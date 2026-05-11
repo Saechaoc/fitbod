@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: completed
-last_updated: "2026-05-11T06:33:52Z"
+status: Exercise dataset vendored (873 raw rows pinned to upstream `acd61f7`); ExerciseDTO + EquipmentMapper + MuscleRegionMap shipped; 9 DTODecodingTests anchor LIB-01 + LIB-06 at the unit-test level
+last_updated: "2026-05-11T06:38:39.800Z"
 progress:
   total_phases: 6
   completed_phases: 0
   total_plans: 12
-  completed_plans: 7
-  percent: 58
+  completed_plans: 6
+  percent: 50
 ---
 
 # Project State: Fitbod
@@ -35,7 +35,7 @@ progress:
 **Phase:** 1 — Foundation & Exercise Library (in progress)
 **Plan:** 02-01 complete (Wave 2, sequence 1 of 2) — next: 02-02
 **Status:** Exercise dataset vendored (873 raw rows pinned to upstream `acd61f7`); ExerciseDTO + EquipmentMapper + MuscleRegionMap shipped; 9 DTODecodingTests anchor LIB-01 + LIB-06 at the unit-test level
-**Progress:** [██████░░░░] 58%
+**Progress:** [█████░░░░░] 50%
 
 ### Phase Outlook
 
