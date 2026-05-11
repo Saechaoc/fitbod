@@ -38,10 +38,13 @@ struct SchemaV1Tests {
         #expect(SchemaV1.models.count == 12)
     }
 
-    @Test("migration plan ships empty stages on Day 1")
-    func migrationPlanHasEmptyStages() {
-        #expect(FitbodSchemaMigrationPlan.stages.isEmpty)
-        #expect(FitbodSchemaMigrationPlan.schemas.count == 1)
+    @Test("migration plan registers SchemaV1 as historical version")
+    func migrationPlanRegistersV1() {
+        // Phase 2 plan 00-02 added SchemaV2 and a V1->V2 lightweight stage;
+        // SchemaV1 stays registered forever so existing on-disk V1 stores
+        // can still be matched and walked forward.
+        let names = FitbodSchemaMigrationPlan.schemas.map { String(describing: $0) }
+        #expect(names.contains("SchemaV1"))
     }
 
     // MARK: - exercise round-trip — proves insert + save + fetch path
