@@ -1,6 +1,20 @@
+---
+gsd_state_version: 1.0
+milestone: v1.0
+milestone_name: milestone
+status: Roadmap created, awaiting `/gsd-plan-phase 1`
+last_updated: "2026-05-11T06:17:58.785Z"
+progress:
+  total_phases: 6
+  completed_phases: 0
+  total_plans: 12
+  completed_plans: 4
+  percent: 33
+---
+
 # Project State: Fitbod
 
-**Last updated:** 2026-05-10
+**Last updated:** 2026-05-11
 
 ---
 
@@ -18,10 +32,10 @@
 
 ## Current Position
 
-**Phase:** Not started (Phase 1 ready to plan)
-**Plan:** —
-**Status:** Roadmap created, awaiting `/gsd-plan-phase 1`
-**Progress:** [░░░░░░░░░░] 0 / 6 phases complete
+**Phase:** 1 — Foundation & Exercise Library (in progress)
+**Plan:** 01-02 complete (Wave 1, sequence 2 of N) — next: 01-03
+**Status:** Schema versioning + ModelContainer wired; project compiles end-to-end for the first time since `Item.swift` was deleted in Wave 0
+**Progress:** [░░░░░░░░░░] 0 / 6 phases complete (Phase 1 in flight)
 
 ### Phase Outlook
 
@@ -40,11 +54,14 @@
 
 ## Performance Metrics
 
-No phases complete yet. Metrics will accumulate at phase transitions.
+Phase 1 in flight; metrics roll up at phase completion. Per-plan duration table:
 
-| Phase | Plans | Reqs Delivered | Notes |
-|-------|------:|---------------:|-------|
-| — | — | — | — |
+| Phase | Plan | Duration (s) | Tasks | Files | Notes |
+|-------|------|-------------:|------:|------:|-------|
+| 1 | 00-01 | 240 (approx) | 3 | 12 | Project hygiene — delete Item.swift, bump Swift 6, scaffold folders |
+| 1 | 00-02 | 180 (approx) | 2 | 3 | Asset catalog — AccentColor + placeholder AppIcon |
+| 1 | 01-01 | 480 | 1 | 23 | 12 entity models + 11 enums |
+| 1 | 01-02 | 68 | 2 | 4 | SchemaV1 + FitbodSchemaMigrationPlan + fitbodApp rewire + RootView stub |
 
 ---
 
@@ -88,8 +105,18 @@ These drive phase ordering and are mitigated by phase placement:
 
 ### Todos
 
-- [ ] `/gsd-plan-phase 1` — decompose Phase 1 into executable plans
-- [ ] Confirm whether `Item.swift` template model is removed before any seed import
+- [x] `/gsd-plan-phase 1` — decompose Phase 1 into executable plans (PLAN-INDEX.md created)
+- [x] Confirm `Item.swift` template model is removed before any seed import (plan 00-01 deleted it; plan 01-02 removed all `Item.self` references)
+- [ ] Plan 01-03 — `PreviewModelContainer.make()` + first batch of SchemaV1 unit tests (Wave 1, next)
+- [ ] Plans 02-01 / 02-02 — `ExerciseDTO` + `ExerciseLibraryImporter` (Wave 2)
+- [ ] Plans 03-01 / 03-02 / 03-03 / 03-04 — RootView TabView + ExerciseLibraryView + custom exercise editor (Wave 3)
+
+### Phase 1 Plans Completed
+
+- **00-01** (Wave 0): Project hygiene — deleted `Item.swift`, bumped Swift 6 + strict concurrency, scaffolded feature-organized folders. Commits: `24ac4e0` / `8a16c96` / `40d9531` / `fa32cf2`.
+- **00-02** (Wave 0, parallel): Asset catalog — AccentColor `#0E7C86` / `#3FBFC9`, placeholder AppIcon. Commits: `a1df0f3` / `e0c68d4`.
+- **01-01** (Wave 1, seq 1): 12 `@Model` entities + 11 String-backed enums + 23 files. Commits: `cb27292` / `6aed051` / `8e35c93` / `adf8a7b` / `a4c5991`.
+- **01-02** (Wave 1, seq 2): `SchemaV1: VersionedSchema` + `FitbodSchemaMigrationPlan` + `fitbodApp` rewire + interim `RootView` stub. Commits: `28795c8` / `58ea362`. Closes FOUND-01.
 
 ### Blockers
 
@@ -101,16 +128,25 @@ None.
 
 ### Last Action
 
-Roadmapper agent created `ROADMAP.md`, `STATE.md`, and updated `REQUIREMENTS.md` traceability with phase mappings.
+Executed plan 01-02 (schema versioning + ModelContainer wiring). Project now compiles end-to-end (parse-PASS via `xcrun swiftc -parse` over the full source tree; `xcodebuild` unavailable in current environment — will be verified locally by user). FOUND-01 closed.
 
 ### Next Action
 
-`/gsd-plan-phase 1` — kick off Foundation & Exercise Library planning. Phase 1 carries the highest architectural weight (versioned schema, template/instance split, seed pipeline, indexes) — do not compress.
+`/gsd-execute-phase 01-03` — adds `PreviewModelContainer.make()` factory and the first batch of Swift Testing unit tests over `SchemaV1` (FOUND-02 reflection, enum round-trip, cascade rules including `exerciseToSessionExerciseNullifies` proving LIB-05).
 
 ### Open Questions
 
-- None at roadmap level. Research items above are deferred to phase planning time when they have specific implementation context.
+- None at this layer. Plan 01-03 will exercise the schema at runtime (in-memory container) for the first time — should surface any macro-expansion edge cases that the parse-only verification has not caught.
+
+### Key Decisions Accumulated (Phase 1)
+
+- **Plan 01-01 D-1**: Public access modifiers throughout (test target reaches via `@testable import`)
+- **Plan 01-01 D-2**: snake_case rawValues for multi-word enum cases (matches `yuhonas/free-exercise-db` wire format)
+- **Plan 01-01 D-3**: `@Relationship(inverse:)` declared on owning side only (single canonical place per relationship)
+- **Plan 01-02 D-1**: `enum FitbodSchemaMigrationPlan: SchemaMigrationPlan` (not `class`) — Apple-canonical form
+- **Plan 01-02 D-2**: `let container: ModelContainer` (not `lazy var`) — Sendable-friendly under Swift 6 strict concurrency
+- **Plan 01-02 D-4**: Interim `RootView` stays in `ContentView.swift` for this plan; renamed + moved to `App/RootView.swift` by plan 03-01 as a single pbxproj edit
 
 ---
 
-*State initialized: 2026-05-10 after roadmap creation*
+*State initialized: 2026-05-10 after roadmap creation. Updated: 2026-05-11 after plan 01-02.*

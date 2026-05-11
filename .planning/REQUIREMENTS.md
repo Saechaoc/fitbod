@@ -114,7 +114,7 @@ User explicitly wants a maximalist v1 (the app's stance is "comprehensive over s
 
 ### FOUND — Foundational Quality Bars (apply across all features)
 
-- [ ] **FOUND-01**: Schema wrapped in `SchemaV1: VersionedSchema` with `SchemaMigrationPlan` scaffold from day 1 (zero migrations yet, but framework in place)
+- [x] **FOUND-01**: Schema wrapped in `SchemaV1: VersionedSchema` with `SchemaMigrationPlan` scaffold from day 1 (zero migrations yet, but framework in place) — closed by plan 01-02 (commit `28795c8`)
 - [ ] **FOUND-02**: All model properties optional or default-valued, all relationships optional (cheap insurance for future iCloud sync without retroactive migration)
 - [ ] **FOUND-03**: All enums persisted as `*Raw: String` columns with computed enum accessors
 - [ ] **FOUND-04**: SwiftData `#Index` declarations on every hot query field (`Exercise.canonicalName`, `equipmentRaw`, `mechanicRaw`, `isCustom`; `Session.startedAt`, `sourceRoutineID`; `SessionExercise.intentRaw`)
@@ -247,7 +247,7 @@ Mapped to phases by `gsd-roadmapper` during roadmap creation.
 | SET-05 | Phase 5 | Pending |
 | SET-06 | Phase 5 | Pending |
 | SET-07 | Phase 3 | Pending |
-| FOUND-01 | Phase 1 | Pending |
+| FOUND-01 | Phase 1 | Complete (plan 01-02, commit 28795c8) |
 | FOUND-02 | Phase 1 | Pending |
 | FOUND-03 | Phase 1 | Pending |
 | FOUND-04 | Phase 1 | Pending |
