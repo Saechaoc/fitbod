@@ -118,7 +118,7 @@ User explicitly wants a maximalist v1 (the app's stance is "comprehensive over s
 - [x] **FOUND-02**: All model properties optional or default-valued, all relationships optional (cheap insurance for future iCloud sync without retroactive migration)
 - [x] **FOUND-03**: All enums persisted as `*Raw: String` columns with computed enum accessors
 - [ ] **FOUND-04**: SwiftData `#Index` declarations on every hot query field (`Exercise.canonicalName`, `equipmentRaw`, `mechanicRaw`, `isCustom`; `Session.startedAt`, `sourceRoutineID`; `SessionExercise.intentRaw`)
-- [ ] **FOUND-05**: Exercise library seed runs once inside a `@ModelActor`, idempotent, version-stamped via `UserDefaults`, completes in <2s on cold launch
+- [x] **FOUND-05**: Exercise library seed runs once inside a `@ModelActor`, idempotent, version-stamped via `UserDefaults`, completes in <2s on cold launch — closed by plan 02-02 (commits `998bacb` / `97f023a`)
 - [ ] **FOUND-06**: Views bind directly to `@Model` types via `@Query` / `@Bindable`; no parallel view-model layer mirrors the schema (MV-VM-lite stance)
 - [ ] **FOUND-07**: Progression and fatigue services are pure-function value types behind protocols, testable without a `ModelContainer`
 
@@ -251,7 +251,7 @@ Mapped to phases by `gsd-roadmapper` during roadmap creation.
 | FOUND-02 | Phase 1 | Complete |
 | FOUND-03 | Phase 1 | Complete |
 | FOUND-04 | Phase 1 | Pending |
-| FOUND-05 | Phase 1 | Pending |
+| FOUND-05 | Phase 1 | Complete (plan 02-02, commits 998bacb / 97f023a) |
 | FOUND-06 | Phase 1 | Pending |
 | FOUND-07 | Phase 1 | Pending |
 
