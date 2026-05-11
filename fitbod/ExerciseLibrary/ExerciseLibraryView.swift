@@ -114,8 +114,16 @@ public struct ExerciseLibraryView: View {
     @State private var internalPath = NavigationPath()
     private var externalPath: Binding<NavigationPath>?
 
+    /// Picker-mode closure (RESEARCH § Pattern 5). When non-nil, tapping
+    /// an exercise row invokes this closure instead of pushing
+    /// `ExerciseDetailView`. Wired up by the plan 03-02 routine builder
+    /// (`InlineExerciseSearchRow`) and the plan 04-02 mid-session
+    /// swap-exercise / add-unplanned flows.
+    private var onSelect: ((Exercise) -> Void)?
+
     public init() {
         self.externalPath = nil
+        self.onSelect = nil
     }
 
     /// External-path variant — `RootView` constructs this so it can
@@ -123,6 +131,19 @@ public struct ExerciseLibraryView: View {
     /// "Tab re-tap pop-to-root").
     public init(path: Binding<NavigationPath>) {
         self.externalPath = path
+        self.onSelect = nil
+    }
+
+    /// Picker init (RESEARCH § Pattern 5) — when provided, tapping an
+    /// exercise row fires the closure rather than pushing the detail
+    /// view. The toolbar "+" affordance for creating a custom exercise
+    /// still renders so a brand-new custom can be authored mid-build
+    /// and selected immediately. The new exercise will appear in the
+    /// list via the reactive `@Query` re-fetch, and the user can tap it
+    /// to fire `onSelect`.
+    public init(onSelect: @escaping (Exercise) -> Void) {
+        self.externalPath = nil
+        self.onSelect = onSelect
     }
 
     private var effectivePath: Binding<NavigationPath> {
@@ -139,7 +160,8 @@ public struct ExerciseLibraryView: View {
                 activeQuery: debouncedSearch,
                 hasActiveFilters: !filterState.isEmpty,
                 clearFiltersAction: filterState.clear,
-                createCustomAction: { presentingNewCustom = true }
+                createCustomAction: { presentingNewCustom = true },
+                onSelect: onSelect
             )
             .navigationTitle("Exercises")
             .searchable(
@@ -235,13 +257,22 @@ private struct FilteredExerciseList: View {
     /// plan 03-02 D-1 until plan 03-04's editor existed.
     let createCustomAction: () -> Void
 
+    /// Optional picker-mode closure (RESEARCH § Pattern 5) — when set,
+    /// each row renders as a `Button { onSelect(ex) }` rather than a
+    /// `NavigationLink(value: ex)` so the row tap fires the closure
+    /// instead of pushing the detail view. Used by the routine builder
+    /// (`InlineExerciseSearchRow`, plan 03-02) and the session-logger
+    /// swap / add-unplanned flows (plan 04-02).
+    let onSelect: ((Exercise) -> Void)?
+
     init(
         predicate: Predicate<Exercise>,
         filterState: FilterState,
         activeQuery: String,
         hasActiveFilters: Bool,
         clearFiltersAction: @escaping () -> Void,
-        createCustomAction: @escaping () -> Void
+        createCustomAction: @escaping () -> Void,
+        onSelect: ((Exercise) -> Void)? = nil
     ) {
         self._exercises = Query(
             filter: predicate,
@@ -253,6 +284,7 @@ private struct FilteredExerciseList: View {
         self.hasActiveFilters = hasActiveFilters
         self.clearFiltersAction = clearFiltersAction
         self.createCustomAction = createCustomAction
+        self.onSelect = onSelect
     }
 
     /// Post-fetch filter: facets, applied in Swift over the search-pruned
@@ -274,8 +306,20 @@ private struct FilteredExerciseList: View {
                     ForEach(sectioned, id: \.letter) { section in
                         Section(section.letter) {
                             ForEach(section.exercises) { ex in
-                                NavigationLink(value: ex) {
-                                    ExerciseRow(exercise: ex)
+                                if let onSelect {
+                                    // Picker mode (RESEARCH § Pattern 5) —
+                                    // tap fires the closure instead of
+                                    // pushing the detail view.
+                                    Button {
+                                        onSelect(ex)
+                                    } label: {
+                                        ExerciseRow(exercise: ex)
+                                    }
+                                    .buttonStyle(.plain)
+                                } else {
+                                    NavigationLink(value: ex) {
+                                        ExerciseRow(exercise: ex)
+                                    }
                                 }
                             }
                         }
