@@ -106,12 +106,33 @@ public struct ExerciseLibraryView: View {
     @State private var presentingFacet: ExerciseFilterBar.FilterFacet? = nil
     @State private var presentingNewCustom = false
 
-    public init() {}
+    /// Internal navigation path used when the caller does not provide
+    /// one (previews, tests). When an external binding is supplied via
+    /// `init(externalPath:)`, `effectivePath` proxies through it so
+    /// `RootView` can clear the stack on Library-tab re-tap (review
+    /// WR-07).
+    @State private var internalPath = NavigationPath()
+    private var externalPath: Binding<NavigationPath>?
+
+    public init() {
+        self.externalPath = nil
+    }
+
+    /// External-path variant — `RootView` constructs this so it can
+    /// reset the path on tab re-tap (UI-SPEC § Interaction patterns
+    /// "Tab re-tap pop-to-root").
+    public init(path: Binding<NavigationPath>) {
+        self.externalPath = path
+    }
+
+    private var effectivePath: Binding<NavigationPath> {
+        externalPath ?? $internalPath
+    }
 
     // MARK: - Body
 
     public var body: some View {
-        NavigationStack {
+        NavigationStack(path: effectivePath) {
             FilteredExerciseList(
                 predicate: filterState.predicate(with: debouncedSearch),
                 activeQuery: debouncedSearch,

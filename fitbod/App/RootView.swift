@@ -55,9 +55,32 @@ public struct RootView: View {
     @Query private var exercises: [Exercise]
     @State private var seedState = SeedState()
 
+    /// Currently-selected tab. Bound to `TabView(selection:)` via a
+    /// custom `Binding<Tab>` that detects re-tap of the same tab and
+    /// clears the matching `NavigationPath` (review WR-07).
+    @State private var selectedTab: Tab = .library
+
+    /// The Library tab owns a navigation stack (Library → Detail). The
+    /// path lives here in `RootView` so the tab re-tap binding setter
+    /// can clear it without reaching into a child view.
+    @State private var libraryPath = NavigationPath()
+
     private static let log = Logger(subsystem: "com.fitbod.app", category: "seed")
 
     public init() {}
+
+    /// The 5 tabs in display order. `Hashable` so it can drive
+    /// `TabView(selection:)`. Only `.library` currently owns a
+    /// `NavigationPath` because it's the only tab with a multi-level
+    /// drilldown in Phase 1; future phases will add paths for the
+    /// other tabs as drilldowns appear (UI-SPEC § Interaction patterns).
+    enum Tab: Hashable {
+        case today
+        case routines
+        case library
+        case progress
+        case settings
+    }
 
     public var body: some View {
         Group {
@@ -101,35 +124,67 @@ public struct RootView: View {
 
     // MARK: - Tab bar
 
+    /// Selection binding that detects re-tap of the currently-active
+    /// tab and resets that tab's `NavigationPath`. SwiftUI calls the
+    /// `set` closure whenever the user taps any tab — including the
+    /// already-selected one — so a same-value set is the re-tap
+    /// signal (review WR-07; UI-SPEC § Interaction patterns).
+    private var tabSelection: Binding<Tab> {
+        Binding(
+            get: { selectedTab },
+            set: { newValue in
+                if newValue == selectedTab {
+                    // Re-tap on the currently-active tab — pop to root.
+                    switch newValue {
+                    case .library:
+                        libraryPath = NavigationPath()
+                    case .today, .routines, .progress, .settings:
+                        // No NavigationPath wired for these tabs yet —
+                        // Phase 2+ will add paths as drilldowns appear.
+                        break
+                    }
+                }
+                selectedTab = newValue
+            }
+        )
+    }
+
     private var tabBar: some View {
-        TabView {
+        TabView(selection: tabSelection) {
             // UI-SPEC § Tab labels — verbatim labels + SF Symbols + order.
             PlaceholderTabView(phaseNumber: 2)
                 .tabItem {
                     Label("Today", systemImage: "figure.strengthtraining.traditional")
                 }
+                .tag(Tab.today)
 
             PlaceholderTabView(phaseNumber: 2)
                 .tabItem {
                     Label("Routines", systemImage: "list.bullet.rectangle.portrait")
                 }
+                .tag(Tab.routines)
 
             // Plan 03-02 replaces `LibraryTabHost` with `ExerciseLibraryView`.
-            LibraryTabHost()
+            // Path is owned by `RootView` so `tabSelection` can clear it
+            // on Library-tab re-tap (review WR-07).
+            LibraryTabHost(path: $libraryPath)
                 .tabItem {
                     Label("Library", systemImage: "dumbbell")
                 }
+                .tag(Tab.library)
 
             PlaceholderTabView(phaseNumber: 6)
                 .tabItem {
                     Label("Progress", systemImage: "chart.xyaxis.line")
                 }
+                .tag(Tab.progress)
 
             // Plan 04-01 wired: `SettingsTabHost` wraps `SettingsView`.
             SettingsTabHost()
                 .tabItem {
                     Label("Settings", systemImage: "gearshape")
                 }
+                .tag(Tab.settings)
         }
     }
 
@@ -161,13 +216,14 @@ public struct RootView: View {
 // MARK: - Interim tab hosts
 
 /// Library tab body — wraps the real `ExerciseLibraryView` (plan 03-02).
-/// `ExerciseLibraryView` owns its own `NavigationStack`, so this host
-/// is now just a thin transparent wrapper. Kept as a private struct
-/// rather than substituting `ExerciseLibraryView()` directly into the
-/// `tabBar` body so plan 04-01's settings substitution and any future
-/// per-tab wrappers stay symmetrical (e.g., wrapping for analytics).
+///
+/// `ExerciseLibraryView` still owns its `NavigationStack`, but the
+/// stack's path is supplied from outside via the `path` binding so
+/// `RootView.tabSelection` can clear it on Library-tab re-tap
+/// (review WR-07).
 private struct LibraryTabHost: View {
-    var body: some View { ExerciseLibraryView() }
+    @Binding var path: NavigationPath
+    var body: some View { ExerciseLibraryView(path: $path) }
 }
 
 /// Settings tab body — wraps the real `SettingsView` (plan 04-01).
