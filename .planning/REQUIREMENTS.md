@@ -15,8 +15,8 @@ User explicitly wants a maximalist v1 (the app's stance is "comprehensive over s
 - [ ] **LIB-02**: User can multi-facet filter exercises by muscle group, equipment, mechanic (compound/isolation), and movement pattern
 - [ ] **LIB-03**: User can search exercises by name with type-ahead (responsive at 1000+ entries via SwiftData `#Index` on hot fields)
 - [ ] **LIB-04**: User can create custom exercises with required primary + secondary muscle mapping (with per-muscle stimulus weights), equipment, mechanic, and optional image
-- [ ] **LIB-05**: User can edit and delete custom exercises without affecting historical session data
-- [ ] **LIB-06**: Bundled exercises distinguish bodyweight, weighted-bodyweight, machine, dumbbell, barbell, cable, and bands; UI input fields adapt per kind
+- [x] **LIB-05**: User can edit and delete custom exercises without affecting historical session data
+- [x] **LIB-06**: Bundled exercises distinguish bodyweight, weighted-bodyweight, machine, dumbbell, barbell, cable, and bands; UI input fields adapt per kind
 
 ### ROUTINE — Routine Builder & Templates
 
@@ -104,7 +104,7 @@ User explicitly wants a maximalist v1 (the app's stance is "comprehensive over s
 
 ### SET — Settings & Configuration
 
-- [ ] **SET-01**: Global weight units (lb / kg) toggle
+- [x] **SET-01**: Global weight units (lb / kg) toggle
 - [ ] **SET-02**: Per-exercise weight unit override
 - [ ] **SET-03**: User defines plate inventory per equipment type (which plates available, microplates yes/no)
 - [ ] **SET-04**: User defines smallest weight increment per equipment type (consumed by all progression rounding and warm-up ramping)
@@ -115,8 +115,8 @@ User explicitly wants a maximalist v1 (the app's stance is "comprehensive over s
 ### FOUND — Foundational Quality Bars (apply across all features)
 
 - [x] **FOUND-01**: Schema wrapped in `SchemaV1: VersionedSchema` with `SchemaMigrationPlan` scaffold from day 1 (zero migrations yet, but framework in place) — closed by plan 01-02 (commit `28795c8`)
-- [ ] **FOUND-02**: All model properties optional or default-valued, all relationships optional (cheap insurance for future iCloud sync without retroactive migration)
-- [ ] **FOUND-03**: All enums persisted as `*Raw: String` columns with computed enum accessors
+- [x] **FOUND-02**: All model properties optional or default-valued, all relationships optional (cheap insurance for future iCloud sync without retroactive migration)
+- [x] **FOUND-03**: All enums persisted as `*Raw: String` columns with computed enum accessors
 - [ ] **FOUND-04**: SwiftData `#Index` declarations on every hot query field (`Exercise.canonicalName`, `equipmentRaw`, `mechanicRaw`, `isCustom`; `Session.startedAt`, `sourceRoutineID`; `SessionExercise.intentRaw`)
 - [ ] **FOUND-05**: Exercise library seed runs once inside a `@ModelActor`, idempotent, version-stamped via `UserDefaults`, completes in <2s on cold launch
 - [ ] **FOUND-06**: Views bind directly to `@Model` types via `@Query` / `@Bindable`; no parallel view-model layer mirrors the schema (MV-VM-lite stance)
@@ -178,8 +178,8 @@ Mapped to phases by `gsd-roadmapper` during roadmap creation.
 | LIB-02 | Phase 1 | Pending |
 | LIB-03 | Phase 1 | Pending |
 | LIB-04 | Phase 1 | Pending |
-| LIB-05 | Phase 1 | Pending |
-| LIB-06 | Phase 1 | Pending |
+| LIB-05 | Phase 1 | Complete |
+| LIB-06 | Phase 1 | Complete |
 | ROUTINE-01 | Phase 2 | Pending |
 | ROUTINE-02 | Phase 2 | Pending |
 | ROUTINE-03 | Phase 2 | Pending |
@@ -240,7 +240,7 @@ Mapped to phases by `gsd-roadmapper` during roadmap creation.
 | EXP-02 | Phase 6 | Pending |
 | EXP-03 | Phase 6 | Pending |
 | EXP-04 | Phase 6 | Pending |
-| SET-01 | Phase 1 | Pending |
+| SET-01 | Phase 1 | Complete |
 | SET-02 | Phase 3 | Pending |
 | SET-03 | Phase 3 | Pending |
 | SET-04 | Phase 3 | Pending |
@@ -248,8 +248,8 @@ Mapped to phases by `gsd-roadmapper` during roadmap creation.
 | SET-06 | Phase 5 | Pending |
 | SET-07 | Phase 3 | Pending |
 | FOUND-01 | Phase 1 | Complete (plan 01-02, commit 28795c8) |
-| FOUND-02 | Phase 1 | Pending |
-| FOUND-03 | Phase 1 | Pending |
+| FOUND-02 | Phase 1 | Complete |
+| FOUND-03 | Phase 1 | Complete |
 | FOUND-04 | Phase 1 | Pending |
 | FOUND-05 | Phase 1 | Pending |
 | FOUND-06 | Phase 1 | Pending |
