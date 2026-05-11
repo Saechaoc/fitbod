@@ -304,7 +304,7 @@ The registry-safety vetting gate from the gsd-ui-researcher protocol is **not ap
 These are intentionally NOT in the Phase 1 UI contract — they belong to later phases per ROADMAP.md / CONTEXT.md / `<deferred>`:
 
 - **Bundled exercise images / GIFs** — image path strings persist from day 1 but the binary blobs are deferred. The exercise detail view shows no image area in Phase 1 (defer adding the section header).
-- **Filter persistence across launches** — single-session reset is the v1 behavior.
+- **Filter persistence across launches** — filters persist while the Library tab is mounted; iOS TabView preserves tab state by design, so they survive every tab switch. Filters reset only when the app is killed (process termination clears `@State`) or the user explicitly taps "Clear filters". Cross-launch persistence (writing to `UserDefaults` / SwiftData) is the deferred work.
 - **Sort options menu** (alphabetical / muscle / equipment) — alphabetical only in v1.
 - **Custom-exercise grip / pattern fields** — out of dataset; ROUTINE phase handles deeper exercise metadata.
 - **Hand-curated stimulus weights for top-50 compounds** — defaults (1.0 / 0.5) only; curation deferred to Phase 5.

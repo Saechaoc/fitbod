@@ -42,13 +42,22 @@
 //  when `searchText` changes, so only the LAST keystroke after a quiet
 //  150 ms actually propagates to `debouncedSearch` and triggers a query.
 //
-//  ## Filter persistence (CONTEXT.md Area 2 — single-session reset)
+//  ## Filter persistence (corrected per review WR-04)
 //
-//  `FilterState` is a `@State` inside this view. SwiftUI re-creates
-//  `@State` storage when the view's identity goes away — leaving the
-//  Library tab and re-entering creates a fresh `FilterState`, so the
-//  filter selections reset per session. Cross-launch persistence is
-//  deferred per CONTEXT.md.
+//  `FilterState` is a `@State` inside this view. `TabView` preserves
+//  the identity of its hidden tab children — switching tabs does NOT
+//  deallocate or re-instantiate this view, so the `@State`-backed
+//  `FilterState` survives every tab switch and lives for the entire
+//  app process lifetime. Filters reset only when:
+//    1. The app is killed and relaunched (`@State` storage is gone), or
+//    2. The user explicitly taps "Clear filters" (`filterState.clear()`).
+//
+//  This contradicts the older CONTEXT.md Area 2 phrasing ("filters
+//  reset when the user leaves the library tab") — that phrasing
+//  assumed tab teardown, which is not how SwiftUI's `TabView` works.
+//  The persisted-for-process behavior is the iOS-native convention
+//  and is what users actually expect; forcing teardown would require
+//  a SwiftUI anti-pattern. The UI-SPEC has been updated to match.
 //
 //  ## Toolbar "+" affordance
 //
