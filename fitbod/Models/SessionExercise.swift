@@ -47,6 +47,8 @@ public final class SessionExercise {
     public var prescribedRestSeconds: Int = 120
     public var tempo: String? = nil
     public var progressionKindRaw: String = "double"
+    public var tracksTempo: Bool = false
+    public var tracksPartialReps: Bool = false
     public var prescribedWeight: Double? = nil
     public var pinnedNote: String? = nil
 

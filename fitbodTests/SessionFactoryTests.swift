@@ -298,6 +298,33 @@ struct SessionFactoryTests {
         #expect(ses[1].exercise?.canonicalName == "bench")
     }
 
+    // MARK: - 9. tracksTempo / tracksPartialReps snapshot (Wave-4 plan 04-02)
+
+    @Test("snapshotsTracksTempoAndTracksPartialReps — opt-in row toggles are snapshotted")
+    func snapshotsTracksTempoAndTracksPartialReps() throws {
+        let ctx = try makeContext()
+        let routine = try makeFixtureRoutine(ctx: ctx)
+
+        // Flip the toggles on the source routine BEFORE starting the
+        // session so SessionFactory observes them during the deep-copy.
+        let re = (routine.exercises ?? []).first { $0.orderIndex == 0 }!
+        re.tracksTempo = true
+        re.tracksPartialReps = true
+        try ctx.save()
+
+        let session = try SessionFactory.start(routine: routine, on: .now, context: ctx)
+        let se = (session.exercises ?? []).first { $0.orderIndex == 0 }!
+        #expect(se.tracksTempo == true)
+        #expect(se.tracksPartialReps == true)
+
+        // The second exercise (which left the toggles at their defaults)
+        // snapshots `false` for both — verifying defaults flow through
+        // the snapshot deep-copy unchanged.
+        let se2 = (session.exercises ?? []).first { $0.orderIndex == 1 }!
+        #expect(se2.tracksTempo == false)
+        #expect(se2.tracksPartialReps == false)
+    }
+
     // MARK: - 8. block reference survives snapshot
 
     @Test("blockReferenceCopiedFromRoutine — optional Block link survives snapshot")

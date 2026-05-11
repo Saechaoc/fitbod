@@ -121,6 +121,13 @@ public enum SessionFactory {
             se.prescribedRestSeconds = re.prescribedRestSeconds
             se.tempo = re.tempo
             se.progressionKindRaw = re.progressionKindRaw
+            // SNAPSHOT (Wave-4 plan 04-02): the routine-side toggles that
+            // gate per-set opt-in row rendering in the session logger.
+            // Snapshotting these onto SessionExercise keeps the active
+            // session decoupled from subsequent edits to the source
+            // RoutineExercise's toggles (PITFALLS-doc #1 / ROUTINE-07).
+            se.tracksTempo = re.tracksTempo
+            se.tracksPartialReps = re.tracksPartialReps
             // `prescribedWeight` is populated by Phase 3's
             // ProgressionStrategy; for Phase 2 we leave it nil and the
             // SetEntry rows pull a weight hint from
