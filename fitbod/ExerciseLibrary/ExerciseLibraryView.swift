@@ -59,18 +59,27 @@
 //  `CustomExerciseDraft()` is constructed per sheet presentation so
 //  the editor opens with empty fields each time.
 //
-//  ## Empty states
+//  ## Empty states (plan 04-01 polish)
 //
-//  Per UI-SPEC § Empty states + execution-rules verbatim copy:
+//  Empty state rendering is delegated to the top-level
+//  `EmptyLibraryView` view (file: `EmptyLibraryView.swift`). It picks
+//  between two UI-SPEC § Empty states copy variants based on whether
+//  the active search text is empty:
 //
-//    - Active search with no matches:
-//      "No exercises match \"{query}\". Try fewer filters or a different name."
-//    - No search but no matches:
-//      "No exercises match. Try fewer filters."
+//    - Empty `searchText` (filters-only / no rows):
+//      "No exercises match"
+//      "Try fewer filters or a different name."
+//      → "Clear filters" (accent text button)
 //
-//  A "Clear filters" text button (UI-SPEC accent) is shown when filters
-//  are present so the user can recover from an over-restrictive
-//  selection without leaving the screen.
+//    - Non-empty `searchText` (no rows for the typed query):
+//      "No exercises match \"{query}\""
+//      "Check spelling or create a custom exercise."
+//      → "Create Custom Exercise" (accent text button)
+//
+//  Both actions dispatch to closures supplied by the outer view —
+//  `filterState.clear` for the no-query path; `presentingNewCustom =
+//  true` for the with-query CTA, which opens `CustomExerciseEditor` via
+//  the existing `.sheet(isPresented: $presentingNewCustom)` modifier.
 //
 
 import SwiftUI
@@ -98,7 +107,8 @@ public struct ExerciseLibraryView: View {
                 predicate: filterState.predicate(with: debouncedSearch),
                 activeQuery: debouncedSearch,
                 hasActiveFilters: !filterState.isEmpty,
-                clearFiltersAction: filterState.clear
+                clearFiltersAction: filterState.clear,
+                createCustomAction: { presentingNewCustom = true }
             )
             .navigationTitle("Exercises")
             .searchable(
@@ -164,22 +174,36 @@ private struct FilteredExerciseList: View {
     @Query private var exercises: [Exercise]
 
     /// The active debounced search text, used by the empty-state copy
-    /// to show the verbatim "{query}" the user typed.
+    /// to show the verbatim "{query}" the user typed AND to select the
+    /// with-query vs without-query variant in `EmptyLibraryView`.
     let activeQuery: String
 
-    /// `true` when at least one facet has a selection — drives the
-    /// "Clear filters" affordance in the empty state.
+    /// `true` when at least one facet has a selection. Plan 04-01: the
+    /// new `EmptyLibraryView` does not currently consume this — it
+    /// picks its variant on `searchText.isEmpty` alone per UI-SPEC §
+    /// Empty states. The flag is preserved on the inner view because
+    /// the outer view still uses it for chip-bar rendering and a later
+    /// polish may want it to disambiguate "filters-only" from "no
+    /// rows" at the empty surface.
     let hasActiveFilters: Bool
 
     /// Closure that clears every facet's selection. Forwarded from the
-    /// outer `FilterState.clear`.
+    /// outer `FilterState.clear`. Wired to the empty state's no-query
+    /// "Clear filters" button.
     let clearFiltersAction: () -> Void
+
+    /// Closure that presents the `CustomExerciseEditor` sheet. Wired to
+    /// the empty state's with-query "Create Custom Exercise" button —
+    /// the plan-04-01 UI-SPEC § Empty states CTA that was deferred by
+    /// plan 03-02 D-1 until plan 03-04's editor existed.
+    let createCustomAction: () -> Void
 
     init(
         predicate: Predicate<Exercise>,
         activeQuery: String,
         hasActiveFilters: Bool,
-        clearFiltersAction: @escaping () -> Void
+        clearFiltersAction: @escaping () -> Void,
+        createCustomAction: @escaping () -> Void
     ) {
         self._exercises = Query(
             filter: predicate,
@@ -189,15 +213,16 @@ private struct FilteredExerciseList: View {
         self.activeQuery = activeQuery
         self.hasActiveFilters = hasActiveFilters
         self.clearFiltersAction = clearFiltersAction
+        self.createCustomAction = createCustomAction
     }
 
     var body: some View {
         Group {
             if exercises.isEmpty {
                 EmptyLibraryView(
-                    activeQuery: activeQuery,
-                    hasActiveFilters: hasActiveFilters,
-                    clearFiltersAction: clearFiltersAction
+                    searchText: activeQuery,
+                    onClearFilters: clearFiltersAction,
+                    onCreateCustom: createCustomAction
                 )
             } else {
                 List {
@@ -238,67 +263,19 @@ private struct FilteredExerciseList: View {
     }
 }
 
-// MARK: - EmptyLibraryView
-
-/// Empty-state surface shown when the active predicate + search match
-/// zero rows. Per UI-SPEC § Empty states + execution-rules:
-///
-///   - If the user is actively searching ("query" is non-empty):
-///     `No exercises match "{query}". Try fewer filters or a different name.`
-///   - Otherwise (no query, just over-restrictive filters):
-///     `No exercises match. Try fewer filters.`
-///
-/// A "Clear filters" text button appears when any filter is active so
-/// the user can recover without leaving the screen.
-private struct EmptyLibraryView: View {
-    let activeQuery: String
-    let hasActiveFilters: Bool
-    let clearFiltersAction: () -> Void
-
-    var body: some View {
-        VStack(spacing: 12) {
-            Text(headline)
-                .font(.title2.weight(.semibold))
-                .multilineTextAlignment(.center)
-            Text(body_copy)
-                .font(.body)
-                .foregroundStyle(.secondary)
-                .multilineTextAlignment(.center)
-            if hasActiveFilters {
-                Button("Clear filters", action: clearFiltersAction)
-                    .font(.body)
-                    .foregroundStyle(Color.accentColor)
-                    .padding(.top, 4)
-                    .accessibilityLabel("Clear filters")
-            }
-        }
-        .padding(.horizontal, 24)
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-    }
-
-    private var hasQuery: Bool {
-        !activeQuery.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-    }
-
-    private var headline: String {
-        hasQuery ? "No exercises match \"\(activeQuery)\"" : "No exercises match"
-    }
-
-    private var body_copy: String {
-        hasQuery
-            ? "Try fewer filters or a different name."
-            : "Try fewer filters."
-    }
-}
-
 // MARK: - Previews
 //
-// NOTE: The interim `NewCustomExerciseRequest` navigation token (plan
-// 03-02 D-5) has been removed. Plan 03-04 wires the "+" toolbar
-// button directly to a `.sheet(isPresented:)` presenting the real
-// `CustomExerciseEditor` wrapped in a `NavigationStack`. The previous
-// `navigationDestination(for: NewCustomExerciseRequest.self)`
-// placeholder is gone.
+// NOTE 1: The inline `EmptyLibraryView` private struct (plan 03-02 D-5)
+// has been promoted to its own top-level file
+// (`EmptyLibraryView.swift`) by plan 04-01. The new version selects
+// its copy variant on `searchText.isEmpty` alone (per UI-SPEC § Empty
+// states) and adds the "Create Custom Exercise" CTA on the with-query
+// variant.
+//
+// NOTE 2: The interim `NewCustomExerciseRequest` navigation token
+// (plan 03-02 D-5) was removed by plan 03-04. Plan 03-04 wired the
+// "+" toolbar button directly to a `.sheet(isPresented:)` presenting
+// the real `CustomExerciseEditor` wrapped in a `NavigationStack`.
 
 
 #Preview("With fixture") {
