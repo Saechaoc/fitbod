@@ -174,92 +174,100 @@ Mapped to phases by `gsd-roadmapper` during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| LIB-01 | TBD | Pending |
-| LIB-02 | TBD | Pending |
-| LIB-03 | TBD | Pending |
-| LIB-04 | TBD | Pending |
-| LIB-05 | TBD | Pending |
-| LIB-06 | TBD | Pending |
-| ROUTINE-01 | TBD | Pending |
-| ROUTINE-02 | TBD | Pending |
-| ROUTINE-03 | TBD | Pending |
-| ROUTINE-04 | TBD | Pending |
-| ROUTINE-05 | TBD | Pending |
-| ROUTINE-06 | TBD | Pending |
-| ROUTINE-07 | TBD | Pending |
-| ROUTINE-08 | TBD | Pending |
-| ROUTINE-09 | TBD | Pending |
-| SESS-01 | TBD | Pending |
-| SESS-02 | TBD | Pending |
-| SESS-03 | TBD | Pending |
-| SESS-04 | TBD | Pending |
-| SESS-05 | TBD | Pending |
-| SESS-06 | TBD | Pending |
-| SESS-07 | TBD | Pending |
-| SESS-08 | TBD | Pending |
-| SESS-09 | TBD | Pending |
-| SESS-10 | TBD | Pending |
-| SESS-11 | TBD | Pending |
-| WARM-01 | TBD | Pending |
-| WARM-02 | TBD | Pending |
-| WARM-03 | TBD | Pending |
-| PRES-01 | TBD | Pending |
-| PRES-02 | TBD | Pending |
-| PRES-03 | TBD | Pending |
-| PRES-04 | TBD | Pending |
-| PRES-05 | TBD | Pending |
-| PRES-06 | TBD | Pending |
-| PRES-07 | TBD | Pending |
-| PRES-08 | TBD | Pending |
-| PRES-09 | TBD | Pending |
-| PRES-10 | TBD | Pending |
-| BLOCK-01 | TBD | Pending |
-| BLOCK-02 | TBD | Pending |
-| BLOCK-03 | TBD | Pending |
-| BLOCK-04 | TBD | Pending |
-| BLOCK-05 | TBD | Pending |
-| BLOCK-06 | TBD | Pending |
-| BLOCK-07 | TBD | Pending |
-| BLOCK-08 | TBD | Pending |
-| VOL-01 | TBD | Pending |
-| VOL-02 | TBD | Pending |
-| VOL-03 | TBD | Pending |
-| VOL-04 | TBD | Pending |
-| VOL-05 | TBD | Pending |
-| VOL-06 | TBD | Pending |
-| VOL-07 | TBD | Pending |
-| PROG-01 | TBD | Pending |
-| PROG-02 | TBD | Pending |
-| PROG-03 | TBD | Pending |
-| PROG-04 | TBD | Pending |
-| PROG-05 | TBD | Pending |
-| PROG-06 | TBD | Pending |
-| PROG-07 | TBD | Pending |
-| PROG-08 | TBD | Pending |
-| EXP-01 | TBD | Pending |
-| EXP-02 | TBD | Pending |
-| EXP-03 | TBD | Pending |
-| EXP-04 | TBD | Pending |
-| SET-01 | TBD | Pending |
-| SET-02 | TBD | Pending |
-| SET-03 | TBD | Pending |
-| SET-04 | TBD | Pending |
-| SET-05 | TBD | Pending |
-| SET-06 | TBD | Pending |
-| SET-07 | TBD | Pending |
-| FOUND-01 | TBD | Pending |
-| FOUND-02 | TBD | Pending |
-| FOUND-03 | TBD | Pending |
-| FOUND-04 | TBD | Pending |
-| FOUND-05 | TBD | Pending |
-| FOUND-06 | TBD | Pending |
-| FOUND-07 | TBD | Pending |
+| LIB-01 | Phase 1 | Pending |
+| LIB-02 | Phase 1 | Pending |
+| LIB-03 | Phase 1 | Pending |
+| LIB-04 | Phase 1 | Pending |
+| LIB-05 | Phase 1 | Pending |
+| LIB-06 | Phase 1 | Pending |
+| ROUTINE-01 | Phase 2 | Pending |
+| ROUTINE-02 | Phase 2 | Pending |
+| ROUTINE-03 | Phase 2 | Pending |
+| ROUTINE-04 | Phase 2 | Pending |
+| ROUTINE-05 | Phase 2 | Pending |
+| ROUTINE-06 | Phase 2 | Pending |
+| ROUTINE-07 | Phase 2 | Pending |
+| ROUTINE-08 | Phase 2 | Pending |
+| ROUTINE-09 | Phase 2 | Pending |
+| SESS-01 | Phase 2 | Pending |
+| SESS-02 | Phase 2 | Pending |
+| SESS-03 | Phase 2 | Pending |
+| SESS-04 | Phase 2 | Pending |
+| SESS-05 | Phase 2 | Pending |
+| SESS-06 | Phase 2 | Pending |
+| SESS-07 | Phase 2 | Pending |
+| SESS-08 | Phase 2 | Pending |
+| SESS-09 | Phase 2 | Pending |
+| SESS-10 | Phase 2 | Pending |
+| SESS-11 | Phase 2 | Pending |
+| WARM-01 | Phase 3 | Pending |
+| WARM-02 | Phase 3 | Pending |
+| WARM-03 | Phase 3 | Pending |
+| PRES-01 | Phase 3 | Pending |
+| PRES-02 | Phase 3 | Pending |
+| PRES-03 | Phase 3 | Pending |
+| PRES-04 | Phase 3 | Pending |
+| PRES-05 | Phase 4 | Pending |
+| PRES-06 | Phase 4 | Pending |
+| PRES-07 | Phase 3 | Pending |
+| PRES-08 | Phase 3 | Pending |
+| PRES-09 | Phase 3 | Pending |
+| PRES-10 | Phase 3 | Pending |
+| BLOCK-01 | Phase 4 | Pending |
+| BLOCK-02 | Phase 4 | Pending |
+| BLOCK-03 | Phase 4 | Pending |
+| BLOCK-04 | Phase 4 | Pending |
+| BLOCK-05 | Phase 4 | Pending |
+| BLOCK-06 | Phase 4 | Pending |
+| BLOCK-07 | Phase 4 | Pending |
+| BLOCK-08 | Phase 4 | Pending |
+| VOL-01 | Phase 5 | Pending |
+| VOL-02 | Phase 5 | Pending |
+| VOL-03 | Phase 5 | Pending |
+| VOL-04 | Phase 5 | Pending |
+| VOL-05 | Phase 5 | Pending |
+| VOL-06 | Phase 5 | Pending |
+| VOL-07 | Phase 5 | Pending |
+| PROG-01 | Phase 6 | Pending |
+| PROG-02 | Phase 6 | Pending |
+| PROG-03 | Phase 6 | Pending |
+| PROG-04 | Phase 6 | Pending |
+| PROG-05 | Phase 6 | Pending |
+| PROG-06 | Phase 5 | Pending |
+| PROG-07 | Phase 6 | Pending |
+| PROG-08 | Phase 6 | Pending |
+| EXP-01 | Phase 6 | Pending |
+| EXP-02 | Phase 6 | Pending |
+| EXP-03 | Phase 6 | Pending |
+| EXP-04 | Phase 6 | Pending |
+| SET-01 | Phase 1 | Pending |
+| SET-02 | Phase 3 | Pending |
+| SET-03 | Phase 3 | Pending |
+| SET-04 | Phase 3 | Pending |
+| SET-05 | Phase 5 | Pending |
+| SET-06 | Phase 5 | Pending |
+| SET-07 | Phase 3 | Pending |
+| FOUND-01 | Phase 1 | Pending |
+| FOUND-02 | Phase 1 | Pending |
+| FOUND-03 | Phase 1 | Pending |
+| FOUND-04 | Phase 1 | Pending |
+| FOUND-05 | Phase 1 | Pending |
+| FOUND-06 | Phase 1 | Pending |
+| FOUND-07 | Phase 1 | Pending |
 
 **Coverage:**
-- v1 requirements: 78 total
-- Mapped to phases: 0 (roadmapper to populate)
-- Unmapped: 78 ⚠️ (expected — roadmap not yet created)
+- v1 requirements: 80 total (6 LIB + 9 ROUTINE + 11 SESS + 3 WARM + 10 PRES + 8 BLOCK + 7 VOL + 8 PROG + 4 EXP + 7 SET + 7 FOUND = 80)
+- Mapped to phases: 80
+- Unmapped: 0
+
+Per-phase counts:
+- Phase 1 (Foundation & Exercise Library): 14 — FOUND-01..07, LIB-01..06, SET-01
+- Phase 2 (Core Loop — Routines + Sessions): 20 — ROUTINE-01..09, SESS-01..11
+- Phase 3 (Smart Prescription & Warm-ups): 15 — PRES-01,02,03,04,07,08,09,10; WARM-01..03; SET-02,03,04,07
+- Phase 4 (Periodization & Blocks): 10 — BLOCK-01..08; PRES-05, PRES-06
+- Phase 5 (Fatigue Model & Plateau Detection): 10 — VOL-01..07; PROG-06; SET-05, SET-06
+- Phase 6 (Progress Views, Export & Polish): 11 — PROG-01,02,03,04,05,07,08; EXP-01..04
 
 ---
 *Requirements defined: 2026-05-10*
-*Last updated: 2026-05-10 after initial definition*
+*Last updated: 2026-05-10 after roadmap creation (traceability populated)*
