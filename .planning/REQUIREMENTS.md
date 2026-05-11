@@ -1,0 +1,265 @@
+# Requirements: Fitbod
+
+**Defined:** 2026-05-10
+**Core Value:** Granular, prescriptive workout sessions — every set is intentionally specified (intent, target reps, target RPE, smart-progressed weight), and progress is visible at the resolution serious lifters actually train at.
+
+---
+
+## v1 Requirements
+
+User explicitly wants a maximalist v1 (the app's stance is "comprehensive over simple"). Every requirement below is in scope for first release.
+
+### LIB — Exercise Library
+
+- [ ] **LIB-01**: User can browse the bundled exercise library (~800 exercises seeded from `yuhonas/free-exercise-db`, Unlicense)
+- [ ] **LIB-02**: User can multi-facet filter exercises by muscle group, equipment, mechanic (compound/isolation), and movement pattern
+- [ ] **LIB-03**: User can search exercises by name with type-ahead (responsive at 1000+ entries via SwiftData `#Index` on hot fields)
+- [ ] **LIB-04**: User can create custom exercises with required primary + secondary muscle mapping (with per-muscle stimulus weights), equipment, mechanic, and optional image
+- [ ] **LIB-05**: User can edit and delete custom exercises without affecting historical session data
+- [ ] **LIB-06**: Bundled exercises distinguish bodyweight, weighted-bodyweight, machine, dumbbell, barbell, cable, and bands; UI input fields adapt per kind
+
+### ROUTINE — Routine Builder & Templates
+
+- [ ] **ROUTINE-01**: User can build a routine in a single screen — inline exercise search-and-add, drag-handle reorder, no modal exercise picker
+- [ ] **ROUTINE-02**: Each exercise in a routine carries first-class prescription: training intent (strength / hypertrophy / power / endurance / technique), target rep range, target RPE range
+- [ ] **ROUTINE-03**: User can set per-set prescription overrides within an exercise (e.g. top set + back-off sets with different rep/RPE targets)
+- [ ] **ROUTINE-04**: User can group exercises into supersets and giant sets (2–N exercises with shared accent rail and smart-scroll between paired sets)
+- [ ] **ROUTINE-05**: User can choose a progression model per exercise from four options: RPE/RIR autoreg, double progression, block-periodized, hybrid
+- [ ] **ROUTINE-06**: User can duplicate routines and organize them into folders
+- [ ] **ROUTINE-07**: Routine templates are stored separately from session instances — editing a routine never rewrites historical session data (snapshot-at-session-start)
+- [ ] **ROUTINE-08**: The same routine recurring on different days with different intent (e.g. strength Mon, hypertrophy Thu) maintains separate per-intent histories for each exercise
+- [ ] **ROUTINE-09**: Each routine exercise has a default rest timer (heuristic by mechanic: compound ≈ 180s, isolation ≈ 90s) that the user can override per exercise
+
+### SESS — Session Logging
+
+- [ ] **SESS-01**: Starting a session calls `SessionFactory.start(...)` which snapshots all routine prescription fields onto the session — subsequent edits to the routine template never alter this session
+- [ ] **SESS-02**: User can log per set: weight, reps, RPE (decimal RPE supported via long-press), set type (warmup / working / drop / failure / rest-pause), and per-set form notes
+- [ ] **SESS-03**: Set inputs auto-populate from the previous matching-intent session of the same exercise; an inline "previous" column shows weight × reps × RPE from that last instance
+- [ ] **SESS-04**: Rest timer auto-starts on set completion, exposes ±15s buttons, fires a lock-screen notification when it reaches 0, displays as a Live Activity / Dynamic Island while running, and auto-stops on next set entry
+- [ ] **SESS-05**: User can swap an exercise mid-session without mutating the routine template (substitution applies to this session only)
+- [ ] **SESS-06**: User can add unplanned exercises mid-session (added to the session, not the routine)
+- [ ] **SESS-07**: User can enter optional tempo per set as 4-field eccentric / bottom-pause / concentric / top-pause
+- [ ] **SESS-08**: User can record partial reps (e.g. "8 + 2 partials") and cluster / rest-pause sub-reps (e.g. `[8, 3, 2]`) per set
+- [ ] **SESS-09**: Bodyweight and weighted-bodyweight exercises log reps + added/assisted weight (signed: negative = assist)
+- [ ] **SESS-10**: User can view per-exercise history with intent split as separate streams (strength series vs hypertrophy series, toggleable / both visible)
+- [ ] **SESS-11**: Workout-level notes and pinned per-exercise notes are surfaced inline in the session UI
+
+### WARM — Warm-up Generation
+
+- [ ] **WARM-01**: First compound exercise of a session auto-generates a warm-up ramp (3–5 ascending sets) plate-rounded to the user's plate inventory
+- [ ] **WARM-02**: Warm-up generator handles edge cases correctly: deload weeks (skip), unilateral lifts (halve loads), light working weights (skip when <1.5× bar), bodyweight (skip)
+- [ ] **WARM-03**: User can override the warm-up scheme per exercise or disable warm-ups
+
+### PRES — Smart Prescription & Progression
+
+- [ ] **PRES-01**: At session start, each working exercise displays a recommended weight computed by its selected progression model
+- [ ] **PRES-02**: User can expand "Why this weight?" on any prescription to see the calculation breakdown (last session's data, formula, percent, rounding)
+- [ ] **PRES-03**: `RPEAutoregStrategy` back-calculates target weight from prior RPE + reps using Tuchscherer table as a prior; switches to per-exercise per-lifter calibration after ≥10 logged sets (shown as a "calibrating" badge until then)
+- [ ] **PRES-04**: `DoubleProgressionStrategy` advances weight by the exercise's smallest-increment when all working sets hit the top of the rep range
+- [ ] **PRES-05**: `BlockPeriodizedStrategy` resolves weight from the active block phase's intensity curve
+- [ ] **PRES-06**: `HybridStrategy` combines block phase context with RPE-driven daily adjustment
+- [ ] **PRES-07**: User can manually override the recommended weight; the override is recorded as actual performance and feeds into the next session's calculation (never ignored)
+- [ ] **PRES-08**: Integrated plate calculator: given target weight and bar weight, output a plate stack respecting the user's plate inventory
+- [ ] **PRES-09**: All progression rounding respects per-exercise smallest weight increment (microplates, plate jumps)
+- [ ] **PRES-10**: "You earned the weight bump" banner surfaces when double progression triggers an increment
+
+### BLOCK — Periodization
+
+- [ ] **BLOCK-01**: User can define training blocks with phase sequence (accumulation, intensification, realization, deload) and week length per phase
+- [ ] **BLOCK-02**: Active block visible on home screen: phase chip, "Week N of M", days remaining, phase color-coded
+- [ ] **BLOCK-03**: User can navigate weeks within a block (swipe between weeks / mesocycle navigation)
+- [ ] **BLOCK-04**: Scheduled deload weeks auto-reduce prescribed volume (~50%) and adjust intensity per the deload phase definition
+- [ ] **BLOCK-05**: Deload weeks are visually distinct (banner / calendar tint / volume targets cut on bars and heatmap)
+- [ ] **BLOCK-06**: App surfaces a "consider deload" alert when fatigue/performance signals spike (e1RM drop > X% over N sessions, RPE creep at same load, missed rep targets across multiple sessions) — suggestion only, never auto-applied
+- [ ] **BLOCK-07**: End-of-block produces a phase-end review (total volume, e1RM deltas, PRs hit, recommended next phase)
+- [ ] **BLOCK-08**: Scheduled block deload is canonical; fatigue-triggered alerts are advisory and never override the block schedule
+
+### VOL — Volume & Fatigue Model
+
+- [ ] **VOL-01**: Each exercise maps primary and secondary muscles via an `ExerciseMuscleStimulus` join with `weight: Double` (defaults: 1.0 primary, 0.5 secondary; hand-curated for the top ~50 lifts; user-tunable per exercise)
+- [ ] **VOL-02**: Weekly volume per muscle computed as the stimulus-weighted sum of working sets from logged sessions
+- [ ] **VOL-03**: Per-muscle MEV / MAV / MRV thresholds seeded from RP-published values, user-tunable in settings
+- [ ] **VOL-04**: Per-muscle volume bars display current weekly sets with MEV/MAV/MRV color zones AND verb labels ("add a set" / "hold" / "near MRV — deload soon" / "over MRV — deload")
+- [ ] **VOL-05**: Front and back body silhouette heatmap shows weekly volume per muscle as color intensity; muscle regions are tappable to drill into the per-muscle detail view
+- [ ] **VOL-06**: Per-muscle frequency tracking (count of sessions per week in which the muscle met a minimum stimulus threshold)
+- [ ] **VOL-07**: Weekly recap auto-surfaced at the week boundary: muscles hit, muscles under-trained, e1RM movement, sessions logged
+
+### PROG — Progress Views & Charts
+
+- [ ] **PROG-01**: Per-exercise time-series chart with intent split — strength series and hypertrophy series rendered as distinct lines on the same chart
+- [ ] **PROG-02**: e1RM trend per exercise using both Epley and Brzycki formulas, rep-range aware (Brzycki for ≤6 reps, Epley for 6–10 reps, suppress >10 reps from PR detection)
+- [ ] **PROG-03**: Top-set e1RM vs all-set average e1RM displayed as separate toggleable series
+- [ ] **PROG-04**: Weekly tonnage chart (total weight × reps), sliceable by week / block phase / muscle group
+- [ ] **PROG-05**: PRs view per exercise: weight PRs, rep PRs, volume PRs, e1RM PRs (intent-matched, rep-range aware)
+- [ ] **PROG-06**: Plateau detection signal per exercise with configurable threshold (e.g. e1RM flat ±X% over N sessions); visual stall flag on the exercise card with suggested action
+- [ ] **PROG-07**: Session comparison view: this week's session vs last week's same-routine session, side-by-side per-exercise diff
+- [ ] **PROG-08**: Live PR detection at set save (in-session banner: "weight PR" / "volume PR" / "e1RM PR")
+
+### EXP — Data Export & Backup
+
+- [ ] **EXP-01**: User can export all data as CSV (sessions → exercises → sets, one row per set)
+- [ ] **EXP-02**: User can export all data as JSON (full schema preserved, version-stamped)
+- [ ] **EXP-03**: User can create a full database backup file shareable via AirDrop / Files / iCloud Drive
+- [ ] **EXP-04**: User can restore from a backup file with explicit confirmation (data-loss warning)
+
+### SET — Settings & Configuration
+
+- [ ] **SET-01**: Global weight units (lb / kg) toggle
+- [ ] **SET-02**: Per-exercise weight unit override
+- [ ] **SET-03**: User defines plate inventory per equipment type (which plates available, microplates yes/no)
+- [ ] **SET-04**: User defines smallest weight increment per equipment type (consumed by all progression rounding and warm-up ramping)
+- [ ] **SET-05**: User-tunable MEV / MAV / MRV per muscle
+- [ ] **SET-06**: User-tunable plateau detection thresholds per exercise (or global default)
+- [ ] **SET-07**: User-tunable RPE-autoreg calibration window (rolling N weeks / minimum N data points)
+
+### FOUND — Foundational Quality Bars (apply across all features)
+
+- [ ] **FOUND-01**: Schema wrapped in `SchemaV1: VersionedSchema` with `SchemaMigrationPlan` scaffold from day 1 (zero migrations yet, but framework in place)
+- [ ] **FOUND-02**: All model properties optional or default-valued, all relationships optional (cheap insurance for future iCloud sync without retroactive migration)
+- [ ] **FOUND-03**: All enums persisted as `*Raw: String` columns with computed enum accessors
+- [ ] **FOUND-04**: SwiftData `#Index` declarations on every hot query field (`Exercise.canonicalName`, `equipmentRaw`, `mechanicRaw`, `isCustom`; `Session.startedAt`, `sourceRoutineID`; `SessionExercise.intentRaw`)
+- [ ] **FOUND-05**: Exercise library seed runs once inside a `@ModelActor`, idempotent, version-stamped via `UserDefaults`, completes in <2s on cold launch
+- [ ] **FOUND-06**: Views bind directly to `@Model` types via `@Query` / `@Bindable`; no parallel view-model layer mirrors the schema (MV-VM-lite stance)
+- [ ] **FOUND-07**: Progression and fatigue services are pure-function value types behind protocols, testable without a `ModelContainer`
+
+---
+
+## v2 Requirements
+
+Deferred to future release. Tracked but not in current roadmap.
+
+### SYNC — iCloud Sync (future)
+
+- **SYNC-01**: User can opt in to iCloud sync via `ModelConfiguration(cloudKitDatabase: .private)` — models are already shaped for this (see FOUND-02)
+- **SYNC-02**: Conflict resolution policy (last-write-wins per record)
+
+### WATCH — Apple Watch Companion (future)
+
+- **WATCH-01**: User can log sets from the wrist mid-workout
+- **WATCH-02**: Rest timer haptics on the Watch
+- **WATCH-03**: Optional heart rate capture during sets
+
+---
+
+## Out of Scope
+
+Explicitly excluded — documented to prevent scope creep.
+
+| Feature | Reason |
+|---------|--------|
+| Cardio tracking | App scope is weight training only; no general fitness creep |
+| Nutrition / macro tracking | Out of scope — separate domain |
+| Body weight / measurements / photo progress | Out of scope for v1; HealthKit is excluded |
+| Social features (friends, streaks, XP, badges, sharing, leaderboards) | Personal single-user app; fights the serious-training stance |
+| AI black-box recommendations (Fitbod-style) | Explicitly rejected — recommendations must be transparent (PRES-02 "Why this weight?") |
+| Beginner onboarding / tutorials | User is the developer; no audience to onboard |
+| Workout reminders / scheduling notifications | Out of scope — user drives their own schedule |
+| HealthKit read/write | Excluded for v1; would couple to Apple Health domain semantics |
+| Apple Watch companion | Phone-only v1 (see WATCH in v2) |
+| VBT / accelerometer / external sensors | No hardware integration v1 |
+| Video form analysis / form-check upload / AI form review | Out of scope; text per-set notes are sufficient |
+| iCloud sync (shipping) | Excluded for v1 (see SYNC in v2); models are shaped for it (FOUND-02) but sync is not wired |
+| Authentication / multi-user | Single-user app |
+| Subscriptions / monetization / paywalls | Personal app, no commercial path planned |
+| App Store distribution / TestFlight | Personal install via Xcode only for v1 |
+| Programs marketplace / shareable routines / community library | Out of scope — single-user app |
+| Audio cues / spoken set guidance | Out of scope |
+| Third-party SPM dependencies | Locked out — entire stack is Apple-native (SwiftData, SwiftUI, Swift Charts, Swift Testing) |
+
+---
+
+## Traceability
+
+Mapped to phases by `gsd-roadmapper` during roadmap creation.
+
+| Requirement | Phase | Status |
+|-------------|-------|--------|
+| LIB-01 | TBD | Pending |
+| LIB-02 | TBD | Pending |
+| LIB-03 | TBD | Pending |
+| LIB-04 | TBD | Pending |
+| LIB-05 | TBD | Pending |
+| LIB-06 | TBD | Pending |
+| ROUTINE-01 | TBD | Pending |
+| ROUTINE-02 | TBD | Pending |
+| ROUTINE-03 | TBD | Pending |
+| ROUTINE-04 | TBD | Pending |
+| ROUTINE-05 | TBD | Pending |
+| ROUTINE-06 | TBD | Pending |
+| ROUTINE-07 | TBD | Pending |
+| ROUTINE-08 | TBD | Pending |
+| ROUTINE-09 | TBD | Pending |
+| SESS-01 | TBD | Pending |
+| SESS-02 | TBD | Pending |
+| SESS-03 | TBD | Pending |
+| SESS-04 | TBD | Pending |
+| SESS-05 | TBD | Pending |
+| SESS-06 | TBD | Pending |
+| SESS-07 | TBD | Pending |
+| SESS-08 | TBD | Pending |
+| SESS-09 | TBD | Pending |
+| SESS-10 | TBD | Pending |
+| SESS-11 | TBD | Pending |
+| WARM-01 | TBD | Pending |
+| WARM-02 | TBD | Pending |
+| WARM-03 | TBD | Pending |
+| PRES-01 | TBD | Pending |
+| PRES-02 | TBD | Pending |
+| PRES-03 | TBD | Pending |
+| PRES-04 | TBD | Pending |
+| PRES-05 | TBD | Pending |
+| PRES-06 | TBD | Pending |
+| PRES-07 | TBD | Pending |
+| PRES-08 | TBD | Pending |
+| PRES-09 | TBD | Pending |
+| PRES-10 | TBD | Pending |
+| BLOCK-01 | TBD | Pending |
+| BLOCK-02 | TBD | Pending |
+| BLOCK-03 | TBD | Pending |
+| BLOCK-04 | TBD | Pending |
+| BLOCK-05 | TBD | Pending |
+| BLOCK-06 | TBD | Pending |
+| BLOCK-07 | TBD | Pending |
+| BLOCK-08 | TBD | Pending |
+| VOL-01 | TBD | Pending |
+| VOL-02 | TBD | Pending |
+| VOL-03 | TBD | Pending |
+| VOL-04 | TBD | Pending |
+| VOL-05 | TBD | Pending |
+| VOL-06 | TBD | Pending |
+| VOL-07 | TBD | Pending |
+| PROG-01 | TBD | Pending |
+| PROG-02 | TBD | Pending |
+| PROG-03 | TBD | Pending |
+| PROG-04 | TBD | Pending |
+| PROG-05 | TBD | Pending |
+| PROG-06 | TBD | Pending |
+| PROG-07 | TBD | Pending |
+| PROG-08 | TBD | Pending |
+| EXP-01 | TBD | Pending |
+| EXP-02 | TBD | Pending |
+| EXP-03 | TBD | Pending |
+| EXP-04 | TBD | Pending |
+| SET-01 | TBD | Pending |
+| SET-02 | TBD | Pending |
+| SET-03 | TBD | Pending |
+| SET-04 | TBD | Pending |
+| SET-05 | TBD | Pending |
+| SET-06 | TBD | Pending |
+| SET-07 | TBD | Pending |
+| FOUND-01 | TBD | Pending |
+| FOUND-02 | TBD | Pending |
+| FOUND-03 | TBD | Pending |
+| FOUND-04 | TBD | Pending |
+| FOUND-05 | TBD | Pending |
+| FOUND-06 | TBD | Pending |
+| FOUND-07 | TBD | Pending |
+
+**Coverage:**
+- v1 requirements: 78 total
+- Mapped to phases: 0 (roadmapper to populate)
+- Unmapped: 78 ⚠️ (expected — roadmap not yet created)
+
+---
+*Requirements defined: 2026-05-10*
+*Last updated: 2026-05-10 after initial definition*
