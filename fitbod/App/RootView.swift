@@ -37,12 +37,13 @@
 //  interim tab hosts (`LibraryTabHost`, `SettingsTabHost`) below each
 //  declare their own.
 //
-//  ## Interim hosts
+//  ## Tab hosts
 //
-//  `LibraryTabHost` and `SettingsTabHost` are 1-line edit-points:
-//  plan 03-02 swaps `LibraryTabHost` for `ExerciseLibraryView`; plan
-//  04-01 swaps `SettingsTabHost` for `SettingsView`. The interim text
-//  is locked to "{tab} — coming in {plan}" per the execution rules.
+//  `LibraryTabHost` (plan 03-02 wired) and `SettingsTabHost` (plan
+//  04-01 wired) are one-line wrappers around the real tab body views.
+//  Kept as private structs rather than substituting the bodies
+//  directly into `tabBar` so future per-tab wrappers (analytics, tab-
+//  re-tap pop-to-root) can attach in one place per tab.
 //
 
 import SwiftUI
@@ -124,7 +125,7 @@ public struct RootView: View {
                     Label("Progress", systemImage: "chart.xyaxis.line")
                 }
 
-            // Plan 04-01 replaces `SettingsTabHost` with `SettingsView`.
+            // Plan 04-01 wired: `SettingsTabHost` wraps `SettingsView`.
             SettingsTabHost()
                 .tabItem {
                     Label("Settings", systemImage: "gearshape")
@@ -169,17 +170,14 @@ private struct LibraryTabHost: View {
     var body: some View { ExerciseLibraryView() }
 }
 
-/// Settings tab body — interim placeholder until plan 04-01.
+/// Settings tab body — wraps the real `SettingsView` (plan 04-01).
+/// `SettingsView` owns its own `NavigationStack`, so this host is now
+/// a thin transparent wrapper. Kept symmetrical with `LibraryTabHost`
+/// (one-line `var body: some View { SettingsView() }`) for the same
+/// reasons: future per-tab analytics wrappers / tab-re-tap pop-to-root
+/// hooks attach to the wrapper without restructuring `RootView`.
 private struct SettingsTabHost: View {
-    var body: some View {
-        NavigationStack {
-            Text("Settings — coming in 04-01")
-                .font(.callout)
-                .foregroundStyle(.secondary)
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .navigationTitle("Settings")
-        }
-    }
+    var body: some View { SettingsView() }
 }
 
 // MARK: - Previews
