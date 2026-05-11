@@ -20,28 +20,28 @@ User explicitly wants a maximalist v1 (the app's stance is "comprehensive over s
 
 ### ROUTINE — Routine Builder & Templates
 
-- [ ] **ROUTINE-01**: User can build a routine in a single screen — inline exercise search-and-add, drag-handle reorder, no modal exercise picker
-- [ ] **ROUTINE-02**: Each exercise in a routine carries first-class prescription: training intent (strength / hypertrophy / power / endurance / technique), target rep range, target RPE range
-- [ ] **ROUTINE-03**: User can set per-set prescription overrides within an exercise (e.g. top set + back-off sets with different rep/RPE targets)
+- [x] **ROUTINE-01**: User can build a routine in a single screen — inline exercise search-and-add, drag-handle reorder, no modal exercise picker
+- [x] **ROUTINE-02**: Each exercise in a routine carries first-class prescription: training intent (strength / hypertrophy / power / endurance / technique), target rep range, target RPE range
+- [x] **ROUTINE-03**: User can set per-set prescription overrides within an exercise (e.g. top set + back-off sets with different rep/RPE targets)
 - [x] **ROUTINE-04**: User can group exercises into supersets and giant sets (2–N exercises with shared accent rail and smart-scroll between paired sets)
-- [ ] **ROUTINE-05**: User can choose a progression model per exercise from four options: RPE/RIR autoreg, double progression, block-periodized, hybrid
+- [x] **ROUTINE-05**: User can choose a progression model per exercise from four options: RPE/RIR autoreg, double progression, block-periodized, hybrid
 - [x] **ROUTINE-06**: User can duplicate routines and organize them into folders
 - [x] **ROUTINE-07**: Routine templates are stored separately from session instances — editing a routine never rewrites historical session data (snapshot-at-session-start)
-- [ ] **ROUTINE-08**: The same routine recurring on different days with different intent (e.g. strength Mon, hypertrophy Thu) maintains separate per-intent histories for each exercise
-- [ ] **ROUTINE-09**: Each routine exercise has a default rest timer (heuristic by mechanic: compound ≈ 180s, isolation ≈ 90s) that the user can override per exercise
+- [x] **ROUTINE-08**: The same routine recurring on different days with different intent (e.g. strength Mon, hypertrophy Thu) maintains separate per-intent histories for each exercise
+- [x] **ROUTINE-09**: Each routine exercise has a default rest timer (heuristic by mechanic: compound ≈ 180s, isolation ≈ 90s) that the user can override per exercise
 
 ### SESS — Session Logging
 
 - [x] **SESS-01**: Starting a session calls `SessionFactory.start(...)` which snapshots all routine prescription fields onto the session — subsequent edits to the routine template never alter this session
 - [x] **SESS-02**: User can log per set: weight, reps, RPE (decimal RPE supported via long-press), set type (warmup / working / drop / failure / rest-pause), and per-set form notes
 - [x] **SESS-03**: Set inputs auto-populate from the previous matching-intent session of the same exercise; an inline "previous" column shows weight × reps × RPE from that last instance
-- [ ] **SESS-04**: Rest timer auto-starts on set completion, exposes ±15s buttons, fires a lock-screen notification when it reaches 0, displays as a Live Activity / Dynamic Island while running, and auto-stops on next set entry
-- [ ] **SESS-05**: User can swap an exercise mid-session without mutating the routine template (substitution applies to this session only)
-- [ ] **SESS-06**: User can add unplanned exercises mid-session (added to the session, not the routine)
-- [ ] **SESS-07**: User can enter optional tempo per set as 4-field eccentric / bottom-pause / concentric / top-pause
-- [ ] **SESS-08**: User can record partial reps (e.g. "8 + 2 partials") and cluster / rest-pause sub-reps (e.g. `[8, 3, 2]`) per set
-- [ ] **SESS-09**: Bodyweight and weighted-bodyweight exercises log reps + added/assisted weight (signed: negative = assist)
-- [ ] **SESS-10**: User can view per-exercise history with intent split as separate streams (strength series vs hypertrophy series, toggleable / both visible)
+- [x] **SESS-04**: Rest timer auto-starts on set completion, exposes ±15s buttons, fires a lock-screen notification when it reaches 0, displays as a Live Activity / Dynamic Island while running, and auto-stops on next set entry
+- [x] **SESS-05**: User can swap an exercise mid-session without mutating the routine template (substitution applies to this session only)
+- [x] **SESS-06**: User can add unplanned exercises mid-session (added to the session, not the routine)
+- [x] **SESS-07**: User can enter optional tempo per set as 4-field eccentric / bottom-pause / concentric / top-pause
+- [x] **SESS-08**: User can record partial reps (e.g. "8 + 2 partials") and cluster / rest-pause sub-reps (e.g. `[8, 3, 2]`) per set
+- [x] **SESS-09**: Bodyweight and weighted-bodyweight exercises log reps + added/assisted weight (signed: negative = assist)
+- [x] **SESS-10**: User can view per-exercise history with intent split as separate streams (strength series vs hypertrophy series, toggleable / both visible)
 - [x] **SESS-11**: Workout-level notes and pinned per-exercise notes are surfaced inline in the session UI
 
 ### WARM — Warm-up Generation
@@ -180,25 +180,25 @@ Mapped to phases by `gsd-roadmapper` during roadmap creation.
 | LIB-04 | Phase 1 | Complete |
 | LIB-05 | Phase 1 | Complete |
 | LIB-06 | Phase 1 | Complete |
-| ROUTINE-01 | Phase 2 | Pending |
-| ROUTINE-02 | Phase 2 | Pending |
-| ROUTINE-03 | Phase 2 | Pending |
+| ROUTINE-01 | Phase 2 | Complete |
+| ROUTINE-02 | Phase 2 | Complete |
+| ROUTINE-03 | Phase 2 | Complete |
 | ROUTINE-04 | Phase 2 | Complete |
-| ROUTINE-05 | Phase 2 | Pending |
+| ROUTINE-05 | Phase 2 | Complete |
 | ROUTINE-06 | Phase 2 | Complete |
 | ROUTINE-07 | Phase 2 | Complete |
-| ROUTINE-08 | Phase 2 | Pending |
-| ROUTINE-09 | Phase 2 | Pending |
+| ROUTINE-08 | Phase 2 | Complete |
+| ROUTINE-09 | Phase 2 | Complete |
 | SESS-01 | Phase 2 | Complete |
 | SESS-02 | Phase 2 | Complete |
 | SESS-03 | Phase 2 | Complete |
-| SESS-04 | Phase 2 | Pending |
-| SESS-05 | Phase 2 | Pending |
-| SESS-06 | Phase 2 | Pending |
-| SESS-07 | Phase 2 | Pending |
-| SESS-08 | Phase 2 | Pending |
-| SESS-09 | Phase 2 | Pending |
-| SESS-10 | Phase 2 | Pending |
+| SESS-04 | Phase 2 | Complete |
+| SESS-05 | Phase 2 | Complete |
+| SESS-06 | Phase 2 | Complete |
+| SESS-07 | Phase 2 | Complete |
+| SESS-08 | Phase 2 | Complete |
+| SESS-09 | Phase 2 | Complete |
+| SESS-10 | Phase 2 | Complete |
 | SESS-11 | Phase 2 | Complete |
 | WARM-01 | Phase 3 | Pending |
 | WARM-02 | Phase 3 | Pending |

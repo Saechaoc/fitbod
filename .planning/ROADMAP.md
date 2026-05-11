@@ -17,7 +17,7 @@ Granular, prescriptive workout sessions — every set in a session is intentiona
 ## Phases
 
 - [x] **Phase 1: Foundation & Exercise Library** — Versioned SwiftData schema, full entity set, library seed pipeline, browse/filter/custom-creation UI **(complete: 12/12 plans, 14/14 requirements — 2026-05-11)**
-- [ ] **Phase 2: Core Loop (Routines + Sessions)** — Single-screen routine builder, snapshot session logger, accurate rest timer, intent-split history lists
+- [x] **Phase 2: Core Loop (Routines + Sessions)** — Single-screen routine builder, snapshot session logger, accurate rest timer, intent-split history lists **(complete: 13/13 plans, 20/20 requirements — 2026-05-11)**
 - [ ] **Phase 3: Smart Prescription & Warm-ups** — Two progression strategies (RPE autoreg, double progression), warm-up generator, plate calculator, "why this weight?" UI
 - [ ] **Phase 4: Periodization & Blocks** — Block builder, scheduled deloads, block timeline on home, remaining two progression strategies (block-periodized, hybrid)
 - [ ] **Phase 5: Fatigue Model & Plateau Detection** — Stimulus-weighted weekly volume, MEV/MAV/MRV bars with verbs, muscle heatmap, plateau detector, fatigue-triggered deload advisory
@@ -127,7 +127,7 @@ Granular, prescriptive workout sessions — every set in a session is intentiona
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation & Exercise Library | 12/12 | Complete | 2026-05-11 |
-| 2. Core Loop (Routines + Sessions) | 12/13 | In Progress | - |
+| 2. Core Loop (Routines + Sessions) | 13/13 | Complete | 2026-05-11 |
 | 3. Smart Prescription & Warm-ups | 0/? | Not started | - |
 | 4. Periodization & Blocks | 0/? | Not started | - |
 | 5. Fatigue Model & Plateau Detection | 0/? | Not started | - |
