@@ -6,7 +6,7 @@ slug: exercise-detail-and-copy-as-custom
 complexity: M
 requirements: ["LIB-01", "LIB-06"]
 covers_pitfalls: []
-depends_on: ["03-02"]
+depends_on: ["03-02", "03-04"]
 files_modified:
   - fitbod/ExerciseLibrary/ExerciseDetailView.swift  # NEW
   - fitbod/ExerciseLibrary/ExerciseLibraryView.swift  # MODIFY — wire navigationDestination
