@@ -153,12 +153,13 @@ public struct RootView: View {
         TabView(selection: tabSelection) {
             // UI-SPEC § Tab labels — verbatim labels + SF Symbols + order.
             //
-            // Plan 03-01 wired: Today tab still shows the Phase 2
-            // placeholder body, but now mounts `ResumeWorkoutBanner` at
-            // the top via `.safeAreaInset(.top)` so a
-            // `Session.completedAt == nil` row surfaces as a tap-to-resume
-            // card. The banner self-hides when no active session exists.
-            TodayTabHost()
+            // Plan 04-01 wired: Today tab body is now `TodayView` — a
+            // real surface that mounts `ResumeWorkoutBanner` at the top
+            // and renders the UI-SPEC empty-state ("No workout in
+            // progress" / "Start a workout from your Routines tab.")
+            // below. Tapping the banner's "Resume" pushes
+            // `SessionLoggerView` via the Today tab's NavigationPath.
+            TodayView()
                 .tabItem {
                     Label("Today", systemImage: "figure.strengthtraining.traditional")
                 }
@@ -225,37 +226,50 @@ public struct RootView: View {
 
 // MARK: - Interim tab hosts
 
-/// Today tab body — interim host that mounts `ResumeWorkoutBanner` above
-/// the Phase 2 placeholder body via `.safeAreaInset(edge: .top)`. When a
-/// `Session.completedAt == nil` row exists, the banner renders the UI-SPEC
-/// verbatim "Resume Workout: {name}" card with Resume / Discard actions.
-/// Otherwise the banner emits `EmptyView()` and only the placeholder
-/// text shows.
+/// Today tab body — plan 04-01 wired. Hosts `ResumeWorkoutBanner` at the
+/// top (renders only when an active session exists) and the UI-SPEC
+/// empty-state below ("No workout in progress" / "Start a workout from
+/// your Routines tab."). Tapping the banner's "Resume" pushes
+/// `SessionLoggerView` via the Today tab's NavigationPath.
 ///
-/// The placeholder view owns its own `NavigationStack`, so the host does
-/// NOT wrap it in another stack — `.safeAreaInset` adds the banner to
-/// the top safe-area of the placeholder's existing stack, avoiding the
-/// nested-NavigationStack anti-pattern (RESEARCH § State of the Art).
-///
-/// Plan 04-01 replaces this host with the real Today-tab content
-/// (post-session summary card, today's planned routine surfacing, etc.).
-private struct TodayTabHost: View {
+/// Owns its own `NavigationStack` — each tab manages its own navigation
+/// surface per the documented Apple pattern (RESEARCH § State of the Art).
+private struct TodayView: View {
     @Environment(\.modelContext) private var ctx
+    @State private var navigationPath = NavigationPath()
 
     var body: some View {
-        PlaceholderTabView(phaseNumber: 2)
-            .safeAreaInset(edge: .top, spacing: 0) {
+        NavigationStack(path: $navigationPath) {
+            VStack(spacing: 16) {
                 ResumeWorkoutBanner(
-                    onResume: { _ in
-                        // TODO plan 04-01: push SessionLoggerView via a
-                        // Today-tab NavigationPath.
+                    onResume: { session in
+                        // Plan 04-01 wired — push SessionLoggerView via
+                        // the Today-tab NavigationPath.
+                        navigationPath.append(SessionRoute.logger(session))
                     },
                     onDiscard: { session in
                         ctx.delete(session)
                         try? ctx.save()
                     }
                 )
+                Spacer()
+                Text("No workout in progress")                                 // UI-SPEC verbatim
+                    .font(.title2)
+                    .fontWeight(.semibold)
+                Text("Start a workout from your Routines tab.")                // UI-SPEC verbatim
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+                Spacer()
             }
+            .padding(.horizontal, 32)
+            .navigationTitle("Today")
+            .navigationDestination(for: SessionRoute.self) { route in
+                switch route {
+                case .logger(let session):
+                    SessionLoggerView(session: session)
+                }
+            }
+        }
     }
 }
 

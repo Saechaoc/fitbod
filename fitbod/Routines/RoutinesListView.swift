@@ -81,13 +81,20 @@ public struct RoutinesListView: View {
     @State private var editingRoutine: Routine? = nil
     @State private var conflictRoutine: Routine? = nil
     @State private var deleteConfirmFolder: RoutineFolder? = nil
+    @State private var navigationPath = NavigationPath()
 
     public init() {}
 
     public var body: some View {
-        NavigationStack {
+        NavigationStack(path: $navigationPath) {
             content
                 .navigationTitle("Routines")
+                .navigationDestination(for: SessionRoute.self) { route in
+                    switch route {
+                    case .logger(let session):
+                        SessionLoggerView(session: session)
+                    }
+                }
                 .toolbar {
                     ToolbarItem(placement: .topBarTrailing) {
                         Menu {
@@ -196,9 +203,10 @@ public struct RoutinesListView: View {
     private var populatedList: some View {
         List {
             ResumeWorkoutBanner(
-                onResume: { _ in
-                    // TODO plan 04-01: navigate to SessionLoggerView via
-                    // a Routines-tab NavigationPath.
+                onResume: { session in
+                    // Plan 04-01 wired — push SessionLoggerView via the
+                    // Routines-tab NavigationPath.
+                    navigationPath.append(SessionRoute.logger(session))
                 },
                 onDiscard: { session in
                     ctx.delete(session)
@@ -309,10 +317,11 @@ public struct RoutinesListView: View {
             return
         }
         do {
-            _ = try SessionFactory.start(routine: routine, on: .now, context: ctx)
-            // TODO plan 04-01: push SessionLoggerView via Routines-tab
-            // NavigationPath. Plan 03-01 leaves the start-success path
-            // visible only via the resume banner reactively re-rendering.
+            let session = try SessionFactory.start(routine: routine, on: .now, context: ctx)
+            // Plan 04-01 wired — push SessionLoggerView via the
+            // Routines-tab NavigationPath. The session is the typed
+            // SessionRoute payload.
+            navigationPath.append(SessionRoute.logger(session))
         } catch SessionFactoryError.activeSessionAlreadyExists {
             conflictRoutine = routine
         } catch SessionFactoryError.routineHasNoExercises {
@@ -380,6 +389,21 @@ public struct RoutinesListView: View {
         ctx.delete(folder)
         try? ctx.save()
     }
+}
+
+// MARK: - Session navigation route
+
+/// Typed navigation route for the Routines tab's `NavigationStack`. Plan
+/// 04-01 wires `.logger(session)` to `SessionLoggerView`; future plans can
+/// extend this enum (e.g. `.summary(session)` for a post-finish summary in
+/// Phase 6 polish) without churn.
+///
+/// `Hashable` is via `Session.id` — SwiftData `@Model` types are
+/// `Hashable` by default because they synthesize `==` and `hashValue` from
+/// the unique `id` attribute. `NavigationPath` requires the payload type
+/// to be `Hashable`, which `Session` already satisfies.
+public enum SessionRoute: Hashable {
+    case logger(Session)
 }
 
 #Preview("empty state") {
