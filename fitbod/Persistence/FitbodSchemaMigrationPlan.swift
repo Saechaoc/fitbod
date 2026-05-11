@@ -2,12 +2,23 @@
 //  FitbodSchemaMigrationPlan.swift
 //  fitbod
 //
-//  Empty Day-1 migration plan scaffold (FOUND-01 / PITFALLS #2).
+//  The project's first real schema migration (FOUND-01 / PITFALLS #2 /
+//  Phase 2 plan 00-02). Wires V1 → V2 as a `MigrationStage.lightweight`
+//  step — SwiftData handles every delta automatically because all
+//  changes since V1 are additive (new entity types + new default-valued
+//  fields on existing entities, landed in plan 00-01).
 //
-//  `stages` is intentionally empty for v1 — no migrations have happened yet.
-//  When `SchemaV2` is introduced (e.g., a rename / split in a future phase),
-//  a `MigrationStage` is appended here and `schemas` grows to include the
-//  new version. This is the cheapest insurance policy in the codebase.
+//  Per RESEARCH § Pattern 4 + Apple's documentation, additive entity
+//  adds and additive default-valued field adds are explicitly eligible
+//  for `MigrationStage.lightweight(fromVersion:toVersion:)`. No custom
+//  willMigrate / didMigrate closures are needed.
+//  [CITED: developer.apple.com/documentation/swiftdata/migrationstage/lightweight]
+//
+//  Keeping `SchemaV1.self` in the `schemas` array is non-negotiable —
+//  even after V2 ships, SwiftData needs the historical schema registered
+//  so it can match an existing on-disk V1 store against the registered
+//  version and pick the V1 → V2 migration path. Removing V1 here would
+//  silently break upgrades from any device that ran a pre-V2 build.
 //
 //  Attached to `ModelContainer` in `fitbodApp.swift` via the
 //  `migrationPlan: FitbodSchemaMigrationPlan.self` initializer parameter.
@@ -16,7 +27,21 @@
 import SwiftData
 
 public enum FitbodSchemaMigrationPlan: SchemaMigrationPlan {
-    public static var schemas: [any VersionedSchema.Type] { [SchemaV1.self] }
+    public static var schemas: [any VersionedSchema.Type] {
+        [SchemaV1.self, SchemaV2.self]
+    }
 
-    public static var stages: [MigrationStage] { [] }
+    public static var stages: [MigrationStage] {
+        [migrateV1toV2]
+    }
+
+    /// Lightweight: SwiftData handles all schema deltas automatically.
+    /// Plan 00-01's deltas are all additive (new entity types + new
+    /// default-valued fields) — explicitly eligible per Apple's
+    /// documentation. No willMigrate / didMigrate closures needed.
+    /// [CITED: developer.apple.com/documentation/swiftdata/migrationstage/lightweight]
+    public static let migrateV1toV2 = MigrationStage.lightweight(
+        fromVersion: SchemaV1.self,
+        toVersion: SchemaV2.self
+    )
 }

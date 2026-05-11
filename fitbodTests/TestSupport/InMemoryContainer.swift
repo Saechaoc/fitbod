@@ -29,6 +29,15 @@ enum InMemoryContainer {
     /// Fresh empty in-memory container for hermetic tests.
     /// Throws if `ModelContainer` initialisation fails — Swift Testing
     /// surfaces the error in the test output verbatim.
+    ///
+    /// Intentionally still opens against `SchemaV1` — `SchemaV1Tests`
+    /// asserts a 12-entity contract against the container's runtime
+    /// schema, and flipping that contract belongs to a dedicated
+    /// SchemaV2-targeted migration test suite (see
+    /// `SchemaV2MigrationTests`) rather than mutating the Phase 1
+    /// baseline. App-target callers route through the V2-bound
+    /// `ModelContainer` injected via `.modelContainer(_)` in
+    /// `fitbodApp.swift`.
     static func makeEmpty() throws -> ModelContainer {
         let schema = Schema(SchemaV1.models)
         let config = ModelConfiguration(

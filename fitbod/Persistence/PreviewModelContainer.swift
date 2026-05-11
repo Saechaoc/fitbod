@@ -22,22 +22,23 @@
 //
 //  Pattern source: RESEARCH § Pattern 8 — Apple's documented in-memory
 //  preview container pattern. The `try!` is intentional — failure to
-//  build an in-memory container with the locked SchemaV1 is a programmer
-//  error (the schema is verified at runtime via SchemaV1Tests).
+//  build an in-memory container with the locked SchemaV2 is a programmer
+//  error (the schema is verified at runtime via SchemaV1Tests +
+//  SchemaV2MigrationTests).
 //
 
 import Foundation
 import SwiftData
 
 public enum PreviewModelContainer {
-    /// Builds a fresh in-memory `ModelContainer` over `SchemaV1`.
+    /// Builds a fresh in-memory `ModelContainer` over `SchemaV2`.
     ///
     /// - Parameter seedFixture: when `true` (default), inserts a
     ///   deterministic 4-muscle / 2-exercise / 1-settings fixture.
     ///   Set to `false` for previews that want the empty store
     ///   (e.g. "first-launch importing…" placeholder).
     public static func make(seedFixture: Bool = true) -> ModelContainer {
-        let schema = Schema(SchemaV1.models)
+        let schema = Schema(SchemaV2.models)
         let config = ModelConfiguration(
             schema: schema,
             isStoredInMemoryOnly: true,
