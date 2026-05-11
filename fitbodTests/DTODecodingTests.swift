@@ -5,8 +5,8 @@
 //  Plan 02-01 anchor suite. Five Swift Testing functions prove:
 //   1. The bundled `exercises.json` decodes cleanly into `[ExerciseDTO]`.
 //   2. After the strength-category filter, at least 600 rows remain
-//      (typical: ~675 per the vendored snapshot in SOURCE.md).
-//   3. `SEED_VERSION.txt` is readable from the app bundle and equals `1`.
+//      (typical: ~702 per the vendored snapshot in SOURCE.md).
+//   3. `SEED_VERSION.txt` is readable from the app bundle and equals `2`.
 //   4. `EquipmentMapper.map(_:)` covers all 12 raw values + nil + empty.
 //   5. `MuscleRegionMap.region(for:)` covers all 17 dataset slugs and
 //      returns the expected canonical bucket for 3 sentinel slugs.
@@ -58,13 +58,13 @@ struct DTODecodingTests {
         }
         #expect(
             strengthOnly.count >= 600,
-            "Strength-only filter should retain at least 600 exercises (typical: ~675)"
+            "Strength-only filter should retain at least 600 exercises (typical: ~702)"
         )
     }
 
     // MARK: - SEED_VERSION.txt
 
-    @Test("SEED_VERSION.txt is bundled and equals 1")
+    @Test("SEED_VERSION.txt is bundled and equals 2")
     func seedVersionBundled() throws {
         let url = try #require(
             Bundle.main.url(forResource: "SEED_VERSION", withExtension: "txt"),
@@ -72,7 +72,7 @@ struct DTODecodingTests {
         )
         let raw = try String(contentsOf: url, encoding: .utf8)
         let trimmed = raw.trimmingCharacters(in: .whitespacesAndNewlines)
-        #expect(Int(trimmed) == 1, "Phase 1 vendored at SEED_VERSION=1, got: \(trimmed)")
+        #expect(Int(trimmed) == 2, "Panatta seed update vendored at SEED_VERSION=2, got: \(trimmed)")
     }
 
     // MARK: - Equipment mapping (LIB-06)

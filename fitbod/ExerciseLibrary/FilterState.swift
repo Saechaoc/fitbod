@@ -51,7 +51,7 @@
 //  @Query result inside `FilteredExerciseList`. This avoids the guarded
 //  multi-facet `#Predicate` shape that pushes Swift's expression-level
 //  type-checker past its budget and is also a brittle SQL translation shape.
-//  Worst-case input size is ~675 rows — negligible cost for this library.
+//  Worst-case input size is ~702 rows — negligible cost for this library.
 //
 
 import Foundation

@@ -13753,6 +13753,615 @@
     "id": "Palms-Up_Dumbbell_Wrist_Curl_Over_A_Bench"
   },
   {
+    "name": "Panatta 3D Abductor",
+    "force": "push",
+    "level": "intermediate",
+    "mechanic": "isolation",
+    "equipment": "machine",
+    "primaryMuscles": [
+      "abductors"
+    ],
+    "secondaryMuscles": [
+      "glutes"
+    ],
+    "instructions": [
+      "Adjust the machine so your working hip lines up with the movement arm and your torso is braced against the pad.",
+      "Set the starting angle to a comfortable stretch and hold the handles for stability.",
+      "Drive the working leg out and slightly back through the guided path without rotating your torso.",
+      "Pause briefly at the end range, then return under control before repeating on the other side."
+    ],
+    "category": "strength",
+    "images": [],
+    "id": "Panatta_3D_Abductor"
+  },
+  {
+    "name": "Panatta Back Deltoids",
+    "force": "pull",
+    "level": "intermediate",
+    "mechanic": "isolation",
+    "equipment": "machine",
+    "primaryMuscles": [
+      "shoulders"
+    ],
+    "secondaryMuscles": [
+      "middle back",
+      "traps"
+    ],
+    "instructions": [
+      "Set the seat and chest pad so the handles start in front of your shoulders.",
+      "Keep your chest against the pad and hold the handles with a neutral grip.",
+      "Pull your arms out and back until your elbows are roughly in line with your torso.",
+      "Control the handles back to the start without letting the weight stack drop."
+    ],
+    "category": "strength",
+    "images": [],
+    "id": "Panatta_Back_Deltoids"
+  },
+  {
+    "name": "Panatta Gluteus Machine",
+    "force": "push",
+    "level": "intermediate",
+    "mechanic": "isolation",
+    "equipment": "machine",
+    "primaryMuscles": [
+      "glutes"
+    ],
+    "secondaryMuscles": [
+      "hamstrings"
+    ],
+    "instructions": [
+      "Adjust the footrest and starting angle so your working hip can move through a full range without your lower back arching.",
+      "Brace your torso against the pad and place the working foot firmly on the platform.",
+      "Drive the platform back by extending your hip and squeezing your glute.",
+      "Return slowly to the starting position and complete all reps before switching sides."
+    ],
+    "category": "strength",
+    "images": [],
+    "id": "Panatta_Gluteus_Machine"
+  },
+  {
+    "name": "Panatta Hip Thrust",
+    "force": "push",
+    "level": "intermediate",
+    "mechanic": "compound",
+    "equipment": "machine",
+    "primaryMuscles": [
+      "glutes"
+    ],
+    "secondaryMuscles": [
+      "hamstrings"
+    ],
+    "instructions": [
+      "Set the pad across your hips and plant your feet so your shins are near vertical at the top of the lift.",
+      "Brace your torso against the bench and unlock the carriage or lever.",
+      "Drive through your heels to extend your hips until your torso and thighs form a straight line.",
+      "Lower under control until you feel a stretch in the glutes, then repeat."
+    ],
+    "category": "strength",
+    "images": [],
+    "id": "Panatta_Hip_Thrust"
+  },
+  {
+    "name": "Panatta Lateral Deltoids",
+    "force": "push",
+    "level": "intermediate",
+    "mechanic": "isolation",
+    "equipment": "machine",
+    "primaryMuscles": [
+      "shoulders"
+    ],
+    "secondaryMuscles": [],
+    "instructions": [
+      "Adjust the seat so your shoulders align with the machine's pivot point.",
+      "Place your upper arms against the pads and keep your torso upright.",
+      "Raise your elbows out to the sides until your upper arms are near shoulder height.",
+      "Lower with control and keep tension on the deltoids between repetitions."
+    ],
+    "category": "strength",
+    "images": [],
+    "id": "Panatta_Lateral_Deltoids"
+  },
+  {
+    "name": "Panatta Leg Curling",
+    "force": "pull",
+    "level": "intermediate",
+    "mechanic": "isolation",
+    "equipment": "machine",
+    "primaryMuscles": [
+      "hamstrings"
+    ],
+    "secondaryMuscles": [
+      "calves"
+    ],
+    "instructions": [
+      "Adjust the pad so it rests just above your heels and align your knees with the machine's pivot point.",
+      "Brace your torso against the pad and hold the handles.",
+      "Curl your lower legs toward your hamstrings as far as the machine allows.",
+      "Squeeze briefly, then return slowly until your knees are extended without locking out harshly."
+    ],
+    "category": "strength",
+    "images": [],
+    "id": "Panatta_Leg_Curling"
+  },
+  {
+    "name": "Panatta Leg Extension",
+    "force": "push",
+    "level": "intermediate",
+    "mechanic": "isolation",
+    "equipment": "machine",
+    "primaryMuscles": [
+      "quadriceps"
+    ],
+    "secondaryMuscles": [],
+    "instructions": [
+      "Adjust the back pad and ankle roller so your knees line up with the machine's pivot point.",
+      "Sit tall with your hips anchored and hold the handles.",
+      "Extend your knees until your legs are nearly straight, keeping the movement smooth.",
+      "Pause briefly at the top, then lower the weight under control."
+    ],
+    "category": "strength",
+    "images": [],
+    "id": "Panatta_Leg_Extension"
+  },
+  {
+    "name": "Panatta Super Declined Chest Press",
+    "force": "push",
+    "level": "intermediate",
+    "mechanic": "compound",
+    "equipment": "machine",
+    "primaryMuscles": [
+      "chest"
+    ],
+    "secondaryMuscles": [
+      "shoulders",
+      "triceps"
+    ],
+    "instructions": [
+      "Set the seat so the handles start slightly below chest level.",
+      "Keep your shoulder blades pulled back against the pad and grip the handles evenly.",
+      "Press the handles forward and slightly downward until your arms are nearly extended.",
+      "Lower under control until you feel a chest stretch, then repeat."
+    ],
+    "category": "strength",
+    "images": [],
+    "id": "Panatta_Super_Declined_Chest_Press"
+  },
+  {
+    "name": "Panatta Super Deltoid Press",
+    "force": "push",
+    "level": "intermediate",
+    "mechanic": "compound",
+    "equipment": "machine",
+    "primaryMuscles": [
+      "shoulders"
+    ],
+    "secondaryMuscles": [
+      "chest",
+      "triceps"
+    ],
+    "instructions": [
+      "Adjust the seat and back pad so the handles begin around shoulder height.",
+      "Brace your back against the pad and choose a grip that keeps your wrists neutral.",
+      "Press the handles upward through the guided path without shrugging your shoulders.",
+      "Lower slowly to the starting position and keep your elbows under control."
+    ],
+    "category": "strength",
+    "images": [],
+    "id": "Panatta_Super_Deltoid_Press"
+  },
+  {
+    "name": "Panatta Super Hack Squat",
+    "force": "push",
+    "level": "intermediate",
+    "mechanic": "compound",
+    "equipment": "machine",
+    "primaryMuscles": [
+      "quadriceps"
+    ],
+    "secondaryMuscles": [
+      "calves",
+      "glutes",
+      "hamstrings"
+    ],
+    "instructions": [
+      "Set your shoulders and back firmly against the pads and place your feet on the platform.",
+      "Unlock the safety handles and keep your knees tracking in line with your toes.",
+      "Lower by bending your knees and hips until you reach a controlled depth.",
+      "Drive through the platform to return to standing, stopping short of a hard knee lockout."
+    ],
+    "category": "strength",
+    "images": [],
+    "id": "Panatta_Super_Hack_Squat"
+  },
+  {
+    "name": "Panatta Super High Row",
+    "force": "pull",
+    "level": "intermediate",
+    "mechanic": "compound",
+    "equipment": "machine",
+    "primaryMuscles": [
+      "lats"
+    ],
+    "secondaryMuscles": [
+      "biceps",
+      "middle back",
+      "traps"
+    ],
+    "instructions": [
+      "Adjust the seat, knee pads, and chest support so you can reach the handles with your arms extended.",
+      "Brace your chest against the pad and choose a neutral, semi-pronated, or semi-supinated grip.",
+      "Pull your elbows down and back toward your sides while keeping your torso fixed.",
+      "Control the handles back to a full stretch before starting the next rep."
+    ],
+    "category": "strength",
+    "images": [],
+    "id": "Panatta_Super_High_Row"
+  },
+  {
+    "name": "Panatta Super Horizontal Bench Press",
+    "force": "push",
+    "level": "intermediate",
+    "mechanic": "compound",
+    "equipment": "machine",
+    "primaryMuscles": [
+      "chest"
+    ],
+    "secondaryMuscles": [
+      "shoulders",
+      "triceps"
+    ],
+    "instructions": [
+      "Adjust the start position so the handles sit near mid-chest with your shoulder blades set against the pad.",
+      "Grip the handles evenly and keep your feet planted.",
+      "Press forward until your arms are nearly straight without losing your chest position.",
+      "Lower under control until the handles return to the starting point."
+    ],
+    "category": "strength",
+    "images": [],
+    "id": "Panatta_Super_Horizontal_Bench_Press"
+  },
+  {
+    "name": "Panatta Super Horizontal Multi Press",
+    "force": "push",
+    "level": "intermediate",
+    "mechanic": "compound",
+    "equipment": "machine",
+    "primaryMuscles": [
+      "chest"
+    ],
+    "secondaryMuscles": [
+      "shoulders",
+      "triceps"
+    ],
+    "instructions": [
+      "Select the press bar and start height that match your target grip and range of motion.",
+      "Lie back with your shoulder blades retracted and your feet braced.",
+      "Press the handles through the guided arc until your arms are nearly extended.",
+      "Lower with control to a comfortable chest stretch before repeating."
+    ],
+    "category": "strength",
+    "images": [],
+    "id": "Panatta_Super_Horizontal_Multi_Press"
+  },
+  {
+    "name": "Panatta Super Inclined Bench Press",
+    "force": "push",
+    "level": "intermediate",
+    "mechanic": "compound",
+    "equipment": "machine",
+    "primaryMuscles": [
+      "chest"
+    ],
+    "secondaryMuscles": [
+      "shoulders",
+      "triceps"
+    ],
+    "instructions": [
+      "Adjust the seat so the handles start at upper-chest height.",
+      "Keep your back against the pad and grip the handles with your wrists stacked over your elbows.",
+      "Press upward and forward through the machine's path until your arms are nearly straight.",
+      "Lower slowly until you feel a controlled stretch across the upper chest."
+    ],
+    "category": "strength",
+    "images": [],
+    "id": "Panatta_Super_Inclined_Bench_Press"
+  },
+  {
+    "name": "Panatta Super Inclined Chest Press",
+    "force": "push",
+    "level": "intermediate",
+    "mechanic": "compound",
+    "equipment": "machine",
+    "primaryMuscles": [
+      "chest"
+    ],
+    "secondaryMuscles": [
+      "shoulders",
+      "triceps"
+    ],
+    "instructions": [
+      "Set the seat so the handles begin just outside the upper chest.",
+      "Brace your torso against the pad and keep your shoulder blades down.",
+      "Press the independent handles up and in through the guided path.",
+      "Return slowly to the start while keeping tension on the chest."
+    ],
+    "category": "strength",
+    "images": [],
+    "id": "Panatta_Super_Inclined_Chest_Press"
+  },
+  {
+    "name": "Panatta Super Lat Machine Convergent",
+    "force": "pull",
+    "level": "intermediate",
+    "mechanic": "compound",
+    "equipment": "machine",
+    "primaryMuscles": [
+      "lats"
+    ],
+    "secondaryMuscles": [
+      "biceps",
+      "middle back"
+    ],
+    "instructions": [
+      "Adjust the seat and thigh pad so your body is locked down while your arms can reach overhead.",
+      "Grip the handles and start with your shoulders elevated but your torso upright.",
+      "Pull your elbows down toward your sides until the handles reach upper-chest level.",
+      "Let the handles rise under control until your lats are stretched."
+    ],
+    "category": "strength",
+    "images": [],
+    "id": "Panatta_Super_Lat_Machine_Convergent"
+  },
+  {
+    "name": "Panatta Super Leg Press 45 Degree",
+    "force": "push",
+    "level": "intermediate",
+    "mechanic": "compound",
+    "equipment": "machine",
+    "primaryMuscles": [
+      "quadriceps"
+    ],
+    "secondaryMuscles": [
+      "calves",
+      "glutes",
+      "hamstrings"
+    ],
+    "instructions": [
+      "Set the backrest and safeties, then place your feet on the platform at a comfortable width.",
+      "Unlock the carriage and keep your hips and back against the pad.",
+      "Lower the platform until your knees bend deeply without your pelvis lifting.",
+      "Press the platform away by driving through your full foot and stop short of locking your knees."
+    ],
+    "category": "strength",
+    "images": [],
+    "id": "Panatta_Super_Leg_Press_45_Degree"
+  },
+  {
+    "name": "Panatta Super Low Row",
+    "force": "pull",
+    "level": "intermediate",
+    "mechanic": "compound",
+    "equipment": "machine",
+    "primaryMuscles": [
+      "middle back"
+    ],
+    "secondaryMuscles": [
+      "biceps",
+      "lats"
+    ],
+    "instructions": [
+      "Adjust the seat and chest pad so your arms can reach forward without rounding your back.",
+      "Brace against the pad and hold the handles with your chosen grip.",
+      "Pull your elbows back until your shoulder blades squeeze together.",
+      "Return the handles forward under control and allow a full stretch before repeating."
+    ],
+    "category": "strength",
+    "images": [],
+    "id": "Panatta_Super_Low_Row"
+  },
+  {
+    "name": "Panatta Super Middle Chest Flight Machine",
+    "force": "pull",
+    "level": "intermediate",
+    "mechanic": "isolation",
+    "equipment": "machine",
+    "primaryMuscles": [
+      "chest"
+    ],
+    "secondaryMuscles": [
+      "shoulders"
+    ],
+    "instructions": [
+      "Adjust the seat and arm pads so your elbows begin slightly behind your torso at chest height.",
+      "Keep a soft bend in your elbows and press your back into the pad.",
+      "Bring the handles together in front of your chest by squeezing your pecs.",
+      "Open your arms slowly until you feel a controlled chest stretch."
+    ],
+    "category": "strength",
+    "images": [],
+    "id": "Panatta_Super_Middle_Chest_Flight_Machine"
+  },
+  {
+    "name": "Panatta Super Pendulum Squat",
+    "force": "push",
+    "level": "intermediate",
+    "mechanic": "compound",
+    "equipment": "machine",
+    "primaryMuscles": [
+      "quadriceps"
+    ],
+    "secondaryMuscles": [
+      "calves",
+      "glutes",
+      "hamstrings"
+    ],
+    "instructions": [
+      "Set the shoulder pads and foot platform so you can squat without your heels lifting.",
+      "Brace your torso, unlock the lever, and keep your knees tracking over your toes.",
+      "Descend through the guided arc until you reach your planned depth.",
+      "Drive the platform away to stand back up while maintaining control of the carriage."
+    ],
+    "category": "strength",
+    "images": [],
+    "id": "Panatta_Super_Pendulum_Squat"
+  },
+  {
+    "name": "Panatta Super Pullover Machine",
+    "force": "pull",
+    "level": "intermediate",
+    "mechanic": "compound",
+    "equipment": "machine",
+    "primaryMuscles": [
+      "lats"
+    ],
+    "secondaryMuscles": [
+      "chest",
+      "triceps"
+    ],
+    "instructions": [
+      "Adjust the seat and back pad so the handle starts overhead with your torso secured.",
+      "Grip the handle or pads and keep your ribs down as you begin from a stretched position.",
+      "Pull the handle down and forward by driving your upper arms toward your torso.",
+      "Return slowly overhead without letting your shoulders lose position."
+    ],
+    "category": "strength",
+    "images": [],
+    "id": "Panatta_Super_Pullover_Machine"
+  },
+  {
+    "name": "Panatta Super Rowing",
+    "force": "pull",
+    "level": "intermediate",
+    "mechanic": "compound",
+    "equipment": "machine",
+    "primaryMuscles": [
+      "middle back"
+    ],
+    "secondaryMuscles": [
+      "biceps",
+      "lats",
+      "traps"
+    ],
+    "instructions": [
+      "Adjust the seat and chest support so your arms can reach the handles with a full stretch.",
+      "Brace your torso and select the grip that best matches your target line of pull.",
+      "Row the handles back by driving your elbows behind your body.",
+      "Pause briefly, then return to the start under control."
+    ],
+    "category": "strength",
+    "images": [],
+    "id": "Panatta_Super_Rowing"
+  },
+  {
+    "name": "Panatta Super Shrug Machine",
+    "force": "pull",
+    "level": "intermediate",
+    "mechanic": "isolation",
+    "equipment": "machine",
+    "primaryMuscles": [
+      "traps"
+    ],
+    "secondaryMuscles": [
+      "shoulders"
+    ],
+    "instructions": [
+      "Set the handle height so your arms hang straight with your shoulders depressed at the start.",
+      "Stand tall on the platform and hold the handles without bending your elbows.",
+      "Elevate your shoulder blades upward and slightly inward through the machine's path.",
+      "Lower under control until your traps are fully stretched."
+    ],
+    "category": "strength",
+    "images": [],
+    "id": "Panatta_Super_Shrug_Machine"
+  },
+  {
+    "name": "Panatta Super Upper Chest Flight Machine",
+    "force": "pull",
+    "level": "intermediate",
+    "mechanic": "isolation",
+    "equipment": "machine",
+    "primaryMuscles": [
+      "chest"
+    ],
+    "secondaryMuscles": [
+      "shoulders"
+    ],
+    "instructions": [
+      "Adjust the seat so the handles line up with the upper chest.",
+      "Keep your back against the pad and maintain a slight bend in your elbows.",
+      "Bring the handles up and together by squeezing through the upper chest.",
+      "Open back to the starting position slowly and stop before your shoulders roll forward."
+    ],
+    "category": "strength",
+    "images": [],
+    "id": "Panatta_Super_Upper_Chest_Flight_Machine"
+  },
+  {
+    "name": "Panatta Super Vertical Chest Press",
+    "force": "push",
+    "level": "intermediate",
+    "mechanic": "compound",
+    "equipment": "machine",
+    "primaryMuscles": [
+      "chest"
+    ],
+    "secondaryMuscles": [
+      "shoulders",
+      "triceps"
+    ],
+    "instructions": [
+      "Adjust the seat so the handles sit at mid-chest height.",
+      "Keep your feet planted, chest tall, and shoulder blades set against the pad.",
+      "Press the handles forward through the guided path until your arms are nearly extended.",
+      "Lower back to the start with control and keep your elbows tracking naturally."
+    ],
+    "category": "strength",
+    "images": [],
+    "id": "Panatta_Super_Vertical_Chest_Press"
+  },
+  {
+    "name": "Panatta Three Angles Biceps Machine",
+    "force": "pull",
+    "level": "intermediate",
+    "mechanic": "isolation",
+    "equipment": "machine",
+    "primaryMuscles": [
+      "biceps"
+    ],
+    "secondaryMuscles": [
+      "forearms"
+    ],
+    "instructions": [
+      "Set the seat and arm pad so your upper arms are supported and your elbows align with the machine.",
+      "Choose the handle angle that keeps your wrists comfortable.",
+      "Curl the handles toward your shoulders without lifting your upper arms from the pad.",
+      "Lower slowly until your elbows are extended and repeat."
+    ],
+    "category": "strength",
+    "images": [],
+    "id": "Panatta_Three_Angles_Biceps_Machine"
+  },
+  {
+    "name": "Panatta Three Angles Triceps Machine",
+    "force": "push",
+    "level": "intermediate",
+    "mechanic": "isolation",
+    "equipment": "machine",
+    "primaryMuscles": [
+      "triceps"
+    ],
+    "secondaryMuscles": [],
+    "instructions": [
+      "Adjust the seat and arm pad so your upper arms stay supported throughout the movement.",
+      "Choose the handle angle that keeps your wrists neutral and your elbows comfortable.",
+      "Extend your elbows until your arms are nearly straight while keeping your torso still.",
+      "Return under control until the triceps are stretched, then repeat."
+    ],
+    "category": "strength",
+    "images": [],
+    "id": "Panatta_Three_Angles_Triceps_Machine"
+  },
+  {
     "name": "Parallel Bar Dip",
     "force": "push",
     "level": "beginner",

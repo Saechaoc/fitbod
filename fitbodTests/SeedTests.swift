@@ -7,7 +7,7 @@
 //
 //  Seven Swift Testing functions cover:
 //   1. `strengthOnlyCount` — at least 600 strength exercises after seed
-//      (typical: ~675 per the vendored snapshot).
+//      (typical: ~702 per the vendored snapshot).
 //   2. `muscleGroupCount` — exactly 17 canonical MuscleGroup rows.
 //   3. `idempotent` — second call does not duplicate rows.
 //   4. `userSettingsSeeded` — UserSettings singleton with weightUnit == .lb.
@@ -74,7 +74,7 @@ struct SeedTests {
         let count = try ctx.fetchCount(FetchDescriptor<Exercise>())
         #expect(
             count >= 600,
-            "Strength-filtered seed should yield ≥600 exercises (typical: ~675); got \(count)"
+            "Strength-filtered seed should yield ≥600 exercises (typical: ~702); got \(count)"
         )
     }
 

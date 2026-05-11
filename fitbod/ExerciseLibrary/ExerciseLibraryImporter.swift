@@ -4,7 +4,7 @@
 //
 //  Plan 01-PLAN-02-02 — the load-bearing one-time seed pipeline for the
 //  built-in exercise library. Authored as a model-actor so the work
-//  (decoding ~1.0 MB of JSON, filtering, and inserting ~675 `Exercise`
+//  (decoding ~1.0 MB of JSON, filtering, and inserting ~702 `Exercise`
 //  rows + 17 `MuscleGroup` rows + ~2200 `ExerciseMuscleStimulus` rows)
 //  runs off the main thread (PITFALLS.md #6 — never block the main
 //  thread on 800+ inserts).

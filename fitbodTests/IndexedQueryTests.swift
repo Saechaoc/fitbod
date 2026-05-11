@@ -14,7 +14,7 @@
 //  We cannot introspect the SQLite query plan from a Swift Testing
 //  suite. The next-best signal is wall-clock — a regression that
 //  removes the `#Index<Exercise>` declaration on either field would
-//  surface as a 5-10× slowdown over the ~675-exercise seeded corpus.
+//  surface as a 5-10× slowdown over the ~702-exercise seeded corpus.
 //
 //  ## Budgets
 //
@@ -28,7 +28,7 @@
 //
 //  Each test resets the UserDefaults seed stamp and builds a fresh
 //  in-memory container, then runs `seedIfNeeded()` to populate the full
-//  ~675-exercise corpus. The seed itself is exercised by `SeedTests`;
+//  ~702-exercise corpus. The seed itself is exercised by `SeedTests`;
 //  these tests assume it works and only measure post-seed query time.
 //
 //  ## Why `.serialized`
@@ -94,7 +94,7 @@ struct IndexedQueryTests {
         )
         #expect(
             elapsed < 0.20,
-            "canonicalName.contains over ~675 rows took \(elapsed)s — production target <0.05s with #Index, soft cap 0.20s for CI"
+            "canonicalName.contains over ~702 rows took \(elapsed)s — production target <0.05s with #Index, soft cap 0.20s for CI"
         )
     }
 
@@ -123,7 +123,7 @@ struct IndexedQueryTests {
         )
         #expect(
             elapsed < 0.20,
-            "primaryMuscleSlugsJoined.contains over ~675 rows took \(elapsed)s — production target <0.05s with #Index, soft cap 0.20s for CI"
+            "primaryMuscleSlugsJoined.contains over ~702 rows took \(elapsed)s — production target <0.05s with #Index, soft cap 0.20s for CI"
         )
     }
 }

@@ -7,8 +7,10 @@
 - **Vendored on:** 2026-05-10
 - **License:** The Unlicense (public domain) — no attribution required.
 - **File:** `dist/exercises.json` → bundled at `fitbod/Resources/ExerciseSeed/exercises.json`
-- **Total exercises (raw):** 873
-- **After strength filter (`category ∈ {strength, powerlifting, olympic weightlifting, strongman}`):** 675
+- **Total exercises (raw):** 900 (873 upstream + 27 local Panatta machine additions)
+- **After strength filter (`category ∈ {strength, powerlifting, olympic weightlifting, strongman}`):** 702
+- **Local additions:** 27 Panatta machine exercises added 2026-05-11. These use the upstream
+  JSON schema, `equipment: "machine"`, empty `images` arrays, and the existing 17-muscle taxonomy.
 - **SEED_VERSION.txt:** Local stamp; bump to trigger re-seed via
   `UserDefaults["exercise_seed_version"]` (plan `02-02`).
 
