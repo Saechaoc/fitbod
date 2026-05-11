@@ -88,6 +88,18 @@ public final class RestTimerEngine {
     /// without triggering the OS permission prompt.
     private let scheduler: RestTimerNotificationScheduling
 
+    /// ActivityKit Live Activity collaborator. Defaults to
+    /// `NoopActivityController()` so plan 02-01's existing unit tests
+    /// keep their hermetic shape (no ActivityKit side effects). Production
+    /// call sites use `RestTimerEngine.makeProduction()` which wires the
+    /// live `RestTimerActivityController` from plan 02-02.
+    ///
+    /// The engine owns three orthogonal concerns: notification scheduling
+    /// (lock-screen alert), Live Activity (lock-screen card + Dynamic
+    /// Island), and the Date-based countdown state. Each is independently
+    /// swappable for tests.
+    private let activityController: RestTimerActivityControlling
+
     /// Injectable wall-clock. `Date.now` in production; unit tests pass a
     /// closure returning a controlled `Date` to simulate elapsed time
     /// without sleeping. This is the seam that lets
@@ -97,10 +109,27 @@ public final class RestTimerEngine {
 
     public init(
         scheduler: RestTimerNotificationScheduling = LiveNotificationScheduler(),
+        activityController: RestTimerActivityControlling = NoopActivityController(),
         now: @escaping () -> Date = { Date.now }
     ) {
         self.scheduler = scheduler
+        self.activityController = activityController
         self.now = now
+    }
+
+    /// Production factory: wires the live `LiveNotificationScheduler`
+    /// (plan 02-01) and the live `RestTimerActivityController` (plan 02-02)
+    /// in a single call. Used by `SessionLoggerView` in plan 04-01.
+    ///
+    /// Kept separate from the default initializer so the default init stays
+    /// hermetic — passing a `StubScheduler` is the canonical unit-test
+    /// shape, and the Noop activity controller default keeps those tests
+    /// free of ActivityKit imports.
+    public static func makeProduction() -> RestTimerEngine {
+        RestTimerEngine(
+            scheduler: LiveNotificationScheduler(),
+            activityController: RestTimerActivityController()
+        )
     }
 
     // MARK: - Computed accessors
@@ -141,6 +170,14 @@ public final class RestTimerEngine {
             exerciseName: exerciseName,
             identifier: Self.notificationID
         )
+        // Plan 02-02 wire: start the Live Activity in lockstep with the
+        // notification scheduling. NoopActivityController by default makes
+        // this a no-op in plan-02-01 unit tests.
+        activityController.start(
+            startedAt: self.startedAt!,
+            targetSeconds: self.targetSeconds,
+            exerciseName: exerciseName
+        )
     }
 
     /// Mutate the target by ±N seconds.
@@ -175,6 +212,12 @@ public final class RestTimerEngine {
             exerciseName: currentExerciseName,
             identifier: Self.notificationID
         )
+        // Plan 02-02 wire: push the new ContentState through the debounce.
+        // startedAt does NOT move; only targetSeconds changes.
+        activityController.update(
+            startedAt: startedAt,
+            targetSeconds: newTarget
+        )
     }
 
     /// Stop the timer and cancel the pending lock-screen notification.
@@ -191,5 +234,7 @@ public final class RestTimerEngine {
         targetSeconds = 0
         currentExerciseName = ""
         scheduler.cancel(identifier: Self.notificationID)
+        // Plan 02-02 wire: dismiss the Live Activity immediately.
+        activityController.end()
     }
 }
