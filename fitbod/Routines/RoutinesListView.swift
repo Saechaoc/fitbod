@@ -324,13 +324,15 @@ public struct RoutinesListView: View {
         }
     }
 
-    /// "Duplicate" action — STUB until plan 03-03 ships
-    /// `RoutineDuplicator.duplicate(routine:context:)`. The closure exists
-    /// so the menu wiring is end-to-end; the deep-copy logic plugs in
-    /// later without touching this view.
+    /// "Duplicate" action — calls `RoutineDuplicator.duplicate(routine:context:)`
+    /// (plan 03-03). The duplicator deep-copies the source Routine + every
+    /// owned RoutineExercise + cascade-owned RoutineExerciseSetOverride
+    /// rows + the soft-ref SupersetGroup rows that belong to the source
+    /// routine (UUIDs freshly minted; supersetGroupID remapped via a
+    /// [UUID: UUID] map per RESEARCH §6 Pitfall 6). The clone surfaces as
+    /// "{Original} (Copy)" in the same folder via the @Query reactivity.
     private func handleDuplicate(routine: Routine) {
-        // TODO plan 03-03: RoutineDuplicator.duplicate(routine: routine, context: ctx)
-        _ = routine
+        RoutineDuplicator.duplicate(routine: routine, context: ctx)
     }
 
     /// "Delete" action on a routine.
