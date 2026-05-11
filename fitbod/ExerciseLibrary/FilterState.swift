@@ -5,7 +5,8 @@
 //  Ephemeral, view-owned filter selection state for `ExerciseLibraryView`.
 //  Holds multi-select sets for the four facets (muscle / equipment /
 //  mechanic / pattern) plus the convenience methods the library view's
-//  filter chip bar consumes (`predicate(with:)`, `isEmpty`, `clear()`).
+//  filter chip bar consumes (`swiftDataPredicate(with:)`,
+//  `applyPostFetchFilters(to:)`, `isEmpty`, `clear()`).
 //
 //  ## Why `@Observable`, not `@Model` or `ObservableObject`
 //
@@ -17,7 +18,7 @@
 //  (FOUND-06 anti-pattern). `@Observable` gives SwiftUI fine-grained
 //  property-level reactivity without `@Published` ceremony.
 //
-//  ## Predicate composition rules (CONTEXT.md Area 2 + RESEARCH § Pitfall 3)
+//  ## Filter composition rules (CONTEXT.md Area 2 + RESEARCH § Pitfall 3)
 //
 //  - **AND across facets** — `&&` joins the four facet sub-predicates so
 //    selecting "Muscle=chest" + "Equipment=barbell" filters to rows
@@ -26,23 +27,32 @@
 //    against the row's value (Set membership semantically ORs).
 //  - **Mechanic is single-select** — per UI-SPEC table the Mechanic chip
 //    holds one value; modeled as `String?` rather than `Set<String>`.
-//  - **Muscle filter — denormalized predicate (PITFALLS #3)** — SwiftData's
-//    predicate translator cannot traverse the many-to-many
-//    `ExerciseMuscleStimulus` join cleanly. Instead, `Exercise` carries a
-//    seed-time-populated `primaryMuscleSlugsJoined: String` field shaped
-//    like `"|chest|triceps|"`, indexed via
-//    `#Index<Exercise>([\.primaryMuscleSlugsJoined])`. The predicate
-//    matches a selected slug as the whole-token `"|slug|"`.
+//  - **Muscle filter — denormalized post-fetch token match (PITFALLS #3)** —
+//    SwiftData's predicate translator cannot traverse the many-to-many
+//    `ExerciseMuscleStimulus` join cleanly, and dynamic OR-over-token matching
+//    is fragile inside `#Predicate`. Instead, `Exercise` carries a seed-time-
+//    populated `primaryMuscleSlugsJoined: String` field shaped like
+//    `"|chest|triceps|"`; the post-fetch muscle filter matches a selected slug
+//    as the whole-token `"|slug|"`.
 //
 //  ## Captures-by-value invariant (RESEARCH § Pitfall 12)
 //
-//  `predicate(with:)` copies every capture into a local `let` BEFORE
+//  `swiftDataPredicate(with:)` copies every capture into a local `let` BEFORE
 //  building the `#Predicate` literal. SwiftData's predicate translator
 //  is sensitive to reference captures — a `self` or instance-property
 //  reference in the predicate body silently breaks the indexed path or
-//  crashes at fetch time. The locals (`muscles`, `equipment`, etc.) are
+//  crashes at fetch time. The locals (`equipment`, `mechanic`, etc.) are
 //  all value-typed primitives that the macro can encode into the
 //  generated NSPredicate.
+//
+//  ## Pipeline split (SwiftData predicate translator workaround)
+//
+//  `swiftDataPredicate(with:)` intentionally stays tiny: search only. The
+//  facet filters run in-memory via `applyPostFetchFilters(to:)` over the
+//  @Query result inside `FilteredExerciseList`. This avoids the guarded
+//  multi-facet `#Predicate` shape that pushes Swift's expression-level
+//  type-checker past its budget and is also a brittle SQL translation shape.
+//  Worst-case input size is ~675 rows — negligible cost for this library.
 //
 
 import Foundation
@@ -51,9 +61,9 @@ import Observation
 /// View-owned filter state for `ExerciseLibraryView`.
 ///
 /// Holds the four-facet selection sets (muscle / equipment / mechanic /
-/// pattern) and composes a `Predicate<Exercise>` against a debounced
-/// search term. Lifetime is tied to the library view; selections reset
-/// per CONTEXT.md Area 2 when the view is dismissed and re-appeared.
+/// pattern) and composes a SwiftData-safe `Predicate<Exercise>` against a
+/// debounced search term. Lifetime is tied to the library view; selections
+/// reset per CONTEXT.md Area 2 when the view is dismissed and re-appeared.
 @Observable
 public final class FilterState {
     /// Selected muscle slugs (e.g. `"chest"`). OR semantics within facet.
@@ -90,62 +100,77 @@ public final class FilterState {
         selectedPatternRaw.removeAll()
     }
 
-    /// Composes a `Predicate<Exercise>` from the current selections plus
-    /// the externally-debounced search term.
+    /// Composes a SwiftData-safe search predicate.
     ///
-    /// All captures are copied to local `let` constants BEFORE the
-    /// `#Predicate` literal — see Pitfall #12 explanation in the file
-    /// header. Mutating `selectedMuscleSlugs` after this call returns
-    /// does NOT affect the returned predicate (it captured the snapshot).
+    /// Facets are intentionally NOT in the predicate. Even guarded
+    /// equipment/mechanic/pattern clauses can push the `#Predicate` macro past
+    /// the compiler's type-checker budget under Xcode 26. Facets are applied
+    /// in-memory via `applyPostFetchFilters(to:)` after the @Query fetch.
     ///
-    /// - Parameter debouncedSearch: search term forwarded from the
-    ///   library view's `.searchable` state after a 150 ms debounce
-    ///   (RESEARCH § Pitfall 4).
-    public func predicate(with debouncedSearch: String) -> Predicate<Exercise> {
-        // Captures-by-value — every binding below is a primitive value type.
+    /// Captures are copied to local `let` constants BEFORE the `#Predicate`
+    /// literal — see Pitfall #12 in the file header.
+    public func swiftDataPredicate(with debouncedSearch: String) -> Predicate<Exercise> {
         let normalizedSearch = debouncedSearch
+            .trimmingCharacters(in: .whitespacesAndNewlines)
             .lowercased()
             .folding(options: .diacriticInsensitive, locale: .current)
-        let muscles = selectedMuscleSlugs
-        let equipment = selectedEquipmentRaw
-        let mechanic = selectedMechanicRaw
-        // Pre-lift the pattern selection into a `Set<String?>` so the
-        // predicate translator can compare `ex.patternRaw` (`String?`)
-        // directly against the set without a force-unwrap or a nil
-        // guard inside the predicate body (review WR-05).
-        let patternsOptional: Set<String?> = Set(selectedPatternRaw.map(Optional.some))
-        let patternsEmpty = selectedPatternRaw.isEmpty
+        let searchEmpty = normalizedSearch.isEmpty
+
+        if searchEmpty {
+            return #Predicate<Exercise> { _ in
+                true
+            }
+        }
 
         return #Predicate<Exercise> { ex in
-            // Text search — case- + diacritic-insensitive substring
-            // match against `canonicalName` (the importer normalizes
-            // `name` into `canonicalName` using the same fold).
-            (normalizedSearch.isEmpty || ex.canonicalName.contains(normalizedSearch))
-            &&
-            // Equipment facet (multi-select within facet — OR semantics).
-            (equipment.isEmpty || equipment.contains(ex.equipmentRaw))
-            &&
-            // Mechanic facet (single-select per UI-SPEC).
-            //
-            // Comparing `Optional<String>` to `String` lifts the RHS
-            // into `Optional` automatically — no force-unwrap needed.
-            // This survives the predicate translator unambiguously
-            // (review WR-05).
-            (mechanic == nil || mechanic == ex.mechanicRaw)
-            &&
-            // Muscle facet — denormalized predicate (PITFALLS #3).
-            // `ex.primaryMuscleSlugsJoined` is shaped like "|chest|triceps|";
-            // selecting "chest" matches against the whole-token "|chest|"
-            // substring. `Set.contains { ... }` ORs within the facet.
-            (muscles.isEmpty || muscles.contains { slug in
-                ex.primaryMuscleSlugsJoined.contains("|\(slug)|")
-            })
-            &&
-            // Pattern facet (multi-select; `patternRaw` is nullable per
-            // Open Q #5). `patternsOptional` is a `Set<String?>` so
-            // membership test handles the nullable column without a
-            // force-unwrap (review WR-05).
-            (patternsEmpty || patternsOptional.contains(ex.patternRaw))
+            ex.canonicalName.contains(normalizedSearch)
         }
+    }
+
+    /// In-memory muscle facet filter.
+    ///
+    /// This preserves OR-within-muscle semantics without forcing SwiftData's
+    /// predicate translator to handle dynamic token matching.
+    public func matchesMuscleFacet(_ exercise: Exercise) -> Bool {
+        guard !selectedMuscleSlugs.isEmpty else {
+            return true
+        }
+
+        return selectedMuscleSlugs.contains { slug in
+            exercise.primaryMuscleSlugsJoined.contains("|\(slug)|")
+        }
+    }
+
+    /// In-memory facet filter for the selections intentionally kept out of
+    /// SwiftData's predicate translator.
+    public func matchesPostFetchFacets(_ exercise: Exercise) -> Bool {
+        if !selectedEquipmentRaw.isEmpty,
+           !selectedEquipmentRaw.contains(exercise.equipmentRaw) {
+            return false
+        }
+
+        if let mechanic = selectedMechanicRaw,
+           exercise.mechanicRaw != mechanic {
+            return false
+        }
+
+        if !selectedPatternRaw.isEmpty {
+            guard let pattern = exercise.patternRaw,
+                  selectedPatternRaw.contains(pattern) else {
+                return false
+            }
+        }
+
+        return matchesMuscleFacet(exercise)
+    }
+
+    /// Applies the post-fetch filters that intentionally stay out of the
+    /// SwiftData predicate.
+    public func applyPostFetchFilters(to exercises: [Exercise]) -> [Exercise] {
+        guard !isEmpty else {
+            return exercises
+        }
+
+        return exercises.filter { matchesPostFetchFacets($0) }
     }
 }

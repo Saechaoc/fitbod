@@ -49,7 +49,7 @@ public enum PreviewModelContainer {
             configurations: config
         )
         if seedFixture {
-            seed(into: container.mainContext)
+            seed(into: ModelContext(container))
         }
         return container
     }

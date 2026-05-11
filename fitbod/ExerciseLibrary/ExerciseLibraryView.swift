@@ -134,7 +134,8 @@ public struct ExerciseLibraryView: View {
     public var body: some View {
         NavigationStack(path: effectivePath) {
             FilteredExerciseList(
-                predicate: filterState.predicate(with: debouncedSearch),
+                predicate: filterState.swiftDataPredicate(with: debouncedSearch),
+                filterState: filterState,
                 activeQuery: debouncedSearch,
                 hasActiveFilters: !filterState.isEmpty,
                 clearFiltersAction: filterState.clear,
@@ -203,6 +204,12 @@ public struct ExerciseLibraryView: View {
 private struct FilteredExerciseList: View {
     @Query private var exercises: [Exercise]
 
+    /// Owning filter state. Read by the facet post-filter that
+    /// `FilterState.swiftDataPredicate(with:)` intentionally leaves out
+    /// (see FilterState header — guarded multi-facet matching is the
+    /// fragile `#Predicate` expression).
+    let filterState: FilterState
+
     /// The active debounced search text, used by the empty-state copy
     /// to show the verbatim "{query}" the user typed AND to select the
     /// with-query vs without-query variant in `EmptyLibraryView`.
@@ -230,6 +237,7 @@ private struct FilteredExerciseList: View {
 
     init(
         predicate: Predicate<Exercise>,
+        filterState: FilterState,
         activeQuery: String,
         hasActiveFilters: Bool,
         clearFiltersAction: @escaping () -> Void,
@@ -240,15 +248,22 @@ private struct FilteredExerciseList: View {
             sort: \Exercise.canonicalName,
             order: .forward
         )
+        self.filterState = filterState
         self.activeQuery = activeQuery
         self.hasActiveFilters = hasActiveFilters
         self.clearFiltersAction = clearFiltersAction
         self.createCustomAction = createCustomAction
     }
 
+    /// Post-fetch filter: facets, applied in Swift over the search-pruned
+    /// @Query result.
+    private var visibleExercises: [Exercise] {
+        filterState.applyPostFetchFilters(to: exercises)
+    }
+
     var body: some View {
         Group {
-            if exercises.isEmpty {
+            if visibleExercises.isEmpty {
                 EmptyLibraryView(
                     searchText: activeQuery,
                     onClearFilters: clearFiltersAction,
@@ -279,12 +294,12 @@ private struct FilteredExerciseList: View {
         }
     }
 
-    /// Groups the fetched `exercises` by the first letter of their
-    /// `name`, returning the sections in alphabetical order. The inner
-    /// list is already sorted by `canonicalName` thanks to the
+    /// Groups the post-filtered `visibleExercises` by the first letter of
+    /// their `name`, returning the sections in alphabetical order. Inner
+    /// rows are already sorted by `canonicalName` thanks to the
     /// `@Query(sort:)`, so per-section order is stable.
     private var sectioned: [(letter: String, exercises: [Exercise])] {
-        let groups = Dictionary(grouping: exercises) { ex in
+        let groups = Dictionary(grouping: visibleExercises) { ex in
             String(ex.name.prefix(1).uppercased())
         }
         return groups.keys.sorted().map { letter in

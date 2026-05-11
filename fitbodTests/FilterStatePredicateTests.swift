@@ -2,20 +2,32 @@
 //  FilterStatePredicateTests.swift
 //  fitbodTests
 //
-//  Plan 01-PLAN-03-02 anchor suite — proves `FilterState.predicate(with:)`
-//  composes correct `Predicate<Exercise>` instances over the full
-//  matrix of facet + search combinations.
+//  Plan 01-PLAN-03-02 anchor suite — proves the `FilterState` filter
+//  pipeline (`swiftDataPredicate(with:)` at SwiftData +
+//  `applyPostFetchFilters(to:)` post-fetch) composes correctly over the
+//  full matrix of facet + search combinations.
 //
-//  Seven Swift Testing functions cover:
+//  Pipeline note: search lives in `swiftDataPredicate(with:)` (pushed down to
+//  SwiftData). Facets live in `applyPostFetchFilters(to:)` because guarded
+//  multi-facet matching pushes `#Predicate` past Swift's type-checker budget
+//  and is fragile for SwiftData SQL translation. See FilterState.swift header
+//  for the full rationale.
+//
+//  Nine Swift Testing functions cover:
 //   1. `emptyFilterAll` — empty state returns every row
 //   2. `searchBench` — case- + diacritic-insensitive substring search
-//   3. `equipmentFilter` — equipment facet, single-value selection
-//   4. `mechanicFilter` — mechanic facet (single-select)
-//   5. `muscleFilterDenormalized` — muscle facet through the
-//      denormalized `|slug|` predicate path (PITFALLS #3)
-//   6. `multiFacetAND` — AND-across-facets (equipment + mechanic)
-//   7. `multiSelectWithinFacet` — OR-within-facet (muscle selecting two
+//      (pushed down via `swiftDataPredicate(with:)`)
+//   3. `swiftDataPredicateAppliesSearch` — proves search constrains the
+//      SwiftData fetch before post-fetch filtering
+//   4. `equipmentFilter` — equipment facet, single-value selection
+//   5. `mechanicFilter` — mechanic facet (single-select)
+//   6. `muscleFilterDenormalized` — muscle facet through the
+//      denormalized `|slug|` post-fetch path (PITFALLS #3)
+//   7. `multiFacetAND` — AND-across-facets (equipment + mechanic)
+//   8. `multiSelectWithinFacet` — OR-within-facet (muscle selecting two
 //      slugs returns the union)
+//   9. `facetSelectionDoesNotConstrainSwiftDataFetch` — proves facets stay
+//      out of the SwiftData predicate
 //
 //  ## Fixture
 //
@@ -42,8 +54,25 @@ import SwiftData
 import Testing
 @testable import fitbod
 
-@Suite("FilterState.predicate(with:)")
+@MainActor
+@Suite("FilterState.swiftDataPredicate(with:) + applyPostFetchFilters(to:)")
 struct FilterStatePredicateTests {
+
+    // MARK: - Pipeline helper
+
+    /// Runs the full filter pipeline: `swiftDataPredicate(with:)` at the
+    /// SwiftData fetch boundary, then `applyPostFetchFilters(to:)` over the
+    /// fetched rows. Mirrors what `FilteredExerciseList` does in production.
+    private static func evaluate(
+        _ state: FilterState,
+        search: String,
+        in ctx: ModelContext
+    ) throws -> [Exercise] {
+        let fetched = try ctx.fetch(FetchDescriptor<Exercise>(
+            predicate: state.swiftDataPredicate(with: search)
+        ))
+        return state.applyPostFetchFilters(to: fetched)
+    }
 
     // MARK: - Fixture
 
@@ -114,8 +143,7 @@ struct FilterStatePredicateTests {
     func emptyFilterAll() throws {
         let (_, ctx) = try Self.makeFixture()
         let state = FilterState()
-        let pred = state.predicate(with: "")
-        let result = try ctx.fetch(FetchDescriptor<Exercise>(predicate: pred))
+        let result = try Self.evaluate(state, search: "", in: ctx)
         #expect(result.count == 4, "Empty filter should match all 4 fixture rows; got \(result.count)")
     }
 
@@ -125,10 +153,19 @@ struct FilterStatePredicateTests {
     func searchBench() throws {
         let (_, ctx) = try Self.makeFixture()
         let state = FilterState()
-        let pred = state.predicate(with: "bench")
-        let result = try ctx.fetch(FetchDescriptor<Exercise>(predicate: pred))
+        let result = try Self.evaluate(state, search: "bench", in: ctx)
         #expect(result.count == 1, "Search 'bench' should match exactly 1 row; got \(result.count)")
         #expect(result.first?.name == "Barbell Bench Press")
+    }
+
+    @Test("SwiftData predicate applies search before post-fetch muscle filtering")
+    func swiftDataPredicateAppliesSearch() throws {
+        let (_, ctx) = try Self.makeFixture()
+        let state = FilterState()
+        let fetched = try ctx.fetch(FetchDescriptor<Exercise>(
+            predicate: state.swiftDataPredicate(with: "bench")
+        ))
+        #expect(fetched.map(\.name) == ["Barbell Bench Press"])
     }
 
     // MARK: - Test 3: equipment facet
@@ -138,8 +175,7 @@ struct FilterStatePredicateTests {
         let (_, ctx) = try Self.makeFixture()
         let state = FilterState()
         state.selectedEquipmentRaw = ["dumbbell"]
-        let pred = state.predicate(with: "")
-        let result = try ctx.fetch(FetchDescriptor<Exercise>(predicate: pred))
+        let result = try Self.evaluate(state, search: "", in: ctx)
         #expect(result.count == 1, "Equipment=dumbbell should match exactly 1 row; got \(result.count)")
         #expect(result.first?.name == "Dumbbell Curl")
     }
@@ -151,8 +187,7 @@ struct FilterStatePredicateTests {
         let (_, ctx) = try Self.makeFixture()
         let state = FilterState()
         state.selectedMechanicRaw = "isolation"
-        let pred = state.predicate(with: "")
-        let result = try ctx.fetch(FetchDescriptor<Exercise>(predicate: pred))
+        let result = try Self.evaluate(state, search: "", in: ctx)
         #expect(result.count == 1, "Mechanic=isolation should match exactly 1 row; got \(result.count)")
         #expect(result.first?.name == "Dumbbell Curl")
     }
@@ -164,8 +199,7 @@ struct FilterStatePredicateTests {
         let (_, ctx) = try Self.makeFixture()
         let state = FilterState()
         state.selectedMuscleSlugs = ["chest"]
-        let pred = state.predicate(with: "")
-        let result = try ctx.fetch(FetchDescriptor<Exercise>(predicate: pred))
+        let result = try Self.evaluate(state, search: "", in: ctx)
         #expect(
             result.count == 1,
             "Muscle=chest should match exactly 1 row via |chest| denormalised match; got \(result.count)"
@@ -181,8 +215,7 @@ struct FilterStatePredicateTests {
         let state = FilterState()
         state.selectedEquipmentRaw = ["barbell"]
         state.selectedMechanicRaw = "compound"
-        let pred = state.predicate(with: "")
-        let result = try ctx.fetch(FetchDescriptor<Exercise>(predicate: pred))
+        let result = try Self.evaluate(state, search: "", in: ctx)
         #expect(
             result.count == 2,
             "barbell + compound AND should match exactly 2 rows (Bench + Squat); got \(result.count)"
@@ -198,13 +231,29 @@ struct FilterStatePredicateTests {
         let (_, ctx) = try Self.makeFixture()
         let state = FilterState()
         state.selectedMuscleSlugs = ["chest", "biceps"]
-        let pred = state.predicate(with: "")
-        let result = try ctx.fetch(FetchDescriptor<Exercise>(predicate: pred))
+        let result = try Self.evaluate(state, search: "", in: ctx)
         #expect(
             result.count == 2,
             "muscle=[chest, biceps] OR should match exactly 2 rows (Bench + Curl); got \(result.count)"
         )
         let names = Set(result.map(\.name))
         #expect(names == Set(["Barbell Bench Press", "Dumbbell Curl"]))
+    }
+
+    // MARK: - Test 8: facets stay post-fetch
+
+    @Test("Facet selections do not constrain the SwiftData fetch")
+    func facetSelectionDoesNotConstrainSwiftDataFetch() throws {
+        let (_, ctx) = try Self.makeFixture()
+        let state = FilterState()
+        state.selectedEquipmentRaw = ["barbell"]
+        state.selectedMuscleSlugs = ["chest"]
+        let fetched = try ctx.fetch(FetchDescriptor<Exercise>(
+            predicate: state.swiftDataPredicate(with: "")
+        ))
+        let filtered = state.applyPostFetchFilters(to: fetched)
+
+        #expect(fetched.count == 4, "Facets should not be pushed into the SwiftData predicate")
+        #expect(filtered.map(\.name) == ["Barbell Bench Press"])
     }
 }
