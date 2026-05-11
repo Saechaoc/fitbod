@@ -78,6 +78,7 @@ public struct RoutinesListView: View {
     @State private var presentingNewFolder = false
     @State private var presentingMoveSheet: Routine? = nil
     @State private var presentingNewRoutine = false
+    @State private var editingRoutine: Routine? = nil
     @State private var conflictRoutine: Routine? = nil
     @State private var deleteConfirmFolder: RoutineFolder? = nil
 
@@ -110,11 +111,25 @@ public struct RoutinesListView: View {
                     MoveRoutineSheet(routine: routine, folders: folders)
                 }
                 .sheet(isPresented: $presentingNewRoutine) {
-                    // TODO plan 03-02: replace with
-                    // `NavigationStack { RoutineBuilderView(draft: RoutineDraft()) }`.
+                    // Plan 03-02 wire — real RoutineBuilderView replaces
+                    // the prior interim placeholder. A fresh
+                    // `RoutineDraft()` is constructed per presentation so
+                    // the sheet opens with empty fields each time.
                     NavigationStack {
-                        Text("New Routine — Plan 03-02 fills this in.")
-                            .navigationTitle("New Routine")
+                        RoutineBuilderView(draft: RoutineDraft())
+                    }
+                }
+                .sheet(item: $editingRoutine) { routine in
+                    // Plan 03-02 edit-mode wire — the row-tap closure on
+                    // RoutineRow sets `editingRoutine = routine`, which
+                    // presents the builder in edit mode (the builder
+                    // round-trips the existing RoutineExercise + per-set
+                    // override rows via `RoutineDraft(routine:)`).
+                    NavigationStack {
+                        RoutineBuilderView(
+                            draft: RoutineDraft(routine: routine),
+                            editing: routine
+                        )
                     }
                 }
                 .alert(
@@ -206,10 +221,7 @@ public struct RoutinesListView: View {
                         ForEach(section.routines) { routine in
                             RoutineRow(
                                 routine: routine,
-                                onTap: { _ in
-                                    // TODO plan 03-02: push
-                                    // RoutineBuilderView(routine:) edit mode.
-                                },
+                                onTap: { editingRoutine = $0 },
                                 onStart: { handleStartTap(routine: $0) },
                                 onDuplicate: { handleDuplicate(routine: $0) },
                                 onMove: { presentingMoveSheet = $0 },
