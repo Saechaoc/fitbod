@@ -11,7 +11,8 @@
 //    - `.searchable` with a 150 ms debounce via `.task(id: searchText)`
 //    - sectioned alphabetical `List`
 //    - inline "Custom" tag on user-authored rows
-//    - "+" toolbar button → custom-exercise editor (plan 03-04 fills in)
+//    - "+" toolbar button → presents `CustomExerciseEditor` as a
+//      `.sheet` wrapped in a `NavigationStack` (plan 03-04)
 //    - row tap → exercise detail (plan 03-03 fills in)
 //
 //  ## Outer / inner view split (RESEARCH § Pattern 3)
@@ -51,10 +52,12 @@
 //
 //  ## Toolbar "+" affordance
 //
-//  Per UI-SPEC § Library screen "+" toolbar button: pushes a typed
-//  navigation value (`NewCustomExerciseRequest`) onto the Library
-//  tab's `NavigationStack`. Plan 03-04 swaps the placeholder destination
-//  for the real `CustomExerciseEditor`.
+//  Per UI-SPEC § Library screen "+" toolbar button: presents the
+//  `CustomExerciseEditor` as a `.sheet` wrapped in a `NavigationStack`.
+//  The editor owns its own toolbar (Save / Cancel) and dismisses
+//  itself via `@Environment(\.dismiss)` on save / discard. A fresh
+//  `CustomExerciseDraft()` is constructed per sheet presentation so
+//  the editor opens with empty fields each time.
 //
 //  ## Empty states
 //
@@ -83,6 +86,7 @@ public struct ExerciseLibraryView: View {
     @State private var searchText: String = ""
     @State private var debouncedSearch: String = ""
     @State private var presentingFacet: ExerciseFilterBar.FilterFacet? = nil
+    @State private var presentingNewCustom = false
 
     public init() {}
 
@@ -122,18 +126,25 @@ public struct ExerciseLibraryView: View {
             }
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
-                    NavigationLink(value: NewCustomExerciseRequest()) {
+                    Button {
+                        presentingNewCustom = true
+                    } label: {
                         Label("Create custom exercise", systemImage: "plus")
                             .labelStyle(.iconOnly)
                     }
                     .accessibilityLabel("Create custom exercise")
                 }
             }
-            .navigationDestination(for: NewCustomExerciseRequest.self) { _ in
-                // Plan 03-04 replaces this with the real
-                // `CustomExerciseEditor` body.
-                Text("Custom exercise editor — plan 03-04 fills this in")
-                    .navigationTitle("New Exercise")
+            .sheet(isPresented: $presentingNewCustom) {
+                // Plan 03-04 wire — fresh CustomExerciseDraft per
+                // sheet presentation. The editor owns the save flow
+                // (`materialize(into: modelContext, ...)` + `ctx.save()`
+                // + dismiss); the new row appears in the library list
+                // via the outer @Query<Exercise> re-running on the
+                // insert.
+                NavigationStack {
+                    CustomExerciseEditor(draft: CustomExerciseDraft())
+                }
             }
         }
     }
@@ -278,15 +289,15 @@ private struct EmptyLibraryView: View {
     }
 }
 
-// MARK: - NewCustomExerciseRequest
-
-/// Typed navigation token for the "+" toolbar button. Plan 03-04 swaps
-/// the destination for the real `CustomExerciseEditor`; keeping the
-/// token as a `Hashable` value lets the toolbar wiring stay testable
-/// and stable across the placeholder swap.
-private struct NewCustomExerciseRequest: Hashable {}
-
 // MARK: - Previews
+//
+// NOTE: The interim `NewCustomExerciseRequest` navigation token (plan
+// 03-02 D-5) has been removed. Plan 03-04 wires the "+" toolbar
+// button directly to a `.sheet(isPresented:)` presenting the real
+// `CustomExerciseEditor` wrapped in a `NavigationStack`. The previous
+// `navigationDestination(for: NewCustomExerciseRequest.self)`
+// placeholder is gone.
+
 
 #Preview("With fixture") {
     ExerciseLibraryView()
