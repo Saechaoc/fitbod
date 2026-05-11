@@ -109,7 +109,12 @@ public final class FilterState {
         let muscles = selectedMuscleSlugs
         let equipment = selectedEquipmentRaw
         let mechanic = selectedMechanicRaw
-        let patterns = selectedPatternRaw
+        // Pre-lift the pattern selection into a `Set<String?>` so the
+        // predicate translator can compare `ex.patternRaw` (`String?`)
+        // directly against the set without a force-unwrap or a nil
+        // guard inside the predicate body (review WR-05).
+        let patternsOptional: Set<String?> = Set(selectedPatternRaw.map(Optional.some))
+        let patternsEmpty = selectedPatternRaw.isEmpty
 
         return #Predicate<Exercise> { ex in
             // Text search — case- + diacritic-insensitive substring
@@ -121,7 +126,12 @@ public final class FilterState {
             (equipment.isEmpty || equipment.contains(ex.equipmentRaw))
             &&
             // Mechanic facet (single-select per UI-SPEC).
-            (mechanic == nil || ex.mechanicRaw == mechanic!)
+            //
+            // Comparing `Optional<String>` to `String` lifts the RHS
+            // into `Optional` automatically — no force-unwrap needed.
+            // This survives the predicate translator unambiguously
+            // (review WR-05).
+            (mechanic == nil || mechanic == ex.mechanicRaw)
             &&
             // Muscle facet — denormalized predicate (PITFALLS #3).
             // `ex.primaryMuscleSlugsJoined` is shaped like "|chest|triceps|";
@@ -132,8 +142,10 @@ public final class FilterState {
             })
             &&
             // Pattern facet (multi-select; `patternRaw` is nullable per
-            // Open Q #5, so guard against nil before set-membership check).
-            (patterns.isEmpty || (ex.patternRaw != nil && patterns.contains(ex.patternRaw!)))
+            // Open Q #5). `patternsOptional` is a `Set<String?>` so
+            // membership test handles the nullable column without a
+            // force-unwrap (review WR-05).
+            (patternsEmpty || patternsOptional.contains(ex.patternRaw))
         }
     }
 }
