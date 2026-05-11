@@ -2,79 +2,29 @@
 //  ContentView.swift
 //  fitbod
 //
-//  Created by Chris Saechao on 5/10/26.
+//  Interim `RootView` stub. The Wave-3 `RootView` (plan 03-01) replaces
+//  this with a `TabView` hosting Today / Routines / Library / Settings
+//  and moves the file to `fitbod/App/RootView.swift`. Keeping the file
+//  named `ContentView.swift` for this plan minimizes pbxproj thrash —
+//  03-01 owns the rename + folder move as a single atomic change.
 //
 
 import SwiftUI
-import SwiftData
 
-struct ContentView: View {
-    @Environment(\.modelContext) private var modelContext
-    @Query private var items: [Item]
-
+struct RootView: View {
     var body: some View {
-        NavigationViewWrapper {
-            List {
-                ForEach(items) { item in
-                    NavigationLink {
-                        Text("Item at \(item.timestamp, format: Date.FormatStyle(date: .numeric, time: .standard))")
-                    } label: {
-                        Text(item.timestamp, format: Date.FormatStyle(date: .numeric, time: .standard))
-                    }
-                }
-                .onDelete(perform: deleteItems)
-            }
-#if os(macOS)
-            .navigationSplitViewColumnWidth(min: 180, ideal: 200)
-#endif
-            .toolbar {
-#if os(iOS)
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    EditButton()
-                }
-#endif
-                ToolbarItem {
-                    Button(action: addItem) {
-                        Label("Add Item", systemImage: "plus")
-                    }
-                }
-            }
+        VStack(spacing: 16) {
+            Image(systemName: "dumbbell")
+                .font(.system(size: 64))
+                .foregroundStyle(.accent)
+            Text("Fitbod")
+                .font(.title2.weight(.semibold))
+            Text("Wave 3 fills this in.")
+                .font(.callout)
+                .foregroundStyle(.secondary)
         }
-    }
-
-    private func addItem() {
-        withAnimation {
-            let newItem = Item(timestamp: Date())
-            modelContext.insert(newItem)
-        }
-    }
-
-    private func deleteItems(offsets: IndexSet) {
-        withAnimation {
-            for index in offsets {
-                modelContext.delete(items[index])
-            }
-        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }
 
-fileprivate struct NavigationViewWrapper<Content: View>: View {
-    let content: () -> Content
-
-    var body: some View {
-#if os(macOS)
-        NavigationSplitView {
-            content()
-        } detail: {
-            Text("Select an item")
-        }
-#else
-        content()
-#endif
-    }
-}
-
-#Preview {
-    ContentView()
-        .modelContainer(for: Item.self, inMemory: true)
-}
+#Preview { RootView() }
