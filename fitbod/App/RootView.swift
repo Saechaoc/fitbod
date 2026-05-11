@@ -152,13 +152,23 @@ public struct RootView: View {
     private var tabBar: some View {
         TabView(selection: tabSelection) {
             // UI-SPEC § Tab labels — verbatim labels + SF Symbols + order.
-            PlaceholderTabView(phaseNumber: 2)
+            //
+            // Plan 03-01 wired: Today tab still shows the Phase 2
+            // placeholder body, but now mounts `ResumeWorkoutBanner` at
+            // the top via `.safeAreaInset(.top)` so a
+            // `Session.completedAt == nil` row surfaces as a tap-to-resume
+            // card. The banner self-hides when no active session exists.
+            TodayTabHost()
                 .tabItem {
                     Label("Today", systemImage: "figure.strengthtraining.traditional")
                 }
                 .tag(Tab.today)
 
-            PlaceholderTabView(phaseNumber: 2)
+            // Plan 03-01 wired: replaces the Phase 2 placeholder body
+            // with the real `RoutinesListView`. The view owns its own
+            // `NavigationStack`, so the wrapper from the placeholder is
+            // removed.
+            RoutinesListView()
                 .tabItem {
                     Label("Routines", systemImage: "list.bullet.rectangle.portrait")
                 }
@@ -214,6 +224,40 @@ public struct RootView: View {
 }
 
 // MARK: - Interim tab hosts
+
+/// Today tab body — interim host that mounts `ResumeWorkoutBanner` above
+/// the Phase 2 placeholder body via `.safeAreaInset(edge: .top)`. When a
+/// `Session.completedAt == nil` row exists, the banner renders the UI-SPEC
+/// verbatim "Resume Workout: {name}" card with Resume / Discard actions.
+/// Otherwise the banner emits `EmptyView()` and only the placeholder
+/// text shows.
+///
+/// The placeholder view owns its own `NavigationStack`, so the host does
+/// NOT wrap it in another stack — `.safeAreaInset` adds the banner to
+/// the top safe-area of the placeholder's existing stack, avoiding the
+/// nested-NavigationStack anti-pattern (RESEARCH § State of the Art).
+///
+/// Plan 04-01 replaces this host with the real Today-tab content
+/// (post-session summary card, today's planned routine surfacing, etc.).
+private struct TodayTabHost: View {
+    @Environment(\.modelContext) private var ctx
+
+    var body: some View {
+        PlaceholderTabView(phaseNumber: 2)
+            .safeAreaInset(edge: .top, spacing: 0) {
+                ResumeWorkoutBanner(
+                    onResume: { _ in
+                        // TODO plan 04-01: push SessionLoggerView via a
+                        // Today-tab NavigationPath.
+                    },
+                    onDiscard: { session in
+                        ctx.delete(session)
+                        try? ctx.save()
+                    }
+                )
+            }
+    }
+}
 
 /// Library tab body — wraps the real `ExerciseLibraryView` (plan 03-02).
 ///
