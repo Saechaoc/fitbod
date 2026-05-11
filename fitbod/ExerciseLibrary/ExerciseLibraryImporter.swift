@@ -3,7 +3,7 @@
 //  fitbod
 //
 //  Plan 01-PLAN-02-02 — the load-bearing one-time seed pipeline for the
-//  built-in exercise library. Authored as a `@ModelActor` so the work
+//  built-in exercise library. Authored as a model-actor so the work
 //  (decoding ~1.0 MB of JSON, filtering, and inserting ~675 `Exercise`
 //  rows + 17 `MuscleGroup` rows + ~2200 `ExerciseMuscleStimulus` rows)
 //  runs off the main thread (PITFALLS.md #6 — never block the main
@@ -25,8 +25,8 @@
 //
 //  ## Critical invariants (RESEARCH PITFALLS)
 //
-//  - **Pitfall #6** — `@ModelActor` synthesizes its own executor + context,
-//    so the seed never blocks the main thread. The macro is the
+//  - **Pitfall #6** — the model-actor macro synthesizes its own executor +
+//    context, so the seed never blocks the main thread. The macro is the
 //    non-negotiable piece; do not refactor to a plain `Task { @MainActor in ... }`.
 //  - **Pitfall #7 (relationship-link)** — `Exercise` is `modelContext.insert(...)`'d
 //    FIRST, then the `ExerciseMuscleStimulus` join rows reference it.
@@ -36,8 +36,8 @@
 //    filter predicate uses `.contains("|<slug>|")` against this indexed
 //    field; predicates traversing the `[ExerciseMuscleStimulus]`
 //    relationship are not allowed by SwiftData's NSPredicate translator.
-//  - **Pitfall #11 (autosave race)** — `@ModelActor` synthesizes a
-//    dedicated context separate from the main context. SQLite WAL mode
+//  - **Pitfall #11 (autosave race)** — the model-actor macro synthesizes
+//    a dedicated context separate from the main context. SQLite WAL mode
 //    handles concurrent readers + serialized writers. No explicit
 //    `autosaveEnabled = false` is needed; we trust the actor isolation.
 //
@@ -70,8 +70,8 @@ public actor ExerciseLibraryImporter {
     /// Default stimulus weight for a secondary-muscle contributor.
     static let secondaryWeight: Double = 0.5
 
-    /// Batch size for `modelContext.save()` calls. 100 rows keeps each
-    /// SQLite transaction small while avoiding per-row save overhead.
+    /// Batch size for context-save calls. 100 rows keeps each SQLite
+    /// transaction small while avoiding per-row save overhead.
     static let batchSize = 100
 
     /// Structured logging handle (Console.app filterable subsystem).
@@ -151,9 +151,10 @@ public actor ExerciseLibraryImporter {
             modelContext.insert(mg)
             musclesBySlug[slug] = mg
         }
-        // Save the muscle batch up-front so the foreign-key links from
-        // stimulus rows land cleanly.
-        try modelContext.save()
+        // No save here — the muscle rows ride along with the first
+        // exercise batch's save. Inserting them up-front (before any
+        // exercise) is enough for the stimulus join rows below to bind
+        // to a real parent reference per Pitfall #7.
 
         // MARK: 3. Insert Exercise rows + stimulus rows in 100-row batches
         var batchCount = 0
