@@ -67,21 +67,25 @@ public struct ExerciseFilterBar: View {
             HStack(spacing: 8) {
                 FilterChip(
                     label: muscleLabel,
+                    accessibilityName: muscleA11yLabel,
                     isActive: !filterState.selectedMuscleSlugs.isEmpty
                 ) { presentingSheet = .muscle }
 
                 FilterChip(
                     label: equipmentLabel,
+                    accessibilityName: equipmentA11yLabel,
                     isActive: !filterState.selectedEquipmentRaw.isEmpty
                 ) { presentingSheet = .equipment }
 
                 FilterChip(
                     label: mechanicLabel,
+                    accessibilityName: mechanicA11yLabel,
                     isActive: filterState.selectedMechanicRaw != nil
                 ) { presentingSheet = .mechanic }
 
                 FilterChip(
                     label: patternLabel,
+                    accessibilityName: patternA11yLabel,
                     isActive: !filterState.selectedPatternRaw.isEmpty
                 ) { presentingSheet = .pattern }
 
@@ -125,5 +129,33 @@ public struct ExerciseFilterBar: View {
         filterState.selectedPatternRaw.isEmpty
             ? "Pattern"
             : "Pattern · \(filterState.selectedPatternRaw.count)"
+    }
+
+    // MARK: - Chip accessibility-label composition (review WR-03)
+    //
+    // Per UI-SPEC § Accessibility Contract the VoiceOver readout is
+    // facet-name + selection count ("Muscle filter, 2 selected"), NOT
+    // the visual mid-dot suffix that screen readers verbalize as "dot".
+    // These computed labels are passed to `FilterChip.accessibilityName`
+    // so the readout is decoupled from the visual label.
+
+    private var muscleA11yLabel: String {
+        let n = filterState.selectedMuscleSlugs.count
+        return n == 0 ? "Muscle filter" : "Muscle filter, \(n) selected"
+    }
+
+    private var equipmentA11yLabel: String {
+        let n = filterState.selectedEquipmentRaw.count
+        return n == 0 ? "Equipment filter" : "Equipment filter, \(n) selected"
+    }
+
+    private var mechanicA11yLabel: String {
+        guard let raw = filterState.selectedMechanicRaw else { return "Mechanic filter" }
+        return "Mechanic filter, \(raw.capitalized) selected"
+    }
+
+    private var patternA11yLabel: String {
+        let n = filterState.selectedPatternRaw.count
+        return n == 0 ? "Pattern filter" : "Pattern filter, \(n) selected"
     }
 }

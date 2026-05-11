@@ -33,13 +33,25 @@ import SwiftUI
 /// The chip is a capsule-shaped button with a `.caption` label and an
 /// active/inactive visual state. Selection count, when present, is
 /// already baked into `label` (e.g. `"Muscle · 2"`).
+///
+/// `accessibilityName` is decoupled from `label` so the VoiceOver
+/// readout follows the UI-SPEC § Accessibility Contract exactly
+/// (e.g. `"Muscle filter, 2 selected"`) rather than reading the
+/// visual mid-dot separator as "dot" (review WR-03).
 public struct FilterChip: View {
     let label: String
+    let accessibilityName: String
     let isActive: Bool
     let action: () -> Void
 
-    public init(label: String, isActive: Bool, action: @escaping () -> Void) {
+    public init(
+        label: String,
+        accessibilityName: String,
+        isActive: Bool,
+        action: @escaping () -> Void
+    ) {
         self.label = label
+        self.accessibilityName = accessibilityName
         self.isActive = isActive
         self.action = action
     }
@@ -59,16 +71,24 @@ public struct FilterChip: View {
         .buttonStyle(.plain)
         .contentShape(Capsule())
         .frame(minHeight: 44)
-        .accessibilityLabel("\(label) filter")
+        .accessibilityLabel(accessibilityName)
     }
 }
 
 #Preview("Inactive") {
-    FilterChip(label: "Muscle", isActive: false) {}
+    FilterChip(
+        label: "Muscle",
+        accessibilityName: "Muscle filter",
+        isActive: false
+    ) {}
         .padding()
 }
 
 #Preview("Active with count") {
-    FilterChip(label: "Muscle · 2", isActive: true) {}
+    FilterChip(
+        label: "Muscle · 2",
+        accessibilityName: "Muscle filter, 2 selected",
+        isActive: true
+    ) {}
         .padding()
 }
