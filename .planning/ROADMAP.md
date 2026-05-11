@@ -55,7 +55,7 @@ Granular, prescriptive workout sessions — every set in a session is intentiona
   4. Rest timer is `Date`-based (not foreground `Timer`), auto-starts on set completion, exposes ±15s buttons, fires a `UNUserNotification` at exactly the right wall-clock moment when phone is locked for 3+ minutes, displays as a Live Activity / Dynamic Island while running, and auto-stops on next set entry
   5. The same routine logged on Monday with strength intent and Thursday with hypertrophy intent produces two distinct per-exercise history streams; the inline "previous" column on each set shows the prior weight × reps × RPE from the matching-intent prior session
   6. Mid-session, user can swap or add unplanned exercises without mutating the routine template; workout-level notes and pinned per-exercise notes are visible inline
-**Plans:** TBD
+**Plans:** 14 atomic plans (5 waves; see .planning/phases/02-core-loop-routines-sessions/PLAN-INDEX.md)
 **UI hint:** yes
 **Research flag:** None — `Date` + `UNUserNotification` rest timer pattern is well-documented; care required but no open question
 
@@ -127,7 +127,7 @@ Granular, prescriptive workout sessions — every set in a session is intentiona
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation & Exercise Library | 12/12 | Complete | 2026-05-11 |
-| 2. Core Loop (Routines + Sessions) | 0/? | Not started | - |
+| 2. Core Loop (Routines + Sessions) | 0/14 | Planned | - |
 | 3. Smart Prescription & Warm-ups | 0/? | Not started | - |
 | 4. Periodization & Blocks | 0/? | Not started | - |
 | 5. Fatigue Model & Plateau Detection | 0/? | Not started | - |
