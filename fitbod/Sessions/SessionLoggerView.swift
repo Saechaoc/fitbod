@@ -83,6 +83,14 @@ public struct SessionLoggerView: View {
     /// Wave-4 plan 04-02 — long-press "Remove from Session" target.
     /// `.alert` presents the destructive confirmation.
     @State private var pendingRemove: SessionExercise?
+    /// Wave-4 plan 04-03 — header "Notes" chip presentation flag.
+    /// Replaces the plan 04-01 TODO with a real WorkoutNotesSheet.
+    @State private var presentingWorkoutNotes = false
+    /// Wave-4 plan 04-03 — long-press "Edit Pinned Note" target on the
+    /// SessionExerciseCard header (anchored as a TODO in plan 04-02; this
+    /// plan ships the real PinnedNoteSheet wire). `.sheet(item:)` presents
+    /// PinnedNoteSheet against this.
+    @State private var pendingPinnedNote: SessionExercise?
 
     public init(session: Session) {
         self.session = session
@@ -102,7 +110,8 @@ public struct SessionLoggerView: View {
                         onCommitSet: { commitSet($0, for: se) },
                         onTapEmptyCell: { engine.stop() },
                         onSwap: { pendingSwap = $0 },
-                        onRemove: { pendingRemove = $0 }
+                        onRemove: { pendingRemove = $0 },
+                        onEditPinnedNote: { pendingPinnedNote = $0 }          // Wave-4 plan 04-03
                     )
                 }
                 // Wave-4 plan 04-02 — bottom-of-list "+ Add Exercise"
@@ -167,6 +176,20 @@ public struct SessionLoggerView: View {
         // long-press "Swap Exercise…" menu entry.
         .sheet(item: $pendingSwap) { se in
             SwapExerciseSheet(sessionExercise: se)
+        }
+        // Wave-4 plan 04-03 — workout-level notes sheet (SESS-11). Bound
+        // to the header "Notes" chip; binds `session.notes` via the
+        // sheet's Binding(get:set:) write-through with empty-string → nil
+        // normalization.
+        .sheet(isPresented: $presentingWorkoutNotes) {
+            WorkoutNotesSheet(session: session)
+        }
+        // Wave-4 plan 04-03 — pinned per-exercise note sheet (SESS-11).
+        // Bound to pendingPinnedNote, which is set by
+        // SessionExerciseCard's long-press "Edit Pinned Note" menu entry
+        // AND by tapping the inline PinnedNoteCapsule.
+        .sheet(item: $pendingPinnedNote) { se in
+            PinnedNoteSheet(sessionExercise: se)
         }
         // Wave-4 plan 04-02 — remove-exercise destructive confirmation
         // (SESS-05/SESS-06 inverse). Bound to pendingRemove, set by
@@ -235,7 +258,7 @@ public struct SessionLoggerView: View {
                 }
                 Text("\(progressLabel)")                                       // "3 of 6"
                 Button {
-                    // Plan 04-03 — present WorkoutNotesSheet.
+                    presentingWorkoutNotes = true                              // Wave-4 plan 04-03
                 } label: {
                     HStack(spacing: 4) {                                       // UI-SPEC xs
                         Image(systemName: "square.and.pencil")

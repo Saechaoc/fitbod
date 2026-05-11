@@ -46,6 +46,11 @@ public struct SessionExerciseCard: View {
     /// SessionLoggerView is responsible for the destructive
     /// confirmation alert + the actual ctx.delete(_:).
     public let onRemove: (SessionExercise) -> Void
+    /// Wave-4 plan 04-03 — fires when the user taps "Edit Pinned Note"
+    /// in the header long-press menu OR taps the inline
+    /// PinnedNoteCapsule. The parent SessionLoggerView is responsible
+    /// for presenting PinnedNoteSheet.
+    public let onEditPinnedNote: (SessionExercise) -> Void
 
     public init(
         sessionExercise: SessionExercise,
@@ -53,7 +58,8 @@ public struct SessionExerciseCard: View {
         onCommitSet: @escaping (SetEntry) -> Void,
         onTapEmptyCell: @escaping () -> Void,
         onSwap: @escaping (SessionExercise) -> Void = { _ in },
-        onRemove: @escaping (SessionExercise) -> Void = { _ in }
+        onRemove: @escaping (SessionExercise) -> Void = { _ in },
+        onEditPinnedNote: @escaping (SessionExercise) -> Void = { _ in }
     ) {
         self.sessionExercise = sessionExercise
         self.engine = engine
@@ -61,10 +67,22 @@ public struct SessionExerciseCard: View {
         self.onTapEmptyCell = onTapEmptyCell
         self.onSwap = onSwap
         self.onRemove = onRemove
+        self.onEditPinnedNote = onEditPinnedNote
     }
 
     public var body: some View {
         Section {
+            // Wave-4 plan 04-03 — inline pinned-note capsule (UI-SPEC §
+            // Session logger "per-exercise card — pinned-note inline
+            // display"). Renders above the column-header row only when
+            // SessionExercise.pinnedNote is populated; tap fires
+            // onEditPinnedNote, which the parent SessionLoggerView wires
+            // to PinnedNoteSheet presentation.
+            if let note = sessionExercise.pinnedNote, !note.isEmpty {
+                PinnedNoteCapsule(note: note) {
+                    onEditPinnedNote(sessionExercise)
+                }
+            }
             // Column-header row — UI-SPEC verbatim labels.
             HStack {
                 Text("Set")
@@ -135,7 +153,7 @@ public struct SessionExerciseCard: View {
                         Label("Swap Exercise…", systemImage: "arrow.left.arrow.right")   // UI-SPEC verbatim
                     }
                     Button {
-                        // Plan 04-03 — present PinnedNoteSheet.
+                        onEditPinnedNote(sessionExercise)                                 // Wave-4 plan 04-03
                     } label: {
                         Label("Edit Pinned Note", systemImage: "pin.fill")               // UI-SPEC verbatim
                     }

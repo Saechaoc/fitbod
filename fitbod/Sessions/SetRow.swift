@@ -71,6 +71,10 @@ public struct SetRow: View {
 
     @State private var weightText: String = ""
     @State private var repsText: String = ""
+    /// Wave-4 plan 04-03 — per-set note sheet presentation flag. Plan
+    /// 04-01 anchored the note-button placement here as a stub; this plan
+    /// ships the real PerSetNoteSheet wire.
+    @State private var presentingSetNote: Bool = false
 
     public init(
         entry: SetEntry,
@@ -121,6 +125,25 @@ public struct SetRow: View {
                 set: { entry.setTypeRaw = $0 }
             ))
             Spacer()
+            // Wave-4 plan 04-03 — per-set notes button (UI-SPEC § Session
+            // logger "Per-set notes button accessibility label" + symbol
+            // anchor placement from plan 04-01). Icon-only button before
+            // the completion checkmark. Foreground tints to accent when a
+            // note is populated as a visual signal; secondary-label
+            // otherwise so empty-notes buttons stay quiet.
+            Button {
+                presentingSetNote = true
+            } label: {
+                Image(systemName: "square.and.pencil")
+                    .font(.caption)
+                    .foregroundStyle(entry.notes != nil ? Color.accentColor : Color.secondary)
+            }
+            .buttonStyle(.plain)
+            .frame(width: 32, height: 32)
+            .accessibilityLabel("Note for set \(entry.orderIndex + 1)")        // UI-SPEC verbatim a11y
+            .sheet(isPresented: $presentingSetNote) {
+                PerSetNoteSheet(entry: entry)
+            }
             Button {
                 // Guard: never commit a zero-weight/zero-rep set. Without
                 // this guard an empty checkmark-tap would flip
