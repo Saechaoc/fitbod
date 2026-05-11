@@ -142,6 +142,26 @@ struct ExerciseDetailView: View {
                     }
                 }
             }
+
+            // Phase 2 Wave 5 plan 05-01 — entry point to the per-exercise
+            // history view (SESS-10 / ROUTINE-08). The detail view is the
+            // Library tab's canonical landing surface for an Exercise, so
+            // surfacing "View All History" here matches UI-SPEC §
+            // "Exercise history view with intent split — Entry point" —
+            // the user reaches the per-exercise history list from the
+            // Library tab's NavigationStack, not from the session logger
+            // (entering it mid-session would break logger focus per the
+            // plan's anti-patterns list).
+            Section("History") {
+                NavigationLink {
+                    ExerciseHistoryView(exercise: exercise)
+                } label: {
+                    HStack {
+                        Text("View All History")
+                        Spacer()
+                    }
+                }
+            }
         }
         .listStyle(.insetGrouped)
         .navigationTitle(exercise.name)
