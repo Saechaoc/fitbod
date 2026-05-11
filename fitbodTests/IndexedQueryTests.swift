@@ -31,13 +31,21 @@
 //  ~675-exercise corpus. The seed itself is exercised by `SeedTests`;
 //  these tests assume it works and only measure post-seed query time.
 //
+//  ## Why `.serialized`
+//
+//  Same reason as `SeedTests`: `UserDefaults.standard` is process-wide,
+//  and parallel `@Test` execution can race the importer's seed-version
+//  stamp, causing one test's `seedIfNeeded()` to short-circuit on the
+//  stamp another test just wrote. `.serialized` forces sequential
+//  execution within this suite (review WR-02).
+//
 
 import Foundation
 import SwiftData
 import Testing
 @testable import fitbod
 
-@Suite("Indexed queries on Exercise")
+@Suite("Indexed queries on Exercise", .serialized)
 struct IndexedQueryTests {
 
     // MARK: - Helpers

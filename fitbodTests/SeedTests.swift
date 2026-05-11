@@ -32,13 +32,24 @@
 //  there is no shared state between tests; UserDefaults is the only
 //  process-wide channel and we reset it explicitly per test.
 //
+//  ## Why `.serialized`
+//
+//  `UserDefaults.standard` is process-wide. Without `.serialized`,
+//  Swift Testing parallelizes `@Test` functions within this suite by
+//  default, and parallel tests can race on the seed-version stamp:
+//  Test A resets the stamp + starts seeding, Test B reads the stamp
+//  AFTER Test A's seed finishes and short-circuits the importer. The
+//  `.serialized` trait forces sequential execution within the suite —
+//  cross-suite parallelism with other unrelated tests is unaffected
+//  (review WR-02).
+//
 
 import Foundation
 import SwiftData
 import Testing
 @testable import fitbod
 
-@Suite("ExerciseLibraryImporter")
+@Suite("ExerciseLibraryImporter", .serialized)
 struct SeedTests {
 
     // MARK: - Helpers
