@@ -41,6 +41,24 @@
 //  faint "Add an exercise to begin." placeholder when `exercises.isEmpty`
 //  per UI-SPEC § Empty states.
 //
+//  ## Plan 03-03 additions
+//
+//  - `pendingSupersetAssignment: RoutineExerciseDraft?` state holds the
+//    long-pressed exercise's draft while the SupersetAssignmentSheet is
+//    presented. The sheet writes the chosen `supersetGroupID` directly
+//    to the draft (not the persisted RE row); the persisted write
+//    happens at Save time via `RoutineDraft.save(into:)`.
+//  - The `RoutineExerciseCard` long-press menu's `onAssignSuperset`
+//    closure sets `pendingSupersetAssignment`; the sheet item-binding
+//    presents the sheet. The sheet's `SupersetGroup` insertions are
+//    persisted immediately (so the @Query in the sheet sees them
+//    next time), but the per-exercise assignment lives on the draft.
+//  - **Edit-mode gate**: the SupersetAssignmentSheet needs a persisted
+//    `Routine` (the SupersetGroup.routineID weak ref must point at a
+//    real Routine). In create mode (editing == nil) we present an alert
+//    asking the user to save first. In edit mode (editing != nil) the
+//    sheet presents immediately.
+//
 
 import SwiftUI
 import SwiftData
@@ -56,6 +74,8 @@ public struct RoutineBuilderView: View {
     @State private var expandedExerciseIDs: Set<UUID> = []
     @State private var presentingDiscardConfirm = false
     @State private var initialSnapshot: String = ""
+    @State private var pendingSupersetAssignment: RoutineExerciseDraft? = nil
+    @State private var presentingSaveFirstAlert: Bool = false
 
     public init(draft: RoutineDraft, editing: Routine? = nil) {
         self.draft = draft
@@ -85,7 +105,19 @@ public struct RoutineBuilderView: View {
                                     if isOpen { expandedExerciseIDs.insert(key) }
                                     else { expandedExerciseIDs.remove(key) }
                                 }
-                            )
+                            ),
+                            onAssignSuperset: { exDraft in
+                                handleAssignSuperset(exDraft)
+                            },
+                            onRemoveFromSuperset: { exDraft in
+                                exDraft.supersetGroupID = nil
+                            },
+                            onDuplicate: { exDraft in
+                                duplicateExercise(exDraft)
+                            },
+                            onRemove: { exDraft in
+                                removeExercise(exDraft)
+                            }
                         )
                     }
                     .onMove { source, destination in
@@ -154,6 +186,29 @@ public struct RoutineBuilderView: View {
                 presentingDiscardConfirm = false
             }
         }
+        .sheet(
+            isPresented: Binding(
+                get: { pendingSupersetAssignment != nil },
+                set: { if !$0 { pendingSupersetAssignment = nil } }
+            )
+        ) {
+            // The save-first gate above guarantees `editing != nil` when
+            // this sheet is presented. The SupersetGroup.routineID weak
+            // ref needs a persisted Routine to point at.
+            if let editing, let exDraft = pendingSupersetAssignment {
+                SupersetAssignmentSheet(routine: editing, exerciseDraft: exDraft)
+            }
+        }
+        .alert(
+            "Save Routine First",
+            isPresented: $presentingSaveFirstAlert
+        ) {
+            Button("OK", role: .cancel) {
+                presentingSaveFirstAlert = false
+            }
+        } message: {
+            Text("Save the routine before grouping exercises into a superset.")
+        }
         .onAppear {
             initialSnapshot = snapshotHash()
         }
@@ -215,5 +270,69 @@ public struct RoutineBuilderView: View {
         draft.save(into: routine, context: ctx)
         try? ctx.save()
         dismiss()
+    }
+
+    // MARK: - Long-press menu handlers (plan 03-03)
+
+    /// "Move to Superset…" / "Make Superset" menu actions both route
+    /// here. The sheet needs a persisted Routine to anchor the
+    /// SupersetGroup.routineID weak ref against — in create mode we
+    /// surface a "Save Routine First" alert per the plan's edge-case
+    /// guidance ("gate visibility on `editing != nil`"). The simpler
+    /// path of saving inline would create a partially-built routine in
+    /// the store before the user has chosen to commit; the alert keeps
+    /// the create-mode user flow predictable.
+    private func handleAssignSuperset(_ exDraft: RoutineExerciseDraft) {
+        if editing == nil {
+            presentingSaveFirstAlert = true
+            return
+        }
+        pendingSupersetAssignment = exDraft
+    }
+
+    /// "Duplicate Exercise" menu action — inserts a clone of the
+    /// long-pressed draft at `index + 1`. In-builder duplication only
+    /// (not persisted until Save). The clone copies every prescription
+    /// field verbatim and gets a fresh in-memory identity; per-set
+    /// overrides are NOT cloned at this layer (the user can re-add
+    /// them after duplication if needed — the in-builder duplicate is
+    /// a quick "give me another row like this" affordance, not the
+    /// routine-level deep copy that `RoutineDuplicator` handles).
+    private func duplicateExercise(_ exDraft: RoutineExerciseDraft) {
+        guard let index = draft.exercises.firstIndex(where: { $0 === exDraft }) else {
+            return
+        }
+        let clone = RoutineExerciseDraft()
+        clone.exercise = exDraft.exercise
+        clone.intent = exDraft.intent
+        clone.targetSets = exDraft.targetSets
+        clone.targetRepsLow = exDraft.targetRepsLow
+        clone.targetRepsHigh = exDraft.targetRepsHigh
+        clone.targetRPE = exDraft.targetRPE
+        clone.prescribedRestSeconds = exDraft.prescribedRestSeconds
+        clone.progressionKind = exDraft.progressionKind
+        clone.tempo = exDraft.tempo
+        clone.tracksTempo = exDraft.tracksTempo
+        clone.tracksPartialReps = exDraft.tracksPartialReps
+        // NOTE: supersetGroupID is intentionally NOT copied — the
+        // duplicate starts as a standalone exercise. The user can
+        // long-press it and assign a superset explicitly.
+        clone.supersetGroupID = nil
+        draft.exercises.insert(clone, at: index + 1)
+        // Rewrite orderIndex on the affected suffix.
+        for (i, ex) in draft.exercises.enumerated() {
+            ex.orderIndex = i
+        }
+    }
+
+    /// "Remove" menu action — removes the long-pressed draft from the
+    /// in-memory exercise list and rewrites `orderIndex` on the
+    /// remainder. Persistence happens at Save time via the three-way
+    /// merge in `RoutineDraft.save(into:context:)`.
+    private func removeExercise(_ exDraft: RoutineExerciseDraft) {
+        draft.exercises.removeAll { $0 === exDraft }
+        for (i, ex) in draft.exercises.enumerated() {
+            ex.orderIndex = i
+        }
     }
 }
