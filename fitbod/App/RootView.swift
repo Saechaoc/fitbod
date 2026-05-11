@@ -159,19 +159,14 @@ public struct RootView: View {
 
 // MARK: - Interim tab hosts
 
-/// Library tab body — interim placeholder until plan 03-02 wires
-/// `ExerciseLibraryView`. Importantly: this view is NOT a `@Query`
-/// consumer, so swapping it for `ExerciseLibraryView` is a 1-line edit.
+/// Library tab body — wraps the real `ExerciseLibraryView` (plan 03-02).
+/// `ExerciseLibraryView` owns its own `NavigationStack`, so this host
+/// is now just a thin transparent wrapper. Kept as a private struct
+/// rather than substituting `ExerciseLibraryView()` directly into the
+/// `tabBar` body so plan 04-01's settings substitution and any future
+/// per-tab wrappers stay symmetrical (e.g., wrapping for analytics).
 private struct LibraryTabHost: View {
-    var body: some View {
-        NavigationStack {
-            Text("Library — coming in 03-02")
-                .font(.callout)
-                .foregroundStyle(.secondary)
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .navigationTitle("Exercises")
-        }
-    }
+    var body: some View { ExerciseLibraryView() }
 }
 
 /// Settings tab body — interim placeholder until plan 04-01.
