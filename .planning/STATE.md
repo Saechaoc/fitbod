@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: RootView 5-tab TabView shipped — RootView.task seed trigger, "Preparing library…" splash with @Observable SeedState lifecycle (idle/loading/ready/failed), locked UI-SPEC SF Symbols + labels, two interim tab hosts (LibraryTabHost / SettingsTabHost) as 1-line edit-points for plans 03-02 / 04-01. Wave 3 sequence 1 of 4 complete.
-last_updated: "2026-05-11T06:51:29Z"
+status: executing
+last_updated: "2026-05-11T07:04:38.655Z"
 progress:
   total_phases: 6
   completed_phases: 0
   total_plans: 12
-  completed_plans: 8
-  percent: 67
+  completed_plans: 9
+  percent: 75
 ---
 
 # Project State: Fitbod
@@ -33,15 +33,15 @@ progress:
 ## Current Position
 
 **Phase:** 1 — Foundation & Exercise Library (in progress)
-**Plan:** 03-01 complete (Wave 3, sequence 1 of 4) — RootView TabView + seed-trigger shipped; next: 03-02 (ExerciseLibraryView)
-**Status:** RootView 5-tab TabView shipped — RootView.task seed trigger, "Preparing library…" splash with @Observable SeedState lifecycle (idle/loading/ready/failed), locked UI-SPEC SF Symbols + labels, two interim tab hosts (LibraryTabHost / SettingsTabHost) as 1-line edit-points for plans 03-02 / 04-01. Wave 3 sequence 1 of 4 complete.
-**Progress:** [███████░░░] 67%
+**Plan:** 03-02 complete (Wave 3, sequence 2 of 4) — ExerciseLibraryView with multi-facet filter + .searchable shipped; next: 03-03 (ExerciseDetailView)
+**Status:** Ready to execute
+**Progress:** [████████░░] 75%
 
 ### Phase Outlook
 
 | # | Phase | Reqs | Status |
 |---|-------|-----:|--------|
-| 1 | Foundation & Exercise Library | 14 | In progress (Wave 3 sequence 1 of 4 complete; 03-02 next) |
+| 1 | Foundation & Exercise Library | 14 | In progress (Wave 3 sequence 2 of 4 complete; 03-03 next) |
 | 2 | Core Loop (Routines + Sessions) | 20 | Not started |
 | 3 | Smart Prescription & Warm-ups | 15 | Not started |
 | 4 | Periodization & Blocks | 10 | Not started |
@@ -66,6 +66,7 @@ Phase 1 in flight; metrics roll up at phase completion. Per-plan duration table:
 | 1 | 02-01 | 216 | 3 | 8 | Vendor free-exercise-db JSON (873 rows, ~1.0 MB, SHA `acd61f7`) + ExerciseDTO + EquipmentMapper + MuscleRegionMap + 9 DTODecodingTests |
 | 1 | 02-02 | 229 | 3 | 3 | ExerciseLibraryImporter @ModelActor (idempotent seed pipeline) + SeedError + 7 SeedTests (FOUND-05 + LIB-01) |
 | 1 | 03-01 | 0 (single-commit micro-plan) | 1 | 4 | RootView 5-tab TabView + RootView.task seed trigger + SeedState + PlaceholderTabView + ContentView.swift deletion |
+| 1 | 03-02 | 270 | 3 | 9 | ExerciseLibraryView (outer/inner split per RESEARCH § Pattern 3) + FilterState (@Observable, captures-by-value) + FilterChip / ExerciseFilterBar (44pt HIG, .safeAreaInset sticky) + FilterPickerSheet (4 facets, [.medium, .large] detents) + ExerciseRow ("Custom" tag) + RootView LibraryTabHost 1-line wire + 7 FilterStatePredicateTests + 2 IndexedQueryTests. Closes LIB-01 / LIB-02 / LIB-03; verifies FOUND-04 / FOUND-06. |
 
 ---
 
@@ -116,7 +117,8 @@ These drive phase ordering and are mitigated by phase placement:
 - [x] Plan 02-01 — `ExerciseDTO` + EquipmentMapper + MuscleRegionMap + vendored exercises.json (Wave 2, seq 1)
 - [x] Plan 02-02 — `ExerciseLibraryImporter` `@ModelActor` + SeedError + 7 SeedTests (Wave 2, seq 2 — closes FOUND-05)
 - [x] Plan 03-01 — RootView 5-tab TabView + RootView.task seed trigger + SeedState + PlaceholderTabView (Wave 3, seq 1)
-- [ ] Plans 03-02 / 03-03 / 03-04 — ExerciseLibraryView + ExerciseDetailView + custom exercise editor (Wave 3, seq 2-4)
+- [x] Plan 03-02 — ExerciseLibraryView (browse + multi-facet filter + .searchable) + FilterState + FilterPickerSheet + ExerciseRow + 9 Swift Testing funcs (Wave 3, seq 2 — closes LIB-01 / LIB-02 / LIB-03; verifies FOUND-04 / FOUND-06)
+- [ ] Plans 03-03 / 03-04 — ExerciseDetailView + CustomExerciseEditor (Wave 3, seq 3-4)
 
 ### Phase 1 Plans Completed
 
@@ -128,6 +130,7 @@ These drive phase ordering and are mitigated by phase placement:
 - **02-01** (Wave 2, seq 1): Vendored `yuhonas/free-exercise-db` `exercises.json` (873 raw rows, ~1.0 MB, pinned to upstream SHA `acd61f7`, Unlicense / public domain). Authored `SEED_VERSION.txt` = 1 + `SOURCE.md` (provenance + 5-step refresh procedure). Created `ExerciseDTO` (plain Codable struct, 11 fields), `EquipmentMapper` (LIB-06 anchor: 12+ raw → 9-case Equipment, plus `shouldImport(category:)` strength filter), `MuscleRegionMap` (RESEARCH Open Q #3: 17 slugs → 10/6/1 region split + `displayName(for:)` + `allSlugs: [String]`). Added 9 `DTODecodingTests` (15-input parameterised equipment-mapping + exhaustive coverage over actual bundled JSON + region bucket sizes + Codable round-trip). Commits: `f7279bb` / `3d21e20` / `fa33433`. Closes LIB-01.
 - **02-02** (Wave 2, seq 2): `ExerciseLibraryImporter` `@ModelActor` — load-bearing seed pipeline. Reads `UserDefaults["exercise_seed_version"]` vs bundled `SEED_VERSION.txt`; short-circuits when up-to-date. On fresh seed: decodes `exercises.json` via `ExerciseDTO`, filters via `EquipmentMapper.shouldImport(category:)` (yielding ~675 rows), upserts 17 `MuscleGroup` rows from `MuscleRegionMap.allSlugs`, inserts the filtered exercises with `equipmentRaw` translated via `EquipmentMapper.map(_:)`, populates the denormalized `primaryMuscleSlugsJoined = "|chest|triceps|"` field (PITFALLS #3 — index-friendly muscle-filter predicate), creates `ExerciseMuscleStimulus` join rows (primary=1.0 / secondary=0.5) AFTER inserting each parent (PITFALLS #7), 100-row batched `modelContext.save()` (PITFALLS #6 — off the main thread), seeds `UserSettings.default()` singleton if absent, stamps `UserDefaults["exercise_seed_version"]` on success. `SeedError` Sendable enum for typed failure modes. 7 `SeedTests`: `strengthOnlyCount`, `muscleGroupCount`, `idempotent`, `userSettingsSeeded`, `stimulusWeightingDefaults`, `denormalizedMuscleField`, `coldLaunchUnder2s` (soft cap 5s for CI; production target <2s = FOUND-05). Commits: `998bacb` / `97f023a`. Closes FOUND-05 and the seed-pipeline portion of LIB-01.
 - **03-01** (Wave 3, seq 1): `RootView` (`fitbod/App/RootView.swift`) — 5-tab `TabView` with locked UI-SPEC SF Symbols + labels (Today / Routines / Library / Progress / Settings), `RootView.task`-driven seed trigger calling `ExerciseLibraryImporter(modelContainer:).seedIfNeeded(bundle: .main)`, `ProgressView("Preparing library…")` splash dismissed by dual-signal predicate (`@Query<Exercise>.isEmpty` AND `SeedState.phase in {.idle, .loading}`). `PlaceholderTabView` "Available in Phase {N}" filler for Today / Routines (Phase 2) / Progress (Phase 6). `@Observable SeedState` lifecycle (idle / loading / ready / failed(message:)). Two interim hosts (`LibraryTabHost` / `SettingsTabHost`) as 1-line edit-points for plans 03-02 / 04-01. Deleted `fitbod/ContentView.swift` (interim stub from 01-02 superseded). Commits: `a9a121e`. Wave 3 sequence 1 of 4 complete.
+- **03-02** (Wave 3, seq 2): `ExerciseLibraryView` (`fitbod/ExerciseLibrary/ExerciseLibraryView.swift`) — outer view owns `@State filterState / searchText / debouncedSearch / presentingFacet`; inner private `FilteredExerciseList` consumes a `Predicate<Exercise>` via `init(predicate:)` and re-runs its `@Query` whenever the predicate changes (RESEARCH § Pattern 3). `.searchable` with 150 ms `.task(id: searchText)` debounce (PITFALLS #4). Sectioned alphabetical `List` (.insetGrouped). `FilterState` (`@Observable`) composes `Predicate<Exercise>` from muscle/equipment/mechanic/pattern + debounced search; captures-by-value (PITFALLS #12); denormalized muscle filter via `primaryMuscleSlugsJoined.contains("|slug|")` (PITFALLS #3). `FilterChip` (44pt HIG `.frame(minHeight: 44)`). `ExerciseFilterBar` (sticky via `.safeAreaInset(edge: .top)`; "Clear filters" trailing button when `!filterState.isEmpty`). `FilterPickerSheet` (multi-select for muscle/equipment/pattern, single-select for mechanic; `[.medium, .large]` detents; pattern footer copy explains the Phase 1 nullable state per Open Q #5). `ExerciseRow` (name `.body` + equipment·mechanic caption + "Custom" capsule tag per UI-SPEC). Empty state ships with both UI-SPEC copy variants now (with-query: `No exercises match "{query}"`; without: `No exercises match`); "Create Custom Exercise" CTA deferred to 04-01 (depends on 03-04's editor). RootView `LibraryTabHost` rewired to `var body: some View { ExerciseLibraryView() }` — the 1-line edit-point planned in 03-01 D-4. 7 `FilterStatePredicateTests` (empty / search / equipment / mechanic / muscle-denormalised / multi-facet AND / multi-select OR) + 2 `IndexedQueryTests` (canonicalName.contains + primaryMuscleSlugsJoined.contains; production target <50 ms, soft cap 200 ms for CI). Commits: `5d16b4f` / `d1dc0da` / `8e75585`. Closes LIB-01 / LIB-02 / LIB-03; verifies FOUND-04 / FOUND-06.
 
 ### Blockers
 
@@ -139,11 +142,11 @@ None.
 
 ### Last Action
 
-Executed plan 03-01 (RootView 5-tab TabView + seed trigger). Created `fitbod/App/RootView.swift` (the real Wave-3 root replacing the 01-02 stub), `fitbod/App/PlaceholderTabView.swift` (Today / Routines / Progress filler with "Available in Phase {N}" copy), `fitbod/App/SeedState.swift` (`@Observable` lifecycle wrapper with idle / loading / ready / failed(message:) cases). Deleted `fitbod/ContentView.swift` (superseded by `App/RootView.swift`; `PBXFileSystemSynchronizedRootGroup` auto-discovery handled the removal — no project.pbxproj edits needed). Five tabs use locked UI-SPEC SF Symbols + labels (figure.strengthtraining.traditional / list.bullet.rectangle.portrait / dumbbell / chart.xyaxis.line / gearshape — Today / Routines / Library / Progress / Settings). Each tab body owns its own NavigationStack (RESEARCH § State of the Art — TabView NOT wrapped in parent NavigationStack). Seed wired via `RootView.task { await runSeed() }` calling `ExerciseLibraryImporter(modelContainer: modelContext.container).seedIfNeeded(bundle: .main)`. Splash predicate `@Query<Exercise>.isEmpty AND SeedState in {.idle, .loading}` — dual-signal dismissal eliminates second-launch flash. `xcrun swiftc -parse` over all 37 production + 8 test Swift files exits 0. Wave 3 sequence 1 of 4 complete; plan 03-02 next.
+Executed plan 03-02 (ExerciseLibraryView with multi-facet filter + .searchable). Created 6 production files under `fitbod/ExerciseLibrary/` (FilterState, FilterChip, ExerciseFilterBar, FilterPickerSheet, ExerciseRow, ExerciseLibraryView) + 2 test files under `fitbodTests/` (FilterStatePredicateTests, IndexedQueryTests). Modified `fitbod/App/RootView.swift` LibraryTabHost body to one-line `ExerciseLibraryView()` wrapper (the 1-line edit-point planned in 03-01 D-4). `FilterState` is `@Observable` ephemeral state holding muscle/equipment/mechanic/pattern selections; `predicate(with:)` composes `Predicate<Exercise>` with captures-by-value per PITFALLS #12 and denormalized muscle predicate `primaryMuscleSlugsJoined.contains("|slug|")` per PITFALLS #3. Outer/inner view split (RESEARCH § Pattern 3): outer view owns `@State filterState / searchText / debouncedSearch / presentingFacet`; inner private `FilteredExerciseList` consumes a `Predicate<Exercise>` via `init(predicate:)` so `@Query` re-runs reactively. `.searchable` with 150 ms `.task(id: searchText)` debounce (PITFALLS #4). Sticky filter chip bar via `.safeAreaInset(edge: .top)`. Sectioned alphabetical `List` (.insetGrouped). 44pt HIG touch target on `FilterChip` via `.frame(minHeight: 44)`. Empty state ships with both UI-SPEC copy variants — `No exercises match "{query}". Try fewer filters or a different name.` (with-query) and `No exercises match. Try fewer filters.` (without-query) — plus inline "Clear filters" recovery button when any filter is active. UI-SPEC literal copy verified by grep: `"Exercises"` navigation title / `"Search exercises"` prompt / `"Muscle · {N}"` / `"Equipment · {N}"` / `"Mechanic · {Value}"` / `"Pattern · {N}"` chip labels / `"Clear filters"` (3 sites) / `"Custom"` capsule tag / `"Create custom exercise"` accessibility label. 7 FilterStatePredicateTests (empty / search / equipment / mechanic / muscle-denormalised / multi-facet AND / multi-select OR within facet) + 2 IndexedQueryTests (canonicalName.contains and primaryMuscleSlugsJoined.contains over ~675 seeded rows; production target <50 ms, soft cap 200 ms for CI). Commits: `5d16b4f` (FilterState + FilterChip + ExerciseFilterBar, +342 lines) / `d1dc0da` (ExerciseLibraryView + ExerciseRow + FilterPickerSheet + RootView edit, +653 / -12 lines) / `8e75585` (FilterStatePredicateTests + IndexedQueryTests, +331 lines). `xcrun swiftc -parse` over all 41 production + 10 test Swift files exits 0 with no output. Wave 3 sequence 2 of 4 complete; plan 03-03 next.
 
 ### Next Action
 
-`/gsd-execute-phase 03-02` (Wave 3, sequence 2 of 4) — `ExerciseLibraryView` with `@Query<Exercise>(sort: \.canonicalName)` + sticky filter chip row (muscle / equipment / mechanic / pattern; multi-select within facet, AND across facets) + `.searchable(text:)` against `canonicalName`. Replaces `LibraryTabHost` in a 1-line edit at line 119 of `fitbod/App/RootView.swift`. Uses the indexed `Exercise.primaryMuscleSlugsJoined` field from plan 02-02 for the muscle-filter predicate.
+`/gsd-execute-phase 03-03` (Wave 3, sequence 3 of 4) — `ExerciseDetailView` (read-only browse: instructions / muscles with stimulus % / equipment / mechanic) with a "Copy as Custom" action that creates an editable `isCustom = true` duplicate. Pushed onto the Library tab's `NavigationStack` via the `navigationDestination(for: Exercise.self)` at line 197 of `fitbod/ExerciseLibrary/ExerciseLibraryView.swift` — that line is the 1-line edit-point. UI-SPEC § Exercise detail screen locks every string ("Instructions" / "Muscles" / "Equipment" / "Mechanic" section headers, "{Muscle name} · {weight as percent}" row format, "Copy as Custom Exercise" button label).
 
 ### Open Questions
 
@@ -173,7 +176,13 @@ Executed plan 03-01 (RootView 5-tab TabView + seed trigger). Created `fitbod/App
 - **Plan 03-01 D-1**: Added a small `@Observable SeedState` type (idle / loading / ready / failed(message:)) rather than the plan's bare `@State Bool` — four-case enum carries error.localizedDescription for the deferred Wave-4 Alert without restructuring RootView
 - **Plan 03-01 D-2**: Splash dismissal uses a dual-signal predicate (`@Query<Exercise>.isEmpty AND SeedState in {.idle, .loading}`) — AND form gives cleanest behaviour in all four scenarios (cold first launch / warm second launch / cold launch + seed failure / hot dev rebuild); eliminates second-launch flash
 - **Plan 03-01 D-4**: Two interim tab hosts (`LibraryTabHost` / `SettingsTabHost`) as private structs inside `RootView.swift` — co-located so plan 03-02 / 04-01 swaps are visible in single 1-line diffs
+- **Plan 03-02 D-1**: Empty state ships with both UI-SPEC copy variants now (with-query + without-query) rather than deferring to 04-01. Only the "Create Custom Exercise" CTA (which depends on 03-04's editor existing) is deferred — headline + body copy is locked now per UI-SPEC § Empty states.
+- **Plan 03-02 D-2**: Inner `FilteredExerciseList` takes 4 init parameters (`predicate / activeQuery / hasActiveFilters / clearFiltersAction`) rather than 1, so the empty-state surface can render the verbatim UI-SPEC copy without violating FOUND-06 (only the inner view consumes `@Query`).
+- **Plan 03-02 D-3**: `FilterPickerSheet` is one file with a four-case switch on `facet`, not four separate sheet files — each section is < 20 lines and the toolbar buttons are identical.
+- **Plan 03-02 D-4**: `LibraryTabHost` stays as a one-line wrapper (`var body: some View { ExerciseLibraryView() }`) for symmetry with the pending `SettingsTabHost` swap in plan 04-01.
+- **Plan 03-02 D-5**: `EmptyLibraryView` and `NewCustomExerciseRequest` are private nested types inside `ExerciseLibraryView.swift` so plan 04-01's empty-state polish and plan 03-04's editor wiring are single-file diffs.
+- **Plan 03-02 D-6**: Equipment + Pattern display names split underscored raw values (`weighted_bodyweight` → "Weighted Bodyweight", `horizontal_push` → "Horizontal Push") via `.replacingOccurrences(of: "_", with: " ").capitalized` rather than `.capitalized` on the raw (which yields `Weighted_bodyweight`).
 
 ---
 
-*State initialized: 2026-05-10 after roadmap creation. Updated: 2026-05-11 after plan 03-01 (Wave 3 seq 1 of 4 complete; RootView TabView + seed trigger + SeedState + PlaceholderTabView shipped; ContentView.swift superseded by App/RootView.swift).*
+*State initialized: 2026-05-10 after roadmap creation. Updated: 2026-05-11 after plan 03-02 (Wave 3 seq 2 of 4 complete; ExerciseLibraryView with multi-facet filter + .searchable shipped; LibraryTabHost rewired to ExerciseLibraryView; 9 new Swift Testing functions; LIB-01 / LIB-02 / LIB-03 closed, FOUND-04 / FOUND-06 verified).*

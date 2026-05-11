@@ -12,8 +12,8 @@ User explicitly wants a maximalist v1 (the app's stance is "comprehensive over s
 ### LIB — Exercise Library
 
 - [x] **LIB-01**: User can browse the bundled exercise library (~800 exercises seeded from `yuhonas/free-exercise-db`, Unlicense)
-- [ ] **LIB-02**: User can multi-facet filter exercises by muscle group, equipment, mechanic (compound/isolation), and movement pattern
-- [ ] **LIB-03**: User can search exercises by name with type-ahead (responsive at 1000+ entries via SwiftData `#Index` on hot fields)
+- [x] **LIB-02**: User can multi-facet filter exercises by muscle group, equipment, mechanic (compound/isolation), and movement pattern
+- [x] **LIB-03**: User can search exercises by name with type-ahead (responsive at 1000+ entries via SwiftData `#Index` on hot fields)
 - [ ] **LIB-04**: User can create custom exercises with required primary + secondary muscle mapping (with per-muscle stimulus weights), equipment, mechanic, and optional image
 - [x] **LIB-05**: User can edit and delete custom exercises without affecting historical session data
 - [x] **LIB-06**: Bundled exercises distinguish bodyweight, weighted-bodyweight, machine, dumbbell, barbell, cable, and bands; UI input fields adapt per kind
@@ -117,9 +117,9 @@ User explicitly wants a maximalist v1 (the app's stance is "comprehensive over s
 - [x] **FOUND-01**: Schema wrapped in `SchemaV1: VersionedSchema` with `SchemaMigrationPlan` scaffold from day 1 (zero migrations yet, but framework in place) — closed by plan 01-02 (commit `28795c8`)
 - [x] **FOUND-02**: All model properties optional or default-valued, all relationships optional (cheap insurance for future iCloud sync without retroactive migration)
 - [x] **FOUND-03**: All enums persisted as `*Raw: String` columns with computed enum accessors
-- [ ] **FOUND-04**: SwiftData `#Index` declarations on every hot query field (`Exercise.canonicalName`, `equipmentRaw`, `mechanicRaw`, `isCustom`; `Session.startedAt`, `sourceRoutineID`; `SessionExercise.intentRaw`)
+- [x] **FOUND-04**: SwiftData `#Index` declarations on every hot query field (`Exercise.canonicalName`, `equipmentRaw`, `mechanicRaw`, `isCustom`; `Session.startedAt`, `sourceRoutineID`; `SessionExercise.intentRaw`)
 - [x] **FOUND-05**: Exercise library seed runs once inside a `@ModelActor`, idempotent, version-stamped via `UserDefaults`, completes in <2s on cold launch — closed by plan 02-02 (commits `998bacb` / `97f023a`)
-- [ ] **FOUND-06**: Views bind directly to `@Model` types via `@Query` / `@Bindable`; no parallel view-model layer mirrors the schema (MV-VM-lite stance)
+- [x] **FOUND-06**: Views bind directly to `@Model` types via `@Query` / `@Bindable`; no parallel view-model layer mirrors the schema (MV-VM-lite stance)
 - [ ] **FOUND-07**: Progression and fatigue services are pure-function value types behind protocols, testable without a `ModelContainer`
 
 ---
@@ -175,8 +175,8 @@ Mapped to phases by `gsd-roadmapper` during roadmap creation.
 | Requirement | Phase | Status |
 |-------------|-------|--------|
 | LIB-01 | Phase 1 | Complete |
-| LIB-02 | Phase 1 | Pending |
-| LIB-03 | Phase 1 | Pending |
+| LIB-02 | Phase 1 | Complete |
+| LIB-03 | Phase 1 | Complete |
 | LIB-04 | Phase 1 | Pending |
 | LIB-05 | Phase 1 | Complete |
 | LIB-06 | Phase 1 | Complete |
@@ -250,9 +250,9 @@ Mapped to phases by `gsd-roadmapper` during roadmap creation.
 | FOUND-01 | Phase 1 | Complete (plan 01-02, commit 28795c8) |
 | FOUND-02 | Phase 1 | Complete |
 | FOUND-03 | Phase 1 | Complete |
-| FOUND-04 | Phase 1 | Pending |
+| FOUND-04 | Phase 1 | Complete |
 | FOUND-05 | Phase 1 | Complete (plan 02-02, commits 998bacb / 97f023a) |
-| FOUND-06 | Phase 1 | Pending |
+| FOUND-06 | Phase 1 | Complete |
 | FOUND-07 | Phase 1 | Pending |
 
 **Coverage:**
