@@ -13,7 +13,7 @@
 //    - inline "Custom" tag on user-authored rows
 //    - "+" toolbar button → presents `CustomExerciseEditor` as a
 //      `.sheet` wrapped in a `NavigationStack` (plan 03-04)
-//    - row tap → exercise detail (plan 03-03 fills in)
+//    - row tap → ExerciseDetailView (plan 03-03)
 //
 //  ## Outer / inner view split (RESEARCH § Pattern 3)
 //
@@ -213,10 +213,12 @@ private struct FilteredExerciseList: View {
                 }
                 .listStyle(.insetGrouped)
                 .navigationDestination(for: Exercise.self) { ex in
-                    // Plan 03-03 replaces this placeholder with the real
-                    // `ExerciseDetailView` body.
-                    Text("Detail for \(ex.name) — plan 03-03 fills this in")
-                        .navigationTitle(ex.name)
+                    // Plan 03-03 wire — real ExerciseDetailView replaces
+                    // the prior placeholder. The detail view owns its own
+                    // navigation title (inline) + toolbar (none for
+                    // built-in; "Copy as Custom Exercise" CTA section)
+                    // and presents its own sheet for the Copy flow.
+                    ExerciseDetailView(exercise: ex)
                 }
             }
         }
