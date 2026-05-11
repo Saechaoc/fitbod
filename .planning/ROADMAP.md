@@ -127,7 +127,7 @@ Granular, prescriptive workout sessions — every set in a session is intentiona
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation & Exercise Library | 12/12 | Complete | 2026-05-11 |
-| 2. Core Loop (Routines + Sessions) | 7/13 | In Progress | - |
+| 2. Core Loop (Routines + Sessions) | 12/13 | In Progress | - |
 | 3. Smart Prescription & Warm-ups | 0/? | Not started | - |
 | 4. Periodization & Blocks | 0/? | Not started | - |
 | 5. Fatigue Model & Plateau Detection | 0/? | Not started | - |

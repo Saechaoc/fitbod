@@ -33,7 +33,7 @@ User explicitly wants a maximalist v1 (the app's stance is "comprehensive over s
 ### SESS — Session Logging
 
 - [x] **SESS-01**: Starting a session calls `SessionFactory.start(...)` which snapshots all routine prescription fields onto the session — subsequent edits to the routine template never alter this session
-- [ ] **SESS-02**: User can log per set: weight, reps, RPE (decimal RPE supported via long-press), set type (warmup / working / drop / failure / rest-pause), and per-set form notes
+- [x] **SESS-02**: User can log per set: weight, reps, RPE (decimal RPE supported via long-press), set type (warmup / working / drop / failure / rest-pause), and per-set form notes
 - [x] **SESS-03**: Set inputs auto-populate from the previous matching-intent session of the same exercise; an inline "previous" column shows weight × reps × RPE from that last instance
 - [ ] **SESS-04**: Rest timer auto-starts on set completion, exposes ±15s buttons, fires a lock-screen notification when it reaches 0, displays as a Live Activity / Dynamic Island while running, and auto-stops on next set entry
 - [ ] **SESS-05**: User can swap an exercise mid-session without mutating the routine template (substitution applies to this session only)
@@ -42,7 +42,7 @@ User explicitly wants a maximalist v1 (the app's stance is "comprehensive over s
 - [ ] **SESS-08**: User can record partial reps (e.g. "8 + 2 partials") and cluster / rest-pause sub-reps (e.g. `[8, 3, 2]`) per set
 - [ ] **SESS-09**: Bodyweight and weighted-bodyweight exercises log reps + added/assisted weight (signed: negative = assist)
 - [ ] **SESS-10**: User can view per-exercise history with intent split as separate streams (strength series vs hypertrophy series, toggleable / both visible)
-- [ ] **SESS-11**: Workout-level notes and pinned per-exercise notes are surfaced inline in the session UI
+- [x] **SESS-11**: Workout-level notes and pinned per-exercise notes are surfaced inline in the session UI
 
 ### WARM — Warm-up Generation
 
@@ -190,7 +190,7 @@ Mapped to phases by `gsd-roadmapper` during roadmap creation.
 | ROUTINE-08 | Phase 2 | Pending |
 | ROUTINE-09 | Phase 2 | Pending |
 | SESS-01 | Phase 2 | Complete |
-| SESS-02 | Phase 2 | Pending |
+| SESS-02 | Phase 2 | Complete |
 | SESS-03 | Phase 2 | Complete |
 | SESS-04 | Phase 2 | Pending |
 | SESS-05 | Phase 2 | Pending |
@@ -199,7 +199,7 @@ Mapped to phases by `gsd-roadmapper` during roadmap creation.
 | SESS-08 | Phase 2 | Pending |
 | SESS-09 | Phase 2 | Pending |
 | SESS-10 | Phase 2 | Pending |
-| SESS-11 | Phase 2 | Pending |
+| SESS-11 | Phase 2 | Complete |
 | WARM-01 | Phase 3 | Pending |
 | WARM-02 | Phase 3 | Pending |
 | WARM-03 | Phase 3 | Pending |
