@@ -37,17 +37,30 @@ public struct SessionExerciseCard: View {
     public let engine: RestTimerEngine
     public let onCommitSet: (SetEntry) -> Void
     public let onTapEmptyCell: () -> Void
+    /// Wave-4 plan 04-02 — fires when the user taps "Swap Exercise…"
+    /// in the header long-press menu. The parent SessionLoggerView is
+    /// responsible for presenting SwapExerciseSheet.
+    public let onSwap: (SessionExercise) -> Void
+    /// Wave-4 plan 04-02 — fires when the user taps "Remove from
+    /// Session" in the header long-press menu. The parent
+    /// SessionLoggerView is responsible for the destructive
+    /// confirmation alert + the actual ctx.delete(_:).
+    public let onRemove: (SessionExercise) -> Void
 
     public init(
         sessionExercise: SessionExercise,
         engine: RestTimerEngine,
         onCommitSet: @escaping (SetEntry) -> Void,
-        onTapEmptyCell: @escaping () -> Void
+        onTapEmptyCell: @escaping () -> Void,
+        onSwap: @escaping (SessionExercise) -> Void = { _ in },
+        onRemove: @escaping (SessionExercise) -> Void = { _ in }
     ) {
         self.sessionExercise = sessionExercise
         self.engine = engine
         self.onCommitSet = onCommitSet
         self.onTapEmptyCell = onTapEmptyCell
+        self.onSwap = onSwap
+        self.onRemove = onRemove
     }
 
     public var body: some View {
@@ -77,12 +90,28 @@ public struct SessionExerciseCard: View {
             }
 
             ForEach(sortedSets) { set in
-                SetRow(
-                    entry: set,
-                    sessionExercise: sessionExercise,
-                    onCommit: { onCommitSet(set) },
-                    onTapEmptyCell: onTapEmptyCell
-                )
+                VStack(spacing: 4) {                                            // UI-SPEC xs
+                    SetRow(
+                        entry: set,
+                        sessionExercise: sessionExercise,
+                        onCommit: { onCommitSet(set) },
+                        onTapEmptyCell: onTapEmptyCell
+                    )
+                    // Wave-4 plan 04-02 — opt-in row conditional rendering.
+                    // Each row only renders when its enabling toggle/flag
+                    // is true; otherwise the card lays out exactly as
+                    // before. The toggles are snapshotted onto
+                    // SessionExercise at SessionFactory time.
+                    if sessionExercise.tracksTempo {
+                        TempoEntryRow(entry: set)
+                    }
+                    if sessionExercise.tracksPartialReps {
+                        PartialRepsRow(entry: set)
+                    }
+                    if set.setType == .restPause {
+                        ClusterSubRepChipRow(entry: set)
+                    }
+                }
             }
 
             Button {
@@ -93,8 +122,29 @@ public struct SessionExerciseCard: View {
             }
             .buttonStyle(.plain)
         } header: {
+            // Wave-4 plan 04-02 — header is a long-press menu surface:
+            // "Swap Exercise…" / "Remove from Session" / "Edit Pinned
+            // Note" (the third entry is a stub here — the pinned-note
+            // edit sheet ships in plan 04-03).
             Text(sessionExercise.exercise?.name ?? "Exercise")
                 .font(.headline)
+                .contextMenu {
+                    Button {
+                        onSwap(sessionExercise)
+                    } label: {
+                        Label("Swap Exercise…", systemImage: "arrow.left.arrow.right")   // UI-SPEC verbatim
+                    }
+                    Button {
+                        // Plan 04-03 — present PinnedNoteSheet.
+                    } label: {
+                        Label("Edit Pinned Note", systemImage: "pin.fill")               // UI-SPEC verbatim
+                    }
+                    Button(role: .destructive) {
+                        onRemove(sessionExercise)
+                    } label: {
+                        Label("Remove from Session", systemImage: "trash")               // UI-SPEC verbatim
+                    }
+                }
         }
     }
 

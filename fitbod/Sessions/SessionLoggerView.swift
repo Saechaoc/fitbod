@@ -77,6 +77,12 @@ public struct SessionLoggerView: View {
     @State private var elapsedStart: Date
     @State private var presentingFinishConfirm = false
     @State private var presentingDiscardConfirm = false
+    /// Wave-4 plan 04-02 — long-press "Swap Exercise…" target.
+    /// `.sheet(item:)` presents `SwapExerciseSheet` against this.
+    @State private var pendingSwap: SessionExercise?
+    /// Wave-4 plan 04-02 — long-press "Remove from Session" target.
+    /// `.alert` presents the destructive confirmation.
+    @State private var pendingRemove: SessionExercise?
 
     public init(session: Session) {
         self.session = session
@@ -94,8 +100,17 @@ public struct SessionLoggerView: View {
                         sessionExercise: se,
                         engine: engine,
                         onCommitSet: { commitSet($0, for: se) },
-                        onTapEmptyCell: { engine.stop() }
+                        onTapEmptyCell: { engine.stop() },
+                        onSwap: { pendingSwap = $0 },
+                        onRemove: { pendingRemove = $0 }
                     )
+                }
+                // Wave-4 plan 04-02 — bottom-of-list "+ Add Exercise"
+                // affordance (SESS-06). Appends an unplanned
+                // SessionExercise to the active session ONLY; the
+                // source Routine is untouched (PITFALLS-doc #1).
+                Section {
+                    AddUnplannedExerciseButton(session: session)
                 }
             }
             .listStyle(.insetGrouped)
@@ -147,6 +162,44 @@ public struct SessionLoggerView: View {
         } message: {
             Text("No data will be saved.")                                     // UI-SPEC verbatim
         }
+        // Wave-4 plan 04-02 — swap-exercise sheet (SESS-05). Bound to the
+        // pendingSwap state, which is set by SessionExerciseCard's
+        // long-press "Swap Exercise…" menu entry.
+        .sheet(item: $pendingSwap) { se in
+            SwapExerciseSheet(sessionExercise: se)
+        }
+        // Wave-4 plan 04-02 — remove-exercise destructive confirmation
+        // (SESS-05/SESS-06 inverse). Bound to pendingRemove, set by
+        // SessionExerciseCard's long-press "Remove from Session" menu.
+        // UI-SPEC verbatim: title "Remove \"{name}\"?", body "Any logged
+        // sets for this exercise will be discarded.", buttons
+        // "Remove" (destructive) / "Cancel".
+        .alert(
+            "Remove \"\(pendingRemove?.exercise?.name ?? "")\"?",              // UI-SPEC verbatim
+            isPresented: Binding(
+                get: { pendingRemove != nil },
+                set: { if !$0 { pendingRemove = nil } }
+            ),
+            presenting: pendingRemove
+        ) { se in
+            Button("Remove", role: .destructive) { handleRemove(se) }          // UI-SPEC verbatim
+            Button("Cancel", role: .cancel) {                                  // UI-SPEC verbatim
+                pendingRemove = nil
+            }
+        } message: { _ in
+            Text("Any logged sets for this exercise will be discarded.")       // UI-SPEC verbatim
+        }
+    }
+
+    /// Wave-4 plan 04-02 — destructively removes a SessionExercise (and
+    /// its owned SetEntry rows by cascade) from the active session.
+    /// PITFALLS-doc #1 — the source RoutineExercise is untouched.
+    /// Cascade rule on SessionExercise.sets is .cascade (plan 01-01 /
+    /// SessionExercise.swift) → owned SetEntry rows go with it.
+    private func handleRemove(_ se: SessionExercise) {
+        ctx.delete(se)
+        try? ctx.save()
+        pendingRemove = nil
     }
 
     // MARK: - Derived state
