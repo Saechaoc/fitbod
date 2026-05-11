@@ -37,13 +37,12 @@
 //
 //  ## Captures-by-value invariant (RESEARCH § Pitfall 12)
 //
-//  `swiftDataPredicate(with:)` copies every capture into a local `let` BEFORE
+//  `swiftDataPredicate(with:)` copies search input into a local `let` BEFORE
 //  building the `#Predicate` literal. SwiftData's predicate translator
 //  is sensitive to reference captures — a `self` or instance-property
 //  reference in the predicate body silently breaks the indexed path or
-//  crashes at fetch time. The locals (`equipment`, `mechanic`, etc.) are
-//  all value-typed primitives that the macro can encode into the
-//  generated NSPredicate.
+//  crashes at fetch time. The non-empty search branch captures only the
+//  normalized search string.
 //
 //  ## Pipeline split (SwiftData predicate translator workaround)
 //
@@ -114,9 +113,8 @@ public final class FilterState {
             .trimmingCharacters(in: .whitespacesAndNewlines)
             .lowercased()
             .folding(options: .diacriticInsensitive, locale: .current)
-        let searchEmpty = normalizedSearch.isEmpty
 
-        if searchEmpty {
+        guard !normalizedSearch.isEmpty else {
             return #Predicate<Exercise> { _ in
                 true
             }

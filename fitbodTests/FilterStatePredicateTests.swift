@@ -45,8 +45,11 @@
 //  ## Test isolation
 //
 //  Swift Testing's `struct` suite is re-instantiated per `@Test`, so each
-//  `@Test` builds its own container. No `UserDefaults` reset needed here
-//  — the importer is not invoked.
+//  `@Test` builds its own container. The suite is `.serialized` because
+//  SwiftData-backed tests in this project otherwise run concurrently inside
+//  the app-hosted test process and can trap before individual assertions run.
+//  No `UserDefaults` reset needed here — the importer is not invoked by the
+//  fixture.
 //
 
 import Foundation
@@ -54,8 +57,7 @@ import SwiftData
 import Testing
 @testable import fitbod
 
-@MainActor
-@Suite("FilterState.swiftDataPredicate(with:) + applyPostFetchFilters(to:)")
+@Suite("FilterState.swiftDataPredicate(with:) + applyPostFetchFilters(to:)", .serialized)
 struct FilterStatePredicateTests {
 
     // MARK: - Pipeline helper
@@ -80,7 +82,7 @@ struct FilterStatePredicateTests {
     /// and returns the container + a fresh `ModelContext` for fetching.
     private static func makeFixture() throws -> (ModelContainer, ModelContext) {
         let container = try InMemoryContainer.makeEmpty()
-        let ctx = container.mainContext
+        let ctx = ModelContext(container)
         ctx.insert(makeExercise(
             name: "Barbell Bench Press",
             equipment: "barbell",
@@ -240,7 +242,7 @@ struct FilterStatePredicateTests {
         #expect(names == Set(["Barbell Bench Press", "Dumbbell Curl"]))
     }
 
-    // MARK: - Test 8: facets stay post-fetch
+    // MARK: - Test 9: facets stay post-fetch
 
     @Test("Facet selections do not constrain the SwiftData fetch")
     func facetSelectionDoesNotConstrainSwiftDataFetch() throws {
