@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: PreviewModelContainer + 5 Swift Testing suites authored; FOUND-01..03, LIB-05/06, SET-01 anchored at the unit-test level (Wave 1 complete)
-last_updated: "2026-05-11T06:27:00Z"
+status: completed
+last_updated: "2026-05-11T06:33:52Z"
 progress:
   total_phases: 6
   completed_phases: 0
   total_plans: 12
-  completed_plans: 6
-  percent: 50
+  completed_plans: 7
+  percent: 58
 ---
 
 # Project State: Fitbod
@@ -33,15 +33,15 @@ progress:
 ## Current Position
 
 **Phase:** 1 — Foundation & Exercise Library (in progress)
-**Plan:** 01-03 complete (Wave 1, sequence 3 of N) — next: 02-01
-**Status:** PreviewModelContainer + 5 Swift Testing suites authored; FOUND-01..03, LIB-05/06, SET-01 anchored at the unit-test level (Wave 1 complete)
-**Progress:** [█████░░░░░] 50%
+**Plan:** 02-01 complete (Wave 2, sequence 1 of 2) — next: 02-02
+**Status:** Exercise dataset vendored (873 raw rows pinned to upstream `acd61f7`); ExerciseDTO + EquipmentMapper + MuscleRegionMap shipped; 9 DTODecodingTests anchor LIB-01 + LIB-06 at the unit-test level
+**Progress:** [██████░░░░] 58%
 
 ### Phase Outlook
 
 | # | Phase | Reqs | Status |
 |---|-------|-----:|--------|
-| 1 | Foundation & Exercise Library | 14 | In progress (Wave 1 complete) |
+| 1 | Foundation & Exercise Library | 14 | In progress (Wave 2 in flight; 02-01 done) |
 | 2 | Core Loop (Routines + Sessions) | 20 | Not started |
 | 3 | Smart Prescription & Warm-ups | 15 | Not started |
 | 4 | Periodization & Blocks | 10 | Not started |
@@ -63,6 +63,7 @@ Phase 1 in flight; metrics roll up at phase completion. Per-plan duration table:
 | 1 | 01-01 | 480 | 1 | 23 | 12 entity models + 11 enums |
 | 1 | 01-02 | 68 | 2 | 4 | SchemaV1 + FitbodSchemaMigrationPlan + fitbodApp rewire + RootView stub |
 | 1 | 01-03 | 240 | 3 | 10 | PreviewModelContainer + 5 Swift Testing suites (48 @Test funcs / 49+ parameterised invocations) |
+| 1 | 02-01 | 216 | 3 | 8 | Vendor free-exercise-db JSON (873 rows, ~1.0 MB, SHA `acd61f7`) + ExerciseDTO + EquipmentMapper + MuscleRegionMap + 9 DTODecodingTests |
 
 ---
 
@@ -110,7 +111,8 @@ These drive phase ordering and are mitigated by phase placement:
 - [x] `/gsd-plan-phase 1` — decompose Phase 1 into executable plans (PLAN-INDEX.md created)
 - [x] Confirm `Item.swift` template model is removed before any seed import (plan 00-01 deleted it; plan 01-02 removed all `Item.self` references)
 - [x] Plan 01-03 — `PreviewModelContainer.make()` + first batch of SchemaV1 unit tests (Wave 1 complete)
-- [ ] Plans 02-01 / 02-02 — `ExerciseDTO` + `ExerciseLibraryImporter` (Wave 2, next)
+- [x] Plan 02-01 — `ExerciseDTO` + EquipmentMapper + MuscleRegionMap + vendored exercises.json (Wave 2, seq 1)
+- [ ] Plan 02-02 — `ExerciseLibraryImporter` `@ModelActor` (Wave 2, seq 2)
 - [ ] Plans 03-01 / 03-02 / 03-03 / 03-04 — RootView TabView + ExerciseLibraryView + custom exercise editor (Wave 3)
 
 ### Phase 1 Plans Completed
@@ -120,6 +122,7 @@ These drive phase ordering and are mitigated by phase placement:
 - **01-01** (Wave 1, seq 1): 12 `@Model` entities + 11 String-backed enums + 23 files. Commits: `cb27292` / `6aed051` / `8e35c93` / `adf8a7b` / `a4c5991`.
 - **01-02** (Wave 1, seq 2): `SchemaV1: VersionedSchema` + `FitbodSchemaMigrationPlan` + `fitbodApp` rewire + interim `RootView` stub. Commits: `28795c8` / `58ea362`. Closes FOUND-01.
 - **01-03** (Wave 1, seq 3): `PreviewModelContainer.make()` + `Exercise.previewSample` + `InMemoryContainer` helper + 5 Swift Testing suites (SchemaV1Tests, CascadeRuleTests, EnumPersistenceTests, EnumTests, UserSettingsTests). 48 `@Test` funcs anchoring FOUND-01..03, LIB-05/06, SET-01. Commits: `38d975b` / `5369cb7`. Closes the Wave 1 testing-infrastructure bar.
+- **02-01** (Wave 2, seq 1): Vendored `yuhonas/free-exercise-db` `exercises.json` (873 raw rows, ~1.0 MB, pinned to upstream SHA `acd61f7`, Unlicense / public domain). Authored `SEED_VERSION.txt` = 1 + `SOURCE.md` (provenance + 5-step refresh procedure). Created `ExerciseDTO` (plain Codable struct, 11 fields), `EquipmentMapper` (LIB-06 anchor: 12+ raw → 9-case Equipment, plus `shouldImport(category:)` strength filter), `MuscleRegionMap` (RESEARCH Open Q #3: 17 slugs → 10/6/1 region split + `displayName(for:)` + `allSlugs: [String]`). Added 9 `DTODecodingTests` (15-input parameterised equipment-mapping + exhaustive coverage over actual bundled JSON + region bucket sizes + Codable round-trip). Commits: `f7279bb` / `3d21e20` / `fa33433`. Closes LIB-01.
 
 ### Blockers
 
@@ -131,11 +134,11 @@ None.
 
 ### Last Action
 
-Executed plan 01-03 (PreviewModelContainer + 5 Swift Testing suites). `xcrun swiftc -parse` over 35 production + test Swift files exits 0; full simulator-runtime verification (`xcodebuild test`) deferred to user's local Xcode (same environment constraint as plans 01-01 / 01-02). FOUND-01..03, LIB-05/06, SET-01 anchored at the unit-test level.
+Executed plan 02-01 (vendor exercise dataset). Pinned to upstream commit `acd61f7` of `yuhonas/free-exercise-db` (873 raw rows, ~1.0 MB, public domain). Authored `ExerciseDTO` + `EquipmentMapper` (LIB-06 anchor) + `MuscleRegionMap` and a 9-test `DTODecodingTests` suite. `xcrun swiftc -parse` over all 37 Swift files exits 0; bundle resources auto-registered via `PBXFileSystemSynchronizedRootGroup`. LIB-01 marked complete.
 
 ### Next Action
 
-`/gsd-execute-phase 02-01` — authors `ExerciseDTO` struct + JSON decoding, bundles `yuhonas/free-exercise-db`'s `exercises.json` into `fitbod/Resources/ExerciseSeed/`. First step of Wave 2 (seed pipeline). Will write `DTODecodingTests` against the bundled JSON sample using the `InMemoryContainer` helper from this plan.
+`/gsd-execute-phase 02-02` — authors `ExerciseLibraryImporter` as a `@ModelActor` that reads the bundled JSON, upserts 17 `MuscleGroup` rows from `MuscleRegionMap.allSlugs`, inserts ~675 strength-filtered `Exercise` rows (using `EquipmentMapper.shouldImport(category:)` + `EquipmentMapper.map(_:)`), creates `ExerciseMuscleStimulus` join rows (primary → 1.0 / secondary → 0.5), and stamps `UserDefaults["exercise_seed_version"]`. Performance target: <2s on cold launch.
 
 ### Open Questions
 
@@ -154,7 +157,11 @@ Executed plan 01-03 (PreviewModelContainer + 5 Swift Testing suites). `xcrun swi
 - **Plan 01-03 D-4**: Twelve separate per-entity default-init `@Test` funcs (not one parameterised loop) — clearer failure messages for FOUND-02 regressions
 - **Plan 01-03 D-5/D-6**: `EnumPersistenceTests` parameterises over `Enum.allCases` (auto-covers new cases); `EnumTests` asserts case count AND the full rawValue `Set<String>` (catches renames + additions)
 - **Plan 01-03 D-7**: `Exercise.previewSample` lives in the main target (not test target) so `#Preview` blocks reach it without `@testable` ceremony
+- **Plan 02-01 D-1**: Pinned upstream SHA `acd61f7` recorded in `SOURCE.md`; future refresh follows the 5-step procedure
+- **Plan 02-01 D-2**: Did NOT pre-filter at vendor time — bundled JSON is the full 873-row upstream dataset byte-for-byte; the strength filter is a runtime predicate (`EquipmentMapper.shouldImport(category:)`), preserves diff-against-upstream traceability
+- **Plan 02-01 D-3**: `e-z curl bar → .barbell` (not `.other`) — UX-driven mapping so 9 E-Z curl exercises stay discoverable under the "barbell" filter chip
+- **Plan 02-01 D-7**: `MuscleRegionMap.allSlugs` exposed as `public static let [String]` so plan 02-02 has a single source of truth for the canonical 17-slug list
 
 ---
 
-*State initialized: 2026-05-10 after roadmap creation. Updated: 2026-05-11 after plan 01-03 (Wave 1 testing infrastructure complete).*
+*State initialized: 2026-05-10 after roadmap creation. Updated: 2026-05-11 after plan 02-01 (Wave 2 seq 1 complete; LIB-01 closed).*

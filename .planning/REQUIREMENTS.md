@@ -11,7 +11,7 @@ User explicitly wants a maximalist v1 (the app's stance is "comprehensive over s
 
 ### LIB — Exercise Library
 
-- [ ] **LIB-01**: User can browse the bundled exercise library (~800 exercises seeded from `yuhonas/free-exercise-db`, Unlicense)
+- [x] **LIB-01**: User can browse the bundled exercise library (~800 exercises seeded from `yuhonas/free-exercise-db`, Unlicense)
 - [ ] **LIB-02**: User can multi-facet filter exercises by muscle group, equipment, mechanic (compound/isolation), and movement pattern
 - [ ] **LIB-03**: User can search exercises by name with type-ahead (responsive at 1000+ entries via SwiftData `#Index` on hot fields)
 - [ ] **LIB-04**: User can create custom exercises with required primary + secondary muscle mapping (with per-muscle stimulus weights), equipment, mechanic, and optional image
@@ -174,7 +174,7 @@ Mapped to phases by `gsd-roadmapper` during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| LIB-01 | Phase 1 | Pending |
+| LIB-01 | Phase 1 | Complete |
 | LIB-02 | Phase 1 | Pending |
 | LIB-03 | Phase 1 | Pending |
 | LIB-04 | Phase 1 | Pending |
