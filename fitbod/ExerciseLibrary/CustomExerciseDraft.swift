@@ -244,8 +244,16 @@ public final class CustomExerciseDraft {
         ex.imageData = imageData
         ctx.insert(ex)
 
+        // Use the failable `uniquingKeysWith:` initializer rather than
+        // `Dictionary(uniqueKeysWithValues:)` — the latter trap-crashes
+        // on duplicate keys, and a transiently-buggy seed pipeline could
+        // leave duplicate `MuscleGroup` rows that `@Query<MuscleGroup>`
+        // would then surface here (see review WR-06). First-wins is
+        // safe: duplicates share the same `slug` and the stimulus row
+        // only reads `slug` from the muscle.
         let muscleBySlug = Dictionary(
-            uniqueKeysWithValues: allMuscles.map { ($0.slug, $0) }
+            allMuscles.map { ($0.slug, $0) },
+            uniquingKeysWith: { first, _ in first }
         )
         for assignment in muscles {
             guard let mg = muscleBySlug[assignment.slug] else { continue }
@@ -288,8 +296,12 @@ public final class CustomExerciseDraft {
             ctx.delete(old)
         }
 
+        // See WR-06 note in `materialize(into:allMuscles:)` — duplicate
+        // slugs from a transient seed-pipeline bug must not trap-crash
+        // this save flow.
         let muscleBySlug = Dictionary(
-            uniqueKeysWithValues: allMuscles.map { ($0.slug, $0) }
+            allMuscles.map { ($0.slug, $0) },
+            uniquingKeysWith: { first, _ in first }
         )
         for assignment in muscles {
             guard let mg = muscleBySlug[assignment.slug] else { continue }
