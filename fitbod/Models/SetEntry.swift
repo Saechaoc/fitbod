@@ -36,10 +36,23 @@ public final class SetEntry {
     public var isWarmup: Bool = false
     public var setTypeRaw: String = "working"
     public var completedAt: Date = Date.now
+    public var partialReps: Int? = nil
+    public var clusterSubRepsJoined: String? = nil
+    public var isComplete: Bool = false
 
     public init() {}
 }
 
 extension SetEntry {
     public var setType: SetType { SetType(rawValue: setTypeRaw) ?? .working }
+
+    public var clusterSubReps: [Int] {
+        get {
+            guard let joined = clusterSubRepsJoined, !joined.isEmpty else { return [] }
+            return joined.split(separator: ",").compactMap { Int($0) }
+        }
+        set {
+            clusterSubRepsJoined = newValue.isEmpty ? nil : newValue.map(String.init).joined(separator: ",")
+        }
+    }
 }

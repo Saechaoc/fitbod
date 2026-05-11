@@ -30,6 +30,7 @@ public final class Routine {
     public var updatedAt: Date = Date.now
     public var isArchived: Bool = false
     public var block: Block? = nil
+    public var folderID: UUID? = nil
 
     @Relationship(deleteRule: .cascade, inverse: \RoutineExercise.routine)
     public var exercises: [RoutineExercise]? = []

@@ -39,6 +39,12 @@ public final class RoutineExercise {
     public var notes: String? = nil
     public var progressionKindRaw: String = "double"
     public var generateWarmups: Bool = false
+    public var supersetGroupID: UUID? = nil
+    public var tracksTempo: Bool = false
+    public var tracksPartialReps: Bool = false
+
+    @Relationship(deleteRule: .cascade, inverse: \RoutineExerciseSetOverride.routineExercise)
+    public var setOverrides: [RoutineExerciseSetOverride]? = []
 
     public init() {}
 }

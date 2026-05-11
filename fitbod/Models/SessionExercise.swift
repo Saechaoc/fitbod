@@ -48,6 +48,7 @@ public final class SessionExercise {
     public var tempo: String? = nil
     public var progressionKindRaw: String = "double"
     public var prescribedWeight: Double? = nil
+    public var pinnedNote: String? = nil
 
     @Relationship(deleteRule: .cascade, inverse: \SetEntry.sessionExercise)
     public var sets: [SetEntry]? = []
