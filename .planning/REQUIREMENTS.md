@@ -23,9 +23,9 @@ User explicitly wants a maximalist v1 (the app's stance is "comprehensive over s
 - [ ] **ROUTINE-01**: User can build a routine in a single screen — inline exercise search-and-add, drag-handle reorder, no modal exercise picker
 - [ ] **ROUTINE-02**: Each exercise in a routine carries first-class prescription: training intent (strength / hypertrophy / power / endurance / technique), target rep range, target RPE range
 - [ ] **ROUTINE-03**: User can set per-set prescription overrides within an exercise (e.g. top set + back-off sets with different rep/RPE targets)
-- [ ] **ROUTINE-04**: User can group exercises into supersets and giant sets (2–N exercises with shared accent rail and smart-scroll between paired sets)
+- [x] **ROUTINE-04**: User can group exercises into supersets and giant sets (2–N exercises with shared accent rail and smart-scroll between paired sets)
 - [ ] **ROUTINE-05**: User can choose a progression model per exercise from four options: RPE/RIR autoreg, double progression, block-periodized, hybrid
-- [ ] **ROUTINE-06**: User can duplicate routines and organize them into folders
+- [x] **ROUTINE-06**: User can duplicate routines and organize them into folders
 - [x] **ROUTINE-07**: Routine templates are stored separately from session instances — editing a routine never rewrites historical session data (snapshot-at-session-start)
 - [ ] **ROUTINE-08**: The same routine recurring on different days with different intent (e.g. strength Mon, hypertrophy Thu) maintains separate per-intent histories for each exercise
 - [ ] **ROUTINE-09**: Each routine exercise has a default rest timer (heuristic by mechanic: compound ≈ 180s, isolation ≈ 90s) that the user can override per exercise
@@ -183,9 +183,9 @@ Mapped to phases by `gsd-roadmapper` during roadmap creation.
 | ROUTINE-01 | Phase 2 | Pending |
 | ROUTINE-02 | Phase 2 | Pending |
 | ROUTINE-03 | Phase 2 | Pending |
-| ROUTINE-04 | Phase 2 | Pending |
+| ROUTINE-04 | Phase 2 | Complete |
 | ROUTINE-05 | Phase 2 | Pending |
-| ROUTINE-06 | Phase 2 | Pending |
+| ROUTINE-06 | Phase 2 | Complete |
 | ROUTINE-07 | Phase 2 | Complete |
 | ROUTINE-08 | Phase 2 | Pending |
 | ROUTINE-09 | Phase 2 | Pending |

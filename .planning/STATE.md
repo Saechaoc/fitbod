@@ -2,19 +2,19 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: completed
-last_updated: "2026-05-11T17:35:00Z"
+status: in-progress
+last_updated: "2026-05-11T20:00:00Z"
 progress:
   total_phases: 6
   completed_phases: 1
   total_plans: 25
-  completed_plans: 19
-  percent: 76
+  completed_plans: 21
+  percent: 84
 ---
 
 # Project State: Fitbod
 
-**Last updated:** 2026-05-11 (post 02-02-01 — RestTimerEngine Date-based controller + UNUserNotifications scheduler shipped)
+**Last updated:** 2026-05-11 (post 02-03-03 — Supersets / giant sets visual grouping + RoutineDuplicator deep-copy shipped)
 
 ---
 
@@ -32,19 +32,21 @@ progress:
 
 ## Current Position
 
-**Phase:** 2 — Core Loop (Routines + Sessions) (Wave 3 — 1/3 plans complete in seq 1)
-**Plan:** 03-01 complete (Wave 3, seq 1) — `RoutinesListView` + `RoutineRow` + `NewFolderSheet` + `MoveRoutineSheet` + `RoutineFolderDraft` + `ResumeWorkoutBanner` ship the user-visible half of ROUTINE-06 (folders) + SESS-04 (Resume Workout surfacing). Sectioned `List` grouped by `RoutineFolder` with implicit "Unfiled" pseudo-section first; "+" toolbar `Menu` (New Routine / New Folder); leading-swipe "Start Workout" + trailing-swipe Delete/Duplicate + long-press context menu with 5 UI-SPEC verbatim actions on every row; UI-SPEC verbatim empty state. `ResumeWorkoutBanner` reactive `@Query<Session>(completedAt == nil)` mounted on Routines tab as floating first list row AND on Today tab via `.safeAreaInset(.top)` over `PlaceholderTabView(phaseNumber: 2)`. Soft-ref invariants enforced: `handleFolderDelete` re-maps `routine.folderID = nil` BEFORE `ctx.delete(folder)` (no cascade); `handleDelete` query-and-deletes `SupersetGroup` rows by `routineID` BEFORE deleting the routine. Active-session conflict guard via UI-SPEC "Workout in Progress" alert. Three stubbed call sites for plans 03-02 / 03-03 wires. 8 new `@Test` functions (1 + 3 + 4 across `RoutinesListCopyTests` / `RoutineFolderDraftTests` / `ActiveSessionConflictTests`). Three atomic commits: `7a6dd7f` (feat) / `25a5ce0` (test) / final docs commit.
+**Phase:** 2 — Core Loop (Routines + Sessions) (Wave 3 — 3/3 plans complete)
+**Plan:** 03-03 complete (Wave 3, seq 3) — `RoutineDuplicator` deep-copy entry point (`Routine` + every owned `RoutineExercise` + cascade-owned `RoutineExerciseSetOverride` + soft-ref `SupersetGroup` rows; UUIDs freshly minted; `supersetGroupID` remapped via `[UUID: UUID]` map per RESEARCH §6 Pitfall 6). `SupersetAssignmentSheet` long-press menu sheet listing existing groups + "New Superset" accent action; row labels match UI-SPEC format "Superset A (Bench + Row)". `RoutineExerciseCard` modified: leading 4pt-wide accent rail (UI-SPEC accent surface #9) rendered when `supersetGroupID != nil`; `.contextMenu` with 5 UI-SPEC verbatim entries ("Edit Prescription" / "Move to Superset…" / "Remove from Superset" / "Make Superset" / "Duplicate Exercise" / "Remove"). `RoutineBuilderView` wires `pendingSupersetAssignment: RoutineExerciseDraft?` state + `.sheet(isPresented:)` + create-mode "Save Routine First" alert gate (SupersetGroup.routineID needs persisted Routine to anchor against). `RoutinesListView.handleDuplicate` stub replaced with real `RoutineDuplicator.duplicate(routine:context:)` call. 10 new `@Test` functions: 6 in `RoutineDuplicationTests` + 4 in `SupersetGroupTests`. Three atomic commits: `1da1c63` (duplicator + tests) / `e9b6318` (sheet + card rail + menu) / `c9bacfb` (RoutinesListView wire). Closes ROUTINE-04 + the deep-copy half of ROUTINE-06.
 
-**Plan:** 02-01 complete (Wave 2, seq 1) — `RestTimerEngine` `@Observable` `@MainActor` Date-based controller (`startedAt: Date?` + `targetSeconds: Int` + `currentExerciseName: String`; `remaining` computed via `Double(targetSeconds) - now().timeIntervalSince(startedAt)`; no foreground timer publisher — the load-bearing PITFALLS-doc #4 / SESS-04 mitigation). `start(seconds:exerciseName:)` / `adjust(deltaSeconds:)` (target moves, `startedAt` doesn't — the canonical ±15s semantic) / `stop()`. Stable `notificationID = "rest-timer.scheduled"` static constant anchors the same-identifier `UNUserNotificationCenter.add(request)` atomic replace-by-identifier reschedule pattern. Split notification scheduling into `RestTimerNotificationScheduling` protocol + `LiveNotificationScheduler` production impl (UI-SPEC verbatim "Rest complete" title + "{exerciseName} — next set ready." body; permission prompt fires on first `schedule(...)` call per CONTEXT.md Area 4; `.authorized` / `.notDetermined` / `.denied` branches handled; silent fallback on denied per UI-SPEC § Error states). Engine takes injectable scheduler + `now: () -> Date` clock for unit-testability — tests use a `StubScheduler` recording double + mutable captured `Date` to simulate a 3-minute lock + 5-minute overrun in microseconds without sleeping. 13 new `@Test` functions: 10 in `RestTimerEngineTests` + 3 in `RestTimerNotificationSchedulerTests`. ActivityKit Live Activity hook deferred to plan 02-02 (no speculative coupling added now).
-**Status:** Phase 2 Wave 3 seq 1 complete (Routines tab + folders + Resume Workout banner shipped). Ready for Wave 3 seq 2 (plan 03-02 — RoutineBuilderView single-screen builder).
-**Progress:** [███████▌░░] 76%
+**Plan:** 03-02 complete (Wave 3, seq 2) — `RoutineBuilderView` single-screen builder with inline `.searchable` exercise picker (reuses Phase 1 `ExerciseLibraryView` via additive `init(onSelect:)` overload), always-on drag-handle reorder via `.environment(\.editMode, .constant(.active))`, per-exercise `PrescriptionEditorRow` (intent / sets / reps / RPE / progression / rest / tempo toggle + 4-field entry / partials toggle / disabled Auto warm-up Phase 3 footnote / per-set overrides disclosure). `RoutineDraft` `@Observable` ephemeral mutation surface (FOUND-06 / MV-VM-lite, no parallel ViewModel) with `targetSets.didSet` prune (RESEARCH §6 Pitfall 8) and three-way merge `save(into:context:)`. `PrescriptionDefaults` ROUTINE-09 heuristic (compound → 180s, isolation → 90s; barbell+compound → strength 4-6, otherwise hypertrophy 8-12). 12 new `@Test` functions across 4 test files. Four atomic commits.
+
+**Plan:** 03-01 complete (Wave 3, seq 1) — Routines tab `RoutinesListView` + folders + Resume Workout banner. See plan 03-01 SUMMARY for details.
+**Status:** Phase 2 Wave 3 complete (Routines tab + folders + Resume banner + builder + prescription editor + supersets + duplication all shipped). Ready for Wave 4 (plan 04-01 — `SessionLoggerView` + the session-start wire that pushes the logger onto the Routines-tab `NavigationPath`).
+**Progress:** [████████▍░] 84%
 
 ### Phase Outlook
 
 | # | Phase | Reqs | Status |
 |---|-------|-----:|--------|
 | 1 | Foundation & Exercise Library | 14 | **Complete** (12/12 plans; 14/14 requirements closed) |
-| 2 | Core Loop (Routines + Sessions) | 20 | In flight (7/13 plans — Wave 0 done + Wave 1 done + Wave 2 done + Wave 3 seq 1 done) |
+| 2 | Core Loop (Routines + Sessions) | 20 | In flight (9/13 plans — Wave 0 done + Wave 1 done + Wave 2 done + Wave 3 done) |
 | 3 | Smart Prescription & Warm-ups | 15 | Not started |
 | 4 | Periodization & Blocks | 10 | Not started |
 | 5 | Fatigue Model & Plateau Detection | 10 | Not started |
