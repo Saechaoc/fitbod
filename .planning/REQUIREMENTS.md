@@ -26,15 +26,15 @@ User explicitly wants a maximalist v1 (the app's stance is "comprehensive over s
 - [ ] **ROUTINE-04**: User can group exercises into supersets and giant sets (2–N exercises with shared accent rail and smart-scroll between paired sets)
 - [ ] **ROUTINE-05**: User can choose a progression model per exercise from four options: RPE/RIR autoreg, double progression, block-periodized, hybrid
 - [ ] **ROUTINE-06**: User can duplicate routines and organize them into folders
-- [ ] **ROUTINE-07**: Routine templates are stored separately from session instances — editing a routine never rewrites historical session data (snapshot-at-session-start)
+- [x] **ROUTINE-07**: Routine templates are stored separately from session instances — editing a routine never rewrites historical session data (snapshot-at-session-start)
 - [ ] **ROUTINE-08**: The same routine recurring on different days with different intent (e.g. strength Mon, hypertrophy Thu) maintains separate per-intent histories for each exercise
 - [ ] **ROUTINE-09**: Each routine exercise has a default rest timer (heuristic by mechanic: compound ≈ 180s, isolation ≈ 90s) that the user can override per exercise
 
 ### SESS — Session Logging
 
-- [ ] **SESS-01**: Starting a session calls `SessionFactory.start(...)` which snapshots all routine prescription fields onto the session — subsequent edits to the routine template never alter this session
+- [x] **SESS-01**: Starting a session calls `SessionFactory.start(...)` which snapshots all routine prescription fields onto the session — subsequent edits to the routine template never alter this session
 - [ ] **SESS-02**: User can log per set: weight, reps, RPE (decimal RPE supported via long-press), set type (warmup / working / drop / failure / rest-pause), and per-set form notes
-- [ ] **SESS-03**: Set inputs auto-populate from the previous matching-intent session of the same exercise; an inline "previous" column shows weight × reps × RPE from that last instance
+- [x] **SESS-03**: Set inputs auto-populate from the previous matching-intent session of the same exercise; an inline "previous" column shows weight × reps × RPE from that last instance
 - [ ] **SESS-04**: Rest timer auto-starts on set completion, exposes ±15s buttons, fires a lock-screen notification when it reaches 0, displays as a Live Activity / Dynamic Island while running, and auto-stops on next set entry
 - [ ] **SESS-05**: User can swap an exercise mid-session without mutating the routine template (substitution applies to this session only)
 - [ ] **SESS-06**: User can add unplanned exercises mid-session (added to the session, not the routine)
@@ -186,12 +186,12 @@ Mapped to phases by `gsd-roadmapper` during roadmap creation.
 | ROUTINE-04 | Phase 2 | Pending |
 | ROUTINE-05 | Phase 2 | Pending |
 | ROUTINE-06 | Phase 2 | Pending |
-| ROUTINE-07 | Phase 2 | Pending |
+| ROUTINE-07 | Phase 2 | Complete |
 | ROUTINE-08 | Phase 2 | Pending |
 | ROUTINE-09 | Phase 2 | Pending |
-| SESS-01 | Phase 2 | Pending |
+| SESS-01 | Phase 2 | Complete |
 | SESS-02 | Phase 2 | Pending |
-| SESS-03 | Phase 2 | Pending |
+| SESS-03 | Phase 2 | Complete |
 | SESS-04 | Phase 2 | Pending |
 | SESS-05 | Phase 2 | Pending |
 | SESS-06 | Phase 2 | Pending |
