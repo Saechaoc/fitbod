@@ -10,6 +10,7 @@
 //
 
 import SwiftUI
+import SwiftData
 
 struct RootView: View {
     var body: some View {
@@ -27,4 +28,13 @@ struct RootView: View {
     }
 }
 
-#Preview { RootView() }
+#Preview("RootView (empty)") { RootView() }
+
+// Acceptance criterion #4: PreviewModelContainer.make() compiles when
+// referenced from a `#Preview` block. The container is in-memory and
+// seeded with the deterministic mini-fixture (4 muscles + 2 exercises
+// + 1 UserSettings row).
+#Preview("RootView (with fixture)") {
+    RootView()
+        .modelContainer(PreviewModelContainer.make())
+}
