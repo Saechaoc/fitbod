@@ -39,7 +39,7 @@ Granular, prescriptive workout sessions — every set in a session is intentiona
   4. User can create a custom exercise — the form blocks save until at least one primary muscle is mapped with a stimulus weight (default 1.0 primary / 0.5 secondary)
   5. The full entity set (Exercise, MuscleGroup, ExerciseMuscleStimulus, Routine, RoutineExercise, Session, SessionExercise, SetEntry, Block, BlockPhase, UserSettings, MuscleVolumeTarget) is wrapped in `SchemaV1: VersionedSchema` with an empty `SchemaMigrationPlan` in place — every property optional or default-valued, every enum persisted as `*Raw: String`
   6. Global units toggle (lb / kg) is settable and affects library display
-**Plans:** 10/12 plans executed
+**Plans:** 11/12 plans executed
 **UI hint:** yes
 **Research flag:** None — patterns are standard SwiftData / SwiftUI
 
@@ -126,7 +126,7 @@ Granular, prescriptive workout sessions — every set in a session is intentiona
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation & Exercise Library | 10/12 | In Progress|  |
+| 1. Foundation & Exercise Library | 11/12 | In Progress|  |
 | 2. Core Loop (Routines + Sessions) | 0/? | Not started | - |
 | 3. Smart Prescription & Warm-ups | 0/? | Not started | - |
 | 4. Periodization & Blocks | 0/? | Not started | - |
