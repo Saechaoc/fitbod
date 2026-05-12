@@ -6,6 +6,16 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		624AD49E2FB375A200D9EF2E /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 624AD49D2FB375A200D9EF2E /* WidgetKit.framework */; };
+		624AD4A02FB375A200D9EF2E /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 624AD49F2FB375A200D9EF2E /* SwiftUI.framework */; };
+		624AD4B12FB375A200D9EF2E /* FitbodWidgetsExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 624AD49B2FB375A200D9EF2E /* FitbodWidgetsExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		624AD4C32FB3763900D9EF2E /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 624AD49D2FB375A200D9EF2E /* WidgetKit.framework */; };
+		624AD4C42FB3763900D9EF2E /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 624AD49F2FB375A200D9EF2E /* SwiftUI.framework */; };
+		624AD4E52FB3765B00D9EF2E /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 624AD49D2FB375A200D9EF2E /* WidgetKit.framework */; };
+		624AD4E62FB3765B00D9EF2E /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 624AD49F2FB375A200D9EF2E /* SwiftUI.framework */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		624AD1542FB18B4200D9EF2E /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -21,12 +31,52 @@
 			remoteGlobalIDString = 624AD1432FB18B4100D9EF2E;
 			remoteInfo = fitbod;
 		};
+		624AD4AF2FB375A200D9EF2E /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 624AD13C2FB18B4100D9EF2E /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 624AD49A2FB375A200D9EF2E;
+			remoteInfo = FitbodWidgetsExtension;
+		};
+		624AD4D32FB3763A00D9EF2E /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 624AD13C2FB18B4100D9EF2E /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 624AD4C12FB3763900D9EF2E;
+			remoteInfo = FitbodWidgetsExtension;
+		};
+		624AD4F52FB3765C00D9EF2E /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 624AD13C2FB18B4100D9EF2E /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 624AD4E32FB3765B00D9EF2E;
+			remoteInfo = FitbodWidgetsExtension;
+		};
 /* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		624AD4B62FB375A200D9EF2E /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				624AD4B12FB375A200D9EF2E /* FitbodWidgetsExtension.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		624AD1442FB18B4100D9EF2E /* fitbod.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = fitbod.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		624AD1532FB18B4200D9EF2E /* fitbodTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = fitbodTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		624AD15D2FB18B4200D9EF2E /* fitbodUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = fitbodUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		624AD49B2FB375A200D9EF2E /* FitbodWidgetsExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = FitbodWidgetsExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		624AD49D2FB375A200D9EF2E /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
+		624AD49F2FB375A200D9EF2E /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
+		624AD4C22FB3763900D9EF2E /* FitbodWidgetsExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = FitbodWidgetsExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		624AD4E42FB3765B00D9EF2E /* FitbodWidgetsExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = FitbodWidgetsExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -69,6 +119,33 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		624AD4982FB375A200D9EF2E /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				624AD4A02FB375A200D9EF2E /* SwiftUI.framework in Frameworks */,
+				624AD49E2FB375A200D9EF2E /* WidgetKit.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		624AD4BF2FB3763900D9EF2E /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				624AD4C42FB3763900D9EF2E /* SwiftUI.framework in Frameworks */,
+				624AD4C32FB3763900D9EF2E /* WidgetKit.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		624AD4E12FB3765B00D9EF2E /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				624AD4E62FB3765B00D9EF2E /* SwiftUI.framework in Frameworks */,
+				624AD4E52FB3765B00D9EF2E /* WidgetKit.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -78,6 +155,7 @@
 				624AD1462FB18B4100D9EF2E /* fitbod */,
 				624AD1562FB18B4200D9EF2E /* fitbodTests */,
 				624AD1602FB18B4200D9EF2E /* fitbodUITests */,
+				624AD49C2FB375A200D9EF2E /* Frameworks */,
 				624AD1452FB18B4100D9EF2E /* Products */,
 			);
 			sourceTree = "<group>";
@@ -88,8 +166,20 @@
 				624AD1442FB18B4100D9EF2E /* fitbod.app */,
 				624AD1532FB18B4200D9EF2E /* fitbodTests.xctest */,
 				624AD15D2FB18B4200D9EF2E /* fitbodUITests.xctest */,
+				624AD49B2FB375A200D9EF2E /* FitbodWidgetsExtension.appex */,
+				624AD4C22FB3763900D9EF2E /* FitbodWidgetsExtension.appex */,
+				624AD4E42FB3765B00D9EF2E /* FitbodWidgetsExtension.appex */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		624AD49C2FB375A200D9EF2E /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				624AD49D2FB375A200D9EF2E /* WidgetKit.framework */,
+				624AD49F2FB375A200D9EF2E /* SwiftUI.framework */,
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -102,10 +192,14 @@
 				624AD1402FB18B4100D9EF2E /* Sources */,
 				624AD1412FB18B4100D9EF2E /* Frameworks */,
 				624AD1422FB18B4100D9EF2E /* Resources */,
+				624AD4B62FB375A200D9EF2E /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				624AD4B02FB375A200D9EF2E /* PBXTargetDependency */,
+				624AD4D42FB3763A00D9EF2E /* PBXTargetDependency */,
+				624AD4F62FB3765C00D9EF2E /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				624AD1462FB18B4100D9EF2E /* fitbod */,
@@ -163,6 +257,63 @@
 			productReference = 624AD15D2FB18B4200D9EF2E /* fitbodUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
+		624AD49A2FB375A200D9EF2E /* FitbodWidgetsExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 624AD4B32FB375A200D9EF2E /* Build configuration list for PBXNativeTarget "FitbodWidgetsExtension" */;
+			buildPhases = (
+				624AD4972FB375A200D9EF2E /* Sources */,
+				624AD4982FB375A200D9EF2E /* Frameworks */,
+				624AD4992FB375A200D9EF2E /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = FitbodWidgetsExtension;
+			packageProductDependencies = (
+			);
+			productName = FitbodWidgetsExtension;
+			productReference = 624AD49B2FB375A200D9EF2E /* FitbodWidgetsExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+		624AD4C12FB3763900D9EF2E /* FitbodWidgetsExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 624AD4D62FB3763A00D9EF2E /* Build configuration list for PBXNativeTarget "FitbodWidgetsExtension" */;
+			buildPhases = (
+				624AD4BE2FB3763900D9EF2E /* Sources */,
+				624AD4BF2FB3763900D9EF2E /* Frameworks */,
+				624AD4C02FB3763900D9EF2E /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = FitbodWidgetsExtension;
+			packageProductDependencies = (
+			);
+			productName = FitbodWidgetsExtension;
+			productReference = 624AD4C22FB3763900D9EF2E /* FitbodWidgetsExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+		624AD4E32FB3765B00D9EF2E /* FitbodWidgetsExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 624AD4F82FB3765C00D9EF2E /* Build configuration list for PBXNativeTarget "FitbodWidgetsExtension" */;
+			buildPhases = (
+				624AD4E02FB3765B00D9EF2E /* Sources */,
+				624AD4E12FB3765B00D9EF2E /* Frameworks */,
+				624AD4E22FB3765B00D9EF2E /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = FitbodWidgetsExtension;
+			packageProductDependencies = (
+			);
+			productName = FitbodWidgetsExtension;
+			productReference = 624AD4E42FB3765B00D9EF2E /* FitbodWidgetsExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -184,6 +335,15 @@
 						CreatedOnToolsVersion = 26.4.1;
 						TestTargetID = 624AD1432FB18B4100D9EF2E;
 					};
+					624AD49A2FB375A200D9EF2E = {
+						CreatedOnToolsVersion = 26.4.1;
+					};
+					624AD4C12FB3763900D9EF2E = {
+						CreatedOnToolsVersion = 26.4.1;
+					};
+					624AD4E32FB3765B00D9EF2E = {
+						CreatedOnToolsVersion = 26.4.1;
+					};
 				};
 			};
 			buildConfigurationList = 624AD13F2FB18B4100D9EF2E /* Build configuration list for PBXProject "fitbod" */;
@@ -203,6 +363,9 @@
 				624AD1432FB18B4100D9EF2E /* fitbod */,
 				624AD1522FB18B4200D9EF2E /* fitbodTests */,
 				624AD15C2FB18B4200D9EF2E /* fitbodUITests */,
+				624AD49A2FB375A200D9EF2E /* FitbodWidgetsExtension */,
+				624AD4C12FB3763900D9EF2E /* FitbodWidgetsExtension */,
+				624AD4E32FB3765B00D9EF2E /* FitbodWidgetsExtension */,
 			);
 		};
 /* End PBXProject section */
@@ -223,6 +386,27 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		624AD15B2FB18B4200D9EF2E /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		624AD4992FB375A200D9EF2E /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		624AD4C02FB3763900D9EF2E /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		624AD4E22FB3765B00D9EF2E /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -253,6 +437,27 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		624AD4972FB375A200D9EF2E /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		624AD4BE2FB3763900D9EF2E /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		624AD4E02FB3765B00D9EF2E /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -265,6 +470,21 @@
 			isa = PBXTargetDependency;
 			target = 624AD1432FB18B4100D9EF2E /* fitbod */;
 			targetProxy = 624AD15E2FB18B4200D9EF2E /* PBXContainerItemProxy */;
+		};
+		624AD4B02FB375A200D9EF2E /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 624AD49A2FB375A200D9EF2E /* FitbodWidgetsExtension */;
+			targetProxy = 624AD4AF2FB375A200D9EF2E /* PBXContainerItemProxy */;
+		};
+		624AD4D42FB3763A00D9EF2E /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 624AD4C12FB3763900D9EF2E /* FitbodWidgetsExtension */;
+			targetProxy = 624AD4D32FB3763A00D9EF2E /* PBXContainerItemProxy */;
+		};
+		624AD4F62FB3765C00D9EF2E /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 624AD4E32FB3765B00D9EF2E /* FitbodWidgetsExtension */;
+			targetProxy = 624AD4F52FB3765C00D9EF2E /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -557,6 +777,195 @@
 			};
 			name = Release;
 		};
+		624AD4B42FB375A200D9EF2E /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = FitbodWidgets/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = FitbodWidgets;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.4;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = bodybuilding.fitbod.FitbodWidgets;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		624AD4B52FB375A200D9EF2E /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = FitbodWidgets/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = FitbodWidgets;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.4;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = bodybuilding.fitbod.FitbodWidgets;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		624AD4D72FB3763A00D9EF2E /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = FitbodWidgets/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = FitbodWidgets;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.4;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = bodybuilding.fitbod.FitbodWidgets;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		624AD4D82FB3763A00D9EF2E /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = FitbodWidgets/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = FitbodWidgets;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.4;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = bodybuilding.fitbod.FitbodWidgets;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		624AD4F92FB3765C00D9EF2E /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = FitbodWidgets/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = FitbodWidgets;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.4;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = bodybuilding.fitbod.FitbodWidgets;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		624AD4FA2FB3765C00D9EF2E /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = FitbodWidgets/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = FitbodWidgets;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.4;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = bodybuilding.fitbod.FitbodWidgets;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -592,6 +1001,33 @@
 			buildConfigurations = (
 				624AD16E2FB18B4200D9EF2E /* Debug */,
 				624AD16F2FB18B4200D9EF2E /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		624AD4B32FB375A200D9EF2E /* Build configuration list for PBXNativeTarget "FitbodWidgetsExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				624AD4B42FB375A200D9EF2E /* Debug */,
+				624AD4B52FB375A200D9EF2E /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		624AD4D62FB3763A00D9EF2E /* Build configuration list for PBXNativeTarget "FitbodWidgetsExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				624AD4D72FB3763A00D9EF2E /* Debug */,
+				624AD4D82FB3763A00D9EF2E /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		624AD4F82FB3765C00D9EF2E /* Build configuration list for PBXNativeTarget "FitbodWidgetsExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				624AD4F92FB3765C00D9EF2E /* Debug */,
+				624AD4FA2FB3765C00D9EF2E /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
