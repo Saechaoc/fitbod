@@ -1,10 +1,11 @@
 ---
 phase: 4
 slug: periodization-blocks
-status: draft
+status: approved
 shadcn_initialized: false
 preset: none
 created: 2026-05-22
+reviewed_at: 2026-05-22
 ---
 
 # Phase 4 — UI Design Contract
