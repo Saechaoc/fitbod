@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Phase 4: Periodization &amp; Blocks — Discussion Questions</title>
+<style>
+:root {
+  --accent: #0E7C86;
+  --accent-light: #3FBFC9;
+  --green: #22c55e;
+  --green-bg: #f0fdf4;
+  --orange: #f97316;
+  --gray-200: #e2e8f0;
+  --gray-300: #cbd5e1;
+  --gray-400: #94a3b8;
+  --gray-500: #64748b;
+  --gray-700: #334155;
+  --gray-900: #0f172a;
+  --bg: #f8fafc;
+}
+* { box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Helvetica, Arial, sans-serif;
+  background: var(--bg);
+  color: var(--gray-900);
+  margin: 0;
+  padding: 0;
+  line-height: 1.5;
+  font-size: 14px;
+}
+header {
+  position: sticky;
+  top: 0;
+  background: white;
+  border-bottom: 1px solid var(--gray-200);
+  z-index: 10;
+  padding: 16px 24px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+}
+.title {
+  font-size: 20px;
+  font-weight: 700;
+  margin: 0 0 8px;
+  color: var(--gray-900);
+}
+.subtitle {
+  color: var(--gray-500);
+  font-size: 13px;
+  margin: 0 0 12px;
+}
+.stats-bar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.stats-text {
+  font-size: 13px;
+  color: var(--gray-700);
+  font-variant-numeric: tabular-nums;
+}
+.stats-text strong { color: var(--gray-900); font-weight: 600; }
+.progress-track {
+  height: 8px;
+  flex: 1 1 200px;
+  max-width: 320px;
+  background: var(--gray-200);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.progress-fill {
+  height: 100%;
+  background: var(--green);
+  transition: width 0.2s ease;
+  width: 0%;
+}
+.save-btn {
+  background: var(--accent);
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.save-btn:hover { background: var(--accent-light); }
+.save-btn:disabled { background: var(--gray-400); cursor: not-allowed; }
+.save-status {
+  font-size: 12px;
+  color: var(--gray-500);
+  font-style: italic;
+}
+main {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 24px;
+}
+.instructions {
+  background: white;
+  border: 1px solid var(--gray-200);
+  border-radius: 8px;
+  padding: 16px 20px;
+  margin-bottom: 24px;
+  font-size: 13px;
+  color: var(--gray-700);
+}
+.instructions strong { color: var(--gray-900); }
+.section {
+  background: white;
+  border: 1px solid var(--gray-200);
+  border-radius: 8px;
+  margin-bottom: 16px;
+  overflow: hidden;
+}
+.section-header {
+  padding: 14px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  user-select: none;
+  border-bottom: 1px solid var(--gray-200);
+}
+.section.collapsed .section-header { border-bottom: none; }
+.section-header:hover { background: var(--bg); }
+.section-title {
+  font-size: 15px;
+  font-weight: 600;
+  margin: 0;
+  color: var(--gray-900);
+}
+.section-meta {
+  font-size: 12px;
+  color: var(--gray-500);
+  font-variant-numeric: tabular-nums;
+}
+.section-toggle {
+  font-size: 12px;
+  color: var(--gray-400);
+  transition: transform 0.15s;
+}
+.section.collapsed .section-toggle { transform: rotate(-90deg); }
+.section-body {
+  padding: 16px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  gap: 16px;
+}
+.section.collapsed .section-body { display: none; }
+.qcard {
+  border: 1px solid var(--gray-200);
+  border-radius: 8px;
+  padding: 14px;
+  background: white;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  transition: border-color 0.15s, background 0.15s;
+}
+.qcard.answered {
+  border: 2px solid var(--green);
+  background: var(--green-bg);
+}
+.qcard-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+.qbadge {
+  background: var(--gray-200);
+  color: var(--gray-700);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+}
+.qcard.answered .qbadge { background: var(--green); color: white; }
+.qtitle {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--gray-900);
+  margin: 0;
+  flex: 1;
+}
+.qcontext {
+  font-size: 12px;
+  color: var(--gray-500);
+  font-style: italic;
+  line-height: 1.45;
+  padding: 8px 10px;
+  background: var(--bg);
+  border-left: 3px solid var(--gray-300);
+  border-radius: 0 4px 4px 0;
+  white-space: pre-wrap;
+}
+.options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.opt {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 8px 10px;
+  border: 1px solid var(--gray-200);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: border-color 0.12s, background 0.12s;
+}
+.opt:hover { border-color: var(--accent-light); background: rgba(63, 191, 201, 0.05); }
+.opt input[type="radio"] { margin-top: 2px; flex-shrink: 0; cursor: pointer; accent-color: var(--accent); }
+.opt-body { flex: 1; }
+.opt-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--gray-900);
+  display: block;
+  margin-bottom: 2px;
+}
+.opt-desc {
+  font-size: 12px;
+  color: var(--gray-700);
+  line-height: 1.45;
+}
+.chatmore {
+  width: 100%;
+  min-height: 56px;
+  resize: vertical;
+  padding: 8px 10px;
+  border: 1px solid var(--gray-200);
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 12px;
+  color: var(--gray-900);
+  background: white;
+  transition: border 0.12s, border-width 0.12s;
+}
+.chatmore:focus { outline: none; border-color: var(--accent-light); }
+.chatmore.has-content {
+  border: 2px solid var(--orange);
+  background: #fff7ed;
+}
+.footer {
+  margin-top: 24px;
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+}
+.text-btn {
+  background: none;
+  border: 1px solid var(--gray-300);
+  padding: 8px 14px;
+  border-radius: 6px;
+  font-size: 12px;
+  color: var(--gray-700);
+  cursor: pointer;
+}
+.text-btn:hover { background: white; border-color: var(--gray-400); }
+@media (max-width: 700px) {
+  main { padding: 12px; }
+  .section-body { grid-template-columns: 1fr; }
+  header { padding: 12px 16px; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <h1 class="title">Phase 4: Periodization &amp; Blocks — Discussion Questions</h1>
+  <p class="subtitle">10 requirements (BLOCK-01..08, PRES-05, PRES-06) · 27 questions · 8 sections</p>
+  <div class="stats-bar">
+    <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+    <div class="stats-text" id="statsText"></div>
+    <button class="save-btn" id="saveBtn">Save answers</button>
+    <span class="save-status" id="saveStatus"></span>
+  </div>
+</header>
+
+<main>
+
+<div class="instructions">
+  <strong>How to use:</strong>
+  Pick an option for each question (or use the chat-more box for freeform notes). When ready, click <em>Save answers</em>.
+  Modern Chromium browsers can write the JSON file directly via the File System Access API; otherwise the page downloads
+  <code>04-QUESTIONS.json</code> which you save over the original.
+  Then return to Claude and say <strong>"refresh"</strong> (re-read state) or <strong>"finalize"</strong> (generate CONTEXT.md).
+</div>
+
+<div id="content"></div>
+
+<div class="footer">
+  <button class="save-btn" id="saveBtnFooter">Save answers</button>
+  <button class="text-btn" id="downloadBtn">Download JSON</button>
+  <button class="text-btn" id="resetBtn">Reset all</button>
+</div>
+
+</main>
+
+<script>
+const DATA = {
+  "phase": "04-periodization-blocks",
+  "generated_at": "2026-05-22T22:20:00Z",
+  "mode": "power",
+  "stats": { "total": 27, "answered": 0, "chat_more": 0, "remaining": 27 },
+  "sections": [
+    {
+      "id": "block-builder",
+      "title": "Block Builder UX (BLOCK-01)",
+      "questions": [
+        { "id": "Q-01", "title": "Block builder screen layout", "context": "Phase 1 shipped Block + BlockPhase schemas. BlockPhase carries nameRaw, weeks, volumeMultiplier, intensityMultiplier, orderIndex. Phase 2's RoutineBuilderView is the established precedent — single screen, inline editing, drag-handle reorder, @Observable draft.", "options": [
+          { "id": "a", "label": "Single-screen builder (matches RoutineBuilderView precedent)", "description": "Block name + start date at top, ordered phase list below with inline editors per phase (kind picker, weeks stepper, multipliers). Drag-handle reorder. @Observable BlockDraft + three-way merge on save. Reuses Phase 2 idioms 1:1." },
+          { "id": "b", "label": "Two-step modal (Create → Edit Phases)", "description": "Sheet 1 = block metadata; Sheet 2 = phase list editor. Slower flow but clearer separation. Breaks from Phase 2 single-screen precedent." },
+          { "id": "c", "label": "Form-style screen with disclosure rows per phase", "description": "iOS Settings-style List with DisclosureGroup per phase. Tap a phase row to expand its editor inline. Conservative and a11y-friendly but feels lower-density than the Phase 2 builder." }
+        ]},
+        { "id": "Q-02", "title": "Where do blocks live in navigation?", "context": "Today tab has empty state + ResumeWorkoutBanner. Routines tab has RoutinesListView. Settings has its own host. No Blocks tab today (RootView has 5 tabs: Today / Routines / Library / Progress / Settings).", "options": [
+          { "id": "a", "label": "Routines tab — top section above routine folders", "description": "Add a 'Blocks' section above folders inside RoutinesListView. Block rows show 'Week N of M' inline. Adding a 6th tab is heavier than this phase needs." },
+          { "id": "b", "label": "New 'Plan' tab (rename Today or replace Progress placeholder)", "description": "Promote periodization to a top-level surface. Plan tab houses block builder + mesocycle navigator. Routines tab stays focused on templates." },
+          { "id": "c", "label": "Today tab — secondary disclosure under the active block card", "description": "Active block card on Today tap-expands to mesocycle view; 'Manage Blocks' button opens BlockBuilderView modal/push. Blocks list lives nested under Today." },
+          { "id": "d", "label": "Settings tab — under 'Periodization' section", "description": "Blocks managed alongside other configuration. Cleanest if blocks are 'set and forget' but feels under-promoted for a v1 differentiator." }
+        ]},
+        { "id": "Q-03", "title": "Block templates / quick-start", "context": "ROADMAP success criterion #1 says 'User can define a training block with an ordered phase sequence.' Doesn't mandate templates. RP/RTS conventions: 4-week accumulation → 2-week intensification → 1-week realization → 1-week deload is a stock 'meso'.", "options": [
+          { "id": "a", "label": "Ship 2-3 stock templates (Generic Strength, Hypertrophy Meso, Powerlifting Peak)", "description": "'New Block' menu shows templates + 'Blank'. Each template seeds the phase list. Fastest path to a usable block; matches what serious lifters expect." },
+          { "id": "b", "label": "Blank only — user defines every phase", "description": "Forces deliberate setup; no opinionated defaults. Aligns with 'transparent over magic' stance but more friction for first use." },
+          { "id": "c", "label": "One stock template ('Generic 8-week meso') + Blank", "description": "Lightweight onboarding without overcommitting to a library of templates. Template defined in code (BlockTemplates.swift)." }
+        ]},
+        { "id": "Q-04", "title": "Phase reorder + add/remove rules", "context": "BlockPhase.orderIndex: Int already exists. SwiftData @Relationship(.cascade) will cascade BlockPhase delete from Block. Are there hard constraints on phase order (e.g., deload must be last)?", "options": [
+          { "id": "a", "label": "No constraints — user is in charge, any kind in any order", "description": "Builder allows any sequence. Matches 'transparent over magic'. User can put deload first if they want." },
+          { "id": "b", "label": "Soft warnings — flag 'unusual' orderings with non-blocking advisory", "description": "E.g., 'Deload typically goes last' as a yellow inline note. User can dismiss. Lightweight nudge without paternalism." },
+          { "id": "c", "label": "Hard validation — deload must be terminal, only one realization, etc.", "description": "Block can't save with invalid sequence. Slowest UX but enforces RP/RTS conventions strictly." }
+        ]},
+        { "id": "Q-05", "title": "Multi-active vs single-active blocks", "context": "Block.isActive: Bool exists on schema. Routine.block: Block? is optional. Can the user have multiple active blocks simultaneously (e.g., one for upper / one for lower)?", "options": [
+          { "id": "a", "label": "Single active block at a time", "description": "Activating block X deactivates any other active block. Simpler model: 'current mesocycle'. Matches RP/RTS convention. Routine.block links the template to a block; only one block is 'current'." },
+          { "id": "b", "label": "Multiple concurrent active blocks (upper / lower split blocks)", "description": "Each routine carries its own block context. Home screen surfaces ALL active blocks. More flexible but more UX complexity. Higher cognitive load." },
+          { "id": "c", "label": "Single active block, but routines NOT in the block default to no block context", "description": "Block X active → routines linked to X get block prescription; routines outside X use Phase 3 strategies only. Clean partition." }
+        ]}
+      ]
+    },
+    {
+      "id": "home-timeline",
+      "title": "Block Timeline & Home Screen (BLOCK-02, BLOCK-03)",
+      "questions": [
+        { "id": "Q-06", "title": "Active block card placement on Today tab", "context": "Today tab today: ResumeWorkoutBanner (active session) + 'No workout in progress' empty state. ROADMAP wants 'phase chip, Week N of M, days remaining, phase color coding' visible on home.", "options": [
+          { "id": "a", "label": "Above ResumeWorkoutBanner, persistent when block active", "description": "Block card is the topmost item on Today when a block is active. Stacks: BlockCard → ResumeBanner → empty/start CTA. Block context is the primary 'where am I in training' signal." },
+          { "id": "b", "label": "Replaces empty state when active; ResumeBanner stays on top", "description": "BlockCard renders in the middle slot. ResumeBanner takes precedence when an active session exists. Less visual weight to block." },
+          { "id": "c", "label": "Compact strip above tab bar (always visible across tabs)", "description": "Pinned mini-bar showing 'Week 3 / Accumulation' across the app. High-visibility but invades all tabs." }
+        ]},
+        { "id": "Q-07", "title": "Phase color coding", "context": "UI-SPEC tokens from Phase 1: accent #0E7C86 / #3FBFC9. Four phases: accumulation / intensification / realization / deload. Need semantic colors distinguishing them.", "options": [
+          { "id": "a", "label": "Heat-map progression — accumulation=teal, intensification=amber, realization=orange, deload=gray", "description": "Visual intensity matches training intensity. Deload reads as 'rest' via desaturated gray. Accumulation uses existing accent teal." },
+          { "id": "b", "label": "Semantic categorical — distinct hues per phase (no intensity mapping)", "description": "Accumulation=blue, intensification=purple, realization=red, deload=green. No 'progression' metaphor, just clear categorization." },
+          { "id": "c", "label": "Monochrome with accent on current phase only", "description": "Phases shown in neutral grays; current phase highlighted in accent teal. Minimal palette; let typography carry the meaning." }
+        ]},
+        { "id": "Q-08", "title": "Mesocycle week navigation gesture", "context": "ROADMAP says 'user can swipe between weeks to navigate the mesocycle.' Where does the swipe live and what does each week show?", "options": [
+          { "id": "a", "label": "Horizontal swipe on the block card (TabView with PageTabViewStyle)", "description": "Each 'page' = one week. Shows: phase chip, multipliers, scheduled days, upcoming routines. Familiar iOS pattern." },
+          { "id": "b", "label": "Dedicated mesocycle screen reached by tapping block card", "description": "Block card on Today opens MesocycleNavigatorView (push). That view has horizontal week strip + scrollable per-week detail. More room but extra tap." },
+          { "id": "c", "label": "Calendar-style month view of the entire block", "description": "Grid showing all weeks/phases at once with current week highlighted. Tap a week to drill in. Better overview but denser." }
+        ]},
+        { "id": "Q-09", "title": "What 'Week N of M' counts", "context": "Block has startDate; BlockPhase has weeks: Int. Is 'Week N of M' the linear week count across the whole block (Week 5 of 8) or week within the current phase (Week 2 of 4 in Accumulation)?", "options": [
+          { "id": "a", "label": "Linear block week (e.g., Week 5 of 8)", "description": "Simple counter spanning the entire block. Easier mental model. Phase chip + linear week is the primary signal." },
+          { "id": "b", "label": "Per-phase week (e.g., Week 2 of 4 in Accumulation)", "description": "Resets at each phase boundary. Communicates 'how deep into THIS phase' more directly. Better when phases are very different lengths." },
+          { "id": "c", "label": "Both — 'Week 2/4 (Accumulation) · Week 5/8 overall'", "description": "Dual readout. Most information, slightly busier UI. Strongest 'where am I' signal." }
+        ]}
+      ]
+    },
+    {
+      "id": "deload-mechanics",
+      "title": "Phase Multipliers & Deload Mechanics (BLOCK-04, BLOCK-05)",
+      "questions": [
+        { "id": "Q-10", "title": "Default multipliers per phase", "context": "BlockPhase has volumeMultiplier=1.0, intensityMultiplier=1.0. ROADMAP flags this as a research item. Common defaults: accumulation 1.0/0.7-0.8, intensification 0.85/0.85-0.9, realization 0.6/0.95-1.0, deload 0.5/0.7-0.8.", "options": [
+          { "id": "a", "label": "RP-style defaults (research-confirmed at plan-phase)", "description": "Accumulation vol 1.0 int 0.75 · Intensification vol 0.85 int 0.88 · Realization vol 0.6 int 0.97 · Deload vol 0.5 int 0.75. Researcher confirms from RP literature." },
+          { "id": "b", "label": "Conservative defaults (everything 1.0 except deload)", "description": "All phases 1.0/1.0 except deload (vol 0.5, int 0.8). User explicitly tunes intensification/realization themselves. Less prescriptive." },
+          { "id": "c", "label": "RTS-style with steeper realization", "description": "Accumulation 1.0/0.7 · Intensification 0.8/0.85 · Realization 0.4/1.0 (heavy singles) · Deload 0.5/0.75. Reflects competition-prep periodization." }
+        ]},
+        { "id": "Q-11", "title": "How multipliers apply to prescription", "context": "Multipliers are Double on BlockPhase. Two strategies (BlockPeriodized + Hybrid) consume them. Volume = how many sets; intensity = % of working weight. Multiplicatively against baseline? Or absolute targets?", "options": [
+          { "id": "a", "label": "Multiplicative against routine's baseline sets/weight", "description": "Baseline = RoutineExercise.targetSets × prescribedWeight. Phase multiplier scales each: accumulation 1.0 × baseline. Deload 0.5 × sets, 0.75 × weight. No schema change." },
+          { "id": "b", "label": "Multiplicative against e1RM (intensity = % of 1RM)", "description": "intensityMultiplier is % of 1RM (0.85 = 85% of 1RM). Strategy resolves prescription via 1RM × multiplier × reps. Requires e1RM tracking inline." },
+          { "id": "c", "label": "Multiplicative against the chosen ProgressionStrategy's output", "description": "Block-periodized: phase context modifies whatever DoubleProgression or RPEAutoreg returns. Cleanest composition with Phase 3 protocol — block IS a wrapper strategy." }
+        ]},
+        { "id": "Q-12", "title": "Volume-multiplier semantics for sets", "context": "ROADMAP says deload 'auto-reduces prescribed volume (~50%).' Volume = sets × reps × weight. How does 50% volume cut apply concretely?", "options": [
+          { "id": "a", "label": "Halve the working sets, keep reps and weight same", "description": "3×8 @ 100kg → 2×8 @ 100kg on deload. Simple and matches RP convention. Working-set count is the most visible 'volume' lever." },
+          { "id": "b", "label": "Halve both sets and weight (full ~50% volume cut)", "description": "3×8 @ 100kg → 2×8 @ 75kg. Stronger deload. Closer to RTS approach for max-strength blocks." },
+          { "id": "c", "label": "Keep sets, halve reps", "description": "3×8 → 3×4 same weight. Less common but useful for technique-focused deloads. Unusual choice." }
+        ]},
+        { "id": "Q-13", "title": "Deload week visual treatment", "context": "BLOCK-05: 'Deload weeks are visually distinct (banner / calendar tint / volume targets cut on bars and heatmap).' Phase 5 owns volume bars and heatmap. Phase 4 owns the banner + any calendar tint.", "options": [
+          { "id": "a", "label": "Banner on Today tab + tinted background on block card", "description": "Top-of-Today banner: 'Deload week — recover, don't load.' Block card background tints to deload color. Mesocycle week strip highlights deload week." },
+          { "id": "b", "label": "Modal alert at session start ('You're in a deload — light day ahead')", "description": "First session of deload week opens one-time modal with rationale. Subsequent days that week show subtle banner. Higher friction." },
+          { "id": "c", "label": "Subtle — small chip on block card + greyed weight prescriptions", "description": "Less intrusive. Deload chip on block card; session logger shows prescribed weights in muted color. User notices but isn't blocked." }
+        ]}
+      ]
+    },
+    {
+      "id": "engine-strategies",
+      "title": "PeriodizationEngine & Strategies (PRES-05, PRES-06)",
+      "questions": [
+        { "id": "Q-14", "title": "PeriodizationEngine API shape", "context": "Phase 3 establishes ProgressionStrategy protocol (pure functions, no SwiftData coupling). Phase 4 adds BlockPeriodizedStrategy + HybridStrategy. They need to know 'current block phase' for a given date.", "options": [
+          { "id": "a", "label": "Static facade: PeriodizationEngine.phase(for: Block, on: Date) -> BlockPhase?", "description": "Pure function. Strategies receive Block via dependency injection and call the engine. Testable without ModelContainer. Matches Phase 3's pure-function services pattern." },
+          { "id": "b", "label": "Method on Block itself: block.phase(on: date) -> BlockPhase?", "description": "Lookup is a method on the @Model. Convenient call site but couples model to logic. Slight conflict with FOUND-07 (services as pure-function value types)." },
+          { "id": "c", "label": "Resolved at session-start by SessionFactory, passed to strategy as context", "description": "SessionFactory computes current phase context once and snapshots it onto SessionExercise. Strategy receives phase as input. Snapshot pattern extended." }
+        ]},
+        { "id": "Q-15", "title": "Where do new strategies live?", "context": "Phase 3 establishes fitbod/Prescription/ with RPEAutoregStrategy.swift, DoubleProgressionStrategy.swift, TuchschererTable.swift. Phase 4 adds two more.", "options": [
+          { "id": "a", "label": "Same directory: fitbod/Prescription/BlockPeriodizedStrategy.swift + HybridStrategy.swift", "description": "All 4 strategies + PeriodizationEngine in fitbod/Prescription/. Discoverable, matches Phase 3 layout. Engine file: fitbod/Prescription/PeriodizationEngine.swift." },
+          { "id": "b", "label": "New directory: fitbod/Periodization/ for block-aware code", "description": "fitbod/Periodization/PeriodizationEngine.swift + BlockPeriodizedStrategy.swift + HybridStrategy.swift + BlockBuilderView.swift. Separates 'block math' from 'prescription math'." },
+          { "id": "c", "label": "Hybrid: strategies stay in Prescription/, engine + UI in Periodization/", "description": "Strategies live with their peers; engine + builder + home card in fitbod/Periodization/. Reflects 'algorithm vs feature' split." }
+        ]},
+        { "id": "Q-16", "title": "Hybrid strategy formula", "context": "PRES-06: 'HybridStrategy combines block phase context with RPE-driven daily adjustment.' Two inputs: block-phase target weight, RPE-autoreg target weight. How combined?", "options": [
+          { "id": "a", "label": "Block sets the upper ceiling; RPE pulls down on bad days", "description": "target = min(blockTarget, rpeTarget). Block defines theoretical max for the phase; RPE responds to fatigue. Conservative — autoregulates ONLY downward." },
+          { "id": "b", "label": "Weighted average: 0.6 × blockTarget + 0.4 × rpeTarget", "description": "Block provides 'big picture' anchor; RPE adds daily readiness sensitivity. Weights user-tunable (default 60/40). Smooth, responsive." },
+          { "id": "c", "label": "Block target with RPE-bounded adjustment window (±5%)", "description": "Use blockTarget as base. If rpeTarget diverges >5%, clamp delta to ±5%. Block-dominant with safety valve." }
+        ]},
+        { "id": "Q-17", "title": "Block-periodized strategy when no calibration data", "context": "BlockPeriodizedStrategy needs a baseline to multiply by intensityMultiplier. If user just started the block on a new exercise with no logged history, what's the baseline?", "options": [
+          { "id": "a", "label": "Fall back to RoutineExercise.prescribedWeight (user's manual entry)", "description": "Routine carries a user-entered baseline weight. Strategy multiplies by intensityMultiplier. Simple, requires user to set realistic baseline at routine creation." },
+          { "id": "b", "label": "Estimate 1RM from last logged set (Epley/Brzycki), multiply by intensity", "description": "Reuses Phase 3 e1RM helper. target = e1RM × intensityMultiplier × repFactor(targetReps). More 'smart', requires at least one prior logged set." },
+          { "id": "c", "label": "Show 'Set baseline' UI prompt blocking session start until user enters", "description": "First time exercise enters a block, force user to input a working weight. Explicit and transparent but adds friction." }
+        ]}
+      ]
+    },
+    {
+      "id": "routine-block-linkage",
+      "title": "Routine ↔ Block Linkage",
+      "questions": [
+        { "id": "Q-18", "title": "Routine-to-block assignment UX", "context": "Routine.block: Block? already exists. Routine builder (Phase 2) currently has no block-picker. Where + how does user assign a routine to a block?", "options": [
+          { "id": "a", "label": "Picker in RoutineBuilderView header ('Block: None ▾')", "description": "Top of RoutineBuilderView gets a 'Block' menu showing all defined blocks + 'None'. Routine's block context visible while editing. Discoverable." },
+          { "id": "b", "label": "Assignment happens from BlockBuilderView side ('Add Routine to Block')", "description": "BlockBuilderView has 'Routines in this block' section with a picker. Routine itself doesn't know it's in a block until viewed in BlockBuilder." },
+          { "id": "c", "label": "Both — assign from either side, single source of truth on Routine.block", "description": "Symmetric: assign from Routine editor OR Block editor; both write Routine.block. Most flexible, more UI surface." }
+        ]},
+        { "id": "Q-19", "title": "Routines outside a block", "context": "Routines can have block == nil. How do block-periodized / hybrid strategies behave when invoked on a routine that's NOT in a block?", "options": [
+          { "id": "a", "label": "Disallow .block / .hybrid progression unless routine is in a block", "description": "RoutineExercise progression picker hides .block and .hybrid options when Routine.block is nil. Tooltip: 'Add routine to a block to use these.'" },
+          { "id": "b", "label": "Allow but degrade gracefully — fall back to baseline multiplier 1.0", "description": "Without a block, BlockPeriodizedStrategy returns baseline target (multiplier defaults to 1.0). HybridStrategy degrades to RPEAutoreg. No UI restriction." },
+          { "id": "c", "label": "Allow + show warning ('No block context — using neutral phase')", "description": "Inline warning in session logger when block-periodized prescription is computed with no block. Transparent over magic." }
+        ]},
+        { "id": "Q-20", "title": "Session inherits block at start", "context": "Session.block: Block? already exists. SessionFactory snapshots Routine prescription onto SessionExercise. Should it also snapshot the routine's block onto Session?", "options": [
+          { "id": "a", "label": "Yes — snapshot routine.block onto Session.block at session start", "description": "Session 'remembers' which block it belonged to at creation. Even if user later detaches routine from block, history shows block context. Matches snapshot pattern (PITFALLS #1)." },
+          { "id": "b", "label": "No — Session.block stays nil; resolve via routine link at query time", "description": "Less data on Session. Slight indirection. If routine→block changes, historical sessions reflect the change (potentially misleading)." },
+          { "id": "c", "label": "Yes, plus snapshot the resolved BlockPhase too (SessionContext sub-snapshot)", "description": "Session captures both Block + which BlockPhase was active on its start date. Heaviest snapshot but most historically accurate." }
+        ]}
+      ]
+    },
+    {
+      "id": "phase-end-review",
+      "title": "Phase-End Review (BLOCK-07)",
+      "questions": [
+        { "id": "Q-21", "title": "When does the phase-end review surface?", "context": "BLOCK-07: 'End-of-block produces a phase-end review (total volume, e1RM deltas, PRs hit, recommended next phase).' At the end of the BLOCK or end of each PHASE within the block?", "options": [
+          { "id": "a", "label": "End of block only (single review when block.endDate passes)", "description": "One comprehensive review per block. Surfaces as modal on Today first time user opens app after block end. Recommends next phase plan." },
+          { "id": "b", "label": "End of each phase (review after deload completes, accumulation completes, etc.)", "description": "4 reviews per block (one per phase). More granular feedback; more interruption. Each review focuses on that phase's outputs." },
+          { "id": "c", "label": "Manual — 'View Block Review' button, no auto-surface", "description": "User opts in to review by navigating to the block. No interruption. Less prominent for serious lifters." }
+        ]},
+        { "id": "Q-22", "title": "Metrics shown in phase-end review", "context": "ROADMAP lists: 'total volume, e1RM deltas, PRs hit, recommended next phase.' Phase 5 (volume aggregation) and Phase 6 (PR detection, charts) haven't shipped. What can Phase 4 deliver inline?", "options": [
+          { "id": "a", "label": "Scaffold all four, render placeholders for Phase 5/6 deliverables", "description": "Render sections with 'Coming in Phase N' for volume/PR slots; compute total tonnage + simple e1RM deltas inline. Visual contract solid." },
+          { "id": "b", "label": "Defer review to Phase 5 — Phase 4 closes BLOCK-07 with 'block complete' acknowledgment only", "description": "Phase 4 shows simple 'Block X complete' card with totals computed inline; full review (charts/PRs) lands Phase 6. Smaller scope." },
+          { "id": "c", "label": "Inline computations only — total sets, total tonnage, sessions logged, days active", "description": "Don't depend on Phase 5/6 helpers. Compute from raw SetEntry what's available now. Honest scope, useful but limited." }
+        ]},
+        { "id": "Q-23", "title": "'Recommended next phase' source", "context": "ROADMAP says review includes 'recommended next phase.' How is the recommendation generated?", "options": [
+          { "id": "a", "label": "Static rules ('After deload → accumulation', 'After realization → deload')", "description": "Hard-coded next-phase suggestion based on kind of just-finished phase. RP-convention defaults. Deterministic, transparent." },
+          { "id": "b", "label": "Block template-based ('Repeat the block template, or start a new one')", "description": "Suggest re-running same block sequence or picking different template. User-driven, not auto-suggested phase type." },
+          { "id": "c", "label": "Defer the recommendation to v1.x — surface only 'Block complete'", "description": "Show review without prescriptive next step. User decides. Phase 4 doesn't ship recommendation engine." }
+        ]}
+      ]
+    },
+    {
+      "id": "fatigue-advisory",
+      "title": "Fatigue-Triggered Deload Advisory (BLOCK-06, BLOCK-08)",
+      "questions": [
+        { "id": "Q-24", "title": "Phase 4's scope on BLOCK-06", "context": "BLOCK-06: 'consider deload alert when fatigue signals spike — suggestion only, never auto-applied.' Phase 5 owns the fatigue/plateau signal computation. Phase 4 owns block schedule + deload canonicality (BLOCK-08).", "options": [
+          { "id": "a", "label": "Phase 4 wires UI scaffold only — Banner component + dismiss state, signal source stubbed", "description": "ConsiderDeloadBanner renders when FatigueAdvisory.shouldSuggest() returns true. Phase 4 ships protocol returning false. Phase 5 fills the real signal." },
+          { "id": "b", "label": "Phase 4 ships full alert UX + a simple rule-based advisory ('logged 5 sessions in 5 days')", "description": "Quick heuristic from session count / frequency. Real fatigue model lands Phase 5 and replaces the rule. Working UX from Phase 4 onward." },
+          { "id": "c", "label": "Defer entirely to Phase 5 — Phase 4 only closes BLOCK-08 (canonicality contract)", "description": "Phase 4 covers 'scheduled deload is canonical' invariant in code/tests. Phase 5 adds BLOCK-06 advisory UI. Cleaner phase separation." }
+        ]},
+        { "id": "Q-25", "title": "Canonicality enforcement (BLOCK-08)", "context": "BLOCK-08: 'Scheduled block deload is canonical; fatigue-triggered alerts are advisory and never override.' How is canonicality enforced in code?", "options": [
+          { "id": "a", "label": "Type-level — FatigueAdvisory only returns Suggestion, never DeloadMutation", "description": "API contract makes it impossible for fatigue model to mutate block. Only PeriodizationEngine.advance() can set deload state. Single writer." },
+          { "id": "b", "label": "Runtime guard — every deload-state setter checks 'is this from the block schedule?'", "description": "Setters take a source: DeloadSource enum. Asserts at runtime. Less compile-time safety but transparent in code review." },
+          { "id": "c", "label": "Tested invariant — unit test asserts that accepting an advisory updates UI dismiss state only, never block", "description": "Belt-and-suspenders: any implementation is fine but a Swift Testing suite locks the contract. Less prescriptive code shape." }
+        ]}
+      ]
+    },
+    {
+      "id": "schema-evolution",
+      "title": "Schema Evolution",
+      "questions": [
+        { "id": "Q-26", "title": "New schema fields needed", "context": "Phase 1 shipped Block, BlockPhase, Routine.block, Session.block, BlockPhaseKind. Phase 3 will ship more. Phase 4 may need: Block.notes is set; Block.isActive is set; phase-end review may need cached deltas. Do any new fields need to land for Phase 4?", "options": [
+          { "id": "a", "label": "None — Phase 1 schema is sufficient, all Phase 4 data computed at read time", "description": "Block/BlockPhase are read-only at strategy time. Phase-end review computed inline from SetEntry history. No SchemaV3 needed. Most conservative." },
+          { "id": "b", "label": "Add SessionContext fields to Session (active BlockPhase ID at session start)", "description": "Snapshot which BlockPhase was active when session began. Session.activeBlockPhaseID: UUID? (soft ref). Triggers lightweight migration. Better historical accuracy." },
+          { "id": "c", "label": "Add BlockReview entity (caches phase-end totals, e1RM deltas)", "description": "Materialized view of phase-end review. Avoids re-computing. Lightweight migration. Useful if Phase 6 charts query reviews often." }
+        ]},
+        { "id": "Q-27", "title": "Migration timing", "context": "Phase 3 in flight will deliver SchemaV3 (PlateInventory + new fields). If Phase 4 also needs schema changes, they could land in SchemaV3 (Phase 3) or SchemaV4 (Phase 4).", "options": [
+          { "id": "a", "label": "Bundle Phase 4 fields into SchemaV3 (during Phase 3 execution)", "description": "If Phase 4 needs any new fields, pre-add them in SchemaV3. Saves a migration step. Risk: scope creep into Phase 3." },
+          { "id": "b", "label": "SchemaV4 in Phase 4 — own migration cycle", "description": "Phase 4 owns its schema delta. Cleaner phase boundary. One additional lightweight migration to run." },
+          { "id": "c", "label": "No new schema — confirmed by Q-26 answer", "description": "Depends on Q-26. If 'no new fields,' this question is moot." }
+        ]}
+      ]
+    }
+  ]
+};
+
+const state = { answers: {}, chatmore: {}, collapsed: {} };
+
+function el(tag, attrs, children) {
+  const e = document.createElement(tag);
+  if (attrs) {
+    for (const k in attrs) {
+      if (k === 'class') e.className = attrs[k];
+      else if (k === 'text') e.textContent = attrs[k];
+      else if (k.startsWith('on') && typeof attrs[k] === 'function') e.addEventListener(k.slice(2), attrs[k]);
+      else if (k === 'value' || k === 'checked' || k === 'placeholder' || k === 'type' || k === 'name') e[k] = attrs[k];
+      else e.setAttribute(k, attrs[k]);
+    }
+  }
+  if (children) {
+    for (const c of children) {
+      if (c === null || c === undefined) continue;
+      e.appendChild(typeof c === 'string' ? document.createTextNode(c) : c);
+    }
+  }
+  return e;
+}
+
+function render() {
+  const root = document.getElementById('content');
+  while (root.firstChild) root.removeChild(root.firstChild);
+  for (const section of DATA.sections) {
+    const answered = section.questions.filter(q => state.answers[q.id]).length;
+    const total = section.questions.length;
+    const isCollapsed = !!state.collapsed[section.id];
+    const sec = el('div', { class: 'section' + (isCollapsed ? ' collapsed' : '') });
+    const head = el('div', { class: 'section-header', onclick: () => toggleSection(section.id) }, [
+      el('div', null, [
+        el('h2', { class: 'section-title', text: section.title }),
+        el('span', { class: 'section-meta', text: `${answered} / ${total} answered` })
+      ]),
+      el('span', { class: 'section-toggle', text: '▼' })
+    ]);
+    sec.appendChild(head);
+    const body = el('div', { class: 'section-body' });
+    for (const q of section.questions) {
+      body.appendChild(renderQCard(q));
+    }
+    sec.appendChild(body);
+    root.appendChild(sec);
+  }
+  updateStats();
+}
+
+function renderQCard(q) {
+  const isAnswered = !!state.answers[q.id];
+  const card = el('div', { class: 'qcard' + (isAnswered ? ' answered' : '') });
+  card.appendChild(el('div', { class: 'qcard-head' }, [
+    el('span', { class: 'qbadge', text: q.id }),
+    el('h3', { class: 'qtitle', text: q.title })
+  ]));
+  card.appendChild(el('div', { class: 'qcontext', text: q.context }));
+  const opts = el('div', { class: 'options' });
+  for (const o of q.options) {
+    const radio = el('input', {
+      type: 'radio',
+      name: q.id,
+      value: o.id,
+      checked: state.answers[q.id] === o.id,
+      onchange: () => setAnswer(q.id, o.id)
+    });
+    const body = el('div', { class: 'opt-body' }, [
+      el('span', { class: 'opt-label', text: o.label }),
+      el('span', { class: 'opt-desc', text: o.description })
+    ]);
+    opts.appendChild(el('label', { class: 'opt' }, [radio, body]));
+  }
+  card.appendChild(opts);
+  const hasNote = !!(state.chatmore[q.id] && state.chatmore[q.id].trim().length > 0);
+  const ta = el('textarea', {
+    class: 'chatmore' + (hasNote ? ' has-content' : ''),
+    placeholder: 'Add context, nuance, or clarification for this question...',
+    oninput: (e) => setChatmore(q.id, e.target)
+  });
+  ta.value = state.chatmore[q.id] || '';
+  card.appendChild(ta);
+  return card;
+}
+
+function setAnswer(qid, optId) {
+  state.answers[qid] = optId;
+  render();
+}
+
+function setChatmore(qid, ta) {
+  state.chatmore[qid] = ta.value;
+  const has = ta.value && ta.value.trim().length > 0;
+  if (has) ta.classList.add('has-content');
+  else ta.classList.remove('has-content');
+  updateStats();
+}
+
+function toggleSection(sid) {
+  state.collapsed[sid] = !state.collapsed[sid];
+  render();
+}
+
+function updateStats() {
+  const total = DATA.sections.reduce((s, sec) => s + sec.questions.length, 0);
+  const answered = Object.values(state.answers).filter(v => v).length;
+  const chatmore = Object.values(state.chatmore).filter(v => v && v.trim().length > 0).length;
+  const stats = document.getElementById('statsText');
+  while (stats.firstChild) stats.removeChild(stats.firstChild);
+  stats.appendChild(el('strong', { text: String(answered) }));
+  stats.appendChild(document.createTextNode(` / ${total} answered · ${chatmore} with notes · ${total - answered} remaining`));
+  document.getElementById('progressFill').style.width = (answered / total * 100) + '%';
+}
+
+function buildJSON() {
+  const out = JSON.parse(JSON.stringify(DATA));
+  let answered = 0, chatmore = 0;
+  for (const sec of out.sections) {
+    for (const q of sec.questions) {
+      const a = state.answers[q.id] || null;
+      const cm = state.chatmore[q.id] || '';
+      q.answer = a;
+      q.chat_more = cm;
+      if (a) { q.status = 'answered'; answered++; }
+      else if (cm && cm.trim().length > 0) q.status = 'chat-more';
+      else q.status = 'unanswered';
+      if (cm && cm.trim().length > 0) chatmore++;
+    }
+  }
+  out.stats.total = DATA.sections.reduce((s, sec) => s + sec.questions.length, 0);
+  out.stats.answered = answered;
+  out.stats.chat_more = chatmore;
+  out.stats.remaining = out.stats.total - answered;
+  out.generated_at = new Date().toISOString();
+  return out;
+}
+
+async function saveAnswers() {
+  const out = buildJSON();
+  const json = JSON.stringify(out, null, 2);
+  const status = document.getElementById('saveStatus');
+  if ('showSaveFilePicker' in window) {
+    try {
+      const handle = await window.showSaveFilePicker({
+        suggestedName: '04-QUESTIONS.json',
+        types: [{ description: 'JSON', accept: { 'application/json': ['.json'] } }]
+      });
+      const writable = await handle.createWritable();
+      await writable.write(json);
+      await writable.close();
+      status.textContent = 'Saved · return to Claude and say "refresh"';
+      return;
+    } catch (e) {
+      if (e.name === 'AbortError') { status.textContent = 'Save cancelled'; return; }
+    }
+  }
+  downloadJSON();
+}
+
+function downloadJSON() {
+  const out = buildJSON();
+  const json = JSON.stringify(out, null, 2);
+  const blob = new Blob([json], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = '04-QUESTIONS.json';
+  a.click();
+  URL.revokeObjectURL(url);
+  document.getElementById('saveStatus').textContent = 'Downloaded · replace 04-QUESTIONS.json, then say "refresh"';
+}
+
+function resetAll() {
+  if (!confirm('Clear all answers and notes?')) return;
+  state.answers = {};
+  state.chatmore = {};
+  render();
+}
+
+(function init() {
+  for (const sec of DATA.sections) {
+    for (const q of sec.questions) {
+      if (q.answer) state.answers[q.id] = q.answer;
+      if (q.chat_more) state.chatmore[q.id] = q.chat_more;
+    }
+  }
+  document.getElementById('saveBtn').addEventListener('click', saveAnswers);
+  document.getElementById('saveBtnFooter').addEventListener('click', saveAnswers);
+  document.getElementById('downloadBtn').addEventListener('click', downloadJSON);
+  document.getElementById('resetBtn').addEventListener('click', resetAll);
+  render();
+})();
+</script>
+
+</body>
+</html>
