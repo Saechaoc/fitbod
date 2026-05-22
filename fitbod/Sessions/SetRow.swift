@@ -62,6 +62,7 @@
 //
 
 import SwiftUI
+import SwiftData
 
 public struct SetRow: View {
     @Bindable public var entry: SetEntry

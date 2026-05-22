@@ -26,7 +26,7 @@
 //
 
 import Foundation
-import ActivityKit
+@preconcurrency import ActivityKit
 
 /// Abstraction over ActivityKit for unit-testability and for the silent-
 /// fallback contract (RESEARCH §6 Pitfall 3). `RestTimerEngine` in plan
@@ -130,18 +130,18 @@ public final class RestTimerActivityController: RestTimerActivityControlling {
         debounceTask?.cancel()
         debounceTask = nil
         guard let activity else { return }
-        let snapshot = activity
-        let final = RestTimerAttributes.ContentState(
-            startedAt: snapshot.content.state.startedAt,
-            targetSeconds: 0   // signal "stopped"
-        )
+        let startedAt = activity.content.state.startedAt
+        self.activity = nil
         Task { @MainActor in
-            await snapshot.end(
+            let final = RestTimerAttributes.ContentState(
+                startedAt: startedAt,
+                targetSeconds: 0   // signal "stopped"
+            )
+            await activity.end(
                 ActivityContent(state: final, staleDate: nil),
                 dismissalPolicy: .immediate
             )
         }
-        self.activity = nil
     }
 }
 
