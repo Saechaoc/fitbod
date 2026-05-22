@@ -89,7 +89,7 @@ struct CustomExerciseImagePicker: View {
         .onChange(of: selection) { _, newValue in
             // Async load — PhotosPickerItem.loadTransferable is async
             // by design (the picker may return a remote-fetched asset).
-            Task {
+            Task { @MainActor in
                 if let data = try? await newValue?
                     .loadTransferable(type: Data.self)
                 {
