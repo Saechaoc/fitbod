@@ -347,7 +347,12 @@ if let csv = vm.csvFile {
 - `.suggestedFileName { $0.filename }` is the correct iOS 16+ API to inject the filename into the share sheet (Files app uses it).
 - Render the CSV **off-main** before constructing the `CSVFile`. `ShareLink` itself is synchronous against the value, so the value must hold ready-rendered `Data`.
 
-### Pattern 5: Backup `.fitbodbackup` (AppleArchive)
+### Pattern 5: Backup `.fitbodbackup` (ZIP container via Apple `Compression` framework)
+
+> **Container choice locked per D-30:** ZIP container via Apple `Compression` framework + a hand-written ZIP central-directory writer. Reverts the earlier AppleArchive recommendation. The AppleArchive code block below is retained for reference only — `BackupArchiver` in plan 06-10 uses `Compression` (`COMPRESSION_ZLIB` / DEFLATE or STORE method) plus a minimal PKWARE APPNOTE ZIP local-file-header / central-directory-record / end-of-central-directory writer (~150 LOC). The reader is symmetrical. CryptoKit SHA-256 still verifies `manifest.checksum` over `store.json` bytes. UTI conforms to `public.zip-archive` (not `public.data`).
+
+#### Reference (deprecated — AppleArchive shape, kept for context):
+
 
 ```swift
 // [CITED: developer.apple.com/documentation/applearchive/archivebytestream]
@@ -383,10 +388,11 @@ actor BackupWriter {
 }
 ```
 
-**Key notes:**
-- AppleArchive (`.aar`) is **simpler** than a raw ZIP central-directory writer, but produces a non-ZIP file. CONTEXT D-30 mentions "ZIP container"; AppleArchive `.aar` is the Apple-recommended evolution. The planner should pick AppleArchive **unless cross-platform interchange becomes a hard requirement** (it isn't in v1 — backup files are read by Fitbod only).
-- UTI declaration in `fitbod/Info.plist` (or target settings UTExportedTypeDeclarations) — see "Pitfall 9" below.
-- If the planner insists on ZIP for D-30 fidelity: there is no Apple-supplied ZIP writer; you would either (a) write the ~150 LOC PKZIP central directory by hand using `Compression`/zlib, or (b) accept that the round-trip works against `.aar` but the user cannot "unzip" the backup on macOS Finder. Recommend (b) — the user's only consumer is Fitbod itself.
+**Key notes (REVISED — ZIP-locked per D-30):**
+- Container is ZIP, not `.aar`. Plan 06-10 writes a minimal PKWARE ZIP using `Compression` (DEFLATE) or STORE method directly — the AppleArchive code above is retained as reference only.
+- ZIP layout: one local-file-header + DEFLATE/STORE payload per entry (`manifest.json`, `store.json`, `images/<uuid>.jpg`), then a central-directory-record per entry, then a single end-of-central-directory record. CRC-32 computed over each uncompressed payload (zlib's `crc32_z` or hand-rolled table — both fine).
+- UTI declaration in `fitbod/Info.plist`: `UTTypeConformsTo` includes `public.zip-archive` (NOT `public.data`).
+- Trade-off accepted: ~150 LOC vs AppleArchive's ~50 LOC. Cross-platform readability of the backup is the load-bearing user decision driving the choice.
 
 ### Pattern 6: Restore + `.fileImporter`
 
@@ -697,42 +703,50 @@ public final class SetEntry {
 | A10 | Phase 4 (Block / BlockPhase) entities are already shipped (Phase 1 schema) per CONTEXT and STATE | "D-19 dependency caveat" | Low — verified by direct read of `Block.swift` and `BlockPhase.swift`. Phase 4 populates them; the schema exists. |
 | A11 | RFC 4180 quoting rules (quote fields containing `,` `"` `\r` `\n`; escape `"` as `""`) | D-26 mapping | None — RFC text. |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **AppleArchive vs hand-rolled ZIP for `.fitbodbackup`?**
    - What we know: AppleArchive is simpler, native, but produces `.aar` (not a ZIP that Finder can unzip).
    - What's unclear: Whether CONTEXT.md D-30's "ZIP container" language is a hard requirement or a loose label.
    - Recommendation: Planner picks **AppleArchive** unless the user explicitly says "I want Finder to unzip this." Surface in plan-check.
+   - **RESOLVED:** ZIP container via Apple `Compression` framework + a hand-written ZIP central-directory writer. Reverts the prior AppleArchive recommendation to honor D-30 (locked user decision) — CONTEXT D-30 line 169 explicitly permits "Apple Compression framework with a tiny zip header writer." Cross-platform readability is a load-bearing user decision; the extra ~150 LOC (local-file-header + central-directory-record + end-of-central-directory record per PKWARE APPNOTE) is accepted cost. Plan 06-10 implements `BackupArchiver.write(...) -> Data` producing a STORE-method (uncompressed) or DEFLATE-method ZIP, with `BackupRestorer` reading the same via `Compression` + manual central-directory parser. CryptoKit SHA-256 still verifies `manifest.checksum`. UTI declaration `LSItemContentTypes` conforms to `public.zip-archive`.
 
 2. **Exercise-name snapshot in exports when `SessionExercise.exercise` is nil (post-delete)?**
    - What we know: Cascade is nullify; deleted-exercise sessions show `exercise == nil` (Pitfall 11).
    - What's unclear: Whether v1 export should emit empty-string + a comment in JSON, OR whether Phase 6 should add `SessionExercise.exerciseSnapshotName: String?` (a 1-field additive — minimal cost).
    - Recommendation: Add the snapshot field. It's tiny, defaults to empty string, and makes exports self-describing. Planner: weigh against "Phase 6 adds no persistent fields" guideline; if breaking that guideline is too costly, fall back to empty-string-and-comment.
+   - **RESOLVED:** deferred. v1 emits empty string when exercise relationship is nil. Documented in 06-07 / 06-09 / 06-10 deferred notes. Adding the persistent field is a Phase 6 follow-up (or Phase 7 candidate) since this phase ships zero schema additions.
 
 3. **`MuscleVolumeProvider` location — `Math/` or `Phase5Shim/`?**
    - What we know: Protocol abstracts a Phase 5 dependency that doesn't exist yet.
    - What's unclear: Whether to commit the unweighted default in Phase 6 and leave the protocol for Phase 5 to swap, or write the protocol in Phase 5 and have Phase 6 inject a closure.
    - Recommendation: Protocol in Phase 6's `Math/` directory; Phase 5 conforms `StimulusWeightedMuscleVolumeProvider` later. The Phase 6 default (`UnweightedMuscleVolumeProvider`) ships now and is replaced via DI at the call site without changing `WeeklyTonnageView`.
+   - **RESOLVED:** Phase 6 ships `UnweightedMuscleVolumeProvider` as the default; Phase 5 swaps `StimulusWeightedMuscleVolumeProvider` later via DI at the `WeeklyTonnageView(provider:)` init site (already designed in plan 06-03 + 06-06).
 
 4. **PR table seed: at session start or at view appear?**
    - What we know: D-14 says session-start; D-12 says PR list is computed on-demand from history.
    - What's unclear: Whether the in-session PR detector and the `ExercisePRsView` PR list share a cache.
    - Recommendation: **Don't share.** In-session detector caches at session start (small set: just the routine's exercises). `ExercisePRsView` queries on demand (single-screen, no scale issue). Different lifecycles → simpler to keep separate.
+   - **RESOLVED:** in-session detector caches at session start via `SessionFactory.seedPRTable(...)`; `ExercisePRsView` recomputes on appear via its own `@Query<SetEntry>` + `PRDetector.buildTable`. No shared cache (different lifecycles).
 
 5. **Restore: restart-via-exit(0) or atomic tree reset?**
    - What we know: `exit(0)` is simple but App-Store-illegal; tree reset via `@Observable` `AppState` is correct but more complex.
    - What's unclear: User's tolerance for the cliff-edge restart.
    - Recommendation: `exit(0)` with explicit alert copy ("Fitbod will restart to load your backup."). Personal app; the alternative is overkill.
+   - **RESOLVED:** `exit(0)`. Personal-team / no-App-Store project; simplicity wins. Alert copy "Fitbod will restart to load your data." is the user-visible explanation.
 
 6. **CSV "unit" column — per-row or per-file?**
    - What we know: D-25 lists `unit` as a column; D-26 says "weights in user's canonical unit."
    - What's unclear: At v1 the unit doesn't change per row (single user, single canonical unit per `UserSettings`). A per-row column is wasted bytes but maximally self-describing.
    - Recommendation: **Keep per-row** (D-25 spec). It's tiny (1-2 chars × N rows) and makes the CSV self-describing for any future unit-changing scenario.
+   - **RESOLVED:** per-row `unit` column kept per D-25 spec. Trivial size cost; CSV is self-describing for any future unit-changing scenario.
 
 7. **Charts dependency on `Exercise.smallestIncrement` for plate-rounded display?**
    - What we know: CONTEXT.md "Existing Code Insights" claims Phase 3 adds `Exercise.smallestIncrement` (used in charts).
    - What's unclear: Field doesn't exist yet (Phase 3 not started).
    - Recommendation: Phase 6 charts plot **raw `setEntry.weight`** without plate-rounding. When Phase 3 ships and adds the field, a small follow-up can adjust display.
+   - **RESOLVED:** deferred. Phase 6 plots raw weight. Follow-up after Phase 3 ships the `Exercise.smallestIncrement` field — a single-display-helper change at the chart Mark level.
+
 
 ## Environment Availability
 

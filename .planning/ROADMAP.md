@@ -126,7 +126,19 @@ Granular, prescriptive workout sessions — every set in a session is intentiona
   3. Weekly tonnage chart (total weight × reps) is sliceable by week / block phase / muscle group; session comparison view shows this week's session vs last week's same-routine session, side-by-side per-exercise diff
   4. User can export all data as CSV (one row per set: sessions → exercises → sets) and as version-stamped JSON (full schema preserved); user can create a full database backup file shareable via AirDrop / Files / iCloud Drive
   5. User can restore from a backup file with explicit data-loss confirmation; round-trip (export → wipe install → import) produces an identical app state
-**Plans:** TBD
+**Plans:** 10 plans (4 waves)
+
+**Plan list:**
+- [ ] 06-01-PLAN.md — OneRepMax kernel + tests (PROG-02)
+- [ ] 06-02-PLAN.md — PRDetector + PRKind + RepBucket + #Index<SetEntry>([\.completedAt]) + Wave-0 fixtures + InMemoryContainer (PROG-05, PROG-08)
+- [ ] 06-03-PLAN.md — WeeklyTonnageAggregator + MuscleVolumeProvider protocol + UnweightedMuscleVolumeProvider + TonnageSliceMode/TimeRangeChoice (PROG-04 algorithm side)
+- [ ] 06-04-PLAN.md — SessionComparator (corrected D-22 per-exercise match rule) + SessionComparisonRow (PROG-07 algorithm side)
+- [ ] 06-05-PLAN.md — ExerciseProgressView + ProgressColors + ProgressFilterChip sibling + SeriesToggleChipRow + SeriesBuilder + deep links (ExerciseDetailView + ExerciseHistoryView) (PROG-01, PROG-03)
+- [ ] 06-06-PLAN.md — WeeklyTonnageView + WeekDetailView + WeeklyTonnageFilterChips + ChartFilterState (PROG-04 UI side)
+- [ ] 06-07-PLAN.md — ExercisePRsView + SessionComparisonView + InSessionPRBanner + InSessionPRState + SessionFactory.seedPRTable + SessionLoggerView mount via .safeAreaInset (PROG-05, PROG-07, PROG-08)
+- [ ] 06-08-PLAN.md — ProgressHomeView (tab root) + RootView TabView wiring + tab icon chart.line.uptrend.xyaxis (PROG-01/04/05/07 integration)
+- [ ] 06-09-PLAN.md — ExportDTOs (15 entities) + CSVExporter + JSONExporter + CSVFile/JSONFile Transferable + ExportService @ModelActor + Settings Data section export rows (EXP-01, EXP-02)
+- [ ] 06-10-PLAN.md — BackupArchiver (AppleArchive) + BackupRestorer + BackupManifest + UTType.fitbodBackup + Info.plist UTI declarations + Settings Data section backup/restore rows + BackupRoundTripTests (D-33 canary) (EXP-03, EXP-04)
 **UI hint:** yes
 **Research flag:** None — Swift Charts, `ShareLink`, and `Transferable` patterns are standard
 
@@ -141,7 +153,7 @@ Granular, prescriptive workout sessions — every set in a session is intentiona
 | 3. Smart Prescription & Warm-ups | 1/8 | In Progress|  |
 | 4. Periodization & Blocks | 0/? | Not started | - |
 | 5. Fatigue Model & Plateau Detection | 0/? | Not started | - |
-| 6. Progress Views, Export & Polish | 0/? | Not started | - |
+| 6. Progress Views, Export & Polish | 0/10 | Not started | - |
 
 ---
 
