@@ -840,22 +840,20 @@ All suites use `@MainActor + .serialized` over in-memory `ModelContainer` with `
 
 ---
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **Tuchscherer rows 11–12**
-   - What we know: the verified table covers reps 1–10
-   - What's unclear: whether the original Tuchscherer table extends to 12 reps (CONTEXT.md says "reps 1–12")
-   - Recommendation: Implement rows 1–10 from the verified table; add rows 11 and 12 as extrapolated values using the ~2% per-rep decrement pattern (row 11 ≈ row 10 minus 2.3%, row 12 ≈ row 11 minus 2.3%). Annotate these rows as `[ASSUMED]` in code comments. The planner should surface this to the user for confirmation.
+1. **Tuchscherer rows 11–12** — RESOLVED 2026-05-22
+   - Decision: **Clamp reps > 10 to row 10**. CONTEXT.md lock revised from "reps 1–12" to "reps 1–10 with clamp for >10".
+   - Rationale: Original Tuchscherer/RTS table does not publish rows 11+. High-rep training (12+) is better served by `DoubleProgressionStrategy` than RPE autoreg, so the loss of resolution at very high reps does not impact phase value. Avoids inventing source-cited data via extrapolation.
+   - Implementation: `TuchschererTable.percent(reps:rpe:)` clamps the `reps` parameter to `min(reps, 10)` before lookup. Document the clamp behavior in a file-header comment and assert it in a dedicated unit test `clampRepsAboveTen`.
 
-2. **`EquipmentKind` enum for `PlateInventory`**
-   - What we know: CONTEXT.md specifies `.barbell`, `.dumbbell`, `.ezBar`, `.trapBar`
-   - What's unclear: Whether this is a separate `EquipmentKind` enum or reuses the existing `Equipment` enum (which has more cases)
-   - Recommendation: Introduce a new `PlateEquipmentKind` enum with exactly the 4 cases needed for `PlateInventory`. Reusing `Equipment` would include `machine`, `cable`, `bands` etc. which don't need plate inventory — confusing. New enum; persisted as `equipmentKindRaw: String` on `PlateInventory`.
+2. **`EquipmentKind` enum for `PlateInventory`** — RESOLVED 2026-05-22
+   - Decision: New `PlateEquipmentKind` enum with exactly 4 cases (`.barbell`, `.dumbbell`, `.ezBar`, `.trapBar`).
+   - Rationale: Reusing the existing 9-case `Equipment` enum would pollute the inventory model with cases (`machine`, `cable`, `bands`) that don't take plates. Persisted as `equipmentKindRaw: String` on `PlateInventory` per the project's standard enum-as-String pattern.
 
-3. **`PlateInventory` seeding — when exactly?**
-   - What we know: Should happen once; guarded by a `UserDefaults` key
-   - What's unclear: Whether it should happen in `fitbodApp.swift` `.task {}` (at app launch) or lazily in `SessionFactory.start(...)` (at first session start)
-   - Recommendation: App-launch `.task {}` alongside the exercise seed check. Users expect settings to be available before starting their first session — seeding at app launch prevents the "no plates configured" empty state on first session.
+3. **`PlateInventory` seeding timing** — RESOLVED 2026-05-22
+   - Decision: App-launch `.task {}` in `fitbodApp.swift`, alongside the existing exercise-seed check. Guarded by `UserDefaults.standard.bool(forKey: "plateInventorySeeded")`.
+   - Rationale: Settings → Plate Inventory must be browsable before the user's first session. Lazy seeding at first session start produces an awkward empty state in Settings prior to any session being logged.
 
 ---
 

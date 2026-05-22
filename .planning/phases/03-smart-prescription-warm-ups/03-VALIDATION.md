@@ -59,18 +59,18 @@ created: 2026-05-22
 
 ## Wave 0 Requirements
 
-- [ ] `fitbodTests/Prescription/TuchschererTableTests.swift` — 90-cell snapshot, covers PRES-03
-- [ ] `fitbodTests/Prescription/RPEAutoregStrategyTests.swift` — calibrating/calibrated mode switch, nil-RPE history, first-session nil, covers PRES-01/PRES-03
-- [ ] `fitbodTests/Prescription/DoubleProgressionStrategyTests.swift` — bump trigger (all sets hit top), no-bump (partial), no-prior-data, covers PRES-04/PRES-10
-- [ ] `fitbodTests/Prescription/PrescriptionExplanationTests.swift` — construction + field correctness, covers PRES-02
-- [ ] `fitbodTests/Prescription/ProgressionRoundingTests.swift` — per-exercise increment overrides global default, covers PRES-09/SET-04
-- [ ] `fitbodTests/Prescription/PlateCalculatorTests.swift` — known-target → expected stack, float-epsilon edge cases, no-solution case, covers PRES-08
-- [ ] `fitbodTests/Prescription/WarmupRampTests.swift` — 4-set ramp %, dumbbell halving, skip threshold, bodyweight skip, covers WARM-01/WARM-02
-- [ ] `fitbodTests/Sessions/WarmupConfigTests.swift` — Data encode/decode round-trip, nil semantics, skipNextSession reset, covers WARM-03
-- [ ] `fitbodTests/Persistence/SchemaV3MigrationTests.swift` — mirrors `SchemaV2MigrationTests.swift`, covers SchemaV3 + lightweight migration + PlateInventory entity, covers SET-02/SET-03
-- [ ] `fitbodTests/Sessions/PlateInventoryTests.swift` — JSON `[PlateSpec]` round-trip via `Data` accessor, covers SET-03
-- [ ] `fitbodTests/Sessions/ManualOverrideTests.swift` — `wasManualOverride` flag set when actual diverges from rounded, next session reads actual, covers PRES-07/SET-07
-- [ ] `fitbodTests/Sessions/SessionFactoryPhase3Tests.swift` — `prescribedWeight` set on `SessionExercise`, warm-up `SetEntry` rows inserted at correct `orderIndex`, covers PRES-01/WARM-01
+- [ ] `fitbodTests/TuchschererTableTests.swift` — 90-cell snapshot, covers PRES-03
+- [ ] `fitbodTests/RPEAutoregStrategyTests.swift` — calibrating/calibrated mode switch, nil-RPE history, first-session nil, covers PRES-01/PRES-03
+- [ ] `fitbodTests/DoubleProgressionStrategyTests.swift` — bump trigger (all sets hit top), no-bump (partial), no-prior-data, covers PRES-04/PRES-10
+- [ ] `fitbodTests/PrescriptionExplanationTests.swift` — construction + field correctness, covers PRES-02
+- [ ] `fitbodTests/ProgressionRoundingTests.swift` — per-exercise increment overrides global default, covers PRES-09/SET-04
+- [ ] `fitbodTests/PlateCalculatorTests.swift` — known-target → expected stack, float-epsilon edge cases, no-solution case, covers PRES-08
+- [ ] `fitbodTests/WarmupRampTests.swift` — 4-set ramp %, dumbbell halving, skip threshold, bodyweight skip, covers WARM-01/WARM-02
+- [ ] `fitbodTests/WarmupConfigTests.swift` — Data encode/decode round-trip, nil semantics, skipNextSession reset, covers WARM-03
+- [ ] `fitbodTests/SchemaV3MigrationTests.swift` — mirrors `SchemaV2MigrationTests.swift`, covers SchemaV3 + lightweight migration + PlateInventory entity, covers SET-02/SET-03
+- [ ] `fitbodTests/PlateInventoryTests.swift` — JSON `[PlateSpec]` round-trip via `Data` accessor, covers SET-03
+- [ ] `fitbodTests/ManualOverrideTests.swift` — `wasManualOverride` flag set when actual diverges from rounded, next session reads actual, covers PRES-07/SET-07
+- [ ] `fitbodTests/SessionFactoryPhase3Tests.swift` — `prescribedWeight` set on `SessionExercise`, warm-up `SetEntry` rows inserted at correct `orderIndex`, covers PRES-01/WARM-01
 
 All suites use `@MainActor + .serialized` over in-memory `ModelContainer` with `Schema(SchemaV3.models)` + `FitbodSchemaMigrationPlan`, matching the `PreviousMatchingIntentTests` fixture pattern from Phase 2.
 
