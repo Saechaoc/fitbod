@@ -31,14 +31,14 @@ import Foundation
 import SwiftData
 
 public enum PreviewModelContainer {
-    /// Builds a fresh in-memory `ModelContainer` over `SchemaV2`.
+    /// Builds a fresh in-memory `ModelContainer` over `SchemaV3`.
     ///
     /// - Parameter seedFixture: when `true` (default), inserts a
     ///   deterministic 4-muscle / 2-exercise / 1-settings fixture.
     ///   Set to `false` for previews that want the empty store
     ///   (e.g. "first-launch importing…" placeholder).
     public static func make(seedFixture: Bool = true) -> ModelContainer {
-        let schema = Schema(SchemaV2.models)
+        let schema = Schema(SchemaV3.models)
         let config = ModelConfiguration(
             schema: schema,
             isStoredInMemoryOnly: true,

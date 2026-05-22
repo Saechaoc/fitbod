@@ -30,7 +30,7 @@ struct fitbodApp: App {
     let container: ModelContainer
 
     init() {
-        let schema = Schema(SchemaV2.models)
+        let schema = Schema(SchemaV3.models)
         let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
         do {
             container = try ModelContainer(

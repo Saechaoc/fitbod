@@ -28,11 +28,11 @@ import SwiftData
 
 public enum FitbodSchemaMigrationPlan: SchemaMigrationPlan {
     public static var schemas: [any VersionedSchema.Type] {
-        [SchemaV1.self, SchemaV2.self]
+        [SchemaV1.self, SchemaV2.self, SchemaV3.self]
     }
 
     public static var stages: [MigrationStage] {
-        [migrateV1toV2]
+        [migrateV1toV2, migrateV2toV3]
     }
 
     /// Lightweight: SwiftData handles all schema deltas automatically.
@@ -43,5 +43,15 @@ public enum FitbodSchemaMigrationPlan: SchemaMigrationPlan {
     public static let migrateV1toV2 = MigrationStage.lightweight(
         fromVersion: SchemaV1.self,
         toVersion: SchemaV2.self
+    )
+
+    /// Lightweight: Plan 03-01's deltas are all additive (1 new entity type
+    /// PlateInventory + 7 default-valued fields on existing entities) —
+    /// explicitly eligible per Apple's documentation. No willMigrate /
+    /// didMigrate closures needed.
+    /// [CITED: developer.apple.com/documentation/swiftdata/migrationstage/lightweight]
+    public static let migrateV2toV3 = MigrationStage.lightweight(
+        fromVersion: SchemaV2.self,
+        toVersion: SchemaV3.self
     )
 }
