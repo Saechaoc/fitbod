@@ -48,7 +48,7 @@ User explicitly wants a maximalist v1 (the app's stance is "comprehensive over s
 
 - [ ] **WARM-01**: First compound exercise of a session auto-generates a warm-up ramp (3–5 ascending sets) plate-rounded to the user's plate inventory
 - [ ] **WARM-02**: Warm-up generator handles edge cases correctly: deload weeks (skip), unilateral lifts (halve loads), light working weights (skip when <1.5× bar), bodyweight (skip)
-- [ ] **WARM-03**: User can override the warm-up scheme per exercise or disable warm-ups
+- [x] **WARM-03**: User can override the warm-up scheme per exercise or disable warm-ups
 
 ### PRES — Smart Prescription & Progression
 
@@ -58,7 +58,7 @@ User explicitly wants a maximalist v1 (the app's stance is "comprehensive over s
 - [ ] **PRES-04**: `DoubleProgressionStrategy` advances weight by the exercise's smallest-increment when all working sets hit the top of the rep range
 - [ ] **PRES-05**: `BlockPeriodizedStrategy` resolves weight from the active block phase's intensity curve
 - [ ] **PRES-06**: `HybridStrategy` combines block phase context with RPE-driven daily adjustment
-- [ ] **PRES-07**: User can manually override the recommended weight; the override is recorded as actual performance and feeds into the next session's calculation (never ignored)
+- [x] **PRES-07**: User can manually override the recommended weight; the override is recorded as actual performance and feeds into the next session's calculation (never ignored)
 - [ ] **PRES-08**: Integrated plate calculator: given target weight and bar weight, output a plate stack respecting the user's plate inventory
 - [ ] **PRES-09**: All progression rounding respects per-exercise smallest weight increment (microplates, plate jumps)
 - [ ] **PRES-10**: "You earned the weight bump" banner surfaces when double progression triggers an increment
@@ -105,12 +105,12 @@ User explicitly wants a maximalist v1 (the app's stance is "comprehensive over s
 ### SET — Settings & Configuration
 
 - [x] **SET-01**: Global weight units (lb / kg) toggle
-- [ ] **SET-02**: Per-exercise weight unit override
-- [ ] **SET-03**: User defines plate inventory per equipment type (which plates available, microplates yes/no)
-- [ ] **SET-04**: User defines smallest weight increment per equipment type (consumed by all progression rounding and warm-up ramping)
+- [x] **SET-02**: Per-exercise weight unit override
+- [x] **SET-03**: User defines plate inventory per equipment type (which plates available, microplates yes/no)
+- [x] **SET-04**: User defines smallest weight increment per equipment type (consumed by all progression rounding and warm-up ramping)
 - [ ] **SET-05**: User-tunable MEV / MAV / MRV per muscle
 - [ ] **SET-06**: User-tunable plateau detection thresholds per exercise (or global default)
-- [ ] **SET-07**: User-tunable RPE-autoreg calibration window (rolling N weeks / minimum N data points)
+- [x] **SET-07**: User-tunable RPE-autoreg calibration window (rolling N weeks / minimum N data points)
 
 ### FOUND — Foundational Quality Bars (apply across all features)
 
@@ -202,14 +202,14 @@ Mapped to phases by `gsd-roadmapper` during roadmap creation.
 | SESS-11 | Phase 2 | Complete |
 | WARM-01 | Phase 3 | Pending |
 | WARM-02 | Phase 3 | Pending |
-| WARM-03 | Phase 3 | Pending |
+| WARM-03 | Phase 3 | Complete |
 | PRES-01 | Phase 3 | Pending |
 | PRES-02 | Phase 3 | Pending |
 | PRES-03 | Phase 3 | Pending |
 | PRES-04 | Phase 3 | Pending |
 | PRES-05 | Phase 4 | Pending |
 | PRES-06 | Phase 4 | Pending |
-| PRES-07 | Phase 3 | Pending |
+| PRES-07 | Phase 3 | Complete |
 | PRES-08 | Phase 3 | Pending |
 | PRES-09 | Phase 3 | Pending |
 | PRES-10 | Phase 3 | Pending |
@@ -241,12 +241,12 @@ Mapped to phases by `gsd-roadmapper` during roadmap creation.
 | EXP-03 | Phase 6 | Pending |
 | EXP-04 | Phase 6 | Pending |
 | SET-01 | Phase 1 | Complete |
-| SET-02 | Phase 3 | Pending |
-| SET-03 | Phase 3 | Pending |
-| SET-04 | Phase 3 | Pending |
+| SET-02 | Phase 3 | Complete |
+| SET-03 | Phase 3 | Complete |
+| SET-04 | Phase 3 | Complete |
 | SET-05 | Phase 5 | Pending |
 | SET-06 | Phase 5 | Pending |
-| SET-07 | Phase 3 | Pending |
+| SET-07 | Phase 3 | Complete |
 | FOUND-01 | Phase 1 | Complete (plan 01-02, commit 28795c8) |
 | FOUND-02 | Phase 1 | Complete |
 | FOUND-03 | Phase 1 | Complete |
