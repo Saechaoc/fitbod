@@ -2,7 +2,7 @@
 phase: 06
 plan: 09b
 type: execute
-wave: 3
+wave: 4
 slug: export-service-and-settings
 depends_on: ["06-09"]
 files_modified:
