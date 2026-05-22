@@ -55,6 +55,9 @@ public final class Exercise {
     public var isCustom: Bool = false
     public var primaryMuscleSlugsJoined: String = ""
     public var createdAt: Date = Date.now
+    public var smallestIncrement: Double? = nil
+    public var barWeightOverride: Double? = nil
+    public var unitOverrideRaw: String? = nil
 
     @Relationship(deleteRule: .cascade, inverse: \ExerciseMuscleStimulus.exercise)
     public var muscleStimuli: [ExerciseMuscleStimulus]? = []
@@ -103,4 +106,8 @@ extension Exercise {
     public var force: Force? { forceRaw.flatMap(Force.init) }
     public var level: Level? { levelRaw.flatMap(Level.init) }
     public var pattern: Pattern? { patternRaw.flatMap(Pattern.init) }
+    public var unitOverride: WeightUnit? {
+        get { unitOverrideRaw.flatMap(WeightUnit.init(rawValue:)) }
+        set { unitOverrideRaw = newValue?.rawValue }
+    }
 }

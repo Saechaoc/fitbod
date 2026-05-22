@@ -39,6 +39,7 @@ public final class SetEntry {
     public var partialReps: Int? = nil
     public var clusterSubRepsJoined: String? = nil
     public var isComplete: Bool = false
+    public var wasManualOverride: Bool = false
 
     public init() {}
 }

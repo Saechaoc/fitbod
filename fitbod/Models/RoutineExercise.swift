@@ -42,6 +42,7 @@ public final class RoutineExercise {
     public var supersetGroupID: UUID? = nil
     public var tracksTempo: Bool = false
     public var tracksPartialReps: Bool = false
+    public var warmupOverrideData: Data? = nil
 
     @Relationship(deleteRule: .cascade, inverse: \RoutineExerciseSetOverride.routineExercise)
     public var setOverrides: [RoutineExerciseSetOverride]? = []
@@ -53,5 +54,14 @@ extension RoutineExercise {
     public var intent: Intent { Intent(rawValue: intentRaw) ?? .hypertrophy }
     public var progressionKind: ProgressionKind {
         ProgressionKind(rawValue: progressionKindRaw) ?? .double
+    }
+    public var warmupOverride: WarmupConfig? {
+        get {
+            guard let data = warmupOverrideData else { return nil }
+            return try? JSONDecoder().decode(WarmupConfig.self, from: data)
+        }
+        set {
+            warmupOverrideData = try? JSONEncoder().encode(newValue)
+        }
     }
 }

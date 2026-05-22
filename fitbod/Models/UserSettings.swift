@@ -31,6 +31,8 @@ public final class UserSettings {
     public var plateauTolerance: Double = 0.005
     public var deloadAlertEnabled: Bool = true
     public var weekStartsMonday: Bool = true
+    public var defaultIncrementKg: Double = 2.5
+    public var minCalibrationSets: Int = 10
 
     public init() {}
 
