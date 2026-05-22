@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: completed
-last_updated: "2026-05-22T22:37:12.137Z"
+status: executing
+last_updated: "2026-05-22T23:21:15.787Z"
 progress:
   total_phases: 6
   completed_phases: 2
-  total_plans: 27
+  total_plans: 39
   completed_plans: 25
-  percent: 93
+  percent: 64
 ---
 
 # Project State: Fitbod
@@ -46,7 +46,7 @@ progress:
 **Plan:** 03-02 complete (Wave 3, seq 2) — `RoutineBuilderView` single-screen builder with inline `.searchable` exercise picker (reuses Phase 1 `ExerciseLibraryView` via additive `init(onSelect:)` overload), always-on drag-handle reorder via `.environment(\.editMode, .constant(.active))`, per-exercise `PrescriptionEditorRow` (intent / sets / reps / RPE / progression / rest / tempo toggle + 4-field entry / partials toggle / disabled Auto warm-up Phase 3 footnote / per-set overrides disclosure). `RoutineDraft` `@Observable` ephemeral mutation surface (FOUND-06 / MV-VM-lite, no parallel ViewModel) with `targetSets.didSet` prune (RESEARCH §6 Pitfall 8) and three-way merge `save(into:context:)`. `PrescriptionDefaults` ROUTINE-09 heuristic (compound → 180s, isolation → 90s; barbell+compound → strength 4-6, otherwise hypertrophy 8-12). 12 new `@Test` functions across 4 test files. Four atomic commits.
 
 **Plan:** 03-01 complete (Wave 3, seq 1) — Routines tab `RoutinesListView` + folders + Resume Workout banner. See plan 03-01 SUMMARY for details.
-**Status:** **Phase 2 COMPLETE (13/13 plans, 20/20 requirements).** Wave 5 sequence 1 (plan 05-01 — `ExerciseHistoryView` with intent-split filter chips — the FINAL plan in Phase 2) closed: per-exercise list-of-logged-sets surface with intent-split predicate, date-grouped sections, summary row, two empty states (no-data + filtered-empty with "Show All" reset), and `ExerciseDetailView` entry point. SESS-10 + ROUTINE-08 closed. The Phase 2 MVP user story (PLAN-INDEX.md Vertical Slice — 18 steps end-to-end) is achievable on the simulator. Next: `/gsd-plan-phase 3` to decompose Phase 3 (Smart Prescription & Warm-ups; 15 reqs covering PRES-01..04, PRES-07..10, WARM-01..03, SET-02..04, SET-07).
+**Status:** Ready to execute
 **Progress:** [██████████] 100% of currently-decomposed plans (25/25); next phase decomposition pending.
 
 ### Phase Outlook
