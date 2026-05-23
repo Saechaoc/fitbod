@@ -39,7 +39,7 @@ The design stance is identical to Phases 1, 2, 3, and 4 verbatim: **"comprehensi
 |-------|-------|---------------|
 | xs | 4pt | Gap between zone-color fill and the MEV/MAV tick marks on a volume bar; gap between stall-badge icon and label on `SessionExerciseCard`; gap between direct/indirect set count numerals in a bar's trailing accessory |
 | sm | 8pt | Vertical spacing inside `MuscleVolumeBar` between label row, bar track, verb row, and delta row; horizontal gap between the volume bars list and the heatmap in `FatigueSurfaceView`; gap between the `DeloadAdvisoryBanner` dismiss icon and the primary text; vertical gap between sections inside `PerMuscleDetailView` |
-| md | 12pt | Internal vertical padding of `DeloadAdvisoryBanner`; internal padding of each `PerMuscleDetailSection`; vertical padding of each `MuscleVolumeTargetStepper` row; internal padding of the `WeeklyRecapSheet` section headers |
+| md | 12pt | Internal vertical padding of `DeloadAdvisoryBanner`; internal padding of each `PerMuscleDetailSection`; vertical padding of each `MuscleVolumeTargetStepper` row; internal padding of the `WeeklyRecapSheet` section headers. **Phase 1 carry-forward — locked across all phases for list-row vertical padding consistency; not a Phase 5 introduction.** |
 | lg | 16pt | Default horizontal inset for `FatigueSurfaceView`, `PerMuscleDetailView`, `MuscleVolumeTargetEditor`, `WeeklyRecapSheet`, `DeloadAdvisoryBanner` outer margin from screen edge; horizontal padding of the `DeloadSignalDetailSheet` |
 | xl | 24pt | Spacing between major sections in `PerMuscleDetailView` ("This week" → "Contributing exercises" → "Frequency" → "Adjust targets"); spacing between the `FatigueSurfaceView` volume-bars list and the silhouette heatmap header; spacing between `WeeklyRecapSheet` sections |
 | 2xl | 32pt | Empty-state vertical padding inside `FatigueSurfaceView` when no sets logged this week; `MuscleVolumeTargetEditor` empty state when no muscles exist |
@@ -50,7 +50,7 @@ The design stance is identical to Phases 1, 2, 3, and 4 verbatim: **"comprehensi
 - **44pt minimum touch target** carries forward for all tappable controls. Specifically: each tappable muscle region in `BodySilhouetteView` — the `.contentShape(scaledPath)` modifier ensures the hit area matches the anatomical path, but very small regions (neck, forearms) must be padded to a minimum 44pt × 44pt clickable area via `.frame(minWidth: 44, minHeight: 44)` on the Path view; the `DeloadAdvisoryBanner` dismiss button (`xmark` SF Symbol) has a 44pt hit area via `.contentShape(Rectangle()).frame(minWidth: 44, minHeight: 44)`; all `Stepper` controls in `MuscleVolumeTargetStepper` use system-provided hit areas (≥44pt by system default).
 - **Volume bar track height:** 16pt visual height (consistent with a compact information-dense display; matches the Phase 3 warm-up ramp bar height if established — otherwise 16pt is the floor for legibility at this scale). MEV/MAV tick marks are 1pt vertical lines at their proportional x positions.
 - **Body silhouette aspect ratio:** `.aspectRatio(0.4, contentMode: .fit)` — the silhouette is tall and narrow; the view fills the available horizontal width and scales its height proportionally.
-- **Stall badge on `SessionExerciseCard`:** rendered as a 28pt capsule (label-only, no leading icon to save space) positioned trailing of the exercise name, left of the chevron; the suggested-action chip below it is 32pt high with 8pt horizontal padding inside.
+- **Stall badge on `SessionExerciseCard`:** rendered as a 24pt capsule (label-only, no leading icon to save space) positioned trailing of the exercise name, left of the chevron; the suggested-action chip below it is 32pt high with 8pt horizontal padding inside. (24pt snaps to the 8-point grid; `SuggestedActionChip` stays at 32pt — already on-grid.)
 - **`WeeklyRecapSheet`:** `.presentationDetents([.large])` — full-screen sheet. Content is sectioned with a vertical scroll; `.large` detent prevents truncation on any device size.
 
 ---
@@ -128,6 +128,8 @@ Phase 5 additions:
 - **Heatmap section header ("Muscle Heatmap") and `FatigueSurfaceView` section headers:** `.headline .label`, never accent. Section headers are never accent per Phase 1 convention.
 - **Volume bar verb labels and delta lines:** `.secondaryLabel` foreground. These are data, not CTAs.
 
+**D-07 reconciliation note:** CONTEXT.md D-07 describes the bar fill style as "solid accent fill for direct (role == primary) weighted-set contribution + lighter accent for indirect." That wording was superseded in this UI-SPEC by the zone-color implementation. D-07's "accent fill" intent is preserved as a two-tone fill pattern (direct at full opacity + indirect at `opacity(0.40)`), but the color source changes from accent to zone color. Volume bars communicate zone state, not a CTA — they correctly do NOT use the app accent color. The two-tone direct/indirect encoding from D-07 is fully retained.
+
 ---
 
 ## Copywriting Contract
@@ -149,7 +151,7 @@ These four strings are the normative copy for the `VolumeZone.verb` computed pro
 
 ### Volume bar delta line (D-08)
 
-The `WeekOverWeekDelta.deltaCopy` computed property returns one of three strings based on the delta value. These appear on a single line below the verb label, styled `.caption2 .tertiaryLabel`.
+The `WeekOverWeekDelta.deltaCopy` computed property returns one of three strings based on the delta value. These appear on a single line below the verb label, styled `.caption .tertiaryLabel` (color-differentiated from the `.secondaryLabel` verb line above it — same `.caption` size, lower-contrast color).
 
 | Condition | Copy |
 |-----------|------|
@@ -417,6 +419,8 @@ Today tab scroll content (below BlockCard + ResumeWorkoutBanner)
 └──────────────────────────────────────────────────┘
 ```
 
+**Primary visual anchor:** When no advisory is active and no session is in progress, the volume bars list ("Volume This Week") is the primary visual anchor — the `MuscleVolumeBar` rows are the first element the eye should reach. When the `DeloadAdvisoryBanner` IS active, the banner becomes the topmost focal element (already enforced by stacking order: banner renders above the scroll content via `.safeAreaInset(edge: .top)`).
+
 ### `MuscleVolumeBar` internal layout
 
 ```
@@ -436,7 +440,7 @@ GeometryReader { geo in
 }
 .frame(height: 16)
 Text(zone.verb)    [.caption .secondaryLabel]  ← 4pt gap below bar
-Text(delta.deltaCopy)  [.caption2 .tertiaryLabel]  ← 4pt gap below verb
+Text(delta.deltaCopy)  [.caption .tertiaryLabel]   ← 4pt gap below verb
 ```
 
 VStack outer spacing: 8pt between the name/count HStack and the bar, 4pt between bar and verb, 4pt between verb and delta.
