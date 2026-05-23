@@ -231,6 +231,13 @@ public struct RootView: View {
             // launch (RESEARCH §6.3).
             StimulusWeightSeeder.seedIfNeeded(in: modelContext)
 
+            // Phase 5 plan 06 — VOL-03 / SET-05: seed MEV/MAV/MRV
+            // targets from RP landmarks. Runs AFTER MuscleGroup rows
+            // are seeded by the library importer. Row-level
+            // idempotency via userEdited; safe to call on every
+            // launch (RESEARCH §7.3).
+            MuscleVolumeTargetSeeder.seedIfNeeded(in: modelContext)
+
             seedState.phase = .ready
         } catch {
             Self.log.error("Seed failed: \(error.localizedDescription)")
@@ -264,6 +271,8 @@ private struct TodayView: View {
     // Phase 5 plan 04 — deload advisory state.
     @State private var currentAdvisory: DeloadAdvisory? = nil
     @State private var presentingSignalSheet: Bool = false
+    // Phase 5 plan 06 — weekly recap state.
+    @State private var presentingWeeklyRecap: Bool = false
 
     var body: some View {
         NavigationStack(path: $navigationPath) {
@@ -363,17 +372,66 @@ private struct TodayView: View {
                     DeloadSignalDetailSheet(report: report)
                 }
             }
+            // Phase 5 plan 06 — VOL-07 weekly recap sheet.
+            .sheet(isPresented: $presentingWeeklyRecap) {
+                if let settings = settingsList.first {
+                    let weekStart = Date.now.mondayAtMidnightForToday(
+                        weekStartsMonday: settings.weekStartsMonday
+                    )
+                    WeeklyRecapSheet(weekStart: weekStart)
+                }
+            }
             .task {
                 pendingBlockReview = (try? BlockReviewStatistics.pendingReviewBlocks(
                     context: ctx,
                     now: Date.now
                 ))?.first
                 refreshAdvisory()
+                checkWeeklyRecap()
             }
             .onAppear {
                 refreshAdvisory()
+                checkWeeklyRecap()
             }
         }
+    }
+
+    // MARK: - Phase 5 plan 06 weekly recap
+
+    /// Decide whether to present the weekly recap sheet using
+    /// `WeeklyRecapTrigger.evaluate` (pure-function helper). Marks
+    /// the recap as seen for this week per Pitfall #8 even when the
+    /// sheet is suppressed (zero-sessions short-circuit).
+    @MainActor
+    private func checkWeeklyRecap() {
+        guard let settings = settingsList.first else { return }
+        let thisMonday = Date.now.mondayAtMidnightForToday(weekStartsMonday: settings.weekStartsMonday)
+        let priorWeekStart = thisMonday.addingTimeInterval(-7 * 86_400)
+        let hasSessions = lastWeekSessionsCount(start: priorWeekStart, end: thisMonday) > 0
+
+        let decision = WeeklyRecapTrigger.evaluate(
+            thisMonday: thisMonday,
+            lastShown: settings.weeklyRecapShownForWeekStart,
+            hasSessionsLastWeek: hasSessions
+        )
+
+        if decision.shouldMarkSeen {
+            settings.weeklyRecapShownForWeekStart = thisMonday
+            try? ctx.save()
+        }
+        if decision.shouldPresent {
+            presentingWeeklyRecap = true
+        }
+    }
+
+    @MainActor
+    private func lastWeekSessionsCount(start: Date, end: Date) -> Int {
+        let descriptor = FetchDescriptor<Session>(
+            predicate: #Predicate<Session> {
+                $0.startedAt >= start && $0.startedAt < end && $0.completedAt != nil
+            }
+        )
+        return (try? ctx.fetchCount(descriptor)) ?? 0
     }
 
     // MARK: - Phase 5 deload advisory helpers

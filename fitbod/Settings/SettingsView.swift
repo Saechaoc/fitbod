@@ -65,6 +65,7 @@ public struct SettingsView: View {
                 if let settings = settingsList.first {
                     unitsSection(settings: settings)
                     smartProgressionSection(settings: settings)
+                    volumeTargetsSection(settings: settings)
                     aboutSectionPlaceholder
                 } else {
                     Section {
@@ -153,6 +154,48 @@ public struct SettingsView: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
+        }
+    }
+
+    // MARK: - Volume Targets section (Phase 5 SET-05 + D-03)
+
+    /// Adds the Settings entry point to `MuscleVolumeTargetEditor`
+    /// per CONTEXT Claude's Discretion ("Settings is the primary
+    /// entry point") + the global frequency-hit-threshold Stepper
+    /// per D-03 + VOL-06. The threshold is the minimum stimulus-
+    /// weighted set contribution for a session to count as a
+    /// frequency hit for a muscle (default 2 sets).
+    @ViewBuilder
+    private func volumeTargetsSection(settings: UserSettings) -> some View {
+        @Bindable var s = settings
+
+        Section {
+            NavigationLink {
+                MuscleVolumeTargetEditor()
+            } label: {
+                HStack {
+                    Text("Volume Targets")
+                    Spacer()
+                    Text("17 muscles")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+
+            Stepper(value: $s.frequencyHitMinSets, in: 1...5, step: 1) {
+                LabeledContent("Frequency hit threshold") {
+                    Text("\(s.frequencyHitMinSets) sets")
+                        .foregroundStyle(.secondary)
+                }
+            }
+            .accessibilityLabel("Frequency hit threshold")
+            .accessibilityValue("\(s.frequencyHitMinSets) sets")
+        } header: {
+            Text("Volume Targets")
+        } footer: {
+            Text("Frequency hit threshold: a session counts as a 'hit' for a muscle when the stimulus-weighted set contribution is at least this many sets.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
         }
     }
 
