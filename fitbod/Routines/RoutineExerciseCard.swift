@@ -2,16 +2,31 @@
 //  RoutineExerciseCard.swift
 //  fitbod
 //
-//  Wave-3 plan 03-02 — one row in the routine builder's exercise list.
-//  Renders a `DisclosureGroup` whose label is the exercise's name +
-//  intent chip + collapsed prescription summary ("3×8–12 · 180s") and
-//  whose body is the inline `PrescriptionEditorRow`.
+//  One row in the routine builder's exercise list. Renders the
+//  exercise name + collapsed prescription summary ("3×8–12 · 180s")
+//  as the always-pinned header; tapping toggles the inline
+//  `PrescriptionEditorRow` body.
 //
-//  The intent chip uses the UI-SPEC § Color § Accent surface #15
-//  treatment — `Color.accentColor.opacity(0.15)` capsule fill with
-//  accent-colored caption label.
+//  ## Phase 3.1 (PIVOT-04 / D-11) — per-exercise intent chip removed
 //
-//  ## Plan 03-03 additions
+//  In Phase 2 the card's header rendered an inline accent intent
+//  capsule next to the prescription summary, using UI-SPEC § Color §
+//  Accent surface #15 (`Color.accentColor.opacity(0.15)` fill with
+//  accent caption label). Phase 3.1 hoisted Intent from per-exercise
+//  to session-level, so the per-card chip has no field to read from
+//  anymore — its data source moved to `Session.intent`. The
+//  user-facing chip surface is now `SessionLoggerView`'s header
+//  `IntentChip` (Plan 06), surfaced once per session instead of once
+//  per exercise. UI-SPEC accent surface #15 is deprecated; #22 (the
+//  SessionLoggerView header chip) is its replacement. Per UI-SPEC §
+//  RoutineExerciseCard header — intent chip REMOVED: the header's
+//  bottom row collapses from `[exercise name] / [chip][summary]` to
+//  `[exercise name] / [summary]`.
+//
+//  The builder cards focus exclusively on the prescription summary —
+//  intent is no longer a per-exercise concept in the data model.
+//
+//  ## Other card features (carried forward from Phase 2)
 //
 //  1. **Leading accent rail** — when `draft.supersetGroupID != nil`, a
 //     4pt-wide accent-color bar renders on the left edge of the card
@@ -79,14 +94,16 @@ public struct RoutineExerciseCard: View {
             }
 
             VStack(alignment: .leading, spacing: 12) {
-                // Header — exercise name + intent chip + summary always
+                // Header — exercise name + prescription summary always
                 // pinned to the TOP of the card, full-width. Tapping the
                 // header toggles the inline prescription editor; the
                 // chevron mirrors the toggle state. We avoid
                 // `DisclosureGroup` because in an active-edit-mode List
                 // the disclosure label and body are squeezed into a
                 // narrow center column, which broke label wrapping and
-                // detached the header visually.
+                // detached the header visually. (Phase 3.1 removed the
+                // per-exercise intent chip that used to live between the
+                // name and the summary — see file header.)
                 Button {
                     withAnimation(.easeInOut(duration: 0.18)) {
                         isExpanded.toggle()
@@ -98,11 +115,6 @@ public struct RoutineExerciseCard: View {
                                 .font(.body)
                                 .foregroundStyle(.primary)
                                 .multilineTextAlignment(.leading)
-                            // Phase 3.1 Plan 04 — `intentChip` REMOVED.
-                            // Intent is session-level now; the chip
-                            // surface moves to the SessionLoggerView
-                            // header (UI-SPEC § RoutineExerciseCard
-                            // header — intent chip REMOVED).
                             Text(prescriptionSummary)
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
@@ -149,12 +161,6 @@ public struct RoutineExerciseCard: View {
             Button("Remove", role: .destructive) { onRemove(draft) }
         }
     }
-
-    // Phase 3.1 Plan 04 — `intentChip` view declaration REMOVED.
-    // Per-exercise intent no longer exists on RoutineExerciseDraft.
-    // The accent-capsule chip surface moves to the SessionLoggerView
-    // header per UI-SPEC § Color § Accent surface #22 (Phase 3.1
-    // addition).
 
     /// "3×8–12 · 180s" — sets × reps · rest. When `targetRepsLow ==
     /// targetRepsHigh` the en-dash collapses to a single value.
