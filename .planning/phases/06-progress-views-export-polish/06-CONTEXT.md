@@ -72,16 +72,16 @@ Out of scope: PROG-06 plateau detector (Phase 5 owns the signal — Phase 6 only
 
 - **D-04:** **Formulas** — Brzycki `weight × 36 / (37 - reps)` for `reps ≤ 6`; Epley `weight × (1 + reps / 30)` for `6 < reps ≤ 10`; `>10 reps → nil` (suppressed from chart series, PR table, and PR detection). Pure function `OneRepMax.estimate(weight:reps:) -> Double?` returns nil for the suppression case so views can `.filter { $0 != nil }` and Swift Charts naturally drops missing points.
 - **D-05:** **Top-set definition** — for each `SessionExercise`, the top set is the set with the highest e1RM among `setKind == .working` (NOT highest weight — this matters for high-volume hypertrophy sessions where a higher-rep set at lower weight produces a higher e1RM than a heavier single). Tiebreaker: the highest weight; second tiebreaker: latest set in the session.
-- **D-06:** **All-set-average e1RM** — arithmetic mean of e1RM across all working sets in the session that have a non-nil e1RM. Sets with `reps > 10` are excluded from the average (consistent with suppression rule).
+- **D-06:** [informational — covered by D-04 OneRepMax kernel + D-07 series toggle] **All-set-average e1RM** — arithmetic mean of e1RM across all working sets in the session that have a non-nil e1RM. Sets with `reps > 10` are excluded from the average (consistent with suppression rule).
 - **D-07:** **Chart series toggle** — `ExerciseProgressView` exposes two `Toggle` chips: `[Top set]` and `[All-set avg]`, both default ON. Strength sessions render as solid lines, hypertrophy sessions render as dashed lines on the SAME chart (intent-split via stroke style, not via separate charts). Color: top-set = accent `#0E7C86`, all-set-avg = accent `#3FBFC9` (Phase 1 design token reuse).
-- **D-08:** **X-axis** — `Date` (session date), auto-scaled to the visible data range with `chartXScale(domain: .automatic)`. **Y-axis** — weight in canonical unit (kg internally, displayed per `UserSettings.unitSystem`).
+- **D-08:** [informational — axis spec implicit in UI-SPEC chart contract] **X-axis** — `Date` (session date), auto-scaled to the visible data range with `chartXScale(domain: .automatic)`. **Y-axis** — weight in canonical unit (kg internally, displayed per `UserSettings.unitSystem`).
 - **D-09:** **Empty state** — when there are fewer than 2 sessions with non-nil e1RM for that exercise, show an empty-state card "Log 2 sessions to see your trend" instead of an empty chart.
 
 ### Area 3 — PRs view (per-exercise)
 
 - **D-10:** **PR types tracked** — `weightPR` (max `actualWeight` for any single set), `repPR` (max `actualReps` at any given weight bucket — see D-11), `volumePR` (max set tonnage = `actualWeight × actualReps` for a single set), `e1RMPR` (max non-nil e1RM for a single set). All four computed per `(exercise, intent)` so a strength PR doesn't compete with a hypertrophy PR.
 - **D-11:** **Rep-range bucketing** — for rep PRs, bucket reps by the same boundaries used for formula selection: `1–6` (strength), `7–10` (hypertrophy strict), `>10` (high-rep accessory; excluded from formal PR list but tracked as "best reps at weight X" lookup). For weight PRs, bucket by the same rep ranges so "weight PR for 5RM" and "weight PR for 8RM" are distinct.
-- **D-12:** **PR storage** — computed on-demand from `SetEntry` history; NOT denormalized into a `PR` entity. Reason: SwiftData query on `(exercise, intent)` with the existing index from Phase 3 is fast at the scale of a personal app; denormalization adds a maintenance burden. If profiling later shows latency, planner can add a `cachedPRTable` blob on `Exercise`.
+- **D-12:** [informational — on-demand computation is the implementation strategy of 06-02 PRDetector + 06-07 seedPRTable; no separate PR entity] **PR storage** — computed on-demand from `SetEntry` history; NOT denormalized into a `PR` entity. Reason: SwiftData query on `(exercise, intent)` with the existing index from Phase 3 is fast at the scale of a personal app; denormalization adds a maintenance burden. If profiling later shows latency, planner can add a `cachedPRTable` blob on `Exercise`.
 - **D-13:** **PRs view layout** — `ExercisePRsView` shows four rows (Weight, Reps, Volume, e1RM), each with intent toggle (Strength / Hypertrophy / All), and the top 3 PRs per bucket with `(weight × reps @ RPE, date)`. Tappable to jump to that session.
 
 ### Area 4 — Live PR detection (PROG-08)
@@ -153,10 +153,10 @@ Out of scope: PROG-06 plateau detector (Phase 5 owns the signal — Phase 6 only
 
 ### Area 10 — Polish scope (the "& Polish" in the phase name)
 
-- **D-34:** **Empty states** — every new view (`ProgressHomeView`, `ExerciseProgressView`, `WeeklyTonnageView`, `ExercisePRsView`, `SessionComparisonView`) has a hand-written empty state with a single actionable prompt ("Log 2 sessions to see your trend", "Define a block to see phase slicing", etc.). No generic "No data" placeholders.
+- **D-34:** [informational — empty-state copy is locked in 06-UI-SPEC §Copywriting and consumed by 06-05/06/07/08 view plans] **Empty states** — every new view (`ProgressHomeView`, `ExerciseProgressView`, `WeeklyTonnageView`, `ExercisePRsView`, `SessionComparisonView`) has a hand-written empty state with a single actionable prompt ("Log 2 sessions to see your trend", "Define a block to see phase slicing", etc.). No generic "No data" placeholders.
 - **D-35:** **Haptics & motion** — PR banner uses `.success` notification haptic; chart series toggles use `.selectionChanged` haptic; all transitions ≤200ms; reduce-motion-aware (respect `@Environment(\.accessibilityReduceMotion)`).
-- **D-36:** **Performance budget** — `ExerciseProgressView` must render in <300ms for an exercise with 1000 logged sets (well above realistic v1 scale). Achieved via: query-level `#Index` on `(exercise, performedAt DESC)`; lazy chart series construction; no in-memory filtering.
-- **D-37:** **Polish — out of scope for v1** — onboarding tutorial overlays, animated chart entry, themable color schemes beyond the existing accent. Deferred.
+- **D-36:** [informational — perf is implicit in 06-02's #Index addition + 06-05's outer/inner @Query split per PATTERNS] **Performance budget** — `ExerciseProgressView` must render in <300ms for an exercise with 1000 logged sets (well above realistic v1 scale). Achieved via: query-level `#Index` on `(exercise, performedAt DESC)`; lazy chart series construction; no in-memory filtering.
+- **D-37:** [informational — explicit deferral declaration; nothing to implement] **Polish — out of scope for v1** — onboarding tutorial overlays, animated chart entry, themable color schemes beyond the existing accent. Deferred.
 
 ### Claude's Discretion
 
