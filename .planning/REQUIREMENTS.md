@@ -224,6 +224,11 @@ Mapped to phases by `gsd-roadmapper` during roadmap creation.
 | PRES-08 | Phase 3 | Complete |
 | PRES-09 | Phase 3 | Complete |
 | PRES-10 | Phase 3 | Complete |
+| PIVOT-01 | Phase 3.1 | Partial (Plan 02 added Routine.intentRaw/progressionKindRaw fields + computed accessors; Routine read-sites repair in Plans 03-05) |
+| PIVOT-02 | Phase 3.1 | Partial (Plan 02 added Session.intentRaw/progressionKindRaw fields + #Index + computed accessors + V3→V4 backfill writes; Session snapshot in Plan 03; Session read-sites repair in Plans 06-07) |
+| PIVOT-03 | Phase 3.1 | Partial (Plan 02 removed per-exercise fields + activated V3→V4 mode-of-children backfill; per-exercise read-sites repair in Plans 03-07) |
+| PIVOT-04 | Phase 3.1 | Pending (Plan 04 + Plan 05) |
+| PIVOT-05 | Phase 3.1 | Pending (Plan 07 + Plan 08) |
 | BLOCK-01 | Phase 4 | Pending |
 | BLOCK-02 | Phase 4 | Pending |
 | BLOCK-03 | Phase 4 | Pending |

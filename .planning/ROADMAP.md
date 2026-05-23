@@ -101,7 +101,7 @@ Granular, prescriptive workout sessions — every set in a session is intentiona
 
 **Plan list:**
 - [x] 03.1-01-PLAN.md — SchemaV4 + V3→V4 custom migration scaffold + SchemaV4MigrationTests wiring + tie-break helper tests
-- [ ] 03.1-02-PLAN.md — Add Routine/Session.intentRaw+progressionKindRaw fields + remove from RoutineExercise/SessionExercise + flip app+preview to SchemaV4 + activate migration backfill + extend SchemaV4MigrationTests end-to-end
+- [x] 03.1-02-PLAN.md — Add Routine/Session.intentRaw+progressionKindRaw fields + remove from RoutineExercise/SessionExercise + flip app+preview to SchemaV4 + activate migration backfill + extend SchemaV4MigrationTests end-to-end
 - [ ] 03.1-03-PLAN.md — SessionFactory session-level snapshot + hoist ProgressionStrategyFactory (D-14 one strategy per session) + RoutineDuplicator + AddUnplannedExerciseButton + SwapExerciseSheet
 - [ ] 03.1-04-PLAN.md — RoutineDraft.intent/progressionKind fields + RoutineBuilderView header pickers (Intent + Progression) + RoutineBuilderHeaderPickersTests
 - [ ] 03.1-05-PLAN.md — PrescriptionEditorRow strip Intent + Progression rows + RoutineExerciseCard intentChip removal
