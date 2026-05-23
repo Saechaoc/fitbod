@@ -38,7 +38,7 @@ public enum PreviewModelContainer {
     ///   Set to `false` for previews that want the empty store
     ///   (e.g. "first-launch importing…" placeholder).
     public static func make(seedFixture: Bool = true) -> ModelContainer {
-        let schema = Schema(SchemaV4.models)
+        let schema = Schema(SchemaV5.models)
         let config = ModelConfiguration(
             schema: schema,
             isStoredInMemoryOnly: true,

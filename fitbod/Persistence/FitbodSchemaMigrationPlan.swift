@@ -51,11 +51,11 @@ import SwiftData
 
 public enum FitbodSchemaMigrationPlan: SchemaMigrationPlan {
     public static var schemas: [any VersionedSchema.Type] {
-        [SchemaV1.self, SchemaV2.self, SchemaV3.self, SchemaV4.self]
+        [SchemaV1.self, SchemaV2.self, SchemaV3.self, SchemaV4.self, SchemaV5.self]
     }
 
     public static var stages: [MigrationStage] {
-        [migrateV1toV2, migrateV2toV3, migrateV3toV4]
+        [migrateV1toV2, migrateV2toV3, migrateV3toV4, migrateV4toV5]
     }
 
     /// Lightweight: SwiftData handles all schema deltas automatically.
@@ -78,11 +78,22 @@ public enum FitbodSchemaMigrationPlan: SchemaMigrationPlan {
         toVersion: SchemaV3.self
     )
 
+    /// Lightweight: Phase 4 SchemaV5 adds `Block.reviewedAt: Date? =
+    /// nil` (D-26 / D-21 — end-of-block review timestamp). The delta is
+    /// a single additive Optional<Date> field on an existing @Model
+    /// with a nil default — Apple's lightweight migration handles
+    /// additive optional fields without a willMigrate closure.
+    /// [CITED: developer.apple.com/documentation/swiftdata/migrationstage/lightweight]
+    public static let migrateV4toV5 = MigrationStage.lightweight(
+        fromVersion: SchemaV4.self,
+        toVersion: SchemaV5.self
+    )
+
     /// Custom: Phase 3.1 PIVOT-03 moves intent + progressionKind from
     /// per-exercise (RoutineExercise / SessionExercise) to per-session
-    /// (Routine / Session). The willMigrate closure reads V3-shape RE/SE
-    /// rows via `SchemaV3.RoutineExercise` / `SchemaV3.SessionExercise`
-    /// (nested types in SchemaV3.swift) and computes the
+    /// (Routine / Session). The didMigrate closure reads V4 intermediate
+    /// RE/SE rows via `SchemaV4.RoutineExercise` / `SchemaV4.SessionExercise`
+    /// (which still retain the child raw fields) and computes the
     /// most-common-with-tie-break value per Routine and per Session, then
     /// writes those values onto V4-shape Routine / Session rows via the
     /// `SchemaV4.Routine` / `SchemaV4.Session` typealiases.
@@ -96,10 +107,10 @@ public enum FitbodSchemaMigrationPlan: SchemaMigrationPlan {
     public static let migrateV3toV4 = MigrationStage.custom(
         fromVersion: SchemaV3.self,
         toVersion: SchemaV4.self,
-        willMigrate: { context in
+        willMigrate: nil,
+        didMigrate: { context in
             try Self.backfillSessionLevelFields(in: context)
-        },
-        didMigrate: nil
+        }
     )
 
     /// Extracted backfill body — same logic the willMigrate closure
@@ -111,16 +122,14 @@ public enum FitbodSchemaMigrationPlan: SchemaMigrationPlan {
     /// SchemaV3 nested types and SchemaV4 typealiases).
     ///
     /// PIVOT-03 backfill: mode-of-per-exercise-value with deterministic
-    /// tie-break. Reads via SchemaV3 nested types (V3 shape); writes via
-    /// SchemaV4 typealiased types (V4 shape). The four field-write lines
-    /// were uncommented in Plan 02 of Phase 3.1 alongside the production
-    /// model reshape that added `Routine.intentRaw` / `Routine.progressionKindRaw`
-    /// / `Session.intentRaw` / `Session.progressionKindRaw`.
+    /// tie-break. Reads via SchemaV4 intermediate child rows; writes via
+    /// SchemaV4 parent rows after the V3->V4 mapping has completed.
     internal static func backfillSessionLevelFields(in context: ModelContext) throws {
-        // Fetch V3-shape rows via the nested types — these still carry
-        // the deprecated intentRaw / progressionKindRaw fields.
-        let v3REs = try context.fetch(FetchDescriptor<SchemaV3.RoutineExercise>())
-        let v3SEs = try context.fetch(FetchDescriptor<SchemaV3.SessionExercise>())
+        // Fetch V4 intermediate child rows. They still carry the
+        // deprecated intentRaw / progressionKindRaw fields so this didMigrate
+        // closure can backfill the new parent-level fields.
+        let v4REs = try context.fetch(FetchDescriptor<SchemaV4.RoutineExercise>())
+        let v4SEs = try context.fetch(FetchDescriptor<SchemaV4.SessionExercise>())
 
         // Fetch V4-shape Routine + Session rows via the typealiases.
         // After Plan 02 these rows have new intent / progressionKind
@@ -130,9 +139,9 @@ public enum FitbodSchemaMigrationPlan: SchemaMigrationPlan {
         let v4Sessions = try context.fetch(FetchDescriptor<SchemaV4.Session>())
 
         for routine in v4Routines {
-            let routineV3REs = v3REs.filter { $0.routine?.id == routine.id }
-            let intents = routineV3REs.map { $0.intentRaw }
-            let progressions = routineV3REs.map { $0.progressionKindRaw }
+            let routineV4REs = v4REs.filter { $0.routine?.id == routine.id }
+            let intents = routineV4REs.map { $0.intentRaw }
+            let progressions = routineV4REs.map { $0.progressionKindRaw }
             // PIVOT-03 backfill: mode-of-per-exercise-value with deterministic
             // tie-break. Reads via SchemaV3 nested types (V3 shape); writes
             // via SchemaV4 typealiased types (V4 shape).
@@ -141,9 +150,9 @@ public enum FitbodSchemaMigrationPlan: SchemaMigrationPlan {
         }
 
         for session in v4Sessions {
-            let sessionV3SEs = v3SEs.filter { $0.session?.id == session.id }
-            let sessionIntents = sessionV3SEs.map { $0.intentRaw }
-            let sessionProgressions = sessionV3SEs.map { $0.progressionKindRaw }
+            let sessionV4SEs = v4SEs.filter { $0.session?.id == session.id }
+            let sessionIntents = sessionV4SEs.map { $0.intentRaw }
+            let sessionProgressions = sessionV4SEs.map { $0.progressionKindRaw }
             // PIVOT-03 backfill: mode-of-per-exercise-value with deterministic
             // tie-break. Reads via SchemaV3 nested types (V3 shape); writes
             // via SchemaV4 typealiased types (V4 shape).

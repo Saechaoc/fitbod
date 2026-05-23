@@ -27,6 +27,7 @@ public final class Block {
     public var endDate: Date? = nil
     public var notes: String? = nil
     public var isActive: Bool = false
+    public var reviewedAt: Date? = nil
 
     @Relationship(deleteRule: .cascade, inverse: \BlockPhase.block)
     public var phases: [BlockPhase]? = []

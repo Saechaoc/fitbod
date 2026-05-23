@@ -250,6 +250,7 @@ private struct TodayView: View {
 
     @State private var navigationPath = NavigationPath()
     @State private var pendingBlockBuilder: PendingBlockBuilder? = nil
+    @State private var pendingBlockReview: Block? = nil
 
     var body: some View {
         NavigationStack(path: $navigationPath) {
@@ -304,6 +305,16 @@ private struct TodayView: View {
                         BlockBuilderView(draft: BlockDraft(template: template))
                     }
                 }
+            }
+            .sheet(item: $pendingBlockReview) { block in
+                BlockReviewView(block: block)
+                    .presentationDetents([.large])
+            }
+            .task {
+                pendingBlockReview = (try? BlockReviewStatistics.pendingReviewBlocks(
+                    context: ctx,
+                    now: Date.now
+                ))?.first
             }
         }
     }

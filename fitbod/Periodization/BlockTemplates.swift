@@ -21,6 +21,10 @@ public struct BlockTemplate: Sendable {
     }
 }
 
+extension BlockTemplate: Identifiable {
+    public var id: String { name }
+}
+
 public enum BlockTemplates {
     public static let generic = BlockTemplate(
         name: "Generic Strength Meso",
