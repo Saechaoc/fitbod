@@ -86,6 +86,17 @@ public struct SessionExerciseCard: View {
     /// Live PlateInventory query for plate math in currentExplanation().
     @Query private var inventories: [PlateInventory]
 
+    // MARK: - Phase 5 (plan 05-03) state
+
+    /// PROG-06 — PlateauDetector result computed in .task(id: se.id).
+    @State private var plateauSignal: PlateauSignal = .notEnoughData
+    /// PROG-06 — D-13 single-chip auto-pick; nil unless plateauSignal == .stalled.
+    @State private var suggestedAction: SuggestedAction? = nil
+    /// PROG-06 Branch 4 — TryVariationSheet presentation flag.
+    @State private var presentingTryVariation: Bool = false
+
+    @Environment(\.modelContext) private var phase5ModelContext
+
     public init(
         sessionExercise: SessionExercise,
         engine: RestTimerEngine,
@@ -221,6 +232,18 @@ public struct SessionExerciseCard: View {
                 if let exp = explanation, case .calibrating(let n, let threshold) = exp.status {
                     CalibratingBadge(current: n, threshold: threshold)
                 }
+                // Phase 5 PROG-06 — StallBadge + SuggestedActionChip
+                if case .stalled = plateauSignal {
+                    StallBadge(
+                        exerciseName: sessionExercise.exercise?.name ?? "Exercise",
+                        sessionCount: settingsList.first?.plateauWindowSessions ?? 4
+                    )
+                    if let action = suggestedAction {
+                        SuggestedActionChip(action: action) {
+                            handleSuggestedAction(action)
+                        }
+                    }
+                }
                 Spacer()
             }
             .contextMenu {
@@ -248,6 +271,71 @@ public struct SessionExerciseCard: View {
             if !bannerDismissed {
                 bannerDismissed = true
             }
+        }
+        // Phase 5 PROG-06 — evaluate the plateau signal when the bound
+        // SessionExercise changes (and on first appearance).
+        .task(id: sessionExercise.id) {
+            evaluatePlateau()
+        }
+        // Phase 5 PROG-06 Branch 4 — TryVariationSheet presentation.
+        .sheet(isPresented: $presentingTryVariation) {
+            if let source = sessionExercise.exercise {
+                TryVariationSheet(sourceExercise: source) { _ in
+                    presentingTryVariation = false
+                }
+            }
+        }
+    }
+
+    // MARK: - Phase 5 PROG-06 helpers
+
+    /// Compute PlateauDetector.evaluate + suggestedAction for the bound
+    /// SessionExercise. @MainActor (matches PlateauDetector's signature).
+    @MainActor
+    private func evaluatePlateau() {
+        guard let exerciseID = sessionExercise.exercise?.id,
+              let intent = sessionExercise.session?.intent,
+              let settings = settingsList.first
+        else {
+            plateauSignal = .notEnoughData
+            suggestedAction = nil
+            return
+        }
+        plateauSignal = PlateauDetector.evaluate(
+            exerciseID: exerciseID,
+            intent: intent,
+            in: phase5ModelContext,
+            settings: settings
+        )
+        if case .stalled = plateauSignal {
+            suggestedAction = PlateauDetector.suggestedAction(
+                exerciseID: exerciseID,
+                intent: intent,
+                in: phase5ModelContext,
+                settings: settings
+            )
+        } else {
+            suggestedAction = nil
+        }
+    }
+
+    /// Route the suggested-action tap per UI-SPEC §Interaction & Motion.
+    /// For plan 03 only .tryVariation is wired; the other three are
+    /// no-op stubs marked for plans 04 + 05.
+    @MainActor
+    private func handleSuggestedAction(_ action: SuggestedAction) {
+        switch action {
+        case .addVolume:
+            // TODO(plan 05): push PerMuscleDetailView for the primary muscle.
+            break
+        case .dropIntensity:
+            // TODO(plan 04/post): open inline prescription editor.
+            break
+        case .deload:
+            // TODO(plan 04): present DeloadSignalDetailSheet.
+            break
+        case .tryVariation:
+            presentingTryVariation = true
         }
     }
 
