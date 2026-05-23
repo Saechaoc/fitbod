@@ -18,7 +18,7 @@ Granular, prescriptive workout sessions — every set in a session is intentiona
 
 - [x] **Phase 1: Foundation & Exercise Library** — Versioned SwiftData schema, full entity set, library seed pipeline, browse/filter/custom-creation UI **(complete: 12/12 plans, 14/14 requirements — 2026-05-11)**
 - [x] **Phase 2: Core Loop (Routines + Sessions)** — Single-screen routine builder, snapshot session logger, accurate rest timer, intent-split history lists **(complete: 13/13 plans, 20/20 requirements — 2026-05-11)**
-- [ ] **Phase 3: Smart Prescription & Warm-ups** — Two progression strategies (RPE autoreg, double progression), warm-up generator, plate calculator, "why this weight?" UI
+- [x] **Phase 3: Smart Prescription & Warm-ups** — Two progression strategies (RPE autoreg, double progression), warm-up generator, plate calculator, "why this weight?" UI (completed 2026-05-23)
 - [ ] **Phase 4: Periodization & Blocks** — Block builder, scheduled deloads, block timeline on home, remaining two progression strategies (block-periodized, hybrid)
 - [ ] **Phase 5: Fatigue Model & Plateau Detection** — Stimulus-weighted weekly volume, MEV/MAV/MRV bars with verbs, muscle heatmap, plateau detector, fatigue-triggered deload advisory
 - [ ] **Phase 6: Progress Views, Export & Polish** — Intent-split charts, PRs, weekly tonnage, session comparison, weekly recap, CSV/JSON export, backup/restore
@@ -71,7 +71,7 @@ Granular, prescriptive workout sessions — every set in a session is intentiona
   4. The first compound exercise of a session auto-generates a 3–5 set warm-up ramp plate-rounded to the user's per-equipment plate inventory; edge cases handled correctly — skipped on deload weeks, halved for unilateral lifts, skipped when working weight < 1.5× bar, skipped for bodyweight, user-overridable per exercise
   5. Plate calculator displays the loadable plate stack for a given target weight and bar weight respecting the user's plate inventory; per-exercise smallest weight increment is honored by every progression rounding decision; manual weight overrides are recorded as actual performance and feed into the next session's calculation (never ignored)
   6. Per-equipment plate inventory and smallest-increment settings, per-exercise unit override, and RPE-calibration window settings are user-configurable
-**Plans:** 7/8 plans executed
+**Plans:** 8/8 plans complete
 
 **Plan list:**
 - [x] 03-01-PLAN.md — SchemaV3 + additive fields + PlateInventory entity + lightweight migration
@@ -81,7 +81,7 @@ Granular, prescriptive workout sessions — every set in a session is intentiona
 - [x] 03-05-PLAN.md — ProgressionStrategy protocol + RPEAutoreg + DoubleProgression + WarmupRamp + Factory
 - [x] 03-06-PLAN.md — Session logger UI components (WhyThisWeightSheet, PrescriptionWeightCell, PlateStackDisclosure, BumpBanner, CalibratingBadge, WarmupRampRows)
 - [x] 03-07-PLAN.md — Routine builder warm-up override + ExerciseDetailView prescription settings
-- [ ] 03-08-PLAN.md — SessionFactory integration + SessionExerciseCard/SetRow wiring + manual-override capture
+- [x] 03-08-PLAN.md — SessionFactory integration + SessionExerciseCard/SetRow wiring + manual-override capture
 **UI hint:** yes
 **Research flag:** Yes — at plan-phase time, confirm Tuchscherer RPE table numbers (exact percent values per rep × RPE cell) and choose per-exercise per-lifter calibration algorithm (linear vs locally-weighted regression; min-points threshold)
 
@@ -161,7 +161,7 @@ Granular, prescriptive workout sessions — every set in a session is intentiona
 |-------|----------------|--------|-----------|
 | 1. Foundation & Exercise Library | 12/12 | Complete | 2026-05-11 |
 | 2. Core Loop (Routines + Sessions) | 13/13 | Complete | 2026-05-11 |
-| 3. Smart Prescription & Warm-ups | 7/8 | In Progress|  |
+| 3. Smart Prescription & Warm-ups | 8/8 | Complete   | 2026-05-23 |
 | 4. Periodization & Blocks | 0/8 | Not started | - |
 | 5. Fatigue Model & Plateau Detection | 0/? | Not started | - |
 | 6. Progress Views, Export & Polish | 0/10 | Not started | - |
