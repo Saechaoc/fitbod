@@ -80,6 +80,11 @@ import SwiftData
 struct ExerciseDetailView: View {
     let exercise: Exercise
 
+    /// Global unit settings — used to derive the `unitLabel` suffix for
+    /// the Prescription Settings section (smallest increment / bar weight
+    /// override). Per-exercise unitOverride takes precedence for display.
+    @Query private var settingsList: [UserSettings]
+
     /// Draft hydrated by the "Copy as Custom Exercise" action. Held as
     /// optional state because it's only constructed at the moment the
     /// CTA is tapped, and the sheet body needs the same instance across
@@ -91,6 +96,14 @@ struct ExerciseDetailView: View {
     /// The sheet body reads `draftFromCopy` and presents the editor
     /// when both are non-nil/true.
     @State private var presentingCustomEditor = false
+
+    /// Unit label for the Prescription Settings fields. Per-exercise
+    /// unitOverride takes precedence; falls back to global UserSettings;
+    /// defaults to "lb" if no settings row exists yet.
+    private var unitLabel: String {
+        let effective = exercise.unitOverride ?? settingsList.first?.weightUnit ?? .lb
+        return effective.rawValue
+    }
 
     var body: some View {
         List {
@@ -125,6 +138,16 @@ struct ExerciseDetailView: View {
                 Text(mechanicDisplay)
                     .font(.body)
             }
+
+            // MARK: - Prescription Settings (plan 03-07 Task 3)
+            //
+            // Three editable fields for per-exercise prescription overrides.
+            // Present for both built-in and custom exercises — the model
+            // allows mutation of smallestIncrement / barWeightOverride /
+            // unitOverride on any Exercise row. @Bindable projects the
+            // Exercise @Model for write-through to SwiftData.
+
+            prescriptionSettingsSection
 
             if !exercise.isCustom {
                 Section {
@@ -223,6 +246,79 @@ struct ExerciseDetailView: View {
         if a.role != b.role { return a.role == "primary" }
         if a.weight != b.weight { return a.weight > b.weight }
         return (a.muscle?.displayName ?? "") < (b.muscle?.displayName ?? "")
+    }
+
+    // MARK: - Prescription Settings section (plan 03-07 / UI-SPEC § Per-exercise fields)
+
+    /// Three editable sections for per-exercise prescription overrides
+    /// (UI-SPEC § Per-exercise fields in ExerciseDetailView verbatim).
+    /// @Bindable write-through to SwiftData — no separate Save button.
+    @ViewBuilder
+    private var prescriptionSettingsSection: some View {
+        @Bindable var ex = exercise
+
+        // Section 1: Smallest increment
+        Section {
+            LabeledContent("Smallest increment") {
+                HStack(spacing: 4) {
+                    TextField(
+                        "e.g. 2.5",
+                        value: $ex.smallestIncrement,
+                        format: .number
+                    )
+                    .multilineTextAlignment(.trailing)
+                    .keyboardType(.decimalPad)
+                    Text(unitLabel)
+                        .foregroundStyle(.secondary)
+                }
+            }
+        } header: {
+            Text("Prescription Settings")
+        } footer: {
+            Text("Weight advances by this amount each progression step.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+
+        // Section 2: Bar weight override
+        Section {
+            LabeledContent("Bar weight override") {
+                HStack(spacing: 4) {
+                    TextField(
+                        "Leave blank to use equipment default",
+                        value: $ex.barWeightOverride,
+                        format: .number
+                    )
+                    .multilineTextAlignment(.trailing)
+                    .keyboardType(.decimalPad)
+                    Text(unitLabel)
+                        .foregroundStyle(.secondary)
+                }
+            }
+        } footer: {
+            Text("Use for specialty bars (safety squat, Swiss bar, women's bar).")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+
+        // Section 3: Weight unit override
+        Section {
+            Picker(
+                "Weight unit",
+                selection: Binding(
+                    get: { ex.unitOverride },
+                    set: { ex.unitOverride = $0 }
+                )
+            ) {
+                Text("System default").tag(Optional<WeightUnit>.none)
+                Text("kg").tag(Optional<WeightUnit>.some(.kg))
+                Text("lb").tag(Optional<WeightUnit>.some(.lb))
+            }
+        } footer: {
+            Text("Overrides the global unit for this exercise only. Affects display; history is stored in a canonical unit.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
     }
 
     // MARK: - Display strings
