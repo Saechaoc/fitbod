@@ -19,7 +19,7 @@ Granular, prescriptive workout sessions — every set in a session is intentiona
 - [x] **Phase 1: Foundation & Exercise Library** — Versioned SwiftData schema, full entity set, library seed pipeline, browse/filter/custom-creation UI **(complete: 12/12 plans, 14/14 requirements — 2026-05-11)**
 - [x] **Phase 2: Core Loop (Routines + Sessions)** — Single-screen routine builder, snapshot session logger, accurate rest timer, intent-split history lists **(complete: 13/13 plans, 20/20 requirements — 2026-05-11)**
 - [x] **Phase 3: Smart Prescription & Warm-ups** — Two progression strategies (RPE autoreg, double progression), warm-up generator, plate calculator, "why this weight?" UI (completed 2026-05-23)
-- [ ] **Phase 3.1: Session-Level Intent & Progression Refactor** — Move intent + progressionKind from per-exercise to Routine/Session; strip per-exercise pickers from PrescriptionEditorRow; SchemaV4 migration
+- [x] **Phase 3.1: Session-Level Intent & Progression Refactor** — Move intent + progressionKind from per-exercise to Routine/Session; strip per-exercise pickers from PrescriptionEditorRow; SchemaV4 migration; rewire 25 test suites to the new model contract (completed 2026-05-23; PIVOT-01..05 satisfied)
 - [ ] **Phase 4: Periodization & Blocks** — Block builder, scheduled deloads, block timeline on home, remaining two progression strategies (block-periodized, hybrid)
 - [ ] **Phase 5: Fatigue Model & Plateau Detection** — Stimulus-weighted weekly volume, MEV/MAV/MRV bars with verbs, muscle heatmap, plateau detector, fatigue-triggered deload advisory
 - [ ] **Phase 6: Progress Views, Export & Polish** — Intent-split charts, PRs, weekly tonnage, session comparison, weekly recap, CSV/JSON export, backup/restore
@@ -107,7 +107,7 @@ Granular, prescriptive workout sessions — every set in a session is intentiona
 - [x] 03.1-05-PLAN.md — PrescriptionEditorRow strip Intent + Progression rows + RoutineExerciseCard intentChip removal
 - [x] 03.1-06-PLAN.md — IntentChip shared SwiftUI component + SessionLoggerView header IntentChip integration (3-line principal toolbar)
 - [x] 03.1-07-PLAN.md — PreviousMatchingIntent + ExerciseHistoryView/Row + SessionExerciseCard.currentExplanation + SetRow + WhyThisWeightSheet status row + PrescriptionExplanation.sessionIntent field
-- [ ] 03.1-08-PLAN.md — Rewire 14 existing test suites (12 Phase 3 + 2 Phase 2) + flip Schema(SchemaV3.models) → SchemaV4 across tests; rewire RoutineBuilderCopyTests + SessionLoggerCopyTests
+- [x] 03.1-08-PLAN.md — Rewire 14 existing test suites (12 Phase 3 + 2 Phase 2) + flip Schema(SchemaV3.models) → SchemaV4 across tests; rewire RoutineBuilderCopyTests + SessionLoggerCopyTests; +5 Rule 3 deviation fixes
 **UI hint:** yes
 **Research flag:** No — the refactor pattern is well-understood (mirrors Phase 1's enum-as-String + snapshot conventions)
 

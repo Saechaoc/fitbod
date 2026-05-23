@@ -127,11 +127,11 @@ User explicitly wants a maximalist v1 (the app's stance is "comprehensive over s
 
 Added 2026-05-22 after user feedback: per-exercise intent + progressionKind is overly prescriptive. Real programs are organized at session/block level (a session has a goal; the same exercise rarely flips intent within a session).
 
-- **PIVOT-01**: `Routine` carries `intent: Intent` and `progressionKind: ProgressionKind` fields (default `.strength` / `.double`); persisted as `*Raw: String` per FOUND-03
-- **PIVOT-02**: `Session` snapshots `intent` and `progressionKind` from its source `Routine` at start time (PITFALLS-doc #1 — editing the Routine later does not retroactively change logged sessions)
-- **PIVOT-03**: `RoutineExercise.intentRaw` and `RoutineExercise.progressionKindRaw` removed; `SessionExercise.intentRaw` removed; SchemaV4 lightweight-additive for new fields + a versioned migration step that backfills `Routine.intentRaw` / `Routine.progressionKindRaw` from the most common per-exercise value at migration time
-- **PIVOT-04**: `RoutineBuilderView` gains a session-level Intent picker + Progression picker at the top of the form (above the exercise list); `PrescriptionEditorRow` drops its per-exercise Intent and Progression rows entirely (Sets / Reps / Target RPE / Rest / Tempo / Partial-reps / Auto-warmup remain)
-- **PIVOT-05**: All Phase 3 read-sites updated: `PreviousMatchingIntent.fetchTopWorkingSet` predicates on `Session.intentRaw` (not `SessionExercise.intentRaw`); `ProgressionStrategyFactory.make(for:)` reads `Session.progressionKind`; `SessionFactory.start(...)` snapshots from Routine; the 12 Phase 3 test suites are updated for the new shape
+- [x] **PIVOT-01**: `Routine` carries `intent: Intent` and `progressionKind: ProgressionKind` fields (default `.strength` / `.double`); persisted as `*Raw: String` per FOUND-03 — closed by plans 03.1-02 + 03.1-04 (2026-05-23)
+- [x] **PIVOT-02**: `Session` snapshots `intent` and `progressionKind` from its source `Routine` at start time (PITFALLS-doc #1 — editing the Routine later does not retroactively change logged sessions) — closed by plan 03.1-03 (2026-05-23)
+- [x] **PIVOT-03**: `RoutineExercise.intentRaw` and `RoutineExercise.progressionKindRaw` removed; `SessionExercise.intentRaw` removed; SchemaV4 lightweight-additive for new fields + a versioned migration step that backfills `Routine.intentRaw` / `Routine.progressionKindRaw` from the most common per-exercise value at migration time — closed by plans 03.1-01 + 03.1-02 (2026-05-23)
+- [x] **PIVOT-04**: `RoutineBuilderView` gains a session-level Intent picker + Progression picker at the top of the form (above the exercise list); `PrescriptionEditorRow` drops its per-exercise Intent and Progression rows entirely (Sets / Reps / Target RPE / Rest / Tempo / Partial-reps / Auto-warmup remain) — closed by plans 03.1-04 + 03.1-05 + 03.1-06 (2026-05-23)
+- [x] **PIVOT-05**: All Phase 3 read-sites updated: `PreviousMatchingIntent.fetchTopWorkingSet` predicates on `Session.intentRaw` (not `SessionExercise.intentRaw`); `ProgressionStrategyFactory.make(for:)` reads `Session.progressionKind`; `SessionFactory.start(...)` snapshots from Routine; the 12 Phase 3 test suites are updated for the new shape — closed by plans 03.1-03 + 03.1-07 + 03.1-08 (2026-05-23)
 
 ---
 
