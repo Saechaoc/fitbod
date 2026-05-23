@@ -23,6 +23,12 @@ import SwiftData
 
 @Model
 public final class SetEntry {
+    // Phase 6 plan 06-02 — additive #Index on completedAt. The PR detector,
+    // weekly tonnage aggregator, and Phase 6 chart queries all fetch
+    // SetEntry rows in completedAt order. #Index is non-persistent
+    // metadata so no SchemaV7 bump is required (RESEARCH §"#Index addition").
+    #Index<SetEntry>([\.completedAt])
+
     @Attribute(.unique) public var id: UUID = UUID()
     public var sessionExercise: SessionExercise? = nil
     public var orderIndex: Int = 0
