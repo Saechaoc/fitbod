@@ -2,37 +2,60 @@
 //  FitbodSchemaMigrationPlan.swift
 //  fitbod
 //
-//  The project's first real schema migration (FOUND-01 / PITFALLS #2 /
-//  Phase 2 plan 00-02). Wires V1 → V2 as a `MigrationStage.lightweight`
-//  step — SwiftData handles every delta automatically because all
-//  changes since V1 are additive (new entity types + new default-valued
-//  fields on existing entities, landed in plan 00-01).
+//  The project's schema migration plan (FOUND-01 / PITFALLS #2). Phase 1
+//  laid the V1 wrapper, Phase 2 added the lightweight V1→V2 stage, Phase 3
+//  added the lightweight V2→V3 stage, and Phase 3.1 (PIVOT-03) adds the
+//  V3→V4 CUSTOM stage that backfills `Routine.intentRaw` / `intentRaw` /
+//  `progressionKindRaw` from the most-common per-exercise value across
+//  each routine's / session's `RoutineExercise` / `SessionExercise` rows.
 //
-//  Per RESEARCH § Pattern 4 + Apple's documentation, additive entity
-//  adds and additive default-valued field adds are explicitly eligible
-//  for `MigrationStage.lightweight(fromVersion:toVersion:)`. No custom
-//  willMigrate / didMigrate closures are needed.
-//  [CITED: developer.apple.com/documentation/swiftdata/migrationstage/lightweight]
+//  Why the V3↔V4 stage cannot be lightweight: Plan 02 REMOVES
+//  `RoutineExercise.intentRaw` / `RoutineExercise.progressionKindRaw` /
+//  `SessionExercise.intentRaw` / `SessionExercise.progressionKindRaw` and
+//  ADDS `Routine.intentRaw` / `Routine.progressionKindRaw` /
+//  `Session.intentRaw` / `Session.progressionKindRaw`. Lightweight
+//  migrations can't transfer values between entities. The custom stage's
+//  willMigrate closure reads V3-shape RE/SE rows via the
+//  `SchemaV3.RoutineExercise` / `SchemaV3.SessionExercise` nested types
+//  (see SchemaV3.swift) and writes V4-shape Routine / Session rows via
+//  the `SchemaV4.Routine` / `SchemaV4.Session` typealiases.
 //
-//  Keeping `SchemaV1.self` in the `schemas` array is non-negotiable —
-//  even after V2 ships, SwiftData needs the historical schema registered
-//  so it can match an existing on-disk V1 store against the registered
-//  version and pick the V1 → V2 migration path. Removing V1 here would
-//  silently break upgrades from any device that ran a pre-V2 build.
+//  [CITED: developer.apple.com/documentation/swiftdata/migrationstage/custom]
+//  [CITED: WWDC23 "Migrate to SwiftData" — namespaced @Model types per
+//          VersionedSchema is Apple's documented pattern for migrations
+//          that move fields between entities.]
 //
-//  Attached to `ModelContainer` in `fitbodApp.swift` via the
-//  `migrationPlan: FitbodSchemaMigrationPlan.self` initializer parameter.
+//  Per CONTEXT.md Specifics: the user wiped + reseeded a fresh SchemaV3
+//  database earlier today, so there are no real V3 rows that need
+//  migrating for v1 ship — the production users won't have V3 stores at
+//  all when v1 ships. SchemaV4MigrationTests is the canonical correctness
+//  gate for the closure's semantics; the closure itself is exercised
+//  literally in tests.
+//
+//  Per CONTEXT.md D-05: SINGLE custom stage covers all four field
+//  additions + three field removals at once. No didMigrate.
+//
+//  Per CONTEXT.md D-06 / D-07: tie-break to `.strength` for intent and
+//  `.double` for progressionKind when multiple per-exercise values tie
+//  for most-common. The `modeRaw(of:tieBreak:)` helper implements the
+//  rule and is shared between the willMigrate closure and unit tests.
+//
+//  Keeping `SchemaV1.self` / `SchemaV2.self` / `SchemaV3.self` in the
+//  `schemas` array is non-negotiable — SwiftData needs every historical
+//  schema registered so it can match an existing on-disk store at any
+//  version and chain through the appropriate migration stages.
 //
 
+import Foundation
 import SwiftData
 
 public enum FitbodSchemaMigrationPlan: SchemaMigrationPlan {
     public static var schemas: [any VersionedSchema.Type] {
-        [SchemaV1.self, SchemaV2.self, SchemaV3.self]
+        [SchemaV1.self, SchemaV2.self, SchemaV3.self, SchemaV4.self]
     }
 
     public static var stages: [MigrationStage] {
-        [migrateV1toV2, migrateV2toV3]
+        [migrateV1toV2, migrateV2toV3, migrateV3toV4]
     }
 
     /// Lightweight: SwiftData handles all schema deltas automatically.
@@ -54,4 +77,90 @@ public enum FitbodSchemaMigrationPlan: SchemaMigrationPlan {
         fromVersion: SchemaV2.self,
         toVersion: SchemaV3.self
     )
+
+    /// Custom: Phase 3.1 PIVOT-03 moves intent + progressionKind from
+    /// per-exercise (RoutineExercise / SessionExercise) to per-session
+    /// (Routine / Session). The willMigrate closure reads V3-shape RE/SE
+    /// rows via `SchemaV3.RoutineExercise` / `SchemaV3.SessionExercise`
+    /// (nested types in SchemaV3.swift) and computes the
+    /// most-common-with-tie-break value per Routine and per Session, then
+    /// writes those values onto V4-shape Routine / Session rows via the
+    /// `SchemaV4.Routine` / `SchemaV4.Session` typealiases.
+    ///
+    /// The four field-write lines are gated by `// TODO(Plan 02)` comments
+    /// because the top-level `fitbod.Routine` / `fitbod.Session` production
+    /// types don't yet declare `intentRaw` / `progressionKindRaw` at Plan
+    /// 01 commit time — Plan 02 adds those fields and uncomments these
+    /// lines as part of the same commit. The scaffolding (fetches, the
+    /// for-loops, the filter chains, the `modeRaw` helper calls computed
+    /// into `intents` / `progressions` local lets) stays UNCOMMENTED so
+    /// the parser exercises the path and so Plan 02's diff is the four
+    /// single-line uncomments.
+    ///
+    /// [CITED: developer.apple.com/documentation/swiftdata/migrationstage/custom]
+    public static let migrateV3toV4 = MigrationStage.custom(
+        fromVersion: SchemaV3.self,
+        toVersion: SchemaV4.self,
+        willMigrate: { context in
+            // Fetch V3-shape rows via the nested types — these still carry
+            // the deprecated intentRaw / progressionKindRaw fields.
+            let v3REs = try context.fetch(FetchDescriptor<SchemaV3.RoutineExercise>())
+            let v3SEs = try context.fetch(FetchDescriptor<SchemaV3.SessionExercise>())
+
+            // Fetch V4-shape Routine + Session rows via the typealiases.
+            // After Plan 02 these rows have new intent / progressionKind
+            // fields with default values; the closure overwrites those
+            // defaults with the backfilled mode-of-children value.
+            let v4Routines = try context.fetch(FetchDescriptor<SchemaV4.Routine>())
+            let v4Sessions = try context.fetch(FetchDescriptor<SchemaV4.Session>())
+
+            for routine in v4Routines {
+                let routineV3REs = v3REs.filter { $0.routine?.id == routine.id }
+                let intents = routineV3REs.map { $0.intentRaw }
+                let progressions = routineV3REs.map { $0.progressionKindRaw }
+                _ = intents       // silence "unused" warning until Plan 02 uncomments
+                _ = progressions  // silence "unused" warning until Plan 02 uncomments
+                // TODO(Plan 02): uncomment field writes after Routine @Model
+                // gains `intentRaw` and `progressionKindRaw`.
+                // routine.intentRaw = Self.modeRaw(of: intents, tieBreak: "strength")
+                // routine.progressionKindRaw = Self.modeRaw(of: progressions, tieBreak: "double")
+            }
+
+            for session in v4Sessions {
+                let sessionV3SEs = v3SEs.filter { $0.session?.id == session.id }
+                let sessionIntents = sessionV3SEs.map { $0.intentRaw }
+                let sessionProgressions = sessionV3SEs.map { $0.progressionKindRaw }
+                _ = sessionIntents       // silence "unused" warning until Plan 02 uncomments
+                _ = sessionProgressions  // silence "unused" warning until Plan 02 uncomments
+                // TODO(Plan 02): uncomment field writes after Session @Model
+                // gains `intentRaw` and `progressionKindRaw`.
+                // session.intentRaw = Self.modeRaw(of: sessionIntents, tieBreak: "strength")
+                // session.progressionKindRaw = Self.modeRaw(of: sessionProgressions, tieBreak: "double")
+            }
+
+            try context.save()
+        },
+        didMigrate: nil
+    )
+
+    // MARK: - Migration helpers
+
+    /// Deterministic mode-with-tie-break used by the V3→V4 backfill and by
+    /// `SchemaV4MigrationTests`. Behavior:
+    ///   - empty input → returns `tieBreak`
+    ///   - single most-common value → returns it
+    ///   - multiple values tied for most-common → returns `tieBreak` if it
+    ///     is one of the top keys, otherwise the alphabetically-first top key
+    ///
+    /// `internal` (not `private`) so both the willMigrate closure above and
+    /// the test suite can call it directly. Exposed as `static` so callers
+    /// don't have to instantiate the enum case (which is impossible anyway).
+    internal static func modeRaw(of values: [String], tieBreak: String) -> String {
+        guard !values.isEmpty else { return tieBreak }
+        let counts = Dictionary(grouping: values, by: { $0 }).mapValues(\.count)
+        let maxCount = counts.values.max() ?? 0
+        let topKeys = counts.filter { $0.value == maxCount }.map { $0.key }
+        if topKeys.contains(tieBreak) { return tieBreak }
+        return topKeys.sorted().first ?? tieBreak
+    }
 }
