@@ -24,8 +24,17 @@
 //
 //  Container/test pattern matches `PreviousMatchingIntentTests` (plan
 //  01-01) verbatim: `@MainActor` + `.serialized` over an in-memory
-//  `ModelContainer` constructed with `Schema(SchemaV2.models)` +
+//  `ModelContainer` constructed with `Schema(SchemaV4.models)` +
 //  `FitbodSchemaMigrationPlan`.
+//
+//  Phase 3.1 (PIVOT-02 / PIVOT-05 / D-13 / D-15): intent moved from
+//  SessionExercise.intentRaw to Session.intentRaw. The view's predicate
+//  drops the intent compare from the #Predicate body and re-adds it as a
+//  Swift post-filter on `se.session?.intentRaw == targetIntent`
+//  (Pitfall 1 workaround for multi-level optional chain inside
+//  #Predicate). The intent-split semantics survive the field move
+//  because the two fixture sessions still carry different session-level
+//  intents.
 //
 
 import Foundation
@@ -40,7 +49,7 @@ struct ExerciseHistoryIntentSplitTests {
     // MARK: - Helpers
 
     private func makeContext() throws -> ModelContext {
-        let schema = Schema(SchemaV2.models)
+        let schema = Schema(SchemaV4.models)
         let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
         let container = try ModelContainer(
             for: schema,
@@ -64,16 +73,16 @@ struct ExerciseHistoryIntentSplitTests {
         )
         ctx.insert(bench)
 
-        // Monday — strength session
+        // Monday — strength session (intent on Session per PIVOT-02).
         let monday = Session()
         monday.startedAt = Date(timeIntervalSince1970: 1_000_000)
         monday.completedAt = monday.startedAt.addingTimeInterval(45 * 60)
         monday.routineSnapshotName = "Push Day A — Strength"
+        monday.intentRaw = Intent.strength.rawValue
         ctx.insert(monday)
         let mondaySE = SessionExercise()
         mondaySE.session = monday
         mondaySE.exercise = bench
-        mondaySE.intentRaw = Intent.strength.rawValue
         ctx.insert(mondaySE)
         let mondaySet = SetEntry()
         mondaySet.sessionExercise = mondaySE
@@ -83,16 +92,16 @@ struct ExerciseHistoryIntentSplitTests {
         mondaySet.isComplete = true
         ctx.insert(mondaySet)
 
-        // Thursday — hypertrophy session
+        // Thursday — hypertrophy session (intent on Session per PIVOT-02).
         let thursday = Session()
         thursday.startedAt = Date(timeIntervalSince1970: 1_300_000)
         thursday.completedAt = thursday.startedAt.addingTimeInterval(60 * 60)
         thursday.routineSnapshotName = "Push Day A — Hypertrophy"
+        thursday.intentRaw = Intent.hypertrophy.rawValue
         ctx.insert(thursday)
         let thursdaySE = SessionExercise()
         thursdaySE.session = thursday
         thursdaySE.exercise = bench
-        thursdaySE.intentRaw = Intent.hypertrophy.rawValue
         ctx.insert(thursdaySE)
         let thursdaySet = SetEntry()
         thursdaySet.sessionExercise = thursdaySE
@@ -106,31 +115,33 @@ struct ExerciseHistoryIntentSplitTests {
         return bench
     }
 
-    /// Mirrors `FilteredHistoryList.init`'s predicate exactly. Returns
-    /// matching `SessionExercise` rows in descending session-startedAt
-    /// order. RESEARCH §6 Pitfall 1 local-let captures applied.
+    /// Mirrors `FilteredHistoryList.init`'s predicate exactly (post-Plan-07
+    /// shape). Returns matching `SessionExercise` rows in descending
+    /// session-startedAt order.
+    ///
+    /// Phase 3.1 (PIVOT-05 / D-13 / D-15): the predicate filters on
+    /// exerciseID only — the intent gate moves to a Swift post-filter
+    /// on `se.session?.intentRaw == targetIntent` because multi-level
+    /// optional chains aren't allowed inside #Predicate (Pitfall 1).
+    /// RESEARCH §6 local-let captures still apply for the exerciseID.
     private func fetchHistory(
         ctx: ModelContext,
         exercise: Exercise,
         intent: Intent?
     ) throws -> [SessionExercise] {
         let targetID = exercise.id
+        let descriptor = FetchDescriptor<SessionExercise>(
+            predicate: #Predicate { se in
+                se.exercise?.id == targetID
+            },
+            sortBy: [SortDescriptor(\.session?.startedAt, order: .reverse)]
+        )
+        let all = try ctx.fetch(descriptor)
         if let intent {
             let targetIntent = intent.rawValue
-            return try ctx.fetch(FetchDescriptor<SessionExercise>(
-                predicate: #Predicate { se in
-                    se.exercise?.id == targetID && se.intentRaw == targetIntent
-                },
-                sortBy: [SortDescriptor(\.session?.startedAt, order: .reverse)]
-            ))
-        } else {
-            return try ctx.fetch(FetchDescriptor<SessionExercise>(
-                predicate: #Predicate { se in
-                    se.exercise?.id == targetID
-                },
-                sortBy: [SortDescriptor(\.session?.startedAt, order: .reverse)]
-            ))
+            return all.filter { $0.session?.intentRaw == targetIntent }
         }
+        return all
     }
 
     // MARK: - 1. "All" returns both intents
@@ -151,7 +162,8 @@ struct ExerciseHistoryIntentSplitTests {
         let bench = try makeMondayAndThursdayFixture(ctx: ctx)
         let results = try fetchHistory(ctx: ctx, exercise: bench, intent: .strength)
         #expect(results.count == 1)
-        #expect(results.first?.intentRaw == Intent.strength.rawValue)
+        // Phase 3.1: intent lives on the parent Session now.
+        #expect(results.first?.session?.intentRaw == Intent.strength.rawValue)
         #expect(results.first?.session?.routineSnapshotName == "Push Day A — Strength")
     }
 
@@ -163,7 +175,8 @@ struct ExerciseHistoryIntentSplitTests {
         let bench = try makeMondayAndThursdayFixture(ctx: ctx)
         let results = try fetchHistory(ctx: ctx, exercise: bench, intent: .hypertrophy)
         #expect(results.count == 1)
-        #expect(results.first?.intentRaw == Intent.hypertrophy.rawValue)
+        // Phase 3.1: intent lives on the parent Session now.
+        #expect(results.first?.session?.intentRaw == Intent.hypertrophy.rawValue)
         #expect(results.first?.session?.routineSnapshotName == "Push Day A — Hypertrophy")
     }
 

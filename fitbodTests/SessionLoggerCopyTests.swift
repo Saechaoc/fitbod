@@ -11,6 +11,13 @@
 //  One test function covering every new file (matches plan AC #19 — 1 test
 //  in SessionLoggerCopyTests).
 //
+//  Phase 3.1 (PIVOT-04 / D-11 / Plan 06): additive coverage for the new
+//  three-line principal toolbar (IntentChip(intent: session.intent)) and
+//  the shared `IntentChip` SwiftUI view's verbatim accessibility label
+//  format `"Intent: \(intent.rawValue.capitalized)"` per UI-SPEC
+//  Verification anchors. Plan 06's SUMMARY confirmed no existing
+//  assertion needs deletion — this is a pure additive update.
+//
 
 import Foundation
 import Testing
@@ -110,5 +117,29 @@ struct SessionLoggerCopyTests {
         )
         #expect(prevSrc.contains("PreviousMatchingIntent.fetchTopWorkingSet"))
         #expect(prevSrc.contains("Text(\"—\")"))
+
+        // Phase 3.1 (PIVOT-04 / D-11): SessionLoggerView's three-line
+        // principal toolbar renders an IntentChip as the third line. The
+        // source contains the IntentChip consumer line wired to
+        // `session.intent`.
+        #expect(loggerSrc.contains("IntentChip(intent: session.intent)"))
+
+        // Phase 3.1 (Plan 06): shared `IntentChip` SwiftUI view ships
+        // the verbatim UI-SPEC Verification anchor accessibility label
+        // format. Source-anchor it here in lieu of runtime view
+        // inspection so a careless edit to the a11y string trips the
+        // suite immediately.
+        let chipViewBase = URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+            .appendingPathComponent("fitbod/Views")
+        let intentChipSrc = try String(
+            contentsOf: chipViewBase.appendingPathComponent("IntentChip.swift"),
+            encoding: .utf8
+        )
+        // The UI-SPEC anchor literal: ".accessibilityLabel(\"Intent: \(intent.rawValue.capitalized)\")".
+        #expect(intentChipSrc.contains(
+            ".accessibilityLabel(\"Intent: \\(intent.rawValue.capitalized)\")"
+        ))
     }
 }

@@ -113,36 +113,40 @@ struct EnumPersistenceTests {
         #expect(fetched.first?.pattern == value)
     }
 
-    // MARK: - Intent ↔ SessionExercise.intentRaw
+    // MARK: - Intent ↔ Session.intentRaw
 
-    @Test("Intent cases round-trip through SessionExercise.intentRaw",
+    // Phase 3.1 (PIVOT-02 / PIVOT-05): intent moved from SessionExercise
+    // to Session. The persistence round-trip subject moves with it; the
+    // FOUND-03 enum-as-String contract is unchanged.
+    @Test("Intent cases round-trip through Session.intentRaw",
           arguments: Intent.allCases)
     func intentRoundTrip(_ value: Intent) throws {
         let container = try InMemoryContainer.makeEmpty()
         let ctx = ModelContext(container)
-        let se = SessionExercise()
-        se.intentRaw = value.rawValue
-        ctx.insert(se)
+        let session = Session()
+        session.intentRaw = value.rawValue
+        ctx.insert(session)
         try ctx.save()
 
-        let fetched = try ctx.fetch(FetchDescriptor<SessionExercise>())
+        let fetched = try ctx.fetch(FetchDescriptor<Session>())
         #expect(fetched.first?.intentRaw == value.rawValue)
         #expect(fetched.first?.intent == value)
     }
 
-    // MARK: - ProgressionKind ↔ SessionExercise.progressionKindRaw
+    // MARK: - ProgressionKind ↔ Session.progressionKindRaw
 
-    @Test("ProgressionKind cases round-trip through SessionExercise.progressionKindRaw",
+    // Phase 3.1: progressionKind also lives on Session now (PIVOT-02).
+    @Test("ProgressionKind cases round-trip through Session.progressionKindRaw",
           arguments: ProgressionKind.allCases)
     func progressionKindRoundTrip(_ value: ProgressionKind) throws {
         let container = try InMemoryContainer.makeEmpty()
         let ctx = ModelContext(container)
-        let se = SessionExercise()
-        se.progressionKindRaw = value.rawValue
-        ctx.insert(se)
+        let session = Session()
+        session.progressionKindRaw = value.rawValue
+        ctx.insert(session)
         try ctx.save()
 
-        let fetched = try ctx.fetch(FetchDescriptor<SessionExercise>())
+        let fetched = try ctx.fetch(FetchDescriptor<Session>())
         #expect(fetched.first?.progressionKindRaw == value.rawValue)
         #expect(fetched.first?.progressionKind == value)
     }

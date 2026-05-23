@@ -5,7 +5,7 @@
 //  Validation + Pitfall coverage for `RoutineDraft` and
 //  `RoutineExerciseDraft` (plan 03-02).
 //
-//  Five `@Test` functions:
+//  Six `@Test` functions:
 //
 //    1. emptyDraftIsInvalid — `name == ""` → invalid
 //    2. noExercisesIsInvalid — name set but exercises empty → invalid
@@ -15,6 +15,15 @@
 //    5. saveRoundTrip — `save(into:)` writes RE rows + overrides; the
 //       round-trip via `RoutineDraft(routine:)` recovers the field
 //       values
+//    6. routineDraftDefaultIntentIsStrength — Phase 3.1 (PIVOT-04 /
+//       D-03 / D-04): RoutineDraft.intent defaults to .strength and
+//       RoutineDraft.progressionKind defaults to .double.
+//
+//  Phase 3.1 (PIVOT-04 / D-10): intent + progressionKind moved from
+//  RoutineExerciseDraft (per-exercise) up to RoutineDraft (per-routine).
+//  Test 5's save round-trip asserts the new fields persist on Routine
+//  and recover via RoutineDraft(routine:); the per-exercise assertions
+//  are dropped (fields gone from RoutineExerciseDraft + RoutineExercise).
 //
 
 import Foundation
@@ -106,18 +115,19 @@ struct RoutineDraftValidationTests {
         try ctx.save()
 
         // Build the draft.
+        // Phase 3.1 (PIVOT-04 / D-10): intent + progressionKind are per-Routine.
         let draft = RoutineDraft()
         draft.name = "  Push Day A  "  // verify trim on save
         draft.notes = "Heavy bench focus."
+        draft.intent = .strength
+        draft.progressionKind = .double
         let exDraft = RoutineExerciseDraft()
         exDraft.exercise = bench
-        exDraft.intent = .strength
         exDraft.targetSets = 4
         exDraft.targetRepsLow = 3
         exDraft.targetRepsHigh = 5
         exDraft.targetRPE = 8.5
         exDraft.prescribedRestSeconds = 180
-        exDraft.progressionKind = .double
         exDraft.tracksTempo = true
         exDraft.tracksPartialReps = false
         exDraft.tempo = "3-1-1-0"
@@ -141,16 +151,17 @@ struct RoutineDraftValidationTests {
         let saved = try #require(routines.first)
         #expect(saved.name == "Push Day A")  // trim landed
         #expect(saved.notes == "Heavy bench focus.")
+        // Phase 3.1: intent + progression persisted on the parent Routine.
+        #expect(saved.intent == .strength)
+        #expect(saved.progressionKind == .double)
         #expect((saved.exercises ?? []).count == 1)
         let re = try #require((saved.exercises ?? []).first)
         #expect(re.exercise?.id == bench.id)
-        #expect(re.intent == .strength)
         #expect(re.targetSets == 4)
         #expect(re.targetRepsLow == 3)
         #expect(re.targetRepsHigh == 5)
         #expect(re.targetRPE == 8.5)
         #expect(re.prescribedRestSeconds == 180)
-        #expect(re.progressionKind == .double)
         #expect(re.tracksTempo == true)
         #expect(re.tracksPartialReps == false)
         #expect(re.tempo == "3-1-1-0")
@@ -165,15 +176,17 @@ struct RoutineDraftValidationTests {
         let recovered = RoutineDraft(routine: saved)
         #expect(recovered.name == "Push Day A")
         #expect(recovered.notes == "Heavy bench focus.")
+        // Phase 3.1: recovered draft surfaces routine-level intent +
+        // progressionKind.
+        #expect(recovered.intent == .strength)
+        #expect(recovered.progressionKind == .double)
         #expect(recovered.exercises.count == 1)
         let recoveredEx = try #require(recovered.exercises.first)
-        #expect(recoveredEx.intent == .strength)
         #expect(recoveredEx.targetSets == 4)
         #expect(recoveredEx.targetRepsLow == 3)
         #expect(recoveredEx.targetRepsHigh == 5)
         #expect(recoveredEx.targetRPE == 8.5)
         #expect(recoveredEx.prescribedRestSeconds == 180)
-        #expect(recoveredEx.progressionKind == .double)
         #expect(recoveredEx.tracksTempo == true)
         #expect(recoveredEx.tempo == "3-1-1-0")
         #expect(recoveredEx.setOverrides.count == 1)
@@ -182,5 +195,24 @@ struct RoutineDraftValidationTests {
         #expect(recoveredOverride.targetRepsLow == 5)
         #expect(recoveredOverride.targetRepsHigh == 5)
         #expect(recoveredOverride.targetRPE == 9.0)
+    }
+
+    // MARK: - 6 — Phase 3.1 (PIVOT-04 / D-03 / D-04)
+
+    @Test("routineDraftDefaultIntentIsStrength — RoutineDraft.intent + .progressionKind defaults")
+    func routineDraftDefaultIntentIsStrength() {
+        // A freshly-constructed RoutineDraft (used by the "+ New Routine"
+        // path in RoutinesListView → RoutineBuilderView) carries the
+        // documented Phase 3.1 defaults: intent = .strength, progressionKind
+        // = .double. The header pickers in RoutineBuilderView render
+        // these as the closed-state values until the user picks a
+        // different option.
+        let draft = RoutineDraft()
+        #expect(draft.intent == .strength)
+        #expect(draft.progressionKind == .double)
+
+        // Validity gating is unchanged — intent + progressionKind do
+        // NOT gate isValid (only name + ≥1 exercise do).
+        #expect(draft.isValid == false)  // empty name + no exercises
     }
 }

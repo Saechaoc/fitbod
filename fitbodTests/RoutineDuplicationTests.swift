@@ -40,6 +40,12 @@ struct RoutineDuplicationTests {
         let routine = Routine()
         routine.name = "Push Day"
         routine.notes = "Heavy bench focus"
+        // Phase 3.1 (PIVOT-01): intent + progressionKind live on Routine.
+        // The pre-3.1 fixture had two distinct intents per-RE; under
+        // PIVOT one routine carries one intent. The duplicator test now
+        // verifies the routine-level intent + progression copy across.
+        routine.intentRaw = Intent.strength.rawValue
+        routine.progressionKindRaw = ProgressionKind.rpe.rawValue
         ctx.insert(routine)
 
         let ex1 = Exercise.previewSample(
@@ -61,7 +67,6 @@ struct RoutineDuplicationTests {
         re1.exercise = ex1
         re1.orderIndex = 0
         re1.targetSets = 3
-        re1.intentRaw = Intent.strength.rawValue
         ctx.insert(re1)
 
         let re2 = RoutineExercise()
@@ -69,7 +74,6 @@ struct RoutineDuplicationTests {
         re2.exercise = ex2
         re2.orderIndex = 1
         re2.targetSets = 4
-        re2.intentRaw = Intent.hypertrophy.rawValue
         ctx.insert(re2)
 
         // Per-set override on re1 (setIndex 0, 6 reps @ RPE 9).
@@ -129,9 +133,14 @@ struct RoutineDuplicationTests {
         }
         // Prescription fields preserved verbatim.
         #expect(copyExercises[0].targetSets == 3)
-        #expect(copyExercises[0].intentRaw == Intent.strength.rawValue)
         #expect(copyExercises[1].targetSets == 4)
-        #expect(copyExercises[1].intentRaw == Intent.hypertrophy.rawValue)
+
+        // Phase 3.1 (PIVOT-01): intent + progressionKind copy through the
+        // routine-level (not per-RE) field set.
+        #expect(copy.intentRaw == source.intentRaw)
+        #expect(copy.progressionKindRaw == source.progressionKindRaw)
+        #expect(copy.intentRaw == Intent.strength.rawValue)
+        #expect(copy.progressionKindRaw == ProgressionKind.rpe.rawValue)
     }
 
     // MARK: - 3 — RESEARCH §6 Pitfall 6

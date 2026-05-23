@@ -192,13 +192,14 @@ struct CustomExerciseDeleteCascadeTests {
         let session = Session()
         session.routineSnapshotName = "Test"
         session.startedAt = .now
+        // Phase 3.1: intent lives on the parent Session now (PIVOT-02).
+        session.intentRaw = "strength"
         ctx.insert(session)
 
         let se = SessionExercise()
         se.session = session
         se.exercise = custom
         se.orderIndex = 0
-        se.intentRaw = "strength"
         ctx.insert(se)
         try ctx.save()
 
