@@ -57,10 +57,12 @@ struct AddUnplannedExerciseTests {
         to session: Session,
         context: ModelContext
     ) {
+        let nextOrderIndex = (session.exercises ?? []).count
+
         let se = SessionExercise()
-        se.session = session
         se.exercise = exercise
-        se.orderIndex = (session.exercises ?? []).count
+        se.orderIndex = nextOrderIndex
+        se.session = session
         se.targetSets = 3
         se.targetRepsLow = 8
         se.targetRepsHigh = 12

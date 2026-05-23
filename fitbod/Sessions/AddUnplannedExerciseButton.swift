@@ -79,10 +79,12 @@ public struct AddUnplannedExerciseButton: View {
     /// SESS-06 — append a fresh SessionExercise + 3 planned SetEntry rows.
     /// The source Routine is untouched.
     private func append(exercise: Exercise) {
+        let nextOrderIndex = (session.exercises ?? []).count
+
         let se = SessionExercise()
-        se.session = session
         se.exercise = exercise
-        se.orderIndex = (session.exercises ?? []).count
+        se.orderIndex = nextOrderIndex
+        se.session = session
         // PIVOT-02 / PIVOT-05: intent is session-level after Plan 02. The
         // unplanned exercise inherits the parent session's intent — no
         // per-exercise default needed.

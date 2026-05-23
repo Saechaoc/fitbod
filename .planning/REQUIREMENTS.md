@@ -56,8 +56,8 @@ User explicitly wants a maximalist v1 (the app's stance is "comprehensive over s
 - [x] **PRES-02**: User can expand "Why this weight?" on any prescription to see the calculation breakdown (last session's data, formula, percent, rounding)
 - [x] **PRES-03**: `RPEAutoregStrategy` back-calculates target weight from prior RPE + reps using Tuchscherer table as a prior; switches to per-exercise per-lifter calibration after ≥10 logged sets (shown as a "calibrating" badge until then)
 - [x] **PRES-04**: `DoubleProgressionStrategy` advances weight by the exercise's smallest-increment when all working sets hit the top of the rep range
-- [ ] **PRES-05**: `BlockPeriodizedStrategy` resolves weight from the active block phase's intensity curve
-- [ ] **PRES-06**: `HybridStrategy` combines block phase context with RPE-driven daily adjustment
+- [x] **PRES-05**: `BlockPeriodizedStrategy` resolves weight from the active block phase's intensity curve
+- [x] **PRES-06**: `HybridStrategy` combines block phase context with RPE-driven daily adjustment
 - [x] **PRES-07**: User can manually override the recommended weight; the override is recorded as actual performance and feeds into the next session's calculation (never ignored)
 - [x] **PRES-08**: Integrated plate calculator: given target weight and bar weight, output a plate stack respecting the user's plate inventory
 - [x] **PRES-09**: All progression rounding respects per-exercise smallest weight increment (microplates, plate jumps)
@@ -65,15 +65,15 @@ User explicitly wants a maximalist v1 (the app's stance is "comprehensive over s
 
 ### BLOCK — Periodization
 
-- [ ] **BLOCK-01**: User can define training blocks with phase sequence (accumulation, intensification, realization, deload) and week length per phase
-- [ ] **BLOCK-02**: Active block visible on home screen: phase chip, "Week N of M", days remaining, phase color-coded
-- [ ] **BLOCK-03**: User can navigate weeks within a block (swipe between weeks / mesocycle navigation)
-- [ ] **BLOCK-04**: Scheduled deload weeks auto-reduce prescribed volume (~50%) and adjust intensity per the deload phase definition
-- [ ] **BLOCK-05**: Deload weeks are visually distinct (banner / calendar tint / volume targets cut on bars and heatmap)
-- [ ] **BLOCK-06a**: UI scaffold for the "consider deload" advisory — `ConsiderDeloadBanner` view + `FatigueAdvisory` protocol exist and are wired into TodayView; `StubFatigueAdvisory` returns `false` so the banner never renders in Phase 4. The advisory contract returns only `FatigueSuggestion` (never `DeloadMutation`), enforcing BLOCK-08 at the type level. (Phase 4)
+- [x] **BLOCK-01**: User can define training blocks with phase sequence (accumulation, intensification, realization, deload) and week length per phase
+- [x] **BLOCK-02**: Active block visible on home screen: phase chip, "Week N of M", days remaining, phase color-coded
+- [x] **BLOCK-03**: User can navigate weeks within a block (swipe between weeks / mesocycle navigation)
+- [x] **BLOCK-04**: Scheduled deload weeks auto-reduce prescribed volume (~50%) and adjust intensity per the deload phase definition
+- [x] **BLOCK-05**: Deload weeks are visually distinct (banner / calendar tint / volume targets cut on bars and heatmap)
+- [x] **BLOCK-06a**: UI scaffold for the "consider deload" advisory — `ConsiderDeloadBanner` view + `FatigueAdvisory` protocol exist and are wired into TodayView; `StubFatigueAdvisory` returns `false` so the banner never renders in Phase 4. The advisory contract returns only `FatigueSuggestion` (never `DeloadMutation`), enforcing BLOCK-08 at the type level. (Phase 4)
 - [ ] **BLOCK-06b**: Real fatigue/performance signal — e1RM-drop / RPE-creep / missed-rep detection populates a non-stub `FatigueAdvisory` implementation; banner activates above threshold (suggestion only, never auto-applies). Closes the substance half of the original BLOCK-06. (Phase 5)
-- [ ] **BLOCK-07**: End-of-block produces a phase-end review (total volume, e1RM deltas, PRs hit, recommended next phase)
-- [ ] **BLOCK-08**: Scheduled block deload is canonical; fatigue-triggered alerts are advisory and never override the block schedule
+- [x] **BLOCK-07**: End-of-block produces a phase-end review (total volume, e1RM deltas, PRs hit, recommended next phase)
+- [x] **BLOCK-08**: Scheduled block deload is canonical; fatigue-triggered alerts are advisory and never override the block schedule
 
 ### VOL — Volume & Fatigue Model
 
@@ -218,8 +218,8 @@ Mapped to phases by `gsd-roadmapper` during roadmap creation.
 | PRES-02 | Phase 3 | Complete |
 | PRES-03 | Phase 3 | Complete |
 | PRES-04 | Phase 3 | Complete |
-| PRES-05 | Phase 4 | Pending |
-| PRES-06 | Phase 4 | Pending |
+| PRES-05 | Phase 4 | Complete |
+| PRES-06 | Phase 4 | Complete |
 | PRES-07 | Phase 3 | Complete |
 | PRES-08 | Phase 3 | Complete |
 | PRES-09 | Phase 3 | Complete |
@@ -229,15 +229,15 @@ Mapped to phases by `gsd-roadmapper` during roadmap creation.
 | PIVOT-03 | Phase 3.1 | Partial (Plan 02 removed per-exercise fields + activated V3→V4 mode-of-children backfill; Plan 03 closed RoutineDuplicator + SessionFactory + AddUnplannedExerciseButton + SwapExerciseSheet per-exercise read-sites; Plan 07 closed the remaining production-code per-exercise read-sites; RoutineDraft + RoutineBuilderView read-sites still pending in Plan 04) |
 | PIVOT-04 | Phase 3.1 | Complete (Plan 07 added PrescriptionExplanation.sessionIntent additive field + WhyThisWeightSheet status row prefix per D-12; Plan 04 added the RoutineBuilderView session-level Intent + Progression header pickers + RoutineDraft field promotion + save-path closure + a Rule 3 minimum-viable removal of the broken PrescriptionEditorRow + RoutineExerciseCard per-exercise pickers; Plan 06 added the shared `fitbod/Views/IntentChip.swift` SwiftUI component + SessionLoggerView principal toolbar three-line integration — the user-visible "this session has an intent" surface (D-11); Plan 05 canonicalized the per-exercise UI strip — file-header doc-comments rewritten forward-looking, Plan 04's transitional inline markers deleted, zero residual symbol references to `intentPicker` / `progressionPicker` / `intentChip`, PrescriptionEditorRow now documents the canonical 8-row VStack and RoutineExerciseCard documents the collapsed `[name] / [summary]` header — the routine-builder side of the refactor is fully complete from a UI + documentation perspective) |
 | PIVOT-05 | Phase 3.1 | Partial (Plan 03 closed BLOCKER 2 — SessionFactory.fetchHistoryPoints + lastSessionWorkingReps internal-static helpers; Plan 07 closed PreviousMatchingIntent.fetchTopWorkingSet + ExerciseHistoryView + ExerciseHistoryRow + SetRow + SessionExerciseCard + Rule 2 SessionLoggerView preview — all three matching-intent queries now use the same descriptor + Swift-post-filter shape; test rewires still pending in Plan 08) |
-| BLOCK-01 | Phase 4 | Pending |
-| BLOCK-02 | Phase 4 | Pending |
-| BLOCK-03 | Phase 4 | Pending |
-| BLOCK-04 | Phase 4 | Pending |
-| BLOCK-05 | Phase 4 | Pending |
-| BLOCK-06a | Phase 4 | Pending (UI scaffold + protocol type-level enforcement; stub signal) |
+| BLOCK-01 | Phase 4 | Complete |
+| BLOCK-02 | Phase 4 | Complete |
+| BLOCK-03 | Phase 4 | Complete |
+| BLOCK-04 | Phase 4 | Complete |
+| BLOCK-05 | Phase 4 | Complete |
+| BLOCK-06a | Phase 4 | Complete (UI scaffold + FatigueAdvisory protocol + StubFatigueAdvisory; BLOCK-08 type-level enforcement holds) |
 | BLOCK-06b | Phase 5 | Pending (real fatigue signal populates the FatigueAdvisory implementation) |
-| BLOCK-07 | Phase 4 | Pending |
-| BLOCK-08 | Phase 4 | Pending |
+| BLOCK-07 | Phase 4 | Complete |
+| BLOCK-08 | Phase 4 | Complete |
 | VOL-01 | Phase 5 | Pending |
 | VOL-02 | Phase 5 | Pending |
 | VOL-03 | Phase 5 | Pending |

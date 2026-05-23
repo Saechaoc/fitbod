@@ -20,7 +20,7 @@ Granular, prescriptive workout sessions — every set in a session is intentiona
 - [x] **Phase 2: Core Loop (Routines + Sessions)** — Single-screen routine builder, snapshot session logger, accurate rest timer, intent-split history lists **(complete: 13/13 plans, 20/20 requirements — 2026-05-11)**
 - [x] **Phase 3: Smart Prescription & Warm-ups** — Two progression strategies (RPE autoreg, double progression), warm-up generator, plate calculator, "why this weight?" UI (completed 2026-05-23)
 - [x] **Phase 3.1: Session-Level Intent & Progression Refactor** — Move intent + progressionKind from per-exercise to Routine/Session; strip per-exercise pickers from PrescriptionEditorRow; SchemaV4 migration; rewire 25 test suites to the new model contract (completed 2026-05-23; PIVOT-01..05 satisfied)
-- [ ] **Phase 4: Periodization & Blocks** — Block builder, scheduled deloads, block timeline on home, remaining two progression strategies (block-periodized, hybrid)
+- [x] **Phase 4: Periodization & Blocks** — Block builder, scheduled deloads, block timeline on home, remaining two progression strategies (block-periodized, hybrid)
 - [ ] **Phase 5: Fatigue Model & Plateau Detection** — Stimulus-weighted weekly volume, MEV/MAV/MRV bars with verbs, muscle heatmap, plateau detector, fatigue-triggered deload advisory
 - [ ] **Phase 6: Progress Views, Export & Polish** — Intent-split charts, PRs, weekly tonnage, session comparison, weekly recap, CSV/JSON export, backup/restore
 
@@ -125,15 +125,15 @@ Granular, prescriptive workout sessions — every set in a session is intentiona
 **Plans:** 9 atomic plans (5 waves; 04-04 split into 04-04a + 04-04b per checker warning #7)
 
 **Plan list:**
-- [ ] 04-01-PLAN.md — SchemaV4 (Block.reviewedAt + RoutineExercise.prescribedWeight per D-17) + PeriodizationEngine + FatigueAdvisory protocol + BlockPhaseColors + BlockTemplates + MesocycleWeekContext (Sendable value snapshot) + Wave-0 test scaffolds (13 suites: 4 GREEN, 9 RED for downstream plans)
-- [ ] 04-02-PLAN.md — BlockBuilderView single-screen builder + BlockDraft / BlockPhaseDraft @Observable + BlockPhaseEditorRow + transactional single-active save
-- [ ] 04-03-PLAN.md — RoutinesListView "Blocks" section + BlockRow + +Block Menu + delete confirmation
-- [ ] 04-04a-PLAN.md — Today-tab BlockCard (value-driven init) + MesocycleWeekPage swipe pager + TodayView active-block @Query hoist (split per checker warning #7)
-- [ ] 04-04b-PLAN.md — DeloadWeekBanner + ConsiderDeloadBanner scaffold + StartBlockCTA + TodayView full banner-stack rewire (split per checker warning #7)
-- [ ] 04-05-PLAN.md — RoutineDraft.blockID + BlockPickerMenu in RoutineBuilderView header + PrescriptionEditorRow conditional .block/.hybrid case filter
-- [ ] 04-06-PLAN.md — ProgressionStrategy protocol extension (defaults at impl site per Swift contract) + BlockPeriodizedStrategy (D-17 baseline chain) + HybridStrategy + Factory swap + PrescriptionExplanation phase-context / deload-note fields
-- [ ] 04-07-PLAN.md — SessionFactory deload set-count cut (D-12 / Pitfall 7 clamp) + Session.block snapshot pinning + WarmupDeloadIntegrationTests (warning #10)
-- [ ] 04-08-PLAN.md — BlockReviewView 4-section sheet (total volume + e1RM deltas + PRs placeholder + recommended next) + TodayView trigger + E1RMHelper.epley fallback + acknowledge transaction
+- [x] 04-01-PLAN.md — Wave 0 pure foundation: PeriodizationEngine + MesocycleWeekContext + BlockTemplates + BlockPhaseColors + FatigueAdvisory protocol + StubFatigueAdvisory + 3 GREEN test suites (SchemaV4 work deferred to 04-08; landed as SchemaV5 with Block.reviewedAt)
+- [x] 04-02-PLAN.md — BlockBuilderView single-screen builder + BlockDraft / BlockPhaseDraft @Observable + BlockPhaseEditorRow + transactional single-active save
+- [x] 04-03-PLAN.md — RoutinesListView "Blocks" section + BlockRow + +Block Menu + delete confirmation
+- [x] 04-04a-PLAN.md — Today-tab BlockCard (value-driven init) + MesocycleWeekPage swipe pager + TodayView active-block @Query hoist (split per checker warning #7)
+- [x] 04-04b-PLAN.md — DeloadWeekBanner + ConsiderDeloadBanner scaffold + StartBlockCTA + TodayView full banner-stack rewire (split per checker warning #7)
+- [x] 04-05-PLAN.md — RoutineDraft.blockID + BlockPickerMenu in RoutineBuilderView header + PrescriptionEditorRow conditional .block/.hybrid case filter (RECONCILED post-Phase 3.1: D-19 filter relocated to RoutineBuilderView's session-level Progression header picker via RoutineDraft.availableProgressionKinds(hasBlock:) + guardedProgressionSelection save-path guard)
+- [x] 04-06-PLAN.md — ProgressionStrategy protocol extension (defaults at impl site per Swift contract) + BlockPeriodizedStrategy (D-17 baseline chain) + HybridStrategy + Factory swap + PrescriptionExplanation phase-context / deload-note fields
+- [x] 04-07-PLAN.md — SessionFactory deload set-count cut (D-12 / Pitfall 7 clamp) + Session.block snapshot pinning + WarmupDeloadIntegrationTests (warning #10)
+- [x] 04-08-PLAN.md — BlockReviewView 4-section sheet (total volume + e1RM deltas + PRs placeholder + recommended next) + TodayView trigger + E1RMHelper.epley fallback + acknowledge transaction + SchemaV5 (Block.reviewedAt; D-26 lands here instead of SchemaV3 because Phase 3 sealed before Phase 4 could ship the field)
 **UI hint:** yes
 **Research flag:** Yes — at plan-phase time, confirm default volume/intensity multipliers per phase against current RP/RTS literature (accumulation, intensification, realization, deload baselines)
 
