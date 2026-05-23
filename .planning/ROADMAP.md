@@ -75,9 +75,9 @@ Granular, prescriptive workout sessions — every set in a session is intentiona
 
 **Plan list:**
 - [x] 03-01-PLAN.md — SchemaV3 + additive fields + PlateInventory entity + lightweight migration
-- [ ] 03-02-PLAN.md — Wave 0 test scaffolding (12 suites: 3 GREEN, 9 RED for downstream plans)
-- [ ] 03-03-PLAN.md — TuchschererTable + PlateCalculator + Calibration pure functions
-- [ ] 03-04-PLAN.md — PlateInventory defaults + seeder + PlateInventoryEditor + Settings extensions
+- [x] 03-02-PLAN.md — Wave 0 test scaffolding (12 suites: 3 GREEN, 9 RED for downstream plans)
+- [x] 03-03-PLAN.md — TuchschererTable + PlateCalculator + Calibration pure functions
+- [x] 03-04-PLAN.md — PlateInventory defaults + seeder + PlateInventoryEditor + Settings extensions
 - [ ] 03-05-PLAN.md — ProgressionStrategy protocol + RPEAutoreg + DoubleProgression + WarmupRamp + Factory
 - [ ] 03-06-PLAN.md — Session logger UI components (WhyThisWeightSheet, PrescriptionWeightCell, PlateStackDisclosure, BumpBanner, CalibratingBadge, WarmupRampRows)
 - [ ] 03-07-PLAN.md — Routine builder warm-up override + ExerciseDetailView prescription settings
