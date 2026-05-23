@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: verifying
-last_updated: "2026-05-23T00:17:11.605Z"
+last_updated: "2026-05-23T00:43:51.055Z"
 progress:
   total_phases: 6
   completed_phases: 2
-  total_plans: 52
-  completed_plans: 30
+  total_plans: 53
+  completed_plans: 31
   percent: 58
 ---
 
@@ -131,6 +131,7 @@ These drive phase ordering and are mitigated by phase placement:
 | Phase 02 P02-01 | 43 | 1 tasks | 4 files |
 | Phase 03-smart-prescription-warm-ups P03 | 25 | 3 tasks | 5 files |
 | Phase 03-smart-prescription-warm-ups P04 | 30 | 3 tasks | 6 files |
+| Phase 03-smart-prescription-warm-ups P05 | 65 | 4 tasks | 6 files |
 
 ### Open Research Items (deferred to plan-phase time)
 
