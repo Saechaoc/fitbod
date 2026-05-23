@@ -1,0 +1,212 @@
+{
+  "blocks" : [
+    {
+      "id" : "00000000-0000-0000-0000-00000000000D",
+      "isActive" : true,
+      "name" : "Spring Block",
+      "phases" : [
+        {
+          "id" : "00000000-0000-0000-0000-00000000000E",
+          "intensityMultiplier" : 1,
+          "nameRaw" : "accumulation",
+          "orderIndex" : 0,
+          "volumeMultiplier" : 1,
+          "weeks" : 4
+        }
+      ],
+      "startDate" : "2023-11-14T22:13:20Z"
+    }
+  ],
+  "exerciseMuscleStimuli" : [
+    {
+      "exerciseID" : "00000000-0000-0000-0000-000000000001",
+      "id" : "00000000-0000-0000-0000-000000000003",
+      "muscleID" : "00000000-0000-0000-0000-000000000002",
+      "role" : "primary",
+      "userEditedWeight" : false,
+      "weight" : 1
+    }
+  ],
+  "exercises" : [
+    {
+      "canonicalName" : "bench press",
+      "category" : "strength",
+      "createdAt" : "2023-11-14T22:13:20Z",
+      "equipmentRaw" : "barbell",
+      "externalID" : "bench-press-1",
+      "forceRaw" : "push",
+      "id" : "00000000-0000-0000-0000-000000000001",
+      "imagePaths" : [
+        "bench-1.jpg"
+      ],
+      "instructions" : [
+        "Lie supine.",
+        "Press the bar."
+      ],
+      "isCustom" : false,
+      "levelRaw" : "intermediate",
+      "mechanicRaw" : "compound",
+      "name" : "Bench Press",
+      "patternRaw" : "horizontal_push",
+      "primaryMuscleSlugsJoined" : "|chest|",
+      "smallestIncrement" : 2.5
+    }
+  ],
+  "exportedAt" : "2023-11-14T22:13:20Z",
+  "formatVersion" : 1,
+  "muscleGroups" : [
+    {
+      "displayName" : "Chest",
+      "id" : "00000000-0000-0000-0000-000000000002",
+      "regionRaw" : "upper",
+      "slug" : "chest"
+    }
+  ],
+  "muscleVolumeTargets" : [
+    {
+      "id" : "00000000-0000-0000-0000-00000000000F",
+      "mav" : 14,
+      "mev" : 8,
+      "mrv" : 22,
+      "muscleID" : "00000000-0000-0000-0000-000000000002",
+      "mv" : 6,
+      "userEdited" : false
+    }
+  ],
+  "plateInventories" : [
+    {
+      "availablePlatesData" : "",
+      "barWeight" : 20,
+      "createdAt" : "2023-11-14T22:13:20Z",
+      "equipmentKindRaw" : "barbell",
+      "id" : "00000000-0000-0000-0000-000000000010",
+      "updatedAt" : "2023-11-14T22:13:20Z"
+    }
+  ],
+  "routineFolders" : [
+    {
+      "createdAt" : "2023-11-14T22:13:20Z",
+      "id" : "00000000-0000-0000-0000-000000000007",
+      "name" : "Hypertrophy block",
+      "sortOrder" : 0
+    }
+  ],
+  "routines" : [
+    {
+      "blockID" : "00000000-0000-0000-0000-00000000000D",
+      "createdAt" : "2023-11-14T22:13:20Z",
+      "exercises" : [
+        {
+          "exerciseID" : "00000000-0000-0000-0000-000000000001",
+          "generateWarmups" : true,
+          "id" : "00000000-0000-0000-0000-000000000005",
+          "orderIndex" : 0,
+          "prescribedRestSeconds" : 180,
+          "setOverrides" : [
+            {
+              "id" : "00000000-0000-0000-0000-000000000006",
+              "setIndex" : 0,
+              "targetRPE" : 8,
+              "targetRepsHigh" : 6,
+              "targetRepsLow" : 4
+            }
+          ],
+          "targetRPE" : 8,
+          "targetRepsHigh" : 6,
+          "targetRepsLow" : 4,
+          "targetSets" : 4,
+          "tracksPartialReps" : false,
+          "tracksTempo" : false
+        }
+      ],
+      "folderID" : "00000000-0000-0000-0000-000000000007",
+      "id" : "00000000-0000-0000-0000-000000000004",
+      "intentRaw" : "strength",
+      "isArchived" : false,
+      "name" : "Upper A",
+      "progressionKindRaw" : "rpe",
+      "updatedAt" : "2023-11-14T22:13:20Z"
+    }
+  ],
+  "schemaVersion" : "v6",
+  "sessions" : [
+    {
+      "blockID" : "00000000-0000-0000-0000-00000000000D",
+      "completedAt" : "2023-11-14T23:13:20Z",
+      "exercises" : [
+        {
+          "exerciseID" : "00000000-0000-0000-0000-000000000001",
+          "exerciseName" : "Bench Press",
+          "id" : "00000000-0000-0000-0000-00000000000A",
+          "orderIndex" : 0,
+          "prescribedRestSeconds" : 180,
+          "prescribedWeight" : 100,
+          "sets" : [
+            {
+              "completedAt" : "2023-11-14T22:13:20Z",
+              "id" : "00000000-0000-0000-0000-00000000000B",
+              "isComplete" : true,
+              "isWarmup" : true,
+              "orderIndex" : 0,
+              "reps" : 8,
+              "restAfterSeconds" : 60,
+              "rpe" : 6,
+              "setTypeRaw" : "warmup",
+              "wasManualOverride" : false,
+              "weight" : 40
+            },
+            {
+              "completedAt" : "2023-11-14T22:15:20Z",
+              "id" : "00000000-0000-0000-0000-00000000000C",
+              "isComplete" : true,
+              "isWarmup" : false,
+              "orderIndex" : 1,
+              "reps" : 5,
+              "restAfterSeconds" : 180,
+              "rpe" : 8,
+              "setTypeRaw" : "working",
+              "wasManualOverride" : false,
+              "weight" : 100
+            }
+          ],
+          "targetRPE" : 8,
+          "targetRepsHigh" : 6,
+          "targetRepsLow" : 4,
+          "targetSets" : 4,
+          "tracksPartialReps" : false,
+          "tracksTempo" : false
+        }
+      ],
+      "id" : "00000000-0000-0000-0000-000000000009",
+      "intentRaw" : "strength",
+      "progressionKindRaw" : "rpe",
+      "routineSnapshotName" : "Upper A",
+      "sourceRoutineID" : "00000000-0000-0000-0000-000000000004",
+      "startedAt" : "2023-11-14T22:13:20Z",
+      "totalDurationSeconds" : 3600
+    }
+  ],
+  "supersetGroups" : [
+    {
+      "createdAt" : "2023-11-14T22:13:20Z",
+      "id" : "00000000-0000-0000-0000-000000000008",
+      "kindRaw" : "paired",
+      "routineID" : "00000000-0000-0000-0000-000000000004",
+      "sortOrder" : 0
+    }
+  ],
+  "unitSystem" : "kg",
+  "userSettings" : {
+    "defaultIncrementKg" : 2.5,
+    "defaultProgressionKindRaw" : "double",
+    "deloadAlertEnabled" : true,
+    "frequencyHitMinSets" : 2,
+    "id" : "00000000-0000-0000-0000-000000000011",
+    "minCalibrationSets" : 10,
+    "plateauTolerance" : 0.02,
+    "plateauWindowSessions" : 4,
+    "unitsRaw" : "lb",
+    "warmupSchemeRaw" : "standard",
+    "weekStartsMonday" : true
+  }
+}
