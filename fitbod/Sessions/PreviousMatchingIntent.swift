@@ -71,21 +71,33 @@ public enum PreviousMatchingIntent {
         guard let exerciseID else { return nil }
 
         // RESEARCH §6 Pitfall 1 — extract to locals BEFORE the #Predicate.
-        // Comparing `se.exercise?.id == exerciseID` directly inside the
-        // predicate triggers a known SwiftData footgun on iOS 17/18 where
-        // the related-entity-ID compare silently returns empty results.
+        //
+        // CRITICAL: do NOT combine `se.intentRaw == targetIntent` with
+        // `se.exercise?.id == targetID` in a single #Predicate. The
+        // related-entity-ID compare silently returns empty results on
+        // iOS 17/18 (verified — SessionFactory.lastSessionWorkingReps
+        // and fetchHistoryPoints use the same workaround). Predicate
+        // on intentRaw only; post-filter by exerciseID in Swift. The
+        // intentRaw filter is selective enough to keep the fetched
+        // set bounded; the post-filter handles the related-entity
+        // compare correctly.
+        //
+        // SortDescriptor on optional keypath (\.session?.startedAt)
+        // also caused type-checking failures in the Swift 6 toolchain
+        // — sort in Swift after fetch.
         let targetID = exerciseID
         let targetIntent = intentRaw
 
-        var descriptor = FetchDescriptor<SessionExercise>(
-            predicate: #Predicate { se in
-                se.intentRaw == targetIntent && se.exercise?.id == targetID
-            },
-            sortBy: [SortDescriptor(\.session?.startedAt, order: .reverse)]
+        let descriptor = FetchDescriptor<SessionExercise>(
+            predicate: #Predicate { se in se.intentRaw == targetIntent }
         )
-        descriptor.fetchLimit = 5
 
-        guard let recent = try? context.fetch(descriptor) else { return nil }
+        guard let all = try? context.fetch(descriptor) else { return nil }
+
+        let recent = all
+            .filter { $0.exercise?.id == targetID }
+            .sorted { ($0.session?.startedAt ?? .distantPast) > ($1.session?.startedAt ?? .distantPast) }
+            .prefix(5)
 
         for se in recent {
             let workingSets = (se.sets ?? []).filter { entry in
