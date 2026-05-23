@@ -65,6 +65,11 @@ public struct RootView: View {
     /// can clear it without reaching into a child view.
     @State private var libraryPath = NavigationPath()
 
+    /// Wave-5 plan 06-08 — Progress tab NavigationPath. Lives in
+    /// RootView so the `tabSelection` setter can clear it on Progress-
+    /// tab re-tap (mirrors the Library tab pattern).
+    @State private var progressPath = NavigationPath()
+
     private static let log = Logger(subsystem: "com.fitbod.app", category: "seed")
 
     public init() {}
@@ -138,9 +143,12 @@ public struct RootView: View {
                     switch newValue {
                     case .library:
                         libraryPath = NavigationPath()
-                    case .today, .routines, .progress, .settings:
+                    case .progress:
+                        // Wave-5 plan 06-08 — Progress tab pop-to-root.
+                        progressPath = NavigationPath()
+                    case .today, .routines, .settings:
                         // No NavigationPath wired for these tabs yet —
-                        // Phase 2+ will add paths as drilldowns appear.
+                        // future polish will add paths as drilldowns appear.
                         break
                     }
                 }
@@ -184,9 +192,13 @@ public struct RootView: View {
                 }
                 .tag(Tab.library)
 
-            PlaceholderTabView(phaseNumber: 6)
+            // Wave-5 plan 06-08 — Progress tab now hosts the real
+            // ProgressHomeView. Tab icon adjudicated per PATTERNS #3 /
+            // UI-SPEC § Asset Contract: chart.line.uptrend.xyaxis
+            // (replaces the Phase 1 placeholder chart.xyaxis.line).
+            ProgressTabHost(path: $progressPath)
                 .tabItem {
-                    Label("Progress", systemImage: "chart.xyaxis.line")
+                    Label("Progress", systemImage: "chart.line.uptrend.xyaxis")
                 }
                 .tag(Tab.progress)
 
@@ -485,6 +497,15 @@ private struct TodayView: View {
 private struct LibraryTabHost: View {
     @Binding var path: NavigationPath
     var body: some View { ExerciseLibraryView(path: $path) }
+}
+
+/// Progress tab body — wraps the real `ProgressHomeView` (plan 06-08).
+/// `ProgressHomeView` owns its own `NavigationStack`, parameterized on
+/// the path binding supplied from `RootView` so `tabSelection` can
+/// clear it on Progress-tab re-tap.
+private struct ProgressTabHost: View {
+    @Binding var path: NavigationPath
+    var body: some View { ProgressHomeView(path: $path) }
 }
 
 /// Settings tab body — wraps the real `SettingsView` (plan 04-01).
