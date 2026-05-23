@@ -102,46 +102,67 @@ public enum FitbodSchemaMigrationPlan: SchemaMigrationPlan {
         fromVersion: SchemaV3.self,
         toVersion: SchemaV4.self,
         willMigrate: { context in
-            // Fetch V3-shape rows via the nested types — these still carry
-            // the deprecated intentRaw / progressionKindRaw fields.
-            let v3REs = try context.fetch(FetchDescriptor<SchemaV3.RoutineExercise>())
-            let v3SEs = try context.fetch(FetchDescriptor<SchemaV3.SessionExercise>())
-
-            // Fetch V4-shape Routine + Session rows via the typealiases.
-            // After Plan 02 these rows have new intent / progressionKind
-            // fields with default values; the closure overwrites those
-            // defaults with the backfilled mode-of-children value.
-            let v4Routines = try context.fetch(FetchDescriptor<SchemaV4.Routine>())
-            let v4Sessions = try context.fetch(FetchDescriptor<SchemaV4.Session>())
-
-            for routine in v4Routines {
-                let routineV3REs = v3REs.filter { $0.routine?.id == routine.id }
-                let intents = routineV3REs.map { $0.intentRaw }
-                let progressions = routineV3REs.map { $0.progressionKindRaw }
-                _ = intents       // silence "unused" warning until Plan 02 uncomments
-                _ = progressions  // silence "unused" warning until Plan 02 uncomments
-                // TODO(Plan 02): uncomment field writes after Routine @Model
-                // gains `intentRaw` and `progressionKindRaw`.
-                // routine.intentRaw = Self.modeRaw(of: intents, tieBreak: "strength")
-                // routine.progressionKindRaw = Self.modeRaw(of: progressions, tieBreak: "double")
-            }
-
-            for session in v4Sessions {
-                let sessionV3SEs = v3SEs.filter { $0.session?.id == session.id }
-                let sessionIntents = sessionV3SEs.map { $0.intentRaw }
-                let sessionProgressions = sessionV3SEs.map { $0.progressionKindRaw }
-                _ = sessionIntents       // silence "unused" warning until Plan 02 uncomments
-                _ = sessionProgressions  // silence "unused" warning until Plan 02 uncomments
-                // TODO(Plan 02): uncomment field writes after Session @Model
-                // gains `intentRaw` and `progressionKindRaw`.
-                // session.intentRaw = Self.modeRaw(of: sessionIntents, tieBreak: "strength")
-                // session.progressionKindRaw = Self.modeRaw(of: sessionProgressions, tieBreak: "double")
-            }
-
-            try context.save()
+            try Self.backfillSessionLevelFields(in: context)
         },
         didMigrate: nil
     )
+
+    /// Extracted backfill body — same logic the willMigrate closure
+    /// delegates to. `internal static` so both the migration stage AND
+    /// `SchemaV4MigrationTests` can call it (MigrationStage's willMigrate
+    /// closure isn't directly invokable from a test fixture, so the test
+    /// suite drives the migration semantics by calling this helper
+    /// directly against an in-memory ModelContext registered with both
+    /// SchemaV3 nested types and SchemaV4 typealiases).
+    ///
+    /// The four field-write lines are gated by `// TODO(Plan 02)` comments
+    /// because the top-level `fitbod.Routine` / `fitbod.Session` production
+    /// types don't yet declare `intentRaw` / `progressionKindRaw` at Plan
+    /// 01 commit time — Plan 02 adds those fields and uncomments these
+    /// lines as part of the same commit. The scaffolding (fetches, the
+    /// for-loops, the filter chains, the `modeRaw` helper calls computed
+    /// into `intents` / `progressions` local lets) stays UNCOMMENTED so
+    /// the parser exercises the path and so Plan 02's diff is the four
+    /// single-line uncomments.
+    internal static func backfillSessionLevelFields(in context: ModelContext) throws {
+        // Fetch V3-shape rows via the nested types — these still carry
+        // the deprecated intentRaw / progressionKindRaw fields.
+        let v3REs = try context.fetch(FetchDescriptor<SchemaV3.RoutineExercise>())
+        let v3SEs = try context.fetch(FetchDescriptor<SchemaV3.SessionExercise>())
+
+        // Fetch V4-shape Routine + Session rows via the typealiases.
+        // After Plan 02 these rows have new intent / progressionKind
+        // fields with default values; the closure overwrites those
+        // defaults with the backfilled mode-of-children value.
+        let v4Routines = try context.fetch(FetchDescriptor<SchemaV4.Routine>())
+        let v4Sessions = try context.fetch(FetchDescriptor<SchemaV4.Session>())
+
+        for routine in v4Routines {
+            let routineV3REs = v3REs.filter { $0.routine?.id == routine.id }
+            let intents = routineV3REs.map { $0.intentRaw }
+            let progressions = routineV3REs.map { $0.progressionKindRaw }
+            _ = intents       // silence "unused" warning until Plan 02 uncomments
+            _ = progressions  // silence "unused" warning until Plan 02 uncomments
+            // TODO(Plan 02): uncomment field writes after Routine @Model
+            // gains `intentRaw` and `progressionKindRaw`.
+            // routine.intentRaw = Self.modeRaw(of: intents, tieBreak: "strength")
+            // routine.progressionKindRaw = Self.modeRaw(of: progressions, tieBreak: "double")
+        }
+
+        for session in v4Sessions {
+            let sessionV3SEs = v3SEs.filter { $0.session?.id == session.id }
+            let sessionIntents = sessionV3SEs.map { $0.intentRaw }
+            let sessionProgressions = sessionV3SEs.map { $0.progressionKindRaw }
+            _ = sessionIntents       // silence "unused" warning until Plan 02 uncomments
+            _ = sessionProgressions  // silence "unused" warning until Plan 02 uncomments
+            // TODO(Plan 02): uncomment field writes after Session @Model
+            // gains `intentRaw` and `progressionKindRaw`.
+            // session.intentRaw = Self.modeRaw(of: sessionIntents, tieBreak: "strength")
+            // session.progressionKindRaw = Self.modeRaw(of: sessionProgressions, tieBreak: "double")
+        }
+
+        try context.save()
+    }
 
     // MARK: - Migration helpers
 

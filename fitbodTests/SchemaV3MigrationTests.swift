@@ -66,12 +66,17 @@ struct SchemaV3MigrationTests {
 
     // MARK: - 2. Migration plan wiring (3 schemas, 2 stages)
 
-    @Test("FitbodSchemaMigrationPlan registers V1+V2+V3 and TWO lightweight stages")
+    @Test("FitbodSchemaMigrationPlan registers V1+V2+V3+V4 and THREE stages")
     func migrationPlanWiringIsV1V2V3() {
+        // Phase 3.1 plan 01 deviation (Rule 1): SchemaV4 is added to the
+        // schemas array and migrateV3toV4 (custom) is appended to stages.
+        // V1+V2+V3 ordering is unchanged. Same precedent as plan 02-00-02's
+        // update to SchemaV1Tests.migrationPlanHasEmptyStages when V2 wiring
+        // ended the empty-stages invariant.
         let names = FitbodSchemaMigrationPlan.schemas.map { String(describing: $0) }
-        #expect(names == ["SchemaV1", "SchemaV2", "SchemaV3"])
-        #expect(FitbodSchemaMigrationPlan.schemas.count == 3)
-        #expect(FitbodSchemaMigrationPlan.stages.count == 2)
+        #expect(names == ["SchemaV1", "SchemaV2", "SchemaV3", "SchemaV4"])
+        #expect(FitbodSchemaMigrationPlan.schemas.count == 4)
+        #expect(FitbodSchemaMigrationPlan.stages.count == 3)
     }
 
     // MARK: - 3. PlateInventory round-trip

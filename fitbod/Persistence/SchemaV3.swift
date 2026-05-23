@@ -116,13 +116,20 @@ public enum SchemaV3: VersionedSchema {
 
     /// V3-shape Session. Mirrors `fitbod.Session` as it existed at the close
     /// of Phase 3 plan 03-01 — no `intentRaw` / `progressionKindRaw` (Plan
-    /// 02 of Phase 3.1 adds those to the top-level production type). The
-    /// V3 #Index is `[\.startedAt], [\.sourceRoutineID]` — Plan 02 extends
-    /// it on the top-level type to add `[\.intentRaw]`.
+    /// 02 of Phase 3.1 adds those to the top-level production type).
+    ///
+    /// `#Index` is intentionally omitted from this nested type: the SwiftData
+    /// `#Index<T>` macro requires `T` to match the enclosing class's
+    /// unqualified identifier as the `@Model` macro sees it (it can't see
+    /// through the enclosing-enum namespace). Indexes here would be cold —
+    /// the V3→V4 migration closure does a single one-shot
+    /// `FetchDescriptor<SchemaV3.Session>` and filters in memory; nothing
+    /// in the migration path benefits from an index. The top-level
+    /// `fitbod.Session` keeps the production `#Index<Session>([\.startedAt],
+    /// [\.sourceRoutineID])` (extended in Plan 02 to add `[\.intentRaw]`)
+    /// for the hot history queries.
     @Model
     public final class Session {
-        #Index<SchemaV3.Session>([\.startedAt], [\.sourceRoutineID])
-
         @Attribute(.unique) public var id: UUID = UUID()
         public var startedAt: Date = Date.now
         public var completedAt: Date? = nil
@@ -186,10 +193,16 @@ public enum SchemaV3: VersionedSchema {
     }
 
     /// V3-shape SessionExercise. Mirrors `fitbod.SessionExercise` AS IT
-    /// EXISTS TODAY — RETAINING `intentRaw` + `progressionKindRaw` and the
-    /// `#Index<...>([\.intentRaw])` macro that the migration's willMigrate
-    /// closure depends on for cheap lookups (Plan 02 moves the index to
-    /// `Session.intentRaw` on the top-level production type).
+    /// EXISTS TODAY — RETAINING `intentRaw` + `progressionKindRaw`.
+    ///
+    /// As with `SchemaV3.Session` above, `#Index` is omitted: the macro
+    /// can't resolve `SchemaV3.SessionExercise` through the enclosing-enum
+    /// namespace, and the migration closure does a one-shot
+    /// `FetchDescriptor<SchemaV3.SessionExercise>` + in-memory filter, so
+    /// an index would be cold-storage anyway. The top-level
+    /// `fitbod.SessionExercise` keeps the production
+    /// `#Index<SessionExercise>([\.intentRaw])` for the hot ExerciseHistoryView
+    /// chip-filter queries (Plan 02 moves that index to `Session.intentRaw`).
     ///
     /// As with RoutineExercise above, `session` references the nested
     /// `SchemaV3.Session`, and `sets` intentionally omits the inverse
@@ -197,8 +210,6 @@ public enum SchemaV3: VersionedSchema {
     /// stays harmless (the migration closure never traverses it).
     @Model
     public final class SessionExercise {
-        #Index<SchemaV3.SessionExercise>([\.intentRaw])
-
         @Attribute(.unique) public var id: UUID = UUID()
         public var session: SchemaV3.Session? = nil
         public var exercise: Exercise? = nil
