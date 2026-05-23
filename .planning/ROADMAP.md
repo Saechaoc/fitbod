@@ -71,12 +71,12 @@ Granular, prescriptive workout sessions — every set in a session is intentiona
   4. The first compound exercise of a session auto-generates a 3–5 set warm-up ramp plate-rounded to the user's per-equipment plate inventory; edge cases handled correctly — skipped on deload weeks, halved for unilateral lifts, skipped when working weight < 1.5× bar, skipped for bodyweight, user-overridable per exercise
   5. Plate calculator displays the loadable plate stack for a given target weight and bar weight respecting the user's plate inventory; per-exercise smallest weight increment is honored by every progression rounding decision; manual weight overrides are recorded as actual performance and feed into the next session's calculation (never ignored)
   6. Per-equipment plate inventory and smallest-increment settings, per-exercise unit override, and RPE-calibration window settings are user-configurable
-**Plans:** 3/8 plans executed
+**Plans:** 1/8 plans executed
 
 **Plan list:**
 - [x] 03-01-PLAN.md — SchemaV3 + additive fields + PlateInventory entity + lightweight migration
-- [x] 03-02-PLAN.md — Wave 0 test scaffolding (12 suites: 3 GREEN, 9 RED for downstream plans)
-- [x] 03-03-PLAN.md — TuchschererTable + PlateCalculator + Calibration pure functions
+- [ ] 03-02-PLAN.md — Wave 0 test scaffolding (12 suites: 3 GREEN, 9 RED for downstream plans)
+- [ ] 03-03-PLAN.md — TuchschererTable + PlateCalculator + Calibration pure functions
 - [ ] 03-04-PLAN.md — PlateInventory defaults + seeder + PlateInventoryEditor + Settings extensions
 - [ ] 03-05-PLAN.md — ProgressionStrategy protocol + RPEAutoreg + DoubleProgression + WarmupRamp + Factory
 - [ ] 03-06-PLAN.md — Session logger UI components (WhyThisWeightSheet, PrescriptionWeightCell, PlateStackDisclosure, BumpBanner, CalibratingBadge, WarmupRampRows)
@@ -96,7 +96,17 @@ Granular, prescriptive workout sessions — every set in a session is intentiona
   3. `BlockPeriodizedStrategy` and `HybridStrategy` are live as the third and fourth progression options — switching the progression kind on a `RoutineExercise` changes the prescribed weight predictably across all four algorithms; hybrid combines block phase macro context with RPE-driven daily adjustment
   4. Scheduled deload weeks auto-reduce prescribed volume (~50%) and adjust intensity per the deload phase definition, are visually distinct (banner / calendar tint / volume targets cut on bars), and warm-up generation respects them (no ramps on deload weeks)
   5. Block schedule is canonical — fatigue-triggered "consider deload" advisories from Phase 5 will never auto-apply; end-of-block produces a phase-end review (total volume, e1RM deltas, PRs hit, recommended next phase)
-**Plans:** TBD
+**Plans:** 8 atomic plans (5 waves)
+
+**Plan list:**
+- [ ] 04-01-PLAN.md — SchemaV4 (Block.reviewedAt) + PeriodizationEngine + FatigueAdvisory protocol + BlockPhaseColors + BlockTemplates + MesocycleWeekContext + Wave-0 test scaffolds (12 suites: 4 GREEN, 8 RED for downstream plans)
+- [ ] 04-02-PLAN.md — BlockBuilderView single-screen builder + BlockDraft / BlockPhaseDraft @Observable + BlockPhaseEditorRow + transactional single-active save
+- [ ] 04-03-PLAN.md — RoutinesListView "Blocks" section + BlockRow + +Block Menu + delete confirmation
+- [ ] 04-04-PLAN.md — Today-tab BlockCard + MesocycleWeekPage swipe pager + DeloadWeekBanner + ConsiderDeloadBanner scaffold + StartBlockCTA + TodayView stacking rewire
+- [ ] 04-05-PLAN.md — RoutineDraft.blockID + BlockPickerMenu in RoutineBuilderView header + PrescriptionEditorRow conditional .block/.hybrid case filter
+- [ ] 04-06-PLAN.md — ProgressionStrategy protocol extension + BlockPeriodizedStrategy + HybridStrategy + Factory swap + PrescriptionExplanation phase-context / deload-note fields
+- [ ] 04-07-PLAN.md — SessionFactory deload set-count cut (D-12 / Pitfall 7 clamp) + Session.block snapshot pinning
+- [ ] 04-08-PLAN.md — BlockReviewView 4-section sheet (total volume + e1RM deltas + PRs placeholder + recommended next) + TodayView trigger + E1RMHelper.epley fallback + acknowledge transaction
 **UI hint:** yes
 **Research flag:** Yes — at plan-phase time, confirm default volume/intensity multipliers per phase against current RP/RTS literature (accumulation, intensification, realization, deload baselines)
 
@@ -150,8 +160,8 @@ Granular, prescriptive workout sessions — every set in a session is intentiona
 |-------|----------------|--------|-----------|
 | 1. Foundation & Exercise Library | 12/12 | Complete | 2026-05-11 |
 | 2. Core Loop (Routines + Sessions) | 13/13 | Complete | 2026-05-11 |
-| 3. Smart Prescription & Warm-ups | 3/8 | In Progress|  |
-| 4. Periodization & Blocks | 0/? | Not started | - |
+| 3. Smart Prescription & Warm-ups | 1/8 | In Progress|  |
+| 4. Periodization & Blocks | 0/8 | Not started | - |
 | 5. Fatigue Model & Plateau Detection | 0/? | Not started | - |
 | 6. Progress Views, Export & Polish | 0/10 | Not started | - |
 
