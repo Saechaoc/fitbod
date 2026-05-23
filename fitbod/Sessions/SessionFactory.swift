@@ -47,6 +47,19 @@
 //      `internal static` so SessionExerciseCard.currentExplanation() can
 //      reuse them without duplicating the SwiftData query logic.
 //
+//  Phase 3.1 (PIVOT-02 / PIVOT-05 / D-14) reshape: intent + progressionKind
+//  are session-level fields now, NOT per-exercise. `start(...)` snapshots
+//  `routine.intentRaw → session.intentRaw` and
+//  `routine.progressionKindRaw → session.progressionKindRaw` exactly once
+//  before the per-exercise loop (PITFALLS-doc #1 — the snapshot pattern is
+//  preserved verbatim; only the level changes). The per-SessionExercise
+//  snapshot now copies just the per-exercise fields that remain:
+//  targetSets / targetRepsLow/High / targetRPE / targetRIR /
+//  prescribedRestSeconds / tempo / tracksTempo / tracksPartialReps /
+//  prescribedWeight. Per D-14, `ProgressionStrategyFactory.make(for:)` is
+//  invoked ONCE per session using `session.progressionKind` and the
+//  resulting strategy instance is reused for every SessionExercise.
+//
 
 import Foundation
 import SwiftData
@@ -58,16 +71,19 @@ public enum SessionFactoryError: Error {
 }
 
 public enum SessionFactory {
-    /// Start a new session from a routine. Deep-copies every prescription
-    /// field from `RoutineExercise` to `SessionExercise` (PITFALLS-doc #1
-    /// / ROUTINE-07) and pre-populates planned `SetEntry` rows with
-    /// target weight pulled from the most recent matching-intent session
-    /// for each exercise (`PreviousMatchingIntent.fetchTopWorkingSet`).
+    /// Start a new session from a routine. Snapshots routine-level intent
+    /// + progressionKind onto the Session (PIVOT-02 / PIVOT-05) before
+    /// deep-copying the remaining per-exercise prescription fields from
+    /// `RoutineExercise` to `SessionExercise` (PITFALLS-doc #1 /
+    /// ROUTINE-07) and pre-populates planned `SetEntry` rows with target
+    /// weight pulled from the most recent matching-intent session for
+    /// each exercise (`PreviousMatchingIntent.fetchTopWorkingSet`).
     ///
-    /// Phase 3 (plan 03-08): also invokes ProgressionStrategyFactory per
-    /// exercise to compute `SessionExercise.prescribedWeight`, and inserts
-    /// warm-up ramp `SetEntry` rows for the first qualifying compound
-    /// exercise (per RESEARCH §SessionFactory Hook Point).
+    /// Phase 3 (plan 03-08): also invokes ProgressionStrategyFactory ONCE
+    /// per session (D-14 — one strategy per session, reused for every
+    /// SessionExercise) to compute `SessionExercise.prescribedWeight`,
+    /// and inserts warm-up ramp `SetEntry` rows for the first qualifying
+    /// compound exercise (per RESEARCH §SessionFactory Hook Point).
     ///
     /// Returns the newly-inserted `Session`. Caller is responsible for
     /// presenting `SessionLoggerView(session: returnedSession)`.
@@ -119,6 +135,17 @@ public enum SessionFactory {
         session.totalDurationSeconds = nil
         context.insert(session)
 
+        // PIVOT-02 / PIVOT-05 — session-level snapshot of intent +
+        // progressionKind. The values are copied from the source routine
+        // at session-start time (PITFALLS-doc #1 — the snapshot pattern
+        // is preserved verbatim; only the level changed from per-exercise
+        // to per-session). Future edits to `routine.intentRaw` /
+        // `routine.progressionKindRaw` will NOT mutate this session's
+        // intent / progressionKind — these fields are independent rows
+        // from this point forward.
+        session.intentRaw = routine.intentRaw
+        session.progressionKindRaw = routine.progressionKindRaw
+
         // Fetch UserSettings once for the entire session — used by Block A
         // for defaultIncrementKg and minCalibrationSets.
         let settingsDescriptor = FetchDescriptor<UserSettings>()
@@ -130,16 +157,25 @@ public enum SessionFactory {
         // compound gets a ramp per session.
         var warmupGenerated = false
 
+        // D-14 — one strategy per session; every SessionExercise uses the
+        // same strategy instance. Lifted out of the per-exercise loop
+        // because intent + progressionKind are now session-level
+        // (PIVOT-02). The instance is stateless so reuse is safe.
+        let sessionStrategy = ProgressionStrategyFactory.make(for: session.progressionKind)
+
         for (orderIndex, re) in exercises.enumerated() {
             let se = SessionExercise()
             se.session = session
             se.exercise = re.exercise
             se.orderIndex = orderIndex
 
-            // SNAPSHOT: every prescription field copied verbatim. Future
-            // edits to `re` will NOT mutate `se` — these are independent
-            // rows from this point forward (PITFALLS-doc #1 / ROUTINE-07).
-            se.intentRaw = re.intentRaw
+            // SNAPSHOT: every per-exercise prescription field copied
+            // verbatim. Future edits to `re` will NOT mutate `se` —
+            // these are independent rows from this point forward
+            // (PITFALLS-doc #1 / ROUTINE-07). Phase 3.1 PIVOT-03: intent
+            // + progressionKind no longer live on RoutineExercise /
+            // SessionExercise — they are session-level fields snapshotted
+            // above (PIVOT-02).
             se.targetSets = re.targetSets
             se.targetRepsLow = re.targetRepsLow
             se.targetRepsHigh = re.targetRepsHigh
@@ -147,7 +183,6 @@ public enum SessionFactory {
             se.targetRIR = re.targetRIR
             se.prescribedRestSeconds = re.prescribedRestSeconds
             se.tempo = re.tempo
-            se.progressionKindRaw = re.progressionKindRaw
             // SNAPSHOT (Wave-4 plan 04-02): the routine-side toggles that
             // gate per-set opt-in row rendering in the session logger.
             // Snapshotting these onto SessionExercise keeps the active
@@ -162,10 +197,12 @@ public enum SessionFactory {
             // Resolve "previous matching-intent weight" for the planned
             // `SetEntry` rows. Returns nil for the first-ever logged
             // session of this (exercise, intent) tuple → set rows default
-            // weight = 0.
+            // weight = 0. PIVOT-02: intent is sourced from the snapshotted
+            // session-level field, not the per-exercise field (which no
+            // longer exists post-Plan-02).
             let previousHint = PreviousMatchingIntent.fetchTopWorkingSet(
                 exerciseID: re.exercise?.id,
-                intentRaw: re.intentRaw,
+                intentRaw: session.intentRaw,
                 context: context
             )
 
@@ -190,17 +227,18 @@ public enum SessionFactory {
 
             // Fetch history for the strategy (RESEARCH §Pitfall 7 filter applied
             // inside fetchHistoryPoints — nil-RPE sets are excluded).
+            // PIVOT-02: intentRaw sourced from session-level snapshot.
             let historyPoints = Self.fetchHistoryPoints(
                 exerciseID: re.exercise?.id,
-                intentRaw: re.intentRaw,
+                intentRaw: session.intentRaw,
                 context: context
             )
 
             // Fetch the last session's working-set reps array for DoubleProgression
-            // bump detection.
+            // bump detection. PIVOT-02: intentRaw sourced from session-level snapshot.
             let lastRepsArray = Self.lastSessionWorkingReps(
                 exerciseID: re.exercise?.id,
-                intentRaw: re.intentRaw,
+                intentRaw: session.intentRaw,
                 context: context
             )
 
@@ -210,7 +248,12 @@ public enum SessionFactory {
             let lastSessionRPE = previousHint?.rpe
             let lastSessionDate = previousHint?.sessionStartedAt
 
-            let strategy = ProgressionStrategyFactory.make(for: re.progressionKind)
+            // D-14 — reuse the session-level strategy instance hoisted
+            // above the loop (one strategy per session, used for every
+            // SessionExercise). The instance is stateless so reuse is
+            // safe; the per-exercise variation lives in the prescribe()
+            // call's history + history-derived inputs.
+            let strategy = sessionStrategy
             let (prescribedWeight, _) = strategy.prescribe(
                 history: historyPoints,
                 targetRepsLow: re.targetRepsLow,
@@ -224,7 +267,9 @@ public enum SessionFactory {
                 lastSessionWeight: lastSessionWeight,
                 lastSessionReps: lastSessionReps,
                 lastSessionRPE: lastSessionRPE,
-                lastSessionDate: lastSessionDate
+                lastSessionDate: lastSessionDate,
+                block: routine.block,
+                today: date
             )
             se.prescribedWeight = prescribedWeight
 
@@ -333,6 +378,16 @@ public enum SessionFactory {
     /// constants BEFORE the #Predicate closure — related-entity ID compares
     /// inside the predicate silently return empty on iOS 17/18 without this
     /// local-capture workaround.
+    ///
+    /// Phase 3.1 PIVOT-05 / D-13: intent is a SESSION-level field after
+    /// Plan 02. The intent post-filter now traverses
+    /// `entry.sessionExercise?.session?.intentRaw` (was
+    /// `entry.sessionExercise?.intentRaw`). The Pitfall 1 multi-level
+    /// optional chain is contained inside the Swift filter step, NOT the
+    /// #Predicate. The Phase 1 #Index<SessionExercise>([\.intentRaw]) is
+    /// gone; the new #Index<Session>([\.intentRaw]) (Plan 02) is one
+    /// indirection away and does not accelerate this specific query.
+    /// Acceptable at single-user scale per CONTEXT.md performance notes.
     internal static func fetchHistoryPoints(
         exerciseID: UUID?,
         intentRaw: String,
@@ -346,8 +401,9 @@ public enum SessionFactory {
 
         // Use a broader predicate (completed + non-warmup) and post-filter by
         // exercise+intent in Swift — the multi-level optional chaining
-        // (entry.sessionExercise?.exercise?.id) causes type-checking timeouts
-        // inside #Predicate on the Swift 6 toolchain (RESEARCH §Pitfall 1).
+        // (entry.sessionExercise?.exercise?.id, and now
+        // entry.sessionExercise?.session?.intentRaw) causes type-checking
+        // timeouts inside #Predicate on the Swift 6 toolchain (RESEARCH §Pitfall 1).
         let descriptor = FetchDescriptor<SetEntry>(
             predicate: #Predicate { entry in
                 entry.isWarmup == false && entry.isComplete == true
@@ -357,13 +413,14 @@ public enum SessionFactory {
 
         // Fetch all completed non-warmup sets, then filter in Swift.
         // fetchLimit not set here because we filter further; cap the
-        // compactMap result to 50 points below.
+        // compactMap result to 50 points below. PIVOT-05: intent is read
+        // from the parent Session via the SessionExercise.session relation.
         guard let all = try? context.fetch(descriptor) else { return [] }
 
         let entries = all.filter { entry in
             entry.reps > 0
                 && entry.weight > 0
-                && entry.sessionExercise?.intentRaw == targetIntent
+                && entry.sessionExercise?.session?.intentRaw == targetIntent
                 && entry.sessionExercise?.exercise?.id == targetID
         }
 
@@ -383,6 +440,17 @@ public enum SessionFactory {
     /// Returns the working-set reps array for the most recent COMPLETED session
     /// matching (exerciseID, intentRaw). Powers DoubleProgressionStrategy's bump
     /// trigger. Returns empty array if no prior session exists.
+    ///
+    /// Phase 3.1 PIVOT-05 / D-13: intent is a SESSION-level field after
+    /// Plan 02. The #Predicate gates on `se.exercise?.id == targetID`
+    /// only; the intent gate moves to the Swift post-filter as
+    /// `se.session?.intentRaw == targetIntent`. Pitfall 1 forbids the
+    /// multi-level optional chain `se.session?.intentRaw` inside the
+    /// #Predicate (mirrors PreviousMatchingIntent's pattern). The Phase 1
+    /// #Index<SessionExercise>([\.intentRaw]) is gone; the new
+    /// #Index<Session>([\.intentRaw]) (Plan 02) is one indirection away
+    /// and does not accelerate this specific query. Acceptable at
+    /// single-user scale per CONTEXT.md performance notes.
     internal static func lastSessionWorkingReps(
         exerciseID: UUID?,
         intentRaw: String,
@@ -394,17 +462,26 @@ public enum SessionFactory {
         let targetID = exerciseID
         let targetIntent = intentRaw
 
-        // Use a simpler predicate on intentRaw only; post-filter by exerciseID.
+        // Predicate gates on exerciseID only (single-level optional chain
+        // is safe inside #Predicate per RESEARCH §Pitfall 1 — the
+        // workaround is the local-let capture above). The intent gate
+        // lives in the Swift post-filter because the new
+        // `se.session?.intentRaw` chain is multi-level optional which
+        // Pitfall 1 forbids inside #Predicate. Mirrors
+        // PreviousMatchingIntent's post-Plan-07 descriptor + filter pattern.
         // SortDescriptor on optional keypaths (\.session?.startedAt) can cause
-        // type-checking failures in the Swift 6 toolchain.
+        // type-checking failures in the Swift 6 toolchain — sort in Swift.
         let descriptor = FetchDescriptor<SessionExercise>(
-            predicate: #Predicate { se in se.intentRaw == targetIntent }
+            predicate: #Predicate { se in se.exercise?.id == targetID }
         )
 
         guard let allSes = try? context.fetch(descriptor) else { return [] }
-        // Post-filter by exercise ID and sort by session startedAt descending.
+        // Swift post-filter for intent (PIVOT-05 — read from parent
+        // Session via the SessionExercise.session relation), then sort by
+        // session startedAt descending and take the 5 most-recent
+        // candidates.
         let recent = allSes
-            .filter { $0.exercise?.id == targetID }
+            .filter { $0.session?.intentRaw == targetIntent }
             .sorted { ($0.session?.startedAt ?? .distantPast) > ($1.session?.startedAt ?? .distantPast) }
             .prefix(5)
 
