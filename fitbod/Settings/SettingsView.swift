@@ -64,6 +64,7 @@ public struct SettingsView: View {
             Form {
                 if let settings = settingsList.first {
                     unitsSection(settings: settings)
+                    smartProgressionSection(settings: settings)
                     aboutSectionPlaceholder
                 } else {
                     Section {
@@ -102,6 +103,56 @@ public struct SettingsView: View {
             Text("Affects display only. Logged session history is stored in a single canonical unit and re-rendered on the fly.")
                 .font(.caption)
                 .foregroundStyle(.secondary)
+        }
+    }
+
+    // MARK: - Smart Progression section (Phase 3 — SET-03, SET-04, SET-07)
+
+    /// Builds the "Smart Progression" section with a NavigationLink to
+    /// `PlateInventoryEditor`, a default-weight-increment Stepper, and an
+    /// RPE-calibration-window Stepper. All copy is verbatim from UI-SPEC
+    /// § Settings — Smart Progression.
+    @ViewBuilder
+    private func smartProgressionSection(settings: UserSettings) -> some View {
+        @Bindable var s = settings
+        let unitLabel = s.weightUnit == .kg ? "kg" : "lb"
+
+        Section {
+            // Navigation row — disclosure chevron is automatic with NavigationLink.
+            NavigationLink {
+                PlateInventoryEditor()
+            } label: {
+                Text("Plate Inventory")                                         // UI-SPEC verbatim
+            }
+
+            // Default weight increment Stepper.
+            Stepper(value: $s.defaultIncrementKg, in: 0.25...10.0, step: 0.25) {
+                LabeledContent("Default weight increment") {                    // UI-SPEC verbatim
+                    Text("\(s.defaultIncrementKg, specifier: "%g") \(unitLabel)")
+                        .foregroundStyle(.secondary)
+                }
+            }
+
+            // RPE calibration window Stepper.
+            Stepper(value: $s.minCalibrationSets, in: 5...30, step: 1) {
+                LabeledContent("Sets before calibrating") {                     // UI-SPEC verbatim
+                    Text("\(s.minCalibrationSets) sets")
+                        .foregroundStyle(.secondary)
+                }
+            }
+        } header: {
+            Text("Smart Progression")                                           // UI-SPEC verbatim
+        } footer: {
+            // UI-SPEC verbatim footers — both displayed in a VStack since SwiftUI
+            // Section only takes a single footer view; use a VStack to stack them.
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Used when an exercise has no specific increment set. Applied by all progression strategies when rounding.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                Text("RPE autoregulation uses the Tuchscherer table until this many working sets are logged per exercise.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
         }
     }
 
