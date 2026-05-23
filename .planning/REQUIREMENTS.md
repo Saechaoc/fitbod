@@ -78,11 +78,11 @@ User explicitly wants a maximalist v1 (the app's stance is "comprehensive over s
 ### VOL — Volume & Fatigue Model
 
 - [x] **VOL-01**: Each exercise maps primary and secondary muscles via an `ExerciseMuscleStimulus` join with `weight: Double` (defaults: 1.0 primary, 0.5 secondary; hand-curated for the top ~50 lifts; user-tunable per exercise)
-- [ ] **VOL-02**: Weekly volume per muscle computed as the stimulus-weighted sum of working sets from logged sessions
+- [x] **VOL-02**: Weekly volume per muscle computed as the stimulus-weighted sum of working sets from logged sessions
 - [x] **VOL-03**: Per-muscle MEV / MAV / MRV thresholds seeded from RP-published values, user-tunable in settings
 - [x] **VOL-04**: Per-muscle volume bars display current weekly sets with MEV/MAV/MRV color zones AND verb labels ("add a set" / "hold" / "near MRV — deload soon" / "over MRV — deload")
 - [x] **VOL-05**: Front and back body silhouette heatmap shows weekly volume per muscle as color intensity; muscle regions are tappable to drill into the per-muscle detail view
-- [ ] **VOL-06**: Per-muscle frequency tracking (count of sessions per week in which the muscle met a minimum stimulus threshold)
+- [x] **VOL-06**: Per-muscle frequency tracking (count of sessions per week in which the muscle met a minimum stimulus threshold)
 - [ ] **VOL-07**: Weekly recap auto-surfaced at the week boundary: muscles hit, muscles under-trained, e1RM movement, sessions logged
 
 ### PROG — Progress Views & Charts
@@ -239,11 +239,11 @@ Mapped to phases by `gsd-roadmapper` during roadmap creation.
 | BLOCK-07 | Phase 4 | Complete |
 | BLOCK-08 | Phase 4 | Complete |
 | VOL-01 | Phase 5 | Complete |
-| VOL-02 | Phase 5 | Pending |
+| VOL-02 | Phase 5 | Complete |
 | VOL-03 | Phase 5 | Complete |
 | VOL-04 | Phase 5 | Complete |
 | VOL-05 | Phase 5 | Complete |
-| VOL-06 | Phase 5 | Pending |
+| VOL-06 | Phase 5 | Complete |
 | VOL-07 | Phase 5 | Pending |
 | PROG-01 | Phase 6 | Pending |
 | PROG-02 | Phase 6 | Pending |

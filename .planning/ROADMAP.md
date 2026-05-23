@@ -149,7 +149,7 @@ Granular, prescriptive workout sessions — every set in a session is intentiona
   4. Plateau detector flags stalled exercises (e1RM flat ±X% over N sessions, configurable per exercise or global) with a visual stall flag on the exercise card and a suggested action (drop intensity, add volume, deload, try variation)
   5. "Consider deload" alert surfaces when fatigue/performance signals spike (e1RM drop > X% over N sessions, RPE creep at same load, missed rep targets across multiple sessions) — always as an advisory the user explicitly accepts or dismisses; scheduled block deloads are never overridden
   6. MEV / MAV / MRV thresholds per muscle and plateau detection thresholds per exercise are user-tunable; weekly recap auto-surfaces at the week boundary (muscles hit, muscles under-trained, e1RM movement, sessions logged)
-**Plans:** 1/6 plans executed
+**Plans:** 2/6 plans executed
 **Research flag:** Yes — at plan-phase time, curate the stimulus-weighting table for the ~50 main compound lifts (per-muscle weights beyond the 1.0/0.5 defaults) and confirm seeded RP-published MEV/MAV/MRV values per muscle
 
 ### Phase 6: Progress Views, Export & Polish
@@ -189,7 +189,7 @@ Granular, prescriptive workout sessions — every set in a session is intentiona
 | 2. Core Loop (Routines + Sessions) | 13/13 | Complete | 2026-05-11 |
 | 3. Smart Prescription & Warm-ups | 8/8 | Complete   | 2026-05-23 |
 | 4. Periodization & Blocks | 0/8 | Not started | - |
-| 5. Fatigue Model & Plateau Detection | 1/6 | In Progress|  |
+| 5. Fatigue Model & Plateau Detection | 2/6 | In Progress|  |
 | 6. Progress Views, Export & Polish | 0/10 | Not started | - |
 
 ---
