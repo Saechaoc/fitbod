@@ -224,6 +224,13 @@ public struct RootView: View {
             let unitSystem = (try? modelContext.fetch(FetchDescriptor<UserSettings>()).first?.weightUnit) ?? .lb
             PlateInventorySeeder.seedIfNeeded(in: modelContext, unitSystem: unitSystem)
 
+            // Phase 5 — VOL-01: write the curated stimulus weights onto
+            // ExerciseMuscleStimulus rows. Runs AFTER the library
+            // importer so canonicalName lookups resolve. Row-level
+            // idempotency via userEditedWeight; safe to call on every
+            // launch (RESEARCH §6.3).
+            StimulusWeightSeeder.seedIfNeeded(in: modelContext)
+
             seedState.phase = .ready
         } catch {
             Self.log.error("Seed failed: \(error.localizedDescription)")
