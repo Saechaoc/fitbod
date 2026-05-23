@@ -31,8 +31,15 @@
 //  The toolbar carries:
 //    - Leading "Discard" (only when zero sets have been logged).
 //    - Trailing "Finish" (always present; accent foreground).
-//    - Principal (centered) — "Workout" headline + routine snapshot name
-//      subtitle in `.caption .secondary`.
+//    - Principal (centered) — three stacked lines in a `VStack(spacing: 2)`:
+//      line 1 "Workout" headline; line 2 routine snapshot name subtitle in
+//      `.caption .secondary`; line 3 `IntentChip` (accent capsule).
+//
+//  Phase 3.1 (PIVOT-04 / D-11) — the principal toolbar block gains a
+//  session-level `IntentChip` as a third stacked line. Reading from
+//  `session.intent` (snapshotted at session-start time per PIVOT-02).
+//  Read-only per 03.1-CONTEXT.md Deferred Ideas — mid-session intent
+//  change is out of scope for v1.
 //
 //  ## Rest timer integration (SESS-04)
 //
@@ -128,10 +135,11 @@ public struct SessionLoggerView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .principal) {
-                VStack {
-                    Text("Workout").font(.headline)
+                VStack(spacing: 2) {                                           // UI-SPEC Phase 3.1 explicit spacing
+                    Text("Workout").font(.headline)                            // UI-SPEC verbatim
                     Text(session.routineSnapshotName)                          // UI-SPEC verbatim subtitle
                         .font(.caption).foregroundStyle(.secondary)
+                    IntentChip(intent: session.intent)                         // NEW Phase 3.1 (PIVOT-04 / D-11)
                 }
             }
             ToolbarItem(placement: .topBarLeading) {
@@ -336,10 +344,11 @@ public struct SessionLoggerView: View {
     let session = Session()
     session.startedAt = .now.addingTimeInterval(-180)
     session.routineSnapshotName = "Push Day A"
-    // Phase 3.1 (PIVOT-05): intent + progressionKind live on Session.
-    // The se.intentRaw write that used to live here is gone (the field
-    // moved off SessionExercise in Plan 02). Set it on the parent
-    // Session so the preview exercises the real PIVOT-05 read path.
+    // Phase 3.1 (PIVOT-05): intent + progressionKind live on Session, not
+    // SessionExercise (the per-exercise fields were removed in Plan 02).
+    // Setting intentRaw on the parent Session here lets the IntentChip in
+    // the principal toolbar (Plan 06) render "Strength" against the real
+    // PIVOT-05 read path.
     session.intentRaw = Intent.strength.rawValue
     ctx.insert(session)
     let se = SessionExercise()
