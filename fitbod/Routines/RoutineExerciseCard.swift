@@ -60,7 +60,7 @@ public struct RoutineExerciseCard: View {
     }
 
     public var body: some View {
-        HStack(spacing: 0) {
+        HStack(alignment: .top, spacing: 0) {
             // UI-SPEC accent surface #9 — 4pt-wide accent rail on the
             // left edge of any card whose supersetGroupID != nil. Render
             // ONLY when grouped; the rail is meaning-bearing, not
@@ -75,21 +75,54 @@ public struct RoutineExerciseCard: View {
                     .accessibilityLabel("Part of a superset")
             }
 
-            DisclosureGroup(isExpanded: $isExpanded) {
-                PrescriptionEditorRow(draft: draft)
-            } label: {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(draft.exercise?.name ?? "Exercise")
-                        .font(.body)
-                    HStack(spacing: 8) {
-                        intentChip
-                        Text(prescriptionSummary)
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
+            VStack(alignment: .leading, spacing: 12) {
+                // Header — exercise name + intent chip + summary always
+                // pinned to the TOP of the card, full-width. Tapping the
+                // header toggles the inline prescription editor; the
+                // chevron mirrors the toggle state. We avoid
+                // `DisclosureGroup` because in an active-edit-mode List
+                // the disclosure label and body are squeezed into a
+                // narrow center column, which broke label wrapping and
+                // detached the header visually.
+                Button {
+                    withAnimation(.easeInOut(duration: 0.18)) {
+                        isExpanded.toggle()
                     }
+                } label: {
+                    HStack(alignment: .top, spacing: 8) {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(draft.exercise?.name ?? "Exercise")
+                                .font(.body)
+                                .foregroundStyle(.primary)
+                                .multilineTextAlignment(.leading)
+                            HStack(spacing: 8) {
+                                intentChip
+                                Text(prescriptionSummary)
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                                    .lineLimit(1)
+                            }
+                        }
+                        Spacer(minLength: 8)
+                        Image(systemName: "chevron.right")
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(.tertiary)
+                            .rotationEffect(.degrees(isExpanded ? 90 : 0))
+                            .accessibilityHidden(true)
+                    }
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityElement(children: .combine)
+                .accessibilityAddTraits(.isButton)
+                .accessibilityHint(isExpanded ? "Collapses prescription editor" : "Expands prescription editor")
+
+                if isExpanded {
+                    PrescriptionEditorRow(draft: draft)
+                        .transition(.opacity.combined(with: .move(edge: .top)))
                 }
             }
-            .tint(Color.accentColor)
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
         .contextMenu {
             Button("Edit Prescription") {

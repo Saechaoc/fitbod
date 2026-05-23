@@ -123,6 +123,11 @@ public struct RoutineBuilderView: View {
                                 pendingWarmupSheet = exDraft
                             }
                         )
+                        // Reclaim the full row width — active edit mode
+                        // otherwise reserves a narrow center column for
+                        // the row content, which crushed the
+                        // prescription editor into ~40% width.
+                        .listRowInsets(EdgeInsets(top: 10, leading: 16, bottom: 10, trailing: 16))
                     }
                     .onMove { source, destination in
                         draft.exercises.move(fromOffsets: source, toOffset: destination)

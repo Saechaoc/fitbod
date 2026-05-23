@@ -39,7 +39,7 @@ public struct PrescriptionEditorRow: View {
     }
 
     public var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 14) {
             intentPicker
             setsStepper
             repsRangeRow
@@ -51,16 +51,25 @@ public struct PrescriptionEditorRow: View {
             autoWarmupToggle
             perSetOverridesDisclosure
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.vertical, 8)
+    }
+
+    /// Single-line, non-shrinking label used by every row in the editor.
+    /// Keeping the label at its natural width prevents the
+    /// character-by-character wrapping that happens when an active-edit
+    /// List squeezes content into a narrow center column.
+    private func rowLabel(_ text: String) -> some View {
+        Text(text)
+            .font(.body)
+            .lineLimit(1)
+            .fixedSize(horizontal: true, vertical: false)
     }
 
     // MARK: - Intent
 
     private var intentPicker: some View {
-        HStack {
-            Text("Intent")
-                .font(.body)
-            Spacer()
+        LabeledContent {
             Picker("Intent", selection: $draft.intent) {
                 Text("Strength").tag(Intent.strength)
                 Text("Hypertrophy").tag(Intent.hypertrophy)
@@ -70,7 +79,11 @@ public struct PrescriptionEditorRow: View {
             }
             .pickerStyle(.menu)
             .labelsHidden()
+            .lineLimit(1)
+            .truncationMode(.tail)
             .accessibilityLabel("Intent")
+        } label: {
+            rowLabel("Intent")
         }
     }
 
@@ -78,11 +91,12 @@ public struct PrescriptionEditorRow: View {
 
     private var setsStepper: some View {
         Stepper(value: $draft.targetSets, in: 1...20) {
-            HStack {
-                Text("Sets")
-                Spacer()
+            LabeledContent {
                 Text("\(draft.targetSets)")
                     .foregroundStyle(.secondary)
+                    .lineLimit(1)
+            } label: {
+                rowLabel("Sets")
             }
         }
     }
@@ -90,29 +104,34 @@ public struct PrescriptionEditorRow: View {
     // MARK: - Reps range
 
     private var repsRangeRow: some View {
-        HStack(spacing: 8) {
-            Text("Reps")
-            Spacer()
-            TextField(
-                "low",
-                value: $draft.targetRepsLow,
-                format: .number
-            )
-            .frame(width: 48)
-            .keyboardType(.numberPad)
-            .multilineTextAlignment(.trailing)
+        LabeledContent {
+            HStack(spacing: 8) {
+                TextField(
+                    "low",
+                    value: $draft.targetRepsLow,
+                    format: .number
+                )
+                .frame(width: 48)
+                .keyboardType(.numberPad)
+                .multilineTextAlignment(.trailing)
+                .textFieldStyle(.roundedBorder)
 
-            Text("–")
-                .foregroundStyle(.secondary)
+                Text("–")
+                    .foregroundStyle(.secondary)
 
-            TextField(
-                "high",
-                value: $draft.targetRepsHigh,
-                format: .number
-            )
-            .frame(width: 48)
-            .keyboardType(.numberPad)
-            .multilineTextAlignment(.trailing)
+                TextField(
+                    "high",
+                    value: $draft.targetRepsHigh,
+                    format: .number
+                )
+                .frame(width: 48)
+                .keyboardType(.numberPad)
+                .multilineTextAlignment(.trailing)
+                .textFieldStyle(.roundedBorder)
+            }
+            .fixedSize(horizontal: true, vertical: false)
+        } label: {
+            rowLabel("Reps")
         }
     }
 
@@ -129,44 +148,47 @@ public struct PrescriptionEditorRow: View {
     /// need the spread. This is documented as a future follow-up,
     /// NOT a stub for plan 03-02.
     private var rpeRangeRow: some View {
-        HStack(spacing: 8) {
-            Text("Target RPE")
-            Spacer()
-            TextField(
-                "low",
-                value: Binding(
-                    get: { draft.targetRPE ?? 0 },
-                    set: { draft.targetRPE = $0 == 0 ? nil : $0 }
-                ),
-                format: .number.precision(.fractionLength(0...1))
-            )
-            .frame(width: 56)
-            .keyboardType(.decimalPad)
-            .multilineTextAlignment(.trailing)
+        LabeledContent {
+            HStack(spacing: 8) {
+                TextField(
+                    "low",
+                    value: Binding(
+                        get: { draft.targetRPE ?? 0 },
+                        set: { draft.targetRPE = $0 == 0 ? nil : $0 }
+                    ),
+                    format: .number.precision(.fractionLength(0...1))
+                )
+                .frame(width: 56)
+                .keyboardType(.decimalPad)
+                .multilineTextAlignment(.trailing)
+                .textFieldStyle(.roundedBorder)
 
-            Text("–")
-                .foregroundStyle(.secondary)
+                Text("–")
+                    .foregroundStyle(.secondary)
 
-            TextField(
-                "high",
-                value: Binding(
-                    get: { draft.targetRPE ?? 0 },
-                    set: { draft.targetRPE = $0 == 0 ? nil : $0 }
-                ),
-                format: .number.precision(.fractionLength(0...1))
-            )
-            .frame(width: 56)
-            .keyboardType(.decimalPad)
-            .multilineTextAlignment(.trailing)
+                TextField(
+                    "high",
+                    value: Binding(
+                        get: { draft.targetRPE ?? 0 },
+                        set: { draft.targetRPE = $0 == 0 ? nil : $0 }
+                    ),
+                    format: .number.precision(.fractionLength(0...1))
+                )
+                .frame(width: 56)
+                .keyboardType(.decimalPad)
+                .multilineTextAlignment(.trailing)
+                .textFieldStyle(.roundedBorder)
+            }
+            .fixedSize(horizontal: true, vertical: false)
+        } label: {
+            rowLabel("Target RPE")
         }
     }
 
     // MARK: - Progression
 
     private var progressionPicker: some View {
-        HStack {
-            Text("Progression")
-            Spacer()
+        LabeledContent {
             Picker("Progression", selection: $draft.progressionKind) {
                 Text("RPE Autoregulation").tag(ProgressionKind.rpe)
                 Text("Double Progression").tag(ProgressionKind.double)
@@ -175,7 +197,11 @@ public struct PrescriptionEditorRow: View {
             }
             .pickerStyle(.menu)
             .labelsHidden()
+            .lineLimit(1)
+            .truncationMode(.tail)
             .accessibilityLabel("Progression")
+        } label: {
+            rowLabel("Progression")
         }
     }
 
@@ -183,11 +209,12 @@ public struct PrescriptionEditorRow: View {
 
     private var restStepper: some View {
         Stepper(value: $draft.prescribedRestSeconds, in: 0...600, step: 15) {
-            HStack {
-                Text("Rest")
-                Spacer()
+            LabeledContent {
                 Text("\(draft.prescribedRestSeconds)s")
                     .foregroundStyle(.secondary)
+                    .lineLimit(1)
+            } label: {
+                rowLabel("Rest")
             }
         }
     }
@@ -197,6 +224,7 @@ public struct PrescriptionEditorRow: View {
     @ViewBuilder
     private var tempoSection: some View {
         Toggle("Track tempo", isOn: $draft.tracksTempo)
+            .lineLimit(1)
         if draft.tracksTempo {
             // The tempo string format is "ecc-bot-con-top" (e.g.
             // "3-1-1-0"). We render 4 small TextFields in a row and
@@ -204,15 +232,20 @@ public struct PrescriptionEditorRow: View {
             // simplest binding is: parse the existing string on read,
             // re-format on write. Empty/blank pieces render as empty
             // fields.
-            HStack(spacing: 8) {
+            LabeledContent {
+                HStack(spacing: 6) {
+                    tempoField(index: 0, placeholder: "Ecc")
+                    tempoField(index: 1, placeholder: "Bot")
+                    tempoField(index: 2, placeholder: "Con")
+                    tempoField(index: 3, placeholder: "Top")
+                }
+                .fixedSize(horizontal: true, vertical: false)
+            } label: {
                 Text("Tempo")
                     .font(.caption)
                     .foregroundStyle(.secondary)
-                Spacer()
-                tempoField(index: 0, placeholder: "Ecc")
-                tempoField(index: 1, placeholder: "Bot")
-                tempoField(index: 2, placeholder: "Con")
-                tempoField(index: 3, placeholder: "Top")
+                    .lineLimit(1)
+                    .fixedSize(horizontal: true, vertical: false)
             }
         }
     }
@@ -242,6 +275,7 @@ public struct PrescriptionEditorRow: View {
 
     private var partialRepsToggle: some View {
         Toggle("Track partial reps", isOn: $draft.tracksPartialReps)
+            .lineLimit(1)
     }
 
     // MARK: - Auto warm-up
@@ -287,33 +321,49 @@ public struct PrescriptionEditorRow: View {
     // MARK: - Per-set overrides
 
     private var perSetOverridesDisclosure: some View {
-        DisclosureGroup(isExpanded: $showingPerSetOverrides) {
-            VStack(spacing: 8) {
-                ForEach(draft.setOverrides) { override in
-                    PerSetOverrideRow(draft: override)
-                        .swipeActions(edge: .trailing, allowsFullSwipe: false) {
-                            Button(role: .destructive) {
-                                removeOverride(override)
-                            } label: {
-                                Label("Remove", systemImage: "trash")
-                            }
-                        }
+        VStack(alignment: .leading, spacing: 8) {
+            Button {
+                withAnimation(.easeInOut(duration: 0.18)) {
+                    showingPerSetOverrides.toggle()
                 }
-                Button {
-                    addOverride()
-                } label: {
-                    Label("Add Override", systemImage: "plus.circle")
-                        .foregroundStyle(Color.accentColor)
+            } label: {
+                HStack(spacing: 8) {
+                    rowLabel("Per-set overrides")
+                    Spacer(minLength: 8)
+                    Text(overrideSummary)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                    Image(systemName: "chevron.right")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.tertiary)
+                        .rotationEffect(.degrees(showingPerSetOverrides ? 90 : 0))
                 }
-                .buttonStyle(.plain)
+                .contentShape(Rectangle())
             }
-        } label: {
-            HStack {
-                Text("Per-set overrides")
-                Spacer()
-                Text(overrideSummary)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+            .buttonStyle(.plain)
+
+            if showingPerSetOverrides {
+                VStack(spacing: 8) {
+                    ForEach(draft.setOverrides) { override in
+                        PerSetOverrideRow(draft: override)
+                            .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                                Button(role: .destructive) {
+                                    removeOverride(override)
+                                } label: {
+                                    Label("Remove", systemImage: "trash")
+                                }
+                            }
+                    }
+                    Button {
+                        addOverride()
+                    } label: {
+                        Label("Add Override", systemImage: "plus.circle")
+                            .foregroundStyle(Color.accentColor)
+                    }
+                    .buttonStyle(.plain)
+                }
+                .transition(.opacity)
             }
         }
     }
