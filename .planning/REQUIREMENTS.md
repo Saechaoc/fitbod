@@ -71,7 +71,7 @@ User explicitly wants a maximalist v1 (the app's stance is "comprehensive over s
 - [x] **BLOCK-04**: Scheduled deload weeks auto-reduce prescribed volume (~50%) and adjust intensity per the deload phase definition
 - [x] **BLOCK-05**: Deload weeks are visually distinct (banner / calendar tint / volume targets cut on bars and heatmap)
 - [x] **BLOCK-06a**: UI scaffold for the "consider deload" advisory — `ConsiderDeloadBanner` view + `FatigueAdvisory` protocol exist and are wired into TodayView; `StubFatigueAdvisory` returns `false` so the banner never renders in Phase 4. The advisory contract returns only `FatigueSuggestion` (never `DeloadMutation`), enforcing BLOCK-08 at the type level. (Phase 4)
-- [ ] **BLOCK-06b**: Real fatigue/performance signal — e1RM-drop / RPE-creep / missed-rep detection populates a non-stub `FatigueAdvisory` implementation; banner activates above threshold (suggestion only, never auto-applies). Closes the substance half of the original BLOCK-06. (Phase 5)
+- [x] **BLOCK-06b**: Real fatigue/performance signal — e1RM-drop / RPE-creep / missed-rep detection populates a non-stub `FatigueAdvisory` implementation; banner activates above threshold (suggestion only, never auto-applies). Closes the substance half of the original BLOCK-06. (Phase 5)
 - [x] **BLOCK-07**: End-of-block produces a phase-end review (total volume, e1RM deltas, PRs hit, recommended next phase)
 - [x] **BLOCK-08**: Scheduled block deload is canonical; fatigue-triggered alerts are advisory and never override the block schedule
 
