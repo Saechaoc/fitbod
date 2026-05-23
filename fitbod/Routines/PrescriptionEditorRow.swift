@@ -2,25 +2,36 @@
 //  PrescriptionEditorRow.swift
 //  fitbod
 //
-//  Wave-3 plan 03-02 — the inline expanded prescription editor that
-//  appears under each `RoutineExerciseCard` when the user taps to
-//  expand it (`DisclosureGroup`). Renders the per-exercise prescription
-//  surface (Sets / Reps / Target RPE / Rest / Tempo / Partials / Auto
-//  warm-up / Per-set overrides).
+//  The inline expanded prescription editor that appears under each
+//  `RoutineExerciseCard` when the user taps to expand it. Renders the
+//  per-exercise prescription surface as an 8-row VStack:
 //
-//  ## Phase 3.1 PIVOT-04 / Plan 04 Rule 3 — Intent + Progression
-//  removed from this row
+//      1. Sets (stepper)
+//      2. Reps range (two TextFields with en-dash)
+//      3. Target RPE range (two TextFields with en-dash)
+//      4. Rest (stepper, "{N}s")
+//      5. Track tempo (toggle) → tempo 4-field row (when toggle on)
+//      6. Track partial reps (toggle)
+//      7. Auto warm-up (toggle, with footnote)
+//      8. Per-set overrides (disclosure)
 //
-//  In Phase 2/3 this row also rendered per-exercise `Intent` and
-//  `Progression` pickers (UI-SPEC § PrescriptionEditorRow — rows
-//  REMOVED in Phase 3.1). The two fields hoisted up to session-level
-//  on `RoutineDraft` in Phase 3.1 Plan 04; the per-exercise picker
-//  invocations + their private view declarations are gone from this
-//  file because the underlying fields no longer exist on
-//  `RoutineExerciseDraft`. Plan 05 (Wave 4, parallel with Plan 04)
-//  documents the full PrescriptionEditorRow strip; Plan 04 takes the
-//  minimum-viable removal needed to keep the production tree
-//  compiling.
+//  ## Phase 3.1 (PIVOT-04 / D-10) — Intent + Progression hoisted to the routine
+//
+//  In Phase 2/3 this row rendered a 10-row VStack that ALSO included a
+//  per-exercise Intent picker (Strength / Hypertrophy / Power /
+//  Endurance / Technique) and a per-exercise Progression picker (RPE
+//  Autoregulation / Double Progression / Block Periodized / Hybrid).
+//
+//  Phase 3.1 hoisted both fields from `RoutineExercise` (per-exercise)
+//  to `Routine` (per-routine / session-level). The user-facing pickers
+//  now live in `RoutineBuilderView`'s top Form Section as
+//  `intentHeaderRow` + `progressionHeaderRow` (Plan 04) — a single
+//  control surface for the whole routine. This editor row is now
+//  strictly the per-exercise prescription detail.
+//
+//  Per UI-SPEC § Component Inventory — Removed views: the two Phase
+//  2/3 per-exercise picker view functions are gone; the body VStack
+//  enumerates the canonical 8-row order.
 //
 //  Bound to a `@Bindable RoutineExerciseDraft`. RESEARCH §6 Pitfall 8
 //  pruning runs automatically via the `targetSets.didSet` on the draft
@@ -41,10 +52,9 @@ public struct PrescriptionEditorRow: View {
     }
 
     public var body: some View {
-        // Phase 3.1 Plan 04 — `intentPicker` + `progressionSection`
-        // invocations REMOVED. Both fields hoisted to session-level on
-        // RoutineDraft; the header pickers on RoutineBuilderView own
-        // them now (UI-SPEC § PrescriptionEditorRow — rows REMOVED).
+        // Phase 3.1 canonical 8-row editor — Intent + Progression are
+        // session-level now (RoutineBuilderView header pickers per
+        // PIVOT-04 / D-10). See file header for full rationale.
         VStack(alignment: .leading, spacing: 14) {
             setsStepper
             repsRangeRow
@@ -69,8 +79,6 @@ public struct PrescriptionEditorRow: View {
             .lineLimit(1)
             .fixedSize(horizontal: true, vertical: false)
     }
-
-    // MARK: - Intent (REMOVED in Phase 3.1 Plan 04 — see file header)
 
     // MARK: - Sets
 
@@ -169,8 +177,6 @@ public struct PrescriptionEditorRow: View {
             rowLabel("Target RPE")
         }
     }
-
-    // MARK: - Progression (REMOVED in Phase 3.1 Plan 04 — see file header)
 
     // MARK: - Rest
 
