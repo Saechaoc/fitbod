@@ -1,10 +1,11 @@
 ---
 phase: 5
 slug: fatigue-model-plateau-detection
-status: draft
+status: approved
 shadcn_initialized: false
 preset: none
 created: 2026-05-22
+reviewed_at: 2026-05-22T00:00:00Z
 ---
 
 # Phase 5 — UI Design Contract
