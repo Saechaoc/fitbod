@@ -255,9 +255,15 @@ private struct TodayView: View {
     @Query(filter: #Predicate<Block> { $0.isActive == true })
     private var activeBlocks: [Block]
 
+    @Query private var settingsList: [UserSettings]
+
     @State private var navigationPath = NavigationPath()
     @State private var pendingBlockBuilder: PendingBlockBuilder? = nil
     @State private var pendingBlockReview: Block? = nil
+
+    // Phase 5 plan 04 — deload advisory state.
+    @State private var currentAdvisory: DeloadAdvisory? = nil
+    @State private var presentingSignalSheet: Bool = false
 
     var body: some View {
         NavigationStack(path: $navigationPath) {
@@ -268,7 +274,17 @@ private struct TodayView: View {
                        phase.kind == .deload {
                         DeloadWeekBanner(currentPhaseKind: phase.kind)
                     }
-                    ConsiderDeloadBanner()
+                    // Phase 5 plan 04 — DeloadAdvisoryBanner replaces
+                    // Phase 4's ConsiderDeloadBanner stub. Renders only
+                    // when DeloadAdvisor.evaluate returns non-nil AND
+                    // not dismissed for the current week (D-17).
+                    if let advisory = currentAdvisory {
+                        DeloadAdvisoryBanner(
+                            advisory: advisory,
+                            onDismiss: { dismissAdvisory() },
+                            onTapBody: { presentingSignalSheet = true }
+                        )
+                    }
                     if let active = activeBlocks.first {
                         BlockCard(block: active)
                     } else if activeBlocks.isEmpty {
@@ -288,7 +304,10 @@ private struct TodayView: View {
                     // Phase 5 — VOL-04 + VOL-05 host. Stacks below the
                     // deload banner, BlockCard, and ResumeWorkoutBanner
                     // per UI-SPEC §Phase 4 ↔ Phase 5 boundary order.
-                    FatigueSurfaceView()
+                    // isAdvisoryActive lights the amber ring overlay
+                    // on every MuscleVolumeBar while the deload
+                    // advisory is active (plan 04 wires the source).
+                    FatigueSurfaceView(isAdvisoryActive: currentAdvisory != nil)
                     if activeBlocks.isEmpty {
                         Spacer().frame(height: 24)
                         Text("No workout in progress")                         // UI-SPEC verbatim
@@ -321,13 +340,59 @@ private struct TodayView: View {
                 BlockReviewView(block: block)
                     .presentationDetents([.large])
             }
+            // Phase 5 plan 04 — fatigue signal detail sheet.
+            .sheet(isPresented: $presentingSignalSheet) {
+                if let advisory = currentAdvisory,
+                   let settings = settingsList.first {
+                    let report = DeloadAdvisor.signalReport(
+                        weekStart: advisory.weekStart,
+                        in: ctx,
+                        settings: settings
+                    )
+                    DeloadSignalDetailSheet(report: report)
+                }
+            }
             .task {
                 pendingBlockReview = (try? BlockReviewStatistics.pendingReviewBlocks(
                     context: ctx,
                     now: Date.now
                 ))?.first
+                refreshAdvisory()
+            }
+            .onAppear {
+                refreshAdvisory()
             }
         }
+    }
+
+    // MARK: - Phase 5 deload advisory helpers
+
+    /// Recompute the deload advisory on Today-tab appearance. Reads
+    /// settings.deloadAlertEnabled as the user-facing kill switch.
+    @MainActor
+    private func refreshAdvisory() {
+        guard let settings = settingsList.first, settings.deloadAlertEnabled else {
+            currentAdvisory = nil
+            return
+        }
+        let thisMonday = Date.now.mondayAtMidnightForToday(weekStartsMonday: settings.weekStartsMonday)
+        currentAdvisory = DeloadAdvisor.evaluate(
+            weekStart: thisMonday,
+            in: ctx,
+            settings: settings
+        )
+    }
+
+    /// Persist the dismissal date and hide the banner immediately
+    /// (without waiting for the next refresh). Per D-17, the dismissal
+    /// applies only to the current calendar week — next Monday's
+    /// `refreshAdvisory` re-evaluates.
+    @MainActor
+    private func dismissAdvisory() {
+        guard let advisory = currentAdvisory, let settings = settingsList.first else { return }
+        settings.deloadAdvisoryDismissedWeekStart = advisory.weekStart
+        try? ctx.save()
+        currentAdvisory = nil
     }
 
     private enum PendingBlockBuilder: Identifiable {

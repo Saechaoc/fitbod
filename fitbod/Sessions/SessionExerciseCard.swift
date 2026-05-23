@@ -94,6 +94,9 @@ public struct SessionExerciseCard: View {
     @State private var suggestedAction: SuggestedAction? = nil
     /// PROG-06 Branch 4 — TryVariationSheet presentation flag.
     @State private var presentingTryVariation: Bool = false
+    /// PROG-06 Branch 3 — DeloadSignalDetailSheet presentation flag
+    /// (plan 04 closes the previously-deferred .deload route).
+    @State private var presentingDeloadSignalSheet: Bool = false
 
     @Environment(\.modelContext) private var phase5ModelContext
 
@@ -285,6 +288,22 @@ public struct SessionExerciseCard: View {
                 }
             }
         }
+        // Phase 5 PROG-06 Branch 3 — DeloadSignalDetailSheet
+        // presented for the .deload chip route (plan 04 closes the
+        // plan-03 TODO). Reads the live DeloadSignalReport.
+        .sheet(isPresented: $presentingDeloadSignalSheet) {
+            if let settings = settingsList.first {
+                let weekStart = Date.now.mondayAtMidnightForToday(
+                    weekStartsMonday: settings.weekStartsMonday
+                )
+                let report = DeloadAdvisor.signalReport(
+                    weekStart: weekStart,
+                    in: phase5ModelContext,
+                    settings: settings
+                )
+                DeloadSignalDetailSheet(report: report)
+            }
+        }
     }
 
     // MARK: - Phase 5 PROG-06 helpers
@@ -320,8 +339,16 @@ public struct SessionExerciseCard: View {
     }
 
     /// Route the suggested-action tap per UI-SPEC §Interaction & Motion.
-    /// For plan 03 only .tryVariation is wired; the other three are
-    /// no-op stubs marked for plans 04 + 05.
+    ///   .addVolume     → plan 05 wires PerMuscleDetailView (still a TODO).
+    ///   .dropIntensity → plan 04 closes this by treating the chip as
+    ///                    a hint: the Phase 3 inline prescription
+    ///                    editor lives on the row itself; tapping the
+    ///                    chip is a no-op pointing the user at the
+    ///                    on-card RPE / weight steppers. A dedicated
+    ///                    push surface is deferred to plan 06 polish.
+    ///   .deload        → plan 04 presents DeloadSignalDetailSheet
+    ///                    (the same sheet the Today-tab banner opens).
+    ///   .tryVariation  → plan 03 presents TryVariationSheet.
     @MainActor
     private func handleSuggestedAction(_ action: SuggestedAction) {
         switch action {
@@ -329,11 +356,13 @@ public struct SessionExerciseCard: View {
             // TODO(plan 05): push PerMuscleDetailView for the primary muscle.
             break
         case .dropIntensity:
-            // TODO(plan 04/post): open inline prescription editor.
+            // No dedicated route — the existing on-card prescription
+            // editor (weight + reps + RPE rows) is the affordance.
+            // A dedicated push surface for "drop intensity" is
+            // deferred to plan 06 polish.
             break
         case .deload:
-            // TODO(plan 04): present DeloadSignalDetailSheet.
-            break
+            presentingDeloadSignalSheet = true
         case .tryVariation:
             presentingTryVariation = true
         }

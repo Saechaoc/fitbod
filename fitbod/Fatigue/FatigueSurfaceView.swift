@@ -29,7 +29,14 @@ public struct FatigueSurfaceView: View {
     @Query private var allMuscles: [MuscleGroup]
     @Query private var allTargets: [MuscleVolumeTarget]
 
-    public init() {}
+    /// Phase 5 plan 04 — flips the per-bar amber ring overlay on when
+    /// `DeloadAdvisor.evaluate` returns non-nil. RootView passes this
+    /// from its `currentAdvisory != nil` check.
+    public var isAdvisoryActive: Bool = false
+
+    public init(isAdvisoryActive: Bool = false) {
+        self.isAdvisoryActive = isAdvisoryActive
+    }
 
     private var weekStart: Date {
         Date.now.mondayAtMidnight(weekStartsMonday: true)
@@ -93,7 +100,8 @@ public struct FatigueSurfaceView: View {
                             muscle: muscle,
                             target: target,
                             total: total,
-                            delta: delta
+                            delta: delta,
+                            isAdvisoryActive: isAdvisoryActive
                         )
                     }
                 }
