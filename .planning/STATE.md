@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-last_updated: "2026-05-23T15:55:13.526Z"
+last_updated: "2026-05-23T21:56:06.961Z"
 progress:
   total_phases: 7
   completed_phases: 5
   total_plans: 67
-  completed_plans: 52
-  percent: 78
+  completed_plans: 62
+  percent: 93
 ---
 
 # Project State: Fitbod
@@ -32,8 +32,18 @@ progress:
 
 ## Current Position
 
-Phase: 5 (fatigue-model-plateau-detection) — **COMPLETE (6/6 plans, 11/11 requirements satisfied — 2026-05-23)**
-Plan: 6 of 6 (Plan 05-06 ships Wave 5 — final Phase 5 plan — Settings "Volume Targets" entry point + MuscleVolumeTargetSeeder + WeeklyRecapTrigger + WeeklyRecapSheet auto-presented on first Monday of each new week with Sessions / Muscles Hit / Under-Trained / Progress sections. All 8 of plan-01's RED scaffolds are now GREEN; Phase 5 ships with full test coverage across all 6 waves). Phase 1-5 regression sweep all GREEN. Phase 6 (Progress Views, Export & Polish) is next per dependency graph.
+Phase: 6 (progress-views-export-polish) — **IN PROGRESS (10/11 plans complete — 2026-05-23; 06-10 backup/restore remaining)**
+Plan: 10 of 11 (Plans 06-01..06-09b complete — closes 9 of 11 Phase 6 requirements: PROG-01/02/03/04/05/07/08 + EXP-01/02. Plan 06-10 ships backup/restore EXP-03/04 — out of scope for this execution wave). Phase 1-5 regression sweep + all Phase 6 test suites GREEN (630 test invocations pass, 0 failures). Phase 6 user-visible: Progress tab now renders ProgressHomeView with Recent / Trends / Compare sections; Weekly Tonnage chart with chip filters + bar tap → WeekDetailView drill-down; ExercisePRsView 4×3 PR layout reachable; SessionComparisonView 3-column Δ diff; in-session PR banner via .safeAreaInset(edge: .top); Settings → Data section ships CSV + JSON exports via ShareLink.
+
+**Phase 6 wave 5 closure summary (2026-05-23) — 5 plans across waves 3/4/5:**
+
+- 06-09 Wave 3: ExportDocument envelope + 17 DTOs + canonicalSchemaVersion = "v6" + JSONEncoder.exportConfigured() shared encoder; byte-stable golden-file JSON snapshot test PASS (work shipped in c8072a8 stream-recovery; SUMMARY backfilled).
+- 06-06 Wave 4: WeeklyTonnageView outer/inner @Query split + BarMark chart + RuleMark "Previous best" + tap-to-drill WeekDetailView; ChartFilterState @Observable + 3 horizontal-scroll filter chip rows (time range / block phase / muscle); Block-phase row visually disabled with footer "No block data yet — define a block in Routines." until Phase 4 ships. 4 GREEN tests + 1 verbatim-copy anchor.
+- 06-07 Wave 4: InSessionPRState @Observable + InSessionPRBanner via .safeAreaInset(edge: .top) on SessionLoggerView (RESEARCH Pattern 3); SessionFactory.seedPRTable per-exercise loop (RESEARCH Pitfall 6 LOCKED v1 path); ExercisePRsView 4×3 sections with intent picker + top-3 history per bucket + e1RM suppression copy; SessionComparisonView 3-column Δ diff with U+2212 minus + Color.accentColor/secondaryLabel rules. 3 GREEN @Test + 1 verbatim-copy anchor across PRsView + ComparisonView + Banner.
+- 06-09b Wave 4: JSONExporter (one-line glue) + CSVExporter (RFC 4180 + UTF-8 BOM + 23 columns in CONTEXT D-25 verbatim order + ISO-8601 UTC dates); CSVFile + JSONFile Transferable; @ModelActor ExportService with renderCSV / renderJSON / snapshotDocument (shared SOT for 06-10 backup writer); SettingsView Data section with 2 ShareLink-backed rows ("Export as CSV" / "Export as JSON") + footer copy forward-compat for backup rows. 10 GREEN tests (8 CSV + 2 JSON) including golden CSV fixture byte-stable snapshot.
+- 06-08 Wave 5: ProgressHomeView (tab root) with 3 sections (Recent / Trends / Compare) + 2 NavigationDestination route enums (ExerciseProgressRoute / ProgressHomeRoute) consuming all 4 Wave 2 destinations; RootView replaces PlaceholderTabView(phaseNumber: 6) with ProgressTabHost; tab icon adjudicated to chart.line.uptrend.xyaxis per UI-SPEC § Asset Contract + PATTERNS #3; progressPath @State + tabSelection .progress case wired for pop-to-root on re-tap.
+
+Phase 6 remaining: Plan 06-10 (Wave 5) — `.fitbodbackup` ZIP archive + restore + BackupRoundTripTests (D-33 canary) — closes EXP-03 + EXP-04 + completes Phase 6.
 
 **Phase 5 closure summary (2026-05-23):**
 
@@ -111,7 +121,7 @@ Plan: 8 of 8 (all plans complete; Phase 3.1 closed). Production tree compiles en
 
 **Plan:** 03-01 complete (Wave 3, seq 1) — Routines tab `RoutinesListView` + folders + Resume Workout banner. See plan 03-01 SUMMARY for details.
 **Status:** Phase 5 **COMPLETE** (6 of 6 plans; 11 of 11 requirements closed — 2026-05-23). Phase 6 (Progress Views, Export & Polish) is next per dependency graph.
-**Progress:** [█████████░] 89%
+**Progress:** [██████████] 100%
 
 ### Phase Outlook
 
