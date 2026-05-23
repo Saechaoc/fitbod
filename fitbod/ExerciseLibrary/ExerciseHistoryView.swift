@@ -110,6 +110,42 @@ public struct ExerciseHistoryView: View {
                         .foregroundStyle(.secondary)
                 }
             }
+            // Phase 6 plan 06-05 (PROG-01 / CONTEXT D-02) — deep-link to
+            // per-exercise progress chart. ProgressChartToolbarButton
+            // owns its own @Query for the set count so the toolbar item
+            // hides itself when count == 0.
+            ToolbarItem(placement: .topBarTrailing) {
+                ProgressChartToolbarButton(exercise: exercise)
+            }
+        }
+    }
+}
+
+/// Toolbar chart-icon entry point to `ExerciseProgressView`. Hides
+/// itself entirely when the exercise has no logged sets (UI-SPEC §
+/// "Asset Contract — chart.line.uptrend.xyaxis").
+private struct ProgressChartToolbarButton: View {
+    let exercise: Exercise
+    @Query private var sets: [SetEntry]
+
+    init(exercise: Exercise) {
+        self.exercise = exercise
+        let targetID = exercise.id
+        _sets = Query(
+            filter: #Predicate<SetEntry> { entry in
+                entry.sessionExercise?.exercise?.id == targetID
+            }
+        )
+    }
+
+    var body: some View {
+        if !sets.isEmpty {
+            NavigationLink {
+                ExerciseProgressView(exercise: exercise)
+            } label: {
+                Image(systemName: "chart.line.uptrend.xyaxis")
+                    .accessibilityLabel("View progress chart")
+            }
         }
     }
 }

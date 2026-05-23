@@ -184,6 +184,11 @@ struct ExerciseDetailView: View {
                         Spacer()
                     }
                 }
+                // Phase 6 plan 06-05 (PROG-01 / CONTEXT D-02) — deep-link
+                // to the per-exercise progress chart. Hidden via the inner
+                // ProgressEntryRow when SetEntry count == 0 to avoid a
+                // useless empty-chart navigation.
+                ProgressEntryRow(exercise: exercise)
             }
 
             // Phase 5 — SET-06 per-exercise plateau threshold override.
@@ -453,6 +458,42 @@ struct ExerciseDetailView: View {
             Text("Global defaults: \(settings.plateauWindowSessions) sessions, \(Int((settings.plateauTolerance * 100).rounded()))% tolerance. Set in Settings.")
                 .font(.caption)
                 .foregroundStyle(.secondary)
+        }
+    }
+}
+
+// MARK: - Progress entry row (Phase 6 plan 06-05)
+
+/// Conditional "View progress" navigation row — hidden when the
+/// exercise has zero logged working SetEntries to avoid pushing
+/// the user into an empty chart. Lives inside ExerciseDetailView's
+/// History section.
+private struct ProgressEntryRow: View {
+    let exercise: Exercise
+    @Query private var sets: [SetEntry]
+
+    init(exercise: Exercise) {
+        self.exercise = exercise
+        let targetID = exercise.id
+        _sets = Query(
+            filter: #Predicate<SetEntry> { entry in
+                entry.sessionExercise?.exercise?.id == targetID
+            }
+        )
+    }
+
+    var body: some View {
+        if !sets.isEmpty {
+            NavigationLink {
+                ExerciseProgressView(exercise: exercise)
+            } label: {
+                HStack {
+                    Image(systemName: "chart.line.uptrend.xyaxis")
+                        .foregroundStyle(Color.accentColor)
+                    Text("View progress")
+                    Spacer()
+                }
+            }
         }
     }
 }
