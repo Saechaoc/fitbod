@@ -77,11 +77,11 @@ User explicitly wants a maximalist v1 (the app's stance is "comprehensive over s
 
 ### VOL — Volume & Fatigue Model
 
-- [ ] **VOL-01**: Each exercise maps primary and secondary muscles via an `ExerciseMuscleStimulus` join with `weight: Double` (defaults: 1.0 primary, 0.5 secondary; hand-curated for the top ~50 lifts; user-tunable per exercise)
+- [x] **VOL-01**: Each exercise maps primary and secondary muscles via an `ExerciseMuscleStimulus` join with `weight: Double` (defaults: 1.0 primary, 0.5 secondary; hand-curated for the top ~50 lifts; user-tunable per exercise)
 - [ ] **VOL-02**: Weekly volume per muscle computed as the stimulus-weighted sum of working sets from logged sessions
-- [ ] **VOL-03**: Per-muscle MEV / MAV / MRV thresholds seeded from RP-published values, user-tunable in settings
-- [ ] **VOL-04**: Per-muscle volume bars display current weekly sets with MEV/MAV/MRV color zones AND verb labels ("add a set" / "hold" / "near MRV — deload soon" / "over MRV — deload")
-- [ ] **VOL-05**: Front and back body silhouette heatmap shows weekly volume per muscle as color intensity; muscle regions are tappable to drill into the per-muscle detail view
+- [x] **VOL-03**: Per-muscle MEV / MAV / MRV thresholds seeded from RP-published values, user-tunable in settings
+- [x] **VOL-04**: Per-muscle volume bars display current weekly sets with MEV/MAV/MRV color zones AND verb labels ("add a set" / "hold" / "near MRV — deload soon" / "over MRV — deload")
+- [x] **VOL-05**: Front and back body silhouette heatmap shows weekly volume per muscle as color intensity; muscle regions are tappable to drill into the per-muscle detail view
 - [ ] **VOL-06**: Per-muscle frequency tracking (count of sessions per week in which the muscle met a minimum stimulus threshold)
 - [ ] **VOL-07**: Weekly recap auto-surfaced at the week boundary: muscles hit, muscles under-trained, e1RM movement, sessions logged
 
@@ -92,7 +92,7 @@ User explicitly wants a maximalist v1 (the app's stance is "comprehensive over s
 - [ ] **PROG-03**: Top-set e1RM vs all-set average e1RM displayed as separate toggleable series
 - [ ] **PROG-04**: Weekly tonnage chart (total weight × reps), sliceable by week / block phase / muscle group
 - [ ] **PROG-05**: PRs view per exercise: weight PRs, rep PRs, volume PRs, e1RM PRs (intent-matched, rep-range aware)
-- [ ] **PROG-06**: Plateau detection signal per exercise with configurable threshold (e.g. e1RM flat ±X% over N sessions); visual stall flag on the exercise card with suggested action
+- [x] **PROG-06**: Plateau detection signal per exercise with configurable threshold (e.g. e1RM flat ±X% over N sessions); visual stall flag on the exercise card with suggested action
 - [ ] **PROG-07**: Session comparison view: this week's session vs last week's same-routine session, side-by-side per-exercise diff
 - [ ] **PROG-08**: Live PR detection at set save (in-session banner: "weight PR" / "volume PR" / "e1RM PR")
 
@@ -110,7 +110,7 @@ User explicitly wants a maximalist v1 (the app's stance is "comprehensive over s
 - [x] **SET-03**: User defines plate inventory per equipment type (which plates available, microplates yes/no)
 - [x] **SET-04**: User defines smallest weight increment per equipment type (consumed by all progression rounding and warm-up ramping)
 - [ ] **SET-05**: User-tunable MEV / MAV / MRV per muscle
-- [ ] **SET-06**: User-tunable plateau detection thresholds per exercise (or global default)
+- [x] **SET-06**: User-tunable plateau detection thresholds per exercise (or global default)
 - [x] **SET-07**: User-tunable RPE-autoreg calibration window (rolling N weeks / minimum N data points)
 
 ### FOUND — Foundational Quality Bars (apply across all features)
@@ -238,11 +238,11 @@ Mapped to phases by `gsd-roadmapper` during roadmap creation.
 | BLOCK-06b | Phase 5 | Pending (real fatigue signal populates the FatigueAdvisory implementation) |
 | BLOCK-07 | Phase 4 | Complete |
 | BLOCK-08 | Phase 4 | Complete |
-| VOL-01 | Phase 5 | Pending |
+| VOL-01 | Phase 5 | Complete |
 | VOL-02 | Phase 5 | Pending |
-| VOL-03 | Phase 5 | Pending |
-| VOL-04 | Phase 5 | Pending |
-| VOL-05 | Phase 5 | Pending |
+| VOL-03 | Phase 5 | Complete |
+| VOL-04 | Phase 5 | Complete |
+| VOL-05 | Phase 5 | Complete |
 | VOL-06 | Phase 5 | Pending |
 | VOL-07 | Phase 5 | Pending |
 | PROG-01 | Phase 6 | Pending |
@@ -250,7 +250,7 @@ Mapped to phases by `gsd-roadmapper` during roadmap creation.
 | PROG-03 | Phase 6 | Pending |
 | PROG-04 | Phase 6 | Pending |
 | PROG-05 | Phase 6 | Pending |
-| PROG-06 | Phase 5 | Pending |
+| PROG-06 | Phase 5 | Complete |
 | PROG-07 | Phase 6 | Pending |
 | PROG-08 | Phase 6 | Pending |
 | EXP-01 | Phase 6 | Pending |
@@ -262,7 +262,7 @@ Mapped to phases by `gsd-roadmapper` during roadmap creation.
 | SET-03 | Phase 3 | Complete |
 | SET-04 | Phase 3 | Complete |
 | SET-05 | Phase 5 | Pending |
-| SET-06 | Phase 5 | Pending |
+| SET-06 | Phase 5 | Complete |
 | SET-07 | Phase 3 | Complete |
 | FOUND-01 | Phase 1 | Complete (plan 01-02, commit 28795c8) |
 | FOUND-02 | Phase 1 | Complete |
