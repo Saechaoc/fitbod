@@ -26,10 +26,13 @@
 //  ## Why receive both SetEntry and SessionExercise?
 //
 //  The set tells us weight/reps/RPE. The session-exercise tells us the
-//  parent session (for the routine-snapshot name) and the intent (for
-//  the inline badge). Passing both avoids the row having to traverse
-//  optional relationships at render time — the parent view's grouping
-//  logic already has both objects in hand.
+//  parent session (for the routine-snapshot name AND the intent — via
+//  session.intent, post-PIVOT-03). Passing both avoids the row having
+//  to traverse optional relationships at render time — the parent
+//  view's grouping logic already has both objects in hand. The intent
+//  badge now reads through `sessionExercise.session?.intent.rawValue`
+//  (an em-dash "—" fallback when the chain is somehow nil, matching the
+//  Phase 2 placeholder convention).
 //
 
 import SwiftUI
@@ -83,8 +86,13 @@ public struct ExerciseHistoryRow: View {
     /// The inline intent badge. UI-SPEC: capsule in `Color(.systemGray6)`
     /// fill with `.caption .semibold` label in `.label` color. NOT
     /// accent — only the selected filter chip uses accent.
+    ///
+    /// Phase 3.1 (PIVOT-05): reads the session-level intent through the
+    /// parent Session relationship. The "—" em-dash fallback covers the
+    /// rare case where `se.session` is nil (cascade-detached row);
+    /// matches the PreviousColumn placeholder convention.
     private var intentChip: some View {
-        Text(sessionExercise.intentRaw.capitalized)
+        Text(sessionExercise.session?.intent.rawValue.capitalized ?? "—")
             .font(.caption)
             .fontWeight(.semibold)
             .padding(.horizontal, 8)

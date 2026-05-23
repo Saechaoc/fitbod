@@ -129,7 +129,11 @@ public struct SetRow: View {
                     .frame(width: 32, alignment: .leading)
                 PreviousColumn(
                     exerciseID: sessionExercise.exercise?.id,
-                    intentRaw: sessionExercise.intentRaw
+                    // Phase 3.1 (PIVOT-05): intent comes from the parent
+                    // Session (the field moved off SessionExercise).
+                    // FOUND-03 default-string fallback covers a detached
+                    // session relationship — matches SwapExerciseSheet.
+                    intentRaw: sessionExercise.session?.intentRaw ?? Intent.strength.rawValue
                 )
                 .frame(width: 80, alignment: .leading)
 
@@ -284,9 +288,16 @@ public struct SetRow: View {
     let ctx = ModelContext(container)
     let ex = Exercise.previewSample(name: "Bench", equipment: .barbell, mechanic: .compound)
     ctx.insert(ex)
+    // Phase 3.1 (PIVOT-05): wire a parent Session so the SetRow's
+    // PreviousColumn read of `sessionExercise.session?.intentRaw`
+    // exercises the real session-level path (matches SwapExerciseSheet
+    // preview pattern from Plan 03).
+    let session = Session()
+    session.intentRaw = Intent.strength.rawValue
+    ctx.insert(session)
     let se = SessionExercise()
+    se.session = session
     se.exercise = ex
-    se.intentRaw = "strength"
     se.prescribedWeight = 100.0
     ctx.insert(se)
     let entry = SetEntry()

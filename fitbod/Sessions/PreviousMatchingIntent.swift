@@ -14,11 +14,21 @@
 //  subtle semantics (working-set filter, warmup exclusion, "top set"
 //  tie-breaking, intent split for ROUTINE-08).
 //
-//  Backed by Phase 1's `SessionExercise.intentRaw` #Index for O(log n)
-//  lookup. RESEARCH §6 Pitfall 1 — extract `exerciseID`/`intentRaw`
-//  to local vars before constructing the #Predicate (SwiftData
-//  related-entity ID compare returns empty results without the
-//  workaround on iOS 17/18).
+//  Phase 3.1 (PIVOT-05 / D-13): the filter source moved from
+//  SessionExercise.intentRaw (gone) to Session.intentRaw via post-fetch
+//  Swift filter. The Phase 3.1 Session.intentRaw #Index does not help
+//  here because the descriptor fetches SessionExercise rows; future
+//  optimization could pivot to fetching matching Sessions first, then
+//  flat-mapping their exercises. At single-user single-month-of-data
+//  scale the Swift post-filter cost is sub-millisecond.
+//
+//  RESEARCH §6 Pitfall 1 — the new chain `se.session?.intentRaw` is a
+//  multi-level optional chain on SessionExercise. Pitfall 1 still
+//  forbids that shape INSIDE #Predicate (the related-entity ID compare
+//  returns empty results on iOS 17/18). The fix mirrors
+//  SessionFactory.fetchHistoryPoints / lastSessionWorkingReps: drop the
+//  intent filter from #Predicate, post-filter ALL fetched results by
+//  both exerciseID AND session.intentRaw in Swift.
 //
 
 import Foundation
@@ -57,12 +67,17 @@ public enum PreviousMatchingIntent {
     /// per-intent histories per exercise`). A strength session's top
     /// working set MUST NOT seed a hypertrophy session and vice versa.
     ///
-    /// Performance: backed by Phase 1's `SessionExercise.intentRaw` #Index.
-    /// `fetchLimit = 5` caps the descriptor at five most-recent
-    /// SessionExercise rows; the first one with a committed working set
-    /// wins. Bounding the descriptor matters once a user has months of
-    /// training data — without the limit the entire matching-intent
-    /// history is materialized into memory per call.
+    /// Performance (Phase 3.1): the descriptor fetches ALL SessionExercise
+    /// rows (no #Predicate filter on intent, since `se.session?.intentRaw`
+    /// is a multi-level optional chain that triggers Pitfall 1). The
+    /// Swift post-filter step keeps only rows matching both exerciseID
+    /// AND parent-session intent, then sorts by session.startedAt and
+    /// keeps the 5 most-recent. At single-user single-month-of-data
+    /// scale (hundreds of SessionExercise rows) the unfiltered fetch +
+    /// Swift filter is sub-millisecond. Future optimization (Phase 6)
+    /// could fetch matching Sessions first via the new
+    /// `#Index<Session>([\.intentRaw])`, then flat-map to their
+    /// exercises.
     public static func fetchTopWorkingSet(
         exerciseID: UUID?,
         intentRaw: String,
@@ -70,17 +85,15 @@ public enum PreviousMatchingIntent {
     ) -> PreviousMatchingIntentHit? {
         guard let exerciseID else { return nil }
 
-        // RESEARCH §6 Pitfall 1 — extract to locals BEFORE the #Predicate.
-        //
-        // CRITICAL: do NOT combine `se.intentRaw == targetIntent` with
-        // `se.exercise?.id == targetID` in a single #Predicate. The
-        // related-entity-ID compare silently returns empty results on
-        // iOS 17/18 (verified — SessionFactory.lastSessionWorkingReps
-        // and fetchHistoryPoints use the same workaround). Predicate
-        // on intentRaw only; post-filter by exerciseID in Swift. The
-        // intentRaw filter is selective enough to keep the fetched
-        // set bounded; the post-filter handles the related-entity
-        // compare correctly.
+        // Phase 3.1 (PIVOT-05 / D-13): no #Predicate filter — both the
+        // intent gate (`session?.intentRaw`) and the exerciseID gate
+        // (`exercise?.id`) are post-filtered in Swift. The intent chain
+        // is multi-level optional which Pitfall 1 forbids inside the
+        // predicate body; the exerciseID chain is single-level optional
+        // and could in principle live inside #Predicate, but keeping
+        // both gates side-by-side in Swift mirrors
+        // SessionFactory.fetchHistoryPoints and keeps the workaround
+        // shape consistent across the three queries.
         //
         // SortDescriptor on optional keypath (\.session?.startedAt)
         // also caused type-checking failures in the Swift 6 toolchain
@@ -88,14 +101,12 @@ public enum PreviousMatchingIntent {
         let targetID = exerciseID
         let targetIntent = intentRaw
 
-        let descriptor = FetchDescriptor<SessionExercise>(
-            predicate: #Predicate { se in se.intentRaw == targetIntent }
-        )
+        let descriptor = FetchDescriptor<SessionExercise>()
 
         guard let all = try? context.fetch(descriptor) else { return nil }
 
         let recent = all
-            .filter { $0.exercise?.id == targetID }
+            .filter { $0.exercise?.id == targetID && $0.session?.intentRaw == targetIntent }
             .sorted { ($0.session?.startedAt ?? .distantPast) > ($1.session?.startedAt ?? .distantPast) }
             .prefix(5)
 

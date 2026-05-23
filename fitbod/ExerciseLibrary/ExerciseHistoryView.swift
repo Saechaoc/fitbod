@@ -43,9 +43,15 @@
 //  builder runs. See `PreviousMatchingIntent.fetchTopWorkingSet` for
 //  the same workaround used in the seed-weight query.
 //
-//  Performance — Phase 1 indexed `SessionExercise.intentRaw` makes the
-//  intent-split predicate O(log n) on the table. Without that index
-//  this view would degrade once a user has months of training data.
+//  Performance — Phase 3.1 (PIVOT-05): the intent filter source moved
+//  from SessionExercise.intentRaw to Session.intentRaw. The Phase 3.1
+//  `#Index<Session>([\.intentRaw])` does NOT accelerate this query
+//  because the predicate still fetches SessionExercise rows by
+//  exerciseID; the intent gate lives in Swift on `completedSets`.
+//  Performance: scan of N SessionExercise rows in Swift; acceptable at
+//  single-user-month-of-data scale (hundreds of SessionExercise rows
+//  → sub-millisecond filter cost). Mirrors PreviousMatchingIntent's
+//  descriptor + post-filter shape.
 //
 //  ## Why no chart?
 //
@@ -127,23 +133,33 @@ private struct FilteredHistoryList: View {
         // LOCAL vars BEFORE the #Predicate body. The SwiftData
         // related-entity-ID compare returns empty results on iOS 17/18
         // when the lookup value is passed by capture through `self`.
+        //
+        // Phase 3.1 (PIVOT-05 / D-13): the intent gate moves OUT of the
+        // #Predicate body and INTO `completedSets` below. The
+        // `se.session?.intentRaw` chain is multi-level optional and
+        // would re-trigger Pitfall 1 if used inside the predicate. Both
+        // the "All" branch and the intent-filtered branch now share the
+        // same #Predicate shape (exerciseID-only); the difference is the
+        // Swift post-filter on `completedSets`.
+        //
+        // WARNING 6 fix: `\.session?.startedAt` SortDescriptor on
+        // SessionExercise is a multi-level optional keypath. After
+        // Plan 02's schema reshape, the SourceKit type-check budget on
+        // this keypath was re-evaluated against the simpler post-Plan-02
+        // model; the SortDescriptor still compiles in Swift 6 mode
+        // (verified via xcodebuild — see SUMMARY). If a future Xcode
+        // toolchain regresses this back into Pitfall 1, fall back to:
+        //   self._sessionExercises = Query(filter: …)   // no sortBy
+        //   // then in the body's `groupedByDate` / `completedSets`:
+        //   sessionExercises.sorted { ($0.session?.startedAt ?? .distantPast)
+        //                              > ($1.session?.startedAt ?? .distantPast) }
         let targetID = exerciseID
-        if let intentValue = intent.wrappedValue {
-            let targetIntent = intentValue.rawValue
-            self._sessionExercises = Query(
-                filter: #Predicate<SessionExercise> { se in
-                    se.exercise?.id == targetID && se.intentRaw == targetIntent
-                },
-                sort: [SortDescriptor(\.session?.startedAt, order: .reverse)]
-            )
-        } else {
-            self._sessionExercises = Query(
-                filter: #Predicate<SessionExercise> { se in
-                    se.exercise?.id == targetID
-                },
-                sort: [SortDescriptor(\.session?.startedAt, order: .reverse)]
-            )
-        }
+        self._sessionExercises = Query(
+            filter: #Predicate<SessionExercise> { se in
+                se.exercise?.id == targetID
+            },
+            sort: [SortDescriptor(\.session?.startedAt, order: .reverse)]
+        )
     }
 
     var body: some View {
@@ -177,11 +193,22 @@ private struct FilteredHistoryList: View {
     /// SessionExercise rows. Warmups and planned-but-not-completed
     /// rows are excluded at this layer — same shape as
     /// `PreviousMatchingIntent.fetchTopWorkingSet`.
+    ///
+    /// Phase 3.1 (PIVOT-05 / D-13): when the chip filter is non-nil,
+    /// additionally gate on `pair.sessionExercise.session?.intentRaw`.
+    /// The intent gate lives here (Swift post-filter) rather than inside
+    /// the `@Query` #Predicate body because `se.session?.intentRaw` is a
+    /// multi-level optional chain that triggers Pitfall 1.
     private var completedSets: [(setEntry: SetEntry, sessionExercise: SessionExercise)] {
-        sessionExercises.flatMap { se in
+        let intentGate: String? = intent?.rawValue
+        return sessionExercises.flatMap { se in
             (se.sets ?? [])
                 .filter { $0.isComplete && !$0.isWarmup }
                 .map { (setEntry: $0, sessionExercise: se) }
+        }
+        .filter { pair in
+            guard let targetIntent = intentGate else { return true }
+            return pair.sessionExercise.session?.intentRaw == targetIntent
         }
     }
 
