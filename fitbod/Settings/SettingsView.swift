@@ -49,6 +49,7 @@
 
 import SwiftUI
 import SwiftData
+import UniformTypeIdentifiers
 
 /// Settings tab body — Phase 1 contract is the lb/kg toggle (SET-01).
 /// Phase 3 will add per-equipment plate inventory / smallest-increment
@@ -68,6 +69,22 @@ public struct SettingsView: View {
     @State private var jsonRendering = false
     @State private var csvError: String?
     @State private var jsonError: String?
+
+    // Wave-5 plan 06-10 — async-archive + restore state for the
+    // backup rows. Backup follows the same render-then-ShareLink
+    // pattern as CSV/JSON; restore introduces .fileImporter + two-step
+    // destructive confirmation + post-restore restart alert.
+    @State private var backupFile: FitbodBackupFile?
+    @State private var backupRendering = false
+    @State private var backupError: String?
+    @State private var showingImporter = false
+    @State private var pendingURL: URL?
+    @State private var pendingManifest: BackupManifest?
+    @State private var showingDestructiveConfirm = false
+    @State private var showingRestoreComplete = false
+    @State private var preflightError: BackupRestorer.RestoreError?
+    @State private var isRestoring = false
+    private let restorer = BackupRestorer()
 
     public init() {}
 
@@ -94,25 +111,62 @@ public struct SettingsView: View {
 
     // MARK: - Data section (Wave-4 plan 06-09b — EXP-01 + EXP-02)
 
-    /// Settings → Data section with two ShareLink-backed rows:
-    /// "Export as CSV" and "Export as JSON". Each row's async render
-    /// runs off-main via @ModelActor ExportService; the resulting
-    /// Transferable file lands in @State, and the row swaps from a
-    /// Button into a ShareLink.
+    /// Settings → Data section with four rows: CSV export + JSON export
+    /// (06-09b) + Create backup + Restore from backup (Wave-5 plan
+    /// 06-10). Backup writes a .fitbodbackup ZIP via BackupArchiver and
+    /// shares via ShareLink; Restore mounts .fileImporter + two-step
+    /// destructive confirmation + post-restore restart.
     ///
-    /// The footer copy ("Exports include every set you've logged.
-    /// Backups can be shared via Files, iCloud Drive, or AirDrop.") is
-    /// forward-compat for 06-10's "Create backup" / "Restore from backup"
-    /// rows — this plan ships ONLY the two export rows. UI-SPEC verbatim.
+    /// All alert copy in this section is UI-SPEC verbatim per 06-UI-SPEC
+    /// §Restore confirmation flow.
     @ViewBuilder
     private var dataSection: some View {
         Section {
             csvRow
             jsonRow
+            createBackupRow
+            restoreBackupRow
         } header: {
             Text("Data")
         } footer: {
             Text("Exports include every set you've logged. Backups can be shared via Files, iCloud Drive, or AirDrop.")
+        }
+        .fileImporter(
+            isPresented: $showingImporter,
+            allowedContentTypes: [.fitbodBackup],
+            allowsMultipleSelection: false,
+            onCompletion: handleFileImporterResult
+        )
+        .alert(
+            "Restore from backup?",
+            isPresented: $showingDestructiveConfirm,
+            presenting: pendingURL
+        ) { url in
+            Button("Restore", role: .destructive) {
+                Task { await runRestore(from: url) }
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: { _ in
+            Text("This will replace all current data with the backup. This cannot be undone.")
+        }
+        .alert(
+            "Restore complete",
+            isPresented: $showingRestoreComplete
+        ) {
+            Button("OK") { restorer.restart() }
+        } message: {
+            Text("Fitbod will restart to load your data.")
+        }
+        .alert(
+            preflightErrorTitle,
+            isPresented: Binding(
+                get: { preflightError != nil },
+                set: { if !$0 { preflightError = nil } }
+            )
+        ) {
+            Button("OK") { preflightError = nil }
+        } message: {
+            Text(preflightErrorMessage)
         }
     }
 
@@ -169,6 +223,165 @@ public struct SettingsView: View {
                 .foregroundStyle(Color(.systemRed))
         }
     }
+
+    // MARK: - Backup rows (Wave-5 plan 06-10)
+
+    /// Row 3 — "Create backup". Async-renders a .fitbodbackup ZIP
+    /// via BackupArchiver; once non-nil swaps to a ShareLink that
+    /// the user can route to Files / iCloud Drive / AirDrop.
+    @ViewBuilder
+    private var createBackupRow: some View {
+        if let file = backupFile {
+            ShareLink(item: file, preview: SharePreview(file.filename)) {
+                Text("Share backup")
+            }
+        } else {
+            Button {
+                Task { await renderBackup() }
+            } label: {
+                HStack {
+                    Text("Create backup")
+                    Spacer()
+                    if backupRendering {
+                        ProgressView()
+                    }
+                }
+            }
+            .disabled(backupRendering)
+        }
+        if let err = backupError {
+            Text(err)
+                .font(.caption)
+                .foregroundStyle(Color(.systemRed))
+        }
+    }
+
+    /// Row 4 — "Restore from backup" (destructive). Mounts
+    /// .fileImporter for [.fitbodBackup]; on selection runs preflight,
+    /// then presents the destructive-confirmation alert via
+    /// $showingDestructiveConfirm; on confirm runs performRestore
+    /// then the "Restore complete" alert; OK calls restart().
+    @ViewBuilder
+    private var restoreBackupRow: some View {
+        Button(role: .destructive) {
+            showingImporter = true
+        } label: {
+            HStack {
+                Text("Restore from backup")
+                    .foregroundStyle(Color(.systemRed))
+                Spacer()
+                if isRestoring {
+                    ProgressView()
+                }
+            }
+        }
+        .disabled(isRestoring)
+    }
+
+    @MainActor
+    private func renderBackup() async {
+        backupRendering = true
+        backupError = nil
+        let archiver = BackupArchiver(modelContainer: modelContext.container)
+        do {
+            let file = try await archiver.archive()
+            backupFile = file
+        } catch {
+            backupError = "Couldn't create backup. Try again."
+        }
+        backupRendering = false
+    }
+
+    /// Handler for the .fileImporter completion callback. Routes to
+    /// preflight on success; reports .fileUnreadable on .failure.
+    nonisolated private func handleFileImporterResult(_ result: Result<[URL], Error>) {
+        switch result {
+        case .success(let urls):
+            guard let url = urls.first else { return }
+            Task { @MainActor in
+                let didStart = url.startAccessingSecurityScopedResource()
+                defer { if didStart { url.stopAccessingSecurityScopedResource() } }
+                do {
+                    let m = try await restorer.preflight(url: url, context: modelContext)
+                    pendingURL = url
+                    pendingManifest = m
+                    showingDestructiveConfirm = true
+                } catch let e as BackupRestorer.RestoreError {
+                    preflightError = e
+                } catch {
+                    preflightError = .fileUnreadable
+                }
+            }
+        case .failure:
+            Task { @MainActor in
+                preflightError = .fileUnreadable
+            }
+        }
+    }
+
+    @MainActor
+    private func runRestore(from url: URL) async {
+        guard let manifest = pendingManifest else {
+            preflightError = .fileUnreadable
+            return
+        }
+        isRestoring = true
+        defer { isRestoring = false }
+        do {
+            try await restorer.performRestore(
+                url: url,
+                manifest: manifest,
+                currentContainer: modelContext.container
+            )
+            showingRestoreComplete = true
+        } catch let e as BackupRestorer.RestoreError {
+            preflightError = e
+        } catch {
+            preflightError = .fileUnreadable
+        }
+    }
+
+    // MARK: - Preflight error copy (UI-SPEC verbatim)
+    //
+    // Switch on the cached RestoreError case to produce the title +
+    // body for the alert. Strings are 1:1 with 06-UI-SPEC §Restore
+    // confirmation flow.
+
+    private var preflightErrorTitle: String {
+        switch preflightError {
+        case .fileUnreadable, .missingManifest, .missingStoreJSON, .zipParseFailed, .decodeFailed, .none:
+            return "Couldn't read backup"
+        case .checksumMismatch:
+            return "Backup is damaged"
+        case .schemaVersionMismatch:
+            return "Backup version not supported"
+        case .activeSessionInProgress:
+            return "Finish your session first"
+        case .pathTraversalDetected:
+            return "Backup contains unsafe entries"
+        case .decompressionBombExceeded:
+            return "Backup too large"
+        }
+    }
+
+    private var preflightErrorMessage: String {
+        switch preflightError {
+        case .fileUnreadable, .missingManifest, .missingStoreJSON, .zipParseFailed, .decodeFailed, .none:
+            return "Make sure the file is a `.fitbodbackup` file from Fitbod."
+        case .checksumMismatch:
+            return "This backup file's contents don't match its checksum. Try a different backup."
+        case .schemaVersionMismatch:
+            return "This backup is from a different version of Fitbod. Restore not supported."
+        case .activeSessionInProgress:
+            return "Restore replaces your data. Complete or discard your active session before restoring."
+        case .pathTraversalDetected:
+            return "This backup includes file paths that can't be safely restored."
+        case .decompressionBombExceeded:
+            return "This backup exceeds the safe restore limit."
+        }
+    }
+
+    // MARK: - CSV/JSON renderers (06-09b)
 
     @MainActor
     private func renderCSV() async {
