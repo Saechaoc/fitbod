@@ -5,7 +5,8 @@ status: approved
 shadcn_initialized: false
 preset: none
 created: 2026-05-22
-reviewed_at: 2026-05-22
+reviewed_at: 2026-05-23
+bru_overlay: 2026-05-23T00:00:00Z
 ---
 
 # Phase 6 — UI Design Contract
@@ -14,7 +15,70 @@ reviewed_at: 2026-05-22
 
 This phase delivers **the resolution at which serious lifters actually inspect their training** plus **data ownership**: a new Progress tab with per-exercise time-series charts, a PRs view, a weekly tonnage chart, a session-comparison view, an in-session live PR banner overlay on `SessionLoggerView`, CSV/JSON/`.fitbodbackup` export, and two-step destructive restore. **No new design tokens.** Every Phase 6 surface composes Phase 1/2/3 tokens verbatim.
 
-The design stance is identical to Phases 1–3: **"comprehensive but uncluttered"** — progressive disclosure when density and clutter conflict. Native iOS chrome only. Swift Charts is the sole chart framework (no DGCharts, no custom Canvas, no third-party SPM).
+The design stance is **"comprehensive but uncluttered"** — progressive disclosure when density and clutter conflict. Swift Charts remains the sole chart framework (no DGCharts, no third-party SPM). **However**, the visual chrome pivots for Phase 5+ — see the Design Pivot section directly below. The Phase 1–3 iOS-native baseline (accent `#0E7C86`, four-role Dynamic Type, 60/30/10 system materials, default `Chart` plot styling) remains the **semantic baseline** — it documents intent and is the source of truth for accessibility labels, copy strings, and component identity. Where the BRU overlay contradicts the baseline on visual treatment, the BRU overlay wins.
+
+---
+
+## Design Pivot — BRU Sketch (2026-05-23)
+
+> **Status:** sketch fidelity. Reference mockups in `bru-screens/` are the visual source of truth for layout intent and component vocabulary. Pixel-exact hex values, stroke widths, and font choices are deferred to implementation. **Token palette + type system are shared with Phase 5; the BRU overlay in `05-UI-SPEC.md` is the canonical token contract.** Phase 6 introduces no new tokens — only new surface compositions.
+
+Phase 6 visually adopts the **BRU brutalist/editorial sketch**: hard 2pt ink rules between sections, paper backgrounds, hairline list-row dividers, oversized display numerals for hero metrics, uppercase letterspaced section heads + chip labels, monospaced technical captions (dates, set chips, axis ticks), and full-bleed `Ink` / `Signal` slabs for hero metrics and alerts. The carried-forward `#0E7C86` teal accent is **superseded** by the BRU `signal` (alert orange-red) for PRs, +deltas, and all alert / recommended surfaces. The Phase-6-only `#3FBFC9` chart-secondary literal is **superseded** by `BRUSignal` (dashed stroke pattern) for the secondary chart series.
+
+### Reference mockup map
+
+| Surface | Mockup | Notes |
+|---------|--------|-------|
+| `ExerciseProgressView` (per-exercise time-series chart) | `bru-screens/progress-chart.jsx` | SVG-style chart: dashed `Hair` grid, ink polyline + 5pt square markers for primary series, **signal dashed stroke + 3.5pt circle markers for secondary series** (replaces `#3FBFC9` teal), signal `RuleMark` for current PR. Hero "248 LB" display + `+ 36 LB` signal chip + 4-segment series toggle (`e1RM` / `TOP SET` / `VOLUME` / `AVG RPE`) where active = inverted (Ink fill, Paper text). |
+| `ExercisePRsView` | `bru-screens/progress-chart.jsx` (lower section) | List rows: small uppercase kind label + display value + mono date + signal delta. Current-day PRs get a `Signal @ 0.06` row background tint. |
+| `ExerciseDetailView` history list (Phase 1+6 hybrid) | `bru-screens/exercise-detail.jsx` | Title slab with category chips + display name + mono stimulus line. **Ink hero slab** for e1RM with signal spark. 3-segment intent toggle (`ALL · 14` / `STRENGTH · 5` / `HYPER · 9`) — active inverted. History rows: display date + intent chip + PR chip + display e1RM right-aligned, mono "TOP X · N sets" sub, set chips wrapping (mono, 1pt `Hair` border per chip, top-set highlighted with signal fill + paper text). PR strip footer = 3-column ink-divided strip with one accent column. |
+| `WeeklyTonnageView` | (no Phase 6 mockup; visual cues from `bru-screens/volume.jsx`) | Apply BRU bar treatment: 1.5pt ink-bordered bars on paper-tint track, mono axis ticks, uppercase letterspaced filter-chip labels. **Filter chips render as `BruChip` outlines (selected = ink fill / paper text, unselected = outline / ink text)** — see BRU type system in 05-UI-SPEC. |
+| `SessionComparisonView` | (no Phase 6 mockup; cues from `bru-screens/exercise-detail.jsx` history rows) | Two-column "THIS WK" / "LAST WK" headers in BRU section-head style. Δ value as display numeral in signal when positive, ink when negative or zero. Mono unit suffix. |
+| `WeeklyRecapSheet` | `bru-screens/weekly-recap.jsx` | (Owned by Phase 5 spec; auto-surfaced sheet uses ink cover slab + display "A strong week." headline + 2×2 metric grid divided by 1pt `Ink` lines + records-broken star list + under-trained amber-bullet list + italic session-note quote + 2-button footer (`All recaps` ghost / `Start W4 ▸` primary).) |
+| Settings → Data section (`SettingsView` extension) | `bru-screens/settings.jsx` (lower half) | **No segmented "Export as CSV/JSON" picker — render as a 2-card grid** (each card: 2pt `Ink` outline, display `CSV` / `JSON` numeral-style label, body copy, mono sub-caption). Full-backup card is a 2pt-ink-outlined panel with split CREATE (ghost) / RESTORE (signal-fill) buttons. "Reset all data" row is rendered with `BRUSignal` foreground (label color, not row background — destructive intent is preserved). |
+| `InSessionPRBanner` | (no direct mockup; cues from `bru-screens/exercise-detail.jsx` PR strip + `weekly-recap.jsx` records list) | Full-bleed `BRUSignal` slab on top of `SessionLoggerView` (matches the plateau-banner pattern in Phase 5). Headline-uppercase `★ PR` caption + display "Weight PR · Volume PR" composite + mono "Bench Press · 248 LB" detail. Tap = dismiss. |
+
+### BRU token reuse (no new tokens introduced)
+
+Phase 6 uses the BRU palette + type system defined in **`05-UI-SPEC.md` § "BRU palette tokens"** and **§ "BRU type system"** — refer there for the canonical token table, the SwiftUI mapping, and the sketch-fidelity disclaimer on hex values. Recap:
+
+- **Palette:** `BRUInk` / `BRUPaper` / `BRUBg` / `BRUBg2` / `BRUHair` / `BRUMuted` / `BRUFaint` / `BRUSignal` / `BRUAmber` / `BRUGreen`. All Phase 6 references to `Color.accentColor` (the `#0E7C86` teal) map to one of these — primarily `BRUSignal` for PR/delta/destructive-restore highlight, `BRUInk` for primary chart series + selected chip backgrounds, `BRUMuted` for axis ticks + secondary captions.
+- **Type roles:** `Display` (hero numerals, tabular monospaced digits), `Mono` (dates, set chips, axis ticks, spec lines), `Headline (uppercase letterspaced)` (section heads, chip labels), `Body` (descriptive sentences), `Caption` (sub-captions under display metrics).
+- **Component vocabulary:** `BruDisplay`, `BruChip` (outline + fill variants), `BruSectionHead`, `BruButton` (ghost / primary / signal kinds), `BruSpark`. SwiftUI mappings are in 05-UI-SPEC § "BRU component vocabulary".
+
+### Key design replacements (Phase 6 specifics; BRU overrides baseline)
+
+1. **Chart secondary series — dashed signal stroke + circle markers, not teal.** The carried-forward Phase 6 `#3FBFC9` literal in `Progress/ProgressColors.swift` is replaced by `BRUSignal` with a dashed stroke pattern (e.g. `StrokeStyle(lineWidth: 2, dash: [6, 3])`) and 3.5pt circle markers stroked in `BRUBg` for contrast against the line. Primary series is `BRUInk` with 2pt solid stroke + 5pt square markers (`Rectangle` overlay on `PointMark`). PR `RuleMark` is `BRUSignal` with a dashed stroke (`[4, 2]`) and inline label `PR {value}` in mono uppercase.
+2. **Chart grid + axis treatment.** Y-axis grid lines are `BRUHair` dashed (`[2, 3]`); axis labels are `Mono` in `BRUMuted`. No solid Y-axis line. X-axis labels are `Mono` `W{n}` for week-indexed series, full date abbreviations for date-indexed series. Plot area background is `BRUBg` (page-tint), never `Color(.systemBackground)` chrome white.
+3. **Series toggle — 4-segment inverted-active bar, not a `Picker`.** `ExerciseProgressView` series toggle is a 4-cell `HStack` with 1pt `BRUInk` cell dividers; selected cell = `BRUInk` background + `BRUPaper` text; unselected = transparent + `BRUInk` text. Labels are `Headline (uppercase letterspaced)`: `e1RM` / `TOP SET` / `VOLUME` / `AVG RPE`. This replaces the iOS-native `Picker(.segmented)` styling.
+4. **Intent-split filter in `ExerciseDetailView` history.** Same 3-segment inverted-active bar pattern: `ALL · {n}` / `STRENGTH · {n}` / `HYPER · {n}`. Counts inline with the label.
+5. **Hero summary slabs (every progress view).** Use the BRU pattern from 05-UI-SPEC: full-bleed (or near-full-bleed) section with uppercase caption + display numeral + optional trailing signal-fill `+DELTA` chip + mono sub-caption. The `ExerciseDetailView` e1RM hero is the full-bleed `BRUInk` variant (paper text); the `ExerciseProgressView` hero is the paper variant with 2pt `BRUInk` bottom rule.
+6. **PR row format.** Each `ExercisePRsView` row is a 3-column grid: small `Headline (uppercase letterspaced)` kind label (left, ~110pt fixed) + `BruDisplay` value (center) + mono date + signal `BruDisplay` delta (right). Current-day rows get a `BRUSignal @ 0.06` (~6% opacity) row tint background and the kind label switches to `BRUSignal` foreground.
+7. **Weekly tonnage stacked bars.** When stacking is on, segments use the **BRU intent palette** — strength = `BRUInk` solid, hypertrophy = `BRUInk @ 0.40`, deload = `BRUMuted`. (Replaces the Phase 6 baseline's stacked-bar palette.) Bar outline is 1.5pt `BRUInk`. PR week gets a `BRUSignal` 2pt outline.
+8. **Settings export — 2-card grid, no segmented picker.** `bru-screens/settings.jsx` shows this concretely. Each card: 2pt `BRUInk` outline, internal padding 12pt, top line = `BruDisplay 28pt` ("CSV" / "JSON"), middle = `Headline 11pt` ("Export CSV" / "Export JSON"), bottom = `Mono 9pt muted` ("ONE ROW PER SET" / "VERSION-STAMPED"). Tap fires `ShareLink` per Phase 6 baseline.
+9. **Backup panel — outlined card with split-button footer.** `bru-screens/settings.jsx`: outer 2pt `BRUInk` panel; top section padded 12pt × 14pt with `Headline 10pt muted` ("FULL BACKUP") + `BruDisplay 22pt` ("iCloud · 2 days ago") + body `mono muted` ("42 sessions · 812 exercises · 3 blocks"); footer divided by 1pt `BRUInk` into two equal cells — left "CREATE" (ghost) + right "RESTORE" (`BRUSignal` fill, paper text). Restore button preserves the two-step destructive confirmation from the baseline.
+10. **`InSessionPRBanner` — full-bleed signal slab.** Replaces the `.systemGroupedBackground + accent 0.15 overlay` baseline. Renders `★ PR` headline-uppercase caption + display PR-type composite ("Weight PR · Volume PR") in `BRUPaper`, with mono "Bench Press · 248 LB" detail line below. Same 44pt tappable height, same `.safeAreaInset(edge: .top)` positioning, same auto-dismiss timing.
+
+### Copy overlay (chip + label rendering vs accessibility)
+
+Verbatim copy strings in the iOS-native sections below remain the **accessibility label** source. The rendered chip label uses the BRU uppercase form. Mapping examples:
+
+| Semantic label (accessibility) | BRU chip / label (rendered) |
+|------------------------------|---------------------------|
+| "Weight PR" | `★ WEIGHT PR` (chip color: `BRUSignal`, filled) |
+| "Volume PR" | `★ VOLUME PR` (chip color: `BRUSignal`, filled) |
+| "e1RM PR" | `★ e1RM PR` (chip color: `BRUSignal`, filled) |
+| "Top set" | `TOP SET` (toggle cell label, kerned 1.2) |
+| "All-set average" | `AVG RPE` (toggle cell label, kerned 1.2) |
+| "Last 8 weeks" | `LAST 8 WK` (filter chip, kerned 1.2) |
+| "Restore from backup" | `RESTORE` (button label, kerned 1.2 — same kerning as primary buttons) |
+| "Reset all data" | `RESET ALL DATA` (row label, kerned 1.0; `BRUSignal` foreground) |
+
+### What sketch fidelity means here
+
+- **In scope to lock:** Settings 2-card export grid + outlined backup panel (replaces segmented picker), chart secondary-series dashed signal + circles (replaces `#3FBFC9` teal), 4-segment inverted-active toggle pattern (replaces `Picker(.segmented)`), full-bleed `Signal` slab for `InSessionPRBanner` (replaces `systemGroupedBackground` + 15%-accent overlay), hero ink-slab pattern on `ExerciseDetailView`, current-day PR row tint, BRU palette role assignments, copy chip overlay above.
+- **Deferred to implementation:** exact hex values (use the sketch values in `05-UI-SPEC.md` § "BRU palette tokens"), display font choice (system `.semibold` is the default; a custom face can be substituted), exact stroke widths within ±0.5pt, exact letterspacing values within ±0.3, exact chart-marker sizes within ±1pt.
+- **Locked regardless of fidelity mode:** every accessibility label string in the baseline below, the Swift Charts framework choice (`LineMark` / `BarMark` / `RuleMark` / `AreaMark` / `PointMark`), `ShareLink` / `.fileImporter` integration, the two-step destructive restore flow, the AppleArchive `.fitbodbackup` container format, the CryptoKit SHA-256 manifest checksum, the iOS 18 deployment target, and every accessibility contract in the Accessibility section below.
 
 ---
 

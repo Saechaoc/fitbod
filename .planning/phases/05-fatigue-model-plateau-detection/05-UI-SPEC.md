@@ -5,7 +5,8 @@ status: approved
 shadcn_initialized: false
 preset: none
 created: 2026-05-22
-reviewed_at: 2026-05-22T00:00:00Z
+reviewed_at: 2026-05-23T00:00:00Z
+bru_overlay: 2026-05-23T00:00:00Z
 ---
 
 # Phase 5 — UI Design Contract
@@ -14,7 +15,96 @@ reviewed_at: 2026-05-22T00:00:00Z
 
 This phase delivers **decision-driving fatigue surfaces** on the Today tab: per-muscle volume bars with verb labels and a two-tone direct/indirect fill, a front/back body silhouette heatmap drillable to per-muscle detail, a plateau stall flag and suggested-action chip on `SessionExerciseCard`, a dismissible deload advisory banner that stacks above the existing `BlockCard`, a `MuscleVolumeTargetEditor` in Settings, per-exercise plateau threshold overrides in `ExerciseDetailView`, and a weekly recap sheet that auto-surfaces at the first app open of a new Monday.
 
-The design stance is identical to Phases 1, 2, 3, and 4 verbatim: **"comprehensive but uncluttered"** — progressive disclosure is the tie-breaker when density and clutter conflict; every new component stays on iOS-native chrome; no custom design system is introduced. This UI-SPEC carries forward every token from Phases 1–4 verbatim: accent `#0E7C86` / `#3FBFC9`, the 8-point spacing scale, the 4-role / 2-weight semantic typography, the 60/30/10 color split, and the terse-prescriptive copywriting voice. Anything below that does not restate a prior-phase token is a Phase 5 addition.
+The design stance is **"comprehensive but uncluttered"** — progressive disclosure remains the tie-breaker when density and clutter conflict. The terse-prescriptive copywriting voice, the 8-point spacing grid, and the underlying SwiftUI primitives all carry forward from Phases 1–4. **However**, the visual chrome pivots for Phase 5+ — see the Design Pivot section directly below. Everything in the iOS-native sections that follows (Design System table, the `#0E7C86` accent column, the four-role semantic Dynamic Type table, the 60/30/10 system-material split) is the **semantic baseline** — it documents intent and remains the source of truth for accessibility labels, copy strings, and component identity. Where the BRU overlay below contradicts the baseline on visual treatment (palette, type weights, chrome), the BRU overlay wins.
+
+---
+
+## Design Pivot — BRU Sketch (2026-05-23)
+
+> **Status:** sketch fidelity. Reference mockups in `bru-screens/` are the visual source of truth for layout intent and component vocabulary. Pixel-exact hex values, stroke widths, and font choices are deferred to implementation.
+
+Phase 5 visually adopts the **BRU brutalist/editorial sketch**: hard 2pt ink rules, paper backgrounds, hairline list dividers, oversized display numerals, uppercase letterspaced section heads, monospaced technical captions, and full-bleed signal/ink slabs for hero metrics and alerts. The carried-forward `#0E7C86` teal accent is **superseded** by the BRU `signal` (alert orange-red) for alerts/PRs/recommended-action surfaces.
+
+### Reference mockup map
+
+| Surface | Mockup | Notes |
+|---------|--------|-------|
+| `FatigueSurfaceView` volume bars | `bru-screens/volume.jsx` | Hard 1.5pt ink-bordered bars; tick marks at MEV/MAV/MRV; chip-style verb below |
+| `FatigueSurfaceView` heatmap | `bru-screens/heatmap.jsx` | **Rectangular block-anatomy on a 10×12 grid — REPLACES the organic silhouette path approach.** Front + back side-by-side. |
+| `PlateauDetectorView` (per-exercise) | `bru-screens/plateau.jsx` | Signal-red full-bleed banner; numbered suggested-action list with signal stripe on recommended |
+| `DeloadAdvisoryBanner` | (visual cues from `bru-screens/plateau.jsx` and `bru-screens/today.jsx`) | Full-bleed slab — not an iOS card |
+| `WeeklyRecapSheet` | `bru-screens/weekly-recap.jsx` (cross-listed Phase 6) | Ink cover slab + 2×2 metric grid with hard 1pt dividers + records broken list |
+
+### BRU palette tokens (sketch — hex values deferred)
+
+| Token | Role | Sketch hex (approximate, replace at impl.) | Asset Catalog destination |
+|-------|------|-------|---------------------------|
+| `Ink` | Near-black; primary fill + stroke; hero-slab background | ~`#0A0A0A` | `BRUInk.colorset` |
+| `Paper` | Off-white / warm bone; default background; text on `Ink` slabs | ~`#F5F2EA` | `BRUPaper.colorset` |
+| `Bg` | Page background (paper-tint) | ~`#FAF8F3` | `BRUBg.colorset` |
+| `Bg2` | Inactive bar track / muted slab background | ~`#EFEBE0` | `BRUBg2.colorset` |
+| `Hair` | 1pt list-row dividers (within-section) | ~`#D8D2C4` | `BRUHair.colorset` |
+| `Muted` | Mono captions, secondary labels, axis ticks | ~`#7A7367` | `BRUMuted.colorset` |
+| `Faint` | Untrained / disabled state fill | ~`#C9C2B2` | `BRUFaint.colorset` |
+| `Signal` | Alerts, PRs, recommended-action stripe, MRV tick, plateau banner | ~`#E5443D` | `BRUSignal.colorset` |
+| `Amber` | Warning chip (under MEV; under-trained bullet) | ~`#E3A12A` | `BRUAmber.colorset` |
+| `Green` | "ADD A SET" / encouragement chip; growth zone | ~`#3F8F5C` | `BRUGreen.colorset` |
+
+**Mapping rule:** BRU `Signal` replaces `AccentColor` for all Phase 5 alert/PR/recommended surfaces. BRU `Amber` replaces `VolumeNearMRVAmber` for warning-state chips. BRU `Green` is the new "productive — but you have headroom" tint that doesn't exist in the iOS-native baseline. The four `VolumeZone` assets (`VolumeBelowMEVGray`, `VolumeProductiveGreen`, `VolumeNearMRVAmber`, `VolumeOverMRVRed`) listed below in **Asset Contract** are superseded by the BRU palette: `.belowMEV` → `BRUBg2` track + `BRUFaint` fill, `.productive` → `BRUInk` fill, `.nearMRV` → `BRUSignal` fill, `.overMRV` → `BRUSignal` fill with the optional pulse, "headroom" verb chip uses `BRUGreen`.
+
+### BRU type system (sketch)
+
+| Role | SwiftUI mapping | When used |
+|------|-----------------|-----------|
+| **Display** | Custom or system `.system(size: N, design: .default)` at 22 / 28 / 38 / 48 / 60 / 68 / 72pt; semibold | Hero metrics (`85`, `248 LB`, `e1RM 248`), title slabs, weekly-recap cover number. Always tabular numerals. |
+| **Mono** | `.system(.caption, design: .monospaced)` / `.system(.footnote, design: .monospaced)` | Dates, spec lines (`−10% load · same volume`), set chips (`205×8 @9`), axis labels, MEV/MAV/MRV legend strings, set-count trailing accessories |
+| **Headline (uppercase letterspaced)** | `.system(size: 9–11, weight: .bold)` with `.kerning(1.2…1.5)` and `.textCase(.uppercase)` | Section heads (`VOLUME · W3`, `WORKING SETS · 7 DAYS`), chip labels (`STALL DETECTED`, `RECOMMENDED`, `ADD A SET`), legend cells, table-cell headers |
+| **Body** | `.body` (regular 17pt) | Plateau action description sentences; deload-banner primary line; weekly-recap quote text |
+| **Caption** | `.caption` / `.caption2` regular | Sub-labels under display metrics (`FROM 212 LB`, `STIMULUS-WEIGHTED`), week-of-N indicators, micro deltas |
+
+**Dynamic Type:** BRU display numerals are size-anchored and **do not** scale with Dynamic Type (they are data-viz elements, not text). All Headline / Body / Caption / Mono surfaces continue to scale with Dynamic Type per the baseline contract below.
+
+### BRU component vocabulary (and SwiftUI mapping)
+
+| BRU primitive | SwiftUI implementation hint | Used in Phase 5 |
+|---------------|------------------------------|-----------------|
+| `BruPhone` | (mockup-only frame; ignored in SwiftUI — root view is the screen) | — |
+| `BruHeader` | `.navigationTitle` + `.toolbar` with `ToolbarItem(.principal)` for centered text; left chevron is the default back button; right slot is a `ToolbarItem(.primaryAction)` text button | Every Phase 5 sheet/screen |
+| `BruDisplay` | `Text("…").font(.system(size: N, weight: .semibold)).monospacedDigit()` — see Display row above | Hero numerals on every surface |
+| `BruChip` (outline) | `Text("…").font(.caption2.weight(.bold)).kerning(1.0).textCase(.uppercase).padding(.horizontal, 6).padding(.vertical, 2).overlay(Rectangle().stroke(color, lineWidth: 1))` | Verb chips, intent chips, "RECOMMENDED" |
+| `BruChip` (fill) | Same as outline but `.background(color)` + foreground = paper | "STALL DETECTED", "★ PR", state alerts |
+| `BruSectionHead` | `HStack { Text("…").font(.system(size: 11, weight: .bold)).kerning(1.5).textCase(.uppercase); Spacer(); rightSlot }.padding(.vertical, 8).background(Color("BRUBg2")).overlay(Rectangle().frame(height: 2).foregroundStyle(Color("BRUInk")), alignment: .top)` | Each list section in `FatigueSurfaceView`, `WeeklyRecapSheet` |
+| `BruTabBar` | Phase 1 carries a custom `TabView` already; the BRU treatment is visual only (uppercase labels, inverted active tab via `.toolbarBackground(.visible)` + manual selected-state ink fill) | Bottom nav on full-screen surfaces |
+| `BruSpark` | SwiftUI `Canvas` or `Chart` with `LineMark` + `AreaMark` (no axes, no grid); used inline at 36–70pt height | `e1RM` mini-spark in plateau detail; per-exercise card sparklines |
+| `BruButton (ghost / primary / signal)` | `Button { … } label: { Text("…").font(.system(size: 11, weight: .bold)).kerning(1.2).textCase(.uppercase).frame(maxWidth: .infinity).padding(.vertical, 10) }`; ghost = transparent + ink text, primary = ink fill + paper text, signal = signal fill + paper text | Footer button strips on plateau + weekly recap |
+
+### Key design replacements (BRU overrides baseline)
+
+1. **`BodySilhouetteView` is implemented as a rectangular block-anatomy** (see `bru-screens/heatmap.jsx` — explicit comment: *"Avoids hand-drawn organic silhouettes — every region is a rectangle."*). Each muscle is a `RoundedRectangle(cornerRadius: 0)` (or `Path` drawing an axis-aligned rect) placed on a fixed 10-column × 12-row grid at ~14pt cell pitch. The view renders front + back **side-by-side** within a single screen (no segmented Front/Back toggle — both visible at once on standard phone widths). 1pt ink border per region; 2pt outer ink frame; 1pt hair grid lines as a background. Hit-testing is via the bounding rect of each region. The `MuscleRegionPaths.front` / `.back` registry shape (17 slugs total) is unchanged — only the geometry generator changes from bezier-traced silhouettes to axis-aligned rect coordinates. **Wave 0 + Wave 3 both render rectangles; there is no "anatomical refinement" wave.** This eliminates the Wave-3 anatomical-tracing risk entirely.
+2. **Plateau banner is a full-bleed `Signal` slab**, not an iOS card. Layout: 16pt-padded full-width banner; `▲ STALL DETECTED` headline-uppercase caption + `BruDisplay` line ("e1RM flat 4 sessions") + body description sentence. Below the banner: e1RM mini-chart (sparkline) with the stall window highlighted via a signal-tinted horizontal span.
+3. **Suggested-action list is numbered (signal-colored display numerals `01` / `02` / …)**, not a chip stack. Each row: numeral (display, signal) + label (body) + spec line (mono muted) + why-sentence (body) + `APPLY` chip trailing. Recommended action gets a 4pt signal stripe down the left edge and a `RECOMMENDED` fill chip inline.
+4. **Volume bar visual:** horizontal 16pt-tall bar with a 1.5pt ink outline, paper-tint track (`BRUBg2`), zone-colored fill, 1pt tick marks at MEV / MAV (ink) and MRV (signal) with tiny mono labels above. Below the bar: outline verb chip (`ADD A SET` / `NEAR MRV — DELOAD` / `HOLD` / `UNDER MEV` / `NOT TRAINED`) trailing-aligned with a mono `MEV X · MAV X · MRV X` legend.
+5. **Hero summary slabs** — every Phase 5 view that has a header summary uses the BRU ink-slab pattern: full-bleed `BRUInk` background, paper text, headline-uppercase caption, BruDisplay numeral, optional trailing delta chip in `BRUSignal`. Examples: `FatigueSurfaceView` ("VOLUME · W3 / WORKING SETS · 7 DAYS / 85 / VS LAST WK +12"); `BlockCard` carries forward from Phase 4 unchanged.
+
+### Copy overlay (chip rendering vs accessibility)
+
+The verbatim D-06 zone-verb strings below (`Below MEV — add volume`, etc.) remain the **accessibility label** source. The chip label rendered on-screen uses the BRU uppercase short form, mapping:
+
+| Semantic verb (D-06; `accessibilityLabel`) | BRU chip label (rendered) |
+|------------------------------------------|---------------------------|
+| `Below MEV — add volume` | `UNDER MEV` (chip color: `BRUAmber`, filled) |
+| `Productive range — hold/progress` | `HOLD` (chip color: `BRUInk`, outline) — or `ADD A SET` (chip color: `BRUGreen`, outline) when there is headroom to MAV ≥ 2 sets |
+| `Near MRV — deload soon if performance or recovery drops.` | `NEAR MRV — DELOAD` (chip color: `BRUSignal`, filled) |
+| `Over MRV — deload recommended.` | `OVER MRV` (chip color: `BRUSignal`, filled, pulses per existing Reduce-Motion gate) |
+| (no week-1 baseline) | `NOT TRAINED` (chip color: `BRUFaint`, outline; row opacity 0.5) |
+
+Same mapping for the heatmap region `accessibilityLabel` — the rendered region uses the BRU palette, the label still reads the full D-06 sentence.
+
+### What sketch fidelity means here
+
+- **In scope to lock:** layout topology (which surface lives where, what stacks above/below what), the rectangular-grid heatmap, the numbered-list plateau suggestions, hero ink-slab pattern, BRU palette role assignments, copy chip overlay above.
+- **Deferred to implementation:** exact hex values (use the sketch values above as starting points; settle final values when designing `Assets.xcassets`), display font choice (system `.semibold` is the default; a custom display face can be substituted), exact stroke widths within ±0.5pt, exact letterspacing values within ±0.3, padding within ±2pt.
+- **Locked regardless of fidelity mode:** the D-06 verbatim copy as accessibility labels, the SwiftUI primitive choices (`Chart`, `Canvas`, `Path`, `Stepper`, `TabView`), the dependency on zero third-party SPM packages, the iOS 18 deployment target, and every accessibility contract in the Accessibility section below.
 
 ---
 
@@ -173,9 +263,9 @@ The right edge of the muscle name row in `MuscleVolumeBar` shows a set-count / M
 | Element | Copy |
 |---------|------|
 | Volume bars section header | "Volume This Week" |
-| Heatmap front view label | "Front" |
-| Heatmap back view label | "Back" |
-| Section toggle (front/back) | Segmented control: "Front" / "Back" |
+| Heatmap front view label | "FRONT" (BRU mono uppercase, kerned 1.5, ~10pt — rendered above the front body block) |
+| Heatmap back view label | "BACK" (BRU mono uppercase, kerned 1.5, ~10pt — rendered above the back body block) |
+| Section toggle (front/back) | **None — both render side-by-side under the BRU overlay.** (Removed: the original iOS-native segmented Front/Back control.) |
 | Empty state heading (no sets this week) | "No sets logged this week" |
 | Empty state body | "Log a workout to see your weekly volume." |
 
@@ -394,8 +484,8 @@ These are the user-visible SwiftUI views to be built or modified in Phase 5. The
 
 | Type | Role |
 |------|------|
-| `BodySide` (`enum`) | `.front` / `.back` — the segmented control selection state; `@State` on `FatigueSurfaceView` |
-| `FatigueSurfaceState` (`@Observable`) | Holds `selectedSide: BodySide`, `isAdvisoryActive: Bool` (derived from `DeloadAdvisor.evaluate(...)`). `@State` on `FatigueSurfaceView`. Not a heavy view model — just thin ephemeral state. |
+| `BodySide` (`enum`) | **Deprecated under BRU overlay.** Front + back render side-by-side; no selection state. Retained only as a `BodySide` filter argument on `MuscleRegionPaths.regions(for: .front)` / `.regions(for: .back)` registry queries. |
+| `FatigueSurfaceState` (`@Observable`) | Holds `isAdvisoryActive: Bool` (derived from `DeloadAdvisor.evaluate(...)`). `@State` on `FatigueSurfaceView`. Not a heavy view model — just thin ephemeral state. |
 
 ---
 
@@ -531,10 +621,17 @@ When Reduce Motion is ON, the fill stays at full opacity (no pulsing); the color
 
 Each `BodySilhouetteView` muscle region `Path` is filled with a single flat zone color (no gradient within a zone — consistent with the volume bars). There is no saturation curve based on set count within a zone: the discrete 4-zone encoding is the only encoding. Partial fills would introduce a 5th visual variable (saturation) that is not represented anywhere else in the system and would conflict with the zone-color contract.
 
-### `BodySilhouetteView` wave strategy
+### `BodySilhouetteView` wave strategy (BRU rectangular block-anatomy — supersedes wave-3 anatomical refinement)
 
-- **Wave 0 (stub):** Each muscle region in `MuscleRegionPaths.front` and `MuscleRegionPaths.back` is a `Path` that draws a simple `Rectangle` at an approximate body-region position. Hit-testing works; visual fidelity is placeholder. Tests for "registry contains all 17 slugs" pass.
-- **Wave 3 (anatomical refinement):** Each `Path` is replaced with anatomically-correct bezier curves hand-traced from a public-domain body reference (Wikimedia Commons CC-0 anatomy silhouette). The `MuscleRegionPathsTests` suite requires the slug registry to contain all 17 muscles regardless of wave; it does not assert path geometry (which is manually verified per VALIDATION.md).
+Per the Design Pivot above, the body view is **rendered as a rectangular block-anatomy** on a fixed grid, not as anatomically-traced silhouettes. There is no Wave-3 bezier-tracing step.
+
+- **Wave 0 = Wave 3 (single implementation):** Each muscle region in `MuscleRegionPaths.front` and `MuscleRegionPaths.back` is a `Path` (or `RoundedRectangle(cornerRadius: 0)`) that draws an axis-aligned rectangle at a fixed grid coordinate. Grid is **10 columns × 12 rows** at ~14pt cell pitch; bounding rect coordinates are `(x: gridX × 14, y: gridY × 14, width: gridW × 14 - 1, height: gridH × 14 - 1)` so each region is separated by a 1pt ink border line. The 17-slug registry shape is preserved verbatim from the iOS-native baseline; only the geometry generator changes.
+- **Layout:** front + back render **side-by-side** within `FatigueSurfaceView` (no segmented Front/Back toggle). Each body view is ~140pt wide × 168pt tall; the two sit horizontally with ~20pt gap, centered in the section. Above each: a centered uppercase `FRONT` / `BACK` mono label (~10pt, kerned 1.5).
+- **Visual treatment:** 2pt `BRUInk` outer frame; 1pt `BRUHair` grid lines drawn via `.background` linear gradient pattern; 1pt `BRUInk` border per region; region fill is the BRU-mapped `VolumeZone` color (see Color section above). Tiny mono labels (`NECK`, `DELT`, `CHEST L`, `CHEST R`, `BICEP`, `ABS`, `FORE`, `QUAD`, `CALF` on front; `TRAPS`, `R.DELT`, `UPPER BACK`, `LAT`, `TRI`, `LOWER BACK`, `GLUTE`, `HAM`, `CALF` on back) are centered within each region in ~7pt bold letterspaced ink (or paper, when the region fill is dark enough to require contrast inversion: when zone is `.nearMRV` / `.overMRV` filled with `BRUSignal`).
+- **Hit-testing:** uses the rectangular bounding shape directly — `.contentShape(Rectangle())`. Minimum 44pt × 44pt hit area: regions narrower than 44pt (NECK, forearms) are wrapped in a `.frame(minWidth: 44, minHeight: 44).contentShape(Rectangle())` so the tap target is comfortable even though the visual is smaller. This was a constraint in the silhouette approach too and carries forward unchanged.
+- **Grid coordinates:** the executor follows the grid layout published in `bru-screens/heatmap.jsx` (lines 14–66) verbatim as the geometry registry. This is the canonical source of `MuscleRegionPaths.front` / `.back` rect coordinates.
+
+The `MuscleRegionPathsTests` suite continues to require the slug registry to contain all 17 muscles. It additionally asserts that every region in the registry has a non-empty bounding rect (`width > 0 && height > 0`); it does **not** assert exact grid coordinates (those are manually verified against `bru-screens/heatmap.jsx` per VALIDATION.md).
 
 ---
 
@@ -583,7 +680,7 @@ The Phase 1, 2, 3, and 4 accessibility contracts apply. Phase 5 adds the followi
 | `SuggestedActionChip` | `accessibilityLabel` = "Suggested: {action label}." `accessibilityHint` = "Tap to {action-specific description}." `accessibilityTraits` = `.button`. |
 | `MuscleVolumeTargetStepper` steppers | MV stepper: `accessibilityLabel` = "Maintenance volume for {muscle.displayName}". MEV stepper: "Minimum effective volume for {muscle.displayName}". MAV stepper: "Maximum adaptive volume". MRV stepper: "Maximum recoverable volume". Each has an `accessibilityValue` = "{N} sets". |
 | `WeeklyRecapSheet` | `accessibilityLabel` on the sheet root = "Weekly recap for the week of {weekStart formatted long}." Individual section content elements are normally accessible via `.list` or `.vstack` traversal. |
-| `BodySilhouetteView` (overall) | The segmented control (Front / Back) has `accessibilityLabel` = "Heatmap view: {front/back}". Switching sides: `accessibilityHint` = "Toggles between front and back muscle view." |
+| `BodySilhouetteView` (overall) | Container `accessibilityLabel` = "Muscle heatmap, front and back views side by side." Each side group (front, back) has `.accessibilityElement(children: .contain)` so VoiceOver groups its 17 regions per side. (BRU overlay removed the Front/Back segmented control; there is no toggle to label.) |
 | Pulse animation | Gated on `@Environment(\.accessibilityReduceMotion)` as specified in the Interaction & Motion section. |
 | Color (zone colors) | Every volume bar carries the verb label as text — zone information is never color-only. Every heatmap region is labeled with the zone verb in its `accessibilityLabel`. Satisfies WCAG 1.4.1 (Use of Color). |
 | Dynamic Type | Volume bar verb labels (`.caption`) wrap onto two lines at very large Dynamic Type sizes — this is acceptable per VOL-04's "reading comfort" manual verification note in VALIDATION.md. The bar track remains 16pt fixed height (a data-viz element, not text). |
