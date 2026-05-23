@@ -51,7 +51,7 @@ created: 2026-05-22
 | 05-XX-09 | Wave 0 scaffold | 0 | VOL-03 | T-05-02: user-supplied MEV/MAV/MRV must be in monotonic order + clamped to [1,30] | input validation on `MuscleVolumeTarget` editor | unit (RED) | `xcodebuild test -only-testing:fitbodTests/MuscleVolumeTargetSeederTests` | ❌ W0 | ⬜ pending |
 | 05-XX-10 | Wave 0 scaffold | 0 | VOL-07 | — | N/A | unit (RED) | `xcodebuild test -only-testing:fitbodTests/WeeklyRecapTriggerTests` | ❌ W0 | ⬜ pending |
 | 05-XX-11 | Wave 0 scaffold | 0 | VOL-05 | — | N/A | unit (RED) | `xcodebuild test -only-testing:fitbodTests/MuscleRegionPathsTests` | ❌ W0 | ⬜ pending |
-| 05-XX-12 | Wave 0 scaffold | 0 | All schema-touching reqs | — | SchemaV3→V4 lightweight migration + custom `plateauTolerance` bump preserves user-edited values | integration (in-memory ModelContainer) | `xcodebuild test -only-testing:fitbodTests/SchemaV4MigrationTests` | ❌ W0 | ⬜ pending |
+| 05-XX-12 | Wave 0 scaffold | 0 | All schema-touching reqs | — | SchemaV4→V5 lightweight migration + custom `plateauTolerance` bump preserves user-edited values | integration (in-memory ModelContainer) | `xcodebuild test -only-testing:fitbodTests/SchemaV5MigrationTests` | ❌ W0 | ⬜ pending |
 | 05-XX-13 | Wave 0 scaffold | 0 | (fixtures) | — | N/A | helper (no #expect) | n/a | ❌ W0 | ⬜ pending |
 | 05-XX-14 | Wave 0 scaffold | 0 | PROG-06 (sanity) | — | N/A | unit (already exists) | `xcodebuild test -only-testing:fitbodTests/FatigueAdvisoryCanonicalityTests` | ✅ Phase 4 | ⬜ pending |
 | 05-XX-15 | Wave 1 | 1 | VOL-02 | — | N/A | unit (RED→GREEN) | `xcodebuild test -only-testing:fitbodTests/FatigueModelWeeklyVolumeTests` | ❌ → ✅ | ⬜ pending |
@@ -90,7 +90,7 @@ created: 2026-05-22
 - [ ] `fitbodTests/Fatigue/MuscleVolumeTargetSeederTests.swift` — VOL-03: 17-row RP seeder; user-edited rows preserved (T-05-02 mitigation: MEV<MAV<MRV monotonic + clamp [1,30])
 - [ ] `fitbodTests/Fatigue/WeeklyRecapTriggerTests.swift` — VOL-07: trigger logic without UI (first-launch-new-Monday gating; zero-sessions short-circuit)
 - [ ] `fitbodTests/Fatigue/MuscleRegionPathsTests.swift` — VOL-05: `MuscleRegionPaths.front` + `.back` registries contain all 17 slugs
-- [ ] `fitbodTests/Persistence/SchemaV4MigrationTests.swift` — V3→V4 lightweight migration + custom `willMigrate` bumps default-valued `plateauTolerance` from 0.005 → 0.02 while preserving user-edited values
+- [ ] `fitbodTests/Persistence/SchemaV5MigrationTests.swift` — V4→V5 lightweight migration + custom `willMigrate` bumps default-valued `plateauTolerance` from 0.005 → 0.02 while preserving user-edited values (Phase 4 ships V4; Phase 5 stacks V5 on top)
 
 ### UI-test scaffolds (XCTest + XCUIApplication)
 
