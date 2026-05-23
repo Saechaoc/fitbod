@@ -3,47 +3,60 @@
 //  fitbod
 //
 //  Phase 5 — Today-tab host for the per-muscle volume bars (VOL-04) and
-//  (later, plan 05) the body silhouette heatmap (VOL-05). @Query-driven
+//  the body silhouette heatmap (VOL-05; Wave 4 plan 05). @Query-driven
 //  per FOUND-06 (MV-VM-lite — no parallel view model wraps the @Query
 //  per Pitfall #8 corollary).
 //
 //  FatigueModel.weeklyVolume is called inline in body — D-04 on-demand
-//  reads, NO snapshot entity. At v1 scale (~17 muscles × ~4500
-//  SetEntry rows = ~76K traversals per render) this is well under the
-//  Pitfall #6 perf ceiling. RESEARCH §10 Pitfall #2 explicitly advises
-//  against premature memoization at this scale.
+//  reads, NO snapshot entity.
 //
-//  Defaults: if the user hasn't yet seeded their MuscleVolumeTarget
-//  rows (plan 06's MuscleVolumeTargetSeeder runs there), the bars
-//  still render against RPVolumeLandmarks fallback values so the
-//  experience isn't blocked on the seeder. The plan 06 seeder
-//  overwrites these transient defaults with persistent rows.
+//  Navigation: parent passes a `Binding<NavigationPath>` so heatmap
+//  region taps + volume bar taps both append `MuscleSlugRoute.detail`
+//  onto the same Today-tab NavigationStack — single drilldown
+//  destination per VOL-05.
 //
 
 import SwiftData
 import SwiftUI
+
+/// Navigation route surfaced to the parent NavigationStack. Hashable
+/// + Sendable so SwiftUI's `.navigationDestination(for:)` resolves.
+public enum MuscleSlugRoute: Hashable, Sendable {
+    case detail(String)
+}
 
 public struct FatigueSurfaceView: View {
     @Environment(\.modelContext) private var ctx
 
     @Query private var allMuscles: [MuscleGroup]
     @Query private var allTargets: [MuscleVolumeTarget]
+    @Query private var settingsList: [UserSettings]
 
     /// Phase 5 plan 04 — flips the per-bar amber ring overlay on when
-    /// `DeloadAdvisor.evaluate` returns non-nil. RootView passes this
-    /// from its `currentAdvisory != nil` check.
+    /// `DeloadAdvisor.evaluate` returns non-nil.
     public var isAdvisoryActive: Bool = false
 
-    public init(isAdvisoryActive: Bool = false) {
+    /// Phase 5 plan 05 — parent's NavigationPath so heatmap + bar
+    /// taps push onto the same stack. Default `.constant(...)` lets
+    /// previews + lightweight call sites compile without wiring.
+    @Binding public var navigationPath: NavigationPath
+
+    @State private var selectedSide: BodySide = .front
+
+    public init(
+        isAdvisoryActive: Bool = false,
+        navigationPath: Binding<NavigationPath> = .constant(NavigationPath())
+    ) {
         self.isAdvisoryActive = isAdvisoryActive
+        self._navigationPath = navigationPath
     }
 
     private var weekStart: Date {
-        Date.now.mondayAtMidnight(weekStartsMonday: true)
+        let weekStartsMonday = settingsList.first?.weekStartsMonday ?? true
+        return Date.now.mondayAtMidnightForToday(weekStartsMonday: weekStartsMonday)
     }
 
-    /// Filter to muscles that have either non-zero weekly volume OR a
-    /// non-zero MEV target (i.e., the user expects to train them).
+    /// Muscles with non-zero weekly volume OR a non-zero MEV target.
     /// Sorted alphabetically by displayName for stable ordering.
     private var visibleMuscles: [MuscleGroup] {
         let withVolume = allMuscles.filter { muscle in
@@ -60,7 +73,7 @@ public struct FatigueSurfaceView: View {
     public var body: some View {
         VStack(alignment: .leading, spacing: 24) {
             volumeSection
-            heatmapPlaceholder
+            heatmapSection
         }
         .padding(.horizontal, 16)
     }
@@ -101,7 +114,10 @@ public struct FatigueSurfaceView: View {
                             target: target,
                             total: total,
                             delta: delta,
-                            isAdvisoryActive: isAdvisoryActive
+                            isAdvisoryActive: isAdvisoryActive,
+                            onTap: { tappedMuscle in
+                                navigationPath.append(MuscleSlugRoute.detail(tappedMuscle.slug))
+                            }
                         )
                     }
                 }
@@ -110,24 +126,65 @@ public struct FatigueSurfaceView: View {
     }
 
     @ViewBuilder
-    private var heatmapPlaceholder: some View {
-        VStack(alignment: .leading, spacing: 8) {
+    private var heatmapSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
             Text("Muscle Heatmap")
                 .font(.headline)
-            Text("Heatmap renders in plan 05")
-                .font(.caption)
-                .foregroundStyle(.tertiary)
+
+            Picker("Heatmap view", selection: $selectedSide) {
+                Text("Front").tag(BodySide.front)
+                Text("Back").tag(BodySide.back)
+            }
+            .pickerStyle(.segmented)
+            .accessibilityLabel("Heatmap view: \(selectedSide.rawValue)")
+            .accessibilityHint("Toggles between front and back muscle view.")
+
+            BodySilhouetteView(
+                side: selectedSide,
+                zoneByMuscleSlug: computeZoneByMuscleSlug(),
+                muscleDisplayNames: muscleDisplayNames(),
+                onTap: { slug in
+                    navigationPath.append(MuscleSlugRoute.detail(slug))
+                }
+            )
         }
+    }
+
+    /// Per-muscle zone classification at render time. At v1 scale
+    /// (~17 muscles × ~4500 SetEntry rows) this fits the Pitfall #6
+    /// perf ceiling without memoization (RESEARCH §10 Pitfall #2).
+    @MainActor
+    private func computeZoneByMuscleSlug() -> [String: VolumeZone] {
+        var result: [String: VolumeZone] = [:]
+        for muscle in allMuscles {
+            let target = allTargets.first { $0.muscle?.slug == muscle.slug } ?? transientTarget(for: muscle)
+            let total = FatigueModel.weeklyVolume(muscleSlug: muscle.slug, weekStart: weekStart, in: ctx)
+            let zone = FatigueModel.volumeZone(
+                currentSets: total.totalSetsRounded,
+                mev: target.mev,
+                mav: target.mav,
+                mrv: target.mrv
+            )
+            result[muscle.slug] = zone
+        }
+        return result
+    }
+
+    private func muscleDisplayNames() -> [String: String] {
+        Dictionary(uniqueKeysWithValues: allMuscles.map { ($0.slug, $0.displayName) })
     }
 
     /// Find the persisted MuscleVolumeTarget for `muscle`, or fall
     /// back to a transient (non-inserted) MuscleVolumeTarget seeded
-    /// with the RPVolumeLandmarks values. This keeps the surface
-    /// rendering before plan 06's seeder runs.
+    /// from RPVolumeLandmarks.
     private func targetFor(_ muscle: MuscleGroup) -> MuscleVolumeTarget {
         if let persisted = allTargets.first(where: { $0.muscle?.slug == muscle.slug }) {
             return persisted
         }
+        return transientTarget(for: muscle)
+    }
+
+    private func transientTarget(for muscle: MuscleGroup) -> MuscleVolumeTarget {
         let fallback = MuscleVolumeTarget()
         let landmark = RPVolumeLandmarks.landmark(for: muscle.slug)
         fallback.mv = landmark.mv
@@ -136,24 +193,5 @@ public struct FatigueSurfaceView: View {
         fallback.mrv = landmark.mrv
         fallback.muscle = muscle
         return fallback
-    }
-}
-
-// MARK: - Monday-at-midnight Date helper (RESEARCH §10 Pitfall #4)
-
-extension Date {
-    /// Returns the Monday-anchored midnight start of the current
-    /// week. Uses `Calendar.current` with `firstWeekday = 2` per
-    /// Pitfall #4 (no raw date math).
-    fileprivate func mondayAtMidnight(
-        weekStartsMonday: Bool,
-        calendar: Calendar = .current
-    ) -> Date {
-        var cal = calendar
-        if weekStartsMonday {
-            cal.firstWeekday = 2
-        }
-        let components = cal.dateComponents([.yearForWeekOfYear, .weekOfYear], from: self)
-        return cal.date(from: components) ?? self
     }
 }

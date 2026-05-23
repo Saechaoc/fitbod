@@ -307,7 +307,10 @@ private struct TodayView: View {
                     // isAdvisoryActive lights the amber ring overlay
                     // on every MuscleVolumeBar while the deload
                     // advisory is active (plan 04 wires the source).
-                    FatigueSurfaceView(isAdvisoryActive: currentAdvisory != nil)
+                    FatigueSurfaceView(
+                        isAdvisoryActive: currentAdvisory != nil,
+                        navigationPath: $navigationPath
+                    )
                     if activeBlocks.isEmpty {
                         Spacer().frame(height: 24)
                         Text("No workout in progress")                         // UI-SPEC verbatim
@@ -326,6 +329,14 @@ private struct TodayView: View {
                 switch route {
                 case .logger(let session):
                     SessionLoggerView(session: session)
+                }
+            }
+            // Phase 5 plan 05 — per-muscle drill-down from heatmap +
+            // volume-bar taps.
+            .navigationDestination(for: MuscleSlugRoute.self) { route in
+                switch route {
+                case .detail(let slug):
+                    PerMuscleDetailView(muscleSlug: slug)
                 }
             }
             .sheet(item: $pendingBlockBuilder) { pending in
