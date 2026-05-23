@@ -285,6 +285,10 @@ private struct TodayView: View {
                             try? ctx.save()
                         }
                     )
+                    // Phase 5 — VOL-04 + VOL-05 host. Stacks below the
+                    // deload banner, BlockCard, and ResumeWorkoutBanner
+                    // per UI-SPEC §Phase 4 ↔ Phase 5 boundary order.
+                    FatigueSurfaceView()
                     if activeBlocks.isEmpty {
                         Spacer().frame(height: 24)
                         Text("No workout in progress")                         // UI-SPEC verbatim
