@@ -76,6 +76,7 @@ public struct RoutineBuilderView: View {
     @State private var initialSnapshot: String = ""
     @State private var pendingSupersetAssignment: RoutineExerciseDraft? = nil
     @State private var presentingSaveFirstAlert: Bool = false
+    @State private var pendingWarmupSheet: RoutineExerciseDraft? = nil
 
     public init(draft: RoutineDraft, editing: Routine? = nil) {
         self.draft = draft
@@ -117,6 +118,9 @@ public struct RoutineBuilderView: View {
                             },
                             onRemove: { exDraft in
                                 removeExercise(exDraft)
+                            },
+                            onEditWarmup: { exDraft in
+                                pendingWarmupSheet = exDraft
                             }
                         )
                     }
@@ -197,6 +201,21 @@ public struct RoutineBuilderView: View {
             // ref needs a persisted Routine to point at.
             if let editing, let exDraft = pendingSupersetAssignment {
                 SupersetAssignmentSheet(routine: editing, exerciseDraft: exDraft)
+            }
+        }
+        .sheet(
+            isPresented: Binding(
+                get: { pendingWarmupSheet != nil },
+                set: { if !$0 { pendingWarmupSheet = nil } }
+            )
+        ) {
+            // Bind WarmupConfigSheet directly to the draft's warmupOverride.
+            // The draft is @Observable so mutations flow back to the card's
+            // PrescriptionEditorRow toggle automatically.
+            if let exDraft = pendingWarmupSheet {
+                @Bindable var bd = exDraft
+                WarmupConfigSheet(config: $bd.warmupOverride)
+                    .presentationDetents([.medium])
             }
         }
         .alert(

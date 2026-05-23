@@ -39,6 +39,7 @@ public struct RoutineExerciseCard: View {
     public let onRemoveFromSuperset: (RoutineExerciseDraft) -> Void
     public let onDuplicate: (RoutineExerciseDraft) -> Void
     public let onRemove: (RoutineExerciseDraft) -> Void
+    public let onEditWarmup: (RoutineExerciseDraft) -> Void
 
     public init(
         draft: RoutineExerciseDraft,
@@ -46,7 +47,8 @@ public struct RoutineExerciseCard: View {
         onAssignSuperset: @escaping (RoutineExerciseDraft) -> Void = { _ in },
         onRemoveFromSuperset: @escaping (RoutineExerciseDraft) -> Void = { _ in },
         onDuplicate: @escaping (RoutineExerciseDraft) -> Void = { _ in },
-        onRemove: @escaping (RoutineExerciseDraft) -> Void = { _ in }
+        onRemove: @escaping (RoutineExerciseDraft) -> Void = { _ in },
+        onEditWarmup: @escaping (RoutineExerciseDraft) -> Void = { _ in }
     ) {
         self.draft = draft
         self._isExpanded = isExpanded
@@ -54,6 +56,7 @@ public struct RoutineExerciseCard: View {
         self.onRemoveFromSuperset = onRemoveFromSuperset
         self.onDuplicate = onDuplicate
         self.onRemove = onRemove
+        self.onEditWarmup = onEditWarmup
     }
 
     public var body: some View {
@@ -91,6 +94,11 @@ public struct RoutineExerciseCard: View {
         .contextMenu {
             Button("Edit Prescription") {
                 isExpanded.toggle()
+            }
+            Button {
+                onEditWarmup(draft)
+            } label: {
+                Label("Edit warm-up…", systemImage: "flame")
             }
             if draft.supersetGroupID == nil {
                 Button("Move to Superset…") { onAssignSuperset(draft) }

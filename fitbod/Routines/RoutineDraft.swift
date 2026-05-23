@@ -154,6 +154,7 @@ public final class RoutineDraft {
             re.tracksTempo = exDraft.tracksTempo
             re.tracksPartialReps = exDraft.tracksPartialReps
             re.supersetGroupID = exDraft.supersetGroupID
+            re.warmupOverride = exDraft.warmupOverride
 
             // Three-way merge for the per-set overrides (cascade-owned).
             let existingOverrides = re.setOverrides ?? []
@@ -218,6 +219,11 @@ public final class RoutineExerciseDraft: Identifiable {
     public var supersetGroupID: UUID? = nil
     public var setOverrides: [PerSetOverrideDraft] = []
 
+    /// Per-exercise warm-up override. nil = default auto-warm-up behavior
+    /// (no override stored). Mirrors `RoutineExercise.warmupOverride` and
+    /// is round-tripped through `RoutineDraft.save(into:context:)`.
+    public var warmupOverride: WarmupConfig? = nil
+
     public init() {}
 
     /// Round-trip from an existing `RoutineExercise` row (edit mode).
@@ -243,6 +249,7 @@ public final class RoutineExerciseDraft: Identifiable {
         self.tracksTempo = re.tracksTempo
         self.tracksPartialReps = re.tracksPartialReps
         self.supersetGroupID = re.supersetGroupID
+        self.warmupOverride = re.warmupOverride
         self.setOverrides = (re.setOverrides ?? [])
             .sorted { $0.setIndex < $1.setIndex }
             .map { PerSetOverrideDraft(override: $0) }

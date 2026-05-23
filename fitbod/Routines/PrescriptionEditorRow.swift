@@ -17,8 +17,8 @@
 //    - Track tempo toggle + 4-field ecc/bot/con/top entry (rendered
 //      conditionally)
 //    - Track partial reps toggle
-//    - Auto warm-up toggle (DISABLED with "Available in Phase 3"
-//      footnote — SESS-08 / ROUTINE-08 land in Phase 3)
+//    - Auto warm-up toggle — wired to RoutineExerciseDraft.warmupOverride
+//      (plan 03-07). Toggle footer copy switches on enabled state.
 //    - Per-set overrides disclosure with "Add Override" trailing action
 //      + swipe-to-delete on individual override sub-rows
 //
@@ -126,7 +126,7 @@ public struct PrescriptionEditorRow: View {
     /// (`RoutineExercise.targetRPE`). For Phase 2 we render the range
     /// UI but bind both ends to the same field — the executor in Phase
     /// 3 will widen this to a true range when progression heuristics
-    /// need the spread. This is documented as a Phase 3 follow-up,
+    /// need the spread. This is documented as a future follow-up,
     /// NOT a stub for plan 03-02.
     private var rpeRangeRow: some View {
         HStack(spacing: 8) {
@@ -244,15 +244,43 @@ public struct PrescriptionEditorRow: View {
         Toggle("Track partial reps", isOn: $draft.tracksPartialReps)
     }
 
-    // MARK: - Auto warm-up (disabled in Phase 2)
+    // MARK: - Auto warm-up
+
+    /// Resolved enabled state: reads the override when present, otherwise
+    /// defaults to true (auto warm-up on when no override exists).
+    private var warmupEnabled: Bool {
+        draft.warmupOverride?.enabled ?? true
+    }
 
     private var autoWarmupToggle: some View {
         VStack(alignment: .leading, spacing: 4) {
-            Toggle("Auto warm-up", isOn: .constant(false))
-                .disabled(true)
-            Text("Available in Phase 3")
-                .font(.caption)
-                .foregroundStyle(.secondary)
+            Toggle(
+                "Auto warm-up",
+                isOn: Binding(
+                    get: {
+                        draft.warmupOverride?.enabled ?? true
+                    },
+                    set: { newValue in
+                        let skipNext = draft.warmupOverride?.skipNextSession ?? false
+                        if newValue && !skipNext {
+                            // Restoring to default behavior — clear the override.
+                            draft.warmupOverride = nil
+                        } else {
+                            draft.warmupOverride = WarmupConfig(
+                                enabled: newValue,
+                                skipNextSession: skipNext
+                            )
+                        }
+                    }
+                )
+            )
+            Text(
+                warmupEnabled
+                    ? "Generates a 4-set ramp (40% × 5, 60% × 3, 75% × 2, 90% × 1) based on your plate inventory."
+                    : "No warm-up sets will be generated for this exercise."
+            )
+            .font(.caption)
+            .foregroundStyle(.secondary)
         }
     }
 
