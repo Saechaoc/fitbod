@@ -46,6 +46,31 @@
 //  the cascade rules in the schema and the soft `Session.sourceRoutineID`
 //  ref that points at the Routine row.
 //
+//  ## Phase 3.1 PIVOT-04 — intent + progression are PER-ROUTINE now
+//
+//  Per UI-SPEC § Stateful types (Phase 3.1 additions), `intent: Intent`
+//  and `progressionKind: ProgressionKind` live on `RoutineDraft` (the
+//  per-routine surface), NOT on `RoutineExerciseDraft` (the per-exercise
+//  surface) as they did in Phase 2/3. The two fields are direct
+//  `@Bindable` surfaces for the new header pickers in
+//  `RoutineBuilderView` (per UI-SPEC § Component Inventory — modified
+//  views table). The save path writes `routine.intentRaw` /
+//  `routine.progressionKindRaw` onto the persisted `Routine` row; the
+//  `RoutineExerciseDraft` no longer carries either field.
+//
+//  ## Phase 3.1 — `snapshotHash()` lives HERE for testability
+//
+//  The routine-builder dirty-check helper relocated from
+//  `RoutineBuilderView` (where it was a `private func` on the view) to
+//  this file (where it's an `internal func` on the draft). The body
+//  reads only `RoutineDraft` stored properties — no view state was
+//  ever referenced — so the relocation is mechanical. Lifting the
+//  function makes Test #6 in `RoutineBuilderHeaderPickersTests`
+//  viable: `draft.snapshotHash()` is reachable from the test target
+//  via `@testable import fitbod`. The Phase 3.1 expansion includes
+//  `intent.rawValue` + `progressionKind.rawValue` in the hash so a
+//  header-picker change arms the Cancel-discard prompt.
+//
 
 import Foundation
 import SwiftData
@@ -65,11 +90,29 @@ public final class RoutineDraft {
     /// picker in the builder writes this directly.
     public var folderID: UUID? = nil
 
+    /// Soft draft ref to `Block`. The save path fetches by UUID and
+    /// materializes `Routine.block`, or nils the relationship when the
+    /// id is absent/unknown.
+    public var blockID: UUID? = nil
+
     /// Ordered list of exercise drafts. Index in this array is the
     /// canonical `orderIndex` at save time — the `.onMove` handler in
     /// `RoutineBuilderView` rewrites the indices on every reorder
     /// (RESEARCH §6 Pitfall 10).
     public var exercises: [RoutineExerciseDraft] = []
+
+    /// Phase 3.1 PIVOT-04 — session-level training intent for THIS
+    /// routine. Bound directly to the Intent header picker in
+    /// `RoutineBuilderView`. Default `.strength` per D-03 in
+    /// 03.1-CONTEXT.md. Persists onto `Routine.intentRaw` at save time.
+    public var intent: Intent = .strength
+
+    /// Phase 3.1 PIVOT-04 — session-level weight-progression strategy
+    /// for THIS routine. Bound directly to the Progression header
+    /// picker in `RoutineBuilderView`. Default `.double` per D-04 in
+    /// 03.1-CONTEXT.md. Persists onto `Routine.progressionKindRaw` at
+    /// save time.
+    public var progressionKind: ProgressionKind = .double
 
     public init() {}
 
@@ -80,6 +123,13 @@ public final class RoutineDraft {
         self.name = routine.name
         self.notes = routine.notes
         self.folderID = routine.folderID
+        self.blockID = routine.block?.id
+        // Phase 3.1 PIVOT-04 — pull session-level Intent + Progression
+        // off the persisted Routine row. The accessors are computed
+        // (`intentRaw` → `Intent`) per FOUND-03 enum-as-String at
+        // persistence, typed enum in memory.
+        self.intent = routine.intent
+        self.progressionKind = routine.progressionKind
         self.exercises = (routine.exercises ?? [])
             .sorted { $0.orderIndex < $1.orderIndex }
             .map { RoutineExerciseDraft(re: $0) }
@@ -119,7 +169,23 @@ public final class RoutineDraft {
         routine.name = name.trimmingCharacters(in: .whitespacesAndNewlines)
         routine.notes = notes
         routine.folderID = folderID
+        // Phase 3.1 PIVOT-04 — write session-level Intent + Progression
+        // to the persisted Routine row. The two raw values flow through
+        // to SessionFactory.start(routine:on:context:) (plan 03.1-03)
+        // when the user starts a session against this routine.
+        routine.intentRaw = intent.rawValue
+        routine.progressionKindRaw = progressionKind.rawValue
         routine.updatedAt = .now
+
+        if let blockID {
+            let targetID = blockID
+            let descriptor = FetchDescriptor<Block>(
+                predicate: #Predicate<Block> { $0.id == targetID }
+            )
+            routine.block = (try? context.fetch(descriptor))?.first
+        } else {
+            routine.block = nil
+        }
 
         // Remove RoutineExercise rows not represented in the draft.
         let existingExercises = routine.exercises ?? []
@@ -142,14 +208,17 @@ public final class RoutineDraft {
 
             re.exercise = exDraft.exercise
             re.orderIndex = i
-            re.intentRaw = exDraft.intent.rawValue
+            // Phase 3.1 PIVOT-04 — `re.intentRaw` and
+            // `re.progressionKindRaw` are GONE (Plan 02 removed both
+            // fields from RoutineExercise). Intent + progression are
+            // session-level now and live on the parent Routine row
+            // (written above via `routine.intentRaw = intent.rawValue`).
             re.targetSets = exDraft.targetSets
             re.targetRepsLow = exDraft.targetRepsLow
             re.targetRepsHigh = exDraft.targetRepsHigh
             re.targetRPE = exDraft.targetRPE
             re.targetRIR = nil
             re.prescribedRestSeconds = exDraft.prescribedRestSeconds
-            re.progressionKindRaw = exDraft.progressionKind.rawValue
             re.tempo = exDraft.tempo
             re.tracksTempo = exDraft.tracksTempo
             re.tracksPartialReps = exDraft.tracksPartialReps
@@ -180,6 +249,23 @@ public final class RoutineDraft {
             }
         }
     }
+
+    /// Cheap fingerprint for the routine-builder dirty-check. Captures the
+    /// load-bearing inputs that change in a normal builder session: name,
+    /// blockID, exercise count + per-exercise targetSets sum + joined ids,
+    /// AND (Phase 3.1) the two new session-level picker fields. Used by
+    /// `RoutineBuilderView.hasUnsavedChanges` to decide whether tapping
+    /// Cancel surfaces the discard-confirmation dialog.
+    ///
+    /// Internal (not private) access so the unit-test target can call
+    /// it via `@testable import fitbod`. Relocated in Phase 3.1 from
+    /// `RoutineBuilderView` (where it was `private func`) to this draft
+    /// so Test #6 in `RoutineBuilderHeaderPickersTests` is viable.
+    func snapshotHash() -> String {
+        let counts = exercises.map { $0.targetSets }.reduce(0, +)
+        let ids = exercises.map { $0.id?.uuidString ?? "new" }.joined(separator: ",")
+        return "\(name)|\(blockID?.uuidString ?? "nil")|\(exercises.count)|\(counts)|\(ids)|\(intent.rawValue)|\(progressionKind.rawValue)"
+    }
 }
 
 // MARK: - RoutineExerciseDraft
@@ -193,7 +279,8 @@ public final class RoutineExerciseDraft: Identifiable {
     public var id: UUID? = nil
     public var exercise: Exercise? = nil
     public var orderIndex: Int = 0
-    public var intent: Intent = .hypertrophy
+    // Phase 3.1 PIVOT-04 — `intent: Intent` REMOVED. The training intent
+    // is now session-level and lives on the parent `RoutineDraft.intent`.
 
     /// `didSet` enforces RESEARCH §6 Pitfall 8 — when the user shrinks
     /// targetSets, every per-set override row whose setIndex >=
@@ -212,7 +299,9 @@ public final class RoutineExerciseDraft: Identifiable {
     public var targetRepsHigh: Int = 12
     public var targetRPE: Double? = 8.0
     public var prescribedRestSeconds: Int = 120
-    public var progressionKind: ProgressionKind = .double
+    // Phase 3.1 PIVOT-04 — `progressionKind: ProgressionKind` REMOVED.
+    // The progression strategy is now session-level and lives on the
+    // parent `RoutineDraft.progressionKind`.
     public var tempo: String? = nil
     public var tracksTempo: Bool = false
     public var tracksPartialReps: Bool = false
@@ -232,7 +321,10 @@ public final class RoutineExerciseDraft: Identifiable {
         self.id = re.id
         self.exercise = re.exercise
         self.orderIndex = re.orderIndex
-        self.intent = re.intent
+        // Phase 3.1 PIVOT-04 — `self.intent = re.intent` REMOVED.
+        // RoutineExercise no longer carries intent (Plan 02); the
+        // session-level intent lives on the parent RoutineDraft, which
+        // is initialised from `routine.intent` in `RoutineDraft.init(routine:)`.
         // Set targetSets BEFORE setOverrides — the `didSet` prune runs
         // against the still-empty initial overrides, which is a no-op.
         // setOverrides is then assigned from the persisted store; those
@@ -244,7 +336,10 @@ public final class RoutineExerciseDraft: Identifiable {
         self.targetRepsHigh = re.targetRepsHigh
         self.targetRPE = re.targetRPE
         self.prescribedRestSeconds = re.prescribedRestSeconds
-        self.progressionKind = re.progressionKind
+        // Phase 3.1 PIVOT-04 — `self.progressionKind = re.progressionKind`
+        // REMOVED. RoutineExercise no longer carries progressionKind
+        // (Plan 02); the session-level progression lives on the parent
+        // RoutineDraft.
         self.tempo = re.tempo
         self.tracksTempo = re.tracksTempo
         self.tracksPartialReps = re.tracksPartialReps
