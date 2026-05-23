@@ -87,15 +87,10 @@ public enum FitbodSchemaMigrationPlan: SchemaMigrationPlan {
     /// writes those values onto V4-shape Routine / Session rows via the
     /// `SchemaV4.Routine` / `SchemaV4.Session` typealiases.
     ///
-    /// The four field-write lines are gated by `// TODO(Plan 02)` comments
-    /// because the top-level `fitbod.Routine` / `fitbod.Session` production
-    /// types don't yet declare `intentRaw` / `progressionKindRaw` at Plan
-    /// 01 commit time — Plan 02 adds those fields and uncomments these
-    /// lines as part of the same commit. The scaffolding (fetches, the
-    /// for-loops, the filter chains, the `modeRaw` helper calls computed
-    /// into `intents` / `progressions` local lets) stays UNCOMMENTED so
-    /// the parser exercises the path and so Plan 02's diff is the four
-    /// single-line uncomments.
+    /// PIVOT-03 backfill: mode-of-per-exercise-value with deterministic
+    /// tie-break. Reads via SchemaV3 nested types (V3 shape); writes via
+    /// SchemaV4 typealiased types (V4 shape). The four field-writes
+    /// landed in Plan 02 of Phase 3.1 alongside the model reshape.
     ///
     /// [CITED: developer.apple.com/documentation/swiftdata/migrationstage/custom]
     public static let migrateV3toV4 = MigrationStage.custom(
@@ -115,15 +110,12 @@ public enum FitbodSchemaMigrationPlan: SchemaMigrationPlan {
     /// directly against an in-memory ModelContext registered with both
     /// SchemaV3 nested types and SchemaV4 typealiases).
     ///
-    /// The four field-write lines are gated by `// TODO(Plan 02)` comments
-    /// because the top-level `fitbod.Routine` / `fitbod.Session` production
-    /// types don't yet declare `intentRaw` / `progressionKindRaw` at Plan
-    /// 01 commit time — Plan 02 adds those fields and uncomments these
-    /// lines as part of the same commit. The scaffolding (fetches, the
-    /// for-loops, the filter chains, the `modeRaw` helper calls computed
-    /// into `intents` / `progressions` local lets) stays UNCOMMENTED so
-    /// the parser exercises the path and so Plan 02's diff is the four
-    /// single-line uncomments.
+    /// PIVOT-03 backfill: mode-of-per-exercise-value with deterministic
+    /// tie-break. Reads via SchemaV3 nested types (V3 shape); writes via
+    /// SchemaV4 typealiased types (V4 shape). The four field-write lines
+    /// were uncommented in Plan 02 of Phase 3.1 alongside the production
+    /// model reshape that added `Routine.intentRaw` / `Routine.progressionKindRaw`
+    /// / `Session.intentRaw` / `Session.progressionKindRaw`.
     internal static func backfillSessionLevelFields(in context: ModelContext) throws {
         // Fetch V3-shape rows via the nested types — these still carry
         // the deprecated intentRaw / progressionKindRaw fields.
@@ -141,24 +133,22 @@ public enum FitbodSchemaMigrationPlan: SchemaMigrationPlan {
             let routineV3REs = v3REs.filter { $0.routine?.id == routine.id }
             let intents = routineV3REs.map { $0.intentRaw }
             let progressions = routineV3REs.map { $0.progressionKindRaw }
-            _ = intents       // silence "unused" warning until Plan 02 uncomments
-            _ = progressions  // silence "unused" warning until Plan 02 uncomments
-            // TODO(Plan 02): uncomment field writes after Routine @Model
-            // gains `intentRaw` and `progressionKindRaw`.
-            // routine.intentRaw = Self.modeRaw(of: intents, tieBreak: "strength")
-            // routine.progressionKindRaw = Self.modeRaw(of: progressions, tieBreak: "double")
+            // PIVOT-03 backfill: mode-of-per-exercise-value with deterministic
+            // tie-break. Reads via SchemaV3 nested types (V3 shape); writes
+            // via SchemaV4 typealiased types (V4 shape).
+            routine.intentRaw = Self.modeRaw(of: intents, tieBreak: "strength")
+            routine.progressionKindRaw = Self.modeRaw(of: progressions, tieBreak: "double")
         }
 
         for session in v4Sessions {
             let sessionV3SEs = v3SEs.filter { $0.session?.id == session.id }
             let sessionIntents = sessionV3SEs.map { $0.intentRaw }
             let sessionProgressions = sessionV3SEs.map { $0.progressionKindRaw }
-            _ = sessionIntents       // silence "unused" warning until Plan 02 uncomments
-            _ = sessionProgressions  // silence "unused" warning until Plan 02 uncomments
-            // TODO(Plan 02): uncomment field writes after Session @Model
-            // gains `intentRaw` and `progressionKindRaw`.
-            // session.intentRaw = Self.modeRaw(of: sessionIntents, tieBreak: "strength")
-            // session.progressionKindRaw = Self.modeRaw(of: sessionProgressions, tieBreak: "double")
+            // PIVOT-03 backfill: mode-of-per-exercise-value with deterministic
+            // tie-break. Reads via SchemaV3 nested types (V3 shape); writes
+            // via SchemaV4 typealiased types (V4 shape).
+            session.intentRaw = Self.modeRaw(of: sessionIntents, tieBreak: "strength")
+            session.progressionKindRaw = Self.modeRaw(of: sessionProgressions, tieBreak: "double")
         }
 
         try context.save()

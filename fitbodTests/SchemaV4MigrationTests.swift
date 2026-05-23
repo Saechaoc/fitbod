@@ -3,8 +3,8 @@
 //  fitbodTests
 //
 //  Canonical proof that the Phase 3.1 V3→V4 custom migration is wired
-//  correctly (plan 03.1-01). Mirrors SchemaV3MigrationTests.swift's
-//  in-memory ModelContainer + Schema(SchemaV4.models) + FitbodSchemaMigrationPlan
+//  correctly. Mirrors SchemaV3MigrationTests.swift's in-memory
+//  ModelContainer + Schema(SchemaV4.models) + FitbodSchemaMigrationPlan
 //  fixture pattern.
 //
 //  Per CONTEXT.md Specifics: the user has a freshly-seeded SchemaV3 store
@@ -17,18 +17,20 @@
 //  value across the routine's / session's child rows, with `.strength`
 //  fallback for intent ties and `.double` fallback for progressionKind
 //  ties. Tests 6 and 7 below exercise the tie-break logic directly via
-//  `FitbodSchemaMigrationPlan.modeRaw(of:tieBreak:)`; tests 8 and 9
-//  exercise it end-to-end through the full migration closure.
+//  `FitbodSchemaMigrationPlan.modeRaw(of:tieBreak:)`; tests 8 / 9 / 10
+//  exercise it end-to-end through the full file-backed migration cycle
+//  (open at V3 → write fixtures → close → reopen at V4 → SwiftData runs
+//  migrateV3toV4 automatically → assert V4-side fields).
 //
-//  Transient state: tests 8 and 9 (and test 10's two field-write
-//  assertions) EXPECT TO FAIL until Plan 02 lands the `intentRaw` /
-//  `progressionKindRaw` fields on the top-level Routine / Session @Model
-//  types AND uncomments the four field-write lines in
-//  `FitbodSchemaMigrationPlan.backfillSessionLevelFields(in:)`. This is
-//  by design — Plan 01 ships the test gate red as a forcing function,
-//  Plan 02 closes it green by reshaping the production models and
-//  uncommenting the closure body. Same precedent as Phase 3 plan 03-01's
-//  cross-plan deltas.
+//  Plan 02 of Phase 3.1 turned tests 8 / 9 / 10 green by:
+//    1. Reshaping top-level Routine / Session @Model types to add
+//       `intentRaw` + `progressionKindRaw`.
+//    2. Uncommenting the four field-write lines in
+//       `FitbodSchemaMigrationPlan.backfillSessionLevelFields(in:)`.
+//    3. Swapping the in-memory `modeRaw`-output-shape assertions for
+//       file-backed open-V3 → reopen-as-V4 migration tests that read
+//       `v4Routines.first?.intentRaw` directly after SwiftData runs the
+//       migration.
 //
 
 import Foundation
@@ -55,42 +57,45 @@ struct SchemaV4MigrationTests {
         return ModelContext(container)
     }
 
-    /// V3-only in-memory context — used by the end-to-end backfill tests
-    /// to insert V3-shape fixtures via `SchemaV3.Routine` /
-    /// `SchemaV3.RoutineExercise` (etc.) nested types.
-    ///
-    /// **Why not a dual-schema context:** the migration helper
-    /// `FitbodSchemaMigrationPlan.backfillSessionLevelFields(in:)` reads
-    /// via `SchemaV3.Routine` (nested type identity) and writes via
-    /// `SchemaV4.Routine` (typealias to top-level `fitbod.Routine`).
-    /// At Plan 01 commit time, `fitbod.Routine` does NOT carry
-    /// `intentRaw` / `progressionKindRaw` — Plan 02 adds those fields.
-    /// Furthermore, registering both `SchemaV3.Routine` (nested) AND
-    /// `fitbod.Routine` (top-level) on the same `ModelContainer` would
-    /// create two entities named "Routine" in the same store and SwiftData
-    /// rejects that. The plan's "single dual-schema container" approach is
-    /// therefore not viable until Plan 02 reshapes the top-level model
-    /// (after which the four nested SchemaV3.* identities are the *only*
-    /// V3-shape representations in scope, and the typealiased V4 side
-    /// resolves to the reshaped top-level types).
-    ///
-    /// At Plan 01 time these end-to-end tests therefore exercise the
-    /// `modeRaw` semantic contract over the inserted V3-shape rows —
-    /// which is the same compute path the migration closure uses,
-    /// minus the field-level writes (those are gated by Plan 02).
-    /// Plan 02's Task 2 uncomments the field writes AND swaps this helper
-    /// to a proper dual-schema container OR a file-backed open-V3 →
-    /// reopen-as-V4 migration test, replacing the `modeRaw` assertions
-    /// with V4-side `fetch + read intentRaw` assertions.
-    private func makeV3InMemoryContext() throws -> ModelContext {
+    /// Fresh per-test temp-directory URL for a file-backed SwiftData store.
+    /// Plan 01's in-memory dual-schema container approach wasn't viable
+    /// (one process can't register both `SchemaV3.Routine` nested and
+    /// `fitbod.Routine` top-level under the same entity name). The
+    /// file-backed pattern works because each open uses ONE schema —
+    /// SwiftData sees a V3-shape store, then on reopen sees a V4-schema
+    /// request, walks the migration chain, and rewrites the on-disk file.
+    private func makeTempStoreURL() -> URL {
+        let dir = URL(fileURLWithPath: NSTemporaryDirectory(), isDirectory: true)
+            .appendingPathComponent("fitbod-schema-v4-tests-\(UUID().uuidString)", isDirectory: true)
+        try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        return dir.appendingPathComponent("store.sqlite")
+    }
+
+    /// Build a V3-only file-backed container at the given URL. Caller
+    /// writes V3-shape fixtures, then releases the container so SwiftData
+    /// flushes to disk.
+    private func makeV3FileContainer(at url: URL) throws -> ModelContainer {
         let schema = Schema(SchemaV3.models)
-        let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
-        let container = try ModelContainer(
+        let config = ModelConfiguration(schema: schema, url: url)
+        return try ModelContainer(
             for: schema,
             migrationPlan: FitbodSchemaMigrationPlan.self,
             configurations: config
         )
-        return ModelContext(container)
+    }
+
+    /// Reopen the same on-disk URL as a V4 container. SwiftData detects
+    /// the V3-shape store and runs `migrateV3toV4.willMigrate` —
+    /// `backfillSessionLevelFields(in:)` — automatically before the
+    /// container becomes usable.
+    private func makeV4FileContainer(at url: URL) throws -> ModelContainer {
+        let schema = Schema(SchemaV4.models)
+        let config = ModelConfiguration(schema: schema, url: url)
+        return try ModelContainer(
+            for: schema,
+            migrationPlan: FitbodSchemaMigrationPlan.self,
+            configurations: config
+        )
     }
 
     // MARK: - 1. SchemaV4 entity list shape
@@ -196,142 +201,140 @@ struct SchemaV4MigrationTests {
         #expect(FitbodSchemaMigrationPlan.modeRaw(of: ["hybrid", "hybrid", "hybrid", "rpe"], tieBreak: "double") == "hybrid")
     }
 
-    // MARK: - 8. End-to-end Routine backfill via SchemaV3 nested fixtures
+    // MARK: - 8. End-to-end Routine backfill via file-backed V3→V4 reopen
 
     @Test("migratesV3RoutineToV4WithBackfill: mode-of-RoutineExercise.intentRaw lands on routine.intentRaw")
     @MainActor
     func endToEndRoutineBackfill() throws {
-        // V3-only in-memory context — see makeV3InMemoryContext docs for
-        // why we can't use a dual-schema container at Plan 01 time.
-        let ctx = try makeV3InMemoryContext()
+        let storeURL = makeTempStoreURL()
+        let routineID = UUID()
 
-        // Insert a V3-shape Routine via the nested type.
-        let routine = SchemaV3.Routine()
-        routine.name = "Push Day"
-        ctx.insert(routine)
+        // Phase 1: write V3-shape fixtures to disk via the V3 container.
+        do {
+            let container = try makeV3FileContainer(at: storeURL)
+            let ctx = ModelContext(container)
 
-        // Three V3-shape RoutineExercises: 2× strength, 1× hypertrophy
-        // → majority strength.
-        let re1 = SchemaV3.RoutineExercise()
-        re1.routine = routine
-        re1.intentRaw = "strength"
-        re1.progressionKindRaw = "rpe"
-        ctx.insert(re1)
+            // Insert a V3-shape Routine via the nested type.
+            let routine = SchemaV3.Routine()
+            routine.id = routineID
+            routine.name = "Push Day"
+            ctx.insert(routine)
 
-        let re2 = SchemaV3.RoutineExercise()
-        re2.routine = routine
-        re2.intentRaw = "strength"
-        re2.progressionKindRaw = "rpe"
-        ctx.insert(re2)
+            // Three V3-shape RoutineExercises: 2× strength, 1× hypertrophy
+            // → majority strength.
+            let re1 = SchemaV3.RoutineExercise()
+            re1.routine = routine
+            re1.intentRaw = "strength"
+            re1.progressionKindRaw = "rpe"
+            ctx.insert(re1)
 
-        let re3 = SchemaV3.RoutineExercise()
-        re3.routine = routine
-        re3.intentRaw = "hypertrophy"
-        re3.progressionKindRaw = "double"
-        ctx.insert(re3)
+            let re2 = SchemaV3.RoutineExercise()
+            re2.routine = routine
+            re2.intentRaw = "strength"
+            re2.progressionKindRaw = "rpe"
+            ctx.insert(re2)
 
-        try ctx.save()
+            let re3 = SchemaV3.RoutineExercise()
+            re3.routine = routine
+            re3.intentRaw = "hypertrophy"
+            re3.progressionKindRaw = "double"
+            ctx.insert(re3)
 
-        // Re-fetch and assert the V3-side data round-trips through the
-        // ModelContainer correctly — this is the fixture sanity check
-        // that the test's input data is what the migration closure would
-        // read at the start of `backfillSessionLevelFields(in:)`.
-        let v3Routines = try ctx.fetch(FetchDescriptor<SchemaV3.Routine>())
-        #expect(v3Routines.count == 1)
-        let v3REs = try ctx.fetch(FetchDescriptor<SchemaV3.RoutineExercise>())
-        #expect(v3REs.count == 3)
-        let routineV3REs = v3REs.filter { $0.routine?.id == routine.id }
-        let intents = routineV3REs.map { $0.intentRaw }
-        let progressions = routineV3REs.map { $0.progressionKindRaw }
+            try ctx.save()
+        }
 
-        // Apply the same modeRaw compute the migration closure applies.
-        // At Plan 01 commit time, the actual field-write lines in
-        // FitbodSchemaMigrationPlan.backfillSessionLevelFields(in:) are
-        // gated by `// TODO(Plan 02)`, so we exercise the semantic
-        // contract here directly — the migration writes precisely what
-        // modeRaw computes. Plan 02 uncomments the field writes AND
-        // replaces these assertions with direct V4-side
-        // `fetch + read intentRaw` reads.
-        #expect(FitbodSchemaMigrationPlan.modeRaw(of: intents, tieBreak: "strength") == "strength")
-        #expect(FitbodSchemaMigrationPlan.modeRaw(of: progressions, tieBreak: "double") == "rpe")
+        // Phase 2: reopen the same URL at V4. SwiftData runs the V3→V4
+        // migration stage (migrateV3toV4.willMigrate →
+        // backfillSessionLevelFields) automatically before the container
+        // becomes usable. After reopening, the V4 Routine row should have
+        // intentRaw == "strength" (majority) and progressionKindRaw == "rpe"
+        // (majority — 2× rpe, 1× double).
+        let v4Container = try makeV4FileContainer(at: storeURL)
+        let v4Ctx = ModelContext(v4Container)
 
-        // TODO(Plan 02): replace the above with end-to-end migration via
-        // file-backed container open. Approach: write the V3 fixtures to
-        // a temp-dir URL using Schema(SchemaV3.models), close the
-        // container, reopen at the same URL using Schema(SchemaV4.models)
-        // + FitbodSchemaMigrationPlan — SwiftData runs migrateV3toV4
-        // automatically on the second open. Then:
-        //
-        //   let v4Routines = try ctx.fetch(FetchDescriptor<SchemaV4.Routine>())
-        //   #expect(v4Routines.count == 1)
-        //   #expect(v4Routines.first?.intentRaw == "strength")
-        //   #expect(v4Routines.first?.progressionKindRaw == "rpe")
+        let v4Routines = try v4Ctx.fetch(FetchDescriptor<SchemaV4.Routine>())
+        #expect(v4Routines.count == 1)
+        let migrated = try #require(v4Routines.first)
+        #expect(migrated.id == routineID)
+        #expect(migrated.intentRaw == "strength")
+        #expect(migrated.progressionKindRaw == "rpe")
+        // Computed accessor sanity — confirms the enum-as-String pattern
+        // round-trips correctly.
+        #expect(migrated.intent == .strength)
+        #expect(migrated.progressionKind == .rpe)
     }
 
-    // MARK: - 9. End-to-end Session backfill via SchemaV3 nested fixtures
+    // MARK: - 9. End-to-end Session backfill via file-backed V3→V4 reopen
 
     @Test("migratesV3SessionToV4WithBackfill: mode-of-SessionExercise.intentRaw lands on session.intentRaw (tie -> .strength)")
     @MainActor
     func endToEndSessionBackfillWithTieBreak() throws {
-        let ctx = try makeV3InMemoryContext()
+        let storeURL = makeTempStoreURL()
+        let sessionAID = UUID()
+        let sessionBID = UUID()
 
-        // Two V3-shape Sessions exercising different backfill cases:
+        // Phase 1: write two V3-shape Sessions to disk.
         //   Session A: 1× strength + 1× hypertrophy → TIE → .strength
         //   Session B: 3× hypertrophy → clear majority → .hypertrophy
-        let sessionA = SchemaV3.Session()
-        sessionA.routineSnapshotName = "Tied Session"
-        ctx.insert(sessionA)
+        do {
+            let container = try makeV3FileContainer(at: storeURL)
+            let ctx = ModelContext(container)
 
-        let seA1 = SchemaV3.SessionExercise()
-        seA1.session = sessionA
-        seA1.intentRaw = "strength"
-        seA1.progressionKindRaw = "rpe"
-        ctx.insert(seA1)
+            let sessionA = SchemaV3.Session()
+            sessionA.id = sessionAID
+            sessionA.routineSnapshotName = "Tied Session"
+            ctx.insert(sessionA)
 
-        let seA2 = SchemaV3.SessionExercise()
-        seA2.session = sessionA
-        seA2.intentRaw = "hypertrophy"
-        seA2.progressionKindRaw = "double"
-        ctx.insert(seA2)
+            let seA1 = SchemaV3.SessionExercise()
+            seA1.session = sessionA
+            seA1.intentRaw = "strength"
+            seA1.progressionKindRaw = "rpe"
+            ctx.insert(seA1)
 
-        let sessionB = SchemaV3.Session()
-        sessionB.routineSnapshotName = "Hypertrophy Session"
-        ctx.insert(sessionB)
+            let seA2 = SchemaV3.SessionExercise()
+            seA2.session = sessionA
+            seA2.intentRaw = "hypertrophy"
+            seA2.progressionKindRaw = "double"
+            ctx.insert(seA2)
 
-        for _ in 0..<3 {
-            let se = SchemaV3.SessionExercise()
-            se.session = sessionB
-            se.intentRaw = "hypertrophy"
-            se.progressionKindRaw = "double"
-            ctx.insert(se)
+            let sessionB = SchemaV3.Session()
+            sessionB.id = sessionBID
+            sessionB.routineSnapshotName = "Hypertrophy Session"
+            ctx.insert(sessionB)
+
+            for _ in 0..<3 {
+                let se = SchemaV3.SessionExercise()
+                se.session = sessionB
+                se.intentRaw = "hypertrophy"
+                se.progressionKindRaw = "double"
+                ctx.insert(se)
+            }
+
+            try ctx.save()
         }
 
-        try ctx.save()
+        // Phase 2: reopen at V4 + assert the migrated V4 Sessions carry
+        // the expected mode-with-tie-break values.
+        let v4Container = try makeV4FileContainer(at: storeURL)
+        let v4Ctx = ModelContext(v4Container)
 
-        // Round-trip sanity: the V3-shape fixtures persist correctly and
-        // can be queried back via the nested SchemaV3.* types.
-        let v3Sessions = try ctx.fetch(FetchDescriptor<SchemaV3.Session>())
-        #expect(v3Sessions.count == 2)
-        let v3SEs = try ctx.fetch(FetchDescriptor<SchemaV3.SessionExercise>())
-        #expect(v3SEs.count == 5)
+        let v4Sessions = try v4Ctx.fetch(FetchDescriptor<SchemaV4.Session>())
+        #expect(v4Sessions.count == 2)
 
-        // Apply the same modeRaw compute the migration closure applies.
-        // See endToEndRoutineBackfill for the gating + Plan 02 plan.
-        let sessionAV3SEs = v3SEs.filter { $0.session?.id == sessionA.id }
-        let intentsA = sessionAV3SEs.map { $0.intentRaw }
-        let progressionsA = sessionAV3SEs.map { $0.progressionKindRaw }
+        let migratedA = try #require(v4Sessions.first(where: { $0.id == sessionAID }))
         // Tie between "strength" and "hypertrophy" → tie-break wins.
-        #expect(FitbodSchemaMigrationPlan.modeRaw(of: intentsA, tieBreak: "strength") == "strength")
+        #expect(migratedA.intentRaw == "strength")
+        #expect(migratedA.intent == .strength)
         // Tie between "rpe" and "double" → "double" tie-break wins.
-        #expect(FitbodSchemaMigrationPlan.modeRaw(of: progressionsA, tieBreak: "double") == "double")
+        #expect(migratedA.progressionKindRaw == "double")
+        #expect(migratedA.progressionKind == .double)
 
-        let sessionBV3SEs = v3SEs.filter { $0.session?.id == sessionB.id }
-        let intentsB = sessionBV3SEs.map { $0.intentRaw }
-        // Clear majority "hypertrophy".
-        #expect(FitbodSchemaMigrationPlan.modeRaw(of: intentsB, tieBreak: "strength") == "hypertrophy")
-
-        // TODO(Plan 02): replace above with file-backed V3→V4 reopen +
-        // direct fetch on `SchemaV4.Session`. See test 8's TODO block.
+        let migratedB = try #require(v4Sessions.first(where: { $0.id == sessionBID }))
+        // Clear majority "hypertrophy" for intent + "double" for progression.
+        #expect(migratedB.intentRaw == "hypertrophy")
+        #expect(migratedB.intent == .hypertrophy)
+        #expect(migratedB.progressionKindRaw == "double")
+        #expect(migratedB.progressionKind == .double)
     }
 
     // MARK: - 10. Empty exercise list keeps default values
@@ -339,32 +342,36 @@ struct SchemaV4MigrationTests {
     @Test("Empty exercise list keeps default values after backfill")
     @MainActor
     func emptyExerciseListKeepsDefaults() throws {
-        let ctx = try makeV3InMemoryContext()
+        let storeURL = makeTempStoreURL()
+        let routineID = UUID()
 
-        // V3-shape Routine with ZERO RoutineExercise rows. The migration
-        // closure's modeRaw call against an empty list returns the
-        // tieBreak — "strength" for intent, "double" for progressionKind.
-        // Plan 02's field-level assertion verifies that the migration
-        // writes those defaults onto v4Routines.first?.intentRaw.
-        let routine = SchemaV3.Routine()
-        routine.name = "Empty Routine"
-        ctx.insert(routine)
-        try ctx.save()
+        // Phase 1: write a V3-shape Routine with ZERO RoutineExercise rows.
+        do {
+            let container = try makeV3FileContainer(at: storeURL)
+            let ctx = ModelContext(container)
+            let routine = SchemaV3.Routine()
+            routine.id = routineID
+            routine.name = "Empty Routine"
+            ctx.insert(routine)
+            try ctx.save()
+        }
 
-        // Round-trip sanity: the empty Routine persists, no children.
-        let v3Routines = try ctx.fetch(FetchDescriptor<SchemaV3.Routine>())
-        #expect(v3Routines.count == 1)
-        let routineV3REs = try ctx.fetch(FetchDescriptor<SchemaV3.RoutineExercise>()).filter { $0.routine?.id == routine.id }
-        #expect(routineV3REs.isEmpty)
+        // Phase 2: reopen at V4 + assert the migration left the
+        // default-valued intentRaw / progressionKindRaw fields intact
+        // (modeRaw against an empty list returns the tie-break).
+        let v4Container = try makeV4FileContainer(at: storeURL)
+        let v4Ctx = ModelContext(v4Container)
 
-        // Helper-output shape assertion documenting the empty-input
-        // contract that the migration closure relies on.
-        let intents = routineV3REs.map { $0.intentRaw }
-        let progressions = routineV3REs.map { $0.progressionKindRaw }
-        #expect(FitbodSchemaMigrationPlan.modeRaw(of: intents, tieBreak: "strength") == "strength")
-        #expect(FitbodSchemaMigrationPlan.modeRaw(of: progressions, tieBreak: "double") == "double")
-
-        // TODO(Plan 02): replace above with file-backed V3→V4 reopen +
-        // assert v4Routines.first?.intentRaw == "strength" (default kept).
+        let v4Routines = try v4Ctx.fetch(FetchDescriptor<SchemaV4.Routine>())
+        #expect(v4Routines.count == 1)
+        let migrated = try #require(v4Routines.first)
+        #expect(migrated.id == routineID)
+        // Defaults from the @Model declaration are "strength" / "double";
+        // the migration closure overwrites them with the modeRaw result,
+        // which against an empty array is also "strength" / "double".
+        #expect(migrated.intentRaw == "strength")
+        #expect(migrated.progressionKindRaw == "double")
+        #expect(migrated.intent == .strength)
+        #expect(migrated.progressionKind == .double)
     }
 }
