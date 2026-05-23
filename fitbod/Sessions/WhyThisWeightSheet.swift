@@ -13,6 +13,18 @@
 //  Presentation: `.sheet(isPresented:) { WhyThisWeightSheet(...).presentationDetents([.medium]) }`.
 //  No "Done" toolbar button — iOS sheet dismiss gesture is the affordance per UI-SPEC.
 //
+//  Phase 3.1 (PIVOT-04 / D-12): the Status row prepends the session
+//  intent on the .calibrating and .calibrated branches when
+//  `explanation.sessionIntent` is non-nil:
+//    - "Strength session — calibrating (4 / 10 sets)"
+//    - "Strength session — calibrated"
+//  Em-dash U+2014 ("—") with single-space padding per UI-SPEC
+//  Verification anchor. The .notApplicable branch (DoubleProgression
+//  bump + no-prior-data) is unchanged. When sessionIntent is nil the
+//  status row falls back to the Phase 3 unprefixed copy ("Calibrating
+//  (4 / 10 sets)" / "Calibrated") so pre-3.1 callers and pure-test
+//  fixtures still render legibly.
+//
 
 import SwiftUI
 
@@ -124,8 +136,17 @@ public struct WhyThisWeightSheet: View {
     private func statusValueView() -> some View {
         switch explanation.status {
         case .calibrating(let n, let threshold):
-            // Calibrating: gray capsule per UI-SPEC item 19 (transitional state, NOT accent)
-            Text("Calibrating (\(n) / \(threshold) sets)")                      // UI-SPEC verbatim
+            // Calibrating: gray capsule per UI-SPEC item 19 (transitional state, NOT accent).
+            //
+            // Phase 3.1 (PIVOT-04 / D-12): when sessionIntent is non-nil,
+            // prefix the status copy with "{Intent.capitalized} session — "
+            // (em-dash U+2014, single-space padding) per UI-SPEC
+            // Verification anchor: `"\(Intent.capitalized) session —
+            // calibrating (\(n) / \(threshold) sets)"`. Note the lowercase
+            // "calibrating" in the prefixed form (UI-SPEC anchor verbatim);
+            // the unprefixed fallback keeps the Phase 3 "Calibrating"
+            // (capital C) copy when sessionIntent is nil.
+            Text(calibratingStatusText(current: n, threshold: threshold))
                 .font(.caption)
                 .foregroundStyle(.secondary)
                 .padding(.horizontal, 8)
@@ -134,8 +155,14 @@ public struct WhyThisWeightSheet: View {
                 .clipShape(Capsule())
 
         case .calibrated:
-            // Calibrated: accent capsule per UI-SPEC item 19
-            Text("Calibrated")                                                   // UI-SPEC verbatim
+            // Calibrated: accent capsule per UI-SPEC item 19.
+            //
+            // Phase 3.1 (PIVOT-04 / D-12): prefix with "{Intent.capitalized}
+            // session — calibrated" when sessionIntent is non-nil per
+            // UI-SPEC Verification anchor: `"\(Intent.capitalized) session
+            // — calibrated"`. Lowercase "calibrated" in the prefixed form;
+            // unprefixed fallback keeps "Calibrated" (capital C).
+            Text(calibratedStatusText())
                 .font(.caption)
                 .foregroundStyle(Color.accentColor)
                 .padding(.horizontal, 8)
@@ -144,7 +171,10 @@ public struct WhyThisWeightSheet: View {
                 .clipShape(Capsule())
 
         case .notApplicable:
-            // Double progression — status row shows bump or first-session copy
+            // Double progression — status row shows bump or first-session copy.
+            // Phase 3.1 UI-SPEC: the .notApplicable branch does NOT prefix
+            // with the session intent (bump + no-prior-data copy stays
+            // exactly as Phase 3 shipped).
             if explanation.bumpOccurred {
                 Text(bumpStatusText())
                     .font(.body)
@@ -157,6 +187,29 @@ public struct WhyThisWeightSheet: View {
                 EmptyView()
             }
         }
+    }
+
+    /// Phase 3.1 (PIVOT-04 / D-12) — calibrating status copy with
+    /// optional session-intent prefix. UI-SPEC Verification anchor:
+    /// `"\(Intent.capitalized) session — calibrating (\(n) / \(threshold) sets)"`.
+    /// Falls back to Phase 3 "Calibrating (n / threshold sets)" when
+    /// sessionIntent is nil.
+    private func calibratingStatusText(current n: Int, threshold: Int) -> String {
+        if let sessionIntent = explanation.sessionIntent {
+            return "\(sessionIntent.rawValue.capitalized) session — calibrating (\(n) / \(threshold) sets)"
+        }
+        return "Calibrating (\(n) / \(threshold) sets)"
+    }
+
+    /// Phase 3.1 (PIVOT-04 / D-12) — calibrated status copy with
+    /// optional session-intent prefix. UI-SPEC Verification anchor:
+    /// `"\(Intent.capitalized) session — calibrated"`.
+    /// Falls back to Phase 3 "Calibrated" when sessionIntent is nil.
+    private func calibratedStatusText() -> String {
+        if let sessionIntent = explanation.sessionIntent {
+            return "\(sessionIntent.rawValue.capitalized) session — calibrated"
+        }
+        return "Calibrated"
     }
 
     private func bumpStatusText() -> String {
@@ -184,8 +237,17 @@ public struct WhyThisWeightSheet: View {
     private func statusAccessibilityText() -> String {
         switch explanation.status {
         case .calibrating(let n, let threshold):
+            // Phase 3.1 (PIVOT-04 / D-12): mirror the visible copy so
+            // VoiceOver announces the same "{Intent} session — calibrating
+            // (n / threshold sets)" form when sessionIntent is non-nil.
+            if let sessionIntent = explanation.sessionIntent {
+                return "\(sessionIntent.rawValue.capitalized) session — calibrating: \(n) of \(threshold) sets"
+            }
             return "Calibrating: \(n) of \(threshold) sets"
         case .calibrated:
+            if let sessionIntent = explanation.sessionIntent {
+                return "\(sessionIntent.rawValue.capitalized) session — calibrated"
+            }
             return "Calibrated"
         case .notApplicable:
             if explanation.bumpOccurred { return bumpStatusText() }
@@ -198,6 +260,8 @@ public struct WhyThisWeightSheet: View {
 // MARK: - Previews
 
 #Preview("calibrating — RPE autoreg") {
+    // Phase 3.1 (PIVOT-04 / D-12): sessionIntent: .strength exercises the
+    // prefixed status copy "Strength session — calibrating (4 / 10 sets)".
     let explanation = PrescriptionExplanation(
         lastSessionLine: "100 kg × 8 @ RPE 8.5 (May 15)",
         formulaName: "RPE autoregulation",
@@ -206,7 +270,8 @@ public struct WhyThisWeightSheet: View {
         roundedLine: "→ 100 kg (rounded down to 2.5 kg plates)",
         status: .calibrating(current: 4, threshold: 10),
         bumpOccurred: false,
-        range: 95.0...105.0
+        range: 95.0...105.0,
+        sessionIntent: .strength
     )
     return Text("Tap to see sheet")
         .sheet(isPresented: .constant(true)) {
@@ -216,6 +281,9 @@ public struct WhyThisWeightSheet: View {
 }
 
 #Preview("calibrated — RPE autoreg") {
+    // Phase 3.1 (PIVOT-04 / D-12): sessionIntent: .hypertrophy exercises
+    // the prefixed status copy "Hypertrophy session — calibrated" so the
+    // preview covers a different Intent case than the calibrating one.
     let explanation = PrescriptionExplanation(
         lastSessionLine: "100 kg × 8 @ RPE 8.5 (May 15)",
         formulaName: "RPE autoregulation",
@@ -224,7 +292,8 @@ public struct WhyThisWeightSheet: View {
         roundedLine: "→ 107.5 kg (rounded down to 2.5 kg plates)",
         status: .calibrated,
         bumpOccurred: false,
-        range: nil
+        range: nil,
+        sessionIntent: .hypertrophy
     )
     return Text("Tap to see sheet")
         .sheet(isPresented: .constant(true)) {
@@ -270,6 +339,8 @@ public struct WhyThisWeightSheet: View {
 }
 
 #Preview("override active — shows Use Suggested Weight button") {
+    // Phase 3.1 (PIVOT-04 / D-12): third sessionIntent-bearing preview;
+    // covers the .calibrated branch with override-active button visible.
     let explanation = PrescriptionExplanation(
         lastSessionLine: "100 kg × 8 @ RPE 8.5 (May 15)",
         formulaName: "RPE autoregulation",
@@ -278,7 +349,8 @@ public struct WhyThisWeightSheet: View {
         roundedLine: "→ 107.5 kg (rounded down to 2.5 kg plates)",
         status: .calibrated,
         bumpOccurred: false,
-        range: nil
+        range: nil,
+        sessionIntent: .strength
     )
     return Text("Tap to see sheet")
         .sheet(isPresented: .constant(true)) {

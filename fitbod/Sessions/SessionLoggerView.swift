@@ -336,11 +336,15 @@ public struct SessionLoggerView: View {
     let session = Session()
     session.startedAt = .now.addingTimeInterval(-180)
     session.routineSnapshotName = "Push Day A"
+    // Phase 3.1 (PIVOT-05): intent + progressionKind live on Session.
+    // The se.intentRaw write that used to live here is gone (the field
+    // moved off SessionExercise in Plan 02). Set it on the parent
+    // Session so the preview exercises the real PIVOT-05 read path.
+    session.intentRaw = Intent.strength.rawValue
     ctx.insert(session)
     let se = SessionExercise()
     se.session = session
     se.exercise = ex
-    se.intentRaw = "strength"
     se.targetSets = 3
     se.prescribedRestSeconds = 180
     ctx.insert(se)

@@ -64,6 +64,28 @@ public struct PrescriptionExplanation: Sendable {
     /// Nil once calibrated or for double-progression strategies.
     public var range: ClosedRange<Double>?
 
+    /// Optional block-context line for periodized prescriptions, e.g.
+    /// "accumulation phase - Week 1 of 8".
+    public var phaseContextLine: String?
+
+    /// Optional deload-specific note.
+    public var deloadNoteLine: String?
+
+    /// Phase 3.1 (PIVOT-04 / D-12): the active session's intent at
+    /// prescription time. Used by WhyThisWeightSheet's Status row to
+    /// prefix the calibrating/calibrated copy with the intent name
+    /// ("Strength session — calibrating (4 / 10 sets)").
+    ///
+    /// Nil for pre-3.1 callers or pure-test fixtures that don't bother
+    /// to thread the field through; the WhyThisWeightSheet status row
+    /// falls back to the unprefixed Phase 3 copy when this is nil.
+    /// Strategies (DoubleProgressionStrategy / RPEAutoregStrategy /
+    /// BlockPeriodizedStrategy / HybridStrategy) do NOT set this — the
+    /// caller (SessionFactory + SessionExerciseCard.currentExplanation)
+    /// assigns `explanation.sessionIntent = session.intent` AFTER the
+    /// strategy returns. Strategies stay pure and decoupled from SwiftData.
+    public var sessionIntent: Intent? = nil
+
     public init(
         lastSessionLine: String? = nil,
         formulaName: String,
@@ -72,7 +94,10 @@ public struct PrescriptionExplanation: Sendable {
         roundedLine: String,
         status: CalibrationStatus,
         bumpOccurred: Bool = false,
-        range: ClosedRange<Double>? = nil
+        range: ClosedRange<Double>? = nil,
+        phaseContextLine: String? = nil,
+        deloadNoteLine: String? = nil,
+        sessionIntent: Intent? = nil
     ) {
         self.lastSessionLine = lastSessionLine
         self.formulaName = formulaName
@@ -82,6 +107,9 @@ public struct PrescriptionExplanation: Sendable {
         self.status = status
         self.bumpOccurred = bumpOccurred
         self.range = range
+        self.phaseContextLine = phaseContextLine
+        self.deloadNoteLine = deloadNoteLine
+        self.sessionIntent = sessionIntent
     }
 }
 
@@ -114,6 +142,8 @@ public protocol ProgressionStrategy: Sendable {
         lastSessionWeight: Double?,
         lastSessionReps: Int?,
         lastSessionRPE: Double?,
-        lastSessionDate: Date?
+        lastSessionDate: Date?,
+        block: Block?,
+        today: Date
     ) -> (weight: Double, explanation: PrescriptionExplanation)
 }

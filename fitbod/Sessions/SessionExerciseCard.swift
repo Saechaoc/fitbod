@@ -24,6 +24,14 @@
 //      coordination passed to each SetRow.
 //    - bannerDismissed: @State Bool; tap-anywhere-on-card dismisses banner.
 //
+//  Phase 3.1 (PIVOT-04 / PIVOT-05 / D-12 / D-14): currentExplanation reads
+//  intent + progression from the parent Session (`se.session?.intentRaw` +
+//  `se.session?.progressionKind`), no longer from SessionExercise fields
+//  that have been removed. After the strategy returns, the helper sets
+//  `explanation.sessionIntent = se.session?.intent` so WhyThisWeightSheet
+//  can prefix the Status capsule with "{Intent} session — …". addSet's
+//  matching-intent weight hint follows the same pattern.
+//
 //  ## Scoping discipline (PITFALLS-doc #1 / UI-SPEC "Anti-Patterns to Avoid")
 //
 //  The card binds to a single `SessionExercise` — NOT the parent `Session`.
@@ -271,12 +279,25 @@ public struct SessionExerciseCard: View {
     ///
     /// Returns nil when prescribedWeight is nil (e.g. Phase 2 sessions
     /// started before Phase 3 shipped) to guard against forced-unwrap.
+    ///
+    /// Phase 3.1 (PIVOT-04 / PIVOT-05 / D-12 / D-14):
+    /// - `intentRaw` + `progressionKind` are read from the parent Session
+    ///   (the fields moved off SessionExercise in Plan 02). FOUND-03
+    ///   default-string fallback (`Intent.strength.rawValue` / `.double`)
+    ///   covers a detached session relationship.
+    /// - `explanation.sessionIntent` is set to `se.session?.intent` AFTER
+    ///   the strategy returns, so WhyThisWeightSheet can prefix the
+    ///   status capsule with "Strength session — …" / "Hypertrophy
+    ///   session — …" per UI-SPEC Copywriting Contract.
     private func currentExplanation() -> PrescriptionExplanation? {
         let se = sessionExercise
         let userSettings = settingsList.first
 
         let exerciseID = se.exercise?.id
-        let intentRaw = se.intentRaw
+        // Phase 3.1 (PIVOT-05): intent + progression now live on the
+        // parent Session. The FOUND-03 default-string fallback matches
+        // SwapExerciseSheet / SetRow at this surface.
+        let intentRaw = se.session?.intentRaw ?? Intent.strength.rawValue
 
         let ekind = SessionFactory.equipmentKind(
             for: se.exercise?.equipment ?? .other
@@ -317,7 +338,8 @@ public struct SessionExerciseCard: View {
             context: ctx
         )
 
-        let strategy = ProgressionStrategyFactory.make(for: se.progressionKind)
+        // Phase 3.1 (D-14): strategy comes from session-level progression.
+        let strategy = ProgressionStrategyFactory.make(for: se.session?.progressionKind ?? .double)
         let (_, explanation) = strategy.prescribe(
             history: historyPoints,
             targetRepsLow: se.targetRepsLow,
@@ -331,9 +353,18 @@ public struct SessionExerciseCard: View {
             lastSessionWeight: lastHint?.weight,
             lastSessionReps: lastHint?.reps,
             lastSessionRPE: lastHint?.rpe,
-            lastSessionDate: lastHint?.sessionStartedAt
+            lastSessionDate: lastHint?.sessionStartedAt,
+            block: se.session?.block,
+            today: se.session?.startedAt ?? Date.now
         )
-        return explanation
+        // Phase 3.1 (PIVOT-04 / D-12): annotate the explanation with the
+        // session's intent so WhyThisWeightSheet's Status row prefixes
+        // "Strength session — …" / "Hypertrophy session — …" etc. The
+        // strategy stays pure (no SwiftData / Intent coupling); the
+        // caller decorates the returned value.
+        var enriched = explanation
+        enriched.sessionIntent = se.session?.intent
+        return enriched
     }
 
     // MARK: - handleSkipWarmups
@@ -364,7 +395,9 @@ public struct SessionExerciseCard: View {
         entry.isComplete = false
         entry.weight = PreviousMatchingIntent.fetchTopWorkingSet(
             exerciseID: sessionExercise.exercise?.id,
-            intentRaw: sessionExercise.intentRaw,
+            // Phase 3.1 (PIVOT-05): intent lives on the parent Session;
+            // FOUND-03 default-string fallback.
+            intentRaw: sessionExercise.session?.intentRaw ?? Intent.strength.rawValue,
             context: ctx
         )?.weight ?? 0
         ctx.insert(entry)
@@ -377,9 +410,15 @@ public struct SessionExerciseCard: View {
     let ctx = ModelContext(container)
     let ex = Exercise.previewSample(name: "Bench", equipment: .barbell, mechanic: .compound)
     ctx.insert(ex)
+    // Phase 3.1 (PIVOT-05): wire a parent Session so currentExplanation
+    // and the inner PreviousColumn read the real session-level intent
+    // path (matches SwapExerciseSheet preview pattern from Plan 03).
+    let session = Session()
+    session.intentRaw = Intent.strength.rawValue
+    ctx.insert(session)
     let se = SessionExercise()
+    se.session = session
     se.exercise = ex
-    se.intentRaw = "strength"
     se.targetSets = 3
     ctx.insert(se)
     for i in 0..<3 {
