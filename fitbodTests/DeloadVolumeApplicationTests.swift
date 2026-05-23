@@ -16,7 +16,7 @@ struct DeloadVolumeApplicationTests {
     private let day: TimeInterval = 86_400
 
     private func makeContext() throws -> ModelContext {
-        let schema = Schema(SchemaV4.models)
+        let schema = Schema(SchemaV5.models)
         let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
         let container = try ModelContainer(
             for: schema,

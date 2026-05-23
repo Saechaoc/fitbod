@@ -25,7 +25,7 @@
 //    8. blockReferenceCopiedFromRoutine — optional `Block` link
 //       survives the snapshot.
 //
-//  Each test builds its own ModelContainer via Schema(SchemaV4.models)
+//  Each test builds its own ModelContainer via Schema(SchemaV5.models)
 //  + FitbodSchemaMigrationPlan to exercise the production wiring
 //  literally (mirroring the SchemaV2MigrationTests pattern from
 //  plan 00-02). Phase 3.1 (PIVOT-01..05): intent + progression are
@@ -46,7 +46,7 @@ struct SessionFactoryTests {
     // MARK: - Helpers
 
     private func makeContext() throws -> ModelContext {
-        let schema = Schema(SchemaV4.models)
+        let schema = Schema(SchemaV5.models)
         let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
         let container = try ModelContainer(
             for: schema,

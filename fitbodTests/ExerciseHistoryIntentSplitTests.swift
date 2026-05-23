@@ -24,7 +24,7 @@
 //
 //  Container/test pattern matches `PreviousMatchingIntentTests` (plan
 //  01-01) verbatim: `@MainActor` + `.serialized` over an in-memory
-//  `ModelContainer` constructed with `Schema(SchemaV4.models)` +
+//  `ModelContainer` constructed with `Schema(SchemaV5.models)` +
 //  `FitbodSchemaMigrationPlan`.
 //
 //  Phase 3.1 (PIVOT-02 / PIVOT-05 / D-13 / D-15): intent moved from
@@ -49,7 +49,7 @@ struct ExerciseHistoryIntentSplitTests {
     // MARK: - Helpers
 
     private func makeContext() throws -> ModelContext {
-        let schema = Schema(SchemaV4.models)
+        let schema = Schema(SchemaV5.models)
         let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
         let container = try ModelContainer(
             for: schema,

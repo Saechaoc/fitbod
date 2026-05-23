@@ -48,12 +48,12 @@ struct RoutineBuilderHeaderPickersTests {
 
     // MARK: - Helpers
 
-    /// Fresh in-memory V4 ModelContext over `Schema(SchemaV4.models)` +
+    /// Fresh in-memory V4 ModelContext over `Schema(SchemaV5.models)` +
     /// FitbodSchemaMigrationPlan — mirrors SchemaV4MigrationTests +
     /// ExerciseHistoryIntentSplitTests fixture pattern.
     @MainActor
     private func makeContext() throws -> ModelContext {
-        let schema = Schema(SchemaV4.models)
+        let schema = Schema(SchemaV5.models)
         let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
         let container = try ModelContainer(
             for: schema,

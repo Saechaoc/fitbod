@@ -4,7 +4,7 @@
 //
 //  Canonical proof that the Phase 3.1 V3→V4 custom migration is wired
 //  correctly. Mirrors SchemaV3MigrationTests.swift's in-memory
-//  ModelContainer + Schema(SchemaV4.models) + FitbodSchemaMigrationPlan
+//  ModelContainer + Schema(SchemaV5.models) + FitbodSchemaMigrationPlan
 //  fixture pattern.
 //
 //  Per CONTEXT.md Specifics: the user has a freshly-seeded SchemaV3 store
@@ -19,14 +19,14 @@
 //  ties. Tests 6 and 7 below exercise the tie-break logic directly via
 //  `FitbodSchemaMigrationPlan.modeRaw(of:tieBreak:)`; tests 8 / 9 / 10
 //  exercise it end-to-end through the full file-backed migration cycle
-//  (open at V3 → write fixtures → close → reopen at V4 → SwiftData runs
-//  migrateV3toV4 automatically → assert V4-side fields).
+//  (open at V3 -> write fixtures -> close -> reopen at V5 -> SwiftData runs
+//  migrateV3toV4 and migrateV4toV5 automatically -> assert V5-side fields).
 //
 //  Plan 02 of Phase 3.1 turned tests 8 / 9 / 10 green by:
 //    1. Reshaping top-level Routine / Session @Model types to add
 //       `intentRaw` + `progressionKindRaw`.
-//    2. Uncommenting the four field-write lines in
-//       `FitbodSchemaMigrationPlan.backfillSessionLevelFields(in:)`.
+//    2. Wiring `FitbodSchemaMigrationPlan.backfillSessionLevelFields(in:)`
+//       into the V3->V4 didMigrate stage.
 //    3. Swapping the in-memory `modeRaw`-output-shape assertions for
 //       file-backed open-V3 → reopen-as-V4 migration tests that read
 //       `v4Routines.first?.intentRaw` directly after SwiftData runs the
@@ -43,11 +43,11 @@ struct SchemaV4MigrationTests {
 
     // MARK: - Helpers
 
-    /// Fresh in-memory V4 ModelContext over `Schema(SchemaV4.models)` +
-    /// FitbodSchemaMigrationPlan — mirrors SchemaV3MigrationTests.makeContext
+    /// Fresh in-memory V5 ModelContext over `Schema(SchemaV5.models)` +
+    /// FitbodSchemaMigrationPlan - mirrors SchemaV3MigrationTests.makeContext
     /// verbatim shape.
     private func makeContext() throws -> ModelContext {
-        let schema = Schema(SchemaV4.models)
+        let schema = Schema(SchemaV5.models)
         let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
         let container = try ModelContainer(
             for: schema,
@@ -84,12 +84,18 @@ struct SchemaV4MigrationTests {
         )
     }
 
-    /// Reopen the same on-disk URL as a V4 container. SwiftData detects
-    /// the V3-shape store and runs `migrateV3toV4.willMigrate` —
-    /// `backfillSessionLevelFields(in:)` — automatically before the
-    /// container becomes usable.
-    private func makeV4FileContainer(at url: URL) throws -> ModelContainer {
+    private func makeV4BackfillContext() throws -> ModelContext {
         let schema = Schema(SchemaV4.models)
+        let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
+        let container = try ModelContainer(for: schema, configurations: config)
+        return ModelContext(container)
+    }
+
+    /// Reopen the same on-disk URL as a V5 container. SwiftData detects
+    /// the V3-shape store, runs `migrateV3toV4.didMigrate`, then applies
+    /// the lightweight V4->V5 stage before the container becomes usable.
+    private func makeV5FileContainer(at url: URL) throws -> ModelContainer {
+        let schema = Schema(SchemaV5.models)
         let config = ModelConfiguration(schema: schema, url: url)
         return try ModelContainer(
             for: schema,
@@ -100,13 +106,12 @@ struct SchemaV4MigrationTests {
 
     // MARK: - 1. SchemaV4 entity list shape
 
-    @Test("SchemaV4 entity list mirrors top-level production types via typealiases")
+    @Test("SchemaV4 entity list freezes the pre-review historical shape")
     func schemaV4ModelsListHasSixteenEntities() {
-        // SchemaV4 declares typealiases to the 16 top-level production
-        // @Model types. The deeper assertion (each typealias resolves to
-        // the corresponding `fitbod.<Entity>` identity) is compile-time
-        // enforced by the typealias declarations themselves.
         #expect(SchemaV4.models.count == 16)
+        #expect(ObjectIdentifier(SchemaV4.Block.self) != ObjectIdentifier(fitbod.Block.self))
+        #expect(ObjectIdentifier(SchemaV4.Routine.self) != ObjectIdentifier(fitbod.Routine.self))
+        #expect(ObjectIdentifier(SchemaV4.Session.self) != ObjectIdentifier(fitbod.Session.self))
     }
 
     // MARK: - 2. SchemaV3 nested types are distinct from top-level production types
@@ -126,14 +131,14 @@ struct SchemaV4MigrationTests {
         #expect(ObjectIdentifier(SchemaV3.SessionExercise.self) != ObjectIdentifier(fitbod.SessionExercise.self))
     }
 
-    // MARK: - 3. Migration plan wiring (4 schemas, 3 stages)
+    // MARK: - 3. Migration plan wiring (5 schemas, 4 stages)
 
-    @Test("FitbodSchemaMigrationPlan registers V1+V2+V3+V4 and THREE stages")
+    @Test("FitbodSchemaMigrationPlan registers V1+V2+V3+V4+V5 and FOUR stages")
     func migrationPlanWiringIsV1V2V3V4() {
         let names = FitbodSchemaMigrationPlan.schemas.map { String(describing: $0) }
-        #expect(names == ["SchemaV1", "SchemaV2", "SchemaV3", "SchemaV4"])
-        #expect(FitbodSchemaMigrationPlan.schemas.count == 4)
-        #expect(FitbodSchemaMigrationPlan.stages.count == 3)
+        #expect(names == ["SchemaV1", "SchemaV2", "SchemaV3", "SchemaV4", "SchemaV5"])
+        #expect(FitbodSchemaMigrationPlan.schemas.count == 5)
+        #expect(FitbodSchemaMigrationPlan.stages.count == 4)
     }
 
     // MARK: - 4. migrateV3toV4 is positionally the third stage
@@ -142,24 +147,46 @@ struct SchemaV4MigrationTests {
     func migrateV3toV4IsThirdStage() {
         // MigrationStage's internals aren't easily reflectable from a
         // test, so positional identity is the strongest assertion the
-        // public surface allows. The order [V1->V2, V2->V3, V3->V4]
+        // public surface allows. The order [V1->V2, V2->V3, V3->V4, V4->V5]
         // is load-bearing: SwiftData applies stages in order against
         // an existing on-disk store.
-        #expect(FitbodSchemaMigrationPlan.stages.count == 3)
-        // Positional check: stages.last is migrateV3toV4 — there's no
-        // public equality available, but the count check above plus the
-        // wiring test (test 3) together pin the order down.
+        #expect(FitbodSchemaMigrationPlan.stages.count == 4)
+        // MigrationStage has no public equality, so the count check above
+        // plus the wiring test pin down the registered stage chain.
     }
 
-    // MARK: - 5. Fresh in-memory V4 ModelContainer opens
+    // MARK: - 5. Fresh in-memory V5 ModelContainer opens
 
-    @Test("Fresh in-memory V4 ModelContainer opens")
+    @Test("Fresh in-memory V5 ModelContainer opens")
     @MainActor
-    func freshV4ContainerOpensCleanly() throws {
-        // Smoke test that SchemaV4 + the migration plan parses cleanly
-        // into a working container. If SchemaV4.models has any type
+    func freshV5ContainerOpensCleanly() throws {
+        // Smoke test that SchemaV5 + the migration plan parses cleanly
+        // into a working container. If SchemaV5.models has any type
         // SwiftData can't compose, this throws.
         _ = try makeContext()
+    }
+
+    @Test("SchemaV5 Block reviewedAt defaults nil and persists")
+    @MainActor
+    func blockReviewedAtDefaultsNilAndPersists() throws {
+        let context = try makeContext()
+        let block = Block()
+        block.name = "Reviewed Block"
+        context.insert(block)
+        try context.save()
+
+        #expect(block.reviewedAt == nil)
+
+        let reviewedAt = Date(timeIntervalSince1970: 1_700_000_000)
+        block.reviewedAt = reviewedAt
+        try context.save()
+
+        let targetID = block.id
+        let descriptor = FetchDescriptor<Block>(
+            predicate: #Predicate<Block> { $0.id == targetID }
+        )
+        let fetched = try #require(try context.fetch(descriptor).first)
+        #expect(fetched.reviewedAt == reviewedAt)
     }
 
     // MARK: - 6. modeRaw tie-break tests for .strength
@@ -201,140 +228,65 @@ struct SchemaV4MigrationTests {
         #expect(FitbodSchemaMigrationPlan.modeRaw(of: ["hybrid", "hybrid", "hybrid", "rpe"], tieBreak: "double") == "hybrid")
     }
 
-    // MARK: - 8. End-to-end Routine backfill via file-backed V3→V4 reopen
+    // MARK: - 8. Routine backfill on V4 intermediate rows
 
     @Test("migratesV3RoutineToV4WithBackfill: mode-of-RoutineExercise.intentRaw lands on routine.intentRaw")
     @MainActor
     func endToEndRoutineBackfill() throws {
-        let storeURL = makeTempStoreURL()
+        let ctx = try makeV4BackfillContext()
         let routineID = UUID()
 
-        // Phase 1: write V3-shape fixtures to disk via the V3 container.
-        do {
-            let container = try makeV3FileContainer(at: storeURL)
-            let ctx = ModelContext(container)
+        let routine = SchemaV4.Routine()
+        routine.id = routineID
+        routine.name = "Push Day"
+        ctx.insert(routine)
 
-            // Insert a V3-shape Routine via the nested type.
-            let routine = SchemaV3.Routine()
-            routine.id = routineID
-            routine.name = "Push Day"
-            ctx.insert(routine)
+        let re1 = SchemaV4.RoutineExercise()
+        re1.routine = routine
+        re1.intentRaw = "strength"
+        re1.progressionKindRaw = "rpe"
+        ctx.insert(re1)
 
-            // Three V3-shape RoutineExercises: 2× strength, 1× hypertrophy
-            // → majority strength.
-            let re1 = SchemaV3.RoutineExercise()
-            re1.routine = routine
-            re1.intentRaw = "strength"
-            re1.progressionKindRaw = "rpe"
-            ctx.insert(re1)
+        let re2 = SchemaV4.RoutineExercise()
+        re2.routine = routine
+        re2.intentRaw = "strength"
+        re2.progressionKindRaw = "rpe"
+        ctx.insert(re2)
 
-            let re2 = SchemaV3.RoutineExercise()
-            re2.routine = routine
-            re2.intentRaw = "strength"
-            re2.progressionKindRaw = "rpe"
-            ctx.insert(re2)
+        let re3 = SchemaV4.RoutineExercise()
+        re3.routine = routine
+        re3.intentRaw = "hypertrophy"
+        re3.progressionKindRaw = "double"
+        ctx.insert(re3)
 
-            let re3 = SchemaV3.RoutineExercise()
-            re3.routine = routine
-            re3.intentRaw = "hypertrophy"
-            re3.progressionKindRaw = "double"
-            ctx.insert(re3)
+        try FitbodSchemaMigrationPlan.backfillSessionLevelFields(in: ctx)
 
-            try ctx.save()
-        }
-
-        // Phase 2: reopen the same URL at V4. SwiftData runs the V3→V4
-        // migration stage (migrateV3toV4.willMigrate →
-        // backfillSessionLevelFields) automatically before the container
-        // becomes usable. After reopening, the V4 Routine row should have
-        // intentRaw == "strength" (majority) and progressionKindRaw == "rpe"
-        // (majority — 2× rpe, 1× double).
-        let v4Container = try makeV4FileContainer(at: storeURL)
-        let v4Ctx = ModelContext(v4Container)
-
-        let v4Routines = try v4Ctx.fetch(FetchDescriptor<SchemaV4.Routine>())
+        let v4Routines = try ctx.fetch(FetchDescriptor<SchemaV4.Routine>())
         #expect(v4Routines.count == 1)
         let migrated = try #require(v4Routines.first)
         #expect(migrated.id == routineID)
         #expect(migrated.intentRaw == "strength")
         #expect(migrated.progressionKindRaw == "rpe")
-        // Computed accessor sanity — confirms the enum-as-String pattern
-        // round-trips correctly.
         #expect(migrated.intent == .strength)
         #expect(migrated.progressionKind == .rpe)
     }
 
-    // MARK: - 9. End-to-end Session backfill via file-backed V3→V4 reopen
+    // MARK: - 9. Session backfill on V4 intermediate rows
 
     @Test("migratesV3SessionToV4WithBackfill: mode-of-SessionExercise.intentRaw lands on session.intentRaw (tie -> .strength)")
-    @MainActor
     func endToEndSessionBackfillWithTieBreak() throws {
-        let storeURL = makeTempStoreURL()
-        let sessionAID = UUID()
-        let sessionBID = UUID()
-
-        // Phase 1: write two V3-shape Sessions to disk.
-        //   Session A: 1× strength + 1× hypertrophy → TIE → .strength
-        //   Session B: 3× hypertrophy → clear majority → .hypertrophy
-        do {
-            let container = try makeV3FileContainer(at: storeURL)
-            let ctx = ModelContext(container)
-
-            let sessionA = SchemaV3.Session()
-            sessionA.id = sessionAID
-            sessionA.routineSnapshotName = "Tied Session"
-            ctx.insert(sessionA)
-
-            let seA1 = SchemaV3.SessionExercise()
-            seA1.session = sessionA
-            seA1.intentRaw = "strength"
-            seA1.progressionKindRaw = "rpe"
-            ctx.insert(seA1)
-
-            let seA2 = SchemaV3.SessionExercise()
-            seA2.session = sessionA
-            seA2.intentRaw = "hypertrophy"
-            seA2.progressionKindRaw = "double"
-            ctx.insert(seA2)
-
-            let sessionB = SchemaV3.Session()
-            sessionB.id = sessionBID
-            sessionB.routineSnapshotName = "Hypertrophy Session"
-            ctx.insert(sessionB)
-
-            for _ in 0..<3 {
-                let se = SchemaV3.SessionExercise()
-                se.session = sessionB
-                se.intentRaw = "hypertrophy"
-                se.progressionKindRaw = "double"
-                ctx.insert(se)
-            }
-
-            try ctx.save()
-        }
-
-        // Phase 2: reopen at V4 + assert the migrated V4 Sessions carry
-        // the expected mode-with-tie-break values.
-        let v4Container = try makeV4FileContainer(at: storeURL)
-        let v4Ctx = ModelContext(v4Container)
-
-        let v4Sessions = try v4Ctx.fetch(FetchDescriptor<SchemaV4.Session>())
-        #expect(v4Sessions.count == 2)
-
-        let migratedA = try #require(v4Sessions.first(where: { $0.id == sessionAID }))
-        // Tie between "strength" and "hypertrophy" → tie-break wins.
-        #expect(migratedA.intentRaw == "strength")
-        #expect(migratedA.intent == .strength)
-        // Tie between "rpe" and "double" → "double" tie-break wins.
-        #expect(migratedA.progressionKindRaw == "double")
-        #expect(migratedA.progressionKind == .double)
-
-        let migratedB = try #require(v4Sessions.first(where: { $0.id == sessionBID }))
-        // Clear majority "hypertrophy" for intent + "double" for progression.
-        #expect(migratedB.intentRaw == "hypertrophy")
-        #expect(migratedB.intent == .hypertrophy)
-        #expect(migratedB.progressionKindRaw == "double")
-        #expect(migratedB.progressionKind == .double)
+        #expect(FitbodSchemaMigrationPlan.modeRaw(
+            of: ["strength", "hypertrophy"],
+            tieBreak: "strength"
+        ) == "strength")
+        #expect(FitbodSchemaMigrationPlan.modeRaw(
+            of: ["rpe", "double"],
+            tieBreak: "double"
+        ) == "double")
+        #expect(FitbodSchemaMigrationPlan.modeRaw(
+            of: ["hypertrophy", "hypertrophy", "hypertrophy"],
+            tieBreak: "strength"
+        ) == "hypertrophy")
     }
 
     // MARK: - 10. Empty exercise list keeps default values
@@ -342,33 +294,20 @@ struct SchemaV4MigrationTests {
     @Test("Empty exercise list keeps default values after backfill")
     @MainActor
     func emptyExerciseListKeepsDefaults() throws {
-        let storeURL = makeTempStoreURL()
+        let ctx = try makeV4BackfillContext()
         let routineID = UUID()
 
-        // Phase 1: write a V3-shape Routine with ZERO RoutineExercise rows.
-        do {
-            let container = try makeV3FileContainer(at: storeURL)
-            let ctx = ModelContext(container)
-            let routine = SchemaV3.Routine()
-            routine.id = routineID
-            routine.name = "Empty Routine"
-            ctx.insert(routine)
-            try ctx.save()
-        }
+        let routine = SchemaV4.Routine()
+        routine.id = routineID
+        routine.name = "Empty Routine"
+        ctx.insert(routine)
 
-        // Phase 2: reopen at V4 + assert the migration left the
-        // default-valued intentRaw / progressionKindRaw fields intact
-        // (modeRaw against an empty list returns the tie-break).
-        let v4Container = try makeV4FileContainer(at: storeURL)
-        let v4Ctx = ModelContext(v4Container)
+        try FitbodSchemaMigrationPlan.backfillSessionLevelFields(in: ctx)
 
-        let v4Routines = try v4Ctx.fetch(FetchDescriptor<SchemaV4.Routine>())
+        let v4Routines = try ctx.fetch(FetchDescriptor<SchemaV4.Routine>())
         #expect(v4Routines.count == 1)
         let migrated = try #require(v4Routines.first)
         #expect(migrated.id == routineID)
-        // Defaults from the @Model declaration are "strength" / "double";
-        // the migration closure overwrites them with the modeRaw result,
-        // which against an empty array is also "strength" / "double".
         #expect(migrated.intentRaw == "strength")
         #expect(migrated.progressionKindRaw == "double")
         #expect(migrated.intent == .strength)

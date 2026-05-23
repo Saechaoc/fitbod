@@ -25,7 +25,7 @@
 //       "Discard" button code path in the conflict alert.
 //
 //  Mirrors the test fixture shape used by `SessionFactoryTests`:
-//  per-test in-memory `ModelContainer` built against `Schema(SchemaV4.models)`
+//  per-test in-memory `ModelContainer` built against `Schema(SchemaV5.models)`
 //  + `FitbodSchemaMigrationPlan` so the production wiring is exercised
 //  literally.
 //
@@ -42,7 +42,7 @@ struct ActiveSessionConflictTests {
     // MARK: - Helpers
 
     private func makeContext() throws -> ModelContext {
-        let schema = Schema(SchemaV4.models)
+        let schema = Schema(SchemaV5.models)
         let config = ModelConfiguration(
             schema: schema,
             isStoredInMemoryOnly: true,
