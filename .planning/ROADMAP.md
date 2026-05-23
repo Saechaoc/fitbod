@@ -21,7 +21,7 @@ Granular, prescriptive workout sessions — every set in a session is intentiona
 - [x] **Phase 3: Smart Prescription & Warm-ups** — Two progression strategies (RPE autoreg, double progression), warm-up generator, plate calculator, "why this weight?" UI (completed 2026-05-23)
 - [x] **Phase 3.1: Session-Level Intent & Progression Refactor** — Move intent + progressionKind from per-exercise to Routine/Session; strip per-exercise pickers from PrescriptionEditorRow; SchemaV4 migration; rewire 25 test suites to the new model contract (completed 2026-05-23; PIVOT-01..05 satisfied)
 - [x] **Phase 4: Periodization & Blocks** — Block builder, scheduled deloads, block timeline on home, remaining two progression strategies (block-periodized, hybrid)
-- [ ] **Phase 5: Fatigue Model & Plateau Detection** — Stimulus-weighted weekly volume, MEV/MAV/MRV bars with verbs, muscle heatmap, plateau detector, fatigue-triggered deload advisory
+- [x] **Phase 5: Fatigue Model & Plateau Detection** — Stimulus-weighted weekly volume, MEV/MAV/MRV bars with verbs, muscle heatmap, plateau detector, fatigue-triggered deload advisory (completed 2026-05-23)
 - [ ] **Phase 6: Progress Views, Export & Polish** — Intent-split charts, PRs, weekly tonnage, session comparison, weekly recap, CSV/JSON export, backup/restore
 
 ---
@@ -149,7 +149,7 @@ Granular, prescriptive workout sessions — every set in a session is intentiona
   4. Plateau detector flags stalled exercises (e1RM flat ±X% over N sessions, configurable per exercise or global) with a visual stall flag on the exercise card and a suggested action (drop intensity, add volume, deload, try variation)
   5. "Consider deload" alert surfaces when fatigue/performance signals spike (e1RM drop > X% over N sessions, RPE creep at same load, missed rep targets across multiple sessions) — always as an advisory the user explicitly accepts or dismisses; scheduled block deloads are never overridden
   6. MEV / MAV / MRV thresholds per muscle and plateau detection thresholds per exercise are user-tunable; weekly recap auto-surfaces at the week boundary (muscles hit, muscles under-trained, e1RM movement, sessions logged)
-**Plans:** 5/6 plans executed
+**Plans:** 6/6 plans complete
 **Research flag:** Yes — at plan-phase time, curate the stimulus-weighting table for the ~50 main compound lifts (per-muscle weights beyond the 1.0/0.5 defaults) and confirm seeded RP-published MEV/MAV/MRV values per muscle
 
 ### Phase 6: Progress Views, Export & Polish
@@ -189,7 +189,7 @@ Granular, prescriptive workout sessions — every set in a session is intentiona
 | 2. Core Loop (Routines + Sessions) | 13/13 | Complete | 2026-05-11 |
 | 3. Smart Prescription & Warm-ups | 8/8 | Complete   | 2026-05-23 |
 | 4. Periodization & Blocks | 0/8 | Not started | - |
-| 5. Fatigue Model & Plateau Detection | 5/6 | In Progress|  |
+| 5. Fatigue Model & Plateau Detection | 6/6 | Complete   | 2026-05-23 |
 | 6. Progress Views, Export & Polish | 0/10 | Not started | - |
 
 ---

@@ -83,7 +83,7 @@ User explicitly wants a maximalist v1 (the app's stance is "comprehensive over s
 - [x] **VOL-04**: Per-muscle volume bars display current weekly sets with MEV/MAV/MRV color zones AND verb labels ("add a set" / "hold" / "near MRV — deload soon" / "over MRV — deload")
 - [x] **VOL-05**: Front and back body silhouette heatmap shows weekly volume per muscle as color intensity; muscle regions are tappable to drill into the per-muscle detail view
 - [x] **VOL-06**: Per-muscle frequency tracking (count of sessions per week in which the muscle met a minimum stimulus threshold)
-- [ ] **VOL-07**: Weekly recap auto-surfaced at the week boundary: muscles hit, muscles under-trained, e1RM movement, sessions logged
+- [x] **VOL-07**: Weekly recap auto-surfaced at the week boundary: muscles hit, muscles under-trained, e1RM movement, sessions logged
 
 ### PROG — Progress Views & Charts
 
@@ -109,7 +109,7 @@ User explicitly wants a maximalist v1 (the app's stance is "comprehensive over s
 - [x] **SET-02**: Per-exercise weight unit override
 - [x] **SET-03**: User defines plate inventory per equipment type (which plates available, microplates yes/no)
 - [x] **SET-04**: User defines smallest weight increment per equipment type (consumed by all progression rounding and warm-up ramping)
-- [ ] **SET-05**: User-tunable MEV / MAV / MRV per muscle
+- [x] **SET-05**: User-tunable MEV / MAV / MRV per muscle
 - [x] **SET-06**: User-tunable plateau detection thresholds per exercise (or global default)
 - [x] **SET-07**: User-tunable RPE-autoreg calibration window (rolling N weeks / minimum N data points)
 
@@ -244,7 +244,7 @@ Mapped to phases by `gsd-roadmapper` during roadmap creation.
 | VOL-04 | Phase 5 | Complete |
 | VOL-05 | Phase 5 | Complete |
 | VOL-06 | Phase 5 | Complete |
-| VOL-07 | Phase 5 | Pending |
+| VOL-07 | Phase 5 | Complete |
 | PROG-01 | Phase 6 | Pending |
 | PROG-02 | Phase 6 | Pending |
 | PROG-03 | Phase 6 | Pending |
@@ -261,7 +261,7 @@ Mapped to phases by `gsd-roadmapper` during roadmap creation.
 | SET-02 | Phase 3 | Complete |
 | SET-03 | Phase 3 | Complete |
 | SET-04 | Phase 3 | Complete |
-| SET-05 | Phase 5 | Pending |
+| SET-05 | Phase 5 | Complete |
 | SET-06 | Phase 5 | Complete |
 | SET-07 | Phase 3 | Complete |
 | FOUND-01 | Phase 1 | Complete (plan 01-02, commit 28795c8) |
