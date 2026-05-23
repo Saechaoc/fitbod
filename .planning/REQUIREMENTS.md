@@ -224,11 +224,11 @@ Mapped to phases by `gsd-roadmapper` during roadmap creation.
 | PRES-08 | Phase 3 | Complete |
 | PRES-09 | Phase 3 | Complete |
 | PRES-10 | Phase 3 | Complete |
-| PIVOT-01 | Phase 3.1 | Partial (Plan 02 added Routine.intentRaw/progressionKindRaw fields + computed accessors; Routine read-sites repair in Plans 03-05) |
-| PIVOT-02 | Phase 3.1 | Partial (Plan 02 added Session.intentRaw/progressionKindRaw fields + #Index + computed accessors + V3→V4 backfill writes; Session snapshot in Plan 03; Session read-sites repair in Plans 06-07) |
-| PIVOT-03 | Phase 3.1 | Partial (Plan 02 removed per-exercise fields + activated V3→V4 mode-of-children backfill; per-exercise read-sites repair in Plans 03-07) |
+| PIVOT-01 | Phase 3.1 | Partial (Plan 02 added Routine.intentRaw/progressionKindRaw fields + computed accessors; Plan 03 added routine-level write in RoutineDuplicator + deleted RE-level writes; Routine read-sites still to repair in Plans 04 + 05) |
+| PIVOT-02 | Phase 3.1 | Partial (Plan 02 added Session.intentRaw/progressionKindRaw fields + #Index + computed accessors + V3→V4 backfill writes; Plan 03 landed the SessionFactory snapshot block + D-14 hoisted strategy + read-site repair in AddUnplannedExerciseButton + SwapExerciseSheet; remaining Session read-sites repair in Plan 06 + Plan 07) |
+| PIVOT-03 | Phase 3.1 | Partial (Plan 02 removed per-exercise fields + activated V3→V4 mode-of-children backfill; Plan 03 closed RoutineDuplicator + SessionFactory + AddUnplannedExerciseButton + SwapExerciseSheet per-exercise read-sites; remaining per-exercise read-sites repair in Plans 04 + 05 + 07) |
 | PIVOT-04 | Phase 3.1 | Pending (Plan 04 + Plan 05) |
-| PIVOT-05 | Phase 3.1 | Pending (Plan 07 + Plan 08) |
+| PIVOT-05 | Phase 3.1 | Partial (Plan 03 closed BLOCKER 2 — SessionFactory.fetchHistoryPoints + lastSessionWorkingReps internal-static helpers now source intent from the parent Session via the SessionExercise.session relation; remaining read-sites repair in Plan 07 + test rewires in Plan 08) |
 | BLOCK-01 | Phase 4 | Pending |
 | BLOCK-02 | Phase 4 | Pending |
 | BLOCK-03 | Phase 4 | Pending |
