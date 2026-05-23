@@ -126,7 +126,7 @@ public struct PlateStackDisclosure: View {
         VStack(spacing: 2) {
             Rectangle()
                 .fill(plateColor(weight: weight))
-                .frame(width: plateWidth(weight: weight), height: 24)
+                .frame(width: plateWidth(weight), height: 24)
 
             Text(String(format: "%g", weight))
                 .font(.caption)
