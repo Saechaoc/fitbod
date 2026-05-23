@@ -91,4 +91,38 @@ struct PrescriptionExplanationTests {
         )
         #expect(exp.range == nil)
     }
+
+    // MARK: - Phase 3.1 (PIVOT-04 / D-12)
+
+    @Test("sessionIntent default is nil; setting it round-trips")
+    func sessionIntentDefaultIsNilAndSettingRoundTrips() throws {
+        // Default-constructed PrescriptionExplanation carries nil sessionIntent
+        // (the field is additive — pre-3.1 strategies that don't thread it
+        // through end up at nil; WhyThisWeightSheet falls back to the
+        // unprefixed Phase 3 status copy).
+        let defaultExp = PrescriptionExplanation(
+            formulaName: "Double progression",
+            roundedWeight: 100.0,
+            roundedLine: "→ 100 kg",
+            status: .notApplicable
+        )
+        #expect(defaultExp.sessionIntent == nil)
+
+        // When the caller (SessionFactory / SessionExerciseCard) sets it from
+        // session.intent, the value sticks for WhyThisWeightSheet to read.
+        let explicitExp = PrescriptionExplanation(
+            formulaName: "RPE autoregulation",
+            roundedWeight: 107.5,
+            roundedLine: "→ 107.5 kg",
+            status: .calibrating(current: 4, threshold: 10),
+            sessionIntent: .strength
+        )
+        #expect(explicitExp.sessionIntent == .strength)
+
+        // The field is also mutable post-init (the caller assigns it after
+        // the strategy returns its computed explanation).
+        var mutated = defaultExp
+        mutated.sessionIntent = .hypertrophy
+        #expect(mutated.sessionIntent == .hypertrophy)
+    }
 }

@@ -33,7 +33,7 @@ struct ManualOverrideTests {
     // MARK: - Helpers
 
     private func makeContext() throws -> ModelContext {
-        let schema = Schema(SchemaV3.models)
+        let schema = Schema(SchemaV4.models)
         let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
         let container = try ModelContainer(
             for: schema,
@@ -58,9 +58,14 @@ struct ManualOverrideTests {
         ex.smallestIncrement = 2.5
         ctx.insert(ex)
 
+        // Phase 3.1: intent lives on the parent Session now (PIVOT-02).
+        let session = Session()
+        session.intentRaw = Intent.strength.rawValue
+        ctx.insert(session)
+
         let se = SessionExercise()
+        se.session = session
         se.exercise = ex
-        se.intentRaw = Intent.strength.rawValue
         se.prescribedWeight = 100.0
         ctx.insert(se)
 
@@ -101,9 +106,14 @@ struct ManualOverrideTests {
         )
         ctx.insert(ex)
 
+        // Phase 3.1: intent lives on the parent Session now (PIVOT-02).
+        let session = Session()
+        session.intentRaw = Intent.strength.rawValue
+        ctx.insert(session)
+
         let se = SessionExercise()
+        se.session = session
         se.exercise = ex
-        se.intentRaw = Intent.strength.rawValue
         se.prescribedWeight = 60.0
         ctx.insert(se)
 
@@ -148,14 +158,17 @@ struct ManualOverrideTests {
         let priorSession = Session()
         priorSession.startedAt = Date(timeIntervalSinceNow: -86400)
         priorSession.completedAt = Date(timeIntervalSinceNow: -83600)
+        // Phase 3.1: intent + progression live on the parent Session now
+        // (PIVOT-02 / PIVOT-05). The PreviousMatchingIntent + history-fetch
+        // calls below read these fields off the session relationship.
+        priorSession.intentRaw = Intent.strength.rawValue
+        priorSession.progressionKindRaw = ProgressionKind.double.rawValue
         ctx.insert(priorSession)
 
         let priorSE = SessionExercise()
         priorSE.session = priorSession
         priorSE.exercise = ex
-        priorSE.intentRaw = Intent.strength.rawValue
         priorSE.prescribedWeight = 100.0   // the prescription
-        priorSE.progressionKindRaw = ProgressionKind.double.rawValue
         ctx.insert(priorSE)
 
         // SetEntry.weight is the actual weight logged (105 kg — user override).
@@ -229,13 +242,15 @@ struct ManualOverrideTests {
         let priorSession = Session()
         priorSession.startedAt = Date(timeIntervalSinceNow: -86400 * 14)
         priorSession.completedAt = Date(timeIntervalSinceNow: -86400 * 14 + 3600)
+        // Phase 3.1: intent + progression live on the parent Session now
+        // (PIVOT-02 / PIVOT-05).
+        priorSession.intentRaw = Intent.hypertrophy.rawValue
+        priorSession.progressionKindRaw = ProgressionKind.rpe.rawValue
         ctx.insert(priorSession)
 
         let priorSE = SessionExercise()
         priorSE.session = priorSession
         priorSE.exercise = ex
-        priorSE.intentRaw = Intent.hypertrophy.rawValue
-        priorSE.progressionKindRaw = ProgressionKind.rpe.rawValue
         priorSE.targetRepsLow = 8
         priorSE.targetRepsHigh = 12
         priorSE.targetRPE = 8.0
