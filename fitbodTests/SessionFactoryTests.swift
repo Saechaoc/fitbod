@@ -25,10 +25,13 @@
 //    8. blockReferenceCopiedFromRoutine — optional `Block` link
 //       survives the snapshot.
 //
-//  Each test builds its own ModelContainer via Schema(SchemaV2.models)
+//  Each test builds its own ModelContainer via Schema(SchemaV4.models)
 //  + FitbodSchemaMigrationPlan to exercise the production wiring
 //  literally (mirroring the SchemaV2MigrationTests pattern from
-//  plan 00-02).
+//  plan 00-02). Phase 3.1 (PIVOT-01..05): intent + progression are
+//  per-Routine (not per-RoutineExercise) and snapshot onto Session
+//  (not SessionExercise) at SessionFactory.start. Tests 1 + 2 assert
+//  the session-level snapshot semantics directly.
 //
 
 import Foundation
@@ -43,7 +46,7 @@ struct SessionFactoryTests {
     // MARK: - Helpers
 
     private func makeContext() throws -> ModelContext {
-        let schema = Schema(SchemaV2.models)
+        let schema = Schema(SchemaV4.models)
         let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
         let container = try ModelContainer(
             for: schema,
@@ -75,13 +78,17 @@ struct SessionFactoryTests {
 
         let routine = Routine()
         routine.name = "Push Day"
+        // Phase 3.1 (PIVOT-01): intent + progression are now per-Routine.
+        // Tests 1 + 2 assert these snapshot onto Session at
+        // SessionFactory.start time (PIVOT-02 / D-14).
+        routine.intentRaw = Intent.strength.rawValue
+        routine.progressionKindRaw = ProgressionKind.rpe.rawValue
         ctx.insert(routine)
 
         let re1 = RoutineExercise()
         re1.routine = routine
         re1.exercise = ex1
         re1.orderIndex = 0
-        re1.intentRaw = Intent.strength.rawValue
         re1.targetSets = 3
         re1.targetRepsLow = 5
         re1.targetRepsHigh = 5
@@ -89,14 +96,12 @@ struct SessionFactoryTests {
         re1.targetRIR = 2
         re1.prescribedRestSeconds = 180
         re1.tempo = "3-1-1-0"
-        re1.progressionKindRaw = ProgressionKind.rpe.rawValue
         ctx.insert(re1)
 
         let re2 = RoutineExercise()
         re2.routine = routine
         re2.exercise = ex2
         re2.orderIndex = 1
-        re2.intentRaw = Intent.hypertrophy.rawValue
         re2.targetSets = 4
         re2.targetRepsLow = 8
         re2.targetRepsHigh = 12
@@ -104,7 +109,6 @@ struct SessionFactoryTests {
         re2.targetRIR = nil
         re2.prescribedRestSeconds = 90
         re2.tempo = nil
-        re2.progressionKindRaw = ProgressionKind.double.rawValue
         ctx.insert(re2)
 
         try ctx.save()
@@ -119,11 +123,16 @@ struct SessionFactoryTests {
         let routine = try makeFixtureRoutine(ctx: ctx)
 
         let session = try SessionFactory.start(routine: routine, on: .now, context: ctx)
+
+        // Phase 3.1 (PIVOT-02 / D-14): intent + progression snapshot from
+        // Routine onto Session (one snapshot per session, not per-exercise).
+        #expect(session.intentRaw == Intent.strength.rawValue)
+        #expect(session.progressionKindRaw == ProgressionKind.rpe.rawValue)
+
         let ses = (session.exercises ?? []).sorted { $0.orderIndex < $1.orderIndex }
         #expect(ses.count == 2)
 
-        // Exercise 1 — strength / 3 sets / 5x5 @ RPE 8.5 / 180s rest / RPE prog
-        #expect(ses[0].intentRaw == Intent.strength.rawValue)
+        // Exercise 1 — 3 sets / 5x5 @ RPE 8.5 / 180s rest
         #expect(ses[0].targetSets == 3)
         #expect(ses[0].targetRepsLow == 5)
         #expect(ses[0].targetRepsHigh == 5)
@@ -131,10 +140,8 @@ struct SessionFactoryTests {
         #expect(ses[0].targetRIR == 2)
         #expect(ses[0].prescribedRestSeconds == 180)
         #expect(ses[0].tempo == "3-1-1-0")
-        #expect(ses[0].progressionKindRaw == ProgressionKind.rpe.rawValue)
 
-        // Exercise 2 — hypertrophy / 4 sets / 8-12 @ RPE 8 / 90s rest / double prog
-        #expect(ses[1].intentRaw == Intent.hypertrophy.rawValue)
+        // Exercise 2 — 4 sets / 8-12 @ RPE 8 / 90s rest
         #expect(ses[1].targetSets == 4)
         #expect(ses[1].targetRepsLow == 8)
         #expect(ses[1].targetRepsHigh == 12)
@@ -142,7 +149,6 @@ struct SessionFactoryTests {
         #expect(ses[1].targetRIR == nil)
         #expect(ses[1].prescribedRestSeconds == 90)
         #expect(ses[1].tempo == nil)
-        #expect(ses[1].progressionKindRaw == ProgressionKind.double.rawValue)
     }
 
     // MARK: - 2. snapshot is immutable to template edits (ROUTINE-07 / PITFALLS-doc #1)
@@ -155,21 +161,32 @@ struct SessionFactoryTests {
         let session = try SessionFactory.start(routine: routine, on: .now, context: ctx)
 
         // Mutate the routine AFTER session-start across every prescription
-        // field on the first RoutineExercise.
+        // field on the first RoutineExercise — AND mutate the new
+        // Phase 3.1 session-level fields on the Routine itself
+        // (PIVOT-02 snapshot semantics extend to intent + progression).
         let re1 = (routine.exercises ?? []).first { $0.orderIndex == 0 }!
         re1.targetSets = 99
         re1.targetRepsLow = 99
         re1.targetRepsHigh = 99
         re1.targetRPE = 9.9
         re1.targetRIR = 999
-        re1.intentRaw = Intent.power.rawValue
         re1.prescribedRestSeconds = 999
         re1.tempo = "X-X-X-X"
-        re1.progressionKindRaw = ProgressionKind.hybrid.rawValue
+        // Phase 3.1: intent + progression now live on the parent Routine.
+        // Mutating them MUST NOT change the snapshot on the started Session.
+        routine.intentRaw = Intent.power.rawValue
+        routine.progressionKindRaw = ProgressionKind.hybrid.rawValue
         try ctx.save()
 
+        // Phase 3.1: session-level snapshot fields stay frozen.
+        #expect(session.intentRaw == Intent.strength.rawValue,
+            "Session.intentRaw must NOT track post-start Routine mutations")
+        #expect(session.progressionKindRaw == ProgressionKind.rpe.rawValue,
+            "Session.progressionKindRaw must NOT track post-start Routine mutations")
+
         // Re-fetch the SessionExercise belonging to THIS session at
-        // orderIndex 0 and verify every snapshot field is unchanged.
+        // orderIndex 0 and verify every per-exercise snapshot field is
+        // unchanged.
         let sessionID = session.id
         let descriptor = FetchDescriptor<SessionExercise>(
             predicate: #Predicate { $0.orderIndex == 0 }
@@ -180,10 +197,8 @@ struct SessionFactoryTests {
         #expect(snapshot.targetRepsHigh == 5)
         #expect(snapshot.targetRPE == 8.5)
         #expect(snapshot.targetRIR == 2)
-        #expect(snapshot.intentRaw == Intent.strength.rawValue)
         #expect(snapshot.prescribedRestSeconds == 180)
         #expect(snapshot.tempo == "3-1-1-0")
-        #expect(snapshot.progressionKindRaw == ProgressionKind.rpe.rawValue)
     }
 
     // MARK: - 3. session ↔ routine link (sourceRoutineID + routineSnapshotName)

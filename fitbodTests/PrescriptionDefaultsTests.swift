@@ -6,13 +6,19 @@
 //  (ROUTINE-09 + CONTEXT.md Area 1). Four `@Test` functions:
 //
 //    1. compoundBarbellStrength — Bench Press (compound + barbell) →
-//       strength intent + 4-6 reps + 180s rest
+//       4-6 reps + 180s rest
 //    2. compoundDumbbellHypertrophy — DB Press (compound + dumbbell) →
-//       hypertrophy intent + 8-12 reps + 180s rest
+//       8-12 reps + 180s rest
 //    3. isolationHypertrophy — Curl (isolation + dumbbell) →
-//       hypertrophy intent + 8-12 reps + 90s rest
+//       8-12 reps + 90s rest
 //    4. restMatchesMechanic — sweep every Mechanic / Equipment
 //       combination and verify the rest-time rule holds
+//
+//  Phase 3.1 (PIVOT-04 / D-10): intent + progressionKind no longer live
+//  on `RoutineExerciseDraft` (the per-exercise editor stripped those
+//  pickers; intent + progression are now per-Routine). The rep-range +
+//  rest-time heuristics survive because they still vary by equipment +
+//  mechanic; the intent/progression assertions are removed.
 //
 
 import Foundation
@@ -23,7 +29,7 @@ import Testing
 @Suite("PrescriptionDefaults (ROUTINE-09 + CONTEXT.md Area 1)")
 struct PrescriptionDefaultsTests {
 
-    @Test("compoundBarbellStrength — Bench Press → strength + 4-6 reps + 180s rest")
+    @Test("compoundBarbellStrength — Bench Press → 4-6 reps + 180s rest")
     func compoundBarbellStrength() {
         let bench = Exercise(
             name: "Barbell Bench Press",
@@ -33,15 +39,16 @@ struct PrescriptionDefaultsTests {
         )
         let draft = RoutineExerciseDraft()
         PrescriptionDefaults.apply(to: draft, from: bench)
-        #expect(draft.intent == .strength)
+        // Phase 3.1 (PIVOT-04): intent + progressionKind no longer live
+        // on the per-exercise draft. RPE + rep range + rest time still
+        // get the compound-barbell-strength shape from the heuristic.
         #expect(draft.targetRepsLow == 4)
         #expect(draft.targetRepsHigh == 6)
         #expect(draft.targetRPE == 8.0)
         #expect(draft.prescribedRestSeconds == 180)
-        #expect(draft.progressionKind == .double)
     }
 
-    @Test("compoundDumbbellHypertrophy — DB Press → hypertrophy + 8-12 reps + 180s rest")
+    @Test("compoundDumbbellHypertrophy — DB Press → 8-12 reps + 180s rest")
     func compoundDumbbellHypertrophy() {
         let dbPress = Exercise(
             name: "Dumbbell Press",
@@ -51,15 +58,14 @@ struct PrescriptionDefaultsTests {
         )
         let draft = RoutineExerciseDraft()
         PrescriptionDefaults.apply(to: draft, from: dbPress)
-        // Compound non-barbell → hypertrophy default
-        #expect(draft.intent == .hypertrophy)
+        // Compound non-barbell → hypertrophy-shaped rep range.
         #expect(draft.targetRepsLow == 8)
         #expect(draft.targetRepsHigh == 12)
-        // Still compound, so 180s rest
+        // Still compound, so 180s rest.
         #expect(draft.prescribedRestSeconds == 180)
     }
 
-    @Test("isolationHypertrophy — Curl → hypertrophy + 8-12 reps + 90s rest")
+    @Test("isolationHypertrophy — Curl → 8-12 reps + 90s rest")
     func isolationHypertrophy() {
         let curl = Exercise(
             name: "Dumbbell Curl",
@@ -69,7 +75,6 @@ struct PrescriptionDefaultsTests {
         )
         let draft = RoutineExerciseDraft()
         PrescriptionDefaults.apply(to: draft, from: curl)
-        #expect(draft.intent == .hypertrophy)
         #expect(draft.targetRepsLow == 8)
         #expect(draft.targetRepsHigh == 12)
         #expect(draft.prescribedRestSeconds == 90)

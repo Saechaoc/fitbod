@@ -33,7 +33,7 @@ struct AddUnplannedExerciseTests {
     // MARK: - Helpers
 
     private func makeContext() throws -> ModelContext {
-        let schema = Schema(SchemaV2.models)
+        let schema = Schema(SchemaV4.models)
         let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
         let container = try ModelContainer(
             for: schema,
@@ -46,6 +46,12 @@ struct AddUnplannedExerciseTests {
     /// Mirrors the production `AddUnplannedExerciseButton.append(exercise:)`
     /// — kept as a hermetic copy so the test exercises the semantic
     /// contract without instantiating the SwiftUI button.
+    ///
+    /// Phase 3.1 (PIVOT-02 / PIVOT-05): intent is session-level. The
+    /// unplanned exercise inherits the parent Session's intent through
+    /// the session relationship; the per-exercise default helper
+    /// (`defaultIntent(for:)`) is gone. PreviousMatchingIntent reads
+    /// intentRaw from `session.intentRaw`.
     private func appendUnplanned(
         exercise: Exercise,
         to session: Session,
@@ -55,7 +61,6 @@ struct AddUnplannedExerciseTests {
         se.session = session
         se.exercise = exercise
         se.orderIndex = (session.exercises ?? []).count
-        se.intentRaw = defaultIntent(for: exercise).rawValue
         se.targetSets = 3
         se.targetRepsLow = 8
         se.targetRepsHigh = 12
@@ -64,7 +69,7 @@ struct AddUnplannedExerciseTests {
 
         let hint = PreviousMatchingIntent.fetchTopWorkingSet(
             exerciseID: exercise.id,
-            intentRaw: se.intentRaw,
+            intentRaw: session.intentRaw,
             context: context
         )?.weight ?? 0
         for i in 0..<3 {
@@ -79,13 +84,6 @@ struct AddUnplannedExerciseTests {
             context.insert(entry)
         }
         try? context.save()
-    }
-
-    private func defaultIntent(for exercise: Exercise) -> Intent {
-        if exercise.mechanic == .compound && exercise.equipment == .barbell {
-            return .strength
-        }
-        return .hypertrophy
     }
 
     /// Active session + routine with one existing exercise. Returns the
@@ -113,13 +111,16 @@ struct AddUnplannedExerciseTests {
 
         let routine = Routine()
         routine.name = "Push"
+        // Phase 3.1 (PIVOT-01): intent + progression live on Routine.
+        // Snapshots onto Session at SessionFactory.start.
+        routine.intentRaw = Intent.strength.rawValue
+        routine.progressionKindRaw = ProgressionKind.double.rawValue
         ctx.insert(routine)
 
         let re = RoutineExercise()
         re.routine = routine
         re.exercise = bench
         re.orderIndex = 0
-        re.intentRaw = Intent.strength.rawValue
         re.targetSets = 3
         ctx.insert(re)
         try ctx.save()
@@ -176,18 +177,19 @@ struct AddUnplannedExerciseTests {
         let ctx = try makeContext()
         let fx = try makeFixture(ctx: ctx)
 
-        // Insert a prior hypertrophy curl session at 30 lb. The append's
-        // computed default intent for a dumbbell isolation curl is
-        // hypertrophy, so the matching-intent hint should surface.
+        // Phase 3.1 (PIVOT-02): the active session inherits .strength
+        // from the fixture's routine. The unplanned curl looks up its
+        // hint via session.intentRaw (.strength) — so seed a prior
+        // STRENGTH curl session for the hint to surface.
         let priorSession = Session()
         priorSession.startedAt = .now.addingTimeInterval(-7 * 24 * 60 * 60)
         priorSession.completedAt = priorSession.startedAt.addingTimeInterval(30 * 60)
         priorSession.routineSnapshotName = "Past Pull"
+        priorSession.intentRaw = Intent.strength.rawValue
         ctx.insert(priorSession)
         let priorSE = SessionExercise()
         priorSE.session = priorSession
         priorSE.exercise = fx.curl
-        priorSE.intentRaw = Intent.hypertrophy.rawValue
         ctx.insert(priorSE)
         let priorSet = SetEntry()
         priorSet.sessionExercise = priorSE
@@ -214,9 +216,10 @@ struct AddUnplannedExerciseTests {
         #expect(sets.allSatisfy { $0.isComplete == false })
         #expect(sets.allSatisfy { $0.setTypeRaw == SetType.working.rawValue })
 
-        // Defaulted prescription on the new SessionExercise: hypertrophy
-        // intent + 90s rest (dumbbell isolation) + 8-12 reps.
-        #expect(newSE.intentRaw == Intent.hypertrophy.rawValue)
+        // Defaulted prescription on the new SessionExercise: 90s rest
+        // (dumbbell isolation) + 8-12 reps. Intent + progression are
+        // session-level now (PIVOT-02) — assert via the parent Session.
+        #expect(newSE.session?.intentRaw == Intent.strength.rawValue)
         #expect(newSE.targetSets == 3)
         #expect(newSE.targetRepsLow == 8)
         #expect(newSE.targetRepsHigh == 12)

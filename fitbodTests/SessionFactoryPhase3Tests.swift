@@ -11,8 +11,14 @@
 //    4. secondQualifyingCompoundDoesNotGetWarmup — WARM-01 single-ramp
 //    5. warmupSkippedWhenWarmupConfigDisabled — WARM-03
 //
-//  Each test builds its own in-memory ModelContainer via Schema(SchemaV3.models)
+//  Each test builds its own in-memory ModelContainer via Schema(SchemaV4.models)
 //  + FitbodSchemaMigrationPlan (mirroring SessionFactoryTests.swift).
+//
+//  Phase 3.1 (PIVOT-01..05): intent + progression have hoisted from
+//  per-RoutineExercise / per-SessionExercise to per-Routine / per-Session.
+//  Fixture helpers set those fields on the parent Routine (and on prior
+//  Sessions when seeding history). SessionFactory snapshots them onto
+//  Session at start time; the per-exercise rows no longer carry the fields.
 //
 //  Fixture helpers build minimal Routine + RoutineExercise graphs and seed
 //  a PlateInventory row so prescribe() has plate math available without
@@ -31,7 +37,7 @@ struct SessionFactoryPhase3Tests {
     // MARK: - Helpers
 
     private func makeContext() throws -> ModelContext {
-        let schema = Schema(SchemaV3.models)
+        let schema = Schema(SchemaV4.models)
         let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
         let container = try ModelContainer(
             for: schema,
@@ -71,18 +77,19 @@ struct SessionFactoryPhase3Tests {
 
         let routine = Routine()
         routine.name = "Push Day"
+        // Phase 3.1 (PIVOT-01): intent + progression live on Routine.
+        routine.intentRaw = Intent.strength.rawValue
+        routine.progressionKindRaw = ProgressionKind.double.rawValue
         ctx.insert(routine)
 
         let re = RoutineExercise()
         re.routine = routine
         re.exercise = ex
         re.orderIndex = 0
-        re.intentRaw = Intent.strength.rawValue
         re.targetSets = 3
         re.targetRepsLow = 5
         re.targetRepsHigh = 5
         re.targetRPE = nil              // double progression doesn't use RPE
-        re.progressionKindRaw = ProgressionKind.double.rawValue
         ctx.insert(re)
 
         try ctx.save()
@@ -130,30 +137,33 @@ struct SessionFactoryPhase3Tests {
 
         let routine = Routine()
         routine.name = "Leg Day"
+        // Phase 3.1: intent + progression live on Routine.
+        routine.intentRaw = Intent.strength.rawValue
+        routine.progressionKindRaw = ProgressionKind.double.rawValue
         ctx.insert(routine)
 
         let re = RoutineExercise()
         re.routine = routine
         re.exercise = ex
         re.orderIndex = 0
-        re.intentRaw = Intent.strength.rawValue
         re.targetSets = 3
         re.targetRepsLow = 5
         re.targetRepsHigh = 5
-        re.progressionKindRaw = ProgressionKind.double.rawValue
         ctx.insert(re)
 
         // Seed a prior completed session so lastSessionWeight > barWeight × 1.5.
         let priorSession = Session()
         priorSession.startedAt = Date(timeIntervalSinceNow: -86400)
         priorSession.completedAt = Date(timeIntervalSinceNow: -83600)
+        // Phase 3.1: intent + progression on the prior session live on
+        // the Session row (the lookup helpers post-filter on session.intentRaw).
+        priorSession.intentRaw = Intent.strength.rawValue
+        priorSession.progressionKindRaw = ProgressionKind.double.rawValue
         ctx.insert(priorSession)
 
         let priorSE = SessionExercise()
         priorSE.session = priorSession
         priorSE.exercise = ex
-        priorSE.intentRaw = Intent.strength.rawValue
-        priorSE.progressionKindRaw = ProgressionKind.double.rawValue
         ctx.insert(priorSE)
 
         // Prior working set at 100 kg — well above 1.5 × 20 = 30 kg threshold.
@@ -218,29 +228,30 @@ struct SessionFactoryPhase3Tests {
 
         let routine = Routine()
         routine.name = "Pull Day"
+        // Phase 3.1: intent + progression live on Routine.
+        routine.intentRaw = Intent.strength.rawValue
+        routine.progressionKindRaw = ProgressionKind.double.rawValue
         ctx.insert(routine)
 
         let re = RoutineExercise()
         re.routine = routine
         re.exercise = ex
         re.orderIndex = 0
-        re.intentRaw = Intent.strength.rawValue
         re.targetSets = 3
         re.targetRepsLow = 5
         re.targetRepsHigh = 5
-        re.progressionKindRaw = ProgressionKind.double.rawValue
         ctx.insert(re)
 
         // Seed prior session for warmup threshold.
         let priorSession = Session()
         priorSession.startedAt = Date(timeIntervalSinceNow: -86400)
         priorSession.completedAt = Date(timeIntervalSinceNow: -83600)
+        priorSession.intentRaw = Intent.strength.rawValue
+        priorSession.progressionKindRaw = ProgressionKind.double.rawValue
         ctx.insert(priorSession)
         let priorSE = SessionExercise()
         priorSE.session = priorSession
         priorSE.exercise = ex
-        priorSE.intentRaw = Intent.strength.rawValue
-        priorSE.progressionKindRaw = ProgressionKind.double.rawValue
         ctx.insert(priorSE)
         let priorSet = SetEntry()
         priorSet.sessionExercise = priorSE
@@ -304,28 +315,29 @@ struct SessionFactoryPhase3Tests {
 
         let routine = Routine()
         routine.name = "Push Day"
+        // Phase 3.1: intent + progression at the Routine level apply to
+        // both RoutineExercise rows. Same outcome as the pre-3.1 per-RE
+        // shape because both RE rows previously carried strength + double.
+        routine.intentRaw = Intent.strength.rawValue
+        routine.progressionKindRaw = ProgressionKind.double.rawValue
         ctx.insert(routine)
 
         let re1 = RoutineExercise()
         re1.routine = routine
         re1.exercise = ex1
         re1.orderIndex = 0
-        re1.intentRaw = Intent.strength.rawValue
         re1.targetSets = 3
         re1.targetRepsLow = 5
         re1.targetRepsHigh = 5
-        re1.progressionKindRaw = ProgressionKind.double.rawValue
         ctx.insert(re1)
 
         let re2 = RoutineExercise()
         re2.routine = routine
         re2.exercise = ex2
         re2.orderIndex = 1
-        re2.intentRaw = Intent.strength.rawValue
         re2.targetSets = 3
         re2.targetRepsLow = 5
         re2.targetRepsHigh = 5
-        re2.progressionKindRaw = ProgressionKind.double.rawValue
         ctx.insert(re2)
 
         // Seed prior sessions for both exercises so warmup threshold is exceeded.
@@ -333,12 +345,13 @@ struct SessionFactoryPhase3Tests {
             let priorSession = Session()
             priorSession.startedAt = Date(timeIntervalSinceNow: -86400)
             priorSession.completedAt = Date(timeIntervalSinceNow: -83600)
+            // Phase 3.1: intent + progression on the prior session level.
+            priorSession.intentRaw = Intent.strength.rawValue
+            priorSession.progressionKindRaw = ProgressionKind.double.rawValue
             ctx.insert(priorSession)
             let priorSE = SessionExercise()
             priorSE.session = priorSession
             priorSE.exercise = exercise
-            priorSE.intentRaw = Intent.strength.rawValue
-            priorSE.progressionKindRaw = ProgressionKind.double.rawValue
             ctx.insert(priorSE)
             let priorSet = SetEntry()
             priorSet.sessionExercise = priorSE
@@ -391,17 +404,17 @@ struct SessionFactoryPhase3Tests {
 
         let routine = Routine()
         routine.name = "Push Day"
+        routine.intentRaw = Intent.strength.rawValue
+        routine.progressionKindRaw = ProgressionKind.double.rawValue
         ctx.insert(routine)
 
         let re = RoutineExercise()
         re.routine = routine
         re.exercise = ex
         re.orderIndex = 0
-        re.intentRaw = Intent.strength.rawValue
         re.targetSets = 3
         re.targetRepsLow = 5
         re.targetRepsHigh = 5
-        re.progressionKindRaw = ProgressionKind.double.rawValue
         // WARM-03: explicitly disable warm-up for this exercise.
         re.warmupOverride = WarmupConfig(enabled: false)
         ctx.insert(re)
@@ -410,12 +423,12 @@ struct SessionFactoryPhase3Tests {
         let priorSession = Session()
         priorSession.startedAt = Date(timeIntervalSinceNow: -86400)
         priorSession.completedAt = Date(timeIntervalSinceNow: -83600)
+        priorSession.intentRaw = Intent.strength.rawValue
+        priorSession.progressionKindRaw = ProgressionKind.double.rawValue
         ctx.insert(priorSession)
         let priorSE = SessionExercise()
         priorSE.session = priorSession
         priorSE.exercise = ex
-        priorSE.intentRaw = Intent.strength.rawValue
-        priorSE.progressionKindRaw = ProgressionKind.double.rawValue
         ctx.insert(priorSE)
         let priorSet = SetEntry()
         priorSet.sessionExercise = priorSE

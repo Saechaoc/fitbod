@@ -33,7 +33,7 @@ struct SetRowCommitTests {
     // MARK: - Helpers
 
     private func makeContext() throws -> ModelContext {
-        let schema = Schema(SchemaV2.models)
+        let schema = Schema(SchemaV4.models)
         let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
         let container = try ModelContainer(
             for: schema,
@@ -72,11 +72,12 @@ struct SetRowCommitTests {
         let session = Session()
         session.startedAt = .now
         session.routineSnapshotName = "Test"
+        // Phase 3.1 (PIVOT-02): intent lives on the parent Session now.
+        session.intentRaw = Intent.strength.rawValue
         ctx.insert(session)
         let se = SessionExercise()
         se.session = session
         se.exercise = ex
-        se.intentRaw = Intent.strength.rawValue
         se.prescribedRestSeconds = 180
         ctx.insert(se)
         let entry = SetEntry()

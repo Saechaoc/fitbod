@@ -37,7 +37,7 @@ struct MidSessionSwapTests {
     // MARK: - Helpers
 
     private func makeContext() throws -> ModelContext {
-        let schema = Schema(SchemaV2.models)
+        let schema = Schema(SchemaV4.models)
         let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
         let container = try ModelContainer(
             for: schema,
@@ -50,6 +50,11 @@ struct MidSessionSwapTests {
     /// Mirrors the production `SwapExerciseSheet`'s onSelect closure —
     /// kept as a hermetic copy so the test exercises the semantic
     /// contract without instantiating the SwiftUI sheet view.
+    ///
+    /// Phase 3.1 (PIVOT-02 / PIVOT-05): intent is session-level. The
+    /// hint lookup reads `sessionExercise.session?.intentRaw` with the
+    /// FOUND-03 .strength default-string fallback, matching the
+    /// production SwapExerciseSheet's post-Plan-03 implementation.
     private func performSwap(
         sessionExercise: SessionExercise,
         to exercise: Exercise,
@@ -58,7 +63,7 @@ struct MidSessionSwapTests {
         sessionExercise.exercise = exercise
         let hint = PreviousMatchingIntent.fetchTopWorkingSet(
             exerciseID: exercise.id,
-            intentRaw: sessionExercise.intentRaw,
+            intentRaw: sessionExercise.session?.intentRaw ?? Intent.strength.rawValue,
             context: context
         )?.weight ?? 0
         let pendingSets = (sessionExercise.sets ?? [])
@@ -101,13 +106,15 @@ struct MidSessionSwapTests {
 
         let routine = Routine()
         routine.name = "Push Day"
+        // Phase 3.1 (PIVOT-01): intent + progression live on Routine.
+        routine.intentRaw = Intent.strength.rawValue
+        routine.progressionKindRaw = ProgressionKind.double.rawValue
         ctx.insert(routine)
 
         let re = RoutineExercise()
         re.routine = routine
         re.exercise = bench
         re.orderIndex = 0
-        re.intentRaw = Intent.strength.rawValue
         re.targetSets = 3
         re.targetRepsLow = 5
         re.targetRepsHigh = 5
@@ -163,11 +170,12 @@ struct MidSessionSwapTests {
         priorSession.startedAt = .now.addingTimeInterval(-7 * 24 * 60 * 60)
         priorSession.completedAt = priorSession.startedAt.addingTimeInterval(45 * 60)
         priorSession.routineSnapshotName = "Past Push"
+        // Phase 3.1: intent is session-level on the prior session.
+        priorSession.intentRaw = Intent.strength.rawValue
         ctx.insert(priorSession)
         let priorSE = SessionExercise()
         priorSE.session = priorSession
         priorSE.exercise = fx.ohp
-        priorSE.intentRaw = Intent.strength.rawValue
         ctx.insert(priorSE)
         let priorSet = SetEntry()
         priorSet.sessionExercise = priorSE
@@ -242,7 +250,8 @@ struct MidSessionSwapTests {
 
         // Routine prescription field set stays identical to pre-swap.
         #expect(fx.routineExercise.exercise?.id == fx.bench.id)
-        #expect(fx.routineExercise.intentRaw == Intent.strength.rawValue)
+        // Phase 3.1: intent lives on the parent Routine now (PIVOT-01).
+        #expect(fx.routine.intentRaw == Intent.strength.rawValue)
         #expect(fx.routineExercise.targetSets == 3)
         #expect(fx.routineExercise.targetRepsLow == 5)
         #expect(fx.routineExercise.targetRepsHigh == 5)

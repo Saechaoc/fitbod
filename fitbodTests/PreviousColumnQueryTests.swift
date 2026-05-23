@@ -31,7 +31,7 @@ struct PreviousColumnQueryTests {
     // MARK: - Helpers
 
     private func makeContext() throws -> ModelContext {
-        let schema = Schema(SchemaV2.models)
+        let schema = Schema(SchemaV4.models)
         let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
         let container = try ModelContainer(
             for: schema,
@@ -44,7 +44,8 @@ struct PreviousColumnQueryTests {
     /// Inserts a completed `Session` with a single `SessionExercise` that
     /// owns one committed working `SetEntry`. Mirrors the fixture in
     /// `PreviousMatchingIntentTests` so the two suites stay aligned on
-    /// the canonical "prior session" shape.
+    /// the canonical "prior session" shape. Intent is set on the parent
+    /// Session per PIVOT-02 / PIVOT-05 (was on SessionExercise pre-3.1).
     @discardableResult
     private func insertPriorSession(
         ctx: ModelContext,
@@ -58,11 +59,11 @@ struct PreviousColumnQueryTests {
         session.startedAt = .now.addingTimeInterval(-7 * 24 * 60 * 60) // 7 days ago
         session.completedAt = session.startedAt.addingTimeInterval(45 * 60)
         session.routineSnapshotName = "Test"
+        session.intentRaw = intentRaw
         ctx.insert(session)
         let se = SessionExercise()
         se.session = session
         se.exercise = exercise
-        se.intentRaw = intentRaw
         ctx.insert(se)
         let entry = SetEntry()
         entry.sessionExercise = se

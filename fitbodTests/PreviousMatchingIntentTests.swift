@@ -32,7 +32,7 @@ struct PreviousMatchingIntentTests {
     // MARK: - Helpers
 
     private func makeContext() throws -> ModelContext {
-        let schema = Schema(SchemaV2.models)
+        let schema = Schema(SchemaV4.models)
         let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
         let container = try ModelContainer(
             for: schema,
@@ -43,8 +43,9 @@ struct PreviousMatchingIntentTests {
     }
 
     /// Creates a completed `Session` with a single `SessionExercise`
-    /// (intent = `intentRaw`, exercise = `exercise`) containing the
-    /// provided set tuples: `(weight, reps, rpe, isWarmup, isComplete)`.
+    /// (intent = `intentRaw` set on the parent Session per PIVOT-02 /
+    /// PIVOT-05, exercise = `exercise`) containing the provided set
+    /// tuples: `(weight, reps, rpe, isWarmup, isComplete)`.
     @discardableResult
     private func makeCompletedSession(
         ctx: ModelContext,
@@ -57,12 +58,13 @@ struct PreviousMatchingIntentTests {
         session.startedAt = startedAt
         session.completedAt = startedAt.addingTimeInterval(60 * 45)
         session.routineSnapshotName = "Test"
+        // Phase 3.1 (PIVOT-02 / PIVOT-05): intent lives on Session now.
+        session.intentRaw = intentRaw
         ctx.insert(session)
 
         let se = SessionExercise()
         se.session = session
         se.exercise = exercise
-        se.intentRaw = intentRaw
         se.targetSets = sets.count
         ctx.insert(se)
 

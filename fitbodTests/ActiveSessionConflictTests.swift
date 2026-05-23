@@ -25,7 +25,7 @@
 //       "Discard" button code path in the conflict alert.
 //
 //  Mirrors the test fixture shape used by `SessionFactoryTests`:
-//  per-test in-memory `ModelContainer` built against `Schema(SchemaV2.models)`
+//  per-test in-memory `ModelContainer` built against `Schema(SchemaV4.models)`
 //  + `FitbodSchemaMigrationPlan` so the production wiring is exercised
 //  literally.
 //
@@ -42,7 +42,7 @@ struct ActiveSessionConflictTests {
     // MARK: - Helpers
 
     private func makeContext() throws -> ModelContext {
-        let schema = Schema(SchemaV2.models)
+        let schema = Schema(SchemaV4.models)
         let config = ModelConfiguration(
             schema: schema,
             isStoredInMemoryOnly: true,
@@ -62,6 +62,8 @@ struct ActiveSessionConflictTests {
     private func makeRoutine(ctx: ModelContext, name: String = "Test") throws -> Routine {
         let routine = Routine()
         routine.name = name
+        // Phase 3.1 (PIVOT-01): intent + progression live on Routine.
+        routine.intentRaw = Intent.strength.rawValue
         ctx.insert(routine)
 
         let ex = Exercise.previewSample(
@@ -79,7 +81,6 @@ struct ActiveSessionConflictTests {
         re.targetSets = 3
         re.targetRepsLow = 5
         re.targetRepsHigh = 5
-        re.intentRaw = Intent.strength.rawValue
         ctx.insert(re)
 
         try ctx.save()
