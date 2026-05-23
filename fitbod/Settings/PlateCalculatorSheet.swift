@@ -117,7 +117,7 @@ public struct PlateCalculatorSheet: View {
             .onAppear {
                 // Initialize bar weight text from inventory on first appear.
                 if barWeightText.isEmpty {
-                    barWeightText = "\(inventory.barWeight, specifier: "%g")"
+                    barWeightText = String(format: "%g", inventory.barWeight)
                 }
             }
         }
@@ -159,14 +159,14 @@ public struct PlateCalculatorSheet: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
                 Spacer()
-                Text("\(stack.totalWeight, specifier: "%g")")
+                Text(String(format: "%g", stack.totalWeight))
                     .font(.body)
             }
 
             // Per-plate breakdown (text summary for accessibility + clarity)
             if !stack.platesPerSide.isEmpty {
                 let summary = stack.platesPerSide
-                    .map { "\($0.count)×\($0.weight, specifier: "%g")" }
+                    .map { "\($0.count)×\(String(format: "%g", $0.weight))" }
                     .joined(separator: ", ")
                 Text("Each side: \(summary)")
                     .font(.caption)
@@ -183,7 +183,7 @@ public struct PlateCalculatorSheet: View {
             RoundedRectangle(cornerRadius: 2)
                 .fill(color)
                 .frame(width: weightToWidth(weight), height: 24)               // UI-SPEC 24pt plate height
-            Text("\(weight, specifier: "%g")")
+            Text(String(format: "%g", weight))
                 .font(.caption)                                                 // UI-SPEC caption for plate labels
                 .foregroundStyle(.secondary)
         }

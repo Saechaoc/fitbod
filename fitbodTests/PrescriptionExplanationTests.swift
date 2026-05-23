@@ -2,15 +2,8 @@
 //  PrescriptionExplanationTests.swift
 //  fitbodTests
 //
-//  RED scaffold — 5 @Test stubs for the PrescriptionExplanation value type
-//  (the "Why this weight?" data model). Replaced by plan 03-05 with real
-//  assertions against PrescriptionExplanation and CalibrationStatus
-//  (types that do not exist yet).
-//
-//  Each body issues a single Issue.record with the verbatim expectation
-//  string so downstream planners can grep "PENDING IMPL" to find their
-//  work targets. Function signatures use `throws` so plan 03-05 can add
-//  `try`-using assertions without changing the signature.
+//  5 @Test functions for PrescriptionExplanation value type and
+//  CalibrationStatus enum — turned GREEN by plan 03-05.
 //
 
 import Foundation
@@ -22,26 +15,80 @@ struct PrescriptionExplanationTests {
 
     @Test("constructionExposesAllFields")
     func constructionExposesAllFields() throws {
-        Issue.record("PENDING IMPL — replaced by plan 03-05: PrescriptionExplanation(lastSessionLine:formulaName:computedLine:roundedWeight:roundedLine:status:bumpOccurred:range:) initializer returns a value with those fields")
+        let lastSessionLine = "100 kg × 8 @ RPE 8.5 (May 15)"
+        let computedLine = "Target e1RM 122.0 kg → 88% × 8 → 107.0 kg"
+        let roundedLine = "→ 107.5 kg (rounded down to 1.25 kg plates)"
+        let range: ClosedRange<Double> = 95.0...105.0
+
+        let exp = PrescriptionExplanation(
+            lastSessionLine: lastSessionLine,
+            formulaName: "RPE autoregulation",
+            computedLine: computedLine,
+            roundedWeight: 107.5,
+            roundedLine: roundedLine,
+            status: .calibrating(current: 4, threshold: 10),
+            bumpOccurred: true,
+            range: range
+        )
+
+        #expect(exp.lastSessionLine == lastSessionLine)
+        #expect(exp.formulaName == "RPE autoregulation")
+        #expect(exp.computedLine == computedLine)
+        #expect(exp.roundedWeight == 107.5)
+        #expect(exp.roundedLine == roundedLine)
+        #expect(exp.status == .calibrating(current: 4, threshold: 10))
+        #expect(exp.bumpOccurred == true)
+        #expect(exp.range == range)
     }
 
     @Test("calibrationStatusEquatable")
     func calibrationStatusEquatable() throws {
-        Issue.record("PENDING IMPL — replaced by plan 03-05: CalibrationStatus.calibrated == .calibrated; .calibrating(4,10) == .calibrating(4,10); .calibrating(4,10) != .calibrating(5,10)")
+        #expect(CalibrationStatus.calibrated == .calibrated)
+        #expect(CalibrationStatus.calibrating(current: 4, threshold: 10) == .calibrating(current: 4, threshold: 10))
+        #expect(CalibrationStatus.calibrating(current: 4, threshold: 10) != .calibrating(current: 5, threshold: 10))
+        #expect(CalibrationStatus.calibrated != .notApplicable)
+        #expect(CalibrationStatus.notApplicable != .calibrating(current: 0, threshold: 10))
     }
 
     @Test("sendableSafe")
-    func sendableSafe() throws {
-        Issue.record("PENDING IMPL — replaced by plan 03-05: PrescriptionExplanation value crosses Sendable boundaries (Task { let ex = explanation; ... } compiles)")
+    func sendableSafe() async throws {
+        let exp = PrescriptionExplanation(
+            lastSessionLine: nil,
+            formulaName: "Double progression",
+            roundedWeight: 100.0,
+            roundedLine: "→ 100.0 kg",
+            status: .notApplicable
+        )
+        // PrescriptionExplanation is a value type with all Sendable fields —
+        // the closure capture compiles without a @Sendable annotation under
+        // Swift 6 strict concurrency.
+        let task = Task {
+            let _ = exp
+        }
+        // Await to ensure the task ran (not asserting anything else — the
+        // compile-time Sendable check is the real assertion here).
+        await task.value
     }
 
     @Test("bumpOccurredFalseByDefault")
     func bumpOccurredFalseByDefault() throws {
-        Issue.record("PENDING IMPL — replaced by plan 03-05: Memberwise init with bumpOccurred default false")
+        let exp = PrescriptionExplanation(
+            formulaName: "x",
+            roundedWeight: 100,
+            roundedLine: "→ 100 kg",
+            status: .notApplicable
+        )
+        #expect(exp.bumpOccurred == false)
     }
 
     @Test("rangeNilByDefault")
     func rangeNilByDefault() throws {
-        Issue.record("PENDING IMPL — replaced by plan 03-05: range default nil")
+        let exp = PrescriptionExplanation(
+            formulaName: "x",
+            roundedWeight: 100,
+            roundedLine: "→ 100 kg",
+            status: .notApplicable
+        )
+        #expect(exp.range == nil)
     }
 }
