@@ -104,7 +104,7 @@ Granular, prescriptive workout sessions — every set in a session is intentiona
 - [x] 03.1-02-PLAN.md — Add Routine/Session.intentRaw+progressionKindRaw fields + remove from RoutineExercise/SessionExercise + flip app+preview to SchemaV4 + activate migration backfill + extend SchemaV4MigrationTests end-to-end
 - [x] 03.1-03-PLAN.md — SessionFactory session-level snapshot + hoist ProgressionStrategyFactory (D-14 one strategy per session) + RoutineDuplicator + AddUnplannedExerciseButton + SwapExerciseSheet
 - [x] 03.1-04-PLAN.md — RoutineDraft.intent/progressionKind fields + RoutineBuilderView header pickers (Intent + Progression) + RoutineBuilderHeaderPickersTests
-- [ ] 03.1-05-PLAN.md — PrescriptionEditorRow strip Intent + Progression rows + RoutineExerciseCard intentChip removal
+- [x] 03.1-05-PLAN.md — PrescriptionEditorRow strip Intent + Progression rows + RoutineExerciseCard intentChip removal
 - [x] 03.1-06-PLAN.md — IntentChip shared SwiftUI component + SessionLoggerView header IntentChip integration (3-line principal toolbar)
 - [x] 03.1-07-PLAN.md — PreviousMatchingIntent + ExerciseHistoryView/Row + SessionExerciseCard.currentExplanation + SetRow + WhyThisWeightSheet status row + PrescriptionExplanation.sessionIntent field
 - [ ] 03.1-08-PLAN.md — Rewire 14 existing test suites (12 Phase 3 + 2 Phase 2) + flip Schema(SchemaV3.models) → SchemaV4 across tests; rewire RoutineBuilderCopyTests + SessionLoggerCopyTests
