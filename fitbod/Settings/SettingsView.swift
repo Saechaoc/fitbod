@@ -56,6 +56,18 @@ import SwiftData
 /// Phase 5 will add MEV/MAV/MRV and plateau threshold editors.
 public struct SettingsView: View {
     @Query private var settingsList: [UserSettings]
+    @Environment(\.modelContext) private var modelContext
+
+    // Wave-4 plan 06-09b — async-render state for the Data section
+    // ShareLink rows. Each export's render runs off-main via @ModelActor
+    // ExportService; the resulting Sendable Transferable file lands here
+    // and switches the row into ShareLink mode.
+    @State private var csvFile: CSVFile?
+    @State private var jsonFile: JSONFile?
+    @State private var csvRendering = false
+    @State private var jsonRendering = false
+    @State private var csvError: String?
+    @State private var jsonError: String?
 
     public init() {}
 
@@ -66,6 +78,7 @@ public struct SettingsView: View {
                     unitsSection(settings: settings)
                     smartProgressionSection(settings: settings)
                     volumeTargetsSection(settings: settings)
+                    dataSection
                     aboutSectionPlaceholder
                 } else {
                     Section {
@@ -77,6 +90,112 @@ public struct SettingsView: View {
             }
             .navigationTitle("Settings")
         }
+    }
+
+    // MARK: - Data section (Wave-4 plan 06-09b — EXP-01 + EXP-02)
+
+    /// Settings → Data section with two ShareLink-backed rows:
+    /// "Export as CSV" and "Export as JSON". Each row's async render
+    /// runs off-main via @ModelActor ExportService; the resulting
+    /// Transferable file lands in @State, and the row swaps from a
+    /// Button into a ShareLink.
+    ///
+    /// The footer copy ("Exports include every set you've logged.
+    /// Backups can be shared via Files, iCloud Drive, or AirDrop.") is
+    /// forward-compat for 06-10's "Create backup" / "Restore from backup"
+    /// rows — this plan ships ONLY the two export rows. UI-SPEC verbatim.
+    @ViewBuilder
+    private var dataSection: some View {
+        Section {
+            csvRow
+            jsonRow
+        } header: {
+            Text("Data")
+        } footer: {
+            Text("Exports include every set you've logged. Backups can be shared via Files, iCloud Drive, or AirDrop.")
+        }
+    }
+
+    @ViewBuilder
+    private var csvRow: some View {
+        if let file = csvFile {
+            ShareLink(item: file, preview: SharePreview(file.filename)) {
+                Text("Share CSV")
+            }
+        } else {
+            Button {
+                Task { await renderCSV() }
+            } label: {
+                HStack {
+                    Text("Export as CSV")
+                    Spacer()
+                    if csvRendering {
+                        ProgressView()
+                    }
+                }
+            }
+            .disabled(csvRendering)
+        }
+        if let err = csvError {
+            Text(err)
+                .font(.caption)
+                .foregroundStyle(Color(.systemRed))
+        }
+    }
+
+    @ViewBuilder
+    private var jsonRow: some View {
+        if let file = jsonFile {
+            ShareLink(item: file, preview: SharePreview(file.filename)) {
+                Text("Share JSON")
+            }
+        } else {
+            Button {
+                Task { await renderJSON() }
+            } label: {
+                HStack {
+                    Text("Export as JSON")
+                    Spacer()
+                    if jsonRendering {
+                        ProgressView()
+                    }
+                }
+            }
+            .disabled(jsonRendering)
+        }
+        if let err = jsonError {
+            Text(err)
+                .font(.caption)
+                .foregroundStyle(Color(.systemRed))
+        }
+    }
+
+    @MainActor
+    private func renderCSV() async {
+        csvRendering = true
+        csvError = nil
+        let service = ExportService(modelContainer: modelContext.container)
+        do {
+            let file = try await service.renderCSV()
+            csvFile = file
+        } catch {
+            csvError = "Couldn't prepare export. Try again."
+        }
+        csvRendering = false
+    }
+
+    @MainActor
+    private func renderJSON() async {
+        jsonRendering = true
+        jsonError = nil
+        let service = ExportService(modelContainer: modelContext.container)
+        do {
+            let file = try await service.renderJSON()
+            jsonFile = file
+        } catch {
+            jsonError = "Couldn't prepare export. Try again."
+        }
+        jsonRendering = false
     }
 
     // MARK: - Units section (SET-01 anchor)
