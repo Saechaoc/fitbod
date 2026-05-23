@@ -12,6 +12,21 @@
 //  Enum-backed fields persist as `*Raw: String` with computed accessors in
 //  the extension below (FOUND-03 / PITFALLS #9).
 //
+//  Phase 3.1 (PIVOT-03) reshape: `intentRaw` and `progressionKindRaw` are
+//  hoisted OUT of this type up to `Routine`. Plan 02 of Phase 3.1 deletes
+//  the field declarations + computed accessors from the V4 shape; the
+//  warmup-related fields, prescription fields (target reps / sets / RPE),
+//  and the set-overrides cascade stay per-exercise.
+//
+//  Schema architecture (BLOCKER 3): `SchemaV3.RoutineExercise` (nested
+//  in `Persistence/SchemaV3.swift`) preserves the V3-shape field set —
+//  including the now-removed `intentRaw` / `progressionKindRaw` fields —
+//  so the V3→V4 custom migration closure can fetch the per-exercise
+//  values and compute the mode-of-children backfill onto V4
+//  `Routine.intentRaw`. This top-level `fitbod.RoutineExercise` is the
+//  V4 shape and the production runtime entity; `SchemaV4.RoutineExercise`
+//  is a typealias pointing back here.
+//
 //  `generateWarmups: Bool = false` defaults to off; the routine builder
 //  in Phase 2 flips it on for the first compound by convention. Per-set
 //  warmup actually materialize as SetEntry rows with `isWarmup = true`
@@ -28,7 +43,6 @@ public final class RoutineExercise {
     public var exercise: Exercise? = nil
     public var orderIndex: Int = 0
 
-    public var intentRaw: String = "hypertrophy"
     public var targetSets: Int = 3
     public var targetRepsLow: Int = 8
     public var targetRepsHigh: Int = 12
@@ -37,7 +51,6 @@ public final class RoutineExercise {
     public var prescribedRestSeconds: Int = 120
     public var tempo: String? = nil
     public var notes: String? = nil
-    public var progressionKindRaw: String = "double"
     public var generateWarmups: Bool = false
     public var supersetGroupID: UUID? = nil
     public var tracksTempo: Bool = false
@@ -51,10 +64,6 @@ public final class RoutineExercise {
 }
 
 extension RoutineExercise {
-    public var intent: Intent { Intent(rawValue: intentRaw) ?? .hypertrophy }
-    public var progressionKind: ProgressionKind {
-        ProgressionKind(rawValue: progressionKindRaw) ?? .double
-    }
     public var warmupOverride: WarmupConfig? {
         get {
             guard let data = warmupOverrideData else { return nil }
