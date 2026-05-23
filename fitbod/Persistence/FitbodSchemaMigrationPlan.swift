@@ -51,11 +51,11 @@ import SwiftData
 
 public enum FitbodSchemaMigrationPlan: SchemaMigrationPlan {
     public static var schemas: [any VersionedSchema.Type] {
-        [SchemaV1.self, SchemaV2.self, SchemaV3.self, SchemaV4.self, SchemaV5.self]
+        [SchemaV1.self, SchemaV2.self, SchemaV3.self, SchemaV4.self, SchemaV5.self, SchemaV6.self]
     }
 
     public static var stages: [MigrationStage] {
-        [migrateV1toV2, migrateV2toV3, migrateV3toV4, migrateV4toV5]
+        [migrateV1toV2, migrateV2toV3, migrateV3toV4, migrateV4toV5, migrateV5toV6]
     }
 
     /// Lightweight: SwiftData handles all schema deltas automatically.
@@ -88,6 +88,43 @@ public enum FitbodSchemaMigrationPlan: SchemaMigrationPlan {
         fromVersion: SchemaV4.self,
         toVersion: SchemaV5.self
     )
+
+    /// Custom: Phase 5 SchemaV6 adds 8 additive default-valued fields AND
+    /// retroactively bumps `UserSettings.plateauTolerance` from 0.005 to
+    /// 0.02 (D-12). The additive fields are lightweight-eligible, but the
+    /// default-bump nuance forces a custom stage because lightweight
+    /// migration does NOT rewrite existing rows when a `@Model` default
+    /// changes (per RESEARCH §9.2). The willMigrate closure fetches the
+    /// singleton UserSettings and bumps `plateauTolerance` if and only if
+    /// it equals the prior default (0.005); user-edited values like 0.015
+    /// fail the float-equality check and are preserved verbatim.
+    ///
+    /// [CITED: developer.apple.com/documentation/swiftdata/migrationstage/custom]
+    public static let migrateV5toV6 = MigrationStage.custom(
+        fromVersion: SchemaV5.self,
+        toVersion: SchemaV6.self,
+        willMigrate: { context in
+            try Self.bumpPlateauToleranceDefault(in: context)
+        },
+        didMigrate: nil
+    )
+
+    /// Extracted bump body — same logic the willMigrate closure delegates to.
+    /// `internal static` so both the migration stage AND `SchemaV6MigrationTests`
+    /// can call it directly (MigrationStage closures aren't invokable from
+    /// fixture tests; tests drive the semantics through this helper after
+    /// SwiftData runs the open-V5 → reopen-V6 cycle).
+    internal static func bumpPlateauToleranceDefault(in context: ModelContext) throws {
+        let settings = try context.fetch(FetchDescriptor<UserSettings>())
+        for row in settings {
+            // Compare against the OLD V5 default (0.005). User-edited values
+            // (e.g., 0.015) fail this check and are preserved.
+            if abs(row.plateauTolerance - 0.005) < 1e-9 {
+                row.plateauTolerance = 0.02
+            }
+        }
+        try? context.save()
+    }
 
     /// Custom: Phase 3.1 PIVOT-03 moves intent + progressionKind from
     /// per-exercise (RoutineExercise / SessionExercise) to per-session

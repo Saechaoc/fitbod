@@ -28,11 +28,18 @@ public final class UserSettings {
     public var warmupSchemeRaw: String = "standard"
     public var customWarmupPercents: [Double]? = nil
     public var plateauWindowSessions: Int = 4
-    public var plateauTolerance: Double = 0.005
+    // Phase 5 — D-12 plateau tolerance default bump 0.005 → 0.02; existing rows
+    // are bumped retroactively by SchemaV6 migrateV5toV6 willMigrate.
+    public var plateauTolerance: Double = 0.02
     public var deloadAlertEnabled: Bool = true
     public var weekStartsMonday: Bool = true
     public var defaultIncrementKg: Double = 2.5
     public var minCalibrationSets: Int = 10
+
+    // Phase 5 — D-03 / D-17 / VOL-07 additive default-valued fields.
+    public var frequencyHitMinSets: Int = 2
+    public var deloadAdvisoryDismissedWeekStart: Date? = nil
+    public var weeklyRecapShownForWeekStart: Date? = nil
 
     public init() {}
 

@@ -59,6 +59,11 @@ public final class Exercise {
     public var barWeightOverride: Double? = nil
     public var unitOverrideRaw: String? = nil
 
+    // Phase 5 — SET-06 per-exercise plateau threshold overrides; nil → fall back
+    // to UserSettings.plateauWindowSessions / plateauTolerance defaults.
+    public var plateauWindowOverride: Int? = nil
+    public var plateauToleranceOverride: Double? = nil
+
     @Relationship(deleteRule: .cascade, inverse: \ExerciseMuscleStimulus.exercise)
     public var muscleStimuli: [ExerciseMuscleStimulus]? = []
 

@@ -31,5 +31,9 @@ public final class MuscleVolumeTarget {
     public var mv: Int = 6
     public var notes: String? = nil
 
+    // Phase 5 — idempotency flag: MuscleVolumeTargetSeeder skips rows where
+    // this is true (VOL-03 / SET-05). Set to true by SET-05 editor on any edit.
+    public var userEdited: Bool = false
+
     public init() {}
 }

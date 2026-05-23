@@ -20,6 +20,13 @@
 //  RESEARCH §Pitfall 7. The strategy assumes every HistoryPoint has a valid
 //  e1RM derived from a non-nil RPE. It does NOT re-filter the input.
 //
+//  Phase 5: a separate `OneRepMaxEstimator` (Brzycki ≤6 / Epley 6–10 / nil >10
+//  per REQUIREMENTS PROG-02) was extracted in `fitbod/Prescription/` for use
+//  by `PlateauDetector` and Phase 6 charts. `RPEAutoregStrategy` itself does
+//  NOT use that estimator — RPE-based progression back-calculates e1RM via
+//  TuchschererTable percent lookup, not Brzycki/Epley. The extraction does
+//  not change this file's public surface.
+//
 //  No SwiftData coupling. No @MainActor. Implicitly Sendable (value type,
 //  no stored mutable state — FOUND-07).
 //
