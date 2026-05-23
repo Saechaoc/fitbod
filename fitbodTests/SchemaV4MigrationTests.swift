@@ -84,14 +84,16 @@ struct SchemaV4MigrationTests {
         #expect(ObjectIdentifier(SchemaV3.SessionExercise.self) != ObjectIdentifier(fitbod.SessionExercise.self))
     }
 
-    // MARK: - 3. Migration plan wiring (5 schemas, 4 stages)
+    // MARK: - 3. Migration plan wiring (6 schemas, 5 stages — Phase 5
+    //              bumped V5 → V6 with a custom plateauTolerance default
+    //              migration; counts updated to match SchemaV6.)
 
-    @Test("FitbodSchemaMigrationPlan registers V1+V2+V3+V4+V5 and FOUR stages")
+    @Test("FitbodSchemaMigrationPlan registers V1+V2+V3+V4+V5+V6 and FIVE stages")
     func migrationPlanWiringIsV1V2V3V4() {
         let names = FitbodSchemaMigrationPlan.schemas.map { String(describing: $0) }
-        #expect(names == ["SchemaV1", "SchemaV2", "SchemaV3", "SchemaV4", "SchemaV5"])
-        #expect(FitbodSchemaMigrationPlan.schemas.count == 5)
-        #expect(FitbodSchemaMigrationPlan.stages.count == 4)
+        #expect(names == ["SchemaV1", "SchemaV2", "SchemaV3", "SchemaV4", "SchemaV5", "SchemaV6"])
+        #expect(FitbodSchemaMigrationPlan.schemas.count == 6)
+        #expect(FitbodSchemaMigrationPlan.stages.count == 5)
     }
 
     // MARK: - 4. migrateV3toV4 is positionally the third stage
@@ -100,10 +102,11 @@ struct SchemaV4MigrationTests {
     func migrateV3toV4IsThirdStage() {
         // MigrationStage's internals aren't easily reflectable from a
         // test, so positional identity is the strongest assertion the
-        // public surface allows. The order [V1->V2, V2->V3, V3->V4, V4->V5]
-        // is load-bearing: SwiftData applies stages in order against
-        // an existing on-disk store.
-        #expect(FitbodSchemaMigrationPlan.stages.count == 4)
+        // public surface allows. The order [V1->V2, V2->V3, V3->V4, V4->V5,
+        // V5->V6] is load-bearing: SwiftData applies stages in order
+        // against an existing on-disk store. Phase 5 appended V5->V6
+        // (custom plateauTolerance bump) to the chain.
+        #expect(FitbodSchemaMigrationPlan.stages.count == 5)
         // MigrationStage has no public equality, so the count check above
         // plus the wiring test pin down the registered stage chain.
     }
