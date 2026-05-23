@@ -27,7 +27,7 @@ import Testing
 struct SupersetGroupTests {
 
     private func makeContext() throws -> ModelContext {
-        let container = try InMemoryContainer.makeEmpty()
+        let container = try InMemoryContainer.makeCurrent()
         return ModelContext(container)
     }
 

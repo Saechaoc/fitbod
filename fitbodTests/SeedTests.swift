@@ -220,9 +220,9 @@ struct SeedTests {
             )
         }
 
-        // Spot-check a known row: any bench-press variant should pull
-        // chest as a primary muscle.
-        if let bench = exercises.first(where: { $0.canonicalName.contains("bench press") }) {
+        // Spot-check a known chest-primary row. Some bench press variants,
+        // such as the powerlifting seed row, are intentionally triceps-primary.
+        if let bench = exercises.first(where: { $0.externalID == "Barbell_Bench_Press_-_Medium_Grip" }) {
             #expect(
                 bench.primaryMuscleSlugsJoined.contains("|chest|"),
                 "Bench press should list chest as a primary muscle; got '\(bench.primaryMuscleSlugsJoined)'"

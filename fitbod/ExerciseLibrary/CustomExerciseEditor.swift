@@ -292,8 +292,7 @@ struct CustomExerciseEditor: View {
 
     private func deleteCustom() {
         guard let target = draft.editingExisting else { return }
-        modelContext.delete(target)
-        try? modelContext.save()
+        try? ExerciseDeletion.delete(target, context: modelContext)
         dismiss()
     }
 }

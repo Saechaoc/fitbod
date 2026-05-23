@@ -52,11 +52,11 @@ struct SchemaV2MigrationTests {
         #expect(SchemaV2.models.count == 15)
     }
 
-    @Test("FitbodSchemaMigrationPlan registers V1 and V2 and a single lightweight stage")
+    @Test("FitbodSchemaMigrationPlan keeps V1 and V2 as the migration prefix")
     func migrationPlanIsWiredCorrectly() {
         let names = FitbodSchemaMigrationPlan.schemas.map { String(describing: $0) }
-        #expect(names == ["SchemaV1", "SchemaV2"])
-        #expect(FitbodSchemaMigrationPlan.stages.count == 1)
+        #expect(Array(names.prefix(2)) == ["SchemaV1", "SchemaV2"])
+        #expect(FitbodSchemaMigrationPlan.stages.count >= 1)
     }
 
     @Test("Fresh in-memory V2 ModelContainer opens; round-trips a Routine + new entity")

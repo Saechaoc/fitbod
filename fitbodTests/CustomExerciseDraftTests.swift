@@ -207,9 +207,8 @@ struct CustomExerciseDeleteCascadeTests {
         #expect(try ctx.fetch(FetchDescriptor<SessionExercise>()).count == 1)
         #expect(try ctx.fetch(FetchDescriptor<SessionExercise>()).first?.exercise != nil)
 
-        // Editor delete path: `ctx.delete(editingExisting); try ctx.save()`.
-        ctx.delete(custom)
-        try ctx.save()
+        // Editor delete path: nullify references, delete, save.
+        try ExerciseDeletion.delete(custom, context: ctx)
 
         // LIB-05: SessionExercise survives, with `exercise = nil`.
         let postDelete = try ctx.fetch(FetchDescriptor<SessionExercise>())

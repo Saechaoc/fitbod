@@ -95,8 +95,7 @@ struct CascadeRuleTests {
         #expect(preDelete.first?.exercise != nil)
 
         // Delete the library entry. LIB-05: history row survives.
-        ctx.delete(ex)
-        try ctx.save()
+        try ExerciseDeletion.delete(ex, context: ctx)
 
         let postDelete = try ctx.fetch(FetchDescriptor<SessionExercise>())
         #expect(postDelete.count == 1, "SessionExercise must survive Exercise deletion")

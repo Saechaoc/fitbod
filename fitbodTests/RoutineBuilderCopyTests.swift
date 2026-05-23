@@ -17,7 +17,7 @@
 //    - InlineExerciseSearchRow: "Add an exercise"
 //    - PrescriptionEditorRow: "Sets" / "Reps" / "Target RPE" /
 //      "Rest" / "Track tempo" / "Track partial reps" /
-//      "Auto warm-up" / "Available in Phase 3" /
+//      "Auto warm-up" /
 //      "Per-set overrides" / "Add Override" / "Remove"
 //
 //  Phase 3.1 (PIVOT-04 / D-10) — REMOVED from PrescriptionEditorRow:
@@ -86,7 +86,6 @@ struct RoutineBuilderCopyTests {
         #expect(editor.contains("\"Track tempo\""))
         #expect(editor.contains("\"Track partial reps\""))
         #expect(editor.contains("\"Auto warm-up\""))
-        #expect(editor.contains("\"Available in Phase 3\""))
         #expect(editor.contains("\"Per-set overrides\""))
         #expect(editor.contains("\"Add Override\""))
         #expect(editor.contains("\"Remove\""))

@@ -52,6 +52,23 @@ enum InMemoryContainer {
         )
     }
 
+    /// Fresh empty in-memory container for tests that exercise current
+    /// app behavior and need post-V1 entities such as SupersetGroup,
+    /// PlateInventory, or Phase 4 block-review fields.
+    static func makeCurrent() throws -> ModelContainer {
+        let schema = Schema(SchemaV5.models)
+        let config = ModelConfiguration(
+            schema: schema,
+            isStoredInMemoryOnly: true,
+            allowsSave: true
+        )
+        return try ModelContainer(
+            for: schema,
+            migrationPlan: FitbodSchemaMigrationPlan.self,
+            configurations: config
+        )
+    }
+
     /// Pre-seeded container reusing the production
     /// `PreviewModelContainer.make()` factory.
     static func makeWithFixture() -> ModelContainer {

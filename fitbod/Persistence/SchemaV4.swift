@@ -50,6 +50,8 @@ public enum SchemaV4: VersionedSchema {
     public typealias Exercise = fitbod.Exercise
     public typealias MuscleGroup = fitbod.MuscleGroup
     public typealias ExerciseMuscleStimulus = fitbod.ExerciseMuscleStimulus
+    public typealias Block = fitbod.Block
+    public typealias BlockPhase = fitbod.BlockPhase
     public typealias UserSettings = fitbod.UserSettings
     public typealias MuscleVolumeTarget = fitbod.MuscleVolumeTarget
     public typealias RoutineFolder = fitbod.RoutineFolder
@@ -75,41 +77,6 @@ public enum SchemaV4: VersionedSchema {
             Self.RoutineExerciseSetOverride.self,
             Self.PlateInventory.self,
         ]
-    }
-
-    @Model
-    public final class Block {
-        @Attribute(.unique) public var id: UUID = UUID()
-        public var name: String = ""
-        public var startDate: Date = Date.now
-        public var endDate: Date? = nil
-        public var notes: String? = nil
-        public var isActive: Bool = false
-
-        @Relationship(deleteRule: .cascade, inverse: \SchemaV4.BlockPhase.block)
-        public var phases: [SchemaV4.BlockPhase]? = []
-
-        @Relationship(inverse: \SchemaV4.Routine.block)
-        public var routines: [SchemaV4.Routine]? = []
-
-        @Relationship(inverse: \SchemaV4.Session.block)
-        public var sessions: [SchemaV4.Session]? = []
-
-        public init() {}
-    }
-
-    @Model
-    public final class BlockPhase {
-        @Attribute(.unique) public var id: UUID = UUID()
-        public var block: SchemaV4.Block? = nil
-        public var orderIndex: Int = 0
-        public var nameRaw: String = "accumulation"
-        public var weeks: Int = 4
-        public var volumeMultiplier: Double = 1.0
-        public var intensityMultiplier: Double = 1.0
-        public var notes: String? = nil
-
-        public init() {}
     }
 
     @Model
@@ -238,10 +205,6 @@ public enum SchemaV4: VersionedSchema {
 
         public init() {}
     }
-}
-
-extension SchemaV4.BlockPhase {
-    public var kind: BlockPhaseKind { BlockPhaseKind(rawValue: nameRaw) ?? .accumulation }
 }
 
 extension SchemaV4.Routine {

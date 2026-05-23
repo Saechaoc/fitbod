@@ -28,7 +28,7 @@ import Testing
 struct RoutineDuplicationTests {
 
     private func makeContext() throws -> ModelContext {
-        let container = try InMemoryContainer.makeEmpty()
+        let container = try InMemoryContainer.makeCurrent()
         return ModelContext(container)
     }
 
