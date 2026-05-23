@@ -97,7 +97,17 @@ Granular, prescriptive workout sessions — every set in a session is intentiona
   3. RoutineBuilderView gains a session-level Intent picker + Progression picker at the top (above the exercise list); PrescriptionEditorRow drops its per-exercise Intent and Progression rows entirely
   4. PreviousMatchingIntent + ProgressionStrategyFactory + SessionFactory + all 12 Phase 3 test suites updated to read intent/progression from Session/Routine (not SessionExercise/RoutineExercise)
   5. Block-level intent + progression default is *not* in scope (Phase 4 owns that wiring) — but the new fields' default values (`intent = .strength`, `progressionKind = .double`) are placed so a future Phase 4 block-default override is a one-line addition
-**Plans:** TBD
+**Plans:** 8 plans (5 waves)
+
+**Plan list:**
+- [ ] 03.1-01-PLAN.md — SchemaV4 + V3→V4 custom migration scaffold + SchemaV4MigrationTests wiring + tie-break helper tests
+- [ ] 03.1-02-PLAN.md — Add Routine/Session.intentRaw+progressionKindRaw fields + remove from RoutineExercise/SessionExercise + flip app+preview to SchemaV4 + activate migration backfill + extend SchemaV4MigrationTests end-to-end
+- [ ] 03.1-03-PLAN.md — SessionFactory session-level snapshot + hoist ProgressionStrategyFactory (D-14 one strategy per session) + RoutineDuplicator + AddUnplannedExerciseButton + SwapExerciseSheet
+- [ ] 03.1-04-PLAN.md — RoutineDraft.intent/progressionKind fields + RoutineBuilderView header pickers (Intent + Progression) + RoutineBuilderHeaderPickersTests
+- [ ] 03.1-05-PLAN.md — PrescriptionEditorRow strip Intent + Progression rows + RoutineExerciseCard intentChip removal
+- [ ] 03.1-06-PLAN.md — IntentChip shared SwiftUI component + SessionLoggerView header IntentChip integration (3-line principal toolbar)
+- [ ] 03.1-07-PLAN.md — PreviousMatchingIntent + ExerciseHistoryView/Row + SessionExerciseCard.currentExplanation + SetRow + WhyThisWeightSheet status row + PrescriptionExplanation.sessionIntent field
+- [ ] 03.1-08-PLAN.md — Rewire 14 existing test suites (12 Phase 3 + 2 Phase 2) + flip Schema(SchemaV3.models) → SchemaV4 across tests; rewire RoutineBuilderCopyTests + SessionLoggerCopyTests
 **UI hint:** yes
 **Research flag:** No — the refactor pattern is well-understood (mirrors Phase 1's enum-as-String + snapshot conventions)
 
