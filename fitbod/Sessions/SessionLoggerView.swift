@@ -99,6 +99,13 @@ public struct SessionLoggerView: View {
     /// PinnedNoteSheet against this.
     @State private var pendingPinnedNote: SessionExercise?
 
+    /// Wave-4 plan 06-07 — @Observable session-scoped PR detector cache.
+    /// Seeded at .task via `SessionFactory.seedPRTable`; mutated in place
+    /// by `commitSet` via `prState.observeSave(set:)`. Drives the
+    /// `.safeAreaInset(edge: .top)` InSessionPRBanner mount per RESEARCH
+    /// Pattern 3 (NEVER inside scroll content — anti-pattern).
+    @State private var prState = InSessionPRState()
+
     public init(session: Session) {
         self.session = session
         self._elapsedStart = State(initialValue: session.startedAt)
@@ -220,6 +227,16 @@ public struct SessionLoggerView: View {
         } message: { _ in
             Text("Any logged sets for this exercise will be discarded.")       // UI-SPEC verbatim
         }
+        // Wave-4 plan 06-07 — view-root PR banner mount via .safeAreaInset.
+        // RESEARCH Pattern 3 — anti-layout-shift; NEVER mount in scroll content.
+        .safeAreaInset(edge: .top, spacing: 0) {
+            InSessionPRBanner(state: prState)
+        }
+        // Wave-4 plan 06-07 — seed PR table at session start via one batched
+        // per-exercise fetch. RESEARCH Pitfall 6 — never re-query per set save.
+        .task {
+            prState.prTable = await SessionFactory.seedPRTable(for: session, context: ctx)
+        }
     }
 
     /// Wave-4 plan 04-02 — destructively removes a SessionExercise (and
@@ -307,6 +324,11 @@ public struct SessionLoggerView: View {
         entry.isComplete = true
         entry.completedAt = .now
         try? ctx.save()
+        // Wave-4 plan 06-07 — observe save for live PR detection. Runs
+        // PRDetector.check against the session-state cache and mutates
+        // prState.currentBanner. Must run AFTER ctx.save() so the set's
+        // committed state matches what PRDetector reads.
+        prState.observeSave(set: entry)
         let prescribed = max(1, se.prescribedRestSeconds)
         engine.start(seconds: prescribed, exerciseName: se.exercise?.name ?? "")
     }

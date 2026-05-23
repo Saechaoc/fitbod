@@ -554,3 +554,51 @@ public enum SessionFactory {
         }
     }
 }
+
+// MARK: - Phase 6 / Plan 06-07 — Per-session PR table seeding
+//
+// Builds the per-exercise PR table once at session start so the
+// in-session detector (InSessionPRState.observeSave) never re-queries
+// SwiftData on a per-set commit. Pitfall 6 endorses the per-exercise
+// loop as the recommended v1 path: realistic routines hold 6–12
+// SessionExercises, so the loop runs 6–12 single-keyed fetches —
+// well within budget — and deliberately avoids the SwiftData macro
+// risk of cross-relationship predicates (`entry.sessionExercise?.exercise?.id`).
+
+extension SessionFactory {
+
+    /// Seeds the PR table at session start by issuing one keyed fetch
+    /// per `Exercise.id` represented in the current session, then
+    /// composing the results via `PRDetector.buildTable`. Bounded by
+    /// `session.exercises.count` (~6–12).
+    ///
+    /// Returns an empty `PRTable` when the session has no exercises
+    /// or every fetch fails — the in-session banner simply emits no
+    /// PRs until the first set lands and seeds the table inline.
+    ///
+    /// RESEARCH Pitfall 3 — `targetID` is captured as a local
+    /// constant before each `#Predicate` so the macro expansion sees
+    /// a value-typed immutable.
+    @MainActor
+    public static func seedPRTable(for session: Session, context: ModelContext) async -> PRTable {
+        let exerciseIDs: [UUID] = (session.exercises ?? []).compactMap { $0.exercise?.id }
+        guard !exerciseIDs.isEmpty else { return PRTable() }
+
+        var aggregated: [SetEntry] = []
+        for exID in exerciseIDs {
+            let targetID = exID
+            let descriptor = FetchDescriptor<SetEntry>(
+                predicate: #Predicate<SetEntry> { entry in
+                    entry.isComplete
+                        && !entry.isWarmup
+                        && entry.sessionExercise?.exercise?.id == targetID
+                },
+                sortBy: [SortDescriptor(\.completedAt)]
+            )
+            if let sets = try? context.fetch(descriptor) {
+                aggregated.append(contentsOf: sets)
+            }
+        }
+        return PRDetector.buildTable(from: aggregated)
+    }
+}
