@@ -46,22 +46,22 @@ User explicitly wants a maximalist v1 (the app's stance is "comprehensive over s
 
 ### WARM — Warm-up Generation
 
-- [ ] **WARM-01**: First compound exercise of a session auto-generates a warm-up ramp (3–5 ascending sets) plate-rounded to the user's plate inventory
-- [ ] **WARM-02**: Warm-up generator handles edge cases correctly: deload weeks (skip), unilateral lifts (halve loads), light working weights (skip when <1.5× bar), bodyweight (skip)
+- [x] **WARM-01**: First compound exercise of a session auto-generates a warm-up ramp (3–5 ascending sets) plate-rounded to the user's plate inventory
+- [x] **WARM-02**: Warm-up generator handles edge cases correctly: deload weeks (skip), unilateral lifts (halve loads), light working weights (skip when <1.5× bar), bodyweight (skip)
 - [x] **WARM-03**: User can override the warm-up scheme per exercise or disable warm-ups
 
 ### PRES — Smart Prescription & Progression
 
-- [ ] **PRES-01**: At session start, each working exercise displays a recommended weight computed by its selected progression model
-- [ ] **PRES-02**: User can expand "Why this weight?" on any prescription to see the calculation breakdown (last session's data, formula, percent, rounding)
-- [ ] **PRES-03**: `RPEAutoregStrategy` back-calculates target weight from prior RPE + reps using Tuchscherer table as a prior; switches to per-exercise per-lifter calibration after ≥10 logged sets (shown as a "calibrating" badge until then)
-- [ ] **PRES-04**: `DoubleProgressionStrategy` advances weight by the exercise's smallest-increment when all working sets hit the top of the rep range
+- [x] **PRES-01**: At session start, each working exercise displays a recommended weight computed by its selected progression model
+- [x] **PRES-02**: User can expand "Why this weight?" on any prescription to see the calculation breakdown (last session's data, formula, percent, rounding)
+- [x] **PRES-03**: `RPEAutoregStrategy` back-calculates target weight from prior RPE + reps using Tuchscherer table as a prior; switches to per-exercise per-lifter calibration after ≥10 logged sets (shown as a "calibrating" badge until then)
+- [x] **PRES-04**: `DoubleProgressionStrategy` advances weight by the exercise's smallest-increment when all working sets hit the top of the rep range
 - [ ] **PRES-05**: `BlockPeriodizedStrategy` resolves weight from the active block phase's intensity curve
 - [ ] **PRES-06**: `HybridStrategy` combines block phase context with RPE-driven daily adjustment
 - [x] **PRES-07**: User can manually override the recommended weight; the override is recorded as actual performance and feeds into the next session's calculation (never ignored)
-- [ ] **PRES-08**: Integrated plate calculator: given target weight and bar weight, output a plate stack respecting the user's plate inventory
-- [ ] **PRES-09**: All progression rounding respects per-exercise smallest weight increment (microplates, plate jumps)
-- [ ] **PRES-10**: "You earned the weight bump" banner surfaces when double progression triggers an increment
+- [x] **PRES-08**: Integrated plate calculator: given target weight and bar weight, output a plate stack respecting the user's plate inventory
+- [x] **PRES-09**: All progression rounding respects per-exercise smallest weight increment (microplates, plate jumps)
+- [x] **PRES-10**: "You earned the weight bump" banner surfaces when double progression triggers an increment
 
 ### BLOCK — Periodization
 
@@ -70,7 +70,8 @@ User explicitly wants a maximalist v1 (the app's stance is "comprehensive over s
 - [ ] **BLOCK-03**: User can navigate weeks within a block (swipe between weeks / mesocycle navigation)
 - [ ] **BLOCK-04**: Scheduled deload weeks auto-reduce prescribed volume (~50%) and adjust intensity per the deload phase definition
 - [ ] **BLOCK-05**: Deload weeks are visually distinct (banner / calendar tint / volume targets cut on bars and heatmap)
-- [ ] **BLOCK-06**: App surfaces a "consider deload" alert when fatigue/performance signals spike (e1RM drop > X% over N sessions, RPE creep at same load, missed rep targets across multiple sessions) — suggestion only, never auto-applied
+- [ ] **BLOCK-06a**: UI scaffold for the "consider deload" advisory — `ConsiderDeloadBanner` view + `FatigueAdvisory` protocol exist and are wired into TodayView; `StubFatigueAdvisory` returns `false` so the banner never renders in Phase 4. The advisory contract returns only `FatigueSuggestion` (never `DeloadMutation`), enforcing BLOCK-08 at the type level. (Phase 4)
+- [ ] **BLOCK-06b**: Real fatigue/performance signal — e1RM-drop / RPE-creep / missed-rep detection populates a non-stub `FatigueAdvisory` implementation; banner activates above threshold (suggestion only, never auto-applies). Closes the substance half of the original BLOCK-06. (Phase 5)
 - [ ] **BLOCK-07**: End-of-block produces a phase-end review (total volume, e1RM deltas, PRs hit, recommended next phase)
 - [ ] **BLOCK-08**: Scheduled block deload is canonical; fatigue-triggered alerts are advisory and never override the block schedule
 
@@ -200,25 +201,26 @@ Mapped to phases by `gsd-roadmapper` during roadmap creation.
 | SESS-09 | Phase 2 | Complete |
 | SESS-10 | Phase 2 | Complete |
 | SESS-11 | Phase 2 | Complete |
-| WARM-01 | Phase 3 | Pending |
-| WARM-02 | Phase 3 | Pending |
+| WARM-01 | Phase 3 | Complete |
+| WARM-02 | Phase 3 | Complete |
 | WARM-03 | Phase 3 | Complete |
-| PRES-01 | Phase 3 | Pending |
-| PRES-02 | Phase 3 | Pending |
-| PRES-03 | Phase 3 | Pending |
-| PRES-04 | Phase 3 | Pending |
+| PRES-01 | Phase 3 | Complete |
+| PRES-02 | Phase 3 | Complete |
+| PRES-03 | Phase 3 | Complete |
+| PRES-04 | Phase 3 | Complete |
 | PRES-05 | Phase 4 | Pending |
 | PRES-06 | Phase 4 | Pending |
 | PRES-07 | Phase 3 | Complete |
-| PRES-08 | Phase 3 | Pending |
-| PRES-09 | Phase 3 | Pending |
-| PRES-10 | Phase 3 | Pending |
+| PRES-08 | Phase 3 | Complete |
+| PRES-09 | Phase 3 | Complete |
+| PRES-10 | Phase 3 | Complete |
 | BLOCK-01 | Phase 4 | Pending |
 | BLOCK-02 | Phase 4 | Pending |
 | BLOCK-03 | Phase 4 | Pending |
 | BLOCK-04 | Phase 4 | Pending |
 | BLOCK-05 | Phase 4 | Pending |
-| BLOCK-06 | Phase 4 | Pending |
+| BLOCK-06a | Phase 4 | Pending (UI scaffold + protocol type-level enforcement; stub signal) |
+| BLOCK-06b | Phase 5 | Pending (real fatigue signal populates the FatigueAdvisory implementation) |
 | BLOCK-07 | Phase 4 | Pending |
 | BLOCK-08 | Phase 4 | Pending |
 | VOL-01 | Phase 5 | Pending |
@@ -256,18 +258,19 @@ Mapped to phases by `gsd-roadmapper` during roadmap creation.
 | FOUND-07 | Phase 1 | Complete |
 
 **Coverage:**
-- v1 requirements: 80 total (6 LIB + 9 ROUTINE + 11 SESS + 3 WARM + 10 PRES + 8 BLOCK + 7 VOL + 8 PROG + 4 EXP + 7 SET + 7 FOUND = 80)
-- Mapped to phases: 80
+- v1 requirements: 81 total (6 LIB + 9 ROUTINE + 11 SESS + 3 WARM + 10 PRES + 9 BLOCK + 7 VOL + 8 PROG + 4 EXP + 7 SET + 7 FOUND = 81)
+- Mapped to phases: 81
 - Unmapped: 0
+- Note: BLOCK-06 was split into BLOCK-06a (Phase 4 UI scaffold + protocol contract) and BLOCK-06b (Phase 5 real fatigue signal) on 2026-05-22 per checker blocker #5; this raises BLOCK count from 8 to 9 and total from 80 to 81.
 
 Per-phase counts:
 - Phase 1 (Foundation & Exercise Library): 14 — FOUND-01..07, LIB-01..06, SET-01
 - Phase 2 (Core Loop — Routines + Sessions): 20 — ROUTINE-01..09, SESS-01..11
 - Phase 3 (Smart Prescription & Warm-ups): 15 — PRES-01,02,03,04,07,08,09,10; WARM-01..03; SET-02,03,04,07
-- Phase 4 (Periodization & Blocks): 10 — BLOCK-01..08; PRES-05, PRES-06
-- Phase 5 (Fatigue Model & Plateau Detection): 10 — VOL-01..07; PROG-06; SET-05, SET-06
+- Phase 4 (Periodization & Blocks): 10 — BLOCK-01..05, BLOCK-06a, BLOCK-07, BLOCK-08; PRES-05, PRES-06
+- Phase 5 (Fatigue Model & Plateau Detection): 11 — VOL-01..07; PROG-06; SET-05, SET-06; BLOCK-06b
 - Phase 6 (Progress Views, Export & Polish): 11 — PROG-01,02,03,04,05,07,08; EXP-01..04
 
 ---
 *Requirements defined: 2026-05-10*
-*Last updated: 2026-05-10 after roadmap creation (traceability populated)*
+*Last updated: 2026-05-22 — BLOCK-06 split into BLOCK-06a (Phase 4) + BLOCK-06b (Phase 5) per checker blocker #5*

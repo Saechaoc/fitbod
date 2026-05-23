@@ -71,7 +71,7 @@ Granular, prescriptive workout sessions — every set in a session is intentiona
   4. The first compound exercise of a session auto-generates a 3–5 set warm-up ramp plate-rounded to the user's per-equipment plate inventory; edge cases handled correctly — skipped on deload weeks, halved for unilateral lifts, skipped when working weight < 1.5× bar, skipped for bodyweight, user-overridable per exercise
   5. Plate calculator displays the loadable plate stack for a given target weight and bar weight respecting the user's plate inventory; per-exercise smallest weight increment is honored by every progression rounding decision; manual weight overrides are recorded as actual performance and feed into the next session's calculation (never ignored)
   6. Per-equipment plate inventory and smallest-increment settings, per-exercise unit override, and RPE-calibration window settings are user-configurable
-**Plans:** 1/8 plans executed
+**Plans:** 5/8 plans executed
 
 **Plan list:**
 - [x] 03-01-PLAN.md — SchemaV3 + additive fields + PlateInventory entity + lightweight migration
@@ -80,7 +80,7 @@ Granular, prescriptive workout sessions — every set in a session is intentiona
 - [x] 03-04-PLAN.md — PlateInventory defaults + seeder + PlateInventoryEditor + Settings extensions
 - [ ] 03-05-PLAN.md — ProgressionStrategy protocol + RPEAutoreg + DoubleProgression + WarmupRamp + Factory
 - [ ] 03-06-PLAN.md — Session logger UI components (WhyThisWeightSheet, PrescriptionWeightCell, PlateStackDisclosure, BumpBanner, CalibratingBadge, WarmupRampRows)
-- [ ] 03-07-PLAN.md — Routine builder warm-up override + ExerciseDetailView prescription settings
+- [x] 03-07-PLAN.md — Routine builder warm-up override + ExerciseDetailView prescription settings
 - [ ] 03-08-PLAN.md — SessionFactory integration + SessionExerciseCard/SetRow wiring + manual-override capture
 **UI hint:** yes
 **Research flag:** Yes — at plan-phase time, confirm Tuchscherer RPE table numbers (exact percent values per rep × RPE cell) and choose per-exercise per-lifter calibration algorithm (linear vs locally-weighted regression; min-points threshold)
@@ -89,7 +89,7 @@ Granular, prescriptive workout sessions — every set in a session is intentiona
 **Goal:** User can define training blocks with phased mesocycles, see the active block on the home screen, navigate weeks, get scheduled deloads that automatically cut volume/intensity, and pick block-periodized or hybrid progression for relevant exercises.
 **Mode:** mvp
 **Depends on:** Phase 3 (block-periodized and hybrid strategies need the `ProgressionStrategy` protocol and warm-up scaling already in place)
-**Requirements:** BLOCK-01, BLOCK-02, BLOCK-03, BLOCK-04, BLOCK-05, BLOCK-06, BLOCK-07, BLOCK-08, PRES-05, PRES-06
+**Requirements:** BLOCK-01, BLOCK-02, BLOCK-03, BLOCK-04, BLOCK-05, BLOCK-06a, BLOCK-07, BLOCK-08, PRES-05, PRES-06
 **Success Criteria** (what must be TRUE):
   1. User can define a training block with an ordered phase sequence (accumulation, intensification, realization, deload), per-phase week length, and per-phase volume/intensity multipliers; routines link to a block
   2. Home screen surfaces the active block with phase chip, "Week N of M", days remaining, and phase color coding; user can swipe between weeks to navigate the mesocycle
@@ -114,7 +114,7 @@ Granular, prescriptive workout sessions — every set in a session is intentiona
 **Goal:** Weekly volume per muscle is computed with stimulus-weighted aggregation, surfaced as MEV/MAV/MRV bars with verb labels and a muscle heatmap, plateau detection flags stalled exercises, and a fatigue-triggered deload alert surfaces as an advisory (block schedule remains canonical).
 **Mode:** mvp
 **Depends on:** Phase 4 (deload-conflict resolution model defined; sessions exist in volume to aggregate)
-**Requirements:** VOL-01, VOL-02, VOL-03, VOL-04, VOL-05, VOL-06, VOL-07, PROG-06, SET-05, SET-06
+**Requirements:** VOL-01, VOL-02, VOL-03, VOL-04, VOL-05, VOL-06, VOL-07, PROG-06, SET-05, SET-06, BLOCK-06b
 **Success Criteria** (what must be TRUE):
   1. Per-muscle weekly volume is computed as the stimulus-weighted sum of working sets via `ExerciseMuscleStimulus.weight` — a barbell row contributes 1.0 to lats and 0.5 to biceps rather than double-counting; the top ~50 lifts have hand-curated weights, all others fall back to 1.0/0.5 defaults
   2. Volume bars per muscle display current weekly sets within MEV/MAV/MRV color zones AND surface a verb label ("add a set" / "hold" / "near MRV — deload soon" / "over MRV — deload") so every number drives a decision
@@ -160,7 +160,7 @@ Granular, prescriptive workout sessions — every set in a session is intentiona
 |-------|----------------|--------|-----------|
 | 1. Foundation & Exercise Library | 12/12 | Complete | 2026-05-11 |
 | 2. Core Loop (Routines + Sessions) | 13/13 | Complete | 2026-05-11 |
-| 3. Smart Prescription & Warm-ups | 1/8 | In Progress|  |
+| 3. Smart Prescription & Warm-ups | 5/8 | In Progress|  |
 | 4. Periodization & Blocks | 0/8 | Not started | - |
 | 5. Fatigue Model & Plateau Detection | 0/? | Not started | - |
 | 6. Progress Views, Export & Polish | 0/10 | Not started | - |
