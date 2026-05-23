@@ -37,9 +37,12 @@ public struct DoubleProgressionStrategy: ProgressionStrategy {
         lastSessionWeight: Double?,
         lastSessionReps: Int?,
         lastSessionRPE: Double?,
-        lastSessionDate: Date?
+        lastSessionDate: Date?,
+        block: Block? = nil,
+        today: Date = Date.now
     ) -> (weight: Double, explanation: PrescriptionExplanation) {
 
+        // Phase 4 protocol extension: double progression ignores block context.
         // No prior data — first session.
         guard let lastWeight = lastSessionWeight else {
             let explanation = PrescriptionExplanation(

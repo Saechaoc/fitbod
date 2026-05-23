@@ -72,6 +72,9 @@ public struct RoutinesListView: View {
     @Query(sort: [SortDescriptor(\Routine.name)])
     private var routines: [Routine]
 
+    @Query(sort: [SortDescriptor(\Block.startDate, order: .reverse)])
+    private var blocks: [Block]
+
     @Query(filter: #Predicate<Session> { $0.completedAt == nil })
     private var activeSessions: [Session]
 
@@ -81,6 +84,8 @@ public struct RoutinesListView: View {
     @State private var editingRoutine: Routine? = nil
     @State private var conflictRoutine: Routine? = nil
     @State private var deleteConfirmFolder: RoutineFolder? = nil
+    @State private var pendingBlockBuilder: PendingBlockBuilder? = nil
+    @State private var pendingBlockDelete: Block? = nil
     @State private var navigationPath = NavigationPath()
 
     public init() {}
@@ -139,6 +144,16 @@ public struct RoutinesListView: View {
                         )
                     }
                 }
+                .sheet(item: $pendingBlockBuilder) { pending in
+                    NavigationStack {
+                        switch pending {
+                        case .template(let template):
+                            BlockBuilderView(draft: BlockDraft(template: template))
+                        case .edit(let block):
+                            BlockBuilderView(draft: BlockDraft(block: block), editing: block)
+                        }
+                    }
+                }
                 .alert(
                     "Workout in Progress",
                     isPresented: Binding(
@@ -164,6 +179,26 @@ public struct RoutinesListView: View {
                     }
                 } message: {
                     Text("Finish or discard the current workout before starting a new one.")
+                }
+                .alert(
+                    "Delete block?",
+                    isPresented: Binding(
+                        get: { pendingBlockDelete != nil },
+                        set: { if !$0 { pendingBlockDelete = nil } }
+                    )
+                ) {
+                    Button("Delete", role: .destructive) {
+                        if let block = pendingBlockDelete {
+                            ctx.delete(block)
+                            try? ctx.save()
+                        }
+                        pendingBlockDelete = nil
+                    }
+                    Button("Cancel", role: .cancel) {
+                        pendingBlockDelete = nil
+                    }
+                } message: {
+                    Text("Linked routines stay; sessions logged under this block keep their snapshot context.")
                 }
                 .confirmationDialog(
                     deleteConfirmFolder.map { "Delete \"\($0.name)\"?" } ?? "Delete?",
@@ -192,11 +227,7 @@ public struct RoutinesListView: View {
 
     @ViewBuilder
     private var content: some View {
-        if routines.isEmpty && folders.isEmpty {
-            emptyState
-        } else {
-            populatedList
-        }
+        populatedList
     }
 
     @ViewBuilder
@@ -216,31 +247,113 @@ public struct RoutinesListView: View {
             .listRowInsets(EdgeInsets())
             .listRowBackground(Color.clear)
 
-            ForEach(sectionsForRendering, id: \.id) { section in
-                Section(section.title) {
-                    if section.routines.isEmpty {
-                        // Folder with no routines yet — show a faint
-                        // placeholder row so the section header isn't
-                        // visually orphaned.
-                        Text("No routines in this folder")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    } else {
-                        ForEach(section.routines) { routine in
-                            RoutineRow(
-                                routine: routine,
-                                onTap: { editingRoutine = $0 },
-                                onStart: { handleStartTap(routine: $0) },
-                                onDuplicate: { handleDuplicate(routine: $0) },
-                                onMove: { presentingMoveSheet = $0 },
-                                onDelete: { handleDelete(routine: $0) }
-                            )
+            blocksSection
+
+            if routines.isEmpty && folders.isEmpty {
+                routinesEmptySection
+            } else {
+                ForEach(sectionsForRendering, id: \.id) { section in
+                    Section(section.title) {
+                        if section.routines.isEmpty {
+                            // Folder with no routines yet — show a faint
+                            // placeholder row so the section header isn't
+                            // visually orphaned.
+                            Text("No routines in this folder")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        } else {
+                            ForEach(section.routines) { routine in
+                                RoutineRow(
+                                    routine: routine,
+                                    onTap: { editingRoutine = $0 },
+                                    onStart: { handleStartTap(routine: $0) },
+                                    onDuplicate: { handleDuplicate(routine: $0) },
+                                    onMove: { presentingMoveSheet = $0 },
+                                    onDelete: { handleDelete(routine: $0) }
+                                )
+                            }
                         }
                     }
                 }
             }
         }
         .listStyle(.insetGrouped)
+    }
+
+    @ViewBuilder
+    private var blocksSection: some View {
+        Section {
+            if blocks.isEmpty {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("No blocks yet.")
+                        .font(.body)
+                    Text("Define a training block to organize routines into a mesocycle.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    Menu {
+                        templateMenuItems
+                    } label: {
+                        Text("+ Block")
+                            .foregroundStyle(Color.accentColor)
+                    }
+                    .padding(.top, 8)
+                }
+                .padding(.vertical, 4)
+            } else {
+                ForEach(BlockRow.sortedForDisplay(blocks)) { block in
+                    BlockRow(
+                        block: block,
+                        onTap: { pendingBlockBuilder = .edit($0) },
+                        onDelete: { pendingBlockDelete = $0 }
+                    )
+                }
+            }
+        } header: {
+            HStack {
+                Text("Blocks")
+                Spacer()
+                Menu {
+                    templateMenuItems
+                } label: {
+                    Text("+ Block")
+                        .foregroundStyle(Color.accentColor)
+                }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var routinesEmptySection: some View {
+        Section {
+            VStack(alignment: .leading, spacing: 8) {
+                Text("No routines yet")
+                    .font(.body)
+                Text("Build a routine to start logging workouts.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                Button("New Routine") {
+                    presentingNewRoutine = true
+                }
+                .foregroundStyle(Color.accentColor)
+            }
+            .padding(.vertical, 4)
+        }
+    }
+
+    @ViewBuilder
+    private var templateMenuItems: some View {
+        Button("Generic Strength Meso") {
+            pendingBlockBuilder = .template(BlockTemplates.generic)
+        }
+        Button("Hypertrophy Meso") {
+            pendingBlockBuilder = .template(BlockTemplates.hypertrophy)
+        }
+        Button("Powerlifting Peak") {
+            pendingBlockBuilder = .template(BlockTemplates.powerliftingPeak)
+        }
+        Button("Blank Block") {
+            pendingBlockBuilder = .template(BlockTemplates.blank)
+        }
     }
 
     /// Builds the rendering sections from the live `@Query` slices.
@@ -278,6 +391,20 @@ public struct RoutinesListView: View {
         let id: UUID
         let title: String
         let routines: [Routine]
+    }
+
+    private enum PendingBlockBuilder: Identifiable {
+        case template(BlockTemplate)
+        case edit(Block)
+
+        var id: String {
+            switch self {
+            case .template(let template):
+                return "template-\(template.name)"
+            case .edit(let block):
+                return "edit-\(block.id.uuidString)"
+            }
+        }
     }
 
     // MARK: - Empty state

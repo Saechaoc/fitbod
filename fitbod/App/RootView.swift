@@ -244,38 +244,77 @@ public struct RootView: View {
 /// surface per the documented Apple pattern (RESEARCH § State of the Art).
 private struct TodayView: View {
     @Environment(\.modelContext) private var ctx
+
+    @Query(filter: #Predicate<Block> { $0.isActive == true })
+    private var activeBlocks: [Block]
+
     @State private var navigationPath = NavigationPath()
+    @State private var pendingBlockBuilder: PendingBlockBuilder? = nil
 
     var body: some View {
         NavigationStack(path: $navigationPath) {
-            VStack(spacing: 16) {
-                ResumeWorkoutBanner(
-                    onResume: { session in
-                        // Plan 04-01 wired — push SessionLoggerView via
-                        // the Today-tab NavigationPath.
-                        navigationPath.append(SessionRoute.logger(session))
-                    },
-                    onDiscard: { session in
-                        ctx.delete(session)
-                        try? ctx.save()
+            ScrollView {
+                VStack(spacing: 0) {
+                    if let active = activeBlocks.first,
+                       let phase = PeriodizationEngine.phase(for: active, on: .now),
+                       phase.kind == .deload {
+                        DeloadWeekBanner(currentPhaseKind: phase.kind)
                     }
-                )
-                Spacer()
-                Text("No workout in progress")                                 // UI-SPEC verbatim
-                    .font(.title2)
-                    .fontWeight(.semibold)
-                Text("Start a workout from your Routines tab.")                // UI-SPEC verbatim
-                    .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
-                Spacer()
+                    ConsiderDeloadBanner()
+                    if let active = activeBlocks.first {
+                        BlockCard(block: active)
+                    } else if activeBlocks.isEmpty {
+                        StartBlockCTA(onStart: {
+                            pendingBlockBuilder = .template(BlockTemplates.blank)
+                        })
+                    }
+                    ResumeWorkoutBanner(
+                        onResume: { session in
+                            navigationPath.append(SessionRoute.logger(session))
+                        },
+                        onDiscard: { session in
+                            ctx.delete(session)
+                            try? ctx.save()
+                        }
+                    )
+                    if activeBlocks.isEmpty {
+                        Spacer().frame(height: 24)
+                        Text("No workout in progress")                         // UI-SPEC verbatim
+                            .font(.title2)
+                            .fontWeight(.semibold)
+                        Text("Start a workout from your Routines tab.")        // UI-SPEC verbatim
+                            .foregroundStyle(.secondary)
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal, 32)
+                    }
+                }
+                .padding(.vertical, 8)
             }
-            .padding(.horizontal, 32)
             .navigationTitle("Today")
             .navigationDestination(for: SessionRoute.self) { route in
                 switch route {
                 case .logger(let session):
                     SessionLoggerView(session: session)
                 }
+            }
+            .sheet(item: $pendingBlockBuilder) { pending in
+                NavigationStack {
+                    switch pending {
+                    case .template(let template):
+                        BlockBuilderView(draft: BlockDraft(template: template))
+                    }
+                }
+            }
+        }
+    }
+
+    private enum PendingBlockBuilder: Identifiable {
+        case template(BlockTemplate)
+
+        var id: String {
+            switch self {
+            case .template(let template):
+                return "template-\(template.name)"
             }
         }
     }

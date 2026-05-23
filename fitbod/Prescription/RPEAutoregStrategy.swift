@@ -45,9 +45,12 @@ public struct RPEAutoregStrategy: ProgressionStrategy {
         lastSessionWeight: Double?,
         lastSessionReps: Int?,
         lastSessionRPE: Double?,
-        lastSessionDate: Date?
+        lastSessionDate: Date?,
+        block: Block? = nil,
+        today: Date = Date.now
     ) -> (weight: Double, explanation: PrescriptionExplanation) {
 
+        // Phase 4 protocol extension: RPE autoregulation ignores block context.
         let effectiveRPE = targetRPE ?? 8.0
         let lastLine = Self.lastSessionLine(
             weight: lastSessionWeight,
