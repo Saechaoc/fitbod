@@ -123,6 +123,16 @@ User explicitly wants a maximalist v1 (the app's stance is "comprehensive over s
 - [x] **FOUND-06**: Views bind directly to `@Model` types via `@Query` / `@Bindable`; no parallel view-model layer mirrors the schema (MV-VM-lite stance)
 - [x] **FOUND-07**: Progression and fatigue services are pure-function value types behind protocols, testable without a `ModelContainer`
 
+### PIVOT — Session-Level Intent & Progression Refactor (Phase 3.1)
+
+Added 2026-05-22 after user feedback: per-exercise intent + progressionKind is overly prescriptive. Real programs are organized at session/block level (a session has a goal; the same exercise rarely flips intent within a session).
+
+- **PIVOT-01**: `Routine` carries `intent: Intent` and `progressionKind: ProgressionKind` fields (default `.strength` / `.double`); persisted as `*Raw: String` per FOUND-03
+- **PIVOT-02**: `Session` snapshots `intent` and `progressionKind` from its source `Routine` at start time (PITFALLS-doc #1 — editing the Routine later does not retroactively change logged sessions)
+- **PIVOT-03**: `RoutineExercise.intentRaw` and `RoutineExercise.progressionKindRaw` removed; `SessionExercise.intentRaw` removed; SchemaV4 lightweight-additive for new fields + a versioned migration step that backfills `Routine.intentRaw` / `Routine.progressionKindRaw` from the most common per-exercise value at migration time
+- **PIVOT-04**: `RoutineBuilderView` gains a session-level Intent picker + Progression picker at the top of the form (above the exercise list); `PrescriptionEditorRow` drops its per-exercise Intent and Progression rows entirely (Sets / Reps / Target RPE / Rest / Tempo / Partial-reps / Auto-warmup remain)
+- **PIVOT-05**: All Phase 3 read-sites updated: `PreviousMatchingIntent.fetchTopWorkingSet` predicates on `Session.intentRaw` (not `SessionExercise.intentRaw`); `ProgressionStrategyFactory.make(for:)` reads `Session.progressionKind`; `SessionFactory.start(...)` snapshots from Routine; the 12 Phase 3 test suites are updated for the new shape
+
 ---
 
 ## v2 Requirements

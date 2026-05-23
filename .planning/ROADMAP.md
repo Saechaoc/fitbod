@@ -19,6 +19,7 @@ Granular, prescriptive workout sessions — every set in a session is intentiona
 - [x] **Phase 1: Foundation & Exercise Library** — Versioned SwiftData schema, full entity set, library seed pipeline, browse/filter/custom-creation UI **(complete: 12/12 plans, 14/14 requirements — 2026-05-11)**
 - [x] **Phase 2: Core Loop (Routines + Sessions)** — Single-screen routine builder, snapshot session logger, accurate rest timer, intent-split history lists **(complete: 13/13 plans, 20/20 requirements — 2026-05-11)**
 - [x] **Phase 3: Smart Prescription & Warm-ups** — Two progression strategies (RPE autoreg, double progression), warm-up generator, plate calculator, "why this weight?" UI (completed 2026-05-23)
+- [ ] **Phase 3.1: Session-Level Intent & Progression Refactor** — Move intent + progressionKind from per-exercise to Routine/Session; strip per-exercise pickers from PrescriptionEditorRow; SchemaV4 migration
 - [ ] **Phase 4: Periodization & Blocks** — Block builder, scheduled deloads, block timeline on home, remaining two progression strategies (block-periodized, hybrid)
 - [ ] **Phase 5: Fatigue Model & Plateau Detection** — Stimulus-weighted weekly volume, MEV/MAV/MRV bars with verbs, muscle heatmap, plateau detector, fatigue-triggered deload advisory
 - [ ] **Phase 6: Progress Views, Export & Polish** — Intent-split charts, PRs, weekly tonnage, session comparison, weekly recap, CSV/JSON export, backup/restore
@@ -84,6 +85,21 @@ Granular, prescriptive workout sessions — every set in a session is intentiona
 - [x] 03-08-PLAN.md — SessionFactory integration + SessionExerciseCard/SetRow wiring + manual-override capture
 **UI hint:** yes
 **Research flag:** Yes — at plan-phase time, confirm Tuchscherer RPE table numbers (exact percent values per rep × RPE cell) and choose per-exercise per-lifter calibration algorithm (linear vs locally-weighted regression; min-points threshold)
+
+### Phase 3.1: Session-Level Intent & Progression Refactor
+**Goal:** Move `intent` and `progressionKind` from per-exercise (RoutineExercise / SessionExercise) to session-level (Routine / Session). Real programs are organized at session/block level — a session has a goal (strength, hypertrophy) and a progression style; the same exercise rarely flips intent within a session. Per-exercise prescription stays detail-rich but stops being prescriptive about *why* the set is being done.
+**Mode:** refactor
+**Depends on:** Phase 3 (consumes ProgressionStrategy protocol and SessionFactory snapshot pattern)
+**Requirements:** PIVOT-01, PIVOT-02, PIVOT-03, PIVOT-04, PIVOT-05
+**Success Criteria** (what must be TRUE):
+  1. `Routine` and `Session` carry `intent: Intent` and `progressionKind: ProgressionKind` fields; `RoutineExercise.intentRaw` and `RoutineExercise.progressionKindRaw` removed (or kept as `nil`-only override paths); `SessionExercise.intentRaw` removed (snapshotted from `Session.intentRaw` instead)
+  2. SchemaV4 migration ships — additive Routine/Session fields land lightweight; per-exercise fields removed via a versioned migration step that backfills session-level values from the most common per-exercise value at migration time
+  3. RoutineBuilderView gains a session-level Intent picker + Progression picker at the top (above the exercise list); PrescriptionEditorRow drops its per-exercise Intent and Progression rows entirely
+  4. PreviousMatchingIntent + ProgressionStrategyFactory + SessionFactory + all 12 Phase 3 test suites updated to read intent/progression from Session/Routine (not SessionExercise/RoutineExercise)
+  5. Block-level intent + progression default is *not* in scope (Phase 4 owns that wiring) — but the new fields' default values (`intent = .strength`, `progressionKind = .double`) are placed so a future Phase 4 block-default override is a one-line addition
+**Plans:** TBD
+**UI hint:** yes
+**Research flag:** No — the refactor pattern is well-understood (mirrors Phase 1's enum-as-String + snapshot conventions)
 
 ### Phase 4: Periodization & Blocks
 **Goal:** User can define training blocks with phased mesocycles, see the active block on the home screen, navigate weeks, get scheduled deloads that automatically cut volume/intensity, and pick block-periodized or hybrid progression for relevant exercises.
