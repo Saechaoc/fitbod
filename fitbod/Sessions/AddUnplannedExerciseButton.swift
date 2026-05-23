@@ -15,16 +15,18 @@
 //  the user adds an unplanned exercise mid-session, prescription
 //  defaults are computed:
 //
-//    - `intentRaw` = the exercise's mechanic-driven default (compound +
-//      barbell → strength; otherwise hypertrophy). Phase 2 keeps this
-//      simple — Phase 3's PrescriptionDefaults / progression strategy
-//      will refine.
+//    - Intent comes from session-level `Session.intentRaw` (PIVOT-02 +
+//      PIVOT-05); no per-exercise intent defaulting needed. If the user
+//      started a strength session, the unplanned exercise inherits
+//      .strength (per D-14: same strategy across the session); same for
+//      hypertrophy.
 //    - `targetSets = 3`, `targetRepsLow = 8`, `targetRepsHigh = 12`.
 //    - `prescribedRestSeconds = 180` (compound) or 90 (isolation).
 //
 //  Three planned `SetEntry` rows are seeded with the matching-intent
 //  weight hint via `PreviousMatchingIntent.fetchTopWorkingSet` (same
-//  path SessionFactory uses on session-start).
+//  path SessionFactory uses on session-start), with the intent sourced
+//  from the parent Session.
 //
 //  ## UI-SPEC verbatim
 //
@@ -81,7 +83,9 @@ public struct AddUnplannedExerciseButton: View {
         se.session = session
         se.exercise = exercise
         se.orderIndex = (session.exercises ?? []).count
-        se.intentRaw = defaultIntent(for: exercise).rawValue
+        // PIVOT-02 / PIVOT-05: intent is session-level after Plan 02. The
+        // unplanned exercise inherits the parent session's intent — no
+        // per-exercise default needed.
         se.targetSets = 3
         se.targetRepsLow = 8
         se.targetRepsHigh = 12
@@ -89,10 +93,11 @@ public struct AddUnplannedExerciseButton: View {
         ctx.insert(se)
 
         // Seed 3 planned sets with the matching-intent weight hint
-        // (same path SessionFactory uses on session-start).
+        // (same path SessionFactory uses on session-start). PIVOT-02:
+        // intent is read from the parent Session.
         let hint = PreviousMatchingIntent.fetchTopWorkingSet(
             exerciseID: exercise.id,
-            intentRaw: se.intentRaw,
+            intentRaw: session.intentRaw,
             context: ctx
         )?.weight ?? 0
         for i in 0..<3 {
@@ -107,18 +112,6 @@ public struct AddUnplannedExerciseButton: View {
             ctx.insert(entry)
         }
         try? ctx.save()
-    }
-
-    /// CONTEXT.md Area 1 mechanic-driven default — compound + barbell
-    /// gravitates to strength; everything else defaults to hypertrophy.
-    /// Phase 3's PrescriptionDefaults will refine this; Phase 2 keeps
-    /// the heuristic minimal so an add-unplanned exercise feels sensible
-    /// out of the gate.
-    private func defaultIntent(for exercise: Exercise) -> Intent {
-        if exercise.mechanic == .compound && exercise.equipment == .barbell {
-            return .strength
-        }
-        return .hypertrophy
     }
 }
 

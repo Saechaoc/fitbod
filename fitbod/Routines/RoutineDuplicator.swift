@@ -39,6 +39,15 @@
 //  `.now`; `isArchived` is reset to `false`. The optional `block` ref
 //  is preserved (a Phase 4 concern).
 //
+//  ## Phase 3.1 (PIVOT-01) reshape
+//
+//  Intent + progressionKind are now ROUTINE-level fields (no longer
+//  per-exercise). The duplicator copies both onto the cloned routine —
+//  `copy.intentRaw = routine.intentRaw` and
+//  `copy.progressionKindRaw = routine.progressionKindRaw`. The
+//  per-RoutineExercise writes for the same two fields are GONE (the
+//  fields no longer exist on RoutineExercise after Plan 02).
+//
 //  ## Failure handling
 //
 //  `try? context.save()` at the end is non-fatal — a save failure is
@@ -72,6 +81,13 @@ public enum RoutineDuplicator {
         copy.updatedAt = .now
         copy.isArchived = false
         copy.block = routine.block
+        // PIVOT-01 — intent + progressionKind are routine-level after
+        // Phase 3.1 Plan 02. The duplicate inherits both fields verbatim
+        // from the source routine; per-RoutineExercise copies of the same
+        // fields are gone (the fields no longer exist on
+        // RoutineExercise).
+        copy.intentRaw = routine.intentRaw
+        copy.progressionKindRaw = routine.progressionKindRaw
         context.insert(copy)
 
         // Clone SupersetGroup rows FIRST so we have a map from source
@@ -102,7 +118,9 @@ public enum RoutineDuplicator {
             clonedRE.routine = copy
             clonedRE.exercise = re.exercise
             clonedRE.orderIndex = re.orderIndex
-            clonedRE.intentRaw = re.intentRaw
+            // PIVOT-03: intentRaw / progressionKindRaw no longer exist on
+            // RoutineExercise (they're routine-level fields written onto
+            // `copy` above).
             clonedRE.targetSets = re.targetSets
             clonedRE.targetRepsLow = re.targetRepsLow
             clonedRE.targetRepsHigh = re.targetRepsHigh
@@ -111,7 +129,6 @@ public enum RoutineDuplicator {
             clonedRE.prescribedRestSeconds = re.prescribedRestSeconds
             clonedRE.tempo = re.tempo
             clonedRE.notes = re.notes
-            clonedRE.progressionKindRaw = re.progressionKindRaw
             clonedRE.generateWarmups = re.generateWarmups
             clonedRE.tracksTempo = re.tracksTempo
             clonedRE.tracksPartialReps = re.tracksPartialReps

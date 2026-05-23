@@ -20,6 +20,15 @@
 //  `reps` reset to 0, and `rpe` cleared so the user starts fresh on
 //  the swapped exercise.
 //
+//  ## Phase 3.1 (PIVOT-02 / PIVOT-05) reshape
+//
+//  Intent is a SESSION-level field after Plan 02. The swap reads
+//  `sessionExercise.session?.intentRaw` (with a `.strength` fallback
+//  matching FOUND-03's default-string pattern when the session somehow
+//  detaches). The previous `sessionExercise.intentRaw` write at session
+//  init is gone — every SessionExercise inherits intent from its parent
+//  Session.
+//
 //  ## Footer copy (UI-SPEC verbatim)
 //
 //  "This swap applies to this session only. The routine template will
@@ -51,10 +60,13 @@ public struct SwapExerciseSheet: View {
                     // Re-seed pending sets with the new exercise's
                     // matching-intent hint. Committed sets are immutable
                     // (PITFALLS-doc #1 — historical data is never
-                    // rewritten).
+                    // rewritten). PIVOT-02 / PIVOT-05: intent is read
+                    // from the parent Session (fallback to .strength if
+                    // the session relationship is somehow nil — matches
+                    // FOUND-03 default-string pattern).
                     let hint = PreviousMatchingIntent.fetchTopWorkingSet(
                         exerciseID: exercise.id,
-                        intentRaw: sessionExercise.intentRaw,
+                        intentRaw: sessionExercise.session?.intentRaw ?? Intent.strength.rawValue,
                         context: ctx
                     )?.weight ?? 0
                     let pendingSets = (sessionExercise.sets ?? [])
@@ -89,9 +101,17 @@ public struct SwapExerciseSheet: View {
     let ctx = ModelContext(container)
     let ex = Exercise.previewSample(name: "Bench", equipment: .barbell, mechanic: .compound)
     ctx.insert(ex)
+    // PIVOT-02 / PIVOT-05 — intent lives on the parent Session, not the
+    // SessionExercise. Wire a session into the preview so the swap-sheet
+    // exercises the real session-level intent read path.
+    let session = Session()
+    session.startedAt = .now
+    session.routineSnapshotName = "Push Day A"
+    session.intentRaw = Intent.strength.rawValue
+    ctx.insert(session)
     let se = SessionExercise()
+    se.session = session
     se.exercise = ex
-    se.intentRaw = Intent.strength.rawValue
     ctx.insert(se)
     try? ctx.save()
     return SwapExerciseSheet(sessionExercise: se)
