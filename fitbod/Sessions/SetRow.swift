@@ -8,18 +8,20 @@
 //
 //  ## Layout (UI-SPEC § Session logger)
 //
-//      [set#] [Previous] [Weight] [Reps] [RPE chips] [type chip] [✓]
+//      [set#] [Previous] [Weight/PrescriptionWeightCell] [Reps] [RPE chips] [type chip] [✓]
+//      [PlateStackDisclosure (conditional, below)]
 //
-//  - `set#` — "1", "2", "W1" for warm-ups (UI-SPEC verbatim format).
-//  - `Previous` — `PreviousColumn` showing matching-intent prior set
-//    (e.g. "175 × 8 @ 8 (Mon)") or "—" when no prior data exists.
-//  - `Weight` / `Reps` — `TextField` with UI-SPEC verbatim placeholder "—".
-//  - `RPE chips` — `InlineRPEChipRow` with 5 integer chips + long-press
-//    decimal sheet.
-//  - `type chip` — `SetTypeChip` cycling through working/warmup/drop/
-//    failure/restPause.
-//  - `✓` — completion button toggles between `circle` (incomplete) and
-//    `checkmark.circle.fill` (complete) in `Color.accentColor`.
+//  Phase 3 (plan 03-08) additions:
+//    - Weight `TextField` replaced by `PrescriptionWeightCell` which renders:
+//        * The prescribed weight with an `info.circle` button (WhyThisWeightSheet)
+//        * A read-only "{low} – {high} kg" Text when `range != nil` (calibrating)
+//        * An "M" badge when the user overrides the prescribed weight
+//    - `PlateStackDisclosure` injected as a conditional VStack child below the
+//      main HStack when `expandedPlateSetID == entry.id`.
+//    - `expandedPlateSetID: Binding<UUID?>` for single-disclosure-at-a-time
+//      coordination across all set rows in a card.
+//    - `prescribed: Double?` — the session-exercise prescribed weight
+//    - `explanation: PrescriptionExplanation?` — recomputed by card
 //
 //  ## Commit semantics (SESS-04 — rest timer integration)
 //
@@ -51,12 +53,18 @@
 //  uses `.numbersAndPunctuation` keyboard so the user can enter a signed
 //  value (negative weight = assistance from a machine; positive = added
 //  weight on a belt). Non-bodyweight exercises use `.decimalPad`.
+//  (This setting is now passed to PrescriptionWeightCell.)
+//
+//  ## Plate-stack inline disclosure (plan 03-08 / UI-SPEC § Plate-stack)
+//
+//  Tapping the weight cell area (NOT the info.circle icon) toggles the
+//  PlateStackDisclosure. Only one disclosure is open at a time — managed by
+//  the `expandedPlateSetID` binding owned by SessionExerciseCard.
 //
 //  ## Anti-patterns avoided
 //
-//  - The TextField text is seeded from `entry.weight` ONLY when the value
-//    is non-zero — otherwise the field shows the placeholder "—" instead
-//    of "0.0" (the planner's "Anti-Patterns to Avoid" callout).
+//  - PrescriptionWeightCell handles the TextField text seeding internally;
+//    SetRow no longer manages `weightText` state.
 //  - The `PreviousColumn` query fires once in `.task`, not on every body
 //    invocation (RESEARCH § Anti-Patterns to Avoid).
 //
@@ -67,114 +75,190 @@ import SwiftData
 public struct SetRow: View {
     @Bindable public var entry: SetEntry
     public let sessionExercise: SessionExercise
+    /// Phase 3 (plan 03-08): the prescribed weight from SessionExercise,
+    /// forwarded to PrescriptionWeightCell. Nil for Phase 2 sessions started
+    /// before Phase 3 shipped.
+    public let prescribed: Double?
+    /// Phase 3 (plan 03-08): the full PrescriptionExplanation recomputed by
+    /// SessionExerciseCard.currentExplanation(). Nil for first sessions or
+    /// Phase 2 sessions. The `range` field inside drives the read-only
+    /// calibrating display per CONTEXT.md Area 1.
+    public let explanation: PrescriptionExplanation?
+    /// Phase 3 (plan 03-08): shared single-disclosure-at-a-time coordination.
+    /// When the user taps the weight cell area, this toggles to entry.id;
+    /// when another row is tapped, this card automatically collapses because
+    /// expandedPlateSetID changes.
+    @Binding public var expandedPlateSetID: UUID?
     public let onCommit: () -> Void
     public let onTapEmptyCell: () -> Void
 
-    @State private var weightText: String = ""
     @State private var repsText: String = ""
     /// Wave-4 plan 04-03 — per-set note sheet presentation flag. Plan
     /// 04-01 anchored the note-button placement here as a stub; this plan
     /// ships the real PerSetNoteSheet wire.
     @State private var presentingSetNote: Bool = false
 
+    /// Phase 3 (plan 03-08): plate inventory for the PlateStackDisclosure.
+    /// Read-only query — no write-through.
+    @Query private var inventories: [PlateInventory]
+
     public init(
         entry: SetEntry,
         sessionExercise: SessionExercise,
+        prescribed: Double? = nil,
+        explanation: PrescriptionExplanation? = nil,
+        expandedPlateSetID: Binding<UUID?> = .constant(nil),
         onCommit: @escaping () -> Void,
         onTapEmptyCell: @escaping () -> Void
     ) {
         self.entry = entry
         self.sessionExercise = sessionExercise
+        self.prescribed = prescribed
+        self.explanation = explanation
+        self._expandedPlateSetID = expandedPlateSetID
         self.onCommit = onCommit
         self.onTapEmptyCell = onTapEmptyCell
     }
 
     public var body: some View {
-        HStack(spacing: 8) {                                                   // UI-SPEC sm
-            Text(setLabel)                                                     // "1", "2", "W1" for warmup
-                .font(.body)
-                .frame(width: 32, alignment: .leading)
-            PreviousColumn(
-                exerciseID: sessionExercise.exercise?.id,
-                intentRaw: sessionExercise.intentRaw
-            )
-            .frame(width: 80, alignment: .leading)
-            TextField("—", text: $weightText)                                  // UI-SPEC verbatim placeholder
-                .keyboardType(weightKeyboardType)
+        VStack(spacing: 0) {
+            // MARK: Main set row HStack
+            HStack(spacing: 8) {                                                   // UI-SPEC sm
+                Text(setLabel)                                                     // "1", "2", "W1" for warmup
+                    .font(.body)
+                    .frame(width: 32, alignment: .leading)
+                PreviousColumn(
+                    exerciseID: sessionExercise.exercise?.id,
+                    intentRaw: sessionExercise.intentRaw
+                )
+                .frame(width: 80, alignment: .leading)
+
+                // Phase 3 (plan 03-08): PrescriptionWeightCell replaces the
+                // plain weight TextField. It renders:
+                //   - An editable TextField (when range == nil)
+                //   - A read-only "{low} – {high} kg" Text (when range != nil)
+                //   - An "M" badge when wasManualOverride == true
+                //   - An info.circle button that opens WhyThisWeightSheet
+                //
+                // CRITICAL: `range: explanation?.range` MUST be passed here so
+                // calibrating-with-prior-data sessions render the read-only
+                // range display per CONTEXT.md Area 1 + UI-SPEC § Prescribed
+                // weight cell. This is the key integration wiring of plan 03-08.
+                PrescriptionWeightCell(
+                    weight: $entry.weight,
+                    prescribed: prescribed,
+                    range: explanation?.range,   // CONTEXT.md Area 1 — calibrating range
+                    explanation: explanation,
+                    wasManualOverride: $entry.wasManualOverride,
+                    isComplete: entry.isComplete,
+                    onTapEmptyCell: onTapEmptyCell
+                )
                 .frame(width: 60)
+                .contentShape(Rectangle())
                 .onTapGesture {
+                    // Tap on weight cell area (NOT info.circle — that button
+                    // intercepts its own tap) toggles the plate stack disclosure.
+                    // UI-SPEC § Plate-stack inline disclosure flow §3: TextField
+                    // focus takes precedence; only toggle when not in range-mode
+                    // (read-only Text) or explicitly tapping the cell background.
+                    togglePlateDisclosure()
                     if !entry.isComplete { onTapEmptyCell() }
                 }
-                .onChange(of: weightText) { _, newValue in
-                    if let d = Double(newValue) { entry.weight = d }
+
+                TextField("—", text: $repsText)                                    // UI-SPEC verbatim placeholder
+                    .keyboardType(.numberPad)
+                    .frame(width: 40)
+                    .onTapGesture {
+                        if !entry.isComplete { onTapEmptyCell() }
+                    }
+                    .onChange(of: repsText) { _, newValue in
+                        if let i = Int(newValue) { entry.reps = i }
+                    }
+                InlineRPEChipRow(rpe: Binding(
+                    get: { entry.rpe },
+                    set: { entry.rpe = $0 }
+                ))
+                SetTypeChip(setTypeRaw: Binding(
+                    get: { entry.setTypeRaw },
+                    set: { entry.setTypeRaw = $0 }
+                ))
+                Spacer()
+                // Wave-4 plan 04-03 — per-set notes button (UI-SPEC § Session
+                // logger "Per-set notes button accessibility label" + symbol
+                // anchor placement from plan 04-01). Icon-only button before
+                // the completion checkmark. Foreground tints to accent when a
+                // note is populated as a visual signal; secondary-label
+                // otherwise so empty-notes buttons stay quiet.
+                Button {
+                    presentingSetNote = true
+                } label: {
+                    Image(systemName: "square.and.pencil")
+                        .font(.caption)
+                        .foregroundStyle(entry.notes != nil ? Color.accentColor : Color.secondary)
                 }
-            TextField("—", text: $repsText)                                    // UI-SPEC verbatim placeholder
-                .keyboardType(.numberPad)
-                .frame(width: 40)
-                .onTapGesture {
-                    if !entry.isComplete { onTapEmptyCell() }
+                .buttonStyle(.plain)
+                .frame(width: 32, height: 32)
+                .accessibilityLabel("Note for set \(entry.orderIndex + 1)")        // UI-SPEC verbatim a11y
+                .sheet(isPresented: $presentingSetNote) {
+                    PerSetNoteSheet(entry: entry)
                 }
-                .onChange(of: repsText) { _, newValue in
-                    if let i = Int(newValue) { entry.reps = i }
+                Button {
+                    // Guard: never commit a zero-weight/zero-rep set. Without
+                    // this guard an empty checkmark-tap would flip
+                    // `isComplete = true` and corrupt future matching-intent
+                    // reads. UI-SPEC § Anti-Patterns to Avoid.
+                    if entry.weight > 0 && entry.reps > 0 {
+                        onCommit()
+                    }
+                } label: {
+                    Image(systemName: entry.isComplete ? "checkmark.circle.fill" : "circle")
+                        .foregroundStyle(entry.isComplete ? Color.accentColor : Color.secondary)
+                        .font(.title2)
+                        .frame(minWidth: 44, minHeight: 44)                        // UI-SPEC HIG 44pt
                 }
-            InlineRPEChipRow(rpe: Binding(
-                get: { entry.rpe },
-                set: { entry.rpe = $0 }
-            ))
-            SetTypeChip(setTypeRaw: Binding(
-                get: { entry.setTypeRaw },
-                set: { entry.setTypeRaw = $0 }
-            ))
-            Spacer()
-            // Wave-4 plan 04-03 — per-set notes button (UI-SPEC § Session
-            // logger "Per-set notes button accessibility label" + symbol
-            // anchor placement from plan 04-01). Icon-only button before
-            // the completion checkmark. Foreground tints to accent when a
-            // note is populated as a visual signal; secondary-label
-            // otherwise so empty-notes buttons stay quiet.
-            Button {
-                presentingSetNote = true
-            } label: {
-                Image(systemName: "square.and.pencil")
-                    .font(.caption)
-                    .foregroundStyle(entry.notes != nil ? Color.accentColor : Color.secondary)
+                .buttonStyle(.plain)
+                .accessibilityLabel(
+                    entry.isComplete
+                    ? "Set \(entry.orderIndex + 1) complete"
+                    : "Mark set \(entry.orderIndex + 1) complete"
+                )
             }
-            .buttonStyle(.plain)
-            .frame(width: 32, height: 32)
-            .accessibilityLabel("Note for set \(entry.orderIndex + 1)")        // UI-SPEC verbatim a11y
-            .sheet(isPresented: $presentingSetNote) {
-                PerSetNoteSheet(entry: entry)
-            }
-            Button {
-                // Guard: never commit a zero-weight/zero-rep set. Without
-                // this guard an empty checkmark-tap would flip
-                // `isComplete = true` and corrupt future matching-intent
-                // reads. UI-SPEC § Anti-Patterns to Avoid.
-                if entry.weight > 0 && entry.reps > 0 {
-                    onCommit()
+            .padding(.vertical, 12)                                                // UI-SPEC md
+
+            // MARK: PlateStackDisclosure (Phase 3 plan 03-08)
+            //
+            // Rendered as a VStack sibling below the main HStack when the
+            // user has tapped this row's weight cell. Single-disclosure-
+            // at-a-time: expandedPlateSetID must equal this entry's id.
+            // Animation is handled inside PlateStackDisclosure itself via
+            // @Environment(\.accessibilityReduceMotion).
+            if expandedPlateSetID == entry.id {
+                let ekind = SessionFactory.equipmentKind(
+                    for: sessionExercise.exercise?.equipment ?? .other
+                )
+                if let inv = inventories.first(where: { $0.equipmentKind == ekind }) {
+                    let targetWeight = entry.weight > 0
+                        ? entry.weight
+                        : (prescribed ?? 0)
+                    let barW = sessionExercise.exercise?.barWeightOverride ?? inv.barWeight
+                    PlateStackDisclosure(
+                        targetWeight: targetWeight,
+                        barWeight: barW,
+                        plates: inv.availablePlates
+                    )
+                    .padding(.vertical, 8)                                         // UI-SPEC sm
                 }
-            } label: {
-                Image(systemName: entry.isComplete ? "checkmark.circle.fill" : "circle")
-                    .foregroundStyle(entry.isComplete ? Color.accentColor : Color.secondary)
-                    .font(.title2)
-                    .frame(minWidth: 44, minHeight: 44)                        // UI-SPEC HIG 44pt
             }
-            .buttonStyle(.plain)
-            .accessibilityLabel(
-                entry.isComplete
-                ? "Set \(entry.orderIndex + 1) complete"
-                : "Mark set \(entry.orderIndex + 1) complete"
-            )
         }
-        .padding(.vertical, 12)                                                // UI-SPEC md
         .onAppear {
-            // Seed the local TextField text from the model. We render the
-            // placeholder "—" instead of "0.0" when the underlying value
-            // is zero (the planner's "Anti-Patterns to Avoid" callout).
-            weightText = entry.weight == 0 ? "" : trimmedNumber(entry.weight)
+            // Seed the reps text field. PrescriptionWeightCell manages the
+            // weight text field internally (seeding from prescribed weight or
+            // current weight on .onAppear).
             repsText = entry.reps == 0 ? "" : String(entry.reps)
         }
     }
+
+    // MARK: - Private helpers
 
     /// "1", "2", "W1" for warmup sets — UI-SPEC § Session logger
     /// "Set-row 'Set N' leading label".
@@ -183,24 +267,15 @@ public struct SetRow: View {
         return entry.isWarmup ? "W\(n)" : "\(n)"
     }
 
-    /// SESS-09 — bodyweight equipment uses `.numbersAndPunctuation` so the
-    /// user can enter a signed numeric value (negative = assist machine,
-    /// positive = added weight). Non-bodyweight exercises use `.decimalPad`.
-    private var weightKeyboardType: UIKeyboardType {
-        if sessionExercise.exercise?.equipment == .bodyweight {
-            return .numbersAndPunctuation
+    /// Toggles the plate-stack disclosure for this row. If this row's
+    /// disclosure is already open, closes it. If another row's disclosure
+    /// is open, this row takes over (single-disclosure-at-a-time).
+    private func togglePlateDisclosure() {
+        if expandedPlateSetID == entry.id {
+            expandedPlateSetID = nil
+        } else {
+            expandedPlateSetID = entry.id
         }
-        return .decimalPad
-    }
-
-    /// Renders weight without a trailing ".0" when the value is an
-    /// integer (e.g. "175" not "175.0"). For decimal weights the natural
-    /// decimal representation is preserved (e.g. "177.5").
-    private func trimmedNumber(_ value: Double) -> String {
-        if value.truncatingRemainder(dividingBy: 1) == 0 {
-            return "\(Int(value))"
-        }
-        return String(value)
     }
 }
 
@@ -212,10 +287,11 @@ public struct SetRow: View {
     let se = SessionExercise()
     se.exercise = ex
     se.intentRaw = "strength"
+    se.prescribedWeight = 100.0
     ctx.insert(se)
     let entry = SetEntry()
     entry.sessionExercise = se
-    entry.weight = 185
+    entry.weight = 100
     entry.reps = 5
     ctx.insert(entry)
     try? ctx.save()
@@ -223,6 +299,8 @@ public struct SetRow: View {
         SetRow(
             entry: entry,
             sessionExercise: se,
+            prescribed: 100.0,
+            explanation: nil,
             onCommit: {},
             onTapEmptyCell: {}
         )
