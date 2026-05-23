@@ -7,29 +7,11 @@
 //  ## Phase 3.1 reconciliation (2026-05-23)
 //
 //  Phase 3.1's PIVOT-04 stripped the per-exercise Intent + Progression
-//  pickers from PrescriptionEditorRow. Decision D-19 from Phase 4
-//  CONTEXT.md ("disallow .block/.hybrid unless routine is in a block")
-//  is OBSOLETE after that strip — there is no longer a per-exercise
-//  progression picker to filter. The two tests that pinned the picker
-//  filter (`prescriptionEditorRowHasHasBlockInit` and
-//  `prescriptionEditorRowFootnoteCopy`) were removed during this
-//  reconciliation; their behavior no longer exists in production code.
-//
-//  The remaining 3 tests pin Plan 04-05 surfaces that ARE still
-//  current:
-//
-//    - `prescriptionEditorRowDoesNotHavePhase3DeferralFootnote` —
-//      asserts the old "Block / Hybrid models activate" deferral
-//      footnote is gone (replaced by Plan 04-06's real strategies).
-//    - `routineBuilderViewPropagatesHasBlock` — asserts that the
-//      routine builder still computes `draft.blockID != nil` and
-//      passes `hasBlock:` into the exercise card. The `hasBlock`
-//      plumbing is preserved (RoutineBuilderView → RoutineExerciseCard
-//      → PrescriptionEditorRow) even though the editor row no longer
-//      branches on it; future Phase 4+ surfaces (e.g., block-aware
-//      banners inside the card) can re-use the same channel.
-//    - `blockPickerMenuLabelsVerbatim` — anchors the verbatim copy
-//      shipped in Plan 04-05's BlockPickerMenu.
+//  pickers from PrescriptionEditorRow and hoisted Progression to the
+//  routine header. Phase 4's block-required filter therefore belongs
+//  on RoutineBuilderView's header picker, with a RoutineDraft save-path
+//  guard so direct draft mutation cannot persist .block/.hybrid without
+//  a real block.
 //
 
 import Foundation
@@ -51,11 +33,35 @@ struct PrescriptionEditorBlockCaseFilterTests {
         )
     }
 
-    @Test("PrescriptionEditorRow does not have Phase 3 deferral footnote")
-    func prescriptionEditorRowDoesNotHavePhase3DeferralFootnote() throws {
-        let editor = try source("fitbod/Routines/PrescriptionEditorRow.swift")
+    @Test("RoutineDraft exposes block-aware progression cases")
+    @MainActor
+    func routineDraftExposesBlockAwareProgressionCases() {
+        #expect(RoutineDraft.availableProgressionKinds(hasBlock: false) == [.rpe, .double])
+        #expect(RoutineDraft.availableProgressionKinds(hasBlock: true) == ProgressionKind.allCases)
+    }
 
-        #expect(!editor.contains("Block / Hybrid models activate"))
+    @Test("RoutineBuilderView filters block-required progression cases")
+    func routineBuilderViewFiltersBlockRequiredProgressionCases() throws {
+        let builder = try source("fitbod/Routines/RoutineBuilderView.swift")
+
+        #expect(builder.contains("availableProgressionKinds"))
+        #expect(builder.contains("RoutineDraft.availableProgressionKinds(hasBlock: draft.blockID != nil)"))
+        #expect(builder.contains("ForEach(availableProgressionKinds"))
+        #expect(builder.contains("guardedProgressionSelection"))
+    }
+
+    @Test("RoutineBuilderView has block-required help copy")
+    func routineBuilderViewFootnoteCopy() throws {
+        let builder = try source("fitbod/Routines/RoutineBuilderView.swift")
+
+        #expect(builder.contains("\"Add routine to a block to use these.\""))
+    }
+
+    @Test("RoutineBuilderView does not have Phase 3 deferral footnote")
+    func routineBuilderViewDoesNotHavePhase3DeferralFootnote() throws {
+        let builder = try source("fitbod/Routines/RoutineBuilderView.swift")
+
+        #expect(!builder.contains("Block / Hybrid models activate"))
     }
 
     @Test("RoutineBuilderView propagates hasBlock")

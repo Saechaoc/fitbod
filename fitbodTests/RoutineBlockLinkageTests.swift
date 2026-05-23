@@ -14,7 +14,7 @@ import Testing
 @Suite("RoutineBlockLinkage", .serialized)
 struct RoutineBlockLinkageTests {
     private func makeContext() throws -> ModelContext {
-        let schema = Schema(SchemaV3.models)
+        let schema = Schema(SchemaV4.models)
         let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
         let container = try ModelContainer(
             for: schema,
@@ -150,5 +150,64 @@ struct RoutineBlockLinkageTests {
         let fetched = try fetchRoutine(routine.id, context: context)
         #expect(fetched.name == "Bench Day")
         #expect(fetched.block?.id == block.id)
+    }
+
+    @Test("Routine linked to block can save block-required progression")
+    func routineLinkedToBlockCanSaveBlockRequiredProgression() throws {
+        let context = try makeContext()
+        let block = Block()
+        block.name = "Peak"
+        context.insert(block)
+
+        for kind in [ProgressionKind.block, .hybrid] {
+            let routine = Routine()
+            context.insert(routine)
+
+            let draft = makeValidDraft(blockID: block.id)
+            draft.progressionKind = kind
+            draft.save(into: routine, context: context)
+            try context.save()
+
+            let fetched = try fetchRoutine(routine.id, context: context)
+            #expect(fetched.block?.id == block.id)
+            #expect(fetched.progressionKind == kind)
+        }
+    }
+
+    @Test("Routine without block falls back from block-required progression")
+    func routineWithoutBlockFallsBackFromBlockRequiredProgression() throws {
+        let context = try makeContext()
+
+        for kind in [ProgressionKind.block, .hybrid] {
+            let routine = Routine()
+            context.insert(routine)
+
+            let draft = makeValidDraft(blockID: nil)
+            draft.progressionKind = kind
+            draft.save(into: routine, context: context)
+            try context.save()
+
+            let fetched = try fetchRoutine(routine.id, context: context)
+            #expect(fetched.block == nil)
+            #expect(fetched.progressionKind == .double)
+            #expect(draft.progressionKind == .double)
+        }
+    }
+
+    @Test("Routine with unresolved block falls back from block-required progression")
+    func routineWithUnresolvedBlockFallsBackFromBlockRequiredProgression() throws {
+        let context = try makeContext()
+        let routine = Routine()
+        context.insert(routine)
+
+        let draft = makeValidDraft(blockID: UUID())
+        draft.progressionKind = .hybrid
+        draft.save(into: routine, context: context)
+        try context.save()
+
+        let fetched = try fetchRoutine(routine.id, context: context)
+        #expect(fetched.block == nil)
+        #expect(fetched.progressionKind == .double)
+        #expect(draft.progressionKind == .double)
     }
 }

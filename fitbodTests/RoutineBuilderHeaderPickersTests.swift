@@ -113,8 +113,15 @@ struct RoutineBuilderHeaderPickersTests {
 
         // Build a fresh draft with both pickers MUTATED away from the
         // default values so the assertion exercises a real write.
+        // Phase 4 requires block/hybrid progression to be inside a
+        // resolved block, so this fixture links the routine to one.
+        let block = Block()
+        block.name = "Peak Block"
+        ctx.insert(block)
+
         let draft = RoutineDraft()
         draft.name = "Header Picker Save Test"
+        draft.blockID = block.id
         draft.intent = .power
         draft.progressionKind = .hybrid
         let exDraft = RoutineExerciseDraft()
@@ -132,6 +139,7 @@ struct RoutineBuilderHeaderPickersTests {
         let saved = try #require(routines.first)
         #expect(saved.intentRaw == "power")
         #expect(saved.progressionKindRaw == "hybrid")
+        #expect(saved.block?.id == block.id)
         // Computed accessor sanity-check.
         #expect(saved.intent == .power)
         #expect(saved.progressionKind == .hybrid)
@@ -182,12 +190,12 @@ struct RoutineBuilderHeaderPickersTests {
             "\"Sets the weight-progression strategy used for every exercise in this routine.\""
         ))
 
-        // Tag bindings prove the picker exposes all four ProgressionKind
-        // cases (D-08 — Block + Hybrid remain selectable).
-        #expect(source.contains(".tag(ProgressionKind.rpe)"))
-        #expect(source.contains(".tag(ProgressionKind.double)"))
-        #expect(source.contains(".tag(ProgressionKind.block)"))
-        #expect(source.contains(".tag(ProgressionKind.hybrid)"))
+        // Phase 4 filters the actual picker entries through
+        // `availableProgressionKinds`, so Block + Hybrid are only
+        // offered after a routine has a block.
+        #expect(source.contains("ForEach(availableProgressionKinds"))
+        #expect(source.contains("RoutineDraft.availableProgressionKinds(hasBlock: draft.blockID != nil)"))
+        #expect(source.contains("\"Add routine to a block to use these.\""))
     }
 
     // MARK: - 6. snapshotHash dirty-check (Phase 3.1 expansion)

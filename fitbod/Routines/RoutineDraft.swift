@@ -142,6 +142,57 @@ public final class RoutineDraft {
         return !trimmed.isEmpty && !exercises.isEmpty
     }
 
+    /// Phase 4 (D-19 relocated): block-aware filter for the
+    /// session-level Progression header picker. `.block` and `.hybrid`
+    /// strategies require a routine.block to be meaningful — without a
+    /// block, BlockPeriodizedStrategy has no phase to read multipliers
+    /// from and HybridStrategy's min(blockTarget, rpeTarget) reduces to
+    /// rpeTarget. The picker therefore hides those two cases when the
+    /// routine has no block. After Phase 3.1's PIVOT-04 hoisted
+    /// Progression to the session level, this filter lives on the
+    /// builder header picker (not on the removed per-exercise row).
+    ///
+    /// Static so it can be called from view-body computed properties
+    /// without needing a draft instance, and from tests via
+    /// `@testable import fitbod`.
+    public static func availableProgressionKinds(hasBlock: Bool) -> [ProgressionKind] {
+        if hasBlock {
+            return ProgressionKind.allCases
+        } else {
+            return [.rpe, .double]
+        }
+    }
+
+    public static func requiresBlock(_ progressionKind: ProgressionKind) -> Bool {
+        progressionKind == .block || progressionKind == .hybrid
+    }
+
+    /// Phase 4 (D-19 relocated): save-path guard so a draft whose
+    /// `progressionKind` is `.block` or `.hybrid` cannot persist
+    /// without a real block. If the draft is dirtied to one of the
+    /// block-required cases via a direct property mutation (not the
+    /// picker — the picker is filtered) and the routine has no block,
+    /// the guard demotes the selection to `.double` (the universal
+    /// default per D-04).
+    internal func guardedProgressionSelection(hasBlock: Bool) -> ProgressionKind {
+        let kinds = RoutineDraft.availableProgressionKinds(hasBlock: hasBlock)
+        if kinds.contains(progressionKind) {
+            return progressionKind
+        }
+        return .double
+    }
+
+    public func enforceBlockProgressionEligibility(hasBlock: Bool) {
+        let guarded = guardedProgressionSelection(hasBlock: hasBlock)
+        if guarded != progressionKind {
+            progressionKind = guarded
+        }
+    }
+
+    public func enforceBlockProgressionEligibility() {
+        enforceBlockProgressionEligibility(hasBlock: blockID != nil)
+    }
+
     /// Append a brand-new exercise to the draft. Runs the
     /// `PrescriptionDefaults` heuristic (ROUTINE-09) so the user sees
     /// reasonable defaults the moment they tap a search result.
@@ -169,23 +220,30 @@ public final class RoutineDraft {
         routine.name = name.trimmingCharacters(in: .whitespacesAndNewlines)
         routine.notes = notes
         routine.folderID = folderID
-        // Phase 3.1 PIVOT-04 — write session-level Intent + Progression
-        // to the persisted Routine row. The two raw values flow through
-        // to SessionFactory.start(routine:on:context:) (plan 03.1-03)
-        // when the user starts a session against this routine.
+        // Phase 3.1 PIVOT-04 — write session-level Intent to the
+        // persisted Routine row. Progression writes after resolving the
+        // Phase 4 block link so .block/.hybrid cannot persist without a
+        // real block.
         routine.intentRaw = intent.rawValue
-        routine.progressionKindRaw = progressionKind.rawValue
         routine.updatedAt = .now
 
+        let resolvedBlock: Block?
         if let blockID {
             let targetID = blockID
             let descriptor = FetchDescriptor<Block>(
                 predicate: #Predicate<Block> { $0.id == targetID }
             )
-            routine.block = (try? context.fetch(descriptor))?.first
+            resolvedBlock = (try? context.fetch(descriptor))?.first
         } else {
-            routine.block = nil
+            resolvedBlock = nil
         }
+
+        routine.block = resolvedBlock
+        if resolvedBlock == nil {
+            blockID = nil
+        }
+        enforceBlockProgressionEligibility(hasBlock: resolvedBlock != nil)
+        routine.progressionKindRaw = progressionKind.rawValue
 
         // Remove RoutineExercise rows not represented in the draft.
         let existingExercises = routine.exercises ?? []

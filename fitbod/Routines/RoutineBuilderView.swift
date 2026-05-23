@@ -269,7 +269,11 @@ public struct RoutineBuilderView: View {
         } message: {
             Text("Save the routine before grouping exercises into a superset.")
         }
+        .onChange(of: draft.blockID) { _, newBlockID in
+            draft.enforceBlockProgressionEligibility(hasBlock: newBlockID != nil)
+        }
         .onAppear {
+            draft.enforceBlockProgressionEligibility()
             // Phase 3.1 — `snapshotHash()` lives on `RoutineDraft` now
             // (relocated from this view so the helper is testable).
             initialSnapshot = draft.snapshotHash()
@@ -359,25 +363,62 @@ public struct RoutineBuilderView: View {
         }
     }
 
-    private var progressionHeaderRow: some View {
-        LabeledContent {
-            Picker("Progression", selection: $draft.progressionKind) {
-                Text("RPE Autoregulation").tag(ProgressionKind.rpe)
-                Text("Double Progression").tag(ProgressionKind.double)
-                Text("Block Periodized").tag(ProgressionKind.block)
-                Text("Hybrid").tag(ProgressionKind.hybrid)
+    /// Phase 4 (D-19 relocated): filter `.block` and `.hybrid` out of
+    /// the picker when the routine has no block. The session-level
+    /// strategies for those two cases need a real block to be
+    /// meaningful (multipliers / phase context), so we hide them rather
+    /// than letting the user pick a degenerate state.
+    private var availableProgressionKinds: [ProgressionKind] {
+        RoutineDraft.availableProgressionKinds(hasBlock: draft.blockID != nil)
+    }
+
+    private var progressionLabel: (ProgressionKind) -> String {
+        { kind in
+            switch kind {
+            case .rpe: return "RPE Autoregulation"
+            case .double: return "Double Progression"
+            case .block: return "Block Periodized"
+            case .hybrid: return "Hybrid"
             }
-            .pickerStyle(.menu)
-            .labelsHidden()
-            .lineLimit(1)
-            .truncationMode(.tail)
-            .accessibilityLabel("Progression")
-            .accessibilityHint("Sets the weight-progression strategy used for every exercise in this routine.")
-        } label: {
-            Text("Progression")
-                .font(.body)
+        }
+    }
+
+    private var guardedProgressionSelection: Binding<ProgressionKind> {
+        Binding(
+            get: { draft.progressionKind },
+            set: { newValue in
+                if draft.blockID != nil || !RoutineDraft.requiresBlock(newValue) {
+                    draft.progressionKind = newValue
+                }
+            }
+        )
+    }
+
+    private var progressionHeaderRow: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            LabeledContent {
+                Picker("Progression", selection: guardedProgressionSelection) {
+                    ForEach(availableProgressionKinds, id: \.rawValue) { kind in
+                        Text(progressionLabel(kind)).tag(kind)
+                    }
+                }
+                .pickerStyle(.menu)
+                .labelsHidden()
                 .lineLimit(1)
-                .fixedSize(horizontal: true, vertical: false)
+                .truncationMode(.tail)
+                .accessibilityLabel("Progression")
+                .accessibilityHint("Sets the weight-progression strategy used for every exercise in this routine.")
+            } label: {
+                Text("Progression")
+                    .font(.body)
+                    .lineLimit(1)
+                    .fixedSize(horizontal: true, vertical: false)
+            }
+            if draft.blockID == nil {
+                Text("Add routine to a block to use these.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
         }
     }
 
