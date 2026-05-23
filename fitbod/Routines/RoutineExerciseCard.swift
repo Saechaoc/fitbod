@@ -33,6 +33,7 @@ import SwiftUI
 
 public struct RoutineExerciseCard: View {
     @Bindable public var draft: RoutineExerciseDraft
+    public let hasBlock: Bool
     @Binding public var isExpanded: Bool
 
     public let onAssignSuperset: (RoutineExerciseDraft) -> Void
@@ -43,6 +44,7 @@ public struct RoutineExerciseCard: View {
 
     public init(
         draft: RoutineExerciseDraft,
+        hasBlock: Bool = false,
         isExpanded: Binding<Bool>,
         onAssignSuperset: @escaping (RoutineExerciseDraft) -> Void = { _ in },
         onRemoveFromSuperset: @escaping (RoutineExerciseDraft) -> Void = { _ in },
@@ -51,6 +53,7 @@ public struct RoutineExerciseCard: View {
         onEditWarmup: @escaping (RoutineExerciseDraft) -> Void = { _ in }
     ) {
         self.draft = draft
+        self.hasBlock = hasBlock
         self._isExpanded = isExpanded
         self.onAssignSuperset = onAssignSuperset
         self.onRemoveFromSuperset = onRemoveFromSuperset
@@ -95,13 +98,15 @@ public struct RoutineExerciseCard: View {
                                 .font(.body)
                                 .foregroundStyle(.primary)
                                 .multilineTextAlignment(.leading)
-                            HStack(spacing: 8) {
-                                intentChip
-                                Text(prescriptionSummary)
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
-                                    .lineLimit(1)
-                            }
+                            // Phase 3.1 Plan 04 — `intentChip` REMOVED.
+                            // Intent is session-level now; the chip
+                            // surface moves to the SessionLoggerView
+                            // header (UI-SPEC § RoutineExerciseCard
+                            // header — intent chip REMOVED).
+                            Text(prescriptionSummary)
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                                .lineLimit(1)
                         }
                         Spacer(minLength: 8)
                         Image(systemName: "chevron.right")
@@ -118,7 +123,7 @@ public struct RoutineExerciseCard: View {
                 .accessibilityHint(isExpanded ? "Collapses prescription editor" : "Expands prescription editor")
 
                 if isExpanded {
-                    PrescriptionEditorRow(draft: draft)
+                    PrescriptionEditorRow(draft: draft, hasBlock: hasBlock)
                         .transition(.opacity.combined(with: .move(edge: .top)))
                 }
             }
@@ -145,20 +150,11 @@ public struct RoutineExerciseCard: View {
         }
     }
 
-    /// UI-SPEC § Color § Accent surface #15 — intent chip on the
-    /// builder exercise card. Capsule fill in 15%-opacity accent +
-    /// accent-colored caption label.
-    private var intentChip: some View {
-        Text(draft.intent.rawValue.capitalized)
-            .font(.caption)
-            .foregroundStyle(Color.accentColor)
-            .padding(.horizontal, 8)
-            .padding(.vertical, 4)
-            .background {
-                Capsule().fill(Color.accentColor.opacity(0.15))
-            }
-            .accessibilityLabel("Intent: \(draft.intent.rawValue.capitalized)")
-    }
+    // Phase 3.1 Plan 04 — `intentChip` view declaration REMOVED.
+    // Per-exercise intent no longer exists on RoutineExerciseDraft.
+    // The accent-capsule chip surface moves to the SessionLoggerView
+    // header per UI-SPEC § Color § Accent surface #22 (Phase 3.1
+    // addition).
 
     /// "3×8–12 · 180s" — sets × reps · rest. When `targetRepsLow ==
     /// targetRepsHigh` the en-dash collapses to a single value.

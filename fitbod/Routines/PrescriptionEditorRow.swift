@@ -4,23 +4,23 @@
 //
 //  Wave-3 plan 03-02 — the inline expanded prescription editor that
 //  appears under each `RoutineExerciseCard` when the user taps to
-//  expand it (`DisclosureGroup`). Renders the full UI-SPEC
-//  § Routine builder / Prescription editor surface:
+//  expand it (`DisclosureGroup`). Renders the per-exercise prescription
+//  surface (Sets / Reps / Target RPE / Rest / Tempo / Partials / Auto
+//  warm-up / Per-set overrides).
 //
-//    - Intent picker (Strength / Hypertrophy / Power / Endurance / Technique)
-//    - Sets stepper
-//    - Reps range two-field (low – high)
-//    - Target RPE range two-field (low – high)
-//    - Progression picker (RPE Autoregulation / Double Progression /
-//      Block Periodized / Hybrid)
-//    - Rest seconds stepper with "{N}s" display
-//    - Track tempo toggle + 4-field ecc/bot/con/top entry (rendered
-//      conditionally)
-//    - Track partial reps toggle
-//    - Auto warm-up toggle — wired to RoutineExerciseDraft.warmupOverride
-//      (plan 03-07). Toggle footer copy switches on enabled state.
-//    - Per-set overrides disclosure with "Add Override" trailing action
-//      + swipe-to-delete on individual override sub-rows
+//  ## Phase 3.1 PIVOT-04 / Plan 04 Rule 3 — Intent + Progression
+//  removed from this row
+//
+//  In Phase 2/3 this row also rendered per-exercise `Intent` and
+//  `Progression` pickers (UI-SPEC § PrescriptionEditorRow — rows
+//  REMOVED in Phase 3.1). The two fields hoisted up to session-level
+//  on `RoutineDraft` in Phase 3.1 Plan 04; the per-exercise picker
+//  invocations + their private view declarations are gone from this
+//  file because the underlying fields no longer exist on
+//  `RoutineExerciseDraft`. Plan 05 (Wave 4, parallel with Plan 04)
+//  documents the full PrescriptionEditorRow strip; Plan 04 takes the
+//  minimum-viable removal needed to keep the production tree
+//  compiling.
 //
 //  Bound to a `@Bindable RoutineExerciseDraft`. RESEARCH §6 Pitfall 8
 //  pruning runs automatically via the `targetSets.didSet` on the draft
@@ -31,20 +31,24 @@ import SwiftUI
 
 public struct PrescriptionEditorRow: View {
     @Bindable public var draft: RoutineExerciseDraft
+    public let hasBlock: Bool
 
     @State private var showingPerSetOverrides: Bool = false
 
-    public init(draft: RoutineExerciseDraft) {
+    public init(draft: RoutineExerciseDraft, hasBlock: Bool = false) {
         self.draft = draft
+        self.hasBlock = hasBlock
     }
 
     public var body: some View {
+        // Phase 3.1 Plan 04 — `intentPicker` + `progressionSection`
+        // invocations REMOVED. Both fields hoisted to session-level on
+        // RoutineDraft; the header pickers on RoutineBuilderView own
+        // them now (UI-SPEC § PrescriptionEditorRow — rows REMOVED).
         VStack(alignment: .leading, spacing: 14) {
-            intentPicker
             setsStepper
             repsRangeRow
             rpeRangeRow
-            progressionPicker
             restStepper
             tempoSection
             partialRepsToggle
@@ -66,26 +70,7 @@ public struct PrescriptionEditorRow: View {
             .fixedSize(horizontal: true, vertical: false)
     }
 
-    // MARK: - Intent
-
-    private var intentPicker: some View {
-        LabeledContent {
-            Picker("Intent", selection: $draft.intent) {
-                Text("Strength").tag(Intent.strength)
-                Text("Hypertrophy").tag(Intent.hypertrophy)
-                Text("Power").tag(Intent.power)
-                Text("Endurance").tag(Intent.endurance)
-                Text("Technique").tag(Intent.technique)
-            }
-            .pickerStyle(.menu)
-            .labelsHidden()
-            .lineLimit(1)
-            .truncationMode(.tail)
-            .accessibilityLabel("Intent")
-        } label: {
-            rowLabel("Intent")
-        }
-    }
+    // MARK: - Intent (REMOVED in Phase 3.1 Plan 04 — see file header)
 
     // MARK: - Sets
 
@@ -185,25 +170,7 @@ public struct PrescriptionEditorRow: View {
         }
     }
 
-    // MARK: - Progression
-
-    private var progressionPicker: some View {
-        LabeledContent {
-            Picker("Progression", selection: $draft.progressionKind) {
-                Text("RPE Autoregulation").tag(ProgressionKind.rpe)
-                Text("Double Progression").tag(ProgressionKind.double)
-                Text("Block Periodized").tag(ProgressionKind.block)
-                Text("Hybrid").tag(ProgressionKind.hybrid)
-            }
-            .pickerStyle(.menu)
-            .labelsHidden()
-            .lineLimit(1)
-            .truncationMode(.tail)
-            .accessibilityLabel("Progression")
-        } label: {
-            rowLabel("Progression")
-        }
-    }
+    // MARK: - Progression (REMOVED in Phase 3.1 Plan 04 — see file header)
 
     // MARK: - Rest
 

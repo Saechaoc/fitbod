@@ -34,6 +34,16 @@
 //  every body redraw without measurable cost at the expected scale
 //  (≤20 exercises per routine).
 //
+//  Phase 3.1 update — `snapshotHash()` MOVED from this view onto
+//  `RoutineDraft` (where it lives as `internal func snapshotHash() ->
+//  String`). The relocation makes the dirty-check helper reachable
+//  from the unit-test target via `@testable import fitbod`. The Phase
+//  3.1 expansion of the hash inputs ALSO includes `intent.rawValue` +
+//  `progressionKind.rawValue` so a header-picker change arms the
+//  Cancel-discard prompt. The view's `hasUnsavedChanges` is now a
+//  one-liner that compares `draft.snapshotHash()` against the captured
+//  `initialSnapshot`.
+//
 //  ## Empty routine guard
 //
 //  An empty routine (no exercises) cannot be saved (`draft.isValid ==
@@ -58,6 +68,23 @@
 //    real Routine). In create mode (editing == nil) we present an alert
 //    asking the user to save first. In edit mode (editing != nil) the
 //    sheet presents immediately.
+//
+//  ## Phase 3.1 plan 04 — header pickers (PIVOT-04 user surface)
+//
+//  The top `Form` Section gains TWO new `LabeledContent` picker rows
+//  rendered BETWEEN the existing `TextField("Routine name", ...)` and
+//  the existing `BlockPickerMenu`. Final first-Section row order:
+//
+//      TextField("Routine name") → Intent picker → Progression picker →
+//      BlockPickerMenu
+//
+//  The two new rows are bound to `RoutineDraft.intent` and
+//  `RoutineDraft.progressionKind` — both session-level fields the
+//  Phase 3.1 PIVOT-04 promoted off `RoutineExerciseDraft`. The Intent
+//  picker exposes the 5 `Intent` cases verbatim per UI-SPEC § Header
+//  pickers; the Progression picker exposes all 4 `ProgressionKind`
+//  cases per D-08 (CONTEXT.md). `RoutineDraft.save(into:context:)`
+//  writes both fields onto the persisted `Routine` row.
 //
 
 import SwiftUI
@@ -85,9 +112,17 @@ public struct RoutineBuilderView: View {
 
     public var body: some View {
         Form {
-            // MARK: Name + folder
+            // MARK: Name + Intent + Progression + folder
+            // Phase 3.1 PIVOT-04 — two NEW rows (intentHeaderRow +
+            // progressionHeaderRow) insert BETWEEN the TextField and
+            // BlockPickerMenu per UI-SPEC § Header pickers § Final
+            // first-Section order. The BlockPickerMenu row stays in
+            // this Section, unchanged.
             Section {
                 TextField("Routine name", text: $draft.name)
+                intentHeaderRow
+                progressionHeaderRow
+                BlockPickerMenu(blockID: $draft.blockID)
             }
 
             // MARK: Exercises
@@ -99,6 +134,7 @@ public struct RoutineBuilderView: View {
                     ForEach(draft.exercises) { exDraft in
                         RoutineExerciseCard(
                             draft: exDraft,
+                            hasBlock: draft.blockID != nil,
                             isExpanded: Binding(
                                 get: { expandedExerciseIDs.contains(stableKey(for: exDraft)) },
                                 set: { isOpen in
@@ -234,7 +270,9 @@ public struct RoutineBuilderView: View {
             Text("Save the routine before grouping exercises into a superset.")
         }
         .onAppear {
-            initialSnapshot = snapshotHash()
+            // Phase 3.1 — `snapshotHash()` lives on `RoutineDraft` now
+            // (relocated from this view so the helper is testable).
+            initialSnapshot = draft.snapshotHash()
         }
     }
 
@@ -267,18 +305,80 @@ public struct RoutineBuilderView: View {
     }
 
     // MARK: - Dirty-check
+    //
+    // The fingerprint helper itself lives on `RoutineDraft` as
+    // `internal func snapshotHash() -> String` (relocated in Phase 3.1
+    // plan 04 so the unit-test target can exercise it directly via
+    // `@testable import fitbod`). The Phase 3.1 expansion of the hash
+    // ALSO includes `intent.rawValue` + `progressionKind.rawValue`, so
+    // changing an Intent or Progression header picker now flips the
+    // hash and arms the Cancel-discard prompt — the intended Phase 3.1
+    // dirty-check behavior change per the plan.
 
     private var hasUnsavedChanges: Bool {
-        snapshotHash() != initialSnapshot
+        draft.snapshotHash() != initialSnapshot
     }
 
-    /// Cheap fingerprint for the dirty-check. Captures the load-bearing
-    /// inputs that change in a normal builder session: name, exercise
-    /// count, total targetSets sum, and the joined exercise ids.
-    private func snapshotHash() -> String {
-        let counts = draft.exercises.map { $0.targetSets }.reduce(0, +)
-        let ids = draft.exercises.map { $0.id?.uuidString ?? "new" }.joined(separator: ",")
-        return "\(draft.name)|\(draft.exercises.count)|\(counts)|\(ids)"
+    // MARK: - Header pickers (Phase 3.1 PIVOT-04)
+    //
+    // Two `LabeledContent` rows rendered inside the top Form Section
+    // BETWEEN the Routine Name TextField and BlockPickerMenu per
+    // UI-SPEC § Header pickers § Final first-Section row order.
+    // Picker copy is verbatim per UI-SPEC § Copywriting Contract:
+    //
+    //   Intent options:      Strength / Hypertrophy / Power / Endurance / Technique
+    //   Progression options: RPE Autoregulation / Double Progression /
+    //                        Block Periodized / Hybrid
+    //
+    // Both Progression options remain selectable per D-08 (CONTEXT.md);
+    // ProgressionStrategyFactory.make(for:) routes .block →
+    // BlockPeriodizedStrategy() and .hybrid → HybridStrategy() since
+    // Phase 3. The picker selects which strategy SessionFactory invokes
+    // once per session (D-14).
+
+    private var intentHeaderRow: some View {
+        LabeledContent {
+            Picker("Intent", selection: $draft.intent) {
+                Text("Strength").tag(Intent.strength)
+                Text("Hypertrophy").tag(Intent.hypertrophy)
+                Text("Power").tag(Intent.power)
+                Text("Endurance").tag(Intent.endurance)
+                Text("Technique").tag(Intent.technique)
+            }
+            .pickerStyle(.menu)
+            .labelsHidden()
+            .lineLimit(1)
+            .truncationMode(.tail)
+            .accessibilityLabel("Intent")
+            .accessibilityHint("Sets the training goal for the whole session.")
+        } label: {
+            Text("Intent")
+                .font(.body)
+                .lineLimit(1)
+                .fixedSize(horizontal: true, vertical: false)
+        }
+    }
+
+    private var progressionHeaderRow: some View {
+        LabeledContent {
+            Picker("Progression", selection: $draft.progressionKind) {
+                Text("RPE Autoregulation").tag(ProgressionKind.rpe)
+                Text("Double Progression").tag(ProgressionKind.double)
+                Text("Block Periodized").tag(ProgressionKind.block)
+                Text("Hybrid").tag(ProgressionKind.hybrid)
+            }
+            .pickerStyle(.menu)
+            .labelsHidden()
+            .lineLimit(1)
+            .truncationMode(.tail)
+            .accessibilityLabel("Progression")
+            .accessibilityHint("Sets the weight-progression strategy used for every exercise in this routine.")
+        } label: {
+            Text("Progression")
+                .font(.body)
+                .lineLimit(1)
+                .fixedSize(horizontal: true, vertical: false)
+        }
     }
 
     // MARK: - Save
@@ -328,13 +428,16 @@ public struct RoutineBuilderView: View {
         }
         let clone = RoutineExerciseDraft()
         clone.exercise = exDraft.exercise
-        clone.intent = exDraft.intent
+        // Phase 3.1 PIVOT-04 — Intent + ProgressionKind are no longer
+        // per-exercise fields on RoutineExerciseDraft (Plan 04 promoted
+        // them to the parent RoutineDraft). The cloned draft implicitly
+        // inherits the session-level Intent + Progression because both
+        // the source and clone live under the same parent RoutineDraft.
         clone.targetSets = exDraft.targetSets
         clone.targetRepsLow = exDraft.targetRepsLow
         clone.targetRepsHigh = exDraft.targetRepsHigh
         clone.targetRPE = exDraft.targetRPE
         clone.prescribedRestSeconds = exDraft.prescribedRestSeconds
-        clone.progressionKind = exDraft.progressionKind
         clone.tempo = exDraft.tempo
         clone.tracksTempo = exDraft.tracksTempo
         clone.tracksPartialReps = exDraft.tracksPartialReps
