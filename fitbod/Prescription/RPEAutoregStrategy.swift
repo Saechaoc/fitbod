@@ -65,7 +65,8 @@ public struct RPEAutoregStrategy: ProgressionStrategy {
             if let calibratedE1RM = Calibration.predict(
                 history: history,
                 targetReps: targetRepsHigh,
-                targetRPE: effectiveRPE
+                targetRPE: effectiveRPE,
+                now: today
             ), let pct = TuchschererTable.percent(reps: targetRepsHigh, rpe: effectiveRPE) {
 
                 let rawTarget = calibratedE1RM * pct

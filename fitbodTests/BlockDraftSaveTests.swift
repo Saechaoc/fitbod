@@ -14,7 +14,7 @@ import Testing
 @Suite("BlockDraftSave", .serialized)
 struct BlockDraftSaveTests {
     private func makeContext() throws -> ModelContext {
-        let schema = Schema(SchemaV3.models)
+        let schema = Schema(SchemaV4.models)
         let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
         let container = try ModelContainer(
             for: schema,

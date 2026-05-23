@@ -162,6 +162,10 @@ public enum SessionFactory {
         // because intent + progressionKind are now session-level
         // (PIVOT-02). The instance is stateless so reuse is safe.
         let sessionStrategy = ProgressionStrategyFactory.make(for: session.progressionKind)
+        let scheduledBlockPhase = routine.block.flatMap { block in
+            PeriodizationEngine.phase(for: block, on: date)
+        }
+        let scheduledDeloadActive = scheduledBlockPhase?.kind == .deload
 
         for (orderIndex, re) in exercises.enumerated() {
             let se = SessionExercise()
@@ -281,7 +285,7 @@ public enum SessionFactory {
             var warmupSetCount = 0
             if !warmupGenerated && WarmupRamp.shouldGenerate(
                 for: se,
-                deloadActive: false,
+                deloadActive: scheduledDeloadActive,
                 topWorkingWeight: prescribedWeight,
                 barWeight: barWeight,
                 warmupConfig: re.warmupOverride
@@ -319,7 +323,17 @@ public enum SessionFactory {
             // rows inserted in Block B so warm-up rows occupy indices 0..N-1
             // and working sets start at N.
             let seedWeight = lastSessionWeight ?? 0
-            for setIndex in 0..<re.targetSets {
+            let plannedWorkingSetCount: Int
+            if scheduledDeloadActive, let scheduledBlockPhase {
+                plannedWorkingSetCount = max(
+                    1,
+                    Int(floor(Double(re.targetSets) * scheduledBlockPhase.volumeMultiplier))
+                )
+            } else {
+                plannedWorkingSetCount = re.targetSets
+            }
+
+            for setIndex in 0..<plannedWorkingSetCount {
                 let entry = SetEntry()
                 entry.sessionExercise = se
                 entry.orderIndex = setIndex + warmupSetCount   // shifted past warm-up slots
