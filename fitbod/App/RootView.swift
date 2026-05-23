@@ -216,6 +216,14 @@ public struct RootView: View {
         do {
             let importer = ExerciseLibraryImporter(modelContainer: modelContext.container)
             try await importer.seedIfNeeded(bundle: .main)
+
+            // NOTE: PlateInventory seeding uses `.lb` as the unit-system fallback
+            // when `UserSettings` is freshly inserted by the exercise seed above.
+            // The user can reset any tab to their preferred defaults via the
+            // "Reset to Defaults" button in Settings → Smart Progression → Plate Inventory.
+            let unitSystem = (try? modelContext.fetch(FetchDescriptor<UserSettings>()).first?.weightUnit) ?? .lb
+            PlateInventorySeeder.seedIfNeeded(in: modelContext, unitSystem: unitSystem)
+
             seedState.phase = .ready
         } catch {
             Self.log.error("Seed failed: \(error.localizedDescription)")
