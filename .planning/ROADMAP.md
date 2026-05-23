@@ -106,7 +106,7 @@ Granular, prescriptive workout sessions — every set in a session is intentiona
 - [ ] 03.1-04-PLAN.md — RoutineDraft.intent/progressionKind fields + RoutineBuilderView header pickers (Intent + Progression) + RoutineBuilderHeaderPickersTests
 - [ ] 03.1-05-PLAN.md — PrescriptionEditorRow strip Intent + Progression rows + RoutineExerciseCard intentChip removal
 - [ ] 03.1-06-PLAN.md — IntentChip shared SwiftUI component + SessionLoggerView header IntentChip integration (3-line principal toolbar)
-- [ ] 03.1-07-PLAN.md — PreviousMatchingIntent + ExerciseHistoryView/Row + SessionExerciseCard.currentExplanation + SetRow + WhyThisWeightSheet status row + PrescriptionExplanation.sessionIntent field
+- [x] 03.1-07-PLAN.md — PreviousMatchingIntent + ExerciseHistoryView/Row + SessionExerciseCard.currentExplanation + SetRow + WhyThisWeightSheet status row + PrescriptionExplanation.sessionIntent field
 - [ ] 03.1-08-PLAN.md — Rewire 14 existing test suites (12 Phase 3 + 2 Phase 2) + flip Schema(SchemaV3.models) → SchemaV4 across tests; rewire RoutineBuilderCopyTests + SessionLoggerCopyTests
 **UI hint:** yes
 **Research flag:** No — the refactor pattern is well-understood (mirrors Phase 1's enum-as-String + snapshot conventions)
