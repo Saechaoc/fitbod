@@ -35,9 +35,15 @@ public enum OneRepMaxEstimator {
     /// - Returns: The estimated 1RM, or nil when reps are out of supported
     ///   range (≤ 0 or > 10).
     public static func estimate(weight: Double, reps: Int) -> Double? {
-        guard reps > 0 else { return nil }
+        // Phase 6 06-01 RESEARCH Pitfall 5: assisted-bodyweight / negative-load
+        // entries (e.g. assisted pull-ups encoded as -20 kg of assistance)
+        // would otherwise emit a nonsense negative e1RM. Suppress at the kernel.
+        guard reps > 0, weight > 0 else { return nil }
         if reps <= 6 {
             // Brzycki — best fit for low-rep maximal effort.
+            // At reps == 1, Brzycki collapses to weight × 36/36 == weight,
+            // matching the RESEARCH Pitfall 4 identity contract — Epley
+            // would over-estimate by +3.3% at reps == 1.
             return weight * (36.0 / Double(37 - reps))
         }
         if reps <= 10 {
