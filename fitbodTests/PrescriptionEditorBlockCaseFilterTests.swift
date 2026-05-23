@@ -4,6 +4,33 @@
 //
 //  Source anchors for Phase 4 routine-to-block picker behavior.
 //
+//  ## Phase 3.1 reconciliation (2026-05-23)
+//
+//  Phase 3.1's PIVOT-04 stripped the per-exercise Intent + Progression
+//  pickers from PrescriptionEditorRow. Decision D-19 from Phase 4
+//  CONTEXT.md ("disallow .block/.hybrid unless routine is in a block")
+//  is OBSOLETE after that strip — there is no longer a per-exercise
+//  progression picker to filter. The two tests that pinned the picker
+//  filter (`prescriptionEditorRowHasHasBlockInit` and
+//  `prescriptionEditorRowFootnoteCopy`) were removed during this
+//  reconciliation; their behavior no longer exists in production code.
+//
+//  The remaining 3 tests pin Plan 04-05 surfaces that ARE still
+//  current:
+//
+//    - `prescriptionEditorRowDoesNotHavePhase3DeferralFootnote` —
+//      asserts the old "Block / Hybrid models activate" deferral
+//      footnote is gone (replaced by Plan 04-06's real strategies).
+//    - `routineBuilderViewPropagatesHasBlock` — asserts that the
+//      routine builder still computes `draft.blockID != nil` and
+//      passes `hasBlock:` into the exercise card. The `hasBlock`
+//      plumbing is preserved (RoutineBuilderView → RoutineExerciseCard
+//      → PrescriptionEditorRow) even though the editor row no longer
+//      branches on it; future Phase 4+ surfaces (e.g., block-aware
+//      banners inside the card) can re-use the same channel.
+//    - `blockPickerMenuLabelsVerbatim` — anchors the verbatim copy
+//      shipped in Plan 04-05's BlockPickerMenu.
+//
 
 import Foundation
 import Testing
@@ -22,23 +49,6 @@ struct PrescriptionEditorBlockCaseFilterTests {
             contentsOf: projectRoot().appendingPathComponent(relativePath),
             encoding: .utf8
         )
-    }
-
-    @Test("PrescriptionEditorRow has hasBlock init and conditional cases")
-    func prescriptionEditorRowHasHasBlockInit() throws {
-        let editor = try source("fitbod/Routines/PrescriptionEditorRow.swift")
-
-        #expect(editor.contains("hasBlock: Bool"))
-        #expect(editor.contains("if hasBlock {"))
-        #expect(editor.contains("ProgressionKind.block"))
-        #expect(editor.contains("ProgressionKind.hybrid"))
-    }
-
-    @Test("PrescriptionEditorRow has block-required help copy")
-    func prescriptionEditorRowFootnoteCopy() throws {
-        let editor = try source("fitbod/Routines/PrescriptionEditorRow.swift")
-
-        #expect(editor.contains("\"Add routine to a block to use these.\""))
     }
 
     @Test("PrescriptionEditorRow does not have Phase 3 deferral footnote")
