@@ -50,11 +50,18 @@ struct PrescriptionEditorBlockCaseFilterTests {
         #expect(builder.contains("guardedProgressionSelection"))
     }
 
-    @Test("RoutineBuilderView has block-required help copy")
+    @Test("RoutineBuilderView has block-aware guard (footnote copy may be absent post-BRU reskin)")
     func routineBuilderViewFootnoteCopy() throws {
         let builder = try source("fitbod/Routines/RoutineBuilderView.swift")
 
-        #expect(builder.contains("\"Add routine to a block to use these.\""))
+        // Phase 2.1 BRU reskin removed the inline "Add routine to a block to use these."
+        // footnote and replaced it with guarded selection (requiresBlock + guardedProgressionSelection).
+        // The structural guard is still present; the copy footnote was dropped.
+        // Test the structural contract rather than the removed copy string.
+        #expect(
+            builder.contains("requiresBlock") || builder.contains("blockID != nil"),
+            "Block-required guard must be present in RoutineBuilderView even if footnote copy was removed"
+        )
     }
 
     @Test("RoutineBuilderView does not have Phase 3 deferral footnote")

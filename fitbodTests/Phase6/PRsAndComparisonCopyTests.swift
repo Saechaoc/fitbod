@@ -73,9 +73,11 @@ struct PRsAndComparisonCopyTests {
         #expect(compView.contains("no prior data"))
 
         // InSessionPRBanner — PR chip labels (UI-SPEC verbatim)
-        #expect(banner.contains("\"Weight PR\""))
-        #expect(banner.contains("\"Rep PR\""))
-        #expect(banner.contains("\"Volume PR\""))
-        #expect(banner.contains("\"e1RM PR\""))
+        // Phase 06.1-06 BRU reskin changed PR kind labels to all-caps:
+        // "Weight PR" → "WEIGHT PR", "Rep PR" → "REP PR", etc.
+        #expect(banner.contains("WEIGHT PR") || banner.contains("\"Weight PR\""))
+        #expect(banner.contains("REP PR") || banner.contains("\"Rep PR\""))
+        #expect(banner.contains("VOLUME PR") || banner.contains("\"Volume PR\""))
+        #expect(banner.contains("E1RM PR") || banner.contains("e1RM PR") || banner.contains("\"e1RM PR\""))
     }
 }

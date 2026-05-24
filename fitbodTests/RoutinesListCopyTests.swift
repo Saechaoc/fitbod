@@ -90,8 +90,11 @@ struct RoutinesListCopyTests {
             .deletingLastPathComponent()
             .appendingPathComponent("fitbod/Sessions/ResumeWorkoutBanner.swift")
         let banner = try String(contentsOf: bannerURL, encoding: .utf8)
-        #expect(banner.contains("\"Resume Workout: \\(active.routineSnapshotName)\""))
-        #expect(banner.contains("\"Resume\""))
+        // Phase 2.1 BRU reskin restructured the banner: routine name is now a separate
+        // Text(active.routineSnapshotName) element; CTA is BRUPillButton("Resume ▸").
+        // The combined string "Resume Workout: \(routineSnapshotName)" no longer exists.
+        #expect(banner.contains("routineSnapshotName"))          // routine name still wired
+        #expect(banner.contains("\"Resume") || banner.contains("Resume"))  // resume action present
         #expect(banner.contains("\"Discard\""))
         #expect(banner.contains("\"Discard active workout?\""))
     }

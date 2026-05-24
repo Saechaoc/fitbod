@@ -47,7 +47,9 @@ struct HistoryBRUCopyTests {
             encoding: .utf8
         )
         #expect(src.contains("\"History\""))
-        #expect(src.contains("\"FILTER\""))
+        // Phase 06.1-06 BRU reskin moved intent filtering to inline IntentFilterChipRow strip;
+        // the BRUHeaderBar right slot changed from "FILTER" to "PROGRESS" (deep link to chart).
+        #expect(src.contains("\"PROGRESS\""))
         #expect(src.contains("\"‹\""))
     }
 

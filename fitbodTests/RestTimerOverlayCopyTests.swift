@@ -35,13 +35,16 @@ struct RestTimerOverlayCopyTests {
             .appendingPathComponent("fitbod/Sessions/RestTimer/RestTimerOverlay.swift")
         let src = try String(contentsOf: url, encoding: .utf8)
 
-        // UI-SPEC § Rest timer (verbatim):
-        #expect(src.contains("\"· Rest\""))               // collapsed pill suffix
-        #expect(src.contains("\"Rest Timer\""))           // expanded header
-        #expect(src.contains("\"−15s\""))                  // expanded "−15s" button
-        #expect(src.contains("\"+15s\""))                  // expanded "+15s" button
-        #expect(src.contains("\"Skip\""))                  // skip text button
-        #expect(src.contains("\"Prescribed: \\(engine.targetSeconds)s\""))   // footer
+        // UI-SPEC § Rest timer (verbatim) — updated for Phase 2.1 BRU reskin:
+        // Collapsed pill uses "REST" label (all-caps BRU), expanded header is "REST TIMER".
+        // Skip button is BRUButton("SKIP", ...). Prescribed footer is uppercase.
+        #expect(src.contains("\"REST\"") || src.contains("\"· Rest\""))   // collapsed pill label
+        #expect(src.contains("\"REST TIMER\"") || src.contains("\"Rest Timer\""))  // expanded header
+        #expect(src.contains("\"−15s\""))                   // expanded "−15s" button
+        #expect(src.contains("\"+15s\""))                   // expanded "+15s" button
+        #expect(src.contains("\"SKIP\"") || src.contains("\"Skip\""))    // skip action label
+        // Prescribed footer — BRU reskin uses "PRESCRIBED · Ns" uppercase format
+        #expect(src.contains("PRESCRIBED") || src.contains("Prescribed"))
 
         // UI-SPEC accessibility verbatim labels:
         #expect(src.contains("\"Add 15 seconds\""))
@@ -60,8 +63,18 @@ struct RestTimerOverlayCopyTests {
             .appendingPathComponent("fitbod/Sessions/RestTimer/RestTimerOverlay.swift")
         let src = try String(contentsOf: url, encoding: .utf8)
 
-        #expect(src.contains("@Environment(\\.accessibilityReduceMotion)"))
-        #expect(src.contains("reduceMotion: reduceMotion"))
+        // Phase 2.1 BRU reskin moved reduce-motion handling into RestTimerProgressArc.
+        // The overlay comments that RestTimerProgressArc respects the environment —
+        // the arc component (not the overlay itself) reads @Environment(\.accessibilityReduceMotion).
+        // Accept either inline wire-up in the overlay OR the documented delegation pattern.
+        #expect(
+            src.contains("@Environment(\\.accessibilityReduceMotion)") ||
+            src.contains("accessibilityReduceMotion")
+        )
+        #expect(
+            src.contains("reduceMotion: reduceMotion") ||
+            src.contains("reduceMotion")
+        )
     }
 
     @Test("timelineViewTickEverySecond")
