@@ -308,6 +308,7 @@ None.
 | # | Description | Date | Commit | Directory |
 |---|-------------|------|--------|-----------|
 | 260522-jgo | Fix Swift 6 concurrency error in CustomExerciseImagePicker.swift Task closure | 2026-05-22 | dd79f12 | [260522-jgo-fix-swift-6-concurrency-error-in-custome](./quick/260522-jgo-fix-swift-6-concurrency-error-in-custome/) |
+| 260524-ilf | Wire BRUTabBar into RootView — replace SwiftUI TabView chrome with BRU bottom nav | 2026-05-24 | (this commit) | [260524-ilf-wire-brutabbar-into-rootview](./quick/260524-ilf-wire-brutabbar-into-rootview/) |
 
 ---
 

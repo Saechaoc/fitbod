@@ -158,56 +158,34 @@ public struct RootView: View {
     }
 
     private var tabBar: some View {
-        TabView(selection: tabSelection) {
-            // UI-SPEC § Tab labels — verbatim labels + SF Symbols + order.
-            //
-            // Plan 04-01 wired: Today tab body is now `TodayView` — a
-            // real surface that mounts `ResumeWorkoutBanner` at the top
-            // and renders the UI-SPEC empty-state ("No workout in
-            // progress" / "Start a workout from your Routines tab.")
-            // below. Tapping the banner's "Resume" pushes
-            // `SessionLoggerView` via the Today tab's NavigationPath.
-            TodayView()
-                .tabItem {
-                    Label("Today", systemImage: "figure.strengthtraining.traditional")
+        // Quick task 260524-ilf — BRU bottom nav.
+        //
+        // We do NOT use SwiftUI's TabView here: hiding the system tab
+        // bar from outside a NavigationStack is not reliably supported
+        // (`.toolbar(.hidden, for: .tabBar)` only takes effect on views
+        // inside the stack, and `.toolbarBackground(.hidden, …)` hides
+        // only the blur layer, not the chrome). Instead we VStack the
+        // selected tab's body above `BRUTabBar`, preserving each tab's
+        // own NavigationStack and the existing re-tap pop-to-root logic.
+        VStack(spacing: 0) {
+            Group {
+                switch selectedTab {
+                case .today:    TodayView()
+                case .routines: RoutinesListView()
+                case .library:  LibraryTabHost(path: $libraryPath)
+                case .progress: ProgressTabHost(path: $progressPath)
+                case .settings: SettingsTabHost()
                 }
-                .tag(Tab.today)
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
 
-            // Plan 03-01 wired: replaces the Phase 2 placeholder body
-            // with the real `RoutinesListView`. The view owns its own
-            // `NavigationStack`, so the wrapper from the placeholder is
-            // removed.
-            RoutinesListView()
-                .tabItem {
-                    Label("Routines", systemImage: "list.bullet.rectangle.portrait")
-                }
-                .tag(Tab.routines)
-
-            // Plan 03-02 replaces `LibraryTabHost` with `ExerciseLibraryView`.
-            // Path is owned by `RootView` so `tabSelection` can clear it
-            // on Library-tab re-tap (review WR-07).
-            LibraryTabHost(path: $libraryPath)
-                .tabItem {
-                    Label("Library", systemImage: "dumbbell")
-                }
-                .tag(Tab.library)
-
-            // Wave-5 plan 06-08 — Progress tab now hosts the real
-            // ProgressHomeView. Tab icon adjudicated per PATTERNS #3 /
-            // UI-SPEC § Asset Contract: chart.line.uptrend.xyaxis
-            // (replaces the Phase 1 placeholder chart.xyaxis.line).
-            ProgressTabHost(path: $progressPath)
-                .tabItem {
-                    Label("Progress", systemImage: "chart.line.uptrend.xyaxis")
-                }
-                .tag(Tab.progress)
-
-            // Plan 04-01 wired: `SettingsTabHost` wraps `SettingsView`.
-            SettingsTabHost()
-                .tabItem {
-                    Label("Settings", systemImage: "gearshape")
-                }
-                .tag(Tab.settings)
+            BRUTabBar(active: selectedTab.bru) { bruTab in
+                tabSelection.wrappedValue = bruTab.rootTab
+            }
+            // Cells declare minHeight (no max) so the bar must be
+            // vertically fixed-size — otherwise the VStack lets it
+            // expand to fill leftover space.
+            .fixedSize(horizontal: false, vertical: true)
         }
     }
 
@@ -254,6 +232,37 @@ public struct RootView: View {
         } catch {
             Self.log.error("Seed failed: \(error.localizedDescription)")
             seedState.phase = .failed(message: error.localizedDescription)
+        }
+    }
+}
+
+// MARK: - BRUTab ↔ Tab mapping
+//
+// `BRUTabBar` is parameterized on its own `BRUTab` enum (declared in
+// fitbod/Design/BRUTabBar.swift) so the chrome component has no
+// dependency on `RootView`. Both enums carry the same 5 cases in the
+// same order; these helpers do the 1:1 conversion at the wiring site.
+
+private extension RootView.Tab {
+    var bru: BRUTab {
+        switch self {
+        case .today:    return .today
+        case .routines: return .routines
+        case .library:  return .library
+        case .progress: return .progress
+        case .settings: return .settings
+        }
+    }
+}
+
+private extension BRUTab {
+    var rootTab: RootView.Tab {
+        switch self {
+        case .today:    return .today
+        case .routines: return .routines
+        case .library:  return .library
+        case .progress: return .progress
+        case .settings: return .settings
         }
     }
 }
