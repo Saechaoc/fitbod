@@ -24,6 +24,13 @@
 	<false/>
 	<key>NSSupportsLiveActivities</key>
 	<true/>
+	<key>UIAppFonts</key>
+	<array>
+		<string>SpaceGrotesk-Bold.ttf</string>
+		<string>SpaceGrotesk-SemiBold.ttf</string>
+		<string>JetBrainsMono-Regular.ttf</string>
+		<string>JetBrainsMono-Bold.ttf</string>
+	</array>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

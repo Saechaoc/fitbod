@@ -74,6 +74,8 @@
 		624AD5142FB378BE00D9EF2E /* Exceptions for "fitbod" folder in "FitbodWidgetsExtension" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
+				Design/BRUFont.swift,
+				"Design/Color+BRU.swift",
 				Sessions/RestTimer/RestTimerAttributes.swift,
 			);
 			target = 624AD49A2FB375A200D9EF2E /* FitbodWidgetsExtension */;
@@ -736,6 +738,7 @@
 				INFOPLIST_FILE = FitbodWidgets/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = FitbodWidgets;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INFOPLIST_KEY_UIAppFonts = "SpaceGrotesk-Bold.ttf SpaceGrotesk-SemiBold.ttf JetBrainsMono-Regular.ttf JetBrainsMono-Bold.ttf";
 				IPHONEOS_DEPLOYMENT_TARGET = 26.4;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -767,6 +770,7 @@
 				INFOPLIST_FILE = FitbodWidgets/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = FitbodWidgets;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INFOPLIST_KEY_UIAppFonts = "SpaceGrotesk-Bold.ttf SpaceGrotesk-SemiBold.ttf JetBrainsMono-Regular.ttf JetBrainsMono-Bold.ttf";
 				IPHONEOS_DEPLOYMENT_TARGET = 26.4;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
