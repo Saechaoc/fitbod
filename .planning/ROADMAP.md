@@ -123,10 +123,10 @@ Granular, prescriptive workout sessions — every set in a session is intentiona
 **Mode:** refactor
 **Depends on:** Phase 3, Phase 02.1 (consumes BRU primitives)
 **Requirements**: None (visual refactor — preserves all PRES-01..04, PRES-07..10, WARM-01..03, SET-02..04, SET-07 requirements)
-**Plans:** 10 plans (3 waves)
+**Plans:** 1/10 plans executed
 
 Plans:
-- [ ] 03.2-01-PLAN.md — Wave 1: BRU primitives (CalibratingProgressMeter + PlateStackViz + PlateTallyRow)
+- [x] 03.2-01-PLAN.md — Wave 1: BRU primitives (CalibratingProgressMeter + PlateStackViz + PlateTallyRow)
 - [ ] 03.2-02-PLAN.md — Wave 2: BumpBanner + CalibratingBadge flat-rectangle reskin
 - [ ] 03.2-03-PLAN.md — Wave 2: WarmupRampRows 4-column grid + mini PlateStackViz
 - [ ] 03.2-04-PLAN.md — Wave 2: PlateStackDisclosure + PrescriptionWeightCell long-press disclosure

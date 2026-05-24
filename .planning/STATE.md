@@ -3,18 +3,18 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: completed
-last_updated: "2026-05-24T13:37:59.909Z"
+last_updated: "2026-05-24T14:11:11Z"
 progress:
   total_phases: 12
   completed_phases: 8
-  total_plans: 86
-  completed_plans: 80
-  percent: 93
+  total_plans: 111
+  completed_plans: 81
+  percent: 73
 ---
 
 # Project State: Fitbod
 
-**Last updated:** 2026-05-11 (post 02-05-01 — ExerciseHistoryView with intent-split filter chips; Phase 2 closed at 13/13 plans, 20/20 requirements)
+**Last updated:** 2026-05-24 (post 03.2-01 — Phase 3 BRU primitives: CalibratingProgressMeter + PlateStackViz + PlateTallyRow; Phase 03.2 Wave 1 complete)
 
 ---
 
@@ -32,6 +32,10 @@ progress:
 
 ## Current Position
 
+Phase: 03.2 (bru-visual-rewrite-prescription-warm-ups) — **IN PROGRESS (1/10 plans complete — 2026-05-24)**
+Plan: 1 of 10 — 03.2-01 complete (Wave 1: 3 BRU primitives shipped — CalibratingProgressMeter, PlateStackViz, PlateTallyRow; 8/8 Phase3BRUPrimitivesTests PASS; commit 05ed57c).
+
+Phase 6 status (for reference — previously active):
 Phase: 6 (progress-views-export-polish) — **IN PROGRESS (10/11 plans complete — 2026-05-23; 06-10 backup/restore remaining)**
 Plan: 10 of 10 (Plans 06-01..06-09b complete — closes 9 of 11 Phase 6 requirements: PROG-01/02/03/04/05/07/08 + EXP-01/02. Plan 06-10 ships backup/restore EXP-03/04 — out of scope for this execution wave). Phase 1-5 regression sweep + all Phase 6 test suites GREEN (630 test invocations pass, 0 failures). Phase 6 user-visible: Progress tab now renders ProgressHomeView with Recent / Trends / Compare sections; Weekly Tonnage chart with chip filters + bar tap → WeekDetailView drill-down; ExercisePRsView 4×3 PR layout reachable; SessionComparisonView 3-column Δ diff; in-session PR banner via .safeAreaInset(edge: .top); Settings → Data section ships CSV + JSON exports via ShareLink.
 
