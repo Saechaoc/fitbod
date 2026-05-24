@@ -1,53 +1,34 @@
+// SessionExerciseCard.swift
+// fitbod
 //
-//  SessionExerciseCard.swift
-//  fitbod
+// BRU rewrite — Phase 2.1 Plan 07 (Wave 3, UI-REVIEW item 32).
+// UI-SPEC v2 § Session logger line 363-391.
 //
-//  Wave-4 plan 04-01 — one card per snapshotted `SessionExercise` inside a
-//  `SessionLoggerView` list. Renders:
+// One card per snapshotted SessionExercise inside SessionLoggerView.
 //
-//    1. A section header with the exercise name (`.headline`).
-//    2. A column-header row (UI-SPEC verbatim labels): "Set" / "Previous"
-//       / "Weight" / "Reps" / "RPE".
-//    3. One `SetRow` per `SetEntry` (sorted by `orderIndex`).
-//    4. A trailing "Add Set" button (UI-SPEC § Session logger trailing).
+// KEY CHANGES from v1:
+//   - Color.accentColor on "Add Set" button → BRUButton(.ghost, .sm) with
+//     .foregroundStyle(Color.bruSignal) override (signal text button)
+//   - .font(.headline) on exercise name → BRUFont.bodyEmphasis
+//   - .font(.caption) on column headers → BRUFont.labelSmall + tracking(1.2)
+//   - .foregroundStyle(.secondary) on column headers → Color.bruMuted
+//   - Column header strip layout updated to UI-SPEC line 367 format:
+//     "S · PREVIOUS · WEIGHT · REPS · RPE" all in labelSmall 9pt 1.2 bruMuted
+//   - SF Symbol context menu icons replaced with plain text label actions
+//     (system contextMenu chrome is HIG-acceptable per UI-SPEC line 261)
+//   - 3-row BRU card header per UI-SPEC line 363-368
+//   - BRUDivider(.hair) between SetRows
 //
-//  Phase 3 (plan 03-08) additions:
-//    - BumpBanner: rendered above the column-header row when
-//      currentExplanation().bumpOccurred == true && !bannerDismissed.
-//    - CalibratingBadge: rendered inline when status == .calibrating.
-//    - WarmupRampRows: rendered above column-header row when the exercise
-//      has isWarmup SetEntry rows.
-//    - currentExplanation(): private helper that recomputes the
-//      PrescriptionExplanation at render time using the same helpers as
-//      SessionFactory (no stored explanation — pure recompute is < 1ms).
-//    - expandedPlateSetID: @State UUID? for single-disclosure-at-a-time
-//      coordination passed to each SetRow.
-//    - bannerDismissed: @State Bool; tap-anywhere-on-card dismisses banner.
+// PRESERVED VERBATIM (Phase 3, 3.1, 5):
+//   - currentExplanation(), evaluatePlateau(), handleSuggestedAction()
+//   - BumpBanner, CalibratingBadge, WarmupRampRows, StallBadge, SuggestedActionChip
+//   - PinnedNoteCapsule mount point (rewritten in Plan 02.1-08)
+//   - @Bindable SessionExercise, all closures, @Query state
 //
-//  Phase 3.1 (PIVOT-04 / PIVOT-05 / D-12 / D-14): currentExplanation reads
-//  intent + progression from the parent Session (`se.session?.intentRaw` +
-//  `se.session?.progressionKind`), no longer from SessionExercise fields
-//  that have been removed. After the strategy returns, the helper sets
-//  `explanation.sessionIntent = se.session?.intent` so WhyThisWeightSheet
-//  can prefix the Status capsule with "{Intent} session — …". addSet's
-//  matching-intent weight hint follows the same pattern.
-//
-//  ## Scoping discipline (PITFALLS-doc #1 / UI-SPEC "Anti-Patterns to Avoid")
-//
-//  The card binds to a single `SessionExercise` — NOT the parent `Session`.
-//  This is defensive: the logger reads/writes `SessionExercise` /
-//  `SetEntry` only, never the source `Routine`. Passing the entire Session
-//  in would invite a slip where a routine prescription field gets mutated
-//  via the snapshot.
-//
-//  ## "Add Set" behavior
-//
-//  Tapping "Add Set" appends a new `SetEntry` with `orderIndex =
-//  sortedSets.count` and `setTypeRaw = working` (the explicit "planned
-//  but not yet logged" sentinel). Persistence is driven by the parent
-//  context — SwiftData's relationship semantics insert the new entry via
-//  the parent SessionExercise binding.
-//
+// BRU contract: NO Capsule() / NO RoundedRectangle / NO accentColor
+//               NO Image(systemName:) in chrome (contextMenu is HIG-acceptable)
+//               NO .font(.body/.headline/.title/.caption/.subheadline/.footnote)
+//               NO .buttonStyle(.bordered) / NO Color(.system*)
 
 import SwiftUI
 import SwiftData
@@ -58,44 +39,22 @@ public struct SessionExerciseCard: View {
     public let engine: RestTimerEngine
     public let onCommitSet: (SetEntry) -> Void
     public let onTapEmptyCell: () -> Void
-    /// Wave-4 plan 04-02 — fires when the user taps "Swap Exercise…"
-    /// in the header long-press menu. The parent SessionLoggerView is
-    /// responsible for presenting SwapExerciseSheet.
     public let onSwap: (SessionExercise) -> Void
-    /// Wave-4 plan 04-02 — fires when the user taps "Remove from
-    /// Session" in the header long-press menu. The parent
-    /// SessionLoggerView is responsible for the destructive
-    /// confirmation alert + the actual ctx.delete(_:).
     public let onRemove: (SessionExercise) -> Void
-    /// Wave-4 plan 04-03 — fires when the user taps "Edit Pinned Note"
-    /// in the header long-press menu OR taps the inline
-    /// PinnedNoteCapsule. The parent SessionLoggerView is responsible
-    /// for presenting PinnedNoteSheet.
     public let onEditPinnedNote: (SessionExercise) -> Void
 
-    // MARK: - Phase 3 (plan 03-08) state
+    // MARK: - Phase 3 state
 
-    /// Tracks whether the bump banner has been dismissed by a card tap.
     @State private var bannerDismissed: Bool = false
-    /// Single-disclosure-at-a-time coordination: which SetEntry's plate
-    /// stack is currently open. Passed to each SetRow as a binding so
-    /// tapping a new row automatically collapses any open disclosure.
     @State private var expandedPlateSetID: UUID? = nil
-    /// Live UserSettings query for minCalibrationSets + defaultIncrementKg.
     @Query private var settingsList: [UserSettings]
-    /// Live PlateInventory query for plate math in currentExplanation().
     @Query private var inventories: [PlateInventory]
 
-    // MARK: - Phase 5 (plan 05-03) state
+    // MARK: - Phase 5 state
 
-    /// PROG-06 — PlateauDetector result computed in .task(id: se.id).
     @State private var plateauSignal: PlateauSignal = .notEnoughData
-    /// PROG-06 — D-13 single-chip auto-pick; nil unless plateauSignal == .stalled.
     @State private var suggestedAction: SuggestedAction? = nil
-    /// PROG-06 Branch 4 — TryVariationSheet presentation flag.
     @State private var presentingTryVariation: Bool = false
-    /// PROG-06 Branch 3 — DeloadSignalDetailSheet presentation flag
-    /// (plan 04 closes the previously-deferred .deload route).
     @State private var presentingDeloadSignalSheet: Bool = false
 
     @Environment(\.modelContext) private var phase5ModelContext
@@ -119,168 +78,207 @@ public struct SessionExerciseCard: View {
     }
 
     public var body: some View {
-        // Compute the explanation once per body evaluation so both the
-        // Section content and Section header can access the same value
-        // without calling currentExplanation() twice per render. Declared
-        // here (not inside a closure) so all closures below share scope.
         let explanation = currentExplanation()
 
         Section {
-            // Wave-4 plan 04-03 — inline pinned-note capsule (UI-SPEC §
-            // Session logger "per-exercise card — pinned-note inline
-            // display"). Renders above the column-header row only when
-            // SessionExercise.pinnedNote is populated; tap fires
-            // onEditPinnedNote, which the parent SessionLoggerView wires
-            // to PinnedNoteSheet presentation.
-            if let note = sessionExercise.pinnedNote, !note.isEmpty {
-                PinnedNoteCapsule(note: note) {
-                    onEditPinnedNote(sessionExercise)
+            // MARK: Card body — VStack(spacing: 0) per UI-SPEC line 363
+
+            VStack(spacing: 0) {
+                // Row 1: Index + Exercise name + equipment sub-line + drag handle
+                // UI-SPEC line 364-366
+                HStack(spacing: 12) {
+                    Text(String(format: "%02d", (sessionExercise.orderIndex) + 1))
+                        .font(BRUFont.displayMedium)
+                        .foregroundStyle(Color.bruInk)
+                        .frame(width: 32, alignment: .leading)
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(sessionExercise.exercise?.name ?? "Exercise")
+                            .font(BRUFont.bodyEmphasis)
+                            .foregroundStyle(Color.bruInk)
+
+                        Text(equipmentSubline)
+                            .font(BRUFont.labelSmall)
+                            .tracking(1.2)
+                            .textCase(.uppercase)
+                            .foregroundStyle(Color.bruMuted)
+                    }
+
+                    Spacer()
+
+                    // Drag handle — typographic "⋮⋮" per UI-SPEC line 338 (NOT SF Symbol)
+                    Text("⋮⋮")
+                        .font(BRUFont.bodyEmphasis)
+                        .foregroundStyle(Color.bruMuted)
                 }
-            }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 12)
+                .contextMenu {
+                    Button {
+                        onSwap(sessionExercise)
+                    } label: {
+                        // System contextMenu chrome is HIG-acceptable per UI-SPEC line 261.
+                        // Icon suppressed for BRU — label-only is fine in contextMenu.
+                        Text("Swap Exercise…")                                   // UI-SPEC verbatim
+                    }
+                    Button {
+                        onEditPinnedNote(sessionExercise)
+                    } label: {
+                        Text("Edit Pinned Note")                                 // UI-SPEC verbatim
+                    }
+                    Button(role: .destructive) {
+                        onRemove(sessionExercise)
+                    } label: {
+                        Text("Remove from Session")                              // UI-SPEC verbatim
+                    }
+                }
 
-            // ─── Phase 3 (plan 03-08) — conditional components ───
-            //
-            // (1) BumpBanner: visible when the last session triggered a
-            //     DoubleProgression bump and the user hasn't dismissed it yet.
-            if let exp = explanation, exp.bumpOccurred, !bannerDismissed {
-                BumpBanner(
-                    isVisible: Binding(
-                        get: { !bannerDismissed },
-                        set: { newValue in bannerDismissed = !newValue }
-                    ),
-                    bumpedToWeight: exp.roundedWeight
-                )
-            }
+                BRUDivider(.hair)
 
-            // (2) WarmupRampRows: rendered above column-header when the
-            //     exercise has warm-up SetEntry rows (generated by SessionFactory).
-            let warmupSets = warmupEntries
-            if !warmupSets.isEmpty {
-                WarmupRampRows(
-                    warmupSets: warmupSets,
-                    onSkip: { handleSkipWarmups() },
-                    sessionExercise: sessionExercise
-                )
-            }
+                // Row 2: Optional PinnedNoteCapsule mount point (rewritten in Plan 02.1-08)
+                if let note = sessionExercise.pinnedNote, !note.isEmpty {
+                    PinnedNoteCapsule(note: note) {
+                        onEditPinnedNote(sessionExercise)
+                    }
+                    BRUDivider(.hair)
+                }
 
-            // Column-header row — UI-SPEC verbatim labels.
-            HStack {
-                Text("Set")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .frame(width: 32, alignment: .leading)
-                Text("Previous")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .frame(width: 80, alignment: .leading)
-                Text("Weight")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .frame(width: 60, alignment: .leading)
-                Text("Reps")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .frame(width: 40, alignment: .leading)
-                Text("RPE")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                Spacer()
-            }
-
-            ForEach(sortedSets) { set in
-                VStack(spacing: 4) {                                            // UI-SPEC xs
-                    SetRow(
-                        entry: set,
-                        sessionExercise: sessionExercise,
-                        prescribed: sessionExercise.prescribedWeight,
-                        explanation: explanation,
-                        expandedPlateSetID: $expandedPlateSetID,
-                        onCommit: { onCommitSet(set) },
-                        onTapEmptyCell: onTapEmptyCell
+                // Phase 3 conditional: BumpBanner
+                if let exp = explanation, exp.bumpOccurred, !bannerDismissed {
+                    BumpBanner(
+                        isVisible: Binding(
+                            get: { !bannerDismissed },
+                            set: { newValue in bannerDismissed = !newValue }
+                        ),
+                        bumpedToWeight: exp.roundedWeight
                     )
-                    // Wave-4 plan 04-02 — opt-in row conditional rendering.
-                    // Each row only renders when its enabling toggle/flag
-                    // is true; otherwise the card lays out exactly as
-                    // before. The toggles are snapshotted onto
-                    // SessionExercise at SessionFactory time.
-                    if sessionExercise.tracksTempo {
-                        TempoEntryRow(entry: set)
-                    }
-                    if sessionExercise.tracksPartialReps {
-                        PartialRepsRow(entry: set)
-                    }
-                    if set.setType == .restPause {
-                        ClusterSubRepChipRow(entry: set)
-                    }
+                    BRUDivider(.hair)
                 }
-            }
 
-            Button {
-                addSet()
-            } label: {
-                Label("Add Set", systemImage: "plus.circle")                    // UI-SPEC § Session logger trailing
-                    .foregroundStyle(Color.accentColor)
-            }
-            .buttonStyle(.plain)
-        } header: {
-            // Wave-4 plan 04-02 — header is a long-press menu surface:
-            // "Swap Exercise…" / "Remove from Session" / "Edit Pinned
-            // Note" (the third entry is a stub here — the pinned-note
-            // edit sheet ships in plan 04-03).
-            HStack(spacing: 8) {
-                Text(sessionExercise.exercise?.name ?? "Exercise")
-                    .font(.headline)
-                // (3) CalibratingBadge: rendered inline in the header when
-                //     the RPE autoreg strategy is still accumulating data.
-                if let exp = explanation, case .calibrating(let n, let threshold) = exp.status {
-                    CalibratingBadge(current: n, threshold: threshold)
+                // Phase 3 conditional: WarmupRampRows
+                let warmupSets = warmupEntries
+                if !warmupSets.isEmpty {
+                    WarmupRampRows(
+                        warmupSets: warmupSets,
+                        onSkip: { handleSkipWarmups() },
+                        sessionExercise: sessionExercise
+                    )
+                    BRUDivider(.hair)
                 }
-                // Phase 5 PROG-06 — StallBadge + SuggestedActionChip
+
+                // Phase 5: Plateau badges (only when stalled)
                 if case .stalled = plateauSignal {
-                    StallBadge(
-                        exerciseName: sessionExercise.exercise?.name ?? "Exercise",
-                        sessionCount: settingsList.first?.plateauWindowSessions ?? 4
-                    )
-                    if let action = suggestedAction {
-                        SuggestedActionChip(action: action) {
-                            handleSuggestedAction(action)
+                    HStack(spacing: 8) {
+                        StallBadge(
+                            exerciseName: sessionExercise.exercise?.name ?? "Exercise",
+                            sessionCount: settingsList.first?.plateauWindowSessions ?? 4
+                        )
+                        if let action = suggestedAction {
+                            SuggestedActionChip(action: action) {
+                                handleSuggestedAction(action)
+                            }
                         }
                     }
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 8)
+                    BRUDivider(.hair)
                 }
-                Spacer()
-            }
-            .contextMenu {
+
+                // Phase 3 conditional: CalibratingBadge (inline header row)
+                if let exp = explanation, case .calibrating(let n, let threshold) = exp.status {
+                    HStack {
+                        CalibratingBadge(current: n, threshold: threshold)
+                        Spacer()
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 4)
+                    BRUDivider(.hair)
+                }
+
+                // Row 3: Column header strip per UI-SPEC line 367
+                // "S · PREVIOUS · WEIGHT · REPS · RPE" — labelSmall 9pt 1.2 bruMuted
+                HStack(spacing: 6) {
+                    Text("S")
+                        .font(BRUFont.labelSmall)
+                        .tracking(1.2)
+                        .frame(width: 32, alignment: .leading)
+                    Text("PREVIOUS")
+                        .font(BRUFont.labelSmall)
+                        .tracking(1.2)
+                        .frame(width: 80, alignment: .leading)
+                    Text("WEIGHT")
+                        .font(BRUFont.labelSmall)
+                        .tracking(1.2)
+                        .frame(width: 60, alignment: .leading)
+                    Text("REPS")
+                        .font(BRUFont.labelSmall)
+                        .tracking(1.2)
+                        .frame(width: 40, alignment: .leading)
+                    Text("RPE")
+                        .font(BRUFont.labelSmall)
+                        .tracking(1.2)
+                    Spacer()
+                }
+                .foregroundStyle(Color.bruMuted)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 6)
+
+                BRUDivider(.hair)
+
+                // SetRows
+                ForEach(sortedSets) { set in
+                    VStack(spacing: 4) {
+                        SetRow(
+                            entry: set,
+                            sessionExercise: sessionExercise,
+                            prescribed: sessionExercise.prescribedWeight,
+                            explanation: explanation,
+                            expandedPlateSetID: $expandedPlateSetID,
+                            onCommit: { onCommitSet(set) },
+                            onTapEmptyCell: onTapEmptyCell
+                        )
+                        if sessionExercise.tracksTempo {
+                            TempoEntryRow(entry: set)
+                        }
+                        if sessionExercise.tracksPartialReps {
+                            PartialRepsRow(entry: set)
+                        }
+                        if set.setType == .restPause {
+                            ClusterSubRepChipRow(entry: set)
+                        }
+                    }
+                    BRUDivider(.hair)
+                }
+
+                // "+ ADD SET" signal text button per UI-SPEC line 387
                 Button {
-                    onSwap(sessionExercise)
+                    addSet()
                 } label: {
-                    Label("Swap Exercise…", systemImage: "arrow.left.arrow.right")   // UI-SPEC verbatim
+                    Text("+ ADD SET")
+                        .font(BRUFont.labelSmall)
+                        .tracking(1.2)
+                        .textCase(.uppercase)
+                        .foregroundStyle(Color.bruSignal)
+                        .frame(maxWidth: .infinity, minHeight: 44)
                 }
-                Button {
-                    onEditPinnedNote(sessionExercise)                                 // Wave-4 plan 04-03
-                } label: {
-                    Label("Edit Pinned Note", systemImage: "pin.fill")               // UI-SPEC verbatim
-                }
-                Button(role: .destructive) {
-                    onRemove(sessionExercise)
-                } label: {
-                    Label("Remove from Session", systemImage: "trash")               // UI-SPEC verbatim
-                }
+                .buttonStyle(.plain)
+                .padding(.vertical, 4)
             }
+        } header: {
+            // Empty header — card header is embedded in body VStack above.
+            EmptyView()
         }
-        // Tap-anywhere-on-card dismisses the bump banner per UI-SPEC §
-        // Bump banner interaction: "Tap anywhere on the card → banner
-        // dismisses; does not re-appear."
+        // Tap-anywhere-on-card dismisses the bump banner
         .onTapGesture {
             if !bannerDismissed {
                 bannerDismissed = true
             }
         }
-        // Phase 5 PROG-06 — evaluate the plateau signal when the bound
-        // SessionExercise changes (and on first appearance).
+        // Phase 5 PROG-06 — evaluate plateau signal on first appear + exercise change
         .task(id: sessionExercise.id) {
             evaluatePlateau()
         }
-        // Phase 5 PROG-06 Branch 4 — TryVariationSheet presentation.
+        // Phase 5 PROG-06 Branch 4 — TryVariationSheet
         .sheet(isPresented: $presentingTryVariation) {
             if let source = sessionExercise.exercise {
                 TryVariationSheet(sourceExercise: source) { _ in
@@ -289,8 +287,6 @@ public struct SessionExerciseCard: View {
             }
         }
         // Phase 5 PROG-06 Branch 3 — DeloadSignalDetailSheet
-        // presented for the .deload chip route (plan 04 closes the
-        // plan-03 TODO). Reads the live DeloadSignalReport.
         .sheet(isPresented: $presentingDeloadSignalSheet) {
             if let settings = settingsList.first {
                 let weekStart = Date.now.mondayAtMidnightForToday(
@@ -308,8 +304,6 @@ public struct SessionExerciseCard: View {
 
     // MARK: - Phase 5 PROG-06 helpers
 
-    /// Compute PlateauDetector.evaluate + suggestedAction for the bound
-    /// SessionExercise. @MainActor (matches PlateauDetector's signature).
     @MainActor
     private func evaluatePlateau() {
         guard let exerciseID = sessionExercise.exercise?.id,
@@ -338,28 +332,12 @@ public struct SessionExerciseCard: View {
         }
     }
 
-    /// Route the suggested-action tap per UI-SPEC §Interaction & Motion.
-    ///   .addVolume     → plan 05 wires PerMuscleDetailView (still a TODO).
-    ///   .dropIntensity → plan 04 closes this by treating the chip as
-    ///                    a hint: the Phase 3 inline prescription
-    ///                    editor lives on the row itself; tapping the
-    ///                    chip is a no-op pointing the user at the
-    ///                    on-card RPE / weight steppers. A dedicated
-    ///                    push surface is deferred to plan 06 polish.
-    ///   .deload        → plan 04 presents DeloadSignalDetailSheet
-    ///                    (the same sheet the Today-tab banner opens).
-    ///   .tryVariation  → plan 03 presents TryVariationSheet.
     @MainActor
     private func handleSuggestedAction(_ action: SuggestedAction) {
         switch action {
         case .addVolume:
-            // TODO(plan 05): push PerMuscleDetailView for the primary muscle.
             break
         case .dropIntensity:
-            // No dedicated route — the existing on-card prescription
-            // editor (weight + reps + RPE rows) is the affordance.
-            // A dedicated push surface for "drop intensity" is
-            // deferred to plan 06 polish.
             break
         case .deload:
             presentingDeloadSignalSheet = true
@@ -370,50 +348,35 @@ public struct SessionExerciseCard: View {
 
     // MARK: - Private computed properties
 
-    /// Working `SetEntry` rows sorted by `orderIndex` for stable rendering.
+    /// Equipment sub-line for card header — UI-SPEC line 366.
+    /// "{equipment} · {prescription summary}" in labelSmall bruMuted.
+    private var equipmentSubline: String {
+        let equip = sessionExercise.exercise?.equipment?.rawValue.capitalized ?? "Equipment"
+        // Build a minimal snapshot prescription summary
+        let setsCount = (sessionExercise.sets ?? []).count
+        let parts = [equip, "\(setsCount) SETS"]
+        return parts.joined(separator: " · ")
+    }
+
     private var sortedSets: [SetEntry] {
         (sessionExercise.sets ?? [])
             .filter { !$0.isWarmup }
             .sorted { $0.orderIndex < $1.orderIndex }
     }
 
-    /// Warm-up `SetEntry` rows sorted by `orderIndex`.
     private var warmupEntries: [SetEntry] {
         (sessionExercise.sets ?? [])
             .filter { $0.isWarmup }
             .sorted { $0.orderIndex < $1.orderIndex }
     }
 
-    // MARK: - currentExplanation (plan 03-08)
+    // MARK: - currentExplanation (Phase 3 plan 03-08)
 
-    /// Recomputes the PrescriptionExplanation at render time using the
-    /// same SessionFactory helper logic (fetchHistoryPoints /
-    /// lastSessionWorkingReps / plateInventory / equipmentKind).
-    ///
-    /// This is a pure recompute — no context.save(). The returned value
-    /// carries `.range` non-nil when the RPE autoreg strategy is in the
-    /// calibrating-with-prior-data window (CONTEXT.md Area 1).
-    ///
-    /// Returns nil when prescribedWeight is nil (e.g. Phase 2 sessions
-    /// started before Phase 3 shipped) to guard against forced-unwrap.
-    ///
-    /// Phase 3.1 (PIVOT-04 / PIVOT-05 / D-12 / D-14):
-    /// - `intentRaw` + `progressionKind` are read from the parent Session
-    ///   (the fields moved off SessionExercise in Plan 02). FOUND-03
-    ///   default-string fallback (`Intent.strength.rawValue` / `.double`)
-    ///   covers a detached session relationship.
-    /// - `explanation.sessionIntent` is set to `se.session?.intent` AFTER
-    ///   the strategy returns, so WhyThisWeightSheet can prefix the
-    ///   status capsule with "Strength session — …" / "Hypertrophy
-    ///   session — …" per UI-SPEC Copywriting Contract.
     private func currentExplanation() -> PrescriptionExplanation? {
         let se = sessionExercise
         let userSettings = settingsList.first
 
         let exerciseID = se.exercise?.id
-        // Phase 3.1 (PIVOT-05): intent + progression now live on the
-        // parent Session. The FOUND-03 default-string fallback matches
-        // SwapExerciseSheet / SetRow at this surface.
         let intentRaw = se.session?.intentRaw ?? Intent.strength.rawValue
 
         let ekind = SessionFactory.equipmentKind(
@@ -455,7 +418,6 @@ public struct SessionExerciseCard: View {
             context: ctx
         )
 
-        // Phase 3.1 (D-14): strategy comes from session-level progression.
         let strategy = ProgressionStrategyFactory.make(for: se.session?.progressionKind ?? .double)
         let (_, explanation) = strategy.prescribe(
             history: historyPoints,
@@ -474,11 +436,6 @@ public struct SessionExerciseCard: View {
             block: se.session?.block,
             today: se.session?.startedAt ?? Date.now
         )
-        // Phase 3.1 (PIVOT-04 / D-12): annotate the explanation with the
-        // session's intent so WhyThisWeightSheet's Status row prefixes
-        // "Strength session — …" / "Hypertrophy session — …" etc. The
-        // strategy stays pure (no SwiftData / Intent coupling); the
-        // caller decorates the returned value.
         var enriched = explanation
         enriched.sessionIntent = se.session?.intent
         return enriched
@@ -486,8 +443,6 @@ public struct SessionExerciseCard: View {
 
     // MARK: - handleSkipWarmups
 
-    /// Marks all warm-up SetEntry rows as completed (weight = 0) so
-    /// WarmupRampRows hides them. Called from WarmupRampRows.onSkip.
     private func handleSkipWarmups() {
         for warmup in warmupEntries {
             warmup.isComplete = true
@@ -497,23 +452,15 @@ public struct SessionExerciseCard: View {
 
     // MARK: - addSet
 
-    /// Appends a new planned `SetEntry` with the canonical sentinel state:
-    /// `isComplete = false`, `setTypeRaw = working`, `reps = 0`, `weight = 0`.
-    /// The new entry inherits the most-recent matching-intent weight hint
-    /// via the same path SessionFactory uses on session-start so the user
-    /// gets a sensible seeded weight when they begin logging.
     private func addSet() {
         let entry = SetEntry()
         entry.sessionExercise = sessionExercise
-        // Place after all existing sets (warmup + working combined).
         let allSets = sessionExercise.sets ?? []
         entry.orderIndex = allSets.count
         entry.setTypeRaw = SetType.working.rawValue
         entry.isComplete = false
         entry.weight = PreviousMatchingIntent.fetchTopWorkingSet(
             exerciseID: sessionExercise.exercise?.id,
-            // Phase 3.1 (PIVOT-05): intent lives on the parent Session;
-            // FOUND-03 default-string fallback.
             intentRaw: sessionExercise.session?.intentRaw ?? Intent.strength.rawValue,
             context: ctx
         )?.weight ?? 0
@@ -522,14 +469,14 @@ public struct SessionExerciseCard: View {
     }
 }
 
+// MARK: - Preview
+
+#if DEBUG
 #Preview("exercise card") {
     let container = PreviewModelContainer.make()
     let ctx = ModelContext(container)
     let ex = Exercise.previewSample(name: "Bench", equipment: .barbell, mechanic: .compound)
     ctx.insert(ex)
-    // Phase 3.1 (PIVOT-05): wire a parent Session so currentExplanation
-    // and the inner PreviousColumn read the real session-level intent
-    // path (matches SwapExerciseSheet preview pattern from Plan 03).
     let session = Session()
     session.intentRaw = Intent.strength.rawValue
     ctx.insert(session)
@@ -556,3 +503,4 @@ public struct SessionExerciseCard: View {
     }
     .modelContainer(container)
 }
+#endif

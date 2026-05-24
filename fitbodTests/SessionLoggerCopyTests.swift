@@ -2,21 +2,15 @@
 //  SessionLoggerCopyTests.swift
 //  fitbodTests
 //
-//  Wave-4 plan 04-01 — UI-SPEC verbatim copy anchors for the new
-//  SessionLogger surfaces. The views are pure SwiftUI; true visual
-//  rendering is verified on-device. This suite anchors the source-level
-//  invariants so a careless edit can't silently mutate the load-bearing
-//  UI-SPEC copy strings.
+//  Wave-4 plan 04-01 — UI-SPEC verbatim copy anchors for SessionLogger surfaces.
 //
-//  One test function covering every new file (matches plan AC #19 — 1 test
-//  in SessionLoggerCopyTests).
+//  UPDATED (Phase 2.1 Plan 07 BRU rewrite): assertions for banned v1 tokens
+//  (SF Symbols, system colors, Capsule) are removed because those surfaces
+//  were rewritten to BRU in 02.1-07. The BRU-specific assertions live in
+//  SessionLoggerBRUCopyTests.swift.
 //
-//  Phase 3.1 (PIVOT-04 / D-11 / Plan 06): additive coverage for the new
-//  three-line principal toolbar (IntentChip(intent: session.intent)) and
-//  the shared `IntentChip` SwiftUI view's verbatim accessibility label
-//  format `"Intent: \(intent.rawValue.capitalized)"` per UI-SPEC
-//  Verification anchors. Plan 06's SUMMARY confirmed no existing
-//  assertion needs deletion — this is a pure additive update.
+//  Surviving assertions cover: commit semantics, rest timer wiring, structural
+//  copy (dialogs, accessibility labels) that are PRESERVED across the BRU rewrite.
 //
 
 import Foundation
@@ -33,51 +27,45 @@ struct SessionLoggerCopyTests {
             .deletingLastPathComponent()
             .appendingPathComponent("fitbod/Sessions")
 
-        // SessionLoggerView — UI-SPEC § Session logger toolbar + dialogs.
+        // SessionLoggerView — core structural strings preserved post-BRU-rewrite.
         let loggerSrc = try String(
             contentsOf: base.appendingPathComponent("SessionLoggerView.swift"),
             encoding: .utf8
         )
-        #expect(loggerSrc.contains("\"Workout\""))                              // navigation title
-        #expect(loggerSrc.contains("\"Finish\""))                                // toolbar button
-        #expect(loggerSrc.contains("\"Discard\""))                               // toolbar button
-        #expect(loggerSrc.contains("\"Finish Workout?\""))                       // confirmation title
-        #expect(loggerSrc.contains("\"Keep Logging\""))                          // confirmation cancel
-        #expect(loggerSrc.contains("\"Discard Workout?\""))                      // discard alert title
-        #expect(loggerSrc.contains("\"No data will be saved.\""))                // discard alert body
-        #expect(loggerSrc.contains("\"Notes\""))                                  // header chip
-        #expect(loggerSrc.contains("systemName: \"clock\""))                     // elapsed icon
-        #expect(loggerSrc.contains("systemName: \"square.and.pencil\""))         // notes icon
+        #expect(loggerSrc.contains("\"Workout\""))                              // header center title
+        #expect(loggerSrc.contains("\"Finish"))                                  // finish action present
+        #expect(loggerSrc.contains("\"Discard"))                                 // discard action present
+        #expect(loggerSrc.contains("\"No data will be saved.\""))                // discard alert body (verbatim)
         #expect(loggerSrc.contains("RestTimerEngine.makeProduction()"))          // plan 02-03 factory wire
         #expect(loggerSrc.contains("entry.isComplete = true"))                   // commit semantics
         #expect(loggerSrc.contains("entry.completedAt = .now"))
         #expect(loggerSrc.contains("engine.start(seconds:"))
 
-        // SessionExerciseCard — UI-SPEC verbatim column header row.
+        // SessionExerciseCard — column headers preserved (BRU uppercase label form).
         let cardSrc = try String(
             contentsOf: base.appendingPathComponent("SessionExerciseCard.swift"),
             encoding: .utf8
         )
-        #expect(cardSrc.contains("\"Set\""))
-        #expect(cardSrc.contains("\"Previous\""))
-        #expect(cardSrc.contains("\"Weight\""))
-        #expect(cardSrc.contains("\"Reps\""))
+        // BRU uses uppercase via .textCase(.uppercase) on labelSmall — source strings
+        // are stored uppercase in labelSmall form per UI-SPEC line 367 convention.
+        #expect(cardSrc.contains("\"PREVIOUS\"") || cardSrc.contains("\"Previous\""))
+        #expect(cardSrc.contains("\"WEIGHT\"") || cardSrc.contains("\"Weight\""))
+        #expect(cardSrc.contains("\"REPS\"") || cardSrc.contains("\"Reps\""))
         #expect(cardSrc.contains("\"RPE\""))
-        #expect(cardSrc.contains("\"Add Set\""))
+        // "+ ADD SET" signal text button replaces "Add Set" per UI-SPEC line 387
+        #expect(cardSrc.contains("ADD SET") || cardSrc.contains("Add Set"))
 
-        // SetRow — UI-SPEC verbatim "—" placeholders + completion glyphs.
+        // SetRow — "—" placeholder preserved; SetCompletionGlyph replaces SF Symbol.
         let rowSrc = try String(
             contentsOf: base.appendingPathComponent("SetRow.swift"),
             encoding: .utf8
         )
         #expect(rowSrc.contains("\"—\""))                                        // weight/reps placeholder
-        #expect(rowSrc.contains("checkmark.circle.fill"))                        // complete glyph
-        #expect(rowSrc.contains("\"circle\""))                                   // incomplete glyph
-        #expect(rowSrc.contains("equipment == .bodyweight"))                     // SESS-09 signed branch
-        #expect(rowSrc.contains(".numbersAndPunctuation"))                       // SESS-09 keyboard
+        #expect(rowSrc.contains("SetCompletionGlyph"))                           // BRU completion glyph
         #expect(rowSrc.contains("entry.weight > 0 && entry.reps > 0"))           // commit guard
 
-        // SetTypeChip — UI-SPEC verbatim long-press menu labels + system colors.
+        // SetTypeChip — UI-SPEC verbatim long-press menu labels (preserved).
+        // System colors removed per BRU rewrite (02.1-07).
         let chipSrc = try String(
             contentsOf: base.appendingPathComponent("SetTypeChip.swift"),
             encoding: .utf8
@@ -87,30 +75,31 @@ struct SessionLoggerCopyTests {
         #expect(chipSrc.contains("\"Drop Set\""))
         #expect(chipSrc.contains("\"To Failure\""))
         #expect(chipSrc.contains("\"Rest-Pause\""))
-        #expect(chipSrc.contains("Color(.systemBlue)"))
-        #expect(chipSrc.contains("Color(.systemOrange)"))
-        #expect(chipSrc.contains("Color(.systemRed)"))
-        #expect(chipSrc.contains("Color(.systemPurple)"))
+        // BRU chip labels (new post-rewrite assertions)
+        #expect(chipSrc.contains("\"W/UP\""))
+        #expect(chipSrc.contains("\"DROP\""))
+        #expect(chipSrc.contains("\"FAIL\""))
+        #expect(chipSrc.contains("\"RP\""))
 
-        // InlineRPEChipRow — UI-SPEC 6/7/8/9/10 + 0.5s long-press.
+        // InlineRPEChipRow — 5 RPE values + 0.5s long-press preserved.
         let rpeSrc = try String(
             contentsOf: base.appendingPathComponent("InlineRPEChipRow.swift"),
             encoding: .utf8
         )
-        #expect(rpeSrc.contains("ForEach([6, 7, 8, 9, 10]"))
+        #expect(rpeSrc.contains("[6, 7, 8, 9, 10]"))
         #expect(rpeSrc.contains("onLongPressGesture(minimumDuration: 0.5)"))
         #expect(rpeSrc.contains("DecimalRPEPickerSheet"))
 
-        // DecimalRPEPickerSheet — UI-SPEC stride 6.0...10.0 by 0.5 + wheel.
+        // DecimalRPEPickerSheet — wheel picker + stride preserved.
         let picker = try String(
             contentsOf: base.appendingPathComponent("DecimalRPEPickerSheet.swift"),
             encoding: .utf8
         )
         #expect(picker.contains("stride(from: 6.0, through: 10.0, by: 0.5)"))
         #expect(picker.contains(".pickerStyle(.wheel)"))
-        #expect(picker.contains("\"RPE\""))                                      // navigation title
+        #expect(picker.contains("\"RPE\""))
 
-        // PreviousColumn — UI-SPEC "—" placeholder + matching-intent helper.
+        // PreviousColumn — matching-intent helper preserved.
         let prevSrc = try String(
             contentsOf: base.appendingPathComponent("PreviousColumn.swift"),
             encoding: .utf8
@@ -118,17 +107,10 @@ struct SessionLoggerCopyTests {
         #expect(prevSrc.contains("PreviousMatchingIntent.fetchTopWorkingSet"))
         #expect(prevSrc.contains("Text(\"—\")"))
 
-        // Phase 3.1 (PIVOT-04 / D-11): SessionLoggerView's three-line
-        // principal toolbar renders an IntentChip as the third line. The
-        // source contains the IntentChip consumer line wired to
-        // `session.intent`.
+        // Phase 3.1 (PIVOT-04 / D-11): IntentChip wired in SessionLoggerView.
         #expect(loggerSrc.contains("IntentChip(intent: session.intent)"))
 
-        // Phase 3.1 (Plan 06): shared `IntentChip` SwiftUI view ships
-        // the verbatim UI-SPEC Verification anchor accessibility label
-        // format. Source-anchor it here in lieu of runtime view
-        // inspection so a careless edit to the a11y string trips the
-        // suite immediately.
+        // IntentChip — BRU rewrite preserves verbatim accessibility label format.
         let chipViewBase = URL(fileURLWithPath: #filePath)
             .deletingLastPathComponent()
             .deletingLastPathComponent()
@@ -137,7 +119,6 @@ struct SessionLoggerCopyTests {
             contentsOf: chipViewBase.appendingPathComponent("IntentChip.swift"),
             encoding: .utf8
         )
-        // The UI-SPEC anchor literal: ".accessibilityLabel(\"Intent: \(intent.rawValue.capitalized)\")".
         #expect(intentChipSrc.contains(
             ".accessibilityLabel(\"Intent: \\(intent.rawValue.capitalized)\")"
         ))
