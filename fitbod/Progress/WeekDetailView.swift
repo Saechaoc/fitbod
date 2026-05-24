@@ -2,11 +2,19 @@
 //  WeekDetailView.swift
 //  fitbod
 //
-//  Wave-4 plan 06-06 — drill-down destination for the Weekly Tonnage
-//  bar tap (CONTEXT D-21). Lists all `Session` rows that started
-//  within the tapped week's ISO 7-day window. Reuses Phase 2's
-//  session-row formatting (routineSnapshotName + startedAt) but
-//  collapsed into a minimal one-row-per-session List.
+//  Phase 6.1 BRU reskin — BRUHeaderBar + BRU session list replaces
+//  .navigationTitle + List scaffolding. Drill-down destination for the
+//  Weekly Tonnage bar tap (CONTEXT D-21).
+//
+//  ## BRU chrome
+//
+//  - BRUHeaderBar(left: "‹", center: "Week of {date}") at top.
+//  - ScrollView → LazyVStack(spacing: 0) of session rows separated by
+//    BRUDivider(.hair).
+//  - Each row: routineName in BRUFont.bodyEmphasis bruInk + metadata
+//    in BRUFont.labelSmall bruMuted + "›" disclosure glyph.
+//  - Empty state: BRUFont.bodyEmphasis bruInk + BRUFont.bodyDefault bruMuted.
+//  - Background: Color.bruPaper.ignoresSafeArea().
 //
 //  ## Predicate-narrowed @Query (RESEARCH Pitfall 3)
 //
@@ -14,20 +22,14 @@
 //  bounds before the #Predicate so the macro expansion sees value-
 //  typed immutables. The bounds straddle 7 days from weekStart.
 //
-//  ## Empty state
-//
-//  When the week contains no sessions (defensive — the user reached
-//  this view only via a non-empty bar), the view shows a single-row
-//  "No sessions in this week" placeholder. UI-SPEC § Week-detail
-//  navigation row implicitly authorizes this fallback.
-//
-//  [CITED: CONTEXT D-21 + UI-SPEC § Week-detail navigation row]
+//  [CITED: CONTEXT D-21 + UI-SPEC v2 §Design Pivot BRU chrome]
 //
 
 import SwiftData
 import SwiftUI
 
 public struct WeekDetailView: View {
+    @Environment(\.dismiss) private var dismiss
     public let weekStart: Date
     @Query private var sessions: [Session]
 
@@ -45,44 +47,74 @@ public struct WeekDetailView: View {
     }
 
     public var body: some View {
-        Group {
+        VStack(spacing: 0) {
+            BRUHeaderBar(
+                left: HeaderAction("‹") { dismiss() },
+                center: navTitle
+            )
+
             if sessions.isEmpty {
                 emptyState
             } else {
-                List(sessions) { session in
-                    sessionRow(session)
+                ScrollView {
+                    LazyVStack(spacing: 0) {
+                        ForEach(sessions) { session in
+                            sessionRow(session)
+                            BRUDivider(.hair)
+                        }
+                    }
                 }
             }
         }
-        .navigationTitle(navTitle)
-        .navigationBarTitleDisplayMode(.inline)
+        .background(Color.bruPaper.ignoresSafeArea())
+        .navigationBarHidden(true)
     }
+
+    // MARK: - Session row
 
     @ViewBuilder
     private func sessionRow(_ session: Session) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text(session.routineSnapshotName.isEmpty ? "Unnamed session" : session.routineSnapshotName)
-                .font(.body)
-            Text(session.startedAt.formatted(.dateTime.weekday(.abbreviated).month(.abbreviated).day()))
-                .font(.caption)
-                .foregroundStyle(Color(.secondaryLabel))
+        HStack(spacing: 12) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(session.routineSnapshotName.isEmpty ? "Unnamed session" : session.routineSnapshotName)
+                    .font(BRUFont.bodyEmphasis)
+                    .foregroundStyle(Color.bruInk)
+                Text(sessionMeta(session))
+                    .font(BRUFont.labelSmall)
+                    .tracking(0.8)
+                    .foregroundStyle(Color.bruMuted)
+            }
+            Spacer()
+            Text("›")
+                .font(BRUFont.bodyEmphasis)
+                .foregroundStyle(Color.bruMuted)
         }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
+        .contentShape(Rectangle())
+        .frame(minHeight: 44)
     }
+
+    // MARK: - Empty state
 
     @ViewBuilder
     private var emptyState: some View {
-        VStack(alignment: .center, spacing: 4) {
+        VStack(alignment: .center, spacing: 8) {
             Text("No sessions in this week")
-                .font(.headline)
-            Text("Pick another week from the chart.")
-                .font(.subheadline)
-                .foregroundStyle(Color(.secondaryLabel))
+                .font(BRUFont.bodyEmphasis)
+                .foregroundStyle(Color.bruInk)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .padding()
+        .padding(32)
     }
+
+    // MARK: - Helpers
 
     private var navTitle: String {
         "Week of \(weekStart.formatted(.dateTime.month(.abbreviated).day().year()))"
+    }
+
+    private func sessionMeta(_ session: Session) -> String {
+        session.startedAt.formatted(.dateTime.weekday(.abbreviated).month(.abbreviated).day())
     }
 }
