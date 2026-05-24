@@ -24,7 +24,7 @@ Granular, prescriptive workout sessions — every set in a session is intentiona
 - [x] **Phase 3.1: Session-Level Intent & Progression Refactor** — Move intent + progressionKind from per-exercise to Routine/Session; strip per-exercise pickers from PrescriptionEditorRow; SchemaV4 migration; rewire 25 test suites to the new model contract (completed 2007-05-23; PIVOT-01..05 satisfied)
 - [x] **Phase 4: Periodization & Blocks** — Block builder, scheduled deloads, block timeline on home, remaining two progression strategies (block-periodized, hybrid)
 - [x] **Phase 5: Fatigue Model & Plateau Detection** — Stimulus-weighted weekly volume, MEV/MAV/MRV bars with verbs, muscle heatmap, plateau detector, fatigue-triggered deload advisory (completed 2007-05-23)
-- [ ] **Phase 6: Progress Views, Export & Polish** — Intent-split charts, PRs, weekly tonnage, session comparison, weekly recap, CSV/JSON export, backup/restore
+- [x] **Phase 6: Progress Views, Export & Polish** — Intent-split charts, PRs, weekly tonnage, session comparison, weekly recap, CSV/JSON export, backup/restore (completed 2026-05-24)
 
 ---
 
@@ -244,7 +244,7 @@ Plans:
   3. Weekly tonnage chart (total weight × reps) is sliceable by week / block phase / muscle group; session comparison view shows this week's session vs last week's same-routine session, side-by-side per-exercise diff
   4. User can export all data as CSV (one row per set: sessions → exercises → sets) and as version-stamped JSON (full schema preserved); user can create a full database backup file shareable via AirDrop / Files / iCloud Drive
   5. User can restore from a backup file with explicit data-loss confirmation; round-trip (export → wipe install → import) produces an identical app state
-**Plans:** 10/11 plans executed
+**Plans:** 11/11 plans complete
 
 **Plan list:**
 - [x] 06-01-PLAN.md — OneRepMax kernel + tests (PROG-02)
@@ -272,7 +272,7 @@ Plans:
 | 3. Smart Prescription & Warm-ups | 8/8 | Complete   | 2026-05-24 |
 | 4. Periodization & Blocks | 0/8 | Not started | - |
 | 5. Fatigue Model & Plateau Detection | 7/6 | Complete   | 2026-05-24 |
-| 6. Progress Views, Export & Polish | 10/11 | In Progress|  |
+| 6. Progress Views, Export & Polish | 11/11 | Complete   | 2026-05-24 |
 
 ---
 
@@ -300,7 +300,7 @@ This ordering is dependency-driven and pitfall-aware (per research/SUMMARY.md an
 **Mode:** refactor
 **Requirements**: None (visual refactor — preserves all PROG-* and EXP-* requirements from Phase 6)
 **Depends on:** Phase 6, Phase 02.1 (BRU primitives)
-**Plans:** 5/7 plans executed
+**Plans:** 7/7 plans executed (COMPLETE — 2026-05-24)
 
 **Plan list:**
 - [x] 06.1-01-PLAN.md — Wave 1: ProgressHomeView reskin (BRUHeaderBar + 3 BRUSectionHead sections + BRURow + BRUDivider)
@@ -309,4 +309,4 @@ This ordering is dependency-driven and pitfall-aware (per research/SUMMARY.md an
 - [x] 06.1-04-PLAN.md — Wave 2: WeeklyTonnageView reskin (BRU chart + hero summary + BRU stacked-bar intent palette) + WeeklyTonnageFilterChips outline/fill + WeekDetailView reskin
 - [x] 06.1-05-PLAN.md — Wave 2: SettingsView full BRU rewrite (Profile + Units + Training + Volume + Smart-Progression + Export 2-card grid + outlined Backup panel + About) preserving ShareLink + fileImporter + destructive alert wires
 - [x] 06.1-06-PLAN.md — Wave 2: InSessionPRBanner full-bleed bruSignal slab + ExerciseHistoryView toolbar chart-icon → BRU HeaderAction "PROGRESS"
-- [ ] 06.1-07-PLAN.md — Wave 3: BRUGrepAuditPhase6Tests + 3 UI smoke test files (ProgressHomeBRUUITests, SettingsBRUUITests, ProgressChartBRUUITests)
+- [x] 06.1-07-PLAN.md — Wave 3: BRUGrepAuditPhase6Tests + 3 UI smoke test files (ProgressHomeBRUUITests, SettingsBRUUITests, ProgressChartBRUUITests)

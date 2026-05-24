@@ -3,18 +3,18 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: completed
-last_updated: "2026-05-24T16:37:01.758Z"
+last_updated: "2026-05-24T18:06:15.877Z"
 progress:
   total_phases: 12
-  completed_phases: 10
+  completed_phases: 11
   total_plans: 111
-  completed_plans: 104
-  percent: 94
+  completed_plans: 105
+  percent: 95
 ---
 
 # Project State: Fitbod
 
-**Last updated:** 2026-05-24 (post 03.2-01 — Phase 3 BRU primitives: CalibratingProgressMeter + PlateStackViz + PlateTallyRow; Phase 03.2 Wave 1 complete)
+**Last updated:** 2026-05-24 (post 06.1-07 — BRUGrepAuditPhase6Tests + 3 UI smoke tests + 8 copy-test fixes; Phase 06.1 COMPLETE — all 7 plans shipped; BRU visual rewrite milestone closed)
 
 ---
 
@@ -127,7 +127,7 @@ Plan: 8 of 8 (all plans complete; Phase 3.1 closed). Production tree compiles en
 
 **Plan:** 03-01 complete (Wave 3, seq 1) — Routines tab `RoutinesListView` + folders + Resume Workout banner. See plan 03-01 SUMMARY for details.
 **Status:** Phase 5 **COMPLETE** (6 of 6 plans; 11 of 11 requirements closed — 2026-05-23). Phase 6 (Progress Views, Export & Polish) is next per dependency graph.
-**Progress:** [█████████░] 93%
+**Progress:** [██████████] 95%
 
 ### Phase Outlook
 
