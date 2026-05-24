@@ -3,6 +3,8 @@
 //  fitbod
 //
 //  Today empty-state call-to-action when no block is active.
+//  BRU reskin: full-bleed paper slab, display headline, muted body,
+//  signal-fill BRUPillButton CTA. No Apple HIG defaults.
 //
 
 import SwiftUI
@@ -15,22 +17,30 @@ public struct StartBlockCTA: View {
     }
 
     public var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("No active block.")
-                .font(.headline)
+        VStack(spacing: 12) {
+            Text("No active block")
+                .font(BRUFont.displayLarge)
+                .foregroundStyle(Color.bruInk)
+                .multilineTextAlignment(.center)
+
             Text("Define a training block to see your phase, week, and deloads here.")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-                .multilineTextAlignment(.leading)
-            Button("Start a Block", action: onStart)
-                .foregroundStyle(Color.accentColor)
-                .padding(.top, 4)
+                .font(BRUFont.bodyDefault)
+                .foregroundStyle(Color.bruMuted)
+                .multilineTextAlignment(.center)
+
+            BRUPillButton("Start a block ▸", action: onStart)
+                .padding(.top, 8)
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(16)
-        .background(Color(.secondarySystemGroupedBackground))
-        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 32)
         .padding(.horizontal, 16)
-        .padding(.vertical, 8)
+        .background(Color.bruPaper)
     }
 }
+
+#if DEBUG
+#Preview("StartBlockCTA") {
+    StartBlockCTA(onStart: {})
+        .background(Color.bruPaper)
+}
+#endif
