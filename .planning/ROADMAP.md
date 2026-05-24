@@ -129,8 +129,8 @@ Plans:
 - [x] 03.2-01-PLAN.md — Wave 1: BRU primitives (CalibratingProgressMeter + PlateStackViz + PlateTallyRow)
 - [ ] 03.2-02-PLAN.md — Wave 2: BumpBanner + CalibratingBadge flat-rectangle reskin
 - [x] 03.2-03-PLAN.md — Wave 2: WarmupRampRows 4-column grid + mini PlateStackViz
-- [ ] 03.2-04-PLAN.md — Wave 2: PlateStackDisclosure + PrescriptionWeightCell long-press disclosure
-- [ ] 03.2-05-PLAN.md — Wave 2: WhyThisWeightSheet ink hero slab + numbered steps + ghost/signal footer
+- [x] 03.2-04-PLAN.md — Wave 2: PlateStackDisclosure + PrescriptionWeightCell long-press disclosure
+- [x] 03.2-05-PLAN.md — Wave 2: WhyThisWeightSheet ink hero slab + numbered steps + ghost/signal footer
 - [ ] 03.2-06-PLAN.md — Wave 2: PlateInventoryEditor BRU reskin with PlateTallyRow
 - [x] 03.2-07-PLAN.md — Wave 2: PlateCalculatorSheet BRU reskin with PlateStackViz
 - [x] 03.2-08-PLAN.md — Wave 2: ExerciseDetailView Prescription Settings + SettingsView Smart Progression sections
