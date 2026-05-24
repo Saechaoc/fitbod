@@ -2,26 +2,22 @@
 //  PlateStackDisclosure.swift
 //  fitbod
 //
-//  Phase 3 plan 06 — inline plate-stack visualization that slides in below
-//  a set row when the weight cell is tapped. Renders an HStack of colored
-//  Rectangles (mirrored per side) with a bar segment in the center.
+//  Phase 3.2-04 BRU rewrite — inline plate-stack disclosure panel.
 //
-//  Plate color palette follows UI-SPEC § Asset Contract exactly.
-//  Animation is gated on @Environment(\.accessibilityReduceMotion).
+//  BRU conformance (03-UI-SPEC lines 376, 416–421):
+//    - bruBg2 background fill, 2pt bruInk bottom rule
+//    - Delegates ALL plate rendering to PlateStackViz (Design/PlateStackViz.swift)
+//    - No local plateColor / plateWidth / plateRect helpers (deleted)
+//    - No Color(.system*), no RoundedRectangle, no Capsule, no SF Symbols
+//    - No Font.body / Font.caption / Font.headline — BRUFont only
 //
-//  Three render states:
-//    1. `targetWeight < barWeight` → "Target is below bar weight..." caption
-//    2. `solve == nil` (no combination found) → "No plate combination found..." error
-//    3. `solve != nil` → plate-stack HStack with heading
+//  Three render branches:
+//    1. targetWeight < barWeight → informational copy (BRUFont.bodyDefault bruMuted)
+//    2. PlateCalculator.solve returns a stack → PlateStackViz at heightScale 0.6
+//    3. No solution → "NO COMBINATION FOUND. ADJUST INVENTORY." (BRUFont.labelSmall bruSignal)
 //
-//  UI-SPEC § Plate-stack inline disclosure heading verbatim:
-//    "{bar} bar + {plates} each side"
-//  UI-SPEC § Plate-stack accessibility label verbatim:
-//    "Bar: {bar} kg. Plates each side: {plate list}. Total: {total} kg."
-//
-//  plan 03-08 wraps this in a DisclosureGroup or conditional VStack inside
-//  SetRow. This component is standalone and does NOT own its own expand/collapse
-//  state — the parent manages that via its plateStackVisible binding.
+//  Slide-in animation is the PARENT SetRow's responsibility per 03-UI-SPEC line 418.
+//  This primitive renders synchronously (no .animation modifier).
 //
 
 import SwiftUI
@@ -30,13 +26,19 @@ public struct PlateStackDisclosure: View {
     public let targetWeight: Double
     public let barWeight: Double
     public let plates: [PlateSpec]
+    /// Unit label for copy strings. Defaults to "kg".
+    public let unitLabel: String
 
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion: Bool
-
-    public init(targetWeight: Double, barWeight: Double, plates: [PlateSpec]) {
+    public init(
+        targetWeight: Double,
+        barWeight: Double,
+        plates: [PlateSpec],
+        unitLabel: String = "kg"
+    ) {
         self.targetWeight = targetWeight
         self.barWeight = barWeight
         self.plates = plates
+        self.unitLabel = unitLabel
     }
 
     // MARK: - Computed plate stack
@@ -49,151 +51,52 @@ public struct PlateStackDisclosure: View {
         )
     }
 
+    // MARK: - Body
+
     public var body: some View {
-        Group {
+        VStack(spacing: 0) {
             if targetWeight < barWeight {
-                // Below-bar state — informational, .secondaryLabel per UI-SPEC verbatim
-                Text("Target is below bar weight (\(String(format: "%g", barWeight)) kg). Log as bodyweight or adjust the bar.")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .padding(.vertical, 8)
-                    .padding(.horizontal, 16)
-            } else if let stack = solvedStack {
-                // Happy path — render the plate stack visualization
-                plateStackView(stack: stack)
-            } else {
-                // No solution found — error state per UI-SPEC verbatim (.systemRed)
-                Text("No plate combination found. Adjust inventory in Settings.")
-                    .font(.caption)
-                    .foregroundStyle(Color(.systemRed))
-                    .padding(.vertical, 8)
-                    .padding(.horizontal, 16)
-            }
-        }
-        .animation(
-            reduceMotion ? nil : .easeInOut(duration: 0.2),
-            value: targetWeight
-        )
-    }
-
-    // MARK: - Plate stack view
-
-    @ViewBuilder
-    private func plateStackView(stack: PlateStack) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
-            // Heading: UI-SPEC verbatim "{bar} bar + {plates} each side"
-            Text(headingText(stack: stack))
-                .font(.caption)
-                .foregroundStyle(.secondary)
+                // Below-bar state: informational copy per 03-UI-SPEC line 418
+                Text(
+                    "Target is below bar weight (\(String(format: "%g", barWeight)) \(unitLabel)). Log as bodyweight or adjust the bar."
+                )
+                .font(BRUFont.bodyDefault)
+                .foregroundStyle(Color.bruMuted)
                 .padding(.horizontal, 16)
-                .padding(.top, 8)
+                .padding(.vertical, 12)
 
-            // Plate visualization: left side (mirrored) | bar | right side
-            HStack(spacing: 4) {
-                Spacer(minLength: 16)
+            } else if let stack = solvedStack {
+                // Solved: delegate to PlateStackViz — no local plate rect helpers
+                PlateStackViz(
+                    platesPerSide: stack.platesPerSide.map { ($0.weight, $0.count) },
+                    barLabel: "\(String(format: "%g", barWeight)) \(unitLabel)",
+                    heightScale: 0.6,
+                    showLegend: true
+                )
+                .padding(.horizontal, 16)
+                .padding(.vertical, 12)
 
-                // Left side plates (reversed order — outermost plate first visually)
-                ForEach(Array(stack.platesPerSide.reversed().enumerated()), id: \.offset) { _, plateGroup in
-                    ForEach(0..<plateGroup.count, id: \.self) { _ in
-                        plateRect(weight: plateGroup.weight)
-                    }
-                }
-
-                // Bar center segment
-                Rectangle()
-                    .fill(Color(.systemGray4))                                   // UI-SPEC § Asset Contract
-                    .frame(width: 40, height: 6)
-
-                // Right side plates (heaviest nearest bar)
-                ForEach(Array(stack.platesPerSide.enumerated()), id: \.offset) { _, plateGroup in
-                    ForEach(0..<plateGroup.count, id: \.self) { _ in
-                        plateRect(weight: plateGroup.weight)
-                    }
-                }
-
-                Spacer(minLength: 16)
+            } else {
+                // No solution: error state per 03-UI-SPEC line 421 verbatim
+                Text("NO COMBINATION FOUND. ADJUST INVENTORY.")
+                    .font(BRUFont.labelSmall)
+                    .foregroundStyle(Color.bruSignal)
+                    .textCase(.uppercase)
+                    .tracking(1.2)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 12)
             }
-            .padding(.bottom, 8)
         }
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel(accessibilityLabel(stack: stack))
-    }
-
-    // MARK: - Single plate rectangle
-
-    @ViewBuilder
-    private func plateRect(weight: Double) -> some View {
-        VStack(spacing: 2) {
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color.bruBg2)
+        .overlay(alignment: .bottom) {
+            // 2pt bruInk bottom rule per 03-UI-SPEC line 376
             Rectangle()
-                .fill(plateColor(weight: weight))
-                .frame(width: plateWidth(weight), height: 24)
-
-            Text(String(format: "%g", weight))
-                .font(.caption)
-                .foregroundStyle(.secondary)
+                .fill(Color.bruInk)
+                .frame(height: 2)
         }
-    }
-
-    // MARK: - Private helpers
-
-    /// UI-SPEC § Asset Contract plate color palette.
-    /// Uses kg-tier thresholds (v1 default — documented limitation in plan 03-06 SUMMARY).
-    private func plateColor(weight: Double) -> Color {
-        if weight >= 25 {
-            return Color(.systemRed).opacity(0.8)                                // ≥25 kg / ≥45 lb
-        } else if weight >= 20 {
-            return Color(.systemBlue).opacity(0.8)                               // 20 kg / 35 lb
-        } else if weight >= 15 {
-            return Color(.systemYellow).opacity(0.8)                             // 15 kg / 25 lb
-        } else if weight >= 10 {
-            return Color(.systemGreen).opacity(0.8)                              // 10 kg
-        } else if weight >= 5 {
-            return Color(.systemGray5)                                           // 5 kg / 10 lb
-        } else if weight >= 2.5 {
-            return Color(.systemGray3)                                           // 2.5 kg / 5 lb
-        } else {
-            // <2.5 kg microplates — systemGray6 with systemGray2 border (render as overlay)
-            return Color(.systemGray6)
-        }
-    }
-
-    /// Linear width scale: heavier plates render wider. Clamped 8…32pt.
-    private func plateWidth(_ weight: Double) -> CGFloat {
-        CGFloat(max(8, min(32, weight)))
-    }
-
-    /// UI-SPEC verbatim heading: "{bar} bar + 2×20 kg, 1×5 kg each side"
-    private func headingText(stack: PlateStack) -> String {
-        let barStr = String(format: "%g", barWeight)
-        let platesStr = perSideDescription(stack: stack)
-        return "\(barStr) bar + \(platesStr) each side"
-    }
-
-    /// Builds a comma-separated plate description: "2×20 kg, 1×5 kg"
-    private func perSideDescription(stack: PlateStack) -> String {
-        stack.platesPerSide
-            .filter { $0.count > 0 }
-            .map { group in
-                let w = String(format: "%g", group.weight)
-                return "\(group.count)×\(w) kg"
-            }
-            .joined(separator: ", ")
-    }
-
-    /// UI-SPEC verbatim a11y label:
-    /// "Bar: {bar} kg. Plates each side: {plate list, e.g. two 20 kg, one 5 kg}. Total: {total} kg."
-    private func accessibilityLabel(stack: PlateStack) -> String {
-        let barStr = String(format: "%g", barWeight)
-        let plateList = stack.platesPerSide
-            .filter { $0.count > 0 }
-            .map { group in
-                let countWord = group.count == 1 ? "one" : "\(group.count)"
-                let w = String(format: "%g", group.weight)
-                return "\(countWord) \(w) kg"
-            }
-            .joined(separator: ", ")
-        let totalStr = String(format: "%g", stack.totalWeight)
-        return "Bar: \(barStr) kg. Plates each side: \(plateList). Total: \(totalStr) kg."
+        // PlateStackViz owns the combined accessibility label internally.
+        // No additional a11y modifier on this primitive per plan 03.2-04 behavior contract.
     }
 }
 
@@ -209,14 +112,14 @@ public struct PlateStackDisclosure: View {
     ]
     return VStack(spacing: 0) {
         Text("100 kg — standard barbell")
-            .font(.caption)
-            .foregroundStyle(.secondary)
+            .font(BRUFont.bodyDefault)
+            .foregroundStyle(Color.bruMuted)
             .padding(.bottom, 4)
         PlateStackDisclosure(targetWeight: 100, barWeight: 20, plates: plates)
     }
     .padding()
-    .background(Color(.systemGroupedBackground))
-    .clipShape(RoundedRectangle(cornerRadius: 8))
+    .background(Color.bruPaper)
+    .overlay { Rectangle().stroke(Color.bruInk, lineWidth: 1) }
     .padding()
 }
 
@@ -231,14 +134,14 @@ public struct PlateStackDisclosure: View {
     ]
     return VStack(spacing: 0) {
         Text("97.5 kg — with fractional plates")
-            .font(.caption)
-            .foregroundStyle(.secondary)
+            .font(BRUFont.bodyDefault)
+            .foregroundStyle(Color.bruMuted)
             .padding(.bottom, 4)
         PlateStackDisclosure(targetWeight: 97.5, barWeight: 20, plates: plates)
     }
     .padding()
-    .background(Color(.systemGroupedBackground))
-    .clipShape(RoundedRectangle(cornerRadius: 8))
+    .background(Color.bruPaper)
+    .overlay { Rectangle().stroke(Color.bruInk, lineWidth: 1) }
     .padding()
 }
 
@@ -248,14 +151,14 @@ public struct PlateStackDisclosure: View {
     ]
     return VStack(spacing: 0) {
         Text("97.5 kg — no solution (missing 2.5 kg plates)")
-            .font(.caption)
-            .foregroundStyle(.secondary)
+            .font(BRUFont.bodyDefault)
+            .foregroundStyle(Color.bruMuted)
             .padding(.bottom, 4)
         PlateStackDisclosure(targetWeight: 97.5, barWeight: 20, plates: plates)
     }
     .padding()
-    .background(Color(.systemGroupedBackground))
-    .clipShape(RoundedRectangle(cornerRadius: 8))
+    .background(Color.bruPaper)
+    .overlay { Rectangle().stroke(Color.bruInk, lineWidth: 1) }
     .padding()
 }
 
@@ -265,13 +168,13 @@ public struct PlateStackDisclosure: View {
     ]
     return VStack(spacing: 0) {
         Text("15 kg target — below 20 kg bar")
-            .font(.caption)
-            .foregroundStyle(.secondary)
+            .font(BRUFont.bodyDefault)
+            .foregroundStyle(Color.bruMuted)
             .padding(.bottom, 4)
         PlateStackDisclosure(targetWeight: 15, barWeight: 20, plates: plates)
     }
     .padding()
-    .background(Color(.systemGroupedBackground))
-    .clipShape(RoundedRectangle(cornerRadius: 8))
+    .background(Color.bruPaper)
+    .overlay { Rectangle().stroke(Color.bruInk, lineWidth: 1) }
     .padding()
 }

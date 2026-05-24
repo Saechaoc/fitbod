@@ -2,25 +2,24 @@
 //  PrescriptionWeightCell.swift
 //  fitbod
 //
-//  Phase 3 plan 06 — compound control for the prescribed-weight input cell.
-//  Replaces the plain weight `TextField` in `SetRow` (plan 03-08 wires this in).
+//  Phase 3.2-04 BRU rewrite — prescribed-weight input cell.
+//
+//  BRU conformance (03-UI-SPEC lines 388, 409, 494):
+//    - info.circle SF Symbol + Button block DELETED (was lines 101–113 of v1)
+//    - Color.accentColor DELETED (was on info.circle button)
+//    - Disclosure now triggered by .onLongPressGesture(minimumDuration: 0.4) on outer HStack
+//    - BRUFont.bodyEmphasis for editable weight value (was Font.body)
+//    - BRUFont.bodyDefault for range display (was Font.body)
+//    - BRUFont.labelMicro + .textCase(.uppercase) + .tracking(1.0) for "M" badge (was Font.caption)
+//    - Zero Color(.system*), zero RoundedRectangle, zero Capsule, zero SF Symbols
 //
 //  Layout:
-//    [weight input OR read-only range] [M badge?] [info.circle button?]
+//    [weight input OR read-only range] [M badge?]
+//    Long-press on HStack opens WhyThisWeightSheet when explanation != nil.
 //
-//  When `range != nil` (RPE autoreg calibrating-with-prior-data state per
-//  CONTEXT.md Area 1), the cell renders a NON-EDITABLE Text view showing
-//  "{low} – {high} {unitLabel}" using a literal U+2013 en-dash.
-//
-//  When `range == nil` (calibrated / double-progression / first-session),
-//  the cell renders the editable `TextField` + optional "M" manual-override badge.
-//
-//  The `info.circle` button appears whenever `explanation != nil`. It opens
-//  `WhyThisWeightSheet` in a `.medium` detent sheet.
-//
-//  UI-SPEC § Prescribed weight cell — 44pt minimum touch target on info.circle.
-//  UI-SPEC § Color — accent on info.circle (item 18 reserved-for list).
-//  UI-SPEC § Copywriting — en-dash U+2013 in range display, NOT hyphen-minus.
+//  Long-press disclosure replaces v1 info.circle button per 03-UI-SPEC line 388 + line 409.
+//  The 44pt touch target is preserved via the cell's vertical padding (12pt) +
+//  TextField height + the gesture-recognizing HStack contact area.
 //
 
 import SwiftUI
@@ -29,11 +28,10 @@ public struct PrescriptionWeightCell: View {
     @Binding public var weight: Double
     public let prescribed: Double?
     /// When non-nil, renders the read-only calibrating-range Text instead of
-    /// the editable TextField. Format: "{low} – {high} {unitLabel}".
+    /// the editable TextField. Format: "{low} \u{2013} {high} {unitLabel}".
     public let range: ClosedRange<Double>?
     public let explanation: PrescriptionExplanation?
-    /// Unit label for the range display. Defaults to "kg"; plan 03-08 passes
-    /// per-exercise unitOverride when it wires this at the call site.
+    /// Unit label for the range display. Defaults to "kg".
     public var unitLabel: String = "kg"
     @Binding public var wasManualOverride: Bool
     public var isComplete: Bool = false
@@ -66,18 +64,18 @@ public struct PrescriptionWeightCell: View {
         HStack(spacing: 4) {
             if let r = range {
                 // MARK: Read-only calibrating-range display
-                // UI-SPEC verbatim: "{low} – {high} kg" with U+2013 en-dash
+                // 03-UI-SPEC line 206 verbatim: "{low} \u{2013} {high} unit" with U+2013 en-dash
                 Text("\(formatted(r.lowerBound)) \u{2013} \(formatted(r.upperBound)) \(unitLabel)")
-                    .font(.body)
-                    .foregroundStyle(.secondary)
-                    .accessibilityLabel(
-                        "Calibrating range: \(formatted(r.lowerBound)) to \(formatted(r.upperBound)) \(unitLabel). Weight will become editable once calibration completes."
-                    )
+                    .font(BRUFont.bodyDefault)
+                    .foregroundStyle(Color.bruMuted)
+                    .accessibilityValue("\(formatted(r.lowerBound)) to \(formatted(r.upperBound)) \(unitLabel), calibrating")
             } else {
                 // MARK: Editable weight TextField
                 TextField("—", text: $weightText)
                     .keyboardType(.decimalPad)
                     .frame(width: 60)
+                    .font(BRUFont.bodyEmphasis)
+                    .foregroundStyle(Color.bruInk)
                     .onChange(of: weightText) { _, new in
                         if let d = Double(new) {
                             weight = d
@@ -85,34 +83,35 @@ public struct PrescriptionWeightCell: View {
                                 abs(d - (prescribed ?? d)) > 0.001
                         }
                     }
-                    .onTapGesture {
-                        if weightText.isEmpty { onTapEmptyCell() }
-                    }
 
                 // MARK: Manual override "M" badge
                 if wasManualOverride {
                     Text("M")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .font(BRUFont.labelMicro)
+                        .foregroundStyle(Color.bruMuted)
+                        .textCase(.uppercase)
+                        .tracking(1.0)
                 }
-            }
-
-            // MARK: info.circle button — shown whenever explanation is available
-            if explanation != nil {
-                Button {
-                    showWhySheet = true
-                } label: {
-                    Image(systemName: "info.circle")
-                        .foregroundStyle(Color.accentColor)                      // UI-SPEC item 18
-                        .contentShape(Rectangle())
-                        .frame(minWidth: 44, minHeight: 44)                      // UI-SPEC 44pt touch target
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel("Why this weight?")                          // UI-SPEC verbatim
-                .accessibilityHint("Shows how this weight was calculated.")      // UI-SPEC verbatim
             }
         }
         .padding(.vertical, 12)
+        // Long-press disclosure replaces v1 info.circle button per 03-UI-SPEC line 388 + line 409
+        .onLongPressGesture(minimumDuration: 0.4) {
+            if explanation != nil {
+                showWhySheet = true
+            }
+        }
+        .onTapGesture {
+            if range == nil && weightText.isEmpty { onTapEmptyCell() }
+        }
+        // Accessibility per 03-UI-SPEC line 494
+        .accessibilityLabel(
+            range != nil
+                ? "Prescribed weight range: \(formatted(range!.lowerBound)) to \(formatted(range!.upperBound)) \(unitLabel)"
+                : "Prescribed weight: \(formatted(weight)) \(unitLabel)"
+        )
+        .accessibilityHint(explanation != nil ? "Long press for prescription breakdown." : "")
+        .accessibilityValue(range == nil ? "\(formatted(weight)) \(unitLabel)" : "")
         .sheet(isPresented: $showWhySheet) {
             if let exp = explanation {
                 WhyThisWeightSheet(explanation: exp)
@@ -147,19 +146,19 @@ public struct PrescriptionWeightCell: View {
     @Previewable @State var weight: Double = 0
     @Previewable @State var wasManualOverride: Bool = false
     let explanation = PrescriptionExplanation(
-        lastSessionLine: "100 kg × 8 @ RPE 8.5 (May 15)",
+        lastSessionLine: "100 kg \u{00D7} 8 @ RPE 8.5 (May 15)",
         formulaName: "RPE autoregulation",
-        computedLine: "Target e1RM 122 kg → 88% × 8 → 102.5 kg",
+        computedLine: "Target e1RM 122 kg \u{2192} 88% \u{00D7} 8 \u{2192} 102.5 kg",
         roundedWeight: 102.5,
-        roundedLine: "→ 102.5 kg (rounded down to 2.5 kg plates)",
+        roundedLine: "\u{2192} 102.5 kg (rounded down to 2.5 kg plates)",
         status: .calibrated,
         bumpOccurred: false,
         range: nil
     )
     return VStack {
         Text("Prescription weight cell — editable (range nil)")
-            .font(.caption)
-            .foregroundStyle(.secondary)
+            .font(BRUFont.bodyDefault)
+            .foregroundStyle(Color.bruMuted)
         PrescriptionWeightCell(
             weight: $weight,
             prescribed: 102.5,
@@ -168,8 +167,8 @@ public struct PrescriptionWeightCell: View {
             wasManualOverride: $wasManualOverride
         )
         .padding()
-        .background(Color(.systemGroupedBackground))
-        .clipShape(RoundedRectangle(cornerRadius: 8))
+        .background(Color.bruPaper)
+        .overlay { Rectangle().stroke(Color.bruInk, lineWidth: 1) }
         .padding()
     }
 }
@@ -178,19 +177,19 @@ public struct PrescriptionWeightCell: View {
     @Previewable @State var weight: Double = 105.0
     @Previewable @State var wasManualOverride: Bool = true
     let explanation = PrescriptionExplanation(
-        lastSessionLine: "100 kg × 8 @ RPE 8.5 (May 15)",
+        lastSessionLine: "100 kg \u{00D7} 8 @ RPE 8.5 (May 15)",
         formulaName: "Double progression",
         computedLine: nil,
         roundedWeight: 100.0,
-        roundedLine: "→ 100 kg (rounded down to 2.5 kg plates)",
+        roundedLine: "\u{2192} 100 kg (rounded down to 2.5 kg plates)",
         status: .notApplicable,
         bumpOccurred: false,
         range: nil
     )
     return VStack {
         Text("Prescription weight cell — manual override, M badge visible")
-            .font(.caption)
-            .foregroundStyle(.secondary)
+            .font(BRUFont.bodyDefault)
+            .foregroundStyle(Color.bruMuted)
         PrescriptionWeightCell(
             weight: $weight,
             prescribed: 100.0,
@@ -199,8 +198,8 @@ public struct PrescriptionWeightCell: View {
             wasManualOverride: $wasManualOverride
         )
         .padding()
-        .background(Color(.systemGroupedBackground))
-        .clipShape(RoundedRectangle(cornerRadius: 8))
+        .background(Color.bruPaper)
+        .overlay { Rectangle().stroke(Color.bruInk, lineWidth: 1) }
         .padding()
     }
 }
@@ -209,19 +208,19 @@ public struct PrescriptionWeightCell: View {
     @Previewable @State var weight: Double = 100.0
     @Previewable @State var wasManualOverride: Bool = false
     let explanation = PrescriptionExplanation(
-        lastSessionLine: "100 kg × 8 @ RPE 8.5 (May 15)",
+        lastSessionLine: "100 kg \u{00D7} 8 @ RPE 8.5 (May 15)",
         formulaName: "RPE autoregulation",
         computedLine: nil,
         roundedWeight: 100.0,
-        roundedLine: "→ 100 kg (rounded down to 2.5 kg plates)",
+        roundedLine: "\u{2192} 100 kg (rounded down to 2.5 kg plates)",
         status: .calibrating(current: 4, threshold: 10),
         bumpOccurred: false,
         range: 95.0...105.0
     )
     return VStack {
         Text("Prescription weight cell — calibrating range, read-only")
-            .font(.caption)
-            .foregroundStyle(.secondary)
+            .font(BRUFont.bodyDefault)
+            .foregroundStyle(Color.bruMuted)
         PrescriptionWeightCell(
             weight: $weight,
             prescribed: 100.0,
@@ -230,8 +229,8 @@ public struct PrescriptionWeightCell: View {
             wasManualOverride: $wasManualOverride
         )
         .padding()
-        .background(Color(.systemGroupedBackground))
-        .clipShape(RoundedRectangle(cornerRadius: 8))
+        .background(Color.bruPaper)
+        .overlay { Rectangle().stroke(Color.bruInk, lineWidth: 1) }
         .padding()
     }
 }
