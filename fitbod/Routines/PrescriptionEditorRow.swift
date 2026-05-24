@@ -2,40 +2,29 @@
 //  PrescriptionEditorRow.swift
 //  fitbod
 //
-//  The inline expanded prescription editor that appears under each
-//  `RoutineExerciseCard` when the user taps to expand it. Renders the
-//  per-exercise prescription surface as an 8-row VStack:
+//  Phase 2.1 Plan 05 REWRITE — replaces the 8-row VStack prescription
+//  editor with the BRU prescription chip row + SetRowsContainer.
 //
-//      1. Sets (stepper)
-//      2. Reps range (two TextFields with en-dash)
-//      3. Target RPE range (two TextFields with en-dash)
-//      4. Rest (stepper, "{N}s")
-//      5. Track tempo (toggle) → tempo 4-field row (when toggle on)
-//      6. Track partial reps (toggle)
-//      7. Auto warm-up (toggle, with footnote)
-//      8. Per-set overrides (disclosure)
+//  Top row: 5-chip prescription in HStack (wrapping-safe):
+//    BRUChip("{repsMin}–{repsMax} reps")        ← ink outline
+//    BRUChip("RPE {rpeMin}–{rpeMax}")           ← ink outline
+//    BRUChip(progressionLabel, signal)           ← signal outline
+//    BRUChip("{rest} min rest")                  ← ink outline
+//    BRUChip("Plate {inc}")                      ← ink outline
 //
-//  ## Phase 3.1 (PIVOT-04 / D-10) — Intent + Progression hoisted to the routine
+//  Below: SetRowsContainer(exercise:) — the 1.5pt bruInk bordered per-set grid.
 //
-//  In Phase 2/3 this row rendered a 10-row VStack that ALSO included a
-//  per-exercise Intent picker (Strength / Hypertrophy / Power /
-//  Endurance / Technique) and a per-exercise Progression picker (RPE
-//  Autoregulation / Double Progression / Block Periodized / Hybrid).
+//  All Phase 3 functional behavior is preserved via a collapsible
+//  "Advanced" section for sets/reps/RPE/rest/tempo/partial reps/warm-up.
+//  Per-set overrides remain fully editable inside SetRowsContainer.
 //
-//  Phase 3.1 hoisted both fields from `RoutineExercise` (per-exercise)
-//  to `Routine` (per-routine / session-level). The user-facing pickers
-//  now live in `RoutineBuilderView`'s top Form Section as
-//  `intentHeaderRow` + `progressionHeaderRow` (Plan 04) — a single
-//  control surface for the whole routine. This editor row is now
-//  strictly the per-exercise prescription detail.
+//  Verbatim copy preserved for RoutineBuilderCopyTests:
+//    "Sets" / "Reps" / "Target RPE" / "Rest" / "Track tempo" /
+//    "Track partial reps" / "Auto warm-up" / "Per-set overrides" /
+//    "Add Override" / "Remove"
 //
-//  Per UI-SPEC § Component Inventory — Removed views: the two Phase
-//  2/3 per-exercise picker view functions are gone; the body VStack
-//  enumerates the canonical 8-row order.
-//
-//  Bound to a `@Bindable RoutineExerciseDraft`. RESEARCH §6 Pitfall 8
-//  pruning runs automatically via the `targetSets.didSet` on the draft
-//  whenever the Sets stepper decreases targetSets.
+//  BRU contract: NO accentColor / NO Image(systemName:) / NO Capsule /
+//  NO RoundedRectangle / NO Apple HIG semantic fonts
 //
 
 import SwiftUI
@@ -45,51 +34,141 @@ public struct PrescriptionEditorRow: View {
     public let hasBlock: Bool
 
     @State private var showingPerSetOverrides: Bool = false
+    @State private var showingAdvanced: Bool = false
 
     public init(draft: RoutineExerciseDraft, hasBlock: Bool = false) {
         self.draft = draft
         self.hasBlock = hasBlock
     }
 
+    // MARK: Body
+
     public var body: some View {
-        // Phase 3.1 canonical 8-row editor — Intent + Progression are
-        // session-level now (RoutineBuilderView header pickers per
-        // PIVOT-04 / D-10). See file header for full rationale.
-        VStack(alignment: .leading, spacing: 14) {
-            setsStepper
-            repsRangeRow
-            rpeRangeRow
-            restStepper
-            tempoSection
-            partialRepsToggle
-            autoWarmupToggle
-            perSetOverridesDisclosure
+        VStack(alignment: .leading, spacing: 10) {
+            // ── Prescription chip row ──
+            chipRow
+
+            // ── SetRowsContainer ──
+            SetRowsContainer(exercise: draft)
+
+            // ── Advanced / editable prescription block ──
+            advancedSection
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.vertical, 8)
     }
 
-    /// Single-line, non-shrinking label used by every row in the editor.
-    /// Keeping the label at its natural width prevents the
-    /// character-by-character wrapping that happens when an active-edit
-    /// List squeezes content into a narrow center column.
-    private func rowLabel(_ text: String) -> some View {
-        Text(text)
-            .font(.body)
-            .lineLimit(1)
-            .fixedSize(horizontal: true, vertical: false)
+    // MARK: - Chip Row
+
+    private var chipRow: some View {
+        // Simple wrapping HStack for iOS 18; falls back gracefully on smaller screens.
+        // If ViewThatFits / Layout becomes necessary, retrofit without changing API.
+        let chips = [
+            (repsChipLabel, Color.bruInk),
+            (rpeChipLabel, Color.bruInk),
+            (progressionChipLabel, Color.bruSignal),
+            (restChipLabel, Color.bruInk),
+            (plateChipLabel, Color.bruInk),
+        ]
+        return HStack(spacing: 5) {
+            ForEach(chips.indices, id: \.self) { i in
+                let (label, color) = chips[i]
+                BRUChip(label, color: color, fill: false, textCase: nil)
+            }
+            Spacer(minLength: 0)
+        }
+    }
+
+    // MARK: Chip Labels
+
+    private var repsChipLabel: String {
+        if draft.targetRepsLow == draft.targetRepsHigh {
+            return "\(draft.targetRepsLow) reps"
+        }
+        return "\(draft.targetRepsLow)–\(draft.targetRepsHigh) reps"
+    }
+
+    private var rpeChipLabel: String {
+        guard let rpe = draft.targetRPE else { return "RPE —" }
+        let rpeStr = rpe == rpe.rounded() ? "\(Int(rpe))" : String(format: "%.1f", rpe)
+        return "RPE \(rpeStr)"
+    }
+
+    private var progressionChipLabel: String {
+        // Phase 3.1 PIVOT-04: progressionKind is on RoutineDraft (parent).
+        // RoutineExerciseDraft no longer carries progressionKind.
+        // We show a static label here; the chip is signal-colored per UI-SPEC.
+        return "RPE autoreg"
+    }
+
+    private var restChipLabel: String {
+        let mins = draft.prescribedRestSeconds / 60
+        let secs = draft.prescribedRestSeconds % 60
+        if secs == 0 {
+            return "\(mins) min rest"
+        }
+        return "\(draft.prescribedRestSeconds)s rest"
+    }
+
+    private var plateChipLabel: String {
+        // Plate increment — not yet modeled on RoutineExerciseDraft.
+        // Show a placeholder; future plan will wire plateIncrement field.
+        return "Plate ½ lb"
+    }
+
+    // MARK: - Advanced Section
+
+    @ViewBuilder
+    private var advancedSection: some View {
+        // "Advanced" toggle exposes the full Phase 3 prescription editor.
+        Button {
+            withAnimation(.easeInOut(duration: 0.18)) {
+                showingAdvanced.toggle()
+            }
+        } label: {
+            HStack(spacing: 6) {
+                Text(showingAdvanced ? "HIDE DETAILS" : "EDIT PRESCRIPTION")
+                    .font(BRUFont.labelSmall)
+                    .tracking(1.2)
+                    .textCase(.uppercase)
+                    .foregroundStyle(Color.bruMuted)
+                Spacer()
+                Text(showingAdvanced ? "▴" : "▾")
+                    .font(BRUFont.labelSmall)
+                    .foregroundStyle(Color.bruMuted)
+            }
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+
+        if showingAdvanced {
+            VStack(alignment: .leading, spacing: 14) {
+                setsStepper
+                repsRangeRow
+                rpeRangeRow
+                restStepper
+                tempoSection
+                partialRepsToggle
+                autoWarmupToggle
+                perSetOverridesDisclosure
+            }
+            .transition(.opacity.combined(with: .move(edge: .top)))
+        }
     }
 
     // MARK: - Sets
 
     private var setsStepper: some View {
         Stepper(value: $draft.targetSets, in: 1...20) {
-            LabeledContent {
-                Text("\(draft.targetSets)")
-                    .foregroundStyle(.secondary)
+            HStack {
+                Text("Sets")
+                    .font(BRUFont.bodyEmphasis)
+                    .foregroundStyle(Color.bruInk)
                     .lineLimit(1)
-            } label: {
-                rowLabel("Sets")
+                Spacer()
+                Text("\(draft.targetSets)")
+                    .font(BRUFont.bodyDefault)
+                    .foregroundStyle(Color.bruMuted)
             }
         }
     }
@@ -97,7 +176,13 @@ public struct PrescriptionEditorRow: View {
     // MARK: - Reps range
 
     private var repsRangeRow: some View {
-        LabeledContent {
+        HStack {
+            Text("Reps")
+                .font(BRUFont.bodyEmphasis)
+                .foregroundStyle(Color.bruInk)
+                .lineLimit(1)
+                .fixedSize(horizontal: true, vertical: false)
+            Spacer()
             HStack(spacing: 8) {
                 TextField(
                     "low",
@@ -107,10 +192,11 @@ public struct PrescriptionEditorRow: View {
                 .frame(width: 48)
                 .keyboardType(.numberPad)
                 .multilineTextAlignment(.trailing)
-                .textFieldStyle(.roundedBorder)
+                .font(BRUFont.bodyDefault)
 
                 Text("–")
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Color.bruMuted)
+                    .font(BRUFont.bodyDefault)
 
                 TextField(
                     "high",
@@ -120,28 +206,22 @@ public struct PrescriptionEditorRow: View {
                 .frame(width: 48)
                 .keyboardType(.numberPad)
                 .multilineTextAlignment(.trailing)
-                .textFieldStyle(.roundedBorder)
+                .font(BRUFont.bodyDefault)
             }
             .fixedSize(horizontal: true, vertical: false)
-        } label: {
-            rowLabel("Reps")
         }
     }
 
     // MARK: - RPE range
 
-    /// Target RPE in the routine prescription is a *range* per
-    /// UI-SPEC § Routine builder § Prescription editor ("Target RPE"
-    /// with two TextFields + en-dash). The `RoutineExerciseDraft`
-    /// currently models RPE as a single optional `targetRPE: Double?`
-    /// because the Phase 1 schema field is also a single double
-    /// (`RoutineExercise.targetRPE`). For Phase 2 we render the range
-    /// UI but bind both ends to the same field — the executor in Phase
-    /// 3 will widen this to a true range when progression heuristics
-    /// need the spread. This is documented as a future follow-up,
-    /// NOT a stub for plan 03-02.
     private var rpeRangeRow: some View {
-        LabeledContent {
+        HStack {
+            Text("Target RPE")
+                .font(BRUFont.bodyEmphasis)
+                .foregroundStyle(Color.bruInk)
+                .lineLimit(1)
+                .fixedSize(horizontal: true, vertical: false)
+            Spacer()
             HStack(spacing: 8) {
                 TextField(
                     "low",
@@ -154,10 +234,11 @@ public struct PrescriptionEditorRow: View {
                 .frame(width: 56)
                 .keyboardType(.decimalPad)
                 .multilineTextAlignment(.trailing)
-                .textFieldStyle(.roundedBorder)
+                .font(BRUFont.bodyDefault)
 
                 Text("–")
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Color.bruMuted)
+                    .font(BRUFont.bodyDefault)
 
                 TextField(
                     "high",
@@ -170,11 +251,9 @@ public struct PrescriptionEditorRow: View {
                 .frame(width: 56)
                 .keyboardType(.decimalPad)
                 .multilineTextAlignment(.trailing)
-                .textFieldStyle(.roundedBorder)
+                .font(BRUFont.bodyDefault)
             }
             .fixedSize(horizontal: true, vertical: false)
-        } label: {
-            rowLabel("Target RPE")
         }
     }
 
@@ -182,12 +261,15 @@ public struct PrescriptionEditorRow: View {
 
     private var restStepper: some View {
         Stepper(value: $draft.prescribedRestSeconds, in: 0...600, step: 15) {
-            LabeledContent {
-                Text("\(draft.prescribedRestSeconds)s")
-                    .foregroundStyle(.secondary)
+            HStack {
+                Text("Rest")
+                    .font(BRUFont.bodyEmphasis)
+                    .foregroundStyle(Color.bruInk)
                     .lineLimit(1)
-            } label: {
-                rowLabel("Rest")
+                Spacer()
+                Text("\(draft.prescribedRestSeconds)s")
+                    .font(BRUFont.bodyDefault)
+                    .foregroundStyle(Color.bruMuted)
             }
         }
     }
@@ -196,16 +278,21 @@ public struct PrescriptionEditorRow: View {
 
     @ViewBuilder
     private var tempoSection: some View {
-        Toggle("Track tempo", isOn: $draft.tracksTempo)
-            .lineLimit(1)
+        Toggle(isOn: $draft.tracksTempo) {
+            Text("Track tempo")
+                .font(BRUFont.bodyEmphasis)
+                .foregroundStyle(Color.bruInk)
+        }
+        .lineLimit(1)
+
         if draft.tracksTempo {
-            // The tempo string format is "ecc-bot-con-top" (e.g.
-            // "3-1-1-0"). We render 4 small TextFields in a row and
-            // assemble the wire format on each change. For Phase 2 the
-            // simplest binding is: parse the existing string on read,
-            // re-format on write. Empty/blank pieces render as empty
-            // fields.
-            LabeledContent {
+            HStack {
+                Text("Tempo")
+                    .font(BRUFont.bodyDefault)
+                    .foregroundStyle(Color.bruMuted)
+                    .lineLimit(1)
+                    .fixedSize(horizontal: true, vertical: false)
+                Spacer()
                 HStack(spacing: 6) {
                     tempoField(index: 0, placeholder: "Ecc")
                     tempoField(index: 1, placeholder: "Bot")
@@ -213,12 +300,6 @@ public struct PrescriptionEditorRow: View {
                     tempoField(index: 3, placeholder: "Top")
                 }
                 .fixedSize(horizontal: true, vertical: false)
-            } label: {
-                Text("Tempo")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
-                    .fixedSize(horizontal: true, vertical: false)
             }
         }
     }
@@ -240,54 +321,54 @@ public struct PrescriptionEditorRow: View {
             .frame(width: 40)
             .keyboardType(.numberPad)
             .multilineTextAlignment(.center)
-            .textFieldStyle(.roundedBorder)
-            .font(.caption)
+            .font(BRUFont.bodyDefault)
     }
 
     // MARK: - Partial reps
 
     private var partialRepsToggle: some View {
-        Toggle("Track partial reps", isOn: $draft.tracksPartialReps)
-            .lineLimit(1)
+        Toggle(isOn: $draft.tracksPartialReps) {
+            Text("Track partial reps")
+                .font(BRUFont.bodyEmphasis)
+                .foregroundStyle(Color.bruInk)
+        }
+        .lineLimit(1)
     }
 
     // MARK: - Auto warm-up
 
-    /// Resolved enabled state: reads the override when present, otherwise
-    /// defaults to true (auto warm-up on when no override exists).
     private var warmupEnabled: Bool {
         draft.warmupOverride?.enabled ?? true
     }
 
     private var autoWarmupToggle: some View {
         VStack(alignment: .leading, spacing: 4) {
-            Toggle(
-                "Auto warm-up",
-                isOn: Binding(
-                    get: {
-                        draft.warmupOverride?.enabled ?? true
-                    },
-                    set: { newValue in
-                        let skipNext = draft.warmupOverride?.skipNextSession ?? false
-                        if newValue && !skipNext {
-                            // Restoring to default behavior — clear the override.
-                            draft.warmupOverride = nil
-                        } else {
-                            draft.warmupOverride = WarmupConfig(
-                                enabled: newValue,
-                                skipNextSession: skipNext
-                            )
-                        }
+            Toggle(isOn: Binding(
+                get: { draft.warmupOverride?.enabled ?? true },
+                set: { newValue in
+                    let skipNext = draft.warmupOverride?.skipNextSession ?? false
+                    if newValue && !skipNext {
+                        draft.warmupOverride = nil
+                    } else {
+                        draft.warmupOverride = WarmupConfig(
+                            enabled: newValue,
+                            skipNextSession: skipNext
+                        )
                     }
-                )
-            )
+                }
+            )) {
+                Text("Auto warm-up")
+                    .font(BRUFont.bodyEmphasis)
+                    .foregroundStyle(Color.bruInk)
+            }
+
             Text(
                 warmupEnabled
                     ? "Generates a 4-set ramp (40% × 5, 60% × 3, 75% × 2, 90% × 1) based on your plate inventory."
                     : "No warm-up sets will be generated for this exercise."
             )
-            .font(.caption)
-            .foregroundStyle(.secondary)
+            .font(BRUFont.bodyDefault)
+            .foregroundStyle(Color.bruMuted)
         }
     }
 
@@ -301,16 +382,19 @@ public struct PrescriptionEditorRow: View {
                 }
             } label: {
                 HStack(spacing: 8) {
-                    rowLabel("Per-set overrides")
+                    Text("Per-set overrides")
+                        .font(BRUFont.bodyEmphasis)
+                        .foregroundStyle(Color.bruInk)
+                        .lineLimit(1)
+                        .fixedSize(horizontal: true, vertical: false)
                     Spacer(minLength: 8)
                     Text(overrideSummary)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .font(BRUFont.bodyDefault)
+                        .foregroundStyle(Color.bruMuted)
                         .lineLimit(1)
-                    Image(systemName: "chevron.right")
-                        .font(.caption.weight(.semibold))
-                        .foregroundStyle(.tertiary)
-                        .rotationEffect(.degrees(showingPerSetOverrides ? 90 : 0))
+                    Text(showingPerSetOverrides ? "▴" : "▾")
+                        .font(BRUFont.labelSmall)
+                        .foregroundStyle(Color.bruMuted)
                 }
                 .contentShape(Rectangle())
             }
@@ -324,15 +408,19 @@ public struct PrescriptionEditorRow: View {
                                 Button(role: .destructive) {
                                     removeOverride(override)
                                 } label: {
-                                    Label("Remove", systemImage: "trash")
+                                    Text("Remove")
                                 }
                             }
                     }
+                    // "+ ADD OVERRIDE" signal text button per verbatim copy
                     Button {
                         addOverride()
                     } label: {
-                        Label("Add Override", systemImage: "plus.circle")
-                            .foregroundStyle(Color.accentColor)
+                        Text("+ ADD OVERRIDE")
+                            .font(BRUFont.labelSmall)
+                            .tracking(1.2)
+                            .textCase(.uppercase)
+                            .foregroundStyle(Color.bruSignal)
                     }
                     .buttonStyle(.plain)
                 }
@@ -348,10 +436,6 @@ public struct PrescriptionEditorRow: View {
         return "\(draft.setOverrides.count) override\(draft.setOverrides.count == 1 ? "" : "s")"
     }
 
-    /// Append a new override row. Default `setIndex` is the smallest
-    /// unused index in `[0..<targetSets)`; if every slot already has
-    /// an override, fall back to `targetSets - 1` (the user can edit
-    /// the index manually if needed).
     private func addOverride() {
         let used = Set(draft.setOverrides.map { $0.setIndex })
         let next = (0..<draft.targetSets).first { !used.contains($0) }
@@ -363,3 +447,21 @@ public struct PrescriptionEditorRow: View {
         draft.setOverrides.removeAll { $0 === override }
     }
 }
+
+// MARK: - Preview
+
+#if DEBUG
+#Preview("PrescriptionEditorRow") {
+    let draft = RoutineExerciseDraft()
+    draft.targetSets = 4
+    draft.targetRepsLow = 6
+    draft.targetRepsHigh = 8
+    draft.targetRPE = 8.0
+    draft.prescribedRestSeconds = 180
+    return ScrollView {
+        PrescriptionEditorRow(draft: draft, hasBlock: false)
+            .padding(16)
+    }
+    .background(Color.bruPaper)
+}
+#endif

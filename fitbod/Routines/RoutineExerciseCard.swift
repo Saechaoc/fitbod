@@ -2,46 +2,27 @@
 //  RoutineExerciseCard.swift
 //  fitbod
 //
-//  One row in the routine builder's exercise list. Renders the
-//  exercise name + collapsed prescription summary ("3×8–12 · 180s")
-//  as the always-pinned header; tapping toggles the inline
-//  `PrescriptionEditorRow` body.
+//  Phase 2.1 Plan 05 REWRITE — replaces SF Symbol chevron/flame glyphs,
+//  Apple HIG fonts, accentColor rail with the BRU brutalist card layout.
 //
-//  ## Phase 3.1 (PIVOT-04 / D-11) — per-exercise intent chip removed
+//  Layout (collapsed):
+//    HStack:
+//      leading: index zero-padded "01" SpaceGrotesk-Bold 26pt (28pt wide)
+//      middle VStack:
+//        name: JetBrainsMono-Bold 14pt (BRUFont.bodyEmphasis)
+//        sub-line: "{equipment} · {spec}" labelSmall 10pt UPPERCASE bruMuted
+//      trailing: "⋮⋮" drag handle in bruMuted (NOT an SF Symbol)
 //
-//  In Phase 2 the card's header rendered an inline accent intent
-//  capsule next to the prescription summary, using UI-SPEC § Color §
-//  Accent surface #15 (`Color.accentColor.opacity(0.15)` fill with
-//  accent caption label). Phase 3.1 hoisted Intent from per-exercise
-//  to session-level, so the per-card chip has no field to read from
-//  anymore — its data source moved to `Session.intent`. The
-//  user-facing chip surface is now `SessionLoggerView`'s header
-//  `IntentChip` (Plan 06), surfaced once per session instead of once
-//  per exercise. UI-SPEC accent surface #15 is deprecated; #22 (the
-//  SessionLoggerView header chip) is its replacement. Per UI-SPEC §
-//  RoutineExerciseCard header — intent chip REMOVED: the header's
-//  bottom row collapses from `[exercise name] / [chip][summary]` to
-//  `[exercise name] / [summary]`.
+//  When expanded: PrescriptionEditorRow mounted inline.
+//  When supersetGroupID != nil: wrapped in BRUSupersetBracket.
+//  Leading index shows "SS" in bruSignal when in a superset.
 //
-//  The builder cards focus exclusively on the prescription summary —
-//  intent is no longer a per-exercise concept in the data model.
+//  Long-press contextMenu preserved from Phase 3.
+//  All @Bindable bindings, drag-handle .onMove, warmup-config-sheet trigger
+//  are preserved from Phase 3.1.
 //
-//  ## Other card features (carried forward from Phase 2)
-//
-//  1. **Leading accent rail** — when `draft.supersetGroupID != nil`, a
-//     4pt-wide accent-color bar renders on the left edge of the card
-//     (UI-SPEC accent surface #9 / spacing token "xs"). This is the
-//     visual signal that the exercise is paired into a superset / giant
-//     set with another row. The rail is meaning-bearing — render ONLY
-//     when grouped, never as decoration.
-//
-//  2. **Long-press context menu** — `.contextMenu { ... }` exposes the
-//     UI-SPEC verbatim entries: "Edit Prescription" / "Move to
-//     Superset…" (when ungrouped) or "Remove from Superset" (when
-//     grouped) / "Make Superset" / "Duplicate Exercise" / "Remove"
-//     (destructive). The menu actions take callback closures injected
-//     by the parent `RoutineBuilderView` so the card itself stays
-//     pure-presentational.
+//  BRU contract: NO accentColor / NO Image(systemName:) / NO Capsule /
+//  NO RoundedRectangle / NO Apple HIG semantic fonts
 //
 
 import SwiftUI
@@ -49,6 +30,7 @@ import SwiftUI
 public struct RoutineExerciseCard: View {
     @Bindable public var draft: RoutineExerciseDraft
     public let hasBlock: Bool
+    public let index: Int
     @Binding public var isExpanded: Bool
 
     public let onAssignSuperset: (RoutineExerciseDraft) -> Void
@@ -60,6 +42,7 @@ public struct RoutineExerciseCard: View {
     public init(
         draft: RoutineExerciseDraft,
         hasBlock: Bool = false,
+        index: Int = 0,
         isExpanded: Binding<Bool>,
         onAssignSuperset: @escaping (RoutineExerciseDraft) -> Void = { _ in },
         onRemoveFromSuperset: @escaping (RoutineExerciseDraft) -> Void = { _ in },
@@ -69,6 +52,7 @@ public struct RoutineExerciseCard: View {
     ) {
         self.draft = draft
         self.hasBlock = hasBlock
+        self.index = index
         self._isExpanded = isExpanded
         self.onAssignSuperset = onAssignSuperset
         self.onRemoveFromSuperset = onRemoveFromSuperset
@@ -77,93 +61,122 @@ public struct RoutineExerciseCard: View {
         self.onEditWarmup = onEditWarmup
     }
 
+    // MARK: Body
+
     public var body: some View {
-        HStack(alignment: .top, spacing: 0) {
-            // UI-SPEC accent surface #9 — 4pt-wide accent rail on the
-            // left edge of any card whose supersetGroupID != nil. Render
-            // ONLY when grouped; the rail is meaning-bearing, not
-            // decorative.
-            if draft.supersetGroupID != nil {
-                Rectangle()
-                    .fill(Color.accentColor)
-                    .frame(width: 4)
-                    .clipShape(RoundedRectangle(cornerRadius: 2))
-                    .padding(.vertical, 2)
-                    .padding(.trailing, 8)
-                    .accessibilityLabel("Part of a superset")
+        if draft.supersetGroupID != nil {
+            BRUSupersetBracket {
+                cardBody
             }
-
-            VStack(alignment: .leading, spacing: 12) {
-                // Header — exercise name + prescription summary always
-                // pinned to the TOP of the card, full-width. Tapping the
-                // header toggles the inline prescription editor; the
-                // chevron mirrors the toggle state. We avoid
-                // `DisclosureGroup` because in an active-edit-mode List
-                // the disclosure label and body are squeezed into a
-                // narrow center column, which broke label wrapping and
-                // detached the header visually. (Phase 3.1 removed the
-                // per-exercise intent chip that used to live between the
-                // name and the summary — see file header.)
-                Button {
-                    withAnimation(.easeInOut(duration: 0.18)) {
-                        isExpanded.toggle()
-                    }
-                } label: {
-                    HStack(alignment: .top, spacing: 8) {
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text(draft.exercise?.name ?? "Exercise")
-                                .font(.body)
-                                .foregroundStyle(.primary)
-                                .multilineTextAlignment(.leading)
-                            Text(prescriptionSummary)
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                                .lineLimit(1)
-                        }
-                        Spacer(minLength: 8)
-                        Image(systemName: "chevron.right")
-                            .font(.caption.weight(.semibold))
-                            .foregroundStyle(.tertiary)
-                            .rotationEffect(.degrees(isExpanded ? 90 : 0))
-                            .accessibilityHidden(true)
-                    }
-                    .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-                .accessibilityElement(children: .combine)
-                .accessibilityAddTraits(.isButton)
-                .accessibilityHint(isExpanded ? "Collapses prescription editor" : "Expands prescription editor")
-
-                if isExpanded {
-                    PrescriptionEditorRow(draft: draft, hasBlock: hasBlock)
-                        .transition(.opacity.combined(with: .move(edge: .top)))
-                }
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
+        } else {
+            cardBody
         }
-        .contextMenu {
-            Button("Edit Prescription") {
-                isExpanded.toggle()
+    }
+
+    // MARK: - Card Body
+
+    private var cardBody: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            // ── Header row: index + name + drag handle ──
+            headerRow
+
+            // ── Expanded prescription editor ──
+            if isExpanded {
+                PrescriptionEditorRow(draft: draft, hasBlock: hasBlock)
+                    .padding(.top, 8)
+                    .transition(.opacity.combined(with: .move(edge: .top)))
             }
-            Button {
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
+        .contentShape(Rectangle())
+        .contextMenu {
+            Button("Edit prescription") {
+                withAnimation(.easeInOut(duration: 0.18)) {
+                    isExpanded.toggle()
+                }
+            }
+            Button("Edit warm-up…") {
                 onEditWarmup(draft)
-            } label: {
-                Label("Edit warm-up…", systemImage: "flame")
             }
             if draft.supersetGroupID == nil {
-                Button("Move to Superset…") { onAssignSuperset(draft) }
+                Button("Move to superset…") { onAssignSuperset(draft) }
             } else {
-                Button("Remove from Superset") { onRemoveFromSuperset(draft) }
+                Button("Remove from superset") { onRemoveFromSuperset(draft) }
             }
-            Button("Make Superset") { onAssignSuperset(draft) }
-            Button("Duplicate Exercise") { onDuplicate(draft) }
+            Button("Make superset") { onAssignSuperset(draft) }
+            Button("Duplicate exercise") { onDuplicate(draft) }
             Divider()
             Button("Remove", role: .destructive) { onRemove(draft) }
         }
     }
 
-    /// "3×8–12 · 180s" — sets × reps · rest. When `targetRepsLow ==
-    /// targetRepsHigh` the en-dash collapses to a single value.
+    // MARK: - Header Row
+
+    private var headerRow: some View {
+        HStack(alignment: .center, spacing: 10) {
+            // Leading index — zero-padded "01", "02", … in SpaceGrotesk-Bold 26pt
+            // When in a superset: show "SS" in bruSignal instead of numeric index
+            if draft.supersetGroupID != nil {
+                Text("SS")
+                    .font(.custom("SpaceGrotesk-Bold", size: 26))
+                    .foregroundStyle(Color.bruSignal)
+                    .frame(width: 28, alignment: .leading)
+                    .lineLimit(1)
+            } else {
+                Text(String(format: "%02d", index + 1))
+                    .font(.custom("SpaceGrotesk-Bold", size: 26))
+                    .foregroundStyle(Color.bruInk)
+                    .frame(width: 28, alignment: .leading)
+                    .lineLimit(1)
+            }
+
+            // Middle: name + sub-line
+            VStack(alignment: .leading, spacing: 2) {
+                Text(draft.exercise?.name ?? "Exercise")
+                    .font(BRUFont.bodyEmphasis)
+                    .foregroundStyle(Color.bruInk)
+                    .multilineTextAlignment(.leading)
+
+                Text(subLine)
+                    .font(BRUFont.labelSmall)
+                    .tracking(0.5)
+                    .textCase(.uppercase)
+                    .foregroundStyle(Color.bruMuted)
+                    .lineLimit(1)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+
+            // Trailing: typographic drag handle "⋮⋮" (NOT an SF Symbol)
+            Text("⋮⋮")
+                .font(.system(size: 14))
+                .foregroundStyle(Color.bruMuted)
+                .accessibilityHidden(true)
+        }
+        .onTapGesture {
+            withAnimation(.easeInOut(duration: 0.18)) {
+                isExpanded.toggle()
+            }
+        }
+        .accessibilityElement(children: .combine)
+        .accessibilityAddTraits(.isButton)
+        .accessibilityHint(isExpanded ? "Collapses prescription editor" : "Expands prescription editor")
+    }
+
+    // MARK: - Sub-line
+
+    /// "{equipment} · {prescription summary}"
+    /// Equipment from exercise.equipment; summary is sets × reps · rest.
+    private var subLine: String {
+        let equipment = draft.exercise?.equipment ?? ""
+        let summary = prescriptionSummary
+        if equipment.isEmpty {
+            return summary
+        }
+        return "\(equipment) · \(summary)"
+    }
+
+    /// "3×8–12 · 180s" — sets × reps · rest.
     private var prescriptionSummary: String {
         let reps = draft.targetRepsLow == draft.targetRepsHigh
             ? "\(draft.targetRepsLow)"
@@ -171,3 +184,37 @@ public struct RoutineExerciseCard: View {
         return "\(draft.targetSets)×\(reps) · \(draft.prescribedRestSeconds)s"
     }
 }
+
+// MARK: - Preview
+
+#if DEBUG
+#Preview("RoutineExerciseCard — collapsed") {
+    @Previewable @State var isExpanded = false
+    let draft = RoutineExerciseDraft()
+    return RoutineExerciseCard(
+        draft: draft,
+        hasBlock: false,
+        index: 0,
+        isExpanded: $isExpanded
+    )
+    .background(Color.bruPaper)
+}
+
+#Preview("RoutineExerciseCard — expanded") {
+    @Previewable @State var isExpanded = true
+    let draft = RoutineExerciseDraft()
+    draft.targetSets = 4
+    draft.targetRepsLow = 6
+    draft.targetRepsHigh = 8
+    draft.targetRPE = 8.5
+    return ScrollView {
+        RoutineExerciseCard(
+            draft: draft,
+            hasBlock: false,
+            index: 0,
+            isExpanded: $isExpanded
+        )
+    }
+    .background(Color.bruPaper)
+}
+#endif
