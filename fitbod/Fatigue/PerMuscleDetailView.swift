@@ -2,15 +2,26 @@
 //  PerMuscleDetailView.swift
 //  fitbod
 //
-//  Phase 5 VOL-05 + VOL-06 + SET-05 inline entry point — per-muscle
-//  drill-down from heatmap tap OR volume-bar tap on Today tab.
+//  Phase 5.1-06 — BRU reskin of the per-muscle drill-down.
+//  Replaces the List(.insetGrouped) host with BRUHeaderBar +
+//  ScrollView + LazyVStack per UI-SPEC v2 and 05-UI-SPEC
+//  §Copywriting Contract verbatim copy.
 //
-//  Four sections per CONTEXT Claude's Discretion + UI-SPEC §
-//  Copywriting Contract verbatim:
-//    1. This Week — total sets + zone badge + delta line
-//    2. Contributing Exercises — DESC by weighted-set count this week
-//    3. Frequency This Week — sessions hitting ≥frequencyHitMinSets
-//    4. Adjust Targets — DisclosureGroup wrapping MuscleVolumeTargetStepper
+//  Four sections (UI-SPEC §PerMuscleDetailView):
+//    1. This Week — total sets + BRUChip zone badge + delta line
+//    2. Contributing Exercises — DESC by weighted-set count
+//    3. Frequency This Week — sessions ≥ frequencyHitMinSets
+//    4. Adjust Targets — DisclosureGroup → MuscleVolumeTargetStepper
+//
+//  BRU contract — ZERO banned tokens:
+//    No Color.accentColor, Color(.system*), RoundedRectangle(cornerRadius:),
+//    Capsule(), .navigationTitle(, List(.insetGrouped), Image(systemName:)
+//    No .font(.body|.headline|.caption|.subheadline|.footnote|.title)
+//
+//  Data layer UNCHANGED from Phase 5 baseline:
+//    @Query<MuscleGroup>(filter: #Predicate { $0.slug == muscleSlug })
+//    @Query<MuscleVolumeTarget>
+//    @Environment(\.modelContext)
 //
 
 import SwiftData
@@ -20,15 +31,17 @@ public struct PerMuscleDetailView: View {
     public let muscleSlug: String
 
     @Environment(\.modelContext) private var ctx
+    @Environment(\.dismiss) private var dismiss
     @Query private var allMuscles: [MuscleGroup]
     @Query private var allTargets: [MuscleVolumeTarget]
     @Query private var settingsList: [UserSettings]
     @State private var adjustTargetsExpanded: Bool = false
-    @State private var fallbackTarget: MuscleVolumeTarget? = nil
 
     public init(muscleSlug: String) {
         self.muscleSlug = muscleSlug
     }
+
+    // MARK: - Data layer computed properties (PRESERVED verbatim)
 
     private var muscle: MuscleGroup? {
         allMuscles.first { $0.slug == muscleSlug }
@@ -43,24 +56,79 @@ public struct PerMuscleDetailView: View {
         return Date.now.mondayAtMidnightForToday(weekStartsMonday: weekStartsMonday)
     }
 
-    public var body: some View {
-        List {
-            if let muscle = muscle {
-                thisWeekSection(muscle: muscle)
-                contributingExercisesSection(muscle: muscle)
-                frequencyThisWeekSection(muscle: muscle)
-                adjustTargetsSection(muscle: muscle)
-            } else {
-                Text("Muscle '\(muscleSlug)' not found.")
-                    .foregroundStyle(.secondary)
-            }
+    // MARK: - Zone chip helpers (inline — mirrors MuscleVolumeBar mapping)
+
+    private func zoneChipLabel(for zone: VolumeZone, totalSets: Int, mav: Int) -> String {
+        switch zone {
+        case .belowMEV:
+            return "UNDER MEV"
+        case .productive:
+            let headroom = mav - totalSets
+            return headroom >= 2 ? "ADD A SET" : "HOLD"
+        case .nearMRV:
+            return "NEAR MRV — DELOAD"
+        case .overMRV:
+            return "OVER MRV"
         }
-        .listStyle(.insetGrouped)
-        .navigationTitle(muscle?.displayName ?? muscleSlug.capitalized)
-        .navigationBarTitleDisplayMode(.inline)
     }
 
-    // MARK: - This Week
+    private func zoneChipColor(for zone: VolumeZone, totalSets: Int, mav: Int) -> Color {
+        switch zone {
+        case .belowMEV:
+            return .bruAmber
+        case .productive:
+            let headroom = mav - totalSets
+            return headroom >= 2 ? .bruGreen : .bruInk
+        case .nearMRV:
+            return .bruSignal
+        case .overMRV:
+            return .bruSignal
+        }
+    }
+
+    private func zoneChipFill(for zone: VolumeZone) -> Bool {
+        switch zone {
+        case .belowMEV:   return true
+        case .productive: return false
+        case .nearMRV:    return true
+        case .overMRV:    return true
+        }
+    }
+
+    // MARK: - Body
+
+    public var body: some View {
+        VStack(spacing: 0) {
+            BRUHeaderBar(
+                left: HeaderAction("‹") { dismiss() },
+                center: muscle?.displayName ?? muscleSlug.capitalized,
+                right: nil
+            )
+
+            ScrollView {
+                LazyVStack(alignment: .leading, spacing: 0) {
+                    if let muscle = muscle {
+                        thisWeekSection(muscle: muscle)
+                        BRUDivider(.ink)
+                        contributingExercisesSection(muscle: muscle)
+                        BRUDivider(.ink)
+                        frequencySection(muscle: muscle)
+                        BRUDivider(.ink)
+                        adjustTargetsSection(muscle: muscle)
+                    } else {
+                        Text("Muscle '\(muscleSlug)' not found.")
+                            .font(BRUFont.bodyDefault)
+                            .foregroundStyle(Color.bruMuted)
+                            .padding(16)
+                    }
+                }
+            }
+        }
+        .background(Color.bruPaper)
+        .toolbar(.hidden, for: .navigationBar)
+    }
+
+    // MARK: - Section 1: This Week
 
     @ViewBuilder
     private func thisWeekSection(muscle: MuscleGroup) -> some View {
@@ -73,56 +141,68 @@ public struct PerMuscleDetailView: View {
             mav: effectiveTarget.mav,
             mrv: effectiveTarget.mrv
         )
+        let chipLabel = zoneChipLabel(for: zone, totalSets: total.totalSetsRounded, mav: effectiveTarget.mav)
+        let chipColor = zoneChipColor(for: zone, totalSets: total.totalSetsRounded, mav: effectiveTarget.mav)
+        let chipFill = zoneChipFill(for: zone)
 
-        Section("This Week") {
+        VStack(alignment: .leading, spacing: 0) {
+            BRUSectionHead("This Week")
             HStack {
                 Text("\(total.totalSetsRounded) sets")
-                    .font(.body)
+                    .font(BRUFont.displayMedium)
+                    .foregroundStyle(Color.bruInk)
                 Spacer()
-                Text(zoneAbbreviation(zone))
-                    .font(.caption)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
-                    .background(zoneColor(zone).opacity(0.15))
-                    .foregroundStyle(zoneColor(zone))
-                    .clipShape(Capsule())
+                BRUChip(chipLabel, color: chipColor, fill: chipFill)
             }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
+
             Text(delta.deltaCopy)
-                .font(.caption)
-                .foregroundStyle(.tertiary)
+                .font(BRUFont.labelMicro)
+                .tracking(1.0)
+                .foregroundStyle(Color.bruMuted)
+                .padding(.horizontal, 16)
+                .padding(.bottom, 12)
         }
     }
 
-    // MARK: - Contributing Exercises
+    // MARK: - Section 2: Contributing Exercises
 
     @ViewBuilder
     private func contributingExercisesSection(muscle: MuscleGroup) -> some View {
-        let contributions = computeContributingExercises()
+        let contributors = computeContributingExercises()
 
-        Section("Contributing Exercises") {
-            if contributions.isEmpty {
+        VStack(alignment: .leading, spacing: 0) {
+            BRUSectionHead("Contributing Exercises")
+            if contributors.isEmpty {
                 Text("No exercises contributed to \(muscle.displayName) this week.")
-                    .font(.body)
-                    .foregroundStyle(.secondary)
+                    .font(BRUFont.bodyDefault)
+                    .foregroundStyle(Color.bruMuted)
+                    .padding(16)
             } else {
-                ForEach(contributions, id: \.exerciseID) { contribution in
+                ForEach(contributors, id: \.exerciseID) { row in
                     HStack {
-                        Text(contribution.exerciseName.capitalized)
-                            .font(.body)
+                        Text(row.exerciseName)
+                            .font(BRUFont.bodyEmphasis)
+                            .foregroundStyle(Color.bruInk)
                         Spacer()
-                        Text(contribution.trailingCopy)
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
+                        Text(row.trailingCopy)
+                            .font(BRUFont.labelMicro)
+                            .tracking(1.0)
+                            .foregroundStyle(Color.bruMuted)
                     }
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 11)
+                    BRUDivider(.hair)
                 }
             }
         }
     }
 
-    // MARK: - Frequency This Week
+    // MARK: - Section 3: Frequency This Week
 
     @ViewBuilder
-    private func frequencyThisWeekSection(muscle: MuscleGroup) -> some View {
+    private func frequencySection(muscle: MuscleGroup) -> some View {
         let minSets = settingsList.first?.frequencyHitMinSets ?? 2
         let hits = FatigueModel.frequencyHits(
             muscleSlug: muscleSlug,
@@ -130,68 +210,52 @@ public struct PerMuscleDetailView: View {
             minContribution: Double(minSets),
             in: ctx
         )
+        let sessionsWord = hits == 1 ? "session" : "sessions"
+        let frequencyCopy = "\(hits) \(sessionsWord) with ≥\(minSets) sets"
 
-        Section("Frequency This Week") {
-            Text(frequencyCopy(hits: hits, minSets: minSets))
-                .font(.body)
+        VStack(alignment: .leading, spacing: 0) {
+            BRUSectionHead("Frequency This Week")
+            Text(frequencyCopy)
+                .font(BRUFont.bodyDefault)
+                .foregroundStyle(Color.bruInk)
+                .padding(16)
         }
     }
 
-    // MARK: - Adjust Targets
+    // MARK: - Section 4: Adjust Targets
 
     @ViewBuilder
     private func adjustTargetsSection(muscle: MuscleGroup) -> some View {
-        Section("Adjust Targets") {
-            DisclosureGroup(
-                isExpanded: $adjustTargetsExpanded,
-                content: {
-                    if let target = persistedTarget {
-                        MuscleVolumeTargetStepper(target: target)
-                            .padding(.vertical, 8)
-                    } else {
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text("No persisted target — using RP defaults.")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                            Button("Create target row") {
-                                createPersistentTarget(for: muscle)
-                            }
-                            .foregroundStyle(Color.accentColor)
-                        }
+        VStack(alignment: .leading, spacing: 0) {
+            BRUSectionHead("Adjust Targets")
+            if let target = persistedTarget {
+                DisclosureGroup(
+                    isExpanded: $adjustTargetsExpanded,
+                    content: {
+                        MuscleVolumeTargetStepper(target: target, showsResetButton: true)
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 12)
+                    },
+                    label: {
+                        Text("Adjust targets")
+                            .font(BRUFont.labelSmall)
+                            .tracking(1.2)
+                            .textCase(.uppercase)
+                            .foregroundStyle(Color.bruInk)
                     }
-                },
-                label: {
-                    Text("Adjust targets")
-                        .foregroundStyle(Color.accentColor)
+                )
+                .padding(.horizontal, 16)
+                .padding(.vertical, 12)
+            } else {
+                BRUButton("CREATE TARGET ROW", kind: .primary) {
+                    createPersistentTarget(for: muscle)
                 }
-            )
+                .padding(16)
+            }
         }
     }
 
-    // MARK: - Helpers
-
-    private func zoneAbbreviation(_ zone: VolumeZone) -> String {
-        switch zone {
-        case .belowMEV:   return "Below MEV"
-        case .productive: return "Productive"
-        case .nearMRV:    return "Near MRV"
-        case .overMRV:    return "Over MRV"
-        }
-    }
-
-    private func zoneColor(_ z: VolumeZone) -> Color {
-        switch z {
-        case .belowMEV:   return Color("VolumeBelowMEVGray")
-        case .productive: return Color("VolumeProductiveGreen")
-        case .nearMRV:    return Color("VolumeNearMRVAmber")
-        case .overMRV:    return Color("VolumeOverMRVRed")
-        }
-    }
-
-    private func frequencyCopy(hits: Int, minSets: Int) -> String {
-        let sessionsWord = hits == 1 ? "session" : "sessions"
-        return "\(hits) \(sessionsWord) with ≥\(minSets) sets"
-    }
+    // MARK: - Helpers (PRESERVED verbatim from Phase 5 baseline)
 
     private func transientTarget(for muscle: MuscleGroup) -> MuscleVolumeTarget {
         let landmark = RPVolumeLandmarks.landmark(for: muscle.slug)
@@ -224,8 +288,6 @@ public struct PerMuscleDetailView: View {
         let weekEnd = weekStart.addingTimeInterval(7 * 86_400)
         let targetSlug = muscleSlug
 
-        // Pitfall #1 + #3: keep predicate gates simple, run multi-hop
-        // traversal + setTypeRaw containment in Swift.
         let descriptor = FetchDescriptor<SetEntry>(
             predicate: #Predicate<SetEntry> { entry in
                 entry.isComplete == true && entry.isWarmup == false
