@@ -2,26 +2,38 @@
 //  MuscleVolumeBar.swift
 //  fitbod
 //
-//  Phase 5 — VOL-04 single muscle bar row.
+//  Phase 5.1-01 Task 2 — BRU reskin of the per-muscle weekly volume bar.
 //
-//  Renders one muscle's weekly volume on the Today-tab fatigue surface:
-//    - Top HStack: `muscle.displayName` (`.body`) + trailing
-//      `"{totalSetsRounded} / {target.mrv}"` (`.caption .monospacedDigit
-//      .secondary`).
-//    - GeometryReader ZStack — track + indirect fill (opacity 0.40) +
-//      direct fill (opacity 1.0) per D-07 two-tone treatment.
-//    - MEV / MAV tick marks drawn on top (1pt vertical lines).
-//    - D-06 verbatim verb label.
-//    - D-08 verbatim "+N vs last week" / "-N vs last week" / "no change
-//      vs last week" copy.
+//  Layout per bru-screens/volume.jsx lines 63–122 + 05-UI-SPEC §MuscleVolumeBar:
+//    (1) Header HStack: uppercase muscle name (labelSmall, left)
+//        + tabular set-count displayMedium + "SETS" labelMicro (right)
+//    (2) 16pt bar track: bruBg2 background + 1.5pt bruInk outline
+//        + zone-color fill clipped to totalSets/mrv%; 2pt bruInk right-edge
+//        separator on the fill; 1pt bruInk MEV + MAV ticks; 1pt bruSignal
+//        MRV tick; 8pt mono bruMuted tick labels floating above.
+//    (3) Footer HStack: BRUChip verb + 9pt mono bruMuted legend
 //
-//  Reduce-motion gated overMRV pulse per UI-SPEC §Interaction & Motion.
-//  When advisory is active, an amber ring overlay tints the bar
-//  (Color("VolumeNearMRVAmber").opacity(0.6)) — plan 06 wires the
-//  `isAdvisoryActive` source.
+//  Zone → bar fill color:
+//    .belowMEV   → bruFaint
+//    .productive → bruInk
+//    .nearMRV    → bruSignal
+//    .overMRV    → bruSignal (+ pulse)
 //
-//  Asset Catalog colors only (NEVER `Color.red` / `Color.green`
-//  literals). Per UI-SPEC §Asset Contract.
+//  Chip label/color/fill per UI-SPEC §Copy overlay:
+//    NOT TRAINED (total==0) → label "NOT TRAINED", color bruFaint, fill false, row opacity 0.5
+//    .belowMEV              → "UNDER MEV", bruAmber, fill true
+//    .productive + headroom ≥ 2 → "ADD A SET", bruGreen, fill false
+//    .productive            → "HOLD", bruInk, fill false
+//    .nearMRV               → "NEAR MRV — DELOAD", bruSignal, fill true
+//    .overMRV               → "OVER MRV", bruSignal, fill true
+//
+//  Accessibility: combined-element label reads D-06 verbatim zone.verb sentence.
+//  Pulse: .overMRV opacity 1.0↔0.7, 1.2s easeInOut, reduce-motion gated.
+//  Advisory ring: Rectangle() stroke bruAmber.opacity(0.6) 2pt (NOT RoundedRectangle).
+//
+//  BRU contract — ZERO banned tokens:
+//    No Color.accentColor, Color(.system*), RoundedRectangle(cornerRadius:),
+//    .font(.body|.headline|.caption|.subheadline|.footnote), Image(systemName:), Capsule()
 //
 
 import SwiftUI
@@ -53,7 +65,15 @@ public struct MuscleVolumeBar: View {
         self.onTap = onTap
     }
 
-    private var zone: VolumeZone {
+    // MARK: - Internal computed properties (exposed for testability)
+
+    /// True when the muscle has logged zero sets this week.
+    var isNotTrained: Bool {
+        total.totalSetsRounded == 0
+    }
+
+    /// The volume zone, bypassed to .belowMEV for untrained muscles.
+    var zone: VolumeZone {
         FatigueModel.volumeZone(
             currentSets: total.totalSetsRounded,
             mev: target.mev,
@@ -62,33 +82,115 @@ public struct MuscleVolumeBar: View {
         )
     }
 
+    /// BRU chip label per UI-SPEC §Copy overlay table.
+    var chipLabel: String {
+        if isNotTrained { return "NOT TRAINED" }
+        switch zone {
+        case .belowMEV:
+            return "UNDER MEV"
+        case .productive:
+            let headroom = target.mav - total.totalSetsRounded
+            return headroom >= 2 ? "ADD A SET" : "HOLD"
+        case .nearMRV:
+            return "NEAR MRV — DELOAD"
+        case .overMRV:
+            return "OVER MRV"
+        }
+    }
+
+    /// BRU chip color per UI-SPEC §Copy overlay table.
+    var chipColor: Color {
+        if isNotTrained { return .bruFaint }
+        switch zone {
+        case .belowMEV:   return .bruAmber
+        case .productive:
+            let headroom = target.mav - total.totalSetsRounded
+            return headroom >= 2 ? .bruGreen : .bruInk
+        case .nearMRV:    return .bruSignal
+        case .overMRV:    return .bruSignal
+        }
+    }
+
+    /// Whether the chip should render filled (background) vs outline.
+    var chipShouldFill: Bool {
+        if isNotTrained { return false }
+        switch zone {
+        case .belowMEV:   return true
+        case .productive: return false
+        case .nearMRV:    return true
+        case .overMRV:    return true
+        }
+    }
+
+    /// Bar fill color per zone.
+    var barFillColor: Color {
+        if isNotTrained { return .bruFaint }
+        switch zone {
+        case .belowMEV:   return .bruFaint
+        case .productive: return .bruInk
+        case .nearMRV:    return .bruSignal
+        case .overMRV:    return .bruSignal
+        }
+    }
+
+    /// The combined accessibility label — muscle name + set count + D-06 verbatim verb + delta.
+    /// The chip label ("UNDER MEV", "ADD A SET", etc.) is NOT used here per
+    /// UI-SPEC §Copy overlay: accessibility reads the full D-06 sentence.
+    var accessibilityDescription: String {
+        "\(muscle.displayName): \(total.totalSetsRounded) sets this week, \(zone.verb). \(delta.deltaCopy)."
+    }
+
+    // MARK: - Body
+
     public var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            HStack {
-                Text(muscle.displayName)
-                    .font(.body)
+        VStack(alignment: .leading, spacing: 0) {
+            // (1) Header row
+            HStack(alignment: .lastTextBaseline, spacing: 4) {
+                Text(muscle.displayName.uppercased())
+                    .font(BRUFont.labelSmall)
+                    .tracking(1.2)
+                    .foregroundStyle(Color.bruInk)
                 Spacer()
-                Text("\(total.totalSetsRounded) / \(target.mrv)")
-                    .font(.caption)
-                    .monospacedDigit()
-                    .foregroundStyle(.secondary)
+                HStack(alignment: .lastTextBaseline, spacing: 6) {
+                    Text("\(total.totalSetsRounded)")
+                        .font(BRUFont.displayMedium)
+                        .monospacedDigit()
+                        .foregroundStyle(barFillColor)
+                    Text("SETS")
+                        .font(BRUFont.labelMicro)
+                        .tracking(1.0)
+                        .foregroundStyle(Color.bruMuted)
+                }
             }
 
+            // (2) Bar track
             barTrack
                 .frame(height: 16)
+                .padding(.top, 6)
 
-            Text(zone.verb)
-                .font(.caption)
-                .foregroundStyle(.secondary)
-
-            Text(delta.deltaCopy)
-                .font(.caption2)
-                .foregroundStyle(.tertiary)
+            // (3) Footer row
+            HStack(alignment: .center) {
+                BRUChip(chipLabel, color: chipColor, fill: chipShouldFill)
+                Spacer()
+                Text("MEV \(target.mev) · MAV \(target.mav) · MRV \(target.mrv)")
+                    .font(.system(size: 9, weight: .regular, design: .monospaced))
+                    .kerning(0.5)
+                    .foregroundStyle(Color.bruMuted)
+            }
+            .padding(.top, 8)
         }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 11)
+        .overlay(alignment: .bottom) {
+            Rectangle()
+                .fill(Color.bruHair)
+                .frame(height: 1)
+        }
+        .opacity(isNotTrained ? 0.5 : 1.0)
         .contentShape(Rectangle())
         .onTapGesture { onTap(muscle) }
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(muscle.displayName): \(total.totalSetsRounded) sets this week, \(zone.verb). \(delta.deltaCopy).")
+        .accessibilityLabel(accessibilityDescription)
         .accessibilityHint("Tap to see details.")
         .accessibilityAddTraits(.isButton)
         .onAppear {
@@ -99,43 +201,53 @@ public struct MuscleVolumeBar: View {
         }
     }
 
+    // MARK: - Bar track
+
     @ViewBuilder
     private var barTrack: some View {
         GeometryReader { geo in
             let width = geo.size.width
-            let mrvD = max(Double(target.mrv), 1.0)  // guard div-by-zero
-            let directWidth = CGFloat(min(total.directSets / mrvD, 1.0)) * width
-            let totalWidth  = CGFloat(min(total.totalSets / mrvD, 1.0)) * width
+            let mrvD = max(Double(target.mrv), 1.0)
+            let fillWidth = CGFloat(min(Double(total.totalSetsRounded) / mrvD, 1.0)) * width
             let mevX = CGFloat(min(Double(target.mev) / mrvD, 1.0)) * width
             let mavX = CGFloat(min(Double(target.mav) / mrvD, 1.0)) * width
+            // MRV tick sits at the right edge of the track (x = 1.0)
+            let mrvX = width
 
             ZStack(alignment: .leading) {
-                // Track
-                RoundedRectangle(cornerRadius: 4)
-                    .fill(Color(.systemGray5))
-                // Indirect fill (lighter, opacity 0.40 per D-07)
-                RoundedRectangle(cornerRadius: 4)
-                    .fill(zoneColor(zone).opacity(0.40))
-                    .frame(width: totalWidth)
-                // Direct fill (full opacity, overpaints the leading
-                // portion so the visible indirect strip is trailing).
-                RoundedRectangle(cornerRadius: 4)
-                    .fill(zoneColor(zone))
-                    .frame(width: directWidth)
-                // MEV tick
+                // Track background + outline
                 Rectangle()
-                    .fill(Color.primary.opacity(0.35))
-                    .frame(width: 1, height: 16)
-                    .offset(x: mevX)
-                // MAV tick
-                Rectangle()
-                    .fill(Color.primary.opacity(0.35))
-                    .frame(width: 1, height: 16)
-                    .offset(x: mavX)
-                // Advisory ring overlay (amber)
+                    .fill(Color.bruBg2)
+                    .overlay(
+                        Rectangle()
+                            .stroke(Color.bruInk, lineWidth: 1.5)
+                    )
+
+                // Zone-color fill with 2pt bruInk right-edge separator
+                if fillWidth > 0 {
+                    Rectangle()
+                        .fill(barFillColor)
+                        .frame(width: fillWidth)
+                        .overlay(alignment: .trailing) {
+                            Rectangle()
+                                .fill(Color.bruInk)
+                                .frame(width: 2)
+                        }
+                }
+
+                // MEV tick (1pt bruInk) + floating label
+                tickMark(at: mevX, in: geo.size.height, color: .bruInk, label: "MEV")
+
+                // MAV tick (1pt bruInk) + floating label
+                tickMark(at: mavX, in: geo.size.height, color: .bruInk, label: "MAV")
+
+                // MRV tick (1pt bruSignal) + floating signal label
+                tickMark(at: mrvX - 1, in: geo.size.height, color: .bruSignal, label: "MRV")
+
+                // Advisory amber ring (Rectangle, NOT RoundedRectangle — sharp corner BRU rule)
                 if isAdvisoryActive {
-                    RoundedRectangle(cornerRadius: 4)
-                        .stroke(Color("VolumeNearMRVAmber").opacity(0.6), lineWidth: 2)
+                    Rectangle()
+                        .stroke(Color.bruAmber.opacity(0.6), lineWidth: 2)
                 }
             }
             .opacity(overMRVPulse ? 0.7 : 1.0)
@@ -148,12 +260,19 @@ public struct MuscleVolumeBar: View {
         }
     }
 
-    private func zoneColor(_ z: VolumeZone) -> Color {
-        switch z {
-        case .belowMEV:   return Color("VolumeBelowMEVGray")
-        case .productive: return Color("VolumeProductiveGreen")
-        case .nearMRV:    return Color("VolumeNearMRVAmber")
-        case .overMRV:    return Color("VolumeOverMRVRed")
-        }
+    /// Renders a vertical tick at the given x offset with a floating label above.
+    @ViewBuilder
+    private func tickMark(at x: CGFloat, in height: CGFloat, color: Color, label: String) -> some View {
+        Rectangle()
+            .fill(color)
+            .frame(width: 1, height: height + 6)
+            .offset(x: x, y: -3)
+            .overlay(alignment: .top) {
+                Text(label)
+                    .font(.system(size: 8, weight: .bold, design: .monospaced))
+                    .kerning(0.5)
+                    .foregroundStyle(color == .bruSignal ? Color.bruSignal : Color.bruMuted)
+                    .offset(x: x - 10, y: -14)
+            }
     }
 }
