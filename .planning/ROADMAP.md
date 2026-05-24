@@ -132,7 +132,7 @@ Plans:
 - [ ] 03.2-04-PLAN.md — Wave 2: PlateStackDisclosure + PrescriptionWeightCell long-press disclosure
 - [ ] 03.2-05-PLAN.md — Wave 2: WhyThisWeightSheet ink hero slab + numbered steps + ghost/signal footer
 - [ ] 03.2-06-PLAN.md — Wave 2: PlateInventoryEditor BRU reskin with PlateTallyRow
-- [ ] 03.2-07-PLAN.md — Wave 2: PlateCalculatorSheet BRU reskin with PlateStackViz
+- [x] 03.2-07-PLAN.md — Wave 2: PlateCalculatorSheet BRU reskin with PlateStackViz
 - [ ] 03.2-08-PLAN.md — Wave 2: ExerciseDetailView Prescription Settings + SettingsView Smart Progression sections
 - [ ] 03.2-09-PLAN.md — Wave 2: WarmupConfigSheet BRUHeaderBar + ghost/signal footer
 - [ ] 03.2-10-PLAN.md — Wave 3: Phase3BRUGrepAuditTests + UI smoke tests + ROADMAP closure
