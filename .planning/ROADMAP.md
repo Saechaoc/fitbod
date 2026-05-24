@@ -119,13 +119,23 @@ Granular, prescriptive workout sessions — every set in a session is intentiona
 
 ### Phase 03.2: BRU Visual Rewrite (Prescription & Warm-ups) — reskin Phase 3 surfaces (PrescriptionWeightCell, WhyThisWeightSheet, PlateStackViz, PlateCalculatorSheet, PlateInventoryEditor, BumpBanner, CalibratingBadge, WarmupRampRows) to BRU brutalist per 03-UI-SPEC v2; depends on Phase 02.1 primitives (INSERTED)
 
-**Goal:** [Urgent work - to be planned]
-**Requirements**: TBD
-**Depends on:** Phase 3
-**Plans:** 0 plans
+**Goal:** All Phase 3 user-facing surfaces (WhyThisWeightSheet, PrescriptionWeightCell, PlateStackDisclosure, PlateCalculatorSheet, PlateInventoryEditor, BumpBanner, CalibratingBadge, WarmupRampRows, ExerciseDetailView Prescription Settings, SettingsView Smart Progression, WarmupConfigSheet) render in the BRU brutalist design system per `03-UI-SPEC.md` v2 — ink/paper/signal palette, Space Grotesk + JetBrains Mono fonts, sharp borders, no rounded corners, no Apple HIG defaults. Zero references to `Color.accentColor`, `Color(.system*)`, `.font(.body|.headline|.caption|.title*)`, `Image(systemName:)`, `RoundedRectangle(cornerRadius:)`, `Capsule()` clips, or `.buttonStyle(.bordered)` remain in Phase 3 surfaces, enforced by `Phase3BRUGrepAuditTests`.
+**Mode:** refactor
+**Depends on:** Phase 3, Phase 02.1 (consumes BRU primitives)
+**Requirements**: None (visual refactor — preserves all PRES-01..04, PRES-07..10, WARM-01..03, SET-02..04, SET-07 requirements)
+**Plans:** 10 plans (3 waves)
 
 Plans:
-- [ ] TBD (run /gsd-plan-phase 03.2 to break down)
+- [ ] 03.2-01-PLAN.md — Wave 1: BRU primitives (CalibratingProgressMeter + PlateStackViz + PlateTallyRow)
+- [ ] 03.2-02-PLAN.md — Wave 2: BumpBanner + CalibratingBadge flat-rectangle reskin
+- [ ] 03.2-03-PLAN.md — Wave 2: WarmupRampRows 4-column grid + mini PlateStackViz
+- [ ] 03.2-04-PLAN.md — Wave 2: PlateStackDisclosure + PrescriptionWeightCell long-press disclosure
+- [ ] 03.2-05-PLAN.md — Wave 2: WhyThisWeightSheet ink hero slab + numbered steps + ghost/signal footer
+- [ ] 03.2-06-PLAN.md — Wave 2: PlateInventoryEditor BRU reskin with PlateTallyRow
+- [ ] 03.2-07-PLAN.md — Wave 2: PlateCalculatorSheet BRU reskin with PlateStackViz
+- [ ] 03.2-08-PLAN.md — Wave 2: ExerciseDetailView Prescription Settings + SettingsView Smart Progression sections
+- [ ] 03.2-09-PLAN.md — Wave 2: WarmupConfigSheet BRUHeaderBar + ghost/signal footer
+- [ ] 03.2-10-PLAN.md — Wave 3: Phase3BRUGrepAuditTests + UI smoke tests + ROADMAP closure
 
 ### Phase 3.1: Session-Level Intent & Progression Refactor
 **Goal:** Move `intent` and `progressionKind` from per-exercise (RoutineExercise / SessionExercise) to session-level (Routine / Session). Real programs are organized at session/block level — a session has a goal (strength, hypertrophy) and a progression style; the same exercise rarely flips intent within a session. Per-exercise prescription stays detail-rich but stops being prescriptive about *why* the set is being done.
@@ -285,10 +295,17 @@ This ordering is dependency-driven and pitfall-aware (per research/SUMMARY.md an
 
 ### Phase 06.1: BRU Visual Rewrite (Progress & Export) — reskin Phase 6 surfaces (progress chart, settings, session history, export sheet) to BRU brutalist per 06-UI-SPEC; depends on Phase 02.1 primitives (INSERTED)
 
-**Goal:** [Urgent work - to be planned]
-**Requirements**: TBD
-**Depends on:** Phase 6
-**Plans:** 0 plans
+**Goal:** Re-skin all Phase 6 (Progress Views, Export & Polish) user-facing surfaces from Apple HIG defaults to the BRU brutalist design system defined in `06-UI-SPEC.md` §Design Pivot, atop the locked BRU primitives from `02-UI-SPEC.md`. Scope: ProgressHomeView + ExerciseProgressView (incl. SeriesToggleChipRow / ProgressColors / ProgressFilterChip) + ExercisePRsView + SessionComparisonView + WeeklyTonnageView (+ WeeklyTonnageFilterChips + WeekDetailView) + SettingsView (incl. Export 2-card grid + outlined Backup panel + 2-step destructive restore) + InSessionPRBanner (full-bleed bruSignal slab) + ExerciseHistoryView toolbar chart-icon swap. Preserves all Phase 6 functional requirements (PROG-01..05/07/08 + EXP-01..04).
+**Mode:** refactor
+**Requirements**: None (visual refactor — preserves all PROG-* and EXP-* requirements from Phase 6)
+**Depends on:** Phase 6, Phase 02.1 (BRU primitives)
+**Plans:** 7 plans (3 waves)
 
-Plans:
-- [ ] TBD (run /gsd-plan-phase 06.1 to break down)
+**Plan list:**
+- [ ] 06.1-01-PLAN.md — Wave 1: ProgressHomeView reskin (BRUHeaderBar + 3 BRUSectionHead sections + BRURow + BRUDivider)
+- [ ] 06.1-02-PLAN.md — Wave 1: ExerciseProgressView reskin + SeriesToggleChipRow inverted-active 4-segment bar + ProgressColors → bruInk/bruSignal + ProgressFilterChip outline/fill
+- [ ] 06.1-03-PLAN.md — Wave 1: ExercisePRsView reskin (BRU header + 3-segment intent toggle + 3-column PR rows + current-day signal tint) + SessionComparisonView reskin (3-column diff + bruSignal positive / bruMuted negative / U+2212 minus)
+- [ ] 06.1-04-PLAN.md — Wave 2: WeeklyTonnageView reskin (BRU chart + hero summary + BRU stacked-bar intent palette) + WeeklyTonnageFilterChips outline/fill + WeekDetailView reskin
+- [ ] 06.1-05-PLAN.md — Wave 2: SettingsView full BRU rewrite (Profile + Units + Training + Volume + Smart-Progression + Export 2-card grid + outlined Backup panel + About) preserving ShareLink + fileImporter + destructive alert wires
+- [ ] 06.1-06-PLAN.md — Wave 2: InSessionPRBanner full-bleed bruSignal slab + ExerciseHistoryView toolbar chart-icon → BRU HeaderAction "PROGRESS"
+- [ ] 06.1-07-PLAN.md — Wave 3: BRUGrepAuditPhase6Tests + 3 UI smoke test files (ProgressHomeBRUUITests, SettingsBRUUITests, ProgressChartBRUUITests)
