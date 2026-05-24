@@ -2,362 +2,200 @@
 //  MuscleRegionPaths.swift
 //  fitbod
 //
-//  Per-muscle silhouette `Path` registry per RESEARCH §8.2. Paths are
-//  normalized to a 0...1 unit square; callers render inside a
-//  `GeometryReader` to scale to the device.
+//  Phase 5.1 plan 04 — Replaces anatomically-informed bezier/ellipse/
+//  rounded-rect geometry (Phase 5 plan 05-05) with axis-aligned
+//  rectangular block-anatomy on a fixed 10-column × 12-row grid.
 //
-//  Wave 3 refinement (Phase 5 plan 05) — replaces plan 01's
-//  axis-aligned `Path(CGRect(...))` stubs with rounded-corner +
-//  contour-curve approximations of each muscle region. Coordinates
-//  derive from the free-exercise-db reference body figure (BSD-2;
-//  positions inferred not traced). Public surface unchanged from
-//  plan 01: `static let front: [String: Path]` + `static let back:
-//  [String: Path]`.
+//  Grid coordinates per bru-screens/heatmap.jsx lines 14–66 (locked).
+//  Cell pitch: 14pt. Container: 140pt × 168pt (10 cols × 12 rows).
 //
-//  Coverage: combined `front ∪ back` covers all 17 free-exercise-db
-//  slugs. Plan 01's `MuscleRegionPathsTests.combinedRegistry-
-//  CoversAllSeventeenMuscleSlugs` continues to pin the contract
-//  regardless of geometry refinement.
+//  Public surface:
+//    - `MuscleRegionPaths.front: [GridRegion]`
+//    - `MuscleRegionPaths.back: [GridRegion]`
+//    - `MuscleRegionPaths.regions(for: BodySide) -> [GridRegion]`
 //
-//  Hit-testing: every Path is closed (`.closeSubpath`) so SwiftUI's
-//  `.contentShape(path)` rejects taps outside the visible region.
+//  Coverage: combined front ∪ back covers all 17 free-exercise-db slugs.
+//  Symmetrical pairs (CHEST L + CHEST R, BICEP × 2, etc.) share the
+//  same canonical slug — they render the same zone fill color.
 //
-//  No SwiftData coupling. Implicitly Sendable via SwiftUI.Path
-//  (value type).
+//  NECK is decorative-only (no zone lookup) per Phase 5 plan 05-05
+//  precedent — slug = "neck-decorative", excluded from zoneByMuscleSlug
+//  lookup at render time.
+//
+//  No bezier/ellipse/RoundedRectangle. No SwiftData coupling.
+//  Implicitly Sendable via value types.
 //
 
 import SwiftUI
 
+// MARK: - GridRegion
+
+/// A single rectangular muscle region on the 10×12 block-anatomy grid.
+/// Coordinates are in grid units; call `rect(cell:)` to get points.
+public struct GridRegion: Sendable, Equatable {
+    /// Canonical free-exercise-db muscle slug, or "neck-decorative" for
+    /// the decorative NECK region that has no zone-data binding.
+    public let slug: String
+    /// Uppercase display label rendered centered inside the region rect
+    /// per bru-screens/heatmap.jsx (e.g. "CHEST L", "LAT", "TRAPS").
+    public let displayLabel: String
+    /// Grid column origin (0-based, 0…9).
+    public let gridX: Int
+    /// Grid row origin (0-based, 0…11).
+    public let gridY: Int
+    /// Width in grid columns.
+    public let gridW: Int
+    /// Height in grid rows.
+    public let gridH: Int
+
+    public init(
+        slug: String,
+        displayLabel: String,
+        gridX: Int, gridY: Int,
+        gridW: Int, gridH: Int
+    ) {
+        self.slug = slug
+        self.displayLabel = displayLabel
+        self.gridX = gridX
+        self.gridY = gridY
+        self.gridW = gridW
+        self.gridH = gridH
+    }
+
+    /// Returns the CGRect for this region at the given cell pitch.
+    /// The −1 on width and height separates adjacent regions by a 1pt
+    /// border gap (matching heatmap.jsx lines 87–88: `w * cell - 1`).
+    public func rect(cell: CGFloat = 14) -> CGRect {
+        CGRect(
+            x: CGFloat(gridX) * cell,
+            y: CGFloat(gridY) * cell,
+            width: CGFloat(gridW) * cell - 1,
+            height: CGFloat(gridH) * cell - 1
+        )
+    }
+
+    /// Returns an axis-aligned `Path` for this region at the given cell pitch.
+    public func path(cell: CGFloat = 14) -> Path {
+        Path(rect(cell: cell))
+    }
+}
+
+// MARK: - MuscleRegionPaths
+
+/// Static registry of per-region `GridRegion` values for front and back
+/// body views. Grid coordinates copied verbatim from
+/// `bru-screens/heatmap.jsx` lines 14–66 (locked).
 public enum MuscleRegionPaths {
 
-    /// Front-view paths keyed by muscle slug.
-    public static let front: [String: Path] = [
-        "chest":      makeChestFront(),
-        "shoulders":  makeShouldersFront(),
-        "biceps":     makeBicepsFront(),
-        "forearms":   makeForearmsFront(),
-        "abdominals": makeAbdominalsFront(),
-        "quadriceps": makeQuadricepsFront(),
-        "calves":     makeCalvesFront(),
-        "neck":       makeNeckFront(),
-        "abductors":  makeAbductorsFront(),
-        "adductors":  makeAdductorsFront(),
+    // MARK: Front view
+    // Grid coordinates per bru-screens/heatmap.jsx lines 14–38 (locked)
+
+    public static let front: [GridRegion] = [
+        // Head + neck (decorative — no zone binding)
+        GridRegion(slug: "neck-decorative", displayLabel: "NECK",
+                   gridX: 4, gridY: 0, gridW: 2, gridH: 1),
+        // Shoulders — left
+        GridRegion(slug: "shoulders", displayLabel: "DELT",
+                   gridX: 1, gridY: 1, gridW: 2, gridH: 1),
+        // Shoulders — right
+        GridRegion(slug: "shoulders", displayLabel: "DELT",
+                   gridX: 7, gridY: 1, gridW: 2, gridH: 1),
+        // Chest — left half
+        GridRegion(slug: "chest", displayLabel: "CHEST L",
+                   gridX: 3, gridY: 1, gridW: 2, gridH: 2),
+        // Chest — right half
+        GridRegion(slug: "chest", displayLabel: "CHEST R",
+                   gridX: 5, gridY: 1, gridW: 2, gridH: 2),
+        // Biceps — left
+        GridRegion(slug: "biceps", displayLabel: "BICEP",
+                   gridX: 1, gridY: 2, gridW: 2, gridH: 2),
+        // Biceps — right
+        GridRegion(slug: "biceps", displayLabel: "BICEP",
+                   gridX: 7, gridY: 2, gridW: 2, gridH: 2),
+        // Abs — left half
+        GridRegion(slug: "abdominals", displayLabel: "ABS L",
+                   gridX: 3, gridY: 3, gridW: 2, gridH: 3),
+        // Abs — right half
+        GridRegion(slug: "abdominals", displayLabel: "ABS R",
+                   gridX: 5, gridY: 3, gridW: 2, gridH: 3),
+        // Forearms — left
+        GridRegion(slug: "forearms", displayLabel: "FORE",
+                   gridX: 1, gridY: 4, gridW: 2, gridH: 2),
+        // Forearms — right
+        GridRegion(slug: "forearms", displayLabel: "FORE",
+                   gridX: 7, gridY: 4, gridW: 2, gridH: 2),
+        // Quadriceps — left
+        GridRegion(slug: "quadriceps", displayLabel: "QUAD",
+                   gridX: 3, gridY: 6, gridW: 2, gridH: 3),
+        // Quadriceps — right
+        GridRegion(slug: "quadriceps", displayLabel: "QUAD",
+                   gridX: 5, gridY: 6, gridW: 2, gridH: 3),
+        // Calves — left
+        GridRegion(slug: "calves", displayLabel: "CALF",
+                   gridX: 3, gridY: 9, gridW: 2, gridH: 2),
+        // Calves — right
+        GridRegion(slug: "calves", displayLabel: "CALF",
+                   gridX: 5, gridY: 9, gridW: 2, gridH: 2),
     ]
 
-    /// Back-view paths keyed by muscle slug.
-    public static let back: [String: Path] = [
-        "traps":       makeTrapsBack(),
-        "lats":        makeLatsBack(),
-        "middle back": makeMiddleBackBack(),
-        "lower back":  makeLowerBackBack(),
-        "shoulders":   makeShouldersBack(),
-        "triceps":     makeTricepsBack(),
-        "glutes":      makeGlutesBack(),
-        "hamstrings":  makeHamstringsBack(),
-        "calves":      makeCalvesBack(),
-        "forearms":    makeForearmsBack(),
+    // MARK: Back view
+    // Grid coordinates per bru-screens/heatmap.jsx lines 40–66 (locked)
+
+    public static let back: [GridRegion] = [
+        // Neck (decorative — no zone binding)
+        GridRegion(slug: "neck-decorative", displayLabel: "NECK",
+                   gridX: 4, gridY: 0, gridW: 2, gridH: 1),
+        // Traps — central upper back
+        GridRegion(slug: "traps", displayLabel: "TRAPS",
+                   gridX: 3, gridY: 1, gridW: 4, gridH: 1),
+        // Rear delts — left
+        GridRegion(slug: "shoulders", displayLabel: "R.DELT",
+                   gridX: 1, gridY: 1, gridW: 2, gridH: 1),
+        // Rear delts — right
+        GridRegion(slug: "shoulders", displayLabel: "R.DELT",
+                   gridX: 7, gridY: 1, gridW: 2, gridH: 1),
+        // Upper back (middle back)
+        GridRegion(slug: "middle back", displayLabel: "UPPER BACK",
+                   gridX: 3, gridY: 2, gridW: 4, gridH: 1),
+        // Lats — left
+        GridRegion(slug: "lats", displayLabel: "LAT",
+                   gridX: 1, gridY: 2, gridW: 2, gridH: 3),
+        // Lats — right
+        GridRegion(slug: "lats", displayLabel: "LAT",
+                   gridX: 7, gridY: 2, gridW: 2, gridH: 3),
+        // Triceps — left (outer arm)
+        GridRegion(slug: "triceps", displayLabel: "TRI",
+                   gridX: 0, gridY: 2, gridW: 1, gridH: 2),
+        // Triceps — right (outer arm)
+        GridRegion(slug: "triceps", displayLabel: "TRI",
+                   gridX: 9, gridY: 2, gridW: 1, gridH: 2),
+        // Lower back
+        GridRegion(slug: "lower back", displayLabel: "LOWER BACK",
+                   gridX: 3, gridY: 5, gridW: 4, gridH: 1),
+        // Glutes — left
+        GridRegion(slug: "glutes", displayLabel: "GLUTE",
+                   gridX: 3, gridY: 6, gridW: 2, gridH: 2),
+        // Glutes — right
+        GridRegion(slug: "glutes", displayLabel: "GLUTE",
+                   gridX: 5, gridY: 6, gridW: 2, gridH: 2),
+        // Hamstrings — left
+        GridRegion(slug: "hamstrings", displayLabel: "HAM",
+                   gridX: 3, gridY: 8, gridW: 2, gridH: 2),
+        // Hamstrings — right
+        GridRegion(slug: "hamstrings", displayLabel: "HAM",
+                   gridX: 5, gridY: 8, gridW: 2, gridH: 2),
+        // Calves — left
+        GridRegion(slug: "calves", displayLabel: "CALF",
+                   gridX: 3, gridY: 10, gridW: 2, gridH: 1),
+        // Calves — right
+        GridRegion(slug: "calves", displayLabel: "CALF",
+                   gridX: 5, gridY: 10, gridW: 2, gridH: 1),
     ]
 
-    // MARK: - Front-view builders
+    // MARK: - Accessor
 
-    /// Rounded-rectangle helper — bezier curves at the corners
-    /// approximate the soft contour of muscle bellies vs the
-    /// axis-aligned stubs from plan 01.
-    private static func roundedRectPath(
-        x: CGFloat, y: CGFloat,
-        width w: CGFloat, height h: CGFloat,
-        cornerRadius cr: CGFloat = 0.02
-    ) -> Path {
-        Path { p in
-            let cornerRadius = min(cr, min(w, h) / 2)
-            p.move(to: CGPoint(x: x + cornerRadius, y: y))
-            p.addLine(to: CGPoint(x: x + w - cornerRadius, y: y))
-            p.addQuadCurve(
-                to: CGPoint(x: x + w, y: y + cornerRadius),
-                control: CGPoint(x: x + w, y: y)
-            )
-            p.addLine(to: CGPoint(x: x + w, y: y + h - cornerRadius))
-            p.addQuadCurve(
-                to: CGPoint(x: x + w - cornerRadius, y: y + h),
-                control: CGPoint(x: x + w, y: y + h)
-            )
-            p.addLine(to: CGPoint(x: x + cornerRadius, y: y + h))
-            p.addQuadCurve(
-                to: CGPoint(x: x, y: y + h - cornerRadius),
-                control: CGPoint(x: x, y: y + h)
-            )
-            p.addLine(to: CGPoint(x: x, y: y + cornerRadius))
-            p.addQuadCurve(
-                to: CGPoint(x: x + cornerRadius, y: y),
-                control: CGPoint(x: x, y: y)
-            )
-            p.closeSubpath()
-        }
-    }
-
-    /// Chest — upper torso, contoured at the sternum dip.
-    private static func makeChestFront() -> Path {
-        Path { p in
-            p.move(to: CGPoint(x: 0.30, y: 0.20))
-            p.addCurve(
-                to: CGPoint(x: 0.50, y: 0.22),
-                control1: CGPoint(x: 0.38, y: 0.18),
-                control2: CGPoint(x: 0.46, y: 0.21)
-            )
-            p.addCurve(
-                to: CGPoint(x: 0.70, y: 0.20),
-                control1: CGPoint(x: 0.54, y: 0.21),
-                control2: CGPoint(x: 0.62, y: 0.18)
-            )
-            p.addQuadCurve(
-                to: CGPoint(x: 0.68, y: 0.32),
-                control: CGPoint(x: 0.72, y: 0.26)
-            )
-            p.addCurve(
-                to: CGPoint(x: 0.32, y: 0.32),
-                control1: CGPoint(x: 0.56, y: 0.34),
-                control2: CGPoint(x: 0.44, y: 0.34)
-            )
-            p.addQuadCurve(
-                to: CGPoint(x: 0.30, y: 0.20),
-                control: CGPoint(x: 0.28, y: 0.26)
-            )
-            p.closeSubpath()
-        }
-    }
-
-    /// Shoulders — front delts, two symmetric lobes flanking the chest.
-    private static func makeShouldersFront() -> Path {
-        Path { p in
-            // Left front delt
-            p.addEllipse(in: CGRect(x: 0.14, y: 0.18, width: 0.16, height: 0.10))
-            // Right front delt
-            p.addEllipse(in: CGRect(x: 0.70, y: 0.18, width: 0.16, height: 0.10))
-        }
-    }
-
-    /// Biceps — upper arms, both sides. Tall ellipse along arm axis.
-    private static func makeBicepsFront() -> Path {
-        Path { p in
-            p.addEllipse(in: CGRect(x: 0.08, y: 0.26, width: 0.14, height: 0.14))
-            p.addEllipse(in: CGRect(x: 0.78, y: 0.26, width: 0.14, height: 0.14))
-        }
-    }
-
-    /// Forearms — lower arms, both sides.
-    private static func makeForearmsFront() -> Path {
-        Path { p in
-            p.addEllipse(in: CGRect(x: 0.06, y: 0.40, width: 0.13, height: 0.13))
-            p.addEllipse(in: CGRect(x: 0.81, y: 0.40, width: 0.13, height: 0.13))
-        }
-    }
-
-    /// Abdominals — mid-torso, narrower than chest, lozenge-shaped.
-    private static func makeAbdominalsFront() -> Path {
-        Path { p in
-            p.move(to: CGPoint(x: 0.42, y: 0.34))
-            p.addCurve(
-                to: CGPoint(x: 0.58, y: 0.34),
-                control1: CGPoint(x: 0.46, y: 0.33),
-                control2: CGPoint(x: 0.54, y: 0.33)
-            )
-            p.addCurve(
-                to: CGPoint(x: 0.56, y: 0.50),
-                control1: CGPoint(x: 0.60, y: 0.40),
-                control2: CGPoint(x: 0.58, y: 0.46)
-            )
-            p.addCurve(
-                to: CGPoint(x: 0.44, y: 0.50),
-                control1: CGPoint(x: 0.50, y: 0.52),
-                control2: CGPoint(x: 0.50, y: 0.52)
-            )
-            p.addCurve(
-                to: CGPoint(x: 0.42, y: 0.34),
-                control1: CGPoint(x: 0.42, y: 0.46),
-                control2: CGPoint(x: 0.40, y: 0.40)
-            )
-            p.closeSubpath()
-        }
-    }
-
-    /// Quadriceps — upper legs, two parallel cylinders.
-    private static func makeQuadricepsFront() -> Path {
-        Path { p in
-            // Left thigh
-            p.addRoundedRect(
-                in: CGRect(x: 0.30, y: 0.55, width: 0.16, height: 0.20),
-                cornerSize: CGSize(width: 0.04, height: 0.04)
-            )
-            // Right thigh
-            p.addRoundedRect(
-                in: CGRect(x: 0.54, y: 0.55, width: 0.16, height: 0.20),
-                cornerSize: CGSize(width: 0.04, height: 0.04)
-            )
-        }
-    }
-
-    /// Calves — front-view shins (slimmer than back view).
-    private static func makeCalvesFront() -> Path {
-        Path { p in
-            p.addRoundedRect(
-                in: CGRect(x: 0.32, y: 0.78, width: 0.13, height: 0.13),
-                cornerSize: CGSize(width: 0.03, height: 0.03)
-            )
-            p.addRoundedRect(
-                in: CGRect(x: 0.55, y: 0.78, width: 0.13, height: 0.13),
-                cornerSize: CGSize(width: 0.03, height: 0.03)
-            )
-        }
-    }
-
-    /// Neck — small region at the top.
-    private static func makeNeckFront() -> Path {
-        Path { p in
-            p.addRoundedRect(
-                in: CGRect(x: 0.42, y: 0.08, width: 0.16, height: 0.07),
-                cornerSize: CGSize(width: 0.03, height: 0.03)
-            )
-        }
-    }
-
-    /// Abductors — outer hips, small slivers either side.
-    private static func makeAbductorsFront() -> Path {
-        Path { p in
-            p.addEllipse(in: CGRect(x: 0.24, y: 0.50, width: 0.08, height: 0.08))
-            p.addEllipse(in: CGRect(x: 0.68, y: 0.50, width: 0.08, height: 0.08))
-        }
-    }
-
-    /// Adductors — inner thigh, central wedge.
-    private static func makeAdductorsFront() -> Path {
-        Path { p in
-            p.move(to: CGPoint(x: 0.46, y: 0.55))
-            p.addLine(to: CGPoint(x: 0.54, y: 0.55))
-            p.addCurve(
-                to: CGPoint(x: 0.52, y: 0.66),
-                control1: CGPoint(x: 0.55, y: 0.60),
-                control2: CGPoint(x: 0.53, y: 0.64)
-            )
-            p.addLine(to: CGPoint(x: 0.48, y: 0.66))
-            p.addCurve(
-                to: CGPoint(x: 0.46, y: 0.55),
-                control1: CGPoint(x: 0.47, y: 0.64),
-                control2: CGPoint(x: 0.45, y: 0.60)
-            )
-            p.closeSubpath()
-        }
-    }
-
-    // MARK: - Back-view builders
-
-    /// Traps — diamond shape from neck base to mid-back.
-    private static func makeTrapsBack() -> Path {
-        Path { p in
-            p.move(to: CGPoint(x: 0.50, y: 0.10))
-            p.addLine(to: CGPoint(x: 0.66, y: 0.16))
-            p.addLine(to: CGPoint(x: 0.50, y: 0.24))
-            p.addLine(to: CGPoint(x: 0.34, y: 0.16))
-            p.closeSubpath()
-        }
-    }
-
-    /// Lats — V-shape flanking the spine, widest at upper back.
-    private static func makeLatsBack() -> Path {
-        Path { p in
-            // Left lat
-            p.move(to: CGPoint(x: 0.30, y: 0.24))
-            p.addCurve(
-                to: CGPoint(x: 0.42, y: 0.42),
-                control1: CGPoint(x: 0.20, y: 0.28),
-                control2: CGPoint(x: 0.32, y: 0.38)
-            )
-            p.addLine(to: CGPoint(x: 0.48, y: 0.42))
-            p.addLine(to: CGPoint(x: 0.48, y: 0.24))
-            p.closeSubpath()
-            // Right lat
-            p.move(to: CGPoint(x: 0.70, y: 0.24))
-            p.addCurve(
-                to: CGPoint(x: 0.58, y: 0.42),
-                control1: CGPoint(x: 0.80, y: 0.28),
-                control2: CGPoint(x: 0.68, y: 0.38)
-            )
-            p.addLine(to: CGPoint(x: 0.52, y: 0.42))
-            p.addLine(to: CGPoint(x: 0.52, y: 0.24))
-            p.closeSubpath()
-        }
-    }
-
-    /// Middle back — central spine column between the lats.
-    private static func makeMiddleBackBack() -> Path {
-        Path { p in
-            p.addRoundedRect(
-                in: CGRect(x: 0.48, y: 0.22, width: 0.04, height: 0.18),
-                cornerSize: CGSize(width: 0.01, height: 0.01)
-            )
-        }
-    }
-
-    /// Lower back — small region below mid-back.
-    private static func makeLowerBackBack() -> Path {
-        Path { p in
-            p.addRoundedRect(
-                in: CGRect(x: 0.42, y: 0.42, width: 0.16, height: 0.08),
-                cornerSize: CGSize(width: 0.02, height: 0.02)
-            )
-        }
-    }
-
-    /// Shoulders back — rear delts (mirror of front delts).
-    private static func makeShouldersBack() -> Path {
-        Path { p in
-            p.addEllipse(in: CGRect(x: 0.14, y: 0.16, width: 0.16, height: 0.10))
-            p.addEllipse(in: CGRect(x: 0.70, y: 0.16, width: 0.16, height: 0.10))
-        }
-    }
-
-    /// Triceps — back of upper arms.
-    private static func makeTricepsBack() -> Path {
-        Path { p in
-            p.addEllipse(in: CGRect(x: 0.05, y: 0.26, width: 0.14, height: 0.14))
-            p.addEllipse(in: CGRect(x: 0.81, y: 0.26, width: 0.14, height: 0.14))
-        }
-    }
-
-    /// Glutes — two rounded humps below lower back.
-    private static func makeGlutesBack() -> Path {
-        Path { p in
-            p.addEllipse(in: CGRect(x: 0.27, y: 0.48, width: 0.22, height: 0.14))
-            p.addEllipse(in: CGRect(x: 0.51, y: 0.48, width: 0.22, height: 0.14))
-        }
-    }
-
-    /// Hamstrings — back of upper legs.
-    private static func makeHamstringsBack() -> Path {
-        Path { p in
-            p.addRoundedRect(
-                in: CGRect(x: 0.30, y: 0.60, width: 0.16, height: 0.18),
-                cornerSize: CGSize(width: 0.04, height: 0.04)
-            )
-            p.addRoundedRect(
-                in: CGRect(x: 0.54, y: 0.60, width: 0.16, height: 0.18),
-                cornerSize: CGSize(width: 0.04, height: 0.04)
-            )
-        }
-    }
-
-    /// Calves back — fuller than front (calf bellies bulge backward).
-    private static func makeCalvesBack() -> Path {
-        Path { p in
-            p.addEllipse(in: CGRect(x: 0.30, y: 0.78, width: 0.16, height: 0.14))
-            p.addEllipse(in: CGRect(x: 0.54, y: 0.78, width: 0.16, height: 0.14))
-        }
-    }
-
-    /// Forearms back — back of lower arms.
-    private static func makeForearmsBack() -> Path {
-        Path { p in
-            p.addEllipse(in: CGRect(x: 0.06, y: 0.40, width: 0.13, height: 0.13))
-            p.addEllipse(in: CGRect(x: 0.81, y: 0.40, width: 0.13, height: 0.13))
-        }
+    /// Returns the `GridRegion` array for the given body side.
+    public static func regions(for side: BodySide) -> [GridRegion] {
+        side == .front ? front : back
     }
 }
