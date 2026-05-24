@@ -30,6 +30,8 @@
 //   Color.bruMuted   — #6E6A60 / #9D998E   — secondary text, captions, metadata
 //   Color.bruBg      — #F2EFE7 / #16140F   — screen-edge chrome, status bar background
 //   Color.bruBg2     — #EDEAE0 / #1C1A14   — inset cards, calibration meter backing
+//   Color.bruAmber   — #E3A12A / #FFB54D   — UNDER MEV chip, under-trained bullet, warning state
+//   Color.bruGreen   — #3F8F5C / #4FBB78   — ADD A SET chip, encouragement state
 //
 // All tokens adapt to light/dark mode via adaptive colorsets in Assets.xcassets.
 //
@@ -74,4 +76,12 @@ public extension Color {
     /// Inset card background `#EDEAE0` (light) / `#1C1A14` (dark).
     /// Weekly tonnage spark backing, calibration meter cards.
     static let bruBg2: Color = Color("bruBg2")
+
+    /// Amber warning `#E3A12A` (light) / `#FFB54D` (dark).
+    /// UNDER MEV chip, under-trained bullet, warning state fill.
+    static let bruAmber: Color = Color("bruAmber")
+
+    /// Growth green `#3F8F5C` (light) / `#4FBB78` (dark).
+    /// ADD A SET chip, encouragement state fill.
+    static let bruGreen: Color = Color("bruGreen")
 }
