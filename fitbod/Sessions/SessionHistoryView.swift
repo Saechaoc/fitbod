@@ -105,14 +105,14 @@ public struct SessionHistoryView: View {
 
     private var totalTonnageLabel: String {
         let cutoff = Calendar.current.date(byAdding: .day, value: -30, to: .now) ?? .now
-        let total = sessions
-            .filter { $0.startedAt >= cutoff }
-            .reduce(0.0) { acc, session in
-                acc + (session.exercises ?? [])
-                    .flatMap { $0.sets ?? [] }
-                    .filter { $0.isComplete && !$0.isWarmup }
-                    .reduce(0.0) { $0 + $1.weight * Double($1.reps) }
-            }
+        // Break up chained expression to avoid Swift type-checker timeout
+        let recentSessions = sessions.filter { $0.startedAt >= cutoff }
+        var total: Double = 0
+        for session in recentSessions {
+            let sets = (session.exercises ?? []).flatMap { $0.sets ?? [] }
+            let workingSets = sets.filter { $0.isComplete && !$0.isWarmup }
+            total += workingSets.reduce(0.0) { $0 + $1.weight * Double($1.reps) }
+        }
         if total >= 1000 {
             return String(format: "%.1fk", total / 1000)
         }

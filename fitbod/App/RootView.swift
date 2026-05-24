@@ -266,6 +266,11 @@ public struct RootView: View {
 // line 170 (`TodayView()`) continues to work — Swift resolves TodayView to
 // the new file in the same module.
 
+// NOTE: SessionHistoryView (Phase 2.1 Plan 10) is surfaced from the Routines tab's
+// "+ NEW" confirmation dialog ("History" button → sheet). The wiring lives in
+// RoutinesListView.swift (`presentingSessionHistory` @State + `.sheet(isPresented:)`).
+// A future revision can promote SessionHistoryView into a dedicated tab.
+
 /// Library tab body — wraps the real `ExerciseLibraryView` (plan 03-02).
 ///
 /// `ExerciseLibraryView` still owns its `NavigationStack`, but the

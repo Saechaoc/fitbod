@@ -19,6 +19,7 @@
 //   NO Color(.system*)
 
 import SwiftUI
+import SwiftData
 
 public struct WorkoutNotesSheet: View {
     @Environment(\.dismiss) private var dismiss

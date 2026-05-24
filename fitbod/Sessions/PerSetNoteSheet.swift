@@ -21,6 +21,7 @@
 //   NO Color(.system*)
 
 import SwiftUI
+import SwiftData
 
 public struct PerSetNoteSheet: View {
     @Environment(\.dismiss) private var dismiss

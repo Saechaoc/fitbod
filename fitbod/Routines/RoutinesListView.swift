@@ -71,6 +71,8 @@ public struct RoutinesListView: View {
     @State private var navigationPath = NavigationPath()
     @State private var searchText = ""
     @State private var presentingNewMenu = false
+    // Plan 02.1-10: v1 History surface — presented as a sheet from the Routines tab
+    @State private var presentingSessionHistory = false
 
     public init() {}
 
@@ -138,6 +140,10 @@ public struct RoutinesListView: View {
                 Button("New Folder") {
                     presentingNewFolder = true
                 }
+                // Plan 02.1-10: surface SessionHistoryView from the Routines tab
+                Button("History") {
+                    presentingSessionHistory = true
+                }
                 Button("Cancel", role: .cancel) {}
             }
             .navigationDestination(for: SessionRoute.self) { route in
@@ -174,6 +180,10 @@ public struct RoutinesListView: View {
                         BlockBuilderView(draft: BlockDraft(block: block), editing: block)
                     }
                 }
+            }
+            // Plan 02.1-10: session history surface — v1 reachability via Routines "+" menu
+            .sheet(isPresented: $presentingSessionHistory) {
+                SessionHistoryView()
             }
             // UI-SPEC verbatim: "Workout in Progress" active-session-conflict alert
             .alert(

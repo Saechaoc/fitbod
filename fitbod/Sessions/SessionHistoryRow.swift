@@ -18,6 +18,7 @@
 //               NO .font(.body/.headline/.title*/caption)
 
 import SwiftUI
+import SwiftData
 
 // MARK: - SessionHistoryRow
 
@@ -161,29 +162,28 @@ public struct SessionHistoryRow: View {
 
 #if DEBUG
 #Preview("SessionHistoryRow") {
-    let container = PreviewModelContainer.make()
-    let ctx = ModelContext(container)
+    SessionHistoryRowPreviewHost()
+        .modelContainer(PreviewModelContainer.make())
+}
 
-    // Build a sample session
-    let session = Session()
-    session.routineSnapshotName = "Push A"
-    session.startedAt = .now
-    session.completedAt = Date(timeIntervalSinceNow: -52 * 60)
-    ctx.insert(session)
-    try? ctx.save()
+private struct SessionHistoryRowPreviewHost: View {
+    @Query(sort: \Session.startedAt, order: .reverse)
+    private var sessions: [Session]
 
-    return VStack(spacing: 0) {
-        SessionHistoryRow(
-            session: session,
-            prBadges: ["PR · e1RM"]
-        )
-        BRUDivider(.hair)
-        SessionHistoryRow(
-            session: session,
-            prBadges: []
-        )
+    var body: some View {
+        VStack(spacing: 0) {
+            if let session = sessions.first {
+                SessionHistoryRow(session: session, prBadges: ["PR · e1RM"])
+                BRUDivider(.hair)
+                SessionHistoryRow(session: session, prBadges: [])
+            } else {
+                Text("No sessions")
+                    .font(BRUFont.bodyDefault)
+                    .foregroundStyle(Color.bruMuted)
+                    .padding()
+            }
+        }
+        .background(Color.bruPaper)
     }
-    .background(Color.bruPaper)
-    .modelContainer(container)
 }
 #endif
