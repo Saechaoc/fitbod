@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: completed
-last_updated: "2026-05-24T14:37:29.509Z"
+last_updated: "2026-05-24T00:00:00.000Z"
 progress:
   total_phases: 12
-  completed_phases: 8
+  completed_phases: 9
   total_plans: 111
-  completed_plans: 88
-  percent: 79
+  completed_plans: 99
+  percent: 89
 ---
 
 # Project State: Fitbod
@@ -32,8 +32,10 @@ progress:
 
 ## Current Position
 
-Phase: 03.2 (bru-visual-rewrite-prescription-warm-ups) — **IN PROGRESS (1/10 plans complete — 2026-05-24)**
-Plan: 1 of 10 — 03.2-01 complete (Wave 1: 3 BRU primitives shipped — CalibratingProgressMeter, PlateStackViz, PlateTallyRow; 8/8 Phase3BRUPrimitivesTests PASS; commit 05ed57c).
+Phase: 03.2 (bru-visual-rewrite-prescription-warm-ups) — **COMPLETE (10/10 plans — 2026-05-24)**
+Plan: 10 of 10 — 03.2-10 complete (Wave 3: Phase3BRUGrepAuditTests 9/9 PASS + BRUGrepAuditTests 7 Phase-3 exclusions removed + 3 UI smoke test files shipped; Phase 03.2 fully closed).
+
+Next active phase: Phase 04.1 (BRU Visual Rewrite — Periodization & Blocks) — 0/8 plans complete.
 
 Phase 6 status (for reference — previously active):
 Phase: 6 (progress-views-export-polish) — **IN PROGRESS (10/11 plans complete — 2026-05-23; 06-10 backup/restore remaining)**

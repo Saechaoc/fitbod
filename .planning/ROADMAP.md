@@ -20,6 +20,7 @@ Granular, prescriptive workout sessions — every set in a session is intentiona
 - [x] **Phase 2: Core Loop (Routines + Sessions)** — Single-screen routine builder, snapshot session logger, accurate rest timer, intent-split history lists **(complete: 13/13 plans, 20/20 requirements — 2007-05-11)**
 - [x] **Phase 2.1: BRU Visual Rewrite (Core Loop)** — Rewrite TodayView / RoutineBuilder / SessionLogger / SessionHistory to BRU brutalist UI-SPEC v2: 8 BRU color tokens, Space Grotesk + JetBrains Mono fonts, 15+ BRU primitive components, no rounded corners, no Apple HIG defaults (completed 2026-05-24)
 - [x] **Phase 3: Smart Prescription & Warm-ups** — Two progression strategies (RPE autoreg, double progression), warm-up generator, plate calculator, "why this weight?" UI (completed 2007-05-23)
+- [x] **Phase 3.2: BRU Visual Rewrite (Prescription & Warm-ups)** — All Phase 3 prescription + warm-up surfaces rewritten to BRU brutalist per 03-UI-SPEC v2; 3 Wave 1 primitives + 7 Wave 2 surface reskins + Phase3BRUGrepAuditTests guardrail; zero banned tokens in Phase 3 scope **(completed 2026-05-24 — 10/10 plans)**
 - [x] **Phase 3.1: Session-Level Intent & Progression Refactor** — Move intent + progressionKind from per-exercise to Routine/Session; strip per-exercise pickers from PrescriptionEditorRow; SchemaV4 migration; rewire 25 test suites to the new model contract (completed 2007-05-23; PIVOT-01..05 satisfied)
 - [x] **Phase 4: Periodization & Blocks** — Block builder, scheduled deloads, block timeline on home, remaining two progression strategies (block-periodized, hybrid)
 - [x] **Phase 5: Fatigue Model & Plateau Detection** — Stimulus-weighted weekly volume, MEV/MAV/MRV bars with verbs, muscle heatmap, plateau detector, fatigue-triggered deload advisory (completed 2007-05-23)
@@ -123,7 +124,7 @@ Granular, prescriptive workout sessions — every set in a session is intentiona
 **Mode:** refactor
 **Depends on:** Phase 3, Phase 02.1 (consumes BRU primitives)
 **Requirements**: None (visual refactor — preserves all PRES-01..04, PRES-07..10, WARM-01..03, SET-02..04, SET-07 requirements)
-**Plans:** 9/10 plans executed
+**Plans:** 10/10 plans executed (complete)
 
 Plans:
 - [x] 03.2-01-PLAN.md — Wave 1: BRU primitives (CalibratingProgressMeter + PlateStackViz + PlateTallyRow)
@@ -135,7 +136,7 @@ Plans:
 - [x] 03.2-07-PLAN.md — Wave 2: PlateCalculatorSheet BRU reskin with PlateStackViz
 - [x] 03.2-08-PLAN.md — Wave 2: ExerciseDetailView Prescription Settings + SettingsView Smart Progression sections
 - [x] 03.2-09-PLAN.md — Wave 2: WarmupConfigSheet BRUHeaderBar + ghost/signal footer
-- [ ] 03.2-10-PLAN.md — Wave 3: Phase3BRUGrepAuditTests + UI smoke tests + ROADMAP closure
+- [x] 03.2-10-PLAN.md — Wave 3: Phase3BRUGrepAuditTests + UI smoke tests + ROADMAP closure (completed 2026-05-24)
 
 ### Phase 3.1: Session-Level Intent & Progression Refactor
 **Goal:** Move `intent` and `progressionKind` from per-exercise (RoutineExercise / SessionExercise) to session-level (Routine / Session). Real programs are organized at session/block level — a session has a goal (strength, hypertrophy) and a progression style; the same exercise rarely flips intent within a session. Per-exercise prescription stays detail-rich but stops being prescriptive about *why* the set is being done.
