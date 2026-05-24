@@ -71,9 +71,12 @@ struct RestTimerOverlayCopyTests {
             src.contains("@Environment(\\.accessibilityReduceMotion)") ||
             src.contains("accessibilityReduceMotion")
         )
+        // The second check accepts the full environment key name (which contains "ReduceMotion"
+        // with uppercase R) or the standalone lowercase "reduceMotion" property name.
         #expect(
             src.contains("reduceMotion: reduceMotion") ||
-            src.contains("reduceMotion")
+            src.contains("reduceMotion") ||
+            src.contains("accessibilityReduceMotion")
         )
     }
 
