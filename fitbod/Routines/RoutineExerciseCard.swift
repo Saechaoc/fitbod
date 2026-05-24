@@ -168,7 +168,7 @@ public struct RoutineExerciseCard: View {
     /// "{equipment} · {prescription summary}"
     /// Equipment from exercise.equipment; summary is sets × reps · rest.
     private var subLine: String {
-        let equipment = draft.exercise?.equipment ?? ""
+        let equipment = draft.exercise?.equipmentRaw ?? ""
         let summary = prescriptionSummary
         if equipment.isEmpty {
             return summary

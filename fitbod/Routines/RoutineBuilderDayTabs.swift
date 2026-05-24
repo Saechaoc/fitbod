@@ -106,7 +106,7 @@ public struct RoutineBuilderDayTabs: View {
                         .font(BRUFont.labelSmall)
                         .tracking(1.2)
                         .foregroundStyle(Color.bruSignal)
-                        .frame(width: 36, minHeight: 40)
+                        .frame(width: 36, height: 40)
                 }
                 .buttonStyle(.plain)
             }
