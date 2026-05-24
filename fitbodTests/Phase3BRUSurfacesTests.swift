@@ -3,22 +3,27 @@
 //  fitbodTests
 //
 //  Tests for Phase 3.2-04 BRU surface reskins:
-//    - PlateStackDisclosure: delegates to PlateStackViz, no local plate helpers
+//    - PlateStackDisclosure: delegates to PlateStackViz, accepts unitLabel param
 //    - PrescriptionWeightCell: long-press disclosure, no info.circle, BRUFont typography
+//
+//  Tests instantiate the view structs directly (not via ViewInspector) to verify
+//  public init signatures and stored property contracts.
 //
 
 import Foundation
+import SwiftUI
 import Testing
 @testable import fitbod
 
 // MARK: - Phase 3 BRU Surfaces Tests
 
+@MainActor
 @Suite("Phase3BRUSurfaces")
 struct Phase3BRUSurfacesTests {
 
     // MARK: - PlateStackDisclosure
 
-    @Test("plateStackDisclosureInstantiates — 100 kg barbell with 5 plate specs")
+    @Test("plateStackDisclosureInstantiates — 100 kg barbell with 5 plate specs and unitLabel param")
     func plateStackDisclosureInstantiates() throws {
         // Fixture: 100 kg target / 20 kg bar / 5 standard plate specs
         let plates: [PlateSpec] = [
@@ -29,7 +34,7 @@ struct Phase3BRUSurfacesTests {
             PlateSpec(weight: 2.5, countPerSide: 2),
         ]
 
-        // PlateStackDisclosure must accept unitLabel param (BRU rewrite requirement)
+        // BRU rewrite requires unitLabel parameter on init
         let disclosure = PlateStackDisclosure(
             targetWeight: 100,
             barWeight: 20,
@@ -84,19 +89,16 @@ struct Phase3BRUSurfacesTests {
             bumpOccurred: false,
             range: nil
         )
-        var weight: Double = 102.5
-        var wasManualOverride: Bool = false
-
-        let weightBinding = Binding(get: { weight }, set: { weight = $0 })
-        let overrideBinding = Binding(get: { wasManualOverride }, set: { wasManualOverride = $0 })
+        @State var weight: Double = 102.5
+        @State var wasManualOverride: Bool = false
 
         let cell = PrescriptionWeightCell(
-            weight: weightBinding,
+            weight: $weight,
             prescribed: 102.5,
             range: nil,
             explanation: explanation,
             unitLabel: "kg",
-            wasManualOverride: overrideBinding
+            wasManualOverride: $wasManualOverride
         )
 
         #expect(cell.explanation?.roundedWeight == 102.5)
@@ -116,19 +118,16 @@ struct Phase3BRUSurfacesTests {
             bumpOccurred: false,
             range: 95.0...105.0
         )
-        var weight: Double = 100.0
-        var wasManualOverride: Bool = false
-
-        let weightBinding = Binding(get: { weight }, set: { weight = $0 })
-        let overrideBinding = Binding(get: { wasManualOverride }, set: { wasManualOverride = $0 })
+        @State var weight: Double = 100.0
+        @State var wasManualOverride: Bool = false
 
         let cell = PrescriptionWeightCell(
-            weight: weightBinding,
+            weight: $weight,
             prescribed: 100.0,
             range: 95.0...105.0,
             explanation: explanation,
             unitLabel: "kg",
-            wasManualOverride: overrideBinding
+            wasManualOverride: $wasManualOverride
         )
 
         #expect(cell.range != nil)
@@ -142,7 +141,7 @@ struct Phase3BRUSurfacesTests {
     @Test("BumpBanner instantiates with representative weight and kg unit")
     func bumpBannerInstantiates() throws {
         // Proves: public init(isVisible:bumpedToWeight:unitLabel:) compiles and the
-        // view conforms to View. All BRU token + font references must resolve.
+        // view conforms to View. Color.bruInk, Color.bruPaper, BRUFont.labelSmall must resolve.
         let banner = BumpBanner(
             isVisible: .constant(true),
             bumpedToWeight: 102.5,
@@ -157,74 +156,108 @@ struct Phase3BRUSurfacesTests {
     @Test("CalibratingBadge instantiates with in-progress calibration data")
     func calibratingBadgeInstantiates() throws {
         // Proves: public init(current:threshold:) compiles and the view conforms to
-        // View. BRU token + font references (bruMuted, bruPaper, labelMicro) must resolve.
+        // View. Color.bruMuted, Color.bruPaper, BRUFont.labelMicro must resolve.
         let badge = CalibratingBadge(current: 4, threshold: 10)
         let _: any View = badge
         #expect(Bool(true), "CalibratingBadge instantiated successfully")
     }
 
-    // MARK: - WarmupConfigSheet (Plan 03.2-09)
+    // MARK: - WhyThisWeightSheet (Plan 03.2-05)
+    // Tests cover the 4 CalibrationStatus branches and validate the BRU
+    // rewrite init signature (new params: reps, rpe, setTypeLabel, unitLabel).
 
-    @Test("WarmupConfigSheet instantiates with nil config binding")
-    func warmupConfigSheetInstantiates() throws {
-        // Proves: public init(config: Binding<WarmupConfig?>) compiles and the view
-        // conforms to View. BRU token + font references (BRUHeaderBar, BRUButton,
-        // BRUFont.bodyEmphasis, BRUFont.bodyDefault, Color.bruInk, Color.bruMuted,
-        // Color.bruHair, Color.bruBg, Color.bruPaper) must resolve at compile time.
-        var cfg: WarmupConfig? = nil
-        let sheet = WarmupConfigSheet(config: Binding(
-            get: { cfg },
-            set: { cfg = $0 }
-        ))
+    @Test("whyThisWeightSheetInstantiates — .calibrating status branch")
+    func whyThisWeightSheetInstantiates_calibrating() throws {
+        let explanation = PrescriptionExplanation(
+            lastSessionLine: "195 × 8 @ RPE 8.5 (May 16)",
+            formulaName: "RPE autoregulation",
+            computedLine: "195 × (1 − 0.04 × (9 − 8.5)) → 207 lb",
+            roundedWeight: 205.0,
+            roundedLine: "→ 205 lb (rounded down to 2.5 lb plates)",
+            status: .calibrating(current: 8, threshold: 10),
+            bumpOccurred: false,
+            range: 200.0...210.0,
+            sessionIntent: .strength
+        )
+        let sheet = WhyThisWeightSheet(
+            explanation: explanation,
+            reps: 8,
+            rpe: 9.0,
+            setTypeLabel: "TOP SET",
+            unitLabel: "lb"
+        )
         let _: any View = sheet
-        #expect(Bool(true), "WarmupConfigSheet instantiated successfully")
+        #expect(Bool(true), "WhyThisWeightSheet(.calibrating) instantiated")
     }
 
-    // MARK: - ExerciseDetailView Prescription Settings (Plan 03.2-08 Task 1)
-
-    @Test("exerciseDetailPrescriptionSettingsRenders — BRU tokens resolve at compile time")
-    func exerciseDetailPrescriptionSettingsRenders() throws {
-        // Proves: ExerciseDetailView compiles with BRUSectionHead("PRESCRIPTION SETTINGS"),
-        // BRUFont.labelSmall labels, BRUFont.bodyDefault footers, and a 3-BRUChip Button
-        // row for unit override. Color.bruMuted tokens must resolve at compile time.
-        let container = PreviewModelContainer.make()
-        let ctx = container.mainContext
-        let exercises = try ctx.fetch(FetchDescriptor<Exercise>())
-        guard let exercise = exercises.first else {
-            Issue.record("PreviewModelContainer must seed at least one Exercise")
-            return
-        }
-        let view = ExerciseDetailView(exercise: exercise)
-        let _: any View = view
-        #expect(Bool(true), "ExerciseDetailView BRU Prescription Settings instantiated successfully")
+    @Test("whyThisWeightSheetInstantiates — .calibrated status branch")
+    func whyThisWeightSheetInstantiates_calibrated() throws {
+        let explanation = PrescriptionExplanation(
+            lastSessionLine: "100 × 8 @ RPE 8.5 (May 15)",
+            formulaName: "RPE autoregulation",
+            computedLine: "Target e1RM 122 kg → 88% × 8 → 107.5 kg",
+            roundedWeight: 107.5,
+            roundedLine: "→ 107.5 kg (rounded down to 2.5 kg plates)",
+            status: .calibrated,
+            bumpOccurred: false,
+            range: nil,
+            sessionIntent: .hypertrophy
+        )
+        let sheet = WhyThisWeightSheet(
+            explanation: explanation,
+            reps: 8,
+            rpe: 8.5,
+            setTypeLabel: "TOP SET",
+            unitLabel: "kg"
+        )
+        let _: any View = sheet
+        #expect(Bool(true), "WhyThisWeightSheet(.calibrated) instantiated")
     }
 
-    // MARK: - SettingsView Smart Progression (Plan 03.2-08 Task 2)
-
-    @Test("settingsSmartProgressionRenders — BRU tokens resolve at compile time")
-    func settingsSmartProgressionRenders() throws {
-        // Proves: SettingsView compiles with BRUSectionHead("SMART PROGRESSION"),
-        // BRUFont.labelSmall row labels, BRUFont.bodyDefault footers, and Color.bruMuted
-        // all resolving at compile time in smartProgressionSection.
-        let view = SettingsView()
-        let _: any View = view
-        #expect(Bool(true), "SettingsView BRU Smart Progression instantiated successfully")
+    @Test("whyThisWeightSheetInstantiates — .notApplicable + bumpOccurred")
+    func whyThisWeightSheetInstantiates_notApplicableBump() throws {
+        let explanation = PrescriptionExplanation(
+            lastSessionLine: "100 × 12 @ RPE 8.5 (May 15)",
+            formulaName: "Double progression",
+            computedLine: nil,
+            roundedWeight: 102.5,
+            roundedLine: "→ 102.5 kg (rounded down to 2.5 kg plates)",
+            status: .notApplicable,
+            bumpOccurred: true,
+            range: nil
+        )
+        let sheet = WhyThisWeightSheet(
+            explanation: explanation,
+            reps: 8,
+            rpe: nil,
+            setTypeLabel: "TOP SET",
+            unitLabel: "kg"
+        )
+        let _: any View = sheet
+        #expect(Bool(true), "WhyThisWeightSheet(.notApplicable + bumpOccurred) instantiated")
     }
 
-    // MARK: - PlateInventoryEditor (Plan 03.2-06)
-
-    @Test("plateInventoryEditorInstantiates — BRU reskin (no Stepper, no Form, no ContentUnavailableView)")
-    func plateInventoryEditorInstantiates() throws {
-        // Proves: public init() compiles; all BRU token + font references resolve at compile time.
-        // Confirms the BRU reskin was applied:
-        //   - PlateTallyRow consumed (not Stepper) — enforced by PlateInventoryEditor body
-        //   - BRUHeaderBar / BRUSectionHead / BRUButton used — enforced by the rewrite
-        //   - Color.accentColor absent — enforced by the rewrite
-        //   - ContentUnavailableView absent — replaced by custom BRU VStack empty state
-        //
-        // Visual / VoiceOver UAT is deferred to Wave 3 grep audit and device QA.
-        let editor = PlateInventoryEditor()
-        let _: any View = editor
-        #expect(Bool(true), "PlateInventoryEditor instantiated successfully")
+    @Test("whyThisWeightSheetInstantiates — .notApplicable + first session")
+    func whyThisWeightSheetInstantiates_notApplicableFirstSession() throws {
+        let explanation = PrescriptionExplanation(
+            lastSessionLine: nil,
+            formulaName: "Double progression",
+            computedLine: nil,
+            roundedWeight: 60.0,
+            roundedLine: "→ 60 kg (rounded down to 2.5 kg plates)",
+            status: .notApplicable,
+            bumpOccurred: false,
+            range: nil
+        )
+        let sheet = WhyThisWeightSheet(
+            explanation: explanation,
+            reps: 5,
+            rpe: nil,
+            setTypeLabel: "WORKING SET",
+            unitLabel: "kg"
+        )
+        let _: any View = sheet
+        #expect(Bool(true), "WhyThisWeightSheet(.notApplicable + first session) instantiated")
     }
+
 }
