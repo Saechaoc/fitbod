@@ -2,14 +2,25 @@
 //  TryVariationSheet.swift
 //  fitbod
 //
-//  Phase 5 PROG-06 Branch 4 — sheet listing 2-3 alternative exercises
-//  by Exercise.mechanic + primary-muscle overlap, excluding the source
-//  exercise AND exercises with zero logged SetEntry rows ever (per
-//  RESEARCH §10 Pitfall #6 mitigation).
+//  Phase 5.1 Plan 02 — BRU reskin: BRUHeaderBar + BRUSectionHead + BRUDivider rows
+//  + BRUButton(.ghost) footer, replacing .navigationTitle + List + accent footer link.
 //
-//  UI-SPEC §Component Inventory + §Copywriting Contract verbatim copy.
-//  Presentation: medium + large detents, navigation title "Try
-//  Variation".
+//  BRU contract per must_haves:
+//   - NavigationStack header replaced with BRUHeaderBar(left: nil, center: "Try
+//     Variation", right: HeaderAction("DONE") { dismiss() })
+//   - Section subtitle uses BRUFont.bodyDefault
+//   - List replaced with VStack + BRUDivider(.hair) between rows
+//   - BRUSectionHead at top
+//   - Per-row HStack: exercise name (bodyEmphasis bruInk) + date/NEVER LOGGED (labelMicro bruMuted)
+//   - Footer: BRUButton("View all similar exercises in library", kind: .ghost)
+//   - Empty state: verbatim "No similar exercises found in your library." (bodyDefault bruMuted)
+//   - NO .navigationTitle / NO Color.accentColor / NO Color(.system*) /
+//     NO RoundedRectangle / NO .font(.body|.headline|.subheadline|.caption|.footnote) /
+//     NO Image(systemName:)
+//
+//  Public init signature UNCHANGED: (sourceExercise: Exercise, onSelect: (Exercise?) -> Void)
+//  FetchDescriptor pipeline PRESERVED (mechanic → primary-muscle overlap → logged gate → sort + prefix(3))
+//  Sheet detents PRESERVED: [.medium, .large]
 //
 
 import SwiftData
@@ -31,70 +42,63 @@ public struct TryVariationSheet: View {
 
     public var body: some View {
         NavigationStack {
-            VStack(alignment: .leading, spacing: 0) {
-                Text("Exercises with similar mechanics and muscle targets:")
-                    .font(.body)
-                    .foregroundStyle(.secondary)
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 12)
+            VStack(spacing: 0) {
+                BRUHeaderBar(
+                    left: nil,
+                    center: "Try Variation",
+                    right: HeaderAction("DONE") { dismiss() }
+                )
 
-                if !hasLoaded {
-                    ProgressView()
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                } else if candidates.isEmpty {
-                    VStack(spacing: 8) {
-                        Text("No similar exercises found")
-                            .font(.headline)
-                        Button("View all similar exercises in library") {
-                            onSelect(nil)
-                            dismiss()
-                        }
-                        .foregroundStyle(Color.accentColor)
-                    }
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .padding(.vertical, 32)
-                } else {
-                    List(candidates, id: \.id) { exercise in
-                        HStack {
-                            Text(exercise.canonicalName.capitalized)
-                            Spacer()
-                            if let mostRecent = mostRecentLogDate(for: exercise) {
-                                Text(mostRecent, format: .dateTime.month().day())
-                                    .font(.caption)
-                                    .foregroundStyle(.tertiary)
+                ScrollView {
+                    LazyVStack(alignment: .leading, spacing: 0) {
+                        BRUSectionHead("Exercises with similar mechanics and muscle targets:")
+
+                        if !hasLoaded {
+                            ProgressView()
+                                .frame(maxWidth: .infinity, minHeight: 80)
+                                .padding(16)
+                        } else if candidates.isEmpty {
+                            Text("No similar exercises found in your library.")
+                                .font(BRUFont.bodyDefault)
+                                .foregroundStyle(Color.bruMuted)
+                                .padding(16)
+                        } else {
+                            ForEach(Array(candidates.enumerated()), id: \.element.id) { idx, exercise in
+                                TryVariationRow(
+                                    exercise: exercise,
+                                    lastLogged: mostRecentLogDate(for: exercise)
+                                ) {
+                                    onSelect(exercise)
+                                    dismiss()
+                                }
+                                BRUDivider(.hair)
                             }
                         }
-                        .contentShape(Rectangle())
-                        .onTapGesture {
-                            onSelect(exercise)
-                            dismiss()
-                        }
-                    }
-                    .listStyle(.plain)
 
-                    Button("View all similar exercises in library") {
-                        onSelect(nil)
-                        dismiss()
+                        BRUButton("View all similar exercises in library", kind: .ghost) {
+                            presentLibraryDeepLink()
+                        }
+                        .padding(.top, 8)
                     }
-                    .foregroundStyle(Color.accentColor)
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 12)
                 }
             }
-            .navigationTitle("Try Variation")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Done") { dismiss() }
-                }
-            }
-            .task {
-                candidates = loadCandidates()
-                hasLoaded = true
-            }
+            .background(Color.bruPaper)
         }
         .presentationDetents([.medium, .large])
+        .task {
+            candidates = loadCandidates()
+            hasLoaded = true
+        }
     }
+
+    // MARK: - Library deep-link
+
+    private func presentLibraryDeepLink() {
+        onSelect(nil)
+        dismiss()
+    }
+
+    // MARK: - Data pipeline (PRESERVED verbatim)
 
     @MainActor
     private func loadCandidates() -> [Exercise] {
@@ -112,7 +116,7 @@ public struct TryVariationSheet: View {
         )
         let mechanicMatches = (try? ctx.fetch(descriptor)) ?? []
 
-        // ≥1 overlapping primary-muscle slug (in-memory set intersection).
+        // >= 1 overlapping primary-muscle slug (in-memory set intersection).
         let withOverlap = mechanicMatches.filter { candidate in
             let candidateSlugs = Set(
                 candidate.primaryMuscleSlugsJoined
@@ -144,7 +148,43 @@ public struct TryVariationSheet: View {
             predicate: #Predicate<SessionExercise> { $0.exercise?.id == exerciseID }
         )
         descriptor.fetchLimit = 5
-        let candidates = (try? ctx.fetch(descriptor)) ?? []
-        return candidates.compactMap { $0.session?.startedAt }.max()
+        let results = (try? ctx.fetch(descriptor)) ?? []
+        return results.compactMap { $0.session?.startedAt }.max()
+    }
+}
+
+// MARK: - TryVariationRow
+
+private struct TryVariationRow: View {
+    let exercise: Exercise
+    let lastLogged: Date?
+    let onTap: () -> Void
+
+    private var dateLabel: String {
+        guard let date = lastLogged else { return "NEVER LOGGED" }
+        let formatter = DateFormatter()
+        formatter.dateStyle = .short
+        formatter.timeStyle = .none
+        return formatter.string(from: date)
+    }
+
+    var body: some View {
+        Button(action: onTap) {
+            HStack {
+                Text(exercise.canonicalName)
+                    .font(BRUFont.bodyEmphasis)
+                    .foregroundStyle(Color.bruInk)
+                Spacer()
+                Text(dateLabel)
+                    .font(BRUFont.labelMicro)
+                    .tracking(1.0)
+                    .textCase(.uppercase)
+                    .foregroundStyle(Color.bruMuted)
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
     }
 }
