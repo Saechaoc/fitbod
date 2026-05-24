@@ -2,45 +2,16 @@
 //  SupersetAssignmentSheet.swift
 //  fitbod
 //
-//  Wave-3 plan 03-03 — the sheet presented by the long-press menu on a
-//  `RoutineExerciseCard` when the user taps "Move to Superset…" or
-//  "Make Superset". Lists every existing `SupersetGroup` in the current
-//  routine + a "New Superset" accent action row (UI-SPEC accent surface
-//  #9 / verbatim row label).
+//  Phase 2.1 Plan 05 REWRITE — replaces NavigationStack .navigationTitle / .toolbar
+//  with BRUHeaderBar("ADD TO SUPERSET") + BRU-styled rows.
 //
-//  ## Row label format
+//  Mutation surface: writes to RoutineExerciseDraft.supersetGroupID (in-memory draft).
+//  The persisted write happens at Save time via RoutineDraft.save(into:).
 //
-//  UI-SPEC § Routine builder verbatim format:
-//    "Superset A (Bench + Row)" / "Superset B (Squat + Curl)" / ...
-//  The letter is `A + sortOrder` (A, B, C, …). The "(Bench + Row)"
-//  suffix is the joined names of the RoutineExercise rows already
-//  pointing at this group; empty groups render as just "Superset A".
+//  Verbatim copy: "ADD TO SUPERSET" / "Cancel" — anchored in RoutineBuilderBRUCopyTests.
 //
-//  ## Mutation surface
-//
-//  The sheet writes to `RoutineExerciseDraft.supersetGroupID` — the
-//  in-memory builder draft, NOT the persisted `RoutineExercise` row.
-//  The persisted write happens later in `RoutineDraft.save(into:)` on
-//  the user's Save tap, so cancelling the builder leaves no side
-//  effects in the SwiftData store.
-//
-//  ## SupersetGroup insertion
-//
-//  "New Superset" inserts a fresh `SupersetGroup` and immediately
-//  saves the context so the row participates in `@Query` predicates
-//  the next time the sheet is presented. The new group is assigned to
-//  the current exercise draft; the user can then long-press a SECOND
-//  exercise card and pick the now-listed "Superset A" entry to pair
-//  them up.
-//
-//  ## Edge cases
-//
-//  - The sheet is gated on a saved routine in `RoutineBuilderView`
-//    (the parent's `editing != nil` check). `SupersetGroup.routineID`
-//    needs to point at a persisted Routine; presenting the sheet on
-//    an unsaved draft would create orphan groups. The parent enforces
-//    this contract — the sheet itself trusts that `routine` is
-//    persisted.
+//  BRU contract: NO accentColor / NO Image(systemName:) / NO Capsule / NO RoundedRectangle
+//  NO .navigationTitle / NO .toolbar / NO accentColor
 //
 
 import SwiftUI
@@ -67,49 +38,63 @@ public struct SupersetAssignmentSheet: View {
 
     public var body: some View {
         NavigationStack {
-            List {
-                ForEach(groups) { group in
-                    Button {
-                        exerciseDraft.supersetGroupID = group.id
-                        dismiss()
-                    } label: {
-                        Text(label(for: group))
+            VStack(spacing: 0) {
+                ScrollView {
+                    VStack(spacing: 0) {
+                        // Existing superset groups
+                        ForEach(groups) { group in
+                            Button {
+                                exerciseDraft.supersetGroupID = group.id
+                                dismiss()
+                            } label: {
+                                HStack {
+                                    Text(label(for: group))
+                                        .font(BRUFont.bodyEmphasis)
+                                        .foregroundStyle(Color.bruInk)
+                                        .multilineTextAlignment(.leading)
+                                    Spacer()
+                                }
+                                .padding(.horizontal, 16)
+                                .padding(.vertical, 14)
+                            }
+                            .buttonStyle(.plain)
+
+                            BRUDivider(.hair)
+                        }
+
+                        // "New Superset" signal action row
+                        BRUButton("+ New superset", kind: .signal, size: .md) {
+                            let newGroup = SupersetGroup(
+                                routineID: routine.id,
+                                kindRaw: SupersetKind.paired.rawValue,
+                                sortOrder: groups.count
+                            )
+                            ctx.insert(newGroup)
+                            try? ctx.save()
+                            exerciseDraft.supersetGroupID = newGroup.id
+                            dismiss()
+                        }
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 12)
                     }
-                    .buttonStyle(.plain)
                 }
-                Button {
-                    let newGroup = SupersetGroup(
-                        routineID: routine.id,
-                        kindRaw: SupersetKind.paired.rawValue,
-                        sortOrder: groups.count
-                    )
-                    ctx.insert(newGroup)
-                    try? ctx.save()
-                    exerciseDraft.supersetGroupID = newGroup.id
-                    dismiss()
-                } label: {
-                    Text("New Superset")
-                        .foregroundStyle(Color.accentColor)
-                }
-                .buttonStyle(.plain)
             }
-            .navigationTitle("Add to Superset")
-            .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
-                    Button("Cancel") { dismiss() }
-                }
+            .background(Color.bruPaper.ignoresSafeArea())
+            .navigationBarHidden(true)
+            .safeAreaInset(edge: .top) {
+                BRUHeaderBar(
+                    left: HeaderAction("Cancel") { dismiss() },
+                    center: "ADD TO SUPERSET",
+                    right: nil
+                )
             }
         }
     }
 
     /// UI-SPEC § Routine builder verbatim format:
     ///   "Superset A (Bench + Row)" / "Superset B (Squat + Curl)"
-    /// Letter is derived from `sortOrder` (A = 0, B = 1, …). The
-    /// "(Bench + Row)" suffix lists the names of every RoutineExercise
-    /// pointing at this group; empty groups render as just
-    /// "Superset A".
     private func label(for group: SupersetGroup) -> String {
-        let letter = String(UnicodeScalar(UInt8(65 + group.sortOrder)))
+        let letter = String(UnicodeScalar(UInt8(65 + min(group.sortOrder, 25))))
         let routineExercises = (routine.exercises ?? [])
             .filter { $0.supersetGroupID == group.id }
         let names = routineExercises
@@ -121,3 +106,28 @@ public struct SupersetAssignmentSheet: View {
         return "Superset \(letter) (\(names))"
     }
 }
+
+// MARK: - Preview
+
+#if DEBUG
+#Preview("SupersetAssignmentSheet — no groups") {
+    // Preview requires a ModelContainer — use in-memory for safety
+    let schema = Schema(SchemaV5.models)
+    let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
+    if let container = try? ModelContainer(
+        for: schema,
+        migrationPlan: FitbodSchemaMigrationPlan.self,
+        configurations: config
+    ) {
+        let routine = Routine()
+        container.mainContext.insert(routine)
+        let draft = RoutineExerciseDraft()
+        return AnyView(
+            SupersetAssignmentSheet(routine: routine, exerciseDraft: draft)
+                .modelContainer(container)
+        )
+    } else {
+        return AnyView(Text("Preview unavailable").foregroundStyle(Color.bruMuted))
+    }
+}
+#endif
