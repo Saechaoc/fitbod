@@ -74,14 +74,14 @@ Granular, prescriptive workout sessions — every set in a session is intentiona
   5. `RoutineBuilderView`, `SessionLoggerView`, `SessionHistoryView` rewritten to match their corresponding `bru-screens/*.jsx` mockups using BRU primitives only — no Apple HIG fallbacks
   6. `RestTimerOverlay` is a full-bleed slab (NOT a capsule); `SetTypeChip` drops `Color(.systemBlue|Orange|Red|Purple)` and uses BRU palette only; `PinnedNoteCapsule` drops `Color(.systemYellow)` and uses `bruSignal` or `bruInk`; `IntentChip` rebuilt as `BRUChip` instance
   7. Grep audit (Wave G) confirms zero residual references to deprecated tokens across all Phase 2 surface files; existing Phase 2 functional tests still pass; UI snapshot tests added for each rewritten screen
-**Plans:** 6/11 plans executed
+**Plans:** 7/11 plans executed
 
 **Plan list:**
 - [x] 02.1-01-PLAN.md — Wave 1: BRU color tokens (8 colorsets) + OFL fonts + Color+BRU.swift + Info.plist UIAppFonts + BRUFont.swift
 - [x] 02.1-02-PLAN.md — Wave 2: 6 core BRU primitives (BRUDivider, BRUChip, BRUDisplay, BRUReadout, BRUSectionHead, BRUButton)
 - [x] 02.1-03-PLAN.md — Wave 2: 9 composite BRU primitives (BRUHeaderBar, BRUTabBar, BRUSpark, BRUDashedSlot, BRUPillButton, BRUSupersetBracket, BRUCornerBadge, SetCompletionGlyph, BRUPhoneFrame)
 - [ ] 02.1-04-PLAN.md — Wave 3: TodayView extraction + 8 BRU TodayView components (TodayStatStrip / BlockContextBand / WeekTickerCells / BlackSlabCTA / ResumeWorkoutSlab / LiftListSection / LiftListRow)
-- [ ] 02.1-05-PLAN.md — Wave 3: RoutineBuilderView reskin + RoutineExerciseCard + PrescriptionEditorRow + SetRowsContainer + 4 supporting Routines files
+- [x] 02.1-05-PLAN.md — Wave 3: RoutineBuilderView reskin + RoutineExerciseCard + PrescriptionEditorRow + SetRowsContainer + 4 supporting Routines files
 - [x] 02.1-06-PLAN.md — Wave 3: RoutinesListView + RoutineRow + NewFolderSheet + MoveRoutineSheet
 - [x] 02.1-07-PLAN.md — Wave 3: SessionLoggerView core + SessionExerciseCard + SetRow + SetTypeChip + IntentChip + InlineRPEChipRow + DecimalRPEPickerSheet
 - [ ] 02.1-08-PLAN.md — Wave 3: 11 SessionLogger widgets (PinnedNoteCapsule yellow ban + WorkoutHeaderToolbar extraction + AddUnplannedExerciseButton BRUDashedSlot + ResumeWorkoutBanner + 7 others)
