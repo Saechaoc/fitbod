@@ -33,9 +33,9 @@
 //
 //  RESEARCH § State of the Art and PITFALLS.md both forbid wrapping
 //  `TabView` in a parent `NavigationStack`. Each tab that needs a
-//  navigation surface owns one. The `PlaceholderTabView` and the two
-//  interim tab hosts (`LibraryTabHost`, `SettingsTabHost`) below each
-//  declare their own.
+//  navigation surface owns one. The interim tab hosts (`LibraryTabHost`,
+//  `SettingsTabHost`) below each declare their own.
+//  (PlaceholderTabView deleted in Phase 2.1 Plan 11 — all tabs are real.)
 //
 //  ## Tab hosts
 //
