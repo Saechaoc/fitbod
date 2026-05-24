@@ -43,6 +43,9 @@ public struct BRUCornerBadge: View {
 
     // MARK: Init
 
+    // NOTE: Color? = nil pattern required — generated Color.bru* tokens are `internal`
+    // and cannot appear as default argument values in `public` inits under Swift 6
+    // MemberImportVisibility. Nil-coalescing in the body is the canonical workaround.
     public init(_ label: String, fill: Color? = nil, textColor: Color? = nil) {
         self.label = label
         self.fill = fill ?? .bruSignal

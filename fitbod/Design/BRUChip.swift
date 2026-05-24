@@ -40,11 +40,13 @@ public struct BRUChip: View {
     /// Creates a BRU chip.
     /// - Parameters:
     ///   - label: The chip's display string. Source string is stored as-typed for VoiceOver.
-    ///   - color: Outline (and fill background) color. Defaults to `Color.bruInk`. Pass `nil` to use default.
+    ///   - color: Outline (and fill background) color. Defaults to `Color.bruInk`.
     ///   - fill: When `true`, renders `color` as the background fill with `Color.bruPaper` text.
     ///           When `false` (default), renders transparent background with `color` text + outline.
     ///   - textCase: Text transform applied at the view layer. Defaults to `.uppercase`.
     ///               Pass `nil` to render the label as-typed.
+    // NOTE: Color? = nil pattern — generated Color.bru* tokens are `internal` and
+    // cannot appear as default argument values in `public` inits under Swift 6.
     public init(
         _ label: String,
         color: Color? = nil,

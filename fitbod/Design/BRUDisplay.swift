@@ -69,7 +69,8 @@ public struct BRUDisplay: View {
     ///   - text: The display string. Case is as-typed (apply `.textCase` at call site if needed).
     ///   - size: Display tier — `.hero` (56pt), `.large` (32pt), or `.medium` (18pt).
     ///   - color: Foreground color. Defaults to `Color.bruInk`.
-    ///            Pass `nil` to use the default (`Color.bruInk`).
+    // NOTE: Color? = nil pattern — generated Color.bru* tokens are `internal` and
+    // cannot appear as default argument values in `public` inits under Swift 6.
     public init(_ text: String, size: BRUDisplaySize, color: Color? = nil) {
         self.text = text
         self.size = size

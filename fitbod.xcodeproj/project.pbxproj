@@ -74,6 +74,10 @@
 		624AD5142FB378BE00D9EF2E /* Exceptions for "fitbod" folder in "FitbodWidgetsExtension" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
+				Design/BRUButton.swift,
+				Design/BRUChip.swift,
+				Design/BRUDisplay.swift,
+				Design/BRUDivider.swift,
 				Design/BRUFont.swift,
 				"Design/Color+BRU.swift",
 				Sessions/RestTimer/RestTimerAttributes.swift,
@@ -549,6 +553,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = NO;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = fitbod/fitbod.entitlements;
 				CODE_SIGN_STYLE = Automatic;
@@ -593,6 +598,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = NO;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = fitbod/fitbod.entitlements;
 				CODE_SIGN_STYLE = Automatic;
