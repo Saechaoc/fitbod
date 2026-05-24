@@ -32,8 +32,15 @@
 //  This view declares one internally with `path: $path` bound to the
 //  RootView-owned NavigationPath (so re-tap on the Progress tab clears it).
 //
+//  ## BRU Reskin (Phase 6.1 Plan 01)
+//
+//  Rebuilt to BRU brutalist design system: BRUHeaderBar replaces .navigationTitle,
+//  BRUSectionHead + BRUDivider rows replace List/Form, BRU type roles replace
+//  system fonts. No List, Form, .listStyle, .navigationTitle, .toolbar,
+//  Color.accentColor, Color(.system*), Image(systemName:), or .buttonStyle(.bordered).
+//
 //  [CITED: CONTEXT D-01/D-03 + UI-SPEC § Progress tab and ProgressHomeView
-//   copy table + PATTERNS adjudication #3]
+//   copy table + PATTERNS adjudication #3 + 06-UI-SPEC.md §Design Pivot]
 //
 
 import SwiftData
@@ -77,13 +84,22 @@ public struct ProgressHomeView: View {
 
     public var body: some View {
         NavigationStack(path: $path) {
-            List {
-                recentSection
-                trendsSection
-                compareSection
+            ZStack(alignment: .top) {
+                Color.bruPaper.ignoresSafeArea()
+
+                VStack(spacing: 0) {
+                    BRUHeaderBar(center: "Progress")
+
+                    ScrollView {
+                        LazyVStack(spacing: 0) {
+                            recentSection
+                            trendsSection
+                            compareSection
+                        }
+                    }
+                }
             }
-            .listStyle(.insetGrouped)
-            .navigationTitle("Progress")
+            .navigationBarHidden(true)
             .navigationDestination(for: ExerciseProgressRoute.self) { route in
                 routeDestination(route)
             }
@@ -100,55 +116,103 @@ public struct ProgressHomeView: View {
     /// + last-logged relative date. Tap pushes ExerciseProgressView.
     @ViewBuilder
     private var recentSection: some View {
-        Section {
-            if recentExercisesCondensed.isEmpty {
-                emptyRow(
-                    heading: "No history yet",
-                    body: "Log a session to start seeing your progress."
-                )
-            } else {
-                ForEach(recentExercisesCondensed, id: \.id) { exercise in
-                    NavigationLink(value: ExerciseProgressRoute.progress(exercise.id)) {
-                        VStack(alignment: .leading, spacing: 4) {
+        BRUSectionHead("Recent")
+
+        if recentExercisesCondensed.isEmpty {
+            bruEmptyState(
+                heading: "No history yet",
+                body: "Log a session to start seeing your progress."
+            )
+        } else {
+            ForEach(Array(recentExercisesCondensed.enumerated()), id: \.element.id) { index, exercise in
+                Button {
+                    path.append(ExerciseProgressRoute.progress(exercise.id))
+                } label: {
+                    HStack(spacing: 12) {
+                        VStack(alignment: .leading, spacing: 2) {
                             Text(exercise.name)
-                                .font(.body)
+                                .font(BRUFont.bodyEmphasis)
+                                .foregroundStyle(Color.bruInk)
                             Text(recentSubLabel(for: exercise))
-                                .font(.caption)
-                                .foregroundStyle(Color(.secondaryLabel))
+                                .font(BRUFont.labelSmall)
+                                .foregroundStyle(Color.bruMuted)
                         }
+                        Spacer()
+                        Text("›")
+                            .font(BRUFont.bodyEmphasis)
+                            .foregroundStyle(Color.bruMuted)
                     }
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 12)
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+
+                if index < recentExercisesCondensed.count - 1 {
+                    BRUDivider(.hair)
                 }
             }
-        } header: {
-            Text("Recent")
         }
+
+        BRUDivider(.ink)
     }
 
     /// Trends — Weekly Tonnage + Personal Records rows. Always renders.
     @ViewBuilder
     private var trendsSection: some View {
-        Section {
-            NavigationLink(value: ProgressHomeRoute.weeklyTonnage) {
-                VStack(alignment: .leading, spacing: 4) {
+        BRUSectionHead("Trends")
+
+        // Weekly Tonnage row
+        Button {
+            path.append(ProgressHomeRoute.weeklyTonnage)
+        } label: {
+            HStack(spacing: 12) {
+                VStack(alignment: .leading, spacing: 2) {
                     Text("Weekly Tonnage")
-                        .font(.body)
+                        .font(BRUFont.bodyEmphasis)
+                        .foregroundStyle(Color.bruInk)
                     Text(weeklyTonnageSubLabel)
-                        .font(.caption)
-                        .foregroundStyle(Color(.secondaryLabel))
+                        .font(BRUFont.labelSmall)
+                        .foregroundStyle(Color.bruMuted)
                 }
+                Spacer()
+                Text("›")
+                    .font(BRUFont.bodyEmphasis)
+                    .foregroundStyle(Color.bruMuted)
             }
-            NavigationLink(value: ProgressHomeRoute.allPRs) {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("Personal Records")
-                        .font(.body)
-                    Text(allPRsSubLabel)
-                        .font(.caption)
-                        .foregroundStyle(Color(.secondaryLabel))
-                }
-            }
-        } header: {
-            Text("Trends")
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
+            .contentShape(Rectangle())
         }
+        .buttonStyle(.plain)
+
+        BRUDivider(.hair)
+
+        // Personal Records row
+        Button {
+            path.append(ProgressHomeRoute.allPRs)
+        } label: {
+            HStack(spacing: 12) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Personal Records")
+                        .font(BRUFont.bodyEmphasis)
+                        .foregroundStyle(Color.bruInk)
+                    Text(allPRsSubLabel)
+                        .font(BRUFont.labelSmall)
+                        .foregroundStyle(Color.bruMuted)
+                }
+                Spacer()
+                Text("›")
+                    .font(BRUFont.bodyEmphasis)
+                    .foregroundStyle(Color.bruMuted)
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+
+        BRUDivider(.ink)
     }
 
     /// Compare — single "This week vs last week" row anchored on the
@@ -156,26 +220,39 @@ public struct ProgressHomeView: View {
     /// sessions exist.
     @ViewBuilder
     private var compareSection: some View {
-        Section {
-            if let anchor = completedSessions.first {
-                NavigationLink(value: ProgressHomeRoute.sessionComparison(anchor.id)) {
-                    VStack(alignment: .leading, spacing: 4) {
+        BRUSectionHead("Compare")
+
+        if let anchor = completedSessions.first {
+            Button {
+                path.append(ProgressHomeRoute.sessionComparison(anchor.id))
+            } label: {
+                HStack(spacing: 12) {
+                    VStack(alignment: .leading, spacing: 2) {
                         Text("This week vs last week")
-                            .font(.body)
-                        Text("Compare to a routine you've logged twice.")
-                            .font(.caption)
-                            .foregroundStyle(Color(.secondaryLabel))
+                            .font(BRUFont.bodyEmphasis)
+                            .foregroundStyle(Color.bruInk)
+                        Text(compareSubLabel)
+                            .font(BRUFont.labelSmall)
+                            .foregroundStyle(Color.bruMuted)
                     }
+                    Spacer()
+                    Text("›")
+                        .font(BRUFont.bodyEmphasis)
+                        .foregroundStyle(Color.bruMuted)
                 }
-            } else {
-                emptyRow(
-                    heading: "No comparable session yet",
-                    body: "Log a routine twice to compare."
-                )
+                .padding(.horizontal, 16)
+                .padding(.vertical, 12)
+                .contentShape(Rectangle())
             }
-        } header: {
-            Text("Compare")
+            .buttonStyle(.plain)
+        } else {
+            bruEmptyState(
+                heading: "No comparable session yet",
+                body: "Log a routine twice to compare."
+            )
         }
+
+        BRUDivider(.ink)
     }
 
     // MARK: - Navigation destinations
@@ -210,20 +287,25 @@ public struct ProgressHomeView: View {
         }
     }
 
-    // MARK: - Helpers
+    // MARK: - BRU empty state
 
     @ViewBuilder
-    private func emptyRow(heading: String, body: String) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
+    private func bruEmptyState(heading: String, body: String) -> some View {
+        VStack(alignment: .center, spacing: 8) {
             Text(heading)
-                .font(.body)
-                .foregroundStyle(Color(.secondaryLabel))
+                .font(BRUFont.bodyEmphasis)
+                .foregroundStyle(Color.bruMuted)
             Text(body)
-                .font(.caption)
-                .foregroundStyle(Color(.tertiaryLabel))
+                .font(BRUFont.bodyDefault)
+                .foregroundStyle(Color.bruMuted)
+                .multilineTextAlignment(.center)
         }
-        .padding(.vertical, 4)
+        .padding(.horizontal, 16)
+        .padding(.vertical, 32)
+        .frame(maxWidth: .infinity)
     }
+
+    // MARK: - Helpers
 
     /// Top-10 most-recently-trained Exercise rows. Dedupes by
     /// exercise.id keeping the most-recent SessionExercise.
@@ -287,5 +369,9 @@ public struct ProgressHomeView: View {
     private var allPRsSubLabel: String {
         let exerciseCount = allExercises.count
         return "Browse PRs across \(exerciseCount) exercises"
+    }
+
+    private var compareSubLabel: String {
+        "Compare to a routine you've logged twice."
     }
 }
