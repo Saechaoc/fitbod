@@ -1,5 +1,5 @@
 // ExerciseHistoryView.swift
-// fitbod — Phase 2.1 Plan 10
+// fitbod — Phase 2.1 Plan 10 → Phase 06.1-06 BRU toolbar pass
 //
 // BRU rewrite of the per-exercise history view.
 // UI-SPEC v2 § Exercise history view (lines 423-439, 607-614).
@@ -27,6 +27,9 @@
 // BRU contract: NO Capsule() / NO RoundedRectangle / NO accentColor /
 //               NO Image(systemName:) / NO Color(.system*) /
 //               NO .font(.body/.headline/.title*/caption)
+//
+// Phase 06.1-06: replaced Phase-6 chart SF Symbol route with BRU HeaderAction("PROGRESS")
+//               wired through BRUHeaderBar right slot. FILTER stub removed (was unimplemented).
 
 import SwiftUI
 import SwiftData
@@ -45,8 +48,11 @@ public struct ExerciseHistoryView: View {
     /// nil = "ALL" — no intent filter. Bound to IntentFilterChipRow.
     @State private var intentFilter: Intent? = nil
 
-    /// Sheet state for filter panel (future: advanced filter sheet)
-    @State private var presentingFilter = false
+    /// Navigation state for "PROGRESS" HeaderAction — presents ExerciseProgressView.
+    @State private var presentingProgress = false
+
+    /// Whether the exercise has any logged set entries (drives PROGRESS affordance visibility).
+    @State private var hasHistory: Bool = false
 
     public init(exercise: Exercise) {
         self.exercise = exercise
@@ -71,17 +77,24 @@ public struct ExerciseHistoryView: View {
                     FilteredHistoryContent(
                         exercise: exercise,
                         intentFilter: $intentFilter,
-                        presentingFilter: $presentingFilter
+                        onHistoryChanged: { count in
+                            hasHistory = count > 0
+                        }
                     )
                 }
             }
             .background(Color.bruPaper.ignoresSafeArea())
             .navigationBarHidden(true)
+            .navigationDestination(isPresented: $presentingProgress) {
+                ExerciseProgressView(exercise: exercise)
+            }
             .safeAreaInset(edge: .top) {
                 BRUHeaderBar(
                     left: HeaderAction("‹", action: { dismiss() }),
                     center: "History",
-                    right: HeaderAction("FILTER", isSignal: true, action: { presentingFilter = true })
+                    right: hasHistory
+                        ? HeaderAction("PROGRESS", isSignal: false, action: { presentingProgress = true })
+                        : nil
                 )
             }
         }
@@ -95,14 +108,16 @@ public struct ExerciseHistoryView: View {
 private struct FilteredHistoryContent: View {
     let exercise: Exercise
     @Binding var intentFilter: Intent?
-    @Binding var presentingFilter: Bool
+
+    /// Callback to inform the outer view whether any history exists (drives PROGRESS affordance).
+    let onHistoryChanged: (Int) -> Void
 
     @Query private var sessionExercises: [SessionExercise]
 
-    init(exercise: Exercise, intentFilter: Binding<Intent?>, presentingFilter: Binding<Bool>) {
+    init(exercise: Exercise, intentFilter: Binding<Intent?>, onHistoryChanged: @escaping (Int) -> Void) {
         self.exercise = exercise
         self._intentFilter = intentFilter
-        self._presentingFilter = presentingFilter
+        self.onHistoryChanged = onHistoryChanged
 
         // Pitfall 1 workaround: capture comparison value into local before #Predicate
         let targetID = exercise.id
@@ -121,6 +136,9 @@ private struct FilteredHistoryContent: View {
         let sessionCount = Set(sessionExercises.compactMap { $0.session?.id }).count
         let grouped = groupedByDate(from: completed)
         let prFooter = prStats(from: completed)
+
+        // Inform outer view of history count so it can show/hide PROGRESS affordance
+        let _ = onHistoryChanged(totalCount)
 
         // 3-cell stat strip
         HStack(spacing: 0) {
