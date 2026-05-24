@@ -2,13 +2,7 @@
 
 ## What This Is
 
-A personal iOS app for comprehensive, detail-rich weight training tracking — built for one serious lifter (the developer) who finds existing apps (Strong, Hevy, Jefit, FitNotes, Fitbod) shallow on routine building, prescription, periodization, and progress visualization. It treats lifting like a discipline: session-level intent + progression, per-exercise prescription detail, user-defined training blocks with phased mesocycles, auto warm-up ramps, RP-style muscle-volume tracking with MEV/MAV/MRV bars + heatmap, plateau detection, end-of-block review, and CSV/JSON export + .fitbodbackup ZIP backup/restore.
-
-## Current State
-
-**Shipped:** v1.0 — Granular Lifting Tracker (2026-05-23)
-
-7 phases (Phases 1–6 + 3.1 pivot), 67 plans, 304 commits, ~29,500 LOC Swift, 13-day timeline (2026-05-10 → 2026-05-23). SchemaV6 with full migration chain V1→V6. ~616 unit tests passing. All 47 v1 requirements satisfied.
+A personal iOS app for comprehensive, detail-rich weight training tracking — built for one serious lifter (the developer) who finds existing apps (Strong, Hevy, Jefit, FitNotes, Fitbod) shallow on routine building, prescription, periodization, and progress visualization. It treats lifting like a discipline: per-exercise prescription, user-selectable smart progression, defined training blocks, auto warm-up ramps, and RP-style muscle-volume tracking.
 
 ## Core Value
 
@@ -20,52 +14,54 @@ A personal iOS app for comprehensive, detail-rich weight training tracking — b
 
 <!-- Shipped and confirmed valuable. -->
 
-**Routines** — v1.0
-- ✓ Build, view, edit, reorder routines with session-level Intent + Progression header pickers (Phase 2 + Phase 3.1 PIVOT-01..04)
-- ✓ Routine template vs Session instance separation (Phase 2 + SessionFactory snapshot pattern PITFALLS #1)
-- ✓ Same routine recurs with separate intent histories (Phase 2 HIST-01..03 + Phase 3.1 session-level read)
-
-**Prescription & progression** — v1.0
-- ✓ Per-exercise prescription detail (Phase 2 PRES-01..04)
-- ✓ Four progression models routed via single factory: RPE Autoreg, Double, Block-Periodized, Hybrid (Phase 3 + Phase 4 PRES-05/06)
-- ✓ Auto warm-up ramp with deload skip (Phase 3 WARM-01..02 + Phase 4 WarmupDeloadIntegration)
-
-**Periodization** — v1.0
-- ✓ User-defined training blocks with phased mesocycles (Phase 4 BLOCK-01..05)
-- ✓ Scheduled deload auto-cuts volume + holds intensity (Phase 4 D-12 + DeloadVolumeApplicationTests)
-- ✓ Fatigue-triggered "consider deload" advisory (Phase 5 DeloadAdvisor — type-enforced as advisory-only per BLOCK-08)
-- ✓ End-of-block review sheet (Phase 4 BLOCK-06/07)
-
-**Tracking inputs (per set)** — v1.0
-- ✓ Weight, reps, RPE, rest, tempo, notes (Phase 2 SES-01..06)
-
-**Progress views** — v1.0
-- ✓ Per-exercise intent-split history + chart (Phase 2 + Phase 6 PROG-01)
-- ✓ Per-exercise PRs (1RM, top set, volume) + in-session PR banner (Phase 6 PROG-02 + PROG-08)
-- ✓ Weekly tonnage chart with filter chips (Phase 6 PROG-03)
-- ✓ Plateau detection with stall flag + suggested action (Phase 5 SET-06 + PROG-06)
-- ✓ Muscle heatmap (front/back silhouette) with drilldown (Phase 5 VOL-01..07)
-- ✓ Session comparison (Phase 6 PROG-07)
-
-**Fatigue & volume model** — v1.0
-- ✓ Stimulus-weighted per-muscle aggregation (Phase 5 FatigueModel + StimulusWeightTable)
-- ✓ RP-style MEV/MAV/MRV bars + user-tunable targets (Phase 5 VOL-01..07 + SET-05)
-
-**Exercise library** — v1.0
-- ✓ ~800 bundled exercises seeded from free-exercise-db (Phase 1 LIB-01..06)
-- ✓ Multi-facet filter UX (muscle / equipment / mechanic / pattern) (Phase 1)
-- ✓ Custom exercise creation (Phase 1)
-
-**Platform** — v1.0
-- ✓ iOS native SwiftUI + SwiftData, Swift 6 strict concurrency
-- ✓ Local-only persistence (SchemaV6)
-- ✓ CSV / JSON export + .fitbodbackup ZIP backup/restore with round-trip canary (Phase 6 EXP-01..04)
+(None yet — ship to validate)
 
 ### Active
 
-<!-- v1.1 backlog — populated by /gsd:new-milestone. -->
+<!-- Current scope. Building toward these. Hypotheses until shipped and validated. -->
 
-(None — start v1.1 with `/gsd:new-milestone`)
+**Routines**
+- [ ] Build, view, edit, and reorder routines with low friction (clear primary pain point in existing apps)
+- [ ] Routine template differs from a routine instance (the actual session that gets logged)
+- [ ] Same routine can recur with different per-exercise intent (e.g., strength Mon / hypertrophy Thu) and the app keeps separate histories
+
+**Prescription & progression**
+- [ ] Per-exercise prescription: each exercise instance carries intent (strength / hypertrophy / etc.), target reps, target RPE/RIR, prescribed weight
+- [ ] Smart progression — user picks the model per exercise or per block from:
+  - RPE/RIR autoregulation (back-calculate weight from prior RPE + reps)
+  - Double progression (hit top of rep range → add weight)
+  - Block-periodized (curve defined by block phase)
+  - Hybrid (block macro, RPE-driven daily)
+- [ ] Auto warm-up ramp on first compound of session (e.g., 3 light ascending sets to top set)
+
+**Periodization**
+- [ ] User-defined training blocks: phase (accumulation/intensification/realization), length, deload schedule
+- [ ] Scheduled deload (e.g., 4 load + 1 deload) auto-cuts volume/intensity that week
+- [ ] App surfaces "consider deload" alert when fatigue/performance metrics spike
+
+**Tracking inputs (per set)**
+- [ ] Weight, reps, RPE, rest duration, tempo, form notes
+
+**Progress views**
+- [ ] Per-exercise history with intent split (strength sessions charted separately from hypertrophy)
+- [ ] Per-exercise PRs (1RM est., top set, volume PRs)
+- [ ] Weekly tonnage and set count
+- [ ] Plateau detection signal (configurable: stalls over N sessions)
+- [ ] Muscle heatmap / body view: which muscles hit recently and how hard
+
+**Fatigue & volume model**
+- [ ] Each exercise mapped to primary/secondary muscles with stimulus weighting
+- [ ] RP-style weekly volume tracking per muscle vs MEV/MAV/MRV thresholds (user-tunable)
+- [ ] Volume bars per muscle group color-coded against thresholds
+
+**Exercise library**
+- [ ] 1000+ bundled exercises seeded from an open dataset (wger / free-exercise-db candidates)
+- [ ] Filter-heavy UX: by muscle, equipment, grip, mechanic (compound/isolation), pattern
+- [ ] Custom exercise variations (user-added) supported
+
+**Platform**
+- [ ] iOS native, SwiftUI + SwiftData (Xcode template already in repo)
+- [ ] Local-only persistence for v1
 
 ### Out of Scope
 
@@ -117,17 +113,15 @@ A personal iOS app for comprehensive, detail-rich weight training tracking — b
 
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
-| iOS native SwiftUI + SwiftData | Xcode template already created with this stack; native is the right call for a phone-first workout logger | ✓ Good |
-| Single-user, local-only v1 | Personal app — no accounts, cloud, or backend complexity | ✓ Good |
-| Session-level intent + progression (Phase 3.1 pivot from per-exercise) | Real programs are organized at session/block level; same exercise rarely flips intent within a session | ✓ Good — clean refactor, all reads simplified |
-| User-selectable progression model (4 options: RPE/RIR, double, block, hybrid) | User wants choice per session/block | ✓ Good — all 4 routed via single ProgressionStrategyFactory |
-| RP-style weekly volume tracking against MEV/MAV/MRV | Most prescriptive of the four offered models | ✓ Good — verb labels + two-tone bars + heatmap landed |
-| Deload: scheduled by default + fatigue advisory (advisory-only per BLOCK-08) | Block schedule is canonical; fatigue advisory can never auto-mutate Block state | ✓ Good — type-level enforcement via DeloadAdvisor return type |
-| ~800-exercise library from free-exercise-db (vendored JSON) | Public domain, single-file bundle, no AGPL exposure | ✓ Good — seeded in <2s on background ModelActor |
-| Auto warm-up ramp on first compound only, with deload skip | Explicit user need; compound-only avoids per-exercise spam | ✓ Good |
-| Phone-only v1 (no Watch, no HealthKit, no VBT) | Hardware integrations excluded from v1 scope | ✓ Good |
-| SchemaV1→V6 migration chain with namespaced @Model types per VersionedSchema (Phase 3.1 BLOCKER 3 fix) | Apple's documented pattern; preserves V3 fixture types after V4 field removal | ✓ Good — round-trip canary green |
-| Backup as PKWARE ZIP (no AppleArchive) with SHA-256 manifest + 7 restore gates + exit(0) restart | AppleArchive too heavy for personal app; custom ZIP gives deterministic byte layout for snapshot tests | ✓ Good — D-33 round-trip canary green |
+| iOS native SwiftUI + SwiftData | Xcode template already created with this stack; native is the right call for a phone-first workout logger with future Watch potential | — Pending |
+| Single-user, local-only v1 | Personal app — no need for accounts, cloud, or backend complexity that dwarfs feature work | — Pending |
+| Per-exercise prescription as the core unit | User explicitly chose this over session-level tag, separate routines, or mesocycle-only — gives maximum granularity for differentiating strength vs hypertrophy work on the same exercise | — Pending |
+| User-selectable progression model (4 options: RPE/RIR, double, block, hybrid) | User wants choice — different exercises and blocks call for different models | — Pending |
+| RP-style weekly volume tracking against MEV/MAV/MRV | User's chosen muscle-fatigue model — most prescriptive of the four offered | — Pending |
+| Deload: scheduled by default + auto-suggest when fatigue spikes | User wanted both deterministic block-driven deloads and adaptive alerts | — Pending |
+| 1000+ exercise library seeded from open dataset (wger / free-exercise-db) | "Exhaustive bundled" was the user's preference; comprehensive library is part of the differentiation | — Pending |
+| Auto warm-up ramp on first compound only | Explicit user need; specified for the *initial* lift, not every exercise | — Pending |
+| Phone-only v1 (no Watch, no HealthKit, no VBT) | User excluded all hardware integrations from v1 scope | — Pending |
 
 ## Evolution
 
@@ -147,4 +141,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-05-23 after v1.0 milestone*
+*Last updated: 2026-05-10 after initialization*
