@@ -74,7 +74,7 @@ Granular, prescriptive workout sessions — every set in a session is intentiona
   5. `RoutineBuilderView`, `SessionLoggerView`, `SessionHistoryView` rewritten to match their corresponding `bru-screens/*.jsx` mockups using BRU primitives only — no Apple HIG fallbacks
   6. `RestTimerOverlay` is a full-bleed slab (NOT a capsule); `SetTypeChip` drops `Color(.systemBlue|Orange|Red|Purple)` and uses BRU palette only; `PinnedNoteCapsule` drops `Color(.systemYellow)` and uses `bruSignal` or `bruInk`; `IntentChip` rebuilt as `BRUChip` instance
   7. Grep audit (Wave G) confirms zero residual references to deprecated tokens across all Phase 2 surface files; existing Phase 2 functional tests still pass; UI snapshot tests added for each rewritten screen
-**Plans:** 11 atomic plans (4 waves)
+**Plans:** 4/11 plans executed
 
 **Plan list:**
 - [x] 02.1-01-PLAN.md — Wave 1: BRU color tokens (8 colorsets) + OFL fonts + Color+BRU.swift + Info.plist UIAppFonts + BRUFont.swift
@@ -85,7 +85,7 @@ Granular, prescriptive workout sessions — every set in a session is intentiona
 - [ ] 02.1-06-PLAN.md — Wave 3: RoutinesListView + RoutineRow + NewFolderSheet + MoveRoutineSheet
 - [ ] 02.1-07-PLAN.md — Wave 3: SessionLoggerView core + SessionExerciseCard + SetRow + SetTypeChip + IntentChip + InlineRPEChipRow + DecimalRPEPickerSheet
 - [ ] 02.1-08-PLAN.md — Wave 3: 11 SessionLogger widgets (PinnedNoteCapsule yellow ban + WorkoutHeaderToolbar extraction + AddUnplannedExerciseButton BRUDashedSlot + ResumeWorkoutBanner + 7 others)
-- [ ] 02.1-09-PLAN.md — Wave 3: RestTimer Overlay (full-bleed slab) + RestTimerProgressArc (rename ProgressRing) + RestTimerLiveActivity + Lock Screen + 2 new Dynamic Island views
+- [x] 02.1-09-PLAN.md — Wave 3: RestTimer Overlay (full-bleed slab) + RestTimerProgressArc (rename ProgressRing) + RestTimerLiveActivity + Lock Screen + 2 new Dynamic Island views
 - [ ] 02.1-10-PLAN.md — Wave 3: ExerciseHistoryView reskin + IntentFilterChipRow + PRStripFooter (NEW) + SessionHistoryView (NEW) + SessionHistoryStatStrip + WeeklyTonnageSparkCard + SessionHistoryRow
 - [ ] 02.1-11-PLAN.md — Wave 4: Wave G cleanup — delete PlaceholderTabView + close deferred Step-E from 02.1-08 + Step-A from 02.1-10 + BRUGrepAuditTests guardrail + 3 UI smoke test files
 **UI hint:** yes (visual rewrite IS the phase)
