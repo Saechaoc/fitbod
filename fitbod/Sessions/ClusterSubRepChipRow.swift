@@ -13,7 +13,7 @@
 //   Trailing "+":   1pt bruSignal stroke + bruSignal text per UI-SPEC line 384 + 257
 //
 // BRU contract:
-//   NO Capsule() — explicitly banned per UI-SPEC line 349
+//   NO capsule shape — explicitly banned per UI-SPEC line 349
 //   NO RoundedRectangle / NO accentColor / NO Color(.system*)
 //   NO Image(systemName:) / NO .font(.body/.headline/.title/.caption)
 

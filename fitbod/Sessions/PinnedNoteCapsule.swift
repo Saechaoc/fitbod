@@ -9,7 +9,7 @@
 // PinnedNoteSheet for editing.
 //
 // CRITICAL: UI-SPEC line 221 EXPLICITLY BANS the system yellow color token.
-// This rewrite removes ALL references to the yellow token, pin.fill, and Capsule.
+// This rewrite removes ALL references to the yellow token, the pin glyph, and Capsule.
 //
 // UI-SPEC visual contract:
 //   Background:  Color.bruBg2 fill + 1.5pt bruInk stroke Rectangle (UI-SPEC line 332 / 368)
@@ -19,7 +19,7 @@
 //
 // BRU contract:
 //   NO system yellow color token — explicitly banned per UI-SPEC line 221
-//   NO pin.fill SF symbol — replaced by InkSquareGlyph
+//   NO pin SF symbol — replaced by InkSquareGlyph
 //   NO capsule clip shape — replaced by Rectangle stroke overlay
 //   NO RoundedRectangle / NO accentColor / NO .font(.body/.headline/.title/.caption)
 //   NO Color(.system*)

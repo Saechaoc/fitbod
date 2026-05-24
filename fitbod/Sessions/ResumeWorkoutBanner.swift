@@ -27,9 +27,9 @@
 //
 // BRU contract:
 //   NO rounded-rectangle shape — removed per plan spec
-//   NO Color.accentColor — removed per UI-SPEC line 214
-//   NO Image(systemName: "arrow.uturn.backward.circle") — removed
-//   NO Capsule() / NO .font(.body/.headline/.title/.caption)
+//   NO accent color — removed per UI-SPEC line 214
+//   NO arrow.uturn SF symbol — removed
+//   NO capsule shape / NO .font(.body/.headline/.title/.caption)
 //   NO Color(.system*)
 
 import SwiftUI

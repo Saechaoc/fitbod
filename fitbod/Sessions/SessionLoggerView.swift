@@ -176,25 +176,10 @@ public struct SessionLoggerView: View {
                 Button("Cancel", role: .cancel) {}
             }
 
-            // Lines 2-3: 3-line principal block below the BRUHeaderBar
+            // Lines 2-3: WorkoutHeaderToolbar — extracted per UI-SPEC line 584 (Plan 02.1-08)
             // Wrapped in TimelineView so elapsed label re-renders per second
             TimelineView(.periodic(from: elapsedStart, by: 1)) { _ in
-                VStack(alignment: .leading, spacing: 6) {
-                    HStack {
-                        Text(session.routineSnapshotName)                        // UI-SPEC line 362
-                            .font(BRUFont.displayMedium)
-                            .foregroundStyle(Color.bruInk)
-                        Spacer()
-                        Text(elapsedLabel)                                       // "32:14" per UI-SPEC
-                            .font(BRUFont.bodyEmphasis)
-                            .monospacedDigit()
-                            .foregroundStyle(Color.bruMuted)
-                    }
-                    IntentChip(intent: session.intent)                           // Line 363 — UI-SPEC
-                }
-                .padding(.horizontal, 16)
-                .padding(.vertical, 10)
-                .background(Color.bruPaper)
+                WorkoutHeaderToolbar(session: session, elapsedLabel: elapsedLabel) // UI-SPEC line 363-366 + 584
             }
 
             BRUDivider(.ink)
