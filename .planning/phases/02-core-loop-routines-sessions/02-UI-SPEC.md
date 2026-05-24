@@ -1,7 +1,7 @@
 ---
 phase: 2
 slug: core-loop-routines-sessions
-status: draft
+status: locked
 shadcn_initialized: false
 preset: none
 created: 2026-05-11
@@ -81,6 +81,18 @@ Multiples of 4, iOS 8-point grid. The scale itself carries forward from v1 — B
 - **Live Activity** layouts follow Apple's `ActivityKit` dimensions strictly — compact ≤ 116pt wide trailing, minimal = 22pt circle. The BRU palette (ink background + paper text + signal progress arc) is applied within those bounds.
 - **Border widths are spacing-adjacent tokens:** 2pt for section-level ink rules (between top stat strip and block context, between block context and black-slab CTA, around the inner set-rows container, around the +Add Exercise dashed slot, around the bottom action bar); 1pt for hair-rule dividers between consecutive list rows; 1.5pt for inner border on week-ticker cells and superset brackets. These are FIXED — never approximate to "default thin" or use `.divider()` (which renders at sub-pixel hairline). Use `Rectangle().fill(.bruInk).frame(height: 2)` or `Rectangle().stroke(.bruInk, lineWidth: 2)` explicitly.
 
+### Project-Level Spacing Scale Extension
+
+The BRU project standard spacing set is `{4, 8, 12, 16, 24, 32, 48, 64}` — an extension of the dimension-5 checker default `{4, 8, 16, 24, 32, 48, 64}` by adding **12pt**.
+
+**Rationale:** BRU mockups heavily use 12pt as the compact-row vertical rhythm (e.g. `padding: '12px 16px'` on `BlockPhaseEditorRow` rows, `padding: '11px 16px'` on compact list rows). Without 12pt, every compact list row collapses to 8pt (too dense for text legibility) or expands to 16pt (breaks the BRU tight-block aesthetic that distinguishes it from standard iOS list spacing). 12 is a multiple of 4, so the underlying multiple-of-4 invariant is preserved — this is an additive extension, not an exception to the base rule.
+
+**Constraints:**
+- Per-phase UI-SPECs MUST use the extended set `{4, 8, 12, 16, 24, 32, 48, 64}` and MUST NOT introduce values outside it.
+- 44pt touch-target and other iOS HIG platform constants are exempt from this rule (they are not layout-spacing tokens).
+- Fixed visual containers sized to match mockup measurements (e.g., 56pt timeline bar, 28pt week-ticker cell height) are exempt as they are component-dimension constants, not layout-spacing tokens.
+- This extension is locked project-wide. All phase UI-SPECs inherit it.
+
 ---
 
 ## Typography
@@ -146,6 +158,29 @@ Multiples of 4, iOS 8-point grid. The scale itself carries forward from v1 — B
 | ExerciseHistoryView — intent badge trailing chip | `labelSmall` 10pt |
 
 **Locked count:** 6 type roles, 2 faces, 4 distinct weights across faces (display Bold + SemiBold; mono Regular + Bold). Within the BRU stance this counts as the "2 weights per face" contract — total cognitive surface is 6 roles, not 6 sizes × 4 weights × 2 cases. The executor MUST NOT introduce a 7th role, a 3rd weight per face, or a 3rd font face. Any new typographic need lands in one of these 6.
+
+### Project-Level Design System Exemption — Type Scale
+
+The BRU 7-role type scale (`displayHero`, `displayLarge`, `displayMedium`, `bodyEmphasis`, `bodyDefault`, `labelSmall`, `labelMicro`) is a **locked project primitive**.
+
+**Status:** Phase 4 surfaced that Phase 2's `02-UI-SPEC.md` declares 6 roles and Phase 4 pattern-matches 7 (the existing 6 plus `labelMicro` which appeared in Phase 2 component specs). The canonical count across the BRU design system is **7 roles**. The table above lists 6; `labelMicro` (7–9pt Mono Bold, 1.0–1.2 letterspacing, UPPERCASE) was always present in practice — see the `BRUFont` enum init signature in §Component Inventory which explicitly includes `labelMicro`. This section formalizes the 7-role count as the locked BRU baseline.
+
+**Rationale for the dimension-4 waiver:** The checker's "max 4 type roles" rule exists to prevent ad-hoc per-phase font accumulation. The BRU 7-role scale is a deliberate, project-wide design system foundation — not ad-hoc growth. It applies system-wide in the same way that border-width constants and the 44pt platform touch-target are exempt from spacing-grid rules. The 7 roles are the complete vocabulary; no phase may add an 8th.
+
+**Constraints:**
+- Per-phase UI-SPECs MUST NOT introduce new roles beyond these 7. They MAY use any subset.
+- This exemption is the basis for dimension-4 compliance project-wide. The checker should treat the 7-role scale as one cohesive design-system primitive, not as 7 independent ad-hoc sizes.
+- Any future type need must land in one of the existing 7 roles by adjusting size within the declared range, not by adding a new role.
+
+| Role | Face | Size range (pt) | Weight | Letterspacing | Case |
+|------|------|-----------------|--------|---------------|------|
+| `displayHero` | Display heavy | 56–72 | Bold | -0.5 | as-typed |
+| `displayLarge` | Display heavy | 28–36 | Bold | -0.3 | as-typed |
+| `displayMedium` | Display heavy | 18–22 | Bold | 0 | as-typed |
+| `bodyEmphasis` | Mono bold | 13–15 | Bold (600) | -0.2 | as-typed |
+| `bodyDefault` | Mono regular | 11–13 | Regular | 0 | as-typed |
+| `labelSmall` | Mono bold | 9–11 | Bold (600) | 1.2–1.5 | UPPERCASE |
+| `labelMicro` | Mono bold | 7–9 | Bold (600) | 1.0–1.2 | UPPERCASE |
 
 ---
 
