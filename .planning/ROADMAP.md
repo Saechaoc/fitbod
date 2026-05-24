@@ -268,7 +268,7 @@ Plans:
 |-------|----------------|--------|-----------|
 | 1. Foundation & Exercise Library | 12/12 | Complete | 2007-05-11 |
 | 2. Core Loop (Routines + Sessions) | 13/13 | Complete   | 2026-05-24 |
-| 3. Smart Prescription & Warm-ups | 8/8 | Complete   | 2007-05-23 |
+| 3. Smart Prescription & Warm-ups | 8/8 | Complete   | 2026-05-24 |
 | 4. Periodization & Blocks | 0/8 | Not started | - |
 | 5. Fatigue Model & Plateau Detection | 6/6 | Complete   | 2007-05-23 |
 | 6. Progress Views, Export & Polish | 10/11 | In Progress|  |
