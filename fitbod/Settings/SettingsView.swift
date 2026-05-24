@@ -440,11 +440,15 @@ public struct SettingsView: View {
     }
 
     // MARK: - Smart Progression section (Phase 3 — SET-03, SET-04, SET-07)
+    // Reskinned in plan 03.2-08 — BRUSectionHead header + BRUFont labels/footers.
+    // Color(.systemRed) lines in the Data section (lines 196/223/255/271) are
+    // Phase 6 scope (Wave-4 plan 06-09b) and are NOT touched here per
+    // threat model T-03.2-15.
 
-    /// Builds the "Smart Progression" section with a NavigationLink to
+    /// Builds the "SMART PROGRESSION" section with a NavigationLink to
     /// `PlateInventoryEditor`, a default-weight-increment Stepper, and an
     /// RPE-calibration-window Stepper. All copy is verbatim from UI-SPEC
-    /// § Settings — Smart Progression.
+    /// § Settings — Smart Progression (line 292). BRU tokens throughout.
     @ViewBuilder
     private func smartProgressionSection(settings: UserSettings) -> some View {
         @Bindable var s = settings
@@ -452,39 +456,61 @@ public struct SettingsView: View {
 
         Section {
             // Navigation row — disclosure chevron is automatic with NavigationLink.
+            // BRUFont.bodyDefault + Color.bruInk per 03.2-08 reskin contract.
             NavigationLink {
                 PlateInventoryEditor()
             } label: {
                 Text("Plate Inventory")                                         // UI-SPEC verbatim
+                    .font(BRUFont.bodyDefault)
+                    .foregroundStyle(Color.bruInk)
             }
 
             // Default weight increment Stepper.
+            // Label: BRUFont.labelSmall UPPERCASE 1.2 tracking bruMuted per UI-SPEC line 294.
+            // Value: BRUFont.bodyDefault bruMuted per UI-SPEC line 295.
             Stepper(value: $s.defaultIncrementKg, in: 0.25...10.0, step: 0.25) {
-                LabeledContent("Default weight increment") {                    // UI-SPEC verbatim
+                HStack {
+                    Text("DEFAULT WEIGHT INCREMENT")                            // UI-SPEC verbatim
+                        .font(BRUFont.labelSmall)
+                        .tracking(1.2)
+                        .textCase(.uppercase)
+                        .foregroundStyle(Color.bruMuted)
+                    Spacer()
                     Text("\(s.defaultIncrementKg, specifier: "%g") \(unitLabel)")
-                        .foregroundStyle(.secondary)
+                        .font(BRUFont.bodyDefault)
+                        .foregroundStyle(Color.bruMuted)
                 }
             }
 
             // RPE calibration window Stepper.
+            // Label: BRUFont.labelSmall UPPERCASE 1.2 tracking bruMuted per UI-SPEC line 297.
+            // Value: BRUFont.bodyDefault bruMuted per UI-SPEC line 299.
             Stepper(value: $s.minCalibrationSets, in: 5...30, step: 1) {
-                LabeledContent("Sets before calibrating") {                     // UI-SPEC verbatim
+                HStack {
+                    Text("SETS BEFORE CALIBRATING")                             // UI-SPEC verbatim
+                        .font(BRUFont.labelSmall)
+                        .tracking(1.2)
+                        .textCase(.uppercase)
+                        .foregroundStyle(Color.bruMuted)
+                    Spacer()
                     Text("\(s.minCalibrationSets) sets")
-                        .foregroundStyle(.secondary)
+                        .font(BRUFont.bodyDefault)
+                        .foregroundStyle(Color.bruMuted)
                 }
             }
         } header: {
-            Text("Smart Progression")                                           // UI-SPEC verbatim
+            BRUSectionHead("SMART PROGRESSION")                                // UI-SPEC line 292
         } footer: {
-            // UI-SPEC verbatim footers — both displayed in a VStack since SwiftUI
-            // Section only takes a single footer view; use a VStack to stack them.
+            // UI-SPEC verbatim footers (lines 296 + 300) — stacked in VStack since
+            // SwiftUI Section only takes a single footer view.
+            // BRUFont.bodyDefault + Color.bruMuted replacing .font(.caption)/.secondary.
             VStack(alignment: .leading, spacing: 4) {
                 Text("Used when an exercise has no specific increment set. Applied by all progression strategies when rounding.")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .font(BRUFont.bodyDefault)
+                    .foregroundStyle(Color.bruMuted)
                 Text("RPE autoregulation uses the Tuchscherer table until this many working sets are logged per exercise.")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .font(BRUFont.bodyDefault)
+                    .foregroundStyle(Color.bruMuted)
             }
         }
     }

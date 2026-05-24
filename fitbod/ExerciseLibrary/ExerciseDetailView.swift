@@ -259,6 +259,8 @@ struct ExerciseDetailView: View {
     }
 
     // MARK: - Prescription Settings section (plan 03-07 / UI-SPEC § Per-exercise fields)
+    // Reskinned in plan 03.2-08 — BRUSectionHead header + BRUFont labels/footers +
+    // 3-BRUChip Button row replacing the Picker for unit override.
 
     /// Three editable sections for per-exercise prescription overrides
     /// (UI-SPEC § Per-exercise fields in ExerciseDetailView verbatim).
@@ -268,66 +270,105 @@ struct ExerciseDetailView: View {
         @Bindable var ex = exercise
 
         // Section 1: Smallest increment
+        // Header: BRUSectionHead "PRESCRIPTION SETTINGS" per UI-SPEC line 308.
+        // Label: BRUFont.labelSmall UPPERCASE 1.2 tracking bruMuted per line 309.
+        // Footer: BRUFont.bodyDefault bruMuted per line 312.
         Section {
-            LabeledContent("Smallest increment") {
-                HStack(spacing: 4) {
-                    TextField(
-                        "e.g. 2.5",
-                        value: $ex.smallestIncrement,
-                        format: .number
-                    )
-                    .multilineTextAlignment(.trailing)
-                    .keyboardType(.decimalPad)
-                    Text(unitLabel)
-                        .foregroundStyle(.secondary)
-                }
+            HStack(spacing: 4) {
+                Text("SMALLEST INCREMENT")
+                    .font(BRUFont.labelSmall)
+                    .tracking(1.2)
+                    .textCase(.uppercase)
+                    .foregroundStyle(Color.bruMuted)
+                Spacer()
+                TextField(
+                    "e.g. 2.5",
+                    value: $ex.smallestIncrement,
+                    format: .number
+                )
+                .multilineTextAlignment(.trailing)
+                .keyboardType(.decimalPad)
+                Text(unitLabel)
+                    .font(BRUFont.bodyDefault)
+                    .foregroundStyle(Color.bruMuted)
             }
         } header: {
-            Text("Prescription Settings")
+            BRUSectionHead("PRESCRIPTION SETTINGS")
         } footer: {
             Text("Weight advances by this amount each progression step.")
-                .font(.caption)
-                .foregroundStyle(.secondary)
+                .font(BRUFont.bodyDefault)
+                .foregroundStyle(Color.bruMuted)
         }
 
         // Section 2: Bar weight override
+        // No section header (continuation). Label + footer per UI-SPEC lines 313–315.
         Section {
-            LabeledContent("Bar weight override") {
-                HStack(spacing: 4) {
-                    TextField(
-                        "Leave blank to use equipment default",
-                        value: $ex.barWeightOverride,
-                        format: .number
-                    )
-                    .multilineTextAlignment(.trailing)
-                    .keyboardType(.decimalPad)
-                    Text(unitLabel)
-                        .foregroundStyle(.secondary)
-                }
+            HStack(spacing: 4) {
+                Text("BAR WEIGHT OVERRIDE")
+                    .font(BRUFont.labelSmall)
+                    .tracking(1.2)
+                    .textCase(.uppercase)
+                    .foregroundStyle(Color.bruMuted)
+                Spacer()
+                TextField(
+                    "Leave blank to use equipment default",
+                    value: $ex.barWeightOverride,
+                    format: .number
+                )
+                .multilineTextAlignment(.trailing)
+                .keyboardType(.decimalPad)
+                Text(unitLabel)
+                    .font(BRUFont.bodyDefault)
+                    .foregroundStyle(Color.bruMuted)
             }
         } footer: {
             Text("Use for specialty bars (safety squat, Swiss bar, women's bar).")
-                .font(.caption)
-                .foregroundStyle(.secondary)
+                .font(BRUFont.bodyDefault)
+                .foregroundStyle(Color.bruMuted)
         }
 
         // Section 3: Weight unit override
+        // Picker replaced by 3-BRUChip Button row per UI-SPEC line 317.
+        // selected = ink fill, unselected = paper fill (fill: Bool param on BRUChip).
+        // Accessibility: each Button gets .accessibilityLabel + .accessibilityAddTraits
+        // per threat model T-03.2-16 (VoiceOver navigation correctness).
         Section {
-            Picker(
-                "Weight unit",
-                selection: Binding(
-                    get: { ex.unitOverride },
-                    set: { ex.unitOverride = $0 }
-                )
-            ) {
-                Text("System default").tag(Optional<WeightUnit>.none)
-                Text("kg").tag(Optional<WeightUnit>.some(.kg))
-                Text("lb").tag(Optional<WeightUnit>.some(.lb))
+            VStack(alignment: .leading, spacing: 8) {
+                Text("WEIGHT UNIT")
+                    .font(BRUFont.labelSmall)
+                    .tracking(1.2)
+                    .textCase(.uppercase)
+                    .foregroundStyle(Color.bruMuted)
+                HStack(spacing: 6) {
+                    Button {
+                        ex.unitOverride = nil
+                    } label: {
+                        BRUChip("System default", fill: ex.unitOverride == nil)
+                    }
+                    .accessibilityLabel("Weight unit: System default")
+                    .accessibilityAddTraits(ex.unitOverride == nil ? .isSelected : [])
+
+                    Button {
+                        ex.unitOverride = .kg
+                    } label: {
+                        BRUChip("kg", fill: ex.unitOverride == .kg)
+                    }
+                    .accessibilityLabel("Weight unit: kg")
+                    .accessibilityAddTraits(ex.unitOverride == .kg ? .isSelected : [])
+
+                    Button {
+                        ex.unitOverride = .lb
+                    } label: {
+                        BRUChip("lb", fill: ex.unitOverride == .lb)
+                    }
+                    .accessibilityLabel("Weight unit: lb")
+                    .accessibilityAddTraits(ex.unitOverride == .lb ? .isSelected : [])
+                }
             }
         } footer: {
-            Text("Overrides the global unit for this exercise only. Affects display; history is stored in a canonical unit.")
-                .font(.caption)
-                .foregroundStyle(.secondary)
+            Text("Overrides the global unit for this exercise only. History stored in canonical unit.")
+                .font(BRUFont.bodyDefault)
+                .foregroundStyle(Color.bruMuted)
         }
     }
 

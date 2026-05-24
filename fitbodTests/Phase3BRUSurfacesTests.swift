@@ -345,4 +345,17 @@ struct Phase3BRUSurfacesTests {
         let _: any View = sheet
         #expect(Bool(true), "PlateCalculatorSheet instantiated successfully")
     }
+
+    // MARK: - WarmupConfigSheet (Plan 03.2-09)
+
+    @Test("WarmupConfigSheet instantiates with nil config binding")
+    func warmupConfigSheetInstantiates() throws {
+        // Proves: public init(config: Binding<WarmupConfig?>) compiles and the view
+        // conforms to View. BRU token + font references (BRUHeaderBar, BRUButton,
+        // BRUFont.bodyEmphasis, BRUFont.bodyDefault, Color.bruInk, Color.bruMuted,
+        // Color.bruHair, Color.bruBg, Color.bruPaper) must resolve at compile time.
+        let sheet = WarmupConfigSheet(config: .constant(nil))
+        let _: any View = sheet
+        #expect(Bool(true), "WarmupConfigSheet instantiated successfully")
+    }
 }
