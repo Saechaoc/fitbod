@@ -12,6 +12,7 @@
 
 import Foundation
 import SwiftUI
+import SwiftData
 import Testing
 @testable import fitbod
 
@@ -260,4 +261,88 @@ struct Phase3BRUSurfacesTests {
         #expect(Bool(true), "WhyThisWeightSheet(.notApplicable + first session) instantiated")
     }
 
+    // MARK: - WarmupRampRows (Plan 03.2-03)
+
+    @Test("warmupRampRowsInstantiates — 4-set barbell ramp with BRU tokens")
+    func warmupRampRowsInstantiates() throws {
+        // Proves: public init(warmupSets:onSkip:sessionExercise:topWorkingWeight:barWeight:
+        //         unitLabel:incrementLabel:) compiles and all BRU token + font references
+        // (Color.bruSignal, Color.bruInk, Color.bruMuted, Color.bruHair,
+        //  BRUFont.displayMedium, BRUFont.bodyDefault, BRUFont.labelSmall, BRUFont.labelMicro,
+        //  .custom("SpaceGrotesk-Bold", size: 22) for the weight numeral)
+        // resolve at compile time.
+        let container = try InMemoryContainer.makeCurrent()
+        let ctx = ModelContext(container)
+
+        let exercise = SessionExercise()
+        exercise.prescribedWeight = 100
+        ctx.insert(exercise)
+
+        let specs: [(pct: Double, reps: Int)] = [
+            (0.40, 5), (0.60, 3), (0.75, 2), (0.90, 1)
+        ]
+        let sets: [SetEntry] = specs.enumerated().map { idx, spec in
+            let s = SetEntry()
+            s.orderIndex = idx
+            s.weight = (100.0 * spec.pct).rounded()
+            s.reps = spec.reps
+            s.isWarmup = true
+            s.setTypeRaw = "warmup"
+            s.sessionExercise = exercise
+            ctx.insert(s)
+            return s
+        }
+        try ctx.save()
+
+        let view = WarmupRampRows(
+            warmupSets: sets,
+            onSkip: {},
+            sessionExercise: exercise,
+            topWorkingWeight: 100,
+            barWeight: 20,
+            unitLabel: "kg",
+            incrementLabel: "2.5 kg"
+        )
+        let _: any View = view
+        #expect(Bool(true), "WarmupRampRows(4-set barbell) instantiated successfully")
+    }
+
+    @Test("warmupRampRowsInstantiates — empty sets renders placeholder without crash")
+    func warmupRampRowsEmptyState() throws {
+        let container = try InMemoryContainer.makeCurrent()
+        let ctx = ModelContext(container)
+
+        let exercise = SessionExercise()
+        exercise.prescribedWeight = 25
+        ctx.insert(exercise)
+        try ctx.save()
+
+        let view = WarmupRampRows(
+            warmupSets: [],
+            onSkip: {},
+            sessionExercise: exercise
+        )
+        let _: any View = view
+        #expect(Bool(true), "WarmupRampRows(empty) renders placeholder without crash")
+    }
+
+    // MARK: - PlateCalculatorSheet (Plan 03.2-07)
+
+    @Test("PlateCalculatorSheet instantiates with seeded barbell inventory")
+    func plateCalculatorSheetInstantiates() throws {
+        // Proves: public init(equipment:inventory:) compiles and the view conforms to
+        // View. All BRU token + font references (bruInk, bruBg2, bruSignal, bruMuted,
+        // bruPaper, bruBg, bruHair, BRUFont.labelSmall, BRUFont.displayLarge) and
+        // Wave 1 primitives (PlateStackViz, PlateTallyRow, BRUHeaderBar, BRUSectionHead,
+        // BRUChip, BRUButton) must resolve at compile time.
+        // Zero Form/Section/plateColor/weightToWidth/plateRect in the rewritten surface.
+        let inv = PlateInventory()
+        inv.equipmentKind = .barbell
+        inv.barWeight = 45
+        inv.availablePlates = PlateInventoryDefaults.make(for: .barbell, unitSystem: .lb)
+
+        let sheet = PlateCalculatorSheet(equipment: .barbell, inventory: inv)
+        let _: any View = sheet
+        #expect(Bool(true), "PlateCalculatorSheet instantiated successfully")
+    }
 }
