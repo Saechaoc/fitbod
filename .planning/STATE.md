@@ -3,9 +3,9 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: completed
-last_updated: "2026-05-24T01:19:58.103Z"
+last_updated: "2026-05-24T03:32:48.326Z"
 progress:
-  total_phases: 7
+  total_phases: 9
   completed_phases: 7
   total_plans: 67
   completed_plans: 69
@@ -33,7 +33,7 @@ progress:
 ## Current Position
 
 Phase: 6 (progress-views-export-polish) — **IN PROGRESS (10/11 plans complete — 2026-05-23; 06-10 backup/restore remaining)**
-Plan: 10 of 11 (Plans 06-01..06-09b complete — closes 9 of 11 Phase 6 requirements: PROG-01/02/03/04/05/07/08 + EXP-01/02. Plan 06-10 ships backup/restore EXP-03/04 — out of scope for this execution wave). Phase 1-5 regression sweep + all Phase 6 test suites GREEN (630 test invocations pass, 0 failures). Phase 6 user-visible: Progress tab now renders ProgressHomeView with Recent / Trends / Compare sections; Weekly Tonnage chart with chip filters + bar tap → WeekDetailView drill-down; ExercisePRsView 4×3 PR layout reachable; SessionComparisonView 3-column Δ diff; in-session PR banner via .safeAreaInset(edge: .top); Settings → Data section ships CSV + JSON exports via ShareLink.
+Plan: 10 of 10 (Plans 06-01..06-09b complete — closes 9 of 11 Phase 6 requirements: PROG-01/02/03/04/05/07/08 + EXP-01/02. Plan 06-10 ships backup/restore EXP-03/04 — out of scope for this execution wave). Phase 1-5 regression sweep + all Phase 6 test suites GREEN (630 test invocations pass, 0 failures). Phase 6 user-visible: Progress tab now renders ProgressHomeView with Recent / Trends / Compare sections; Weekly Tonnage chart with chip filters + bar tap → WeekDetailView drill-down; ExercisePRsView 4×3 PR layout reachable; SessionComparisonView 3-column Δ diff; in-session PR banner via .safeAreaInset(edge: .top); Settings → Data section ships CSV + JSON exports via ShareLink.
 
 **Phase 6 wave 5 closure summary (2026-05-23) — 5 plans across waves 3/4/5:**
 
@@ -175,6 +175,11 @@ Phase 1 in flight; metrics roll up at phase completion. Per-plan duration table:
 ---
 
 ## Accumulated Context
+
+### Roadmap Evolution
+
+- Phase 04.1 inserted after Phase 4: BRU Visual Rewrite (Periodization & Blocks) (URGENT)
+- Phase 7 added: BRU Visual Rewrite
 
 ### Key Decisions (from PROJECT.md, locked in)
 
