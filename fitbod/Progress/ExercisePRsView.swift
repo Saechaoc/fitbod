@@ -11,15 +11,12 @@
 //    .allExercises      — all-exercises feed (consumed by
 //                         ProgressHomeView's "Personal Records" row)
 //
-//  ## Layout
+//  ## Layout (Phase 6.1 BRU reskin — 06.1-03)
 //
-//  Header: segmented `Picker` over `IntentFilter` (.strength /
-//          .hypertrophy / .all)
-//  Body:   List with 4 Section blocks (Weight / Reps / Volume / e1RM)
-//          each rendering up to 3 sub-sections per rep bucket
-//          (1–6 reps / 7–10 reps / 11+ reps). The e1RM section
-//          omits the 11+ bucket and replaces it with the verbatim
-//          string "Suppressed for reps above 10." (PROG-02 + D-04).
+//  BRUHeaderBar(left: back, center: nav title, right: "ALL TIME")
+//  3-segment inverted-active intent toggle bar
+//  BRUDivider(.ink)
+//  ScrollView → LazyVStack of 4 sections (Weight / Reps / Volume / e1RM)
 //
 //  ## Top 3 PRs per (kind, bucket)
 //
@@ -52,6 +49,7 @@
 
 import SwiftData
 import SwiftUI
+import UIKit
 
 // MARK: - Scope + IntentFilter
 
@@ -87,6 +85,7 @@ public enum ExercisePRsIntentFilter: String, CaseIterable, Sendable {
 public struct ExercisePRsView: View {
     public let scope: ExercisePRsViewScope
     @State private var intentFilter: ExercisePRsIntentFilter = .all
+    @Environment(\.dismiss) private var dismiss
 
     public init(scope: ExercisePRsViewScope) {
         self.scope = scope
@@ -94,25 +93,66 @@ public struct ExercisePRsView: View {
 
     public var body: some View {
         VStack(spacing: 0) {
-            Picker("Intent", selection: $intentFilter) {
-                ForEach(ExercisePRsIntentFilter.allCases, id: \.self) { f in
-                    Text(f.label).tag(f)
-                }
-            }
-            .pickerStyle(.segmented)
-            .padding(.horizontal, 16)
-            .padding(.vertical, 8)
+            BRUHeaderBar(
+                left: HeaderAction("‹") { dismiss() },
+                center: navTitle,
+                right: HeaderAction("ALL TIME") { }
+            )
+
+            // 3-segment inverted-active intent toggle bar
+            intentToggle
+
+            BRUDivider(.ink)
+
             PRsHost(scope: scope, intentFilter: intentFilter)
         }
-        .navigationTitle(navTitle)
-        .navigationBarTitleDisplayMode(.inline)
+        .background(Color.bruPaper.ignoresSafeArea())
+        .navigationBarHidden(true)
+    }
+
+    // MARK: - Intent Toggle
+
+    private var intentToggle: some View {
+        HStack(spacing: 0) {
+            ForEach(Array(ExercisePRsIntentFilter.allCases.enumerated()), id: \.element) { index, filter in
+                let isSelected = intentFilter == filter
+                let isLast = index == ExercisePRsIntentFilter.allCases.count - 1
+
+                Button {
+                    let generator = UISelectionFeedbackGenerator()
+                    generator.selectionChanged()
+                    intentFilter = filter
+                } label: {
+                    Text(filter.label.uppercased())
+                        .font(BRUFont.labelSmall)
+                        .tracking(1.2)
+                        .foregroundStyle(isSelected ? Color.bruPaper : Color.bruInk)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 10)
+                        .background(isSelected ? Color.bruInk : Color.clear)
+                }
+                .buttonStyle(.plain)
+
+                if !isLast {
+                    Rectangle()
+                        .fill(Color.bruInk)
+                        .frame(width: 1)
+                        .frame(maxHeight: .infinity)
+                }
+            }
+        }
+        .fixedSize(horizontal: false, vertical: true)
+        .overlay(
+            Rectangle()
+                .stroke(Color.bruInk, lineWidth: 1)
+        )
+        .padding(.horizontal, 16)
+        .padding(.vertical, 8)
+        .background(Color.bruPaper)
     }
 
     private var navTitle: String {
-        switch scope {
-        case .forExercise: return "Personal Records"
-        case .allExercises: return "Personal Records"
-        }
+        "Personal Records"
     }
 }
 
@@ -159,41 +199,54 @@ private struct PRsHost: View {
             if filtered.isEmpty {
                 emptyState
             } else {
-                List {
-                    section(kind: .weight, label: "Weight", sets: filtered)
-                    section(kind: .reps, label: "Reps", sets: filtered)
-                    section(kind: .volume, label: "Volume", sets: filtered)
-                    section(kind: .e1RM, label: "e1RM", sets: filtered)
+                ScrollView {
+                    LazyVStack(spacing: 0) {
+                        prSection(kind: .weight, label: "Weight", sets: filtered)
+                        prSection(kind: .reps, label: "Reps", sets: filtered)
+                        prSection(kind: .volume, label: "Volume", sets: filtered)
+                        prSection(kind: .e1RM, label: "e1RM", sets: filtered)
+                    }
                 }
-                .listStyle(.insetGrouped)
             }
         }
     }
+
+    // MARK: - Empty State
 
     @ViewBuilder
     private var emptyState: some View {
-        VStack(alignment: .center, spacing: 4) {
+        VStack(spacing: 6) {
             Text("No PRs yet")
-                .font(.headline)
+                .font(BRUFont.bodyEmphasis)
+                .foregroundStyle(Color.bruInk)
             Text("Complete a working set to set your first record.")
-                .font(.subheadline)
-                .foregroundStyle(Color(.secondaryLabel))
+                .font(BRUFont.bodyDefault)
+                .foregroundStyle(Color.bruMuted)
+                .multilineTextAlignment(.center)
         }
+        .padding(.vertical, 32)
+        .padding(.horizontal, 16)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .padding()
     }
 
+    // MARK: - Section
+
     @ViewBuilder
-    private func section(kind: PRKind, label: String, sets: [SetEntry]) -> some View {
-        Section(header: Text(label)) {
-            ForEach(bucketsToRender(kind: kind), id: \.rawValue) { bucket in
-                bucketBlock(kind: kind, bucket: bucket, sets: sets)
-            }
-            if kind == .e1RM {
-                Text("Suppressed for reps above 10.")
-                    .font(.caption)
-                    .foregroundStyle(Color(.secondaryLabel))
-            }
+    private func prSection(kind: PRKind, label: String, sets: [SetEntry]) -> some View {
+        BRUSectionHead(label)
+
+        ForEach(bucketsToRender(kind: kind), id: \.rawValue) { bucket in
+            bucketBlock(kind: kind, bucket: bucket, sets: sets)
+        }
+
+        if kind == .e1RM {
+            Text("Suppressed for reps above 10.")
+                .font(BRUFont.labelSmall)
+                .tracking(1.2)
+                .foregroundStyle(Color.bruMuted)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 12)
+            BRUDivider(.ink)
         }
     }
 
@@ -204,36 +257,89 @@ private struct PRsHost: View {
         return RepBucket.allCases
     }
 
+    // MARK: - Bucket Block
+
     @ViewBuilder
     private func bucketBlock(kind: PRKind, bucket: RepBucket, sets: [SetEntry]) -> some View {
         let bucketSets = sets.filter { RepBucket.bucket(for: $0.reps) == bucket }
-        let topThree = topThree(kind: kind, sets: bucketSets)
-        if !topThree.isEmpty {
-            VStack(alignment: .leading, spacing: 4) {
-                Text(bucketLabel(bucket: bucket))
-                    .font(.caption)
-                    .foregroundStyle(Color(.secondaryLabel))
-                ForEach(Array(topThree.enumerated()), id: \.offset) { _, entry in
-                    NavigationLink(
-                        value: PRsRouteDestination.session(date: entry.completedAt, setEntryID: entry.id)
-                    ) {
-                        HStack {
-                            Text(rowText(kind: kind, set: entry))
-                                .font(.body)
-                            Spacer()
-                            Text(entry.completedAt.formatted(.dateTime.month().day().year()))
-                                .font(.caption)
-                                .foregroundStyle(Color(.secondaryLabel))
-                            Image(systemName: "chevron.right")
-                                .font(.caption)
-                                .foregroundStyle(Color.accentColor)
-                        }
-                    }
+        let topThreeEntries = topThree(kind: kind, sets: bucketSets)
+
+        if !topThreeEntries.isEmpty {
+            // Bucket sub-header
+            Text(bucketLabel(bucket: bucket).uppercased())
+                .font(BRUFont.labelSmall)
+                .tracking(1.2)
+                .foregroundStyle(Color.bruMuted)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 6)
+
+            ForEach(Array(topThreeEntries.enumerated()), id: \.offset) { index, entry in
+                NavigationLink(
+                    value: PRsRouteDestination.session(date: entry.completedAt, setEntryID: entry.id)
+                ) {
+                    prRow(kind: kind, entry: entry)
+                }
+                .buttonStyle(.plain)
+
+                if index < topThreeEntries.count - 1 {
+                    BRUDivider(.hair)
                 }
             }
-            .padding(.vertical, 4)
         }
     }
+
+    // MARK: - PR Row (3-column BRU layout per bru-screens/progress-chart.jsx)
+
+    private func prRow(kind: PRKind, entry: SetEntry) -> some View {
+        let isCurrentDay = Calendar.current.isDateInToday(entry.completedAt)
+        let rowKindColor: Color = isCurrentDay ? .bruSignal : .bruInk
+        let kindLabel = prKindLabel(kind: kind)
+        let valueText = rowText(kind: kind, set: entry)
+        let dateText = entry.completedAt.formatted(.dateTime.month().day().year()).uppercased()
+
+        return HStack(spacing: 10) {
+            // (a) Leading ~110pt fixed — kind label
+            VStack(alignment: .leading, spacing: 2) {
+                Text(kindLabel.uppercased())
+                    .font(BRUFont.labelSmall)
+                    .tracking(1.2)
+                    .foregroundStyle(rowKindColor)
+            }
+            .frame(width: 110, alignment: .leading)
+
+            // (b) Center — PR value display
+            BRUDisplay(valueText, size: .medium)
+                .frame(maxWidth: .infinity, alignment: .center)
+
+            // (c) Trailing — mono date
+            VStack(alignment: .trailing, spacing: 2) {
+                Text(dateText)
+                    .font(BRUFont.labelMicro)
+                    .tracking(0.5)
+                    .foregroundStyle(Color.bruMuted)
+            }
+            .frame(alignment: .trailing)
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 10)
+        .frame(minHeight: 44)
+        .background(isCurrentDay ? Color.bruSignal.opacity(0.06) : Color.clear)
+        .contentShape(Rectangle())
+    }
+
+    // MARK: - Kind Label
+
+    private func prKindLabel(kind: PRKind) -> String {
+        switch kind {
+        case .weight: return "Weight PR"
+        case .reps:   return "Top Reps"
+        case .volume: return "Volume PR"
+        case .e1RM:   return "e1RM PR"
+        }
+    }
+
+    // MARK: - Bucket Label
 
     private func bucketLabel(bucket: RepBucket) -> String {
         switch bucket {
@@ -242,6 +348,8 @@ private struct PRsHost: View {
         case .highRep:     return "11+ reps"
         }
     }
+
+    // MARK: - Top 3
 
     private func topThree(kind: PRKind, sets: [SetEntry]) -> [SetEntry] {
         let sorted: [SetEntry]
@@ -262,6 +370,8 @@ private struct PRsHost: View {
         }
         return Array(sorted.prefix(3))
     }
+
+    // MARK: - Row Text
 
     private func rowText(kind: PRKind, set: SetEntry) -> String {
         let weightStr = formatWeight(set.weight)
@@ -307,8 +417,15 @@ public extension View {
         self.navigationDestination(for: PRsRouteDestination.self) { dest in
             switch dest {
             case .session(let date, _):
-                Text("Session of \(date.formatted(.dateTime.month().day().year()))")
-                    .navigationTitle("Session")
+                VStack(spacing: 0) {
+                    BRUHeaderBar(center: "Session")
+                    Text("Session of \(date.formatted(.dateTime.month().day().year()))")
+                        .font(BRUFont.bodyDefault)
+                        .foregroundStyle(Color.bruMuted)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                }
+                .background(Color.bruPaper.ignoresSafeArea())
+                .navigationBarHidden(true)
             }
         }
     }

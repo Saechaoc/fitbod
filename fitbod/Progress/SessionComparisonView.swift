@@ -7,24 +7,19 @@
 //  prior session per the corrected D-22 rule (PROG-07 + CONTEXT
 //  D-22..D-24).
 //
-//  ## Layout (UI-SPEC § SessionComparisonView row styling lines
-//  540–552)
+//  ## Layout (Phase 6.1 BRU reskin — 06.1-03)
 //
-//  Column-header row above the list:
+//  BRUHeaderBar(center: "This week vs last week")
+//  Column header row (dates + Δ) — BRUFont.labelMicro .bruMuted uppercase
+//  BRUDivider(.ink)
+//  ScrollView → LazyVStack per-exercise 3-column rows
 //
-//      {this-week-date}  |  Δ  |  {last-week-date}
-//      .caption .secondaryLabel
+//  ## Δ rendering rules (BRU contract — 06.1-03)
 //
-//  Per-row 3-column HStack:
-//
-//      this-week .body (~35%)  |  Δ.headline (~30%)  |  last-week .body (~35%)
-//
-//  ## Δ rendering rules (UI-SPEC item 27)
-//
-//    positive Δ → Color.accentColor .headline ("+5 kg / +1 rep / +3 kg")
-//    negative Δ → Color(.secondaryLabel) .headline (NOT systemRed) using
+//    positive Δ → Color.bruSignal (NOT accentColor)
+//    negative Δ → Color.bruMuted (NOT systemRed — regression is data not error)
 //                 U+2212 (true minus sign), e.g. "−2.5 kg"
-//    zero      → "—" em-dash, Color(.tertiaryLabel)
+//    zero      → "—" em-dash U+2014, Color.bruFaint
 //    nil prior → "{exercise name} — no prior data" single-cell row
 //
 //  ## Empty state (UI-SPEC verbatim)
@@ -46,6 +41,7 @@ import SwiftUI
 public struct SessionComparisonView: View {
     public let anchorSession: Session
     @Environment(\.modelContext) private var ctx
+    @Environment(\.dismiss) private var dismiss
     @State private var rows: [SessionComparisonRow] = []
     @State private var didLoad = false
 
@@ -54,200 +50,183 @@ public struct SessionComparisonView: View {
     }
 
     public var body: some View {
-        Group {
+        VStack(spacing: 0) {
+            BRUHeaderBar(
+                left: HeaderAction("‹") { dismiss() },
+                center: "This week vs last week",
+                right: nil
+            )
+
             if rows.isEmpty && didLoad {
                 emptyState
             } else if !rows.isEmpty {
-                List {
-                    Section(header: columnHeader) {
-                        ForEach(rows, id: \.exerciseID) { row in
+                columnHeaderRow
+                BRUDivider(.ink)
+                ScrollView {
+                    LazyVStack(spacing: 0) {
+                        ForEach(Array(rows.enumerated()), id: \.element.exerciseID) { index, row in
                             rowView(row)
+                            if index < rows.count - 1 {
+                                BRUDivider(.hair)
+                            }
                         }
                     }
                 }
-                .listStyle(.insetGrouped)
             } else {
                 ProgressView()
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
         }
-        .navigationTitle("This week vs last week")
-        .navigationBarTitleDisplayMode(.inline)
+        .background(Color.bruPaper.ignoresSafeArea())
+        .navigationBarHidden(true)
         .task {
             rows = SessionComparator.compare(current: anchorSession, context: ctx)
             didLoad = true
         }
     }
 
-    // MARK: - Column header
+    // MARK: - Column Header Row
 
-    private var columnHeader: some View {
-        HStack {
-            Text(anchorSession.startedAt.formatted(.dateTime.month(.abbreviated).day()))
-                .font(.caption)
-                .foregroundStyle(Color(.secondaryLabel))
-                .frame(maxWidth: .infinity, alignment: .leading)
-            Text("Δ")
-                .font(.caption)
-                .foregroundStyle(Color(.secondaryLabel))
-                .frame(maxWidth: .infinity, alignment: .center)
-            Text(priorDateLabel)
-                .font(.caption)
-                .foregroundStyle(Color(.secondaryLabel))
+    private var columnHeaderRow: some View {
+        HStack(spacing: 0) {
+            Text(thisWeekDateLabel.uppercased())
+                .font(BRUFont.labelMicro)
+                .tracking(1.2)
+                .foregroundStyle(Color.bruMuted)
                 .frame(maxWidth: .infinity, alignment: .trailing)
+
+            Text("Δ")
+                .font(BRUFont.labelMicro)
+                .tracking(1.2)
+                .foregroundStyle(Color.bruMuted)
+                .frame(maxWidth: .infinity, alignment: .center)
+
+            Text(lastWeekDateLabel.uppercased())
+                .font(BRUFont.labelMicro)
+                .tracking(1.2)
+                .foregroundStyle(Color.bruMuted)
+                .frame(maxWidth: .infinity, alignment: .leading)
         }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
+        .background(Color.bruPaper)
     }
 
-    private var priorDateLabel: String {
+    private var thisWeekDateLabel: String {
+        anchorSession.startedAt.formatted(.dateTime.month(.abbreviated).day())
+    }
+
+    private var lastWeekDateLabel: String {
         if let firstPrior = rows.first(where: { $0.lastWeekTopSet != nil })?.lastWeekTopSet {
             return firstPrior.sessionStartedAt.formatted(.dateTime.month(.abbreviated).day())
         }
         return "—"
     }
 
-    // MARK: - Per-row body
+    // MARK: - Per-Row Body
 
     @ViewBuilder
     private func rowView(_ row: SessionComparisonRow) -> some View {
-        if row.thisWeekTopSet == nil && row.lastWeekTopSet == nil {
-            HStack {
+        if row.lastWeekTopSet == nil {
+            // No prior data — single-cell inline row
+            HStack(spacing: 16) {
                 Text("\(row.exerciseName) — no prior data")
-                    .font(.body)
-                    .foregroundStyle(Color(.secondaryLabel))
+                    .font(BRUFont.bodyDefault)
+                    .foregroundStyle(Color.bruMuted)
             }
-        } else if row.lastWeekTopSet == nil {
-            HStack {
-                Text("\(row.exerciseName) — no prior data")
-                    .font(.body)
-                    .foregroundStyle(Color(.secondaryLabel))
-            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
+            .frame(maxWidth: .infinity, alignment: .leading)
         } else {
-            VStack(alignment: .leading, spacing: 4) {
-                Text(row.exerciseName)
-                    .font(.caption)
-                    .foregroundStyle(Color(.secondaryLabel))
-                HStack(spacing: 8) {
-                    leftCell(top: row.thisWeekTopSet)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                    centerCell(row: row)
-                        .frame(maxWidth: .infinity, alignment: .center)
-                    rightCell(top: row.lastWeekTopSet)
-                        .frame(maxWidth: .infinity, alignment: .trailing)
+            // 3-column layout: this-week | Δ | last-week
+            HStack(spacing: 8) {
+                // Leading (~35%) — exercise name + this-week value
+                VStack(alignment: .trailing, spacing: 2) {
+                    Text(row.exerciseName)
+                        .font(BRUFont.bodyEmphasis)
+                        .foregroundStyle(Color.bruInk)
+                    if let top = row.thisWeekTopSet {
+                        Text("\(formatWeight(top.weight)) × \(top.reps)")
+                            .font(BRUFont.bodyDefault)
+                            .foregroundStyle(Color.bruInk)
+                    }
                 }
+                .frame(maxWidth: .infinity, alignment: .trailing)
+
+                // Center (~30%) — Δ values
+                VStack(spacing: 2) {
+                    deltaView(value: row.deltaWeight, unit: "kg")
+                    deltaViewReps(value: row.deltaReps)
+                    deltaView(value: row.deltaE1RM, unit: "e1RM kg")
+                }
+                .frame(maxWidth: .infinity, alignment: .center)
+
+                // Trailing (~35%) — last-week value
+                VStack(alignment: .leading, spacing: 2) {
+                    if let top = row.lastWeekTopSet {
+                        Text("\(formatWeight(top.weight)) × \(top.reps)")
+                            .font(BRUFont.bodyDefault)
+                            .foregroundStyle(Color.bruInk)
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
-            .padding(.vertical, 4)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
         }
     }
+
+    // MARK: - Δ Rendering
 
     @ViewBuilder
-    private func leftCell(top: TopSetSummary?) -> some View {
-        if let t = top {
-            VStack(alignment: .leading, spacing: 2) {
-                Text("\(formatWeight(t.weight)) kg × \(t.reps)")
-                    .font(.body)
-                if let e1rm = t.e1RM {
-                    Text("e1RM \(Int(e1rm.rounded())) kg")
-                        .font(.caption)
-                        .foregroundStyle(Color(.secondaryLabel))
-                }
-            }
-        } else {
-            Text("—")
-                .font(.body)
-                .foregroundStyle(Color(.tertiaryLabel))
-        }
-    }
-
-    @ViewBuilder
-    private func rightCell(top: TopSetSummary?) -> some View {
-        if let t = top {
-            VStack(alignment: .trailing, spacing: 2) {
-                Text("\(formatWeight(t.weight)) kg × \(t.reps)")
-                    .font(.body)
-                if let e1rm = t.e1RM {
-                    Text("e1RM \(Int(e1rm.rounded())) kg")
-                        .font(.caption)
-                        .foregroundStyle(Color(.secondaryLabel))
-                }
-            }
-        } else {
-            Text("—")
-                .font(.body)
-                .foregroundStyle(Color(.tertiaryLabel))
-        }
-    }
-
-    @ViewBuilder
-    private func centerCell(row: SessionComparisonRow) -> some View {
-        VStack(spacing: 2) {
-            deltaText(value: row.deltaWeight, unit: "kg")
-            deltaTextReps(value: row.deltaReps)
-            deltaText(value: row.deltaE1RM, unit: "e1RM kg")
-        }
-    }
-
-    // MARK: - Δ rendering
-
-    private func deltaText(value: Double?, unit: String) -> some View {
-        let txt: Text
-        let color: Color
+    private func deltaView(value: Double?, unit: String) -> some View {
         if let v = value {
             if v > 0 {
-                txt = Text("+\(formatWeight(v)) \(unit)")
-                color = Color.accentColor
+                BRUDisplay("+\(formatWeight(v)) \(unit)", size: .medium, color: .bruSignal)
             } else if v < 0 {
-                // U+2212 minus sign (not hyphen)
-                txt = Text("−\(formatWeight(abs(v))) \(unit)")
-                color = Color(.secondaryLabel)
+                // U+2212 minus sign (NOT U+002D hyphen) — preserved per BRU contract
+                BRUDisplay("\u{2212}\(formatWeight(abs(v))) \(unit)", size: .medium, color: .bruMuted)
             } else {
-                txt = Text("—")
-                color = Color(.tertiaryLabel)
+                // Zero Δ — em-dash U+2014 in bruFaint
+                BRUDisplay("\u{2014}", size: .medium, color: .bruFaint)
             }
         } else {
-            txt = Text("—")
-            color = Color(.tertiaryLabel)
+            BRUDisplay("\u{2014}", size: .medium, color: .bruFaint)
         }
-        return txt
-            .font(.headline)
-            .foregroundStyle(color)
     }
 
-    private func deltaTextReps(value: Int?) -> some View {
-        let txt: Text
-        let color: Color
+    @ViewBuilder
+    private func deltaViewReps(value: Int?) -> some View {
         if let v = value {
             if v > 0 {
-                txt = Text("+\(v) reps")
-                color = Color.accentColor
+                BRUDisplay("+\(v) reps", size: .medium, color: .bruSignal)
             } else if v < 0 {
-                txt = Text("−\(abs(v)) reps")
-                color = Color(.secondaryLabel)
+                // U+2212 minus sign (NOT hyphen)
+                BRUDisplay("\u{2212}\(abs(v)) reps", size: .medium, color: .bruMuted)
             } else {
-                txt = Text("—")
-                color = Color(.tertiaryLabel)
+                BRUDisplay("\u{2014}", size: .medium, color: .bruFaint)
             }
         } else {
-            txt = Text("—")
-            color = Color(.tertiaryLabel)
+            BRUDisplay("\u{2014}", size: .medium, color: .bruFaint)
         }
-        return txt
-            .font(.headline)
-            .foregroundStyle(color)
     }
 
-    // MARK: - Empty state
+    // MARK: - Empty State
 
     @ViewBuilder
     private var emptyState: some View {
-        VStack(alignment: .center, spacing: 4) {
+        VStack(spacing: 6) {
             Text("No comparable session")
-                .font(.headline)
+                .font(BRUFont.bodyEmphasis)
+                .foregroundStyle(Color.bruInk)
             Text("Log this routine again next week to compare.")
-                .font(.subheadline)
-                .foregroundStyle(Color(.secondaryLabel))
+                .font(BRUFont.bodyDefault)
+                .foregroundStyle(Color.bruMuted)
+                .multilineTextAlignment(.center)
         }
+        .padding(.vertical, 32)
+        .padding(.horizontal, 16)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .padding()
     }
 
     // MARK: - Formatting
