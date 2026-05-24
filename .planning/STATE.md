@@ -3,7 +3,7 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: completed
-last_updated: "2026-05-24T01:19:58.103Z"
+last_updated: "2026-05-24T03:02:00.702Z"
 progress:
   total_phases: 7
   completed_phases: 7
@@ -120,7 +120,7 @@ Plan: 8 of 8 (all plans complete; Phase 3.1 closed). Production tree compiles en
 **Plan:** 03-02 complete (Wave 3, seq 2) — `RoutineBuilderView` single-screen builder with inline `.searchable` exercise picker (reuses Phase 1 `ExerciseLibraryView` via additive `init(onSelect:)` overload), always-on drag-handle reorder via `.environment(\.editMode, .constant(.active))`, per-exercise `PrescriptionEditorRow` (intent / sets / reps / RPE / progression / rest / tempo toggle + 4-field entry / partials toggle / disabled Auto warm-up Phase 3 footnote / per-set overrides disclosure). `RoutineDraft` `@Observable` ephemeral mutation surface (FOUND-06 / MV-VM-lite, no parallel ViewModel) with `targetSets.didSet` prune (RESEARCH §6 Pitfall 8) and three-way merge `save(into:context:)`. `PrescriptionDefaults` ROUTINE-09 heuristic (compound → 180s, isolation → 90s; barbell+compound → strength 4-6, otherwise hypertrophy 8-12). 12 new `@Test` functions across 4 test files. Four atomic commits.
 
 **Plan:** 03-01 complete (Wave 3, seq 1) — Routines tab `RoutinesListView` + folders + Resume Workout banner. See plan 03-01 SUMMARY for details.
-**Status:** Phase 5 **COMPLETE** (6 of 6 plans; 11 of 11 requirements closed — 2026-05-23). Phase 6 (Progress Views, Export & Polish) is next per dependency graph.
+**Status:** v1.0 milestone complete
 **Progress:** [██████████] 100%
 
 ### Phase Outlook
@@ -409,3 +409,17 @@ Executed Phase 2 plan 00-02 (SchemaV2 VersionedSchema + V1→V2 lightweight migr
 ---
 
 *State initialized: 2026-05-10 after roadmap creation. Updated: 2026-05-11 after Phase 2 plan 05-01 (Wave 5 sequence 1 — `ExerciseHistoryView` + `IntentFilterChipRow` + `ExerciseHistoryRow` + `ExerciseDetailView` History entry-point section + 7 new @Test funcs across 2 new suites). **Phase 2 is now COMPLETE — 13/13 plans, 20/20 requirements (ROUTINE-01..09 + SESS-01..11). The Phase 2 MVP user story (PLAN-INDEX.md Vertical Slice — 18 steps end-to-end) is achievable on the simulator. Next: `/gsd-transition` to formally close Phase 2 + `/gsd-plan-phase 3` to decompose Smart Prescription & Warm-ups.***
+
+## Deferred Items
+
+Items acknowledged and deferred at v1.0 milestone close on 2026-05-23:
+
+| Category | Item | Status | Notes |
+|----------|------|--------|-------|
+| verification_gap | 01-VERIFICATION.md | human_needed | Phase 1 pre-VERIFICATION-practice phase; plan-level summaries cover scope |
+| verification_gap | 04-VERIFICATION.md | human_needed | Phase 4 UI items validated by user 2026-05-23 (this session); status not updated in file |
+| verification_gap | 05-VERIFICATION.md | human_needed | 7 UI items deferred per user choice to post-milestone UAT |
+| verification_gap | 06-VERIFICATION.md | human_needed | 12 UI items deferred per user choice to post-milestone UAT |
+| quick_task | 260522-jgo-fix-swift-6-concurrency-error-in-custome | missing | Stale entry from earlier session |
+
+See `.planning/v1.0-MILESTONE-AUDIT.md` for full deferred-debt inventory.
