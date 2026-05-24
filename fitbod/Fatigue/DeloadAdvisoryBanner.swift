@@ -2,21 +2,40 @@
 //  DeloadAdvisoryBanner.swift
 //  fitbod
 //
-//  Phase 5 PROG-06 — dismissible Today-tab top banner. Mounted via
-//  `.safeAreaInset(edge: .top)` on TodayView, ABOVE the BlockCard +
-//  ResumeWorkoutBanner per UI-SPEC §Phase 4 ↔ Phase 5 Boundary
-//  Reminders.
+//  Phase 5.1 Plan 03 — BRU reskin of the Today-tab top advisory banner.
 //
-//  Layout (UI-SPEC §Layout & Spacing §DeloadAdvisoryBanner): HStack
-//  with leading copy + Spacer + trailing xmark dismiss button (44pt
-//  hit area). Background: `Color("VolumeNearMRVAmber").opacity(0.15)`
-//  (Asset Catalog entry from plan 01). Padding 16h / 12v.
+//  Design Pivot line 35: "Full-bleed slab — not an iOS card."
+//  Design Pivot lines 84-85: "Plateau banner is a full-bleed Signal slab,
+//  not an iOS card."
 //
-//  Tap routes:
-//    Banner body → onTapBody (RootView opens DeloadSignalDetailSheet)
-//    xmark       → onDismiss  (RootView writes
-//                  settings.deloadAdvisoryDismissedWeekStart =
-//                  advisory.weekStart, per D-17)
+//  Layout:
+//    HStack(alignment: .top, spacing: 12)
+//      Button (body tap → onTap):
+//        VStack(alignment: .leading, spacing: 6)
+//          "▲ CONSIDER DELOAD"  — labelSmall, kerning 1.5, bruPaper.opacity(0.7)
+//          advisory.bannerCopy  — bodyDefault, bruPaper
+//      Button(✕) → onDismiss, .frame(minWidth: 44, minHeight: 44)
+//    .padding(.horizontal, 16).padding(.vertical, 14)
+//    .background(Color.bruSignal)
+//    .overlay top + bottom: 2pt bruInk rules
+//
+//  Accessibility:
+//    Banner root: .accessibilityLabel("Deload advisory: \(advisory.bannerCopy)")
+//                 + .isButton trait
+//    Dismiss: .accessibilityLabel("Dismiss deload advisory")
+//
+//  Copy contract (D-16 verbatim, baked into DeloadAdvisory.bannerCopy):
+//    Single: "Consider deload — {desc} over last 3 sessions. Tap to see signals."
+//    Multi:  "Consider deload — {N} fatigue signals tripped over last 3 sessions. Tap to see signals."
+//
+//  Public init UNCHANGED (RootView call site preserved):
+//    (advisory: DeloadAdvisory, onDismiss: () -> Void, onTapBody: () -> Void)
+//
+//  BRU contract — ZERO banned tokens:
+//    No Color.accentColor, Color(.system*), Color("Volume*"),
+//    RoundedRectangle(cornerRadius:), Capsule(),
+//    .font(.body|.headline|.caption|.subheadline|.footnote),
+//    Image(systemName:), .navigationTitle(
 //
 
 import SwiftUI
@@ -37,31 +56,49 @@ public struct DeloadAdvisoryBanner: View {
     }
 
     public var body: some View {
-        HStack(alignment: .top, spacing: 8) {
-            VStack(alignment: .leading, spacing: 4) {
-                Text(advisory.bannerCopy)
-                    .font(.body)
+        HStack(alignment: .top, spacing: 12) {
+            // Body tap region — opens DeloadSignalDetailSheet
+            Button(action: onTapBody) {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("▲ CONSIDER DELOAD")
+                        .font(BRUFont.labelSmall)
+                        .tracking(1.5)
+                        .textCase(.uppercase)
+                        .foregroundStyle(Color.bruPaper.opacity(0.7))
+                    Text(advisory.bannerCopy)
+                        .font(BRUFont.bodyDefault)
+                        .foregroundStyle(Color.bruPaper)
+                        .multilineTextAlignment(.leading)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
+            .buttonStyle(.plain)
             .contentShape(Rectangle())
-            .onTapGesture { onTapBody() }
-            .accessibilityElement(children: .combine)
-            .accessibilityLabel("Deload advisory: \(advisory.bannerCopy)")
-            .accessibilityAddTraits(.isButton)
-            .accessibilityHint("Tap to see signals.")
 
-            Spacer()
-
+            // Dismiss button — 44pt minimum hit area (UI-SPEC §Tap targets)
             Button(action: onDismiss) {
-                Image(systemName: "xmark")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                Text("✕")
+                    .font(BRUFont.labelSmall)
+                    .foregroundStyle(Color.bruPaper)
             }
             .frame(minWidth: 44, minHeight: 44)
-            .contentShape(Rectangle())
             .accessibilityLabel("Dismiss deload advisory")
         }
         .padding(.horizontal, 16)
-        .padding(.vertical, 12)
-        .background(Color("VolumeNearMRVAmber").opacity(0.15))
+        .padding(.vertical, 14)
+        .background(Color.bruSignal)
+        .overlay(alignment: .top) {
+            Rectangle()
+                .fill(Color.bruInk)
+                .frame(height: 2)
+        }
+        .overlay(alignment: .bottom) {
+            Rectangle()
+                .fill(Color.bruInk)
+                .frame(height: 2)
+        }
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel("Deload advisory: \(advisory.bannerCopy)")
+        .accessibilityAddTraits(.isButton)
     }
 }
