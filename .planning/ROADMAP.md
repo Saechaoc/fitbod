@@ -18,7 +18,7 @@ Granular, prescriptive workout sessions — every set in a session is intentiona
 
 - [x] **Phase 1: Foundation & Exercise Library** — Versioned SwiftData schema, full entity set, library seed pipeline, browse/filter/custom-creation UI **(complete: 12/12 plans, 14/14 requirements — 2007-05-11)**
 - [x] **Phase 2: Core Loop (Routines + Sessions)** — Single-screen routine builder, snapshot session logger, accurate rest timer, intent-split history lists **(complete: 13/13 plans, 20/20 requirements — 2007-05-11)**
-- [ ] **Phase 2.1: BRU Visual Rewrite (Core Loop)** — Rewrite TodayView / RoutineBuilder / SessionLogger / SessionHistory to BRU brutalist UI-SPEC v2: 8 BRU color tokens, Space Grotesk + JetBrains Mono fonts, 15+ BRU primitive components, no rounded corners, no Apple HIG defaults
+- [x] **Phase 2.1: BRU Visual Rewrite (Core Loop)** — Rewrite TodayView / RoutineBuilder / SessionLogger / SessionHistory to BRU brutalist UI-SPEC v2: 8 BRU color tokens, Space Grotesk + JetBrains Mono fonts, 15+ BRU primitive components, no rounded corners, no Apple HIG defaults (completed 2026-05-24)
 - [x] **Phase 3: Smart Prescription & Warm-ups** — Two progression strategies (RPE autoreg, double progression), warm-up generator, plate calculator, "why this weight?" UI (completed 2007-05-23)
 - [x] **Phase 3.1: Session-Level Intent & Progression Refactor** — Move intent + progressionKind from per-exercise to Routine/Session; strip per-exercise pickers from PrescriptionEditorRow; SchemaV4 migration; rewire 25 test suites to the new model contract (completed 2007-05-23; PIVOT-01..05 satisfied)
 - [x] **Phase 4: Periodization & Blocks** — Block builder, scheduled deloads, block timeline on home, remaining two progression strategies (block-periodized, hybrid)
@@ -74,7 +74,7 @@ Granular, prescriptive workout sessions — every set in a session is intentiona
   5. `RoutineBuilderView`, `SessionLoggerView`, `SessionHistoryView` rewritten to match their corresponding `bru-screens/*.jsx` mockups using BRU primitives only — no Apple HIG fallbacks
   6. `RestTimerOverlay` is a full-bleed slab (NOT a capsule); `SetTypeChip` drops `Color(.systemBlue|Orange|Red|Purple)` and uses BRU palette only; `PinnedNoteCapsule` drops `Color(.systemYellow)` and uses `bruSignal` or `bruInk`; `IntentChip` rebuilt as `BRUChip` instance
   7. Grep audit (Wave G) confirms zero residual references to deprecated tokens across all Phase 2 surface files; existing Phase 2 functional tests still pass; UI snapshot tests added for each rewritten screen
-**Plans:** 8/11 plans executed
+**Plans:** 11/11 plans complete
 
 **Plan list:**
 - [x] 02.1-01-PLAN.md — Wave 1: BRU color tokens (8 colorsets) + OFL fonts + Color+BRU.swift + Info.plist UIAppFonts + BRUFont.swift
@@ -87,7 +87,7 @@ Granular, prescriptive workout sessions — every set in a session is intentiona
 - [x] 02.1-08-PLAN.md — Wave 3: 11 SessionLogger widgets (PinnedNoteCapsule yellow ban + WorkoutHeaderToolbar extraction + AddUnplannedExerciseButton BRUDashedSlot + ResumeWorkoutBanner + 7 others)
 - [x] 02.1-09-PLAN.md — Wave 3: RestTimer Overlay (full-bleed slab) + RestTimerProgressArc (rename ProgressRing) + RestTimerLiveActivity + Lock Screen + 2 new Dynamic Island views
 - [x] 02.1-10-PLAN.md — Wave 3: ExerciseHistoryView reskin + IntentFilterChipRow + PRStripFooter (NEW) + SessionHistoryView (NEW) + SessionHistoryStatStrip + WeeklyTonnageSparkCard + SessionHistoryRow
-- [ ] 02.1-11-PLAN.md — Wave 4: Wave G cleanup — delete PlaceholderTabView + close deferred Step-E from 02.1-08 + Step-A from 02.1-10 + BRUGrepAuditTests guardrail + 3 UI smoke test files
+- [x] 02.1-11-PLAN.md — Wave 4: Wave G cleanup — delete PlaceholderTabView + close deferred Step-E from 02.1-08 + Step-A from 02.1-10 + BRUGrepAuditTests guardrail + 3 UI smoke test files
 **UI hint:** yes (visual rewrite IS the phase)
 **Research flag:** None — design system already locked in `02-UI-SPEC.md` v2 (commit 4c1674b); audit gap list already produced in `02-UI-REVIEW.md` (commit 7a1f142)
 
