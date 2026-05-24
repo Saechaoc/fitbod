@@ -2,40 +2,37 @@
 //  WeeklyTonnageView.swift
 //  fitbod
 //
-//  Wave-4 plan 06-06 — Swift Charts BarMark weekly tonnage chart
-//  (CONTEXT D-18..D-21 + REQUIREMENTS PROG-04). Three horizontal-
-//  scroll filter chip rows sit above the chart; the chart itself is
-//  rendered by an inner `WeeklyTonnageChartHost` view that holds the
-//  date-bounded `@Query<SetEntry>` so the outer view stays stable.
+//  Phase 6.1 BRU reskin — BRUHeaderBar + hero summary band + BRU chart chrome.
+//  (CONTEXT D-18..D-21 + REQUIREMENTS PROG-04). Three horizontal-scroll BRU
+//  filter chip rows sit above the chart.
+//
+//  ## BRU chrome overview
+//
+//  - NavigationStack wrapper removed; BRUHeaderBar replaces .navigationTitle.
+//  - Hero total band: uppercase BRUFont.labelSmall caption + BRUDisplay(.large) value.
+//  - BarMark baseline fill: Color.bruInk (single-color mode).
+//  - Stacked-bar (muscle filter active): Plan B — system palette per muscle name.
+//    WeeklyTonnageAggregator groups slices by muscle, not by intent. Extending
+//    the aggregator to carry intent would be a new data-path change (deviation
+//    Rule 4 architectural scope); Plan B is explicitly permitted by UI-SPEC §Design
+//    Pivot #7 disclaimer ("sketch fidelity lets the system palette stand for
+//    stacked muscle mode"). BRU intent palette (bruInk/bruInk@0.4/bruMuted) is
+//    applied to the BASELINE (non-stacked) bar only.
+//  - Chart grid: bruHair dashed gridlines, bruMuted BRUFont.labelSmall axis labels.
+//  - RuleMark: bruMuted, StrokeStyle(lineWidth:1, dash:[2,4]), BRUFont.labelMicro.
+//  - Background: Color.bruPaper.
 //
 //  ## Outer/inner @Query split (PATTERNS §Pattern D)
 //
-//  `WeeklyTonnageView` (outer) owns the @State ChartFilterState +
-//  the injectable MuscleVolumeProvider.
-//  `WeeklyTonnageChartHost` (inner) reads the @Query<SetEntry>
-//  filtered by `filterState.timeRange.lowerBound(now:)` so changing
-//  the time-range chip rebuilds the @Query predicate via a fresh
-//  init of the inner view.
-//
-//  ## MuscleVolumeProvider DI seam (CONTEXT D-20)
-//
-//  Default provider is `UnweightedMuscleVolumeProvider()` — Phase 5's
-//  stimulus-weighted implementation drops in via a one-line edit at
-//  the ProgressHomeView call site without touching this file.
+//  WeeklyTonnageView (outer) owns @State ChartFilterState + DI provider.
+//  WeeklyTonnageChartHost (inner) reads @Query<SetEntry> filtered by time range.
 //
 //  ## Bar tap → WeekDetailView (CONTEXT D-21)
 //
-//  Implemented via `.chartOverlay { proxy in ... }` with a clear
-//  Rectangle that catches `.onTapGesture(coordinateSpace: .local)`
-//  and translates the x-coordinate back to a `Date` via
-//  `proxy.value(atX:)`. The detected date snaps to its containing
-//  bar's weekStart by re-running the same ISO-calendar bucketing.
-//  When the user taps inside the chart area but not on a bar, the
-//  closest-bar tolerance heuristic is intentionally absent in v1 —
-//  this keeps the hit logic auditable.
+//  Preserved unchanged via .chartOverlay + GeometryReader hit-test that translates
+//  x-coordinate to an ISO week-start Date, then triggers navigationDestination.
 //
-//  [CITED: CONTEXT D-18..D-21 + UI-SPEC § Chart Styling
-//   WeeklyTonnageView + PATTERNS §Pattern D]
+//  [CITED: CONTEXT D-18..D-21 + UI-SPEC v2 §Design Pivot #7 + §Reference mockup map]
 //
 
 import Charts
@@ -62,6 +59,7 @@ extension TimeRangeChoice {
 // MARK: - WeeklyTonnageView (outer)
 
 public struct WeeklyTonnageView: View {
+    @Environment(\.dismiss) private var dismiss
     @State private var filterState = ChartFilterState()
     @State private var navigationDestination: Date?
     private let provider: MuscleVolumeProvider
@@ -71,20 +69,39 @@ public struct WeeklyTonnageView: View {
     }
 
     public var body: some View {
-        VStack(spacing: 8) {
-            TimeRangeChipRow(selection: $filterState.timeRange)
-            BlockPhaseChipRow(selection: $filterState.blockPhases)
-            MuscleChipRow(selection: $filterState.selectedMuscles)
-            WeeklyTonnageChartHost(
-                filterState: filterState,
-                provider: provider,
-                onBarTap: { date in
-                    navigationDestination = date
-                }
+        VStack(spacing: 0) {
+            BRUHeaderBar(
+                left: HeaderAction("‹") { dismiss() },
+                center: "Weekly Tonnage"
             )
-            Spacer(minLength: 0)
+
+            ScrollView {
+                VStack(spacing: 0) {
+                    // Filter chip rows
+                    VStack(spacing: 8) {
+                        TimeRangeChipRow(selection: $filterState.timeRange)
+                        BlockPhaseChipRow(selection: $filterState.blockPhases)
+                        MuscleChipRow(selection: $filterState.selectedMuscles)
+                    }
+                    .padding(.top, 12)
+                    .padding(.bottom, 8)
+
+                    BRUDivider(.ink)
+
+                    // Chart host (holds @Query)
+                    WeeklyTonnageChartHost(
+                        filterState: filterState,
+                        provider: provider,
+                        onBarTap: { date in
+                            navigationDestination = date
+                        }
+                    )
+                    .padding(.bottom, 24)
+                }
+            }
         }
-        .navigationTitle("Weekly Tonnage")
+        .background(Color.bruPaper.ignoresSafeArea())
+        .navigationBarHidden(true)
         .navigationDestination(item: $navigationDestination) { weekStart in
             WeekDetailView(weekStart: weekStart)
         }
@@ -138,92 +155,169 @@ private struct WeeklyTonnageChartHost: View {
             selectedMuscleIDs: filterState.selectedMuscles,
             provider: provider
         )
-        VStack(alignment: .leading, spacing: 8) {
+
+        VStack(alignment: .leading, spacing: 0) {
             if bars.isEmpty {
                 emptyState
             } else {
-                summaryLine(bars: bars)
+                heroSummary(bars: bars)
+                BRUDivider(.ink)
+                    .padding(.horizontal, 0)
                 chart(bars: bars, weekStartsMonday: weekStartsMonday)
             }
         }
-        .padding(.horizontal, 16)
     }
+
+    // MARK: - Hero summary band
+
+    private func heroSummary(bars: [WeeklyTonnageBar]) -> some View {
+        let total = bars.reduce(0.0) { $0 + $1.totalTonnage }
+        let totalKg = Int(total.rounded())
+        let unitLabel = "KG"
+        let totalFormatted = totalKg >= 1_000
+            ? String(format: "%d,%03d", totalKg / 1_000, totalKg % 1_000)
+            : "\(totalKg)"
+
+        return HStack(alignment: .lastTextBaseline) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text("TOTAL · \(bars.count) WEEKS")
+                    .font(BRUFont.labelSmall)
+                    .tracking(1.5)
+                    .foregroundStyle(Color.bruMuted)
+                HStack(alignment: .lastTextBaseline, spacing: 4) {
+                    BRUDisplay("\(totalFormatted)", size: .large)
+                    Text(unitLabel)
+                        .font(BRUFont.bodyDefault)
+                        .tracking(0.5)
+                        .foregroundStyle(Color.bruMuted)
+                }
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.horizontal, 16)
+        .padding(.vertical, 14)
+    }
+
+    // MARK: - Empty state
 
     @ViewBuilder
     private var emptyState: some View {
-        VStack(alignment: .center, spacing: 4) {
+        VStack(alignment: .center, spacing: 8) {
             Text("Not enough data")
-                .font(.headline)
+                .font(BRUFont.bodyEmphasis)
+                .foregroundStyle(Color.bruInk)
             Text("Log one week of training to see tonnage.")
-                .font(.subheadline)
-                .foregroundStyle(Color(.secondaryLabel))
+                .font(BRUFont.bodyDefault)
+                .foregroundStyle(Color.bruMuted)
         }
         .frame(maxWidth: .infinity, alignment: .center)
-        .padding(.top, 24)
+        .padding(.top, 48)
+        .padding(.horizontal, 16)
     }
 
-    private func summaryLine(bars: [WeeklyTonnageBar]) -> some View {
-        let total = bars.reduce(0.0) { $0 + $1.totalTonnage }
-        let totalKg = Int(total.rounded())
-        return Text("\(totalKg) kg over \(bars.count) weeks")
-            .font(.headline)
-            .frame(maxWidth: .infinity, alignment: .leading)
-    }
+    // MARK: - Chart
 
     @ViewBuilder
     private func chart(bars: [WeeklyTonnageBar], weekStartsMonday: Bool) -> some View {
+        // RuleMark value: the overall max week tonnage (used as "previous best" reference)
         let previousBest = bars.map(\.totalTonnage).max() ?? 0
-        Chart {
-            ForEach(bars, id: \.weekStart) { week in
-                if filterState.selectedMuscles.isEmpty {
-                    BarMark(
-                        x: .value("Week", week.weekStart, unit: .weekOfYear),
-                        y: .value("Tonnage (kg)", week.totalTonnage)
-                    )
-                    .foregroundStyle(Color.accentColor)
-                } else {
-                    ForEach(week.muscleBreakdown ?? [], id: \.muscleID) { slice in
+
+        VStack(alignment: .leading, spacing: 4) {
+            // Y-axis label above the chart frame
+            Text("TONNAGE (KG)")
+                .font(BRUFont.labelSmall)
+                .tracking(1.2)
+                .foregroundStyle(Color.bruMuted)
+                .padding(.horizontal, 16)
+                .padding(.top, 8)
+
+            Chart {
+                ForEach(bars, id: \.weekStart) { week in
+                    if filterState.selectedMuscles.isEmpty {
+                        // Baseline mode: single bruInk bar
                         BarMark(
                             x: .value("Week", week.weekStart, unit: .weekOfYear),
-                            y: .value("Tonnage (kg)", slice.tonnage)
+                            y: .value("Tonnage (kg)", week.totalTonnage)
                         )
-                        .foregroundStyle(by: .value("Muscle", slice.muscleName))
+                        .foregroundStyle(Color.bruInk)
+                        .cornerRadius(0)
+                    } else {
+                        // Muscle-stacked mode (Plan B): system palette per muscle name.
+                        // WeeklyTonnageAggregator groups by muscle, not intent.
+                        // BRU intent palette (strength/hypertrophy/deload) requires an
+                        // intent field on MuscleSlice — a new data-path (Rule 4 scope).
+                        // Plan B is explicitly permitted by UI-SPEC §Design Pivot #7
+                        // disclaimer: "sketch fidelity lets the system palette stand for
+                        // stacked muscle mode."
+                        ForEach(week.muscleBreakdown ?? [], id: \.muscleID) { slice in
+                            BarMark(
+                                x: .value("Week", week.weekStart, unit: .weekOfYear),
+                                y: .value("Tonnage (kg)", slice.tonnage)
+                            )
+                            .foregroundStyle(by: .value("Muscle", slice.muscleName))
+                            .cornerRadius(0)
+                        }
                     }
                 }
+
+                // RuleMark "previous best" — bruMuted dashed, BRUFont.labelMicro annotation
+                if bars.count >= 2 {
+                    RuleMark(y: .value("Previous best", previousBest))
+                        .foregroundStyle(Color.bruMuted)
+                        .lineStyle(StrokeStyle(lineWidth: 1, dash: [2, 4]))
+                        .annotation(position: .topTrailing, alignment: .trailing) {
+                            Text("PREVIOUS BEST")
+                                .font(BRUFont.labelMicro)
+                                .tracking(1.0)
+                                .foregroundStyle(Color.bruMuted)
+                        }
+                }
             }
-            if bars.count >= 2 {
-                RuleMark(y: .value("Previous best", previousBest))
-                    .foregroundStyle(Color(.secondaryLabel))
-                    .lineStyle(StrokeStyle(lineWidth: 1, dash: [2, 4]))
-                    .annotation(position: .topTrailing, alignment: .trailing) {
-                        Text("Previous best")
-                            .font(.caption)
-                            .foregroundStyle(Color(.secondaryLabel))
-                    }
+            // X-axis: bruMuted mono labels, bruHair gridlines
+            .chartXAxis {
+                AxisMarks(values: .stride(by: .weekOfYear)) {
+                    AxisGridLine()
+                        .foregroundStyle(Color.bruHair)
+                    AxisTick()
+                        .foregroundStyle(Color.bruMuted)
+                    AxisValueLabel()
+                        .font(BRUFont.labelSmall)
+                        .foregroundStyle(Color.bruMuted)
+                }
             }
-        }
-        .chartXAxis {
-            AxisMarks(values: .stride(by: .weekOfYear))
-        }
-        .chartYScale(domain: .automatic(includesZero: true))
-        .frame(minHeight: 280)
-        .chartOverlay { proxy in
-            GeometryReader { geometry in
-                Rectangle()
-                    .fill(Color.clear)
-                    .contentShape(Rectangle())
-                    .onTapGesture { location in
-                        guard let plotFrame = proxy.plotFrame else { return }
-                        let plotRect = geometry[plotFrame]
-                        let relativeX = location.x - plotRect.minX
-                        guard relativeX >= 0, relativeX <= plotRect.width else { return }
-                        guard let date: Date = proxy.value(atX: relativeX) else { return }
-                        // Snap to the containing ISO week start.
-                        var calendar = Calendar(identifier: .iso8601)
-                        calendar.firstWeekday = weekStartsMonday ? 2 : 1
-                        guard let interval = calendar.dateInterval(of: .weekOfYear, for: date) else { return }
-                        onBarTap(interval.start)
-                    }
+            // Y-axis: bruHair dashed gridlines, bruMuted mono labels, no tick marks
+            .chartYAxis {
+                AxisMarks {
+                    AxisGridLine(stroke: StrokeStyle(lineWidth: 1, dash: [2, 3]))
+                        .foregroundStyle(Color.bruHair)
+                    AxisValueLabel()
+                        .font(BRUFont.labelSmall)
+                        .foregroundStyle(Color.bruMuted)
+                }
+            }
+            .chartYScale(domain: .automatic(includesZero: true))
+            .frame(minHeight: 280)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
+            // Preserve existing bar-tap → WeekDetailView drill logic
+            .chartOverlay { proxy in
+                GeometryReader { geometry in
+                    Rectangle()
+                        .fill(Color.clear)
+                        .contentShape(Rectangle())
+                        .onTapGesture { location in
+                            guard let plotFrame = proxy.plotFrame else { return }
+                            let plotRect = geometry[plotFrame]
+                            let relativeX = location.x - plotRect.minX
+                            guard relativeX >= 0, relativeX <= plotRect.width else { return }
+                            guard let date: Date = proxy.value(atX: relativeX) else { return }
+                            // Snap to the containing ISO week start.
+                            var calendar = Calendar(identifier: .iso8601)
+                            calendar.firstWeekday = weekStartsMonday ? 2 : 1
+                            guard let interval = calendar.dateInterval(of: .weekOfYear, for: date) else { return }
+                            onBarTap(interval.start)
+                        }
+                }
             }
         }
     }
