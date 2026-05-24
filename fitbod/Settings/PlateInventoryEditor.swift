@@ -3,8 +3,11 @@
 //  fitbod
 //
 //  Settings → Smart Progression → Plate Inventory.
-//  Tabbed Form editor for all four PlateEquipmentKind rows in the store.
 //  Pushed onto the Settings NavigationStack — owns no NavigationStack itself.
+//
+//  BRU reskin (03.2-06): Stepper → PlateTallyRow; Form/Section → ScrollView/VStack;
+//  ContentUnavailableView → custom BRU empty-state; Picker(.segmented) → custom HStack tab strip;
+//  Color.accentColor → BRU tokens; .navigationTitle → BRUHeaderBar.
 //
 //  UI-SPEC §PlateInventoryEditor (verbatim copy in all labels / alerts / empty states).
 //  Pattern: PATTERNS.md @Query + @Bindable write-through (SettingsView analog).
@@ -20,6 +23,7 @@ public struct PlateInventoryEditor: View {
     @Query private var inventories: [PlateInventory]
     @Environment(\.modelContext) private var ctx
     @Query private var settingsList: [UserSettings]
+    @Environment(\.dismiss) private var dismiss
 
     // MARK: - State
 
@@ -27,7 +31,6 @@ public struct PlateInventoryEditor: View {
     @State private var showResetConfirm: Bool = false
     @State private var showAddPlateSheet: Bool = false
     @State private var showCalculatorSheet: Bool = false
-    @State private var newPlateWeightText: String = ""
 
     // MARK: - Init
 
@@ -51,32 +54,36 @@ public struct PlateInventoryEditor: View {
 
     public var body: some View {
         VStack(spacing: 0) {
-            // Segmented picker — top of the pushed view, above the Form.
-            // Explicit .tag() on each case so the Picker's selection binding
-            // resolves correctly for each PlateEquipmentKind.
-            Picker("Equipment", selection: $activeTab) {
-                Text(PlateEquipmentKind.barbell.displayName).tag(PlateEquipmentKind.barbell)
-                Text(PlateEquipmentKind.dumbbell.displayName).tag(PlateEquipmentKind.dumbbell)
-                Text(PlateEquipmentKind.ezBar.displayName).tag(PlateEquipmentKind.ezBar)
-                Text(PlateEquipmentKind.trapBar.displayName).tag(PlateEquipmentKind.trapBar)
-            }
-            .pickerStyle(.segmented)
-            .padding(.horizontal, 16)
-            .padding(.vertical, 8)
+            // BRUHeaderBar — replaces .navigationTitle (03.2-06 must_have)
+            BRUHeaderBar(
+                center: "Plate Inventory",
+                right: HeaderAction("•••") { showCalculatorSheet = true }
+            )
 
-            if let inv = activeInventory {
-                @Bindable var binv = inv
-                inventoryForm(binv: binv)
-            } else {
-                emptyInventoryState
+            // Custom bruInk-styled tab strip (replaces Picker(.segmented))
+            equipmentTabStrip
+
+            // Content scroll area
+            ScrollView {
+                if let inv = activeInventory {
+                    @Bindable var binv = inv
+                    activeTabContent(binv: binv)
+                } else {
+                    emptyInventoryState
+                }
             }
+
+            // Footer — 2pt bruInk top rule + ghost "Save inventory" + primary "Done ▸"
+            footerBar
+
+            // 24pt bruBg safe-area filler
+            Rectangle()
+                .fill(Color.bruBg)
+                .frame(height: 24)
         }
-        .navigationTitle("Plate Inventory")                                     // UI-SPEC verbatim
-        .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                Button("Calculator") { showCalculatorSheet = true }
-            }
-        }
+        .background(Color.bruPaper)
+        // No .navigationTitle — BRUHeaderBar owns that chrome
+        .navigationBarHidden(true)
         .sheet(isPresented: $showCalculatorSheet) {
             if let inv = activeInventory {
                 PlateCalculatorSheet(equipment: activeTab, inventory: inv)
@@ -86,10 +93,10 @@ public struct PlateInventoryEditor: View {
         .sheet(isPresented: $showAddPlateSheet) {
             if let inv = activeInventory {
                 @Bindable var binv = inv
-                addPlateSheet(binv: binv)
+                AddPlateSheet(binv: binv, ctx: ctx)
             }
         }
-        .alert("Reset plate inventory?", isPresented: $showResetConfirm) {   // UI-SPEC verbatim
+        .alert("Reset plate inventory?", isPresented: $showResetConfirm) {    // UI-SPEC verbatim
             Button("Reset", role: .destructive) {
                 if let inv = activeInventory {
                     inv.availablePlates = PlateInventoryDefaults.make(
@@ -106,26 +113,79 @@ public struct PlateInventoryEditor: View {
             }
             Button("Cancel", role: .cancel) {}
         } message: {
-            // UI-SPEC verbatim: "Replaces with the default {unit system} plate set for {equipment kind}."
+            // UI-SPEC line 280 verbatim
             Text("Replaces with the default \(unitLabel) plate set for \(activeTab.displayName).")
         }
     }
 
-    // MARK: - Inventory Form
+    // MARK: - Equipment tab strip
+
+    /// Custom 4-segment bruInk tab strip — replaces Picker(.segmented).
+    /// Selected segment: bruInk fill + bruPaper text.
+    /// Unselected: bruPaper fill + bruInk text.
+    /// 1pt bruInk vertical separators between segments.
+    /// 2pt bruInk bottom rule beneath the strip.
+    private var equipmentTabStrip: some View {
+        VStack(spacing: 0) {
+            HStack(spacing: 0) {
+                ForEach(PlateEquipmentKind.allCases, id: \.self) { kind in
+                    tabButton(for: kind)
+
+                    // 1pt vertical separator between buttons (not after last)
+                    if kind != PlateEquipmentKind.allCases.last {
+                        Rectangle()
+                            .fill(Color.bruInk)
+                            .frame(width: 1)
+                    }
+                }
+            }
+            .background(Color.bruPaper)
+            // Outer 1.5pt bruInk border around the full strip (per UI-SPEC line 441)
+            .overlay {
+                Rectangle()
+                    .stroke(Color.bruInk, lineWidth: 1.5)
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 8)
+
+            // 2pt bruInk bottom rule beneath the strip
+            Rectangle()
+                .fill(Color.bruInk)
+                .frame(height: 2)
+        }
+        .background(Color.bruPaper)
+    }
 
     @ViewBuilder
-    private func inventoryForm(binv: PlateInventory) -> some View {
-        let plates = binv.availablePlates
+    private func tabButton(for kind: PlateEquipmentKind) -> some View {
+        let isActive = activeTab == kind
+        Button {
+            activeTab = kind
+        } label: {
+            Text(kind.displayName)
+                .font(BRUFont.labelSmall)
+                .tracking(1.2)
+                .textCase(.uppercase)
+                .foregroundStyle(isActive ? Color.bruPaper : Color.bruInk)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 10)
+                .background(isActive ? Color.bruInk : Color.bruPaper)
+        }
+        .buttonStyle(.plain)
+        // T-03.2-11 mitigation: VoiceOver announces the active tab
+        .accessibilityAddTraits(isActive ? .isSelected : [])
+    }
 
-        Form {
-            // Section 1: Bar weight
+    // MARK: - Active tab content
+
+    @ViewBuilder
+    private func activeTabContent(binv: PlateInventory) -> some View {
+        VStack(spacing: 0) {
+            // Bar weight section
             barWeightSection(binv: binv)
 
-            // Section 2: Plates per side
-            platesSection(binv: binv, plates: plates)
-
-            // Section 3: Reset to Defaults
-            resetSection
+            // Plates per side section
+            platesSection(binv: binv)
         }
     }
 
@@ -134,140 +194,162 @@ public struct PlateInventoryEditor: View {
     @ViewBuilder
     private func barWeightSection(binv: PlateInventory) -> some View {
         @Bindable var b = binv
-        Section {
-            HStack {
-                TextField("Bar weight", value: $b.barWeight, format: .number)   // UI-SPEC verbatim label
-                    .keyboardType(.decimalPad)
-                Text(unitLabel)
-                    .foregroundStyle(.secondary)
-            }
-        } header: {
-            Text("Bar weight")                                                  // UI-SPEC verbatim header
+
+        BRUSectionHead("Bar weight")                                           // UI-SPEC verbatim
+
+        HStack {
+            Text("BAR WEIGHT")                                                 // UI-SPEC verbatim
+                .font(BRUFont.labelSmall)
+                .tracking(1.2)
+                .textCase(.uppercase)
+                .foregroundStyle(Color.bruMuted)
+
+            Spacer()
+
+            TextField("45", value: $b.barWeight, format: .number)
+                .keyboardType(.decimalPad)
+                .font(BRUFont.bodyDefault)
+                .multilineTextAlignment(.trailing)
+                .frame(width: 80)
+
+            Text(unitLabel)
+                .font(BRUFont.bodyDefault)
+                .foregroundStyle(Color.bruMuted)
         }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
+
+        // 2pt bruInk bottom rule beneath bar weight row
+        Rectangle()
+            .fill(Color.bruInk)
+            .frame(height: 2)
     }
 
     // MARK: - Plates per side section
 
     @ViewBuilder
-    private func platesSection(binv: PlateInventory, plates: [PlateSpec]) -> some View {
-        Section {
-            if plates.isEmpty {
-                // Empty state — UI-SPEC verbatim
-                ContentUnavailableView {
-                    Label("No plates configured", systemImage: "scalemass")    // UI-SPEC verbatim heading
-                } description: {
-                    Text("Add plates to use the plate calculator.")             // UI-SPEC verbatim body
-                } actions: {
-                    Button("Add Plate") { showAddPlateSheet = true }           // UI-SPEC verbatim action
-                        .foregroundStyle(Color.accentColor)
+    private func platesSection(binv: PlateInventory) -> some View {
+        BRUSectionHead("Plates available", right: "Per side")                  // UI-SPEC verbatim
+
+        if binv.availablePlates.isEmpty {
+            // Empty state — UI-SPEC lines 282–284 verbatim
+            VStack(spacing: 12) {
+                Text("No plates configured")                                   // UI-SPEC verbatim
+                    .font(.custom("SpaceGrotesk-Bold", size: 28))
+                    .foregroundStyle(Color.bruInk)
+
+                Text("Add plates to use the plate calculator.")                // UI-SPEC verbatim
+                    .font(BRUFont.bodyDefault)
+                    .foregroundStyle(Color.bruMuted)
+
+                // "+ ADD PLATE" signal text button per UI-SPEC line 284
+                Button {
+                    showAddPlateSheet = true
+                } label: {
+                    Text("+ ADD PLATE")                                        // UI-SPEC verbatim
+                        .font(BRUFont.labelSmall)
+                        .tracking(1.2)
+                        .textCase(.uppercase)
+                        .foregroundStyle(Color.bruSignal)
                 }
-            } else {
-                ForEach(plates.sorted(by: { $0.weight > $1.weight }), id: \.weight) { plate in
-                    plateRow(plate: plate, binv: binv)
-                }
-                Button("Add Plate") { showAddPlateSheet = true }               // UI-SPEC verbatim
+                .buttonStyle(.plain)
+                .frame(maxWidth: .infinity, minHeight: 44)
             }
-        } header: {
-            Text("Plates per side")                                             // UI-SPEC verbatim header
-        }
-    }
+            .padding(.top, 32)
+            .padding(.horizontal, 16)
 
-    @ViewBuilder
-    private func plateRow(plate: PlateSpec, binv: PlateInventory) -> some View {
-        HStack {
-            // UI-SPEC plate row format: "{weight} kg" leading
-            Text("\(plate.weight, specifier: "%g") \(unitLabel)")
-            Spacer()
-            Stepper(
-                "× \(plate.countPerSide)",
-                value: stepperBinding(for: plate, on: binv),
-                in: 0...10
-            )
-        }
-        .swipeActions(edge: .trailing, allowsFullSwipe: false) {
-            Button("Delete", role: .destructive) {                             // UI-SPEC verbatim
-                delete(plate: plate, from: binv)
-            }
-        }
-    }
-
-    // MARK: - Reset section
-
-    @ViewBuilder
-    private var resetSection: some View {
-        Section {
-            Button("Reset to Defaults") {                                       // UI-SPEC verbatim
-                showResetConfirm = true
-            }
-            .foregroundStyle(Color.accentColor)                                 // UI-SPEC accent item 21
-        }
-    }
-
-    // MARK: - Add plate sheet
-
-    @ViewBuilder
-    private func addPlateSheet(binv: PlateInventory) -> some View {
-        NavigationStack {
-            Form {
-                Section {
-                    TextField("e.g. 25", text: $newPlateWeightText)             // UI-SPEC verbatim placeholder
-                        .keyboardType(.decimalPad)
-                } header: {
-                    Text("Plate weight")                                         // UI-SPEC verbatim
-                }
-            }
-            .navigationTitle("Add Plate")                                       // UI-SPEC verbatim
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
-                    Button("Cancel") {
-                        newPlateWeightText = ""
-                        showAddPlateSheet = false
-                    }
-                }
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button("Add") {                                             // UI-SPEC verbatim
-                        if let w = Double(newPlateWeightText), w > 0 {
-                            var updated = binv.availablePlates
-                            updated.append(PlateSpec(weight: w, countPerSide: 2))
-                            updated.sort(by: { $0.weight > $1.weight })
-                            binv.availablePlates = updated
-                            binv.updatedAt = .now
-                            try? ctx.save()
-                            newPlateWeightText = ""
-                            showAddPlateSheet = false
+        } else {
+            // Plate tally rows — PlateTallyRow replaces Stepper (03.2-06 must_have)
+            LazyVStack(spacing: 0) {
+                ForEach(
+                    binv.availablePlates.sorted(by: { $0.weight > $1.weight }),
+                    id: \.weight
+                ) { plate in
+                    PlateTallyRow(
+                        weight: plate.weight,
+                        count: stepperBinding(for: plate, on: binv),
+                        unitLabel: unitLabel
+                    )
+                    .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                        Button("Delete", role: .destructive) {               // UI-SPEC verbatim
+                            delete(plate: plate, from: binv)
                         }
                     }
-                    .disabled(Double(newPlateWeightText) == nil || newPlateWeightText.isEmpty)
                 }
             }
+
+            // "+ ADD PLATE" signal text button — UI-SPEC line 271 verbatim
+            Button {
+                showAddPlateSheet = true
+            } label: {
+                Text("+ ADD PLATE")                                          // UI-SPEC verbatim
+                    .font(BRUFont.labelSmall)
+                    .tracking(1.2)
+                    .textCase(.uppercase)
+                    .foregroundStyle(Color.bruSignal)
+            }
+            .buttonStyle(.plain)
+            .frame(maxWidth: .infinity, minHeight: 44)
+            .padding(.vertical, 4)
+
+            // "RESET TO DEFAULTS" ghost text footer — UI-SPEC line 278 verbatim
+            // bruMuted NOT signal — reset is destructive, not aspirational
+            Button {
+                showResetConfirm = true
+            } label: {
+                Text("RESET TO DEFAULTS")                                    // UI-SPEC verbatim
+                    .font(BRUFont.labelSmall)
+                    .tracking(1.2)
+                    .textCase(.uppercase)
+                    .foregroundStyle(Color.bruMuted)
+            }
+            .buttonStyle(.plain)
+            .frame(maxWidth: .infinity, minHeight: 44)
         }
     }
 
-    // MARK: - Empty inventory (no PlateInventory row for the active tab)
+    // MARK: - Footer bar
 
-    @ViewBuilder
-    private var emptyInventoryState: some View {
-        ContentUnavailableView {
-            Label("No plates configured", systemImage: "scalemass")            // UI-SPEC verbatim
-        } description: {
-            Text("Add plates to use the plate calculator.")                     // UI-SPEC verbatim
-        } actions: {
-            Button("Add Plate") { showAddPlateSheet = true }                   // UI-SPEC verbatim
-                .foregroundStyle(Color.accentColor)
+    /// 2pt bruInk top rule + ghost "Save inventory" (half-width) + primary "Done ▸" (half-width)
+    /// T-03.2-12 note: @Bindable write-through already persists all changes; the ghost Save
+    /// button is a visual continuity gesture matching plate-calc.jsx mockup, not a state mutation.
+    private var footerBar: some View {
+        VStack(spacing: 0) {
+            // 2pt bruInk top rule
+            Rectangle()
+                .fill(Color.bruInk)
+                .frame(height: 2)
+
+            HStack(spacing: 0) {
+                // Ghost "Save inventory" — visual gesture per plate-calc.jsx line 133
+                BRUButton("Save inventory", kind: .ghost) {
+                    // No-op: @Bindable + try? ctx.save() in stepperBinding already write-through.
+                    // This button provides visual continuity with the mockup (T-03.2-12 accepted).
+                }
+                .frame(maxWidth: .infinity)
+
+                // Primary "Done ▸" — dismisses the view
+                BRUButton("Done ▸", kind: .primary) {
+                    dismiss()
+                }
+                .frame(maxWidth: .infinity)
+            }
         }
     }
 
     // MARK: - Helpers
 
-    /// Transforms Stepper value changes into mutations on the matching PlateSpec.
+    /// Transforms PlateTallyRow count changes into mutations on the matching PlateSpec.
+    /// Reused verbatim from v1 Stepper wire-through (stepperBinding helper).
     private func stepperBinding(
         for plate: PlateSpec,
         on inv: PlateInventory
     ) -> Binding<Int> {
         Binding(
             get: {
-                inv.availablePlates.first(where: { $0.weight == plate.weight })?.countPerSide ?? plate.countPerSide
+                inv.availablePlates
+                    .first(where: { $0.weight == plate.weight })?
+                    .countPerSide ?? plate.countPerSide
             },
             set: { newCount in
                 var updated = inv.availablePlates
@@ -293,18 +375,119 @@ public struct PlateInventoryEditor: View {
         inv.updatedAt = .now
         try? ctx.save()
     }
+
+    // MARK: - Empty inventory (no PlateInventory row for active tab)
+
+    @ViewBuilder
+    private var emptyInventoryState: some View {
+        VStack(spacing: 12) {
+            Text("No plates configured")                                       // UI-SPEC verbatim
+                .font(.custom("SpaceGrotesk-Bold", size: 28))
+                .foregroundStyle(Color.bruInk)
+
+            Text("Add plates to use the plate calculator.")                    // UI-SPEC verbatim
+                .font(BRUFont.bodyDefault)
+                .foregroundStyle(Color.bruMuted)
+
+            Button {
+                showAddPlateSheet = true
+            } label: {
+                Text("+ ADD PLATE")                                            // UI-SPEC verbatim
+                    .font(BRUFont.labelSmall)
+                    .tracking(1.2)
+                    .textCase(.uppercase)
+                    .foregroundStyle(Color.bruSignal)
+            }
+            .buttonStyle(.plain)
+            .frame(maxWidth: .infinity, minHeight: 44)
+        }
+        .padding(.top, 32)
+        .padding(.horizontal, 16)
+    }
 }
 
-// MARK: - PlateEquipmentKind display names (file-private; UI-SPEC verbatim)
+// MARK: - AddPlateSheet
+
+/// Private sheet — BRUHeaderBar + PLATE WEIGHT label + TextField + CANCEL/ADD buttons.
+/// Per UI-SPEC lines 272–276 verbatim. No NavigationStack — bare VStack.
+private struct AddPlateSheet: View {
+
+    @Bindable var binv: PlateInventory
+    let ctx: ModelContext
+
+    @State private var newPlateWeightText: String = ""
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        VStack(spacing: 0) {
+            BRUHeaderBar(center: "ADD PLATE")                                   // UI-SPEC line 272 verbatim
+
+            VStack(alignment: .leading, spacing: 8) {
+                Text("PLATE WEIGHT")                                            // UI-SPEC line 273 verbatim
+                    .font(BRUFont.labelSmall)
+                    .tracking(1.2)
+                    .textCase(.uppercase)
+                    .foregroundStyle(Color.bruMuted)
+
+                TextField("e.g. 25", text: $newPlateWeightText)                // UI-SPEC line 274 verbatim
+                    .keyboardType(.decimalPad)
+                    .font(BRUFont.bodyDefault)
+
+                // Inline validation error per 03-UI-SPEC destructive pattern
+                // (bruSignal replaces systemRed per must_have: "Color(.system*) zero")
+                if !newPlateWeightText.isEmpty,
+                   Double(newPlateWeightText) == nil {
+                    Text("Enter a valid number.")
+                        .font(BRUFont.labelSmall)
+                        .tracking(1.2)
+                        .foregroundStyle(Color.bruSignal)                       // bruSignal replaces systemRed (was line 87)
+                }
+
+                HStack(spacing: 0) {
+                    BRUButton("Cancel", kind: .ghost) {                        // UI-SPEC line 276 verbatim
+                        newPlateWeightText = ""
+                        dismiss()
+                    }
+                    .frame(maxWidth: .infinity)
+
+                    BRUButton("Add", kind: .signal) {                          // UI-SPEC line 275 verbatim
+                        addPlate()
+                    }
+                    .disabled(Double(newPlateWeightText) == nil || newPlateWeightText.isEmpty)
+                    .frame(maxWidth: .infinity)
+                }
+                .padding(.top, 8)
+            }
+            .padding(16)
+
+            Spacer()
+        }
+        .background(Color.bruPaper)
+    }
+
+    private func addPlate() {
+        guard let w = Double(newPlateWeightText), w > 0 else { return }
+        var updated = binv.availablePlates
+        updated.append(PlateSpec(weight: w, countPerSide: 2))
+        updated.sort(by: { $0.weight > $1.weight })
+        binv.availablePlates = updated
+        binv.updatedAt = .now
+        try? ctx.save()
+        newPlateWeightText = ""
+        dismiss()
+    }
+}
+
+// MARK: - PlateEquipmentKind display names (file-private; UI-SPEC verbatim UPPERCASE)
 
 fileprivate extension PlateEquipmentKind {
-    /// Tab label per UI-SPEC § PlateInventoryEditor.
+    /// Tab label per UI-SPEC §PlateInventoryEditor line 265 — UPPERCASE verbatim.
     var displayName: String {
         switch self {
-        case .barbell:  return "Barbell"     // UI-SPEC verbatim
-        case .dumbbell: return "Dumbbells"   // UI-SPEC verbatim
-        case .ezBar:    return "EZ-Bar"      // UI-SPEC verbatim
-        case .trapBar:  return "Trap Bar"    // UI-SPEC verbatim
+        case .barbell:  return "BARBELL"     // UI-SPEC verbatim
+        case .dumbbell: return "DUMBBELLS"   // UI-SPEC verbatim
+        case .ezBar:    return "EZ-BAR"      // UI-SPEC verbatim
+        case .trapBar:  return "TRAP BAR"    // UI-SPEC verbatim
         }
     }
 }
@@ -314,7 +497,6 @@ fileprivate extension PlateEquipmentKind {
 #Preview("Plate Inventory Editor (seeded)") {
     let container = PreviewModelContainer.make()
     let ctx = ModelContext(container)
-    // Pre-seed inventory for the preview.
     PlateInventorySeeder.seedIfNeeded(in: ctx, unitSystem: .kg)
     return NavigationStack {
         PlateInventoryEditor()
