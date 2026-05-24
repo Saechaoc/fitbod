@@ -58,11 +58,14 @@ struct WeeklyTonnageViewCopyTests {
         #expect(chips.contains("\"Tap a muscle to break the bar by stimulus.\""))
 
         // Chart-host strings
+        // Note: Phase 06.1-04 BRU reskin replaced the pre-BRU hero band
+        // ("X kg over N weeks") with the BRU hero band ("TOTAL · N WEEKS" + BRUDisplay).
+        // "Previous best" remains in the RuleMark value label (chart scale key).
         #expect(view.contains("\"Previous best\""))
         #expect(view.contains("\"Not enough data\""))
         #expect(view.contains("\"Log one week of training to see tonnage.\""))
         #expect(view.contains("\"Weekly Tonnage\""))
-        #expect(view.contains("kg over"))
+        #expect(view.contains("TOTAL"))      // BRU hero band caption (replaced "kg over" pre-BRU)
 
         // Week-detail nav title + empty state copy
         #expect(detail.contains("\"Week of"))

@@ -46,16 +46,21 @@ struct ExerciseProgressViewCopyTests {
         guard !combined.isEmpty else { return }
 
         // UI-SPEC verbatim strings.
+        // Note: Phase 06.1-02 BRU reskin replaced the pre-BRU legend ("Solid: Strength",
+        // "Top set series", "All-set average series") with BRU uppercase legends
+        // ("HYPERTROPHY · N SESSIONS", "STRENGTH · N SESSIONS"). The 4-segment toggle
+        // labels (e1RM, TOP SET, VOLUME, AVG RPE) replaced the prior chip row labels.
+        // SeriesKind.displayLabel ("Top set", "All-set avg") continues to exist in
+        // SeriesKind.swift as the chart foreground style scale keys.
         let required: [String] = [
-            "Top set",
-            "All-set avg",
+            "Top set",        // SeriesKind.displayLabel — chart scale key
+            "All-set avg",    // SeriesKind.displayLabel — chart scale key
             "Not enough data",
             "Log 2 sessions to see your trend.",
             "Sets above 10 reps aren't shown in e1RM.",
-            "Solid: Strength · Dashed: Hypertrophy",
             "Select a series to display.",
-            "Top set series",
-            "All-set average series",
+            "HYPERTROPHY",    // BRU legend row (replaced "Solid: Strength" pre-BRU)
+            "STRENGTH",       // BRU legend row (replaced "Dashed: Hypertrophy" pre-BRU)
         ]
 
         var missing: [String] = []
