@@ -14,6 +14,8 @@
 		624AD50F2FB3780200D9EF2E /* RestTimerLockScreenView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 624AD50B2FB3780200D9EF2E /* RestTimerLockScreenView.swift */; };
 		624AD5102FB3780200D9EF2E /* FitbodWidgetsBundle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 624AD5082FB3780200D9EF2E /* FitbodWidgetsBundle.swift */; };
 		624AD5112FB3780200D9EF2E /* SOURCES.md in Resources */ = {isa = PBXBuildFile; fileRef = 624AD50C2FB3780200D9EF2E /* SOURCES.md */; };
+		A102090100000001000000001 /* RestTimerDynamicIslandCompactView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A102090100000001000000002 /* RestTimerDynamicIslandCompactView.swift */; };
+		A102090100000001000000003 /* RestTimerDynamicIslandExpandedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A102090100000001000000004 /* RestTimerDynamicIslandExpandedView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -68,6 +70,8 @@
 		624AD50B2FB3780200D9EF2E /* RestTimerLockScreenView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RestTimerLockScreenView.swift; sourceTree = "<group>"; };
 		624AD50C2FB3780200D9EF2E /* SOURCES.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = SOURCES.md; sourceTree = "<group>"; };
 		624AD5152FB3791500D9EF2E /* fitbod.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = fitbod.xcodeproj; sourceTree = SOURCE_ROOT; };
+		A102090100000001000000002 /* RestTimerDynamicIslandCompactView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RestTimerDynamicIslandCompactView.swift; sourceTree = "<group>"; };
+		A102090100000001000000004 /* RestTimerDynamicIslandExpandedView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RestTimerDynamicIslandExpandedView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -195,6 +199,8 @@
 				624AD5092FB3780200D9EF2E /* Info.plist */,
 				624AD50A2FB3780200D9EF2E /* RestTimerLiveActivity.swift */,
 				624AD50B2FB3780200D9EF2E /* RestTimerLockScreenView.swift */,
+				A102090100000001000000002 /* RestTimerDynamicIslandCompactView.swift */,
+				A102090100000001000000004 /* RestTimerDynamicIslandExpandedView.swift */,
 				624AD50C2FB3780200D9EF2E /* SOURCES.md */,
 			);
 			path = FitbodWidgets;
@@ -407,6 +413,8 @@
 				624AD50E2FB3780200D9EF2E /* RestTimerLiveActivity.swift in Sources */,
 				624AD50F2FB3780200D9EF2E /* RestTimerLockScreenView.swift in Sources */,
 				624AD5102FB3780200D9EF2E /* FitbodWidgetsBundle.swift in Sources */,
+				A102090100000001000000001 /* RestTimerDynamicIslandCompactView.swift in Sources */,
+				A102090100000001000000003 /* RestTimerDynamicIslandExpandedView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
