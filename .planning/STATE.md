@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: completed
-last_updated: "2026-05-24T03:32:48.326Z"
+last_updated: "2026-05-24T03:41:17.912Z"
 progress:
-  total_phases: 9
+  total_phases: 12
   completed_phases: 7
-  total_plans: 67
+  total_plans: 70
   completed_plans: 69
-  percent: 100
+  percent: 99
 ---
 
 # Project State: Fitbod
@@ -180,6 +180,9 @@ Phase 1 in flight; metrics roll up at phase completion. Per-plan duration table:
 
 - Phase 04.1 inserted after Phase 4: BRU Visual Rewrite (Periodization & Blocks) (URGENT)
 - Phase 7 added: BRU Visual Rewrite
+- Phase 03.2 inserted after Phase 3: BRU rewrite for Phase 3 surfaces (URGENT)
+- Phase 05.1 inserted after Phase 5: BRU rewrite for Phase 5 surfaces (URGENT)
+- Phase 06.1 inserted after Phase 6: BRU rewrite for Phase 6 surfaces (URGENT)
 
 ### Key Decisions (from PROJECT.md, locked in)
 

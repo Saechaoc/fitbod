@@ -104,6 +104,16 @@ Granular, prescriptive workout sessions — every set in a session is intentiona
 **UI hint:** yes
 **Research flag:** Yes — at plan-phase time, confirm Tuchscherer RPE table numbers (exact percent values per rep × RPE cell) and choose per-exercise per-lifter calibration algorithm (linear vs locally-weighted regression; min-points threshold)
 
+### Phase 03.2: BRU Visual Rewrite (Prescription & Warm-ups) — reskin Phase 3 surfaces (PrescriptionWeightCell, WhyThisWeightSheet, PlateStackViz, PlateCalculatorSheet, PlateInventoryEditor, BumpBanner, CalibratingBadge, WarmupRampRows) to BRU brutalist per 03-UI-SPEC v2; depends on Phase 02.1 primitives (INSERTED)
+
+**Goal:** [Urgent work - to be planned]
+**Requirements**: TBD
+**Depends on:** Phase 3
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd-plan-phase 03.2 to break down)
+
 ### Phase 3.1: Session-Level Intent & Progression Refactor
 **Goal:** Move `intent` and `progressionKind` from per-exercise (RoutineExercise / SessionExercise) to session-level (Routine / Session). Real programs are organized at session/block level — a session has a goal (strength, hypertrophy) and a progression style; the same exercise rarely flips intent within a session. Per-exercise prescription stays detail-rich but stops being prescriptive about *why* the set is being done.
 **Mode:** refactor
@@ -180,6 +190,16 @@ Plans:
 **Plans:** 6/6 plans complete
 **Research flag:** Yes — at plan-phase time, curate the stimulus-weighting table for the ~50 main compound lifts (per-muscle weights beyond the 1.0/0.5 defaults) and confirm seeded RP-published MEV/MAV/MRV values per muscle
 
+### Phase 05.1: BRU Visual Rewrite (Fatigue & Volume) — reskin Phase 5 surfaces (volume bars MEV/MAV/MRV, muscle heatmap, plateau detection, weekly recap, fatigue advisory banner) to BRU brutalist per 05-UI-SPEC; depends on Phase 02.1 primitives (INSERTED)
+
+**Goal:** [Urgent work - to be planned]
+**Requirements**: TBD
+**Depends on:** Phase 5
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd-plan-phase 05.1 to break down)
+
 ### Phase 6: Progress Views, Export & Polish
 **Goal:** Per-exercise intent-split charts, PR detection, weekly tonnage, session comparison, and weekly recap surface the resolution serious lifters train at — and the user can export everything as CSV or JSON and back up / restore the database.
 **Mode:** mvp
@@ -240,3 +260,13 @@ Phase 6 (Progress Views & Export — pure presentation polish on a stable backen
 ```
 
 This ordering is dependency-driven and pitfall-aware (per research/SUMMARY.md and research/PITFALLS.md). Earlier phases never assume later phases; later phases compose on stable foundations.
+
+### Phase 06.1: BRU Visual Rewrite (Progress & Export) — reskin Phase 6 surfaces (progress chart, settings, session history, export sheet) to BRU brutalist per 06-UI-SPEC; depends on Phase 02.1 primitives (INSERTED)
+
+**Goal:** [Urgent work - to be planned]
+**Requirements**: TBD
+**Depends on:** Phase 6
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd-plan-phase 06.1 to break down)
