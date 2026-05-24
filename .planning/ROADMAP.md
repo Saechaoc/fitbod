@@ -228,10 +228,10 @@ Plans:
 **Goal:** [Urgent work - to be planned]
 **Requirements**: TBD
 **Depends on:** Phase 5
-**Plans:** 6/8 plans executed
+**Plans:** 8/8 plans complete
 
 Plans:
-- [ ] TBD (run /gsd-plan-phase 05.1 to break down)
+- [x] TBD (run /gsd-plan-phase 05.1 to break down) (completed 2026-05-24)
 
 ### Phase 6: Progress Views, Export & Polish
 **Goal:** Per-exercise intent-split charts, PR detection, weekly tonnage, session comparison, and weekly recap surface the resolution serious lifters train at — and the user can export everything as CSV or JSON and back up / restore the database.
