@@ -63,10 +63,12 @@ public enum BRUTab: String, CaseIterable, Sendable {
 /// ```
 /// ──────────────────────────────────────────────  2pt bruInk top rule
 /// ┌──────┬──────┬──────┬──────┬──────┐
-/// │  ▣   │  ▤   │  ▥   │  ▦   │  ◍   │  56pt min cell height
-/// │TODAY │ROUT. │ LIB. │PROG. │SETT. │
+/// │TODAY │ROUT. │ LIB. │PROG. │SETT. │  56pt min cell height
 /// └──────┴──────┴──────┴──────┴──────┘
 /// ```
+/// Labels-only — the JSX mocks in `bru-screens/` show no glyphs above
+/// the labels. The `BRUTab.glyph` property is retained for potential
+/// reuse elsewhere but is no longer rendered in the bar.
 /// Active tab: bruInk fill, bruPaper text.
 /// Inactive tabs: bruPaper fill, bruInk text.
 /// 1pt bruHair vertical separators between cells.
@@ -121,18 +123,13 @@ public struct BRUTabBar: View {
         Button {
             onSelect(tab)
         } label: {
-            VStack(spacing: 2) {
-                Text(tab.glyph)
-                    .font(.custom("SpaceGrotesk-Bold", size: 16))
-
-                Text(tab.label)
-                    .font(BRUFont.labelSmall)
-                    .tracking(1.2)
-                    .textCase(.uppercase)
-            }
-            .frame(maxWidth: .infinity, minHeight: 56)
-            .background(isActive ? Color.bruInk : Color.bruPaper)
-            .foregroundStyle(isActive ? Color.bruPaper : Color.bruInk)
+            Text(tab.label)
+                .font(BRUFont.labelSmall)
+                .tracking(1.2)
+                .textCase(.uppercase)
+                .frame(maxWidth: .infinity, minHeight: 56)
+                .background(isActive ? Color.bruInk : Color.bruPaper)
+                .foregroundStyle(isActive ? Color.bruPaper : Color.bruInk)
         }
         .buttonStyle(.plain)
         // Accessibility: .isSelected on the active tab per UI-SPEC v2 line 689
