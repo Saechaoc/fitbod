@@ -427,6 +427,8 @@ struct ExerciseDetailView: View {
     }
 
     // MARK: - Plateau Detection section (Phase 5 SET-06)
+    // Reskinned in plan 05.1-08 — BRUSectionHead header + BRUButton ghost +
+    // BRUFont labels/footers. ZERO banned tokens within this section boundary.
 
     /// SET-06 — per-exercise plateau threshold override editor.
     /// Toggle "Override global settings" seeds both override fields
@@ -436,69 +438,76 @@ struct ExerciseDetailView: View {
     private func plateauDetectionSection(settings: UserSettings) -> some View {
         @Bindable var ex = exercise
 
-        Section {
-            Toggle("Override global settings", isOn: Binding(
-                get: { ex.plateauWindowOverride != nil },
-                set: { isOn in
-                    if isOn {
-                        ex.plateauWindowOverride = settings.plateauWindowSessions
-                        ex.plateauToleranceOverride = settings.plateauTolerance
-                    } else {
+        VStack(alignment: .leading, spacing: 0) {
+            BRUSectionHead(
+                "Plateau Detection",
+                right: ex.plateauWindowOverride != nil ? "Custom" : "Using defaults"
+            )
+
+            VStack(alignment: .leading, spacing: 12) {
+                HStack {
+                    Text("Override global settings")
+                        .font(BRUFont.bodyDefault)
+                    Spacer()
+                    Toggle("", isOn: Binding(
+                        get: { ex.plateauWindowOverride != nil },
+                        set: { newValue in
+                            if newValue {
+                                ex.plateauWindowOverride = settings.plateauWindowSessions
+                                ex.plateauToleranceOverride = settings.plateauTolerance
+                            } else {
+                                ex.plateauWindowOverride = nil
+                                ex.plateauToleranceOverride = nil
+                            }
+                        }
+                    ))
+                    .labelsHidden()
+                }
+
+                if let windowOverride = ex.plateauWindowOverride,
+                   let toleranceOverride = ex.plateauToleranceOverride {
+                    HStack {
+                        Text("Window (sessions)")
+                            .font(BRUFont.bodyDefault)
+                        Spacer()
+                        Stepper(
+                            "\(windowOverride) sessions",
+                            value: Binding(
+                                get: { windowOverride },
+                                set: { ex.plateauWindowOverride = $0 }
+                            ),
+                            in: 1...12,
+                            step: 1
+                        )
+                    }
+
+                    HStack {
+                        Text("Tolerance (%)")
+                            .font(BRUFont.bodyDefault)
+                        Spacer()
+                        Stepper(
+                            String(format: "%.1f%%", toleranceOverride * 100),
+                            value: Binding(
+                                get: { toleranceOverride * 100 },
+                                set: { ex.plateauToleranceOverride = $0 / 100 }
+                            ),
+                            in: 0.5...10,
+                            step: 0.5
+                        )
+                    }
+
+                    BRUButton("Use global defaults", kind: .ghost) {
                         ex.plateauWindowOverride = nil
                         ex.plateauToleranceOverride = nil
                     }
                 }
-            ))
 
-            if let windowOverride = ex.plateauWindowOverride,
-               let toleranceOverride = ex.plateauToleranceOverride {
-                Stepper(
-                    value: Binding(
-                        get: { windowOverride },
-                        set: { ex.plateauWindowOverride = $0 }
-                    ),
-                    in: 1...12,
-                    step: 1
-                ) {
-                    LabeledContent("Window (sessions)") {
-                        Text("\(windowOverride) sessions")
-                            .foregroundStyle(.secondary)
-                    }
-                }
-
-                Stepper(
-                    value: Binding(
-                        get: { toleranceOverride * 100 },     // display as percent
-                        set: { ex.plateauToleranceOverride = $0 / 100 }  // store as decimal
-                    ),
-                    in: 0.5...10,
-                    step: 0.5
-                ) {
-                    LabeledContent("Tolerance (%)") {
-                        Text(String(format: "%.1f%%", toleranceOverride * 100))
-                            .foregroundStyle(.secondary)
-                    }
-                }
-
-                Button("Use global defaults") {
-                    ex.plateauWindowOverride = nil
-                    ex.plateauToleranceOverride = nil
-                }
-                .foregroundStyle(Color.accentColor)
+                Text("Global defaults: \(settings.plateauWindowSessions) sessions, \(Int((settings.plateauTolerance * 100).rounded()))% tolerance. Set in Settings.")
+                    .font(BRUFont.labelMicro)
+                    .foregroundStyle(Color.bruMuted)
             }
-        } header: {
-            HStack {
-                Text("Plateau Detection")
-                Spacer()
-                Text(ex.plateauWindowOverride != nil ? "Custom" : "Using defaults")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .textCase(nil)
-            }
-        } footer: {
-            Text("Global defaults: \(settings.plateauWindowSessions) sessions, \(Int((settings.plateauTolerance * 100).rounded()))% tolerance. Set in Settings.")
-                .font(.caption)
-                .foregroundStyle(.secondary)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
         }
     }
 }
