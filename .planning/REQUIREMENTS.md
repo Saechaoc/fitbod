@@ -100,8 +100,8 @@ User explicitly wants a maximalist v1 (the app's stance is "comprehensive over s
 
 - [ ] **EXP-01**: User can export all data as CSV (sessions → exercises → sets, one row per set)
 - [ ] **EXP-02**: User can export all data as JSON (full schema preserved, version-stamped)
-- [ ] **EXP-03**: User can create a full database backup file shareable via AirDrop / Files / iCloud Drive
-- [ ] **EXP-04**: User can restore from a backup file with explicit confirmation (data-loss warning)
+- [x] **EXP-03**: User can create a full database backup file shareable via AirDrop / Files / iCloud Drive
+- [x] **EXP-04**: User can restore from a backup file with explicit confirmation (data-loss warning)
 
 ### SET — Settings & Configuration
 
@@ -255,8 +255,8 @@ Mapped to phases by `gsd-roadmapper` during roadmap creation.
 | PROG-08 | Phase 6 | Pending |
 | EXP-01 | Phase 6 | Pending |
 | EXP-02 | Phase 6 | Pending |
-| EXP-03 | Phase 6 | Pending |
-| EXP-04 | Phase 6 | Pending |
+| EXP-03 | Phase 6 | Complete |
+| EXP-04 | Phase 6 | Complete |
 | SET-01 | Phase 1 | Complete |
 | SET-02 | Phase 3 | Complete |
 | SET-03 | Phase 3 | Complete |

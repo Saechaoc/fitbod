@@ -91,8 +91,8 @@
 		624AD1462FB18B4100D9EF2E /* fitbod */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
-				624AD5142FB378BE00D9EF2E /* Exceptions for "fitbod" folder in "FitbodWidgetsExtension" target */,
 				624AD5152FB378BE00D9EF2F /* Exceptions for "fitbod" folder in "fitbod" target */,
+				624AD5142FB378BE00D9EF2E /* Exceptions for "fitbod" folder in "FitbodWidgetsExtension" target */,
 			);
 			path = fitbod;
 			sourceTree = "<group>";

@@ -176,7 +176,7 @@ Granular, prescriptive workout sessions — every set in a session is intentiona
 - [x] 06-08-PLAN.md — ProgressHomeView (tab root) + RootView TabView wiring + tab icon chart.line.uptrend.xyaxis (PROG-01/04/05/07 integration)
 - [x] 06-09-PLAN.md — ExportDocument envelope + 17 Codable DTOs covering SchemaV6 + canonicalSchemaVersion = "v6" + JSONEncoder.exportConfigured() shared encoder (EXP-02 envelope half)
 - [x] 06-09b-PLAN.md — CSVExporter + JSONExporter + CSVFile/JSONFile Transferable + ExportService @ModelActor + Settings Data section export rows (EXP-01 + EXP-02 user-facing half)
-- [ ] 06-10-PLAN.md — BackupArchiver (PKWARE ZIP) + BackupRestorer + BackupManifest + UTType.fitbodBackup + Info.plist UTI declarations + Settings Data section backup/restore rows + BackupRoundTripTests (D-33 canary) (EXP-03, EXP-04)
+- [x] 06-10-PLAN.md — BackupArchiver (PKWARE ZIP) + BackupRestorer + BackupManifest + UTType.fitbodBackup + Info.plist UTI declarations + Settings Data section backup/restore rows + BackupRoundTripTests (D-33 canary) (EXP-03, EXP-04)
 **UI hint:** yes
 **Research flag:** None — Swift Charts, `ShareLink`, and `Transferable` patterns are standard
 
