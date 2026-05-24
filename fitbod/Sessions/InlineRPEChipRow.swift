@@ -1,28 +1,18 @@
+// InlineRPEChipRow.swift
+// fitbod
 //
-//  InlineRPEChipRow.swift
-//  fitbod
+// BRU rewrite — Phase 2.1 Plan 07 (Wave 3, UI-REVIEW item 34).
+// UI-SPEC v2 § Session logger line 374-376: 5 BRUChip-style outlined rectangles.
+// Each chip: displayMedium 18pt centered numeric; selected = bruInk fill +
+// bruPaper text; unselected = bruPaper fill + bruInk text + bruInk 1.5pt outline.
 //
-//  Wave-4 plan 04-01 — the 5-chip RPE row inside `SetRow`. Per UI-SPEC
-//  § Session logger:
+// Tap an integer chip → sets `rpe = Double(value)`.
+// Long-press any chip (0.5s threshold per UI-SPEC accessibility) →
+// presents DecimalRPEPickerSheet with the long-pressed integer pre-selected.
 //
-//    "RPE inline-chip row labels: 6 / 7 / 8 / 9 / 10 (5 visible chips;
-//     decimal RPE via long-press → wheel picker tenths)"
-//
-//  Tap an integer chip → sets `entry.rpe = Double(value)`.
-//  Long-press any chip (0.5s threshold per UI-SPEC accessibility) →
-//  presents `DecimalRPEPickerSheet` with the long-pressed integer pre-
-//  selected. The user spins the wheel to a decimal value (6.0…10.0 in 0.5
-//  increments) and "Done" dismisses.
-//
-//  Each chip is 36pt visual but the parent's `SetRow` row padding extends
-//  the hit area to ≥44pt (UI-SPEC HIG exception). Each chip carries an
-//  `accessibilityLabel = "RPE {N}"` (UI-SPEC accessibility § RPE chip row).
-//
-//  The currently-selected chip is tinted `Color.accentColor` (chips are an
-//  accent surface per UI-SPEC § Color "Selected intent filter chip" — the
-//  same chip selection pattern applies). Unselected chips render in
-//  `.secondary` tint per the system `.bordered` button style.
-//
+// BRU contract: NO Capsule() / NO RoundedRectangle / NO accentColor
+//               NO Image(systemName:) / NO .buttonStyle(.bordered)
+//               NO Color(.system*) / NO .font(.caption/.body/.headline)
 
 import SwiftUI
 
@@ -39,20 +29,32 @@ public struct InlineRPEChipRow: View {
     }
 
     public var body: some View {
-        HStack(spacing: 4) {                                                  // UI-SPEC xs
+        HStack(spacing: 4) {                                                   // UI-SPEC xs
             ForEach([6, 7, 8, 9, 10], id: \.self) { value in
-                Button("\(value)") {
+                let selected = Int(rpe ?? -1) == value
+                Button {
                     rpe = Double(value)
+                } label: {
+                    // UI-SPEC line 374: displayMedium 18pt centered in chip.
+                    // Selected: bruInk fill + bruPaper text.
+                    // Unselected: bruPaper fill + bruInk text + 1.5pt bruInk outline.
+                    Text("\(value)")
+                        .font(BRUFont.displayMedium)
+                        .monospacedDigit()
+                        .foregroundStyle(selected ? Color.bruPaper : Color.bruInk)
+                        .frame(minWidth: 32, minHeight: 32)
+                        .background(selected ? Color.bruInk : Color.bruPaper)
+                        .overlay(
+                            Rectangle()
+                                .stroke(Color.bruInk, lineWidth: 1.5)
+                        )
                 }
-                .font(.caption)
-                .buttonStyle(.bordered)
-                .tint(Int(rpe ?? 0) == value ? Color.accentColor : Color.secondary)
-                .frame(minWidth: 36, minHeight: 36)
+                .buttonStyle(.plain)
                 .onLongPressGesture(minimumDuration: 0.5) {
                     longPressedValue = Double(value)
                     presentingPicker = true
                 }
-                .accessibilityLabel("RPE \(value)")
+                .accessibilityLabel("RPE \(value)")                            // UI-SPEC verbatim a11y
             }
         }
         .sheet(isPresented: $presentingPicker) {
@@ -65,7 +67,27 @@ public struct InlineRPEChipRow: View {
     }
 }
 
-#Preview("RPE chip row") {
+// MARK: - Previews
+
+#if DEBUG
+#Preview("RPE chip row — value selected") {
     @Previewable @State var rpe: Double? = 8
-    return InlineRPEChipRow(rpe: $rpe).padding()
+    return InlineRPEChipRow(rpe: $rpe)
+        .padding()
+        .background(Color.bruPaper)
 }
+
+#Preview("RPE chip row — no selection") {
+    @Previewable @State var rpe: Double? = nil
+    return InlineRPEChipRow(rpe: $rpe)
+        .padding()
+        .background(Color.bruPaper)
+}
+
+#Preview("RPE chip row — decimal value (7.5)") {
+    @Previewable @State var rpe: Double? = 7.5
+    return InlineRPEChipRow(rpe: $rpe)
+        .padding()
+        .background(Color.bruPaper)
+}
+#endif
