@@ -1,40 +1,25 @@
+// AddUnplannedExerciseButton.swift
+// fitbod
 //
-//  AddUnplannedExerciseButton.swift
-//  fitbod
+// BRU rewrite — Phase 2.1 Plan 08 (Wave 4, UI-REVIEW item 44).
+// UI-SPEC v2 § Session logger line 582.
 //
-//  Wave-4 plan 04-02 — "+ Add Exercise" affordance at the bottom of the
-//  session logger's list (SESS-06). Tapping opens an
-//  `ExerciseLibraryView(onSelect:)` picker in a sheet; choosing an
-//  exercise appends a brand-new `SessionExercise` row to the active
-//  `Session.exercises` ONLY — the source `Routine.exercises` is never
-//  touched (PITFALLS-doc #1 / RESEARCH § Anti-Patterns).
+// "+ Add Exercise" affordance at the bottom of the session logger's list (SESS-06).
+// Rewritten as a BRUDashedSlot per UI-SPEC line 582.
 //
-//  ## Defaulted prescription
+// UI-SPEC verbatim:
+//   label:  "+ ADD EXERCISE"
+//   hint:   "↘ FROM LIBRARY"
 //
-//  Because there is no source `RoutineExercise` to snapshot from when
-//  the user adds an unplanned exercise mid-session, prescription
-//  defaults are computed:
+// Tapping opens ExerciseLibraryView in a sheet; choosing an exercise appends
+// a brand-new SessionExercise row to the active Session.exercises ONLY —
+// the source Routine.exercises is never touched (PITFALLS-doc #1).
 //
-//    - Intent comes from session-level `Session.intentRaw` (PIVOT-02 +
-//      PIVOT-05); no per-exercise intent defaulting needed. If the user
-//      started a strength session, the unplanned exercise inherits
-//      .strength (per D-14: same strategy across the session); same for
-//      hypertrophy.
-//    - `targetSets = 3`, `targetRepsLow = 8`, `targetRepsHigh = 12`.
-//    - `prescribedRestSeconds = 180` (compound) or 90 (isolation).
-//
-//  Three planned `SetEntry` rows are seeded with the matching-intent
-//  weight hint via `PreviousMatchingIntent.fetchTopWorkingSet` (same
-//  path SessionFactory uses on session-start), with the intent sourced
-//  from the parent Session.
-//
-//  ## UI-SPEC verbatim
-//
-//  - Button label: "Add Exercise" (UI-SPEC § Session logger)
-//  - Leading icon: `plus.circle` (UI-SPEC § Asset Contract)
-//  - Sheet title: "Add Exercise"
-//  - Toolbar cancel: "Cancel"
-//
+// BRU contract:
+//   NO systemName plus.circle — removed per UI-SPEC line 582
+//   NO Color.accentColor — removed per UI-SPEC line 214
+//   NO Capsule() / NO RoundedRectangle / NO .font(.body/.headline/.title/.caption)
+//   NO Color(.system*)
 
 import SwiftUI
 import SwiftData
@@ -49,28 +34,26 @@ public struct AddUnplannedExerciseButton: View {
     }
 
     public var body: some View {
-        Button {
-            presentingPicker = true
-        } label: {
-            HStack(spacing: 4) {                                                // UI-SPEC xs
-                Image(systemName: "plus.circle")                                // UI-SPEC § Asset Contract
-                Text("Add Exercise")                                            // UI-SPEC verbatim
-            }
-            .foregroundStyle(Color.accentColor)
-        }
-        .buttonStyle(.plain)
+        // BRUDashedSlot replaces the old Button + systemName plus.circle icon
+        BRUDashedSlot(
+            label: "+ ADD EXERCISE",                                                // UI-SPEC verbatim
+            hint: "↘ FROM LIBRARY",                                                // UI-SPEC verbatim
+            leadingGlyph: "+",
+            action: { presentingPicker = true }
+        )
         .sheet(isPresented: $presentingPicker) {
             NavigationStack {
                 ExerciseLibraryView(onSelect: { exercise in
                     append(exercise: exercise)
                     presentingPicker = false
                 })
-                .navigationTitle("Add Exercise")                                // UI-SPEC verbatim
-                .navigationBarTitleDisplayMode(.inline)
-                .toolbar {
-                    ToolbarItem(placement: .topBarLeading) {
-                        Button("Cancel") { presentingPicker = false }           // UI-SPEC verbatim
-                    }
+                .navigationBarHidden(true)
+                .safeAreaInset(edge: .top, spacing: 0) {
+                    BRUHeaderBar(
+                        left: HeaderAction("CANCEL") { presentingPicker = false }, // UI-SPEC verbatim
+                        center: "ADD EXERCISE",                                     // UI-SPEC verbatim
+                        right: nil
+                    )
                 }
             }
         }
@@ -85,9 +68,7 @@ public struct AddUnplannedExerciseButton: View {
         se.exercise = exercise
         se.orderIndex = nextOrderIndex
         se.session = session
-        // PIVOT-02 / PIVOT-05: intent is session-level after Plan 02. The
-        // unplanned exercise inherits the parent session's intent — no
-        // per-exercise default needed.
+        // PIVOT-02 / PIVOT-05: intent is session-level after Plan 02.
         se.targetSets = 3
         se.targetRepsLow = 8
         se.targetRepsHigh = 12
@@ -95,8 +76,6 @@ public struct AddUnplannedExerciseButton: View {
         ctx.insert(se)
 
         // Seed 3 planned sets with the matching-intent weight hint
-        // (same path SessionFactory uses on session-start). PIVOT-02:
-        // intent is read from the parent Session.
         let hint = PreviousMatchingIntent.fetchTopWorkingSet(
             exerciseID: exercise.id,
             intentRaw: session.intentRaw,
@@ -117,6 +96,7 @@ public struct AddUnplannedExerciseButton: View {
     }
 }
 
+#if DEBUG
 #Preview("add unplanned exercise button") {
     let container = PreviewModelContainer.make()
     let ctx = ModelContext(container)
@@ -127,4 +107,7 @@ public struct AddUnplannedExerciseButton: View {
     try? ctx.save()
     return AddUnplannedExerciseButton(session: session)
         .modelContainer(container)
+        .padding()
+        .background(Color.bruPaper)
 }
+#endif

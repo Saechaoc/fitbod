@@ -1,40 +1,25 @@
+// SwapExerciseSheet.swift
+// fitbod
 //
-//  SwapExerciseSheet.swift
-//  fitbod
+// BRU rewrite — Phase 2.1 Plan 08 (Wave 4, UI-REVIEW item 43).
+// UI-SPEC v2 § Session logger line 391.
 //
-//  Wave-4 plan 04-02 — mid-session swap (SESS-05). Long-pressing the
-//  header on a `SessionExerciseCard` surfaces "Swap Exercise…" in a
-//  contextMenu. Tapping it presents this sheet, which embeds
-//  Phase 1's `ExerciseLibraryView(onSelect:)` picker. Choosing a row
-//  mutates `SessionExercise.exercise` on the active session ONLY —
-//  the source `RoutineExercise.exercise` is never touched
-//  (PITFALLS-doc #1 / RESEARCH § Anti-Patterns).
+// Mid-session swap (SESS-05). Long-pressing the header on a SessionExerciseCard
+// surfaces "Swap Exercise…" in a contextMenu. Tapping it presents this sheet,
+// which embeds Phase 1's ExerciseLibraryView(onSelect:) picker. Choosing a row
+// mutates SessionExercise.exercise on the active session ONLY — the source
+// RoutineExercise.exercise is never touched (PITFALLS-doc #1).
 //
-//  ## Pending-set re-seed behaviour
+// Chrome: BRUHeaderBar replaces .navigationTitle("Swap Exercise") + .toolbar.
 //
-//  Swapping mid-session re-seeds the still-pending (un-committed) sets
-//  using `PreviousMatchingIntent.fetchTopWorkingSet` against the NEW
-//  exercise + the snapshotted intent. Already-committed sets stay
-//  immutable (logged history is never rewritten). Pending sets have
-//  their `weight` overwritten with the new hint (or 0 if none),
-//  `reps` reset to 0, and `rpe` cleared so the user starts fresh on
-//  the swapped exercise.
+// Footer copy (UI-SPEC verbatim line 391):
+//   "This swap applies to this session only. The routine template will not change."
 //
-//  ## Phase 3.1 (PIVOT-02 / PIVOT-05) reshape
-//
-//  Intent is a SESSION-level field after Plan 02. The swap reads
-//  `sessionExercise.session?.intentRaw` (with a `.strength` fallback
-//  matching FOUND-03's default-string pattern when the session somehow
-//  detaches). The previous `sessionExercise.intentRaw` write at session
-//  init is gone — every SessionExercise inherits intent from its parent
-//  Session.
-//
-//  ## Footer copy (UI-SPEC verbatim)
-//
-//  "This swap applies to this session only. The routine template will
-//  not change." — anchored verbatim from UI-SPEC § Session logger
-//  "Swap-exercise footer note".
-//
+// BRU contract:
+//   NO .navigationTitle / NO .toolbar with system chrome
+//   NO Capsule() / NO RoundedRectangle / NO accentColor
+//   NO Image(systemName:) / NO .font(.body/.headline/.title/.caption)
+//   NO Color(.system*)
 
 import SwiftUI
 import SwiftData
@@ -52,18 +37,15 @@ public struct SwapExerciseSheet: View {
     public var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
+                // Exercise library — NOT rewritten (out of Phase 2.1 scope per UI-SPEC line 724)
                 ExerciseLibraryView(onSelect: { exercise in
                     // SESS-05 — mutate SessionExercise.exercise ONLY.
                     // The source RoutineExercise.exercise is untouched.
                     sessionExercise.exercise = exercise
 
-                    // Re-seed pending sets with the new exercise's
-                    // matching-intent hint. Committed sets are immutable
-                    // (PITFALLS-doc #1 — historical data is never
-                    // rewritten). PIVOT-02 / PIVOT-05: intent is read
-                    // from the parent Session (fallback to .strength if
-                    // the session relationship is somehow nil — matches
-                    // FOUND-03 default-string pattern).
+                    // Re-seed pending sets with the new exercise's matching-intent hint.
+                    // Committed sets are immutable (PITFALLS-doc #1).
+                    // PIVOT-02 / PIVOT-05: intent is read from the parent Session.
                     let hint = PreviousMatchingIntent.fetchTopWorkingSet(
                         exerciseID: exercise.id,
                         intentRaw: sessionExercise.session?.intentRaw ?? Intent.strength.rawValue,
@@ -79,31 +61,33 @@ public struct SwapExerciseSheet: View {
                     try? ctx.save()
                     dismiss()
                 })
+
+                // Footer note per UI-SPEC verbatim line 391
                 Text("This swap applies to this session only. The routine template will not change.")   // UI-SPEC verbatim
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .font(BRUFont.bodyDefault)
+                    .foregroundStyle(Color.bruMuted)
                     .multilineTextAlignment(.center)
                     .padding(16)
             }
-            .navigationTitle("Swap Exercise")                                  // UI-SPEC verbatim
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
-                    Button("Cancel") { dismiss() }                             // UI-SPEC verbatim
-                }
+            .background(Color.bruPaper)
+            .navigationBarHidden(true)
+            .safeAreaInset(edge: .top, spacing: 0) {
+                BRUHeaderBar(
+                    left: HeaderAction("CANCEL") { dismiss() },                    // UI-SPEC verbatim
+                    center: "SWAP EXERCISE",                                        // UI-SPEC verbatim
+                    right: nil
+                )
             }
         }
     }
 }
 
+#if DEBUG
 #Preview("swap exercise sheet") {
     let container = PreviewModelContainer.make()
     let ctx = ModelContext(container)
     let ex = Exercise.previewSample(name: "Bench", equipment: .barbell, mechanic: .compound)
     ctx.insert(ex)
-    // PIVOT-02 / PIVOT-05 — intent lives on the parent Session, not the
-    // SessionExercise. Wire a session into the preview so the swap-sheet
-    // exercises the real session-level intent read path.
     let session = Session()
     session.startedAt = .now
     session.routineSnapshotName = "Push Day A"
@@ -117,3 +101,4 @@ public struct SwapExerciseSheet: View {
     return SwapExerciseSheet(sessionExercise: se)
         .modelContainer(container)
 }
+#endif

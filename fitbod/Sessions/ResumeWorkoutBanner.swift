@@ -1,53 +1,36 @@
+// ResumeWorkoutBanner.swift
+// fitbod
 //
-//  ResumeWorkoutBanner.swift
-//  fitbod
+// BRU rewrite — Phase 2.1 Plan 08 (Wave 4, UI-REVIEW item 45).
+// UI-SPEC v2 § Session logger line 583.
 //
-//  Top-of-tab banner that appears whenever an active (`completedAt == nil`)
-//  `Session` exists. Mounted at the top of:
+// Slim resume banner that appears whenever an active (completedAt == nil)
+// Session exists. Mounted at the top of the Routines tab (RoutinesListView).
 //
-//    - The Routines tab (`RoutinesListView`) — plan 03-01.
-//    - The Today tab — plan 03-01 (interim placeholder host).
-//    - Future: the Session logger root when reopened (plan 04-01).
+// NOTE: This is DISTINCT from Plan 02.1-04's ResumeWorkoutSlab which lives in
+// fitbod/Views/. This banner (Sessions/) is the slim variant used in the
+// session logger context.
 //
-//  Renders the UI-SPEC verbatim copy:
+// UI-SPEC verbatim copy:
+//   Leading label:  "RESUME"              (labelSmall bruMuted)
+//   Routine name:   routineSnapshotName   (bodyEmphasis bruInk)
+//   Meta:           "{elapsed} · {sets} sets" (labelSmall bruMuted)
+//   CTA:            BRUPillButton("Resume ▸")
 //
-//    "Resume Workout: {routineSnapshotName}"   — primary line
-//    "Resume" (accent text)                    — primary CTA
-//    "Discard" (destructive text)              — secondary CTA
+// Style: 2pt bruInk-bordered Rectangle slim band per UI-SPEC line 583.
 //
-//  The banner uses its own `@Query<Session>` filtered by
-//  `completedAt == nil` so it is reactive — when the active session
-//  finishes elsewhere (e.g. Finish Workout in the logger), the banner
-//  disappears without any explicit dismiss call from the parent.
+// The banner uses its own @Query<Session> filtered by completedAt == nil so
+// it is reactive — when the active session finishes elsewhere the banner
+// disappears without any explicit dismiss call from the parent.
 //
-//  When no active session exists the view body is `EmptyView()` — no
-//  spacer, no padding. This is load-bearing for `RoutinesListView`'s
-//  empty-state path: mounting the banner unconditionally at the top of
-//  the list MUST NOT push the empty-state heading off-screen when there
-//  is no active session.
+// When no active session exists the view body is EmptyView().
 //
-//  ## Mounting inside a `List`
-//
-//  Per plan 03-01's "Anti-Patterns to Avoid" list, this banner is mounted
-//  as the first row of the routines `List` using `.listRowInsets(EdgeInsets())`
-//  + `.listRowBackground(Color.clear)` so it visually floats above the
-//  sectioned content. Mounting it as a separate view above the
-//  `NavigationStack`'s content would break the sectioned-list shape (the
-//  banner would push the search bar / section headers down).
-//
-//  ## Resume / Discard side effects
-//
-//  - "Resume" tap → fires `onResume(activeSession)`. Plan 04-01 wires this
-//    to push `SessionLoggerView(session: activeSession)` via the parent's
-//    `NavigationPath`. Plan 03-01 stubs the closure as a no-op pending
-//    that wiring.
-//
-//  - "Discard" tap → opens an `.alert` confirmation ("Discard active
-//    workout?") because deleting an active session is destructive (the
-//    user loses any logged sets). On confirm, fires
-//    `onDiscard(activeSession)` which the parent uses to delete the
-//    session via `ctx.delete(...)` + `ctx.save()`.
-//
+// BRU contract:
+//   NO rounded-rectangle shape — removed per plan spec
+//   NO Color.accentColor — removed per UI-SPEC line 214
+//   NO Image(systemName: "arrow.uturn.backward.circle") — removed
+//   NO Capsule() / NO .font(.body/.headline/.title/.caption)
+//   NO Color(.system*)
 
 import SwiftUI
 import SwiftData
@@ -81,24 +64,46 @@ public struct ResumeWorkoutBanner: View {
     @ViewBuilder
     private func bannerBody(active: Session) -> some View {
         HStack(spacing: 12) {
-            Image(systemName: "arrow.uturn.backward.circle")
-                .foregroundStyle(Color.accentColor)
-            VStack(alignment: .leading) {
-                Text("Resume Workout: \(active.routineSnapshotName)")
-                    .font(.headline)
+            // Left: stacked labels
+            VStack(alignment: .leading, spacing: 4) {
+                Text("RESUME")                                                      // UI-SPEC verbatim
+                    .font(BRUFont.labelSmall)
+                    .tracking(1.2)
+                    .textCase(.uppercase)
+                    .foregroundStyle(Color.bruMuted)
+
+                Text(active.routineSnapshotName)
+                    .font(BRUFont.bodyEmphasis)
+                    .foregroundStyle(Color.bruInk)
+
+                Text("\(elapsedLabel(for: active)) · \(setCount(for: active)) sets")
+                    .font(BRUFont.labelSmall)
+                    .tracking(0.5)
+                    .foregroundStyle(Color.bruMuted)
             }
+
             Spacer()
-            Button("Resume") { onResume(active) }
-                .foregroundStyle(Color.accentColor)
+
+            // Right: Resume CTA
+            BRUPillButton("Resume ▸") {                                            // UI-SPEC verbatim
+                onResume(active)
+            }
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
+        .background(Color.bruPaper)
+        .overlay(
+            Rectangle()
+                .stroke(Color.bruInk, lineWidth: 2)                               // 2pt bruInk border per UI-SPEC line 583
+        )
+        .padding(.horizontal, 16)
+        .padding(.vertical, 8)
+        // Discard is exposed via swipe / contextMenu per plan spec — alert confirmation retained
+        .contextMenu {
             Button("Discard", role: .destructive) {
                 discardConfirm = true
             }
         }
-        .padding(16)
-        .background(Color(.secondarySystemGroupedBackground))
-        .clipShape(RoundedRectangle(cornerRadius: 12))
-        .padding(.horizontal, 16)
-        .padding(.vertical, 8)
         .alert(
             "Discard active workout?",
             isPresented: $discardConfirm
@@ -112,8 +117,30 @@ public struct ResumeWorkoutBanner: View {
             }
         }
     }
+
+    /// Formats elapsed time since session start as "HH:MM" or "MM:SS".
+    private func elapsedLabel(for session: Session) -> String {
+        let elapsed = Int(Date().timeIntervalSince(session.startedAt))
+        let minutes = elapsed / 60
+        let seconds = elapsed % 60
+        if minutes >= 60 {
+            let hours = minutes / 60
+            let mins = minutes % 60
+            return String(format: "%d:%02d", hours, mins)
+        }
+        return String(format: "%d:%02d", minutes, seconds)
+    }
+
+    /// Returns the count of completed sets in the session.
+    private func setCount(for session: Session) -> Int {
+        (session.exercises ?? [])
+            .flatMap { $0.sets ?? [] }
+            .filter { $0.isComplete }
+            .count
+    }
 }
 
+#if DEBUG
 #Preview("active session") {
     let container = PreviewModelContainer.make()
     let ctx = ModelContext(container)
@@ -145,3 +172,4 @@ public struct ResumeWorkoutBanner: View {
     }
     .modelContainer(PreviewModelContainer.make())
 }
+#endif
