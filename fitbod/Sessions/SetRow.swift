@@ -7,8 +7,8 @@
 // Per-set logging row: [S{N}] [Previous] [Weight] [Reps] [RPE chips] [SetTypeChip] [✎] [SetCompletionGlyph]
 //
 // KEY CHANGES from v1:
-//   - Image(systemName: "checkmark.circle.fill") → SetCompletionGlyph(isComplete:)
-//   - Image(systemName: "square.and.pencil")     → Text("✎") typographic glyph
+//   - SF Symbol checkmark.circle.fill → SetCompletionGlyph(isComplete:)
+//   - SF Symbol square.and.pencil     → Text("✎") typographic glyph
 //   - Color.accentColor → removed; completed numerics override to bruSignal
 //   - .font(.body) / .font(.title2) / .font(.caption) → BRUFont.*
 //   - Both action buttons wrapped in .frame(minWidth: 44, minHeight: 44).contentShape(Rectangle())

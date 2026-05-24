@@ -1,76 +1,36 @@
+// SessionLoggerView.swift
+// fitbod
 //
-//  SessionLoggerView.swift
-//  fitbod
+// BRU rewrite — Phase 2.1 Plan 07 (Wave 3, UI-REVIEW item 31).
+// UI-SPEC v2 § Session logger line 355-396.
 //
-//  Wave-4 plan 04-01 — the user-facing centerpiece of Phase 2. The active
-//  workout-logging surface bound to a `@Bindable Session`. Mounted via
-//  `NavigationStack` push from:
+// The user-facing centerpiece of Phase 2: the active workout-logging surface
+// bound to a @Bindable Session.
 //
-//    - The Routines tab — `RoutinesListView.handleStartTap` pushes
-//      `SessionRoute.logger(session)` after `SessionFactory.start` succeeds.
-//    - The Today tab — `ResumeWorkoutBanner.onResume` pushes the same
-//      route for an existing active session.
+// KEY CHANGES from v1:
+//   - .navigationTitle("Workout") + .toolbar principal block REMOVED
+//   - Image(systemName: "clock") + headerChips REMOVED
+//   - Color.accentColor on "Finish" button REMOVED
+//   - REPLACED with .safeAreaInset(edge: .top) BRUHeaderBar + 3-line principal block:
+//       Line 1: BRUHeaderBar("Workout", left: "‹", right: "•••")
+//       Line 2: HStack { routineSnapshotName (displayMedium) + elapsed (bodyEmphasis monoMuted right) }
+//       Line 3: IntentChip(intent: session.intent)
+//   - Finish/Discard menu moves into right HeaderAction "•••" onTap → confirmationDialog
+//   - Workout notes moves into "•••" menu per UI-SPEC line 361
 //
-//  ## Layout (UI-SPEC § Session logger)
+// PRESERVED VERBATIM:
+//   - @Bindable Session, SessionTimerState, RestTimerEngine wiring
+//   - All .confirmationDialog + .alert blocks (system chrome acceptable per UI-SPEC line 261)
+//   - .safeAreaInset(edge: .bottom) RestTimerOverlay mount
+//   - .safeAreaInset(edge: .top) InSessionPRBanner mount (Phase 6 plan 06-07)
+//   - commitSet, finish, discard, handleRemove semantics
+//   - pendingSwap, pendingRemove, pendingPinnedNote sheets
+//   - prState InSessionPRState + .task seed
 //
-//      ┌────────────────────────────────────────────────────────────┐
-//      │  RestTimerOverlay (mounted unconditionally; EmptyView when │
-//      │  the engine isn't running)                                 │
-//      ├────────────────────────────────────────────────────────────┤
-//      │  [clock 32:14] [3 of 6] [pencil Notes]   ← header chips    │
-//      ├────────────────────────────────────────────────────────────┤
-//      │  Section: Exercise Name                                    │
-//      │    Set | Previous | Weight | Reps | RPE   ← column header  │
-//      │    1   175×8 @8  185  5    [chips] [chip] [✓]              │
-//      │    2   175×8 @8  185  5    [chips] [chip] [✓]              │
-//      │    [+ Add Set]                                             │
-//      │  Section: Exercise Name                                    │
-//      │    ...                                                     │
-//      └────────────────────────────────────────────────────────────┘
-//
-//  The toolbar carries:
-//    - Leading "Discard" (only when zero sets have been logged).
-//    - Trailing "Finish" (always present; accent foreground).
-//    - Principal (centered) — three stacked lines in a `VStack(spacing: 2)`:
-//      line 1 "Workout" headline; line 2 routine snapshot name subtitle in
-//      `.caption .secondary`; line 3 `IntentChip` (accent capsule).
-//
-//  Phase 3.1 (PIVOT-04 / D-11) — the principal toolbar block gains a
-//  session-level `IntentChip` as a third stacked line. Reading from
-//  `session.intent` (snapshotted at session-start time per PIVOT-02).
-//  Read-only per 03.1-CONTEXT.md Deferred Ideas — mid-session intent
-//  change is out of scope for v1.
-//
-//  ## Rest timer integration (SESS-04)
-//
-//  Each `SessionLoggerView` instance owns one `RestTimerEngine` instance
-//  via `RestTimerEngine.makeProduction()` — the factory wires the live
-//  notification scheduler + live Live Activity controller in one call
-//  (plan 02-03's surface).
-//
-//  - `commitSet(_:for:)` flips `isComplete = true`, writes `completedAt`,
-//    saves the context, AND calls `engine.start(seconds:, exerciseName:)`.
-//    The save MUST precede the engine start so the committed set is in the
-//    store before the rest period begins (RESEARCH §6 Pitfall 2).
-//
-//  - Tapping the next set's weight/reps cell on a still-incomplete set
-//    calls `engine.stop()` via the `onTapEmptyCell` closure. This is the
-//    auto-stop-on-next-set-entry pattern (SESS-04).
-//
-//  - `finish()` and `discard()` both call `engine.stop()` to cancel any
-//    pending lock-screen notification + end the Live Activity.
-//
-//  ## Finish / Discard semantics
-//
-//  - "Finish" → `confirmationDialog` with summary ("{N} sets logged ·
-//    {elapsed time}"). On confirm: writes `session.completedAt = .now`,
-//    `totalDurationSeconds`, dismisses.
-//  - "Discard" (only when `loggedSetCount == 0`) → alert ("No data will
-//    be saved."). On confirm: `ctx.delete(session)`, dismisses. The
-//    cascade rule on `Session.exercises` automatically deletes the empty
-//    `SessionExercise` rows (and their `SetEntry` rows by transitive
-//    cascade).
-//
+// BRU contract: NO navigationTitle / NO .toolbar with system chrome
+//               NO Capsule() / NO RoundedRectangle / NO accentColor
+//               NO Image(systemName:) in chrome / NO .font(.body/.headline/.title/.caption)
+//               NO .buttonStyle(.bordered) / NO Color(.system*)
 
 import SwiftUI
 import SwiftData
@@ -84,26 +44,13 @@ public struct SessionLoggerView: View {
     @State private var elapsedStart: Date
     @State private var presentingFinishConfirm = false
     @State private var presentingDiscardConfirm = false
-    /// Wave-4 plan 04-02 — long-press "Swap Exercise…" target.
-    /// `.sheet(item:)` presents `SwapExerciseSheet` against this.
+    @State private var presentingMenu = false
     @State private var pendingSwap: SessionExercise?
-    /// Wave-4 plan 04-02 — long-press "Remove from Session" target.
-    /// `.alert` presents the destructive confirmation.
     @State private var pendingRemove: SessionExercise?
-    /// Wave-4 plan 04-03 — header "Notes" chip presentation flag.
-    /// Replaces the plan 04-01 TODO with a real WorkoutNotesSheet.
     @State private var presentingWorkoutNotes = false
-    /// Wave-4 plan 04-03 — long-press "Edit Pinned Note" target on the
-    /// SessionExerciseCard header (anchored as a TODO in plan 04-02; this
-    /// plan ships the real PinnedNoteSheet wire). `.sheet(item:)` presents
-    /// PinnedNoteSheet against this.
     @State private var pendingPinnedNote: SessionExercise?
 
-    /// Wave-4 plan 06-07 — @Observable session-scoped PR detector cache.
-    /// Seeded at .task via `SessionFactory.seedPRTable`; mutated in place
-    /// by `commitSet` via `prState.observeSave(set:)`. Drives the
-    /// `.safeAreaInset(edge: .top)` InSessionPRBanner mount per RESEARCH
-    /// Pattern 3 (NEVER inside scroll content — anti-pattern).
+    /// Phase 6 plan 06-07 — in-session PR banner state.
     @State private var prState = InSessionPRState()
 
     public init(session: Session) {
@@ -113,9 +60,6 @@ public struct SessionLoggerView: View {
 
     public var body: some View {
         VStack(spacing: 0) {
-            RestTimerOverlay(engine: engine)
-                .padding(.top, 8)
-            headerChips
             List {
                 ForEach(sortedExercises) { se in
                     SessionExerciseCard(
@@ -125,218 +69,169 @@ public struct SessionLoggerView: View {
                         onTapEmptyCell: { engine.stop() },
                         onSwap: { pendingSwap = $0 },
                         onRemove: { pendingRemove = $0 },
-                        onEditPinnedNote: { pendingPinnedNote = $0 }          // Wave-4 plan 04-03
+                        onEditPinnedNote: { pendingPinnedNote = $0 }
                     )
                 }
-                // Wave-4 plan 04-02 — bottom-of-list "+ Add Exercise"
-                // affordance (SESS-06). Appends an unplanned
-                // SessionExercise to the active session ONLY; the
-                // source Routine is untouched (PITFALLS-doc #1).
                 Section {
                     AddUnplannedExerciseButton(session: session)
                 }
             }
             .listStyle(.insetGrouped)
         }
-        .navigationTitle("Workout")                                            // UI-SPEC verbatim
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .principal) {
-                VStack(spacing: 2) {                                           // UI-SPEC Phase 3.1 explicit spacing
-                    Text("Workout").font(.headline)                            // UI-SPEC verbatim
-                    Text(session.routineSnapshotName)                          // UI-SPEC verbatim subtitle
-                        .font(.caption).foregroundStyle(.secondary)
-                    IntentChip(intent: session.intent)                         // NEW Phase 3.1 (PIVOT-04 / D-11)
-                }
-            }
-            ToolbarItem(placement: .topBarLeading) {
-                if loggedSetCount == 0 {
-                    Button("Discard") {                                        // UI-SPEC verbatim
-                        presentingDiscardConfirm = true
-                    }
-                }
-            }
-            ToolbarItem(placement: .topBarTrailing) {
-                Button("Finish") {                                             // UI-SPEC verbatim
-                    presentingFinishConfirm = true
-                }
-                .foregroundStyle(Color.accentColor)
-            }
+        // BRU header replaces .navigationTitle + .toolbar principal block
+        .navigationBarHidden(true)
+        .safeAreaInset(edge: .top, spacing: 0) {
+            bruHeader
         }
+        // Phase 6 plan 06-07 — PR banner above the content (anti-layout-shift)
+        .safeAreaInset(edge: .top, spacing: 0) {
+            InSessionPRBanner(state: prState)
+        }
+        // Finish workout confirmation (system chrome acceptable per UI-SPEC line 261)
         .confirmationDialog(
-            "Finish Workout?",                                                 // UI-SPEC verbatim
+            "Finish workout?",                                                   // UI-SPEC verbatim
             isPresented: $presentingFinishConfirm,
             titleVisibility: .visible
         ) {
-            Button("Finish") { finish() }                                      // UI-SPEC verbatim
-            Button("Keep Logging", role: .cancel) {                            // UI-SPEC verbatim
+            Button("Finish") { finish() }                                        // UI-SPEC verbatim
+            Button("Keep logging", role: .cancel) {                              // UI-SPEC verbatim
                 presentingFinishConfirm = false
             }
         } message: {
-            Text("\(loggedSetCount) sets logged · \(elapsedLabel)")            // UI-SPEC verbatim format
+            Text("\(loggedSetCount) sets logged · \(elapsedLabel)")              // UI-SPEC verbatim format
         }
+        // Discard workout confirmation
         .alert(
-            "Discard Workout?",                                                // UI-SPEC verbatim
+            "Discard workout?",                                                  // UI-SPEC verbatim
             isPresented: $presentingDiscardConfirm
         ) {
-            Button("Discard", role: .destructive) { discard() }                // UI-SPEC verbatim
-            Button("Cancel", role: .cancel) {                                  // UI-SPEC verbatim
+            Button("Discard", role: .destructive) { discard() }                  // UI-SPEC verbatim
+            Button("Cancel", role: .cancel) {                                    // UI-SPEC verbatim
                 presentingDiscardConfirm = false
             }
         } message: {
-            Text("No data will be saved.")                                     // UI-SPEC verbatim
+            Text("No data will be saved.")                                       // UI-SPEC verbatim
         }
-        // Wave-4 plan 04-02 — swap-exercise sheet (SESS-05). Bound to the
-        // pendingSwap state, which is set by SessionExerciseCard's
-        // long-press "Swap Exercise…" menu entry.
+        // Swap-exercise sheet
         .sheet(item: $pendingSwap) { se in
             SwapExerciseSheet(sessionExercise: se)
         }
-        // Wave-4 plan 04-03 — workout-level notes sheet (SESS-11). Bound
-        // to the header "Notes" chip; binds `session.notes` via the
-        // sheet's Binding(get:set:) write-through with empty-string → nil
-        // normalization.
+        // Workout-level notes sheet
         .sheet(isPresented: $presentingWorkoutNotes) {
             WorkoutNotesSheet(session: session)
         }
-        // Wave-4 plan 04-03 — pinned per-exercise note sheet (SESS-11).
-        // Bound to pendingPinnedNote, which is set by
-        // SessionExerciseCard's long-press "Edit Pinned Note" menu entry
-        // AND by tapping the inline PinnedNoteCapsule.
+        // Pinned per-exercise note sheet
         .sheet(item: $pendingPinnedNote) { se in
             PinnedNoteSheet(sessionExercise: se)
         }
-        // Wave-4 plan 04-02 — remove-exercise destructive confirmation
-        // (SESS-05/SESS-06 inverse). Bound to pendingRemove, set by
-        // SessionExerciseCard's long-press "Remove from Session" menu.
-        // UI-SPEC verbatim: title "Remove \"{name}\"?", body "Any logged
-        // sets for this exercise will be discarded.", buttons
-        // "Remove" (destructive) / "Cancel".
+        // Remove-exercise destructive confirmation
         .alert(
-            "Remove \"\(pendingRemove?.exercise?.name ?? "")\"?",              // UI-SPEC verbatim
+            "Remove \"\(pendingRemove?.exercise?.name ?? "")\"?",                // UI-SPEC verbatim
             isPresented: Binding(
                 get: { pendingRemove != nil },
                 set: { if !$0 { pendingRemove = nil } }
             ),
             presenting: pendingRemove
         ) { se in
-            Button("Remove", role: .destructive) { handleRemove(se) }          // UI-SPEC verbatim
-            Button("Cancel", role: .cancel) {                                  // UI-SPEC verbatim
+            Button("Remove", role: .destructive) { handleRemove(se) }            // UI-SPEC verbatim
+            Button("Cancel", role: .cancel) {                                    // UI-SPEC verbatim
                 pendingRemove = nil
             }
         } message: { _ in
-            Text("Any logged sets for this exercise will be discarded.")       // UI-SPEC verbatim
+            Text("Any logged sets for this exercise will be discarded.")         // UI-SPEC verbatim
         }
-        // Wave-4 plan 06-07 — view-root PR banner mount via .safeAreaInset.
-        // RESEARCH Pattern 3 — anti-layout-shift; NEVER mount in scroll content.
-        .safeAreaInset(edge: .top, spacing: 0) {
-            InSessionPRBanner(state: prState)
-        }
-        // Wave-4 plan 06-07 — seed PR table at session start via one batched
-        // per-exercise fetch. RESEARCH Pitfall 6 — never re-query per set save.
+        // Phase 6 plan 06-07 — PR state seeded once on appear
         .task {
             prState.prTable = await SessionFactory.seedPRTable(for: session, context: ctx)
         }
     }
 
-    /// Wave-4 plan 04-02 — destructively removes a SessionExercise (and
-    /// its owned SetEntry rows by cascade) from the active session.
-    /// PITFALLS-doc #1 — the source RoutineExercise is untouched.
-    /// Cascade rule on SessionExercise.sets is .cascade (plan 01-01 /
-    /// SessionExercise.swift) → owned SetEntry rows go with it.
-    private func handleRemove(_ se: SessionExercise) {
-        ctx.delete(se)
-        try? ctx.save()
-        pendingRemove = nil
+    // MARK: - BRU Header
+
+    /// BRUHeaderBar + 3-line principal block per UI-SPEC line 358-363.
+    ///
+    /// Line 1: BRUHeaderBar("Workout", left: "‹", right: "•••")
+    /// Line 2: HStack { routineSnapshotName (displayMedium) | elapsed (bodyEmphasis muted) }
+    /// Line 3: IntentChip
+    @ViewBuilder private var bruHeader: some View {
+        VStack(spacing: 0) {
+            // Line 1: BRUHeaderBar — "‹" dismiss left, "Workout" center, "•••" menu right
+            BRUHeaderBar(
+                left: HeaderAction("‹") { dismiss() },                           // UI-SPEC verbatim
+                center: "Workout",                                               // UI-SPEC verbatim
+                right: HeaderAction("•••") { presentingMenu = true }            // UI-SPEC verbatim
+            )
+            .confirmationDialog(
+                "Workout",
+                isPresented: $presentingMenu,
+                titleVisibility: .hidden
+            ) {
+                Button("Workout notes") { presentingWorkoutNotes = true }        // UI-SPEC verbatim
+                Button("Finish") { presentingFinishConfirm = true }              // UI-SPEC verbatim
+                if loggedSetCount == 0 {
+                    Button("Discard", role: .destructive) {                      // UI-SPEC verbatim
+                        presentingDiscardConfirm = true
+                    }
+                }
+                Button("Cancel", role: .cancel) {}
+            }
+
+            // Lines 2-3: 3-line principal block below the BRUHeaderBar
+            // Wrapped in TimelineView so elapsed label re-renders per second
+            TimelineView(.periodic(from: elapsedStart, by: 1)) { _ in
+                VStack(alignment: .leading, spacing: 6) {
+                    HStack {
+                        Text(session.routineSnapshotName)                        // UI-SPEC line 362
+                            .font(BRUFont.displayMedium)
+                            .foregroundStyle(Color.bruInk)
+                        Spacer()
+                        Text(elapsedLabel)                                       // "32:14" per UI-SPEC
+                            .font(BRUFont.bodyEmphasis)
+                            .monospacedDigit()
+                            .foregroundStyle(Color.bruMuted)
+                    }
+                    IntentChip(intent: session.intent)                           // Line 363 — UI-SPEC
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 10)
+                .background(Color.bruPaper)
+            }
+
+            BRUDivider(.ink)
+        }
     }
 
     // MARK: - Derived state
 
-    /// `SessionExercise` rows sorted by `orderIndex` for stable rendering.
-    /// The snapshot order is locked at `SessionFactory.start` time and
-    /// never re-shuffled by routine edits.
     private var sortedExercises: [SessionExercise] {
         (session.exercises ?? []).sorted { $0.orderIndex < $1.orderIndex }
     }
 
-    /// Total committed sets across every exercise — drives the
-    /// "Discard" button's visibility (only renders when zero) and the
-    /// "Finish Workout?" confirmation body summary.
     private var loggedSetCount: Int {
         sortedExercises.reduce(0) { sum, se in
             sum + (se.sets ?? []).filter { $0.isComplete }.count
         }
     }
 
-    // MARK: - Header
-
-    /// Elapsed-time + exercise-progress + workout-notes chip row. Wrapped
-    /// in `TimelineView(.periodic(from: elapsedStart, by: 1))` so the
-    /// elapsed-time label re-renders once per second without a foreground
-    /// `Timer` (RESEARCH §6 Pattern 2).
-    @ViewBuilder private var headerChips: some View {
-        TimelineView(.periodic(from: elapsedStart, by: 1)) { _ in
-            HStack(spacing: 12) {                                              // UI-SPEC md
-                HStack(spacing: 4) {                                           // UI-SPEC xs
-                    Image(systemName: "clock")
-                    Text(elapsedLabel)
-                }
-                Text("\(progressLabel)")                                       // "3 of 6"
-                Button {
-                    presentingWorkoutNotes = true                              // Wave-4 plan 04-03
-                } label: {
-                    HStack(spacing: 4) {                                       // UI-SPEC xs
-                        Image(systemName: "square.and.pencil")
-                        Text("Notes")                                          // UI-SPEC verbatim caption
-                    }
-                }
-            }
-            .font(.caption)
-            .padding(.horizontal, 16)
-            .padding(.vertical, 8)
-        }
-    }
-
-    /// "M:SS" elapsed label — computed off `Date.now` so it never drifts
-    /// (PITFALLS-doc #4 — same Date-math pattern as the rest timer).
+    /// "M:SS" elapsed label — computed off Date.now (matches PITFALLS-doc #4).
     private var elapsedLabel: String {
         let s = max(0, Int(Date.now.timeIntervalSince(elapsedStart)))
         return String(format: "%d:%02d", s / 60, s % 60)
     }
 
-    /// "{N} of {M}" exercise-progress label. N = the next-incomplete
-    /// exercise's 1-based index (or the last index when all are complete).
-    private var progressLabel: String {
-        let totalExercises = sortedExercises.count
-        let completed = sortedExercises.prefix(while: { se in
-            (se.sets ?? []).allSatisfy { $0.isComplete }
-        }).count
-        return "\(min(completed + 1, totalExercises)) of \(totalExercises)"
-    }
-
     // MARK: - Mutating commands
 
-    /// Commits a set: flips `isComplete = true`, writes `completedAt`,
-    /// persists, and starts the rest timer. RESEARCH §6 Pitfall 2 — the
-    /// save MUST precede `engine.start(...)` so the committed set is in
-    /// the store before the rest period kicks off.
+    /// Commits a set: flips isComplete, saves, observes for PR detection, starts rest timer.
+    /// RESEARCH §6 Pitfall 2 — save MUST precede engine.start.
     private func commitSet(_ entry: SetEntry, for se: SessionExercise) {
         entry.isComplete = true
         entry.completedAt = .now
         try? ctx.save()
-        // Wave-4 plan 06-07 — observe save for live PR detection. Runs
-        // PRDetector.check against the session-state cache and mutates
-        // prState.currentBanner. Must run AFTER ctx.save() so the set's
-        // committed state matches what PRDetector reads.
         prState.observeSave(set: entry)
         let prescribed = max(1, se.prescribedRestSeconds)
         engine.start(seconds: prescribed, exerciseName: se.exercise?.name ?? "")
     }
 
-    /// Marks the session finished. Writes `completedAt = .now` and the
-    /// elapsed `totalDurationSeconds` (matches UI-SPEC § Session logger
-    /// "Finish workout confirmation body" surface). Stops the rest timer
-    /// to cancel any pending lock-screen notification.
     private func finish() {
         session.completedAt = .now
         session.totalDurationSeconds = Int(Date.now.timeIntervalSince(session.startedAt))
@@ -345,19 +240,23 @@ public struct SessionLoggerView: View {
         dismiss()
     }
 
-    /// Discards the active session. Only reachable from the Discard
-    /// toolbar button, which only renders when `loggedSetCount == 0` — so
-    /// no user data is at risk. The cascade rule on `Session.exercises`
-    /// automatically deletes the empty `SessionExercise` rows + their
-    /// (empty) `SetEntry` rows by transitive cascade.
     private func discard() {
         engine.stop()
         ctx.delete(session)
         try? ctx.save()
         dismiss()
     }
+
+    private func handleRemove(_ se: SessionExercise) {
+        ctx.delete(se)
+        try? ctx.save()
+        pendingRemove = nil
+    }
 }
 
+// MARK: - Preview
+
+#if DEBUG
 #Preview("session logger") {
     let container = PreviewModelContainer.make()
     let ctx = ModelContext(container)
@@ -366,11 +265,6 @@ public struct SessionLoggerView: View {
     let session = Session()
     session.startedAt = .now.addingTimeInterval(-180)
     session.routineSnapshotName = "Push Day A"
-    // Phase 3.1 (PIVOT-05): intent + progressionKind live on Session, not
-    // SessionExercise (the per-exercise fields were removed in Plan 02).
-    // Setting intentRaw on the parent Session here lets the IntentChip in
-    // the principal toolbar (Plan 06) render "Strength" against the real
-    // PIVOT-05 read path.
     session.intentRaw = Intent.strength.rawValue
     ctx.insert(session)
     let se = SessionExercise()
@@ -391,3 +285,4 @@ public struct SessionLoggerView: View {
     }
     .modelContainer(container)
 }
+#endif

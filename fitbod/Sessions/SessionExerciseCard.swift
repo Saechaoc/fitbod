@@ -351,7 +351,7 @@ public struct SessionExerciseCard: View {
     /// Equipment sub-line for card header — UI-SPEC line 366.
     /// "{equipment} · {prescription summary}" in labelSmall bruMuted.
     private var equipmentSubline: String {
-        let equip = sessionExercise.exercise?.equipment?.rawValue.capitalized ?? "Equipment"
+        let equip = sessionExercise.exercise?.equipment.rawValue.capitalized ?? "Equipment"
         // Build a minimal snapshot prescription summary
         let setsCount = (sessionExercise.sets ?? []).count
         let parts = [equip, "\(setsCount) SETS"]
