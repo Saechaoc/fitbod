@@ -84,7 +84,7 @@ Granular, prescriptive workout sessions — every set in a session is intentiona
 - [x] 02.1-05-PLAN.md — Wave 3: RoutineBuilderView reskin + RoutineExerciseCard + PrescriptionEditorRow + SetRowsContainer + 4 supporting Routines files
 - [x] 02.1-06-PLAN.md — Wave 3: RoutinesListView + RoutineRow + NewFolderSheet + MoveRoutineSheet
 - [x] 02.1-07-PLAN.md — Wave 3: SessionLoggerView core + SessionExerciseCard + SetRow + SetTypeChip + IntentChip + InlineRPEChipRow + DecimalRPEPickerSheet
-- [ ] 02.1-08-PLAN.md — Wave 3: 11 SessionLogger widgets (PinnedNoteCapsule yellow ban + WorkoutHeaderToolbar extraction + AddUnplannedExerciseButton BRUDashedSlot + ResumeWorkoutBanner + 7 others)
+- [x] 02.1-08-PLAN.md — Wave 3: 11 SessionLogger widgets (PinnedNoteCapsule yellow ban + WorkoutHeaderToolbar extraction + AddUnplannedExerciseButton BRUDashedSlot + ResumeWorkoutBanner + 7 others)
 - [x] 02.1-09-PLAN.md — Wave 3: RestTimer Overlay (full-bleed slab) + RestTimerProgressArc (rename ProgressRing) + RestTimerLiveActivity + Lock Screen + 2 new Dynamic Island views
 - [x] 02.1-10-PLAN.md — Wave 3: ExerciseHistoryView reskin + IntentFilterChipRow + PRStripFooter (NEW) + SessionHistoryView (NEW) + SessionHistoryStatStrip + WeeklyTonnageSparkCard + SessionHistoryRow
 - [ ] 02.1-11-PLAN.md — Wave 4: Wave G cleanup — delete PlaceholderTabView + close deferred Step-E from 02.1-08 + Step-A from 02.1-10 + BRUGrepAuditTests guardrail + 3 UI smoke test files
