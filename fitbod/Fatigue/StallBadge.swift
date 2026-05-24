@@ -2,12 +2,19 @@
 //  StallBadge.swift
 //  fitbod
 //
-//  Phase 5 PROG-06 — orange "Stalled" capsule rendered on
-//  SessionExerciseCard when PlateauDetector.evaluate returns .stalled.
+//  Phase 5.1 Plan 02 — BRU reskin: filled bruSignal mini-banner replacing
+//  the original Color(.systemOrange).opacity(0.15) capsule.
 //
-//  UI-SPEC §Spacing Scale (24pt capsule) + §Color (Color(.systemOrange)
-//  family — semantic, not literal) + §Copywriting Contract ("Stalled"
-//  verbatim).
+//  BRU contract per must_haves + bru-screens/plateau.jsx ▲ STALL DETECTED pattern:
+//   - Text("Stalled".uppercased()) — visible label is uppercase per BRU labelSmall
+//   - Rectangle fill Color.bruSignal (NOT systemOrange capsule)
+//   - Foreground Color.bruPaper (NOT orange-on-orange-tint)
+//   - Sharp corners — NO Capsule() / NO RoundedRectangle
+//
+//  Public init signature UNCHANGED: (exerciseName: String, sessionCount: Int)
+//  Accessibility label PRESERVED VERBATIM per UI-SPEC §Accessibility Contract:
+//    "Stalled: {exerciseName} has been flat for {sessionCount} sessions."
+//  Accessibility trait PRESERVED: .isStaticText
 //
 
 import SwiftUI
@@ -22,13 +29,13 @@ public struct StallBadge: View {
     }
 
     public var body: some View {
-        Text("Stalled")
-            .font(.caption.weight(.semibold))
-            .padding(.horizontal, 8)
-            .padding(.vertical, 4)
-            .background(Color(.systemOrange).opacity(0.15))
-            .foregroundStyle(Color(.systemOrange))
-            .clipShape(Capsule())
+        Text("Stalled".uppercased())
+            .font(BRUFont.labelSmall)
+            .tracking(1.2)
+            .foregroundStyle(Color.bruPaper)
+            .padding(.horizontal, 6)
+            .padding(.vertical, 2)
+            .background(Color.bruSignal)
             .accessibilityElement(children: .ignore)
             .accessibilityLabel("Stalled: \(exerciseName) has been flat for \(sessionCount) sessions.")
             .accessibilityAddTraits(.isStaticText)
