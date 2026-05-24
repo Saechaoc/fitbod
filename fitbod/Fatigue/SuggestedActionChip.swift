@@ -2,10 +2,22 @@
 //  SuggestedActionChip.swift
 //  fitbod
 //
-//  Phase 5 PROG-06 — accent-tinted capsule chip rendered alongside
-//  StallBadge on SessionExerciseCard. Label is D-13 verbatim per
-//  UI-SPEC §Copywriting Contract. Tap routes per UI-SPEC §Interaction
-//  & Motion action table (parent handles the route).
+//  Phase 5.1 Plan 02 — BRU reskin: outline ink chip replacing the original
+//  Color.accentColor.opacity(0.15) capsule treatment.
+//
+//  BRU contract per must_haves + bru-screens/plateau.jsx:
+//   - Label uses BRU short forms (uppercase): ADD VOLUME / DROP INTENSITY /
+//     CONSIDER DELOAD / TRY VARIATION
+//   - Rendered as BRUChip(label, color: .bruInk, fill: false) — outline ink chip
+//   - 44pt minimum hit area via .frame(minHeight: 44) on the Button
+//   - NO Color.accentColor / NO Capsule() / NO .font(.caption)
+//
+//  Public init signature UNCHANGED: (action: SuggestedAction, onTap: () -> Void)
+//  Tap routing UNCHANGED: parent call sites in SessionExerciseCard handle navigation.
+//  Accessibility labels PRESERVED VERBATIM per UI-SPEC §Copywriting Contract:
+//    label: "Suggested: {action.label}."
+//    hint:  action.accessibilityHint
+//    trait: .isButton
 //
 
 import SwiftUI
@@ -42,19 +54,32 @@ public struct SuggestedActionChip: View {
         self.onTap = onTap
     }
 
+    // MARK: - BRU short-form label (visible on chip)
+    // UI-SPEC §Copy overlay table — uppercase BRU short forms for chip rendering.
+    // These differ from action.label (title-case semantic form used for accessibility).
+    public var brShortLabel: String {
+        switch action {
+        case .addVolume:     return "ADD VOLUME"
+        case .dropIntensity: return "DROP INTENSITY"
+        case .deload:        return "CONSIDER DELOAD"
+        case .tryVariation:  return "TRY VARIATION"
+        }
+    }
+
+    // MARK: - Accessibility label (title-case semantic form per UI-SPEC §Copywriting Contract)
+    // Note: stored as a computed property for testability.
+    public var accessibilityChipLabel: String {
+        "Suggested: \(action.label)."
+    }
+
     public var body: some View {
-        Text(action.label)
-            .font(.caption)
-            .padding(.horizontal, 8)
-            .padding(.vertical, 4)
-            .background(Color.accentColor.opacity(0.15))
-            .foregroundStyle(Color.accentColor)
-            .clipShape(Capsule())
-            .contentShape(Rectangle())
-            .frame(minHeight: 32)
-            .onTapGesture { onTap() }
-            .accessibilityLabel("Suggested: \(action.label).")
-            .accessibilityHint(action.accessibilityHint)
-            .accessibilityAddTraits(.isButton)
+        Button(action: onTap) {
+            BRUChip(brShortLabel, color: .bruInk, fill: false)
+        }
+        .buttonStyle(.plain)
+        .frame(minHeight: 44)
+        .accessibilityLabel(accessibilityChipLabel)
+        .accessibilityHint(action.accessibilityHint)
+        .accessibilityAddTraits(.isButton)
     }
 }
