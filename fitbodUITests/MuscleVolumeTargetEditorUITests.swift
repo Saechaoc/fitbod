@@ -68,8 +68,13 @@ final class MuscleVolumeTargetEditorUITests: XCTestCase {
         XCTAssertTrue(row.waitForExistence(timeout: 10))
         row.tap()
 
-        // Navigation title should appear.
-        XCTAssertTrue(app.navigationBars["Volume Targets"].waitForExistence(timeout: 5))
+        // BRU header bar replaces system navigation bar — assert the BRUHeaderBar
+        // center Text element "Volume Targets" is present rather than a nav bar title.
+        let headerText = app.staticTexts.matching(
+            NSPredicate(format: "label == 'Volume Targets'")
+        ).firstMatch
+        XCTAssertTrue(headerText.waitForExistence(timeout: 5),
+                      "BRUHeaderBar center 'Volume Targets' must be visible")
 
         // Reset All destructive button should be present at the bottom.
         let resetAll = app.buttons["Reset All to RP Defaults"]
