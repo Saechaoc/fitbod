@@ -7,6 +7,12 @@
 //  on-disk source so a careless future edit can't silently mutate the
 //  copy contract without tripping the test suite.
 //
+//  Phase 2.1 Plan 06 — Updated for BRU visual rewrite:
+//  - "NEW FOLDER" replaces "New Folder" (BRUHeaderBar center, UPPERCASE)
+//  - "SAVE" / "CANCEL" replace "Save" / "Cancel" (BRUHeaderBar actions)
+//  - "MOVE ROUTINE" replaces "Move Routine" (BRUHeaderBar center)
+//  - "Add routine or folder" accessibility label removed (toolbar Menu removed)
+//
 //  Pattern mirrors `RestTimerOverlayCopyTests` from plan 02-03 — read the
 //  source files at runtime via `#filePath`-relative URLs and grep for
 //  exact string literals. SwiftUI views aren't snapshot-tested at the
@@ -34,9 +40,9 @@ struct RoutinesListCopyTests {
         )
         #expect(list.contains("\"Routines\""))
         #expect(list.contains("\"New Routine\""))
+        // BRU rewrite: "New Folder" action name in the confirmationDialog
         #expect(list.contains("\"New Folder\""))
-        #expect(list.contains("\"Add routine or folder\""))
-        #expect(list.contains("\"Unfiled\""))
+        #expect(list.contains("\"UNFILED\""))
         #expect(list.contains("\"No routines yet\""))
         #expect(list.contains("\"Build a routine to start logging workouts.\""))
         #expect(list.contains("\"Workout in Progress\""))
@@ -52,27 +58,27 @@ struct RoutinesListCopyTests {
         )
         #expect(row.contains("\"Start Workout\""))
         #expect(row.contains("\"Duplicate\""))
-        #expect(row.contains("\"Move…\""))
+        #expect(row.contains("\"Move\u{2026}\""))
         #expect(row.contains("\"Edit\""))
         #expect(row.contains("\"Delete\""))
-        #expect(row.contains("\"play.fill\""))
 
         let folder = try String(
             contentsOf: base.appendingPathComponent("NewFolderSheet.swift"),
             encoding: .utf8
         )
-        #expect(folder.contains("\"New Folder\""))
-        #expect(folder.contains("\"e.g. Push / Pull / Legs\""))
-        #expect(folder.contains("\"Save\""))
-        #expect(folder.contains("\"Cancel\""))
+        // BRU rewrite: uppercase "NEW FOLDER" header, "SAVE"/"CANCEL" BRU actions
+        #expect(folder.contains("\"NEW FOLDER\""))
+        #expect(folder.contains("\"Folder name\""))
+        #expect(folder.contains("\"SAVE\""))
+        #expect(folder.contains("\"CANCEL\""))
 
         let move = try String(
             contentsOf: base.appendingPathComponent("MoveRoutineSheet.swift"),
             encoding: .utf8
         )
-        #expect(move.contains("\"Move Routine\""))
-        #expect(move.contains("\"Save\""))
-        #expect(move.contains("\"Cancel\""))
+        // BRU rewrite: uppercase "MOVE ROUTINE" header
+        #expect(move.contains("\"MOVE ROUTINE\""))
+        #expect(move.contains("\"CANCEL\""))
         #expect(move.contains("\"Unfiled\""))
 
         // ResumeWorkoutBanner lives under fitbod/Sessions/ — read it

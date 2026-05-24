@@ -2,67 +2,49 @@
 //  RoutinesListView.swift
 //  fitbod
 //
-//  Wave-3 plan 03-01 — the user-facing keystone of the Routines tab in
-//  Phase 2. Replaces the `PlaceholderTabView(phaseNumber: 2)` placeholder
-//  on the Routines tab in `RootView` with a sectioned `List` grouped by
-//  `RoutineFolder`, a sticky `+` toolbar `Menu` (New Routine / New
-//  Folder), per-row swipe + context-menu actions, and the empty state.
+//  Phase 2.1 Plan 06 — BRU visual rewrite of the Routines tab list.
+//  UI-SPEC v2 § RoutinesListView (lines 302-322) + § Surfaces (lines 544-549).
 //
-//  ## Sectioning
+//  ## Composition
 //
-//  The list groups by `RoutineFolder`. The implicit "Unfiled" section
-//  (routines with `folderID == nil`) renders FIRST and ONLY when at least
-//  one such routine exists — empty folders do NOT render in Phase 2 (the
-//  user-visible folder is only a header for routines below it). Folder
-//  sections render in `sortOrder` order (driven by the `@Query` sort
-//  descriptor).
+//  NavigationStack with .navigationBarHidden(true) + .safeAreaInset(edge: .top)
+//  mounting BRUHeaderBar(left: nil, center: "Routines", right: HeaderAction("+ NEW")).
+//  The BRUHeaderBar right action opens a SwiftUI Menu (system styling acceptable
+//  per UI-SPEC line 261 — Apple's chrome cannot be fully restyled).
 //
-//  ## Soft-ref invariants (CONTEXT.md Area 6)
+//  Body is a ScrollView > LazyVStack(pinnedViews: [.sectionHeaders]) grouping
+//  routines by RoutineFolder. Each group renders BRUSectionHead(folder name
+//  UPPERCASED) as the pinned section header, followed by RoutineRow items
+//  separated by BRUDivider(.hair). "Unfiled" section (folderID == nil) renders
+//  FIRST when any unfiled routines exist (per existing Phase 2 convention).
 //
-//  `Routine.folderID` is a soft `UUID?` reference — NOT a SwiftData
-//  `@Relationship`. This is load-bearing: deleting a `RoutineFolder` MUST
-//  NOT cascade-delete its routines. `handleFolderDelete(_:)` enforces the
-//  invariant by re-mapping `routine.folderID = nil` BEFORE deleting the
-//  folder; affected routines then surface in the "Unfiled" section.
+//  ## Preserved Behaviors (Phase 2 — soft-ref invariants + active-session guard)
 //
-//  Similarly, deleting a `Routine` does NOT cascade-delete the soft-ref
-//  `SupersetGroup` rows that reference it via `routineID`. The
-//  `handleDelete(routine:)` handler query-and-deletes those groups
-//  explicitly before deleting the routine, preventing orphan
-//  `SupersetGroup` rows from accumulating in the store.
+//  - Soft-ref folder design: `Routine.folderID` is UUID? (NOT a SwiftData
+//    relationship). `handleFolderDelete(_:)` re-maps routines to nil BEFORE
+//    deleting the folder — preventing cascade-delete of routines.
+//  - Deleting a Routine query-and-deletes orphan `SupersetGroup` rows (soft
+//    UUID ref) before `ctx.delete(routine)`.
+//  - Active-session conflict guard: `handleStartTap(routine:)` gates on
+//    `activeSessions` @Query and surfaces the UI-SPEC "Workout in Progress"
+//    alert (RESEARCH §6 Pitfall 7).
 //
-//  ## Active-session conflict guard (RESEARCH §6 Pitfall 7)
+//  ## State Vars Preserved
 //
-//  This view is the canonical "Start Workout" caller per plan 03-01's
-//  pitfall mapping. `handleStartTap(routine:)` queries
-//  `#Predicate<Session> { $0.completedAt == nil }` reactively (via the
-//  `activeSessions` `@Query` property) AND defensively (via
-//  `SessionFactoryError.activeSessionAlreadyExists` from
-//  `SessionFactory.start`). Both paths surface the same UI-SPEC verbatim
-//  alert ("Workout in Progress" / "Finish or discard the current workout
-//  before starting a new one." / "Resume Workout" / "Discard" / "Cancel").
-//
-//  ## Stubbed navigation (plan 03-02 / 03-03 wires)
-//
-//  Two call sites are intentionally stubbed in plan 03-01:
-//
-//    - "New Routine" sheet body — interim placeholder text until plan
-//      03-02 ships `RoutineBuilderView`.
-//    - Row tap (edit mode) — no-op closure until plan 03-02 wires the
-//      navigation destination.
-//    - "Duplicate" menu item — no-op until plan 03-03 ships
-//      `RoutineDuplicator.duplicate(routine:context:)`.
-//
-//  These stubs are documented as TODO comments at the call sites so the
-//  consuming plans have unambiguous swap-in targets.
+//  @State: presentingNewFolder, presentingMoveSheet, presentingNewRoutine,
+//          editingRoutine, conflictRoutine, deleteConfirmFolder,
+//          pendingBlockBuilder, pendingBlockDelete, navigationPath, searchText,
+//          presentingNewMenu
 //
 
 import SwiftUI
 import SwiftData
 
-/// Routines tab body — sectioned `List` grouped by `RoutineFolder` with a
-/// "+" toolbar `Menu` for creating new routines / folders, swipe and
-/// context-menu actions on each row, and a UI-SPEC verbatim empty state.
+/// Routines tab body — BRU brutalist composition replacing navigationTitle+List.
+///
+/// Grouped by `RoutineFolder` with a BRUHeaderBar "+ NEW" right action opening
+/// a Menu for creating new routines / folders. Preserves all Phase 2 swipe,
+/// context-menu, active-session-conflict, and soft-ref delete behaviors.
 public struct RoutinesListView: View {
     @Environment(\.modelContext) private var ctx
 
@@ -87,218 +69,209 @@ public struct RoutinesListView: View {
     @State private var pendingBlockBuilder: PendingBlockBuilder? = nil
     @State private var pendingBlockDelete: Block? = nil
     @State private var navigationPath = NavigationPath()
+    @State private var searchText = ""
+    @State private var presentingNewMenu = false
 
     public init() {}
 
     public var body: some View {
         NavigationStack(path: $navigationPath) {
-            content
-                .navigationTitle("Routines")
-                .navigationDestination(for: SessionRoute.self) { route in
-                    switch route {
-                    case .logger(let session):
-                        SessionLoggerView(session: session)
-                    }
-                }
-                .toolbar {
-                    ToolbarItem(placement: .topBarTrailing) {
-                        Menu {
-                            Button("New Routine") {
-                                presentingNewRoutine = true
-                            }
-                            Button("New Folder") {
-                                presentingNewFolder = true
-                            }
-                        } label: {
-                            Label("Add routine or folder", systemImage: "plus")
-                                .labelStyle(.iconOnly)
-                        }
-                        .accessibilityLabel("Add routine or folder")
-                    }
-                }
-                .sheet(isPresented: $presentingNewFolder) {
-                    NewFolderSheet(draft: RoutineFolderDraft())
-                }
-                .sheet(item: $presentingMoveSheet) { routine in
-                    MoveRoutineSheet(routine: routine, folders: folders)
-                }
-                .sheet(isPresented: $presentingNewRoutine) {
-                    // Plan 03-02 wire — real RoutineBuilderView replaces
-                    // the prior interim placeholder. A fresh
-                    // `RoutineDraft()` is constructed per presentation so
-                    // the sheet opens with empty fields each time.
-                    NavigationStack {
-                        RoutineBuilderView(draft: RoutineDraft())
-                    }
-                }
-                .sheet(item: $editingRoutine) { routine in
-                    // Plan 03-02 edit-mode wire — the row-tap closure on
-                    // RoutineRow sets `editingRoutine = routine`, which
-                    // presents the builder in edit mode (the builder
-                    // round-trips the existing RoutineExercise + per-set
-                    // override rows via `RoutineDraft(routine:)`).
-                    NavigationStack {
-                        RoutineBuilderView(
-                            draft: RoutineDraft(routine: routine),
-                            editing: routine
-                        )
-                    }
-                }
-                .sheet(item: $pendingBlockBuilder) { pending in
-                    NavigationStack {
-                        switch pending {
-                        case .template(let template):
-                            BlockBuilderView(draft: BlockDraft(template: template))
-                        case .edit(let block):
-                            BlockBuilderView(draft: BlockDraft(block: block), editing: block)
-                        }
-                    }
-                }
-                .alert(
-                    "Workout in Progress",
-                    isPresented: Binding(
-                        get: { conflictRoutine != nil },
-                        set: { if !$0 { conflictRoutine = nil } }
-                    )
-                ) {
-                    Button("Resume Workout") {
-                        // The visible resume banner mounted above the list
-                        // owns the actual navigation to the session logger
-                        // (plan 04-01). The alert just dismisses here.
-                        conflictRoutine = nil
-                    }
-                    Button("Discard", role: .destructive) {
-                        if let active = activeSessions.first {
-                            ctx.delete(active)
+            ScrollView {
+                LazyVStack(spacing: 0, pinnedViews: [.sectionHeaders]) {
+                    // Resume-workout banner at top
+                    ResumeWorkoutBanner(
+                        onResume: { session in
+                            navigationPath.append(SessionRoute.logger(session))
+                        },
+                        onDiscard: { session in
+                            ctx.delete(session)
                             try? ctx.save()
                         }
-                        conflictRoutine = nil
-                    }
-                    Button("Cancel", role: .cancel) {
-                        conflictRoutine = nil
-                    }
-                } message: {
-                    Text("Finish or discard the current workout before starting a new one.")
-                }
-                .alert(
-                    "Delete block?",
-                    isPresented: Binding(
-                        get: { pendingBlockDelete != nil },
-                        set: { if !$0 { pendingBlockDelete = nil } }
                     )
-                ) {
-                    Button("Delete", role: .destructive) {
-                        if let block = pendingBlockDelete {
-                            ctx.delete(block)
-                            try? ctx.save()
-                        }
-                        pendingBlockDelete = nil
-                    }
-                    Button("Cancel", role: .cancel) {
-                        pendingBlockDelete = nil
-                    }
-                } message: {
-                    Text("Linked routines stay; sessions logged under this block keep their snapshot context.")
-                }
-                .confirmationDialog(
-                    deleteConfirmFolder.map { "Delete \"\($0.name)\"?" } ?? "Delete?",
-                    isPresented: Binding(
-                        get: { deleteConfirmFolder != nil },
-                        set: { if !$0 { deleteConfirmFolder = nil } }
-                    ),
-                    titleVisibility: .visible
-                ) {
-                    Button("Delete", role: .destructive) {
-                        if let folder = deleteConfirmFolder {
-                            handleFolderDelete(folder)
-                        }
-                        deleteConfirmFolder = nil
-                    }
-                    Button("Cancel", role: .cancel) {
-                        deleteConfirmFolder = nil
-                    }
-                } message: {
-                    Text("The folder will be removed.")
-                }
-        }
-    }
 
-    // MARK: - Content
+                    // Blocks section
+                    bruBlocksSection
 
-    @ViewBuilder
-    private var content: some View {
-        populatedList
-    }
-
-    @ViewBuilder
-    private var populatedList: some View {
-        List {
-            ResumeWorkoutBanner(
-                onResume: { session in
-                    // Plan 04-01 wired — push SessionLoggerView via the
-                    // Routines-tab NavigationPath.
-                    navigationPath.append(SessionRoute.logger(session))
-                },
-                onDiscard: { session in
-                    ctx.delete(session)
-                    try? ctx.save()
-                }
-            )
-            .listRowInsets(EdgeInsets())
-            .listRowBackground(Color.clear)
-
-            blocksSection
-
-            if routines.isEmpty && folders.isEmpty {
-                routinesEmptySection
-            } else {
-                ForEach(sectionsForRendering, id: \.id) { section in
-                    Section(section.title) {
-                        if section.routines.isEmpty {
-                            // Folder with no routines yet — show a faint
-                            // placeholder row so the section header isn't
-                            // visually orphaned.
-                            Text("No routines in this folder")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        } else {
-                            ForEach(section.routines) { routine in
-                                RoutineRow(
-                                    routine: routine,
-                                    onTap: { editingRoutine = $0 },
-                                    onStart: { handleStartTap(routine: $0) },
-                                    onDuplicate: { handleDuplicate(routine: $0) },
-                                    onMove: { presentingMoveSheet = $0 },
-                                    onDelete: { handleDelete(routine: $0) }
-                                )
+                    // Routines sections or empty state
+                    if filteredSectionsForRendering.allSatisfy({ $0.routines.isEmpty }) &&
+                       routines.filter({ matchesSearch($0) }).isEmpty {
+                        bruEmptyState
+                    } else {
+                        ForEach(filteredSectionsForRendering, id: \.id) { section in
+                            Section {
+                                ForEach(section.routines) { routine in
+                                    RoutineRow(
+                                        routine: routine,
+                                        onTap: { editingRoutine = $0 },
+                                        onStart: { handleStartTap(routine: $0) },
+                                        onDuplicate: { handleDuplicate(routine: $0) },
+                                        onMove: { presentingMoveSheet = $0 },
+                                        onDelete: { handleDelete(routine: $0) }
+                                    )
+                                    BRUDivider(.hair)
+                                }
+                            } header: {
+                                BRUSectionHead(section.title.uppercased())
                             }
                         }
                     }
                 }
             }
+            .background(Color.bruPaper.ignoresSafeArea())
+            .navigationBarHidden(true)
+            .searchable(text: $searchText, prompt: "Search routines")
+            .safeAreaInset(edge: .top) {
+                BRUHeaderBar(
+                    left: nil,
+                    center: "Routines",
+                    right: HeaderAction("+ NEW", isSignal: true, action: { presentingNewMenu = true })
+                )
+            }
+            .confirmationDialog(
+                "Add",
+                isPresented: $presentingNewMenu,
+                titleVisibility: .hidden
+            ) {
+                Button("New Routine") {
+                    presentingNewRoutine = true
+                }
+                Button("New Folder") {
+                    presentingNewFolder = true
+                }
+                Button("Cancel", role: .cancel) {}
+            }
+            .navigationDestination(for: SessionRoute.self) { route in
+                switch route {
+                case .logger(let session):
+                    SessionLoggerView(session: session)
+                }
+            }
+            .sheet(isPresented: $presentingNewFolder) {
+                NewFolderSheet(draft: RoutineFolderDraft())
+            }
+            .sheet(item: $presentingMoveSheet) { routine in
+                MoveRoutineSheet(routine: routine, folders: folders)
+            }
+            .sheet(isPresented: $presentingNewRoutine) {
+                NavigationStack {
+                    RoutineBuilderView(draft: RoutineDraft())
+                }
+            }
+            .sheet(item: $editingRoutine) { routine in
+                NavigationStack {
+                    RoutineBuilderView(
+                        draft: RoutineDraft(routine: routine),
+                        editing: routine
+                    )
+                }
+            }
+            .sheet(item: $pendingBlockBuilder) { pending in
+                NavigationStack {
+                    switch pending {
+                    case .template(let template):
+                        BlockBuilderView(draft: BlockDraft(template: template))
+                    case .edit(let block):
+                        BlockBuilderView(draft: BlockDraft(block: block), editing: block)
+                    }
+                }
+            }
+            // UI-SPEC verbatim: "Workout in Progress" active-session-conflict alert
+            .alert(
+                "Workout in Progress",
+                isPresented: Binding(
+                    get: { conflictRoutine != nil },
+                    set: { if !$0 { conflictRoutine = nil } }
+                )
+            ) {
+                Button("Resume Workout") {
+                    conflictRoutine = nil
+                }
+                Button("Discard", role: .destructive) {
+                    if let active = activeSessions.first {
+                        ctx.delete(active)
+                        try? ctx.save()
+                    }
+                    conflictRoutine = nil
+                }
+                Button("Cancel", role: .cancel) {
+                    conflictRoutine = nil
+                }
+            } message: {
+                Text("Finish or discard the current workout before starting a new one.")
+            }
+            .alert(
+                "Delete block?",
+                isPresented: Binding(
+                    get: { pendingBlockDelete != nil },
+                    set: { if !$0 { pendingBlockDelete = nil } }
+                )
+            ) {
+                Button("Delete", role: .destructive) {
+                    if let block = pendingBlockDelete {
+                        ctx.delete(block)
+                        try? ctx.save()
+                    }
+                    pendingBlockDelete = nil
+                }
+                Button("Cancel", role: .cancel) {
+                    pendingBlockDelete = nil
+                }
+            } message: {
+                Text("Linked routines stay; sessions logged under this block keep their snapshot context.")
+            }
+            .confirmationDialog(
+                deleteConfirmFolder.map { "Delete \"\($0.name)\"?" } ?? "Delete?",
+                isPresented: Binding(
+                    get: { deleteConfirmFolder != nil },
+                    set: { if !$0 { deleteConfirmFolder = nil } }
+                ),
+                titleVisibility: .visible
+            ) {
+                Button("Delete", role: .destructive) {
+                    if let folder = deleteConfirmFolder {
+                        handleFolderDelete(folder)
+                    }
+                    deleteConfirmFolder = nil
+                }
+                Button("Cancel", role: .cancel) {
+                    deleteConfirmFolder = nil
+                }
+            } message: {
+                Text("The folder will be removed.")
+            }
         }
-        .listStyle(.insetGrouped)
     }
 
+    // MARK: - Blocks section (BRU-styled, preserving block create/edit behaviors)
+
     @ViewBuilder
-    private var blocksSection: some View {
-        Section {
+    private var bruBlocksSection: some View {
+        VStack(spacing: 0) {
+            BRUSectionHead("Blocks", right: nil)
+
             if blocks.isEmpty {
                 VStack(alignment: .leading, spacing: 8) {
                     Text("No blocks yet.")
-                        .font(.body)
+                        .font(BRUFont.bodyDefault)
+                        .foregroundStyle(Color.bruInk)
                     Text("Define a training block to organize routines into a mesocycle.")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .font(BRUFont.bodyDefault)
+                        .foregroundStyle(Color.bruMuted)
                     Menu {
-                        templateMenuItems
+                        bruTemplateMenuItems
                     } label: {
                         Text("+ Block")
-                            .foregroundStyle(Color.accentColor)
+                            .font(BRUFont.labelSmall)
+                            .tracking(1.2)
+                            .textCase(.uppercase)
+                            .foregroundStyle(Color.bruSignal)
                     }
+                    .buttonStyle(.plain)
                     .padding(.top, 8)
                 }
-                .padding(.vertical, 4)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 12)
+                BRUDivider(.hair)
             } else {
                 ForEach(BlockRow.sortedForDisplay(blocks)) { block in
                     BlockRow(
@@ -306,42 +279,14 @@ public struct RoutinesListView: View {
                         onTap: { pendingBlockBuilder = .edit($0) },
                         onDelete: { pendingBlockDelete = $0 }
                     )
-                }
-            }
-        } header: {
-            HStack {
-                Text("Blocks")
-                Spacer()
-                Menu {
-                    templateMenuItems
-                } label: {
-                    Text("+ Block")
-                        .foregroundStyle(Color.accentColor)
+                    BRUDivider(.hair)
                 }
             }
         }
     }
 
     @ViewBuilder
-    private var routinesEmptySection: some View {
-        Section {
-            VStack(alignment: .leading, spacing: 8) {
-                Text("No routines yet")
-                    .font(.body)
-                Text("Build a routine to start logging workouts.")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                Button("New Routine") {
-                    presentingNewRoutine = true
-                }
-                .foregroundStyle(Color.accentColor)
-            }
-            .padding(.vertical, 4)
-        }
-    }
-
-    @ViewBuilder
-    private var templateMenuItems: some View {
+    private var bruTemplateMenuItems: some View {
         Button("Generic Strength Meso") {
             pendingBlockBuilder = .template(BlockTemplates.generic)
         }
@@ -356,8 +301,30 @@ public struct RoutinesListView: View {
         }
     }
 
-    /// Builds the rendering sections from the live `@Query` slices.
-    /// "Unfiled" first (only when ≥1 unfiled routine), then user folders.
+    // MARK: - Empty state (UI-SPEC line 467, line 322)
+
+    @ViewBuilder
+    private var bruEmptyState: some View {
+        VStack(spacing: 16) {
+            BRUDisplay("No routines yet", size: .large)
+            Text("Build a routine to start logging workouts.")
+                .font(BRUFont.bodyDefault)
+                .foregroundStyle(Color.bruMuted)
+                .multilineTextAlignment(.center)
+            BRUButton("+ NEW ROUTINE", kind: .signal, size: .md) {
+                presentingNewRoutine = true
+            }
+        }
+        .padding(.horizontal, 16)
+        .padding(.top, 32)
+    }
+
+    // MARK: - Folder grouping logic
+
+    /// Builds the sections from live @Query slices.
+    ///
+    /// Sort: "UNFILED" first (only when ≥1 unfiled routine), then user
+    /// folders in `sortOrder` order (driven by @Query sort descriptor).
     private var sectionsForRendering: [RoutineSection] {
         let unfiled = routines.filter { $0.folderID == nil }
         let folderSections = folders.map { folder -> RoutineSection in
@@ -369,11 +336,12 @@ public struct RoutinesListView: View {
             )
         }
         var out = [RoutineSection]()
+        // UI-SPEC line 308: "UNFILED" section head for routines with no folder
         if !unfiled.isEmpty {
             out.append(
                 RoutineSection(
                     id: Self.unfiledSectionID,
-                    title: "Unfiled",
+                    title: "UNFILED",
                     routines: unfiled
                 )
             )
@@ -382,9 +350,23 @@ public struct RoutinesListView: View {
         return out
     }
 
-    /// Stable id for the "Unfiled" pseudo-section. Pre-generated once
-    /// rather than `UUID()` on every `body` invocation so SwiftUI's
-    /// `ForEach` diffing does not see the section as new every redraw.
+    private var filteredSectionsForRendering: [RoutineSection] {
+        sectionsForRendering.map { section in
+            RoutineSection(
+                id: section.id,
+                title: section.title,
+                routines: section.routines.filter { matchesSearch($0) }
+            )
+        }.filter { !$0.routines.isEmpty || searchText.isEmpty }
+    }
+
+    private func matchesSearch(_ routine: Routine) -> Bool {
+        guard !searchText.isEmpty else { return true }
+        return routine.name.localizedCaseInsensitiveContains(searchText)
+    }
+
+    /// Stable id for the "UNFILED" pseudo-section — pre-generated so
+    /// SwiftUI's ForEach diffing doesn't see it as new every redraw.
     private static let unfiledSectionID = UUID()
 
     private struct RoutineSection: Identifiable {
@@ -407,37 +389,9 @@ public struct RoutinesListView: View {
         }
     }
 
-    // MARK: - Empty state
-
-    @ViewBuilder
-    private var emptyState: some View {
-        VStack(spacing: 16) {
-            Spacer().frame(height: 48)
-            Text("No routines yet")
-                .font(.title2)
-                .fontWeight(.semibold)
-            Text("Build a routine to start logging workouts.")
-                .font(.body)
-                .foregroundStyle(.secondary)
-                .multilineTextAlignment(.center)
-            Button("New Routine") {
-                presentingNewRoutine = true
-            }
-            .foregroundStyle(Color.accentColor)
-            Spacer()
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .padding(.horizontal, 32)
-    }
-
     // MARK: - Handlers
 
-    /// "Start Workout" tap (from swipe action OR context menu).
-    ///
-    /// Enforces RESEARCH §6 Pitfall 7 — one active session at a time. If
-    /// an active session exists, surface the UI-SPEC "Workout in Progress"
-    /// alert and do NOT call `SessionFactory.start`. The factory itself
-    /// guards defensively too, but the user-visible alert lives here.
+    /// "Start Workout" tap — enforces RESEARCH §6 Pitfall 7 (one active session at a time).
     private func handleStartTap(routine: Routine) {
         if !activeSessions.isEmpty {
             conflictRoutine = routine
@@ -445,42 +399,23 @@ public struct RoutinesListView: View {
         }
         do {
             let session = try SessionFactory.start(routine: routine, on: .now, context: ctx)
-            // Plan 04-01 wired — push SessionLoggerView via the
-            // Routines-tab NavigationPath. The session is the typed
-            // SessionRoute payload.
             navigationPath.append(SessionRoute.logger(session))
         } catch SessionFactoryError.activeSessionAlreadyExists {
             conflictRoutine = routine
         } catch SessionFactoryError.routineHasNoExercises {
-            // Plan 03-02 wires the empty-routine error path (the user
-            // can't currently build an empty routine from this view —
-            // the row only exists if a routine already has rows).
+            // Plan 03-02 wires the empty-routine error path.
         } catch {
             // Plan 04-01 polish: surface "Couldn't Start Workout".
         }
     }
 
-    /// "Duplicate" action — calls `RoutineDuplicator.duplicate(routine:context:)`
-    /// (plan 03-03). The duplicator deep-copies the source Routine + every
-    /// owned RoutineExercise + cascade-owned RoutineExerciseSetOverride
-    /// rows + the soft-ref SupersetGroup rows that belong to the source
-    /// routine (UUIDs freshly minted; supersetGroupID remapped via a
-    /// [UUID: UUID] map per RESEARCH §6 Pitfall 6). The clone surfaces as
-    /// "{Original} (Copy)" in the same folder via the @Query reactivity.
+    /// "Duplicate" action — deep-copies the Routine + RoutineExercise rows.
     private func handleDuplicate(routine: Routine) {
         RoutineDuplicator.duplicate(routine: routine, context: ctx)
     }
 
-    /// "Delete" action on a routine.
-    ///
-    /// Per ROUTINE-07 / PITFALLS-doc #1, deleting a Routine MUST NOT
-    /// affect historical Sessions (Session.sourceRoutineID is a soft
-    /// UUID ref). The SwiftData cascade on `Routine.exercises` deletes
-    /// the owned `RoutineExercise` + `RoutineExerciseSetOverride` rows
-    /// automatically. But `SupersetGroup` rows that reference this
-    /// routine via the soft `routineID: UUID` ref must be explicitly
-    /// query-and-deleted here so the store doesn't accumulate orphan
-    /// groups.
+    /// "Delete" routine — query-and-deletes orphan SupersetGroup rows (soft
+    /// UUID ref) BEFORE `ctx.delete(routine)` (ROUTINE-07 / PITFALLS-doc #1).
     private func handleDelete(routine: Routine) {
         let id = routine.id
         let supersetDescriptor = FetchDescriptor<SupersetGroup>(
@@ -494,16 +429,8 @@ public struct RoutinesListView: View {
         try? ctx.save()
     }
 
-    /// "Delete" action on a folder — confirmation is presented before
-    /// reaching this handler.
-    ///
-    /// Soft-ref design (CONTEXT.md Area 6): deleting a folder MUST NOT
-    /// cascade-delete its routines. Routines whose `folderID == folder.id`
-    /// are re-mapped to `nil` (Unfiled) BEFORE the folder is deleted so
-    /// the routines remain visible on the Routines tab. The order
-    /// matters — if the folder were deleted first, the routines would
-    /// still appear under their original folder.id until the user
-    /// reopened the tab.
+    /// "Delete" folder — re-maps affected routines to nil (Unfiled) BEFORE
+    /// deleting the folder (soft-ref invariant, CONTEXT.md Area 6).
     private func handleFolderDelete(_ folder: RoutineFolder) {
         let folderID = folder.id
         let affectedDescriptor = FetchDescriptor<Routine>(
@@ -520,15 +447,8 @@ public struct RoutinesListView: View {
 
 // MARK: - Session navigation route
 
-/// Typed navigation route for the Routines tab's `NavigationStack`. Plan
-/// 04-01 wires `.logger(session)` to `SessionLoggerView`; future plans can
-/// extend this enum (e.g. `.summary(session)` for a post-finish summary in
-/// Phase 6 polish) without churn.
-///
-/// `Hashable` is via `Session.id` — SwiftData `@Model` types are
-/// `Hashable` by default because they synthesize `==` and `hashValue` from
-/// the unique `id` attribute. `NavigationPath` requires the payload type
-/// to be `Hashable`, which `Session` already satisfies.
+/// Typed navigation route for the Routines tab's NavigationStack.
+/// Plan 04-01 wired `.logger(session)` to `SessionLoggerView`.
 public enum SessionRoute: Hashable {
     case logger(Session)
 }

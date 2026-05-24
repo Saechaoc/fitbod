@@ -2,20 +2,27 @@
 //  MoveRoutineSheet.swift
 //  fitbod
 //
-//  Sheet for moving a routine to a different folder (or back to Unfiled).
-//  Presented from the routine row's "Move…" context menu entry. Copy is
-//  locked verbatim by UI-SPEC § Routines tab (Move-routine sheet title /
-//  Save / Cancel).
+//  Phase 2.1 Plan 06 — BRU visual rewrite of the move-routine sheet.
+//  UI-SPEC v2 § RoutinesListView (lines 313-322).
 //
-//  The sheet receives the routine and the list of folders from the
-//  parent view (which owns the `@Query<RoutineFolder>`). The user picks
-//  a destination (or "Unfiled") via Form rows with a trailing checkmark
-//  on the currently-selected entry; tapping "Save" writes the chosen
-//  folder UUID (or nil for Unfiled) to `routine.folderID` and saves.
+//  ## Composition
 //
-//  `routine.folderID` is a SOFT reference (UUID? — not a SwiftData
-//  relationship; see `Routine.swift` header + CONTEXT.md Area 6), so this
-//  is a one-field mutation; no relationship traversal needed.
+//  NavigationStack with .navigationBarHidden(true) + .safeAreaInset(edge: .top)
+//  mounting BRUHeaderBar with:
+//    left:   HeaderAction("CANCEL") → dismiss()
+//    center: "MOVE ROUTINE"
+//    right:  nil
+//
+//  Body: ScrollView > LazyVStack of folder destination rows. Each row is a
+//  Button(.plain) with folder name in bodyEmphasis + "✓" text glyph (NOT
+//  Image(systemName: "checkmark")) in bruSignal when selected.
+//  Tapping a row immediately writes the move and dismisses (no separate Save action).
+//
+//  ## BRU contract
+//
+//  NO Image(systemName: "checkmark") — "✓" text glyph only per plan must_haves.
+//  NO Color.accentColor. NO navigationTitle. NO Form. NO Capsule.
+//  NO RoundedRectangle. NO Color(.system*). NO .font(.body/.headline/.title*/caption).
 //
 
 import SwiftUI
@@ -38,58 +45,76 @@ public struct MoveRoutineSheet: View {
 
     public var body: some View {
         NavigationStack {
-            Form {
-                Section {
+            ScrollView {
+                LazyVStack(spacing: 0) {
+                    // "Unfiled" destination row
                     Button {
-                        selected = nil
+                        routine.folderID = nil
+                        try? ctx.save()
+                        dismiss()
                     } label: {
                         HStack {
                             Text("Unfiled")
+                                .font(BRUFont.bodyEmphasis)
+                                .foregroundStyle(Color.bruInk)
                             Spacer()
+                            // "✓" text glyph for currently-selected folder
                             if selected == nil {
-                                Image(systemName: "checkmark")
-                                    .foregroundStyle(Color.accentColor)
+                                Text("✓")
+                                    .font(BRUFont.displayMedium)
+                                    .foregroundStyle(Color.bruSignal)
                             }
                         }
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 14)
+                        .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
-                    .foregroundStyle(.primary)
+
+                    BRUDivider(.hair)
 
                     ForEach(folders) { folder in
                         Button {
-                            selected = folder.id
+                            routine.folderID = folder.id
+                            try? ctx.save()
+                            dismiss()
                         } label: {
                             HStack {
                                 Text(folder.name)
+                                    .font(BRUFont.bodyEmphasis)
+                                    .foregroundStyle(Color.bruInk)
                                 Spacer()
+                                // "✓" text glyph (NOT Image(systemName: "checkmark"))
                                 if selected == folder.id {
-                                    Image(systemName: "checkmark")
-                                        .foregroundStyle(Color.accentColor)
+                                    Text("✓")
+                                        .font(BRUFont.displayMedium)
+                                        .foregroundStyle(Color.bruSignal)
                                 }
                             }
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 14)
+                            .contentShape(Rectangle())
                         }
                         .buttonStyle(.plain)
-                        .foregroundStyle(.primary)
+
+                        BRUDivider(.hair)
                     }
                 }
             }
-            .navigationTitle("Move Routine")
-            .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
-                    Button("Cancel") { dismiss() }
-                }
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button("Save") {
-                        routine.folderID = selected
-                        try? ctx.save()
-                        dismiss()
-                    }
-                }
+            .background(Color.bruPaper.ignoresSafeArea())
+            .navigationBarHidden(true)
+            .safeAreaInset(edge: .top) {
+                BRUHeaderBar(
+                    left: HeaderAction("CANCEL") { dismiss() },
+                    center: "MOVE ROUTINE",
+                    right: nil
+                )
             }
         }
     }
 }
 
+#if DEBUG
 #Preview {
     let container = PreviewModelContainer.make()
     let ctx = ModelContext(container)
@@ -103,3 +128,4 @@ public struct MoveRoutineSheet: View {
     return MoveRoutineSheet(routine: routine, folders: [f1, f2])
         .modelContainer(container)
 }
+#endif

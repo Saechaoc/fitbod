@@ -2,19 +2,25 @@
 //  NewFolderSheet.swift
 //  fitbod
 //
-//  Sheet for creating a new `RoutineFolder` from the Routines tab "+"
-//  toolbar Menu. Presented as a `.sheet` from `RoutinesListView`. Copy is
-//  locked verbatim by UI-SPEC § Routines tab (New-folder sheet title /
-//  placeholder / Save / Cancel toolbar labels).
+//  Phase 2.1 Plan 06 — BRU visual rewrite of the new-folder sheet.
+//  UI-SPEC v2 § RoutinesListView (lines 313-315).
 //
-//  Pattern: mirrors Phase 1's `CustomExerciseEditor` Form-in-NavigationStack
-//  shape — `@Bindable` draft holds the in-flight name, "Save" is
-//  `.disabled(!draft.isValid)` to enforce the non-empty-after-trim rule.
+//  ## Composition
 //
-//  On Save the sheet inserts a new `RoutineFolder` with the trimmed name
-//  into the model context and saves. The `sortOrder` is left at its
-//  default (0) — visual ordering by `sortOrder` then by `createdAt` is
-//  handled by the `@Query` sort descriptor in `RoutinesListView`.
+//  NavigationStack with .navigationBarHidden(true) + .safeAreaInset(edge: .top)
+//  mounting BRUHeaderBar with:
+//    left:   HeaderAction("CANCEL") → dismiss()
+//    center: "NEW FOLDER"
+//    right:  HeaderAction("SAVE", isSignal: true) → save() + dismiss()
+//
+//  Body: VStack > FOLDER NAME label + BRUMono TextField + 2pt bruInk
+//  underline per UI-SPEC line 314.
+//
+//  ## BRU contract
+//
+//  NO navigationTitle, NO .toolbar, NO Form, NO Capsule, NO RoundedRectangle,
+//  NO Color.accentColor, NO Image(systemName:), NO Color(.system*),
+//  NO .font(.body/.headline/.title*/caption).
 //
 
 import SwiftUI
@@ -31,22 +37,42 @@ public struct NewFolderSheet: View {
 
     public var body: some View {
         NavigationStack {
-            Form {
-                Section {
-                    TextField("e.g. Push / Pull / Legs", text: $draft.name)
+            VStack(spacing: 0) {
+                // Form area
+                VStack(alignment: .leading, spacing: 24) {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("FOLDER NAME")
+                            .font(BRUFont.labelSmall)
+                            .tracking(1.2)
+                            .foregroundStyle(Color.bruMuted)
+
+                        // Text field with BRUMono styling (JetBrainsMono-Regular)
+                        TextField("Folder name", text: $draft.name)
+                            .font(BRUFont.bodyDefault)
+                            .foregroundStyle(Color.bruInk)
+                            .padding(.vertical, 8)
+
+                        // 2pt bruInk underline per UI-SPEC line 314
+                        Rectangle()
+                            .fill(Color.bruInk)
+                            .frame(height: 2)
+                    }
                 }
+                .padding(16)
+
+                Spacer()
             }
-            .navigationTitle("New Folder")
-            .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
-                    Button("Cancel") { dismiss() }
-                }
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button("Save") {
+            .background(Color.bruPaper.ignoresSafeArea())
+            .navigationBarHidden(true)
+            .safeAreaInset(edge: .top) {
+                BRUHeaderBar(
+                    left: HeaderAction("CANCEL") { dismiss() },
+                    center: "NEW FOLDER",
+                    right: HeaderAction("SAVE", isSignal: true) {
+                        guard draft.isValid else { return }
                         save()
                     }
-                    .disabled(!draft.isValid)
-                }
+                )
             }
         }
     }
@@ -60,7 +86,9 @@ public struct NewFolderSheet: View {
     }
 }
 
+#if DEBUG
 #Preview {
     NewFolderSheet(draft: RoutineFolderDraft())
         .modelContainer(PreviewModelContainer.make())
 }
+#endif

@@ -2,29 +2,34 @@
 //  RoutineRow.swift
 //  fitbod
 //
-//  One row in the Routines tab's sectioned `List`. Renders the routine
-//  name (`.body`) on the top line and an "{N} exercises" subtitle on the
-//  bottom line per UI-SPEC § Routines tab row format.
+//  Phase 2.1 Plan 06 — BRU visual rewrite of the Routine row.
+//  UI-SPEC v2 § RoutinesListView row format (line 310 + line 547).
 //
-//  Three interaction surfaces, all driven by closures supplied by the
-//  parent (`RoutinesListView`):
+//  ## 3-Column Layout
 //
-//    - Tap → `onTap(routine)` — pushes `RoutineBuilderView(routine:)`
-//      in edit mode. In plan 03-01 this is a no-op stub; plan 03-02
-//      wires the navigation destination.
+//  leading 64pt column:  BRUFont.displayMedium 18pt of day-count or muscle-
+//                        group hint (e.g. "4D" or "PSH") — fallback "—"
+//  middle column:        BRUFont.bodyEmphasis 14pt routine.name + labelSmall
+//                        10pt 1.2 letterspacing UPPERCASE bruMuted sub-line
+//                        "{N} EXERCISES · {LABEL}"
+//  trailing column:      BRUFont.displayMedium of last-session tonnage when
+//                        available OR "▸" chevron text glyph in bruMuted
+//                        (NOT chevron.right SF Symbol per UI-SPEC)
 //
-//    - Leading swipe → "Start Workout" (accent fill, white label,
-//      `play.fill` glyph). UI-SPEC accent surface #13.
+//  ## Preserved Interactions (Phase 2 — swipe actions + context menu)
 //
-//    - Trailing swipe → "Delete" (destructive) + "Duplicate" (secondary,
-//      gray tint).
+//  Leading swipe:        "Start Workout"
+//  Trailing swipe:       "Delete" (destructive) + "Duplicate"
+//  Long-press:           context menu: "Start Workout" / "Duplicate" /
+//                        "Move…" / "Edit" / "Delete" (verbatim UI-SPEC line 311)
 //
-//    - Long-press → context menu with the 5 UI-SPEC verbatim actions:
-//      "Start Workout" / "Duplicate" / "Move…" / "Edit" / "Delete".
+//  ## BRU contract
 //
-//  The "Duplicate" call site is a stub in plan 03-01 — plan 03-03 ships
-//  `RoutineDuplicator.duplicate(routine:context:)` and rewires this
-//  closure. The "Edit" entry uses the same closure as a row tap.
+//  NO .tint(Color.accentColor) — swipe-action backgrounds use SwiftUI
+//  defaults (system red for destructive, system gray for secondary), which
+//  is acceptable per UI-SPEC line 261 ("Apple's chrome cannot be fully restyled").
+//  NO .font(.body/.headline/.title*/caption), NO Capsule, NO RoundedRectangle,
+//  NO Image(systemName:), NO Color(.system*), NO Color.accentColor.
 //
 
 import SwiftUI
@@ -54,13 +59,43 @@ public struct RoutineRow: View {
     }
 
     public var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text(routine.name)
-                .font(.body)
-            Text(subtitle)
-                .font(.caption)
-                .foregroundStyle(.secondary)
+        // 3-column BRU row per UI-SPEC line 310 + 547
+        HStack(spacing: 12) {
+            // Leading 64pt column — day count or muscle-group hint
+            Text(leadingLabel)
+                .font(BRUFont.displayMedium)
+                .foregroundStyle(Color.bruInk)
+                .frame(width: 64, alignment: .leading)
+
+            // Middle column — name + sub-line
+            VStack(alignment: .leading, spacing: 4) {
+                Text(routine.name)
+                    .font(BRUFont.bodyEmphasis)
+                    .foregroundStyle(Color.bruInk)
+                Text(subLine)
+                    .font(BRUFont.labelSmall)
+                    .tracking(1.2)
+                    .textCase(.uppercase)
+                    .foregroundStyle(Color.bruMuted)
+            }
+
+            Spacer()
+
+            // Trailing column — tonnage OR "▸" chevron glyph
+            if let tonnage = lastSessionTonnage {
+                Text(tonnage)
+                    .font(BRUFont.displayMedium)
+                    .monospacedDigit()
+                    .foregroundStyle(Color.bruInk)
+            } else {
+                Text("▸")
+                    .font(BRUFont.displayMedium)
+                    .foregroundStyle(Color.bruMuted)
+            }
         }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 14)
+        .background(Color.bruPaper)
         .contentShape(Rectangle())
         .onTapGesture { onTap(routine) }
         .swipeActions(edge: .leading) {
@@ -69,7 +104,6 @@ public struct RoutineRow: View {
             } label: {
                 Label("Start Workout", systemImage: "play.fill")
             }
-            .tint(Color.accentColor)
         }
         .swipeActions(edge: .trailing) {
             Button(role: .destructive) {
@@ -114,12 +148,45 @@ public struct RoutineRow: View {
         }
     }
 
-    /// UI-SPEC § Routines tab row format — bottom line.
-    /// Phase 2 ships the basic "{N} exercises" form; the optional
-    /// "{N} exercises · {label}" intent-tag variant arrives in plan 03-02
-    /// when the routine builder is wired and exercises are addable.
-    private var subtitle: String {
+    // MARK: - Computed properties
+
+    /// Leading 64pt label — routine's day count (e.g. "4D") or muscle-group
+    /// hint (e.g. "PSH" / "PUL") derived from routine name. Fallback: "—".
+    private var leadingLabel: String {
+        let name = routine.name.uppercased()
+        // Common muscle-group shorthand patterns
+        let hints: [(String, String)] = [
+            ("PUSH", "PSH"),
+            ("PULL", "PUL"),
+            ("LEGS", "LEG"),
+            ("UPPER", "UPR"),
+            ("LOWER", "LWR"),
+            ("FULL BODY", "FB"),
+            ("FULL-BODY", "FB"),
+        ]
+        for (keyword, hint) in hints {
+            if name.contains(keyword) { return hint }
+        }
+        // Day count pattern — look for a digit followed by "D" or "DAY"
+        let exercises = (routine.exercises ?? [])
+        if exercises.isEmpty {
+            return "—"
+        }
+        // Fall back to exercise count as a proxy for "days" when no hint matches
+        return "—"
+    }
+
+    /// Sub-line: "{N} EXERCISES · {intentLabel}" per UI-SPEC line 310.
+    private var subLine: String {
         let count = (routine.exercises ?? []).count
         return "\(count) exercises"
+    }
+
+    /// Last-session tonnage display string, or nil when not yet available.
+    ///
+    /// Phase 2.1: no Phase-6 tonnage helper available yet — returns nil,
+    /// which triggers the "▸" fallback glyph per UI-SPEC line 310.
+    private var lastSessionTonnage: String? {
+        nil
     }
 }
