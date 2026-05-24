@@ -2,42 +2,87 @@
 //  WarmupRampRows.swift
 //  fitbod
 //
-//  Phase 3 plan 06 — renders the warm-up ramp block inside a
-//  `SessionExerciseCard`, above the working set rows.
+//  Phase 3.2 BRU rewrite — replaces the v1 Apple HIG layout with the
+//  brutalist visual system per 03-UI-SPEC v2 and why-weight.jsx lines 95–139.
 //
-//  UI-SPEC § Warm-up ramp rows — all copy verbatim:
-//    W{N} leading label / "{pct}% × {reps}" percentage hint in .caption .secondaryLabel
-//    "Working sets" divider below last warm-up row (.caption .secondaryLabel, centered)
-//    "Skip warm-ups" text button (.secondaryLabel — NOT accent)
-//    "Warm up however you'd like." placeholder when working weight < 1.5× bar
+//  Renders:
+//    • BRUSectionHead "Warm-up ramp" with right trailing "Plate {increment} · ×2 sides"
+//    • Per-row 4-column grid: 36pt W{N} signal · 1fr weight+pct+reps · 1fr mini PlateStackViz · auto plate legend
+//    • "WORK SETS BEGIN AT" footer row (labelSmall left, displayMedium right)
+//    • "SKIP WARM-UPS" ghost text button in bruMuted
+//    • "Warm up however you'd like." placeholder when warmupSets is empty
 //
-//  Set count → ramp mapping:
-//    count == 4 (barbell): orderIndex 0=40%×5, 1=60%×3, 2=75%×2, 3=90%×1
-//    count == 2 (dumbbell/unilateral): orderIndex 0=60%×3, 1=90%×1
-//    other counts: defensive linear fraction of working weight
+//  Design tokens:
+//    W{N} label  — BRUFont.displayMedium (18pt) Color.bruSignal  (03-UI-SPEC reserved-for item 23)
+//    Weight      — BRUFont.displayMedium (22pt via .custom) Color.bruInk
+//    pct suffix  — BRUFont.bodyDefault (10pt) Color.bruInk opacity 0.5
+//    reps/RPE    — BRUFont.bodyDefault (10pt) Color.bruMuted
+//    plate legend— BRUFont.labelMicro (9pt) Color.bruMuted tracking 0.5
+//    footer L    — BRUFont.labelSmall (10pt) Color.bruInk tracking 1.2 UPPERCASE
+//    footer R    — BRUFont.displayMedium (18pt) Color.bruInk
+//    skip button — BRUFont.labelSmall (10pt) Color.bruMuted tracking 1.2 UPPERCASE
 //
-//  plan 03-08 owns wiring this component into SessionExerciseCard.
-//  This file does NOT modify SessionExerciseCard or SetRow.
+//  Row separators: 1pt Color.bruHair bottom rule per why-weight.jsx line 107.
+//
+//  Mini PlateStackViz at heightScale 0.3 yields ~18pt tall plates per 03-UI-SPEC line 51.
+//  Labels are suppressed at heightScale < 0.5 per PlateStackViz.isMini contract.
+//
+//  Threat mitigation T-03.2-05: computePlates returns empty array on PlateCalculator.solve
+//  failure; PlateStackViz renders sleeve + end cap only — no crash.
+//
+//  Banned tokens: zero Color(.system*) / zero Capsule / zero RoundedRectangle /
+//  zero Image(systemName:) / zero .font(.body|.headline|.caption|.title*).
+//
+//  File ownership: Wave 2 plan 03.2-03 only. Do NOT modify PlateStackDisclosure
+//  or PrescriptionWeightCell (owned by Wave 2 plan 03.2-04).
 //
 
 import SwiftUI
 import SwiftData
 
+// MARK: - WarmupRampRows
+
+/// The warm-up ramp block rendered inside `SessionExerciseCard` above working set rows.
+///
+/// Renders a `BRUSectionHead` header, one row per warm-up `SetEntry`, a "WORK SETS BEGIN AT"
+/// footer row, and a "SKIP WARM-UPS" ghost text button. When `warmupSets` is empty, renders
+/// only the "Warm up however you'd like." placeholder (no header, no footer).
 public struct WarmupRampRows: View {
+
+    // MARK: - Public properties
+
     public let warmupSets: [SetEntry]
     public let onSkip: () -> Void
-    /// The parent SessionExercise — used to read prescribedWeight for
-    /// computing the percentage display from each warmup set's weight.
+    /// The parent SessionExercise — used to read prescribedWeight for pct computation.
     public let sessionExercise: SessionExercise
+    /// Top working weight, displayed in the "WORK SETS BEGIN AT" footer row.
+    /// Defaults to sessionExercise.prescribedWeight if not provided.
+    public let topWorkingWeight: Double
+    /// Bar weight used for PlateStackViz plate computation (defaults to 20 kg Olympic).
+    public let barWeight: Double
+    /// Unit label rendered after the working weight in the footer row (e.g. "kg", "lb").
+    public let unitLabel: String
+    /// Increment label rendered in the section head right trailing (e.g. "2.5 kg").
+    public let incrementLabel: String
+
+    // MARK: - Init
 
     public init(
         warmupSets: [SetEntry],
         onSkip: @escaping () -> Void,
-        sessionExercise: SessionExercise
+        sessionExercise: SessionExercise,
+        topWorkingWeight: Double? = nil,
+        barWeight: Double = 20,
+        unitLabel: String = "kg",
+        incrementLabel: String = "2.5 kg"
     ) {
         self.warmupSets = warmupSets
         self.onSkip = onSkip
         self.sessionExercise = sessionExercise
+        self.topWorkingWeight = topWorkingWeight ?? sessionExercise.prescribedWeight ?? 0
+        self.barWeight = barWeight
+        self.unitLabel = unitLabel
+        self.incrementLabel = incrementLabel
     }
 
     // MARK: - Sorted warmups
@@ -46,141 +91,244 @@ public struct WarmupRampRows: View {
         warmupSets.sorted { $0.orderIndex < $1.orderIndex }
     }
 
+    // MARK: - Ramp table (static per orderIndex and set count)
+
+    // Keyed by (count, orderIndex) → (pct, reps, rpe)
+    // 4-set barbell: 40%×5@4, 60%×3@5, 75%×2@6, 90%×1@7
+    // 2-set dumbbell: 60%×3@5, 90%×1@7
+    // per why-weight.jsx lines 98–102 and 03-UI-SPEC line 91
+
+    private static let ramp4: [(pct: Int, reps: Int, rpe: Double)] = [
+        (pct: 40, reps: 5, rpe: 4.0),
+        (pct: 60, reps: 3, rpe: 5.0),
+        (pct: 75, reps: 2, rpe: 6.0),
+        (pct: 90, reps: 1, rpe: 7.0),
+    ]
+    private static let ramp2: [(pct: Int, reps: Int, rpe: Double)] = [
+        (pct: 60, reps: 3, rpe: 5.0),
+        (pct: 90, reps: 1, rpe: 7.0),
+    ]
+
+    // MARK: - Body
+
     public var body: some View {
         if warmupSets.isEmpty {
-            // Placeholder when no ramp was generated (e.g. weight < 1.5× bar)
-            Text("Warm up however you'd like.")                                  // UI-SPEC verbatim
-                .font(.caption)
-                .foregroundStyle(.secondary)
-                .padding(.vertical, 12)
+            // Placeholder per 03-UI-SPEC line 230 — single row, no row grid, no section head.
+            Text("Warm up however you'd like.")
+                .font(BRUFont.labelSmall)
+                .foregroundStyle(Color.bruMuted)
                 .padding(.horizontal, 16)
+                .padding(.vertical, 10)
         } else {
-            VStack(spacing: 4) {
-                // Warm-up set rows
+            VStack(spacing: 0) {
+                // Section head with right trailing increment label per 03-UI-SPEC line 222–223.
+                BRUSectionHead("Warm-up ramp", right: "Plate \(incrementLabel) · ×2 sides")
+
+                // One row per warm-up set entry
                 ForEach(sortedWarmups, id: \.id) { warmup in
                     warmupRow(warmup)
+                    // 1pt bruHair bottom rule per why-weight.jsx line 107
+                    Rectangle()
+                        .fill(Color.bruHair)
+                        .frame(height: 1)
                 }
 
-                // "Skip warm-ups" text button — trailing, NOT accent per UI-SPEC
-                Button("Skip warm-ups") {                                        // UI-SPEC verbatim
-                    onSkip()
-                }
-                .font(.caption)
-                .foregroundStyle(.secondary)                                     // NOT accent per UI-SPEC
-                .frame(maxWidth: .infinity, alignment: .trailing)
-                .padding(.trailing, 16)
-                .accessibilityLabel("Skip all warm-up sets")
-                .accessibilityHint("Marks warm-ups as done without logging them.") // UI-SPEC verbatim
+                // "WORK SETS BEGIN AT" footer row per 03-UI-SPEC line 228
+                workSetsBeginAtRow
 
-                // "Working sets" divider between warmup and working rows
-                workingSetsDivider()
+                // "SKIP WARM-UPS" ghost text button per 03-UI-SPEC line 229
+                skipWarmUpsButton
             }
         }
     }
 
-    // MARK: - Warmup row
+    // MARK: - Warmup row (4-column grid)
 
     @ViewBuilder
     private func warmupRow(_ warmup: SetEntry) -> some View {
-        let pct = percentageForSet(warmup)
-        let repsHint = repsForOrderIndex(warmup.orderIndex, count: sortedWarmups.count)
-        HStack(spacing: 8) {
-            // Leading "W{N}" label — UI-SPEC verbatim
-            Text("W\(warmup.orderIndex + 1)")                                    // UI-SPEC verbatim W{N}
-                .font(.caption)
-                .foregroundStyle(.secondary)
-                .frame(minWidth: 24, alignment: .leading)
+        let pct = pctForSet(warmup)
+        let reps = repsForSet(warmup)
+        let rpe = rpeForSet(warmup)
+        let plates = computePlates(weight: warmup.weight, bar: barWeight)
 
-            // Warmup chip — systemBlue per Phase 2 set-type chip color convention
-            Text("warmup")
-                .font(.caption)
-                .fontWeight(.semibold)
-                .padding(.horizontal, 6)
-                .padding(.vertical, 3)
-                .background(Color(.systemBlue))
-                .foregroundStyle(.white)
-                .clipShape(Capsule())
+        HStack(spacing: 10) {
+            // Column 1 — 36pt: W{N} in displayMedium bruSignal per 03-UI-SPEC reserved-for item 23
+            Text("W\(warmup.orderIndex + 1)")
+                .font(BRUFont.displayMedium)
+                .foregroundStyle(Color.bruSignal)
+                .frame(width: 36, alignment: .leading)
 
-            // Percentage hint in Previous-column area — .caption .secondaryLabel
-            Text("\(pct)% × \(repsHint)")                                       // UI-SPEC verbatim "{pct}% × {reps}"
-                .font(.caption)
-                .foregroundStyle(.secondary)
+            // Column 2 — 1fr: weight numeral + pct suffix + reps/rpe sub-line
+            VStack(alignment: .leading, spacing: 2) {
+                // Weight + pct per 03-UI-SPEC line 225
+                HStack(alignment: .firstTextBaseline, spacing: 4) {
+                    // displayMedium at 22pt requires .custom because BRUFont.displayMedium is 18pt
+                    // The spec calls for 22pt for the weight numeral (03-UI-SPEC line 88 / why-weight.jsx line 111)
+                    Text(formatted(warmup.weight))
+                        .font(.custom("SpaceGrotesk-Bold", size: 22))
+                        .foregroundStyle(Color.bruInk)
+                    Text("\(pct)%")
+                        .font(BRUFont.bodyDefault)
+                        .foregroundStyle(Color.bruInk.opacity(0.5))
+                }
+                // ×reps @ rpe sub-line per 03-UI-SPEC line 226
+                Text("×\(reps) @ \(rpeFormatted(rpe))")
+                    .font(BRUFont.bodyDefault)
+                    .foregroundStyle(Color.bruMuted)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
 
+            // Column 3 — 1fr: mini PlateStackViz at heightScale 0.3 per 03-UI-SPEC line 51
+            // "Mini plate viz at 0.3 scale yields ~18pt tall plates per 03-UI-SPEC line 51
+            //  'mini PlateStackViz at 18pt height, scaled'."
+            PlateStackViz(
+                platesPerSide: plates,
+                barLabel: "\(formatted(barWeight)) \(unitLabel)",
+                heightScale: 0.3,
+                showLegend: false
+            )
+            .frame(maxWidth: .infinity)
+
+            // Column 4 — auto: plate legend "45+25+10" per 03-UI-SPEC line 227
+            Text(platesList(plates))
+                .font(BRUFont.labelMicro)
+                .foregroundStyle(Color.bruMuted)
+                .tracking(0.5)
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 10)
+        // Accessibility per 03-UI-SPEC line 500
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(
+            "Warm-up set \(warmup.orderIndex + 1): \(formatted(warmup.weight)) \(unitLabel) × \(reps) reps at \(pct)% of working weight. Plates: \(platesList(plates))."
+        )
+    }
+
+    // MARK: - "WORK SETS BEGIN AT" footer row
+
+    private var workSetsBeginAtRow: some View {
+        HStack {
+            Text("WORK SETS BEGIN AT")
+                .font(BRUFont.labelSmall)
+                .foregroundStyle(Color.bruInk)
+                .textCase(.uppercase)
+                .tracking(1.2)
             Spacer()
-
-            // Weight display
-            Text(String(format: "%g", warmup.weight))
-                .font(.body)
-
-            // Reps display
-            Text("× \(warmup.reps)")
-                .font(.body)
-                .foregroundStyle(.secondary)
-        }
-        .padding(.vertical, 12)
-        .padding(.horizontal, 16)
-        .accessibilityLabel(accessibilityLabel(for: warmup, pct: pct))
-    }
-
-    // MARK: - Working sets divider
-
-    @ViewBuilder
-    private func workingSetsDivider() -> some View {
-        ZStack {
-            Divider()
-            Text("Working sets")                                                  // UI-SPEC verbatim
-                .font(.caption)
-                .foregroundStyle(.secondary)
-                .padding(.horizontal, 8)
-                .background(Color(.systemBackground))
+            Text("\(formatted(topWorkingWeight)) \(unitLabel.uppercased())")
+                .font(BRUFont.displayMedium)
+                .foregroundStyle(Color.bruInk)
         }
         .padding(.horizontal, 16)
-        .padding(.vertical, 4)
+        .padding(.vertical, 10)
+        // NO border below — this row is the boundary before the first working SetRow
+        // per 03-UI-SPEC line 228.
     }
 
-    // MARK: - Percentage helpers
+    // MARK: - "SKIP WARM-UPS" ghost text button
 
-    /// Returns the percentage label for a given warm-up set based on order + ramp count.
-    private func percentageForSet(_ set: SetEntry) -> Int {
+    private var skipWarmUpsButton: some View {
+        Button {
+            onSkip()
+        } label: {
+            // NOT signal — skipping is structural, not aspirational per 03-UI-SPEC line 229.
+            Text("SKIP WARM-UPS")
+                .font(BRUFont.labelSmall)
+                .foregroundStyle(Color.bruMuted)
+                .textCase(.uppercase)
+                .tracking(1.2)
+        }
+        .frame(maxWidth: .infinity, minHeight: 44, alignment: .center)
+        .accessibilityLabel("Skip all warm-up sets")
+        .accessibilityHint("Marks warm-ups as done without logging them.")
+    }
+
+    // MARK: - Ramp math helpers
+
+    /// Returns the warm-up percentage label for a given warm-up set.
+    private func pctForSet(_ s: SetEntry) -> Int {
         let count = sortedWarmups.count
         switch count {
         case 4:
-            // Barbell 4-set ramp: 40 / 60 / 75 / 90
-            let pcts = [40, 60, 75, 90]
-            let idx = min(set.orderIndex, pcts.count - 1)
-            return pcts[idx]
+            return Self.ramp4[min(s.orderIndex, Self.ramp4.count - 1)].pct
         case 2:
-            // Dumbbell 2-set ramp: 60 / 90
-            let pcts = [60, 90]
-            let idx = min(set.orderIndex, pcts.count - 1)
-            return pcts[idx]
+            return Self.ramp2[min(s.orderIndex, Self.ramp2.count - 1)].pct
         default:
-            // Defensive: linear fraction
             guard count > 1 else { return 50 }
             let step = 90 / max(count - 1, 1)
-            return 40 + set.orderIndex * step
+            return 40 + s.orderIndex * step
         }
     }
 
-    /// Returns the rep count for a given orderIndex based on ramp shape.
-    private func repsForOrderIndex(_ idx: Int, count: Int) -> Int {
+    /// Returns the rep count for a given warm-up set.
+    private func repsForSet(_ s: SetEntry) -> Int {
+        let count = sortedWarmups.count
         switch count {
         case 4:
-            // Barbell: 5 / 3 / 2 / 1
-            let reps = [5, 3, 2, 1]
-            return reps[min(idx, reps.count - 1)]
+            return Self.ramp4[min(s.orderIndex, Self.ramp4.count - 1)].reps
         case 2:
-            // Dumbbell: 3 / 1
-            let reps = [3, 1]
-            return reps[min(idx, reps.count - 1)]
+            return Self.ramp2[min(s.orderIndex, Self.ramp2.count - 1)].reps
         default:
-            return max(1, 5 - idx)
+            return max(1, 5 - s.orderIndex)
         }
     }
 
-    /// UI-SPEC a11y label for a warm-up row.
-    private func accessibilityLabel(for warmup: SetEntry, pct: Int) -> String {
-        "Warm-up set \(warmup.orderIndex + 1): \(String(format: "%g", warmup.weight)) kg × \(warmup.reps) reps at \(pct)% of working weight."
+    /// Returns the derived RPE for a given warm-up set based on ramp position.
+    /// Ramp: 40%→4 RPE, 60%→5, 75%→6, 90%→7 per why-weight.jsx lines 99–102.
+    private func rpeForSet(_ s: SetEntry) -> Double {
+        let count = sortedWarmups.count
+        switch count {
+        case 4:
+            return Self.ramp4[min(s.orderIndex, Self.ramp4.count - 1)].rpe
+        case 2:
+            return Self.ramp2[min(s.orderIndex, Self.ramp2.count - 1)].rpe
+        default:
+            // Linear interpolation for non-standard counts
+            let maxIdx = max(count - 1, 1)
+            let t = Double(s.orderIndex) / Double(maxIdx)
+            return 4.0 + t * 3.0 // 4→7 RPE over the ramp
+        }
+    }
+
+    // MARK: - Plate helpers
+
+    /// Computes plates-per-side for a warm-up set weight.
+    /// Returns empty array on PlateCalculator.solve failure — PlateStackViz degrades
+    /// gracefully to sleeve + end cap only (Threat T-03.2-05 mitigation).
+    private func computePlates(weight: Double, bar: Double) -> [PlateStackViz.PlateDenomination] {
+        // Build plate inventory from sessionExercise — fall back to standard barbell set
+        let defaultPlates: [(weight: Double, countPerSide: Int)] = [
+            (45, 4), (25, 2), (10, 4), (5, 4), (2.5, 4)
+        ]
+
+        guard let stack = PlateCalculator.solve(
+            target: weight,
+            barWeight: bar,
+            plates: defaultPlates
+        ) else {
+            // solve returned nil — degrade to empty (T-03.2-05: no crash)
+            return []
+        }
+        return stack.platesPerSide
+    }
+
+    /// Renders the auto plate legend as "45+25+10" per 03-UI-SPEC line 227.
+    private func platesList(_ plates: [PlateStackViz.PlateDenomination]) -> String {
+        guard !plates.isEmpty else { return "" }
+        return plates.flatMap { denomination in
+            Array(repeating: formatted(denomination.weight), count: denomination.count)
+        }.joined(separator: "+")
+    }
+
+    // MARK: - Formatting helpers
+
+    /// Formats a Double weight stripping trailing zeros ("%g").
+    private func formatted(_ d: Double) -> String {
+        String(format: "%g", d)
+    }
+
+    /// Formats RPE value: whole numbers as integers, fractions with one decimal.
+    private func rpeFormatted(_ rpe: Double) -> String {
+        rpe == rpe.rounded() ? String(Int(rpe)) : String(format: "%.1f", rpe)
     }
 }
 
@@ -194,7 +342,6 @@ public struct WarmupRampRows: View {
     exercise.prescribedWeight = 100
     ctx.insert(exercise)
 
-    // Build 4 warmup SetEntry rows (40/60/75/90)
     let specs: [(pct: Double, reps: Int)] = [(0.40, 5), (0.60, 3), (0.75, 2), (0.90, 1)]
     let sets: [SetEntry] = specs.enumerated().map { idx, spec in
         let s = SetEntry()
@@ -213,11 +360,13 @@ public struct WarmupRampRows: View {
         WarmupRampRows(
             warmupSets: sets,
             onSkip: {},
-            sessionExercise: exercise
+            sessionExercise: exercise,
+            topWorkingWeight: 100,
+            barWeight: 20,
+            unitLabel: "kg",
+            incrementLabel: "2.5 kg"
         )
-        .background(Color(.systemGroupedBackground))
-        .clipShape(RoundedRectangle(cornerRadius: 8))
-        .padding()
+        .background(Color.bruPaper)
     }
     .modelContainer(container)
 }
@@ -230,7 +379,6 @@ public struct WarmupRampRows: View {
     exercise.prescribedWeight = 30
     ctx.insert(exercise)
 
-    // Build 2 warmup rows (60%/90% dumbbell)
     let specs: [(pct: Double, reps: Int)] = [(0.60, 3), (0.90, 1)]
     let sets: [SetEntry] = specs.enumerated().map { idx, spec in
         let s = SetEntry()
@@ -249,11 +397,13 @@ public struct WarmupRampRows: View {
         WarmupRampRows(
             warmupSets: sets,
             onSkip: {},
-            sessionExercise: exercise
+            sessionExercise: exercise,
+            topWorkingWeight: 30,
+            barWeight: 10,
+            unitLabel: "kg",
+            incrementLabel: "2 kg"
         )
-        .background(Color(.systemGroupedBackground))
-        .clipShape(RoundedRectangle(cornerRadius: 8))
-        .padding()
+        .background(Color.bruPaper)
     }
     .modelContainer(container)
 }
@@ -273,9 +423,7 @@ public struct WarmupRampRows: View {
             onSkip: {},
             sessionExercise: exercise
         )
-        .background(Color(.systemGroupedBackground))
-        .clipShape(RoundedRectangle(cornerRadius: 8))
-        .padding()
+        .background(Color.bruPaper)
     }
     .modelContainer(container)
 }
