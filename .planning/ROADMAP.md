@@ -220,7 +220,7 @@ Plans:
   4. Plateau detector flags stalled exercises (e1RM flat ±X% over N sessions, configurable per exercise or global) with a visual stall flag on the exercise card and a suggested action (drop intensity, add volume, deload, try variation)
   5. "Consider deload" alert surfaces when fatigue/performance signals spike (e1RM drop > X% over N sessions, RPE creep at same load, missed rep targets across multiple sessions) — always as an advisory the user explicitly accepts or dismisses; scheduled block deloads are never overridden
   6. MEV / MAV / MRV thresholds per muscle and plateau detection thresholds per exercise are user-tunable; weekly recap auto-surfaces at the week boundary (muscles hit, muscles under-trained, e1RM movement, sessions logged)
-**Plans:** 6/6 plans complete
+**Plans:** 7/6 plans complete
 **Research flag:** Yes — at plan-phase time, curate the stimulus-weighting table for the ~50 main compound lifts (per-muscle weights beyond the 1.0/0.5 defaults) and confirm seeded RP-published MEV/MAV/MRV values per muscle
 
 ### Phase 05.1: BRU Visual Rewrite (Fatigue & Volume) — reskin Phase 5 surfaces (volume bars MEV/MAV/MRV, muscle heatmap, plateau detection, weekly recap, fatigue advisory banner) to BRU brutalist per 05-UI-SPEC; depends on Phase 02.1 primitives (INSERTED)
@@ -271,7 +271,7 @@ Plans:
 | 2. Core Loop (Routines + Sessions) | 13/13 | Complete   | 2026-05-24 |
 | 3. Smart Prescription & Warm-ups | 8/8 | Complete   | 2026-05-24 |
 | 4. Periodization & Blocks | 0/8 | Not started | - |
-| 5. Fatigue Model & Plateau Detection | 6/6 | Complete   | 2007-05-23 |
+| 5. Fatigue Model & Plateau Detection | 7/6 | Complete   | 2026-05-24 |
 | 6. Progress Views, Export & Polish | 10/11 | In Progress|  |
 
 ---
