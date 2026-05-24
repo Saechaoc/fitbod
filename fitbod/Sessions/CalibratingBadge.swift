@@ -2,20 +2,22 @@
 //  CalibratingBadge.swift
 //  fitbod
 //
-//  Phase 3 plan 06 — small capsule badge rendered inline in the
+//  Phase 3.2 plan 02 — flat bruMuted rectangle badge rendered inline in the
 //  `SessionExerciseCard` header when RPE autoreg is in calibrating mode
 //  (logged working sets < minCalibrationSets for this exercise + intent pair).
 //
-//  UI-SPEC § Calibrating badge — verbatim copy:
-//    badge label:  "calibrating"
-//    a11y label:   "Calibrating: {n} of {threshold} sets logged. Weight shown as a range."
+//  BRU contract (03-UI-SPEC § Calibrating badge):
+//    - Flat rectangle (NOT Capsule, NOT RoundedRectangle) — BRU has no rounded shapes.
+//    - bruMuted fill with bruPaper text. NOT signal — this is transitional state.
+//    - labelMicro 8pt JetBrains Mono Bold, .textCase(.uppercase), tracking 1.2.
+//    - Dot is Unicode '●' (U+25CF) in bruMuted Text — NOT a Circle().fill() shape.
+//      (03-UI-SPEC § Glyphs: typographic glyphs preferred over shapes.)
+//    - BRUCornerBadge NOT used here: it uses SpaceGrotesk-Bold 7pt, but the spec
+//      requires JetBrainsMono-Bold (labelMicro). Rendered inline instead.
 //
-//  Background: `Color(.systemGray5)` — NOT accent per UI-SPEC item 19 exclusion.
-//  The calibrating state is TRANSITIONAL (incomplete) and must not draw the
-//  same visual weight as the accent-colored "Calibrated" capsule in
-//  WhyThisWeightSheet. The muted gray signals "work in progress" not "success".
-//
-//  Analogous to `SetTypeChip` for the capsule shape; no tap-cycling behavior.
+//  03-UI-SPEC line 147:
+//    "The calibrating badge '●' on SessionExerciseCard header when calibrating mode
+//     — uses bruMuted dot (NOT signal). Signal appears inside WhyThisWeightSheet only."
 //
 
 import SwiftUI
@@ -31,33 +33,59 @@ public struct CalibratingBadge: View {
 
     public var body: some View {
         HStack(spacing: 4) {
-            Circle()
-                .fill(Color(.systemGray3))                                       // muted dot, NOT accent
-                .frame(width: 6, height: 6)
+            Text("●")
+                .font(BRUFont.labelMicro)
+                .foregroundStyle(Color.bruMuted)
 
-            Text("calibrating")                                                  // UI-SPEC verbatim
-                .font(.caption)
-                .foregroundStyle(.secondary)                                     // NOT accent per UI-SPEC item 19
+            Text("CALIBRATING")
+                .font(BRUFont.labelMicro)
+                .foregroundStyle(Color.bruPaper)
+                .textCase(.uppercase)
+                .tracking(1.2)
         }
-        .padding(.horizontal, 8)
-        .padding(.vertical, 4)
-        .background(Color(.systemGray5))                                         // UI-SPEC verbatim, NOT accent
-        .clipShape(Capsule())
+        .padding(.horizontal, 6)
+        .padding(.vertical, 3)
+        .background(Color.bruMuted)
         .accessibilityLabel(
             "Calibrating: \(current) of \(threshold) sets logged. Weight shown as a range."
-        )                                                                        // UI-SPEC verbatim
+        )
         .accessibilityAddTraits(.isStaticText)
     }
 }
 
 // MARK: - Previews
 
-#Preview("4 of 10 sets") {
-    CalibratingBadge(current: 4, threshold: 10)
-        .padding()
+#if DEBUG
+#Preview("BRU — 4 of 10 sets") {
+    HStack(spacing: 8) {
+        Text("Bench Press")
+            .font(BRUFont.bodyEmphasis)
+            .foregroundStyle(Color.bruInk)
+        CalibratingBadge(current: 4, threshold: 10)
+    }
+    .padding()
+    .background(Color.bruPaper)
 }
 
-#Preview("9 of 10 sets (near calibrated)") {
-    CalibratingBadge(current: 9, threshold: 10)
-        .padding()
+#Preview("BRU — 9 of 10 sets (near calibrated)") {
+    HStack(spacing: 8) {
+        Text("Squat")
+            .font(BRUFont.bodyEmphasis)
+            .foregroundStyle(Color.bruInk)
+        CalibratingBadge(current: 9, threshold: 10)
+    }
+    .padding()
+    .background(Color.bruPaper)
 }
+
+#Preview("BRU — dark background contrast") {
+    HStack(spacing: 8) {
+        Text("Deadlift")
+            .font(BRUFont.bodyEmphasis)
+            .foregroundStyle(Color.bruPaper)
+        CalibratingBadge(current: 2, threshold: 10)
+    }
+    .padding()
+    .background(Color.bruInk)
+}
+#endif
