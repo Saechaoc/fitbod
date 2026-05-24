@@ -2,10 +2,9 @@
 //  WeeklyTonnageFilterChips.swift
 //  fitbod
 //
-//  Wave-4 plan 06-06 — three horizontal-scroll chip rows that sit
-//  above the `WeeklyTonnageView` chart. UI-SPEC § "Filter-chip row
-//  layout — horizontal scroll, NOT wrap" + § "WeeklyTonnageView copy
-//  table" lock the labels and footer copy verbatim.
+//  Phase 6.1 BRU reskin — three horizontal-scroll BRU chip rows that sit
+//  above the WeeklyTonnageView chart. UI-SPEC v2 §Design Pivot #7 and the
+//  WeeklyTonnageView entry in the §Reference mockup map govern chip visuals.
 //
 //  ## Row 1 — TimeRangeChipRow
 //
@@ -31,15 +30,16 @@
 //
 //      "Tap a muscle to break the bar by stimulus."
 //
-//  ## Visual contract
+//  ## Visual contract (BRU reskin)
 //
-//  - 16pt leading/trailing padding on each ScrollView
-//  - 8pt chip spacing
-//  - ProgressFilterChip (the accent-tinted sibling shipped in 06-05)
-//  - `.showsIndicators(false)`
+//  Each chip uses ProgressFilterChip — the BRU rectangular inverted-active chip:
+//  - Selected:   bruInk fill / bruPaper text / 1pt bruInk outline
+//  - Unselected: clear fill / bruInk text / 1pt bruInk outline
 //
-//  [CITED: UI-SPEC § Filter-chip row layout + § WeeklyTonnageView
-//   copy + CONTEXT D-19]
+//  Footer captions: BRUFont.labelSmall + Color.bruMuted (per BRU type system).
+//  Horizontal scroll; 16pt leading/trailing padding; 8pt chip spacing.
+//
+//  [CITED: UI-SPEC v2 §Design Pivot #7 + §Reference mockup map WeeklyTonnageView]
 //
 
 import SwiftData
@@ -108,8 +108,9 @@ public struct BlockPhaseChipRow: View {
             }
             if disabled {
                 Text("No block data yet — define a block in Routines.")
-                    .font(.caption)
-                    .foregroundStyle(Color(.secondaryLabel))
+                    .font(BRUFont.labelSmall)
+                    .tracking(1.0)
+                    .foregroundStyle(Color.bruMuted)
                     .padding(.horizontal, 16)
             }
         }
@@ -166,8 +167,9 @@ public struct MuscleChipRow: View {
             }
             if selection.isEmpty {
                 Text("Tap a muscle to break the bar by stimulus.")
-                    .font(.caption)
-                    .foregroundStyle(Color(.secondaryLabel))
+                    .font(BRUFont.labelSmall)
+                    .tracking(1.0)
+                    .foregroundStyle(Color.bruMuted)
                     .padding(.horizontal, 16)
             }
         }
