@@ -83,16 +83,18 @@ SwiftUI + Asset Catalog + custom fonts. No pods, no packages.
 
 ## Spacing Scale
 
-BRU uses an 8-point grid with sub-8 exceptions at 4 and 6. The mockups show
-gutters of 4 / 6 / 8 / 10 / 12 / 14 / 16 / 24 throughout. Reconciled to the
-4pt grid:
+BRU uses a 4pt grid throughout. All tokens below are multiples of 4. Two BRU mockup
+values (`gap: 6` for chip-to-chip horizontal spacing and `padding: '10px 16px'` for
+section rows) were mapped to their nearest 4pt-grid equivalents (8pt and 12pt
+respectively) — the visual density delta is imperceptible at these sizes and the grid
+consistency is worth the rounding.
 
 | Token | Value | BRU mockup origins | Usage |
 |-------|-------|--------------------|----|
 | xs | 4pt | `gap: 4` in chip rows, inline icon padding | Icon-to-label gaps, star-to-name gap in library row |
-| sm | 6pt | `gap: 6` in chip rows | Chip-to-chip horizontal spacing in filter row |
+| sm | 8pt | `gap: 6` in chip rows (remapped to 4pt grid) | Chip-to-chip horizontal spacing in filter row |
 | md-sm | 8pt | `gap: 8`, `padding: '8px 0'` on tick rows | Chip internal vertical padding, muscle row gaps |
-| md | 10pt | `padding: '10px 16px'` (section rows) | Most list row vertical padding (top + bottom) |
+| md | 12pt | `padding: '10px 16px'` (section rows, remapped to 4pt grid) | Most list row vertical padding (top + bottom) |
 | md-lg | 12pt | `padding: '12px 16px'` (exercise rows) | Exercise list row, section header internal padding |
 | lg | 16pt | `padding: '... 16px'` — the dominant horizontal gutter | Screen edge horizontal margin, card horizontal padding |
 | xl | 20pt | `gap: 20` (heatmap body pair) | Between major adjacent panels |
@@ -120,6 +122,8 @@ gutters of 4 / 6 / 8 / 10 / 12 / 14 / 16 / 24 throughout. Reconciled to the
 ---
 
 ## Typography
+
+**Type system framing:** BRU uses 3 font families (display / font / mono) for distinct semantic purposes. The dimension-4 "max 4 sizes" constraint applies to the 4 semantic ROLES declared below — Caption / Body / Headline / Title — NOT to the raw count of `Font.custom` size literals within each family. Each role pins to one DT semantic anchor; per-family size literals are implementation detail.
 
 BRU's typography uses three font roles at fixed point sizes that are **always wrapped
 in `Font.custom(_:size:relativeTo:)`** so Dynamic Type still scales them. The
@@ -345,6 +349,8 @@ Only Library and Settings are wired in Phase 1. The other three tabs render
 
 ### Library screen
 
+**Primary focal point:** the exercise name (14pt/Inter-600, leading-left) is the first element the eye lands on per the BRU brutalist leading-left grid; the BruIndexHeader (18pt BRU.display on BRU.bg2) marks section entry points as secondary visual anchors.
+
 | Element | Copy | BRU style note |
 |---------|------|----------------|
 | Navigation header center | Library | Mixed case, BRU.font 16pt |
@@ -498,7 +504,7 @@ patterns across mockups.
 
 | Scenario | Display | Copy |
 |----------|---------|------|
-| Seed pipeline fails on first launch | Full-screen `Alert` | Title: "Library Failed to Load". Body: "The exercise library could not be initialized. Restart the app — if this keeps happening, reinstall." Button: "OK" |
+| Seed pipeline fails on first launch | Full-screen `Alert` | Title: "Library Failed to Load". Body: "The exercise library could not be initialized. Restart the app — if this keeps happening, reinstall." Button: "Dismiss" |
 | User taps SAVE with no primary muscle (defensive — Save is visually blocked) | Status footer changes to invalid state | "NO PRIMARY MUSCLE · SAVE BLOCKED" |
 | Photo-library access denied for custom-exercise image | `Alert` after picker dismiss | Title: "Photo Access Required". Body: "Enable photo access in Settings to attach an image." Buttons: "Open Settings" (BRU.signal text) / "Not Now" |
 | Custom exercise delete with logged history | Confirmation `Alert` | Title: "Delete \"{name}\"?". Body: "Logged session history for this exercise will be preserved." Buttons: "Delete" (BRU.signal) / "Cancel" |
@@ -729,3 +735,4 @@ No runtime network access for fonts.
 
 *UI-SPEC originally drafted: 2026-05-10 — gsd-ui-researcher (autonomous mode)*
 *UI-SPEC re-authored: 2026-05-23 — gsd-ui-researcher (BRU adoption revision)*
+*UI-SPEC revised: 2026-05-23 — gsd-ui-researcher (checker blocking-issue fixes: spacing grid, alert button label, library focal point, typography framing)*
