@@ -164,10 +164,7 @@ public struct FatigueSurfaceView: View {
                     .tracking(1.5)
                     .textCase(.uppercase)
                     .foregroundStyle(Color.bruPaper.opacity(0.6))
-                Text("\(weeklyTotalRounded)")
-                    .font(.system(size: 56, weight: .semibold, design: .default))
-                    .monospacedDigit()
-                    .foregroundStyle(Color.bruPaper)
+                BRUDisplay("\(weeklyTotalRounded)", size: .hero, color: .bruPaper)
             }
             Spacer()
             VStack(alignment: .trailing, spacing: 2) {
@@ -176,10 +173,7 @@ public struct FatigueSurfaceView: View {
                     .tracking(1.5)
                     .textCase(.uppercase)
                     .foregroundStyle(Color.bruPaper.opacity(0.6))
-                Text(deltaCopy)
-                    .font(.system(size: 32, weight: .semibold))
-                    .monospacedDigit()
-                    .foregroundStyle(Color.bruSignal)
+                BRUDisplay(deltaCopy, size: .large, color: .bruSignal)
                 Text("STIMULUS-WEIGHTED")
                     .font(BRUFont.labelMicro)
                     .tracking(1.0)
