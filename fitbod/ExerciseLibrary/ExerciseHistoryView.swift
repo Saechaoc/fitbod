@@ -1,195 +1,111 @@
+// ExerciseHistoryView.swift
+// fitbod — Phase 2.1 Plan 10
 //
-//  ExerciseHistoryView.swift
-//  fitbod
+// BRU rewrite of the per-exercise history view.
+// UI-SPEC v2 § Exercise history view (lines 423-439, 607-614).
 //
-//  Wave-5 plan 05-01 — closes Phase 2 with **SESS-10** (per-exercise
-//  history with intent split — list view, not chart; charts deferred
-//  to Phase 6) and **ROUTINE-08** (same-routine-different-intent
-//  maintains separate per-intent histories).
+// ## Composition
 //
-//  Reached from the Library tab: `ExerciseLibraryView` → tap a row →
-//  `ExerciseDetailView` (Phase 1) → tap the new "View All History"
-//  section row → this view pushes onto the Library tab's
-//  `NavigationStack`.
+//   BRUHeaderBar (safeAreaInset .top, navigationBarHidden)
+//   exercise.canonicalName in BRUFont.displayLarge 32pt
+//   3-cell stat strip: 'Sessions · 30d' / 'Tonnage' bruSignal / 'PRs · 30d'
+//   BRUDivider(.ink)
+//   IntentFilterChipRow full-bleed strip (2pt rules drawn internally)
+//   set-count summary row
+//   BRUDivider(.hair)
+//   date-grouped sections with ExerciseHistoryRow items
+//   PRStripFooter at bottom
 //
-//  ## Composition
+// ## Empty states (UI-SPEC verbatim)
+//   All filter + no sets: "No logged sets yet" / "Log this exercise in a workout to see history."
+//   Filtered + no match: "No {INTENT} sets" / "Try a different intent filter." + "SHOW ALL" BRUButton
 //
-//  Top section: a horizontal `IntentFilterChipRow` (six chips — "All"
-//  plus the five `Intent` cases). Selecting a chip mutates a
-//  `@State private var selectedIntent: Intent?` (nil = "All").
+// ## Performance
+//   Same @Query shape as pre-BRU version: exerciseID-only predicate, intent gate in Swift.
+//   Pitfall 1 workaround: capture exerciseID into a local let before #Predicate body.
 //
-//  Body: a private `FilteredHistoryList` owns the `@Query<SessionExercise>`
-//  filtered by `(exerciseID, intentRaw?)`. The query re-runs whenever
-//  the parent's `selectedIntent` changes — implemented via the SwiftUI
-//  "outer state + inner query view re-initialized on key change"
-//  pattern (the inner view's `init(...)` rebuilds the descriptor).
-//
-//  Date-grouped sectioned `List` of `ExerciseHistoryRow`s. Each row
-//  shows the routine snapshot name, the set's "{w} × {r} @ RPE {N}"
-//  line, and an inline quiet intent badge.
-//
-//  ## Empty states (UI-SPEC verbatim — both heading and body)
-//
-//  - All filter + no logged sets: "No logged sets yet" / "Log this
-//    exercise in a workout to see history."
-//  - Filtered + no matching sets: "No {Intent} sets" / "Try a different
-//    intent filter." with "Show All" action (clears filter to nil).
-//
-//  ## Performance — RESEARCH §6 Pitfall 1 (UUID workaround)
-//
-//  The `#Predicate<SessionExercise>` predicate compares `se.exercise?.id
-//  == X`, which on iOS 17/18 silently returns empty results unless the
-//  comparison value is captured in a local var BEFORE the predicate
-//  builder runs. See `PreviousMatchingIntent.fetchTopWorkingSet` for
-//  the same workaround used in the seed-weight query.
-//
-//  Performance — Phase 3.1 (PIVOT-05): the intent filter source moved
-//  from SessionExercise.intentRaw to Session.intentRaw. The Phase 3.1
-//  `#Index<Session>([\.intentRaw])` does NOT accelerate this query
-//  because the predicate still fetches SessionExercise rows by
-//  exerciseID; the intent gate lives in Swift on `completedSets`.
-//  Performance: scan of N SessionExercise rows in Swift; acceptable at
-//  single-user-month-of-data scale (hundreds of SessionExercise rows
-//  → sub-millisecond filter cost). Mirrors PreviousMatchingIntent's
-//  descriptor + post-filter shape.
-//
-//  ## Why no chart?
-//
-//  PITFALLS-doc #2 — "mixing strength and hypertrophy histories" is
-//  the differentiator's failure mode if implemented naively. The chip
-//  filter is the canonical UI control; charts compose ON TOP of this
-//  data shape in Phase 6 (per ROADMAP.md). Shipping list-only here
-//  proves the intent-split contract before adding visual encoding.
-//
-//  ## Why exclude warmups and incomplete sets?
-//
-//  Same shape as `PreviousMatchingIntent` (plan 01-01): the visible
-//  history is the *committed working sets* only. Warmups + planned-
-//  but-not-completed rows are excluded at the view layer (the parent
-//  `SessionExercise` rows still match the predicate, but
-//  `.filter { $0.isComplete }` skips planned sets and
-//  `.filter { !$0.isWarmup }` skips ramps — see `completedSets`).
-//
+// BRU contract: NO Capsule() / NO RoundedRectangle / NO accentColor /
+//               NO Image(systemName:) / NO Color(.system*) /
+//               NO .font(.body/.headline/.title*/caption)
 
 import SwiftUI
 import SwiftData
 
-/// Read-only per-exercise history list with intent-split filter chips.
-/// Composed of an outer view owning the chip state and an inner view
-/// owning the `@Query` whose predicate is keyed off that state.
+// MARK: - ExerciseHistoryView
+
+/// BRU-compliant per-exercise history view with intent-split filter.
+///
+/// Composed of an outer view owning filter state and an inner SwiftData-querying
+/// view re-keyed whenever the selected intent changes (standard SwiftData pattern).
 public struct ExerciseHistoryView: View {
     public let exercise: Exercise
 
-    /// nil = "All" — no intent filter applied. Bound to the chip row;
-    /// the inner `FilteredHistoryList` reads it via the same binding so
-    /// the filtered-empty "Show All" button can clear back to nil.
-    @State private var selectedIntent: Intent? = nil
+    @Environment(\.dismiss) private var dismiss
+
+    /// nil = "ALL" — no intent filter. Bound to IntentFilterChipRow.
+    @State private var intentFilter: Intent? = nil
+
+    /// Sheet state for filter panel (future: advanced filter sheet)
+    @State private var presentingFilter = false
 
     public init(exercise: Exercise) {
         self.exercise = exercise
     }
 
     public var body: some View {
-        VStack(spacing: 0) {
-            IntentFilterChipRow(selected: $selectedIntent)
-                .padding(.horizontal, 16)
-                .padding(.vertical, 8)
-            FilteredHistoryList(
-                exerciseID: exercise.id,
-                intent: $selectedIntent
-            )
-        }
-        .navigationTitle("History")                                           // UI-SPEC verbatim
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .principal) {
-                VStack {
-                    Text("History").font(.headline)
-                    Text(exercise.name)                                       // UI-SPEC verbatim subtitle
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+        NavigationStack {
+            ScrollView {
+                LazyVStack(spacing: 0, pinnedViews: [.sectionHeaders]) {
+                    // Exercise name sub-line
+                    HStack {
+                        Text(exercise.canonicalName)
+                            .font(BRUFont.displayLarge)
+                            .foregroundStyle(Color.bruInk)
+                        Spacer()
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.top, 16)
+                    .padding(.bottom, 8)
+
+                    // Inner query view — re-keyed on intentFilter to rebuild @Query predicate
+                    FilteredHistoryContent(
+                        exercise: exercise,
+                        intentFilter: $intentFilter,
+                        presentingFilter: $presentingFilter
+                    )
                 }
             }
-            // Phase 6 plan 06-05 (PROG-01 / CONTEXT D-02) — deep-link to
-            // per-exercise progress chart. ProgressChartToolbarButton
-            // owns its own @Query for the set count so the toolbar item
-            // hides itself when count == 0.
-            ToolbarItem(placement: .topBarTrailing) {
-                ProgressChartToolbarButton(exercise: exercise)
+            .background(Color.bruPaper.ignoresSafeArea())
+            .navigationBarHidden(true)
+            .safeAreaInset(edge: .top) {
+                BRUHeaderBar(
+                    left: HeaderAction("‹", action: { dismiss() }),
+                    center: "History",
+                    right: HeaderAction("FILTER", isSignal: true, action: { presentingFilter = true })
+                )
             }
         }
     }
 }
 
-/// Toolbar chart-icon entry point to `ExerciseProgressView`. Hides
-/// itself entirely when the exercise has no logged sets (UI-SPEC §
-/// "Asset Contract — chart.line.uptrend.xyaxis").
-private struct ProgressChartToolbarButton: View {
+// MARK: - FilteredHistoryContent
+
+/// Inner view that owns the @Query. Re-initialized whenever intentFilter changes
+/// to rebuild the SwiftData predicate (standard SwiftData re-keying pattern).
+private struct FilteredHistoryContent: View {
     let exercise: Exercise
-    @Query private var sets: [SetEntry]
+    @Binding var intentFilter: Intent?
+    @Binding var presentingFilter: Bool
 
-    init(exercise: Exercise) {
-        self.exercise = exercise
-        let targetID = exercise.id
-        _sets = Query(
-            filter: #Predicate<SetEntry> { entry in
-                entry.sessionExercise?.exercise?.id == targetID
-            }
-        )
-    }
-
-    var body: some View {
-        if !sets.isEmpty {
-            NavigationLink {
-                ExerciseProgressView(exercise: exercise)
-            } label: {
-                Image(systemName: "chart.line.uptrend.xyaxis")
-                    .accessibilityLabel("View progress chart")
-            }
-        }
-    }
-}
-
-/// Inner query-owning view. Re-initialised whenever the outer view's
-/// `selectedIntent` state changes (SwiftUI rebuilds the inner subtree
-/// because the binding key it depends on moved). Each rebuild
-/// constructs a fresh `Query` with the appropriate predicate — there
-/// is no other way to change a `@Query`'s predicate from inside the
-/// same view instance in SwiftData.
-private struct FilteredHistoryList: View {
     @Query private var sessionExercises: [SessionExercise]
-    @Binding var intent: Intent?
-    let exerciseID: UUID
 
-    init(exerciseID: UUID, intent: Binding<Intent?>) {
-        self.exerciseID = exerciseID
-        self._intent = intent
+    init(exercise: Exercise, intentFilter: Binding<Intent?>, presentingFilter: Binding<Bool>) {
+        self.exercise = exercise
+        self._intentFilter = intentFilter
+        self._presentingFilter = presentingFilter
 
-        // RESEARCH §6 Pitfall 1 — capture the comparison values in
-        // LOCAL vars BEFORE the #Predicate body. The SwiftData
-        // related-entity-ID compare returns empty results on iOS 17/18
-        // when the lookup value is passed by capture through `self`.
-        //
-        // Phase 3.1 (PIVOT-05 / D-13): the intent gate moves OUT of the
-        // #Predicate body and INTO `completedSets` below. The
-        // `se.session?.intentRaw` chain is multi-level optional and
-        // would re-trigger Pitfall 1 if used inside the predicate. Both
-        // the "All" branch and the intent-filtered branch now share the
-        // same #Predicate shape (exerciseID-only); the difference is the
-        // Swift post-filter on `completedSets`.
-        //
-        // WARNING 6 fix: `\.session?.startedAt` SortDescriptor on
-        // SessionExercise is a multi-level optional keypath. After
-        // Plan 02's schema reshape, the SourceKit type-check budget on
-        // this keypath was re-evaluated against the simpler post-Plan-02
-        // model; the SortDescriptor still compiles in Swift 6 mode
-        // (verified via xcodebuild — see SUMMARY). If a future Xcode
-        // toolchain regresses this back into Pitfall 1, fall back to:
-        //   self._sessionExercises = Query(filter: …)   // no sortBy
-        //   // then in the body's `groupedByDate` / `completedSets`:
-        //   sessionExercises.sorted { ($0.session?.startedAt ?? .distantPast)
-        //                              > ($1.session?.startedAt ?? .distantPast) }
-        let targetID = exerciseID
+        // Pitfall 1 workaround: capture comparison value into local before #Predicate
+        let targetID = exercise.id
         self._sessionExercises = Query(
             filter: #Predicate<SessionExercise> { se in
                 se.exercise?.id == targetID
@@ -199,44 +115,100 @@ private struct FilteredHistoryList: View {
     }
 
     var body: some View {
-        if completedSets.isEmpty {
+        let completed = completedSets
+        let countsByIntent = buildCounts()
+        let totalCount = completed.count
+        let sessionCount = Set(sessionExercises.compactMap { $0.session?.id }).count
+        let grouped = groupedByDate(from: completed)
+        let prFooter = prStats(from: completed)
+
+        // 3-cell stat strip
+        HStack(spacing: 0) {
+            BRUReadout(
+                label: "Sessions · 30d",
+                value: "\(sessions30d)"
+            )
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
+            .frame(maxWidth: .infinity, alignment: .leading)
+
+            Rectangle().fill(Color.bruHair).frame(width: 1)
+
+            BRUReadout(
+                label: "Tonnage",
+                value: tonnageLabel(from: completed),
+                valueColor: .bruSignal
+            )
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
+            .frame(maxWidth: .infinity, alignment: .leading)
+
+            Rectangle().fill(Color.bruHair).frame(width: 1)
+
+            BRUReadout(
+                label: "PRs · 30d",
+                value: "\(prs30d)"
+            )
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        BRUDivider(.ink)
+
+        // Intent filter chip row (2pt rules drawn internally)
+        IntentFilterChipRow(filter: $intentFilter, counts: countsByIntent)
+
+        // Set-count summary row
+        HStack {
+            Text("\(totalCount) sets across \(sessionCount) sessions")
+                .font(BRUFont.labelSmall)
+                .tracking(1.2)
+                .textCase(.uppercase)
+                .foregroundStyle(Color.bruMuted)
+            Spacer()
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 10)
+
+        BRUDivider(.hair)
+
+        // Content: empty state or date-grouped sections
+        if completed.isEmpty {
             emptyState
         } else {
-            List {
-                if let summary = summaryLine {
-                    Section {
-                        Text(summary)
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
+            ForEach(grouped, id: \.dateKey) { group in
+                Section {
+                    ForEach(group.entries) { entry in
+                        ExerciseHistoryRow(entry: entry)
+                        BRUDivider(.hair)
                     }
-                }
-                ForEach(groupedByDate, id: \.dateKey) { group in
-                    Section(group.dateLabel) {
-                        ForEach(group.rows) { row in
-                            ExerciseHistoryRow(
-                                setEntry: row.setEntry,
-                                sessionExercise: row.sessionExercise
-                            )
-                        }
+                } header: {
+                    HStack {
+                        Text(group.dateLabel)
+                            .font(BRUFont.displayMedium)
+                            .foregroundStyle(Color.bruInk)
+                        Spacer()
                     }
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 12)
+                    .background(Color.bruPaper)
                 }
             }
-            .listStyle(.insetGrouped)
+
+            // PR strip footer
+            PRStripFooter(
+                topWeight: prFooter.topWeight,
+                topReps: prFooter.topReps,
+                volPR: prFooter.volPR
+            )
         }
     }
 
-    /// Flatten every committed working set across the matching
-    /// SessionExercise rows. Warmups and planned-but-not-completed
-    /// rows are excluded at this layer — same shape as
-    /// `PreviousMatchingIntent.fetchTopWorkingSet`.
-    ///
-    /// Phase 3.1 (PIVOT-05 / D-13): when the chip filter is non-nil,
-    /// additionally gate on `pair.sessionExercise.session?.intentRaw`.
-    /// The intent gate lives here (Swift post-filter) rather than inside
-    /// the `@Query` #Predicate body because `se.session?.intentRaw` is a
-    /// multi-level optional chain that triggers Pitfall 1.
+    // MARK: - Computed properties
+
+    /// All completed working sets, post-filtered by intent if filter is active.
     private var completedSets: [(setEntry: SetEntry, sessionExercise: SessionExercise)] {
-        let intentGate: String? = intent?.rawValue
+        let intentGate: String? = intentFilter?.rawValue
         return sessionExercises.flatMap { se in
             (se.sets ?? [])
                 .filter { $0.isComplete && !$0.isWarmup }
@@ -248,98 +220,221 @@ private struct FilteredHistoryList: View {
         }
     }
 
-    /// UI-SPEC verbatim summary row: "{N} sets across {M} sessions".
-    /// Returns nil when no sets — the empty-state branch handles that.
-    private var summaryLine: String? {
-        let sessionCount = Set(sessionExercises.compactMap { $0.session?.id }).count
-        let setCount = completedSets.count
-        if setCount == 0 { return nil }
-        return "\(setCount) sets across \(sessionCount) sessions"
+    /// Count of sessions in the last 30 days.
+    private var sessions30d: Int {
+        let cutoff = Calendar.current.date(byAdding: .day, value: -30, to: .now) ?? .now
+        let recentSEs = sessionExercises.filter {
+            ($0.session?.startedAt ?? .distantPast) >= cutoff
+        }
+        return Set(recentSEs.compactMap { $0.session?.id }).count
     }
 
-    /// One date-section's worth of rows.
-    private struct HistoryGroup {
+    /// Count of PR entries in the last 30 days (placeholder — detected by e1RM increase).
+    private var prs30d: Int {
+        // Simplified PR count: sessions where e1RM exceeded all prior e1RMs
+        // Full PR detection deferred to Phase 6 plan 06-05 (PROG-01).
+        // Returns 0 as a safe placeholder until that plan ships.
+        0
+    }
+
+    /// Tonnage display label (e.g. "71.2k").
+    private func tonnageLabel(from sets: [(setEntry: SetEntry, sessionExercise: SessionExercise)]) -> String {
+        let total = sets.reduce(0.0) { $0 + $1.setEntry.weight * Double($1.setEntry.reps) }
+        if total >= 1000 {
+            return String(format: "%.1fk", total / 1000)
+        }
+        return "\(Int(total))"
+    }
+
+    /// Counts by intent for IntentFilterChipRow.
+    private func buildCounts() -> [Intent?: Int] {
+        var counts: [Intent?: Int] = [:]
+        for se in sessionExercises {
+            let sets = (se.sets ?? []).filter { $0.isComplete && !$0.isWarmup }
+            if sets.isEmpty { continue }
+            let intent = se.session?.intent
+            counts[intent, default: 0] += sets.count
+        }
+        return counts
+    }
+
+    // MARK: - Date grouping
+
+    private struct DateGroup {
         let dateKey: String
         let dateLabel: String
-        let rows: [HistoryRow]
+        let entries: [HistoryEntry]
     }
 
-    /// Identifiable wrapper for the `ForEach` inside each section.
-    /// Uses a fresh `UUID()` because the same `SetEntry` may be safe
-    /// to identify by its own `id`, but the explicit wrapper sidesteps
-    /// any SwiftData identity rebuild edge cases inside `List`.
-    private struct HistoryRow: Identifiable {
-        let id = UUID()
-        let setEntry: SetEntry
-        let sessionExercise: SessionExercise
-    }
-
-    /// Group the completed sets by calendar day (start-of-day in the
-    /// user's local calendar). Most-recent day first. The label uses
-    /// `Date.FormatStyle` for the "Mon, May 11" format — UI-SPEC
-    /// verbatim, and the project-native formatter (avoids the
-    /// per-render `DateFormatter()` allocation anti-pattern).
-    private var groupedByDate: [HistoryGroup] {
-        // ISO key uses startOfDay so two sessions on the same day
-        // collapse into one section (e.g. an a.m. workout + a p.m.
-        // workout produce one "Today" section, not two).
-        let isoFormatter = ISO8601DateFormatter()
-        let grouped = Dictionary(grouping: completedSets) { pair -> String in
-            let date = pair.sessionExercise.session?.startedAt ?? .distantPast
-            return isoFormatter.string(from: Calendar.current.startOfDay(for: date))
+    private func groupedByDate(
+        from sets: [(setEntry: SetEntry, sessionExercise: SessionExercise)]
+    ) -> [DateGroup] {
+        // Group by session identity (same session = same date group)
+        let bySession = Dictionary(grouping: sets) { pair -> String in
+            pair.sessionExercise.session?.id.uuidString ?? UUID().uuidString
         }
-        return grouped
-            .sorted { $0.key > $1.key }
-            .map { (key, pairs) in
-                let date = pairs.first?.sessionExercise.session?.startedAt ?? .distantPast
-                // UI-SPEC verbatim format "Mon, May 11" — equivalent to
-                // DateFormatter format "EEE, MMM d" but built with
-                // `Date.FormatStyle` to honor the
-                // "no DateFormatter() inside body" anti-pattern (the
-                // plan's anti-patterns list rules out per-render
-                // `DateFormatter()` allocation).
-                let label = date.formatted(
-                    .dateTime
-                        .weekday(.abbreviated)
-                        .month(.abbreviated)
-                        .day()
+
+        return bySession
+            .compactMap { (sessionID, pairs) -> DateGroup? in
+                guard let firstPair = pairs.first,
+                      let session = firstPair.sessionExercise.session else { return nil }
+                let date = session.startedAt
+                let dateKey = ISO8601DateFormatter().string(
+                    from: Calendar.current.startOfDay(for: date)
                 )
-                let rows = pairs.map {
-                    HistoryRow(setEntry: $0.setEntry, sessionExercise: $0.sessionExercise)
+                let dateLabel = Self.formatDateLabel(date)
+                let intent = session.intent
+
+                // All working sets for this session
+                let allSetsForSession = (firstPair.sessionExercise.sets ?? [])
+                    .filter { $0.isComplete && !$0.isWarmup }
+                    .sorted { $0.orderIndex < $1.orderIndex }
+
+                let topSet = allSetsForSession.max(by: {
+                    $0.weight * Double($0.reps) < $1.weight * Double($1.reps)
+                })
+                let topSetLabel = topSet.map { set -> String in
+                    let w = set.weight.truncatingRemainder(dividingBy: 1) == 0
+                        ? "\(Int(set.weight))"
+                        : String(format: "%.1f", set.weight)
+                    if let rpe = set.rpe {
+                        let rpeStr = rpe.truncatingRemainder(dividingBy: 1) == 0
+                            ? "\(Int(rpe))" : String(format: "%.1f", rpe)
+                        return "\(w)×\(set.reps) @\(rpeStr)"
+                    }
+                    return "\(w)×\(set.reps)"
+                } ?? "—"
+
+                let e1RM = allSetsForSession.compactMap { set -> Double? in
+                    let rpe = set.rpe ?? 8.0
+                    let rir = 10.0 - rpe
+                    return set.weight * (1 + (Double(set.reps) + rir) / 30.0)
+                }.max() ?? 0
+                let e1RMLabel = e1RM > 0
+                    ? (e1RM.truncatingRemainder(dividingBy: 1) == 0
+                       ? "\(Int(e1RM))"
+                       : String(format: "%.1f", e1RM))
+                    : "—"
+
+                let chips = allSetsForSession.map { set -> String in
+                    let w = set.weight.truncatingRemainder(dividingBy: 1) == 0
+                        ? "\(Int(set.weight))"
+                        : String(format: "%.1f", set.weight)
+                    if let rpe = set.rpe {
+                        let rpeStr = rpe.truncatingRemainder(dividingBy: 1) == 0
+                            ? "\(Int(rpe))" : String(format: "%.1f", rpe)
+                        return "\(w)×\(set.reps) @\(rpeStr)"
+                    }
+                    return "\(w)×\(set.reps)"
                 }
-                return HistoryGroup(dateKey: key, dateLabel: label, rows: rows)
+
+                let entry = HistoryEntry(
+                    id: UUID(uuidString: sessionID) ?? UUID(),
+                    dateLabel: dateLabel,
+                    intentLabel: Self.shortIntentLabel(intent),
+                    isPR: false, // Phase 6 PROG-01 will wire actual PR detection
+                    e1RMLabel: e1RMLabel,
+                    topSetLabel: topSetLabel,
+                    setCount: allSetsForSession.count,
+                    setChips: chips
+                )
+                return DateGroup(dateKey: dateKey, dateLabel: dateLabel, entries: [entry])
             }
+            .sorted { $0.dateKey > $1.dateKey }
     }
 
-    /// Either the no-logged-sets-yet state (intent == nil) or the
-    /// filtered-empty state (intent != nil). UI-SPEC verbatim copy.
-    /// The filtered branch uses an explicit force-unwrap on `intent!`
-    /// rather than an `if let` shadowing pattern so the source string
-    /// "No \(intent!.rawValue.capitalized) sets" remains the canonical
-    /// UI-SPEC anchor — verified by `ExerciseHistoryViewCopyTests`.
-    /// The force-unwrap is safe because we are already inside the
-    /// `intent == nil ? else-branch` guard below.
+    private static func formatDateLabel(_ date: Date) -> String {
+        let cal = Calendar.current
+        if cal.isDateInToday(date) {
+            return "TODAY"
+        }
+        // "MON, MAY 11" — uppercased EEE, MMM d
+        return date.formatted(
+            .dateTime
+                .weekday(.abbreviated)
+                .month(.abbreviated)
+                .day()
+        ).uppercased()
+    }
+
+    private static func shortIntentLabel(_ intent: Intent) -> String {
+        switch intent {
+        case .strength:    return "STR"
+        case .hypertrophy: return "HYP"
+        case .power:       return "PWR"
+        case .endurance:   return "END"
+        case .technique:   return "TECH"
+        }
+    }
+
+    // MARK: - PR footer stats
+
+    private struct PRStats {
+        let topWeight: String
+        let topReps: String
+        let volPR: String
+    }
+
+    private func prStats(
+        from sets: [(setEntry: SetEntry, sessionExercise: SessionExercise)]
+    ) -> PRStats {
+        let allSets = sets.map { $0.setEntry }
+        let topWeight = allSets.max(by: { $0.weight < $1.weight })
+        let topReps = allSets.max(by: { $0.reps < $1.reps })
+
+        let topWeightLabel: String
+        if let tw = topWeight {
+            topWeightLabel = tw.weight.truncatingRemainder(dividingBy: 1) == 0
+                ? "\(Int(tw.weight))"
+                : String(format: "%.1f", tw.weight)
+        } else {
+            topWeightLabel = "—"
+        }
+
+        let topRepsLabel = topReps.map { "\($0.reps)" } ?? "—"
+
+        // Volume PR = session with highest total volume
+        let bySession = Dictionary(grouping: sets) { $0.sessionExercise.session?.id }
+        let sessionVols = bySession.values.map { pairs in
+            pairs.reduce(0.0) { $0 + $1.setEntry.weight * Double($1.setEntry.reps) }
+        }
+        let maxVol = sessionVols.max() ?? 0
+        let volLabel: String
+        if maxVol >= 1000 {
+            volLabel = String(format: "%.1fk", maxVol / 1000)
+        } else if maxVol > 0 {
+            volLabel = "\(Int(maxVol))"
+        } else {
+            volLabel = "—"
+        }
+
+        return PRStats(topWeight: topWeightLabel, topReps: topRepsLabel, volPR: volLabel)
+    }
+
+    // MARK: - Empty state
+
     @ViewBuilder private var emptyState: some View {
         VStack(spacing: 16) {
-            Spacer().frame(height: 48)                                        // UI-SPEC 3xl
-            if intent == nil {
-                Text("No logged sets yet")                                    // UI-SPEC verbatim
-                    .font(.title2)
-                    .fontWeight(.semibold)
-                Text("Log this exercise in a workout to see history.")        // UI-SPEC verbatim
-                    .foregroundStyle(.secondary)
+            Spacer().frame(height: 48)
+            if intentFilter == nil {
+                Text("No logged sets yet")              // UI-SPEC verbatim
+                    .font(BRUFont.displayMedium)
+                    .foregroundStyle(Color.bruInk)
+                Text("Log this exercise in a workout to see history.")  // UI-SPEC verbatim
+                    .font(BRUFont.bodyDefault)
+                    .foregroundStyle(Color.bruMuted)
                     .multilineTextAlignment(.center)
             } else {
-                Text("No \(intent!.rawValue.capitalized) sets")               // UI-SPEC verbatim format
-                    .font(.title2)
-                    .fontWeight(.semibold)
-                Text("Try a different intent filter.")                        // UI-SPEC verbatim
-                    .foregroundStyle(.secondary)
+                Text("No \(intentFilter!.rawValue.capitalized) sets")   // UI-SPEC verbatim format
+                    .font(BRUFont.displayMedium)
+                    .foregroundStyle(Color.bruInk)
+                Text("Try a different intent filter.")                   // UI-SPEC verbatim
+                    .font(BRUFont.bodyDefault)
+                    .foregroundStyle(Color.bruMuted)
                     .multilineTextAlignment(.center)
-                Button("Show All") {                                          // UI-SPEC verbatim accent text button
-                    self.intent = nil
+                BRUButton("SHOW ALL", kind: .signal, size: .md) {       // UI-SPEC verbatim
+                    intentFilter = nil
                 }
-                .foregroundStyle(Color.accentColor)
             }
             Spacer()
         }
@@ -348,11 +443,18 @@ private struct FilteredHistoryList: View {
     }
 }
 
-#Preview("Empty (no sets)") {
-    NavigationStack {
-        let container = PreviewModelContainer.make()
-        let exercises = try! container.mainContext.fetch(FetchDescriptor<Exercise>())
-        ExerciseHistoryView(exercise: exercises.first!)
+// MARK: - Preview
+
+#if DEBUG
+#Preview("ExerciseHistoryView (empty)") {
+    let container = PreviewModelContainer.make()
+    let exercises = try! container.mainContext.fetch(FetchDescriptor<Exercise>())
+    if let first = exercises.first {
+        return AnyView(
+            ExerciseHistoryView(exercise: first)
+                .modelContainer(container)
+        )
     }
-    .modelContainer(PreviewModelContainer.make())
+    return AnyView(Text("No exercises").modelContainer(container))
 }
+#endif

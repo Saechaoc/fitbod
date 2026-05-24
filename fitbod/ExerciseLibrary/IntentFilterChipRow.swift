@@ -1,121 +1,159 @@
+// IntentFilterChipRow.swift
+// fitbod — Phase 2.1 Plan 10
 //
-//  IntentFilterChipRow.swift
-//  fitbod
+// BRU full-bleed intent filter strip for ExerciseHistoryView.
+// UI-SPEC v2 § Exercise history view (line 434 + 612) + § Color (line 244).
 //
-//  Wave-5 plan 05-01 — the horizontal filter chip row that drives the
-//  intent-split predicate on `ExerciseHistoryView`. Six chips total:
-//  "All" + the five `Intent` cases (Strength / Hypertrophy / Power /
-//  Endurance / Technique).
+// CRITICAL: selected chip uses bruInk fill + bruPaper text.
+// UI-SPEC line 244: "in history rows ink fill, not signal, marks selection."
+// This is the OPPOSITE of most BRU chip contexts — intentional per spec.
 //
-//  Drives a `@Binding<Intent?>` where `nil` represents the "All" state
-//  (no intent filter applied — every logged set visible). Tapping the
-//  selected chip is a no-op visually but the closure still fires; the
-//  parent view's `FilteredHistoryList` re-runs its `@Query` predicate
-//  on any change.
-//
-//  ## Visual contract (UI-SPEC § Exercise history view § Color)
-//
-//  - Selected chip: `Color.accentColor` fill + `Color.white` label
-//    (UI-SPEC accent-reserved-for item #8).
-//  - Unselected chip: `Color(.systemGray5)` fill + `Color.primary`
-//    label.
-//  - Spacing: 8pt between chips (UI-SPEC `sm` token).
-//  - Padding: horizontal 12pt + vertical 6pt inside each capsule.
-//  - Touch target: 44pt × 44pt minimum (UI-SPEC HIG exception) —
-//    achieved by `.frame(minWidth: 44, minHeight: 44)` so the visual
-//    capsule stays compact while the hit area extends.
-//
-//  ## Accessibility contract (UI-SPEC § Accessibility Contract)
-//
-//  - `accessibilityLabel` format: "{name} filter, {selected|unselected}"
-//    — verbatim per UI-SPEC.
-//  - `accessibilityAddTraits`: `.isButton` always, plus `.isSelected`
-//    when the chip is the currently active filter.
-//
-//  ## Why a flat `Button` row instead of a `Picker(.segmented)`?
-//
-//  A segmented picker would visually collapse the 6 options into a
-//  bounded segmented control — but Apple's segmented picker is a poor
-//  fit for 6+ items (it crowds), and the UI-SPEC explicitly calls for
-//  a horizontal scrolling chip row (matches the Phase 1 facet-picker
-//  pattern in `ExerciseFilterBar.swift`).
-//
+// Labels: "ALL · {N}" / "STRENGTH · {N}" / "HYPER · {N}" /
+//         "POWER · {N}" / "ENDUR · {N}" / "TECH · {N}"
+// Each chip has equal flex width. 1pt bruInk vertical separators between.
+// 2pt bruInk rules top + bottom are drawn by the parent layout; this view
+// provides them via BRUDivider(.ink) wrappers.
 
 import SwiftUI
 
-public struct IntentFilterChipRow: View {
-    @Binding public var selected: Intent?
+// MARK: - IntentFilterChipRow
 
-    public init(selected: Binding<Intent?>) {
-        self._selected = selected
+/// Full-bleed horizontal strip of intent filter chips for the exercise history view.
+///
+/// Six chips: ALL + the five `Intent` cases. Selected chip uses `bruInk` fill
+/// per UI-SPEC line 244 ("in history rows ink fill, not signal, marks selection").
+///
+/// - Parameters:
+///   - filter: Binding to the current filter. `nil` = "ALL".
+///   - counts: Map of intent (nil = all) to set count. Displayed after each label.
+public struct IntentFilterChipRow: View {
+    @Binding public var filter: Intent?
+    public let counts: [Intent?: Int]
+
+    public init(filter: Binding<Intent?>, counts: [Intent?: Int] = [:]) {
+        self._filter = filter
+        self.counts = counts
     }
 
     public var body: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 8) {                                              // UI-SPEC sm
-                chip(label: "All", isSelected: selected == nil) {              // UI-SPEC verbatim
-                    selected = nil
+        VStack(spacing: 0) {
+            BRUDivider(.ink)
+            HStack(spacing: 0) {
+                // "ALL" chip
+                chipButton(label: "ALL", count: totalCount, isSelected: filter == nil) {
+                    filter = nil
                 }
-                ForEach(Intent.allCases, id: \.rawValue) { intent in
-                    chip(
-                        label: intent.rawValue.capitalized,
-                        isSelected: selected == intent
+                Rectangle().fill(Color.bruInk).frame(width: 1)
+
+                // Per-intent chips
+                ForEach(IntentFilter.allCases, id: \.rawValue) { item in
+                    chipButton(
+                        label: item.shortLabel,
+                        count: counts[item.intent] ?? 0,
+                        isSelected: filter == item.intent
                     ) {
-                        selected = intent
+                        filter = item.intent
+                    }
+                    if item != IntentFilter.allCases.last {
+                        Rectangle().fill(Color.bruInk).frame(width: 1)
                     }
                 }
             }
+            .frame(maxWidth: .infinity)
+            BRUDivider(.ink)
         }
     }
 
-    /// One chip — capsule with text label, accent-fill when selected,
-    /// `.systemGray5` fill when not. The min-44pt frame extends the
-    /// hit area without affecting the compact visual padding.
-    private func chip(
+    // MARK: - Private
+
+    private var totalCount: Int {
+        counts.values.reduce(0, +)
+    }
+
+    private func chipButton(
         label: String,
+        count: Int,
         isSelected: Bool,
         action: @escaping () -> Void
     ) -> some View {
         Button(action: action) {
-            Text(label)
-                .font(.caption)
-                .padding(.horizontal, 12)
-                .padding(.vertical, 6)
-                .background(isSelected ? Color.accentColor : Color(.systemGray5))    // UI-SPEC #8
-                .foregroundStyle(isSelected ? Color.white : Color.primary)
-                .clipShape(Capsule())
+            Text("\(label) · \(count)")
+                .font(BRUFont.labelSmall)
+                .tracking(1.2)
+                .textCase(.uppercase)
+                // UI-SPEC line 244: selected = bruInk fill + bruPaper text (NOT signal)
+                .foregroundStyle(isSelected ? Color.bruPaper : Color.bruInk)
+                .frame(maxWidth: .infinity)
+                .padding(.horizontal, 4)
+                .padding(.vertical, 10)
+                .background(isSelected ? Color.bruInk : Color.bruPaper)
+                .accessibilityAddTraits(isSelected ? [.isButton, .isSelected] : [.isButton])
         }
         .buttonStyle(.plain)
-        .frame(minWidth: 44, minHeight: 44)                                   // UI-SPEC HIG
-        .accessibilityLabel("\(label) filter, \(isSelected ? "selected" : "unselected")")
-        .accessibilityAddTraits(isSelected ? [.isButton, .isSelected] : .isButton)
     }
 }
 
-#Preview("All selected") {
-    StatefulIntentFilterPreview(initial: nil)
-}
+// MARK: - IntentFilter (helper enum for ordered cases + short labels)
 
-#Preview("Strength selected") {
-    StatefulIntentFilterPreview(initial: .strength)
-}
+/// Internal enumeration for ordered rendering of filter chips.
+/// Maps to `Intent?` (nil = ALL) and provides the UI-SPEC short label.
+enum IntentFilter: String, CaseIterable {
+    case strength
+    case hypertrophy
+    case power
+    case endurance
+    case technique
 
-private struct StatefulIntentFilterPreview: View {
-    @State var selected: Intent?
-
-    init(initial: Intent?) {
-        self._selected = State(initialValue: initial)
+    var shortLabel: String {
+        switch self {
+        case .strength:   return "STRENGTH"
+        case .hypertrophy: return "HYPER"
+        case .power:       return "POWER"
+        case .endurance:   return "ENDUR"
+        case .technique:   return "TECH"
+        }
     }
+
+    var intent: Intent {
+        switch self {
+        case .strength:    return .strength
+        case .hypertrophy: return .hypertrophy
+        case .power:       return .power
+        case .endurance:   return .endurance
+        case .technique:   return .technique
+        }
+    }
+}
+
+// MARK: - Preview
+
+#if DEBUG
+private struct IntentFilterPreviewWrapper: View {
+    @State private var selected: Intent? = nil
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            IntentFilterChipRow(selected: $selected)
-                .padding(.horizontal, 16)
-            Text("Selected: \(selected?.rawValue.capitalized ?? "All")")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-                .padding(.horizontal, 16)
+        VStack(spacing: 0) {
+            IntentFilterChipRow(
+                filter: $selected,
+                counts: [
+                    nil: 14,
+                    .strength: 5,
+                    .hypertrophy: 9,
+                    .power: 0,
+                    .endurance: 0,
+                    .technique: 0
+                ]
+            )
+            Text("Selected: \(selected?.rawValue ?? "ALL")")
+                .font(BRUFont.bodyDefault)
+                .foregroundStyle(Color.bruMuted)
+                .padding(16)
         }
-        .padding(.vertical, 16)
+        .background(Color.bruPaper)
     }
 }
+
+#Preview("IntentFilterChipRow — All selected") {
+    IntentFilterPreviewWrapper()
+}
+#endif

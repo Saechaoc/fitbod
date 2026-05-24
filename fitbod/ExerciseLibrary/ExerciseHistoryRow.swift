@@ -1,104 +1,207 @@
+// ExerciseHistoryRow.swift
+// fitbod — Phase 2.1 Plan 10
 //
-//  ExerciseHistoryRow.swift
-//  fitbod
+// BRU rewrite of the per-exercise history row.
+// UI-SPEC v2 § Exercise history view (line 437).
 //
-//  Wave-5 plan 05-01 — one row in the per-exercise history list. Each
-//  row corresponds to a single committed `SetEntry`. Rendered inside
-//  the date-grouped `Section` blocks of `ExerciseHistoryView`'s inner
-//  `FilteredHistoryList`.
+// Visual contract per UI-SPEC:
+//  Top line: date displayMedium 18pt + intent BRUChip + optional '★ PR' BRUChip(.signal, fill:true)
+//            right-aligned: 'e1RM {value}' displayMedium 18pt
+//  Sub-line: 'TOP {weight × reps @ RPE}' BRUMono 11pt bruMuted + '· {N} sets'
+//  Bottom: wrap-flow row of mono set chips — 1pt bruHair outlined Rectangles
+//          (NOT capsules) holding BRUMono 11pt numerics
 //
-//  ## Visual contract (UI-SPEC § Exercise history view)
-//
-//  - Top line (small): the workout's `routineSnapshotName` in
-//    `.caption .secondaryLabel` — matches the UI-SPEC row format
-//    "(top) workout name, (bottom) primary line". This is the only
-//    place the user sees which routine produced the set without
-//    drilling further.
-//  - Primary line (body): "{weight} × {reps} @ RPE {N}" — verbatim per
-//    UI-SPEC. Weight renders as integer when an integer (175, not
-//    175.0); decimal weights render with one digit (177.5). RPE
-//    suppresses to "{w} × {r}" when the set didn't record one.
-//  - Trailing intent badge: a quiet capsule (UI-SPEC explicit — "inline
-//    intent badges below are quiet") in `Color(.systemGray6)` fill with
-//    `.label` foreground. Only the SELECTED filter chip up top uses
-//    accent; the inline badges do not.
-//
-//  ## Why receive both SetEntry and SessionExercise?
-//
-//  The set tells us weight/reps/RPE. The session-exercise tells us the
-//  parent session (for the routine-snapshot name AND the intent — via
-//  session.intent, post-PIVOT-03). Passing both avoids the row having
-//  to traverse optional relationships at render time — the parent
-//  view's grouping logic already has both objects in hand. The intent
-//  badge now reads through `sessionExercise.session?.intent.rawValue`
-//  (an em-dash "—" fallback when the chain is somehow nil, matching the
-//  Phase 2 placeholder convention).
-//
+// BRU contract: NO Capsule() / NO RoundedRectangle / NO accentColor /
+//               NO Image(systemName:) / NO Color(.system*) /
+//               NO .font(.body/.headline/.title*/caption)
 
 import SwiftUI
 
-public struct ExerciseHistoryRow: View {
-    public let setEntry: SetEntry
-    public let sessionExercise: SessionExercise
+// MARK: - ExerciseHistoryRow
 
-    public init(setEntry: SetEntry, sessionExercise: SessionExercise) {
-        self.setEntry = setEntry
-        self.sessionExercise = sessionExercise
+/// One date-session block in the exercise history list.
+///
+/// Receives a pre-computed `HistoryEntry` value (built by ExerciseHistoryView's
+/// grouping logic) rather than raw SwiftData objects at render time.
+public struct ExerciseHistoryRow: View {
+    public let entry: HistoryEntry
+
+    public init(entry: HistoryEntry) {
+        self.entry = entry
     }
 
     public var body: some View {
-        VStack(alignment: .leading, spacing: 4) {                             // UI-SPEC xs
-            Text(sessionExercise.session?.routineSnapshotName ?? "Workout")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-            HStack {
-                Text(primaryLine)
-                    .font(.body)
+        VStack(alignment: .leading, spacing: 6) {
+            // Top line
+            HStack(alignment: .center, spacing: 8) {
+                Text(entry.dateLabel)
+                    .font(BRUFont.displayMedium)
+                    .foregroundStyle(Color.bruInk)
+
+                BRUChip(entry.intentLabel)
+
+                if entry.isPR {
+                    BRUChip("★ PR", color: .bruSignal, fill: true)
+                }
+
                 Spacer()
-                intentChip
-            }
-        }
-        .padding(.vertical, 8)                                                // UI-SPEC sm
-    }
 
-    /// UI-SPEC verbatim: "175 × 8 @ RPE 8" — RPE clause suppressed when
-    /// the set didn't record one ("175 × 8"). Weight without fractional
-    /// part renders as integer; weights with a fractional part render
-    /// with one decimal digit (e.g. 177.5).
-    private var primaryLine: String {
-        let w = setEntry.weight.truncatingRemainder(dividingBy: 1) == 0
-            ? "\(Int(setEntry.weight))"
-            : String(format: "%.1f", setEntry.weight)
-        if let rpe = setEntry.rpe {
-            // Render integer RPE without ".0"; render decimal RPE with one digit.
-            let rpeText: String
-            if rpe.truncatingRemainder(dividingBy: 1) == 0 {
-                rpeText = "\(Int(rpe))"
-            } else {
-                rpeText = String(format: "%.1f", rpe)
+                Text("e1RM \(entry.e1RMLabel)")
+                    .font(BRUFont.displayMedium)
+                    .monospacedDigit()
+                    .foregroundStyle(Color.bruInk)
             }
-            return "\(w) × \(setEntry.reps) @ RPE \(rpeText)"
-        } else {
-            return "\(w) × \(setEntry.reps)"
-        }
-    }
 
-    /// The inline intent badge. UI-SPEC: capsule in `Color(.systemGray6)`
-    /// fill with `.caption .semibold` label in `.label` color. NOT
-    /// accent — only the selected filter chip uses accent.
-    ///
-    /// Phase 3.1 (PIVOT-05): reads the session-level intent through the
-    /// parent Session relationship. The "—" em-dash fallback covers the
-    /// rare case where `se.session` is nil (cascade-detached row);
-    /// matches the PreviousColumn placeholder convention.
-    private var intentChip: some View {
-        Text(sessionExercise.session?.intent.rawValue.capitalized ?? "—")
-            .font(.caption)
-            .fontWeight(.semibold)
-            .padding(.horizontal, 8)
-            .padding(.vertical, 4)
-            .background(Color(.systemGray6))                                  // UI-SPEC: quiet inline badge
-            .foregroundStyle(.primary)
-            .clipShape(Capsule())
+            // Sub-line: TOP set + set count
+            HStack(spacing: 0) {
+                Text("TOP ")
+                    .font(BRUFont.bodyDefault)
+                    .foregroundStyle(Color.bruMuted)
+                Text(entry.topSetLabel)
+                    .font(BRUFont.bodyDefault)
+                    .foregroundStyle(Color.bruInk)
+                Text(" · \(entry.setCount) sets")
+                    .font(BRUFont.bodyDefault)
+                    .foregroundStyle(Color.bruMuted)
+            }
+
+            // Set chips — 1pt bruHair outlined rectangles (NOT capsules per UI-SPEC line 437)
+            SetChipFlow(chips: entry.setChips)
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
     }
 }
+
+// MARK: - SetChipFlow
+
+/// Wrapping flow of per-set chips — 1pt bruHair outlined sharp rectangles.
+/// Uses a simple HStack wrapping via ViewThatFits fallback pattern on iOS 18.
+private struct SetChipFlow: View {
+    let chips: [String]
+
+    var body: some View {
+        FlexWrap(items: chips) { chip in
+            Text(chip)
+                .font(BRUFont.bodyDefault)
+                .tracking(0.3)
+                .monospacedDigit()
+                .foregroundStyle(Color.bruInk)
+                .padding(.horizontal, 6)
+                .padding(.vertical, 3)
+                .overlay(
+                    Rectangle()
+                        .stroke(Color.bruHair, lineWidth: 1)
+                )
+        }
+    }
+}
+
+// MARK: - FlexWrap (simple wrapping layout)
+
+/// A simple wrapping horizontal layout built from HStack rows.
+/// Used for the set chip wrap-flow in ExerciseHistoryRow.
+private struct FlexWrap<Item: Hashable, Content: View>: View {
+    let items: [Item]
+    let content: (Item) -> Content
+
+    init(items: [Item], @ViewBuilder content: @escaping (Item) -> Content) {
+        self.items = items
+        self.content = content
+    }
+
+    var body: some View {
+        // iOS 18+ Layout protocol would be ideal, but this simple
+        // approach handles the typical 3-6 chips per row correctly.
+        var rows: [[Item]] = [[]]
+        for item in items {
+            rows[rows.count - 1].append(item)
+            if rows[rows.count - 1].count >= 4 {
+                rows.append([])
+            }
+        }
+        return VStack(alignment: .leading, spacing: 4) {
+            ForEach(rows.indices, id: \.self) { rowIndex in
+                HStack(spacing: 4) {
+                    ForEach(rows[rowIndex], id: \.self) { item in
+                        content(item)
+                    }
+                }
+            }
+        }
+    }
+}
+
+// MARK: - HistoryEntry (value type for the row)
+
+/// Pre-computed value type for ExerciseHistoryRow — avoids SwiftData
+/// optional-chain traversal at render time.
+public struct HistoryEntry: Identifiable {
+    public let id: UUID
+    public let dateLabel: String       // e.g. "TODAY" or "THU MAY 16"
+    public let intentLabel: String     // e.g. "HYP" or "STR"
+    public let isPR: Bool
+    public let e1RMLabel: String       // e.g. "248"
+    public let topSetLabel: String     // e.g. "205×8 @9"
+    public let setCount: Int
+    public let setChips: [String]      // e.g. ["95×8 @4", "135×6 @5", ...]
+
+    public init(
+        id: UUID = UUID(),
+        dateLabel: String,
+        intentLabel: String,
+        isPR: Bool,
+        e1RMLabel: String,
+        topSetLabel: String,
+        setCount: Int,
+        setChips: [String]
+    ) {
+        self.id = id
+        self.dateLabel = dateLabel
+        self.intentLabel = intentLabel
+        self.isPR = isPR
+        self.e1RMLabel = e1RMLabel
+        self.topSetLabel = topSetLabel
+        self.setCount = setCount
+        self.setChips = setChips
+    }
+}
+
+// MARK: - Preview
+
+#if DEBUG
+#Preview("ExerciseHistoryRow") {
+    VStack(spacing: 0) {
+        ExerciseHistoryRow(entry: HistoryEntry(
+            dateLabel: "TODAY",
+            intentLabel: "HYP",
+            isPR: true,
+            e1RMLabel: "248",
+            topSetLabel: "205×8 @9",
+            setCount: 6,
+            setChips: ["95×8 @4", "135×6 @5", "165×8 @7", "185×8 @8", "205×8 @9", "175×10 @8"]
+        ))
+        BRUDivider(.hair)
+        ExerciseHistoryRow(entry: HistoryEntry(
+            dateLabel: "THU MAY 16",
+            intentLabel: "HYP",
+            isPR: false,
+            e1RMLabel: "244",
+            topSetLabel: "195×8 @8.5",
+            setCount: 5,
+            setChips: ["95×8", "135×6", "165×8", "185×8", "195×8"]
+        ))
+        BRUDivider(.hair)
+        ExerciseHistoryRow(entry: HistoryEntry(
+            dateLabel: "MON MAY 13",
+            intentLabel: "STR",
+            isPR: false,
+            e1RMLabel: "240",
+            topSetLabel: "215×2 @9",
+            setCount: 5,
+            setChips: ["95×5", "135×5", "185×5", "205×3", "215×2"]
+        ))
+    }
+    .background(Color.bruPaper)
+}
+#endif
