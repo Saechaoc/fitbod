@@ -36,15 +36,9 @@ struct BRUGrepAuditTests {
 
     /// Suffixes (relative path fragments) of files excluded from the audit.
     /// Phase 3 / Phase 5 / Phase 6 surfaces not rewritten in Phase 2.1.
+    // Phase 3 surfaces audited by Phase3BRUGrepAuditTests starting Phase 03.2 / 2026-05-24;
+    // their reskins removed them from this exclusion list.
     private static let excludedFileSuffixes: Set<String> = [
-        // Phase 3 surfaces deferred per UI-SPEC line 721
-        "fitbod/Sessions/WhyThisWeightSheet.swift",
-        "fitbod/Sessions/WarmupRampRows.swift",
-        "fitbod/Sessions/BumpBanner.swift",
-        "fitbod/Sessions/CalibratingBadge.swift",
-        "fitbod/Sessions/PlateStackDisclosure.swift",
-        "fitbod/Sessions/PrescriptionWeightCell.swift",
-        "fitbod/Routines/WarmupConfigSheet.swift",
         // Phase 6 surfaces deferred per UI-SPEC line 721
         "fitbod/Sessions/InSessionPRBanner.swift",
         "fitbod/Sessions/PinnedNoteSheet.swift",
