@@ -1,11 +1,12 @@
 ---
 phase: 4
 slug: periodization-blocks
-status: draft
+status: approved
 shadcn_initialized: false
 preset: none
 created: 2026-05-22
 updated: 2026-05-23
+reviewed_at: 2026-05-23
 revision: 3
 revision_reason: |
   v1 (2026-05-22) used the old Apple HIG token set (teal AccentColor, Dynamic Type
