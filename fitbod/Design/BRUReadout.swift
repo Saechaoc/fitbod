@@ -38,12 +38,12 @@ public struct BRUReadout: View {
     ///   - label: Small uppercase descriptor shown above the value (e.g. "Day streak", "Sessions").
     ///            Rendered uppercase at the view layer — source string is as-typed for VoiceOver.
     ///   - value: The large display-weight value (e.g. "14", "↑", "42").
-    ///   - valueColor: Foreground color for the value text. Defaults to `Color.bruInk`. Pass `nil` to use default.
+    ///   - valueColor: Foreground color for the value text. Defaults to `Color.bruInk`.
     ///                 Use `Color.bruSignal` for upward-trend arrows and highlight values.
-    public init(label: String, value: String, valueColor: Color? = nil) {
+    public init(label: String, value: String, valueColor: Color = .bruInk) {
         self.label = label
         self.value = value
-        self.valueColor = valueColor ?? .bruInk
+        self.valueColor = valueColor
     }
 
     // MARK: - Body
