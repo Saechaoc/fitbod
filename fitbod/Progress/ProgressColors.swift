@@ -2,22 +2,26 @@
 //  ProgressColors.swift
 //  fitbod
 //
-//  Wave-3 plan 06-05 — single source of truth for Phase 6 chart
-//  series colors. UI-SPEC § Asset Contract:
+//  Phase 6.1 BRU reskin — series colors now reference BRU palette tokens only.
+//  Supersedes the Phase 6 baseline which used Color.accentColor (#0E7C86) for
+//  topSet and a #3FBFC9 literal for allSetAvg.
 //
-//    topSet     → Color.accentColor       (existing project accent)
-//    allSetAvg  → ProgressColors.allSetAverageSeries  (#3FBFC9 cyan)
+//  Design pivot (06-UI-SPEC §Design Pivot key replacement 1):
+//    topSet     → Color.bruInk   (2pt solid, square markers)
+//    allSetAvg  → Color.bruSignal (dashed [6,3], circle markers)
 //
-//  Phase 6 reserves `Color.accentColor` for the primary chart series
-//  + the active filter chip; secondary series uses the cyan accent
-//  so the two visually distinct on the same axes. RGB values match
-//  the UI-SPEC table exactly.
+//  Both identifiers are kept as public statics so all existing call sites
+//  in ExerciseProgressView + SeriesToggleChipRow compile without change.
 //
 
 import SwiftUI
 
 public enum ProgressColors {
-    /// Secondary chart series color (#3FBFC9). Used by the all-set-avg
-    /// LineMark + PointMark + the chart's foreground style scale.
-    public static let allSetAverageSeries = Color(red: 0.247, green: 0.749, blue: 0.788)
+    /// Primary chart series: top-set e1RM per session.
+    /// BRU token: bruInk — 2pt solid stroke + square PointMark markers.
+    public static let topSetSeries: Color = .bruInk
+
+    /// Secondary chart series: all-set-average e1RM per session.
+    /// BRU token: bruSignal — 2pt dashed [6,3] stroke + circle PointMark markers.
+    public static let allSetAverageSeries: Color = .bruSignal
 }

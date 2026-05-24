@@ -2,36 +2,24 @@
 //  ProgressFilterChip.swift
 //  fitbod
 //
-//  Wave-3 plan 06-05 — accent-tinted sibling of
-//  `ExerciseLibrary/FilterChip.swift`. The library chip uses a SOLID
-//  accent fill when active (UI-SPEC § Color contract item 1) — Phase
-//  6's progress surfaces want a softer accent-tint background so the
-//  chips read as "filter modifiers on a chart" rather than primary
-//  affordances (UI-SPEC § Color contract item 24).
+//  Phase 6.1 BRU reskin — rebuilt as a BRU inverted-active rectangular chip.
+//  Supersedes the Phase 6 baseline which used Capsule() + Color.accentColor.
 //
-//  Per PATTERNS adjudication #2: we ship a new sibling rather than
-//  modify the existing FilterChip — keeps the library surface stable
-//  and lets Phase 6 evolve its own visual language without regressing
-//  Phase 1.
+//  BRU visual states (06-UI-SPEC §Design Pivot key replacement 3):
+//  | State      | Background      | Foreground      | Border             |
+//  |------------|-----------------|-----------------|--------------------|
+//  | Selected   | Color.bruInk    | Color.bruPaper  | 1pt bruInk (match) |
+//  | Unselected | Color.clear     | Color.bruInk    | 1pt bruInk outline |
 //
-//  ## Visual states
+//  BRU contract: NO Capsule / NO RoundedRectangle / NO accentColor /
+//  NO Image(systemName:) / NO .buttonStyle(.bordered) / NO .font(.body|caption)
 //
-//  | State    | Background fill              | Foreground         |
-//  |----------|------------------------------|--------------------|
-//  | Inactive | `Color(.systemGray5)`        | `.secondaryLabel`  |
-//  | Active   | accent at 15% opacity        | `Color.accentColor`|
+//  Accessibility:
+//  - `accessibilityLabel` carries the explicit name (e.g. "Top set series").
+//  - `accessibilityValue` is "selected" or "hidden" for VoiceOver toggle state.
+//  - `.frame(minHeight: 44)` provides the HIG-mandated touch target.
 //
-//  ## Haptics
-//
-//  `.selectionChanged()` on tap (UI-SPEC item 627 haptics anchor).
-//
-//  ## Accessibility
-//
-//  - `accessibilityLabel` is the explicit accessibility-name string
-//    (e.g. "Top set series").
-//  - `accessibilityValue` is "selected" or "hidden" so VoiceOver
-//    users hear the toggle state.
-//  - `.frame(minHeight: 44)` gives the HIG-mandated touch target.
+//  Haptics: `.selectionChanged()` on tap (UI-SPEC item 627 haptics anchor).
 //
 
 import SwiftUI
@@ -39,7 +27,7 @@ import SwiftUI
 import UIKit
 #endif
 
-/// Accent-tinted filter chip used by Phase 6 chart surfaces.
+/// BRU inverted-active rectangular filter chip used by Phase 6 chart surfaces.
 public struct ProgressFilterChip: View {
     public let label: String
     public let accessibilityName: String
@@ -66,29 +54,42 @@ public struct ProgressFilterChip: View {
             action()
         } label: {
             Text(label)
-                .font(.caption)
-                .foregroundStyle(isActive ? Color.accentColor : Color(.secondaryLabel))
-                .padding(.horizontal, 12)
-                .padding(.vertical, 8)
-                .background {
-                    Capsule()
-                        .fill(isActive ? Color.accentColor.opacity(0.15) : Color(.systemGray5))
-                }
+                .font(BRUFont.labelSmall)
+                .tracking(1.2)
+                .textCase(.uppercase)
+                .foregroundStyle(isActive ? Color.bruPaper : Color.bruInk)
+                .padding(.horizontal, 8)
+                .padding(.vertical, 6)
+                .background(isActive ? Color.bruInk : Color.clear)
+                .overlay(
+                    Rectangle()
+                        .stroke(Color.bruInk, lineWidth: 1)
+                )
         }
         .buttonStyle(.plain)
-        .contentShape(Capsule())
+        .contentShape(Rectangle())
         .frame(minHeight: 44)
         .accessibilityLabel(accessibilityName)
         .accessibilityValue(isActive ? "selected" : "hidden")
     }
 }
 
-#Preview("Inactive") {
-    ProgressFilterChip(label: "Top set", accessibilityName: "Top set series", isActive: false) {}
-        .padding()
+#Preview("Unselected") {
+    ProgressFilterChip(
+        label: "Top set",
+        accessibilityName: "Top set series",
+        isActive: false
+    ) {}
+    .padding()
+    .background(Color.bruBg)
 }
 
-#Preview("Active") {
-    ProgressFilterChip(label: "All-set avg", accessibilityName: "All-set average series", isActive: true) {}
-        .padding()
+#Preview("Selected") {
+    ProgressFilterChip(
+        label: "All-set avg",
+        accessibilityName: "All-set average series",
+        isActive: true
+    ) {}
+    .padding()
+    .background(Color.bruBg)
 }
