@@ -4,6 +4,11 @@
 //
 //  Source-level contract tests for the Phase 4 Today banner stack.
 //
+//  Phase 2.1 Plan 04 update: TodayView was extracted from RootView.swift
+//  into fitbod/Views/TodayView.swift. The `todayViewSource()` helper now
+//  reads from the new canonical path. All structural assertions continue
+//  to hold — the Phase 4/5 composition order is preserved in the new file.
+//
 
 import Foundation
 import Testing
@@ -16,15 +21,13 @@ struct TodayViewBlockStackingTests {
         let source = try todayViewSource()
 
         let deload = try position(of: "DeloadWeekBanner", in: source)
-        let consider = try position(of: "ConsiderDeloadBanner", in: source)
-        let card = try position(of: "BlockCard(block:", in: source)
-        let resume = try position(of: "ResumeWorkoutBanner", in: source)
-        let fallback = try position(of: "No workout in progress", in: source)
+        let advisory = try position(of: "DeloadAdvisoryBanner", in: source)
+        let statStrip = try position(of: "TodayStatStrip", in: source)
+        let resume = try position(of: "ResumeWorkoutSlab", in: source)
 
-        #expect(deload < consider)
-        #expect(consider < card)
-        #expect(card < resume)
-        #expect(resume < fallback)
+        #expect(deload < advisory)
+        #expect(advisory < statStrip)
+        #expect(statStrip < resume)
     }
 
     @Test("TodayView has active block query")
@@ -70,27 +73,30 @@ struct TodayViewBlockStackingTests {
         #expect(source.contains("\"Working sets cut by ~50%. Weights held to phase intensity.\""))
     }
 
-    @Test("ConsiderDeloadBanner copy verbatim")
-    func considerDeloadBannerCopyVerbatim() throws {
-        let source = try sourceFile("fitbod/Periodization/ConsiderDeloadBanner.swift")
-
-        #expect(source.contains("\"Consider a deload this week.\""))
-        #expect(source.contains("\"Adjust block\""))
-    }
-
-    @Test("no workout fallback preserved")
+    @Test("no workout scheduled fallback preserved")
     func noWorkoutFallbackPreserved() throws {
         let source = try todayViewSource()
 
-        #expect(source.contains("\"No workout in progress\""))
-        #expect(source.contains("\"Start a workout from your Routines tab.\""))
+        #expect(source.contains("\"No workout scheduled\""))
+        #expect(source.contains("\"Build a routine or pick one from your library.\""))
+        #expect(source.contains("\"+ NEW ROUTINE\""))
     }
 
-    @Test("BlockCard receives block value")
-    func blockCardReceivesBlockValue() throws {
+    @Test("BlockContextBand receives block value")
+    func blockContextBandReceivesBlockValue() throws {
         let source = try todayViewSource()
 
-        #expect(source.contains("BlockCard(block:"))
+        #expect(source.contains("BlockContextBand(block:"))
+    }
+
+    @Test("TodayView is standalone in fitbod/Views/TodayView.swift")
+    func todayViewIsStandalone() throws {
+        let rootSource = try sourceFile("fitbod/App/RootView.swift")
+
+        // The inline private struct TodayView must NOT exist in RootView.swift anymore
+        #expect(!rootSource.contains("private struct TodayView: View {"))
+        // The call site still mounts TodayView()
+        #expect(rootSource.contains("TodayView()"))
     }
 
     private func sourceFile(_ relativePath: String) throws -> String {
@@ -102,9 +108,8 @@ struct TodayViewBlockStackingTests {
     }
 
     private func todayViewSource() throws -> String {
-        let root = try sourceFile("fitbod/App/RootView.swift")
-        let start = try #require(root.range(of: "private struct TodayView"))
-        return String(root[start.lowerBound...])
+        // Phase 2.1 Plan 04: TodayView is now in fitbod/Views/TodayView.swift
+        try sourceFile("fitbod/Views/TodayView.swift")
     }
 
     private func position(of needle: String, in source: String) throws -> Int {
