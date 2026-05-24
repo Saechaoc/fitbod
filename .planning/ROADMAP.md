@@ -86,7 +86,7 @@ Granular, prescriptive workout sessions — every set in a session is intentiona
 - [x] 02.1-07-PLAN.md — Wave 3: SessionLoggerView core + SessionExerciseCard + SetRow + SetTypeChip + IntentChip + InlineRPEChipRow + DecimalRPEPickerSheet
 - [ ] 02.1-08-PLAN.md — Wave 3: 11 SessionLogger widgets (PinnedNoteCapsule yellow ban + WorkoutHeaderToolbar extraction + AddUnplannedExerciseButton BRUDashedSlot + ResumeWorkoutBanner + 7 others)
 - [x] 02.1-09-PLAN.md — Wave 3: RestTimer Overlay (full-bleed slab) + RestTimerProgressArc (rename ProgressRing) + RestTimerLiveActivity + Lock Screen + 2 new Dynamic Island views
-- [ ] 02.1-10-PLAN.md — Wave 3: ExerciseHistoryView reskin + IntentFilterChipRow + PRStripFooter (NEW) + SessionHistoryView (NEW) + SessionHistoryStatStrip + WeeklyTonnageSparkCard + SessionHistoryRow
+- [x] 02.1-10-PLAN.md — Wave 3: ExerciseHistoryView reskin + IntentFilterChipRow + PRStripFooter (NEW) + SessionHistoryView (NEW) + SessionHistoryStatStrip + WeeklyTonnageSparkCard + SessionHistoryRow
 - [ ] 02.1-11-PLAN.md — Wave 4: Wave G cleanup — delete PlaceholderTabView + close deferred Step-E from 02.1-08 + Step-A from 02.1-10 + BRUGrepAuditTests guardrail + 3 UI smoke test files
 **UI hint:** yes (visual rewrite IS the phase)
 **Research flag:** None — design system already locked in `02-UI-SPEC.md` v2 (commit 4c1674b); audit gap list already produced in `02-UI-REVIEW.md` (commit 7a1f142)
