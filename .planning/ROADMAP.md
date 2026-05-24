@@ -303,9 +303,9 @@ This ordering is dependency-driven and pitfall-aware (per research/SUMMARY.md an
 **Plans:** 7 plans (3 waves)
 
 **Plan list:**
-- [ ] 06.1-01-PLAN.md — Wave 1: ProgressHomeView reskin (BRUHeaderBar + 3 BRUSectionHead sections + BRURow + BRUDivider)
+- [x] 06.1-01-PLAN.md — Wave 1: ProgressHomeView reskin (BRUHeaderBar + 3 BRUSectionHead sections + BRURow + BRUDivider)
 - [ ] 06.1-02-PLAN.md — Wave 1: ExerciseProgressView reskin + SeriesToggleChipRow inverted-active 4-segment bar + ProgressColors → bruInk/bruSignal + ProgressFilterChip outline/fill
-- [ ] 06.1-03-PLAN.md — Wave 1: ExercisePRsView reskin (BRU header + 3-segment intent toggle + 3-column PR rows + current-day signal tint) + SessionComparisonView reskin (3-column diff + bruSignal positive / bruMuted negative / U+2212 minus)
+- [x] 06.1-03-PLAN.md — Wave 1: ExercisePRsView reskin (BRU header + 3-segment intent toggle + 3-column PR rows + current-day signal tint) + SessionComparisonView reskin (3-column diff + bruSignal positive / bruMuted negative / U+2212 minus)
 - [ ] 06.1-04-PLAN.md — Wave 2: WeeklyTonnageView reskin (BRU chart + hero summary + BRU stacked-bar intent palette) + WeeklyTonnageFilterChips outline/fill + WeekDetailView reskin
 - [ ] 06.1-05-PLAN.md — Wave 2: SettingsView full BRU rewrite (Profile + Units + Training + Volume + Smart-Progression + Export 2-card grid + outlined Backup panel + About) preserving ShareLink + fileImporter + destructive alert wires
 - [ ] 06.1-06-PLAN.md — Wave 2: InSessionPRBanner full-bleed bruSignal slab + ExerciseHistoryView toolbar chart-icon → BRU HeaderAction "PROGRESS"
