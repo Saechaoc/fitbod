@@ -1,29 +1,22 @@
+// WorkoutNotesSheet.swift
+// fitbod
 //
-//  WorkoutNotesSheet.swift
-//  fitbod
+// BRU rewrite — Phase 2.1 Plan 08 (Wave 4, UI-REVIEW item 38).
+// UI-SPEC v2 § Session logger line 361.
 //
-//  Wave-4 plan 04-03 — workout-level notes editor. Presented as a sheet
-//  from the SessionLoggerView header's "Notes" chip (the `square.and.pencil`
-//  button anchored in plan 04-01 as a TODO; this plan ships the real sheet).
+// Workout-level notes editor. Replaces the default NavigationStack + Form +
+// .navigationTitle chrome with BRUHeaderBar + styled TextEditor.
 //
-//  ## UI-SPEC § Session logger verbatim copy
+// Binding semantics:
+//   Binds directly to @Bindable session.notes: String? via a Binding(get:set:)
+//   that normalizes empty strings to nil on write — keeps the persisted column
+//   free of blank entries so any downstream "has notes?" predicate stays simple.
 //
-//      Workout-level notes sheet title:        "Workout Notes"
-//      Workout-level notes placeholder:        "Notes for this session"
-//      Workout-level notes "Done" toolbar:     "Done"
-//
-//  ## Binding semantics
-//
-//  Binds directly to the `@Bindable session: Session`'s `notes: String?`
-//  field via a `Binding(get:set:)` that normalizes empty strings to `nil`
-//  on write — keeps the persisted column free of blank entries so any
-//  downstream "has notes?" predicate stays simple (`session.notes != nil`).
-//
-//  UI-SPEC anti-pattern explicitly avoided: there is NO "Save" button.
-//  The toolbar carries only "Done" (top-bar trailing). The TextField writes
-//  through to the model on every keystroke via the binding; the sheet's
-//  dismissal is decoupled from persistence.
-//
+// BRU contract:
+//   NO .navigationTitle / NO .toolbar with system chrome
+//   NO Capsule() / NO RoundedRectangle / NO accentColor
+//   NO Image(systemName:) / NO .font(.body/.headline/.title/.caption)
+//   NO Color(.system*)
 
 import SwiftUI
 
@@ -37,21 +30,61 @@ public struct WorkoutNotesSheet: View {
 
     public var body: some View {
         NavigationStack {
-            Form {
-                Section {
-                    TextField("Notes for this session", text: Binding(         // UI-SPEC verbatim placeholder
-                        get: { session.notes ?? "" },
-                        set: { session.notes = $0.isEmpty ? nil : $0 }
-                    ), axis: .vertical)
-                    .lineLimit(5...)
+            ZStack(alignment: .top) {
+                Color.bruPaper.ignoresSafeArea()
+
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 16) {
+                        // Spacer for BRUHeaderBar height (46pt = 44pt + 2pt rule)
+                        Color.clear.frame(height: 46)
+
+                        // TextEditor with 2pt bruInk border per UI-SPEC line 575
+                        TextEditor(text: Binding(
+                            get: { session.notes ?? "" },
+                            set: { session.notes = $0.isEmpty ? nil : $0 }
+                        ))
+                        .font(BRUFont.bodyDefault)
+                        .foregroundStyle(Color.bruInk)
+                        .frame(minHeight: 200)
+                        .padding(8)
+                        .overlay(
+                            Rectangle()
+                                .stroke(Color.bruInk, lineWidth: 2)
+                        )
+
+                        // Placeholder hint
+                        Text("Notes for this session")                             // placeholder hint
+                            .font(BRUFont.labelSmall)
+                            .tracking(0.5)
+                            .foregroundStyle(Color.bruMuted)
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.bottom, 16)
                 }
             }
-            .navigationTitle("Workout Notes")                                  // UI-SPEC verbatim
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button("Done") { dismiss() }                               // UI-SPEC verbatim
-                }
+            .navigationBarHidden(true)
+            .safeAreaInset(edge: .top, spacing: 0) {
+                BRUHeaderBar(
+                    left: HeaderAction("CANCEL") { dismiss() },                    // UI-SPEC verbatim
+                    center: "WORKOUT NOTES",                                       // UI-SPEC verbatim
+                    right: HeaderAction("SAVE", isSignal: true) { dismiss() }      // UI-SPEC verbatim
+                )
             }
         }
     }
 }
+
+#if DEBUG
+#Preview("workout notes sheet") {
+    let container = PreviewModelContainer.make()
+    let ctx = ModelContext(container)
+    let session = Session()
+    session.startedAt = .now
+    session.routineSnapshotName = "Push Day A"
+    session.notes = "Felt strong today"
+    ctx.insert(session)
+    try? ctx.save()
+    return WorkoutNotesSheet(session: session)
+        .modelContainer(container)
+}
+#endif

@@ -1,31 +1,21 @@
+// ClusterSubRepChipRow.swift
+// fitbod
 //
-//  ClusterSubRepChipRow.swift
-//  fitbod
+// BRU rewrite — Phase 2.1 Plan 08 (Wave 4, UI-REVIEW item 41).
+// UI-SPEC v2 § Session logger line 384 + 349.
 //
-//  Wave-4 plan 04-02 — rest-pause sub-rep chip row (SESS-08). Renders
-//  only when the parent `SessionExerciseCard` decides the set's
-//  `setType == .restPause` (cluster / rest-pause set type chosen via
-//  the SetTypeChip cycling/menu).
+// Rest-pause sub-rep chip row (SESS-08). Renders only when the set's
+// setType == .restPause (cluster / rest-pause set type).
 //
-//  ## UI-SPEC verbatim
+// UI-SPEC verbatim:
+//   Leading label:  "SUB-REPS:"  (labelSmall 10pt, 1.2 letterspacing)
+//   Chips:          1pt bruInk-outlined Rectangle (NOT a Capsule — UI-SPEC line 349)
+//   Trailing "+":   1pt bruSignal stroke + bruSignal text per UI-SPEC line 384 + 257
 //
-//  "Sub-reps:" prefix, followed by a chip per logged sub-rep (e.g.
-//  `[8] [3] [2]`) and a trailing `[+]` chip to add another. Each chip
-//  is a Capsule with `Color(.systemGray5)` background and a `.caption`
-//  rep-count label (UI-SPEC § Session logger
-//  "Cluster / rest-pause sub-rep chip row").
-//
-//  ## Persistence semantics
-//
-//  Reads/writes via the `entry.clusterSubReps: [Int]` computed accessor
-//  from plan 00-01 (Phase 1 SetEntry extension). The accessor encodes
-//  the array as a comma-separated string in
-//  `SetEntry.clusterSubRepsJoined`, so an empty array round-trips to
-//  `nil`. The first tap on `[+]` appends `1` (the most common rest-pause
-//  miniset count); the user can override the chip's value in a later
-//  Phase 6 polish (chip-tap-to-edit pattern explicitly deferred per the
-//  plan body).
-//
+// BRU contract:
+//   NO Capsule() — explicitly banned per UI-SPEC line 349
+//   NO RoundedRectangle / NO accentColor / NO Color(.system*)
+//   NO Image(systemName:) / NO .font(.body/.headline/.title/.caption)
 
 import SwiftUI
 import SwiftData
@@ -38,37 +28,51 @@ public struct ClusterSubRepChipRow: View {
     }
 
     public var body: some View {
-        HStack(spacing: 4) {                                                    // UI-SPEC xs
-            Text("Sub-reps:")                                                   // UI-SPEC verbatim
-                .font(.caption)
-                .foregroundStyle(.secondary)
-            ForEach(Array(entry.clusterSubReps.enumerated()), id: \.offset) { _, reps in
+        HStack(spacing: 4) {
+            // Leading section label per UI-SPEC line 384
+            Text("SUB-REPS:")                                                       // UI-SPEC verbatim
+                .font(BRUFont.labelSmall)
+                .tracking(1.2)
+                .textCase(.uppercase)
+                .foregroundStyle(Color.bruMuted)
+
+            // Per-index sub-rep chips — Rectangle-outlined, NOT Capsule (UI-SPEC line 349)
+            ForEach(Array(entry.clusterSubReps.enumerated()), id: \.offset) { idx, reps in
                 Text("\(reps)")
-                    .font(.caption)
-                    .padding(.horizontal, 8)                                    // UI-SPEC sm
-                    .padding(.vertical, 4)                                      // UI-SPEC xs
-                    .background(Color(.systemGray5))
-                    .clipShape(Capsule())
+                    .font(BRUFont.bodyDefault)
+                    .monospacedDigit()
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 4)
+                    .frame(minHeight: 32)
+                    .overlay(
+                        Rectangle()
+                            .stroke(Color.bruInk, lineWidth: 1)
+                    )
             }
+
+            // Trailing "+" add-chip — bruSignal outline + text per UI-SPEC line 384 + 257
             Button {
                 addSubRep()
             } label: {
-                Text("+")                                                       // UI-SPEC verbatim
-                    .font(.caption)
-                    .padding(.horizontal, 8)                                    // UI-SPEC sm
-                    .padding(.vertical, 4)                                      // UI-SPEC xs
-                    .background(Color(.systemGray5))
-                    .clipShape(Capsule())
+                Text("+")                                                           // UI-SPEC verbatim
+                    .font(BRUFont.bodyDefault)
+                    .foregroundStyle(Color.bruSignal)
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 4)
+                    .frame(minHeight: 32)
+                    .overlay(
+                        Rectangle()
+                            .stroke(Color.bruSignal, lineWidth: 1)
+                    )
             }
             .buttonStyle(.plain)
+
             Spacer()
         }
-        .padding(.vertical, 4)                                                  // UI-SPEC xs
+        .padding(.vertical, 4)
     }
 
-    /// Appends a new sub-rep entry. Defaults to 1 — the chip-tap-to-edit
-    /// cycle (so the user can bump to 2, 3, …) is explicitly deferred to
-    /// Phase 6 polish per the plan body's anti-patterns callout.
+    /// Appends a new sub-rep entry. Defaults to 1 — chip-tap-to-edit deferred to Phase 6.
     private func addSubRep() {
         var subs = entry.clusterSubReps
         subs.append(1)
@@ -76,6 +80,7 @@ public struct ClusterSubRepChipRow: View {
     }
 }
 
+#if DEBUG
 #Preview("cluster sub-rep chip row") {
     let container = PreviewModelContainer.make()
     let ctx = ModelContext(container)
@@ -93,4 +98,6 @@ public struct ClusterSubRepChipRow: View {
     return ClusterSubRepChipRow(entry: entry)
         .modelContainer(container)
         .padding()
+        .background(Color.bruPaper)
 }
+#endif

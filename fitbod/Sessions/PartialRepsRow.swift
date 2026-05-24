@@ -1,26 +1,24 @@
+// PartialRepsRow.swift
+// fitbod
 //
-//  PartialRepsRow.swift
-//  fitbod
+// BRU rewrite — Phase 2.1 Plan 08 (Wave 4, UI-REVIEW item 40).
+// UI-SPEC v2 § Session logger line 383.
 //
-//  Wave-4 plan 04-02 — opt-in partial reps row (SESS-08). Renders only
-//  when the parent `SessionExerciseCard` decides
-//  `sessionExercise.tracksPartialReps == true` (snapshotted from the
-//  source `RoutineExercise.tracksPartialReps` at SessionFactory time).
+// Opt-in partial reps row (SESS-08). Renders only when the parent
+// SessionExerciseCard decides sessionExercise.tracksPartialReps == true.
 //
-//  ## UI-SPEC verbatim
+// UI-SPEC verbatim:
+//   Leading section label: "PARTIAL REPS"   (labelSmall 10pt, 1.2 letterspacing)
+//   Field:                 BRUFont.bodyDefault mono 12pt, outlined Rectangle 1pt bruInk
 //
-//  "Partial reps" leading caption, followed by a single small numeric
-//  `TextField` with placeholder "0" (UI-SPEC § Session logger
-//  "Partial reps row label"). Captures the partial-rep count
-//  performed after the main set hit failure (e.g. lengthened partials
-//  beyond the working set).
+// Persistence semantics:
+//   Empty → partialReps = nil (no zero ghosts in history).
+//   Non-empty numeric → partialReps = Int(newValue).
 //
-//  ## Persistence semantics
-//
-//  Empty input → `entry.partialReps = nil` (no zero ghosts in history).
-//  Non-empty numeric input → `entry.partialReps = Int(newValue)`. The
-//  Phase 1 `SetEntry.partialReps: Int?` field is the destination.
-//
+// BRU contract:
+//   NO Capsule() / NO RoundedRectangle / NO accentColor
+//   NO Image(systemName:) / NO .font(.body/.headline/.title/.caption)
+//   NO Color(.system*)
 
 import SwiftUI
 import SwiftData
@@ -34,27 +32,39 @@ public struct PartialRepsRow: View {
     }
 
     public var body: some View {
-        HStack(spacing: 8) {                                                    // UI-SPEC sm
-            Text("Partial reps")                                                // UI-SPEC verbatim
-                .font(.caption)
-                .foregroundStyle(.secondary)
-            TextField("0", text: $partialsText)
+        HStack(spacing: 8) {
+            // Leading section label per UI-SPEC line 383
+            Text("PARTIAL REPS")                                                    // UI-SPEC verbatim
+                .font(BRUFont.labelSmall)
+                .tracking(1.2)
+                .textCase(.uppercase)
+                .foregroundStyle(Color.bruMuted)
+
+            // Mono TextField with 1pt bruInk outlined Rectangle
+            TextField("—", text: $partialsText)
+                .font(BRUFont.bodyDefault)
+                .monospacedDigit()
+                .multilineTextAlignment(.trailing)
                 .keyboardType(.numberPad)
-                .frame(width: 40)
-                .multilineTextAlignment(.center)
-                .font(.caption)
+                .frame(minWidth: 40, minHeight: 32)
+                .overlay(
+                    Rectangle()
+                        .stroke(Color.bruInk, lineWidth: 1)
+                )
                 .onChange(of: partialsText) { _, newValue in
                     entry.partialReps = newValue.isEmpty ? nil : Int(newValue)
                 }
+
             Spacer()
         }
-        .padding(.vertical, 4)                                                  // UI-SPEC xs
+        .padding(.vertical, 4)
         .onAppear {
             partialsText = entry.partialReps.map(String.init) ?? ""
         }
     }
 }
 
+#if DEBUG
 #Preview("partial reps row") {
     let container = PreviewModelContainer.make()
     let ctx = ModelContext(container)
@@ -72,4 +82,6 @@ public struct PartialRepsRow: View {
     return PartialRepsRow(entry: entry)
         .modelContainer(container)
         .padding()
+        .background(Color.bruPaper)
 }
+#endif

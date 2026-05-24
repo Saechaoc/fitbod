@@ -1,28 +1,24 @@
+// PerSetNoteSheet.swift
+// fitbod
 //
-//  PerSetNoteSheet.swift
-//  fitbod
+// BRU rewrite — Phase 2.1 Plan 08 (Wave 4, UI-REVIEW item 37).
+// UI-SPEC v2 § Session logger line 380.
 //
-//  Wave-4 plan 04-03 — per-set form-note editor. Presented as a sheet from
-//  the SetRow's notes button (the `square.and.pencil` icon anchored before
-//  the completion checkmark by plan 04-01 as a TODO; this plan ships the
-//  real sheet plus the button wire on the SetRow).
+// Per-set form-note editor. Presented as a sheet from the SetRow's notes
+// button. Replaces the default NavigationStack + Form + .navigationTitle
+// chrome with BRUHeaderBar + styled TextEditor.
 //
-//  ## UI-SPEC § Session logger verbatim copy
+// UI-SPEC verbatim copy:
+//   Sheet title:        "SET {N} NOTE"
+//   Left action:        "CANCEL"
+//   Right action:       "SAVE"  (bruSignal)
+//   Placeholder text:   "e.g. right knee caved on rep 7"
 //
-//      Per-set notes sheet title:              "Set {N} Note"
-//      Per-set notes placeholder:              "e.g. right knee caved on rep 7"
-//      Per-set notes "Done" toolbar:           "Done"
-//
-//  The "Set {N} Note" title uses `entry.orderIndex + 1` to render the set
-//  number in user-facing 1-based form.
-//
-//  ## Binding semantics
-//
-//  Binds directly to the `@Bindable entry: SetEntry`'s `notes: String?`
-//  field with the same empty-string → nil normalization as
-//  `WorkoutNotesSheet`. Keeps "has notes?" predicates clean for any later
-//  surface (e.g. an "all sets with form notes" history filter).
-//
+// BRU contract:
+//   NO .navigationTitle / NO .toolbar with system chrome
+//   NO Capsule() / NO RoundedRectangle / NO accentColor
+//   NO Image(systemName:) / NO .font(.body/.headline/.title/.caption)
+//   NO Color(.system*)
 
 import SwiftUI
 
@@ -36,21 +32,66 @@ public struct PerSetNoteSheet: View {
 
     public var body: some View {
         NavigationStack {
-            Form {
-                Section {
-                    TextField("e.g. right knee caved on rep 7", text: Binding( // UI-SPEC verbatim placeholder
-                        get: { entry.notes ?? "" },
-                        set: { entry.notes = $0.isEmpty ? nil : $0 }
-                    ), axis: .vertical)
-                    .lineLimit(3...)
+            ZStack(alignment: .top) {
+                Color.bruPaper.ignoresSafeArea()
+
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 16) {
+                        // Spacer for BRUHeaderBar height (46pt = 44pt + 2pt rule)
+                        Color.clear.frame(height: 46)
+
+                        // TextEditor with 2pt bruInk border per UI-SPEC line 575
+                        TextEditor(text: Binding(
+                            get: { entry.notes ?? "" },
+                            set: { entry.notes = $0.isEmpty ? nil : $0 }
+                        ))
+                        .font(BRUFont.bodyDefault)
+                        .foregroundStyle(Color.bruInk)
+                        .frame(minHeight: 200)
+                        .padding(8)
+                        .overlay(
+                            Rectangle()
+                                .stroke(Color.bruInk, lineWidth: 2)
+                        )
+
+                        // Placeholder hint
+                        Text("e.g. right knee caved on rep 7")                    // UI-SPEC verbatim placeholder
+                            .font(BRUFont.labelSmall)
+                            .tracking(0.5)
+                            .foregroundStyle(Color.bruMuted)
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.bottom, 16)
                 }
             }
-            .navigationTitle("Set \(entry.orderIndex + 1) Note")               // UI-SPEC verbatim format
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button("Done") { dismiss() }
-                }
+            .navigationBarHidden(true)
+            .safeAreaInset(edge: .top, spacing: 0) {
+                BRUHeaderBar(
+                    left: HeaderAction("CANCEL") { dismiss() },                    // UI-SPEC verbatim
+                    center: "SET \(entry.orderIndex + 1) NOTE",                    // UI-SPEC verbatim format
+                    right: HeaderAction("SAVE", isSignal: true) { dismiss() }      // UI-SPEC verbatim
+                )
             }
         }
     }
 }
+
+#if DEBUG
+#Preview("per-set note sheet") {
+    let container = PreviewModelContainer.make()
+    let ctx = ModelContext(container)
+    let ex = Exercise.previewSample(name: "Bench", equipment: .barbell, mechanic: .compound)
+    ctx.insert(ex)
+    let se = SessionExercise()
+    se.exercise = ex
+    ctx.insert(se)
+    let entry = SetEntry()
+    entry.sessionExercise = se
+    entry.orderIndex = 2
+    entry.notes = "right knee caved on rep 7"
+    ctx.insert(entry)
+    try? ctx.save()
+    return PerSetNoteSheet(entry: entry)
+        .modelContainer(container)
+}
+#endif
