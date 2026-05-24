@@ -1,23 +1,21 @@
+// RestTimerLockScreenView.swift
+// FitbodWidgets
 //
-//  RestTimerLockScreenView.swift
-//  FitbodWidgets
+// BRU brutalist lock-screen Live Activity card — rewritten for Phase 2.1
+// (UI-REVIEW Wave E item 54). The legacy `.headline` / `.title2.semibold`
+// system fonts and accentColor tint are replaced with the BRU palette.
 //
-//  The non-Dynamic-Island Live Activity layout — the lock-screen card and
-//  banner pull-down. UI-SPEC § Live Activity (non-Dynamic-Island, iPhone
-//  14+ lock screen card) verbatim:
+// Layout: paper-on-ink hero (UI-SPEC v2 line 384).
+//   - Background: Color.bruInk (full-bleed)
+//   - HStack: VStack(leading) { "REST TIMER" labelSmall + exercise name
+//             displayLarge } + Spacer + countdown displayHero (trailing)
+//   - Bottom overlay: 4pt Color.bruSignal progress bar (UI-SPEC line 421)
 //
-//    - Header: "Rest Timer" (`.headline`)
-//    - Body: the current exercise's name (`.body`, `.secondaryLabel`)
-//    - Trailing: countdown in `.title2 .semibold .monospacedDigit`
-//    - Bottom: a thin accent-color progress bar inset 16pt
+// Stateless presentation — `state` and `exerciseName` are pushed in from
+// the parent `ActivityConfiguration` content closure on every render.
+// No internal Timer; redraw cadence is driven by ActivityKit.
 //
-//  Spacing follows UI-SPEC § Spacing tokens — `sm` (8pt) between rows,
-//  parent applies `lg` (16pt) padding in `RestTimerLiveActivity` body.
-//
-//  Stateless presentation — `state` and `exerciseName` are pushed in from
-//  the parent `ActivityConfiguration` content closure on every render.
-//  No internal `Timer`; redraw cadence is driven by ActivityKit.
-//
+// UI-REVIEW Wave E item 54 (lock screen card).
 
 import SwiftUI
 
@@ -32,34 +30,96 @@ public struct RestTimerLockScreenView: View {
     }
 
     public var body: some View {
-        VStack(alignment: .leading, spacing: 8) {                            // UI-SPEC § Spacing sm
-            HStack {
-                Text("Rest Timer")                                           // UI-SPEC verbatim header
-                    .font(.headline)
-                Spacer()
-                Text(remainingText)                                          // countdown trailing
-                    .font(.title2)
-                    .fontWeight(.semibold)
-                    .monospacedDigit()
+        HStack(spacing: 16) {
+            VStack(alignment: .leading, spacing: 6) {
+                // Header label — labelSmall bruPaper, UPPERCASE
+                Text("REST TIMER")
+                    .font(BRUFont.labelSmall)
+                    .tracking(1.5)
+                    .textCase(.uppercase)
+                    .foregroundStyle(Color.bruPaper)
+
+                // Exercise name — displayLarge bruPaper
+                Text(exerciseName)
+                    .font(BRUFont.displayLarge)
+                    .tracking(-0.3)
+                    .foregroundStyle(Color.bruPaper)
+                    .lineLimit(1)
+                    .truncationMode(.tail)
             }
-            Text(exerciseName)                                               // UI-SPEC verbatim body
-                .font(.body)
-                .foregroundStyle(.secondary)
-            ProgressView(value: elapsed, total: max(1, Double(state.targetSeconds)))
-                .tint(Color.accentColor)                                     // UI-SPEC accent surface #17
+
+            Spacer()
+
+            // Countdown — displayHero bruPaper, right-aligned
+            Text(remainingText)
+                .font(BRUFont.displayHero)
+                .monospacedDigit()
+                .foregroundStyle(Color.bruPaper)
+        }
+        .padding(16)
+        .background(Color.bruInk)  // paper-on-ink hero (UI-SPEC line 384)
+        // 4pt bruSignal progress bar at the bottom (UI-SPEC line 421)
+        .overlay(alignment: .bottom) {
+            GeometryReader { geo in
+                ZStack(alignment: .leading) {
+                    Rectangle()
+                        .fill(Color.bruFaint)
+                        .frame(height: 4)
+                    Rectangle()
+                        .fill(Color.bruSignal)
+                        .frame(width: geo.size.width * progressFraction, height: 4)
+                }
+            }
+            .frame(height: 4)
         }
     }
 
-    /// Elapsed seconds since the rest started. Computed every render pass.
+    // MARK: - Helpers
+
+    /// Elapsed seconds since the rest started.
     private var elapsed: Double {
         max(0, Date.now.timeIntervalSince(state.startedAt))
     }
 
-    /// Formatted "M:SS" countdown — see `RestTimerLiveActivity.remainingText`
-    /// for the post-zero overrun behavior (clamps at "0:00").
+    /// Remaining time clamped at 0 — "0:00" when overrun.
     private var remainingText: String {
         let remaining = max(0, Double(state.targetSeconds) - elapsed)
         let s = Int(remaining)
         return String(format: "%d:%02d", s / 60, s % 60)
     }
+
+    /// Progress fraction: 1.0 at start, 0.0 at complete.
+    private var progressFraction: Double {
+        let total = max(1, Double(state.targetSeconds))
+        let remaining = max(0, total - elapsed)
+        return min(1, remaining / total)
+    }
 }
+
+// MARK: - Preview
+
+#if DEBUG
+@available(iOS 16.1, *)
+#Preview("Lock Screen — 2:30 remaining") {
+    RestTimerLockScreenView(
+        state: RestTimerAttributes.ContentState(
+            startedAt: Date.now.addingTimeInterval(-30),
+            targetSeconds: 180
+        ),
+        exerciseName: "Bench Press"
+    )
+    .frame(maxWidth: .infinity)
+}
+
+@available(iOS 16.1, *)
+#Preview("Lock Screen — 0:15 remaining") {
+    RestTimerLockScreenView(
+        state: RestTimerAttributes.ContentState(
+            startedAt: Date.now.addingTimeInterval(-165),
+            targetSeconds: 180
+        ),
+        exerciseName: "Romanian Deadlift"
+    )
+    .frame(maxWidth: .infinity)
+}
+#endif
