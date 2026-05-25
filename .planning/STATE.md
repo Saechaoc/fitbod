@@ -2,19 +2,19 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: completed
-last_updated: "2026-05-24T18:06:15.877Z"
+status: executing
+last_updated: "2026-05-25T15:15:01.351Z"
 progress:
   total_phases: 12
   completed_phases: 11
   total_plans: 111
-  completed_plans: 105
+  completed_plans: 106
   percent: 95
 ---
 
 # Project State: Fitbod
 
-**Last updated:** 2026-05-24 (post 06.1-07 — BRUGrepAuditPhase6Tests + 3 UI smoke tests + 8 copy-test fixes; Phase 06.1 COMPLETE — all 7 plans shipped; BRU visual rewrite milestone closed)
+**Last updated:** 2026-05-25 (post 04.1-01 — Wave 0 foundation guard + 10 BRU primitive API extensions; BRUPrimitivesTests 11/11 GREEN; pbxproj widget exceptions wired)
 
 ---
 
@@ -32,10 +32,10 @@ progress:
 
 ## Current Position
 
-Phase: 03.2 (bru-visual-rewrite-prescription-warm-ups) — **COMPLETE (10/10 plans — 2026-05-24)**
-Plan: 10 of 10 — 03.2-10 complete (Wave 3: Phase3BRUGrepAuditTests 9/9 PASS + BRUGrepAuditTests 7 Phase-3 exclusions removed + 3 UI smoke test files shipped; Phase 03.2 fully closed).
+Phase: 04.1 (bru-visual-rewrite-periodization-blocks) — EXECUTING
+Plan: 2 of 8
 
-Next active phase: Phase 04.1 (BRU Visual Rewrite — Periodization & Blocks) — 0/8 plans complete.
+Next active phase: Phase 04.1 (BRU Visual Rewrite — Periodization & Blocks) — 1/8 plans complete (04.1-01 Wave 0 foundation guard + 10 BRU primitives with 04.1 API contracts; BRUPrimitivesTests 11/11 GREEN).
 
 Phase 6 status (for reference — previously active):
 Phase: 6 (progress-views-export-polish) — **IN PROGRESS (10/11 plans complete — 2026-05-23; 06-10 backup/restore remaining)**
@@ -126,7 +126,7 @@ Plan: 8 of 8 (all plans complete; Phase 3.1 closed). Production tree compiles en
 **Plan:** 03-02 complete (Wave 3, seq 2) — `RoutineBuilderView` single-screen builder with inline `.searchable` exercise picker (reuses Phase 1 `ExerciseLibraryView` via additive `init(onSelect:)` overload), always-on drag-handle reorder via `.environment(\.editMode, .constant(.active))`, per-exercise `PrescriptionEditorRow` (intent / sets / reps / RPE / progression / rest / tempo toggle + 4-field entry / partials toggle / disabled Auto warm-up Phase 3 footnote / per-set overrides disclosure). `RoutineDraft` `@Observable` ephemeral mutation surface (FOUND-06 / MV-VM-lite, no parallel ViewModel) with `targetSets.didSet` prune (RESEARCH §6 Pitfall 8) and three-way merge `save(into:context:)`. `PrescriptionDefaults` ROUTINE-09 heuristic (compound → 180s, isolation → 90s; barbell+compound → strength 4-6, otherwise hypertrophy 8-12). 12 new `@Test` functions across 4 test files. Four atomic commits.
 
 **Plan:** 03-01 complete (Wave 3, seq 1) — Routines tab `RoutinesListView` + folders + Resume Workout banner. See plan 03-01 SUMMARY for details.
-**Status:** Phase 5 **COMPLETE** (6 of 6 plans; 11 of 11 requirements closed — 2026-05-23). Phase 6 (Progress Views, Export & Polish) is next per dependency graph.
+**Status:** Executing Phase 04.1
 **Progress:** [██████████] 95%
 
 ### Phase Outlook

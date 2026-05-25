@@ -198,7 +198,7 @@ Plans:
 **Plans:** 8 plans (8 waves)
 
 **Plan list:**
-- [ ] 04.1-01-PLAN.md — Wave 0: Foundation precondition guard + 10 BRU primitive components (BRUChip / BRUHeaderBar / BRUSectionHead / BRUButton / BRUDivider / BRUDashedSlot / BRUPillButton / BRUDisplay / BRUReadout / BRUCornerBadge)
+- [x] 04.1-01-PLAN.md — Wave 0: Foundation precondition guard + 10 BRU primitive components (BRUChip / BRUHeaderBar / BRUSectionHead / BRUButton / BRUDivider / BRUDashedSlot / BRUPillButton / BRUDisplay / BRUReadout / BRUCornerBadge) — COMPLETE (feca3c7; BRUPrimitivesTests 11/11 GREEN)
 - [ ] 04.1-02-PLAN.md — Wave 1: BlockPhaseColors palette flip (ink/signal/quiet/Canvas-stripe) + drawDeloadStripes helper + rowTint helper
 - [ ] 04.1-03-PLAN.md — Wave 2: Small re-skins (BlockRow + BlockPickerMenu + StartBlockCTA + DeloadWeekBanner + ConsiderDeloadBanner with D-16 + D-17)
 - [ ] 04.1-04-PLAN.md — Wave 3: Medium re-skins (BlockCard with D-14 + D-15 + week ticker + MesocycleWeekPage + BlockPhaseEditorRow with D-15 + 3-column data grid + RoutinesListView.blocksSection with D-09 copy fix)
