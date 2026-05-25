@@ -484,15 +484,10 @@ public struct BlockOverviewScreen: View {
             }
         }()
 
-        ZStack(alignment: .leading) {
-            // NOW row left-edge signal stripe
-            if isNow {
-                Rectangle()
-                    .fill(Color.bruSignal)
-                    .frame(width: 4)
-            }
-        }
-
+        // CR-02 fix: removed orphan ZStack that previously sat above the HStack
+        // emitting a stray signal-stripe Rectangle as a sibling view. The
+        // `.overlay(alignment: .leading)` on the HStack below is the single
+        // source of truth for the NOW row's left-edge signal stripe.
         HStack(alignment: .top, spacing: 10) {
             Text(weekRange)
                 .font(.custom("JetBrainsMono-Bold", size: 10))
