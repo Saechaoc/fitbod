@@ -60,7 +60,11 @@ public struct BlockOverviewScreen: View {
         self.onEdit = onEdit
 
         let now = Date.now
-        let cal = Calendar.current
+        // CR-01 fix: pin to a Monday-first ISO-8601 calendar so the grid's
+        // hardcoded `weekdayLetters = ["M", "T", "W", "T", "F", "S", "S"]`
+        // (see `dayCell(for:offset:)`) lines up with the actual cellDate
+        // regardless of the user's locale firstWeekday (en_US = Sunday).
+        let cal = Self.mondayFirstCalendar
         let start = cal.dateInterval(of: .weekOfYear, for: now)?.start ?? now
         let end = cal.date(byAdding: .day, value: 7, to: start) ?? start
         self.weekStart = start
@@ -75,6 +79,15 @@ public struct BlockOverviewScreen: View {
             },
             sort: [SortDescriptor(\Session.startedAt)]
         )
+    }
+
+    /// Monday-first calendar for week-carousel cell alignment. ISO-8601 always
+    /// uses Monday as `firstWeekday`; explicit `.iso8601` identifier removes any
+    /// dependence on the device locale.
+    private static var mondayFirstCalendar: Calendar {
+        var cal = Calendar(identifier: .iso8601)
+        cal.firstWeekday = 2 // 1 = Sunday, 2 = Monday
+        return cal
     }
 
     // MARK: - Body
