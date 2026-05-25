@@ -53,6 +53,20 @@ struct BRUPrimitivesTests {
         return try String(contentsOf: url, encoding: .utf8)
     }
 
+    /// Returns the source file with single-line comment lines removed.
+    /// This prevents false-positive forbidden-shape checks on documentation lines
+    /// like `// BRU contract: NO Capsule() / NO RoundedRectangle` which appear in
+    /// every primitive's file header as prohibition reminders.
+    private func loadCodeOnly(for name: String) throws -> String {
+        let source = try loadSource(for: name)
+        let codeLines = source.split(separator: "\n", omittingEmptySubsequences: false)
+            .filter { line in
+                let trimmed = line.trimmingCharacters(in: .whitespaces)
+                return !trimmed.hasPrefix("//")
+            }
+        return codeLines.joined(separator: "\n")
+    }
+
     // MARK: - Task 1: BRUChip call-shape + source-anchor
 
     @Test("bruChipCallShapeCompiles — 04.1 interface contract")
@@ -63,18 +77,23 @@ struct BRUPrimitivesTests {
         _ = BRUChip("ACTIVE", color: .bruSignal, fill: true)
         _ = BRUChip("Compound", textCase: nil)
 
-        // Source-anchor: verify the implementation references BRU tokens
+        // Source-anchor: verify the implementation references BRU tokens.
+        // Use loadSource for positive checks (tokens must be present).
+        // Use loadCodeOnly for negative checks (forbidden shapes must be absent),
+        // stripping single-line comments to avoid false positives from documentation
+        // like "// BRU contract: NO Capsule() / NO RoundedRectangle".
         let source = try loadSource(for: "BRUChip")
+        let codeOnly = try loadCodeOnly(for: "BRUChip")
         #expect(source.contains("Color.bruInk"),
                 "BRUChip.swift must reference Color.bruInk for outline/fill color")
         #expect(source.contains("BRUFont.labelSmall"),
                 "BRUChip.swift must reference BRUFont.labelSmall for chip text")
         #expect(source.contains(".tracking("),
                 "BRUChip.swift must apply .tracking() for 1.2 letterspacing")
-        #expect(!source.contains("RoundedRectangle("),
-                "BRUChip.swift must NOT use RoundedRectangle — sharp-cornered Rectangle only")
-        #expect(!source.contains("Capsule()"),
-                "BRUChip.swift must NOT use Capsule() — sharp-cornered Rectangle only")
+        #expect(!codeOnly.contains("RoundedRectangle("),
+                "BRUChip.swift must NOT use RoundedRectangle in code — sharp-cornered Rectangle only")
+        #expect(!codeOnly.contains("Capsule()"),
+                "BRUChip.swift must NOT use Capsule() in code — sharp-cornered Rectangle only")
     }
 
     // MARK: - Task 2: BRUHeaderBar call-shape + source-anchor
@@ -85,11 +104,12 @@ struct BRUPrimitivesTests {
         _ = BRUHeaderBar(center: "Today")
         _ = BRUHeaderBar(left: HeaderAction("‹") {}, center: "Edit")
 
-        // Phase 04.1 HeaderSlot init per 02-UI-SPEC.md line 511:
-        //   BRUHeaderBar(left: HeaderSlot? = nil, center: String? = nil, right: HeaderSlot? = nil)
-        _ = BRUHeaderBar(left: .back, center: "Block · Upper Hyp", right: .action("EDIT") {})
-        _ = BRUHeaderBar(left: .cancel, center: "Add Phase")
-        _ = BRUHeaderBar(left: .none, center: "Title", right: .text("INFO"))
+        // Phase 04.1 HeaderSlot factory per 02-UI-SPEC.md line 511:
+        //   BRUHeaderBar.slots(left: HeaderSlot? = nil, center: String? = nil, right: HeaderSlot? = nil)
+        // Factory avoids Swift overload ambiguity with the legacy HeaderAction? init.
+        _ = BRUHeaderBar.slots(left: .back, center: "Block · Upper Hyp", right: .action("EDIT") {})
+        _ = BRUHeaderBar.slots(left: .cancel, center: "Add Phase")
+        _ = BRUHeaderBar.slots(left: .empty, center: "Title", right: .text("INFO"))
 
         let source = try loadSource(for: "BRUHeaderBar")
         #expect(source.contains("Color.bruPaper"),
@@ -135,16 +155,17 @@ struct BRUPrimitivesTests {
         _ = BRUButton("Plan custom", kind: .ghost) {}
 
         let source = try loadSource(for: "BRUButton")
-        #expect(source.contains("Color.bruInk"),
-                "BRUButton.swift must reference Color.bruInk for .primary fill and .ghost border")
-        #expect(source.contains("Color.bruSignal"),
-                "BRUButton.swift must reference Color.bruSignal for .signal fill")
-        #expect(source.contains("Color.bruPaper"),
-                "BRUButton.swift must reference Color.bruPaper for text on filled kinds")
+        let codeOnly = try loadCodeOnly(for: "BRUButton")
+        #expect(source.contains("Color.bruInk") || source.contains(".bruInk"),
+                "BRUButton.swift must reference bruInk for .primary fill and .ghost border")
+        #expect(source.contains("Color.bruSignal") || source.contains(".bruSignal"),
+                "BRUButton.swift must reference bruSignal for .signal fill")
+        #expect(source.contains("Color.bruPaper") || source.contains(".bruPaper"),
+                "BRUButton.swift must reference bruPaper for text on filled kinds")
         #expect(source.contains("BRUFont.labelSmall"),
                 "BRUButton.swift must reference BRUFont.labelSmall for button text")
-        #expect(!source.contains("RoundedRectangle("),
-                "BRUButton.swift must NOT use RoundedRectangle — sharp 0-radius corners only")
+        #expect(!codeOnly.contains("RoundedRectangle("),
+                "BRUButton.swift must NOT use RoundedRectangle in code — sharp 0-radius corners only")
     }
 
     // MARK: - Task 5: BRUDivider call-shape + source-anchor
@@ -179,14 +200,15 @@ struct BRUPrimitivesTests {
         _ = BRUDashedSlot(label: "Add exercise", hint: "↘ FROM LIBRARY") {}
 
         let source = try loadSource(for: "BRUDashedSlot")
+        let codeOnly = try loadCodeOnly(for: "BRUDashedSlot")
         #expect(source.contains("Color.bruInk") || source.contains(".bruInk"),
                 "BRUDashedSlot.swift must reference bruInk for dashed border color")
         #expect(source.contains("StrokeStyle"),
                 "BRUDashedSlot.swift must use StrokeStyle for dashed border rendering")
         #expect(source.contains(".tracking("),
                 "BRUDashedSlot.swift must apply .tracking() for letterspacing")
-        #expect(!source.contains("RoundedRectangle("),
-                "BRUDashedSlot.swift must NOT use RoundedRectangle")
+        #expect(!codeOnly.contains("RoundedRectangle("),
+                "BRUDashedSlot.swift must NOT use RoundedRectangle in code")
     }
 
     // MARK: - Task 7: BRUPillButton call-shape + source-anchor
@@ -200,14 +222,15 @@ struct BRUPrimitivesTests {
         _ = BRUPillButton("Apply changes ▸", fill: .bruInk) {}
 
         let source = try loadSource(for: "BRUPillButton")
+        let codeOnly = try loadCodeOnly(for: "BRUPillButton")
         #expect(source.contains("Color.bruPaper") || source.contains(".bruPaper"),
                 "BRUPillButton.swift must reference bruPaper for text color")
         #expect(source.contains("BRUFont.labelSmall"),
                 "BRUPillButton.swift must reference BRUFont.labelSmall for button text")
         #expect(source.contains(".tracking("),
                 "BRUPillButton.swift must apply .tracking() for letterspacing")
-        #expect(!source.contains("Capsule()"),
-                "BRUPillButton.swift must NOT use Capsule() — rectangular shape only")
+        #expect(!codeOnly.contains("Capsule()"),
+                "BRUPillButton.swift must NOT use Capsule() in code — rectangular shape only")
     }
 
     // MARK: - Task 8: BRUDisplay call-shape + source-anchor
@@ -268,14 +291,15 @@ struct BRUPrimitivesTests {
         _ = BRUCornerBadge("STR", fill: .bruInk)
 
         let source = try loadSource(for: "BRUCornerBadge")
+        let codeOnly = try loadCodeOnly(for: "BRUCornerBadge")
         #expect(source.contains("Color.bruPaper") || source.contains(".bruPaper"),
                 "BRUCornerBadge.swift must reference bruPaper for text color")
         #expect(source.contains("Color.bruSignal") || source.contains(".bruSignal"),
                 "BRUCornerBadge.swift must reference bruSignal as default fill color")
         #expect(source.contains(".textCase(.uppercase)") || source.contains("textCase(.uppercase)"),
                 "BRUCornerBadge.swift must apply uppercase text transform")
-        #expect(!source.contains("RoundedRectangle("),
-                "BRUCornerBadge.swift must NOT use RoundedRectangle — fill badge is rectangular")
+        #expect(!codeOnly.contains("RoundedRectangle("),
+                "BRUCornerBadge.swift must NOT use RoundedRectangle in code — fill badge is rectangular")
     }
 
     // MARK: - Task 11: allPrimitivesAvoidForbiddenShapes

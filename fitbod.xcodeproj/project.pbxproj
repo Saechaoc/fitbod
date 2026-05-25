@@ -80,9 +80,15 @@
 			membershipExceptions = (
 				Design/BRUButton.swift,
 				Design/BRUChip.swift,
+				Design/BRUCornerBadge.swift,
+				Design/BRUDashedSlot.swift,
 				Design/BRUDisplay.swift,
 				Design/BRUDivider.swift,
 				Design/BRUFont.swift,
+				Design/BRUHeaderBar.swift,
+				Design/BRUPillButton.swift,
+				Design/BRUReadout.swift,
+				Design/BRUSectionHead.swift,
 				"Design/Color+BRU.swift",
 				Sessions/RestTimer/RestTimerAttributes.swift,
 			);
