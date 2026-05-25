@@ -4,6 +4,9 @@
 //
 //  Phase-end review sheet for completed periodization blocks.
 //
+//  Phase 04.1 (BRU re-skin — NavigationStack+ScrollView+VStack body + ink hero band +
+//  GeometryReader e1RM bars + bottom action bar) — see 04.1-PATTERNS.md File #2
+//
 
 import Foundation
 import SwiftData
@@ -22,29 +25,38 @@ public struct BlockReviewView: View {
         self.block = block
     }
 
+    // MARK: - Body
+
     public var body: some View {
         let blockStart = block.startDate
         let blockEnd = block.endDate ?? Date.now
+        let recommendedKind = BlockReviewStatistics.recommendedNextKind(for: block)
 
         NavigationStack {
-            Form {
-                totalVolumeSection(blockStart: blockStart, blockEnd: blockEnd)
-                e1RMDeltasSection(blockStart: blockStart, blockEnd: blockEnd)
-                prsHitSectionPlaceholder
-                recommendedNextSection
-                if let acknowledgeError {
-                    Text(acknowledgeError)
-                        .font(.caption)
-                        .foregroundStyle(.red)
-                }
-            }
-            .navigationTitle("\(block.name) — review")
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button("Done") {
-                        acknowledgeAndDismiss()
+            VStack(spacing: 0) {
+                BRUHeaderBar.slots(
+                    left: .back,
+                    center: "Block review",
+                    right: .text("EXPORT")
+                )
+
+                ScrollView {
+                    VStack(spacing: 0) {
+                        heroBand(blockStart: blockStart, blockEnd: blockEnd)
+                        e1RMSection(blockStart: blockStart, blockEnd: blockEnd)
+                        recommendedNextBand(recommendedKind: recommendedKind)
+                        if let acknowledgeError {
+                            Text(acknowledgeError)
+                                .font(BRUFont.labelSmall)
+                                .foregroundStyle(Color.bruSignal)
+                                .padding(.horizontal, 16)
+                                .padding(.vertical, 8)
+                        }
                     }
                 }
+
+                bottomActionBar(recommendedKind: recommendedKind)
+                safeAreaFiller
             }
         }
         .sheet(item: $pendingNextBlockBuilder) { template in
@@ -54,13 +66,10 @@ public struct BlockReviewView: View {
         }
     }
 
-    private func totalVolumeSection(blockStart: Date, blockEnd: Date) -> some View {
+    // MARK: - Hero Band
+
+    private func heroBand(blockStart: Date, blockEnd: Date) -> some View {
         let totalKg = BlockReviewStatistics.totalVolume(
-            context: ctx,
-            start: blockStart,
-            end: blockEnd
-        )
-        let workingSetCount = BlockReviewStatistics.workingSetCount(
             context: ctx,
             start: blockStart,
             end: blockEnd
@@ -70,95 +79,268 @@ public struct BlockReviewView: View {
             start: blockStart,
             end: blockEnd
         )
+        let weekOfYear = Calendar.current.component(.weekOfYear, from: blockStart)
+        let formattedRange = formattedDateRange(start: blockStart, end: blockEnd)
 
-        return Section("Total volume") {
-            if workingSetCount == 0 {
-                Text("No logged sets in this block.")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            } else {
-                Text("\(BlockReviewStatistics.formattedKg(totalKg)) kg total")
-                    .font(.headline)
-                Text("\(workingSetCount) working sets across \(sessionsCount) sessions")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+        return VStack(alignment: .leading, spacing: 0) {
+            // Top label row
+            Text("BLOCK \(weekOfYear) · COMPLETE · \(formattedRange)")
+                .font(BRUFont.labelSmall)
+                .textCase(.uppercase)
+                .tracking(1.5)
+                .foregroundStyle(Color.bruPaper.opacity(0.6))
+
+            // Block name
+            Text(block.name)
+                .font(BRUFont.displayLarge)
+                .foregroundStyle(Color.bruPaper)
+                .padding(.top, 4)
+
+            // Three-column stat row
+            HStack(spacing: 0) {
+                statCell(
+                    label: "SESSIONS",
+                    value: "\(sessionsCount)",
+                    subLabel: "LOGGED",
+                    valueColor: Color.bruPaper
+                )
+                Spacer()
+                statCell(
+                    label: "TONNAGE",
+                    value: BlockReviewStatistics.formattedKg(totalKg),
+                    subLabel: "KG TOTAL",
+                    valueColor: Color.bruSignal
+                )
+                Spacer()
+                statCell(
+                    label: "PRS",
+                    value: "—",
+                    subLabel: "COMING IN PHASE 6",
+                    valueColor: Color.bruPaper
+                )
+            }
+            .padding(.top, 14)
+            .overlay(alignment: .top) {
+                Rectangle()
+                    .fill(Color.bruPaper.opacity(0.3))
+                    .frame(height: 2)
+                    .offset(y: 0)
+            }
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 16)
+        .background(Color.bruInk)
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private func statCell(
+        label: String,
+        value: String,
+        subLabel: String? = nil,
+        valueColor: Color
+    ) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(label)
+                .font(BRUFont.labelMicro)
+                .textCase(.uppercase)
+                .tracking(1.2)
+                .foregroundStyle(Color.bruPaper.opacity(0.6))
+            Text(value)
+                .font(BRUFont.displayHero)
+                .foregroundStyle(valueColor)
+            if let subLabel {
+                Text(subLabel)
+                    .font(BRUFont.labelMicro)
+                    .textCase(.uppercase)
+                    .tracking(1.0)
+                    .foregroundStyle(Color.bruPaper.opacity(0.6))
             }
         }
     }
 
-    private func e1RMDeltasSection(blockStart: Date, blockEnd: Date) -> some View {
+    // MARK: - e1RM Movement Section
+
+    private func e1RMSection(blockStart: Date, blockEnd: Date) -> some View {
         let deltas = BlockReviewStatistics.e1RMDeltas(
             context: ctx,
             start: blockStart,
             end: blockEnd
         )
+        let positiveCount = deltas.filter { $0.delta > 0 }.count
 
-        return Section("e1RM deltas") {
+        return VStack(spacing: 0) {
+            BRUSectionHead("e1RM movement", right: "↑ \(positiveCount) LIFTS")
+
             if deltas.isEmpty {
                 Text("Not enough sessions logged to compute deltas.")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .font(BRUFont.bodyDefault)
+                    .foregroundStyle(Color.bruMuted)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 12)
             } else {
-                ForEach(deltas, id: \.exerciseID) { delta in
-                    HStack {
-                        Text(delta.exerciseName)
-                        Spacer()
-                        Text(BlockReviewStatistics.formattedDelta(delta.delta))
-                            .foregroundStyle(color(for: delta.delta))
+                VStack(spacing: 0) {
+                    ForEach(deltas, id: \.exerciseID) { delta in
+                        e1RMRow(delta: delta)
+                        Rectangle()
+                            .fill(Color.bruHair)
+                            .frame(height: 1)
                     }
                 }
             }
         }
     }
 
-    private var prsHitSectionPlaceholder: some View {
-        Section("PRs hit") {
-            Text("Coming in Phase 6. Full PR detection ships with the progress views update.")
-                .font(.caption)
-                .foregroundStyle(.secondary)
+    private func e1RMRow(delta: BlockReviewE1RMDelta) -> some View {
+        // Compute start and end e1RM from delta
+        // delta.delta = end - start, so we derive a "start" visual from the delta magnitude
+        // For display, we show the delta as the progression value
+        let pct = min(1.0, abs(delta.delta) / 50.0)
+        let isPR = delta.delta > 0  // treat positive delta as PR eligible (Phase 6 will refine)
+
+        return VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 0) {
+                // Exercise name + optional PR chip
+                HStack(spacing: 6) {
+                    Text(delta.exerciseName)
+                        .font(BRUFont.bodyEmphasis)
+                        .foregroundStyle(Color.bruInk)
+                    if isPR {
+                        BRUChip("★ PR", color: .bruSignal, fill: true)
+                            .accessibilityHidden(true)
+                    }
+                }
+                Spacer()
+                // Delta display
+                HStack(spacing: 6) {
+                    Text(BlockReviewStatistics.formattedDelta(delta.delta))
+                        .font(BRUFont.labelSmall)
+                        .foregroundStyle(delta.delta > 0 ? Color.bruSignal : Color.bruInk)
+                }
+            }
+
+            // GeometryReader progress bar per 04.1-PATTERNS.md File #2 lines 322-335
+            GeometryReader { geo in
+                ZStack(alignment: .leading) {
+                    Rectangle()
+                        .fill(Color.bruHair)
+                        .frame(height: 4)
+                    Rectangle()
+                        .fill(Color.bruInk)
+                        .frame(width: geo.size.width * pct, height: 4)
+                    Rectangle()
+                        .fill(Color.bruSignal)
+                        .frame(width: 3, height: 12)
+                        .offset(x: geo.size.width * pct - 1.5, y: -4)
+                }
+            }
+            .frame(height: 4)
+            .accessibilityHidden(true)
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 10)
+    }
+
+    // MARK: - Recommended Next Band
+
+    private func recommendedNextBand(recommendedKind: BlockPhaseKind) -> some View {
+        let recommendedKindLabel = BlockPhaseColors.phaseLabel(recommendedKind).capitalized
+        let recommendedWeeks = 4  // Phase 6 will compute from block history; placeholder per spec
+        let weekOfYear = Calendar.current.component(.weekOfYear, from: block.startDate)
+
+        return VStack(spacing: 0) {
+            HStack(alignment: .lastTextBaseline) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("RECOMMENDED NEXT BLOCK")
+                        .font(BRUFont.labelSmall)
+                        .textCase(.uppercase)
+                        .tracking(1.5)
+                        .foregroundStyle(Color.bruInk)
+                    Text("\(recommendedKindLabel) · \(recommendedWeeks) weeks")
+                        .font(BRUFont.displayLarge)
+                        .foregroundStyle(Color.bruInk)
+                }
+                Spacer()
+                Text("BASED ON BLOCK \(weekOfYear)")
+                    .font(BRUFont.labelMicro)
+                    .textCase(.uppercase)
+                    .tracking(1.2)
+                    .foregroundStyle(Color.bruMuted)
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
+        }
+        .background(Color.bruBg2)
+        .overlay(alignment: .top) {
+            Rectangle()
+                .fill(Color.bruInk)
+                .frame(height: 2)
         }
     }
 
-    private var recommendedNextSection: some View {
-        let recommendedKind = BlockReviewStatistics.recommendedNextKind(for: block)
-        let labelKind = BlockPhaseColors.phaseLabel(recommendedKind).lowercased()
+    // MARK: - Bottom Action Bar
 
-        return Section("Recommended next phase") {
-            Text("Start \(labelKind) next.")
-            Button {
-                pendingNextBlockBuilder = BlockTemplates.template(for: recommendedKind)
-            } label: {
-                Text("Start \(labelKind.capitalized) Block")
-                    .frame(maxWidth: .infinity)
-            }
-            .buttonStyle(.borderedProminent)
-            .tint(Color.accentColor)
-            Button("Not now") {
+    private func bottomActionBar(recommendedKind: BlockPhaseKind) -> some View {
+        HStack(spacing: 0) {
+            BRUButton("Plan custom", kind: .ghost) {
                 dismiss()
             }
-            .foregroundStyle(.secondary)
+            Rectangle()
+                .fill(Color.bruInk)
+                .frame(width: 2)
+            BRUButton("Start next ▸", kind: .signal) {
+                acknowledge()
+                pendingNextBlockBuilder = BlockTemplates.template(for: recommendedKind)
+            }
+        }
+        .overlay(alignment: .top) {
+            Rectangle()
+                .fill(Color.bruInk)
+                .frame(height: 2)
         }
     }
 
-    private func color(for delta: Double) -> Color {
-        if delta > 0 { return .green }
-        if delta < 0 { return .red }
-        return .primary
+    // MARK: - Safe-Area Filler
+
+    private var safeAreaFiller: some View {
+        Rectangle()
+            .fill(Color.bruBg)
+            .frame(height: 24)
     }
 
-    private func acknowledgeAndDismiss() {
+    // MARK: - Helpers
+
+    private func formattedDateRange(start: Date, end: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "MMM d"
+        return "\(formatter.string(from: start)) – \(formatter.string(from: end))"
+    }
+
+    // MARK: - Acknowledge Logic
+    //
+    // Split into acknowledge() (no dismiss) and acknowledgeAndDismiss() (with dismiss)
+    // so "Start next ▸" can acknowledge THEN show the next-block sheet without
+    // an immediate dismiss interfering with the sheet presentation.
+    // "Plan custom" calls dismiss() only (no acknowledge — user is deferring review).
+
+    private func acknowledge() {
         do {
             try BlockReviewStatistics.acknowledge(
                 block: block,
                 context: ctx,
                 now: Date.now
             )
-            dismiss()
         } catch {
             acknowledgeError = "Couldn't save review. Try again."
         }
     }
+
+    private func acknowledgeAndDismiss() {
+        acknowledge()
+        dismiss()
+    }
 }
+
+// MARK: - Supporting Types (Preserved verbatim — DO NOT MODIFY)
 
 public struct BlockReviewE1RMDelta: Sendable, Equatable {
     public let exerciseID: UUID
