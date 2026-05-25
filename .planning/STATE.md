@@ -3,18 +3,18 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-last_updated: "2026-05-25T16:22:03.977Z"
+last_updated: "2026-05-25T16:45:30.405Z"
 progress:
   total_phases: 12
-  completed_phases: 11
+  completed_phases: 12
   total_plans: 111
-  completed_plans: 112
+  completed_plans: 113
   percent: 100
 ---
 
 # Project State: Fitbod
 
-**Last updated:** 2026-05-25 (post 04.1-06 — BlockReviewView BRU full rebuild complete; Form → 5-band NavigationStack+ScrollView+VStack; bruInk hero band with 3-col displayHero stat row; GeometryReader e1RM progress bars; bruBg2 recommended-next footer; ghost+signal bottom action bar; acknowledge()/acknowledgeAndDismiss() split; 6 Phase 4 test suites GREEN; 11 of 12 Phase 4 audited surfaces now BRU-styled)
+**Last updated:** 2026-05-25 (post 04.1-08 — Phase 04.1 BRU Visual Rewrite COMPLETE; 15-test BRUPeriodizationRegressionTests + 6-test BRUPeriodizationAuditTests (25-pattern audit GREEN + W4 proximity rule + W5 extended ROADMAP coverage); BlockPhaseColors.tint(for:) deleted; BlockPickerMenu Divider() removed; ROADMAP Phase 4 progress table updated 0/8→8/8 Complete; all 8 Phase 4 + Phase 04.1 functional regression suites GREEN)
 
 ---
 
@@ -32,10 +32,12 @@ progress:
 
 ## Current Position
 
-Phase: 04.1 (bru-visual-rewrite-periodization-blocks) — EXECUTING
-Plan: 6 of 8
+Phase: 04.1 (bru-visual-rewrite-periodization-blocks) — COMPLETE
+Plan: 8 of 8
 
-Next active phase: Phase 04.1 (BRU Visual Rewrite — Periodization & Blocks) — 6/8 plans complete (04.1-01 foundation + primitives, 04.1-02 BlockPhaseColors palette flip, 04.1-03 Wave 2 small surfaces, 04.1-04 Wave 3 medium surfaces, 04.1-05 BlockBuilderView rebuild, 04.1-06 BlockReviewView rebuild). 11 of 12 audited Phase 4 surfaces now BRU-styled. Plans 07 (BlockOverviewScreen NEW) + 08 (final audit sweep) remaining.
+Phase 04.1 complete (2026-05-25). All 8 plans executed. 12 Phase-4 surfaces re-skinned to BRU brutalist design system + 1 net-new BlockOverviewScreen; 25-forbidden-pattern audit GREEN; 15-test regression suite + 6-test audit suite added; BlockPhaseColors.tint(for:) removed.
+
+Next active phase: Phase 5 (Fatigue Model & Plateau Detection) or Phase 6 (Progress Views, Export & Polish) — see ROADMAP.md dependency graph.
 
 Phase 6 status (for reference — previously active):
 Phase: 6 (progress-views-export-polish) — **IN PROGRESS (10/11 plans complete — 2026-05-23; 06-10 backup/restore remaining)**
@@ -126,7 +128,7 @@ Plan: 8 of 8 (all plans complete; Phase 3.1 closed). Production tree compiles en
 **Plan:** 03-02 complete (Wave 3, seq 2) — `RoutineBuilderView` single-screen builder with inline `.searchable` exercise picker (reuses Phase 1 `ExerciseLibraryView` via additive `init(onSelect:)` overload), always-on drag-handle reorder via `.environment(\.editMode, .constant(.active))`, per-exercise `PrescriptionEditorRow` (intent / sets / reps / RPE / progression / rest / tempo toggle + 4-field entry / partials toggle / disabled Auto warm-up Phase 3 footnote / per-set overrides disclosure). `RoutineDraft` `@Observable` ephemeral mutation surface (FOUND-06 / MV-VM-lite, no parallel ViewModel) with `targetSets.didSet` prune (RESEARCH §6 Pitfall 8) and three-way merge `save(into:context:)`. `PrescriptionDefaults` ROUTINE-09 heuristic (compound → 180s, isolation → 90s; barbell+compound → strength 4-6, otherwise hypertrophy 8-12). 12 new `@Test` functions across 4 test files. Four atomic commits.
 
 **Plan:** 03-01 complete (Wave 3, seq 1) — Routines tab `RoutinesListView` + folders + Resume Workout banner. See plan 03-01 SUMMARY for details.
-**Status:** Executing Phase 04.1
+**Status:** Phase 04.1 Complete — BRU Visual Rewrite (Periodization & Blocks) finished 2026-05-25
 **Progress:** [██████████] 100%
 
 ### Phase Outlook

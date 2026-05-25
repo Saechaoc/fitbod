@@ -195,7 +195,7 @@ Plans:
 **Mode:** refactor
 **Depends on:** Phase 4, Phase 2.1 (specifically 02.1-01-PLAN.md foundation)
 **Requirements:** None (visual refactor — no new functional requirements; preserves all existing Phase 4 BLOCK-01..08 + PRES-05 + PRES-06 requirements)
-**Plans:** 7/8 plans executed
+**Plans:** 8/8 plans executed
 
 **Plan list:**
 - [x] 04.1-01-PLAN.md — Wave 0: Foundation precondition guard + 10 BRU primitive components (BRUChip / BRUHeaderBar / BRUSectionHead / BRUButton / BRUDivider / BRUDashedSlot / BRUPillButton / BRUDisplay / BRUReadout / BRUCornerBadge) — COMPLETE (feca3c7; BRUPrimitivesTests 11/11 GREEN)
@@ -205,7 +205,7 @@ Plans:
 - [x] 04.1-05-PLAN.md — Wave 4: BlockBuilderView rebuild (Form → ScrollView+VStack + 56pt Canvas TIMELINE + BRUSectionHead "+ ADD PHASE" + BRUButton "Apply changes ▸")
 - [x] 04.1-06-PLAN.md — Wave 5: BlockReviewView rebuild (Form → ScrollView+VStack + full-bleed bruInk hero band + three displayHero stat columns + GeometryReader e1RM progress bars + bruBg2 recommended-next footer + bottom action bar with ghost+signal BRUButtons)
 - [x] 04.1-07-PLAN.md — Wave 6: Net-new BlockOverviewScreen (D-10) + BlockCard tap-routing rewire (D-11) + ROADMAP Depends on update (D-02)
-- [ ] 04.1-08-PLAN.md — Wave 7: Snapshot/regression tests + 25-forbidden-pattern audit re-run + Phase 04.1 completion verification
+- [x] 04.1-08-PLAN.md — Wave 7: Snapshot/regression tests + 25-forbidden-pattern audit re-run + Phase 04.1 completion verification — COMPLETE (2026-05-25)
 
 
 ### Phase 5: Fatigue Model & Plateau Detection
@@ -270,7 +270,7 @@ Plans:
 | 1. Foundation & Exercise Library | 12/12 | Complete | 2007-05-11 |
 | 2. Core Loop (Routines + Sessions) | 13/13 | Complete   | 2026-05-24 |
 | 3. Smart Prescription & Warm-ups | 8/8 | Complete   | 2026-05-24 |
-| 4. Periodization & Blocks | 0/8 | Not started | - |
+| 4. Periodization & Blocks | 8/8 | Complete | 2026-05-25 |
 | 5. Fatigue Model & Plateau Detection | 7/6 | Complete   | 2026-05-24 |
 | 6. Progress Views, Export & Polish | 11/11 | Complete   | 2026-05-24 |
 
