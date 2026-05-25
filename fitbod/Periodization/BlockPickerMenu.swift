@@ -44,8 +44,6 @@ public struct BlockPickerMenu: View {
                 }
             }
 
-            Divider()
-
             Button("+ Create New Block") {
                 pendingCreateBlock = true
             }
