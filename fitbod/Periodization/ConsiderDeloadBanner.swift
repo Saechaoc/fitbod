@@ -4,6 +4,7 @@
 //
 //  Advisory deload banner scaffold. The Phase 4 default advisory returns
 //  false, so this view stays hidden until Phase 5 supplies a real signal.
+//  Phase 04.1 (BRU re-skin + D-16 remove Adjust block + D-17 BRUChip DISMISS) — see 04.1-PATTERNS.md File #10
 //
 
 import SwiftUI
@@ -23,37 +24,35 @@ public struct ConsiderDeloadBanner: View {
         } else {
             let suggestion = advisory.suggestion(context: sessionContext)
             HStack(spacing: 12) {
-                Image(systemName: "exclamationmark.triangle")
-                    .foregroundStyle(Color.yellow)
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("Consider a deload this week.")
-                        .font(.body)
+                    Text("▲ FATIGUE ADVISORY")
+                        .font(BRUFont.labelSmall)
+                        .textCase(.uppercase)
+                        .tracking(1.5)
+                        .foregroundStyle(Color.bruSignal)
                     Text(suggestion.reason)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .font(BRUFont.bodyDefault)
+                        .foregroundStyle(Color.bruInk)
                 }
                 Spacer()
-                Button("Adjust block") {
-                    // Phase 5 wires the real advisory action.
-                }
-                .foregroundStyle(Color.accentColor)
-                Button {
-                    dismissed = true
-                } label: {
-                    Image(systemName: "xmark")
-                        .foregroundStyle(.secondary)
-                }
-                .frame(minWidth: 44, minHeight: 44)
-                .accessibilityLabel("Dismiss deload advisory")
+                BRUChip("DISMISS")
+                    .frame(minWidth: 44, minHeight: 44)
+                    .onTapGesture { dismissed = true }
+                    .accessibilityLabel("Dismiss deload advisory")
             }
-            .padding(16)
-            .background(Color(.systemYellow).opacity(0.15))
-            .clipShape(RoundedRectangle(cornerRadius: 12))
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
+            .background(Color.bruBg2)
+            .overlay(alignment: .top) {
+                Rectangle()
+                    .fill(Color.bruInk)
+                    .frame(height: 2)
+            }
             .padding(.horizontal, 16)
             .padding(.vertical, 8)
             .accessibilityElement(children: .contain)
             .accessibilityLabel("Advisory: consider a deload this week. \(suggestion.reason).")
-            .accessibilityHint("Tap to adjust your block, or swipe right to dismiss.")
+            .accessibilityHint("Tap DISMISS to clear this advisory.")
         }
     }
 }
