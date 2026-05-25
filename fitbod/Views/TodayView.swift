@@ -102,8 +102,11 @@ public struct TodayView: View {
                     )
 
                     // Block context band — only when a block is active
+                    // onTap pushes BlockOverviewRoute.summary per CONTEXT D-11
                     if let block = activeBlocks.first {
-                        BlockContextBand(block: block)
+                        BlockContextBand(block: block, onTap: {
+                            navigationPath.append(BlockOverviewRoute.summary(blockID: block.id))
+                        })
                     }
 
                     // CTA slab — branch on active session vs scheduled routine vs no block
@@ -198,12 +201,36 @@ public struct TodayView: View {
                     PerMuscleDetailView(muscleSlug: slug)
                 }
             }
+            // Phase 04.1 Plan 07 — BlockOverviewRoute (CONTEXT D-11)
+            // Resolves the block by UUID via FetchDescriptor and presents the
+            // read-only BlockOverviewScreen. The onEdit closure pushes to
+            // BlockBuilderView via pendingBlockBuilder (.edit case).
+            .navigationDestination(for: BlockOverviewRoute.self) { route in
+                switch route {
+                case .summary(let blockID):
+                    let blockIDCapture = blockID
+                    let fetchedBlock = (try? ctx.fetch(
+                        FetchDescriptor<Block>(predicate: #Predicate<Block> { $0.id == blockIDCapture })
+                    ))?.first
+                    if let resolvedBlock = fetchedBlock {
+                        BlockOverviewScreen(block: resolvedBlock, onEdit: {
+                            pendingBlockBuilder = .edit(resolvedBlock)
+                        })
+                    } else {
+                        Text("Block not found")
+                            .font(BRUFont.bodyDefault)
+                            .foregroundStyle(Color.bruMuted)
+                    }
+                }
+            }
             // ─── Sheets (preserved verbatim from Phase 4/5) ──────────────────
             .sheet(item: $pendingBlockBuilder) { pending in
                 NavigationStack {
                     switch pending {
                     case .template(let template):
                         BlockBuilderView(draft: BlockDraft(template: template))
+                    case .edit(let block):
+                        BlockBuilderView(draft: BlockDraft(block: block), editing: block)
                     }
                 }
             }
@@ -434,15 +461,18 @@ public struct TodayView: View {
         currentAdvisory = nil
     }
 
-    // MARK: - PendingBlockBuilder (preserved verbatim from Phase 4/5)
+    // MARK: - PendingBlockBuilder (preserved verbatim from Phase 4/5; .edit case added for D-11)
 
     private enum PendingBlockBuilder: Identifiable {
         case template(BlockTemplate)
+        case edit(Block)
 
         var id: String {
             switch self {
             case .template(let template):
                 return "template-\(template.name)"
+            case .edit(let block):
+                return "edit-\(block.id.uuidString)"
             }
         }
     }

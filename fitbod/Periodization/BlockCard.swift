@@ -14,13 +14,17 @@ public struct BlockCard: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     public let block: Block
+    /// When non-nil, called on card-body tap instead of opening the edit sheet directly.
+    /// Wire this from TodayView to push BlockOverviewRoute.summary(blockID:) (CONTEXT D-11).
+    public var onTapBlock: ((Block) -> Void)? = nil
 
     @State private var selectedWeekIndex = 0
     @State private var pendingBuilderForEdit: Block? = nil
     @State private var pendingEndConfirm: Block? = nil
 
-    public init(block: Block) {
+    public init(block: Block, onTapBlock: ((Block) -> Void)? = nil) {
         self.block = block
+        self.onTapBlock = onTapBlock
     }
 
     public var body: some View {
@@ -114,6 +118,10 @@ public struct BlockCard: View {
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 8)
+            .contentShape(Rectangle())
+            .onTapGesture {
+                onTapBlock?(active)
+            }
             .accessibilityElement(children: .contain)
             .accessibilityLabel("Active block: \(active.name), \(BlockPhaseColors.phaseLabel(selectedPhaseKind(for: active))) phase, week \(displayWeekIndex(for: active) + 1) of \(totalWeeks).")
             .accessibilityHint("Swipe horizontally to navigate between weeks of the mesocycle.")

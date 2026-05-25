@@ -29,6 +29,9 @@ public struct BlockContextBand: View {
     // MARK: - Properties
 
     let block: Block
+    /// Optional tap closure — wired from TodayView to push BlockOverviewRoute.summary(blockID:).
+    /// When nil the band is display-only (backward-compatible default, CONTEXT D-11).
+    var onTap: (() -> Void)? = nil
 
     // MARK: - Computed
 
@@ -111,6 +114,10 @@ public struct BlockContextBand: View {
             BRUDivider(.ink)
         }
         .background(Color.bruPaper)
+        .contentShape(Rectangle())
+        .onTapGesture {
+            onTap?()
+        }
     }
 }
 
