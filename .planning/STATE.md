@@ -3,18 +3,18 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-last_updated: "2026-05-25T15:29:41.806Z"
+last_updated: "2026-05-25T15:39:05.906Z"
 progress:
   total_phases: 12
   completed_phases: 11
   total_plans: 111
-  completed_plans: 108
-  percent: 97
+  completed_plans: 109
+  percent: 98
 ---
 
 # Project State: Fitbod
 
-**Last updated:** 2026-05-25 (post 04.1-02 — Wave 1 BlockPhaseColors BRU palette flip; rowTint + drawDeloadStripes helpers added; Phase 4 regression smoke GREEN)
+**Last updated:** 2026-05-25 (post 04.1-04 — Wave 3 medium surface re-skins complete; BlockCard + MesocycleWeekPage + BlockPhaseEditorRow + RoutinesListView.blocksSection BRU-reskinned; D-09 copy fixes + D-14 reduced-motion gate + D-15 a11y labels applied; all 6 Phase 4 regression tests GREEN)
 
 ---
 
@@ -33,9 +33,9 @@ progress:
 ## Current Position
 
 Phase: 04.1 (bru-visual-rewrite-periodization-blocks) — EXECUTING
-Plan: 3 of 8
+Plan: 5 of 8
 
-Next active phase: Phase 04.1 (BRU Visual Rewrite — Periodization & Blocks) — 2/8 plans complete (04.1-02 Wave 1 BlockPhaseColors BRU palette flip; 4 pre-BRU color literals replaced; rowTint(for:) + drawDeloadStripes(ctx:rect:) added; tint(for:) repurposed; Phase 4 regression smoke GREEN).
+Next active phase: Phase 04.1 (BRU Visual Rewrite — Periodization & Blocks) — 4/8 plans complete (04.1-01 foundation + primitives, 04.1-02 BlockPhaseColors palette flip, 04.1-03 Wave 2 small surfaces, 04.1-04 Wave 3 medium surfaces). 9 of 12 audited Phase 4 surfaces now BRU-styled. Plans 05 + 06 (BlockBuilderView + BlockReviewView heavy rebuilds) unblocked.
 
 Phase 6 status (for reference — previously active):
 Phase: 6 (progress-views-export-polish) — **IN PROGRESS (10/11 plans complete — 2026-05-23; 06-10 backup/restore remaining)**
@@ -127,7 +127,7 @@ Plan: 8 of 8 (all plans complete; Phase 3.1 closed). Production tree compiles en
 
 **Plan:** 03-01 complete (Wave 3, seq 1) — Routines tab `RoutinesListView` + folders + Resume Workout banner. See plan 03-01 SUMMARY for details.
 **Status:** Executing Phase 04.1
-**Progress:** [██████████] 97%
+**Progress:** [██████████] 98%
 
 ### Phase Outlook
 
