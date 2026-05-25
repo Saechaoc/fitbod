@@ -167,6 +167,14 @@ public struct RootView: View {
         // only the blur layer, not the chrome). Instead we VStack the
         // selected tab's body above `BRUTabBar`, preserving each tab's
         // own NavigationStack and the existing re-tap pop-to-root logic.
+        //
+        // Quick task 260525-g32 — BRUTabBar now self-extends its
+        // background through the bottom safe area via its own
+        // `.ignoresSafeArea(.container, edges: .bottom)` layer, so this
+        // VStack does NOT need its own bottom-safe-area filler. If a
+        // future change introduces a parent that paints behind the bar,
+        // re-add `.background(Color.bruTabSurface.ignoresSafeArea(...))`
+        // on the outer VStack here as a fallback.
         VStack(spacing: 0) {
             Group {
                 switch selectedTab {

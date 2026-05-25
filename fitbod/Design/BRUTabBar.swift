@@ -69,9 +69,13 @@ public enum BRUTab: String, CaseIterable, Sendable {
 /// Labels-only — the JSX mocks in `bru-screens/` show no glyphs above
 /// the labels. The `BRUTab.glyph` property is retained for potential
 /// reuse elsewhere but is no longer rendered in the bar.
-/// Active tab: bruInk fill, bruPaper text.
-/// Inactive tabs: bruPaper fill, bruInk text.
-/// 1pt bruHair vertical separators between cells.
+/// Active tab: bruInk fill, bruTabSurface text.
+/// Inactive tabs: bruTabSurface fill, bruInk text.
+/// 1pt bruTabSeparator vertical separators between cells.
+/// The whole bar paints `bruTabSurface` through the bottom safe-area
+/// via `ignoresSafeArea(.container, edges: .bottom)` so it reads as a
+/// full-bleed bar pinned to the screen edge (no "floating pill" gap
+/// above the home indicator).
 ///
 /// Accessibility: each cell carries `.isButton`. The active cell additionally
 /// carries `.isSelected` per UI-SPEC v2 line 689 so VoiceOver announces
@@ -103,15 +107,22 @@ public struct BRUTabBar: View {
                 ForEach(BRUTab.allCases, id: \.rawValue) { tab in
                     tabCell(tab)
 
-                    // 1pt hair separator between cells (not after the last one)
+                    // 1pt cool-gray separator between cells (not after the last one)
                     if tab != BRUTab.allCases.last {
                         Rectangle()
-                            .fill(Color.bruHair)
+                            .fill(Color.bruTabSeparator)
                             .frame(width: 1)
                     }
                 }
             }
         }
+        // Paint the tab surface through the bottom safe area so the bar
+        // reads as a full-bleed rectangle pinned to the screen edge —
+        // eliminates the "floating pill" gap above the home indicator.
+        .background(
+            Color.bruTabSurface
+                .ignoresSafeArea(.container, edges: .bottom)
+        )
     }
 
     // MARK: Cell
@@ -128,8 +139,8 @@ public struct BRUTabBar: View {
                 .tracking(1.2)
                 .textCase(.uppercase)
                 .frame(maxWidth: .infinity, minHeight: 56)
-                .background(isActive ? Color.bruInk : Color.bruPaper)
-                .foregroundStyle(isActive ? Color.bruPaper : Color.bruInk)
+                .background(isActive ? Color.bruInk : Color.bruTabSurface)
+                .foregroundStyle(isActive ? Color.bruTabSurface : Color.bruInk)
         }
         .buttonStyle(.plain)
         // Accessibility: .isSelected on the active tab per UI-SPEC v2 line 689
