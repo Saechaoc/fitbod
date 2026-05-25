@@ -3,6 +3,7 @@
 //  fitbod
 //
 //  Non-dismissible scheduled deload banner for Today.
+//  Phase 04.1 (BRU re-skin) — see 04.1-PATTERNS.md File #9
 //
 
 import SwiftUI
@@ -16,16 +17,27 @@ public struct DeloadWeekBanner: View {
 
     public var body: some View {
         VStack(alignment: .leading, spacing: 4) {
+            Text("▲ DELOAD WEEK")
+                .font(BRUFont.labelSmall)
+                .textCase(.uppercase)
+                .tracking(1.5)
+                .foregroundStyle(Color.bruSignal)
             Text("Deload week — recover, don't load.")
-                .font(.headline)
+                .font(BRUFont.bodyDefault)
+                .foregroundStyle(Color.bruMuted)
             Text("Working sets cut by ~50%. Weights held to phase intensity.")
-                .font(.caption)
-                .foregroundStyle(.secondary)
+                .font(BRUFont.bodyDefault)
+                .foregroundStyle(Color.bruMuted)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(16)
-        .background(BlockPhaseColors.tint(for: .deload))
-        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
+        .background(Color.bruBg2)
+        .overlay(alignment: .top) {
+            Rectangle()
+                .fill(Color.bruInk)
+                .frame(height: 2)
+        }
         .padding(.horizontal, 16)
         .padding(.vertical, 8)
         .accessibilityElement(children: .combine)
