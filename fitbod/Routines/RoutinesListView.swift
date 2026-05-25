@@ -253,27 +253,52 @@ public struct RoutinesListView: View {
     }
 
     // MARK: - Blocks section (BRU-styled, preserving block create/edit behaviors)
+    // Phase 04.1 (BRU re-skin blocksSection + D-09 copy fix) — see 04.1-PATTERNS.md File #12
 
     @ViewBuilder
     private var bruBlocksSection: some View {
         VStack(spacing: 0) {
-            BRUSectionHead("Blocks", right: nil)
+            // Section header: BRU-styled HStack (BRUSectionHead wiring deferred to Phase 2.1)
+            HStack {
+                Text("BLOCKS")
+                    .font(BRUFont.labelSmall)
+                    .textCase(.uppercase)
+                    .tracking(1.2)
+                    .foregroundStyle(Color.bruInk)
+                Spacer()
+                Menu {
+                    bruTemplateMenuItems
+                } label: {
+                    Text("+ BLOCK")
+                        .font(BRUFont.labelSmall)
+                        .textCase(.uppercase)
+                        .tracking(1.2)
+                        .foregroundStyle(Color.bruSignal)
+                }
+                .buttonStyle(.plain)
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
+            BRUDivider(.hair)
 
             if blocks.isEmpty {
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("No blocks yet.")
-                        .font(BRUFont.bodyDefault)
+                    // D-09 copy fix: "No blocks defined." replaces "No blocks yet."
+                    Text("No blocks defined.")
+                        .font(BRUFont.displayLarge)
                         .foregroundStyle(Color.bruInk)
-                    Text("Define a training block to organize routines into a mesocycle.")
+                    // D-09 copy fix: updated body copy
+                    Text("Create a training block to track mesocycles, phases, and scheduled deloads.")
                         .font(BRUFont.bodyDefault)
                         .foregroundStyle(Color.bruMuted)
+                    // D-09: signal text CTA "+ NEW BLOCK" replaces "+ Block" with accentColor
                     Menu {
                         bruTemplateMenuItems
                     } label: {
-                        Text("+ Block")
+                        Text("+ NEW BLOCK")
                             .font(BRUFont.labelSmall)
-                            .tracking(1.2)
                             .textCase(.uppercase)
+                            .tracking(1.2)
                             .foregroundStyle(Color.bruSignal)
                     }
                     .buttonStyle(.plain)
