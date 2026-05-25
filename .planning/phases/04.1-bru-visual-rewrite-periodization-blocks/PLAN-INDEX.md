@@ -41,6 +41,21 @@ One BLOCKER introduced by iteration 1's B1 fix, resolved in iteration 2:
 
 ---
 
+## Revision Iteration 3 — Decision Coverage Citations (applied 2026-05-25)
+
+The decision-coverage gate flagged 5 uncovered decisions in iteration 2. Two of those (D-19, D-20) are already tagged `[informational]` in CONTEXT.md and require no plan citation. The remaining three (D-05, D-06, D-08) are concrete implementation rules every relevant rewrite plan already satisfies — they were missing a literal `D-NN` ID citation in the `must_haves.truths` block. Pure textual citation work — no plan-architecture change, no task additions, no behavior change.
+
+| Decision | Plans gaining citation | Citation summary |
+|----------|------------------------|------------------|
+| D-05 — "Re-skin replaces (not augments)" | 04.1-03, 04.1-04, 04.1-05, 04.1-06, 04.1-07 | Each plan's `must_haves.truths` now leads with: "D-05: All forbidden Apple-HIG patterns (Color.accentColor / Color.red / Color.yellow / Color(.system*) / RoundedRectangle(cornerRadius:) / Capsule() / Circle() as visual element / .font(.headline\|.caption\|.body\|.title*)) are replaced with BRU equivalents in <files-this-plan-modifies>. Verified via the Plan 08 audit re-run grep set." The file list is plan-specific; the trailing "Verified via Plan 08 audit re-run" pointer keeps the truth load-bearing — Plan 08's `testForbiddenPatternsAcrossAllPhase4Surfaces` is the runtime proof that D-05 is satisfied. |
+| D-06 — "Form → ScrollView+VStack" | 04.1-05, 04.1-06 | Plan 05 adds: "D-06: BlockBuilderView body is rebuilt as ScrollView + VStack — the prior Form{Section{...}} inset-grouped structure is removed entirely per 04-UI-REVIEW.md Pillar 2 Fix 3." Plan 06 adds the analogous truth for BlockReviewView. |
+| D-08 — "BlockPhaseColors palette flip" | 04.1-02 | Plan 02's `must_haves.truths` now leads with: "D-08: BlockPhaseColors palette returns BRU tokens per the audit Pillar 3 table — accumulation → bruInk, intensification → bruSignal, realization → bruInk.opacity(0.25), deload → diagonal-stripe Canvas pattern. The pre-BRU D-07 teal/amber/orange/slate palette is fully removed." |
+| D-19, D-20 — `[informational]` | n/a | Tagged `[informational]` in 04.1-CONTEXT.md — no plan citation required. The gate skips informational decisions. |
+
+**Constraints honored:** Only `must_haves.truths` blocks were modified. No `<action>`, `<verify>`, `<read_first>`, frontmatter, or `<threat_model>` blocks were touched in any of the six plans. Plans 01 (foundation) and 08 (test/audit closure) were not modified because neither plan implements any of D-05, D-06, or D-08.
+
+---
+
 ## Foundation Strategy (CONTEXT D-01..D-03)
 
 `02.1-01-PLAN.md` ships ONLY the BRU color tokens + font foundation (`Color+BRU.swift`, `BRUFont.swift`, 8 colorsets, 4 OFL fonts, `Info.plist UIAppFonts`, `BRUFoundationsTests`). The downstream Phase 2.1 plans (02.1-02..02.1-11) that ship the BRU **primitive components** (`BRUChip`, `BRUHeaderBar`, `BRUSectionHead`, `BRUButton`, `BRUDivider`, `BRUDashedSlot`, `BRUPillButton`, `BRUDisplay`, `BRUReadout`, `BRUCornerBadge`) have NOT executed yet.
@@ -69,12 +84,12 @@ The grep-based audit re-run in Plan 08 is the load-bearing assertion. The image 
 | Plan | Wave | Title | Surfaces | Files modified |
 |------|------|-------|----------|----------------|
 | 04.1-01 | 0 | Foundation precondition + BRU primitive components | 10 primitives (BRUChip, BRUHeaderBar, BRUSectionHead, BRUButton, BRUDivider, BRUDashedSlot, BRUPillButton, BRUDisplay, BRUReadout, BRUCornerBadge) | `fitbod/Design/BRUChip.swift`, `BRUHeaderBar.swift`, `BRUSectionHead.swift`, `BRUButton.swift`, `BRUDivider.swift`, `BRUDashedSlot.swift`, `BRUPillButton.swift`, `BRUDisplay.swift`, `BRUReadout.swift`, `BRUCornerBadge.swift`, `fitbodTests/BRUPrimitivesTests.swift` |
-| 04.1-02 | 1 | `BlockPhaseColors` palette flip + deload stripe helper | `BlockPhaseColors.swift` | `fitbod/Periodization/BlockPhaseColors.swift` |
-| 04.1-03 | 2 | Small surface re-skins (5 files in one plan) | `BlockRow`, `BlockPickerMenu`, `StartBlockCTA`, `DeloadWeekBanner`, `ConsiderDeloadBanner` | `fitbod/Periodization/BlockRow.swift`, `BlockPickerMenu.swift`, `StartBlockCTA.swift`, `DeloadWeekBanner.swift`, `ConsiderDeloadBanner.swift` |
-| 04.1-04 | 3 | Medium surface re-skins (TabView pager PRESERVED per revision iter 1 B4) | `BlockCard` (+ D-14 reduced-motion + D-15 a11y + TabView pager KEPT), `MesocycleWeekPage`, `BlockPhaseEditorRow`, `RoutinesListView.blocksSection` | `fitbod/Periodization/BlockCard.swift`, `MesocycleWeekPage.swift`, `BlockPhaseEditorRow.swift`, `fitbod/Routines/RoutinesListView.swift` |
-| 04.1-05 | 4 | `BlockBuilderView` full rebuild (Form → ScrollView+VStack, 56pt Canvas TIMELINE, BRUSectionHead "+ ADD PHASE", "Apply changes ▸" BRUButton) | `BlockBuilderView` | `fitbod/Periodization/BlockBuilderView.swift` |
-| 04.1-06 | 5 | `BlockReviewView` full rebuild (Form → ScrollView+VStack, full-bleed bruInk hero band, three displayHero stat columns, GeometryReader e1RM bars, bruBg2 footer, "Start next ▸" BRUButton signal) | `BlockReviewView` | `fitbod/Periodization/BlockReviewView.swift` |
-| 04.1-07 | 6 | Net-new `BlockOverviewScreen` (real @Query<Session>-backed weekCarousel per revision iter 1 B5) + `BlockCard` tap rewire (D-11) + ROADMAP `Depends on:` verify (D-02, idempotent per revision iter 1 W3) + BlockOverviewScreenWeekCarouselTests | `BlockOverviewScreen` (NEW), `BlockCard` (rewire only), `TodayView` host-side navigation wire (Phase 2.1 owns surrounding chrome — 04.1 only touches the NavigationPath append site) | `fitbod/Periodization/BlockOverviewScreen.swift`, `fitbod/Periodization/BlockCard.swift`, `fitbod/App/RootView.swift` (single navigation wire site), `.planning/ROADMAP.md` (idempotent verify), `fitbodTests/BlockOverviewScreenWeekCarouselTests.swift` |
+| 04.1-02 | 1 | `BlockPhaseColors` palette flip + deload stripe helper (cites D-08) | `BlockPhaseColors.swift` | `fitbod/Periodization/BlockPhaseColors.swift` |
+| 04.1-03 | 2 | Small surface re-skins (5 files in one plan; cites D-05) | `BlockRow`, `BlockPickerMenu`, `StartBlockCTA`, `DeloadWeekBanner`, `ConsiderDeloadBanner` | `fitbod/Periodization/BlockRow.swift`, `BlockPickerMenu.swift`, `StartBlockCTA.swift`, `DeloadWeekBanner.swift`, `ConsiderDeloadBanner.swift` |
+| 04.1-04 | 3 | Medium surface re-skins (TabView pager PRESERVED per revision iter 1 B4; cites D-05) | `BlockCard` (+ D-14 reduced-motion + D-15 a11y + TabView pager KEPT), `MesocycleWeekPage`, `BlockPhaseEditorRow`, `RoutinesListView.blocksSection` | `fitbod/Periodization/BlockCard.swift`, `MesocycleWeekPage.swift`, `BlockPhaseEditorRow.swift`, `fitbod/Routines/RoutinesListView.swift` |
+| 04.1-05 | 4 | `BlockBuilderView` full rebuild (Form → ScrollView+VStack, 56pt Canvas TIMELINE, BRUSectionHead "+ ADD PHASE", "Apply changes ▸" BRUButton; cites D-05 + D-06) | `BlockBuilderView` | `fitbod/Periodization/BlockBuilderView.swift` |
+| 04.1-06 | 5 | `BlockReviewView` full rebuild (Form → ScrollView+VStack, full-bleed bruInk hero band, three displayHero stat columns, GeometryReader e1RM bars, bruBg2 footer, "Start next ▸" BRUButton signal; cites D-05 + D-06) | `BlockReviewView` | `fitbod/Periodization/BlockReviewView.swift` |
+| 04.1-07 | 6 | Net-new `BlockOverviewScreen` (real @Query<Session>-backed weekCarousel per revision iter 1 B5; cites D-05) + `BlockCard` tap rewire (D-11) + ROADMAP `Depends on:` verify (D-02, idempotent per revision iter 1 W3) + BlockOverviewScreenWeekCarouselTests | `BlockOverviewScreen` (NEW), `BlockCard` (rewire only), `TodayView` host-side navigation wire (Phase 2.1 owns surrounding chrome — 04.1 only touches the NavigationPath append site) | `fitbod/Periodization/BlockOverviewScreen.swift`, `fitbod/Periodization/BlockCard.swift`, `fitbod/App/RootView.swift` (single navigation wire site), `.planning/ROADMAP.md` (idempotent verify), `fitbodTests/BlockOverviewScreenWeekCarouselTests.swift` |
 | 04.1-08 | 7 | Snapshot tests + audit re-run (proximity-rule swipeActions exemption per W4 + extended ROADMAP audit per W5) + BlockPhaseColors.tint(for:) cleanup (per W6) + ROADMAP progress-table closure write-back (deferred from Plan 07 per W3) + Phase 04.1 completion verification | All 12 rewritten files + 1 new file + cleanup | `fitbodTests/BRUPeriodizationRegressionTests.swift`, `fitbodTests/BRUPeriodizationAuditTests.swift`, `fitbod/Periodization/BlockPhaseColors.swift`, `.planning/ROADMAP.md` (progress table) |
 
 ---
@@ -109,6 +124,40 @@ The grep-based audit re-run in Plan 08 is the load-bearing assertion. The image 
 | DELETE (or @available deprecate) `BlockPhaseColors.tint(for:)` — dead code post-Plans 03 + 04 | 04.1-08 | Revision iter 1 W6 user decision. Helper is no longer called after BRU re-skins; either remove or annotate to prevent future re-use. |
 
 All other Phase 4 behavior is preserved verbatim (D-13, D-18). Existing Phase 4 functional tests must still pass after every plan (each plan's `<verify>` runs a Phase-4 regression smoke).
+
+---
+
+## Decision Coverage Map (post-iteration-3 citations)
+
+Per the decision-coverage gate, each non-`[informational]` decision in 04.1-CONTEXT.md must be cited in at least one plan's `must_haves.truths` block as `D-NN: <truth>`. Iteration 3 closed the last three gaps (D-05, D-06, D-08).
+
+| Decision | Cited in plan(s) | Cite shape |
+|----------|------------------|------------|
+| D-01 — 8 BRU colorsets foundation | 04.1-01 | Foundation guard truth references the 8 D-01 colorsets explicitly |
+| D-02 — ROADMAP `Depends on:` update | 04.1-07 (idempotent verify), 04.1-08 (closure write-back) | "ROADMAP.md Phase 04.1 entry's 'Depends on:' line reads ... per CONTEXT D-02" |
+| D-03 — Foundation precondition guard | 04.1-01 | "Wave 0 precondition guard ... If the foundation is missing, Plan 01 halts with `BRU foundation missing — run 02.1-01-PLAN.md first` per CONTEXT D-03" |
+| D-04 — Full visual rewrite (not augment) | All 12 surface rewrite plans (03..07) implicitly; D-05 below is the load-bearing test gate | Composes with D-05 truth |
+| **D-05 — Re-skin replaces (not augments)** | **04.1-03, 04.1-04, 04.1-05, 04.1-06, 04.1-07** | **Added iter 3: "D-05: All forbidden Apple-HIG patterns ... are replaced with BRU equivalents in <files>. Verified via the Plan 08 audit re-run grep set."** |
+| **D-06 — Form → ScrollView+VStack** | **04.1-05, 04.1-06** | **Added iter 3: "D-06: <View> body is rebuilt as ScrollView + VStack — the prior Form{Section{...}} inset-grouped structure is removed entirely per 04-UI-REVIEW.md Pillar 2 Fix 3."** |
+| D-07 — Pre-BRU symbol/glyph removal | 04.1-03 (ConsiderDeloadBanner, BlockRow trash swipe), 04.1-04 (BlockCard ellipsis), 04.1-08 (audit gate) | "Image(systemName: ... ) REMOVED ... per CONTEXT D-07" |
+| **D-08 — BlockPhaseColors palette flip** | **04.1-02** | **Added iter 3: "D-08: BlockPhaseColors palette returns BRU tokens per the audit Pillar 3 table ... The pre-BRU D-07 teal/amber/orange/slate palette is fully removed."** |
+| D-09 — Copy drift fixes | 04.1-03 (ConsiderDeloadBanner/DeloadWeekBanner), 04.1-04 (RoutinesListView blocksSection), 04.1-05 (BlockBuilderView toolbar Save → Apply changes), 04.1-06 (section-header rewording) | Each cites the specific copy fix with "per CONTEXT D-09" |
+| D-10 — Net-new BlockOverviewScreen | 04.1-07 | "BlockOverviewScreen.swift exists ... as a NEW file (CONTEXT D-10)" |
+| D-11 — BlockCard tap-routing rewire | 04.1-07 | "BlockCard tap behavior rewired per CONTEXT D-11" |
+| D-12 — BlockOverviewScreen read-only | 04.1-07 | "BlockOverviewScreen reads, NEVER writes (CONTEXT D-12)" |
+| D-13 — Behavior preservation contract | 04.1-02..07 (each plan's regression-smoke task), 04.1-08 (final audit) | "Phase 4 functional tests still PASS (CONTEXT D-13 + D-18)" |
+| D-14 — Reduced-motion gate | 04.1-04 (BlockCard TabView pager) | "TabView gets `.animation(reduceMotion ? nil : .default, ...)` per CONTEXT D-14" |
+| D-15 — Accessibility labels | 04.1-04 (BlockCard, BlockPhaseEditorRow), 04.1-07 (BlockOverviewScreen) | ".accessibilityLabel(...) per CONTEXT D-15" |
+| D-16 — Remove "Adjust block" Button | 04.1-03 | "ConsiderDeloadBanner's 'Adjust block' button is REMOVED entirely (CONTEXT D-16)" |
+| D-17 — BRUChip "DISMISS" replacement | 04.1-03 | "ConsiderDeloadBanner's xmark dismiss button is REPLACED with BRUChip(\"DISMISS\") ... per CONTEXT D-17" |
+| D-18 — Schema + data layer preservation | 04.1-02..07 (each plan's data-layer-preservation truth), 04.1-08 | "Data layer preserved verbatim ... D-13 + D-18" |
+| D-19 — `[informational]` | n/a — informational | Skipped per gate |
+| D-20 — `[informational]` | n/a — informational | Skipped per gate |
+| D-21 — Plan-task budget | 04.1-03 (5 tasks), 04.1-04 (5 tasks) | "bundling them keeps the wave count manageable per CONTEXT D-21" |
+| D-22 — Heavy surfaces get own plan | 04.1-05 (BlockBuilderView), 04.1-06 (BlockReviewView) | "owns its own plan per CONTEXT D-22" |
+| D-23 — Visual regression snapshot test framework | 04.1-08 | "Plan 08 ships the visual regression suite ... CONTEXT D-23" |
+
+**Coverage status (post-iter-3):** 21/21 non-informational decisions cited; 0 gaps remaining.
 
 ---
 
@@ -152,7 +201,7 @@ All other Phase 4 behavior is preserved verbatim (D-13, D-18). Existing Phase 4 
 ## Quality Gate Status
 
 - [x] ≤8 PLAN.md files created (exactly 8)
-- [x] PLAN-INDEX.md created (this file) — revision iter 1 + iter 2 resolutions documented
+- [x] PLAN-INDEX.md created (this file) — revision iter 1 + iter 2 + iter 3 resolutions documented
 - [x] Every plan has valid frontmatter (phase=04.1, plan number, type, wave, depends_on, files_modified, autonomous, requirements=[], must_haves)
 - [x] Every plan's `files_modified` traces to: 13 Phase-4 surface files, BRU primitive components (Plan 01), `fitbodTests/`, or `.planning/ROADMAP.md` (Plans 07 + 08)
 - [x] Every task has `<read_first>` with at least the file being modified + relevant SPEC/REVIEW sections + 04.1-PATTERNS.md
@@ -169,7 +218,8 @@ All other Phase 4 behavior is preserved verbatim (D-13, D-18). Existing Phase 4 
 - [x] Wave 7 (Plan 08) Task 3 cleans up BlockPhaseColors.tint(for:) — delete or @available deprecate (revision iter 1 W6)
 - [x] Wave 7 (Plan 08) Task 4 includes the ROADMAP progress-table closure write-back (revision iter 1 W3 deferral)
 - [x] Every plan includes a `<threat_model>` block (all severity: none — visual-only refactor)
-- [x] must_haves derived from the audit + CONTEXT D-04..D-17 + revision iter 1 + iter 2 resolutions
+- [x] must_haves derived from the audit + CONTEXT D-04..D-17 + revision iter 1 + iter 2 + iter 3 resolutions
+- [x] **Decision coverage gate (iter 3): D-05 cited in 04.1-03, 04.1-04, 04.1-05, 04.1-06, 04.1-07; D-06 cited in 04.1-05, 04.1-06; D-08 cited in 04.1-02. D-19, D-20 are `[informational]` and exempt. All 21 non-informational decisions now have at least one plan citation.**
 
 ---
 
@@ -179,4 +229,4 @@ None. Visual-only refactor with no new network calls, no auth, no persistence ch
 
 ---
 
-*Generated by /gsd:plan-phase 04.1 — 2026-05-23. Revision iteration 1 applied 2026-05-24 (B1, B2, B3, B4, B5, W1, W2, W3, W4, W5, W6 — all resolved). Revision iteration 2 applied 2026-05-24 (B7 — resolved).*
+*Generated by /gsd:plan-phase 04.1 — 2026-05-23. Revision iteration 1 applied 2026-05-24 (B1, B2, B3, B4, B5, W1, W2, W3, W4, W5, W6 — all resolved). Revision iteration 2 applied 2026-05-24 (B7 — resolved). Revision iteration 3 applied 2026-05-25 (decision-coverage citations D-05, D-06, D-08 — all resolved).*
