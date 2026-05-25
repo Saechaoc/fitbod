@@ -15,12 +15,16 @@
 //       right:  HeaderAction("•••", isSignal: false) { showMenu() }
 //   )
 //
-// USAGE (Phase 04.1 — HeaderSlot enum API):
-//   BRUHeaderBar(
+// USAGE (Phase 04.1 — HeaderSlot enum API via BRUHeaderBar.slots factory):
+//   BRUHeaderBar.slots(
 //       left:   .back,
 //       center: "Block · Upper Hyp",
 //       right:  .action("EDIT") { edit() }
 //   )
+//
+// NOTE on overload disambiguation: the HeaderAction? init and a HeaderSlot? init would be
+// ambiguous when only `center:` is provided (Swift can't choose between two identical-label
+// overloads with nil-defaulted params). The `.slots(...)` static factory avoids this.
 
 import SwiftUI
 
@@ -47,20 +51,20 @@ public struct HeaderAction: Sendable {
 
 // MARK: - HeaderSlot (Phase 04.1 API)
 
-/// Slot descriptor for the enum-based BRUHeaderBar init used in Phase 04.1 surfaces.
+/// Slot descriptor for the enum-based BRUHeaderBar factory used in Phase 04.1 surfaces.
 ///
 /// Cases:
 /// - `.back`: Renders the `‹` glyph in bruInk. On tap, invokes SwiftUI's environment `dismiss`.
 /// - `.cancel`: Renders "CANCEL" text in bruInk. On tap, invokes SwiftUI's environment `dismiss`.
 /// - `.action(String, () -> Void)`: Renders the label string in bruSignal with a tap closure.
 /// - `.text(String)`: Renders the label string in bruInk with no tap action.
-/// - `.none`: Renders nothing (equivalent to passing `nil` to the legacy `HeaderAction?` API).
+/// - `.empty`: Renders nothing (equivalent to passing `nil` to the legacy `HeaderAction?` API).
 public enum HeaderSlot {
     case back
     case cancel
     case action(String, @Sendable () -> Void)
     case text(String)
-    case none
+    case empty
 }
 
 // MARK: - BRUHeaderBar
@@ -75,10 +79,12 @@ public enum HeaderSlot {
 /// ──────────────────────────────────────────────  2pt bruInk bottom rule
 /// ```
 ///
-/// Two init forms:
-/// - **Legacy** (`HeaderAction?` params): used by all pre-04.1 callers.
-/// - **Phase 04.1** (`HeaderSlot?` params): `.back` / `.cancel` auto-wire dismiss;
-///   `.action(label, closure)` renders in bruSignal; `.text(label)` renders display-only.
+/// Two usage forms:
+/// - **Legacy init** (`HeaderAction?` params): `BRUHeaderBar(left: HeaderAction("‹") {}, center: "Title")`.
+///   Used by all pre-04.1 callers. Maintains exact backward compatibility.
+/// - **Phase 04.1 factory** (`HeaderSlot?` params): `BRUHeaderBar.slots(left: .back, center: "Title")`.
+///   `.back` / `.cancel` auto-wire dismiss; `.action(label, closure)` renders in bruSignal.
+///   Uses a static factory to avoid Swift overload ambiguity with the legacy init.
 ///
 /// Usage: mount at the top of a `VStack(spacing: 0)` on each surface, replacing
 /// `.navigationTitle` calls. See UI-SPEC v2 §Component Inventory line 507.
@@ -103,14 +109,27 @@ public struct BRUHeaderBar: View {
         self.mode = .legacy(left: left, center: center, right: right)
     }
 
-    // MARK: Init — Phase 04.1 (HeaderSlot)
+    // Internal init used by the .slots factory
+    private init(slotLeft: HeaderSlot?, center: String?, slotRight: HeaderSlot?) {
+        self.mode = .slots(left: slotLeft, center: center, right: slotRight)
+    }
 
-    public init(
+    // MARK: Factory — Phase 04.1 (HeaderSlot)
+    //
+    // Implemented as a static factory method rather than an additional init to avoid
+    // Swift overload ambiguity: both init(left: HeaderAction?, center: String?, right: HeaderAction?)
+    // and init(left: HeaderSlot?, center: String?, right: HeaderSlot?) have identical labels
+    // and would produce an "ambiguous use" error for calls like BRUHeaderBar(center: "Title").
+    //
+    // Phase 04.1 call sites use:
+    //   BRUHeaderBar.slots(left: .back, center: "Block · Upper Hyp", right: .action("EDIT") {...})
+
+    public static func slots(
         left: HeaderSlot? = nil,
         center: String? = nil,
         right: HeaderSlot? = nil
-    ) {
-        self.mode = .slots(left: left, center: center, right: right)
+    ) -> BRUHeaderBar {
+        BRUHeaderBar(slotLeft: left, center: center, slotRight: right)
     }
 
     // MARK: Body
@@ -207,11 +226,11 @@ private struct SlotBRUHeaderBarBody: View {
     var body: some View {
         VStack(spacing: 0) {
             HStack(spacing: 0) {
-                slotView(left, alignment: .leading)
+                slotView(left)
                     .frame(maxWidth: .infinity, alignment: .leading)
                 centerView
                     .frame(maxWidth: .infinity, alignment: .center)
-                slotView(right, alignment: .trailing)
+                slotView(right)
                     .frame(maxWidth: .infinity, alignment: .trailing)
             }
             .padding(.horizontal, 16)
@@ -236,7 +255,7 @@ private struct SlotBRUHeaderBarBody: View {
     }
 
     @ViewBuilder
-    private func slotView(_ slot: HeaderSlot?, alignment: Alignment) -> some View {
+    private func slotView(_ slot: HeaderSlot?) -> some View {
         switch slot {
         case .back:
             Button {
@@ -280,7 +299,7 @@ private struct SlotBRUHeaderBarBody: View {
                 .textCase(.uppercase)
                 .foregroundStyle(Color.bruInk)
 
-        case .none, nil:
+        case .empty, nil:
             Color.clear.frame(height: 44)
         }
     }
@@ -317,9 +336,9 @@ private struct SlotBRUHeaderBarBody: View {
     }
 }
 
-#Preview("Phase 04.1 — HeaderSlot API") {
+#Preview("Phase 04.1 — HeaderSlot API via .slots factory") {
     VStack(spacing: 0) {
-        BRUHeaderBar(
+        BRUHeaderBar.slots(
             left: .back,
             center: "Block · Upper Hyp",
             right: .action("EDIT") {}

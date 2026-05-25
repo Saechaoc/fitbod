@@ -2,20 +2,37 @@
 //  PlateCalculatorSheet.swift
 //  fitbod
 //
-//  "Try it" plate calculator sheet reachable from PlateInventoryEditor's
-//  toolbar trailing "Calculator" button. Rendered at .medium detent.
+//  BRU brutalist plate calculator sheet.
+//  Rewritten per 03.2-07-PLAN.md — full Form/Section/plateColor/weightToWidth/plateRect
+//  architecture replaced with BRU composition per plate-calc.jsx verbatim.
 //
-//  Inputs: editable target weight + editable bar weight.
-//  Output: live plate-stack visualization using PlateCalculator.solve(...)
-//  from the active PlateInventory.
+//  Architecture (top→bottom, VStack(spacing: 0)):
+//    BRUHeaderBar ← left "‹" / center "Plate calculator" / right "•••"
+//    targetBand   ← "TARGET" label + 96pt displayHero weight + unit + 4 BRUChip quick-adjust
+//    [barExceedsTargetError] ← inline signal caption if parsedBar > parsedTarget
+//    plateStackZone ← bruBg2 fill + 2pt bruInk rules top+bottom + "PER SIDE" + PlateStackViz
+//    equipmentGrid  ← BRUSectionHead + 2-column grid with 1pt hair separator + 2pt ink bottom
+//    platesAvailableList ← BRUSectionHead + LazyVStack PlateTallyRow rows (read-only .constant)
+//    footerBar  ← 2pt bruInk top rule + ghost "Save inventory" + primary "Done ▸"
+//    bruBgFiller ← 24pt bruBg
 //
-//  Pattern: DecimalRPEPickerSheet analog (PATTERNS.md Sheet presentation
-//  + dismiss pattern, lines 907–933). NavigationStack + .navigationTitle +
-//  .navigationBarTitleDisplayMode(.inline) + ToolbarItem "Done" dismiss.
+//  Input init unchanged: `public init(equipment: PlateEquipmentKind, inventory: PlateInventory)`
+//  Computed math (parsedTarget, parsedBar, barWeightExceedsTarget, solvedStack) preserved verbatim.
 //
-//  Plate-stack visualization: horizontal HStack of Rectangle shapes per
-//  plate per side (left mirrored), bar segment in center. Colors per
-//  UI-SPEC § Asset Contract color palette.
+//  DELETED (v1 legacy):
+//    - plateColor(for:)     — bruInk for ALL plates per 03-UI-SPEC line 141
+//    - weightToWidth(_:)    — PlateStackViz owns sizing per spec lines 73-74
+//    - plateRect(weight:)   — PlateStackViz renders the stack
+//    - ScrollView(.horizontal) HStack plate stack (lines 132-154) — replaced by PlateStackViz
+//    - Color(.systemRed/.systemGray4/.systemGray*) — banned tokens
+//    - Duplicated "No combination found" copy (v1 lines 96+104) — replaced by single bruSignal text
+//    - RoundedRectangle(cornerRadius: 2) — BRU has no rounded shapes
+//    - .font(.caption) / .font(.body) / .font(.headline) — replaced by BRUFont tokens
+//    - Form/Section root structure — replaced by VStack(spacing:0) in NavigationStack
+//
+//  96pt hero override rationale — documented inline below.
+//  Read-only .constant binding on PlateTallyRow — documented inline below.
+//  Threat T-03.2-14 mitigation — documented on PlateTallyRow usage.
 //
 
 import SwiftUI
@@ -44,7 +61,7 @@ public struct PlateCalculatorSheet: View {
         self.inventory = inventory
     }
 
-    // MARK: - Computed
+    // MARK: - Computed (math preserved verbatim from v1)
 
     private var parsedTarget: Double { Double(targetWeightText) ?? 0 }
     private var parsedBar: Double { Double(barWeightText) ?? inventory.barWeight }
@@ -62,159 +79,360 @@ public struct PlateCalculatorSheet: View {
         )
     }
 
+    /// Total weight from plates only (both sides), for the "BAR X + PLATES Y" label.
+    private var totalPlateWeight: Double {
+        guard let stack = solvedStack else { return 0 }
+        // stack.totalWeight includes bar weight; subtract it to get plates-only total
+        return stack.totalWeight - parsedBar
+    }
+
+    /// Unit label derived from bar weight heuristic; safe default is "kg".
+    /// Explicit `unitLabel` init param approach: add via a separate init if callers
+    /// need to override (plan-spec allows `String = "kg"` default).
+    private var unitLabel: String {
+        // Simple heuristic: bar weights above 30 are almost certainly in lb
+        // (Olympic lb bar = 45; kg bar = 20). Overridable via future init param if needed.
+        parsedBar > 30 ? "lb" : "kg"
+    }
+
+    /// Human-readable bar name for the Equipment grid.
+    private var barName: String {
+        switch equipment {
+        case .barbell:
+            return "Olympic · \(formatted(parsedBar)) \(unitLabel)"
+        case .dumbbell:
+            return "Dumbbell · \(formatted(parsedBar)) \(unitLabel)"
+        case .ezBar:
+            return "EZ-Bar · \(formatted(parsedBar)) \(unitLabel)"
+        case .trapBar:
+            return "Trap Bar · \(formatted(parsedBar)) \(unitLabel)"
+        }
+    }
+
+    /// Human-readable inventory name for the Equipment grid.
+    private var inventoryName: String {
+        switch equipment {
+        case .barbell:  return "Barbell set"
+        case .dumbbell: return "Dumbbell set"
+        case .ezBar:    return "EZ-Bar set"
+        case .trapBar:  return "Trap Bar set"
+        }
+    }
+
+    /// Format a Double, stripping unnecessary trailing zeros.
+    private func formatted(_ d: Double) -> String {
+        String(format: "%g", d)
+    }
+
     // MARK: - Body
 
     public var body: some View {
         NavigationStack {
-            Form {
-                // Target weight input
-                Section {
-                    TextField("Target weight", text: $targetWeightText)
-                        .keyboardType(.decimalPad)
-                }
-
-                // Bar weight input with validation footer
-                Section {
-                    TextField("Bar weight", text: $barWeightText)
-                        .keyboardType(.decimalPad)
-                } header: {
-                    Text("Bar weight")
-                } footer: {
-                    if barWeightExceedsTarget {
-                        // UI-SPEC § Error states verbatim
-                        Text("Bar weight exceeds target. Check the bar weight.")
-                            .font(.caption)
-                            .foregroundStyle(Color(.systemRed))
+            // Hide the default navigation chrome — BRUHeaderBar is the chrome.
+            VStack(spacing: 0) {
+                headerBar
+                ScrollView {
+                    VStack(spacing: 0) {
+                        targetBand
+                        if barWeightExceedsTarget {
+                            barExceedsTargetError
+                        }
+                        plateStackZone
+                        equipmentGrid
+                        platesAvailableList
                     }
                 }
-
-                // Plate stack visualization
-                Section {
-                    if let stack = solvedStack {
-                        plateStackView(stack: stack)
-                    } else if parsedTarget > 0 {
-                        Text("No combination found")                            // UI-SPEC verbatim
-                            .foregroundStyle(.secondary)
-                            .font(.body)
-                    }
-                } header: {
-                    Text("Plate stack")
-                } footer: {
-                    if parsedTarget > 0, solvedStack == nil {
-                        Text("No combination found")
-                            .foregroundStyle(.secondary)
-                            .font(.caption)
-                    }
-                }
+                footerBar
+                bruBgFiller
             }
-            .navigationTitle("Plate Calculator")                                // UI-SPEC verbatim
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button("Done") { dismiss() }
-                }
-            }
-            .onAppear {
-                // Initialize bar weight text from inventory on first appear.
-                if barWeightText.isEmpty {
-                    barWeightText = String(format: "%g", inventory.barWeight)
-                }
+            .background(Color.bruPaper)
+            .navigationBarHidden(true)
+        }
+        .onAppear {
+            if barWeightText.isEmpty {
+                barWeightText = formatted(inventory.barWeight)
             }
         }
     }
 
-    // MARK: - Plate Stack Visualization
+    // MARK: - Header Bar
 
-    @ViewBuilder
-    private func plateStackView(stack: PlateStack) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
-            // Horizontal plate stack: left side (mirrored) | bar | right side
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 4) {
-                    // Left side plates (mirrored — same as right side, reversed)
-                    ForEach(Array(stack.platesPerSide.reversed().enumerated()), id: \.offset) { _, entry in
-                        ForEach(0..<entry.count, id: \.self) { _ in
-                            plateRect(weight: entry.weight)
-                        }
-                    }
+    /// BRU header bar: "‹" dismiss / "Plate calculator" / "•••" menu.
+    /// Per 03-UI-SPEC lines 237-239 / plate-calc.jsx line 22.
+    private var headerBar: some View {
+        BRUHeaderBar(
+            left: HeaderAction("‹") { dismiss() },
+            center: "Plate calculator",
+            right: HeaderAction("•••") { /* future menu */ }
+        )
+    }
 
-                    // Bar center segment
-                    Rectangle()
-                        .fill(Color(.systemGray4))                              // UI-SPEC § Asset Contract bar segment
-                        .frame(width: 60, height: 6)
+    // MARK: - Target Band
 
-                    // Right side plates
-                    ForEach(Array(stack.platesPerSide.enumerated()), id: \.offset) { _, entry in
-                        ForEach(0..<entry.count, id: \.self) { _ in
-                            plateRect(weight: entry.weight)
-                        }
-                    }
-                }
-                .padding(.vertical, 8)
-            }
+    /// Target display band: 14pt top padding, 16pt horizontal, 2pt bruInk bottom rule.
+    /// Per 03-UI-SPEC lines 240-244 / plate-calc.jsx lines 24-43.
+    private var targetBand: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            // Top row: "TARGET" label + "BAR X + PLATES Y" right label
+            HStack(alignment: .firstTextBaseline) {
+                Text("Target")
+                    .font(BRUFont.labelSmall)
+                    .foregroundStyle(Color.bruInk)
+                    .textCase(.uppercase)
+                    .tracking(1.5)
 
-            // Total weight readout
-            HStack {
-                Text("Total")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
                 Spacer()
-                Text(String(format: "%g", stack.totalWeight))
-                    .font(.body)
+
+                Text("Bar \(formatted(parsedBar)) + Plates \(formatted(totalPlateWeight))")
+                    .font(BRUFont.labelSmall)
+                    .foregroundStyle(Color.bruMuted)
+                    .textCase(.uppercase)
+                    .tracking(1.2)
             }
+            .padding(.top, 14)
+            .padding(.horizontal, 16)
 
-            // Per-plate breakdown (text summary for accessibility + clarity)
-            if !stack.platesPerSide.isEmpty {
-                let summary = stack.platesPerSide
-                    .map { "\($0.count)×\(String(format: "%g", $0.weight))" }
-                    .joined(separator: ", ")
-                Text("Each side: \(summary)")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+            // Hero row: 96pt weight + unit label + quick-adjust chips
+            HStack(alignment: .lastTextBaseline, spacing: 6) {
+                // 96pt hero weight per 03-UI-SPEC line 87 / plate-calc.jsx line 34
+                // Font.custom override — BRUFont enum supplies the typeface name
+                // (SpaceGrotesk-Bold) but the 96pt size is a load-bearing spec exception
+                // requiring Font.custom directly (BRUFont.displayHero is 56pt).
+                Text(formatted(parsedTarget))
+                    .font(.custom("SpaceGrotesk-Bold", size: 96, relativeTo: .largeTitle))
+                    .foregroundStyle(Color.bruInk)
+                    // Negative letterspacing per displayHero spec (-0.5)
+                    .tracking(-0.5)
+
+                Text(unitLabel.uppercased())
+                    .font(BRUFont.displayLarge)
+                    .foregroundStyle(Color.bruMuted)
+
+                Spacer()
+
+                // Quick-adjust chips per 03-UI-SPEC line 244 (item 25):
+                // BRUChip ink-outline, NOT signal — plate-calc.jsx line 37 shows BruChip without color override.
+                HStack(spacing: 4) {
+                    quickAdjustChip(label: "−5", delta: -5)
+                    quickAdjustChip(label: "−2.5", delta: -2.5)
+                    quickAdjustChip(label: "+2.5", delta: 2.5)
+                    quickAdjustChip(label: "+5", delta: 5)
+                }
+            }
+            .padding(.horizontal, 16)
+            .padding(.top, 2)
+            .padding(.bottom, 14)
+        }
+        .overlay(alignment: .bottom) {
+            // 2pt bruInk bottom rule per plate-calc.jsx line 25
+            Rectangle()
+                .fill(Color.bruInk)
+                .frame(height: 2)
+        }
+    }
+
+    /// Quick-adjust chip: tapping mutates `targetWeightText` by `delta`.
+    private func quickAdjustChip(label: String, delta: Double) -> some View {
+        Button {
+            // T-03.2-13 mitigation: Double can safely represent any plausible plate
+            // weight — overflow not a realistic concern up to ~10^15.
+            let current = parsedTarget
+            let newValue = max(0, current + delta)
+            targetWeightText = formatted(newValue)
+        } label: {
+            BRUChip(label)
+        }
+        .buttonStyle(.plain)
+        // Accessibility: announce the intended action including unit per 03-UI-SPEC line 502
+        .accessibilityLabel(delta > 0 ? "Add \(formatted(delta)) \(unitLabel)" : "Subtract \(formatted(abs(delta))) \(unitLabel)")
+    }
+
+    // MARK: - Bar Exceeds Target Error
+
+    /// Inline validation caption: shown when parsedBar > parsedTarget && parsedTarget > 0.
+    /// Per 03-UI-SPEC line 352 verbatim. Replaces v1 Color(.systemRed) Section footer.
+    private var barExceedsTargetError: some View {
+        Text("Bar weight exceeds target. Check the bar weight.")
+            .font(BRUFont.labelSmall)
+            .foregroundStyle(Color.bruSignal)
+            .textCase(.uppercase)
+            .tracking(1.2)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 8)
+    }
+
+    // MARK: - Plate Stack Zone
+
+    /// PLATE STACK zone: bruBg2 fill, 2pt bruInk top + bottom rules, "PER SIDE" label, PlateStackViz.
+    /// Per 03-UI-SPEC line 382 / plate-calc.jsx lines 45-83.
+    private var plateStackZone: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            // "PER SIDE" label per 03-UI-SPEC line 245 / plate-calc.jsx lines 48-49
+            Text("Per side")
+                .font(BRUFont.labelSmall)
+                .foregroundStyle(Color.bruInk)
+                .textCase(.uppercase)
+                .tracking(1.5)
+
+            if let stack = solvedStack {
+                // Full-size PlateStackViz — Wave 1 primitive (03.2-01).
+                // heightScale: 1.0 per plan spec. showLegend: true per plan spec.
+                PlateStackViz(
+                    platesPerSide: stack.platesPerSide.map { ($0.weight, $0.count) },
+                    barLabel: "\(formatted(parsedBar)) \(unitLabel)",
+                    heightScale: 1.0,
+                    showLegend: true
+                )
+                .frame(maxWidth: .infinity)
+            } else if parsedTarget > 0 {
+                // No-solution state per 03-UI-SPEC line 256 verbatim.
+                // Replaces duplicated v1 "No combination found" copy at v1 lines 96+104.
+                Text("No combination found. Adjust inventory.")
+                    .font(BRUFont.labelSmall)
+                    .foregroundStyle(Color.bruSignal)
+                    .textCase(.uppercase)
+                    .tracking(1.2)
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    .padding(.vertical, 40)
+            }
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 20)
+        .frame(maxWidth: .infinity)
+        .background(Color.bruBg2)
+        .overlay(alignment: .top) {
+            // 2pt bruInk top rule per plate-calc.jsx line 46
+            Rectangle()
+                .fill(Color.bruInk)
+                .frame(height: 2)
+        }
+        .overlay(alignment: .bottom) {
+            // 2pt bruInk bottom rule per plate-calc.jsx line 46
+            Rectangle()
+                .fill(Color.bruInk)
+                .frame(height: 2)
+        }
+    }
+
+    // MARK: - Equipment Grid
+
+    /// Equipment 2-column grid: bar + inventory display.
+    /// Per 03-UI-SPEC lines 247-251 / plate-calc.jsx lines 85-97.
+    private var equipmentGrid: some View {
+        VStack(spacing: 0) {
+            BRUSectionHead("Equipment", right: "Tap to change")
+
+            HStack(spacing: 0) {
+                // Left column: BAR
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Bar")
+                        .font(BRUFont.labelSmall)
+                        .foregroundStyle(Color.bruMuted)
+                        .textCase(.uppercase)
+                        .tracking(1.2)
+
+                    Text(barName)
+                        .font(.custom("SpaceGrotesk-Bold", size: 20))
+                        .foregroundStyle(Color.bruInk)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 10)
+                .overlay(alignment: .trailing) {
+                    // 1pt bruHair vertical separator between columns per plate-calc.jsx line 89
+                    Rectangle()
+                        .fill(Color.bruHair)
+                        .frame(width: 1)
+                }
+
+                // Right column: INVENTORY
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Inventory")
+                        .font(BRUFont.labelSmall)
+                        .foregroundStyle(Color.bruMuted)
+                        .textCase(.uppercase)
+                        .tracking(1.2)
+
+                    Text(inventoryName)
+                        .font(.custom("SpaceGrotesk-Bold", size: 20))
+                        .foregroundStyle(Color.bruInk)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 10)
+            }
+            .overlay(alignment: .bottom) {
+                // 2pt bruInk bottom rule per plate-calc.jsx line 88
+                Rectangle()
+                    .fill(Color.bruInk)
+                    .frame(height: 2)
             }
         }
     }
 
-    /// A single colored plate rectangle per UI-SPEC § Asset Contract.
-    @ViewBuilder
-    private func plateRect(weight: Double) -> some View {
-        let color = plateColor(for: weight)
-        VStack(spacing: 2) {
-            RoundedRectangle(cornerRadius: 2)
-                .fill(color)
-                .frame(width: weightToWidth(weight), height: 24)               // UI-SPEC 24pt plate height
-            Text(String(format: "%g", weight))
-                .font(.caption)                                                 // UI-SPEC caption for plate labels
-                .foregroundStyle(.secondary)
+    // MARK: - Plates Available List
+
+    /// Plates available list: BRUSectionHead + LazyVStack of PlateTallyRow rows.
+    /// READ-ONLY: PlateCalculatorSheet displays the inventory but does NOT edit it —
+    /// PlateInventoryEditor is the editor. `.constant(plate.countPerSide)` ensures no
+    /// accidental mutation from this calculator context.
+    /// T-03.2-14 mitigation: PlateTallyRow's accessibilityAdjustableAction fires its setter;
+    /// when bound to .constant, the action is a no-op — this is intentional per the
+    /// PlateInventoryEditor-is-the-editor contract.
+    private var platesAvailableList: some View {
+        VStack(spacing: 0) {
+            BRUSectionHead("Plates available", right: "Per side")
+
+            LazyVStack(spacing: 0) {
+                ForEach(
+                    inventory.availablePlates.sorted { $0.weight > $1.weight },
+                    id: \.weight
+                ) { plate in
+                    // Read-only display per PlateInventoryEditor-is-the-editor contract.
+                    PlateTallyRow(
+                        weight: plate.weight,
+                        count: .constant(plate.countPerSide),
+                        unitLabel: unitLabel
+                    )
+                }
+            }
         }
     }
 
-    /// Maps a plate weight to a display width proportional to its weight.
-    private func weightToWidth(_ weight: Double) -> CGFloat {
-        // Scale: heaviest standard plate (45/25 kg) → 20pt; lightest → 6pt.
-        // Clamp to [6, 20] so microplates remain visible.
-        let scaled = max(6, min(20, CGFloat(weight) * 0.8))
-        return scaled
+    // MARK: - Footer Bar
+
+    /// Ghost "Save inventory" + primary "Done ▸" footer bar.
+    /// Per 03-UI-SPEC lines 254-255 / plate-calc.jsx lines 131-135.
+    private var footerBar: some View {
+        VStack(spacing: 0) {
+            // 2pt bruInk top rule per plate-calc.jsx line 132
+            Rectangle()
+                .fill(Color.bruInk)
+                .frame(height: 2)
+
+            HStack(spacing: 0) {
+                BRUButton("Save inventory", kind: .ghost) {
+                    // No-op in calculator context; PlateInventoryEditor handles mutations.
+                }
+                .frame(maxWidth: .infinity)
+
+                BRUButton("Done ▸", kind: .primary) {
+                    dismiss()
+                }
+                .frame(maxWidth: .infinity)
+            }
+        }
     }
 
-    /// Returns the semantic system color for a plate weight per UI-SPEC § Asset Contract.
-    private func plateColor(for weight: Double) -> Color {
-        switch weight {
-        case let w where w >= 25:                                               // UI-SPEC: Red for ≥25 kg / ≥45 lb
-            return Color(.systemRed).opacity(0.8)
-        case let w where w >= 20:                                               // UI-SPEC: Blue for 20 kg / 35 lb
-            return Color(.systemBlue).opacity(0.8)
-        case let w where w >= 15:                                               // UI-SPEC: Yellow for 15 kg / 25 lb
-            return Color(.systemYellow).opacity(0.8)
-        case let w where w >= 10:                                               // UI-SPEC: Green for 10 kg
-            return Color(.systemGreen).opacity(0.8)
-        case let w where w >= 5:                                                // UI-SPEC: Light gray for 5 kg
-            return Color(.systemGray5)
-        case let w where w >= 2.5:                                              // UI-SPEC: Gray for 2.5 kg
-            return Color(.systemGray3)
-        default:                                                                // UI-SPEC: Silver/border for microplates
-            return Color(.systemGray6)
-        }
+    // MARK: - BruBg Filler
+
+    /// 24pt bruBg safe-area filler below footer per 03-UI-SPEC line 67 (xl spacing token).
+    /// Per plate-calc.jsx line 136: `<div style={{ height: 24, background: BRU.bg }} />`.
+    private var bruBgFiller: some View {
+        Rectangle()
+            .fill(Color.bruBg)
+            .frame(height: 24)
     }
 }
 
@@ -222,17 +440,20 @@ public struct PlateCalculatorSheet: View {
 
 #Preview("plate calculator") {
     @Previewable @State var present = true
-    let container = PreviewModelContainer.make()
+    let container = try! ModelContainer(
+        for: PlateInventory.self,
+        configurations: ModelConfiguration(isStoredInMemoryOnly: true)
+    )
     let ctx = ModelContext(container)
     let inv = PlateInventory()
     inv.equipmentKind = .barbell
-    inv.barWeight = 20
-    inv.availablePlates = PlateInventoryDefaults.make(for: .barbell, unitSystem: .kg)
+    inv.barWeight = 45
+    inv.availablePlates = PlateInventoryDefaults.make(for: .barbell, unitSystem: .lb)
     ctx.insert(inv)
     try? ctx.save()
-    return Color.clear.sheet(isPresented: $present) {
+    return Color.bruPaper.sheet(isPresented: $present) {
         PlateCalculatorSheet(equipment: .barbell, inventory: inv)
-            .presentationDetents([.medium])
+            .presentationDetents([.large])
     }
     .modelContainer(container)
 }
