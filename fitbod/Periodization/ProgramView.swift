@@ -5,26 +5,35 @@
 //  Quick task 260525-gen — BRU Program empty-state surface that replaces
 //  the Routines tab body in the bottom nav.
 //
-//  Source of truth: bru-screens/Program/empty-state.png + empty-state.html
+//  Source of truth: bru-screens/Program/empty-state.png (PNG primary),
+//  bru-screens/Program/empty-state.html (typography + measurement
+//  reference). The PNG governs spacing, vertical rhythm, and proportions;
+//  the HTML governs exact copy, font weights, and inline emphasis.
 //
 //  ## Composition
 //
-//  NavigationStack with .navigationBarHidden(true) + .safeAreaInset(edge: .top)
-//  mounting BRUHeaderBar(center: "Program", right: HeaderAction("+ NEW", signal)).
-//  Body is a ScrollView > LazyVStack with the following layered sections:
-//
-//    1. ResumeWorkoutBanner — only renders when an active Session exists
-//       (carried over from RoutinesListView; reactive via its own @Query).
-//    2. NoProgramHero — "ACTIVE BLOCK · NONE" caption, big "NO PROGRAM"
-//       hero headline, explanatory body paragraph.
-//    3. Coral CTA "+ DEFINE BLOCK ▶" — opens BlockBuilderView with a
-//       blank template (same flow as the "Blank Block" path that lived
-//       in RoutinesListView.bruTemplateMenuItems).
-//    4. Feature chip row — WEEKS / PHASES / DELOAD / CUSTOM (outline chips).
-//    5. ProgramTemplateSection — BRUSectionHead("OR START FROM A
-//       TEMPLATE", right: "4 PRESETS") followed by 4 ProgramTemplateRow
-//       items, each opening BlockBuilderView with the mapped
-//       BlockTemplate from BlockTemplates.swift.
+//  - Custom pageHeader (not BRUHeaderBar) painted via .safeAreaInset(.top):
+//      - Thin SETUP strip on the right
+//      - BRUDivider(.ink)
+//      - PROGRAM (left, bruInk) / + NEW (right, bruSignal) row
+//      - BRUDivider(.ink)
+//    BRUHeaderBar is bypassed here because BRUHeaderBar centers the
+//    title and only paints a bottom rule — the mockup needs left-aligned
+//    PROGRAM, right-aligned + NEW, and a top rule above the row.
+//  - ResumeWorkoutBanner (reactive via its own @Query) when an active
+//    Session exists.
+//  - NoProgramHero: "ACTIVE BLOCK · NONE" caption, large condensed
+//    "NO PROGRAM" headline (system .black .compressed), explanatory body
+//    paragraph using SF system sans-serif with inline bold on the
+//    accumulation/intensification/peak/deload keywords.
+//  - Coral "+ DEFINE BLOCK ▸" CTA — inline button with bruSignal fill
+//    and an explicit 68pt height (BRUButton .lg tier is 52pt — too short
+//    for the mockup's hero CTA).
+//  - Feature chip row: WEEKS / PHASES / DELOAD on line 1, CUSTOM wraps
+//    to line 2. Hardcoded two-row VStack instead of a Layout protocol
+//    implementation because the chip set is fixed at 4.
+//  - ProgramTemplateSection: BRUSectionHead + four ProgramTemplateRow
+//    presets mapped to existing BlockTemplates.
 //
 //  ## Scope decisions (260525-gen)
 //
@@ -34,19 +43,27 @@
 //    / New Folder / History), and the active-session conflict alert that
 //    lived in RoutinesListView — none of those surfaces apply to a
 //    Program empty state.
-//  - Preserves ResumeWorkoutBanner so an in-progress workout stays
-//    reachable from the Program tab.
-//  - "+ NEW" right header action is wired to the same blank-block flow
-//    as the main CTA (the mockup's "+ NEW" reads as "new program/block",
-//    not a Routine-style "+ NEW" menu).
+//  - "+ NEW" header action and the hero CTA both route to the same
+//    blank-block flow (the mockup's "+ NEW" reads as "new program",
+//    not the legacy Routine menu).
 //
-//  ## File location
+//  ## Font departures from the design system
+//
+//  Two BRU departures are intentional on this screen:
+//  - The hero uses .system(size:weight:).width(.compressed) instead of
+//    SpaceGrotesk-Bold — Space Grotesk is not a condensed cut, and the
+//    mockup hero is unmistakably condensed. iOS 18 ships compressed
+//    system weights so we get the look without bundling a font.
+//  - The body paragraph uses SF system sans-serif (16pt) instead of
+//    JetBrains Mono — the mockup body is plainly proportional sans-serif,
+//    not mono. Using BRUFont.bodyDefault here visually breaks fidelity.
+//  Both departures are scoped to this screen and documented at each call
+//  site so future BRU audits don't flag them as drift.
+//
+//  ## File location & Xcode wiring
 //
 //  fitbod/Periodization/ — co-located with Block*, MesocycleWeek*, and
-//  PeriodizationEngine. The Program concept owns the Block model below
-//  it; co-locating keeps the periodization surfaces together.
-//
-//  Xcode wiring: the project uses synchronized file system groups
+//  PeriodizationEngine. The project uses synchronized file system groups
 //  (PBXFileSystemSynchronizedRootGroup, objectVersion 77), so this file
 //  is picked up automatically with no pbxproj edit required.
 //
@@ -57,10 +74,6 @@ import SwiftData
 // MARK: - ProgramView
 
 /// Program tab body — BRU brutalist empty-state surface for periodization.
-///
-/// Renders the "NO PROGRAM" composition from bru-screens/Program/empty-state.png:
-/// hero headline, explanatory body, coral define-block CTA, feature
-/// chips, and 4 template preset rows that route into BlockBuilderView.
 public struct ProgramView: View {
 
     // MARK: State
@@ -94,8 +107,7 @@ public struct ProgramView: View {
                     )
 
                     NoProgramHero(
-                        defineAction: { startBlank() },
-                        chips: ProgramView.featureChips
+                        defineAction: { startBlank() }
                     )
 
                     ProgramTemplateSection(
@@ -108,12 +120,8 @@ public struct ProgramView: View {
             }
             .background(Color.bruPaper.ignoresSafeArea())
             .navigationBarHidden(true)
-            .safeAreaInset(edge: .top) {
-                BRUHeaderBar(
-                    left: nil,
-                    center: "Program",
-                    right: HeaderAction("+ NEW", isSignal: true, action: { startBlank() })
-                )
+            .safeAreaInset(edge: .top, spacing: 0) {
+                pageHeader
             }
             .navigationDestination(for: SessionRoute.self) { route in
                 switch route {
@@ -132,6 +140,61 @@ public struct ProgramView: View {
         }
     }
 
+    // MARK: Page header (custom, not BRUHeaderBar)
+
+    /// Two-tier top chrome that BRUHeaderBar can't express:
+    ///   ─ SETUP right-aligned in a slim strip
+    ///   ─ 2pt bruInk divider
+    ///   ─ PROGRAM (left) / + NEW (right)
+    ///   ─ 2pt bruInk divider
+    ///
+    /// Painted via .safeAreaInset(.top) so the rules pin to the top edge
+    /// while the body scrolls beneath.
+    @ViewBuilder
+    private var pageHeader: some View {
+        VStack(spacing: 0) {
+            HStack {
+                Spacer()
+                Text("Setup")
+                    .font(BRUFont.labelSmall)
+                    .tracking(1.2)
+                    .textCase(.uppercase)
+                    .foregroundStyle(Color.bruInk)
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 8)
+            .frame(maxWidth: .infinity)
+            .background(Color.bruPaper)
+
+            BRUDivider(.ink)
+
+            HStack(alignment: .center) {
+                Text("Program")
+                    .font(BRUFont.labelSmall)
+                    .tracking(1.5)
+                    .textCase(.uppercase)
+                    .foregroundStyle(Color.bruInk)
+                Spacer()
+                Button {
+                    startBlank()
+                } label: {
+                    Text("+ New")
+                        .font(BRUFont.labelSmall)
+                        .tracking(1.5)
+                        .textCase(.uppercase)
+                        .foregroundStyle(Color.bruSignal)
+                }
+                .buttonStyle(.plain)
+            }
+            .padding(.horizontal, 16)
+            .frame(height: 44)
+            .frame(maxWidth: .infinity)
+            .background(Color.bruPaper)
+
+            BRUDivider(.ink)
+        }
+    }
+
     // MARK: Actions
 
     private func startBlank() {
@@ -139,13 +202,6 @@ public struct ProgramView: View {
     }
 
     // MARK: Static data
-
-    fileprivate static let featureChips: [String] = [
-        "Weeks · 4-12",
-        "Phases · 1-4",
-        "Deload optional",
-        "Custom",
-    ]
 
     fileprivate static let templatePresets: [ProgramTemplatePreset] = [
         ProgramTemplatePreset(
@@ -196,10 +252,6 @@ public struct ProgramView: View {
 
 // MARK: - ProgramTemplatePreset
 
-/// Display-side preset descriptor that maps a mockup row to an existing
-/// BlockTemplate. The displayed `weeks`, `cadence`, and `phaseDescriptor`
-/// strings come from the mockup; the underlying `template` is the closest
-/// existing BlockTemplate in BlockTemplates.swift.
 fileprivate struct ProgramTemplatePreset: Identifiable {
     let weeks: String
     let title: String
@@ -213,74 +265,141 @@ fileprivate struct ProgramTemplatePreset: Identifiable {
 
 // MARK: - NoProgramHero
 
-/// Hero block: "ACTIVE BLOCK · NONE" caption, big "NO PROGRAM" headline,
-/// explanatory paragraph, coral CTA, and outline feature chips. Closes
-/// with a 2pt bruInk divider so the next section starts crisply.
+/// Hero block: ACTIVE BLOCK caption, big condensed NO PROGRAM headline,
+/// explanatory body paragraph with inline bold on the phase keywords,
+/// coral CTA, and a wrapping feature-chip row (3 + 1).
 fileprivate struct NoProgramHero: View {
 
     let defineAction: () -> Void
-    let chips: [String]
 
     var body: some View {
         VStack(spacing: 0) {
-            BRUDivider(.ink)
-
-            VStack(alignment: .leading, spacing: 16) {
+            VStack(alignment: .leading, spacing: 20) {
                 Text("Active block · None")
                     .font(BRUFont.labelSmall)
                     .tracking(1.2)
                     .textCase(.uppercase)
                     .foregroundStyle(Color.bruMuted)
 
-                BRUDisplay("NO PROGRAM", size: .hero)
+                heroHeadline
 
-                Text("A block schedules routines across weeks and phases — accumulation, intensification, peak, deload. You can also lift without a block, but Fitbod really earns its keep when you’re running one.")
-                    .font(BRUFont.bodyDefault)
-                    .foregroundStyle(Color.bruInk)
-                    .fixedSize(horizontal: false, vertical: true)
+                bodyParagraph
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.horizontal, 16)
-            .padding(.top, 20)
-            .padding(.bottom, 16)
-
-            BRUButton("+ Define block ▸", kind: .signal, size: .lg, action: defineAction)
-                .padding(.horizontal, 16)
-
-            HStack(spacing: 8) {
-                ForEach(chips, id: \.self) { chip in
-                    ProgramFeatureChip(label: chip)
-                }
-                Spacer(minLength: 0)
-            }
-            .padding(.horizontal, 16)
-            .padding(.top, 12)
-            .padding(.bottom, 20)
+            .padding(.top, 24)
+            .padding(.bottom, 24)
 
             BRUDivider(.ink)
+
+            defineCTA
+                .padding(.horizontal, 16)
+                .padding(.top, 20)
+                .padding(.bottom, 16)
+
+            chipRows
+                .padding(.horizontal, 16)
+                .padding(.bottom, 24)
+
+            BRUDivider(.ink)
+        }
+    }
+
+    /// NO PROGRAM hero — system .black .width(.compressed) at ~84pt.
+    /// Departure from BRUFont.displayHero (Space Grotesk Bold 56pt) is
+    /// intentional: Space Grotesk has no condensed cut and the mockup
+    /// hero is unmistakably condensed.
+    private var heroHeadline: some View {
+        Text("NO PROGRAM")
+            .font(.system(size: 84, weight: .black).width(.compressed))
+            .foregroundStyle(Color.bruInk)
+            .tracking(-1)
+            .lineSpacing(0)
+            .minimumScaleFactor(0.75)
+            .lineLimit(1)
+            .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    /// Body paragraph with inline bold on "accumulation, intensification,
+    /// peak, deload." — concatenated Text segments so the bold span
+    /// flows inline with the surrounding regular weight.
+    /// Departure from BRUFont.bodyDefault (JetBrains Mono Regular 12pt)
+    /// is intentional: mockup body is plainly proportional sans-serif.
+    private var bodyParagraph: some View {
+        let lead = Text("A block schedules routines across weeks and phases — ")
+        let bold = Text("accumulation, intensification, peak, deload.")
+            .fontWeight(.semibold)
+        let tail = Text(" You can also lift without a block, but Fitbod really earns its keep when you’re running one.")
+
+        return Text("\(lead)\(bold)\(tail)")
+            .font(.system(size: 16, weight: .regular))
+            .foregroundStyle(Color.bruInk)
+            .lineSpacing(4)
+            .fixedSize(horizontal: false, vertical: true)
+            .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    /// Coral define-block CTA — 68pt tall (BRUButton .lg is 52pt and
+    /// reads too short next to the mockup). Inline Button + bruSignal
+    /// background gives us exact control without bending BRUButton's
+    /// size enum.
+    private var defineCTA: some View {
+        Button(action: defineAction) {
+            Text("+ Define block  ▸")
+                .font(BRUFont.bodyEmphasis)
+                .tracking(1.4)
+                .textCase(.uppercase)
+                .foregroundStyle(Color.bruPaper)
+                .frame(maxWidth: .infinity, minHeight: 68)
+                .background(Color.bruSignal)
+        }
+        .buttonStyle(.plain)
+    }
+
+    /// Two-row chip layout: WEEKS / PHASES / DELOAD on row 1, CUSTOM
+    /// alone on row 2. Hardcoded because the set is fixed at 4 — using
+    /// a Layout protocol implementation would be overkill.
+    private var chipRows: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 10) {
+                ProgramFeatureChip(label: "Weeks · 4-12")
+                ProgramFeatureChip(label: "Phases · 1-4")
+                ProgramFeatureChip(label: "Deload optional")
+                Spacer(minLength: 0)
+            }
+            HStack(spacing: 10) {
+                ProgramFeatureChip(label: "Custom")
+                Spacer(minLength: 0)
+            }
         }
     }
 }
 
 // MARK: - ProgramFeatureChip
 
-/// Outline chip used in the hero "feature row" beneath the define CTA.
-///
-/// Thin wrapper over BRUChip — kept as a named primitive so the chip
-/// styling for this row can evolve (e.g. swap to a tighter padding tier)
-/// without touching the hero composition.
+/// Outline chip used in the hero feature row. Slightly larger padding
+/// and a stronger border weight than BRUChip's defaults to match the
+/// mockup's chip presence.
 fileprivate struct ProgramFeatureChip: View {
     let label: String
 
     var body: some View {
-        BRUChip(label)
+        Text(label)
+            .font(BRUFont.labelSmall)
+            .tracking(1.2)
+            .textCase(.uppercase)
+            .foregroundStyle(Color.bruInk)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 6)
+            .overlay(
+                Rectangle()
+                    .stroke(Color.bruInk, lineWidth: 1.5)
+            )
     }
 }
 
 // MARK: - ProgramTemplateSection
 
-/// "OR START FROM A TEMPLATE · 4 PRESETS" section: BRUSectionHead row
-/// followed by the preset rows separated by hair dividers.
 fileprivate struct ProgramTemplateSection: View {
 
     let presets: [ProgramTemplatePreset]
@@ -309,9 +428,9 @@ fileprivate struct ProgramTemplateSection: View {
 
 // MARK: - ProgramTemplateRow
 
-/// One preset row: large `weeks` label on the left, stacked
-/// title+cadence+phase block in the middle (with optional POPULAR badge),
-/// chevron on the right.
+/// One preset row: large condensed weeks label on the left, stacked
+/// title / cadence / phase block in the middle (with optional POPULAR
+/// badge inline next to the title), chevron on the right.
 fileprivate struct ProgramTemplateRow: View {
 
     let preset: ProgramTemplatePreset
@@ -319,19 +438,19 @@ fileprivate struct ProgramTemplateRow: View {
 
     var body: some View {
         Button(action: action) {
-            HStack(alignment: .top, spacing: 16) {
+            HStack(alignment: .center, spacing: 16) {
                 Text(preset.weeks)
-                    .font(.custom("SpaceGrotesk-Bold", size: 24))
+                    .font(.system(size: 36, weight: .black).width(.compressed))
                     .foregroundStyle(Color.bruInk)
-                    .frame(width: 40, alignment: .leading)
+                    .frame(width: 56, alignment: .leading)
 
-                VStack(alignment: .leading, spacing: 4) {
-                    HStack(spacing: 8) {
+                VStack(alignment: .leading, spacing: 6) {
+                    HStack(spacing: 10) {
                         Text(preset.title)
-                            .font(BRUFont.displayMedium)
+                            .font(.system(size: 18, weight: .bold))
                             .foregroundStyle(Color.bruInk)
                         if preset.popular {
-                            BRUChip("Popular", color: .bruSignal, fill: true)
+                            popularBadge
                         }
                         Spacer(minLength: 0)
                     }
@@ -350,16 +469,27 @@ fileprivate struct ProgramTemplateRow: View {
                 }
 
                 Text("›")
-                    .font(BRUFont.displayMedium)
-                    .foregroundStyle(Color.bruInk)
+                    .font(.system(size: 28, weight: .medium))
+                    .foregroundStyle(Color.bruMuted)
             }
             .padding(.horizontal, 16)
-            .padding(.vertical, 16)
+            .padding(.vertical, 20)
             .frame(maxWidth: .infinity, alignment: .leading)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .background(Color.bruPaper)
+    }
+
+    private var popularBadge: some View {
+        Text("Popular")
+            .font(BRUFont.labelMicro)
+            .tracking(1.0)
+            .textCase(.uppercase)
+            .foregroundStyle(Color.bruPaper)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 4)
+            .background(Color.bruSignal)
     }
 }
 
