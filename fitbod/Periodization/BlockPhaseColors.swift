@@ -47,17 +47,6 @@ public enum BlockPhaseColors {
         }
     }
 
-    // MARK: - Deprecated — migrate callers to rowTint(for:) or Color.bruBg2
-    //
-    // Pre-BRU tint pattern; use rowTint(for:) for the NOW-row 6% signal tint
-    // or Color.bruBg2 directly for inset card backgrounds.
-    // This helper is repurposed to delegate to rowTint(for:) so any forgotten
-    // Phase 4 call site stops surfacing teal/amber/orange/slate tints.
-    // Plan 08 (Wave 7) will delete or @available-deprecate this entirely.
-    public static func tint(for kind: BlockPhaseKind) -> Color {
-        rowTint(for: kind)
-    }
-
     public static func phaseLabel(_ kind: BlockPhaseKind) -> String {
         kind.rawValue.capitalized
     }
