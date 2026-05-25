@@ -5,6 +5,7 @@
 //  Routine-builder header row for linking a routine to a periodization
 //  block. The draft stores only a UUID until Save; RoutineDraft
 //  materializes the SwiftData relationship transactionally.
+//  Phase 04.1 (BRU re-skin) — see 04.1-PATTERNS.md File #7
 //
 
 import SwiftData
@@ -34,8 +35,8 @@ public struct BlockPickerMenu: View {
                 } label: {
                     HStack {
                         if block.isActive {
-                            Circle()
-                                .fill(Color.accentColor)
+                            Rectangle()
+                                .fill(Color.bruSignal)
                                 .frame(width: 6, height: 6)
                         }
                         Text(block.name)
@@ -48,14 +49,10 @@ public struct BlockPickerMenu: View {
             Button("+ Create New Block") {
                 pendingCreateBlock = true
             }
-            .foregroundStyle(Color.accentColor)
+            .foregroundStyle(Color.bruSignal)
+            .font(BRUFont.labelSmall)
         } label: {
-            HStack {
-                Text("Block:")
-                Spacer()
-                Text(currentBlockLabel)
-                    .foregroundStyle(blockID == nil ? Color.secondary : Color.accentColor)
-            }
+            BRUChip("Block: \(currentBlockLabel)", color: blockID == nil ? nil : .bruSignal, fill: blockID != nil)
         }
         .sheet(isPresented: $pendingCreateBlock) {
             BlockBuilderView(draft: BlockDraft(template: BlockTemplates.blank))
