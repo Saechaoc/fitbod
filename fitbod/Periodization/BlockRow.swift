@@ -3,6 +3,7 @@
 //  fitbod
 //
 //  Row for one periodization block in the Routines tab.
+//  Phase 04.1 (BRU re-skin) — see 04.1-PATTERNS.md File #6
 //
 
 import SwiftUI
@@ -25,28 +26,24 @@ public struct BlockRow: View {
     public var body: some View {
         HStack(spacing: 8) {
             if block.isActive {
-                Circle()
-                    .fill(Color.accentColor)
+                Rectangle()
+                    .fill(Color.bruSignal)
                     .frame(width: 6, height: 6)
                     .accessibilityHidden(true)
             }
 
             VStack(alignment: .leading, spacing: 4) {
                 Text(block.name)
-                    .font(.body)
+                    .font(BRUFont.bodyEmphasis)
+                    .foregroundStyle(Color.bruInk)
                 Text(Self.captionText(for: block))
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .font(BRUFont.labelSmall)
+                    .foregroundStyle(Color.bruMuted)
             }
 
             Spacer()
 
-            Text(Self.weekBadgeText(for: block))
-                .font(.caption)
-                .padding(.horizontal, 8)
-                .padding(.vertical, 4)
-                .background(Color(.systemGray6))
-                .clipShape(Capsule())
+            BRUChip(Self.weekBadgeText(for: block))
         }
         .contentShape(Rectangle())
         .onTapGesture { onTap(block) }
@@ -59,6 +56,11 @@ public struct BlockRow: View {
         }
         .accessibilityLabel(Self.accessibilityLabelText(for: block))
         .accessibilityHint("Tap to edit. Swipe left to delete.")
+        .overlay(alignment: .bottom) {
+            Rectangle()
+                .fill(Color.bruHair)
+                .frame(height: 1)
+        }
     }
 
     public static func sortedForDisplay(_ blocks: [Block]) -> [Block] {
