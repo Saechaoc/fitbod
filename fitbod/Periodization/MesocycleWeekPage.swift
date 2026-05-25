@@ -3,6 +3,7 @@
 //  fitbod
 //
 //  One page in the active block swipe pager.
+//  Phase 04.1 (BRU re-skin) — see 04.1-PATTERNS.md File #8
 //
 
 import SwiftUI
@@ -19,50 +20,52 @@ public struct MesocycleWeekPage: View {
     public var body: some View {
         if let weekContext = PeriodizationEngine.weekContext(for: block, weekIndex: weekIndex, on: .now) {
             VStack(alignment: .leading, spacing: 8) {
-                Text(BlockPhaseColors.phaseLabel(weekContext.phaseKind))
-                    .font(.caption)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 6)
-                    .background(BlockPhaseColors.color(for: weekContext.phaseKind))
-                    .foregroundStyle(Color.white)
-                    .clipShape(Capsule())
-                    .frame(minWidth: 44, minHeight: 44, alignment: .leading)
+                // Phase chip — BRUChip replaces Capsule + Color.white text
+                BRUChip(
+                    BlockPhaseColors.phaseLabel(weekContext.phaseKind).uppercased(),
+                    color: phaseChipColor(for: weekContext.phaseKind),
+                    fill: shouldFillChip(for: weekContext.phaseKind)
+                )
+                .frame(minWidth: 44, minHeight: 44, alignment: .leading)
 
-                Text(Self.weekBadgeText(for: block, weekIndex: weekIndex))
-                    .font(.headline)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
-                    .background(Color(.systemGray6))
-                    .clipShape(Capsule())
+                // Week badge — BRUChip replaces .headline + Capsule + systemGray6
+                BRUChip(Self.weekBadgeText(for: block, weekIndex: weekIndex).uppercased(), color: .bruInk)
 
+                // Days remaining + multiplier captions
                 Text(Self.daysRemainingText(for: weekContext))
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .font(BRUFont.bodyDefault)
+                    .foregroundStyle(Color.bruMuted)
 
                 Text(Self.multiplierPreviewText(for: weekContext))
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .font(BRUFont.bodyDefault)
+                    .foregroundStyle(Color.bruMuted)
 
-                Divider()
+                // Hair divider — replaces Divider()
+                Rectangle()
+                    .fill(Color.bruHair)
+                    .frame(height: 1)
 
                 let routines = Self.scheduledRoutines(for: block)
                 if !routines.isEmpty {
                     Text("Routines this week")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .font(BRUFont.bodyDefault)
+                        .foregroundStyle(Color.bruMuted)
                     ForEach(routines) { routine in
                         HStack {
                             Text(routine.name)
-                                .font(.body)
+                                .font(BRUFont.bodyEmphasis)
+                                .foregroundStyle(Color.bruInk)
                             Spacer()
-                            Image(systemName: "chevron.right")
-                                .foregroundStyle(.secondary)
+                            // Typographic chevron — replaces Image(systemName: "chevron.right")
+                            Text("›")
+                                .font(BRUFont.labelSmall)
+                                .foregroundStyle(Color.bruMuted)
                         }
                     }
                 } else {
                     Text("No routines linked to this block.")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .font(BRUFont.bodyDefault)
+                        .foregroundStyle(Color.bruMuted)
                 }
             }
             .padding(16)
@@ -70,11 +73,28 @@ public struct MesocycleWeekPage: View {
             .accessibilityLabel(accessibilityLabel(for: weekContext))
         } else {
             Text("Block ended — review pending.")
-                .font(.caption)
-                .foregroundStyle(.secondary)
+                .font(BRUFont.labelSmall)
+                .foregroundStyle(Color.bruMuted)
                 .padding(16)
         }
     }
+
+    // MARK: - Phase chip color helpers
+
+    private func phaseChipColor(for kind: BlockPhaseKind) -> Color {
+        switch kind {
+        case .intensification, .deload:
+            return Color.bruSignal
+        default:
+            return Color.bruInk
+        }
+    }
+
+    private func shouldFillChip(for kind: BlockPhaseKind) -> Bool {
+        kind == .intensification
+    }
+
+    // MARK: - Static helpers (preserved verbatim)
 
     public static func totalWeeks(of block: Block) -> Int {
         (block.phases ?? []).reduce(0) { $0 + $1.weeks }
