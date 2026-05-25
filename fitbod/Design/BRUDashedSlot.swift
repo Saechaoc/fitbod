@@ -55,6 +55,18 @@ public struct BRUDashedSlot: View {
         self.action = action
     }
 
+    /// Positional convenience init per the 04.1 interface contract.
+    /// `BRUDashedSlot("+ ADD PHASE")` or `BRUDashedSlot("+ ADD PHASE") { ... }`.
+    /// When `action` is nil, the slot renders as non-interactive (used for display-only placeholders).
+    public init(_ caption: String, action: (() -> Void)? = nil) {
+        self.label = caption
+        self.hint = nil
+        self.leadingGlyph = ""
+        // Wrap optional action in @Sendable; fall back to a no-op.
+        let resolved: @Sendable () -> Void = { action?() }
+        self.action = resolved
+    }
+
     // MARK: Body
 
     public var body: some View {

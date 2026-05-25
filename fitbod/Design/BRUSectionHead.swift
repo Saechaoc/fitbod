@@ -11,6 +11,7 @@
 //   BRUSectionHead("Lift list")
 //   BRUSectionHead("Lift list", right: "Tap to reorder")
 //   BRUSectionHead("Past sessions", right: "14 sessions")
+//   BRUSectionHead("Phases", right: "+ ADD PHASE", rightAction: { ... })  // tappable right
 
 import SwiftUI
 
@@ -25,7 +26,9 @@ import SwiftUI
 /// └─────────────────────────────────────────────────────┘ ← 2pt bruInk rule
 /// ```
 /// - Title: `Font.custom("SpaceGrotesk-Bold", size: 14)`, tracking 0, uppercase transform.
-/// - Right metadata: `BRUFont.labelSmall`, tracking 1.2, uppercase transform, `bruMuted` color.
+/// - Right metadata: `BRUFont.labelSmall`, tracking 1.2, uppercase transform.
+///   - When `rightAction` is `nil`: renders in `bruMuted` (display only).
+///   - When `rightAction` is non-nil: renders in `bruSignal` and is tappable.
 /// - Accessibility: adds `.isHeader` trait so VoiceOver announces the section.
 public struct BRUSectionHead: View {
 
@@ -33,6 +36,7 @@ public struct BRUSectionHead: View {
 
     private let title: String
     private let right: String?
+    private let rightAction: (() -> Void)?
 
     // MARK: - Init
 
@@ -40,11 +44,15 @@ public struct BRUSectionHead: View {
     /// - Parameters:
     ///   - title: The section heading. Rendered uppercase at the view layer — source string
     ///            is as-typed for VoiceOver.
-    ///   - right: Optional right-side metadata string (e.g. "Tap to reorder", "14 sessions").
-    ///            Rendered uppercase in `bruMuted` labelSmall. Pass `nil` (default) to omit.
-    public init(_ title: String, right: String? = nil) {
+    ///   - right: Optional right-side metadata string (e.g. "Tap to reorder", "14 sessions",
+    ///            "+ ADD PHASE"). Rendered uppercase labelSmall. Pass `nil` (default) to omit.
+    ///   - rightAction: Optional tap closure for the right label. When provided, the right
+    ///                  label renders in `bruSignal` (instead of `bruMuted`) and is tappable.
+    ///                  Used by Phase 04.1 surfaces for "+ADD PHASE" actions per UI-SPEC line 513.
+    public init(_ title: String, right: String? = nil, rightAction: (() -> Void)? = nil) {
         self.title = title
         self.right = right
+        self.rightAction = rightAction
     }
 
     // MARK: - Body
@@ -63,11 +71,24 @@ public struct BRUSectionHead: View {
                 Spacer()
 
                 if let right {
-                    Text(right)
-                        .font(BRUFont.labelSmall)
-                        .tracking(1.2)
-                        .textCase(.uppercase)
-                        .foregroundStyle(Color.bruMuted)
+                    if let action = rightAction {
+                        // Tappable variant — bruSignal color per UI-SPEC line 513
+                        Button(action: action) {
+                            Text(right)
+                                .font(BRUFont.labelSmall)
+                                .tracking(1.2)
+                                .textCase(.uppercase)
+                                .foregroundStyle(Color.bruSignal)
+                        }
+                        .buttonStyle(.plain)
+                    } else {
+                        // Display-only variant — bruMuted color (original behavior)
+                        Text(right)
+                            .font(BRUFont.labelSmall)
+                            .tracking(1.2)
+                            .textCase(.uppercase)
+                            .foregroundStyle(Color.bruMuted)
+                    }
                 }
             }
             .padding(.horizontal, 16)
@@ -110,6 +131,8 @@ public struct BRUSectionHead: View {
             .padding(.horizontal, 16)
             .padding(.vertical, 12)
         }
+
+        BRUSectionHead("Phases", right: "+ ADD PHASE", rightAction: {})
 
         BRUSectionHead("Past sessions")
 

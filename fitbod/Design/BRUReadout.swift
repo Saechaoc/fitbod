@@ -30,6 +30,7 @@ public struct BRUReadout: View {
     private let label: String
     private let value: String
     private let valueColor: Color
+    private let size: BRUDisplaySize
 
     // MARK: - Init
 
@@ -40,10 +41,13 @@ public struct BRUReadout: View {
     ///   - value: The large display-weight value (e.g. "14", "↑", "42").
     ///   - valueColor: Foreground color for the value text. Defaults to `Color.bruInk`.
     ///                 Use `Color.bruSignal` for upward-trend arrows and highlight values.
-    public init(label: String, value: String, valueColor: Color = .bruInk) {
+    ///   - size: Display size tier for the value. Defaults to `.medium` (18pt) per UI-SPEC stat-strip
+    ///           contract. Use `BRUDisplay.Size` or `BRUDisplaySize` to reference the enum.
+    public init(label: String, value: String, valueColor: Color = .bruInk, size: BRUDisplaySize = .medium) {
         self.label = label
         self.value = value
         self.valueColor = valueColor
+        self.size = size
     }
 
     // MARK: - Body
@@ -57,7 +61,8 @@ public struct BRUReadout: View {
                 .foregroundStyle(Color.bruMuted)
 
             Text(value)
-                .font(BRUFont.displayMedium)
+                .font(.custom("SpaceGrotesk-Bold", size: size.pointSize))
+                .tracking(size.tracking)
                 .foregroundStyle(valueColor)
         }
     }

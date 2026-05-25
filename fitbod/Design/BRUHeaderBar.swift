@@ -8,16 +8,23 @@
 // Downstream plans (02.1-04..09) must account for 46pt at the top of each surface.
 // Do NOT nest BRUHeaderBar inside a NavigationStack that also has .navigationBarHidden(false).
 //
-// USAGE:
+// USAGE (legacy — HeaderAction struct API, all existing callers):
 //   BRUHeaderBar(
 //       left:   HeaderAction("‹ Back") { dismiss() },
 //       center: "Edit Routine",
 //       right:  HeaderAction("•••", isSignal: false) { showMenu() }
 //   )
+//
+// USAGE (Phase 04.1 — HeaderSlot enum API):
+//   BRUHeaderBar(
+//       left:   .back,
+//       center: "Block · Upper Hyp",
+//       right:  .action("EDIT") { edit() }
+//   )
 
 import SwiftUI
 
-// MARK: - HeaderAction
+// MARK: - HeaderAction (legacy API — all existing callers use this)
 
 /// A value type bundling a label, optional signal styling, and a tap action.
 /// Define once per use-site; BRUHeaderBar holds it by value (no reference capture issues).
@@ -38,6 +45,24 @@ public struct HeaderAction: Sendable {
     }
 }
 
+// MARK: - HeaderSlot (Phase 04.1 API)
+
+/// Slot descriptor for the enum-based BRUHeaderBar init used in Phase 04.1 surfaces.
+///
+/// Cases:
+/// - `.back`: Renders the `‹` glyph in bruInk. On tap, invokes SwiftUI's environment `dismiss`.
+/// - `.cancel`: Renders "CANCEL" text in bruInk. On tap, invokes SwiftUI's environment `dismiss`.
+/// - `.action(String, () -> Void)`: Renders the label string in bruSignal with a tap closure.
+/// - `.text(String)`: Renders the label string in bruInk with no tap action.
+/// - `.none`: Renders nothing (equivalent to passing `nil` to the legacy `HeaderAction?` API).
+public enum HeaderSlot {
+    case back
+    case cancel
+    case action(String, @Sendable () -> Void)
+    case text(String)
+    case none
+}
+
 // MARK: - BRUHeaderBar
 
 /// Custom navigation bar replacement for the BRU design system.
@@ -50,42 +75,71 @@ public struct HeaderAction: Sendable {
 /// ──────────────────────────────────────────────  2pt bruInk bottom rule
 /// ```
 ///
+/// Two init forms:
+/// - **Legacy** (`HeaderAction?` params): used by all pre-04.1 callers.
+/// - **Phase 04.1** (`HeaderSlot?` params): `.back` / `.cancel` auto-wire dismiss;
+///   `.action(label, closure)` renders in bruSignal; `.text(label)` renders display-only.
+///
 /// Usage: mount at the top of a `VStack(spacing: 0)` on each surface, replacing
 /// `.navigationTitle` calls. See UI-SPEC v2 §Component Inventory line 507.
 public struct BRUHeaderBar: View {
 
-    // MARK: State
+    // MARK: Mode
 
-    private let left: HeaderAction?
-    private let center: String?
-    private let right: HeaderAction?
+    private enum Mode {
+        case legacy(left: HeaderAction?, center: String?, right: HeaderAction?)
+        case slots(left: HeaderSlot?, center: String?, right: HeaderSlot?)
+    }
 
-    // MARK: Init
+    private let mode: Mode
+
+    // MARK: Init — Legacy (HeaderAction)
 
     public init(
         left: HeaderAction? = nil,
         center: String? = nil,
         right: HeaderAction? = nil
     ) {
-        self.left = left
-        self.center = center
-        self.right = right
+        self.mode = .legacy(left: left, center: center, right: right)
+    }
+
+    // MARK: Init — Phase 04.1 (HeaderSlot)
+
+    public init(
+        left: HeaderSlot? = nil,
+        center: String? = nil,
+        right: HeaderSlot? = nil
+    ) {
+        self.mode = .slots(left: left, center: center, right: right)
     }
 
     // MARK: Body
 
     public var body: some View {
+        switch mode {
+        case .legacy(let left, let center, let right):
+            LegacyBRUHeaderBarBody(left: left, center: center, right: right)
+        case .slots(let left, let center, let right):
+            SlotBRUHeaderBarBody(left: left, center: center, right: right)
+        }
+    }
+}
+
+// MARK: - LegacyBRUHeaderBarBody (internal — legacy HeaderAction API)
+
+private struct LegacyBRUHeaderBarBody: View {
+
+    let left: HeaderAction?
+    let center: String?
+    let right: HeaderAction?
+
+    var body: some View {
         VStack(spacing: 0) {
             HStack(spacing: 0) {
-                // Left action — anchored leading, maxWidth to share space equally
                 leftView
                     .frame(maxWidth: .infinity, alignment: .leading)
-
-                // Center title — anchored center, maxWidth to share space equally
                 centerView
                     .frame(maxWidth: .infinity, alignment: .center)
-
-                // Right action — anchored trailing, maxWidth to share space equally
                 rightView
                     .frame(maxWidth: .infinity, alignment: .trailing)
             }
@@ -93,14 +147,11 @@ public struct BRUHeaderBar: View {
             .frame(height: 44)
             .background(Color.bruPaper)
 
-            // 2pt bruInk bottom rule per UI-SPEC v2 line 82
             Rectangle()
                 .fill(Color.bruInk)
                 .frame(height: 2)
         }
     }
-
-    // MARK: Sub-views
 
     @ViewBuilder
     private var leftView: some View {
@@ -143,6 +194,98 @@ public struct BRUHeaderBar: View {
     }
 }
 
+// MARK: - SlotBRUHeaderBarBody (internal — Phase 04.1 HeaderSlot API)
+
+private struct SlotBRUHeaderBarBody: View {
+
+    @Environment(\.dismiss) private var dismiss
+
+    let left: HeaderSlot?
+    let center: String?
+    let right: HeaderSlot?
+
+    var body: some View {
+        VStack(spacing: 0) {
+            HStack(spacing: 0) {
+                slotView(left, alignment: .leading)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                centerView
+                    .frame(maxWidth: .infinity, alignment: .center)
+                slotView(right, alignment: .trailing)
+                    .frame(maxWidth: .infinity, alignment: .trailing)
+            }
+            .padding(.horizontal, 16)
+            .frame(minHeight: 56)
+            .background(Color.bruPaper)
+
+            Rectangle()
+                .fill(Color.bruInk)
+                .frame(height: 2)
+        }
+    }
+
+    @ViewBuilder
+    private var centerView: some View {
+        if let center {
+            Text(center)
+                .font(BRUFont.labelSmall)
+                .tracking(1.5)
+                .textCase(.uppercase)
+                .foregroundStyle(Color.bruInk)
+        }
+    }
+
+    @ViewBuilder
+    private func slotView(_ slot: HeaderSlot?, alignment: Alignment) -> some View {
+        switch slot {
+        case .back:
+            Button {
+                dismiss()
+            } label: {
+                Text("‹")
+                    .font(BRUFont.labelSmall)
+                    .tracking(1.5)
+                    .foregroundStyle(Color.bruInk)
+            }
+            .buttonStyle(.plain)
+
+        case .cancel:
+            Button {
+                dismiss()
+            } label: {
+                Text("CANCEL")
+                    .font(BRUFont.labelSmall)
+                    .tracking(1.5)
+                    .textCase(.uppercase)
+                    .foregroundStyle(Color.bruInk)
+            }
+            .buttonStyle(.plain)
+
+        case .action(let label, let action):
+            Button {
+                action()
+            } label: {
+                Text(label)
+                    .font(BRUFont.labelSmall)
+                    .tracking(1.5)
+                    .textCase(.uppercase)
+                    .foregroundStyle(Color.bruSignal)
+            }
+            .buttonStyle(.plain)
+
+        case .text(let label):
+            Text(label)
+                .font(BRUFont.labelSmall)
+                .tracking(1.5)
+                .textCase(.uppercase)
+                .foregroundStyle(Color.bruInk)
+
+        case .none, nil:
+            Color.clear.frame(height: 44)
+        }
+    }
+}
+
 // MARK: - Previews
 
 #if DEBUG
@@ -169,6 +312,17 @@ public struct BRUHeaderBar: View {
             left: HeaderAction("‹ Back") {},
             center: "Routines",
             right: HeaderAction("+ New", isSignal: true) {}
+        )
+        Color.bruBg
+    }
+}
+
+#Preview("Phase 04.1 — HeaderSlot API") {
+    VStack(spacing: 0) {
+        BRUHeaderBar(
+            left: .back,
+            center: "Block · Upper Hyp",
+            right: .action("EDIT") {}
         )
         Color.bruBg
     }

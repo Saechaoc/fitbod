@@ -32,12 +32,22 @@ public struct BRUPillButton: View {
     // MARK: Properties
 
     private let label: String
+    private let fill: Color
     private let action: @Sendable () -> Void
 
     // MARK: Init
 
-    public init(_ label: String, action: @escaping @Sendable () -> Void) {
+    /// Creates a BRUPillButton.
+    /// - Parameters:
+    ///   - label: Button label text. Rendered uppercase via `.textCase(.uppercase)`.
+    ///   - fill: Background fill color. Defaults to `Color.bruSignal` per BRU CTA contract.
+    ///           Use `Color.bruInk` for primary dark fill per the 04.1 interface contract.
+    ///           NOTE: `Color? = nil` pattern — generated Color.bru* tokens are `internal` under
+    ///           Swift 6 MemberImportVisibility and cannot be default argument values in public inits.
+    ///   - action: Closure invoked on tap.
+    public init(_ label: String, fill: Color? = nil, action: @escaping @Sendable () -> Void) {
         self.label = label
+        self.fill = fill ?? .bruSignal
         self.action = action
     }
 
@@ -52,7 +62,7 @@ public struct BRUPillButton: View {
                 .foregroundStyle(Color.bruPaper)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 16)
-                .background(Color.bruSignal)
+                .background(fill)
         }
         .buttonStyle(.plain)
     }

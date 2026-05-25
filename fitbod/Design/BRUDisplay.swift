@@ -54,7 +54,15 @@ public enum BRUDisplaySize {
 /// Use `BRUFont.displayHero` / `displayLarge` / `displayMedium` for inline text
 /// where you need mixed tracking on a `Text` modifier chain. Use `BRUDisplay`
 /// when the text is a standalone display element with a color binding.
+///
+/// The nested `Size` typealias is provided so Phase 04.1 surfaces and `BRUReadout`
+/// can reference `BRUDisplay.Size` instead of the top-level `BRUDisplaySize`.
 public struct BRUDisplay: View {
+
+    /// Nested type alias for `BRUDisplaySize` — allows call sites to reference
+    /// `BRUDisplay.Size` per the 04.1 interface contract while keeping the top-level
+    /// `BRUDisplaySize` for backward compatibility with existing callers.
+    public typealias Size = BRUDisplaySize
 
     // MARK: - Properties
 
@@ -71,7 +79,9 @@ public struct BRUDisplay: View {
     ///   - color: Foreground color. Defaults to `Color.bruInk`.
     // NOTE: Color? = nil pattern — generated Color.bru* tokens are `internal` and
     // cannot appear as default argument values in `public` inits under Swift 6.
-    public init(_ text: String, size: BRUDisplaySize, color: Color? = nil) {
+    // NOTE: size defaults to .large per the 04.1 interface contract; existing callers
+    // that pass size: explicitly continue to work unchanged.
+    public init(_ text: String, size: BRUDisplaySize = .large, color: Color? = nil) {
         self.text = text
         self.size = size
         self.color = color ?? .bruInk
