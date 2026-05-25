@@ -32,6 +32,8 @@
 //   Color.bruBg2     — #EDEAE0 / #1C1A14   — inset cards, calibration meter backing
 //   Color.bruAmber   — #E3A12A / #FFB54D   — UNDER MEV chip, under-trained bullet, warning state
 //   Color.bruGreen   — #3F8F5C / #4FBB78   — ADD A SET chip, encouragement state
+//   Color.bruTabSurface   — #FFFFFF / #0A0A0A   — BRUTabBar chrome surface (pure white / near-black); NOT bruPaper (warm)
+//   Color.bruTabSeparator — #D9D9D9 / #454545   — BRUTabBar cell dividers (cool neutral gray); NOT bruHair (warm beige)
 //
 // All tokens adapt to light/dark mode via adaptive colorsets in Assets.xcassets.
 //
@@ -84,4 +86,19 @@ public extension Color {
     /// Growth green `#3F8F5C` (light) / `#4FBB78` (dark).
     /// ADD A SET chip, encouragement state fill.
     static let bruGreen: Color = Color("bruGreen")
+
+    /// Pure white `#FFFFFF` (light) / near-black `#0A0A0A` (dark).
+    /// BRUTabBar chrome surface — inactive cell background AND foreground
+    /// for the active cell's label. Intentionally NOT `bruPaper`: the tab
+    /// bar is a structural neutral element and must read as clean white
+    /// (not warm cream) to match the mockup. Mirrors `bruInk`'s inversion
+    /// so the contrast pair (surface ↔ ink) holds in both light and dark.
+    static let bruTabSurface: Color = Color("bruTabSurface")
+
+    /// Cool neutral gray `#D9D9D9` (light) / mid-gray `#454545` (dark).
+    /// 1pt vertical dividers between BRUTabBar cells. Intentionally NOT
+    /// `bruHair`: `bruHair` is a warm hairline scoped to list-row dividers
+    /// only, while the tab bar needs a structural cool gray that reads
+    /// architectural against the pure-white surface.
+    static let bruTabSeparator: Color = Color("bruTabSeparator")
 }
