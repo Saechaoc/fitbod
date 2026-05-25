@@ -3,7 +3,7 @@
 //  fitbod
 //
 //  Wave-3 RootView — replaces the interim stub from plan 01-02. Hosts
-//  the 4-tab bar (Today / Routines / Progress / Settings) and wires
+//  the 4-tab bar (Today / Program / Progress / Settings) and wires
 //  the one-time `ExerciseLibraryImporter.seedIfNeeded()` call
 //  off `.task { ... }` so the seed runs the first time the view
 //  appears, off the main thread (per the `@ModelActor` macro on the
@@ -75,9 +75,16 @@ public struct RootView: View {
     /// custom tab-bar binding. `.progress` currently owns a
     /// `NavigationPath` because it has a multi-level drilldown; future
     /// phases will add paths for the other tabs as drilldowns appear.
+    ///
+    /// `.program` (was `.routines` pre quick-task 260525-gen) hosts the
+    /// new ProgramView empty-state surface. The routine builder + folder
+    /// CRUD that lived inside RoutinesListView is no longer reachable
+    /// from the tab bar; surfaces like ExerciseLibraryView are reached
+    /// from within the routine builder, and the routine builder itself
+    /// is reached from BlockBuilderView once a block is defined.
     enum Tab: Hashable {
         case today
-        case routines
+        case program
         case progress
         case settings
     }
@@ -139,7 +146,7 @@ public struct RootView: View {
                     case .progress:
                         // Wave-5 plan 06-08 — Progress tab pop-to-root.
                         progressPath = NavigationPath()
-                    case .today, .routines, .settings:
+                    case .today, .program, .settings:
                         // No NavigationPath wired for these tabs yet —
                         // future polish will add paths as drilldowns appear.
                         break
@@ -172,7 +179,7 @@ public struct RootView: View {
             Group {
                 switch selectedTab {
                 case .today:    TodayView()
-                case .routines: RoutinesListView()
+                case .program:  ProgramView()
                 case .progress: ProgressTabHost(path: $progressPath)
                 case .settings: SettingsTabHost()
                 }
@@ -247,7 +254,7 @@ private extension RootView.Tab {
     var bru: BRUTab {
         switch self {
         case .today:    return .today
-        case .routines: return .routines
+        case .program:  return .program
         case .progress: return .progress
         case .settings: return .settings
         }
@@ -258,7 +265,7 @@ private extension BRUTab {
     var rootTab: RootView.Tab {
         switch self {
         case .today:    return .today
-        case .routines: return .routines
+        case .program:  return .program
         case .progress: return .progress
         case .settings: return .settings
         }

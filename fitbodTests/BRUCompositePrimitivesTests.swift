@@ -5,7 +5,7 @@
 //  Swift Testing suite for Phase 2.1 Plan 03 composite BRU primitives.
 //
 //  Coverage:
-//  1. bruTabValuesCoverFiveCases     — BRUTab.allCases.count == 5, all labels/glyphs non-empty
+//  1. bruTabValuesCoverFourCases     — BRUTab.allCases.count == 4, all labels/glyphs non-empty
 //  2. bruTabGlyphsAreTypographic     — each glyph is a single Unicode scalar (not an SF Symbol)
 //  3. bruDashedSlotFiresAction       — BRUDashedSlot tap closure fires (hosting-controller approach)
 //  4. bruPillButtonFiresAction       — BRUPillButton tap closure fires
@@ -34,9 +34,11 @@ struct BRUCompositePrimitivesTests {
 
     // MARK: 1 — Tab value contract
 
-    @Test func bruTabValuesCoverFiveCases() {
-        // Verify the enum has exactly 5 cases
-        #expect(BRUTab.allCases.count == 5, "BRUTab must have exactly 5 cases; found \(BRUTab.allCases.count)")
+    @Test func bruTabValuesCoverFourCases() {
+        // Verify the enum has exactly 4 cases — `library` removed (quick task
+        // 260525-g32 follow-up), `routines` renamed to `program` (quick task
+        // 260525-gen).
+        #expect(BRUTab.allCases.count == 4, "BRUTab must have exactly 4 cases; found \(BRUTab.allCases.count)")
 
         for tab in BRUTab.allCases {
             #expect(!tab.label.isEmpty, "BRUTab.\(tab.rawValue).label must be non-empty")
@@ -48,11 +50,10 @@ struct BRUCompositePrimitivesTests {
                 "BRUTab.\(tab.rawValue).glyph '\(tab.glyph)' contains a colon — possible SF Symbol reference")
         }
 
-        // Spot-check all 5 rawValues exist
+        // Spot-check all 4 rawValues exist
         let rawValues = BRUTab.allCases.map(\.rawValue)
         #expect(rawValues.contains("today"))
-        #expect(rawValues.contains("routines"))
-        #expect(rawValues.contains("library"))
+        #expect(rawValues.contains("program"))
         #expect(rawValues.contains("progress"))
         #expect(rawValues.contains("settings"))
     }

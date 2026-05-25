@@ -9,10 +9,14 @@
 //   NEVER wrap the TabView in a parent NavigationStack (UI-SPEC v2 line 58).
 //   Plan 02.1-04 wires this into RootView.
 //
-// TAB COUNT: 4 tabs (today / routines / progress / settings).
+// TAB COUNT: 4 tabs (today / program / progress / settings).
 //   Library was removed in quick task 260525-g32 follow-up — the exercise
 //   library is reachable from the routine builder; a dedicated tab was
 //   redundant. Settings preserved.
+//   `program` replaces the former `routines` tab (quick task 260525-gen) —
+//   the Routines surface was rebranded as Program to reflect block/
+//   periodization as the primary planning unit; the underlying Routine
+//   data model is unchanged.
 //
 // USAGE:
 //   BRUTabBar(active: .today) { tab in selectedTab = tab }
@@ -27,7 +31,7 @@ import SwiftUI
 /// Per UI-SPEC v2 §Design System: "SF Symbols are NOT used in BRU."
 public enum BRUTab: String, CaseIterable, Sendable {
     case today
-    case routines
+    case program
     case progress
     case settings
 
@@ -35,7 +39,7 @@ public enum BRUTab: String, CaseIterable, Sendable {
     public var label: String {
         switch self {
         case .today:    return "Today"
-        case .routines: return "Routines"
+        case .program:  return "Program"
         case .progress: return "Progress"
         case .settings: return "Settings"
         }
@@ -46,7 +50,7 @@ public enum BRUTab: String, CaseIterable, Sendable {
     public var glyph: String {
         switch self {
         case .today:    return "▣"
-        case .routines: return "▤"
+        case .program:  return "▤"
         case .progress: return "▦"
         case .settings: return "◍"
         }
@@ -157,10 +161,10 @@ public struct BRUTabBar: View {
     .background(Color.bruBg)
 }
 
-#Preview("Active: Routines") {
+#Preview("Active: Program") {
     VStack {
         Spacer()
-        BRUTabBar(active: .routines) { _ in }
+        BRUTabBar(active: .program) { _ in }
     }
     .background(Color.bruBg)
 }
