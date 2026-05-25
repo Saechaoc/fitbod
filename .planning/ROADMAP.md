@@ -195,7 +195,7 @@ Plans:
 **Mode:** refactor
 **Depends on:** Phase 4, Phase 2.1 (specifically 02.1-01-PLAN.md foundation)
 **Requirements:** None (visual refactor — no new functional requirements; preserves all existing Phase 4 BLOCK-01..08 + PRES-05 + PRES-06 requirements)
-**Plans:** 6/8 plans executed
+**Plans:** 7/8 plans executed
 
 **Plan list:**
 - [x] 04.1-01-PLAN.md — Wave 0: Foundation precondition guard + 10 BRU primitive components (BRUChip / BRUHeaderBar / BRUSectionHead / BRUButton / BRUDivider / BRUDashedSlot / BRUPillButton / BRUDisplay / BRUReadout / BRUCornerBadge) — COMPLETE (feca3c7; BRUPrimitivesTests 11/11 GREEN)
@@ -204,7 +204,7 @@ Plans:
 - [x] 04.1-04-PLAN.md — Wave 3: Medium re-skins (BlockCard with D-14 + D-15 + week ticker + MesocycleWeekPage + BlockPhaseEditorRow with D-15 + 3-column data grid + RoutinesListView.blocksSection with D-09 copy fix)
 - [x] 04.1-05-PLAN.md — Wave 4: BlockBuilderView rebuild (Form → ScrollView+VStack + 56pt Canvas TIMELINE + BRUSectionHead "+ ADD PHASE" + BRUButton "Apply changes ▸")
 - [x] 04.1-06-PLAN.md — Wave 5: BlockReviewView rebuild (Form → ScrollView+VStack + full-bleed bruInk hero band + three displayHero stat columns + GeometryReader e1RM progress bars + bruBg2 recommended-next footer + bottom action bar with ghost+signal BRUButtons)
-- [ ] 04.1-07-PLAN.md — Wave 6: Net-new BlockOverviewScreen (D-10) + BlockCard tap-routing rewire (D-11) + ROADMAP Depends on update (D-02)
+- [x] 04.1-07-PLAN.md — Wave 6: Net-new BlockOverviewScreen (D-10) + BlockCard tap-routing rewire (D-11) + ROADMAP Depends on update (D-02)
 - [ ] 04.1-08-PLAN.md — Wave 7: Snapshot/regression tests + 25-forbidden-pattern audit re-run + Phase 04.1 completion verification
 
 
