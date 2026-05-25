@@ -195,7 +195,7 @@ Plans:
 **Mode:** refactor
 **Depends on:** Phase 4, Phase 2.1 (specifically 02.1-01-PLAN.md foundation)
 **Requirements:** None (visual refactor — no new functional requirements; preserves all existing Phase 4 BLOCK-01..08 + PRES-05 + PRES-06 requirements)
-**Plans:** 8/8 plans executed
+**Plans:** 8/8 plans complete
 
 **Plan list:**
 - [x] 04.1-01-PLAN.md — Wave 0: Foundation precondition guard + 10 BRU primitive components (BRUChip / BRUHeaderBar / BRUSectionHead / BRUButton / BRUDivider / BRUDashedSlot / BRUPillButton / BRUDisplay / BRUReadout / BRUCornerBadge) — COMPLETE (feca3c7; BRUPrimitivesTests 11/11 GREEN)
