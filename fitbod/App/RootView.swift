@@ -3,8 +3,8 @@
 //  fitbod
 //
 //  Wave-3 RootView — replaces the interim stub from plan 01-02. Hosts
-//  the 5-tab `TabView` (Today / Routines / Library / Progress / Settings)
-//  and wires the one-time `ExerciseLibraryImporter.seedIfNeeded()` call
+//  the 4-tab bar (Today / Routines / Progress / Settings) and wires
+//  the one-time `ExerciseLibraryImporter.seedIfNeeded()` call
 //  off `.task { ... }` so the seed runs the first time the view
 //  appears, off the main thread (per the `@ModelActor` macro on the
 //  importer).
@@ -33,17 +33,19 @@
 //
 //  RESEARCH § State of the Art and PITFALLS.md both forbid wrapping
 //  `TabView` in a parent `NavigationStack`. Each tab that needs a
-//  navigation surface owns one. The interim tab hosts (`LibraryTabHost`,
-//  `SettingsTabHost`) below each declare their own.
-//  (PlaceholderTabView deleted in Phase 2.1 Plan 11 — all tabs are real.)
+//  navigation surface owns one. The remaining interim tab host
+//  (`SettingsTabHost`) declares its own.
+//  (PlaceholderTabView deleted in Phase 2.1 Plan 11 — all tabs are real.
+//  LibraryTabHost removed when the Library tab was deleted in quick task
+//  260525-g32 follow-up; ExerciseLibraryView is still reachable from the
+//  routine builder.)
 //
 //  ## Tab hosts
 //
-//  `LibraryTabHost` (plan 03-02 wired) and `SettingsTabHost` (plan
-//  04-01 wired) are one-line wrappers around the real tab body views.
-//  Kept as private structs rather than substituting the bodies
-//  directly into `tabBar` so future per-tab wrappers (analytics, tab-
-//  re-tap pop-to-root) can attach in one place per tab.
+//  `SettingsTabHost` (plan 04-01 wired) is a one-line wrapper around the
+//  real settings view. Kept as a private struct rather than substituting
+//  the body directly into `tabBar` so future per-tab wrappers (analytics,
+//  tab-re-tap pop-to-root) can attach in one place per tab.
 //
 
 import SwiftUI
@@ -55,34 +57,27 @@ public struct RootView: View {
     @Query private var exercises: [Exercise]
     @State private var seedState = SeedState()
 
-    /// Currently-selected tab. Bound to `TabView(selection:)` via a
+    /// Currently-selected tab. Bound to the tab-bar binding via a
     /// custom `Binding<Tab>` that detects re-tap of the same tab and
     /// clears the matching `NavigationPath` (review WR-07).
-    @State private var selectedTab: Tab = .library
-
-    /// The Library tab owns a navigation stack (Library → Detail). The
-    /// path lives here in `RootView` so the tab re-tap binding setter
-    /// can clear it without reaching into a child view.
-    @State private var libraryPath = NavigationPath()
+    @State private var selectedTab: Tab = .today
 
     /// Wave-5 plan 06-08 — Progress tab NavigationPath. Lives in
     /// RootView so the `tabSelection` setter can clear it on Progress-
-    /// tab re-tap (mirrors the Library tab pattern).
+    /// tab re-tap.
     @State private var progressPath = NavigationPath()
 
     private static let log = Logger(subsystem: "com.fitbod.app", category: "seed")
 
     public init() {}
 
-    /// The 5 tabs in display order. `Hashable` so it can drive
-    /// `TabView(selection:)`. Only `.library` currently owns a
-    /// `NavigationPath` because it's the only tab with a multi-level
-    /// drilldown in Phase 1; future phases will add paths for the
-    /// other tabs as drilldowns appear (UI-SPEC § Interaction patterns).
+    /// The 4 tabs in display order. `Hashable` so it can drive the
+    /// custom tab-bar binding. `.progress` currently owns a
+    /// `NavigationPath` because it has a multi-level drilldown; future
+    /// phases will add paths for the other tabs as drilldowns appear.
     enum Tab: Hashable {
         case today
         case routines
-        case library
         case progress
         case settings
     }
@@ -141,8 +136,6 @@ public struct RootView: View {
                 if newValue == selectedTab {
                     // Re-tap on the currently-active tab — pop to root.
                     switch newValue {
-                    case .library:
-                        libraryPath = NavigationPath()
                     case .progress:
                         // Wave-5 plan 06-08 — Progress tab pop-to-root.
                         progressPath = NavigationPath()
@@ -180,7 +173,6 @@ public struct RootView: View {
                 switch selectedTab {
                 case .today:    TodayView()
                 case .routines: RoutinesListView()
-                case .library:  LibraryTabHost(path: $libraryPath)
                 case .progress: ProgressTabHost(path: $progressPath)
                 case .settings: SettingsTabHost()
                 }
@@ -248,7 +240,7 @@ public struct RootView: View {
 //
 // `BRUTabBar` is parameterized on its own `BRUTab` enum (declared in
 // fitbod/Design/BRUTabBar.swift) so the chrome component has no
-// dependency on `RootView`. Both enums carry the same 5 cases in the
+// dependency on `RootView`. Both enums carry the same 4 cases in the
 // same order; these helpers do the 1:1 conversion at the wiring site.
 
 private extension RootView.Tab {
@@ -256,7 +248,6 @@ private extension RootView.Tab {
         switch self {
         case .today:    return .today
         case .routines: return .routines
-        case .library:  return .library
         case .progress: return .progress
         case .settings: return .settings
         }
@@ -268,7 +259,6 @@ private extension BRUTab {
         switch self {
         case .today:    return .today
         case .routines: return .routines
-        case .library:  return .library
         case .progress: return .progress
         case .settings: return .settings
         }
@@ -288,17 +278,6 @@ private extension BRUTab {
 // RoutinesListView.swift (`presentingSessionHistory` @State + `.sheet(isPresented:)`).
 // A future revision can promote SessionHistoryView into a dedicated tab.
 
-/// Library tab body — wraps the real `ExerciseLibraryView` (plan 03-02).
-///
-/// `ExerciseLibraryView` still owns its `NavigationStack`, but the
-/// stack's path is supplied from outside via the `path` binding so
-/// `RootView.tabSelection` can clear it on Library-tab re-tap
-/// (review WR-07).
-private struct LibraryTabHost: View {
-    @Binding var path: NavigationPath
-    var body: some View { ExerciseLibraryView(path: $path) }
-}
-
 /// Progress tab body — wraps the real `ProgressHomeView` (plan 06-08).
 /// `ProgressHomeView` owns its own `NavigationStack`, parameterized on
 /// the path binding supplied from `RootView` so `tabSelection` can
@@ -309,11 +288,10 @@ private struct ProgressTabHost: View {
 }
 
 /// Settings tab body — wraps the real `SettingsView` (plan 04-01).
-/// `SettingsView` owns its own `NavigationStack`, so this host is now
-/// a thin transparent wrapper. Kept symmetrical with `LibraryTabHost`
-/// (one-line `var body: some View { SettingsView() }`) for the same
-/// reasons: future per-tab analytics wrappers / tab-re-tap pop-to-root
-/// hooks attach to the wrapper without restructuring `RootView`.
+/// `SettingsView` owns its own `NavigationStack`, so this host is a
+/// thin transparent wrapper. Kept as a private struct so future per-tab
+/// analytics wrappers / tab-re-tap pop-to-root hooks attach without
+/// restructuring `RootView`.
 private struct SettingsTabHost: View {
     var body: some View { SettingsView() }
 }

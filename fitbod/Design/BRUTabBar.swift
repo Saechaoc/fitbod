@@ -9,9 +9,10 @@
 //   NEVER wrap the TabView in a parent NavigationStack (UI-SPEC v2 line 58).
 //   Plan 02.1-04 wires this into RootView.
 //
-// TAB COUNT: 5 tabs (today / routines / library / progress / settings).
-//   UI-SPEC v2 line 516 mentioned 4 tabs, but the existing RootView has 5.
-//   Settings is preserved so the existing settings surface remains accessible.
+// TAB COUNT: 4 tabs (today / routines / progress / settings).
+//   Library was removed in quick task 260525-g32 follow-up — the exercise
+//   library is reachable from the routine builder; a dedicated tab was
+//   redundant. Settings preserved.
 //
 // USAGE:
 //   BRUTabBar(active: .today) { tab in selectedTab = tab }
@@ -20,14 +21,13 @@ import SwiftUI
 
 // MARK: - BRUTab Enum
 
-/// The five top-level destinations in the BRU tab bar.
+/// The four top-level destinations in the BRU tab bar.
 ///
 /// Typographic glyphs are Unicode box-drawing characters — NO SF Symbols.
 /// Per UI-SPEC v2 §Design System: "SF Symbols are NOT used in BRU."
 public enum BRUTab: String, CaseIterable, Sendable {
     case today
     case routines
-    case library
     case progress
     case settings
 
@@ -36,7 +36,6 @@ public enum BRUTab: String, CaseIterable, Sendable {
         switch self {
         case .today:    return "Today"
         case .routines: return "Routines"
-        case .library:  return "Library"
         case .progress: return "Progress"
         case .settings: return "Settings"
         }
@@ -48,7 +47,6 @@ public enum BRUTab: String, CaseIterable, Sendable {
         switch self {
         case .today:    return "▣"
         case .routines: return "▤"
-        case .library:  return "▥"
         case .progress: return "▦"
         case .settings: return "◍"
         }
@@ -62,9 +60,9 @@ public enum BRUTab: String, CaseIterable, Sendable {
 /// Layout (top to bottom):
 /// ```
 /// ──────────────────────────────────────────────  2pt bruInk top rule
-/// ┌──────┬──────┬──────┬──────┬──────┐
-/// │TODAY │ROUT. │ LIB. │PROG. │SETT. │  56pt min cell height
-/// └──────┴──────┴──────┴──────┴──────┘
+/// ┌──────┬──────┬──────┬──────┐
+/// │TODAY │ROUT. │PROG. │SETT. │  56pt min cell height
+/// └──────┴──────┴──────┴──────┘
 /// ```
 /// Labels-only — the JSX mocks in `bru-screens/` show no glyphs above
 /// the labels. The `BRUTab.glyph` property is retained for potential
@@ -163,14 +161,6 @@ public struct BRUTabBar: View {
     VStack {
         Spacer()
         BRUTabBar(active: .routines) { _ in }
-    }
-    .background(Color.bruBg)
-}
-
-#Preview("Active: Library") {
-    VStack {
-        Spacer()
-        BRUTabBar(active: .library) { _ in }
     }
     .background(Color.bruBg)
 }
