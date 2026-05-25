@@ -71,6 +71,25 @@ public struct BlockOverviewScreen: View {
         self.weekEnd = end
         self.todayDate = now
 
+        // CR-03 trade-off: `weekStart` / `weekEnd` / `todayDate` and the
+        // `@Query` predicate bounds (`startBound` / `endBound`) are all
+        // captured at init. SwiftUI may keep this view's identity stable
+        // across body re-evaluations, so if the screen stays mounted past
+        // midnight (or worse, across the Sun→Mon ISO week rollover) the
+        // entire carousel — grid columns, predicate bounds, and "today"
+        // highlight — will continue to render the captured snapshot.
+        // The whole screen stays *internally consistent* (everything reads
+        // from the same `todayDate`, see `dayState(for:)`), so there's no
+        // mismatch between query bounds and the "today" cell. The screen
+        // is simply stale until SwiftUI re-instantiates it (typical for a
+        // personal app re-opened daily).
+        //
+        // FIXME(v2): force re-init when the day rolls over, e.g. by passing
+        // a snap-day from the parent and applying
+        // `.id(Self.mondayFirstCalendar.startOfDay(for: .now))` on the
+        // call site so SwiftUI rebuilds the view and refreshes the
+        // predicate at the next midnight tick.
+
         let startBound = start
         let endBound = end
         _weekSessions = Query(
@@ -175,7 +194,13 @@ public struct BlockOverviewScreen: View {
     /// - rest: everything else
     internal func dayState(for cellDate: Date) -> DayState {
         let cal = Calendar.current
-        if cal.isDate(cellDate, inSameDayAs: Date.now) {
+        // CR-03 fix: derive .today and .upcoming from the captured `todayDate`
+        // (set in init) rather than `Date.now`, so the carousel grid, the
+        // @Query predicate bounds, and the "today" / "upcoming" highlight
+        // all use the same captured instant. Prevents internal inconsistency
+        // if the view stays mounted past midnight — see init for the
+        // FIXME(v2) about re-init on day rollover.
+        if cal.isDate(cellDate, inSameDayAs: todayDate) {
             return .today
         }
         let sessionLinked = weekSessions.contains { session in
@@ -186,7 +211,7 @@ public struct BlockOverviewScreen: View {
         if sessionLinked {
             return .done
         }
-        if cellDate > Date.now {
+        if cellDate > todayDate {
             // Heuristic: mark upcoming if there are routines in the block
             let routineCount = (block.routines ?? []).count
             if routineCount > 0 {
