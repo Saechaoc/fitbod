@@ -3,18 +3,18 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-last_updated: "2026-05-25T15:15:01.351Z"
+last_updated: "2026-05-25T15:26:00Z"
 progress:
   total_phases: 12
   completed_phases: 11
   total_plans: 111
-  completed_plans: 106
-  percent: 95
+  completed_plans: 108
+  percent: 97
 ---
 
 # Project State: Fitbod
 
-**Last updated:** 2026-05-25 (post 04.1-01 — Wave 0 foundation guard + 10 BRU primitive API extensions; BRUPrimitivesTests 11/11 GREEN; pbxproj widget exceptions wired)
+**Last updated:** 2026-05-25 (post 04.1-02 — Wave 1 BlockPhaseColors BRU palette flip; rowTint + drawDeloadStripes helpers added; Phase 4 regression smoke GREEN)
 
 ---
 
@@ -33,9 +33,9 @@ progress:
 ## Current Position
 
 Phase: 04.1 (bru-visual-rewrite-periodization-blocks) — EXECUTING
-Plan: 2 of 8
+Plan: 3 of 8
 
-Next active phase: Phase 04.1 (BRU Visual Rewrite — Periodization & Blocks) — 1/8 plans complete (04.1-01 Wave 0 foundation guard + 10 BRU primitives with 04.1 API contracts; BRUPrimitivesTests 11/11 GREEN).
+Next active phase: Phase 04.1 (BRU Visual Rewrite — Periodization & Blocks) — 2/8 plans complete (04.1-02 Wave 1 BlockPhaseColors BRU palette flip; 4 pre-BRU color literals replaced; rowTint(for:) + drawDeloadStripes(ctx:rect:) added; tint(for:) repurposed; Phase 4 regression smoke GREEN).
 
 Phase 6 status (for reference — previously active):
 Phase: 6 (progress-views-export-polish) — **IN PROGRESS (10/11 plans complete — 2026-05-23; 06-10 backup/restore remaining)**
