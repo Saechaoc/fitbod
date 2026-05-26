@@ -36,8 +36,8 @@ public struct ResumeWorkoutSlab: View {
     // MARK: - Properties
 
     let session: Session
-    let onResume: () -> Void
-    let onDiscard: () -> Void
+    let onResume: @MainActor () -> Void
+    let onDiscard: @MainActor () -> Void
 
     // MARK: - Computed
 
@@ -154,7 +154,7 @@ private struct ResumeWorkoutSlabPreviewContainer: View {
     }
 
     static func make() -> ResumeWorkoutSlabPreviewContainer {
-        let config = try! ModelConfiguration(isStoredInMemoryOnly: true)
+        let config = ModelConfiguration(isStoredInMemoryOnly: true)
         let container = try! ModelContainer(for: Session.self, configurations: config)
         let session = Session()
         session.routineSnapshotName = "Push A"

@@ -40,14 +40,14 @@ public struct ResumeWorkoutBanner: View {
     @Query(filter: #Predicate<Session> { $0.completedAt == nil })
     private var activeSessions: [Session]
 
-    public let onResume: (Session) -> Void
-    public let onDiscard: (Session) -> Void
+    public let onResume: @MainActor (Session) -> Void
+    public let onDiscard: @MainActor (Session) -> Void
 
     @State private var discardConfirm = false
 
     public init(
-        onResume: @escaping (Session) -> Void,
-        onDiscard: @escaping (Session) -> Void
+        onResume: @escaping @MainActor (Session) -> Void,
+        onDiscard: @escaping @MainActor (Session) -> Void
     ) {
         self.onResume = onResume
         self.onDiscard = onDiscard

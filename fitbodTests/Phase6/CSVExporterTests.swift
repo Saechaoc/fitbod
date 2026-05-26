@@ -246,10 +246,7 @@ struct CSVExporterTests {
         let committed = (try? Data(contentsOf: fixtureURL)) ?? Data()
         if committed.isEmpty {
             try? generated.write(to: fixtureURL)
-            #expect(
-                false,
-                "Fixture regenerated at \(fixtureURL.path) — commit and re-run."
-            )
+            Issue.record("Fixture regenerated at \(fixtureURL.path) — commit and re-run.")
             return
         }
         if generated != committed {

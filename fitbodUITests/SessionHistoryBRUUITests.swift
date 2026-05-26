@@ -77,8 +77,7 @@ final class SessionHistoryBRUUITests: XCTestCase {
         guard didNavigate else {
             // "+ NEW" or "History" button not found — navigation could not complete.
             // This may indicate a simulator state issue; log but don't hard-fail.
-            XCTSkip("Could not navigate to SessionHistoryView — '+ NEW' or 'History' button not found in UI hierarchy. Check that RoutinesListView.presentingNewMenu is wired correctly.")
-            return
+            throw XCTSkip("Could not navigate to SessionHistoryView — '+ NEW' or 'History' button not found in UI hierarchy. Check that RoutinesListView.presentingNewMenu is wired correctly.")
         }
 
         // Assert the BRU "History" header is visible
@@ -101,8 +100,7 @@ final class SessionHistoryBRUUITests: XCTestCase {
 
         let didNavigate = navigateToSessionHistory(app)
         guard didNavigate else {
-            XCTSkip("Could not navigate to SessionHistoryView — navigation path not established.")
-            return
+            throw XCTSkip("Could not navigate to SessionHistoryView — navigation path not established.")
         }
 
         // Wait for the sheet to present

@@ -12,28 +12,23 @@
 //
 //  ## Composition
 //
-//  - Custom pageHeader (not BRUHeaderBar) painted via .safeAreaInset(.top):
-//      - Thin SETUP strip on the right
-//      - BRUDivider(.ink)
-//      - PROGRAM (left, bruInk) / + NEW (right, bruSignal) row
-//      - BRUDivider(.ink)
+//  - ProgramChromeHeader (not BRUHeaderBar) starts below the native
+//    status bar:
+//      - 2pt top rule
+//      - PROGRAM (left) / + NEW (right) row
+//      - 2pt bottom rule
 //    BRUHeaderBar is bypassed here because BRUHeaderBar centers the
 //    title and only paints a bottom rule — the mockup needs left-aligned
 //    PROGRAM, right-aligned + NEW, and a top rule above the row.
 //  - ResumeWorkoutBanner (reactive via its own @Query) when an active
 //    Session exists.
-//  - NoProgramHero: "ACTIVE BLOCK · NONE" caption, large condensed
-//    "NO PROGRAM" headline (system .black .compressed), explanatory body
-//    paragraph using SF system sans-serif with inline bold on the
+//  - NoProgramHero: "ACTIVE BLOCK · NONE" caption, Bebas Neue
+//    "NO PROGRAM" headline, Geist paragraph with inline bold on the
 //    accumulation/intensification/peak/deload keywords.
-//  - Coral "+ DEFINE BLOCK ▸" CTA — inline button with bruSignal fill
-//    and an explicit 68pt height (BRUButton .lg tier is 52pt — too short
-//    for the mockup's hero CTA).
-//  - Feature chip row: WEEKS / PHASES / DELOAD on line 1, CUSTOM wraps
-//    to line 2. Hardcoded two-row VStack instead of a Layout protocol
-//    implementation because the chip set is fixed at 4.
-//  - ProgramTemplateSection: BRUSectionHead + four ProgramTemplateRow
-//    presets mapped to existing BlockTemplates.
+//  - Coral "+ DEFINE BLOCK ▶" CTA with the measured 71pt height.
+//  - Feature chips rendered by a wrapping layout using fixed chip tokens.
+//  - ProgramTemplateSection: compact ProgramTemplateHeader + four
+//    ProgramTemplateRow presets mapped to existing BlockTemplates.
 //
 //  ## Scope decisions (260525-gen)
 //
@@ -50,15 +45,9 @@
 //  ## Font departures from the design system
 //
 //  Two BRU departures are intentional on this screen:
-//  - The hero uses .system(size:weight:).width(.compressed) instead of
-//    SpaceGrotesk-Bold — Space Grotesk is not a condensed cut, and the
-//    mockup hero is unmistakably condensed. iOS 18 ships compressed
-//    system weights so we get the look without bundling a font.
-//  - The body paragraph uses SF system sans-serif (16pt) instead of
-//    JetBrains Mono — the mockup body is plainly proportional sans-serif,
-//    not mono. Using BRUFont.bodyDefault here visually breaks fidelity.
-//  Both departures are scoped to this screen and documented at each call
-//  site so future BRU audits don't flag them as drift.
+//  - BebasNeue-Regular.ttf and Geist-Regular.ttf are registered in
+//    Info.plist for this measured mockup pass. Space Grotesk remains the
+//    BRU default elsewhere.
 //
 //  ## File location & Xcode wiring
 //
@@ -94,35 +83,37 @@ public struct ProgramView: View {
 
     public var body: some View {
         NavigationStack(path: $navigationPath) {
-            ScrollView {
-                LazyVStack(spacing: 0) {
-                    ResumeWorkoutBanner(
-                        onResume: { session in
-                            navigationPath.append(SessionRoute.logger(session))
-                        },
-                        onDiscard: { session in
-                            ctx.delete(session)
-                            try? ctx.save()
-                        }
-                    )
+            VStack(spacing: 0) {
+                ProgramChromeHeader(onNew: { startBlank() })
 
-                    NoProgramHero(
-                        defineAction: { startBlank() }
-                    )
+                ScrollView {
+                    LazyVStack(spacing: 0) {
+                        ResumeWorkoutBanner(
+                            onResume: { session in
+                                navigationPath.append(SessionRoute.logger(session))
+                            },
+                            onDiscard: { session in
+                                ctx.delete(session)
+                                try? ctx.save()
+                            }
+                        )
 
-                    ProgramTemplateSection(
-                        presets: ProgramView.templatePresets,
-                        onSelect: { preset in
-                            pendingBlockBuilder = .template(preset.template)
-                        }
-                    )
+                        NoProgramHero(
+                            defineAction: { startBlank() }
+                        )
+
+                        ProgramTemplateSection(
+                            presets: ProgramView.templatePresets,
+                            onSelect: { preset in
+                                pendingBlockBuilder = .template(preset.template)
+                            }
+                        )
+                    }
                 }
+                .scrollIndicators(.hidden)
             }
-            .background(Color.bruPaper.ignoresSafeArea())
+            .background(ProgramScreenTokens.screenBackground.ignoresSafeArea())
             .navigationBarHidden(true)
-            .safeAreaInset(edge: .top, spacing: 0) {
-                pageHeader
-            }
             .navigationDestination(for: SessionRoute.self) { route in
                 switch route {
                 case .logger(let session):
@@ -137,61 +128,6 @@ public struct ProgramView: View {
                     }
                 }
             }
-        }
-    }
-
-    // MARK: Page header (custom, not BRUHeaderBar)
-
-    /// Two-tier top chrome that BRUHeaderBar can't express:
-    ///   ─ SETUP right-aligned in a slim strip
-    ///   ─ 2pt bruInk divider
-    ///   ─ PROGRAM (left) / + NEW (right)
-    ///   ─ 2pt bruInk divider
-    ///
-    /// Painted via .safeAreaInset(.top) so the rules pin to the top edge
-    /// while the body scrolls beneath.
-    @ViewBuilder
-    private var pageHeader: some View {
-        VStack(spacing: 0) {
-            HStack {
-                Spacer()
-                Text("Setup")
-                    .font(BRUFont.labelSmall)
-                    .tracking(1.2)
-                    .textCase(.uppercase)
-                    .foregroundStyle(Color.bruInk)
-            }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 8)
-            .frame(maxWidth: .infinity)
-            .background(Color.bruPaper)
-
-            BRUDivider(.ink)
-
-            HStack(alignment: .center) {
-                Text("Program")
-                    .font(BRUFont.labelSmall)
-                    .tracking(1.5)
-                    .textCase(.uppercase)
-                    .foregroundStyle(Color.bruInk)
-                Spacer()
-                Button {
-                    startBlank()
-                } label: {
-                    Text("+ New")
-                        .font(BRUFont.labelSmall)
-                        .tracking(1.5)
-                        .textCase(.uppercase)
-                        .foregroundStyle(Color.bruSignal)
-                }
-                .buttonStyle(.plain)
-            }
-            .padding(.horizontal, 16)
-            .frame(height: 44)
-            .frame(maxWidth: .infinity)
-            .background(Color.bruPaper)
-
-            BRUDivider(.ink)
         }
     }
 
@@ -250,6 +186,150 @@ public struct ProgramView: View {
     }
 }
 
+// MARK: - ProgramScreenTokens
+
+fileprivate enum ProgramScreenTokens {
+    static let screenBackground = Color(red: 240 / 255, green: 237 / 255, blue: 229 / 255)
+    static let ink = Color(red: 10 / 255, green: 10 / 255, blue: 10 / 255)
+    static let muted = Color(red: 126 / 255, green: 123 / 255, blue: 114 / 255)
+    static let blackDividerThickness: CGFloat = 2
+    static let lightRowDividerColor = Color(red: 212 / 255, green: 209 / 255, blue: 202 / 255)
+    static let lightRowDividerThickness: CGFloat = 1
+    static let horizontalPagePadding: CGFloat = 16
+
+    static let topHeaderHeight: CGFloat = 34
+    static let topHeaderRowHeight: CGFloat = 30
+    static let headerLabelFontSize: CGFloat = 11
+    static let headerLetterSpacing: CGFloat = 1.2
+
+    static let heroCopyHeight: CGFloat = 208
+    static let heroTopPadding: CGFloat = 20
+    static let heroCaptionFontSize: CGFloat = 10
+    static let heroCaptionLineHeight: CGFloat = 14
+    static let heroCaptionLetterSpacing: CGFloat = 1.5
+    static let captionToHeadlineSpacing: CGFloat = 0
+    static let noProgramFontSize: CGFloat = 68
+    static let noProgramLineHeight: CGFloat = 70
+    static let noProgramLetterSpacing: CGFloat = 0.5
+    static let headlineToBodySpacing: CGFloat = 8
+    static let bodyFontSize: CGFloat = 13.4
+    static let bodyLineHeight: CGFloat = 20
+    static let bodyLineSpacing: CGFloat = 2
+
+    static let ctaTopSpacing: CGFloat = 16
+    static let ctaHeight: CGFloat = 71
+    static let ctaColor = Color(red: 255 / 255, green: 77 / 255, blue: 46 / 255)
+    static let ctaBottomSpacing: CGFloat = 10
+    static let ctaFontSize: CGFloat = 28
+
+    static let chipHeight: CGFloat = 20
+    static let chipHorizontalPadding: CGFloat = 4
+    static let chipBorderWidth: CGFloat = 1
+    static let chipSpacing: CGFloat = 6
+    static let chipRowSpacing: CGFloat = 5
+    static let chipFontSize: CGFloat = 10
+    static let chipLetterSpacing: CGFloat = 1.5
+    static let chipBottomSpacing: CGFloat = 16
+
+    static let templateHeaderHeight: CGFloat = 26
+    static let templateHeaderDividerThickness: CGFloat = 1
+    static let templateRowHeight: CGFloat = 77
+    static let templateTitleFontSize: CGFloat = 15
+    static let templateMetaFontSize: CGFloat = 10
+    static let templateMetaLineHeight: CGFloat = 13
+    static let templateTextSpacing: CGFloat = 2
+    static let popularBadgeSpacing: CGFloat = 2
+    static let templateWeeksFontSize: CGFloat = 32
+    static let templateWeeksWidth: CGFloat = 56
+    static let popularBadgeWidth: CGFloat = 62
+    static let popularBadgeHeight: CGFloat = 18
+
+    static let bottomTabBarHeight: CGFloat = 63
+    static let selectedTabWidth: CGFloat = 99
+    static let selectedTabHeight: CGFloat = 29
+    static let bottomSafeAreaSpacing: CGFloat = 34
+}
+
+// MARK: - ProgramTypography
+
+fileprivate enum ProgramTypography {
+    static let chromeLabel: Font = .custom("SpaceGrotesk-Bold", size: ProgramScreenTokens.headerLabelFontSize)
+    static let templateMeta: Font = .custom("SpaceGrotesk-Bold", size: ProgramScreenTokens.templateMetaFontSize)
+}
+
+// MARK: - ProgramChromeHeader
+
+fileprivate struct ProgramChromeHeader: View {
+    static let totalHeight: CGFloat = ProgramScreenTokens.topHeaderHeight
+
+    let onNew: () -> Void
+
+    var body: some View {
+        VStack(spacing: 0) {
+            rule
+
+            HStack(alignment: .center) {
+                Text("PROGRAM")
+                    .font(ProgramTypography.chromeLabel)
+                    .tracking(ProgramScreenTokens.headerLetterSpacing)
+                    .foregroundStyle(ProgramScreenTokens.ink)
+
+                Spacer()
+
+                Button {
+                    onNew()
+                } label: {
+                    Text("+ NEW")
+                        .font(ProgramTypography.chromeLabel)
+                        .tracking(ProgramScreenTokens.headerLetterSpacing)
+                        .foregroundStyle(ProgramScreenTokens.ink)
+                }
+                .buttonStyle(.plain)
+            }
+            .padding(.horizontal, ProgramScreenTokens.horizontalPagePadding)
+            .frame(height: ProgramScreenTokens.topHeaderRowHeight)
+            .frame(maxWidth: .infinity)
+            .background(ProgramScreenTokens.screenBackground)
+
+            rule
+        }
+        .frame(height: Self.totalHeight)
+        .background(ProgramScreenTokens.screenBackground)
+    }
+
+    private var rule: some View {
+        Rectangle()
+            .fill(ProgramScreenTokens.ink)
+            .frame(height: ProgramScreenTokens.blackDividerThickness)
+    }
+}
+
+// MARK: - Program Dividers
+
+fileprivate struct ProgramInkDivider: View {
+    var body: some View {
+        Rectangle()
+            .fill(ProgramScreenTokens.ink)
+            .frame(height: ProgramScreenTokens.blackDividerThickness)
+    }
+}
+
+fileprivate struct ProgramHairDivider: View {
+    var body: some View {
+        Rectangle()
+            .fill(ProgramScreenTokens.lightRowDividerColor)
+            .frame(height: ProgramScreenTokens.lightRowDividerThickness)
+    }
+}
+
+fileprivate struct ProgramTemplateHeaderDivider: View {
+    var body: some View {
+        Rectangle()
+            .fill(ProgramScreenTokens.ink)
+            .frame(height: ProgramScreenTokens.templateHeaderDividerThickness)
+    }
+}
+
 // MARK: - ProgramTemplatePreset
 
 fileprivate struct ProgramTemplatePreset: Identifiable {
@@ -274,104 +354,86 @@ fileprivate struct NoProgramHero: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            VStack(alignment: .leading, spacing: 20) {
+            VStack(alignment: .leading, spacing: 0) {
                 Text("Active block · None")
-                    .font(BRUFont.labelSmall)
-                    .tracking(1.2)
+                    .font(.custom("SpaceGrotesk-Bold", size: ProgramScreenTokens.heroCaptionFontSize))
+                    .tracking(ProgramScreenTokens.heroCaptionLetterSpacing)
                     .textCase(.uppercase)
-                    .foregroundStyle(Color.bruMuted)
+                    .foregroundStyle(ProgramScreenTokens.muted)
+                    .frame(height: ProgramScreenTokens.heroCaptionLineHeight, alignment: .center)
 
                 heroHeadline
+                    .padding(.top, ProgramScreenTokens.captionToHeadlineSpacing)
 
                 bodyParagraph
+                    .padding(.top, ProgramScreenTokens.headlineToBodySpacing)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.horizontal, 16)
-            .padding(.top, 24)
-            .padding(.bottom, 24)
+            .padding(.horizontal, ProgramScreenTokens.horizontalPagePadding)
+            .padding(.top, ProgramScreenTokens.heroTopPadding)
+            .frame(height: ProgramScreenTokens.heroCopyHeight, alignment: .top)
 
-            BRUDivider(.ink)
+            ProgramInkDivider()
 
             defineCTA
-                .padding(.horizontal, 16)
-                .padding(.top, 20)
-                .padding(.bottom, 16)
+                .padding(.horizontal, ProgramScreenTokens.horizontalPagePadding)
+                .padding(.top, ProgramScreenTokens.ctaTopSpacing)
+                .padding(.bottom, ProgramScreenTokens.ctaBottomSpacing)
 
             chipRows
-                .padding(.horizontal, 16)
-                .padding(.bottom, 24)
+                .padding(.horizontal, ProgramScreenTokens.horizontalPagePadding)
+                .padding(.bottom, ProgramScreenTokens.chipBottomSpacing)
 
-            BRUDivider(.ink)
+            ProgramInkDivider()
         }
     }
 
-    /// NO PROGRAM hero — system .black .width(.compressed) at ~84pt.
-    /// Departure from BRUFont.displayHero (Space Grotesk Bold 56pt) is
-    /// intentional: Space Grotesk has no condensed cut and the mockup
-    /// hero is unmistakably condensed.
     private var heroHeadline: some View {
         Text("NO PROGRAM")
-            .font(.system(size: 84, weight: .black).width(.compressed))
-            .foregroundStyle(Color.bruInk)
-            .tracking(-1)
-            .lineSpacing(0)
-            .minimumScaleFactor(0.75)
+            .font(.custom("BebasNeue-Regular", size: ProgramScreenTokens.noProgramFontSize))
+            .foregroundStyle(ProgramScreenTokens.ink)
+            .tracking(ProgramScreenTokens.noProgramLetterSpacing)
+            .frame(height: ProgramScreenTokens.noProgramLineHeight, alignment: .center)
             .lineLimit(1)
             .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     /// Body paragraph with inline bold on "accumulation, intensification,
-    /// peak, deload." — concatenated Text segments so the bold span
-    /// flows inline with the surrounding regular weight.
-    /// Departure from BRUFont.bodyDefault (JetBrains Mono Regular 12pt)
-    /// is intentional: mockup body is plainly proportional sans-serif.
+    /// peak, deload." via SwiftUI Markdown so the span flows inline with
+    /// the surrounding regular weight.
     private var bodyParagraph: some View {
-        let lead = Text("A block schedules routines across weeks and phases — ")
-        let bold = Text("accumulation, intensification, peak, deload.")
-            .fontWeight(.semibold)
-        let tail = Text(" You can also lift without a block, but Fitbod really earns its keep when you’re running one.")
-
-        return Text("\(lead)\(bold)\(tail)")
-            .font(.system(size: 16, weight: .regular))
-            .foregroundStyle(Color.bruInk)
-            .lineSpacing(4)
+        Text(.init("A block schedules routines across weeks and phases — **accumulation, intensification, peak, deload.** You can also lift without a block, but Fitbod really earns its keep when you’re running one."))
+            .font(.custom("Geist-Regular", size: ProgramScreenTokens.bodyFontSize))
+            .foregroundStyle(ProgramScreenTokens.ink)
+            .lineSpacing(ProgramScreenTokens.bodyLineSpacing)
             .fixedSize(horizontal: false, vertical: true)
             .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    /// Coral define-block CTA — 68pt tall (BRUButton .lg is 52pt and
-    /// reads too short next to the mockup). Inline Button + bruSignal
-    /// background gives us exact control without bending BRUButton's
-    /// size enum.
     private var defineCTA: some View {
         Button(action: defineAction) {
-            Text("+ Define block  ▸")
-                .font(BRUFont.bodyEmphasis)
-                .tracking(1.4)
-                .textCase(.uppercase)
-                .foregroundStyle(Color.bruPaper)
-                .frame(maxWidth: .infinity, minHeight: 68)
-                .background(Color.bruSignal)
+            Text("+ DEFINE BLOCK ▶︎")
+                .font(.custom("BebasNeue-Regular", size: ProgramScreenTokens.ctaFontSize))
+                .tracking(ProgramScreenTokens.noProgramLetterSpacing)
+                .foregroundStyle(.white)
+            .frame(maxWidth: .infinity)
+            .frame(height: ProgramScreenTokens.ctaHeight)
+            .background(ProgramScreenTokens.ctaColor)
         }
         .buttonStyle(.plain)
     }
 
-    /// Two-row chip layout: WEEKS / PHASES / DELOAD on row 1, CUSTOM
-    /// alone on row 2. Hardcoded because the set is fixed at 4 — using
-    /// a Layout protocol implementation would be overkill.
     private var chipRows: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack(spacing: 10) {
-                ProgramFeatureChip(label: "Weeks · 4-12")
-                ProgramFeatureChip(label: "Phases · 1-4")
-                ProgramFeatureChip(label: "Deload optional")
-                Spacer(minLength: 0)
-            }
-            HStack(spacing: 10) {
-                ProgramFeatureChip(label: "Custom")
-                Spacer(minLength: 0)
-            }
+        ProgramChipFlow(
+            spacing: ProgramScreenTokens.chipSpacing,
+            rowSpacing: ProgramScreenTokens.chipRowSpacing
+        ) {
+            ProgramFeatureChip(label: "WEEKS · 4-12")
+            ProgramFeatureChip(label: "PHASES · 1-4")
+            ProgramFeatureChip(label: "DELOAD OPTIONAL")
+            ProgramFeatureChip(label: "CUSTOM")
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
 
@@ -385,16 +447,102 @@ fileprivate struct ProgramFeatureChip: View {
 
     var body: some View {
         Text(label)
-            .font(BRUFont.labelSmall)
-            .tracking(1.2)
-            .textCase(.uppercase)
-            .foregroundStyle(Color.bruInk)
-            .padding(.horizontal, 10)
-            .padding(.vertical, 6)
+            .font(.custom("SpaceGrotesk-Bold", size: ProgramScreenTokens.chipFontSize))
+            .tracking(ProgramScreenTokens.chipLetterSpacing)
+            .foregroundStyle(ProgramScreenTokens.ink)
+            .padding(.horizontal, ProgramScreenTokens.chipHorizontalPadding)
+            .frame(height: ProgramScreenTokens.chipHeight)
             .overlay(
                 Rectangle()
-                    .stroke(Color.bruInk, lineWidth: 1.5)
+                    .stroke(ProgramScreenTokens.ink, lineWidth: ProgramScreenTokens.chipBorderWidth)
             )
+    }
+}
+
+// MARK: - ProgramChipFlow
+
+fileprivate struct ProgramChipFlow: Layout {
+    let spacing: CGFloat
+    let rowSpacing: CGFloat
+
+    func sizeThatFits(
+        proposal: ProposedViewSize,
+        subviews: Subviews,
+        cache: inout Void
+    ) -> CGSize {
+        let rows = arrangedRows(proposal: proposal, subviews: subviews)
+        let width = proposal.width ?? rows.map(\.width).max() ?? 0
+        let height = rows.last.map { $0.y + $0.height } ?? 0
+        return CGSize(width: width, height: height)
+    }
+
+    func placeSubviews(
+        in bounds: CGRect,
+        proposal: ProposedViewSize,
+        subviews: Subviews,
+        cache: inout Void
+    ) {
+        let rows = arrangedRows(
+            proposal: ProposedViewSize(width: bounds.width, height: proposal.height),
+            subviews: subviews
+        )
+
+        for row in rows {
+            for item in row.items {
+                subviews[item.index].place(
+                    at: CGPoint(x: bounds.minX + item.x, y: bounds.minY + row.y),
+                    anchor: .topLeading,
+                    proposal: ProposedViewSize(item.size)
+                )
+            }
+        }
+    }
+
+    private func arrangedRows(proposal: ProposedViewSize, subviews: Subviews) -> [Row] {
+        let maxWidth = proposal.width ?? .greatestFiniteMagnitude
+        var rows: [Row] = []
+        var currentItems: [Item] = []
+        var currentX: CGFloat = 0
+        var currentY: CGFloat = 0
+        var currentHeight: CGFloat = 0
+
+        for index in subviews.indices {
+            let size = subviews[index].sizeThatFits(.unspecified)
+            let itemX = currentItems.isEmpty ? 0 : currentX + spacing
+            let wraps = !currentItems.isEmpty && itemX + size.width > maxWidth
+
+            if wraps {
+                rows.append(Row(y: currentY, height: currentHeight, width: currentX, items: currentItems))
+                currentY += currentHeight + rowSpacing
+                currentItems = []
+                currentX = 0
+                currentHeight = 0
+            }
+
+            let x = currentItems.isEmpty ? 0 : currentX + spacing
+            currentItems.append(Item(index: index, x: x, size: size))
+            currentX = x + size.width
+            currentHeight = max(currentHeight, size.height)
+        }
+
+        if !currentItems.isEmpty {
+            rows.append(Row(y: currentY, height: currentHeight, width: currentX, items: currentItems))
+        }
+
+        return rows
+    }
+
+    private struct Row {
+        let y: CGFloat
+        let height: CGFloat
+        let width: CGFloat
+        let items: [Item]
+    }
+
+    private struct Item {
+        let index: Int
+        let x: CGFloat
+        let size: CGSize
     }
 }
 
@@ -407,8 +555,8 @@ fileprivate struct ProgramTemplateSection: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            BRUSectionHead(
-                "Or start from a template",
+            ProgramTemplateHeader(
+                title: "Or start from a template",
                 right: "\(presets.count) presets"
             )
 
@@ -417,11 +565,40 @@ fileprivate struct ProgramTemplateSection: View {
                     onSelect(preset)
                 }
                 if index < presets.count - 1 {
-                    BRUDivider(.hair)
+                    ProgramHairDivider()
                 }
             }
 
-            BRUDivider(.ink)
+            ProgramInkDivider()
+        }
+    }
+}
+
+// MARK: - ProgramTemplateHeader
+
+fileprivate struct ProgramTemplateHeader: View {
+    let title: String
+    let right: String
+
+    var body: some View {
+        VStack(spacing: 0) {
+            HStack(alignment: .center) {
+                Text(title)
+                    .foregroundStyle(ProgramScreenTokens.ink)
+
+                Spacer()
+
+                Text(right)
+                    .foregroundStyle(ProgramScreenTokens.muted)
+            }
+            .font(ProgramTypography.chromeLabel)
+            .tracking(ProgramScreenTokens.headerLetterSpacing)
+            .textCase(.uppercase)
+            .padding(.horizontal, ProgramScreenTokens.horizontalPagePadding)
+            .frame(height: ProgramScreenTokens.templateHeaderHeight - ProgramScreenTokens.templateHeaderDividerThickness)
+            .background(ProgramScreenTokens.screenBackground)
+
+            ProgramTemplateHeaderDivider()
         }
     }
 }
@@ -440,15 +617,18 @@ fileprivate struct ProgramTemplateRow: View {
         Button(action: action) {
             HStack(alignment: .center, spacing: 16) {
                 Text(preset.weeks)
-                    .font(.system(size: 36, weight: .black).width(.compressed))
-                    .foregroundStyle(Color.bruInk)
-                    .frame(width: 56, alignment: .leading)
+                    .font(.custom("BebasNeue-Regular", size: ProgramScreenTokens.templateWeeksFontSize))
+                    .foregroundStyle(ProgramScreenTokens.ink)
+                    .frame(width: ProgramScreenTokens.templateWeeksWidth, alignment: .leading)
 
-                VStack(alignment: .leading, spacing: 6) {
-                    HStack(spacing: 10) {
+                VStack(alignment: .leading, spacing: ProgramScreenTokens.templateTextSpacing) {
+                    HStack(spacing: ProgramScreenTokens.popularBadgeSpacing) {
                         Text(preset.title)
-                            .font(.system(size: 18, weight: .bold))
-                            .foregroundStyle(Color.bruInk)
+                            .font(.custom("Geist-Regular", size: ProgramScreenTokens.templateTitleFontSize))
+                            .fontWeight(.semibold)
+                            .foregroundStyle(ProgramScreenTokens.ink)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.9)
                         if preset.popular {
                             popularBadge
                         }
@@ -456,40 +636,44 @@ fileprivate struct ProgramTemplateRow: View {
                     }
 
                     Text(preset.cadence)
-                        .font(BRUFont.labelSmall)
-                        .tracking(1.2)
+                        .font(ProgramTypography.templateMeta)
+                        .tracking(ProgramScreenTokens.headerLetterSpacing)
                         .textCase(.uppercase)
-                        .foregroundStyle(Color.bruMuted)
+                        .foregroundStyle(ProgramScreenTokens.muted)
+                        .frame(height: ProgramScreenTokens.templateMetaLineHeight, alignment: .leading)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.85)
 
                     Text(preset.phaseDescriptor)
-                        .font(BRUFont.labelSmall)
-                        .tracking(1.2)
+                        .font(ProgramTypography.templateMeta)
+                        .tracking(ProgramScreenTokens.headerLetterSpacing)
                         .textCase(.uppercase)
-                        .foregroundStyle(Color.bruMuted)
+                        .foregroundStyle(ProgramScreenTokens.muted)
+                        .frame(height: ProgramScreenTokens.templateMetaLineHeight, alignment: .leading)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.85)
                 }
 
                 Text("›")
-                    .font(.system(size: 28, weight: .medium))
-                    .foregroundStyle(Color.bruMuted)
+                    .font(.system(size: 16, weight: .regular))
+                    .foregroundStyle(ProgramScreenTokens.muted)
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 20)
+            .padding(.horizontal, ProgramScreenTokens.horizontalPagePadding)
+            .frame(height: ProgramScreenTokens.templateRowHeight)
             .frame(maxWidth: .infinity, alignment: .leading)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .background(Color.bruPaper)
+        .background(ProgramScreenTokens.screenBackground)
     }
 
     private var popularBadge: some View {
-        Text("Popular")
-            .font(BRUFont.labelMicro)
-            .tracking(1.0)
-            .textCase(.uppercase)
-            .foregroundStyle(Color.bruPaper)
-            .padding(.horizontal, 8)
-            .padding(.vertical, 4)
-            .background(Color.bruSignal)
+        Text("POPULAR")
+            .font(.custom("SpaceGrotesk-Bold", size: 10))
+            .tracking(1.5)
+            .foregroundStyle(.white)
+            .frame(width: ProgramScreenTokens.popularBadgeWidth, height: ProgramScreenTokens.popularBadgeHeight)
+            .background(ProgramScreenTokens.ctaColor)
     }
 }
 

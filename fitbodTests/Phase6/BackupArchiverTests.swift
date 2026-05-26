@@ -25,7 +25,7 @@ struct BackupArchiverTests {
     @Test("manifestShapeAndChecksum — manifest fields + SHA-256 match")
     func manifestShapeAndChecksum() async throws {
         let container = try InMemoryContainer.makeCurrent()
-        try PRFixtures.seedKnownPRHistory(ctx: container.mainContext)
+        _ = try PRFixtures.seedKnownPRHistory(ctx: container.mainContext)
 
         let archiver = BackupArchiver(modelContainer: container)
         let tmpURL = FileManager.default.temporaryDirectory

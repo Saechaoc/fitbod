@@ -179,7 +179,7 @@ struct BlockOverviewScreenWeekCarouselTests {
     @Test("Today cell is identified correctly")
     func todayCellIsIdentifiedCorrectly() throws {
         let context = try makeContext()
-        let block = makeBlock(in: context)
+        _ = makeBlock(in: context)
         try context.save()
 
         let now = Date.now

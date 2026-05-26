@@ -135,7 +135,7 @@ private struct BlockContextBandPreviewContainer: View {
     }
 
     static func make() -> BlockContextBandPreviewContainer {
-        let config = try! ModelConfiguration(isStoredInMemoryOnly: true)
+        let config = ModelConfiguration(isStoredInMemoryOnly: true)
         let container = try! ModelContainer(for: Block.self, BlockPhase.self, configurations: config)
 
         let block = Block()

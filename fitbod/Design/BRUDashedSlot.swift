@@ -39,7 +39,7 @@ public struct BRUDashedSlot: View {
     private let label: String
     private let hint: String?
     private let leadingGlyph: String
-    private let action: @Sendable () -> Void
+    private let action: @MainActor () -> Void
 
     // MARK: Init
 
@@ -47,7 +47,7 @@ public struct BRUDashedSlot: View {
         label: String,
         hint: String? = nil,
         leadingGlyph: String = "+",
-        action: @escaping @Sendable () -> Void
+        action: @escaping @MainActor () -> Void
     ) {
         self.label = label
         self.hint = hint
@@ -58,12 +58,12 @@ public struct BRUDashedSlot: View {
     /// Positional convenience init per the 04.1 interface contract.
     /// `BRUDashedSlot("+ ADD PHASE")` or `BRUDashedSlot("+ ADD PHASE") { ... }`.
     /// When `action` is nil, the slot renders as non-interactive (used for display-only placeholders).
-    public init(_ caption: String, action: (() -> Void)? = nil) {
+    public init(_ caption: String, action: (@MainActor () -> Void)? = nil) {
         self.label = caption
         self.hint = nil
         self.leadingGlyph = ""
-        // Wrap optional action in @Sendable; fall back to a no-op.
-        let resolved: @Sendable () -> Void = { action?() }
+        // Wrap optional action; fall back to a no-op.
+        let resolved: @MainActor () -> Void = { action?() }
         self.action = resolved
     }
 

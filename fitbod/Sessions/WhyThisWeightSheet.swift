@@ -353,21 +353,18 @@ public struct WhyThisWeightSheet: View {
         let roundedStr = formatted(explanation.roundedWeight)
         let rawStr = formatted(raw)
         let showArrow = abs(raw - explanation.roundedWeight) > 0.01
+        let prefix = Text(showArrow ? "\(rawStr) → " : "")
+            .font(BRUFont.bodyDefault)
+            .foregroundStyle(Color.bruInk)
+        let rounded = Text(roundedStr)
+            .font(BRUFont.bodyDefault)
+            .foregroundStyle(Color.bruSignal)
+            .bold()
+        let suffix = Text(plateListSuffix)
+            .font(BRUFont.bodyDefault)
+            .foregroundStyle(Color.bruMuted)
 
-        (
-            Text(showArrow ? "\(rawStr) → " : "")
-                .font(BRUFont.bodyDefault)
-                .foregroundStyle(Color.bruInk)
-            +
-            Text(roundedStr)
-                .font(BRUFont.bodyDefault)
-                .foregroundStyle(Color.bruSignal)
-                .bold()
-            +
-            Text(plateListSuffix)
-                .font(BRUFont.bodyDefault)
-                .foregroundStyle(Color.bruMuted)
-        )
+        Text("\(prefix)\(rounded)\(suffix)")
     }
 
     private var plateListSuffix: String {

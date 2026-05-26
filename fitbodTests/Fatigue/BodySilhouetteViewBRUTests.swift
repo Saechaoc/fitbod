@@ -122,7 +122,7 @@ struct BodySilhouetteViewBRUTests {
     @Test("onTap does NOT fire for neck-decorative region")
     func tapDecorative() {
         var tappedSlugs: [String] = []
-        let view = makeView(zones: [:]) { slug in
+        _ = makeView(zones: [:]) { slug in
             tappedSlugs.append(slug)
         }
         // Decorative NECK region should be guarded in the view;

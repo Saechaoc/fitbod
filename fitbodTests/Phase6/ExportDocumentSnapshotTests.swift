@@ -274,10 +274,7 @@ struct ExportDocumentSnapshotTests {
         if committed.isEmpty {
             // First run: regenerate fixture and fail with re-run guidance.
             try? generated.write(to: fixtureURL)
-            #expect(
-                false,
-                "Fixture regenerated at \(fixtureURL.path) — commit and re-run."
-            )
+            Issue.record("Fixture regenerated at \(fixtureURL.path) — commit and re-run.")
             return
         }
 

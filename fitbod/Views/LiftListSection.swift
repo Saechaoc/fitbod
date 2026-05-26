@@ -81,7 +81,7 @@ private struct LiftListSectionPreviewContainer: View {
     }
 
     static func make() -> LiftListSectionPreviewContainer {
-        let config = try! ModelConfiguration(isStoredInMemoryOnly: true)
+        let config = ModelConfiguration(isStoredInMemoryOnly: true)
         let container = try! ModelContainer(
             for: Routine.self, RoutineExercise.self, Exercise.self,
             configurations: config

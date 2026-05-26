@@ -61,23 +61,14 @@ public enum BRUTab: String, CaseIterable, Sendable {
 
 /// Full-bleed replacement for the SwiftUI default tab bar chrome.
 ///
-/// Layout (top to bottom):
-/// ```
-/// ──────────────────────────────────────────────  2pt bruInk top rule
-/// ┌──────┬──────┬──────┬──────┐
-/// │TODAY │ROUT. │PROG. │SETT. │  56pt min cell height
-/// └──────┴──────┴──────┴──────┘
-/// ```
+/// Layout (top to bottom): 2pt ink rule, a compact 61pt label band,
+/// and a negative bottom inset so the rendered bar occupies the same
+/// 63pt bottom chrome block as `bru-screens/Program/empty-state.png`.
 /// Labels-only — the JSX mocks in `bru-screens/` show no glyphs above
 /// the labels. The `BRUTab.glyph` property is retained for potential
 /// reuse elsewhere but is no longer rendered in the bar.
-/// Active tab: bruInk fill, bruTabSurface text.
-/// Inactive tabs: bruTabSurface fill, bruInk text.
-/// 1pt bruTabSeparator vertical separators between cells.
-/// The whole bar paints `bruTabSurface` through the bottom safe-area
-/// via `ignoresSafeArea(.container, edges: .bottom)` so it reads as a
-/// full-bleed bar pinned to the screen edge (no "floating pill" gap
-/// above the home indicator).
+/// Active tab: bruInk fill, bruPaper text. Inactive tabs sit directly
+/// on the warm paper surface with no vertical separators.
 ///
 /// Accessibility: each cell carries `.isButton`. The active cell additionally
 /// carries `.isSelected` per UI-SPEC v2 line 689 so VoiceOver announces
@@ -87,11 +78,18 @@ public struct BRUTabBar: View {
     // MARK: Properties
 
     private let active: BRUTab
-    private let onSelect: @Sendable (BRUTab) -> Void
+    private let onSelect: @MainActor (BRUTab) -> Void
+
+    private static let mockupTopRuleHeight: CGFloat = 2
+    private static let mockupCellHeight: CGFloat = 61
+    private static let mockupSelectedHeight: CGFloat = 29
+    private static let mockupSelectedTopInset: CGFloat = 8
+    private static let mockupBottomSafeOverlap: CGFloat = 34
+    private static let mockupSurface = Color(red: 240 / 255, green: 237 / 255, blue: 229 / 255)
 
     // MARK: Init
 
-    public init(active: BRUTab, onSelect: @escaping @Sendable (BRUTab) -> Void) {
+    public init(active: BRUTab, onSelect: @escaping @MainActor (BRUTab) -> Void) {
         self.active = active
         self.onSelect = onSelect
     }
@@ -100,31 +98,22 @@ public struct BRUTabBar: View {
 
     public var body: some View {
         VStack(spacing: 0) {
-            // 2pt bruInk top rule per UI-SPEC v2 line 82
             Rectangle()
                 .fill(Color.bruInk)
-                .frame(height: 2)
+                .frame(height: Self.mockupTopRuleHeight)
 
             HStack(spacing: 0) {
                 ForEach(BRUTab.allCases, id: \.rawValue) { tab in
                     tabCell(tab)
-
-                    // 1pt cool-gray separator between cells (not after the last one)
-                    if tab != BRUTab.allCases.last {
-                        Rectangle()
-                            .fill(Color.bruTabSeparator)
-                            .frame(width: 1)
-                    }
                 }
             }
+            .frame(height: Self.mockupCellHeight)
         }
-        // Paint the tab surface through the bottom safe area so the bar
-        // reads as a full-bleed rectangle pinned to the screen edge —
-        // eliminates the "floating pill" gap above the home indicator.
         .background(
-            Color.bruTabSurface
+            Self.mockupSurface
                 .ignoresSafeArea(.container, edges: .bottom)
         )
+        .padding(.bottom, -Self.mockupBottomSafeOverlap)
     }
 
     // MARK: Cell
@@ -136,15 +125,31 @@ public struct BRUTabBar: View {
         Button {
             onSelect(tab)
         } label: {
-            Text(tab.label)
-                .font(BRUFont.labelSmall)
-                .tracking(1.2)
-                .textCase(.uppercase)
-                .frame(maxWidth: .infinity, minHeight: 56)
-                .background(isActive ? Color.bruInk : Color.bruTabSurface)
-                .foregroundStyle(isActive ? Color.bruTabSurface : Color.bruInk)
+            ZStack(alignment: .top) {
+                if isActive {
+                    Rectangle()
+                        .fill(Color.bruInk)
+                        .frame(height: Self.mockupSelectedHeight)
+                        .padding(.top, Self.mockupSelectedTopInset)
+                }
+
+                Text(tab.label)
+                    .font(.custom("SpaceGrotesk-Bold", size: 10))
+                    .tracking(1.5)
+                    .textCase(.uppercase)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
+                    .foregroundStyle(isActive ? Self.mockupSurface : Color.bruInk)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: Self.mockupSelectedHeight)
+                    .padding(.top, Self.mockupSelectedTopInset)
+            }
+            .frame(height: Self.mockupCellHeight, alignment: .top)
+            .frame(maxWidth: .infinity)
         }
         .buttonStyle(.plain)
+        .frame(maxWidth: .infinity)
+        .accessibilityIdentifier(tab.label)
         // Accessibility: .isSelected on the active tab per UI-SPEC v2 line 689
         .accessibilityAddTraits(isActive ? [.isButton, .isSelected] : [.isButton])
     }

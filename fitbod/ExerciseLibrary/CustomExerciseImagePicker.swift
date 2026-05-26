@@ -75,15 +75,14 @@ struct CustomExerciseImagePicker: View {
                     }
             }
 
+            let pickerLabel = draft.imageData == nil ? "Add Photo" : "Change Photo"
+
             PhotosPicker(
                 selection: $selection,
                 matching: .images,
                 photoLibrary: .shared()
             ) {
-                Label(
-                    draft.imageData == nil ? "Add Photo" : "Change Photo",
-                    systemImage: "photo"
-                )
+                Label(pickerLabel, systemImage: "photo")
             }
         }
         .onChange(of: selection) { _, newValue in

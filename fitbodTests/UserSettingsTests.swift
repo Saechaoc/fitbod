@@ -36,7 +36,7 @@ struct UserSettingsTests {
         try ctx.save()
 
         // Initial state: lb (default factory).
-        var fetched = try ctx.fetch(FetchDescriptor<UserSettings>())
+        let fetched = try ctx.fetch(FetchDescriptor<UserSettings>())
         #expect(fetched.count == 1)
         #expect(fetched.first?.unitsRaw == "lb")
         #expect(fetched.first?.weightUnit == .lb)
@@ -62,7 +62,7 @@ struct UserSettingsTests {
         try ctx.save()
 
         // Initial state from the default() factory: `double`.
-        var fetched = try ctx.fetch(FetchDescriptor<UserSettings>())
+        let fetched = try ctx.fetch(FetchDescriptor<UserSettings>())
         #expect(fetched.first?.defaultProgressionKindRaw == "double")
         #expect(fetched.first?.defaultProgressionKind == .double)
 

@@ -27,9 +27,6 @@ struct DeloadAdvisoryBannerBRUTests {
     /// and must NOT use Color("VolumeNearMRVAmber").
     @Test("Banner uses bruSignal background, not VolumeNearMRVAmber soft-tint")
     func bannerPaletteSourceGuard() throws {
-        let sourceURL = Bundle(for: DeloadAdvisoryBannerBRUTestsHelper.self)
-            .url(forResource: "DeloadAdvisoryBanner", withExtension: "swift",
-                 subdirectory: nil)
         // Source not bundled in test host — use grep audit approach:
         // The canonical check is the grep in the done criteria. Here we
         // verify through the model: the banner is constructed with a

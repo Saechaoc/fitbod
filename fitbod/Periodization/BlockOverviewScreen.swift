@@ -44,7 +44,7 @@ public struct BlockOverviewScreen: View {
     // MARK: - Stored properties
 
     private let block: Block
-    private let onEdit: @Sendable () -> Void
+    private let onEdit: @MainActor () -> Void
     private let weekStart: Date
     private let weekEnd: Date
     private let todayDate: Date
@@ -55,7 +55,7 @@ public struct BlockOverviewScreen: View {
 
     // MARK: - Init
 
-    public init(block: Block, onEdit: @escaping @Sendable () -> Void = {}) {
+    public init(block: Block, onEdit: @escaping @MainActor () -> Void = {}) {
         self.block = block
         self.onEdit = onEdit
 

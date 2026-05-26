@@ -35,7 +35,7 @@ public struct BlackSlabCTA: View {
     let routine: Routine
     let dayIndex: Int       // 1-based, e.g. 1 of 4
     let totalDays: Int
-    let onStart: () -> Void
+    let onStart: @MainActor () -> Void
 
     // MARK: - Computed
 
@@ -134,7 +134,7 @@ private struct BlackSlabCTAPreviewContainer: View {
     }
 
     static func make() -> BlackSlabCTAPreviewContainer {
-        let config = try! ModelConfiguration(isStoredInMemoryOnly: true)
+        let config = ModelConfiguration(isStoredInMemoryOnly: true)
         let container = try! ModelContainer(
             for: Routine.self, RoutineExercise.self, Exercise.self,
             configurations: config

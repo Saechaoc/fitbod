@@ -37,12 +37,12 @@ import SwiftUI
 ///   - label:    Display text rendered in `BRUFont.labelSmall` UPPERCASE 1.2 letterspacing.
 ///   - isSignal: When `true`, the label renders in `Color.bruSignal` instead of `Color.bruInk`.
 ///   - action:   Closure invoked on tap. Use `@escaping` at the call site.
-public struct HeaderAction: Sendable {
+public struct HeaderAction {
     public let label: String
     public let isSignal: Bool
-    public let action: @Sendable () -> Void
+    public let action: @MainActor () -> Void
 
-    public init(_ label: String, isSignal: Bool = false, action: @escaping @Sendable () -> Void) {
+    public init(_ label: String, isSignal: Bool = false, action: @escaping @MainActor () -> Void) {
         self.label = label
         self.isSignal = isSignal
         self.action = action
@@ -62,7 +62,7 @@ public struct HeaderAction: Sendable {
 public enum HeaderSlot {
     case back
     case cancel
-    case action(String, @Sendable () -> Void)
+    case action(String, @MainActor () -> Void)
     case text(String)
     case empty
 }

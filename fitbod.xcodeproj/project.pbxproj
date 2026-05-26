@@ -16,6 +16,9 @@
 		624AD5112FB3780200D9EF2E /* SOURCES.md in Resources */ = {isa = PBXBuildFile; fileRef = 624AD50C2FB3780200D9EF2E /* SOURCES.md */; };
 		A102090100000001000000001 /* RestTimerDynamicIslandCompactView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A102090100000001000000002 /* RestTimerDynamicIslandCompactView.swift */; };
 		A102090100000001000000003 /* RestTimerDynamicIslandExpandedView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A102090100000001000000004 /* RestTimerDynamicIslandExpandedView.swift */; };
+		A5F2A0012FC0000000000001 /* AppIntents.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A5F2A0022FC0000000000002 /* AppIntents.framework */; };
+		A5F2A0032FC0000000000003 /* AppIntents.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A5F2A0022FC0000000000002 /* AppIntents.framework */; };
+		A5F2A0042FC0000000000004 /* AppIntents.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A5F2A0022FC0000000000002 /* AppIntents.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -72,6 +75,7 @@
 		624AD5152FB3791500D9EF2E /* fitbod.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = fitbod.xcodeproj; sourceTree = SOURCE_ROOT; };
 		A102090100000001000000002 /* RestTimerDynamicIslandCompactView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RestTimerDynamicIslandCompactView.swift; sourceTree = "<group>"; };
 		A102090100000001000000004 /* RestTimerDynamicIslandExpandedView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RestTimerDynamicIslandExpandedView.swift; sourceTree = "<group>"; };
+		A5F2A0022FC0000000000002 /* AppIntents.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppIntents.framework; path = System/Library/Frameworks/AppIntents.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -130,6 +134,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A5F2A0012FC0000000000001 /* AppIntents.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -137,6 +142,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A5F2A0032FC0000000000003 /* AppIntents.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -144,6 +150,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A5F2A0042FC0000000000004 /* AppIntents.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -191,6 +198,7 @@
 		624AD49C2FB375A200D9EF2E /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				A5F2A0022FC0000000000002 /* AppIntents.framework */,
 				624AD49D2FB375A200D9EF2E /* WidgetKit.framework */,
 				624AD49F2FB375A200D9EF2E /* SwiftUI.framework */,
 			);

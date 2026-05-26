@@ -33,7 +33,7 @@ public struct BRUPillButton: View {
 
     private let label: String
     private let fill: Color
-    private let action: @Sendable () -> Void
+    private let action: @MainActor () -> Void
 
     // MARK: Init
 
@@ -45,7 +45,7 @@ public struct BRUPillButton: View {
     ///           NOTE: `Color? = nil` pattern — generated Color.bru* tokens are `internal` under
     ///           Swift 6 MemberImportVisibility and cannot be default argument values in public inits.
     ///   - action: Closure invoked on tap.
-    public init(_ label: String, fill: Color? = nil, action: @escaping @Sendable () -> Void) {
+    public init(_ label: String, fill: Color? = nil, action: @escaping @MainActor () -> Void) {
         self.label = label
         self.fill = fill ?? .bruSignal
         self.action = action

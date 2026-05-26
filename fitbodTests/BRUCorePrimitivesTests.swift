@@ -91,11 +91,11 @@ struct BRUCorePrimitivesTests {
         // Kind is accessible via the BRUDivider.Kind enum; height is the body contract.
         // Verify via a parallel Kind instance (the enum property is the source of truth).
         let hairKind = BRUDivider.Kind.hair
-        // We verify the BRUDivider.Kind.hair case matches the known height
-        // by checking the switch on hairKind — if .hair != 1, the body is wrong.
-        switch hairKind {
-        case .hair: #expect(true, "hair case exists")
-        case .ink: Issue.record("Expected .hair to be the .hair case")
+        // We verify the BRUDivider.Kind.hair case remains available.
+        if case .hair = hairKind {
+            #expect(true, "hair case exists")
+        } else {
+            Issue.record("Expected .hair to be the .hair case")
         }
         _ = divider // suppress unused warning
     }

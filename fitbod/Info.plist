@@ -30,6 +30,8 @@
 		<string>SpaceGrotesk-SemiBold.ttf</string>
 		<string>JetBrainsMono-Regular.ttf</string>
 		<string>JetBrainsMono-Bold.ttf</string>
+		<string>BebasNeue-Regular.ttf</string>
+		<string>Geist-Regular.ttf</string>
 	</array>
 	<key>UIApplicationSceneManifest</key>
 	<dict>

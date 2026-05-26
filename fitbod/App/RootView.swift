@@ -60,7 +60,7 @@ public struct RootView: View {
     /// Currently-selected tab. Bound to the tab-bar binding via a
     /// custom `Binding<Tab>` that detects re-tap of the same tab and
     /// clears the matching `NavigationPath` (review WR-07).
-    @State private var selectedTab: Tab = .today
+    @State private var selectedTab: Tab = Self.initialSelectedTab()
 
     /// Wave-5 plan 06-08 — Progress tab NavigationPath. Lives in
     /// RootView so the `tabSelection` setter can clear it on Progress-
@@ -87,6 +87,15 @@ public struct RootView: View {
         case program
         case progress
         case settings
+    }
+
+    private static func initialSelectedTab() -> Tab {
+        #if DEBUG
+        if ProcessInfo.processInfo.arguments.contains("-fitbod-start-program") {
+            return .program
+        }
+        #endif
+        return .today
     }
 
     public var body: some View {
