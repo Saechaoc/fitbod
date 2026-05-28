@@ -61,8 +61,8 @@ struct NewBlockBuilderFidelityTests {
                 "The New Block flow should cover the whole phone frame, not use the default sheet chrome.")
         #expect(source.contains("BlockDraft.newBlock()"),
                 "The + New block action should seed the blank modal mock defaults.")
-        #expect(source.contains("Create New Block"),
-                "The pre-editor start-choice sheet title should be 'Create New Block'.")
+        #expect(source.contains("CREATE BLOCK"),
+                "The pre-editor start-choice sheet title should be 'CREATE BLOCK'.")
     }
 
     @Test("Timeline preview keys unsaved phases by draft identity")

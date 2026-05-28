@@ -20,7 +20,7 @@ final class NewBlockModalUITests: XCTestCase {
 
         tapElement(label: "+ NEW", in: app, timeout: 60)
         tapElement(label: "+ New block", in: app, timeout: 5)
-        tapElement(label: "Start From Scratch", in: app, timeout: 5)
+        tapElement(label: "Blank Block", in: app, timeout: 5)
 
         XCTAssertTrue(app.staticTexts["NEW BLOCK"].waitForExistence(timeout: 5))
         XCTAssertTrue(app.staticTexts["NAME YOUR BLOCK"].waitForExistence(timeout: 5))

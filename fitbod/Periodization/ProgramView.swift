@@ -167,7 +167,11 @@ public struct ProgramView: View {
                         stagedBuilder = .newBlock(chosenPreset)
                         presentingPresetPicker = false
                     }
+                    .presentationDetents([.medium])
+                    .presentationDragIndicator(.visible)
                 }
+                .presentationDetents([.medium])
+                .presentationDragIndicator(.visible)
             }
         }
     }
@@ -276,96 +280,104 @@ fileprivate struct NewBlockStartChoiceSheet: View {
     let onPreset: () -> Void
 
     var body: some View {
-        NavigationStack {
-            ZStack {
-                ProgramScreenTokens.screenBackground.ignoresSafeArea()
+        ZStack {
+            ProgramScreenTokens.screenBackground.ignoresSafeArea()
 
-                VStack(spacing: 0) {
-                    // Prompt
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("How do you want to start?")
-                            .font(.custom("SpaceGrotesk-Bold", size: 11))
-                            .tracking(1.2)
-                            .textCase(.uppercase)
+            VStack(spacing: 0) {
+                // Title (left-aligned, editorial — high contrast on cream)
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("CREATE BLOCK")
+                        .font(.custom("BebasNeue-Regular", size: 30))
+                        .tracking(1.5)
+                        .foregroundStyle(ProgramScreenTokens.ink)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    Text("Choose a starting point for your reusable training block.")
+                        .font(.custom("Geist-Regular", size: 13))
+                        .foregroundStyle(ProgramScreenTokens.muted)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
+                .padding(.horizontal, ProgramScreenTokens.horizontalPagePadding)
+                .padding(.top, 24)
+                .padding(.bottom, 20)
+
+                // Section label
+                Text("CHOOSE STARTING POINT")
+                    .font(.custom("SpaceGrotesk-Bold", size: 11))
+                    .tracking(1.2)
+                    .textCase(.uppercase)
+                    .foregroundStyle(ProgramScreenTokens.muted)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, ProgramScreenTokens.horizontalPagePadding)
+                    .padding(.bottom, 10)
+
+                // Divider
+                Rectangle()
+                    .fill(ProgramScreenTokens.ink)
+                    .frame(height: 2)
+
+                // Choice: Blank Block
+                Button(action: onScratch) {
+                    HStack(alignment: .center, spacing: 0) {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Blank Block")
+                                .font(.custom("SpaceGrotesk-Bold", size: 15))
+                                .foregroundStyle(ProgramScreenTokens.ink)
+                            Text("Build your own phases manually.")
+                                .font(.custom("SpaceGrotesk-Bold", size: 11))
+                                .tracking(ProgramScreenTokens.headerLetterSpacing)
+                                .foregroundStyle(ProgramScreenTokens.muted)
+                        }
+                        Spacer()
+                        Text("›")
+                            .font(.system(size: 16, weight: .regular))
                             .foregroundStyle(ProgramScreenTokens.muted)
-                            .frame(maxWidth: .infinity, alignment: .leading)
                     }
                     .padding(.horizontal, ProgramScreenTokens.horizontalPagePadding)
-                    .padding(.top, 20)
-                    .padding(.bottom, 16)
-
-                    // Divider
-                    Rectangle()
-                        .fill(ProgramScreenTokens.ink)
-                        .frame(height: 2)
-
-                    // Choice: Start From Scratch
-                    Button(action: onScratch) {
-                        HStack(alignment: .center, spacing: 0) {
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text("Start From Scratch")
-                                    .font(.custom("SpaceGrotesk-Bold", size: 15))
-                                    .foregroundStyle(ProgramScreenTokens.ink)
-                                Text("Build your own phases manually.")
-                                    .font(.custom("SpaceGrotesk-Bold", size: 11))
-                                    .tracking(ProgramScreenTokens.headerLetterSpacing)
-                                    .foregroundStyle(ProgramScreenTokens.muted)
-                            }
-                            Spacer()
-                            Text("›")
-                                .font(.system(size: 16, weight: .regular))
-                                .foregroundStyle(ProgramScreenTokens.muted)
-                        }
-                        .padding(.horizontal, ProgramScreenTokens.horizontalPagePadding)
-                        .frame(minHeight: 64)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .contentShape(Rectangle())
-                    }
-                    .buttonStyle(.plain)
-                    .background(ProgramScreenTokens.screenBackground)
-
-                    // Divider
-                    Rectangle()
-                        .fill(ProgramScreenTokens.lightRowDividerColor)
-                        .frame(height: 1)
-
-                    // Choice: Use Preset
-                    Button(action: onPreset) {
-                        HStack(alignment: .center, spacing: 0) {
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text("Use Preset")
-                                    .font(.custom("SpaceGrotesk-Bold", size: 15))
-                                    .foregroundStyle(ProgramScreenTokens.ink)
-                                Text("Start from Hypertrophy, Strength, Powerbuilding, etc.")
-                                    .font(.custom("SpaceGrotesk-Bold", size: 11))
-                                    .tracking(ProgramScreenTokens.headerLetterSpacing)
-                                    .foregroundStyle(ProgramScreenTokens.muted)
-                            }
-                            Spacer()
-                            Text("›")
-                                .font(.system(size: 16, weight: .regular))
-                                .foregroundStyle(ProgramScreenTokens.muted)
-                        }
-                        .padding(.horizontal, ProgramScreenTokens.horizontalPagePadding)
-                        .frame(minHeight: 64)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .contentShape(Rectangle())
-                    }
-                    .buttonStyle(.plain)
-                    .background(ProgramScreenTokens.screenBackground)
-
-                    // Divider
-                    Rectangle()
-                        .fill(ProgramScreenTokens.ink)
-                        .frame(height: 2)
-
-                    Spacer()
+                    .frame(minHeight: 64)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .contentShape(Rectangle())
                 }
+                .buttonStyle(.plain)
+                .background(ProgramScreenTokens.screenBackground)
+
+                // Divider
+                Rectangle()
+                    .fill(ProgramScreenTokens.lightRowDividerColor)
+                    .frame(height: 1)
+
+                // Choice: Use Preset
+                Button(action: onPreset) {
+                    HStack(alignment: .center, spacing: 0) {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Use Preset")
+                                .font(.custom("SpaceGrotesk-Bold", size: 15))
+                                .foregroundStyle(ProgramScreenTokens.ink)
+                            Text("Start from Hypertrophy, Strength, Powerbuilding, etc.")
+                                .font(.custom("SpaceGrotesk-Bold", size: 11))
+                                .tracking(ProgramScreenTokens.headerLetterSpacing)
+                                .foregroundStyle(ProgramScreenTokens.muted)
+                        }
+                        Spacer()
+                        Text("›")
+                            .font(.system(size: 16, weight: .regular))
+                            .foregroundStyle(ProgramScreenTokens.muted)
+                    }
+                    .padding(.horizontal, ProgramScreenTokens.horizontalPagePadding)
+                    .frame(minHeight: 64)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .background(ProgramScreenTokens.screenBackground)
+
+                // Divider
+                Rectangle()
+                    .fill(ProgramScreenTokens.ink)
+                    .frame(height: 2)
+
+                Spacer()
             }
-            .navigationTitle("Create New Block")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbarColorScheme(.dark, for: .navigationBar)
-            .toolbarBackground(ProgramScreenTokens.ink, for: .navigationBar)
         }
     }
 }
@@ -376,59 +388,63 @@ fileprivate struct NewBlockPresetPickerSheet: View {
     let onSelect: (NewBlockPreset) -> Void
 
     var body: some View {
-        NavigationStack {
-            ZStack {
-                ProgramScreenTokens.screenBackground.ignoresSafeArea()
+        ZStack {
+            ProgramScreenTokens.screenBackground.ignoresSafeArea()
 
-                VStack(spacing: 0) {
-                    // Top rule
-                    Rectangle()
-                        .fill(ProgramScreenTokens.ink)
-                        .frame(height: 2)
+            VStack(spacing: 0) {
+                // Title (left-aligned, editorial — high contrast on cream)
+                Text("CHOOSE PRESET")
+                    .font(.custom("BebasNeue-Regular", size: 30))
+                    .tracking(1.5)
+                    .foregroundStyle(ProgramScreenTokens.ink)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, ProgramScreenTokens.horizontalPagePadding)
+                    .padding(.top, 24)
+                    .padding(.bottom, 16)
 
-                    ForEach(Array(NewBlockPreset.all.enumerated()), id: \.element) { index, preset in
-                        Button {
-                            onSelect(preset)
-                        } label: {
-                            HStack(alignment: .center, spacing: 0) {
-                                Text(preset == .blank ? "FROM SCRATCH" : preset.chipLabel)
-                                    .font(.custom("SpaceGrotesk-Bold", size: 13))
-                                    .tracking(1.5)
-                                    .foregroundStyle(ProgramScreenTokens.ink)
-                                    .lineLimit(1)
-                                    .minimumScaleFactor(0.85)
-                                Spacer()
-                                Text("›")
-                                    .font(.system(size: 16, weight: .regular))
-                                    .foregroundStyle(ProgramScreenTokens.muted)
-                            }
-                            .padding(.horizontal, ProgramScreenTokens.horizontalPagePadding)
-                            .frame(height: 52)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .contentShape(Rectangle())
+                // Top rule
+                Rectangle()
+                    .fill(ProgramScreenTokens.ink)
+                    .frame(height: 2)
+
+                ForEach(Array(NewBlockPreset.all.enumerated()), id: \.element) { index, preset in
+                    Button {
+                        onSelect(preset)
+                    } label: {
+                        HStack(alignment: .center, spacing: 0) {
+                            Text(preset == .blank ? "FROM SCRATCH" : preset.chipLabel)
+                                .font(.custom("SpaceGrotesk-Bold", size: 13))
+                                .tracking(1.5)
+                                .foregroundStyle(ProgramScreenTokens.ink)
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.85)
+                            Spacer()
+                            Text("›")
+                                .font(.system(size: 16, weight: .regular))
+                                .foregroundStyle(ProgramScreenTokens.muted)
                         }
-                        .buttonStyle(.plain)
-                        .background(ProgramScreenTokens.screenBackground)
-
-                        if index < NewBlockPreset.all.count - 1 {
-                            Rectangle()
-                                .fill(ProgramScreenTokens.lightRowDividerColor)
-                                .frame(height: 1)
-                        }
+                        .padding(.horizontal, ProgramScreenTokens.horizontalPagePadding)
+                        .frame(height: 52)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .contentShape(Rectangle())
                     }
+                    .buttonStyle(.plain)
+                    .background(ProgramScreenTokens.screenBackground)
 
-                    // Bottom rule
-                    Rectangle()
-                        .fill(ProgramScreenTokens.ink)
-                        .frame(height: 2)
-
-                    Spacer()
+                    if index < NewBlockPreset.all.count - 1 {
+                        Rectangle()
+                            .fill(ProgramScreenTokens.lightRowDividerColor)
+                            .frame(height: 1)
+                    }
                 }
+
+                // Bottom rule
+                Rectangle()
+                    .fill(ProgramScreenTokens.ink)
+                    .frame(height: 2)
+
+                Spacer()
             }
-            .navigationTitle("Choose Preset")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbarColorScheme(.dark, for: .navigationBar)
-            .toolbarBackground(ProgramScreenTokens.ink, for: .navigationBar)
         }
     }
 }

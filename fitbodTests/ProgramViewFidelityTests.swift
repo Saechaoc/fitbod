@@ -149,9 +149,9 @@ struct ProgramViewFidelityTests {
                 "The New routine action should route directly to RoutineBuilderView.")
         #expect(programSource.contains("RoutineBuilderView(draft: RoutineDraft())"),
                 "ProgramView should present the existing routine builder for New routine.")
-        #expect(programSource.contains("Create New Block"),
-                "The start-choice sheet should be titled 'Create New Block'.")
-        #expect(programSource.contains("How do you want to start?"),
-                "The start-choice sheet should prompt 'How do you want to start?'.")
+        #expect(programSource.contains("CREATE BLOCK"),
+                "The start-choice sheet should be titled 'CREATE BLOCK'.")
+        #expect(programSource.contains("CHOOSE STARTING POINT"),
+                "The start-choice sheet should label the choices 'CHOOSE STARTING POINT'.")
     }
 }
