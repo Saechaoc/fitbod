@@ -193,6 +193,15 @@ fileprivate enum NewBlockScreenTokens {
     static let labelTracking: CGFloat = 2.2
     static let chipTracking: CGFloat = 2.1
 
+    // Named vertical-rhythm scale (260528-cby). Use these in every band's
+    // .padding(.top/.bottom/.vertical) and VStack/HStack spacing to tune the
+    // whole screen from one place. Bare CGFloat literals in band internals
+    // are an anti-pattern.
+    static let microGap:   CGFloat = 4
+    static let tightGap:   CGFloat = 6
+    static let rowGap:     CGFloat = 8
+    static let sectionGap: CGFloat = 10
+
     static let topBarRowHeight: CGFloat = 50
     static let nameBandHeight: CGFloat = 152
     static let metricsHeight: CGFloat = 74
@@ -269,51 +278,21 @@ fileprivate struct NewBlockTopBar: View {
 
 fileprivate struct NewBlockNameBand: View {
     @Bindable var draft: BlockDraft
-    @FocusState private var isNameFocused: Bool
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            Text("BLOCK NAME")
-                .font(NewBlockType.label)
-                .tracking(NewBlockScreenTokens.labelTracking)
-                .foregroundStyle(NewBlockScreenTokens.muted)
-                .padding(.top, 16)
-
-            ZStack(alignment: .leading) {
-                TextField("", text: $draft.name)
-                    .font(nameFont)
-                    .textInputAutocapitalization(.words)
-                    .foregroundStyle(NewBlockScreenTokens.ink)
-                    .tint(NewBlockScreenTokens.ink)
-                    .frame(height: 46)
-                    .opacity(draft.name.isEmpty ? 0.02 : 1)
-                    .focused($isNameFocused)
-
-                if draft.name.isEmpty {
-                    HStack(alignment: .center, spacing: 5) {
-                        Text("NAME YOUR BLOCK")
-                            .font(NewBlockType.displayLarge)
-                            .foregroundStyle(NewBlockScreenTokens.muted)
-                            .lineLimit(1)
-                        if isNameFocused {
-                            Rectangle()
-                                .fill(NewBlockScreenTokens.ink)
-                                .frame(width: 2, height: 38)
-                        }
-                    }
-                    .allowsHitTesting(false)
-                }
-            }
-            .padding(.top, 2)
-            .contentShape(Rectangle())
-            .onTapGesture { isNameFocused = true }
+            BlockNameField(
+                title: "BLOCK NAME",
+                placeholder: "NAME YOUR BLOCK",
+                text: $draft.name
+            )
 
             if draft.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                 presetRows
-                    .padding(.top, 10)
+                    .padding(.top, NewBlockScreenTokens.tightGap)
             } else {
                 activeChips
-                    .padding(.top, 10)
+                    .padding(.top, NewBlockScreenTokens.tightGap)
             }
 
             Spacer(minLength: 0)
@@ -325,10 +304,6 @@ fileprivate struct NewBlockNameBand: View {
         .overlay(alignment: .bottom) {
             NewBlockInkRule()
         }
-    }
-
-    private var nameFont: Font {
-        draft.name.isEmpty ? NewBlockType.displayLarge : NewBlockType.display
     }
 
     private var presetRows: some View {
@@ -405,7 +380,7 @@ fileprivate struct NewBlockMetricsBand: View {
 
     var body: some View {
         HStack(spacing: 0) {
-            VStack(alignment: .leading, spacing: 6) {
+            VStack(alignment: .leading, spacing: NewBlockScreenTokens.tightGap) {
                 Text("TOTAL WEEKS")
                     .font(NewBlockType.label)
                     .tracking(NewBlockScreenTokens.labelTracking)
@@ -427,14 +402,14 @@ fileprivate struct NewBlockMetricsBand: View {
             }
             .padding(.leading, NewBlockScreenTokens.sidePadding)
             .padding(.trailing, 14)
-            .padding(.vertical, 10)
+            .padding(.vertical, NewBlockScreenTokens.sectionGap)
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
 
             Rectangle()
                 .fill(NewBlockScreenTokens.ink)
                 .frame(width: NewBlockScreenTokens.rule)
 
-            VStack(alignment: .leading, spacing: 6) {
+            VStack(alignment: .leading, spacing: NewBlockScreenTokens.tightGap) {
                 Text("DAYS PER WEEK")
                     .font(NewBlockType.label)
                     .tracking(NewBlockScreenTokens.labelTracking)
@@ -453,7 +428,7 @@ fileprivate struct NewBlockMetricsBand: View {
             }
             .padding(.leading, 14)
             .padding(.trailing, NewBlockScreenTokens.sidePadding)
-            .padding(.vertical, 10)
+            .padding(.vertical, NewBlockScreenTokens.sectionGap)
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
         }
         .frame(height: NewBlockScreenTokens.metricsHeight)
@@ -517,7 +492,7 @@ fileprivate struct NewBlockTimelinePreview: View {
     let phases: [BlockPhaseDraft]
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: NewBlockScreenTokens.sectionGap) {
             Text("PREVIEW")
                 .font(NewBlockType.label)
                 .tracking(NewBlockScreenTokens.labelTracking)
@@ -545,8 +520,8 @@ fileprivate struct NewBlockTimelinePreview: View {
             .foregroundStyle(NewBlockScreenTokens.muted)
         }
         .padding(.horizontal, NewBlockScreenTokens.sidePadding)
-        .padding(.top, 14)
-        .padding(.bottom, 10)
+        .padding(.top, NewBlockScreenTokens.sectionGap)
+        .padding(.bottom, NewBlockScreenTokens.tightGap)
         .frame(height: NewBlockScreenTokens.previewHeight, alignment: .top)
         .background(NewBlockScreenTokens.paper)
         .overlay(alignment: .bottom) {
@@ -615,14 +590,14 @@ fileprivate struct NewBlockPhaseEditorRow: View {
     let displayIndex: Int
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            HStack(alignment: .top, spacing: 14) {
+        VStack(alignment: .leading, spacing: NewBlockScreenTokens.sectionGap) {
+            HStack(alignment: .top, spacing: NewBlockScreenTokens.sectionGap) {
                 Text(String(format: "%02d", displayIndex))
                     .font(NewBlockType.phaseIndex)
                     .foregroundStyle(NewBlockScreenTokens.ink)
                     .frame(width: 32, alignment: .leading)
 
-                VStack(alignment: .leading, spacing: 4) {
+                VStack(alignment: .leading, spacing: NewBlockScreenTokens.microGap) {
                     HStack(spacing: 10) {
                         Text(NewBlockPhaseText.title(for: draft.kind))
                             .font(NewBlockType.phaseTitle)
@@ -662,8 +637,8 @@ fileprivate struct NewBlockPhaseEditorRow: View {
             }
         }
         .padding(.horizontal, NewBlockScreenTokens.sidePadding)
-        .padding(.top, 14)
-        .padding(.bottom, 12)
+        .padding(.top, NewBlockScreenTokens.sectionGap)
+        .padding(.bottom, NewBlockScreenTokens.rowGap)
         .frame(height: NewBlockScreenTokens.phaseRowHeight, alignment: .top)
         .background(NewBlockScreenTokens.paper)
         .overlay(alignment: .bottom) {
@@ -685,14 +660,14 @@ fileprivate struct NewBlockPhaseMetricCell: View {
                 .font(NewBlockType.micro)
                 .tracking(1.4)
                 .foregroundStyle(NewBlockScreenTokens.muted)
-                .padding(.top, 6)
+                .padding(.top, NewBlockScreenTokens.tightGap)
             Text(value)
                 .font(NewBlockType.number)
                 .foregroundStyle(NewBlockScreenTokens.ink)
                 .lineLimit(1)
                 .minimumScaleFactor(0.7)
         }
-        .padding(.horizontal, 10)
+        .padding(.horizontal, NewBlockScreenTokens.sectionGap)
         .frame(maxWidth: .infinity, alignment: .leading)
         .frame(height: NewBlockScreenTokens.metricCellHeight)
         .overlay(Rectangle().stroke(NewBlockScreenTokens.ink, lineWidth: 1.5))
@@ -795,8 +770,8 @@ fileprivate struct NewBlockAddPhaseSlot: View {
                     style: StrokeStyle(lineWidth: 2, dash: [7, 4])
                 )
         )
-        .padding(.horizontal, 12)
-        .padding(.vertical, 8)
+        .padding(.horizontal, NewBlockScreenTokens.tightGap)
+        .padding(.vertical, NewBlockScreenTokens.microGap)
         .frame(height: NewBlockScreenTokens.addPhaseSlotHeight)
         .background(NewBlockScreenTokens.paper)
     }
