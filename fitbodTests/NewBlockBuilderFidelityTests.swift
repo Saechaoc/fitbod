@@ -32,7 +32,7 @@ struct NewBlockBuilderFidelityTests {
         let draft = BlockDraft.newBlock()
 
         #expect(draft.name.isEmpty)
-        #expect(draft.isActive)
+        #expect(!draft.isActive)
         #expect(draft.daysPerWeek == 4)
         #expect(draft.totalWeeks == 5)
         #expect(draft.phases.count == 3)
@@ -84,7 +84,7 @@ struct NewBlockBuilderFidelityTests {
             "NewBlockTimelinePreview",
             "NewBlockPhaseEditorRow",
             "NewBlockBottomActionBar",
-            "NewBlockTemplatePresetsBand",
+            "NewBlockStartingPointBand",
         ] {
             #expect(source.contains(requiredType), "Missing New Block structure: \(requiredType)")
         }
