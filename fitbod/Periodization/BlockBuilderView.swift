@@ -19,6 +19,8 @@ public struct BlockBuilderView: View {
 
     @State private var presentingDiscardConfirm = false
     @State private var presentingTemplateSheet = false
+    @State private var presentingDurationSheet = false
+    @State private var presentingDaysSheet = false
     @State private var initialSnapshot = ""
     @State private var saveError: String? = nil
     @State private var selectedPreset: NewBlockPreset = .blank
@@ -51,17 +53,14 @@ public struct BlockBuilderView: View {
                                 // 2. BLOCK SETTINGS (label removed; grid + dividers kept)
                                 NewBlockMetricsBand(
                                     draft: draft,
-                                    decrementWeeks: { adjustTotalWeeks(by: -1) },
-                                    incrementWeeks: { adjustTotalWeeks(by: 1) },
-                                    decrementDays: { adjustDaysPerWeek(by: -1) },
-                                    incrementDays: { adjustDaysPerWeek(by: 1) }
+                                    onEditWeeks: { presentingDurationSheet = true },
+                                    onEditDays: { presentingDaysSheet = true }
                                 )
 
                                 // 3. PHASES
                                 NewBlockPhasesHeader(
                                     phaseCount: draft.phases.count,
-                                    addPhase: addDefaultPhase,
-                                    applyPreset: presentPresetPicker
+                                    addPhase: addDefaultPhase
                                 )
 
                                 NewBlockTimelinePreview(phases: draft.phases)
@@ -127,6 +126,12 @@ public struct BlockBuilderView: View {
                     }
                 }
             )
+        }
+        .sheet(isPresented: $presentingDurationSheet) {
+            NewBlockDurationSheet(draft: draft)
+        }
+        .sheet(isPresented: $presentingDaysSheet) {
+            NewBlockDaysSheet(draft: draft)
         }
         .confirmationDialog(
             "Apply Preset?",
@@ -218,24 +223,6 @@ public struct BlockBuilderView: View {
         )
     }
 
-    private func adjustDaysPerWeek(by delta: Int) {
-        draft.daysPerWeek = min(7, max(1, draft.daysPerWeek + delta))
-    }
-
-    private func adjustTotalWeeks(by delta: Int) {
-        guard delta != 0 else { return }
-        if delta > 0 {
-            draft.phases.first?.weeks += delta
-            return
-        }
-
-        if let index = draft.phases.firstIndex(where: { $0.kind != .deload && $0.weeks > 1 }) {
-            draft.phases[index].weeks += delta
-        } else if let index = draft.phases.firstIndex(where: { $0.weeks > 1 }) {
-            draft.phases[index].weeks += delta
-        }
-    }
-
     private var hasUnsavedChanges: Bool {
         snapshotHash() != initialSnapshot
     }
@@ -290,7 +277,7 @@ fileprivate enum NewBlockScreenTokens {
 
     static let topBarRowHeight: CGFloat = 50
     static let nameBandHeight: CGFloat = 80
-    static let metricsHeight: CGFloat = 74
+    static let metricsHeight: CGFloat = 92
     static let phasesHeaderHeight: CGFloat = 36
     static let previewHeight: CGFloat = 120
     static let phaseRowHeight: CGFloat = 108
@@ -541,66 +528,66 @@ fileprivate struct NewBlockTemplateSheet: View {
 
 fileprivate struct NewBlockMetricsBand: View {
     @Bindable var draft: BlockDraft
-    let decrementWeeks: () -> Void
-    let incrementWeeks: () -> Void
-    let decrementDays: () -> Void
-    let incrementDays: () -> Void
+    let onEditWeeks: () -> Void
+    let onEditDays: () -> Void
 
     var body: some View {
         HStack(spacing: 0) {
-            VStack(alignment: .leading, spacing: NewBlockScreenTokens.tightGap) {
-                Text("TOTAL WEEKS")
-                    .font(NewBlockType.label)
-                    .tracking(NewBlockScreenTokens.labelTracking)
-                    .foregroundStyle(NewBlockScreenTokens.muted)
+            // TOTAL WEEKS — read-only tappable cell
+            Button(action: onEditWeeks) {
+                VStack(alignment: .leading, spacing: NewBlockScreenTokens.tightGap) {
+                    Text("TOTAL WEEKS")
+                        .font(NewBlockType.label)
+                        .tracking(NewBlockScreenTokens.labelTracking)
+                        .foregroundStyle(NewBlockScreenTokens.muted)
 
-                HStack(alignment: .center, spacing: 0) {
                     Text("\(draft.totalWeeks)")
                         .font(NewBlockType.display)
                         .foregroundStyle(NewBlockScreenTokens.ink)
-                        .frame(width: 44, alignment: .leading)
 
-                    Spacer(minLength: 4)
-
-                    HStack(spacing: 6) {
-                        NewBlockStepperButton(label: "−", action: decrementWeeks)
-                        NewBlockStepperButton(label: "+", action: incrementWeeks)
-                    }
+                    Text("TAP TO EDIT PHASES")
+                        .font(NewBlockType.micro)
+                        .tracking(NewBlockScreenTokens.labelTracking)
+                        .foregroundStyle(NewBlockScreenTokens.muted)
                 }
+                .padding(.leading, NewBlockScreenTokens.sidePadding)
+                .padding(.trailing, 14)
+                .padding(.vertical, NewBlockScreenTokens.sectionGap)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
             }
-            .padding(.leading, NewBlockScreenTokens.sidePadding)
-            .padding(.trailing, 14)
-            .padding(.vertical, NewBlockScreenTokens.sectionGap)
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+            .buttonStyle(.plain)
+            .accessibilityAddTraits(.isButton)
+            .accessibilityLabel("Total weeks, \(draft.totalWeeks), edit phase durations")
 
             Rectangle()
                 .fill(NewBlockScreenTokens.ink)
                 .frame(width: NewBlockScreenTokens.rule)
 
-            VStack(alignment: .leading, spacing: NewBlockScreenTokens.tightGap) {
-                Text("DAYS PER WEEK")
-                    .font(NewBlockType.label)
-                    .tracking(NewBlockScreenTokens.labelTracking)
-                    .foregroundStyle(NewBlockScreenTokens.muted)
+            // DAYS PER WEEK — tappable cell
+            Button(action: onEditDays) {
+                VStack(alignment: .leading, spacing: NewBlockScreenTokens.tightGap) {
+                    Text("DAYS PER WEEK")
+                        .font(NewBlockType.label)
+                        .tracking(NewBlockScreenTokens.labelTracking)
+                        .foregroundStyle(NewBlockScreenTokens.muted)
 
-                HStack(alignment: .center, spacing: 0) {
                     Text("\(draft.daysPerWeek)")
                         .font(NewBlockType.display)
                         .foregroundStyle(NewBlockScreenTokens.ink)
-                        .frame(width: 44, alignment: .leading)
 
-                    Spacer(minLength: NewBlockScreenTokens.microGap)
-
-                    HStack(spacing: NewBlockScreenTokens.tightGap) {
-                        NewBlockStepperButton(label: "−", action: decrementDays)
-                        NewBlockStepperButton(label: "+", action: incrementDays)
-                    }
+                    Text("TAP TO EDIT")
+                        .font(NewBlockType.micro)
+                        .tracking(NewBlockScreenTokens.labelTracking)
+                        .foregroundStyle(NewBlockScreenTokens.muted)
                 }
+                .padding(.leading, 14)
+                .padding(.trailing, NewBlockScreenTokens.sidePadding)
+                .padding(.vertical, NewBlockScreenTokens.sectionGap)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
             }
-            .padding(.leading, 14)
-            .padding(.trailing, NewBlockScreenTokens.sidePadding)
-            .padding(.vertical, NewBlockScreenTokens.sectionGap)
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+            .buttonStyle(.plain)
+            .accessibilityAddTraits(.isButton)
+            .accessibilityLabel("Days per week, \(draft.daysPerWeek), edit")
         }
         .frame(height: NewBlockScreenTokens.metricsHeight)
         .background(NewBlockScreenTokens.paper)
@@ -632,7 +619,6 @@ fileprivate struct NewBlockStepperButton: View {
 fileprivate struct NewBlockPhasesHeader: View {
     let phaseCount: Int
     let addPhase: () -> Void
-    let applyPreset: () -> Void
 
     var body: some View {
         HStack {
@@ -641,14 +627,6 @@ fileprivate struct NewBlockPhasesHeader: View {
                 .tracking(NewBlockScreenTokens.chipTracking)
                 .foregroundStyle(NewBlockScreenTokens.ink)
             Spacer()
-            Button(action: applyPreset) {
-                Text("APPLY PRESET")
-                    .font(NewBlockType.label)
-                    .tracking(NewBlockScreenTokens.chipTracking)
-                    .foregroundStyle(NewBlockScreenTokens.muted)
-            }
-            .buttonStyle(.plain)
-            .padding(.trailing, NewBlockScreenTokens.rowGap)
             Button(action: addPhase) {
                 Text("+ ADD PHASE")
                     .font(NewBlockType.chrome)
@@ -1039,6 +1017,171 @@ fileprivate struct NewBlockInkRule: View {
         Rectangle()
             .fill(NewBlockScreenTokens.ink)
             .frame(height: NewBlockScreenTokens.rule)
+    }
+}
+
+// MARK: - Editor Sheets
+
+fileprivate struct NewBlockDurationSheet: View {
+    @Bindable var draft: BlockDraft
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        NavigationStack {
+            VStack(alignment: .leading, spacing: 0) {
+                // Title and live total
+                VStack(alignment: .leading, spacing: NewBlockScreenTokens.microGap) {
+                    Text("Edit Block Duration")
+                        .font(NewBlockType.phaseTitle)
+                        .fontWeight(.semibold)
+                        .foregroundStyle(NewBlockScreenTokens.ink)
+
+                    HStack(spacing: NewBlockScreenTokens.microGap) {
+                        Text("TOTAL")
+                            .font(NewBlockType.label)
+                            .tracking(NewBlockScreenTokens.labelTracking)
+                            .foregroundStyle(NewBlockScreenTokens.muted)
+                        Text("\(draft.totalWeeks)")
+                            .font(NewBlockType.number)
+                            .foregroundStyle(NewBlockScreenTokens.ink)
+                        Text("WKS")
+                            .font(NewBlockType.label)
+                            .tracking(NewBlockScreenTokens.labelTracking)
+                            .foregroundStyle(NewBlockScreenTokens.muted)
+                    }
+                }
+                .padding(.horizontal, NewBlockScreenTokens.sidePadding)
+                .padding(.top, NewBlockScreenTokens.sectionGap)
+                .padding(.bottom, NewBlockScreenTokens.rowGap)
+
+                NewBlockInkRule()
+
+                ScrollView {
+                    VStack(spacing: 0) {
+                        ForEach(Array(draft.phases.enumerated()), id: \.element.draftID) { index, phase in
+                            let phaseBinding = $draft.phases[index]
+                            HStack(spacing: NewBlockScreenTokens.rowGap) {
+                                Text(String(format: "%02d", index + 1))
+                                    .font(NewBlockType.phaseIndex)
+                                    .foregroundStyle(NewBlockScreenTokens.ink)
+                                    .frame(width: 32, alignment: .leading)
+
+                                Text(NewBlockPhaseText.title(for: phase.kind))
+                                    .font(NewBlockType.phaseTitle)
+                                    .foregroundStyle(NewBlockScreenTokens.ink)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+
+                                NewBlockStepperButton(label: "−") {
+                                    phaseBinding.weeks.wrappedValue = max(1, phase.weeks - 1)
+                                }
+                                Text("\(phase.weeks)")
+                                    .font(NewBlockType.number)
+                                    .foregroundStyle(NewBlockScreenTokens.ink)
+                                    .frame(width: 28, alignment: .center)
+                                NewBlockStepperButton(label: "+") {
+                                    phaseBinding.weeks.wrappedValue = phase.weeks + 1
+                                }
+                            }
+                            .padding(.horizontal, NewBlockScreenTokens.sidePadding)
+                            .frame(height: 56)
+                            .background(NewBlockScreenTokens.paper)
+                            .overlay(alignment: .bottom) {
+                                Rectangle()
+                                    .fill(NewBlockScreenTokens.hair)
+                                    .frame(height: NewBlockScreenTokens.rule)
+                            }
+                        }
+                    }
+                }
+
+                Spacer(minLength: 0)
+
+                NewBlockInkRule()
+
+                Button(action: { dismiss() }) {
+                    Text("Done")
+                        .font(NewBlockType.chrome)
+                        .tracking(NewBlockScreenTokens.ctaTracking)
+                        .foregroundStyle(NewBlockScreenTokens.ink)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: NewBlockScreenTokens.bottomButtonHeight)
+                }
+                .buttonStyle(.plain)
+                .background(NewBlockScreenTokens.paper)
+            }
+            .background(NewBlockScreenTokens.paper.ignoresSafeArea())
+            .navigationBarHidden(true)
+        }
+        .presentationDetents([.medium])
+    }
+}
+
+fileprivate struct NewBlockDaysSheet: View {
+    @Bindable var draft: BlockDraft
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        NavigationStack {
+            VStack(alignment: .leading, spacing: 0) {
+                // Title
+                Text("Days Per Week")
+                    .font(NewBlockType.phaseTitle)
+                    .fontWeight(.semibold)
+                    .foregroundStyle(NewBlockScreenTokens.ink)
+                    .padding(.horizontal, NewBlockScreenTokens.sidePadding)
+                    .padding(.top, NewBlockScreenTokens.sectionGap)
+                    .padding(.bottom, NewBlockScreenTokens.rowGap)
+
+                NewBlockInkRule()
+
+                // 1-7 BRU-styled selector
+                HStack(spacing: 0) {
+                    ForEach(1...7, id: \.self) { day in
+                        let isSelected = draft.daysPerWeek == day
+                        Button {
+                            draft.daysPerWeek = day
+                        } label: {
+                            Text("\(day)")
+                                .font(NewBlockType.number)
+                                .foregroundStyle(isSelected ? NewBlockScreenTokens.paper : NewBlockScreenTokens.ink)
+                                .frame(maxWidth: .infinity)
+                                .frame(height: 52)
+                                .background(isSelected ? NewBlockScreenTokens.ink : Color.clear)
+                                .overlay(Rectangle().stroke(NewBlockScreenTokens.ink, lineWidth: 1.5))
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+                .padding(.horizontal, NewBlockScreenTokens.sidePadding)
+                .padding(.vertical, NewBlockScreenTokens.sectionGap)
+
+                // Recommended hint
+                Text("Recommended: 3-6")
+                    .font(NewBlockType.label)
+                    .tracking(NewBlockScreenTokens.labelTracking)
+                    .foregroundStyle(NewBlockScreenTokens.muted)
+                    .padding(.horizontal, NewBlockScreenTokens.sidePadding)
+                    .padding(.bottom, NewBlockScreenTokens.sectionGap)
+
+                Spacer(minLength: 0)
+
+                NewBlockInkRule()
+
+                Button(action: { dismiss() }) {
+                    Text("Done")
+                        .font(NewBlockType.chrome)
+                        .tracking(NewBlockScreenTokens.ctaTracking)
+                        .foregroundStyle(NewBlockScreenTokens.ink)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: NewBlockScreenTokens.bottomButtonHeight)
+                }
+                .buttonStyle(.plain)
+                .background(NewBlockScreenTokens.paper)
+            }
+            .background(NewBlockScreenTokens.paper.ignoresSafeArea())
+            .navigationBarHidden(true)
+        }
+        .presentationDetents([.medium])
     }
 }
 
