@@ -113,7 +113,6 @@ struct NewBlockBuilderFidelityTests {
             "BUILD STRENGTH",
             "Deload",
             "RECOVER",
-            "↘ PRESETS",
             "CANCEL",
             "NAME FIRST ↑",
             "SAVE TEMPLATE ▸",

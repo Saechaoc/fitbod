@@ -27,6 +27,7 @@ public struct BlockBuilderView: View {
     @State private var didApplyInitialPreset = false
     @State private var pendingPresetToApply: NewBlockPreset? = nil
     @State private var presentingApplyPresetConfirm = false
+    @State private var presentingAddPhaseTypePicker = false
 
     init(draft: BlockDraft, editing: Block? = nil, initialPreset: NewBlockPreset? = nil) {
         self.draft = draft
@@ -58,9 +59,18 @@ public struct BlockBuilderView: View {
                                 )
 
                                 // 3. PHASES
+                                // D5: header right is now a stateful preset Menu; + ADD PHASE moved to bottom.
                                 NewBlockPhasesHeader(
                                     phaseCount: draft.phases.count,
-                                    addPhase: addDefaultPhase
+                                    selectedPreset: selectedPreset,
+                                    onSelectPreset: { preset in
+                                        if presetWouldReplacePhases(preset) {
+                                            pendingPresetToApply = preset
+                                            presentingApplyPresetConfirm = true
+                                        } else {
+                                            applyPreset(preset)
+                                        }
+                                    }
                                 )
 
                                 NewBlockTimelinePreview(phases: draft.phases)
@@ -80,9 +90,9 @@ public struct BlockBuilderView: View {
                                     NewBlockPhaseEditorRow(draft: phase, displayIndex: index + 1)
                                 }
 
+                                // D6: single full-width Add Phase row → type picker sheet.
                                 NewBlockAddPhaseSlot(
-                                    addPhase: addDefaultPhase,
-                                    addPreset: presentPresetPicker
+                                    onTap: { presentingAddPhaseTypePicker = true }
                                 )
 
                                 if draft.isValid {
@@ -143,6 +153,12 @@ public struct BlockBuilderView: View {
         }
         .sheet(isPresented: $presentingDaysSheet) {
             NewBlockDaysSheet(draft: draft)
+        }
+        .sheet(isPresented: $presentingAddPhaseTypePicker) {
+            NewBlockAddPhaseTypeSheet { kind in
+                addPhase(of: kind)
+                presentingAddPhaseTypePicker = false
+            }
         }
         .confirmationDialog(
             "Apply Preset?",
@@ -222,16 +238,22 @@ public struct BlockBuilderView: View {
         }
     }
 
-    private func addDefaultPhase() {
-        let defaults = BlockPhaseDraft.defaultMultipliers(for: .accumulation)
+    // D6: kind-parameterized append used by the add-phase type picker.
+    private func addPhase(of kind: BlockPhaseKind) {
+        let defaults = BlockPhaseDraft.defaultMultipliers(for: kind)
         draft.phases.append(
             BlockPhaseDraft(
-                kind: .accumulation,
+                kind: kind,
                 weeks: 1,
                 volumeMultiplier: defaults.volume,
                 intensityMultiplier: defaults.intensity
             )
         )
+    }
+
+    // Legacy convenience: still used by any remaining call site.
+    private func addDefaultPhase() {
+        addPhase(of: .accumulation)
     }
 
     private var hasUnsavedChanges: Bool {
@@ -661,9 +683,17 @@ fileprivate struct NewBlockStepperButton: View {
 
 // MARK: - Phase Header and Timeline
 
+// D5: header right is now a stateful "Preset: {Custom|name} ▾" Menu routing through
+// the existing Apply Preset? destructive confirm flow. "+ ADD PHASE" moved to D6 bottom row.
 fileprivate struct NewBlockPhasesHeader: View {
     let phaseCount: Int
-    let addPhase: () -> Void
+    let selectedPreset: NewBlockPreset
+    let onSelectPreset: (NewBlockPreset) -> Void
+
+    /// Display name for the current preset state.
+    private var presetStateName: String {
+        selectedPreset == .blank ? "Custom" : selectedPreset.displayName
+    }
 
     var body: some View {
         HStack {
@@ -671,14 +701,34 @@ fileprivate struct NewBlockPhasesHeader: View {
                 .font(NewBlockType.chrome)
                 .tracking(NewBlockScreenTokens.chipTracking)
                 .foregroundStyle(NewBlockScreenTokens.ink)
+
             Spacer()
-            Button(action: addPhase) {
-                Text("+ ADD PHASE")
-                    .font(NewBlockType.chrome)
-                    .tracking(NewBlockScreenTokens.chipTracking)
-                    .foregroundStyle(NewBlockScreenTokens.muted)
+
+            // D5: stateful preset selector — label reads "Preset: {Custom|name} ▾"
+            Menu {
+                ForEach(NewBlockPreset.all, id: \.self) { preset in
+                    let label = preset == .blank ? "Custom" : preset.displayName
+                    Button(label) {
+                        onSelectPreset(preset)
+                    }
+                }
+            } label: {
+                HStack(spacing: 4) {
+                    Text("Preset:")
+                        .font(NewBlockType.chrome)
+                        .tracking(NewBlockScreenTokens.chipTracking)
+                        .foregroundStyle(NewBlockScreenTokens.muted)
+                    Text(presetStateName)
+                        .font(NewBlockType.chrome)
+                        .tracking(NewBlockScreenTokens.chipTracking)
+                        .fontWeight(.bold)
+                        .foregroundStyle(NewBlockScreenTokens.ink)
+                    Image(systemName: "chevron.down")
+                        .font(.system(size: 9, weight: .bold))
+                        .foregroundStyle(NewBlockScreenTokens.ink)
+                }
+                .frame(minHeight: 44)  // 44pt touch target
             }
-            .buttonStyle(.plain)
         }
         .padding(.horizontal, NewBlockScreenTokens.sidePadding)
         .frame(height: NewBlockScreenTokens.phasesHeaderHeight)
@@ -1039,51 +1089,105 @@ fileprivate enum NewBlockPhaseText {
 
 // MARK: - Add Phase and Linked Routines
 
+// D6: single full-width "+ ADD PHASE" row — opens the add-phase type picker sheet.
+// "↘ PRESETS" removed (presets now in the header Menu). ONE literal "+" ADD PHASE" satisfies both guards.
 fileprivate struct NewBlockAddPhaseSlot: View {
-    let addPhase: () -> Void
-    let addPreset: () -> Void
+    let onTap: () -> Void
 
     var body: some View {
-        HStack(spacing: 0) {
-            Button(action: addPhase) {
-                HStack(spacing: 14) {
-                    Text("+")
-                        .font(NewBlockType.phaseTitle)
-                        .fontWeight(.bold)
-                    Text("ADD PHASE")
-                        .font(NewBlockType.chrome)
-                        .tracking(NewBlockScreenTokens.chipTracking)
-                }
+        Button(action: onTap) {
+            Text("+ ADD PHASE")
+                .font(NewBlockType.chrome)
+                .tracking(NewBlockScreenTokens.chipTracking)
                 .foregroundStyle(NewBlockScreenTokens.ink)
-                .frame(maxHeight: .infinity)
-            }
-            .buttonStyle(.plain)
-
-            Spacer()
-
-            Button(action: addPreset) {
-                Text("↘ PRESETS")
-                    .font(NewBlockType.label)
-                    .tracking(NewBlockScreenTokens.labelTracking)
-                    .foregroundStyle(NewBlockScreenTokens.muted)
-                    .frame(maxHeight: .infinity)
-            }
-            .buttonStyle(.plain)
-        }
-        .padding(.horizontal, 26)
-        .frame(maxWidth: .infinity)
-        .frame(height: 54)
-        .overlay(
-            Rectangle()
-                .stroke(
-                    NewBlockScreenTokens.ink,
-                    style: StrokeStyle(lineWidth: 2, dash: [7, 4])
+                .frame(maxWidth: .infinity)
+                .frame(height: 54)
+                .overlay(
+                    Rectangle()
+                        .stroke(
+                            NewBlockScreenTokens.ink,
+                            style: StrokeStyle(lineWidth: 2, dash: [7, 4])
+                        )
                 )
-        )
+        }
+        .buttonStyle(.plain)
         .padding(.horizontal, NewBlockScreenTokens.tightGap)
         .padding(.vertical, NewBlockScreenTokens.microGap)
         .frame(height: NewBlockScreenTokens.addPhaseSlotHeight)
         .background(NewBlockScreenTokens.paper)
+    }
+}
+
+// D6: add-phase type picker — presented as a sheet; one row per BlockPhaseKind.
+fileprivate struct NewBlockAddPhaseTypeSheet: View {
+    let onSelect: (BlockPhaseKind) -> Void
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        NavigationStack {
+            VStack(alignment: .leading, spacing: 0) {
+                Text("Choose a phase type to add.")
+                    .font(NewBlockType.label)
+                    .tracking(0.4)
+                    .foregroundStyle(NewBlockScreenTokens.muted)
+                    .padding(.horizontal, NewBlockScreenTokens.sidePadding)
+                    .padding(.top, NewBlockScreenTokens.rowGap)
+                    .padding(.bottom, NewBlockScreenTokens.sectionGap)
+
+                Rectangle()
+                    .fill(NewBlockScreenTokens.ink)
+                    .frame(height: NewBlockScreenTokens.rule)
+
+                // One 44pt row per BlockPhaseKind with a color swatch, title, and subtitle.
+                ForEach(BlockPhaseKind.allCases, id: \.self) { kind in
+                    let orderIndex = BlockPhaseKind.allCases.firstIndex(of: kind) ?? 0
+                    let isDeload = kind == .deload
+                    let swatchColor = NewBlockScreenTokens.paletteColor(
+                        forOrderIndex: orderIndex, isDeload: isDeload)
+
+                    Button {
+                        onSelect(kind)
+                        dismiss()
+                    } label: {
+                        HStack(spacing: NewBlockScreenTokens.sectionGap) {
+                            // Color swatch matching the Chunk-A palette
+                            RoundedRectangle(cornerRadius: 4)
+                                .fill(swatchColor)
+                                .frame(width: 28, height: 28)
+
+                            VStack(alignment: .leading, spacing: NewBlockScreenTokens.microGap) {
+                                Text(NewBlockPhaseText.title(for: kind))
+                                    .font(NewBlockType.phaseTitle)
+                                    .fontWeight(.semibold)
+                                    .foregroundStyle(NewBlockScreenTokens.ink)
+                                Text(NewBlockPhaseText.subtitle(for: kind))
+                                    .font(NewBlockType.label)
+                                    .tracking(1.2)
+                                    .foregroundStyle(NewBlockScreenTokens.muted)
+                            }
+
+                            Spacer()
+                        }
+                        .padding(.horizontal, NewBlockScreenTokens.sidePadding)
+                        .frame(maxWidth: .infinity)
+                        .frame(minHeight: 44)
+                        .padding(.vertical, NewBlockScreenTokens.tightGap)
+                        .background(NewBlockScreenTokens.paper)
+                    }
+                    .buttonStyle(.plain)
+
+                    Rectangle()
+                        .fill(NewBlockScreenTokens.hair)
+                        .frame(height: NewBlockScreenTokens.rule)
+                }
+
+                Spacer()
+            }
+            .background(NewBlockScreenTokens.paper.ignoresSafeArea())
+            .navigationTitle("Add Phase")
+            .navigationBarTitleDisplayMode(.inline)
+        }
+        .presentationDetents([.medium])
     }
 }
 
