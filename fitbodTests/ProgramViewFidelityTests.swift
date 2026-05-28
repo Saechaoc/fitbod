@@ -112,4 +112,42 @@ struct ProgramViewFidelityTests {
         #expect(source.contains("accumulation, intensification, peak, deload."))
         #expect(source.contains("You can also lift without a block, but Fitbod really earns its keep when you’re running one."))
     }
+
+    @Test("ProgramView + NEW opens reusable BRU action popover with block and routine routes")
+    func programNewUsesBRUActionPopover() throws {
+        let programSource = try source("fitbod", "Periodization", "ProgramView.swift")
+        let popoverURL = Self.projectPath(["fitbod", "Design", "BRUActionPopover.swift"])
+
+        #expect(FileManager.default.fileExists(atPath: popoverURL.path),
+                "The custom + NEW menu should live in a reusable BRUActionPopover primitive.")
+
+        if FileManager.default.fileExists(atPath: popoverURL.path) {
+            let popoverSource = try String(contentsOf: popoverURL, encoding: .utf8)
+            #expect(popoverSource.contains("public struct BRUActionPopover"),
+                    "The reusable action popover should be available to future BRU menus.")
+            #expect(popoverSource.contains("struct BRUActionPopoverItem"),
+                    "Popover rows should be data-driven instead of hard-coded inside ProgramView.")
+            #expect(popoverSource.contains("static let rowHeight: CGFloat = 40"),
+                    "The two-row popover should match the compact New-modal reference height.")
+        }
+
+        #expect(programSource.contains("@State private var showingNewPopover = false"),
+                "ProgramView should own a boolean for the anchored + NEW popover.")
+        #expect(programSource.contains("@State private var presentingNewRoutine = false"),
+                "ProgramView should present the routine builder from the popover's routine row.")
+        #expect(programSource.contains("ProgramChromeHeader(onNew: { showingNewPopover = true })"),
+                "Tapping + NEW should open the custom popover instead of immediately starting a block.")
+        #expect(programSource.contains("BRUActionPopover("),
+                "ProgramView should render the reusable BRUActionPopover overlay.")
+        #expect(programSource.contains(#"title: "+ New block""#),
+                "The first popover row should match the supplied New-modal copy.")
+        #expect(programSource.contains(#"title: "+ New routine""#),
+                "The second popover row should match the supplied New-modal copy.")
+        #expect(programSource.contains("startBlank()"),
+                "The New block action should route directly to a blank block builder.")
+        #expect(programSource.contains("presentingNewRoutine = true"),
+                "The New routine action should route directly to RoutineBuilderView.")
+        #expect(programSource.contains("RoutineBuilderView(draft: RoutineDraft())"),
+                "ProgramView should present the existing routine builder for New routine.")
+    }
 }

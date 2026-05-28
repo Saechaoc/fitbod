@@ -34,13 +34,12 @@
 //
 //  - Always renders the empty-state design regardless of existing Block
 //    count. The "active block" populated state is a separate task.
-//  - Drops the search bar, folder/routine list, "+ NEW" menu (New Routine
-//    / New Folder / History), and the active-session conflict alert that
-//    lived in RoutinesListView — none of those surfaces apply to a
-//    Program empty state.
-//  - "+ NEW" header action and the hero CTA both route to the same
-//    blank-block flow (the mockup's "+ NEW" reads as "new program",
-//    not the legacy Routine menu).
+//  - Drops the search bar, folder/routine list, New Folder / History menu,
+//    and the active-session conflict alert that lived in RoutinesListView.
+//  - "+ NEW" opens the custom BRU action popover from bru-screens/New-modal:
+//    "+ New block" routes to a blank block builder, "+ New routine" routes
+//    to the existing RoutineBuilderView.
+//  - The hero CTA still routes directly to the blank-block flow.
 //
 //  ## Font departures from the design system
 //
@@ -74,6 +73,8 @@ public struct ProgramView: View {
 
     @State private var navigationPath = NavigationPath()
     @State private var pendingBlockBuilder: PendingBlockBuilder? = nil
+    @State private var showingNewPopover = false
+    @State private var presentingNewRoutine = false
 
     // MARK: Init
 
@@ -83,34 +84,40 @@ public struct ProgramView: View {
 
     public var body: some View {
         NavigationStack(path: $navigationPath) {
-            VStack(spacing: 0) {
-                ProgramChromeHeader(onNew: { startBlank() })
+            ZStack(alignment: .topTrailing) {
+                VStack(spacing: 0) {
+                    ProgramChromeHeader(onNew: { showingNewPopover = true })
 
-                ScrollView {
-                    LazyVStack(spacing: 0) {
-                        ResumeWorkoutBanner(
-                            onResume: { session in
-                                navigationPath.append(SessionRoute.logger(session))
-                            },
-                            onDiscard: { session in
-                                ctx.delete(session)
-                                try? ctx.save()
-                            }
-                        )
+                    ScrollView {
+                        LazyVStack(spacing: 0) {
+                            ResumeWorkoutBanner(
+                                onResume: { session in
+                                    navigationPath.append(SessionRoute.logger(session))
+                                },
+                                onDiscard: { session in
+                                    ctx.delete(session)
+                                    try? ctx.save()
+                                }
+                            )
 
-                        NoProgramHero(
-                            defineAction: { startBlank() }
-                        )
+                            NoProgramHero(
+                                defineAction: { startBlank() }
+                            )
 
-                        ProgramTemplateSection(
-                            presets: ProgramView.templatePresets,
-                            onSelect: { preset in
-                                pendingBlockBuilder = .template(preset.template)
-                            }
-                        )
+                            ProgramTemplateSection(
+                                presets: ProgramView.templatePresets,
+                                onSelect: { preset in
+                                    pendingBlockBuilder = .template(preset.template)
+                                }
+                            )
+                        }
                     }
+                    .scrollIndicators(.hidden)
                 }
-                .scrollIndicators(.hidden)
+
+                if showingNewPopover {
+                    newPopoverLayer
+                }
             }
             .background(ProgramScreenTokens.screenBackground.ignoresSafeArea())
             .navigationBarHidden(true)
@@ -120,21 +127,61 @@ public struct ProgramView: View {
                     SessionLoggerView(session: session)
                 }
             }
-            .sheet(item: $pendingBlockBuilder) { pending in
+            .fullScreenCover(item: $pendingBlockBuilder) { pending in
+                switch pending {
+                case .newBlock:
+                    BlockBuilderView(draft: BlockDraft.newBlock())
+                case .template(let template):
+                    BlockBuilderView(draft: BlockDraft(template: template))
+                }
+            }
+            .sheet(isPresented: $presentingNewRoutine) {
                 NavigationStack {
-                    switch pending {
-                    case .template(let template):
-                        BlockBuilderView(draft: BlockDraft(template: template))
-                    }
+                    RoutineBuilderView(draft: RoutineDraft())
                 }
             }
         }
     }
 
+    // MARK: Popover
+
+    private var newPopoverLayer: some View {
+        ZStack(alignment: .topTrailing) {
+            Color.bruInk
+                .opacity(0.34)
+                .ignoresSafeArea()
+                .onTapGesture {
+                    showingNewPopover = false
+                }
+
+            BRUActionPopover(
+                items: [
+                    BRUActionPopoverItem(title: "+ New block") {
+                        showingNewPopover = false
+                        startBlank()
+                    },
+                    BRUActionPopoverItem(title: "+ New routine") {
+                        showingNewPopover = false
+                        startNewRoutine()
+                    },
+                ]
+            )
+            .padding(.top, ProgramChromeHeader.totalHeight + ProgramScreenTokens.newPopoverTopGap)
+            .padding(.trailing, ProgramScreenTokens.newPopoverTrailingPadding)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .transition(.opacity)
+        .zIndex(1)
+    }
+
     // MARK: Actions
 
     private func startBlank() {
-        pendingBlockBuilder = .template(BlockTemplates.blank)
+        pendingBlockBuilder = .newBlock
+    }
+
+    private func startNewRoutine() {
+        presentingNewRoutine = true
     }
 
     // MARK: Static data
@@ -175,10 +222,13 @@ public struct ProgramView: View {
     ]
 
     private enum PendingBlockBuilder: Identifiable {
+        case newBlock
         case template(BlockTemplate)
 
         var id: String {
             switch self {
+            case .newBlock:
+                return "new-block"
             case .template(let template):
                 return "template-\(template.name)"
             }
@@ -201,6 +251,8 @@ fileprivate enum ProgramScreenTokens {
     static let topHeaderRowHeight: CGFloat = 30
     static let headerLabelFontSize: CGFloat = 11
     static let headerLetterSpacing: CGFloat = 1.2
+    static let newPopoverTopGap: CGFloat = 4
+    static let newPopoverTrailingPadding: CGFloat = 14
 
     static let heroCopyHeight: CGFloat = 208
     static let heroTopPadding: CGFloat = 20

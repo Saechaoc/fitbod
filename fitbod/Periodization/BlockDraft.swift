@@ -16,9 +16,37 @@ public final class BlockDraft {
     public var name: String = ""
     public var startDate: Date = .now
     public var isActive: Bool = false
+    public var daysPerWeek: Int = 4
     public var phases: [BlockPhaseDraft] = []
 
     public init() {}
+
+    public static func newBlock() -> BlockDraft {
+        let draft = BlockDraft()
+        draft.isActive = true
+        draft.daysPerWeek = 4
+        draft.phases = [
+            BlockPhaseDraft(
+                kind: .accumulation,
+                weeks: 2,
+                volumeMultiplier: 1.2,
+                intensityMultiplier: 0.70
+            ),
+            BlockPhaseDraft(
+                kind: .intensification,
+                weeks: 2,
+                volumeMultiplier: 1.0,
+                intensityMultiplier: 0.85
+            ),
+            BlockPhaseDraft(
+                kind: .deload,
+                weeks: 1,
+                volumeMultiplier: 0.5,
+                intensityMultiplier: 0.60
+            ),
+        ]
+        return draft
+    }
 
     public convenience init(template: BlockTemplate) {
         self.init()
