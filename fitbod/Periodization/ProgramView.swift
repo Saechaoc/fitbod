@@ -75,6 +75,9 @@ public struct ProgramView: View {
     @State private var pendingBlockBuilder: PendingBlockBuilder? = nil
     @State private var showingNewPopover = false
     @State private var presentingNewRoutine = false
+    @State private var presentingStartChoice = false
+    @State private var presentingPresetPicker = false
+    @State private var stagedBuilder: PendingBlockBuilder? = nil
 
     // MARK: Init
 
@@ -101,7 +104,7 @@ public struct ProgramView: View {
                             )
 
                             NoProgramHero(
-                                defineAction: { startBlank() }
+                                defineAction: { presentingStartChoice = true }
                             )
 
                             ProgramTemplateSection(
@@ -129,8 +132,8 @@ public struct ProgramView: View {
             }
             .fullScreenCover(item: $pendingBlockBuilder) { pending in
                 switch pending {
-                case .newBlock:
-                    BlockBuilderView(draft: BlockDraft.newBlock())
+                case .newBlock(let chosenPreset):
+                    BlockBuilderView(draft: BlockDraft.newBlock(), initialPreset: chosenPreset)
                 case .template(let template):
                     BlockBuilderView(draft: BlockDraft(template: template))
                 }
@@ -138,6 +141,32 @@ public struct ProgramView: View {
             .sheet(isPresented: $presentingNewRoutine) {
                 NavigationStack {
                     RoutineBuilderView(draft: RoutineDraft())
+                }
+            }
+            .sheet(isPresented: $presentingStartChoice, onDismiss: {
+                if let staged = stagedBuilder {
+                    pendingBlockBuilder = staged
+                    stagedBuilder = nil
+                }
+            }) {
+                NewBlockStartChoiceSheet(
+                    onScratch: {
+                        stagedBuilder = .newBlock(nil)
+                        presentingStartChoice = false
+                    },
+                    onPreset: {
+                        presentingPresetPicker = true
+                    }
+                )
+                .sheet(isPresented: $presentingPresetPicker, onDismiss: {
+                    if stagedBuilder != nil {
+                        presentingStartChoice = false
+                    }
+                }) {
+                    NewBlockPresetPickerSheet { chosenPreset in
+                        stagedBuilder = .newBlock(chosenPreset)
+                        presentingPresetPicker = false
+                    }
                 }
             }
         }
@@ -158,7 +187,7 @@ public struct ProgramView: View {
                 items: [
                     BRUActionPopoverItem(title: "+ New block") {
                         showingNewPopover = false
-                        startBlank()
+                        presentingStartChoice = true
                     },
                     BRUActionPopoverItem(title: "+ New routine") {
                         showingNewPopover = false
@@ -177,7 +206,7 @@ public struct ProgramView: View {
     // MARK: Actions
 
     private func startBlank() {
-        pendingBlockBuilder = .newBlock
+        presentingStartChoice = true
     }
 
     private func startNewRoutine() {
@@ -222,16 +251,184 @@ public struct ProgramView: View {
     ]
 
     private enum PendingBlockBuilder: Identifiable {
-        case newBlock
+        case newBlock(NewBlockPreset?)
         case template(BlockTemplate)
 
         var id: String {
             switch self {
-            case .newBlock:
-                return "new-block"
+            case .newBlock(let preset):
+                if let preset = preset {
+                    return "new-block-preset-\(preset.displayName)"
+                } else {
+                    return "new-block-scratch"
+                }
             case .template(let template):
                 return "template-\(template.name)"
             }
+        }
+    }
+}
+
+// MARK: - NewBlockStartChoiceSheet
+
+fileprivate struct NewBlockStartChoiceSheet: View {
+    let onScratch: () -> Void
+    let onPreset: () -> Void
+
+    var body: some View {
+        NavigationStack {
+            ZStack {
+                ProgramScreenTokens.screenBackground.ignoresSafeArea()
+
+                VStack(spacing: 0) {
+                    // Prompt
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("How do you want to start?")
+                            .font(.custom("SpaceGrotesk-Bold", size: 11))
+                            .tracking(1.2)
+                            .textCase(.uppercase)
+                            .foregroundStyle(ProgramScreenTokens.muted)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                    .padding(.horizontal, ProgramScreenTokens.horizontalPagePadding)
+                    .padding(.top, 20)
+                    .padding(.bottom, 16)
+
+                    // Divider
+                    Rectangle()
+                        .fill(ProgramScreenTokens.ink)
+                        .frame(height: 2)
+
+                    // Choice: Start From Scratch
+                    Button(action: onScratch) {
+                        HStack(alignment: .center, spacing: 0) {
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("Start From Scratch")
+                                    .font(.custom("SpaceGrotesk-Bold", size: 15))
+                                    .foregroundStyle(ProgramScreenTokens.ink)
+                                Text("Build your own phases manually.")
+                                    .font(.custom("SpaceGrotesk-Bold", size: 11))
+                                    .tracking(ProgramScreenTokens.headerLetterSpacing)
+                                    .foregroundStyle(ProgramScreenTokens.muted)
+                            }
+                            Spacer()
+                            Text("›")
+                                .font(.system(size: 16, weight: .regular))
+                                .foregroundStyle(ProgramScreenTokens.muted)
+                        }
+                        .padding(.horizontal, ProgramScreenTokens.horizontalPagePadding)
+                        .frame(minHeight: 64)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .background(ProgramScreenTokens.screenBackground)
+
+                    // Divider
+                    Rectangle()
+                        .fill(ProgramScreenTokens.lightRowDividerColor)
+                        .frame(height: 1)
+
+                    // Choice: Use Preset
+                    Button(action: onPreset) {
+                        HStack(alignment: .center, spacing: 0) {
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("Use Preset")
+                                    .font(.custom("SpaceGrotesk-Bold", size: 15))
+                                    .foregroundStyle(ProgramScreenTokens.ink)
+                                Text("Start from Hypertrophy, Strength, Powerbuilding, etc.")
+                                    .font(.custom("SpaceGrotesk-Bold", size: 11))
+                                    .tracking(ProgramScreenTokens.headerLetterSpacing)
+                                    .foregroundStyle(ProgramScreenTokens.muted)
+                            }
+                            Spacer()
+                            Text("›")
+                                .font(.system(size: 16, weight: .regular))
+                                .foregroundStyle(ProgramScreenTokens.muted)
+                        }
+                        .padding(.horizontal, ProgramScreenTokens.horizontalPagePadding)
+                        .frame(minHeight: 64)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .background(ProgramScreenTokens.screenBackground)
+
+                    // Divider
+                    Rectangle()
+                        .fill(ProgramScreenTokens.ink)
+                        .frame(height: 2)
+
+                    Spacer()
+                }
+            }
+            .navigationTitle("Create New Block")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbarColorScheme(.dark, for: .navigationBar)
+            .toolbarBackground(ProgramScreenTokens.ink, for: .navigationBar)
+        }
+    }
+}
+
+// MARK: - NewBlockPresetPickerSheet
+
+fileprivate struct NewBlockPresetPickerSheet: View {
+    let onSelect: (NewBlockPreset) -> Void
+
+    var body: some View {
+        NavigationStack {
+            ZStack {
+                ProgramScreenTokens.screenBackground.ignoresSafeArea()
+
+                VStack(spacing: 0) {
+                    // Top rule
+                    Rectangle()
+                        .fill(ProgramScreenTokens.ink)
+                        .frame(height: 2)
+
+                    ForEach(Array(NewBlockPreset.all.enumerated()), id: \.element) { index, preset in
+                        Button {
+                            onSelect(preset)
+                        } label: {
+                            HStack(alignment: .center, spacing: 0) {
+                                Text(preset == .blank ? "FROM SCRATCH" : preset.chipLabel)
+                                    .font(.custom("SpaceGrotesk-Bold", size: 13))
+                                    .tracking(1.5)
+                                    .foregroundStyle(ProgramScreenTokens.ink)
+                                    .lineLimit(1)
+                                    .minimumScaleFactor(0.85)
+                                Spacer()
+                                Text("›")
+                                    .font(.system(size: 16, weight: .regular))
+                                    .foregroundStyle(ProgramScreenTokens.muted)
+                            }
+                            .padding(.horizontal, ProgramScreenTokens.horizontalPagePadding)
+                            .frame(height: 52)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+                        .background(ProgramScreenTokens.screenBackground)
+
+                        if index < NewBlockPreset.all.count - 1 {
+                            Rectangle()
+                                .fill(ProgramScreenTokens.lightRowDividerColor)
+                                .frame(height: 1)
+                        }
+                    }
+
+                    // Bottom rule
+                    Rectangle()
+                        .fill(ProgramScreenTokens.ink)
+                        .frame(height: 2)
+
+                    Spacer()
+                }
+            }
+            .navigationTitle("Choose Preset")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbarColorScheme(.dark, for: .navigationBar)
+            .toolbarBackground(ProgramScreenTokens.ink, for: .navigationBar)
         }
     }
 }
