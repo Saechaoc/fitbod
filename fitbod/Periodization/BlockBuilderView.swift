@@ -36,50 +36,60 @@ public struct BlockBuilderView: View {
                         onSave: saveIfValid
                     )
 
-                    ScrollView {
-                        VStack(spacing: 0) {
-                            NewBlockNameBand(draft: draft)
+                    GeometryReader { geo in
+                        ScrollView {
+                            VStack(spacing: 0) {
+                                // 1. BLOCK NAME
+                                NewBlockNameBand(draft: draft)
 
-                            NewBlockMetricsBand(
-                                draft: draft,
-                                decrementWeeks: { adjustTotalWeeks(by: -1) },
-                                incrementWeeks: { adjustTotalWeeks(by: 1) },
-                                decrementDays: { adjustDaysPerWeek(by: -1) },
-                                incrementDays: { adjustDaysPerWeek(by: 1) }
-                            )
+                                // 2. BLOCK SETTINGS
+                                NewBlockSettingsSectionHeader()
+                                NewBlockMetricsBand(
+                                    draft: draft,
+                                    decrementWeeks: { adjustTotalWeeks(by: -1) },
+                                    incrementWeeks: { adjustTotalWeeks(by: 1) },
+                                    decrementDays: { adjustDaysPerWeek(by: -1) },
+                                    incrementDays: { adjustDaysPerWeek(by: 1) }
+                                )
 
-                            NewBlockStartingPointBand(
-                                selectedPreset: selectedPreset,
-                                onChange: { presentingTemplateSheet = true }
-                            )
+                                // 3. STARTING POINT
+                                NewBlockStartingPointBand(
+                                    selectedPreset: selectedPreset,
+                                    onChange: { presentingTemplateSheet = true }
+                                )
 
-                            NewBlockPhasesHeader(
-                                phaseCount: draft.phases.count,
-                                addPhase: addDefaultPhase
-                            )
+                                // 4. PHASES
+                                NewBlockPhasesHeader(
+                                    phaseCount: draft.phases.count,
+                                    addPhase: addDefaultPhase
+                                )
 
-                            NewBlockTimelinePreview(phases: draft.phases)
+                                NewBlockTimelinePreview(phases: draft.phases)
 
-                            ForEach(Array(draft.phases.enumerated()), id: \.element.draftID) { index, phase in
-                                NewBlockPhaseEditorRow(draft: phase, displayIndex: index + 1)
+                                ForEach(Array(draft.phases.enumerated()), id: \.element.draftID) { index, phase in
+                                    NewBlockPhaseEditorRow(draft: phase, displayIndex: index + 1)
+                                }
+
+                                NewBlockAddPhaseSlot(
+                                    addPhase: addDefaultPhase,
+                                    addPreset: applyHypertrophyPreset
+                                )
+
+                                if draft.isValid {
+                                    NewBlockLinkedRoutinesBand(count: editing?.routines?.count ?? 0)
+                                }
+
+                                if let saveError {
+                                    errorBand(saveError)
+                                }
                             }
-
-                            NewBlockAddPhaseSlot(
-                                addPhase: addDefaultPhase,
-                                addPreset: applyHypertrophyPreset
-                            )
-
-                            if draft.isValid {
-                                NewBlockLinkedRoutinesBand(count: editing?.routines?.count ?? 0)
-                            }
-
-                            if let saveError {
-                                errorBand(saveError)
-                            }
+                            .padding(.bottom,
+                                NewBlockScreenTokens.bottomActionHeight
+                                    + geo.safeAreaInsets.bottom
+                                    + NewBlockScreenTokens.sectionGap)
                         }
-                        .padding(.bottom, NewBlockScreenTokens.scrollBottomInset)
+                        .scrollIndicators(.hidden)
                     }
-                    .scrollIndicators(.hidden)
                 }
 
                 NewBlockBottomActionBar(
@@ -538,6 +548,22 @@ fileprivate struct NewBlockTemplateSheet: View {
 }
 
 // MARK: - Metrics
+
+fileprivate struct NewBlockSettingsSectionHeader: View {
+    var body: some View {
+        HStack {
+            Text("BLOCK SETTINGS")
+                .font(NewBlockType.label)
+                .tracking(NewBlockScreenTokens.labelTracking)
+                .foregroundStyle(NewBlockScreenTokens.muted)
+            Spacer()
+        }
+        .padding(.horizontal, NewBlockScreenTokens.sidePadding)
+        .padding(.top, NewBlockScreenTokens.sectionGap)
+        .padding(.bottom, NewBlockScreenTokens.microGap)
+        .background(NewBlockScreenTokens.paper)
+    }
+}
 
 fileprivate struct NewBlockMetricsBand: View {
     @Bindable var draft: BlockDraft
