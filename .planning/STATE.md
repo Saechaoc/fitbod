@@ -313,6 +313,7 @@ None.
 | 260524-ilf | Wire BRUTabBar into RootView — replace SwiftUI TabView chrome with BRU bottom nav | 2026-05-24 | (this commit) | [260524-ilf-wire-brutabbar-into-rootview](./quick/260524-ilf-wire-brutabbar-into-rootview/) |
 | 260527-th4 | Make Name your block field tappable text input | 2026-05-28 | 50be53b | [260527-th4-make-name-your-block-field-tappable-text](./quick/260527-th4-make-name-your-block-field-tappable-text/) |
 | 260528-cby | Fix New Block screen — editable name TextField (kill 44→39pt font shrink) + tighten vertical rhythm via NewBlockScreenTokens spacing scale (microGap/tightGap/rowGap/sectionGap) | 2026-05-28 | 4097d3a | [260528-cby-fix-new-block-screen-blockbuilderview-sw](./quick/260528-cby-fix-new-block-screen-blockbuilderview-sw/) |
+| 260528-dum | New Block screen — move preset chips into dedicated START FROM TEMPLATE band + BLANK preset + selected-preset state + CTA "CREATE + ACTIVATE ▸" → "SAVE TEMPLATE ▸". Architectural template/active split deferred to .planning/backlog/block-template-active-split.md | 2026-05-28 | dc58019 | [260528-dum-restructure-new-block-screen-ui-per-trai](./quick/260528-dum-restructure-new-block-screen-ui-per-trai/) |
 
 ---
 
