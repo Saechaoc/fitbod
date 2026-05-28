@@ -42,7 +42,9 @@ public struct BlockBuilderView: View {
                             NewBlockMetricsBand(
                                 draft: draft,
                                 decrementWeeks: { adjustTotalWeeks(by: -1) },
-                                incrementWeeks: { adjustTotalWeeks(by: 1) }
+                                incrementWeeks: { adjustTotalWeeks(by: 1) },
+                                decrementDays: { adjustDaysPerWeek(by: -1) },
+                                incrementDays: { adjustDaysPerWeek(by: 1) }
                             )
 
                             NewBlockTemplatePresetsBand(
@@ -159,6 +161,10 @@ public struct BlockBuilderView: View {
                 intensityMultiplier: defaults.intensity
             )
         )
+    }
+
+    private func adjustDaysPerWeek(by delta: Int) {
+        draft.daysPerWeek = min(7, max(1, draft.daysPerWeek + delta))
     }
 
     private func adjustTotalWeeks(by delta: Int) {
@@ -457,6 +463,8 @@ fileprivate struct NewBlockMetricsBand: View {
     @Bindable var draft: BlockDraft
     let decrementWeeks: () -> Void
     let incrementWeeks: () -> Void
+    let decrementDays: () -> Void
+    let incrementDays: () -> Void
 
     var body: some View {
         HStack(spacing: 0) {
@@ -499,11 +507,14 @@ fileprivate struct NewBlockMetricsBand: View {
                     Text("\(draft.daysPerWeek)")
                         .font(NewBlockType.display)
                         .foregroundStyle(NewBlockScreenTokens.ink)
-                    Spacer(minLength: 4)
-                    Text("3–6")
-                        .font(NewBlockType.label)
-                        .tracking(0.6)
-                        .foregroundStyle(NewBlockScreenTokens.muted)
+                        .frame(width: 44, alignment: .leading)
+
+                    Spacer(minLength: NewBlockScreenTokens.microGap)
+
+                    HStack(spacing: NewBlockScreenTokens.tightGap) {
+                        NewBlockStepperButton(label: "−", action: decrementDays)
+                        NewBlockStepperButton(label: "+", action: incrementDays)
+                    }
                 }
             }
             .padding(.leading, 14)
