@@ -754,22 +754,10 @@ fileprivate struct NewBlockPhaseEditorRow: View {
                     .frame(width: 32, alignment: .leading)
 
                 VStack(alignment: .leading, spacing: NewBlockScreenTokens.microGap) {
-                    HStack(spacing: 10) {
-                        Text(NewBlockPhaseText.title(for: draft.kind))
-                            .font(NewBlockType.phaseTitle)
-                            .fontWeight(.semibold)
-                            .foregroundStyle(NewBlockScreenTokens.ink)
-
-                        if draft.kind == .deload {
-                            Text("DELOAD")
-                                .font(NewBlockType.label)
-                                .tracking(NewBlockScreenTokens.labelTracking)
-                                .foregroundStyle(NewBlockScreenTokens.signal)
-                                .frame(height: 22)
-                                .padding(.horizontal, 10)
-                                .overlay(Rectangle().stroke(NewBlockScreenTokens.signal, lineWidth: 1.5))
-                        }
-                    }
+                    Text(NewBlockPhaseText.title(for: draft.kind))
+                        .font(NewBlockType.phaseTitle)
+                        .fontWeight(.semibold)
+                        .foregroundStyle(NewBlockScreenTokens.ink)
 
                     Text(NewBlockPhaseText.subtitle(for: draft.kind))
                         .font(NewBlockType.label)
