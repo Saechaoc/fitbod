@@ -688,29 +688,60 @@ fileprivate struct NewBlockTimelinePreview: View {
                 .tracking(NewBlockScreenTokens.labelTracking)
                 .foregroundStyle(NewBlockScreenTokens.muted)
 
+            // D4: lighter bar — drop the 1.5pt full-ink stroke box; hair baseline only.
             GeometryReader { geometry in
                 let total = max(CGFloat(phases.reduce(0) { $0 + $1.weeks }), 1)
-                HStack(spacing: 0) {
-                    // D1: pass order index so each segment gets its palette slot.
-                    // ForEach keys by \.draftID (stable UUID per unsaved draft).
-                    ForEach(phases, id: \.draftID) { phase in
-                        let orderIndex = phases.firstIndex(where: { $0.draftID == phase.draftID }) ?? 0
-                        NewBlockTimelineSegment(phase: phase, orderIndex: orderIndex)
-                            .frame(width: geometry.size.width * CGFloat(phase.weeks) / total)
+                ZStack(alignment: .bottom) {
+                    HStack(spacing: 0) {
+                        // ForEach keys by \.draftID (stable UUID per unsaved draft).
+                        ForEach(phases, id: \.draftID) { phase in
+                            let orderIndex = phases.firstIndex(where: { $0.draftID == phase.draftID }) ?? 0
+                            NewBlockTimelineSegment(phase: phase, orderIndex: orderIndex)
+                                .frame(width: geometry.size.width * CGFloat(phase.weeks) / total)
+                        }
+                    }
+                    // Hair-weight bottom baseline (replaces the 1.5pt full-ink outer box)
+                    Rectangle()
+                        .fill(NewBlockScreenTokens.hair)
+                        .frame(height: NewBlockScreenTokens.rule)
+                }
+            }
+            .frame(height: NewBlockScreenTokens.timelineBarHeight)
+
+            // D4: cumulative week boundary ticks — one tick+label per phase boundary.
+            // Computed outside the GeometryReader @ViewBuilder to avoid control-flow restrictions.
+            let cumulativeWeeks: [Int] = phases.reduce(into: [Int]()) { acc, phase in
+                acc.append((acc.last ?? 0) + phase.weeks)
+            }
+            let totalWeeks = max(phases.reduce(0) { $0 + $1.weeks }, 1)
+
+            GeometryReader { tickGeo in
+                let totalWeeksF = CGFloat(totalWeeks)
+                ZStack(alignment: .topLeading) {
+                    ForEach(Array(cumulativeWeeks.enumerated()), id: \.offset) { _, weekEnd in
+                        let xFraction = CGFloat(weekEnd) / totalWeeksF
+                        let xPos = tickGeo.size.width * xFraction
+                        Group {
+                            // Thin vertical tick at each phase boundary
+                            Rectangle()
+                                .fill(NewBlockScreenTokens.muted)
+                                .frame(width: 1, height: 6)
+                                .position(x: xPos, y: 3)
+                            // W{n} label
+                            Text("W\(weekEnd)")
+                                .font(NewBlockType.micro)
+                                .tracking(0.4)
+                                .foregroundStyle(NewBlockScreenTokens.muted)
+                                .fixedSize()
+                                .position(
+                                    x: min(max(xPos, 8), tickGeo.size.width - 8),
+                                    y: 14
+                                )
+                        }
                     }
                 }
-                .overlay(Rectangle().stroke(NewBlockScreenTokens.ink, lineWidth: 1.5))
             }
-            .frame(height: 44)
-
-            HStack {
-                Text("W1")
-                Spacer()
-                Text("W\(max(phases.reduce(0) { $0 + $1.weeks }, 1))")
-            }
-            .font(NewBlockType.label)
-            .tracking(0.4)
-            .foregroundStyle(NewBlockScreenTokens.muted)
+            .frame(height: 22)
         }
         .padding(.horizontal, NewBlockScreenTokens.sidePadding)
         .padding(.top, NewBlockScreenTokens.sectionGap)
@@ -731,21 +762,30 @@ fileprivate struct NewBlockTimelineSegment: View {
 
     var body: some View {
         // D1: palette-ordered fill; deload = solid muted (no hatched stripes).
+        // D4: narrow-label drop — GeometryReader measures rendered width; label is
+        //     omitted entirely below the threshold (not just scaled down).
         let isDeload = phase.kind == .deload
         let fillColor = NewBlockScreenTokens.paletteColor(forOrderIndex: orderIndex, isDeload: isDeload)
         let labelColor = NewBlockScreenTokens.paletteLabelColor(forOrderIndex: orderIndex, isDeload: isDeload)
 
-        ZStack(alignment: .leading) {
-            fillColor
-            Text(NewBlockPhaseText.abbreviation(for: phase.kind))
-                .font(NewBlockType.label)
-                .tracking(1.2)
-                .foregroundStyle(labelColor)
-                .padding(.leading, 6)
-                .lineLimit(1)
-                .minimumScaleFactor(0.65)
+        GeometryReader { geo in
+            let segmentWidth = geo.size.width
+            let labelThreshold: CGFloat = 40  // D4: drop label when narrower than this
+
+            ZStack(alignment: .leading) {
+                fillColor
+                if segmentWidth >= labelThreshold {
+                    Text(NewBlockPhaseText.abbreviation(for: phase.kind))
+                        .font(NewBlockType.label)
+                        .tracking(1.2)
+                        .foregroundStyle(labelColor)
+                        .padding(.leading, 6)
+                        .lineLimit(1)
+                }
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .clipped()
         }
-        .clipped()
     }
 }
 
