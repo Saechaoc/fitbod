@@ -1,57 +1,49 @@
 ---
 quick_id: 260528-ejb
-status: incomplete
+status: complete
 date: 2026-05-28
 tasks_total: 6
-tasks_done: 1
+tasks_done: 6
 ---
 
-# Quick Task 260528-ejb — Refactor New Block screen (PARTIAL)
+# Quick Task 260528-ejb — Refactor New Block screen (COMPLETE)
 
-**Status: 1 of 6 tasks committed. Resume needed.**
+**Status: 6 of 6 tasks committed. Build green; all four named test suites green.**
 
-## Why partial
-The `gsd-executor` agent ran out of context window twice before completing the
-plan — this project's `CLAUDE.md` is very large and `BlockBuilderView.swift` is
-976 lines, so the executor's baseline + file reads + a full `xcodebuild test`
-run do not fit in one executor context. The orchestrator banked Task 1's
-(correct, build-plausible) edits directly. Tasks 2–6 remain.
+New Block now saves a reusable INACTIVE template, has an editable Days Per Week stepper, a "Start From Template" bottom sheet, a 4-section layout with no bottom clipping, and a decluttered name band. UI-only — no SwiftData schema changes.
 
-## Done — Task 1 (commit `a532157`)
-"Save inactive template + strip New Block activation + delete badge row":
-- `BlockDraft.newBlock()` — removed `isActive = true`.
-- `BlockBuilderView.saveIfValid()` — `isActive = true` → `false` (saving creates a reusable template, never activates).
-- `applyHypertrophyPreset()` — now delegates to `applyPreset(.hypertrophyMeso)`.
-- `applyPreset(_:)` — removed `isActive = true`; sets `daysPerWeek = 4`; for `.hypertrophyMeso` populates `draft.phases` from `BlockTemplates.hypertrophy.phases`. (This pulled Task 3's `applyPreset` rewrite forward.)
-- `NewBlockNameBand` — deleted the `activeChips` row + computed property (killed "WILL ACTIVATE ON SAVE" badge and the duplicate "{n} DAYS / WK" badge).
+## Commits (on `main`)
+| Task | Commit | What |
+|------|--------|------|
+| 1 | `a532157` | Save inactive (`isActive=false`) + strip New Block activation + delete "WILL ACTIVATE ON SAVE"/days badge row + Hypertrophy Meso phase population |
+| 2 | `a73921a` | Editable Days Per Week −/+ stepper (reuses `NewBlockStepperButton`), clamp `1...7`; "3–6" hint dropped (didn't fit the 74pt band; CONTEXT permits) |
+| 3 | `0a4900b` | Replaced inline preset chips with STARTING POINT summary row + CHANGE → `NewBlockTemplateSheet` (`.sheet`, title "Start From Template", 6 full-width non-truncating rows, `.medium` detent); `NewBlockTemplatePresetsBand` removed; `NewBlockPresetChip` kept |
+| 4 | `e066d18` | `NewBlockSettingsSectionHeader` ("BLOCK SETTINGS"); 4-zone order; bottom-clip fix via `GeometryReader` → `.padding(.bottom, bottomActionHeight + geo.safeAreaInsets.bottom + sectionGap)` (runtime, not hardcoded); `draftID` keying preserved |
+| 5 | `4e441b8` | Bottom bar polish: balanced full-height halves, `ctaTracking` token (killed bare literal), legible disabled "NAME FIRST ↑"; `SAVE TEMPLATE ▸` / `SAVE CHANGES ▸` / top-bar `SAVE` byte-identical |
+| 6 | `b3d5daa` | Tests: removed WILL-ACTIVATE copy anchor (+ added STARTING POINT / Start From Template anchors); flipped fidelity `draft.isActive` → `!isActive`; swapped required-type `NewBlockTemplatePresetsBand` → `NewBlockStartingPointBand`; new `BlockBuilderViewActivationTests` (save-inactive + clamp) |
 
-**Known transient RED (fix in Task 6):**
-- `BlockBuilderViewCopyTests` (~line 33) asserts "WILL ACTIVATE ON SAVE" — string is gone.
-- `NewBlockBuilderFidelityTests` (~line 36) asserts `draft.isActive == true` — now `false`.
-- Task 1 was NOT build-verified (committed without an xcodebuild run to conserve context). First action on resume: build once to confirm it compiles, then proceed.
+## Verification (independently re-run by orchestrator)
+- `xcodebuild build` → **BUILD SUCCEEDED** (iPhone 17 Pro Max sim; iPhone 16 not installed on this machine).
+- `xcodebuild test`, four suites → **TEST SUCCEEDED**, all green:
+  - `BlockBuilderViewCopyTests` (1)
+  - `NewBlockBuilderFidelityTests` (5) — incl. flipped `newBlockDraftMatchesBlankModalDefaults` + swapped-type `blockBuilderViewExposesNewBlockMockStructureAndCopy`
+  - `BlockBuilderViewActivationTests` (3, new) — `newBlockIsInactive`, `savingNewBlockPersistsInactiveBlock`, `daysPerWeekClampsToOneThroughSeven`
+  - `ProgramViewFidelityTests` (6)
+- Source guards: `isActive = true` 0/0 in New Block files; external activation sites intact (`BlockContextBand.swift:143`, `BlockOverviewScreen.swift:618` — 1 each); badge strings gone; `NewBlockPresetChip` kept.
 
-## Remaining — Tasks 2–6 (see `260528-ejb-PLAN.md`)
-- **Task 2** — Days Per Week −/+ stepper reusing `NewBlockStepperButton`, clamp 1...7; recommended-range hint only. (`daysPerWeek` is a stored Int — no schema change.)
-- **Task 3** — STARTING POINT summary row + "Start From Template" bottom sheet (6 options, NO truncation, POWERBUILDING full). NOTE: the `applyPreset` body is already done (Task 1); Task 3 now only needs the summary row + sheet UI + wiring `selectedPreset`/`CHANGE`. Keep `NewBlockPresetChip` symbol + the 5 preset label strings alive (fidelity-test-anchored); reuse the chip for sheet rows.
-- **Task 4** — 4-section restructure (BLOCK NAME / BLOCK SETTINGS / STARTING POINT / PHASES) + hierarchy + runtime safe-area scroll-padding fix (`scrollBottomInset` is 12, bar is 60 → Add Phase clips).
-- **Task 5** — Bottom action bar polish (balanced tap targets, legible-subtle disabled, "SAVE TEMPLATE ▸"; only "NAME FIRST ↑" disabled state).
-- **Task 6** — Update `BlockBuilderViewCopyTests` + `NewBlockBuilderFidelityTests` assertions; add activation test (saveIfValid → isActive false); add Days Per Week stepper test. Build + run `BlockBuilderViewCopyTests`, `NewBlockBuilderFidelityTests`, `ProgramViewFidelityTests` + new suite GREEN.
+## Execution notes
+- Run as 3 chunked executors (Tasks 2+3, 4+5, 6) on `main`, each told to **skip the large `./CLAUDE.md`** (design rules were in CONTEXT.md). This avoided the context-exhaustion that stalled the original single-executor attempts.
+- SourceKit emitted phantom "cannot find type BlockDraft/Block/…" and "No such module 'Testing'" diagnostics throughout the edits; all proved to be index staleness — build + tests compiled clean. Trust xcodebuild over SourceKit here.
 
-## Resume guidance (IMPORTANT)
-`/gsd-quick resume refactor-new-block-screen-reduce-clutter`, BUT execute in
-**small chunks** so the executor doesn't blow its context:
-- Chunk A: Tasks 2 + 3 (code) → commit each.
-- Chunk B: Tasks 4 + 5 (code) → commit each.
-- Chunk C: Task 6 (tests + build) → fresh executor, filter xcodebuild output (`2>&1 | grep -E "error:|Test Suite .*(passed|failed)|Executed [0-9]|\*\* (BUILD|TEST)"`).
-- Tell each executor to SKIP reading the large `./CLAUDE.md` (rules are in `260528-ejb-CONTEXT.md`).
+## Manual visual check — STILL NEEDS HUMAN EYES (cannot be automated)
+Run the New Block screen in Simulator / Xcode Preview and confirm:
+1. 4 sections in order: BLOCK NAME → BLOCK SETTINGS → STARTING POINT → PHASES; name field dominant.
+2. Days Per Week stepper looks identical to Total Weeks; taps clamp at 1 and 7.
+3. CHANGE opens "Start From Template" sheet (helper "Choose a preset or build from scratch.") with 6 options; POWERBUILDING fully visible, no truncation/shrink.
+4. Hypertrophy Meso fills name + phases; the other presets set name + days only; Blank clears the name.
+5. Last phase row + Add Phase dashed slot fully visible/tappable above the bottom bar (no clipping).
+6. Disabled CTA reads "NAME FIRST ↑" (legible-subtle); enabled "SAVE TEMPLATE ▸"; no red "WILL ACTIVATE ON SAVE" badge anywhere.
+7. After SAVE TEMPLATE: the block saves as an inactive template; Today/active-block state is unchanged (StartBlockCTA empty state persists until a block is activated elsewhere — intended trade-off).
 
-## Manual visual check (after Task 6)
-- Bottom sheet: POWERBUILDING (and all 6) labels show in full, no truncation.
-- Add Phase dashed slot + last phase row are NOT clipped by the bottom CTA.
-- Section order reads cleanly: BLOCK NAME → BLOCK SETTINGS → STARTING POINT → PHASES.
-
-## Locked scope (do not drift)
-UI-only, NO schema changes. Don't fabricate phase content for Linear Strength /
-Powerbuilding / Off-Season / Pre-Meet. Only "NAME FIRST ↑" disabled CTA (no FIX
-PHASES / CHECK WEEKS). Don't touch `BlockOverviewScreen.swift`,
-`BlockContextBand.swift`, `ProgramView.swift`. See `260528-ejb-CONTEXT.md`.
+## Locked scope honored
+UI-only, no schema changes. No fabricated phase content for Linear Strength / Powerbuilding / Off-Season / Pre-Meet (name + `daysPerWeek` only; phases only for Hypertrophy Meso). Only the "NAME FIRST ↑" disabled CTA state. Untouched: `BlockOverviewScreen.swift`, `BlockContextBand.swift`, `ProgramView.swift`, `BlockDraft` schema. FIX PHASES / CHECK WEEKS / the template-active split remain deferred to Phase 7 (`.planning/backlog/block-template-active-split.md`).
