@@ -16,6 +16,7 @@ public struct BlockBuilderView: View {
     public let editing: Block?
 
     @State private var presentingDiscardConfirm = false
+    @State private var presentingTemplateSheet = false
     @State private var initialSnapshot = ""
     @State private var saveError: String? = nil
     @State private var selectedPreset: NewBlockPreset = .blank
@@ -47,9 +48,9 @@ public struct BlockBuilderView: View {
                                 incrementDays: { adjustDaysPerWeek(by: 1) }
                             )
 
-                            NewBlockTemplatePresetsBand(
-                                selectedPreset: $selectedPreset,
-                                applyPreset: applyPreset
+                            NewBlockStartingPointBand(
+                                selectedPreset: selectedPreset,
+                                onChange: { presentingTemplateSheet = true }
                             )
 
                             NewBlockPhasesHeader(
@@ -102,6 +103,15 @@ public struct BlockBuilderView: View {
             Button("Keep Editing", role: .cancel) {
                 presentingDiscardConfirm = false
             }
+        }
+        .sheet(isPresented: $presentingTemplateSheet) {
+            NewBlockTemplateSheet(
+                selected: selectedPreset,
+                onSelect: { preset in
+                    applyPreset(preset)
+                    presentingTemplateSheet = false
+                }
+            )
         }
         .onAppear {
             selectedPreset = NewBlockPreset.matching(name: draft.name)
@@ -265,7 +275,7 @@ fileprivate enum NewBlockPreset: Hashable, CaseIterable {
     case offSeason
     case preMeet
 
-    /// Uppercase chip label rendered inside `NewBlockTemplatePresetsBand`.
+    /// Uppercase chip label rendered in the template sheet and STARTING POINT band.
     var chipLabel: String {
         switch self {
         case .blank:           return "BLANK"
@@ -411,42 +421,46 @@ fileprivate struct NewBlockPresetChip: View {
     }
 }
 
-// MARK: - Template Presets Band
+// MARK: - Starting Point Band + Template Sheet
 
-fileprivate struct NewBlockTemplatePresetsBand: View {
-    @Binding var selectedPreset: NewBlockPreset
-    let applyPreset: (NewBlockPreset) -> Void
+fileprivate struct NewBlockStartingPointBand: View {
+    let selectedPreset: NewBlockPreset
+    let onChange: () -> Void
+
+    private var displayLabel: String {
+        selectedPreset == .blank ? "FROM SCRATCH" : selectedPreset.chipLabel
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            Text("START FROM TEMPLATE")
+            Text("STARTING POINT")
                 .font(NewBlockType.label)
                 .tracking(NewBlockScreenTokens.labelTracking)
                 .foregroundStyle(NewBlockScreenTokens.muted)
                 .padding(.top, NewBlockScreenTokens.sectionGap)
+                .padding(.bottom, NewBlockScreenTokens.rowGap)
 
-            Text("Choose a preset or build from scratch.")
-                .font(NewBlockType.chip)
-                .tracking(0)
-                .foregroundStyle(NewBlockScreenTokens.muted)
-                .padding(.top, NewBlockScreenTokens.microGap)
+            HStack(alignment: .center, spacing: 0) {
+                Text(displayLabel)
+                    .font(NewBlockType.chrome)
+                    .tracking(NewBlockScreenTokens.chipTracking)
+                    .foregroundStyle(NewBlockScreenTokens.ink)
+                    .frame(maxWidth: .infinity, alignment: .leading)
 
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 5) {
-                    ForEach(NewBlockPreset.all, id: \.self) { preset in
-                        NewBlockPresetChip(
-                            preset.chipLabel,
-                            isSelected: preset == selectedPreset
-                        ) {
-                            applyPreset(preset)
-                        }
-                    }
+                Button(action: onChange) {
+                    Text("CHANGE")
+                        .font(NewBlockType.chrome)
+                        .tracking(NewBlockScreenTokens.chipTracking)
+                        .foregroundStyle(NewBlockScreenTokens.ink)
+                        .frame(height: 26)
+                        .padding(.horizontal, NewBlockScreenTokens.sectionGap)
+                        .overlay(Rectangle().stroke(NewBlockScreenTokens.ink, lineWidth: 1.5))
                 }
+                .buttonStyle(.plain)
             }
-            .padding(.top, NewBlockScreenTokens.tightGap)
+            .padding(.bottom, NewBlockScreenTokens.sectionGap)
         }
         .padding(.horizontal, NewBlockScreenTokens.sidePadding)
-        .padding(.bottom, NewBlockScreenTokens.sectionGap)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(NewBlockScreenTokens.paper)
         .overlay(alignment: .bottom) {
@@ -454,6 +468,72 @@ fileprivate struct NewBlockTemplatePresetsBand: View {
                 .fill(NewBlockScreenTokens.ink)
                 .frame(height: NewBlockScreenTokens.heavyRule)
         }
+    }
+}
+
+fileprivate struct NewBlockTemplateSheet: View {
+    let selected: NewBlockPreset
+    let onSelect: (NewBlockPreset) -> Void
+
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        NavigationStack {
+            VStack(alignment: .leading, spacing: 0) {
+                Text("Choose a preset or build from scratch.")
+                    .font(NewBlockType.label)
+                    .tracking(0.4)
+                    .foregroundStyle(NewBlockScreenTokens.muted)
+                    .padding(.horizontal, NewBlockScreenTokens.sidePadding)
+                    .padding(.top, NewBlockScreenTokens.rowGap)
+                    .padding(.bottom, NewBlockScreenTokens.sectionGap)
+
+                Rectangle()
+                    .fill(NewBlockScreenTokens.ink)
+                    .frame(height: NewBlockScreenTokens.rule)
+
+                VStack(spacing: 0) {
+                    ForEach(NewBlockPreset.all, id: \.self) { preset in
+                        let isSelected = preset == selected
+                        let rowLabel = preset == .blank ? "FROM SCRATCH" : preset.chipLabel
+
+                        Button {
+                            onSelect(preset)
+                            dismiss()
+                        } label: {
+                            HStack(spacing: NewBlockScreenTokens.rowGap) {
+                                Text(rowLabel)
+                                    .font(NewBlockType.chrome)
+                                    .tracking(NewBlockScreenTokens.chipTracking)
+                                    .foregroundStyle(NewBlockScreenTokens.ink)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+
+                                if isSelected {
+                                    Text("✓")
+                                        .font(NewBlockType.chrome)
+                                        .foregroundStyle(NewBlockScreenTokens.ink)
+                                }
+                            }
+                            .padding(.horizontal, NewBlockScreenTokens.sidePadding)
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 48)
+                            .background(isSelected ? NewBlockScreenTokens.faint : NewBlockScreenTokens.paper)
+                        }
+                        .buttonStyle(.plain)
+
+                        Rectangle()
+                            .fill(NewBlockScreenTokens.hair)
+                            .frame(height: NewBlockScreenTokens.rule)
+                    }
+                }
+
+                Spacer()
+            }
+            .background(NewBlockScreenTokens.paper.ignoresSafeArea())
+            .navigationTitle("Start From Template")
+            .navigationBarTitleDisplayMode(.inline)
+        }
+        .presentationDetents([.medium])
     }
 }
 
