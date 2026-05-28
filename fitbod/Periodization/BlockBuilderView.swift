@@ -42,8 +42,7 @@ public struct BlockBuilderView: View {
                                 // 1. BLOCK NAME
                                 NewBlockNameBand(draft: draft)
 
-                                // 2. BLOCK SETTINGS
-                                NewBlockSettingsSectionHeader()
+                                // 2. BLOCK SETTINGS (label removed; grid + dividers kept)
                                 NewBlockMetricsBand(
                                     draft: draft,
                                     decrementWeeks: { adjustTotalWeeks(by: -1) },
@@ -85,8 +84,8 @@ public struct BlockBuilderView: View {
                             }
                             .padding(.bottom,
                                 NewBlockScreenTokens.bottomActionHeight
-                                    + geo.safeAreaInsets.bottom
-                                    + NewBlockScreenTokens.sectionGap)
+                                    + max(geo.safeAreaInsets.bottom,
+                                          NewBlockScreenTokens.scrollBottomClearance))
                         }
                         .scrollIndicators(.hidden)
                     }
@@ -254,16 +253,16 @@ fileprivate enum NewBlockScreenTokens {
     static let ctaTracking: CGFloat = 2.8
 
     static let topBarRowHeight: CGFloat = 50
-    static let nameBandHeight: CGFloat = 104
+    static let nameBandHeight: CGFloat = 80
     static let metricsHeight: CGFloat = 74
     static let phasesHeaderHeight: CGFloat = 36
-    static let previewHeight: CGFloat = 104
+    static let previewHeight: CGFloat = 120
     static let phaseRowHeight: CGFloat = 108
     static let metricCellHeight: CGFloat = 36
     static let addPhaseSlotHeight: CGFloat = 70
     static let bottomActionHeight: CGFloat = 60
     static let bottomButtonHeight: CGFloat = 54
-    static let scrollBottomInset: CGFloat = 12
+    static let scrollBottomClearance: CGFloat = 44
 }
 
 fileprivate enum NewBlockType {
@@ -462,12 +461,12 @@ fileprivate struct NewBlockStartingPointBand: View {
 
                 Button(action: onChange) {
                     Text("CHANGE")
-                        .font(NewBlockType.chrome)
+                        .font(NewBlockType.label)
                         .tracking(NewBlockScreenTokens.chipTracking)
-                        .foregroundStyle(NewBlockScreenTokens.ink)
-                        .frame(height: 26)
-                        .padding(.horizontal, NewBlockScreenTokens.sectionGap)
-                        .overlay(Rectangle().stroke(NewBlockScreenTokens.ink, lineWidth: 1.5))
+                        .foregroundStyle(NewBlockScreenTokens.muted)
+                        .frame(height: 22)
+                        .padding(.horizontal, NewBlockScreenTokens.rowGap)
+                        .overlay(Rectangle().stroke(NewBlockScreenTokens.muted, lineWidth: NewBlockScreenTokens.rule))
                 }
                 .buttonStyle(.plain)
             }
@@ -551,22 +550,6 @@ fileprivate struct NewBlockTemplateSheet: View {
 }
 
 // MARK: - Metrics
-
-fileprivate struct NewBlockSettingsSectionHeader: View {
-    var body: some View {
-        HStack {
-            Text("BLOCK SETTINGS")
-                .font(NewBlockType.label)
-                .tracking(NewBlockScreenTokens.labelTracking)
-                .foregroundStyle(NewBlockScreenTokens.muted)
-            Spacer()
-        }
-        .padding(.horizontal, NewBlockScreenTokens.sidePadding)
-        .padding(.top, NewBlockScreenTokens.sectionGap)
-        .padding(.bottom, NewBlockScreenTokens.microGap)
-        .background(NewBlockScreenTokens.paper)
-    }
-}
 
 fileprivate struct NewBlockMetricsBand: View {
     @Bindable var draft: BlockDraft
@@ -706,7 +689,7 @@ fileprivate struct NewBlockTimelinePreview: View {
                 }
                 .overlay(Rectangle().stroke(NewBlockScreenTokens.ink, lineWidth: 1.5))
             }
-            .frame(height: 36)
+            .frame(height: 44)
 
             HStack {
                 Text("W1")
