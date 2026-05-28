@@ -250,6 +250,9 @@ fileprivate enum NewBlockScreenTokens {
     static let rowGap:     CGFloat = 8
     static let sectionGap: CGFloat = 10
 
+    // CTA button tracking (bottom bar CANCEL + primary labels).
+    static let ctaTracking: CGFloat = 2.8
+
     static let topBarRowHeight: CGFloat = 50
     static let nameBandHeight: CGFloat = 104
     static let metricsHeight: CGFloat = 74
@@ -1014,7 +1017,7 @@ fileprivate struct NewBlockBottomActionBar: View {
                 Button(action: onCancel) {
                     Text("CANCEL")
                         .font(NewBlockType.chrome)
-                        .tracking(2.8)
+                        .tracking(NewBlockScreenTokens.ctaTracking)
                         .foregroundStyle(NewBlockScreenTokens.ink)
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                 }
@@ -1027,7 +1030,7 @@ fileprivate struct NewBlockBottomActionBar: View {
                 Button(action: onPrimary) {
                     Text(primaryTitle)
                         .font(NewBlockType.chrome)
-                        .tracking(2.8)
+                        .tracking(NewBlockScreenTokens.ctaTracking)
                         .foregroundStyle(canCreate ? .white : NewBlockScreenTokens.muted)
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                         .background(canCreate ? NewBlockScreenTokens.ink : NewBlockScreenTokens.paper)
