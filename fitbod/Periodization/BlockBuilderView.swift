@@ -15,15 +15,21 @@ public struct BlockBuilderView: View {
 
     public let editing: Block?
 
+    private let initialPreset: NewBlockPreset?
+
     @State private var presentingDiscardConfirm = false
     @State private var presentingTemplateSheet = false
     @State private var initialSnapshot = ""
     @State private var saveError: String? = nil
     @State private var selectedPreset: NewBlockPreset = .blank
+    @State private var didApplyInitialPreset = false
+    @State private var pendingPresetToApply: NewBlockPreset? = nil
+    @State private var presentingApplyPresetConfirm = false
 
-    public init(draft: BlockDraft, editing: Block? = nil) {
+    init(draft: BlockDraft, editing: Block? = nil, initialPreset: NewBlockPreset? = nil) {
         self.draft = draft
         self.editing = editing
+        self.initialPreset = initialPreset
     }
 
     public var body: some View {
@@ -51,16 +57,11 @@ public struct BlockBuilderView: View {
                                     incrementDays: { adjustDaysPerWeek(by: 1) }
                                 )
 
-                                // 3. STARTING POINT
-                                NewBlockStartingPointBand(
-                                    selectedPreset: selectedPreset,
-                                    onChange: { presentingTemplateSheet = true }
-                                )
-
-                                // 4. PHASES
+                                // 3. PHASES
                                 NewBlockPhasesHeader(
                                     phaseCount: draft.phases.count,
-                                    addPhase: addDefaultPhase
+                                    addPhase: addDefaultPhase,
+                                    applyPreset: presentPresetPicker
                                 )
 
                                 NewBlockTimelinePreview(phases: draft.phases)
@@ -71,7 +72,7 @@ public struct BlockBuilderView: View {
 
                                 NewBlockAddPhaseSlot(
                                     addPhase: addDefaultPhase,
-                                    addPreset: applyHypertrophyPreset
+                                    addPreset: presentPresetPicker
                                 )
 
                                 if draft.isValid {
@@ -117,15 +118,46 @@ public struct BlockBuilderView: View {
             NewBlockTemplateSheet(
                 selected: selectedPreset,
                 onSelect: { preset in
-                    applyPreset(preset)
                     presentingTemplateSheet = false
+                    if presetWouldReplacePhases(preset) {
+                        pendingPresetToApply = preset
+                        presentingApplyPresetConfirm = true
+                    } else {
+                        applyPreset(preset)
+                    }
                 }
             )
         }
+        .confirmationDialog(
+            "Apply Preset?",
+            isPresented: $presentingApplyPresetConfirm,
+            titleVisibility: .visible
+        ) {
+            Button("Apply", role: .destructive) {
+                if let p = pendingPresetToApply {
+                    applyPreset(p)
+                }
+                pendingPresetToApply = nil
+            }
+            Button("Cancel", role: .cancel) {
+                pendingPresetToApply = nil
+            }
+        } message: {
+            Text("This will replace your current phases and settings.")
+        }
         .onAppear {
-            selectedPreset = NewBlockPreset.matching(name: draft.name)
+            if initialPreset == nil {
+                selectedPreset = NewBlockPreset.matching(name: draft.name)
+            }
             if initialSnapshot.isEmpty {
                 initialSnapshot = snapshotHash()
+            }
+        }
+        .task {
+            guard !didApplyInitialPreset else { return }
+            didApplyInitialPreset = true
+            if let preset = initialPreset, preset != .blank {
+                applyPreset(preset)
             }
         }
     }
@@ -149,8 +181,12 @@ public struct BlockBuilderView: View {
         }
     }
 
-    private func applyHypertrophyPreset() {
-        applyPreset(.hypertrophyMeso)
+    private func presentPresetPicker() {
+        presentingTemplateSheet = true
+    }
+
+    private func presetWouldReplacePhases(_ preset: NewBlockPreset) -> Bool {
+        preset == .hypertrophyMeso && !draft.phases.isEmpty
     }
 
     private func applyPreset(_ preset: NewBlockPreset) {
@@ -279,7 +315,7 @@ fileprivate enum NewBlockType {
 
 // MARK: - Preset model
 
-fileprivate enum NewBlockPreset: Hashable, CaseIterable {
+internal enum NewBlockPreset: Hashable, CaseIterable {
     case blank
     case hypertrophyMeso
     case linearStrength
@@ -433,55 +469,7 @@ fileprivate struct NewBlockPresetChip: View {
     }
 }
 
-// MARK: - Starting Point Band + Template Sheet
-
-fileprivate struct NewBlockStartingPointBand: View {
-    let selectedPreset: NewBlockPreset
-    let onChange: () -> Void
-
-    private var displayLabel: String {
-        selectedPreset == .blank ? "FROM SCRATCH" : selectedPreset.chipLabel
-    }
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            Text("STARTING POINT")
-                .font(NewBlockType.label)
-                .tracking(NewBlockScreenTokens.labelTracking)
-                .foregroundStyle(NewBlockScreenTokens.muted)
-                .padding(.top, NewBlockScreenTokens.sectionGap)
-                .padding(.bottom, NewBlockScreenTokens.rowGap)
-
-            HStack(alignment: .center, spacing: 0) {
-                Text(displayLabel)
-                    .font(NewBlockType.chrome)
-                    .tracking(NewBlockScreenTokens.chipTracking)
-                    .foregroundStyle(NewBlockScreenTokens.ink)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-
-                Button(action: onChange) {
-                    Text("CHANGE")
-                        .font(NewBlockType.label)
-                        .tracking(NewBlockScreenTokens.chipTracking)
-                        .foregroundStyle(NewBlockScreenTokens.muted)
-                        .frame(height: 22)
-                        .padding(.horizontal, NewBlockScreenTokens.rowGap)
-                        .overlay(Rectangle().stroke(NewBlockScreenTokens.muted, lineWidth: NewBlockScreenTokens.rule))
-                }
-                .buttonStyle(.plain)
-            }
-            .padding(.bottom, NewBlockScreenTokens.sectionGap)
-        }
-        .padding(.horizontal, NewBlockScreenTokens.sidePadding)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(NewBlockScreenTokens.paper)
-        .overlay(alignment: .bottom) {
-            Rectangle()
-                .fill(NewBlockScreenTokens.ink)
-                .frame(height: NewBlockScreenTokens.heavyRule)
-        }
-    }
-}
+// MARK: - Template Sheet
 
 fileprivate struct NewBlockTemplateSheet: View {
     let selected: NewBlockPreset
@@ -644,6 +632,7 @@ fileprivate struct NewBlockStepperButton: View {
 fileprivate struct NewBlockPhasesHeader: View {
     let phaseCount: Int
     let addPhase: () -> Void
+    let applyPreset: () -> Void
 
     var body: some View {
         HStack {
@@ -652,6 +641,14 @@ fileprivate struct NewBlockPhasesHeader: View {
                 .tracking(NewBlockScreenTokens.chipTracking)
                 .foregroundStyle(NewBlockScreenTokens.ink)
             Spacer()
+            Button(action: applyPreset) {
+                Text("APPLY PRESET")
+                    .font(NewBlockType.label)
+                    .tracking(NewBlockScreenTokens.chipTracking)
+                    .foregroundStyle(NewBlockScreenTokens.muted)
+            }
+            .buttonStyle(.plain)
+            .padding(.trailing, NewBlockScreenTokens.rowGap)
             Button(action: addPhase) {
                 Text("+ ADD PHASE")
                     .font(NewBlockType.chrome)
