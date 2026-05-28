@@ -28,6 +28,9 @@ public struct BlockBuilderView: View {
     @State private var pendingPresetToApply: NewBlockPreset? = nil
     @State private var presentingApplyPresetConfirm = false
     @State private var presentingAddPhaseTypePicker = false
+    @State private var editMode: EditMode = .inactive
+    @State private var pendingDelete: (phase: BlockPhaseDraft, index: Int)? = nil
+    @State private var undoTask: Task<Void, Never>? = nil
 
     init(draft: BlockDraft, editing: Block? = nil, initialPreset: NewBlockPreset? = nil) {
         self.draft = draft
@@ -45,10 +48,12 @@ public struct BlockBuilderView: View {
                         onSave: saveIfValid
                     )
 
-                    // D7a: SwiftUI List — plain style with full-bleed rows preserving
+                    // D7a/D7b: SwiftUI List — plain style with full-bleed rows preserving
                     // the brutalist look. PHASES header is a Section header so it pins
                     // while scrolling. NewBlockBottomActionBar stays outside as a ZStack
                     // overlay; bottom clearance is a trailing spacer row.
+                    // D7b: edit mode is bound via .environment(\.editMode, $editMode) so
+                    // the native List move handles appear when editMode == .active.
                     List {
                         // ── Upper bands ─────────────────────────────────────────────
                         // Block Name
@@ -95,11 +100,27 @@ public struct BlockBuilderView: View {
                                     .listRowInsets(EdgeInsets())
                                     .listRowSeparator(.hidden)
                                     .listRowBackground(Color.clear)
+                                    // D7b: swipe-delete (NOT .onDelete — need index for undo)
+                                    .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                                        Button(role: .destructive) {
+                                            beginPendingDelete(phase)
+                                        } label: {
+                                            Label("Delete", systemImage: "trash")
+                                        }
+                                    }
+                            }
+                            // D7b: .onMove gated by editMode (toggle in pinned header)
+                            .onMove { from, to in
+                                draft.phases.move(fromOffsets: from, toOffset: to)
                             }
                         } header: {
                             NewBlockPhasesHeader(
                                 phaseCount: draft.phases.count,
                                 selectedPreset: selectedPreset,
+                                isReordering: editMode == .active,
+                                onToggleReorder: {
+                                    editMode = editMode == .active ? .inactive : .active
+                                },
                                 onSelectPreset: { preset in
                                     if presetWouldReplacePhases(preset) {
                                         pendingPresetToApply = preset
@@ -148,6 +169,17 @@ public struct BlockBuilderView: View {
                     .scrollContentBackground(.hidden)
                     .background(NewBlockScreenTokens.paper)
                     .scrollIndicators(.hidden)
+                    // D7b: bind edit mode so native move handles appear in active mode
+                    .environment(\.editMode, $editMode)
+                }
+
+                // D7b: transient undo toast — visible above the action bar while
+                // pendingDelete is non-nil; auto-dismisses when the 4s Task clears it.
+                if pendingDelete != nil {
+                    NewBlockUndoToast(onUndo: undoDelete)
+                        .padding(.bottom, NewBlockScreenTokens.bottomActionHeight
+                            + NewBlockScreenTokens.tightGap)
+                        .transition(.move(edge: .bottom).combined(with: .opacity))
                 }
 
                 NewBlockBottomActionBar(
@@ -159,6 +191,7 @@ public struct BlockBuilderView: View {
             }
             .background(NewBlockScreenTokens.paper.ignoresSafeArea())
             .navigationBarHidden(true)
+            .animation(.easeInOut(duration: 0.2), value: pendingDelete != nil)
         }
         .confirmationDialog(
             "Discard Changes?",
@@ -292,6 +325,33 @@ public struct BlockBuilderView: View {
     // Legacy convenience: still used by any remaining call site.
     private func addDefaultPhase() {
         addPhase(of: .accumulation)
+    }
+
+    // D7b: swipe-delete undo affordance.
+    // beginPendingDelete captures {phase, index}, removes from draft.phases, cancels any
+    // prior undoTask, and starts a 4s @MainActor Task that clears pendingDelete on timeout.
+    // The whole view is @MainActor so the Task body touches view state directly.
+    // Swift 6: state is built inside the Task and Task.isCancelled is checked after sleep.
+    private func beginPendingDelete(_ phase: BlockPhaseDraft) {
+        guard let index = draft.phases.firstIndex(where: { $0.draftID == phase.draftID }) else { return }
+        pendingDelete = (phase: phase, index: index)
+        draft.phases.remove(at: index)
+        undoTask?.cancel()
+        undoTask = Task { @MainActor in
+            try? await Task.sleep(for: .seconds(4))
+            guard !Task.isCancelled else { return }
+            pendingDelete = nil
+        }
+    }
+
+    // Cancels the undo timer and reinserts the phase at its original index.
+    private func undoDelete() {
+        undoTask?.cancel()
+        undoTask = nil
+        if let pd = pendingDelete {
+            draft.phases.insert(pd.phase, at: min(pd.index, draft.phases.count))
+            pendingDelete = nil
+        }
     }
 
     private var hasUnsavedChanges: Bool {
@@ -723,9 +783,12 @@ fileprivate struct NewBlockStepperButton: View {
 
 // D5: header right is now a stateful "Preset: {Custom|name} ▾" Menu routing through
 // the existing Apply Preset? destructive confirm flow. "+ ADD PHASE" moved to D6 bottom row.
+// D7b: also contains the REORDER/DONE toggle for the List edit mode.
 fileprivate struct NewBlockPhasesHeader: View {
     let phaseCount: Int
     let selectedPreset: NewBlockPreset
+    let isReordering: Bool
+    let onToggleReorder: () -> Void
     let onSelectPreset: (NewBlockPreset) -> Void
 
     /// Display name for the current preset state.
@@ -734,13 +797,23 @@ fileprivate struct NewBlockPhasesHeader: View {
     }
 
     var body: some View {
-        HStack {
+        HStack(spacing: NewBlockScreenTokens.rowGap) {
             Text("PHASES · \(phaseCount)")
                 .font(NewBlockType.chrome)
                 .tracking(NewBlockScreenTokens.chipTracking)
                 .foregroundStyle(NewBlockScreenTokens.ink)
 
             Spacer()
+
+            // D7b: REORDER / DONE toggle — 44pt tap target, BRU-styled
+            Button(action: onToggleReorder) {
+                Text(isReordering ? "DONE" : "REORDER")
+                    .font(NewBlockType.chrome)
+                    .tracking(NewBlockScreenTokens.chipTracking)
+                    .foregroundStyle(isReordering ? NewBlockScreenTokens.signal : NewBlockScreenTokens.muted)
+                    .frame(minWidth: 44, minHeight: 44)
+            }
+            .buttonStyle(.plain)
 
             // D5: stateful preset selector — label reads "Preset: {Custom|name} ▾"
             Menu {
@@ -769,7 +842,7 @@ fileprivate struct NewBlockPhasesHeader: View {
             }
         }
         .padding(.horizontal, NewBlockScreenTokens.sidePadding)
-        .frame(height: NewBlockScreenTokens.phasesHeaderHeight)
+        .frame(minHeight: NewBlockScreenTokens.phasesHeaderHeight)
         .background(NewBlockScreenTokens.paper)
         .overlay(alignment: .bottom) {
             NewBlockInkRule()
@@ -955,12 +1028,8 @@ fileprivate struct NewBlockPhaseEditorRow: View {
                 }
 
                 Spacer()
-
-                Text("⋮⋮")
-                    .font(.custom("Geist-Regular", size: 16))
-                    .foregroundStyle(NewBlockScreenTokens.muted)
-                    .frame(width: 28, height: 32)
-                    .accessibilityLabel("Reorder phase \(displayIndex): \(BlockPhaseColors.phaseLabel(draft.kind))")
+                // D7b: decorative reorder glyph removed — native List move handle is the
+                // single reorder cue (avoids double-handle confusion per D7 spec).
             }
 
             // D3: inline-editable metrics — no 1.5pt ink border boxes; hair dividers instead.
@@ -1250,6 +1319,42 @@ fileprivate struct NewBlockLinkedRoutinesBand: View {
         .overlay(alignment: .top) {
             NewBlockInkRule()
         }
+    }
+}
+
+// D7b: transient undo toast shown above the bottom action bar after a swipe-delete.
+// Auto-dismisses when the 4s undoTask clears pendingDelete. "UNDO" is a ≥44pt Button.
+fileprivate struct NewBlockUndoToast: View {
+    let onUndo: () -> Void
+
+    var body: some View {
+        HStack(spacing: NewBlockScreenTokens.rowGap) {
+            Text("Phase deleted")
+                .font(NewBlockType.chrome)
+                .tracking(NewBlockScreenTokens.chipTracking)
+                .foregroundStyle(NewBlockScreenTokens.ink)
+
+            Rectangle()
+                .fill(NewBlockScreenTokens.hair)
+                .frame(width: NewBlockScreenTokens.rule)
+
+            Button(action: onUndo) {
+                Text("UNDO")
+                    .font(NewBlockType.chrome)
+                    .tracking(NewBlockScreenTokens.chipTracking)
+                    .foregroundStyle(NewBlockScreenTokens.signal)
+                    .frame(minWidth: 44, minHeight: 44)
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(.horizontal, NewBlockScreenTokens.sidePadding)
+        .padding(.vertical, NewBlockScreenTokens.tightGap)
+        .background(NewBlockScreenTokens.faint)
+        .overlay(
+            Rectangle()
+                .stroke(NewBlockScreenTokens.hair, lineWidth: NewBlockScreenTokens.rule)
+        )
+        .padding(.horizontal, NewBlockScreenTokens.sidePadding)
     }
 }
 
