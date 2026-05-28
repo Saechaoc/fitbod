@@ -65,6 +65,17 @@ public struct BlockBuilderView: View {
 
                                 NewBlockTimelinePreview(phases: draft.phases)
 
+                                // D2: baseline legend — one muted caption explaining the metric conventions.
+                                Text("VOL Δ vs base · INT % of training max")
+                                    .font(NewBlockType.micro)
+                                    .tracking(0.8)
+                                    .foregroundStyle(NewBlockScreenTokens.muted)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .padding(.horizontal, NewBlockScreenTokens.sidePadding)
+                                    .padding(.top, NewBlockScreenTokens.tightGap)
+                                    .padding(.bottom, NewBlockScreenTokens.microGap)
+                                    .background(NewBlockScreenTokens.paper)
+
                                 ForEach(Array(draft.phases.enumerated()), id: \.element.draftID) { index, phase in
                                     NewBlockPhaseEditorRow(draft: phase, displayIndex: index + 1)
                                 }
@@ -281,7 +292,7 @@ fileprivate enum NewBlockScreenTokens {
     static let phasesHeaderHeight: CGFloat = 36
     static let previewHeight: CGFloat = 120
     static let timelineBarHeight: CGFloat = 30  // D4: lighter than 44pt
-    static let phaseRowHeight: CGFloat = 108
+    static let phaseRowHeight: CGFloat = 148  // D3: taller for inline steppers
 
     // D1: New-Block-LOCAL ordered phase palette (fileprivate — never modifies
     // the public BlockPhaseColors API used by 5 other screens).
@@ -816,6 +827,7 @@ fileprivate struct NewBlockPhaseEditorRow: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: NewBlockScreenTokens.sectionGap) {
+            // Header: number chip + title/subtitle + reorder glyph
             HStack(alignment: .top, spacing: NewBlockScreenTokens.sectionGap) {
                 // D1: filled number chip — palette color keyed by order index.
                 // Color is ALWAYS paired with the phase name beside it (colorblind-safe).
@@ -832,11 +844,22 @@ fileprivate struct NewBlockPhaseEditorRow: View {
                     .clipShape(RoundedRectangle(cornerRadius: 4))
 
                 VStack(alignment: .leading, spacing: NewBlockScreenTokens.microGap) {
-                    Text(NewBlockPhaseText.title(for: draft.kind))
-                        .font(NewBlockType.phaseTitle)
-                        .fontWeight(.semibold)
-                        .foregroundStyle(NewBlockScreenTokens.ink)
-
+                    HStack(spacing: NewBlockScreenTokens.microGap) {
+                        Text(NewBlockPhaseText.title(for: draft.kind))
+                            .font(NewBlockType.phaseTitle)
+                            .fontWeight(.semibold)
+                            .foregroundStyle(NewBlockScreenTokens.ink)
+                        if isDeload {
+                            Text("DELOAD")
+                                .font(NewBlockType.chip)
+                                .tracking(1.4)
+                                .foregroundStyle(NewBlockScreenTokens.paper)
+                                .padding(.horizontal, 5)
+                                .padding(.vertical, 2)
+                                .background(NewBlockScreenTokens.muted)
+                                .clipShape(RoundedRectangle(cornerRadius: 3))
+                        }
+                    }
                     Text(NewBlockPhaseText.subtitle(for: draft.kind))
                         .font(NewBlockType.label)
                         .tracking(1.2)
@@ -852,11 +875,62 @@ fileprivate struct NewBlockPhaseEditorRow: View {
                     .accessibilityLabel("Reorder phase \(displayIndex): \(BlockPhaseColors.phaseLabel(draft.kind))")
             }
 
-            HStack(spacing: 7) {
-                NewBlockPhaseMetricCell(label: "WEEKS", value: "\(draft.weeks)")
-                NewBlockPhaseMetricCell(label: "VOL", value: NewBlockPhaseText.volumeValue(draft.volumeMultiplier))
-                NewBlockPhaseMetricCell(label: "INT", value: NewBlockPhaseText.intensityValue(draft.intensityMultiplier))
+            // D3: inline-editable metrics — no 1.5pt ink border boxes; hair dividers instead.
+            // Each column: label (top) · value · −/+ stepper controls.
+            HStack(spacing: 0) {
+                // WEEKS
+                NewBlockInlineMetricColumn(
+                    label: "WEEKS",
+                    value: "\(draft.weeks)",
+                    onDecrement: {
+                        draft.weeks = max(1, draft.weeks - 1)
+                    },
+                    onIncrement: {
+                        draft.weeks = min(52, draft.weeks + 1)
+                    }
+                )
+
+                // Hair divider
+                Rectangle()
+                    .fill(NewBlockScreenTokens.hair)
+                    .frame(width: NewBlockScreenTokens.rule)
+
+                // VOL
+                NewBlockInlineMetricColumn(
+                    label: "VOL",
+                    value: NewBlockPhaseText.volumeValue(draft.volumeMultiplier),
+                    onDecrement: {
+                        let newVal = (draft.volumeMultiplier - 0.05)
+                        draft.volumeMultiplier = (max(0.4, newVal) * 100).rounded() / 100
+                    },
+                    onIncrement: {
+                        let newVal = (draft.volumeMultiplier + 0.05)
+                        draft.volumeMultiplier = (min(1.6, newVal) * 100).rounded() / 100
+                    }
+                )
+
+                // Hair divider
+                Rectangle()
+                    .fill(NewBlockScreenTokens.hair)
+                    .frame(width: NewBlockScreenTokens.rule)
+
+                // INT
+                NewBlockInlineMetricColumn(
+                    label: "INT",
+                    value: NewBlockPhaseText.intensityValue(draft.intensityMultiplier),
+                    onDecrement: {
+                        let newVal = (draft.intensityMultiplier - 0.05)
+                        draft.intensityMultiplier = (max(0.5, newVal) * 100).rounded() / 100
+                    },
+                    onIncrement: {
+                        let newVal = (draft.intensityMultiplier + 0.05)
+                        draft.intensityMultiplier = (min(1.0, newVal) * 100).rounded() / 100
+                    }
+                )
             }
+            .frame(height: 56)
+            .background(NewBlockScreenTokens.faint)
+            .clipShape(RoundedRectangle(cornerRadius: 4))
         }
         .padding(.horizontal, NewBlockScreenTokens.sidePadding)
         .padding(.top, NewBlockScreenTokens.sectionGap)
@@ -872,27 +946,40 @@ fileprivate struct NewBlockPhaseEditorRow: View {
     }
 }
 
-fileprivate struct NewBlockPhaseMetricCell: View {
+// D3: one reusable column for an inline-editable metric (label / value / −  +).
+// No 1.5pt ink border box — calm label-over-value layout with shared hair dividers.
+fileprivate struct NewBlockInlineMetricColumn: View {
     let label: String
     let value: String
+    let onDecrement: () -> Void
+    let onIncrement: () -> Void
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
+        VStack(spacing: 2) {
             Text(label)
                 .font(NewBlockType.micro)
                 .tracking(1.4)
                 .foregroundStyle(NewBlockScreenTokens.muted)
-                .padding(.top, NewBlockScreenTokens.tightGap)
+
             Text(value)
-                .font(NewBlockType.number)
+                .font(NewBlockType.label)
+                .tracking(0.6)
                 .foregroundStyle(NewBlockScreenTokens.ink)
                 .lineLimit(1)
-                .minimumScaleFactor(0.7)
+                .minimumScaleFactor(0.8)
+
+            HStack(spacing: 4) {
+                // 44pt touch target wrapping the 32×30 visual glyph
+                NewBlockStepperButton(label: "−", action: onDecrement)
+                    .contentShape(Rectangle())
+                    .frame(minWidth: 44, minHeight: 44)
+                NewBlockStepperButton(label: "+", action: onIncrement)
+                    .contentShape(Rectangle())
+                    .frame(minWidth: 44, minHeight: 44)
+            }
         }
-        .padding(.horizontal, NewBlockScreenTokens.sectionGap)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .frame(height: NewBlockScreenTokens.metricCellHeight)
-        .overlay(Rectangle().stroke(NewBlockScreenTokens.ink, lineWidth: 1.5))
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 6)
     }
 }
 
@@ -937,8 +1024,9 @@ fileprivate enum NewBlockPhaseText {
     }
 
     static func volumeValue(_ multiplier: Double) -> String {
+        // D2: signed % vs base; ==1.0 renders as "Hold" (0-delta).
         if abs(multiplier - 1.0) < 0.001 {
-            return "HOLD"
+            return "Hold"
         }
         let percent = Int(((multiplier - 1.0) * 100).rounded())
         return percent > 0 ? "+\(percent)%" : "\(percent)%"
