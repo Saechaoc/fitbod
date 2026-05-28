@@ -84,6 +84,7 @@ struct NewBlockBuilderFidelityTests {
             "NewBlockTimelinePreview",
             "NewBlockPhaseEditorRow",
             "NewBlockBottomActionBar",
+            "NewBlockTemplatePresetsBand",
         ] {
             #expect(source.contains(requiredType), "Missing New Block structure: \(requiredType)")
         }
@@ -113,7 +114,7 @@ struct NewBlockBuilderFidelityTests {
             "↘ PRESETS",
             "CANCEL",
             "NAME FIRST ↑",
-            "CREATE + ACTIVATE ▸",
+            "SAVE TEMPLATE ▸",
         ] {
             #expect(source.contains(requiredCopy), "Missing New Block copy: \(requiredCopy)")
         }

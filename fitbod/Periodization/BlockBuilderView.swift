@@ -18,6 +18,7 @@ public struct BlockBuilderView: View {
     @State private var presentingDiscardConfirm = false
     @State private var initialSnapshot = ""
     @State private var saveError: String? = nil
+    @State private var selectedPreset: NewBlockPreset = .blank
 
     public init(draft: BlockDraft, editing: Block? = nil) {
         self.draft = draft
@@ -42,6 +43,11 @@ public struct BlockBuilderView: View {
                                 draft: draft,
                                 decrementWeeks: { adjustTotalWeeks(by: -1) },
                                 incrementWeeks: { adjustTotalWeeks(by: 1) }
+                            )
+
+                            NewBlockTemplatePresetsBand(
+                                selectedPreset: $selectedPreset,
+                                applyPreset: applyPreset
                             )
 
                             NewBlockPhasesHeader(
@@ -96,6 +102,7 @@ public struct BlockBuilderView: View {
             }
         }
         .onAppear {
+            selectedPreset = NewBlockPreset.matching(name: draft.name)
             if initialSnapshot.isEmpty {
                 initialSnapshot = snapshotHash()
             }
@@ -125,6 +132,12 @@ public struct BlockBuilderView: View {
         draft.name = "Hypertrophy Meso"
         draft.isActive = true
         draft.daysPerWeek = 4
+    }
+
+    private func applyPreset(_ preset: NewBlockPreset) {
+        draft.name = preset.displayName
+        draft.isActive = true
+        selectedPreset = preset
     }
 
     private func addDefaultPhase() {
@@ -203,7 +216,7 @@ fileprivate enum NewBlockScreenTokens {
     static let sectionGap: CGFloat = 10
 
     static let topBarRowHeight: CGFloat = 50
-    static let nameBandHeight: CGFloat = 152
+    static let nameBandHeight: CGFloat = 104
     static let metricsHeight: CGFloat = 74
     static let phasesHeaderHeight: CGFloat = 36
     static let previewHeight: CGFloat = 104
@@ -225,6 +238,64 @@ fileprivate enum NewBlockType {
     static let number = Font.custom("BebasNeue-Regular", size: 29)
     static let phaseIndex = Font.custom("BebasNeue-Regular", size: 28)
     static let phaseTitle = Font.custom("Geist-Regular", size: 18)
+}
+
+// MARK: - Preset model
+
+fileprivate enum NewBlockPreset: Hashable, CaseIterable {
+    case blank
+    case hypertrophyMeso
+    case linearStrength
+    case powerbuilding
+    case offSeason
+    case preMeet
+
+    /// Uppercase chip label rendered inside `NewBlockTemplatePresetsBand`.
+    var chipLabel: String {
+        switch self {
+        case .blank:           return "BLANK"
+        case .hypertrophyMeso: return "HYPERTROPHY MESO"
+        case .linearStrength:  return "LINEAR STRENGTH"
+        case .powerbuilding:   return "POWERBUILDING"
+        case .offSeason:       return "OFF-SEASON"
+        case .preMeet:         return "PRE-MEET"
+        }
+    }
+
+    /// Title-cased name applied to `draft.name` when the chip is tapped.
+    /// `BLANK` returns the empty string so tapping it clears the draft name.
+    var displayName: String {
+        switch self {
+        case .blank:           return ""
+        case .hypertrophyMeso: return "Hypertrophy Meso"
+        case .linearStrength:  return "Linear Strength"
+        case .powerbuilding:   return "Powerbuilding"
+        case .offSeason:       return "Off-Season"
+        case .preMeet:         return "Pre-Meet"
+        }
+    }
+
+    /// Case-insensitive match of an existing draft name against the preset
+    /// list. Falls back to `.blank` when the name is empty or doesn't match.
+    /// Used by `BlockBuilderView.onAppear` to seed initial chip selection
+    /// for both the new-block path (empty name → `.blank`) and the edit
+    /// path (existing block name matched against the preset display names).
+    static func matching(name: String) -> NewBlockPreset {
+        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return .blank }
+        let lower = trimmed.lowercased()
+        for preset in NewBlockPreset.all where preset != .blank {
+            if preset.displayName.lowercased() == lower {
+                return preset
+            }
+        }
+        return .blank
+    }
+
+    /// Spec-locked chip order: BLANK first, then the 5 named presets.
+    static let all: [NewBlockPreset] = [
+        .blank, .hypertrophyMeso, .linearStrength, .powerbuilding, .offSeason, .preMeet,
+    ]
 }
 
 fileprivate struct NewBlockTopBar: View {
@@ -287,36 +358,17 @@ fileprivate struct NewBlockNameBand: View {
                 text: $draft.name
             )
 
-            if draft.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                presetRows
-                    .padding(.top, NewBlockScreenTokens.tightGap)
-            } else {
+            if !draft.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                 activeChips
                     .padding(.top, NewBlockScreenTokens.tightGap)
             }
-
-            Spacer(minLength: 0)
         }
         .padding(.horizontal, NewBlockScreenTokens.sidePadding)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .frame(height: NewBlockScreenTokens.nameBandHeight)
+        .frame(maxWidth: .infinity, alignment: .topLeading)
+        .frame(height: NewBlockScreenTokens.nameBandHeight, alignment: .topLeading)
         .background(NewBlockScreenTokens.paper)
         .overlay(alignment: .bottom) {
             NewBlockInkRule()
-        }
-    }
-
-    private var presetRows: some View {
-        VStack(alignment: .leading, spacing: 7) {
-            HStack(spacing: 5) {
-                NewBlockPresetChip("HYPERTROPHY MESO") { applyName("Hypertrophy Meso") }
-                NewBlockPresetChip("LINEAR STRENGTH") { applyName("Linear Strength") }
-                NewBlockPresetChip("POWERBUILDING") { applyName("Powerbuilding") }
-            }
-            HStack(spacing: 5) {
-                NewBlockPresetChip("OFF-SEASON") { applyName("Off-Season") }
-                NewBlockPresetChip("PRE-MEET") { applyName("Pre-Meet") }
-            }
         }
     }
 
@@ -339,19 +391,16 @@ fileprivate struct NewBlockNameBand: View {
                 .overlay(Rectangle().stroke(NewBlockScreenTokens.ink, lineWidth: 1.5))
         }
     }
-
-    private func applyName(_ name: String) {
-        draft.name = name
-        draft.isActive = true
-    }
 }
 
 fileprivate struct NewBlockPresetChip: View {
     let title: String
+    let isSelected: Bool
     let action: () -> Void
 
-    init(_ title: String, action: @escaping () -> Void) {
+    init(_ title: String, isSelected: Bool = false, action: @escaping () -> Void) {
         self.title = title
+        self.isSelected = isSelected
         self.action = action
     }
 
@@ -360,14 +409,61 @@ fileprivate struct NewBlockPresetChip: View {
             Text(title)
                 .font(NewBlockType.chip)
                 .tracking(1.8)
-                .foregroundStyle(NewBlockScreenTokens.ink)
+                .foregroundStyle(isSelected ? NewBlockScreenTokens.paper : NewBlockScreenTokens.ink)
                 .lineLimit(1)
                 .minimumScaleFactor(0.75)
                 .frame(height: 26)
                 .padding(.horizontal, 9)
+                .background(isSelected ? NewBlockScreenTokens.ink : Color.clear)
                 .overlay(Rectangle().stroke(NewBlockScreenTokens.ink, lineWidth: 1.5))
         }
         .buttonStyle(.plain)
+    }
+}
+
+// MARK: - Template Presets Band
+
+fileprivate struct NewBlockTemplatePresetsBand: View {
+    @Binding var selectedPreset: NewBlockPreset
+    let applyPreset: (NewBlockPreset) -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            Text("START FROM TEMPLATE")
+                .font(NewBlockType.label)
+                .tracking(NewBlockScreenTokens.labelTracking)
+                .foregroundStyle(NewBlockScreenTokens.muted)
+                .padding(.top, NewBlockScreenTokens.sectionGap)
+
+            Text("Choose a preset or build from scratch.")
+                .font(NewBlockType.chip)
+                .tracking(0)
+                .foregroundStyle(NewBlockScreenTokens.muted)
+                .padding(.top, NewBlockScreenTokens.microGap)
+
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 5) {
+                    ForEach(NewBlockPreset.all, id: \.self) { preset in
+                        NewBlockPresetChip(
+                            preset.chipLabel,
+                            isSelected: preset == selectedPreset
+                        ) {
+                            applyPreset(preset)
+                        }
+                    }
+                }
+            }
+            .padding(.top, NewBlockScreenTokens.tightGap)
+        }
+        .padding(.horizontal, NewBlockScreenTokens.sidePadding)
+        .padding(.bottom, NewBlockScreenTokens.sectionGap)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(NewBlockScreenTokens.paper)
+        .overlay(alignment: .bottom) {
+            Rectangle()
+                .fill(NewBlockScreenTokens.ink)
+                .frame(height: NewBlockScreenTokens.heavyRule)
+        }
     }
 }
 
@@ -434,9 +530,7 @@ fileprivate struct NewBlockMetricsBand: View {
         .frame(height: NewBlockScreenTokens.metricsHeight)
         .background(NewBlockScreenTokens.paper)
         .overlay(alignment: .bottom) {
-            Rectangle()
-                .fill(NewBlockScreenTokens.ink)
-                .frame(height: NewBlockScreenTokens.heavyRule)
+            NewBlockInkRule()
         }
     }
 }
@@ -850,7 +944,7 @@ fileprivate struct NewBlockBottomActionBar: View {
         if !canCreate {
             return "NAME FIRST ↑"
         }
-        return isEditing ? "SAVE CHANGES ▸" : "CREATE + ACTIVATE ▸"
+        return isEditing ? "SAVE CHANGES ▸" : "SAVE TEMPLATE ▸"
     }
 }
 

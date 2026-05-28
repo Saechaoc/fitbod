@@ -33,7 +33,7 @@ struct BlockBuilderViewCopyTests {
         #expect(builder.contains("\"WILL ACTIVATE ON SAVE\""))
         #expect(builder.contains("\"ROUTINES · \\(count) LINKED\""))
         #expect(builder.contains("\"NAME FIRST ↑\""))
-        #expect(builder.contains("\"CREATE + ACTIVATE ▸\""))
+        #expect(builder.contains("\"SAVE TEMPLATE ▸\""))
         #expect(builder.contains("\"Couldn't save block. Try again.\""))
         #expect(builder.contains("\"Discard Changes?\""))
         #expect(builder.contains("\"Discard\""))
