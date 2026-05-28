@@ -45,71 +45,109 @@ public struct BlockBuilderView: View {
                         onSave: saveIfValid
                     )
 
-                    GeometryReader { geo in
-                        ScrollView {
-                            VStack(spacing: 0) {
-                                // 1. BLOCK NAME
-                                NewBlockNameBand(draft: draft)
+                    // D7a: SwiftUI List — plain style with full-bleed rows preserving
+                    // the brutalist look. PHASES header is a Section header so it pins
+                    // while scrolling. NewBlockBottomActionBar stays outside as a ZStack
+                    // overlay; bottom clearance is a trailing spacer row.
+                    List {
+                        // ── Upper bands ─────────────────────────────────────────────
+                        // Block Name
+                        NewBlockNameBand(draft: draft)
+                            .listRowInsets(EdgeInsets())
+                            .listRowSeparator(.hidden)
+                            .listRowBackground(Color.clear)
 
-                                // 2. BLOCK SETTINGS (label removed; grid + dividers kept)
-                                NewBlockMetricsBand(
-                                    draft: draft,
-                                    onEditWeeks: { presentingDurationSheet = true },
-                                    onEditDays: { presentingDaysSheet = true }
-                                )
+                        // Block Settings
+                        NewBlockMetricsBand(
+                            draft: draft,
+                            onEditWeeks: { presentingDurationSheet = true },
+                            onEditDays: { presentingDaysSheet = true }
+                        )
+                        .listRowInsets(EdgeInsets())
+                        .listRowSeparator(.hidden)
+                        .listRowBackground(Color.clear)
 
-                                // 3. PHASES
-                                // D5: header right is now a stateful preset Menu; + ADD PHASE moved to bottom.
-                                NewBlockPhasesHeader(
-                                    phaseCount: draft.phases.count,
-                                    selectedPreset: selectedPreset,
-                                    onSelectPreset: { preset in
-                                        if presetWouldReplacePhases(preset) {
-                                            pendingPresetToApply = preset
-                                            presentingApplyPresetConfirm = true
-                                        } else {
-                                            applyPreset(preset)
-                                        }
-                                    }
-                                )
+                        // Timeline preview (bands paint their own paper background)
+                        NewBlockTimelinePreview(phases: draft.phases)
+                            .listRowInsets(EdgeInsets())
+                            .listRowSeparator(.hidden)
+                            .listRowBackground(Color.clear)
 
-                                NewBlockTimelinePreview(phases: draft.phases)
+                        // D2: baseline legend row
+                        Text("VOL Δ vs base · INT % of training max")
+                            .font(NewBlockType.micro)
+                            .tracking(0.8)
+                            .foregroundStyle(NewBlockScreenTokens.muted)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(.horizontal, NewBlockScreenTokens.sidePadding)
+                            .padding(.top, NewBlockScreenTokens.tightGap)
+                            .padding(.bottom, NewBlockScreenTokens.microGap)
+                            .background(NewBlockScreenTokens.paper)
+                            .listRowInsets(EdgeInsets())
+                            .listRowSeparator(.hidden)
+                            .listRowBackground(Color.clear)
 
-                                // D2: baseline legend — one muted caption explaining the metric conventions.
-                                Text("VOL Δ vs base · INT % of training max")
-                                    .font(NewBlockType.micro)
-                                    .tracking(0.8)
-                                    .foregroundStyle(NewBlockScreenTokens.muted)
-                                    .frame(maxWidth: .infinity, alignment: .leading)
-                                    .padding(.horizontal, NewBlockScreenTokens.sidePadding)
-                                    .padding(.top, NewBlockScreenTokens.tightGap)
-                                    .padding(.bottom, NewBlockScreenTokens.microGap)
-                                    .background(NewBlockScreenTokens.paper)
-
-                                ForEach(Array(draft.phases.enumerated()), id: \.element.draftID) { index, phase in
-                                    NewBlockPhaseEditorRow(draft: phase, displayIndex: index + 1)
-                                }
-
-                                // D6: single full-width Add Phase row → type picker sheet.
-                                NewBlockAddPhaseSlot(
-                                    onTap: { presentingAddPhaseTypePicker = true }
-                                )
-
-                                if draft.isValid {
-                                    NewBlockLinkedRoutinesBand(count: editing?.routines?.count ?? 0)
-                                }
-
-                                if let saveError {
-                                    errorBand(saveError)
-                                }
+                        // ── Phases Section ──────────────────────────────────────────
+                        // The Section header pins automatically in a plain List.
+                        Section {
+                            ForEach(Array(draft.phases.enumerated()), id: \.element.draftID) { index, phase in
+                                NewBlockPhaseEditorRow(draft: phase, displayIndex: index + 1)
+                                    .listRowInsets(EdgeInsets())
+                                    .listRowSeparator(.hidden)
+                                    .listRowBackground(Color.clear)
                             }
-                            .padding(.bottom,
-                                NewBlockScreenTokens.bottomActionHeight
-                                    + max(geo.safeAreaInsets.bottom,
-                                          NewBlockScreenTokens.scrollBottomClearance))
+                        } header: {
+                            NewBlockPhasesHeader(
+                                phaseCount: draft.phases.count,
+                                selectedPreset: selectedPreset,
+                                onSelectPreset: { preset in
+                                    if presetWouldReplacePhases(preset) {
+                                        pendingPresetToApply = preset
+                                        presentingApplyPresetConfirm = true
+                                    } else {
+                                        applyPreset(preset)
+                                    }
+                                }
+                            )
+                            .listRowInsets(EdgeInsets())
                         }
-                        .scrollIndicators(.hidden)
+
+                        // ── Bottom rows ─────────────────────────────────────────────
+                        // D6: full-width Add Phase row
+                        NewBlockAddPhaseSlot(
+                            onTap: { presentingAddPhaseTypePicker = true }
+                        )
+                        .listRowInsets(EdgeInsets())
+                        .listRowSeparator(.hidden)
+                        .listRowBackground(Color.clear)
+
+                        if draft.isValid {
+                            NewBlockLinkedRoutinesBand(count: editing?.routines?.count ?? 0)
+                                .listRowInsets(EdgeInsets())
+                                .listRowSeparator(.hidden)
+                                .listRowBackground(Color.clear)
+                        }
+
+                        if let saveError {
+                            errorBand(saveError)
+                                .listRowInsets(EdgeInsets())
+                                .listRowSeparator(.hidden)
+                                .listRowBackground(Color.clear)
+                        }
+
+                        // Bottom clearance spacer: keeps the last row visible above the
+                        // action bar. Uses safeAreaInset equivalent via a clear spacer row.
+                        Color.clear
+                            .frame(height: NewBlockScreenTokens.bottomActionHeight
+                                + NewBlockScreenTokens.scrollBottomClearance)
+                            .listRowInsets(EdgeInsets())
+                            .listRowSeparator(.hidden)
+                            .listRowBackground(Color.clear)
                     }
+                    .listStyle(.plain)
+                    .scrollContentBackground(.hidden)
+                    .background(NewBlockScreenTokens.paper)
+                    .scrollIndicators(.hidden)
                 }
 
                 NewBlockBottomActionBar(
