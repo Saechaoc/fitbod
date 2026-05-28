@@ -3,7 +3,7 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-last_updated: "2026-05-25T18:55:43.456Z"
+last_updated: "2026-05-28T04:13:21.856Z"
 progress:
   total_phases: 12
   completed_phases: 12
@@ -311,6 +311,7 @@ None.
 |---|-------------|------|--------|-----------|
 | 260522-jgo | Fix Swift 6 concurrency error in CustomExerciseImagePicker.swift Task closure | 2026-05-22 | dd79f12 | [260522-jgo-fix-swift-6-concurrency-error-in-custome](./quick/260522-jgo-fix-swift-6-concurrency-error-in-custome/) |
 | 260524-ilf | Wire BRUTabBar into RootView — replace SwiftUI TabView chrome with BRU bottom nav | 2026-05-24 | (this commit) | [260524-ilf-wire-brutabbar-into-rootview](./quick/260524-ilf-wire-brutabbar-into-rootview/) |
+| 260527-th4 | Make Name your block field tappable text input | 2026-05-28 | 50be53b | [260527-th4-make-name-your-block-field-tappable-text](./quick/260527-th4-make-name-your-block-field-tappable-text/) |
 
 ---
 
