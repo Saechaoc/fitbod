@@ -120,7 +120,7 @@ public struct BlockBuilderView: View {
     private func saveIfValid() {
         guard draft.isValid else { return }
         do {
-            draft.isActive = true
+            draft.isActive = false
             try draft.save(into: ctx)
             dismiss()
         } catch {
@@ -129,15 +129,24 @@ public struct BlockBuilderView: View {
     }
 
     private func applyHypertrophyPreset() {
-        draft.name = "Hypertrophy Meso"
-        draft.isActive = true
-        draft.daysPerWeek = 4
+        applyPreset(.hypertrophyMeso)
     }
 
     private func applyPreset(_ preset: NewBlockPreset) {
         draft.name = preset.displayName
-        draft.isActive = true
+        draft.daysPerWeek = 4
         selectedPreset = preset
+
+        if preset == .hypertrophyMeso {
+            draft.phases = BlockTemplates.hypertrophy.phases.map { phase in
+                BlockPhaseDraft(
+                    kind: phase.kind,
+                    weeks: phase.weeks,
+                    volumeMultiplier: phase.volumeMultiplier,
+                    intensityMultiplier: phase.intensityMultiplier
+                )
+            }
+        }
     }
 
     private func addDefaultPhase() {
@@ -357,11 +366,6 @@ fileprivate struct NewBlockNameBand: View {
                 placeholder: "NAME YOUR BLOCK",
                 text: $draft.name
             )
-
-            if !draft.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                activeChips
-                    .padding(.top, NewBlockScreenTokens.tightGap)
-            }
         }
         .padding(.horizontal, NewBlockScreenTokens.sidePadding)
         .frame(maxWidth: .infinity, alignment: .topLeading)
@@ -369,26 +373,6 @@ fileprivate struct NewBlockNameBand: View {
         .background(NewBlockScreenTokens.paper)
         .overlay(alignment: .bottom) {
             NewBlockInkRule()
-        }
-    }
-
-    private var activeChips: some View {
-        HStack(spacing: 6) {
-            Text("WILL ACTIVATE ON SAVE")
-                .font(NewBlockType.label)
-                .tracking(NewBlockScreenTokens.labelTracking)
-                .foregroundStyle(.white)
-                .frame(height: 30)
-                .padding(.horizontal, 11)
-                .background(NewBlockScreenTokens.signal)
-
-            Text("\(draft.daysPerWeek) DAYS / WK")
-                .font(NewBlockType.label)
-                .tracking(NewBlockScreenTokens.labelTracking)
-                .foregroundStyle(NewBlockScreenTokens.ink)
-                .frame(height: 30)
-                .padding(.horizontal, 11)
-                .overlay(Rectangle().stroke(NewBlockScreenTokens.ink, lineWidth: 1.5))
         }
     }
 }

@@ -23,7 +23,6 @@ public final class BlockDraft {
 
     public static func newBlock() -> BlockDraft {
         let draft = BlockDraft()
-        draft.isActive = true
         draft.daysPerWeek = 4
         draft.phases = [
             BlockPhaseDraft(
