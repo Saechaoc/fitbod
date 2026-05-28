@@ -280,7 +280,41 @@ fileprivate enum NewBlockScreenTokens {
     static let metricsHeight: CGFloat = 92
     static let phasesHeaderHeight: CGFloat = 36
     static let previewHeight: CGFloat = 120
+    static let timelineBarHeight: CGFloat = 30  // D4: lighter than 44pt
     static let phaseRowHeight: CGFloat = 108
+
+    // D1: New-Block-LOCAL ordered phase palette (fileprivate — never modifies
+    // the public BlockPhaseColors API used by 5 other screens).
+    //
+    // Slot 0: ink (dark, highest contrast)
+    // Slot 1: signal (coral, high energy)
+    // Slot 2: ink @ 55% (medium dark)
+    // Slot 3: ink @ 30% (light — pairs with ink label)
+    // Slot 4: slate companion (desaturated warm-gray, paper-friendly)
+    // Cycle when more phases than slots.
+    // Deload: always solid muted (not a palette slot).
+    static let paletteSlots: [Color] = [
+        Color(red: 10 / 255, green: 10 / 255, blue: 10 / 255),               // slot 0: full ink
+        Color(red: 255 / 255, green: 77 / 255, blue: 46 / 255),              // slot 1: signal coral
+        Color(red: 10 / 255, green: 10 / 255, blue: 10 / 255).opacity(0.55), // slot 2: ink@55%
+        Color(red: 10 / 255, green: 10 / 255, blue: 10 / 255).opacity(0.30), // slot 3: ink@30%
+        Color(red: 90 / 255, green: 87 / 255, blue: 80 / 255),               // slot 4: slate companion
+    ]
+
+    // Returns the palette fill color for a given phase order index.
+    // Deload always gets the solid muted color regardless of index.
+    static func paletteColor(forOrderIndex index: Int, isDeload: Bool) -> Color {
+        if isDeload { return muted }
+        return paletteSlots[index % paletteSlots.count]
+    }
+
+    // Returns the label color that has adequate contrast on top of the given palette slot.
+    // Dark slots (ink, signal, slate) → white; light slot (ink@30%) → ink.
+    static func paletteLabelColor(forOrderIndex index: Int, isDeload: Bool) -> Color {
+        if isDeload { return paper }  // muted background → paper label
+        let slot = index % paletteSlots.count
+        return slot == 3 ? ink : Color.white
+    }
     static let metricCellHeight: CGFloat = 36
     static let addPhaseSlotHeight: CGFloat = 70
     static let bottomActionHeight: CGFloat = 60
@@ -657,8 +691,11 @@ fileprivate struct NewBlockTimelinePreview: View {
             GeometryReader { geometry in
                 let total = max(CGFloat(phases.reduce(0) { $0 + $1.weeks }), 1)
                 HStack(spacing: 0) {
+                    // D1: pass order index so each segment gets its palette slot.
+                    // ForEach keys by \.draftID (stable UUID per unsaved draft).
                     ForEach(phases, id: \.draftID) { phase in
-                        NewBlockTimelineSegment(phase: phase)
+                        let orderIndex = phases.firstIndex(where: { $0.draftID == phase.draftID }) ?? 0
+                        NewBlockTimelineSegment(phase: phase, orderIndex: orderIndex)
                             .frame(width: geometry.size.width * CGFloat(phase.weeks) / total)
                     }
                 }
@@ -690,33 +727,25 @@ fileprivate struct NewBlockTimelinePreview: View {
 
 fileprivate struct NewBlockTimelineSegment: View {
     let phase: BlockPhaseDraft
+    let orderIndex: Int
 
     var body: some View {
+        // D1: palette-ordered fill; deload = solid muted (no hatched stripes).
+        let isDeload = phase.kind == .deload
+        let fillColor = NewBlockScreenTokens.paletteColor(forOrderIndex: orderIndex, isDeload: isDeload)
+        let labelColor = NewBlockScreenTokens.paletteLabelColor(forOrderIndex: orderIndex, isDeload: isDeload)
+
         ZStack(alignment: .leading) {
-            segmentFill
+            fillColor
             Text(NewBlockPhaseText.abbreviation(for: phase.kind))
                 .font(NewBlockType.label)
                 .tracking(1.2)
-                .foregroundStyle(phase.kind == .accumulation ? .white : NewBlockScreenTokens.ink)
+                .foregroundStyle(labelColor)
                 .padding(.leading, 6)
                 .lineLimit(1)
                 .minimumScaleFactor(0.65)
         }
         .clipped()
-    }
-
-    @ViewBuilder
-    private var segmentFill: some View {
-        switch phase.kind {
-        case .accumulation:
-            NewBlockScreenTokens.ink
-        case .intensification:
-            NewBlockScreenTokens.signal
-        case .realization:
-            NewBlockScreenTokens.ink.opacity(0.25)
-        case .deload:
-            NewBlockDeloadStripes()
-        }
     }
 }
 
@@ -748,10 +777,19 @@ fileprivate struct NewBlockPhaseEditorRow: View {
     var body: some View {
         VStack(alignment: .leading, spacing: NewBlockScreenTokens.sectionGap) {
             HStack(alignment: .top, spacing: NewBlockScreenTokens.sectionGap) {
+                // D1: filled number chip — palette color keyed by order index.
+                // Color is ALWAYS paired with the phase name beside it (colorblind-safe).
+                let isDeload = draft.kind == .deload
+                let chipFill = NewBlockScreenTokens.paletteColor(
+                    forOrderIndex: displayIndex - 1, isDeload: isDeload)
+                let chipLabel = NewBlockScreenTokens.paletteLabelColor(
+                    forOrderIndex: displayIndex - 1, isDeload: isDeload)
                 Text(String(format: "%02d", displayIndex))
                     .font(NewBlockType.phaseIndex)
-                    .foregroundStyle(NewBlockScreenTokens.ink)
-                    .frame(width: 32, alignment: .leading)
+                    .foregroundStyle(chipLabel)
+                    .frame(width: 36, height: 36)
+                    .background(chipFill)
+                    .clipShape(RoundedRectangle(cornerRadius: 4))
 
                 VStack(alignment: .leading, spacing: NewBlockScreenTokens.microGap) {
                     Text(NewBlockPhaseText.title(for: draft.kind))
