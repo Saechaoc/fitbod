@@ -144,10 +144,14 @@ struct ProgramViewFidelityTests {
         #expect(programSource.contains(#"title: "+ New routine""#),
                 "The second popover row should match the supplied New-modal copy.")
         #expect(programSource.contains("startBlank()"),
-                "The New block action should route directly to a blank block builder.")
+                "The New block action opens the start-choice sheet.")
         #expect(programSource.contains("presentingNewRoutine = true"),
                 "The New routine action should route directly to RoutineBuilderView.")
         #expect(programSource.contains("RoutineBuilderView(draft: RoutineDraft())"),
                 "ProgramView should present the existing routine builder for New routine.")
+        #expect(programSource.contains("Create New Block"),
+                "The start-choice sheet should be titled 'Create New Block'.")
+        #expect(programSource.contains("How do you want to start?"),
+                "The start-choice sheet should prompt 'How do you want to start?'.")
     }
 }
