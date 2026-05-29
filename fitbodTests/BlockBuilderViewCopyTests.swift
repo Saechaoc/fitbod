@@ -29,7 +29,7 @@ struct BlockBuilderViewCopyTests {
         #expect(builder.contains("\"DAYS PER WEEK\""))
         #expect(builder.contains("\"PHASES · \\(phaseCount)\""))
         #expect(builder.contains("\"+ ADD PHASE\""))
-        #expect(builder.contains("\"PREVIEW\""))
+        #expect(builder.contains("\"PROGRESSION OVERVIEW\""))
         #expect(builder.contains("\"Apply Preset?\""))
         #expect(builder.contains("\"Start From Template\""))
         #expect(builder.contains("\"ROUTINES · \\(count) LINKED\""))

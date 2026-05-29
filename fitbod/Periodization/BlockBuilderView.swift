@@ -21,7 +21,6 @@ public struct BlockBuilderView: View {
     @State private var presentingDiscardConfirm = false
     @State private var presentingTemplateSheet = false
     @State private var presentingDurationSheet = false
-    @State private var presentingDaysSheet = false
     @State private var initialSnapshot = ""
     @State private var saveError: String? = nil
     @State private var selectedPreset: NewBlockPreset = .blank
@@ -66,8 +65,7 @@ public struct BlockBuilderView: View {
                         // Block Settings
                         NewBlockMetricsBand(
                             draft: draft,
-                            onEditWeeks: { presentingDurationSheet = true },
-                            onEditDays: { presentingDaysSheet = true }
+                            onEditWeeks: { presentingDurationSheet = true }
                         )
                         .listRowInsets(EdgeInsets())
                         .listRowSeparator(.hidden)
@@ -202,9 +200,6 @@ public struct BlockBuilderView: View {
         }
         .sheet(isPresented: $presentingDurationSheet) {
             NewBlockDurationSheet(draft: draft)
-        }
-        .sheet(isPresented: $presentingDaysSheet) {
-            NewBlockDaysSheet(draft: draft)
         }
         .sheet(isPresented: $presentingAddPhaseTypePicker) {
             NewBlockAddPhaseTypeSheet { kind in
@@ -640,79 +635,88 @@ fileprivate struct NewBlockTemplateSheet: View {
 
 // MARK: - Metrics
 
+// Two-cell metrics card matching bru-screens/New-block/final-design-2.png:
+// a single rounded card split by a hairline divider. TOTAL WEEKS is read-only
+// (it is the sum of phase durations) and taps through to the duration editor;
+// DAYS PER WEEK is edited inline with − / + steppers (the design shows the
+// steppers here — it is a free value, not derived).
 fileprivate struct NewBlockMetricsBand: View {
     @Bindable var draft: BlockDraft
     let onEditWeeks: () -> Void
-    let onEditDays: () -> Void
 
     var body: some View {
-        HStack(spacing: NewBlockScreenTokens.rowGap) {
-            // TOTAL WEEKS card
+        HStack(spacing: 0) {
+            // TOTAL WEEKS — computed from phase durations; tap opens the duration editor.
             Button(action: onEditWeeks) {
-                VStack(alignment: .leading, spacing: NewBlockScreenTokens.microGap) {
-                    HStack(spacing: NewBlockScreenTokens.microGap) {
-                        Image(systemName: "calendar")
-                            .font(.system(size: 10, weight: .bold))
-                            .foregroundStyle(NewBlockScreenTokens.ink)
-                        Text("TOTAL WEEKS")
-                            .font(NewBlockType.label)
-                            .tracking(NewBlockScreenTokens.labelTracking)
-                            .foregroundStyle(NewBlockScreenTokens.muted)
-                    }
+                VStack(alignment: .leading, spacing: NewBlockScreenTokens.tightGap) {
+                    Text("TOTAL WEEKS")
+                        .font(NewBlockType.label)
+                        .tracking(NewBlockScreenTokens.labelTracking)
+                        .foregroundStyle(NewBlockScreenTokens.muted)
 
                     Text("\(draft.totalWeeks)")
                         .font(NewBlockType.display)
                         .foregroundStyle(NewBlockScreenTokens.ink)
-
-                    Text("TAP TO EDIT")
-                        .font(NewBlockType.micro)
-                        .tracking(NewBlockScreenTokens.labelTracking)
-                        .foregroundStyle(NewBlockScreenTokens.muted)
                 }
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
                 .padding(.horizontal, NewBlockScreenTokens.sectionGap)
-                .padding(.vertical, NewBlockScreenTokens.sectionGap)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .background(NewBlockScreenTokens.paper)
-                .overlay(Rectangle().stroke(NewBlockScreenTokens.ink, lineWidth: 1))
+                .padding(.vertical, NewBlockScreenTokens.rowGap)
+                .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
             .accessibilityAddTraits(.isButton)
             .accessibilityLabel("Total weeks, \(draft.totalWeeks), edit phase durations")
 
-            // DAYS PER WEEK card
-            Button(action: onEditDays) {
-                VStack(alignment: .leading, spacing: NewBlockScreenTokens.microGap) {
-                    HStack(spacing: NewBlockScreenTokens.microGap) {
-                        Image(systemName: "calendar.day.timeline.left")
-                            .font(.system(size: 10, weight: .bold))
-                            .foregroundStyle(NewBlockScreenTokens.ink)
-                        Text("DAYS PER WEEK")
-                            .font(NewBlockType.label)
-                            .tracking(NewBlockScreenTokens.labelTracking)
-                            .foregroundStyle(NewBlockScreenTokens.muted)
+            // Hairline divider between the two cells.
+            Rectangle()
+                .fill(NewBlockScreenTokens.hair)
+                .frame(width: NewBlockScreenTokens.rule)
+
+            // DAYS PER WEEK — inline − / + steppers (clamp 1...7, mirrors the days sheet's range).
+            VStack(alignment: .leading, spacing: NewBlockScreenTokens.tightGap) {
+                Text("DAYS PER WEEK")
+                    .font(NewBlockType.label)
+                    .tracking(NewBlockScreenTokens.labelTracking)
+                    .foregroundStyle(NewBlockScreenTokens.muted)
+
+                HStack(spacing: NewBlockScreenTokens.rowGap) {
+                    NewBlockStepperButton(label: "−") {
+                        draft.daysPerWeek = max(1, draft.daysPerWeek - 1)
                     }
+                    .contentShape(Rectangle())
+                    .frame(minWidth: 44, minHeight: 44, alignment: .leading)
+                    .accessibilityLabel("Decrease days per week")
 
                     Text("\(draft.daysPerWeek)")
                         .font(NewBlockType.display)
                         .foregroundStyle(NewBlockScreenTokens.ink)
+                        .frame(minWidth: 28)
+                        .accessibilityHidden(true)
 
-                    Text("TAP TO EDIT")
-                        .font(NewBlockType.micro)
-                        .tracking(NewBlockScreenTokens.labelTracking)
-                        .foregroundStyle(NewBlockScreenTokens.muted)
+                    NewBlockStepperButton(label: "+") {
+                        draft.daysPerWeek = min(7, draft.daysPerWeek + 1)
+                    }
+                    .contentShape(Rectangle())
+                    .frame(minWidth: 44, minHeight: 44, alignment: .leading)
+                    .accessibilityLabel("Increase days per week")
                 }
-                .padding(.horizontal, NewBlockScreenTokens.sectionGap)
-                .padding(.vertical, NewBlockScreenTokens.sectionGap)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .background(NewBlockScreenTokens.paper)
-                .overlay(Rectangle().stroke(NewBlockScreenTokens.ink, lineWidth: 1))
             }
-            .buttonStyle(.plain)
-            .accessibilityAddTraits(.isButton)
-            .accessibilityLabel("Days per week, \(draft.daysPerWeek), edit")
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+            .padding(.horizontal, NewBlockScreenTokens.sectionGap)
+            .padding(.vertical, NewBlockScreenTokens.rowGap)
+            .accessibilityElement(children: .contain)
+            .accessibilityValue("\(draft.daysPerWeek) days per week")
         }
-        .padding(.horizontal, NewBlockScreenTokens.sidePadding)
         .frame(minHeight: NewBlockScreenTokens.metricsHeight)
+        .background(NewBlockScreenTokens.paper)
+        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(NewBlockScreenTokens.hair, lineWidth: NewBlockScreenTokens.rule)
+        )
+        .padding(.horizontal, NewBlockScreenTokens.sidePadding)
+        .padding(.vertical, NewBlockScreenTokens.rowGap)
+        .frame(maxWidth: .infinity)
         .background(NewBlockScreenTokens.paper)
         .overlay(alignment: .bottom) {
             NewBlockInkRule()
@@ -1171,7 +1175,7 @@ fileprivate enum NewBlockPhaseText {
 // MARK: - Per-Phase Editor Sheet
 
 /// BRU-styled sheet for editing a single phase's weeks, volume, and intensity.
-/// Mirrors NewBlockDurationSheet / NewBlockDaysSheet: NavigationStack,
+/// Mirrors NewBlockDurationSheet: NavigationStack,
 /// .presentationDetents([.medium]), NewBlockInkRule separators, plain "Done" dismiss.
 /// Uses row-local @State identity via draftID — never BlockPhaseDraft.id (nil until saved).
 fileprivate struct NewBlockPhaseEditorSheet: View {
@@ -1584,75 +1588,6 @@ fileprivate struct NewBlockDurationSheet: View {
                         }
                     }
                 }
-
-                Spacer(minLength: 0)
-
-                NewBlockInkRule()
-
-                Button(action: { dismiss() }) {
-                    Text("Done")
-                        .font(NewBlockType.chrome)
-                        .tracking(NewBlockScreenTokens.ctaTracking)
-                        .foregroundStyle(NewBlockScreenTokens.ink)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: NewBlockScreenTokens.bottomButtonHeight)
-                }
-                .buttonStyle(.plain)
-                .background(NewBlockScreenTokens.paper)
-            }
-            .background(NewBlockScreenTokens.paper.ignoresSafeArea())
-            .navigationBarHidden(true)
-        }
-        .presentationDetents([.medium])
-    }
-}
-
-fileprivate struct NewBlockDaysSheet: View {
-    @Bindable var draft: BlockDraft
-    @Environment(\.dismiss) private var dismiss
-
-    var body: some View {
-        NavigationStack {
-            VStack(alignment: .leading, spacing: 0) {
-                // Title
-                Text("Days Per Week")
-                    .font(NewBlockType.phaseTitle)
-                    .fontWeight(.semibold)
-                    .foregroundStyle(NewBlockScreenTokens.ink)
-                    .padding(.horizontal, NewBlockScreenTokens.sidePadding)
-                    .padding(.top, NewBlockScreenTokens.sectionGap)
-                    .padding(.bottom, NewBlockScreenTokens.rowGap)
-
-                NewBlockInkRule()
-
-                // 1-7 BRU-styled selector
-                HStack(spacing: 0) {
-                    ForEach(1...7, id: \.self) { day in
-                        let isSelected = draft.daysPerWeek == day
-                        Button {
-                            draft.daysPerWeek = day
-                        } label: {
-                            Text("\(day)")
-                                .font(NewBlockType.number)
-                                .foregroundStyle(isSelected ? NewBlockScreenTokens.paper : NewBlockScreenTokens.ink)
-                                .frame(maxWidth: .infinity)
-                                .frame(height: 52)
-                                .background(isSelected ? NewBlockScreenTokens.ink : Color.clear)
-                                .overlay(Rectangle().stroke(NewBlockScreenTokens.ink, lineWidth: 1.5))
-                        }
-                        .buttonStyle(.plain)
-                    }
-                }
-                .padding(.horizontal, NewBlockScreenTokens.sidePadding)
-                .padding(.vertical, NewBlockScreenTokens.sectionGap)
-
-                // Recommended hint
-                Text("Recommended: 3-6")
-                    .font(NewBlockType.label)
-                    .tracking(NewBlockScreenTokens.labelTracking)
-                    .foregroundStyle(NewBlockScreenTokens.muted)
-                    .padding(.horizontal, NewBlockScreenTokens.sidePadding)
-                    .padding(.bottom, NewBlockScreenTokens.sectionGap)
 
                 Spacer(minLength: 0)
 
