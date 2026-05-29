@@ -5,6 +5,7 @@
 //  Full-screen New Block editor matching bru-screens/New-block/new-block.png.
 //
 
+import Charts
 import SwiftData
 import SwiftUI
 
@@ -72,22 +73,8 @@ public struct BlockBuilderView: View {
                         .listRowSeparator(.hidden)
                         .listRowBackground(Color.clear)
 
-                        // Timeline preview (bands paint their own paper background)
-                        NewBlockTimelinePreview(phases: draft.phases)
-                            .listRowInsets(EdgeInsets())
-                            .listRowSeparator(.hidden)
-                            .listRowBackground(Color.clear)
-
-                        // D2: baseline legend row
-                        Text("VOL Δ vs base · INT % of training max")
-                            .font(NewBlockType.micro)
-                            .tracking(0.8)
-                            .foregroundStyle(NewBlockScreenTokens.muted)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .padding(.horizontal, NewBlockScreenTokens.sidePadding)
-                            .padding(.top, NewBlockScreenTokens.tightGap)
-                            .padding(.bottom, NewBlockScreenTokens.microGap)
-                            .background(NewBlockScreenTokens.paper)
+                        // Progression chart (replaces timeline preview)
+                        NewBlockProgressionChart(phases: draft.phases)
                             .listRowInsets(EdgeInsets())
                             .listRowSeparator(.hidden)
                             .listRowBackground(Color.clear)
@@ -414,38 +401,6 @@ fileprivate enum NewBlockScreenTokens {
     static let timelineBarHeight: CGFloat = 30  // D4: lighter than 44pt
     static let phaseRowHeight: CGFloat = 148  // D3: taller for inline steppers
 
-    // D1: New-Block-LOCAL ordered phase palette (fileprivate — never modifies
-    // the public BlockPhaseColors API used by 5 other screens).
-    //
-    // Slot 0: ink (dark, highest contrast)
-    // Slot 1: signal (coral, high energy)
-    // Slot 2: ink @ 55% (medium dark)
-    // Slot 3: ink @ 30% (light — pairs with ink label)
-    // Slot 4: slate companion (desaturated warm-gray, paper-friendly)
-    // Cycle when more phases than slots.
-    // Deload: always solid muted (not a palette slot).
-    static let paletteSlots: [Color] = [
-        Color(red: 10 / 255, green: 10 / 255, blue: 10 / 255),               // slot 0: full ink
-        Color(red: 255 / 255, green: 77 / 255, blue: 46 / 255),              // slot 1: signal coral
-        Color(red: 10 / 255, green: 10 / 255, blue: 10 / 255).opacity(0.55), // slot 2: ink@55%
-        Color(red: 10 / 255, green: 10 / 255, blue: 10 / 255).opacity(0.30), // slot 3: ink@30%
-        Color(red: 90 / 255, green: 87 / 255, blue: 80 / 255),               // slot 4: slate companion
-    ]
-
-    // Returns the palette fill color for a given phase order index.
-    // Deload always gets the solid muted color regardless of index.
-    static func paletteColor(forOrderIndex index: Int, isDeload: Bool) -> Color {
-        if isDeload { return muted }
-        return paletteSlots[index % paletteSlots.count]
-    }
-
-    // Returns the label color that has adequate contrast on top of the given palette slot.
-    // Dark slots (ink, signal, slate) → white; light slot (ink@30%) → ink.
-    static func paletteLabelColor(forOrderIndex index: Int, isDeload: Bool) -> Color {
-        if isDeload { return paper }  // muted background → paper label
-        let slot = index % paletteSlots.count
-        return slot == 3 ? ink : Color.white
-    }
     static let metricCellHeight: CGFloat = 36
     static let addPhaseSlotHeight: CGFloat = 70
     static let bottomActionHeight: CGFloat = 60
@@ -850,132 +805,191 @@ fileprivate struct NewBlockPhasesHeader: View {
     }
 }
 
-fileprivate struct NewBlockTimelinePreview: View {
+// MARK: - Progression Chart
+
+/// Chart data point for volume/intensity progression lines.
+private struct NewBlockProgressionPoint: Identifiable {
+    let id = UUID()
+    let week: Int
+    let value: Double
+    let series: String
+    let kind: BlockPhaseKind
+}
+
+/// Swift Charts progression card — replaces the old timeline preview.
+/// Shows Volume (solid line + points) and Intensity (dashed line) across
+/// all phases with proportional top-phase labels and W1..Wn x-axis ticks.
+fileprivate struct NewBlockProgressionChart: View {
     let phases: [BlockPhaseDraft]
+
+    /// Expand phases into per-week data points.
+    private var points: [NewBlockProgressionPoint] {
+        var result: [NewBlockProgressionPoint] = []
+        var weekOffset = 0
+        for phase in phases {
+            for w in 0..<phase.weeks {
+                let week = weekOffset + w + 1
+                result.append(NewBlockProgressionPoint(
+                    week: week,
+                    value: phase.volumeMultiplier * 100,
+                    series: "Volume",
+                    kind: phase.kind
+                ))
+                result.append(NewBlockProgressionPoint(
+                    week: week,
+                    value: phase.intensityMultiplier * 100,
+                    series: "Intensity",
+                    kind: phase.kind
+                ))
+            }
+            weekOffset += phase.weeks
+        }
+        return result
+    }
+
+    /// Cumulative week boundaries for x-axis marks.
+    private var cumulativeBoundaries: [Int] {
+        phases.reduce(into: [Int]()) { acc, phase in
+            acc.append((acc.last ?? 0) + phase.weeks)
+        }
+    }
+
+    private var totalWeeks: Int {
+        phases.reduce(0) { $0 + $1.weeks }
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: NewBlockScreenTokens.sectionGap) {
-            Text("PREVIEW")
+            // Section label
+            Text("PROGRESSION OVERVIEW")
                 .font(NewBlockType.label)
                 .tracking(NewBlockScreenTokens.labelTracking)
                 .foregroundStyle(NewBlockScreenTokens.muted)
 
-            // D4: lighter bar — drop the 1.5pt full-ink stroke box; hair baseline only.
-            GeometryReader { geometry in
-                let total = max(CGFloat(phases.reduce(0) { $0 + $1.weeks }), 1)
-                ZStack(alignment: .bottom) {
-                    HStack(spacing: 0) {
-                        // ForEach keys by \.draftID (stable UUID per unsaved draft).
-                        ForEach(phases, id: \.draftID) { phase in
-                            let orderIndex = phases.firstIndex(where: { $0.draftID == phase.draftID }) ?? 0
-                            NewBlockTimelineSegment(phase: phase, orderIndex: orderIndex)
-                                .frame(width: geometry.size.width * CGFloat(phase.weeks) / total)
-                        }
-                    }
-                    // Hair-weight bottom baseline (replaces the 1.5pt full-ink outer box)
+            // Hand-rolled legend (avoids fighting chartForegroundStyleScale)
+            HStack(spacing: NewBlockScreenTokens.sectionGap) {
+                HStack(spacing: 4) {
+                    // Solid volume line indicator
                     Rectangle()
-                        .fill(NewBlockScreenTokens.hair)
-                        .frame(height: NewBlockScreenTokens.rule)
+                        .fill(NewBlockScreenTokens.ink)
+                        .frame(width: 16, height: 2)
+                    Circle()
+                        .fill(NewBlockScreenTokens.ink)
+                        .frame(width: 5, height: 5)
+                    Text("Volume")
+                        .font(NewBlockType.micro)
+                        .foregroundStyle(NewBlockScreenTokens.ink)
                 }
-            }
-            .frame(height: NewBlockScreenTokens.timelineBarHeight)
-
-            // D4: cumulative week boundary ticks — one tick+label per phase boundary.
-            // Computed outside the GeometryReader @ViewBuilder to avoid control-flow restrictions.
-            let cumulativeWeeks: [Int] = phases.reduce(into: [Int]()) { acc, phase in
-                acc.append((acc.last ?? 0) + phase.weeks)
-            }
-            let totalWeeks = max(phases.reduce(0) { $0 + $1.weeks }, 1)
-
-            GeometryReader { tickGeo in
-                let totalWeeksF = CGFloat(totalWeeks)
-                ZStack(alignment: .topLeading) {
-                    ForEach(Array(cumulativeWeeks.enumerated()), id: \.offset) { _, weekEnd in
-                        let xFraction = CGFloat(weekEnd) / totalWeeksF
-                        let xPos = tickGeo.size.width * xFraction
-                        Group {
-                            // Thin vertical tick at each phase boundary
+                HStack(spacing: 4) {
+                    // Dashed intensity line indicator
+                    HStack(spacing: 2) {
+                        ForEach(0..<3, id: \.self) { _ in
                             Rectangle()
                                 .fill(NewBlockScreenTokens.muted)
-                                .frame(width: 1, height: 6)
-                                .position(x: xPos, y: 3)
-                            // W{n} label
-                            Text("W\(weekEnd)")
+                                .frame(width: 4, height: 2)
+                        }
+                    }
+                    Text("Intensity")
+                        .font(NewBlockType.micro)
+                        .foregroundStyle(NewBlockScreenTokens.muted)
+                }
+            }
+
+            if phases.isEmpty {
+                // Empty state placeholder
+                Text("Add phases to preview progression")
+                    .font(NewBlockType.label)
+                    .tracking(0.6)
+                    .foregroundStyle(NewBlockScreenTokens.muted)
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    .frame(height: NewBlockScreenTokens.previewHeight)
+            } else {
+                // Top phase abbreviation labels (proportional width)
+                GeometryReader { geo in
+                    HStack(spacing: 0) {
+                        ForEach(phases, id: \.draftID) { phase in
+                            Text(NewBlockPhaseText.abbreviation(for: phase.kind))
                                 .font(NewBlockType.micro)
-                                .tracking(0.4)
+                                .tracking(0.8)
                                 .foregroundStyle(NewBlockScreenTokens.muted)
-                                .fixedSize()
-                                .position(
-                                    x: min(max(xPos, 8), tickGeo.size.width - 8),
-                                    y: 14
+                                .frame(
+                                    width: totalWeeks > 0
+                                        ? geo.size.width * CGFloat(phase.weeks) / CGFloat(totalWeeks)
+                                        : 0,
+                                    alignment: .center
                                 )
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.7)
                         }
                     }
                 }
+                .frame(height: 14)
+
+                // The chart
+                Chart {
+                    ForEach(points.filter { $0.series == "Volume" }) { pt in
+                        LineMark(
+                            x: .value("Week", pt.week),
+                            y: .value("Value", pt.value),
+                            series: .value("Series", pt.series)
+                        )
+                        .foregroundStyle(NewBlockScreenTokens.ink)
+                        .lineStyle(StrokeStyle(lineWidth: 2))
+                        PointMark(
+                            x: .value("Week", pt.week),
+                            y: .value("Value", pt.value)
+                        )
+                        .foregroundStyle(NewBlockScreenTokens.ink)
+                        .symbolSize(24)
+                    }
+                    ForEach(points.filter { $0.series == "Intensity" }) { pt in
+                        LineMark(
+                            x: .value("Week", pt.week),
+                            y: .value("Value", pt.value),
+                            series: .value("Series", pt.series)
+                        )
+                        .foregroundStyle(NewBlockScreenTokens.muted)
+                        .lineStyle(StrokeStyle(lineWidth: 1.5, dash: [4, 3]))
+                    }
+                }
+                .chartXAxis {
+                    AxisMarks(values: cumulativeBoundaries) { value in
+                        if let week = value.as(Int.self) {
+                            AxisValueLabel {
+                                Text("W\(week)")
+                                    .font(NewBlockType.micro)
+                                    .foregroundStyle(NewBlockScreenTokens.muted)
+                            }
+                            AxisTick(stroke: StrokeStyle(lineWidth: 1))
+                                .foregroundStyle(NewBlockScreenTokens.muted)
+                        }
+                    }
+                }
+                .chartYAxis {
+                    AxisMarks(position: .trailing, values: .automatic(desiredCount: 3)) { _ in
+                        AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5))
+                            .foregroundStyle(NewBlockScreenTokens.hair)
+                    }
+                }
+                .frame(height: NewBlockScreenTokens.previewHeight)
             }
-            .frame(height: 22)
         }
         .padding(.horizontal, NewBlockScreenTokens.sidePadding)
         .padding(.top, NewBlockScreenTokens.sectionGap)
         .padding(.bottom, NewBlockScreenTokens.tightGap)
-        .frame(height: NewBlockScreenTokens.previewHeight, alignment: .top)
         .background(NewBlockScreenTokens.paper)
+        .overlay(
+            Rectangle()
+                .stroke(NewBlockScreenTokens.ink, lineWidth: 1)
+                .padding(.horizontal, NewBlockScreenTokens.sidePadding)
+                .padding(.top, NewBlockScreenTokens.sectionGap)
+                .padding(.bottom, NewBlockScreenTokens.tightGap),
+            alignment: .center
+        )
         .overlay(alignment: .bottom) {
             Rectangle()
                 .fill(NewBlockScreenTokens.hair)
                 .frame(height: NewBlockScreenTokens.rule)
-        }
-    }
-}
-
-fileprivate struct NewBlockTimelineSegment: View {
-    let phase: BlockPhaseDraft
-    let orderIndex: Int
-
-    var body: some View {
-        // D1: palette-ordered fill; deload = solid muted (no hatched stripes).
-        // D4: narrow-label drop — GeometryReader measures rendered width; label is
-        //     omitted entirely below the threshold (not just scaled down).
-        let isDeload = phase.kind == .deload
-        let fillColor = NewBlockScreenTokens.paletteColor(forOrderIndex: orderIndex, isDeload: isDeload)
-        let labelColor = NewBlockScreenTokens.paletteLabelColor(forOrderIndex: orderIndex, isDeload: isDeload)
-
-        GeometryReader { geo in
-            let segmentWidth = geo.size.width
-            let labelThreshold: CGFloat = 40  // D4: drop label when narrower than this
-
-            ZStack(alignment: .leading) {
-                fillColor
-                if segmentWidth >= labelThreshold {
-                    Text(NewBlockPhaseText.abbreviation(for: phase.kind))
-                        .font(NewBlockType.label)
-                        .tracking(1.2)
-                        .foregroundStyle(labelColor)
-                        .padding(.leading, 6)
-                        .lineLimit(1)
-                }
-            }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .clipped()
-        }
-    }
-}
-
-fileprivate struct NewBlockDeloadStripes: View {
-    var body: some View {
-        Canvas { ctx, size in
-            ctx.fill(Path(CGRect(origin: .zero, size: size)), with: .color(NewBlockScreenTokens.paper))
-            var x = -size.height
-            while x < size.width + size.height {
-                var path = Path()
-                path.move(to: CGPoint(x: x, y: 0))
-                path.addLine(to: CGPoint(x: x + 6, y: 0))
-                path.addLine(to: CGPoint(x: x + 6 + size.height, y: size.height))
-                path.addLine(to: CGPoint(x: x + size.height, y: size.height))
-                path.closeSubpath()
-                ctx.fill(path, with: .color(NewBlockScreenTokens.ink.opacity(0.15)))
-                x += 12
-            }
         }
     }
 }
