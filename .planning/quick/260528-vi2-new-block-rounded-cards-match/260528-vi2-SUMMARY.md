@@ -13,6 +13,7 @@ commits:
   - 90a1e09  # T2 top bar + name band + font bump
   - 5129fd7  # executor cleanup: remove calendar icon (unreported in its return)
   - e3699e1  # retire BlockBuilderView from Phase 04.1 BRU suites
+  - 6d96305  # r2: phase-row polish (left rail, left-aligned stats, pill, spacing)
 ---
 
 # Quick Task 260528-vi2: New Block screen → rounded-card layout — SUMMARY
@@ -110,6 +111,26 @@ baseline. Zero new test regressions were introduced by the restyle.
 **Final verification — BUILD SUCCEEDED + ALL 5 suites GREEN** on iPhone 17 Pro Max:
 - `NewBlockBuilderFidelityTests` 5/5 · `BlockBuilderViewCopyTests` 1/1 · `BlockBuilderViewActivationTests` 3/3
 - `BRUPeriodizationAuditTests` 6/6 · `BRUPeriodizationRegressionTests` 13/13
+
+## Round 2 — phase-row polish (user feedback on the on-device capture) — commit 6d96305
+
+After diffing the first on-device capture against `final-design.png`, the user flagged 5 phase-row
+deltas the first pass missed. All fixed in `NewBlockPhaseEditorRow` / `NewBlockReadOnlyStatColumn` /
+`NewBlockPhasesHeader` / the body grouping:
+
+1. **Color on the left of each row card** — added a 5pt phase-colored left rail (clipped to the card
+   corner by `.bruCard`), anchoring the phase color to the card's left edge (was an inset badge only).
+2. **Stat cells left-aligned** — `NewBlockReadOnlyStatColumn` flipped from `.trailing` to `.leading`
+   with a fixed 40pt width, so WEEKS/VOL/INT line up as a left-aligned grid (was right-aligned, cramped
+   against the chevron).
+3. **Column spacing** — the WEEKS/VOL/INT block uses even 12pt columns, `.top`-aligned.
+4. **Vertical/horizontal rhythm** — header + phase cards grouped in one `VStack(spacing: 10)` (header
+   sits close above the first card; cards 10pt apart vs the 14pt gap between the big top cards); phase
+   card vertical padding 14→12.
+5. **ADD PHASE pill** — `+ ADD PHASE` is now an outlined coral `Capsule` (was plain coral text).
+
+Re-verified: build green + the 3 New-Block guardrail suites green; on-device re-capture
+(`bru-screens/New-block/_rendered-vi2-r2.png`) confirmed against the mockup.
 
 ## Open flags for the user
 
