@@ -640,15 +640,9 @@ fileprivate struct NewBlockMetricsBand: View {
                         .tracking(NewBlockScreenTokens.labelTracking)
                         .foregroundStyle(NewBlockScreenTokens.muted)
 
-                    HStack(spacing: 6) {
-                        Image(systemName: "calendar")
-                            .font(.system(size: 15))
-                            .foregroundStyle(NewBlockScreenTokens.muted)
-
-                        Text("\(draft.totalWeeks)")
-                            .font(NewBlockType.display)
-                            .foregroundStyle(NewBlockScreenTokens.ink)
-                    }
+                    Text("\(draft.totalWeeks)")
+                        .font(NewBlockType.display)
+                        .foregroundStyle(NewBlockScreenTokens.ink)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
                 .padding(.horizontal, NewBlockScreenTokens.cardPadding)
