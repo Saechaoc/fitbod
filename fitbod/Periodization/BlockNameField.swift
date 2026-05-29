@@ -25,7 +25,8 @@ fileprivate enum BlockNameFieldTokens {
 fileprivate enum BlockNameFieldType {
     static let label        = Font.custom("SpaceGrotesk-Bold", size: 10)
     static let display      = Font.custom("BebasNeue-Regular", size: 39)
-    static let displayLarge = Font.custom("BebasNeue-Regular", size: 44)
+    // 260528-vi2: bumped 44 → 46 for more display presence
+    static let displayLarge = Font.custom("BebasNeue-Regular", size: 46)
 }
 
 // MARK: - BlockNameField
