@@ -75,14 +75,18 @@ public struct BlockBuilderView: View {
                                     onAddPhase: { presentingAddPhaseTypePicker = true }
                                 )
 
-                                ForEach(Array(draft.phases.enumerated()), id: \.element.draftID) { index, phase in
-                                    NewBlockPhaseEditorRow(
-                                        draft: phase,
-                                        displayIndex: index + 1,
-                                        onDelete: { beginPendingDelete(phase) },
-                                        onMoveUp: { movePhase(phase, by: -1) },
-                                        onMoveDown: { movePhase(phase, by: 1) }
-                                    )
+                                // 260528-vi2 r3: tighter card→card gap (6pt) than the
+                                // header→cards gap (10pt), matching the mockup's dense row list.
+                                VStack(alignment: .leading, spacing: 6) {
+                                    ForEach(Array(draft.phases.enumerated()), id: \.element.draftID) { index, phase in
+                                        NewBlockPhaseEditorRow(
+                                            draft: phase,
+                                            displayIndex: index + 1,
+                                            onDelete: { beginPendingDelete(phase) },
+                                            onMoveUp: { movePhase(phase, by: -1) },
+                                            onMoveDown: { movePhase(phase, by: 1) }
+                                        )
+                                    }
                                 }
                             }
 
