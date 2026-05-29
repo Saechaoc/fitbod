@@ -2,7 +2,7 @@
 //  BlockBuilderView.swift
 //  fitbod
 //
-//  Full-screen New Block editor matching bru-screens/New-block/new-block.png.
+//  Full-screen New Block editor matching bru-screens/New-block/final-design.png.
 //
 
 import Charts
@@ -28,7 +28,6 @@ public struct BlockBuilderView: View {
     @State private var pendingPresetToApply: NewBlockPreset? = nil
     @State private var presentingApplyPresetConfirm = false
     @State private var presentingAddPhaseTypePicker = false
-    @State private var editMode: EditMode = .inactive
     @State private var pendingDelete: (phase: BlockPhaseDraft, index: Int)? = nil
     @State private var undoTask: Task<Void, Never>? = nil
 
@@ -48,111 +47,64 @@ public struct BlockBuilderView: View {
                         onSave: saveIfValid
                     )
 
-                    // D7a/D7b: SwiftUI List — plain style with full-bleed rows preserving
-                    // the brutalist look. PHASES header is a Section header so it pins
-                    // while scrolling. NewBlockBottomActionBar stays outside as a ZStack
-                    // overlay; bottom clearance is a trailing spacer row.
-                    // D7b: edit mode is bound via .environment(\.editMode, $editMode) so
-                    // the native List move handles appear when editMode == .active.
-                    List {
-                        // ── Upper bands ─────────────────────────────────────────────
-                        // Block Name
-                        NewBlockNameBand(draft: draft)
-                            .listRowInsets(EdgeInsets())
-                            .listRowSeparator(.hidden)
-                            .listRowBackground(Color.clear)
+                    // 260528-vi2: ScrollView/LazyVStack card layout replaces the old
+                    // List(.plain) table. The LazyVStack owns the screenMargin horizontal
+                    // padding — child bands must NOT re-apply their own horizontal padding
+                    // to avoid the double-margin (~36pt) trap.
+                    ScrollView {
+                        LazyVStack(alignment: .leading, spacing: NewBlockScreenTokens.cardGap) {
+                            // Large name header (not a card — floats on paper)
+                            NewBlockNameBand(draft: draft)
 
-                        // Block Settings
-                        NewBlockMetricsBand(
-                            draft: draft,
-                            onEditWeeks: { presentingDurationSheet = true }
-                        )
-                        .listRowInsets(EdgeInsets())
-                        .listRowSeparator(.hidden)
-                        .listRowBackground(Color.clear)
+                            // Stats card
+                            NewBlockMetricsBand(
+                                draft: draft,
+                                onEditWeeks: { presentingDurationSheet = true }
+                            )
 
-                        // Progression chart (replaces timeline preview)
-                        NewBlockProgressionChart(phases: draft.phases)
-                            .listRowInsets(EdgeInsets())
-                            .listRowSeparator(.hidden)
-                            .listRowBackground(Color.clear)
+                            // Progression chart card
+                            NewBlockProgressionChart(phases: draft.phases)
 
-                        // ── Phases Section ──────────────────────────────────────────
-                        // The Section header pins automatically in a plain List.
-                        Section {
-                            ForEach(Array(draft.phases.enumerated()), id: \.element.draftID) { index, phase in
-                                NewBlockPhaseEditorRow(draft: phase, displayIndex: index + 1)
-                                    .listRowInsets(EdgeInsets())
-                                    .listRowSeparator(.hidden)
-                                    .listRowBackground(Color.clear)
-                                    // D7b: swipe-delete (NOT .onDelete — need index for undo)
-                                    .swipeActions(edge: .trailing, allowsFullSwipe: true) {
-                                        Button(role: .destructive) {
-                                            beginPendingDelete(phase)
-                                        } label: {
-                                            Label("Delete", systemImage: "trash")
-                                        }
-                                    }
-                            }
-                            // D7b: .onMove gated by editMode (toggle in pinned header)
-                            .onMove { from, to in
-                                draft.phases.move(fromOffsets: from, toOffset: to)
-                            }
-                        } header: {
+                            // Phases header row (plain, on paper — no card)
                             NewBlockPhasesHeader(
                                 phaseCount: draft.phases.count,
-                                selectedPreset: selectedPreset,
-                                isReordering: editMode == .active,
-                                onToggleReorder: {
-                                    editMode = editMode == .active ? .inactive : .active
-                                },
-                                onSelectPreset: { preset in
-                                    if presetWouldReplacePhases(preset) {
-                                        pendingPresetToApply = preset
-                                        presentingApplyPresetConfirm = true
-                                    } else {
-                                        applyPreset(preset)
-                                    }
-                                },
                                 onAddPhase: { presentingAddPhaseTypePicker = true }
                             )
-                            .listRowInsets(EdgeInsets())
+
+                            // Phase cards
+                            ForEach(Array(draft.phases.enumerated()), id: \.element.draftID) { index, phase in
+                                NewBlockPhaseEditorRow(
+                                    draft: phase,
+                                    displayIndex: index + 1,
+                                    onDelete: { beginPendingDelete(phase) },
+                                    onMoveUp: { movePhase(phase, by: -1) },
+                                    onMoveDown: { movePhase(phase, by: 1) }
+                                )
+                            }
+
+                            // Conditional linked-routines band
+                            if draft.isValid {
+                                NewBlockLinkedRoutinesBand(count: editing?.routines?.count ?? 0)
+                            }
+
+                            // Error band
+                            if let saveError {
+                                errorBand(saveError)
+                            }
+
+                            // Bottom clearance: keeps last card visible above the action bar
+                            Color.clear
+                                .frame(height: NewBlockScreenTokens.bottomActionHeight
+                                    + NewBlockScreenTokens.scrollBottomClearance)
                         }
-
-                        // ── Bottom rows ─────────────────────────────────────────────
-
-                        if draft.isValid {
-                            NewBlockLinkedRoutinesBand(count: editing?.routines?.count ?? 0)
-                                .listRowInsets(EdgeInsets())
-                                .listRowSeparator(.hidden)
-                                .listRowBackground(Color.clear)
-                        }
-
-                        if let saveError {
-                            errorBand(saveError)
-                                .listRowInsets(EdgeInsets())
-                                .listRowSeparator(.hidden)
-                                .listRowBackground(Color.clear)
-                        }
-
-                        // Bottom clearance spacer: keeps the last row visible above the
-                        // action bar. Uses safeAreaInset equivalent via a clear spacer row.
-                        Color.clear
-                            .frame(height: NewBlockScreenTokens.bottomActionHeight
-                                + NewBlockScreenTokens.scrollBottomClearance)
-                            .listRowInsets(EdgeInsets())
-                            .listRowSeparator(.hidden)
-                            .listRowBackground(Color.clear)
+                        .padding(.horizontal, NewBlockScreenTokens.screenMargin)
+                        .padding(.top, NewBlockScreenTokens.cardGap)
                     }
-                    .listStyle(.plain)
-                    .scrollContentBackground(.hidden)
-                    .background(NewBlockScreenTokens.paper)
                     .scrollIndicators(.hidden)
-                    // D7b: bind edit mode so native move handles appear in active mode
-                    .environment(\.editMode, $editMode)
+                    .background(NewBlockScreenTokens.paper)
                 }
 
-                // D7b: transient undo toast — visible above the action bar while
+                // Transient undo toast — visible above the action bar while
                 // pendingDelete is non-nil; auto-dismisses when the 4s Task clears it.
                 if pendingDelete != nil {
                     NewBlockUndoToast(onUndo: undoDelete)
@@ -303,11 +255,18 @@ public struct BlockBuilderView: View {
         addPhase(of: .accumulation)
     }
 
-    // D7b: swipe-delete undo affordance.
+    // 260528-vi2: reorder helper — replaces the removed .onMove List affordance.
+    // Context menu "Move Up" / "Move Down" buttons call this.
+    private func movePhase(_ phase: BlockPhaseDraft, by offset: Int) {
+        guard let i = draft.phases.firstIndex(where: { $0.draftID == phase.draftID }) else { return }
+        let j = i + offset
+        guard draft.phases.indices.contains(j) else { return }
+        draft.phases.swapAt(i, j)
+    }
+
+    // Swipe-delete undo affordance.
     // beginPendingDelete captures {phase, index}, removes from draft.phases, cancels any
     // prior undoTask, and starts a 4s @MainActor Task that clears pendingDelete on timeout.
-    // The whole view is @MainActor so the Task body touches view state directly.
-    // Swift 6: state is built inside the Task and Task.isCancelled is checked after sleep.
     private func beginPendingDelete(_ phase: BlockPhaseDraft) {
         guard let index = draft.phases.firstIndex(where: { $0.draftID == phase.draftID }) else { return }
         pendingDelete = (phase: phase, index: index)
@@ -342,71 +301,100 @@ public struct BlockBuilderView: View {
         return "\(draft.name)|\(draft.startDate.timeIntervalSince1970)|\(draft.isActive)|\(draft.daysPerWeek)|\(phaseHash)"
     }
 
+    // 260528-vi2: error band — rendered as a subtle rounded note (no hard ink rules).
     private func errorBand(_ message: String) -> some View {
         Text(message)
             .font(NewBlockType.label)
             .tracking(NewBlockScreenTokens.labelTracking)
             .foregroundStyle(NewBlockScreenTokens.signal)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.horizontal, NewBlockScreenTokens.sidePadding)
-            .padding(.vertical, 8)
-            .background(NewBlockScreenTokens.faint)
+            .padding(NewBlockScreenTokens.cardPadding)
+            .background(
+                RoundedRectangle(cornerRadius: NewBlockScreenTokens.phaseCardRadius, style: .continuous)
+                    .fill(NewBlockScreenTokens.faint)
+            )
     }
 }
 
 // MARK: - Tokens
 
 fileprivate enum NewBlockScreenTokens {
-    static let paper = Color(red: 240 / 255, green: 237 / 255, blue: 229 / 255)
-    static let ink = Color(red: 10 / 255, green: 10 / 255, blue: 10 / 255)
-    static let muted = Color(red: 126 / 255, green: 123 / 255, blue: 114 / 255)
-    static let hair = Color(red: 212 / 255, green: 209 / 255, blue: 202 / 255)
-    static let faint = Color(red: 232 / 255, green: 229 / 255, blue: 221 / 255)
-    static let signal = Color(red: 255 / 255, green: 77 / 255, blue: 46 / 255)
+    static let paper  = Color(red: 240 / 255, green: 237 / 255, blue: 229 / 255)
+    static let ink    = Color(red: 10 / 255,  green: 10 / 255,  blue: 10 / 255)
+    static let muted  = Color(red: 126 / 255, green: 123 / 255, blue: 114 / 255)
+    static let hair   = Color(red: 212 / 255, green: 209 / 255, blue: 202 / 255)
+    static let faint  = Color(red: 232 / 255, green: 229 / 255, blue: 221 / 255)
+    static let signal = Color(red: 255 / 255, green: 77 / 255,  blue: 46 / 255)
 
-    static let sidePadding: CGFloat = 16
-    static let rule: CGFloat = 1
-    static let heavyRule: CGFloat = 3
+    // Card surface system (rounded-card restyle 260528-vi2)
+    static let card        = Color(red: 252 / 255, green: 251 / 255, blue: 248 / 255) // #FCFBF8 warm white
+    static let cardStroke  = Color(red: 225 / 255, green: 222 / 255, blue: 214 / 255) // #E1DED6 faint border
+    static let cardShadow  = Color.black.opacity(0.06)
+
+    static let screenMargin: CGFloat    = 20  // uniform L/R margin for ALL main-scroll content
+    static let cardGap: CGFloat         = 14  // vertical spacing between stacked cards
+    static let cardPadding: CGFloat     = 16  // internal card padding
+    static let cardRadius: CGFloat      = 18  // stats + chart big cards
+    static let phaseCardRadius: CGFloat = 14  // phase cards
+    static let cardStrokeWidth: CGFloat = 0.75
+
+    // Legacy spacing tokens (kept for sheet internals and other reuse)
+    static let sidePadding: CGFloat  = 16
+    static let rule: CGFloat         = 1
+    static let heavyRule: CGFloat    = 3
     static let labelTracking: CGFloat = 2.2
-    static let chipTracking: CGFloat = 2.1
+    static let chipTracking: CGFloat  = 2.1
 
-    // Named vertical-rhythm scale (260528-cby). Use these in every band's
-    // .padding(.top/.bottom/.vertical) and VStack/HStack spacing to tune the
-    // whole screen from one place. Bare CGFloat literals in band internals
-    // are an anti-pattern.
     static let microGap:   CGFloat = 4
     static let tightGap:   CGFloat = 6
     static let rowGap:     CGFloat = 8
     static let sectionGap: CGFloat = 10
 
-    // CTA button tracking (bottom bar CANCEL + primary labels).
     static let ctaTracking: CGFloat = 2.8
 
-    static let topBarRowHeight: CGFloat = 50
-    static let nameBandHeight: CGFloat = 80
-    static let metricsHeight: CGFloat = 92
+    static let topBarRowHeight: CGFloat   = 50
+    static let nameBandHeight: CGFloat    = 80
+    static let metricsHeight: CGFloat     = 92
     static let phasesHeaderHeight: CGFloat = 36
-    static let previewHeight: CGFloat = 120
-    static let timelineBarHeight: CGFloat = 30  // D4: lighter than 44pt
-    static let phaseRowHeight: CGFloat = 100  // read-only stat columns; no steppers needed
+    static let previewHeight: CGFloat     = 120
+    static let timelineBarHeight: CGFloat = 30
+    static let phaseRowHeight: CGFloat    = 100
 
-    static let metricCellHeight: CGFloat = 36
+    static let metricCellHeight: CGFloat   = 36
     static let addPhaseSlotHeight: CGFloat = 70
-    static let bottomActionHeight: CGFloat = 60
-    static let bottomButtonHeight: CGFloat = 54
+    // 260528-vi2: bumped 60 → 72 to clear the new taller bottom bar (52pt button + ~20pt padding)
+    static let bottomActionHeight: CGFloat  = 72
+    static let bottomButtonHeight: CGFloat  = 54
     static let scrollBottomClearance: CGFloat = 44
 }
 
 fileprivate enum NewBlockType {
     static let chrome = Font.custom("SpaceGrotesk-Bold", size: 11)
-    static let chip = Font.custom("SpaceGrotesk-Bold", size: 9)
-    static let label = Font.custom("SpaceGrotesk-Bold", size: 10)
-    static let micro = Font.custom("SpaceGrotesk-Bold", size: 8)
-    static let display = Font.custom("BebasNeue-Regular", size: 39)
+    static let chip   = Font.custom("SpaceGrotesk-Bold", size: 9)
+    static let label  = Font.custom("SpaceGrotesk-Bold", size: 10)
+    static let micro  = Font.custom("SpaceGrotesk-Bold", size: 8)
+    static let display      = Font.custom("BebasNeue-Regular", size: 39)
     static let displayLarge = Font.custom("BebasNeue-Regular", size: 44)
-    static let number = Font.custom("BebasNeue-Regular", size: 29)
-    static let phaseIndex = Font.custom("BebasNeue-Regular", size: 28)
-    static let phaseTitle = Font.custom("Geist-Regular", size: 18)
+    static let number       = Font.custom("BebasNeue-Regular", size: 29)
+    static let phaseIndex   = Font.custom("BebasNeue-Regular", size: 28)
+    static let phaseTitle   = Font.custom("Geist-Regular", size: 18)
+}
+
+// MARK: - bruCard modifier
+
+// 260528-vi2: shared card surface modifier — warm white fill, faint border, soft drop shadow.
+private extension View {
+    func bruCard(radius: CGFloat = NewBlockScreenTokens.cardRadius) -> some View {
+        self
+            .background(NewBlockScreenTokens.card)
+            .clipShape(RoundedRectangle(cornerRadius: radius, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: radius, style: .continuous)
+                    .stroke(NewBlockScreenTokens.cardStroke,
+                            lineWidth: NewBlockScreenTokens.cardStrokeWidth)
+            )
+            .shadow(color: NewBlockScreenTokens.cardShadow, radius: 10, x: 0, y: 3)
+    }
 }
 
 // MARK: - Preset model
@@ -446,9 +434,6 @@ internal enum NewBlockPreset: Hashable, CaseIterable {
 
     /// Case-insensitive match of an existing draft name against the preset
     /// list. Falls back to `.blank` when the name is empty or doesn't match.
-    /// Used by `BlockBuilderView.onAppear` to seed initial chip selection
-    /// for both the new-block path (empty name → `.blank`) and the edit
-    /// path (existing block name matched against the preset display names).
     static func matching(name: String) -> NewBlockPreset {
         let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return .blank }
@@ -467,75 +452,79 @@ internal enum NewBlockPreset: Hashable, CaseIterable {
     ]
 }
 
+// MARK: - Top Bar
+
+// 260528-vi2: no ink rules; sits on paper, borderless.
 fileprivate struct NewBlockTopBar: View {
     let title: String
     let onBack: () -> Void
     let onSave: () -> Void
 
     var body: some View {
-        VStack(spacing: 0) {
-            NewBlockInkRule()
-
-            HStack(alignment: .center) {
-                Button(action: onBack) {
-                    Text("< PROGRAM")
-                        .font(NewBlockType.chrome)
-                        .tracking(NewBlockScreenTokens.chipTracking)
-                        .foregroundStyle(NewBlockScreenTokens.ink)
-                        .frame(maxHeight: .infinity)
-                }
-                .buttonStyle(.plain)
-
-                Spacer()
-
-                Text(title)
+        HStack(alignment: .center) {
+            Button(action: onBack) {
+                Text("< PROGRAM")
                     .font(NewBlockType.chrome)
                     .tracking(NewBlockScreenTokens.chipTracking)
                     .foregroundStyle(NewBlockScreenTokens.ink)
                     .frame(maxHeight: .infinity)
-
-                Spacer()
-
-                Button(action: onSave) {
-                    Text("SAVE")
-                        .font(NewBlockType.chrome)
-                        .tracking(NewBlockScreenTokens.chipTracking)
-                        .foregroundStyle(NewBlockScreenTokens.signal)
-                        .frame(maxHeight: .infinity)
-                }
-                .buttonStyle(.plain)
             }
-            .padding(.horizontal, NewBlockScreenTokens.sidePadding)
-            .frame(height: NewBlockScreenTokens.topBarRowHeight)
+            .buttonStyle(.plain)
 
-            NewBlockInkRule()
+            Spacer()
+
+            Text(title)
+                .font(NewBlockType.chrome)
+                .tracking(NewBlockScreenTokens.chipTracking)
+                .foregroundStyle(NewBlockScreenTokens.ink)
+                .frame(maxHeight: .infinity)
+
+            Spacer()
+
+            Button(action: onSave) {
+                Text("SAVE")
+                    .font(NewBlockType.chrome)
+                    .tracking(NewBlockScreenTokens.chipTracking)
+                    .foregroundStyle(NewBlockScreenTokens.signal)
+                    .frame(maxHeight: .infinity)
+            }
+            .buttonStyle(.plain)
         }
+        .padding(.horizontal, NewBlockScreenTokens.sidePadding)
+        .frame(height: NewBlockScreenTokens.topBarRowHeight)
         .background(NewBlockScreenTokens.paper)
     }
 }
 
 // MARK: - Name Band
 
+// 260528-vi2: large display name with trailing pencil icon; no ink rules; no height clamp.
+// The LazyVStack owns screenMargin — this band does NOT add its own horizontal padding.
 fileprivate struct NewBlockNameBand: View {
     @Bindable var draft: BlockDraft
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
+        HStack(alignment: .top, spacing: 8) {
             BlockNameField(
                 title: "BLOCK NAME",
                 placeholder: "NAME YOUR BLOCK",
                 text: $draft.name
             )
+
+            // Trailing pencil affordance (visual; field is tappable via BlockNameField)
+            Image(systemName: "square.and.pencil")
+                .font(.system(size: 18))
+                .foregroundStyle(NewBlockScreenTokens.muted)
+                .padding(.top, 28)
         }
-        .padding(.horizontal, NewBlockScreenTokens.sidePadding)
+        .padding(.top, 8)
+        .padding(.bottom, 4)
         .frame(maxWidth: .infinity, alignment: .topLeading)
-        .frame(height: NewBlockScreenTokens.nameBandHeight, alignment: .topLeading)
         .background(NewBlockScreenTokens.paper)
-        .overlay(alignment: .bottom) {
-            NewBlockInkRule()
-        }
     }
 }
+
+// MARK: - Preset Chip (kept for fidelity test — may be visually unused)
 
 fileprivate struct NewBlockPresetChip: View {
     let title: String
@@ -565,7 +554,7 @@ fileprivate struct NewBlockPresetChip: View {
     }
 }
 
-// MARK: - Template Sheet
+// MARK: - Template Sheet (kept for fidelity test — wired to presentingTemplateSheet)
 
 fileprivate struct NewBlockTemplateSheet: View {
     let selected: NewBlockPreset
@@ -633,13 +622,10 @@ fileprivate struct NewBlockTemplateSheet: View {
     }
 }
 
-// MARK: - Metrics
+// MARK: - Metrics Band
 
-// Two-cell metrics card matching bru-screens/New-block/final-design-2.png:
-// a single rounded card split by a hairline divider. TOTAL WEEKS is read-only
-// (it is the sum of phase durations) and taps through to the duration editor;
-// DAYS PER WEEK is edited inline with − / + steppers (the design shows the
-// steppers here — it is a free value, not derived).
+// 260528-vi2: two-cell metrics rendered as a floating white bruCard.
+// The LazyVStack owns screenMargin — no horizontal padding here.
 fileprivate struct NewBlockMetricsBand: View {
     @Bindable var draft: BlockDraft
     let onEditWeeks: () -> Void
@@ -654,25 +640,32 @@ fileprivate struct NewBlockMetricsBand: View {
                         .tracking(NewBlockScreenTokens.labelTracking)
                         .foregroundStyle(NewBlockScreenTokens.muted)
 
-                    Text("\(draft.totalWeeks)")
-                        .font(NewBlockType.display)
-                        .foregroundStyle(NewBlockScreenTokens.ink)
+                    HStack(spacing: 6) {
+                        Image(systemName: "calendar")
+                            .font(.system(size: 15))
+                            .foregroundStyle(NewBlockScreenTokens.muted)
+
+                        Text("\(draft.totalWeeks)")
+                            .font(NewBlockType.display)
+                            .foregroundStyle(NewBlockScreenTokens.ink)
+                    }
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
-                .padding(.horizontal, NewBlockScreenTokens.sectionGap)
-                .padding(.vertical, NewBlockScreenTokens.rowGap)
+                .padding(.horizontal, NewBlockScreenTokens.cardPadding)
+                .padding(.vertical, NewBlockScreenTokens.cardPadding)
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
             .accessibilityAddTraits(.isButton)
             .accessibilityLabel("Total weeks, \(draft.totalWeeks), edit phase durations")
 
-            // Hairline divider between the two cells.
+            // Inset hairline divider between the two cells
             Rectangle()
                 .fill(NewBlockScreenTokens.hair)
                 .frame(width: NewBlockScreenTokens.rule)
+                .padding(.vertical, 10)
 
-            // DAYS PER WEEK — inline − / + steppers (clamp 1...7, mirrors the days sheet's range).
+            // DAYS PER WEEK — inline − / + steppers (clamp 1...7)
             VStack(alignment: .leading, spacing: NewBlockScreenTokens.tightGap) {
                 Text("DAYS PER WEEK")
                     .font(NewBlockType.label)
@@ -702,25 +695,13 @@ fileprivate struct NewBlockMetricsBand: View {
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
-            .padding(.horizontal, NewBlockScreenTokens.sectionGap)
-            .padding(.vertical, NewBlockScreenTokens.rowGap)
+            .padding(.horizontal, NewBlockScreenTokens.cardPadding)
+            .padding(.vertical, NewBlockScreenTokens.cardPadding)
             .accessibilityElement(children: .contain)
             .accessibilityValue("\(draft.daysPerWeek) days per week")
         }
         .frame(minHeight: NewBlockScreenTokens.metricsHeight)
-        .background(NewBlockScreenTokens.paper)
-        .clipShape(RoundedRectangle(cornerRadius: 12))
-        .overlay(
-            RoundedRectangle(cornerRadius: 12)
-                .stroke(NewBlockScreenTokens.hair, lineWidth: NewBlockScreenTokens.rule)
-        )
-        .padding(.horizontal, NewBlockScreenTokens.sidePadding)
-        .padding(.vertical, NewBlockScreenTokens.rowGap)
-        .frame(maxWidth: .infinity)
-        .background(NewBlockScreenTokens.paper)
-        .overlay(alignment: .bottom) {
-            NewBlockInkRule()
-        }
+        .bruCard()
     }
 }
 
@@ -741,23 +722,13 @@ fileprivate struct NewBlockStepperButton: View {
     }
 }
 
-// MARK: - Phase Header and Timeline
+// MARK: - Phases Header
 
-// Header: PHASES · N title, REORDER toggle, Preset menu, and coral "+ ADD PHASE" accent action.
-// D7b: REORDER/DONE toggle gates .onMove. Preset menu routes through the destructive confirm.
-// "+ ADD PHASE" is the rightmost accent action wired to the add-phase type picker sheet.
+// 260528-vi2: simplified to PHASES · N (left) + + ADD PHASE (right, coral).
+// REORDER/DONE toggle and Preset menu removed — reorder is in per-card context menu.
 fileprivate struct NewBlockPhasesHeader: View {
     let phaseCount: Int
-    let selectedPreset: NewBlockPreset
-    let isReordering: Bool
-    let onToggleReorder: () -> Void
-    let onSelectPreset: (NewBlockPreset) -> Void
     let onAddPhase: () -> Void
-
-    /// Display name for the current preset state.
-    private var presetStateName: String {
-        selectedPreset == .blank ? "Custom" : selectedPreset.displayName
-    }
 
     var body: some View {
         HStack(spacing: NewBlockScreenTokens.rowGap) {
@@ -768,43 +739,7 @@ fileprivate struct NewBlockPhasesHeader: View {
 
             Spacer()
 
-            // D7b: REORDER / DONE toggle — 44pt tap target, BRU-styled
-            Button(action: onToggleReorder) {
-                Text(isReordering ? "DONE" : "REORDER")
-                    .font(NewBlockType.chrome)
-                    .tracking(NewBlockScreenTokens.chipTracking)
-                    .foregroundStyle(isReordering ? NewBlockScreenTokens.signal : NewBlockScreenTokens.muted)
-                    .frame(minWidth: 44, minHeight: 44)
-            }
-            .buttonStyle(.plain)
-
-            // Stateful preset selector — label reads "Preset: {Custom|name} ▾"
-            Menu {
-                ForEach(NewBlockPreset.all, id: \.self) { preset in
-                    let label = preset == .blank ? "Custom" : preset.displayName
-                    Button(label) {
-                        onSelectPreset(preset)
-                    }
-                }
-            } label: {
-                HStack(spacing: 4) {
-                    Text("Preset:")
-                        .font(NewBlockType.chrome)
-                        .tracking(NewBlockScreenTokens.chipTracking)
-                        .foregroundStyle(NewBlockScreenTokens.muted)
-                    Text(presetStateName)
-                        .font(NewBlockType.chrome)
-                        .tracking(NewBlockScreenTokens.chipTracking)
-                        .fontWeight(.bold)
-                        .foregroundStyle(NewBlockScreenTokens.ink)
-                    Image(systemName: "chevron.down")
-                        .font(.system(size: 9, weight: .bold))
-                        .foregroundStyle(NewBlockScreenTokens.ink)
-                }
-                .frame(minHeight: 44)  // 44pt touch target
-            }
-
-            // Coral "+ ADD PHASE" — rightmost accent, ≥44pt target, wired to type picker
+            // Coral "+ ADD PHASE" — rightmost accent, ≥44pt target
             Button(action: onAddPhase) {
                 Text("+ ADD PHASE")
                     .font(NewBlockType.chrome)
@@ -814,12 +749,8 @@ fileprivate struct NewBlockPhasesHeader: View {
             }
             .buttonStyle(.plain)
         }
-        .padding(.horizontal, NewBlockScreenTokens.sidePadding)
         .frame(minHeight: NewBlockScreenTokens.phasesHeaderHeight)
         .background(NewBlockScreenTokens.paper)
-        .overlay(alignment: .bottom) {
-            NewBlockInkRule()
-        }
     }
 }
 
@@ -834,9 +765,16 @@ private struct NewBlockProgressionPoint: Identifiable {
     let kind: BlockPhaseKind
 }
 
-/// Swift Charts progression card — replaces the old timeline preview.
-/// Shows Volume (solid line + points) and Intensity (dashed line) across
-/// all phases with proportional top-phase labels and W1..Wn x-axis ticks.
+/// Phase band data for colored background regions.
+private struct NewBlockPhaseBand: Identifiable {
+    let id = UUID()
+    let start: Int
+    let end: Int
+    let kind: BlockPhaseKind
+}
+
+/// Swift Charts progression card — shows Volume (solid) and Intensity (dashed) lines
+/// with faint colored phase-band regions behind them. Wrapped in a bruCard.
 fileprivate struct NewBlockProgressionChart: View {
     let phases: [BlockPhaseDraft]
 
@@ -872,49 +810,67 @@ fileprivate struct NewBlockProgressionChart: View {
         }
     }
 
+    /// Phase bands for colored background regions (start..end in cumulative weeks).
+    private var phaseBands: [NewBlockPhaseBand] {
+        var bands: [NewBlockPhaseBand] = []
+        var offset = 0
+        for phase in phases {
+            let start = offset
+            let end = offset + phase.weeks
+            bands.append(NewBlockPhaseBand(start: start, end: end, kind: phase.kind))
+            offset = end
+        }
+        return bands
+    }
+
     private var totalWeeks: Int {
         phases.reduce(0) { $0 + $1.weeks }
     }
 
+    /// Y range spanning data values for the band height.
+    private var yLow: Double { 30 }
+    private var yHigh: Double { 130 }
+
     var body: some View {
         VStack(alignment: .leading, spacing: NewBlockScreenTokens.sectionGap) {
-            // Section label
-            Text("PROGRESSION OVERVIEW")
-                .font(NewBlockType.label)
-                .tracking(NewBlockScreenTokens.labelTracking)
-                .foregroundStyle(NewBlockScreenTokens.muted)
+            // Section label + legend on the same row
+            HStack {
+                Text("PROGRESSION OVERVIEW")
+                    .font(NewBlockType.label)
+                    .tracking(NewBlockScreenTokens.labelTracking)
+                    .foregroundStyle(NewBlockScreenTokens.muted)
 
-            // Hand-rolled legend (avoids fighting chartForegroundStyleScale)
-            HStack(spacing: NewBlockScreenTokens.sectionGap) {
-                HStack(spacing: 4) {
-                    // Solid volume line indicator
-                    Rectangle()
-                        .fill(NewBlockScreenTokens.ink)
-                        .frame(width: 16, height: 2)
-                    Circle()
-                        .fill(NewBlockScreenTokens.ink)
-                        .frame(width: 5, height: 5)
-                    Text("Volume")
-                        .font(NewBlockType.micro)
-                        .foregroundStyle(NewBlockScreenTokens.ink)
-                }
-                HStack(spacing: 4) {
-                    // Dashed intensity line indicator
-                    HStack(spacing: 2) {
-                        ForEach(0..<3, id: \.self) { _ in
-                            Rectangle()
-                                .fill(NewBlockScreenTokens.muted)
-                                .frame(width: 4, height: 2)
-                        }
+                Spacer()
+
+                // Hand-rolled legend (top-right)
+                HStack(spacing: NewBlockScreenTokens.sectionGap) {
+                    HStack(spacing: 4) {
+                        Rectangle()
+                            .fill(NewBlockScreenTokens.ink)
+                            .frame(width: 16, height: 2)
+                        Circle()
+                            .fill(NewBlockScreenTokens.ink)
+                            .frame(width: 5, height: 5)
+                        Text("Volume")
+                            .font(NewBlockType.micro)
+                            .foregroundStyle(NewBlockScreenTokens.ink)
                     }
-                    Text("Intensity")
-                        .font(NewBlockType.micro)
-                        .foregroundStyle(NewBlockScreenTokens.muted)
+                    HStack(spacing: 4) {
+                        HStack(spacing: 2) {
+                            ForEach(0..<3, id: \.self) { _ in
+                                Rectangle()
+                                    .fill(NewBlockScreenTokens.muted)
+                                    .frame(width: 4, height: 2)
+                            }
+                        }
+                        Text("Intensity")
+                            .font(NewBlockType.micro)
+                            .foregroundStyle(NewBlockScreenTokens.muted)
+                    }
                 }
             }
 
             if phases.isEmpty {
-                // Empty state placeholder
                 Text("Add phases to preview progression")
                     .font(NewBlockType.label)
                     .tracking(0.6)
@@ -922,7 +878,7 @@ fileprivate struct NewBlockProgressionChart: View {
                     .frame(maxWidth: .infinity, alignment: .center)
                     .frame(height: NewBlockScreenTokens.previewHeight)
             } else {
-                // Top phase abbreviation labels (proportional width)
+                // Top phase abbreviation labels (proportional width) — required: ForEach(phases, id: \.draftID)
                 GeometryReader { geo in
                     HStack(spacing: 0) {
                         ForEach(phases, id: \.draftID) { phase in
@@ -943,8 +899,22 @@ fileprivate struct NewBlockProgressionChart: View {
                 }
                 .frame(height: 14)
 
-                // The chart
+                // The chart with colored phase-band regions behind the lines
                 Chart {
+                    // Faint colored background bands per phase
+                    ForEach(phaseBands) { band in
+                        RectangleMark(
+                            xStart: .value("s", band.start),
+                            xEnd: .value("e", band.end),
+                            yStart: .value("lo", yLow),
+                            yEnd: .value("hi", yHigh)
+                        )
+                        .foregroundStyle(
+                            BlockPhaseColors.badgeColor(for: band.kind).opacity(0.12)
+                        )
+                    }
+
+                    // Volume line (solid ink + points) ON TOP of bands
                     ForEach(points.filter { $0.series == "Volume" }) { pt in
                         LineMark(
                             x: .value("Week", pt.week),
@@ -960,6 +930,7 @@ fileprivate struct NewBlockProgressionChart: View {
                         .foregroundStyle(NewBlockScreenTokens.ink)
                         .symbolSize(24)
                     }
+                    // Intensity line (dashed muted) ON TOP of bands
                     ForEach(points.filter { $0.series == "Intensity" }) { pt in
                         LineMark(
                             x: .value("Week", pt.week),
@@ -992,65 +963,43 @@ fileprivate struct NewBlockProgressionChart: View {
                 .frame(height: NewBlockScreenTokens.previewHeight)
             }
         }
-        .padding(.horizontal, NewBlockScreenTokens.sidePadding)
-        .padding(.top, NewBlockScreenTokens.sectionGap)
-        .padding(.bottom, NewBlockScreenTokens.tightGap)
-        .background(NewBlockScreenTokens.paper)
-        .overlay(
-            Rectangle()
-                .stroke(NewBlockScreenTokens.ink, lineWidth: 1)
-                .padding(.horizontal, NewBlockScreenTokens.sidePadding)
-                .padding(.top, NewBlockScreenTokens.sectionGap)
-                .padding(.bottom, NewBlockScreenTokens.tightGap),
-            alignment: .center
-        )
-        .overlay(alignment: .bottom) {
-            Rectangle()
-                .fill(NewBlockScreenTokens.hair)
-                .frame(height: NewBlockScreenTokens.rule)
-        }
+        .padding(NewBlockScreenTokens.cardPadding)
+        .bruCard()
     }
 }
 
 // MARK: - Phase Rows
 
+// 260528-vi2: compact rounded phase card with context menu for reorder + delete.
+// Each phase is its own ~68pt bruCard. Context menu replaces swipe-delete + REORDER.
 fileprivate struct NewBlockPhaseEditorRow: View {
     @Bindable var draft: BlockPhaseDraft
     let displayIndex: Int
+    let onDelete: () -> Void
+    let onMoveUp: () -> Void
+    let onMoveDown: () -> Void
 
     @State private var presentingEditor = false
 
     var body: some View {
-        HStack(alignment: .center, spacing: NewBlockScreenTokens.sectionGap) {
-            // Semantic badge color keyed by phase kind.
-            // Color is ALWAYS paired with the phase name beside it (colorblind-safe).
-            let isDeload = draft.kind == .deload
-            let chipFill = BlockPhaseColors.badgeColor(for: draft.kind)
+        HStack(alignment: .center, spacing: 12) {
+            // Semantic badge (phase color + Bebas index)
+            let chipFill  = BlockPhaseColors.badgeColor(for: draft.kind)
             let chipLabel = BlockPhaseColors.badgeLabelColor(for: draft.kind)
             Text(String(format: "%02d", displayIndex))
                 .font(NewBlockType.phaseIndex)
                 .foregroundStyle(chipLabel)
                 .frame(width: 36, height: 36)
                 .background(chipFill)
-                .clipShape(RoundedRectangle(cornerRadius: 4))
+                .clipShape(RoundedRectangle(cornerRadius: 9, style: .continuous))
 
-            VStack(alignment: .leading, spacing: NewBlockScreenTokens.microGap) {
-                HStack(spacing: NewBlockScreenTokens.microGap) {
-                    Text(NewBlockPhaseText.title(for: draft.kind))
-                        .font(NewBlockType.phaseTitle)
-                        .fontWeight(.semibold)
-                        .foregroundStyle(NewBlockScreenTokens.ink)
-                    if isDeload {
-                        Text("DELOAD")
-                            .font(NewBlockType.chip)
-                            .tracking(1.4)
-                            .foregroundStyle(NewBlockScreenTokens.paper)
-                            .padding(.horizontal, 5)
-                            .padding(.vertical, 2)
-                            .background(NewBlockScreenTokens.muted)
-                            .clipShape(RoundedRectangle(cornerRadius: 3))
-                    }
-                }
+            // Phase title + subtitle
+            VStack(alignment: .leading, spacing: 3) {
+                Text(NewBlockPhaseText.title(for: draft.kind))
+                    .font(NewBlockType.phaseTitle)
+                    .fontWeight(.semibold)
+                    .foregroundStyle(NewBlockScreenTokens.ink)
+
                 Text(NewBlockPhaseText.subtitle(for: draft.kind))
                     .font(NewBlockType.label)
                     .tracking(1.2)
@@ -1059,37 +1008,37 @@ fileprivate struct NewBlockPhaseEditorRow: View {
 
             Spacer()
 
-            // Read-only stat columns: WEEKS / VOL / INT
-            HStack(spacing: NewBlockScreenTokens.rowGap) {
+            // Compact stat columns: WEEKS / VOL / INT (no vertical hairlines)
+            HStack(spacing: 10) {
                 NewBlockReadOnlyStatColumn(
                     label: "WEEKS",
                     value: "\(draft.weeks)"
                 )
-                Rectangle()
-                    .fill(NewBlockScreenTokens.hair)
-                    .frame(width: NewBlockScreenTokens.rule, height: 28)
                 NewBlockReadOnlyStatColumn(
                     label: "VOL",
                     value: NewBlockPhaseText.volumeValue(draft.volumeMultiplier)
                 )
-                Rectangle()
-                    .fill(NewBlockScreenTokens.hair)
-                    .frame(width: NewBlockScreenTokens.rule, height: 28)
                 NewBlockReadOnlyStatColumn(
                     label: "INT",
                     value: NewBlockPhaseText.intensityValue(draft.intensityMultiplier)
                 )
             }
+
+            // Chevron affordance
+            Image(systemName: "chevron.right")
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundStyle(NewBlockScreenTokens.muted)
         }
-        .padding(.horizontal, NewBlockScreenTokens.sidePadding)
-        .frame(height: NewBlockScreenTokens.phaseRowHeight)
-        .background(NewBlockScreenTokens.paper)
+        .padding(.horizontal, NewBlockScreenTokens.cardPadding)
+        .padding(.vertical, 14)
+        .bruCard(radius: NewBlockScreenTokens.phaseCardRadius)
         .contentShape(Rectangle())
         .onTapGesture { presentingEditor = true }
-        .overlay(alignment: .bottom) {
-            Rectangle()
-                .fill(NewBlockScreenTokens.hair)
-                .frame(height: NewBlockScreenTokens.rule)
+        .contextMenu {
+            Button("Move Up") { onMoveUp() }
+            Button("Move Down") { onMoveDown() }
+            Divider()
+            Button("Delete Phase", role: .destructive) { onDelete() }
         }
         .accessibilityLabel("Phase \(displayIndex): \(BlockPhaseColors.phaseLabel(draft.kind))")
         .sheet(isPresented: $presentingEditor) {
@@ -1110,7 +1059,7 @@ fileprivate struct NewBlockReadOnlyStatColumn: View {
                 .tracking(1.4)
                 .foregroundStyle(NewBlockScreenTokens.muted)
             Text(value)
-                .font(NewBlockType.number)
+                .font(Font.custom("BebasNeue-Regular", size: 22))
                 .foregroundStyle(NewBlockScreenTokens.ink)
                 .lineLimit(1)
                 .minimumScaleFactor(0.8)
@@ -1121,45 +1070,32 @@ fileprivate struct NewBlockReadOnlyStatColumn: View {
 fileprivate enum NewBlockPhaseText {
     static func title(for kind: BlockPhaseKind) -> String {
         switch kind {
-        case .accumulation:
-            return "Accumulation"
-        case .intensification:
-            return "Intensification"
-        case .realization:
-            return "Peak"
-        case .deload:
-            return "Deload"
+        case .accumulation:   return "Accumulation"
+        case .intensification: return "Intensification"
+        case .realization:    return "Peak"
+        case .deload:         return "Deload"
         }
     }
 
     static func subtitle(for kind: BlockPhaseKind) -> String {
         switch kind {
-        case .accumulation:
-            return "BUILD VOLUME"
-        case .intensification:
-            return "BUILD STRENGTH"
-        case .realization:
-            return "SHARPEN OUTPUT"
-        case .deload:
-            return "RECOVER"
+        case .accumulation:   return "BUILD VOLUME"
+        case .intensification: return "BUILD STRENGTH"
+        case .realization:    return "SHARPEN OUTPUT"
+        case .deload:         return "RECOVER"
         }
     }
 
     static func abbreviation(for kind: BlockPhaseKind) -> String {
         switch kind {
-        case .accumulation:
-            return "ACCUM"
-        case .intensification:
-            return "INTEN"
-        case .realization:
-            return "PEAK"
-        case .deload:
-            return "DELOAD"
+        case .accumulation:   return "ACCUM"
+        case .intensification: return "INTEN"
+        case .realization:    return "PEAK"
+        case .deload:         return "DELOAD"
         }
     }
 
     static func volumeValue(_ multiplier: Double) -> String {
-        // D2: signed % vs base; ==1.0 renders as "Hold" (0-delta).
         if abs(multiplier - 1.0) < 0.001 {
             return "Hold"
         }
@@ -1174,10 +1110,6 @@ fileprivate enum NewBlockPhaseText {
 
 // MARK: - Per-Phase Editor Sheet
 
-/// BRU-styled sheet for editing a single phase's weeks, volume, and intensity.
-/// Mirrors NewBlockDurationSheet: NavigationStack,
-/// .presentationDetents([.medium]), NewBlockInkRule separators, plain "Done" dismiss.
-/// Uses row-local @State identity via draftID — never BlockPhaseDraft.id (nil until saved).
 fileprivate struct NewBlockPhaseEditorSheet: View {
     @Bindable var draft: BlockPhaseDraft
     @Environment(\.dismiss) private var dismiss
@@ -1185,7 +1117,6 @@ fileprivate struct NewBlockPhaseEditorSheet: View {
     var body: some View {
         NavigationStack {
             VStack(alignment: .leading, spacing: 0) {
-                // Title
                 Text(NewBlockPhaseText.title(for: draft.kind))
                     .font(NewBlockType.phaseTitle)
                     .fontWeight(.semibold)
@@ -1322,7 +1253,6 @@ fileprivate struct NewBlockPhaseEditorSheet: View {
 
 // MARK: - Add Phase and Linked Routines
 
-// Add-phase type picker — presented as a sheet; one row per BlockPhaseKind.
 fileprivate struct NewBlockAddPhaseTypeSheet: View {
     let onSelect: (BlockPhaseKind) -> Void
     @Environment(\.dismiss) private var dismiss
@@ -1342,7 +1272,6 @@ fileprivate struct NewBlockAddPhaseTypeSheet: View {
                     .fill(NewBlockScreenTokens.ink)
                     .frame(height: NewBlockScreenTokens.rule)
 
-                // One 44pt row per BlockPhaseKind with a color swatch, title, and subtitle.
                 ForEach(BlockPhaseKind.allCases, id: \.self) { kind in
                     let swatchColor = BlockPhaseColors.badgeColor(for: kind)
 
@@ -1351,7 +1280,6 @@ fileprivate struct NewBlockAddPhaseTypeSheet: View {
                         dismiss()
                     } label: {
                         HStack(spacing: NewBlockScreenTokens.sectionGap) {
-                            // Color swatch matching the Chunk-A palette
                             RoundedRectangle(cornerRadius: 4)
                                 .fill(swatchColor)
                                 .frame(width: 28, height: 28)
@@ -1392,6 +1320,7 @@ fileprivate struct NewBlockAddPhaseTypeSheet: View {
     }
 }
 
+// 260528-vi2: linked routines band — borderless quiet row (no ink rules).
 fileprivate struct NewBlockLinkedRoutinesBand: View {
     let count: Int
 
@@ -1400,24 +1329,19 @@ fileprivate struct NewBlockLinkedRoutinesBand: View {
             Text("ROUTINES · \(count) LINKED")
                 .font(NewBlockType.chrome)
                 .tracking(NewBlockScreenTokens.chipTracking)
-                .foregroundStyle(NewBlockScreenTokens.ink)
+                .foregroundStyle(NewBlockScreenTokens.muted)
             Spacer()
             Text("+ LINK")
                 .font(NewBlockType.chrome)
                 .tracking(NewBlockScreenTokens.chipTracking)
                 .foregroundStyle(NewBlockScreenTokens.muted)
         }
-        .padding(.horizontal, NewBlockScreenTokens.sidePadding)
         .frame(height: 31)
         .background(NewBlockScreenTokens.paper)
-        .overlay(alignment: .top) {
-            NewBlockInkRule()
-        }
     }
 }
 
-// D7b: transient undo toast shown above the bottom action bar after a swipe-delete.
-// Auto-dismisses when the 4s undoTask clears pendingDelete. "UNDO" is a ≥44pt Button.
+// Transient undo toast shown above the bottom action bar after context-menu delete.
 fileprivate struct NewBlockUndoToast: View {
     let onUndo: () -> Void
 
@@ -1454,6 +1378,8 @@ fileprivate struct NewBlockUndoToast: View {
 
 // MARK: - Bottom Bar
 
+// 260528-vi2: ghost CANCEL (left, intrinsic width) + filled rounded SAVE TEMPLATE (right, fills remaining).
+// No heavy 3pt rule. Sits on paper with screen-margin insets.
 fileprivate struct NewBlockBottomActionBar: View {
     let canCreate: Bool
     let isEditing: Bool
@@ -1461,40 +1387,44 @@ fileprivate struct NewBlockBottomActionBar: View {
     let onPrimary: () -> Void
 
     var body: some View {
-        VStack(spacing: 0) {
-            Rectangle()
-                .fill(NewBlockScreenTokens.ink)
-                .frame(height: NewBlockScreenTokens.heavyRule)
+        HStack(spacing: 12) {
+            // Ghost CANCEL button
+            Button(action: onCancel) {
+                Text("CANCEL")
+                    .font(NewBlockType.chrome)
+                    .tracking(NewBlockScreenTokens.ctaTracking)
+                    .foregroundStyle(NewBlockScreenTokens.ink)
+                    .frame(height: 52)
+                    .padding(.horizontal, 18)
+            }
+            .buttonStyle(.plain)
 
-            HStack(spacing: 0) {
-                Button(action: onCancel) {
-                    Text("CANCEL")
-                        .font(NewBlockType.chrome)
-                        .tracking(NewBlockScreenTokens.ctaTracking)
-                        .foregroundStyle(NewBlockScreenTokens.ink)
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                }
-                .buttonStyle(.plain)
+            // Filled primary button — fills remaining width
+            Button(action: onPrimary) {
+                HStack(spacing: 6) {
+                    // Small filled square glyph (mockup detail)
+                    RoundedRectangle(cornerRadius: 2, style: .continuous)
+                        .frame(width: 7, height: 7)
+                        .foregroundStyle(.white)
 
-                Rectangle()
-                    .fill(NewBlockScreenTokens.ink)
-                    .frame(width: NewBlockScreenTokens.rule)
-
-                Button(action: onPrimary) {
                     Text(primaryTitle)
                         .font(NewBlockType.chrome)
                         .tracking(NewBlockScreenTokens.ctaTracking)
                         .foregroundStyle(canCreate ? .white : NewBlockScreenTokens.muted)
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                        .background(canCreate ? NewBlockScreenTokens.ink : NewBlockScreenTokens.paper)
                 }
-                .buttonStyle(.plain)
-                .disabled(!canCreate)
+                .frame(maxWidth: .infinity)
+                .frame(height: 52)
+                .background(canCreate ? NewBlockScreenTokens.ink : NewBlockScreenTokens.faint)
+                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
             }
-            .frame(height: NewBlockScreenTokens.bottomButtonHeight)
+            .buttonStyle(.plain)
+            .disabled(!canCreate)
         }
-        .frame(height: NewBlockScreenTokens.bottomActionHeight)
+        .padding(.horizontal, NewBlockScreenTokens.screenMargin)
+        .padding(.top, 10)
+        .padding(.bottom, 8)
         .background(NewBlockScreenTokens.paper)
+        .frame(height: NewBlockScreenTokens.bottomActionHeight)
     }
 
     private var primaryTitle: String {
@@ -1505,7 +1435,7 @@ fileprivate struct NewBlockBottomActionBar: View {
     }
 }
 
-// MARK: - Shared Rules
+// MARK: - Shared Rules (kept for sheet internals)
 
 fileprivate struct NewBlockInkRule: View {
     var body: some View {
@@ -1524,7 +1454,6 @@ fileprivate struct NewBlockDurationSheet: View {
     var body: some View {
         NavigationStack {
             VStack(alignment: .leading, spacing: 0) {
-                // Title and live total
                 VStack(alignment: .leading, spacing: NewBlockScreenTokens.microGap) {
                     Text("Edit Block Duration")
                         .font(NewBlockType.phaseTitle)
