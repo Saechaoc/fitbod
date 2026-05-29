@@ -71,27 +71,18 @@ struct BRUPeriodizationRegressionTests {
         return codeLines.joined(separator: "\n")
     }
 
-    // MARK: - 1. BlockBuilderView
-
-    @Test("BlockBuilderView — BRU primitive identifiers + no Form/Section")
-    func blockBuilderViewBRUPrimitives() throws {
-        let source = try loadSource("BlockBuilderView.swift")
-        let codeOnly = try loadCodeOnly("BlockBuilderView.swift")
-        #expect(source.contains("BRUHeaderBar"),
-                "BlockBuilderView.swift must use BRUHeaderBar (not .navigationTitle)")
-        #expect(source.contains("BRUSectionHead"),
-                "BlockBuilderView.swift must use BRUSectionHead for 'Phases' header")
-        #expect(source.contains("BRUButton"),
-                "BlockBuilderView.swift must use BRUButton for 'Apply changes ▸' CTA")
-        #expect(source.contains("Color.bruInk") || source.contains(".bruInk"),
-                "BlockBuilderView.swift must reference bruInk")
-        #expect(source.contains("BRUFont."),
-                "BlockBuilderView.swift must use BRUFont type roles")
-        #expect(source.contains("Canvas"),
-                "BlockBuilderView.swift must include the 56pt Canvas TIMELINE band")
-        #expect(!codeOnly.contains("Form {"),
-                "BlockBuilderView.swift must NOT use Form { in code (replaced by ScrollView+VStack)")
-    }
+    // MARK: - 1. BlockBuilderView — RETIRED (quick task 260528-vi2)
+    //
+    // The `blockBuilderViewBRUPrimitives()` regression test was retired when the
+    // New Block screen was redesigned to the rounded-card final-design.png contract.
+    // That contract intentionally abandons the Phase 04.1 brutalist vocabulary this
+    // test asserted — BRUHeaderBar / BRUSectionHead / BRUButton / the 56pt `Canvas`
+    // TIMELINE band were all replaced (the timeline became a Swift Charts progression
+    // card in 260528-utc; the screen uses the bespoke `NewBlock*` component family with
+    // its own `NewBlockScreenTokens`, not the shared BRU primitives). The screen's
+    // current contract is guarded by NewBlockBuilderFidelityTests + BlockBuilderViewCopyTests
+    // + BlockBuilderViewActivationTests instead. BlockBuilderView is likewise exempt from
+    // `allSurfacesUseAtLeastOneBRUPrimitive` and BRUPeriodizationAuditTests below.
 
     // MARK: - 2. BlockReviewView
 
@@ -328,7 +319,8 @@ struct BRUPeriodizationRegressionTests {
         ]
 
         let surfaces: [(filename: String, directory: String)] = [
-            ("BlockBuilderView.swift", "Periodization"),
+            // BlockBuilderView.swift retired here in 260528-vi2: the rounded-card redesign
+            // uses local NewBlockScreenTokens, not the shared BRU primitive identifiers.
             ("BlockReviewView.swift", "Periodization"),
             ("BlockCard.swift", "Periodization"),
             ("BlockPhaseEditorRow.swift", "Periodization"),

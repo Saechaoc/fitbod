@@ -221,7 +221,11 @@ struct BRUPeriodizationAuditTests {
             ("MesocycleWeekPage.swift", "Periodization"),
             ("BlockPhaseEditorRow.swift", "Periodization"),
             ("RoutinesListView.swift", "Routines"),
-            ("BlockBuilderView.swift", "Periodization"),
+            // BlockBuilderView.swift retired from this audit in quick task 260528-vi2:
+            // the New Block screen was redesigned to the rounded-card final-design.png
+            // contract (warm cards, RoundedRectangle, chevron) which intentionally
+            // supersedes the Phase 04.1 brutalist "sharp-corners / no RoundedRectangle"
+            // contract this audit enforces. It is no longer one of these surfaces.
             ("BlockReviewView.swift", "Periodization"),
             ("BlockOverviewScreen.swift", "Periodization"),
         ]
