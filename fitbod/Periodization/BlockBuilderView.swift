@@ -65,21 +65,25 @@ public struct BlockBuilderView: View {
                             // Progression chart card
                             NewBlockProgressionChart(phases: draft.phases)
 
-                            // Phases header row (plain, on paper — no card)
-                            NewBlockPhasesHeader(
-                                phaseCount: draft.phases.count,
-                                onAddPhase: { presentingAddPhaseTypePicker = true }
-                            )
-
-                            // Phase cards
-                            ForEach(Array(draft.phases.enumerated()), id: \.element.draftID) { index, phase in
-                                NewBlockPhaseEditorRow(
-                                    draft: phase,
-                                    displayIndex: index + 1,
-                                    onDelete: { beginPendingDelete(phase) },
-                                    onMoveUp: { movePhase(phase, by: -1) },
-                                    onMoveDown: { movePhase(phase, by: 1) }
+                            // 260528-vi2 r2: group the header + phase cards in one
+                            // tight VStack (10pt) so the header sits close above the
+                            // first card and cards stack denser than the 14pt gap
+                            // between the big top cards.
+                            VStack(alignment: .leading, spacing: 10) {
+                                NewBlockPhasesHeader(
+                                    phaseCount: draft.phases.count,
+                                    onAddPhase: { presentingAddPhaseTypePicker = true }
                                 )
+
+                                ForEach(Array(draft.phases.enumerated()), id: \.element.draftID) { index, phase in
+                                    NewBlockPhaseEditorRow(
+                                        draft: phase,
+                                        displayIndex: index + 1,
+                                        onDelete: { beginPendingDelete(phase) },
+                                        onMoveUp: { movePhase(phase, by: -1) },
+                                        onMoveDown: { movePhase(phase, by: 1) }
+                                    )
+                                }
                             }
 
                             // Conditional linked-routines band
@@ -754,13 +758,19 @@ fileprivate struct NewBlockPhasesHeader: View {
 
             Spacer()
 
-            // Coral "+ ADD PHASE" — rightmost accent, ≥44pt target
+            // Coral "+ ADD PHASE" — outlined pill accent (260528-vi2 r2)
             Button(action: onAddPhase) {
                 Text("+ ADD PHASE")
                     .font(NewBlockType.chrome)
                     .tracking(NewBlockScreenTokens.chipTracking)
                     .foregroundStyle(NewBlockScreenTokens.signal)
-                    .frame(minWidth: 44, minHeight: 44)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 7)
+                    .overlay(
+                        Capsule()
+                            .stroke(NewBlockScreenTokens.signal, lineWidth: 1.5)
+                    )
+                    .frame(minHeight: 44)
             }
             .buttonStyle(.plain)
         }
@@ -997,55 +1007,68 @@ fileprivate struct NewBlockPhaseEditorRow: View {
     @State private var presentingEditor = false
 
     var body: some View {
-        HStack(alignment: .center, spacing: 12) {
-            // Semantic badge (phase color + Bebas index)
+        HStack(spacing: 0) {
             let chipFill  = BlockPhaseColors.badgeColor(for: draft.kind)
             let chipLabel = BlockPhaseColors.badgeLabelColor(for: draft.kind)
-            Text(String(format: "%02d", displayIndex))
-                .font(NewBlockType.phaseIndex)
-                .foregroundStyle(chipLabel)
-                .frame(width: 36, height: 36)
-                .background(chipFill)
-                .clipShape(RoundedRectangle(cornerRadius: 9, style: .continuous))
 
-            // Phase title + subtitle
-            VStack(alignment: .leading, spacing: 3) {
-                Text(NewBlockPhaseText.title(for: draft.kind))
-                    .font(NewBlockType.phaseTitle)
-                    .fontWeight(.semibold)
-                    .foregroundStyle(NewBlockScreenTokens.ink)
+            // 260528-vi2 r2: colored left rail — anchors the phase color to the
+            // card's left edge (clipped to the rounded corner by .bruCard).
+            Rectangle()
+                .fill(chipFill)
+                .frame(width: 5)
 
-                Text(NewBlockPhaseText.subtitle(for: draft.kind))
-                    .font(NewBlockType.label)
-                    .tracking(1.2)
+            HStack(alignment: .center, spacing: 12) {
+                // Semantic badge (phase color + Bebas index)
+                Text(String(format: "%02d", displayIndex))
+                    .font(NewBlockType.phaseIndex)
+                    .foregroundStyle(chipLabel)
+                    .frame(width: 36, height: 36)
+                    .background(chipFill)
+                    .clipShape(RoundedRectangle(cornerRadius: 9, style: .continuous))
+
+                // Phase title + subtitle
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(NewBlockPhaseText.title(for: draft.kind))
+                        .font(NewBlockType.phaseTitle)
+                        .fontWeight(.semibold)
+                        .foregroundStyle(NewBlockScreenTokens.ink)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.75)
+
+                    Text(NewBlockPhaseText.subtitle(for: draft.kind))
+                        .font(NewBlockType.label)
+                        .tracking(1.2)
+                        .foregroundStyle(NewBlockScreenTokens.muted)
+                        .lineLimit(1)
+                }
+
+                Spacer(minLength: 10)
+
+                // Left-aligned compact stat grid: WEEKS / VOL / INT
+                HStack(alignment: .top, spacing: 12) {
+                    NewBlockReadOnlyStatColumn(
+                        label: "WEEKS",
+                        value: "\(draft.weeks)"
+                    )
+                    NewBlockReadOnlyStatColumn(
+                        label: "VOL",
+                        value: NewBlockPhaseText.volumeValue(draft.volumeMultiplier)
+                    )
+                    NewBlockReadOnlyStatColumn(
+                        label: "INT",
+                        value: NewBlockPhaseText.intensityValue(draft.intensityMultiplier)
+                    )
+                }
+
+                // Chevron affordance
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 12, weight: .semibold))
                     .foregroundStyle(NewBlockScreenTokens.muted)
             }
-
-            Spacer()
-
-            // Compact stat columns: WEEKS / VOL / INT (no vertical hairlines)
-            HStack(spacing: 10) {
-                NewBlockReadOnlyStatColumn(
-                    label: "WEEKS",
-                    value: "\(draft.weeks)"
-                )
-                NewBlockReadOnlyStatColumn(
-                    label: "VOL",
-                    value: NewBlockPhaseText.volumeValue(draft.volumeMultiplier)
-                )
-                NewBlockReadOnlyStatColumn(
-                    label: "INT",
-                    value: NewBlockPhaseText.intensityValue(draft.intensityMultiplier)
-                )
-            }
-
-            // Chevron affordance
-            Image(systemName: "chevron.right")
-                .font(.system(size: 12, weight: .semibold))
-                .foregroundStyle(NewBlockScreenTokens.muted)
+            .padding(.leading, 12)
+            .padding(.trailing, NewBlockScreenTokens.cardPadding)
+            .padding(.vertical, 12)
         }
-        .padding(.horizontal, NewBlockScreenTokens.cardPadding)
-        .padding(.vertical, 14)
         .bruCard(radius: NewBlockScreenTokens.phaseCardRadius)
         .contentShape(Rectangle())
         .onTapGesture { presentingEditor = true }
@@ -1062,16 +1085,18 @@ fileprivate struct NewBlockPhaseEditorRow: View {
     }
 }
 
-/// Read-only right-aligned label-over-value stat column for the phase row.
+/// Read-only LEFT-aligned label-over-value stat column for the phase row.
+/// 260528-vi2 r2: left-aligned + fixed width so WEEKS/VOL/INT line up as a grid
+/// (was trailing/variable-width, which read cramped against the chevron).
 fileprivate struct NewBlockReadOnlyStatColumn: View {
     let label: String
     let value: String
 
     var body: some View {
-        VStack(alignment: .trailing, spacing: NewBlockScreenTokens.microGap) {
+        VStack(alignment: .leading, spacing: 2) {
             Text(label)
                 .font(NewBlockType.micro)
-                .tracking(1.4)
+                .tracking(1.2)
                 .foregroundStyle(NewBlockScreenTokens.muted)
             Text(value)
                 .font(Font.custom("BebasNeue-Regular", size: 22))
@@ -1079,6 +1104,7 @@ fileprivate struct NewBlockReadOnlyStatColumn: View {
                 .lineLimit(1)
                 .minimumScaleFactor(0.8)
         }
+        .frame(width: 40, alignment: .leading)
     }
 }
 
