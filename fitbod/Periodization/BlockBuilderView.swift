@@ -666,27 +666,27 @@ fileprivate struct NewBlockMetricsBand: View {
                     .tracking(NewBlockScreenTokens.labelTracking)
                     .foregroundStyle(NewBlockScreenTokens.muted)
 
-                HStack(spacing: NewBlockScreenTokens.rowGap) {
-                    NewBlockStepperButton(label: "−") {
+                HStack(spacing: NewBlockScreenTokens.sectionGap) {
+                    NewBlockRoundStepper(label: "−") {
                         draft.daysPerWeek = max(1, draft.daysPerWeek - 1)
                     }
-                    .contentShape(Rectangle())
-                    .frame(minWidth: 44, minHeight: 44, alignment: .leading)
                     .accessibilityLabel("Decrease days per week")
 
                     Text("\(draft.daysPerWeek)")
                         .font(NewBlockType.display)
                         .foregroundStyle(NewBlockScreenTokens.ink)
-                        .frame(minWidth: 28)
+                        .frame(minWidth: 24)
+                        .multilineTextAlignment(.center)
                         .accessibilityHidden(true)
 
-                    NewBlockStepperButton(label: "+") {
+                    NewBlockRoundStepper(label: "+") {
                         draft.daysPerWeek = min(7, draft.daysPerWeek + 1)
                     }
-                    .contentShape(Rectangle())
-                    .frame(minWidth: 44, minHeight: 44, alignment: .leading)
                     .accessibilityLabel("Increase days per week")
                 }
+                // Pull the centered first button flush-left so the − aligns under
+                // the label, matching the TOTAL WEEKS number's left edge.
+                .padding(.leading, -6)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
             .padding(.horizontal, NewBlockScreenTokens.cardPadding)
@@ -696,6 +696,27 @@ fileprivate struct NewBlockMetricsBand: View {
         }
         .frame(minHeight: NewBlockScreenTokens.metricsHeight)
         .bruCard()
+    }
+}
+
+// Rounded, borderless ± control for the metrics DAYS PER WEEK cell (final-design-2):
+// a soft filled circle (no outline) with the glyph centered in a 44pt tap target.
+// Distinct from NewBlockStepperButton (the sharp outlined stepper the editor sheets use).
+fileprivate struct NewBlockRoundStepper: View {
+    let label: String
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            Text(label)
+                .font(.system(size: 18, weight: .regular))
+                .foregroundStyle(NewBlockScreenTokens.ink)
+                .frame(width: 32, height: 32)
+                .background(NewBlockScreenTokens.hair, in: Circle())
+        }
+        .buttonStyle(.plain)
+        .frame(width: 44, height: 44)   // centered tap target — glyph stays visually centered
+        .contentShape(Circle())
     }
 }
 
