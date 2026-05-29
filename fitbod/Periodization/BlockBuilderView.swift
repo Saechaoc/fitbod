@@ -652,44 +652,51 @@ fileprivate struct NewBlockMetricsBand: View {
     let onEditDays: () -> Void
 
     var body: some View {
-        HStack(spacing: 0) {
-            // TOTAL WEEKS — read-only tappable cell
+        HStack(spacing: NewBlockScreenTokens.rowGap) {
+            // TOTAL WEEKS card
             Button(action: onEditWeeks) {
-                VStack(alignment: .leading, spacing: NewBlockScreenTokens.tightGap) {
-                    Text("TOTAL WEEKS")
-                        .font(NewBlockType.label)
-                        .tracking(NewBlockScreenTokens.labelTracking)
-                        .foregroundStyle(NewBlockScreenTokens.muted)
+                VStack(alignment: .leading, spacing: NewBlockScreenTokens.microGap) {
+                    HStack(spacing: NewBlockScreenTokens.microGap) {
+                        Image(systemName: "calendar")
+                            .font(.system(size: 10, weight: .bold))
+                            .foregroundStyle(NewBlockScreenTokens.ink)
+                        Text("TOTAL WEEKS")
+                            .font(NewBlockType.label)
+                            .tracking(NewBlockScreenTokens.labelTracking)
+                            .foregroundStyle(NewBlockScreenTokens.muted)
+                    }
 
                     Text("\(draft.totalWeeks)")
                         .font(NewBlockType.display)
                         .foregroundStyle(NewBlockScreenTokens.ink)
 
-                    Text("TAP TO EDIT PHASES")
+                    Text("TAP TO EDIT")
                         .font(NewBlockType.micro)
                         .tracking(NewBlockScreenTokens.labelTracking)
                         .foregroundStyle(NewBlockScreenTokens.muted)
                 }
-                .padding(.leading, NewBlockScreenTokens.sidePadding)
-                .padding(.trailing, 14)
+                .padding(.horizontal, NewBlockScreenTokens.sectionGap)
                 .padding(.vertical, NewBlockScreenTokens.sectionGap)
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(NewBlockScreenTokens.paper)
+                .overlay(Rectangle().stroke(NewBlockScreenTokens.ink, lineWidth: 1))
             }
             .buttonStyle(.plain)
             .accessibilityAddTraits(.isButton)
             .accessibilityLabel("Total weeks, \(draft.totalWeeks), edit phase durations")
 
-            Rectangle()
-                .fill(NewBlockScreenTokens.ink)
-                .frame(width: NewBlockScreenTokens.rule)
-
-            // DAYS PER WEEK — tappable cell
+            // DAYS PER WEEK card
             Button(action: onEditDays) {
-                VStack(alignment: .leading, spacing: NewBlockScreenTokens.tightGap) {
-                    Text("DAYS PER WEEK")
-                        .font(NewBlockType.label)
-                        .tracking(NewBlockScreenTokens.labelTracking)
-                        .foregroundStyle(NewBlockScreenTokens.muted)
+                VStack(alignment: .leading, spacing: NewBlockScreenTokens.microGap) {
+                    HStack(spacing: NewBlockScreenTokens.microGap) {
+                        Image(systemName: "calendar.day.timeline.left")
+                            .font(.system(size: 10, weight: .bold))
+                            .foregroundStyle(NewBlockScreenTokens.ink)
+                        Text("DAYS PER WEEK")
+                            .font(NewBlockType.label)
+                            .tracking(NewBlockScreenTokens.labelTracking)
+                            .foregroundStyle(NewBlockScreenTokens.muted)
+                    }
 
                     Text("\(draft.daysPerWeek)")
                         .font(NewBlockType.display)
@@ -700,16 +707,18 @@ fileprivate struct NewBlockMetricsBand: View {
                         .tracking(NewBlockScreenTokens.labelTracking)
                         .foregroundStyle(NewBlockScreenTokens.muted)
                 }
-                .padding(.leading, 14)
-                .padding(.trailing, NewBlockScreenTokens.sidePadding)
+                .padding(.horizontal, NewBlockScreenTokens.sectionGap)
                 .padding(.vertical, NewBlockScreenTokens.sectionGap)
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(NewBlockScreenTokens.paper)
+                .overlay(Rectangle().stroke(NewBlockScreenTokens.ink, lineWidth: 1))
             }
             .buttonStyle(.plain)
             .accessibilityAddTraits(.isButton)
             .accessibilityLabel("Days per week, \(draft.daysPerWeek), edit")
         }
-        .frame(height: NewBlockScreenTokens.metricsHeight)
+        .padding(.horizontal, NewBlockScreenTokens.sidePadding)
+        .frame(minHeight: NewBlockScreenTokens.metricsHeight)
         .background(NewBlockScreenTokens.paper)
         .overlay(alignment: .bottom) {
             NewBlockInkRule()
@@ -1160,7 +1169,7 @@ fileprivate enum NewBlockPhaseText {
         case .intensification:
             return "Intensification"
         case .realization:
-            return "Realization"
+            return "Peak"
         case .deload:
             return "Deload"
         }
@@ -1173,7 +1182,7 @@ fileprivate enum NewBlockPhaseText {
         case .intensification:
             return "BUILD STRENGTH"
         case .realization:
-            return "PEAK"
+            return "SHARPEN OUTPUT"
         case .deload:
             return "RECOVER"
         }
