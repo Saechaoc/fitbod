@@ -101,4 +101,8 @@ public extension Color {
     /// only, while the tab bar needs a structural cool gray that reads
     /// architectural against the pure-white surface.
     static let bruTabSeparator: Color = Color("bruTabSeparator")
+
+    /// Brutalist primary blue `#2F5ACF` (light) / `#4A78E6` (dark).
+    /// Accumulation phase badge color — indicates the volume-building phase.
+    static let bruBlue: Color = Color("bruBlue")
 }

@@ -50,4 +50,34 @@ public enum BlockPhaseColors {
     public static func phaseLabel(_ kind: BlockPhaseKind) -> String {
         kind.rawValue.capitalized
     }
+
+    /// Semantic badge fill color for a phase kind.
+    /// Used by phase-row number chip and add-phase-type sheet swatch.
+    public static func badgeColor(for kind: BlockPhaseKind) -> Color {
+        switch kind {
+        case .accumulation:
+            return Color.bruBlue
+        case .intensification:
+            return Color.bruSignal
+        case .realization:
+            return Color.bruGreen
+        case .deload:
+            return Color.bruAmber
+        }
+    }
+
+    /// Contrasting label color for `badgeColor`.
+    /// Amber (deload) is light — use bruInk; all others are dark — use white.
+    public static func badgeLabelColor(for kind: BlockPhaseKind) -> Color {
+        switch kind {
+        case .accumulation:
+            return .white
+        case .intensification:
+            return .white
+        case .realization:
+            return .white
+        case .deload:
+            return Color.bruInk
+        }
+    }
 }

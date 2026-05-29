@@ -990,13 +990,11 @@ fileprivate struct NewBlockPhaseEditorRow: View {
         VStack(alignment: .leading, spacing: NewBlockScreenTokens.sectionGap) {
             // Header: number chip + title/subtitle + reorder glyph
             HStack(alignment: .top, spacing: NewBlockScreenTokens.sectionGap) {
-                // D1: filled number chip — palette color keyed by order index.
+                // Semantic badge color keyed by phase kind.
                 // Color is ALWAYS paired with the phase name beside it (colorblind-safe).
                 let isDeload = draft.kind == .deload
-                let chipFill = NewBlockScreenTokens.paletteColor(
-                    forOrderIndex: displayIndex - 1, isDeload: isDeload)
-                let chipLabel = NewBlockScreenTokens.paletteLabelColor(
-                    forOrderIndex: displayIndex - 1, isDeload: isDeload)
+                let chipFill = BlockPhaseColors.badgeColor(for: draft.kind)
+                let chipLabel = BlockPhaseColors.badgeLabelColor(for: draft.kind)
                 Text(String(format: "%02d", displayIndex))
                     .font(NewBlockType.phaseIndex)
                     .foregroundStyle(chipLabel)
@@ -1247,10 +1245,7 @@ fileprivate struct NewBlockAddPhaseTypeSheet: View {
 
                 // One 44pt row per BlockPhaseKind with a color swatch, title, and subtitle.
                 ForEach(BlockPhaseKind.allCases, id: \.self) { kind in
-                    let orderIndex = BlockPhaseKind.allCases.firstIndex(of: kind) ?? 0
-                    let isDeload = kind == .deload
-                    let swatchColor = NewBlockScreenTokens.paletteColor(
-                        forOrderIndex: orderIndex, isDeload: isDeload)
+                    let swatchColor = BlockPhaseColors.badgeColor(for: kind)
 
                     Button {
                         onSelect(kind)
