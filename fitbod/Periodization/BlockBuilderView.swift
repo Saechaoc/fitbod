@@ -399,7 +399,7 @@ fileprivate enum NewBlockScreenTokens {
     static let phasesHeaderHeight: CGFloat = 36
     static let previewHeight: CGFloat = 120
     static let timelineBarHeight: CGFloat = 30  // D4: lighter than 44pt
-    static let phaseRowHeight: CGFloat = 148  // D3: taller for inline steppers
+    static let phaseRowHeight: CGFloat = 100  // read-only stat columns; no steppers needed
 
     static let metricCellHeight: CGFloat = 36
     static let addPhaseSlotHeight: CGFloat = 70
@@ -1009,155 +1009,103 @@ fileprivate struct NewBlockPhaseEditorRow: View {
     @Bindable var draft: BlockPhaseDraft
     let displayIndex: Int
 
+    @State private var presentingEditor = false
+
     var body: some View {
-        VStack(alignment: .leading, spacing: NewBlockScreenTokens.sectionGap) {
-            // Header: number chip + title/subtitle + reorder glyph
-            HStack(alignment: .top, spacing: NewBlockScreenTokens.sectionGap) {
-                // Semantic badge color keyed by phase kind.
-                // Color is ALWAYS paired with the phase name beside it (colorblind-safe).
-                let isDeload = draft.kind == .deload
-                let chipFill = BlockPhaseColors.badgeColor(for: draft.kind)
-                let chipLabel = BlockPhaseColors.badgeLabelColor(for: draft.kind)
-                Text(String(format: "%02d", displayIndex))
-                    .font(NewBlockType.phaseIndex)
-                    .foregroundStyle(chipLabel)
-                    .frame(width: 36, height: 36)
-                    .background(chipFill)
-                    .clipShape(RoundedRectangle(cornerRadius: 4))
+        HStack(alignment: .center, spacing: NewBlockScreenTokens.sectionGap) {
+            // Semantic badge color keyed by phase kind.
+            // Color is ALWAYS paired with the phase name beside it (colorblind-safe).
+            let isDeload = draft.kind == .deload
+            let chipFill = BlockPhaseColors.badgeColor(for: draft.kind)
+            let chipLabel = BlockPhaseColors.badgeLabelColor(for: draft.kind)
+            Text(String(format: "%02d", displayIndex))
+                .font(NewBlockType.phaseIndex)
+                .foregroundStyle(chipLabel)
+                .frame(width: 36, height: 36)
+                .background(chipFill)
+                .clipShape(RoundedRectangle(cornerRadius: 4))
 
-                VStack(alignment: .leading, spacing: NewBlockScreenTokens.microGap) {
-                    HStack(spacing: NewBlockScreenTokens.microGap) {
-                        Text(NewBlockPhaseText.title(for: draft.kind))
-                            .font(NewBlockType.phaseTitle)
-                            .fontWeight(.semibold)
-                            .foregroundStyle(NewBlockScreenTokens.ink)
-                        if isDeload {
-                            Text("DELOAD")
-                                .font(NewBlockType.chip)
-                                .tracking(1.4)
-                                .foregroundStyle(NewBlockScreenTokens.paper)
-                                .padding(.horizontal, 5)
-                                .padding(.vertical, 2)
-                                .background(NewBlockScreenTokens.muted)
-                                .clipShape(RoundedRectangle(cornerRadius: 3))
-                        }
+            VStack(alignment: .leading, spacing: NewBlockScreenTokens.microGap) {
+                HStack(spacing: NewBlockScreenTokens.microGap) {
+                    Text(NewBlockPhaseText.title(for: draft.kind))
+                        .font(NewBlockType.phaseTitle)
+                        .fontWeight(.semibold)
+                        .foregroundStyle(NewBlockScreenTokens.ink)
+                    if isDeload {
+                        Text("DELOAD")
+                            .font(NewBlockType.chip)
+                            .tracking(1.4)
+                            .foregroundStyle(NewBlockScreenTokens.paper)
+                            .padding(.horizontal, 5)
+                            .padding(.vertical, 2)
+                            .background(NewBlockScreenTokens.muted)
+                            .clipShape(RoundedRectangle(cornerRadius: 3))
                     }
-                    Text(NewBlockPhaseText.subtitle(for: draft.kind))
-                        .font(NewBlockType.label)
-                        .tracking(1.2)
-                        .foregroundStyle(NewBlockScreenTokens.muted)
                 }
-
-                Spacer()
-                // D7b: decorative reorder glyph removed — native List move handle is the
-                // single reorder cue (avoids double-handle confusion per D7 spec).
+                Text(NewBlockPhaseText.subtitle(for: draft.kind))
+                    .font(NewBlockType.label)
+                    .tracking(1.2)
+                    .foregroundStyle(NewBlockScreenTokens.muted)
             }
 
-            // D3: inline-editable metrics — no 1.5pt ink border boxes; hair dividers instead.
-            // Each column: label (top) · value · −/+ stepper controls.
-            HStack(spacing: 0) {
-                // WEEKS
-                NewBlockInlineMetricColumn(
+            Spacer()
+
+            // Read-only stat columns: WEEKS / VOL / INT
+            HStack(spacing: NewBlockScreenTokens.rowGap) {
+                NewBlockReadOnlyStatColumn(
                     label: "WEEKS",
-                    value: "\(draft.weeks)",
-                    onDecrement: {
-                        draft.weeks = max(1, draft.weeks - 1)
-                    },
-                    onIncrement: {
-                        draft.weeks = min(52, draft.weeks + 1)
-                    }
+                    value: "\(draft.weeks)"
                 )
-
-                // Hair divider
                 Rectangle()
                     .fill(NewBlockScreenTokens.hair)
-                    .frame(width: NewBlockScreenTokens.rule)
-
-                // VOL
-                NewBlockInlineMetricColumn(
+                    .frame(width: NewBlockScreenTokens.rule, height: 28)
+                NewBlockReadOnlyStatColumn(
                     label: "VOL",
-                    value: NewBlockPhaseText.volumeValue(draft.volumeMultiplier),
-                    onDecrement: {
-                        let newVal = (draft.volumeMultiplier - 0.05)
-                        draft.volumeMultiplier = (max(0.4, newVal) * 100).rounded() / 100
-                    },
-                    onIncrement: {
-                        let newVal = (draft.volumeMultiplier + 0.05)
-                        draft.volumeMultiplier = (min(1.6, newVal) * 100).rounded() / 100
-                    }
+                    value: NewBlockPhaseText.volumeValue(draft.volumeMultiplier)
                 )
-
-                // Hair divider
                 Rectangle()
                     .fill(NewBlockScreenTokens.hair)
-                    .frame(width: NewBlockScreenTokens.rule)
-
-                // INT
-                NewBlockInlineMetricColumn(
+                    .frame(width: NewBlockScreenTokens.rule, height: 28)
+                NewBlockReadOnlyStatColumn(
                     label: "INT",
-                    value: NewBlockPhaseText.intensityValue(draft.intensityMultiplier),
-                    onDecrement: {
-                        let newVal = (draft.intensityMultiplier - 0.05)
-                        draft.intensityMultiplier = (max(0.5, newVal) * 100).rounded() / 100
-                    },
-                    onIncrement: {
-                        let newVal = (draft.intensityMultiplier + 0.05)
-                        draft.intensityMultiplier = (min(1.0, newVal) * 100).rounded() / 100
-                    }
+                    value: NewBlockPhaseText.intensityValue(draft.intensityMultiplier)
                 )
             }
-            .frame(height: 56)
-            .background(NewBlockScreenTokens.faint)
-            .clipShape(RoundedRectangle(cornerRadius: 4))
         }
         .padding(.horizontal, NewBlockScreenTokens.sidePadding)
-        .padding(.top, NewBlockScreenTokens.sectionGap)
-        .padding(.bottom, NewBlockScreenTokens.rowGap)
-        .frame(height: NewBlockScreenTokens.phaseRowHeight, alignment: .top)
+        .frame(height: NewBlockScreenTokens.phaseRowHeight)
         .background(NewBlockScreenTokens.paper)
+        .contentShape(Rectangle())
+        .onTapGesture { presentingEditor = true }
         .overlay(alignment: .bottom) {
             Rectangle()
                 .fill(NewBlockScreenTokens.hair)
                 .frame(height: NewBlockScreenTokens.rule)
         }
         .accessibilityLabel("Phase \(displayIndex): \(BlockPhaseColors.phaseLabel(draft.kind))")
+        .sheet(isPresented: $presentingEditor) {
+            NewBlockPhaseEditorSheet(draft: draft)
+        }
     }
 }
 
-// D3: one reusable column for an inline-editable metric (label / value / −  +).
-// No 1.5pt ink border box — calm label-over-value layout with shared hair dividers.
-fileprivate struct NewBlockInlineMetricColumn: View {
+/// Read-only right-aligned label-over-value stat column for the phase row.
+fileprivate struct NewBlockReadOnlyStatColumn: View {
     let label: String
     let value: String
-    let onDecrement: () -> Void
-    let onIncrement: () -> Void
 
     var body: some View {
-        VStack(spacing: 2) {
+        VStack(alignment: .trailing, spacing: NewBlockScreenTokens.microGap) {
             Text(label)
                 .font(NewBlockType.micro)
                 .tracking(1.4)
                 .foregroundStyle(NewBlockScreenTokens.muted)
-
             Text(value)
-                .font(NewBlockType.label)
-                .tracking(0.6)
+                .font(NewBlockType.number)
                 .foregroundStyle(NewBlockScreenTokens.ink)
                 .lineLimit(1)
                 .minimumScaleFactor(0.8)
-
-            HStack(spacing: 4) {
-                // 44pt touch target wrapping the 32×30 visual glyph
-                NewBlockStepperButton(label: "−", action: onDecrement)
-                    .contentShape(Rectangle())
-                    .frame(minWidth: 44, minHeight: 44)
-                NewBlockStepperButton(label: "+", action: onIncrement)
-                    .contentShape(Rectangle())
-                    .frame(minWidth: 44, minHeight: 44)
-            }
         }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 6)
     }
 }
 
@@ -1212,6 +1160,154 @@ fileprivate enum NewBlockPhaseText {
 
     static func intensityValue(_ multiplier: Double) -> String {
         "\(Int((multiplier * 100).rounded()))%"
+    }
+}
+
+// MARK: - Per-Phase Editor Sheet
+
+/// BRU-styled sheet for editing a single phase's weeks, volume, and intensity.
+/// Mirrors NewBlockDurationSheet / NewBlockDaysSheet: NavigationStack,
+/// .presentationDetents([.medium]), NewBlockInkRule separators, plain "Done" dismiss.
+/// Uses row-local @State identity via draftID — never BlockPhaseDraft.id (nil until saved).
+fileprivate struct NewBlockPhaseEditorSheet: View {
+    @Bindable var draft: BlockPhaseDraft
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        NavigationStack {
+            VStack(alignment: .leading, spacing: 0) {
+                // Title
+                Text(NewBlockPhaseText.title(for: draft.kind))
+                    .font(NewBlockType.phaseTitle)
+                    .fontWeight(.semibold)
+                    .foregroundStyle(NewBlockScreenTokens.ink)
+                    .padding(.horizontal, NewBlockScreenTokens.sidePadding)
+                    .padding(.top, NewBlockScreenTokens.sectionGap)
+                    .padding(.bottom, NewBlockScreenTokens.rowGap)
+
+                NewBlockInkRule()
+
+                ScrollView {
+                    VStack(spacing: 0) {
+                        // WEEKS row
+                        HStack(spacing: NewBlockScreenTokens.rowGap) {
+                            Text("WEEKS")
+                                .font(NewBlockType.label)
+                                .tracking(NewBlockScreenTokens.labelTracking)
+                                .foregroundStyle(NewBlockScreenTokens.muted)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+
+                            NewBlockStepperButton(label: "−") {
+                                draft.weeks = max(1, draft.weeks - 1)
+                            }
+                            Text("\(draft.weeks)")
+                                .font(NewBlockType.number)
+                                .foregroundStyle(NewBlockScreenTokens.ink)
+                                .frame(width: 36, alignment: .center)
+                            NewBlockStepperButton(label: "+") {
+                                draft.weeks = min(52, draft.weeks + 1)
+                            }
+                        }
+                        .padding(.horizontal, NewBlockScreenTokens.sidePadding)
+                        .frame(height: 56)
+                        .background(NewBlockScreenTokens.paper)
+                        .overlay(alignment: .bottom) {
+                            Rectangle()
+                                .fill(NewBlockScreenTokens.hair)
+                                .frame(height: NewBlockScreenTokens.rule)
+                        }
+
+                        // VOL row
+                        HStack(spacing: NewBlockScreenTokens.rowGap) {
+                            VStack(alignment: .leading, spacing: NewBlockScreenTokens.microGap) {
+                                Text("VOLUME")
+                                    .font(NewBlockType.label)
+                                    .tracking(NewBlockScreenTokens.labelTracking)
+                                    .foregroundStyle(NewBlockScreenTokens.muted)
+                                Text("vs base")
+                                    .font(NewBlockType.micro)
+                                    .foregroundStyle(NewBlockScreenTokens.muted)
+                            }
+                            .frame(maxWidth: .infinity, alignment: .leading)
+
+                            NewBlockStepperButton(label: "−") {
+                                let newVal = draft.volumeMultiplier - 0.05
+                                draft.volumeMultiplier = (max(0.4, newVal) * 100).rounded() / 100
+                            }
+                            Text(NewBlockPhaseText.volumeValue(draft.volumeMultiplier))
+                                .font(NewBlockType.number)
+                                .foregroundStyle(NewBlockScreenTokens.ink)
+                                .frame(width: 52, alignment: .center)
+                            NewBlockStepperButton(label: "+") {
+                                let newVal = draft.volumeMultiplier + 0.05
+                                draft.volumeMultiplier = (min(1.6, newVal) * 100).rounded() / 100
+                            }
+                        }
+                        .padding(.horizontal, NewBlockScreenTokens.sidePadding)
+                        .frame(height: 56)
+                        .background(NewBlockScreenTokens.paper)
+                        .overlay(alignment: .bottom) {
+                            Rectangle()
+                                .fill(NewBlockScreenTokens.hair)
+                                .frame(height: NewBlockScreenTokens.rule)
+                        }
+
+                        // INT row
+                        HStack(spacing: NewBlockScreenTokens.rowGap) {
+                            VStack(alignment: .leading, spacing: NewBlockScreenTokens.microGap) {
+                                Text("INTENSITY")
+                                    .font(NewBlockType.label)
+                                    .tracking(NewBlockScreenTokens.labelTracking)
+                                    .foregroundStyle(NewBlockScreenTokens.muted)
+                                Text("% of training max")
+                                    .font(NewBlockType.micro)
+                                    .foregroundStyle(NewBlockScreenTokens.muted)
+                            }
+                            .frame(maxWidth: .infinity, alignment: .leading)
+
+                            NewBlockStepperButton(label: "−") {
+                                let newVal = draft.intensityMultiplier - 0.05
+                                draft.intensityMultiplier = (max(0.5, newVal) * 100).rounded() / 100
+                            }
+                            Text(NewBlockPhaseText.intensityValue(draft.intensityMultiplier))
+                                .font(NewBlockType.number)
+                                .foregroundStyle(NewBlockScreenTokens.ink)
+                                .frame(width: 52, alignment: .center)
+                            NewBlockStepperButton(label: "+") {
+                                let newVal = draft.intensityMultiplier + 0.05
+                                draft.intensityMultiplier = (min(1.0, newVal) * 100).rounded() / 100
+                            }
+                        }
+                        .padding(.horizontal, NewBlockScreenTokens.sidePadding)
+                        .frame(height: 56)
+                        .background(NewBlockScreenTokens.paper)
+                        .overlay(alignment: .bottom) {
+                            Rectangle()
+                                .fill(NewBlockScreenTokens.hair)
+                                .frame(height: NewBlockScreenTokens.rule)
+                        }
+                    }
+                }
+
+                Spacer(minLength: 0)
+
+                NewBlockInkRule()
+
+                Button(action: { dismiss() }) {
+                    Text("Done")
+                        .font(NewBlockType.chrome)
+                        .tracking(NewBlockScreenTokens.ctaTracking)
+                        .foregroundStyle(NewBlockScreenTokens.ink)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: NewBlockScreenTokens.bottomButtonHeight)
+                }
+                .buttonStyle(.plain)
+                .background(NewBlockScreenTokens.paper)
+            }
+            .background(NewBlockScreenTokens.paper.ignoresSafeArea())
+            .navigationBarHidden(true)
+        }
+        .presentationDetents([.medium])
     }
 }
 
