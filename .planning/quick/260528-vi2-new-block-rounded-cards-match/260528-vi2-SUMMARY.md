@@ -14,6 +14,7 @@ commits:
   - 5129fd7  # executor cleanup: remove calendar icon (unreported in its return)
   - e3699e1  # retire BlockBuilderView from Phase 04.1 BRU suites
   - 6d96305  # r2: phase-row polish (left rail, left-aligned stats, pill, spacing)
+  - b8ba2ed  # r3: tighten phase card->card gap 10->6pt
 ---
 
 # Quick Task 260528-vi2: New Block screen → rounded-card layout — SUMMARY
@@ -131,6 +132,10 @@ deltas the first pass missed. All fixed in `NewBlockPhaseEditorRow` / `NewBlockR
 
 Re-verified: build green + the 3 New-Block guardrail suites green; on-device re-capture
 (`bru-screens/New-block/_rendered-vi2-r2.png`) confirmed against the mockup.
+
+**r3 (commit b8ba2ed):** per follow-up feedback, tightened the phase **card→card** gap 10→6pt
+(nested the ForEach in `VStack(spacing: 6)`; header→cards stays 10pt) to match the mockup's denser
+row list. On-device re-capture: `bru-screens/New-block/_rendered-vi2-r3.png`.
 
 ## Open flags for the user
 
