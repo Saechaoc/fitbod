@@ -123,10 +123,10 @@ public struct BlockBuilderView: View {
                                 errorBand(saveError)
                             }
 
-                            // Bottom clearance: keeps last card visible above the action bar
+                            // Bottom clearance: the safeAreaInset action bar already
+                            // insets the scroll content — this is breathing room only.
                             Color.clear
-                                .frame(height: NewBlockScreenTokens.bottomActionHeight
-                                    + NewBlockScreenTokens.scrollBottomClearance)
+                                .frame(height: NewBlockScreenTokens.scrollBottomClearance)
                         }
                         .padding(.horizontal, NewBlockScreenTokens.screenMargin)
                         .padding(.top, NewBlockScreenTokens.cardGap)
@@ -137,13 +137,20 @@ public struct BlockBuilderView: View {
 
                 // Transient undo toast — visible above the action bar while
                 // pendingDelete is non-nil; auto-dismisses when the 4s Task clears it.
+                // The action bar lives in safeAreaInset, so the ZStack's bottom
+                // safe-area edge is the bar's top — only a tight gap needed here.
                 if pendingDelete != nil {
                     NewBlockUndoToast(onUndo: undoDelete)
-                        .padding(.bottom, NewBlockScreenTokens.bottomActionHeight
-                            + NewBlockScreenTokens.tightGap)
+                        .padding(.bottom, NewBlockScreenTokens.tightGap)
                         .transition(.move(edge: .bottom).combined(with: .opacity))
                 }
-
+            }
+            // BRUTabBar wiring pattern: bottom chrome attaches via safeAreaInset
+            // (not a ZStack overlay) so its paper background reliably extends
+            // through the home-indicator zone — a ZStack-overlay background's
+            // ignoresSafeArea bleed does not engage, leaving a see-through strip
+            // where scrolled phase cards show below CANCEL / SAVE TEMPLATE.
+            .safeAreaInset(edge: .bottom, spacing: 0) {
                 NewBlockBottomActionBar(
                     canCreate: draft.isValid,
                     isEditing: editing != nil,
@@ -1893,9 +1900,9 @@ fileprivate struct NewBlockBottomActionBar: View {
         .padding(.bottom, 8)
         // Paper must run through the bottom safe area — the ScrollView's content
         // scrolls under the home-indicator zone, and a background that stops at
-        // the safe-area edge leaves a see-through strip below the bar.
+        // the safe-area edge leaves a see-through strip below the bar. Sized
+        // intrinsically (~70pt) — safeAreaInset placement needs no rigid frame.
         .background(NewBlockScreenTokens.paper.ignoresSafeArea(edges: .bottom))
-        .frame(height: NewBlockScreenTokens.bottomActionHeight)
     }
 
     private var primaryTitle: String {
