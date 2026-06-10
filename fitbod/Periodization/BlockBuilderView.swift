@@ -364,7 +364,6 @@ fileprivate enum NewBlockScreenTokens {
     static let nameBandHeight: CGFloat    = 80
     static let metricsHeight: CGFloat     = 92
     static let phasesHeaderHeight: CGFloat = 36
-    static let previewHeight: CGFloat     = 120
     static let timelineBarHeight: CGFloat = 30
     static let phaseRowHeight: CGFloat    = 100
 
@@ -871,12 +870,29 @@ fileprivate struct NewBlockProgressionChart: View {
         phases.reduce(0) { $0 + $1.weeks }
     }
 
-    /// Y range spanning data values for the band height.
-    private var yLow: Double { 30 }
-    private var yHigh: Double { 130 }
+    // Chart layout — sized to final-design.png card proportions (plot ≈ 156pt
+    // on a 393pt screen). Heights are plot-area heights, not Chart frame
+    // heights: the week-label axis row adds its own height below the plot.
+    private enum ChartLayout {
+        static let plotAreaHeight: CGFloat = 156
+        static let emptyStateHeight: CGFloat = 156
+        static let titleToLabelsGap: CGFloat = 14   // title/legend row → phase labels
+        static let labelsToPlotGap: CGFloat = 4     // phase labels hug their bands
+        static let weekLabelSpacing: CGFloat = 8    // plot bottom → W1..WN labels
+    }
+
+    /// Y domain derived from the plotted data, padded so both lines show real
+    /// vertical movement and points never touch the plot edges. Adapts to any
+    /// multiplier spread and any week count — no fixed 30...130 window.
+    private var yDomain: ClosedRange<Double> {
+        let values = points.map(\.value)
+        guard let lo = values.min(), let hi = values.max() else { return 0...100 }
+        let pad = max(10, (hi - lo) * 0.15)
+        return (lo - pad)...(hi + pad)
+    }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: NewBlockScreenTokens.sectionGap) {
+        VStack(alignment: .leading, spacing: 0) {
             // Section label + legend on the same row
             HStack {
                 Text("PROGRESSION OVERVIEW")
@@ -914,6 +930,7 @@ fileprivate struct NewBlockProgressionChart: View {
                     }
                 }
             }
+            .padding(.bottom, ChartLayout.titleToLabelsGap)
 
             if phases.isEmpty {
                 Text("Add phases to preview progression")
@@ -921,7 +938,7 @@ fileprivate struct NewBlockProgressionChart: View {
                     .tracking(0.6)
                     .foregroundStyle(NewBlockScreenTokens.muted)
                     .frame(maxWidth: .infinity, alignment: .center)
-                    .frame(height: NewBlockScreenTokens.previewHeight)
+                    .frame(height: ChartLayout.emptyStateHeight)
             } else {
                 // Top phase abbreviation labels (proportional width) — required: ForEach(phases, id: \.draftID)
                 GeometryReader { geo in
@@ -943,16 +960,18 @@ fileprivate struct NewBlockProgressionChart: View {
                     }
                 }
                 .frame(height: 14)
+                .padding(.bottom, ChartLayout.labelsToPlotGap)
 
                 // The chart with colored phase-band regions behind the lines
                 Chart {
-                    // Faint colored background bands per phase
+                    // Faint colored background bands per phase — span the full
+                    // y domain so the pastel columns fill the plot height.
                     ForEach(phaseBands) { band in
                         RectangleMark(
                             xStart: .value("s", band.start),
                             xEnd: .value("e", band.end),
-                            yStart: .value("lo", yLow),
-                            yEnd: .value("hi", yHigh)
+                            yStart: .value("lo", yDomain.lowerBound),
+                            yEnd: .value("hi", yDomain.upperBound)
                         )
                         .foregroundStyle(
                             BlockPhaseColors.badgeColor(for: band.kind).opacity(0.18)
@@ -993,12 +1012,16 @@ fileprivate struct NewBlockProgressionChart: View {
                                 Text("W\(week)")
                                     .font(NewBlockType.micro)
                                     .foregroundStyle(NewBlockScreenTokens.muted)
+                                    .padding(.top, ChartLayout.weekLabelSpacing)
                             }
                         }
                     }
                 }
                 .chartYAxis(.hidden)
-                .frame(height: NewBlockScreenTokens.previewHeight)
+                .chartYScale(domain: yDomain)
+                .chartPlotStyle { plotArea in
+                    plotArea.frame(height: ChartLayout.plotAreaHeight)
+                }
             }
         }
         .padding(NewBlockScreenTokens.cardPadding)
@@ -1619,5 +1642,32 @@ fileprivate struct NewBlockDurationSheet: View {
     draft.name = "Hypertrophy Meso"
     return BlockBuilderView(draft: draft)
         .modelContainer(PreviewModelContainer.make(seedFixture: false))
+}
+
+// 7-week fixture for chart-proportion checks against final-design.png.
+// (BlockPhaseKind has 4 cases; the mockup's separate "Realization" phase is
+// covered by .realization, which renders as "Peak".)
+@MainActor
+private func sevenWeekPhases() -> [BlockPhaseDraft] {
+    [
+        BlockPhaseDraft(kind: .accumulation, weeks: 2, volumeMultiplier: 1.2, intensityMultiplier: 0.70),
+        BlockPhaseDraft(kind: .intensification, weeks: 2, volumeMultiplier: 1.0, intensityMultiplier: 0.85),
+        BlockPhaseDraft(kind: .deload, weeks: 1, volumeMultiplier: 0.5, intensityMultiplier: 0.60),
+        BlockPhaseDraft(kind: .realization, weeks: 2, volumeMultiplier: 0.8, intensityMultiplier: 0.95),
+    ]
+}
+
+#Preview("New Block — 7-week meso") {
+    let draft = BlockDraft.newBlock()
+    draft.name = "Hypertrophy Meso"
+    draft.phases = sevenWeekPhases()
+    return BlockBuilderView(draft: draft)
+        .modelContainer(PreviewModelContainer.make(seedFixture: false))
+}
+
+#Preview("Progression chart — 7-week") {
+    NewBlockProgressionChart(phases: sevenWeekPhases())
+        .padding(20)
+        .background(Color(red: 240 / 255, green: 237 / 255, blue: 229 / 255))
 }
 #endif
