@@ -68,100 +68,114 @@ public struct SetRow: View {
 
     public var body: some View {
         VStack(spacing: 0) {
-            // MARK: Main set row HStack
-            HStack(spacing: 8) {
-                // S{N} / W{N} leading label — BRUFont.bodyDefault per UI-SPEC line 369
-                Text(setLabel)
-                    .font(BRUFont.bodyDefault)
-                    .foregroundStyle(Color.bruMuted)
-                    .frame(width: 32, alignment: .leading)
+            // MARK: Main set row — two-line layout (approved 2026-06-10)
+            // Single-line layout overflowed all device widths (~532pt required,
+            // ~350pt available on 390pt devices). RPE chips + SetTypeChip move
+            // to line 2, indented to align under the PREV column.
+            VStack(alignment: .leading, spacing: 6) {
+                // LINE 1 — numbers + action buttons
+                HStack(spacing: 8) {
+                    // S{N} / W{N} leading label — BRUFont.bodyDefault per UI-SPEC line 369
+                    Text(setLabel)
+                        .font(BRUFont.bodyDefault)
+                        .foregroundStyle(Color.bruMuted)
+                        .frame(width: 32, alignment: .leading)
 
-                PreviousColumn(
-                    exerciseID: sessionExercise.exercise?.id,
-                    intentRaw: sessionExercise.session?.intentRaw ?? Intent.strength.rawValue
-                )
-                .frame(width: 80, alignment: .leading)
+                    PreviousColumn(
+                        exerciseID: sessionExercise.exercise?.id,
+                        intentRaw: sessionExercise.session?.intentRaw ?? Intent.strength.rawValue
+                    )
+                    .frame(width: 80, alignment: .leading)
 
-                // Weight cell — PrescriptionWeightCell handles prescribed/range/override display.
-                // Tap on cell area (not info icon) toggles plate stack disclosure.
-                PrescriptionWeightCell(
-                    weight: $entry.weight,
-                    prescribed: prescribed,
-                    range: explanation?.range,
-                    explanation: explanation,
-                    wasManualOverride: $entry.wasManualOverride,
-                    isComplete: entry.isComplete,
-                    onTapEmptyCell: onTapEmptyCell
-                )
-                .frame(width: 60)
-                .contentShape(Rectangle())
-                .onTapGesture {
-                    togglePlateDisclosure()
-                    if !entry.isComplete { onTapEmptyCell() }
-                }
-                // Completed set: weight/reps numerics turn bruSignal per UI-SPEC line 241
-                .foregroundStyle(entry.isComplete ? Color.bruSignal : Color.bruInk)
-
-                // Reps TextField — mono emphasis + bruSignal when complete
-                TextField("—", text: $repsText)                                  // UI-SPEC verbatim "—"
-                    .font(BRUFont.bodyEmphasis)
-                    .monospacedDigit()
-                    .foregroundStyle(entry.isComplete ? Color.bruSignal : Color.bruInk)
-                    .keyboardType(.numberPad)
-                    .frame(width: 40)
+                    // Weight cell — PrescriptionWeightCell handles prescribed/range/override display.
+                    // Tap on cell area (not info icon) toggles plate stack disclosure.
+                    PrescriptionWeightCell(
+                        weight: $entry.weight,
+                        prescribed: prescribed,
+                        range: explanation?.range,
+                        explanation: explanation,
+                        wasManualOverride: $entry.wasManualOverride,
+                        isComplete: entry.isComplete,
+                        onTapEmptyCell: onTapEmptyCell
+                    )
+                    .frame(width: 60)
+                    .contentShape(Rectangle())
                     .onTapGesture {
+                        togglePlateDisclosure()
                         if !entry.isComplete { onTapEmptyCell() }
                     }
-                    .onChange(of: repsText) { _, newValue in
-                        if let i = Int(newValue) { entry.reps = i }
-                    }
+                    // Completed set: weight/reps numerics turn bruSignal per UI-SPEC line 241
+                    .foregroundStyle(entry.isComplete ? Color.bruSignal : Color.bruInk)
 
-                InlineRPEChipRow(rpe: Binding(
-                    get: { entry.rpe },
-                    set: { entry.rpe = $0 }
-                ))
-
-                SetTypeChip(setTypeRaw: Binding(
-                    get: { entry.setTypeRaw },
-                    set: { entry.setTypeRaw = $0 }
-                ))
-
-                Spacer()
-
-                // Per-set notes button — typographic "✎" glyph (NOT SF Symbol)
-                // per UI-SPEC line 199: "square.and.pencil → '✎' glyph"
-                Button {
-                    presentingSetNote = true
-                } label: {
-                    Text("✎")
+                    // Reps TextField — mono emphasis + bruSignal when complete
+                    TextField("—", text: $repsText)                              // UI-SPEC verbatim "—"
                         .font(BRUFont.bodyEmphasis)
-                        .foregroundStyle(entry.notes != nil ? Color.bruInk : Color.bruMuted)
-                }
-                .buttonStyle(.plain)
-                .frame(minWidth: 44, minHeight: 44)                              // UI-SPEC HIG 44pt
-                .contentShape(Rectangle())
-                .accessibilityLabel("Note for set \(entry.orderIndex + 1)")      // UI-SPEC verbatim a11y
-                .sheet(isPresented: $presentingSetNote) {
-                    PerSetNoteSheet(entry: entry)
+                        .monospacedDigit()
+                        .foregroundStyle(entry.isComplete ? Color.bruSignal : Color.bruInk)
+                        .keyboardType(.numberPad)
+                        .frame(width: 40)
+                        .onTapGesture {
+                            if !entry.isComplete { onTapEmptyCell() }
+                        }
+                        .onChange(of: repsText) { _, newValue in
+                            if let i = Int(newValue) { entry.reps = i }
+                        }
+
+                    Spacer(minLength: 0)
+
+                    // Per-set notes button — typographic "✎" glyph (NOT SF Symbol)
+                    // per UI-SPEC line 199: "square.and.pencil → '✎' glyph"
+                    Button {
+                        presentingSetNote = true
+                    } label: {
+                        Text("✎")
+                            .font(BRUFont.bodyEmphasis)
+                            .foregroundStyle(entry.notes != nil ? Color.bruInk : Color.bruMuted)
+                    }
+                    .buttonStyle(.plain)
+                    .frame(minWidth: 44, minHeight: 44)                          // UI-SPEC HIG 44pt
+                    .contentShape(Rectangle())
+                    .accessibilityLabel("Note for set \(entry.orderIndex + 1)")  // UI-SPEC verbatim a11y
+                    .sheet(isPresented: $presentingSetNote) {
+                        PerSetNoteSheet(entry: entry)
+                    }
+
+                    // Completion button — SetCompletionGlyph replaces SF Symbol checkmark
+                    // Guard: entry.weight > 0 && entry.reps > 0 (T-02.1-07-01)
+                    Button {
+                        if entry.weight > 0 && entry.reps > 0 {
+                            onCommit()
+                        }
+                    } label: {
+                        SetCompletionGlyph(isComplete: entry.isComplete)
+                    }
+                    .buttonStyle(.plain)
+                    .frame(minWidth: 44, minHeight: 44)                          // UI-SPEC HIG 44pt
+                    .contentShape(Rectangle())
+                    .accessibilityLabel(
+                        entry.isComplete
+                        ? "Set \(entry.orderIndex + 1) complete"
+                        : "Mark set \(entry.orderIndex + 1) complete"
+                    )
                 }
 
-                // Completion button — SetCompletionGlyph replaces SF Symbol checkmark
-                // Guard: entry.weight > 0 && entry.reps > 0 (T-02.1-07-01)
-                Button {
-                    if entry.weight > 0 && entry.reps > 0 {
-                        onCommit()
-                    }
-                } label: {
-                    SetCompletionGlyph(isComplete: entry.isComplete)
+                // LINE 2 — RPE chips + set-type chip
+                // .padding(.leading, 40) = 32pt setLabel + 8pt gap,
+                // so chips align under the PREV column.
+                HStack(spacing: 8) {
+                    InlineRPEChipRow(rpe: Binding(
+                        get: { entry.rpe },
+                        set: { entry.rpe = $0 }
+                    ))
+
+                    SetTypeChip(setTypeRaw: Binding(
+                        get: { entry.setTypeRaw },
+                        set: { entry.setTypeRaw = $0 }
+                    ))
+
+                    Spacer(minLength: 0)
                 }
-                .buttonStyle(.plain)
-                .frame(minWidth: 44, minHeight: 44)                              // UI-SPEC HIG 44pt
-                .contentShape(Rectangle())
-                .accessibilityLabel(
-                    entry.isComplete
-                    ? "Set \(entry.orderIndex + 1) complete"
-                    : "Mark set \(entry.orderIndex + 1) complete"
-                )
+                .padding(.leading, 40)
             }
             .padding(.vertical, 12)                                              // UI-SPEC md
 
