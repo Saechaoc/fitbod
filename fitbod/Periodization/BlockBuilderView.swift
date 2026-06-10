@@ -75,9 +75,9 @@ public struct BlockBuilderView: View {
                                     onAddPhase: { presentingAddPhaseTypePicker = true }
                                 )
 
-                                // 260528-vi2 r3: tighter card→card gap (6pt) than the
-                                // header→cards gap (10pt), matching the mockup's dense row list.
-                                VStack(alignment: .leading, spacing: 6) {
+                                // 260610-dbz: 10pt paper separation between phase cards
+                                // to match final-design.png (was 6pt in 260528-vi2 r3).
+                                VStack(alignment: .leading, spacing: 10) {
                                     ForEach(Array(draft.phases.enumerated()), id: \.element.draftID) { index, phase in
                                         NewBlockPhaseEditorRow(
                                             draft: phase,
@@ -762,21 +762,29 @@ fileprivate struct NewBlockPhasesHeader: View {
 
             Spacer()
 
-            // Coral "+ ADD PHASE" — outlined pill accent (260528-vi2 r2)
+            // White card capsule "+ ADD PHASE" — two-tone coral/ink label (260610-dbz)
             Button(action: onAddPhase) {
-                Text("+ ADD PHASE")
-                    .font(NewBlockType.chrome)
-                    .tracking(NewBlockScreenTokens.chipTracking)
-                    .foregroundStyle(NewBlockScreenTokens.signal)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 7)
-                    .overlay(
-                        Capsule()
-                            .stroke(NewBlockScreenTokens.signal, lineWidth: 1.5)
-                    )
-                    .frame(minHeight: 44)
+                (
+                    Text("+ ")
+                        .foregroundStyle(NewBlockScreenTokens.signal)
+                    + Text("ADD PHASE")
+                        .foregroundStyle(NewBlockScreenTokens.ink)
+                )
+                .font(NewBlockType.chrome)
+                .tracking(NewBlockScreenTokens.chipTracking)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 7)
+                .background(NewBlockScreenTokens.card, in: Capsule())
+                .overlay(
+                    Capsule()
+                        .stroke(NewBlockScreenTokens.cardStroke,
+                                lineWidth: NewBlockScreenTokens.cardStrokeWidth)
+                )
+                .shadow(color: NewBlockScreenTokens.cardShadow, radius: 6, x: 0, y: 2)
+                .frame(minHeight: 44)
             }
             .buttonStyle(.plain)
+            .accessibilityLabel("+ ADD PHASE")
         }
         .frame(minHeight: NewBlockScreenTokens.phasesHeaderHeight)
         .background(NewBlockScreenTokens.paper)
@@ -1011,6 +1019,13 @@ fileprivate struct NewBlockPhaseEditorRow: View {
 
     @State private var presentingEditor = false
 
+    /// 1pt × 34pt hairline divider between stat columns (260610-dbz).
+    private var phaseRowDivider: some View {
+        Rectangle()
+            .fill(NewBlockScreenTokens.hair)
+            .frame(width: 1, height: 34)
+    }
+
     var body: some View {
         HStack(spacing: 0) {
             let chipFill  = BlockPhaseColors.badgeColor(for: draft.kind)
@@ -1049,16 +1064,19 @@ fileprivate struct NewBlockPhaseEditorRow: View {
 
                 Spacer(minLength: 10)
 
-                // Left-aligned compact stat grid: WEEKS / VOL / INT
-                HStack(alignment: .top, spacing: 12) {
+                // Stat grid: hairline dividers before each column + chevron (260610-dbz)
+                HStack(alignment: .top, spacing: 8) {
+                    phaseRowDivider
                     NewBlockReadOnlyStatColumn(
                         label: "WEEKS",
                         value: "\(draft.weeks)"
                     )
+                    phaseRowDivider
                     NewBlockReadOnlyStatColumn(
                         label: "VOL",
                         value: NewBlockPhaseText.volumeValue(draft.volumeMultiplier)
                     )
+                    phaseRowDivider
                     NewBlockReadOnlyStatColumn(
                         label: "INT",
                         value: NewBlockPhaseText.intensityValue(draft.intensityMultiplier)
@@ -1090,26 +1108,28 @@ fileprivate struct NewBlockPhaseEditorRow: View {
     }
 }
 
-/// Read-only LEFT-aligned label-over-value stat column for the phase row.
-/// 260528-vi2 r2: left-aligned + fixed width so WEEKS/VOL/INT line up as a grid
-/// (was trailing/variable-width, which read cramped against the chevron).
+/// Center-aligned label-over-value stat column for the phase row.
+/// 260610-dbz: center-aligned + narrowed to 38pt (was 40pt left-aligned in 260528-vi2 r2)
+/// to compensate for the added hairline dividers and keep the title block from being squeezed.
 fileprivate struct NewBlockReadOnlyStatColumn: View {
     let label: String
     let value: String
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 2) {
+        VStack(alignment: .center, spacing: 2) {
             Text(label)
                 .font(NewBlockType.micro)
                 .tracking(1.2)
                 .foregroundStyle(NewBlockScreenTokens.muted)
+                .multilineTextAlignment(.center)
             Text(value)
                 .font(Font.custom("BebasNeue-Regular", size: 22))
                 .foregroundStyle(NewBlockScreenTokens.ink)
                 .lineLimit(1)
                 .minimumScaleFactor(0.8)
+                .multilineTextAlignment(.center)
         }
-        .frame(width: 40, alignment: .leading)
+        .frame(width: 38, alignment: .center)
     }
 }
 
