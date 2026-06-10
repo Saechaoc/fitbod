@@ -322,8 +322,8 @@ fileprivate enum NewBlockScreenTokens {
 
     static let metricCellHeight: CGFloat   = 36
     static let addPhaseSlotHeight: CGFloat = 70
-    // 260528-vi2: bumped 60 → 72 to clear the new taller bottom bar (52pt button + ~20pt padding)
-    static let bottomActionHeight: CGFloat  = 72
+    // 260610-h3v: bumped 72 → 86 to clear the now-taller bottom bar (52pt button + ~32pt padding)
+    static let bottomActionHeight: CGFloat  = 86
     static let bottomButtonHeight: CGFloat  = 54
     static let scrollBottomClearance: CGFloat = 44
 }
@@ -1931,7 +1931,7 @@ fileprivate struct NewBlockBottomActionBar: View {
             .disabled(!canCreate)
         }
         .padding(.horizontal, NewBlockScreenTokens.screenMargin)
-        .padding(.top, 10)
+        .padding(.top, 24)
         .padding(.bottom, 8)
         // Paper must run through the bottom safe area — the ScrollView's content
         // scrolls under the home-indicator zone, and a background that stops at
