@@ -173,6 +173,10 @@ public struct BlockBuilderView: View {
                 applyPreset(preset)
             }
         }
+        .onDisappear {
+            undoTask?.cancel()
+            undoTask = nil
+        }
     }
 
     private func cancel() {
@@ -326,6 +330,7 @@ fileprivate enum NewBlockScreenTokens {
 
 fileprivate enum NewBlockType {
     static let chrome = Font.custom("SpaceGrotesk-Bold", size: 11)
+    static let cta    = Font.custom("SpaceGrotesk-Bold", size: 13)
     static let chip   = Font.custom("SpaceGrotesk-Bold", size: 9)
     static let label  = Font.custom("SpaceGrotesk-Bold", size: 10)
     static let micro  = Font.custom("SpaceGrotesk-Bold", size: 8)
@@ -1880,6 +1885,7 @@ fileprivate struct NewBlockUndoToast: View {
 // MARK: - Bottom Bar
 
 // 260528-vi2: ghost CANCEL (left, intrinsic width) + filled rounded SAVE TEMPLATE (right, fills remaining).
+// 260610-guh: restyle — outlined CANCEL pill, bookmark.fill icon, cta-size typography, drop trailing glyphs from display.
 // No heavy 3pt rule. Sits on paper with screen-margin insets.
 fileprivate struct NewBlockBottomActionBar: View {
     let canCreate: Bool
@@ -1889,28 +1895,31 @@ fileprivate struct NewBlockBottomActionBar: View {
 
     var body: some View {
         HStack(spacing: 12) {
-            // Ghost CANCEL button
+            // Ghost-outlined CANCEL button — faint border, muted text, no fill
             Button(action: onCancel) {
                 Text("CANCEL")
-                    .font(NewBlockType.chrome)
-                    .tracking(NewBlockScreenTokens.ctaTracking)
-                    .foregroundStyle(NewBlockScreenTokens.ink)
+                    .font(NewBlockType.cta)
+                    .tracking(2.5)
+                    .foregroundStyle(NewBlockScreenTokens.muted)
                     .frame(height: 52)
-                    .padding(.horizontal, 18)
+                    .padding(.horizontal, 22)
             }
             .buttonStyle(.plain)
+            .overlay(
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .stroke(NewBlockScreenTokens.cardStroke, lineWidth: 1)
+            )
 
             // Filled primary button — fills remaining width
             Button(action: onPrimary) {
-                HStack(spacing: 6) {
-                    // Small filled square glyph (mockup detail)
-                    RoundedRectangle(cornerRadius: 2, style: .continuous)
-                        .frame(width: 7, height: 7)
-                        .foregroundStyle(.white)
+                HStack(spacing: 8) {
+                    Image(systemName: "bookmark.fill")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(canCreate ? .white : NewBlockScreenTokens.muted)
 
-                    Text(primaryTitle)
-                        .font(NewBlockType.chrome)
-                        .tracking(NewBlockScreenTokens.ctaTracking)
+                    Text(displayPrimaryTitle)
+                        .font(NewBlockType.cta)
+                        .tracking(2.5)
                         .foregroundStyle(canCreate ? .white : NewBlockScreenTokens.muted)
                 }
                 .frame(maxWidth: .infinity)
@@ -1936,6 +1945,12 @@ fileprivate struct NewBlockBottomActionBar: View {
             return "NAME FIRST ↑"
         }
         return isEditing ? "SAVE CHANGES ▸" : "SAVE TEMPLATE ▸"
+    }
+
+    private var displayPrimaryTitle: String {
+        primaryTitle
+            .replacingOccurrences(of: " ▸", with: "")
+            .replacingOccurrences(of: " ↑", with: "")
     }
 }
 
