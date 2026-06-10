@@ -832,11 +832,18 @@ fileprivate struct NewBlockProgressionChart: View {
         return result
     }
 
-    /// Cumulative week boundaries for x-axis marks.
+    /// Cumulative week boundaries (kept for phase bands).
     private var cumulativeBoundaries: [Int] {
         phases.reduce(into: [Int]()) { acc, phase in
             acc.append((acc.last ?? 0) + phase.weeks)
         }
+    }
+
+    /// X-axis week labels: every week when totalWeeks <= 8; strided up for longer blocks.
+    private var weekAxisValues: [Int] {
+        guard totalWeeks >= 1 else { return [] }
+        let step = totalWeeks <= 8 ? 1 : Int(ceil(Double(totalWeeks) / 8.0))
+        return Array(stride(from: 1, through: totalWeeks, by: max(1, step)))
     }
 
     /// Phase bands for colored background regions (start..end in cumulative weeks).
@@ -874,27 +881,28 @@ fileprivate struct NewBlockProgressionChart: View {
                 // Hand-rolled legend (top-right)
                 HStack(spacing: NewBlockScreenTokens.sectionGap) {
                     HStack(spacing: 4) {
-                        Rectangle()
-                            .fill(NewBlockScreenTokens.ink)
-                            .frame(width: 16, height: 2)
-                        Circle()
-                            .fill(NewBlockScreenTokens.ink)
-                            .frame(width: 5, height: 5)
+                        RoundedRectangle(cornerRadius: 2)
+                            .fill(NewBlockScreenTokens.hair)
+                            .frame(width: 8, height: 8)
                         Text("Volume")
                             .font(NewBlockType.micro)
-                            .foregroundStyle(NewBlockScreenTokens.ink)
+                            .foregroundStyle(NewBlockScreenTokens.muted)
                     }
                     HStack(spacing: 4) {
                         HStack(spacing: 2) {
-                            ForEach(0..<3, id: \.self) { _ in
-                                Rectangle()
-                                    .fill(NewBlockScreenTokens.muted)
-                                    .frame(width: 4, height: 2)
-                            }
+                            Rectangle()
+                                .fill(NewBlockScreenTokens.ink)
+                                .frame(width: 8, height: 2)
+                            Circle()
+                                .fill(NewBlockScreenTokens.ink)
+                                .frame(width: 5, height: 5)
+                            Rectangle()
+                                .fill(NewBlockScreenTokens.ink)
+                                .frame(width: 8, height: 2)
                         }
                         Text("Intensity")
                             .font(NewBlockType.micro)
-                            .foregroundStyle(NewBlockScreenTokens.muted)
+                            .foregroundStyle(NewBlockScreenTokens.ink)
                     }
                 }
             }
@@ -914,7 +922,7 @@ fileprivate struct NewBlockProgressionChart: View {
                             Text(NewBlockPhaseText.abbreviation(for: phase.kind))
                                 .font(NewBlockType.micro)
                                 .tracking(0.8)
-                                .foregroundStyle(NewBlockScreenTokens.muted)
+                                .foregroundStyle(BlockPhaseColors.badgeColor(for: phase.kind))
                                 .frame(
                                     width: totalWeeks > 0
                                         ? geo.size.width * CGFloat(phase.weeks) / CGFloat(totalWeeks)
@@ -939,12 +947,12 @@ fileprivate struct NewBlockProgressionChart: View {
                             yEnd: .value("hi", yHigh)
                         )
                         .foregroundStyle(
-                            BlockPhaseColors.badgeColor(for: band.kind).opacity(0.12)
+                            BlockPhaseColors.badgeColor(for: band.kind).opacity(0.18)
                         )
                     }
 
-                    // Volume line (solid ink + points) ON TOP of bands
-                    ForEach(points.filter { $0.series == "Volume" }) { pt in
+                    // Intensity line (solid ink + points) ON TOP of bands
+                    ForEach(points.filter { $0.series == "Intensity" }) { pt in
                         LineMark(
                             x: .value("Week", pt.week),
                             y: .value("Value", pt.value),
@@ -957,10 +965,10 @@ fileprivate struct NewBlockProgressionChart: View {
                             y: .value("Value", pt.value)
                         )
                         .foregroundStyle(NewBlockScreenTokens.ink)
-                        .symbolSize(24)
+                        .symbolSize(40)
                     }
-                    // Intensity line (dashed muted) ON TOP of bands
-                    ForEach(points.filter { $0.series == "Intensity" }) { pt in
+                    // Volume line (dashed muted, no points) ON TOP of bands
+                    ForEach(points.filter { $0.series == "Volume" }) { pt in
                         LineMark(
                             x: .value("Week", pt.week),
                             y: .value("Value", pt.value),
@@ -971,24 +979,17 @@ fileprivate struct NewBlockProgressionChart: View {
                     }
                 }
                 .chartXAxis {
-                    AxisMarks(values: cumulativeBoundaries) { value in
+                    AxisMarks(values: weekAxisValues) { value in
                         if let week = value.as(Int.self) {
                             AxisValueLabel {
                                 Text("W\(week)")
                                     .font(NewBlockType.micro)
                                     .foregroundStyle(NewBlockScreenTokens.muted)
                             }
-                            AxisTick(stroke: StrokeStyle(lineWidth: 1))
-                                .foregroundStyle(NewBlockScreenTokens.muted)
                         }
                     }
                 }
-                .chartYAxis {
-                    AxisMarks(position: .trailing, values: .automatic(desiredCount: 3)) { _ in
-                        AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5))
-                            .foregroundStyle(NewBlockScreenTokens.hair)
-                    }
-                }
+                .chartYAxis(.hidden)
                 .frame(height: NewBlockScreenTokens.previewHeight)
             }
         }
@@ -1133,10 +1134,10 @@ fileprivate enum NewBlockPhaseText {
 
     static func abbreviation(for kind: BlockPhaseKind) -> String {
         switch kind {
-        case .accumulation:   return "ACCUM"
-        case .intensification: return "INTEN"
-        case .realization:    return "PEAK"
-        case .deload:         return "DELOAD"
+        case .accumulation:   return "Accum."
+        case .intensification: return "Intens."
+        case .realization:    return "Peak"
+        case .deload:         return "Deload"
         }
     }
 
