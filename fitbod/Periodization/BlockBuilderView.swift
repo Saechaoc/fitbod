@@ -1299,8 +1299,8 @@ fileprivate struct NewBlockProgressionChart: View {
 
 // 260528-vi2: compact rounded phase card. Direct-manipulation affordances:
 // swipe-left reveals/commits Delete (custom gesture — .swipeActions is a no-op in a
-// LazyVStack), and the trailing ⋮⋮ handle long-press-drags to reorder. The context
-// menu (Move Up / Move Down / Delete) is kept as the accessibility fallback.
+// LazyVStack), and the trailing ⋮⋮ handle long-press-drags to reorder. No .contextMenu:
+// it intercepts long-press and fights the drag; VoiceOver gets .accessibilityActions.
 fileprivate struct NewBlockPhaseEditorRow: View {
     @Bindable var draft: BlockPhaseDraft
     let displayIndex: Int
@@ -1353,12 +1353,6 @@ fileprivate struct NewBlockPhaseEditorRow: View {
                 .simultaneousGesture(swipeGesture)
         }
         .onGeometryChange(for: CGFloat.self, of: { $0.size.width }, action: { cardWidth = $0 })
-        .contextMenu {
-            Button("Move Up") { onMoveUp() }
-            Button("Move Down") { onMoveDown() }
-            Divider()
-            Button("Delete Phase", role: .destructive) { onDelete() }
-        }
         .accessibilityLabel("Phase \(displayIndex): \(BlockPhaseColors.phaseLabel(draft.kind))")
         .accessibilityActions {
             Button("Move Up") { onMoveUp() }
