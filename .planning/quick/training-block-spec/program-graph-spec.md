@@ -34,7 +34,7 @@ Everything is graph edges by reference — links are never copies or claims:
 Two freeze points break the live-reference rule, deliberately:
 
 1. **Log time** — logged workouts snapshot prescription at completion (already shipped:
-   copy-at-log-time architecture rule). V5 adds `Session.templateName: String?` so a
+   copy-at-log-time architecture rule). V7 adds `Session.templateName: String?` so a
    nullified template ref never strips names from history rows.
 2. **Block end** — `archivedConfigJSON` written once, in the same save that sets
    `endDate`. Progress and DONE-block views read the archive, never live templates.
@@ -44,20 +44,28 @@ live-editable while a block runs; mid-block progression edits are the app's poin
 The **live-edit banner** (§8) exists precisely because of that: awareness, not
 friction.
 
-## 3. Schema V5
+## 3. Schema V7
+
+> **Reality reconciliation (2026-06-10):** the live store is **SchemaV6** (V1–V6
+> shipped — Phase 4 took the V5 name, Phase 5 took V6). The new schema is **V7**,
+> migrating from V6. The template child entity is `RoutineExercise` (there is no
+> `RoutineExerciseTemplate`). Aux entities `RoutineFolder`,
+> `RoutineExerciseSetOverride`, and `SupersetGroup` **keep their names** — each
+> store-entity rename costs a custom-stage row copy, not justified for cosmetics.
+> Accepted naming debt, noted in the CLAUDE.md glossary.
 
 ### Renames (call-graph rename via gitnexus, custom migration stage)
 
-| V4 | V5 |
+| V6 (current) | V7 |
 |---|---|
 | `Routine` | `SessionTemplate` |
-| `RoutineExerciseTemplate` | `SessionExerciseTemplate` |
+| `RoutineExercise` | `SessionExerciseTemplate` |
 | `Session.routine` | `Session.template` |
 
 The split entity is named `Split`, **not** `Routine`, for two reasons: (a) SwiftData
-inferred migration matches entities by name — reusing `Routine` would carry V4
-template rows into the V5 split entity as ghosts unless a purge loop is perfect;
-(b) git archaeology stays unambiguous — pre-V5 `Routine` always means template,
+inferred migration matches entities by name — reusing `Routine` would carry V6
+template rows into the V7 split entity as ghosts unless a purge loop is perfect;
+(b) git archaeology stays unambiguous — pre-V7 `Routine` always means template,
 `Split` always means split.
 
 ### New entities
@@ -199,30 +207,30 @@ day-chip UI shows soft mismatch ("5 days / 4 sessions") at attach time.
 
 - Written in the same save as `endDate` (no completed-without-archive window).
 - `"v": 1` stamped for V6+ readers.
-- Pre-V5 completed blocks: backfilled best-effort from post-migration state at
+- Pre-V7 completed blocks: backfilled best-effort from post-migration state at
   migration time (drift accepted). **No live-template fallback path in readers, ever.**
 - Decode failure in a reader → explicit error state ("Archive unreadable"); the
   no-live-fallback rule forbids recovering from current templates.
 - v1 consumer: archived-mode `BlockOverviewScreen` only. Progress charts over
   archives = future phase; contract exists so that phase needs no schema change.
 
-## 7. Migration V4 → V5 (custom stage)
+## 7. Migration V6 → V7 (custom stage)
 
-1. `willMigrate`: stash old `Routine` rows — **including each row's block ID from V4
+1. `willMigrate`: stash old `Routine` rows — **including each row's block ID from V6
    `Routine.block`** (step 3 depends on it) — and Session→Routine ID pairs, as plain
    structs (model objects don't cross the stage boundary).
 2. `didMigrate`: create `SessionTemplate` per stashed row; remap `Session.template` refs.
-3. Per V4 block with attached templates: auto-create a `Split` named "{block.name}
+3. Per V6 block with attached templates: auto-create a `Split` named "{block.name}
    split", slots in **name-sorted order** (matches the old weekday heuristic), mode
    `.rotation`. Completed blocks' auto-splits are born `isArchived = true` (history
    doesn't pollute the picker).
 4. Backfill `Session.slot` on the active block's last completed session (template's
    index in the name-sorted auto-split) so a mid-block upgrade doesn't reset rotation.
 5. Backfill `Session.templateName` from the remapped template's name.
-6. Best-effort `archivedConfigJSON` for pre-V5 completed blocks.
+6. Best-effort `archivedConfigJSON` for pre-V7 completed blocks.
 7. Old `Routine.block` field dies with the entity.
 
-`SchemaV5MigrationTests` asserts, minimum: ghost-free picker (only auto-splits exist,
+`SchemaV7MigrationTests` asserts, minimum: ghost-free picker (only auto-splits exist,
 archived ones hidden), ref remapping, rotation continuity (point 4), archive backfill
 presence, templateName backfill.
 
@@ -276,7 +284,7 @@ rest-day empty state, `StartBlockCTA` all stay.
 
 ## 9. Tests
 
-- `SchemaV5MigrationTests` (§7 assertions).
+- `SchemaV7MigrationTests` (§7 assertions).
 - Scheduler suite: the unified predicate across skip / repeat / reorder / ad-hoc /
   deleted-slot (nullified) / swapped-split / abandoned-in-progress; fixedWeekly rest
   days, count drift, mid-block-emptied split (zero-slot short-circuit, no mod-by-zero);
@@ -295,7 +303,7 @@ rest-day empty state, `StartBlockCTA` all stay.
 
 Tests for each layer gate the next:
 
-1. **Migration** — V5 schema + custom stage + `SchemaV5MigrationTests`.
+1. **Migration** — V7 schema + custom stage + `SchemaV7MigrationTests`.
 2. **Resolver + lifecycle** — scheduler, derived status, start/end one-save
    transactions, delete rules.
 3. **Program surfaces** — `ProgramView` rebuild, `SplitDetailView`,

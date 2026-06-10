@@ -188,10 +188,13 @@ Phase 1 in flight; metrics roll up at phase completion. Per-plan duration table:
 ### Roadmap Evolution
 
 - Phase 04.1 inserted after Phase 4: BRU Visual Rewrite (Periodization & Blocks) (URGENT)
-- Phase 7 added: BRU Visual Rewrite
+- Phase 7 added: BRU Visual Rewrite — SUPERSEDED 2026-06-10: never entered ROADMAP; its discuss artifacts archived to `.planning/archived-phases/07-bru-visual-rewrite-superseded-by-decimal-bru-phases/` (work shipped as decimal BRU phases 2.1/03.2/04.1/05.1/06.1). Phase number 7 reused below.
 - Phase 03.2 inserted after Phase 3: BRU rewrite for Phase 3 surfaces (URGENT)
 - Phase 05.1 inserted after Phase 5: BRU rewrite for Phase 5 surfaces (URGENT)
 - Phase 06.1 inserted after Phase 6: BRU rewrite for Phase 6 surfaces (URGENT)
+- Phase 7 added (2026-06-10): Program Graph Schema V7 & Migration — from approved spec `.planning/quick/training-block-spec/program-graph-spec.md`
+- Phase 8 added (2026-06-10): Scheduler Resolver & Block Lifecycle — same spec
+- Phase 9 added (2026-06-10): Program Surfaces — same spec. Spec corrected during registration: live store is SchemaV6 (V1–V6 shipped), so new schema is V7 not V5; template child entity is `RoutineExercise` not `RoutineExerciseTemplate`.
 
 ### Key Decisions (from PROJECT.md, locked in)
 

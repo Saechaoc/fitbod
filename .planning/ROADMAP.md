@@ -25,6 +25,9 @@ Granular, prescriptive workout sessions — every set in a session is intentiona
 - [x] **Phase 4: Periodization & Blocks** — Block builder, scheduled deloads, block timeline on home, remaining two progression strategies (block-periodized, hybrid)
 - [x] **Phase 5: Fatigue Model & Plateau Detection** — Stimulus-weighted weekly volume, MEV/MAV/MRV bars with verbs, muscle heatmap, plateau detector, fatigue-triggered deload advisory (completed 2007-05-23)
 - [x] **Phase 6: Progress Views, Export & Polish** — Intent-split charts, PRs, weekly tonnage, session comparison, weekly recap, CSV/JSON export, backup/restore (completed 2026-05-24)
+- [ ] **Phase 7: Program Graph Schema V7 & Migration** — Split/SplitSessionSlot entities, Routine→SessionTemplate + RoutineExercise→SessionExerciseTemplate renames, Block split/mode/trainingDays/archive fields, Session slot/templateName, custom V6→V7 migration stage, SchemaV7MigrationTests
+- [ ] **Phase 8: Scheduler Resolver & Block Lifecycle** — Unified rotation resolver predicate, fixedWeekly scheduling, derived block status switch, one-save start/end transactions, deny/nullify delete rules, ArchivedBlockConfig write + decode error state
+- [ ] **Phase 9: Program Surfaces** — ProgramView rebuild (BLOCKS/ROUTINES sections), SplitDetailView, BlockOverviewScreen live+archived modes, builder split band, live-edit banners, Today resolver wiring
 
 ---
 
@@ -274,6 +277,36 @@ Plans:
 | 5. Fatigue Model & Plateau Detection | 7/6 | Complete   | 2026-05-24 |
 | 6. Progress Views, Export & Polish | 11/11 | Complete   | 2026-05-24 |
 
+### Phase 7: Program Graph Schema V5 & Migration
+
+**Goal:** Schema V5 lands the program graph: `Split` + `SplitSessionSlot` entities (ordered via explicit `position`, contiguity as test invariant), `Routine`→`SessionTemplate` / `RoutineExerciseTemplate`→`SessionExerciseTemplate` renames, Block gains `split`/`schedulingMode`/`trainingDays`/`archivedConfigJSON`, logged Session gains `slot`/`templateName` and `template` ref rename. Custom V4→V5 migration stage stashes plain structs (incl. V4 `Routine.block` IDs), auto-creates per-block splits (name-sorted slots, `.rotation`, completed blocks' splits born archived), backfills rotation continuity slot + templateName + best-effort archives. `SchemaV5MigrationTests` green.
+**Requirements**: Authoritative contract: `.planning/quick/training-block-spec/program-graph-spec.md` §1–§3, §6–§7. Delete rules per §3/§4: slot.sessionTemplate `.deny`, Block.split nullify, Session.slot nullify, Split.slots cascade.
+**Depends on:** Phase 6
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd-plan-phase 7 to break down)
+
+### Phase 8: Scheduler Resolver & Block Lifecycle
+
+**Goal:** Today's session resolves from the block graph: unified rotation predicate (latest completed session with live slot on the block's current split → next position mod count; none → slot 0), fixedWeekly via canonical-order trainingDays, zero-slot short-circuit. Derived block status (ordered switch: completed → active → ready → draft) with `slotCount >= 1` ready gate and transition assertions. Start/end lifecycle: one-save handover (end + archive + activate atomically), split swap gated to draft/ready, service-layer conditional deny for split archive/delete while referenced, `ArchivedBlockConfig` v1 written at end with decode-failure error state. Scheduler + lifecycle + delete-rule + locale test suites green.
+**Requirements**: Authoritative contract: `.planning/quick/training-block-spec/program-graph-spec.md` §3 (status), §4–§6, §9.
+**Depends on:** Phase 7
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd-plan-phase 8 to break down)
+
+### Phase 9: Program Surfaces
+
+**Goal:** The program graph is visible and operable: ProgramView rebuilt with BLOCKS (status-badged cards, DONE collapse) and ROUTINES (split rows with live-block usage tags) sections while preserving the guarded empty-state design; new SplitDetailView (ordered slots, drag-reorder with reindex-on-write, template picker, usage, live-edit banner); BlockOverviewScreen live + archived modes (archived renders from `ArchivedBlockConfig`, hides attach/swap/mode/Start); block builder split band (picker + mode + day-chips); session template editor live-edit banner; TodayView wired to the Phase 8 resolver with empty-split fix-it surface. All 3 BlockBuilderView copy-guardrail suites stay green.
+**Requirements**: Authoritative contract: `.planning/quick/training-block-spec/program-graph-spec.md` §5 (edge surfaces), §8. UI terms per §1 glossary: "Session" = SessionTemplate, "Routine" = Split.
+**Depends on:** Phase 8
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd-plan-phase 9 to break down)
+
 ---
 
 ## Phase Dependency Graph
@@ -310,3 +343,36 @@ This ordering is dependency-driven and pitfall-aware (per research/SUMMARY.md an
 - [x] 06.1-05-PLAN.md — Wave 2: SettingsView full BRU rewrite (Profile + Units + Training + Volume + Smart-Progression + Export 2-card grid + outlined Backup panel + About) preserving ShareLink + fileImporter + destructive alert wires
 - [x] 06.1-06-PLAN.md — Wave 2: InSessionPRBanner full-bleed bruSignal slab + ExerciseHistoryView toolbar chart-icon → BRU HeaderAction "PROGRESS"
 - [x] 06.1-07-PLAN.md — Wave 3: BRUGrepAuditPhase6Tests + 3 UI smoke test files (ProgressHomeBRUUITests, SettingsBRUUITests, ProgressChartBRUUITests)
+
+### Phase 7: Program Graph Schema V7 & Migration
+
+**Goal:** Schema V7 lands the program graph: `Split` + `SplitSessionSlot` entities (ordered via explicit `position`, contiguity as test invariant — no `#Unique`), `Routine`→`SessionTemplate` / `RoutineExercise`→`SessionExerciseTemplate` renames, Block gains `split`/`schedulingMode`/`trainingDays`/`archivedConfigJSON`, logged Session gains `slot`/`templateName` and `routine`→`template` ref rename. Custom V6→V7 migration stage stashes plain structs (incl. V6 `Routine.block` IDs), auto-creates per-block splits (name-sorted slots, `.rotation`, completed blocks' splits born archived), backfills rotation-continuity slot + templateName + best-effort archives. `SchemaV7MigrationTests` green, including ghost-free splits picker assertion.
+**Mode:** mvp
+**Requirements**: Authoritative contract: `.planning/quick/training-block-spec/program-graph-spec.md` §1–§3, §6–§7. Delete rules per §3/§4: slot.sessionTemplate `.deny`, Block.split nullify, Session.slot nullify, Split.slots cascade. Aux entities (RoutineFolder, RoutineExerciseSetOverride, SupersetGroup) keep names — accepted naming debt.
+**Depends on:** Phase 6
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd-plan-phase 7 to break down)
+
+### Phase 8: Scheduler Resolver & Block Lifecycle
+
+**Goal:** Today's session resolves from the block graph: unified rotation predicate (latest completed session with live slot on the block's current split → next position mod count; none → slot 0), fixedWeekly via canonical-order trainingDays (sorted once at write via user's Calendar.firstWeekday, never re-sorted at read), zero-slot short-circuit. Derived block status (ordered switch: completed → active → ready → draft) with `slotCount >= 1` ready gate and transition assertions. Start/end lifecycle: one-save handover (end + archive + activate atomically), split swap gated to draft/ready, service-layer conditional deny for split archive/delete while referenced by non-completed blocks, `ArchivedBlockConfig` v1 written at end with decode-failure error state. Scheduler + lifecycle + delete-rule + locale test suites green.
+**Mode:** mvp
+**Requirements**: Authoritative contract: `.planning/quick/training-block-spec/program-graph-spec.md` §3 (status), §4–§6, §9.
+**Depends on:** Phase 7
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd-plan-phase 8 to break down)
+
+### Phase 9: Program Surfaces
+
+**Goal:** The program graph is visible and operable: ProgramView rebuilt with BLOCKS (status-badged cards, DONE collapse) and ROUTINES (split rows with live-block usage tags) sections while preserving the guarded empty-state design; new SplitDetailView (ordered slots, drag-reorder with reindex-on-write, template picker, usage, live-edit banner); BlockOverviewScreen live + archived modes (archived renders from `ArchivedBlockConfig`, hides attach/swap/mode/Start); block builder split band (picker + mode + day-chips); session template editor live-edit banner; TodayView wired to the Phase 8 resolver with empty-split fix-it surface. All 3 BlockBuilderView copy-guardrail suites stay green.
+**Mode:** mvp
+**Requirements**: Authoritative contract: `.planning/quick/training-block-spec/program-graph-spec.md` §5 (edge surfaces), §8. UI terms per §1 glossary: "Session" = SessionTemplate, "Routine" = Split.
+**Depends on:** Phase 8
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd-plan-phase 9 to break down)
