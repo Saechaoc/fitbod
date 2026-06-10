@@ -52,6 +52,7 @@ struct BlockTemplatesTests {
         arguments: [
             (BlockPhaseKind.accumulation, "Generic Strength Meso"),
             (BlockPhaseKind.intensification, "Hypertrophy Meso"),
+            (BlockPhaseKind.peak, "Powerlifting Peak"),
             (BlockPhaseKind.realization, "Powerlifting Peak"),
             (BlockPhaseKind.deload, "Generic Strength Meso"),
         ]
@@ -82,6 +83,9 @@ struct BlockTemplatesTests {
             case .intensification:
                 #expect(phase.volumeMultiplier == 0.85)
                 #expect(phase.intensityMultiplier == 0.88)
+            case .peak:
+                // No stock template currently inserts .peak; defaults are exercised by BlockPhaseDraft tests instead.
+                break
             case .realization:
                 #expect(phase.volumeMultiplier == 0.6)
                 #expect(phase.intensityMultiplier == 0.97)

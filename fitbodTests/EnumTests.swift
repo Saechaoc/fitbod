@@ -114,11 +114,14 @@ struct EnumTests {
 
     // MARK: - BlockPhaseKind (4 cases)
 
-    @Test("BlockPhaseKind has exactly 4 cases")
-    func blockPhaseKindHasFourCases() {
-        #expect(BlockPhaseKind.allCases.count == 4)
+    @Test("BlockPhaseKind has exactly 5 cases")
+    func blockPhaseKindHasFiveCases() {
+        #expect(BlockPhaseKind.allCases.count == 5)
         #expect(Set(BlockPhaseKind.allCases.map(\.rawValue)) == [
-            "accumulation", "intensification", "realization", "deload",
+            "accumulation", "intensification", "peak", "realization", "deload",
+        ])
+        #expect(BlockPhaseKind.allCases.map(\.rawValue) == [
+            "accumulation", "intensification", "peak", "realization", "deload",
         ])
     }
 

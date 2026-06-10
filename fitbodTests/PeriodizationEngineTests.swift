@@ -117,7 +117,8 @@ struct PeriodizationEngineTests {
         "recommended next kind map is deterministic",
         arguments: [
             (BlockPhaseKind.accumulation, BlockPhaseKind.intensification),
-            (BlockPhaseKind.intensification, BlockPhaseKind.realization),
+            (BlockPhaseKind.intensification, BlockPhaseKind.peak),
+            (BlockPhaseKind.peak, BlockPhaseKind.realization),
             (BlockPhaseKind.realization, BlockPhaseKind.deload),
             (BlockPhaseKind.deload, BlockPhaseKind.accumulation),
         ]
