@@ -37,3 +37,12 @@ The working-tree edits were swept into the concurrent session's whole-file commi
 
 - Build + all 4 suites green post-merge: BlockBuilderViewCopy · NewBlockBuilderFidelity · BlockBuilderViewActivation · NewBlockProgressionChart.
 - Drag feel (1:1 tracking, no boundary rubber-band, faster arm): pending human verify on device.
+
+## R2 — row-local @GestureState drag (4a5e00e)
+
+User: still snappy/not smooth after r1. R1's animation split was correct but the dominant cost remained: per-frame `dragOffsetY` writes re-evaluated the whole section body (all rows × fresh closures → no body skipping), debug build amplifying it.
+
+- Translation moved into `NewBlockPhaseEditorRow` as `@GestureState dragTranslation` — per-frame invalidation is now ONE card body. Auto-resets on end/cancel with a spring matching the drop settle.
+- Row computes its own drop slot (`rowIndex`/`rowCount`/`reorderPitch` props) and reports only boundary crossings via `onReorderTarget(Int)` (renamed from `onReorderChanged(CGSize)`), gated by 0.55-pitch hysteresis — no gap flicker when hovering at a boundary.
+- Section drops `dragOffsetY`/`updateReorder`/`dropTarget` and both `.animation(value:)` modifiers; lift/retarget/drop all animate via explicit `withAnimation` transactions (zero spring leakage onto the held card by construction).
+- Build + all 4 suites green. Drag feel pending human verify — NOTE: simulator + debug build understate smoothness; judge on device or at least Release.
