@@ -1512,7 +1512,10 @@ fileprivate struct NewBlockBottomActionBar: View {
         .padding(.horizontal, NewBlockScreenTokens.screenMargin)
         .padding(.top, 10)
         .padding(.bottom, 8)
-        .background(NewBlockScreenTokens.paper)
+        // Paper must run through the bottom safe area — the ScrollView's content
+        // scrolls under the home-indicator zone, and a background that stops at
+        // the safe-area edge leaves a see-through strip below the bar.
+        .background(NewBlockScreenTokens.paper.ignoresSafeArea(edges: .bottom))
         .frame(height: NewBlockScreenTokens.bottomActionHeight)
     }
 
