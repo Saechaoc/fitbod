@@ -56,6 +56,8 @@ public final class BlockPhaseDraft: Identifiable {
             return (1.0, 0.75)
         case .intensification:
             return (0.85, 0.88)
+        case .peak:
+            return (0.8, 0.95)
         case .realization:
             return (0.6, 0.97)
         case .deload:

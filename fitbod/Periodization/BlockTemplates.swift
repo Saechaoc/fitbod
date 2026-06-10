@@ -63,6 +63,8 @@ public enum BlockTemplates {
             return generic
         case .intensification:
             return hypertrophy
+        case .peak:
+            return powerliftingPeak
         case .realization:
             return powerliftingPeak
         case .deload:

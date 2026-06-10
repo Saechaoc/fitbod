@@ -92,6 +92,8 @@ public enum PeriodizationEngine {
         case .accumulation:
             return .intensification
         case .intensification:
+            return .peak
+        case .peak:
             return .realization
         case .realization:
             return .deload

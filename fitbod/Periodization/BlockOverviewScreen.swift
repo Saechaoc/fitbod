@@ -490,7 +490,8 @@ public struct BlockOverviewScreen: View {
             switch phase.kind {
             case .accumulation: return "BUILD VOLUME"
             case .intensification: return "BUILD STRENGTH"
-            case .realization: return "PEAK · −20% VOL"
+            case .peak: return "PEAK · −20% VOL"
+            case .realization: return "REALIZATION · −40% VOL"
             case .deload: return "RECOVER · −50% VOL"
             }
         }()

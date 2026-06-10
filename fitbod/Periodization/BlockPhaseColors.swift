@@ -15,8 +15,10 @@ public enum BlockPhaseColors {
             return Color.bruInk
         case .intensification:
             return Color.bruSignal
-        case .realization:
+        case .peak:
             return Color.bruInk.opacity(0.25)
+        case .realization:
+            return Color(red: 122 / 255, green: 60 / 255, blue: 110 / 255).opacity(0.18)
         case .deload:
             return Color.clear
         }
@@ -59,8 +61,10 @@ public enum BlockPhaseColors {
             return Color.bruBlue
         case .intensification:
             return Color.bruSignal
-        case .realization:
+        case .peak:
             return Color.bruGreen
+        case .realization:
+            return Color(red: 122 / 255, green: 60 / 255, blue: 110 / 255)
         case .deload:
             return Color.bruAmber
         }
@@ -73,6 +77,8 @@ public enum BlockPhaseColors {
         case .accumulation:
             return .white
         case .intensification:
+            return .white
+        case .peak:
             return .white
         case .realization:
             return .white
@@ -92,9 +98,12 @@ public enum BlockPhaseColors {
         case .intensification:
             // bruSignal #FF5C1A is burnt orange/rust — passes on 0.18 peach tint.
             return Color.bruSignal
-        case .realization:
-            // Deepened forest green — passes on 0.18 green tint.
+        case .peak:
+            // Deepened forest green — passes on 0.18 green tint. Inherited from former .realization identity.
             return Color(red: 34 / 255, green: 96 / 255, blue: 60 / 255)
+        case .realization:
+            // Deep plum — passes contrast on 0.18 plum tint band, distinct from .peak forest green.
+            return Color(red: 78 / 255, green: 38 / 255, blue: 70 / 255)
         case .deload:
             // Deep ochre — passes contrast on bruAmber 0.18 tint. 260610-ey9: deep ochre literal.
             return Color(red: 138 / 255, green: 92 / 255, blue: 24 / 255)

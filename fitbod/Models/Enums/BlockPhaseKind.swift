@@ -3,7 +3,7 @@
 //  fitbod
 //
 //  The phase a periodization block is in: accumulation, intensification,
-//  realization, or deload. Drives `BlockPeriodizedStrategy` (Phase 3) and
+//  peak, realization, or deload. Drives `BlockPeriodizedStrategy` (Phase 3) and
 //  `PeriodizationEngine` (Phase 4).
 //
 //  Persisted as `nameRaw: String` on `BlockPhase`
@@ -15,6 +15,7 @@ import Foundation
 public enum BlockPhaseKind: String, CaseIterable, Sendable {
     case accumulation
     case intensification
+    case peak
     case realization
     case deload
 

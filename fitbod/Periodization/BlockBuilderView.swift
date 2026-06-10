@@ -1579,7 +1579,8 @@ fileprivate enum NewBlockPhaseText {
         switch kind {
         case .accumulation:   return "Accumulation"
         case .intensification: return "Intensification"
-        case .realization:    return "Peak"
+        case .peak:           return "Peak"
+        case .realization:    return "Realization"
         case .deload:         return "Deload"
         }
     }
@@ -1588,7 +1589,8 @@ fileprivate enum NewBlockPhaseText {
         switch kind {
         case .accumulation:   return "BUILD VOLUME"
         case .intensification: return "BUILD STRENGTH"
-        case .realization:    return "SHARPEN OUTPUT"
+        case .peak:           return "SHARPEN OUTPUT"
+        case .realization:    return "TEST MAXES"
         case .deload:         return "RECOVER"
         }
     }
@@ -1597,7 +1599,8 @@ fileprivate enum NewBlockPhaseText {
         switch kind {
         case .accumulation:   return "Accum."
         case .intensification: return "Intens."
-        case .realization:    return "Peak"
+        case .peak:           return "Peak"
+        case .realization:    return "Real."
         case .deload:         return "Deload"
         }
     }
@@ -2078,16 +2081,15 @@ fileprivate struct NewBlockDurationSheet: View {
         .modelContainer(PreviewModelContainer.make(seedFixture: false))
 }
 
-// 7-week fixture for chart-proportion checks against final-design.png.
-// (BlockPhaseKind has 4 cases; the mockup's separate "Realization" phase is
-// covered by .realization, which renders as "Peak".)
+// 7-week fixture for chart-proportion checks against final-design-2.png — 5 distinct phases.
 @MainActor
 private func sevenWeekPhases() -> [BlockPhaseDraft] {
     [
         BlockPhaseDraft(kind: .accumulation, weeks: 2, volumeMultiplier: 1.2, intensityMultiplier: 0.70),
         BlockPhaseDraft(kind: .intensification, weeks: 2, volumeMultiplier: 1.0, intensityMultiplier: 0.85),
+        BlockPhaseDraft(kind: .peak, weeks: 1, volumeMultiplier: 0.8, intensityMultiplier: 0.95),
+        BlockPhaseDraft(kind: .realization, weeks: 1, volumeMultiplier: 0.6, intensityMultiplier: 0.97),
         BlockPhaseDraft(kind: .deload, weeks: 1, volumeMultiplier: 0.5, intensityMultiplier: 0.60),
-        BlockPhaseDraft(kind: .realization, weeks: 2, volumeMultiplier: 0.8, intensityMultiplier: 0.95),
     ]
 }
 
