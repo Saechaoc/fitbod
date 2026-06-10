@@ -1333,7 +1333,7 @@ fileprivate struct NewBlockPhaseEditorRow: View {
     private var phaseRowDivider: some View {
         Rectangle()
             .fill(NewBlockScreenTokens.hair)
-            .frame(width: 1, height: 34)
+            .frame(width: 1, height: 30)
     }
 
     var body: some View {
@@ -1385,7 +1385,7 @@ fileprivate struct NewBlockPhaseEditorRow: View {
                 .fill(chipFill)
                 .frame(width: 5)
 
-            HStack(alignment: .center, spacing: 12) {
+            HStack(alignment: .center, spacing: 8) {
                 // Semantic badge (phase color + Bebas index)
                 Text(String(format: "%02d", displayIndex))
                     .font(NewBlockType.phaseIndex)
@@ -1405,15 +1405,16 @@ fileprivate struct NewBlockPhaseEditorRow: View {
 
                     Text(NewBlockPhaseText.subtitle(for: draft.kind))
                         .font(NewBlockType.label)
-                        .tracking(1.2)
+                        .tracking(0.7)
                         .foregroundStyle(NewBlockScreenTokens.muted)
                         .lineLimit(1)
+                        .minimumScaleFactor(0.8)
                 }
 
-                Spacer(minLength: 10)
+                Spacer(minLength: 6)
 
                 // Stat grid: hairline dividers before each column + chevron (260610-dbz)
-                HStack(alignment: .top, spacing: 8) {
+                HStack(alignment: .top, spacing: 5) {
                     phaseRowDivider
                     NewBlockReadOnlyStatColumn(
                         label: "WEEKS",
@@ -1442,7 +1443,7 @@ fileprivate struct NewBlockPhaseEditorRow: View {
                 Text("⋮⋮")
                     .font(.system(size: 16, weight: .bold))
                     .foregroundStyle(NewBlockScreenTokens.muted)
-                    .frame(width: 22, height: 44)
+                    .frame(width: 18, height: 44)
                     .contentShape(Rectangle())
                     .highPriorityGesture(reorderGesture)
                     .accessibilityHidden(true)
@@ -1559,17 +1560,17 @@ fileprivate struct NewBlockReadOnlyStatColumn: View {
         VStack(alignment: .center, spacing: 2) {
             Text(label)
                 .font(NewBlockType.micro)
-                .tracking(1.2)
+                .tracking(0.8)
                 .foregroundStyle(NewBlockScreenTokens.muted)
                 .multilineTextAlignment(.center)
             Text(value)
-                .font(Font.custom("BebasNeue-Regular", size: 22))
+                .font(Font.custom("BebasNeue-Regular", size: 19))
                 .foregroundStyle(NewBlockScreenTokens.ink)
                 .lineLimit(1)
                 .minimumScaleFactor(0.8)
                 .multilineTextAlignment(.center)
         }
-        .frame(width: 38, alignment: .center)
+        .frame(width: 32, alignment: .center)
     }
 }
 
@@ -1932,7 +1933,10 @@ fileprivate struct NewBlockBottomActionBar: View {
         }
         .padding(.horizontal, NewBlockScreenTokens.screenMargin)
         .padding(.top, 24)
-        .padding(.bottom, 8)
+        // Negative bottom padding pulls the bar down into the home-indicator
+        // safe area — full 34pt inset + 8pt padding left ~42pt of paper below
+        // the buttons; design shows ~20pt (matching screenMargin).
+        .padding(.bottom, -14)
         // Paper must run through the bottom safe area — the ScrollView's content
         // scrolls under the home-indicator zone, and a background that stops at
         // the safe-area edge leaves a see-through strip below the bar. Sized
