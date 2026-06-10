@@ -18,10 +18,8 @@ public struct BlockBuilderView: View {
 
     private let initialPreset: NewBlockPreset?
 
-    @State private var presentingDiscardConfirm = false
     @State private var presentingTemplateSheet = false
     @State private var presentingDurationSheet = false
-    @State private var initialSnapshot = ""
     @State private var saveError: String? = nil
     @State private var selectedPreset: NewBlockPreset = .blank
     @State private var didApplyInitialPreset = false
@@ -30,15 +28,6 @@ public struct BlockBuilderView: View {
     @State private var presentingAddPhaseTypePicker = false
     @State private var pendingDelete: (phase: BlockPhaseDraft, index: Int)? = nil
     @State private var undoTask: Task<Void, Never>? = nil
-
-    // Drag-to-reorder (live row-shift, handle-initiated). Parent owns the cross-row
-    // state: which row is lifted, the live finger delta, and the computed drop slot.
-    // The array is mutated once on drop (gap-based) — never mid-drag — so there is no
-    // index/offset double-counting to reconcile. Per-row swipe-to-delete state lives
-    // inside NewBlockPhaseEditorRow.
-    @State private var draggingPhaseID: UUID? = nil
-    @State private var dragOffsetY: CGFloat = 0
-    @State private var dragTargetIndex: Int? = nil
 
     init(draft: BlockDraft, editing: Block? = nil, initialPreset: NewBlockPreset? = nil) {
         self.draft = draft
@@ -74,44 +63,14 @@ public struct BlockBuilderView: View {
                             // Progression chart card
                             NewBlockProgressionChart(phases: draft.phases)
 
-                            // 260528-vi2 r2: group the header + phase cards in one
-                            // tight VStack (10pt) so the header sits close above the
-                            // first card and cards stack denser than the 14pt gap
-                            // between the big top cards.
-                            VStack(alignment: .leading, spacing: 10) {
-                                NewBlockPhasesHeader(
-                                    phaseCount: draft.phases.count,
-                                    onAddPhase: { presentingAddPhaseTypePicker = true }
-                                )
-
-                                // 260610-dbz: 10pt paper separation between phase cards
-                                // to match final-design.png (was 6pt in 260528-vi2 r3).
-                                VStack(alignment: .leading, spacing: 10) {
-                                    ForEach(Array(draft.phases.enumerated()), id: \.element.draftID) { index, phase in
-                                        NewBlockPhaseEditorRow(
-                                            draft: phase,
-                                            displayIndex: index + 1,
-                                            isDragging: draggingPhaseID == phase.draftID,
-                                            onDelete: { beginPendingDelete(phase) },
-                                            onMoveUp: { movePhase(phase, by: -1) },
-                                            onMoveDown: { movePhase(phase, by: 1) },
-                                            onReorderBegan: { beginReorder(phase) },
-                                            onReorderChanged: { translation in updateReorder(translation.height) },
-                                            onReorderEnded: { endReorder() }
-                                        )
-                                        // Lifted row tracks the finger; siblings part to open a gap.
-                                        .offset(y: reorderOffset(rowIndex: index, phaseID: phase.draftID))
-                                        .scaleEffect(draggingPhaseID == phase.draftID ? 1.03 : 1.0)
-                                        .zIndex(draggingPhaseID == phase.draftID ? 1 : 0)
-                                        .animation(.spring(response: 0.28, dampingFraction: 0.86), value: dragTargetIndex)
-                                        .animation(.spring(response: 0.28, dampingFraction: 0.86), value: draggingPhaseID)
-                                    }
-                                }
-                                // Haptic on lift only (nil → id); silent on drop (id → nil).
-                                .sensoryFeedback(trigger: draggingPhaseID) { _, newValue in
-                                    newValue != nil ? .impact(weight: .medium) : nil
-                                }
-                            }
+                            // 260610-g9d: phase header + cards live in their own child
+                            // view so per-frame drag state doesn't invalidate this whole
+                            // screen body (name band, metrics, Swift Charts card).
+                            NewBlockPhaseListSection(
+                                draft: draft,
+                                onDelete: { beginPendingDelete($0) },
+                                onAddPhase: { presentingAddPhaseTypePicker = true }
+                            )
 
                             // Conditional linked-routines band
                             if draft.isValid {
@@ -162,18 +121,6 @@ public struct BlockBuilderView: View {
             .navigationBarHidden(true)
             .animation(.easeInOut(duration: 0.2), value: pendingDelete != nil)
         }
-        .confirmationDialog(
-            "Discard Changes?",
-            isPresented: $presentingDiscardConfirm,
-            titleVisibility: .visible
-        ) {
-            Button("Discard", role: .destructive) {
-                dismiss()
-            }
-            Button("Keep Editing", role: .cancel) {
-                presentingDiscardConfirm = false
-            }
-        }
         .sheet(isPresented: $presentingTemplateSheet) {
             NewBlockTemplateSheet(
                 selected: selectedPreset,
@@ -218,9 +165,6 @@ public struct BlockBuilderView: View {
             if initialPreset == nil {
                 selectedPreset = NewBlockPreset.matching(name: draft.name)
             }
-            if initialSnapshot.isEmpty {
-                initialSnapshot = snapshotHash()
-            }
         }
         .task {
             guard !didApplyInitialPreset else { return }
@@ -232,11 +176,7 @@ public struct BlockBuilderView: View {
     }
 
     private func cancel() {
-        if hasUnsavedChanges {
-            presentingDiscardConfirm = true
-        } else {
-            dismiss()
-        }
+        dismiss()
     }
 
     private func saveIfValid() {
@@ -293,67 +233,6 @@ public struct BlockBuilderView: View {
         addPhase(of: .accumulation)
     }
 
-    // 260528-vi2: reorder helper — replaces the removed .onMove List affordance.
-    // Context menu "Move Up" / "Move Down" buttons call this.
-    private func movePhase(_ phase: BlockPhaseDraft, by offset: Int) {
-        guard let i = draft.phases.firstIndex(where: { $0.draftID == phase.draftID }) else { return }
-        let j = i + offset
-        guard draft.phases.indices.contains(j) else { return }
-        draft.phases.swapAt(i, j)
-    }
-
-    // Drag-to-reorder (live row-shift). One row pitch = card height + the 10pt VStack gap.
-    private var phasePitch: CGFloat { NewBlockScreenTokens.phaseRowHeight + 10 }
-
-    // The drop slot the lifted row would land in, given the current finger delta.
-    private func dropTarget(from origin: Int, translationY: CGFloat) -> Int {
-        let steps = Int((translationY / phasePitch).rounded())
-        return min(max(origin + steps, 0), draft.phases.count - 1)
-    }
-
-    private func beginReorder(_ phase: BlockPhaseDraft) {
-        draggingPhaseID = phase.draftID
-        dragOffsetY = 0
-        dragTargetIndex = draft.phases.firstIndex(where: { $0.draftID == phase.draftID })
-    }
-
-    private func updateReorder(_ translationY: CGFloat) {
-        dragOffsetY = translationY
-        guard let activeID = draggingPhaseID,
-              let from = draft.phases.firstIndex(where: { $0.draftID == activeID }) else { return }
-        dragTargetIndex = dropTarget(from: from, translationY: translationY)
-    }
-
-    // Commit the move exactly once, on drop. Resetting drag state inside the same
-    // animation lets the lifted row settle into its new slot.
-    private func endReorder() {
-        let activeID = draggingPhaseID
-        let target = dragTargetIndex
-        withAnimation(.spring(response: 0.3, dampingFraction: 0.85)) {
-            if let activeID,
-               let from = draft.phases.firstIndex(where: { $0.draftID == activeID }),
-               let target, target != from {
-                draft.phases.move(fromOffsets: IndexSet(integer: from),
-                                  toOffset: target > from ? target + 1 : target)
-            }
-            draggingPhaseID = nil
-            dragOffsetY = 0
-            dragTargetIndex = nil
-        }
-    }
-
-    // Per-row visual offset during a drag: the lifted row follows the finger; rows
-    // between the origin and the drop slot shift one pitch to open the landing gap.
-    private func reorderOffset(rowIndex: Int, phaseID: UUID) -> CGFloat {
-        guard let activeID = draggingPhaseID,
-              let from = draft.phases.firstIndex(where: { $0.draftID == activeID }),
-              let target = dragTargetIndex else { return 0 }
-        if phaseID == activeID { return dragOffsetY }
-        if from < target, rowIndex > from, rowIndex <= target { return -phasePitch }
-        if from > target, rowIndex >= target, rowIndex < from { return phasePitch }
-        return 0
-    }
-
     // Swipe-delete undo affordance.
     // beginPendingDelete captures {phase, index}, removes from draft.phases, cancels any
     // prior undoTask, and starts a 4s @MainActor Task that clears pendingDelete on timeout.
@@ -377,18 +256,6 @@ public struct BlockBuilderView: View {
             draft.phases.insert(pd.phase, at: min(pd.index, draft.phases.count))
             pendingDelete = nil
         }
-    }
-
-    private var hasUnsavedChanges: Bool {
-        snapshotHash() != initialSnapshot
-    }
-
-    private func snapshotHash() -> String {
-        let phaseHash = draft.phases.map {
-            "\($0.kind.rawValue)|\($0.weeks)|\($0.volumeMultiplier)|\($0.intensityMultiplier)"
-        }
-        .joined(separator: ",")
-        return "\(draft.name)|\(draft.startDate.timeIntervalSince1970)|\(draft.isActive)|\(draft.daysPerWeek)|\(phaseHash)"
     }
 
     // 260528-vi2: error band — rendered as a subtle rounded note (no hard ink rules).
@@ -1291,6 +1158,127 @@ fileprivate struct NewBlockProgressionChart: View {
     }
 }
 
+// MARK: - Phase List Section
+
+// 260610-g9d: owns drag-to-reorder state so per-frame finger deltas invalidate only
+// this subtree, not the whole BlockBuilderView body. The array is mutated once on
+// drop (gap-based) — never mid-drag — so there is no index/offset double-counting.
+// Per-row swipe-to-delete state lives inside NewBlockPhaseEditorRow; the delete/undo
+// toast and the add-phase sheet stay with the parent via closures.
+fileprivate struct NewBlockPhaseListSection: View {
+    let draft: BlockDraft
+    let onDelete: (BlockPhaseDraft) -> Void
+    let onAddPhase: () -> Void
+
+    @State private var draggingPhaseID: UUID? = nil
+    @State private var dragOffsetY: CGFloat = 0
+    @State private var dragTargetIndex: Int? = nil
+
+    var body: some View {
+        // 260528-vi2 r2: header + cards in one tight 10pt VStack so the header sits
+        // close above the first card.
+        VStack(alignment: .leading, spacing: 10) {
+            NewBlockPhasesHeader(
+                phaseCount: draft.phases.count,
+                onAddPhase: onAddPhase
+            )
+
+            // 260610-dbz: 10pt paper separation between phase cards.
+            VStack(alignment: .leading, spacing: 10) {
+                ForEach(Array(draft.phases.enumerated()), id: \.element.draftID) { index, phase in
+                    NewBlockPhaseEditorRow(
+                        draft: phase,
+                        displayIndex: index + 1,
+                        isDragging: draggingPhaseID == phase.draftID,
+                        onDelete: { onDelete(phase) },
+                        onMoveUp: { movePhase(phase, by: -1) },
+                        onMoveDown: { movePhase(phase, by: 1) },
+                        onReorderBegan: { beginReorder(phase) },
+                        onReorderChanged: { translation in updateReorder(translation.height) },
+                        onReorderEnded: { endReorder() }
+                    )
+                    // Siblings part to open the landing gap — spring-animated.
+                    .offset(y: gapOffset(rowIndex: index, phaseID: phase.draftID))
+                    .scaleEffect(draggingPhaseID == phase.draftID ? 1.03 : 1.0)
+                    .animation(.spring(response: 0.28, dampingFraction: 0.86), value: dragTargetIndex)
+                    .animation(.spring(response: 0.28, dampingFraction: 0.86), value: draggingPhaseID)
+                    // Lifted row tracks the finger 1:1 — applied OUTSIDE the springs so a
+                    // dragTargetIndex change mid-drag never rubber-bands the held card.
+                    // Drop settle still animates via endReorder's withAnimation transaction.
+                    .offset(y: phase.draftID == draggingPhaseID ? dragOffsetY : 0)
+                    .zIndex(draggingPhaseID == phase.draftID ? 1 : 0)
+                }
+            }
+            // Haptic on lift only (nil → id); silent on drop (id → nil).
+            .sensoryFeedback(trigger: draggingPhaseID) { _, newValue in
+                newValue != nil ? .impact(weight: .medium) : nil
+            }
+        }
+    }
+
+    // Reorder helper — replaces the removed .onMove List affordance. VoiceOver
+    // "Move Up" / "Move Down" accessibility actions call this.
+    private func movePhase(_ phase: BlockPhaseDraft, by offset: Int) {
+        guard let i = draft.phases.firstIndex(where: { $0.draftID == phase.draftID }) else { return }
+        let j = i + offset
+        guard draft.phases.indices.contains(j) else { return }
+        draft.phases.swapAt(i, j)
+    }
+
+    // One row pitch = card height + the 10pt VStack gap.
+    private var phasePitch: CGFloat { NewBlockScreenTokens.phaseRowHeight + 10 }
+
+    // The drop slot the lifted row would land in, given the current finger delta.
+    private func dropTarget(from origin: Int, translationY: CGFloat) -> Int {
+        let steps = Int((translationY / phasePitch).rounded())
+        return min(max(origin + steps, 0), draft.phases.count - 1)
+    }
+
+    private func beginReorder(_ phase: BlockPhaseDraft) {
+        draggingPhaseID = phase.draftID
+        dragOffsetY = 0
+        dragTargetIndex = draft.phases.firstIndex(where: { $0.draftID == phase.draftID })
+    }
+
+    private func updateReorder(_ translationY: CGFloat) {
+        dragOffsetY = translationY
+        guard let activeID = draggingPhaseID,
+              let from = draft.phases.firstIndex(where: { $0.draftID == activeID }) else { return }
+        let newTarget = dropTarget(from: from, translationY: translationY)
+        if dragTargetIndex != newTarget { dragTargetIndex = newTarget }
+    }
+
+    // Commit the move exactly once, on drop. Resetting drag state inside the same
+    // animation lets the lifted row settle into its new slot.
+    private func endReorder() {
+        let activeID = draggingPhaseID
+        let target = dragTargetIndex
+        withAnimation(.spring(response: 0.3, dampingFraction: 0.85)) {
+            if let activeID,
+               let from = draft.phases.firstIndex(where: { $0.draftID == activeID }),
+               let target, target != from {
+                draft.phases.move(fromOffsets: IndexSet(integer: from),
+                                  toOffset: target > from ? target + 1 : target)
+            }
+            draggingPhaseID = nil
+            dragOffsetY = 0
+            dragTargetIndex = nil
+        }
+    }
+
+    // Gap shift for rows between the origin and the drop slot; the lifted row's
+    // finger tracking is applied separately (outside the spring modifiers).
+    private func gapOffset(rowIndex: Int, phaseID: UUID) -> CGFloat {
+        guard let activeID = draggingPhaseID,
+              phaseID != activeID,
+              let from = draft.phases.firstIndex(where: { $0.draftID == activeID }),
+              let target = dragTargetIndex else { return 0 }
+        if from < target, rowIndex > from, rowIndex <= target { return -phasePitch }
+        if from > target, rowIndex >= target, rowIndex < from { return phasePitch }
+        return 0
+    }
+}
+
 // MARK: - Phase Rows
 
 // 260528-vi2: compact rounded phase card. Direct-manipulation affordances:
@@ -1497,7 +1485,7 @@ fileprivate struct NewBlockPhaseEditorRow: View {
     // Long-press gate (so a scroll fling never arms it) then drag. Reported up to the
     // parent, which owns the cross-row shift + the commit-on-drop.
     private var reorderGesture: some Gesture {
-        LongPressGesture(minimumDuration: 0.4)
+        LongPressGesture(minimumDuration: 0.25)
             .sequenced(before: DragGesture(minimumDistance: 0))
             .onChanged { value in
                 switch value {

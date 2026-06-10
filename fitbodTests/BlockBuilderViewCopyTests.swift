@@ -36,9 +36,6 @@ struct BlockBuilderViewCopyTests {
         #expect(builder.contains("\"NAME FIRST ↑\""))
         #expect(builder.contains("\"SAVE TEMPLATE ▸\""))
         #expect(builder.contains("\"Couldn't save block. Try again.\""))
-        #expect(builder.contains("\"Discard Changes?\""))
-        #expect(builder.contains("\"Discard\""))
-        #expect(builder.contains("\"Keep Editing\""))
         #expect(builder.contains("\"CANCEL\""))
         #expect(builder.contains("\"SAVE\""))
 
