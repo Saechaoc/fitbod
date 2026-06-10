@@ -39,6 +39,11 @@ Two freeze points break the live-reference rule, deliberately:
 2. **Block end** — `archivedConfigJSON` written once, in the same save that sets
    `endDate`. Progress and DONE-block views read the archive, never live templates.
 
+There is deliberately **no freeze at block start** — templates and splits stay
+live-editable while a block runs; mid-block progression edits are the app's point.
+The **live-edit banner** (§8) exists precisely because of that: awareness, not
+friction.
+
 ## 3. Schema V5
 
 ### Renames (call-graph rename via gitnexus, custom migration stage)
@@ -66,14 +71,17 @@ Split
   slots: [SplitSessionSlot]   // cascade on delete
 
 SplitSessionSlot
-  split: Split                // inverse of Split.slots
-  sessionTemplate: SessionTemplate
-  position: Int               // explicit order; SwiftData to-many is unordered
+  split: Split                       // inverse of Split.slots
+  sessionTemplate: SessionTemplate   // delete rule .deny — hard-delete refused while
+                                     // slotted; soft-delete (isArchived) unaffected
+  position: Int                      // explicit order; SwiftData to-many is unordered
 ```
 
 - Duplicate templates in one split are free (PPL ×2 = 6 slots, 3 templates).
-- Positions stay contiguous via reindex-on-write. `#Unique` on (split, position)
-  as belt-and-suspenders (iOS 26 target — available).
+- Positions stay contiguous via reindex-on-write. Contiguity is a **test invariant,
+  not a schema constraint** — `#Unique` on (split, position) is deliberately omitted:
+  SwiftData upserts on unique-key collision, so a reorder bug producing a duplicate
+  position would silently merge rows and destroy a slot instead of erroring.
 
 ### Block changes
 
@@ -81,9 +89,15 @@ SplitSessionSlot
 Block (existing fields kept: id, name, startDate, endDate?, notes?, isActive,
        reviewedAt?, phases, sessions)
   - routines: [Routine]?            // REMOVED (old direct template attachment)
-  + split: Split?                   // nil while draft; inverse Split.blocks (to-many)
+  + split: Split?                   // nil while draft; inverse Split.blocks (to-many);
+                                    //   nullify on split hard-delete (completed blocks
+                                    //   survive — they render from archive)
   + schedulingMode: SchedulingMode  // .rotation | .fixedWeekly, default .rotation
-  + trainingDays: [Int]             // Calendar weekday numbers (1=Sun…7=Sat), default []
+  + trainingDays: [Int]             // Calendar weekday numbers (1=Sun…7=Sat), default [].
+                                    //   Sorted ONCE at write via the user's
+                                    //   Calendar.firstWeekday; array order is canonical
+                                    //   and never re-sorted at read — a region change
+                                    //   must not remap days to slots mid-block
   + archivedConfigJSON: String?     // freeze #2, written once at block end
 ```
 
@@ -107,7 +121,8 @@ Computed property, evaluated as an **ordered switch** (precedence matters):
 ```
 completed   endDate != nil
 active      isActive
-ready       split != nil && (mode == .rotation || trainingDays.count == slotCount)
+ready       split != nil && slotCount >= 1
+            && (mode == .rotation || trainingDays.count == slotCount)
 draft       otherwise
 ```
 
@@ -125,7 +140,12 @@ Transition-site assertions: `isActive ⇒ split != nil ∧ endDate == nil`.
   the split is ending the block — keeps the archive truthful (describes one split).
   Mode flips and trainingDays edits stay live on active blocks.
 - **Split deletion:** archive-only from UI (`isArchived`); deny-delete while referenced
-  by any non-completed block. Slots cascade on split delete.
+  by any non-completed block. **Archiving mirrors the same rule** — a split cannot be
+  archived while a draft/ready/active block references it (otherwise the block points
+  at a row hidden from the Routines list). The conditional deny is **service-layer
+  logic plus a test**, not a schema rule — SwiftData's `.deny` is unconditional.
+  Slots cascade on split delete; `Block.split` nullifies (§3), so a split hard-deleted
+  while only completed blocks reference it takes nothing down.
 - **Session templates:** existing soft-delete via `isArchived` unchanged.
 
 ## 5. Today scheduler
@@ -135,19 +155,28 @@ Replaces the name-sort heuristic (`TodayView.swift` `todaysRoutine`).
 **Unified resolver predicate** (rotation): *the latest **completed** session in this
 block whose `slot` is non-nil and whose `slot.split == block.split` → next slot =
 `(slot.position + 1) % slotCount` against current positions; no matching session →
-slot 0.* Ad-hoc sessions, dead slots, sessions from a previously attached split, and
-abandoned in-progress workouts all fall out of the scan identically — skipped, scan
-back. Tests assert the predicate, not enumerated cases.
+slot 0.* Ad-hoc sessions, sessions whose slot was deleted (ref nullified → reads as
+ad-hoc), sessions from a previously attached split, and abandoned in-progress
+workouts all fall out of the scan identically — skipped, scan back. Tests assert the
+predicate, not enumerated cases.
+
+**Zero-slot guard:** the resolver runs only when `slotCount >= 1`. The ready gate
+(§3) makes an empty split unstartable, so zero slots is reachable only by emptying a
+shared split mid-block — that case short-circuits to the fix-it surface below before
+any `% slotCount` math.
 
 **fixedWeekly:** today's weekday ∈ `trainingDays` → slot at `index(of: weekday in
-sorted trainingDays) % slotCount` (mod is the runtime guard for mid-block slot count
-drift on a shared split); weekday absent → rest-day empty state (exists). Missed day =
-skipped, not shifted. Ready gate requires count equality (§3); day-chip UI shows soft
-mismatch ("5 days / 4 sessions") at attach time.
+trainingDays as stored) % slotCount`. Stored order is canonical (§3): sorted once at
+write via the user's `Calendar.firstWeekday`, never re-sorted at read — a region
+change cannot remap days to slots mid-block. The mod is the runtime guard for
+mid-block slot-count drift on a shared split; weekday absent → rest-day empty state
+(exists). Missed day = skipped, not shifted. Ready gate requires count equality (§3);
+day-chip UI shows soft mismatch ("5 days / 4 sessions") at attach time.
 
 **Edge surfaces:**
-- Active block, empty split → fix-it pointer to `SplitDetailView` ("Routine has no
-  sessions"), not the rest-day state (which would lie).
+- Active block, split emptied mid-block (only path to zero slots — ready gate blocks
+  empty starts) → fix-it pointer to `SplitDetailView` ("Routine has no sessions"),
+  not the rest-day state (which would lie).
 - Resume-state (in-progress session) wins the CTA as today (unchanged).
 
 ## 6. Archive contract (freeze #2)
@@ -172,12 +201,15 @@ mismatch ("5 days / 4 sessions") at attach time.
 - `"v": 1` stamped for V6+ readers.
 - Pre-V5 completed blocks: backfilled best-effort from post-migration state at
   migration time (drift accepted). **No live-template fallback path in readers, ever.**
+- Decode failure in a reader → explicit error state ("Archive unreadable"); the
+  no-live-fallback rule forbids recovering from current templates.
 - v1 consumer: archived-mode `BlockOverviewScreen` only. Progress charts over
   archives = future phase; contract exists so that phase needs no schema change.
 
 ## 7. Migration V4 → V5 (custom stage)
 
-1. `willMigrate`: stash old `Routine` rows and Session→Routine ID pairs as plain
+1. `willMigrate`: stash old `Routine` rows — **including each row's block ID from V4
+   `Routine.block`** (step 3 depends on it) — and Session→Routine ID pairs, as plain
    structs (model objects don't cross the stage boundary).
 2. `didMigrate`: create `SessionTemplate` per stashed row; remap `Session.template` refs.
 3. Per V4 block with attached templates: auto-create a `Split` named "{block.name}
@@ -216,7 +248,7 @@ slot picker.
 
 Ordered slot list with drag-reorder (reindex-on-write); add slot via picker over all
 `SessionTemplate`s or "new session" → existing builder; remove slot; usage section
-listing referencing blocks (non-completed). Shows the freeze-#3 banner when this split
+listing referencing blocks (non-completed). Shows the live-edit banner when this split
 sits on the active block (reorder is as schedule-affecting as a prescription edit).
 
 ### `BlockOverviewScreen` (extended)
@@ -234,7 +266,7 @@ suites (standing rule).
 
 ### Session template editor
 
-Freeze-#3 banner when the template is reachable via slots → split → active block:
+Live-edit banner when the template is reachable via slots → split → active block:
 "Part of active block — edits apply to upcoming workouts." Non-blocking.
 
 ### Today tab
@@ -246,10 +278,15 @@ rest-day empty state, `StartBlockCTA` all stay.
 
 - `SchemaV5MigrationTests` (§7 assertions).
 - Scheduler suite: the unified predicate across skip / repeat / reorder / ad-hoc /
-  swapped-split / abandoned-in-progress; fixedWeekly rest days, count drift, empty
-  split, dead slot; **locale test** for trainingDays (Calendar weekday + Monday-first
-  locale off-by-one).
+  deleted-slot (nullified) / swapped-split / abandoned-in-progress; fixedWeekly rest
+  days, count drift, mid-block-emptied split (zero-slot short-circuit, no mod-by-zero);
+  **locale test** pinning trainingDays canonical stored order (written via the user's
+  `Calendar.firstWeekday`, stable across a later region change).
 - `Session.slot` delete-rule test (nullify, history intact).
+- Slot-position contiguity invariant after reorder/add/remove (replaces the dropped
+  `#Unique` constraint).
+- Deny-rule tests: template hard-delete while slotted; split archive or delete while
+  referenced by a non-completed block.
 - Status-precedence ordered-switch tests + transition assertions.
 - The 3 copy-guardrail suites on any New Block edit.
 - Swift Testing for all of the above; UI smoke via existing XCTest patterns.
@@ -262,11 +299,13 @@ Tests for each layer gate the next:
 2. **Resolver + lifecycle** — scheduler, derived status, start/end one-save
    transactions, delete rules.
 3. **Program surfaces** — `ProgramView` rebuild, `SplitDetailView`,
-   `BlockOverviewScreen` modes, builder band, freeze-#3 banners, Today wiring.
+   `BlockOverviewScreen` modes, builder band, live-edit banners, Today wiring.
 
 ## 11. Out of scope (v2+)
 
 - Per-phase routine overrides (accumulation on PPL, peak on Upper/Lower).
 - Progress charts reading block archives.
-- Top-level session-template library.
+- Top-level session-template library. **Accepted v1 consequence:** a template in
+  zero splits is orphaned — invisible, uneditable, un-archivable — until slotted into
+  a split via the picker.
 - Day-slot-level scheduling beyond rotation/fixedWeekly.
