@@ -900,7 +900,8 @@ private struct NewBlockPhaseBand: Identifiable {
 fileprivate struct NewBlockProgressionChart: View {
     let phases: [BlockPhaseDraft]
 
-    // Selected week for scrub / callout pill. Defaults to week 1 on appear.
+    // Selected week for scrub / callout pill. Starts nil — selection chrome
+    // (ring, RuleMark, callout pill) appears only after the user taps or scrubs.
     @State private var selectedWeek: Int? = nil
 
     // Measured callout pill width, used to clamp the pill inside the plot
@@ -1144,7 +1145,7 @@ fileprivate struct NewBlockProgressionChart: View {
                         .symbolSize(44)
 
                         // Hollow ring around the selected week's point
-                        if pt.week == (selectedWeek ?? 1) {
+                        if let sel = selectedWeek, pt.week == sel {
                             PointMark(
                                 x: .value("Week", pt.week),
                                 y: .value("Value", pt.value)
@@ -1204,7 +1205,7 @@ fileprivate struct NewBlockProgressionChart: View {
                 }
                 .accessibilityLabel(
                     "Progression overview, \(totalWeeks) weeks, \(contiguousPhaseSpans.count) phases. " +
-                    "Volume and intensity by week. Selected week \(selectedWeek ?? 1)."
+                    "Volume and intensity by week. \(selectedWeek.map { "Selected week \($0)." } ?? "No week selected.")"
                 )
                 // ── Phase-label overlay (one label per contiguous span) ────────────────
                 // 260610-ey9: phase labels emitted per contiguous span, not per phase.
@@ -1281,11 +1282,6 @@ fileprivate struct NewBlockProgressionChart: View {
                                     .position(x: clampedX, y: yPos)
                             }
                         }
-                    }
-                }
-                .onAppear {
-                    if selectedWeek == nil, !phases.isEmpty {
-                        selectedWeek = 1
                     }
                 }
             }
