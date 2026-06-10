@@ -1171,8 +1171,12 @@ fileprivate struct NewBlockPhaseListSection: View {
     let onAddPhase: () -> Void
 
     @State private var draggingPhaseID: UUID? = nil
-    @State private var dragOffsetY: CGFloat = 0
     @State private var dragTargetIndex: Int? = nil
+
+    // One row pitch = card height + the 10pt VStack gap.
+    private var phasePitch: CGFloat { NewBlockScreenTokens.phaseRowHeight + 10 }
+
+    private static let reorderSpring: Animation = .spring(response: 0.28, dampingFraction: 0.86)
 
     var body: some View {
         // 260528-vi2 r2: header + cards in one tight 10pt VStack so the header sits
@@ -1184,28 +1188,31 @@ fileprivate struct NewBlockPhaseListSection: View {
             )
 
             // 260610-dbz: 10pt paper separation between phase cards.
+            // 260610-g9d r2: the finger-tracking offset lives INSIDE the row
+            // (@GestureState) so per-frame drag updates re-evaluate one card, not
+            // this section. The row reports only boundary crossings; all reorder
+            // animation here is explicit withAnimation — no .animation(value:)
+            // modifiers to leak springs onto the held card.
             VStack(alignment: .leading, spacing: 10) {
                 ForEach(Array(draft.phases.enumerated()), id: \.element.draftID) { index, phase in
                     NewBlockPhaseEditorRow(
                         draft: phase,
                         displayIndex: index + 1,
+                        rowIndex: index,
+                        rowCount: draft.phases.count,
+                        reorderPitch: phasePitch,
                         isDragging: draggingPhaseID == phase.draftID,
                         onDelete: { onDelete(phase) },
                         onMoveUp: { movePhase(phase, by: -1) },
                         onMoveDown: { movePhase(phase, by: 1) },
-                        onReorderBegan: { beginReorder(phase) },
-                        onReorderChanged: { translation in updateReorder(translation.height) },
+                        onReorderBegan: { beginReorder(phase, at: index) },
+                        onReorderTarget: { target in retarget(target) },
                         onReorderEnded: { endReorder() }
                     )
-                    // Siblings part to open the landing gap — spring-animated.
+                    // Siblings part to open the landing gap (spring via retarget's
+                    // explicit withAnimation transaction).
                     .offset(y: gapOffset(rowIndex: index, phaseID: phase.draftID))
                     .scaleEffect(draggingPhaseID == phase.draftID ? 1.03 : 1.0)
-                    .animation(.spring(response: 0.28, dampingFraction: 0.86), value: dragTargetIndex)
-                    .animation(.spring(response: 0.28, dampingFraction: 0.86), value: draggingPhaseID)
-                    // Lifted row tracks the finger 1:1 — applied OUTSIDE the springs so a
-                    // dragTargetIndex change mid-drag never rubber-bands the held card.
-                    // Drop settle still animates via endReorder's withAnimation transaction.
-                    .offset(y: phase.draftID == draggingPhaseID ? dragOffsetY : 0)
                     .zIndex(draggingPhaseID == phase.draftID ? 1 : 0)
                 }
             }
@@ -1225,31 +1232,23 @@ fileprivate struct NewBlockPhaseListSection: View {
         draft.phases.swapAt(i, j)
     }
 
-    // One row pitch = card height + the 10pt VStack gap.
-    private var phasePitch: CGFloat { NewBlockScreenTokens.phaseRowHeight + 10 }
-
-    // The drop slot the lifted row would land in, given the current finger delta.
-    private func dropTarget(from origin: Int, translationY: CGFloat) -> Int {
-        let steps = Int((translationY / phasePitch).rounded())
-        return min(max(origin + steps, 0), draft.phases.count - 1)
+    private func beginReorder(_ phase: BlockPhaseDraft, at index: Int) {
+        withAnimation(Self.reorderSpring) {
+            draggingPhaseID = phase.draftID
+            dragTargetIndex = index
+        }
     }
 
-    private func beginReorder(_ phase: BlockPhaseDraft) {
-        draggingPhaseID = phase.draftID
-        dragOffsetY = 0
-        dragTargetIndex = draft.phases.firstIndex(where: { $0.draftID == phase.draftID })
-    }
-
-    private func updateReorder(_ translationY: CGFloat) {
-        dragOffsetY = translationY
-        guard let activeID = draggingPhaseID,
-              let from = draft.phases.firstIndex(where: { $0.draftID == activeID }) else { return }
-        let newTarget = dropTarget(from: from, translationY: translationY)
-        if dragTargetIndex != newTarget { dragTargetIndex = newTarget }
+    // Boundary crossings only — the row's hysteresis gate already deduplicates,
+    // and the explicit transaction here is what springs the sibling gap shift.
+    private func retarget(_ target: Int) {
+        guard dragTargetIndex != target else { return }
+        withAnimation(Self.reorderSpring) { dragTargetIndex = target }
     }
 
     // Commit the move exactly once, on drop. Resetting drag state inside the same
-    // animation lets the lifted row settle into its new slot.
+    // animation lets the lifted row settle into its new slot (the row's
+    // @GestureState translation resets in a matching spring transaction).
     private func endReorder() {
         let activeID = draggingPhaseID
         let target = dragTargetIndex
@@ -1261,7 +1260,6 @@ fileprivate struct NewBlockPhaseListSection: View {
                                   toOffset: target > from ? target + 1 : target)
             }
             draggingPhaseID = nil
-            dragOffsetY = 0
             dragTargetIndex = nil
         }
     }
@@ -1288,15 +1286,27 @@ fileprivate struct NewBlockPhaseListSection: View {
 fileprivate struct NewBlockPhaseEditorRow: View {
     @Bindable var draft: BlockPhaseDraft
     let displayIndex: Int
+    let rowIndex: Int
+    let rowCount: Int
+    let reorderPitch: CGFloat
     let isDragging: Bool
     let onDelete: () -> Void
     let onMoveUp: () -> Void
     let onMoveDown: () -> Void
     let onReorderBegan: () -> Void
-    let onReorderChanged: (CGSize) -> Void
+    let onReorderTarget: (Int) -> Void
     let onReorderEnded: () -> Void
 
     @State private var presentingEditor = false
+
+    // 260610-g9d r2: finger-tracking offset is row-local @GestureState so per-frame
+    // drag updates invalidate only this card's body — never the parent section.
+    // Auto-resets (with a spring matching endReorder's) on gesture end/cancel.
+    @GestureState(resetTransaction: Transaction(animation: .spring(response: 0.3, dampingFraction: 0.85)))
+    private var dragTranslation: CGFloat = 0
+
+    // Last drop slot reported up — gates onReorderTarget to boundary crossings.
+    @State private var liveTarget: Int? = nil
 
     // Swipe-to-delete (per-row). swipeOffset is the committed reveal; swipeDrag is the
     // live finger delta (auto-resets to 0 when the gesture ends or is interrupted).
@@ -1336,6 +1346,10 @@ fileprivate struct NewBlockPhaseEditorRow: View {
                 }
                 .simultaneousGesture(swipeGesture)
         }
+        // Finger tracking 1:1. Gesture transactions carry no animation, and the
+        // parent's reorder springs run in their own withAnimation transactions,
+        // so nothing ever rubber-bands this offset mid-drag.
+        .offset(y: dragTranslation)
         .onGeometryChange(for: CGFloat.self, of: { $0.size.width }, action: { cardWidth = $0 })
         .accessibilityLabel("Phase \(displayIndex): \(BlockPhaseColors.phaseLabel(draft.kind))")
         .accessibilityActions {
@@ -1482,22 +1496,43 @@ fileprivate struct NewBlockPhaseEditorRow: View {
             }
     }
 
-    // Long-press gate (so a scroll fling never arms it) then drag. Reported up to the
-    // parent, which owns the cross-row shift + the commit-on-drop.
+    // Long-press gate (so a scroll fling never arms it) then drag. The translation
+    // stays row-local in @GestureState; only drop-slot boundary crossings are
+    // reported up (with hysteresis so hovering at a boundary doesn't flicker the
+    // sibling gap open/closed).
     private var reorderGesture: some Gesture {
         LongPressGesture(minimumDuration: 0.25)
             .sequenced(before: DragGesture(minimumDistance: 0))
+            .updating($dragTranslation) { value, state, _ in
+                if case .second(true, let drag?) = value {
+                    state = drag.translation.height
+                }
+            }
             .onChanged { value in
                 switch value {
                 case .first(true):
+                    liveTarget = rowIndex
                     onReorderBegan()
                 case .second(true, let drag?):
-                    onReorderChanged(drag.translation)
+                    let raw = Double(rowIndex) + Double(drag.translation.height / reorderPitch)
+                    let current = liveTarget ?? rowIndex
+                    // Hysteresis: re-target only once the finger passes 0.55 of a
+                    // pitch beyond the current slot's center.
+                    if abs(raw - Double(current)) > 0.55 {
+                        let next = min(max(Int(raw.rounded()), 0), rowCount - 1)
+                        if next != current {
+                            liveTarget = next
+                            onReorderTarget(next)
+                        }
+                    }
                 default:
                     break
                 }
             }
-            .onEnded { _ in onReorderEnded() }
+            .onEnded { _ in
+                liveTarget = nil
+                onReorderEnded()
+            }
     }
 
     // Route both full-swipe and the revealed Delete button through the existing
