@@ -903,6 +903,10 @@ fileprivate struct NewBlockProgressionChart: View {
     // Selected week for scrub / callout pill. Defaults to week 1 on appear.
     @State private var selectedWeek: Int? = nil
 
+    // Measured callout pill width, used to clamp the pill inside the plot
+    // area so edge-week selections (W1, last week) don't clip the pill.
+    @State private var calloutWidth: CGFloat = 0
+
     /// Expand phases into per-week data points (Volume + Intensity series).
     private var points: [NewBlockProgressionPoint] {
         var result: [NewBlockProgressionPoint] = []
@@ -1249,6 +1253,10 @@ fileprivate struct NewBlockProgressionChart: View {
                                     }
                                     return 22
                                 }()
+                                let halfPill = calloutWidth / 2
+                                let clampedX = calloutWidth > 0
+                                    ? min(max(xPos, halfPill + 4), geo.size.width - halfPill - 4)
+                                    : xPos
                                 Text(calloutText(for: sel))
                                     .font(NewBlockType.micro)
                                     .tracking(1.0)
@@ -1265,7 +1273,12 @@ fileprivate struct NewBlockProgressionChart: View {
                                     )
                                     .shadow(color: Color.black.opacity(0.06), radius: 3, y: 1)
                                     .fixedSize()
-                                    .position(x: xPos, y: yPos)
+                                    .onGeometryChange(for: CGFloat.self) { proxy in
+                                        proxy.size.width
+                                    } action: { width in
+                                        calloutWidth = width
+                                    }
+                                    .position(x: clampedX, y: yPos)
                             }
                         }
                     }
