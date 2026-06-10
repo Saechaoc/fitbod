@@ -31,6 +31,15 @@ public struct BlockBuilderView: View {
     @State private var pendingDelete: (phase: BlockPhaseDraft, index: Int)? = nil
     @State private var undoTask: Task<Void, Never>? = nil
 
+    // Drag-to-reorder (live row-shift, handle-initiated). Parent owns the cross-row
+    // state: which row is lifted, the live finger delta, and the computed drop slot.
+    // The array is mutated once on drop (gap-based) — never mid-drag — so there is no
+    // index/offset double-counting to reconcile. Per-row swipe-to-delete state lives
+    // inside NewBlockPhaseEditorRow.
+    @State private var draggingPhaseID: UUID? = nil
+    @State private var dragOffsetY: CGFloat = 0
+    @State private var dragTargetIndex: Int? = nil
+
     init(draft: BlockDraft, editing: Block? = nil, initialPreset: NewBlockPreset? = nil) {
         self.draft = draft
         self.editing = editing
@@ -82,11 +91,25 @@ public struct BlockBuilderView: View {
                                         NewBlockPhaseEditorRow(
                                             draft: phase,
                                             displayIndex: index + 1,
+                                            isDragging: draggingPhaseID == phase.draftID,
                                             onDelete: { beginPendingDelete(phase) },
                                             onMoveUp: { movePhase(phase, by: -1) },
-                                            onMoveDown: { movePhase(phase, by: 1) }
+                                            onMoveDown: { movePhase(phase, by: 1) },
+                                            onReorderBegan: { beginReorder(phase) },
+                                            onReorderChanged: { translation in updateReorder(translation.height) },
+                                            onReorderEnded: { endReorder() }
                                         )
+                                        // Lifted row tracks the finger; siblings part to open a gap.
+                                        .offset(y: reorderOffset(rowIndex: index, phaseID: phase.draftID))
+                                        .scaleEffect(draggingPhaseID == phase.draftID ? 1.03 : 1.0)
+                                        .zIndex(draggingPhaseID == phase.draftID ? 1 : 0)
+                                        .animation(.spring(response: 0.28, dampingFraction: 0.86), value: dragTargetIndex)
+                                        .animation(.spring(response: 0.28, dampingFraction: 0.86), value: draggingPhaseID)
                                     }
+                                }
+                                // Haptic on lift only (nil → id); silent on drop (id → nil).
+                                .sensoryFeedback(trigger: draggingPhaseID) { _, newValue in
+                                    newValue != nil ? .impact(weight: .medium) : nil
                                 }
                             }
 
@@ -270,6 +293,58 @@ public struct BlockBuilderView: View {
         let j = i + offset
         guard draft.phases.indices.contains(j) else { return }
         draft.phases.swapAt(i, j)
+    }
+
+    // Drag-to-reorder (live row-shift). One row pitch = card height + the 10pt VStack gap.
+    private var phasePitch: CGFloat { NewBlockScreenTokens.phaseRowHeight + 10 }
+
+    // The drop slot the lifted row would land in, given the current finger delta.
+    private func dropTarget(from origin: Int, translationY: CGFloat) -> Int {
+        let steps = Int((translationY / phasePitch).rounded())
+        return min(max(origin + steps, 0), draft.phases.count - 1)
+    }
+
+    private func beginReorder(_ phase: BlockPhaseDraft) {
+        draggingPhaseID = phase.draftID
+        dragOffsetY = 0
+        dragTargetIndex = draft.phases.firstIndex(where: { $0.draftID == phase.draftID })
+    }
+
+    private func updateReorder(_ translationY: CGFloat) {
+        dragOffsetY = translationY
+        guard let activeID = draggingPhaseID,
+              let from = draft.phases.firstIndex(where: { $0.draftID == activeID }) else { return }
+        dragTargetIndex = dropTarget(from: from, translationY: translationY)
+    }
+
+    // Commit the move exactly once, on drop. Resetting drag state inside the same
+    // animation lets the lifted row settle into its new slot.
+    private func endReorder() {
+        let activeID = draggingPhaseID
+        let target = dragTargetIndex
+        withAnimation(.spring(response: 0.3, dampingFraction: 0.85)) {
+            if let activeID,
+               let from = draft.phases.firstIndex(where: { $0.draftID == activeID }),
+               let target, target != from {
+                draft.phases.move(fromOffsets: IndexSet(integer: from),
+                                  toOffset: target > from ? target + 1 : target)
+            }
+            draggingPhaseID = nil
+            dragOffsetY = 0
+            dragTargetIndex = nil
+        }
+    }
+
+    // Per-row visual offset during a drag: the lifted row follows the finger; rows
+    // between the origin and the drop slot shift one pitch to open the landing gap.
+    private func reorderOffset(rowIndex: Int, phaseID: UUID) -> CGFloat {
+        guard let activeID = draggingPhaseID,
+              let from = draft.phases.firstIndex(where: { $0.draftID == activeID }),
+              let target = dragTargetIndex else { return 0 }
+        if phaseID == activeID { return dragOffsetY }
+        if from < target, rowIndex > from, rowIndex <= target { return -phasePitch }
+        if from > target, rowIndex >= target, rowIndex < from { return phasePitch }
+        return 0
     }
 
     // Swipe-delete undo affordance.
@@ -809,12 +884,19 @@ private struct NewBlockPhaseBand: Identifiable {
     let kind: BlockPhaseKind
 }
 
-/// Swift Charts progression card — shows Volume (solid) and Intensity (dashed) lines
-/// with faint colored phase-band regions behind them. Wrapped in a bruCard.
+/// Swift Charts progression card — shows Volume (AreaMark, translucent gray) and
+/// Intensity (bold LineMark + ring PointMark) with colored phase-band regions,
+/// in-band phase labels per contiguous span, HIGH/LOW anchors, vertical RuleMark
+/// at the selected week, and a value callout pill. Wrapped in a bruCard.
+///
+/// 260610-ey9: rebuilt from the dashed-line version to match reference.png.
 fileprivate struct NewBlockProgressionChart: View {
     let phases: [BlockPhaseDraft]
 
-    /// Expand phases into per-week data points.
+    // Selected week for scrub / callout pill. Defaults to week 1 on appear.
+    @State private var selectedWeek: Int? = nil
+
+    /// Expand phases into per-week data points (Volume + Intensity series).
     private var points: [NewBlockProgressionPoint] {
         var result: [NewBlockProgressionPoint] = []
         var weekOffset = 0
@@ -839,21 +921,7 @@ fileprivate struct NewBlockProgressionChart: View {
         return result
     }
 
-    /// Cumulative week boundaries (kept for phase bands).
-    private var cumulativeBoundaries: [Int] {
-        phases.reduce(into: [Int]()) { acc, phase in
-            acc.append((acc.last ?? 0) + phase.weeks)
-        }
-    }
-
-    /// X-axis week labels: every week when totalWeeks <= 8; strided up for longer blocks.
-    private var weekAxisValues: [Int] {
-        guard totalWeeks >= 1 else { return [] }
-        let step = totalWeeks <= 8 ? 1 : Int(ceil(Double(totalWeeks) / 8.0))
-        return Array(stride(from: 1, through: totalWeeks, by: max(1, step)))
-    }
-
-    /// Phase bands for colored background regions (start..end in cumulative weeks).
+    /// Phase bands for colored background regions (start..end in 0-indexed cumulative weeks).
     private var phaseBands: [NewBlockPhaseBand] {
         var bands: [NewBlockPhaseBand] = []
         var offset = 0
@@ -866,24 +934,36 @@ fileprivate struct NewBlockProgressionChart: View {
         return bands
     }
 
+    /// Collapse adjacent same-kind phases into a single labeled span.
+    /// 260610-ey9: phase labels emitted per contiguous span, not per phase.
+    private var contiguousPhaseSpans: [(kind: BlockPhaseKind, start: Int, end: Int)] {
+        var result: [(kind: BlockPhaseKind, start: Int, end: Int)] = []
+        var offset = 0
+        for phase in phases {
+            let start = offset
+            let end = offset + phase.weeks
+            if let last = result.last, last.kind == phase.kind {
+                result[result.count - 1] = (kind: last.kind, start: last.start, end: end)
+            } else {
+                result.append((kind: phase.kind, start: start, end: end))
+            }
+            offset = end
+        }
+        return result
+    }
+
     private var totalWeeks: Int {
         phases.reduce(0) { $0 + $1.weeks }
     }
 
-    // Chart layout — sized to final-design.png card proportions (plot ≈ 156pt
-    // on a 393pt screen). Heights are plot-area heights, not Chart frame
-    // heights: the week-label axis row adds its own height below the plot.
-    private enum ChartLayout {
-        static let plotAreaHeight: CGFloat = 156
-        static let emptyStateHeight: CGFloat = 156
-        static let titleToLabelsGap: CGFloat = 14   // title/legend row → phase labels
-        static let labelsToPlotGap: CGFloat = 4     // phase labels hug their bands
-        static let weekLabelSpacing: CGFloat = 8    // plot bottom → W1..WN labels
+    /// X-axis week labels: every week when totalWeeks <= 8; strided for longer blocks.
+    private var weekAxisValues: [Int] {
+        guard totalWeeks >= 1 else { return [] }
+        let step = totalWeeks <= 8 ? 1 : Int(ceil(Double(totalWeeks) / 8.0))
+        return Array(stride(from: 1, through: totalWeeks, by: max(1, step)))
     }
 
-    /// Y domain derived from the plotted data, padded so both lines show real
-    /// vertical movement and points never touch the plot edges. Adapts to any
-    /// multiplier spread and any week count — no fixed 30...130 window.
+    /// Y domain derived from all plotted data, padded for visual breathing room.
     private var yDomain: ClosedRange<Double> {
         let values = points.map(\.value)
         guard let lo = values.min(), let hi = values.max() else { return 0...100 }
@@ -891,10 +971,37 @@ fileprivate struct NewBlockProgressionChart: View {
         return (lo - pad)...(hi + pad)
     }
 
+    /// Find the phase containing the given 1-indexed week.
+    private func phase(forWeek week: Int) -> BlockPhaseDraft? {
+        var offset = 0
+        for phase in phases {
+            let start = offset + 1
+            let end = offset + phase.weeks
+            if week >= start, week <= end { return phase }
+            offset += phase.weeks
+        }
+        return nil
+    }
+
+    /// Build the callout pill text for the selected week.
+    private func calloutText(for week: Int) -> String {
+        guard let p = phase(forWeek: week) else { return "WK \(week)" }
+        let intStr = NewBlockPhaseText.intensityValue(p.intensityMultiplier)
+        let volStr = NewBlockPhaseText.volumeValue(p.volumeMultiplier)
+        return "WK \(week) · INT \(intStr) · VOL \(volStr)"
+    }
+
+    // Chart layout constants.
+    private enum ChartLayout {
+        static let plotAreaHeight: CGFloat = 156
+        static let emptyStateHeight: CGFloat = 156
+        static let weekLabelSpacing: CGFloat = 8
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            // Section label + legend on the same row
-            HStack {
+            // Title row + legend pill chips
+            HStack(alignment: .center) {
                 Text("PROGRESSION OVERVIEW")
                     .font(NewBlockType.label)
                     .tracking(NewBlockScreenTokens.labelTracking)
@@ -902,35 +1009,53 @@ fileprivate struct NewBlockProgressionChart: View {
 
                 Spacer()
 
-                // Hand-rolled legend (top-right)
-                HStack(spacing: NewBlockScreenTokens.sectionGap) {
+                // Legend pill chips — VOLUME: dashed line glyph; INTENSITY: line-dot-line glyph.
+                // The series marker strings "Volume" / "Intensity" remain in the marks below.
+                HStack(spacing: 8) {
+                    // VOLUME chip — three short dashes
                     HStack(spacing: 4) {
-                        RoundedRectangle(cornerRadius: 2)
-                            .fill(NewBlockScreenTokens.hair)
-                            .frame(width: 8, height: 8)
-                        Text("Volume")
+                        HStack(spacing: 2) {
+                            ForEach(0..<3, id: \.self) { _ in
+                                Rectangle()
+                                    .fill(NewBlockScreenTokens.muted)
+                                    .frame(width: 4, height: 1)
+                            }
+                        }
+                        Text("VOLUME")
                             .font(NewBlockType.micro)
+                            .tracking(1.2)
                             .foregroundStyle(NewBlockScreenTokens.muted)
                     }
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 5)
+                    .background(NewBlockScreenTokens.card, in: Capsule())
+                    .overlay(Capsule().stroke(NewBlockScreenTokens.hair, lineWidth: 0.75))
+
+                    // INTENSITY chip — line-dot-line
                     HStack(spacing: 4) {
                         HStack(spacing: 2) {
                             Rectangle()
                                 .fill(NewBlockScreenTokens.ink)
-                                .frame(width: 8, height: 2)
+                                .frame(width: 8, height: 1.5)
                             Circle()
                                 .fill(NewBlockScreenTokens.ink)
-                                .frame(width: 5, height: 5)
+                                .frame(width: 4, height: 4)
                             Rectangle()
                                 .fill(NewBlockScreenTokens.ink)
-                                .frame(width: 8, height: 2)
+                                .frame(width: 8, height: 1.5)
                         }
-                        Text("Intensity")
+                        Text("INTENSITY")
                             .font(NewBlockType.micro)
+                            .tracking(1.2)
                             .foregroundStyle(NewBlockScreenTokens.ink)
                     }
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 5)
+                    .background(NewBlockScreenTokens.card, in: Capsule())
+                    .overlay(Capsule().stroke(NewBlockScreenTokens.hair, lineWidth: 0.75))
                 }
             }
-            .padding(.bottom, ChartLayout.titleToLabelsGap)
+            .padding(.bottom, 14)
 
             if phases.isEmpty {
                 Text("Add phases to preview progression")
@@ -940,87 +1065,208 @@ fileprivate struct NewBlockProgressionChart: View {
                     .frame(maxWidth: .infinity, alignment: .center)
                     .frame(height: ChartLayout.emptyStateHeight)
             } else {
-                // Top phase abbreviation labels (proportional width) — required: ForEach(phases, id: \.draftID)
-                GeometryReader { geo in
-                    HStack(spacing: 0) {
-                        ForEach(phases, id: \.draftID) { phase in
-                            Text(NewBlockPhaseText.abbreviation(for: phase.kind))
-                                .font(NewBlockType.micro)
-                                .tracking(0.8)
-                                .foregroundStyle(BlockPhaseColors.badgeColor(for: phase.kind))
-                                .frame(
-                                    width: totalWeeks > 0
-                                        ? geo.size.width * CGFloat(phase.weeks) / CGFloat(totalWeeks)
-                                        : 0,
-                                    alignment: .center
-                                )
-                                .lineLimit(1)
-                                .minimumScaleFactor(0.7)
-                        }
-                    }
-                }
-                .frame(height: 14)
-                .padding(.bottom, ChartLayout.labelsToPlotGap)
-
-                // The chart with colored phase-band regions behind the lines
                 Chart {
-                    // Faint colored background bands per phase — span the full
-                    // y domain so the pastel columns fill the plot height.
+                    // ── Phase bands (drawn first so marks render on top) ──────────────
+                    // Bands use x: weekStart+0.5 ... weekEnd+0.5 (cut between weeks).
+                    // A thin 2pt accent rail caps each band's top edge in the phase color.
                     ForEach(phaseBands) { band in
+                        // Tinted band fill (0.18 opacity)
                         RectangleMark(
-                            xStart: .value("s", band.start),
-                            xEnd: .value("e", band.end),
+                            xStart: .value("s", Double(band.start) + 0.5),
+                            xEnd:   .value("e", Double(band.end) + 0.5),
                             yStart: .value("lo", yDomain.lowerBound),
-                            yEnd: .value("hi", yDomain.upperBound)
+                            yEnd:   .value("hi", yDomain.upperBound)
                         )
                         .foregroundStyle(
                             BlockPhaseColors.badgeColor(for: band.kind).opacity(0.18)
                         )
+
+                        // 2pt top accent rail in the full phase color
+                        let tinyEpsilon = (yDomain.upperBound - yDomain.lowerBound) * 0.015
+                        RectangleMark(
+                            xStart: .value("s", Double(band.start) + 0.5),
+                            xEnd:   .value("e", Double(band.end) + 0.5),
+                            yStart: .value("railLo", yDomain.upperBound - tinyEpsilon),
+                            yEnd:   .value("railHi", yDomain.upperBound)
+                        )
+                        .foregroundStyle(BlockPhaseColors.badgeColor(for: band.kind))
                     }
 
-                    // Intensity line (solid ink + points) ON TOP of bands
+                    // ── Volume AreaMark (translucent gray, anchored to chart floor) ──
+                    // Drawn before intensity so intensity renders on top.
+                    ForEach(points.filter { $0.series == "Volume" }) { pt in
+                        AreaMark(
+                            x: .value("Week", pt.week),
+                            yStart: .value("floor", yDomain.lowerBound),
+                            yEnd:   .value("Value", pt.value),
+                            series: .value("Series", "Volume")
+                        )
+                        .foregroundStyle(NewBlockScreenTokens.muted.opacity(0.18))
+                        .interpolationMethod(.linear)
+
+                        // Thin dashed top edge following the volume line
+                        LineMark(
+                            x: .value("Week", pt.week),
+                            y: .value("Value", pt.value),
+                            series: .value("Series", "Volume")
+                        )
+                        .foregroundStyle(NewBlockScreenTokens.muted.opacity(0.7))
+                        .lineStyle(StrokeStyle(lineWidth: 1, dash: [3, 3]))
+                    }
+
+                    // ── Intensity LineMark + PointMark (bold, rendered on top) ───────
                     ForEach(points.filter { $0.series == "Intensity" }) { pt in
                         LineMark(
                             x: .value("Week", pt.week),
                             y: .value("Value", pt.value),
-                            series: .value("Series", pt.series)
+                            series: .value("Series", "Intensity")
                         )
                         .foregroundStyle(NewBlockScreenTokens.ink)
                         .lineStyle(StrokeStyle(lineWidth: 2))
+
+                        // Solid filled dot at each week
                         PointMark(
                             x: .value("Week", pt.week),
                             y: .value("Value", pt.value)
                         )
                         .foregroundStyle(NewBlockScreenTokens.ink)
-                        .symbolSize(40)
+                        .symbolSize(44)
+
+                        // Hollow ring around the selected week's point
+                        if pt.week == (selectedWeek ?? 1) {
+                            PointMark(
+                                x: .value("Week", pt.week),
+                                y: .value("Value", pt.value)
+                            )
+                            .symbol {
+                                Circle()
+                                    .stroke(NewBlockScreenTokens.ink, lineWidth: 1.5)
+                                    .frame(width: 18, height: 18)
+                            }
+                            .foregroundStyle(NewBlockScreenTokens.ink)
+                        }
                     }
-                    // Volume line (dashed muted, no points) ON TOP of bands
-                    ForEach(points.filter { $0.series == "Volume" }) { pt in
-                        LineMark(
-                            x: .value("Week", pt.week),
-                            y: .value("Value", pt.value),
-                            series: .value("Series", pt.series)
-                        )
-                        .foregroundStyle(NewBlockScreenTokens.muted)
-                        .lineStyle(StrokeStyle(lineWidth: 1.5, dash: [4, 3]))
+
+                    // ── Vertical dotted RuleMark at the selected week ─────────────────
+                    if let sel = selectedWeek {
+                        RuleMark(x: .value("sel", sel))
+                            .lineStyle(StrokeStyle(lineWidth: 1, dash: [2, 3]))
+                            .foregroundStyle(NewBlockScreenTokens.ink.opacity(0.55))
                     }
                 }
+                .chartXScale(domain: 0.5 ... Double(totalWeeks) + 0.5)
                 .chartXAxis {
                     AxisMarks(values: weekAxisValues) { value in
                         if let week = value.as(Int.self) {
                             AxisValueLabel {
                                 Text("W\(week)")
                                     .font(NewBlockType.micro)
-                                    .foregroundStyle(NewBlockScreenTokens.muted)
+                                    .foregroundStyle(
+                                        week == (selectedWeek ?? -1)
+                                            ? NewBlockScreenTokens.ink
+                                            : NewBlockScreenTokens.muted
+                                    )
+                                    .fontWeight(week == (selectedWeek ?? -1) ? .semibold : .regular)
                                     .padding(.top, ChartLayout.weekLabelSpacing)
                             }
                         }
                     }
                 }
-                .chartYAxis(.hidden)
+                .chartYAxis {
+                    // Two hairline gridlines at 18% and 82% of the y range (HIGH and LOW).
+                    let lo = yDomain.lowerBound
+                    let hi = yDomain.upperBound
+                    let range = hi - lo
+                    AxisMarks(
+                        position: .leading,
+                        values: [lo + range * 0.18, lo + range * 0.82]
+                    ) { _ in
+                        AxisGridLine()
+                            .foregroundStyle(NewBlockScreenTokens.hair)
+                    }
+                }
                 .chartYScale(domain: yDomain)
+                .chartXSelection(value: $selectedWeek)
+                .sensoryFeedback(.selection, trigger: selectedWeek)
                 .chartPlotStyle { plotArea in
                     plotArea.frame(height: ChartLayout.plotAreaHeight)
+                }
+                .accessibilityLabel(
+                    "Progression overview, \(totalWeeks) weeks, \(contiguousPhaseSpans.count) phases. " +
+                    "Volume and intensity by week. Selected week \(selectedWeek ?? 1)."
+                )
+                // ── Phase-label overlay (one label per contiguous span) ────────────────
+                // 260610-ey9: phase labels emitted per contiguous span, not per phase.
+                // Required: ForEach(phases, id: \.draftID) — used in timeline and phase-list rows.
+                .chartOverlay { proxy in
+                    GeometryReader { geo in
+                        ZStack(alignment: .topLeading) {
+                            // Per-span phase abbreviation centered inside the band
+                            ForEach(Array(contiguousPhaseSpans.enumerated()), id: \.offset) { _, span in
+                                let midWeek = Double(span.start + span.end) / 2.0 + 0.5
+                                let xPos = proxy.position(forX: midWeek) ?? (geo.size.width / 2)
+                                Text(NewBlockPhaseText.abbreviation(for: span.kind).uppercased())
+                                    .font(NewBlockType.micro)
+                                    .tracking(0.8)
+                                    .foregroundStyle(BlockPhaseColors.phaseLabelInk(for: span.kind))
+                                    .position(x: xPos, y: 12)
+                            }
+
+                            // HIGH / LOW y-anchor labels on the leading edge
+                            let lo = yDomain.lowerBound
+                            let hi = yDomain.upperBound
+                            let range = hi - lo
+                            let highY = proxy.position(forY: lo + range * 0.82) ?? 0
+                            let lowY  = proxy.position(forY: lo + range * 0.18) ?? geo.size.height
+
+                            Text("HIGH")
+                                .font(NewBlockType.micro)
+                                .tracking(0.6)
+                                .foregroundStyle(NewBlockScreenTokens.muted)
+                                .position(x: 18, y: highY)
+
+                            Text("LOW")
+                                .font(NewBlockType.micro)
+                                .tracking(0.6)
+                                .foregroundStyle(NewBlockScreenTokens.muted)
+                                .position(x: 16, y: lowY)
+
+                            // Value callout pill above the selected week
+                            if let sel = selectedWeek,
+                               let xPos = proxy.position(forX: Double(sel)) {
+                                let intensityPt = points.first(where: { $0.week == sel && $0.series == "Intensity" })
+                                let yPos: CGFloat = {
+                                    if let pt = intensityPt,
+                                       let y = proxy.position(forY: pt.value) {
+                                        return max(22, y - 28)
+                                    }
+                                    return 22
+                                }()
+                                Text(calloutText(for: sel))
+                                    .font(NewBlockType.micro)
+                                    .tracking(1.0)
+                                    .foregroundStyle(NewBlockScreenTokens.ink)
+                                    .padding(.horizontal, 10)
+                                    .padding(.vertical, 5)
+                                    .background(
+                                        Capsule()
+                                            .fill(NewBlockScreenTokens.paper)
+                                            .overlay(
+                                                Capsule()
+                                                    .stroke(NewBlockScreenTokens.hair, lineWidth: 0.75)
+                                            )
+                                    )
+                                    .shadow(color: Color.black.opacity(0.06), radius: 3, y: 1)
+                                    .fixedSize()
+                                    .position(x: xPos, y: yPos)
+                            }
+                        }
+                    }
+                }
+                .onAppear {
+                    if selectedWeek == nil, !phases.isEmpty {
+                        selectedWeek = 1
+                    }
                 }
             }
         }
@@ -1031,16 +1277,38 @@ fileprivate struct NewBlockProgressionChart: View {
 
 // MARK: - Phase Rows
 
-// 260528-vi2: compact rounded phase card with context menu for reorder + delete.
-// Each phase is its own ~68pt bruCard. Context menu replaces swipe-delete + REORDER.
+// 260528-vi2: compact rounded phase card. Direct-manipulation affordances:
+// swipe-left reveals/commits Delete (custom gesture — .swipeActions is a no-op in a
+// LazyVStack), and the trailing ⋮⋮ handle long-press-drags to reorder. The context
+// menu (Move Up / Move Down / Delete) is kept as the accessibility fallback.
 fileprivate struct NewBlockPhaseEditorRow: View {
     @Bindable var draft: BlockPhaseDraft
     let displayIndex: Int
+    let isDragging: Bool
     let onDelete: () -> Void
     let onMoveUp: () -> Void
     let onMoveDown: () -> Void
+    let onReorderBegan: () -> Void
+    let onReorderChanged: (CGSize) -> Void
+    let onReorderEnded: () -> Void
 
     @State private var presentingEditor = false
+
+    // Swipe-to-delete (per-row). swipeOffset is the committed reveal; swipeDrag is the
+    // live finger delta (auto-resets to 0 when the gesture ends or is interrupted).
+    @State private var swipeOffset: CGFloat = 0
+    @GestureState private var swipeDrag: CGFloat = 0
+    @State private var cardWidth: CGFloat = 0
+
+    private enum Swipe {
+        static let activate: CGFloat = 12       // DragGesture minimumDistance
+        static let revealWidth: CGFloat = 92    // resting open width = Delete button width
+        static let commitFraction: CGFloat = 0.6 // full-swipe commit past 60% of card width
+        static let dominance: CGFloat = 1.3     // |dx| must beat |dy|·dominance to claim swipe
+    }
+
+    private var revealed: Bool { swipeOffset < -1 }
+    private var visibleOffset: CGFloat { min(0, swipeOffset + swipeDrag) }
 
     /// 1pt × 34pt hairline divider between stat columns (260610-dbz).
     private var phaseRowDivider: some View {
@@ -1050,6 +1318,46 @@ fileprivate struct NewBlockPhaseEditorRow: View {
     }
 
     var body: some View {
+        ZStack(alignment: .trailing) {
+            deleteBackground
+            cardSurface
+                .offset(x: visibleOffset)
+                .contentShape(Rectangle())
+                .onTapGesture {
+                    if revealed {
+                        withAnimation(.spring(response: 0.3, dampingFraction: 0.9)) { swipeOffset = 0 }
+                    } else {
+                        presentingEditor = true
+                    }
+                }
+                .simultaneousGesture(swipeGesture)
+        }
+        .onGeometryChange(for: CGFloat.self, of: { $0.size.width }, action: { cardWidth = $0 })
+        .contextMenu {
+            Button("Move Up") { onMoveUp() }
+            Button("Move Down") { onMoveDown() }
+            Divider()
+            Button("Delete Phase", role: .destructive) { onDelete() }
+        }
+        .accessibilityLabel("Phase \(displayIndex): \(BlockPhaseColors.phaseLabel(draft.kind))")
+        .accessibilityActions {
+            Button("Move Up") { onMoveUp() }
+            Button("Move Down") { onMoveDown() }
+            Button("Delete Phase") { onDelete() }
+        }
+        // A row that gets lifted to reorder must not also be sitting half-open.
+        .onChange(of: isDragging) { _, nowDragging in
+            if nowDragging, swipeOffset != 0 {
+                withAnimation(.spring(response: 0.3, dampingFraction: 0.9)) { swipeOffset = 0 }
+            }
+        }
+        .sheet(isPresented: $presentingEditor) {
+            NewBlockPhaseEditorSheet(draft: draft)
+        }
+    }
+
+    // The warm card itself (rail + content), offset over the Delete affordance.
+    private var cardSurface: some View {
         HStack(spacing: 0) {
             let chipFill  = BlockPhaseColors.badgeColor(for: draft.kind)
             let chipLabel = BlockPhaseColors.badgeLabelColor(for: draft.kind)
@@ -1110,24 +1418,95 @@ fileprivate struct NewBlockPhaseEditorRow: View {
                 Image(systemName: "chevron.right")
                     .font(.system(size: 12, weight: .semibold))
                     .foregroundStyle(NewBlockScreenTokens.muted)
+
+                // Drag handle — typographic ⋮⋮ (matches RoutineExerciseCard); long-press
+                // then drag to reorder. Gesture is scoped to the handle so the card body
+                // stays free for swipe-to-delete and tap-to-edit.
+                Text("⋮⋮")
+                    .font(.system(size: 16, weight: .bold))
+                    .foregroundStyle(NewBlockScreenTokens.muted)
+                    .frame(width: 22, height: 44)
+                    .contentShape(Rectangle())
+                    .highPriorityGesture(reorderGesture)
+                    .accessibilityHidden(true)
             }
             .padding(.leading, 12)
             .padding(.trailing, NewBlockScreenTokens.cardPadding)
             .padding(.vertical, 12)
         }
         .bruCard(radius: NewBlockScreenTokens.phaseCardRadius)
-        .contentShape(Rectangle())
-        .onTapGesture { presentingEditor = true }
-        .contextMenu {
-            Button("Move Up") { onMoveUp() }
-            Button("Move Down") { onMoveDown() }
-            Divider()
-            Button("Delete Phase", role: .destructive) { onDelete() }
+    }
+
+    // Trailing red Delete affordance revealed behind the card on swipe-left.
+    private var deleteBackground: some View {
+        ZStack(alignment: .trailing) {
+            RoundedRectangle(cornerRadius: NewBlockScreenTokens.phaseCardRadius, style: .continuous)
+                .fill(NewBlockScreenTokens.signal)
+            Button(role: .destructive) {
+                commitDelete()
+            } label: {
+                Text("Delete")
+                    .font(NewBlockType.chrome)
+                    .tracking(NewBlockScreenTokens.chipTracking)
+                    .foregroundStyle(.white)
+                    .frame(width: Swipe.revealWidth)
+                    .frame(maxHeight: .infinity)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
         }
-        .accessibilityLabel("Phase \(displayIndex): \(BlockPhaseColors.phaseLabel(draft.kind))")
-        .sheet(isPresented: $presentingEditor) {
-            NewBlockPhaseEditorSheet(draft: draft)
-        }
+        .opacity(visibleOffset < 0 ? 1 : 0)
+    }
+
+    private var swipeGesture: some Gesture {
+        DragGesture(minimumDistance: Swipe.activate)
+            .updating($swipeDrag) { value, state, _ in
+                // Horizontal-dominant only — vertical-leaning drags fall through to scroll.
+                guard abs(value.translation.width) > abs(value.translation.height) * Swipe.dominance
+                else { return }
+                state = value.translation.width
+            }
+            .onEnded { value in
+                guard abs(value.translation.width) > abs(value.translation.height) * Swipe.dominance
+                else { return }
+                let width = cardWidth > 0 ? cardWidth : 320
+                let projected = value.predictedEndTranslation.width   // include flick velocity
+                withAnimation(.spring(response: 0.32, dampingFraction: 0.86)) {
+                    if projected < -(width * Swipe.commitFraction) {
+                        swipeOffset = -width
+                    } else if value.translation.width < -Swipe.revealWidth * 0.5 {
+                        swipeOffset = -Swipe.revealWidth
+                    } else {
+                        swipeOffset = 0
+                    }
+                }
+                if swipeOffset <= -width { commitDelete() }
+            }
+    }
+
+    // Long-press gate (so a scroll fling never arms it) then drag. Reported up to the
+    // parent, which owns the cross-row shift + the commit-on-drop.
+    private var reorderGesture: some Gesture {
+        LongPressGesture(minimumDuration: 0.4)
+            .sequenced(before: DragGesture(minimumDistance: 0))
+            .onChanged { value in
+                switch value {
+                case .first(true):
+                    onReorderBegan()
+                case .second(true, let drag?):
+                    onReorderChanged(drag.translation)
+                default:
+                    break
+                }
+            }
+            .onEnded { _ in onReorderEnded() }
+    }
+
+    // Route both full-swipe and the revealed Delete button through the existing
+    // onDelete → beginPendingDelete → 4s undo toast. Reset so a recycled row is clean.
+    private func commitDelete() {
+        onDelete()
+        swipeOffset = 0
     }
 }
 

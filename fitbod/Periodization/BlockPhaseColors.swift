@@ -80,4 +80,24 @@ public enum BlockPhaseColors {
             return Color.bruInk
         }
     }
+
+    /// Contrast-safe label ink for phase abbreviations rendered on translucent tinted bands.
+    /// Returns a deepened color that passes contrast on a 0.18-opacity band fill.
+    /// Distinct from `badgeColor` (which is a vivid fill) — these are darker for legibility.
+    public static func phaseLabelInk(for kind: BlockPhaseKind) -> Color {
+        switch kind {
+        case .accumulation:
+            // bruBlue #2F5ACF is already a deep saturated indigo — passes on 0.18 blue tint.
+            return Color.bruBlue
+        case .intensification:
+            // bruSignal #FF5C1A is burnt orange/rust — passes on 0.18 peach tint.
+            return Color.bruSignal
+        case .realization:
+            // Deepened forest green — passes on 0.18 green tint.
+            return Color(red: 34 / 255, green: 96 / 255, blue: 60 / 255)
+        case .deload:
+            // Deep ochre — passes contrast on bruAmber 0.18 tint. 260610-ey9: deep ochre literal.
+            return Color(red: 138 / 255, green: 92 / 255, blue: 24 / 255)
+        }
+    }
 }
