@@ -284,6 +284,9 @@ public actor ExportService {
             totalDurationSeconds: s.totalDurationSeconds,
             intentRaw: s.intentRaw,
             progressionKindRaw: s.progressionKindRaw,
+            templateName: s.templateName,
+            slotPosition: s.slot?.position,
+            slotSplitName: s.slot?.split?.name,
             exercises: exercises
         )
     }
@@ -338,6 +341,10 @@ public actor ExportService {
             startDate: b.startDate, endDate: b.endDate,
             notes: b.notes, isActive: b.isActive,
             reviewedAt: b.reviewedAt,
+            schedulingModeRaw: b.schedulingModeRaw,
+            trainingDaysJoined: b.trainingDaysJoined,
+            archivedConfigJSON: b.archivedConfigJSON,
+            splitName: b.split?.name,
             phases: phases
         )
     }

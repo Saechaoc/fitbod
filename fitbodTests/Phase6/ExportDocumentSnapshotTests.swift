@@ -166,6 +166,9 @@ struct ExportDocumentSnapshotTests {
             sourceRoutineID: routineID, blockID: blockID,
             notes: nil, totalDurationSeconds: 3600,
             intentRaw: "strength", progressionKindRaw: "rpe",
+            templateName: "Upper A",          // WR-05 (V7)
+            slotPosition: 0,                  // WR-05 (V7)
+            slotSplitName: "Spring Block split", // WR-05 (V7)
             exercises: [sessionExercise]
         )
 
@@ -180,6 +183,10 @@ struct ExportDocumentSnapshotTests {
             id: blockID, name: "Spring Block",
             startDate: fixedDate, endDate: nil, notes: nil,
             isActive: true, reviewedAt: nil,
+            schedulingModeRaw: "rotation",       // WR-05 (V7)
+            trainingDaysJoined: "2,4,6",         // WR-05 (V7)
+            archivedConfigJSON: nil,             // WR-05 (V7) — active block, no archive yet
+            splitName: "Spring Block split",     // WR-05 (V7)
             phases: [blockPhase]
         )
 

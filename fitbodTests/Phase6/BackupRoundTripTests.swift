@@ -291,6 +291,9 @@ struct BackupRoundTripTests {
             totalDurationSeconds: s.totalDurationSeconds,
             intentRaw: s.intentRaw,
             progressionKindRaw: s.progressionKindRaw,
+            templateName: s.templateName,
+            slotPosition: s.slot?.position,
+            slotSplitName: s.slot?.split?.name,
             exercises: exercises
         )
     }
@@ -339,7 +342,12 @@ struct BackupRoundTripTests {
             id: b.id, name: b.name,
             startDate: b.startDate, endDate: b.endDate,
             notes: b.notes, isActive: b.isActive,
-            reviewedAt: b.reviewedAt, phases: phases
+            reviewedAt: b.reviewedAt,
+            schedulingModeRaw: b.schedulingModeRaw,
+            trainingDaysJoined: b.trainingDaysJoined,
+            archivedConfigJSON: b.archivedConfigJSON,
+            splitName: b.split?.name,
+            phases: phases
         )
     }
 
@@ -522,6 +530,9 @@ private extension ExportSessionDTO {
             totalDurationSeconds: totalDurationSeconds,
             intentRaw: intentRaw,
             progressionKindRaw: progressionKindRaw,
+            templateName: templateName,
+            slotPosition: slotPosition,
+            slotSplitName: slotSplitName,
             exercises: exercises.map { $0.dateTruncated() }
         )
     }
@@ -570,6 +581,10 @@ private extension ExportBlockDTO {
             endDate: truncate(endDate),
             notes: notes, isActive: isActive,
             reviewedAt: truncate(reviewedAt),
+            schedulingModeRaw: schedulingModeRaw,
+            trainingDaysJoined: trainingDaysJoined,
+            archivedConfigJSON: archivedConfigJSON,
+            splitName: splitName,
             phases: phases
         )
     }

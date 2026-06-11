@@ -386,6 +386,16 @@ public final class BackupRestorer {
             b.notes = dto.notes
             b.isActive = dto.isActive
             b.reviewedAt = dto.reviewedAt
+            // WR-05 (V7): restore program-graph scalar fields. archivedConfigJSON
+            // is the freeze-#2 archive (spec §6 — sole source of truth for
+            // completed-block views); without it, restored completed blocks would
+            // be permanently unreadable. schedulingModeRaw / trainingDaysJoined
+            // carry the live scheduling config. (Block.split live-graph reattach is
+            // deferred to Phase 8 split wiring; splitName travels in the export for
+            // that future use.)
+            b.schedulingModeRaw = dto.schedulingModeRaw
+            b.trainingDaysJoined = dto.trainingDaysJoined
+            b.archivedConfigJSON = dto.archivedConfigJSON
             ctx.insert(b)
             blocksByID[dto.id] = b
             for phaseDTO in dto.phases {
@@ -469,6 +479,11 @@ public final class BackupRestorer {
             s.totalDurationSeconds = dto.totalDurationSeconds
             s.intentRaw = dto.intentRaw
             s.progressionKindRaw = dto.progressionKindRaw
+            // WR-05 (V7): restore the log-time template-name snapshot (freeze #1
+            // insurance — survives a nullified template ref). slotPosition /
+            // slotSplitName travel in the export for forward use; live slot-graph
+            // reattach is deferred to Phase 8.
+            s.templateName = dto.templateName
             if let blockID = dto.blockID, let block = blocksByID[blockID] {
                 s.block = block
             }

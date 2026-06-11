@@ -320,6 +320,12 @@ public struct ExportSessionDTO: Codable, Equatable, Sendable {
     public let totalDurationSeconds: Int?
     public let intentRaw: String
     public let progressionKindRaw: String
+    // WR-05 (V7): log-time template-name snapshot (freeze #1 insurance) +
+    // the launching slot's position and split name. All optional/defaulted
+    // so older v6 backups (which lack these keys) decode cleanly.
+    public let templateName: String?
+    public let slotPosition: Int?
+    public let slotSplitName: String?
     public let exercises: [ExportSessionExerciseDTO]
 
     public init(
@@ -327,6 +333,9 @@ public struct ExportSessionDTO: Codable, Equatable, Sendable {
         routineSnapshotName: String, sourceRoutineID: UUID?,
         blockID: UUID?, notes: String?, totalDurationSeconds: Int?,
         intentRaw: String, progressionKindRaw: String,
+        templateName: String? = nil,
+        slotPosition: Int? = nil,
+        slotSplitName: String? = nil,
         exercises: [ExportSessionExerciseDTO]
     ) {
         self.id = id; self.startedAt = startedAt
@@ -336,6 +345,9 @@ public struct ExportSessionDTO: Codable, Equatable, Sendable {
         self.notes = notes; self.totalDurationSeconds = totalDurationSeconds
         self.intentRaw = intentRaw
         self.progressionKindRaw = progressionKindRaw
+        self.templateName = templateName
+        self.slotPosition = slotPosition
+        self.slotSplitName = slotSplitName
         self.exercises = exercises
     }
 }
@@ -432,17 +444,35 @@ public struct ExportBlockDTO: Codable, Equatable, Sendable {
     public let notes: String?
     public let isActive: Bool
     public let reviewedAt: Date?
+    // WR-05 (V7): program-graph fields. schedulingModeRaw / trainingDaysJoined
+    // default to the V7 model defaults; archivedConfigJSON is the freeze-#2
+    // archive (spec §6 — sole source of truth for completed-block views, so it
+    // MUST round-trip); splitName is a soft name reference to the attached split.
+    // All defaulted/optional so older v6 backups decode without these keys.
+    public let schedulingModeRaw: String
+    public let trainingDaysJoined: String
+    public let archivedConfigJSON: String?
+    public let splitName: String?
     public let phases: [ExportBlockPhaseDTO]
 
     public init(
         id: UUID, name: String, startDate: Date, endDate: Date?,
         notes: String?, isActive: Bool, reviewedAt: Date?,
+        schedulingModeRaw: String = "rotation",
+        trainingDaysJoined: String = "",
+        archivedConfigJSON: String? = nil,
+        splitName: String? = nil,
         phases: [ExportBlockPhaseDTO]
     ) {
         self.id = id; self.name = name
         self.startDate = startDate; self.endDate = endDate
         self.notes = notes; self.isActive = isActive
-        self.reviewedAt = reviewedAt; self.phases = phases
+        self.reviewedAt = reviewedAt
+        self.schedulingModeRaw = schedulingModeRaw
+        self.trainingDaysJoined = trainingDaysJoined
+        self.archivedConfigJSON = archivedConfigJSON
+        self.splitName = splitName
+        self.phases = phases
     }
 }
 
