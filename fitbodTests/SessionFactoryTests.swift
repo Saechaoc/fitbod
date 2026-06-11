@@ -313,6 +313,90 @@ struct SessionFactoryTests {
         #expect(ses[1].exercise?.canonicalName == "bench")
     }
 
+    // MARK: - Phase 8 (CR-02): activeBlock drives prescription, template.block ignored
+
+    /// Builds a Block with a single deload phase starting `daysAgo` days before `date`
+    /// so `PeriodizationEngine.phase(for:on:)` returns the deload phase on `date`.
+    private func makeDeloadBlock(ctx: ModelContext, daysAgo: Int = 1) throws -> Block {
+        let block = Block()
+        block.name = "Test Block"
+        block.isActive = true
+        block.startDate = Calendar.current.date(byAdding: .day, value: -daysAgo, to: .now) ?? .now
+        ctx.insert(block)
+
+        let deloadPhase = BlockPhase()
+        deloadPhase.block = block
+        deloadPhase.orderIndex = 0
+        deloadPhase.nameRaw = "deload"
+        deloadPhase.weeks = 1
+        deloadPhase.volumeMultiplier = 0.5
+        ctx.insert(deloadPhase)
+        try ctx.save()
+        return block
+    }
+
+    @Test("prescriptionResolvesFromActiveBlockNotTemplateBlock — session.block == activeBlock; deload fires")
+    func prescriptionResolvesFromActiveBlockNotTemplateBlock() throws {
+        let ctx = try makeContext()
+        let routine = try makeFixtureRoutine(ctx: ctx)
+        let theBlock = try makeDeloadBlock(ctx: ctx)
+
+        // Start with activeBlock passed explicitly.
+        let session = try SessionFactory.start(
+            template: routine,
+            activeBlock: theBlock,
+            on: .now,
+            context: ctx
+        )
+
+        // session.block must be the injected activeBlock, not the template edge.
+        #expect(session.block?.id == theBlock.id)
+
+        // Deload volumeMultiplier = 0.5 → planned working sets cut for ex1 (targetSets=3).
+        // floor(3 * 0.5) = 1, max(1, 1) = 1.
+        let ses = (session.exercises ?? []).sorted { $0.orderIndex < $1.orderIndex }
+        let workingSets = (ses[0].sets ?? []).filter { !$0.isWarmup }
+        #expect(workingSets.count == 1, "Deload volumeMultiplier 0.5 should reduce 3 sets → 1")
+    }
+
+    @Test("templateBlockSentinelIgnored — session reflects activeBlock not template.block")
+    func templateBlockSentinelIgnored() throws {
+        let ctx = try makeContext()
+        let routine = try makeFixtureRoutine(ctx: ctx)
+
+        // theBlock = the canonical active block we inject
+        let theBlock = try makeDeloadBlock(ctx: ctx)
+
+        // sentinelBlock = a different block set on template.block to prove it is NOT read
+        let sentinelBlock = Block()
+        sentinelBlock.name = "Sentinel Block"
+        sentinelBlock.isActive = false
+        ctx.insert(sentinelBlock)
+        routine.block = sentinelBlock   // legacy edge — factory must ignore this for prescription
+        try ctx.save()
+
+        let session = try SessionFactory.start(
+            template: routine,
+            activeBlock: theBlock,
+            on: .now,
+            context: ctx
+        )
+
+        // The session must reflect theBlock, NOT the sentinelBlock legacy edge.
+        #expect(session.block?.id == theBlock.id, "session.block must come from activeBlock, not template.block sentinel")
+        #expect(session.block?.id != sentinelBlock.id, "template.block sentinel must be ignored")
+    }
+
+    @Test("activeBlockNil — adHoc session has nil block")
+    func activeBlockNilAdHocSessionHasNilBlock() throws {
+        let ctx = try makeContext()
+        let routine = try makeFixtureRoutine(ctx: ctx)
+
+        // Call with default activeBlock (nil) — backward-compatible ad-hoc path.
+        let session = try SessionFactory.start(template: routine, on: .now, context: ctx)
+        #expect(session.block == nil, "ad-hoc session with activeBlock=nil must have nil block")
+    }
+
     // MARK: - 9. tracksTempo / tracksPartialReps snapshot (Wave-4 plan 04-02)
 
     @Test("snapshotsTracksTempoAndTracksPartialReps — opt-in row toggles are snapshotted")
