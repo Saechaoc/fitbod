@@ -58,10 +58,27 @@ struct SchemaV7MigrationTests {
 
     // MARK: - Helpers
 
-    /// Fresh in-memory V7 ModelContext over `Schema(SchemaV7.models)` +
-    /// FitbodSchemaMigrationPlan — mirrors SchemaV6MigrationTests.makeContext shape.
+    /// Fresh in-memory ModelContext over a combined V6+V7 schema +
+    /// FitbodSchemaMigrationPlan — required so SchemaV6.Routine rows seeded
+    /// in refRemapping are actually persisted and fetchable.
+    ///
+    /// Root cause of the original 0-row stash (verified in 07-07):
+    /// Schema(SchemaV7.models) does NOT register SchemaV6.Routine. Inserting
+    /// SchemaV6.Routine() into a V7-only container is a silent no-op, so
+    /// FetchDescriptor<SchemaV6.Routine>() returns 0 rows. The real V6→V7
+    /// migration container registers BOTH shape sets; this helper mirrors that.
+    ///
+    /// Deduplication: SchemaV6 and SchemaV7 share ~14 production typealiases
+    /// that resolve to the same metatype. A raw concat would register duplicates
+    /// and SwiftData would reject the schema. Dedup by ObjectIdentifier.
     private func makeContext() throws -> ModelContext {
-        let schema = Schema(SchemaV7.models)
+        let combined = (SchemaV6.models + SchemaV7.models)
+            .reduce(into: [any PersistentModel.Type]()) { acc, t in
+                if !acc.contains(where: { ObjectIdentifier($0) == ObjectIdentifier(t) }) {
+                    acc.append(t)
+                }
+            }
+        let schema = Schema(combined)
         let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
         let container = try ModelContainer(
             for: schema,

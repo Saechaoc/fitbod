@@ -100,15 +100,19 @@ struct SchemaV6MigrationTests {
         #expect(Bool(true))
     }
 
-    // MARK: - 4. V6 entity count is V5 + 2 nested migration shapes
+    // MARK: - 4. V6 entity count equals V5 entity count (nested-substitution invariant)
 
-    @Test("SchemaV6 models count is SchemaV5.models count + 2 (V7 migration: SchemaV6 gained nested Routine + RoutineExercise shapes for the V6→V7 custom stage)")
+    @Test("SchemaV6 models count equals SchemaV5.models count (nested-substitution invariant: both carry exactly 2 nested migration shapes substituting for the 2 renamed entities)")
     func schemaV6ModelsCountMatchesV5() {
-        // V7 migration: SchemaV6 gained nested Routine + RoutineExercise shapes
-        // for the V6 to V7 custom stage (Pitfall 4 fix — silent 0-row stash
-        // without explicit models entries). SchemaV6.models is now a 16-entry
-        // explicit array: 14 production types + SchemaV6.Routine + SchemaV6.RoutineExercise.
-        #expect(SchemaV6.models.count == SchemaV5.models.count + 2)
+        // Nested-substitution invariant: both V5 and V6 carry exactly 16 entries.
+        //   V6 = 14 production typealiases + SchemaV6.Routine + SchemaV6.RoutineExercise (nested)
+        //   V5 = 14 unchanged typealiases + SchemaV5.Routine + SchemaV5.RoutineExercise (nested)
+        // V5→V6 added fields on OTHER entities (UserSettings/Exercise/ExerciseMuscleStimulus/
+        // MuscleVolumeTarget) — it never changed the Routine/RoutineExercise entity shapes.
+        // The entity COUNT is therefore preserved across the V5↔V6 boundary even though
+        // the entity NAMES differ (Routine → still Routine in V5; Routine nested in V6).
+        // 07-07 fix: the previous `+2` assertion (16 == 18) was wrong arithmetic; V5.count == 16.
+        #expect(SchemaV6.models.count == SchemaV5.models.count)
     }
 
     // MARK: - 5. UserSettings Phase 5 fields round-trip

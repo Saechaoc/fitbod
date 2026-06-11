@@ -215,6 +215,14 @@ public enum FitbodSchemaMigrationPlan: SchemaMigrationPlan {
     /// Captured @Model objects are converted to value types immediately — no @Model
     /// reference escapes this function (Pitfall 1 / cross-stage boundary rule).
     internal static func stashV6Routines(in context: ModelContext) throws {
+        // Entry-reset: clear stash at the TOP of every invocation so in-process
+        // re-entry (e.g., serialized test suite running multiple tests) always
+        // starts from a clean slate regardless of whether a prior run cleared it.
+        // The belt-and-suspenders clear at the end of materializeSessionTemplates
+        // is kept; this reset is the idempotency guarantee for re-entry.
+        v6RoutineStash = []
+        v6SessionStash = []
+
         // Fetch V6-shape Routine rows via the nested type (requires SchemaV6.models
         // to include Self.Routine.self — Pitfall 4 fix in SchemaV6.swift).
         let routines = try context.fetch(FetchDescriptor<SchemaV6.Routine>())
