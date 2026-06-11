@@ -1955,13 +1955,17 @@ fileprivate struct NewBlockSplitBand: View {
                 .padding(.horizontal, NewBlockScreenTokens.sidePadding)
                 .padding(.vertical, NewBlockScreenTokens.rowGap)
 
-                // Soft mismatch hint (amber) when day count != slot count
+                // Soft mismatch hint (amber) when day count != slot count.
+                // Shown whenever a split is attached and counts differ — including
+                // slotCount == 0 (an attached but empty split is still a real mismatch),
+                // matching BlockOverviewScreen.dayChipSection. Hidden only when no split
+                // is attached (nothing to mismatch against). (WR-04)
                 let slotCount = draft.split?.slots?.count ?? 0
-                if slotCount > 0 && draft.trainingDays.count != slotCount {
+                if draft.split != nil && draft.trainingDays.count != slotCount {
                     Text("\(draft.trainingDays.count) days / \(slotCount) sessions")
                         .font(NewBlockType.label)
                         .tracking(NewBlockScreenTokens.labelTracking)
-                        .foregroundStyle(Color(red: 1.0, green: 0.65, blue: 0.0)) // bruAmber
+                        .foregroundStyle(Color.bruAmber) // BRU token, dark-mode-aware (WR-03)
                         .padding(.horizontal, NewBlockScreenTokens.sidePadding)
                         .padding(.bottom, NewBlockScreenTokens.rowGap)
                 }
