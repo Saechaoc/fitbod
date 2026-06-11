@@ -25,7 +25,7 @@ Granular, prescriptive workout sessions — every set in a session is intentiona
 - [x] **Phase 4: Periodization & Blocks** — Block builder, scheduled deloads, block timeline on home, remaining two progression strategies (block-periodized, hybrid)
 - [x] **Phase 5: Fatigue Model & Plateau Detection** — Stimulus-weighted weekly volume, MEV/MAV/MRV bars with verbs, muscle heatmap, plateau detector, fatigue-triggered deload advisory (completed 2007-05-23)
 - [x] **Phase 6: Progress Views, Export & Polish** — Intent-split charts, PRs, weekly tonnage, session comparison, weekly recap, CSV/JSON export, backup/restore (completed 2026-05-24)
-- [ ] **Phase 7: Program Graph Schema V7 & Migration** — Split/SplitSessionSlot entities, Routine→SessionTemplate + RoutineExercise→SessionExerciseTemplate renames, Block split/mode/trainingDays/archive fields, Session slot/templateName, custom V6→V7 migration stage, SchemaV7MigrationTests
+- [x] **Phase 7: Program Graph Schema V7 & Migration** — Split/SplitSessionSlot entities, Routine→SessionTemplate + RoutineExercise→SessionExerciseTemplate renames, Block split/mode/trainingDays/archive fields, Session slot/templateName, custom V6→V7 migration stage, SchemaV7MigrationTests (completed 2026-06-11)
 - [ ] **Phase 8: Scheduler Resolver & Block Lifecycle** — Unified rotation resolver predicate, fixedWeekly scheduling, derived block status switch, one-save start/end transactions, deny/nullify delete rules, ArchivedBlockConfig write + decode error state
 - [ ] **Phase 9: Program Surfaces** — ProgramView rebuild (BLOCKS/ROUTINES sections), SplitDetailView, BlockOverviewScreen live+archived modes, builder split band, live-edit banners, Today resolver wiring
 
@@ -276,7 +276,7 @@ Plans:
 | 4. Periodization & Blocks | 8/8 | Complete | 2026-05-25 |
 | 5. Fatigue Model & Plateau Detection | 7/6 | Complete   | 2026-05-24 |
 | 6. Progress Views, Export & Polish | 11/11 | Complete   | 2026-05-24 |
-| 7. Program Graph Schema V7 & Migration | 4/6 | In Progress|  |
+| 7. Program Graph Schema V7 & Migration | 6/6 | Complete   | 2026-06-11 |
 
 ---
 
@@ -321,7 +321,7 @@ This ordering is dependency-driven and pitfall-aware (per research/SUMMARY.md an
 **Mode:** mvp
 **Requirements**: Authoritative contract: `.planning/quick/training-block-spec/program-graph-spec.md` §1–§3, §6–§7. Delete rules per §3/§4: slot.sessionTemplate `.deny`, Block.split nullify, Session.slot nullify, Split.slots cascade. Aux entities (RoutineFolder, RoutineExerciseSetOverride, SupersetGroup) keep names — accepted naming debt.
 **Depends on:** Phase 6
-**Plans:** 4/6 plans executed
+**Plans:** 6/6 plans complete
 
 Plans:
 - [x] 07-01-PLAN.md — Wave 1: SchedulingMode enum + ArchivedBlockConfig Codable DTO + nested DTOs + iso8601 decoder (SPEC-7-DTO)
@@ -329,7 +329,7 @@ Plans:
 - [x] 07-03-PLAN.md — Wave 3: Split + SplitSessionSlot entities + Block (split/schedulingMode/trainingDays/archivedConfigJSON, routines removed, derivedStatus) + Session (template/slot/templateName) + remaining app clusters compile green
 - [x] 07-04-PLAN.md — Wave 4: SchemaV7 (explicit models) + SchemaV6 nested-type expansion + 7-step custom migrateV6toV7 stage with internal-static helpers
 - [x] 07-05-PLAN.md — Wave 5: Test-target rename + InMemoryContainer→V7 + count-pin refresh (schemas 7 / stages 6 / SchemaV6.models delta) + ExportDocument canonicalSchemaVersion v7
-- [ ] 07-06-PLAN.md — Wave 6: SchemaV7MigrationTests (ghost-free picker, ref remap, rotation continuity, templateName/archive backfill, deny/nullify/cascade, contiguity, derivedStatus) + full Phase 1-6 regression sweep
+- [x] 07-06-PLAN.md — Wave 6: SchemaV7MigrationTests (ghost-free picker, ref remap, rotation continuity, templateName/archive backfill, deny/nullify/cascade, contiguity, derivedStatus) + full Phase 1-6 regression sweep
 
 ### Phase 8: Scheduler Resolver & Block Lifecycle
 
