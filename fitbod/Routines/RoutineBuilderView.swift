@@ -52,8 +52,8 @@ public struct RoutineBuilderView: View {
     @Environment(\.dismiss) private var dismiss
     @Bindable public var draft: RoutineDraft
 
-    /// nil = create mode; non-nil = edit mode (existing Routine).
-    public let editing: Routine?
+    /// nil = create mode; non-nil = edit mode (existing SessionTemplate).
+    public let editing: SessionTemplate?
 
     @State private var expandedExerciseIDs: Set<UUID> = []
     @State private var presentingDiscardConfirm = false
@@ -70,7 +70,7 @@ public struct RoutineBuilderView: View {
     // Multi-day routing will wire in a future plan.
     @State private var dayTabID: UUID = UUID()
 
-    public init(draft: RoutineDraft, editing: Routine? = nil) {
+    public init(draft: RoutineDraft, editing: SessionTemplate? = nil) {
         self.draft = draft
         self.editing = editing
     }
@@ -419,11 +419,11 @@ public struct RoutineBuilderView: View {
     }
 
     private func save() {
-        let routine: Routine
+        let routine: SessionTemplate
         if let editing {
             routine = editing
         } else {
-            routine = Routine()
+            routine = SessionTemplate()
             ctx.insert(routine)
         }
         draft.save(into: routine, context: ctx)

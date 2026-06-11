@@ -51,8 +51,8 @@ public struct RoutinesListView: View {
     @Query(sort: \RoutineFolder.sortOrder)
     private var folders: [RoutineFolder]
 
-    @Query(sort: [SortDescriptor(\Routine.name)])
-    private var routines: [Routine]
+    @Query(sort: [SortDescriptor(\SessionTemplate.name)])
+    private var routines: [SessionTemplate]
 
     @Query(sort: [SortDescriptor(\Block.startDate, order: .reverse)])
     private var blocks: [Block]
@@ -61,10 +61,10 @@ public struct RoutinesListView: View {
     private var activeSessions: [Session]
 
     @State private var presentingNewFolder = false
-    @State private var presentingMoveSheet: Routine? = nil
+    @State private var presentingMoveSheet: SessionTemplate? = nil
     @State private var presentingNewRoutine = false
-    @State private var editingRoutine: Routine? = nil
-    @State private var conflictRoutine: Routine? = nil
+    @State private var editingRoutine: SessionTemplate? = nil
+    @State private var conflictRoutine: SessionTemplate? = nil
     @State private var deleteConfirmFolder: RoutineFolder? = nil
     @State private var pendingBlockBuilder: PendingBlockBuilder? = nil
     @State private var pendingBlockDelete: Block? = nil
@@ -395,7 +395,7 @@ public struct RoutinesListView: View {
         }.filter { !$0.routines.isEmpty || searchText.isEmpty }
     }
 
-    private func matchesSearch(_ routine: Routine) -> Bool {
+    private func matchesSearch(_ routine: SessionTemplate) -> Bool {
         guard !searchText.isEmpty else { return true }
         return routine.name.localizedCaseInsensitiveContains(searchText)
     }
@@ -407,7 +407,7 @@ public struct RoutinesListView: View {
     private struct RoutineSection: Identifiable {
         let id: UUID
         let title: String
-        let routines: [Routine]
+        let routines: [SessionTemplate]
     }
 
     private enum PendingBlockBuilder: Identifiable {
@@ -427,13 +427,13 @@ public struct RoutinesListView: View {
     // MARK: - Handlers
 
     /// "Start Workout" tap — enforces RESEARCH §6 Pitfall 7 (one active session at a time).
-    private func handleStartTap(routine: Routine) {
+    private func handleStartTap(routine: SessionTemplate) {
         if !activeSessions.isEmpty {
             conflictRoutine = routine
             return
         }
         do {
-            let session = try SessionFactory.start(routine: routine, on: .now, context: ctx)
+            let session = try SessionFactory.start(template: routine, on: .now, context: ctx)
             navigationPath.append(SessionRoute.logger(session))
         } catch SessionFactoryError.activeSessionAlreadyExists {
             conflictRoutine = routine
@@ -444,14 +444,14 @@ public struct RoutinesListView: View {
         }
     }
 
-    /// "Duplicate" action — deep-copies the Routine + RoutineExercise rows.
-    private func handleDuplicate(routine: Routine) {
+    /// "Duplicate" action — deep-copies the SessionTemplate + SessionExerciseTemplate rows.
+    private func handleDuplicate(routine: SessionTemplate) {
         RoutineDuplicator.duplicate(routine: routine, context: ctx)
     }
 
     /// "Delete" routine — query-and-deletes orphan SupersetGroup rows (soft
     /// UUID ref) BEFORE `ctx.delete(routine)` (ROUTINE-07 / PITFALLS-doc #1).
-    private func handleDelete(routine: Routine) {
+    private func handleDelete(routine: SessionTemplate) {
         let id = routine.id
         let supersetDescriptor = FetchDescriptor<SupersetGroup>(
             predicate: #Predicate { $0.routineID == id }
@@ -468,7 +468,7 @@ public struct RoutinesListView: View {
     /// deleting the folder (soft-ref invariant, CONTEXT.md Area 6).
     private func handleFolderDelete(_ folder: RoutineFolder) {
         let folderID = folder.id
-        let affectedDescriptor = FetchDescriptor<Routine>(
+        let affectedDescriptor = FetchDescriptor<SessionTemplate>(
             predicate: #Predicate { $0.folderID == folderID }
         )
         let affected = (try? ctx.fetch(affectedDescriptor)) ?? []
@@ -496,9 +496,9 @@ public enum SessionRoute: Hashable {
 #Preview("populated") {
     let container = PreviewModelContainer.make()
     let ctx = ModelContext(container)
-    let r1 = Routine()
+    let r1 = SessionTemplate()
     r1.name = "Push Day A"
-    let r2 = Routine()
+    let r2 = SessionTemplate()
     r2.name = "Pull Day A"
     let folder = RoutineFolder(name: "Push / Pull / Legs")
     ctx.insert(folder)

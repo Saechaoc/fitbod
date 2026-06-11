@@ -32,12 +32,12 @@ public struct MoveRoutineSheet: View {
     @Environment(\.modelContext) private var ctx
     @Environment(\.dismiss) private var dismiss
 
-    public let routine: Routine
+    public let routine: SessionTemplate
     public let folders: [RoutineFolder]
 
     @State private var selected: UUID?
 
-    public init(routine: Routine, folders: [RoutineFolder]) {
+    public init(routine: SessionTemplate, folders: [RoutineFolder]) {
         self.routine = routine
         self.folders = folders
         self._selected = State(initialValue: routine.folderID)
@@ -118,7 +118,7 @@ public struct MoveRoutineSheet: View {
 #Preview {
     let container = PreviewModelContainer.make()
     let ctx = ModelContext(container)
-    let routine = Routine()
+    let routine = SessionTemplate()
     routine.name = "Push Day"
     ctx.insert(routine)
     let f1 = RoutineFolder(name: "Push / Pull / Legs")

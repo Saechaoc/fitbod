@@ -21,12 +21,12 @@ public struct SupersetAssignmentSheet: View {
     @Environment(\.modelContext) private var ctx
     @Environment(\.dismiss) private var dismiss
 
-    public let routine: Routine
+    public let routine: SessionTemplate
     public let exerciseDraft: RoutineExerciseDraft
 
     @Query private var groups: [SupersetGroup]
 
-    public init(routine: Routine, exerciseDraft: RoutineExerciseDraft) {
+    public init(routine: SessionTemplate, exerciseDraft: RoutineExerciseDraft) {
         self.routine = routine
         self.exerciseDraft = exerciseDraft
         let routineID = routine.id
@@ -119,7 +119,7 @@ public struct SupersetAssignmentSheet: View {
         migrationPlan: FitbodSchemaMigrationPlan.self,
         configurations: config
     ) {
-        let routine = Routine()
+        let routine = SessionTemplate()
         container.mainContext.insert(routine)
         let draft = RoutineExerciseDraft()
         return AnyView(

@@ -35,20 +35,20 @@
 import SwiftUI
 
 public struct RoutineRow: View {
-    public let routine: Routine
-    public let onTap: (Routine) -> Void
-    public let onStart: (Routine) -> Void
-    public let onDuplicate: (Routine) -> Void
-    public let onMove: (Routine) -> Void
-    public let onDelete: (Routine) -> Void
+    public let routine: SessionTemplate
+    public let onTap: (SessionTemplate) -> Void
+    public let onStart: (SessionTemplate) -> Void
+    public let onDuplicate: (SessionTemplate) -> Void
+    public let onMove: (SessionTemplate) -> Void
+    public let onDelete: (SessionTemplate) -> Void
 
     public init(
-        routine: Routine,
-        onTap: @escaping (Routine) -> Void,
-        onStart: @escaping (Routine) -> Void,
-        onDuplicate: @escaping (Routine) -> Void,
-        onMove: @escaping (Routine) -> Void,
-        onDelete: @escaping (Routine) -> Void
+        routine: SessionTemplate,
+        onTap: @escaping (SessionTemplate) -> Void,
+        onStart: @escaping (SessionTemplate) -> Void,
+        onDuplicate: @escaping (SessionTemplate) -> Void,
+        onMove: @escaping (SessionTemplate) -> Void,
+        onDelete: @escaping (SessionTemplate) -> Void
     ) {
         self.routine = routine
         self.onTap = onTap

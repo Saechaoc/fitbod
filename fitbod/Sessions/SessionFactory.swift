@@ -103,14 +103,14 @@ public enum SessionFactory {
     /// violation). Caller surfaces UI-SPEC's "Couldn't Start Workout"
     /// alert with the underlying error's `localizedDescription`.
     public static func start(
-        routine: Routine,
+        template: SessionTemplate,
         on date: Date = .now,
         context: ModelContext
     ) throws -> Session {
-        // Empty-routine guard — surface as a typed error BEFORE checking
+        // Empty-template guard — surface as a typed error BEFORE checking
         // the active-session invariant. Both are blocking conditions, but
-        // the empty-routine path is the cheaper check.
-        let exercises = (routine.exercises ?? [])
+        // the empty-template path is the cheaper check.
+        let exercises = (template.exercises ?? [])
             .sorted { $0.orderIndex < $1.orderIndex }
         guard !exercises.isEmpty else {
             throw SessionFactoryError.routineHasNoExercises
@@ -128,23 +128,23 @@ public enum SessionFactory {
         let session = Session()
         session.startedAt = date
         session.completedAt = nil
-        session.routineSnapshotName = routine.name
-        session.sourceRoutineID = routine.id          // soft UUID ref
-        session.block = routine.block                 // optional; safe to carry forward
+        session.routineSnapshotName = template.name
+        session.sourceRoutineID = template.id          // soft UUID ref
+        session.block = template.block                 // optional; safe to carry forward
         session.notes = nil
         session.totalDurationSeconds = nil
         context.insert(session)
 
         // PIVOT-02 / PIVOT-05 — session-level snapshot of intent +
-        // progressionKind. The values are copied from the source routine
+        // progressionKind. The values are copied from the source template
         // at session-start time (PITFALLS-doc #1 — the snapshot pattern
         // is preserved verbatim; only the level changed from per-exercise
-        // to per-session). Future edits to `routine.intentRaw` /
-        // `routine.progressionKindRaw` will NOT mutate this session's
+        // to per-session). Future edits to `template.intentRaw` /
+        // `template.progressionKindRaw` will NOT mutate this session's
         // intent / progressionKind — these fields are independent rows
         // from this point forward.
-        session.intentRaw = routine.intentRaw
-        session.progressionKindRaw = routine.progressionKindRaw
+        session.intentRaw = template.intentRaw
+        session.progressionKindRaw = template.progressionKindRaw
 
         // Fetch UserSettings once for the entire session — used by Block A
         // for defaultIncrementKg and minCalibrationSets.
@@ -162,7 +162,7 @@ public enum SessionFactory {
         // because intent + progressionKind are now session-level
         // (PIVOT-02). The instance is stateless so reuse is safe.
         let sessionStrategy = ProgressionStrategyFactory.make(for: session.progressionKind)
-        let scheduledBlockPhase = routine.block.flatMap { block in
+        let scheduledBlockPhase = template.block.flatMap { block in
             PeriodizationEngine.phase(for: block, on: date)
         }
         let scheduledDeloadActive = scheduledBlockPhase?.kind == .deload
@@ -272,7 +272,7 @@ public enum SessionFactory {
                 lastSessionReps: lastSessionReps,
                 lastSessionRPE: lastSessionRPE,
                 lastSessionDate: lastSessionDate,
-                block: routine.block,
+                block: template.block,
                 today: date
             )
             se.prescribedWeight = prescribedWeight

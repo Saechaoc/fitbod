@@ -72,8 +72,8 @@ public enum RoutineDuplicator {
     /// `RoutineExercise` rows are remapped via a `[UUID: UUID]` map.
     @MainActor
     @discardableResult
-    public static func duplicate(routine: Routine, context: ModelContext) -> Routine {
-        let copy = Routine()
+    public static func duplicate(routine: SessionTemplate, context: ModelContext) -> SessionTemplate {
+        let copy = SessionTemplate()
         copy.name = "\(routine.name) (Copy)"
         copy.notes = routine.notes
         copy.folderID = routine.folderID
@@ -83,9 +83,9 @@ public enum RoutineDuplicator {
         copy.block = routine.block
         // PIVOT-01 — intent + progressionKind are routine-level after
         // Phase 3.1 Plan 02. The duplicate inherits both fields verbatim
-        // from the source routine; per-RoutineExercise copies of the same
-        // fields are gone (the fields no longer exist on
-        // RoutineExercise).
+        // from the source template; per-SessionExerciseTemplate copies of
+        // the same fields are gone (the fields no longer exist on
+        // SessionExerciseTemplate).
         copy.intentRaw = routine.intentRaw
         copy.progressionKindRaw = routine.progressionKindRaw
         context.insert(copy)
@@ -114,8 +114,8 @@ public enum RoutineDuplicator {
         // cloned routine's exercise list mirrors the source's visual
         // order verbatim.
         for re in (routine.exercises ?? []).sorted(by: { $0.orderIndex < $1.orderIndex }) {
-            let clonedRE = RoutineExercise()
-            clonedRE.routine = copy
+            let clonedRE = SessionExerciseTemplate()
+            clonedRE.sessionTemplate = copy
             clonedRE.exercise = re.exercise
             clonedRE.orderIndex = re.orderIndex
             // PIVOT-03: intentRaw / progressionKindRaw no longer exist on

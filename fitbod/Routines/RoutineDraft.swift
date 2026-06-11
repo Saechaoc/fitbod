@@ -119,13 +119,13 @@ public final class RoutineDraft {
     /// Build a draft from an existing `Routine` (edit mode). Each
     /// `RoutineExercise` becomes a `RoutineExerciseDraft` whose `id`
     /// field round-trips back to the SwiftData row on save.
-    public init(routine: Routine) {
+    public init(routine: SessionTemplate) {
         self.name = routine.name
         self.notes = routine.notes
         self.folderID = routine.folderID
         self.blockID = routine.block?.id
         // Phase 3.1 PIVOT-04 — pull session-level Intent + Progression
-        // off the persisted Routine row. The accessors are computed
+        // off the persisted SessionTemplate row. The accessors are computed
         // (`intentRaw` → `Intent`) per FOUND-03 enum-as-String at
         // persistence, typed enum in memory.
         self.intent = routine.intent
@@ -216,13 +216,13 @@ public final class RoutineDraft {
     ///   2. Insert new RE rows where draft.id == nil; back-fill draft.id.
     ///   3. Update existing RE rows in place.
     /// Same shape for the per-RE `RoutineExerciseSetOverride` children.
-    public func save(into routine: Routine, context: ModelContext) {
+    public func save(into routine: SessionTemplate, context: ModelContext) {
         routine.name = name.trimmingCharacters(in: .whitespacesAndNewlines)
         routine.notes = notes
         routine.folderID = folderID
         // Phase 3.1 PIVOT-04 — write session-level Intent to the
-        // persisted Routine row. Progression writes after resolving the
-        // Phase 4 block link so .block/.hybrid cannot persist without a
+        // persisted SessionTemplate row. Progression writes after resolving
+        // the Phase 4 block link so .block/.hybrid cannot persist without a
         // real block.
         routine.intentRaw = intent.rawValue
         routine.updatedAt = .now
@@ -245,7 +245,7 @@ public final class RoutineDraft {
         enforceBlockProgressionEligibility(hasBlock: resolvedBlock != nil)
         routine.progressionKindRaw = progressionKind.rawValue
 
-        // Remove RoutineExercise rows not represented in the draft.
+        // Remove SessionExerciseTemplate rows not represented in the draft.
         let existingExercises = routine.exercises ?? []
         let draftIDs = Set(exercises.compactMap { $0.id })
         for old in existingExercises where !draftIDs.contains(old.id) {
@@ -253,13 +253,13 @@ public final class RoutineDraft {
         }
 
         for (i, exDraft) in exercises.enumerated() {
-            let re: RoutineExercise
+            let re: SessionExerciseTemplate
             if let id = exDraft.id,
                let match = existingExercises.first(where: { $0.id == id }) {
                 re = match
             } else {
-                re = RoutineExercise()
-                re.routine = routine
+                re = SessionExerciseTemplate()
+                re.sessionTemplate = routine
                 context.insert(re)
                 exDraft.id = re.id
             }
@@ -374,7 +374,7 @@ public final class RoutineExerciseDraft: Identifiable {
     public init() {}
 
     /// Round-trip from an existing `RoutineExercise` row (edit mode).
-    convenience init(re: RoutineExercise) {
+    convenience init(re: SessionExerciseTemplate) {
         self.init()
         self.id = re.id
         self.exercise = re.exercise
