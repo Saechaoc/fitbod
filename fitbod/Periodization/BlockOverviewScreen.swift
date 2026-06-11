@@ -4,14 +4,27 @@
 //
 //  Net-new read-only block summary screen (CONTEXT D-10).
 //  Phase 04.1 Wave 6 — BRU composition per 04.1-PATTERNS.md File #13
+//  Phase 09 Wave 2 — live-mode controls + archived mode (09-04)
 //
 //  Composition (top to bottom):
-//    BRUHeaderBar (left: .back, center: "Block · <name>", right: .action("EDIT"))
-//    ScrollView { heroBand; weekCarousel; phaseProgressionList; fatigueAdvisoryStrip }
-//    editBlockButton
-//    safeAreaFiller
+//    BRUHeaderBar (left: .back, center: "Block · <name>", right: .action("EDIT") [live only])
+//    ScrollView {
+//      heroBand
+//      weekCarousel
+//      [live] splitAttachSwapBand (draft/ready only)
+//      [live] modePickerSection (all live statuses)
+//      [live/fixedWeekly] dayChipSection
+//      phaseProgressionList
+//      fatigueAdvisoryStrip
+//      [completed] archiveContentSection
+//    }
+//    [ready]  startBlockButton + safeAreaFiller
+//    [active] editBlockButton + endBlockButton + safeAreaFiller
+//    [draft]  safeAreaFiller
+//    [completed] safeAreaFiller
 //
-//  Read-only per CONTEXT D-12. All mutations route through BlockBuilderView.
+//  Read-only in archived (completed) mode per spec §6.
+//  All mutations route through BlockLifecycleService / TrainingDaysWriter.
 //  weekCarousel uses real @Query<Session> data — NO hardcoded mocks (revision iter 1 B5).
 //
 
@@ -48,6 +61,16 @@ public struct BlockOverviewScreen: View {
     private let weekStart: Date
     private let weekEnd: Date
     private let todayDate: Date
+
+    // MARK: - Environment
+
+    @Environment(\.modelContext) private var ctx
+
+    // MARK: - Presentation state
+
+    @State private var presentingSplitPicker = false
+    @State private var presentingSwapConfirm = false
+    @State private var presentingEndConfirm = false
 
     // MARK: - @Query — real session data, no mocks (revision iter 1 B5)
 
@@ -113,25 +136,62 @@ public struct BlockOverviewScreen: View {
 
     public var body: some View {
         VStack(spacing: 0) {
-            BRUHeaderBar.slots(
-                left: .back,
-                center: "Block · \(block.name)",
-                right: .action("EDIT", onEdit)
-            )
+            // Header: EDIT action hidden on completed blocks
+            if block.derivedStatus == .completed {
+                BRUHeaderBar.slots(
+                    left: .back,
+                    center: "Block · \(block.name)",
+                    right: nil
+                )
+            } else {
+                BRUHeaderBar.slots(
+                    left: .back,
+                    center: "Block · \(block.name)",
+                    right: .action("EDIT", onEdit)
+                )
+            }
 
             ScrollView {
                 VStack(spacing: 0) {
                     heroBand
                     weekCarousel
-                    phaseProgressionList
-                    fatigueAdvisoryStrip
+
+                    if block.derivedStatus != .completed {
+                        // Live controls: shown on draft / ready / active
+                        if block.derivedStatus == .draft || block.derivedStatus == .ready {
+                            splitAttachSwapBand
+                        }
+                        modePickerSection
+                        if block.schedulingMode == .fixedWeekly {
+                            dayChipSection
+                        }
+                        phaseProgressionList
+                        fatigueAdvisoryStrip
+                    } else {
+                        // Archived mode: render from decoded archive only
+                        archiveContentSection
+                    }
                 }
             }
 
-            editBlockButton
+            bottomBar
             safeAreaFiller
         }
         .background(Color.bruBg.ignoresSafeArea())
+        .sheet(isPresented: $presentingSplitPicker) {
+            SplitPickerSheet(block: block)
+        }
+        .sheet(isPresented: $presentingSwapConfirm) {
+            swapConfirmSheet
+        }
+        .alert("End block?", isPresented: $presentingEndConfirm) {
+            Button("End Block", role: .destructive) {
+                try? BlockLifecycleService.end(block: block, context: ctx)
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("End this block now? You can review it from the Routines tab.")
+        }
     }
 
     // MARK: - Computed helpers
@@ -246,6 +306,15 @@ public struct BlockOverviewScreen: View {
 
     @ViewBuilder
     private var heroBand: some View {
+        if block.derivedStatus == .completed {
+            completedHeroBand
+        } else {
+            activeHeroBand
+        }
+    }
+
+    @ViewBuilder
+    private var activeHeroBand: some View {
         VStack(alignment: .leading, spacing: 0) {
             // Top row: ACTIVE BLOCK label + DAYS REMAINING
             HStack {
@@ -306,6 +375,49 @@ public struct BlockOverviewScreen: View {
         .accessibilityLabel(
             "Active block \(blockSequenceNumber): \(block.name), \(phaseKindCapitalized) week, week \(currentWeekIndex + 1) of \(totalWeeks), \(computedDaysRemaining) days remaining."
         )
+    }
+
+    @ViewBuilder
+    private var completedHeroBand: some View {
+        let endedText: String = {
+            if let endDate = block.endDate {
+                let formatter = DateFormatter()
+                formatter.dateStyle = .medium
+                formatter.timeStyle = .none
+                return "ENDED \(formatter.string(from: endDate))"
+            }
+            return "ENDED"
+        }()
+
+        VStack(alignment: .leading, spacing: 0) {
+            // Top row: COMPLETED BLOCK label + ENDED date
+            HStack {
+                Text("● COMPLETED BLOCK · #\(blockSequenceNumber)")
+                    .font(BRUFont.labelSmall)
+                    .textCase(.uppercase)
+                    .tracking(1.5)
+                    .foregroundStyle(Color.bruPaper.opacity(0.7))
+                    .accessibilityHidden(true)
+                Spacer()
+                Text(endedText)
+                    .font(BRUFont.labelSmall)
+                    .textCase(.uppercase)
+                    .tracking(1.5)
+                    .foregroundStyle(Color.bruMuted)
+            }
+
+            // Phase-week hero label
+            Text(block.name)
+                .font(BRUFont.displayHero)
+                .foregroundStyle(Color.bruPaper)
+                .padding(.top, 6)
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 14)
+        .background(Color.bruInk)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("Completed block \(blockSequenceNumber): \(block.name), \(endedText).")
     }
 
     // MARK: - Week Carousel
@@ -460,6 +572,118 @@ public struct BlockOverviewScreen: View {
         .accessibilityLabel(accessLabel)
     }
 
+    // MARK: - Split Attach / Swap Band (draft/ready only)
+
+    @ViewBuilder
+    private var splitAttachSwapBand: some View {
+        VStack(spacing: 0) {
+            BRUSectionHead("Routine", right: nil)
+            HStack(spacing: 12) {
+                if block.split == nil {
+                    BRUButton("+ ATTACH ROUTINE ▸", kind: .ghost) {
+                        presentingSplitPicker = true
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 8)
+                } else {
+                    Text(block.split!.name)
+                        .font(BRUFont.bodyEmphasis)
+                        .foregroundStyle(Color.bruInk)
+                    Spacer()
+                    Button {
+                        presentingSplitPicker = true
+                    } label: {
+                        Text("SWAP ▸")
+                            .font(BRUFont.labelSmall)
+                            .textCase(.uppercase)
+                            .tracking(1.2)
+                            .foregroundStyle(Color.bruSignal)
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            BRUDivider(.ink)
+        }
+    }
+
+    // MARK: - Mode Picker (all live statuses)
+
+    @ViewBuilder
+    private var modePickerSection: some View {
+        VStack(spacing: 0) {
+            BRUSectionHead("Scheduling", right: nil)
+            HStack(spacing: 8) {
+                ModeChip("ROTATION", selected: block.schedulingMode == .rotation) {
+                    block.schedulingMode = .rotation
+                    block.trainingDays = TrainingDaysWriter.sort(weekdays: block.trainingDays)
+                    try? ctx.save()
+                }
+                ModeChip("FIXED WEEKLY", selected: block.schedulingMode == .fixedWeekly) {
+                    block.schedulingMode = .fixedWeekly
+                    block.trainingDays = TrainingDaysWriter.sort(weekdays: block.trainingDays)
+                    try? ctx.save()
+                }
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
+            BRUDivider(.ink)
+        }
+    }
+
+    // MARK: - Day Chip Grid (fixedWeekly mode only)
+
+    @ViewBuilder
+    private var dayChipSection: some View {
+        // Weekday int mapping — Monday-first: Mon=2, Tue=3, Wed=4, Thu=5, Fri=6, Sat=7, Sun=1
+        // UI grid index 0=Mon...6=Sun; Calendar weekday: Sun=1, Mon=2, ...Sat=7
+        let weekdayForGridIndex: [Int] = [2, 3, 4, 5, 6, 7, 1] // Mon..Sun in Calendar weekday ints
+        let weekdayLetters = ["M", "T", "W", "T", "F", "S", "S"]
+        let slotCount = block.split?.slots?.count ?? 0
+
+        VStack(spacing: 0) {
+            BRUSectionHead("Training days", right: nil)
+            LazyVGrid(
+                columns: Array(repeating: GridItem(.flexible(), spacing: 4), count: 7),
+                spacing: 4
+            ) {
+                ForEach(0..<7, id: \.self) { index in
+                    let weekday = weekdayForGridIndex[index]
+                    let letter = index < weekdayLetters.count ? weekdayLetters[index] : "?"
+                    let isSelected = block.trainingDays.contains(weekday)
+                    DayToggleChip(letter: letter, selected: isSelected) {
+                        var days = block.trainingDays
+                        if isSelected {
+                            days.removeAll { $0 == weekday }
+                        } else {
+                            days.append(weekday)
+                        }
+                        block.trainingDays = TrainingDaysWriter.sort(weekdays: days)
+                        try? ctx.save()
+                    }
+                }
+            }
+            .padding(.horizontal, 16)
+            .padding(.top, 8)
+            .padding(.bottom, 4)
+
+            // Soft amber mismatch hint
+            if block.trainingDays.count != slotCount {
+                Text("\(block.trainingDays.count) days / \(slotCount) sessions")
+                    .font(BRUFont.bodyDefault)
+                    .foregroundStyle(Color.bruAmber)
+                    .padding(.horizontal, 16)
+                    .padding(.top, 4)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+
+            BRUDivider(.ink)
+                .padding(.top, 8)
+        }
+    }
+
     // MARK: - Phase Progression List
 
     @ViewBuilder
@@ -578,6 +802,158 @@ public struct BlockOverviewScreen: View {
         }
     }
 
+    // MARK: - Archive Content (completed blocks)
+
+    @ViewBuilder
+    private var archiveContentSection: some View {
+        if let jsonString = block.archivedConfigJSON {
+            // Non-nil JSON: attempt decode; undecodable → ArchiveUnreadableView (terminal)
+            let decodeResult = Result { try BlockLifecycleService.decodeArchive(jsonString) }
+            switch decodeResult {
+            case .failure:
+                ArchiveUnreadableView()
+            case .success(let config):
+                archivedConfigView(config: config)
+            }
+        } else {
+            // nil archivedConfigJSON → quiet "NO ARCHIVE AVAILABLE" state (not corrupt)
+            // Distinct from ArchiveUnreadableView: this is "archive missing", not "archive corrupt"
+            VStack(spacing: 12) {
+                Text("NO ARCHIVE AVAILABLE")
+                    .font(BRUFont.bodyEmphasis)
+                    .foregroundStyle(Color.bruMuted)
+                    .textCase(.uppercase)
+                    .tracking(1.2)
+                Text("This block was completed before archive support was added.")
+                    .font(BRUFont.bodyDefault)
+                    .foregroundStyle(Color.bruMuted)
+                    .multilineTextAlignment(.center)
+            }
+            .padding(24)
+            .frame(maxWidth: .infinity)
+        }
+    }
+
+    @ViewBuilder
+    private func archivedConfigView(config: ArchivedBlockConfig) -> some View {
+        VStack(spacing: 0) {
+            // Archived phase progression from snapshot — HISTORY label, not live WHAT'S NEXT
+            BRUSectionHead("Phase progression", right: "HISTORY")
+            VStack(spacing: 0) {
+                ForEach(Array(config.phases.enumerated()), id: \.offset) { index, phase in
+                    archivedPhaseRow(phase: phase, index: index, allPhases: config.phases)
+                    Rectangle()
+                        .fill(Color.bruHair)
+                        .frame(height: 1)
+                }
+            }
+
+            // Archived split slots from snapshot — never from live block.split
+            if !config.split.slots.isEmpty {
+                BRUSectionHead("Sessions", right: "HISTORY")
+                VStack(spacing: 0) {
+                    ForEach(Array(config.split.slots.enumerated()), id: \.element.position) { _, slot in
+                        HStack(spacing: 12) {
+                            Text("\(slot.position + 1)")
+                                .font(BRUFont.labelSmall)
+                                .textCase(.uppercase)
+                                .tracking(1.2)
+                                .foregroundStyle(Color.bruMuted)
+                                .frame(width: 32, alignment: .leading)
+                            Text(slot.sessionName)
+                                .font(BRUFont.bodyEmphasis)
+                                .foregroundStyle(Color.bruInk)
+                            Spacer()
+                            Text("Completed")
+                                .font(BRUFont.bodyDefault)
+                                .foregroundStyle(Color.bruMuted)
+                        }
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 11)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        Rectangle()
+                            .fill(Color.bruHair)
+                            .frame(height: 1)
+                    }
+                }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func archivedPhaseRow(phase: ArchivedPhaseDTO, index: Int, allPhases: [ArchivedPhaseDTO]) -> some View {
+        let priorWeeks = allPhases.prefix(index).reduce(0) { $0 + $1.weeks }
+        let startWeek = priorWeeks + 1
+        let endWeek = priorWeeks + phase.weeks
+        let weekRange = startWeek == endWeek ? "W\(startWeek)" : "W\(startWeek)–W\(endWeek)"
+
+        HStack(alignment: .top, spacing: 10) {
+            Text(weekRange)
+                .font(.custom("JetBrainsMono-Bold", size: 10))
+                .tracking(1.2)
+                .foregroundStyle(Color.bruMuted)
+                .frame(width: 38, alignment: .leading)
+
+            VStack(alignment: .leading, spacing: 4) {
+                HStack(spacing: 6) {
+                    Text(phase.kind.capitalized)
+                        .font(BRUFont.bodyEmphasis)
+                        .foregroundStyle(Color.bruInk)
+                    BRUChip("DONE")
+                }
+                Text("Completed")
+                    .font(BRUFont.bodyDefault)
+                    .foregroundStyle(Color.bruMuted)
+            }
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 11)
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    // MARK: - Bottom Bar
+
+    @ViewBuilder
+    private var bottomBar: some View {
+        switch block.derivedStatus {
+        case .ready:
+            startBlockButton
+        case .active:
+            VStack(spacing: 0) {
+                editBlockButton
+                endBlockButton
+            }
+        case .draft, .completed:
+            EmptyView()
+        }
+    }
+
+    // MARK: - Start Block Button
+
+    private var startBlockButton: some View {
+        BRUButton("START BLOCK ▸", kind: .signal) {
+            onStartTapped()
+        }
+        .overlay(alignment: .top) {
+            Rectangle()
+                .fill(Color.bruInk)
+                .frame(height: 2)
+        }
+    }
+
+    private func onStartTapped() {
+        // Fetch any other active block
+        let descriptor = FetchDescriptor<Block>(predicate: #Predicate<Block> { $0.isActive == true })
+        let activeBlocks = (try? ctx.fetch(descriptor)) ?? []
+        let myID = block.id
+        let otherActive = activeBlocks.first { $0.id != myID }
+        if otherActive != nil {
+            presentingSwapConfirm = true
+        } else {
+            try? BlockLifecycleService.start(block: block, context: ctx)
+        }
+    }
+
     // MARK: - Edit Block Button
 
     private var editBlockButton: some View {
@@ -591,12 +967,211 @@ public struct BlockOverviewScreen: View {
         }
     }
 
+    // MARK: - End Block Button
+
+    private var endBlockButton: some View {
+        BRUButton("END BLOCK", kind: .ghost) {
+            presentingEndConfirm = true
+        }
+    }
+
+    // MARK: - Swap Confirm Sheet
+
+    @ViewBuilder
+    private var swapConfirmSheet: some View {
+        let descriptor = FetchDescriptor<Block>(predicate: #Predicate<Block> { $0.isActive == true })
+        let activeBlocks = (try? ctx.fetch(descriptor)) ?? []
+        let myID = block.id
+        let currentActiveBlock = activeBlocks.first { $0.id != myID }
+
+        SwapConfirmSheet(
+            currentActiveBlockName: currentActiveBlock?.name ?? "current block",
+            onConfirm: {
+                try? BlockLifecycleService.start(block: block, context: ctx)
+                presentingSwapConfirm = false
+            },
+            onCancel: {
+                presentingSwapConfirm = false
+            }
+        )
+    }
+
     // MARK: - Safe-Area Filler
 
     private var safeAreaFiller: some View {
         Rectangle()
             .fill(Color.bruBg)
             .frame(height: 24)
+    }
+}
+
+// MARK: - ModeChip (fileprivate)
+
+fileprivate struct ModeChip: View {
+    let label: String
+    let selected: Bool
+    let action: () -> Void
+
+    init(_ label: String, selected: Bool, action: @escaping () -> Void) {
+        self.label = label
+        self.selected = selected
+        self.action = action
+    }
+
+    var body: some View {
+        Button {
+            action()
+        } label: {
+            Text(label)
+                .font(BRUFont.labelSmall)
+                .textCase(.uppercase)
+                .tracking(1.2)
+                .foregroundStyle(selected ? Color.bruPaper : Color.bruInk)
+                .padding(.horizontal, 10)
+                .padding(.vertical, 6)
+                .frame(maxWidth: .infinity)
+                .background(selected ? Color.bruInk : Color.clear)
+                .overlay(
+                    Rectangle()
+                        .stroke(Color.bruInk, lineWidth: selected ? 1.5 : 1.0)
+                )
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("\(label) scheduling")
+        .accessibilityAddTraits(selected ? .isSelected : [])
+    }
+}
+
+// MARK: - DayToggleChip (fileprivate)
+
+fileprivate struct DayToggleChip: View {
+    let letter: String
+    let selected: Bool
+    let action: () -> Void
+
+    var body: some View {
+        Button {
+            action()
+        } label: {
+            Text(letter)
+                .font(BRUFont.labelSmall)
+                .textCase(.uppercase)
+                .tracking(1.2)
+                .foregroundStyle(selected ? Color.bruPaper : Color.bruMuted)
+                .frame(maxWidth: .infinity)
+                .frame(height: 28)
+                .background(selected ? Color.bruInk : Color.bruFaint)
+                .overlay(
+                    Rectangle()
+                        .stroke(Color.bruInk, lineWidth: selected ? 1.5 : 1.0)
+                )
+        }
+        .buttonStyle(.plain)
+        .accessibilityAddTraits(.isToggle)
+        .accessibilityValue(selected ? "on" : "off")
+    }
+}
+
+// MARK: - SwapConfirmSheet (fileprivate)
+
+fileprivate struct SwapConfirmSheet: View {
+    let currentActiveBlockName: String
+    let onConfirm: () -> Void
+    let onCancel: () -> Void
+
+    var body: some View {
+        VStack(spacing: 20) {
+            Text("Start Block?")
+                .font(BRUFont.displayMedium)
+                .foregroundStyle(Color.bruInk)
+                .frame(maxWidth: .infinity, alignment: .leading)
+
+            Text("Ends **\(currentActiveBlockName)** — its config freezes to history.")
+                .font(BRUFont.bodyDefault)
+                .foregroundStyle(Color.bruInk)
+                .frame(maxWidth: .infinity, alignment: .leading)
+
+            BRUButton("Confirm", kind: .signal) {
+                onConfirm()
+            }
+
+            BRUButton("Cancel", kind: .ghost) {
+                onCancel()
+            }
+        }
+        .padding(24)
+        .frame(maxWidth: .infinity)
+        .background(Color.bruPaper)
+        .presentationDetents([.fraction(0.4)])
+    }
+}
+
+// MARK: - SplitPickerSheet (fileprivate)
+
+fileprivate struct SplitPickerSheet: View {
+    let block: Block
+
+    @Environment(\.modelContext) private var ctx
+    @Environment(\.dismiss) private var dismiss
+
+    @Query(
+        filter: #Predicate<Split> { !$0.isArchived },
+        sort: [SortDescriptor(\Split.name)]
+    ) private var splits: [Split]
+
+    var body: some View {
+        NavigationStack {
+            List(splits) { split in
+                Button {
+                    attachOrSwap(split: split)
+                    dismiss()
+                } label: {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(split.name)
+                            .font(BRUFont.bodyEmphasis)
+                            .foregroundStyle(Color.bruInk)
+                        Text("\(split.slots?.count ?? 0) sessions")
+                            .font(BRUFont.bodyDefault)
+                            .foregroundStyle(Color.bruMuted)
+                    }
+                    .padding(.vertical, 4)
+                }
+                .buttonStyle(.plain)
+            }
+            .navigationTitle("Choose Routine")
+            .navigationBarTitleDisplayMode(.inline)
+        }
+    }
+
+    private func attachOrSwap(split: Split) {
+        // Explicit nil-conditional branch per plan: attach vs swap
+        if block.split == nil {
+            try? BlockLifecycleService.attachSplit(split, to: block, context: ctx)
+        } else {
+            try? BlockLifecycleService.swapSplit(split, on: block, context: ctx)
+        }
+    }
+}
+
+// MARK: - ArchiveUnreadableView (fileprivate)
+
+fileprivate struct ArchiveUnreadableView: View {
+    var body: some View {
+        VStack(spacing: 16) {
+            Text("ARCHIVE UNREADABLE")
+                .font(BRUFont.bodyEmphasis)
+                .foregroundStyle(Color.bruSignal)
+                .textCase(.uppercase)
+                .tracking(1.2)
+            Text("This block's historical config could not be loaded. The raw data is intact but cannot be decoded.")
+                .font(BRUFont.bodyDefault)
+                .foregroundStyle(Color.bruMuted)
+                .multilineTextAlignment(.center)
+        }
+        .padding(24)
+        .frame(maxWidth: .infinity)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("Archive unreadable. This block's historical config could not be loaded.")
     }
 }
 
