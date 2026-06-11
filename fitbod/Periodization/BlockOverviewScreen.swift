@@ -1169,26 +1169,42 @@ fileprivate struct SplitPickerSheet: View {
     ) private var splits: [Split]
 
     var body: some View {
+        // BRU chrome (WR-05): ScrollView + BRUSectionHead + row pattern, matching
+        // SlotPickerSheet / NewBlockSplitPickerSheet. No List / .navigationTitle —
+        // system list chrome and nav-bar titles violate the BRU contract.
         NavigationStack {
-            List(splits) { split in
-                Button {
-                    attachOrSwap(split: split)
-                    dismiss()
-                } label: {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(split.name)
-                            .font(BRUFont.bodyEmphasis)
-                            .foregroundStyle(Color.bruInk)
-                        Text("\(split.slots?.count ?? 0) sessions")
-                            .font(BRUFont.bodyDefault)
-                            .foregroundStyle(Color.bruMuted)
+            VStack(spacing: 0) {
+                BRUSectionHead("Choose Routine")
+
+                ScrollView {
+                    LazyVStack(spacing: 0) {
+                        ForEach(splits) { split in
+                            Button {
+                                attachOrSwap(split: split)
+                                dismiss()
+                            } label: {
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text(split.name)
+                                        .font(BRUFont.bodyEmphasis)
+                                        .foregroundStyle(Color.bruInk)
+                                    Text("\(split.slots?.count ?? 0) sessions")
+                                        .font(BRUFont.bodyDefault)
+                                        .foregroundStyle(Color.bruMuted)
+                                }
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .padding(.horizontal, 16)
+                                .frame(minHeight: 44)
+                                .contentShape(Rectangle())
+                            }
+                            .buttonStyle(.plain)
+
+                            BRUDivider(.hair)
+                        }
                     }
-                    .padding(.vertical, 4)
                 }
-                .buttonStyle(.plain)
             }
-            .navigationTitle("Choose Routine")
-            .navigationBarTitleDisplayMode(.inline)
+            .background(Color.bruPaper.ignoresSafeArea())
+            .navigationBarHidden(true)
         }
     }
 
