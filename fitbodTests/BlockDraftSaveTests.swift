@@ -74,7 +74,9 @@ struct BlockDraftSaveTests {
         #expect(block.name == "Powerlifting Peak Q3")
         #expect(block.startDate == startDate)
         #expect(block.isActive == true)
-        #expect(block.endDate == startDate.addingTimeInterval(Double(8 * 7) * 86_400))
+        // endDate is NOT written by the builder (spec §3/§4 — freeze marker set only by
+        // BlockLifecycleService.end). A builder-saved block must have endDate == nil.
+        #expect(block.endDate == nil)
         #expect(draft.id == block.id)
 
         let phases = (block.phases ?? []).sorted { $0.orderIndex < $1.orderIndex }
@@ -82,6 +84,92 @@ struct BlockDraftSaveTests {
         #expect(phases.map(\.orderIndex) == [0, 1, 2, 3])
         #expect(phases.map(\.kind) == [.accumulation, .intensification, .realization, .deload])
         #expect(phases.map(\.weeks) == [4, 2, 1, 1])
+    }
+
+    // MARK: - T-09-13 / T-09-14 behavior tests (spec §3/§4)
+
+    @Test("saved draft without split has derivedStatus == .draft and endDate == nil")
+    func savedDraftWithoutSplitIsDraftAndHasNoEndDate() throws {
+        let context = try makeContext()
+        let draft = BlockDraft(template: BlockTemplates.generic)
+        draft.name = "No Split Draft"
+        // split is nil by default — no routine attached
+
+        try draft.save(into: context)
+        try context.save()
+
+        let block = try #require(try context.fetch(FetchDescriptor<Block>()).first)
+        #expect(block.endDate == nil, "Builder must not write endDate (T-09-13)")
+        #expect(block.derivedStatus == .draft, "A builder-saved block without a split must be .draft, not .completed")
+        #expect(block.split == nil)
+    }
+
+    @Test("saved draft with split and matching rotation mode has derivedStatus == .ready")
+    func savedDraftWithSplitAndRotationIsReady() throws {
+        let context = try makeContext()
+
+        // Build a split with one slot so slotCount >= 1
+        let split = Split()
+        split.name = "Upper / Lower"
+        context.insert(split)
+        let slot = SplitSessionSlot()
+        slot.split = split
+        slot.position = 0
+        context.insert(slot)
+        split.slots = [slot]
+
+        let draft = BlockDraft(template: BlockTemplates.generic)
+        draft.name = "Ready Block"
+        draft.split = split
+        draft.schedulingMode = .rotation
+        // rotation mode: trainingDays count need not match — ready as long as split != nil + slotCount >= 1
+
+        try draft.save(into: context)
+        try context.save()
+
+        let block = try #require(try context.fetch(FetchDescriptor<Block>()).first)
+        #expect(block.endDate == nil, "Builder must not write endDate (T-09-13)")
+        #expect(block.derivedStatus == .ready, "A builder-saved block with a matching split must be .ready, not .completed")
+        #expect(block.split?.name == "Upper / Lower")
+    }
+
+    @Test("trainingDays are persisted sorted via TrainingDaysWriter.sort (T-09-14)")
+    func trainingDaysArePersistedSorted() throws {
+        let context = try makeContext()
+        let draft = BlockDraft(template: BlockTemplates.generic)
+        draft.name = "Fixed Weekly"
+        draft.schedulingMode = .fixedWeekly
+        // Pass unsorted weekdays — writer must sort them
+        draft.trainingDays = [6, 2, 4] // Fri, Mon, Wed (unsorted)
+
+        try draft.save(into: context)
+        try context.save()
+
+        let block = try #require(try context.fetch(FetchDescriptor<Block>()).first)
+        let sorted = TrainingDaysWriter.sort(weekdays: [6, 2, 4])
+        #expect(block.trainingDays == sorted, "trainingDays must be sorted via TrainingDaysWriter.sort at save time (T-09-14)")
+    }
+
+    @Test("init(block:) round-trips split, schedulingMode, and trainingDays")
+    func initFromBlockRoundTripsSchedulingFields() throws {
+        let context = try makeContext()
+
+        let split = Split()
+        split.name = "PPL"
+        context.insert(split)
+
+        let block = Block()
+        block.name = "Existing"
+        block.split = split
+        block.schedulingMode = .fixedWeekly
+        block.trainingDays = [2, 4, 6]
+        context.insert(block)
+        try context.save()
+
+        let draft = BlockDraft(block: block)
+        #expect(draft.split?.name == "PPL")
+        #expect(draft.schedulingMode == .fixedWeekly)
+        #expect(draft.trainingDays == [2, 4, 6])
     }
 
     @Test("draft init from block sorts phases by order index")

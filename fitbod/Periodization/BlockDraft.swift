@@ -19,6 +19,14 @@ public final class BlockDraft {
     public var daysPerWeek: Int = 4
     public var phases: [BlockPhaseDraft] = []
 
+    // V7 program-graph fields — wired by the Phase 9 split band.
+    // split is written directly in BlockDraft.save (builder is pre-activation;
+    // BlockLifecycleService.attachSplit / swapSplit are for post-activation mutations).
+    public var split: Split? = nil
+    public var schedulingMode: SchedulingMode = .rotation
+    // trainingDays written ONLY via TrainingDaysWriter.sort at save time (T-09-14).
+    public var trainingDays: [Int] = []
+
     public init() {}
 
     public static func newBlock() -> BlockDraft {
@@ -69,6 +77,10 @@ public final class BlockDraft {
         self.phases = (block.phases ?? [])
             .sorted { $0.orderIndex < $1.orderIndex }
             .map { BlockPhaseDraft(phase: $0) }
+        // V7 round-trip — preserve scheduling config when editing an existing block.
+        self.split = block.split
+        self.schedulingMode = block.schedulingMode
+        self.trainingDays = block.trainingDays
     }
 
     public var isValid: Bool {
@@ -118,8 +130,22 @@ public final class BlockDraft {
 
             block.name = name.trimmingCharacters(in: .whitespacesAndNewlines)
             block.startDate = startDate
-            block.endDate = computedEndDate
+            // endDate is the completion freeze marker (spec §3/§4) — written ONLY by
+            // BlockLifecycleService.end when the block is ended. The builder is pre-
+            // activation (draft/ready context) so block.endDate MUST stay nil here.
+            // Preserving any pre-existing endDate (e.g. re-editing a completed block)
+            // is intentional — we do not clear it. computedEndDate stays available for
+            // display purposes (projected total weeks) but is never persisted by the builder.
             block.isActive = isActive
+
+            // V7 program-graph fields — direct split write is permitted here because the
+            // builder operates in a draft/ready context (pre-activation). Post-activation
+            // mutations must use BlockLifecycleService.attachSplit / swapSplit instead.
+            block.split = split
+            block.schedulingMode = schedulingMode
+            // trainingDays written ONLY via TrainingDaysWriter.sort to ensure sort-at-write
+            // invariant (T-09-14 / SPEC-8-TRAININGDAYS).
+            block.trainingDays = TrainingDaysWriter.sort(weekdays: trainingDays)
 
             for oldPhase in block.phases ?? [] {
                 context.delete(oldPhase)
