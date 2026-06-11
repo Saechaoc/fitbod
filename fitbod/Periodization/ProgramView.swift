@@ -262,7 +262,7 @@ public struct ProgramView: View {
                 items: [
                     BRUActionPopoverItem(title: "+ New block") {
                         showingNewPopover = false
-                        presentingStartChoice = true
+                        startBlank()
                     },
                     BRUActionPopoverItem(title: "+ New routine") {
                         showingNewPopover = false
