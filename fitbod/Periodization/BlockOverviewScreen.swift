@@ -205,10 +205,11 @@ public struct BlockOverviewScreen: View {
         }
         let sessionLinked = weekSessions.contains { session in
             cal.isDate(session.startedAt, inSameDayAs: cellDate)
-            && (session.block?.id == block.id
-                // V7: block.routines removed; use slot→split link as canonical check.
-                // TODO Phase 8: replace with slot-based session membership predicate.
-                || session.slot?.split?.id == block.split?.id)
+            && (session.slot?.split?.id == block.split?.id
+                // Phase 8: slot-based membership is primary (resolver sets session.slot);
+                // block?.id fallback covers pre-resolver / legacy-edge sessions
+                // (spec §8, RESEARCH Pitfall 7).
+                || session.block?.id == block.id)
         }
         if sessionLinked {
             return .done
@@ -228,10 +229,11 @@ public struct BlockOverviewScreen: View {
         let cal = Calendar.current
         return weekSessions.first { session in
             cal.isDate(session.startedAt, inSameDayAs: cellDate)
-            && (session.block?.id == block.id
-                // V7: block.routines removed; slot→split link as canonical check.
-                // TODO Phase 8: replace with slot-based session membership predicate.
-                || session.slot?.split?.id == block.split?.id)
+            && (session.slot?.split?.id == block.split?.id
+                // Phase 8: slot-based membership is primary (resolver sets session.slot);
+                // block?.id fallback covers pre-resolver / legacy-edge sessions
+                // (spec §8, RESEARCH Pitfall 7).
+                || session.block?.id == block.id)
         }.map { $0.routineSnapshotName.isEmpty ? nil : $0.routineSnapshotName } ?? nil
     }
 
@@ -505,8 +507,9 @@ public struct BlockOverviewScreen: View {
         let summaryText: String = {
             if isNow {
                 let done = weekSessions.filter { s in
-                    // V7: block.routines removed; slot→split link as canonical check.
-                    // TODO Phase 8: replace with slot-based session membership predicate.
+                    // Phase 8: slot-based membership is primary (resolver sets session.slot);
+                    // block?.id fallback covers pre-resolver / legacy-edge sessions
+                    // (spec §8, RESEARCH Pitfall 7).
                     s.slot?.split?.id == block.split?.id || s.block?.id == block.id
                 }.count
                 return "In progress · \(done) sessions"
