@@ -503,7 +503,10 @@ public enum FitbodSchemaMigrationPlan: SchemaMigrationPlan {
                 row.plateauTolerance = 0.02
             }
         }
-        try? context.save()
+        // CR-03: propagate save failures so a failed bump aborts the V5→V6 stage
+        // instead of silently opening the V6 store with the un-bumped default
+        // (matches `materializeSessionTemplates`, which uses `try context.save()`).
+        try context.save()
     }
 
     /// Custom: Phase 3.1 PIVOT-03 moves intent + progressionKind from
