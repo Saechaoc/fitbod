@@ -328,7 +328,7 @@ Plans:
 - [x] 07-02-PLAN.md — Wave 2: Rename Routine→SessionTemplate / RoutineExercise→SessionExerciseTemplate (Models + Routines + Sessions clusters; gitnexus call-graph rename)
 - [x] 07-03-PLAN.md — Wave 3: Split + SplitSessionSlot entities + Block (split/schedulingMode/trainingDays/archivedConfigJSON, routines removed, derivedStatus) + Session (template/slot/templateName) + remaining app clusters compile green
 - [x] 07-04-PLAN.md — Wave 4: SchemaV7 (explicit models) + SchemaV6 nested-type expansion + 7-step custom migrateV6toV7 stage with internal-static helpers
-- [ ] 07-05-PLAN.md — Wave 5: Test-target rename + InMemoryContainer→V7 + count-pin refresh (schemas 7 / stages 6 / SchemaV6.models delta) + ExportDocument canonicalSchemaVersion v7
+- [x] 07-05-PLAN.md — Wave 5: Test-target rename + InMemoryContainer→V7 + count-pin refresh (schemas 7 / stages 6 / SchemaV6.models delta) + ExportDocument canonicalSchemaVersion v7
 - [ ] 07-06-PLAN.md — Wave 6: SchemaV7MigrationTests (ghost-free picker, ref remap, rotation continuity, templateName/archive backfill, deny/nullify/cascade, contiguity, derivedStatus) + full Phase 1-6 regression sweep
 
 ### Phase 8: Scheduler Resolver & Block Lifecycle
