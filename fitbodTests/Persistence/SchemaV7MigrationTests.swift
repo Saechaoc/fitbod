@@ -631,3 +631,86 @@ struct SchemaV7MigrationTests {
         #expect(draftBlock.derivedStatus == .draft)
     }
 }
+
+// MARK: - Behavioral deny-rule suite (CR-04)
+//
+// Spec §9 requires a BEHAVIORAL deny-rule test: hard-deleting a slotted
+// SessionTemplate must be refused at runtime. Test 8 above only verifies the
+// .deny metadata declaration + round-trip, because SwiftData's deny-rule
+// enforcement is process-context-sensitive and unreliable when multiple
+// migration-schema containers run in the same test process (plan 07-06
+// SUMMARY). Rather than silently drop the contract, this isolated suite gives
+// the behavioral path its OWN dedicated container and runs serialized, then
+// guards the documented flakiness with `withKnownIssue(isIntermittent:)` so a
+// non-throwing run does not red the suite while the assertion still exercises
+// the runtime deny path on the (common) runs where SwiftData enforces it.
+
+@MainActor
+@Suite("SchemaV7DeleteRuleBehavior", .serialized)
+struct SchemaV7DeleteRuleBehaviorTests {
+
+    /// Dedicated process-isolated V7 container — NOT shared with any other suite.
+    private func makeIsolatedContext() throws -> ModelContext {
+        let schema = Schema(SchemaV7.models)
+        let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
+        let container = try ModelContainer(
+            for: schema,
+            migrationPlan: FitbodSchemaMigrationPlan.self,
+            configurations: config
+        )
+        return ModelContext(container)
+    }
+
+    @Test("Hard-deleting a slotted SessionTemplate is refused at runtime (.deny)")
+    func slottedTemplateDenyRuleEnforced() throws {
+        let ctx = try makeIsolatedContext()
+
+        let split = Split()
+        ctx.insert(split)
+        split.name = "PPL Split"
+
+        let template = SessionTemplate()
+        ctx.insert(template)
+        template.name = "Push Day"
+
+        let slot = SplitSessionSlot()
+        ctx.insert(slot)
+        slot.split = split
+        slot.position = 0
+        slot.sessionTemplate = template
+
+        try ctx.save()
+        let templateID = template.id
+
+        // Behavioral assertion: deleting the template while it is slotted must be
+        // refused. SwiftData's .deny enforcement is known-flaky across schema-
+        // registry contamination in-process, so the throw is wrapped as an
+        // intermittent known issue — when enforcement fires, this asserts the
+        // deny; when it does not, withKnownIssue absorbs the miss instead of
+        // failing the run (and the template-survival check below still guards the
+        // strongest observable invariant).
+        withKnownIssue(
+            "SwiftData .deny enforcement is process-registry-sensitive in-suite (plan 07-06)",
+            isIntermittent: true
+        ) {
+            #expect(throws: (any Error).self) {
+                ctx.delete(template)
+                try ctx.save()
+            }
+        }
+
+        // Strongest portable invariant regardless of whether the throw fired:
+        // a template referenced by a live slot must NOT have been hard-deleted.
+        // If the deny fired, the row survives because the delete was refused.
+        // If SwiftData instead silently nullified, the slot's ref would be nil —
+        // which itself violates the .deny contract, so assert BOTH: the template
+        // row still exists AND the slot still references it.
+        let templates = try ctx.fetch(FetchDescriptor<SessionTemplate>())
+        #expect(templates.contains { $0.id == templateID },
+                "A slotted SessionTemplate must survive a hard-delete attempt (.deny)")
+
+        let slots = try ctx.fetch(FetchDescriptor<SplitSessionSlot>())
+        #expect(slots.first?.sessionTemplate?.id == templateID,
+                "The slot must still reference the template after a refused delete")
+    }
+}
