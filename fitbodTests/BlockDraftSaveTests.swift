@@ -14,7 +14,7 @@ import Testing
 @Suite("BlockDraftSave", .serialized)
 struct BlockDraftSaveTests {
     private func makeContext() throws -> ModelContext {
-        let schema = Schema(SchemaV5.models)
+        let schema = Schema(SchemaV7.models)   // V7 required — Split, SplitSessionSlot, SessionTemplate
         let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
         let container = try ModelContainer(
             for: schema,
