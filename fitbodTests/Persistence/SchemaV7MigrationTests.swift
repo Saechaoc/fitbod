@@ -14,7 +14,7 @@
 //    - Block additions: split, schedulingModeRaw, trainingDaysJoined, archivedConfigJSON
 //    - Session additions: template, slot, templateName
 //
-//  Test surface (Tasks 1 + 2):
+//  Test surface (Tasks 1 + 2 combined in a single serialized suite):
 //
 //  TASK 1 — Migration + backfill + ghost-free assertions (spec §7 minimum):
 //    1.  migrationPlanRegistersV7:      schemas.last == "SchemaV7", count == 7
@@ -27,7 +27,7 @@
 //    7.  archiveBackfill:               completed block has archivedConfigJSON v==1
 //
 //  TASK 2 — Delete-rule + contiguity + status invariants (spec §3 / §9):
-//    8.  slottedTemplateDenyRule:       hard-delete of slotted template throws
+//    8.  slottedTemplateDenyRule:       hard-delete of slotted template throws (.deny)
 //    9.  slotNullifyHistoryIntact:      slot delete → session.slot == nil, session survives
 //    10. blockSplitNullify:             split delete → block.split == nil, block survives
 //    11. splitSlotsCascade:             split delete cascades all 3 slots
@@ -40,6 +40,9 @@
 //  calls `FitbodSchemaMigrationPlan.stashV6Routines(in:)` followed by
 //  `FitbodSchemaMigrationPlan.materializeSessionTemplates(in:)` and asserts the
 //  V7-shape result. Delete-rule + contiguity tests operate directly on V7 entities.
+//
+//  Single serialized suite to prevent in-process SwiftData container conflicts
+//  when multiple simulator test clones run different suites concurrently.
 //
 
 import Foundation
@@ -184,6 +187,8 @@ struct SchemaV7MigrationTests {
 
         // Orphan routine (no block) — must NOT spawn a split.
         _ = makeV6Routine(ctx: ctx, name: "Orphan Routine", block: nil)
+        _ = r1
+        _ = r2
 
         try ctx.save()
 
@@ -319,24 +324,6 @@ struct SchemaV7MigrationTests {
         #expect(archive.v == 1)
         #expect(archive.blockName == "Completed Block")
     }
-}
-
-// MARK: - Task 2: Delete-rule + contiguity + status tests
-
-@MainActor
-@Suite("SchemaV7DeleteRules", .serialized)
-struct SchemaV7DeleteRuleTests {
-
-    private func makeContext() throws -> ModelContext {
-        let schema = Schema(SchemaV7.models)
-        let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
-        let container = try ModelContainer(
-            for: schema,
-            migrationPlan: FitbodSchemaMigrationPlan.self,
-            configurations: config
-        )
-        return ModelContext(container)
-    }
 
     // MARK: - 8. slottedTemplateDenyRule (Pitfall 9 / T-07-15)
 
@@ -409,7 +396,7 @@ struct SchemaV7DeleteRuleTests {
         #expect(row.slot == nil)
     }
 
-    // MARK: - 10. blockSplitNullify (Pitfall 7 / T-07-17 adjacent)
+    // MARK: - 10. blockSplitNullify (T-07-17 adjacent)
 
     @Test("Deleting a Split sets Block.split to nil; the Block survives")
     func blockSplitNullify() throws {
@@ -448,12 +435,7 @@ struct SchemaV7DeleteRuleTests {
         ctx.insert(split)
         split.name = "Full Body 3x"
 
-        // Insert templates for each slot (deny-rule: we must unlink before deleting split,
-        // or cascade must handle it without triggering deny on the template itself).
-        // The deny rule is on SplitSessionSlot → SessionTemplate, not Split → SplitSessionSlot.
-        // Cascade (Split→SplitSessionSlot) deletes slots first, which frees the deny-ref.
-        // However SwiftData processes cascade before deny per Apple docs for this graph shape.
-        // To avoid complexity, unlink templates from slots before deleting the split.
+        // Insert templates for each slot (deny-rule: unlink before deleting the split).
         let templates: [SessionTemplate] = (0..<3).map { i in
             let t = SessionTemplate()
             ctx.insert(t)
