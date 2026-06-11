@@ -31,7 +31,7 @@ import Foundation
 import SwiftData
 
 public enum PreviewModelContainer {
-    /// Builds a fresh in-memory `ModelContainer` over the current schema (`SchemaV4`).
+    /// Builds a fresh in-memory `ModelContainer` over the current schema (`SchemaV7`).
     ///
     /// - Parameter seedFixture: when `true` (default), inserts a
     ///   deterministic 4-muscle / 2-exercise / 1-settings fixture.
