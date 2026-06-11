@@ -47,6 +47,36 @@
 import SwiftUI
 import SwiftData
 
+// MARK: - Reachability helper (testable seam)
+
+/// Returns true iff `template` is slotted into at least one `Split` whose
+/// `blocks` contains a block with `derivedStatus == .active`.
+///
+/// Reachability is computed entirely in Swift — the multi-level optional chain
+/// `SplitSessionSlot.split?.blocks` is NOT expressible in a `#Predicate`.
+///
+/// Steps:
+///   1. Fetch all `SplitSessionSlot`s whose `sessionTemplate == template` (single-level
+///      predicate — safe for `#Predicate`).
+///   2. From those slots, collect their `split` references.
+///   3. Return true iff any `split.blocks` contains a block with `.derivedStatus == .active`.
+///
+/// Exposed at `internal` so `RoutineBuilderLiveEditTests` can call it directly.
+internal func isTemplateOnActiveBlock(
+    _ template: SessionTemplate,
+    context: ModelContext
+) -> Bool {
+    let templateID = template.id
+    let descriptor = FetchDescriptor<SplitSessionSlot>(
+        predicate: #Predicate<SplitSessionSlot> { $0.sessionTemplate?.id == templateID }
+    )
+    guard let slots = try? context.fetch(descriptor) else { return false }
+    return slots.contains { slot in
+        guard let split = slot.split else { return false }
+        return (split.blocks ?? []).contains { $0.derivedStatus == .active }
+    }
+}
+
 public struct RoutineBuilderView: View {
     @Environment(\.modelContext) private var ctx
     @Environment(\.dismiss) private var dismiss
@@ -73,6 +103,19 @@ public struct RoutineBuilderView: View {
     public init(draft: RoutineDraft, editing: SessionTemplate? = nil) {
         self.draft = draft
         self.editing = editing
+    }
+
+    // MARK: - Reachability
+
+    /// True iff this view is in edit mode AND the template being edited is
+    /// reachable via slots → split → an active block.
+    ///
+    /// Create mode (editing == nil) always returns false.
+    /// Uses the module-level `isTemplateOnActiveBlock(_:context:)` helper so
+    /// the reachability logic can be unit-tested without instantiating the view.
+    private var isOnActiveBlock: Bool {
+        guard let template = editing else { return false }
+        return isTemplateOnActiveBlock(template, context: ctx)
     }
 
     // MARK: Body
@@ -114,15 +157,22 @@ public struct RoutineBuilderView: View {
             .background(Color.bruPaper.ignoresSafeArea())
             .navigationBarHidden(true)
             .safeAreaInset(edge: .top) {
-                BRUHeaderBar(
-                    left: HeaderAction("‹ Back") {
-                        handleDiscard()
-                    },
-                    center: editing == nil ? "New routine" : "Edit routine",
-                    right: HeaderAction("•••") {
-                        showingMoreMenu = true
+                VStack(spacing: 0) {
+                    BRUHeaderBar(
+                        left: HeaderAction("‹ Back") {
+                            handleDiscard()
+                        },
+                        center: editing == nil ? "New routine" : "Edit routine",
+                        right: HeaderAction("•••") {
+                            showingMoreMenu = true
+                        }
+                    )
+                    // Live-edit banner — shown when editing a template on an active block.
+                    // Non-blocking: no dismiss. Reactive: drops when block ends between edits.
+                    if isOnActiveBlock {
+                        LiveEditBanner()
                     }
-                )
+                }
             }
         }
         // Discard confirmation dialog — verbatim copy per UI-SPEC
