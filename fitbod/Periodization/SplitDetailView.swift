@@ -62,6 +62,7 @@ public struct SplitDetailView: View {
     // MARK: - UI State
 
     @State private var showArchiveDenied: Bool = false
+    @State private var showSaveError: Bool = false
     @State private var presentingSlotPicker: Bool = false
 
     // Drag-reorder state (parent-side, copy-adapted from NewBlockPhaseListSection)
@@ -127,6 +128,12 @@ public struct SplitDetailView: View {
             Button("OK", role: .cancel) {}
         } message: {
             Text("This routine is linked to an active or upcoming block. End or complete that block first.")
+        }
+        // Save failure alert (reorder / remove / archive persistence errors)
+        .alert("Couldn't Save", isPresented: $showSaveError) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text("Couldn't save. Try again.")
         }
         // Remove slot confirmation
         .confirmationDialog(
@@ -238,13 +245,24 @@ public struct SplitDetailView: View {
     // MARK: - Archive
 
     private func attemptArchive() {
+        // First gate: deny-rule (linked to active/upcoming block) — surfaces its own alert.
         do {
             try BlockLifecycleService.assertSplitDeletable(split)
-            split.isArchived = true
-            try? ctx.save()
-            dismiss()
         } catch {
             showArchiveDenied = true
+            return
+        }
+
+        // Persist the archive flag. On save failure, revert the in-memory flag and do
+        // NOT dismiss — otherwise the split would vanish from the list while the store
+        // still holds it (reappears on next launch).
+        split.isArchived = true
+        do {
+            try ctx.save()
+            dismiss()
+        } catch {
+            split.isArchived = false
+            showSaveError = true
         }
     }
 
@@ -279,7 +297,11 @@ public struct SplitDetailView: View {
             let slot = slots.remove(at: fromIndex)
             slots.insert(slot, at: clampedTarget)
             reindexSlots(slots)
-            try? ctx.save()
+            do {
+                try ctx.save()
+            } catch {
+                showSaveError = true
+            }
         }
 
         draggingSlotID = nil
@@ -318,7 +340,11 @@ public struct SplitDetailView: View {
             .filter { $0.id != slot.id }
             .sorted { $0.position < $1.position }
         reindexSlots(remaining)
-        try? ctx.save()
+        do {
+            try ctx.save()
+        } catch {
+            showSaveError = true
+        }
     }
 
     // MARK: - VoiceOver Move Actions
@@ -331,7 +357,11 @@ public struct SplitDetailView: View {
         let moved = slots.remove(at: index)
         slots.insert(moved, at: newIndex)
         reindexSlots(slots)
-        try? ctx.save()
+        do {
+            try ctx.save()
+        } catch {
+            showSaveError = true
+        }
     }
 }
 

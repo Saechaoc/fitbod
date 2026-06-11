@@ -71,6 +71,7 @@ public struct BlockOverviewScreen: View {
     @State private var presentingSplitPicker = false
     @State private var presentingSwapConfirm = false
     @State private var presentingEndConfirm = false
+    @State private var showSaveError = false
 
     // MARK: - @Query — real session data, no mocks (revision iter 1 B5)
 
@@ -186,11 +187,20 @@ public struct BlockOverviewScreen: View {
         }
         .alert("End block?", isPresented: $presentingEndConfirm) {
             Button("End Block", role: .destructive) {
-                try? BlockLifecycleService.end(block: block, context: ctx)
+                do {
+                    try BlockLifecycleService.end(block: block, context: ctx)
+                } catch {
+                    showSaveError = true
+                }
             }
             Button("Cancel", role: .cancel) {}
         } message: {
             Text("End this block now? You can review it from the Routines tab.")
+        }
+        .alert("Couldn't Save", isPresented: $showSaveError) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text("Couldn't save. Try again.")
         }
     }
 
@@ -636,6 +646,18 @@ public struct BlockOverviewScreen: View {
         }
     }
 
+    // MARK: - Persistence helper
+
+    /// Persist pending edits; surface a lightweight save-error alert on failure
+    /// instead of silently swallowing the error (WR-02).
+    private func saveOrAlert() {
+        do {
+            try ctx.save()
+        } catch {
+            showSaveError = true
+        }
+    }
+
     // MARK: - Mode Picker (all live statuses)
 
     @ViewBuilder
@@ -646,12 +668,12 @@ public struct BlockOverviewScreen: View {
                 ModeChip("ROTATION", selected: block.schedulingMode == .rotation) {
                     block.schedulingMode = .rotation
                     block.trainingDays = TrainingDaysWriter.sort(weekdays: block.trainingDays)
-                    try? ctx.save()
+                    saveOrAlert()
                 }
                 ModeChip("FIXED WEEKLY", selected: block.schedulingMode == .fixedWeekly) {
                     block.schedulingMode = .fixedWeekly
                     block.trainingDays = TrainingDaysWriter.sort(weekdays: block.trainingDays)
-                    try? ctx.save()
+                    saveOrAlert()
                 }
             }
             .padding(.horizontal, 16)
@@ -688,7 +710,7 @@ public struct BlockOverviewScreen: View {
                             days.append(weekday)
                         }
                         block.trainingDays = TrainingDaysWriter.sort(weekdays: days)
-                        try? ctx.save()
+                        saveOrAlert()
                     }
                 }
             }
