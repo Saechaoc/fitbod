@@ -3,18 +3,18 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-last_updated: "2026-06-11T03:09:04.470Z"
+last_updated: "2026-06-11T05:15:00.000Z"
 progress:
   total_phases: 15
   completed_phases: 13
-  total_plans: 117
-  completed_plans: 119
+  total_plans: 118
+  completed_plans: 120
   percent: 100
 ---
 
 # Project State: Fitbod
 
-**Last updated:** 2026-06-10 (post 07-06 — SchemaV7MigrationTests: 14-test suite proving V6→V7 migration correctness; container flip fitbodApp.swift + PreviewModelContainer.swift to Schema(SchemaV7.models); full Phase 7 complete — 6/6 plans executed; pre-existing full-suite failure count: 17 Clone 1 parallelism artifacts unchanged)
+**Last updated:** 2026-06-11 (post 07-07 gap closure — nullify delete-rules wired for Session.slot + SessionTemplate.block (Block.legacyTemplates CR-02 carry-over); SchemaV7MigrationTests deterministic (combined V6+V7 test container + stash entry-reset); SchemaV6 count-pin fixed (16==16); SchemaV5 CR-01 fixed (nested Routine/RoutineExercise @Model types restore V5 entity names); Phase 7 exit gate: 5 regressions closed, 1 pre-existing BRU copy-introspection failure unchanged)
 
 ---
 
@@ -32,8 +32,8 @@ progress:
 
 ## Current Position
 
-Phase: 07 (Program Graph Schema V7 & Migration) — EXECUTING
-Plan: 5 of 6
+Phase: 07 (Program Graph Schema V7 & Migration) — COMPLETE (7/7 plans)
+Plan: 7 of 7
 
 Phase 04.1 complete (2026-05-25). All 8 plans executed. 12 Phase-4 surfaces re-skinned to BRU brutalist design system + 1 net-new BlockOverviewScreen; 25-forbidden-pattern audit GREEN; 15-test regression suite + 6-test audit suite added; BlockPhaseColors.tint(for:) removed.
 
@@ -248,6 +248,7 @@ These drive phase ordering and are mitigated by phase placement:
 | Phase 06.1 P01 | 225 | 2 tasks | 1 files |
 | Phase 07-program-graph-schema-v7-migration P02 | 10 | 2 tasks | 17 files |
 | Phase 07 P06 | 90 | 14 tasks | 3 files |
+| Phase 07 P07 (gap closure) | 90 | 3 tasks | 8 files |
 
 ### Open Research Items (deferred to plan-phase time)
 

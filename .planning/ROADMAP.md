@@ -276,7 +276,7 @@ Plans:
 | 4. Periodization & Blocks | 8/8 | Complete | 2026-05-25 |
 | 5. Fatigue Model & Plateau Detection | 7/6 | Complete   | 2026-05-24 |
 | 6. Progress Views, Export & Polish | 11/11 | Complete   | 2026-05-24 |
-| 7. Program Graph Schema V7 & Migration | 6/6 | Complete   | 2026-06-11 |
+| 7. Program Graph Schema V7 & Migration | 7/7 | Complete   | 2026-06-11 |
 
 ---
 
@@ -321,7 +321,7 @@ This ordering is dependency-driven and pitfall-aware (per research/SUMMARY.md an
 **Mode:** mvp
 **Requirements**: Authoritative contract: `.planning/quick/training-block-spec/program-graph-spec.md` §1–§3, §6–§7. Delete rules per §3/§4: slot.sessionTemplate `.deny`, Block.split nullify, Session.slot nullify, Split.slots cascade. Aux entities (RoutineFolder, RoutineExerciseSetOverride, SupersetGroup) keep names — accepted naming debt.
 **Depends on:** Phase 6
-**Plans:** 7/7 plans complete (07-07 gap closure)
+**Plans:** 7/7 plans complete
 
 Plans:
 - [x] 07-01-PLAN.md — Wave 1: SchedulingMode enum + ArchivedBlockConfig Codable DTO + nested DTOs + iso8601 decoder (SPEC-7-DTO)
@@ -330,7 +330,7 @@ Plans:
 - [x] 07-04-PLAN.md — Wave 4: SchemaV7 (explicit models) + SchemaV6 nested-type expansion + 7-step custom migrateV6toV7 stage with internal-static helpers
 - [x] 07-05-PLAN.md — Wave 5: Test-target rename + InMemoryContainer→V7 + count-pin refresh (schemas 7 / stages 6 / SchemaV6.models delta) + ExportDocument canonicalSchemaVersion v7
 - [x] 07-06-PLAN.md — Wave 6: SchemaV7MigrationTests (ghost-free picker, ref remap, rotation continuity, templateName/archive backfill, deny/nullify/cascade, contiguity, derivedStatus) + full Phase 1-6 regression sweep
-- [ ] 07-07-PLAN.md — Wave 7 (gap closure): wire Session.slot + legacy SessionTemplate.block nullify inverses, deterministic SchemaV7MigrationTests (V6+V7 test container, idempotent stash), fix SchemaV6 count-pin, restore V5 nested Routine/RoutineExercise chain (SPEC-7-DELETE-RULES, SPEC-7-MIGRATION, SPEC-7-TESTS)
+- [x] 07-07-PLAN.md — Wave 7 (gap closure): wire Session.slot + legacy SessionTemplate.block nullify inverses, deterministic SchemaV7MigrationTests (V6+V7 test container, idempotent stash), fix SchemaV6 count-pin, restore V5 nested Routine/RoutineExercise chain (SPEC-7-DELETE-RULES, SPEC-7-MIGRATION, SPEC-7-TESTS)
 
 ### Phase 8: Scheduler Resolver & Block Lifecycle
 
