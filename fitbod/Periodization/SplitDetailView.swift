@@ -535,12 +535,21 @@ fileprivate struct SlotPickerSheet: View {
         ctx.insert(slot)
         slot.split = split
         slot.sessionTemplate = template
-        // Append at end — reindex ensures contiguous positions
-        let currentCount = split.slots?.count ?? 0
-        slot.position = currentCount
+        // Sentinel position only — reindexSlots assigns the real, contiguous value below.
+        // Reading split.slots?.count here is unreliable: SwiftData may already include the
+        // just-inserted slot in the live relationship count (off-by-one) and the new slot's
+        // position can collide with an existing slot's, making the sort order ambiguous.
+        slot.position = 0
 
-        // Reindex all slots (including new one) for contiguity
-        let allSlots = (split.slots ?? []).sorted { $0.position < $1.position }
+        // Reindex all slots (including the new one) for contiguity. Sort by existing
+        // position, but pin the new slot to the end so it appends rather than landing
+        // at an arbitrary index among equal positions.
+        let newSlotID = slot.id
+        let allSlots = (split.slots ?? []).sorted { a, b in
+            if a.id == newSlotID { return false }   // new slot sorts last (append)
+            if b.id == newSlotID { return true }
+            return a.position < b.position
+        }
         reindexSlots(allSlots)
         try? ctx.save()
         onDismiss()

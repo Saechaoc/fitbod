@@ -106,19 +106,28 @@ struct SplitDetailViewTests {
         ctx.insert(newSlot)
         newSlot.split = split
         newSlot.sessionTemplate = newTemplate
-        newSlot.position = split.slots?.count ?? 0  // append position
+        // Mirror the production addSlot fix (CR-02): sentinel position, then pin the new
+        // slot to the end of the sort so it appends regardless of SwiftData's
+        // relationship-count timing or position collisions.
+        newSlot.position = 0  // sentinel — reindexSlots assigns the real value
+        let newSlotID = newSlot.id
 
-        let allSlots = (split.slots ?? []).sorted { $0.position < $1.position }
+        let allSlots = (split.slots ?? []).sorted { a, b in
+            if a.id == newSlotID { return false }   // new slot sorts last (append)
+            if b.id == newSlotID { return true }
+            return a.position < b.position
+        }
         reindexSlots(allSlots)
         try? ctx.save()
 
         let reloaded = (split.slots ?? []).sorted { $0.position < $1.position }
         let positions = reloaded.map { $0.position }
 
-        // 4 slots total: positions [0, 1, 2, 3]
+        // 4 slots total: positions [0, 1, 2, 3] — contiguous, no gaps or duplicates
         #expect(positions == [0, 1, 2, 3])
+        #expect(positions == Array(0..<reloaded.count), "positions must be contiguous 0..<n after add")
         #expect(reloaded.count == 4)
-        // New slot is at the end
+        // New slot is at the end (append semantics held)
         #expect(reloaded.last?.sessionTemplate?.name == "New Session")
     }
 
