@@ -121,6 +121,31 @@ struct NewBlockBuilderFidelityTests {
         }
     }
 
+    @Test("BlockBuilderView wires swipe-to-delete and drag-to-reorder affordances")
+    func blockBuilderViewExposesDirectManipulationAffordances() throws {
+        let source = try source("fitbod", "Periodization", "BlockBuilderView.swift")
+
+        // Drag-to-reorder: ⋮⋮ handle, long-press-gated drag, commit-on-drop array move,
+        // and the reorder lifecycle reported up to the parent.
+        #expect(source.contains(#"Text("⋮⋮")"#),
+                "Phase rows need the ⋮⋮ drag handle to initiate reorder.")
+        #expect(source.contains("LongPressGesture"),
+                "Reorder must be gated behind a long press so scrolling isn't hijacked.")
+        #expect(source.contains("move(fromOffsets:"),
+                "Reorder must commit by moving the phase within draft.phases.")
+        #expect(source.contains("onReorderBegan") && source.contains("onReorderEnded"),
+                "Phase rows must report the reorder lifecycle up to the parent.")
+
+        // Swipe-to-delete: a custom DragGesture (because .swipeActions is a no-op in a
+        // LazyVStack) feeding a single commit path, plus a revealed destructive button.
+        #expect(source.contains("DragGesture"),
+                "Swipe-to-delete needs a custom horizontal DragGesture.")
+        #expect(source.contains("Button(role: .destructive)"),
+                "The revealed swipe affordance must be a destructive Delete button.")
+        #expect(source.contains("commitDelete"),
+                "Swipe and the Delete button should funnel through a single commit path.")
+    }
+
     @Test("BlockBuilderView does not render fake recording status chrome")
     func blockBuilderViewDoesNotRenderFakeRecordingStatusChrome() throws {
         let source = try source("fitbod", "Periodization", "BlockBuilderView.swift")

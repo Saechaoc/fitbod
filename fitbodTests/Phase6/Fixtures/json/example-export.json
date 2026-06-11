@@ -128,7 +128,7 @@
       "updatedAt" : "2023-11-14T22:13:20Z"
     }
   ],
-  "schemaVersion" : "v6",
+  "schemaVersion" : "v7",
   "sessions" : [
     {
       "blockID" : "00000000-0000-0000-0000-00000000000D",

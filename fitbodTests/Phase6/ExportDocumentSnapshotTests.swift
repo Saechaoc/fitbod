@@ -235,7 +235,7 @@ struct ExportDocumentSnapshotTests {
         let data = try JSONEncoder.exportConfigured().encode(doc)
         let json = try #require(try JSONSerialization.jsonObject(with: data) as? [String: Any])
         #expect(json["formatVersion"] as? Int == 1)
-        #expect(json["schemaVersion"] as? String == "v6")
+        #expect(json["schemaVersion"] as? String == "v7")
         let exportedAt = try #require(json["exportedAt"] as? String)
         #expect(exportedAt.hasSuffix("Z"), "exportedAt should be UTC ISO-8601 with Z suffix")
 

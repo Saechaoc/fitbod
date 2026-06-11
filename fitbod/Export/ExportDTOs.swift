@@ -84,7 +84,7 @@ public struct ExportDocument: Codable, Equatable, Sendable {
 
     /// Single source-of-truth schema version. Restore-side compares
     /// against this; backup manifest writes the same string.
-    public static let canonicalSchemaVersion = "v6"
+    public static let canonicalSchemaVersion = "v7"
 
     public init(
         formatVersion: Int,
