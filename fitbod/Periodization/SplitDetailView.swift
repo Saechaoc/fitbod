@@ -228,7 +228,18 @@ public struct SplitDetailView: View {
                         .font(BRUFont.bodyEmphasis)
                         .foregroundStyle(Color.bruInk)
                     Spacer()
-                    BRUChip(block.derivedStatus.rawValue.uppercased())
+                    // Status badge colors mirror ProgramView.statusChip:
+                    //   ACTIVE  = bruSignal fill  (highest urgency)
+                    //   READY   = bruSignal outline
+                    //   others  = default ink chip
+                    switch block.derivedStatus {
+                    case .active:
+                        BRUChip("ACTIVE", color: .bruSignal, fill: true)
+                    case .ready:
+                        BRUChip("READY", color: .bruSignal)
+                    default:
+                        BRUChip(block.derivedStatus.rawValue.uppercased())
+                    }
                 }
                 .padding(.horizontal, 16)
                 .padding(.vertical, 12)
