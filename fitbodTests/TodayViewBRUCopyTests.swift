@@ -206,6 +206,30 @@ struct TodayViewBRUCopyTests {
         #expect(source.contains("activeSessions"))
     }
 
+    // MARK: - 9. emptySplit fix-it copy (Phase 9 Plan 03)
+
+    @Test("TodayView emptySplit fix-it copy is verbatim")
+    func emptySplitFixItCopyVerbatim() throws {
+        let source = try todayViewSource()
+        #expect(source.contains("ROUTINE HAS NO SESSIONS"))
+        #expect(source.contains("The routine linked to this block has no sessions scheduled. Add a session to continue."))
+        #expect(source.contains("GO TO ROUTINE ▸"))
+    }
+
+    @Test("TodayView emptySplit fix-it uses SplitDetailRoute on Today's own stack")
+    func emptySplitFixItNavigationPattern() throws {
+        let source = try todayViewSource()
+        #expect(source.contains("navigationPath.append(SplitDetailRoute.detail(splitID:"))
+        #expect(source.contains("navigationDestination(for: SplitDetailRoute.self)"))
+    }
+
+    @Test("TodayView rest-day empty-state copy is still present and unchanged")
+    func restDayEmptyStateCopyPreserved() throws {
+        let source = try todayViewSource()
+        #expect(source.contains("\"No workout scheduled\""))
+        #expect(source.contains("\"Build a routine or pick one from your library.\""))
+    }
+
     // MARK: - Helpers
 
     private func sourceFile(_ relativePath: String) throws -> String {
