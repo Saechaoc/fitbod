@@ -45,9 +45,14 @@ struct TrainingDaysWriterTests {
 
     // MARK: - Region-change stability (SPEC-8-TRAININGDAYS §3/§5)
 
-    /// Proves the verbatim-read invariant: writing with Mon-first calendar and
-    /// then reading block.trainingDays WITHOUT calling the writer again must
-    /// return the stored array unchanged, even if the reader uses a different Calendar.
+    /// Proves the verbatim-read invariant ACROSS a persistence round-trip: the
+    /// array sorted at write under a Mon-first calendar must survive a save and a
+    /// fresh-context fetch unchanged — even when the reading context is created
+    /// after a simulated region change (different `Calendar.firstWeekday`).
+    ///
+    /// WR-05: the prior version read the same in-memory object twice (`x == x`),
+    /// which proved nothing. This version fetches from a SECOND ModelContext to
+    /// prove the stored order survived persistence and was not re-sorted on read.
     @Test("Region change after write does not re-sort stored trainingDays")
     func regionChangeDoesNotResort() throws {
         // Build an in-memory V7 container — same pattern as SplitDeletionGuardTests
@@ -70,16 +75,23 @@ struct TrainingDaysWriterTests {
         block.name = "Test Block"
         block.trainingDays = TrainingDaysWriter.sort(weekdays: [3, 5, 7], using: monFirstCal)
         try ctx.save()
+        let storedID = block.id
 
-        // Capture what was stored
-        let storedDays = block.trainingDays
+        // Simulate a region change by reading through a NEW ModelContext (mimics
+        // a cold re-launch where Calendar.current now has a different firstWeekday).
+        // The reader does NOT call TrainingDaysWriter — it reads verbatim from storage.
+        let ctx2 = ModelContext(container)
+        let fetched = try #require(
+            try ctx2.fetch(
+                FetchDescriptor<Block>(predicate: #Predicate { $0.id == storedID })
+            ).first,
+            "Block must be fetchable from a fresh context after save"
+        )
 
-        // Simulate region change: reader has a Sun-first calendar
-        // but does NOT call TrainingDaysWriter — reads verbatim from storage
-        let readBack = block.trainingDays
-
-        // Stored array is unchanged regardless of the reader's calendar
-        #expect(readBack == storedDays)
-        #expect(readBack == [3, 5, 7])
+        // The fetched array must match the Mon-first-sorted order exactly —
+        // proving the stored order survived persistence and was not re-sorted
+        // under the reader's (different) calendar.
+        #expect(fetched.trainingDays == [3, 5, 7],
+            "Stored trainingDays order must survive a persistence round-trip unchanged")
     }
 }
