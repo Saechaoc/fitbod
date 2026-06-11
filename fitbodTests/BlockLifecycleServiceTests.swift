@@ -151,6 +151,25 @@ struct BlockLifecycleServiceTests {
         }
     }
 
+    // MARK: - Test 3b: end throws .notActive on a ready (not-yet-started) block
+
+    @Test("end throws .notActive on a ready block that was never started")
+    func endThrowsNotActiveOnReady() throws {
+        let ctx = try makeContext()
+        let block = try makeReadyBlock(name: "NeverStarted", context: ctx)
+        #expect(block.derivedStatus == .ready)
+
+        // WR-04: ending a non-active block must be refused BEFORE any mutation,
+        // so endDate/archive are never written to a never-started block.
+        #expect(throws: BlockLifecycleError.notActive) {
+            try BlockLifecycleService.end(block: block, context: ctx)
+        }
+
+        // State must be untouched by the refused call.
+        #expect(block.endDate == nil, "endDate must not be set when end is refused")
+        #expect(block.archivedConfigJSON == nil, "archive must not be written when end is refused")
+    }
+
     // MARK: - Test 4: end writes endDate AND archivedConfigJSON together
 
     @Test("end writes endDate AND archivedConfigJSON together")

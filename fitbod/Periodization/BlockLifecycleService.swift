@@ -34,6 +34,11 @@ public enum BlockLifecycleError: Error, Equatable, Sendable {
     /// The block is not in `.ready` status and cannot be started.
     case notReady
 
+    /// The block is not in `.active` status and cannot be ended (spec §4 —
+    /// only active blocks can be ended; ending a draft/ready block would
+    /// stamp an archive with a never-started block's default startDate).
+    case notActive
+
     /// Split swap/attach is refused on an active block — changing the split IS ending the block.
     case splitChangeOnActiveBlock
 }
@@ -109,8 +114,18 @@ public enum BlockLifecycleService {
     /// always set in the same `context.save()` — a block can never have `endDate`
     /// without a corresponding archive (spec §6, T-08-05, Pitfall 4).
     ///
+    /// - Precondition: `block.derivedStatus == .active`
+    /// - Throws: `BlockLifecycleError.notActive` when the block is not active —
+    ///   ending a draft/ready block would archive a never-started block with a
+    ///   default `startDate`, producing a corrupt completed block (spec §4).
     /// - Throws: Any encoder error from `ArchivedBlockConfig.write`.
     public static func end(block: Block, context: ModelContext, now: Date = .now) throws {
+        // WR-04: symmetric guard to start's .ready check — only active blocks
+        // can be ended. Checked BEFORE the encode/transaction (abort-before-mutation).
+        guard block.derivedStatus == .active else {
+            throw BlockLifecycleError.notActive
+        }
+
         // Encode BEFORE entering the transaction — abort-before-mutation guarantee.
         let json = try ArchivedBlockConfig.write(from: block, endedAt: now)
 
