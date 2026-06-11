@@ -609,7 +609,9 @@ private extension Array {
 
 #if DEBUG
 #Preview("BlockOverviewScreen") {
-    let schema = Schema(SchemaV5.models)
+    // CR-05: V7 schema — BlockOverviewScreen accesses Split / SplitSessionSlot /
+    // SessionTemplate relationships at runtime, which SchemaV5 has no tables for.
+    let schema = Schema(SchemaV7.models)
     let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
     let container = try! ModelContainer(
         for: schema,
