@@ -122,7 +122,7 @@ public struct SplitDetailView: View {
                 }
             }
         }
-        .background(Color.bruBg.ignoresSafeArea())
+        .background(Color.bruPaper.ignoresSafeArea())   // fix-6: bruPaper per 60/30/10 doctrine
         .navigationBarHidden(true)
         // Archive denied alert
         .alert("Cannot Archive Routine", isPresented: $showArchiveDenied) {
