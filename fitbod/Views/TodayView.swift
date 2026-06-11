@@ -67,6 +67,10 @@ public struct TodayView: View {
     @State private var presentingSignalSheet: Bool = false
     // Phase 5 plan 06 — weekly recap state.
     @State private var presentingWeeklyRecap: Bool = false
+    // Phase 9 IN-02 — "+ NEW ROUTINE" from the empty state. Presents the same
+    // new-routine builder ProgramView uses, as a sheet on Today's OWN surface
+    // (no cross-tab navigation).
+    @State private var presentingNewRoutine: Bool = false
 
     // MARK: - Body
 
@@ -277,6 +281,13 @@ public struct TodayView: View {
                     WeeklyRecapSheet(weekStart: weekStart)
                 }
             }
+            // Phase 9 IN-02 — "+ NEW ROUTINE" empty-state sheet. Same builder flow
+            // ProgramView's "+ New routine" presents, on Today's own surface.
+            .sheet(isPresented: $presentingNewRoutine) {
+                NavigationStack {
+                    RoutineBuilderView(draft: RoutineDraft())
+                }
+            }
             // ─── Lifecycle (preserved verbatim from Phase 4/5) ───────────────
             .task {
                 pendingBlockReview = (try? BlockReviewStatistics.pendingReviewBlocks(
@@ -311,7 +322,7 @@ public struct TodayView: View {
                 .multilineTextAlignment(.center)
 
             Button {
-                // Navigate to RoutinesListView's +NEW routine action
+                presentingNewRoutine = true
             } label: {
                 Text("+ NEW ROUTINE")
                     .font(BRUFont.labelSmall)
