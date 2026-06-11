@@ -277,6 +277,7 @@ Plans:
 | 5. Fatigue Model & Plateau Detection | 7/6 | Complete   | 2026-05-24 |
 | 6. Progress Views, Export & Polish | 11/11 | Complete   | 2026-05-24 |
 | 7. Program Graph Schema V7 & Migration | 7/7 | Complete   | 2026-06-11 |
+| 8. Scheduler Resolver & Block Lifecycle | 1/5 | Executing  | 2026-06-11 |
 
 ---
 
@@ -341,7 +342,7 @@ Plans:
 **Plans:** 5 plans
 
 Plans:
-- [ ] 08-01-PLAN.md — Wave 1: TodayResolver + TodayResolution enum (unified rotation predicate + fixedWeekly + zero-slot guard) + TodayResolverTests scheduler suite (SPEC-8-RESOLVER)
+- [x] 08-01-PLAN.md — Wave 1: TodayResolver + TodayResolution enum (unified rotation predicate + fixedWeekly + zero-slot guard) + TodayResolverTests scheduler suite (SPEC-8-RESOLVER)
 - [ ] 08-02-PLAN.md — Wave 1: TrainingDaysWriter sort-at-write service (injected Calendar) + locale / region-change-stability tests (SPEC-8-TRAININGDAYS)
 - [ ] 08-03-PLAN.md — Wave 2: ArchivedBlockConfig.write(from:endedAt:) + BlockLifecycleService one-save start/end/swap + SplitDeletionGuard wiring + typed decode error + atomicity/deny-matrix tests (SPEC-8-LIFECYCLE, SPEC-8-ARCHIVE, SPEC-8-GUARDS)
 - [ ] 08-04-PLAN.md — Wave 3: SessionFactory migration off template.block (lines 133/165/275 → activeBlock) + legacy-edge deprecation doc + SessionFactoryTests (SPEC-8-FACTORY)
