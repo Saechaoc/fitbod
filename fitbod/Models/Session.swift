@@ -61,6 +61,16 @@ public final class Session {
     @Relationship(deleteRule: .cascade, inverse: \SessionExercise.session)
     public var exercises: [SessionExercise]? = []
 
+    // V7 additive: proper relationship replacing the soft UUID ref. nullify on template delete (default).
+    public var template: SessionTemplate? = nil
+
+    // V7 additive: which slot launched this workout; nil = ad-hoc.
+    // nullify on slot delete (default for optional). NEVER cascade (Pitfall 6).
+    public var slot: SplitSessionSlot? = nil
+
+    // V7 additive: log-time snapshot of template name (freeze #1 insurance).
+    public var templateName: String? = nil
+
     public init() {}
 }
 
