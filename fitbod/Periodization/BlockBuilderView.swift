@@ -28,6 +28,7 @@ public struct BlockBuilderView: View {
     @State private var presentingAddPhaseTypePicker = false
     @State private var pendingDelete: (phase: BlockPhaseDraft, index: Int)? = nil
     @State private var undoTask: Task<Void, Never>? = nil
+    @State private var presentingSplitPicker = false
 
     init(draft: BlockDraft, editing: Block? = nil, initialPreset: NewBlockPreset? = nil) {
         self.draft = draft
@@ -72,12 +73,13 @@ public struct BlockBuilderView: View {
                                 onAddPhase: { presentingAddPhaseTypePicker = true }
                             )
 
-                            // Conditional linked-routines band
-                            if draft.isValid {
-                                // V7: block.routines removed; split.slots is the new count source.
-                            // Phase 9 replaces this band with the split picker component.
-                            NewBlockLinkedRoutinesBand(count: editing?.split?.slots?.count ?? 0)
-                            }
+                            // Split band — always shown; optionality expressed via
+                            // "None — saves as draft" copy (Phase 9 replacement for the old
+                            // NewBlockLinkedRoutinesBand conditional block).
+                            NewBlockSplitBand(
+                                draft: draft,
+                                presentSplitPicker: { presentingSplitPicker = true }
+                            )
 
                             // Error band
                             if let saveError {
@@ -145,6 +147,15 @@ public struct BlockBuilderView: View {
                 addPhase(of: kind)
                 presentingAddPhaseTypePicker = false
             }
+        }
+        .sheet(isPresented: $presentingSplitPicker) {
+            NewBlockSplitPickerSheet(
+                selectedSplit: draft.split,
+                onSelect: { chosen in
+                    draft.split = chosen
+                    presentingSplitPicker = false
+                }
+            )
         }
         .confirmationDialog(
             "Apply Preset?",
@@ -1832,24 +1843,238 @@ fileprivate struct NewBlockAddPhaseTypeSheet: View {
     }
 }
 
-// 260528-vi2: linked routines band — borderless quiet row (no ink rules).
-fileprivate struct NewBlockLinkedRoutinesBand: View {
-    let count: Int
+// Phase 9 split band — replaces the old NewBlockLinkedRoutinesBand.
+// Always visible (optionality expressed via "None — saves as draft" copy).
+// Uses NewBlockScreenTokens token world (NOT Color.bru* — different token system).
+// ModeChip / DayToggleChip are copy-adapted from BlockOverviewScreen (fileprivate
+// there; do NOT import or reference them — separate token worlds per 09-RESEARCH Pattern 3).
+fileprivate struct NewBlockSplitBand: View {
+    @Bindable var draft: BlockDraft
+    let presentSplitPicker: () -> Void
 
     var body: some View {
-        HStack {
-            Text("ROUTINES · \(count) LINKED")
+        VStack(alignment: .leading, spacing: 0) {
+
+            // Section head "Routine"
+            Text("Routine")
                 .font(NewBlockType.chrome)
                 .tracking(NewBlockScreenTokens.chipTracking)
                 .foregroundStyle(NewBlockScreenTokens.muted)
-            Spacer()
-            Text("+ LINK")
-                .font(NewBlockType.chrome)
-                .tracking(NewBlockScreenTokens.chipTracking)
-                .foregroundStyle(NewBlockScreenTokens.muted)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, NewBlockScreenTokens.sidePadding)
+                .padding(.vertical, NewBlockScreenTokens.rowGap)
+
+            Rectangle()
+                .fill(NewBlockScreenTokens.ink)
+                .frame(height: NewBlockScreenTokens.heavyRule)
+
+            // Split picker row
+            HStack(spacing: NewBlockScreenTokens.rowGap) {
+                Text("Routine")
+                    .font(NewBlockType.cta)
+                    .foregroundStyle(NewBlockScreenTokens.ink)
+                Spacer()
+                if let split = draft.split {
+                    Text(split.name)
+                        .font(NewBlockType.label)
+                        .tracking(NewBlockScreenTokens.labelTracking)
+                        .foregroundStyle(NewBlockScreenTokens.muted)
+                    Button {
+                        presentSplitPicker()
+                    } label: {
+                        Text("SWAP ▸")
+                            .font(NewBlockType.label)
+                            .tracking(NewBlockScreenTokens.labelTracking)
+                            .foregroundStyle(NewBlockScreenTokens.signal)
+                            .frame(minWidth: 44, minHeight: 44)
+                    }
+                    .buttonStyle(.plain)
+                } else {
+                    Text("None — saves as draft")
+                        .font(NewBlockType.label)
+                        .tracking(NewBlockScreenTokens.labelTracking)
+                        .foregroundStyle(NewBlockScreenTokens.muted)
+                    Button {
+                        presentSplitPicker()
+                    } label: {
+                        Text("+ ATTACH ▸")
+                            .font(NewBlockType.label)
+                            .tracking(NewBlockScreenTokens.labelTracking)
+                            .foregroundStyle(NewBlockScreenTokens.signal)
+                            .frame(minWidth: 44, minHeight: 44)
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+            .padding(.horizontal, NewBlockScreenTokens.sidePadding)
+            .frame(minHeight: 44)
+
+            Rectangle()
+                .fill(NewBlockScreenTokens.hair)
+                .frame(height: NewBlockScreenTokens.rule)
+
+            // Scheduling mode picker row
+            HStack(spacing: NewBlockScreenTokens.rowGap) {
+                Text("Scheduling")
+                    .font(NewBlockType.cta)
+                    .foregroundStyle(NewBlockScreenTokens.ink)
+                Spacer()
+                HStack(spacing: NewBlockScreenTokens.tightGap) {
+                    NewBlockModeChip("ROTATION", selected: draft.schedulingMode == .rotation) {
+                        draft.schedulingMode = .rotation
+                    }
+                    NewBlockModeChip("FIXED WEEKLY", selected: draft.schedulingMode == .fixedWeekly) {
+                        draft.schedulingMode = .fixedWeekly
+                    }
+                }
+            }
+            .padding(.horizontal, NewBlockScreenTokens.sidePadding)
+            .frame(minHeight: 44)
+
+            // Day-chip row (shown only when fixedWeekly)
+            if draft.schedulingMode == .fixedWeekly {
+                Rectangle()
+                    .fill(NewBlockScreenTokens.hair)
+                    .frame(height: NewBlockScreenTokens.rule)
+
+                HStack(spacing: 4) {
+                    let weekdays: [(Int, String)] = [
+                        (2, "M"), (3, "T"), (4, "W"), (5, "T"), (6, "F"), (7, "S"), (1, "S")
+                    ]
+                    ForEach(weekdays, id: \.0) { weekday, letter in
+                        let isSelected = draft.trainingDays.contains(weekday)
+                        NewBlockDayToggleChip(letter: letter, selected: isSelected) {
+                            if isSelected {
+                                draft.trainingDays.removeAll { $0 == weekday }
+                            } else {
+                                draft.trainingDays.append(weekday)
+                            }
+                        }
+                    }
+                }
+                .padding(.horizontal, NewBlockScreenTokens.sidePadding)
+                .padding(.vertical, NewBlockScreenTokens.rowGap)
+
+                // Soft mismatch hint (amber) when day count != slot count
+                let slotCount = draft.split?.slots?.count ?? 0
+                if slotCount > 0 && draft.trainingDays.count != slotCount {
+                    Text("\(draft.trainingDays.count) days / \(slotCount) sessions")
+                        .font(NewBlockType.label)
+                        .tracking(NewBlockScreenTokens.labelTracking)
+                        .foregroundStyle(Color(red: 1.0, green: 0.65, blue: 0.0)) // bruAmber
+                        .padding(.horizontal, NewBlockScreenTokens.sidePadding)
+                        .padding(.bottom, NewBlockScreenTokens.rowGap)
+                }
+            }
+
+            Rectangle()
+                .fill(NewBlockScreenTokens.ink)
+                .frame(height: NewBlockScreenTokens.heavyRule)
         }
-        .frame(height: 31)
         .background(NewBlockScreenTokens.paper)
+    }
+}
+
+// Mode chip for the split band — copy-adapted from BlockOverviewScreen.ModeChip
+// using NewBlockScreenTokens instead of Color.bru* (separate token worlds).
+fileprivate struct NewBlockModeChip: View {
+    let label: String
+    let selected: Bool
+    let action: () -> Void
+
+    init(_ label: String, selected: Bool, action: @escaping () -> Void) {
+        self.label = label
+        self.selected = selected
+        self.action = action
+    }
+
+    var body: some View {
+        Button {
+            action()
+        } label: {
+            Text(label)
+                .font(NewBlockType.chip)
+                .tracking(NewBlockScreenTokens.chipTracking)
+                .foregroundStyle(selected ? NewBlockScreenTokens.paper : NewBlockScreenTokens.ink)
+                .padding(.horizontal, 8)
+                .padding(.vertical, 5)
+                .frame(maxWidth: .infinity)
+                .background(selected ? NewBlockScreenTokens.ink : Color.clear)
+                .overlay(
+                    Rectangle()
+                        .stroke(NewBlockScreenTokens.ink,
+                                lineWidth: selected ? 1.5 : 1.0)
+                )
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("\(label) scheduling")
+        .accessibilityAddTraits(selected ? .isSelected : [])
+    }
+}
+
+// Day toggle chip for the split band — copy-adapted from BlockOverviewScreen.DayToggleChip.
+fileprivate struct NewBlockDayToggleChip: View {
+    let letter: String
+    let selected: Bool
+    let action: () -> Void
+
+    var body: some View {
+        Button {
+            action()
+        } label: {
+            Text(letter)
+                .font(NewBlockType.chip)
+                .tracking(NewBlockScreenTokens.chipTracking)
+                .foregroundStyle(selected ? NewBlockScreenTokens.paper : NewBlockScreenTokens.muted)
+                .frame(maxWidth: .infinity)
+                .frame(height: 28)
+                .background(selected ? NewBlockScreenTokens.ink : NewBlockScreenTokens.faint)
+                .overlay(
+                    Rectangle()
+                        .stroke(NewBlockScreenTokens.ink,
+                                lineWidth: selected ? 1.5 : 1.0)
+                )
+        }
+        .buttonStyle(.plain)
+        .accessibilityAddTraits(.isToggle)
+        .accessibilityValue(selected ? "on" : "off")
+    }
+}
+
+// Split picker sheet — lists non-archived Splits, tap selects and dismisses.
+fileprivate struct NewBlockSplitPickerSheet: View {
+    @Query(filter: #Predicate<Split> { !$0.isArchived }, sort: \Split.name)
+    private var splits: [Split]
+
+    let selectedSplit: Split?
+    let onSelect: (Split) -> Void
+
+    var body: some View {
+        NavigationStack {
+            List(splits, id: \.id) { split in
+                Button {
+                    onSelect(split)
+                } label: {
+                    HStack {
+                        Text(split.name)
+                            .font(NewBlockType.cta)
+                            .foregroundStyle(NewBlockScreenTokens.ink)
+                        Spacer()
+                        if split.id == selectedSplit?.id {
+                            Text("✓")
+                                .font(NewBlockType.cta)
+                                .foregroundStyle(NewBlockScreenTokens.signal)
+                        }
+                    }
+                    .frame(minHeight: 44)
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+            }
+            .navigationTitle("Choose Routine")
+            .navigationBarTitleDisplayMode(.inline)
+        }
+        .presentationDetents([.medium, .large])
     }
 }
 
