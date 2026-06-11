@@ -27,7 +27,7 @@ Granular, prescriptive workout sessions — every set in a session is intentiona
 - [x] **Phase 6: Progress Views, Export & Polish** — Intent-split charts, PRs, weekly tonnage, session comparison, weekly recap, CSV/JSON export, backup/restore (completed 2026-05-24)
 - [x] **Phase 7: Program Graph Schema V7 & Migration** — Split/SplitSessionSlot entities, Routine→SessionTemplate + RoutineExercise→SessionExerciseTemplate renames, Block split/mode/trainingDays/archive fields, Session slot/templateName, custom V6→V7 migration stage, SchemaV7MigrationTests (completed 2026-06-11)
 - [x] **Phase 8: Scheduler Resolver & Block Lifecycle** — Unified rotation resolver predicate, fixedWeekly scheduling, derived block status switch, one-save start/end transactions, deny/nullify delete rules, ArchivedBlockConfig write + decode error state (completed 2026-06-11)
-- [ ] **Phase 9: Program Surfaces** — ProgramView rebuild (BLOCKS/ROUTINES sections), SplitDetailView, BlockOverviewScreen live+archived modes, builder split band, live-edit banners, Today resolver wiring
+- [x] **Phase 9: Program Surfaces** — ProgramView rebuild (BLOCKS/ROUTINES sections), SplitDetailView, BlockOverviewScreen live+archived modes, builder split band, live-edit banners, Today resolver wiring **(executed 2026-06-11: 6/6 plans; 36/36 must-haves; UI audit 16/24 → 7 advisory fixes applied; visual/device UAT deferred)**
 
 ---
 
