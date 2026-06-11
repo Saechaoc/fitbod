@@ -340,9 +340,9 @@ struct SessionFactoryTests {
         #expect(se2.tracksPartialReps == false)
     }
 
-    // MARK: - 8. block reference survives snapshot
+    // MARK: - 8. block reference survives snapshot (Phase 8: via activeBlock parameter)
 
-    @Test("blockReferenceCopiedFromRoutine — optional Block link survives snapshot")
+    @Test("blockReferenceCopiedFromRoutine — optional Block link survives snapshot via activeBlock")
     func blockReferenceCopiedFromRoutine() throws {
         let ctx = try makeContext()
         let routine = try makeFixtureRoutine(ctx: ctx)
@@ -350,10 +350,11 @@ struct SessionFactoryTests {
         let block = Block()
         block.name = "Hypertrophy I"
         ctx.insert(block)
-        routine.block = block
+        // Phase 8 (CR-02): session.block is set via the activeBlock parameter,
+        // not by reading template.block. Pass it explicitly.
         try ctx.save()
 
-        let session = try SessionFactory.start(template: routine, on: .now, context: ctx)
+        let session = try SessionFactory.start(template: routine, activeBlock: block, on: .now, context: ctx)
         #expect(session.block?.id == block.id)
     }
 }

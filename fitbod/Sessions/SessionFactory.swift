@@ -85,6 +85,11 @@ public enum SessionFactory {
     /// and inserts warm-up ramp `SetEntry` rows for the first qualifying
     /// compound exercise (per RESEARCH §SessionFactory Hook Point).
     ///
+    /// Phase 8 (CR-02 migrated): `activeBlock` supplies the canonical
+    /// block context (resolver output / TodayView activeBlocks.first);
+    /// `template.block` is no longer read for prescription resolution.
+    /// Pass `activeBlock: nil` (the default) for ad-hoc sessions.
+    ///
     /// Returns the newly-inserted `Session`. Caller is responsible for
     /// presenting `SessionLoggerView(session: returnedSession)`.
     ///
@@ -104,6 +109,7 @@ public enum SessionFactory {
     /// alert with the underlying error's `localizedDescription`.
     public static func start(
         template: SessionTemplate,
+        activeBlock: Block? = nil,
         on date: Date = .now,
         context: ModelContext
     ) throws -> Session {
@@ -130,7 +136,7 @@ public enum SessionFactory {
         session.completedAt = nil
         session.routineSnapshotName = template.name
         session.sourceRoutineID = template.id          // soft UUID ref
-        session.block = template.block                 // optional; safe to carry forward
+        session.block = activeBlock                     // from resolver context (activeBlock), not the legacy template edge
         session.notes = nil
         session.totalDurationSeconds = nil
         context.insert(session)
@@ -162,7 +168,7 @@ public enum SessionFactory {
         // because intent + progressionKind are now session-level
         // (PIVOT-02). The instance is stateless so reuse is safe.
         let sessionStrategy = ProgressionStrategyFactory.make(for: session.progressionKind)
-        let scheduledBlockPhase = template.block.flatMap { block in
+        let scheduledBlockPhase = activeBlock.flatMap { block in
             PeriodizationEngine.phase(for: block, on: date)
         }
         let scheduledDeloadActive = scheduledBlockPhase?.kind == .deload
@@ -272,7 +278,7 @@ public enum SessionFactory {
                 lastSessionReps: lastSessionReps,
                 lastSessionRPE: lastSessionRPE,
                 lastSessionDate: lastSessionDate,
-                block: template.block,
+                block: activeBlock,
                 today: date
             )
             se.prescribedWeight = prescribedWeight

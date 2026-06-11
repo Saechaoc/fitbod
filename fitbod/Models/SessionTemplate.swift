@@ -49,6 +49,9 @@ public final class SessionTemplate {
     public var createdAt: Date = Date.now
     public var updatedAt: Date = Date.now
     public var isArchived: Bool = false
+    // DEPRECATED(Phase 8): write-orphaned for prescription resolution; SessionFactory no longer
+    // reads this edge. Removal in V8 schema migration. Non-prescription writers (RoutineDraft,
+    // RoutineDuplicator, BackupRestorer) still set it — see RESEARCH §Pattern 4 readers inventory.
     public var block: Block? = nil
     public var folderID: UUID? = nil
     public var intentRaw: String = "strength"
