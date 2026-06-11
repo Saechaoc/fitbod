@@ -339,14 +339,14 @@ Plans:
 **Mode:** mvp
 **Requirements**: Authoritative contract: `.planning/quick/training-block-spec/program-graph-spec.md` §3 (status), §4–§6, §9.
 **Depends on:** Phase 7
-**Plans:** 4/5 plans executed
+**Plans:** 5/5 plans executed
 
 Plans:
 - [x] 08-01-PLAN.md — Wave 1: TodayResolver + TodayResolution enum (unified rotation predicate + fixedWeekly + zero-slot guard) + TodayResolverTests scheduler suite (SPEC-8-RESOLVER)
 - [x] 08-02-PLAN.md — Wave 1: TrainingDaysWriter sort-at-write service (injected Calendar) + locale / region-change-stability tests (SPEC-8-TRAININGDAYS)
 - [x] 08-03-PLAN.md — Wave 2: ArchivedBlockConfig.write(from:endedAt:) + BlockLifecycleService one-save start/end/swap + SplitDeletionGuard wiring + typed decode error + atomicity/deny-matrix tests (SPEC-8-LIFECYCLE, SPEC-8-ARCHIVE, SPEC-8-GUARDS)
 - [x] 08-04-PLAN.md — Wave 3: SessionFactory migration off template.block (lines 133/165/275 → activeBlock) + legacy-edge deprecation doc + SessionFactoryTests (SPEC-8-FACTORY)
-- [ ] 08-05-PLAN.md — Wave 4: TodayView.todaysRoutine wired to resolver (resume-state precedence preserved) + startWorkout passes activeBlock + BlockOverviewScreen membership TODO sites refined + carousel membership test (SPEC-8-TODAY)
+- [x] 08-05-PLAN.md — Wave 4: TodayView.todaysRoutine wired to resolver (resume-state precedence preserved) + startWorkout passes activeBlock + BlockOverviewScreen membership TODO sites refined + carousel membership test (SPEC-8-TODAY)
 
 ### Phase 9: Program Surfaces
 
