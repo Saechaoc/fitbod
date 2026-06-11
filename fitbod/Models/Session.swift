@@ -65,7 +65,9 @@ public final class Session {
     public var template: SessionTemplate? = nil
 
     // V7 additive: which slot launched this workout; nil = ad-hoc.
-    // nullify on slot delete (default for optional). NEVER cascade (Pitfall 6).
+    // Nullify inverse declared on SplitSessionSlot.sessions — SwiftData fires
+    // the nullify rule from the managed to-many side; this plain var is the
+    // to-one side (single-sided convention). NEVER cascade (Pitfall 6).
     public var slot: SplitSessionSlot? = nil
 
     // V7 additive: log-time snapshot of template name (freeze #1 insurance).
