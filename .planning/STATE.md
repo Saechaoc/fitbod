@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-last_updated: "2026-06-11T19:50:37.810Z"
+last_updated: "2026-06-11T20:49:39.577Z"
 progress:
   total_phases: 15
   completed_phases: 14
-  total_plans: 124
-  completed_plans: 126
-  percent: 100
+  total_plans: 130
+  completed_plans: 127
+  percent: 98
 ---
 
 # Project State: Fitbod
@@ -32,8 +32,8 @@ progress:
 
 ## Current Position
 
-Phase: 08 (Scheduler Resolver & Block Lifecycle) — EXECUTING
-Plan: 5 of 5 (Plans 08-01..08-05 complete)
+Phase: 09 (Program Surfaces) — EXECUTING
+Plan: 1 of 6
 
 Phase 04.1 complete (2026-05-25). All 8 plans executed. 12 Phase-4 surfaces re-skinned to BRU brutalist design system + 1 net-new BlockOverviewScreen; 25-forbidden-pattern audit GREEN; 15-test regression suite + 6-test audit suite added; BlockPhaseColors.tint(for:) removed.
 
@@ -128,8 +128,8 @@ Plan: 8 of 8 (all plans complete; Phase 3.1 closed). Production tree compiles en
 **Plan:** 03-02 complete (Wave 3, seq 2) — `RoutineBuilderView` single-screen builder with inline `.searchable` exercise picker (reuses Phase 1 `ExerciseLibraryView` via additive `init(onSelect:)` overload), always-on drag-handle reorder via `.environment(\.editMode, .constant(.active))`, per-exercise `PrescriptionEditorRow` (intent / sets / reps / RPE / progression / rest / tempo toggle + 4-field entry / partials toggle / disabled Auto warm-up Phase 3 footnote / per-set overrides disclosure). `RoutineDraft` `@Observable` ephemeral mutation surface (FOUND-06 / MV-VM-lite, no parallel ViewModel) with `targetSets.didSet` prune (RESEARCH §6 Pitfall 8) and three-way merge `save(into:context:)`. `PrescriptionDefaults` ROUTINE-09 heuristic (compound → 180s, isolation → 90s; barbell+compound → strength 4-6, otherwise hypertrophy 8-12). 12 new `@Test` functions across 4 test files. Four atomic commits.
 
 **Plan:** 03-01 complete (Wave 3, seq 1) — Routines tab `RoutinesListView` + folders + Resume Workout banner. See plan 03-01 SUMMARY for details.
-**Status:** Executing Phase 08
-**Progress:** [██████████] 100%
+**Status:** Executing Phase 09
+**Progress:** [██████████] 98%
 
 ### Phase Outlook
 
@@ -251,6 +251,7 @@ These drive phase ordering and are mitigated by phase placement:
 | Phase 07-program-graph-schema-v7-migration P02 | 10 | 2 tasks | 17 files |
 | Phase 07 P06 | 90 | 14 tasks | 3 files |
 | Phase 07 P07 (gap closure) | 90 | 3 tasks | 8 files |
+| Phase 09-program-surfaces P01 | 898 | 2 tasks | 4 files |
 
 ### Open Research Items (deferred to plan-phase time)
 
