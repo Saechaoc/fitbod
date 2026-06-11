@@ -2046,6 +2046,9 @@ fileprivate struct NewBlockDayToggleChip: View {
 }
 
 // Split picker sheet — lists non-archived Splits, tap selects and dismisses.
+// BRU chrome: ScrollView + BRUSectionHead + row + BRUDivider(.hair) matching
+// BlockOverviewScreen.SplitPickerSheet. NO List / NO .navigationTitle — system
+// list chrome and nav-bar titles violate the BRU contract.
 fileprivate struct NewBlockSplitPickerSheet: View {
     @Query(filter: #Predicate<Split> { !$0.isArchived }, sort: \Split.name)
     private var splits: [Split]
@@ -2055,28 +2058,39 @@ fileprivate struct NewBlockSplitPickerSheet: View {
 
     var body: some View {
         NavigationStack {
-            List(splits, id: \.id) { split in
-                Button {
-                    onSelect(split)
-                } label: {
-                    HStack {
-                        Text(split.name)
-                            .font(NewBlockType.cta)
-                            .foregroundStyle(NewBlockScreenTokens.ink)
-                        Spacer()
-                        if split.id == selectedSplit?.id {
-                            Text("✓")
-                                .font(NewBlockType.cta)
-                                .foregroundStyle(NewBlockScreenTokens.signal)
+            VStack(spacing: 0) {
+                BRUSectionHead("Choose Routine")
+
+                ScrollView {
+                    LazyVStack(spacing: 0) {
+                        ForEach(splits) { split in
+                            Button {
+                                onSelect(split)
+                            } label: {
+                                HStack {
+                                    Text(split.name)
+                                        .font(NewBlockType.cta)
+                                        .foregroundStyle(NewBlockScreenTokens.ink)
+                                    Spacer()
+                                    if split.id == selectedSplit?.id {
+                                        Text("✓")
+                                            .font(NewBlockType.cta)
+                                            .foregroundStyle(NewBlockScreenTokens.signal)
+                                    }
+                                }
+                                .frame(minHeight: 44)
+                                .padding(.horizontal, NewBlockScreenTokens.sidePadding)
+                                .contentShape(Rectangle())
+                            }
+                            .buttonStyle(.plain)
+
+                            BRUDivider(.hair)
                         }
                     }
-                    .frame(minHeight: 44)
-                    .contentShape(Rectangle())
                 }
-                .buttonStyle(.plain)
             }
-            .navigationTitle("Choose Routine")
-            .navigationBarTitleDisplayMode(.inline)
+            .background(Color.bruPaper.ignoresSafeArea())
+            .navigationBarHidden(true)
         }
         .presentationDetents([.medium, .large])
     }
