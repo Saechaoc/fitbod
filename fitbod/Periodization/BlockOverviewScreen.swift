@@ -470,22 +470,49 @@ public struct BlockOverviewScreen: View {
                 else { return false }
                 return dayState(for: cellDate) == .done
             }.count
-            // V7: block.routines removed; slot count from split.
-            let scheduledCount = block.split?.slots?.count ?? 0
+            // Scheduled slot count.
+            //
+            // Spec §6: completed blocks must NEVER read the live split — the archive is
+            // the sole source. Reading block.split?.slots?.count on a completed block
+            // would show 0/0 lies once the split is archived/nullified. So:
+            //   - completed: derive from the decoded ArchivedBlockConfig; if the archive
+            //     is missing or undecodable, scheduledCount is nil → omit the count
+            //     (a quiet "N SESSIONS DONE" with no total/LEFT, never a "0/0" lie).
+            //   - non-completed: read the live split count as before.
+            let scheduledCount: Int? = {
+                if block.derivedStatus == .completed {
+                    guard let json = block.archivedConfigJSON,
+                          let config = try? BlockLifecycleService.decodeArchive(json)
+                    else { return nil }
+                    return config.split.slots.count
+                }
+                return block.split?.slots?.count ?? 0
+            }()
 
             HStack {
-                Text("\(doneCount) / \(max(doneCount, scheduledCount)) SESSIONS DONE")
-                    .font(BRUFont.labelMicro)
-                    .textCase(.uppercase)
-                    .tracking(1.2)
-                    .foregroundStyle(Color.bruMuted)
-                Spacer()
-                let leftCount = max(0, scheduledCount - doneCount)
-                Text("\(leftCount) LEFT")
-                    .font(BRUFont.labelMicro)
-                    .textCase(.uppercase)
-                    .tracking(1.2)
-                    .foregroundStyle(Color.bruMuted)
+                if let scheduledCount {
+                    Text("\(doneCount) / \(max(doneCount, scheduledCount)) SESSIONS DONE")
+                        .font(BRUFont.labelMicro)
+                        .textCase(.uppercase)
+                        .tracking(1.2)
+                        .foregroundStyle(Color.bruMuted)
+                    Spacer()
+                    let leftCount = max(0, scheduledCount - doneCount)
+                    Text("\(leftCount) LEFT")
+                        .font(BRUFont.labelMicro)
+                        .textCase(.uppercase)
+                        .tracking(1.2)
+                        .foregroundStyle(Color.bruMuted)
+                } else {
+                    // Completed block with no/undecodable archive — omit the count
+                    // rather than render a "0/0" lie (spec §6 no-live-fallback).
+                    Text("\(doneCount) SESSIONS DONE")
+                        .font(BRUFont.labelMicro)
+                        .textCase(.uppercase)
+                        .tracking(1.2)
+                        .foregroundStyle(Color.bruMuted)
+                    Spacer()
+                }
             }
             .padding(.top, 10)
         }
