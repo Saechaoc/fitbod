@@ -144,7 +144,8 @@ struct WarmupDeloadIntegrationTests {
         try seedPriorCompletedSession(in: context, exercise: exercise, date: start.addingTimeInterval(-7 * day))
 
         #expect(PeriodizationEngine.phase(for: block, on: deloadDate)?.kind == .deload)
-        let session = try SessionFactory.start(template: routine, on: deloadDate, context: context)
+        // Phase 8 (CR-01): pass activeBlock so deload phase resolves and warmups are skipped.
+        let session = try SessionFactory.start(template: routine, activeBlock: block, on: deloadDate, context: context)
 
         #expect(warmupCount(in: session) == 0)
     }
@@ -162,7 +163,8 @@ struct WarmupDeloadIntegrationTests {
         let (routine, exercise) = makeRoutineWithCompoundExercise(in: context, block: block)
         try seedPriorCompletedSession(in: context, exercise: exercise, date: start.addingTimeInterval(-7 * day))
 
-        let session = try SessionFactory.start(template: routine, on: start, context: context)
+        // Phase 8 (CR-01): pass activeBlock so prescription context is correct.
+        let session = try SessionFactory.start(template: routine, activeBlock: block, on: start, context: context)
 
         #expect(warmupCount(in: session) >= 3)
     }
@@ -181,7 +183,8 @@ struct WarmupDeloadIntegrationTests {
         let (routine, exercise) = makeRoutineWithCompoundExercise(in: context, block: block)
         try seedPriorCompletedSession(in: context, exercise: exercise, date: start.addingTimeInterval(-7 * day))
 
-        let session = try SessionFactory.start(template: routine, on: today, context: context)
+        // Phase 8 (CR-01): pass activeBlock so prescription context is correct.
+        let session = try SessionFactory.start(template: routine, activeBlock: block, on: today, context: context)
 
         #expect(warmupCount(in: session) >= 3)
     }
@@ -211,7 +214,8 @@ struct WarmupDeloadIntegrationTests {
         try seedPriorCompletedSession(in: context, exercise: exercise, date: start.addingTimeInterval(-7 * day))
 
         #expect(PeriodizationEngine.phase(for: block, on: today) == nil)
-        let session = try SessionFactory.start(template: routine, on: today, context: context)
+        // Phase 8 (CR-01): pass activeBlock so prescription context is correct.
+        let session = try SessionFactory.start(template: routine, activeBlock: block, on: today, context: context)
 
         #expect(warmupCount(in: session) >= 3)
     }

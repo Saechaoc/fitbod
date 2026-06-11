@@ -107,7 +107,8 @@ struct DeloadVolumeApplicationTests {
         try context.save()
 
         #expect(PeriodizationEngine.phase(for: block, on: deloadDate)?.kind == .deload)
-        let session = try SessionFactory.start(template: routine, on: deloadDate, context: context)
+        // Phase 8 (CR-01): pass activeBlock so deload phase resolution fires.
+        let session = try SessionFactory.start(template: routine, activeBlock: block, on: deloadDate, context: context)
 
         #expect(workingSetCounts(in: session) == [2])
     }
@@ -125,7 +126,8 @@ struct DeloadVolumeApplicationTests {
         let routine = makeRoutine(in: context, block: block, targetSets: [1])
         try context.save()
 
-        let session = try SessionFactory.start(template: routine, on: deloadDate, context: context)
+        // Phase 8 (CR-01): pass activeBlock so deload phase resolution fires.
+        let session = try SessionFactory.start(template: routine, activeBlock: block, on: deloadDate, context: context)
 
         #expect(workingSetCounts(in: session) == [1])
     }
@@ -138,7 +140,8 @@ struct DeloadVolumeApplicationTests {
         let routine = makeRoutine(in: context, block: block, targetSets: [3])
         try context.save()
 
-        let session = try SessionFactory.start(template: routine, on: start, context: context)
+        // Phase 8 (CR-01): pass activeBlock so prescription context is correct.
+        let session = try SessionFactory.start(template: routine, activeBlock: block, on: start, context: context)
 
         #expect(workingSetCounts(in: session) == [3])
     }
@@ -157,7 +160,8 @@ struct DeloadVolumeApplicationTests {
         try context.save()
 
         #expect(PeriodizationEngine.phase(for: block, on: today)?.kind == .intensification)
-        let session = try SessionFactory.start(template: routine, on: today, context: context)
+        // Phase 8 (CR-01): pass activeBlock so prescription context is correct.
+        let session = try SessionFactory.start(template: routine, activeBlock: block, on: today, context: context)
 
         #expect(workingSetCounts(in: session) == [3])
     }
@@ -176,7 +180,8 @@ struct DeloadVolumeApplicationTests {
         try context.save()
 
         #expect(PeriodizationEngine.phase(for: block, on: today)?.kind == .realization)
-        let session = try SessionFactory.start(template: routine, on: today, context: context)
+        // Phase 8 (CR-01): pass activeBlock so prescription context is correct.
+        let session = try SessionFactory.start(template: routine, activeBlock: block, on: today, context: context)
 
         #expect(workingSetCounts(in: session) == [3])
     }
@@ -202,7 +207,8 @@ struct DeloadVolumeApplicationTests {
         try context.save()
 
         #expect(PeriodizationEngine.phase(for: block, on: end.addingTimeInterval(day)) == nil)
-        let session = try SessionFactory.start(template: routine, on: end.addingTimeInterval(day), context: context)
+        // Phase 8 (CR-01): pass activeBlock so prescription context is correct.
+        let session = try SessionFactory.start(template: routine, activeBlock: block, on: end.addingTimeInterval(day), context: context)
 
         #expect(workingSetCounts(in: session) == [4])
     }
@@ -220,7 +226,8 @@ struct DeloadVolumeApplicationTests {
         let routine = makeRoutine(in: context, block: block, targetSets: [4, 5, 6])
         try context.save()
 
-        let session = try SessionFactory.start(template: routine, on: deloadDate, context: context)
+        // Phase 8 (CR-01): pass activeBlock so deload phase resolution fires.
+        let session = try SessionFactory.start(template: routine, activeBlock: block, on: deloadDate, context: context)
 
         #expect(workingSetCounts(in: session) == [2, 2, 3])
     }

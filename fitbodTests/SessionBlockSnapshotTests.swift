@@ -81,7 +81,8 @@ struct SessionBlockSnapshotTests {
         let routine = makeRoutine(in: context, block: block)
         try context.save()
 
-        let session = try SessionFactory.start(template: routine, on: block.startDate, context: context)
+        // Phase 8 (CR-01): session.block resolves from activeBlock, not routine.block.
+        let session = try SessionFactory.start(template: routine, activeBlock: block, on: block.startDate, context: context)
 
         #expect(session.block?.id == block.id)
     }
@@ -93,7 +94,8 @@ struct SessionBlockSnapshotTests {
         let routine = makeRoutine(in: context, block: block)
         try context.save()
 
-        let session = try SessionFactory.start(template: routine, on: block.startDate, context: context)
+        // Phase 8 (CR-01): session.block resolves from activeBlock, not routine.block.
+        let session = try SessionFactory.start(template: routine, activeBlock: block, on: block.startDate, context: context)
         routine.block = nil
         try context.save()
 
@@ -107,6 +109,7 @@ struct SessionBlockSnapshotTests {
         let routine = makeRoutine(in: context, block: nil)
         try context.save()
 
+        // No activeBlock — ad-hoc session; session.block stays nil.
         let session = try SessionFactory.start(template: routine, on: .now, context: context)
 
         #expect(session.block == nil)
@@ -119,7 +122,8 @@ struct SessionBlockSnapshotTests {
         let routine = makeRoutine(in: context, block: block)
         try context.save()
 
-        let session = try SessionFactory.start(template: routine, on: block.startDate, context: context)
+        // Phase 8 (CR-01): session.block resolves from activeBlock, not routine.block.
+        let session = try SessionFactory.start(template: routine, activeBlock: block, on: block.startDate, context: context)
         block.name = "Renamed"
         try context.save()
 
@@ -134,7 +138,8 @@ struct SessionBlockSnapshotTests {
         let routine = makeRoutine(in: context, block: block)
         try context.save()
 
-        let session = try SessionFactory.start(template: routine, on: block.startDate, context: context)
+        // Phase 8 (CR-01): session.block resolves from activeBlock, not routine.block.
+        let session = try SessionFactory.start(template: routine, activeBlock: block, on: block.startDate, context: context)
         context.delete(block)
         try context.save()
 
