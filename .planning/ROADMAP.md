@@ -26,7 +26,7 @@ Granular, prescriptive workout sessions — every set in a session is intentiona
 - [x] **Phase 5: Fatigue Model & Plateau Detection** — Stimulus-weighted weekly volume, MEV/MAV/MRV bars with verbs, muscle heatmap, plateau detector, fatigue-triggered deload advisory (completed 2007-05-23)
 - [x] **Phase 6: Progress Views, Export & Polish** — Intent-split charts, PRs, weekly tonnage, session comparison, weekly recap, CSV/JSON export, backup/restore (completed 2026-05-24)
 - [x] **Phase 7: Program Graph Schema V7 & Migration** — Split/SplitSessionSlot entities, Routine→SessionTemplate + RoutineExercise→SessionExerciseTemplate renames, Block split/mode/trainingDays/archive fields, Session slot/templateName, custom V6→V7 migration stage, SchemaV7MigrationTests (completed 2026-06-11)
-- [ ] **Phase 8: Scheduler Resolver & Block Lifecycle** — Unified rotation resolver predicate, fixedWeekly scheduling, derived block status switch, one-save start/end transactions, deny/nullify delete rules, ArchivedBlockConfig write + decode error state
+- [x] **Phase 8: Scheduler Resolver & Block Lifecycle** — Unified rotation resolver predicate, fixedWeekly scheduling, derived block status switch, one-save start/end transactions, deny/nullify delete rules, ArchivedBlockConfig write + decode error state (completed 2026-06-11)
 - [ ] **Phase 9: Program Surfaces** — ProgramView rebuild (BLOCKS/ROUTINES sections), SplitDetailView, BlockOverviewScreen live+archived modes, builder split band, live-edit banners, Today resolver wiring
 
 ---
@@ -277,7 +277,7 @@ Plans:
 | 5. Fatigue Model & Plateau Detection | 7/6 | Complete   | 2026-05-24 |
 | 6. Progress Views, Export & Polish | 11/11 | Complete   | 2026-05-24 |
 | 7. Program Graph Schema V7 & Migration | 7/7 | Complete   | 2026-06-11 |
-| 8. Scheduler Resolver & Block Lifecycle | 4/5 | In Progress|  |
+| 8. Scheduler Resolver & Block Lifecycle | 6/6 | Complete   | 2026-06-11 |
 
 ---
 
@@ -339,7 +339,7 @@ Plans:
 **Mode:** mvp
 **Requirements**: Authoritative contract: `.planning/quick/training-block-spec/program-graph-spec.md` §3 (status), §4–§6, §9.
 **Depends on:** Phase 7
-**Plans:** 5/5 plans executed
+**Plans:** 6/6 plans complete
 
 Plans:
 - [x] 08-01-PLAN.md — Wave 1: TodayResolver + TodayResolution enum (unified rotation predicate + fixedWeekly + zero-slot guard) + TodayResolverTests scheduler suite (SPEC-8-RESOLVER)
