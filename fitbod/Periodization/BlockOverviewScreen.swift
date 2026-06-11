@@ -720,8 +720,10 @@ public struct BlockOverviewScreen: View {
             .padding(.top, 8)
             .padding(.bottom, 4)
 
-            // Soft amber mismatch hint
-            if block.trainingDays.count != slotCount {
+            // Soft amber mismatch hint — only when a split is attached and counts differ.
+            // Hidden when no split attached (nothing to mismatch against), matching
+            // NewBlockSplitBand semantics. (fix-5)
+            if block.split != nil && block.trainingDays.count != slotCount {
                 Text("\(block.trainingDays.count) days / \(slotCount) sessions")
                     .font(BRUFont.bodyDefault)
                     .foregroundStyle(Color.bruAmber)
