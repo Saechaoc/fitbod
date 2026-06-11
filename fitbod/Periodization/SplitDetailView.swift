@@ -54,6 +54,7 @@ public struct SplitDetailView: View {
 
     @Environment(\.modelContext) private var ctx
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     // MARK: - Stored
 
@@ -196,7 +197,7 @@ public struct SplitDetailView: View {
             .scaleEffect(draggingSlotID == slot.id ? 0.97 : 1)
             .zIndex(draggingSlotID == slot.id ? 1 : 0)
             .background(draggingSlotID == slot.id ? Color.bruBg2 : Color.clear)
-            .animation(.spring(response: 0.28, dampingFraction: 0.86), value: dragTargetIndex)
+            .animation(reduceMotion ? nil : .spring(response: 0.28, dampingFraction: 0.86), value: dragTargetIndex)
 
             if index < slots.count - 1 {
                 BRUDivider(.hair)
