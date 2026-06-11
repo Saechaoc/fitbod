@@ -102,10 +102,12 @@ public enum TodayResolver {
         let targetSplitID = block.split?.id
 
         // Broad predicate: only the flat `completedAt != nil` gate.
-        // Sort descending so `.first` below finds the latest completed session.
+        // Sort by completedAt desc (spec §5: latest *completed* session is the
+        // anchor — not insertion order, not start order). The predicate already
+        // filters completedAt != nil, so the SortDescriptor's nil handling is moot.
         let descriptor = FetchDescriptor<Session>(
             predicate: #Predicate { $0.completedAt != nil },
-            sortBy: [SortDescriptor(\Session.startedAt, order: .reverse)]
+            sortBy: [SortDescriptor(\Session.completedAt, order: .reverse)]
         )
         guard let all = try? context.fetch(descriptor) else {
             // Fetch failure treated as no history → start from slot 0.
