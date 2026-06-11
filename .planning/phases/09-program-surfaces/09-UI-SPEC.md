@@ -77,7 +77,7 @@ Seven type roles from `BRUFont`. This phase uses 5 of the 7 roles. No new sizes 
 | Body emphasis | `BRUFont.bodyEmphasis` | 14pt | JetBrains Mono | Bold | –0.2 at call site | as-typed |
 | Body default | `BRUFont.bodyDefault` | 12pt | JetBrains Mono | Regular | 0 | as-typed |
 | Label small | `BRUFont.labelSmall` | 10pt | JetBrains Mono | Bold | +1.2 at call site | `.uppercase` at call site |
-| Label micro | `BRUFont.labelMicro` | 8pt | JetBrains Mono | Bold | +1.0 at call site | `.uppercase` at call site |
+| Label micro | `BRUFont.labelMicro` | 8pt | JetBrains Mono | Bold | +1.0 at call site | `.uppercase` at call site — **inventory only; NOT active in Phase 9** (4-size budget) |
 
 **Per-element role assignments for this phase:**
 
@@ -93,7 +93,7 @@ Seven type roles from `BRUFont`. This phase uses 5 of the 7 roles. No new sizes 
 | SplitDetailView slot name | `bodyEmphasis` | — |
 | SplitDetailView slot position number | `labelSmall` | UPPERCASE |
 | Day-chip weekday letter (M/T/W/T/F/S/S) | `labelSmall` | — |
-| Day-chip secondary label (TODAY / DONE / REST / session name) | 9pt JetBrains Mono Bold custom | Reuse existing `dayCell` 9pt for session name overflow, else `labelMicro` |
+| Day-chip secondary label (TODAY / DONE / REST / session name) | `labelSmall` | NEW day-chips in this phase use `labelSmall` (10pt). The pre-existing `dayCell` 9pt inside the shipped BlockOverviewScreen carousel is locked primitive behavior — defer to it untouched, do not re-specify or propagate that size to any new element. `labelMicro` is NOT active in this phase (4-size budget: displayMedium / bodyEmphasis / bodyDefault / labelSmall). |
 | Live-edit banner body | `bodyDefault` | — |
 | "Archive unreadable" error heading | `bodyEmphasis` | — |
 | "Archive unreadable" error body | `bodyDefault` | — |
@@ -299,7 +299,7 @@ HStack(spacing: 12):
 
 **Slot picker sheet:** `RoutineBuilderView` existing sheet flow, or a picker over all `SessionTemplate`s + "New session" option → `RoutineBuilderView`. Presented as `.sheet`. Sheet uses `.presentationDetents([.medium, .large])` for discoverability.
 
-**Remove slot:** Swipe trailing `.swipeActions` → confirm alert "Remove Session?" / "Remove" (destructive) / "Cancel". Removal triggers reindex-on-write.
+**Remove slot:** Swipe trailing `.swipeActions` → confirm alert "Remove Session?" / "Remove Session" (destructive) / "Cancel". Removal triggers reindex-on-write.
 
 **Usage section:**
 ```
@@ -471,7 +471,7 @@ Show `LiveEditBanner` immediately below `BRUHeaderBar` (above the exercise list)
 ```
 HStack(spacing: 0):
   Rectangle().fill(Color.bruSignal).frame(width: 4)  // left accent stripe
-  VStack(alignment: .leading, spacing: 2):
+  VStack(alignment: .leading, spacing: 4):
     Text("ACTIVE BLOCK").font(BRUFont.labelSmall).textCase(.uppercase).tracking(1.2).foregroundStyle(Color.bruSignal)
     Text("Part of active block — edits apply to upcoming workouts.")
       .font(BRUFont.bodyDefault).foregroundStyle(Color.bruMuted)
@@ -559,7 +559,7 @@ The `.noBlock` branch's `noWorkoutScheduledEmptyState` is **unchanged** (copy pi
 | emptySplit fix-it body | "The routine linked to this block has no sessions scheduled. Add a session to continue." | New |
 | emptySplit fix-it CTA | "GO TO ROUTINE ▸" | New |
 | Remove slot alert title | "Remove Session?" | New |
-| Remove slot alert destructive | "Remove" | New |
+| Remove slot alert destructive | "Remove Session" | New |
 
 ---
 
