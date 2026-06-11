@@ -594,7 +594,9 @@ private var todaysRoutine: SessionTemplate? {
 
 ---
 
-## Open Questions
+## Open Questions (RESOLVED)
+
+> Orchestrator disposition 2026-06-11: all three inline recommendations below are ACCEPTED as the implementation decisions.
 
 1. **TodayView empty-state copy for `emptySplit` case**
    - What we know: `TodayResolution.emptySplit` is a distinct case; Phase 9 "renders the surface"
