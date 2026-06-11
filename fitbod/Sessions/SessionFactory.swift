@@ -90,6 +90,14 @@ public enum SessionFactory {
     /// `template.block` is no longer read for prescription resolution.
     /// Pass `activeBlock: nil` (the default) for ad-hoc sessions.
     ///
+    /// Phase 8 (CR-01): `slot` is the rotation anchor written onto
+    /// `session.slot`. `TodayResolver.resolveRotation` (spec §5) advances
+    /// rotation by reading the latest completed session's `slot.position`.
+    /// Sessions started without a slot (the default `nil`) are ad-hoc and
+    /// fall out of the resolver's anchor scan — preserving ad-hoc
+    /// semantics. Production callers that resolve a `.session(slot)` MUST
+    /// thread the slot through so rotation actually advances.
+    ///
     /// Returns the newly-inserted `Session`. Caller is responsible for
     /// presenting `SessionLoggerView(session: returnedSession)`.
     ///
@@ -109,6 +117,7 @@ public enum SessionFactory {
     /// alert with the underlying error's `localizedDescription`.
     public static func start(
         template: SessionTemplate,
+        slot: SplitSessionSlot? = nil,
         activeBlock: Block? = nil,
         on date: Date = .now,
         context: ModelContext
@@ -137,6 +146,7 @@ public enum SessionFactory {
         session.routineSnapshotName = template.name
         session.sourceRoutineID = template.id          // soft UUID ref
         session.block = activeBlock                     // from resolver context (activeBlock), not the legacy template edge
+        session.slot = slot                             // CR-01: rotation anchor; nil = ad-hoc (skipped by TodayResolver)
         session.notes = nil
         session.totalDurationSeconds = nil
         context.insert(session)

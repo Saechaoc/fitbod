@@ -109,7 +109,10 @@ public struct TodayView: View {
                         })
                     }
 
-                    // CTA slab — branch on active session vs scheduled routine vs no block
+                    // CTA slab — resume-in-progress wins (spec §5); otherwise
+                    // branch on the full TodayResolution so .emptySplit gets a
+                    // distinct repair surface (CR-02) and the resolved slot is
+                    // threaded into startWorkout as the rotation anchor (CR-01).
                     if let active = activeSessions.first {
                         // Active in-progress session → Resume slab
                         ResumeWorkoutSlab(
@@ -120,45 +123,42 @@ public struct TodayView: View {
                                 try? ctx.save()
                             }
                         )
-                    } else if let routine = todaysRoutine {
-                        // Scheduled routine → Black slab CTA
-                        BlackSlabCTA(
-                            routine: routine,
-                            dayIndex: dayIndexInBlock,
-                            totalDays: totalDaysInBlock,
-                            onStart: { startWorkout(routine) }
-                        )
-                    } else if activeBlocks.isEmpty {
-                        // No block at all → Start Block CTA (Phase 4 preserved)
-                        StartBlockCTA(onStart: {
-                            pendingBlockBuilder = .template(BlockTemplates.blank)
-                        })
                     } else {
-                        // Block active but no routine scheduled today → empty state
-                        // UI-SPEC line 466 verbatim copy
-                        VStack(spacing: 12) {
-                            Text("No workout scheduled")
-                                .font(BRUFont.displayLarge)
-                                .foregroundStyle(Color.bruInk)
-
-                            Text("Build a routine or pick one from your library.")
-                                .font(BRUFont.bodyDefault)
-                                .foregroundStyle(Color.bruMuted)
-                                .multilineTextAlignment(.center)
-
-                            Button {
-                                // Navigate to RoutinesListView's +NEW routine action
-                            } label: {
-                                Text("+ NEW ROUTINE")
-                                    .font(BRUFont.labelSmall)
-                                    .tracking(1.2)
-                                    .textCase(.uppercase)
-                                    .foregroundStyle(Color.bruSignal)
+                        switch todaysResolution {
+                        case .session(let slot):
+                            if let routine = slot.sessionTemplate {
+                                // Scheduled routine → Black slab CTA. CR-01: keep
+                                // the resolved slot so startWorkout writes it as
+                                // the rotation anchor.
+                                BlackSlabCTA(
+                                    routine: routine,
+                                    dayIndex: dayIndexInBlock,
+                                    totalDays: totalDaysInBlock,
+                                    onStart: { startWorkout(routine, slot: slot) }
+                                )
+                            } else {
+                                noWorkoutScheduledEmptyState
                             }
-                            .buttonStyle(.plain)
+                        case .emptySplit:
+                            // CR-02: split emptied mid-block → distinct repair
+                            // surface, NOT the rest-day "No workout scheduled"
+                            // copy (spec §5 — the rest-day state would lie).
+                            // Phase 9: replace with SplitDetailView fix-it pointer.
+                            emptySplitFixItState
+                        case .restDay:
+                            // fixedWeekly today-not-a-training-day → rest-day empty state.
+                            noWorkoutScheduledEmptyState
+                        case .noBlock:
+                            if activeBlocks.isEmpty {
+                                // No block at all → Start Block CTA (Phase 4 preserved)
+                                StartBlockCTA(onStart: {
+                                    pendingBlockBuilder = .template(BlockTemplates.blank)
+                                })
+                            } else {
+                                // Block active but split not yet attached → empty state
+                                noWorkoutScheduledEmptyState
+                            }
                         }
-                        .padding(.vertical, 32)
-                        .padding(.horizontal, 16)
                     }
 
                     // Lift list — empty view when routine is nil
@@ -275,6 +275,60 @@ public struct TodayView: View {
         }
     }
 
+    // MARK: - Empty-state surfaces
+
+    /// Rest-day / no-routine empty state — UI-SPEC line 466 verbatim copy.
+    /// Used for `.restDay`, `.noBlock` (with a block active but no split), and
+    /// the defensive `.session` with a nil template.
+    @ViewBuilder
+    private var noWorkoutScheduledEmptyState: some View {
+        VStack(spacing: 12) {
+            Text("No workout scheduled")
+                .font(BRUFont.displayLarge)
+                .foregroundStyle(Color.bruInk)
+
+            Text("Build a routine or pick one from your library.")
+                .font(BRUFont.bodyDefault)
+                .foregroundStyle(Color.bruMuted)
+                .multilineTextAlignment(.center)
+
+            Button {
+                // Navigate to RoutinesListView's +NEW routine action
+            } label: {
+                Text("+ NEW ROUTINE")
+                    .font(BRUFont.labelSmall)
+                    .tracking(1.2)
+                    .textCase(.uppercase)
+                    .foregroundStyle(Color.bruSignal)
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(.vertical, 32)
+        .padding(.horizontal, 16)
+    }
+
+    /// CR-02 / spec §5: distinct surface for a block whose split was emptied
+    /// mid-block (zero slots). Reuses the empty-state visual shell but with
+    /// copy that points at the repair path, NOT the rest-day "No workout
+    /// scheduled" copy (which would lie about why nothing is scheduled).
+    // Phase 9: replace with SplitDetailView fix-it pointer.
+    @ViewBuilder
+    private var emptySplitFixItState: some View {
+        VStack(spacing: 12) {
+            Text("Routine has no sessions")
+                .font(BRUFont.displayLarge)
+                .foregroundStyle(Color.bruInk)
+                .multilineTextAlignment(.center)
+
+            Text("Add sessions in the Program tab.")
+                .font(BRUFont.bodyDefault)
+                .foregroundStyle(Color.bruMuted)
+                .multilineTextAlignment(.center)
+        }
+        .padding(.vertical, 32)
+        .padding(.horizontal, 16)
+    }
+
     // MARK: - Formatted Date (BRU header right slot)
 
     /// "Wed · May 22" — en_US weekday abbreviated + month abbreviated + day.
@@ -358,24 +412,26 @@ public struct TodayView: View {
         return .flat
     }
 
-    /// The session template scheduled for today in the active block (nil when none).
+    /// The full resolver output for today in the active block.
     ///
-    /// V7: block.routines removed; Phase 8 unified resolver drives this property.
-    /// Phase 8: wired to TodayResolver.resolve — the four-case output contract
-    /// maps to nil except for .session(slot), which returns the slot's template.
+    /// V7: block.routines removed; Phase 8 unified resolver drives the CTA.
+    /// Phase 8 (CR-01 / CR-02): the body switches on the full four-case
+    /// `TodayResolution` so `.emptySplit` is NOT collapsed into the rest-day
+    /// empty state (spec §5 / resolver header contract), and so the resolved
+    /// `slot` survives to `startWorkout` as the rotation anchor.
+    private var todaysResolution: TodayResolution {
+        guard let block = activeBlocks.first else { return .noBlock }
+        return TodayResolver.resolve(block: block, context: ctx)
+    }
+
+    /// The session template scheduled for today (nil unless the resolver
+    /// returns `.session(slot)` with a non-nil template). Drives
+    /// `LiftListSection`'s exercise preview.
     private var todaysRoutine: SessionTemplate? {
-        guard let block = activeBlocks.first else { return nil }
-        let resolution = TodayResolver.resolve(block: block, context: ctx)
-        switch resolution {
-        case .session(let slot):
+        if case .session(let slot) = todaysResolution {
             return slot.sessionTemplate
-        case .restDay, .noBlock:
-            return nil
-        case .emptySplit:
-            // TODO Phase 9: .emptySplit needs a distinct "fix-it" surface (spec §5);
-            // for now falls through to the existing "No workout scheduled" empty state.
-            return nil
         }
+        return nil
     }
 
     /// 1-based day index in the current block (for "DAY 01 / 04" in BlackSlabCTA).
@@ -395,9 +451,16 @@ public struct TodayView: View {
     // MARK: - Workout Start
 
     @MainActor
-    private func startWorkout(_ routine: SessionTemplate) {
+    private func startWorkout(_ routine: SessionTemplate, slot: SplitSessionSlot? = nil) {
         do {
-            let session = try SessionFactory.start(template: routine, activeBlock: activeBlocks.first, context: ctx)
+            // CR-01: thread the resolved slot through so session.slot is the
+            // rotation anchor; TodayResolver advances rotation off it.
+            let session = try SessionFactory.start(
+                template: routine,
+                slot: slot,
+                activeBlock: activeBlocks.first,
+                context: ctx
+            )
             navigationPath.append(SessionRoute.logger(session))
         } catch {
             // Session start errors (e.g. routineHasNoExercises) are surfaced

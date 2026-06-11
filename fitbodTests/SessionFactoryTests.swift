@@ -441,4 +441,130 @@ struct SessionFactoryTests {
         let session = try SessionFactory.start(template: routine, activeBlock: block, on: .now, context: ctx)
         #expect(session.block?.id == block.id)
     }
+
+    // MARK: - Phase 8 (CR-01): rotation anchor — session.slot is written by start
+
+    /// Builds an active Block with a Split + `slotCount` slots, the first slot
+    /// pointing at `routine` so a slot-started session has a real template.
+    @discardableResult
+    private func makeRotationBlock(
+        routine: SessionTemplate,
+        slotCount: Int,
+        ctx: ModelContext
+    ) throws -> (block: Block, slots: [SplitSessionSlot]) {
+        let split = Split()
+        ctx.insert(split)
+        split.name = "Test Split"
+
+        var slots: [SplitSessionSlot] = []
+        for i in 0..<slotCount {
+            let template: SessionTemplate
+            if i == 0 {
+                template = routine
+            } else {
+                template = SessionTemplate()
+                ctx.insert(template)
+                template.name = "Day \(i)"
+                template.intentRaw = Intent.strength.rawValue
+                template.progressionKindRaw = ProgressionKind.rpe.rawValue
+
+                let ex = Exercise.previewSample(
+                    name: "Filler \(i)",
+                    equipment: .barbell,
+                    mechanic: .compound,
+                    primaryMuscleSlugs: ["back"]
+                )
+                ctx.insert(ex)
+                let re = SessionExerciseTemplate()
+                re.sessionTemplate = template
+                re.exercise = ex
+                re.orderIndex = 0
+                re.targetSets = 3
+                re.targetRepsLow = 5
+                re.targetRepsHigh = 5
+                ctx.insert(re)
+            }
+
+            let slot = SplitSessionSlot()
+            ctx.insert(slot)
+            slot.position = i
+            slot.sessionTemplate = template
+            slot.split = split
+            slots.append(slot)
+        }
+
+        let block = Block()
+        ctx.insert(block)
+        block.name = "Rotation Block"
+        block.isActive = true
+        block.split = split
+        block.schedulingMode = .rotation
+        try ctx.save()
+        return (block, slots)
+    }
+
+    @Test("startWithSlotWritesRotationAnchor — session.slot === passed slot")
+    func startWithSlotWritesRotationAnchor() throws {
+        let ctx = try makeContext()
+        let routine = try makeFixtureRoutine(ctx: ctx)
+        let (block, slots) = try makeRotationBlock(routine: routine, slotCount: 3, ctx: ctx)
+
+        let session = try SessionFactory.start(
+            template: routine,
+            slot: slots[0],
+            activeBlock: block,
+            on: .now,
+            context: ctx
+        )
+
+        // CR-01: the rotation anchor must be persisted, not dropped.
+        #expect(session.slot != nil, "session.slot must be set when start is called with a slot")
+        #expect(session.slot?.id == slots[0].id, "session.slot must be the exact slot passed to start")
+    }
+
+    @Test("startWithoutSlotIsAdHoc — session.slot stays nil (ad-hoc semantics)")
+    func startWithoutSlotIsAdHoc() throws {
+        let ctx = try makeContext()
+        let routine = try makeFixtureRoutine(ctx: ctx)
+
+        // Default slot=nil path → ad-hoc session, invisible to the resolver anchor scan.
+        let session = try SessionFactory.start(template: routine, on: .now, context: ctx)
+        #expect(session.slot == nil, "ad-hoc session (no slot) must have nil slot")
+    }
+
+    @Test("rotationAdvancesEndToEnd — completing a slot-0 session makes resolver return slot 1")
+    func rotationAdvancesEndToEnd() throws {
+        let ctx = try makeContext()
+        let routine = try makeFixtureRoutine(ctx: ctx)
+        let (block, slots) = try makeRotationBlock(routine: routine, slotCount: 3, ctx: ctx)
+
+        // Before any session: resolver returns slot 0.
+        let before = TodayResolver.resolve(block: block, context: ctx)
+        if case .session(let slot) = before {
+            #expect(slot.position == 0, "Fresh rotation block resolves to slot 0")
+        } else {
+            Issue.record("Expected .session(slot 0) before any session, got \(before)")
+        }
+
+        // Start a session from slot 0 and complete it.
+        let session = try SessionFactory.start(
+            template: routine,
+            slot: slots[0],
+            activeBlock: block,
+            on: .now,
+            context: ctx
+        )
+        session.completedAt = Date.now.addingTimeInterval(3600)
+        try ctx.save()
+
+        // CR-01 end-to-end: the completed slot-0 session is now the anchor,
+        // so the resolver must advance to slot 1. This is THE phase goal —
+        // it fails on main because session.slot was never written.
+        let after = TodayResolver.resolve(block: block, context: ctx)
+        if case .session(let slot) = after {
+            #expect(slot.position == 1, "After completing slot 0, rotation must advance to slot 1")
+        } else {
+            Issue.record("Expected .session(slot 1) after completing slot 0, got \(after)")
+        }
+    }
 }
