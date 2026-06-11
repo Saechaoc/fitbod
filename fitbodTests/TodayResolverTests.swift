@@ -301,6 +301,25 @@ struct TodayResolverTests {
         }
     }
 
+    @Test("rotation: same slot done twice consecutively — advances to next position")
+    func rotationRepeatSameSlotAdvances() throws {
+        // IN-01 / spec §9 "repeat": completing the same slot position twice in a
+        // row leaves slot 1 as the latest anchor → next is (1+1) % 3 == 2.
+        let ctx = try makeContext()
+        let (block, _, slots) = try makeBlock(slotCount: 3, context: ctx)
+        let base = Date(timeIntervalSinceReferenceDate: 0)
+
+        try completeSession(slot: slots[1], block: block, startedAt: base, context: ctx)
+        try completeSession(slot: slots[1], block: block, startedAt: base.addingTimeInterval(86400), context: ctx)
+
+        let resolution = TodayResolver.resolve(block: block, context: ctx)
+        if case .session(let slot) = resolution {
+            #expect(slot.position == 2, "Latest anchor is slot 1 → next is (1+1) % 3 == 2")
+        } else {
+            Issue.record("Expected .session(slot 2), got \(resolution)")
+        }
+    }
+
     @Test("rotation: split emptied mid-block (0 slots) → .emptySplit, no crash — Pitfall 3")
     func rotationZeroSlotsReturnsEmptySplit() throws {
         let ctx = try makeContext()
