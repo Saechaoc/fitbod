@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-last_updated: "2026-06-11T00:00:32.364Z"
+last_updated: "2026-06-11T00:13:18.033Z"
 progress:
   total_phases: 15
   completed_phases: 12
   total_plans: 117
-  completed_plans: 114
-  percent: 97
+  completed_plans: 115
+  percent: 98
 ---
 
 # Project State: Fitbod
@@ -129,7 +129,7 @@ Plan: 8 of 8 (all plans complete; Phase 3.1 closed). Production tree compiles en
 
 **Plan:** 03-01 complete (Wave 3, seq 1) — Routines tab `RoutinesListView` + folders + Resume Workout banner. See plan 03-01 SUMMARY for details.
 **Status:** Executing Phase 07
-**Progress:** [██████████] 97%
+**Progress:** [██████████] 98%
 
 ### Phase Outlook
 
@@ -246,6 +246,7 @@ These drive phase ordering and are mitigated by phase placement:
 | Phase 05.1-bru-visual-rewrite-fatigue P03 | 724 | 2 tasks | 3 files |
 | Phase 05.1-bru-visual-rewrite-fatigue P05 | 30min | 1 tasks | 2 files |
 | Phase 06.1 P01 | 225 | 2 tasks | 1 files |
+| Phase 07-program-graph-schema-v7-migration P02 | 10 | 2 tasks | 17 files |
 
 ### Open Research Items (deferred to plan-phase time)
 
