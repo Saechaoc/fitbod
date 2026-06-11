@@ -379,9 +379,13 @@ public enum FitbodSchemaMigrationPlan: SchemaMigrationPlan {
            let activeSplit = activeBlock.split,
            let slots = activeSplit.slots {
 
+            // WR-02: re-fetch sessions here so step 4 sees post-step-2/3 mutations
+            // (Session.template assignments) rather than the stale step-2 array.
+            let freshSessions = try context.fetch(FetchDescriptor<Session>())
+
             // Sessions associated with the active block, that are completed (have
             // completedAt), ordered by most recent first.
-            let blockSessions = sessions
+            let blockSessions = freshSessions
                 .filter { $0.block?.id == activeBlock.id && $0.completedAt != nil }
                 .sorted { ($0.completedAt ?? .distantPast) > ($1.completedAt ?? .distantPast) }
 
