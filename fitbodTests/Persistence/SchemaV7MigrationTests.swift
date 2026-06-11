@@ -419,6 +419,13 @@ struct SchemaV7MigrationTests {
         let allSessions = try ctx.fetch(FetchDescriptor<Session>())
         #expect(allSessions.contains(where: { $0.id == sessionID }),
                 "Session must survive SplitSessionSlot deletion — workout history is permanent")
+
+        // WR-01: assert the NULLIFY half of the contract (spec §3) — after the
+        // slot is deleted, the surviving session's slot ref must be nil. Only
+        // half the invariant (history intact) was previously asserted.
+        let savedSession = allSessions.first { $0.id == sessionID }
+        #expect(savedSession?.slot == nil,
+                "Session.slot must be nil after the slot is deleted (nullify rule, spec §3)")
     }
 
     // MARK: - 10. blockSplitNullify (T-07-17 adjacent)
