@@ -61,7 +61,14 @@ import SwiftData
 
 // MARK: - ProgramView
 
-/// Program tab body — BRU brutalist empty-state surface for periodization.
+/// Program tab body — BRU brutalist surface for periodization.
+/// Empty-state (NoProgramHero + ProgramTemplateSection) is shown ONLY when
+/// there are zero blocks AND zero non-archived splits. When either exists the
+/// BLOCKS and ROUTINES sections are rendered instead.
+///
+/// THREADING NOTE: `derivedStatus` is a computed property on Block and is NOT
+/// addressable in #Predicate. All status-based ordering and usage-tag filtering
+/// is performed as Swift post-filter after the @Query result is received.
 public struct ProgramView: View {
 
     // MARK: State
@@ -71,6 +78,18 @@ public struct ProgramView: View {
     @Query(filter: #Predicate<Session> { $0.completedAt == nil })
     private var activeSessions: [Session]
 
+    // All blocks, sorted by startDate descending. Status ordering applied as
+    // Swift post-filter in `orderedBlocks` (derivedStatus is computed, not stored).
+    @Query(sort: [SortDescriptor(\Block.startDate, order: .reverse)])
+    private var allBlocks: [Block]
+
+    // Non-archived splits only — isArchived is a stored Bool so predicate-safe.
+    @Query(
+        filter: #Predicate<Split> { !$0.isArchived },
+        sort: [SortDescriptor(\Split.name)]
+    )
+    private var allSplits: [Split]
+
     @State private var navigationPath = NavigationPath()
     @State private var pendingBlockBuilder: PendingBlockBuilder? = nil
     @State private var showingNewPopover = false
@@ -78,6 +97,9 @@ public struct ProgramView: View {
     @State private var presentingStartChoice = false
     @State private var presentingPresetPicker = false
     @State private var stagedBuilder: PendingBlockBuilder? = nil
+    @State private var showAllDone = false
+
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     // MARK: Init
 
@@ -103,16 +125,22 @@ public struct ProgramView: View {
                                 }
                             )
 
-                            NoProgramHero(
-                                defineAction: { presentingStartChoice = true }
-                            )
-
-                            ProgramTemplateSection(
-                                presets: ProgramView.templatePresets,
-                                onSelect: { preset in
-                                    pendingBlockBuilder = .template(preset.template)
-                                }
-                            )
+                            // Empty-state gate: show hero ONLY when zero blocks AND zero splits.
+                            // When either exists, show the live BLOCKS + ROUTINES sections.
+                            if allBlocks.isEmpty && allSplits.isEmpty {
+                                NoProgramHero(
+                                    defineAction: { presentingStartChoice = true }
+                                )
+                                ProgramTemplateSection(
+                                    presets: ProgramView.templatePresets,
+                                    onSelect: { preset in
+                                        pendingBlockBuilder = .template(preset.template)
+                                    }
+                                )
+                            } else {
+                                blocksSection
+                                routinesSection
+                            }
                         }
                     }
                     .scrollIndicators(.hidden)
@@ -130,12 +158,55 @@ public struct ProgramView: View {
                     SessionLoggerView(session: session)
                 }
             }
+            // T-09-04 mitigation: register BlockOverviewRoute BEFORE any BLOCKS taps.
+            // Resolves Block by UUID via FetchDescriptor — mirrors TodayView pattern.
+            .navigationDestination(for: BlockOverviewRoute.self) { route in
+                switch route {
+                case .summary(let blockID):
+                    let blockIDCapture = blockID
+                    let fetchedBlock = (try? ctx.fetch(
+                        FetchDescriptor<Block>(
+                            predicate: #Predicate<Block> { $0.id == blockIDCapture }
+                        )
+                    ))?.first
+                    if let resolvedBlock = fetchedBlock {
+                        BlockOverviewScreen(block: resolvedBlock, onEdit: {
+                            pendingBlockBuilder = .edit(resolvedBlock)
+                        })
+                    } else {
+                        Text("Block not found")
+                            .font(BRUFont.bodyDefault)
+                            .foregroundStyle(Color.bruMuted)
+                    }
+                }
+            }
+            // SplitDetailRoute destination — resolves Split by UUID.
+            .navigationDestination(for: SplitDetailRoute.self) { route in
+                switch route {
+                case .detail(let splitID):
+                    let splitIDCapture = splitID
+                    let fetchedSplit = (try? ctx.fetch(
+                        FetchDescriptor<Split>(
+                            predicate: #Predicate<Split> { $0.id == splitIDCapture }
+                        )
+                    ))?.first
+                    if let resolvedSplit = fetchedSplit {
+                        SplitDetailView(split: resolvedSplit)
+                    } else {
+                        Text("Routine not found")
+                            .font(BRUFont.bodyDefault)
+                            .foregroundStyle(Color.bruMuted)
+                    }
+                }
+            }
             .fullScreenCover(item: $pendingBlockBuilder) { pending in
                 switch pending {
                 case .newBlock(let chosenPreset):
                     BlockBuilderView(draft: BlockDraft.newBlock(), initialPreset: chosenPreset)
                 case .template(let template):
                     BlockBuilderView(draft: BlockDraft(template: template))
+                case .edit(let block):
+                    BlockBuilderView(draft: BlockDraft(block: block), editing: block)
                 }
             }
             .sheet(isPresented: $presentingNewRoutine) {
@@ -257,6 +328,7 @@ public struct ProgramView: View {
     private enum PendingBlockBuilder: Identifiable {
         case newBlock(NewBlockPreset?)
         case template(BlockTemplate)
+        case edit(Block)
 
         var id: String {
             switch self {
@@ -268,6 +340,292 @@ public struct ProgramView: View {
                 }
             case .template(let template):
                 return "template-\(template.name)"
+            case .edit(let block):
+                return "edit-\(block.id)"
+            }
+        }
+    }
+
+    // MARK: - Ordered blocks (Swift post-filter — derivedStatus is computed, not stored)
+
+    /// Blocks sorted by status precedence ACTIVE → READY → DRAFT → DONE,
+    /// then by startDate descending within each status group.
+    /// NOTE: derivedStatus is a computed property on Block and is NOT
+    /// addressable in #Predicate — ordering performed in Swift post-filter.
+    private var orderedBlocks: [Block] {
+        let statusOrder: [BlockStatus: Int] = [
+            .active: 0, .ready: 1, .draft: 2, .completed: 3
+        ]
+        return allBlocks.sorted { a, b in
+            let aPriority = statusOrder[a.derivedStatus] ?? 4
+            let bPriority = statusOrder[b.derivedStatus] ?? 4
+            if aPriority != bPriority { return aPriority < bPriority }
+            return a.startDate > b.startDate
+        }
+    }
+
+    // MARK: - BLOCKS section
+
+    @ViewBuilder
+    private var blocksSection: some View {
+        BRUSectionHead("Blocks")
+
+        let liveBlocks = orderedBlocks.filter { $0.derivedStatus != .completed }
+        let doneBlocks = orderedBlocks.filter { $0.derivedStatus == .completed }
+        let visibleDone = showAllDone ? doneBlocks : Array(doneBlocks.prefix(3))
+
+        ForEach(liveBlocks) { block in
+            BlockStatusCard(
+                block: block,
+                onTap: {
+                    navigationPath.append(BlockOverviewRoute.summary(blockID: block.id))
+                }
+            )
+            BRUDivider(.hair)
+        }
+
+        ForEach(visibleDone) { block in
+            BlockStatusCard(
+                block: block,
+                onTap: {
+                    navigationPath.append(BlockOverviewRoute.summary(blockID: block.id))
+                }
+            )
+            BRUDivider(.hair)
+        }
+
+        if !showAllDone && doneBlocks.count > 3 {
+            let doneCount = doneBlocks.count
+            Button {
+                if reduceMotion {
+                    showAllDone = true
+                } else {
+                    withAnimation(.easeOut(duration: 0.2)) {
+                        showAllDone = true
+                    }
+                }
+            } label: {
+                Text("ALL HISTORY ▸")
+                    .font(BRUFont.labelSmall)
+                    .textCase(.uppercase)
+                    .tracking(1.2)
+                    .foregroundStyle(Color.bruSignal)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, ProgramScreenTokens.horizontalPagePadding)
+                    .frame(minHeight: 44)
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Show all \(doneCount) completed blocks")
+        }
+
+        BRUDivider(.ink)
+    }
+
+    // MARK: - ROUTINES section
+
+    @ViewBuilder
+    private var routinesSection: some View {
+        BRUSectionHead("Routines")
+
+        ForEach(allSplits) { split in
+            RoutineSplitRow(
+                split: split,
+                onTap: {
+                    navigationPath.append(SplitDetailRoute.detail(splitID: split.id))
+                }
+            )
+            BRUDivider(.hair)
+        }
+
+        // "+ NEW ROUTINE" action row (dedicated row per UI-SPEC §2)
+        Button {
+            presentingNewRoutine = true
+        } label: {
+            Text("+ NEW ROUTINE")
+                .font(BRUFont.labelSmall)
+                .textCase(.uppercase)
+                .tracking(1.2)
+                .foregroundStyle(Color.bruSignal)
+                .frame(maxWidth: .infinity, alignment: .trailing)
+                .padding(.horizontal, ProgramScreenTokens.horizontalPagePadding)
+                .frame(minHeight: 44)
+        }
+        .buttonStyle(.plain)
+
+        BRUDivider(.ink)
+    }
+}
+
+// MARK: - BlockStatusCard
+
+/// Card displaying a single Block in the BLOCKS section.
+/// Fileprivate so ProgramChipFlow and ProgramScreenTokens remain accessible.
+fileprivate struct BlockStatusCard: View {
+
+    let block: Block
+    let onTap: () -> Void
+
+    // Capture today at construction — mirrors BlockOverviewScreen init pattern.
+    private let today = Date.now
+
+    private var derivedStatus: BlockStatus { block.derivedStatus }
+
+    private var weekIndex: Int {
+        PeriodizationEngine.weekIndex(for: block, on: today) ?? 0
+    }
+
+    private var totalWeeks: Int {
+        MesocycleWeekPage.totalWeeks(of: block)
+    }
+
+    private var phaseLabel: String {
+        let ctx = PeriodizationEngine.weekContext(for: block, weekIndex: weekIndex, on: today)
+        return (ctx?.phaseKind.rawValue ?? "Accumulation").capitalized
+    }
+
+    var body: some View {
+        Button(action: onTap) {
+            VStack(alignment: .leading, spacing: 4) {
+                // Status chip row
+                HStack(spacing: 8) {
+                    statusChip
+                    Spacer()
+                    if derivedStatus == .active {
+                        Text("W\(weekIndex + 1) · \(phaseLabel.uppercased())")
+                            .font(BRUFont.labelSmall)
+                            .textCase(.uppercase)
+                            .tracking(1.2)
+                            .foregroundStyle(Color.bruMuted)
+                    }
+                }
+
+                // Block name
+                Text(block.name.isEmpty ? "Untitled Block" : block.name)
+                    .font(BRUFont.bodyEmphasis)
+                    .foregroundStyle(Color.bruInk)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                // Active progress line
+                if derivedStatus == .active {
+                    Text("Week \(weekIndex + 1) of \(totalWeeks) · \(phaseLabel)")
+                        .font(BRUFont.bodyDefault)
+                        .foregroundStyle(Color.bruMuted)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .lineLimit(1)
+                }
+            }
+            .padding(.horizontal, ProgramScreenTokens.horizontalPagePadding)
+            .padding(.vertical, 12)
+            .frame(minHeight: 44)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(accessibilityLabelText)
+    }
+
+    private var statusChip: some View {
+        switch derivedStatus {
+        case .active:
+            return BRUChip("ACTIVE", color: .bruSignal, fill: true)
+        case .ready:
+            return BRUChip("READY", color: .bruSignal)
+        case .draft:
+            return BRUChip("DRAFT")
+        case .completed:
+            return BRUChip("DONE")
+        }
+    }
+
+    private var accessibilityLabelText: String {
+        let name = block.name.isEmpty ? "Untitled Block" : block.name
+        switch derivedStatus {
+        case .active:
+            return "ACTIVE block: \(name). Week \(weekIndex + 1) of \(totalWeeks), \(phaseLabel)."
+        case .ready:
+            return "READY block: \(name)"
+        case .draft:
+            return "DRAFT block: \(name)"
+        case .completed:
+            return "DONE block: \(name)"
+        }
+    }
+}
+
+// MARK: - RoutineSplitRow
+
+/// Row for a single Split in the ROUTINES section.
+/// Fileprivate so it can access ProgramChipFlow and ProgramScreenTokens.
+fileprivate struct RoutineSplitRow: View {
+
+    let split: Split
+    let onTap: () -> Void
+
+    // Session count = number of slots in the split.
+    private var sessionCount: Int { split.slots?.count ?? 0 }
+
+    // Usage tags: live (non-completed) block names attached to this split.
+    // Post-filter in Swift — multi-level chain (split.blocks + derivedStatus)
+    // is not expressible in #Predicate (T-09-06 mitigation).
+    private var liveBlockNames: [String] {
+        (split.blocks ?? [])
+            .filter { $0.derivedStatus != .completed }
+            .map { $0.name.isEmpty ? "Untitled" : $0.name }
+    }
+
+    var body: some View {
+        Button(action: onTap) {
+            HStack(spacing: 12) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(split.name.isEmpty ? "Untitled Routine" : split.name)
+                        .font(BRUFont.bodyEmphasis)
+                        .foregroundStyle(Color.bruInk)
+
+                    Text("\(sessionCount) sessions")
+                        .font(BRUFont.bodyDefault)
+                        .foregroundStyle(Color.bruMuted)
+                }
+
+                Spacer()
+
+                if !liveBlockNames.isEmpty {
+                    UsageTagFlow(names: liveBlockNames)
+                }
+
+                Text("›")
+                    .font(BRUFont.bodyEmphasis)
+                    .foregroundStyle(Color.bruMuted)
+            }
+            .padding(.horizontal, ProgramScreenTokens.horizontalPagePadding)
+            .padding(.vertical, 12)
+            .frame(minHeight: 44)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+// MARK: - UsageTagFlow
+
+/// Wrapping horizontal flow of usage tag chips using ProgramChipFlow layout.
+/// Renders nothing when names is empty (no "unused" label).
+fileprivate struct UsageTagFlow: View {
+
+    let names: [String]
+
+    var body: some View {
+        if names.isEmpty {
+            EmptyView()
+        } else {
+            ProgramChipFlow(
+                spacing: ProgramScreenTokens.chipSpacing,
+                rowSpacing: ProgramScreenTokens.chipRowSpacing
+            ) {
+                ForEach(names, id: \.self) { name in
+                    BRUChip(name)
+                }
             }
         }
     }
