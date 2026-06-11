@@ -25,6 +25,7 @@
 //
 
 import Foundation
+import SwiftData
 
 // MARK: - Top-level envelope
 
@@ -160,6 +161,107 @@ public struct ArchivedSlotDTO: Codable, Equatable, Sendable {
         self.position = position
         self.sessionName = sessionName
         self.exercises = exercises
+    }
+}
+
+// MARK: - write(from:endedAt:) — freeze-#2 serializer (spec §6)
+//
+// Called BEFORE context.transaction in BlockLifecycleService.end so an encoder
+// throw aborts before endDate is set. Never returns "" silently on encode error —
+// only the post-encode UTF-8 conversion uses a non-empty fallback (encoder error
+// propagates; UTF-8 conversion of valid JSON is always non-nil in practice).
+//
+// Mirrors all block state at archive time:
+//   - phases sorted by orderIndex
+//   - slots sorted by position; session name falls back to "Slot N" when empty
+//   - exercises sorted by orderIndex; intentRaw / progressionKindRaw come from
+//     the slot's sessionTemplate (NOT the exercise row itself)
+
+extension ArchivedBlockConfig {
+
+    /// Serializes `block` into a v1 archive JSON String.
+    ///
+    /// - Parameters:
+    ///   - block: The block whose current state should be frozen.
+    ///   - endedAt: The end-date timestamp to embed in the archive.
+    /// - Returns: A non-empty JSON String encoding an `ArchivedBlockConfig(v: 1, ...)`.
+    /// - Throws: Any error from `JSONEncoder` (propagates — encode failure aborts
+    ///   before any SwiftData mutation when called pre-transaction per spec §6).
+    public static func write(from block: Block, endedAt: Date) throws -> String {
+        // Build phases sorted by orderIndex
+        let phases: [ArchivedPhaseDTO] = (block.phases ?? [])
+            .sorted { $0.orderIndex < $1.orderIndex }
+            .map { phase in
+                ArchivedPhaseDTO(
+                    kind: phase.nameRaw,
+                    weeks: phase.weeks,
+                    volumeMultiplier: phase.volumeMultiplier,
+                    intensityMultiplier: phase.intensityMultiplier,
+                    notes: nil
+                )
+            }
+
+        // Build slots sorted by position
+        let slots: [ArchivedSlotDTO] = (block.split?.slots ?? [])
+            .sorted { $0.position < $1.position }
+            .map { slot in
+                let intentRaw = slot.sessionTemplate?.intentRaw ?? "strength"
+                let progressionKindRaw = slot.sessionTemplate?.progressionKindRaw ?? "double"
+
+                let exercises: [ArchivedExerciseDTO] = (slot.sessionTemplate?.exercises ?? [])
+                    .sorted { $0.orderIndex < $1.orderIndex }
+                    .map { ex in
+                        ArchivedExerciseDTO(
+                            exerciseID: ex.exercise?.id ?? UUID(),
+                            exerciseName: ex.exercise?.name ?? "",
+                            orderIndex: ex.orderIndex,
+                            targetSets: ex.targetSets,
+                            targetRepsLow: ex.targetRepsLow,
+                            targetRepsHigh: ex.targetRepsHigh,
+                            targetRPE: ex.targetRPE,
+                            targetRIR: ex.targetRIR,
+                            prescribedRestSeconds: ex.prescribedRestSeconds,
+                            tempo: ex.tempo,
+                            notes: nil,
+                            intentRaw: intentRaw,
+                            progressionKindRaw: progressionKindRaw,
+                            generateWarmups: false,
+                            tracksTempo: ex.tracksTempo,
+                            tracksPartialReps: ex.tracksPartialReps
+                        )
+                    }
+
+                // Fall back to "Slot N" (1-indexed) when session template name is empty
+                let rawName = slot.sessionTemplate?.name ?? ""
+                let sessionName = rawName.isEmpty ? "Slot \(slot.position + 1)" : rawName
+
+                return ArchivedSlotDTO(
+                    position: slot.position,
+                    sessionName: sessionName,
+                    exercises: exercises
+                )
+            }
+
+        let splitDTO = ArchivedSplitDTO(
+            name: block.split?.name ?? "",
+            slots: slots
+        )
+
+        let config = ArchivedBlockConfig(
+            blockName: block.name,
+            startedAt: block.startDate,
+            endedAt: endedAt,
+            mode: block.schedulingModeRaw,
+            trainingDays: block.trainingDays,
+            phases: phases,
+            split: splitDTO
+        )
+
+        // Encoder error propagates — this is the abort-before-mutation guarantee.
+        let data = try config.encoded()
+
+        // UTF-8 conversion of valid JSON is always non-nil; fallback is defensive only.
+        return String(data: data, encoding: .utf8) ?? ""
     }
 }
 

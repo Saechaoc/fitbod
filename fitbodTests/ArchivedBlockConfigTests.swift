@@ -147,3 +147,175 @@ struct ArchivedBlockConfigTests {
         }
     }
 }
+
+// MARK: - write(from:endedAt:) tests (Task 1 — Phase 8 Plan 03)
+
+import SwiftData
+
+@MainActor
+@Suite("ArchivedBlockConfig.write", .serialized)
+struct ArchivedBlockConfigWriteTests {
+
+    private func makeContext() throws -> ModelContext {
+        let schema = Schema(SchemaV7.models)
+        let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
+        let container = try ModelContainer(
+            for: schema,
+            migrationPlan: FitbodSchemaMigrationPlan.self,
+            configurations: config
+        )
+        return ModelContext(container)
+    }
+
+    /// Builds a Block with a split, slot, session template, exercise, and phase.
+    private func makeFullBlock(_ ctx: ModelContext) throws -> Block {
+        let exercise = Exercise()
+        ctx.insert(exercise)
+        exercise.name = "Squat"
+
+        let template = SessionTemplate()
+        ctx.insert(template)
+        template.name = "Day A"
+        template.intentRaw = "strength"
+        template.progressionKindRaw = "double"
+
+        let set = SessionExerciseTemplate()
+        ctx.insert(set)
+        set.sessionTemplate = template
+        set.exercise = exercise
+        set.orderIndex = 0
+        set.targetSets = 3
+        set.targetRepsLow = 5
+        set.targetRepsHigh = 8
+        set.targetRPE = 8.0
+        set.prescribedRestSeconds = 180
+
+        let slot = SplitSessionSlot()
+        ctx.insert(slot)
+        slot.position = 0
+        slot.sessionTemplate = template
+
+        let split = Split()
+        ctx.insert(split)
+        split.name = "PPL"
+        slot.split = split
+
+        let phase = BlockPhase()
+        ctx.insert(phase)
+        phase.orderIndex = 0
+        phase.nameRaw = "accumulation"
+        phase.weeks = 4
+        phase.volumeMultiplier = 1.0
+        phase.intensityMultiplier = 1.0
+
+        let block = Block()
+        ctx.insert(block)
+        block.name = "Strength Block"
+        block.startDate = Date(timeIntervalSince1970: 0)
+        block.schedulingModeRaw = "rotation"
+        block.trainingDays = [2, 4, 6]
+        block.split = split
+        phase.block = block
+
+        try ctx.save()
+        return block
+    }
+
+    @Test("write produces a non-empty JSON string")
+    func writeProducesNonEmptyString() throws {
+        let ctx = try makeContext()
+        let block = try makeFullBlock(ctx)
+        let endedAt = Date(timeIntervalSince1970: 3600)
+        let json = try ArchivedBlockConfig.write(from: block, endedAt: endedAt)
+        #expect(!json.isEmpty)
+    }
+
+    @Test("write round-trips to ArchivedBlockConfig with v == 1")
+    func writeRoundTripsToV1() throws {
+        let ctx = try makeContext()
+        let block = try makeFullBlock(ctx)
+        let endedAt = Date(timeIntervalSince1970: 3600)
+        let json = try ArchivedBlockConfig.write(from: block, endedAt: endedAt)
+        let data = Data(json.utf8)
+        let decoded = try ArchivedBlockConfig.decode(from: data)
+        #expect(decoded.v == 1)
+        #expect(decoded.blockName == "Strength Block")
+    }
+
+    @Test("write mirrors phases in orderIndex order")
+    func writeMirrorsPhases() throws {
+        let ctx = try makeContext()
+        let block = try makeFullBlock(ctx)
+        // Add a second phase with higher orderIndex
+        let phase2 = BlockPhase()
+        ctx.insert(phase2)
+        phase2.orderIndex = 1
+        phase2.nameRaw = "deload"
+        phase2.weeks = 1
+        phase2.volumeMultiplier = 0.6
+        phase2.intensityMultiplier = 0.8
+        phase2.block = block
+        try ctx.save()
+
+        let json = try ArchivedBlockConfig.write(from: block, endedAt: .now)
+        let decoded = try ArchivedBlockConfig.decode(from: Data(json.utf8))
+        #expect(decoded.phases.count == 2)
+        #expect(decoded.phases[0].kind == "accumulation")
+        #expect(decoded.phases[1].kind == "deload")
+    }
+
+    @Test("write mirrors slot exercises with intentRaw/progressionKindRaw from sessionTemplate")
+    func writeMirrorsExercisesWithSessionTemplateIntent() throws {
+        let ctx = try makeContext()
+        let block = try makeFullBlock(ctx)
+        let json = try ArchivedBlockConfig.write(from: block, endedAt: .now)
+        let decoded = try ArchivedBlockConfig.decode(from: Data(json.utf8))
+        #expect(decoded.split.slots.count == 1)
+        let exercise = decoded.split.slots[0].exercises[0]
+        #expect(exercise.intentRaw == "strength")
+        #expect(exercise.progressionKindRaw == "double")
+        #expect(exercise.exerciseName == "Squat")
+    }
+
+    @Test("write uses 'Slot N' fallback when sessionTemplate name is empty")
+    func writeUsesSlotFallbackWhenNameEmpty() throws {
+        let ctx = try makeContext()
+        let block = try makeFullBlock(ctx)
+        // Clear the template name to trigger fallback
+        if let slot = block.split?.slots?.first {
+            slot.sessionTemplate?.name = ""
+        }
+        try ctx.save()
+
+        let json = try ArchivedBlockConfig.write(from: block, endedAt: .now)
+        let decoded = try ArchivedBlockConfig.decode(from: Data(json.utf8))
+        #expect(decoded.split.slots[0].sessionName == "Slot 1")
+    }
+
+    @Test("write uses 'strength'/'double' fallback when sessionTemplate is nil")
+    func writeUsesFallbackWhenTemplateNil() throws {
+        let ctx = try makeContext()
+
+        let split2 = Split()
+        ctx.insert(split2)
+        split2.name = "No-template split"
+
+        let slot2 = SplitSessionSlot()
+        ctx.insert(slot2)
+        slot2.position = 0
+        slot2.split = split2
+        // sessionTemplate is nil
+
+        let block2 = Block()
+        ctx.insert(block2)
+        block2.name = "Sparse"
+        block2.startDate = .now
+        block2.schedulingModeRaw = "rotation"
+        block2.split = split2
+        try ctx.save()
+
+        let json = try ArchivedBlockConfig.write(from: block2, endedAt: .now)
+        let decoded = try ArchivedBlockConfig.decode(from: Data(json.utf8))
+        #expect(decoded.split.slots[0].sessionName == "Slot 1")
+    }
+}
