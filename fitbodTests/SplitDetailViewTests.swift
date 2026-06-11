@@ -164,14 +164,19 @@ struct SplitDetailViewTests {
 
     // MARK: - Test 4: Source-introspection copy pins
 
-    @Test("SplitDetailView.swift contains verbatim copy strings")
-    func splitDetailViewPinsCopy() throws {
-        let sourceURL = URL(fileURLWithPath: #filePath)
+    private func splitDetailViewSource() throws -> String {
+        let url = URL(fileURLWithPath: #filePath)
             .deletingLastPathComponent()  // fitbodTests/
             .deletingLastPathComponent()  // project root
-            .appendingPathComponent("fitbod/Periodization/SplitDetailView.swift")
+            .appendingPathComponent("fitbod")
+            .appendingPathComponent("Periodization")
+            .appendingPathComponent("SplitDetailView.swift")
+        return try String(contentsOf: url, encoding: .utf8)
+    }
 
-        let source = try String(contentsOf: sourceURL, encoding: .utf8)
+    @Test("SplitDetailView.swift contains verbatim copy strings")
+    func splitDetailViewPinsCopy() throws {
+        let source = try splitDetailViewSource()
 
         // Verbatim copy pins per UI-SPEC Copywriting Contract + task behavior block
         #expect(source.contains("\"Sessions\""), "Must contain verbatim 'Sessions' section head")
@@ -182,6 +187,7 @@ struct SplitDetailViewTests {
         #expect(source.contains("\"Cannot Archive Routine\""), "Must contain deny alert title")
         #expect(source.contains("\"Remove Session?\""), "Must contain remove confirmation title")
         #expect(source.contains("\"Remove Session\""), "Must contain remove confirmation destructive button")
-        #expect(source.contains("\"Routine · \""), "Must contain verbatim screen title prefix")
+        // Title uses string interpolation: "Routine · \(split.name)" — check the prefix literal
+        #expect(source.contains("\"Routine · \\("), "Must contain verbatim screen title prefix")
     }
 }
