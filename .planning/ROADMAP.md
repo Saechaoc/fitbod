@@ -361,5 +361,5 @@ Plans:
 - [x] 09-02-PLAN.md — ProgramView rebuild (empty-state gate, BLOCKS/ROUTINES sections, nav destinations, .edit(Block))
 - [x] 09-03-PLAN.md — TodayView emptySplit fix-it surface + SplitDetailRoute destination
 - [x] 09-04-PLAN.md — BlockOverviewScreen live modes + archived mode + ArchiveUnreadableView
-- [ ] 09-05-PLAN.md — Block builder split band + BlockDraft split/mode/days save (endDate fix) + guardrail test update
+- [x] 09-05-PLAN.md — Block builder split band + BlockDraft split/mode/days save (endDate fix) + guardrail test update
 - [x] 09-06-PLAN.md — Session template editor live-edit banner
