@@ -51,11 +51,13 @@ import SwiftData
 
 public enum FitbodSchemaMigrationPlan: SchemaMigrationPlan {
     public static var schemas: [any VersionedSchema.Type] {
-        [SchemaV1.self, SchemaV2.self, SchemaV3.self, SchemaV4.self, SchemaV5.self, SchemaV6.self]
+        [SchemaV1.self, SchemaV2.self, SchemaV3.self, SchemaV4.self,
+         SchemaV5.self, SchemaV6.self, SchemaV7.self]
     }
 
     public static var stages: [MigrationStage] {
-        [migrateV1toV2, migrateV2toV3, migrateV3toV4, migrateV4toV5, migrateV5toV6]
+        [migrateV1toV2, migrateV2toV3, migrateV3toV4, migrateV4toV5,
+         migrateV5toV6, migrateV6toV7]
     }
 
     /// Lightweight: SwiftData handles all schema deltas automatically.
@@ -108,6 +110,384 @@ public enum FitbodSchemaMigrationPlan: SchemaMigrationPlan {
         },
         didMigrate: nil
     )
+
+    /// Custom: Phase 7 SchemaV7 renames `Routine`→`SessionTemplate` and
+    /// `RoutineExercise`→`SessionExerciseTemplate` (entity-level rename — rows
+    /// must be stashed before the table is dropped and recreated). Also adds
+    /// `Split`/`SplitSessionSlot` entities and backfills `Session.template`,
+    /// `Session.slot`, `Session.templateName`, and `Block.archivedConfigJSON`.
+    ///
+    /// Orchestrator decision #2 (templateName backfill): `Session.templateName`
+    /// is backfilled from the remapped `SessionTemplate.name` — equivalent to
+    /// the existing `routineSnapshotName` log-time snapshot semantics.
+    /// No duplicate snapshot column was added; the step reuses the same
+    /// concept as the existing field, applied to the new template relationship.
+    ///
+    /// 7-step migration (spec §7):
+    ///   1. willMigrate: stash Routine rows (incl. block?.id) + Session→Routine
+    ///      pairs as Sendable plain structs (no @Model crosses stage boundary).
+    ///   2. didMigrate: create SessionTemplate per stash row; remap Session.template.
+    ///   3. Per block with templates: create Split "{name} split", name-sorted slots,
+    ///      mode .rotation. Completed blocks → split.isArchived = true.
+    ///   4. Backfill Session.slot on active block's last completed session.
+    ///   5. Backfill Session.templateName from remapped template name.
+    ///   6. Best-effort archivedConfigJSON for completed blocks.
+    ///   7. Old Routine.block field dies with the entity (no code needed).
+    ///
+    /// [CITED: developer.apple.com/documentation/swiftdata/migrationstage/custom]
+    public static let migrateV6toV7 = MigrationStage.custom(
+        fromVersion: SchemaV6.self,
+        toVersion: SchemaV7.self,
+        willMigrate: { context in
+            try Self.stashV6Routines(in: context)
+        },
+        didMigrate: { context in
+            try Self.materializeSessionTemplates(in: context)
+        }
+    )
+
+    // MARK: - V6→V7 stash types
+    // Plain Sendable value types — safe to hold across the willMigrate/didMigrate
+    // stage boundary. @Model objects fetched in willMigrate are invalidated when
+    // the stage completes; only these structs survive (Pattern 1 / SchemaV3 header).
+
+    /// Stash of one V6 Routine row. `internal` so SchemaV7MigrationTests can
+    /// construct test fixtures and call `stashV6Routines`/`materializeSessionTemplates`
+    /// directly (same testability pattern as `bumpPlateauToleranceDefault`).
+    internal struct RoutineStash: Sendable {
+        let id: UUID
+        let name: String
+        let notes: String?
+        let createdAt: Date
+        let updatedAt: Date
+        let isArchived: Bool
+        let folderID: UUID?
+        /// Captured from `Routine.block?.id` — step 3 (auto-Split per block) depends on this.
+        let blockID: UUID?
+        let intentRaw: String
+        let progressionKindRaw: String
+        /// Stashed exercises needed to rebuild SessionExerciseTemplate rows in didMigrate.
+        let exercises: [RoutineExerciseStash]
+    }
+
+    /// Stash of one V6 RoutineExercise row (per-exercise prescription fields).
+    internal struct RoutineExerciseStash: Sendable {
+        let id: UUID
+        let exerciseID: UUID?
+        let orderIndex: Int
+        let targetSets: Int
+        let targetRepsLow: Int
+        let targetRepsHigh: Int
+        let targetRPE: Double?
+        let targetRIR: Int?
+        let prescribedRestSeconds: Int
+        let tempo: String?
+        let notes: String?
+        let generateWarmups: Bool
+        let supersetGroupID: UUID?
+        let tracksTempo: Bool
+        let tracksPartialReps: Bool
+        let warmupOverrideData: Data?
+    }
+
+    /// Stash of one V6 Session→Routine pair. Used in step 2 to remap Session.template.
+    internal struct SessionRoutineStash: Sendable {
+        let sessionID: UUID
+        /// `sourceRoutineID` from the V6 Session (soft UUID ref to the old Routine).
+        let routineID: UUID?
+    }
+
+    // MARK: - V6→V7 stash storage
+    // `nonisolated(unsafe)` storage lets the static vars be set from the migration
+    // closures (which run on an unspecified executor) without strict-concurrency
+    // violations. The migration plan enum is never instantiated; these vars act as
+    // thread-local scratch storage for the duration of a single migration run.
+    internal nonisolated(unsafe) static var v6RoutineStash: [RoutineStash] = []
+    internal nonisolated(unsafe) static var v6SessionStash: [SessionRoutineStash] = []
+
+    // MARK: - V6→V7 helpers (internal static for test access)
+
+    /// willMigrate helper — stashes V6 Routine + Session rows as plain Sendable
+    /// structs BEFORE SwiftData drops the Routine/RoutineExercise tables.
+    ///
+    /// `internal static` so `SchemaV7MigrationTests` can call it directly against
+    /// an in-memory context (same pattern as `bumpPlateauToleranceDefault`).
+    /// Captured @Model objects are converted to value types immediately — no @Model
+    /// reference escapes this function (Pitfall 1 / cross-stage boundary rule).
+    internal static func stashV6Routines(in context: ModelContext) throws {
+        // Fetch V6-shape Routine rows via the nested type (requires SchemaV6.models
+        // to include Self.Routine.self — Pitfall 4 fix in SchemaV6.swift).
+        let routines = try context.fetch(FetchDescriptor<SchemaV6.Routine>())
+        // Build exercise stash per routine in one pass.
+        v6RoutineStash = routines.map { r in
+            let exerciseStash = (r.exercises ?? []).map { re in
+                RoutineExerciseStash(
+                    id: re.id,
+                    exerciseID: re.exercise?.id,
+                    orderIndex: re.orderIndex,
+                    targetSets: re.targetSets,
+                    targetRepsLow: re.targetRepsLow,
+                    targetRepsHigh: re.targetRepsHigh,
+                    targetRPE: re.targetRPE,
+                    targetRIR: re.targetRIR,
+                    prescribedRestSeconds: re.prescribedRestSeconds,
+                    tempo: re.tempo,
+                    notes: re.notes,
+                    generateWarmups: re.generateWarmups,
+                    supersetGroupID: re.supersetGroupID,
+                    tracksTempo: re.tracksTempo,
+                    tracksPartialReps: re.tracksPartialReps,
+                    warmupOverrideData: re.warmupOverrideData
+                )
+            }
+            return RoutineStash(
+                id: r.id,
+                name: r.name,
+                notes: r.notes,
+                createdAt: r.createdAt,
+                updatedAt: r.updatedAt,
+                isArchived: r.isArchived,
+                folderID: r.folderID,
+                blockID: r.block?.id,   // step 3 depends on this
+                intentRaw: r.intentRaw,
+                progressionKindRaw: r.progressionKindRaw,
+                exercises: exerciseStash
+            )
+        }
+        // Stash Session→Routine ID pairs for step 2 (remap Session.template).
+        let sessions = try context.fetch(FetchDescriptor<Session>())
+        v6SessionStash = sessions.map { s in
+            SessionRoutineStash(sessionID: s.id, routineID: s.sourceRoutineID)
+        }
+    }
+
+    /// didMigrate helper — runs the 7-step materialization after SwiftData has
+    /// applied the schema migration (new tables exist; old Routine table is gone).
+    ///
+    /// Steps 2–6 per spec §7. Step 7 (old Routine.block dies with the entity)
+    /// requires no code — it is the natural consequence of the entity rename.
+    ///
+    /// `internal static` so `SchemaV7MigrationTests` can drive semantics directly.
+    internal static func materializeSessionTemplates(in context: ModelContext) throws {
+        // ── Step 2: Create SessionTemplate per stash row ──────────────────────────
+        // Insert before relating (project convention — never assign relationships
+        // in init).
+        var routineIDToTemplate: [UUID: SessionTemplate] = [:]
+        for stash in v6RoutineStash {
+            let template = SessionTemplate()
+            context.insert(template)
+            template.id = stash.id
+            template.name = stash.name
+            template.notes = stash.notes
+            template.createdAt = stash.createdAt
+            template.updatedAt = stash.updatedAt
+            template.isArchived = stash.isArchived
+            template.folderID = stash.folderID
+            template.intentRaw = stash.intentRaw
+            template.progressionKindRaw = stash.progressionKindRaw
+            routineIDToTemplate[stash.id] = template
+
+            // Rebuild SessionExerciseTemplate rows (ordered by stash orderIndex).
+            // Fetch the Exercise catalog row by ID for the relationship.
+            for exStash in stash.exercises.sorted(by: { $0.orderIndex < $1.orderIndex }) {
+                let set = SessionExerciseTemplate()
+                context.insert(set)
+                set.id = exStash.id
+                set.sessionTemplate = template
+                set.orderIndex = exStash.orderIndex
+                set.targetSets = exStash.targetSets
+                set.targetRepsLow = exStash.targetRepsLow
+                set.targetRepsHigh = exStash.targetRepsHigh
+                set.targetRPE = exStash.targetRPE
+                set.targetRIR = exStash.targetRIR
+                set.prescribedRestSeconds = exStash.prescribedRestSeconds
+                set.tempo = exStash.tempo
+                set.notes = exStash.notes
+                set.generateWarmups = exStash.generateWarmups
+                set.supersetGroupID = exStash.supersetGroupID
+                set.tracksTempo = exStash.tracksTempo
+                set.tracksPartialReps = exStash.tracksPartialReps
+                set.warmupOverrideData = exStash.warmupOverrideData
+                if let exerciseID = exStash.exerciseID {
+                    var exDescriptor = FetchDescriptor<Exercise>(
+                        predicate: #Predicate { $0.id == exerciseID }
+                    )
+                    exDescriptor.fetchLimit = 1
+                    if let exercise = try context.fetch(exDescriptor).first {
+                        set.exercise = exercise
+                    }
+                }
+            }
+        }
+
+        // Remap Session.template using the session stash.
+        let sessions = try context.fetch(FetchDescriptor<Session>())
+        let sessionByID: [UUID: Session] = Dictionary(
+            uniqueKeysWithValues: sessions.map { ($0.id, $0) }
+        )
+        for stash in v6SessionStash {
+            guard let session = sessionByID[stash.sessionID] else { continue }
+            if let routineID = stash.routineID {
+                session.template = routineIDToTemplate[routineID]
+            }
+        }
+
+        // ── Step 3: Auto-create Split per block with attached templates ───────────
+        // Group templates by blockID (from willMigrate stash).
+        let templatesByBlockID: [UUID: [RoutineStash]] = Dictionary(
+            grouping: v6RoutineStash.filter { $0.blockID != nil },
+            by: { $0.blockID! }
+        )
+        let blocks = try context.fetch(FetchDescriptor<Block>())
+        var blockIDToSplit: [UUID: Split] = [:]
+
+        for block in blocks {
+            guard let routineStashes = templatesByBlockID[block.id],
+                  !routineStashes.isEmpty else { continue }
+
+            let split = Split()
+            context.insert(split)
+            split.name = "\(block.name) split"
+            split.createdAt = block.startDate
+            // Completed blocks' auto-splits are born archived (history doesn't
+            // pollute the picker per spec §7).
+            split.isArchived = block.endDate != nil
+
+            // Wire block→split after both are inserted.
+            block.split = split
+            block.schedulingModeRaw = "rotation"
+
+            blockIDToSplit[block.id] = split
+
+            // Slots in name-sorted order (matches the old weekday heuristic per spec §7).
+            let sortedStashes = routineStashes.sorted { $0.name < $1.name }
+            for (position, stash) in sortedStashes.enumerated() {
+                guard let template = routineIDToTemplate[stash.id] else { continue }
+                let slot = SplitSessionSlot()
+                context.insert(slot)
+                slot.split = split
+                slot.position = position
+                slot.sessionTemplate = template
+            }
+        }
+
+        // ── Step 4: Backfill Session.slot on active block's last completed session ─
+        // Rotation continuity: find the active block, get its split, find the last
+        // completed session whose template matches a slot in that split, and set
+        // Session.slot to the corresponding slot.
+        if let activeBlock = blocks.first(where: { $0.isActive }),
+           let activeSplit = activeBlock.split,
+           let slots = activeSplit.slots {
+
+            // Sessions associated with the active block, that are completed (have
+            // completedAt), ordered by most recent first.
+            let blockSessions = sessions
+                .filter { $0.block?.id == activeBlock.id && $0.completedAt != nil }
+                .sorted { ($0.completedAt ?? .distantPast) > ($1.completedAt ?? .distantPast) }
+
+            // The name-sorted slot list mirrors the willMigrate sort — positional
+            // index maps to the auto-created slot position.
+            let sortedSlots = slots.sorted { $0.position < $1.position }
+
+            // Find the last completed session whose template is one of this split's slots.
+            for session in blockSessions {
+                guard let tmpl = session.template else { continue }
+                if let slotIndex = sortedSlots.firstIndex(where: {
+                    $0.sessionTemplate?.id == tmpl.id
+                }) {
+                    session.slot = sortedSlots[slotIndex]
+                    break   // only the most recent completed session gets the backfill
+                }
+            }
+        }
+
+        // ── Step 5: Backfill Session.templateName ────────────────────────────────
+        // Reuses routineSnapshotName semantics — set from the remapped template name
+        // (orchestrator decision #2: no duplicate snapshot column was added).
+        for session in sessions {
+            if let tmpl = session.template {
+                session.templateName = tmpl.name
+            } else if !session.routineSnapshotName.isEmpty {
+                // Fall back to the existing snapshot if the template ref is nil
+                // (ad-hoc sessions or sessions whose routine was deleted pre-migration).
+                session.templateName = session.routineSnapshotName
+            }
+        }
+
+        // ── Step 6: Best-effort archivedConfigJSON for completed blocks ──────────
+        // Encode ArchivedBlockConfig from post-migration state. Drift is accepted
+        // per spec §6 — exercise names and prescriptions may differ from what was
+        // active at block-end time, but the archive is better than nothing.
+        for block in blocks where block.endDate != nil {
+            guard let split = block.split,
+                  let slots = split.slots,
+                  let endDate = block.endDate else { continue }
+
+            let sortedSlots = slots.sorted { $0.position < $1.position }
+            let slotDTOs = sortedSlots.map { slot -> ArchivedSlotDTO in
+                let exercises = (slot.sessionTemplate?.exercises ?? [])
+                    .sorted { $0.orderIndex < $1.orderIndex }
+                    .compactMap { ex -> ArchivedExerciseDTO? in
+                        guard let exercise = ex.exercise else { return nil }
+                        return ArchivedExerciseDTO(
+                            exerciseID: exercise.id,
+                            exerciseName: exercise.name,
+                            orderIndex: ex.orderIndex,
+                            targetSets: ex.targetSets,
+                            targetRepsLow: ex.targetRepsLow,
+                            targetRepsHigh: ex.targetRepsHigh,
+                            targetRPE: ex.targetRPE,
+                            targetRIR: ex.targetRIR,
+                            prescribedRestSeconds: ex.prescribedRestSeconds,
+                            tempo: ex.tempo,
+                            notes: ex.notes,
+                            intentRaw: slot.sessionTemplate?.intentRaw ?? "strength",
+                            progressionKindRaw: slot.sessionTemplate?.progressionKindRaw ?? "double",
+                            generateWarmups: ex.generateWarmups,
+                            tracksTempo: ex.tracksTempo,
+                            tracksPartialReps: ex.tracksPartialReps
+                        )
+                    }
+                return ArchivedSlotDTO(
+                    position: slot.position,
+                    sessionName: slot.sessionTemplate?.name ?? "",
+                    exercises: exercises
+                )
+            }
+
+            let phaseDTOs = (block.phases ?? []).map { phase -> ArchivedPhaseDTO in
+                ArchivedPhaseDTO(
+                    kind: phase.nameRaw,   // BlockPhase uses nameRaw (not kindRaw)
+                    weeks: phase.weeks,
+                    volumeMultiplier: phase.volumeMultiplier,
+                    intensityMultiplier: phase.intensityMultiplier,
+                    notes: phase.notes
+                )
+            }
+
+            let archiveConfig = ArchivedBlockConfig(
+                v: 1,
+                blockName: block.name,
+                startedAt: block.startDate,
+                endedAt: endDate,
+                mode: block.schedulingModeRaw,
+                trainingDays: block.trainingDays,
+                phases: phaseDTOs,
+                split: ArchivedSplitDTO(name: split.name, slots: slotDTOs)
+            )
+
+            if let jsonData = try? archiveConfig.encoded(),
+               let jsonString = String(data: jsonData, encoding: .utf8) {
+                block.archivedConfigJSON = jsonString
+            }
+        }
+
+        try context.save()
+
+        // Clear stash storage after successful migration (free memory).
+        v6RoutineStash = []
+        v6SessionStash = []
+    }
 
     /// Extracted bump body — same logic the willMigrate closure delegates to.
     /// `internal static` so both the migration stage AND `SchemaV6MigrationTests`
