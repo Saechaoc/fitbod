@@ -223,6 +223,24 @@ public struct TodayView: View {
                     }
                 }
             }
+            // Phase 09 Plan 03 — SplitDetailRoute: fix-it CTA from .emptySplit
+            // navigates to SplitDetailView on Today's OWN stack (no cross-tab nav).
+            .navigationDestination(for: SplitDetailRoute.self) { route in
+                switch route {
+                case .detail(let splitID):
+                    let splitIDCapture = splitID
+                    let fetchedSplit = (try? ctx.fetch(
+                        FetchDescriptor<Split>(predicate: #Predicate<Split> { $0.id == splitIDCapture })
+                    ))?.first
+                    if let resolvedSplit = fetchedSplit {
+                        SplitDetailView(split: resolvedSplit)
+                    } else {
+                        Text("Routine not found")
+                            .font(BRUFont.bodyDefault)
+                            .foregroundStyle(Color.bruMuted)
+                    }
+                }
+            }
             // ─── Sheets (preserved verbatim from Phase 4/5) ──────────────────
             .sheet(item: $pendingBlockBuilder) { pending in
                 NavigationStack {
@@ -307,26 +325,22 @@ public struct TodayView: View {
         .padding(.horizontal, 16)
     }
 
-    /// CR-02 / spec §5: distinct surface for a block whose split was emptied
-    /// mid-block (zero slots). Reuses the empty-state visual shell but with
-    /// copy that points at the repair path, NOT the rest-day "No workout
-    /// scheduled" copy (which would lie about why nothing is scheduled).
-    // Phase 9: replace with SplitDetailView fix-it pointer.
+    /// CR-02 / spec §5 / Phase 9: fix-it surface for a block whose split was
+    /// emptied mid-block (zero slots). Distinct from the rest-day
+    /// "No workout scheduled" copy — showing that copy would lie about why
+    /// nothing is scheduled. CTA navigates to SplitDetailView on Today's OWN
+    /// NavigationStack (no cross-tab navigation).
     @ViewBuilder
     private var emptySplitFixItState: some View {
-        VStack(spacing: 12) {
-            Text("Routine has no sessions")
-                .font(BRUFont.displayLarge)
-                .foregroundStyle(Color.bruInk)
-                .multilineTextAlignment(.center)
-
-            Text("Add sessions in the Program tab.")
-                .font(BRUFont.bodyDefault)
-                .foregroundStyle(Color.bruMuted)
-                .multilineTextAlignment(.center)
+        if let split = activeBlocks.first?.split {
+            EmptySplitFixIt(onGoToRoutine: {
+                navigationPath.append(SplitDetailRoute.detail(splitID: split.id))
+            })
+        } else {
+            // Defensive: .emptySplit should only fire when a split is wired but
+            // has zero slots; if somehow split is nil, fall back gracefully.
+            noWorkoutScheduledEmptyState
         }
-        .padding(.vertical, 32)
-        .padding(.horizontal, 16)
     }
 
     // MARK: - Formatted Date (BRU header right slot)
@@ -541,6 +555,40 @@ public struct TodayView: View {
                 return "edit-\(block.id.uuidString)"
             }
         }
+    }
+}
+
+// MARK: - EmptySplitFixIt
+
+/// CR-02 / Phase 9 Plan 03: shown when the active block's split has zero slots.
+/// Copy and layout verbatim from UI-SPEC §8 + Copywriting Contract.
+/// Caller supplies the navigation action so this view stays stack-agnostic.
+fileprivate struct EmptySplitFixIt: View {
+
+    let onGoToRoutine: () -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("ROUTINE HAS NO SESSIONS")
+                .font(BRUFont.bodyEmphasis)
+                .textCase(.uppercase)
+                .tracking(1.2)
+                .foregroundStyle(Color.bruInk)
+
+            Text("The routine linked to this block has no sessions scheduled. Add a session to continue.")
+                .font(BRUFont.bodyDefault)
+                .foregroundStyle(Color.bruMuted)
+
+            BRUButton("GO TO ROUTINE ▸", kind: .ghost) {
+                onGoToRoutine()
+            }
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 24)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color.bruPaper)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("Routine has no sessions. The routine linked to this block has no sessions scheduled. Add a session to continue.")
     }
 }
 
