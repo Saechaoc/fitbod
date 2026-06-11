@@ -361,10 +361,21 @@ public struct TodayView: View {
     /// The session template scheduled for today in the active block (nil when none).
     ///
     /// V7: block.routines removed; Phase 8 unified resolver drives this property.
-    /// Returns nil as a compile stub so the app builds green against V7 models.
+    /// Phase 8: wired to TodayResolver.resolve — the four-case output contract
+    /// maps to nil except for .session(slot), which returns the slot's template.
     private var todaysRoutine: SessionTemplate? {
-        // TODO Phase 8: replace with unified resolver predicate (spec §5)
-        return nil
+        guard let block = activeBlocks.first else { return nil }
+        let resolution = TodayResolver.resolve(block: block, context: ctx)
+        switch resolution {
+        case .session(let slot):
+            return slot.sessionTemplate
+        case .restDay, .noBlock:
+            return nil
+        case .emptySplit:
+            // TODO Phase 9: .emptySplit needs a distinct "fix-it" surface (spec §5);
+            // for now falls through to the existing "No workout scheduled" empty state.
+            return nil
+        }
     }
 
     /// 1-based day index in the current block (for "DAY 01 / 04" in BlackSlabCTA).
@@ -386,7 +397,7 @@ public struct TodayView: View {
     @MainActor
     private func startWorkout(_ routine: SessionTemplate) {
         do {
-            let session = try SessionFactory.start(template: routine, context: ctx)
+            let session = try SessionFactory.start(template: routine, activeBlock: activeBlocks.first, context: ctx)
             navigationPath.append(SessionRoute.logger(session))
         } catch {
             // Session start errors (e.g. routineHasNoExercises) are surfaced
