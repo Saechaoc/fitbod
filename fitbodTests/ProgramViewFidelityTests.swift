@@ -42,9 +42,14 @@ struct ProgramViewFidelityTests {
         #expect(source.contains("ProgramChromeHeader"),
                 "ProgramView should use a dedicated top chrome that can draw through the top safe area.")
         #expect(source.contains("ProgramTemplateHeader"),
-                "Program templates need a compact header matching the PNG, not the taller generic BRUSectionHead.")
-        #expect(!codeOnly.contains("BRUSectionHead("),
-                "ProgramView's template header should not use BRUSectionHead because its 45pt height is too tall for the mockup.")
+                "Program template section still uses compact header matching the PNG, not the taller generic BRUSectionHead.")
+        // NOTE: BRUSectionHead is now legitimately used in the BLOCKS and ROUTINES sections
+        // (Phase 9 Plan 02 addition). The blanket '!contains' check has been replaced with
+        // positive assertions that the new section heads exist at the expected call sites.
+        #expect(codeOnly.contains(#"BRUSectionHead("Blocks")"#),
+                "BLOCKS section must use BRUSectionHead(\"Blocks\") as its section head.")
+        #expect(codeOnly.contains(#"BRUSectionHead("Routines")"#),
+                "ROUTINES section must use BRUSectionHead(\"Routines\") as its section head.")
         #expect(!codeOnly.contains(#"Text("setup")"#),
                 "The fake mockup 'setup' status label must not render inside the production Program screen.")
         #expect(!codeOnly.contains("statusBandHeight"),
@@ -111,6 +116,39 @@ struct ProgramViewFidelityTests {
         #expect(source.contains("A block schedules routines across weeks and phases — "))
         #expect(source.contains("accumulation, intensification, peak, deload."))
         #expect(source.contains("You can also lift without a block, but Fitbod really earns its keep when you’re running one."))
+    }
+
+    @Test("ProgramView pins BLOCKS and ROUTINES section copy (Phase 9 Plan 02)")
+    func programViewPinsBlocksAndRoutinesSectionCopy() throws {
+        let source = try source("fitbod", "Periodization", "ProgramView.swift")
+
+        // Section head copy
+        #expect(source.contains(#"BRUSectionHead("Blocks")"#),
+                "BLOCKS section head must use verbatim copy 'Blocks'.")
+        #expect(source.contains(#"BRUSectionHead("Routines")"#),
+                "ROUTINES section head must use verbatim copy 'Routines'.")
+
+        // Action rows
+        #expect(source.contains("+ NEW ROUTINE"),
+                "'+ NEW ROUTINE' action row must appear verbatim.")
+        #expect(source.contains("ALL HISTORY ▸"),
+                "'ALL HISTORY ▸' DONE collapse row must appear verbatim.")
+
+        // Status labels
+        #expect(source.contains(#"BRUChip("ACTIVE""#),
+                "ACTIVE status badge must use verbatim label 'ACTIVE'.")
+        #expect(source.contains(#"BRUChip("READY""#),
+                "READY status badge must use verbatim label 'READY'.")
+        #expect(source.contains(#"BRUChip("DRAFT")"#),
+                "DRAFT status badge must use verbatim label 'DRAFT'.")
+        #expect(source.contains(#"BRUChip("DONE")"#),
+                "DONE status badge must use verbatim label 'DONE'.")
+
+        // Navigation destinations registered (T-09-04 mitigation)
+        #expect(source.contains("navigationDestination(for: BlockOverviewRoute.self)"),
+                "BlockOverviewRoute destination must be registered on ProgramView's NavigationStack.")
+        #expect(source.contains("navigationDestination(for: SplitDetailRoute.self)"),
+                "SplitDetailRoute destination must be registered on ProgramView's NavigationStack.")
     }
 
     @Test("ProgramView + NEW opens reusable BRU action popover with block and routine routes")
