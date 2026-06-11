@@ -354,7 +354,7 @@ Plans:
 **Mode:** mvp
 **Requirements**: Authoritative contract: `.planning/quick/training-block-spec/program-graph-spec.md` §5 (edge surfaces), §8. UI terms per §1 glossary: "Session" = SessionTemplate, "Routine" = Split.
 **Depends on:** Phase 8
-**Plans:** 3/6 plans executed
+**Plans:** 5/6 plans executed
 
 Plans:
 - [x] 09-01-PLAN.md — SplitDetailView + SplitDetailRoute + LiveEditBanner (slots, drag-reorder reindex, picker, usage, archive)
@@ -362,4 +362,4 @@ Plans:
 - [x] 09-03-PLAN.md — TodayView emptySplit fix-it surface + SplitDetailRoute destination
 - [x] 09-04-PLAN.md — BlockOverviewScreen live modes + archived mode + ArchiveUnreadableView
 - [ ] 09-05-PLAN.md — Block builder split band + BlockDraft split/mode/days save (endDate fix) + guardrail test update
-- [ ] 09-06-PLAN.md — Session template editor live-edit banner
+- [x] 09-06-PLAN.md — Session template editor live-edit banner
