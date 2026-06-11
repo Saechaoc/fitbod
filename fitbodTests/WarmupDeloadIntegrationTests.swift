@@ -62,7 +62,7 @@ struct WarmupDeloadIntegrationTests {
         return block
     }
 
-    private func makeRoutineWithCompoundExercise(in context: ModelContext, block: Block?) -> (Routine, Exercise) {
+    private func makeRoutineWithCompoundExercise(in context: ModelContext, block: Block?) -> (SessionTemplate, Exercise) {
         let exercise = Exercise.previewSample(
             name: "Bench Press",
             equipment: .barbell,
@@ -71,16 +71,16 @@ struct WarmupDeloadIntegrationTests {
         )
         context.insert(exercise)
 
-        let routine = Routine()
+        let routine = SessionTemplate()
         routine.name = "Push Day"
         routine.block = block
-        // Phase 3.1 (PIVOT-01): intent + progression live on Routine.
+        // Phase 3.1 (PIVOT-01): intent + progression live on SessionTemplate.
         routine.intentRaw = Intent.strength.rawValue
         routine.progressionKindRaw = ProgressionKind.double.rawValue
         context.insert(routine)
 
-        let routineExercise = RoutineExercise()
-        routineExercise.routine = routine
+        let routineExercise = SessionExerciseTemplate()
+        routineExercise.sessionTemplate = routine
         routineExercise.exercise = exercise
         routineExercise.orderIndex = 0
         routineExercise.targetSets = 4
@@ -144,7 +144,7 @@ struct WarmupDeloadIntegrationTests {
         try seedPriorCompletedSession(in: context, exercise: exercise, date: start.addingTimeInterval(-7 * day))
 
         #expect(PeriodizationEngine.phase(for: block, on: deloadDate)?.kind == .deload)
-        let session = try SessionFactory.start(routine: routine, on: deloadDate, context: context)
+        let session = try SessionFactory.start(template: routine, on: deloadDate, context: context)
 
         #expect(warmupCount(in: session) == 0)
     }
@@ -162,7 +162,7 @@ struct WarmupDeloadIntegrationTests {
         let (routine, exercise) = makeRoutineWithCompoundExercise(in: context, block: block)
         try seedPriorCompletedSession(in: context, exercise: exercise, date: start.addingTimeInterval(-7 * day))
 
-        let session = try SessionFactory.start(routine: routine, on: start, context: context)
+        let session = try SessionFactory.start(template: routine, on: start, context: context)
 
         #expect(warmupCount(in: session) >= 3)
     }
@@ -181,7 +181,7 @@ struct WarmupDeloadIntegrationTests {
         let (routine, exercise) = makeRoutineWithCompoundExercise(in: context, block: block)
         try seedPriorCompletedSession(in: context, exercise: exercise, date: start.addingTimeInterval(-7 * day))
 
-        let session = try SessionFactory.start(routine: routine, on: today, context: context)
+        let session = try SessionFactory.start(template: routine, on: today, context: context)
 
         #expect(warmupCount(in: session) >= 3)
     }
@@ -194,7 +194,7 @@ struct WarmupDeloadIntegrationTests {
         let (routine, exercise) = makeRoutineWithCompoundExercise(in: context, block: nil)
         try seedPriorCompletedSession(in: context, exercise: exercise, date: start.addingTimeInterval(-7 * day))
 
-        let session = try SessionFactory.start(routine: routine, on: start, context: context)
+        let session = try SessionFactory.start(template: routine, on: start, context: context)
 
         #expect(warmupCount(in: session) >= 3)
     }
@@ -211,7 +211,7 @@ struct WarmupDeloadIntegrationTests {
         try seedPriorCompletedSession(in: context, exercise: exercise, date: start.addingTimeInterval(-7 * day))
 
         #expect(PeriodizationEngine.phase(for: block, on: today) == nil)
-        let session = try SessionFactory.start(routine: routine, on: today, context: context)
+        let session = try SessionFactory.start(template: routine, on: today, context: context)
 
         #expect(warmupCount(in: session) >= 3)
     }

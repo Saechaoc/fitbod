@@ -56,11 +56,11 @@ struct DeloadVolumeApplicationTests {
         in context: ModelContext,
         block: Block?,
         targetSets: [Int]
-    ) -> Routine {
-        let routine = Routine()
+    ) -> SessionTemplate {
+        let routine = SessionTemplate()
         routine.name = "Volume Test"
         routine.block = block
-        // Phase 3.1 (PIVOT-01): progression lives on Routine.
+        // Phase 3.1 (PIVOT-01): progression lives on SessionTemplate.
         routine.progressionKindRaw = ProgressionKind.double.rawValue
         context.insert(routine)
 
@@ -72,8 +72,8 @@ struct DeloadVolumeApplicationTests {
             )
             context.insert(exercise)
 
-            let routineExercise = RoutineExercise()
-            routineExercise.routine = routine
+            let routineExercise = SessionExerciseTemplate()
+            routineExercise.sessionTemplate = routine
             routineExercise.exercise = exercise
             routineExercise.orderIndex = index
             routineExercise.targetSets = sets
@@ -107,7 +107,7 @@ struct DeloadVolumeApplicationTests {
         try context.save()
 
         #expect(PeriodizationEngine.phase(for: block, on: deloadDate)?.kind == .deload)
-        let session = try SessionFactory.start(routine: routine, on: deloadDate, context: context)
+        let session = try SessionFactory.start(template: routine, on: deloadDate, context: context)
 
         #expect(workingSetCounts(in: session) == [2])
     }
@@ -125,7 +125,7 @@ struct DeloadVolumeApplicationTests {
         let routine = makeRoutine(in: context, block: block, targetSets: [1])
         try context.save()
 
-        let session = try SessionFactory.start(routine: routine, on: deloadDate, context: context)
+        let session = try SessionFactory.start(template: routine, on: deloadDate, context: context)
 
         #expect(workingSetCounts(in: session) == [1])
     }
@@ -138,7 +138,7 @@ struct DeloadVolumeApplicationTests {
         let routine = makeRoutine(in: context, block: block, targetSets: [3])
         try context.save()
 
-        let session = try SessionFactory.start(routine: routine, on: start, context: context)
+        let session = try SessionFactory.start(template: routine, on: start, context: context)
 
         #expect(workingSetCounts(in: session) == [3])
     }
@@ -157,7 +157,7 @@ struct DeloadVolumeApplicationTests {
         try context.save()
 
         #expect(PeriodizationEngine.phase(for: block, on: today)?.kind == .intensification)
-        let session = try SessionFactory.start(routine: routine, on: today, context: context)
+        let session = try SessionFactory.start(template: routine, on: today, context: context)
 
         #expect(workingSetCounts(in: session) == [3])
     }
@@ -176,7 +176,7 @@ struct DeloadVolumeApplicationTests {
         try context.save()
 
         #expect(PeriodizationEngine.phase(for: block, on: today)?.kind == .realization)
-        let session = try SessionFactory.start(routine: routine, on: today, context: context)
+        let session = try SessionFactory.start(template: routine, on: today, context: context)
 
         #expect(workingSetCounts(in: session) == [3])
     }
@@ -187,7 +187,7 @@ struct DeloadVolumeApplicationTests {
         let routine = makeRoutine(in: context, block: nil, targetSets: [4])
         try context.save()
 
-        let session = try SessionFactory.start(routine: routine, on: .now, context: context)
+        let session = try SessionFactory.start(template: routine, on: .now, context: context)
 
         #expect(workingSetCounts(in: session) == [4])
     }
@@ -202,7 +202,7 @@ struct DeloadVolumeApplicationTests {
         try context.save()
 
         #expect(PeriodizationEngine.phase(for: block, on: end.addingTimeInterval(day)) == nil)
-        let session = try SessionFactory.start(routine: routine, on: end.addingTimeInterval(day), context: context)
+        let session = try SessionFactory.start(template: routine, on: end.addingTimeInterval(day), context: context)
 
         #expect(workingSetCounts(in: session) == [4])
     }
@@ -220,7 +220,7 @@ struct DeloadVolumeApplicationTests {
         let routine = makeRoutine(in: context, block: block, targetSets: [4, 5, 6])
         try context.save()
 
-        let session = try SessionFactory.start(routine: routine, on: deloadDate, context: context)
+        let session = try SessionFactory.start(template: routine, on: deloadDate, context: context)
 
         #expect(workingSetCounts(in: session) == [2, 2, 3])
     }

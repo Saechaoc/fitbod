@@ -91,8 +91,8 @@ struct AddUnplannedExerciseTests {
     /// Active session + routine with one existing exercise. Returns the
     /// new exercise (curl) that the tests will append.
     private struct Fixture {
-        let routine: Routine
-        let routineExercise: RoutineExercise
+        let routine: SessionTemplate
+        let routineExercise: SessionExerciseTemplate
         let session: Session
         let curl: Exercise
     }
@@ -111,23 +111,23 @@ struct AddUnplannedExerciseTests {
         ctx.insert(bench)
         ctx.insert(curl)
 
-        let routine = Routine()
+        let routine = SessionTemplate()
         routine.name = "Push"
-        // Phase 3.1 (PIVOT-01): intent + progression live on Routine.
+        // Phase 3.1 (PIVOT-01): intent + progression live on SessionTemplate.
         // Snapshots onto Session at SessionFactory.start.
         routine.intentRaw = Intent.strength.rawValue
         routine.progressionKindRaw = ProgressionKind.double.rawValue
         ctx.insert(routine)
 
-        let re = RoutineExercise()
-        re.routine = routine
+        let re = SessionExerciseTemplate()
+        re.sessionTemplate = routine
         re.exercise = bench
         re.orderIndex = 0
         re.targetSets = 3
         ctx.insert(re)
         try ctx.save()
 
-        let session = try SessionFactory.start(routine: routine, on: .now, context: ctx)
+        let session = try SessionFactory.start(template: routine, on: .now, context: ctx)
 
         return Fixture(
             routine: routine,

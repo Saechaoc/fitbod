@@ -41,10 +41,10 @@ struct RoutineBlockLinkageTests {
         return draft
     }
 
-    private func fetchRoutine(_ routineID: UUID, context: ModelContext) throws -> Routine {
+    private func fetchRoutine(_ routineID: UUID, context: ModelContext) throws -> SessionTemplate {
         let targetID = routineID
-        let descriptor = FetchDescriptor<Routine>(
-            predicate: #Predicate<Routine> { $0.id == targetID }
+        let descriptor = FetchDescriptor<SessionTemplate>(
+            predicate: #Predicate<SessionTemplate> { $0.id == targetID }
         )
         return try #require(try context.fetch(descriptor).first)
     }
@@ -56,14 +56,14 @@ struct RoutineBlockLinkageTests {
         #expect(draft.blockID == nil)
     }
 
-    @Test("RoutineDraft init from Routine populates blockID")
+    @Test("RoutineDraft init from SessionTemplate populates blockID")
     func routineDraftInitFromRoutinePopulatesBlockID() throws {
         let context = try makeContext()
         let block = Block()
         block.name = "Peak"
         context.insert(block)
 
-        let routine = Routine()
+        let routine = SessionTemplate()
         routine.name = "Bench"
         routine.block = block
         context.insert(routine)
@@ -74,14 +74,14 @@ struct RoutineBlockLinkageTests {
         #expect(draft.blockID == block.id)
     }
 
-    @Test("RoutineDraft save materializes Routine.block")
+    @Test("RoutineDraft save materializes SessionTemplate.block")
     func routineDraftSaveMaterializesRoutineBlock() throws {
         let context = try makeContext()
         let block = Block()
         block.name = "Peak"
         context.insert(block)
 
-        let routine = Routine()
+        let routine = SessionTemplate()
         context.insert(routine)
 
         let draft = makeValidDraft(blockID: block.id)
@@ -92,14 +92,14 @@ struct RoutineBlockLinkageTests {
         #expect(fetched.block?.id == block.id)
     }
 
-    @Test("RoutineDraft save with nil blockID nullifies Routine.block")
+    @Test("RoutineDraft save with nil blockID nullifies SessionTemplate.block")
     func routineDraftSaveWithNilBlockIDNullifiesRoutineBlock() throws {
         let context = try makeContext()
         let block = Block()
         block.name = "Peak"
         context.insert(block)
 
-        let routine = Routine()
+        let routine = SessionTemplate()
         routine.name = "Bench"
         routine.block = block
         context.insert(routine)
@@ -114,10 +114,10 @@ struct RoutineBlockLinkageTests {
         #expect(fetched.block == nil)
     }
 
-    @Test("RoutineDraft save with unknown blockID leaves Routine.block nil")
+    @Test("RoutineDraft save with unknown blockID leaves SessionTemplate.block nil")
     func routineDraftSaveWithUnknownBlockIDLeavesRoutineBlockNil() throws {
         let context = try makeContext()
-        let routine = Routine()
+        let routine = SessionTemplate()
         context.insert(routine)
 
         let draft = makeValidDraft(blockID: UUID())
@@ -135,7 +135,7 @@ struct RoutineBlockLinkageTests {
         block.name = "Peak"
         context.insert(block)
 
-        let routine = Routine()
+        let routine = SessionTemplate()
         context.insert(routine)
 
         let firstDraft = makeValidDraft(blockID: block.id)
@@ -152,7 +152,7 @@ struct RoutineBlockLinkageTests {
         #expect(fetched.block?.id == block.id)
     }
 
-    @Test("Routine linked to block can save block-required progression")
+    @Test("SessionTemplate linked to block can save block-required progression")
     func routineLinkedToBlockCanSaveBlockRequiredProgression() throws {
         let context = try makeContext()
         let block = Block()
@@ -160,7 +160,7 @@ struct RoutineBlockLinkageTests {
         context.insert(block)
 
         for kind in [ProgressionKind.block, .hybrid] {
-            let routine = Routine()
+            let routine = SessionTemplate()
             context.insert(routine)
 
             let draft = makeValidDraft(blockID: block.id)
@@ -174,12 +174,12 @@ struct RoutineBlockLinkageTests {
         }
     }
 
-    @Test("Routine without block falls back from block-required progression")
+    @Test("SessionTemplate without block falls back from block-required progression")
     func routineWithoutBlockFallsBackFromBlockRequiredProgression() throws {
         let context = try makeContext()
 
         for kind in [ProgressionKind.block, .hybrid] {
-            let routine = Routine()
+            let routine = SessionTemplate()
             context.insert(routine)
 
             let draft = makeValidDraft(blockID: nil)
@@ -194,10 +194,10 @@ struct RoutineBlockLinkageTests {
         }
     }
 
-    @Test("Routine with unresolved block falls back from block-required progression")
+    @Test("SessionTemplate with unresolved block falls back from block-required progression")
     func routineWithUnresolvedBlockFallsBackFromBlockRequiredProgression() throws {
         let context = try makeContext()
-        let routine = Routine()
+        let routine = SessionTemplate()
         context.insert(routine)
 
         let draft = makeValidDraft(blockID: UUID())

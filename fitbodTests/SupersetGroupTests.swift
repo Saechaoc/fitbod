@@ -36,11 +36,11 @@ struct SupersetGroupTests {
     @Test("createAndAssign")
     func createAndAssign() throws {
         let ctx = try makeContext()
-        let routine = Routine()
+        let routine = SessionTemplate()
         ctx.insert(routine)
 
-        let re = RoutineExercise()
-        re.routine = routine
+        let re = SessionExerciseTemplate()
+        re.sessionTemplate = routine
         ctx.insert(re)
 
         let group = SupersetGroup(
@@ -65,10 +65,10 @@ struct SupersetGroupTests {
     @Test("unassignSetsNil")
     func unassignSetsNil() throws {
         let ctx = try makeContext()
-        let routine = Routine()
+        let routine = SessionTemplate()
         ctx.insert(routine)
-        let re = RoutineExercise()
-        re.routine = routine
+        let re = SessionExerciseTemplate()
+        re.sessionTemplate = routine
         let group = SupersetGroup(routineID: routine.id)
         ctx.insert(group)
         re.supersetGroupID = group.id
@@ -94,12 +94,12 @@ struct SupersetGroupTests {
 
     @Test("orphanedSupersetGroupAfterRoutineDelete — handled by RoutinesListView.handleDelete")
     func orphanedSupersetGroupAfterRoutineDelete() throws {
-        // The Routine entity has no SwiftData relationship to
+        // The SessionTemplate entity has no SwiftData relationship to
         // SupersetGroup (soft ref). RoutinesListView.handleDelete is
         // responsible for sweeping the orphans. This test verifies the
         // sweep logic by simulating the routine-delete path.
         let ctx = try makeContext()
-        let routine = Routine()
+        let routine = SessionTemplate()
         ctx.insert(routine)
         let group = SupersetGroup(routineID: routine.id)
         ctx.insert(group)

@@ -60,7 +60,7 @@ struct SessionFactoryTests {
     /// a unique prescription field set so per-field snapshot checks are
     /// unambiguous.
     @discardableResult
-    private func makeFixtureRoutine(ctx: ModelContext) throws -> Routine {
+    private func makeFixtureRoutine(ctx: ModelContext) throws -> SessionTemplate {
         let ex1 = Exercise.previewSample(
             name: "Bench",
             equipment: .barbell,
@@ -76,17 +76,17 @@ struct SessionFactoryTests {
         ctx.insert(ex1)
         ctx.insert(ex2)
 
-        let routine = Routine()
+        let routine = SessionTemplate()
         routine.name = "Push Day"
-        // Phase 3.1 (PIVOT-01): intent + progression are now per-Routine.
+        // Phase 3.1 (PIVOT-01): intent + progression are now per-SessionTemplate.
         // Tests 1 + 2 assert these snapshot onto Session at
         // SessionFactory.start time (PIVOT-02 / D-14).
         routine.intentRaw = Intent.strength.rawValue
         routine.progressionKindRaw = ProgressionKind.rpe.rawValue
         ctx.insert(routine)
 
-        let re1 = RoutineExercise()
-        re1.routine = routine
+        let re1 = SessionExerciseTemplate()
+        re1.sessionTemplate = routine
         re1.exercise = ex1
         re1.orderIndex = 0
         re1.targetSets = 3
@@ -98,8 +98,8 @@ struct SessionFactoryTests {
         re1.tempo = "3-1-1-0"
         ctx.insert(re1)
 
-        let re2 = RoutineExercise()
-        re2.routine = routine
+        let re2 = SessionExerciseTemplate()
+        re2.sessionTemplate = routine
         re2.exercise = ex2
         re2.orderIndex = 1
         re2.targetSets = 4
@@ -122,7 +122,7 @@ struct SessionFactoryTests {
         let ctx = try makeContext()
         let routine = try makeFixtureRoutine(ctx: ctx)
 
-        let session = try SessionFactory.start(routine: routine, on: .now, context: ctx)
+        let session = try SessionFactory.start(template: routine, on: .now, context: ctx)
 
         // Phase 3.1 (PIVOT-02 / D-14): intent + progression snapshot from
         // Routine onto Session (one snapshot per session, not per-exercise).
@@ -158,7 +158,7 @@ struct SessionFactoryTests {
         let ctx = try makeContext()
         let routine = try makeFixtureRoutine(ctx: ctx)
 
-        let session = try SessionFactory.start(routine: routine, on: .now, context: ctx)
+        let session = try SessionFactory.start(template: routine, on: .now, context: ctx)
 
         // Mutate the routine AFTER session-start across every prescription
         // field on the first RoutineExercise — AND mutate the new
@@ -208,7 +208,7 @@ struct SessionFactoryTests {
         let ctx = try makeContext()
         let routine = try makeFixtureRoutine(ctx: ctx)
 
-        let session = try SessionFactory.start(routine: routine, on: .now, context: ctx)
+        let session = try SessionFactory.start(template: routine, on: .now, context: ctx)
         #expect(session.sourceRoutineID == routine.id)
         #expect(session.routineSnapshotName == "Push Day")
 
@@ -228,7 +228,7 @@ struct SessionFactoryTests {
         let ctx = try makeContext()
         let routine = try makeFixtureRoutine(ctx: ctx)
 
-        let session = try SessionFactory.start(routine: routine, on: .now, context: ctx)
+        let session = try SessionFactory.start(template: routine, on: .now, context: ctx)
         let ses = (session.exercises ?? []).sorted { $0.orderIndex < $1.orderIndex }
         #expect((ses[0].sets ?? []).count == 3)   // bench: 3 sets
         #expect((ses[1].sets ?? []).count == 4)   // OHP: 4 sets
@@ -252,10 +252,10 @@ struct SessionFactoryTests {
         let ctx = try makeContext()
         let routine = try makeFixtureRoutine(ctx: ctx)
 
-        _ = try SessionFactory.start(routine: routine, on: .now, context: ctx)
+        _ = try SessionFactory.start(template: routine, on: .now, context: ctx)
 
         do {
-            _ = try SessionFactory.start(routine: routine, on: .now, context: ctx)
+            _ = try SessionFactory.start(template: routine, on: .now, context: ctx)
             Issue.record("Expected SessionFactoryError.activeSessionAlreadyExists, but start returned a Session")
         } catch SessionFactoryError.activeSessionAlreadyExists {
             // expected
@@ -272,17 +272,17 @@ struct SessionFactoryTests {
 
     // MARK: - 6. empty-routine guard
 
-    @Test("emptyRoutineGuard — start throws when routine has no exercises")
+    @Test("emptyRoutineGuard — start throws when session template has no exercises")
     func emptyRoutineGuard() throws {
         let ctx = try makeContext()
 
-        let empty = Routine()
+        let empty = SessionTemplate()
         empty.name = "Empty"
         ctx.insert(empty)
         try ctx.save()
 
         do {
-            _ = try SessionFactory.start(routine: empty, on: .now, context: ctx)
+            _ = try SessionFactory.start(template: empty, on: .now, context: ctx)
             Issue.record("Expected routineHasNoExercises error, but start returned a Session")
         } catch SessionFactoryError.routineHasNoExercises {
             // expected
@@ -293,7 +293,7 @@ struct SessionFactoryTests {
 
     // MARK: - 7. orderIndex preserved across snapshot
 
-    @Test("orderIndexPreservedAcrossSnapshot — RoutineExercise.orderIndex translates to SessionExercise.orderIndex")
+    @Test("orderIndexPreservedAcrossSnapshot — SessionExerciseTemplate.orderIndex translates to SessionExercise.orderIndex")
     func orderIndexPreservedAcrossSnapshot() throws {
         let ctx = try makeContext()
         let routine = try makeFixtureRoutine(ctx: ctx)
@@ -305,7 +305,7 @@ struct SessionFactoryTests {
         re2.orderIndex = 0
         try ctx.save()
 
-        let session = try SessionFactory.start(routine: routine, on: .now, context: ctx)
+        let session = try SessionFactory.start(template: routine, on: .now, context: ctx)
         let ses = (session.exercises ?? []).sorted { $0.orderIndex < $1.orderIndex }
 
         // After the swap: OHP is at orderIndex 0; Bench is at orderIndex 1.
@@ -327,7 +327,7 @@ struct SessionFactoryTests {
         re.tracksPartialReps = true
         try ctx.save()
 
-        let session = try SessionFactory.start(routine: routine, on: .now, context: ctx)
+        let session = try SessionFactory.start(template: routine, on: .now, context: ctx)
         let se = (session.exercises ?? []).first { $0.orderIndex == 0 }!
         #expect(se.tracksTempo == true)
         #expect(se.tracksPartialReps == true)
@@ -353,7 +353,7 @@ struct SessionFactoryTests {
         routine.block = block
         try ctx.save()
 
-        let session = try SessionFactory.start(routine: routine, on: .now, context: ctx)
+        let session = try SessionFactory.start(template: routine, on: .now, context: ctx)
         #expect(session.block?.id == block.id)
     }
 }

@@ -59,7 +59,7 @@ struct SchemaV2MigrationTests {
         #expect(FitbodSchemaMigrationPlan.stages.count >= 1)
     }
 
-    @Test("Fresh in-memory V2 ModelContainer opens; round-trips a Routine + new entity")
+    @Test("Fresh in-memory V2 ModelContainer opens; round-trips a SessionTemplate + new entity")
     func freshV2ContainerRoundTripsRoutineAndNewEntities() throws {
         let schema = Schema(SchemaV2.models)
         let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
@@ -73,7 +73,7 @@ struct SchemaV2MigrationTests {
         let folder = RoutineFolder(name: "Push / Pull / Legs", sortOrder: 0)
         ctx.insert(folder)
 
-        let routine = Routine()
+        let routine = SessionTemplate()
         routine.name = "Push Day"
         routine.folderID = folder.id           // NEW V2 field
         ctx.insert(routine)
@@ -81,7 +81,7 @@ struct SchemaV2MigrationTests {
         try ctx.save()
 
         // Re-fetch and verify the new field survived a save/fetch cycle.
-        let fetched = try ctx.fetch(FetchDescriptor<Routine>())
+        let fetched = try ctx.fetch(FetchDescriptor<SessionTemplate>())
         #expect(fetched.count == 1)
         #expect(fetched.first?.folderID == folder.id)
 
@@ -90,7 +90,7 @@ struct SchemaV2MigrationTests {
         #expect(folders.first?.name == "Push / Pull / Legs")
     }
 
-    @Test("Cascade: deleting a RoutineExercise cascades into its setOverrides")
+    @Test("Cascade: deleting a SessionExerciseTemplate cascades into its setOverrides")
     func setOverrideCascadeOnRoutineExerciseDelete() throws {
         let schema = Schema(SchemaV2.models)
         let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
@@ -101,12 +101,12 @@ struct SchemaV2MigrationTests {
         )
         let ctx = ModelContext(container)
 
-        let routine = Routine()
+        let routine = SessionTemplate()
         routine.name = "Test"
         ctx.insert(routine)
 
-        let re = RoutineExercise()
-        re.routine = routine
+        let re = SessionExerciseTemplate()
+        re.sessionTemplate = routine
         ctx.insert(re)
 
         let override1 = RoutineExerciseSetOverride(setIndex: 0, targetRepsLow: 6, targetRepsHigh: 6, targetRPE: 8.5)
@@ -122,11 +122,11 @@ struct SchemaV2MigrationTests {
         ctx.delete(re)
         try ctx.save()
 
-        // RoutineExercise.setOverrides has deleteRule: .cascade -> overrides gone.
+        // SessionExerciseTemplate.setOverrides has deleteRule: .cascade -> overrides gone.
         #expect(try ctx.fetch(FetchDescriptor<RoutineExerciseSetOverride>()).isEmpty)
     }
 
-    @Test("Soft refs: deleting a RoutineFolder does NOT cascade into routines")
+    @Test("Soft refs: deleting a RoutineFolder does NOT cascade into session templates")
     func folderDeleteDoesNotCascadeIntoRoutines() throws {
         let schema = Schema(SchemaV2.models)
         let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
@@ -140,7 +140,7 @@ struct SchemaV2MigrationTests {
         let folder = RoutineFolder(name: "Misc")
         ctx.insert(folder)
 
-        let routine = Routine()
+        let routine = SessionTemplate()
         routine.name = "Stays"
         routine.folderID = folder.id
         ctx.insert(routine)
@@ -149,10 +149,10 @@ struct SchemaV2MigrationTests {
         ctx.delete(folder)
         try ctx.save()
 
-        // Routine survives; folderID is now dangling (Unfiled re-mapping
+        // SessionTemplate survives; folderID is now dangling (Unfiled re-mapping
         // happens in the folder-delete handler in plan 03-01, not at the
         // SwiftData level).
-        let routines = try ctx.fetch(FetchDescriptor<Routine>())
+        let routines = try ctx.fetch(FetchDescriptor<SessionTemplate>())
         #expect(routines.count == 1)
     }
 }

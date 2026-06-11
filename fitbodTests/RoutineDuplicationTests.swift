@@ -32,18 +32,18 @@ struct RoutineDuplicationTests {
         return ModelContext(container)
     }
 
-    /// Seeds a routine with:
-    ///   - 2 RoutineExercise rows (Bench, OHP) in order
+    /// Seeds a session template with:
+    ///   - 2 SessionExerciseTemplate rows (Bench, OHP) in order
     ///   - 1 per-set override on the Bench row (setIndex 0, 6 reps @ RPE 9)
-    ///   - 1 SupersetGroup linking both RE rows
-    private func makeFixture(ctx: ModelContext) throws -> Routine {
-        let routine = Routine()
+    ///   - 1 SupersetGroup linking both rows
+    private func makeFixture(ctx: ModelContext) throws -> SessionTemplate {
+        let routine = SessionTemplate()
         routine.name = "Push Day"
         routine.notes = "Heavy bench focus"
-        // Phase 3.1 (PIVOT-01): intent + progressionKind live on Routine.
+        // Phase 3.1 (PIVOT-01): intent + progressionKind live on SessionTemplate.
         // The pre-3.1 fixture had two distinct intents per-RE; under
-        // PIVOT one routine carries one intent. The duplicator test now
-        // verifies the routine-level intent + progression copy across.
+        // PIVOT one template carries one intent. The duplicator test now
+        // verifies the template-level intent + progression copy across.
         routine.intentRaw = Intent.strength.rawValue
         routine.progressionKindRaw = ProgressionKind.rpe.rawValue
         ctx.insert(routine)
@@ -61,16 +61,16 @@ struct RoutineDuplicationTests {
         ctx.insert(ex1)
         ctx.insert(ex2)
 
-        // Two RoutineExercise rows.
-        let re1 = RoutineExercise()
-        re1.routine = routine
+        // Two SessionExerciseTemplate rows.
+        let re1 = SessionExerciseTemplate()
+        re1.sessionTemplate = routine
         re1.exercise = ex1
         re1.orderIndex = 0
         re1.targetSets = 3
         ctx.insert(re1)
 
-        let re2 = RoutineExercise()
-        re2.routine = routine
+        let re2 = SessionExerciseTemplate()
+        re2.sessionTemplate = routine
         re2.exercise = ex2
         re2.orderIndex = 1
         re2.targetSets = 4
@@ -128,8 +128,8 @@ struct RoutineDuplicationTests {
         #expect(sourceIDs.isDisjoint(with: copyIDs))
         // Cloned RE rows belong to the cloned routine, not the source.
         for re in copyExercises {
-            #expect(re.routine?.id == copy.id)
-            #expect(re.routine?.id != source.id)
+            #expect(re.sessionTemplate?.id == copy.id)
+            #expect(re.sessionTemplate?.id != source.id)
         }
         // Prescription fields preserved verbatim.
         #expect(copyExercises[0].targetSets == 3)

@@ -8,7 +8,7 @@
 //
 //    - Exercise → ExerciseMuscleStimulus: cascade (stimulus rows owned)
 //    - Session → SessionExercise → SetEntry: cascade chain
-//    - Routine → RoutineExercise: cascade
+//    - SessionTemplate → SessionExerciseTemplate: cascade
 //    - Exercise → SessionExercise: NULLIFY (LIB-05) — deleting a library
 //      entry must leave the SessionExercise row in place with
 //      `exercise == nil`.
@@ -151,34 +151,34 @@ struct CascadeRuleTests {
         #expect(try ctx.fetch(FetchDescriptor<SetEntry>()).isEmpty)
     }
 
-    // MARK: - Routine → RoutineExercise (cascade)
+    // MARK: - SessionTemplate → SessionExerciseTemplate (cascade)
 
-    @Test("deleting a Routine cascades into its RoutineExercise rows")
+    @Test("deleting a SessionTemplate cascades into its SessionExerciseTemplate rows")
     func routineCascadesToRoutineExercise() throws {
         let container = try InMemoryContainer.makeEmpty()
         let ctx = ModelContext(container)
 
-        let routine = Routine()
+        let routine = SessionTemplate()
         routine.name = "Push Day"
         ctx.insert(routine)
 
-        let re1 = RoutineExercise()
-        re1.routine = routine
+        let re1 = SessionExerciseTemplate()
+        re1.sessionTemplate = routine
         re1.orderIndex = 0
         ctx.insert(re1)
 
-        let re2 = RoutineExercise()
-        re2.routine = routine
+        let re2 = SessionExerciseTemplate()
+        re2.sessionTemplate = routine
         re2.orderIndex = 1
         ctx.insert(re2)
         try ctx.save()
 
-        #expect(try ctx.fetch(FetchDescriptor<RoutineExercise>()).count == 2)
+        #expect(try ctx.fetch(FetchDescriptor<SessionExerciseTemplate>()).count == 2)
 
         ctx.delete(routine)
         try ctx.save()
 
-        #expect(try ctx.fetch(FetchDescriptor<Routine>()).isEmpty)
-        #expect(try ctx.fetch(FetchDescriptor<RoutineExercise>()).isEmpty)
+        #expect(try ctx.fetch(FetchDescriptor<SessionTemplate>()).isEmpty)
+        #expect(try ctx.fetch(FetchDescriptor<SessionExerciseTemplate>()).isEmpty)
     }
 }

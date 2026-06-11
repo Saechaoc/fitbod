@@ -56,7 +56,7 @@ enum InMemoryContainer {
     /// app behavior and need post-V1 entities such as SupersetGroup,
     /// PlateInventory, or Phase 4 block-review fields.
     static func makeCurrent() throws -> ModelContainer {
-        let schema = Schema(SchemaV6.models)
+        let schema = Schema(SchemaV7.models)
         let config = ModelConfiguration(
             schema: schema,
             isStoredInMemoryOnly: true,

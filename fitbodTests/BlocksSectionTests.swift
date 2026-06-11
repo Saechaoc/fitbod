@@ -133,11 +133,11 @@ struct BlocksSectionTests {
         #expect(phases.isEmpty)
     }
 
-    @Test("deleting block nullifies routine link")
+    @Test("deleting block nullifies session template link")
     func deletingBlockNullifiesRoutineLink() throws {
         let context = try makeContext()
         let block = makeBlock()
-        let routine = Routine()
+        let routine = SessionTemplate()
         routine.name = "Linked"
         routine.block = block
         context.insert(block)
@@ -147,7 +147,7 @@ struct BlocksSectionTests {
         context.delete(block)
         try context.save()
 
-        let fetched = try #require(try context.fetch(FetchDescriptor<Routine>()).first)
+        let fetched = try #require(try context.fetch(FetchDescriptor<SessionTemplate>()).first)
         #expect(fetched.block == nil)
     }
 

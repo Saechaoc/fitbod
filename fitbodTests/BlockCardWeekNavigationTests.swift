@@ -96,19 +96,14 @@ struct BlockCardWeekNavigationTests {
         #expect(MesocycleWeekPage.weekBadgeText(for: block, weekIndex: 4) == "Week 5 of 8")
     }
 
-    @Test("scheduled routines sorted by name")
-    func scheduledRoutinesSortedByName() {
-        let now = Date(timeIntervalSince1970: 1_700_000_000)
-        let block = makeBlock(startDate: now)
-        let z = Routine()
-        z.name = "Z Press"
-        let a = Routine()
-        a.name = "Bench"
-        let m = Routine()
-        m.name = "Squat"
-        block.routines = [z, a, m]
-
-        #expect(MesocycleWeekPage.scheduledRoutines(for: block).map(\.name) == ["Bench", "Squat", "Z Press"])
+    // NOTE (V7): scheduledRoutines(for:) was removed in V7 (Block.routines replaced
+    // by Block→Split→SplitSessionSlot graph). The V6 sort-by-name logic is covered
+    // by the new Split-slot ordering tests in 07-06. This test is retired in V7.
+    // @Test("scheduled routines sorted by name")
+    // func scheduledRoutinesSortedByName() { ... }
+    func scheduledRoutinesSortedByName_v7Retired() {
+        // V7: Block.routines and MesocycleWeekPage.scheduledRoutines removed.
+        // Verified in V6 history; replaced by Split-slot order tests (07-06).
     }
 
     @Test("days remaining text current week format")

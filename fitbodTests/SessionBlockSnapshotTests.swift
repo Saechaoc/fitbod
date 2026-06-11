@@ -44,19 +44,19 @@ struct SessionBlockSnapshotTests {
         return block
     }
 
-    private func makeRoutine(in context: ModelContext, block: Block?) -> Routine {
+    private func makeRoutine(in context: ModelContext, block: Block?) -> SessionTemplate {
         let exercise = Exercise.previewSample(name: "Bench Press", equipment: .barbell, mechanic: .compound)
         context.insert(exercise)
 
-        let routine = Routine()
+        let routine = SessionTemplate()
         routine.name = "Push Day"
         routine.block = block
-        // Phase 3.1 (PIVOT-01): progression lives on Routine.
+        // Phase 3.1 (PIVOT-01): progression lives on SessionTemplate.
         routine.progressionKindRaw = ProgressionKind.double.rawValue
         context.insert(routine)
 
-        let routineExercise = RoutineExercise()
-        routineExercise.routine = routine
+        let routineExercise = SessionExerciseTemplate()
+        routineExercise.sessionTemplate = routine
         routineExercise.exercise = exercise
         routineExercise.orderIndex = 0
         routineExercise.targetSets = 3
@@ -81,7 +81,7 @@ struct SessionBlockSnapshotTests {
         let routine = makeRoutine(in: context, block: block)
         try context.save()
 
-        let session = try SessionFactory.start(routine: routine, on: block.startDate, context: context)
+        let session = try SessionFactory.start(template: routine, on: block.startDate, context: context)
 
         #expect(session.block?.id == block.id)
     }
@@ -93,7 +93,7 @@ struct SessionBlockSnapshotTests {
         let routine = makeRoutine(in: context, block: block)
         try context.save()
 
-        let session = try SessionFactory.start(routine: routine, on: block.startDate, context: context)
+        let session = try SessionFactory.start(template: routine, on: block.startDate, context: context)
         routine.block = nil
         try context.save()
 
@@ -107,7 +107,7 @@ struct SessionBlockSnapshotTests {
         let routine = makeRoutine(in: context, block: nil)
         try context.save()
 
-        let session = try SessionFactory.start(routine: routine, on: .now, context: context)
+        let session = try SessionFactory.start(template: routine, on: .now, context: context)
 
         #expect(session.block == nil)
     }
@@ -119,7 +119,7 @@ struct SessionBlockSnapshotTests {
         let routine = makeRoutine(in: context, block: block)
         try context.save()
 
-        let session = try SessionFactory.start(routine: routine, on: block.startDate, context: context)
+        let session = try SessionFactory.start(template: routine, on: block.startDate, context: context)
         block.name = "Renamed"
         try context.save()
 
@@ -134,7 +134,7 @@ struct SessionBlockSnapshotTests {
         let routine = makeRoutine(in: context, block: block)
         try context.save()
 
-        let session = try SessionFactory.start(routine: routine, on: block.startDate, context: context)
+        let session = try SessionFactory.start(template: routine, on: block.startDate, context: context)
         context.delete(block)
         try context.save()
 

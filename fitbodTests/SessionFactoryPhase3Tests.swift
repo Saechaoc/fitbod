@@ -64,7 +64,7 @@ struct SessionFactoryPhase3Tests {
     /// Builds a routine with a single barbell compound exercise using double
     /// progression. Appropriate for prescribedWeight and warmup tests.
     @discardableResult
-    private func makeCompoundRoutine(ctx: ModelContext) throws -> (Routine, Exercise) {
+    private func makeCompoundRoutine(ctx: ModelContext) throws -> (SessionTemplate, Exercise) {
         let ex = Exercise.previewSample(
             name: "Bench Press",
             equipment: .barbell,
@@ -75,15 +75,15 @@ struct SessionFactoryPhase3Tests {
         ex.barWeightOverride = nil    // use inventory bar weight (20 kg)
         ctx.insert(ex)
 
-        let routine = Routine()
+        let routine = SessionTemplate()
         routine.name = "Push Day"
-        // Phase 3.1 (PIVOT-01): intent + progression live on Routine.
+        // Phase 3.1 (PIVOT-01): intent + progression live on SessionTemplate.
         routine.intentRaw = Intent.strength.rawValue
         routine.progressionKindRaw = ProgressionKind.double.rawValue
         ctx.insert(routine)
 
-        let re = RoutineExercise()
-        re.routine = routine
+        let re = SessionExerciseTemplate()
+        re.sessionTemplate = routine
         re.exercise = ex
         re.orderIndex = 0
         re.targetSets = 3
@@ -104,7 +104,7 @@ struct SessionFactoryPhase3Tests {
         try seedBarbellInventory(ctx: ctx)
         let (routine, _) = try makeCompoundRoutine(ctx: ctx)
 
-        let session = try SessionFactory.start(routine: routine, on: .now, context: ctx)
+        let session = try SessionFactory.start(template: routine, on: .now, context: ctx)
 
         // After start, every SessionExercise must have a non-nil prescribedWeight.
         // On the first-ever session (no history), DoubleProgressionStrategy returns
@@ -135,15 +135,15 @@ struct SessionFactoryPhase3Tests {
         ex.smallestIncrement = 2.5
         ctx.insert(ex)
 
-        let routine = Routine()
+        let routine = SessionTemplate()
         routine.name = "Leg Day"
-        // Phase 3.1: intent + progression live on Routine.
+        // Phase 3.1: intent + progression live on SessionTemplate.
         routine.intentRaw = Intent.strength.rawValue
         routine.progressionKindRaw = ProgressionKind.double.rawValue
         ctx.insert(routine)
 
-        let re = RoutineExercise()
-        re.routine = routine
+        let re = SessionExerciseTemplate()
+        re.sessionTemplate = routine
         re.exercise = ex
         re.orderIndex = 0
         re.targetSets = 3
@@ -184,7 +184,7 @@ struct SessionFactoryPhase3Tests {
         // (active session guard checks completedAt == nil)
         // Already set above.
 
-        let session = try SessionFactory.start(routine: routine, on: .now, context: ctx)
+        let session = try SessionFactory.start(template: routine, on: .now, context: ctx)
         let ses = session.exercises ?? []
         #expect(ses.count == 1)
 
@@ -226,15 +226,15 @@ struct SessionFactoryPhase3Tests {
         ex.smallestIncrement = 2.5
         ctx.insert(ex)
 
-        let routine = Routine()
+        let routine = SessionTemplate()
         routine.name = "Pull Day"
-        // Phase 3.1: intent + progression live on Routine.
+        // Phase 3.1: intent + progression live on SessionTemplate.
         routine.intentRaw = Intent.strength.rawValue
         routine.progressionKindRaw = ProgressionKind.double.rawValue
         ctx.insert(routine)
 
-        let re = RoutineExercise()
-        re.routine = routine
+        let re = SessionExerciseTemplate()
+        re.sessionTemplate = routine
         re.exercise = ex
         re.orderIndex = 0
         re.targetSets = 3
@@ -265,7 +265,7 @@ struct SessionFactoryPhase3Tests {
         ctx.insert(priorSet)
         try ctx.save()
 
-        let session = try SessionFactory.start(routine: routine, on: .now, context: ctx)
+        let session = try SessionFactory.start(template: routine, on: .now, context: ctx)
         let se = (session.exercises ?? [])[0]
         let allSets = (se.sets ?? []).sorted { $0.orderIndex < $1.orderIndex }
         let warmupSets = allSets.filter { $0.isWarmup }
@@ -313,17 +313,17 @@ struct SessionFactoryPhase3Tests {
         ex2.smallestIncrement = 2.5
         ctx.insert(ex2)
 
-        let routine = Routine()
+        let routine = SessionTemplate()
         routine.name = "Push Day"
-        // Phase 3.1: intent + progression at the Routine level apply to
-        // both RoutineExercise rows. Same outcome as the pre-3.1 per-RE
+        // Phase 3.1: intent + progression at the SessionTemplate level apply to
+        // both SessionExerciseTemplate rows. Same outcome as the pre-3.1 per-RE
         // shape because both RE rows previously carried strength + double.
         routine.intentRaw = Intent.strength.rawValue
         routine.progressionKindRaw = ProgressionKind.double.rawValue
         ctx.insert(routine)
 
-        let re1 = RoutineExercise()
-        re1.routine = routine
+        let re1 = SessionExerciseTemplate()
+        re1.sessionTemplate = routine
         re1.exercise = ex1
         re1.orderIndex = 0
         re1.targetSets = 3
@@ -331,8 +331,8 @@ struct SessionFactoryPhase3Tests {
         re1.targetRepsHigh = 5
         ctx.insert(re1)
 
-        let re2 = RoutineExercise()
-        re2.routine = routine
+        let re2 = SessionExerciseTemplate()
+        re2.sessionTemplate = routine
         re2.exercise = ex2
         re2.orderIndex = 1
         re2.targetSets = 3
@@ -369,7 +369,7 @@ struct SessionFactoryPhase3Tests {
         try seedPriorSet(for: ex2, weight: 80.0)
         try ctx.save()
 
-        let session = try SessionFactory.start(routine: routine, on: .now, context: ctx)
+        let session = try SessionFactory.start(template: routine, on: .now, context: ctx)
         let exercises = (session.exercises ?? []).sorted { $0.orderIndex < $1.orderIndex }
         #expect(exercises.count == 2)
 
@@ -402,14 +402,14 @@ struct SessionFactoryPhase3Tests {
         ex.smallestIncrement = 2.5
         ctx.insert(ex)
 
-        let routine = Routine()
+        let routine = SessionTemplate()
         routine.name = "Push Day"
         routine.intentRaw = Intent.strength.rawValue
         routine.progressionKindRaw = ProgressionKind.double.rawValue
         ctx.insert(routine)
 
-        let re = RoutineExercise()
-        re.routine = routine
+        let re = SessionExerciseTemplate()
+        re.sessionTemplate = routine
         re.exercise = ex
         re.orderIndex = 0
         re.targetSets = 3
@@ -442,7 +442,7 @@ struct SessionFactoryPhase3Tests {
         ctx.insert(priorSet)
         try ctx.save()
 
-        let session = try SessionFactory.start(routine: routine, on: .now, context: ctx)
+        let session = try SessionFactory.start(template: routine, on: .now, context: ctx)
         let se = (session.exercises ?? [])[0]
         let warmupSets = (se.sets ?? []).filter { $0.isWarmup }
 

@@ -75,12 +75,12 @@ struct RoutineBuilderHeaderPickersTests {
 
     // MARK: - 2. init(routine:) round-trip (edit mode)
 
-    @Test("RoutineDraft init(routine:) round-trips intent + progressionKind from an existing Routine")
+    @Test("RoutineDraft init(routine:) round-trips intent + progressionKind from an existing SessionTemplate")
     @MainActor
     func initFromRoutineRoundTrip() throws {
         let ctx = try makeContext()
 
-        let routine = Routine()
+        let routine = SessionTemplate()
         routine.name = "Edit-Mode Fixture"
         routine.intentRaw = "hypertrophy"
         routine.progressionKindRaw = "rpe"
@@ -128,14 +128,14 @@ struct RoutineBuilderHeaderPickersTests {
         exDraft.exercise = bench
         draft.exercises = [exDraft]
 
-        // Save into a fresh Routine row.
-        let routine = Routine()
+        // Save into a fresh SessionTemplate row.
+        let routine = SessionTemplate()
         ctx.insert(routine)
         draft.save(into: routine, context: ctx)
         try ctx.save()
 
         // Re-fetch from the store.
-        let routines = try ctx.fetch(FetchDescriptor<Routine>())
+        let routines = try ctx.fetch(FetchDescriptor<SessionTemplate>())
         let saved = try #require(routines.first)
         #expect(saved.intentRaw == "power")
         #expect(saved.progressionKindRaw == "hybrid")

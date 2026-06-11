@@ -56,13 +56,13 @@ struct ActiveSessionConflictTests {
         return ModelContext(container)
     }
 
-    /// Builds a one-exercise Routine — the minimum shape SessionFactory
-    /// will accept (it throws `routineHasNoExercises` for empty routines).
+    /// Builds a one-exercise SessionTemplate — the minimum shape SessionFactory
+    /// will accept (it throws `routineHasNoExercises` for empty templates).
     @discardableResult
-    private func makeRoutine(ctx: ModelContext, name: String = "Test") throws -> Routine {
-        let routine = Routine()
+    private func makeRoutine(ctx: ModelContext, name: String = "Test") throws -> SessionTemplate {
+        let routine = SessionTemplate()
         routine.name = name
-        // Phase 3.1 (PIVOT-01): intent + progression live on Routine.
+        // Phase 3.1 (PIVOT-01): intent + progression live on SessionTemplate.
         routine.intentRaw = Intent.strength.rawValue
         ctx.insert(routine)
 
@@ -74,8 +74,8 @@ struct ActiveSessionConflictTests {
         )
         ctx.insert(ex)
 
-        let re = RoutineExercise()
-        re.routine = routine
+        let re = SessionExerciseTemplate()
+        re.sessionTemplate = routine
         re.exercise = ex
         re.orderIndex = 0
         re.targetSets = 3
@@ -94,7 +94,7 @@ struct ActiveSessionConflictTests {
         let ctx = try makeContext()
         let routine = try makeRoutine(ctx: ctx)
 
-        let session = try SessionFactory.start(routine: routine, on: .now, context: ctx)
+        let session = try SessionFactory.start(template: routine, on: .now, context: ctx)
         #expect(session.completedAt == nil)
         #expect(SessionFactory.active(in: ctx)?.id == session.id)
     }
@@ -105,10 +105,10 @@ struct ActiveSessionConflictTests {
     func secondStartThrowsActiveSessionAlreadyExists() throws {
         let ctx = try makeContext()
         let routine = try makeRoutine(ctx: ctx)
-        _ = try SessionFactory.start(routine: routine, on: .now, context: ctx)
+        _ = try SessionFactory.start(template: routine, on: .now, context: ctx)
 
         do {
-            _ = try SessionFactory.start(routine: routine, on: .now, context: ctx)
+            _ = try SessionFactory.start(template: routine, on: .now, context: ctx)
             Issue.record("Expected activeSessionAlreadyExists, but start returned a Session")
         } catch SessionFactoryError.activeSessionAlreadyExists {
             // expected — this is the error code that RoutinesListView's
@@ -125,11 +125,11 @@ struct ActiveSessionConflictTests {
     func startAfterFinishingPriorSessionSucceeds() throws {
         let ctx = try makeContext()
         let routine = try makeRoutine(ctx: ctx)
-        let first = try SessionFactory.start(routine: routine, on: .now, context: ctx)
+        let first = try SessionFactory.start(template: routine, on: .now, context: ctx)
         first.completedAt = .now
         try ctx.save()
 
-        let second = try SessionFactory.start(routine: routine, on: .now, context: ctx)
+        let second = try SessionFactory.start(template: routine, on: .now, context: ctx)
         #expect(second.id != first.id)
         #expect(second.completedAt == nil)
     }
@@ -140,7 +140,7 @@ struct ActiveSessionConflictTests {
     func startAfterDiscardingPriorSessionSucceeds() throws {
         let ctx = try makeContext()
         let routine = try makeRoutine(ctx: ctx)
-        let first = try SessionFactory.start(routine: routine, on: .now, context: ctx)
+        let first = try SessionFactory.start(template: routine, on: .now, context: ctx)
 
         // Simulate the "Discard" button in the "Workout in Progress"
         // alert — `RoutinesListView` invokes `ctx.delete(active)` +
@@ -149,7 +149,7 @@ struct ActiveSessionConflictTests {
         try ctx.save()
         #expect(SessionFactory.active(in: ctx) == nil)
 
-        let second = try SessionFactory.start(routine: routine, on: .now, context: ctx)
+        let second = try SessionFactory.start(template: routine, on: .now, context: ctx)
         #expect(second.completedAt == nil)
     }
 }

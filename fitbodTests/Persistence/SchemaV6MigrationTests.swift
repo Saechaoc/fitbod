@@ -61,18 +61,18 @@ struct SchemaV6MigrationTests {
 
     // MARK: - 1. Migration plan registers V6
 
-    @Test("Migration plan lists SchemaV6 as the latest schema")
+    @Test("Migration plan lists SchemaV7 as the latest schema")
     func migrationPlanRegistersV6() {
         let names = FitbodSchemaMigrationPlan.schemas.map { String(describing: $0) }
-        #expect(names.last == "SchemaV6")
-        #expect(names == ["SchemaV1", "SchemaV2", "SchemaV3", "SchemaV4", "SchemaV5", "SchemaV6"])
+        #expect(names.last == "SchemaV7")
+        #expect(names == ["SchemaV1", "SchemaV2", "SchemaV3", "SchemaV4", "SchemaV5", "SchemaV6", "SchemaV7"])
     }
 
-    // MARK: - 2. Migration plan has 5 stages
+    // MARK: - 2. Migration plan has 6 stages
 
-    @Test("Migration plan has five stages (V1→V2, V2→V3, V3→V4, V4→V5, V5→V6)")
+    @Test("Migration plan has six stages (V1→V2, V2→V3, V3→V4, V4→V5, V5→V6, V6→V7)")
     func migrationPlanHasFiveStages() {
-        #expect(FitbodSchemaMigrationPlan.stages.count == 5)
+        #expect(FitbodSchemaMigrationPlan.stages.count == 6)
     }
 
     // MARK: - 3. migrateV5toV6 is custom (not lightweight)
@@ -100,11 +100,15 @@ struct SchemaV6MigrationTests {
         #expect(Bool(true))
     }
 
-    // MARK: - 4. V6 entity count matches V5
+    // MARK: - 4. V6 entity count is V5 + 2 nested migration shapes
 
-    @Test("SchemaV6 models count matches SchemaV5.models count (no new entities)")
+    @Test("SchemaV6 models count is SchemaV5.models count + 2 (V7 migration: SchemaV6 gained nested Routine + RoutineExercise shapes for the V6→V7 custom stage)")
     func schemaV6ModelsCountMatchesV5() {
-        #expect(SchemaV6.models.count == SchemaV5.models.count)
+        // V7 migration: SchemaV6 gained nested Routine + RoutineExercise shapes
+        // for the V6 to V7 custom stage (Pitfall 4 fix — silent 0-row stash
+        // without explicit models entries). SchemaV6.models is now a 16-entry
+        // explicit array: 14 production types + SchemaV6.Routine + SchemaV6.RoutineExercise.
+        #expect(SchemaV6.models.count == SchemaV5.models.count + 2)
     }
 
     // MARK: - 5. UserSettings Phase 5 fields round-trip

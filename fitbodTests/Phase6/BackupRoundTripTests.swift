@@ -156,7 +156,7 @@ struct BackupRoundTripTests {
         let muscleStimuli = try ctx.fetch(FetchDescriptor<ExerciseMuscleStimulus>(sortBy: [SortDescriptor(\.id)])).map(mapMuscleStimulus)
         let routineFolders = try ctx.fetch(FetchDescriptor<RoutineFolder>(sortBy: [SortDescriptor(\.id)])).map(mapRoutineFolder)
         let supersetGroups = try ctx.fetch(FetchDescriptor<SupersetGroup>(sortBy: [SortDescriptor(\.id)])).map(mapSupersetGroup)
-        let routines = try ctx.fetch(FetchDescriptor<Routine>(sortBy: [SortDescriptor(\.id)])).map(mapRoutine)
+        let routines = try ctx.fetch(FetchDescriptor<SessionTemplate>(sortBy: [SortDescriptor(\.id)])).map(mapRoutine)
         let sessions = try ctx.fetch(FetchDescriptor<Session>(sortBy: [SortDescriptor(\.startedAt)])).map(mapSession)
         let blocks = try ctx.fetch(FetchDescriptor<Block>(sortBy: [SortDescriptor(\.id)])).map(mapBlock)
         let muscleVolumeTargets = try ctx.fetch(FetchDescriptor<MuscleVolumeTarget>(sortBy: [SortDescriptor(\.id)])).map(mapMuscleVolumeTarget)
@@ -234,7 +234,7 @@ struct BackupRoundTripTests {
         )
     }
 
-    static func mapRoutine(_ r: Routine) -> ExportRoutineDTO {
+    static func mapRoutine(_ r: SessionTemplate) -> ExportRoutineDTO {
         let exercises = (r.exercises ?? [])
             .sorted { $0.orderIndex < $1.orderIndex }
             .map(mapRoutineExercise)
@@ -249,7 +249,7 @@ struct BackupRoundTripTests {
         )
     }
 
-    static func mapRoutineExercise(_ re: RoutineExercise) -> ExportRoutineExerciseDTO {
+    static func mapRoutineExercise(_ re: SessionExerciseTemplate) -> ExportRoutineExerciseDTO {
         let overrides = (re.setOverrides ?? [])
             .sorted { $0.setIndex < $1.setIndex }
             .map(mapSetOverride)

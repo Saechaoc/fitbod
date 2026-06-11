@@ -49,12 +49,13 @@ struct BlockOverviewScreenWeekCarouselTests {
         context.insert(phase)
         block.phases = [phase]
 
-        let routine = Routine()
+        // V7: SessionTemplate links to Block via SessionTemplate.block (Block.routines removed).
+        // Block no longer has a direct routines array; templates are linked via the inverse only.
+        let routine = SessionTemplate()
         routine.name = "Push Day"
         routine.block = block
         routine.progressionKindRaw = ProgressionKind.double.rawValue
         context.insert(routine)
-        block.routines = [routine]
 
         return block
     }
@@ -118,9 +119,9 @@ struct BlockOverviewScreenWeekCarouselTests {
 
         // Test dayState derivation logic via a helper that replicates the production logic
         // (dayState(for:) is internal but requires weekSessions to be populated via @Query)
-        // We verify the predicate conditions that drive .done state directly:
+        // V7: Block.routines removed; session-to-block link is now session.block?.id == block.id only.
+        // (In V6, the OR-branch used block.routines to match sourceRoutineID; V7 uses session.block.)
         let isLinkedToBlock = session.block?.id == block.id
-            || (block.routines ?? []).contains { $0.id == session.sourceRoutineID }
         #expect(isLinkedToBlock, "Session should be recognized as linked to block for done-state")
 
         let cellDate = sessionStartDate
@@ -156,24 +157,26 @@ struct BlockOverviewScreenWeekCarouselTests {
         #expect(!isInCurrentWeek, "Old session should not be in current week window")
     }
 
-    @Test("Future day cells derive upcoming state when routines exist")
+    @Test("Future day cells derive upcoming state when block is active")
     func futureDayCellsAreUpcomingWhenRoutinesExist() throws {
         let context = try makeContext()
         let block = makeBlock(in: context)
         try context.save()
 
-        // Block has 1 routine — future days should be .upcoming
-        let routineCount = (block.routines ?? []).count
-        #expect(routineCount > 0, "Block should have at least one routine for upcoming state")
+        // V7: Block.routines removed. "Has scheduled sessions" is now determined via
+        // Block.split→SplitSessionSlot (07-06). For this regression test, we verify
+        // the block is active (which drives .upcoming for future days) rather than
+        // counting directly linked routines.
+        #expect(block.isActive, "Block should be active for upcoming state logic")
 
         // A date 2 days from now is in the future
         let cal = Calendar.current
         let futureDate = cal.date(byAdding: .day, value: 2, to: Date.now) ?? Date.now
         #expect(futureDate > Date.now, "Future date should be in the future")
 
-        // The upcoming heuristic: future AND routineCount > 0
-        let wouldBeUpcoming = futureDate > Date.now && routineCount > 0
-        #expect(wouldBeUpcoming, "Future day with routines should resolve to upcoming")
+        // The upcoming heuristic: future AND block is active
+        let wouldBeUpcoming = futureDate > Date.now && block.isActive
+        #expect(wouldBeUpcoming, "Future day in active block should resolve to upcoming")
     }
 
     @Test("Today cell is identified correctly")

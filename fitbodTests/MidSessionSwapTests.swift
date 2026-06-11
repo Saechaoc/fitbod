@@ -82,8 +82,8 @@ struct MidSessionSwapTests {
     private struct Fixture {
         let bench: Exercise
         let ohp: Exercise
-        let routine: Routine
-        let routineExercise: RoutineExercise
+        let routine: SessionTemplate
+        let routineExercise: SessionExerciseTemplate
         let session: Session
         let sessionExercise: SessionExercise
     }
@@ -104,15 +104,15 @@ struct MidSessionSwapTests {
         ctx.insert(bench)
         ctx.insert(ohp)
 
-        let routine = Routine()
+        let routine = SessionTemplate()
         routine.name = "Push Day"
-        // Phase 3.1 (PIVOT-01): intent + progression live on Routine.
+        // Phase 3.1 (PIVOT-01): intent + progression live on SessionTemplate.
         routine.intentRaw = Intent.strength.rawValue
         routine.progressionKindRaw = ProgressionKind.double.rawValue
         ctx.insert(routine)
 
-        let re = RoutineExercise()
-        re.routine = routine
+        let re = SessionExerciseTemplate()
+        re.sessionTemplate = routine
         re.exercise = bench
         re.orderIndex = 0
         re.targetSets = 3
@@ -121,7 +121,7 @@ struct MidSessionSwapTests {
         re.prescribedRestSeconds = 180
         ctx.insert(re)
 
-        let session = try SessionFactory.start(routine: routine, on: .now, context: ctx)
+        let session = try SessionFactory.start(template: routine, on: .now, context: ctx)
         let se = (session.exercises ?? []).first { $0.orderIndex == 0 }!
         // Seed planned sets at 135 (no prior matching-intent session
         // exists, so SessionFactory defaulted to 0; we set 135 to

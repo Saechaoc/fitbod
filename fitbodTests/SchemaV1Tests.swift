@@ -104,24 +104,24 @@ struct SchemaV1Tests {
         #expect(try ctx.fetch(FetchDescriptor<ExerciseMuscleStimulus>()).count == 1)
     }
 
-    @Test("Routine default-inits and saves")
+    @Test("SessionTemplate default-inits and saves")
     func routineDefaults() throws {
         let container = try InMemoryContainer.makeEmpty()
         let ctx = ModelContext(container)
-        let r = Routine()
+        let r = SessionTemplate()
         ctx.insert(r)
         try ctx.save()
-        #expect(try ctx.fetch(FetchDescriptor<Routine>()).count == 1)
+        #expect(try ctx.fetch(FetchDescriptor<SessionTemplate>()).count == 1)
     }
 
-    @Test("RoutineExercise default-inits and saves")
+    @Test("SessionExerciseTemplate default-inits and saves")
     func routineExerciseDefaults() throws {
         let container = try InMemoryContainer.makeEmpty()
         let ctx = ModelContext(container)
-        let re = RoutineExercise()
+        let re = SessionExerciseTemplate()
         ctx.insert(re)
         try ctx.save()
-        #expect(try ctx.fetch(FetchDescriptor<RoutineExercise>()).count == 1)
+        #expect(try ctx.fetch(FetchDescriptor<SessionExerciseTemplate>()).count == 1)
     }
 
     @Test("Session default-inits and saves")

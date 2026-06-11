@@ -139,19 +139,19 @@ struct RoutineDraftValidationTests {
         exDraft.setOverrides = [ov]
         draft.exercises = [exDraft]
 
-        // Save into a fresh Routine row.
-        let routine = Routine()
+        // Save into a fresh SessionTemplate row.
+        let routine = SessionTemplate()
         ctx.insert(routine)
         draft.save(into: routine, context: ctx)
         try ctx.save()
 
         // Re-fetch via @Model identity.
-        let routines = try ctx.fetch(FetchDescriptor<Routine>())
+        let routines = try ctx.fetch(FetchDescriptor<SessionTemplate>())
         #expect(routines.count == 1)
         let saved = try #require(routines.first)
         #expect(saved.name == "Push Day A")  // trim landed
         #expect(saved.notes == "Heavy bench focus.")
-        // Phase 3.1: intent + progression persisted on the parent Routine.
+        // Phase 3.1: intent + progression persisted on the parent SessionTemplate.
         #expect(saved.intent == .strength)
         #expect(saved.progressionKind == .double)
         #expect((saved.exercises ?? []).count == 1)

@@ -62,12 +62,12 @@ struct WarmupConfigTests {
         #expect(config.skipNextSession == false)
     }
 
-    // MARK: - 3. RoutineExercise.warmupOverride is nil by default
+    // MARK: - 3. SessionExerciseTemplate.warmupOverride is nil by default
 
-    @Test("routineExerciseWarmupOverrideNilByDefault — fresh RoutineExercise has nil override")
+    @Test("routineExerciseWarmupOverrideNilByDefault — fresh SessionExerciseTemplate has nil override")
     func routineExerciseWarmupOverrideNilByDefault() throws {
         let ctx = try makeContext()
-        let re = RoutineExercise()
+        let re = SessionExerciseTemplate()
         ctx.insert(re)
         try ctx.save()
 
@@ -78,12 +78,12 @@ struct WarmupConfigTests {
         #expect(re.warmupOverride == nil)
     }
 
-    // MARK: - 4. RoutineExercise.warmupOverride get/set round-trip
+    // MARK: - 4. SessionExerciseTemplate.warmupOverride get/set round-trip
 
     @Test("routineExerciseWarmupOverrideSetGetRoundTrip — set encodes Data; get decodes back")
     func routineExerciseWarmupOverrideSetGetRoundTrip() throws {
         let ctx = try makeContext()
-        let re = RoutineExercise()
+        let re = SessionExerciseTemplate()
         ctx.insert(re)
 
         let config = WarmupConfig(enabled: false, skipNextSession: true)

@@ -63,7 +63,9 @@ struct SchemaV4MigrationTests {
     func schemaV4ModelsListHasSixteenEntities() {
         #expect(SchemaV4.models.count == 16)
         #expect(ObjectIdentifier(SchemaV4.Block.self) == ObjectIdentifier(fitbod.Block.self))
-        #expect(ObjectIdentifier(SchemaV4.Routine.self) != ObjectIdentifier(fitbod.Routine.self))
+        // SchemaV4.Routine is the V4 historical nested type; it is distinct from
+        // the V7 production type fitbod.SessionTemplate (formerly fitbod.Routine).
+        #expect(ObjectIdentifier(SchemaV4.Routine.self) != ObjectIdentifier(fitbod.SessionTemplate.self))
         #expect(ObjectIdentifier(SchemaV4.Session.self) != ObjectIdentifier(fitbod.Session.self))
     }
 
@@ -75,25 +77,25 @@ struct SchemaV4MigrationTests {
         // `String(describing:)` returns just the class name, not the
         // namespace, so `SchemaV3.Routine.self` describes as `"Routine"`.
         #expect(String(describing: SchemaV3.Routine.self) == "Routine")
-        // Identity-level distinctness: nested SchemaV3.Routine is NOT the
-        // same type as top-level fitbod.Routine. ObjectIdentifier on the
-        // metatype is the canonical disambiguation.
-        #expect(ObjectIdentifier(SchemaV3.Routine.self) != ObjectIdentifier(fitbod.Routine.self))
+        // Identity-level distinctness: nested SchemaV3.Routine is NOT the same type
+        // as the V7 production type fitbod.SessionTemplate (formerly fitbod.Routine).
+        // ObjectIdentifier on the metatype is the canonical disambiguation.
+        #expect(ObjectIdentifier(SchemaV3.Routine.self) != ObjectIdentifier(fitbod.SessionTemplate.self))
         #expect(ObjectIdentifier(SchemaV3.Session.self) != ObjectIdentifier(fitbod.Session.self))
-        #expect(ObjectIdentifier(SchemaV3.RoutineExercise.self) != ObjectIdentifier(fitbod.RoutineExercise.self))
+        #expect(ObjectIdentifier(SchemaV3.RoutineExercise.self) != ObjectIdentifier(fitbod.SessionExerciseTemplate.self))
         #expect(ObjectIdentifier(SchemaV3.SessionExercise.self) != ObjectIdentifier(fitbod.SessionExercise.self))
     }
 
-    // MARK: - 3. Migration plan wiring (6 schemas, 5 stages — Phase 5
-    //              bumped V5 → V6 with a custom plateauTolerance default
-    //              migration; counts updated to match SchemaV6.)
+    // MARK: - 3. Migration plan wiring (7 schemas, 6 stages — Phase 7
+    //              added V6 → V7 with a custom Routine→SessionTemplate
+    //              materialization stage; counts updated to match SchemaV7.)
 
-    @Test("FitbodSchemaMigrationPlan registers V1+V2+V3+V4+V5+V6 and FIVE stages")
+    @Test("FitbodSchemaMigrationPlan registers V1+V2+V3+V4+V5+V6+V7 and SIX stages")
     func migrationPlanWiringIsV1V2V3V4() {
         let names = FitbodSchemaMigrationPlan.schemas.map { String(describing: $0) }
-        #expect(names == ["SchemaV1", "SchemaV2", "SchemaV3", "SchemaV4", "SchemaV5", "SchemaV6"])
-        #expect(FitbodSchemaMigrationPlan.schemas.count == 6)
-        #expect(FitbodSchemaMigrationPlan.stages.count == 5)
+        #expect(names == ["SchemaV1", "SchemaV2", "SchemaV3", "SchemaV4", "SchemaV5", "SchemaV6", "SchemaV7"])
+        #expect(FitbodSchemaMigrationPlan.schemas.count == 7)
+        #expect(FitbodSchemaMigrationPlan.stages.count == 6)
     }
 
     // MARK: - 4. migrateV3toV4 is positionally the third stage
@@ -103,10 +105,10 @@ struct SchemaV4MigrationTests {
         // MigrationStage's internals aren't easily reflectable from a
         // test, so positional identity is the strongest assertion the
         // public surface allows. The order [V1->V2, V2->V3, V3->V4, V4->V5,
-        // V5->V6] is load-bearing: SwiftData applies stages in order
-        // against an existing on-disk store. Phase 5 appended V5->V6
-        // (custom plateauTolerance bump) to the chain.
-        #expect(FitbodSchemaMigrationPlan.stages.count == 5)
+        // V5->V6, V6->V7] is load-bearing: SwiftData applies stages in order
+        // against an existing on-disk store. Phase 7 appended V6->V7
+        // (custom Routine→SessionTemplate materialization) to the chain.
+        #expect(FitbodSchemaMigrationPlan.stages.count == 6)
         // MigrationStage has no public equality, so the count check above
         // plus the wiring test pin down the registered stage chain.
     }
