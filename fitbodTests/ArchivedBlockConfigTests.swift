@@ -189,6 +189,9 @@ struct ArchivedBlockConfigWriteTests {
         set.targetRepsHigh = 8
         set.targetRPE = 8.0
         set.prescribedRestSeconds = 180
+        // WR-03: author exercise-level notes + warmup flag so the mirror is testable.
+        set.notes = "Pause at chest"
+        set.generateWarmups = true
 
         let slot = SplitSessionSlot()
         ctx.insert(slot)
@@ -207,6 +210,8 @@ struct ArchivedBlockConfigWriteTests {
         phase.weeks = 4
         phase.volumeMultiplier = 1.0
         phase.intensityMultiplier = 1.0
+        // WR-02: author phase-level notes so the mirror is testable.
+        phase.notes = "Build base volume"
 
         let block = Block()
         ctx.insert(block)
@@ -290,6 +295,29 @@ struct ArchivedBlockConfigWriteTests {
         let json = try ArchivedBlockConfig.write(from: block, endedAt: .now)
         let decoded = try ArchivedBlockConfig.decode(from: Data(json.utf8))
         #expect(decoded.split.slots[0].sessionName == "Slot 1")
+    }
+
+    @Test("write mirrors BlockPhase.notes — WR-02, full phase field mirror (spec §6)")
+    func writeMirrorsPhaseNotes() throws {
+        let ctx = try makeContext()
+        let block = try makeFullBlock(ctx)
+        let json = try ArchivedBlockConfig.write(from: block, endedAt: .now)
+        let decoded = try ArchivedBlockConfig.decode(from: Data(json.utf8))
+        #expect(decoded.phases[0].notes == "Build base volume",
+            "BlockPhase.notes must be mirrored into the archive, not dropped")
+    }
+
+    @Test("write mirrors exercise notes + generateWarmups — WR-03 (spec §6)")
+    func writeMirrorsExerciseNotesAndWarmupFlag() throws {
+        let ctx = try makeContext()
+        let block = try makeFullBlock(ctx)
+        let json = try ArchivedBlockConfig.write(from: block, endedAt: .now)
+        let decoded = try ArchivedBlockConfig.decode(from: Data(json.utf8))
+        let exercise = decoded.split.slots[0].exercises[0]
+        #expect(exercise.notes == "Pause at chest",
+            "SessionExerciseTemplate.notes must be mirrored, not dropped")
+        #expect(exercise.generateWarmups == true,
+            "generateWarmups must mirror the template flag, not be hardcoded false")
     }
 
     @Test("write uses 'strength'/'double' fallback when sessionTemplate is nil")

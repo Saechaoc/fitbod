@@ -197,7 +197,7 @@ extension ArchivedBlockConfig {
                     weeks: phase.weeks,
                     volumeMultiplier: phase.volumeMultiplier,
                     intensityMultiplier: phase.intensityMultiplier,
-                    notes: nil
+                    notes: phase.notes          // WR-02: full BlockPhase mirror (spec §6)
                 )
             }
 
@@ -222,10 +222,10 @@ extension ArchivedBlockConfig {
                             targetRIR: ex.targetRIR,
                             prescribedRestSeconds: ex.prescribedRestSeconds,
                             tempo: ex.tempo,
-                            notes: nil,
+                            notes: ex.notes,                          // WR-03: full prescription mirror (spec §6)
                             intentRaw: intentRaw,
                             progressionKindRaw: progressionKindRaw,
-                            generateWarmups: false,
+                            generateWarmups: ex.generateWarmups,      // WR-03: mirror flag, not hardcoded false
                             tracksTempo: ex.tracksTempo,
                             tracksPartialReps: ex.tracksPartialReps
                         )
