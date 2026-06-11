@@ -20,11 +20,11 @@ public struct LiftListSection: View {
 
     // MARK: - Properties
 
-    let routine: Routine?
+    let routine: SessionTemplate?
 
     // MARK: - Computed
 
-    private var sortedExercises: [RoutineExercise] {
+    private var sortedExercises: [SessionExerciseTemplate] {
         (routine?.exercises ?? []).sorted { $0.orderIndex < $1.orderIndex }
     }
 
@@ -72,7 +72,7 @@ public struct LiftListSection: View {
 #if DEBUG
 private struct LiftListSectionPreviewContainer: View {
     let container: ModelContainer
-    let routine: Routine
+    let routine: SessionTemplate
 
     var body: some View {
         LiftListSection(routine: routine)
@@ -83,7 +83,7 @@ private struct LiftListSectionPreviewContainer: View {
     static func make() -> LiftListSectionPreviewContainer {
         let config = ModelConfiguration(isStoredInMemoryOnly: true)
         let container = try! ModelContainer(
-            for: Routine.self, RoutineExercise.self, Exercise.self,
+            for: SessionTemplate.self, SessionExerciseTemplate.self, Exercise.self,
             configurations: config
         )
         let fixture: [(String, String, Int, Int, Int)] = [
@@ -93,7 +93,7 @@ private struct LiftListSectionPreviewContainer: View {
             ("Tricep Pushdown", "isolation", 4, 12, 15),
             ("OH Tricep Ext", "isolation", 3, 15, 20),
         ]
-        let routine = Routine()
+        let routine = SessionTemplate()
         routine.name = "Push A"
         container.mainContext.insert(routine)
         for (idx, spec) in fixture.enumerated() {
@@ -101,12 +101,12 @@ private struct LiftListSectionPreviewContainer: View {
             ex.name = spec.0
             ex.canonicalName = spec.0
             ex.mechanicRaw = spec.1
-            let re = RoutineExercise()
+            let re = SessionExerciseTemplate()
             re.exercise = ex
             re.targetSets = spec.2
             re.targetRepsLow = spec.3
             re.targetRepsHigh = spec.4
-            re.routine = routine
+            re.sessionTemplate = routine
             re.orderIndex = idx
             container.mainContext.insert(ex)
             container.mainContext.insert(re)

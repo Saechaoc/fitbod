@@ -21,7 +21,7 @@ public enum ExerciseDeletion {
                 sessionExercise.exercise = nil
             }
 
-            let routineExercises = try context.fetch(FetchDescriptor<RoutineExercise>())
+            let routineExercises = try context.fetch(FetchDescriptor<SessionExerciseTemplate>())
             for routineExercise in routineExercises where routineExercise.exercise?.id == exerciseID {
                 routineExercise.exercise = nil
             }

@@ -42,8 +42,8 @@ public enum SchemaV2: VersionedSchema {
             Exercise.self,
             MuscleGroup.self,
             ExerciseMuscleStimulus.self,
-            Routine.self,                 // + folderID
-            RoutineExercise.self,         // + supersetGroupID / tracksTempo / tracksPartialReps / setOverrides
+            SessionTemplate.self,                 // + folderID (V7 rename of Routine)
+            SessionExerciseTemplate.self,         // + supersetGroupID / tracksTempo / tracksPartialReps / setOverrides (V7 rename of RoutineExercise)
             Session.self,
             SessionExercise.self,         // + pinnedNote
             SetEntry.self,                // + partialReps / clusterSubRepsJoined / isComplete

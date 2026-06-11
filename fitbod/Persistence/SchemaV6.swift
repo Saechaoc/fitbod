@@ -51,8 +51,8 @@ public enum SchemaV6: VersionedSchema {
     public typealias Exercise = fitbod.Exercise
     public typealias MuscleGroup = fitbod.MuscleGroup
     public typealias ExerciseMuscleStimulus = fitbod.ExerciseMuscleStimulus
-    public typealias Routine = fitbod.Routine
-    public typealias RoutineExercise = fitbod.RoutineExercise
+    public typealias Routine = fitbod.SessionTemplate          // V7 rename: Routine → SessionTemplate
+    public typealias RoutineExercise = fitbod.SessionExerciseTemplate  // V7 rename: RoutineExercise → SessionExerciseTemplate
     public typealias Session = fitbod.Session
     public typealias SessionExercise = fitbod.SessionExercise
     public typealias SetEntry = fitbod.SetEntry
