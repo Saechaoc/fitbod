@@ -1938,12 +1938,13 @@ fileprivate struct NewBlockSplitBand: View {
                     .frame(height: NewBlockScreenTokens.rule)
 
                 HStack(spacing: 4) {
-                    let weekdays: [(Int, String)] = [
-                        (2, "M"), (3, "T"), (4, "W"), (5, "T"), (6, "F"), (7, "S"), (1, "S")
+                    let weekdays: [(Int, String, String)] = [
+                        (2, "M", "Monday"), (3, "T", "Tuesday"), (4, "W", "Wednesday"),
+                        (5, "T", "Thursday"), (6, "F", "Friday"), (7, "S", "Saturday"), (1, "S", "Sunday")
                     ]
-                    ForEach(weekdays, id: \.0) { weekday, letter in
+                    ForEach(weekdays, id: \.0) { weekday, letter, name in
                         let isSelected = draft.trainingDays.contains(weekday)
-                        NewBlockDayToggleChip(letter: letter, selected: isSelected) {
+                        NewBlockDayToggleChip(letter: letter, weekdayName: name, selected: isSelected) {
                             if isSelected {
                                 draft.trainingDays.removeAll { $0 == weekday }
                             } else {
@@ -2019,6 +2020,7 @@ fileprivate struct NewBlockModeChip: View {
 // Day toggle chip for the split band — copy-adapted from BlockOverviewScreen.DayToggleChip.
 fileprivate struct NewBlockDayToggleChip: View {
     let letter: String
+    let weekdayName: String   // full name e.g. "Monday" — used for accessibilityLabel
     let selected: Bool
     let action: () -> Void
 
@@ -2040,6 +2042,7 @@ fileprivate struct NewBlockDayToggleChip: View {
                 )
         }
         .buttonStyle(.plain)
+        .accessibilityLabel(weekdayName)
         .accessibilityAddTraits(.isToggle)
         .accessibilityValue(selected ? "on" : "off")
     }

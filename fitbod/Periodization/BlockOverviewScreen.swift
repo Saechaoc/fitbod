@@ -690,6 +690,7 @@ public struct BlockOverviewScreen: View {
         // UI grid index 0=Mon...6=Sun; Calendar weekday: Sun=1, Mon=2, ...Sat=7
         let weekdayForGridIndex: [Int] = [2, 3, 4, 5, 6, 7, 1] // Mon..Sun in Calendar weekday ints
         let weekdayLetters = ["M", "T", "W", "T", "F", "S", "S"]
+        let weekdayNames = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
         let slotCount = block.split?.slots?.count ?? 0
 
         VStack(spacing: 0) {
@@ -701,8 +702,9 @@ public struct BlockOverviewScreen: View {
                 ForEach(0..<7, id: \.self) { index in
                     let weekday = weekdayForGridIndex[index]
                     let letter = index < weekdayLetters.count ? weekdayLetters[index] : "?"
+                    let name = index < weekdayNames.count ? weekdayNames[index] : "Day \(index + 1)"
                     let isSelected = block.trainingDays.contains(weekday)
-                    DayToggleChip(letter: letter, selected: isSelected) {
+                    DayToggleChip(letter: letter, weekdayName: name, selected: isSelected) {
                         var days = block.trainingDays
                         if isSelected {
                             days.removeAll { $0 == weekday }
@@ -1095,6 +1097,7 @@ fileprivate struct ModeChip: View {
 
 fileprivate struct DayToggleChip: View {
     let letter: String
+    let weekdayName: String   // full name e.g. "Monday" — used for accessibilityLabel
     let selected: Bool
     let action: () -> Void
 
@@ -1116,6 +1119,7 @@ fileprivate struct DayToggleChip: View {
                 )
         }
         .buttonStyle(.plain)
+        .accessibilityLabel(weekdayName)
         .accessibilityAddTraits(.isToggle)
         .accessibilityValue(selected ? "on" : "off")
     }
