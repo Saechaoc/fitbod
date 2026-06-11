@@ -320,10 +320,10 @@ This ordering is dependency-driven and pitfall-aware (per research/SUMMARY.md an
 **Mode:** mvp
 **Requirements**: Authoritative contract: `.planning/quick/training-block-spec/program-graph-spec.md` §1–§3, §6–§7. Delete rules per §3/§4: slot.sessionTemplate `.deny`, Block.split nullify, Session.slot nullify, Split.slots cascade. Aux entities (RoutineFolder, RoutineExerciseSetOverride, SupersetGroup) keep names — accepted naming debt.
 **Depends on:** Phase 6
-**Plans:** 6 plans (6 waves)
+**Plans:** 1/6 plans executed
 
 Plans:
-- [ ] 07-01-PLAN.md — Wave 1: SchedulingMode enum + ArchivedBlockConfig Codable DTO + nested DTOs + iso8601 decoder (SPEC-7-DTO)
+- [x] 07-01-PLAN.md — Wave 1: SchedulingMode enum + ArchivedBlockConfig Codable DTO + nested DTOs + iso8601 decoder (SPEC-7-DTO)
 - [ ] 07-02-PLAN.md — Wave 2: Rename Routine→SessionTemplate / RoutineExercise→SessionExerciseTemplate (Models + Routines + Sessions clusters; gitnexus call-graph rename)
 - [ ] 07-03-PLAN.md — Wave 3: Split + SplitSessionSlot entities + Block (split/schedulingMode/trainingDays/archivedConfigJSON, routines removed, derivedStatus) + Session (template/slot/templateName) + remaining app clusters compile green
 - [ ] 07-04-PLAN.md — Wave 4: SchemaV7 (explicit models) + SchemaV6 nested-type expansion + 7-step custom migrateV6toV7 stage with internal-static helpers
