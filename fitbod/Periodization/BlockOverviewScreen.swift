@@ -832,7 +832,7 @@ public struct BlockOverviewScreen: View {
         .padding(.horizontal, 16)
         .padding(.vertical, 11)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(isNow ? BlockPhaseColors.rowTint(for: .intensification) : Color.clear)
+        .background(isNow ? BlockPhaseColors.rowTint(for: phase.kind) : Color.clear)
         .overlay(alignment: .leading) {
             if isNow {
                 Rectangle()
