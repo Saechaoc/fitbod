@@ -27,7 +27,7 @@ import SwiftData
 @Model
 public final class RoutineExerciseSetOverride {
     @Attribute(.unique) public var id: UUID = UUID()
-    public var routineExercise: RoutineExercise? = nil
+    public var routineExercise: SessionExerciseTemplate? = nil
     public var setIndex: Int = 0
     public var targetRepsLow: Int? = nil
     public var targetRepsHigh: Int? = nil

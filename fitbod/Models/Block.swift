@@ -32,8 +32,8 @@ public final class Block {
     @Relationship(deleteRule: .cascade, inverse: \BlockPhase.block)
     public var phases: [BlockPhase]? = []
 
-    @Relationship(inverse: \Routine.block)
-    public var routines: [Routine]? = []
+    @Relationship(inverse: \SessionTemplate.block)
+    public var routines: [SessionTemplate]? = []
 
     @Relationship(inverse: \Session.block)
     public var sessions: [Session]? = []

@@ -1,31 +1,34 @@
 //
-//  RoutineExercise.swift
+//  SessionExerciseTemplate.swift
 //  fitbod
 //
-//  Per-exercise prescription within a Routine template. Each field on this
-//  type has a mirror on `SessionExercise` — when a Session starts, the
-//  values are *copied* (not referenced), so editing the template tomorrow
-//  never rewrites yesterday's logged session. This is the load-bearing
-//  snapshot field set per PITFALLS #1 — the field set must exist Day 1
-//  even though Phase 2 owns the snapshot logic.
+//  V7 rename of RoutineExercise.swift. Per-exercise prescription within a
+//  SessionTemplate. Previously named `RoutineExercise`; renamed to
+//  `SessionExerciseTemplate` per spec §3 of the Phase 7 program-graph
+//  migration.
+//
+//  Each field on this type has a mirror on `SessionExercise` — when a
+//  Session starts, the values are *copied* (not referenced), so editing
+//  the template tomorrow never rewrites yesterday's logged session. This
+//  is the load-bearing snapshot field set per PITFALLS #1 — the field
+//  set must exist Day 1 even though Phase 2 owns the snapshot logic.
 //
 //  Enum-backed fields persist as `*Raw: String` with computed accessors in
 //  the extension below (FOUND-03 / PITFALLS #9).
 //
 //  Phase 3.1 (PIVOT-03) reshape: `intentRaw` and `progressionKindRaw` are
-//  hoisted OUT of this type up to `Routine`. Plan 02 of Phase 3.1 deletes
-//  the field declarations + computed accessors from the V4 shape; the
-//  warmup-related fields, prescription fields (target reps / sets / RPE),
+//  hoisted OUT of this type up to `SessionTemplate`. Plan 02 of Phase 3.1
+//  deletes the field declarations + computed accessors from the V4 shape;
+//  the warmup-related fields, prescription fields (target reps / sets / RPE),
 //  and the set-overrides cascade stay per-exercise.
 //
-//  Schema architecture (BLOCKER 3): `SchemaV3.RoutineExercise` (nested
-//  in `Persistence/SchemaV3.swift`) preserves the V3-shape field set —
+//  Historical shape: `SchemaV3.RoutineExercise` (nested in
+//  Persistence/SchemaV3.swift) preserves the V3-shape field set —
 //  including the now-removed `intentRaw` / `progressionKindRaw` fields —
 //  so the V3→V4 custom migration closure can fetch the per-exercise
 //  values and compute the mode-of-children backfill onto V4
-//  `Routine.intentRaw`. This top-level `fitbod.RoutineExercise` is the
-//  V4 shape and the production runtime entity; `SchemaV4.RoutineExercise`
-//  is a typealias pointing back here.
+//  `SessionTemplate.intentRaw`. This top-level `fitbod.SessionExerciseTemplate`
+//  is the V4+ production runtime entity.
 //
 //  `generateWarmups: Bool = false` defaults to off; the routine builder
 //  in Phase 2 flips it on for the first compound by convention. Per-set
@@ -37,9 +40,9 @@ import Foundation
 import SwiftData
 
 @Model
-public final class RoutineExercise {
+public final class SessionExerciseTemplate {
     @Attribute(.unique) public var id: UUID = UUID()
-    public var routine: Routine? = nil
+    public var sessionTemplate: SessionTemplate? = nil
     public var exercise: Exercise? = nil
     public var orderIndex: Int = 0
 
@@ -63,7 +66,7 @@ public final class RoutineExercise {
     public init() {}
 }
 
-extension RoutineExercise {
+extension SessionExerciseTemplate {
     public var warmupOverride: WarmupConfig? {
         get {
             guard let data = warmupOverrideData else { return nil }
