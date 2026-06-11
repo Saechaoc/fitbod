@@ -30,7 +30,7 @@ public struct LiftListRow: View {
     // MARK: - Properties
 
     let index: Int                  // 1-based display index
-    let routineExercise: RoutineExercise
+    let routineExercise: SessionExerciseTemplate
     let isFirstCompound: Bool       // true → COMPOUND chip (signal); false → WORK chip (ink)
 
     // MARK: - Computed
@@ -99,8 +99,8 @@ public struct LiftListRow: View {
 #if DEBUG
 private struct LiftListRowPreviewContainer: View {
     let container: ModelContainer
-    let benchRE: RoutineExercise
-    let flyRE: RoutineExercise
+    let benchRE: SessionExerciseTemplate
+    let flyRE: SessionExerciseTemplate
 
     var body: some View {
         VStack(spacing: 0) {
@@ -114,13 +114,13 @@ private struct LiftListRowPreviewContainer: View {
     static func make() -> LiftListRowPreviewContainer {
         let config = ModelConfiguration(isStoredInMemoryOnly: true)
         let container = try! ModelContainer(
-            for: RoutineExercise.self, Exercise.self,
+            for: SessionExerciseTemplate.self, Exercise.self,
             configurations: config
         )
         let bench = Exercise()
         bench.name = "Bench Press"
         bench.mechanicRaw = "compound"
-        let benchRE = RoutineExercise()
+        let benchRE = SessionExerciseTemplate()
         benchRE.exercise = bench
         benchRE.targetSets = 3
         benchRE.targetRepsLow = 5
@@ -133,7 +133,7 @@ private struct LiftListRowPreviewContainer: View {
         let fly = Exercise()
         fly.name = "Cable Fly"
         fly.mechanicRaw = "isolation"
-        let flyRE = RoutineExercise()
+        let flyRE = SessionExerciseTemplate()
         flyRE.exercise = fly
         flyRE.targetSets = 3
         flyRE.targetRepsLow = 12

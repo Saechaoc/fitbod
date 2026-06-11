@@ -227,9 +227,9 @@ public final class BackupRestorer {
         try ctx.delete(model: SessionExercise.self)
         try ctx.delete(model: Session.self)
         try ctx.delete(model: RoutineExerciseSetOverride.self)
-        try ctx.delete(model: RoutineExercise.self)
+        try ctx.delete(model: SessionExerciseTemplate.self)
         try ctx.delete(model: SupersetGroup.self)
-        try ctx.delete(model: Routine.self)
+        try ctx.delete(model: SessionTemplate.self)
         try ctx.delete(model: RoutineFolder.self)
         try ctx.delete(model: BlockPhase.self)
         try ctx.delete(model: Block.self)
@@ -403,9 +403,9 @@ public final class BackupRestorer {
         }
 
         // Routines + RoutineExercises + SetOverrides.
-        var routinesByID: [UUID: Routine] = [:]
+        var routinesByID: [UUID: SessionTemplate] = [:]
         for dto in doc.routines {
-            let r = Routine()
+            let r = SessionTemplate()
             r.id = dto.id
             r.name = dto.name
             r.notes = dto.notes
@@ -422,7 +422,7 @@ public final class BackupRestorer {
             routinesByID[dto.id] = r
 
             for reDTO in dto.exercises {
-                let re = RoutineExercise()
+                let re = SessionExerciseTemplate()
                 re.id = reDTO.id
                 re.orderIndex = reDTO.orderIndex
                 re.targetSets = reDTO.targetSets
@@ -438,7 +438,7 @@ public final class BackupRestorer {
                 re.tracksTempo = reDTO.tracksTempo
                 re.tracksPartialReps = reDTO.tracksPartialReps
                 re.warmupOverrideData = reDTO.warmupOverrideData
-                re.routine = r
+                re.sessionTemplate = r
                 if let exID = reDTO.exerciseID, let ex = exercisesByID[exID] {
                     re.exercise = ex
                 }

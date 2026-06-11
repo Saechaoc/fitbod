@@ -32,7 +32,7 @@ public struct BlackSlabCTA: View {
 
     // MARK: - Properties
 
-    let routine: Routine
+    let routine: SessionTemplate
     let dayIndex: Int       // 1-based, e.g. 1 of 4
     let totalDays: Int
     let onStart: @MainActor () -> Void
@@ -126,7 +126,7 @@ public struct BlackSlabCTA: View {
 #if DEBUG
 private struct BlackSlabCTAPreviewContainer: View {
     let container: ModelContainer
-    let routine: Routine
+    let routine: SessionTemplate
 
     var body: some View {
         BlackSlabCTA(routine: routine, dayIndex: 1, totalDays: 4, onStart: {})
@@ -136,10 +136,10 @@ private struct BlackSlabCTAPreviewContainer: View {
     static func make() -> BlackSlabCTAPreviewContainer {
         let config = ModelConfiguration(isStoredInMemoryOnly: true)
         let container = try! ModelContainer(
-            for: Routine.self, RoutineExercise.self, Exercise.self,
+            for: SessionTemplate.self, SessionExerciseTemplate.self, Exercise.self,
             configurations: config
         )
-        let routine = Routine()
+        let routine = SessionTemplate()
         routine.name = "Push A"
         let specs: [(Int, String)] = [
             (3, "Bench Press"), (4, "Incline DB Press"),
@@ -149,12 +149,12 @@ private struct BlackSlabCTAPreviewContainer: View {
             let ex = Exercise()
             ex.name = spec.1
             ex.canonicalName = spec.1
-            let re = RoutineExercise()
+            let re = SessionExerciseTemplate()
             re.exercise = ex
             re.targetSets = spec.0
             re.targetRepsLow = 10
             re.targetRepsHigh = 12
-            re.routine = routine
+            re.sessionTemplate = routine
             re.orderIndex = idx
             container.mainContext.insert(ex)
             container.mainContext.insert(re)

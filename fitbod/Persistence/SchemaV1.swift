@@ -29,8 +29,8 @@ public enum SchemaV1: VersionedSchema {
             Exercise.self,
             MuscleGroup.self,
             ExerciseMuscleStimulus.self,
-            Routine.self,
-            RoutineExercise.self,
+            SessionTemplate.self,       // V7 rename of Routine
+            SessionExerciseTemplate.self, // V7 rename of RoutineExercise
             Session.self,
             SessionExercise.self,
             SetEntry.self,

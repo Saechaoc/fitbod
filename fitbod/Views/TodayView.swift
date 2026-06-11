@@ -358,21 +358,13 @@ public struct TodayView: View {
         return .flat
     }
 
-    /// The routine scheduled for today in the active block (nil when none).
+    /// The session template scheduled for today in the active block (nil when none).
     ///
-    /// Looks at the active block's routines and finds the one whose weekday
-    /// matches today. Simple heuristic for Phase 2.1: pick the first routine
-    /// belonging to the active block if any (full scheduling logic is Phase 3+).
-    private var todaysRoutine: Routine? {
-        guard let block = activeBlocks.first else { return nil }
-        // Use block-attached routines, sorted by day-of-week or position
-        let blockRoutines = (block.routines ?? []).filter { !$0.isArchived }
-        guard !blockRoutines.isEmpty else { return nil }
-
-        // Map weekday (1=Sun … 7=Sat) to routine index (0-based, looping)
-        let weekday = Calendar.current.component(.weekday, from: .now)
-        let index = (weekday - 2 + blockRoutines.count) % blockRoutines.count  // Mon=0
-        return blockRoutines.sorted { $0.name < $1.name }[index]
+    /// V7: block.routines removed; Phase 8 unified resolver drives this property.
+    /// Returns nil as a compile stub so the app builds green against V7 models.
+    private var todaysRoutine: SessionTemplate? {
+        // TODO Phase 8: replace with unified resolver predicate (spec §5)
+        return nil
     }
 
     /// 1-based day index in the current block (for "DAY 01 / 04" in BlackSlabCTA).
@@ -392,9 +384,9 @@ public struct TodayView: View {
     // MARK: - Workout Start
 
     @MainActor
-    private func startWorkout(_ routine: Routine) {
+    private func startWorkout(_ routine: SessionTemplate) {
         do {
-            let session = try SessionFactory.start(routine: routine, context: ctx)
+            let session = try SessionFactory.start(template: routine, context: ctx)
             navigationPath.append(SessionRoute.logger(session))
         } catch {
             // Session start errors (e.g. routineHasNoExercises) are surfaced

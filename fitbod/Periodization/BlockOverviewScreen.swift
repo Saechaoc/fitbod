@@ -206,14 +206,16 @@ public struct BlockOverviewScreen: View {
         let sessionLinked = weekSessions.contains { session in
             cal.isDate(session.startedAt, inSameDayAs: cellDate)
             && (session.block?.id == block.id
-                || (block.routines ?? []).contains { $0.id == session.sourceRoutineID })
+                // V7: block.routines removed; use slot→split link as canonical check.
+                // TODO Phase 8: replace with slot-based session membership predicate.
+                || session.slot?.split?.id == block.split?.id)
         }
         if sessionLinked {
             return .done
         }
         if cellDate > todayDate {
-            // Heuristic: mark upcoming if there are routines in the block
-            let routineCount = (block.routines ?? []).count
+            // Heuristic: mark upcoming if there are slots in the block's split
+            let routineCount = block.split?.slots?.count ?? 0
             if routineCount > 0 {
                 return .upcoming
             }
@@ -227,7 +229,9 @@ public struct BlockOverviewScreen: View {
         return weekSessions.first { session in
             cal.isDate(session.startedAt, inSameDayAs: cellDate)
             && (session.block?.id == block.id
-                || (block.routines ?? []).contains { $0.id == session.sourceRoutineID })
+                // V7: block.routines removed; slot→split link as canonical check.
+                // TODO Phase 8: replace with slot-based session membership predicate.
+                || session.slot?.split?.id == block.split?.id)
         }.map { $0.routineSnapshotName.isEmpty ? nil : $0.routineSnapshotName } ?? nil
     }
 
@@ -352,7 +356,8 @@ public struct BlockOverviewScreen: View {
                 else { return false }
                 return dayState(for: cellDate) == .done
             }.count
-            let scheduledCount = (block.routines ?? []).count
+            // V7: block.routines removed; slot count from split.
+            let scheduledCount = block.split?.slots?.count ?? 0
 
             HStack {
                 Text("\(doneCount) / \(max(doneCount, scheduledCount)) SESSIONS DONE")
@@ -500,7 +505,9 @@ public struct BlockOverviewScreen: View {
         let summaryText: String = {
             if isNow {
                 let done = weekSessions.filter { s in
-                    (block.routines ?? []).contains { $0.id == s.sourceRoutineID } || s.block?.id == block.id
+                    // V7: block.routines removed; slot→split link as canonical check.
+                    // TODO Phase 8: replace with slot-based session membership predicate.
+                    s.slot?.split?.id == block.split?.id || s.block?.id == block.id
                 }.count
                 return "In progress · \(done) sessions"
             } else if isDone {

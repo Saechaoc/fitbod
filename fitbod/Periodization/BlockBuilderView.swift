@@ -74,7 +74,9 @@ public struct BlockBuilderView: View {
 
                             // Conditional linked-routines band
                             if draft.isValid {
-                                NewBlockLinkedRoutinesBand(count: editing?.routines?.count ?? 0)
+                                // V7: block.routines removed; split.slots is the new count source.
+                            // Phase 9 replaces this band with the split picker component.
+                            NewBlockLinkedRoutinesBand(count: editing?.split?.slots?.count ?? 0)
                             }
 
                             // Error band

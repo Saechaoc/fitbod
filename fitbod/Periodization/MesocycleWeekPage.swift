@@ -45,14 +45,15 @@ public struct MesocycleWeekPage: View {
                     .fill(Color.bruHair)
                     .frame(height: 1)
 
-                let routines = Self.scheduledRoutines(for: block)
-                if !routines.isEmpty {
-                    Text("Routines this week")
+                // V7: block.routines removed; slots carry canonical position order.
+                let slots = Self.scheduledSlots(for: block)
+                if !slots.isEmpty {
+                    Text("Slots this week")
                         .font(BRUFont.bodyDefault)
                         .foregroundStyle(Color.bruMuted)
-                    ForEach(routines) { routine in
+                    ForEach(slots) { slot in
                         HStack {
-                            Text(routine.name)
+                            Text(slot.sessionTemplate?.name ?? "Slot \(slot.position + 1)")
                                 .font(BRUFont.bodyEmphasis)
                                 .foregroundStyle(Color.bruInk)
                             Spacer()
@@ -63,7 +64,7 @@ public struct MesocycleWeekPage: View {
                         }
                     }
                 } else {
-                    Text("No routines linked to this block.")
+                    Text("No slots linked to this block.")
                         .font(BRUFont.bodyDefault)
                         .foregroundStyle(Color.bruMuted)
                 }
@@ -100,8 +101,10 @@ public struct MesocycleWeekPage: View {
         (block.phases ?? []).reduce(0) { $0 + $1.weeks }
     }
 
-    public static func scheduledRoutines(for block: Block) -> [Routine] {
-        (block.routines ?? []).sorted { $0.name < $1.name }
+    // V7: block.routines removed; slots carry canonical position order.
+    // Phase 9 replaces this with the full split-picker component.
+    public static func scheduledSlots(for block: Block) -> [SplitSessionSlot] {
+        (block.split?.slots ?? []).sorted { $0.position < $1.position }
     }
 
     public static func weekBadgeText(for block: Block, weekIndex: Int) -> String {
@@ -128,7 +131,7 @@ public struct MesocycleWeekPage: View {
     }
 
     private func accessibilityLabel(for weekContext: MesocycleWeekContext) -> String {
-        let routinesCount = Self.scheduledRoutines(for: block).count
-        return "Week \(weekIndex + 1) of \(Self.totalWeeks(of: block)), \(BlockPhaseColors.phaseLabel(weekContext.phaseKind)) phase, volume multiplier \(weekContext.phaseVolumeMultiplier), intensity multiplier \(weekContext.phaseIntensityMultiplier), \(routinesCount) routines this week."
+        let slotsCount = Self.scheduledSlots(for: block).count
+        return "Week \(weekIndex + 1) of \(Self.totalWeeks(of: block)), \(BlockPhaseColors.phaseLabel(weekContext.phaseKind)) phase, volume multiplier \(weekContext.phaseVolumeMultiplier), intensity multiplier \(weekContext.phaseIntensityMultiplier), \(slotsCount) slots this week."
     }
 }

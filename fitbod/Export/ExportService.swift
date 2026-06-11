@@ -137,8 +137,8 @@ public actor ExportService {
         try modelContext.fetch(FetchDescriptor<SupersetGroup>(sortBy: [SortDescriptor(\SupersetGroup.id)]))
     }
 
-    private func fetchRoutines() throws -> [Routine] {
-        try modelContext.fetch(FetchDescriptor<Routine>(sortBy: [SortDescriptor(\Routine.id)]))
+    private func fetchRoutines() throws -> [SessionTemplate] {
+        try modelContext.fetch(FetchDescriptor<SessionTemplate>(sortBy: [SortDescriptor(\SessionTemplate.id)]))
     }
 
     private func fetchSessions() throws -> [Session] {
@@ -220,7 +220,7 @@ public actor ExportService {
         )
     }
 
-    private func mapRoutine(_ r: Routine) -> ExportRoutineDTO {
+    private func mapRoutine(_ r: SessionTemplate) -> ExportRoutineDTO {
         let exercises = (r.exercises ?? [])
             .sorted { $0.orderIndex < $1.orderIndex }
             .map { mapRoutineExercise($0) }
@@ -236,7 +236,7 @@ public actor ExportService {
         )
     }
 
-    private func mapRoutineExercise(_ re: RoutineExercise) -> ExportRoutineExerciseDTO {
+    private func mapRoutineExercise(_ re: SessionExerciseTemplate) -> ExportRoutineExerciseDTO {
         let overrides = (re.setOverrides ?? [])
             .sorted { $0.setIndex < $1.setIndex }
             .map { mapSetOverride($0) }
