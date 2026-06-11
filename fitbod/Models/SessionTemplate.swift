@@ -14,10 +14,15 @@
 //  here.
 //
 //  The optional `block` relationship lets a template belong to a
-//  periodization block when one is active; the inverse declaration lives
-//  on `Block.routines` (keypath updated to \SessionTemplate.block) so the
-//  inverse keypath chain is single-sided
-//  (per CONTEXT.md Area 4 — explicit inverses everywhere).
+//  periodization block when one is active. As of V7 this is a *one-sided*
+//  relationship: the former inverse `Block.routines` was REMOVED (see
+//  Block.swift), so no inverse keypath exists. The field is still
+//  load-bearing — `SessionFactory` reads `template.block` to resolve the
+//  scheduled `BlockPhase` (volume/intensity multipliers) at log time, and
+//  `RoutineDraft` / `RoutineDuplicator` carry it across edits. V7's
+//  Split→SplitSessionSlot graph is the new program structure; this direct
+//  template→block link is retained for periodization resolution until the
+//  Phase 8 unified resolver supersedes it.
 //
 //  Cascade: deleting a SessionTemplate cascades its SessionExerciseTemplate
 //  lines (owned rows). SessionTemplate→Session is intentionally NOT a
