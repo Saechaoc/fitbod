@@ -645,12 +645,12 @@ fileprivate struct NewBlockStartChoiceSheet: View {
                 // Title (left-aligned, editorial — high contrast on cream)
                 VStack(alignment: .leading, spacing: 6) {
                     Text("CREATE BLOCK")
-                        .font(.custom("BebasNeue-Regular", size: 30))
+                        .font(.bru(.condensed, size: 30))
                         .tracking(1.5)
                         .foregroundStyle(ProgramScreenTokens.ink)
                         .frame(maxWidth: .infinity, alignment: .leading)
                     Text("Choose a starting point for your reusable training block.")
-                        .font(.custom("Geist-Regular", size: 13))
+                        .font(.bru(.text, size: 13))
                         .foregroundStyle(ProgramScreenTokens.muted)
                         .fixedSize(horizontal: false, vertical: true)
                         .frame(maxWidth: .infinity, alignment: .leading)
@@ -661,7 +661,7 @@ fileprivate struct NewBlockStartChoiceSheet: View {
 
                 // Section label
                 Text("CHOOSE STARTING POINT")
-                    .font(.custom("SpaceGrotesk-Bold", size: 11))
+                    .font(.bru(.grotesk, size: 11))
                     .tracking(1.2)
                     .textCase(.uppercase)
                     .foregroundStyle(ProgramScreenTokens.muted)
@@ -679,10 +679,10 @@ fileprivate struct NewBlockStartChoiceSheet: View {
                     HStack(alignment: .center, spacing: 0) {
                         VStack(alignment: .leading, spacing: 4) {
                             Text("Blank Block")
-                                .font(.custom("SpaceGrotesk-Bold", size: 15))
+                                .font(.bru(.grotesk, size: 15))
                                 .foregroundStyle(ProgramScreenTokens.ink)
                             Text("Build your own phases manually.")
-                                .font(.custom("SpaceGrotesk-Bold", size: 11))
+                                .font(.bru(.grotesk, size: 11))
                                 .tracking(ProgramScreenTokens.headerLetterSpacing)
                                 .foregroundStyle(ProgramScreenTokens.muted)
                         }
@@ -709,10 +709,10 @@ fileprivate struct NewBlockStartChoiceSheet: View {
                     HStack(alignment: .center, spacing: 0) {
                         VStack(alignment: .leading, spacing: 4) {
                             Text("Use Preset")
-                                .font(.custom("SpaceGrotesk-Bold", size: 15))
+                                .font(.bru(.grotesk, size: 15))
                                 .foregroundStyle(ProgramScreenTokens.ink)
                             Text("Start from Hypertrophy, Strength, Powerbuilding, etc.")
-                                .font(.custom("SpaceGrotesk-Bold", size: 11))
+                                .font(.bru(.grotesk, size: 11))
                                 .tracking(ProgramScreenTokens.headerLetterSpacing)
                                 .foregroundStyle(ProgramScreenTokens.muted)
                         }
@@ -752,7 +752,7 @@ fileprivate struct NewBlockPresetPickerSheet: View {
             VStack(spacing: 0) {
                 // Title (left-aligned, editorial — high contrast on cream)
                 Text("CHOOSE PRESET")
-                    .font(.custom("BebasNeue-Regular", size: 30))
+                    .font(.bru(.condensed, size: 30))
                     .tracking(1.5)
                     .foregroundStyle(ProgramScreenTokens.ink)
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -771,7 +771,7 @@ fileprivate struct NewBlockPresetPickerSheet: View {
                     } label: {
                         HStack(alignment: .center, spacing: 0) {
                             Text(preset == .blank ? "FROM SCRATCH" : preset.chipLabel)
-                                .font(.custom("SpaceGrotesk-Bold", size: 13))
+                                .font(.bru(.grotesk, size: 13))
                                 .tracking(1.5)
                                 .foregroundStyle(ProgramScreenTokens.ink)
                                 .lineLimit(1)
@@ -876,8 +876,8 @@ fileprivate enum ProgramScreenTokens {
 // MARK: - ProgramTypography
 
 fileprivate enum ProgramTypography {
-    static let chromeLabel: Font = .custom("SpaceGrotesk-Bold", size: ProgramScreenTokens.headerLabelFontSize)
-    static let templateMeta: Font = .custom("SpaceGrotesk-Bold", size: ProgramScreenTokens.templateMetaFontSize)
+    static let chromeLabel: Font = .bru(.grotesk, size: ProgramScreenTokens.headerLabelFontSize)
+    static let templateMeta: Font = .bru(.grotesk, size: ProgramScreenTokens.templateMetaFontSize)
 }
 
 // MARK: - ProgramChromeHeader
@@ -979,7 +979,7 @@ fileprivate struct NoProgramHero: View {
         VStack(spacing: 0) {
             VStack(alignment: .leading, spacing: 0) {
                 Text("Active block · None")
-                    .font(.custom("SpaceGrotesk-Bold", size: ProgramScreenTokens.heroCaptionFontSize))
+                    .font(.bru(.grotesk, size: ProgramScreenTokens.heroCaptionFontSize))
                     .tracking(ProgramScreenTokens.heroCaptionLetterSpacing)
                     .textCase(.uppercase)
                     .foregroundStyle(ProgramScreenTokens.muted)
@@ -1013,7 +1013,7 @@ fileprivate struct NoProgramHero: View {
 
     private var heroHeadline: some View {
         Text("NO PROGRAM")
-            .font(.custom("BebasNeue-Regular", size: ProgramScreenTokens.noProgramFontSize))
+            .font(.bru(.condensed, size: ProgramScreenTokens.noProgramFontSize))
             .foregroundStyle(ProgramScreenTokens.ink)
             .tracking(ProgramScreenTokens.noProgramLetterSpacing)
             .frame(height: ProgramScreenTokens.noProgramLineHeight, alignment: .center)
@@ -1026,7 +1026,7 @@ fileprivate struct NoProgramHero: View {
     /// the surrounding regular weight.
     private var bodyParagraph: some View {
         Text(.init("A block schedules routines across weeks and phases — **accumulation, intensification, peak, deload.** You can also lift without a block, but Fitbod really earns its keep when you’re running one."))
-            .font(.custom("Geist-Regular", size: ProgramScreenTokens.bodyFontSize))
+            .font(.bru(.text, size: ProgramScreenTokens.bodyFontSize))
             .foregroundStyle(ProgramScreenTokens.ink)
             .lineSpacing(ProgramScreenTokens.bodyLineSpacing)
             .fixedSize(horizontal: false, vertical: true)
@@ -1036,7 +1036,7 @@ fileprivate struct NoProgramHero: View {
     private var defineCTA: some View {
         Button(action: defineAction) {
             Text("+ DEFINE BLOCK ▶︎")
-                .font(.custom("BebasNeue-Regular", size: ProgramScreenTokens.ctaFontSize))
+                .font(.bru(.condensed, size: ProgramScreenTokens.ctaFontSize))
                 .tracking(ProgramScreenTokens.noProgramLetterSpacing)
                 .foregroundStyle(.white)
             .frame(maxWidth: .infinity)
@@ -1070,7 +1070,7 @@ fileprivate struct ProgramFeatureChip: View {
 
     var body: some View {
         Text(label)
-            .font(.custom("SpaceGrotesk-Bold", size: ProgramScreenTokens.chipFontSize))
+            .font(.bru(.grotesk, size: ProgramScreenTokens.chipFontSize))
             .tracking(ProgramScreenTokens.chipLetterSpacing)
             .foregroundStyle(ProgramScreenTokens.ink)
             .padding(.horizontal, ProgramScreenTokens.chipHorizontalPadding)
@@ -1240,14 +1240,14 @@ fileprivate struct ProgramTemplateRow: View {
         Button(action: action) {
             HStack(alignment: .center, spacing: 16) {
                 Text(preset.weeks)
-                    .font(.custom("BebasNeue-Regular", size: ProgramScreenTokens.templateWeeksFontSize))
+                    .font(.bru(.condensed, size: ProgramScreenTokens.templateWeeksFontSize))
                     .foregroundStyle(ProgramScreenTokens.ink)
                     .frame(width: ProgramScreenTokens.templateWeeksWidth, alignment: .leading)
 
                 VStack(alignment: .leading, spacing: ProgramScreenTokens.templateTextSpacing) {
                     HStack(spacing: ProgramScreenTokens.popularBadgeSpacing) {
                         Text(preset.title)
-                            .font(.custom("Geist-Regular", size: ProgramScreenTokens.templateTitleFontSize))
+                            .font(.bru(.text, size: ProgramScreenTokens.templateTitleFontSize))
                             .fontWeight(.semibold)
                             .foregroundStyle(ProgramScreenTokens.ink)
                             .lineLimit(1)
@@ -1292,7 +1292,7 @@ fileprivate struct ProgramTemplateRow: View {
 
     private var popularBadge: some View {
         Text("POPULAR")
-            .font(.custom("SpaceGrotesk-Bold", size: 10))
+            .font(.bru(.grotesk, size: 10))
             .tracking(1.5)
             .foregroundStyle(.white)
             .frame(width: ProgramScreenTokens.popularBadgeWidth, height: ProgramScreenTokens.popularBadgeHeight)

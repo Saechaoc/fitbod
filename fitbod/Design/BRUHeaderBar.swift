@@ -208,6 +208,7 @@ private struct LegacyBRUHeaderBarBody: View {
                 .tracking(1.2)
                 .textCase(.uppercase)
                 .foregroundStyle(action.isSignal ? Color.bruSignal : Color.bruInk)
+                .bruHitArea()
         }
         .buttonStyle(.plain)
     }

@@ -77,7 +77,7 @@ public struct BRUButton: View {
 
     /// The vertical size tier of the button.
     public enum Size {
-        /// 32pt minimum height — compact inline actions.
+        /// 36pt minimum height — compact inline actions.
         case sm
         /// 44pt minimum height — standard tappable controls (iOS HIG touch target).
         case md
@@ -87,7 +87,7 @@ public struct BRUButton: View {
         /// Minimum height for the button's frame.
         public var minHeight: CGFloat {
             switch self {
-            case .sm: return 32
+            case .sm: return 36
             case .md: return 44
             case .lg: return 52
             }
@@ -127,25 +127,87 @@ public struct BRUButton: View {
     public var body: some View {
         Button(action: action) {
             Text(label)
-                .font(BRUFont.labelSmall)
-                .tracking(1.2)
                 .textCase(.uppercase)
-                .foregroundStyle(kind.textColor)
-                .frame(maxWidth: .infinity, minHeight: size.minHeight)
-                .background(kind.fillColor)
-                .overlay(
-                    // Only ghost variant renders the outline; primary + signal are solid fills.
-                    Group {
-                        if kind.showBorder {
-                            Rectangle()
-                                .stroke(kind.borderColor, lineWidth: 1.5)
-                        }
-                    }
-                )
+                .multilineTextAlignment(.center)
         }
-        // CRITICAL: .plain suppresses Apple's bordered chrome (T-02.1-02-02).
-        // If .plain is insufficient on a future iOS version, fall back to .borderless.
-        .buttonStyle(.plain)
+        // BRUButtonStyle replaces `.plain`: it keeps Apple's chrome off while
+        // adding a full-rectangle hit area plus pressed and disabled states.
+        .buttonStyle(BRUButtonStyle(kind: kind, size: size))
+    }
+}
+
+// MARK: - BRUButtonStyle
+
+/// Renders a `BRUButton` in its three interaction states.
+///
+/// - Normal: the kind's fill, text and border.
+/// - Pressed: fills darken to `bruInk` (ghost inverts to an ink slab) so the
+///   press reads on every kind without animation.
+/// - Disabled: `bruFaint` fill, `bruMuted` text, `bruHair` border. Text stays
+///   legible (contrast ≥ 4.5:1) instead of fading the whole control.
+///
+/// The whole frame is hit-testable (`contentShape`), so a ghost button
+/// responds outside its label too.
+public struct BRUButtonStyle: ButtonStyle {
+    let kind: BRUButton.Kind
+    let size: BRUButton.Size
+
+    @Environment(\.isEnabled) private var isEnabled
+
+    public func makeBody(configuration: Configuration) -> some View {
+        let pressed = configuration.isPressed
+        return configuration.label
+            .font(size.font)
+            .tracking(size.tracking)
+            .foregroundStyle(textColor(pressed: pressed))
+            .padding(.horizontal, 12)
+            .padding(.vertical, 6)
+            .frame(maxWidth: .infinity, minHeight: size.minHeight)
+            .background(fillColor(pressed: pressed))
+            .overlay(
+                Rectangle()
+                    .strokeBorder(borderColor, lineWidth: showBorder ? 1.5 : 0)
+            )
+            .contentShape(Rectangle())
+    }
+
+    private var showBorder: Bool {
+        kind.showBorder || !isEnabled
+    }
+
+    private var borderColor: Color {
+        isEnabled ? kind.borderColor : .bruHair
+    }
+
+    private func fillColor(pressed: Bool) -> Color {
+        guard isEnabled else { return .bruFaint }
+        guard pressed else { return kind.fillColor }
+        return kind == .ghost ? .bruInk : .bruInk.opacity(0.85)
+    }
+
+    private func textColor(pressed: Bool) -> Color {
+        guard isEnabled else { return .bruMuted }
+        if pressed && kind == .ghost { return .bruPaper }
+        return kind.textColor
+    }
+}
+
+extension BRUButton.Size {
+    /// Label font grows with the button so large CTAs read at arm's length.
+    var font: Font {
+        switch self {
+        case .sm: return BRUFont.labelSmall
+        case .md: return BRUFont.labelLarge
+        case .lg: return BRUFont.displayMedium
+        }
+    }
+
+    var tracking: CGFloat {
+        switch self {
+        case .sm: return 1.2
+        case .md: return 1.4
+        case .lg: return 0.6
+        }
     }
 }
 

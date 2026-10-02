@@ -109,7 +109,7 @@ public struct PlateTallyRow: View {
             // Weight number in displayMedium 20pt per 03-UI-SPEC line 49
             // (BRUDisplay size=20 per the spec table)
             Text(formatted(weight))
-                .font(.custom("SpaceGrotesk-Bold", size: 20))
+                .font(.bru(.grotesk, size: 20))
                 .foregroundStyle(Color.bruInk)
         }
     }

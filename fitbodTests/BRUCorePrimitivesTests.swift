@@ -63,10 +63,10 @@ struct BRUCorePrimitivesTests {
 
     // MARK: - BRUButton.Size — minHeight (mandatory pure-value)
 
-    @Test("BRUButton.Size.sm minHeight is 32pt")
+    @Test("BRUButton.Size.sm minHeight is 36pt")
     func bruButtonSizeSmMinHeight() {
-        #expect(BRUButton.Size.sm.minHeight == 32,
-                ".sm minHeight must be 32 per UI-SPEC v2 line 27")
+        #expect(BRUButton.Size.sm.minHeight == 36,
+                ".sm minHeight must be 36 (milestone-1 touch-target floor; docs/design-system)")
     }
 
     @Test("BRUButton.Size.md minHeight is 44pt")

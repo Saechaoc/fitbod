@@ -199,7 +199,7 @@ public struct PlateCalculatorSheet: View {
                 // (SpaceGrotesk-Bold) but the 96pt size is a load-bearing spec exception
                 // requiring Font.custom directly (BRUFont.displayHero is 56pt).
                 Text(formatted(parsedTarget))
-                    .font(.custom("SpaceGrotesk-Bold", size: 96, relativeTo: .largeTitle))
+                    .font(.bru(.grotesk, size: 96, relativeTo: .largeTitle))
                     .foregroundStyle(Color.bruInk)
                     // Negative letterspacing per displayHero spec (-0.5)
                     .tracking(-0.5)
@@ -333,7 +333,7 @@ public struct PlateCalculatorSheet: View {
                         .tracking(1.2)
 
                     Text(barName)
-                        .font(.custom("SpaceGrotesk-Bold", size: 20))
+                        .font(.bru(.grotesk, size: 20))
                         .foregroundStyle(Color.bruInk)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -355,7 +355,7 @@ public struct PlateCalculatorSheet: View {
                         .tracking(1.2)
 
                     Text(inventoryName)
-                        .font(.custom("SpaceGrotesk-Bold", size: 20))
+                        .font(.bru(.grotesk, size: 20))
                         .foregroundStyle(Color.bruInk)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)

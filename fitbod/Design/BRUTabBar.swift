@@ -134,7 +134,7 @@ public struct BRUTabBar: View {
                 }
 
                 Text(tab.label)
-                    .font(.custom("SpaceGrotesk-Bold", size: 10))
+                    .font(.bru(.grotesk, size: 10))
                     .tracking(1.5)
                     .textCase(.uppercase)
                     .lineLimit(1)
@@ -146,6 +146,7 @@ public struct BRUTabBar: View {
             }
             .frame(height: Self.mockupCellHeight, alignment: .top)
             .frame(maxWidth: .infinity)
+            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .frame(maxWidth: .infinity)

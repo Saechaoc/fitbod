@@ -89,7 +89,7 @@ public struct BlockContextBand: View {
                     Spacer()
 
                     Text(block.name.uppercased())
-                        .font(.custom("SpaceGrotesk-Bold", size: 11))
+                        .font(.bru(.grotesk, size: 11))
                         .tracking(1.2)
                         .foregroundStyle(Color.bruInk)
 

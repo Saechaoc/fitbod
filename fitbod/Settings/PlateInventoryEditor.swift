@@ -235,7 +235,7 @@ public struct PlateInventoryEditor: View {
             // Empty state — UI-SPEC lines 282–284 verbatim
             VStack(spacing: 12) {
                 Text("No plates configured")                                   // UI-SPEC verbatim
-                    .font(.custom("SpaceGrotesk-Bold", size: 28))
+                    .font(.bru(.grotesk, size: 28))
                     .foregroundStyle(Color.bruInk)
 
                 Text("Add plates to use the plate calculator.")                // UI-SPEC verbatim
@@ -382,7 +382,7 @@ public struct PlateInventoryEditor: View {
     private var emptyInventoryState: some View {
         VStack(spacing: 12) {
             Text("No plates configured")                                       // UI-SPEC verbatim
-                .font(.custom("SpaceGrotesk-Bold", size: 28))
+                .font(.bru(.grotesk, size: 28))
                 .foregroundStyle(Color.bruInk)
 
             Text("Add plates to use the plate calculator.")                    // UI-SPEC verbatim

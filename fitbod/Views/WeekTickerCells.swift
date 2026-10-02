@@ -61,7 +61,7 @@ public struct WeekTickerCells: View {
 
             // Week label centered
             Text("W\(n)")
-                .font(.custom("SpaceGrotesk-Bold", size: 16))
+                .font(.bru(.grotesk, size: 16))
                 .foregroundStyle(isActive ? Color.bruPaper : Color.bruInk)
                 .frame(maxWidth: .infinity, minHeight: 28)
 

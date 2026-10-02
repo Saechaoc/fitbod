@@ -150,7 +150,7 @@ public struct WhyThisWeightSheet: View {
             // audits will catch drift. This is the only Font.custom call in this file.
             HStack(alignment: .lastTextBaseline, spacing: 6) {
                 Text(formatted(explanation.roundedWeight))
-                    .font(.custom("SpaceGrotesk-Bold", size: 128, relativeTo: .largeTitle))
+                    .font(.bru(.grotesk, size: 128, relativeTo: .largeTitle))
                     .foregroundStyle(Color.bruPaper)
 
                 Text(unitLabel.uppercased())

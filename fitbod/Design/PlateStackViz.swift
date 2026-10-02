@@ -183,7 +183,7 @@ public struct PlateStackViz: View {
     ///         width × −90deg rotation legibility.
     private func rotatedLabel(weight: Double) -> some View {
         Text(formatted(weight))
-            .font(.custom("SpaceGrotesk-Bold", size: 12))
+            .font(.bru(.grotesk, size: 12))
             .foregroundStyle(Color.bruPaper)
             .rotationEffect(.degrees(-90))
             .fixedSize()

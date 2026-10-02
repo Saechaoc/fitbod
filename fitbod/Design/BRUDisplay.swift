@@ -91,7 +91,7 @@ public struct BRUDisplay: View {
 
     public var body: some View {
         Text(text)
-            .font(.custom("SpaceGrotesk-Bold", size: size.pointSize))
+            .font(.bru(.grotesk, size: size.pointSize))
             .tracking(size.tracking)
             .foregroundStyle(color)
             .lineSpacing(0)

@@ -61,7 +61,7 @@ public struct BRUReadout: View {
                 .foregroundStyle(Color.bruMuted)
 
             Text(value)
-                .font(.custom("SpaceGrotesk-Bold", size: size.pointSize))
+                .font(.bru(.grotesk, size: size.pointSize))
                 .tracking(size.tracking)
                 .foregroundStyle(valueColor)
         }

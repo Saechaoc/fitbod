@@ -153,7 +153,7 @@ public struct MuscleVolumeBar: View {
                 Spacer()
                 HStack(alignment: .lastTextBaseline, spacing: 6) {
                     Text("\(total.totalSetsRounded)")
-                        .font(.custom("SpaceGrotesk-Bold", size: 24))
+                        .font(.bru(.grotesk, size: 24))
                         .foregroundStyle(barFillColor)
                     Text("SETS")
                         .font(BRUFont.labelMicro)
@@ -172,7 +172,7 @@ public struct MuscleVolumeBar: View {
                 BRUChip(chipLabel, color: chipColor, fill: chipShouldFill)
                 Spacer()
                 Text("MEV \(target.mev) · MAV \(target.mav) · MRV \(target.mrv)")
-                    .font(.custom("JetBrainsMono-Regular", size: 9))
+                    .font(.bru(.mono, size: 9))
                     .kerning(0.5)
                     .foregroundStyle(Color.bruMuted)
             }
@@ -268,7 +268,7 @@ public struct MuscleVolumeBar: View {
             .offset(x: x, y: -3)
             .overlay(alignment: .top) {
                 Text(label)
-                    .font(.custom("JetBrainsMono-Regular", size: 8))
+                    .font(.bru(.mono, size: 8))
                     .kerning(0.5)
                     .foregroundStyle(color == .bruSignal ? Color.bruSignal : Color.bruMuted)
                     .offset(x: x - 10, y: -14)

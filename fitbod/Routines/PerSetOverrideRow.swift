@@ -60,7 +60,7 @@ public struct PerSetOverrideRow: View {
                 ),
                 format: .number
             )
-            .font(.custom("SpaceGrotesk-Bold", size: 18))
+            .font(.bru(.grotesk, size: 18))
             .foregroundStyle(isTop ? Color.bruSignal : Color.bruInk)
             .keyboardType(.numberPad)
             .multilineTextAlignment(.trailing)
@@ -75,7 +75,7 @@ public struct PerSetOverrideRow: View {
                 ),
                 format: .number.precision(.fractionLength(0...1))
             )
-            .font(.custom("SpaceGrotesk-Bold", size: 18))
+            .font(.bru(.grotesk, size: 18))
             .foregroundStyle(isTop ? Color.bruSignal : Color.bruInk)
             .keyboardType(.decimalPad)
             .multilineTextAlignment(.trailing)

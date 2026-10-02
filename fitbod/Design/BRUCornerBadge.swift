@@ -56,7 +56,7 @@ public struct BRUCornerBadge: View {
 
     public var body: some View {
         Text(label)
-            .font(.custom("SpaceGrotesk-Bold", size: 7))
+            .font(.bru(.grotesk, size: 7))
             .tracking(1.0)
             .textCase(.uppercase)
             .foregroundStyle(textColor)
