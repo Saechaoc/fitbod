@@ -68,6 +68,9 @@ public struct BottomActionBar: View {
                     .disabled(!isValid)
                     .opacity(isValid ? 1.0 : 0.4)
             }
+            // The separator Rectangle has no intrinsic height. Without this the
+            // HStack accepts all offered height and the bar covers its host.
+            .fixedSize(horizontal: false, vertical: true)
             .background(Color.bruPaper)
         }
         .background(Color.bruPaper)
