@@ -54,7 +54,7 @@ public enum FitbodModelContainer {
             return try ModelContainer(for: schema, configurations: config)
         }
 
-        let url = storeURL ?? ModelConfiguration(schema: schema).url
+        let url = storeURL ?? defaultStoreURL
         let config = ModelConfiguration(schema: schema, url: url)
         do {
             return try ModelContainer(for: schema, configurations: config)
@@ -68,6 +68,24 @@ public enum FitbodModelContainer {
             clearSeedStamps(in: defaults)
             return fresh
         }
+    }
+
+    /// Where `make()` keeps the store when no `storeURL` is passed.
+    static var defaultStoreURL: URL {
+        ModelConfiguration(schema: Schema(versionedSchema: CurrentSchema.self)).url
+    }
+
+    /// The store file plus the siblings SQLite and SwiftData keep next to it:
+    /// `-shm`, `-wal` and the `.<name>_SUPPORT` folder.
+    static func storeFiles(for url: URL) -> [URL] {
+        let dir = url.deletingLastPathComponent()
+        let name = url.lastPathComponent
+        return [
+            url,
+            dir.appendingPathComponent(name + "-shm"),
+            dir.appendingPathComponent(name + "-wal"),
+            dir.appendingPathComponent("." + url.deletingPathExtension().lastPathComponent + "_SUPPORT", isDirectory: true),
+        ]
     }
 
     /// The seeders skip work when these stamps are set. A brand-new store is
@@ -96,15 +114,7 @@ public enum FitbodModelContainer {
         }
         try fm.createDirectory(at: destination, withIntermediateDirectories: true)
 
-        let dir = url.deletingLastPathComponent()
-        let name = url.lastPathComponent
-        let candidates = [
-            url,
-            dir.appendingPathComponent(name + "-shm"),
-            dir.appendingPathComponent(name + "-wal"),
-            dir.appendingPathComponent("." + url.deletingPathExtension().lastPathComponent + "_SUPPORT", isDirectory: true),
-        ]
-        for source in candidates where fm.fileExists(atPath: source.path) {
+        for source in storeFiles(for: url) where fm.fileExists(atPath: source.path) {
             try fm.moveItem(at: source, to: destination.appendingPathComponent(source.lastPathComponent))
         }
         return destination

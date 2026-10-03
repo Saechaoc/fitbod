@@ -26,6 +26,7 @@ struct fitbodApp: App {
     let container: ModelContainer
 
     init() {
+        DebugLaunchReset.runIfRequested()
         do {
             container = try FitbodModelContainer.make()
         } catch {
