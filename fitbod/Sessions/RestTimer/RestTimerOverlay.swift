@@ -8,12 +8,16 @@
 //
 // Two visual states:
 //
-//   1. COLLAPSED slab (64pt, full-bleed) — anchored above the BRUTabBar.
-//      Background: Color.bruBg2. Bottom border: 2pt Color.bruInk.
-//      Contents: 32pt RestTimerProgressArc + "REST" labelSmall + countdown
-//      displayMedium + "▸" chevron.
-//      NO Capsule, NO RoundedRectangle, NO .regularMaterial, NO padding
-//      around the slab itself.
+//   1. BOTTOM DOCK (full-bleed) — mounted by SessionLoggerView with
+//      .safeAreaInset(edge: .bottom), so it sits above the home indicator
+//      and within thumb reach for one-handed use.
+//      Background: Color.bruBg2. Top border: 2pt Color.bruInk.
+//      Row 1: 32pt RestTimerProgressArc + "REST" + exercise name +
+//             countdown displayMedium + "▸" (tap row to expand).
+//      Row 2: −15s / +15s / SKIP, each a 44pt-tall outlined rectangle.
+//      When the countdown reaches zero the dock flips to "REST COMPLETE"
+//      with the overrun in bruSignal and SKIP becomes DONE.
+//      NO Capsule, NO RoundedRectangle, NO .regularMaterial.
 //
 //   2. EXPANDED sheet (.medium detent) — BRUHeaderBar "REST TIMER" top,
 //      exercise name displayLarge, 200×200 RestTimerProgressArc + displayHero
@@ -36,10 +40,11 @@ import SwiftUI
 
 /// BRU brutalist rest-timer overlay.
 ///
-/// Collapsed state: a 64pt full-bleed `bruBg2` slab with a 2pt `bruInk`
-/// bottom border. Tap to expand to a `.medium`-detent sheet with full
-/// BRU controls. Reads from a `RestTimerEngine` `@Bindable` injection;
-/// the engine is the single source of truth.
+/// Bottom dock: a full-bleed `bruBg2` panel with a 2pt `bruInk` top
+/// border carrying the countdown and the −15s / +15s / SKIP controls.
+/// Tap the countdown row to expand to a `.medium`-detent sheet. Reads
+/// from a `RestTimerEngine` `@Bindable` injection; the engine is the
+/// single source of truth.
 public struct RestTimerOverlay: View {
     @Bindable public var engine: RestTimerEngine
     @State private var presentingExpanded = false
@@ -50,13 +55,74 @@ public struct RestTimerOverlay: View {
 
     public var body: some View {
         if engine.isRunning {
-            collapsedSlab
+            bottomDock
+                .sheet(isPresented: $presentingExpanded) {
+                    expandedSheet
+                        .presentationDetents([.medium])
+                }
+                .transition(.move(edge: .bottom))
+        } else {
+            EmptyView()
+        }
+    }
+
+    // MARK: - Bottom dock
+
+    /// Full-bleed `bruBg2` dock with a 2pt `bruInk` top border.
+    private var bottomDock: some View {
+        TimelineView(.periodic(from: engine.startedAt ?? .now, by: 1)) { _ in
+            let finished = engine.isFinished
+            VStack(spacing: 10) {
+                // Row 1 — status + countdown. Tap to expand.
+                HStack(spacing: 12) {
+                    ZStack {
+                        RestTimerProgressArc(
+                            remaining: engine.remaining,
+                            target: Double(engine.targetSeconds),
+                            lineWidth: 3
+                        )
+                        .frame(width: 32, height: 32)
+
+                        Text("REST")
+                            .font(BRUFont.labelMicro)
+                            .tracking(1.5)
+                            .textCase(.uppercase)
+                            .foregroundStyle(Color.bruInk)
+                    }
+
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(finished ? "REST COMPLETE" : "RESTING")
+                            .font(BRUFont.labelSmall)
+                            .tracking(1.2)
+                            .textCase(.uppercase)
+                            .foregroundStyle(finished ? Color.bruSignal : Color.bruMuted)
+                        Text(engine.currentExerciseName)
+                            .font(BRUFont.bodyEmphasis)
+                            .foregroundStyle(Color.bruInk)
+                            .lineLimit(1)
+                            .truncationMode(.tail)
+                    }
+
+                    Spacer(minLength: 8)
+
+                    Text(finished ? formatOverrun(engine.remaining) : formatRemaining(engine.remaining))
+                        .font(BRUFont.displayMedium)
+                        .monospacedDigit()
+                        .foregroundStyle(finished ? Color.bruSignal : Color.bruInk)
+
+                    Text("▸")
+                        .font(BRUFont.bodyEmphasis)
+                        .foregroundStyle(Color.bruMuted)
+                }
+                .frame(minHeight: 44)
+                .contentShape(Rectangle())
                 .onTapGesture {
                     presentingExpanded = true
                 }
                 .accessibilityElement(children: .combine)
                 .accessibilityLabel("Rest timer: \(remainingAccessibility)")
                 .accessibilityHint("Tap to expand controls")
+                .accessibilityAddTraits(.isButton)
                 .accessibilityAdjustableAction { direction in
                     switch direction {
                     case .increment: engine.adjust(deltaSeconds: 15)
@@ -64,67 +130,62 @@ public struct RestTimerOverlay: View {
                     @unknown default: break
                     }
                 }
-                .sheet(isPresented: $presentingExpanded) {
-                    expandedSheet
-                        .presentationDetents([.medium])
+
+                // Row 2 — one-handed controls, each 44pt tall.
+                HStack(spacing: 8) {
+                    dockButton("−15s", accessibility: "Subtract 15 seconds") {
+                        engine.adjust(deltaSeconds: -15)
+                    }
+                    dockButton("+15s", accessibility: "Add 15 seconds") {
+                        engine.adjust(deltaSeconds: 15)
+                    }
+                    dockButton(
+                        finished ? "DONE" : "SKIP",
+                        accessibility: finished ? "Dismiss rest timer" : "Skip remaining rest",
+                        isSignal: true
+                    ) {
+                        withAnimation(.easeOut(duration: 0.2)) { engine.stop() }
+                    }
                 }
-        } else {
-            EmptyView()
-        }
-    }
-
-    // MARK: - Collapsed slab
-
-    /// Full-bleed 64pt `bruBg2` slab with 2pt `bruInk` bottom border.
-    /// UI-SPEC v2 lines 366-369 + 401.
-    private var collapsedSlab: some View {
-        TimelineView(.periodic(from: engine.startedAt ?? .now, by: 1)) { _ in
-            HStack(spacing: 12) {
-                // Progress arc + "REST" label
-                ZStack {
-                    RestTimerProgressArc(
-                        remaining: engine.remaining,
-                        target: Double(engine.targetSeconds),
-                        lineWidth: 3
-                    )
-                    .frame(width: 32, height: 32)
-
-                    Text("REST")
-                        .font(BRUFont.labelMicro)
-                        .tracking(1.5)
-                        .textCase(.uppercase)
-                        .foregroundStyle(Color.bruInk)
-                }
-
-                Spacer()
-
-                // Countdown digits
-                Text(formatRemaining(engine.remaining))
-                    .font(BRUFont.displayMedium)
-                    .monospacedDigit()
-                    .foregroundStyle(Color.bruInk)
-
-                // Expand chevron
-                Text("▸")
-                    .font(BRUFont.bodyEmphasis)
-                    .foregroundStyle(Color.bruMuted)
             }
             .padding(.horizontal, 16)
-            .padding(.vertical, 8)
+            .padding(.top, 10)
+            .padding(.bottom, 10)
         }
-        // FULL BLEED — 64pt tall, max width, no horizontal clipping
-        .frame(height: 64)
         .frame(maxWidth: .infinity)
-        .background(Color.bruBg2)
-        // 2pt bruInk bottom border per UI-SPEC line 82 + 401
+        .background(Color.bruBg2.ignoresSafeArea(edges: .bottom))
+        // 2pt bruInk top border — the dock sits under the list content.
         .overlay(
             Rectangle()
                 .fill(Color.bruInk)
                 .frame(height: 2),
-            alignment: .bottom
+            alignment: .top
         )
-        // NO .clipShape, NO .padding(.horizontal) around the slab
-        .contentShape(Rectangle())
+    }
+
+    /// Equal-width outlined rectangle control for the dock.
+    private func dockButton(
+        _ title: String,
+        accessibility: String,
+        isSignal: Bool = false,
+        action: @escaping () -> Void
+    ) -> some View {
+        Button(action: action) {
+            Text(title)
+                .font(BRUFont.labelSmall)
+                .tracking(1.2)
+                .textCase(.uppercase)
+                .foregroundStyle(isSignal ? Color.bruPaper : Color.bruInk)
+                .frame(maxWidth: .infinity, minHeight: 44)
+                .background(isSignal ? Color.bruInk : Color.bruPaper)
+                .overlay(
+                    Rectangle()
+                        .stroke(Color.bruInk, lineWidth: 1.5)
+                )
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(accessibility)
     }
 
     // MARK: - Expanded sheet
@@ -161,7 +222,7 @@ public struct RestTimerOverlay: View {
                             )
                             .frame(width: 200, height: 200)
 
-                            Text(formatRemaining(engine.remaining))
+                            Text(engine.isFinished ? formatOverrun(engine.remaining) : formatRemaining(engine.remaining))
                                 .font(BRUFont.displayHero)
                                 .monospacedDigit()
                                 .foregroundStyle(Color.bruInk)
@@ -206,9 +267,9 @@ public struct RestTimerOverlay: View {
                     }
 
                     // SKIP ghost button
-                    BRUButton("SKIP", kind: .ghost, size: .md) {
-                        engine.stop()
+                    BRUButton(engine.isFinished ? "DONE" : "SKIP", kind: .ghost, size: .md) {
                         presentingExpanded = false
+                        engine.stop()
                     }
                     .accessibilityLabel("Skip remaining rest")
 
@@ -235,7 +296,17 @@ public struct RestTimerOverlay: View {
         return String(format: "%d:%02d", s / 60, s % 60)
     }
 
+    /// Overrun after the countdown hits zero: "+0:12". Past an hour (a
+    /// rest restored long after it ended) the counter is meaningless, so
+    /// it reads "0:00".
+    private func formatOverrun(_ remaining: TimeInterval) -> String {
+        let over = Int(-remaining)
+        guard over > 0, over < 3600 else { return "0:00" }
+        return String(format: "+%d:%02d", over / 60, over % 60)
+    }
+
     private var remainingAccessibility: String {
+        if engine.isFinished { return "rest complete" }
         let s = max(0, Int(engine.remaining))
         if s >= 60 { return "\(s / 60) minutes \(s % 60) seconds" }
         return "\(s) seconds"

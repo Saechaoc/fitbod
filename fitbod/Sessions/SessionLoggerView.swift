@@ -27,6 +27,17 @@
 //   - pendingSwap, pendingRemove, pendingPinnedNote sheets
 //   - prState InSessionPRState + .task seed
 //
+// M1 logger additions:
+//   - RestTimerOverlay is mounted with .safeAreaInset(edge: .bottom) (the
+//     header note above claimed this mount, but the body never had it).
+//   - The rest timer is bound to the session id and persisted as a
+//     deadline (RestTimerStore). It is restored on appear and every time
+//     the scene becomes active, so it survives background and relaunch.
+//   - Sets can be un-completed (tap the checkmark) and deleted (swipe);
+//     both persist immediately via SessionSetActions. Weight/reps edits
+//     save when a field loses focus and when the app leaves the foreground.
+//   - Finish presents SessionDetailView as the workout summary.
+//
 // BRU contract: NO navigationTitle / NO .toolbar with system chrome
 //               NO Capsule() / NO RoundedRectangle / NO accentColor
 //               NO Image(systemName:) in chrome / NO .font(.body/.headline/.title/.caption)
@@ -38,6 +49,7 @@ import SwiftData
 public struct SessionLoggerView: View {
     @Environment(\.modelContext) private var ctx
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.scenePhase) private var scenePhase
 
     @Bindable public var session: Session
     @State private var engine = RestTimerEngine.makeProduction()
@@ -49,6 +61,7 @@ public struct SessionLoggerView: View {
     @State private var pendingRemove: SessionExercise?
     @State private var presentingWorkoutNotes = false
     @State private var pendingPinnedNote: SessionExercise?
+    @State private var presentingSummary = false
 
     /// Phase 6 plan 06-07 — in-session PR banner state.
     @State private var prState = InSessionPRState()
@@ -66,10 +79,14 @@ public struct SessionLoggerView: View {
                         sessionExercise: se,
                         engine: engine,
                         onCommitSet: { commitSet($0, for: se) },
-                        onTapEmptyCell: { engine.stop() },
+                        onTapEmptyCell: { stopRestIfRunning() },
                         onSwap: { pendingSwap = $0 },
                         onRemove: { pendingRemove = $0 },
-                        onEditPinnedNote: { pendingPinnedNote = $0 }
+                        onEditPinnedNote: { pendingPinnedNote = $0 },
+                        onUncompleteSet: { uncompleteSet($0) },
+                        onDeleteSet: { deleteSet($0) },
+                        onAddSet: { SessionSetActions.addSet(to: $0, context: ctx) },
+                        onEditCommitted: { try? ctx.save() }
                     )
                 }
                 Section {
@@ -77,6 +94,29 @@ public struct SessionLoggerView: View {
                 }
             }
             .listStyle(.insetGrouped)
+            .scrollDismissesKeyboard(.interactively)
+        }
+        // Rest timer dock — bottom edge, above the home indicator, in
+        // thumb reach. Renders nothing while no rest is running.
+        .safeAreaInset(edge: .bottom, spacing: 0) {
+            RestTimerOverlay(engine: engine)
+        }
+        .animation(.easeOut(duration: 0.2), value: engine.isRunning)
+        // Number pads have no return key: give the keyboard a Done.
+        .toolbar {
+            ToolbarItemGroup(placement: .keyboard) {
+                Spacer()
+                Button {
+                    UIApplication.shared.sendAction(
+                        #selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil
+                    )
+                } label: {
+                    Text("DONE")
+                        .font(BRUFont.labelSmall)
+                        .tracking(1.2)
+                        .foregroundStyle(Color.bruInk)
+                }
+            }
         }
         // BRU header replaces .navigationTitle + .toolbar principal block
         .navigationBarHidden(true)
@@ -126,7 +166,7 @@ public struct SessionLoggerView: View {
         }
         // Remove-exercise destructive confirmation
         .alert(
-            "Remove \"\(pendingRemove?.exercise?.name ?? "")\"?",                // UI-SPEC verbatim
+            "Remove \"\(pendingRemove?.displayName ?? "")\"?",                  // UI-SPEC verbatim
             isPresented: Binding(
                 get: { pendingRemove != nil },
                 set: { if !$0 { pendingRemove = nil } }
@@ -140,9 +180,29 @@ public struct SessionLoggerView: View {
         } message: { _ in
             Text("Any logged sets for this exercise will be discarded.")         // UI-SPEC verbatim
         }
-        // Phase 6 plan 06-07 — PR state seeded once on appear
+        // Workout summary after Finish. DONE closes the summary and the logger.
+        .fullScreenCover(isPresented: $presentingSummary, onDismiss: { dismiss() }) {
+            SessionDetailView(session: session, onDone: { presentingSummary = false })
+        }
+        // Phase 6 plan 06-07 — PR state seeded once on appear.
+        // Rest timer: bind to this session and restore any persisted rest.
         .task {
+            engine.bind(sessionID: session.id)
             prState.prTable = await SessionFactory.seedPRTable(for: session, context: ctx)
+        }
+        .onChange(of: scenePhase) { _, phase in
+            switch phase {
+            case .active:
+                // Back from background or the app switcher: re-sync the
+                // countdown from the stored deadline.
+                engine.restore()
+            case .inactive, .background:
+                // Flush any in-flight weight/reps edit before iOS may
+                // suspend or kill the app.
+                try? ctx.save()
+            @unknown default:
+                break
+            }
         }
     }
 
@@ -209,12 +269,38 @@ public struct SessionLoggerView: View {
     /// Commits a set: flips isComplete, saves, observes for PR detection, starts rest timer.
     /// RESEARCH §6 Pitfall 2 — save MUST precede engine.start.
     private func commitSet(_ entry: SetEntry, for se: SessionExercise) {
-        entry.isComplete = true
-        entry.completedAt = .now
-        try? ctx.save()
+        guard entry.weight > 0 && entry.reps > 0 else { return }
+        // Flips isComplete, stamps completedAt and saves BEFORE the rest
+        // timer starts (RESEARCH §6 Pitfall 2).
+        SessionSetActions.complete(entry, at: .now, context: ctx)
         prState.observeSave(set: entry)
         let prescribed = max(1, se.prescribedRestSeconds)
-        engine.start(seconds: prescribed, exerciseName: se.exercise?.name ?? "")
+        engine.start(seconds: prescribed, exerciseName: se.displayName)
+    }
+
+    /// Tap on a completed checkmark. The rest timer is left alone: undoing
+    /// a mis-tap must not restart (or cancel) the rest already running.
+    private func uncompleteSet(_ entry: SetEntry) {
+        SessionSetActions.uncomplete(entry, context: ctx)
+        reseedPRTable()
+    }
+
+    private func deleteSet(_ entry: SetEntry) {
+        SessionSetActions.delete(entry, context: ctx)
+        reseedPRTable()
+    }
+
+    /// Un-completing or deleting a set can lower a PR the live table
+    /// already recorded; rebuild it from what is actually logged.
+    private func reseedPRTable() {
+        Task {
+            prState.prTable = await SessionFactory.seedPRTable(for: session, context: ctx)
+        }
+    }
+
+    /// Typing into the next set's empty cell ends the rest (SESS-04).
+    private func stopRestIfRunning() {
+        if engine.isRunning { engine.stop() }
     }
 
     private func finish() {
@@ -222,7 +308,7 @@ public struct SessionLoggerView: View {
         session.totalDurationSeconds = Int(Date.now.timeIntervalSince(session.startedAt))
         engine.stop()
         try? ctx.save()
-        dismiss()
+        presentingSummary = true
     }
 
     private func discard() {

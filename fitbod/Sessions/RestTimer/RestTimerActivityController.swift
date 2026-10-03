@@ -44,6 +44,18 @@ public protocol RestTimerActivityControlling {
 
     /// Dismiss the running Live Activity immediately. Idempotent.
     func end()
+
+    /// Re-attach to a rest period restored from persistence (app relaunch
+    /// or logger re-open). The live controller adopts a still-running
+    /// activity for the same exercise instead of stacking a duplicate.
+    func resume(startedAt: Date, targetSeconds: Int, exerciseName: String)
+}
+
+extension RestTimerActivityControlling {
+    /// Default: a restore is just a fresh start.
+    public func resume(startedAt: Date, targetSeconds: Int, exerciseName: String) {
+        start(startedAt: startedAt, targetSeconds: targetSeconds, exerciseName: exerciseName)
+    }
 }
 
 /// Production implementation. Owns a single `Activity<RestTimerAttributes>`
@@ -75,11 +87,10 @@ public final class RestTimerActivityController: RestTimerActivityControlling {
         let authInfo = ActivityAuthorizationInfo()
         guard authInfo.areActivitiesEnabled else { return }
 
-        // If an activity is already running (defensive — engine should
-        // call end() first), end the prior one before requesting a new one.
-        if activity != nil {
-            end()
-        }
+        // End whatever is showing first: the activity this controller owns
+        // AND any orphan left by a previous process (the app was killed
+        // mid-rest), so a new rest never stacks a second card.
+        end()
 
         let attributes = RestTimerAttributes(
             sessionStartedAt: startedAt,
@@ -126,21 +137,47 @@ public final class RestTimerActivityController: RestTimerActivityControlling {
         }
     }
 
+    public func resume(startedAt: Date, targetSeconds: Int, exerciseName: String) {
+        // After a relaunch `activity` is nil but the system may still be
+        // showing the card from the previous process. Adopt it when it
+        // belongs to the same rest period; otherwise start fresh.
+        if activity == nil,
+           let orphan = Activity<RestTimerAttributes>.activities.first(where: {
+               $0.activityState == .active && $0.attributes.exerciseName == exerciseName
+           }) {
+            activity = orphan
+            update(startedAt: startedAt, targetSeconds: targetSeconds)
+            return
+        }
+        if activity != nil {
+            update(startedAt: startedAt, targetSeconds: targetSeconds)
+            return
+        }
+        start(startedAt: startedAt, targetSeconds: targetSeconds, exerciseName: exerciseName)
+    }
+
     public func end() {
         debounceTask?.cancel()
         debounceTask = nil
-        guard let activity else { return }
-        let startedAt = activity.content.state.startedAt
+        let owned = activity
         self.activity = nil
-        Task { @MainActor in
-            let final = RestTimerAttributes.ContentState(
-                startedAt: startedAt,
-                targetSeconds: 0   // signal "stopped"
-            )
-            await activity.end(
-                ActivityContent(state: final, staleDate: nil),
-                dismissalPolicy: .immediate
-            )
+        // Owned activity plus any orphan from a previous process.
+        var toEnd = Activity<RestTimerAttributes>.activities
+        if let owned, !toEnd.contains(where: { $0.id == owned.id }) {
+            toEnd.append(owned)
+        }
+        for activity in toEnd {
+            let startedAt = activity.content.state.startedAt
+            Task { @MainActor in
+                let final = RestTimerAttributes.ContentState(
+                    startedAt: startedAt,
+                    targetSeconds: 0   // signal "stopped"
+                )
+                await activity.end(
+                    ActivityContent(state: final, staleDate: nil),
+                    dismissalPolicy: .immediate
+                )
+            }
         }
     }
 }

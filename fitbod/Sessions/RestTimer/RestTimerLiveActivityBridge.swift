@@ -118,4 +118,12 @@ extension RestTimerLiveActivityBridge: RestTimerActivityControlling {
     public func end() {
         engineDidStop()
     }
+
+    public func resume(startedAt: Date, targetSeconds: Int, exerciseName: String) {
+        controller.resume(
+            startedAt: startedAt,
+            targetSeconds: targetSeconds,
+            exerciseName: exerciseName
+        )
+    }
 }

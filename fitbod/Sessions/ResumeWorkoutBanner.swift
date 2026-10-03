@@ -76,10 +76,12 @@ public struct ResumeWorkoutBanner: View {
                     .font(BRUFont.bodyEmphasis)
                     .foregroundStyle(Color.bruInk)
 
-                Text("\(elapsedLabel(for: active)) · \(setCount(for: active)) sets")
-                    .font(BRUFont.labelSmall)
-                    .tracking(0.5)
-                    .foregroundStyle(Color.bruMuted)
+                TimelineView(.periodic(from: active.startedAt, by: 1)) { _ in
+                    Text("\(elapsedLabel(for: active)) · \(setCount(for: active)) sets")
+                        .font(BRUFont.labelSmall)
+                        .tracking(0.5)
+                        .foregroundStyle(Color.bruMuted)
+                }
             }
 
             Spacer()
@@ -109,6 +111,7 @@ public struct ResumeWorkoutBanner: View {
             isPresented: $discardConfirm
         ) {
             Button("Discard", role: .destructive) {
+                RestTimerEngine.clearPersisted(sessionID: active.id)
                 onDiscard(active)
                 discardConfirm = false
             }
