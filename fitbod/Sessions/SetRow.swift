@@ -9,7 +9,7 @@
 // KEY CHANGES from v1:
 //   - SF Symbol checkmark.circle.fill → SetCompletionGlyph(isComplete:)
 //   - SF Symbol square.and.pencil     → Text("✎") typographic glyph
-//   - Color.accentColor → removed; completed numerics override to bruSignal
+//   - system accent color → removed; completed numerics override to bruSignal
 //   - .font(.body) / .font(.title2) / .font(.caption) → BRUFont.*
 //   - Both action buttons wrapped in .frame(minWidth: 44, minHeight: 44).contentShape(Rectangle())
 //     per UI-SPEC line 79 + T-02.1-03-03 touch-target mitigation
@@ -23,9 +23,9 @@
 //   - Bodyweight signed weight keyboard (.numbersAndPunctuation per SESS-09)
 //   - accessibilityLabel on note button + completion button
 //
-// BRU contract: NO Capsule() / NO RoundedRectangle / NO accentColor
+// BRU contract: NO capsule shapes / NO RoundedRectangle / NO accent color
 //               NO Image(systemName:) / NO .font(.body/.headline/.title/.caption)
-//               NO .buttonStyle(.bordered) / NO Color(.system*)
+//               NO bordered button style / NO Color(.system*)
 
 import SwiftUI
 import SwiftData
@@ -42,9 +42,14 @@ public struct SetRow: View {
     @Binding public var expandedPlateSetID: UUID?
     public let onCommit: () -> Void
     public let onTapEmptyCell: () -> Void
+    /// Tap on a completed checkmark: un-complete the set.
+    public let onUncomplete: () -> Void
+    /// A weight or reps field finished editing: persist now.
+    public let onEditCommitted: () -> Void
 
     @State private var repsText: String = ""
     @State private var presentingSetNote: Bool = false
+    @FocusState private var repsFocused: Bool
 
     @Query private var inventories: [PlateInventory]
 
@@ -55,7 +60,9 @@ public struct SetRow: View {
         explanation: PrescriptionExplanation? = nil,
         expandedPlateSetID: Binding<UUID?> = .constant(nil),
         onCommit: @escaping () -> Void,
-        onTapEmptyCell: @escaping () -> Void
+        onTapEmptyCell: @escaping () -> Void,
+        onUncomplete: @escaping () -> Void = {},
+        onEditCommitted: @escaping () -> Void = {}
     ) {
         self.entry = entry
         self.sessionExercise = sessionExercise
@@ -64,6 +71,8 @@ public struct SetRow: View {
         self._expandedPlateSetID = expandedPlateSetID
         self.onCommit = onCommit
         self.onTapEmptyCell = onTapEmptyCell
+        self.onUncomplete = onUncomplete
+        self.onEditCommitted = onEditCommitted
     }
 
     public var body: some View {
@@ -83,7 +92,8 @@ public struct SetRow: View {
 
                     PreviousColumn(
                         exerciseID: sessionExercise.exercise?.id,
-                        intentRaw: sessionExercise.session?.intentRaw ?? Intent.strength.rawValue
+                        intentRaw: sessionExercise.session?.intentRaw ?? Intent.strength.rawValue,
+                        currentSessionID: sessionExercise.session?.id
                     )
                     .frame(width: 80, alignment: .leading)
 
@@ -96,7 +106,8 @@ public struct SetRow: View {
                         explanation: explanation,
                         wasManualOverride: $entry.wasManualOverride,
                         isComplete: entry.isComplete,
-                        onTapEmptyCell: onTapEmptyCell
+                        onTapEmptyCell: onTapEmptyCell,
+                        onEditCommitted: onEditCommitted
                     )
                     .frame(width: 60)
                     .contentShape(Rectangle())
@@ -113,12 +124,22 @@ public struct SetRow: View {
                         .monospacedDigit()
                         .foregroundStyle(entry.isComplete ? Color.bruSignal : Color.bruInk)
                         .keyboardType(.numberPad)
+                        .focused($repsFocused)
                         .frame(width: 40)
                         .onTapGesture {
                             if !entry.isComplete { onTapEmptyCell() }
                         }
                         .onChange(of: repsText) { _, newValue in
-                            if let i = Int(newValue) { entry.reps = i }
+                            if let i = Int(newValue) {
+                                entry.reps = i
+                            } else if newValue.isEmpty {
+                                entry.reps = 0
+                            }
+                        }
+                        // Persist as soon as the field loses focus, not
+                        // only when the set is checked off.
+                        .onChange(of: repsFocused) { _, focused in
+                            if !focused { onEditCommitted() }
                         }
 
                     Spacer(minLength: 0)
@@ -135,15 +156,18 @@ public struct SetRow: View {
                     .buttonStyle(.plain)
                     .frame(minWidth: 44, minHeight: 44)                          // UI-SPEC HIG 44pt
                     .contentShape(Rectangle())
-                    .accessibilityLabel("Note for set \(entry.orderIndex + 1)")  // UI-SPEC verbatim a11y
+                    .accessibilityLabel("Note for set \(displayNumber)")         // UI-SPEC verbatim a11y
                     .sheet(isPresented: $presentingSetNote) {
                         PerSetNoteSheet(entry: entry)
                     }
 
                     // Completion button — SetCompletionGlyph replaces SF Symbol checkmark
                     // Guard: entry.weight > 0 && entry.reps > 0 (T-02.1-07-01)
+                    // Tapping a completed set's checkmark un-completes it.
                     Button {
-                        if entry.weight > 0 && entry.reps > 0 {
+                        if entry.isComplete {
+                            onUncomplete()
+                        } else if entry.weight > 0 && entry.reps > 0 {
                             onCommit()
                         }
                     } label: {
@@ -154,9 +178,10 @@ public struct SetRow: View {
                     .contentShape(Rectangle())
                     .accessibilityLabel(
                         entry.isComplete
-                        ? "Set \(entry.orderIndex + 1) complete"
-                        : "Mark set \(entry.orderIndex + 1) complete"
+                        ? "Set \(displayNumber) complete"
+                        : "Mark set \(displayNumber) complete"
                     )
+                    .accessibilityHint(entry.isComplete ? "Double tap to mark as not done" : "")
                 }
 
                 // LINE 2 — RPE chips + set-type chip
@@ -165,12 +190,12 @@ public struct SetRow: View {
                 HStack(spacing: 8) {
                     InlineRPEChipRow(rpe: Binding(
                         get: { entry.rpe },
-                        set: { entry.rpe = $0 }
+                        set: { entry.rpe = $0; onEditCommitted() }
                     ))
 
                     SetTypeChip(setTypeRaw: Binding(
                         get: { entry.setTypeRaw },
-                        set: { entry.setTypeRaw = $0 }
+                        set: { entry.setTypeRaw = $0; onEditCommitted() }
                     ))
 
                     Spacer(minLength: 0)
@@ -205,10 +230,17 @@ public struct SetRow: View {
 
     // MARK: - Private helpers
 
-    /// "1", "2", "W1" for warmup sets — UI-SPEC § Session logger line 369.
+    /// "S1", "S2", "W1" for warmup sets — UI-SPEC § Session logger line 369.
+    /// Numbered by position among sets of the same kind, so working sets
+    /// start at S1 even after a warm-up ramp and stay gap-free after a
+    /// set is deleted.
     private var setLabel: String {
-        let n = entry.orderIndex + 1
+        let n = displayNumber
         return entry.isWarmup ? "W\(n)" : "S\(n)"
+    }
+
+    private var displayNumber: Int {
+        SessionSetActions.displayNumber(of: entry)
     }
 
     /// Toggles the plate-stack disclosure for this row.

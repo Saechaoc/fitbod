@@ -243,6 +243,7 @@ public struct RootView: View {
             // idempotency via userEdited; safe to call on every
             // launch (RESEARCH §7.3).
             MuscleVolumeTargetSeeder.seedIfNeeded(in: modelContext)
+            DemoWorkoutSeed.runIfRequested(in: modelContext) // DEBUG-only E2E hook; no-op without the launch argument
 
             seedState.phase = .ready
         } catch {

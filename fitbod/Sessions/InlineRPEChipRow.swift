@@ -10,8 +10,8 @@
 // Long-press any chip (0.5s threshold per UI-SPEC accessibility) →
 // presents DecimalRPEPickerSheet with the long-pressed integer pre-selected.
 //
-// BRU contract: NO Capsule() / NO RoundedRectangle / NO accentColor
-//               NO Image(systemName:) / NO .buttonStyle(.bordered)
+// BRU contract: NO capsule shapes / NO RoundedRectangle / NO accent color
+//               NO Image(systemName:) / NO bordered button style
 //               NO Color(.system*) / NO .font(.caption/.body/.headline)
 
 import SwiftUI

@@ -66,6 +66,7 @@ public struct AddUnplannedExerciseButton: View {
 
         let se = SessionExercise()
         se.exercise = exercise
+        se.exerciseNameSnapshot = exercise.name
         se.orderIndex = nextOrderIndex
         se.session = session
         // PIVOT-02 / PIVOT-05: intent is session-level after Plan 02.
@@ -79,7 +80,8 @@ public struct AddUnplannedExerciseButton: View {
         let hint = PreviousMatchingIntent.fetchTopWorkingSet(
             exerciseID: exercise.id,
             intentRaw: session.intentRaw,
-            context: ctx
+            context: ctx,
+            excludingSessionID: session.id
         )?.weight ?? 0
         for i in 0..<3 {
             let entry = SetEntry()

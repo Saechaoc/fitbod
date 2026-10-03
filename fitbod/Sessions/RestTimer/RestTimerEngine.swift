@@ -36,6 +36,16 @@
 //  mutating the clock closure's captured `Date`, proving the Date-math is
 //  correct without any actual elapsed wall time.
 //
+//  Persistence (M1 logger): the running rest period is mirrored into an
+//  injected `RestTimerStore` as an absolute deadline keyed by session id.
+//  `bind(sessionID:)` / `restore()` rebuild the countdown from that
+//  deadline after the logger re-opens, the app returns from background,
+//  or the app is relaunched after being killed. A deadline in the future
+//  resumes; a deadline in the past is shown as finished and cleared.
+//  Every mutation (start / adjust / stop) writes the store, reschedules or
+//  cancels the notification, and updates or ends the Live Activity in the
+//  same call, so the three never disagree about when rest ends.
+//
 //  Out of scope for this plan: ActivityKit / Live Activity wiring (plan 02-02),
 //  Dynamic Island view declarations (plan 02-03), SwiftUI overlay views
 //  (plan 04-01). The engine exposes the surface those plans consume.
@@ -64,6 +74,11 @@ public final class RestTimerEngine {
     /// The exercise label shown in the lock-screen notification body and
     /// the in-app overlay header. Cleared on `stop()`.
     public private(set) var currentExerciseName: String = ""
+
+    /// The session whose rest period this engine mirrors into the store.
+    /// `nil` until `bind(sessionID:)`; an unbound engine keeps the
+    /// original in-memory-only behavior.
+    public private(set) var sessionID: UUID?
 
     // MARK: - Static contract
 
@@ -107,13 +122,19 @@ public final class RestTimerEngine {
     /// scenario in microseconds.
     private let now: () -> Date
 
+    /// Deadline persistence. In-memory by default so existing unit tests
+    /// stay hermetic; production wires `UserDefaultsRestTimerStore`.
+    private let store: RestTimerStore
+
     public init(
         scheduler: RestTimerNotificationScheduling = LiveNotificationScheduler(),
         activityController: RestTimerActivityControlling = NoopActivityController(),
+        store: RestTimerStore = InMemoryRestTimerStore(),
         now: @escaping () -> Date = { Date.now }
     ) {
         self.scheduler = scheduler
         self.activityController = activityController
+        self.store = store
         self.now = now
     }
 
@@ -128,8 +149,25 @@ public final class RestTimerEngine {
     public static func makeProduction() -> RestTimerEngine {
         RestTimerEngine(
             scheduler: LiveNotificationScheduler(),
-            activityController: RestTimerActivityController()
+            activityController: RestTimerActivityController(),
+            store: UserDefaultsRestTimerStore()
         )
+    }
+
+    /// Clears a session's persisted rest period and its side effects
+    /// (pending notification + Live Activity) without a live engine.
+    /// Used by discard paths outside the logger (Today / Program resume
+    /// surfaces) so a discarded workout never leaves a rest alert behind.
+    public static func clearPersisted(
+        sessionID: UUID,
+        store: RestTimerStore = UserDefaultsRestTimerStore(),
+        scheduler: RestTimerNotificationScheduling = LiveNotificationScheduler(),
+        activityController: RestTimerActivityControlling = RestTimerActivityController()
+    ) {
+        guard store.load(sessionID: sessionID) != nil else { return }
+        store.clear(sessionID: sessionID)
+        scheduler.cancel(identifier: notificationID)
+        activityController.end()
     }
 
     // MARK: - Computed accessors
@@ -149,6 +187,81 @@ public final class RestTimerEngine {
     /// session logger to decide whether to render the rest overlay.
     public var isRunning: Bool { startedAt != nil }
 
+    /// The absolute moment rest ends (`startedAt + targetSeconds`), or nil
+    /// when not running. This is the value persisted to the store.
+    public var endsAt: Date? {
+        startedAt.map { $0.addingTimeInterval(Double(targetSeconds)) }
+    }
+
+    /// True once the countdown has reached zero but the user has not yet
+    /// skipped or started the next set. The overlay shows "Rest complete".
+    public var isFinished: Bool { isRunning && remaining <= 0 }
+
+    // MARK: - Persistence
+
+    /// Attach the engine to a session and rebuild any persisted rest
+    /// period for it. Call on logger appear.
+    public func bind(sessionID: UUID) {
+        self.sessionID = sessionID
+        restore()
+    }
+
+    /// Re-sync from the store. Call on logger appear and whenever the app
+    /// returns to the foreground. Idempotent.
+    ///
+    ///   - Deadline in the future: the countdown resumes from the
+    ///     remaining time. When the engine was cold (fresh launch), the
+    ///     notification is rescheduled and the Live Activity is re-adopted
+    ///     so both match the stored deadline.
+    ///   - Deadline passed: the rest shows as finished, the store entry is
+    ///     cleared, and the notification + Live Activity are torn down.
+    ///   - Nothing stored: in-memory state is left alone (it may be a
+    ///     finished rest that was already cleared from the store).
+    public func restore() {
+        guard let sessionID, let snapshot = store.load(sessionID: sessionID) else { return }
+
+        let target = max(0, Int((snapshot.endsAt.timeIntervalSince(snapshot.startedAt)).rounded()))
+        let alreadyInSync = startedAt == snapshot.startedAt
+            && targetSeconds == target
+            && currentExerciseName == snapshot.exerciseName
+
+        startedAt = snapshot.startedAt
+        targetSeconds = target
+        currentExerciseName = snapshot.exerciseName
+
+        if snapshot.endsAt > now() {
+            guard !alreadyInSync else { return }
+            let firesIn = max(1, Int(snapshot.endsAt.timeIntervalSince(now()).rounded(.up)))
+            scheduler.schedule(
+                in: firesIn,
+                exerciseName: snapshot.exerciseName,
+                identifier: Self.notificationID
+            )
+            activityController.resume(
+                startedAt: snapshot.startedAt,
+                targetSeconds: target,
+                exerciseName: snapshot.exerciseName
+            )
+        } else {
+            store.clear(sessionID: sessionID)
+            scheduler.cancel(identifier: Self.notificationID)
+            activityController.end()
+        }
+    }
+
+    private func persist() {
+        guard let sessionID, let startedAt, let endsAt else { return }
+        store.save(
+            RestTimerSnapshot(
+                startedAt: startedAt,
+                endsAt: endsAt,
+                targetSeconds: targetSeconds,
+                exerciseName: currentExerciseName
+            ),
+            sessionID: sessionID
+        )
+    }
+
     // MARK: - Mutating commands
 
     /// Start (or restart) the timer.
@@ -165,6 +278,7 @@ public final class RestTimerEngine {
         self.startedAt = now()
         self.targetSeconds = max(1, seconds)
         self.currentExerciseName = exerciseName
+        persist()
         scheduler.schedule(
             in: targetSeconds,
             exerciseName: exerciseName,
@@ -200,18 +314,27 @@ public final class RestTimerEngine {
         guard isRunning, let startedAt else { return }
         let newTarget = max(0, targetSeconds + deltaSeconds)
         targetSeconds = newTarget
+        // The stored deadline moves with the target.
+        persist()
 
         // Reschedule the notification to fire at `startedAt + newTarget`,
         // computed as the delta from `now()` so the trigger interval is
         // correct regardless of how much time has elapsed since `start()`.
         // Clamp at >= 1s to keep `UNTimeIntervalNotificationTrigger` happy.
+        // If the adjusted deadline is already behind us (e.g. -15s with
+        // under 15s left) there is nothing left to alert about: cancel
+        // instead of firing a stray alert one second from now.
         let fireDate = startedAt.addingTimeInterval(Double(newTarget))
-        let firesIn = max(1, Int(fireDate.timeIntervalSince(now())))
-        scheduler.schedule(
-            in: firesIn,
-            exerciseName: currentExerciseName,
-            identifier: Self.notificationID
-        )
+        let secondsLeft = fireDate.timeIntervalSince(now())
+        if secondsLeft > 0 {
+            scheduler.schedule(
+                in: max(1, Int(secondsLeft.rounded(.up))),
+                exerciseName: currentExerciseName,
+                identifier: Self.notificationID
+            )
+        } else {
+            scheduler.cancel(identifier: Self.notificationID)
+        }
         // Plan 02-02 wire: push the new ContentState through the debounce.
         // startedAt does NOT move; only targetSeconds changes.
         activityController.update(
@@ -230,6 +353,7 @@ public final class RestTimerEngine {
     ///
     /// Idempotent — safe to call when not running.
     public func stop() {
+        if let sessionID { store.clear(sessionID: sessionID) }
         startedAt = nil
         targetSeconds = 0
         currentExerciseName = ""

@@ -36,9 +36,12 @@ public struct PrescriptionWeightCell: View {
     @Binding public var wasManualOverride: Bool
     public var isComplete: Bool = false
     public var onTapEmptyCell: () -> Void = {}
+    /// Fired when the weight field loses focus so the caller can persist.
+    public var onEditCommitted: () -> Void = {}
 
     @State private var weightText: String = ""
     @State private var showWhySheet: Bool = false
+    @FocusState private var weightFocused: Bool
 
     public init(
         weight: Binding<Double>,
@@ -48,7 +51,8 @@ public struct PrescriptionWeightCell: View {
         unitLabel: String = "kg",
         wasManualOverride: Binding<Bool>,
         isComplete: Bool = false,
-        onTapEmptyCell: @escaping () -> Void = {}
+        onTapEmptyCell: @escaping () -> Void = {},
+        onEditCommitted: @escaping () -> Void = {}
     ) {
         self._weight = weight
         self.prescribed = prescribed
@@ -58,6 +62,7 @@ public struct PrescriptionWeightCell: View {
         self._wasManualOverride = wasManualOverride
         self.isComplete = isComplete
         self.onTapEmptyCell = onTapEmptyCell
+        self.onEditCommitted = onEditCommitted
     }
 
     public var body: some View {
@@ -73,6 +78,7 @@ public struct PrescriptionWeightCell: View {
                 // MARK: Editable weight TextField
                 TextField("—", text: $weightText)
                     .keyboardType(.decimalPad)
+                    .focused($weightFocused)
                     .frame(width: 60)
                     .font(BRUFont.bodyEmphasis)
                     .foregroundStyle(Color.bruInk)
@@ -81,6 +87,17 @@ public struct PrescriptionWeightCell: View {
                             weight = d
                             wasManualOverride = (prescribed != nil) &&
                                 abs(d - (prescribed ?? d)) > 0.001
+                        }
+                    }
+                    .onChange(of: weightFocused) { _, focused in
+                        if !focused { onEditCommitted() }
+                    }
+                    // Reflect weight changes made outside the field (swap
+                    // re-seed, plateau "drop intensity") without fighting
+                    // the user's own typing.
+                    .onChange(of: weight) { _, new in
+                        if !weightFocused, Double(weightText) != new {
+                            weightText = new > 0 ? formatted(new) : ""
                         }
                     }
 

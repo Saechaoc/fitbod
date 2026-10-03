@@ -22,7 +22,7 @@ import SwiftData
 /// │                                               │  6pt gap
 /// │  Push A                                       │  56pt hero bruPaper
 /// │                                               │  12pt gap
-/// │  14:32  ·  9 SETS LOGGED                      │  10pt caps 0.6 opacity
+/// │  14:32  ·  9 SETS LOGGED                      │  10pt caps 0.6 opacity (ticks every second)
 /// │                                               │  16pt gap
 /// │  [  RESUME ▸  ] [  DISCARD  ]                 │  two equal-width buttons
 /// └──────────────────────────────────────────────┘
@@ -39,6 +39,9 @@ public struct ResumeWorkoutSlab: View {
     let onResume: @MainActor () -> Void
     let onDiscard: @MainActor () -> Void
 
+    /// Discard confirmation, shown only when completed sets would be lost.
+    @State private var confirmingDiscard = false
+
     // MARK: - Computed
 
     private var routineDisplayName: String {
@@ -46,15 +49,16 @@ public struct ResumeWorkoutSlab: View {
         return session.routineSnapshotName
     }
 
+    /// Completed sets only. Planned (not yet done) rows are not "logged".
     private var setsLogged: Int {
         (session.exercises ?? []).reduce(0) { total, exercise in
-            total + (exercise.sets ?? []).count
+            total + (exercise.sets ?? []).filter { $0.isComplete }.count
         }
     }
 
     /// Elapsed time string: "mm:ss" for < 60 min, "h:mm" for >= 60 min
-    private var elapsedString: String {
-        let elapsed = Date.now.timeIntervalSince(session.startedAt)
+    private func elapsedString(at now: Date) -> String {
+        let elapsed = now.timeIntervalSince(session.startedAt)
         let totalSeconds = max(0, Int(elapsed))
         if totalSeconds < 3600 {
             let m = totalSeconds / 60
@@ -86,8 +90,10 @@ public struct ResumeWorkoutSlab: View {
             // 12pt gap then meta strip
             Spacer().frame(height: 12)
 
+            // TimelineView re-renders the elapsed clock once a second.
+            TimelineView(.periodic(from: session.startedAt, by: 1)) { context in
             HStack(spacing: 0) {
-                Text(elapsedString)
+                Text(elapsedString(at: context.date))
                     .font(BRUFont.labelSmall)
                     .tracking(1.2)
                     .textCase(.uppercase)
@@ -97,11 +103,12 @@ public struct ResumeWorkoutSlab: View {
                     .font(BRUFont.labelSmall)
                     .foregroundStyle(Color.bruPaper.opacity(0.3))
 
-                Text("\(setsLogged) sets logged")
+                Text(setsLogged == 1 ? "1 set logged" : "\(setsLogged) sets logged")
                     .font(BRUFont.labelSmall)
                     .tracking(1.2)
                     .textCase(.uppercase)
                     .foregroundStyle(Color.bruPaper.opacity(0.6))
+            }
             }
 
             // 16pt gap then two equal-width action buttons
@@ -117,7 +124,13 @@ public struct ResumeWorkoutSlab: View {
                 // On this bruInk slab background we need bruPaper text + bruPaper outline.
                 // We implement this directly rather than through BRUButton to avoid coupling
                 // BRUButton to caller context. See threat model T-02.1-04-01 note.
-                Button(action: onDiscard) {
+                Button {
+                    if setsLogged > 0 {
+                        confirmingDiscard = true
+                    } else {
+                        discard()
+                    }
+                } label: {
                     Text("Discard")
                         .font(BRUFont.labelSmall)
                         .tracking(1.2)
@@ -138,6 +151,21 @@ public struct ResumeWorkoutSlab: View {
         .padding(.horizontal, 16)
         .background(Color.bruInk)
         .frame(maxWidth: .infinity, alignment: .leading)
+        .alert("Discard workout?", isPresented: $confirmingDiscard) {
+            Button("Discard", role: .destructive) { discard() }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text(setsLogged == 1
+                 ? "1 logged set will be deleted."
+                 : "\(setsLogged) logged sets will be deleted.")
+        }
+    }
+
+    /// Clears any persisted rest timer (and its alert + Live Activity)
+    /// for this session, then hands off to the caller's delete.
+    private func discard() {
+        RestTimerEngine.clearPersisted(sessionID: session.id)
+        onDiscard()
     }
 }
 

@@ -78,10 +78,18 @@ public enum PreviousMatchingIntent {
     /// could fetch matching Sessions first via the new
     /// `#Index<Session>([\.intentRaw])`, then flat-map to their
     /// exercises.
+    ///
+    /// Only FINISHED sessions count as "previous" (`completedAt != nil`),
+    /// most recent first. The in-progress session and any abandoned,
+    /// never-finished session are excluded, so a set the user just logged
+    /// can never show up as its own "previous" value. Pass
+    /// `excludingSessionID` (the current session) as a second guard for
+    /// callers that run while a session is open.
     public static func fetchTopWorkingSet(
         exerciseID: UUID?,
         intentRaw: String,
-        context: ModelContext
+        context: ModelContext,
+        excludingSessionID: UUID? = nil
     ) -> PreviousMatchingIntentHit? {
         guard let exerciseID else { return nil }
 
@@ -106,7 +114,13 @@ public enum PreviousMatchingIntent {
         guard let all = try? context.fetch(descriptor) else { return nil }
 
         let recent = all
-            .filter { $0.exercise?.id == targetID && $0.session?.intentRaw == targetIntent }
+            .filter { se in
+                guard let session = se.session,
+                      session.completedAt != nil,
+                      session.id != excludingSessionID
+                else { return false }
+                return se.exercise?.id == targetID && session.intentRaw == targetIntent
+            }
             .sorted { ($0.session?.startedAt ?? .distantPast) > ($1.session?.startedAt ?? .distantPast) }
             .prefix(5)
 

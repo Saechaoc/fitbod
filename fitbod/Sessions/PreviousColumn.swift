@@ -29,20 +29,31 @@ public struct PreviousColumn: View {
     @Environment(\.modelContext) private var ctx
     public let exerciseID: UUID?
     public let intentRaw: String
+    /// The in-progress session, excluded so the column never echoes a set
+    /// logged in this same workout.
+    public let currentSessionID: UUID?
     @State private var hint: PreviousMatchingIntentHit?
 
-    public init(exerciseID: UUID?, intentRaw: String) {
+    public init(exerciseID: UUID?, intentRaw: String, currentSessionID: UUID? = nil) {
         self.exerciseID = exerciseID
         self.intentRaw = intentRaw
+        self.currentSessionID = currentSessionID
     }
 
     public var body: some View {
         Group {
             if let hit = hint {
-                Text(formatHint(hit))
-                    .font(BRUFont.bodyDefault)
-                    .monospacedDigit()
-                    .foregroundStyle(Color.bruMuted)
+                // The column is 80pt wide. Show the longest form that fits
+                // without truncation: full "175 × 8 @ 8 (Mon)", then without
+                // the day, then the bare "175×8". The full string stays the
+                // accessibility label.
+                ViewThatFits(in: .horizontal) {
+                    hintText(formatHint(hit))
+                    hintText(formatHint(hit, includeDay: false))
+                    hintText(compactHint(hit))
+                }
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel("Previous: \(formatHint(hit))")
             } else {
                 Text("—")                                                           // UI-SPEC verbatim placeholder
                     .font(BRUFont.bodyDefault)
@@ -50,11 +61,13 @@ public struct PreviousColumn: View {
                     .foregroundStyle(Color.bruMuted)
             }
         }
-        .task {
+        // Keyed on exerciseID so a mid-session swap re-queries.
+        .task(id: exerciseID) {
             hint = PreviousMatchingIntent.fetchTopWorkingSet(
                 exerciseID: exerciseID,
                 intentRaw: intentRaw,
-                context: ctx
+                context: ctx,
+                excludingSessionID: currentSessionID
             )
         }
     }
@@ -63,7 +76,27 @@ public struct PreviousColumn: View {
     /// "{prev weight} × {prev reps} @ {prev RPE} ({day-of-week ref})"
     /// e.g. "175 × 8 @ 8 (Mon)". RPE clause suppressed when the prior set
     /// didn't record one. Weight renders without decimal when integer.
-    private func formatHint(_ hit: PreviousMatchingIntentHit) -> String {
+    private func hintText(_ text: String) -> some View {
+        Text(text)
+            .font(BRUFont.bodyDefault)
+            .monospacedDigit()
+            .foregroundStyle(Color.bruMuted)
+            .lineLimit(1)
+            .fixedSize(horizontal: true, vertical: false)
+    }
+
+    /// "175×8" — the narrowest form.
+    private func compactHint(_ hit: PreviousMatchingIntentHit) -> String {
+        "\(formatWeight(hit.weight))×\(hit.reps)"
+    }
+
+    private func formatWeight(_ weight: Double) -> String {
+        weight.truncatingRemainder(dividingBy: 1) == 0
+            ? "\(Int(weight))"
+            : String(format: "%.1f", weight)
+    }
+
+    private func formatHint(_ hit: PreviousMatchingIntentHit, includeDay: Bool = true) -> String {
         let day = hit.sessionStartedAt.formatted(.dateTime.weekday(.abbreviated))
         let rpeText: String
         if let rpe = hit.rpe {
@@ -75,12 +108,12 @@ public struct PreviousColumn: View {
         } else {
             rpeText = ""
         }
-        let w = hit.weight.truncatingRemainder(dividingBy: 1) == 0
-            ? "\(Int(hit.weight))"
-            : String(format: "%.1f", hit.weight)
+        let w = formatWeight(hit.weight)
         // UI-SPEC verbatim: "175 × 8 @ 8 (Mon)"
-        return "\(w) × \(hit.reps) \(rpeText) (\(day))"
+        let dayText = includeDay ? " (\(day))" : ""
+        return "\(w) × \(hit.reps) \(rpeText)\(dayText)"
             .replacingOccurrences(of: "  ", with: " ")
+            .trimmingCharacters(in: .whitespaces)
     }
 }
 
