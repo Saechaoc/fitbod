@@ -20,13 +20,7 @@ struct BlockOverviewScreenWeekCarouselTests {
     // MARK: - Fixture helpers
 
     private func makeContext() throws -> ModelContext {
-        let schema = Schema(SchemaV5.models)
-        let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
-        let container = try ModelContainer(
-            for: schema,
-            migrationPlan: FitbodSchemaMigrationPlan.self,
-            configurations: config
-        )
+        let container = try FitbodModelContainer.make(inMemory: true)
         return ModelContext(container)
     }
 
@@ -185,13 +179,7 @@ struct BlockOverviewScreenWeekCarouselTests {
     /// Proves the primary (slot-based) OR branch alone marks the day as .done.
     @Test("Slot-based membership path marks day cell done when session.block is nil")
     func slotBasedPathAloneMarksDone() throws {
-        let schema = Schema(SchemaV7.models)
-        let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
-        let container = try ModelContainer(
-            for: schema,
-            migrationPlan: FitbodSchemaMigrationPlan.self,
-            configurations: config
-        )
+        let container = try FitbodModelContainer.make(inMemory: true)
         let context = ModelContext(container)
 
         // Build block + split + slot
@@ -239,13 +227,7 @@ struct BlockOverviewScreenWeekCarouselTests {
     /// session.block?.id == block.id. Proves the fallback OR branch alone marks done.
     @Test("Block-ID fallback path marks day cell done when session.slot is nil")
     func blockIDFallbackPathAloneMarksDone() throws {
-        let schema = Schema(SchemaV7.models)
-        let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
-        let container = try ModelContainer(
-            for: schema,
-            migrationPlan: FitbodSchemaMigrationPlan.self,
-            configurations: config
-        )
+        let container = try FitbodModelContainer.make(inMemory: true)
         let context = ModelContext(container)
 
         // Block with no split wired (pre-resolver legacy edge)

@@ -18,7 +18,7 @@
 //    6. highRepSuppressesE1RM — a 12-rep set never returns .e1RM even
 //       when it tops the other PR kinds
 //
-//  Each test acquires a fresh in-memory SchemaV6 ModelContainer via
+//  Each test acquires a fresh in-memory baseline ModelContainer via
 //  the existing fitbodTests/TestSupport/InMemoryContainer.makeCurrent()
 //  helper. `.serialized` because SwiftData ModelContainer setup is
 //  not safe to parallelize across @Test instances.

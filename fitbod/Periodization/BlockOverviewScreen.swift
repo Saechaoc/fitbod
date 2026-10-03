@@ -1260,13 +1260,7 @@ private extension Array {
 #Preview("BlockOverviewScreen") {
     // CR-05: V7 schema — BlockOverviewScreen accesses Split / SplitSessionSlot /
     // SessionTemplate relationships at runtime, which SchemaV5 has no tables for.
-    let schema = Schema(SchemaV7.models)
-    let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
-    let container = try! ModelContainer(
-        for: schema,
-        migrationPlan: FitbodSchemaMigrationPlan.self,
-        configurations: config
-    )
+    let container = try! FitbodModelContainer.make(inMemory: true)
     let ctx = ModelContext(container)
 
     // Seed a deterministic block for preview

@@ -1,17 +1,8 @@
 //
-//  SchemaV1Tests.swift
+//  ModelDefaultInitTests.swift
 //  fitbodTests
 //
-//  Anchors FOUND-01 and FOUND-02:
-//    - FOUND-01: `ModelContainer(for: Schema(SchemaV1.models),
-//      migrationPlan: FitbodSchemaMigrationPlan.self, ...)` succeeds.
-//    - FOUND-02: every `@Model` type can be instantiated via its no-arg
-//      `init()`, inserted into a context, saved, and fetched — i.e.,
-//      every property is Optional or default-valued so the schema is
-//      iCloud-shape-ready.
-//
-//  Also asserts the schema has exactly 12 entities, the count locked
-//  by ARCHITECTURE.md.
+//  Every @Model type default-inits, inserts, saves and fetches (FOUND-02).
 //
 
 import Foundation
@@ -19,33 +10,10 @@ import SwiftData
 import Testing
 @testable import fitbod
 
-@Suite("SchemaV1")
-struct SchemaV1Tests {
+@Suite("ModelDefaultInit")
+struct ModelDefaultInitTests {
 
     // MARK: - FOUND-01 — container builds with versioned schema + migration plan
-
-    @Test("container builds with versioned schema + migration plan")
-    func containerBuilds() throws {
-        let container = try InMemoryContainer.makeEmpty()
-        // SchemaV1.models remains locked at 12 below. The composed
-        // runtime container may materialize additive relationship
-        // targets from the current aliased model types.
-        #expect(container.schema.entities.count >= SchemaV1.models.count)
-    }
-
-    @Test("schema list and SchemaV1.models agree on 12 entities")
-    func schemaListMatchesModelsList() {
-        #expect(SchemaV1.models.count == 12)
-    }
-
-    @Test("migration plan registers SchemaV1 as historical version")
-    func migrationPlanRegistersV1() {
-        // Phase 2 plan 00-02 added SchemaV2 and a V1->V2 lightweight stage;
-        // SchemaV1 stays registered forever so existing on-disk V1 stores
-        // can still be matched and walked forward.
-        let names = FitbodSchemaMigrationPlan.schemas.map { String(describing: $0) }
-        #expect(names.contains("SchemaV1"))
-    }
 
     // MARK: - exercise round-trip — proves insert + save + fetch path
 

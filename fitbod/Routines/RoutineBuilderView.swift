@@ -518,13 +518,7 @@ public struct RoutineBuilderView: View {
 
 #if DEBUG
 #Preview("RoutineBuilderView — New routine") {
-    let schema = Schema(SchemaV5.models)
-    let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
-    if let container = try? ModelContainer(
-        for: schema,
-        migrationPlan: FitbodSchemaMigrationPlan.self,
-        configurations: config
-    ) {
+    if let container = try? FitbodModelContainer.make(inMemory: true) {
         let draft = RoutineDraft()
         return AnyView(
             RoutineBuilderView(draft: draft, editing: nil)

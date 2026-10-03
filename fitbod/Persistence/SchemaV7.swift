@@ -2,36 +2,21 @@
 //  SchemaV7.swift
 //  fitbod
 //
-//  Phase 7 schema wrapper — entity-rename + program-graph successor to
-//  SchemaV6 (Phase 5). SchemaV7's delta:
+//  BASELINE SCHEMA. This is the only VersionedSchema in the app.
 //
-//  Renames (custom stage, entity-level row copy via willMigrate/didMigrate):
-//    - Routine             → SessionTemplate
-//    - RoutineExercise     → SessionExerciseTemplate
-//    - Session.template:     renamed relationship (was soft UUID)
+//  Schema history (SchemaV1-V6 and FitbodSchemaMigrationPlan) was
+//  intentionally reset on 2026-10-02: the app has a single user and no
+//  production data, and the frozen historical schemas were fragile (they
+//  referenced live types and crashed on launch for pre-V7 stores). The type
+//  keeps the name `SchemaV7` so existing V7 stores still match.
 //
-//  New entities:
-//    - Split              (periodization split bundling sessions; new table)
-//    - SplitSessionSlot   (ordered join row — split × session template × position)
+//  The container is built from this schema WITHOUT a migration plan (see
+//  `FitbodModelContainer`). Additive changes (new optional or defaulted
+//  attributes, new entities) migrate automatically in place. A store SwiftData
+//  cannot open is moved aside into `IncompatibleStores/<timestamp>/` and a
+//  fresh store is created.
 //
-//  Block field additions (additive; handled by custom stage):
-//    - split: Split?               (nil while draft; nullify on split hard-delete)
-//    - schedulingModeRaw: String   ("rotation" | "fixedWeekly", default "rotation")
-//    - trainingDaysJoined: String  (join-to-String [Int] accessor; default "")
-//    - archivedConfigJSON: String? (freeze #2 — written once at block end)
-//
-//  Session field additions (additive; handled by custom stage):
-//    - template: SessionTemplate?  (replaces soft sourceRoutineID)
-//    - slot: SplitSessionSlot?     (which slot launched this workout; nil = ad-hoc)
-//    - templateName: String?       (log-time name snapshot — freeze #1 insurance)
-//
-//  IMPORTANT: `models` is an EXPLICIT array of all 18 production types —
-//  NOT a passthrough to SchemaV6.models. SchemaV6 is expanded for migration
-//  (nested Routine/RoutineExercise types) and must NOT appear in the V7
-//  production container. Passthrough here would silently include those
-//  migration-only nested types (Pitfall 4 from RESEARCH.md).
-//
-//  [CITED: developer.apple.com/documentation/swiftdata/migrationstage/custom]
+//  `models` is an explicit list of all 18 production types.
 //
 
 import Foundation
@@ -65,8 +50,7 @@ public enum SchemaV7: VersionedSchema {
     public typealias RoutineExerciseSetOverride = fitbod.RoutineExerciseSetOverride
     public typealias PlateInventory = fitbod.PlateInventory
 
-    // MARK: - Explicit models array (18 production types — do NOT use SchemaV6.models passthrough)
-    // Order: V7 new/renamed types first, then unchanged from V6.
+    // MARK: - Explicit models array (18 production types)
 
     public static var models: [any PersistentModel.Type] {
         [

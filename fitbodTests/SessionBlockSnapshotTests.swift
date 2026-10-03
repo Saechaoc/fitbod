@@ -14,13 +14,7 @@ import Testing
 @Suite("SessionBlockSnapshot", .serialized)
 struct SessionBlockSnapshotTests {
     private func makeContext() throws -> ModelContext {
-        let schema = Schema(SchemaV5.models)
-        let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
-        let container = try ModelContainer(
-            for: schema,
-            migrationPlan: FitbodSchemaMigrationPlan.self,
-            configurations: config
-        )
+        let container = try FitbodModelContainer.make(inMemory: true)
         return ModelContext(container)
     }
 

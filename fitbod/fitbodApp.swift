@@ -2,22 +2,16 @@
 //  fitbodApp.swift
 //  fitbod
 //
-//  App entry point. Single shared `ModelContainer` wired with the
-//  versioned schema (SchemaV4 — 16 entities: same entity count as V3
-//  with PIVOT-03 reshaping the per-exercise intent + progressionKind
-//  fields up to per-session) and the V1 → V2 → V3 → V4 migration
-//  chain registered in `FitbodSchemaMigrationPlan` (FOUND-01 /
-//  PITFALLS #2 / Phase 2 plan 00-02 / Phase 3 plan 03-01 / Phase 3.1
-//  plans 01 + 02). The migration plan itself keeps every historical
-//  schema (`SchemaV1.self` ... `SchemaV4.self`) registered so SwiftData
-//  can open a pre-V4 on-disk store and walk it forward through the
-//  appropriate lightweight + custom stages.
+//  App entry point. Single shared `ModelContainer` built by
+//  `FitbodModelContainer.make()` from the baseline schema (`SchemaV7`)
+//  with no migration plan: additive changes migrate automatically, and an
+//  incompatible on-disk store is moved aside into
+//  `IncompatibleStores/<timestamp>/` before a fresh store is created.
 //
-//  The container is constructed synchronously in `init()` per Apple's
-//  recommended `ModelContainer` pattern (RESEARCH Code Example 1):
-//  failing here means the on-disk store is unusable, which is unrecoverable
-//  — so a `fatalError` on failure is correct rather than silently routing
-//  the app to a degraded in-memory mode.
+//  The container is constructed synchronously in `init()`. `make()` only
+//  throws when even the fresh store cannot be built, which is unrecoverable,
+//  so a `fatalError` is correct rather than silently routing the app to a
+//  degraded in-memory mode.
 //
 //  Views consume the container via `.modelContainer(_)` environment
 //  injection, then use `@Query` / `@Bindable` directly against the schema
@@ -32,14 +26,8 @@ struct fitbodApp: App {
     let container: ModelContainer
 
     init() {
-        let schema = Schema(SchemaV7.models)
-        let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
         do {
-            container = try ModelContainer(
-                for: schema,
-                migrationPlan: FitbodSchemaMigrationPlan.self,
-                configurations: config
-            )
+            container = try FitbodModelContainer.make()
         } catch {
             fatalError("Failed to create ModelContainer: \(error)")
         }

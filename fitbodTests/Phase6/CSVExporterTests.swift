@@ -19,7 +19,7 @@
 //    7. exerciseNameEmptyForNilExercise — Open Question 2 deferred
 //    8. goldenSnapshotMatch — byte-equal against committed fixture
 //
-//  Each test acquires a fresh in-memory SchemaV6 ModelContainer.
+//  Each test acquires a fresh in-memory baseline ModelContainer.
 //
 
 import Foundation

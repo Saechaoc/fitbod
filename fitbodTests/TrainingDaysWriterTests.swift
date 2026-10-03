@@ -56,13 +56,7 @@ struct TrainingDaysWriterTests {
     @Test("Region change after write does not re-sort stored trainingDays")
     func regionChangeDoesNotResort() throws {
         // Build an in-memory V7 container — same pattern as SplitDeletionGuardTests
-        let schema = Schema(SchemaV7.models)
-        let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
-        let container = try ModelContainer(
-            for: schema,
-            migrationPlan: FitbodSchemaMigrationPlan.self,
-            configurations: config
-        )
+        let container = try FitbodModelContainer.make(inMemory: true)
         let ctx = ModelContext(container)
 
         // Mon-first calendar for the write

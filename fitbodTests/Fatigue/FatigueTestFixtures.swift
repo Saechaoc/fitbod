@@ -11,8 +11,8 @@
 //  crashes loudly instead of silently passing.
 //
 //  Pattern mirrors `PreviousMatchingIntentTests.makeContext()` and
-//  `InMemoryContainer.makeCurrent()`: Schema(SchemaV6.models) +
-//  FitbodSchemaMigrationPlan over an in-memory ModelContainer.
+//  `InMemoryContainer.makeCurrent()`: FitbodModelContainer.make(inMemory: true) +
+//  FitbodModelContainer.make over an in-memory ModelContainer.
 //
 
 import Foundation
@@ -24,17 +24,11 @@ enum FatigueTestFixtures {
 
     // MARK: - Container
 
-    /// Fresh in-memory V6 ModelContext over `Schema(SchemaV6.models)` +
-    /// FitbodSchemaMigrationPlan. Mirrors PreviousMatchingIntentTests
+    /// Fresh in-memory V6 ModelContext over FitbodModelContainer.make(inMemory: true) +
+    /// FitbodModelContainer.make. Mirrors PreviousMatchingIntentTests
     /// shape verbatim; swap V5→V6.
     static func makeContext() throws -> ModelContext {
-        let schema = Schema(SchemaV6.models)
-        let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
-        let container = try ModelContainer(
-            for: schema,
-            migrationPlan: FitbodSchemaMigrationPlan.self,
-            configurations: config
-        )
+        let container = try FitbodModelContainer.make(inMemory: true)
         return ModelContext(container)
     }
 

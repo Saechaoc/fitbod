@@ -24,8 +24,8 @@
 //
 //  Container/test pattern matches `PreviousMatchingIntentTests` (plan
 //  01-01) verbatim: `@MainActor` + `.serialized` over an in-memory
-//  `ModelContainer` constructed with `Schema(SchemaV5.models)` +
-//  `FitbodSchemaMigrationPlan`.
+//  `ModelContainer` constructed with FitbodModelContainer.make(inMemory: true) +
+//  `FitbodModelContainer.make`.
 //
 //  Phase 3.1 (PIVOT-02 / PIVOT-05 / D-13 / D-15): intent moved from
 //  SessionExercise.intentRaw to Session.intentRaw. The view's predicate
@@ -49,13 +49,7 @@ struct ExerciseHistoryIntentSplitTests {
     // MARK: - Helpers
 
     private func makeContext() throws -> ModelContext {
-        let schema = Schema(SchemaV5.models)
-        let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
-        let container = try ModelContainer(
-            for: schema,
-            migrationPlan: FitbodSchemaMigrationPlan.self,
-            configurations: config
-        )
+        let container = try FitbodModelContainer.make(inMemory: true)
         return ModelContext(container)
     }
 

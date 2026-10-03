@@ -6,7 +6,7 @@
 //
 //  - `makeEmpty()` returns a freshly-built container with NO seeded
 //    rows — the right choice for hermetic tests that need to count
-//    inserts exactly (`SchemaV1Tests`, `CascadeRuleTests`,
+//    inserts exactly (`ModelDefaultInitTests`, `CascadeRuleTests`,
 //    `EnumPersistenceTests`, `UserSettingsTests`).
 //
 //  - `makeWithFixture()` re-exports the production
@@ -30,43 +30,17 @@ enum InMemoryContainer {
     /// Throws if `ModelContainer` initialisation fails — Swift Testing
     /// surfaces the error in the test output verbatim.
     ///
-    /// Intentionally still opens against `SchemaV1` — `SchemaV1Tests`
-    /// asserts a 12-entity contract against the container's runtime
-    /// schema, and flipping that contract belongs to a dedicated
-    /// SchemaV2-targeted migration test suite (see
-    /// `SchemaV2MigrationTests`) rather than mutating the Phase 1
-    /// baseline. App-target callers route through the V2-bound
-    /// `ModelContainer` injected via `.modelContainer(_)` in
-    /// `fitbodApp.swift`.
+    /// Built by `FitbodModelContainer.make(inMemory:)` - the exact production
+    /// path (current schema + the full FitbodModelContainer.make).
     static func makeEmpty() throws -> ModelContainer {
-        let schema = Schema(SchemaV1.models)
-        let config = ModelConfiguration(
-            schema: schema,
-            isStoredInMemoryOnly: true,
-            allowsSave: true
-        )
-        return try ModelContainer(
-            for: schema,
-            migrationPlan: FitbodSchemaMigrationPlan.self,
-            configurations: config
-        )
+        return try FitbodModelContainer.make(inMemory: true)
     }
 
     /// Fresh empty in-memory container for tests that exercise current
     /// app behavior and need post-V1 entities such as SupersetGroup,
     /// PlateInventory, or Phase 4 block-review fields.
     static func makeCurrent() throws -> ModelContainer {
-        let schema = Schema(SchemaV7.models)
-        let config = ModelConfiguration(
-            schema: schema,
-            isStoredInMemoryOnly: true,
-            allowsSave: true
-        )
-        return try ModelContainer(
-            for: schema,
-            migrationPlan: FitbodSchemaMigrationPlan.self,
-            configurations: config
-        )
+        return try FitbodModelContainer.make(inMemory: true)
     }
 
     /// Pre-seeded container reusing the production

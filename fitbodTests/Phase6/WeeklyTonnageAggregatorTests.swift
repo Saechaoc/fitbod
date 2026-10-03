@@ -20,7 +20,7 @@
 //       attributes full tonnage to primary-role stimuli only
 //
 //  Hermetic: each test gets a fresh in-memory ModelContainer via
-//  InMemoryContainer.makeCurrent() (SchemaV6). `@MainActor` because we
+//  InMemoryContainer.makeCurrent() (baseline schema). `@MainActor` because we
 //  touch a ModelContext to materialize Exercise + Session + SessionExercise
 //  + SetEntry fixtures (SwiftData @Model classes are @MainActor-bound
 //  in this codebase per FOUND-09).

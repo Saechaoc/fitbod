@@ -16,7 +16,7 @@
 //    Binding(get: { model.field ?? "" }, set: { model.field = $0.isEmpty ? nil : $0 })
 //
 //  This test exercises the SwiftData round-trip directly (in-memory
-//  ModelContainer over SchemaV2) — the sheet UI is pure SwiftUI binding so
+//  ModelContainer over the baseline schema) — the sheet UI is pure SwiftUI binding so
 //  the semantic contract is the round-trip itself. The defensive
 //  empty-string → nil normalization is exercised by the fourth test.
 //
@@ -37,13 +37,7 @@ struct NotesPersistenceTests {
     // MARK: - Helpers
 
     private func makeContext() throws -> ModelContext {
-        let schema = Schema(SchemaV5.models)
-        let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
-        let container = try ModelContainer(
-            for: schema,
-            migrationPlan: FitbodSchemaMigrationPlan.self,
-            configurations: config
-        )
+        let container = try FitbodModelContainer.make(inMemory: true)
         return ModelContext(container)
     }
 

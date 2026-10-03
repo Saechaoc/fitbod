@@ -5,7 +5,7 @@
 //  Wave-2 plan 06-02 — durable enforcement of the RESEARCH §"Schema
 //  reality vs CONTEXT" delta table. Two layers:
 //
-//    1. Compile-time KeyPath block — proves every real SchemaV6 field
+//    1. Compile-time KeyPath block — proves every real baseline-schema field
 //       this phase relies on (weight, reps, rpe, completedAt,
 //       setTypeRaw on SetEntry; startedAt, intentRaw, sourceRoutineID
 //       on Session; intent reach via session, exercise reach via

@@ -1,24 +1,8 @@
 //
-//  SchemaV3MigrationTests.swift
+//  PlateInventoryAndAdditiveFieldTests.swift
 //  fitbodTests
 //
-//  Canonical proof that the Phase 3 schema migration is wired correctly
-//  (Phase 3 plan 03-01). Mirrors SchemaV2MigrationTests.swift verbatim
-//  shape. Four assertions cover the end-to-end contract:
-//
-//    1. `SchemaV3.models` is SchemaV2.models + [PlateInventory.self]
-//       (strict additive superset — precondition for lightweight migration).
-//    2. `FitbodSchemaMigrationPlan` registers V1, V2, and V3 with TWO
-//       lightweight migration stages.
-//    3. A fresh in-memory V3 container round-trips a PlateInventory with
-//       a [PlateSpec] payload.
-//    4. All additive Phase 3 fields (UserSettings, Exercise, SetEntry)
-//       round-trip their new defaults correctly.
-//
-//  Tests that touch ModelContainer use the current runtime schema. The
-//  SchemaV3 model-list test below still pins the historical shape, but
-//  avoids registering nested historical @Model types in the same process
-//  as runtime relationship tests.
+//  PlateInventory round-trip and Phase 3 additive field defaults on the live schema.
 //
 
 import Foundation
@@ -26,48 +10,14 @@ import SwiftData
 import Testing
 @testable import fitbod
 
-@Suite("SchemaV3Migration")
-struct SchemaV3MigrationTests {
+@Suite("PlateInventoryAndAdditiveFields")
+struct PlateInventoryAndAdditiveFieldTests {
 
     // MARK: - Helpers (used by round-trip tests)
 
     private func makeContext() throws -> ModelContext {
         let container = try InMemoryContainer.makeCurrent()
         return ModelContext(container)
-    }
-
-    // MARK: - 1. Schema model list shape
-
-    @Test("SchemaV3 models list equals SchemaV2.models + PlateInventory.self")
-    func schemaV3ModelsListEqualsV2PlusPlateInventory() {
-        // SchemaV3 must be a strict additive superset of SchemaV2.
-        let v2Names = Set(SchemaV2.models.map { String(describing: $0) })
-        let v3Names = Set(SchemaV3.models.map { String(describing: $0) })
-
-        // Every V2 entity must be present in V3.
-        #expect(v2Names.isSubset(of: v3Names))
-
-        // V3 \ V2 == exactly the new entity.
-        let added = v3Names.subtracting(v2Names)
-        #expect(added == ["PlateInventory"])
-
-        // Counts: V2 has 15 entities; V3 adds 1.
-        #expect(SchemaV2.models.count == 15)
-        #expect(SchemaV3.models.count == SchemaV2.models.count + 1)
-
-        // PlateInventory.self must be explicitly present in SchemaV3.models.
-        #expect(SchemaV3.models.contains(where: { $0 == PlateInventory.self }))
-    }
-
-    // MARK: - 2. Migration plan wiring (3 schemas, 2 stages)
-
-    @Test("FitbodSchemaMigrationPlan keeps V1+V2+V3 as the migration prefix")
-    func migrationPlanWiringIsV1V2V3() {
-        // Later phases append schemas and stages, but the V1+V2+V3
-        // prefix remains load-bearing for existing stores.
-        let names = FitbodSchemaMigrationPlan.schemas.map { String(describing: $0) }
-        #expect(Array(names.prefix(3)) == ["SchemaV1", "SchemaV2", "SchemaV3"])
-        #expect(FitbodSchemaMigrationPlan.stages.count >= 2)
     }
 
     // MARK: - 3. PlateInventory round-trip

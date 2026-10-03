@@ -11,8 +11,8 @@
 //    4. secondQualifyingCompoundDoesNotGetWarmup — WARM-01 single-ramp
 //    5. warmupSkippedWhenWarmupConfigDisabled — WARM-03
 //
-//  Each test builds its own in-memory ModelContainer via Schema(SchemaV5.models)
-//  + FitbodSchemaMigrationPlan (mirroring SessionFactoryTests.swift).
+//  Each test builds its own in-memory ModelContainer via FitbodModelContainer.make(inMemory: true)
+//  + FitbodModelContainer.make (mirroring SessionFactoryTests.swift).
 //
 //  Phase 3.1 (PIVOT-01..05): intent + progression have hoisted from
 //  per-RoutineExercise / per-SessionExercise to per-Routine / per-Session.
@@ -37,13 +37,7 @@ struct SessionFactoryPhase3Tests {
     // MARK: - Helpers
 
     private func makeContext() throws -> ModelContext {
-        let schema = Schema(SchemaV5.models)
-        let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
-        let container = try ModelContainer(
-            for: schema,
-            migrationPlan: FitbodSchemaMigrationPlan.self,
-            configurations: config
-        )
+        let container = try FitbodModelContainer.make(inMemory: true)
         return ModelContext(container)
     }
 

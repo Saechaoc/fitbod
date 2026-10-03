@@ -25,9 +25,9 @@
 //    8. blockReferenceCopiedFromRoutine — optional `Block` link
 //       survives the snapshot.
 //
-//  Each test builds its own ModelContainer via Schema(SchemaV5.models)
-//  + FitbodSchemaMigrationPlan to exercise the production wiring
-//  literally (mirroring the SchemaV2MigrationTests pattern from
+//  Each test builds its own ModelContainer via FitbodModelContainer.make(inMemory: true)
+//  + FitbodModelContainer.make to exercise the production wiring
+//  literally (mirroring the RoutineFolderAndOverrideTests pattern from
 //  plan 00-02). Phase 3.1 (PIVOT-01..05): intent + progression are
 //  per-Routine (not per-RoutineExercise) and snapshot onto Session
 //  (not SessionExercise) at SessionFactory.start. Tests 1 + 2 assert
@@ -46,13 +46,7 @@ struct SessionFactoryTests {
     // MARK: - Helpers
 
     private func makeContext() throws -> ModelContext {
-        let schema = Schema(SchemaV5.models)
-        let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
-        let container = try ModelContainer(
-            for: schema,
-            migrationPlan: FitbodSchemaMigrationPlan.self,
-            configurations: config
-        )
+        let container = try FitbodModelContainer.make(inMemory: true)
         return ModelContext(container)
     }
 

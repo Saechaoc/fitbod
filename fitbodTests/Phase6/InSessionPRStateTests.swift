@@ -15,7 +15,7 @@
 //       the prior banner (D-15 "next save with no PRs replaces
 //       prior banner")
 //
-//  Each test acquires a fresh in-memory SchemaV6 ModelContainer via
+//  Each test acquires a fresh in-memory baseline ModelContainer via
 //  InMemoryContainer.makeCurrent() so SetEntry rows can carry their
 //  Session/SessionExercise/Exercise relationship chain into the
 //  PRDetector kernel.

@@ -23,8 +23,7 @@
 //  Pattern source: RESEARCH § Pattern 8 — Apple's documented in-memory
 //  preview container pattern. The `try!` is intentional — failure to
 //  build an in-memory container with the current schema is a programmer
-//  error (the schema is verified at runtime via SchemaV1Tests +
-//  SchemaV2MigrationTests + SchemaV3MigrationTests + SchemaV4MigrationTests).
+//  error (the schema is exercised by every unit test that opens a container).
 //
 
 import Foundation
@@ -38,17 +37,7 @@ public enum PreviewModelContainer {
     ///   Set to `false` for previews that want the empty store
     ///   (e.g. "first-launch importing…" placeholder).
     public static func make(seedFixture: Bool = true) -> ModelContainer {
-        let schema = Schema(SchemaV7.models)
-        let config = ModelConfiguration(
-            schema: schema,
-            isStoredInMemoryOnly: true,
-            allowsSave: true
-        )
-        let container = try! ModelContainer(
-            for: schema,
-            migrationPlan: FitbodSchemaMigrationPlan.self,
-            configurations: config
-        )
+        let container = try! FitbodModelContainer.make(inMemory: true)
         if seedFixture {
             seed(into: ModelContext(container))
         }
