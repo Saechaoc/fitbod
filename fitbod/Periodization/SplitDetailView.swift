@@ -73,6 +73,16 @@ public struct SplitDetailView: View {
     // Remove-slot confirmation
     @State private var slotPendingRemoval: SplitSessionSlot? = nil
 
+    // Session detail push (tap a slot row)
+    @State private var openedTemplate: SessionTemplate? = nil
+
+    // Edit mode: shows move / remove controls on each session row
+    @State private var isEditing = false
+
+    // Editable routine name; committed on submit, empty input reverts
+    @State private var nameText: String = ""
+    @FocusState private var nameFocused: Bool
+
     // MARK: - Init
 
     public init(split: Split) {
@@ -97,7 +107,7 @@ public struct SplitDetailView: View {
     }
 
     /// Row pitch for drag-reorder gap calculation (row min-height + 0pt inter-row gap).
-    private var slotPitch: CGFloat { 44 }
+    private var slotPitch: CGFloat { 64 }
 
     // MARK: - Body
 
@@ -106,8 +116,8 @@ public struct SplitDetailView: View {
             // Header — "Routine · {name}" + ARCHIVE right action
             BRUHeaderBar.slots(
                 left: .back,
-                center: "Routine · \(split.name)",
-                right: .action("ARCHIVE") { attemptArchive() }
+                center: "Routine",
+                right: .action(isEditing ? "Done" : "Edit") { isEditing.toggle() }
             )
 
             // Live-edit banner — shown when split is on an active block
@@ -117,8 +127,10 @@ public struct SplitDetailView: View {
 
             ScrollView {
                 LazyVStack(spacing: 0) {
+                    nameSection
                     sessionsSection
                     usedInSection
+                    archiveSection
                 }
             }
         }
@@ -162,9 +174,66 @@ public struct SplitDetailView: View {
             })
             .presentationDetents([.medium, .large])
         }
+        .navigationDestination(item: $openedTemplate) { template in
+            SessionTemplateDetailView(template: template)
+        }
+        .onAppear { nameText = split.name }
         // Sensory feedback when drag starts/ends
         .sensoryFeedback(trigger: draggingSlotID) { _, newValue in
             newValue != nil ? .impact(weight: .medium) : nil
+        }
+    }
+
+    // MARK: - Name Section
+
+    private var nameSection: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text("Routine name")
+                .font(BRUFont.labelSmall)
+                .tracking(1.2)
+                .textCase(.uppercase)
+                .foregroundStyle(Color.bruMuted)
+            TextField("Name this routine", text: $nameText, axis: .vertical)
+                .font(BRUFont.condensedTitle)
+                .foregroundStyle(Color.bruInk)
+                .focused($nameFocused)
+                .submitLabel(.done)
+                .onSubmit(commitName)
+                .onChange(of: nameFocused) { _, focused in
+                    if !focused { commitName() }
+                }
+                .accessibilityLabel("Routine name")
+            Text("\(orderedSlots.count) \(orderedSlots.count == 1 ? "session" : "sessions") · rotates in order")
+                .font(BRUFont.labelSmall)
+                .tracking(1.2)
+                .textCase(.uppercase)
+                .foregroundStyle(Color.bruMuted)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.horizontal, 16)
+        .padding(.vertical, 16)
+        .overlay(alignment: .bottom) { BRUDivider(.ink) }
+    }
+
+    /// Writes the trimmed name. An empty name is rejected and the field
+    /// reverts, so a routine can never become unnamed.
+    private func commitName() {
+        // A vertical-axis TextField inserts "\n" on Return instead of submitting.
+        let trimmed = nameText
+            .replacingOccurrences(of: "\n", with: " ")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else {
+            nameText = split.name
+            return
+        }
+        nameText = trimmed
+        nameFocused = false
+        guard trimmed != split.name else { return }
+        split.name = trimmed
+        do {
+            try ctx.save()
+        } catch {
+            showSaveError = true
         }
     }
 
@@ -179,6 +248,23 @@ public struct SplitDetailView: View {
         )
 
         let slots = orderedSlots
+        if slots.isEmpty {
+            VStack(spacing: 12) {
+                Text("No sessions yet")
+                    .font(BRUFont.condensedHeading)
+                    .foregroundStyle(Color.bruInk)
+                Text("A routine is an ordered list of sessions, like Push, Pull, Legs. Add the first one.")
+                    .font(BRUFont.bodyDefault)
+                    .foregroundStyle(Color.bruMuted)
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
+                BRUButton("+ Add session", kind: .signal) { presentingSlotPicker = true }
+                    .frame(maxWidth: 260)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 32)
+            .padding(.horizontal, 16)
+        }
         ForEach(Array(slots.enumerated()), id: \.element.id) { index, slot in
             SplitSlotRow(
                 slot: slot,
@@ -186,6 +272,8 @@ public struct SplitDetailView: View {
                 rowCount: slots.count,
                 isDragging: draggingSlotID == slot.id,
                 reorderPitch: slotPitch,
+                isEditing: isEditing,
+                onOpen: { openedTemplate = slot.sessionTemplate },
                 onReorderBegan: { beginReorder(slotID: slot.id) },
                 onReorderTarget: { target in retargetReorder(to: target) },
                 onReorderEnded: { commitReorder() },
@@ -205,6 +293,18 @@ public struct SplitDetailView: View {
         }
 
         BRUDivider(.ink)
+    }
+
+    // MARK: - Archive Section
+
+    private var archiveSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            BRUButton("Archive routine", kind: .ghost) { attemptArchive() }
+            Text("Archived routines leave Program but keep their logged history.")
+                .font(BRUFont.bodyDefault)
+                .foregroundStyle(Color.bruMuted)
+        }
+        .padding(16)
     }
 
     // MARK: - Used In Section
@@ -386,6 +486,8 @@ fileprivate struct SplitSlotRow: View {
     let rowCount: Int
     let isDragging: Bool
     let reorderPitch: CGFloat
+    let isEditing: Bool
+    var onOpen: () -> Void
     var onReorderBegan: () -> Void
     var onReorderTarget: (Int) -> Void
     var onReorderEnded: () -> Void
@@ -407,55 +509,88 @@ fileprivate struct SplitSlotRow: View {
 
     var body: some View {
         HStack(spacing: 12) {
-            // Position number (1-based, labelSmall UPPERCASE)
-            Text("\(slot.position + 1)")
-                .font(BRUFont.labelSmall)
-                .textCase(.uppercase)
-                .tracking(1.2)
+            // Position number (1-based)
+            Text(String(format: "%02d", slot.position + 1))
+                .font(BRUFont.condensedLabel)
                 .foregroundStyle(Color.bruMuted)
                 .frame(width: 32, alignment: .leading)
 
-            // Session template name
-            Text(slot.sessionTemplate?.name ?? "—")
-                .font(BRUFont.bodyEmphasis)
-                .foregroundStyle(Color.bruInk)
+            // Session template name + summary line
+            VStack(alignment: .leading, spacing: 3) {
+                Text(slot.sessionTemplate?.name ?? "—")
+                    .font(BRUFont.displayMedium)
+                    .foregroundStyle(Color.bruInk)
+                    .fixedSize(horizontal: false, vertical: true)
+                if let template = slot.sessionTemplate {
+                    Text(SessionTemplateSummary(template: template).line)
+                        .font(BRUFont.labelSmall)
+                        .tracking(1.0)
+                        .textCase(.uppercase)
+                        .foregroundStyle(Color.bruMuted)
+                }
+            }
 
-            Spacer()
+            Spacer(minLength: 8)
 
-            // Drag handle — braille dots glyph (not SF Symbol per BRU contract)
-            Text("⠿")
-                .font(BRUFont.bodyEmphasis)
-                .foregroundStyle(Color.bruMuted)
-                .accessibilityHidden(true)
+            if isEditing {
+                editControls
+            } else {
+                Text("›")
+                    .font(BRUFont.displayMedium)
+                    .foregroundStyle(Color.bruMuted)
+                    .accessibilityHidden(true)
+            }
         }
         .padding(.horizontal, 16)
-        .frame(minHeight: 44)
+        .padding(.vertical, 12)
+        .frame(minHeight: 64)
         .contentShape(Rectangle())
         .offset(y: isDragging ? dragTranslation : 0)
-        .gesture(reduceMotion ? nil : reorderGesture)
-        // VoiceOver accessibility actions for reorder
+        .onTapGesture { if !isEditing { onOpen() } }
+        .gesture(reduceMotion || isEditing ? nil : reorderGesture)
+        // VoiceOver: activate opens the session; reorder and remove are actions
+        .accessibilityElement(children: isEditing ? .contain : .ignore)
         .accessibilityLabel("Session \(slot.position + 1): \(slot.sessionTemplate?.name ?? "—")")
-        .accessibilityHint("Double-tap to remove. Use actions to reorder.")
+        .accessibilityAddTraits(isEditing ? [] : .isButton)
+        .accessibilityHint(isEditing ? "" : "Opens the session. Touch and hold, then drag to reorder.")
+        .accessibilityAction { if !isEditing { onOpen() } }
         .accessibilityAction(named: "Move up") { onMoveUp() }
         .accessibilityAction(named: "Move down") { onMoveDown() }
-        // Swipe-to-remove
-        .swipeActions(edge: .trailing) {
-            Button(role: .destructive) {
-                onRemove()
-            } label: {
+        .accessibilityAction(named: "Remove") { onRemove() }
+    }
+
+    /// Edit-mode controls: move up, move down, remove. Visible alternative
+    /// to the long-press drag (which Reduce Motion disables).
+    private var editControls: some View {
+        HStack(spacing: 4) {
+            rowControl("▲", label: "Move up", enabled: rowIndex > 0, action: onMoveUp)
+            rowControl("▼", label: "Move down", enabled: rowIndex < rowCount - 1, action: onMoveDown)
+            Button(action: onRemove) {
                 Text("Remove")
+                    .font(BRUFont.labelSmall)
+                    .tracking(1.2)
+                    .textCase(.uppercase)
+                    .foregroundStyle(Color.bruSignal)
+                    .frame(minWidth: 64, minHeight: 44)
+                    .contentShape(Rectangle())
             }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Remove \(slot.sessionTemplate?.name ?? "session")")
         }
-        // Informational text when reduce motion is active
-        .overlay(alignment: .bottom) {
-            if reduceMotion && isDragging {
-                Text("Reorder unavailable with Reduce Motion enabled")
-                    .font(BRUFont.bodyDefault)
-                    .foregroundStyle(Color.bruMuted)
-                    .padding(.horizontal, 16)
-                    .padding(.bottom, 8)
-            }
+    }
+
+    private func rowControl(_ glyph: String, label: String, enabled: Bool, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Text(glyph)
+                .font(BRUFont.labelLarge)
+                .foregroundStyle(enabled ? Color.bruInk : Color.bruHair)
+                .frame(width: 44, height: 44)
+                .overlay(Rectangle().strokeBorder(enabled ? Color.bruInk : Color.bruHair, lineWidth: 1.5))
+                .contentShape(Rectangle())
         }
+        .buttonStyle(.plain)
+        .disabled(!enabled)
+        .accessibilityLabel(label)
     }
 
     // MARK: - Hysteresis Reorder Gesture
@@ -514,11 +649,13 @@ fileprivate struct SlotPickerSheet: View {
     private var availableTemplates: [SessionTemplate]
 
     @State private var presentingNewSession: Bool = false
+    /// Set by the builder's onSaved; attached when the builder sheet closes.
+    @State private var pendingNewTemplate: SessionTemplate? = nil
 
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
-                BRUSectionHead("Add Session")
+                BRUHeaderBar.slots(left: .cancel, center: "Add session", right: nil)
 
                 ScrollView {
                     LazyVStack(spacing: 0) {
@@ -528,30 +665,48 @@ fileprivate struct SlotPickerSheet: View {
                         } label: {
                             HStack {
                                 Text("+ New session")
-                                    .font(BRUFont.bodyEmphasis)
+                                    .font(BRUFont.displayMedium)
                                     .foregroundStyle(Color.bruSignal)
                                 Spacer()
                             }
                             .padding(.horizontal, 16)
-                            .frame(minHeight: 44)
+                            .frame(minHeight: 56)
                             .contentShape(Rectangle())
                         }
                         .buttonStyle(.plain)
 
-                        BRUDivider(.hair)
+                        BRUDivider(.ink)
+
+                        if !availableTemplates.isEmpty {
+                            BRUSectionHead("Existing sessions")
+                        }
 
                         ForEach(availableTemplates, id: \.id) { template in
                             Button {
                                 addSlot(for: template)
                             } label: {
                                 HStack {
-                                    Text(template.name)
-                                        .font(BRUFont.bodyEmphasis)
-                                        .foregroundStyle(Color.bruInk)
+                                    VStack(alignment: .leading, spacing: 3) {
+                                        Text(template.name)
+                                            .font(BRUFont.displayMedium)
+                                            .foregroundStyle(Color.bruInk)
+                                            .fixedSize(horizontal: false, vertical: true)
+                                        Text(SessionTemplateSummary(template: template).line)
+                                            .font(BRUFont.labelSmall)
+                                            .tracking(1.0)
+                                            .textCase(.uppercase)
+                                            .foregroundStyle(Color.bruMuted)
+                                    }
                                     Spacer()
+                                    Text("+ Add")
+                                        .font(BRUFont.labelSmall)
+                                        .tracking(1.2)
+                                        .textCase(.uppercase)
+                                        .foregroundStyle(Color.bruSignal)
                                 }
                                 .padding(.horizontal, 16)
-                                .frame(minHeight: 44)
+                                .padding(.vertical, 12)
+                                .frame(minHeight: 56)
                                 .contentShape(Rectangle())
                             }
                             .buttonStyle(.plain)
@@ -564,10 +719,18 @@ fileprivate struct SlotPickerSheet: View {
             .background(Color.bruPaper.ignoresSafeArea())
             .navigationBarHidden(true)
         }
-        // v1 UX debt: after RoutineBuilderView dismiss, re-open picker so user explicitly
-        // selects the new session — 2-tap create+attach flow accepted for v1.
-        .sheet(isPresented: $presentingNewSession) {
-            RoutineBuilderView(draft: RoutineDraft(), editing: nil)
+        // A session built here is attached as soon as its builder closes.
+        .sheet(isPresented: $presentingNewSession, onDismiss: {
+            if let template = pendingNewTemplate {
+                pendingNewTemplate = nil
+                addSlot(for: template)
+            }
+        }) {
+            RoutineBuilderView(
+                draft: RoutineDraft(),
+                editing: nil,
+                onSaved: { pendingNewTemplate = $0 }
+            )
         }
     }
 

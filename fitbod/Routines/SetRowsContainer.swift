@@ -108,13 +108,13 @@ public struct SetRowsContainer: View {
 
             // Reps — displayMedium 18pt right-aligned
             Text("×\(exercise.targetRepsLow)")
-                .font(.custom("SpaceGrotesk-Bold", size: 18))
+                .font(.bru(.grotesk, size: 18))
                 .foregroundStyle(Color.bruInk)
                 .multilineTextAlignment(.trailing)
 
             // RPE — displayMedium 18pt right-aligned
             Text("@\(rpeString(exercise.targetRPE))")
-                .font(.custom("SpaceGrotesk-Bold", size: 18))
+                .font(.bru(.grotesk, size: 18))
                 .foregroundStyle(Color.bruInk)
                 .multilineTextAlignment(.trailing)
         }

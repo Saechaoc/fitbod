@@ -102,6 +102,7 @@ public struct BRUDashedSlot: View {
                         style: StrokeStyle(lineWidth: 2, dash: [6, 4])
                     )
             )
+            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
     }

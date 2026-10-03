@@ -95,9 +95,9 @@ struct ProgramViewFidelityTests {
                 "Bebas Neue must be registered in UIAppFonts for Program display typography.")
         #expect(infoPlist.contains("Geist-Regular.ttf"),
                 "Geist must be registered in UIAppFonts for Program body typography.")
-        #expect(programSource.contains(#".custom("BebasNeue-Regular""#),
+        #expect(programSource.contains(".bru(.condensed"),
                 "NO PROGRAM, week labels, CTA, and uppercase labels should use Bebas Neue.")
-        #expect(programSource.contains(#".custom("Geist-Regular""#),
+        #expect(programSource.contains(".bru(.text"),
                 "Program body copy and row titles should use Geist.")
         #expect(!programSource.contains(".width(.compressed)"),
                 "Program fidelity should use the mockup display font, not compressed system fallback.")

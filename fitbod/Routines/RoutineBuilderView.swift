@@ -85,6 +85,10 @@ public struct RoutineBuilderView: View {
     /// nil = create mode; non-nil = edit mode (existing SessionTemplate).
     public let editing: SessionTemplate?
 
+    /// Called with the saved template right before the builder dismisses.
+    /// Lets a host attach a newly created session (e.g. into a routine).
+    public let onSaved: ((SessionTemplate) -> Void)?
+
     @State private var expandedExerciseIDs: Set<UUID> = []
     @State private var presentingDiscardConfirm = false
     @State private var initialSnapshot: String = ""
@@ -94,15 +98,19 @@ public struct RoutineBuilderView: View {
     @State private var presentingLibraryPicker: Bool = false
     @State private var showingMoreMenu: Bool = false
     @State private var showingValidationError: Bool = false
+    @State private var presentingArchiveConfirm: Bool = false
+    @State private var archiveBlockedRoutines: [String] = []
+    @State private var saveErrorMessage: String? = nil
+    @FocusState private var nameFocused: Bool
 
-    // Day tabs — single-day routine builder for v1.
-    // The tab strip is visual scaffolding; the ForEach always iterates draft.exercises.
-    // Multi-day routing will wire in a future plan.
-    @State private var dayTabID: UUID = UUID()
-
-    public init(draft: RoutineDraft, editing: SessionTemplate? = nil) {
+    public init(
+        draft: RoutineDraft,
+        editing: SessionTemplate? = nil,
+        onSaved: ((SessionTemplate) -> Void)? = nil
+    ) {
         self.draft = draft
         self.editing = editing
+        self.onSaved = onSaved
     }
 
     // MARK: - Reachability
@@ -122,48 +130,33 @@ public struct RoutineBuilderView: View {
 
     public var body: some View {
         NavigationStack {
-            ZStack(alignment: .bottom) {
-                VStack(spacing: 0) {
-                    // 1. Routine name + chip row
-                    nameAndChipBlock
+            VStack(spacing: 0) {
+                // 1. Session name + chip row
+                nameAndChipBlock
 
-                    // 2. Day tabs strip
-                    let singleDay = RoutineDay(id: dayTabID, label: "Day 1")
-                    RoutineBuilderDayTabs(
-                        days: [singleDay],
-                        selectedDayID: Binding(
-                            get: { dayTabID },
-                            set: { dayTabID = $0 ?? dayTabID }
-                        ),
-                        onAddDay: { /* multi-day: future plan */ }
-                    )
-
-                    // 3. Exercise list + add slot
-                    exerciseScrollView
-
-                    // 4. 24pt bruBg filler above bottom bar
-                    Rectangle()
-                        .fill(Color.bruBg)
-                        .frame(height: 24)
-                }
-
-                // Bottom action bar floats above the scroll content
-                BottomActionBar(
-                    onDiscard: handleDiscard,
-                    onSave: handleSave,
-                    isValid: draft.isValid
-                )
+                // 2. Exercise list + add slot
+                exerciseScrollView
             }
             .background(Color.bruPaper.ignoresSafeArea())
             .navigationBarHidden(true)
+            // Bottom action bar pinned above the home indicator
+            .safeAreaInset(edge: .bottom, spacing: 0) {
+                BottomActionBar(
+                    onDiscard: handleDiscard,
+                    onSave: handleSave,
+                    isValid: draft.isValid,
+                    saveLabel: "Save session ▸"
+                )
+            }
             .safeAreaInset(edge: .top) {
                 VStack(spacing: 0) {
                     BRUHeaderBar(
                         left: HeaderAction("‹ Back") {
                             handleDiscard()
                         },
-                        center: editing == nil ? "New routine" : "Edit routine",
-                        right: HeaderAction("•••") {
+                        center: editing == nil ? "New session" : "Edit session",
+                        // ••• only has actions for a saved session.
+                        right: editing == nil ? nil : HeaderAction("•••") {
                             showingMoreMenu = true
                         }
                     )
@@ -234,16 +227,47 @@ public struct RoutineBuilderView: View {
         } message: {
             Text("Save the routine before grouping exercises into a superset.")
         }
-        // More menu — Duplicate / Move… / Delete
+        // More menu (edit mode only) — Duplicate / Archive
         .confirmationDialog(
-            "Routine",
+            "Session",
             isPresented: $showingMoreMenu,
             titleVisibility: .hidden
         ) {
-            Button("Duplicate") { /* future: duplicate routine */ }
-            Button("Move…") { /* future: move to folder */ }
-            Button("Delete", role: .destructive) { /* future: delete with confirm */ }
+            Button("Duplicate session") { duplicateSession() }
+            Button("Archive session", role: .destructive) { requestArchive() }
             Button("Cancel", role: .cancel) {}
+        }
+        .confirmationDialog(
+            "Archive this session?",
+            isPresented: $presentingArchiveConfirm,
+            titleVisibility: .visible
+        ) {
+            Button("Archive session", role: .destructive) { archiveSession() }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("It disappears from pickers. Workouts you already logged keep their history.")
+        }
+        .alert(
+            "Session is in use",
+            isPresented: Binding(
+                get: { !archiveBlockedRoutines.isEmpty },
+                set: { if !$0 { archiveBlockedRoutines = [] } }
+            )
+        ) {
+            Button("OK", role: .cancel) { archiveBlockedRoutines = [] }
+        } message: {
+            Text("Remove it from \(archiveBlockedRoutines.joined(separator: ", ")) before archiving.")
+        }
+        .alert(
+            "Couldn't save",
+            isPresented: Binding(
+                get: { saveErrorMessage != nil },
+                set: { if !$0 { saveErrorMessage = nil } }
+            )
+        ) {
+            Button("OK", role: .cancel) { saveErrorMessage = nil }
+        } message: {
+            Text(saveErrorMessage ?? "")
         }
         .onChange(of: draft.blockID) { _, newBlockID in
             draft.enforceBlockProgressionEligibility(hasBlock: newBlockID != nil)
@@ -258,19 +282,38 @@ public struct RoutineBuilderView: View {
 
     private var nameAndChipBlock: some View {
         VStack(alignment: .leading, spacing: 10) {
-            // Routine name — displayLarge editable TextField
-            TextField("Routine name", text: $draft.name)
-                .font(BRUFont.displayLarge)
-                .foregroundStyle(Color.bruInk)
-                .submitLabel(.done)
+            Text("Session name")
+                .font(BRUFont.labelSmall)
+                .tracking(1.2)
+                .textCase(.uppercase)
+                .foregroundStyle(Color.bruMuted)
 
-            // Validation error — shown when Save was tapped with invalid draft
-            if showingValidationError && !draft.isValid {
-                Text("Add a routine name and at least one exercise to save.")
-                    .font(BRUFont.labelSmall)
-                    .tracking(1.0)
-                    .textCase(.uppercase)
-                    .foregroundStyle(Color.bruSignal)
+            // Session name — wraps instead of truncating long names
+            TextField("Name this session", text: $draft.name, axis: .vertical)
+                .font(BRUFont.condensedTitle)
+                .foregroundStyle(Color.bruInk)
+                .lineLimit(1...3)
+                .submitLabel(.done)
+                .focused($nameFocused)
+                .onChange(of: draft.name) { _, newValue in
+                    // A vertical TextField turns Return into "\n"; treat it as done.
+                    if newValue.contains("\n") {
+                        draft.name = newValue.replacingOccurrences(of: "\n", with: "")
+                        nameFocused = false
+                    }
+                }
+                .accessibilityLabel("Session name")
+
+            // Validation errors — shown when Save was tapped with an invalid draft
+            if showingValidationError {
+                ForEach(validationMessages, id: \.self) { message in
+                    Text("! \(message)")
+                        .font(BRUFont.labelSmall)
+                        .tracking(1.0)
+                        .textCase(.uppercase)
+                        .foregroundStyle(Color.bruSignal)
+                        .accessibilityLabel("Error: \(message)")
+                }
             }
 
             // Header chip row: intent · days/wk · ~min · linked block
@@ -297,11 +340,10 @@ public struct RoutineBuilderView: View {
                 )
             }
 
-            // Days per week chip (placeholder — draft doesn't model this yet)
-            BRUChip("4 days / wk")
-
-            // Estimated duration chip (placeholder)
-            BRUChip("~52 min")
+            // Estimated duration — derived from sets and rest (SessionTemplateSummary)
+            if !draft.exercises.isEmpty {
+                BRUChip("~\(SessionTemplateSummary(draft: draft).estimatedMinutes) min")
+            }
 
             // Linked block chip — signal outline when block is set
             if draft.blockID != nil {
@@ -460,6 +502,18 @@ public struct RoutineBuilderView: View {
         }
     }
 
+    /// What blocks saving, in display order. Empty when the draft is valid.
+    private var validationMessages: [String] {
+        var messages: [String] = []
+        if draft.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            messages.append("Name this session")
+        }
+        if draft.exercises.isEmpty {
+            messages.append("Add at least one exercise")
+        }
+        return messages
+    }
+
     private func handleSave() {
         guard draft.isValid else {
             showingValidationError = true
@@ -476,9 +530,59 @@ public struct RoutineBuilderView: View {
             routine = SessionTemplate()
             ctx.insert(routine)
         }
+        draft.name = draft.name.trimmingCharacters(in: .whitespacesAndNewlines)
         draft.save(into: routine, context: ctx)
-        try? ctx.save()
+        do {
+            try ctx.save()
+        } catch {
+            saveErrorMessage = error.localizedDescription
+            return
+        }
+        onSaved?(routine)
         dismiss()
+    }
+
+    // MARK: - More-menu actions (edit mode)
+
+    private func duplicateSession() {
+        guard let editing else { return }
+        _ = RoutineDuplicator.duplicate(routine: editing, context: ctx)
+        do {
+            try ctx.save()
+            dismiss()
+        } catch {
+            saveErrorMessage = error.localizedDescription
+        }
+    }
+
+    /// Archiving a session that a routine still schedules would leave a hole
+    /// in the rotation, so it is blocked until the session is removed there.
+    private func requestArchive() {
+        guard let editing else { return }
+        let templateID = editing.id
+        let slots = (try? ctx.fetch(FetchDescriptor<SplitSessionSlot>(
+            predicate: #Predicate<SplitSessionSlot> { $0.sessionTemplate?.id == templateID }
+        ))) ?? []
+        let routineNames = Set(slots.compactMap { slot -> String? in
+            guard let split = slot.split, !split.isArchived else { return nil }
+            return split.name
+        })
+        if routineNames.isEmpty {
+            presentingArchiveConfirm = true
+        } else {
+            archiveBlockedRoutines = routineNames.sorted()
+        }
+    }
+
+    private func archiveSession() {
+        guard let editing else { return }
+        editing.isArchived = true
+        do {
+            try ctx.save()
+            dismiss()
+        } catch {
+            saveErrorMessage = error.localizedDescription
+        }
     }
 
     // MARK: - Long-press menu handlers
@@ -517,15 +621,8 @@ public struct RoutineBuilderView: View {
 // MARK: - Preview
 
 #if DEBUG
-#Preview("RoutineBuilderView — New routine") {
-    if let container = try? FitbodModelContainer.make(inMemory: true) {
-        let draft = RoutineDraft()
-        return AnyView(
-            RoutineBuilderView(draft: draft, editing: nil)
-                .modelContainer(container)
-        )
-    } else {
-        return AnyView(Text("Preview unavailable"))
-    }
+#Preview("RoutineBuilderView — New session") {
+    RoutineBuilderView(draft: RoutineDraft(), editing: nil)
+        .modelContainer(PreviewModelContainer.make())
 }
 #endif

@@ -90,6 +90,7 @@
 				Design/BRUDivider.swift,
 				Design/BRUFont.swift,
 				Design/BRUHeaderBar.swift,
+				Design/BRUHitArea.swift,
 				Design/BRUPillButton.swift,
 				Design/BRUReadout.swift,
 				Design/BRUSectionHead.swift,

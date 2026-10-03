@@ -165,7 +165,7 @@ public struct WarmupRampRows: View {
                     // displayMedium at 22pt requires .custom because BRUFont.displayMedium is 18pt
                     // The spec calls for 22pt for the weight numeral (03-UI-SPEC line 88 / why-weight.jsx line 111)
                     Text(formatted(warmup.weight))
-                        .font(.custom("SpaceGrotesk-Bold", size: 22))
+                        .font(.bru(.grotesk, size: 22))
                         .foregroundStyle(Color.bruInk)
                     Text("\(pct)%")
                         .font(BRUFont.bodyDefault)

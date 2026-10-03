@@ -33,7 +33,7 @@ public enum BRUTab: String, CaseIterable, Sendable {
     case today
     case program
     case progress
-    case settings
+    case library
 
     /// Human-readable tab label rendered in `BRUFont.labelSmall` UPPERCASE.
     public var label: String {
@@ -41,7 +41,7 @@ public enum BRUTab: String, CaseIterable, Sendable {
         case .today:    return "Today"
         case .program:  return "Program"
         case .progress: return "Progress"
-        case .settings: return "Settings"
+        case .library:  return "Library"
         }
     }
 
@@ -52,7 +52,7 @@ public enum BRUTab: String, CaseIterable, Sendable {
         case .today:    return "▣"
         case .program:  return "▤"
         case .progress: return "▦"
-        case .settings: return "◍"
+        case .library:  return "▥"
         }
     }
 }
@@ -134,7 +134,7 @@ public struct BRUTabBar: View {
                 }
 
                 Text(tab.label)
-                    .font(.custom("SpaceGrotesk-Bold", size: 10))
+                    .font(.bru(.grotesk, size: 10))
                     .tracking(1.5)
                     .textCase(.uppercase)
                     .lineLimit(1)
@@ -146,6 +146,7 @@ public struct BRUTabBar: View {
             }
             .frame(height: Self.mockupCellHeight, alignment: .top)
             .frame(maxWidth: .infinity)
+            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .frame(maxWidth: .infinity)
@@ -182,10 +183,10 @@ public struct BRUTabBar: View {
     .background(Color.bruBg)
 }
 
-#Preview("Active: Settings") {
+#Preview("Active: Library") {
     VStack {
         Spacer()
-        BRUTabBar(active: .settings) { _ in }
+        BRUTabBar(active: .library) { _ in }
     }
     .background(Color.bruBg)
 }

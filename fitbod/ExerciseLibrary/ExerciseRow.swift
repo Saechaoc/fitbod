@@ -1,109 +1,115 @@
+// ExerciseRow.swift
+// fitbod
 //
-//  ExerciseRow.swift
-//  fitbod
+// One exercise in the library list (browse and picker modes).
 //
-//  One row of the library list. Per UI-SPEC § Copywriting Contract
-//  / § Typography:
+// Layout:
+//   Name (Space Grotesk 18, wraps)                    [accessory]
+//   [PRIMARY MUSCLE] [EQUIPMENT] [MECHANIC] [CUSTOM]
 //
-//    - Name in `.body` (.primary)
-//    - Equipment + mechanic metadata in `.caption` (.secondary), separated
-//      by a verbatim mid-dot " · "
-//    - "Custom" tag for user-authored entries — `.caption.weight(.semibold)`
-//      on a `Color.accentColor.opacity(0.15)` capsule (UI-SPEC § Library
-//      screen / Custom-exercise row inline tag)
-//
-//  The row reads only from the passed-in `Exercise` model — no `@Query`,
-//  no environment context. SwiftData propagates property-level
-//  invalidations through the `@Model` macro so a custom exercise being
-//  edited from elsewhere re-renders this row without any extra plumbing.
-//
-//  Touch-target / hit-area: the parent `List` row already supplies a
-//  full-width tappable area via `NavigationLink`, so this view only
-//  styles the cell content. No `.contentShape` override here.
-//
+// The accessory is the logged count ("12× / LOGGED") in browse mode and a
+// signal "+ ADD" in picker mode, so the row tells you what a tap does.
 
 import SwiftUI
 
-/// A single row in the exercise library list — name, metadata, and
-/// the optional "Custom" tag.
 public struct ExerciseRow: View {
-    let exercise: Exercise
 
-    public init(exercise: Exercise) {
+    public enum Accessory: Equatable {
+        /// Browse mode: how many workouts included this exercise.
+        case loggedCount(Int)
+        /// Picker mode: tapping adds the exercise.
+        case add
+    }
+
+    let exercise: Exercise
+    let accessory: Accessory
+
+    public init(exercise: Exercise, accessory: Accessory = .loggedCount(0)) {
         self.exercise = exercise
+        self.accessory = accessory
     }
 
     public var body: some View {
         HStack(alignment: .center, spacing: 12) {
-            VStack(alignment: .leading, spacing: 2) {
+            VStack(alignment: .leading, spacing: 8) {
                 Text(exercise.name)
-                    .font(.body)
-                    .foregroundStyle(.primary)
-                HStack(spacing: 6) {
-                    Text(displayName(forEquipmentRaw: exercise.equipmentRaw))
-                    Text("·")
-                    Text(exercise.mechanicRaw.capitalized)
-                }
-                .font(.caption)
-                .foregroundStyle(.secondary)
+                    .font(BRUFont.displayMedium)
+                    .foregroundStyle(Color.bruInk)
+                    .multilineTextAlignment(.leading)
+                    .fixedSize(horizontal: false, vertical: true)
+                tagRow
             }
             Spacer(minLength: 8)
-            if exercise.isCustom {
-                customTag
-            }
+            accessoryView
         }
-        .padding(.vertical, 4)
+        .padding(.horizontal, 16)
+        .padding(.vertical, 14)
+        .frame(maxWidth: .infinity, minHeight: 64, alignment: .leading)
+        .contentShape(Rectangle())
+        .accessibilityElement(children: .combine)
     }
 
-    // MARK: - Custom tag
+    // MARK: - Tags
 
-    /// The "Custom" capsule per UI-SPEC § Library screen / Custom-exercise
-    /// row inline tag. Caption weight semibold + accent foreground + a
-    /// 15%-opacity accent fill (the accent never appears at full opacity
-    /// in this position — that's reserved for active filter chips).
-    private var customTag: some View {
-        Text("Custom")
-            .font(.caption.weight(.semibold))
-            .foregroundStyle(Color.accentColor)
-            .padding(.horizontal, 8)
-            .padding(.vertical, 2)
-            .background {
-                Capsule().fill(Color.accentColor.opacity(0.15))
+    private var tagRow: some View {
+        // Wrapping layout so long muscle names never clip at 390pt or at
+        // large Dynamic Type sizes.
+        BRUFlowLayout(spacing: 6) {
+            if let muscle = Self.primaryMuscleLabel(exercise) {
+                BRUChip(muscle)
             }
-            .accessibilityLabel("Custom exercise")
+            BRUChip(Self.displayName(forEquipmentRaw: exercise.equipmentRaw))
+            BRUChip(exercise.mechanicRaw.capitalized)
+            if exercise.isCustom {
+                BRUChip("Custom", color: .bruSignal)
+                    .accessibilityLabel("Custom exercise")
+            }
+        }
+    }
+
+    // MARK: - Accessory
+
+    @ViewBuilder
+    private var accessoryView: some View {
+        switch accessory {
+        case .loggedCount(let count):
+            VStack(alignment: .trailing, spacing: 2) {
+                Text("\(count)×")
+                    .font(BRUFont.bodyEmphasis)
+                    .foregroundStyle(count > 0 ? Color.bruInk : Color.bruMuted)
+                Text("Logged")
+                    .font(BRUFont.labelMicro)
+                    .tracking(1.0)
+                    .textCase(.uppercase)
+                    .foregroundStyle(Color.bruMuted)
+            }
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel(count == 1 ? "Logged once" : "Logged \(count) times")
+        case .add:
+            Text("+ Add")
+                .font(BRUFont.labelSmall)
+                .tracking(1.2)
+                .textCase(.uppercase)
+                .foregroundStyle(Color.bruSignal)
+                .accessibilityHidden(true)
+        }
     }
 
     // MARK: - Helpers
 
+    /// First primary muscle, title-cased ("lower_back" → "Lower Back").
+    static func primaryMuscleLabel(_ exercise: Exercise) -> String? {
+        let first = exercise.primaryMuscleSlugsJoined
+            .split(whereSeparator: { $0 == "|" || $0 == "," })
+            .map { $0.trimmingCharacters(in: .whitespaces) }
+            .first { !$0.isEmpty }
+        return first.map { $0.replacingOccurrences(of: "_", with: " ").capitalized }
+    }
+
     /// Equipment display name. `weighted_bodyweight` is split on
     /// underscore and capitalised so the UI reads "Weighted Bodyweight"
     /// rather than "Weighted_bodyweight".
-    private func displayName(forEquipmentRaw raw: String) -> String {
+    static func displayName(forEquipmentRaw raw: String) -> String {
         raw.replacingOccurrences(of: "_", with: " ").capitalized
     }
-}
-
-#Preview("Built-in exercise") {
-    ExerciseRow(
-        exercise: Exercise.previewSample(
-            name: "Barbell Bench Press",
-            equipment: .barbell,
-            mechanic: .compound,
-            primaryMuscleSlugs: ["chest"]
-        )
-    )
-    .padding()
-}
-
-#Preview("Custom exercise") {
-    ExerciseRow(
-        exercise: Exercise.previewSample(
-            name: "Cambered Bar Bench",
-            equipment: .barbell,
-            mechanic: .compound,
-            primaryMuscleSlugs: ["chest"],
-            isCustom: true
-        )
-    )
-    .padding()
 }

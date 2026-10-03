@@ -584,7 +584,7 @@ public struct BlockOverviewScreen: View {
                 .foregroundStyle(textColor)
 
             Text(secondaryLabel)
-                .font(.custom("JetBrainsMono-Bold", size: 9))
+                .font(.bru(.monoBold, size: 9))
                 .textCase(.uppercase)
                 .tracking(0.5)
                 .foregroundStyle(textColor.opacity(state == .rest ? 0.5 : 1.0))
@@ -803,7 +803,7 @@ public struct BlockOverviewScreen: View {
         // source of truth for the NOW row's left-edge signal stripe.
         HStack(alignment: .top, spacing: 10) {
             Text(weekRange)
-                .font(BRUFont.labelSmall)   // fix-7: BRU token replaces .custom("JetBrainsMono-Bold", size: 10)
+                .font(BRUFont.labelSmall)   // fix-7: BRU token replaces .bru(.monoBold, size: 10)
                 .tracking(1.2)
                 .foregroundStyle(Color.bruMuted)
                 .frame(width: 38, alignment: .leading)
@@ -942,7 +942,7 @@ public struct BlockOverviewScreen: View {
 
         HStack(alignment: .top, spacing: 10) {
             Text(weekRange)
-                .font(BRUFont.labelSmall)   // fix-7: BRU token replaces .custom("JetBrainsMono-Bold", size: 10)
+                .font(BRUFont.labelSmall)   // fix-7: BRU token replaces .bru(.monoBold, size: 10)
                 .tracking(1.2)
                 .foregroundStyle(Color.bruMuted)
                 .frame(width: 38, alignment: .leading)

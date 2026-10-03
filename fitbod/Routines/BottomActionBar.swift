@@ -34,17 +34,20 @@ public struct BottomActionBar: View {
     public let onDiscard: () -> Void
     public let onSave: () -> Void
     public let isValid: Bool
+    public let saveLabel: String
 
     // MARK: Init
 
     public init(
         onDiscard: @escaping () -> Void,
         onSave: @escaping () -> Void,
-        isValid: Bool
+        isValid: Bool,
+        saveLabel: String = "Save routine ▸"
     ) {
         self.onDiscard = onDiscard
         self.onSave = onSave
         self.isValid = isValid
+        self.saveLabel = saveLabel
     }
 
     // MARK: Body
@@ -63,17 +66,17 @@ public struct BottomActionBar: View {
                     .fill(Color.bruInk)
                     .frame(width: 2)
 
-                // Right: signal "Save routine ▸" — disabled + dimmed when draft invalid
-                BRUButton("Save routine ▸", kind: .signal, size: .md, action: onSave)
-                    .disabled(!isValid)
-                    .opacity(isValid ? 1.0 : 0.4)
+                // Right: signal save. It stays tappable while the draft is
+                // invalid so the host can show what is missing; invalid
+                // drafts render the outlined (not filled) treatment.
+                BRUButton(saveLabel, kind: isValid ? .signal : .ghost, size: .md, action: onSave)
             }
             // The separator Rectangle has no intrinsic height. Without this the
             // HStack accepts all offered height and the bar covers its host.
             .fixedSize(horizontal: false, vertical: true)
             .background(Color.bruPaper)
         }
-        .background(Color.bruPaper)
+        .background(Color.bruPaper.ignoresSafeArea(edges: .bottom))
     }
 }
 

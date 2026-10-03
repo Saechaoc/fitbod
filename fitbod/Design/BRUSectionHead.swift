@@ -25,7 +25,7 @@ import SwiftUI
 /// │  LIFT LIST                          Tap to reorder  │ ← bruPaper fill, 16pt h-pad, 12pt v-pad
 /// └─────────────────────────────────────────────────────┘ ← 2pt bruInk rule
 /// ```
-/// - Title: `Font.custom("SpaceGrotesk-Bold", size: 14)`, tracking 0, uppercase transform.
+/// - Title: `.bru(.grotesk, size: 14)`, tracking 0, uppercase transform.
 /// - Right metadata: `BRUFont.labelSmall`, tracking 1.2, uppercase transform.
 ///   - When `rightAction` is `nil`: renders in `bruMuted` (display only).
 ///   - When `rightAction` is non-nil: renders in `bruSignal` and is tappable.
@@ -63,7 +63,7 @@ public struct BRUSectionHead: View {
 
             HStack {
                 Text(title)
-                    .font(.custom("SpaceGrotesk-Bold", size: 14))
+                    .font(.bru(.grotesk, size: 14))
                     .tracking(0)
                     .textCase(.uppercase)
                     .foregroundStyle(Color.bruInk)
@@ -79,6 +79,7 @@ public struct BRUSectionHead: View {
                                 .tracking(1.2)
                                 .textCase(.uppercase)
                                 .foregroundStyle(Color.bruSignal)
+                                .bruHitArea()
                         }
                         .buttonStyle(.plain)
                     } else {

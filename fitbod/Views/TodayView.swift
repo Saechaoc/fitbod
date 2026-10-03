@@ -70,7 +70,12 @@ public struct TodayView: View {
     // Phase 9 IN-02 — "+ NEW ROUTINE" from the empty state. Presents the same
     // new-routine builder ProgramView uses, as a sheet on Today's OWN surface
     // (no cross-tab navigation).
-    @State private var presentingNewRoutine: Bool = false
+    /// Session detail pushed from the Start-a-workout picker.
+    @State private var openedTemplate: SessionTemplate? = nil
+    /// A workout already in progress when the user tried to start another.
+    @State private var startConflict: Session? = nil
+    @State private var startError: String? = nil
+    @State private var presentingSettings = false
 
     // MARK: - Body
 
@@ -153,20 +158,38 @@ public struct TodayView: View {
                             // fixedWeekly today-not-a-training-day → rest-day empty state.
                             noWorkoutScheduledEmptyState
                         case .noBlock:
-                            if activeBlocks.isEmpty {
-                                // No block at all → Start Block CTA (Phase 4 preserved)
-                                StartBlockCTA(onStart: {
-                                    pendingBlockBuilder = .template(BlockTemplates.blank)
-                                })
-                            } else {
+                            if !activeBlocks.isEmpty {
                                 // Block active but split not yet attached → empty state
                                 noWorkoutScheduledEmptyState
                             }
+                            // No block at all: the Start-a-workout picker below
+                            // leads; the Start Block CTA follows it.
                         }
                     }
 
-                    // Lift list — empty view when routine is nil
-                    LiftListSection(routine: todaysRoutine)
+                    // Start-a-workout picker whenever nothing is scheduled
+                    // and nothing is in progress (no block, rest day, empty
+                    // split), so an unscheduled workout is always one tap away.
+                    if activeSessions.isEmpty && todaysRoutine == nil {
+                        TodaySessionPicker(
+                            onOpen: { openedTemplate = $0 },
+                            onStart: { startWorkout($0) },
+                            onNewRoutine: startNewRoutine
+                        )
+                    }
+
+                    // No block at all → Start Block CTA (Phase 4 preserved),
+                    // after the picker so starting a workout stays primary.
+                    if activeSessions.isEmpty && activeBlocks.isEmpty {
+                        StartBlockCTA(onStart: {
+                            pendingBlockBuilder = .template(BlockTemplates.blank)
+                        })
+                    }
+
+                    // Lift list — only for a scheduled session
+                    if todaysRoutine != nil {
+                        LiftListSection(routine: todaysRoutine)
+                    }
 
                     // ─── DEFENSIVE BOTTOM — Phase 5 FatigueSurfaceView ──
                     FatigueSurfaceView(
@@ -186,7 +209,7 @@ public struct TodayView: View {
             // BRUHeaderBar floated as a safeArea inset — renders above ScrollView content
             .safeAreaInset(edge: .top) {
                 BRUHeaderBar(
-                    left: nil,
+                    left: HeaderAction("Settings") { presentingSettings = true },
                     center: "Fitbod / Today",
                     right: HeaderAction(formattedDate) { /* no-op — date label only */ }
                 )
@@ -283,10 +306,38 @@ public struct TodayView: View {
             }
             // Phase 9 IN-02 — "+ NEW ROUTINE" empty-state sheet. Same builder flow
             // ProgramView's "+ New routine" presents, on Today's own surface.
-            .sheet(isPresented: $presentingNewRoutine) {
-                NavigationStack {
-                    RoutineBuilderView(draft: RoutineDraft())
+            .sheet(isPresented: $presentingSettings) {
+                SettingsView(onClose: { presentingSettings = false })
+            }
+            .navigationDestination(item: $openedTemplate) { template in
+                SessionTemplateDetailView(template: template)
+            }
+            .alert(
+                "Workout in progress",
+                isPresented: Binding(
+                    get: { startConflict != nil },
+                    set: { if !$0 { startConflict = nil } }
+                ),
+                presenting: startConflict
+            ) { active in
+                Button("Resume \(active.routineSnapshotName)") {
+                    navigationPath.append(SessionRoute.logger(active))
+                    startConflict = nil
                 }
+                Button("Cancel", role: .cancel) { startConflict = nil }
+            } message: { _ in
+                Text("Finish or discard the current workout before starting another.")
+            }
+            .alert(
+                "Couldn't start workout",
+                isPresented: Binding(
+                    get: { startError != nil },
+                    set: { if !$0 { startError = nil } }
+                )
+            ) {
+                Button("OK", role: .cancel) { startError = nil }
+            } message: {
+                Text(startError ?? "")
             }
             // ─── Lifecycle (preserved verbatim from Phase 4/5) ───────────────
             .task {
@@ -322,7 +373,7 @@ public struct TodayView: View {
                 .multilineTextAlignment(.center)
 
             Button {
-                presentingNewRoutine = true
+                startNewRoutine()
             } label: {
                 Text("+ NEW ROUTINE")
                     .font(BRUFont.labelSmall)
@@ -477,20 +528,25 @@ public struct TodayView: View {
 
     @MainActor
     private func startWorkout(_ routine: SessionTemplate, slot: SplitSessionSlot? = nil) {
-        do {
-            // CR-01: thread the resolved slot through so session.slot is the
-            // rotation anchor; TodayResolver advances rotation off it.
-            let session = try SessionFactory.start(
-                template: routine,
-                slot: slot,
-                activeBlock: activeBlocks.first,
-                context: ctx
-            )
+        // CR-01: thread the resolved slot through so session.slot is the
+        // rotation anchor; TodayResolver advances rotation off it.
+        switch WorkoutStarter.start(routine, slot: slot, context: ctx) {
+        case .started(let session):
             navigationPath.append(SessionRoute.logger(session))
-        } catch {
-            // Session start errors (e.g. routineHasNoExercises) are surfaced
-            // by RoutinesListView's conflict alert. TodayView silently skips
-            // (the routine will still show the CTA next launch).
+        case .alreadyInProgress(let active):
+            startConflict = active
+        case .emptyTemplate:
+            startError = "Add at least one exercise to \(routine.name) first."
+        case .failed(let message):
+            startError = message
+        }
+    }
+
+    /// Creates an untitled routine and opens it on Today's own stack.
+    @MainActor
+    private func startNewRoutine() {
+        if let split = RoutineCreator.create(context: ctx) {
+            navigationPath.append(SplitDetailRoute.detail(splitID: split.id))
         }
     }
 

@@ -64,12 +64,21 @@ public struct SettingsView: View {
     // Sheet state for Picker overlays
     @State private var showingUnitPicker = false
 
-    public init() {}
+    /// Set when Settings is presented as a sheet (from Today's header);
+    /// renders a Close action. Nil when hosted without a presenter.
+    private let onClose: (() -> Void)?
+
+    public init(onClose: (() -> Void)? = nil) {
+        self.onClose = onClose
+    }
 
     public var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
-                BRUHeaderBar(center: "Settings")
+                BRUHeaderBar(
+                    left: onClose.map { close in HeaderAction("Close") { close() } },
+                    center: "Settings"
+                )
 
                 if let settings = settingsList.first {
                     ScrollView {

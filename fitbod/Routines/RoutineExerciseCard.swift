@@ -119,13 +119,13 @@ public struct RoutineExerciseCard: View {
             // When in a superset: show "SS" in bruSignal instead of numeric index
             if draft.supersetGroupID != nil {
                 Text("SS")
-                    .font(.custom("SpaceGrotesk-Bold", size: 26))
+                    .font(.bru(.grotesk, size: 26))
                     .foregroundStyle(Color.bruSignal)
                     .frame(width: 28, alignment: .leading)
                     .lineLimit(1)
             } else {
                 Text(String(format: "%02d", index + 1))
-                    .font(.custom("SpaceGrotesk-Bold", size: 26))
+                    .font(.bru(.grotesk, size: 26))
                     .foregroundStyle(Color.bruInk)
                     .frame(width: 28, alignment: .leading)
                     .lineLimit(1)

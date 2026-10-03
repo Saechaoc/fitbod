@@ -106,103 +106,47 @@ struct ExerciseDetailView: View {
     }
 
     var body: some View {
-        List {
-            if !exercise.instructions.isEmpty {
-                Section("Instructions") {
-                    // Numbered list — render "{index}. {step}" rows.
-                    // Using `Array(enumerated())` so each step can be
-                    // identified by its position (instructions are not
-                    // independently Identifiable strings).
-                    ForEach(Array(exercise.instructions.enumerated()), id: \.offset) { i, step in
-                        HStack(alignment: .top, spacing: 8) {
-                            Text("\(i + 1).")
-                                .font(.body)
-                                .foregroundStyle(.secondary)
-                                .frame(width: 24, alignment: .leading)
-                            Text(step)
-                                .font(.body)
-                                .foregroundStyle(.primary)
+        VStack(spacing: 0) {
+            BRUHeaderBar.slots(
+                left: .back,
+                center: "Exercise",
+                right: exercise.isCustom
+                    ? .action("Edit") { openEditor(editing: true) }
+                    : .action("Copy") { openEditor(editing: false) }
+            )
+            ScrollView {
+                VStack(spacing: 0) {
+                    heroBlock
+                    BRUDivider(.ink)
+                    recentPerformanceSection
+                    muscleSection
+                    instructionsSection
+                    prescriptionSettingsSection
+                    // Phase 5 — SET-06 per-exercise plateau threshold override.
+                    if let settings = settingsList.first {
+                        plateauDetectionSection(settings: settings)
+                    }
+                    if !exercise.isCustom {
+                        VStack(alignment: .leading, spacing: 8) {
+                            BRUButton("Copy as Custom Exercise", kind: .ghost) {
+                                openEditor(editing: false)
+                            }
+                            Text("Built-in exercises are read-only. A copy is yours to rename and re-target.")
+                                .font(BRUFont.bodyDefault)
+                                .foregroundStyle(Color.bruMuted)
                         }
+                        .padding(16)
                     }
                 }
             }
-
-            muscleSection
-
-            Section("Equipment") {
-                Text(equipmentDisplay)
-                    .font(.body)
-            }
-
-            Section("Mechanic") {
-                Text(mechanicDisplay)
-                    .font(.body)
-            }
-
-            // MARK: - Prescription Settings (plan 03-07 Task 3)
-            //
-            // Three editable fields for per-exercise prescription overrides.
-            // Present for both built-in and custom exercises — the model
-            // allows mutation of smallestIncrement / barWeightOverride /
-            // unitOverride on any Exercise row. @Bindable projects the
-            // Exercise @Model for write-through to SwiftData.
-
-            prescriptionSettingsSection
-
-            if !exercise.isCustom {
-                Section {
-                    Button {
-                        // Hydrate a fresh draft from the source built-in
-                        // exercise's fields. The draft is a separate
-                        // CustomExerciseDraft — the source Exercise is
-                        // never mutated (PITFALLS — read-only must mean
-                        // read-only for built-in entries).
-                        draftFromCopy = makeDraft(from: exercise)
-                        presentingCustomEditor = true
-                    } label: {
-                        Text("Copy as Custom Exercise")
-                            .foregroundStyle(Color.accentColor)
-                    }
-                }
-            }
-
-            // Phase 2 Wave 5 plan 05-01 — entry point to the per-exercise
-            // history view (SESS-10 / ROUTINE-08). The detail view is the
-            // Library tab's canonical landing surface for an Exercise, so
-            // surfacing "View All History" here matches UI-SPEC §
-            // "Exercise history view with intent split — Entry point" —
-            // the user reaches the per-exercise history list from the
-            // Library tab's NavigationStack, not from the session logger
-            // (entering it mid-session would break logger focus per the
-            // plan's anti-patterns list).
-            Section("History") {
-                NavigationLink {
-                    ExerciseHistoryView(exercise: exercise)
-                } label: {
-                    HStack {
-                        Text("View All History")
-                        Spacer()
-                    }
-                }
-                // Phase 6 plan 06-05 (PROG-01 / CONTEXT D-02) — deep-link
-                // to the per-exercise progress chart. Hidden via the inner
-                // ProgressEntryRow when SetEntry count == 0 to avoid a
-                // useless empty-chart navigation.
-                ProgressEntryRow(exercise: exercise)
-            }
-
-            // Phase 5 — SET-06 per-exercise plateau threshold override.
-            if let settings = settingsList.first {
-                plateauDetectionSection(settings: settings)
-            }
+            .scrollDismissesKeyboard(.interactively)
         }
-        .listStyle(.insetGrouped)
-        .navigationTitle(exercise.name)
-        .navigationBarTitleDisplayMode(.inline)
+        .background(Color.bruPaper.ignoresSafeArea())
+        .navigationBarHidden(true)
         .sheet(isPresented: $presentingCustomEditor) {
             // Wrap the editor in its own NavigationStack so it owns its
-            // toolbar (Save / Cancel) and navigation title. The editor
-            // dismisses via `@Environment(\.dismiss)` on save/discard.
+            // toolbar (Save / Cancel). The editor dismisses itself on
+            // save / discard / delete.
             if let draft = draftFromCopy {
                 NavigationStack {
                     CustomExerciseEditor(draft: draft)
@@ -211,37 +155,149 @@ struct ExerciseDetailView: View {
         }
     }
 
+    /// Copy (built-in) or edit (custom) through the custom-exercise editor.
+    private func openEditor(editing: Bool) {
+        let draft = makeDraft(from: exercise)
+        if editing {
+            draft.name = exercise.name
+            draft.imageData = exercise.imageData
+            draft.editingExisting = exercise
+        }
+        draftFromCopy = draft
+        presentingCustomEditor = true
+    }
+
+    // MARK: - Hero
+
+    private var heroBlock: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text(exercise.name)
+                .font(BRUFont.condensedTitle)
+                .foregroundStyle(Color.bruInk)
+                .fixedSize(horizontal: false, vertical: true)
+                .accessibilityAddTraits(.isHeader)
+            BRUFlowLayout(spacing: 6) {
+                if let muscle = ExerciseRow.primaryMuscleLabel(exercise) {
+                    BRUChip(muscle, color: .bruSignal, fill: true)
+                }
+                BRUChip(equipmentDisplay)
+                BRUChip(mechanicDisplay)
+                if exercise.isCustom {
+                    BRUChip("Custom", color: .bruSignal)
+                }
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(16)
+    }
+
+    // MARK: - Recent performance
+
+    private var recentPerformanceSection: some View {
+        VStack(spacing: 0) {
+            RecentPerformanceList(exercise: exercise, unitLabel: unitLabel)
+            NavigationLink {
+                ExerciseHistoryView(exercise: exercise)
+            } label: {
+                linkRow("View all history")
+            }
+            .buttonStyle(.plain)
+            // Phase 6 plan 06-05 — progress chart deep link, hidden while
+            // nothing is logged (avoids an empty chart).
+            ProgressEntryRow(exercise: exercise)
+            BRUDivider(.ink)
+        }
+    }
+
+    // MARK: - Instructions
+
+    @ViewBuilder
+    private var instructionsSection: some View {
+        if !exercise.instructions.isEmpty {
+            BRUSectionHead("How to")
+            VStack(alignment: .leading, spacing: 12) {
+                ForEach(Array(exercise.instructions.enumerated()), id: \.offset) { i, step in
+                    HStack(alignment: .firstTextBaseline, spacing: 12) {
+                        Text(String(format: "%02d", i + 1))
+                            .font(BRUFont.labelLarge)
+                            .foregroundStyle(Color.bruMuted)
+                            .frame(minWidth: 24, alignment: .leading)
+                        Text(step)
+                            .font(.bru(.text, size: 15))
+                            .foregroundStyle(Color.bruInk)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    .accessibilityElement(children: .combine)
+                }
+            }
+            .padding(16)
+            BRUDivider(.ink)
+        }
+    }
+
     // MARK: - Muscles section
 
-    /// Renders one row per ExerciseMuscleStimulus join — primary tier
-    /// first, then secondary; descending weight within each tier;
-    /// alphabetical by displayName on weight ties.
+    /// One bar per ExerciseMuscleStimulus join: primary tier first, then
+    /// secondary; descending weight within each tier; alphabetical on ties.
     @ViewBuilder
     private var muscleSection: some View {
         let stimuli = exercise.muscleStimuli ?? []
         if !stimuli.isEmpty {
-            Section("Muscles") {
+            BRUSectionHead("Muscles", right: "Stimulus")
+            VStack(spacing: 10) {
                 ForEach(stimuli.sorted(by: stimulusSort), id: \.id) { stim in
-                    HStack {
-                        Text(stim.muscle?.displayName ?? "Unknown")
-                            .font(.body)
-                        Spacer()
-                        // Render as integer percent — UI-SPEC §
-                        // Copywriting Contract "Muscle row label
-                        // format: '{Muscle name} · {weight as percent}'
-                        // — e.g. 'Chest · 100%', 'Triceps · 50%'".
-                        // The middle-dot separator is provided by the
-                        // HStack + Spacer; the row presents as
-                        // "Chest                 100%" but VoiceOver
-                        // reads them adjacent so the spec is honored.
-                        Text("\(Int((stim.weight * 100).rounded()))%")
-                            .font(.body)
-                            .foregroundStyle(.secondary)
-                            .monospacedDigit()
+                    let percent = Int((stim.weight * 100).rounded())
+                    VStack(alignment: .leading, spacing: 4) {
+                        HStack {
+                            Text(stim.muscle?.displayName ?? "Unknown")
+                                .font(BRUFont.bodyEmphasis)
+                                .foregroundStyle(Color.bruInk)
+                            if stim.role == "primary" {
+                                Text("Primary")
+                                    .font(BRUFont.labelMicro)
+                                    .tracking(1.0)
+                                    .textCase(.uppercase)
+                                    .foregroundStyle(Color.bruSignal)
+                            }
+                            Spacer()
+                            Text("\(percent)%")
+                                .font(BRUFont.bodyEmphasis)
+                                .monospacedDigit()
+                                .foregroundStyle(Color.bruMuted)
+                        }
+                        GeometryReader { geo in
+                            ZStack(alignment: .leading) {
+                                Rectangle().fill(Color.bruFaint)
+                                Rectangle()
+                                    .fill(stim.role == "primary" ? Color.bruInk : Color.bruMuted)
+                                    .frame(width: geo.size.width * min(1, max(0, stim.weight)))
+                            }
+                        }
+                        .frame(height: 6)
                     }
+                    .accessibilityElement(children: .ignore)
+                    .accessibilityLabel("\(stim.muscle?.displayName ?? "Unknown"), \(stim.role), \(percent) percent")
                 }
             }
+            .padding(16)
+            BRUDivider(.ink)
         }
+    }
+
+    private func linkRow(_ title: String) -> some View {
+        HStack {
+            Text(title)
+                .font(BRUFont.bodyEmphasis)
+                .foregroundStyle(Color.bruInk)
+            Spacer()
+            Text("›")
+                .font(BRUFont.displayMedium)
+                .foregroundStyle(Color.bruMuted)
+        }
+        .padding(.horizontal, 16)
+        .frame(minHeight: 52)
+        .contentShape(Rectangle())
+        .overlay(alignment: .top) { BRUDivider(.hair) }
     }
 
     /// Primary (`role == "primary"`) first, then secondary; within each
@@ -269,70 +325,20 @@ struct ExerciseDetailView: View {
     private var prescriptionSettingsSection: some View {
         @Bindable var ex = exercise
 
-        // Section 1: Smallest increment
-        // Header: BRUSectionHead "PRESCRIPTION SETTINGS" per UI-SPEC line 308.
-        // Label: BRUFont.labelSmall UPPERCASE 1.2 tracking bruMuted per line 309.
-        // Footer: BRUFont.bodyDefault bruMuted per line 312.
-        Section {
-            HStack(spacing: 4) {
-                Text("SMALLEST INCREMENT")
-                    .font(BRUFont.labelSmall)
-                    .tracking(1.2)
-                    .textCase(.uppercase)
-                    .foregroundStyle(Color.bruMuted)
-                Spacer()
-                TextField(
-                    "e.g. 2.5",
-                    value: $ex.smallestIncrement,
-                    format: .number
-                )
-                .multilineTextAlignment(.trailing)
-                .keyboardType(.decimalPad)
-                Text(unitLabel)
-                    .font(BRUFont.bodyDefault)
-                    .foregroundStyle(Color.bruMuted)
-            }
-        } header: {
-            BRUSectionHead("PRESCRIPTION SETTINGS")
-        } footer: {
-            Text("Weight advances by this amount each progression step.")
-                .font(BRUFont.bodyDefault)
-                .foregroundStyle(Color.bruMuted)
-        }
-
-        // Section 2: Bar weight override
-        // No section header (continuation). Label + footer per UI-SPEC lines 313–315.
-        Section {
-            HStack(spacing: 4) {
-                Text("BAR WEIGHT OVERRIDE")
-                    .font(BRUFont.labelSmall)
-                    .tracking(1.2)
-                    .textCase(.uppercase)
-                    .foregroundStyle(Color.bruMuted)
-                Spacer()
-                TextField(
-                    "Leave blank to use equipment default",
-                    value: $ex.barWeightOverride,
-                    format: .number
-                )
-                .multilineTextAlignment(.trailing)
-                .keyboardType(.decimalPad)
-                Text(unitLabel)
-                    .font(BRUFont.bodyDefault)
-                    .foregroundStyle(Color.bruMuted)
-            }
-        } footer: {
-            Text("Use for specialty bars (safety squat, Swiss bar, women's bar).")
-                .font(BRUFont.bodyDefault)
-                .foregroundStyle(Color.bruMuted)
-        }
-
-        // Section 3: Weight unit override
-        // Picker replaced by 3-BRUChip Button row per UI-SPEC line 317.
-        // selected = ink fill, unselected = paper fill (fill: Bool param on BRUChip).
-        // Accessibility: each Button gets .accessibilityLabel + .accessibilityAddTraits
-        // per threat model T-03.2-16 (VoiceOver navigation correctness).
-        Section {
+        BRUSectionHead("PRESCRIPTION SETTINGS")
+        VStack(alignment: .leading, spacing: 18) {
+            settingField(
+                label: "SMALLEST INCREMENT",
+                placeholder: "e.g. 2.5",
+                value: $ex.smallestIncrement,
+                footer: "Weight advances by this amount each progression step."
+            )
+            settingField(
+                label: "BAR WEIGHT OVERRIDE",
+                placeholder: "Default",
+                value: $ex.barWeightOverride,
+                footer: "Use for specialty bars (safety squat, Swiss bar, women's bar)."
+            )
             VStack(alignment: .leading, spacing: 8) {
                 Text("WEIGHT UNIT")
                     .font(BRUFont.labelSmall)
@@ -340,36 +346,62 @@ struct ExerciseDetailView: View {
                     .textCase(.uppercase)
                     .foregroundStyle(Color.bruMuted)
                 HStack(spacing: 6) {
-                    Button {
-                        ex.unitOverride = nil
-                    } label: {
-                        BRUChip("System default", fill: ex.unitOverride == nil)
-                    }
-                    .accessibilityLabel("Weight unit: System default")
-                    .accessibilityAddTraits(ex.unitOverride == nil ? .isSelected : [])
-
-                    Button {
-                        ex.unitOverride = .kg
-                    } label: {
-                        BRUChip("kg", fill: ex.unitOverride == .kg)
-                    }
-                    .accessibilityLabel("Weight unit: kg")
-                    .accessibilityAddTraits(ex.unitOverride == .kg ? .isSelected : [])
-
-                    Button {
-                        ex.unitOverride = .lb
-                    } label: {
-                        BRUChip("lb", fill: ex.unitOverride == .lb)
-                    }
-                    .accessibilityLabel("Weight unit: lb")
-                    .accessibilityAddTraits(ex.unitOverride == .lb ? .isSelected : [])
+                    unitChip("System default", selected: ex.unitOverride == nil) { ex.unitOverride = nil }
+                    unitChip("kg", selected: ex.unitOverride == .kg) { ex.unitOverride = .kg }
+                    unitChip("lb", selected: ex.unitOverride == .lb) { ex.unitOverride = .lb }
                 }
+                Text("Overrides the global unit for this exercise only. History stored in canonical unit.")
+                    .font(BRUFont.bodyDefault)
+                    .foregroundStyle(Color.bruMuted)
+                    .fixedSize(horizontal: false, vertical: true)
             }
-        } footer: {
-            Text("Overrides the global unit for this exercise only. History stored in canonical unit.")
+        }
+        .padding(16)
+        BRUDivider(.ink)
+    }
+
+    private func settingField(
+        label: String,
+        placeholder: String,
+        value: Binding<Double?>,
+        footer: String
+    ) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(spacing: 8) {
+                Text(label)
+                    .font(BRUFont.labelSmall)
+                    .tracking(1.2)
+                    .textCase(.uppercase)
+                    .foregroundStyle(Color.bruMuted)
+                Spacer()
+                TextField(placeholder, value: value, format: .number)
+                    .font(BRUFont.bodyEmphasis)
+                    .multilineTextAlignment(.trailing)
+                    .keyboardType(.decimalPad)
+                    .frame(maxWidth: 120, minHeight: 44)
+                    .padding(.horizontal, 8)
+                    .overlay(Rectangle().strokeBorder(Color.bruInk, lineWidth: 1.5))
+                    .accessibilityLabel(label.capitalized)
+                Text(unitLabel)
+                    .font(BRUFont.bodyDefault)
+                    .foregroundStyle(Color.bruMuted)
+            }
+            Text(footer)
                 .font(BRUFont.bodyDefault)
                 .foregroundStyle(Color.bruMuted)
+                .fixedSize(horizontal: false, vertical: true)
         }
+    }
+
+    private func unitChip(_ title: String, selected: Bool, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            BRUChip(title, fill: selected)
+                .frame(minHeight: 44)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Weight unit: \(title)")
+        .accessibilityAddTraits(selected ? .isSelected : [])
     }
 
     // MARK: - Display strings
@@ -445,11 +477,7 @@ struct ExerciseDetailView: View {
             )
 
             VStack(alignment: .leading, spacing: 12) {
-                HStack {
-                    Text("Override global settings")
-                        .font(BRUFont.bodyDefault)
-                    Spacer()
-                    Toggle("", isOn: Binding(
+                Toggle("Override global settings", isOn: Binding(
                         get: { ex.plateauWindowOverride != nil },
                         set: { newValue in
                             if newValue {
@@ -461,40 +489,29 @@ struct ExerciseDetailView: View {
                             }
                         }
                     ))
-                    .labelsHidden()
-                }
+                    .toggleStyle(.bru)
 
                 if let windowOverride = ex.plateauWindowOverride,
                    let toleranceOverride = ex.plateauToleranceOverride {
-                    HStack {
-                        Text("Window (sessions)")
-                            .font(BRUFont.bodyDefault)
-                        Spacer()
-                        Stepper(
-                            "\(windowOverride) sessions",
-                            value: Binding(
-                                get: { windowOverride },
-                                set: { ex.plateauWindowOverride = $0 }
-                            ),
-                            in: 1...12,
-                            step: 1
-                        )
-                    }
+                    BRUStepper(
+                        "Window",
+                        value: Binding(
+                            get: { windowOverride },
+                            set: { ex.plateauWindowOverride = $0 }
+                        ),
+                        in: 1...12,
+                        step: 1
+                    ) { "\($0) sessions" }
 
-                    HStack {
-                        Text("Tolerance (%)")
-                            .font(BRUFont.bodyDefault)
-                        Spacer()
-                        Stepper(
-                            String(format: "%.1f%%", toleranceOverride * 100),
-                            value: Binding(
-                                get: { toleranceOverride * 100 },
-                                set: { ex.plateauToleranceOverride = $0 / 100 }
-                            ),
-                            in: 0.5...10,
-                            step: 0.5
-                        )
-                    }
+                    BRUStepper(
+                        "Tolerance",
+                        value: Binding(
+                            get: { toleranceOverride * 100 },
+                            set: { ex.plateauToleranceOverride = $0 / 100 }
+                        ),
+                        in: 0.5...10,
+                        step: 0.5
+                    ) { String(format: "%.1f%%", $0) }
 
                     BRUButton("Use global defaults", kind: .ghost) {
                         ex.plateauWindowOverride = nil
@@ -503,7 +520,7 @@ struct ExerciseDetailView: View {
                 }
 
                 Text("Global defaults: \(settings.plateauWindowSessions) sessions, \(Int((settings.plateauTolerance * 100).rounded()))% tolerance. Set in Settings.")
-                    .font(BRUFont.labelMicro)
+                    .font(BRUFont.bodyDefault)
                     .foregroundStyle(Color.bruMuted)
             }
             .padding(.horizontal, 16)
@@ -520,29 +537,111 @@ struct ExerciseDetailView: View {
 /// History section.
 private struct ProgressEntryRow: View {
     let exercise: Exercise
-    @Query private var sets: [SetEntry]
+    @Query private var loggedExercises: [SessionExercise]
 
     init(exercise: Exercise) {
         self.exercise = exercise
-        let targetID = exercise.id
-        _sets = Query(
-            filter: #Predicate<SetEntry> { entry in
-                entry.sessionExercise?.exercise?.id == targetID
-            }
+        let targetID: UUID? = exercise.id
+        // Single-level optional chain only; deeper chains crash #Predicate.
+        _loggedExercises = Query(
+            filter: #Predicate<SessionExercise> { $0.exercise?.id == targetID }
         )
     }
 
+    private var hasLoggedSets: Bool {
+        loggedExercises.contains { !($0.sets ?? []).isEmpty }
+    }
+
     var body: some View {
-        if !sets.isEmpty {
+        if hasLoggedSets {
             NavigationLink {
                 ExerciseProgressView(exercise: exercise)
             } label: {
                 HStack {
-                    Image(systemName: "chart.line.uptrend.xyaxis")
-                        .foregroundStyle(Color.accentColor)
-                    Text("View progress")
+                    Text("View progress chart")
+                        .font(BRUFont.bodyEmphasis)
+                        .foregroundStyle(Color.bruInk)
                     Spacer()
+                    Text("›")
+                        .font(BRUFont.displayMedium)
+                        .foregroundStyle(Color.bruMuted)
                 }
+                .padding(.horizontal, 16)
+                .frame(minHeight: 52)
+                .contentShape(Rectangle())
+                .overlay(alignment: .top) { BRUDivider(.hair) }
+            }
+            .buttonStyle(.plain)
+        }
+    }
+}
+
+// MARK: - Recent performance
+
+/// The last five finished workouts that included this exercise: date,
+/// best working set and working-set count. This is the "previous
+/// performance" a lifter checks before choosing today's load.
+private struct RecentPerformanceList: View {
+    let unitLabel: String
+    @Query private var logged: [SessionExercise]
+
+    init(exercise: Exercise, unitLabel: String) {
+        self.unitLabel = unitLabel
+        let targetID: UUID? = exercise.id
+        // Single-level optional chain only; deeper chains crash #Predicate.
+        _logged = Query(filter: #Predicate<SessionExercise> { $0.exercise?.id == targetID })
+    }
+
+    struct Entry: Identifiable {
+        let id: UUID
+        let date: Date
+        let best: SetEntry
+        let workingSets: Int
+    }
+
+    private var entries: [Entry] {
+        logged.compactMap { item -> Entry? in
+            guard let session = item.session, session.completedAt != nil else { return nil }
+            let working = (item.sets ?? []).filter { $0.isComplete && !$0.isWarmup }
+            guard let best = working.max(by: { ($0.weight, $0.reps) < ($1.weight, $1.reps) }) else { return nil }
+            return Entry(id: item.id, date: session.startedAt, best: best, workingSets: working.count)
+        }
+        .sorted { $0.date > $1.date }
+        .prefix(5)
+        .map { $0 }
+    }
+
+    var body: some View {
+        let entries = entries
+        BRUSectionHead("Recent performance", right: entries.isEmpty ? nil : "Best set")
+        if entries.isEmpty {
+            Text("Not logged yet. Your best set from each workout will show here.")
+                .font(BRUFont.bodyDefault)
+                .foregroundStyle(Color.bruMuted)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(16)
+        } else {
+            ForEach(entries) { entry in
+                HStack(alignment: .firstTextBaseline) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(entry.date.formatted(.dateTime.weekday(.abbreviated).month(.abbreviated).day()))
+                            .font(BRUFont.bodyEmphasis)
+                            .foregroundStyle(Color.bruInk)
+                        Text(entry.workingSets == 1 ? "1 working set" : "\(entry.workingSets) working sets")
+                            .font(BRUFont.labelSmall)
+                            .tracking(1.0)
+                            .textCase(.uppercase)
+                            .foregroundStyle(Color.bruMuted)
+                    }
+                    Spacer()
+                    Text("\(entry.best.weight.formatted(.number.precision(.fractionLength(0...1)))) \(unitLabel) × \(entry.best.reps)")
+                        .font(BRUFont.condensedLabel)
+                        .foregroundStyle(Color.bruInk)
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 10)
+                .accessibilityElement(children: .combine)
+                BRUDivider(.hair)
             }
         }
     }

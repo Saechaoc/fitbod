@@ -59,7 +59,7 @@ public struct LiftListRow: View {
             HStack(spacing: 10) {
                 // Leading index — 32pt wide, displayMedium 22pt, zero-padded
                 Text(String(format: "%02d", index))
-                    .font(.custom("SpaceGrotesk-Bold", size: 22))
+                    .font(.bru(.grotesk, size: 22))
                     .foregroundStyle(Color.bruInk)
                     .frame(width: 32, alignment: .leading)
 

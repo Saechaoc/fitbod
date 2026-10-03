@@ -342,16 +342,16 @@ fileprivate enum NewBlockScreenTokens {
 }
 
 fileprivate enum NewBlockType {
-    static let chrome = Font.custom("SpaceGrotesk-Bold", size: 11)
-    static let cta    = Font.custom("SpaceGrotesk-Bold", size: 13)
-    static let chip   = Font.custom("SpaceGrotesk-Bold", size: 9)
-    static let label  = Font.custom("SpaceGrotesk-Bold", size: 10)
-    static let micro  = Font.custom("SpaceGrotesk-Bold", size: 8)
-    static let display      = Font.custom("BebasNeue-Regular", size: 39)
-    static let displayLarge = Font.custom("BebasNeue-Regular", size: 44)
-    static let number       = Font.custom("BebasNeue-Regular", size: 29)
-    static let phaseIndex   = Font.custom("BebasNeue-Regular", size: 28)
-    static let phaseTitle   = Font.custom("Geist-Regular", size: 18)
+    static let chrome = Font.bru(.grotesk, size: 11)
+    static let cta    = Font.bru(.grotesk, size: 13)
+    static let chip   = Font.bru(.grotesk, size: 9)
+    static let label  = Font.bru(.grotesk, size: 10)
+    static let micro  = Font.bru(.grotesk, size: 8)
+    static let display      = Font.bru(.condensed, size: 39)
+    static let displayLarge = Font.bru(.condensed, size: 44)
+    static let number       = Font.bru(.condensed, size: 29)
+    static let phaseIndex   = Font.bru(.condensed, size: 28)
+    static let phaseTitle   = Font.bru(.text, size: 18)
 }
 
 // MARK: - bruCard modifier
@@ -1577,7 +1577,7 @@ fileprivate struct NewBlockReadOnlyStatColumn: View {
                 .foregroundStyle(NewBlockScreenTokens.muted)
                 .multilineTextAlignment(.center)
             Text(value)
-                .font(Font.custom("BebasNeue-Regular", size: 19))
+                .font(.bru(.condensed, size: 19))
                 .foregroundStyle(NewBlockScreenTokens.ink)
                 .lineLimit(1)
                 .minimumScaleFactor(0.8)

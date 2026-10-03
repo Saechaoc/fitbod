@@ -67,6 +67,9 @@ public struct RootView: View {
     /// tab re-tap.
     @State private var progressPath = NavigationPath()
 
+    /// Library tab NavigationPath, cleared on Library-tab re-tap.
+    @State private var libraryPath = NavigationPath()
+
     private static let log = Logger(subsystem: "com.fitbod.app", category: "seed")
 
     public init() {}
@@ -82,11 +85,11 @@ public struct RootView: View {
     /// from the tab bar; surfaces like ExerciseLibraryView are reached
     /// from within the routine builder, and the routine builder itself
     /// is reached from BlockBuilderView once a block is defined.
-    enum Tab: Hashable {
+    enum Tab: Hashable, CaseIterable {
         case today
         case program
         case progress
-        case settings
+        case library
     }
 
     private static func initialSelectedTab() -> Tab {
@@ -155,7 +158,9 @@ public struct RootView: View {
                     case .progress:
                         // Wave-5 plan 06-08 — Progress tab pop-to-root.
                         progressPath = NavigationPath()
-                    case .today, .program, .settings:
+                    case .library:
+                        libraryPath = NavigationPath()
+                    case .today, .program:
                         // No NavigationPath wired for these tabs yet —
                         // future polish will add paths as drilldowns appear.
                         break
@@ -185,12 +190,17 @@ public struct RootView: View {
         // re-add `.background(Color.bruTabSurface.ignoresSafeArea(...))`
         // on the outer VStack here as a fallback.
         VStack(spacing: 0) {
-            Group {
-                switch selectedTab {
-                case .today:    TodayView()
-                case .program:  ProgramView()
-                case .progress: ProgressTabHost(path: $progressPath)
-                case .settings: SettingsTabHost()
+            // Every tab stays alive; only the selected one is visible and
+            // interactive. A `switch` here would rebuild the tab on each
+            // switch and drop its navigation stack (e.g. a logger pushed
+            // on Today) and its @State (library filters).
+            ZStack {
+                ForEach(Tab.allCases, id: \.self) { tab in
+                    let isSelected = tab == selectedTab
+                    tabBody(tab)
+                        .opacity(isSelected ? 1 : 0)
+                        .allowsHitTesting(isSelected)
+                        .accessibilityHidden(!isSelected)
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -202,6 +212,16 @@ public struct RootView: View {
             // vertically fixed-size — otherwise the VStack lets it
             // expand to fill leftover space.
             .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+
+    @ViewBuilder
+    private func tabBody(_ tab: Tab) -> some View {
+        switch tab {
+        case .today:    TodayView()
+        case .program:  ProgramView()
+        case .progress: ProgressTabHost(path: $progressPath)
+        case .library:  ExerciseLibraryView(path: $libraryPath)
         }
     }
 
@@ -266,7 +286,7 @@ private extension RootView.Tab {
         case .today:    return .today
         case .program:  return .program
         case .progress: return .progress
-        case .settings: return .settings
+        case .library:  return .library
         }
     }
 }
@@ -277,7 +297,7 @@ private extension BRUTab {
         case .today:    return .today
         case .program:  return .program
         case .progress: return .progress
-        case .settings: return .settings
+        case .library:  return .library
         }
     }
 }
@@ -304,14 +324,6 @@ private struct ProgressTabHost: View {
     var body: some View { ProgressHomeView(path: $path) }
 }
 
-/// Settings tab body — wraps the real `SettingsView` (plan 04-01).
-/// `SettingsView` owns its own `NavigationStack`, so this host is a
-/// thin transparent wrapper. Kept as a private struct so future per-tab
-/// analytics wrappers / tab-re-tap pop-to-root hooks attach without
-/// restructuring `RootView`.
-private struct SettingsTabHost: View {
-    var body: some View { SettingsView() }
-}
 
 // MARK: - Previews
 
