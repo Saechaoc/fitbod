@@ -28,12 +28,16 @@ public struct StartBlockCTA: View {
                 .foregroundStyle(Color.bruMuted)
 
             Button(action: onStart) {
-                Text("START A BLOCK")
+                // Mixed-case source string, uppercased for display, so
+                // VoiceOver reads words instead of spelling letters.
+                Text("Start a block")
                     .font(BRUFont.labelSmall)
                     .textCase(.uppercase)
                     .tracking(1.2)
                     .foregroundStyle(Color.bruSignal)
+                    .bruHitArea()
             }
+            .buttonStyle(.plain)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(16)

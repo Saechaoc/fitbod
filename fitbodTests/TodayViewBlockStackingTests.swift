@@ -42,10 +42,16 @@ struct TodayViewBlockStackingTests {
     func todayViewConditionallyRendersStartBlockCTA() throws {
         let source = try todayViewSource()
 
-        let cta = try position(of: "StartBlockCTA", in: source)
-        let empty = try position(of: "activeBlocks.isEmpty", in: source)
+        // The condition that guards the CTA sits just before it. Search the
+        // text right above the CTA so an unrelated `!activeBlocks.isEmpty`
+        // earlier in the file cannot satisfy the check.
+        let cta = try position(of: "StartBlockCTA(", in: source)
+        let start = source.index(source.startIndex, offsetBy: max(0, cta - 200))
+        let end = source.index(source.startIndex, offsetBy: cta)
+        let guardText = source[start..<end]
 
-        #expect(abs(cta - empty) < 500)
+        #expect(guardText.contains("activeBlocks.isEmpty"))
+        #expect(!guardText.contains("!activeBlocks.isEmpty"))
     }
 
     @Test("TodayView conditionally renders deload banner when phase is deload")
@@ -62,7 +68,8 @@ struct TodayViewBlockStackingTests {
 
         #expect(source.contains("\"No active block.\""))
         #expect(source.contains("\"Define a training block to see your phase, week, and deloads here.\""))
-        #expect(source.contains("\"Start a Block\""))
+        #expect(source.contains("\"Start a block\""))
+        #expect(source.contains(".textCase(.uppercase)"))
     }
 
     @Test("DeloadWeekBanner copy verbatim")
