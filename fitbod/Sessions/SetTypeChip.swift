@@ -12,9 +12,9 @@
 // Long-press presents a .contextMenu for direct selection (UI-SPEC verbatim
 // labels "Working" / "Warm-up" / "Drop Set" / "To Failure" / "Rest-Pause").
 //
-// BRU contract: NO Capsule() / NO RoundedRectangle / NO accentColor
+// BRU contract: NO capsule shapes / NO RoundedRectangle / NO accent color
 //               NO Image(systemName:) / NO Color(.system*) / NO .font(.caption)
-//               NO .buttonStyle(.bordered)
+//               NO bordered button style
 
 import SwiftUI
 

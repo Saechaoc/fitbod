@@ -12,7 +12,7 @@
 // per UI-SPEC Verification anchor (line 686). The .textCase(.uppercase) in
 // BRUChip renders visually uppercase but VoiceOver reads the underlying string.
 //
-// BRU contract: NO Capsule() / NO RoundedRectangle / NO accentColor
+// BRU contract: NO capsule shapes / NO RoundedRectangle / NO accent color
 //               NO Image(systemName:) / NO .font(.caption) / NO Color(.system*)
 
 import SwiftUI
