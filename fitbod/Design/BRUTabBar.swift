@@ -9,11 +9,10 @@
 //   NEVER wrap the TabView in a parent NavigationStack (UI-SPEC v2 line 58).
 //   Plan 02.1-04 wires this into RootView.
 //
-// TAB COUNT: 4 tabs (today / program / progress / settings).
-//   Library was removed in quick task 260525-g32 follow-up — the exercise
-//   library is reachable from the routine builder; a dedicated tab was
-//   redundant. Settings preserved.
-//   `program` replaces the former `routines` tab (quick task 260525-gen) —
+// TAB COUNT: 4 tabs (today / program / progress / library).
+//   Settings is not a tab. It is a sheet opened by the "Settings" button
+//   in the Today header.
+//   `program` replaces the former `routines` tab (quick task 260525-gen) -
 //   the Routines surface was rebranded as Program to reflect block/
 //   periodization as the primary planning unit; the underlying Routine
 //   data model is unchanged.
