@@ -262,12 +262,15 @@ private struct SlotBRUHeaderBarBody: View {
             Button {
                 dismiss()
             } label: {
-                Text("‹")
+                Text("‹ Back")
                     .font(BRUFont.labelSmall)
                     .tracking(1.5)
+                    .textCase(.uppercase)
                     .foregroundStyle(Color.bruInk)
+                    .bruHitArea()
             }
             .buttonStyle(.plain)
+            .accessibilityLabel("Back")
 
         case .cancel:
             Button {
@@ -278,6 +281,7 @@ private struct SlotBRUHeaderBarBody: View {
                     .tracking(1.5)
                     .textCase(.uppercase)
                     .foregroundStyle(Color.bruInk)
+                    .bruHitArea()
             }
             .buttonStyle(.plain)
 
@@ -290,6 +294,7 @@ private struct SlotBRUHeaderBarBody: View {
                     .tracking(1.5)
                     .textCase(.uppercase)
                     .foregroundStyle(Color.bruSignal)
+                    .bruHitArea()
             }
             .buttonStyle(.plain)
 

@@ -84,7 +84,8 @@ struct TodayViewBRUCopyTests {
     func liftListSectionHeadCopyVerbatim() throws {
         let sectionSource = try sourceFile("fitbod/Views/LiftListSection.swift")
         #expect(sectionSource.contains("\"Lift list\""))
-        #expect(sectionSource.contains("\"Tap to reorder\""))
+        // "Tap to reorder" was a false affordance (nothing reorders); the head shows a count.
+        #expect(!sectionSource.contains("\"Tap to reorder\""))
     }
 
     // MARK: - 5. Empty state copy

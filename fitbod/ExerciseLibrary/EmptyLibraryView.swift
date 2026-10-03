@@ -65,27 +65,33 @@ struct EmptyLibraryView: View {
     let onCreateCustom: () -> Void
 
     var body: some View {
-        VStack(spacing: 16) {
-            Image(systemName: "magnifyingglass")
-                .font(.system(size: 48))
-                .foregroundStyle(.secondary)
+        VStack(spacing: 12) {
+            Text("0")
+                .font(BRUFont.condensedTitle)
+                .foregroundStyle(Color.bruMuted)
+                .frame(width: 72, height: 72)
+                .overlay(
+                    Rectangle().strokeBorder(Color.bruInk, style: StrokeStyle(lineWidth: 2, dash: [6, 4]))
+                )
                 .accessibilityHidden(true)
 
             heading
-                .font(.title2.weight(.semibold))
+                .font(BRUFont.condensedHeading)
+                .foregroundStyle(Color.bruInk)
                 .multilineTextAlignment(.center)
 
             bodyCopy
-                .font(.body)
-                .foregroundStyle(.secondary)
+                .font(BRUFont.bodyDefault)
+                .foregroundStyle(Color.bruMuted)
                 .multilineTextAlignment(.center)
 
             actionButton
+                .frame(maxWidth: 280)
                 .padding(.top, 8)
         }
         .padding(.horizontal, 32)
         .padding(.top, 48)
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
     }
 
     // MARK: - Variant predicate
@@ -125,14 +131,10 @@ struct EmptyLibraryView: View {
     @ViewBuilder
     private var actionButton: some View {
         if hasQuery {
-            Button("Create Custom Exercise", action: onCreateCustom)
-                .font(.body)
-                .foregroundStyle(Color.accentColor)
+            BRUButton("Create Custom Exercise", kind: .signal, action: onCreateCustom)
                 .accessibilityLabel("Create Custom Exercise")
         } else {
-            Button("Clear filters", action: onClearFilters)
-                .font(.body)
-                .foregroundStyle(Color.accentColor)
+            BRUButton("Clear filters", kind: .ghost, action: onClearFilters)
                 .accessibilityLabel("Clear filters")
         }
     }

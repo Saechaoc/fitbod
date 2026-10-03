@@ -2,100 +2,33 @@
 //  ExerciseLibraryView.swift
 //  fitbod
 //
-//  Wave-3 plan 03-02 — the user-facing keystone of Phase 1. Replaces
-//  the interim `LibraryTabHost` placeholder from plan 03-01 with the
-//  real library surface:
+//  The exercise library: Library tab (browse) and exercise picker (routine
+//  builder, logger add/swap).
 //
-//    - sticky filter chip bar (muscle / equipment / mechanic / pattern,
-//      multi-select within / AND across)
-//    - `.searchable` with a 150 ms debounce via `.task(id: searchText)`
-//    - sectioned alphabetical `List`
-//    - inline "Custom" tag on user-authored rows
-//    - "+" toolbar button → presents `CustomExerciseEditor` as a
-//      `.sheet` wrapped in a `NavigationStack` (plan 03-04)
-//    - row tap → ExerciseDetailView (plan 03-03)
+//  Composition: BRUHeaderBar · search field · ExerciseFilterBar chip row ·
+//  FilteredExerciseList (pinned letter sections of ExerciseRow).
 //
-//  ## Outer / inner view split (RESEARCH § Pattern 3)
+//  Outer / inner split: the outer view owns filter + search state; the inner
+//  FilteredExerciseList owns the @Query and is rebuilt with a new predicate
+//  whenever that state changes (the @Query must live in the inner view so
+//  SwiftUI keeps its subscription).
 //
-//  The outer `ExerciseLibraryView` owns the ephemeral state:
+//  Search is debounced 150 ms through `.task(id: searchText)` so the query
+//  does not re-run on every keystroke.
 //
-//    - `@State filterState` — facet selections
-//    - `@State searchText` — live searchable text (every keystroke)
-//    - `@State debouncedSearch` — searchText forwarded after 150 ms
-//      via `.task(id: searchText)` (RESEARCH § Pitfall 4)
-//    - `@State presentingFacet` — which `FilterPickerSheet` is presented
-//
-//  The inner `FilteredExerciseList` owns the `@Query<Exercise>`. Its
-//  `init(predicate:)` re-runs the query whenever the outer view passes
-//  a new predicate (which it does whenever any of the above state
-//  changes). This is the load-bearing pattern in RESEARCH §
-//  Code Example 4 — the `@Query` lives in a private inner view so the
-//  outer view's body can rebuild the inner view (and thus the @Query)
-//  reactively without dropping the `@Query`'s subscription side effects.
-//
-//  ## Search debounce (RESEARCH § Pitfall 4)
-//
-//  `.searchable` writes to `searchText` on every keystroke. A naive
-//  binding into the predicate would re-run `@Query` against 800 rows on
-//  every keystroke (visibly janky in tests). Instead `.task(id:)` runs
-//  a 150 ms sleep keyed to `searchText` — the prior task is auto-cancelled
-//  when `searchText` changes, so only the LAST keystroke after a quiet
-//  150 ms actually propagates to `debouncedSearch` and triggers a query.
-//
-//  ## Filter persistence (corrected per review WR-04)
-//
-//  `FilterState` is a `@State` inside this view. `TabView` preserves
-//  the identity of its hidden tab children — switching tabs does NOT
-//  deallocate or re-instantiate this view, so the `@State`-backed
-//  `FilterState` survives every tab switch and lives for the entire
-//  app process lifetime. Filters reset only when:
-//    1. The app is killed and relaunched (`@State` storage is gone), or
-//    2. The user explicitly taps "Clear filters" (`filterState.clear()`).
-//
-//  This contradicts the older CONTEXT.md Area 2 phrasing ("filters
-//  reset when the user leaves the library tab") — that phrasing
-//  assumed tab teardown, which is not how SwiftUI's `TabView` works.
-//  The persisted-for-process behavior is the iOS-native convention
-//  and is what users actually expect; forcing teardown would require
-//  a SwiftUI anti-pattern. The UI-SPEC has been updated to match.
-//
-//  ## Toolbar "+" affordance
-//
-//  Per UI-SPEC § Library screen "+" toolbar button: presents the
-//  `CustomExerciseEditor` as a `.sheet` wrapped in a `NavigationStack`.
-//  The editor owns its own toolbar (Save / Cancel) and dismisses
-//  itself via `@Environment(\.dismiss)` on save / discard. A fresh
-//  `CustomExerciseDraft()` is constructed per sheet presentation so
-//  the editor opens with empty fields each time.
-//
-//  ## Empty states (plan 04-01 polish)
-//
-//  Empty state rendering is delegated to the top-level
-//  `EmptyLibraryView` view (file: `EmptyLibraryView.swift`). It picks
-//  between two UI-SPEC § Empty states copy variants based on whether
-//  the active search text is empty:
-//
-//    - Empty `searchText` (filters-only / no rows):
-//      "No exercises match"
-//      "Try fewer filters or a different name."
-//      → "Clear filters" (accent text button)
-//
-//    - Non-empty `searchText` (no rows for the typed query):
-//      "No exercises match \"{query}\""
-//      "Check spelling or create a custom exercise."
-//      → "Create Custom Exercise" (accent text button)
-//
-//  Both actions dispatch to closures supplied by the outer view —
-//  `filterState.clear` for the no-query path; `presentingNewCustom =
-//  true` for the with-query CTA, which opens `CustomExerciseEditor` via
-//  the existing `.sheet(isPresented: $presentingNewCustom)` modifier.
+//  Filters persist for the process lifetime (the tab keeps this view alive)
+//  and reset on relaunch or via "Clear filters".
 //
 
 import SwiftUI
 import SwiftData
 
-/// Library tab body — sectioned, searchable, multi-facet-filterable
-/// list of every `Exercise` in the store.
+/// Library tab body and exercise picker: BRU-styled, searchable,
+/// multi-facet-filterable list of every `Exercise` in the store.
+///
+/// Browse mode (`init()` / `init(path:)`) owns a NavigationStack and pushes
+/// `ExerciseDetailView`. Picker mode (`init(onSelect:)`) renders inside the
+/// caller's NavigationStack and fires `onSelect` on tap.
 public struct ExerciseLibraryView: View {
 
     // MARK: - State
@@ -105,55 +38,76 @@ public struct ExerciseLibraryView: View {
     @State private var debouncedSearch: String = ""
     @State private var presentingFacet: ExerciseFilterBar.FilterFacet? = nil
     @State private var presentingNewCustom = false
+    @FocusState private var searchFocused: Bool
 
     /// Internal navigation path used when the caller does not provide
     /// one (previews, tests). When an external binding is supplied via
-    /// `init(externalPath:)`, `effectivePath` proxies through it so
-    /// `RootView` can clear the stack on Library-tab re-tap (review
-    /// WR-07).
+    /// `init(path:)`, `effectivePath` proxies through it so `RootView` can
+    /// clear the stack on Library-tab re-tap.
     @State private var internalPath = NavigationPath()
     private var externalPath: Binding<NavigationPath>?
 
-    /// Picker-mode closure (RESEARCH § Pattern 5). When non-nil, tapping
-    /// an exercise row invokes this closure instead of pushing
-    /// `ExerciseDetailView`. Wired up by the plan 03-02 routine builder
-    /// (`InlineExerciseSearchRow`) and the plan 04-02 mid-session
-    /// swap-exercise / add-unplanned flows.
+    /// Picker-mode closure. When non-nil, tapping an exercise row invokes
+    /// this closure instead of pushing `ExerciseDetailView`.
     private var onSelect: ((Exercise) -> Void)?
+
+    /// Picker mode only: whether to draw the CANCEL · ADD EXERCISE header.
+    /// Hosts that draw their own header (swap sheet) pass false.
+    private var showsPickerHeader: Bool = true
 
     public init() {
         self.externalPath = nil
         self.onSelect = nil
     }
 
-    /// External-path variant — `RootView` constructs this so it can
-    /// reset the path on tab re-tap (UI-SPEC § Interaction patterns
-    /// "Tab re-tap pop-to-root").
+    /// External-path variant: `RootView` constructs this so it can reset
+    /// the path on tab re-tap.
     public init(path: Binding<NavigationPath>) {
         self.externalPath = path
         self.onSelect = nil
     }
 
-    /// Picker init (RESEARCH § Pattern 5) — when provided, tapping an
-    /// exercise row fires the closure rather than pushing the detail
-    /// view. The toolbar "+" affordance for creating a custom exercise
-    /// still renders so a brand-new custom can be authored mid-build
-    /// and selected immediately. The new exercise will appear in the
-    /// list via the reactive `@Query` re-fetch, and the user can tap it
-    /// to fire `onSelect`.
-    public init(onSelect: @escaping (Exercise) -> Void) {
+    /// Picker init: tapping a row fires the closure rather than pushing
+    /// the detail view. "+ New" still creates a custom exercise, which
+    /// then appears in the list ready to pick.
+    public init(onSelect: @escaping (Exercise) -> Void, showsPickerHeader: Bool = true) {
         self.externalPath = nil
         self.onSelect = onSelect
+        self.showsPickerHeader = showsPickerHeader
     }
 
     private var effectivePath: Binding<NavigationPath> {
         externalPath ?? $internalPath
     }
 
+    private var isPicker: Bool { onSelect != nil }
+
     // MARK: - Body
 
     public var body: some View {
-        NavigationStack(path: effectivePath) {
+        if isPicker {
+            content
+        } else {
+            NavigationStack(path: effectivePath) {
+                content
+            }
+        }
+    }
+
+    private var content: some View {
+        VStack(spacing: 0) {
+            if !isPicker || showsPickerHeader {
+                BRUHeaderBar.slots(
+                    left: isPicker ? .cancel : nil,
+                    center: isPicker ? "Add exercise" : "Library",
+                    right: .action("+ New") { presentingNewCustom = true }
+                )
+            }
+            searchField
+            ExerciseFilterBar(
+                filterState: filterState,
+                presentingSheet: $presentingFacet
+            )
             FilteredExerciseList(
                 predicate: filterState.swiftDataPredicate(with: debouncedSearch),
                 filterState: filterState,
@@ -163,106 +117,101 @@ public struct ExerciseLibraryView: View {
                 createCustomAction: { presentingNewCustom = true },
                 onSelect: onSelect
             )
-            .navigationTitle("Exercises")
-            .searchable(
-                text: $searchText,
-                placement: .navigationBarDrawer,
-                prompt: "Search exercises"
-            )
-            .task(id: searchText) {
-                // Debounce: wait 150 ms, then propagate the searchText.
-                // `.task(id:)` auto-cancels the prior task when `searchText`
-                // changes — only the last keystroke after a 150 ms quiet
-                // window survives to set `debouncedSearch`.
-                try? await Task.sleep(for: .milliseconds(150))
-                guard !Task.isCancelled else { return }
-                debouncedSearch = searchText
-            }
-            .safeAreaInset(edge: .top, spacing: 0) {
-                ExerciseFilterBar(
-                    filterState: filterState,
-                    presentingSheet: $presentingFacet
-                )
-            }
-            .sheet(item: $presentingFacet) { facet in
-                FilterPickerSheet(facet: facet, filterState: filterState)
-            }
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button {
-                        presentingNewCustom = true
-                    } label: {
-                        Label("Create custom exercise", systemImage: "plus")
-                            .labelStyle(.iconOnly)
-                    }
-                    .accessibilityLabel("Create custom exercise")
-                }
-            }
-            .sheet(isPresented: $presentingNewCustom) {
-                // Plan 03-04 wire — fresh CustomExerciseDraft per
-                // sheet presentation. The editor owns the save flow
-                // (`materialize(into: modelContext, ...)` + `ctx.save()`
-                // + dismiss); the new row appears in the library list
-                // via the outer @Query<Exercise> re-running on the
-                // insert.
-                NavigationStack {
-                    CustomExerciseEditor(draft: CustomExerciseDraft())
-                }
+        }
+        .background(Color.bruPaper.ignoresSafeArea())
+        .navigationBarHidden(true)
+        .task(id: searchText) {
+            // Debounce: wait 150 ms, then propagate the searchText.
+            // `.task(id:)` auto-cancels the prior task when `searchText`
+            // changes, so only the last keystroke after a quiet 150 ms
+            // window reaches `debouncedSearch` and re-runs the query.
+            try? await Task.sleep(for: .milliseconds(150))
+            guard !Task.isCancelled else { return }
+            debouncedSearch = searchText
+        }
+        .sheet(item: $presentingFacet) { facet in
+            FilterPickerSheet(facet: facet, filterState: filterState)
+        }
+        .sheet(isPresented: $presentingNewCustom) {
+            // Fresh draft per presentation; the editor saves and dismisses,
+            // and the inner @Query picks up the new row.
+            NavigationStack {
+                CustomExerciseEditor(draft: CustomExerciseDraft())
             }
         }
+    }
+
+    // MARK: - Search field
+
+    private var searchField: some View {
+        HStack(spacing: 10) {
+            Text("⌕")
+                .font(BRUFont.condensedHeading)
+                .foregroundStyle(Color.bruMuted)
+                .accessibilityHidden(true)
+            TextField("Search exercises", text: $searchText)
+                .font(.bru(.mono, size: 17))
+                .foregroundStyle(Color.bruInk)
+                .textInputAutocapitalization(.never)
+                .autocorrectionDisabled()
+                .submitLabel(.search)
+                .focused($searchFocused)
+                .accessibilityLabel("Search exercises")
+            if !searchText.isEmpty {
+                Button {
+                    searchText = ""
+                    debouncedSearch = ""
+                } label: {
+                    Text("×")
+                        .font(BRUFont.condensedHeading)
+                        .foregroundStyle(Color.bruInk)
+                        .frame(width: 44, height: 44)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Clear search")
+            }
+        }
+        .padding(.horizontal, 16)
+        .frame(minHeight: 56)
+        .background(Color.bruPaper)
+        .contentShape(Rectangle())
+        .onTapGesture { searchFocused = true }
+        .overlay(alignment: .bottom) { BRUDivider(.ink) }
     }
 }
 
 // MARK: - FilteredExerciseList
 
 /// Predicate-driven inner view. Its `init(predicate:)` re-creates the
-/// `@Query` whenever the outer view passes a new predicate — the
-/// load-bearing pattern from RESEARCH § Pattern 3 / Code Example 4.
+/// `@Query` whenever the outer view passes a new predicate, so the query
+/// stays subscribed while filters and search change.
 ///
-/// Sectioning happens in-Swift over the already-fetched rows (the
-/// `@Query` returns them sorted by `canonicalName`, so grouping by the
-/// first letter of `name` yields stable alphabetical sections). At ~800
-/// rows this is a sub-millisecond operation on iPhone 16 sim.
+/// Sectioning happens in Swift over the already-fetched rows (sorted by
+/// `canonicalName`), grouping by first letter. At ~700 rows this is
+/// sub-millisecond.
 private struct FilteredExerciseList: View {
     @Query private var exercises: [Exercise]
 
-    /// Owning filter state. Read by the facet post-filter that
-    /// `FilterState.swiftDataPredicate(with:)` intentionally leaves out
-    /// (see FilterState header — guarded multi-facet matching is the
-    /// fragile `#Predicate` expression).
+    /// Logged exercises from finished workouts, for the per-row "N×" count.
+    /// Single-level optional chain only (deeper chains crash #Predicate).
+    @Query(filter: #Predicate<SessionExercise> { $0.session?.completedAt != nil })
+    private var loggedExercises: [SessionExercise]
+
+    /// Owning filter state. Read by the facet post-filter that the
+    /// SwiftData predicate leaves out.
     let filterState: FilterState
 
-    /// The active debounced search text, used by the empty-state copy
-    /// to show the verbatim "{query}" the user typed AND to select the
-    /// with-query vs without-query variant in `EmptyLibraryView`.
+    /// The active debounced search text (empty-state copy variant).
     let activeQuery: String
 
-    /// `true` when at least one facet has a selection. Plan 04-01: the
-    /// new `EmptyLibraryView` does not currently consume this — it
-    /// picks its variant on `searchText.isEmpty` alone per UI-SPEC §
-    /// Empty states. The flag is preserved on the inner view because
-    /// the outer view still uses it for chip-bar rendering and a later
-    /// polish may want it to disambiguate "filters-only" from "no
-    /// rows" at the empty surface.
+    /// `true` when at least one facet has a selection.
     let hasActiveFilters: Bool
 
-    /// Closure that clears every facet's selection. Forwarded from the
-    /// outer `FilterState.clear`. Wired to the empty state's no-query
-    /// "Clear filters" button.
     let clearFiltersAction: () -> Void
-
-    /// Closure that presents the `CustomExerciseEditor` sheet. Wired to
-    /// the empty state's with-query "Create Custom Exercise" button —
-    /// the plan-04-01 UI-SPEC § Empty states CTA that was deferred by
-    /// plan 03-02 D-1 until plan 03-04's editor existed.
     let createCustomAction: () -> Void
 
-    /// Optional picker-mode closure (RESEARCH § Pattern 5) — when set,
-    /// each row renders as a `Button { onSelect(ex) }` rather than a
-    /// `NavigationLink(value: ex)` so the row tap fires the closure
-    /// instead of pushing the detail view. Used by the routine builder
-    /// (`InlineExerciseSearchRow`, plan 03-02) and the session-logger
-    /// swap / add-unplanned flows (plan 04-02).
+    /// Picker-mode closure; nil in browse mode.
     let onSelect: ((Exercise) -> Void)?
 
     init(
@@ -293,57 +242,98 @@ private struct FilteredExerciseList: View {
         filterState.applyPostFetchFilters(to: exercises)
     }
 
+    /// Number of finished workouts that included each exercise.
+    private var loggedCounts: [UUID: Int] {
+        var counts: [UUID: Int] = [:]
+        for item in loggedExercises {
+            if let id = item.exercise?.id { counts[id, default: 0] += 1 }
+        }
+        return counts
+    }
+
     var body: some View {
+        let visible = visibleExercises
         Group {
-            if visibleExercises.isEmpty {
+            if visible.isEmpty {
                 EmptyLibraryView(
                     searchText: activeQuery,
                     onClearFilters: clearFiltersAction,
                     onCreateCustom: createCustomAction
                 )
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
-                List {
-                    ForEach(sectioned, id: \.letter) { section in
-                        Section(section.letter) {
-                            ForEach(section.exercises) { ex in
-                                if let onSelect {
-                                    // Picker mode (RESEARCH § Pattern 5) —
-                                    // tap fires the closure instead of
-                                    // pushing the detail view.
-                                    Button {
-                                        onSelect(ex)
-                                    } label: {
-                                        ExerciseRow(exercise: ex)
-                                    }
-                                    .buttonStyle(.plain)
-                                } else {
-                                    NavigationLink(value: ex) {
-                                        ExerciseRow(exercise: ex)
-                                    }
+                let counts = loggedCounts
+                ScrollView {
+                    LazyVStack(spacing: 0, pinnedViews: [.sectionHeaders]) {
+                        resultCount(visible.count)
+                        ForEach(sectioned(visible), id: \.letter) { section in
+                            Section {
+                                ForEach(section.exercises) { ex in
+                                    row(ex, loggedCount: counts[ex.id] ?? 0)
+                                    BRUDivider(.hair)
                                 }
+                            } header: {
+                                sectionHeader(section.letter)
                             }
                         }
                     }
                 }
-                .listStyle(.insetGrouped)
+                .scrollDismissesKeyboard(.immediately)
                 .navigationDestination(for: Exercise.self) { ex in
-                    // Plan 03-03 wire — real ExerciseDetailView replaces
-                    // the prior placeholder. The detail view owns its own
-                    // navigation title (inline) + toolbar (none for
-                    // built-in; "Copy as Custom Exercise" CTA section)
-                    // and presents its own sheet for the Copy flow.
                     ExerciseDetailView(exercise: ex)
                 }
             }
         }
     }
 
-    /// Groups the post-filtered `visibleExercises` by the first letter of
-    /// their `name`, returning the sections in alphabetical order. Inner
-    /// rows are already sorted by `canonicalName` thanks to the
-    /// `@Query(sort:)`, so per-section order is stable.
-    private var sectioned: [(letter: String, exercises: [Exercise])] {
-        let groups = Dictionary(grouping: visibleExercises) { ex in
+    @ViewBuilder
+    private func row(_ ex: Exercise, loggedCount: Int) -> some View {
+        if let onSelect {
+            Button {
+                onSelect(ex)
+            } label: {
+                ExerciseRow(exercise: ex, accessory: .add)
+            }
+            .buttonStyle(.plain)
+            .accessibilityHint("Adds this exercise")
+        } else {
+            NavigationLink(value: ex) {
+                ExerciseRow(exercise: ex, accessory: .loggedCount(loggedCount))
+            }
+            .buttonStyle(.plain)
+        }
+    }
+
+    private func resultCount(_ count: Int) -> some View {
+        let filtered = !activeQuery.isEmpty || hasActiveFilters
+        return Text(filtered
+                    ? (count == 1 ? "1 match" : "\(count) matches")
+                    : "\(count) exercises")
+            .font(BRUFont.labelSmall)
+            .tracking(1.2)
+            .textCase(.uppercase)
+            .foregroundStyle(Color.bruMuted)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 10)
+    }
+
+    private func sectionHeader(_ letter: String) -> some View {
+        Text(letter)
+            .font(BRUFont.condensedLabel)
+            .foregroundStyle(Color.bruInk)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 6)
+            .background(Color.bruBg2)
+            .overlay(alignment: .top) { BRUDivider(.ink) }
+            .accessibilityAddTraits(.isHeader)
+    }
+
+    /// Groups rows by the first letter of their name, in alphabetical
+    /// order. Rows inside each section keep the @Query sort order.
+    private func sectioned(_ rows: [Exercise]) -> [(letter: String, exercises: [Exercise])] {
+        let groups = Dictionary(grouping: rows) { ex in
             String(ex.name.prefix(1).uppercased())
         }
         return groups.keys.sorted().map { letter in

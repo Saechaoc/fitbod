@@ -64,27 +64,26 @@ public struct FilterPickerSheet: View {
     }
 
     public var body: some View {
-        NavigationStack {
-            List {
-                switch facet {
-                case .muscle:    muscleSection
-                case .equipment: equipmentSection
-                case .mechanic:  mechanicSection
-                case .pattern:   patternSection
+        VStack(spacing: 0) {
+            BRUHeaderBar.slots(
+                left: .action("Clear", clearCurrentFacet),
+                center: title,
+                right: .action("Done") { dismiss() }
+            )
+            ScrollView {
+                LazyVStack(spacing: 0) {
+                    switch facet {
+                    case .muscle:    muscleSection
+                    case .equipment: equipmentSection
+                    case .mechanic:  mechanicSection
+                    case .pattern:   patternSection
+                    }
                 }
             }
-            .navigationTitle(title)
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Done") { dismiss() }
-                }
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Clear", action: clearCurrentFacet)
-                }
-            }
-            .presentationDetents([.medium, .large])
         }
+        .background(Color.bruPaper.ignoresSafeArea())
+        .presentationDetents([.medium, .large])
+        .presentationDragIndicator(.visible)
     }
 
     private var title: String {
@@ -145,23 +144,13 @@ public struct FilterPickerSheet: View {
         // selecting any pattern will return zero rows until later-phase
         // curation populates it. The footer copy explains this so the
         // user isn't surprised by an empty result list.
-        Section {
-            ForEach(Pattern.allCases, id: \.rawValue) { p in
-                selectableRow(
-                    title: displayName(forPattern: p),
-                    isSelected: filterState.selectedPatternRaw.contains(p.rawValue)
-                ) {
-                    toggle(p.rawValue, in: &filterState.selectedPatternRaw)
-                }
+        ForEach(Pattern.allCases, id: \.rawValue) { p in
+            selectableRow(
+                title: displayName(forPattern: p),
+                isSelected: filterState.selectedPatternRaw.contains(p.rawValue)
+            ) {
+                toggle(p.rawValue, in: &filterState.selectedPatternRaw)
             }
-        } footer: {
-            Text(
-                "Patterns are not yet assigned to seeded exercises. " +
-                "Selecting a pattern will return no results until " +
-                "curation lands in a later phase."
-            )
-            .font(.caption)
-            .foregroundStyle(.secondary)
         }
     }
 
@@ -176,17 +165,26 @@ public struct FilterPickerSheet: View {
         action: @escaping () -> Void
     ) -> some View {
         Button(action: action) {
-            HStack {
+            HStack(spacing: 12) {
+                // BRU checkbox: filled signal square when selected.
+                Rectangle()
+                    .fill(isSelected ? Color.bruSignal : Color.clear)
+                    .frame(width: 20, height: 20)
+                    .overlay(
+                        Rectangle().strokeBorder(isSelected ? Color.bruSignal : Color.bruInk, lineWidth: 2)
+                    )
                 Text(title)
-                    .foregroundStyle(.primary)
+                    .font(BRUFont.displayMedium)
+                    .foregroundStyle(Color.bruInk)
                 Spacer()
-                if isSelected {
-                    Image(systemName: "checkmark")
-                        .foregroundStyle(Color.accentColor)
-                }
             }
+            .padding(.horizontal, 16)
+            .frame(minHeight: 52)
             .contentShape(Rectangle())
         }
+        .buttonStyle(.plain)
+        .overlay(alignment: .bottom) { BRUDivider(.hair) }
+        .accessibilityAddTraits(isSelected ? .isSelected : [])
     }
 
     /// Equipment display names — split the underscore raw values into

@@ -93,7 +93,6 @@ public struct ProgramView: View {
     @State private var navigationPath = NavigationPath()
     @State private var pendingBlockBuilder: PendingBlockBuilder? = nil
     @State private var showingNewPopover = false
-    @State private var presentingNewRoutine = false
     @State private var presentingStartChoice = false
     @State private var presentingPresetPicker = false
     @State private var stagedBuilder: PendingBlockBuilder? = nil
@@ -209,11 +208,6 @@ public struct ProgramView: View {
                     BlockBuilderView(draft: BlockDraft(block: block), editing: block)
                 }
             }
-            .sheet(isPresented: $presentingNewRoutine) {
-                NavigationStack {
-                    RoutineBuilderView(draft: RoutineDraft())
-                }
-            }
             .sheet(isPresented: $presentingStartChoice, onDismiss: {
                 if let staged = stagedBuilder {
                     pendingBlockBuilder = staged
@@ -284,8 +278,13 @@ public struct ProgramView: View {
         presentingStartChoice = true
     }
 
+    /// "+ New routine" creates the routine (UI term; code `Split`) right
+    /// away and opens it, where the user names it and adds sessions. An
+    /// untitled routine still shows in ROUTINES so it is never orphaned.
     private func startNewRoutine() {
-        presentingNewRoutine = true
+        if let split = RoutineCreator.create(context: ctx) {
+            navigationPath.append(SplitDetailRoute.detail(splitID: split.id))
+        }
     }
 
     // MARK: Static data
@@ -439,7 +438,7 @@ public struct ProgramView: View {
 
         // "+ NEW ROUTINE" action row (dedicated row per UI-SPEC §2)
         Button {
-            presentingNewRoutine = true
+            startNewRoutine()
         } label: {
             Text("+ NEW ROUTINE")
                 .font(BRUFont.labelSmall)
@@ -449,6 +448,7 @@ public struct ProgramView: View {
                 .frame(maxWidth: .infinity, alignment: .trailing)
                 .padding(.horizontal, ProgramScreenTokens.horizontalPagePadding)
                 .frame(minHeight: 44)
+                .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
 

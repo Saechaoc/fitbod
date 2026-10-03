@@ -1,7 +1,7 @@
 // LiftListSection.swift
 // fitbod — Phase 2.1 Plan 04
 //
-// BRUSectionHead("Lift list", right: "Tap to reorder") + LazyVStack of LiftListRow.
+// BRUSectionHead("Lift list", right: sortedExercises.count == 1 ? "1 lift" : "\(sortedExercises.count) lifts") + LazyVStack of LiftListRow.
 // Reference: bru-screens/today.jsx lines 83-110
 //
 // BRU contract: NO Capsule() / NO RoundedRectangle / NO accentColor / NO Image(systemName:)
@@ -39,7 +39,7 @@ public struct LiftListSection: View {
 
     public var body: some View {
         VStack(spacing: 0) {
-            BRUSectionHead("Lift list", right: "Tap to reorder")
+            BRUSectionHead("Lift list", right: sortedExercises.count == 1 ? "1 lift" : "\(sortedExercises.count) lifts")
 
             if sortedExercises.isEmpty {
                 // Minimal placeholder — not the full empty-state (that's TodayView's job)

@@ -83,27 +83,32 @@ public struct ExerciseFilterBar: View {
                     isActive: filterState.selectedMechanicRaw != nil
                 ) { presentingSheet = .mechanic }
 
-                FilterChip(
-                    label: patternLabel,
-                    accessibilityName: patternA11yLabel,
-                    isActive: !filterState.selectedPatternRaw.isEmpty
-                ) { presentingSheet = .pattern }
+                // Pattern facet hidden: the seeded catalog has no pattern
+                // data yet, so any selection returned zero rows. Restore
+                // once patterns are curated (docs/ROADMAP.md).
 
                 if !filterState.isEmpty {
-                    Button("Clear filters") {
+                    Button {
                         filterState.clear()
+                    } label: {
+                        Text("Clear filters")
+                            .font(BRUFont.labelSmall)
+                            .tracking(1.2)
+                            .textCase(.uppercase)
+                            .foregroundStyle(Color.bruSignal)
+                            .padding(.horizontal, 8)
+                            .frame(minHeight: 44)
+                            .contentShape(Rectangle())
                     }
-                    .font(.caption)
-                    .foregroundStyle(Color.accentColor)
-                    .padding(.horizontal, 8)
-                    .frame(minHeight: 44)
+                    .buttonStyle(.plain)
                     .accessibilityLabel("Clear filters")
                 }
             }
             .padding(.horizontal, 16)
-            .padding(.vertical, 8)
+            .padding(.vertical, 4)
         }
-        .background(.thinMaterial)
+        .background(Color.bruPaper)
+        .overlay(alignment: .bottom) { BRUDivider(.ink) }
     }
 
     // MARK: - Chip-label composition

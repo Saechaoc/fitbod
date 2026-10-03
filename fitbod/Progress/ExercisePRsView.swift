@@ -166,31 +166,29 @@ private struct PRsHost: View {
     init(scope: ExercisePRsViewScope, intentFilter: ExercisePRsIntentFilter) {
         self.scope = scope
         self.intentFilter = intentFilter
+        // Broad predicate + Swift post-filter: a multi-level optional chain
+        // (entry.sessionExercise?.exercise?.id) inside #Predicate crashes
+        // SwiftData at fetch time ("Unsupported function expression").
+        _sets = Query(
+            filter: #Predicate<SetEntry> { entry in
+                entry.isComplete && !entry.isWarmup
+            },
+            sort: \SetEntry.completedAt,
+            order: .reverse
+        )
+    }
+
+    private var scopedSets: [SetEntry] {
         switch scope {
         case .forExercise(let exerciseID):
-            let targetID = exerciseID
-            _sets = Query(
-                filter: #Predicate<SetEntry> { entry in
-                    entry.isComplete
-                        && !entry.isWarmup
-                        && entry.sessionExercise?.exercise?.id == targetID
-                },
-                sort: \SetEntry.completedAt,
-                order: .reverse
-            )
+            return sets.filter { $0.sessionExercise?.exercise?.id == exerciseID }
         case .allExercises:
-            _sets = Query(
-                filter: #Predicate<SetEntry> { entry in
-                    entry.isComplete && !entry.isWarmup
-                },
-                sort: \SetEntry.completedAt,
-                order: .reverse
-            )
+            return sets
         }
     }
 
     var body: some View {
-        let filtered = sets.filter { entry in
+        let filtered = scopedSets.filter { entry in
             guard let session = entry.sessionExercise?.session else { return false }
             let intent = Intent(rawValue: session.intentRaw) ?? .strength
             return intentFilter.matches(intent: intent)

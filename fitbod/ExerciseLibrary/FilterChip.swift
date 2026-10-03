@@ -59,36 +59,22 @@ public struct FilterChip: View {
     public var body: some View {
         Button(action: action) {
             Text(label)
-                .font(.caption)
-                .foregroundStyle(isActive ? Color.white : Color.primary)
+                .font(BRUFont.labelSmall)
+                .tracking(1.2)
+                .textCase(.uppercase)
+                .lineLimit(1)
+                .foregroundStyle(isActive ? Color.bruPaper : Color.bruInk)
                 .padding(.horizontal, 12)
-                .padding(.vertical, 8)
-                .background {
-                    Capsule()
-                        .fill(isActive ? Color.accentColor : Color(.systemGray5))
-                }
+                .frame(minHeight: 36)
+                .background(isActive ? Color.bruSignal : Color.clear)
+                .overlay(
+                    Rectangle().strokeBorder(isActive ? Color.bruSignal : Color.bruInk, lineWidth: 1.5)
+                )
+                .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .contentShape(Capsule())
         .frame(minHeight: 44)
         .accessibilityLabel(accessibilityName)
+        .accessibilityAddTraits(isActive ? .isSelected : [])
     }
-}
-
-#Preview("Inactive") {
-    FilterChip(
-        label: "Muscle",
-        accessibilityName: "Muscle filter",
-        isActive: false
-    ) {}
-        .padding()
-}
-
-#Preview("Active with count") {
-    FilterChip(
-        label: "Muscle · 2",
-        accessibilityName: "Muscle filter, 2 selected",
-        isActive: true
-    ) {}
-        .padding()
 }
