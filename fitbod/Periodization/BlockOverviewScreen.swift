@@ -1258,8 +1258,8 @@ private extension Array {
 
 #if DEBUG
 #Preview("BlockOverviewScreen") {
-    // CR-05: V7 schema — BlockOverviewScreen accesses Split / SplitSessionSlot /
-    // SessionTemplate relationships at runtime, which SchemaV5 has no tables for.
+    // BlockOverviewScreen reads Split / SplitSessionSlot / SessionTemplate
+    // relationships, so the preview needs the full baseline schema.
     let container = try! FitbodModelContainer.make(inMemory: true)
     let ctx = ModelContext(container)
 

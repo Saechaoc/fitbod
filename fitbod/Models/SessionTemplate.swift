@@ -7,11 +7,8 @@
 //  Previously named `Routine`; renamed to `SessionTemplate` per spec §3
 //  of the Phase 7 program-graph migration.
 //
-//  Historical shape: `SchemaV6.Routine` (nested in Persistence/SchemaV6.swift)
-//  preserves the V6 field set verbatim for the V6→V7 custom migration
-//  closure. This top-level `fitbod.SessionTemplate` is the V7 production
-//  runtime entity; `SchemaV7.SessionTemplate` is a typealias pointing back
-//  here.
+//  `SchemaV7.SessionTemplate` (the baseline schema) is a typealias for
+//  this type.
 //
 //  The optional `block` relationship lets a template belong to a
 //  periodization block when one is active. The inverse for this field is

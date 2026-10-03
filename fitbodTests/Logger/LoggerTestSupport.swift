@@ -14,10 +14,7 @@ import SwiftData
 enum LoggerFixtures {
 
     static func makeContext() throws -> ModelContext {
-        let schema = Schema(SchemaV7.models)
-        let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true)
-        let container = try ModelContainer(for: schema, configurations: config)
-        return ModelContext(container)
+        ModelContext(try FitbodModelContainer.make(inMemory: true))
     }
 
     static func exercise(_ name: String, in ctx: ModelContext) -> Exercise {

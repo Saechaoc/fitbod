@@ -32,12 +32,7 @@
 //  SessionExercise → SetEntry, giving us the documented Session →
 //  SessionExercise → SetEntry cascade chain).
 //
-//  Schema architecture (BLOCKER 3): `SchemaV3.Session` (nested in
-//  `Persistence/SchemaV3.swift`) preserves the V3-shape field set — no
-//  `intentRaw` / `progressionKindRaw` and no `#Index` — for the V3→V4
-//  custom migration closure to fetch against. This top-level
-//  `fitbod.Session` is the V4 shape and the production runtime entity;
-//  `SchemaV4.Session` is a typealias pointing back here.
+//  `SchemaV7.Session` (the baseline schema) is a typealias for this type.
 //
 
 import Foundation

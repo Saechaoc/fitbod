@@ -22,13 +22,8 @@
 //  the warmup-related fields, prescription fields (target reps / sets / RPE),
 //  and the set-overrides cascade stay per-exercise.
 //
-//  Historical shape: `SchemaV3.RoutineExercise` (nested in
-//  Persistence/SchemaV3.swift) preserves the V3-shape field set —
-//  including the now-removed `intentRaw` / `progressionKindRaw` fields —
-//  so the V3→V4 custom migration closure can fetch the per-exercise
-//  values and compute the mode-of-children backfill onto V4
-//  `SessionTemplate.intentRaw`. This top-level `fitbod.SessionExerciseTemplate`
-//  is the V4+ production runtime entity.
+//  `SchemaV7.SessionExerciseTemplate` (the baseline schema) is a typealias
+//  for this type.
 //
 //  `generateWarmups: Bool = false` defaults to off; the routine builder
 //  in Phase 2 flips it on for the first compound by convention. Per-set

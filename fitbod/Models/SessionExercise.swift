@@ -11,20 +11,11 @@
 //  user is *prescribed* for the session, distinct from the weight they
 //  actually log (which lives on SetEntry).
 //
-//  Phase 3.1 (PIVOT-03) reshape: `intentRaw` and `progressionKindRaw` are
-//  hoisted OUT of this type up to `Session`. Plan 02 of Phase 3.1 deletes
-//  the field declarations + computed accessors AND the `#Index<SessionExercise>([\.intentRaw])`
-//  macro from the V4 shape; the analogous index group moves to
-//  `Session.intentRaw` (see Session.swift).
+//  Session intent and progression kind live on `Session`, not here
+//  (see Session.swift).
 //
-//  Schema architecture (BLOCKER 3): `SchemaV3.SessionExercise` (nested
-//  in `Persistence/SchemaV3.swift`) preserves the V3-shape field set —
-//  including the now-removed `intentRaw` / `progressionKindRaw` fields
-//  AND the V3-shape `#Index` semantics — so the V3→V4 custom migration
-//  closure can fetch the per-exercise values and compute the
-//  mode-of-children backfill onto V4 `Session.intentRaw`. This top-level
-//  `fitbod.SessionExercise` is the V4 shape and the production runtime
-//  entity; `SchemaV4.SessionExercise` is a typealias pointing back here.
+//  `exerciseNameSnapshot` freezes the exercise name at log time, so a
+//  later rename or deletion in the library never rewrites history.
 //
 //  Cascade rules (CONTEXT.md Area 4):
 //    - SessionExercise → SetEntry: cascade (sets are owned)
