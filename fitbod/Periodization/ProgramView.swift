@@ -37,8 +37,8 @@
 //  - Drops the search bar, folder/routine list, New Folder / History menu,
 //    and the active-session conflict alert that lived in RoutinesListView.
 //  - "+ NEW" opens the custom BRU action popover from bru-screens/New-modal:
-//    "+ New block" routes to a blank block builder, "+ New routine" routes
-//    to the existing RoutineBuilderView.
+//    "+ New block" routes to a blank block builder, "+ New routine" creates
+//    a routine (code `Split`) and pushes its SplitDetailView.
 //  - The hero CTA still routes directly to the blank-block flow.
 //
 //  ## Font departures from the design system

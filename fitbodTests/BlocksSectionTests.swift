@@ -47,10 +47,12 @@ struct BlocksSectionTests {
     func copyAnchorsExistInRoutinesListView() throws {
         let source = try routinesListSource()
 
-        #expect(source.contains("\"Blocks\""))
-        #expect(source.contains("\"+ Block\""))
-        #expect(source.contains("\"No blocks yet.\""))
-        #expect(source.contains("\"Define a training block to organize routines into a mesocycle.\""))
+        // D-09 copy (the BRU reskin replaced "Blocks" / "+ Block" /
+        // "No blocks yet." and the old body line).
+        #expect(source.contains("\"BLOCKS\""))
+        #expect(source.contains("\"+ NEW BLOCK\""))
+        #expect(source.contains("\"No blocks defined.\""))
+        #expect(source.contains("\"Create a training block to track mesocycles, phases, and scheduled deloads.\""))
         #expect(source.contains("\"Generic Strength Meso\""))
         #expect(source.contains("\"Hypertrophy Meso\""))
         #expect(source.contains("\"Powerlifting Peak\""))

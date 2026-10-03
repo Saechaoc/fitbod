@@ -7,11 +7,13 @@
 //  live-edit banner when on active block.
 //
 //  Composition (top to bottom):
-//    BRUHeaderBar (left: .back, center: "Routine · {name}", right: .action("ARCHIVE"))
+//    BRUHeaderBar (left: .back, center: "Routine", right: Edit / Done)
 //    [conditional] LiveEditBanner — when any block referencing this split is active
 //    ScrollView { LazyVStack:
-//      Sessions section (BRUSectionHead + SplitSlotRow rows + drag-reorder)
+//      Name section (editable "Routine name" field)
+//      Sessions section (BRUSectionHead + SplitSlotRow rows; Edit mode moves / removes)
 //      Used-in section (BRUSectionHead + block usage rows)
+//      Archive section ("Archive routine")
 //    }
 //
 //  Drag-reorder: hysteresis-gated row-local @GestureState pattern (copy-adapted
@@ -113,7 +115,7 @@ public struct SplitDetailView: View {
 
     public var body: some View {
         VStack(spacing: 0) {
-            // Header — "Routine · {name}" + ARCHIVE right action
+            // Header — "Routine" title + Edit / Done right action
             BRUHeaderBar.slots(
                 left: .back,
                 center: "Routine",

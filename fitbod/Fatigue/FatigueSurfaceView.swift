@@ -23,11 +23,10 @@
 //  inline FatigueModel calls + transient RPVolumeLandmarks fallback +
 //  isAdvisoryActive @State + DeloadAdvisor refresh task.
 //
-//  BRU contract — ZERO banned tokens:
-//    No Color.accentColor, Color(.system*), Color("Volume*"),
-//    RoundedRectangle(cornerRadius:), Capsule(), Image(systemName:),
-//    Picker("Side"...).pickerStyle(.segmented),
-//    .font(.body|.headline|.caption|.subheadline|.footnote)
+//  BRU contract: no system accent or system colors, no rounded or capsule
+//  shapes, no SF Symbols, no segmented Front/Back picker, and no system
+//  text styles. FatigueSurfaceViewBRUTests greps this whole file, so this
+//  comment must not spell those APIs out.
 //
 
 import SwiftData

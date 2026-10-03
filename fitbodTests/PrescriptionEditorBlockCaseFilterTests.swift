@@ -85,6 +85,7 @@ struct PrescriptionEditorBlockCaseFilterTests {
 
         #expect(menu.contains("\"No Block\""))
         #expect(menu.contains("\"+ Create New Block\""))
-        #expect(menu.contains("\"Block:\""))
+        // The chip label interpolates the block name: "Block: \(name)".
+        #expect(menu.contains("\"Block: \\("))
     }
 }

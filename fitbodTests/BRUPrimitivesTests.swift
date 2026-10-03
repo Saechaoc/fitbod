@@ -254,8 +254,10 @@ struct BRUPrimitivesTests {
         let source = try loadSource(for: "BRUDisplay")
         #expect(source.contains("typealias Size"),
                 "BRUDisplay.swift must declare `typealias Size = BRUDisplaySize` for 04.1 contract")
-        #expect(source.contains("SpaceGrotesk-Bold"),
-                "BRUDisplay.swift must use SpaceGrotesk-Bold font per BRU type scale")
+        // Faces resolve through Font.bru(_:size:), which scales with Dynamic Type.
+        #expect(source.contains(".bru(.grotesk"),
+                "BRUDisplay.swift must use the Space Grotesk Bold face via Font.bru")
+        #expect(BRUFace.grotesk.rawValue == "SpaceGrotesk-Bold")
     }
 
     // MARK: - Task 9: BRUReadout call-shape + source-anchor

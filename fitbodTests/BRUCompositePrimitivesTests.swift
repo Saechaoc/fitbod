@@ -50,12 +50,10 @@ struct BRUCompositePrimitivesTests {
                 "BRUTab.\(tab.rawValue).glyph '\(tab.glyph)' contains a colon — possible SF Symbol reference")
         }
 
-        // Spot-check all 4 rawValues exist
+        // The four tabs, in order. Settings is a sheet from the Today
+        // header, not a tab (milestone 1 IA decision).
         let rawValues = BRUTab.allCases.map(\.rawValue)
-        #expect(rawValues.contains("today"))
-        #expect(rawValues.contains("program"))
-        #expect(rawValues.contains("progress"))
-        #expect(rawValues.contains("settings"))
+        #expect(rawValues == ["today", "program", "progress", "library"])
     }
 
     // MARK: 2 — Glyph single-scalar contract

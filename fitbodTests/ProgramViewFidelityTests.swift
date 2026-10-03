@@ -171,8 +171,6 @@ struct ProgramViewFidelityTests {
 
         #expect(programSource.contains("@State private var showingNewPopover = false"),
                 "ProgramView should own a boolean for the anchored + NEW popover.")
-        #expect(programSource.contains("@State private var presentingNewRoutine = false"),
-                "ProgramView should present the routine builder from the popover's routine row.")
         #expect(programSource.contains("ProgramChromeHeader(onNew: { showingNewPopover = true })"),
                 "Tapping + NEW should open the custom popover instead of immediately starting a block.")
         #expect(programSource.contains("BRUActionPopover("),
@@ -183,10 +181,17 @@ struct ProgramViewFidelityTests {
                 "The second popover row should match the supplied New-modal copy.")
         #expect(programSource.contains("startBlank()"),
                 "The New block action opens the start-choice sheet.")
-        #expect(programSource.contains("presentingNewRoutine = true"),
-                "The New routine action should route directly to RoutineBuilderView.")
-        #expect(programSource.contains("RoutineBuilderView(draft: RoutineDraft())"),
-                "ProgramView should present the existing routine builder for New routine.")
+        // UI "Routine" is code `Split`. "+ New routine" creates the Split and
+        // pushes its detail screen; it must not open the session builder,
+        // which would create an orphaned SessionTemplate (journey audit P0).
+        #expect(programSource.contains("startNewRoutine()"),
+                "The New routine row should call startNewRoutine().")
+        #expect(programSource.contains("RoutineCreator.create(context: ctx)"),
+                "startNewRoutine() should create the routine through RoutineCreator.")
+        #expect(programSource.contains("navigationPath.append(SplitDetailRoute.detail(splitID: split.id))"),
+                "startNewRoutine() should open the new routine's detail screen.")
+        #expect(!programSource.contains("RoutineBuilderView(draft: RoutineDraft())"),
+                "New routine must not open the session builder.")
         #expect(programSource.contains("CREATE BLOCK"),
                 "The start-choice sheet should be titled 'CREATE BLOCK'.")
         #expect(programSource.contains("CHOOSE STARTING POINT"),

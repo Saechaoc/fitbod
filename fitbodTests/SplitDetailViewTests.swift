@@ -181,16 +181,20 @@ struct SplitDetailViewTests {
     func splitDetailViewPinsCopy() throws {
         let source = try splitDetailViewSource()
 
-        // Verbatim copy pins per UI-SPEC Copywriting Contract + task behavior block
+        // Verbatim copy pins. Milestone 1 moved the name into an editable
+        // "Routine name" field, put Edit/Done in the header, and moved
+        // archiving to an "Archive routine" button at the bottom.
+        #expect(source.contains("center: \"Routine\""), "Header title must be 'Routine'")
+        #expect(source.contains("\"Routine name\""), "Must label the editable name field")
+        #expect(source.contains("isEditing ? \"Done\" : \"Edit\""), "Header action must toggle Edit / Done")
         #expect(source.contains("\"Sessions\""), "Must contain verbatim 'Sessions' section head")
-        #expect(source.contains("\"+ ADD SESSION\""), "Must contain verbatim '+ ADD SESSION'")
+        #expect(source.contains("\"+ Add session\""), "Must contain verbatim '+ Add session'")
+        #expect(source.contains("\"No sessions yet\""), "Must contain the empty-state heading")
         #expect(source.contains("\"Used in\""), "Must contain verbatim 'Used in' section head")
         #expect(source.contains("\"Not linked to any active block.\""), "Must contain empty-usage copy")
-        #expect(source.contains("\"ARCHIVE\""), "Must contain verbatim 'ARCHIVE' action label")
+        #expect(source.contains("\"Archive routine\""), "Must contain the archive action label")
         #expect(source.contains("\"Cannot Archive Routine\""), "Must contain deny alert title")
         #expect(source.contains("\"Remove Session?\""), "Must contain remove confirmation title")
         #expect(source.contains("\"Remove Session\""), "Must contain remove confirmation destructive button")
-        // Title uses string interpolation: "Routine · \(split.name)" — check the prefix literal
-        #expect(source.contains("\"Routine · \\("), "Must contain verbatim screen title prefix")
     }
 }
