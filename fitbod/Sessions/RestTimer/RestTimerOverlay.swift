@@ -12,7 +12,7 @@
 //      .safeAreaInset(edge: .bottom), so it sits above the home indicator
 //      and within thumb reach for one-handed use.
 //      Background: Color.bruBg2. Top border: 2pt Color.bruInk.
-//      Row 1: 32pt RestTimerProgressArc + "REST" + exercise name +
+//      Row 1: 40pt RestTimerProgressArc + "REST" + exercise name +
 //             countdown displayMedium + "▸" (tap row to expand).
 //      Row 2: −15s / +15s / SKIP, each a 44pt-tall outlined rectangle.
 //      When the countdown reaches zero the dock flips to "REST COMPLETE"
@@ -81,7 +81,7 @@ public struct RestTimerOverlay: View {
                             target: Double(engine.targetSeconds),
                             lineWidth: 3
                         )
-                        .frame(width: 32, height: 32)
+                        .frame(width: 40, height: 40)
 
                         Text("REST")
                             .font(BRUFont.labelMicro)
@@ -174,7 +174,7 @@ public struct RestTimerOverlay: View {
             Text(title)
                 .font(BRUFont.labelSmall)
                 .tracking(1.2)
-                .textCase(.uppercase)
+                // No textCase: "−15s" must not render as "−15S".
                 .foregroundStyle(isSignal ? Color.bruPaper : Color.bruInk)
                 .frame(maxWidth: .infinity, minHeight: 44)
                 .background(isSignal ? Color.bruInk : Color.bruPaper)
@@ -237,7 +237,6 @@ public struct RestTimerOverlay: View {
                             Text("−15s")
                                 .font(BRUFont.labelSmall)
                                 .tracking(1.2)
-                                .textCase(.uppercase)
                                 .foregroundStyle(Color.bruInk)
                                 .frame(minWidth: 80, minHeight: 44)
                                 .overlay(
@@ -254,7 +253,6 @@ public struct RestTimerOverlay: View {
                             Text("+15s")
                                 .font(BRUFont.labelSmall)
                                 .tracking(1.2)
-                                .textCase(.uppercase)
                                 .foregroundStyle(Color.bruInk)
                                 .frame(minWidth: 80, minHeight: 44)
                                 .overlay(
