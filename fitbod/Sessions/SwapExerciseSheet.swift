@@ -42,6 +42,7 @@ public struct SwapExerciseSheet: View {
                     // SESS-05 — mutate SessionExercise.exercise ONLY.
                     // The source RoutineExercise.exercise is untouched.
                     sessionExercise.exercise = exercise
+                    sessionExercise.exerciseNameSnapshot = exercise.name
 
                     // Re-seed pending sets with the new exercise's matching-intent hint.
                     // Committed sets are immutable (PITFALLS-doc #1).
@@ -49,7 +50,8 @@ public struct SwapExerciseSheet: View {
                     let hint = PreviousMatchingIntent.fetchTopWorkingSet(
                         exerciseID: exercise.id,
                         intentRaw: sessionExercise.session?.intentRaw ?? Intent.strength.rawValue,
-                        context: ctx
+                        context: ctx,
+                        excludingSessionID: sessionExercise.session?.id
                     )?.weight ?? 0
                     let pendingSets = (sessionExercise.sets ?? [])
                         .filter { !$0.isComplete }

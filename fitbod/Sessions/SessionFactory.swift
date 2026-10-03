@@ -147,6 +147,8 @@ public enum SessionFactory {
         session.sourceRoutineID = template.id          // soft UUID ref
         session.block = activeBlock                     // from resolver context (activeBlock), not the legacy template edge
         session.slot = slot                             // CR-01: rotation anchor; nil = ad-hoc (skipped by TodayResolver)
+        session.template = template                     // V7 live edge (nullify on template delete)
+        session.templateName = template.name            // V7 log-time name snapshot (freeze #1)
         session.notes = nil
         session.totalDurationSeconds = nil
         context.insert(session)
@@ -187,6 +189,7 @@ public enum SessionFactory {
             let se = SessionExercise()
             se.session = session
             se.exercise = re.exercise
+            se.exerciseNameSnapshot = re.exercise?.name ?? ""
             se.orderIndex = orderIndex
 
             // SNAPSHOT: every per-exercise prescription field copied
@@ -575,46 +578,39 @@ public enum SessionFactory {
 //
 // Builds the per-exercise PR table once at session start so the
 // in-session detector (InSessionPRState.observeSave) never re-queries
-// SwiftData on a per-set commit. Pitfall 6 endorses the per-exercise
-// loop as the recommended v1 path: realistic routines hold 6–12
-// SessionExercises, so the loop runs 6–12 single-keyed fetches —
-// well within budget — and deliberately avoids the SwiftData macro
-// risk of cross-relationship predicates (`entry.sessionExercise?.exercise?.id`).
+// SwiftData on a per-set commit.
+//
+// The fetch is ONE broad predicate (completed, non-warm-up) with the
+// exercise gate applied in Swift. A multi-level optional chain such as
+// `entry.sessionExercise?.exercise?.id` inside #Predicate compiles but
+// throws NSInvalidArgumentException at fetch time ("Unsupported function
+// expression TERNARY(...)"), which crashed the logger on every open.
 
 extension SessionFactory {
 
-    /// Seeds the PR table at session start by issuing one keyed fetch
-    /// per `Exercise.id` represented in the current session, then
-    /// composing the results via `PRDetector.buildTable`. Bounded by
-    /// `session.exercises.count` (~6–12).
+    /// Seeds the PR table from every completed working-candidate set of
+    /// the exercises in `session` (including sets already logged in this
+    /// session, so a resumed workout keeps its in-session PRs).
     ///
-    /// Returns an empty `PRTable` when the session has no exercises
-    /// or every fetch fails — the in-session banner simply emits no
-    /// PRs until the first set lands and seeds the table inline.
-    ///
-    /// RESEARCH Pitfall 3 — `targetID` is captured as a local
-    /// constant before each `#Predicate` so the macro expansion sees
-    /// a value-typed immutable.
+    /// Returns an empty `PRTable` when the session has no exercises or
+    /// the fetch fails; the in-session banner then simply emits no PRs
+    /// until the first set lands and seeds the table inline.
     @MainActor
     public static func seedPRTable(for session: Session, context: ModelContext) async -> PRTable {
-        let exerciseIDs: [UUID] = (session.exercises ?? []).compactMap { $0.exercise?.id }
+        let exerciseIDs = Set((session.exercises ?? []).compactMap { $0.exercise?.id })
         guard !exerciseIDs.isEmpty else { return PRTable() }
 
-        var aggregated: [SetEntry] = []
-        for exID in exerciseIDs {
-            let targetID = exID
-            let descriptor = FetchDescriptor<SetEntry>(
-                predicate: #Predicate<SetEntry> { entry in
-                    entry.isComplete
-                        && !entry.isWarmup
-                        && entry.sessionExercise?.exercise?.id == targetID
-                },
-                sortBy: [SortDescriptor(\.completedAt)]
-            )
-            if let sets = try? context.fetch(descriptor) {
-                aggregated.append(contentsOf: sets)
-            }
+        let descriptor = FetchDescriptor<SetEntry>(
+            predicate: #Predicate<SetEntry> { entry in
+                entry.isComplete && !entry.isWarmup
+            },
+            sortBy: [SortDescriptor(\.completedAt)]
+        )
+        guard let candidates = try? context.fetch(descriptor) else { return PRTable() }
+        let relevant = candidates.filter { entry in
+            guard let id = entry.sessionExercise?.exercise?.id else { return false }
+            return exerciseIDs.contains(id)
         }
-        return PRDetector.buildTable(from: aggregated)
+        return PRDetector.buildTable(from: relevant)
     }
 }

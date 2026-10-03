@@ -60,8 +60,25 @@ public final class SessionExercise {
     public var prescribedWeight: Double? = nil
     public var pinnedNote: String? = nil
 
+    /// Log-time snapshot of the exercise name. Written by
+    /// `SessionFactory.start` and whenever an exercise is added or swapped
+    /// mid-session, so renaming the catalog entry later never rewrites
+    /// history. Defaulted so existing stores migrate without a stage;
+    /// rows logged before this field existed read "" and fall back to
+    /// the live name via `displayName`.
+    public var exerciseNameSnapshot: String = ""
+
     @Relationship(deleteRule: .cascade, inverse: \SetEntry.sessionExercise)
     public var sets: [SetEntry]? = []
 
     public init() {}
+}
+
+extension SessionExercise {
+    /// The name to show for this logged exercise: the log-time snapshot
+    /// when present, else the live catalog name (pre-snapshot rows), else "".
+    public var displayName: String {
+        if !exerciseNameSnapshot.isEmpty { return exerciseNameSnapshot }
+        return exercise?.name ?? ""
+    }
 }

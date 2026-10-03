@@ -29,11 +29,15 @@ public struct PreviousColumn: View {
     @Environment(\.modelContext) private var ctx
     public let exerciseID: UUID?
     public let intentRaw: String
+    /// The in-progress session, excluded so the column never echoes a set
+    /// logged in this same workout.
+    public let currentSessionID: UUID?
     @State private var hint: PreviousMatchingIntentHit?
 
-    public init(exerciseID: UUID?, intentRaw: String) {
+    public init(exerciseID: UUID?, intentRaw: String, currentSessionID: UUID? = nil) {
         self.exerciseID = exerciseID
         self.intentRaw = intentRaw
+        self.currentSessionID = currentSessionID
     }
 
     public var body: some View {
@@ -50,11 +54,13 @@ public struct PreviousColumn: View {
                     .foregroundStyle(Color.bruMuted)
             }
         }
-        .task {
+        // Keyed on exerciseID so a mid-session swap re-queries.
+        .task(id: exerciseID) {
             hint = PreviousMatchingIntent.fetchTopWorkingSet(
                 exerciseID: exerciseID,
                 intentRaw: intentRaw,
-                context: ctx
+                context: ctx,
+                excludingSessionID: currentSessionID
             )
         }
     }
