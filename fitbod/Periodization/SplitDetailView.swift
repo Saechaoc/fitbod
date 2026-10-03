@@ -2,13 +2,13 @@
 //  SplitDetailView.swift
 //  fitbod
 //
-//  Phase 09-01 — SplitDetailView: ordered session slots, drag-reorder,
+//  Phase 09-01 - SplitDetailView: ordered session slots, drag-reorder,
 //  slot add/remove via picker, usage section, archive via deny seam,
 //  live-edit banner when on active block.
 //
 //  Composition (top to bottom):
 //    BRUHeaderBar (left: .back, center: "Routine", right: Edit / Done)
-//    [conditional] LiveEditBanner — when any block referencing this split is active
+//    [conditional] LiveEditBanner - when any block referencing this split is active
 //    ScrollView { LazyVStack:
 //      Name section (editable "Routine name" field)
 //      Sessions section (BRUSectionHead + SplitSlotRow rows; Edit mode moves / removes)
@@ -18,7 +18,7 @@
 //
 //  Drag-reorder: hysteresis-gated row-local @GestureState pattern (copy-adapted
 //  from NewBlockPhaseListSection / NewBlockPhaseEditorRow in BlockBuilderView.swift).
-//  NOT List .onMove — List chrome violates BRU contract.
+//  NOT List .onMove - List chrome violates BRU contract.
 //
 //  Reindex-on-write: positions become 0..<n contiguous after every add/remove/reorder.
 //  Single ctx.save() per mutation (no multi-write windows).
@@ -30,7 +30,7 @@
 //    NO .font(.body/.headline/.title*)
 //
 //  Navigation: pushed via SplitDetailRoute; uses the parent tab's NavigationStack.
-//  No child NavigationStack — one stack per tab rule.
+//  No child NavigationStack - one stack per tab rule.
 //
 
 import SwiftUI
@@ -98,7 +98,7 @@ public struct SplitDetailView: View {
     }
 
     /// The active block referencing this split, if any.
-    /// Post-filter in Swift — multi-level optional chain is NOT expressible in #Predicate.
+    /// Post-filter in Swift - multi-level optional chain is NOT expressible in #Predicate.
     private var liveActiveBlock: Block? {
         (split.blocks ?? []).first { $0.derivedStatus == .active }
     }
@@ -115,14 +115,14 @@ public struct SplitDetailView: View {
 
     public var body: some View {
         VStack(spacing: 0) {
-            // Header — "Routine" title + Edit / Done right action
+            // Header - "Routine" title + Edit / Done right action
             BRUHeaderBar.slots(
                 left: .back,
                 center: "Routine",
                 right: .action(isEditing ? "Done" : "Edit") { isEditing.toggle() }
             )
 
-            // Live-edit banner — shown when split is on an active block
+            // Live-edit banner - shown when split is on an active block
             if liveActiveBlock != nil {
                 LiveEditBanner()
             }
@@ -359,7 +359,7 @@ public struct SplitDetailView: View {
     // MARK: - Archive
 
     private func attemptArchive() {
-        // First gate: deny-rule (linked to active/upcoming block) — surfaces its own alert.
+        // First gate: deny-rule (linked to active/upcoming block) - surfaces its own alert.
         do {
             try BlockLifecycleService.assertSplitDeletable(split)
         } catch {
@@ -368,7 +368,7 @@ public struct SplitDetailView: View {
         }
 
         // Persist the archive flag. On save failure, revert the in-memory flag and do
-        // NOT dismiss — otherwise the split would vanish from the list while the store
+        // NOT dismiss - otherwise the split would vanish from the list while the store
         // still holds it (reappears on next launch).
         split.isArchived = true
         do {
@@ -447,7 +447,7 @@ public struct SplitDetailView: View {
     // MARK: - Slot Remove
 
     private func removeSlot(_ slot: SplitSessionSlot) {
-        // Remove the SplitSessionSlot only — NEVER the SessionTemplate (.deny rule)
+        // Remove the SplitSessionSlot only - NEVER the SessionTemplate (.deny rule)
         ctx.delete(slot)
         // Reindex remaining slots
         let remaining = (split.slots ?? [])
@@ -499,7 +499,7 @@ fileprivate struct SplitSlotRow: View {
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
-    // Row-local drag translation — reset with spring on gesture end
+    // Row-local drag translation - reset with spring on gesture end
     @GestureState(
         resetTransaction: Transaction(
             animation: .spring(response: 0.28, dampingFraction: 0.86)
@@ -597,7 +597,7 @@ fileprivate struct SplitSlotRow: View {
 
     // MARK: - Hysteresis Reorder Gesture
 
-    // Long-press gate + drag — copy-adapted from NewBlockPhaseEditorRow (BlockBuilderView.swift
+    // Long-press gate + drag - copy-adapted from NewBlockPhaseEditorRow (BlockBuilderView.swift
     // lines 1511-1543). Hysteresis threshold 0.55 pitch so hovering at a boundary doesn't
     // flicker the sibling gap open/closed.
     private var reorderGesture: some Gesture {
@@ -737,12 +737,12 @@ fileprivate struct SlotPickerSheet: View {
     }
 
     private func addSlot(for template: SessionTemplate) {
-        // Insert slot into context first — then assign relationships (project convention)
+        // Insert slot into context first - then assign relationships (project convention)
         let slot = SplitSessionSlot()
         ctx.insert(slot)
         slot.split = split
         slot.sessionTemplate = template
-        // Sentinel position only — reindexSlots assigns the real, contiguous value below.
+        // Sentinel position only - reindexSlots assigns the real, contiguous value below.
         // Reading split.slots?.count here is unreliable: SwiftData may already include the
         // just-inserted slot in the live relationship count (off-by-one) and the new slot's
         // position can collide with an existing slot's, making the sort order ambiguous.

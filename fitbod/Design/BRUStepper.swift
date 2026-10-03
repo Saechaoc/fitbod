@@ -5,11 +5,14 @@
 // replacing the system Stepper inside BRU screens (routine prescription,
 // plateau settings). The value reads in mono so digits do not jump as
 // they change. VoiceOver exposes it as an adjustable element (swipe up /
-// down) with the formatted value.
+// down) with the formatted value. At accessibility text sizes the label
+// moves above the control so neither has to truncate.
 
 import SwiftUI
 
 public struct BRUStepper<Value: Strideable>: View where Value.Stride: SignedNumeric {
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+
     private let label: String
     @Binding private var value: Value
     private let range: ClosedRange<Value>
@@ -34,7 +37,7 @@ public struct BRUStepper<Value: Strideable>: View where Value.Stride: SignedNume
     private var canIncrement: Bool { value.advanced(by: step) <= range.upperBound }
 
     public var body: some View {
-        HStack(spacing: 12) {
+        layout {
             Text(label)
                 .font(BRUFont.bodyEmphasis)
                 .foregroundStyle(Color.bruInk)
@@ -45,6 +48,7 @@ public struct BRUStepper<Value: Strideable>: View where Value.Stride: SignedNume
                     .font(BRUFont.bodyEmphasis)
                     .monospacedDigit()
                     .foregroundStyle(Color.bruInk)
+                    .padding(.horizontal, 8)
                     .frame(minWidth: 64, minHeight: 44)
                     .overlay(alignment: .top) { Rectangle().fill(Color.bruInk).frame(height: 2) }
                     .overlay(alignment: .bottom) { Rectangle().fill(Color.bruInk).frame(height: 2) }
@@ -61,6 +65,13 @@ public struct BRUStepper<Value: Strideable>: View where Value.Stride: SignedNume
             @unknown default: break
             }
         }
+    }
+
+    /// Side by side normally; stacked at accessibility text sizes.
+    private var layout: AnyLayout {
+        dynamicTypeSize.isAccessibilitySize
+            ? AnyLayout(VStackLayout(alignment: .leading, spacing: 8))
+            : AnyLayout(HStackLayout(spacing: 12))
     }
 
     private func stepButton(_ glyph: String, enabled: Bool, action: @escaping () -> Void) -> some View {
@@ -87,5 +98,15 @@ public struct BRUStepper<Value: Strideable>: View where Value.Stride: SignedNume
     }
     .padding(16)
     .background(Color.bruPaper)
+}
+
+#Preview("BRUStepper at accessibility size") {
+    @Previewable @State var increment = 2.5
+    BRUStepper("Default increment", value: $increment, in: 0.25...10, step: 0.25) {
+        String(format: "%g kg", $0)
+    }
+    .padding(16)
+    .background(Color.bruPaper)
+    .environment(\.dynamicTypeSize, .accessibility3)
 }
 #endif

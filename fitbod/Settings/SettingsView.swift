@@ -2,20 +2,23 @@
 //  SettingsView.swift
 //  fitbod
 //
-//  Phase 06.1 plan 05 — BRU full reskin of SettingsView.
+//  Phase 06.1 plan 05 - BRU full reskin of SettingsView.
 //
 //  Prior structure (Form/Section/NavigationTitle) replaced with:
 //    NavigationStack → VStack(spacing: 0) → BRUHeaderBar(center: "Settings")
 //      → ScrollView → LazyVStack(spacing: 0)
 //
-//  Sections:
-//    Profile band (bruInk-bordered avatar + name/subtitle)
-//    Units & Calibration — BRUSectionHead + BRURow rows
-//    Volume Targets — BRUSectionHead + BRURow rows
-//    Smart Progression — BRUSectionHead + BRURow rows (PRESERVED verbatim from 03.2-08)
-//    Export — BRUSectionHead(right:) + 2-card grid (CSV / JSON)
-//    Backup — BRUSectionHead + 2pt bruInk-outlined panel with CREATE/RESTORE footer
-//    About — BRUSectionHead + BRURow rows (Version / Source / Reset)
+//  Sections (milestone 1 layout, after bru-screens phase-6--settings.png):
+//    Profile band (bruInk avatar + app name + version / schema line)
+//    Units & Calibration - units, plate inventory, default increment,
+//      sets before calibrating (BRUSegmentedControl + BRUStepper rows)
+//    Volume Targets - target editor row + frequency hit threshold stepper
+//    Export - BRUSectionHead(right:) + 2-card grid (CSV / JSON)
+//    Backup - BRUSectionHead + 2pt bruInk-outlined panel with CREATE/RESTORE footer
+//
+//  Milestone 1 removed the "Source" row (it opened github.com, not a real
+//  project page) and the "Reset all data" row (it had no action). Reset is
+//  on the roadmap; Backup + Restore covers starting over today.
 //
 //  Wired actions preserved:
 //    ShareLink(item: csvFile) / ShareLink(item: jsonFile)
@@ -34,13 +37,13 @@ import UniformTypeIdentifiers
 
 // MARK: - SettingsView
 
-/// Settings tab — BRU-reskinned root. All functional wires preserved from
+/// Settings tab - BRU-reskinned root. All functional wires preserved from
 /// prior wave plans (06-09b CSV/JSON, 06-10 Backup/Restore, 03.2-08 Smart Progression).
 public struct SettingsView: View {
     @Query private var settingsList: [UserSettings]
     @Environment(\.modelContext) private var modelContext
 
-    // Wave-4 plan 06-09b — async-render state for Export section
+    // Wave-4 plan 06-09b - async-render state for Export section
     @State private var csvFile: CSVFile?
     @State private var jsonFile: JSONFile?
     @State private var csvRendering = false
@@ -48,7 +51,7 @@ public struct SettingsView: View {
     @State private var csvError: String?
     @State private var jsonError: String?
 
-    // Wave-5 plan 06-10 — backup + restore state
+    // Wave-5 plan 06-10 - backup + restore state
     @State private var backupFile: FitbodBackupFile?
     @State private var backupRendering = false
     @State private var backupError: String?
@@ -87,15 +90,13 @@ public struct SettingsView: View {
                             BRUDivider(.ink)
                             unitsCalibrSection(settings: settings)
                             volumeTargetsSection(settings: settings)
-                            smartProgressionSection(settings: settings)
                             exportSection
                             backupSection
-                            aboutSection(settings: settings)
                         }
                     }
                 } else {
                     Spacer()
-                    Text("Settings unavailable — library seed not yet complete.")
+                    Text("Settings are not ready yet. The exercise library is still loading.")
                         .font(BRUFont.bodyDefault)
                         .foregroundStyle(Color.bruMuted)
                         .padding(32)
@@ -146,12 +147,13 @@ public struct SettingsView: View {
 
     // MARK: - Profile band
 
-    /// bruInk-bordered avatar band at the top of the scroll surface.
-    /// Avatar initial "F", Display name "Fitbod", subtitle "1.0.0 · SCHEMA V6"
+    /// bruInk avatar band at the top of the scroll surface.
+    /// Avatar initial "F", display name "Fitbod", subtitle "VERSION 1.0 · SCHEMA V7"
+    /// (read from the bundle and `SchemaV7.versionIdentifier`, so it never goes stale).
     @ViewBuilder
     private var profileBand: some View {
         HStack(spacing: 14) {
-            // Square avatar — bruInk fill, paper "F" hero initial
+            // Square avatar - bruInk fill, paper "F" hero initial
             Rectangle()
                 .fill(Color.bruInk)
                 .frame(width: 56, height: 56)
@@ -163,7 +165,7 @@ public struct SettingsView: View {
 
             VStack(alignment: .leading, spacing: 2) {
                 BRUDisplay("Fitbod", size: .medium)
-                Text("1.0.0 · SCHEMA V6")
+                Text(Self.versionLine)
                     .font(BRUFont.labelSmall)
                     .tracking(1.2)
                     .textCase(.uppercase)
@@ -180,40 +182,67 @@ public struct SettingsView: View {
     @ViewBuilder
     private func unitsCalibrSection(settings: UserSettings) -> some View {
         @Bindable var s = settings
-        let unitLabel = s.weightUnit == .kg ? "KG" : "LB"
 
         BRUSectionHead("Units & Calibration")
 
-        // Weight unit — BRURow wrapping a Toggle trailing
-        BRURow(
-            label: "Weight Unit",
-            value: unitLabel,
-            trailing: AnyView(
-                Toggle("", isOn: Binding(
-                    get: { s.weightUnit == .kg },
-                    set: { newValue in s.weightUnit = newValue ? .kg : .lb }
-                ))
-                .labelsHidden()
-                .tint(Color.bruInk)
-            )
-        )
+        // Weight unit. Display only: history stays in its canonical unit.
+        HStack(spacing: 12) {
+            Text("Units")
+                .font(BRUFont.bodyEmphasis)
+                .foregroundStyle(Color.bruInk)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            BRUSegmentedControl(
+                "Units",
+                options: [WeightUnit.lb, WeightUnit.kg],
+                selection: $s.weightUnit
+            ) { $0 == .kg ? "kg" : "lb" }
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 10)
+        .background(Color.bruPaper)
         BRUDivider(.hair)
 
-        // Plate Inventory — NavigationLink
         NavigationLink {
             PlateInventoryEditor()
         } label: {
             BRURowLabel(label: "Plate Inventory", value: nil)
         }
         .buttonStyle(.plain)
+        BRUDivider(.hair)
+
+        // Stored in kilograms, so the value always reads in kg.
+        BRUStepper(
+            "Default increment",
+            value: $s.defaultIncrementKg,
+            in: 0.25...10.0,
+            step: 0.25
+        ) { String(format: "%g kg", $0) }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 8)
+        .background(Color.bruPaper)
+        BRUDivider(.hair)
+
+        BRUStepper(
+            "Sets before calibrating",
+            value: $s.minCalibrationSets,
+            in: 5...30,
+            step: 1
+        ) { "\($0) sets" }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 8)
+        .background(Color.bruPaper)
         BRUDivider(.ink)
 
-        // Footer note
-        Text("Affects display only. Logged history is stored in a canonical unit and re-rendered on the fly.")
-            .font(BRUFont.bodyDefault)
-            .foregroundStyle(Color.bruMuted)
-            .padding(.horizontal, 16)
-            .padding(.vertical, 8)
+        VStack(alignment: .leading, spacing: 6) {
+            Text("Units affect display only. Logged history is stored in a canonical unit and re-rendered on the fly.")
+            Text("The default increment is used when an exercise has no increment of its own. Every progression strategy rounds to it.")
+            Text("RPE autoregulation uses the Tuchscherer table until this many working sets are logged for an exercise.")
+        }
+        .font(BRUFont.bodyDefault)
+        .foregroundStyle(Color.bruMuted)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.horizontal, 16)
+        .padding(.vertical, 8)
     }
 
     // MARK: - Volume Targets section
@@ -233,17 +262,15 @@ public struct SettingsView: View {
         .buttonStyle(.plain)
         BRUDivider(.hair)
 
-        // Frequency hit threshold stepper
-        BRURow(
-            label: "Frequency Hit Threshold",
-            value: "\(s.frequencyHitMinSets) SETS",
-            trailing: AnyView(
-                Stepper("", value: $s.frequencyHitMinSets, in: 1...5, step: 1)
-                    .labelsHidden()
-            )
-        )
-        .accessibilityLabel("Frequency hit threshold")
-        .accessibilityValue("\(s.frequencyHitMinSets) sets")
+        BRUStepper(
+            "Frequency hit threshold",
+            value: $s.frequencyHitMinSets,
+            in: 1...5,
+            step: 1
+        ) { $0 == 1 ? "1 set" : "\($0) sets" }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 8)
+        .background(Color.bruPaper)
         BRUDivider(.ink)
 
         Text("Frequency hit threshold: a session counts as a 'hit' for a muscle when the stimulus-weighted set contribution is at least this many sets.")
@@ -251,80 +278,6 @@ public struct SettingsView: View {
             .foregroundStyle(Color.bruMuted)
             .padding(.horizontal, 16)
             .padding(.vertical, 8)
-    }
-
-    // MARK: - Smart Progression section (Phase 3 — SET-03, SET-04, SET-07)
-    // Reskinned in plan 03.2-08 — BRUSectionHead header + BRUFont labels/footers.
-    // PRESERVED VERBATIM per 06.1-05 plan requirement.
-
-    /// Builds the "SMART PROGRESSION" section with a NavigationLink to
-    /// `PlateInventoryEditor`, a default-weight-increment Stepper, and an
-    /// RPE-calibration-window Stepper. All copy is verbatim from UI-SPEC
-    /// § Settings — Smart Progression (line 292). BRU tokens throughout.
-    @ViewBuilder
-    private func smartProgressionSection(settings: UserSettings) -> some View {
-        @Bindable var s = settings
-        let unitLabel = s.weightUnit == .kg ? "kg" : "lb"
-
-        Section {
-            // Navigation row — disclosure chevron is automatic with NavigationLink.
-            // BRUFont.bodyDefault + Color.bruInk per 03.2-08 reskin contract.
-            NavigationLink {
-                PlateInventoryEditor()
-            } label: {
-                Text("Plate Inventory")                                         // UI-SPEC verbatim
-                    .font(BRUFont.bodyDefault)
-                    .foregroundStyle(Color.bruInk)
-            }
-
-            // Default weight increment Stepper.
-            // Label: BRUFont.labelSmall UPPERCASE 1.2 tracking bruMuted per UI-SPEC line 294.
-            // Value: BRUFont.bodyDefault bruMuted per UI-SPEC line 295.
-            Stepper(value: $s.defaultIncrementKg, in: 0.25...10.0, step: 0.25) {
-                HStack {
-                    Text("DEFAULT WEIGHT INCREMENT")                            // UI-SPEC verbatim
-                        .font(BRUFont.labelSmall)
-                        .tracking(1.2)
-                        .textCase(.uppercase)
-                        .foregroundStyle(Color.bruMuted)
-                    Spacer()
-                    Text("\(s.defaultIncrementKg, specifier: "%g") \(unitLabel)")
-                        .font(BRUFont.bodyDefault)
-                        .foregroundStyle(Color.bruMuted)
-                }
-            }
-
-            // RPE calibration window Stepper.
-            // Label: BRUFont.labelSmall UPPERCASE 1.2 tracking bruMuted per UI-SPEC line 297.
-            // Value: BRUFont.bodyDefault bruMuted per UI-SPEC line 299.
-            Stepper(value: $s.minCalibrationSets, in: 5...30, step: 1) {
-                HStack {
-                    Text("SETS BEFORE CALIBRATING")                             // UI-SPEC verbatim
-                        .font(BRUFont.labelSmall)
-                        .tracking(1.2)
-                        .textCase(.uppercase)
-                        .foregroundStyle(Color.bruMuted)
-                    Spacer()
-                    Text("\(s.minCalibrationSets) sets")
-                        .font(BRUFont.bodyDefault)
-                        .foregroundStyle(Color.bruMuted)
-                }
-            }
-        } header: {
-            BRUSectionHead("SMART PROGRESSION")                                // UI-SPEC line 292
-        } footer: {
-            // UI-SPEC verbatim footers (lines 296 + 300) — stacked in VStack since
-            // SwiftUI Section only takes a single footer view.
-            // BRUFont.bodyDefault + Color.bruMuted replacing .font(.caption)/.secondary.
-            VStack(alignment: .leading, spacing: 4) {
-                Text("Used when an exercise has no specific increment set. Applied by all progression strategies when rounding.")
-                    .font(BRUFont.bodyDefault)
-                    .foregroundStyle(Color.bruMuted)
-                Text("RPE autoregulation uses the Tuchscherer table until this many working sets are logged per exercise.")
-                    .font(BRUFont.bodyDefault)
-                    .foregroundStyle(Color.bruMuted)
-            }
-        }
     }
 
     // MARK: - Export section (BRU 2-card grid)
@@ -425,7 +378,7 @@ public struct SettingsView: View {
         BRUSectionHead("Backup")
 
         VStack(spacing: 0) {
-            // Top region — backup metadata
+            // Top region - backup metadata
             VStack(alignment: .leading, spacing: 4) {
                 Text("FULL BACKUP")
                     .font(BRUFont.labelSmall)
@@ -443,9 +396,9 @@ public struct SettingsView: View {
 
             BRUDivider(.ink)
 
-            // Footer — CREATE (ghost) | RESTORE (signal) split by 1pt line
+            // Footer - CREATE (ghost) | RESTORE (signal) split by 1pt line
             HStack(spacing: 0) {
-                // CREATE button — wraps ShareLink if backupFile is ready, else renders button
+                // CREATE button - wraps ShareLink if backupFile is ready, else renders button
                 if let file = backupFile {
                     ShareLink(item: file, preview: SharePreview(file.filename)) {
                         Text("CREATE")
@@ -483,7 +436,7 @@ public struct SettingsView: View {
                     .fill(Color.bruInk)
                     .frame(width: 1)
 
-                // RESTORE button — signal fill
+                // RESTORE button - signal fill
                 Button {
                     showingImporter = true
                 } label: {
@@ -527,38 +480,24 @@ public struct SettingsView: View {
         BRUDivider(.ink)
     }
 
-    // MARK: - About section
+    // MARK: - Version line
 
-    @ViewBuilder
-    private func aboutSection(settings: UserSettings) -> some View {
-        BRUSectionHead("About")
-
-        BRURow(label: "Version", value: "1.0.0 · SCHEMA V6")
-        BRUDivider(.hair)
-
-        BRURow(label: "Source", value: "MIT · GITHUB") {
-            if let url = URL(string: "https://github.com") {
-                UIApplication.shared.open(url)
-            }
-        }
-        BRUDivider(.hair)
-
-        BRURow(
-            label: "Reset all data",
-            accent: Color.bruSignal
-        )
-        BRUDivider(.ink)
+    /// "VERSION 1.0 · SCHEMA V7", from the bundle's marketing version and the
+    /// baseline schema, so a schema or version bump can't leave it stale.
+    static var versionLine: String {
+        let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0"
+        return "Version \(version) · Schema V\(SchemaV7.versionIdentifier.major)"
     }
 
     // MARK: - Backup computed metadata
 
     private var lastBackupDescription: String {
-        // v1 placeholder — real last-backup timestamp would require persisted metadata
+        // v1 placeholder - real last-backup timestamp would require persisted metadata
         "No backup yet"
     }
 
     private var entityCountLine: String {
-        // v1 placeholder — real counts would query the store
+        // v1 placeholder - real counts would query the store
         "Create a backup to protect your data"
     }
 
@@ -692,81 +631,11 @@ public struct SettingsView: View {
     }
 }
 
-// MARK: - BRURow helper (fileprivate)
-
-/// A reusable row primitive matching the bru-screens/settings.jsx `Row` component.
-///
-/// Renders either a `Button` (when `action` is non-nil) or a plain `HStack` (non-interactive).
-///
-/// Layout: HStack → Text(label) + Spacer + optional value Text + optional trailing view.
-/// If neither `value` nor `trailing` is provided, shows a "›" chevron in bruMuted.
-private struct BRURow: View {
-
-    let label: String
-    var value: String? = nil
-    var accent: Color? = nil
-    var trailing: AnyView? = nil
-    var action: (() -> Void)? = nil
-
-    // Convenience init with a trailing closure action
-    init(
-        label: String,
-        value: String? = nil,
-        accent: Color? = nil,
-        trailing: AnyView? = nil,
-        action: (() -> Void)? = nil
-    ) {
-        self.label = label
-        self.value = value
-        self.accent = accent
-        self.trailing = trailing
-        self.action = action
-    }
-
-    var body: some View {
-        if let action {
-            Button(action: action) {
-                rowContent
-                    .contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
-        } else {
-            rowContent
-        }
-    }
-
-    @ViewBuilder
-    private var rowContent: some View {
-        HStack(spacing: 10) {
-            Text(label)
-                .font(BRUFont.bodyEmphasis)
-                .foregroundStyle(accent ?? Color.bruInk)
-            Spacer()
-            if let value {
-                Text(value.uppercased())
-                    .font(BRUFont.labelSmall)
-                    .tracking(0.5)
-                    .textCase(.uppercase)
-                    .foregroundStyle(Color.bruMuted)
-            }
-            if let trailing {
-                trailing
-            } else if value == nil && action != nil {
-                Text("›")
-                    .font(BRUFont.bodyEmphasis)
-                    .foregroundStyle(Color.bruMuted)
-            }
-        }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 12)
-        .background(Color.bruPaper)
-    }
-}
-
 // MARK: - BRURowLabel helper (fileprivate)
 
-/// Renders the standard label + value HStack used inside NavigationLink labels.
-/// Keeps NavigationLink's native chevron while applying BRU typography.
+/// Renders the standard label + value + "›" row used inside NavigationLink labels.
+/// NavigationLink draws no chevron outside a List, so the row draws its own,
+/// and the whole row is the tap target.
 private struct BRURowLabel: View {
     let label: String
     let value: String?
@@ -783,10 +652,15 @@ private struct BRURowLabel: View {
                     .tracking(0.5)
                     .foregroundStyle(Color.bruMuted)
             }
+            Text("›")
+                .font(BRUFont.bodyEmphasis)
+                .foregroundStyle(Color.bruMuted)
+                .accessibilityHidden(true)
         }
         .padding(.horizontal, 16)
-        .padding(.vertical, 12)
+        .frame(minHeight: 48)
         .background(Color.bruPaper)
+        .contentShape(Rectangle())
     }
 }
 
