@@ -42,6 +42,10 @@ public struct SessionExerciseCard: View {
     public let onSwap: (SessionExercise) -> Void
     public let onRemove: (SessionExercise) -> Void
     public let onEditPinnedNote: (SessionExercise) -> Void
+    public let onUncompleteSet: (SetEntry) -> Void
+    public let onDeleteSet: (SetEntry) -> Void
+    public let onAddSet: (SessionExercise) -> Void
+    public let onEditCommitted: () -> Void
 
     // MARK: - Phase 3 state
 
@@ -66,7 +70,11 @@ public struct SessionExerciseCard: View {
         onTapEmptyCell: @escaping () -> Void,
         onSwap: @escaping (SessionExercise) -> Void = { _ in },
         onRemove: @escaping (SessionExercise) -> Void = { _ in },
-        onEditPinnedNote: @escaping (SessionExercise) -> Void = { _ in }
+        onEditPinnedNote: @escaping (SessionExercise) -> Void = { _ in },
+        onUncompleteSet: @escaping (SetEntry) -> Void = { _ in },
+        onDeleteSet: @escaping (SetEntry) -> Void = { _ in },
+        onAddSet: @escaping (SessionExercise) -> Void = { _ in },
+        onEditCommitted: @escaping () -> Void = {}
     ) {
         self.sessionExercise = sessionExercise
         self.engine = engine
@@ -75,27 +83,36 @@ public struct SessionExerciseCard: View {
         self.onSwap = onSwap
         self.onRemove = onRemove
         self.onEditPinnedNote = onEditPinnedNote
+        self.onUncompleteSet = onUncompleteSet
+        self.onDeleteSet = onDeleteSet
+        self.onAddSet = onAddSet
+        self.onEditCommitted = onEditCommitted
     }
 
     public var body: some View {
         let explanation = currentExplanation()
 
         Section {
-            // MARK: Card body — VStack(spacing: 0) per UI-SPEC line 363
+            // MARK: Card body
+            // The card is split into separate List rows (header block, one
+            // row per set, add-set row) so each set gets the native
+            // swipe-to-delete. Rows drop the system separators and insets;
+            // BRUDivider draws the rules exactly as the single-VStack card did.
 
             VStack(spacing: 0) {
-                // Row 1: Index + Exercise name + equipment sub-line + drag handle
+                // Row 1: Index + Exercise name + equipment sub-line
                 // UI-SPEC line 364-366
-                HStack(spacing: 12) {
+                HStack(alignment: .firstTextBaseline, spacing: 12) {
                     Text(String(format: "%02d", (sessionExercise.orderIndex) + 1))
                         .font(BRUFont.displayMedium)
                         .foregroundStyle(Color.bruInk)
                         .frame(width: 32, alignment: .leading)
 
                     VStack(alignment: .leading, spacing: 4) {
-                        Text(sessionExercise.exercise?.name ?? "Exercise")
+                        Text(exerciseName)
                             .font(BRUFont.bodyEmphasis)
                             .foregroundStyle(Color.bruInk)
+                            .fixedSize(horizontal: false, vertical: true)
 
                         Text(equipmentSubline)
                             .font(BRUFont.labelSmall)
@@ -104,12 +121,7 @@ public struct SessionExerciseCard: View {
                             .foregroundStyle(Color.bruMuted)
                     }
 
-                    Spacer()
-
-                    // Drag handle — typographic "⋮⋮" per UI-SPEC line 338 (NOT SF Symbol)
-                    Text("⋮⋮")
-                        .font(BRUFont.bodyEmphasis)
-                        .foregroundStyle(Color.bruMuted)
+                    Spacer(minLength: 0)
                 }
                 .padding(.horizontal, 16)
                 .padding(.vertical, 12)
@@ -170,7 +182,7 @@ public struct SessionExerciseCard: View {
                 if case .stalled = plateauSignal {
                     HStack(spacing: 8) {
                         StallBadge(
-                            exerciseName: sessionExercise.exercise?.name ?? "Exercise",
+                            exerciseName: exerciseName,
                             sessionCount: settingsList.first?.plateauWindowSessions ?? 4
                         )
                         if let action = suggestedAction {
@@ -224,9 +236,18 @@ public struct SessionExerciseCard: View {
                 .padding(.vertical, 6)
 
                 BRUDivider(.hair)
+            }
+            .cardRow()
+            // Tap-anywhere-on-header dismisses the bump banner
+            .onTapGesture {
+                if !bannerDismissed {
+                    bannerDismissed = true
+                }
+            }
 
-                // SetRows
-                ForEach(sortedSets) { set in
+            // SetRows — one List row each so swipe-to-delete works.
+            ForEach(sortedSets) { set in
+                VStack(spacing: 0) {
                     VStack(spacing: 4) {
                         SetRow(
                             entry: set,
@@ -235,7 +256,9 @@ public struct SessionExerciseCard: View {
                             explanation: explanation,
                             expandedPlateSetID: $expandedPlateSetID,
                             onCommit: { onCommitSet(set) },
-                            onTapEmptyCell: onTapEmptyCell
+                            onTapEmptyCell: onTapEmptyCell,
+                            onUncomplete: { onUncompleteSet(set) },
+                            onEditCommitted: onEditCommitted
                         )
                         if sessionExercise.tracksTempo {
                             TempoEntryRow(entry: set)
@@ -247,32 +270,40 @@ public struct SessionExerciseCard: View {
                             ClusterSubRepChipRow(entry: set)
                         }
                     }
+                    .padding(.horizontal, 16)
                     BRUDivider(.hair)
                 }
-
-                // "+ ADD SET" signal text button per UI-SPEC line 387
-                Button {
-                    addSet()
-                } label: {
-                    Text("+ ADD SET")
-                        .font(BRUFont.labelSmall)
-                        .tracking(1.2)
-                        .textCase(.uppercase)
-                        .foregroundStyle(Color.bruSignal)
-                        .frame(maxWidth: .infinity, minHeight: 44)
+                .cardRow()
+                .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                    Button(role: .destructive) {
+                        onDeleteSet(set)
+                    } label: {
+                        Text("Delete")
+                    }
                 }
-                .buttonStyle(.plain)
-                .padding(.vertical, 4)
+                .accessibilityAction(named: "Delete set") {
+                    onDeleteSet(set)
+                }
             }
+
+            // "+ ADD SET" signal text button per UI-SPEC line 387
+            Button {
+                onAddSet(sessionExercise)
+            } label: {
+                Text("+ ADD SET")
+                    .font(BRUFont.labelSmall)
+                    .tracking(1.2)
+                    .textCase(.uppercase)
+                    .foregroundStyle(Color.bruSignal)
+                    .frame(maxWidth: .infinity, minHeight: 44)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .padding(.vertical, 4)
+            .cardRow()
         } header: {
             // Empty header — card header is embedded in body VStack above.
             EmptyView()
-        }
-        // Tap-anywhere-on-card dismisses the bump banner
-        .onTapGesture {
-            if !bannerDismissed {
-                bannerDismissed = true
-            }
         }
         // Phase 5 PROG-06 — evaluate plateau signal on first appear + exercise change
         .task(id: sessionExercise.id) {
@@ -336,9 +367,22 @@ public struct SessionExerciseCard: View {
     private func handleSuggestedAction(_ action: SuggestedAction) {
         switch action {
         case .addVolume:
-            break
+            // One more working set for this exercise today.
+            onAddSet(sessionExercise)
+            suggestedAction = nil
         case .dropIntensity:
-            break
+            // Lighten the sets not yet done by 10%, rounded down to the
+            // smallest plate increment.
+            let increment = sessionExercise.exercise?.smallestIncrement
+                ?? settingsList.first?.defaultIncrementKg
+                ?? 2.5
+            SessionSetActions.dropIntensity(
+                of: sessionExercise,
+                fraction: 0.10,
+                increment: increment,
+                context: ctx
+            )
+            suggestedAction = nil
         case .deload:
             presentingDeloadSignalSheet = true
         case .tryVariation:
@@ -352,10 +396,17 @@ public struct SessionExerciseCard: View {
     /// "{equipment} · {prescription summary}" in labelSmall bruMuted.
     private var equipmentSubline: String {
         let equip = sessionExercise.exercise?.equipment.rawValue.capitalized ?? "Equipment"
-        // Build a minimal snapshot prescription summary
-        let setsCount = (sessionExercise.sets ?? []).count
+        // Build a minimal snapshot prescription summary (working sets only;
+        // warm-ups have their own ramp block above).
+        let setsCount = (sessionExercise.sets ?? []).filter { !$0.isWarmup }.count
         let parts = [equip, "\(setsCount) SETS"]
         return parts.joined(separator: " · ")
+    }
+
+    /// Log-time snapshot name, falling back to the live catalog name.
+    private var exerciseName: String {
+        let name = sessionExercise.displayName
+        return name.isEmpty ? "Exercise" : name
     }
 
     private var sortedSets: [SetEntry] {
@@ -415,7 +466,8 @@ public struct SessionExerciseCard: View {
         let lastHint = PreviousMatchingIntent.fetchTopWorkingSet(
             exerciseID: exerciseID,
             intentRaw: intentRaw,
-            context: ctx
+            context: ctx,
+            excludingSessionID: se.session?.id
         )
 
         let strategy = ProgressionStrategyFactory.make(for: se.session?.progressionKind ?? .double)
@@ -449,23 +501,15 @@ public struct SessionExerciseCard: View {
         }
         try? ctx.save()
     }
+}
 
-    // MARK: - addSet
-
-    private func addSet() {
-        let entry = SetEntry()
-        entry.sessionExercise = sessionExercise
-        let allSets = sessionExercise.sets ?? []
-        entry.orderIndex = allSets.count
-        entry.setTypeRaw = SetType.working.rawValue
-        entry.isComplete = false
-        entry.weight = PreviousMatchingIntent.fetchTopWorkingSet(
-            exerciseID: sessionExercise.exercise?.id,
-            intentRaw: sessionExercise.session?.intentRaw ?? Intent.strength.rawValue,
-            context: ctx
-        )?.weight ?? 0
-        ctx.insert(entry)
-        try? ctx.save()
+private extension View {
+    /// Card rows draw their own rules and padding: no system separator,
+    /// no inset, paper background.
+    func cardRow() -> some View {
+        self
+            .listRowInsets(EdgeInsets())
+            .listRowSeparator(.hidden)
     }
 }
 
