@@ -13,6 +13,7 @@
 
 import SwiftUI
 import SwiftData
+import UIKit
 
 struct ComponentGalleryView: View {
     @State private var search = ""
@@ -20,10 +21,14 @@ struct ComponentGalleryView: View {
     @State private var sets = 4
     @State private var rest = 180
     @State private var muscleSelected = true
+    @State private var equipmentSelected = false
     @State private var customOnly = false
     @State private var timer = RestTimerEngine(scheduler: NoopNotificationScheduler())
     @FocusState private var focus: SetField?
     @State private var demoSets: [SetEntry] = ComponentGalleryView.makeDemoSets()
+    @State private var demoErrors: [SetValidation] = [.ok, .ok, .missingReps]
+    @State private var lastTapped: String?
+    @State private var tapCount = 0
 
     var body: some View {
         ScrollView {
@@ -53,6 +58,35 @@ struct ComponentGalleryView: View {
                 timer.start(seconds: 150, exerciseName: "Weighted Pull Ups")
             }
         }
+        .overlay(alignment: .bottom) {
+            if let lastTapped {
+                Text("Tapped “\(lastTapped)”")
+                    .font(.chalkChip)
+                    .foregroundStyle(.chalkOnPanel)
+                    .padding(.horizontal, Chalk.Space.lg)
+                    .padding(.vertical, Chalk.Space.sm)
+                    .background(Color.chalkPanel, in: Capsule())
+                    .padding(.bottom, Chalk.Space.md)
+                    .transition(.opacity)
+                    .accessibilityIdentifier("gallery.lastTapped")
+            }
+        }
+        .task(id: tapCount) {
+            guard tapCount > 0 else { return }
+            // A newer tap restarts this task; the cancelled one must not
+            // clear the newer readout.
+            do { try await Task.sleep(for: .seconds(2)) } catch { return }
+            withAnimation(.easeOut(duration: Chalk.Motion.standard)) { lastTapped = nil }
+        }
+    }
+
+    /// Specimens whose real action lives elsewhere in the app (start a
+    /// workout, discard, …) report the tap instead, so every control in the
+    /// gallery visibly responds.
+    private func tapped(_ name: String) {
+        withAnimation(.easeOut(duration: Chalk.Motion.quick)) { lastTapped = name }
+        tapCount += 1
+        UIAccessibility.post(notification: .announcement, argument: "\(name) tapped")
     }
 
     // MARK: Colors
@@ -160,21 +194,21 @@ struct ComponentGalleryView: View {
     private var buttons: some View {
         VStack(alignment: .leading, spacing: Chalk.Space.sm) {
             ChalkSectionHeader("Buttons")
-            Button {} label: { Label("Start workout", systemImage: "play.fill") }
+            Button { tapped("Start workout") } label: { Label("Start workout", systemImage: "play.fill") }
                 .buttonStyle(.chalk(.primary, size: .large, fullWidth: true))
-            Button {} label: { Label("Add set", systemImage: "plus") }
+            Button { tapped("Add set") } label: { Label("Add set", systemImage: "plus") }
                 .buttonStyle(.chalk(.secondary, fullWidth: true))
             HStack(spacing: Chalk.Space.sm) {
-                Button("Done") {}.buttonStyle(.chalk(.inverse))
-                Button("See all") {}.buttonStyle(.chalk(.ghost))
-                Button("Discard") {}.buttonStyle(.chalk(.destructive))
+                Button("Done") { tapped("Done") }.buttonStyle(.chalk(.inverse))
+                Button("See all") { tapped("See all") }.buttonStyle(.chalk(.ghost))
+                Button("Discard") { tapped("Discard") }.buttonStyle(.chalk(.destructive))
             }
             Button("Disabled") {}
                 .buttonStyle(.chalk(.primary, fullWidth: true))
                 .disabled(true)
             HStack(spacing: Chalk.Space.sm) {
-                ChalkIconButton("plus", accessibilityLabel: "Add", style: .outlined) {}
-                ChalkIconButton("ellipsis", accessibilityLabel: "More") {}
+                ChalkIconButton("plus", accessibilityLabel: "Add", style: .outlined) { tapped("Add") }
+                ChalkIconButton("ellipsis", accessibilityLabel: "More") { tapped("More") }
             }
         }
     }
@@ -188,7 +222,9 @@ struct ComponentGalleryView: View {
                 ChalkChip("Chest", isSelected: muscleSelected, extraCount: 1, showsMenuIndicator: true) {
                     muscleSelected.toggle()
                 }
-                ChalkChip("Equipment", isSelected: false, showsMenuIndicator: true) {}
+                ChalkChip("Equipment", isSelected: equipmentSelected, showsMenuIndicator: true) {
+                    equipmentSelected.toggle()
+                }
                 ChalkChip("Custom", isSelected: customOnly) { customOnly.toggle() }
             }
             HStack(spacing: Chalk.Space.sm) {
@@ -229,7 +265,7 @@ struct ComponentGalleryView: View {
                 title: "No routines yet",
                 message: "Build a routine to start logging workouts.",
                 primaryTitle: "New routine",
-                primaryAction: {}
+                primaryAction: { tapped("New routine") }
             )
         }
     }
@@ -270,13 +306,72 @@ struct ComponentGalleryView: View {
             ChalkSectionHeader("Set entry")
             ChalkCard {
                 VStack(spacing: Chalk.Space.xs) {
-                    SetEntryRow(entry: demoSets[0], setLabel: "1", previous: .init(weight: 185, reps: 5, rpe: 7), targetRepsText: "4–6", unitLabel: "lb", allowsSignedWeight: false, isNext: false, validation: .ok, identifierPrefix: "gallery.0", focus: $focus, onComplete: {}, onUncomplete: { demoSets[0].isComplete.toggle() }, onUsePrevious: {}, onEdited: {})
-                        .background(Color.chalkComplete, in: RoundedRectangle(cornerRadius: Chalk.Radius.md, style: .continuous))
-                    SetEntryRow(entry: demoSets[1], setLabel: "2", previous: .init(weight: 185, reps: 5, rpe: nil), targetRepsText: "4–6", unitLabel: "lb", allowsSignedWeight: false, isNext: true, validation: .ok, identifierPrefix: "gallery.1", focus: $focus, onComplete: { demoSets[1].reps = max(demoSets[1].reps, 5); demoSets[1].isComplete = true }, onUncomplete: { demoSets[1].isComplete = false }, onUsePrevious: { demoSets[1].reps = 5 }, onEdited: {})
-                    SetEntryRow(entry: demoSets[2], setLabel: "3", previous: .init(weight: 185, reps: 4, rpe: 9), targetRepsText: "4–6", unitLabel: "lb", allowsSignedWeight: false, isNext: false, validation: .missingReps, identifierPrefix: "gallery.2", focus: $focus, onComplete: {}, onUncomplete: {}, onUsePrevious: {}, onEdited: {})
+                    ForEach(demoSets.indices, id: \.self) { index in
+                        demoSetRow(index)
+                    }
                 }
             }
         }
+    }
+
+    private static let demoPrevious: [PreviousPerformance.Line] = [
+        .init(weight: 185, reps: 5, rpe: 7),
+        .init(weight: 185, reps: 5, rpe: nil),
+        .init(weight: 185, reps: 4, rpe: 9),
+    ]
+
+    private func demoSetRow(_ index: Int) -> some View {
+        let entry = demoSets[index]
+        return SetEntryRow(
+            entry: entry,
+            setLabel: "\(index + 1)",
+            previous: Self.demoPrevious[index],
+            targetRepsText: "4–6",
+            unitLabel: "lb",
+            allowsSignedWeight: false,
+            isNext: index == demoSets.firstIndex(where: { !$0.isComplete }),
+            validation: demoErrors[index],
+            identifierPrefix: "gallery.\(index)",
+            focus: $focus,
+            onComplete: { completeDemoSet(index) },
+            onUncomplete: { entry.isComplete = false },
+            onUsePrevious: { useDemoPrevious(index) },
+            onEdited: { revalidateDemoSet(index) }
+        )
+        .background(
+            entry.isComplete ? Color.chalkComplete : Color.clear,
+            in: RoundedRectangle(cornerRadius: Chalk.Radius.md, style: .continuous)
+        )
+    }
+
+    // The specimen rows follow the workout's rules (WorkoutLogging) but
+    // never save: the gallery's sets are not in the store.
+
+    private func completeDemoSet(_ index: Int) {
+        let entry = demoSets[index]
+        let result = WorkoutLogging.validate(entry, equipment: .barbell)
+        demoErrors[index] = result
+        if result == .ok {
+            entry.isComplete = true
+            focus = nil
+        } else if let message = result.message(setLabel: "\(index + 1)") {
+            UIAccessibility.post(notification: .announcement, argument: message)
+        }
+    }
+
+    private func useDemoPrevious(_ index: Int) {
+        let entry = demoSets[index]
+        guard !entry.isComplete else { return }
+        let previous = Self.demoPrevious[index]
+        entry.weight = previous.weight
+        entry.reps = previous.reps
+        if entry.rpe == nil { entry.rpe = previous.rpe }
+        revalidateDemoSet(index)
+    }
+
+    private func revalidateDemoSet(_ index: Int) {
+        guard demoErrors[index] != .ok else { return }
+        demoErrors[index] = WorkoutLogging.validate(demoSets[index], equipment: .barbell)
     }
 
     // MARK: Timer

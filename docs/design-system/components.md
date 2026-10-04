@@ -8,7 +8,10 @@ two: when a component changes, change both and keep the names aligned.
 All components take tokens from [`ChalkTokens.swift`](../../fitbod/DesignSystem/ChalkTokens.swift)
 (see [README.md](README.md)), scale with Dynamic Type, and have both an
 Xcode `#Preview` and a live section in the in-app **Component gallery**
-(Settings → Design system).
+(Settings → Design system). Every gallery specimen responds: chips,
+steppers, fields and the rest dock work as in the app, the set rows follow
+the workout's validation rules (without saving anything), and buttons whose
+real action lives elsewhere show a brief "Tapped …" readout.
 
 ## Foundation components (`fitbod/DesignSystem/`)
 
