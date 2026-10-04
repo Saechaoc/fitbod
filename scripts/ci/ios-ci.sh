@@ -5,7 +5,7 @@
 # with Xcode 26.4+ installed:
 #
 #   scripts/ci/ios-ci.sh select-xcode      # CI only: pick newest Xcode 26.x
-#   scripts/ci/ios-ci.sh simulators        # create/boot "Fitbod Small/Large"
+#   scripts/ci/ios-ci.sh simulators        # create "Fitbod Small/Large"
 #   scripts/ci/ios-ci.sh build             # build-for-testing (one build)
 #   scripts/ci/ios-ci.sh unit              # Swift Testing unit suites
 #   scripts/ci/ios-ci.sh ui small|large    # XCUITest journey + layout audit
@@ -151,9 +151,8 @@ with open(out_path, "w") as f:
     f.write("\n".join(lines) + "\n")
 PY
   load_sims
-  # Devices are not pre-booted: xcodebuild boots each one when its test
-  # step starts, which avoids a long serial boot here and a stale
-  # "Booting" state confusing destination matching later.
+  # Devices are not pre-booted: each test step boots its own simulator
+  # (and waits for the boot to finish) right before it runs.
   cat "$SIMS_ENV"
 }
 
@@ -170,18 +169,71 @@ cmd_build() {
     2>&1 | pretty "$LOGS/build.log"
 }
 
+# Runs a command and kills it after $1 seconds (macOS ships no `timeout`).
+with_timeout() {
+  local seconds="$1"; shift
+  perl -e 'alarm shift; exec @ARGV' "$seconds" "$@"
+}
+
+# Boots one simulator and waits until it has finished booting. xcodebuild
+# cannot match a destination that is still "Booting" ("Unable to find a
+# device matching the provided destination specifier"), and a second booted
+# simulator slows the runner down, so any other booted device is shut down
+# first.
+boot_simulator() {
+  local keep="$1" udid
+  for udid in $(xcrun simctl list devices -j | python3 -c '
+import json, sys
+for devices in json.load(sys.stdin)["devices"].values():
+    for d in devices:
+        if d.get("state") == "Booted":
+            print(d["udid"])'); do
+    [[ "$udid" == "$keep" ]] || xcrun simctl shutdown "$udid" >/dev/null 2>&1 || true
+  done
+  xcrun simctl boot "$keep" >/dev/null 2>&1 || true
+  with_timeout 600 xcrun simctl bootstatus "$keep" -b
+}
+
+# Number of tests recorded in a result bundle (0 when none ran).
+tests_in_bundle() {
+  local bundle="$1" count=""
+  if [[ -d "$bundle" ]]; then
+    count="$(xcrun xcresulttool get test-results summary --path "$bundle" 2>/dev/null \
+      | python3 -c 'import json, sys; print(json.load(sys.stdin).get("totalTestCount") or 0)' 2>/dev/null || true)"
+  fi
+  echo "${count:-0}"
+}
+
 run_tests() {
   local label="$1" udid="$2"; shift 2
   local bundle="$RESULTS/$label.xcresult"
-  rm -rf "$bundle"
-  log "test-without-building [$label]"
-  xcrun simctl boot "$udid" >/dev/null 2>&1 || true
-  set -o pipefail
-  xcodebuild test-without-building "${common_flags[@]}" \
-    -destination "platform=iOS Simulator,id=$udid" \
-    -resultBundlePath "$bundle" \
-    -parallel-testing-enabled NO \
-    "$@" 2>&1 | pretty "$LOGS/$label.log"
+  local attempt logfile status=0
+  for attempt in 1 2; do
+    rm -rf "$bundle"
+    logfile="$LOGS/$label.log"
+    [[ $attempt -eq 1 ]] || logfile="$LOGS/$label.attempt$attempt.log"
+    log "test-without-building [$label] attempt $attempt"
+    boot_simulator "$udid" || echo "warning: simulator $udid did not report booted" >&2
+    set +e
+    set -o pipefail
+    xcodebuild test-without-building "${common_flags[@]}" \
+      -destination "platform=iOS Simulator,id=$udid" \
+      -resultBundlePath "$bundle" \
+      -parallel-testing-enabled NO \
+      "$@" 2>&1 | pretty "$logfile"
+    status=${PIPESTATUS[0]}
+    set -e
+    # A failing test is a real failure and is never retried. Only a run in
+    # which no test started at all (the simulator was not found or was lost
+    # before the first test) gets one more attempt on a freshly booted
+    # simulator.
+    if [[ $status -eq 0 || "$(tests_in_bundle "$bundle")" -gt 0 ]]; then
+      return "$status"
+    fi
+    echo "No test ran on [$label] (xcodebuild exit $status)." >&2
+    xcrun simctl shutdown "$udid" >/dev/null 2>&1 || true
+  done
+  return "$status"
 }
 
 cmd_unit() {

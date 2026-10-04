@@ -96,8 +96,10 @@ Highlights of what is covered:
 branches and every pull request on a GitHub-hosted macOS runner (the only
 way agent sessions without a Mac can run `xcodebuild`). A commit whose
 message contains `[evidence]` gets its screenshots and test summary
-committed back to `docs/verification/ci/`. The workflow is optional for
-local development and can be disabled from the Actions tab.
+committed back to `docs/verification/ci/` when the build and every test
+step pass, so that folder always reflects the last fully green run. The
+workflow is optional for local development and can be disabled from the
+Actions tab.
 
 ## Project layout
 

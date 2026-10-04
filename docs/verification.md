@@ -18,6 +18,13 @@ ran on GitHub-hosted macOS runners via `.github/workflows/ios.yml`
 | Large iPhone | iPhone 17 Pro Max — 440 × 956 pt |
 | Build | `xcodebuild build-for-testing` (Debug, simulator, arm64) |
 
+Each test step boots its own simulator, shuts the other one down and waits
+for the boot to finish before `xcodebuild` runs. If no test starts at all
+(the simulator was not found or was lost before the first test), the step
+is retried once on a freshly booted simulator; a failing test is never
+retried. Screenshots are committed to `verification/ci/` only from runs in
+which the build and every test step passed.
+
 Local syntax checks used `scripts/dev/swift_syntax_check.py` (tree-sitter);
 they are not a substitute for the compiler and were only used between CI
 runs.

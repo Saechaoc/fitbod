@@ -6,10 +6,12 @@
 # iPhone simulator. It is free for public repositories and can be removed or
 # disabled from the Actions tab without affecting the app.
 #
-# Evidence publishing: when the pushed commit message contains "[evidence]",
-# the exported screenshots + test summary are committed back to the same
-# branch under docs/verification/ci/ (commits made with GITHUB_TOKEN never
-# trigger new workflow runs). Otherwise results stay in the run log/artifact.
+# Evidence publishing: when the pushed commit message contains "[evidence]"
+# and the build and every test step passed, the exported screenshots + test
+# summary are committed back to the same branch under docs/verification/ci/
+# (commits made with GITHUB_TOKEN never trigger new workflow runs), so that
+# folder always holds the last fully green run. Otherwise results stay in
+# the run log/artifact.
 
 name: iOS build & test
 
@@ -93,7 +95,11 @@ jobs:
           retention-days: 14
 
       - name: Publish evidence to branch
-        if: always() && github.event_name == 'push' && contains(github.event.head_commit.message, '[evidence]')
+        if: >-
+          always() && github.event_name == 'push' &&
+          contains(github.event.head_commit.message, '[evidence]') &&
+          steps.build.outcome == 'success' && steps.unit.outcome == 'success' &&
+          steps.ui_large.outcome == 'success' && steps.ui_small.outcome == 'success'
         env:
           BRANCH: ${{ github.ref_name }}
         run: |
