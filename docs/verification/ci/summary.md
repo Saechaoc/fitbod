@@ -1,6 +1,6 @@
 # CI verification summary
 
-- Generated: 2026-10-04T05:37:57+00:00
+- Generated: 2026-10-04T06:37:00+00:00
 - Xcode: Xcode 26.6 Build version 17F113
 - Simulator runtime: iOS 26.5
 - Small device: iPhone SE (3rd generation) · Large device: iPhone 17 Pro Max
@@ -18,30 +18,26 @@ Total 4 · passed 4 · failed 0 · skipped 0
 
 </details>
 
-Screenshots (73): A01-today.png, A02-routines.png, A03-routine-detail.png, A04-library.png, A05-exercise-detail.png, A06-history.png, A07-history-detail.png, A08-settings.png, A09-gallery-1.png, A09-gallery-2.png, A09-gallery-3.png, A09-gallery-4.png, A10-workout.png, A11-set-row-ready.png, A12-rest-dock.png, A13-rest-sheet.png, B-ax01-today.png, B-ax02-routines.png, B-ax03-routine-detail.png, B-ax04-library.png, B-ax05-exercise-detail.png, B-ax06-history.png, B-ax07-history-detail.png, B-ax08-settings.png, B-ax09-gallery-1.png, B-ax09-gallery-2.png, B-ax09-gallery-3.png, B-ax09-gallery-4.png, B-ax10-workout.png, B-ax11-set-row-ready.png, B-ax12-rest-dock.png, B-ax13-rest-sheet.png, C-dark01-today.png, C-dark02-routines.png, C-dark03-routine-detail.png, C-dark04-library.png, C-dark05-exercise-detail.png, C-dark06-history.png, C-dark07-history-detail.png, C-dark08-settings.png, C-dark09-gallery-1.png, C-dark09-gallery-2.png, C-dark09-gallery-3.png, C-dark09-gallery-4.png, C-dark10-workout.png, C-dark11-set-row-ready.png, C-dark12-rest-dock.png, C-dark13-rest-sheet.png, FAILURE---LayoutAuditUITests-testTourAccessibilityText.png, FAILURE---LayoutAuditUITests-testTourDarkLargestText.png, FAILURE---LayoutAuditUITests-testTourDefaultText.png, FAILURE---WorkoutJourneyUITests-testEndToEndWorkoutJourneySurvivesRelaunch.png, J00-today-first-launch.png, J01-library-search.png, J02-library-filtered.png, J03-exercise-detail.png, J04-library-no-match.png, J05-custom-exercise-validation.png, J06-custom-exercise-saved.png, J07-routines-empty.png, J08-routine-validation.png, J09-routine-builder.png, J10-routines-list.png, J11-workout-start.png, J12-set-logged-rest-timer.png, J13-set-validation-error.png, J14-relaunch-resumed.png, J15-summary.png, J16-history.png, J17-history-detail.png, J18-history-after-rename.png, J19-previous-performance.png, J20-today-after-discard.png
+Screenshots (69): A01-today.png, A02-routines.png, A03-routine-detail.png, A04-library.png, A05-exercise-detail.png, A06-history.png, A07-history-detail.png, A08-settings.png, A09-gallery-1.png, A09-gallery-2.png, A09-gallery-3.png, A09-gallery-4.png, A10-workout.png, A11-set-row-ready.png, A12-rest-dock.png, A13-rest-sheet.png, B-ax01-today.png, B-ax02-routines.png, B-ax03-routine-detail.png, B-ax04-library.png, B-ax05-exercise-detail.png, B-ax06-history.png, B-ax07-history-detail.png, B-ax08-settings.png, B-ax09-gallery-1.png, B-ax09-gallery-2.png, B-ax09-gallery-3.png, B-ax09-gallery-4.png, B-ax10-workout.png, B-ax11-set-row-ready.png, B-ax12-rest-dock.png, B-ax13-rest-sheet.png, C-dark01-today.png, C-dark02-routines.png, C-dark03-routine-detail.png, C-dark04-library.png, C-dark05-exercise-detail.png, C-dark06-history.png, C-dark07-history-detail.png, C-dark08-settings.png, C-dark09-gallery-1.png, C-dark09-gallery-2.png, C-dark09-gallery-3.png, C-dark09-gallery-4.png, C-dark10-workout.png, C-dark11-set-row-ready.png, C-dark12-rest-dock.png, C-dark13-rest-sheet.png, J00-today-first-launch.png, J01-library-search.png, J02-library-filtered.png, J03-exercise-detail.png, J04-library-no-match.png, J05-custom-exercise-validation.png, J06-custom-exercise-saved.png, J07-routines-empty.png, J08-routine-validation.png, J09-routine-builder.png, J10-routines-list.png, J11-workout-start.png, J12-set-logged-rest-timer.png, J13-set-validation-error.png, J14-relaunch-resumed.png, J15-summary.png, J16-history.png, J17-history-detail.png, J18-history-after-rename.png, J19-previous-performance.png, J20-today-after-discard.png
 
-## ui-small — Failed
+## ui-small — Passed
 
-Total 4 · passed 3 · failed 1 · skipped 0
-
-### Failures
-
-- `testEndToEndWorkoutJourneySurvivesRelaunch()` — XCTAssertTrue failed - Missing: "set.0.0.previous" Button
+Total 4 · passed 4 · failed 0 · skipped 0
 
 <details><summary>All test cases</summary>
 
 - ✅ LayoutAuditUITests › testTourAccessibilityText()
 - ✅ LayoutAuditUITests › testTourDarkLargestText()
 - ✅ LayoutAuditUITests › testTourDefaultText()
-- ❌ WorkoutJourneyUITests › testEndToEndWorkoutJourneySurvivesRelaunch()
+- ✅ WorkoutJourneyUITests › testEndToEndWorkoutJourneySurvivesRelaunch()
 
 </details>
 
-Screenshots (71): A01-today.png, A02-routines.png, A03-routine-detail.png, A04-library.png, A05-exercise-detail.png, A06-history.png, A07-history-detail.png, A08-settings.png, A09-gallery-1.png, A09-gallery-2.png, A09-gallery-3.png, A09-gallery-4.png, A10-workout.png, A11-set-row-ready.png, A12-rest-dock.png, A13-rest-sheet.png, B-ax01-today.png, B-ax02-routines.png, B-ax03-routine-detail.png, B-ax04-library.png, B-ax05-exercise-detail.png, B-ax06-history.png, B-ax07-history-detail.png, B-ax08-settings.png, B-ax09-gallery-1.png, B-ax09-gallery-2.png, B-ax09-gallery-3.png, B-ax09-gallery-4.png, B-ax10-workout.png, B-ax11-set-row-ready.png, B-ax12-rest-dock.png, B-ax13-rest-sheet.png, C-dark01-today.png, C-dark02-routines.png, C-dark03-routine-detail.png, C-dark04-library.png, C-dark05-exercise-detail.png, C-dark06-history.png, C-dark07-history-detail.png, C-dark08-settings.png, C-dark09-gallery-1.png, C-dark09-gallery-2.png, C-dark09-gallery-3.png, C-dark09-gallery-4.png, C-dark10-workout.png, C-dark11-set-row-ready.png, C-dark12-rest-dock.png, C-dark13-rest-sheet.png, FAILURE---LayoutAuditUITests-testTourAccessibilityText.png, FAILURE---LayoutAuditUITests-testTourDarkLargestText.png, FAILURE---LayoutAuditUITests-testTourDefaultText.png, FAILURE---WorkoutJourneyUITests-testEndToEndWorkoutJourneySurvivesRelaunch.png, J00-today-first-launch.png, J01-library-search.png, J02-library-filtered.png, J03-exercise-detail.png, J04-library-no-match.png, J05-custom-exercise-validation.png, J06-custom-exercise-saved.png, J07-routines-empty.png, J08-routine-validation.png, J09-routine-builder.png, J10-routines-list.png, J11-workout-start.png, J12-set-logged-rest-timer.png, J13-set-validation-error.png, J14-relaunch-resumed.png, J15-summary.png, J16-history.png, J17-history-detail.png, J18-history-after-rename.png
+Screenshots (69): A01-today.png, A02-routines.png, A03-routine-detail.png, A04-library.png, A05-exercise-detail.png, A06-history.png, A07-history-detail.png, A08-settings.png, A09-gallery-1.png, A09-gallery-2.png, A09-gallery-3.png, A09-gallery-4.png, A10-workout.png, A11-set-row-ready.png, A12-rest-dock.png, A13-rest-sheet.png, B-ax01-today.png, B-ax02-routines.png, B-ax03-routine-detail.png, B-ax04-library.png, B-ax05-exercise-detail.png, B-ax06-history.png, B-ax07-history-detail.png, B-ax08-settings.png, B-ax09-gallery-1.png, B-ax09-gallery-2.png, B-ax09-gallery-3.png, B-ax09-gallery-4.png, B-ax10-workout.png, B-ax11-set-row-ready.png, B-ax12-rest-dock.png, B-ax13-rest-sheet.png, C-dark01-today.png, C-dark02-routines.png, C-dark03-routine-detail.png, C-dark04-library.png, C-dark05-exercise-detail.png, C-dark06-history.png, C-dark07-history-detail.png, C-dark08-settings.png, C-dark09-gallery-1.png, C-dark09-gallery-2.png, C-dark09-gallery-3.png, C-dark09-gallery-4.png, C-dark10-workout.png, C-dark11-set-row-ready.png, C-dark12-rest-dock.png, C-dark13-rest-sheet.png, J00-today-first-launch.png, J01-library-search.png, J02-library-filtered.png, J03-exercise-detail.png, J04-library-no-match.png, J05-custom-exercise-validation.png, J06-custom-exercise-saved.png, J07-routines-empty.png, J08-routine-validation.png, J09-routine-builder.png, J10-routines-list.png, J11-workout-start.png, J12-set-logged-rest-timer.png, J13-set-validation-error.png, J14-relaunch-resumed.png, J15-summary.png, J16-history.png, J17-history-detail.png, J18-history-after-rename.png, J19-previous-performance.png, J20-today-after-discard.png
 
 ## unit — Passed
 
-Total 274 · passed 274 · failed 0 · skipped 0
+Total 275 · passed 275 · failed 0 · skipped 0
 
 <details><summary>All test cases</summary>
 
@@ -310,6 +306,7 @@ Total 274 · passed 274 · failed 0 · skipped 0
 - ✅ WorkoutLogic (milestone 1) › reps are always required; weight only for loaded lifts
 - ✅ WorkoutLogic (milestone 1) › complete only marks valid sets, stamps the time and saves
 - ✅ WorkoutLogic (milestone 1) › add set copies the last working weight; delete removes it
+- ✅ WorkoutLogic (milestone 1) › a logged weight carries into later empty sets, never over typed ones or bodyweight
 - ✅ WorkoutLogic (milestone 1) › previous performance comes from the last earlier workout, never the one in progress
 - ✅ WorkoutLogic (milestone 1) › finish keeps only performed work and stamps the duration
 - ✅ WorkoutLogic (milestone 1) › discard deletes the workout; the routine is untouched
