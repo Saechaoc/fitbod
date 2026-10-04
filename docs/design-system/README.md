@@ -191,6 +191,14 @@ weight. Icon-only buttons always have an accessibility label
 | Swap / note / pin / plate math | `arrow.left.arrow.right` · `square.and.pencil` · `pin` · `circle.grid.2x1` |
 | Destructive | `trash` |
 
+### Assets
+
+| Asset | Where | Notes |
+|---|---|---|
+| App icon | `fitbod/Assets.xcassets/AppIcon.appiconset/AppIcon-1024.png` | Iron logbook page: two logged set rows with chalk checks, the next set waiting with the signal-orange ring. Generated from tokens by `scripts/design/make_app_icon.py` (re-run after a palette change). |
+| Accent color set | `fitbod/Assets.xcassets/AccentColor.colorset` | `chalkAccentInk` light/dark, for system tinting. |
+| Icons | SF Symbols | No custom glyphs in v1. |
+
 ---
 
 ## 6. Interaction states
