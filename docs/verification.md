@@ -24,9 +24,39 @@ runs.
 
 ## Results
 
-_Filled in from the CI run recorded in `verification/ci/RUN_URL`._
+From the CI run recorded in [`verification/ci/RUN_URL`](verification/ci/RUN_URL)
+(app commit in [`verification/ci/COMMIT`](verification/ci/COMMIT); full list
+of test cases in [`verification/ci/summary.md`](verification/ci/summary.md)):
 
-<!-- RESULTS -->
+| Check | Result |
+|---|---|
+| Native build (`xcodebuild build-for-testing`, Xcode 26.6, iOS 26.5 simulator SDK) | **Succeeded** |
+| Unit + persistence tests (Swift Testing) | **275 / 275 passed** |
+| UI tests on iPhone 17 Pro Max (journey + 3 layout tours) | **4 / 4 passed** |
+| UI tests on iPhone SE 3rd gen (journey + 3 layout tours) | **4 / 4 passed** |
+
+The end-to-end journey (`WorkoutJourneyUITests`) passed on both devices,
+including the step that **terminates the app mid-workout and relaunches
+it**: the workout reopened automatically with both completed sets, the
+typed weight and the running rest timer (J14).
+
+Before milestone 1 the base branch had 8 failing unit tests out of 244
+(stale schema assertions, tests running V2 entities on a V1 container, a
+copy test pointing at removed views, an order-dependent seed check, and a
+test mirror that had drifted from production). All were fixed at the root;
+none were skipped or disabled.
+
+### Issues the screenshots caught (fixed before the final run)
+
+| Found in | Problem | Fix |
+|---|---|---|
+| iPhone SE | Set rows stacked even at default text (row needed 320 pt, got 311) | Tighter set-table row insets |
+| iPhone SE | "PREVIOUS" column label truncated | Falls back to "PREV" |
+| iPhone SE | Rest dock covered the row being typed into | Dock steps aside while a field is focused |
+| Both | Builder/editor labels and banners clipped by iOS 26's rounded section mask | `chalkBareListRow()` insets |
+| Both | Library large title hidden by the sticky header's background | Header background limited to its own frame |
+| Both | Equipment chips truncated in the custom-exercise editor | Two-column grid, chips may shrink slightly |
+| Both | Logging set 2 meant retyping the weight | Logged weight carries into later empty sets |
 
 ## Screenshots
 
