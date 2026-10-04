@@ -91,15 +91,10 @@ struct ExerciseDetailView: View {
                     .fixedSize(horizontal: false, vertical: true)
                     .accessibilityAddTraits(.isHeader)
                     .accessibilityIdentifier("exercise.detail.title")
-                HStack(spacing: Chalk.Space.xs) {
-                    ChalkTag(ExerciseRow.equipmentName(exercise.equipmentRaw), style: .onPanel)
-                    ChalkTag(exercise.mechanicRaw, style: .onPanel)
-                    if let level = exercise.levelRaw {
-                        ChalkTag(level, style: .onPanel)
-                    }
-                    if exercise.isCustom {
-                        ChalkTag("Custom", style: .accent)
-                    }
+                // One line when it fits; stacked at large text sizes.
+                ViewThatFits(in: .horizontal) {
+                    HStack(spacing: Chalk.Space.xs) { heroTags }
+                    VStack(alignment: .leading, spacing: Chalk.Space.xs) { heroTags }
                 }
                 let stimuli = sortedStimuli
                 if !stimuli.isEmpty {
@@ -130,6 +125,18 @@ struct ExerciseDetailView: View {
                     }
                 }
             }
+        }
+    }
+
+    @ViewBuilder
+    private var heroTags: some View {
+        ChalkTag(ExerciseRow.equipmentName(exercise.equipmentRaw), style: .onPanel)
+        ChalkTag(exercise.mechanicRaw, style: .onPanel)
+        if let level = exercise.levelRaw {
+            ChalkTag(level, style: .onPanel)
+        }
+        if exercise.isCustom {
+            ChalkTag("Custom", style: .accent)
         }
     }
 

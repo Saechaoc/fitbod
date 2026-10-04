@@ -19,6 +19,7 @@ struct TodayView: View {
     @Environment(\.modelContext) private var ctx
     @Environment(AppRouter.self) private var router
     @Environment(RestTimerEngine.self) private var restTimer
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     @Query(filter: #Predicate<Session> { $0.completedAt == nil })
     private var activeSessions: [Session]
@@ -158,7 +159,10 @@ struct TodayView: View {
         let week = weekTotals
         return VStack(alignment: .leading, spacing: Chalk.Space.sm) {
             ChalkSectionHeader("This week")
-            HStack(spacing: Chalk.Space.sm) {
+            let layout = dynamicTypeSize.isAccessibilitySize
+                ? AnyLayout(VStackLayout(alignment: .leading, spacing: Chalk.Space.sm))
+                : AnyLayout(HStackLayout(spacing: Chalk.Space.sm))
+            layout {
                 ChalkMetricTile("Workouts", value: "\(week.workouts)")
                 ChalkMetricTile("Sets", value: "\(week.sets)")
                 ChalkMetricTile("Vol \(unitLabel)", value: ChalkFormat.volume(week.volume))
@@ -195,6 +199,7 @@ struct TodayView: View {
 struct ActiveWorkoutCard: View {
     @Bindable var session: Session
     @Bindable var restTimer: RestTimerEngine
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     let onResume: () -> Void
     let onDiscard: () -> Void
 
@@ -217,7 +222,10 @@ struct ActiveWorkoutCard: View {
                         .textCase(.uppercase)
                         .foregroundStyle(.chalkOnPanel)
                         .fixedSize(horizontal: false, vertical: true)
-                    HStack(alignment: .top, spacing: Chalk.Space.md) {
+                    let metricsLayout = dynamicTypeSize.isAccessibilitySize
+                        ? AnyLayout(VStackLayout(alignment: .leading, spacing: Chalk.Space.sm))
+                        : AnyLayout(HStackLayout(alignment: .top, spacing: Chalk.Space.md))
+                    metricsLayout {
                         ChalkMetric("Elapsed", value: ChalkFormat.clock(seconds: stats.durationSeconds), onPanel: true)
                         ChalkMetric("Sets", value: "\(stats.completedSets)/\(stats.plannedSets)", onPanel: true)
                         if restTimer.isRunning && restTimer.sessionID == session.id {

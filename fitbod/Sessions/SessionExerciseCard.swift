@@ -328,6 +328,7 @@ public struct SessionExerciseCard: View {
         }
         .accessibilityHidden(true)
         .listRowSeparator(.hidden)
+        .listRowInsets(Self.tableRowInsets)
     }
 
     // MARK: Rows
@@ -354,7 +355,18 @@ public struct SessionExerciseCard: View {
             },
             onEdited: { onSetEdited(set) }
         )
+        .listRowInsets(Self.tableRowInsets)
     }
+
+    /// Set-table rows run closer to the card edges than ordinary rows so
+    /// the single-line layout fits a 375 pt iPhone at default text
+    /// (columns need 320 pt; default insets leave 311).
+    static let tableRowInsets = EdgeInsets(
+        top: Chalk.Space.xxs,
+        leading: Chalk.Space.sm + Chalk.Space.xxs,
+        bottom: Chalk.Space.xxs,
+        trailing: Chalk.Space.sm
+    )
 
     private var targetRepsText: String {
         let se = sessionExercise

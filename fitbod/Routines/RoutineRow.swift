@@ -22,8 +22,13 @@ public struct RoutineRow: View {
         self.onStart = onStart
     }
 
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+
     public var body: some View {
-        HStack(spacing: Chalk.Space.md) {
+        let layout = dynamicTypeSize.isAccessibilitySize
+            ? AnyLayout(VStackLayout(alignment: .leading, spacing: Chalk.Space.sm))
+            : AnyLayout(HStackLayout(spacing: Chalk.Space.md))
+        layout {
             Button(action: onOpen) {
                 VStack(alignment: .leading, spacing: Chalk.Space.xxs) {
                     Text(routine.name)

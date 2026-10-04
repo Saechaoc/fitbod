@@ -18,6 +18,7 @@ struct RoutineDetailView: View {
     @Environment(\.modelContext) private var ctx
     @Environment(AppRouter.self) private var router
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @Bindable var routine: Routine
 
     @Query(sort: \RoutineFolder.sortOrder) private var folders: [RoutineFolder]
@@ -167,11 +168,18 @@ struct RoutineDetailView: View {
                         Text(Self.meta(for: item))
                             .font(.chalkFootnote)
                             .foregroundStyle(.chalkInk2)
+                        if dynamicTypeSize.isAccessibilitySize {
+                            Text(Self.target(for: item))
+                                .font(.chalkMetric)
+                                .foregroundStyle(.chalkInk)
+                        }
                     }
                     Spacer(minLength: Chalk.Space.sm)
-                    Text(Self.target(for: item))
-                        .font(.chalkMetric)
-                        .foregroundStyle(.chalkInk)
+                    if !dynamicTypeSize.isAccessibilitySize {
+                        Text(Self.target(for: item))
+                            .font(.chalkMetric)
+                            .foregroundStyle(.chalkInk)
+                    }
                 }
                 .padding(.vertical, Chalk.Space.md)
                 .accessibilityElement(children: .combine)
