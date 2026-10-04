@@ -195,6 +195,18 @@ extension XCTestCase {
         XCTFail("No tappable dialog button \"\(label)\"", file: file, line: line)
     }
 
+    /// Dismisses the one-time iOS keyboard tip ("Speed up your typing by
+    /// sliding your finger…") that a fresh simulator shows over the first
+    /// text keyboard. It is system UI, not the app's, but it hides
+    /// whatever is behind it in a screenshot.
+    @MainActor
+    func dismissKeyboardTip(in app: XCUIApplication) {
+        let button = app.buttons["Continue"]
+        if button.waitForExistence(timeout: 1.5), button.isHittable {
+            button.tap()
+        }
+    }
+
     /// Dismisses the keyboard through the workout keyboard toolbar, or the
     /// keyboard's own return / search key.
     @MainActor

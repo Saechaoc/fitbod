@@ -118,6 +118,8 @@ final class WorkoutJourneyUITests: FitbodUITestCase {
 
             // The first added exercise opens expanded on its prescription.
             waitExists(app.element("builder.0.sets"))
+            dismissKeyboardTip(in: app)
+            dismissKeyboard(in: app)
             snapshot(app, "J09-routine-builder")
 
             waitHittable(app.buttons["builder.save"]).tap()
