@@ -159,6 +159,28 @@ struct WorkoutLogicTests {
         #expect(WorkoutLogging.workingSets(of: bench).count == 3)
     }
 
+    @Test("a logged weight carries into later empty sets, never over typed ones or bodyweight")
+    func weightCarriesForward() throws {
+        let fx = try makeFixture()
+        let session = try SessionFactory.start(routine: fx.routine, on: start, context: fx.context)
+        let bench = WorkoutLogging.workingSets(of: try exercise(session, named: "Barbell Bench Press"))
+        bench[2].weight = 195                     // typed ahead of time
+        bench[0].weight = 185
+        bench[0].reps = 5
+        WorkoutLogging.complete(bench[0], equipment: .barbell, context: fx.context)
+        #expect(bench[1].weight == 185)
+        #expect(bench[1].reps == 0)                // reps are still the lifter's to enter
+        #expect(bench[1].isComplete == false)
+        #expect(bench[2].weight == 195)
+
+        // Bodyweight lifts: 0 means bodyweight, so nothing is carried.
+        let pullups = WorkoutLogging.workingSets(of: try exercise(session, named: "Pullups"))
+        pullups[0].weight = 25
+        pullups[0].reps = 8
+        WorkoutLogging.complete(pullups[0], equipment: .bodyweight, context: fx.context)
+        #expect(pullups[1].weight == 0)
+    }
+
     // MARK: - Previous performance
 
     @Test("previous performance comes from the last earlier workout, never the one in progress")

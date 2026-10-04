@@ -19,7 +19,7 @@ class FitbodUITestCase: XCTestCase {
     }
 
     override func tearDownWithError() throws {
-        if let run = testRun, !run.hasSucceeded {
+        if let run = testRun, run.totalFailureCount > 0 {
             MainActor.assumeIsolated {
                 let shot = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
                 shot.name = "FAILURE-\(name)"

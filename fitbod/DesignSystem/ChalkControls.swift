@@ -56,6 +56,7 @@ public struct ChalkChip: View {
             .textCase(.uppercase)
             .tracking(Chalk.Tracking.label)
             .lineLimit(1)
+            .minimumScaleFactor(0.8)
             .foregroundStyle(isSelected ? Color.chalkCanvas : Color.chalkInk)
             .padding(.horizontal, Chalk.Space.md)
             .frame(minHeight: Chalk.Size.chip)

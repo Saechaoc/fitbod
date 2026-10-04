@@ -149,8 +149,7 @@ public struct RoutinesListView: View {
                 if !activeSessions.isEmpty {
                     Section {
                         resumeCard
-                            .listRowInsets(EdgeInsets())
-                            .listRowBackground(Color.clear)
+                            .chalkBareListRow()
                     }
                 }
                 ForEach(sections) { section in

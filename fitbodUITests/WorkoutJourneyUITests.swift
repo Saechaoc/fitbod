@@ -150,13 +150,12 @@ final class WorkoutJourneyUITests: FitbodUITestCase {
             waitExists(app.element("set.0.1.error"))
             snapshot(app, "J13-set-validation-error")
 
+            // Set 1's weight was carried forward; only reps are missing.
+            XCTAssertEqual(app.textFields["set.0.1.weight"].value as? String, "225")
             let reps1 = app.textFields["set.0.1.reps"]
             revealAndTap(reps1, in: app)
             reps1.typeText("5")
-            let weight1 = app.textFields["set.0.1.weight"]
-            weight1.tap()
-            weight1.typeText("225")
-            waitHittable(app.buttons["set.0.1.complete"]).tap()
+            revealAndTap(app.buttons["set.0.1.complete"], in: app)
             XCTAssertEqual(app.buttons["set.0.1.complete"].value as? String, "complete")
             dismissKeyboard(in: app)
         }
@@ -218,8 +217,11 @@ final class WorkoutJourneyUITests: FitbodUITestCase {
             app.tabBars.buttons["Today"].tap()
             waitHittable(app.buttons["today.start.Upper A v2"]).tap()
             waitExists(app.element("workout.title"), timeout: 20)
-            let previous = waitExists(app.buttons["set.0.0.previous"])
-            if !previous.isHittable { reveal(previous, in: app) }
+            // Warm-up rows can push the first working set below the fold
+            // (and lazy lists only create rows that are near the screen).
+            let previous = app.buttons["set.0.0.previous"]
+            if !previous.exists || !previous.isHittable { reveal(previous, in: app) }
+            waitExists(previous)
             XCTAssertTrue(previous.label.contains("225"), previous.label)
             snapshot(app, "J19-previous-performance")
             waitHittable(previous).tap()

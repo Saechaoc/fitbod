@@ -305,6 +305,22 @@ extension View {
             .foregroundStyle(color)
     }
 
+    /// A list row that brings its own chrome (a field, message, panel,
+    /// chip grid or full-width button) and sits on the canvas instead of a
+    /// cell. The insets keep content clear of the inset-grouped section's
+    /// rounded corner mask, which otherwise clips the first letter of a
+    /// label or the corners of a banner.
+    public func chalkBareListRow() -> some View {
+        self
+            .listRowInsets(EdgeInsets(
+                top: Chalk.Space.md,
+                leading: Chalk.Space.xs + Chalk.Space.xxs,
+                bottom: Chalk.Space.md,
+                trailing: Chalk.Space.xs + Chalk.Space.xxs
+            ))
+            .listRowBackground(Color.clear)
+    }
+
     /// Paper canvas behind a scrolling container (List / ScrollView).
     public func chalkCanvasBackground() -> some View {
         self

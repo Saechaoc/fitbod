@@ -67,8 +67,7 @@ public struct SessionLoggerView: View {
             List {
                 Section {
                     WorkoutHeaderPanel(session: session, unitLabel: unitLabel)
-                        .listRowInsets(EdgeInsets())
-                        .listRowBackground(Color.clear)
+                        .chalkBareListRow()
                 }
 
                 if sortedExercises.isEmpty {
@@ -78,8 +77,7 @@ public struct SessionLoggerView: View {
                             title: "No exercises",
                             message: "Add an exercise to keep logging, or discard this workout from the ⋯ menu."
                         )
-                        .listRowInsets(EdgeInsets())
-                        .listRowBackground(Color.clear)
+                        .chalkBareListRow()
                     }
                 }
 
@@ -125,7 +123,11 @@ public struct SessionLoggerView: View {
             .chalkCanvasBackground()
             .scrollDismissesKeyboard(.interactively)
             .safeAreaInset(edge: .bottom, spacing: 0) {
-                RestTimerDock(engine: restTimer)
+                // Out of the way while a number is being typed: on small
+                // iPhones the dock would otherwise cover the row in focus.
+                if focusedField == nil {
+                    RestTimerDock(engine: restTimer)
+                }
             }
             .animation(.easeInOut(duration: Chalk.Motion.standard), value: restTimer.isRunning)
             .navigationTitle("WORKOUT")

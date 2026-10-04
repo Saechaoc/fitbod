@@ -306,7 +306,11 @@ public struct SessionExerciseCard: View {
                 } else {
                     HStack(spacing: SetTableMetrics.spacing) {
                         Text("Set").frame(width: metrics.setWidth)
-                        Text("Previous").frame(maxWidth: .infinity, alignment: .leading)
+                        ViewThatFits(in: .horizontal) {
+                            Text("Previous")
+                            Text("Prev")
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
                         Text(unitLabel).frame(width: metrics.weightWidth)
                         Text("Reps").frame(width: metrics.repsWidth)
                         Text("RPE").frame(width: metrics.rpeWidth)

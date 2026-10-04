@@ -45,8 +45,7 @@ struct CustomExerciseEditor: View {
                     ChalkInlineMessage(summary, kind: .error)
                         .accessibilityIdentifier("custom.errorSummary")
                 }
-                .listRowInsets(EdgeInsets())
-                .listRowBackground(Color.clear)
+                .chalkBareListRow()
             }
 
             Section {
@@ -59,11 +58,10 @@ struct CustomExerciseEditor: View {
                     identifier: "custom.name"
                 )
             }
-            .listRowInsets(EdgeInsets())
-            .listRowBackground(Color.clear)
+            .chalkBareListRow()
 
             Section {
-                LazyVGrid(columns: [GridItem(.adaptive(minimum: 100), spacing: Chalk.Space.sm)], spacing: Chalk.Space.sm) {
+                LazyVGrid(columns: [GridItem(.adaptive(minimum: 150), spacing: Chalk.Space.sm)], spacing: Chalk.Space.sm) {
                     ForEach(Equipment.allCases, id: \.self) { equipment in
                         ChalkChip(ExerciseRow.equipmentName(equipment.rawValue), isSelected: draft.equipment == equipment) {
                             draft.equipment = equipment
@@ -72,8 +70,7 @@ struct CustomExerciseEditor: View {
                     }
                 }
                 .padding(.vertical, Chalk.Space.xs)
-                .listRowBackground(Color.clear)
-                .listRowInsets(EdgeInsets())
+                .chalkBareListRow()
             } header: {
                 Text("Equipment").chalkLabelStyle()
             }
@@ -85,8 +82,7 @@ struct CustomExerciseEditor: View {
                     }
                 }
                 .pickerStyle(.segmented)
-                .listRowBackground(Color.clear)
-                .listRowInsets(EdgeInsets())
+                .chalkBareListRow()
             } header: {
                 Text("Mechanic").chalkLabelStyle()
             }
@@ -135,8 +131,7 @@ struct CustomExerciseEditor: View {
                         presentingDeleteConfirmation = true
                     }
                     .buttonStyle(.chalk(.destructive, fullWidth: true))
-                    .listRowBackground(Color.clear)
-                    .listRowInsets(EdgeInsets())
+                    .chalkBareListRow()
                     .accessibilityIdentifier("custom.delete")
                 }
             }

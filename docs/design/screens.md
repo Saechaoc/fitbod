@@ -139,12 +139,14 @@ weight.
 |---|---|
 | Open / next | Sunken fields; the next set has an accent ring on ✓. |
 | Validation error | ✓ on a set without reps (or without weight on a loaded lift) → nothing is saved; danger ring on the missing field, "Enter reps to complete set 2." (`.error`), error haptic, VoiceOver announcement, focus jumps to the field. |
-| Completed | Row tints `complete`, filled ink ✓, success haptic, set saved immediately, **rest starts**. |
+| Completed | Row tints `complete`, filled ink ✓, success haptic, set saved immediately, **rest starts**. Later open sets of the exercise that have no weight yet take the logged weight, so the next set needs only reps (not for bodyweight lifts, where 0 means bodyweight). |
 | Delete | Swipe left → Delete set. Long-press → set type, note, edit, delete. |
 | Large text | When the row can't fit on one line it stacks into labelled lines ("SET 2" + previous / LB + REPS / RPE + ✓) and the column labels collapse to "SETS". |
 
 **Rest timer:** completing a working set starts rest for the exercise's
-prescribed time. The dock (`rest.dock`) shows "Rest · Barbell Squat",
+prescribed time. The dock (`rest.dock`) steps aside while a number is being
+typed (it would cover the focused row on small iPhones) and shows "Rest ·
+Barbell Squat",
 the countdown (`rest.remaining`), **−15** / **+15** / **Skip**; past zero it
 counts up in accent ("Rest done +0:18") with one success haptic and the
 button becomes **Done**. Tapping the countdown opens the rest sheet (big

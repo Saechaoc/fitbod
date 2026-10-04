@@ -113,7 +113,9 @@ public struct ExerciseLibraryView: View {
             .padding(.horizontal, Chalk.Space.gutter)
             .padding(.top, Chalk.Space.xs)
             .padding(.bottom, Chalk.Space.sm)
-            .background(Color.chalkCanvas)
+            // Only behind the header itself: a background extending into the
+            // top safe area (the default) paints over the large title.
+            .background(Color.chalkCanvas, ignoresSafeAreaEdges: [])
         }
         .task(id: searchText) {
             try? await Task.sleep(for: .milliseconds(150))

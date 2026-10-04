@@ -58,8 +58,7 @@ public struct RoutineBuilderView: View {
                     ChalkInlineMessage(summary, kind: .error)
                         .accessibilityIdentifier("builder.errorSummary")
                 }
-                .listRowInsets(EdgeInsets())
-                .listRowBackground(Color.clear)
+                .chalkBareListRow()
             }
 
             Section {
@@ -72,8 +71,7 @@ public struct RoutineBuilderView: View {
                     identifier: "builder.name"
                 )
             }
-            .listRowInsets(EdgeInsets())
-            .listRowBackground(Color.clear)
+            .chalkBareListRow()
 
             Section {
                 if draft.exercises.isEmpty {
@@ -117,14 +115,12 @@ public struct RoutineBuilderView: View {
                     Label("Add exercises", systemImage: "plus")
                 }
                 .buttonStyle(.chalk(.secondary, fullWidth: true))
-                .listRowBackground(Color.clear)
-                .listRowInsets(EdgeInsets(top: Chalk.Space.sm, leading: 0, bottom: Chalk.Space.sm, trailing: 0))
+                .chalkBareListRow()
                 .accessibilityIdentifier("builder.addExercises")
 
                 if showErrors && draft.issues.contains(.noExercises) {
                     ChalkValidationText(RoutineDraft.Issue.noExercises.message)
-                        .listRowBackground(Color.clear)
-                        .listRowInsets(EdgeInsets())
+                        .chalkBareListRow()
                         .accessibilityIdentifier("builder.exercisesError")
                 }
             } header: {

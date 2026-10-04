@@ -69,8 +69,23 @@ public enum WorkoutLogging {
         guard result == .ok else { return result }
         entry.isComplete = true
         entry.completedAt = now
+        if !allowsZeroOrNegativeWeight(equipment) {
+            carryWeightForward(from: entry)
+        }
         try? context.save()
         return .ok
+    }
+
+    /// After a working set is logged, open working sets later in the same
+    /// exercise that still have no weight start from the logged weight, so
+    /// the next set only needs reps. Typed or planned weights are kept.
+    /// (Not for bodyweight lifts, where 0 means "bodyweight".)
+    static func carryWeightForward(from entry: SetEntry) {
+        guard !entry.isWarmup, entry.weight > 0, let sessionExercise = entry.sessionExercise else { return }
+        for later in workingSets(of: sessionExercise)
+        where !later.isComplete && later.orderIndex > entry.orderIndex && later.weight == 0 {
+            later.weight = entry.weight
+        }
     }
 
     /// Re-opens a completed set for editing.
