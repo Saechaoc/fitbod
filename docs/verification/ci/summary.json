@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-04T06:37:00+00:00",
+  "generatedAt": "2026-10-04T07:07:38+00:00",
   "xcode": "Xcode 26.6 Build version 17F113",
   "runtime": "iOS 26.5",
   "devices": {
@@ -19,22 +19,22 @@
         {
           "name": "LayoutAuditUITests \u203a testTourAccessibilityText()",
           "result": "Passed",
-          "duration": 276.0209939479828
+          "duration": 316.81685197353363
         },
         {
           "name": "LayoutAuditUITests \u203a testTourDarkLargestText()",
           "result": "Passed",
-          "duration": 182.24031102657318
+          "duration": 149.3402349948883
         },
         {
           "name": "LayoutAuditUITests \u203a testTourDefaultText()",
           "result": "Passed",
-          "duration": 144.3536080121994
+          "duration": 114.64247500896454
         },
         {
           "name": "WorkoutJourneyUITests \u203a testEndToEndWorkoutJourneySurvivesRelaunch()",
           "result": "Passed",
-          "duration": 290.33417904376984
+          "duration": 236.30280089378357
         }
       ],
       "screenshots": [
@@ -111,105 +111,14 @@
     },
     {
       "label": "ui-small",
-      "result": "Passed",
-      "total": 4,
-      "passed": 4,
+      "result": "unknown",
+      "total": 0,
+      "passed": 0,
       "failed": 0,
       "skipped": 0,
       "failures": [],
-      "tests": [
-        {
-          "name": "LayoutAuditUITests \u203a testTourAccessibilityText()",
-          "result": "Passed",
-          "duration": 374.4378910064697
-        },
-        {
-          "name": "LayoutAuditUITests \u203a testTourDarkLargestText()",
-          "result": "Passed",
-          "duration": 233.02979803085327
-        },
-        {
-          "name": "LayoutAuditUITests \u203a testTourDefaultText()",
-          "result": "Passed",
-          "duration": 206.52152299880981
-        },
-        {
-          "name": "WorkoutJourneyUITests \u203a testEndToEndWorkoutJourneySurvivesRelaunch()",
-          "result": "Passed",
-          "duration": 380.1559090614319
-        }
-      ],
-      "screenshots": [
-        "A01-today.png",
-        "A02-routines.png",
-        "A03-routine-detail.png",
-        "A04-library.png",
-        "A05-exercise-detail.png",
-        "A06-history.png",
-        "A07-history-detail.png",
-        "A08-settings.png",
-        "A09-gallery-1.png",
-        "A09-gallery-2.png",
-        "A09-gallery-3.png",
-        "A09-gallery-4.png",
-        "A10-workout.png",
-        "A11-set-row-ready.png",
-        "A12-rest-dock.png",
-        "A13-rest-sheet.png",
-        "B-ax01-today.png",
-        "B-ax02-routines.png",
-        "B-ax03-routine-detail.png",
-        "B-ax04-library.png",
-        "B-ax05-exercise-detail.png",
-        "B-ax06-history.png",
-        "B-ax07-history-detail.png",
-        "B-ax08-settings.png",
-        "B-ax09-gallery-1.png",
-        "B-ax09-gallery-2.png",
-        "B-ax09-gallery-3.png",
-        "B-ax09-gallery-4.png",
-        "B-ax10-workout.png",
-        "B-ax11-set-row-ready.png",
-        "B-ax12-rest-dock.png",
-        "B-ax13-rest-sheet.png",
-        "C-dark01-today.png",
-        "C-dark02-routines.png",
-        "C-dark03-routine-detail.png",
-        "C-dark04-library.png",
-        "C-dark05-exercise-detail.png",
-        "C-dark06-history.png",
-        "C-dark07-history-detail.png",
-        "C-dark08-settings.png",
-        "C-dark09-gallery-1.png",
-        "C-dark09-gallery-2.png",
-        "C-dark09-gallery-3.png",
-        "C-dark09-gallery-4.png",
-        "C-dark10-workout.png",
-        "C-dark11-set-row-ready.png",
-        "C-dark12-rest-dock.png",
-        "C-dark13-rest-sheet.png",
-        "J00-today-first-launch.png",
-        "J01-library-search.png",
-        "J02-library-filtered.png",
-        "J03-exercise-detail.png",
-        "J04-library-no-match.png",
-        "J05-custom-exercise-validation.png",
-        "J06-custom-exercise-saved.png",
-        "J07-routines-empty.png",
-        "J08-routine-validation.png",
-        "J09-routine-builder.png",
-        "J10-routines-list.png",
-        "J11-workout-start.png",
-        "J12-set-logged-rest-timer.png",
-        "J13-set-validation-error.png",
-        "J14-relaunch-resumed.png",
-        "J15-summary.png",
-        "J16-history.png",
-        "J17-history-detail.png",
-        "J18-history-after-rename.png",
-        "J19-previous-performance.png",
-        "J20-today-after-discard.png"
-      ]
+      "tests": [],
+      "screenshots": []
     },
     {
       "label": "unit",
@@ -223,1377 +132,1377 @@
         {
           "name": "ActiveSessionConflict \u203a firstStartSucceeds \u2014 no active session exists \u2192 start returns a Session with completedAt == nil",
           "result": "Passed",
-          "duration": 0.1004629135131836
+          "duration": 0.09607100486755371
         },
         {
           "name": "ActiveSessionConflict \u203a secondStartThrowsActiveSessionAlreadyExists \u2014 RESEARCH \u00a76 Pitfall 7",
           "result": "Passed",
-          "duration": 0.015984058380126953
+          "duration": 0.018172025680541992
         },
         {
           "name": "ActiveSessionConflict \u203a startAfterFinishingPriorSessionSucceeds \u2014 finished sessions don't count as active",
           "result": "Passed",
-          "duration": 0.037709951400756836
+          "duration": 0.03329777717590332
         },
         {
           "name": "ActiveSessionConflict \u203a startAfterDiscardingPriorSessionSucceeds \u2014 discard branch of the conflict alert",
           "result": "Passed",
-          "duration": 0.035778045654296875
+          "duration": 0.12457799911499023
         },
         {
           "name": "AddUnplannedExercise \u203a appendsSessionExerciseToActiveSession \u2014 SE.orderIndex past existing count",
           "result": "Passed",
-          "duration": 0.5747809410095215
+          "duration": 0.023363113403320312
         },
         {
           "name": "AddUnplannedExercise \u203a doesNotMutateSourceRoutine \u2014 appending only affects session.exercises",
           "result": "Passed",
-          "duration": 0.02460312843322754
+          "duration": 0.01776599884033203
         },
         {
           "name": "AddUnplannedExercise \u203a seedsThreeDefaultSetsWithMatchingIntentHint \u2014 3 planned sets at hint weight",
           "result": "Passed",
-          "duration": 0.02821493148803711
+          "duration": 0.48920583724975586
         },
         {
           "name": "CascadeRules \u203a deleting an Exercise cascades into its ExerciseMuscleStimulus rows",
           "result": "Passed",
-          "duration": 0.0209200382232666
+          "duration": 0.02790689468383789
         },
         {
           "name": "CascadeRules \u203a deleting an Exercise NULLIFIES the linked SessionExercise.exercise (LIB-05)",
           "result": "Passed",
-          "duration": 0.09585881233215332
+          "duration": 0.019912004470825195
         },
         {
           "name": "CascadeRules \u203a deleting a Session cascades into SessionExercise and SetEntry rows",
           "result": "Passed",
-          "duration": 0.024863004684448242
+          "duration": 0.016477108001708984
         },
         {
           "name": "CascadeRules \u203a deleting a Routine cascades into its RoutineExercise rows",
           "result": "Passed",
-          "duration": 0.01289510726928711
+          "duration": 4.342489957809448
         },
         {
           "name": "Chalkline tokens \u203a every text pair is at least 4.5:1 in light, dark and Increase Contrast",
           "result": "Passed",
-          "duration": 0.00031185150146484375
+          "duration": 0.0046558380126953125
         },
         {
           "name": "Chalkline tokens \u203a the accent fill is at least 3:1 against paper",
           "result": "Passed",
-          "duration": 0.0006959438323974609
+          "duration": 0.00044798851013183594
         },
         {
           "name": "Chalkline tokens \u203a Increase Contrast never lowers a secondary ink's contrast",
           "result": "Passed",
-          "duration": 0.07020783424377441
+          "duration": 0.0004968643188476562
         },
         {
           "name": "Chalkline tokens \u203a durations, clocks, weights, RPE and volume",
           "result": "Passed",
-          "duration": 0.0004210472106933594
+          "duration": 0.012201070785522461
         },
         {
           "name": "Chalkline tokens \u203a the set table needs 320 pt at default text \u2014 and fits a 375 pt iPhone row",
           "result": "Passed",
-          "duration": 0.0005280971527099609
+          "duration": 0.0007569789886474609
         },
         {
           "name": "CustomExerciseDraft validation (LIB-04 / FOUND-07 / PITFALLS #5) \u203a Empty name \u2192 invalid",
           "result": "Passed",
-          "duration": 0.00015211105346679688
+          "duration": 0.0008928775787353516
         },
         {
           "name": "CustomExerciseDraft validation (LIB-04 / FOUND-07 / PITFALLS #5) \u203a Whitespace-only name \u2192 invalid",
           "result": "Passed",
-          "duration": 6.699562072753906e-05
+          "duration": 0.0002040863037109375
         },
         {
           "name": "CustomExerciseDraft validation (LIB-04 / FOUND-07 / PITFALLS #5) \u203a No muscles \u2192 invalid",
           "result": "Passed",
-          "duration": 0.019721031188964844
+          "duration": 0.00033092498779296875
         },
         {
           "name": "CustomExerciseDraft validation (LIB-04 / FOUND-07 / PITFALLS #5) \u203a Only secondary muscle \u2192 invalid (PITFALLS #5)",
           "result": "Passed",
-          "duration": 0.00018405914306640625
+          "duration": 5.762665033340454
         },
         {
           "name": "CustomExerciseDraft validation (LIB-04 / FOUND-07 / PITFALLS #5) \u203a Primary muscle with weight < 0.5 \u2192 invalid",
           "result": "Passed",
-          "duration": 0.0001430511474609375
+          "duration": 0.001230001449584961
         },
         {
           "name": "CustomExerciseDraft validation (LIB-04 / FOUND-07 / PITFALLS #5) \u203a Name + primary muscle (weight=0.5) \u2192 valid (threshold)",
           "result": "Passed",
-          "duration": 0.0001010894775390625
+          "duration": 0.0007581710815429688
         },
         {
           "name": "CustomExerciseDraft validation (LIB-04 / FOUND-07 / PITFALLS #5) \u203a Name + primary muscle (weight=1.0) \u2192 valid (full)",
           "result": "Passed",
-          "duration": 0.00010395050048828125
+          "duration": 0.0004570484161376953
         },
         {
           "name": "CustomExerciseDraft validation (LIB-04 / FOUND-07 / PITFALLS #5) \u203a Multiple primaries \u2192 still valid",
           "result": "Passed",
-          "duration": 0.028848886489868164
+          "duration": 0.00045990943908691406
         },
         {
           "name": "CustomExerciseDraft validation (LIB-04 / FOUND-07 / PITFALLS #5) \u203a Materialize inserts Exercise + stimulus rows with isCustom=true",
           "result": "Passed",
-          "duration": 0.024431943893432617
+          "duration": 2.2819318771362305
         },
         {
           "name": "CustomExerciseDraft validation (LIB-04 / FOUND-07 / PITFALLS #5) \u203a Snapshot equality detects dirty state",
           "result": "Passed",
-          "duration": 0.00037097930908203125
+          "duration": 0.0031020641326904297
         },
         {
           "name": "Exercise \u2192 SessionExercise nullify on delete (LIB-05 \u2014 editor surface) \u203a Deleting a custom Exercise nullifies any SessionExercise reference (LIB-05)",
           "result": "Passed",
-          "duration": 0.021116971969604492
+          "duration": 0.03461098670959473
         },
         {
           "name": "ExerciseDTO decoding \u203a Bundled exercises.json decodes into [ExerciseDTO]",
           "result": "Passed",
-          "duration": 0.02089715003967285
+          "duration": 1.5269370079040527
         },
         {
           "name": "ExerciseDTO decoding \u203a Strength filter retains at least 600 exercises",
           "result": "Passed",
-          "duration": 0.015803098678588867
+          "duration": 0.009368896484375
         },
         {
           "name": "ExerciseDTO decoding \u203a SEED_VERSION.txt is bundled and equals 2",
           "result": "Passed",
-          "duration": 0.0009698867797851562
+          "duration": 0.0012090206146240234
         },
         {
           "name": "ExerciseDTO decoding \u203a EquipmentMapper covers the 12 known dataset values + nil + empty",
           "result": "Passed",
-          "duration": 0.014367628097534179
+          "duration": 1.6332236607869466
         },
         {
           "name": "ExerciseDTO decoding \u203a EquipmentMapper handles nil input",
           "result": "Passed",
-          "duration": 0.00010704994201660156
+          "duration": 0.003108978271484375
         },
         {
           "name": "ExerciseDTO decoding \u203a EquipmentMapper covers every raw equipment value in the bundled dataset",
           "result": "Passed",
-          "duration": 0.053340911865234375
+          "duration": 0.022164106369018555
         },
         {
           "name": "ExerciseDTO decoding \u203a Region map handles all 17 dataset slugs",
           "result": "Passed",
-          "duration": 0.00018405914306640625
+          "duration": 0.050009965896606445
         },
         {
           "name": "ExerciseDTO decoding \u203a Region map bucket sizes match RESEARCH Open Q #3 (10/6/1)",
           "result": "Passed",
-          "duration": 8.606910705566406e-05
+          "duration": 0.00047206878662109375
         },
         {
           "name": "ExerciseDTO decoding \u203a Display names handle multi-word slugs and special cases",
           "result": "Passed",
-          "duration": 0.00011110305786132812
+          "duration": 0.0008292198181152344
         },
         {
           "name": "ExerciseDTO decoding \u203a ExerciseDTO round-trips through JSONEncoder/JSONDecoder",
           "result": "Passed",
-          "duration": 0.00015306472778320312
+          "duration": 0.0013670921325683594
         },
         {
           "name": "DoubleProgressionStrategy \u203a bumpWhenAllSetsHitTopOfRange",
           "result": "Passed",
-          "duration": 0.0011301040649414062
+          "duration": 0.9214439392089844
         },
         {
           "name": "DoubleProgressionStrategy \u203a noBumpWhenAnySetMissesTop",
           "result": "Passed",
-          "duration": 0.00015616416931152344
+          "duration": 0.0006339550018310547
         },
         {
           "name": "DoubleProgressionStrategy \u203a noBumpWhenWarmupsExcluded",
           "result": "Passed",
-          "duration": 8.392333984375e-05
+          "duration": 0.0003612041473388672
         },
         {
           "name": "DoubleProgressionStrategy \u203a noBumpFirstSessionUsesPriorHint",
           "result": "Passed",
-          "duration": 9.703636169433594e-05
+          "duration": 0.00074005126953125
         },
         {
           "name": "DoubleProgressionStrategy \u203a smallestIncrementHonored",
           "result": "Passed",
-          "duration": 8.58306884765625e-05
+          "duration": 0.0002071857452392578
         },
         {
           "name": "EmptyLibraryView copy selection (UI-SPEC \u00a7 Empty states) \u203a Empty searchText \u2192 'No exercises match' + 'Clear filters'",
           "result": "Passed",
-          "duration": 0.000186920166015625
+          "duration": 0.6756370067596436
         },
         {
           "name": "EmptyLibraryView copy selection (UI-SPEC \u00a7 Empty states) \u203a Non-empty searchText \u2192 'No exercises match \"X\"' + 'Create Custom Exercise'",
           "result": "Passed",
-          "duration": 0.0003190040588378906
+          "duration": 0.0002288818359375
         },
         {
           "name": "EmptyLibraryView copy selection (UI-SPEC \u00a7 Empty states) \u203a Whitespace-only searchText is a valid no-query input shape",
           "result": "Passed",
-          "duration": 0.0001461505889892578
+          "duration": 0.0004220008850097656
         },
         {
           "name": "EnumPersistence \u203a Equipment cases round-trip through Exercise.equipmentRaw",
           "result": "Passed",
-          "duration": 0.029374652438693576
+          "duration": 0.02356190151638455
         },
         {
           "name": "EnumPersistence \u203a Mechanic cases round-trip through Exercise.mechanicRaw",
           "result": "Passed",
-          "duration": 0.01373755931854248
+          "duration": 0.011610031127929688
         },
         {
           "name": "EnumPersistence \u203a Force cases round-trip through Exercise.forceRaw",
           "result": "Passed",
-          "duration": 0.023091713587443035
+          "duration": 0.055430332819620766
         },
         {
           "name": "EnumPersistence \u203a Level cases round-trip through Exercise.levelRaw",
           "result": "Passed",
-          "duration": 0.014429330825805664
+          "duration": 0.1256426970163981
         },
         {
           "name": "EnumPersistence \u203a Pattern cases round-trip through Exercise.patternRaw",
           "result": "Passed",
-          "duration": 0.022888686921861436
+          "duration": 0.011163128746880425
         },
         {
           "name": "EnumPersistence \u203a Intent cases round-trip through SessionExercise.intentRaw",
           "result": "Passed",
-          "duration": 0.009999227523803712
+          "duration": 0.012839269638061524
         },
         {
           "name": "EnumPersistence \u203a ProgressionKind cases round-trip through SessionExercise.progressionKindRaw",
           "result": "Passed",
-          "duration": 0.010799169540405273
+          "duration": 0.010561704635620117
         },
         {
           "name": "EnumPersistence \u203a MuscleRegion cases round-trip through MuscleGroup.regionRaw",
           "result": "Passed",
-          "duration": 0.04774061838785807
+          "duration": 0.009731292724609375
         },
         {
           "name": "EnumPersistence \u203a WeightUnit cases round-trip through UserSettings.unitsRaw",
           "result": "Passed",
-          "duration": 0.011406540870666504
+          "duration": 0.02336752414703369
         },
         {
           "name": "EnumPersistence \u203a BlockPhaseKind cases round-trip through BlockPhase.nameRaw",
           "result": "Passed",
-          "duration": 0.012631237506866455
+          "duration": 0.01672297716140747
         },
         {
           "name": "EnumPersistence \u203a SetType cases round-trip through SetEntry.setTypeRaw",
           "result": "Passed",
-          "duration": 0.0121307373046875
+          "duration": 0.011001825332641602
         },
         {
           "name": "Enums \u203a Intent has exactly 5 cases",
           "result": "Passed",
-          "duration": 0.0001900196075439453
+          "duration": 0.1073617935180664
         },
         {
           "name": "Enums \u203a ProgressionKind has exactly 4 cases",
           "result": "Passed",
-          "duration": 0.00011014938354492188
+          "duration": 0.0005469322204589844
         },
         {
           "name": "Enums \u203a Equipment has exactly 9 cases (LIB-06)",
           "result": "Passed",
-          "duration": 0.0002999305725097656
+          "duration": 0.00018715858459472656
         },
         {
           "name": "Enums \u203a Mechanic has exactly 2 cases",
           "result": "Passed",
-          "duration": 0.06371021270751953
+          "duration": 0.000141143798828125
         },
         {
           "name": "Enums \u203a Force has exactly 3 cases",
           "result": "Passed",
-          "duration": 0.00049591064453125
+          "duration": 0.00017690658569335938
         },
         {
           "name": "Enums \u203a Level has exactly 3 cases",
           "result": "Passed",
-          "duration": 0.00015306472778320312
+          "duration": 8.893013000488281e-05
         },
         {
           "name": "Enums \u203a Pattern has exactly 9 cases",
           "result": "Passed",
-          "duration": 0.00010800361633300781
+          "duration": 0.00011110305786132812
         },
         {
           "name": "Enums \u203a MuscleRegion has exactly 3 cases",
           "result": "Passed",
-          "duration": 0.00012302398681640625
+          "duration": 0.052884817123413086
         },
         {
           "name": "Enums \u203a WeightUnit has exactly 2 cases",
           "result": "Passed",
-          "duration": 0.0002570152282714844
+          "duration": 0.0005180835723876953
         },
         {
           "name": "Enums \u203a BlockPhaseKind has exactly 4 cases",
           "result": "Passed",
-          "duration": 0.0002071857452392578
+          "duration": 0.00022077560424804688
         },
         {
           "name": "Enums \u203a SetType has exactly 5 cases",
           "result": "Passed",
-          "duration": 0.07793998718261719
+          "duration": 0.0001671314239501953
         },
         {
           "name": "Enums \u203a Every enum's static `default` is one of its cases",
           "result": "Passed",
-          "duration": 0.0001430511474609375
+          "duration": 0.00014591217041015625
         },
         {
           "name": "ExerciseHistoryIntentSplit \u203a allFilterReturnsBoth \u2014 nil intent \u21d2 both Monday + Thursday visible",
           "result": "Passed",
-          "duration": 0.05874490737915039
+          "duration": 0.10142803192138672
         },
         {
           "name": "ExerciseHistoryIntentSplit \u203a strengthFilterReturnsMondayOnly \u2014 ROUTINE-08 separates strength stream",
           "result": "Passed",
-          "duration": 0.022556066513061523
+          "duration": 0.014094114303588867
         },
         {
           "name": "ExerciseHistoryIntentSplit \u203a hypertrophyFilterReturnsThursdayOnly \u2014 ROUTINE-08 separates hypertrophy stream",
           "result": "Passed",
-          "duration": 0.05611014366149902
+          "duration": 0.0173189640045166
         },
         {
           "name": "ExerciseHistoryIntentSplit \u203a powerFilterReturnsEmpty \u2014 no power sessions logged \u21d2 empty result",
           "result": "Passed",
-          "duration": 0.010354995727539062
+          "duration": 0.013596057891845703
         },
         {
           "name": "ExerciseHistoryIntentSplit \u203a differentExerciseReturnsEmpty \u2014 predicate isolates per-exercise history",
           "result": "Passed",
-          "duration": 0.011982917785644531
+          "duration": 0.0961301326751709
         },
         {
           "name": "ExerciseHistoryIntentSplit \u203a incompleteSetsExcludedFromVisibleSets \u2014 view-layer filter pin",
           "result": "Passed",
-          "duration": 0.013948917388916016
+          "duration": 0.014544963836669922
         },
         {
           "name": "ExerciseHistoryViewCopy \u203a verbatimCopy \u2014 UI-SPEC \u00a7 Exercise history strings present in source",
           "result": "Passed",
-          "duration": 0.005856990814208984
+          "duration": 0.011495113372802734
         },
         {
           "name": "ExerciseLibraryPickerMode (plan 03-02 \u2014 RESEARCH \u00a7 Pattern 5) \u203a pickerInitCompilesAndInvokesClosure",
           "result": "Passed",
-          "duration": 0.0007271766662597656
+          "duration": 0.05882000923156738
         },
         {
           "name": "ExerciseLibraryPickerMode (plan 03-02 \u2014 RESEARCH \u00a7 Pattern 5) \u203a defaultInitStillExists",
           "result": "Passed",
-          "duration": 0.0005490779876708984
+          "duration": 0.0005228519439697266
         },
         {
           "name": "ExerciseStore + DemoData (milestone 1) \u203a deleting a custom exercise keeps history, removes routine lines, renumbers",
           "result": "Passed",
-          "duration": 0.08724594116210938
+          "duration": 0.03893089294433594
         },
         {
           "name": "ExerciseStore + DemoData (milestone 1) \u203a demo history: finished workouts with climbing weights, seeded once",
           "result": "Passed",
-          "duration": 0.06056022644042969
+          "duration": 0.04057502746582031
         },
         {
           "name": "ExerciseStore + DemoData (milestone 1) \u203a demo history needs a library",
           "result": "Passed",
-          "duration": 0.016134977340698242
+          "duration": 0.007151126861572266
         },
         {
           "name": "FilterState.swiftDataPredicate(with:) + applyPostFetchFilters(to:) \u203a Empty filter returns every exercise",
           "result": "Passed",
-          "duration": 0.013281106948852539
+          "duration": 0.012386083602905273
         },
         {
           "name": "FilterState.swiftDataPredicate(with:) + applyPostFetchFilters(to:) \u203a Search 'bench' returns only Bench Press",
           "result": "Passed",
-          "duration": 0.030337095260620117
+          "duration": 0.018270015716552734
         },
         {
           "name": "FilterState.swiftDataPredicate(with:) + applyPostFetchFilters(to:) \u203a SwiftData predicate applies search before post-fetch muscle filtering",
           "result": "Passed",
-          "duration": 0.010120868682861328
+          "duration": 0.015111923217773438
         },
         {
           "name": "FilterState.swiftDataPredicate(with:) + applyPostFetchFilters(to:) \u203a Equipment=dumbbell returns Dumbbell Curl only",
           "result": "Passed",
-          "duration": 0.010982036590576172
+          "duration": 0.013861894607543945
         },
         {
           "name": "FilterState.swiftDataPredicate(with:) + applyPostFetchFilters(to:) \u203a Mechanic=isolation returns Dumbbell Curl only",
           "result": "Passed",
-          "duration": 0.01538395881652832
+          "duration": 0.016742944717407227
         },
         {
           "name": "FilterState.swiftDataPredicate(with:) + applyPostFetchFilters(to:) \u203a Muscle=chest returns Bench Press only (denormalized slug match)",
           "result": "Passed",
-          "duration": 0.009810924530029297
+          "duration": 0.09025907516479492
         },
         {
           "name": "FilterState.swiftDataPredicate(with:) + applyPostFetchFilters(to:) \u203a Equipment=barbell AND Mechanic=compound returns Bench + Squat",
           "result": "Passed",
-          "duration": 0.08662295341491699
+          "duration": 0.02099299430847168
         },
         {
           "name": "FilterState.swiftDataPredicate(with:) + applyPostFetchFilters(to:) \u203a Multi-select within muscle facet ORs: chest+biceps \u2192 2 rows",
           "result": "Passed",
-          "duration": 0.014185905456542969
+          "duration": 0.012901067733764648
         },
         {
           "name": "FilterState.swiftDataPredicate(with:) + applyPostFetchFilters(to:) \u203a Facet selections do not constrain the SwiftData fetch",
           "result": "Passed",
-          "duration": 0.01271200180053711
+          "duration": 0.011619091033935547
         },
         {
           "name": "Indexed queries on Exercise \u203a canonicalName.contains query stays under 200ms at seeded scale",
           "result": "Passed",
-          "duration": 1.7752649784088135
+          "duration": 1.7347211837768555
         },
         {
           "name": "Indexed queries on Exercise \u203a primaryMuscleSlugsJoined.contains query stays under 200ms at seeded scale",
           "result": "Passed",
-          "duration": 1.6336250305175781
+          "duration": 1.7567839622497559
         },
         {
           "name": "ManualOverride \u203a manualOverrideFlagSetWhenWeightDiverges",
           "result": "Passed",
-          "duration": 0.01779484748840332
+          "duration": 0.013682126998901367
         },
         {
           "name": "ManualOverride \u203a manualOverrideFlagFalseWhenWeightMatchesPrescription",
           "result": "Passed",
-          "duration": 0.012955904006958008
+          "duration": 0.010163068771362305
         },
         {
           "name": "ManualOverride \u203a nextSessionReadsActualNotPrescribed",
           "result": "Passed",
-          "duration": 0.011986017227172852
+          "duration": 0.01374197006225586
         },
         {
           "name": "ManualOverride \u203a userSettingsMinCalibrationSetsHonored",
           "result": "Passed",
-          "duration": 0.021596908569335938
+          "duration": 0.02044987678527832
         },
         {
           "name": "MidSessionSwap \u203a swapMutatesSessionExerciseOnly \u2014 SE.exercise = new; RE.exercise unchanged",
           "result": "Passed",
-          "duration": 0.018510103225708008
+          "duration": 0.0371549129486084
         },
         {
           "name": "MidSessionSwap \u203a swapResetsPendingSetsToNewHint \u2014 pending sets adopt the new exercise's hint",
           "result": "Passed",
-          "duration": 0.018319129943847656
+          "duration": 0.017422199249267578
         },
         {
           "name": "MidSessionSwap \u203a swapLeavesCompletedSetsAlone \u2014 committed sets retain weight/reps/rpe",
           "result": "Passed",
-          "duration": 0.025165081024169922
+          "duration": 0.023174047470092773
         },
         {
           "name": "MidSessionSwap \u203a swapDoesNotAffectRoutineTemplate \u2014 PITFALLS-doc #1 / ROUTINE-07",
           "result": "Passed",
-          "duration": 0.023130178451538086
+          "duration": 0.01810479164123535
         },
         {
           "name": "NotesPersistence \u203a sessionNotesRoundTrip \u2014 session.notes writes + reads through SwiftData",
           "result": "Passed",
-          "duration": 0.009946107864379883
+          "duration": 0.03814506530761719
         },
         {
           "name": "NotesPersistence \u203a pinnedNoteRoundTrip \u2014 sessionExercise.pinnedNote writes + reads through SwiftData",
           "result": "Passed",
-          "duration": 0.0153350830078125
+          "duration": 0.010547876358032227
         },
         {
           "name": "NotesPersistence \u203a setEntryNoteRoundTrip \u2014 setEntry.notes writes + reads through SwiftData",
           "result": "Passed",
-          "duration": 0.014116048812866211
+          "duration": 0.009939193725585938
         },
         {
           "name": "NotesPersistence \u203a emptyStringNotesPersistAsNil \u2014 Binding(get:set:) empty-string set maps to nil",
           "result": "Passed",
-          "duration": 0.018269062042236328
+          "duration": 0.009059906005859375
         },
         {
           "name": "OptionalRowRendering \u203a tempoRowRendersWhenSnapshottedFlag \u2014 gated on sessionExercise.tracksTempo",
           "result": "Passed",
-          "duration": 0.004567146301269531
+          "duration": 0.0019757747650146484
         },
         {
           "name": "OptionalRowRendering \u203a partialsRowRendersWhenSnapshottedFlag \u2014 gated on sessionExercise.tracksPartialReps",
           "result": "Passed",
-          "duration": 0.000782012939453125
+          "duration": 0.0005819797515869141
         },
         {
           "name": "OptionalRowRendering \u203a clusterChipRowRendersWhenSetTypeRestPause \u2014 gated on set.setType == .restPause",
           "result": "Passed",
-          "duration": 0.0006148815155029297
+          "duration": 0.0007188320159912109
         },
         {
           "name": "PlateCalculator \u203a solve100kgWith20kgBar",
           "result": "Passed",
-          "duration": 0.0002300739288330078
+          "duration": 0.0012030601501464844
         },
         {
           "name": "PlateCalculator \u203a roundDown102_5kgWith2_5kgIncrement",
           "result": "Passed",
-          "duration": 0.020521163940429688
+          "duration": 0.016012907028198242
         },
         {
           "name": "PlateCalculator \u203a belowBarReturnsBar",
           "result": "Passed",
-          "duration": 0.00015616416931152344
+          "duration": 0.00029397010803222656
         },
         {
           "name": "PlateCalculator \u203a epsilonFloatDriftGuard",
           "result": "Passed",
-          "duration": 0.00010991096496582031
+          "duration": 0.0002079010009765625
         },
         {
           "name": "PlateCalculator \u203a noSolutionReturnsNil",
           "result": "Passed",
-          "duration": 0.00014495849609375
+          "duration": 0.00020503997802734375
         },
         {
           "name": "PlateInventory \u203a jsonRoundTripPreservesAllFields \u2014 weight, countPerSide, color survive encode/decode",
           "result": "Passed",
-          "duration": 0.00899505615234375
+          "duration": 0.007614850997924805
         },
         {
           "name": "PlateInventory \u203a emptyPlateArraySerializesAsEmptyJSON \u2014 empty assignment decodes back to []",
           "result": "Passed",
-          "duration": 0.009750843048095703
+          "duration": 0.08320999145507812
         },
         {
           "name": "PlateInventory \u203a equipmentKindAccessorFallbackOnBadRaw \u2014 unknown raw value returns .barbell",
           "result": "Passed",
-          "duration": 0.007214069366455078
+          "duration": 0.01289510726928711
         },
         {
           "name": "PlateInventory \u203a equipmentKindAccessorRoundTrip \u2014 set .ezBar writes 'ez_bar' raw; get returns .ezBar",
           "result": "Passed",
-          "duration": 0.007231950759887695
+          "duration": 0.010612010955810547
         },
         {
           "name": "PrescriptionDefaults (ROUTINE-09 + CONTEXT.md Area 1) \u203a compoundBarbellStrength \u2014 Bench Press \u2192 strength + 4-6 reps + 180s rest",
           "result": "Passed",
-          "duration": 0.0014309883117675781
+          "duration": 0.0048830509185791016
         },
         {
           "name": "PrescriptionDefaults (ROUTINE-09 + CONTEXT.md Area 1) \u203a compoundDumbbellHypertrophy \u2014 DB Press \u2192 hypertrophy + 8-12 reps + 180s rest",
           "result": "Passed",
-          "duration": 0.0005078315734863281
+          "duration": 0.14900612831115723
         },
         {
           "name": "PrescriptionDefaults (ROUTINE-09 + CONTEXT.md Area 1) \u203a isolationHypertrophy \u2014 Curl \u2192 hypertrophy + 8-12 reps + 90s rest",
           "result": "Passed",
-          "duration": 0.00039196014404296875
+          "duration": 0.0015139579772949219
         },
         {
           "name": "PrescriptionDefaults (ROUTINE-09 + CONTEXT.md Area 1) \u203a restMatchesMechanic \u2014 sweep \u2014 every compound \u2192 180s, every isolation \u2192 90s",
           "result": "Passed",
-          "duration": 0.0010538101196289062
+          "duration": 0.0035910606384277344
         },
         {
           "name": "PrescriptionExplanation \u203a constructionExposesAllFields",
           "result": "Passed",
-          "duration": 0.0003509521484375
+          "duration": 0.002543926239013672
         },
         {
           "name": "PrescriptionExplanation \u203a calibrationStatusEquatable",
           "result": "Passed",
-          "duration": 0.022088050842285156
+          "duration": 0.05711007118225098
         },
         {
           "name": "PrescriptionExplanation \u203a sendableSafe",
           "result": "Passed",
-          "duration": 0.00035190582275390625
+          "duration": 0.00015211105346679688
         },
         {
           "name": "PrescriptionExplanation \u203a bumpOccurredFalseByDefault",
           "result": "Passed",
-          "duration": 0.0002028942108154297
+          "duration": 8.821487426757812e-05
         },
         {
           "name": "PrescriptionExplanation \u203a rangeNilByDefault",
           "result": "Passed",
-          "duration": 0.00022912025451660156
+          "duration": 6.389617919921875e-05
         },
         {
           "name": "PreviousColumnQuery \u203a previousColumnReturnsHintWhenPriorExists \u2014 matching-intent prior yields hit",
           "result": "Passed",
-          "duration": 0.016434907913208008
+          "duration": 0.013917922973632812
         },
         {
           "name": "PreviousColumnQuery \u203a previousColumnReturnsNilWhenNoPrior \u2014 empty store yields nil",
           "result": "Passed",
-          "duration": 0.08341002464294434
+          "duration": 0.05177807807922363
         },
         {
           "name": "PreviousColumnQuery \u203a previousColumnRespectsIntentSplit \u2014 strength ignored when querying hypertrophy",
           "result": "Passed",
-          "duration": 0.01453709602355957
+          "duration": 0.011307001113891602
         },
         {
           "name": "PreviousMatchingIntent \u203a returnsNilWhenNoPriorSession \u2014 empty DB yields no hit",
           "result": "Passed",
-          "duration": 0.008391141891479492
+          "duration": 0.01618504524230957
         },
         {
           "name": "PreviousMatchingIntent \u203a findsTopWorkingSetExcludesWarmupsAndZeroReps \u2014 filters to committed working sets",
           "result": "Passed",
-          "duration": 0.011286020278930664
+          "duration": 0.020249128341674805
         },
         {
           "name": "PreviousMatchingIntent \u203a intentSplitRespectsIntentFilter \u2014 strength session ignored when querying hypertrophy",
           "result": "Passed",
-          "duration": 0.01620006561279297
+          "duration": 0.016705989837646484
         },
         {
           "name": "PreviousMatchingIntent \u203a mostRecentSessionByStartedAtWins \u2014 sorted by Session.startedAt desc",
           "result": "Passed",
-          "duration": 0.06527495384216309
+          "duration": 0.02048802375793457
         },
         {
           "name": "PreviousMatchingIntent \u203a nilExerciseIDReturnsNil \u2014 defensive guard",
           "result": "Passed",
-          "duration": 0.013839960098266602
+          "duration": 0.007841825485229492
         },
         {
           "name": "PreviousMatchingIntent \u203a ignoresIncompleteSets \u2014 planned-but-not-logged rows skipped",
           "result": "Passed",
-          "duration": 0.010850191116333008
+          "duration": 0.017868995666503906
         },
         {
           "name": "ProgressionRounding \u203a exerciseIncrementOverridesGlobal",
           "result": "Passed",
-          "duration": 0.00018310546875
+          "duration": 0.029703855514526367
         },
         {
           "name": "ProgressionRounding \u203a globalDefaultUsedWhenNil",
           "result": "Passed",
-          "duration": 0.00012087821960449219
+          "duration": 0.00025200843811035156
         },
         {
           "name": "ProgressionRounding \u203a kgVsLbUnitOverride",
           "result": "Passed",
-          "duration": 9.989738464355469e-05
+          "duration": 0.00011992454528808594
         },
         {
           "name": "ProgressionRounding \u203a microplateIncrement",
           "result": "Passed",
-          "duration": 9.799003601074219e-05
+          "duration": 0.0001552104949951172
         },
         {
           "name": "ProgressionRounding \u203a roundingDownNeverExceedsTarget",
           "result": "Passed",
-          "duration": 0.00017189979553222656
+          "duration": 0.0002789497375488281
         },
         {
           "name": "RPEAutoregStrategy \u203a calibratingBelowThresholdShowsRange",
           "result": "Passed",
-          "duration": 0.0002529621124267578
+          "duration": 0.0009298324584960938
         },
         {
           "name": "RPEAutoregStrategy \u203a calibratedAboveThresholdReturnsPointEstimate",
           "result": "Passed",
-          "duration": 0.00015592575073242188
+          "duration": 0.011438131332397461
         },
         {
           "name": "RPEAutoregStrategy \u203a nilRPEInHistoryIsExcluded",
           "result": "Passed",
-          "duration": 0.00011587142944335938
+          "duration": 0.0001621246337890625
         },
         {
           "name": "RPEAutoregStrategy \u203a emptyHistoryReturnsFirstSessionExplanation",
           "result": "Passed",
-          "duration": 9.202957153320312e-05
+          "duration": 9.703636169433594e-05
         },
         {
           "name": "RPEAutoregStrategy \u203a tuchschererBackCalcUsedBelowThreshold",
           "result": "Passed",
-          "duration": 0.0001220703125
+          "duration": 0.00015306472778320312
         },
         {
           "name": "RestTimerActivityController \u203a noopControllerSwallowsAllCalls",
           "result": "Passed",
-          "duration": 0.000453948974609375
+          "duration": 0.0012979507446289062
         },
         {
           "name": "RestTimerActivityController \u203a liveControllerSilentFallbackOnSimulator",
           "result": "Passed",
-          "duration": 0.3548760414123535
+          "duration": 3.291938066482544
         },
         {
           "name": "RestTimerActivityController \u203a updateDebounceCoalesces",
           "result": "Passed",
-          "duration": 0.15534305572509766
+          "duration": 0.14402508735656738
         },
         {
           "name": "RestTimerEngine \u203a notRunningInitially",
           "result": "Passed",
-          "duration": 0.002557992935180664
+          "duration": 0.0069239139556884766
         },
         {
           "name": "RestTimerEngine \u203a startSetsStartedAtAndTarget",
           "result": "Passed",
-          "duration": 0.001026153564453125
+          "duration": 0.010232925415039062
         },
         {
           "name": "RestTimerEngine \u203a startSchedulesNotificationOnce",
           "result": "Passed",
-          "duration": 0.0010218620300292969
+          "duration": 0.0008530616760253906
         },
         {
           "name": "RestTimerEngine \u203a plus15IncreasesTargetAndReschedulesFromOriginalStart",
           "result": "Passed",
-          "duration": 0.0012860298156738281
+          "duration": 0.0002899169921875
         },
         {
           "name": "RestTimerEngine \u203a minus15DecreasesTarget",
           "result": "Passed",
-          "duration": 0.0006258487701416016
+          "duration": 0.0025899410247802734
         },
         {
           "name": "RestTimerEngine \u203a adjustClampsTargetAtZero",
           "result": "Passed",
-          "duration": 0.01653909683227539
+          "duration": 0.025767087936401367
         },
         {
           "name": "RestTimerEngine \u203a adjustNoopWhenNotRunning",
           "result": "Passed",
-          "duration": 0.000614166259765625
+          "duration": 0.0007789134979248047
         },
         {
           "name": "RestTimerEngine \u203a stopCancelsAndResets",
           "result": "Passed",
-          "duration": 0.0006239414215087891
+          "duration": 0.0006110668182373047
         },
         {
           "name": "RestTimerEngine \u203a dateMathSurvivesSimulatedBackground",
           "result": "Passed",
-          "duration": 0.0005779266357421875
+          "duration": 0.0005688667297363281
         },
         {
           "name": "RestTimerEngine \u203a restartReplacesPriorState",
           "result": "Passed",
-          "duration": 0.0003418922424316406
+          "duration": 0.0005261898040771484
         },
         {
           "name": "RestTimerNotificationScheduler \u203a notificationIDConstantIsStable",
           "result": "Passed",
-          "duration": 0.004786968231201172
+          "duration": 0.2003021240234375
         },
         {
           "name": "RestTimerNotificationScheduler \u203a liveSchedulerConformsToProtocol",
           "result": "Passed",
-          "duration": 0.030478954315185547
+          "duration": 0.014950990676879883
         },
         {
           "name": "RestTimerNotificationScheduler \u203a liveSchedulerScheduleAccepts1SecondMinimum",
           "result": "Passed",
-          "duration": 0.0015380382537841797
+          "duration": 0.0005359649658203125
         },
         {
           "name": "RestTimerOverlayCopy \u203a verbatimCopyAnchors \u2014 rest timer strings present in source",
           "result": "Passed",
-          "duration": 0.00925302505493164
+          "duration": 0.006479024887084961
         },
         {
           "name": "RestTimerOverlayCopy \u203a reduceMotionWiredThroughEnvironment",
           "result": "Passed",
-          "duration": 0.0021250247955322266
+          "duration": 0.00045800209045410156
         },
         {
           "name": "RestTimerOverlayCopy \u203a timelineViewTickEverySecond",
           "result": "Passed",
-          "duration": 0.11929702758789062
+          "duration": 0.0005741119384765625
         },
         {
           "name": "RestTimerOverlayCopy \u203a countdownText \u2014 clock and spoken values, including overtime",
           "result": "Passed",
-          "duration": 0.0013630390167236328
+          "duration": 0.346193790435791
         },
         {
           "name": "RestTimerPersistence (milestone 1) \u203a start persists the absolute deadline; a relaunched engine shows the same remaining time",
           "result": "Passed",
-          "duration": 0.0007150173187255859
+          "duration": 0.004571199417114258
         },
         {
           "name": "RestTimerPersistence (milestone 1) \u203a time keeps running while the app is away \u2014 restore past the deadline shows overtime, not a reset",
           "result": "Passed",
-          "duration": 0.0005888938903808594
+          "duration": 0.0016739368438720703
         },
         {
           "name": "RestTimerPersistence (milestone 1) \u203a a timer that ended long ago is dropped on restore",
           "result": "Passed",
-          "duration": 0.0015308856964111328
+          "duration": 0.009003877639770508
         },
         {
           "name": "RestTimerPersistence (milestone 1) \u203a \u00b115 s and presets persist and keep the original start",
           "result": "Passed",
-          "duration": 0.0007750988006591797
+          "duration": 0.0014820098876953125
         },
         {
           "name": "RestTimerPersistence (milestone 1) \u203a stop clears the persisted timer",
           "result": "Passed",
-          "duration": 0.00027108192443847656
+          "duration": 0.0006821155548095703
         },
         {
           "name": "RestTimerPersistence (milestone 1) \u203a stop(ifBelongsTo:) only stops the workout's own timer",
           "result": "Passed",
-          "duration": 0.0004658699035644531
+          "duration": 0.0007250308990478516
         },
         {
           "name": "RestTimerPersistence (milestone 1) \u203a UserDefaults store round-trips the snapshot and clears it",
           "result": "Passed",
-          "duration": 0.010287046432495117
+          "duration": 0.06335592269897461
         },
         {
           "name": "RoutineBuilderCopy \u203a verbatimCopy \u2014 routine builder strings present in source",
           "result": "Passed",
-          "duration": 0.40551090240478516
+          "duration": 0.5542819499969482
         },
         {
           "name": "RoutineBuilderCopy \u203a RoutineDraft issues \u2014 name and exercises, in display order",
           "result": "Passed",
-          "duration": 0.0028340816497802734
+          "duration": 0.0038309097290039062
         },
         {
           "name": "RoutineDraftValidation (plan 03-02) \u203a emptyDraftIsInvalid",
           "result": "Passed",
-          "duration": 0.0010099411010742188
+          "duration": 0.0015799999237060547
         },
         {
           "name": "RoutineDraftValidation (plan 03-02) \u203a noExercisesIsInvalid",
           "result": "Passed",
-          "duration": 0.0016198158264160156
+          "duration": 0.000762939453125
         },
         {
           "name": "RoutineDraftValidation (plan 03-02) \u203a validDraft",
           "result": "Passed",
-          "duration": 0.0018069744110107422
+          "duration": 0.0005800724029541016
         },
         {
           "name": "RoutineDraftValidation (plan 03-02) \u203a pruneOverridesOnTargetSetsShrink",
           "result": "Passed",
-          "duration": 0.001194000244140625
+          "duration": 0.12106013298034668
         },
         {
           "name": "RoutineDraftValidation (plan 03-02) \u203a saveRoundTrip \u2014 fields persist + recover",
           "result": "Passed",
-          "duration": 0.04518294334411621
+          "duration": 0.03846406936645508
         },
         {
           "name": "RoutineDuplication (plan 03-03) \u203a nameSuffixedWithCopy",
           "result": "Passed",
-          "duration": 0.042276859283447266
+          "duration": 0.03232002258300781
         },
         {
           "name": "RoutineDuplication (plan 03-03) \u203a deepCopyOfRoutineExercises",
           "result": "Passed",
-          "duration": 0.02909994125366211
+          "duration": 0.018465042114257812
         },
         {
           "name": "RoutineDuplication (plan 03-03) \u203a supersetGroupRemappedToClonedGroup",
           "result": "Passed",
-          "duration": 0.028599977493286133
+          "duration": 0.016128063201904297
         },
         {
           "name": "RoutineDuplication (plan 03-03) \u203a perSetOverridesCloned",
           "result": "Passed",
-          "duration": 0.03297090530395508
+          "duration": 0.017088890075683594
         },
         {
           "name": "RoutineDuplication (plan 03-03) \u203a folderIDPreserved",
           "result": "Passed",
-          "duration": 0.028727054595947266
+          "duration": 0.026530027389526367
         },
         {
           "name": "RoutineDuplication (plan 03-03) \u203a originalRoutineUntouched",
           "result": "Passed",
-          "duration": 0.017538070678710938
+          "duration": 0.029798030853271484
         },
         {
           "name": "RoutineFolderDraft \u203a emptyDraftIsInvalid",
           "result": "Passed",
-          "duration": 0.0004379749298095703
+          "duration": 0.0016331672668457031
         },
         {
           "name": "RoutineFolderDraft \u203a whitespaceOnlyNameIsInvalid",
           "result": "Passed",
-          "duration": 0.0005359649658203125
+          "duration": 0.0004031658172607422
         },
         {
           "name": "RoutineFolderDraft \u203a namedDraftIsValid",
           "result": "Passed",
-          "duration": 0.0003440380096435547
+          "duration": 0.0005140304565429688
         },
         {
           "name": "RoutinesListCopy \u203a verbatimCopy \u2014 Routines tab strings present in source",
           "result": "Passed",
-          "duration": 0.009541034698486328
+          "duration": 0.0072650909423828125
         },
         {
           "name": "SchemaV1 \u203a container builds with versioned schema + migration plan",
           "result": "Passed",
-          "duration": 0.014441967010498047
+          "duration": 0.014475107192993164
         },
         {
           "name": "SchemaV1 \u203a schema list and SchemaV1.models agree on 12 entities",
           "result": "Passed",
-          "duration": 0.00010895729064941406
+          "duration": 0.00018095970153808594
         },
         {
           "name": "SchemaV1 \u203a migration plan registers SchemaV1 as historical version",
           "result": "Passed",
-          "duration": 0.020047903060913086
+          "duration": 0.02067399024963379
         },
         {
           "name": "SchemaV1 \u203a Exercise round-trips through insert + save + fetch",
           "result": "Passed",
-          "duration": 0.030251026153564453
+          "duration": 0.016952991485595703
         },
         {
           "name": "SchemaV1 \u203a Exercise default-inits and saves",
           "result": "Passed",
-          "duration": 0.009184122085571289
+          "duration": 0.010380983352661133
         },
         {
           "name": "SchemaV1 \u203a MuscleGroup default-inits and saves",
           "result": "Passed",
-          "duration": 0.010035037994384766
+          "duration": 0.007962942123413086
         },
         {
           "name": "SchemaV1 \u203a ExerciseMuscleStimulus default-inits and saves",
           "result": "Passed",
-          "duration": 0.01630711555480957
+          "duration": 0.007458209991455078
         },
         {
           "name": "SchemaV1 \u203a Routine default-inits and saves",
           "result": "Passed",
-          "duration": 0.020251035690307617
+          "duration": 0.007797956466674805
         },
         {
           "name": "SchemaV1 \u203a RoutineExercise default-inits and saves",
           "result": "Passed",
-          "duration": 0.016817092895507812
+          "duration": 0.00849604606628418
         },
         {
           "name": "SchemaV1 \u203a Session default-inits and saves",
           "result": "Passed",
-          "duration": 0.01993107795715332
+          "duration": 0.007768869400024414
         },
         {
           "name": "SchemaV1 \u203a SessionExercise default-inits and saves",
           "result": "Passed",
-          "duration": 0.009170055389404297
+          "duration": 0.008042097091674805
         },
         {
           "name": "SchemaV1 \u203a SetEntry default-inits and saves",
           "result": "Passed",
-          "duration": 0.007305145263671875
+          "duration": 0.007687091827392578
         },
         {
           "name": "SchemaV1 \u203a Block default-inits and saves",
           "result": "Passed",
-          "duration": 0.025127887725830078
+          "duration": 0.020839214324951172
         },
         {
           "name": "SchemaV1 \u203a BlockPhase default-inits and saves",
           "result": "Passed",
-          "duration": 0.010383844375610352
+          "duration": 0.007151126861572266
         },
         {
           "name": "SchemaV1 \u203a UserSettings default-inits and saves",
           "result": "Passed",
-          "duration": 0.020168066024780273
+          "duration": 0.012234210968017578
         },
         {
           "name": "SchemaV1 \u203a MuscleVolumeTarget default-inits and saves",
           "result": "Passed",
-          "duration": 0.009927988052368164
+          "duration": 0.013543128967285156
         },
         {
           "name": "SchemaV2Migration \u203a SchemaV2 models list contains every V1 entity plus 3 new types",
           "result": "Passed",
-          "duration": 0.0001850128173828125
+          "duration": 0.0002079010009765625
         },
         {
           "name": "SchemaV2Migration \u203a FitbodSchemaMigrationPlan registers V1 then V2, one lightweight stage per step",
           "result": "Passed",
-          "duration": 0.000164031982421875
+          "duration": 0.00015592575073242188
         },
         {
           "name": "SchemaV2Migration \u203a Fresh in-memory V2 ModelContainer opens; round-trips a Routine + new entity",
           "result": "Passed",
-          "duration": 0.02295684814453125
+          "duration": 0.009057044982910156
         },
         {
           "name": "SchemaV2Migration \u203a Cascade: deleting a RoutineExercise cascades into its setOverrides",
           "result": "Passed",
-          "duration": 0.012661933898925781
+          "duration": 0.030030012130737305
         },
         {
           "name": "SchemaV2Migration \u203a Soft refs: deleting a RoutineFolder does NOT cascade into routines",
           "result": "Passed",
-          "duration": 0.008090972900390625
+          "duration": 0.014477014541625977
         },
         {
           "name": "SchemaV3Migration \u203a SchemaV3 models list equals SchemaV2.models + PlateInventory.self",
           "result": "Passed",
-          "duration": 0.0002269744873046875
+          "duration": 0.0006549358367919922
         },
         {
           "name": "SchemaV3Migration \u203a FitbodSchemaMigrationPlan registers V1+V2+V3 and TWO lightweight stages",
           "result": "Passed",
-          "duration": 9.298324584960938e-05
+          "duration": 0.00013899803161621094
         },
         {
           "name": "SchemaV3Migration \u203a Fresh in-memory V3 ModelContainer opens; round-trips PlateInventory with plates",
           "result": "Passed",
-          "duration": 0.010343074798583984
+          "duration": 0.16879701614379883
         },
         {
           "name": "SchemaV3Migration \u203a Additive Phase 3 fields round-trip with correct defaults",
           "result": "Passed",
-          "duration": 0.011012792587280273
+          "duration": 0.01838517189025879
         },
         {
           "name": "ExerciseLibraryImporter \u203a Seed inserts at least 600 strength exercises (LIB-01 / FOUND-05)",
           "result": "Passed",
-          "duration": 1.785675048828125
+          "duration": 1.892915964126587
         },
         {
           "name": "ExerciseLibraryImporter \u203a Seed creates exactly 17 canonical MuscleGroup rows",
           "result": "Passed",
-          "duration": 1.674889087677002
+          "duration": 1.8248279094696045
         },
         {
           "name": "ExerciseLibraryImporter \u203a Seed is idempotent \u2014 second call does not duplicate rows",
           "result": "Passed",
-          "duration": 1.5866541862487793
+          "duration": 2.0959360599517822
         },
         {
           "name": "ExerciseLibraryImporter \u203a Seed populates the UserSettings singleton with weightUnit == .lb",
           "result": "Passed",
-          "duration": 1.5755870342254639
+          "duration": 1.6186130046844482
         },
         {
           "name": "ExerciseLibraryImporter \u203a Stimulus rows: primary=1.0, secondary=0.5, at least 1 per exercise",
           "result": "Passed",
-          "duration": 2.080109119415283
+          "duration": 2.317012071609497
         },
         {
           "name": "ExerciseLibraryImporter \u203a primaryMuscleSlugsJoined populated as |slug| for the muscle-filter predicate",
           "result": "Passed",
-          "duration": 1.5453717708587646
+          "duration": 1.8157591819763184
         },
         {
           "name": "ExerciseLibraryImporter \u203a Cold seed completes within performance budget (target <2s, soft cap 5s)",
           "result": "Passed",
-          "duration": 1.5280721187591553
+          "duration": 1.5828020572662354
         },
         {
           "name": "ExerciseLibraryImporter \u203a Re-seed updates built-ins in place and keeps custom exercises, references and tweaks",
           "result": "Passed",
-          "duration": 6.107525110244751
+          "duration": 5.8380820751190186
         },
         {
           "name": "SessionFactoryPhase3 \u203a prescribedWeightSetOnSessionExercise",
           "result": "Passed",
-          "duration": 0.020689010620117188
+          "duration": 0.02326202392578125
         },
         {
           "name": "SessionFactoryPhase3 \u203a warmupSetEntriesInsertedForFirstQualifyingCompound",
           "result": "Passed",
-          "duration": 0.02103400230407715
+          "duration": 0.026016950607299805
         },
         {
           "name": "SessionFactoryPhase3 \u203a workingSetsShiftAfterWarmupInsertion",
           "result": "Passed",
-          "duration": 0.02504110336303711
+          "duration": 0.022343873977661133
         },
         {
           "name": "SessionFactoryPhase3 \u203a secondQualifyingCompoundDoesNotGetWarmup",
           "result": "Passed",
-          "duration": 0.044107913970947266
+          "duration": 0.043290138244628906
         },
         {
           "name": "SessionFactoryPhase3 \u203a warmupSkippedWhenWarmupConfigDisabled",
           "result": "Passed",
-          "duration": 0.030472993850708008
+          "duration": 0.021355152130126953
         },
         {
           "name": "SessionFactory \u203a snapshotsAllPrescriptionFields \u2014 every RoutineExercise field is copied verbatim",
           "result": "Passed",
-          "duration": 0.019647836685180664
+          "duration": 0.028378963470458984
         },
         {
           "name": "SessionFactory \u203a editingRoutineAfterStartLeavesSnapshotIntact \u2014 ROUTINE-07 / PITFALLS-doc #1",
           "result": "Passed",
-          "duration": 0.07793593406677246
+          "duration": 0.02299785614013672
         },
         {
           "name": "SessionFactory \u203a sessionLinksRoutineByUUIDAndName \u2014 sourceRoutineID is the routine UUID; name survives rename",
           "result": "Passed",
-          "duration": 0.01962113380432129
+          "duration": 0.02132391929626465
         },
         {
           "name": "SessionFactory \u203a plannedSetEntriesCount \u2014 one SetEntry per targetSets; all carry isComplete = false",
           "result": "Passed",
-          "duration": 0.01800704002380371
+          "duration": 0.019305944442749023
         },
         {
           "name": "SessionFactory \u203a activeSessionInvariant \u2014 start throws when an unfinished session exists",
           "result": "Passed",
-          "duration": 0.030085086822509766
+          "duration": 0.04391813278198242
         },
         {
           "name": "SessionFactory \u203a emptyRoutineGuard \u2014 start throws when routine has no exercises",
           "result": "Passed",
-          "duration": 0.5649042129516602
+          "duration": 0.019695043563842773
         },
         {
           "name": "SessionFactory \u203a orderIndexPreservedAcrossSnapshot \u2014 RoutineExercise.orderIndex translates to SessionExercise.orderIndex",
           "result": "Passed",
-          "duration": 0.03373098373413086
+          "duration": 0.03749394416809082
         },
         {
           "name": "SessionFactory \u203a snapshotsTracksTempoAndTracksPartialReps \u2014 opt-in row toggles are snapshotted",
           "result": "Passed",
-          "duration": 0.024702072143554688
+          "duration": 0.02305912971496582
         },
         {
           "name": "SessionFactory \u203a blockReferenceCopiedFromRoutine \u2014 optional Block link survives snapshot",
           "result": "Passed",
-          "duration": 0.0362701416015625
+          "duration": 0.0402069091796875
         },
         {
           "name": "SessionLoggerCopy \u203a verbatimCopy \u2014 active-workout strings and wiring present in source",
           "result": "Passed",
-          "duration": 0.20610499382019043
+          "duration": 0.021044015884399414
         },
         {
           "name": "SetRowCommit \u203a commitFlipsIsComplete \u2014 after commit, entry.isComplete == true",
           "result": "Passed",
-          "duration": 0.025055885314941406
+          "duration": 0.018600940704345703
         },
         {
           "name": "SetRowCommit \u203a commitWritesCompletedAt \u2014 entry.completedAt is set to a recent Date",
           "result": "Passed",
-          "duration": 0.014720916748046875
+          "duration": 0.016685009002685547
         },
         {
           "name": "SetRowCommit \u203a commitStartsRestTimer \u2014 engine.start(seconds:, exerciseName:) is called",
           "result": "Passed",
-          "duration": 0.014153003692626953
+          "duration": 0.01615619659423828
         },
         {
           "name": "SetRowCommit \u203a commitGuardedByWeightAndReps \u2014 zero-weight or zero-rep entry is a no-op",
           "result": "Passed",
-          "duration": 0.011979818344116211
+          "duration": 0.0114288330078125
         },
         {
           "name": "SettingsView units toggle (SET-01 integration) \u203a Flipping weightUnit on UserSettings persists across re-fetched ModelContext (SET-01)",
           "result": "Passed",
-          "duration": 0.08705711364746094
+          "duration": 0.01588296890258789
         },
         {
           "name": "SettingsView units toggle (SET-01 integration) \u203a Flipping weightUnit kg \u2192 lb also persists across re-fetched ModelContext",
           "result": "Passed",
-          "duration": 0.013741016387939453
+          "duration": 0.023730039596557617
         },
         {
           "name": "SupersetGroup (plan 03-03) \u203a createAndAssign",
           "result": "Passed",
-          "duration": 0.01021718978881836
+          "duration": 0.016934871673583984
         },
         {
           "name": "SupersetGroup (plan 03-03) \u203a unassignSetsNil",
           "result": "Passed",
-          "duration": 0.013314008712768555
+          "duration": 0.011925935745239258
         },
         {
           "name": "SupersetGroup (plan 03-03) \u203a kindAccessor",
           "result": "Passed",
-          "duration": 0.0007569789886474609
+          "duration": 0.000659942626953125
         },
         {
           "name": "SupersetGroup (plan 03-03) \u203a orphanedSupersetGroupAfterRoutineDelete \u2014 handled by RoutinesListView.handleDelete",
           "result": "Passed",
-          "duration": 0.013289928436279297
+          "duration": 0.011091947555541992
         },
         {
           "name": "TuchschererTable \u203a rpe10reps1Returns1_000",
           "result": "Passed",
-          "duration": 0.0009839534759521484
+          "duration": 0.0010371208190917969
         },
         {
           "name": "TuchschererTable \u203a rpe8reps5Returns0_811",
           "result": "Passed",
-          "duration": 0.00040984153747558594
+          "duration": 0.0002880096435546875
         },
         {
           "name": "TuchschererTable \u203a rpe6reps10Returns0_656",
           "result": "Passed",
-          "duration": 0.00017309188842773438
+          "duration": 0.0002899169921875
         },
         {
           "name": "TuchschererTable \u203a clampRepsAboveTen",
           "result": "Passed",
-          "duration": 0.00011181831359863281
+          "duration": 0.00015115737915039062
         },
         {
           "name": "TuchschererTable \u203a nearestRPESnap",
           "result": "Passed",
-          "duration": 0.00010204315185546875
+          "duration": 0.00022101402282714844
         },
         {
           "name": "UserSettings \u203a default() returns lb, and the kg toggle round-trips (SET-01)",
           "result": "Passed",
-          "duration": 0.21500086784362793
+          "duration": 0.009234905242919922
         },
         {
           "name": "UserSettings \u203a defaultProgressionKind toggle round-trips",
           "result": "Passed",
-          "duration": 0.01168203353881836
+          "duration": 0.02301502227783203
         },
         {
           "name": "UserSettings \u203a default() factory ships lb units and double progression",
           "result": "Passed",
-          "duration": 0.00038886070251464844
+          "duration": 0.00036787986755371094
         },
         {
           "name": "WarmupConfig \u203a codableRoundTripPreservesEnabledAndSkipNextSession \u2014 encode/decode is lossless",
           "result": "Passed",
-          "duration": 0.0006549358367919922
+          "duration": 0.0007009506225585938
         },
         {
           "name": "WarmupConfig \u203a defaultsAreEnabledTrueSkipFalse \u2014 WarmupConfig() carries correct defaults",
           "result": "Passed",
-          "duration": 0.0005960464477539062
+          "duration": 0.00031280517578125
         },
         {
           "name": "WarmupConfig \u203a routineExerciseWarmupOverrideNilByDefault \u2014 fresh RoutineExercise has nil override",
           "result": "Passed",
-          "duration": 0.05065107345581055
+          "duration": 0.0691530704498291
         },
         {
           "name": "WarmupConfig \u203a routineExerciseWarmupOverrideSetGetRoundTrip \u2014 set encodes Data; get decodes back",
           "result": "Passed",
-          "duration": 0.019682884216308594
+          "duration": 0.007361888885498047
         },
         {
           "name": "WarmupRamp \u203a barbellCompoundAtTopGenerates4Sets",
           "result": "Passed",
-          "duration": 0.002310037612915039
+          "duration": 0.006001949310302734
         },
         {
           "name": "WarmupRamp \u203a dumbbellHalvesTo2Sets",
           "result": "Passed",
-          "duration": 0.00244903564453125
+          "duration": 0.002856016159057617
         },
         {
           "name": "WarmupRamp \u203a lightWeightSkipsRamp",
           "result": "Passed",
-          "duration": 0.021281003952026367
+          "duration": 0.029278993606567383
         },
         {
           "name": "WarmupRamp \u203a bodyweightSkipsRamp",
           "result": "Passed",
-          "duration": 0.774616003036499
+          "duration": 0.008857965469360352
         },
         {
           "name": "WarmupRamp \u203a deloadActiveSkipsRamp",
           "result": "Passed",
-          "duration": 0.03485393524169922
+          "duration": 0.01487278938293457
         },
         {
           "name": "WorkoutLogic (milestone 1) \u203a reps are always required; weight only for loaded lifts",
           "result": "Passed",
-          "duration": 0.03800797462463379
+          "duration": 0.0018949508666992188
         },
         {
           "name": "WorkoutLogic (milestone 1) \u203a complete only marks valid sets, stamps the time and saves",
           "result": "Passed",
-          "duration": 0.0325469970703125
+          "duration": 0.021498918533325195
         },
         {
           "name": "WorkoutLogic (milestone 1) \u203a add set copies the last working weight; delete removes it",
           "result": "Passed",
-          "duration": 0.0402219295501709
+          "duration": 0.025828838348388672
         },
         {
           "name": "WorkoutLogic (milestone 1) \u203a a logged weight carries into later empty sets, never over typed ones or bodyweight",
           "result": "Passed",
-          "duration": 0.8733549118041992
+          "duration": 0.028549909591674805
         },
         {
           "name": "WorkoutLogic (milestone 1) \u203a previous performance comes from the last earlier workout, never the one in progress",
           "result": "Passed",
-          "duration": 0.04191398620605469
+          "duration": 0.035384178161621094
         },
         {
           "name": "WorkoutLogic (milestone 1) \u203a finish keeps only performed work and stamps the duration",
           "result": "Passed",
-          "duration": 0.1406550407409668
+          "duration": 0.03150296211242676
         },
         {
           "name": "WorkoutLogic (milestone 1) \u203a discard deletes the workout; the routine is untouched",
           "result": "Passed",
-          "duration": 0.07607316970825195
+          "duration": 0.02518486976623535
         },
         {
           "name": "WorkoutLogic (milestone 1) \u203a an unplanned exercise is appended after the planned ones",
           "result": "Passed",
-          "duration": 0.11123394966125488
+          "duration": 0.022383928298950195
         },
         {
           "name": "WorkoutLogic (milestone 1) \u203a recap delta compares best sets",
           "result": "Passed",
-          "duration": 0.0003170967102050781
+          "duration": 0.0007197856903076172
         },
         {
           "name": "WorkoutLogic (milestone 1) \u203a summary recap reports the gain over the previous session",
           "result": "Passed",
-          "duration": 2.6238560676574707
+          "duration": 0.03014993667602539
         },
         {
           "name": "WorkoutLogic (milestone 1) \u203a Epley estimate, capped at 12 reps",
           "result": "Passed",
-          "duration": 0.007865190505981445
+          "duration": 0.00039196014404296875
         },
         {
           "name": "WorkoutPersistence (milestone 1) \u203a editing or deleting the routine never rewrites a logged workout",
           "result": "Passed",
-          "duration": 0.060545921325683594
+          "duration": 0.05304908752441406
         },
         {
           "name": "WorkoutPersistence (milestone 1) \u203a an in-progress workout reopens intact from disk, then finishes and stays in history",
           "result": "Passed",
-          "duration": 0.17099595069885254
+          "duration": 0.08867692947387695
         }
       ],
       "screenshots": []
