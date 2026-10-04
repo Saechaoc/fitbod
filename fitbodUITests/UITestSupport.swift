@@ -10,6 +10,27 @@
 
 import XCTest
 
+/// Base class: attaches a screenshot of the screen whenever a test fails,
+/// so CI evidence shows where it stopped.
+class FitbodUITestCase: XCTestCase {
+    override func setUpWithError() throws {
+        try super.setUpWithError()
+        continueAfterFailure = false
+    }
+
+    override func tearDownWithError() throws {
+        if let run = testRun, !run.hasSucceeded {
+            MainActor.assumeIsolated {
+                let shot = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
+                shot.name = "FAILURE-\(name)"
+                shot.lifetime = .keepAlways
+                add(shot)
+            }
+        }
+        try super.tearDownWithError()
+    }
+}
+
 enum Launch {
     static let uiTesting = "-ui-testing"
     static let resetStore = "-reset-store"
@@ -101,19 +122,38 @@ extension XCTestCase {
         XCTAssertEqual(XCTWaiter().wait(for: [expectation], timeout: timeout), .completed, "Still present: \(element)", file: file, line: line)
     }
 
-    /// Swipes the front-most list up until `element` is hittable (rows in
-    /// SwiftUI lists are created lazily, so they may not exist yet).
+    /// Scrolls the front-most list up until `element` is hittable (rows in
+    /// SwiftUI lists are created lazily, so they may not exist yet). Each
+    /// step is a drag that holds before lifting, so the list does not keep
+    /// coasting — a tap on a still-moving list only stops the scroll.
     @MainActor
-    func reveal(_ element: XCUIElement, in app: XCUIApplication, maxSwipes: Int = 8) {
+    func reveal(_ element: XCUIElement, in app: XCUIApplication, maxSwipes: Int = 10) {
         var swipes = 0
         while !(element.exists && element.isHittable) && swipes < maxSwipes {
             let lists = app.collectionViews.allElementsBoundByIndex.filter(\.exists)
-            if let list = lists.last {
-                list.swipeUp(velocity: .slow)
-            } else {
-                app.swipeUp(velocity: .slow)
-            }
+            let container: XCUIElement = lists.last ?? app.scrollViews.allElementsBoundByIndex.last ?? app
+            let start = container.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.62))
+            let end = container.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.28))
+            start.press(forDuration: 0.05, thenDragTo: end, withVelocity: .slow, thenHoldForDuration: 0.3)
             swipes += 1
+        }
+        waitForStableFrame(element)
+    }
+
+    /// Waits until `element` stops moving (scroll deceleration, keyboard
+    /// or sheet animations) so a following tap lands on it.
+    @MainActor
+    func waitForStableFrame(_ element: XCUIElement, timeout: TimeInterval = 3) {
+        guard element.exists else { return }
+        var last = element.frame
+        var stablePolls = 0
+        let deadline = Date().addingTimeInterval(timeout)
+        while Date() < deadline && stablePolls < 2 {
+            RunLoop.current.run(until: Date().addingTimeInterval(0.15))
+            guard element.exists else { return }
+            let frame = element.frame
+            stablePolls = frame == last ? stablePolls + 1 : 0
+            last = frame
         }
     }
 
@@ -123,7 +163,9 @@ extension XCTestCase {
         if !element.waitForExistence(timeout: 3) || !element.isHittable {
             reveal(element, in: app)
         }
-        waitHittable(element, file: file, line: line).tap()
+        waitHittable(element, file: file, line: line)
+        waitForStableFrame(element)
+        element.tap()
     }
 
     /// Taps the first hittable button with `label` whose identifier is not

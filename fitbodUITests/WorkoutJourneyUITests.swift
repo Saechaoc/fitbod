@@ -19,11 +19,7 @@
 
 import XCTest
 
-final class WorkoutJourneyUITests: XCTestCase {
-
-    override func setUpWithError() throws {
-        continueAfterFailure = false
-    }
+final class WorkoutJourneyUITests: FitbodUITestCase {
 
     @MainActor
     func testEndToEndWorkoutJourneySurvivesRelaunch() throws {
@@ -110,12 +106,14 @@ final class WorkoutJourneyUITests: XCTestCase {
             let search = waitHittable(app.visibleSearchField)
             search.tap()
             search.typeText("barbell squat")
+            // On small iPhones the keyboard covers the results.
+            dismissKeyboard(in: app)
             revealAndTap(app.exerciseRow(named: "Barbell Squat"), in: app)
             waitHittable(app.buttons["Clear search"]).tap()
             app.visibleSearchField.tap()
             app.visibleSearchField.typeText("zercher good")
-            revealAndTap(app.exerciseRow(named: "Zercher Good Morning"), in: app)
             dismissKeyboard(in: app)
+            revealAndTap(app.exerciseRow(named: "Zercher Good Morning"), in: app)
             waitHittable(app.buttons["picker.add"]).tap()
 
             // The first added exercise opens expanded on its prescription.

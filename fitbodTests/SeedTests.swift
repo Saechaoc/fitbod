@@ -220,9 +220,12 @@ struct SeedTests {
             )
         }
 
-        // Spot-check a known row: any bench-press variant should pull
-        // chest as a primary muscle.
-        if let bench = exercises.first(where: { $0.canonicalName.contains("bench press") }) {
+        // Spot-check a known row. (Not "any bench-press variant": the fetch
+        // is unordered and close-grip variants list triceps as primary,
+        // which made this check flaky.)
+        let bench = exercises.first { $0.externalID == "Barbell_Bench_Press_-_Medium_Grip" }
+        #expect(bench != nil, "The canonical barbell bench press should be seeded")
+        if let bench {
             #expect(
                 bench.primaryMuscleSlugsJoined.contains("|chest|"),
                 "Bench press should list chest as a primary muscle; got '\(bench.primaryMuscleSlugsJoined)'"

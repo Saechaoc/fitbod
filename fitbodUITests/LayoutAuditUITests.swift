@@ -16,11 +16,7 @@
 
 import XCTest
 
-final class LayoutAuditUITests: XCTestCase {
-
-    override func setUpWithError() throws {
-        continueAfterFailure = false
-    }
+final class LayoutAuditUITests: FitbodUITestCase {
 
     @MainActor
     func testTourDefaultText() throws {
