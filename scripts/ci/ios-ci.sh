@@ -162,8 +162,11 @@ cmd_build() {
   set -o pipefail
   # A generic destination needs no booted or matching device; the test
   # steps below run the same products on specific simulators.
+  # Apple-silicon runners only need arm64; a generic destination would
+  # otherwise compile every simulator architecture.
   xcodebuild build-for-testing "${common_flags[@]}" \
     -destination "generic/platform=iOS Simulator" \
+    ARCHS=arm64 ONLY_ACTIVE_ARCH=NO \
     2>&1 | pretty "$LOGS/build.log"
 }
 

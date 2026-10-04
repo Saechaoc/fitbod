@@ -13,6 +13,7 @@
 //    -seed-demo-history    After the exercise seed, insert two demo
 //                          routines and three weeks of finished workouts
 //                          (only when the store has no routines yet).
+//    -ui-dark-mode         Force the dark appearance (screenshot audits).
 //
 //  The rest timer and the active workout still persist normally under
 //  -ui-testing, which is what lets the journey test terminate and
@@ -25,11 +26,13 @@ public struct LaunchConfiguration: Sendable {
     public let isUITesting: Bool
     public let resetStore: Bool
     public let seedDemoHistory: Bool
+    public let forcesDarkMode: Bool
 
     public init(arguments: [String] = ProcessInfo.processInfo.arguments) {
         isUITesting = arguments.contains("-ui-testing")
         resetStore = arguments.contains("-reset-store")
         seedDemoHistory = arguments.contains("-seed-demo-history")
+        forcesDarkMode = arguments.contains("-ui-dark-mode")
     }
 
     public static let current = LaunchConfiguration()

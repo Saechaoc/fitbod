@@ -155,6 +155,9 @@ public struct ChalkPanel<Content: View>: View {
                 RoundedRectangle(cornerRadius: radius, style: .continuous)
                     .strokeBorder(Color.chalkPanelBorder, lineWidth: Chalk.Line.hairline)
             }
+            // A container element: children stay individually focusable,
+            // and an identifier on the panel lands on one element.
+            .accessibilityElement(children: .contain)
     }
 }
 
@@ -354,6 +357,7 @@ public struct ChalkEmptyState: View {
             RoundedRectangle(cornerRadius: Chalk.Radius.lg, style: .continuous)
                 .strokeBorder(Color.chalkDivider, style: StrokeStyle(lineWidth: Chalk.Line.strong, dash: [6, 4]))
         }
+        .accessibilityElement(children: .contain)
     }
 }
 

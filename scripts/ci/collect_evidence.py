@@ -33,19 +33,24 @@ def run_json(*args: str):
         return None
 
 
+CONTAINER_KINDS = ("Test Plan", "Unit test bundle", "UI test bundle", "Device", "Test Plan Configuration")
+DETAIL_KINDS = ("Failure Message", "Source Code Reference", "Attachment", "Expression", "Runtime Warning",
+                 "Repetition", "Arguments", "Test Value")
+
+
 def flatten_tests(nodes, trail=()):
     for node in nodes or []:
         name = node.get("name", "?")
         kind = node.get("nodeType", "")
-        children = node.get("children") or []
-        if kind in ("Test Case",):
+        children = [c for c in (node.get("children") or []) if c.get("nodeType", "") not in DETAIL_KINDS]
+        if kind == "Test Case" or (not children and "result" in node and kind not in CONTAINER_KINDS):
             yield {
                 "name": " › ".join([*trail, name]),
                 "result": node.get("result", "unknown"),
                 "duration": node.get("durationInSeconds") or node.get("duration"),
             }
         elif children:
-            label = () if kind in ("Test Plan", "Unit test bundle", "UI test bundle") else (name,)
+            label = () if kind in CONTAINER_KINDS else (name,)
             yield from flatten_tests(children, (*trail, *label))
 
 

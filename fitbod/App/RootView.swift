@@ -47,6 +47,7 @@ public struct RootView: View {
         }
         .environment(router)
         .environment(restTimer)
+        .preferredColorScheme(LaunchConfiguration.current.forcesDarkMode ? .dark : nil)
         .task {
             await runSeed()
             restoreActiveWorkout()

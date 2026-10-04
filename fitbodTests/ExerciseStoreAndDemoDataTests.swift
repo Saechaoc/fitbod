@@ -86,7 +86,7 @@ struct ExerciseStoreAndDemoDataTests {
         #expect(sessions.count == 6)
         #expect(sessions.allSatisfy { $0.completedAt != nil && ($0.totalDurationSeconds ?? 0) > 0 })
         #expect(sessions.allSatisfy { $0.startedAt < now })
-        #expect(try context.fetch(FetchDescriptor<SetEntry>()).allSatisfy(\.isComplete))
+        #expect(try context.fetch(FetchDescriptor<SetEntry>()).allSatisfy { $0.isComplete })
 
         let benchWeights = sessions.compactMap { session in
             (session.exercises ?? []).first { $0.exercise?.name == "Barbell Bench Press" }

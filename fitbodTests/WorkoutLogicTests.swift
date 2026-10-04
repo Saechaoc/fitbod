@@ -229,7 +229,7 @@ struct WorkoutLogicTests {
         #expect(remaining.first?.exercise?.name == "Barbell Bench Press")
         let sets = try fx.context.fetch(FetchDescriptor<SetEntry>())
         #expect(sets.count == 2)
-        #expect(sets.allSatisfy(\.isComplete))
+        #expect(sets.allSatisfy { $0.isComplete })
         #expect(SessionFactory.active(in: fx.context) == nil)
 
         let stats = WorkoutStats.compute(for: session)

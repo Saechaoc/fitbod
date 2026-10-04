@@ -89,12 +89,12 @@ public struct RestTimerDock: View {
                     .foregroundStyle(done ? Color.chalkAccentOnPanel : Color.chalkOnPanel)
                     .lineLimit(1)
                     .minimumScaleFactor(0.7)
-                    .accessibilityIdentifier("rest.remaining")
             }
             .frame(minHeight: Chalk.Size.minTouch)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+        .accessibilityIdentifier("rest.remaining")
         .accessibilityLabel(Text(title))
         .accessibilityValue(Text(RestTimerText.spoken(engine.remaining)))
         .accessibilityHint(Text("Double-tap for presets. Swipe up or down to change by 15 seconds."))

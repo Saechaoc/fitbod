@@ -273,6 +273,7 @@ public struct ChalkValidationText: View {
         .font(.footnote.weight(.semibold))
         .foregroundStyle(.chalkDanger)
         .fixedSize(horizontal: false, vertical: true)
+        .accessibilityElement(children: .combine)
     }
 }
 
