@@ -17,8 +17,9 @@
 //    - Honest data: completing requires reps (and a positive weight unless
 //      the lift is bodyweight-based). A missing value shows the danger
 //      outline + an inline message instead of silently logging.
-//    - Accessible: at accessibility text sizes the row stacks into two
-//      lines; every control has a label that reads its value.
+//    - Accessible: when the single line no longer fits (accessibility
+//      text sizes, or a small iPhone at larger sizes) the row stacks into
+//      labelled lines; every control has a label that reads its value.
 //
 //  Values are written to the model on every keystroke and saved by the
 //  parent, so a relaunch mid-set keeps what was typed.
@@ -32,6 +33,33 @@ import UIKit
 public enum SetField: Hashable, Sendable {
     case weight(UUID)
     case reps(UUID)
+}
+
+/// Column widths of the set table, scaled with Dynamic Type. Shared by the
+/// rows and the exercise card's column labels so they always line up, and
+/// used to decide when a row no longer fits on one line (small iPhones at
+/// larger text sizes, every phone at accessibility sizes) and must stack.
+public struct SetTableMetrics: DynamicProperty {
+    @ScaledMetric(relativeTo: .body) public var setWidth: CGFloat = 28
+    @ScaledMetric(relativeTo: .footnote) public var previousMinWidth: CGFloat = 44
+    @ScaledMetric(relativeTo: .title3) public var weightWidth: CGFloat = 74
+    @ScaledMetric(relativeTo: .title3) public var repsWidth: CGFloat = 54
+    @ScaledMetric(relativeTo: .title3) public var rpeWidth: CGFloat = 42
+
+    public static let spacing: CGFloat = 6
+
+    public init() {}
+
+    /// Narrowest width that still fits the single-line row.
+    public var singleLineMinimumWidth: CGFloat {
+        setWidth + previousMinWidth + weightWidth + repsWidth + rpeWidth
+            + Chalk.Size.setCheck + 5 * Self.spacing
+    }
+
+    /// `width` is the measured row width (0 before the first layout pass).
+    public func usesStackedLayout(width: CGFloat, dynamicTypeSize: DynamicTypeSize) -> Bool {
+        dynamicTypeSize.isAccessibilitySize || (width > 0 && width < singleLineMinimumWidth)
+    }
 }
 
 public struct SetEntryRow: View {
@@ -51,10 +79,8 @@ public struct SetEntryRow: View {
     let onEdited: () -> Void
 
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
-    @ScaledMetric(relativeTo: .title3) private var weightWidth: CGFloat = 74
-    @ScaledMetric(relativeTo: .title3) private var repsWidth: CGFloat = 54
-    @ScaledMetric(relativeTo: .title3) private var rpeWidth: CGFloat = 42
-    @ScaledMetric(relativeTo: .body) private var setWidth: CGFloat = 28
+    private var metrics = SetTableMetrics()
+    @State private var rowWidth: CGFloat = 0
 
     public init(
         entry: SetEntry,
@@ -90,16 +116,22 @@ public struct SetEntryRow: View {
 
     public var body: some View {
         VStack(alignment: .leading, spacing: Chalk.Space.xs) {
-            if dynamicTypeSize.isAccessibilitySize {
+            if isStacked {
                 stackedLayout
             } else {
                 singleLineLayout
             }
             if let message = validation.message(setLabel: setLabel) {
                 ChalkValidationText(message)
-                    .padding(.leading, dynamicTypeSize.isAccessibilitySize ? 0 : setWidth + Chalk.Space.sm)
+                    .padding(.leading, isStacked ? 0 : metrics.setWidth + SetTableMetrics.spacing)
                     .accessibilityIdentifier("\(identifierPrefix).error")
             }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .onGeometryChange(for: CGFloat.self) { proxy in
+            proxy.size.width
+        } action: { width in
+            rowWidth = width
         }
         .padding(.vertical, Chalk.Space.xs)
         .accessibilityElement(children: .contain)
@@ -107,18 +139,22 @@ public struct SetEntryRow: View {
 
     // MARK: Layouts
 
+    private var isStacked: Bool {
+        metrics.usesStackedLayout(width: rowWidth, dynamicTypeSize: dynamicTypeSize)
+    }
+
     private var singleLineLayout: some View {
-        HStack(spacing: 6) {
+        HStack(spacing: SetTableMetrics.spacing) {
             setNumber
-                .frame(width: setWidth)
+                .frame(width: metrics.setWidth)
             previousButton
                 .frame(maxWidth: .infinity, alignment: .leading)
             weightField
-                .frame(width: weightWidth)
+                .frame(width: metrics.weightWidth)
             repsField
-                .frame(width: repsWidth)
+                .frame(width: metrics.repsWidth)
             rpeMenu
-                .frame(width: rpeWidth)
+                .frame(width: metrics.rpeWidth)
             checkButton
         }
     }

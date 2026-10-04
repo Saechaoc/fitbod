@@ -27,8 +27,10 @@ import Testing
 @Suite("RoutineDuplication (plan 03-03)")
 struct RoutineDuplicationTests {
 
+    /// Current schema: `SupersetGroup` is a V2 entity, so a V1-only
+    /// container would not register it.
     private func makeContext() throws -> ModelContext {
-        let container = try InMemoryContainer.makeEmpty()
+        let container = try InMemoryContainer.makeCurrent()
         return ModelContext(container)
     }
 

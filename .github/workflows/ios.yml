@@ -116,8 +116,12 @@ jobs:
           if [ -f .ci/evidence/summary.md ]; then cat .ci/evidence/summary.md >> "$GITHUB_STEP_SUMMARY"; fi
           echo "build=${{ steps.build.outcome }} unit=${{ steps.unit.outcome }} ui_large=${{ steps.ui_large.outcome }} ui_small=${{ steps.ui_small.outcome }}"
           if [ -f .ci/logs/build.log ]; then
-            echo "---- compiler errors (first 80) ----"
-            grep -E "error:" .ci/logs/build.log | sort -u | head -80 || true
+            echo "---- compiler errors (first 150) ----"
+            grep -E "error:" .ci/logs/build.log | sed "s|$GITHUB_WORKSPACE/||" | sort -u | head -150 || true
+            if [ "${{ steps.build.outcome }}" != "success" ]; then
+              echo "---- build log tail ----"
+              tail -n 40 .ci/logs/build.log
+            fi
           fi
           if [ -f .ci/evidence/summary.md ]; then
             echo "---- test summary ----"

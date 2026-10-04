@@ -161,10 +161,9 @@ struct CustomExerciseDraftTests {
 struct CustomExerciseDeleteCascadeTests {
 
     /// Anchors LIB-05 at the *editor* level: when the user taps the
-    /// "Delete" button in the custom-exercise editor (which calls
-    /// `ctx.delete(draft.editingExisting!)` then `ctx.save()`), the
-    /// cascade rule `Exercise → SessionExercise: nullify` keeps the
-    /// historical session row alive with `exercise == nil`.
+    /// "Delete" button in the custom-exercise editor (which routes
+    /// through `ExerciseStore.delete`), the historical session row stays
+    /// alive with `exercise == nil`.
     ///
     /// The same rule is exercised at the schema level by
     /// `CascadeRuleTests.exerciseToSessionExerciseNullifies` (plan
@@ -206,9 +205,8 @@ struct CustomExerciseDeleteCascadeTests {
         #expect(try ctx.fetch(FetchDescriptor<SessionExercise>()).count == 1)
         #expect(try ctx.fetch(FetchDescriptor<SessionExercise>()).first?.exercise != nil)
 
-        // Editor delete path: `ctx.delete(editingExisting); try ctx.save()`.
-        ctx.delete(custom)
-        try ctx.save()
+        // Editor delete path (CustomExerciseEditor / ExerciseDetailView).
+        ExerciseStore.delete(custom, context: ctx)
 
         // LIB-05: SessionExercise survives, with `exercise = nil`.
         let postDelete = try ctx.fetch(FetchDescriptor<SessionExercise>())

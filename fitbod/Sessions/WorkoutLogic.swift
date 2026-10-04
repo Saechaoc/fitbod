@@ -134,10 +134,13 @@ public enum WorkoutLogging {
     @discardableResult
     public static func addExercise(_ exercise: Exercise, to session: Session, context: ModelContext) -> SessionExercise {
         let isStrength = exercise.mechanic == .compound && exercise.equipment == .barbell
+        // Read the next position before linking: assigning `se.session`
+        // updates the inverse `session.exercises` immediately.
+        let nextIndex = ((session.exercises ?? []).map(\.orderIndex).max() ?? -1) + 1
         let se = SessionExercise()
         se.session = session
         se.exercise = exercise
-        se.orderIndex = ((session.exercises ?? []).map(\.orderIndex).max() ?? -1) + 1
+        se.orderIndex = nextIndex
         se.intentRaw = (isStrength ? Intent.strength : Intent.hypertrophy).rawValue
         se.targetSets = 3
         se.targetRepsLow = isStrength ? 4 : 8

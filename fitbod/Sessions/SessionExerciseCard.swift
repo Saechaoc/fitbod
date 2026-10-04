@@ -45,7 +45,11 @@ public struct SessionExerciseCard: View {
     @State private var previous: PreviousPerformance?
     @State private var explanation: PrescriptionExplanation?
     @State private var presentingWhy = false
+    @State private var presentingPlateMath = false
     @State private var bannerDismissed = false
+    @State private var tableWidth: CGFloat = 0
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    private var metrics = SetTableMetrics()
     @Query private var settingsList: [UserSettings]
     @Query private var inventories: [PlateInventory]
 
@@ -88,6 +92,16 @@ public struct SessionExerciseCard: View {
                 .sheet(isPresented: $presentingWhy) {
                     if let explanation {
                         WhyThisWeightSheet(explanation: explanation, onUseSuggested: { useSuggested() })
+                    }
+                }
+                .sheet(isPresented: $presentingPlateMath) {
+                    if let kind = plateKind {
+                        PlateCalculatorSheet(
+                            equipment: kind,
+                            inventory: SessionFactory.plateInventory(for: kind, context: ctx),
+                            initialTarget: plateMathTarget
+                        )
+                        .presentationDetents([.medium, .large])
                     }
                 }
 
@@ -214,6 +228,13 @@ public struct SessionExerciseCard: View {
                 } label: {
                     Label("Pinned note", systemImage: "pin")
                 }
+                if plateKind != nil {
+                    Button {
+                        presentingPlateMath = true
+                    } label: {
+                        Label("Plate math", systemImage: "circle.grid.2x1")
+                    }
+                }
                 if !WorkoutLogging.warmupSets(of: sessionExercise).isEmpty {
                     Button {
                         WorkoutLogging.skipWarmups(of: sessionExercise, context: ctx)
@@ -236,6 +257,30 @@ public struct SessionExerciseCard: View {
         .padding(.vertical, Chalk.Space.xs)
     }
 
+    // MARK: Plate math
+
+    /// Barbell and dumbbell lifts get the plate calculator.
+    private var plateKind: PlateEquipmentKind? {
+        switch sessionExercise.exercise?.equipment {
+        case .barbell?: return .barbell
+        case .dumbbell?: return .dumbbell
+        default: return nil
+        }
+    }
+
+    /// The weight to load next: the first open working set, else the
+    /// prescription, else the last set.
+    private var plateMathTarget: Double? {
+        let working = WorkoutLogging.workingSets(of: sessionExercise)
+        if let open = working.first(where: { !$0.isComplete && $0.weight > 0 }) {
+            return open.weight
+        }
+        if let prescribed = sessionExercise.prescribedWeight, prescribed > 0 {
+            return prescribed
+        }
+        return working.last?.weight
+    }
+
     private var prescriptionLine: String {
         let se = sessionExercise
         var parts: [String] = [se.intent.rawValue.capitalized]
@@ -250,20 +295,33 @@ public struct SessionExerciseCard: View {
 
     // MARK: Column labels
 
+    /// Same scaled widths and stacking rule as `SetEntryRow`, so the labels
+    /// sit exactly over their columns — or collapse to one "Sets" label
+    /// when the rows stack.
     private var columnLabels: some View {
         VStack(spacing: Chalk.Space.xs) {
-            ViewThatFits(in: .horizontal) {
-                HStack(spacing: 6) {
-                    Text("Set").frame(width: 28)
-                    Text("Previous").frame(maxWidth: .infinity, alignment: .leading)
-                    Text(unitLabel).frame(width: 74)
-                    Text("Reps").frame(width: 54)
-                    Text("RPE").frame(width: 42)
-                    Color.clear.frame(width: Chalk.Size.setCheck, height: 1)
+            Group {
+                if metrics.usesStackedLayout(width: tableWidth, dynamicTypeSize: dynamicTypeSize) {
+                    Text("Sets").frame(maxWidth: .infinity, alignment: .leading)
+                } else {
+                    HStack(spacing: SetTableMetrics.spacing) {
+                        Text("Set").frame(width: metrics.setWidth)
+                        Text("Previous").frame(maxWidth: .infinity, alignment: .leading)
+                        Text(unitLabel).frame(width: metrics.weightWidth)
+                        Text("Reps").frame(width: metrics.repsWidth)
+                        Text("RPE").frame(width: metrics.rpeWidth)
+                        Color.clear.frame(width: Chalk.Size.setCheck, height: 1)
+                    }
                 }
-                Text("Sets").frame(maxWidth: .infinity, alignment: .leading)
             }
             .chalkLabelStyle()
+            .lineLimit(1)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .onGeometryChange(for: CGFloat.self) { proxy in
+                proxy.size.width
+            } action: { width in
+                tableWidth = width
+            }
             Rectangle()
                 .fill(Color.chalkInk)
                 .frame(height: Chalk.Line.strong)

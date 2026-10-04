@@ -151,19 +151,19 @@ with open(out_path, "w") as f:
     f.write("\n".join(lines) + "\n")
 PY
   load_sims
-  for udid in "$SMALL_UDID" "$LARGE_UDID"; do
-    xcrun simctl boot "$udid" 2>/dev/null || true
-    xcrun simctl bootstatus "$udid" -b >/dev/null 2>&1 || true
-  done
+  # Devices are not pre-booted: xcodebuild boots each one when its test
+  # step starts, which avoids a long serial boot here and a stale
+  # "Booting" state confusing destination matching later.
   cat "$SIMS_ENV"
 }
 
 cmd_build() {
-  load_sims
-  log "build-for-testing on $LARGE_NAME ($RUNTIME_NAME)"
+  log "build-for-testing (generic iOS Simulator)"
   set -o pipefail
+  # A generic destination needs no booted or matching device; the test
+  # steps below run the same products on specific simulators.
   xcodebuild build-for-testing "${common_flags[@]}" \
-    -destination "platform=iOS Simulator,id=$LARGE_UDID" \
+    -destination "generic/platform=iOS Simulator" \
     2>&1 | pretty "$LOGS/build.log"
 }
 
@@ -172,6 +172,7 @@ run_tests() {
   local bundle="$RESULTS/$label.xcresult"
   rm -rf "$bundle"
   log "test-without-building [$label]"
+  xcrun simctl boot "$udid" >/dev/null 2>&1 || true
   set -o pipefail
   xcodebuild test-without-building "${common_flags[@]}" \
     -destination "platform=iOS Simulator,id=$udid" \
