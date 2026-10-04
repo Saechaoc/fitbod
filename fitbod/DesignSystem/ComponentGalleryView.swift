@@ -83,7 +83,7 @@ struct ComponentGalleryView: View {
     private var colors: some View {
         VStack(alignment: .leading, spacing: Chalk.Space.md) {
             ChalkSectionHeader("Color")
-            LazyVGrid(columns: [GridItem(.adaptive(minimum: 150), spacing: Chalk.Space.sm)], spacing: Chalk.Space.sm) {
+            LazyVGrid(columns: [GridItem(.adaptive(minimum: 150), spacing: Chalk.Space.sm, alignment: .leading)], alignment: .leading, spacing: Chalk.Space.sm) {
                 ForEach(swatches) { swatch in
                     HStack(spacing: Chalk.Space.sm) {
                         RoundedRectangle(cornerRadius: Chalk.Radius.sm, style: .continuous)
@@ -98,6 +98,7 @@ struct ComponentGalleryView: View {
                             Text(swatch.use).font(.caption).foregroundStyle(.chalkInk2)
                         }
                     }
+                    .frame(maxWidth: .infinity, alignment: .leading)
                     .accessibilityElement(children: .combine)
                 }
             }
