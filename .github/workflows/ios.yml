@@ -30,9 +30,12 @@ on:
 permissions:
   contents: write
 
+# One run per branch at a time. A running job is allowed to finish (a full
+# pass with UI tests takes ~30 min and its evidence is the point); a newer
+# push waits, and any still-queued older run is replaced by it.
 concurrency:
   group: ios-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   ios:
