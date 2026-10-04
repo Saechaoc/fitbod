@@ -39,9 +39,15 @@ public struct PlateCalculatorSheet: View {
 
     // MARK: - Init
 
-    public init(equipment: PlateEquipmentKind, inventory: PlateInventory) {
+    /// `initialTarget` pre-fills the target (the workout screen's "Plate
+    /// math" passes the set's weight); the Settings entry point keeps the
+    /// 60 default.
+    public init(equipment: PlateEquipmentKind, inventory: PlateInventory, initialTarget: Double? = nil) {
         self.equipment = equipment
         self.inventory = inventory
+        if let initialTarget, initialTarget > 0 {
+            _targetWeightText = State(initialValue: ChalkFormat.weight(initialTarget))
+        }
     }
 
     // MARK: - Computed

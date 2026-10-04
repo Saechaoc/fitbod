@@ -94,9 +94,12 @@ struct CascadeRuleTests {
         #expect(preDelete.count == 1)
         #expect(preDelete.first?.exercise != nil)
 
-        // Delete the library entry. LIB-05: history row survives.
-        ctx.delete(ex)
-        try ctx.save()
+        // Delete the library entry through the app's delete path. LIB-05:
+        // history row survives. `Exercise` declares no inverse for
+        // `SessionExercise.exercise`, so SwiftData alone leaves a dangling
+        // reference; `ExerciseStore.delete` nullifies it explicitly
+        // (milestone 1 — no schema change).
+        ExerciseStore.delete(ex, context: ctx)
 
         let postDelete = try ctx.fetch(FetchDescriptor<SessionExercise>())
         #expect(postDelete.count == 1, "SessionExercise must survive Exercise deletion")

@@ -42,21 +42,25 @@ public struct PinnedNoteCapsule: View {
         Button {
             onTap()
         } label: {
-            HStack(spacing: 4) {
-                Image(systemName: "pin.fill")                                  // UI-SPEC Asset Contract
-                    .foregroundStyle(Color(.systemYellow))
+            HStack(alignment: .firstTextBaseline, spacing: Chalk.Space.sm) {
+                Image(systemName: "pin.fill")
+                    .foregroundStyle(.chalkAccentInk)
                 Text(note)
-                    .font(.caption)
-                    .foregroundStyle(.primary)
-                    .lineLimit(2)
+                    .font(.subheadline)
+                    .foregroundStyle(.chalkInk)
+                    .lineLimit(3)
+                    .multilineTextAlignment(.leading)
+                Spacer(minLength: 0)
             }
-            .padding(.horizontal, 8)
-            .padding(.vertical, 4)
-            .background(Color(.systemYellow).opacity(0.15))                   // UI-SPEC verbatim pinned-note background
-            .clipShape(Capsule())
+            .padding(.horizontal, Chalk.Space.md)
+            .padding(.vertical, Chalk.Space.sm)
+            .frame(minHeight: Chalk.Size.minTouch)
+            .background(Color.chalkSunken, in: RoundedRectangle(cornerRadius: Chalk.Radius.md, style: .continuous))
+            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .accessibilityLabel("Pinned note: \(note)")                            // UI-SPEC verbatim a11y
+        .accessibilityLabel("Pinned note: \(note)")
         .accessibilityHint("Tap to edit")
     }
 }
+

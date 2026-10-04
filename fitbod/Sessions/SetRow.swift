@@ -2,308 +2,500 @@
 //  SetRow.swift
 //  fitbod
 //
-//  Wave-4 plan 04-01 — one row per `SetEntry` inside a `SessionExerciseCard`.
-//  This is the user-facing per-set logging surface: weight | reps | RPE chips
-//  | set-type chip | completion checkmark.
+//  Chalkline set-entry row — the most-used control in the app. One row per
+//  `SetEntry` in the active workout:
 //
-//  ## Layout (UI-SPEC § Session logger)
+//      SET  PREVIOUS   LB    REPS  RPE   ✓
+//       2   185 × 5   [185]  [ 5]   8   (●)
 //
-//      [set#] [Previous] [Weight/PrescriptionWeightCell] [Reps] [RPE chips] [type chip] [✓]
-//      [PlateStackDisclosure (conditional, below)]
+//  Design goals (docs/design/screens.md § Active workout):
+//    - Fast: weight is pre-filled (previous / prescription), tapping the
+//      Previous value copies last time's weight × reps, and the keyboard
+//      toolbar's Next walks weight → reps → next set.
+//    - One-handed: the 48 pt check button sits at the trailing edge, in
+//      thumb reach; inputs are 44 pt tall.
+//    - Honest data: completing requires reps (and a positive weight unless
+//      the lift is bodyweight-based). A missing value shows the danger
+//      outline + an inline message instead of silently logging.
+//    - Accessible: when the single line no longer fits (accessibility
+//      text sizes, or a small iPhone at larger sizes) the row stacks into
+//      labelled lines; every control has a label that reads its value.
 //
-//  Phase 3 (plan 03-08) additions:
-//    - Weight `TextField` replaced by `PrescriptionWeightCell` which renders:
-//        * The prescribed weight with an `info.circle` button (WhyThisWeightSheet)
-//        * A read-only "{low} – {high} kg" Text when `range != nil` (calibrating)
-//        * An "M" badge when the user overrides the prescribed weight
-//    - `PlateStackDisclosure` injected as a conditional VStack child below the
-//      main HStack when `expandedPlateSetID == entry.id`.
-//    - `expandedPlateSetID: Binding<UUID?>` for single-disclosure-at-a-time
-//      coordination across all set rows in a card.
-//    - `prescribed: Double?` — the session-exercise prescribed weight
-//    - `explanation: PrescriptionExplanation?` — recomputed by card
-//
-//  ## Commit semantics (SESS-04 — rest timer integration)
-//
-//  The completion button is GUARDED — it only fires `onCommit()` when
-//  `entry.weight > 0 && entry.reps > 0`. This guard is load-bearing for
-//  the matching-intent query: without it, an accidental tap would flip
-//  `isComplete = true` on a zero-weight/zero-rep set, corrupting future
-//  `PreviousMatchingIntent` reads (which filter on `reps > 0`).
-//
-//  When `onCommit()` fires, the parent `SessionLoggerView`:
-//    1. Sets `entry.isComplete = true` + `entry.completedAt = .now`.
-//    2. Calls `try? ctx.save()` to persist the committed set.
-//    3. Fires `engine.start(seconds: prescribedRest, exerciseName:)` to
-//       kick off the rest period. RESEARCH §6 Pitfall 2 — the save MUST
-//       precede the engine.start so the committed set is in the store
-//       before the rest period begins.
-//
-//  ## Auto-stop on next-set entry (SESS-04)
-//
-//  When the user taps a weight or reps cell on a STILL-INCOMPLETE set
-//  (i.e. starting to log the next set), `onTapEmptyCell()` fires which
-//  calls `engine.stop()` in the parent. The empty-cell-tap pattern keeps
-//  ±15s button taps + decimal-RPE long-presses from re-cancelling the
-//  notification (they fire on bordered button presses, not on the cell tap).
-//
-//  ## Bodyweight signed weight (SESS-09)
-//
-//  For exercises with `equipment == .bodyweight`, the weight TextField
-//  uses `.numbersAndPunctuation` keyboard so the user can enter a signed
-//  value (negative weight = assistance from a machine; positive = added
-//  weight on a belt). Non-bodyweight exercises use `.decimalPad`.
-//  (This setting is now passed to PrescriptionWeightCell.)
-//
-//  ## Plate-stack inline disclosure (plan 03-08 / UI-SPEC § Plate-stack)
-//
-//  Tapping the weight cell area (NOT the info.circle icon) toggles the
-//  PlateStackDisclosure. Only one disclosure is open at a time — managed by
-//  the `expandedPlateSetID` binding owned by SessionExerciseCard.
-//
-//  ## Anti-patterns avoided
-//
-//  - PrescriptionWeightCell handles the TextField text seeding internally;
-//    SetRow no longer manages `weightText` state.
-//  - The `PreviousColumn` query fires once in `.task`, not on every body
-//    invocation (RESEARCH § Anti-Patterns to Avoid).
+//  Values are written to the model on every keystroke and saved by the
+//  parent, so a relaunch mid-set keeps what was typed.
 //
 
 import SwiftUI
 import SwiftData
+import UIKit
 
-public struct SetRow: View {
+/// Focus identity for the numeric fields in the workout list.
+public enum SetField: Hashable, Sendable {
+    case weight(UUID)
+    case reps(UUID)
+}
+
+/// Column widths of the set table, scaled with Dynamic Type. Shared by the
+/// rows and the exercise card's column labels so they always line up, and
+/// used to decide when a row no longer fits on one line (small iPhones at
+/// larger text sizes, every phone at accessibility sizes) and must stack.
+public struct SetTableMetrics: DynamicProperty {
+    @ScaledMetric(relativeTo: .body) public var setWidth: CGFloat = 28
+    @ScaledMetric(relativeTo: .footnote) public var previousMinWidth: CGFloat = 44
+    @ScaledMetric(relativeTo: .title3) public var weightWidth: CGFloat = 74
+    @ScaledMetric(relativeTo: .title3) public var repsWidth: CGFloat = 54
+    @ScaledMetric(relativeTo: .title3) public var rpeWidth: CGFloat = 42
+
+    public static let spacing: CGFloat = 6
+
+    public init() {}
+
+    /// Narrowest width that still fits the single-line row.
+    public var singleLineMinimumWidth: CGFloat {
+        setWidth + previousMinWidth + weightWidth + repsWidth + rpeWidth
+            + Chalk.Size.setCheck + 5 * Self.spacing
+    }
+
+    /// `width` is the measured row width (0 before the first layout pass).
+    public func usesStackedLayout(width: CGFloat, dynamicTypeSize: DynamicTypeSize) -> Bool {
+        dynamicTypeSize.isAccessibilitySize || (width > 0 && width < singleLineMinimumWidth)
+    }
+}
+
+public struct SetEntryRow: View {
     @Bindable public var entry: SetEntry
-    public let sessionExercise: SessionExercise
-    /// Phase 3 (plan 03-08): the prescribed weight from SessionExercise,
-    /// forwarded to PrescriptionWeightCell. Nil for Phase 2 sessions started
-    /// before Phase 3 shipped.
-    public let prescribed: Double?
-    /// Phase 3 (plan 03-08): the full PrescriptionExplanation recomputed by
-    /// SessionExerciseCard.currentExplanation(). Nil for first sessions or
-    /// Phase 2 sessions. The `range` field inside drives the read-only
-    /// calibrating display per CONTEXT.md Area 1.
-    public let explanation: PrescriptionExplanation?
-    /// Phase 3 (plan 03-08): shared single-disclosure-at-a-time coordination.
-    /// When the user taps the weight cell area, this toggles to entry.id;
-    /// when another row is tapped, this card automatically collapses because
-    /// expandedPlateSetID changes.
-    @Binding public var expandedPlateSetID: UUID?
-    public let onCommit: () -> Void
-    public let onTapEmptyCell: () -> Void
+    let setLabel: String
+    let previous: PreviousPerformance.Line?
+    let targetRepsText: String
+    let unitLabel: String
+    let allowsSignedWeight: Bool
+    let isNext: Bool
+    let validation: SetValidation
+    let identifierPrefix: String
+    let focus: FocusState<SetField?>.Binding
+    let onComplete: () -> Void
+    let onUncomplete: () -> Void
+    let onUsePrevious: () -> Void
+    let onEdited: () -> Void
 
-    @State private var repsText: String = ""
-    /// Wave-4 plan 04-03 — per-set note sheet presentation flag. Plan
-    /// 04-01 anchored the note-button placement here as a stub; this plan
-    /// ships the real PerSetNoteSheet wire.
-    @State private var presentingSetNote: Bool = false
-
-    /// Phase 3 (plan 03-08): plate inventory for the PlateStackDisclosure.
-    /// Read-only query — no write-through.
-    @Query private var inventories: [PlateInventory]
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    private var metrics = SetTableMetrics()
+    @State private var rowWidth: CGFloat = 0
 
     public init(
         entry: SetEntry,
-        sessionExercise: SessionExercise,
-        prescribed: Double? = nil,
-        explanation: PrescriptionExplanation? = nil,
-        expandedPlateSetID: Binding<UUID?> = .constant(nil),
-        onCommit: @escaping () -> Void,
-        onTapEmptyCell: @escaping () -> Void
+        setLabel: String,
+        previous: PreviousPerformance.Line?,
+        targetRepsText: String,
+        unitLabel: String,
+        allowsSignedWeight: Bool,
+        isNext: Bool,
+        validation: SetValidation,
+        identifierPrefix: String,
+        focus: FocusState<SetField?>.Binding,
+        onComplete: @escaping () -> Void,
+        onUncomplete: @escaping () -> Void,
+        onUsePrevious: @escaping () -> Void,
+        onEdited: @escaping () -> Void
     ) {
         self.entry = entry
-        self.sessionExercise = sessionExercise
-        self.prescribed = prescribed
-        self.explanation = explanation
-        self._expandedPlateSetID = expandedPlateSetID
-        self.onCommit = onCommit
-        self.onTapEmptyCell = onTapEmptyCell
+        self.setLabel = setLabel
+        self.previous = previous
+        self.targetRepsText = targetRepsText
+        self.unitLabel = unitLabel
+        self.allowsSignedWeight = allowsSignedWeight
+        self.isNext = isNext
+        self.validation = validation
+        self.identifierPrefix = identifierPrefix
+        self.focus = focus
+        self.onComplete = onComplete
+        self.onUncomplete = onUncomplete
+        self.onUsePrevious = onUsePrevious
+        self.onEdited = onEdited
     }
 
     public var body: some View {
-        VStack(spacing: 0) {
-            // MARK: Main set row HStack
-            HStack(spacing: 8) {                                                   // UI-SPEC sm
-                Text(setLabel)                                                     // "1", "2", "W1" for warmup
-                    .font(.body)
-                    .frame(width: 32, alignment: .leading)
-                PreviousColumn(
-                    exerciseID: sessionExercise.exercise?.id,
-                    intentRaw: sessionExercise.intentRaw
-                )
-                .frame(width: 80, alignment: .leading)
-
-                // Phase 3 (plan 03-08): PrescriptionWeightCell replaces the
-                // plain weight TextField. It renders:
-                //   - An editable TextField (when range == nil)
-                //   - A read-only "{low} – {high} kg" Text (when range != nil)
-                //   - An "M" badge when wasManualOverride == true
-                //   - An info.circle button that opens WhyThisWeightSheet
-                //
-                // CRITICAL: `range: explanation?.range` MUST be passed here so
-                // calibrating-with-prior-data sessions render the read-only
-                // range display per CONTEXT.md Area 1 + UI-SPEC § Prescribed
-                // weight cell. This is the key integration wiring of plan 03-08.
-                PrescriptionWeightCell(
-                    weight: $entry.weight,
-                    prescribed: prescribed,
-                    range: explanation?.range,   // CONTEXT.md Area 1 — calibrating range
-                    explanation: explanation,
-                    wasManualOverride: $entry.wasManualOverride,
-                    isComplete: entry.isComplete,
-                    onTapEmptyCell: onTapEmptyCell
-                )
-                .frame(width: 60)
-                .contentShape(Rectangle())
-                .onTapGesture {
-                    // Tap on weight cell area (NOT info.circle — that button
-                    // intercepts its own tap) toggles the plate stack disclosure.
-                    // UI-SPEC § Plate-stack inline disclosure flow §3: TextField
-                    // focus takes precedence; only toggle when not in range-mode
-                    // (read-only Text) or explicitly tapping the cell background.
-                    togglePlateDisclosure()
-                    if !entry.isComplete { onTapEmptyCell() }
-                }
-
-                TextField("—", text: $repsText)                                    // UI-SPEC verbatim placeholder
-                    .keyboardType(.numberPad)
-                    .frame(width: 40)
-                    .onTapGesture {
-                        if !entry.isComplete { onTapEmptyCell() }
-                    }
-                    .onChange(of: repsText) { _, newValue in
-                        if let i = Int(newValue) { entry.reps = i }
-                    }
-                InlineRPEChipRow(rpe: Binding(
-                    get: { entry.rpe },
-                    set: { entry.rpe = $0 }
-                ))
-                SetTypeChip(setTypeRaw: Binding(
-                    get: { entry.setTypeRaw },
-                    set: { entry.setTypeRaw = $0 }
-                ))
-                Spacer()
-                // Wave-4 plan 04-03 — per-set notes button (UI-SPEC § Session
-                // logger "Per-set notes button accessibility label" + symbol
-                // anchor placement from plan 04-01). Icon-only button before
-                // the completion checkmark. Foreground tints to accent when a
-                // note is populated as a visual signal; secondary-label
-                // otherwise so empty-notes buttons stay quiet.
-                Button {
-                    presentingSetNote = true
-                } label: {
-                    Image(systemName: "square.and.pencil")
-                        .font(.caption)
-                        .foregroundStyle(entry.notes != nil ? Color.accentColor : Color.secondary)
-                }
-                .buttonStyle(.plain)
-                .frame(width: 32, height: 32)
-                .accessibilityLabel("Note for set \(entry.orderIndex + 1)")        // UI-SPEC verbatim a11y
-                .sheet(isPresented: $presentingSetNote) {
-                    PerSetNoteSheet(entry: entry)
-                }
-                Button {
-                    // Guard: never commit a zero-weight/zero-rep set. Without
-                    // this guard an empty checkmark-tap would flip
-                    // `isComplete = true` and corrupt future matching-intent
-                    // reads. UI-SPEC § Anti-Patterns to Avoid.
-                    if entry.weight > 0 && entry.reps > 0 {
-                        onCommit()
-                    }
-                } label: {
-                    Image(systemName: entry.isComplete ? "checkmark.circle.fill" : "circle")
-                        .foregroundStyle(entry.isComplete ? Color.accentColor : Color.secondary)
-                        .font(.title2)
-                        .frame(minWidth: 44, minHeight: 44)                        // UI-SPEC HIG 44pt
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel(
-                    entry.isComplete
-                    ? "Set \(entry.orderIndex + 1) complete"
-                    : "Mark set \(entry.orderIndex + 1) complete"
-                )
+        VStack(alignment: .leading, spacing: Chalk.Space.xs) {
+            if isStacked {
+                stackedLayout
+            } else {
+                singleLineLayout
             }
-            .padding(.vertical, 12)                                                // UI-SPEC md
-
-            // MARK: PlateStackDisclosure (Phase 3 plan 03-08)
-            //
-            // Rendered as a VStack sibling below the main HStack when the
-            // user has tapped this row's weight cell. Single-disclosure-
-            // at-a-time: expandedPlateSetID must equal this entry's id.
-            // Animation is handled inside PlateStackDisclosure itself via
-            // @Environment(\.accessibilityReduceMotion).
-            if expandedPlateSetID == entry.id {
-                let ekind = SessionFactory.equipmentKind(
-                    for: sessionExercise.exercise?.equipment ?? .other
-                )
-                if let inv = inventories.first(where: { $0.equipmentKind == ekind }) {
-                    let targetWeight = entry.weight > 0
-                        ? entry.weight
-                        : (prescribed ?? 0)
-                    let barW = sessionExercise.exercise?.barWeightOverride ?? inv.barWeight
-                    PlateStackDisclosure(
-                        targetWeight: targetWeight,
-                        barWeight: barW,
-                        plates: inv.availablePlates
-                    )
-                    .padding(.vertical, 8)                                         // UI-SPEC sm
-                }
+            if let message = validation.message(setLabel: setLabel) {
+                ChalkValidationText(message)
+                    .padding(.leading, isStacked ? 0 : metrics.setWidth + SetTableMetrics.spacing)
+                    .accessibilityIdentifier("\(identifierPrefix).error")
             }
         }
-        .onAppear {
-            // Seed the reps text field. PrescriptionWeightCell manages the
-            // weight text field internally (seeding from prescribed weight or
-            // current weight on .onAppear).
-            repsText = entry.reps == 0 ? "" : String(entry.reps)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .onGeometryChange(for: CGFloat.self) { proxy in
+            proxy.size.width
+        } action: { width in
+            rowWidth = width
+        }
+        .padding(.vertical, Chalk.Space.xs)
+        .accessibilityElement(children: .contain)
+    }
+
+    // MARK: Layouts
+
+    private var isStacked: Bool {
+        metrics.usesStackedLayout(width: rowWidth, dynamicTypeSize: dynamicTypeSize)
+    }
+
+    private var singleLineLayout: some View {
+        HStack(spacing: SetTableMetrics.spacing) {
+            setNumber
+                .frame(width: metrics.setWidth)
+            previousButton
+                .frame(maxWidth: .infinity, alignment: .leading)
+            weightField
+                .frame(width: metrics.weightWidth)
+            repsField
+                .frame(width: metrics.repsWidth)
+            rpeMenu
+                .frame(width: metrics.rpeWidth)
+            checkButton
         }
     }
 
-    // MARK: - Private helpers
-
-    /// "1", "2", "W1" for warmup sets — UI-SPEC § Session logger
-    /// "Set-row 'Set N' leading label".
-    private var setLabel: String {
-        let n = entry.orderIndex + 1
-        return entry.isWarmup ? "W\(n)" : "\(n)"
+    private var stackedLayout: some View {
+        VStack(alignment: .leading, spacing: Chalk.Space.sm) {
+            HStack(alignment: .firstTextBaseline) {
+                Text("Set \(setLabel)")
+                    .font(.chalkSubtitle)
+                    .textCase(.uppercase)
+                    .foregroundStyle(isNext ? Color.chalkAccentInk : Color.chalkInk)
+                Spacer(minLength: Chalk.Space.sm)
+                previousButton
+            }
+            HStack(spacing: Chalk.Space.sm) {
+                VStack(alignment: .leading, spacing: Chalk.Space.xxs) {
+                    Text(unitLabel).chalkLabelStyle()
+                    weightField
+                }
+                VStack(alignment: .leading, spacing: Chalk.Space.xxs) {
+                    Text("Reps").chalkLabelStyle()
+                    repsField
+                }
+            }
+            HStack(spacing: Chalk.Space.sm) {
+                VStack(alignment: .leading, spacing: Chalk.Space.xxs) {
+                    Text("RPE").chalkLabelStyle()
+                    rpeMenu
+                }
+                Spacer(minLength: Chalk.Space.sm)
+                checkButton
+            }
+        }
     }
 
-    /// Toggles the plate-stack disclosure for this row. If this row's
-    /// disclosure is already open, closes it. If another row's disclosure
-    /// is open, this row takes over (single-disclosure-at-a-time).
-    private func togglePlateDisclosure() {
-        if expandedPlateSetID == entry.id {
-            expandedPlateSetID = nil
+    // MARK: Cells
+
+    private var setNumber: some View {
+        Text(setLabel)
+            .font(.chalkMetric)
+            .foregroundStyle(isNext ? Color.chalkAccentInk : Color.chalkInk)
+            .lineLimit(1)
+            .minimumScaleFactor(0.7)
+            .accessibilityLabel(Text("Set \(setLabel)"))
+    }
+
+    @ViewBuilder
+    private var previousButton: some View {
+        if let previous {
+            Button(action: onUsePrevious) {
+                Text(previousText(previous))
+                    .font(.chalkFootnote)
+                    .foregroundStyle(.chalkInk2)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.75)
+                    .frame(minHeight: Chalk.Size.minTouch, alignment: .leading)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .disabled(entry.isComplete)
+            .accessibilityLabel(Text("Previous: \(previousSpoken(previous))"))
+            .accessibilityHint(Text(entry.isComplete ? "" : "Double-tap to copy into this set"))
+            .accessibilityIdentifier("\(identifierPrefix).previous")
         } else {
-            expandedPlateSetID = entry.id
+            Text("—")
+                .font(.chalkFootnote)
+                .foregroundStyle(.chalkInk3)
+                .accessibilityLabel(Text("No previous set"))
+        }
+    }
+
+    private var weightField: some View {
+        SetNumberField(
+            value: entry.weight,
+            isInteger: false,
+            allowsNegative: allowsSignedWeight,
+            placeholder: allowsSignedWeight ? "BW" : "0",
+            showsZero: false,
+            isComplete: entry.isComplete,
+            isError: validation == .missingWeight,
+            isNext: isNext,
+            accessibilityLabel: "Set \(setLabel) weight, \(unitLabel)",
+            identifier: "\(identifierPrefix).weight",
+            focus: focus,
+            field: .weight(entry.id),
+            onChange: { newValue in
+                entry.weight = newValue ?? 0
+                if newValue != nil, entry.wasManualOverride == false,
+                   let prescribed = entry.sessionExercise?.prescribedWeight,
+                   abs((newValue ?? 0) - prescribed) > 0.001 {
+                    entry.wasManualOverride = true
+                }
+                onEdited()
+            }
+        )
+    }
+
+    private var repsField: some View {
+        SetNumberField(
+            value: Double(entry.reps),
+            isInteger: true,
+            allowsNegative: false,
+            placeholder: targetRepsText,
+            showsZero: false,
+            isComplete: entry.isComplete,
+            isError: validation == .missingReps,
+            isNext: false,
+            accessibilityLabel: "Set \(setLabel) reps",
+            identifier: "\(identifierPrefix).reps",
+            focus: focus,
+            field: .reps(entry.id),
+            onChange: { newValue in
+                entry.reps = max(0, Int(newValue ?? 0))
+                onEdited()
+            }
+        )
+    }
+
+    private var rpeMenu: some View {
+        Menu {
+            Button("No RPE") {
+                entry.rpe = nil
+                onEdited()
+            }
+            ForEach(Self.rpeOptions, id: \.self) { value in
+                Button(ChalkFormat.rpe(value)) {
+                    entry.rpe = value
+                    onEdited()
+                }
+            }
+        } label: {
+            Text(entry.rpe.map { ChalkFormat.rpe($0) } ?? "–")
+                .font(.chalkMetric)
+                .foregroundStyle(entry.rpe == nil ? Color.chalkInk3 : Color.chalkInk)
+                .frame(maxWidth: .infinity, minHeight: Chalk.Size.input)
+                .background(
+                    entry.isComplete ? Color.clear : Color.chalkSunken,
+                    in: RoundedRectangle(cornerRadius: Chalk.Radius.md, style: .continuous)
+                )
+                .contentShape(Rectangle())
+        }
+        .accessibilityLabel(Text("Set \(setLabel) RPE"))
+        .accessibilityValue(Text(entry.rpe.map { ChalkFormat.rpe($0) } ?? "not set"))
+        .accessibilityIdentifier("\(identifierPrefix).rpe")
+    }
+
+    private var checkButton: some View {
+        let label: String = entry.isComplete ? "Set \(setLabel) complete" : "Complete set \(setLabel)"
+        return Button {
+            if entry.isComplete { onUncomplete() } else { onComplete() }
+        } label: {
+            ZStack {
+                Circle()
+                    .fill(entry.isComplete ? Color.chalkInk : Color.chalkSurface)
+                Circle()
+                    .strokeBorder(checkBorder, lineWidth: isNext && !entry.isComplete ? Chalk.Line.focus : Chalk.Line.strong)
+                if entry.isComplete {
+                    Image(systemName: "checkmark")
+                        .font(.body.weight(.heavy))
+                        .foregroundStyle(.chalkCanvas)
+                }
+            }
+            .frame(width: Chalk.Size.minTouch, height: Chalk.Size.minTouch)
+            .frame(width: Chalk.Size.setCheck, height: Chalk.Size.setCheck)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(Text(label))
+        .accessibilityValue(Text(entry.isComplete ? "complete" : "open"))
+        .accessibilityHint(Text(entry.isComplete ? "Double-tap to edit this set" : "Logs the set and starts rest"))
+        .accessibilityIdentifier("\(identifierPrefix).complete")
+    }
+
+    private var checkBorder: Color {
+        if entry.isComplete { return .chalkInk }
+        if validation != .ok { return .chalkDanger }
+        return isNext ? .chalkAccent : .chalkInk
+    }
+
+    // MARK: Text
+
+    static let rpeOptions: [Double] = [10, 9.5, 9, 8.5, 8, 7.5, 7, 6.5, 6]
+
+    private func previousText(_ line: PreviousPerformance.Line) -> String {
+        let weight = allowsSignedWeight && line.weight > 0 ? "+" + ChalkFormat.weight(line.weight) : ChalkFormat.weight(line.weight)
+        let base = line.weight == 0 && allowsSignedWeight ? "BW × \(line.reps)" : "\(weight) × \(line.reps)"
+        if let rpe = line.rpe {
+            return base + " @" + ChalkFormat.rpe(rpe)
+        }
+        return base
+    }
+
+    private func previousSpoken(_ line: PreviousPerformance.Line) -> String {
+        var text = "\(ChalkFormat.weight(line.weight)) \(unitLabel) for \(line.reps) reps"
+        if let rpe = line.rpe {
+            text += " at RPE \(ChalkFormat.rpe(rpe))"
+        }
+        return text
+    }
+}
+
+/// Numeric text input backed by local text state, so typing "187." or a
+/// leading "-" is never reformatted mid-keystroke. Parsed values are pushed
+/// to the model on every change; external model changes (Previous, Add
+/// set) refresh the text.
+struct SetNumberField: View {
+    let value: Double
+    let isInteger: Bool
+    let allowsNegative: Bool
+    let placeholder: String
+    let showsZero: Bool
+    let isComplete: Bool
+    let isError: Bool
+    let isNext: Bool
+    let accessibilityLabel: String
+    let identifier: String
+    let focus: FocusState<SetField?>.Binding
+    let field: SetField
+    let onChange: (Double?) -> Void
+
+    @State private var text: String = ""
+    @State private var loaded = false
+
+    var body: some View {
+        TextField("", text: $text, prompt: Text(placeholder).foregroundStyle(Color.chalkInk3))
+            .font(.chalkMetric)
+            .foregroundStyle(.chalkInk)
+            .multilineTextAlignment(.center)
+            .keyboardType(keyboard)
+            .focused(focus, equals: field)
+            .disabled(isComplete)
+            .lineLimit(1)
+            .minimumScaleFactor(0.6)
+            .padding(.horizontal, Chalk.Space.xs)
+            .frame(maxWidth: .infinity, minHeight: Chalk.Size.input)
+            .background(
+                isComplete ? Color.clear : (isError ? Color.chalkSurface : Color.chalkSunken),
+                in: RoundedRectangle(cornerRadius: Chalk.Radius.md, style: .continuous)
+            )
+            .overlay {
+                RoundedRectangle(cornerRadius: Chalk.Radius.md, style: .continuous)
+                    .strokeBorder(borderColor, lineWidth: isError ? Chalk.Line.strong : Chalk.Line.focus)
+            }
+            .accessibilityLabel(Text(accessibilityLabel))
+            .accessibilityValue(Text(text.isEmpty ? (isError ? "empty, required" : "empty") : text))
+            .accessibilityIdentifier(identifier)
+            .onAppear {
+                if !loaded {
+                    text = Self.format(value, isInteger: isInteger, showsZero: showsZero)
+                    loaded = true
+                }
+            }
+            .onChange(of: text) { _, newText in
+                let sanitized = Self.sanitize(newText, allowsNegative: allowsNegative, isInteger: isInteger)
+                if sanitized != newText {
+                    text = sanitized
+                    return
+                }
+                onChange(Self.parse(sanitized))
+            }
+            .onChange(of: value) { _, newValue in
+                let current = Self.parse(text) ?? 0
+                if abs(current - newValue) > 0.0001 {
+                    text = Self.format(newValue, isInteger: isInteger, showsZero: showsZero)
+                }
+            }
+    }
+
+    private var keyboard: UIKeyboardType {
+        if allowsNegative { return .numbersAndPunctuation }
+        return isInteger ? .numberPad : .decimalPad
+    }
+
+    private var borderColor: Color {
+        if isError { return .chalkDanger }
+        if focus.wrappedValue == field { return .chalkAccent }
+        return .clear
+    }
+
+    static func format(_ value: Double, isInteger: Bool, showsZero: Bool) -> String {
+        if value == 0 && !showsZero { return "" }
+        return isInteger ? String(Int(value)) : ChalkFormat.weight(value)
+    }
+
+    /// Keeps digits, one decimal separator (`,` normalised to `.`), and a
+    /// leading minus when allowed.
+    static func sanitize(_ text: String, allowsNegative: Bool, isInteger: Bool) -> String {
+        var result = ""
+        var hasDot = false
+        for (index, ch) in text.enumerated() {
+            if ch.isASCII && ch.isNumber {
+                result.append(ch)
+            } else if (ch == "." || ch == ",") && !isInteger && !hasDot {
+                result.append(".")
+                hasDot = true
+            } else if (ch == "-" || ch == "−") && allowsNegative && index == 0 {
+                result.append("-")
+            } else if ch == "+" && allowsNegative && index == 0 {
+                continue
+            }
+        }
+        return String(result.prefix(7))
+    }
+
+    /// nil for empty or a lone "-" / ".".
+    static func parse(_ text: String) -> Double? {
+        let trimmed = text.hasSuffix(".") ? String(text.dropLast()) : text
+        guard !trimmed.isEmpty, trimmed != "-" else { return nil }
+        return Double(trimmed)
+    }
+}
+
+private struct SetRowsPreview: View {
+    @FocusState private var focus: SetField?
+    let done: SetEntry
+    let next: SetEntry
+    let error: SetEntry
+
+    var body: some View {
+        List {
+            SetEntryRow(entry: done, setLabel: "1", previous: .init(weight: 185, reps: 5, rpe: 7), targetRepsText: "4–6", unitLabel: "lb", allowsSignedWeight: false, isNext: false, validation: .ok, identifierPrefix: "p.0", focus: $focus, onComplete: {}, onUncomplete: {}, onUsePrevious: {}, onEdited: {})
+                .listRowBackground(Color.chalkComplete)
+            SetEntryRow(entry: next, setLabel: "2", previous: .init(weight: 185, reps: 5, rpe: nil), targetRepsText: "4–6", unitLabel: "lb", allowsSignedWeight: false, isNext: true, validation: .ok, identifierPrefix: "p.1", focus: $focus, onComplete: {}, onUncomplete: {}, onUsePrevious: {}, onEdited: {})
+            SetEntryRow(entry: error, setLabel: "3", previous: nil, targetRepsText: "4–6", unitLabel: "lb", allowsSignedWeight: false, isNext: false, validation: .missingReps, identifierPrefix: "p.2", focus: $focus, onComplete: {}, onUncomplete: {}, onUsePrevious: {}, onEdited: {})
         }
     }
 }
 
-#Preview("set row") {
+#Preview("Set rows") {
     let container = PreviewModelContainer.make()
     let ctx = ModelContext(container)
-    let ex = Exercise.previewSample(name: "Bench", equipment: .barbell, mechanic: .compound)
-    ctx.insert(ex)
-    let se = SessionExercise()
-    se.exercise = ex
-    se.intentRaw = "strength"
-    se.prescribedWeight = 100.0
-    ctx.insert(se)
-    let entry = SetEntry()
-    entry.sessionExercise = se
-    entry.weight = 100
-    entry.reps = 5
-    ctx.insert(entry)
-    try? ctx.save()
-    return List {
-        SetRow(
-            entry: entry,
-            sessionExercise: se,
-            prescribed: 100.0,
-            explanation: nil,
-            onCommit: {},
-            onTapEmptyCell: {}
-        )
-    }
-    .modelContainer(container)
+    let done = SetEntry()
+    done.weight = 185
+    done.reps = 5
+    done.rpe = 8
+    done.isComplete = true
+    let next = SetEntry()
+    next.weight = 185
+    let error = SetEntry()
+    error.weight = 185
+    [done, next, error].forEach { ctx.insert($0) }
+    return SetRowsPreview(done: done, next: next, error: error)
+        .modelContainer(container)
 }

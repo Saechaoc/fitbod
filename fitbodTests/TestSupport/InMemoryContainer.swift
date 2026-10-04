@@ -52,6 +52,25 @@ enum InMemoryContainer {
         )
     }
 
+    /// Fresh empty in-memory container over the CURRENT production
+    /// schema (the one `fitbodApp` opens). Use it for any entity added
+    /// after V1 — `SupersetGroup`, `RoutineFolder`, `PlateInventory`… —
+    /// which a V1-only container does not register, so inserts of those
+    /// types silently fetch back empty.
+    static func makeCurrent() throws -> ModelContainer {
+        let schema = Schema(SchemaV3.models)
+        let config = ModelConfiguration(
+            schema: schema,
+            isStoredInMemoryOnly: true,
+            allowsSave: true
+        )
+        return try ModelContainer(
+            for: schema,
+            migrationPlan: FitbodSchemaMigrationPlan.self,
+            configurations: config
+        )
+    }
+
     /// Pre-seeded container reusing the production
     /// `PreviewModelContainer.make()` factory.
     static func makeWithFixture() -> ModelContainer {

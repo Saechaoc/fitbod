@@ -42,42 +42,43 @@ public struct SwapExerciseSheet: View {
 
     public var body: some View {
         NavigationStack {
-            VStack(spacing: 0) {
-                ExerciseLibraryView(onSelect: { exercise in
-                    // SESS-05 — mutate SessionExercise.exercise ONLY.
-                    // The source RoutineExercise.exercise is untouched.
-                    sessionExercise.exercise = exercise
+            ExerciseLibraryView(onSelect: { exercise in
+                // SESS-05 — mutate SessionExercise.exercise ONLY. The
+                // source RoutineExercise.exercise is untouched.
+                sessionExercise.exercise = exercise
 
-                    // Re-seed pending sets with the new exercise's
-                    // matching-intent hint. Committed sets are immutable
-                    // (PITFALLS-doc #1 — historical data is never
-                    // rewritten).
-                    let hint = PreviousMatchingIntent.fetchTopWorkingSet(
-                        exerciseID: exercise.id,
-                        intentRaw: sessionExercise.intentRaw,
-                        context: ctx
-                    )?.weight ?? 0
-                    let pendingSets = (sessionExercise.sets ?? [])
-                        .filter { !$0.isComplete }
-                    for set in pendingSets {
-                        set.weight = hint
-                        set.reps = 0
-                        set.rpe = nil
-                    }
-                    try? ctx.save()
-                    dismiss()
-                })
-                Text("This swap applies to this session only. The routine template will not change.")   // UI-SPEC verbatim
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                // Re-seed pending sets with the new exercise's
+                // matching-intent hint. Committed sets are immutable
+                // (PITFALLS-doc #1 — history is never rewritten).
+                let hint = PreviousMatchingIntent.fetchTopWorkingSet(
+                    exerciseID: exercise.id,
+                    intentRaw: sessionExercise.intentRaw,
+                    context: ctx
+                )?.weight ?? 0
+                let pendingSets = (sessionExercise.sets ?? [])
+                    .filter { !$0.isComplete }
+                for set in pendingSets {
+                    set.weight = hint
+                    set.reps = 0
+                    set.rpe = nil
+                }
+                try? ctx.save()
+                dismiss()
+            })
+            .safeAreaInset(edge: .bottom, spacing: 0) {
+                Text("This swap applies to this workout only. The routine template will not change.")
+                    .font(.chalkFootnote)
+                    .foregroundStyle(.chalkInk2)
                     .multilineTextAlignment(.center)
-                    .padding(16)
+                    .frame(maxWidth: .infinity)
+                    .padding(Chalk.Space.lg)
+                    .background(Color.chalkCanvas)
             }
-            .navigationTitle("Swap Exercise")                                  // UI-SPEC verbatim
+            .navigationTitle("SWAP EXERCISE")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
-                    Button("Cancel") { dismiss() }                             // UI-SPEC verbatim
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { dismiss() }
                 }
             }
         }

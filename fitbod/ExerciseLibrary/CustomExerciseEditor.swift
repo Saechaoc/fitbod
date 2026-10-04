@@ -2,106 +2,143 @@
 //  CustomExerciseEditor.swift
 //  fitbod
 //
-//  Wave-3 plan 03-04 — the user-facing surface that creates (and edits)
-//  custom `Exercise` rows. The save button is the runtime gate that
-//  enforces PITFALLS #5 (no exercise lacks ≥1 primary muscle with
-//  weight ≥ 0.5) via `draft.isValid`.
+//  Create / edit a custom exercise (Chalkline redesign of plan 03-04).
 //
-//  ## Composition
+//    - Name (required) · Equipment chips · Mechanic · Muscles with stimulus
+//      weights (≥ 1 primary at ≥ 50% — FOUND-07 / PITFALLS #5) · optional
+//      photo.
+//    - Save is always tappable. An invalid save shows a summary banner,
+//      inline errors on the name and muscles, an error haptic and a
+//      VoiceOver announcement; errors clear as they are fixed.
+//    - Edit mode adds Delete, which explains what happens to history and
+//      routines first (`ExerciseStore`).
 //
-//  - `Form` with five sections: Name / Muscles / Equipment / Mechanic /
-//    Image (optional). When `draft.editingExisting != nil` (Edit
-//    Exercise mode), a sixth Delete section is appended.
-//  - Muscles section renders one `MuscleWeightRow` per assignment via
-//    `ForEach($draft.muscles)` — the `$`-binding into the `@Observable`
-//    array means edits propagate back to the draft directly.
-//  - Footer text per UI-SPEC: "How much this exercise contributes to
-//    weekly volume for that muscle. 100% for primary, 50% for
-//    assisting muscles."
-//  - Inline error text when `!draft.isValid`: "At least one primary
-//    muscle is required to save." in `systemRed`.
-//  - Equipment picker exposes all 9 `Equipment.allCases`; display
-//    names split underscored raws ("weighted_bodyweight" → "Weighted
-//    Bodyweight") matching plan 03-02 D-6 convention.
-//  - Mechanic picker is `.segmented` ("Compound" / "Isolation") per
-//    UI-SPEC § Custom exercise editor.
-//
-//  ## Toolbar
-//
-//  - Leading: "Cancel" — dismisses immediately if !isDirty, else
-//    presents the "Discard Changes?" confirmation dialog.
-//  - Trailing: "Save" — disabled when `!draft.isValid`;
-//    `accessibilityHint = "Add a primary muscle to enable saving"` per
-//    UI-SPEC § Accessibility.
-//
-//  ## Discard / Delete confirmations (UI-SPEC verbatim)
-//
-//  - "Discard Changes?" `.confirmationDialog` — "Discard" (destructive)
-//    + "Keep Editing" (cancel). Only presented when the snapshot
-//    diff says the draft is dirty.
-//  - "Delete \"{name}\"?" `.alert` — "Delete" (destructive) + "Cancel".
-//    Message: "Logged session history for this exercise will be
-//    preserved." (Cosmetic in Phase 1 since no sessions exist yet —
-//    but the wiring is in place for LIB-05 + the cascade-rule from
-//    `CascadeRuleTests/exerciseToSessionExerciseNullifies`.)
-//
-//  ## First-muscle vs subsequent
-//
-//  `appendMuscle(_:)` checks whether the draft already contains a
-//  primary muscle. If not, the new row is `role = .primary` with
-//  `weight = 1.0` (button label = "Add Primary Muscle"). Otherwise
-//  `role = .secondary` with `weight = 0.5` (button label = "Add
-//  Another Muscle"). The user can override either via the segmented
-//  role picker + slider in the row.
-//
-//  ## Save flow
-//
-//  Save tap → `draft.materialize(into:allMuscles:)` (New) or
-//  `draft.updateExisting(in:allMuscles:)` (Edit) → `ctx.save()` →
-//  `dismiss()`. The new row appears in `ExerciseLibraryView` via the
-//  outer `@Query<Exercise>` re-running on `Exercise` changes.
+//  The draft round-trips through `CustomExerciseDraft` (value-aware form
+//  state, unit-tested without a container).
 //
 
 import SwiftUI
 import SwiftData
+import UIKit
 
-/// `Form`-based authoring surface for a custom exercise.
-///
-/// Bind the editor to a fresh `CustomExerciseDraft()` for "New
-/// Exercise" mode, or to a draft with `editingExisting` set to the
-/// existing custom `Exercise` for "Edit Exercise" mode. The editor
-/// expects to live inside a `NavigationStack` (it owns its own
-/// navigation title + toolbar).
 struct CustomExerciseEditor: View {
     @Bindable var draft: CustomExerciseDraft
+    /// When supplied (edit from the detail screen) the parent performs the
+    /// delete after leaving the screen; otherwise the editor deletes.
+    var onDelete: ((Exercise) -> Void)? = nil
 
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
-
     @Query(sort: \MuscleGroup.slug) private var allMuscles: [MuscleGroup]
 
-    @State private var initialSnapshot: CustomExerciseDraft.Snapshot? = nil
+    @State private var initialSnapshot: CustomExerciseDraft.Snapshot?
     @State private var presentingMusclePicker = false
     @State private var presentingCancelConfirmation = false
     @State private var presentingDeleteConfirmation = false
+    @State private var showErrors = false
+    @State private var errorTick = 0
 
     var body: some View {
-        Form {
-            nameSection
-            musclesSection
-            equipmentSection
-            mechanicSection
-            imageSection
-
-            if isEditing {
+        List {
+            if showErrors, let summary = errorSummary {
                 Section {
-                    Button("Delete Exercise", role: .destructive) {
-                        presentingDeleteConfirmation = true
+                    ChalkInlineMessage(summary, kind: .error)
+                        .accessibilityIdentifier("custom.errorSummary")
+                }
+                .chalkBareListRow()
+            }
+
+            Section {
+                ChalkTextField(
+                    "Name",
+                    text: $draft.name,
+                    prompt: "e.g. Zercher Good Morning",
+                    error: showErrors && nameMissing ? "Name is required." : nil,
+                    isProminent: true,
+                    identifier: "custom.name"
+                )
+            }
+            .chalkBareListRow()
+
+            Section {
+                LazyVGrid(columns: [GridItem(.adaptive(minimum: 150), spacing: Chalk.Space.sm)], spacing: Chalk.Space.sm) {
+                    ForEach(Equipment.allCases, id: \.self) { equipment in
+                        ChalkChip(ExerciseRow.equipmentName(equipment.rawValue), isSelected: draft.equipment == equipment) {
+                            draft.equipment = equipment
+                        }
+                        .accessibilityIdentifier("custom.equipment.\(equipment.rawValue)")
+                    }
+                }
+                .padding(.vertical, Chalk.Space.xs)
+                .chalkBareListRow()
+            } header: {
+                Text("Equipment").chalkLabelStyle()
+            }
+
+            Section {
+                Picker("Mechanic", selection: $draft.mechanic) {
+                    ForEach(Mechanic.allCases, id: \.self) { mechanic in
+                        Text(mechanic.rawValue.capitalized).tag(mechanic)
+                    }
+                }
+                .pickerStyle(.segmented)
+                .chalkBareListRow()
+            } header: {
+                Text("Mechanic").chalkLabelStyle()
+            }
+
+            Section {
+                ForEach($draft.muscles) { $assignment in
+                    MuscleWeightRow(
+                        assignment: $assignment,
+                        displayName: displayName(for: assignment.slug),
+                        onDelete: { remove(assignment) }
+                    )
+                    .listRowBackground(Color.chalkSurface)
+                }
+                Button {
+                    presentingMusclePicker = true
+                } label: {
+                    Label(addMuscleTitle, systemImage: "plus")
+                }
+                .buttonStyle(.chalk(.ghost, size: .compact))
+                .listRowBackground(Color.chalkSurface)
+                .accessibilityIdentifier("custom.addMuscle")
+            } header: {
+                Text("Muscles").chalkLabelStyle()
+            } footer: {
+                VStack(alignment: .leading, spacing: Chalk.Space.xs) {
+                    Text("Stimulus weight sets how much one set counts toward that muscle's weekly volume: 100% primary, 50% assisting.")
+                        .font(.chalkFootnote)
+                        .foregroundStyle(.chalkInk2)
+                    if showErrors, let muscleError {
+                        ChalkValidationText(muscleError)
+                            .accessibilityIdentifier("custom.muscleError")
                     }
                 }
             }
+
+            Section {
+                CustomExerciseImagePicker(draft: draft)
+                    .listRowBackground(Color.chalkSurface)
+            } header: {
+                Text("Photo (optional)").chalkLabelStyle()
+            }
+
+            if draft.editingExisting != nil {
+                Section {
+                    Button("Delete exercise", role: .destructive) {
+                        presentingDeleteConfirmation = true
+                    }
+                    .buttonStyle(.chalk(.destructive, fullWidth: true))
+                    .chalkBareListRow()
+                    .accessibilityIdentifier("custom.delete")
+                }
+            }
         }
-        .navigationTitle(navigationTitle)
+        .listStyle(.insetGrouped)
+        .chalkCanvasBackground()
+        .navigationTitle(draft.editingExisting == nil ? "NEW EXERCISE" : "EDIT EXERCISE")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .cancellationAction) {
@@ -112,38 +149,29 @@ struct CustomExerciseEditor: View {
                         dismiss()
                     }
                 }
+                .accessibilityIdentifier("custom.cancel")
             }
             ToolbarItem(placement: .confirmationAction) {
                 Button("Save", action: save)
-                    .disabled(!draft.isValid)
-                    .accessibilityHint(
-                        draft.isValid
-                            ? ""
-                            : "Add a primary muscle to enable saving"
-                    )
+                    .fontWeight(.heavy)
+                    .accessibilityIdentifier("custom.save")
             }
         }
+        .sensoryFeedback(.error, trigger: errorTick)
         .sheet(isPresented: $presentingMusclePicker) {
-            MusclePickerSheet { mg in
-                appendMuscle(mg)
+            MusclePickerSheet { muscle in
+                appendMuscle(muscle)
             }
         }
-        .confirmationDialog(
-            "Discard Changes?",
-            isPresented: $presentingCancelConfirmation,
-            titleVisibility: .visible
-        ) {
+        .confirmationDialog("Discard changes?", isPresented: $presentingCancelConfirmation, titleVisibility: .visible) {
             Button("Discard", role: .destructive) { dismiss() }
-            Button("Keep Editing", role: .cancel) {}
+            Button("Keep editing", role: .cancel) {}
         }
-        .alert(
-            "Delete \"\(draft.name)\"?",
-            isPresented: $presentingDeleteConfirmation
-        ) {
+        .alert("Delete \"\(draft.name)\"?", isPresented: $presentingDeleteConfirmation) {
             Button("Delete", role: .destructive, action: deleteCustom)
             Button("Cancel", role: .cancel) {}
         } message: {
-            Text("Logged session history for this exercise will be preserved.")
+            Text(deleteMessage)
         }
         .onAppear {
             if initialSnapshot == nil {
@@ -152,88 +180,32 @@ struct CustomExerciseEditor: View {
         }
     }
 
-    // MARK: - Sections
+    // MARK: Validation
 
-    private var nameSection: some View {
-        Section("Name") {
-            TextField("e.g. Cambered Bar Bench Press", text: $draft.name)
-                .textInputAutocapitalization(.words)
-                .autocorrectionDisabled(false)
+    private var nameMissing: Bool {
+        draft.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+
+    private var muscleError: String? {
+        if !draft.muscles.contains(where: { $0.role == .primary }) {
+            return "Pick at least one primary muscle — it drives weekly volume."
         }
-    }
-
-    private var musclesSection: some View {
-        Section {
-            ForEach($draft.muscles) { $assignment in
-                MuscleWeightRow(
-                    assignment: $assignment,
-                    displayName: displayName(for: assignment.slug),
-                    onDelete: { remove(assignment) }
-                )
-            }
-            Button {
-                presentingMusclePicker = true
-            } label: {
-                Label(addMuscleButtonLabel, systemImage: "plus")
-                    .foregroundStyle(Color.accentColor)
-            }
-        } header: {
-            Text("Muscles")
-        } footer: {
-            VStack(alignment: .leading, spacing: 4) {
-                Text(
-                    "How much this exercise contributes to weekly volume for that muscle. 100% for primary, 50% for assisting muscles."
-                )
-                .font(.caption)
-                .foregroundStyle(.secondary)
-                if !draft.isValid && !draft.muscles.isEmpty {
-                    Text("At least one primary muscle is required to save.")
-                        .font(.caption)
-                        .foregroundStyle(Color(.systemRed))
-                }
-            }
+        if !draft.muscles.contains(where: { $0.role == .primary && $0.weight >= 0.5 }) {
+            return "A primary muscle needs at least 50% stimulus."
         }
+        return nil
     }
 
-    private var equipmentSection: some View {
-        Section("Equipment") {
-            Picker("Equipment", selection: $draft.equipment) {
-                ForEach(Equipment.allCases, id: \.self) { eq in
-                    Text(equipmentDisplay(eq)).tag(eq)
-                }
-            }
-        }
+    private var errorSummary: String? {
+        let count = (nameMissing ? 1 : 0) + (muscleError == nil ? 0 : 1)
+        guard count > 0 else { return nil }
+        return count == 1 ? "Fix 1 thing to save this exercise." : "Fix \(count) things to save this exercise."
     }
 
-    private var mechanicSection: some View {
-        Section("Mechanic") {
-            Picker("Mechanic", selection: $draft.mechanic) {
-                ForEach(Mechanic.allCases, id: \.self) { mech in
-                    Text(mech.rawValue.capitalized).tag(mech)
-                }
-            }
-            .pickerStyle(.segmented)
-        }
-    }
+    // MARK: Derived
 
-    private var imageSection: some View {
-        Section("Image (optional)") {
-            CustomExerciseImagePicker(draft: draft)
-        }
-    }
-
-    // MARK: - Derived
-
-    private var isEditing: Bool { draft.editingExisting != nil }
-
-    private var navigationTitle: String {
-        isEditing ? "Edit Exercise" : "New Exercise"
-    }
-
-    private var addMuscleButtonLabel: String {
-        draft.muscles.contains(where: { $0.role == .primary })
-            ? "Add Another Muscle"
-            : "Add Primary Muscle"
+    private var addMuscleTitle: String {
+        draft.muscles.contains(where: { $0.role == .primary }) ? "Add another muscle" : "Add primary muscle"
     }
 
     private var isDirty: Bool {
@@ -241,39 +213,30 @@ struct CustomExerciseEditor: View {
         return initial != draft.snapshot()
     }
 
-    // MARK: - Helpers
+    private var deleteMessage: String {
+        guard let target = draft.editingExisting else { return "" }
+        let usage = ExerciseStore.usage(of: target, context: modelContext)
+        var parts: [String] = []
+        if usage.loggedSessions > 0 {
+            parts.append("\(usage.loggedSessions) logged workout\(usage.loggedSessions == 1 ? "" : "s") keep their sets but will show “Removed exercise”.")
+        }
+        if usage.routines > 0 {
+            parts.append("It will be removed from \(usage.routines) routine\(usage.routines == 1 ? "" : "s").")
+        }
+        return parts.isEmpty ? "This can't be undone." : parts.joined(separator: " ")
+    }
 
     private func displayName(for slug: String) -> String {
-        allMuscles.first(where: { $0.slug == slug })?.displayName
-            ?? slug.capitalized
+        allMuscles.first(where: { $0.slug == slug })?.displayName ?? MuscleRegionMap.displayName(for: slug)
     }
 
-    /// Splits underscored Equipment raws to "Title Cased" form per
-    /// plan 03-02 D-6 ("weighted_bodyweight" → "Weighted Bodyweight").
-    /// Single-word raws (`barbell`, `cable`, etc.) are a no-op for
-    /// the split.
-    private func equipmentDisplay(_ eq: Equipment) -> String {
-        eq.rawValue
-            .split(separator: "_")
-            .map { $0.capitalized }
-            .joined(separator: " ")
-    }
+    // MARK: Mutations
 
-    // MARK: - Mutations
-
-    private func appendMuscle(_ mg: MuscleGroup) {
-        // No-op if this muscle is already mapped — prevents accidental
-        // double-mapping that would silently double the volume.
-        guard !draft.muscles.contains(where: { $0.slug == mg.slug }) else {
-            return
-        }
+    private func appendMuscle(_ muscle: MuscleGroup) {
+        guard !draft.muscles.contains(where: { $0.slug == muscle.slug }) else { return }
         let hasPrimary = draft.muscles.contains { $0.role == .primary }
-        let role: CustomExerciseDraft.MuscleAssignment.Role =
-            hasPrimary ? .secondary : .primary
-        let weight: Double = role == .primary ? 1.0 : 0.5
-        draft.muscles.append(
-            .init(slug: mg.slug, role: role, weight: weight)
-        )
+        let role: CustomExerciseDraft.MuscleAssignment.Role = hasPrimary ? .secondary : .primary
+        draft.muscles.append(.init(slug: muscle.slug, role: role, weight: role == .primary ? 1.0 : 0.5))
     }
 
     private func remove(_ assignment: CustomExerciseDraft.MuscleAssignment) {
@@ -281,7 +244,16 @@ struct CustomExerciseEditor: View {
     }
 
     private func save() {
-        if isEditing {
+        guard draft.isValid else {
+            showErrors = true
+            errorTick += 1
+            if let errorSummary {
+                UIAccessibility.post(notification: .announcement, argument: errorSummary)
+            }
+            return
+        }
+        draft.name = draft.name.trimmingCharacters(in: .whitespacesAndNewlines)
+        if draft.editingExisting != nil {
             draft.updateExisting(in: modelContext, allMuscles: allMuscles)
         } else {
             draft.materialize(into: modelContext, allMuscles: allMuscles)
@@ -292,13 +264,16 @@ struct CustomExerciseEditor: View {
 
     private func deleteCustom() {
         guard let target = draft.editingExisting else { return }
-        modelContext.delete(target)
-        try? modelContext.save()
+        if let onDelete {
+            onDelete(target)
+        } else {
+            ExerciseStore.delete(target, context: modelContext)
+        }
         dismiss()
     }
 }
 
-#Preview("New Exercise") {
+#Preview("New exercise") {
     NavigationStack {
         CustomExerciseEditor(draft: CustomExerciseDraft())
     }

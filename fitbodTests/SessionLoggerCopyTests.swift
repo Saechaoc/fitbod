@@ -2,14 +2,18 @@
 //  SessionLoggerCopyTests.swift
 //  fitbodTests
 //
-//  Wave-4 plan 04-01 — UI-SPEC verbatim copy anchors for the new
-//  SessionLogger surfaces. The views are pure SwiftUI; true visual
-//  rendering is verified on-device. This suite anchors the source-level
-//  invariants so a careless edit can't silently mutate the load-bearing
-//  UI-SPEC copy strings.
+//  Copy + wiring anchors for the active-workout screen (milestone 1,
+//  Chalkline redesign — docs/design/screens.md § Active workout). The
+//  views are pure SwiftUI; rendering is exercised by the XCUITest journey.
+//  This suite pins, in source, the strings the spec fixes and the calls
+//  that carry the screen's guarantees (one app-wide rest timer bound to the
+//  session, validated completion, delayed discard, VoiceOver
+//  announcements), so a careless edit trips a test.
 //
-//  One test function covering every new file (matches plan AC #19 — 1 test
-//  in SessionLoggerCopyTests).
+//  Supersedes the plan 04-01 anchors on SetTypeChip / InlineRPEChipRow /
+//  DecimalRPEPickerSheet / PreviousColumn, which the redesign replaced
+//  (set type → row context menu, RPE → per-row menu, previous → tappable
+//  Previous column inside SetEntryRow).
 //
 
 import Foundation
@@ -19,96 +23,67 @@ import Testing
 @Suite("SessionLoggerCopy")
 struct SessionLoggerCopyTests {
 
-    @Test("verbatimCopy — UI-SPEC strings present in SessionLogger source")
+    @Test("verbatimCopy — active-workout strings and wiring present in source")
     func verbatimCopy() throws {
-        let base = URL(fileURLWithPath: #filePath)
-            .deletingLastPathComponent()
-            .deletingLastPathComponent()
-            .appendingPathComponent("fitbod/Sessions")
+        // SessionLoggerView — toolbar, bottom action, dialogs.
+        let logger = try SourceFile.read("fitbod/Sessions/SessionLoggerView.swift")
+        let loggerStrings = [
+            "\"Finish\"",
+            "\"Finish workout\"",
+            "\"Finish workout?\"",
+            "\"No sets logged yet\"",
+            "\"Log at least one set to save this workout, or discard it.\"",
+            "\"Keep logging\"",
+            "\"Discard workout\"",
+            "\"Discard workout?\"",
+            "\"All sets logged in this workout will be deleted. Your routine is not affected.\"",
+            "\"Add exercise\"",
+            "\"Workout notes\"",
+            "\"Minimize workout\"",
+            "\"Elapsed\"",
+        ]
+        for string in loggerStrings {
+            #expect(logger.contains(string), "SessionLoggerView.swift should contain \(string)")
+        }
+        // One app-wide timer from the environment, bound to this session.
+        #expect(logger.contains("@Environment(RestTimerEngine.self)"))
+        #expect(logger.contains("restTimer.start("))
+        #expect(logger.contains("sessionID: session.id"))
+        #expect(logger.contains("restTimer.stop(ifBelongsTo: session.id)"))
+        // Validated completion + announcement on error.
+        #expect(logger.contains("WorkoutLogging.complete(entry"))
+        #expect(logger.contains("UIAccessibility.post(notification: .announcement"))
+        // Finish prunes/stamps; discard deletes only after the cover closes.
+        #expect(logger.contains("WorkoutFinisher.finish(session, context: ctx)"))
+        #expect(logger.contains("router.pendingDiscard = session"))
 
-        // SessionLoggerView — UI-SPEC § Session logger toolbar + dialogs.
-        let loggerSrc = try String(
-            contentsOf: base.appendingPathComponent("SessionLoggerView.swift"),
-            encoding: .utf8
-        )
-        #expect(loggerSrc.contains("\"Workout\""))                              // navigation title
-        #expect(loggerSrc.contains("\"Finish\""))                                // toolbar button
-        #expect(loggerSrc.contains("\"Discard\""))                               // toolbar button
-        #expect(loggerSrc.contains("\"Finish Workout?\""))                       // confirmation title
-        #expect(loggerSrc.contains("\"Keep Logging\""))                          // confirmation cancel
-        #expect(loggerSrc.contains("\"Discard Workout?\""))                      // discard alert title
-        #expect(loggerSrc.contains("\"No data will be saved.\""))                // discard alert body
-        #expect(loggerSrc.contains("\"Notes\""))                                  // header chip
-        #expect(loggerSrc.contains("systemName: \"clock\""))                     // elapsed icon
-        #expect(loggerSrc.contains("systemName: \"square.and.pencil\""))         // notes icon
-        #expect(loggerSrc.contains("RestTimerEngine.makeProduction()"))          // plan 02-03 factory wire
-        #expect(loggerSrc.contains("entry.isComplete = true"))                   // commit semantics
-        #expect(loggerSrc.contains("entry.completedAt = .now"))
-        #expect(loggerSrc.contains("engine.start(seconds:"))
+        // SessionExerciseCard — column labels, menus, set actions.
+        let card = try SourceFile.read("fitbod/Sessions/SessionExerciseCard.swift")
+        let cardStrings = [
+            "\"Set\"", "\"Previous\"", "\"Reps\"", "\"RPE\"", "\"Sets\"",
+            "\"Add set\"", "\"Delete set\"",
+            "\"Swap exercise\"", "\"Pinned note\"", "\"Plate math\"",
+            "\"Skip warm-ups\"", "\"Remove from workout\"", "\"Removed exercise\"",
+            "\"Set type\"", "\"Working\"", "\"Warm-up\"", "\"Drop Set\"", "\"To Failure\"", "\"Rest-Pause\"",
+        ]
+        for string in cardStrings {
+            #expect(card.contains(string), "SessionExerciseCard.swift should contain \(string)")
+        }
+        // Previous performance never reads the workout in progress.
+        #expect(card.contains("excludingSessionID:"))
+        // Labels share the rows' scaled column widths.
+        #expect(card.contains("SetTableMetrics()"))
 
-        // SessionExerciseCard — UI-SPEC verbatim column header row.
-        let cardSrc = try String(
-            contentsOf: base.appendingPathComponent("SessionExerciseCard.swift"),
-            encoding: .utf8
-        )
-        #expect(cardSrc.contains("\"Set\""))
-        #expect(cardSrc.contains("\"Previous\""))
-        #expect(cardSrc.contains("\"Weight\""))
-        #expect(cardSrc.contains("\"Reps\""))
-        #expect(cardSrc.contains("\"RPE\""))
-        #expect(cardSrc.contains("\"Add Set\""))
-
-        // SetRow — UI-SPEC verbatim "—" placeholders + completion glyphs.
-        let rowSrc = try String(
-            contentsOf: base.appendingPathComponent("SetRow.swift"),
-            encoding: .utf8
-        )
-        #expect(rowSrc.contains("\"—\""))                                        // weight/reps placeholder
-        #expect(rowSrc.contains("checkmark.circle.fill"))                        // complete glyph
-        #expect(rowSrc.contains("\"circle\""))                                   // incomplete glyph
-        #expect(rowSrc.contains("equipment == .bodyweight"))                     // SESS-09 signed branch
-        #expect(rowSrc.contains(".numbersAndPunctuation"))                       // SESS-09 keyboard
-        #expect(rowSrc.contains("entry.weight > 0 && entry.reps > 0"))           // commit guard
-
-        // SetTypeChip — UI-SPEC verbatim long-press menu labels + system colors.
-        let chipSrc = try String(
-            contentsOf: base.appendingPathComponent("SetTypeChip.swift"),
-            encoding: .utf8
-        )
-        #expect(chipSrc.contains("\"Working\""))
-        #expect(chipSrc.contains("\"Warm-up\""))
-        #expect(chipSrc.contains("\"Drop Set\""))
-        #expect(chipSrc.contains("\"To Failure\""))
-        #expect(chipSrc.contains("\"Rest-Pause\""))
-        #expect(chipSrc.contains("Color(.systemBlue)"))
-        #expect(chipSrc.contains("Color(.systemOrange)"))
-        #expect(chipSrc.contains("Color(.systemRed)"))
-        #expect(chipSrc.contains("Color(.systemPurple)"))
-
-        // InlineRPEChipRow — UI-SPEC 6/7/8/9/10 + 0.5s long-press.
-        let rpeSrc = try String(
-            contentsOf: base.appendingPathComponent("InlineRPEChipRow.swift"),
-            encoding: .utf8
-        )
-        #expect(rpeSrc.contains("ForEach([6, 7, 8, 9, 10]"))
-        #expect(rpeSrc.contains("onLongPressGesture(minimumDuration: 0.5)"))
-        #expect(rpeSrc.contains("DecimalRPEPickerSheet"))
-
-        // DecimalRPEPickerSheet — UI-SPEC stride 6.0...10.0 by 0.5 + wheel.
-        let picker = try String(
-            contentsOf: base.appendingPathComponent("DecimalRPEPickerSheet.swift"),
-            encoding: .utf8
-        )
-        #expect(picker.contains("stride(from: 6.0, through: 10.0, by: 0.5)"))
-        #expect(picker.contains(".pickerStyle(.wheel)"))
-        #expect(picker.contains("\"RPE\""))                                      // navigation title
-
-        // PreviousColumn — UI-SPEC "—" placeholder + matching-intent helper.
-        let prevSrc = try String(
-            contentsOf: base.appendingPathComponent("PreviousColumn.swift"),
-            encoding: .utf8
-        )
-        #expect(prevSrc.contains("PreviousMatchingIntent.fetchTopWorkingSet"))
-        #expect(prevSrc.contains("Text(\"—\")"))
+        // SetEntryRow — placeholders, glyphs, keyboards, accessibility.
+        let row = try SourceFile.read("fitbod/Sessions/SetRow.swift")
+        #expect(row.contains("Text(\"—\")"))                          // no previous set
+        #expect(row.contains("\"checkmark\""))                        // complete glyph
+        #expect(row.contains("\"No RPE\""))
+        #expect(row.contains(".numbersAndPunctuation"))               // signed bodyweight load
+        #expect(row.contains(".decimalPad"))
+        #expect(row.contains(".numberPad"))
+        #expect(row.contains("\"Complete set \\(setLabel)\""))
+        #expect(row.contains("\"Logs the set and starts rest\""))
+        #expect(row.contains("usesStackedLayout"))                    // adaptive layout
     }
 }

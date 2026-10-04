@@ -51,17 +51,24 @@ struct MusclePickerSheet: View {
                     } label: {
                         HStack {
                             Text(mg.displayName)
-                                .font(.body)
-                                .foregroundStyle(.primary)
+                                .font(.chalkBody)
+                                .foregroundStyle(.chalkInk)
                             Spacer()
                             Text(mg.region.rawValue.capitalized)
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
+                                .font(.chalkFootnote)
+                                .foregroundStyle(.chalkInk2)
                         }
+                        .frame(minHeight: Chalk.Size.minTouch)
+                        .contentShape(Rectangle())
                     }
+                    .buttonStyle(.plain)
+                    .listRowBackground(Color.chalkSurface)
+                    .accessibilityIdentifier("muscle.option.\(mg.slug)")
                 }
             }
-            .navigationTitle("Select Muscle")
+            .listStyle(.insetGrouped)
+            .chalkCanvasBackground()
+            .navigationTitle("SELECT MUSCLE")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {

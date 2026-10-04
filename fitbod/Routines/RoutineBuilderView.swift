@@ -2,66 +2,30 @@
 //  RoutineBuilderView.swift
 //  fitbod
 //
-//  Wave-3 plan 03-02 — the user-facing keystone of ROUTINE-01: the
-//  single-screen routine builder with inline exercise add, drag-handle
-//  reorder, and per-exercise prescription editor. Pushed onto the
-//  Routines tab's `NavigationStack` (from `RoutinesListView`) in both
-//  create mode (`editing == nil`) and edit mode (`editing == routine`).
+//  Create / edit a routine on one screen (Chalkline redesign of plan
+//  03-02). Presented in a sheet wrapped in a NavigationStack.
 //
-//  ## State shape (FOUND-06 / MV-VM-lite)
+//    - Name (prominent field).
+//    - Ordered exercises: tap a card to expand its prescription steppers;
+//      "Reorder" switches to drag handles; the card menu also moves items
+//      up/down (no drag needed).
+//    - "Add exercises" opens the library in multi-select; picks are
+//      appended in the order they were tapped.
+//    - Notes.
 //
-//  The view binds to a single `@Bindable RoutineDraft`. There is NO
-//  parallel ViewModel; the draft IS the mutation surface. Persistence
-//  happens only on Save tap via `draft.save(into:context:)` — every
-//  in-between keystroke and stepper tap mutates the draft in memory
-//  only, so the user can Cancel without leaving any side effects in
-//  the SwiftData store.
+//  Validation: Save is always tappable. An invalid save reveals an error
+//  summary at the top plus inline messages on the name field and the
+//  exercise section, fires an error haptic and is announced to VoiceOver.
+//  Errors clear as soon as they are fixed.
 //
-//  ## Drag-handle reorder (RESEARCH §6 Pitfall 10)
-//
-//  `.environment(\.editMode, .constant(.active))` keeps the drag
-//  handles always visible (UI-SPEC § Routine builder § Interaction
-//  patterns). `.onMove(...)` reorders the draft's `exercises` array AND
-//  rewrites every `RoutineExerciseDraft.orderIndex` from 0..<count so
-//  the persisted SwiftData order matches the visual order after save.
-//
-//  ## Dirty-check / Cancel confirmation
-//
-//  The "Cancel" toolbar button presents the UI-SPEC § Routine builder
-//  "Discard Changes?" `confirmationDialog` if the draft has been
-//  modified since `onAppear`. Dirty is computed via a snapshot hash
-//  (name + exercise count + sum of targetSets) — light enough to run
-//  every body redraw without measurable cost at the expected scale
-//  (≤20 exercises per routine).
-//
-//  ## Empty routine guard
-//
-//  An empty routine (no exercises) cannot be saved (`draft.isValid ==
-//  false` disables the toolbar Save button). The Form body shows a
-//  faint "Add an exercise to begin." placeholder when `exercises.isEmpty`
-//  per UI-SPEC § Empty states.
-//
-//  ## Plan 03-03 additions
-//
-//  - `pendingSupersetAssignment: RoutineExerciseDraft?` state holds the
-//    long-pressed exercise's draft while the SupersetAssignmentSheet is
-//    presented. The sheet writes the chosen `supersetGroupID` directly
-//    to the draft (not the persisted RE row); the persisted write
-//    happens at Save time via `RoutineDraft.save(into:)`.
-//  - The `RoutineExerciseCard` long-press menu's `onAssignSuperset`
-//    closure sets `pendingSupersetAssignment`; the sheet item-binding
-//    presents the sheet. The sheet's `SupersetGroup` insertions are
-//    persisted immediately (so the @Query in the sheet sees them
-//    next time), but the per-exercise assignment lives on the draft.
-//  - **Edit-mode gate**: the SupersetAssignmentSheet needs a persisted
-//    `Routine` (the SupersetGroup.routineID weak ref must point at a
-//    real Routine). In create mode (editing == nil) we present an alert
-//    asking the user to save first. In edit mode (editing != nil) the
-//    sheet presents immediately.
+//  Persistence is the existing three-way merge in `RoutineDraft.save` —
+//  sessions already started from this routine are snapshots and are never
+//  rewritten by these edits.
 //
 
 import SwiftUI
 import SwiftData
+import UIKit
 
 public struct RoutineBuilderView: View {
     @Environment(\.modelContext) private var ctx
@@ -71,12 +35,16 @@ public struct RoutineBuilderView: View {
     /// nil = create mode; non-nil = edit mode (existing Routine).
     public let editing: Routine?
 
-    @State private var expandedExerciseIDs: Set<UUID> = []
+    @State private var expanded: Set<ObjectIdentifier> = []
+    @State private var showErrors = false
+    @State private var errorTick = 0
+    @State private var editMode: EditMode = .inactive
+    @State private var presentingPicker = false
     @State private var presentingDiscardConfirm = false
-    @State private var initialSnapshot: String = ""
-    @State private var pendingSupersetAssignment: RoutineExerciseDraft? = nil
-    @State private var presentingSaveFirstAlert: Bool = false
-    @State private var pendingWarmupSheet: RoutineExerciseDraft? = nil
+    @State private var initialSnapshot = ""
+    @State private var pendingSupersetAssignment: RoutineExerciseDraft?
+    @State private var presentingSaveFirstAlert = false
+    @State private var pendingWarmupSheet: RoutineExerciseDraft?
 
     public init(draft: RoutineDraft, editing: Routine? = nil) {
         self.draft = draft
@@ -84,73 +52,96 @@ public struct RoutineBuilderView: View {
     }
 
     public var body: some View {
-        Form {
-            // MARK: Name + folder
-            Section {
-                TextField("Routine name", text: $draft.name)
+        List {
+            if showErrors, let summary = draft.issueSummary {
+                Section {
+                    ChalkInlineMessage(summary, kind: .error)
+                        .accessibilityIdentifier("builder.errorSummary")
+                }
+                .chalkBareListRow()
             }
 
-            // MARK: Exercises
-            Section("Exercises") {
+            Section {
+                ChalkTextField(
+                    "Routine name",
+                    text: $draft.name,
+                    prompt: "e.g. Push Day A",
+                    error: showErrors && draft.issues.contains(.missingName) ? RoutineDraft.Issue.missingName.message : nil,
+                    isProminent: true,
+                    identifier: "builder.name"
+                )
+            }
+            .chalkBareListRow()
+
+            Section {
                 if draft.exercises.isEmpty {
-                    Text("Add an exercise to begin.")
-                        .foregroundStyle(.secondary)
-                } else {
-                    ForEach(draft.exercises) { exDraft in
-                        RoutineExerciseCard(
-                            draft: exDraft,
-                            isExpanded: Binding(
-                                get: { expandedExerciseIDs.contains(stableKey(for: exDraft)) },
-                                set: { isOpen in
-                                    let key = stableKey(for: exDraft)
-                                    if isOpen { expandedExerciseIDs.insert(key) }
-                                    else { expandedExerciseIDs.remove(key) }
-                                }
-                            ),
-                            onAssignSuperset: { exDraft in
-                                handleAssignSuperset(exDraft)
-                            },
-                            onRemoveFromSuperset: { exDraft in
-                                exDraft.supersetGroupID = nil
-                            },
-                            onDuplicate: { exDraft in
-                                duplicateExercise(exDraft)
-                            },
-                            onRemove: { exDraft in
-                                removeExercise(exDraft)
-                            },
-                            onEditWarmup: { exDraft in
-                                pendingWarmupSheet = exDraft
-                            }
-                        )
-                        // Reclaim the full row width — active edit mode
-                        // otherwise reserves a narrow center column for
-                        // the row content, which crushed the
-                        // prescription editor into ~40% width.
-                        .listRowInsets(EdgeInsets(top: 10, leading: 16, bottom: 10, trailing: 16))
+                    Text("Add exercises in the order you'll do them. You can reorder later.")
+                        .font(.chalkCallout)
+                        .foregroundStyle(.chalkInk2)
+                        .listRowBackground(Color.chalkSurface)
+                } else if editMode == .active {
+                    ForEach(Array(draft.exercises.enumerated()), id: \.element.objectID) { index, exercise in
+                        Text("\(index + 1) · \(exercise.exercise?.name ?? "Exercise")")
+                            .font(.chalkHeadline)
+                            .foregroundStyle(.chalkInk)
+                            .listRowBackground(Color.chalkSurface)
                     }
                     .onMove { source, destination in
                         draft.exercises.move(fromOffsets: source, toOffset: destination)
-                        // RESEARCH §6 Pitfall 10 — rewrite orderIndex on
-                        // every reorder so the save path persists the
-                        // visual order verbatim.
-                        for (i, ex) in draft.exercises.enumerated() {
-                            ex.orderIndex = i
-                        }
+                        draft.renumber()
                     }
-                    .onDelete { offsets in
-                        draft.exercises.remove(atOffsets: offsets)
-                        for (i, ex) in draft.exercises.enumerated() {
-                            ex.orderIndex = i
-                        }
+                } else {
+                    ForEach(Array(draft.exercises.enumerated()), id: \.element.objectID) { index, exercise in
+                        RoutineExerciseCard(
+                            draft: exercise,
+                            index: index,
+                            count: draft.exercises.count,
+                            isExpanded: expansionBinding(for: exercise),
+                            onMoveUp: { draft.move(exercise, by: -1) },
+                            onMoveDown: { draft.move(exercise, by: 1) },
+                            onAssignSuperset: { handleAssignSuperset($0) },
+                            onRemoveFromSuperset: { $0.supersetGroupID = nil },
+                            onDuplicate: { duplicateExercise($0) },
+                            onRemove: { removeExercise($0) },
+                            onEditWarmup: { pendingWarmupSheet = $0 }
+                        )
+                        .listRowBackground(Color.chalkSurface)
                     }
                 }
-                InlineExerciseSearchRow { exercise in
-                    draft.append(exercise: exercise)
+
+                Button {
+                    presentingPicker = true
+                } label: {
+                    Label("Add exercises", systemImage: "plus")
                 }
+                .buttonStyle(.chalk(.secondary, fullWidth: true))
+                .chalkBareListRow()
+                .accessibilityIdentifier("builder.addExercises")
+
+                if showErrors && draft.issues.contains(.noExercises) {
+                    ChalkValidationText(RoutineDraft.Issue.noExercises.message)
+                        .chalkBareListRow()
+                        .accessibilityIdentifier("builder.exercisesError")
+                }
+            } header: {
+                HStack {
+                    Text(exerciseHeader)
+                    Spacer()
+                    if draft.exercises.count > 1 {
+                        Button(reorderTitle) {
+                            withAnimation {
+                                editMode = editMode == .active ? .inactive : .active
+                            }
+                        }
+                        .font(.chalkChip)
+                        .foregroundStyle(.chalkAccentInk)
+                        .frame(minHeight: Chalk.Size.minTouch)
+                        .accessibilityIdentifier("builder.reorder")
+                    }
+                }
+                .chalkLabelStyle()
             }
 
-            // MARK: Notes
             Section {
                 TextField(
                     "Notes (optional)",
@@ -158,15 +149,23 @@ public struct RoutineBuilderView: View {
                         get: { draft.notes ?? "" },
                         set: { draft.notes = $0.isEmpty ? nil : $0 }
                     ),
+                    prompt: Text("Cues, warm-up, equipment").foregroundStyle(Color.chalkInk3),
                     axis: .vertical
                 )
+                .lineLimit(2...6)
+                .font(.chalkBody)
+                .listRowBackground(Color.chalkSurface)
+            } header: {
+                Text("Notes").chalkLabelStyle()
             }
         }
-        .environment(\.editMode, .constant(.active))
-        .navigationTitle(editing == nil ? "New Routine" : draft.name)
+        .listStyle(.insetGrouped)
+        .environment(\.editMode, $editMode)
+        .chalkCanvasBackground()
+        .navigationTitle(screenTitle)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
-            ToolbarItem(placement: .topBarLeading) {
+            ToolbarItem(placement: .cancellationAction) {
                 Button("Cancel") {
                     if hasUnsavedChanges {
                         presentingDiscardConfirm = true
@@ -174,25 +173,31 @@ public struct RoutineBuilderView: View {
                         dismiss()
                     }
                 }
+                .accessibilityIdentifier("builder.cancel")
             }
-            ToolbarItem(placement: .topBarTrailing) {
-                Button("Save") {
-                    save()
-                }
-                .disabled(!draft.isValid)
-                .foregroundStyle(Color.accentColor)
+            ToolbarItem(placement: .confirmationAction) {
+                Button("Save") { save() }
+                    .fontWeight(.heavy)
+                    .accessibilityIdentifier("builder.save")
             }
         }
-        .confirmationDialog(
-            "Discard Changes?",
-            isPresented: $presentingDiscardConfirm,
-            titleVisibility: .visible
-        ) {
-            Button("Discard", role: .destructive) {
-                dismiss()
-            }
-            Button("Keep Editing", role: .cancel) {
-                presentingDiscardConfirm = false
+        .sensoryFeedback(.error, trigger: errorTick)
+        .onChange(of: draft.issues) { _, issues in
+            if issues.isEmpty { showErrors = false }
+        }
+        .confirmationDialog("Discard changes?", isPresented: $presentingDiscardConfirm, titleVisibility: .visible) {
+            Button("Discard", role: .destructive) { dismiss() }
+            Button("Keep editing", role: .cancel) {}
+        }
+        .sheet(isPresented: $presentingPicker) {
+            ExercisePickerSheet(title: "Add exercises", allowsMultipleSelection: true) { exercises in
+                let firstNew = draft.exercises.count
+                for exercise in exercises {
+                    draft.append(exercise: exercise)
+                }
+                if draft.exercises.indices.contains(firstNew) {
+                    expanded.insert(draft.exercises[firstNew].objectID)
+                }
             }
         }
         .sheet(
@@ -201,9 +206,6 @@ public struct RoutineBuilderView: View {
                 set: { if !$0 { pendingSupersetAssignment = nil } }
             )
         ) {
-            // The save-first gate above guarantees `editing != nil` when
-            // this sheet is presented. The SupersetGroup.routineID weak
-            // ref needs a persisted Routine to point at.
             if let editing, let exDraft = pendingSupersetAssignment {
                 SupersetAssignmentSheet(routine: editing, exerciseDraft: exDraft)
             }
@@ -214,76 +216,75 @@ public struct RoutineBuilderView: View {
                 set: { if !$0 { pendingWarmupSheet = nil } }
             )
         ) {
-            // Bind WarmupConfigSheet directly to the draft's warmupOverride.
-            // The draft is @Observable so mutations flow back to the card's
-            // PrescriptionEditorRow toggle automatically.
             if let exDraft = pendingWarmupSheet {
-                @Bindable var bd = exDraft
-                WarmupConfigSheet(config: $bd.warmupOverride)
+                @Bindable var bound = exDraft
+                WarmupConfigSheet(config: $bound.warmupOverride)
                     .presentationDetents([.medium])
             }
         }
-        .alert(
-            "Save Routine First",
-            isPresented: $presentingSaveFirstAlert
-        ) {
-            Button("OK", role: .cancel) {
-                presentingSaveFirstAlert = false
-            }
+        .alert("Save routine first", isPresented: $presentingSaveFirstAlert) {
+            Button("OK", role: .cancel) {}
         } message: {
-            Text("Save the routine before grouping exercises into a superset.")
+            Text("Save the routine once before grouping exercises into a superset.")
         }
         .onAppear {
-            initialSnapshot = snapshotHash()
+            if initialSnapshot.isEmpty {
+                initialSnapshot = snapshotHash()
+            }
         }
     }
 
-    // MARK: - Stable key for the expansion set
+    // MARK: Derived
 
-    /// Each `RoutineExerciseDraft` has an optional `id: UUID?` — nil
-    /// for freshly-appended exercises that haven't been saved yet.
-    /// We need a stable key for the expansion `Set` so the expanded
-    /// state survives unrelated body redraws. Fall back to
-    /// `ObjectIdentifier`'s integer representation hashed into a UUID
-    /// when the persistent id isn't available. Since the
-    /// `RoutineExerciseDraft` is `@Observable` final class, its
-    /// instance identity is stable for the lifetime of the draft.
-    private func stableKey(for exDraft: RoutineExerciseDraft) -> UUID {
-        if let id = exDraft.id { return id }
-        // Hash ObjectIdentifier into a UUID-shaped key. The result is
-        // stable across body redraws (the object stays in memory) but
-        // is NOT the persisted id (which the save path back-fills).
-        let oid = ObjectIdentifier(exDraft)
-        let hash = UInt64(bitPattern: Int64(oid.hashValue))
-        let upper = (hash >> 32) & 0xFFFFFFFF
-        let lower = hash & 0xFFFFFFFF
-        return UUID(uuid: (
-            UInt8((upper >> 24) & 0xFF), UInt8((upper >> 16) & 0xFF),
-            UInt8((upper >> 8) & 0xFF), UInt8(upper & 0xFF),
-            UInt8((lower >> 24) & 0xFF), UInt8((lower >> 16) & 0xFF),
-            UInt8((lower >> 8) & 0xFF), UInt8(lower & 0xFF),
-            0, 0, 0, 0, 0, 0, 0, 0
-        ))
+    private var screenTitle: String {
+        editing == nil ? "NEW ROUTINE" : "EDIT ROUTINE"
     }
 
-    // MARK: - Dirty-check
+    private var reorderTitle: String {
+        editMode == .active ? "Done" : "Reorder"
+    }
+
+    private var exerciseHeader: String {
+        let count = draft.exercises.count
+        let sets = draft.exercises.reduce(0) { $0 + $1.targetSets }
+        if count == 0 { return "Exercises" }
+        return "Exercises · \(count) · \(sets) sets"
+    }
+
+    private func expansionBinding(for exercise: RoutineExerciseDraft) -> Binding<Bool> {
+        Binding(
+            get: { expanded.contains(exercise.objectID) },
+            set: { isOpen in
+                if isOpen {
+                    expanded.insert(exercise.objectID)
+                } else {
+                    expanded.remove(exercise.objectID)
+                }
+            }
+        )
+    }
 
     private var hasUnsavedChanges: Bool {
         snapshotHash() != initialSnapshot
     }
 
-    /// Cheap fingerprint for the dirty-check. Captures the load-bearing
-    /// inputs that change in a normal builder session: name, exercise
-    /// count, total targetSets sum, and the joined exercise ids.
+    /// Cheap fingerprint for the dirty check.
     private func snapshotHash() -> String {
-        let counts = draft.exercises.map { $0.targetSets }.reduce(0, +)
-        let ids = draft.exercises.map { $0.id?.uuidString ?? "new" }.joined(separator: ",")
-        return "\(draft.name)|\(draft.exercises.count)|\(counts)|\(ids)"
+        let sets = draft.exercises.map { "\($0.exercise?.id.uuidString ?? "-"):\($0.targetSets):\($0.targetRepsLow)-\($0.targetRepsHigh):\($0.prescribedRestSeconds)" }
+        return "\(draft.name)|\(draft.notes ?? "")|\(sets.joined(separator: ","))"
     }
 
-    // MARK: - Save
+    // MARK: Save
 
     private func save() {
+        guard draft.isValid else {
+            showErrors = true
+            errorTick += 1
+            if let summary = draft.issueSummary {
+                UIAccessibility.post(notification: .announcement, argument: summary)
+            }
+            return
+        }
         let routine: Routine
         if let editing {
             routine = editing
@@ -296,16 +297,10 @@ public struct RoutineBuilderView: View {
         dismiss()
     }
 
-    // MARK: - Long-press menu handlers (plan 03-03)
+    // MARK: Menu handlers
 
-    /// "Move to Superset…" / "Make Superset" menu actions both route
-    /// here. The sheet needs a persisted Routine to anchor the
-    /// SupersetGroup.routineID weak ref against — in create mode we
-    /// surface a "Save Routine First" alert per the plan's edge-case
-    /// guidance ("gate visibility on `editing != nil`"). The simpler
-    /// path of saving inline would create a partially-built routine in
-    /// the store before the user has chosen to commit; the alert keeps
-    /// the create-mode user flow predictable.
+    /// Superset groups anchor on a persisted routine, so create mode asks
+    /// the user to save first.
     private func handleAssignSuperset(_ exDraft: RoutineExerciseDraft) {
         if editing == nil {
             presentingSaveFirstAlert = true
@@ -314,18 +309,9 @@ public struct RoutineBuilderView: View {
         pendingSupersetAssignment = exDraft
     }
 
-    /// "Duplicate Exercise" menu action — inserts a clone of the
-    /// long-pressed draft at `index + 1`. In-builder duplication only
-    /// (not persisted until Save). The clone copies every prescription
-    /// field verbatim and gets a fresh in-memory identity; per-set
-    /// overrides are NOT cloned at this layer (the user can re-add
-    /// them after duplication if needed — the in-builder duplicate is
-    /// a quick "give me another row like this" affordance, not the
-    /// routine-level deep copy that `RoutineDuplicator` handles).
+    /// Inserts a copy right after the original (not persisted until Save).
     private func duplicateExercise(_ exDraft: RoutineExerciseDraft) {
-        guard let index = draft.exercises.firstIndex(where: { $0 === exDraft }) else {
-            return
-        }
+        guard let index = draft.exercises.firstIndex(where: { $0 === exDraft }) else { return }
         let clone = RoutineExerciseDraft()
         clone.exercise = exDraft.exercise
         clone.intent = exDraft.intent
@@ -338,25 +324,14 @@ public struct RoutineBuilderView: View {
         clone.tempo = exDraft.tempo
         clone.tracksTempo = exDraft.tracksTempo
         clone.tracksPartialReps = exDraft.tracksPartialReps
-        // NOTE: supersetGroupID is intentionally NOT copied — the
-        // duplicate starts as a standalone exercise. The user can
-        // long-press it and assign a superset explicitly.
         clone.supersetGroupID = nil
         draft.exercises.insert(clone, at: index + 1)
-        // Rewrite orderIndex on the affected suffix.
-        for (i, ex) in draft.exercises.enumerated() {
-            ex.orderIndex = i
-        }
+        draft.renumber()
     }
 
-    /// "Remove" menu action — removes the long-pressed draft from the
-    /// in-memory exercise list and rewrites `orderIndex` on the
-    /// remainder. Persistence happens at Save time via the three-way
-    /// merge in `RoutineDraft.save(into:context:)`.
     private func removeExercise(_ exDraft: RoutineExerciseDraft) {
+        expanded.remove(exDraft.objectID)
         draft.exercises.removeAll { $0 === exDraft }
-        for (i, ex) in draft.exercises.enumerated() {
-            ex.orderIndex = i
-        }
+        draft.renumber()
     }
 }

@@ -10,8 +10,8 @@
 //    1. `SchemaV2.models` is a strict additive superset of
 //       `SchemaV1.models` (the precondition for `lightweight`
 //       migration eligibility).
-//    2. `FitbodSchemaMigrationPlan` registers both V1 + V2 and a single
-//       `MigrationStage.lightweight` stage.
+//    2. `FitbodSchemaMigrationPlan` registers V1 then V2 (later versions
+//       append after them) with one lightweight stage per step.
 //    3. A fresh in-memory V2 container round-trips the new fields and
 //       entities (Routine.folderID + RoutineFolder insert/fetch).
 //    4. `RoutineExercise -> RoutineExerciseSetOverride` is a cascade
@@ -52,11 +52,13 @@ struct SchemaV2MigrationTests {
         #expect(SchemaV2.models.count == 15)
     }
 
-    @Test("FitbodSchemaMigrationPlan registers V1 and V2 and a single lightweight stage")
+    @Test("FitbodSchemaMigrationPlan registers V1 then V2, one lightweight stage per step")
     func migrationPlanIsWiredCorrectly() {
         let names = FitbodSchemaMigrationPlan.schemas.map { String(describing: $0) }
-        #expect(names == ["SchemaV1", "SchemaV2"])
-        #expect(FitbodSchemaMigrationPlan.stages.count == 1)
+        // V1 and V2 stay registered, in order, as later versions are
+        // appended (SchemaV3MigrationTests pins the full current list).
+        #expect(Array(names.prefix(2)) == ["SchemaV1", "SchemaV2"])
+        #expect(FitbodSchemaMigrationPlan.stages.count == names.count - 1)
     }
 
     @Test("Fresh in-memory V2 ModelContainer opens; round-trips a Routine + new entity")

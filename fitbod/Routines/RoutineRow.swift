@@ -2,124 +2,56 @@
 //  RoutineRow.swift
 //  fitbod
 //
-//  One row in the Routines tab's sectioned `List`. Renders the routine
-//  name (`.body`) on the top line and an "{N} exercises" subtitle on the
-//  bottom line per UI-SPEC § Routines tab row format.
-//
-//  Three interaction surfaces, all driven by closures supplied by the
-//  parent (`RoutinesListView`):
-//
-//    - Tap → `onTap(routine)` — pushes `RoutineBuilderView(routine:)`
-//      in edit mode. In plan 03-01 this is a no-op stub; plan 03-02
-//      wires the navigation destination.
-//
-//    - Leading swipe → "Start Workout" (accent fill, white label,
-//      `play.fill` glyph). UI-SPEC accent surface #13.
-//
-//    - Trailing swipe → "Delete" (destructive) + "Duplicate" (secondary,
-//      gray tint).
-//
-//    - Long-press → context menu with the 5 UI-SPEC verbatim actions:
-//      "Start Workout" / "Duplicate" / "Move…" / "Edit" / "Delete".
-//
-//  The "Duplicate" call site is a stub in plan 03-01 — plan 03-03 ships
-//  `RoutineDuplicator.duplicate(routine:context:)` and rewires this
-//  closure. The "Edit" entry uses the same closure as a row tap.
+//  One routine in the Routines list: name, structured meta line, and a
+//  visible START button in thumb reach. The name area opens the routine
+//  detail; both are separate hit targets (≥ 44 pt).
 //
 
 import SwiftUI
 
 public struct RoutineRow: View {
     public let routine: Routine
-    public let onTap: (Routine) -> Void
-    public let onStart: (Routine) -> Void
-    public let onDuplicate: (Routine) -> Void
-    public let onMove: (Routine) -> Void
-    public let onDelete: (Routine) -> Void
+    public let lastDone: Date?
+    public let onOpen: () -> Void
+    public let onStart: () -> Void
 
-    public init(
-        routine: Routine,
-        onTap: @escaping (Routine) -> Void,
-        onStart: @escaping (Routine) -> Void,
-        onDuplicate: @escaping (Routine) -> Void,
-        onMove: @escaping (Routine) -> Void,
-        onDelete: @escaping (Routine) -> Void
-    ) {
+    public init(routine: Routine, lastDone: Date?, onOpen: @escaping () -> Void, onStart: @escaping () -> Void) {
         self.routine = routine
-        self.onTap = onTap
+        self.lastDone = lastDone
+        self.onOpen = onOpen
         self.onStart = onStart
-        self.onDuplicate = onDuplicate
-        self.onMove = onMove
-        self.onDelete = onDelete
     }
+
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     public var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text(routine.name)
-                .font(.body)
-            Text(subtitle)
-                .font(.caption)
-                .foregroundStyle(.secondary)
-        }
-        .contentShape(Rectangle())
-        .onTapGesture { onTap(routine) }
-        .swipeActions(edge: .leading) {
-            Button {
-                onStart(routine)
-            } label: {
-                Label("Start Workout", systemImage: "play.fill")
+        let layout = dynamicTypeSize.isAccessibilitySize
+            ? AnyLayout(VStackLayout(alignment: .leading, spacing: Chalk.Space.sm))
+            : AnyLayout(HStackLayout(spacing: Chalk.Space.md))
+        layout {
+            Button(action: onOpen) {
+                VStack(alignment: .leading, spacing: Chalk.Space.xxs) {
+                    Text(routine.name)
+                        .font(.chalkHeadline)
+                        .foregroundStyle(.chalkInk)
+                        .multilineTextAlignment(.leading)
+                    Text(RoutineSummary.line(for: routine, lastDone: lastDone))
+                        .font(.chalkFootnote)
+                        .foregroundStyle(.chalkInk2)
+                        .multilineTextAlignment(.leading)
+                }
+                .frame(maxWidth: .infinity, minHeight: Chalk.Size.minTouch, alignment: .leading)
+                .contentShape(Rectangle())
             }
-            .tint(Color.accentColor)
-        }
-        .swipeActions(edge: .trailing) {
-            Button(role: .destructive) {
-                onDelete(routine)
-            } label: {
-                Label("Delete", systemImage: "trash")
-            }
-            Button {
-                onDuplicate(routine)
-            } label: {
-                Label("Duplicate", systemImage: "doc.on.doc")
-            }
-            .tint(.gray)
-        }
-        .contextMenu {
-            Button {
-                onStart(routine)
-            } label: {
-                Label("Start Workout", systemImage: "play.fill")
-            }
-            Button {
-                onDuplicate(routine)
-            } label: {
-                Label("Duplicate", systemImage: "doc.on.doc")
-            }
-            Button {
-                onMove(routine)
-            } label: {
-                Label("Move…", systemImage: "folder.fill.badge.plus")
-            }
-            Button {
-                onTap(routine)
-            } label: {
-                Label("Edit", systemImage: "pencil")
-            }
-            Divider()
-            Button(role: .destructive) {
-                onDelete(routine)
-            } label: {
-                Label("Delete", systemImage: "trash")
-            }
-        }
-    }
+            .buttonStyle(.plain)
+            .accessibilityHint(Text("Opens the routine"))
+            .accessibilityIdentifier("routine.row.\(routine.name)")
 
-    /// UI-SPEC § Routines tab row format — bottom line.
-    /// Phase 2 ships the basic "{N} exercises" form; the optional
-    /// "{N} exercises · {label}" intent-tag variant arrives in plan 03-02
-    /// when the routine builder is wired and exercises are addable.
-    private var subtitle: String {
-        let count = (routine.exercises ?? []).count
-        return "\(count) exercises"
+            Button("Start", action: onStart)
+                .buttonStyle(.chalk(.primary, size: .compact))
+                .accessibilityLabel(Text("Start \(routine.name)"))
+                .accessibilityIdentifier("routine.start.\(routine.name)")
+        }
+        .padding(.vertical, Chalk.Space.xxs)
     }
 }

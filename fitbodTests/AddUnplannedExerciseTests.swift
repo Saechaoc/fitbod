@@ -2,12 +2,13 @@
 //  AddUnplannedExerciseTests.swift
 //  fitbodTests
 //
-//  Wave-4 plan 04-02 — pins the SESS-06 contract for the bottom-of-
-//  session "+ Add Exercise" affordance. The production surface is
-//  `AddUnplannedExerciseButton.append(exercise:)`; these tests
-//  re-implement the same append semantics against the production model
-//  entities so the contract is verified without instantiating the
-//  SwiftUI sheet.
+//  Wave-4 plan 04-02 — pins the SESS-06 contract for the workout
+//  screen's "Add exercise" affordance. The production surface is
+//  `WorkoutLogging.addExercise(_:to:context:)`; these tests call it
+//  directly against the production model entities (milestone 1 replaced
+//  the earlier hand-copied mirror of the old button, which had drifted:
+//  it numbered the new exercise after linking it, so it read its own
+//  row and skipped an index).
 //
 //  Three `@Test` functions cover:
 //
@@ -43,49 +44,14 @@ struct AddUnplannedExerciseTests {
         return ModelContext(container)
     }
 
-    /// Mirrors the production `AddUnplannedExerciseButton.append(exercise:)`
-    /// — kept as a hermetic copy so the test exercises the semantic
-    /// contract without instantiating the SwiftUI button.
+    /// The production append path (`WorkoutLogging.addExercise`, used by
+    /// the workout screen's "Add exercise" picker).
     private func appendUnplanned(
         exercise: Exercise,
         to session: Session,
         context: ModelContext
     ) {
-        let se = SessionExercise()
-        se.session = session
-        se.exercise = exercise
-        se.orderIndex = (session.exercises ?? []).count
-        se.intentRaw = defaultIntent(for: exercise).rawValue
-        se.targetSets = 3
-        se.targetRepsLow = 8
-        se.targetRepsHigh = 12
-        se.prescribedRestSeconds = exercise.mechanic == .compound ? 180 : 90
-        context.insert(se)
-
-        let hint = PreviousMatchingIntent.fetchTopWorkingSet(
-            exerciseID: exercise.id,
-            intentRaw: se.intentRaw,
-            context: context
-        )?.weight ?? 0
-        for i in 0..<3 {
-            let entry = SetEntry()
-            entry.sessionExercise = se
-            entry.orderIndex = i
-            entry.weight = hint
-            entry.reps = 0
-            entry.setTypeRaw = SetType.working.rawValue
-            entry.isComplete = false
-            entry.completedAt = .now
-            context.insert(entry)
-        }
-        try? context.save()
-    }
-
-    private func defaultIntent(for exercise: Exercise) -> Intent {
-        if exercise.mechanic == .compound && exercise.equipment == .barbell {
-            return .strength
-        }
-        return .hypertrophy
+        WorkoutLogging.addExercise(exercise, to: session, context: context)
     }
 
     /// Active session + routine with one existing exercise. Returns the

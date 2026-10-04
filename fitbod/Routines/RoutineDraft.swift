@@ -291,3 +291,67 @@ public final class PerSetOverrideDraft: Identifiable {
         self.targetRPE = override.targetRPE
     }
 }
+
+
+// MARK: - Milestone 1 helpers
+
+extension RoutineExerciseDraft {
+    /// Stable identity for `ForEach` while `id` is still nil (unsaved).
+    public var objectID: ObjectIdentifier { ObjectIdentifier(self) }
+}
+
+extension PerSetOverrideDraft {
+    /// Stable identity for `ForEach` while `id` is still nil (unsaved).
+    public var objectID: ObjectIdentifier { ObjectIdentifier(self) }
+}
+
+extension RoutineDraft {
+    /// Save-blocking problems, in display order. Empty when `isValid`.
+    public enum Issue: Equatable, Sendable {
+        case missingName
+        case noExercises
+
+        public var message: String {
+            switch self {
+            case .missingName: return "Give this routine a name."
+            case .noExercises: return "Add at least one exercise."
+            }
+        }
+    }
+
+    public var issues: [Issue] {
+        var result: [Issue] = []
+        if name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            result.append(.missingName)
+        }
+        if exercises.isEmpty {
+            result.append(.noExercises)
+        }
+        return result
+    }
+
+    /// "Fix 2 things to save: name the routine and add at least one exercise."
+    public var issueSummary: String? {
+        let list = issues
+        guard !list.isEmpty else { return nil }
+        if list.count == 1 {
+            return "Fix this to save: \(list[0].message.lowercased().dropLast())."
+        }
+        return "Fix \(list.count) things to save: name the routine and add at least one exercise."
+    }
+
+    /// Moves one exercise up or down and renumbers `orderIndex`.
+    public func move(_ exercise: RoutineExerciseDraft, by offset: Int) {
+        guard let index = exercises.firstIndex(where: { $0 === exercise }) else { return }
+        let target = index + offset
+        guard exercises.indices.contains(target) else { return }
+        exercises.swapAt(index, target)
+        renumber()
+    }
+
+    public func renumber() {
+        for (i, ex) in exercises.enumerated() {
+            ex.orderIndex = i
+        }
+    }
+}

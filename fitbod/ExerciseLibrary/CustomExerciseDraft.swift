@@ -320,3 +320,32 @@ public final class CustomExerciseDraft {
             : "|" + primarySlugs.joined(separator: "|") + "|"
     }
 }
+
+// MARK: - Milestone 1 helpers
+
+/// Sheets present the editor with `.sheet(item:)`; class identity is
+/// enough (default `ObjectIdentifier` id).
+extension CustomExerciseDraft: Identifiable {}
+
+extension CustomExerciseDraft {
+    /// A draft pre-filled from an existing custom exercise, in edit mode
+    /// (Save rewrites it; Delete becomes available).
+    public static func editing(_ exercise: Exercise) -> CustomExerciseDraft {
+        let draft = CustomExerciseDraft()
+        draft.editingExisting = exercise
+        draft.name = exercise.name
+        draft.equipment = Equipment(rawValue: exercise.equipmentRaw) ?? .other
+        draft.mechanic = Mechanic(rawValue: exercise.mechanicRaw) ?? .compound
+        draft.imageData = exercise.imageData
+        for stimulus in exercise.muscleStimuli ?? [] {
+            guard let slug = stimulus.muscle?.slug else { continue }
+            let role: MuscleAssignment.Role = stimulus.role == "primary" ? .primary : .secondary
+            draft.muscles.append(.init(slug: slug, role: role, weight: stimulus.weight))
+        }
+        draft.muscles.sort { a, b in
+            if a.role != b.role { return a.role == .primary }
+            return a.weight > b.weight
+        }
+        return draft
+    }
+}

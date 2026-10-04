@@ -40,6 +40,18 @@
 //  Dynamic Island view declarations (plan 02-03), SwiftUI overlay views
 //  (plan 04-01). The engine exposes the surface those plans consume.
 //
+//  Milestone 1 (Chalkline) additions:
+//    - Persistence. Every start / adjust / stop writes a `RestTimerSnapshot`
+//      through the injected `RestTimerPersisting` store, and `restore()`
+//      rehydrates it on launch, so the countdown survives backgrounding,
+//      eviction, and a full relaunch (it is computed from the absolute
+//      `deadline`, never from a ticking counter).
+//    - `sessionID` ties a running timer to the workout that started it.
+//    - `setTarget(seconds:)` for the rest-sheet presets (total rest from
+//      the original start, same semantics as ±15 s).
+//    - The engine is now app-scoped (owned by `RootView`, injected via
+//      `.environment`) instead of living inside the logger view.
+//
 
 import Foundation
 import SwiftUI
@@ -64,6 +76,11 @@ public final class RestTimerEngine {
     /// The exercise label shown in the lock-screen notification body and
     /// the in-app overlay header. Cleared on `stop()`.
     public private(set) var currentExerciseName: String = ""
+
+    /// The workout this rest period belongs to (nil for timers started by
+    /// legacy call sites). Used to drop a stale timer when that workout is
+    /// finished or discarded.
+    public private(set) var sessionID: UUID?
 
     // MARK: - Static contract
 
@@ -107,13 +124,19 @@ public final class RestTimerEngine {
     /// scenario in microseconds.
     private let now: () -> Date
 
+    /// Persistence seam (milestone 1). `nil` keeps the engine purely
+    /// in-memory, which is what the original hermetic unit tests expect.
+    private let store: RestTimerPersisting?
+
     public init(
         scheduler: RestTimerNotificationScheduling = LiveNotificationScheduler(),
         activityController: RestTimerActivityControlling = NoopActivityController(),
+        store: RestTimerPersisting? = nil,
         now: @escaping () -> Date = { Date.now }
     ) {
         self.scheduler = scheduler
         self.activityController = activityController
+        self.store = store
         self.now = now
     }
 
@@ -125,11 +148,25 @@ public final class RestTimerEngine {
     /// hermetic — passing a `StubScheduler` is the canonical unit-test
     /// shape, and the Noop activity controller default keeps those tests
     /// free of ActivityKit imports.
-    public static func makeProduction() -> RestTimerEngine {
-        RestTimerEngine(
-            scheduler: LiveNotificationScheduler(),
-            activityController: RestTimerActivityController()
-        )
+    public static func makeProduction(configuration: LaunchConfiguration = .current) -> RestTimerEngine {
+        let engine: RestTimerEngine
+        if configuration.isUITesting {
+            // Hermetic: no permission prompt, no Live Activity — but still
+            // persisted, so relaunch tests exercise the real restore path.
+            engine = RestTimerEngine(
+                scheduler: NoopNotificationScheduler(),
+                activityController: NoopActivityController(),
+                store: UserDefaultsRestTimerStore()
+            )
+        } else {
+            engine = RestTimerEngine(
+                scheduler: LiveNotificationScheduler(),
+                activityController: RestTimerActivityController(),
+                store: UserDefaultsRestTimerStore()
+            )
+        }
+        engine.restore()
+        return engine
     }
 
     // MARK: - Computed accessors
@@ -149,6 +186,23 @@ public final class RestTimerEngine {
     /// session logger to decide whether to render the rest overlay.
     public var isRunning: Bool { startedAt != nil }
 
+    /// Absolute end of the current rest period, or nil when stopped.
+    public var deadline: Date? {
+        startedAt.map { $0.addingTimeInterval(TimeInterval(targetSeconds)) }
+    }
+
+    /// True once the countdown has passed zero (the dock switches to an
+    /// overtime count-up).
+    public var isOvertime: Bool {
+        isRunning && remaining <= 0
+    }
+
+    /// Fraction of the rest period elapsed, 0…1.
+    public var progress: Double {
+        guard isRunning, targetSeconds > 0 else { return 0 }
+        return min(1, max(0, 1 - remaining / Double(targetSeconds)))
+    }
+
     // MARK: - Mutating commands
 
     /// Start (or restart) the timer.
@@ -162,6 +216,12 @@ public final class RestTimerEngine {
     /// name, fresh notification scheduling). The `restartReplacesPriorState`
     /// test pins this.
     public func start(seconds: Int, exerciseName: String) {
+        start(seconds: seconds, exerciseName: exerciseName, sessionID: nil)
+    }
+
+    /// Start (or restart) the timer for a specific workout.
+    public func start(seconds: Int, exerciseName: String, sessionID: UUID?) {
+        self.sessionID = sessionID
         self.startedAt = now()
         self.targetSeconds = max(1, seconds)
         self.currentExerciseName = exerciseName
@@ -178,6 +238,7 @@ public final class RestTimerEngine {
             targetSeconds: self.targetSeconds,
             exerciseName: exerciseName
         )
+        persist()
     }
 
     /// Mutate the target by ±N seconds.
@@ -218,6 +279,53 @@ public final class RestTimerEngine {
             startedAt: startedAt,
             targetSeconds: newTarget
         )
+        persist()
+    }
+
+    /// Set the total rest target (rest-sheet presets). Same semantics as
+    /// `adjust`: `startedAt` does not move, so choosing 2:00 after 1:30
+    /// has elapsed leaves 0:30 on the clock.
+    public func setTarget(seconds: Int) {
+        guard isRunning else { return }
+        adjust(deltaSeconds: max(0, seconds) - targetSeconds)
+    }
+
+    /// Rehydrate a persisted timer (called once at launch). A timer whose
+    /// deadline passed more than `maxOvertime` ago is discarded instead of
+    /// showing a stale overtime count.
+    public func restore(maxOvertime: TimeInterval = 15 * 60) {
+        guard let store, let snapshot = store.load() else { return }
+        if now().timeIntervalSince(snapshot.deadline) > maxOvertime {
+            store.save(nil)
+            return
+        }
+        startedAt = snapshot.startedAt
+        targetSeconds = snapshot.targetSeconds
+        currentExerciseName = snapshot.exerciseName
+        sessionID = snapshot.sessionID
+    }
+
+    /// Stop only if the running timer belongs to `sessionID` (finish /
+    /// discard of that workout). Timers without a session are stopped too.
+    public func stop(ifBelongsTo sessionID: UUID) {
+        guard isRunning else { return }
+        if self.sessionID == nil || self.sessionID == sessionID {
+            stop()
+        }
+    }
+
+    private func persist() {
+        guard let store else { return }
+        if let startedAt {
+            store.save(RestTimerSnapshot(
+                startedAt: startedAt,
+                targetSeconds: targetSeconds,
+                exerciseName: currentExerciseName,
+                sessionID: sessionID
+            ))
+        } else {
+            store.save(nil)
+        }
     }
 
     /// Stop the timer and cancel the pending lock-screen notification.
@@ -233,6 +341,8 @@ public final class RestTimerEngine {
         startedAt = nil
         targetSeconds = 0
         currentExerciseName = ""
+        sessionID = nil
+        persist()
         scheduler.cancel(identifier: Self.notificationID)
         // Plan 02-02 wire: dismiss the Live Activity immediately.
         activityController.end()

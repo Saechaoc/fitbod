@@ -1,1 +1,7 @@
 fitbod.xcodeproj/xcuserdata/
+
+# CI / local verification outputs (scripts/ci/ios-ci.sh)
+.ci/
+.build/
+DerivedData/
+__pycache__/

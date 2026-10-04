@@ -2,108 +2,90 @@
 //  ExerciseRow.swift
 //  fitbod
 //
-//  One row of the library list. Per UI-SPEC § Copywriting Contract
-//  / § Typography:
-//
-//    - Name in `.body` (.primary)
-//    - Equipment + mechanic metadata in `.caption` (.secondary), separated
-//      by a verbatim mid-dot " · "
-//    - "Custom" tag for user-authored entries — `.caption.weight(.semibold)`
-//      on a `Color.accentColor.opacity(0.15)` capsule (UI-SPEC § Library
-//      screen / Custom-exercise row inline tag)
-//
-//  The row reads only from the passed-in `Exercise` model — no `@Query`,
-//  no environment context. SwiftData propagates property-level
-//  invalidations through the `@Model` macro so a custom exercise being
-//  edited from elsewhere re-renders this row without any extra plumbing.
-//
-//  Touch-target / hit-area: the parent `List` row already supplies a
-//  full-width tappable area via `NavigationLink`, so this view only
-//  styles the cell content. No `.contentShape` override here.
+//  One library row: the full exercise name (wraps — catalog names run to
+//  58 characters), then "Equipment · Primary muscles", plus a CUSTOM tag
+//  for user-authored entries. In multi-select pickers a leading check
+//  circle shows selection.
 //
 
 import SwiftUI
 
-/// A single row in the exercise library list — name, metadata, and
-/// the optional "Custom" tag.
 public struct ExerciseRow: View {
     let exercise: Exercise
+    let isSelected: Bool?
 
-    public init(exercise: Exercise) {
+    public init(exercise: Exercise, isSelected: Bool? = nil) {
         self.exercise = exercise
+        self.isSelected = isSelected
     }
 
     public var body: some View {
-        HStack(alignment: .center, spacing: 12) {
-            VStack(alignment: .leading, spacing: 2) {
-                Text(exercise.name)
-                    .font(.body)
-                    .foregroundStyle(.primary)
-                HStack(spacing: 6) {
-                    Text(displayName(forEquipmentRaw: exercise.equipmentRaw))
-                    Text("·")
-                    Text(exercise.mechanicRaw.capitalized)
+        HStack(alignment: .center, spacing: Chalk.Space.md) {
+            if let isSelected {
+                ZStack {
+                    Circle()
+                        .fill(isSelected ? Color.chalkInk : Color.chalkSurface)
+                    Circle()
+                        .strokeBorder(Color.chalkInk, lineWidth: Chalk.Line.strong)
+                    if isSelected {
+                        Image(systemName: "checkmark")
+                            .font(.footnote.weight(.heavy))
+                            .foregroundStyle(.chalkCanvas)
+                    }
                 }
-                .font(.caption)
-                .foregroundStyle(.secondary)
+                .frame(width: 28, height: 28)
+                .accessibilityHidden(true)
             }
-            Spacer(minLength: 8)
-            if exercise.isCustom {
-                customTag
+            VStack(alignment: .leading, spacing: Chalk.Space.xxs) {
+                Text(exercise.name)
+                    .font(.chalkHeadline)
+                    .foregroundStyle(.chalkInk)
+                    .multilineTextAlignment(.leading)
+                    .fixedSize(horizontal: false, vertical: true)
+                HStack(spacing: Chalk.Space.sm) {
+                    Text(meta)
+                        .font(.chalkFootnote)
+                        .foregroundStyle(.chalkInk2)
+                    if exercise.isCustom {
+                        ChalkTag("Custom", style: .subtle)
+                    }
+                }
             }
+            Spacer(minLength: 0)
         }
-        .padding(.vertical, 4)
+        .padding(.vertical, Chalk.Space.xxs)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(Text(accessibilityText))
     }
 
-    // MARK: - Custom tag
-
-    /// The "Custom" capsule per UI-SPEC § Library screen / Custom-exercise
-    /// row inline tag. Caption weight semibold + accent foreground + a
-    /// 15%-opacity accent fill (the accent never appears at full opacity
-    /// in this position — that's reserved for active filter chips).
-    private var customTag: some View {
-        Text("Custom")
-            .font(.caption.weight(.semibold))
-            .foregroundStyle(Color.accentColor)
-            .padding(.horizontal, 8)
-            .padding(.vertical, 2)
-            .background {
-                Capsule().fill(Color.accentColor.opacity(0.15))
-            }
-            .accessibilityLabel("Custom exercise")
+    /// "Barbell · Chest · Triceps"
+    private var meta: String {
+        ([Self.equipmentName(exercise.equipmentRaw)] + primaryMuscles).joined(separator: " · ")
     }
 
-    // MARK: - Helpers
+    private var primaryMuscles: [String] {
+        exercise.primaryMuscleSlugsJoined
+            .split(separator: "|")
+            .map { MuscleRegionMap.displayName(for: String($0)) }
+    }
 
-    /// Equipment display name. `weighted_bodyweight` is split on
-    /// underscore and capitalised so the UI reads "Weighted Bodyweight"
-    /// rather than "Weighted_bodyweight".
-    private func displayName(forEquipmentRaw raw: String) -> String {
-        raw.replacingOccurrences(of: "_", with: " ").capitalized
+    private var accessibilityText: String {
+        var text = "\(exercise.name), \(meta)"
+        if exercise.isCustom { text += ", custom" }
+        if let isSelected { text += isSelected ? ", selected" : "" }
+        return text
+    }
+
+    /// "weighted_bodyweight" → "Weighted Bodyweight".
+    public static func equipmentName(_ raw: String) -> String {
+        raw.split(separator: "_").map { $0.capitalized }.joined(separator: " ")
     }
 }
 
-#Preview("Built-in exercise") {
-    ExerciseRow(
-        exercise: Exercise.previewSample(
-            name: "Barbell Bench Press",
-            equipment: .barbell,
-            mechanic: .compound,
-            primaryMuscleSlugs: ["chest"]
-        )
-    )
-    .padding()
-}
-
-#Preview("Custom exercise") {
-    ExerciseRow(
-        exercise: Exercise.previewSample(
-            name: "Cambered Bar Bench",
-            equipment: .barbell,
-            mechanic: .compound,
-            primaryMuscleSlugs: ["chest"],
-            isCustom: true
-        )
-    )
-    .padding()
+#Preview("Rows") {
+    List {
+        ExerciseRow(exercise: .previewSample(name: "Barbell Bench Press - Medium Grip", equipment: .barbell, mechanic: .compound, primaryMuscleSlugs: ["chest"]))
+        ExerciseRow(exercise: .previewSample(name: "Lying Close-Grip Barbell Triceps Extension Behind The Head", equipment: .barbell, mechanic: .isolation, primaryMuscleSlugs: ["triceps"]), isSelected: true)
+        ExerciseRow(exercise: .previewSample(name: "Cambered Bar Paused Bench Press", equipment: .barbell, mechanic: .compound, primaryMuscleSlugs: ["chest"], isCustom: true))
+    }
 }

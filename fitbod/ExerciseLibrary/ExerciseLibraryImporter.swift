@@ -97,13 +97,13 @@ public actor ExerciseLibraryImporter {
     ///
     /// 1. Reads `UserDefaults[seedVersionKey]` and bundled `SEED_VERSION.txt`.
     /// 2. If stored ≥ bundled, returns immediately (no work).
-    /// 3. Otherwise wipes any partial seed-owned rows from a previously
-    ///    failed seed (`Exercise` + `MuscleGroup`; cascade clears the
-    ///    `ExerciseMuscleStimulus` join rows), then loads
-    ///    `exercises.json`, filters to strength categories, upserts 17
-    ///    `MuscleGroup` rows, inserts the filtered exercises + stimulus
-    ///    join rows in 100-row batches, and seeds the `UserSettings`
-    ///    singleton if absent.
+    /// 3. Otherwise loads `exercises.json`, filters to strength
+    ///    categories, upserts the 17 `MuscleGroup` rows and the filtered
+    ///    exercises (matched by `externalID`; stimulus join rows rebuilt)
+    ///    in 100-row batches, and seeds the `UserSettings` singleton if
+    ///    absent. Existing rows are updated in place — never deleted — so
+    ///    routines, history, volume targets and custom exercises survive a
+    ///    library refresh.
     /// 4. On success stamps `UserDefaults[seedVersionKey] = bundled`.
     /// 5. On mid-import failure rolls back unsaved inserts and
     ///    rethrows; the next call's step 3 cleanup makes retry safe
@@ -127,25 +127,27 @@ public actor ExerciseLibraryImporter {
         Self.log.info("Seeding library from version \(stored) → \(bundled)")
         let start = Date()
 
-        // MARK: 0. Clear any partial state from a prior failed seed
+        // MARK: 0. Index what is already stored (upsert — never wipe)
         //
-        // The per-batch saves below are NOT a single transaction. If a
-        // prior `seedIfNeeded()` call crashed mid-import (disk full,
-        // OOM during decode, etc.), partial Exercise + MuscleGroup +
-        // ExerciseMuscleStimulus rows persist, the seed-version stamp
-        // is NOT bumped, and the next run would collide on the
-        // `#Unique<Exercise>([\.externalID])` and
-        // `#Unique<MuscleGroup>([\.slug])` constraints — bricking
-        // retry permanently (review WR-01).
-        //
-        // Wipe the seed-owned rows up front. UserSettings is left alone
-        // (it's the singleton row the user may have already toggled in
-        // Settings). Cascade `Exercise → ExerciseMuscleStimulus: cascade`
-        // and `MuscleGroup → ExerciseMuscleStimulus: cascade` clean up
-        // the join rows automatically when their parents are deleted.
-        try modelContext.delete(model: Exercise.self)
-        try modelContext.delete(model: MuscleGroup.self)
-        try modelContext.save()
+        // A re-seed (bundled SEED_VERSION bumped) or a retry after a failed
+        // partial seed updates built-in rows in place, matched by
+        // `externalID` (exercises) and `slug` (muscles), and inserts only
+        // what is new. Nothing is deleted: routines and logged workouts
+        // point at built-in exercises, muscles own the user's volume
+        // targets, and custom exercises (`externalID == nil`) are never
+        // touched. Upserting also removes the unique-constraint collision a
+        // partial seed used to cause on retry (review WR-01) without the
+        // old wipe, which destroyed those references (milestone 1).
+        var exercisesByExternalID: [String: Exercise] = [:]
+        for exercise in try modelContext.fetch(FetchDescriptor<Exercise>()) {
+            if let externalID = exercise.externalID {
+                exercisesByExternalID[externalID] = exercise
+            }
+        }
+        var musclesBySlug: [String: MuscleGroup] = [:]
+        for muscle in try modelContext.fetch(FetchDescriptor<MuscleGroup>()) {
+            musclesBySlug[muscle.slug] = muscle
+        }
 
         // MARK: 1. Load + decode + filter
         guard let url = bundle.url(forResource: "exercises", withExtension: "json") else {
@@ -173,8 +175,12 @@ public actor ExerciseLibraryImporter {
             // canonical slug gets a row even if no dataset entry references
             // it yet, which keeps the muscle-volume-target wiring in Phase 5
             // stable across future dataset refreshes.
-            var musclesBySlug: [String: MuscleGroup] = [:]
             for slug in MuscleRegionMap.allSlugs {
+                if let existing = musclesBySlug[slug] {
+                    existing.displayName = MuscleRegionMap.displayName(for: slug)
+                    existing.regionRaw = MuscleRegionMap.region(for: slug).rawValue
+                    continue
+                }
                 let mg = MuscleGroup(
                     slug: slug,
                     displayName: MuscleRegionMap.displayName(for: slug),
@@ -203,24 +209,47 @@ public actor ExerciseLibraryImporter {
                     ? ""
                     : "|" + dto.primaryMuscles.joined(separator: "|") + "|"
 
-                let exercise = Exercise(
-                    externalID: dto.id,
-                    name: dto.name,
-                    canonicalName: canonicalName,
-                    equipmentRaw: EquipmentMapper.map(dto.equipment).rawValue,
-                    mechanicRaw: dto.mechanic ?? Mechanic.compound.rawValue,
-                    forceRaw: dto.force,
-                    levelRaw: dto.level,
-                    category: dto.category,
-                    instructions: dto.instructions,
-                    imagePaths: dto.images,
-                    isCustom: false,
-                    primaryMuscleSlugsJoined: joined
-                )
-                // Pitfall #7 — insert FIRST, then the join rows reference it.
-                // SwiftData drops relationship links silently if the parent
-                // isn't yet inserted into the context.
-                modelContext.insert(exercise)
+                let exercise: Exercise
+                if let existing = exercisesByExternalID[dto.id] {
+                    // Refresh catalog fields in place; the row keeps its id,
+                    // so routines and history keep pointing at it. User
+                    // tweaks (increment, bar weight, unit) are left alone.
+                    exercise = existing
+                    exercise.name = dto.name
+                    exercise.canonicalName = canonicalName
+                    exercise.equipmentRaw = EquipmentMapper.map(dto.equipment).rawValue
+                    exercise.mechanicRaw = dto.mechanic ?? Mechanic.compound.rawValue
+                    exercise.forceRaw = dto.force
+                    exercise.levelRaw = dto.level
+                    exercise.category = dto.category
+                    exercise.instructions = dto.instructions
+                    exercise.imagePaths = dto.images
+                    exercise.primaryMuscleSlugsJoined = joined
+                    // Stimulus rows are rebuilt from the dataset below.
+                    for stimulus in exercise.muscleStimuli ?? [] {
+                        modelContext.delete(stimulus)
+                    }
+                } else {
+                    exercise = Exercise(
+                        externalID: dto.id,
+                        name: dto.name,
+                        canonicalName: canonicalName,
+                        equipmentRaw: EquipmentMapper.map(dto.equipment).rawValue,
+                        mechanicRaw: dto.mechanic ?? Mechanic.compound.rawValue,
+                        forceRaw: dto.force,
+                        levelRaw: dto.level,
+                        category: dto.category,
+                        instructions: dto.instructions,
+                        imagePaths: dto.images,
+                        isCustom: false,
+                        primaryMuscleSlugsJoined: joined
+                    )
+                    // Pitfall #7 — insert FIRST, then the join rows reference it.
+                    // SwiftData drops relationship links silently if the parent
+                    // isn't yet inserted into the context.
+                    modelContext.insert(exercise)
+                    exercisesByExternalID[dto.id] = exercise
+                }
 
                 // Stimulus rows: 1.0 primary / 0.5 secondary (CONTEXT.md Area 1).
                 // Unknown slugs (i.e., slugs not in `MuscleRegionMap.allSlugs`)
@@ -284,7 +313,7 @@ public actor ExerciseLibraryImporter {
             // unsaved inserts so the context state matches disk before
             // rethrowing. The next `seedIfNeeded()` call (after the
             // user retries / app relaunches) re-enters MARK: 0 and
-            // wipes any rows that DID make it to disk before the
+            // upserts over any rows that DID make it to disk before the
             // failure, so retry succeeds cleanly (review WR-01).
             modelContext.rollback()
             Self.log.error("Seed failed mid-import — rolling back: \(error.localizedDescription)")
