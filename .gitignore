@@ -1,1 +1,5 @@
 fitbod.xcodeproj/xcuserdata/
+
+# CI output from scripts/ci/ios-ci.sh
+.ci/
+__pycache__/

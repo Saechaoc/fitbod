@@ -1,0 +1,142 @@
+# Native build + simulator verification for the fitbod iOS app.
+#
+# Why this exists: the app is developed locally in Xcode, but agent sessions
+# (and reviewers) have no Mac. This workflow gives every claude/** branch a
+# real `xcodebuild` build plus unit and XCUITest runs on a small and a large
+# iPhone simulator. It is free for public repositories and can be removed or
+# disabled from the Actions tab without affecting the app.
+#
+# Evidence publishing: when the pushed commit message contains "[evidence]"
+# and the build and every test step passed, the exported screenshots + test
+# summary are committed back to the same branch under docs/verification/ci/
+# (commits made with GITHUB_TOKEN never trigger new workflow runs), so that
+# folder always holds the last fully green run. Otherwise results stay in
+# the run log/artifact.
+
+name: iOS build & test
+
+on:
+  push:
+    branches: ["claude/**"]
+    paths-ignore:
+      - "docs/**"
+      - ".planning/**"
+      - "**/*.md"
+  pull_request:
+    paths-ignore:
+      - "docs/**"
+      - ".planning/**"
+      - "**/*.md"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+# One run per branch at a time. A running job is allowed to finish (a full
+# pass with UI tests takes ~30 min and its evidence is the point); a newer
+# push waits, and any still-queued older run is replaced by it.
+concurrency:
+  group: ios-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  ios:
+    name: Build, unit tests, UI journey (small + large iPhone)
+    runs-on: macos-26
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Select Xcode
+        run: |
+          chmod +x scripts/ci/ios-ci.sh
+          scripts/ci/ios-ci.sh select-xcode
+          scripts/ci/ios-ci.sh inventory
+
+      - name: Create simulators
+        run: scripts/ci/ios-ci.sh simulators
+
+      - name: Build for testing
+        id: build
+        run: scripts/ci/ios-ci.sh build
+
+      - name: Unit tests (Swift Testing)
+        id: unit
+        if: steps.build.outcome == 'success'
+        continue-on-error: true
+        run: scripts/ci/ios-ci.sh unit
+
+      - name: UI journey + layout audit (large iPhone)
+        id: ui_large
+        if: steps.build.outcome == 'success'
+        continue-on-error: true
+        run: scripts/ci/ios-ci.sh ui large
+
+      - name: UI journey + layout audit (small iPhone)
+        id: ui_small
+        if: steps.build.outcome == 'success'
+        continue-on-error: true
+        run: scripts/ci/ios-ci.sh ui small
+
+      - name: Collect evidence
+        if: always()
+        run: scripts/ci/ios-ci.sh evidence || true
+
+      - name: Upload results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fitbod-ci-${{ github.sha }}
+          path: |
+            .ci/evidence
+            .ci/logs
+          retention-days: 14
+
+      - name: Publish evidence to branch
+        if: >-
+          always() && github.event_name == 'push' &&
+          contains(github.event.head_commit.message, '[evidence]') &&
+          steps.build.outcome == 'success' && steps.unit.outcome == 'success' &&
+          steps.ui_large.outcome == 'success' && steps.ui_small.outcome == 'success'
+        env:
+          BRANCH: ${{ github.ref_name }}
+        run: |
+          git fetch origin "$BRANCH"
+          if [ "$(git rev-parse "origin/$BRANCH")" != "$GITHUB_SHA" ]; then
+            echo "Branch moved past $GITHUB_SHA; skipping evidence publish."
+            exit 0
+          fi
+          rm -rf docs/verification/ci
+          mkdir -p docs/verification/ci
+          cp -R .ci/evidence/. docs/verification/ci/
+          echo "${GITHUB_SHA}" > docs/verification/ci/COMMIT
+          echo "https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}" > docs/verification/ci/RUN_URL
+          git config user.name "fitbod-ci"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/verification/ci
+          git commit -m "ci: verification evidence for ${GITHUB_SHA::7} [skip ci]" || exit 0
+          git push origin "HEAD:refs/heads/$BRANCH"
+
+      - name: Summary
+        if: always()
+        run: |
+          if [ -f .ci/evidence/summary.md ]; then cat .ci/evidence/summary.md >> "$GITHUB_STEP_SUMMARY"; fi
+          echo "build=${{ steps.build.outcome }} unit=${{ steps.unit.outcome }} ui_large=${{ steps.ui_large.outcome }} ui_small=${{ steps.ui_small.outcome }}"
+          if [ -f .ci/logs/build.log ]; then
+            echo "---- compiler errors (first 150) ----"
+            grep -E "error:" .ci/logs/build.log | sed "s|$GITHUB_WORKSPACE/||" | sort -u | head -150 || true
+            if [ "${{ steps.build.outcome }}" != "success" ]; then
+              echo "---- build log tail ----"
+              tail -n 40 .ci/logs/build.log
+            fi
+          fi
+          if [ -f .ci/evidence/summary.md ]; then
+            echo "---- test summary ----"
+            grep -vE "^- (✅|⏭️)" .ci/evidence/summary.md | head -200
+          fi
+          test "${{ steps.build.outcome }}" = "success"
+          test "${{ steps.unit.outcome }}" = "success"
+          test "${{ steps.ui_large.outcome }}" = "success"
+          test "${{ steps.ui_small.outcome }}" = "success"
