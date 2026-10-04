@@ -194,6 +194,24 @@ for devices in json.load(sys.stdin)["devices"].values():
   with_timeout 600 xcrun simctl bootstatus "$keep" -b
 }
 
+# The first app launch on a freshly created, just-booted simulator can
+# outlast XCUITest's launch timeout while the system finishes post-boot
+# work ("Timed out while launching application via Xcode"). The unit-test
+# step happens to absorb that cost on the large simulator; this launches the
+# app once outside XCTest so every test step starts on a warm simulator.
+warm_up_app() {
+  local udid="$1"
+  local app="$DERIVED/Build/Products/Debug-iphonesimulator/fitbod.app"
+  [[ -d "$app" ]] || return 0
+  local bundle_id
+  bundle_id="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$app/Info.plist" 2>/dev/null || echo bodybuilding.fitbod)"
+  log "Warming up $bundle_id on $udid"
+  xcrun simctl install "$udid" "$app"
+  with_timeout 300 xcrun simctl launch "$udid" "$bundle_id" -ui-testing
+  sleep 15
+  xcrun simctl terminate "$udid" "$bundle_id" >/dev/null 2>&1 || true
+}
+
 # Number of tests recorded in a result bundle (0 when none ran).
 tests_in_bundle() {
   local bundle="$1" count=""
@@ -214,6 +232,7 @@ run_tests() {
     [[ $attempt -eq 1 ]] || logfile="$LOGS/$label.attempt$attempt.log"
     log "test-without-building [$label] attempt $attempt"
     boot_simulator "$udid" || echo "warning: simulator $udid did not report booted" >&2
+    warm_up_app "$udid" || echo "warning: warm-up launch failed on $udid" >&2
     set +e
     set -o pipefail
     xcodebuild test-without-building "${common_flags[@]}" \

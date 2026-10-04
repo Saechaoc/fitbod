@@ -18,8 +18,10 @@ ran on GitHub-hosted macOS runners via `.github/workflows/ios.yml`
 | Large iPhone | iPhone 17 Pro Max — 440 × 956 pt |
 | Build | `xcodebuild build-for-testing` (Debug, simulator, arm64) |
 
-Each test step boots its own simulator, shuts the other one down and waits
-for the boot to finish before `xcodebuild` runs. If no test starts at all
+Each test step boots its own simulator, shuts the other one down, waits
+for the boot to finish and launches the app once outside XCTest (a freshly
+created simulator's first launch can otherwise outlast XCUITest's launch
+timeout) before `xcodebuild` runs. If no test starts at all
 (the simulator was not found or was lost before the first test), the step
 is retried once on a freshly booted simulator; a failing test is never
 retried. Screenshots are committed to `verification/ci/` only from runs in
