@@ -168,3 +168,15 @@ struct HistoryRow: View {
         return "\(minutes) min"
     }
 }
+
+#Preview("History — demo") {
+    HistoryView()
+        .environment(AppRouter())
+        .modelContainer(PreviewModelContainer.makeDemo())
+}
+
+#Preview("History — empty") {
+    HistoryView()
+        .environment(AppRouter())
+        .modelContainer(PreviewModelContainer.make())
+}

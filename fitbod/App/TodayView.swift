@@ -260,3 +260,17 @@ enum RoutineSummary {
         return parts.joined(separator: " · ")
     }
 }
+
+#Preview("Today — demo history") {
+    TodayView()
+        .environment(AppRouter())
+        .environment(RestTimerEngine(scheduler: NoopNotificationScheduler()))
+        .modelContainer(PreviewModelContainer.makeDemo())
+}
+
+#Preview("Today — first launch") {
+    TodayView()
+        .environment(AppRouter())
+        .environment(RestTimerEngine(scheduler: NoopNotificationScheduler()))
+        .modelContainer(PreviewModelContainer.make())
+}

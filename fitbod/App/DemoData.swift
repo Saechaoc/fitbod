@@ -222,3 +222,23 @@ enum DemoData {
         session.totalDurationSeconds = Int(finishedAt.timeIntervalSince(startedAt))
     }
 }
+
+// MARK: - Previews
+
+extension PreviewModelContainer {
+    /// The preview fixture plus demo history, for screen previews.
+    @MainActor
+    public static func makeDemo() -> ModelContainer {
+        let container = make()
+        DemoData.seed(into: container.mainContext)
+        return container
+    }
+
+    /// A workout in progress on the demo routine (previews of the logger).
+    @MainActor
+    public static func demoActiveWorkout(in container: ModelContainer) -> Session? {
+        let context = container.mainContext
+        guard let routine = try? context.fetch(FetchDescriptor<Routine>()).first else { return nil }
+        return try? SessionFactory.start(routine: routine, context: context)
+    }
+}

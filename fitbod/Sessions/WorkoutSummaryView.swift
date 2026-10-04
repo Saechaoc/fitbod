@@ -229,3 +229,15 @@ public struct WorkoutSummaryView: View {
         }
     }
 }
+
+#Preview("Summary — finished workout") {
+    let container = PreviewModelContainer.makeDemo()
+    let sessions = (try? container.mainContext.fetch(FetchDescriptor<Session>(sortBy: [SortDescriptor(\.startedAt, order: .reverse)]))) ?? []
+    return NavigationStack {
+        if let session = sessions.first {
+            WorkoutSummaryView(session: session, presentation: .justFinished)
+        }
+    }
+    .environment(AppRouter())
+    .modelContainer(container)
+}

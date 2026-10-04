@@ -255,4 +255,57 @@ struct SeedTests {
             "Seed elapsed \(elapsed)s — production target <2s, soft cap 5s for CI headroom"
         )
     }
+
+    // MARK: - Test 8: re-seed is an in-place upsert (milestone 1)
+
+    @Test("Re-seed updates built-ins in place and keeps custom exercises, references and tweaks")
+    func reseedPreservesUserData() async throws {
+        Self.resetStamp()
+        let container = try InMemoryContainer.makeEmpty()
+        let importer = ExerciseLibraryImporter(modelContainer: container)
+        try await importer.seedIfNeeded()
+
+        let ctx = ModelContext(container)
+        let benchExternalID = "Barbell_Bench_Press_-_Medium_Grip"
+        let bench = try #require(try ctx.fetch(FetchDescriptor<Exercise>(
+            predicate: #Predicate { $0.externalID == benchExternalID }
+        )).first)
+        let benchID = bench.id
+        bench.smallestIncrement = 1.25
+        let custom = Exercise(
+            name: "Zercher Good Morning",
+            canonicalName: "zercher good morning",
+            equipmentRaw: "barbell",
+            mechanicRaw: "compound",
+            isCustom: true
+        )
+        ctx.insert(custom)
+        let routine = Routine()
+        routine.name = "Upper A"
+        ctx.insert(routine)
+        let line = RoutineExercise()
+        line.routine = routine
+        line.exercise = bench
+        ctx.insert(line)
+        try ctx.save()
+        let exerciseCount = try ctx.fetchCount(FetchDescriptor<Exercise>())
+        let stimulusCount = try ctx.fetchCount(FetchDescriptor<ExerciseMuscleStimulus>())
+
+        // A bumped SEED_VERSION.txt looks like a missing stamp.
+        Self.resetStamp()
+        try await importer.seedIfNeeded()
+
+        let after = ModelContext(container)
+        #expect(try after.fetchCount(FetchDescriptor<Exercise>()) == exerciseCount)
+        #expect(try after.fetchCount(FetchDescriptor<ExerciseMuscleStimulus>()) == stimulusCount)
+        #expect(try after.fetchCount(FetchDescriptor<MuscleGroup>()) == 17)
+
+        let refreshed = try #require(try after.fetch(FetchDescriptor<Exercise>(
+            predicate: #Predicate { $0.id == benchID }
+        )).first)
+        #expect(refreshed.smallestIncrement == 1.25)
+        #expect((refreshed.muscleStimuli ?? []).isEmpty == false)
+        #expect(try after.fetch(FetchDescriptor<RoutineExercise>()).first?.exercise?.id == benchID)
+        #expect(try after.fetchCount(FetchDescriptor<Exercise>(predicate: #Predicate { $0.isCustom == true })) == 1)
+    }
 }

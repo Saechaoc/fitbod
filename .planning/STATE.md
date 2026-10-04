@@ -14,6 +14,13 @@ progress:
 
 # Project State: Fitbod
 
+> **2026-10-04 — Milestone 1 (Chalkline design system + working journey)** shipped on branch
+> `claude/nifty-hypatia-yassxj` outside the GSD command flow (GSD skills unavailable in that
+> agent session). Record: `.planning/quick/261004-m1-chalkline-design-system-and-journey/`.
+> Docs: `README.md`, `docs/design-system/`, `docs/design/screens.md`, `docs/verification.md`,
+> `docs/roadmap.md`. Phase 4+ plans below are unchanged; read `docs/roadmap.md` P0 (schema
+> freezing) before executing any plan that changes the SwiftData schema.
+
 **Last updated:** 2026-05-11 (post 02-05-01 — ExerciseHistoryView with intent-split filter chips; Phase 2 closed at 13/13 plans, 20/20 requirements)
 
 ---

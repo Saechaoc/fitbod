@@ -422,3 +422,16 @@ struct WorkoutFlowView: View {
         }
     }
 }
+
+#Preview("Workout — in progress") {
+    let container = PreviewModelContainer.makeDemo()
+    let session = PreviewModelContainer.demoActiveWorkout(in: container)
+    return Group {
+        if let session {
+            WorkoutFlowView(session: session)
+        }
+    }
+    .environment(AppRouter())
+    .environment(RestTimerEngine(scheduler: NoopNotificationScheduler()))
+    .modelContainer(container)
+}

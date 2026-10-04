@@ -194,3 +194,15 @@ struct RoutineDetailView: View {
         return parts.joined(separator: " · ")
     }
 }
+
+#Preview("Routine detail — demo") {
+    let container = PreviewModelContainer.makeDemo()
+    let routine = try? container.mainContext.fetch(FetchDescriptor<Routine>()).first
+    return NavigationStack {
+        if let routine {
+            RoutineDetailView(routine: routine)
+        }
+    }
+    .environment(AppRouter())
+    .modelContainer(container)
+}
