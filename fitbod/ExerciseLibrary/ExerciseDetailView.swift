@@ -166,7 +166,7 @@ struct ExerciseDetailView: View {
                 HStack(spacing: Chalk.Space.sm) {
                     ChalkMetricTile("Last", value: history.lastDate.map { $0.formatted(.dateTime.month(.abbreviated).day()) } ?? "—")
                     ChalkMetricTile("Best set", value: history.best.map { "\(ChalkFormat.weight($0.weight)) × \($0.reps)" } ?? "—")
-                    ChalkMetricTile("Est. 1RM", value: history.bestEstimatedOneRepMax.map { ChalkFormat.weight($0.rounded()) } ?? "—", caption: unitLabel)
+                    ChalkMetricTile("Est. 1RM \(unitLabel)", value: history.bestEstimatedOneRepMax.map { ChalkFormat.weight($0.rounded()) } ?? "—")
                 }
                 ChalkCard(padding: 0) {
                     VStack(spacing: 0) {
