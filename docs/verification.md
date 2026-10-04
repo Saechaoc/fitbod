@@ -33,9 +33,10 @@ runs.
 
 ## Results
 
-From the CI run recorded in [`verification/ci/RUN_URL`](verification/ci/RUN_URL)
-(app commit in [`verification/ci/COMMIT`](verification/ci/COMMIT); full list
-of test cases in [`verification/ci/summary.md`](verification/ci/summary.md)):
+From the final CI run, [run 12](https://github.com/Saechaoc/fitbod/actions/runs/37187717778)
+on commit `bb06c38` (also recorded in [`verification/ci/RUN_URL`](verification/ci/RUN_URL)
+and [`verification/ci/COMMIT`](verification/ci/COMMIT); full list of test
+cases in [`verification/ci/summary.md`](verification/ci/summary.md)):
 
 | Check | Result |
 |---|---|
@@ -55,7 +56,10 @@ copy test pointing at removed views, an order-dependent seed check, and a
 test mirror that had drifted from production). All were fixed at the root;
 none were skipped or disabled.
 
-### Issues the screenshots caught (fixed before the final run)
+### Issues found during verification (fixed before the final run)
+
+Most were caught by reviewing the exported screenshots; the gallery one by a
+sweep for controls with empty actions.
 
 | Found in | Problem | Fix |
 |---|---|---|
@@ -66,6 +70,17 @@ none were skipped or disabled.
 | Both | Library large title hidden by the sticky header's background | Header background limited to its own frame |
 | Both | Equipment chips truncated in the custom-exercise editor | Two-column grid, chips may shrink slightly |
 | Both | Logging set 2 meant retyping the weight | Logged weight carries into later empty sets |
+| Gallery | Several specimen buttons, a chip and two set-row specimens did nothing when tapped | Every specimen responds (set rows follow the workout's rules without saving; other buttons show a "Tapped …" readout) |
+
+### CI environment issues (not app failures)
+
+Two earlier runs failed on the iPhone SE for reasons outside the app, and
+both were fixed in `scripts/ci/ios-ci.sh` rather than retried away:
+
+| Run | Symptom | Cause | Fix |
+|---|---|---|---|
+| 9 | No test ran: "Unable to find a device matching the provided destination specifier" | SE simulator still booting while the large one was up | One booted simulator at a time; wait for `simctl bootstatus`; retry only if no test started |
+| 11 | First UI test: "Timed out while launching application via Xcode" (other 3 passed) | First app launch on a freshly created simulator ran under XCUITest's launch timeout | Launch the app once outside XCTest before each test step |
 
 ## Screenshots
 
@@ -131,6 +146,9 @@ case and its result.
 - **VoiceOver end to end:** labels, values, traits and announcements are
   implemented and exercised indirectly by XCUITest queries (which use the
   same accessibility tree), but no manual VoiceOver pass was done.
+- **Component gallery interactions:** the gallery is captured on every
+  layout tour, but no UI test taps its specimens; their behaviour was
+  reviewed in code.
 - **Migration of an existing on-device store:** milestone 1 makes no schema
   changes, so the developer's current store opens unchanged; this was not
   tested against a copy of that store.
