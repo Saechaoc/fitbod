@@ -12,7 +12,7 @@ ran on GitHub-hosted macOS runners via `.github/workflows/ios.yml`
 
 | | |
 |---|---|
-| Xcode | 26.6 (17F113), Swift 6 language mode, strict concurrency |
+| Xcode | 26.6 (17F113); app target in Swift 6 language mode with complete concurrency checking |
 | Simulator runtime | iOS 26.5 |
 | Small iPhone | iPhone SE (3rd generation) — 375 × 667 pt |
 | Large iPhone | iPhone 17 Pro Max — 440 × 956 pt |
@@ -28,11 +28,48 @@ _Filled in from the CI run recorded in `verification/ci/RUN_URL`._
 
 <!-- RESULTS -->
 
+## Screenshots
+
+Exported from the XCUITest runs (`ui-small` = iPhone SE 3rd gen, `ui-large`
+= iPhone 17 Pro Max). `J…` = the end-to-end journey on a fresh install;
+`A…` = demo-data tour at default text; `B-ax…` = Accessibility L text;
+`C-dark…` = dark mode at XXXL text.
+
+| Step | iPhone SE | iPhone 17 Pro Max |
+|---|---|---|
+| Library search | [J01](verification/ci/ui-small/J01-library-search.png) | [J01](verification/ci/ui-large/J01-library-search.png) |
+| Library filtered (Chest · Barbell) | [J02](verification/ci/ui-small/J02-library-filtered.png) | [J02](verification/ci/ui-large/J02-library-filtered.png) |
+| Exercise detail | [J03](verification/ci/ui-small/J03-exercise-detail.png) | [J03](verification/ci/ui-large/J03-exercise-detail.png) |
+| No match → create | [J04](verification/ci/ui-small/J04-library-no-match.png) | [J04](verification/ci/ui-large/J04-library-no-match.png) |
+| Custom exercise validation error | [J05](verification/ci/ui-small/J05-custom-exercise-validation.png) | [J05](verification/ci/ui-large/J05-custom-exercise-validation.png) |
+| Routines empty | [J07](verification/ci/ui-small/J07-routines-empty.png) | [J07](verification/ci/ui-large/J07-routines-empty.png) |
+| Routine builder validation error | [J08](verification/ci/ui-small/J08-routine-validation.png) | [J08](verification/ci/ui-large/J08-routine-validation.png) |
+| Routine builder editing | [J09](verification/ci/ui-small/J09-routine-builder.png) | [J09](verification/ci/ui-large/J09-routine-builder.png) |
+| Workout started | [J11](verification/ci/ui-small/J11-workout-start.png) | [J11](verification/ci/ui-large/J11-workout-start.png) |
+| Set logged + rest timer | [J12](verification/ci/ui-small/J12-set-logged-rest-timer.png) | [J12](verification/ci/ui-large/J12-set-logged-rest-timer.png) |
+| Set validation error | [J13](verification/ci/ui-small/J13-set-validation-error.png) | [J13](verification/ci/ui-large/J13-set-validation-error.png) |
+| **After terminate + relaunch** | [J14](verification/ci/ui-small/J14-relaunch-resumed.png) | [J14](verification/ci/ui-large/J14-relaunch-resumed.png) |
+| Summary | [J15](verification/ci/ui-small/J15-summary.png) | [J15](verification/ci/ui-large/J15-summary.png) |
+| History | [J16](verification/ci/ui-small/J16-history.png) | [J16](verification/ci/ui-large/J16-history.png) |
+| History after routine rename | [J18](verification/ci/ui-small/J18-history-after-rename.png) | [J18](verification/ci/ui-large/J18-history-after-rename.png) |
+| Previous performance offered | [J19](verification/ci/ui-small/J19-previous-performance.png) | [J19](verification/ci/ui-large/J19-previous-performance.png) |
+| Today with history | [A01](verification/ci/ui-small/A01-today.png) | [A01](verification/ci/ui-large/A01-today.png) |
+| Workout set row (default text) | [A11](verification/ci/ui-small/A11-set-row-ready.png) | [A11](verification/ci/ui-large/A11-set-row-ready.png) |
+| Rest dock / rest sheet | [A12](verification/ci/ui-small/A12-rest-dock.png) · [A13](verification/ci/ui-small/A13-rest-sheet.png) | [A12](verification/ci/ui-large/A12-rest-dock.png) · [A13](verification/ci/ui-large/A13-rest-sheet.png) |
+| Workout at Accessibility L | [B-ax11](verification/ci/ui-small/B-ax11-set-row-ready.png) | [B-ax11](verification/ci/ui-large/B-ax11-set-row-ready.png) |
+| Today at Accessibility L | [B-ax01](verification/ci/ui-small/B-ax01-today.png) | [B-ax01](verification/ci/ui-large/B-ax01-today.png) |
+| Dark mode, XXXL text | [C-dark10](verification/ci/ui-small/C-dark10-workout.png) | [C-dark10](verification/ci/ui-large/C-dark10-workout.png) |
+| Component gallery | [A09](verification/ci/ui-small/A09-gallery-1.png) | [A09](verification/ci/ui-large/A09-gallery-1.png) |
+
+Every screenshot is in `verification/ci/ui-small/` and
+`verification/ci/ui-large/`; `verification/ci/summary.md` lists every test
+case and its result.
+
 ## What each check proves
 
 | Requirement | Evidence |
 |---|---|
-| Native build | `Build for testing` step: app, widget extension, unit and UI test bundles compile with Swift 6 strict concurrency. |
+| Native build | `Build for testing` step: the app (Swift 6 language mode, complete concurrency checking), the widget extension, and the unit and UI test bundles (Swift 5 mode, as configured in the project) all compile. |
 | Library search / filter by muscle & equipment / detail | Journey steps J01–J03 (screenshots). |
 | Custom exercise with validation | J04–J06: empty search → "Create “…”", Save with no muscle shows the error summary, then saves. |
 | Routine create with ordered exercises + targets, validation | J07–J10. Prescription defaults and draft validation also unit-tested (`RoutineBuilderCopyTests.draftIssues`, `RoutineDraftValidationTests`). |

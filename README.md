@@ -22,7 +22,8 @@ journey built on it:
 ## Requirements
 
 - macOS with **Xcode 26.4 or newer** (the project targets iOS 26.4 and
-  builds with Swift 6 strict concurrency). CI uses Xcode 26.6.
+  builds the app in Swift 6 language mode with complete concurrency
+  checking). CI uses Xcode 26.6.
 - An iPhone simulator (any size; the app is tested on iPhone SE 3rd
   generation and iPhone 17 Pro Max) or an iPhone on iOS 26.4+.
 - No third-party dependencies, no package resolution, no backend.
