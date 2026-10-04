@@ -2,58 +2,17 @@
 //  SettingsView.swift
 //  fitbod
 //
-//  Wave-4 plan 04-01 — the Settings tab body. Replaces the interim
-//  `SettingsTabHost` placeholder from plan 03-01 ("Settings — coming in
-//  04-01"). Closes SET-01 (global lb/kg toggle) and verifies FOUND-06
-//  (`@Bindable` write-through to a `@Model` row — no parallel
-//  ViewModel layer).
+//  Settings tab (Chalkline styling). Units (SET-01), smart-progression
+//  defaults and plate inventory (plan 03-04), and — for the design system
+//  — the in-app Component Gallery.
 //
-//  ## Structure (UI-SPEC § Settings screen)
-//
-//    - Navigation title: "Settings"
-//    - Section "Units":
-//        Toggle "Weight Unit" — right-aligned trailing "lb" / "kg"
-//        Footer help: "Affects display only. Logged session history is
-//        stored in a single canonical unit and re-rendered on the fly."
-//    - Section "About": placeholder header, no rows in Phase 1
-//      (UI-SPEC permits the placeholder; About rows deferred to a
-//      later polish pass).
-//
-//  ## Binding shape (FOUND-06 / SET-01 anchor)
-//
-//  The `Toggle` is bound to a `Binding<Bool>` projection of the
-//  `UserSettings.weightUnit` computed property — `get { weightUnit ==
-//  .kg }` / `set { weightUnit = newValue ? .kg : .lb }`. The setter
-//  writes to `unitsRaw: String` under the hood (see
-//  `UserSettings+WeightUnit` extension). SwiftData persists the
-//  `unitsRaw` change on the next implicit save; the value survives
-//  app relaunch because the singleton `UserSettings` row was seeded by
-//  `ExerciseLibraryImporter` (plan 02-02) and lives in the on-disk
-//  SQLite store.
-//
-//  `@Bindable var s = settings` is the iOS 17+ Observation pattern —
-//  produces a `Bindable<UserSettings>` projection so mutations to
-//  `s.weightUnit` go through the `@Model`'s observation tracking.
-//
-//  ## Empty / not-yet-seeded state
-//
-//  On the very first launch BEFORE the seed has run, the
-//  `@Query<UserSettings>` returns zero rows. The Settings view shows
-//  a single secondary-label message: "Settings unavailable — library
-//  seed not yet complete." In practice this state lasts <2s (FOUND-05
-//  cold-launch target) and `RootView` blocks tab presentation with
-//  the "Preparing library…" splash anyway — but defensive UI here
-//  prevents a crash if the user somehow reaches the Settings tab
-//  before the seed completes.
+//  Writes are direct `@Bindable` mutations of the `UserSettings`
+//  singleton; SwiftData persists them.
 //
 
 import SwiftUI
 import SwiftData
 
-/// Settings tab body — Phase 1 contract is the lb/kg toggle (SET-01).
-/// Phase 3 will add per-equipment plate inventory / smallest-increment
-/// / per-exercise unit override / RPE-calibration window editors.
-/// Phase 5 will add MEV/MAV/MRV and plateau threshold editors.
 public struct SettingsView: View {
     @Query private var settingsList: [UserSettings]
 
@@ -61,125 +20,102 @@ public struct SettingsView: View {
 
     public var body: some View {
         NavigationStack {
-            Form {
+            List {
                 if let settings = settingsList.first {
                     unitsSection(settings: settings)
                     smartProgressionSection(settings: settings)
-                    aboutSectionPlaceholder
                 } else {
                     Section {
                         Text("Settings unavailable — library seed not yet complete.")
-                            .font(.callout)
-                            .foregroundStyle(.secondary)
+                            .font(.chalkCallout)
+                            .foregroundStyle(.chalkInk2)
                     }
                 }
+                Section {
+                    NavigationLink {
+                        ComponentGalleryView()
+                    } label: {
+                        Label("Component gallery", systemImage: "square.grid.2x2")
+                            .font(.chalkBody)
+                            .foregroundStyle(.chalkInk)
+                    }
+                    .accessibilityIdentifier("settings.gallery")
+                } header: {
+                    Text("Design system").chalkLabelStyle()
+                } footer: {
+                    Text("Chalkline tokens and components as implemented in SwiftUI.")
+                        .font(.chalkFootnote)
+                        .foregroundStyle(.chalkInk2)
+                }
+                .listRowBackground(Color.chalkSurface)
             }
-            .navigationTitle("Settings")
+            .listStyle(.insetGrouped)
+            .chalkCanvasBackground()
+            .navigationTitle("SETTINGS")
         }
     }
 
-    // MARK: - Units section (SET-01 anchor)
-
-    /// Builds the "Units" section bound to the singleton `UserSettings`
-    /// row. `@Bindable` projects the `@Model` for two-way Toggle binding.
     @ViewBuilder
     private func unitsSection(settings: UserSettings) -> some View {
         @Bindable var s = settings
         Section {
-            Toggle(isOn: Binding(
-                get: { s.weightUnit == .kg },
-                set: { newValue in s.weightUnit = newValue ? .kg : .lb }
-            )) {
-                HStack {
-                    Text("Weight Unit")
-                    Spacer()
-                    Text(s.weightUnit == .kg ? "kg" : "lb")
-                        .foregroundStyle(.secondary)
-                }
+            Picker("Weight unit", selection: $s.weightUnit) {
+                Text("lb").tag(WeightUnit.lb)
+                Text("kg").tag(WeightUnit.kg)
             }
+            .pickerStyle(.segmented)
+            .accessibilityIdentifier("settings.unit")
+            Toggle("Weeks start on Monday", isOn: $s.weekStartsMonday)
+                .font(.chalkBody)
+                .tint(Color.chalkInk)
         } header: {
-            Text("Units")
+            Text("Units").chalkLabelStyle()
         } footer: {
-            Text("Affects display only. Logged session history is stored in a single canonical unit and re-rendered on the fly.")
-                .font(.caption)
-                .foregroundStyle(.secondary)
+            Text("Weights are logged as entered; the unit labels inputs, totals and history.")
+                .font(.chalkFootnote)
+                .foregroundStyle(.chalkInk2)
         }
+        .listRowBackground(Color.chalkSurface)
     }
 
-    // MARK: - Smart Progression section (Phase 3 — SET-03, SET-04, SET-07)
-
-    /// Builds the "Smart Progression" section with a NavigationLink to
-    /// `PlateInventoryEditor`, a default-weight-increment Stepper, and an
-    /// RPE-calibration-window Stepper. All copy is verbatim from UI-SPEC
-    /// § Settings — Smart Progression.
     @ViewBuilder
     private func smartProgressionSection(settings: UserSettings) -> some View {
         @Bindable var s = settings
-        let unitLabel = s.weightUnit == .kg ? "kg" : "lb"
-
+        let unitLabel = s.weightUnit.rawValue
         Section {
-            // Navigation row — disclosure chevron is automatic with NavigationLink.
             NavigationLink {
                 PlateInventoryEditor()
             } label: {
-                Text("Plate Inventory")                                         // UI-SPEC verbatim
+                Text("Plate inventory").font(.chalkBody)
             }
-
-            // Default weight increment Stepper.
             Stepper(value: $s.defaultIncrementKg, in: 0.25...10.0, step: 0.25) {
-                LabeledContent("Default weight increment") {                    // UI-SPEC verbatim
-                    Text("\(s.defaultIncrementKg, specifier: "%g") \(unitLabel)")
-                        .foregroundStyle(.secondary)
+                LabeledContent("Default weight increment") {
+                    Text("\(ChalkFormat.weight(s.defaultIncrementKg)) \(unitLabel)")
+                        .font(.chalkMetric)
+                        .foregroundStyle(.chalkInk)
                 }
+                .font(.chalkBody)
             }
-
-            // RPE calibration window Stepper.
             Stepper(value: $s.minCalibrationSets, in: 5...30, step: 1) {
-                LabeledContent("Sets before calibrating") {                     // UI-SPEC verbatim
-                    Text("\(s.minCalibrationSets) sets")
-                        .foregroundStyle(.secondary)
+                LabeledContent("Sets before calibrating") {
+                    Text("\(s.minCalibrationSets)")
+                        .font(.chalkMetric)
+                        .foregroundStyle(.chalkInk)
                 }
+                .font(.chalkBody)
             }
         } header: {
-            Text("Smart Progression")                                           // UI-SPEC verbatim
+            Text("Smart progression").chalkLabelStyle()
         } footer: {
-            // UI-SPEC verbatim footers — both displayed in a VStack since SwiftUI
-            // Section only takes a single footer view; use a VStack to stack them.
-            VStack(alignment: .leading, spacing: 4) {
-                Text("Used when an exercise has no specific increment set. Applied by all progression strategies when rounding.")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                Text("RPE autoregulation uses the Tuchscherer table until this many working sets are logged per exercise.")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
+            Text("The increment is used when an exercise has none of its own. RPE autoregulation uses the Tuchscherer table until this many working sets are logged per exercise.")
+                .font(.chalkFootnote)
+                .foregroundStyle(.chalkInk2)
         }
-    }
-
-    // MARK: - About section placeholder
-
-    /// "About" header is allowed in Phase 1 per UI-SPEC, but no rows
-    /// yet — version display + dataset attribution are deferred to a
-    /// later polish pass. The placeholder header sets up the visual
-    /// structure so future rows land in a familiar place.
-    @ViewBuilder
-    private var aboutSectionPlaceholder: some View {
-        Section {
-            EmptyView()
-        } header: {
-            Text("About")
-        }
+        .listRowBackground(Color.chalkSurface)
     }
 }
-
-// MARK: - Previews
 
 #Preview("Settings (seeded)") {
     SettingsView()
         .modelContainer(PreviewModelContainer.make())
-}
-
-#Preview("Settings (no UserSettings row)") {
-    SettingsView()
-        .modelContainer(PreviewModelContainer.make(seedFixture: false))
 }

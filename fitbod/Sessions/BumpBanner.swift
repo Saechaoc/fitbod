@@ -28,42 +28,44 @@ import SwiftUI
 public struct BumpBanner: View {
     @Binding public var isVisible: Bool
     public let bumpedToWeight: Double
+    public let unitLabel: String
 
-    public init(isVisible: Binding<Bool>, bumpedToWeight: Double) {
+    public init(isVisible: Binding<Bool>, bumpedToWeight: Double, unitLabel: String = "kg") {
         self._isVisible = isVisible
         self.bumpedToWeight = bumpedToWeight
+        self.unitLabel = unitLabel
     }
 
     public var body: some View {
         if isVisible {
-            HStack(spacing: 12) {
-                Image(systemName: "arrow.up.circle")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)                                  // NOT accent per UI-SPEC
-
-                Text("Bumping to \(String(format: "%g", bumpedToWeight)) kg \u{2014} you cleared the top of the range last time.")
-                    .font(.headline)
-                    .foregroundStyle(Color(.label))                              // NOT accent per UI-SPEC
-
-                Spacer()
+            // Chalkline: earning the bump is meaningful emphasis, so the
+            // icon uses accent-ink on a sunken well; tap dismisses.
+            Button {
+                isVisible = false
+            } label: {
+                HStack(alignment: .firstTextBaseline, spacing: Chalk.Space.sm) {
+                    Image(systemName: "arrow.up.circle.fill")
+                        .foregroundStyle(.chalkAccentInk)
+                    Text("Bumping to \(ChalkFormat.weight(bumpedToWeight)) \(unitLabel) — you cleared the top of the range last time.")
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(.chalkInk)
+                        .fixedSize(horizontal: false, vertical: true)
+                    Spacer(minLength: 0)
+                    Image(systemName: "xmark")
+                        .font(.caption.weight(.bold))
+                        .foregroundStyle(.chalkInk2)
+                }
+                .padding(Chalk.Space.md)
+                .frame(minHeight: Chalk.Size.minTouch)
+                .background(Color.chalkSunken, in: RoundedRectangle(cornerRadius: Chalk.Radius.md, style: .continuous))
+                .contentShape(Rectangle())
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 8)
-            .frame(height: 44)                                                   // UI-SPEC § Spacing exception: 44pt
-            .background(Color(.systemGreen).opacity(0.15))                       // UI-SPEC verbatim, NOT accent
-            .clipShape(RoundedRectangle(cornerRadius: 12))
-            .padding(.horizontal, 16)
-            .padding(.vertical, 8)
-            .accessibilityLabel(
-                "Weight bump: bumping to \(String(format: "%g", bumpedToWeight)) kg. Tap to dismiss."
-            )                                                                    // UI-SPEC verbatim
-            .accessibilityHint("Tap anywhere on this exercise card to dismiss.") // UI-SPEC verbatim
-            .accessibilityAddTraits(.isButton)
+            .buttonStyle(.plain)
+            .accessibilityLabel(Text("Weight bump: bumping to \(ChalkFormat.weight(bumpedToWeight)) \(unitLabel)."))
+            .accessibilityHint(Text("Double-tap to dismiss."))
         }
     }
 }
-
-// MARK: - Previews
 
 #Preview("standard 102.5 kg bump") {
     @Previewable @State var isVisible: Bool = true

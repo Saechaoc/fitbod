@@ -2,256 +2,232 @@
 //  PrescriptionEditorRow.swift
 //  fitbod
 //
-//  Wave-3 plan 03-02 — the inline expanded prescription editor that
-//  appears under each `RoutineExerciseCard` when the user taps to
-//  expand it (`DisclosureGroup`). Renders the full UI-SPEC
-//  § Routine builder / Prescription editor surface:
+//  Per-exercise prescription editor inside the routine builder (Chalkline
+//  redesign of plan 03-02). The everyday fields are big ± steppers with
+//  44 pt targets — no keyboard needed to set up a routine:
 //
-//    - Intent picker (Strength / Hypertrophy / Power / Endurance / Technique)
-//    - Sets stepper
-//    - Reps range two-field (low – high)
-//    - Target RPE range two-field (low – high)
-//    - Progression picker (RPE Autoregulation / Double Progression /
-//      Block Periodized / Hybrid)
-//    - Rest seconds stepper with "{N}s" display
-//    - Track tempo toggle + 4-field ecc/bot/con/top entry (rendered
-//      conditionally)
-//    - Track partial reps toggle
-//    - Auto warm-up toggle — wired to RoutineExerciseDraft.warmupOverride
-//      (plan 03-07). Toggle footer copy switches on enabled state.
-//    - Per-set overrides disclosure with "Add Override" trailing action
-//      + swipe-to-delete on individual override sub-rows
+//    Sets · Reps (low–high, kept ordered) · Target RPE (Off, 6–10 by ½)
+//    · Rest (15 s steps) · Intent · Progression
 //
-//  Bound to a `@Bindable RoutineExerciseDraft`. RESEARCH §6 Pitfall 8
-//  pruning runs automatically via the `targetSets.didSet` on the draft
-//  whenever the Sets stepper decreases targetSets.
+//  "Advanced" holds the specialist options from Phase 2/3: tempo tracking,
+//  partial reps, the auto warm-up toggle + settings, and per-set
+//  overrides.
+//
+//  Progression shows the strategies implemented today (double progression,
+//  RPE autoregulation); block-periodized and hybrid arrive with Phase 4
+//  and only appear here if a routine already uses one.
 //
 
 import SwiftUI
 
 public struct PrescriptionEditorRow: View {
     @Bindable public var draft: RoutineExerciseDraft
+    let identifierPrefix: String
+    let onEditWarmup: () -> Void
+    @State private var showingAdvanced = false
 
-    @State private var showingPerSetOverrides: Bool = false
+    static let rpeOptions: [Double] = [6, 6.5, 7, 7.5, 8, 8.5, 9, 9.5, 10]
 
-    public init(draft: RoutineExerciseDraft) {
+    public init(draft: RoutineExerciseDraft, identifierPrefix: String = "builder", onEditWarmup: @escaping () -> Void = {}) {
         self.draft = draft
+        self.identifierPrefix = identifierPrefix
+        self.onEditWarmup = onEditWarmup
     }
 
     public var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            intentPicker
-            setsStepper
-            repsRangeRow
-            rpeRangeRow
-            progressionPicker
-            restStepper
-            tempoSection
-            partialRepsToggle
-            autoWarmupToggle
-            perSetOverridesDisclosure
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.vertical, 8)
-    }
-
-    /// Single-line, non-shrinking label used by every row in the editor.
-    /// Keeping the label at its natural width prevents the
-    /// character-by-character wrapping that happens when an active-edit
-    /// List squeezes content into a narrow center column.
-    private func rowLabel(_ text: String) -> some View {
-        Text(text)
-            .font(.body)
-            .lineLimit(1)
-            .fixedSize(horizontal: true, vertical: false)
-    }
-
-    // MARK: - Intent
-
-    private var intentPicker: some View {
-        LabeledContent {
-            Picker("Intent", selection: $draft.intent) {
-                Text("Strength").tag(Intent.strength)
-                Text("Hypertrophy").tag(Intent.hypertrophy)
-                Text("Power").tag(Intent.power)
-                Text("Endurance").tag(Intent.endurance)
-                Text("Technique").tag(Intent.technique)
+        VStack(alignment: .leading, spacing: 0) {
+            ChalkStepperRow("Sets", value: $draft.targetSets, in: 1...10, identifier: "\(identifierPrefix).sets")
+            divider
+            repsRow
+            divider
+            ChalkStepperRow("Target RPE", value: rpeIndex, in: 0...Self.rpeOptions.count, identifier: "\(identifierPrefix).rpe") { index in
+                index == 0 ? "Off" : ChalkFormat.rpe(Self.rpeOptions[index - 1])
             }
-            .pickerStyle(.menu)
-            .labelsHidden()
-            .lineLimit(1)
-            .truncationMode(.tail)
-            .accessibilityLabel("Intent")
-        } label: {
-            rowLabel("Intent")
-        }
-    }
-
-    // MARK: - Sets
-
-    private var setsStepper: some View {
-        Stepper(value: $draft.targetSets, in: 1...20) {
-            LabeledContent {
-                Text("\(draft.targetSets)")
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
-            } label: {
-                rowLabel("Sets")
+            divider
+            ChalkStepperRow("Rest", value: $draft.prescribedRestSeconds, in: 0...600, step: 15, identifier: "\(identifierPrefix).rest") { seconds in
+                ChalkFormat.duration(seconds: seconds)
             }
-        }
-    }
-
-    // MARK: - Reps range
-
-    private var repsRangeRow: some View {
-        LabeledContent {
-            HStack(spacing: 8) {
-                TextField(
-                    "low",
-                    value: $draft.targetRepsLow,
-                    format: .number
-                )
-                .frame(width: 48)
-                .keyboardType(.numberPad)
-                .multilineTextAlignment(.trailing)
-                .textFieldStyle(.roundedBorder)
-
-                Text("–")
-                    .foregroundStyle(.secondary)
-
-                TextField(
-                    "high",
-                    value: $draft.targetRepsHigh,
-                    format: .number
-                )
-                .frame(width: 48)
-                .keyboardType(.numberPad)
-                .multilineTextAlignment(.trailing)
-                .textFieldStyle(.roundedBorder)
-            }
-            .fixedSize(horizontal: true, vertical: false)
-        } label: {
-            rowLabel("Reps")
-        }
-    }
-
-    // MARK: - RPE range
-
-    /// Target RPE in the routine prescription is a *range* per
-    /// UI-SPEC § Routine builder § Prescription editor ("Target RPE"
-    /// with two TextFields + en-dash). The `RoutineExerciseDraft`
-    /// currently models RPE as a single optional `targetRPE: Double?`
-    /// because the Phase 1 schema field is also a single double
-    /// (`RoutineExercise.targetRPE`). For Phase 2 we render the range
-    /// UI but bind both ends to the same field — the executor in Phase
-    /// 3 will widen this to a true range when progression heuristics
-    /// need the spread. This is documented as a future follow-up,
-    /// NOT a stub for plan 03-02.
-    private var rpeRangeRow: some View {
-        LabeledContent {
-            HStack(spacing: 8) {
-                TextField(
-                    "low",
-                    value: Binding(
-                        get: { draft.targetRPE ?? 0 },
-                        set: { draft.targetRPE = $0 == 0 ? nil : $0 }
-                    ),
-                    format: .number.precision(.fractionLength(0...1))
-                )
-                .frame(width: 56)
-                .keyboardType(.decimalPad)
-                .multilineTextAlignment(.trailing)
-                .textFieldStyle(.roundedBorder)
-
-                Text("–")
-                    .foregroundStyle(.secondary)
-
-                TextField(
-                    "high",
-                    value: Binding(
-                        get: { draft.targetRPE ?? 0 },
-                        set: { draft.targetRPE = $0 == 0 ? nil : $0 }
-                    ),
-                    format: .number.precision(.fractionLength(0...1))
-                )
-                .frame(width: 56)
-                .keyboardType(.decimalPad)
-                .multilineTextAlignment(.trailing)
-                .textFieldStyle(.roundedBorder)
-            }
-            .fixedSize(horizontal: true, vertical: false)
-        } label: {
-            rowLabel("Target RPE")
-        }
-    }
-
-    // MARK: - Progression
-
-    private var progressionPicker: some View {
-        LabeledContent {
-            Picker("Progression", selection: $draft.progressionKind) {
-                Text("RPE Autoregulation").tag(ProgressionKind.rpe)
-                Text("Double Progression").tag(ProgressionKind.double)
-                Text("Block Periodized").tag(ProgressionKind.block)
-                Text("Hybrid").tag(ProgressionKind.hybrid)
-            }
-            .pickerStyle(.menu)
-            .labelsHidden()
-            .lineLimit(1)
-            .truncationMode(.tail)
-            .accessibilityLabel("Progression")
-        } label: {
-            rowLabel("Progression")
-        }
-    }
-
-    // MARK: - Rest
-
-    private var restStepper: some View {
-        Stepper(value: $draft.prescribedRestSeconds, in: 0...600, step: 15) {
-            LabeledContent {
-                Text("\(draft.prescribedRestSeconds)s")
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
-            } label: {
-                rowLabel("Rest")
-            }
-        }
-    }
-
-    // MARK: - Tempo
-
-    @ViewBuilder
-    private var tempoSection: some View {
-        Toggle("Track tempo", isOn: $draft.tracksTempo)
-            .lineLimit(1)
-        if draft.tracksTempo {
-            // The tempo string format is "ecc-bot-con-top" (e.g.
-            // "3-1-1-0"). We render 4 small TextFields in a row and
-            // assemble the wire format on each change. For Phase 2 the
-            // simplest binding is: parse the existing string on read,
-            // re-format on write. Empty/blank pieces render as empty
-            // fields.
-            LabeledContent {
-                HStack(spacing: 6) {
-                    tempoField(index: 0, placeholder: "Ecc")
-                    tempoField(index: 1, placeholder: "Bot")
-                    tempoField(index: 2, placeholder: "Con")
-                    tempoField(index: 3, placeholder: "Top")
+            divider
+            pickerRow("Intent") {
+                Picker("Intent", selection: $draft.intent) {
+                    ForEach(Intent.allCases, id: \.self) { intent in
+                        Text(intent.rawValue.capitalized).tag(intent)
+                    }
                 }
-                .fixedSize(horizontal: true, vertical: false)
-            } label: {
-                Text("Tempo")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
-                    .fixedSize(horizontal: true, vertical: false)
+            }
+            divider
+            pickerRow("Progression") {
+                Picker("Progression", selection: $draft.progressionKind) {
+                    ForEach(progressionOptions, id: \.self) { kind in
+                        Text(Self.title(for: kind)).tag(kind)
+                    }
+                }
+            }
+            divider
+            advanced
+        }
+    }
+
+    private var divider: some View {
+        Rectangle()
+            .fill(Color.chalkDivider)
+            .frame(height: Chalk.Line.hairline)
+    }
+
+    // MARK: Reps
+
+    private var repsRow: some View {
+        ViewThatFits(in: .horizontal) {
+            HStack(spacing: Chalk.Space.sm) {
+                Text("Reps").font(.chalkBody).foregroundStyle(.chalkInk)
+                Spacer(minLength: Chalk.Space.sm)
+                repsSteppers
+            }
+            VStack(alignment: .leading, spacing: Chalk.Space.xs) {
+                Text("Reps").font(.chalkBody).foregroundStyle(.chalkInk)
+                repsSteppers
             }
         }
+        .padding(.vertical, Chalk.Space.xs)
+    }
+
+    private var repsSteppers: some View {
+        HStack(spacing: Chalk.Space.xs) {
+            ChalkStepper("Lowest reps", value: repsLow, in: 1...30, compact: true, identifier: "\(identifierPrefix).repsLow")
+            Text("to")
+                .font(.chalkFootnote)
+                .foregroundStyle(.chalkInk2)
+                .accessibilityHidden(true)
+            ChalkStepper("Highest reps", value: repsHigh, in: 1...30, compact: true, identifier: "\(identifierPrefix).repsHigh")
+        }
+    }
+
+    /// Keeps low ≤ high: raising low past high drags high along.
+    private var repsLow: Binding<Int> {
+        Binding(
+            get: { draft.targetRepsLow },
+            set: { newValue in
+                draft.targetRepsLow = newValue
+                if draft.targetRepsHigh < newValue { draft.targetRepsHigh = newValue }
+            }
+        )
+    }
+
+    private var repsHigh: Binding<Int> {
+        Binding(
+            get: { draft.targetRepsHigh },
+            set: { newValue in
+                draft.targetRepsHigh = newValue
+                if draft.targetRepsLow > newValue { draft.targetRepsLow = newValue }
+            }
+        )
+    }
+
+    // MARK: RPE
+
+    /// 0 = off, 1… = index into `rpeOptions` + 1.
+    private var rpeIndex: Binding<Int> {
+        Binding(
+            get: {
+                guard let rpe = draft.targetRPE,
+                      let index = Self.rpeOptions.firstIndex(of: rpe) else { return 0 }
+                return index + 1
+            },
+            set: { newValue in
+                draft.targetRPE = newValue == 0 ? nil : Self.rpeOptions[min(newValue, Self.rpeOptions.count) - 1]
+            }
+        )
+    }
+
+    // MARK: Pickers
+
+    private func pickerRow<P: View>(_ title: String, @ViewBuilder picker: () -> P) -> some View {
+        HStack {
+            Text(title).font(.chalkBody).foregroundStyle(.chalkInk)
+            Spacer(minLength: Chalk.Space.sm)
+            picker()
+                .pickerStyle(.menu)
+                .tint(Color.chalkAccentInk)
+                .labelsHidden()
+        }
+        .frame(minHeight: Chalk.Size.minTouch)
+    }
+
+    private var progressionOptions: [ProgressionKind] {
+        var options: [ProgressionKind] = [.double, .rpe]
+        if !options.contains(draft.progressionKind) {
+            options.append(draft.progressionKind)
+        }
+        return options
+    }
+
+    static func title(for kind: ProgressionKind) -> String {
+        switch kind {
+        case .double: return "Double progression"
+        case .rpe: return "RPE autoregulation"
+        case .block: return "Block periodized"
+        case .hybrid: return "Hybrid"
+        }
+    }
+
+    // MARK: Advanced
+
+    private var advanced: some View {
+        DisclosureGroup(isExpanded: $showingAdvanced) {
+            VStack(alignment: .leading, spacing: Chalk.Space.md) {
+                Toggle("Track tempo", isOn: $draft.tracksTempo)
+                if draft.tracksTempo {
+                    HStack(spacing: Chalk.Space.sm) {
+                        tempoField(index: 0, placeholder: "Ecc")
+                        tempoField(index: 1, placeholder: "Bot")
+                        tempoField(index: 2, placeholder: "Con")
+                        tempoField(index: 3, placeholder: "Top")
+                    }
+                }
+                Toggle("Track partial reps", isOn: $draft.tracksPartialReps)
+                Toggle("Auto warm-up", isOn: warmupEnabled)
+                Text(warmupFootnote)
+                    .font(.chalkFootnote)
+                    .foregroundStyle(.chalkInk2)
+                Button("Warm-up settings…", action: onEditWarmup)
+                    .buttonStyle(.chalk(.ghost, size: .compact))
+                overrides
+            }
+            .font(.chalkBody)
+            .tint(Color.chalkInk)
+            .padding(.vertical, Chalk.Space.sm)
+        } label: {
+            Text("Advanced")
+                .font(.chalkBody)
+                .foregroundStyle(.chalkInk)
+                .frame(minHeight: Chalk.Size.minTouch)
+        }
+        .tint(Color.chalkInk)
+    }
+
+    private var warmupFootnote: String {
+        if draft.warmupOverride?.enabled ?? true {
+            return "First qualifying compound gets a plate-rounded ramp (40/60/75/90%)."
+        }
+        return "No warm-up sets will be generated for this exercise."
+    }
+
+    private var warmupEnabled: Binding<Bool> {
+        Binding(
+            get: { draft.warmupOverride?.enabled ?? true },
+            set: { newValue in
+                let skipNext = draft.warmupOverride?.skipNextSession ?? false
+                if newValue && !skipNext {
+                    draft.warmupOverride = nil
+                } else {
+                    draft.warmupOverride = WarmupConfig(enabled: newValue, skipNextSession: skipNext)
+                }
+            }
+        )
     }
 
     private func tempoField(index: Int, placeholder: String) -> some View {
-        let parts = (draft.tempo ?? "").split(separator: "-").map(String.init)
+        let parts = (draft.tempo ?? "").split(separator: "-", omittingEmptySubsequences: false).map(String.init)
         let current = index < parts.count ? parts[index] : ""
         let binding = Binding<String>(
             get: { current },
@@ -260,133 +236,40 @@ public struct PrescriptionEditorRow: View {
                 while p.count <= index { p.append("") }
                 p[index] = newValue
                 let joined = p.joined(separator: "-")
-                draft.tempo = joined.isEmpty ? nil : joined
+                draft.tempo = joined.replacingOccurrences(of: "-", with: "").isEmpty ? nil : joined
             }
         )
         return TextField(placeholder, text: binding)
-            .frame(width: 40)
             .keyboardType(.numberPad)
             .multilineTextAlignment(.center)
-            .textFieldStyle(.roundedBorder)
-            .font(.caption)
+            .frame(minWidth: 44, minHeight: Chalk.Size.minTouch)
+            .background(Color.chalkSunken, in: RoundedRectangle(cornerRadius: Chalk.Radius.md, style: .continuous))
+            .accessibilityLabel(Text("Tempo \(placeholder)"))
     }
 
-    // MARK: - Partial reps
-
-    private var partialRepsToggle: some View {
-        Toggle("Track partial reps", isOn: $draft.tracksPartialReps)
-            .lineLimit(1)
-    }
-
-    // MARK: - Auto warm-up
-
-    /// Resolved enabled state: reads the override when present, otherwise
-    /// defaults to true (auto warm-up on when no override exists).
-    private var warmupEnabled: Bool {
-        draft.warmupOverride?.enabled ?? true
-    }
-
-    private var autoWarmupToggle: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Toggle(
-                "Auto warm-up",
-                isOn: Binding(
-                    get: {
-                        draft.warmupOverride?.enabled ?? true
-                    },
-                    set: { newValue in
-                        let skipNext = draft.warmupOverride?.skipNextSession ?? false
-                        if newValue && !skipNext {
-                            // Restoring to default behavior — clear the override.
-                            draft.warmupOverride = nil
-                        } else {
-                            draft.warmupOverride = WarmupConfig(
-                                enabled: newValue,
-                                skipNextSession: skipNext
-                            )
-                        }
-                    }
-                )
-            )
-            Text(
-                warmupEnabled
-                    ? "Generates a 4-set ramp (40% × 5, 60% × 3, 75% × 2, 90% × 1) based on your plate inventory."
-                    : "No warm-up sets will be generated for this exercise."
-            )
-            .font(.caption)
-            .foregroundStyle(.secondary)
-        }
-    }
-
-    // MARK: - Per-set overrides
-
-    private var perSetOverridesDisclosure: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Button {
-                withAnimation(.easeInOut(duration: 0.18)) {
-                    showingPerSetOverrides.toggle()
-                }
-            } label: {
-                HStack(spacing: 8) {
-                    rowLabel("Per-set overrides")
-                    Spacer(minLength: 8)
-                    Text(overrideSummary)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        .lineLimit(1)
-                    Image(systemName: "chevron.right")
-                        .font(.caption.weight(.semibold))
-                        .foregroundStyle(.tertiary)
-                        .rotationEffect(.degrees(showingPerSetOverrides ? 90 : 0))
-                }
-                .contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
-
-            if showingPerSetOverrides {
-                VStack(spacing: 8) {
-                    ForEach(draft.setOverrides) { override in
-                        PerSetOverrideRow(draft: override)
-                            .swipeActions(edge: .trailing, allowsFullSwipe: false) {
-                                Button(role: .destructive) {
-                                    removeOverride(override)
-                                } label: {
-                                    Label("Remove", systemImage: "trash")
-                                }
-                            }
-                    }
+    private var overrides: some View {
+        VStack(alignment: .leading, spacing: Chalk.Space.sm) {
+            Text("Per-set overrides").chalkLabelStyle()
+            ForEach(draft.setOverrides, id: \.objectID) { item in
+                HStack {
+                    PerSetOverrideRow(draft: item)
                     Button {
-                        addOverride()
+                        draft.setOverrides.removeAll { $0 === item }
                     } label: {
-                        Label("Add Override", systemImage: "plus.circle")
-                            .foregroundStyle(Color.accentColor)
+                        Image(systemName: "minus.circle")
+                            .foregroundStyle(.chalkDanger)
+                            .frame(width: Chalk.Size.minTouch, height: Chalk.Size.minTouch)
                     }
                     .buttonStyle(.plain)
+                    .accessibilityLabel(Text("Remove override for set \(item.setIndex + 1)"))
                 }
-                .transition(.opacity)
             }
+            Button("Add override") {
+                let used = Set(draft.setOverrides.map(\.setIndex))
+                let next = (0..<draft.targetSets).first { !used.contains($0) } ?? max(0, draft.targetSets - 1)
+                draft.appendOverride(setIndex: next)
+            }
+            .buttonStyle(.chalk(.ghost, size: .compact))
         }
-    }
-
-    private var overrideSummary: String {
-        if draft.setOverrides.isEmpty {
-            return "\(draft.targetSets) sets default"
-        }
-        return "\(draft.setOverrides.count) override\(draft.setOverrides.count == 1 ? "" : "s")"
-    }
-
-    /// Append a new override row. Default `setIndex` is the smallest
-    /// unused index in `[0..<targetSets)`; if every slot already has
-    /// an override, fall back to `targetSets - 1` (the user can edit
-    /// the index manually if needed).
-    private func addOverride() {
-        let used = Set(draft.setOverrides.map { $0.setIndex })
-        let next = (0..<draft.targetSets).first { !used.contains($0) }
-            ?? max(0, draft.targetSets - 1)
-        draft.appendOverride(setIndex: next)
-    }
-
-    private func removeOverride(_ override: PerSetOverrideDraft) {
-        draft.setOverrides.removeAll { $0 === override }
     }
 }

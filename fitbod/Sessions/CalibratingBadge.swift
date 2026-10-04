@@ -30,23 +30,11 @@ public struct CalibratingBadge: View {
     }
 
     public var body: some View {
-        HStack(spacing: 4) {
-            Circle()
-                .fill(Color(.systemGray3))                                       // muted dot, NOT accent
-                .frame(width: 6, height: 6)
-
-            Text("calibrating")                                                  // UI-SPEC verbatim
-                .font(.caption)
-                .foregroundStyle(.secondary)                                     // NOT accent per UI-SPEC item 19
-        }
-        .padding(.horizontal, 8)
-        .padding(.vertical, 4)
-        .background(Color(.systemGray5))                                         // UI-SPEC verbatim, NOT accent
-        .clipShape(Capsule())
-        .accessibilityLabel(
-            "Calibrating: \(current) of \(threshold) sets logged. Weight shown as a range."
-        )                                                                        // UI-SPEC verbatim
-        .accessibilityAddTraits(.isStaticText)
+        ChalkTag("Calibrating \(current)/\(threshold)", style: .outline)
+            .accessibilityLabel(
+                "Calibrating: \(current) of \(threshold) sets logged. Weight shown as a range."
+            )
+            .accessibilityAddTraits(.isStaticText)
     }
 }
 

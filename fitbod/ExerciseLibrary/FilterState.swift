@@ -80,6 +80,9 @@ public final class FilterState {
     /// empty until curation lands in a later phase.
     public var selectedPatternRaw: Set<String> = []
 
+    /// Milestone 1: "Custom" chip — only user-authored exercises.
+    public var customOnly: Bool = false
+
     public init() {}
 
     /// `true` when no facet has any selection. Drives the visibility of
@@ -89,6 +92,7 @@ public final class FilterState {
             && selectedEquipmentRaw.isEmpty
             && selectedMechanicRaw == nil
             && selectedPatternRaw.isEmpty
+            && !customOnly
     }
 
     /// Clears every facet's selection in one call.
@@ -97,6 +101,7 @@ public final class FilterState {
         selectedEquipmentRaw.removeAll()
         selectedMechanicRaw = nil
         selectedPatternRaw.removeAll()
+        customOnly = false
     }
 
     /// Composes a SwiftData-safe search predicate.
@@ -142,6 +147,10 @@ public final class FilterState {
     /// In-memory facet filter for the selections intentionally kept out of
     /// SwiftData's predicate translator.
     public func matchesPostFetchFacets(_ exercise: Exercise) -> Bool {
+        if customOnly && !exercise.isCustom {
+            return false
+        }
+
         if !selectedEquipmentRaw.isEmpty,
            !selectedEquipmentRaw.contains(exercise.equipmentRaw) {
             return false

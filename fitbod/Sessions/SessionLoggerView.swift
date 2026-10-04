@@ -2,357 +2,423 @@
 //  SessionLoggerView.swift
 //  fitbod
 //
-//  Wave-4 plan 04-01 — the user-facing centerpiece of Phase 2. The active
-//  workout-logging surface bound to a `@Bindable Session`. Mounted via
-//  `NavigationStack` push from:
+//  The active workout (Chalkline redesign of plan 04-01). Presented
+//  full-screen by `RootView` through `WorkoutFlowView`, so it looks the same
+//  whether it was started from a routine, Today, or restored on relaunch.
 //
-//    - The Routines tab — `RoutinesListView.handleStartTap` pushes
-//      `SessionRoute.logger(session)` after `SessionFactory.start` succeeds.
-//    - The Today tab — `ResumeWorkoutBanner.onResume` pushes the same
-//      route for an existing active session.
+//  ## Layout
 //
-//  ## Layout (UI-SPEC § Session logger)
+//      [⌄ minimize]        WORKOUT        [⋯] [Finish]
+//      ┌ iron panel ──────────────────────────────────┐
+//      │ PUSH DAY A                                    │
+//      │ ELAPSED 32:14   SETS 7/14   VOLUME LB 8,450   │
+//      │ ███████░░░░░░░                                │
+//      └───────────────────────────────────────────────┘
+//      Exercise sections (SessionExerciseCard) …
+//      [+ Add exercise]  [FINISH WORKOUT]
+//      ┌ rest dock (safe-area inset, thumb zone) ──────┐
 //
-//      ┌────────────────────────────────────────────────────────────┐
-//      │  RestTimerOverlay (mounted unconditionally; EmptyView when │
-//      │  the engine isn't running)                                 │
-//      ├────────────────────────────────────────────────────────────┤
-//      │  [clock 32:14] [3 of 6] [pencil Notes]   ← header chips    │
-//      ├────────────────────────────────────────────────────────────┤
-//      │  Section: Exercise Name                                    │
-//      │    Set | Previous | Weight | Reps | RPE   ← column header  │
-//      │    1   175×8 @8  185  5    [chips] [chip] [✓]              │
-//      │    2   175×8 @8  185  5    [chips] [chip] [✓]              │
-//      │    [+ Add Set]                                             │
-//      │  Section: Exercise Name                                    │
-//      │    ...                                                     │
-//      └────────────────────────────────────────────────────────────┘
+//  ## Behaviour
 //
-//  The toolbar carries:
-//    - Leading "Discard" (only when zero sets have been logged).
-//    - Trailing "Finish" (always present; accent foreground).
-//    - Principal (centered) — "Workout" headline + routine snapshot name
-//      subtitle in `.caption .secondary`.
-//
-//  ## Rest timer integration (SESS-04)
-//
-//  Each `SessionLoggerView` instance owns one `RestTimerEngine` instance
-//  via `RestTimerEngine.makeProduction()` — the factory wires the live
-//  notification scheduler + live Live Activity controller in one call
-//  (plan 02-03's surface).
-//
-//  - `commitSet(_:for:)` flips `isComplete = true`, writes `completedAt`,
-//    saves the context, AND calls `engine.start(seconds:, exerciseName:)`.
-//    The save MUST precede the engine start so the committed set is in the
-//    store before the rest period begins (RESEARCH §6 Pitfall 2).
-//
-//  - Tapping the next set's weight/reps cell on a still-incomplete set
-//    calls `engine.stop()` via the `onTapEmptyCell` closure. This is the
-//    auto-stop-on-next-set-entry pattern (SESS-04).
-//
-//  - `finish()` and `discard()` both call `engine.stop()` to cancel any
-//    pending lock-screen notification + end the Live Activity.
-//
-//  ## Finish / Discard semantics
-//
-//  - "Finish" → `confirmationDialog` with summary ("{N} sets logged ·
-//    {elapsed time}"). On confirm: writes `session.completedAt = .now`,
-//    `totalDurationSeconds`, dismisses.
-//  - "Discard" (only when `loggedSetCount == 0`) → alert ("No data will
-//    be saved."). On confirm: `ctx.delete(session)`, dismisses. The
-//    cascade rule on `Session.exercises` automatically deletes the empty
-//    `SessionExercise` rows (and their `SetEntry` rows by transitive
-//    cascade).
+//  - Completing a set validates (reps required; weight > 0 unless the lift
+//    is bodyweight-based), saves immediately, fires a success haptic and
+//    starts the rest timer from an absolute deadline tied to this session.
+//    A failed completion outlines the missing field, shows an inline
+//    message, focuses the field, and is announced to VoiceOver.
+//  - Every edit is saved as it happens; closing or killing the app loses
+//    nothing, and `RootView` reopens this screen on relaunch.
+//  - The keyboard toolbar walks weight → reps → next open set.
+//  - Finish confirms (with the count of unfinished sets that will be
+//    dropped), then `WorkoutFinisher` stamps the session and the flow
+//    switches to the summary. With nothing logged, Finish offers Discard.
+//  - Minimize keeps the workout active; Today shows Resume.
 //
 
 import SwiftUI
 import SwiftData
+import UIKit
 
 public struct SessionLoggerView: View {
     @Environment(\.modelContext) private var ctx
-    @Environment(\.dismiss) private var dismiss
-
+    @Environment(RestTimerEngine.self) private var restTimer
+    @Environment(AppRouter.self) private var router
     @Bindable public var session: Session
-    @State private var engine = RestTimerEngine.makeProduction()
-    @State private var elapsedStart: Date
-    @State private var presentingFinishConfirm = false
-    @State private var presentingDiscardConfirm = false
-    /// Wave-4 plan 04-02 — long-press "Swap Exercise…" target.
-    /// `.sheet(item:)` presents `SwapExerciseSheet` against this.
-    @State private var pendingSwap: SessionExercise?
-    /// Wave-4 plan 04-02 — long-press "Remove from Session" target.
-    /// `.alert` presents the destructive confirmation.
-    @State private var pendingRemove: SessionExercise?
-    /// Wave-4 plan 04-03 — header "Notes" chip presentation flag.
-    /// Replaces the plan 04-01 TODO with a real WorkoutNotesSheet.
+    @Query private var settingsList: [UserSettings]
+
+    @FocusState private var focusedField: SetField?
+    @State private var errors: [UUID: SetValidation] = [:]
+    @State private var completedTick = 0
+    @State private var errorTick = 0
+    @State private var presentingFinish = false
+    @State private var presentingDiscard = false
+    @State private var presentingAddExercise = false
     @State private var presentingWorkoutNotes = false
-    /// Wave-4 plan 04-03 — long-press "Edit Pinned Note" target on the
-    /// SessionExerciseCard header (anchored as a TODO in plan 04-02; this
-    /// plan ships the real PinnedNoteSheet wire). `.sheet(item:)` presents
-    /// PinnedNoteSheet against this.
+    @State private var pendingSwap: SessionExercise?
+    @State private var pendingRemove: SessionExercise?
     @State private var pendingPinnedNote: SessionExercise?
+    @State private var pendingSetNote: SetEntry?
 
     public init(session: Session) {
         self.session = session
-        self._elapsedStart = State(initialValue: session.startedAt)
     }
 
     public var body: some View {
-        VStack(spacing: 0) {
-            RestTimerOverlay(engine: engine)
-                .padding(.top, 8)
-            headerChips
+        NavigationStack {
             List {
-                ForEach(sortedExercises) { se in
-                    SessionExerciseCard(
-                        sessionExercise: se,
-                        engine: engine,
-                        onCommitSet: { commitSet($0, for: se) },
-                        onTapEmptyCell: { engine.stop() },
-                        onSwap: { pendingSwap = $0 },
-                        onRemove: { pendingRemove = $0 },
-                        onEditPinnedNote: { pendingPinnedNote = $0 }          // Wave-4 plan 04-03
-                    )
-                }
-                // Wave-4 plan 04-02 — bottom-of-list "+ Add Exercise"
-                // affordance (SESS-06). Appends an unplanned
-                // SessionExercise to the active session ONLY; the
-                // source Routine is untouched (PITFALLS-doc #1).
                 Section {
-                    AddUnplannedExerciseButton(session: session)
+                    WorkoutHeaderPanel(session: session, unitLabel: unitLabel)
+                        .listRowInsets(EdgeInsets())
+                        .listRowBackground(Color.clear)
                 }
-            }
-            .listStyle(.insetGrouped)
-        }
-        .navigationTitle("Workout")                                            // UI-SPEC verbatim
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .principal) {
-                VStack {
-                    Text("Workout").font(.headline)
-                    Text(session.routineSnapshotName)                          // UI-SPEC verbatim subtitle
-                        .font(.caption).foregroundStyle(.secondary)
-                }
-            }
-            ToolbarItem(placement: .topBarLeading) {
-                if loggedSetCount == 0 {
-                    Button("Discard") {                                        // UI-SPEC verbatim
-                        presentingDiscardConfirm = true
+
+                if sortedExercises.isEmpty {
+                    Section {
+                        ChalkEmptyState(
+                            systemImage: "dumbbell",
+                            title: "No exercises",
+                            message: "Add an exercise to keep logging, or discard this workout from the ⋯ menu."
+                        )
+                        .listRowInsets(EdgeInsets())
+                        .listRowBackground(Color.clear)
                     }
                 }
-            }
-            ToolbarItem(placement: .topBarTrailing) {
-                Button("Finish") {                                             // UI-SPEC verbatim
-                    presentingFinishConfirm = true
+
+                ForEach(Array(sortedExercises.enumerated()), id: \.element.id) { index, se in
+                    SessionExerciseCard(
+                        sessionExercise: se,
+                        exerciseIndex: index,
+                        unitLabel: unitLabel(for: se),
+                        nextSetID: nextSetID,
+                        errors: errors,
+                        focus: $focusedField,
+                        onComplete: { complete($0, in: se) },
+                        onUncomplete: { WorkoutLogging.uncomplete($0, context: ctx) },
+                        onSetEdited: { edited($0, in: se) },
+                        onSwap: { pendingSwap = $0 },
+                        onRemove: { pendingRemove = $0 },
+                        onEditPinnedNote: { pendingPinnedNote = $0 },
+                        onEditSetNote: { pendingSetNote = $0 }
+                    )
                 }
-                .foregroundStyle(Color.accentColor)
+
+                Section {
+                    Button {
+                        presentingAddExercise = true
+                    } label: {
+                        Label("Add exercise", systemImage: "plus")
+                    }
+                    .buttonStyle(.chalk(.secondary, fullWidth: true))
+                    .accessibilityIdentifier("workout.addExercise")
+
+                    Button("Finish workout") {
+                        presentingFinish = true
+                    }
+                    .buttonStyle(.chalk(.primary, size: .large, fullWidth: true))
+                    .accessibilityIdentifier("workout.finishBottom")
+                }
+                .listRowInsets(EdgeInsets(top: Chalk.Space.xs, leading: 0, bottom: Chalk.Space.xs, trailing: 0))
+                .listRowBackground(Color.clear)
+                .listRowSeparator(.hidden)
             }
+            .listStyle(.insetGrouped)
+            .listSectionSpacing(Chalk.Space.lg)
+            .chalkCanvasBackground()
+            .scrollDismissesKeyboard(.interactively)
+            .safeAreaInset(edge: .bottom, spacing: 0) {
+                RestTimerDock(engine: restTimer)
+            }
+            .animation(.easeInOut(duration: Chalk.Motion.standard), value: restTimer.isRunning)
+            .navigationTitle("WORKOUT")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar { toolbarContent }
         }
-        .confirmationDialog(
-            "Finish Workout?",                                                 // UI-SPEC verbatim
-            isPresented: $presentingFinishConfirm,
-            titleVisibility: .visible
-        ) {
-            Button("Finish") { finish() }                                      // UI-SPEC verbatim
-            Button("Keep Logging", role: .cancel) {                            // UI-SPEC verbatim
-                presentingFinishConfirm = false
+        .sensoryFeedback(.success, trigger: completedTick)
+        .sensoryFeedback(.error, trigger: errorTick)
+        .confirmationDialog(finishTitle, isPresented: $presentingFinish, titleVisibility: .visible) {
+            if completedSetCount > 0 {
+                Button("Finish workout") { finish() }
+            } else {
+                Button("Discard workout", role: .destructive) { discard() }
             }
+            Button("Keep logging", role: .cancel) {}
         } message: {
-            Text("\(loggedSetCount) sets logged · \(elapsedLabel)")            // UI-SPEC verbatim format
+            Text(finishMessage)
+        }
+        .alert("Discard workout?", isPresented: $presentingDiscard) {
+            Button("Discard", role: .destructive) { discard() }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("All sets logged in this workout will be deleted. Your routine is not affected.")
         }
         .alert(
-            "Discard Workout?",                                                // UI-SPEC verbatim
-            isPresented: $presentingDiscardConfirm
-        ) {
-            Button("Discard", role: .destructive) { discard() }                // UI-SPEC verbatim
-            Button("Cancel", role: .cancel) {                                  // UI-SPEC verbatim
-                presentingDiscardConfirm = false
-            }
-        } message: {
-            Text("No data will be saved.")                                     // UI-SPEC verbatim
-        }
-        // Wave-4 plan 04-02 — swap-exercise sheet (SESS-05). Bound to the
-        // pendingSwap state, which is set by SessionExerciseCard's
-        // long-press "Swap Exercise…" menu entry.
-        .sheet(item: $pendingSwap) { se in
-            SwapExerciseSheet(sessionExercise: se)
-        }
-        // Wave-4 plan 04-03 — workout-level notes sheet (SESS-11). Bound
-        // to the header "Notes" chip; binds `session.notes` via the
-        // sheet's Binding(get:set:) write-through with empty-string → nil
-        // normalization.
-        .sheet(isPresented: $presentingWorkoutNotes) {
-            WorkoutNotesSheet(session: session)
-        }
-        // Wave-4 plan 04-03 — pinned per-exercise note sheet (SESS-11).
-        // Bound to pendingPinnedNote, which is set by
-        // SessionExerciseCard's long-press "Edit Pinned Note" menu entry
-        // AND by tapping the inline PinnedNoteCapsule.
-        .sheet(item: $pendingPinnedNote) { se in
-            PinnedNoteSheet(sessionExercise: se)
-        }
-        // Wave-4 plan 04-02 — remove-exercise destructive confirmation
-        // (SESS-05/SESS-06 inverse). Bound to pendingRemove, set by
-        // SessionExerciseCard's long-press "Remove from Session" menu.
-        // UI-SPEC verbatim: title "Remove \"{name}\"?", body "Any logged
-        // sets for this exercise will be discarded.", buttons
-        // "Remove" (destructive) / "Cancel".
-        .alert(
-            "Remove \"\(pendingRemove?.exercise?.name ?? "")\"?",              // UI-SPEC verbatim
+            removeTitle,
             isPresented: Binding(
                 get: { pendingRemove != nil },
                 set: { if !$0 { pendingRemove = nil } }
             ),
             presenting: pendingRemove
         ) { se in
-            Button("Remove", role: .destructive) { handleRemove(se) }          // UI-SPEC verbatim
-            Button("Cancel", role: .cancel) {                                  // UI-SPEC verbatim
+            Button("Remove", role: .destructive) {
+                ctx.delete(se)
+                try? ctx.save()
                 pendingRemove = nil
             }
+            Button("Cancel", role: .cancel) { pendingRemove = nil }
         } message: { _ in
-            Text("Any logged sets for this exercise will be discarded.")       // UI-SPEC verbatim
+            Text("Any logged sets for this exercise will be discarded.")
+        }
+        .sheet(isPresented: $presentingAddExercise) {
+            ExercisePickerSheet(title: "Add exercise", allowsMultipleSelection: true) { exercises in
+                for exercise in exercises {
+                    WorkoutLogging.addExercise(exercise, to: session, context: ctx)
+                }
+            }
+        }
+        .sheet(item: $pendingSwap) { se in
+            SwapExerciseSheet(sessionExercise: se)
+        }
+        .sheet(isPresented: $presentingWorkoutNotes) {
+            WorkoutNotesSheet(session: session)
+        }
+        .sheet(item: $pendingPinnedNote) { se in
+            PinnedNoteSheet(sessionExercise: se)
+        }
+        .sheet(item: $pendingSetNote) { entry in
+            PerSetNoteSheet(entry: entry)
         }
     }
 
-    /// Wave-4 plan 04-02 — destructively removes a SessionExercise (and
-    /// its owned SetEntry rows by cascade) from the active session.
-    /// PITFALLS-doc #1 — the source RoutineExercise is untouched.
-    /// Cascade rule on SessionExercise.sets is .cascade (plan 01-01 /
-    /// SessionExercise.swift) → owned SetEntry rows go with it.
-    private func handleRemove(_ se: SessionExercise) {
-        ctx.delete(se)
-        try? ctx.save()
-        pendingRemove = nil
+    // MARK: Toolbar
+
+    @ToolbarContentBuilder
+    private var toolbarContent: some ToolbarContent {
+        ToolbarItem(placement: .topBarLeading) {
+            Button {
+                focusedField = nil
+                router.dismissWorkout()
+            } label: {
+                Image(systemName: "chevron.down")
+            }
+            .accessibilityLabel("Minimize workout")
+            .accessibilityIdentifier("workout.minimize")
+        }
+        ToolbarItem(placement: .topBarTrailing) {
+            Menu {
+                Button {
+                    presentingWorkoutNotes = true
+                } label: {
+                    Label("Workout notes", systemImage: "square.and.pencil")
+                }
+                Button(role: .destructive) {
+                    presentingDiscard = true
+                } label: {
+                    Label("Discard workout", systemImage: "trash")
+                }
+            } label: {
+                Image(systemName: "ellipsis")
+            }
+            .accessibilityLabel("Workout options")
+            .accessibilityIdentifier("workout.options")
+        }
+        ToolbarItem(placement: .topBarTrailing) {
+            Button("Finish") {
+                presentingFinish = true
+            }
+            .fontWeight(.heavy)
+            .accessibilityIdentifier("workout.finish")
+        }
+        ToolbarItemGroup(placement: .keyboard) {
+            Spacer()
+            Button("Next") { advanceFocus() }
+                .accessibilityIdentifier("keyboard.next")
+            Button("Done") { focusedField = nil }
+                .fontWeight(.semibold)
+                .accessibilityIdentifier("keyboard.done")
+        }
     }
 
-    // MARK: - Derived state
+    // MARK: Derived
 
-    /// `SessionExercise` rows sorted by `orderIndex` for stable rendering.
-    /// The snapshot order is locked at `SessionFactory.start` time and
-    /// never re-shuffled by routine edits.
     private var sortedExercises: [SessionExercise] {
         (session.exercises ?? []).sorted { $0.orderIndex < $1.orderIndex }
     }
 
-    /// Total committed sets across every exercise — drives the
-    /// "Discard" button's visibility (only renders when zero) and the
-    /// "Finish Workout?" confirmation body summary.
-    private var loggedSetCount: Int {
-        sortedExercises.reduce(0) { sum, se in
-            sum + (se.sets ?? []).filter { $0.isComplete }.count
+    private var globalUnit: WeightUnit {
+        settingsList.first?.weightUnit ?? .lb
+    }
+
+    private var unitLabel: String { globalUnit.rawValue }
+
+    private func unitLabel(for se: SessionExercise) -> String {
+        (se.exercise?.unitOverride ?? globalUnit).rawValue
+    }
+
+    /// Sets in logging order: each exercise's warm-ups, then working sets.
+    private var orderedSets: [SetEntry] {
+        sortedExercises.flatMap { se in
+            WorkoutLogging.warmupSets(of: se) + WorkoutLogging.workingSets(of: se)
         }
     }
 
-    // MARK: - Header
+    /// The first open set — highlighted as "next".
+    private var nextSetID: UUID? {
+        orderedSets.first { !$0.isComplete }?.id
+    }
 
-    /// Elapsed-time + exercise-progress + workout-notes chip row. Wrapped
-    /// in `TimelineView(.periodic(from: elapsedStart, by: 1))` so the
-    /// elapsed-time label re-renders once per second without a foreground
-    /// `Timer` (RESEARCH §6 Pattern 2).
-    @ViewBuilder private var headerChips: some View {
-        TimelineView(.periodic(from: elapsedStart, by: 1)) { _ in
-            HStack(spacing: 12) {                                              // UI-SPEC md
-                HStack(spacing: 4) {                                           // UI-SPEC xs
-                    Image(systemName: "clock")
-                    Text(elapsedLabel)
-                }
-                Text("\(progressLabel)")                                       // "3 of 6"
-                Button {
-                    presentingWorkoutNotes = true                              // Wave-4 plan 04-03
-                } label: {
-                    HStack(spacing: 4) {                                       // UI-SPEC xs
-                        Image(systemName: "square.and.pencil")
-                        Text("Notes")                                          // UI-SPEC verbatim caption
-                    }
-                }
+    private var completedSetCount: Int {
+        WorkoutFinisher.completedSetCount(in: session)
+    }
+
+    private var finishTitle: String {
+        completedSetCount > 0 ? "Finish workout?" : "No sets logged yet"
+    }
+
+    private var finishMessage: String {
+        let completed = completedSetCount
+        guard completed > 0 else {
+            return "Log at least one set to save this workout, or discard it."
+        }
+        let elapsed = ChalkFormat.clock(seconds: Int(Date.now.timeIntervalSince(session.startedAt)))
+        let unfinished = WorkoutFinisher.unfinishedSetCount(in: session)
+        var message = "\(completed) set\(completed == 1 ? "" : "s") logged · \(elapsed)."
+        if unfinished > 0 {
+            message += " \(unfinished) unfinished set\(unfinished == 1 ? "" : "s") will be removed."
+        }
+        return message
+    }
+
+    private var removeTitle: String {
+        "Remove \"\(pendingRemove?.exercise?.name ?? "exercise")\"?"
+    }
+
+    // MARK: Actions
+
+    private func complete(_ entry: SetEntry, in se: SessionExercise) {
+        let result = WorkoutLogging.complete(entry, equipment: se.exercise?.equipment, context: ctx)
+        if result == .ok {
+            errors[entry.id] = nil
+            focusedField = nil
+            completedTick += 1
+            if !entry.isWarmup {
+                restTimer.start(
+                    seconds: max(1, se.prescribedRestSeconds),
+                    exerciseName: se.exercise?.name ?? "",
+                    sessionID: session.id
+                )
             }
-            .font(.caption)
-            .padding(.horizontal, 16)
-            .padding(.vertical, 8)
+        } else {
+            errors[entry.id] = result
+            errorTick += 1
+            if let message = result.message(setLabel: label(for: entry, in: se)) {
+                UIAccessibility.post(notification: .announcement, argument: message)
+            }
+            focusedField = result == .missingReps ? .reps(entry.id) : .weight(entry.id)
         }
     }
 
-    /// "M:SS" elapsed label — computed off `Date.now` so it never drifts
-    /// (PITFALLS-doc #4 — same Date-math pattern as the rest timer).
-    private var elapsedLabel: String {
-        let s = max(0, Int(Date.now.timeIntervalSince(elapsedStart)))
-        return String(format: "%d:%02d", s / 60, s % 60)
-    }
-
-    /// "{N} of {M}" exercise-progress label. N = the next-incomplete
-    /// exercise's 1-based index (or the last index when all are complete).
-    private var progressLabel: String {
-        let totalExercises = sortedExercises.count
-        let completed = sortedExercises.prefix(while: { se in
-            (se.sets ?? []).allSatisfy { $0.isComplete }
-        }).count
-        return "\(min(completed + 1, totalExercises)) of \(totalExercises)"
-    }
-
-    // MARK: - Mutating commands
-
-    /// Commits a set: flips `isComplete = true`, writes `completedAt`,
-    /// persists, and starts the rest timer. RESEARCH §6 Pitfall 2 — the
-    /// save MUST precede `engine.start(...)` so the committed set is in
-    /// the store before the rest period kicks off.
-    private func commitSet(_ entry: SetEntry, for se: SessionExercise) {
-        entry.isComplete = true
-        entry.completedAt = .now
+    private func edited(_ entry: SetEntry, in se: SessionExercise) {
+        if errors[entry.id] != nil {
+            let validation = WorkoutLogging.validate(entry, equipment: se.exercise?.equipment)
+            errors[entry.id] = validation == .ok ? nil : validation
+        }
         try? ctx.save()
-        let prescribed = max(1, se.prescribedRestSeconds)
-        engine.start(seconds: prescribed, exerciseName: se.exercise?.name ?? "")
     }
 
-    /// Marks the session finished. Writes `completedAt = .now` and the
-    /// elapsed `totalDurationSeconds` (matches UI-SPEC § Session logger
-    /// "Finish workout confirmation body" surface). Stops the rest timer
-    /// to cancel any pending lock-screen notification.
+    private func label(for entry: SetEntry, in se: SessionExercise) -> String {
+        if entry.isWarmup {
+            let index = WorkoutLogging.warmupSets(of: se).firstIndex { $0.id == entry.id } ?? 0
+            return "W\(index + 1)"
+        }
+        let index = WorkoutLogging.workingSets(of: se).firstIndex { $0.id == entry.id } ?? 0
+        return "\(index + 1)"
+    }
+
+    private func advanceFocus() {
+        let order: [SetField] = orderedSets
+            .filter { !$0.isComplete }
+            .flatMap { [SetField.weight($0.id), SetField.reps($0.id)] }
+        guard let current = focusedField,
+              let index = order.firstIndex(of: current),
+              index + 1 < order.count else {
+            focusedField = nil
+            return
+        }
+        focusedField = order[index + 1]
+    }
+
     private func finish() {
-        session.completedAt = .now
-        session.totalDurationSeconds = Int(Date.now.timeIntervalSince(session.startedAt))
-        engine.stop()
-        try? ctx.save()
-        dismiss()
+        focusedField = nil
+        restTimer.stop(ifBelongsTo: session.id)
+        WorkoutFinisher.finish(session, context: ctx)
     }
 
-    /// Discards the active session. Only reachable from the Discard
-    /// toolbar button, which only renders when `loggedSetCount == 0` — so
-    /// no user data is at risk. The cascade rule on `Session.exercises`
-    /// automatically deletes the empty `SessionExercise` rows + their
-    /// (empty) `SetEntry` rows by transitive cascade.
     private func discard() {
-        engine.stop()
-        ctx.delete(session)
-        try? ctx.save()
-        dismiss()
+        focusedField = nil
+        restTimer.stop(ifBelongsTo: session.id)
+        router.pendingDiscard = session
+        router.dismissWorkout()
     }
 }
 
-#Preview("session logger") {
-    let container = PreviewModelContainer.make()
-    let ctx = ModelContext(container)
-    let ex = Exercise.previewSample(name: "Bench", equipment: .barbell, mechanic: .compound)
-    ctx.insert(ex)
-    let session = Session()
-    session.startedAt = .now.addingTimeInterval(-180)
-    session.routineSnapshotName = "Push Day A"
-    ctx.insert(session)
-    let se = SessionExercise()
-    se.session = session
-    se.exercise = ex
-    se.intentRaw = "strength"
-    se.targetSets = 3
-    se.prescribedRestSeconds = 180
-    ctx.insert(se)
-    for i in 0..<3 {
-        let entry = SetEntry()
-        entry.sessionExercise = se
-        entry.orderIndex = i
-        ctx.insert(entry)
+// MARK: - Header panel
+
+/// Iron panel at the top of the workout: routine snapshot name, live
+/// elapsed time, completed / planned sets, volume, progress.
+struct WorkoutHeaderPanel: View {
+    @Bindable var session: Session
+    let unitLabel: String
+
+    var body: some View {
+        ChalkPanel {
+            TimelineView(.periodic(from: session.startedAt, by: 1)) { context in
+                let stats = WorkoutStats.compute(for: session, now: context.date)
+                VStack(alignment: .leading, spacing: Chalk.Space.md) {
+                    Text(session.routineSnapshotName.isEmpty ? "Workout" : session.routineSnapshotName)
+                        .font(.chalkDisplay)
+                        .textCase(.uppercase)
+                        .foregroundStyle(.chalkOnPanel)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .accessibilityAddTraits(.isHeader)
+                        .accessibilityIdentifier("workout.title")
+                    ViewThatFits(in: .horizontal) {
+                        HStack(alignment: .top, spacing: Chalk.Space.md) {
+                            metrics(stats)
+                        }
+                        VStack(alignment: .leading, spacing: Chalk.Space.sm) {
+                            metrics(stats)
+                        }
+                    }
+                    ChalkProgressBar(
+                        progress: stats.plannedSets > 0 ? Double(stats.completedSets) / Double(stats.plannedSets) : 0
+                    )
+                }
+            }
+        }
     }
-    try? ctx.save()
-    return NavigationStack {
-        SessionLoggerView(session: session)
+
+    @ViewBuilder
+    private func metrics(_ stats: WorkoutStats) -> some View {
+        ChalkMetric("Elapsed", value: ChalkFormat.clock(seconds: stats.durationSeconds), onPanel: true)
+        ChalkMetric("Sets", value: "\(stats.completedSets)/\(stats.plannedSets)", onPanel: true)
+            .accessibilityIdentifier("workout.setsProgress")
+        ChalkMetric("Volume \(unitLabel)", value: ChalkFormat.volume(stats.volume), onPanel: true)
     }
-    .modelContainer(container)
+}
+
+// MARK: - Flow
+
+/// Cover content: the logger while the workout is open, the summary once
+/// it is finished.
+struct WorkoutFlowView: View {
+    @Bindable var session: Session
+
+    var body: some View {
+        if session.completedAt == nil {
+            SessionLoggerView(session: session)
+        } else {
+            NavigationStack {
+                WorkoutSummaryView(session: session, presentation: .justFinished)
+            }
+        }
+    }
 }

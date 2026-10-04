@@ -73,14 +73,19 @@ public struct FilterPickerSheet: View {
                 case .pattern:   patternSection
                 }
             }
-            .navigationTitle(title)
+            .listStyle(.insetGrouped)
+            .chalkCanvasBackground()
+            .navigationTitle(title.uppercased())
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Done") { dismiss() }
+                        .fontWeight(.heavy)
+                        .accessibilityIdentifier("filter.done")
                 }
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Clear", action: clearCurrentFacet)
+                        .accessibilityIdentifier("filter.clearFacet")
                 }
             }
             .presentationDetents([.medium, .large])
@@ -178,15 +183,21 @@ public struct FilterPickerSheet: View {
         Button(action: action) {
             HStack {
                 Text(title)
-                    .foregroundStyle(.primary)
+                    .font(.chalkBody)
+                    .foregroundStyle(.chalkInk)
                 Spacer()
                 if isSelected {
                     Image(systemName: "checkmark")
-                        .foregroundStyle(Color.accentColor)
+                        .font(.body.weight(.bold))
+                        .foregroundStyle(.chalkInk)
                 }
             }
+            .frame(minHeight: Chalk.Size.minTouch)
             .contentShape(Rectangle())
         }
+        .listRowBackground(isSelected ? Color.chalkComplete : Color.chalkSurface)
+        .accessibilityAddTraits(isSelected ? .isSelected : [])
+        .accessibilityIdentifier("filter.option.\(title)")
     }
 
     /// Equipment display names — split the underscore raw values into

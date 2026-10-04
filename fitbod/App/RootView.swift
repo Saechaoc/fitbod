@@ -2,48 +2,23 @@
 //  RootView.swift
 //  fitbod
 //
-//  Wave-3 RootView — replaces the interim stub from plan 01-02. Hosts
-//  the 5-tab `TabView` (Today / Routines / Library / Progress / Settings)
-//  and wires the one-time `ExerciseLibraryImporter.seedIfNeeded()` call
-//  off `.task { ... }` so the seed runs the first time the view
-//  appears, off the main thread (per the `@ModelActor` macro on the
-//  importer).
+//  App shell (milestone 1). Owns the app-scoped state and wires it into the
+//  environment:
 //
-//  ## Splash vs. tabs
+//    - `AppRouter` — selected tab, per-tab NavigationPaths (re-tap pops to
+//      root), and the workout presented full-screen.
+//    - `RestTimerEngine` — one rest timer for the whole app, restored from
+//      its persisted absolute deadline at launch.
 //
-//  While `@Query<Exercise>` is empty AND the `SeedState` is still
-//  `.idle` or `.loading`, the view shows a centered `ProgressView`
-//  with the locked UI-SPEC copy "Preparing library…". As soon as the
-//  seed task transitions to `.ready` (or `.failed`), the tab bar
-//  appears. On second-and-later launches the seed short-circuits in
-//  O(1) (UserDefaults version stamp check), so the splash flashes for
-//  <100 ms and is functionally invisible.
+//  Tabs: Today · Routines · Library · History · Settings. Each tab owns its
+//  NavigationStack (never wrap a TabView in a NavigationStack —
+//  RESEARCH § State of the Art).
 //
-//  ## Why `.task` and not `App.init`
-//
-//  `App.init` is synchronous and runs before SwiftUI scenes exist —
-//  there is no main-actor context for the importer to call back into.
-//  `RootView.task` is the documented Apple pattern (RESEARCH Code
-//  Example 2): it runs once when the view first appears and gets
-//  automatically cancelled if the view goes away mid-seed (which
-//  cannot happen for `RootView`, but the structured-concurrency
-//  contract still holds).
-//
-//  ## Why each tab owns its own `NavigationStack`
-//
-//  RESEARCH § State of the Art and PITFALLS.md both forbid wrapping
-//  `TabView` in a parent `NavigationStack`. Each tab that needs a
-//  navigation surface owns one. The `PlaceholderTabView` and the two
-//  interim tab hosts (`LibraryTabHost`, `SettingsTabHost`) below each
-//  declare their own.
-//
-//  ## Tab hosts
-//
-//  `LibraryTabHost` (plan 03-02 wired) and `SettingsTabHost` (plan
-//  04-01 wired) are one-line wrappers around the real tab body views.
-//  Kept as private structs rather than substituting the bodies
-//  directly into `tabBar` so future per-tab wrappers (analytics, tab-
-//  re-tap pop-to-root) can attach in one place per tab.
+//  The active workout is a full-screen cover above the tabs. On launch,
+//  after the one-time exercise seed, an unfinished workout is presented
+//  again automatically, so closing and reopening the app lands the lifter
+//  exactly where they were — sets, typed values, and rest countdown
+//  included.
 //
 
 import SwiftUI
@@ -54,33 +29,13 @@ public struct RootView: View {
     @Environment(\.modelContext) private var modelContext
     @Query private var exercises: [Exercise]
     @State private var seedState = SeedState()
-
-    /// Currently-selected tab. Bound to `TabView(selection:)` via a
-    /// custom `Binding<Tab>` that detects re-tap of the same tab and
-    /// clears the matching `NavigationPath` (review WR-07).
-    @State private var selectedTab: Tab = .library
-
-    /// The Library tab owns a navigation stack (Library → Detail). The
-    /// path lives here in `RootView` so the tab re-tap binding setter
-    /// can clear it without reaching into a child view.
-    @State private var libraryPath = NavigationPath()
+    @State private var router = AppRouter()
+    @State private var restTimer = RestTimerEngine.makeProduction()
+    @State private var didRestoreWorkout = false
 
     private static let log = Logger(subsystem: "com.fitbod.app", category: "seed")
 
     public init() {}
-
-    /// The 5 tabs in display order. `Hashable` so it can drive
-    /// `TabView(selection:)`. Only `.library` currently owns a
-    /// `NavigationPath` because it's the only tab with a multi-level
-    /// drilldown in Phase 1; future phases will add paths for the
-    /// other tabs as drilldowns appear (UI-SPEC § Interaction patterns).
-    enum Tab: Hashable {
-        case today
-        case routines
-        case library
-        case progress
-        case settings
-    }
 
     public var body: some View {
         Group {
@@ -90,140 +45,132 @@ public struct RootView: View {
                 tabBar
             }
         }
+        .environment(router)
+        .environment(restTimer)
         .task {
             await runSeed()
+            restoreActiveWorkout()
         }
-    }
-
-    /// Splash visibility predicate.
-    ///
-    /// The splash is shown only while the seed task is in flight (or
-    /// has not yet started) AND the store has no exercises. On the
-    /// second-and-later launches `@Query<Exercise>` returns the
-    /// previously-seeded rows immediately, so even with the seed task
-    /// still nominally running (it short-circuits in O(1) but the
-    /// `@State` transition is async), the tab bar renders without a
-    /// flash of splash.
-    private var shouldShowSplash: Bool {
-        guard exercises.isEmpty else { return false }
-        switch seedState.phase {
-        case .idle, .loading:
-            return true
-        case .ready, .failed:
-            return false
+        .fullScreenCover(item: $router.presentedWorkout, onDismiss: handleWorkoutDismiss) { session in
+            WorkoutFlowView(session: session)
+                .environment(router)
+                .environment(restTimer)
         }
     }
 
     // MARK: - Splash
 
-    private var splash: some View {
-        ProgressView("Preparing library…")
-            .progressViewStyle(.circular)
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
+    private var shouldShowSplash: Bool {
+        guard exercises.isEmpty else { return false }
+        switch seedState.phase {
+        case .idle, .loading: return true
+        case .ready, .failed: return false
+        }
     }
 
-    // MARK: - Tab bar
-
-    /// Selection binding that detects re-tap of the currently-active
-    /// tab and resets that tab's `NavigationPath`. SwiftUI calls the
-    /// `set` closure whenever the user taps any tab — including the
-    /// already-selected one — so a same-value set is the re-tap
-    /// signal (review WR-07; UI-SPEC § Interaction patterns).
-    private var tabSelection: Binding<Tab> {
-        Binding(
-            get: { selectedTab },
-            set: { newValue in
-                if newValue == selectedTab {
-                    // Re-tap on the currently-active tab — pop to root.
-                    switch newValue {
-                    case .library:
-                        libraryPath = NavigationPath()
-                    case .today, .routines, .progress, .settings:
-                        // No NavigationPath wired for these tabs yet —
-                        // Phase 2+ will add paths as drilldowns appear.
-                        break
-                    }
-                }
-                selectedTab = newValue
+    private var splash: some View {
+        VStack(alignment: .leading, spacing: Chalk.Space.md) {
+            Text("Fitbod")
+                .font(.chalkDisplay)
+                .textCase(.uppercase)
+                .foregroundStyle(.chalkInk)
+            Rectangle()
+                .fill(Color.chalkInk)
+                .frame(width: 64, height: Chalk.Line.heavy)
+            HStack(spacing: Chalk.Space.sm) {
+                ProgressView()
+                    .tint(Color.chalkInk)
+                Text("Preparing library…")
+                    .font(.chalkCallout)
+                    .foregroundStyle(.chalkInk2)
             }
+        }
+        .padding(Chalk.Space.xxl)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+        .background(Color.chalkCanvas)
+        .accessibilityElement(children: .combine)
+    }
+
+    // MARK: - Tabs
+
+    /// Re-tapping the selected tab pops it to root (review WR-07).
+    private var tabSelection: Binding<AppRouter.Tab> {
+        Binding(
+            get: { router.selectedTab },
+            set: { router.select($0) }
         )
     }
 
     private var tabBar: some View {
         TabView(selection: tabSelection) {
-            // UI-SPEC § Tab labels — verbatim labels + SF Symbols + order.
-            //
-            // Plan 04-01 wired: Today tab body is now `TodayView` — a
-            // real surface that mounts `ResumeWorkoutBanner` at the top
-            // and renders the UI-SPEC empty-state ("No workout in
-            // progress" / "Start a workout from your Routines tab.")
-            // below. Tapping the banner's "Resume" pushes
-            // `SessionLoggerView` via the Today tab's NavigationPath.
             TodayView()
-                .tabItem {
-                    Label("Today", systemImage: "figure.strengthtraining.traditional")
-                }
-                .tag(Tab.today)
+                .tabItem { Label("Today", systemImage: "calendar") }
+                .tag(AppRouter.Tab.today)
 
-            // Plan 03-01 wired: replaces the Phase 2 placeholder body
-            // with the real `RoutinesListView`. The view owns its own
-            // `NavigationStack`, so the wrapper from the placeholder is
-            // removed.
             RoutinesListView()
-                .tabItem {
-                    Label("Routines", systemImage: "list.bullet.rectangle.portrait")
-                }
-                .tag(Tab.routines)
+                .tabItem { Label("Routines", systemImage: "list.bullet.rectangle.portrait") }
+                .tag(AppRouter.Tab.routines)
 
-            // Plan 03-02 replaces `LibraryTabHost` with `ExerciseLibraryView`.
-            // Path is owned by `RootView` so `tabSelection` can clear it
-            // on Library-tab re-tap (review WR-07).
-            LibraryTabHost(path: $libraryPath)
-                .tabItem {
-                    Label("Library", systemImage: "dumbbell")
-                }
-                .tag(Tab.library)
+            LibraryTabHost()
+                .tabItem { Label("Library", systemImage: "dumbbell") }
+                .tag(AppRouter.Tab.library)
 
-            PlaceholderTabView(phaseNumber: 6)
-                .tabItem {
-                    Label("Progress", systemImage: "chart.xyaxis.line")
-                }
-                .tag(Tab.progress)
+            HistoryView()
+                .tabItem { Label("History", systemImage: "clock.arrow.circlepath") }
+                .tag(AppRouter.Tab.history)
 
-            // Plan 04-01 wired: `SettingsTabHost` wraps `SettingsView`.
-            SettingsTabHost()
-                .tabItem {
-                    Label("Settings", systemImage: "gearshape")
-                }
-                .tag(Tab.settings)
+            SettingsView()
+                .tabItem { Label("Settings", systemImage: "gearshape") }
+                .tag(AppRouter.Tab.settings)
+        }
+        .tint(Color.chalkInk)
+    }
+
+    // MARK: - Workout cover
+
+    /// A workout discarded from inside the cover is deleted only after the
+    /// cover has gone, so no view reads a deleted model.
+    private func handleWorkoutDismiss() {
+        if let session = router.pendingDiscard {
+            router.pendingDiscard = nil
+            WorkoutFinisher.discard(session, context: modelContext)
         }
     }
 
-    // MARK: - Seed wiring
+    /// Relaunch: reopen an unfinished workout, and drop a rest timer whose
+    /// workout no longer exists or is finished.
+    private func restoreActiveWorkout() {
+        guard !didRestoreWorkout else { return }
+        didRestoreWorkout = true
+        let active = SessionFactory.active(in: modelContext)
+        if restTimer.isRunning {
+            if let active, restTimer.sessionID == nil || restTimer.sessionID == active.id {
+                // keep running
+            } else {
+                restTimer.stop()
+            }
+        }
+        if let active, router.presentedWorkout == nil {
+            router.present(workout: active)
+        }
+    }
 
-    /// Run the one-time seed against a freshly-constructed
-    /// `ExerciseLibraryImporter` (a `@ModelActor` — see plan 02-02).
-    /// The importer's synthesized initializer takes a `ModelContainer`,
-    /// which we obtain from the environment-injected `modelContext`.
-    ///
-    /// Errors are logged but not surfaced — on first launch a failure
-    /// is catastrophic (the UI-SPEC § Error states alert is deferred
-    /// to Wave 4 polish), and on subsequent launches a stale
-    /// `@Query<Exercise>` will still return the previously-seeded rows
-    /// so the tabs render normally.
+    // MARK: - Seed
+
     private func runSeed() async {
         seedState.phase = .loading
         do {
             let importer = ExerciseLibraryImporter(modelContainer: modelContext.container)
             try await importer.seedIfNeeded(bundle: .main)
 
-            // NOTE: PlateInventory seeding uses `.lb` as the unit-system fallback
-            // when `UserSettings` is freshly inserted by the exercise seed above.
-            // The user can reset any tab to their preferred defaults via the
-            // "Reset to Defaults" button in Settings → Smart Progression → Plate Inventory.
+            // PlateInventory seeding uses the user's unit system, falling
+            // back to lb when UserSettings was just inserted by the seed.
             let unitSystem = (try? modelContext.fetch(FetchDescriptor<UserSettings>()).first?.weightUnit) ?? .lb
             PlateInventorySeeder.seedIfNeeded(in: modelContext, unitSystem: unitSystem)
 
+            if LaunchConfiguration.current.seedDemoHistory {
+                DemoData.seedIfNeeded(in: modelContext)
+            }
             seedState.phase = .ready
         } catch {
             Self.log.error("Seed failed: \(error.localizedDescription)")
@@ -232,74 +179,15 @@ public struct RootView: View {
     }
 }
 
-// MARK: - Interim tab hosts
-
-/// Today tab body — plan 04-01 wired. Hosts `ResumeWorkoutBanner` at the
-/// top (renders only when an active session exists) and the UI-SPEC
-/// empty-state below ("No workout in progress" / "Start a workout from
-/// your Routines tab."). Tapping the banner's "Resume" pushes
-/// `SessionLoggerView` via the Today tab's NavigationPath.
-///
-/// Owns its own `NavigationStack` — each tab manages its own navigation
-/// surface per the documented Apple pattern (RESEARCH § State of the Art).
-private struct TodayView: View {
-    @Environment(\.modelContext) private var ctx
-    @State private var navigationPath = NavigationPath()
+/// Library tab body — the library owns its NavigationStack; its path lives
+/// in the router so a tab re-tap can pop it.
+private struct LibraryTabHost: View {
+    @Environment(AppRouter.self) private var router
 
     var body: some View {
-        NavigationStack(path: $navigationPath) {
-            VStack(spacing: 16) {
-                ResumeWorkoutBanner(
-                    onResume: { session in
-                        // Plan 04-01 wired — push SessionLoggerView via
-                        // the Today-tab NavigationPath.
-                        navigationPath.append(SessionRoute.logger(session))
-                    },
-                    onDiscard: { session in
-                        ctx.delete(session)
-                        try? ctx.save()
-                    }
-                )
-                Spacer()
-                Text("No workout in progress")                                 // UI-SPEC verbatim
-                    .font(.title2)
-                    .fontWeight(.semibold)
-                Text("Start a workout from your Routines tab.")                // UI-SPEC verbatim
-                    .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
-                Spacer()
-            }
-            .padding(.horizontal, 32)
-            .navigationTitle("Today")
-            .navigationDestination(for: SessionRoute.self) { route in
-                switch route {
-                case .logger(let session):
-                    SessionLoggerView(session: session)
-                }
-            }
-        }
+        @Bindable var router = router
+        ExerciseLibraryView(path: $router.libraryPath)
     }
-}
-
-/// Library tab body — wraps the real `ExerciseLibraryView` (plan 03-02).
-///
-/// `ExerciseLibraryView` still owns its `NavigationStack`, but the
-/// stack's path is supplied from outside via the `path` binding so
-/// `RootView.tabSelection` can clear it on Library-tab re-tap
-/// (review WR-07).
-private struct LibraryTabHost: View {
-    @Binding var path: NavigationPath
-    var body: some View { ExerciseLibraryView(path: $path) }
-}
-
-/// Settings tab body — wraps the real `SettingsView` (plan 04-01).
-/// `SettingsView` owns its own `NavigationStack`, so this host is now
-/// a thin transparent wrapper. Kept symmetrical with `LibraryTabHost`
-/// (one-line `var body: some View { SettingsView() }`) for the same
-/// reasons: future per-tab analytics wrappers / tab-re-tap pop-to-root
-/// hooks attach to the wrapper without restructuring `RootView`.
-private struct SettingsTabHost: View {
-    var body: some View { SettingsView() }
 }
 
 // MARK: - Previews
@@ -307,9 +195,4 @@ private struct SettingsTabHost: View {
 #Preview("RootView (seeded)") {
     RootView()
         .modelContainer(PreviewModelContainer.make())
-}
-
-#Preview("RootView (empty / splash)") {
-    RootView()
-        .modelContainer(PreviewModelContainer.make(seedFixture: false))
 }

@@ -2,47 +2,21 @@
 //  ExerciseFilterBar.swift
 //  fitbod
 //
-//  Horizontal scrolling row of `FilterChip`s for the library view.
-//  Hosted via `.safeAreaInset(edge: .top)` on the `List` so the bar
-//  stays visually pinned above the rows during scroll (UI-SPEC § Library
-//  screen — "sticky chip-row at the top").
+//  Library filter chips (Chalkline redesign of plan 03-02):
 //
-//  ## Facet identification
+//    [MUSCLE ▾] [EQUIPMENT ▾] [CUSTOM] CLEAR
 //
-//  `FilterFacet` is a public enum (Identifiable) so the parent view can
-//  drive a single `.sheet(item:)` against the same selection. Tapping
-//  any chip writes its facet into the parent's `presentingSheet`
-//  binding; the parent presents the appropriate `FilterPickerSheet`.
-//
-//  ## Chip labels
-//
-//  Each chip label combines a verbatim UI-SPEC token with a count or
-//  capitalised value when the facet has a selection:
-//
-//  | Facet     | Empty label  | Active label                       |
-//  |-----------|--------------|------------------------------------|
-//  | muscle    | "Muscle"     | "Muscle · {N}" (count)             |
-//  | equipment | "Equipment"  | "Equipment · {N}" (count)          |
-//  | mechanic  | "Mechanic"   | "Mechanic · {Value}" (capitalised) |
-//  | pattern   | "Pattern"    | "Pattern · {N}" (count)            |
-//
-//  The "· " separator is the locked UI-SPEC token (mid-dot + non-breaking
-//  space) so VoiceOver and Larger Text scale it sanely.
-//
-//  ## Clear-filters action
-//
-//  When any facet has at least one selection (`!filterState.isEmpty`) a
-//  trailing "Clear filters" text button appears, calling `filterState.clear()`.
-//  Per UI-SPEC § Library screen the copy is verbatim "Clear filters"
-//  (no exclamation) and the foreground is the accent colour.
+//  A selected multi-select chip turns iron and shows its first value plus
+//  "+N" (e.g. "CHEST +1"); VoiceOver reads "Muscle filter, Chest and 1
+//  more selected". Muscle and Equipment open `FilterPickerSheet`; Custom
+//  toggles in place. Mechanic and Pattern remain in `FilterState` but are
+//  not offered as chips in milestone 1 (patterns are not curated yet, so a
+//  pattern chip could only ever return zero results).
 //
 
 import SwiftUI
 
-/// Sticky horizontal chip row at the top of the library list.
 public struct ExerciseFilterBar: View {
-    /// `@Bindable` because mutating the filter state from the picker
-    /// sheets must propagate back through the same instance.
     @Bindable var filterState: FilterState
     @Binding var presentingSheet: FilterFacet?
 
@@ -51,8 +25,7 @@ public struct ExerciseFilterBar: View {
         self._presentingSheet = presentingSheet
     }
 
-    /// Public identifier enum so a single `.sheet(item:)` modifier can
-    /// dispatch to the correct `FilterPickerSheet` configuration.
+    /// Facet identifier so one `.sheet(item:)` can present any picker.
     public enum FilterFacet: String, Identifiable, Sendable {
         case muscle
         case equipment
@@ -64,98 +37,72 @@ public struct ExerciseFilterBar: View {
 
     public var body: some View {
         ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 8) {
-                FilterChip(
-                    label: muscleLabel,
-                    accessibilityName: muscleA11yLabel,
-                    isActive: !filterState.selectedMuscleSlugs.isEmpty
-                ) { presentingSheet = .muscle }
+            HStack(spacing: Chalk.Space.sm) {
+                ChalkChip(
+                    muscleTitle,
+                    isSelected: !filterState.selectedMuscleSlugs.isEmpty,
+                    extraCount: max(0, filterState.selectedMuscleSlugs.count - 1),
+                    showsMenuIndicator: true,
+                    accessibilityLabel: a11y("Muscle", values: sortedMuscleNames)
+                ) {
+                    presentingSheet = .muscle
+                }
+                .accessibilityIdentifier("filter.muscle")
 
-                FilterChip(
-                    label: equipmentLabel,
-                    accessibilityName: equipmentA11yLabel,
-                    isActive: !filterState.selectedEquipmentRaw.isEmpty
-                ) { presentingSheet = .equipment }
+                ChalkChip(
+                    equipmentTitle,
+                    isSelected: !filterState.selectedEquipmentRaw.isEmpty,
+                    extraCount: max(0, filterState.selectedEquipmentRaw.count - 1),
+                    showsMenuIndicator: true,
+                    accessibilityLabel: a11y("Equipment", values: sortedEquipmentNames)
+                ) {
+                    presentingSheet = .equipment
+                }
+                .accessibilityIdentifier("filter.equipment")
 
-                FilterChip(
-                    label: mechanicLabel,
-                    accessibilityName: mechanicA11yLabel,
-                    isActive: filterState.selectedMechanicRaw != nil
-                ) { presentingSheet = .mechanic }
-
-                FilterChip(
-                    label: patternLabel,
-                    accessibilityName: patternA11yLabel,
-                    isActive: !filterState.selectedPatternRaw.isEmpty
-                ) { presentingSheet = .pattern }
+                ChalkChip(
+                    "Custom",
+                    isSelected: filterState.customOnly,
+                    accessibilityLabel: filterState.customOnly ? "Custom exercises only, on" : "Custom exercises only, off"
+                ) {
+                    filterState.customOnly.toggle()
+                }
+                .accessibilityIdentifier("filter.custom")
 
                 if !filterState.isEmpty {
-                    Button("Clear filters") {
+                    Button("Clear") {
                         filterState.clear()
                     }
-                    .font(.caption)
-                    .foregroundStyle(Color.accentColor)
-                    .padding(.horizontal, 8)
-                    .frame(minHeight: 44)
-                    .accessibilityLabel("Clear filters")
+                    .buttonStyle(.chalk(.ghost, size: .compact))
+                    .accessibilityLabel("Clear all filters")
+                    .accessibilityIdentifier("filter.clear")
                 }
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 8)
         }
-        .background(.thinMaterial)
+        .scrollClipDisabled()
     }
 
-    // MARK: - Chip-label composition
+    // MARK: Titles
 
-    private var muscleLabel: String {
-        filterState.selectedMuscleSlugs.isEmpty
-            ? "Muscle"
-            : "Muscle · \(filterState.selectedMuscleSlugs.count)"
+    private var sortedMuscleNames: [String] {
+        filterState.selectedMuscleSlugs.sorted().map { MuscleRegionMap.displayName(for: $0) }
     }
 
-    private var equipmentLabel: String {
-        filterState.selectedEquipmentRaw.isEmpty
-            ? "Equipment"
-            : "Equipment · \(filterState.selectedEquipmentRaw.count)"
+    private var sortedEquipmentNames: [String] {
+        filterState.selectedEquipmentRaw.sorted().map { ExerciseRow.equipmentName($0) }
     }
 
-    private var mechanicLabel: String {
-        guard let raw = filterState.selectedMechanicRaw else { return "Mechanic" }
-        return "Mechanic · \(raw.capitalized)"
+    private var muscleTitle: String {
+        sortedMuscleNames.first ?? "Muscle"
     }
 
-    private var patternLabel: String {
-        filterState.selectedPatternRaw.isEmpty
-            ? "Pattern"
-            : "Pattern · \(filterState.selectedPatternRaw.count)"
+    private var equipmentTitle: String {
+        sortedEquipmentNames.first ?? "Equipment"
     }
 
-    // MARK: - Chip accessibility-label composition (review WR-03)
-    //
-    // Per UI-SPEC § Accessibility Contract the VoiceOver readout is
-    // facet-name + selection count ("Muscle filter, 2 selected"), NOT
-    // the visual mid-dot suffix that screen readers verbalize as "dot".
-    // These computed labels are passed to `FilterChip.accessibilityName`
-    // so the readout is decoupled from the visual label.
-
-    private var muscleA11yLabel: String {
-        let n = filterState.selectedMuscleSlugs.count
-        return n == 0 ? "Muscle filter" : "Muscle filter, \(n) selected"
-    }
-
-    private var equipmentA11yLabel: String {
-        let n = filterState.selectedEquipmentRaw.count
-        return n == 0 ? "Equipment filter" : "Equipment filter, \(n) selected"
-    }
-
-    private var mechanicA11yLabel: String {
-        guard let raw = filterState.selectedMechanicRaw else { return "Mechanic filter" }
-        return "Mechanic filter, \(raw.capitalized) selected"
-    }
-
-    private var patternA11yLabel: String {
-        let n = filterState.selectedPatternRaw.count
-        return n == 0 ? "Pattern filter" : "Pattern filter, \(n) selected"
+    private func a11y(_ facet: String, values: [String]) -> String {
+        guard let first = values.first else { return "\(facet) filter" }
+        if values.count == 1 { return "\(facet) filter, \(first) selected" }
+        return "\(facet) filter, \(first) and \(values.count - 1) more selected"
     }
 }

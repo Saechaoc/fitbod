@@ -4,3 +4,4 @@ fitbod.xcodeproj/xcuserdata/
 .ci/
 .build/
 DerivedData/
+__pycache__/
