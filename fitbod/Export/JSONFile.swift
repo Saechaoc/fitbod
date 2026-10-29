@@ -3,8 +3,8 @@
 //  fitbod
 //
 //  Wave-4 plan 06-09b — `Transferable` value type wrapping pre-rendered
-//  JSON bytes. Consumed by `ShareLink(item:)` in `SettingsView` to
-//  surface the EXP-02 export via the system share sheet.
+//  JSON bytes. `ExportService.renderJSON()` returns it, and Settings'
+//  `JSONExportItem` hands its bytes to the system share sheet.
 //
 //  Symmetric to `CSVFile.swift`. Filename format:
 //  `fitbod-export-YYYY-MM-DD.json` locked at construction time by

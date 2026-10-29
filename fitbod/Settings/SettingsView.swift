@@ -21,8 +21,9 @@
 //  on the roadmap; Backup + Restore covers starting over today.
 //
 //  Wired actions preserved:
-//    ShareLink(item: csvFile) / ShareLink(item: jsonFile)
-//    ShareLink(item: backupFile)
+//    ShareLink(item: CSVExportItem / JSONExportItem / BackupShareItem); each
+//    item renders its file when the share sheet asks for it, so one tap
+//    shares (Milestone 1 review item 34)
 //    .fileImporter + 2-step destructive confirm + preflight alerts
 //
 //  Banned tokens eliminated: Form, List, .insetGrouped, .navigationTitle,
@@ -43,17 +44,11 @@ public struct SettingsView: View {
     @Query private var settingsList: [UserSettings]
     @Environment(\.modelContext) private var modelContext
 
-    // Wave-4 plan 06-09b - async-render state for Export section
-    @State private var csvFile: CSVFile?
-    @State private var jsonFile: JSONFile?
-    @State private var csvRendering = false
-    @State private var jsonRendering = false
+    // Wave-4 plan 06-09b - Export section errors, set by the share items
     @State private var csvError: String?
     @State private var jsonError: String?
 
     // Wave-5 plan 06-10 - backup + restore state
-    @State private var backupFile: FitbodBackupFile?
-    @State private var backupRendering = false
     @State private var backupError: String?
     @State private var showingImporter = false
     @State private var pendingURL: URL?
@@ -295,63 +290,32 @@ public struct SettingsView: View {
 
     /// Export section with BRUSectionHead + 2-card horizontal grid.
     /// Each card: 2pt bruInk outline, BRUDisplay kind label, bodyEmphasis label, labelMicro sub.
-    /// Cards are wrapped in ShareLink containers that present the system share sheet on tap.
+    /// Each card is one ShareLink: one tap opens the share sheet, which asks
+    /// the item for its file. A failed render shows the inline error below.
     @ViewBuilder
     private var exportSection: some View {
         BRUSectionHead("Export", right: "DATA")
 
         HStack(spacing: 8) {
-            // CSV card
-            if let file = csvFile {
-                ShareLink(item: file, preview: SharePreview(file.filename)) {
-                    ExportCard(
-                        kind: "CSV",
-                        label: "Export CSV",
-                        sub: "ONE ROW PER SET",
-                        isLoading: false
-                    )
-                }
-                .buttonStyle(.plain)
-            } else {
-                Button {
-                    Task { await renderCSV() }
-                } label: {
-                    ExportCard(
-                        kind: "CSV",
-                        label: "Export CSV",
-                        sub: "ONE ROW PER SET",
-                        isLoading: csvRendering
-                    )
-                }
-                .buttonStyle(.plain)
-                .disabled(csvRendering)
+            ShareLink(
+                item: CSVExportItem(container: modelContext.container) { succeeded in
+                    csvError = succeeded ? nil : "Couldn't prepare export. Try again."
+                },
+                preview: SharePreview(ExportService.dailyFilename(prefix: "fitbod-export", ext: "csv"))
+            ) {
+                ExportCard(kind: "CSV", label: "Export CSV", sub: "ONE ROW PER SET")
             }
+            .buttonStyle(.plain)
 
-            // JSON card
-            if let file = jsonFile {
-                ShareLink(item: file, preview: SharePreview(file.filename)) {
-                    ExportCard(
-                        kind: "JSON",
-                        label: "Export JSON",
-                        sub: "VERSION-STAMPED",
-                        isLoading: false
-                    )
-                }
-                .buttonStyle(.plain)
-            } else {
-                Button {
-                    Task { await renderJSON() }
-                } label: {
-                    ExportCard(
-                        kind: "JSON",
-                        label: "Export JSON",
-                        sub: "VERSION-STAMPED",
-                        isLoading: jsonRendering
-                    )
-                }
-                .buttonStyle(.plain)
-                .disabled(jsonRendering)
+            ShareLink(
+                item: JSONExportItem(container: modelContext.container) { succeeded in
+                    jsonError = succeeded ? nil : "Couldn't prepare export. Try again."
+                },
+                preview: SharePreview(ExportService.dailyFilename(prefix: "fitbod-export", ext: "json"))
+            ) {
+                ExportCard(kind: "JSON", label: "Export JSON", sub: "VERSION-STAMPED")
             }
+            .buttonStyle(.plain)
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 8)
@@ -409,38 +373,23 @@ public struct SettingsView: View {
 
             // Footer - CREATE (ghost) | RESTORE (signal) split by 1pt line
             HStack(spacing: 0) {
-                // CREATE button - wraps ShareLink if backupFile is ready, else renders button
-                if let file = backupFile {
-                    ShareLink(item: file, preview: SharePreview(file.filename)) {
-                        Text("CREATE")
-                            .font(BRUFont.labelSmall)
-                            .tracking(1.2)
-                            .textCase(.uppercase)
-                            .foregroundStyle(Color.bruInk)
-                            .frame(maxWidth: .infinity, minHeight: 44)
-                    }
-                    .buttonStyle(.plain)
-                } else {
-                    Button {
-                        Task { await renderBackup() }
-                    } label: {
-                        Group {
-                            if backupRendering {
-                                ProgressView()
-                                    .tint(Color.bruInk)
-                            } else {
-                                Text("CREATE")
-                                    .font(BRUFont.labelSmall)
-                                    .tracking(1.2)
-                                    .textCase(.uppercase)
-                                    .foregroundStyle(Color.bruInk)
-                            }
-                        }
+                // CREATE - one ShareLink; the archive is written when the
+                // share sheet asks for it.
+                ShareLink(
+                    item: BackupShareItem(container: modelContext.container) { succeeded in
+                        backupError = succeeded ? nil : "Couldn't create backup. Try again."
+                    },
+                    preview: SharePreview(BackupArchiver.dailyFilename(now: .now))
+                ) {
+                    Text("CREATE")
+                        .font(BRUFont.labelSmall)
+                        .tracking(1.2)
+                        .textCase(.uppercase)
+                        .foregroundStyle(Color.bruInk)
                         .frame(maxWidth: .infinity, minHeight: 44)
-                    }
-                    .buttonStyle(.plain)
-                    .disabled(backupRendering)
+                        .contentShape(Rectangle())
                 }
+                .buttonStyle(.plain)
 
                 // 1pt vertical separator
                 Rectangle()
@@ -513,20 +462,6 @@ public struct SettingsView: View {
     }
 
     // MARK: - Backup/Restore handlers (Wave-5 plan 06-10)
-
-    @MainActor
-    private func renderBackup() async {
-        backupRendering = true
-        backupError = nil
-        let archiver = BackupArchiver(modelContainer: modelContext.container)
-        do {
-            let file = try await archiver.archive()
-            backupFile = file
-        } catch {
-            backupError = "Couldn't create backup. Try again."
-        }
-        backupRendering = false
-    }
 
     nonisolated private func handleFileImporterResult(_ result: Result<[URL], Error>) {
         switch result {
@@ -610,36 +545,6 @@ public struct SettingsView: View {
             return "This backup exceeds the safe restore limit."
         }
     }
-
-    // MARK: - CSV/JSON renderers (06-09b)
-
-    @MainActor
-    private func renderCSV() async {
-        csvRendering = true
-        csvError = nil
-        let service = ExportService(modelContainer: modelContext.container)
-        do {
-            let file = try await service.renderCSV()
-            csvFile = file
-        } catch {
-            csvError = "Couldn't prepare export. Try again."
-        }
-        csvRendering = false
-    }
-
-    @MainActor
-    private func renderJSON() async {
-        jsonRendering = true
-        jsonError = nil
-        let service = ExportService(modelContainer: modelContext.container)
-        do {
-            let file = try await service.renderJSON()
-            jsonFile = file
-        } catch {
-            jsonError = "Couldn't prepare export. Try again."
-        }
-        jsonRendering = false
-    }
 }
 
 // MARK: - BRURowLabel helper (fileprivate)
@@ -678,22 +583,15 @@ private struct BRURowLabel: View {
 // MARK: - ExportCard helper (fileprivate)
 
 /// 2pt bruInk-outlined card for the Export section grid.
-/// Used inside ShareLink or Button label closures.
+/// Used as a ShareLink label.
 private struct ExportCard: View {
     let kind: String      // "CSV" / "JSON"
     let label: String     // "Export CSV" / "Export JSON"
     let sub: String       // "ONE ROW PER SET" / "VERSION-STAMPED"
-    let isLoading: Bool
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
-            if isLoading {
-                ProgressView()
-                    .tint(Color.bruInk)
-                    .frame(height: 28)
-            } else {
-                BRUDisplay(kind, size: .large)
-            }
+            BRUDisplay(kind, size: .large)
             Text(label)
                 .font(BRUFont.bodyEmphasis)
                 .foregroundStyle(Color.bruInk)

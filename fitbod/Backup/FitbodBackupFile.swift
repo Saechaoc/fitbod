@@ -3,9 +3,9 @@
 //  fitbod
 //
 //  Wave-5 plan 06-10 — `Transferable` value type wrapping an on-disk
-//  `.fitbodbackup` archive URL. Consumed by `ShareLink(item:)` in
-//  `SettingsView` to surface backups via the system share sheet
-//  (Files / iCloud Drive / AirDrop).
+//  `.fitbodbackup` archive URL. `BackupArchiver.archive(outputURL:)`
+//  returns it, and Settings' `BackupShareItem` shares its file through
+//  the system share sheet (Files / iCloud Drive / AirDrop).
 //
 //  ## Why FileRepresentation (not DataRepresentation)
 //
