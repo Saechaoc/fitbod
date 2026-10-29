@@ -22,7 +22,7 @@ must_haves:
 
 <objective>
 Fix review items 14, 16, 17 and 18, as part of Phase 2 of the approved plan `.planning/noble-wishing-conway.md`.
-Each item has a full section (what you see, cause, fix, test) in `/Users/chrissaechao/Desktop/fitbod-review/fitbod-m1-review.md`.
+Each item has a full section (what you see, cause, fix, test) in `docs/review-docs/fitbod-m1-review.md`.
 </objective>
 
 <rules>

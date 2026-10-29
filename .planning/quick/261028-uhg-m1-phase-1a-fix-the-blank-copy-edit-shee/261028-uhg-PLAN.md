@@ -36,7 +36,7 @@ must_haves:
 Fix Milestone 1 review items 1, 2, 3, 33, 41 and 42, as part of Phase 1 of the approved plan `.planning/noble-wishing-conway.md`.
 Each fix starts with a UI test that reproduces the bug the way a user meets it, and that test stays as a regression test.
 
-Full descriptions, causes and suggested fixes for every item are in `/Users/chrissaechao/Desktop/fitbod-review/fitbod-m1-review.md`.
+Full descriptions, causes and suggested fixes for every item are in `docs/review-docs/fitbod-m1-review.md`.
 Read only the sections for your task's items.
 
 Output: one commit per item (or per tightly coupled pair), new UI and unit tests, and a section per task in `261028-uhg-SUMMARY.md`.

@@ -24,7 +24,7 @@ must_haves:
 
 <objective>
 Fix review items 22, 23, 24 and 25, plus the item 25 additions, as Phase 3 of the approved plan `.planning/noble-wishing-conway.md`.
-Items 22-25 have full sections in `/Users/chrissaechao/Desktop/fitbod-review/fitbod-m1-review.md`; the additions are under "Second-pass updates to items 1-25" there, and in "Additions to item 25" in the approved plan.
+Items 22-25 have full sections in `docs/review-docs/fitbod-m1-review.md`; the additions are under "Second-pass updates to items 1-25" there, and in "Additions to item 25" in the approved plan.
 </objective>
 
 <rules>

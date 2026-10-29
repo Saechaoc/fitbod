@@ -84,7 +84,7 @@ Codex must not edit this working tree while I work.
    Run `detect_changes(scope: staged)` before each commit.
    Paths that Codex left out of the groups stay uncommitted.
    After group 07, the tip must build and match the results from step 4.
-6. Add items 26-47 to `~/Desktop/fitbod-review/fitbod-m1-review.md`, so the review record is complete again.
+6. Add items 26-47 to `docs/review-docs/fitbod-m1-review.md`, so the review record is complete again.
 
 ## Phase 1 - P0 and P1 defects
 
@@ -229,7 +229,7 @@ The milestone is done when all of these are true:
 
 ## Appendix A - Defect checklist
 
-Items 1-25 are described in full, with fixes, in `~/Desktop/fitbod-review/fitbod-m1-review.md`.
+Items 1-25 are described in full, with fixes, in `docs/review-docs/fitbod-m1-review.md`.
 Items 26-47 exist only here, because their drafts were lost when the temporary folder was wiped.
 
 | # | P | Defect | Fix | Key files |

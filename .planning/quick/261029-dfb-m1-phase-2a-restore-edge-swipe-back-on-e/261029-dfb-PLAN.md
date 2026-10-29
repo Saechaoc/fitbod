@@ -22,7 +22,7 @@ must_haves:
 
 <objective>
 Restore edge-swipe back on every pushed screen, and fix review item 43, as part of Phase 2 of the approved plan `.planning/noble-wishing-conway.md`.
-Item 43 is described in `/Users/chrissaechao/Desktop/fitbod-review/fitbod-m1-review.md`, section 43.
+Item 43 is described in `docs/review-docs/fitbod-m1-review.md`, section 43.
 </objective>
 
 <rules>
