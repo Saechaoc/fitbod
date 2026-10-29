@@ -1342,7 +1342,7 @@ fileprivate struct NewBlockPhaseEditorRow: View {
     private var revealed: Bool { swipeOffset < -1 }
     private var visibleOffset: CGFloat { min(0, swipeOffset + swipeDrag) }
 
-    /// 1pt × 34pt hairline divider between stat columns (260610-dbz).
+    /// 1pt × 30pt hairline divider between stat columns (260610-dbz; 34 → 30pt in 260610-hcv).
     private var phaseRowDivider: some View {
         Rectangle()
             .fill(NewBlockScreenTokens.hair)
@@ -1407,7 +1407,9 @@ fileprivate struct NewBlockPhaseEditorRow: View {
                     .background(chipFill)
                     .clipShape(RoundedRectangle(cornerRadius: 9, style: .continuous))
 
-                // Phase title + subtitle
+                // Phase title + subtitle. The block fills the width up to the stat grid
+                // itself rather than sitting beside a Spacer, so the title gets that
+                // Spacer's 14pt back and fits on 390pt phones (260610-hcv).
                 VStack(alignment: .leading, spacing: 3) {
                     Text(NewBlockPhaseText.title(for: draft.kind))
                         .font(NewBlockType.phaseTitle)
@@ -1423,8 +1425,7 @@ fileprivate struct NewBlockPhaseEditorRow: View {
                         .lineLimit(1)
                         .minimumScaleFactor(0.8)
                 }
-
-                Spacer(minLength: 6)
+                .frame(maxWidth: .infinity, alignment: .leading)
 
                 // Stat grid: hairline dividers before each column + chevron (260610-dbz)
                 HStack(alignment: .top, spacing: 5) {
@@ -1565,6 +1566,7 @@ fileprivate struct NewBlockPhaseEditorRow: View {
 /// Center-aligned label-over-value stat column for the phase row.
 /// 260610-dbz: center-aligned + narrowed to 38pt (was 40pt left-aligned in 260528-vi2 r2)
 /// to compensate for the added hairline dividers and keep the title block from being squeezed.
+/// 260610-hcv: narrowed again to 32pt with a 19pt value for the same reason.
 fileprivate struct NewBlockReadOnlyStatColumn: View {
     let label: String
     let value: String
