@@ -40,6 +40,25 @@ Full rationale, alternatives, sources, install: docs/STACK-RESEARCH.md
 - Do not search `node_modules`, build outputs, generated files, snapshots, lockfiles, coverage, or large fixtures unless explicitly relevant.
 - When a search returns many results, refine the query instead of reading all matches.
 
+## Milestone 1 baseline
+
+- Tabs: Today, Program, Progress, Library. Native tab containment preserves
+  each navigation stack; BRU supplies the visible tab controls. Settings is a
+  sheet from Today. History opens from Today → Sessions or Progress → Workouts.
+- The tab bar hides in the logger and while the keyboard is visible.
+- At accessibility text sizes, headers separate titles/actions, tabs use two
+  columns, Today statistics stack, and logger inputs stack with 44pt targets.
+- SchemaV7 is the sole baseline. Incompatible stores are moved aside with
+  SQLite siblings, not migrated. The former schema history is preserved on
+  `archive/frozen-schema-history`.
+- Units relabel stored numbers without converting them; exercise overrides
+  win. Do not describe a canonical converted store or add implicit conversion.
+- Keep Pattern filtering hidden until catalog pattern metadata exists.
+- Run simulator tests serially on dedicated devices. DEBUG reset is initial
+  launch only; persistence journeys must relaunch without reset.
+- Current evidence, limitations and product decisions: `docs/VERIFICATION.md`,
+  `docs/MILESTONE-1-CLOSEOUT.md`, `docs/ROADMAP.md`.
+
 <!-- GSD:conventions-start source:CONVENTIONS.md -->
 ## Conventions
 
@@ -66,7 +85,8 @@ Full rationale, alternatives, sources, install: docs/STACK-RESEARCH.md
 
 ### SwiftData
 - Don't assign relationships in initializers — insert into context first.
-- Versioned schemas from day one: `VersionedSchema` + `SchemaMigrationPlan`.
+- Current baseline: `SchemaV7` only, with recoverable incompatible-store reset;
+  do not reintroduce the removed historical migration chain.
 - No `Codable` on `@Model` types — decode into DTO structs, map to `@Model` explicitly.
 - Cascade: Session→SessionExercise→SetEntry cascade; Split→slots cascade; Exercise→history nullify (soft-delete via `isArchived`). Session.slot + Block.split + Session.template = nullify; SplitSessionSlot.sessionTemplate = deny.
 
@@ -138,7 +158,7 @@ Do not make direct repo edits outside a GSD workflow unless the user explicitly 
 <!-- gitnexus:start -->
 # GitNexus — Code Intelligence
 
-This project is indexed by GitNexus as **fitbod** (9915 symbols, 183708 relationships, 166 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
+This project is indexed by GitNexus as **fitbod** (11905 symbols, 233617 relationships, 219 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
 
 > If any GitNexus tool warns the index is stale, run `npx gitnexus analyze` in terminal first.
 

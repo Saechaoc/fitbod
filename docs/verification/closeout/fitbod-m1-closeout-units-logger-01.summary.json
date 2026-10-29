@@ -1,0 +1,47 @@
+{
+  "devicesAndConfigurations": [
+    {
+      "device": {
+        "architecture": "arm64",
+        "deviceId": "777198FC-2973-4310-9F3B-831A92847600",
+        "deviceName": "fitbod-codex-small",
+        "modelName": "iPhone 17e",
+        "osBuildNumber": "23F77",
+        "osVersion": "26.5",
+        "platform": "iOS Simulator"
+      },
+      "expectedFailures": 1,
+      "failedTests": 0,
+      "passedTests": 1053,
+      "skippedTests": 0,
+      "testPlanConfiguration": {
+        "configurationId": "1",
+        "configurationName": "Test Scheme Action"
+      }
+    }
+  ],
+  "environmentDescription": "fitbod \u00b7 Built with macOS 26.4.1",
+  "expectedFailures": 1,
+  "failedTests": 0,
+  "finishTime": 1791143791.316,
+  "passedTests": 976,
+  "result": "Passed",
+  "skippedTests": 0,
+  "startTime": 1791143565.669,
+  "statistics": [
+    {
+      "subtitle": "95 test runs",
+      "title": "18 tests ran with dynamic parameters"
+    }
+  ],
+  "testFailures": [],
+  "title": "Test - fitbod",
+  "topInsights": [
+    {
+      "category": "Longest Test Runs",
+      "impact": "52% of duration",
+      "text": "11 longest test runs with outlier durations exceeding 0.20s (three standard deviations)"
+    }
+  ],
+  "totalTestCount": 977
+}

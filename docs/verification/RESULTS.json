@@ -1,0 +1,101 @@
+{
+  "date": "2026-10-05",
+  "status": "acceptance_open",
+  "xcode": "26.5 (17F42)",
+  "simulator_runtime": "iOS 26.5 (23F77)",
+  "latest_complete_run": {
+    "bundle": "/private/tmp/fitbod-m1-closeout-full-02.xcresult",
+    "passed_identifiers": 1021,
+    "failed_identifiers": 4,
+    "expected_failures": 1,
+    "skipped": 0,
+    "unit": {
+      "passed_identifiers": 973,
+      "expected_failures": 1,
+      "unexpected_failures": 0
+    },
+    "ui": {
+      "passed_identifiers": 48,
+      "failed_identifiers": 4,
+      "passed_invocations": 51,
+      "total_invocations": 55
+    }
+  },
+  "source_after_run": "Numeric helper, workout-menu UI test, weight-cell gesture/accessibility action and AX3 builder layout need final combined verification.",
+  "current_device_checks": {
+    "17e_ax3": "History/Today (2), gallery and logger layout passed in 06; swap passed in 04; authored journey failed in 08.",
+    "17_pro_max_ax3": "Full current authored journey pending; historical logger/gallery captures are separate."
+  },
+  "checks": {
+    "contrast_pairs": 19,
+    "contrast_appearances": [
+      "light",
+      "dark"
+    ],
+    "contrast_failures": 0,
+    "whitespace": "passed",
+    "gitnexus": {
+      "scope": "all",
+      "changed_symbols": 667,
+      "affected_flows": 75,
+      "changed_files": 128,
+      "risk": "CRITICAL",
+      "fresh_index": "05 completed; 06 failed at restricted registry write",
+      "staged_checks": "pending"
+    },
+    "final_swift_syntax": {
+      "result": "passed",
+      "files": [
+        "fitbod/Sessions/PrescriptionWeightCell.swift",
+        "fitbodUITests/MilestoneOneJourneyUITests.swift",
+        "fitbodUITests/SessionLoggerBRUUITests.swift"
+      ],
+      "limit": "Syntax parse only; not typecheck/build/runtime verification"
+    },
+    "docs_and_report": {
+      "relative_markdown_links_resolved": 106,
+      "missing_report_assets": 0,
+      "javascript_syntax": "passed",
+      "live_browser_layout": "not verified; Lavish SERVER_ERROR"
+    }
+  },
+  "expected_failure": {
+    "test": "ProgramGraphDeleteRuleBehaviorTests.slottedTemplateDenyRuleRuntimeEnforcement",
+    "meaning": "Known issue deliberately avoids process-aborting deletion; does not prove runtime deny enforcement."
+  },
+  "environment_attempts": [
+    {
+      "log": "/private/tmp/fitbod-m1-closeout-sandbox-01.log",
+      "exit_code": 70,
+      "result": "No tests executed; CoreSimulator access blocked"
+    },
+    {
+      "log": "/private/tmp/fitbod-m1-closeout-sandbox-build-01.log",
+      "exit_code": 65,
+      "result": "Swift macro server sandbox_apply operation not permitted"
+    },
+    {
+      "log": "/private/tmp/fitbod-m1-closeout-index-06.log",
+      "exit_code": 1,
+      "result": "EPERM writing global GitNexus registry"
+    }
+  ],
+  "repository": {
+    "head": "27687f8b55fdda7c9b6ea5b696a2f52eaa896fce",
+    "commits_created": 0,
+    "pushed": false,
+    "index": "No staged changes",
+    "authorization": "Grouped exact task-owned commits and main push already authorized; current metadata access read-only",
+    "staging_attempt": {
+      "manifest": "closeout/commit-groups/01-design.paths",
+      "exit_code": 128,
+      "error": "Unable to create .git/index.lock: Operation not permitted",
+      "staged_paths_after_attempt": 0
+    },
+    "prepared_groups": 7,
+    "task_paths": 303,
+    "excluded_paths": 847
+  },
+  "open_flags_document": "../MILESTONE-1-CLOSEOUT.md",
+  "historical_results": "RESULTS-20261003.json"
+}

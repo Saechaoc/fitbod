@@ -1,0 +1,80 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>Debug — brutalist screens</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@400;500;600;700&family=Bebas+Neue&family=Bricolage+Grotesque:opsz,wght@10..48,300;10..48,400;10..48,500;10..48,600;10..48,700&family=IBM+Plex+Mono:wght@400;500;600&family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,300;1,6..72,400&family=Public+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+  body { margin: 0; padding: 16px; background: #ddd; font-family: sans-serif; }
+  .row { display: flex; gap: 12px; flex-wrap: wrap; }
+  .phone { width: 393px; height: 852px; border-radius: 50px; overflow: hidden;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.2); }
+  .label { font-size: 11px; margin-bottom: 4px; color: #333; }
+</style>
+</head>
+<body>
+<div class="row" id="root"></div>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<script src="workout-data.js"></script>
+<script type="text/babel" src="use-session.jsx"></script>
+<script type="text/babel" src="variant-brutalist.jsx"></script>
+<script type="text/babel" src="bru-theme.jsx"></script>
+<script type="text/babel" src="../today.jsx"></script>
+<script type="text/babel" src="../routine-builder.jsx"></script>
+<script type="text/babel" src="../session-history.jsx"></script>
+<script type="text/babel" src="../library.jsx"></script>
+<script type="text/babel" src="../exercise-detail.jsx"></script>
+<script type="text/babel" src="../custom-exercise.jsx"></script>
+<script type="text/babel" src="../why-weight.jsx"></script>
+<script type="text/babel" src="../plate-calc.jsx"></script>
+<script type="text/babel" src="../block-builder.jsx"></script>
+<script type="text/babel" src="../block-overview.jsx"></script>
+<script type="text/babel" src="../block-review.jsx"></script>
+<script type="text/babel" src="../volume.jsx"></script>
+<script type="text/babel" src="../heatmap.jsx"></script>
+<script type="text/babel" src="../plateau.jsx"></script>
+<script type="text/babel" src="../progress-chart.jsx"></script>
+<script type="text/babel" src="../weekly-recap.jsx"></script>
+<script type="text/babel" src="../settings.jsx"></script>
+
+<script type="text/babel">
+  function P({ name, children }) {
+    return (
+      <div>
+        <div className="label">{name}</div>
+        <div className="phone" style={{ background: '#F0EDE5' }}>{children}</div>
+      </div>
+    );
+  }
+  function All() {
+    return <>
+      <P name="ACTIVE SESSION"><BrutalistVariant /></P>
+      <P name="TODAY"><BruTodayScreen /></P>
+      <P name="ROUTINE BUILDER"><BruRoutineBuilderScreen /></P>
+      <P name="SESSION HISTORY"><BruSessionHistoryScreen /></P>
+      <P name="LIBRARY"><BruLibraryScreen /></P>
+      <P name="EXERCISE DETAIL"><BruExerciseDetailScreen /></P>
+      <P name="CUSTOM EXERCISE"><BruCustomExerciseScreen /></P>
+      <P name="WHY THIS WEIGHT"><BruWhyWeightScreen /></P>
+      <P name="PLATE CALC"><BruPlateCalcScreen /></P>
+      <P name="BLOCK OVERVIEW"><BruBlockOverviewScreen /></P>
+      <P name="BLOCK BUILDER"><BruBlockBuilderScreen /></P>
+      <P name="BLOCK REVIEW"><BruBlockReviewScreen /></P>
+      <P name="VOLUME"><BruVolumeScreen /></P>
+      <P name="HEATMAP"><BruHeatmapScreen /></P>
+      <P name="PLATEAU"><BruPlateauScreen /></P>
+      <P name="PROGRESS CHART"><BruProgressChartScreen /></P>
+      <P name="WEEKLY RECAP"><BruWeeklyRecapScreen /></P>
+      <P name="SETTINGS"><BruSettingsScreen /></P>
+    </>;
+  }
+  ReactDOM.createRoot(document.getElementById('root')).render(<All />);
+</script>
+</body>
+</html>

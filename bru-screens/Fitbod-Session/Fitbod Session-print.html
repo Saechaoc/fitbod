@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Fitbod · print</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@400;500;600;700&family=Bebas+Neue&family=Bricolage+Grotesque:opsz,wght@10..48,300;10..48,400;10..48,500;10..48,600;10..48,700&family=IBM+Plex+Mono:wght@400;500;600&family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,300;1,6..72,400&family=Public+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+  html, body { margin: 0; padding: 0; background: #ffffff;
+    font-family: -apple-system, "SF Pro Text", system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .cover {
+    padding: 60px 56px; height: 100vh; box-sizing: border-box;
+    display: flex; flex-direction: column; justify-content: space-between;
+    background: #F0EDE5;
+    break-after: page;
+  }
+  .cover h1 { font-family: "Bebas Neue", system-ui, sans-serif; font-size: 140px; font-weight: 400;
+    line-height: 0.9; margin: 0; letter-spacing: 0.5px; text-transform: uppercase; color: #0A0A0A; }
+  .cover .sub { font-size: 14px; letter-spacing: 1.5px; font-weight: 700; text-transform: uppercase; color: #0A0A0A; }
+  .cover .meta { font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 11px;
+    color: rgba(10,10,10,0.55); letter-spacing: 1px; }
+  .cover .rule { height: 4px; background: #0A0A0A; margin: 16px 0; }
+
+  .section-cover {
+    padding: 80px 56px; height: 100vh; box-sizing: border-box;
+    display: flex; flex-direction: column; justify-content: center;
+    background: #F0EDE5;
+    break-before: page; break-after: page;
+  }
+  .section-cover .label { font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 12px;
+    letter-spacing: 2px; color: rgba(10,10,10,0.55); font-weight: 700; text-transform: uppercase; }
+  .section-cover h2 { font-family: "Bebas Neue", system-ui, sans-serif; font-size: 96px;
+    font-weight: 400; line-height: 0.9; margin: 8px 0 16px; letter-spacing: 0.5px;
+    text-transform: uppercase; color: #0A0A0A; }
+  .section-cover .desc { font-size: 18px; max-width: 540px; line-height: 1.45; color: #1C1C1A; }
+
+  .page {
+    padding: 28px 40px;
+    height: 100vh; box-sizing: border-box;
+    display: grid; grid-template-columns: 393px 1fr; gap: 36px;
+    align-items: start;
+    break-before: page;
+    background: #ffffff;
+  }
+  .phone-wrap {
+    width: 393px; height: 852px; border-radius: 50px; overflow: hidden;
+    box-shadow: 0 0 0 1px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.06);
+    position: relative; background: #F0EDE5;
+  }
+  .phone-wrap.dark { background: #000; }
+  .phone-wrap .island { position: absolute; top: 11px; left: 50%; transform: translateX(-50%);
+    width: 126px; height: 37px; border-radius: 24px; background: #000; z-index: 99; }
+  .phone-wrap .home { position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%);
+    width: 134px; height: 5px; border-radius: 100px; background: rgba(0,0,0,0.35); z-index: 99; }
+  .phone-wrap.dark .home { background: rgba(255,255,255,0.5); }
+
+  .meta-col { padding-top: 18px; max-width: 360px; }
+  .meta-col .tag { font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 10px;
+    letter-spacing: 2px; color: rgba(10,10,10,0.55); font-weight: 700; text-transform: uppercase; }
+  .meta-col h3 { font-family: "Bebas Neue", system-ui, sans-serif; font-size: 48px; font-weight: 400;
+    line-height: 0.95; margin: 6px 0 6px; letter-spacing: 0.5px; text-transform: uppercase; color: #0A0A0A; }
+  .meta-col .desc { font-size: 14px; line-height: 1.5; color: #1C1C1A; }
+  .meta-col .reqs { margin-top: 18px; padding-top: 14px; border-top: 2px solid #0A0A0A;
+    font-size: 11px; line-height: 1.5; color: rgba(10,10,10,0.7); font-family: "JetBrains Mono", monospace; }
+  .meta-col .reqs strong { color: #0A0A0A; font-weight: 600; }
+  .footer {
+    position: fixed; bottom: 16px; left: 40px; right: 40px;
+    display: flex; justify-content: space-between;
+    font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 9px;
+    letter-spacing: 1px; color: rgba(10,10,10,0.4);
+  }
+
+  @page { size: letter portrait; margin: 0; }
+  @media print {
+    .footer { color: rgba(10,10,10,0.4); }
+    .phone-wrap { box-shadow: 0 0 0 1px rgba(0,0,0,0.15); }
+  }
+</style>
+</head>
+<body>
+
+<!-- Cover -->
+<div class="cover">
+  <div>
+    <div class="sub">A personal iOS lifting app · brutalist direction</div>
+    <div class="rule"></div>
+    <h1>Fitbod</h1>
+    <h1 style="color:#FF4D2E;">Full app</h1>
+  </div>
+  <div>
+    <div class="rule"></div>
+    <div style="display: flex; justify-content: space-between; align-items: flex-end;">
+      <div>
+        <div class="sub">17 screens · 6 phases · 80 requirements</div>
+        <div class="meta" style="margin-top:6px;">SwiftData + SwiftUI · iOS 18 · Swift 6</div>
+      </div>
+      <div class="meta">v1.0 · MAY 2026</div>
+    </div>
+  </div>
+</div>
+
+<div id="print-root"></div>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<script src="workout-data.js"></script>
+<script type="text/babel" src="use-session.jsx"></script>
+<script type="text/babel" src="variant-terminal.jsx"></script>
+<script type="text/babel" src="variant-brutalist.jsx"></script>
+<script type="text/babel" src="variant-soft.jsx"></script>
+<script type="text/babel" src="variant-dark.jsx"></script>
+<script type="text/babel" src="variant-editorial.jsx"></script>
+<script type="text/babel" src="bru-theme.jsx"></script>
+<script type="text/babel" src="../today.jsx"></script>
+<script type="text/babel" src="../routine-builder.jsx"></script>
+<script type="text/babel" src="../session-history.jsx"></script>
+<script type="text/babel" src="../library.jsx"></script>
+<script type="text/babel" src="../exercise-detail.jsx"></script>
+<script type="text/babel" src="../custom-exercise.jsx"></script>
+<script type="text/babel" src="../why-weight.jsx"></script>
+<script type="text/babel" src="../plate-calc.jsx"></script>
+<script type="text/babel" src="../block-builder.jsx"></script>
+<script type="text/babel" src="../block-overview.jsx"></script>
+<script type="text/babel" src="../block-review.jsx"></script>
+<script type="text/babel" src="../volume.jsx"></script>
+<script type="text/babel" src="../heatmap.jsx"></script>
+<script type="text/babel" src="../plateau.jsx"></script>
+<script type="text/babel" src="../progress-chart.jsx"></script>
+<script type="text/babel" src="../weekly-recap.jsx"></script>
+<script type="text/babel" src="../settings.jsx"></script>
+
+<script type="text/babel">
+
+function Phone({ Comp, dark = false }) {
+  return (
+    <div className={'phone-wrap' + (dark ? ' dark' : '')}>
+      <Comp />
+      <div className="island" />
+      <div className="home" />
+    </div>
+  );
+}
+
+function Page({ tag, title, desc, reqs, Comp, dark, footer }) {
+  return (
+    <div className="page">
+      <Phone Comp={Comp} dark={dark} />
+      <div className="meta-col">
+        <div className="tag">{tag}</div>
+        <h3>{title}</h3>
+        <div className="desc">{desc}</div>
+        {reqs && <div className="reqs"><strong>Requirements</strong><br />{reqs}</div>}
+      </div>
+      <div className="footer">
+        <span>FITBOD · BRUTALIST · v1.0</span>
+        <span>{footer}</span>
+      </div>
+    </div>
+  );
+}
+
+function SectionCover({ label, title, desc }) {
+  return (
+    <div className="section-cover">
+      <div className="label">{label}</div>
+      <h2>{title}</h2>
+      <div className="desc">{desc}</div>
+    </div>
+  );
+}
+
+const directions = [
+  { tag: 'Direction A', title: 'Data terminal', desc: 'Mono everywhere, hairline borders, tabular data. A Bloomberg-for-lifting feel: every number sits in a fixed-width grid; sparklines pull e1RM trend into the header; the set ledger is the primary surface.', Comp: TerminalVariant, dark: false, footer: '01 / 22' },
+  { tag: 'Direction B', title: 'Brutalist', desc: 'Hard edges, no rounding, condensed Bebas Neue for the weight slab. One signal red drives all attention. Set rows are heavy lines; the LOG SET CTA is a full-bleed red bar — the chosen direction for the full app build.', Comp: BrutalistVariant, dark: false, footer: '02 / 22' },
+  { tag: 'Direction C', title: 'Soft modern iOS', desc: 'Rounded cards, system blue, generous padding. Native iOS feel with platelets, target reps/RPE/rest in a 3-column split, and a plate viz row beneath the hero. The familiar option.', Comp: SoftVariant, dark: false, footer: '03 / 22' },
+  { tag: 'Direction D', title: 'Dark garage', desc: 'High-contrast dark, amber arc gauge, oversized display numerals. The weight glows. Set list as horizontal cards. Industrial gym-meter vibe.', Comp: DarkVariant, dark: true, footer: '04 / 22' },
+  { tag: 'Direction E', title: 'Editorial', desc: 'Newsreader serif headlines, cream paper, the weight as a magazine pull-quote. Italic prescriptions ("for 8 reps at RPE 9"). Set list rendered as a dotted ledger.', Comp: EditorialVariant, dark: false, footer: '05 / 22' },
+];
+
+const phase1 = [
+  { tag: 'Phase 1 · LIB', title: 'Exercise library', desc: 'Multi-facet filter across muscle, equipment, mechanic, and pattern simultaneously. ~800-exercise seed indexed for sub-100ms response, type-ahead search, alphabetized sections.', reqs: 'LIB-01 · LIB-02 · LIB-03 · LIB-04 · LIB-05', Comp: BruLibraryScreen, footer: '06 / 22' },
+  { tag: 'Phase 1 · DETAIL', title: 'Exercise detail', desc: 'Intent-split history (strength / hypertrophy as distinct streams). e1RM hero with 12-week spark. Each session card shows top set + per-set chips. PR strip at the bottom shows top weight, top reps, and volume PR.', reqs: 'LIB-06 · SET-01 · PROG-02', Comp: BruExerciseDetailScreen, footer: '07 / 22' },
+  { tag: 'Phase 1 · CUSTOM', title: 'Custom exercise', desc: 'Save is blocked until at least one primary muscle is mapped with a stimulus weight. Stimulus weights pick from a quantized tick scale (0.25 / 0.5 / 0.75 / 1.0). Primary vs secondary visually distinct.', reqs: 'LIB-04 · FOUND-02 · FOUND-05', Comp: BruCustomExerciseScreen, footer: '08 / 22' },
+];
+
+const phase2 = [
+  { tag: 'Phase 2 · HOME', title: 'Today', desc: 'Surface the active block, the current phase, and the day\'s prescribed workout. The week ticker shows W3 active, W5 deload. The black slab is the singular CTA. Day-stats row, then lift list with intent chips.', reqs: 'BLOCK-02 · SESS-01 · SESS-08', Comp: BruTodayScreen, footer: '09 / 22' },
+  { tag: 'Phase 2 · BUILD', title: 'Routine builder', desc: 'One screen, no modal exercise picker. Per-exercise prescription (intent / rep range / RPE / progression / rest). Supersets bracketed with the red rail. Per-set prescription rows are inline & editable.', reqs: 'ROUTINE-01 to ROUTINE-09', Comp: BruRoutineBuilderScreen, footer: '10 / 22' },
+  { tag: 'Phase 2 · SESSION', title: 'Active session', desc: 'Snapshot-at-start: editing the routine template later doesn\'t mutate this logged session. Big weight × reps × RPE hero. Tap LOG SET to advance and fire the rest timer (Live Activity / Dynamic Island).', reqs: 'SESS-01 to SESS-11', Comp: BrutalistVariant, footer: '11 / 22' },
+  { tag: 'Phase 2 · HISTORY', title: 'Session history', desc: '30-day adherence + tonnage trend. Each row: date, routine, set count + duration, tonnage. PR chips per session. Filterable by routine.', reqs: 'SESS-05 · SESS-06 · PROG-01', Comp: BruSessionHistoryScreen, footer: '12 / 22' },
+];
+
+const phase3 = [
+  { tag: 'Phase 3 · WHY', title: 'Why this weight + warm-up ramp', desc: 'Three-step disclosure: last session, target @ RPE 9 via Tuchscherer prior, rounded to plate ½ lb. Calibration meter shows the algorithm is still learning (8 / 10 sets). Warm-up ramp auto-generated per equipment plate inventory.', reqs: 'PRES-01 · PRES-02 · PRES-07 · WARM-01 · WARM-02 · WARM-03', Comp: BruWhyWeightScreen, footer: '13 / 22' },
+  { tag: 'Phase 3 · PLATES', title: 'Plate calculator + inventory', desc: 'Per-equipment plate inventory with a 4-tick tally per weight. Bar selection, plate stack visualization, ± steppers. Smallest-increment per exercise is honored by every progression rounding decision.', reqs: 'PRES-08 · PRES-09 · PRES-10 · SET-02', Comp: BruPlateCalcScreen, footer: '14 / 22' },
+];
+
+const phase4 = [
+  { tag: 'Phase 4 · BLOCK', title: 'Block overview', desc: 'Active mesocycle with phase context. Week-day strip surfaces what\'s done, what\'s now, what\'s next; PR badges fly above completed days. Phase progression with summary per phase. Fatigue advisory at the bottom — never auto-applies.', reqs: 'BLOCK-02 · BLOCK-03 · VOL-05', Comp: BruBlockOverviewScreen, footer: '15 / 22' },
+  { tag: 'Phase 4 · EDIT', title: 'Block builder', desc: 'Phase sequence editor. The timeline visual shows phase weight + width; below, each phase is a card with editable weeks, volume multiplier, intensity multiplier. Deload phase distinct via stripe fill.', reqs: 'BLOCK-01 · BLOCK-04 · BLOCK-05 · BLOCK-06', Comp: BruBlockBuilderScreen, footer: '16 / 22' },
+  { tag: 'Phase 4 · REVIEW', title: 'End-of-block review', desc: 'Surfaces automatically at phase end. Sessions complete / tonnage / PRs in the hero. e1RM movement bars per exercise with PR chips. Recommended next block at the bottom.', reqs: 'BLOCK-07 · BLOCK-08', Comp: BruBlockReviewScreen, footer: '17 / 22' },
+];
+
+const phase5 = [
+  { tag: 'Phase 5 · VOL', title: 'Weekly volume', desc: 'MEV / MAV / MRV bars per muscle. The current value drives a verb label — "add a set" / "hold" / "near MRV — deload" — so every number drives a decision. Triceps in red (alarm), quads in amber (under MEV), hamstrings off.', reqs: 'VOL-01 to VOL-04', Comp: BruVolumeScreen, footer: '18 / 22' },
+  { tag: 'Phase 5 · MAP', title: 'Muscle heatmap', desc: 'Stylized block-anatomy: front and back bodies as a grid of muscle rectangles, intensity = stimulus-weighted weekly sets. Tappable list drills into per-muscle detail with frequency.', reqs: 'VOL-03 · VOL-06', Comp: BruHeatmapScreen, footer: '19 / 22' },
+  { tag: 'Phase 5 · STALL', title: 'Plateau detected', desc: 'Stall detector flags e1RM ± 1.2% across 4 sessions. Four ranked actions: drop intensity (recommended), add a set, deload (advisory), swap variation. The block deload schedule is never overridden — user accepts explicitly.', reqs: 'VOL-05 · VOL-07 · PROG-06', Comp: BruPlateauScreen, footer: '20 / 22' },
+];
+
+const phase6 = [
+  { tag: 'Phase 6 · CHART', title: 'Per-exercise progress', desc: 'Intent-split: solid hypertrophy series (9 sessions) + dashed strength series (5 sessions) on the same axes. PR line at top. PRs strip below shows e1RM, top weight, top reps, volume — each intent-matched and rep-range-aware.', reqs: 'PROG-01 · PROG-02 · PROG-03', Comp: BruProgressChartScreen, footer: '21 / 22' },
+  { tag: 'Phase 6 · RECAP', title: 'Weekly recap', desc: 'Auto-surfaced at the week boundary. Headline metric grid + records broken + under-trained list + a recent session note. Sets the tone for the upcoming week.', reqs: 'PROG-07 · PROG-08', Comp: BruWeeklyRecapScreen, footer: '22 / 22' },
+  { tag: 'Phase 6 · EXPORT', title: 'Settings & export', desc: 'CSV export (one row per set) and version-stamped JSON. Full database backup to iCloud / Files / AirDrop; restore with explicit data-loss confirmation. Per-equipment plate inventory and stimulus weight tables live here.', reqs: 'EXP-01 · EXP-02 · EXP-03 · EXP-04', Comp: BruSettingsScreen, footer: '23 / 23' },
+];
+
+function PrintApp() {
+  return <>
+    <SectionCover label="Section 01" title="Five visual directions"
+      desc="The same prescriptive top set — Bench Press, 205 × 8 @ RPE 9 — rendered five ways. The Brutalist direction was selected and built out across the rest of the document." />
+    {directions.map((p, i) => <Page key={i} {...p} />)}
+
+    <SectionCover label="Section 02 · Phase 1" title="Foundation + library"
+      desc="~800-exercise seed, multi-facet filter, custom exercises, SwiftData schema with versioning and indexes. The keystone every other phase composes on." />
+    {phase1.map((p, i) => <Page key={i} {...p} />)}
+
+    <SectionCover label="Section 03 · Phase 2" title="Core loop"
+      desc="Routine builder, supersets, snapshot-at-start sessions, per-set logging with RPE / tempo / partials / clusters, rest timer with Live Activity, intent-split history." />
+    {phase2.map((p, i) => <Page key={i} {...p} />)}
+
+    <SectionCover label="Section 04 · Phase 3" title="Smart prescription"
+      desc="RPE autoreg with per-exercise per-lifter calibration. Double progression with earned weight bumps. Warm-up ramps generated from plate inventory. Plate calculator that respects inventory." />
+    {phase3.map((p, i) => <Page key={i} {...p} />)}
+
+    <SectionCover label="Section 05 · Phase 4" title="Periodization + blocks"
+      desc="Training blocks with phased mesocycles, phase navigation, scheduled deloads, end-of-block review. Block schedule is canonical — fatigue advisories never override it." />
+    {phase4.map((p, i) => <Page key={i} {...p} />)}
+
+    <SectionCover label="Section 06 · Phase 5" title="Fatigue model + plateau detection"
+      desc="Stimulus-weighted weekly volume. MEV / MAV / MRV bars with verb labels. Front + back muscle heatmap. Plateau detection with ranked corrective actions." />
+    {phase5.map((p, i) => <Page key={i} {...p} />)}
+
+    <SectionCover label="Section 07 · Phase 6" title="Progress + export"
+      desc="Per-exercise intent-split charts, PR detection at set-save, weekly recap surfaced at the boundary, CSV / JSON export, full database backup + restore." />
+    {phase6.map((p, i) => <Page key={i} {...p} />)}
+  </>;
+}
+
+ReactDOM.createRoot(document.getElementById('print-root')).render(<PrintApp />);
+
+// Auto-print after fonts + Babel finish.
+(async () => {
+  try { await document.fonts.ready; } catch {}
+  await new Promise(r => setTimeout(r, 600));
+  window.print();
+})();
+</script>
+</body>
+</html>

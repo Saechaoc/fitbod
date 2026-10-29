@@ -1,0 +1,88 @@
+{
+  "date": "2026-10-03",
+  "xcode": "26.5 (17F42)",
+  "simulator_runtime": "iOS 26.5 (23F77)",
+  "native_build": {
+    "exit_code": 0,
+    "includes": [
+      "fitbod",
+      "FitbodWidgetsExtension"
+    ]
+  },
+  "unit_tests": {
+    "passed": 965,
+    "failed": 0,
+    "expected_failures": 1
+  },
+  "runs": [
+    {
+      "bundle": "/private/tmp/fitbod-codex-m1-compact-journey-16.xcresult",
+      "phone": "iPhone SE 3",
+      "width_pt": 375,
+      "text": "default",
+      "appearance": "light",
+      "cases": "authored journey",
+      "passed": 1,
+      "failed": 0
+    },
+    {
+      "bundle": "/private/tmp/fitbod-codex-m1-large-default-journey-17.xcresult",
+      "phone": "iPhone 17 Pro Max",
+      "width_pt": 440,
+      "text": "default",
+      "appearance": "light",
+      "cases": "965 passing units + authored journey",
+      "passed": 966,
+      "failed": 0,
+      "expected_failures": 1
+    },
+    {
+      "bundle": "/private/tmp/fitbod-codex-m1-compact-ax3-07.xcresult",
+      "phone": "iPhone SE 3",
+      "width_pt": 375,
+      "text": "accessibility-extra-large",
+      "appearance": "light",
+      "cases": "965 passing units + logger layout + component gallery",
+      "passed": 967,
+      "failed": 0,
+      "expected_failures": 1
+    },
+    {
+      "bundle": "/private/tmp/fitbod-codex-m1-large-ax3-11.xcresult",
+      "phone": "iPhone 17 Pro Max",
+      "width_pt": 440,
+      "text": "accessibility-extra-large",
+      "appearance": "dark",
+      "cases": "logger layout + component gallery",
+      "passed": 2,
+      "failed": 0
+    }
+  ],
+  "foreground_pairs": {
+    "pairs": 19,
+    "appearances": [
+      "light",
+      "dark"
+    ],
+    "failures": 0
+  },
+  "expected_failure": {
+    "test": "ProgramGraphDeleteRuleBehaviorTests.slottedTemplateDenyRuleRuntimeEnforcement",
+    "note": "Records a known SwiftData process-abort issue; destructive runtime enforcement is intentionally not executed or proven."
+  },
+  "unverified": [
+    "physical VoiceOver navigation",
+    "physical haptics",
+    "notification permission",
+    "physical Live Activities",
+    "populated backup round-trip",
+    "sync"
+  ],
+  "scope_note": "Shared dirty worktree includes user/Claude changes; no commits or pushes made by Codex.",
+  "audit": {
+    "date": "2026-10-04",
+    "record": "AUDIT-20261004.json",
+    "native_build_exit_code": 0,
+    "saved_test_bundles_rechecked": 4
+  }
+}

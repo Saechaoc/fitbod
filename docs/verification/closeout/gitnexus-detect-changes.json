@@ -1,0 +1,1125 @@
+{
+  "date": "2026-10-05",
+  "scope": "all",
+  "summary": {
+    "changed_count": 667,
+    "affected_count": 75,
+    "changed_files": 128,
+    "risk_level": "critical"
+  },
+  "index_refresh": "index-06 failed at global registry write: EPERM; detect_changes returned results afterward. Not a completed refresh or staged commit check.",
+  "affected_processes": [
+    {
+      "id": "proc_21_startworkout",
+      "name": "StartWorkout \u2192 SortedPhases",
+      "process_type": "cross_community",
+      "step_count": 5,
+      "changed_steps": [
+        {
+          "symbol": "start",
+          "step": 3
+        }
+      ]
+    },
+    {
+      "id": "proc_22_startworkout",
+      "name": "StartWorkout \u2192 Days",
+      "process_type": "cross_community",
+      "step_count": 5,
+      "changed_steps": [
+        {
+          "symbol": "start",
+          "step": 3
+        }
+      ]
+    },
+    {
+      "id": "proc_23_startworkout",
+      "name": "StartWorkout \u2192 PreviousMatchingIntentHit",
+      "process_type": "cross_community",
+      "step_count": 5,
+      "changed_steps": [
+        {
+          "symbol": "start",
+          "step": 3
+        }
+      ]
+    },
+    {
+      "id": "proc_36_runifrequested",
+      "name": "RunIfRequested \u2192 SortedPhases",
+      "process_type": "cross_community",
+      "step_count": 5,
+      "changed_steps": [
+        {
+          "symbol": "start",
+          "step": 3
+        },
+        {
+          "symbol": "seed",
+          "step": 2
+        }
+      ]
+    },
+    {
+      "id": "proc_37_runifrequested",
+      "name": "RunIfRequested \u2192 Days",
+      "process_type": "cross_community",
+      "step_count": 5,
+      "changed_steps": [
+        {
+          "symbol": "start",
+          "step": 3
+        },
+        {
+          "symbol": "seed",
+          "step": 2
+        }
+      ]
+    },
+    {
+      "id": "proc_38_runifrequested",
+      "name": "RunIfRequested \u2192 PreviousMatchingIntentHit",
+      "process_type": "cross_community",
+      "step_count": 5,
+      "changed_steps": [
+        {
+          "symbol": "start",
+          "step": 3
+        },
+        {
+          "symbol": "seed",
+          "step": 2
+        }
+      ]
+    },
+    {
+      "id": "proc_39_start",
+      "name": "Start \u2192 SortedPhases",
+      "process_type": "cross_community",
+      "step_count": 5,
+      "changed_steps": [
+        {
+          "symbol": "start",
+          "step": 3
+        }
+      ]
+    },
+    {
+      "id": "proc_40_start",
+      "name": "Start \u2192 Days",
+      "process_type": "cross_community",
+      "step_count": 5,
+      "changed_steps": [
+        {
+          "symbol": "start",
+          "step": 3
+        }
+      ]
+    },
+    {
+      "id": "proc_41_start",
+      "name": "Start \u2192 PreviousMatchingIntentHit",
+      "process_type": "cross_community",
+      "step_count": 5,
+      "changed_steps": [
+        {
+          "symbol": "start",
+          "step": 3
+        }
+      ]
+    },
+    {
+      "id": "proc_67_startworkout",
+      "name": "StartWorkout \u2192 Make",
+      "process_type": "cross_community",
+      "step_count": 4,
+      "changed_steps": [
+        {
+          "symbol": "start",
+          "step": 3
+        }
+      ]
+    },
+    {
+      "id": "proc_68_startworkout",
+      "name": "StartWorkout \u2192 EquipmentKind",
+      "process_type": "cross_community",
+      "step_count": 4,
+      "changed_steps": [
+        {
+          "symbol": "start",
+          "step": 3
+        }
+      ]
+    },
+    {
+      "id": "proc_95_runifrequested",
+      "name": "RunIfRequested \u2192 Make",
+      "process_type": "cross_community",
+      "step_count": 4,
+      "changed_steps": [
+        {
+          "symbol": "start",
+          "step": 3
+        },
+        {
+          "symbol": "seed",
+          "step": 2
+        }
+      ]
+    },
+    {
+      "id": "proc_96_runifrequested",
+      "name": "RunIfRequested \u2192 EquipmentKind",
+      "process_type": "cross_community",
+      "step_count": 4,
+      "changed_steps": [
+        {
+          "symbol": "start",
+          "step": 3
+        },
+        {
+          "symbol": "seed",
+          "step": 2
+        }
+      ]
+    },
+    {
+      "id": "proc_101_handlestarttap",
+      "name": "HandleStartTap \u2192 SortedPhases",
+      "process_type": "cross_community",
+      "step_count": 4,
+      "changed_steps": [
+        {
+          "symbol": "start",
+          "step": 2
+        }
+      ]
+    },
+    {
+      "id": "proc_102_handlestarttap",
+      "name": "HandleStartTap \u2192 Days",
+      "process_type": "cross_community",
+      "step_count": 4,
+      "changed_steps": [
+        {
+          "symbol": "start",
+          "step": 2
+        }
+      ]
+    },
+    {
+      "id": "proc_103_handlestarttap",
+      "name": "HandleStartTap \u2192 PreviousMatchingIntentHit",
+      "process_type": "cross_community",
+      "step_count": 4,
+      "changed_steps": [
+        {
+          "symbol": "start",
+          "step": 2
+        }
+      ]
+    },
+    {
+      "id": "proc_104_start",
+      "name": "Start \u2192 Make",
+      "process_type": "cross_community",
+      "step_count": 4,
+      "changed_steps": [
+        {
+          "symbol": "start",
+          "step": 3
+        }
+      ]
+    },
+    {
+      "id": "proc_105_start",
+      "name": "Start \u2192 EquipmentKind",
+      "process_type": "cross_community",
+      "step_count": 4,
+      "changed_steps": [
+        {
+          "symbol": "start",
+          "step": 3
+        }
+      ]
+    },
+    {
+      "id": "proc_205_handlestarttap",
+      "name": "HandleStartTap \u2192 Make",
+      "process_type": "cross_community",
+      "step_count": 3,
+      "changed_steps": [
+        {
+          "symbol": "start",
+          "step": 2
+        }
+      ]
+    },
+    {
+      "id": "proc_206_handlestarttap",
+      "name": "HandleStartTap \u2192 EquipmentKind",
+      "process_type": "intra_community",
+      "step_count": 3,
+      "changed_steps": [
+        {
+          "symbol": "start",
+          "step": 2
+        }
+      ]
+    },
+    {
+      "id": "proc_198_runifrequested",
+      "name": "RunIfRequested \u2192 MondayAtMidnightForToday",
+      "process_type": "intra_community",
+      "step_count": 3,
+      "changed_steps": [
+        {
+          "symbol": "seed",
+          "step": 2
+        }
+      ]
+    },
+    {
+      "id": "proc_199_runifrequested",
+      "name": "RunIfRequested \u2192 Double",
+      "process_type": "cross_community",
+      "step_count": 3,
+      "changed_steps": [
+        {
+          "symbol": "seed",
+          "step": 2
+        }
+      ]
+    },
+    {
+      "id": "proc_25_runrestore",
+      "name": "RunRestore \u2192 FetchExercises",
+      "process_type": "cross_community",
+      "step_count": 5,
+      "changed_steps": [
+        {
+          "symbol": "buildExportDocument",
+          "step": 4
+        }
+      ]
+    },
+    {
+      "id": "proc_26_runrestore",
+      "name": "RunRestore \u2192 FetchMuscleGroups",
+      "process_type": "cross_community",
+      "step_count": 5,
+      "changed_steps": [
+        {
+          "symbol": "buildExportDocument",
+          "step": 4
+        }
+      ]
+    },
+    {
+      "id": "proc_27_runrestore",
+      "name": "RunRestore \u2192 FetchMuscleStimuli",
+      "process_type": "cross_community",
+      "step_count": 5,
+      "changed_steps": [
+        {
+          "symbol": "buildExportDocument",
+          "step": 4
+        }
+      ]
+    },
+    {
+      "id": "proc_28_runrestore",
+      "name": "RunRestore \u2192 FetchRoutineFolders",
+      "process_type": "cross_community",
+      "step_count": 5,
+      "changed_steps": [
+        {
+          "symbol": "buildExportDocument",
+          "step": 4
+        }
+      ]
+    },
+    {
+      "id": "proc_60_renderbackup",
+      "name": "RenderBackup \u2192 FetchExercises",
+      "process_type": "cross_community",
+      "step_count": 4,
+      "changed_steps": [
+        {
+          "symbol": "buildExportDocument",
+          "step": 3
+        }
+      ]
+    },
+    {
+      "id": "proc_61_renderbackup",
+      "name": "RenderBackup \u2192 FetchMuscleGroups",
+      "process_type": "cross_community",
+      "step_count": 4,
+      "changed_steps": [
+        {
+          "symbol": "buildExportDocument",
+          "step": 3
+        }
+      ]
+    },
+    {
+      "id": "proc_62_renderbackup",
+      "name": "RenderBackup \u2192 FetchMuscleStimuli",
+      "process_type": "cross_community",
+      "step_count": 4,
+      "changed_steps": [
+        {
+          "symbol": "buildExportDocument",
+          "step": 3
+        }
+      ]
+    },
+    {
+      "id": "proc_63_renderbackup",
+      "name": "RenderBackup \u2192 FetchRoutineFolders",
+      "process_type": "cross_community",
+      "step_count": 4,
+      "changed_steps": [
+        {
+          "symbol": "buildExportDocument",
+          "step": 3
+        }
+      ]
+    },
+    {
+      "id": "proc_180_placesubviews",
+      "name": "PlaceSubviews \u2192 Row",
+      "process_type": "intra_community",
+      "step_count": 3,
+      "changed_steps": [
+        {
+          "symbol": "placeSubviews",
+          "step": 1
+        },
+        {
+          "symbol": "arrange",
+          "step": 2
+        }
+      ]
+    },
+    {
+      "id": "proc_179_sizethatfits",
+      "name": "SizeThatFits \u2192 Row",
+      "process_type": "intra_community",
+      "step_count": 3,
+      "changed_steps": [
+        {
+          "symbol": "arrange",
+          "step": 2
+        }
+      ]
+    },
+    {
+      "id": "proc_1_rendercsv",
+      "name": "RenderCSV \u2192 Estimate",
+      "process_type": "cross_community",
+      "step_count": 6,
+      "changed_steps": [
+        {
+          "symbol": "render",
+          "step": 3
+        }
+      ]
+    },
+    {
+      "id": "proc_16_rendercsv",
+      "name": "RenderCSV \u2192 FormatISO",
+      "process_type": "cross_community",
+      "step_count": 5,
+      "changed_steps": [
+        {
+          "symbol": "render",
+          "step": 3
+        }
+      ]
+    },
+    {
+      "id": "proc_17_rendercsv",
+      "name": "RenderCSV \u2192 FormatDouble",
+      "process_type": "cross_community",
+      "step_count": 5,
+      "changed_steps": [
+        {
+          "symbol": "render",
+          "step": 3
+        }
+      ]
+    },
+    {
+      "id": "proc_64_rendercsv",
+      "name": "RenderCSV \u2192 Data",
+      "process_type": "cross_community",
+      "step_count": 4,
+      "changed_steps": [
+        {
+          "symbol": "render",
+          "step": 3
+        }
+      ]
+    },
+    {
+      "id": "proc_18_renderjson",
+      "name": "RenderJSON \u2192 ExportExerciseDTO",
+      "process_type": "cross_community",
+      "step_count": 5,
+      "changed_steps": [
+        {
+          "symbol": "snapshotDocument",
+          "step": 3
+        }
+      ]
+    },
+    {
+      "id": "proc_19_renderjson",
+      "name": "RenderJSON \u2192 ExportMuscleGroupDTO",
+      "process_type": "cross_community",
+      "step_count": 5,
+      "changed_steps": [
+        {
+          "symbol": "snapshotDocument",
+          "step": 3
+        }
+      ]
+    },
+    {
+      "id": "proc_65_renderjson",
+      "name": "RenderJSON \u2192 FetchExercises",
+      "process_type": "cross_community",
+      "step_count": 4,
+      "changed_steps": [
+        {
+          "symbol": "snapshotDocument",
+          "step": 3
+        }
+      ]
+    },
+    {
+      "id": "proc_66_renderjson",
+      "name": "RenderJSON \u2192 FetchMuscleGroups",
+      "process_type": "cross_community",
+      "step_count": 4,
+      "changed_steps": [
+        {
+          "symbol": "snapshotDocument",
+          "step": 3
+        }
+      ]
+    },
+    {
+      "id": "proc_10_refreshadvisory",
+      "name": "RefreshAdvisory \u2192 Estimate",
+      "process_type": "cross_community",
+      "step_count": 5,
+      "changed_steps": [
+        {
+          "symbol": "signalReport",
+          "step": 3
+        }
+      ]
+    },
+    {
+      "id": "proc_44_refreshadvisory",
+      "name": "RefreshAdvisory \u2192 Array",
+      "process_type": "cross_community",
+      "step_count": 4,
+      "changed_steps": [
+        {
+          "symbol": "signalReport",
+          "step": 3
+        }
+      ]
+    },
+    {
+      "id": "proc_45_refreshadvisory",
+      "name": "RefreshAdvisory \u2192 Double",
+      "process_type": "cross_community",
+      "step_count": 4,
+      "changed_steps": [
+        {
+          "symbol": "signalReport",
+          "step": 3
+        }
+      ]
+    },
+    {
+      "id": "proc_135_heroband",
+      "name": "HeroBand \u2192 CompletedWorkingSets",
+      "process_type": "cross_community",
+      "step_count": 3,
+      "changed_steps": [
+        {
+          "symbol": "heroBand",
+          "step": 1
+        }
+      ]
+    },
+    {
+      "id": "proc_163_e1rmsection",
+      "name": "E1RMSection \u2192 BRUChip",
+      "process_type": "intra_community",
+      "step_count": 3,
+      "changed_steps": [
+        {
+          "symbol": "e1RMRow",
+          "step": 2
+        },
+        {
+          "symbol": "BRUChip",
+          "step": 3
+        }
+      ]
+    },
+    {
+      "id": "proc_164_e1rmsection",
+      "name": "E1RMSection \u2192 FormattedDelta",
+      "process_type": "intra_community",
+      "step_count": 3,
+      "changed_steps": [
+        {
+          "symbol": "e1RMRow",
+          "step": 2
+        },
+        {
+          "symbol": "formattedDelta",
+          "step": 3
+        }
+      ]
+    },
+    {
+      "id": "proc_42_prescribe",
+      "name": "Prescribe \u2192 SortedPhases",
+      "process_type": "cross_community",
+      "step_count": 4,
+      "changed_steps": [
+        {
+          "symbol": "prescribe",
+          "step": 1
+        }
+      ]
+    },
+    {
+      "id": "proc_43_prescribe",
+      "name": "Prescribe \u2192 Days",
+      "process_type": "cross_community",
+      "step_count": 4,
+      "changed_steps": [
+        {
+          "symbol": "prescribe",
+          "step": 1
+        }
+      ]
+    },
+    {
+      "id": "proc_86_prrow",
+      "name": "PrRow \u2192 Estimate",
+      "process_type": "cross_community",
+      "step_count": 4,
+      "changed_steps": [
+        {
+          "symbol": "rowText",
+          "step": 2
+        }
+      ]
+    },
+    {
+      "id": "proc_175_prrow",
+      "name": "PrRow \u2192 Effective",
+      "process_type": "intra_community",
+      "step_count": 3,
+      "changed_steps": [
+        {
+          "symbol": "rowText",
+          "step": 2
+        }
+      ]
+    },
+    {
+      "id": "proc_176_prrow",
+      "name": "PrRow \u2192 FormatWeight",
+      "process_type": "intra_community",
+      "step_count": 3,
+      "changed_steps": [
+        {
+          "symbol": "rowText",
+          "step": 2
+        }
+      ]
+    },
+    {
+      "id": "proc_147_rowview",
+      "name": "RowView \u2192 BRUDisplay",
+      "process_type": "intra_community",
+      "step_count": 3,
+      "changed_steps": [
+        {
+          "symbol": "rowView",
+          "step": 1
+        },
+        {
+          "symbol": "deltaView",
+          "step": 2
+        },
+        {
+          "symbol": "BRUDisplay",
+          "step": 3
+        }
+      ]
+    },
+    {
+      "id": "proc_148_rowview",
+      "name": "RowView \u2192 FormatWeight",
+      "process_type": "intra_community",
+      "step_count": 3,
+      "changed_steps": [
+        {
+          "symbol": "rowView",
+          "step": 1
+        },
+        {
+          "symbol": "deltaView",
+          "step": 2
+        }
+      ]
+    },
+    {
+      "id": "proc_149_rowview",
+      "name": "RowView \u2192 AccessibilityLabel",
+      "process_type": "cross_community",
+      "step_count": 3,
+      "changed_steps": [
+        {
+          "symbol": "rowView",
+          "step": 1
+        },
+        {
+          "symbol": "deltaView",
+          "step": 2
+        }
+      ]
+    },
+    {
+      "id": "proc_90_defaultsetrow",
+      "name": "DefaultSetRow \u2192 Double",
+      "process_type": "cross_community",
+      "step_count": 4,
+      "changed_steps": [
+        {
+          "symbol": "defaultSetRow",
+          "step": 1
+        }
+      ]
+    },
+    {
+      "id": "proc_192_append",
+      "name": "Append \u2192 PreviousMatchingIntentHit",
+      "process_type": "intra_community",
+      "step_count": 3,
+      "changed_steps": [
+        {
+          "symbol": "append",
+          "step": 1
+        }
+      ]
+    },
+    {
+      "id": "proc_150_slab",
+      "name": "Slab \u2192 KindLabel",
+      "process_type": "intra_community",
+      "step_count": 3,
+      "changed_steps": [
+        {
+          "symbol": "slab",
+          "step": 1
+        }
+      ]
+    },
+    {
+      "id": "proc_151_slab",
+      "name": "Slab \u2192 FormatWeight",
+      "process_type": "intra_community",
+      "step_count": 3,
+      "changed_steps": [
+        {
+          "symbol": "slab",
+          "step": 1
+        },
+        {
+          "symbol": "setDetailMono",
+          "step": 2
+        }
+      ]
+    },
+    {
+      "id": "proc_69_commitset",
+      "name": "CommitSet \u2192 IsWorkingSet",
+      "process_type": "cross_community",
+      "step_count": 4,
+      "changed_steps": [
+        {
+          "symbol": "observeSave",
+          "step": 2
+        },
+        {
+          "symbol": "commitSet",
+          "step": 1
+        }
+      ]
+    },
+    {
+      "id": "proc_70_commitset",
+      "name": "CommitSet \u2192 Bucket",
+      "process_type": "cross_community",
+      "step_count": 4,
+      "changed_steps": [
+        {
+          "symbol": "observeSave",
+          "step": 2
+        },
+        {
+          "symbol": "commitSet",
+          "step": 1
+        }
+      ]
+    },
+    {
+      "id": "proc_71_commitset",
+      "name": "CommitSet \u2192 PRRecord",
+      "process_type": "cross_community",
+      "step_count": 4,
+      "changed_steps": [
+        {
+          "symbol": "observeSave",
+          "step": 2
+        },
+        {
+          "symbol": "commitSet",
+          "step": 1
+        }
+      ]
+    },
+    {
+      "id": "proc_72_commitset",
+      "name": "CommitSet \u2192 UpsertIfTops",
+      "process_type": "cross_community",
+      "step_count": 4,
+      "changed_steps": [
+        {
+          "symbol": "observeSave",
+          "step": 2
+        },
+        {
+          "symbol": "commitSet",
+          "step": 1
+        }
+      ]
+    },
+    {
+      "id": "proc_140_commitset",
+      "name": "CommitSet \u2192 InSessionPRBannerContent",
+      "process_type": "intra_community",
+      "step_count": 3,
+      "changed_steps": [
+        {
+          "symbol": "observeSave",
+          "step": 2
+        },
+        {
+          "symbol": "commitSet",
+          "step": 1
+        },
+        {
+          "symbol": "InSessionPRBannerContent",
+          "step": 3
+        }
+      ]
+    },
+    {
+      "id": "proc_141_commitset",
+      "name": "CommitSet \u2192 Cancel",
+      "process_type": "cross_community",
+      "step_count": 3,
+      "changed_steps": [
+        {
+          "symbol": "observeSave",
+          "step": 2
+        },
+        {
+          "symbol": "commitSet",
+          "step": 1
+        }
+      ]
+    },
+    {
+      "id": "proc_30_exerciserow",
+      "name": "ExerciseRow \u2192 Double",
+      "process_type": "cross_community",
+      "step_count": 5,
+      "changed_steps": [
+        {
+          "symbol": "exerciseRow",
+          "step": 1
+        }
+      ]
+    },
+    {
+      "id": "proc_91_exerciserow",
+      "name": "ExerciseRow \u2192 Formatted",
+      "process_type": "cross_community",
+      "step_count": 4,
+      "changed_steps": [
+        {
+          "symbol": "exerciseRow",
+          "step": 1
+        }
+      ]
+    },
+    {
+      "id": "proc_136_currentexplanation",
+      "name": "CurrentExplanation \u2192 Percent",
+      "process_type": "cross_community",
+      "step_count": 3,
+      "changed_steps": [
+        {
+          "symbol": "currentExplanation",
+          "step": 1
+        }
+      ]
+    },
+    {
+      "id": "proc_137_currentexplanation",
+      "name": "CurrentExplanation \u2192 HistoryPoint",
+      "process_type": "intra_community",
+      "step_count": 3,
+      "changed_steps": [
+        {
+          "symbol": "currentExplanation",
+          "step": 1
+        }
+      ]
+    },
+    {
+      "id": "proc_138_currentexplanation",
+      "name": "CurrentExplanation \u2192 PreviousMatchingIntentHit",
+      "process_type": "intra_community",
+      "step_count": 3,
+      "changed_steps": [
+        {
+          "symbol": "currentExplanation",
+          "step": 1
+        }
+      ]
+    },
+    {
+      "id": "proc_212_compacttonnage",
+      "name": "CompactTonnage \u2192 Double",
+      "process_type": "cross_community",
+      "step_count": 3,
+      "changed_steps": [
+        {
+          "symbol": "compactTonnage",
+          "step": 1
+        }
+      ]
+    },
+    {
+      "id": "proc_139_commitset",
+      "name": "CommitSet \u2192 CanComplete",
+      "process_type": "cross_community",
+      "step_count": 3,
+      "changed_steps": [
+        {
+          "symbol": "commitSet",
+          "step": 1
+        },
+        {
+          "symbol": "canComplete",
+          "step": 3
+        },
+        {
+          "symbol": "complete",
+          "step": 2
+        }
+      ]
+    },
+    {
+      "id": "proc_13_warmuprow",
+      "name": "WarmupRow \u2192 Double",
+      "process_type": "cross_community",
+      "step_count": 5,
+      "changed_steps": [
+        {
+          "symbol": "computePlates",
+          "step": 2
+        }
+      ]
+    },
+    {
+      "id": "proc_174_runrestore",
+      "name": "RunRestore \u2192 BackupArchiver",
+      "process_type": "intra_community",
+      "step_count": 3,
+      "changed_steps": [
+        {
+          "symbol": "BackupArchiver",
+          "step": 3
+        }
+      ]
+    },
+    {
+      "id": "proc_158_archivedconfigview",
+      "name": "ArchivedConfigView \u2192 BRUChip",
+      "process_type": "intra_community",
+      "step_count": 3,
+      "changed_steps": [
+        {
+          "symbol": "BRUChip",
+          "step": 3
+        }
+      ]
+    },
+    {
+      "id": "proc_195_activetabcontent",
+      "name": "ActiveTabContent \u2192 BRUSectionHead",
+      "process_type": "intra_community",
+      "step_count": 3,
+      "changed_steps": [
+        {
+          "symbol": "BRUSectionHead",
+          "step": 3
+        }
+      ]
+    }
+  ],
+  "scope_note": "Shared worktree includes excluded user/tooling paths. Exact commit manifests are authoritative for staging. Files without indexed changed symbols need direct diff review.",
+  "indexed_changed_files": [
+    "CLAUDE.md",
+    "bru-screens/block-builder.jsx",
+    "bru-screens/routine-builder.jsx",
+    "fitbod/App/DemoWorkoutSeed.swift",
+    "fitbod/App/RootView.swift",
+    "fitbod/Backup/BackupArchiver.swift",
+    "fitbod/Design/BRUButton.swift",
+    "fitbod/Design/BRUChip.swift",
+    "fitbod/Design/BRUCornerBadge.swift",
+    "fitbod/Design/BRUDashedSlot.swift",
+    "fitbod/Design/BRUDisplay.swift",
+    "fitbod/Design/BRUFlowLayout.swift",
+    "fitbod/Design/BRUHeaderBar.swift",
+    "fitbod/Design/BRUHitArea.swift",
+    "fitbod/Design/BRUPillButton.swift",
+    "fitbod/Design/BRUReadout.swift",
+    "fitbod/Design/BRUSectionHead.swift",
+    "fitbod/Design/BRUSpark.swift",
+    "fitbod/Design/BRUStepper.swift",
+    "fitbod/Design/BRUTabBar.swift",
+    "fitbod/Design/BRUToggleStyle.swift",
+    "fitbod/Design/Color+BRU.swift",
+    "fitbod/ExerciseLibrary/CustomExerciseEditor.swift",
+    "fitbod/ExerciseLibrary/ExerciseDetailView.swift",
+    "fitbod/ExerciseLibrary/ExerciseFilterBar.swift",
+    "fitbod/ExerciseLibrary/ExerciseLibraryView.swift",
+    "fitbod/ExerciseLibrary/ExerciseRow.swift",
+    "fitbod/ExerciseLibrary/FilterChip.swift",
+    "fitbod/ExerciseLibrary/MusclePickerSheet.swift",
+    "fitbod/ExerciseLibrary/PRStripFooter.swift",
+    "fitbod/Export/CSVExporter.swift",
+    "fitbod/Export/ExportService.swift",
+    "fitbod/Fatigue/DeloadAdvisor.swift",
+    "fitbod/Fatigue/FatigueSurfaceView.swift",
+    "fitbod/Fatigue/MuscleVolumeBar.swift",
+    "fitbod/Models/Enums/PRKind.swift",
+    "fitbod/Models/Session.swift",
+    "fitbod/Periodization/BlockBuilderView.swift",
+    "fitbod/Periodization/BlockReviewView.swift",
+    "fitbod/Periodization/SplitDetailView.swift",
+    "fitbod/Prescription/BlockPeriodizedStrategy.swift",
+    "fitbod/Prescription/DoubleProgressionStrategy.swift",
+    "fitbod/Prescription/HybridStrategy.swift",
+    "fitbod/Prescription/ProgressionStrategy.swift",
+    "fitbod/Prescription/RPEAutoregStrategy.swift",
+    "fitbod/Progress/ExercisePRsView.swift",
+    "fitbod/Progress/ProgressHomeView.swift",
+    "fitbod/Progress/SessionComparisonView.swift",
+    "fitbod/Progress/WeeklyTonnageView.swift",
+    "fitbod/Routines/MoveRoutineSheet.swift",
+    "fitbod/Routines/PerSetOverrideRow.swift",
+    "fitbod/Routines/PrescriptionEditorRow.swift",
+    "fitbod/Routines/RoutineBuilderView.swift",
+    "fitbod/Routines/RoutineExerciseCard.swift",
+    "fitbod/Routines/RoutinesListView.swift",
+    "fitbod/Routines/SetRowsContainer.swift",
+    "fitbod/Sessions/AddUnplannedExerciseButton.swift",
+    "fitbod/Sessions/BumpBanner.swift",
+    "fitbod/Sessions/InSessionPRBanner.swift",
+    "fitbod/Sessions/InSessionPRState.swift",
+    "fitbod/Sessions/InlineRPEChipRow.swift",
+    "fitbod/Sessions/PlateStackDisclosure.swift",
+    "fitbod/Sessions/PrescriptionWeightCell.swift",
+    "fitbod/Sessions/PreviousColumn.swift",
+    "fitbod/Sessions/RestTimer/RestTimerOverlay.swift",
+    "fitbod/Sessions/SessionDetailView.swift",
+    "fitbod/Sessions/SessionExerciseCard.swift",
+    "fitbod/Sessions/SessionFactory.swift",
+    "fitbod/Sessions/SessionHistoryRow.swift",
+    "fitbod/Sessions/SessionHistoryStatStrip.swift",
+    "fitbod/Sessions/SessionHistoryView.swift",
+    "fitbod/Sessions/SessionLoggerView.swift",
+    "fitbod/Sessions/SessionSetActions.swift",
+    "fitbod/Sessions/SessionSummary.swift",
+    "fitbod/Sessions/SetRow.swift",
+    "fitbod/Sessions/SwapExerciseSheet.swift",
+    "fitbod/Sessions/WarmupRampRows.swift",
+    "fitbod/Sessions/WeeklyTonnageSparkCard.swift",
+    "fitbod/Sessions/WhyThisWeightSheet.swift",
+    "fitbod/Settings/PlateCalculatorSheet.swift",
+    "fitbod/Settings/SettingsView.swift",
+    "fitbod/Views/ResumeWorkoutSlab.swift",
+    "fitbod/Views/TodayStatStrip.swift",
+    "fitbod/Views/TodayView.swift",
+    "fitbodTests/BRUCorePrimitivesTests.swift",
+    "fitbodTests/BRUPrimitivesTests.swift",
+    "fitbodTests/BlockPeriodizedStrategyTests.swift",
+    "fitbodTests/DoubleProgressionStrategyTests.swift",
+    "fitbodTests/Fatigue/DeloadAdvisorTests.swift",
+    "fitbodTests/Fatigue/FatigueSurfaceViewBRUTests.swift",
+    "fitbodTests/HistoryBRUCopyTests.swift",
+    "fitbodTests/HybridStrategyTests.swift",
+    "fitbodTests/Logger/SessionSummaryTests.swift",
+    "fitbodTests/ManualOverrideTests.swift",
+    "fitbodTests/MuscleVolumeBarBRUTests.swift",
+    "fitbodTests/Phase3BRUSurfacesTests.swift",
+    "fitbodTests/ProgressionRoundingTests.swift",
+    "fitbodTests/RPEAutoregStrategyTests.swift",
+    "fitbodTests/RoutineBuilderBRUCopyTests.swift",
+    "fitbodTests/SessionLoggerBRUCopyTests.swift",
+    "fitbodTests/SessionLoggerCopyTests.swift",
+    "fitbodTests/SetRowCommitTests.swift",
+    "fitbodUITests/BodySilhouetteUITests.swift",
+    "fitbodUITests/DeloadAdvisoryBannerUITests.swift",
+    "fitbodUITests/MuscleVolumeTargetEditorUITests.swift",
+    "fitbodUITests/NewBlockModalUITests.swift",
+    "fitbodUITests/PerMuscleDetailUITests.swift",
+    "fitbodUITests/Phase5BRUSmokeUITests.swift",
+    "fitbodUITests/Phase6/ProgressChartBRUUITests.swift",
+    "fitbodUITests/Phase6/ProgressHomeBRUUITests.swift",
+    "fitbodUITests/Phase6/SettingsBRUUITests.swift",
+    "fitbodUITests/PlateCalculatorSheetBRUUITests.swift",
+    "fitbodUITests/PlateauOverrideUITests.swift",
+    "fitbodUITests/PrescriptionWeightCellBRUUITests.swift",
+    "fitbodUITests/RoutineBuilderBRUUITests.swift",
+    "fitbodUITests/SessionHistoryBRUUITests.swift",
+    "fitbodUITests/SessionLoggerBRUUITests.swift",
+    "fitbodUITests/VolumeBarsUITests.swift",
+    "fitbodUITests/WeeklyRecapUITests.swift",
+    "fitbodUITests/WhyThisWeightSheetBRUUITests.swift",
+    "scripts/generate_app_icon.swift"
+  ]
+}

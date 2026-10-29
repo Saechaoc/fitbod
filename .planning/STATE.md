@@ -314,6 +314,12 @@ These drive phase ordering and are mitigated by phase placement:
 
 None.
 
+### Active milestone continuation
+
+| Task | Updated | Status | Evidence |
+| --- | --- | --- | --- |
+| 261003-9k8 — usable workout milestone | 2026-10-05 | Open: four UI failures have prepared fixes; full AX3 journeys, final rerun and commits/push remain. Current sandbox blocks simulator and repository metadata access. | [Continuation summary](./quick/261003-9k8-complete-milestone-1-usable-workout-app/261003-9k8-SUMMARY.md) |
+
 ### Quick Tasks Completed
 
 | # | Description | Date | Commit | Directory |

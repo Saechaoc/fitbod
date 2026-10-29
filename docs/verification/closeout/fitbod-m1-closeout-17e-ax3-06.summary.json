@@ -1,0 +1,45 @@
+{
+  "devicesAndConfigurations": [
+    {
+      "device": {
+        "architecture": "arm64",
+        "deviceId": "777198FC-2973-4310-9F3B-831A92847600",
+        "deviceName": "fitbod-codex-small",
+        "modelName": "iPhone 17e",
+        "osBuildNumber": "23F77",
+        "osVersion": "26.5",
+        "platform": "iOS Simulator"
+      },
+      "expectedFailures": 0,
+      "failedTests": 1,
+      "passedTests": 4,
+      "skippedTests": 0,
+      "testPlanConfiguration": {
+        "configurationId": "1",
+        "configurationName": "Test Scheme Action"
+      }
+    }
+  ],
+  "environmentDescription": "fitbod \u00b7 Built with macOS 26.4.1",
+  "expectedFailures": 0,
+  "failedTests": 1,
+  "finishTime": 1791211364.7,
+  "passedTests": 4,
+  "result": "Failed",
+  "skippedTests": 0,
+  "startTime": 1791211127.286,
+  "statistics": [],
+  "testFailures": [
+    {
+      "failureText": "XCTAssertEqual failed: (\"Optional(\"M1 Upper BodyUntitled routine\")\") is not equal to (\"Optional(\"M1 Upper Body\")\") - Text replacement must not retain a prefix or suffix",
+      "targetName": "fitbodUITests",
+      "testIdentifier": 3,
+      "testIdentifierString": "MilestoneOneJourneyUITests/testAuthorRoutineLogRelaunchFinishAndHistory()",
+      "testIdentifierURL": "test://com.apple.xcode/fitbod/fitbodUITests/MilestoneOneJourneyUITests/testAuthorRoutineLogRelaunchFinishAndHistory",
+      "testName": "testAuthorRoutineLogRelaunchFinishAndHistory()"
+    }
+  ],
+  "title": "Test - fitbod",
+  "topInsights": [],
+  "totalTestCount": 5
+}
