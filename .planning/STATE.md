@@ -3,7 +3,7 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-last_updated: "2026-10-29T14:30:00.000Z"
+last_updated: "2026-10-29T23:55:07.000Z"
 progress:
   total_phases: 15
   completed_phases: 15
@@ -16,7 +16,7 @@ progress:
 
 **Last updated:** 2026-10-29 (Milestone 1 finish, phase 0 done: Codex's seven groups committed, baseline 1,023 of 1,026 passed with 2 known app-bug failures and 1 expected failure)
 
-Last activity: 2026-10-29 - Completed quick task 261028-tll: Milestone 1 finish, phase 0 (scheme, GitNexus refresh, seven group commits, baseline run, review record)
+Last activity: 2026-10-29 - Completed quick task 261029-n3k: Fix Conway dispatch settlement, safe cleanup, split completion, and read-only rerun contracts
 
 ---
 
@@ -358,6 +358,7 @@ None.
 | 261028-tll | Milestone 1 finish, phase 0: restore the serial UI-test scheme setting, refresh GitNexus, run a baseline build and full suite on the large phone, commit Codex's seven prepared groups, and complete the review record | 2026-10-29 | 3c5aaf2 | [261028-tll-milestone-1-finish-phase-0-restore-the-s](./quick/261028-tll-milestone-1-finish-phase-0-restore-the-s/) |
 | fast | Add the approved Milestone 1 plan to the repo as .planning/noble-wishing-conway.md and point the 14 phase plans at it | 2026-10-29 | 2e87d8d | - |
 | 260610-hcv | Fix phase row text cut-off in New Block: the plan's eight width edits were already in the code, but OCR renders still showed "Accumulati…" and "Intensificati…" at 390 and 393pt, so the title block now takes the Spacer's 14pt. New Vision test at 390/393/402pt failed first and passes; six New Block guardrail suites and NewBlockModalUITests green. Open, pre-existing: tapping the red Delete after a partial swipe closes the card instead of deleting | 2026-10-29 | 3ff4a8a | [260610-hcv-fix-phase-row-text-cut-off-in-new-block-](./quick/260610-hcv-fix-phase-row-text-cut-off-in-new-block-/) |
+| 261029-n3k | Fix Conway dispatch owned/held-file handoff, proof-gated cleanup, split-parent completion, and read-only verification reruns | 2026-10-29 | 65c02ae | [261029-n3k-fix-conway-dispatch-settlement-safe-clea](./quick/261029-n3k-fix-conway-dispatch-settlement-safe-clea/) |
 
 ---
 
