@@ -316,7 +316,7 @@ def simulate(jobs, lanes):
     alone stops later jobs from starting until it has started.
     Worker minutes stretch by SLOWDOWN for the number of workers working at that moment;
     coordinator minutes, gates and Phase 8 do not stretch.
-    Returns (finish minute, busy lane minutes, start minute per job, end minute per job)."""
+    Returns (finish minute, busy lane minutes)."""
     pending, left, start, end = list(jobs), {}, {}, {}
     now = 0.0
     while pending or left:
@@ -352,7 +352,7 @@ def simulate(jobs, lanes):
             else:
                 left[name] = [w, f]
     busy = sum(end[j] - start[j] for j in jobs if jobs[j]["lane"])
-    return now, busy, start, end
+    return now, busy
 
 
 print(f"Order (lowest id first; up to {LANES} code workers at once, each ticket in its own worktree;"
@@ -397,32 +397,13 @@ print("\nParallel lanes: lowest id first, no two live tickets share an owned fil
 print(f"for their gates, and {', '.join(sorted(EXCLUSIVE))} and the reruns run alone (dispatch.md).")
 print("Worker minutes stretch by SLOWDOWN, a guess for workers sharing the Mac's cores at once.")
 for n in LANE_OPTIONS:
-    stop, busy, _, _ = simulate(plan_jobs(n), n)
+    stop, busy = simulate(plan_jobs(n), n)
     mark = "  <- the default in dispatch.md" if n == LANES else ""
     print(f"  {n} lane{'s' if n > 1 else ' '}: {stop / 60:5.1f} h, lanes busy {busy / (n * stop):4.0%}{mark}")
-stop_skip, _, _, _ = simulate(plan_jobs(LANES, skip=CONDITIONAL), LANES)
-stop_free, _, _, _ = simulate(plan_jobs(LANES, gates=False), LANES)
+stop_skip, _ = simulate(plan_jobs(LANES, skip=CONDITIONAL), LANES)
+stop_free, _ = simulate(plan_jobs(LANES, gates=False), LANES)
 print(f"  At {LANES} lanes: {stop_skip / 60:.1f} h if {', '.join(sorted(CONDITIONAL))} is skipped, "
       f"or {stop_free / 60:.1f} h without phase gates, which the run keeps (tradeoffs.md)")
-
-jobs = plan_jobs(LANES)
-stop, _, start, end = simulate(jobs, LANES)
-print(f"\nPhase windows at {LANES} lanes, in hours from the first dispatch:")
-for phase in sorted({tickets[t]["phase"] for t in ids}):
-    names = [t for t in ids if tickets[t]["phase"] == phase]
-    if phase == tickets["T46"]["phase"]:
-        names += [j for j in jobs if j.startswith("finding ") or j.endswith(" rerun")]
-    edges = sorted([(start[j], 1) for j in names if jobs[j]["lane"]]
-                   + [(end[j], -1) for j in names if jobs[j]["lane"]])
-    width = live = 0
-    for _, step in edges:
-        live += step
-        width = max(width, live)
-    barrier = f"end of phase {phase}"
-    gate = f", then a {GATE_MIN}-minute gate" if jobs[barrier]["fixed"] else ""
-    print(f"  Phase {phase}: {min(start[j] for j in names) / 60:5.1f} to {end[barrier] / 60:5.1f} h, "
-          f"up to {width} at once{gate}")
-print(f"  Phase 8: {start['Phase 8'] / 60:5.1f} to {stop / 60:5.1f} h")
 
 sim_min = sum(worker_min(t) for t in ids if tickets[t]["sim"] != "none")
 print(f"\nSimulator-bound worker time: {sim_min / 60:.1f} h of {sum(map(worker_min, ids)) / 60:.1f} h")

@@ -10,7 +10,8 @@ Product decisions are in [decisions.md](decisions.md), and they win over this fi
 
 - Call: up to three code workers run at once, and each ticket gets its own Orca worktree and branch from the newest `main`.
   Each lane has its own two simulators and its own DerivedData folder.
-  Two tickets that own the same file never run at the same time, and T42 to T46 run alone on the gate phones.
+  Two tickets never edit the same file at once: tickets that own the same file never run together, and a worker needs the coordinator's yes before it edits a file outside its `owns` list.
+  T42 to T46 run alone on the gate phones.
   Phases still run in order, and a phase opens only after the gate of the phase before it passes.
 - Rejected: one worker at a time in the main checkout, which was this bundle's first plan.
   `capacity_model.py` estimates about 107 hours for it, against about 64 with three lanes.

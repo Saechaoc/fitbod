@@ -15,6 +15,8 @@ Every ticket gets a new worktree, so also read `orca skills get orchestration --
 - Ticket worktree: a new Orca worktree for one ticket, on its own branch from the newest `main`.
   Its worker commits there, and the coordinator merges that branch into `main`.
 - Live ticket: a ticket that is dispatched and not yet merged, skipped or abandoned.
+- Held file: a file outside a live ticket's `owns` list that you let its worker edit.
+  It stays held until that ticket merges, and no other ticket may edit it meanwhile.
 - Exclusive ticket: T42, T43, T44, T45, T46, and the reruns of T44 and T45.
   Each one touches many files or runs the full suite, so it runs with no other code worker, on the gate phones.
 
@@ -69,7 +71,7 @@ Whenever a lane is free, start the lowest-numbered ticket that passes every chec
 
 - Its status is `todo`, and every dependency is `done` or `skipped`.
 - Its phase is open: every ticket of each earlier phase is `done` or `skipped`, and every gate after those phases passed.
-- None of its `owns` paths, with `new:` removed, is owned by a live ticket.
+- None of its `owns` paths, with `new:` removed, is owned or held by a live ticket.
 - No exclusive ticket is live.
   An exclusive ticket also needs every other code worker to be finished, and nothing else starts while it waits for them.
 
@@ -80,31 +82,31 @@ The hotspot list from `capacity_model.py` shows which tickets will wait for each
 ## Start one ticket
 
 1. Pick a free lane, or the gate phones for an exclusive ticket.
-2. Build the spec text: the task header below, then the full ticket file.
-3. Create the task with `orca orchestration task-create --run <run id> --task-title "<id> <title>" --spec "<spec text>" --deps '<JSON array of the Orca task ids of its dependencies>' --json`.
-4. Start the worker in a new worktree with `orca orchestration worker-start --task <task id> --worktree new-top-level --base-branch main --name conway-<id in lower case> <agent flags> --display-name "<id> <lane>" --json`.
-   The call exits 0 only when the worker is ready.
+2. Create the ticket worktree from the newest `main` with `orca worktree create --repo path:<main checkout> --name conway-<id in lower case> --base-branch main --json`.
    `--base-branch main` matters: the local `main` holds every merged ticket, and the repo's default base may be `origin/main`, which does not until Phase 8.
-5. Check that `git -C <worktree> rev-parse HEAD` equals `git rev-parse main`.
-   If it does not, stop the worker with `orca orchestration worker-stop --dispatch <dispatch id>`, remove the worktree, and start the ticket again.
-6. Record the lane, the task id, the dispatch id, the worktree path and its branch in the run log.
-   The receipt names the worktree, and `git worktree list` shows its branch.
+3. Check that `git -C <worktree> rev-parse HEAD` equals `git rev-parse main`.
+   If it does not, remove the worktree and create it again.
+4. Copy into `<worktree>/docs/conway-specs/evidence/` every earlier evidence folder the ticket reads: T31's for T32 and T43, T40's for T41 and T47, and the latest T44, T45 and T46 folders, reruns included, for T47.
+   Workers stay inside their worktree, because Copilot CLI asks before it changes files outside its folder, and nobody is there to answer.
+5. Build the spec text: the task header below, then the full ticket file.
+6. Create the task with `orca orchestration task-create --run <run id> --task-title "<id> <title>" --spec "<spec text>" --deps '<JSON array of the Orca task ids of its dependencies>' --json`.
+7. Start the worker in that worktree with `orca orchestration worker-start --task <task id> --worktree path:<worktree> <agent flags> --json`.
+   The call exits 0 only when the worker is ready.
+8. Record the lane, the task id, the dispatch id, the worktree path and its branch in the run log.
+   `git worktree list` shows the branch.
 
 The task header, with the brackets filled in:
 
-- Main checkout: `<absolute path>`.
-  Never edit, stage or commit there.
 - Bundle: `docs/conway-specs/` in your worktree.
-  The live run log is `<main checkout>/docs/conway-specs/run-log.md`.
 - Read `worker-rules.md` in the bundle before anything else, because it is part of this spec.
-- Your evidence folder is `<main checkout>/docs/conway-specs/evidence/<id>/`.
+- Your evidence folder is `docs/conway-specs/evidence/<id>/` in your worktree.
 - Lane: <L1, L2, L3 or gate>.
   Small phone: "<name>" `<id>`.
   Large phone: "<name>" `<id>`.
   DerivedData: `<path>`.
 - GitNexus mode: <index or manual>.
 - Workflow exception: the user approved skipping GSD for this run on 2026-10-29.
-- Live tickets beside you, and the files they own: <list, or "none">.
+- Live tickets beside you, and the files they own or hold: <list, or "none">.
 - Shared test helpers so far: <the helper list from the run log>.
 - Notes from earlier tickets that touch your files: <any, or "none">.
 - Review items already fixed outside this run: <items with commit hashes, or "none">.
@@ -116,7 +118,8 @@ The task header, with the brackets filled in:
 - Answer each question with `orca orchestration reply --id <message id>`.
   Answer from [decisions.md](decisions.md) and [tradeoffs.md](tradeoffs.md).
   Ask the user only about a product decision that neither file covers, and record the answer in both the run log and the right leaf.
-- Let a worker edit a file outside its `owns` list only after you check that no live ticket owns it.
+- When a worker asks to edit a file outside its `owns` list, say yes only if no live ticket owns or holds that file.
+  Once you say yes, the file is held by that ticket; list it in the run log under "Held files".
 - After three empty waits in a row, run `orca orchestration worker-list --run <run id> --include-remote --json` to see whether the workers are alive.
 - If a worker is stuck or gone, load `orca skills get orchestration --reference references/recovery-and-cleanup.md` before you act.
 
@@ -125,10 +128,10 @@ The task header, with the brackets filled in:
 Check all of this in the ticket worktree before you accept:
 
 1. `git -C <worktree> log --format=%H%n%B main..HEAD` shows the ticket's commits, which name the ticket and have no `Co-Authored-By` line.
-2. `git -C <worktree> diff --stat main...HEAD` lists only files from the ticket's `owns` list, their direct callers, their tests and allowed DEBUG seeds.
-   It lists no file that another live ticket owns, and nothing under `fitbod/Models/` or `fitbod/Persistence/` unless the ticket says so.
+2. `git -C <worktree> diff --stat main...HEAD` lists only files from the ticket's `owns` list, the files it holds, and new DEBUG seed files next to `fitbod/App/DemoWorkoutSeed.swift`.
+   It lists nothing under `fitbod/Models/` or `fitbod/Persistence/` unless the ticket says so.
 3. `git -C <worktree> status --porcelain` matches the worker's `status-before.txt`.
-4. The evidence folder has every file [worker-rules.md](worker-rules.md) lists.
+4. The evidence folder in the worktree has every file [worker-rules.md](worker-rules.md) lists.
    Open at least one screenshot yourself.
 5. For an L ticket, or any result you doubt, rerun the repro test once on one of the ticket's phones.
 
@@ -139,27 +142,31 @@ Otherwise, merge.
 
 1. If `git merge-base --is-ancestor main <branch>` succeeds, the branch already sits on the newest `main`.
    Otherwise, run `git -C <worktree> rebase main`.
-   If that stops on a conflict, run `git -C <worktree> rebase --abort`, and retry the ticket from the newest `main`.
+   If that stops on a conflict, run `git -C <worktree> rebase --abort`, and retry the ticket as Retry says.
    If it is clean, build the app from the worktree with the ticket's large phone and DerivedData, and treat a failed build as a failed check.
 2. In the main checkout, run `git merge --ff-only <branch>`.
    `main` never gets a merge commit.
 3. Release the worker with `orca orchestration worker-release --dispatch <dispatch id>`.
    Release closes only the worker's terminal.
-4. Remove the worktree with `orca worktree rm --worktree path:<worktree> --json`, then delete its branch with `git branch -d <branch>` if it still exists.
+4. Copy `<worktree>/docs/conway-specs/evidence/<id>/` to `<main checkout>/docs/conway-specs/evidence/`, so the evidence outlives the worktree.
+5. Remove the worktree with `orca worktree rm --worktree path:<worktree> --json`, then delete its branch with `git branch -d <branch>` if it still exists.
    If either one refuses, read `git -C <worktree> status` before you force anything, and ask the user when in doubt.
-5. Acknowledge the message with `orca orchestration check --ack <delivery id>`, mark the ticket `done` with its commit on `main`, and free the lane.
-6. Copy into the run log any HIGH or CRITICAL rating, removed control, new shared helper and out-of-scope finding the worker reports.
-7. Start the next tickets before you wait again.
+6. Acknowledge the message with `orca orchestration check --ack <delivery id>`, mark the ticket `done` with its commit on `main`, and free the lane and the ticket's held files.
+7. Copy into the run log any HIGH or CRITICAL rating, removed control, new shared helper and out-of-scope finding the worker reports.
+8. Start the next tickets before you wait again.
 
 ## Retry
 
-- If the outcome is `failed`, or the commit fails your checks, retry once.
-  Use `worker-start --task <task id> --retry-of <dispatch id>`, and repeat the placement and agent flags, because a retry does not inherit them: a new worktree from the newest `main`, in the same lane.
+- Retry a failed or rejected ticket once, in a new worktree made as "Start one ticket" says, in the same lane and with the same agent flags.
   Add a short "What went wrong last time" note to the spec.
-- Before the retry, release the failed worker and remove its worktree.
+- If the worker's outcome was `failed`, start the retry with `orca orchestration worker-start --task <task id> --retry-of <dispatch id> --worktree path:<new worktree> <agent flags> --json`.
+- If the worker reported `succeeded` but you reject the result, because a check failed or its rebase conflicted, create a new task for the retry and start it without `--retry-of`.
+  Orca accepts `--retry-of` only for a failed or stopped attempt, and refuses a succeeded one with `task_not_startable`.
+  Record both task ids in the run log.
+- Before the retry, release the old worker, copy its evidence folder to `<main checkout>/docs/conway-specs/evidence/<id>-failed/`, and remove its worktree.
   Keep its branch only if it holds work worth reading, note it in the run log, and delete it in Phase 8.
 - After a second failure, split the ticket into smaller tickets or take it yourself, and say so in the run log.
-- A T46 retry continues from the first configuration that has no section in `findings.md` yet.
+- A T46 retry continues from the first configuration that has no section in `findings.md` yet, so copy the failed attempt's evidence into the new worktree's `evidence/T46/` before it starts.
 
 ## Phase gates
 

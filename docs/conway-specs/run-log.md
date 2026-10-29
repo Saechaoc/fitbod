@@ -1,7 +1,7 @@
 # Run log
 
-The coordinator keeps this file current.
-Workers read it but never edit it.
+The coordinator keeps this file current in the main checkout.
+Workers never read or edit it; their task header carries what they need from it.
 
 ## Approvals
 
@@ -107,6 +107,13 @@ Done means merged into `main`.
 ## Shared test helpers
 
 Workers list new helpers in their notes, and the coordinator copies them here for later task headers.
+
+- None yet.
+
+## Held files
+
+Files outside a live ticket's `owns` list that its worker may edit, as [dispatch.md](dispatch.md) says.
+Each line names the ticket and the file; strike the line when the ticket merges.
 
 - None yet.
 

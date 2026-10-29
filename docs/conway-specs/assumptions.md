@@ -39,7 +39,10 @@ The coordinator re-checks the first group before the first dispatch.
 - On csaechao4's Mac, the gate phones "sw6 iPhone 17e" (`FF89B400-1160-4818-8436-314B014D2614`) and "sw6 iPhone 17 Pro Max" (`69E32D56-148D-40A7-9D1B-543F6878B1D1`) use the iOS 27.0 runtime.
   New phones need that runtime too, because creating them on iOS 27.1 failed there.
   Simulator ids differ between Macs, so the run log records each lane's ids.
-- Orca's `worker-start --worktree new-top-level` gives each worker a new git worktree, and `worker-release` closes only the worker's terminal, so the coordinator removes worktrees itself.
+- `orca worktree create --base-branch main` makes each ticket worktree from the local `main`, as the quick-task run's worktree branches show ("Created from refs/heads/main").
+  `worker-start --worktree path:<worktree>` then starts a worker in it.
+  `worker-release` closes only the worker's terminal, so the coordinator removes worktrees itself.
+- Copilot CLI asks before it changes files outside its working folder, so workers keep their evidence inside their worktree.
 - The app and test targets use folder-synchronized groups, so new files need no project file edit.
 
 ## Code facts the tickets rely on

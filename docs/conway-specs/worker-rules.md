@@ -28,12 +28,15 @@ Never run a `/gsd-*` command yourself.
 
 - Work in your own ticket worktree, on the branch Orca made for it.
   Run `git rev-parse --show-toplevel` first: that is your worktree root, and every repo path in your ticket is relative to it.
-- Never edit, stage or commit in the main checkout that your task header names.
-  Only the coordinator moves `main`.
+- Read and write only inside your worktree, apart from your phones, your DerivedData folder and your scratchpad.
+  Copilot CLI asks before it changes files outside its folder, and nobody is there to answer.
+- Never touch the main checkout.
+  Only the coordinator works there and moves `main`.
 - Never create, switch or delete a branch or a worktree.
 - Other workers run at the same time, each in its own worktree.
-  Your task header lists their tickets and the files they own.
-  Never edit those files; if your change needs one, ask the coordinator first.
+  Your task header lists their tickets and the files they own or hold.
+- Before you edit any file outside your `owns` list, ask the coordinator and wait for a yes, even for a UI test your change broke, a test that pins copy, or `docs/ROADMAP.md`.
+  This narrows the Ownership section of every ticket, because another worker may be editing that file.
 - Stage only files you changed.
 - Before your first edit, save the output of `git status --porcelain` to `status-before.txt` in your evidence folder.
 - New Swift files need no project file edit, because the targets use folder-synchronized groups.
@@ -59,8 +62,7 @@ These paths are protected for every ticket:
 - Everything under `bru-screens/`.
   These are read-only design references.
 - `fitbod.xcodeproj/project.pbxproj` and `.gitignore`.
-- Everything under `docs/conway-specs/`.
-  Your evidence goes to the main checkout's evidence folder, which git ignores.
+- Everything under `docs/conway-specs/` except your own evidence folder, which git ignores.
 - `.lavish/`, except in T48.
 
 Xcode sometimes drops `parallelizable = "NO"` from `fitbod.xcodeproj/xcshareddata/xcschemes/fitbod.xcscheme`.
@@ -177,6 +179,7 @@ When you change `BlockBuilderView.swift`, `BlockDraft.swift`, `BlockPhaseEditorR
 When your ticket removes a visible control, add one line for it to `docs/ROADMAP.md` in the same commit.
 Put it under the heading "Removed in Milestone 1 closeout", and create that heading at the end of the file if it does not exist.
 The line says what was removed and why.
+If `docs/ROADMAP.md` is not in your `owns` list, ask the coordinator before you edit it, as Workspace says.
 
 ## Out of scope
 
@@ -223,8 +226,8 @@ Your task header gives the GitNexus mode.
 
 ## Evidence
 
-Write everything to the evidence folder your task header names, `<main checkout>/docs/conway-specs/evidence/<ticket id>/`.
-Git ignores it, and it outlives your worktree, which the coordinator removes after the merge:
+Write everything to `docs/conway-specs/evidence/<ticket id>/` in your worktree.
+Git ignores it, and the coordinator copies it to the main checkout before it removes your worktree:
 
 | File | Holds |
 |---|---|
@@ -236,7 +239,8 @@ Git ignores it, and it outlives your worktree, which the coordinator removes aft
 | `detect-changes.txt` | `git diff --cached --stat` and the symbols you changed |
 | `notes.md` | what you changed and why, your decisions, out-of-scope findings, your branch and the commit hash |
 
-When a ticket names another ticket's evidence, such as `evidence/T31/export-diff.md`, read it next to your own folder in the main checkout.
+When a ticket names another ticket's evidence, such as `evidence/T31/export-diff.md`, read it next to your own folder; the coordinator copies it into your worktree before you start.
+If it is missing, ask the coordinator.
 
 ## Finishing
 

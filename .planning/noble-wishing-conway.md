@@ -49,7 +49,8 @@ No other agent, Codex included, edits this repo or its worktrees while the run w
   Their commits map onto tickets before the first dispatch.
 - **Parallel lanes.** Up to three workers run at once, and each ticket gets its own git worktree and branch from the newest `main`.
   Each lane has its own two simulators and its own DerivedData folder, so no two workers ever share a simulator.
-  Two tickets that own the same file never run at the same time, and the tickets that touch many files or run the full suite (T42-T46) run alone.
+  Two tickets never edit the same file at the same time, and a worker asks before it edits a file outside its ticket's list.
+  The tickets that touch many files or run the full suite (T42-T46) run alone.
   Phases still run in order, and a phase starts only after the previous phase's gate passes.
   Each worker rebases onto `main` before its final runs.
   The coordinator merges each accepted branch as a fast-forward, after another rebase and a build if `main` moved.

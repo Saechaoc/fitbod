@@ -2,6 +2,18 @@
 
 Newest first.
 
+## 2026-10-29: review fixes for the parallel run
+
+- What: workers keep their evidence inside their own worktree, and the coordinator copies it to the main checkout before it removes the worktree.
+  The coordinator also copies in the earlier evidence that T32, T41, T43 and T47 read.
+- Why: Copilot CLI asks before it changes files outside its folder, so a worker that wrote to the main checkout could wait for an approval nobody gives.
+- What: the coordinator now creates each worktree with `orca worktree create`, checks its base, copies evidence in, and then starts the worker there.
+- What: a worker asks before it edits any file outside its `owns` list, and the coordinator holds that file for the ticket until it merges.
+- Why: otherwise two tickets could both fix the same broken UI test, and the second merge would send a whole ticket back to the start.
+- What: a rejected ticket whose worker reported `succeeded` is retried as a new task.
+- Why: Orca accepts `--retry-of` only for a failed or stopped attempt.
+- What: dropped the phase-window report from `capacity_model.py`, which no doc used.
+
 ## 2026-10-29: parallel lanes in worktrees
 
 - What: up to three workers now run at once, each ticket in its own Orca worktree and branch from the newest `main`, with each lane's own simulators and DerivedData.

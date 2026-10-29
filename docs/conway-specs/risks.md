@@ -12,7 +12,8 @@ Each entry is a way this run can fail, and what limits the damage.
 ## Two tickets fight over one file
 
 - Failure: hot files such as `ProgramView.swift`, `BlockBuilderView.swift` and `SessionExerciseCard.swift` change under a worker.
-- Mitigation: a ticket never starts while a live ticket owns one of its files, and each worker edits only its own worktree.
+- Mitigation: a ticket never starts while a live ticket owns or holds one of its files, and each worker edits only its own worktree.
+  A worker asks before it edits any file outside its `owns` list, and the coordinator then holds that file for it until it merges.
   `capacity_model.py` prints the files that three or more tickets own, so the coordinator knows where tickets will wait for each other and where regressions are likely.
   The coordinator merges only as a fast-forward, after a rebase and a build when `main` moved.
 
@@ -33,7 +34,7 @@ Each entry is a way this run can fail, and what limits the damage.
 
 - Failure: worktrees, branches and booted phones from finished tickets fill the disk, and later checks confuse them with live work.
 - Mitigation: the coordinator removes each worktree and its branch right after the merge.
-  Evidence lives in the main checkout, so nothing is lost with a worktree.
+  It first copies the ticket's evidence to the main checkout, so nothing is lost with a worktree.
   Phase 8 checks that no ticket worktree or branch is left, and shuts down the lane phones.
 
 ## GitNexus rates an edit CRITICAL
@@ -88,8 +89,10 @@ Each entry is a way this run can fail, and what limits the damage.
 ## Workers stall on permission prompts
 
 - Failure: workers wait for approval of every build, test or commit, and the run stops while nobody watches.
+  Copilot CLI also asks before it changes files outside its working folder.
 - Mitigation: worker tabs follow the user's Orca setting for new agent tabs.
   The user chooses that setting before dispatch, as [dispatch.md](dispatch.md) asks.
+  Workers keep their evidence inside their worktree, and the coordinator copies in any earlier evidence a ticket reads, so no worker needs a file outside its folder.
 
 ## The design export arrives mid-run
 
