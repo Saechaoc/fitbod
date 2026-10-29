@@ -295,6 +295,7 @@ struct ManualOverrideTests {
             smallestIncrement: 2.5,
             plates: plates,
             barWeight: barWeight,
+            unit: .kg,
             minCalibrationSets: settings.minCalibrationSets,  // 20
             lastSessionWeight: lastHint?.weight,
             lastSessionReps: lastHint?.reps,

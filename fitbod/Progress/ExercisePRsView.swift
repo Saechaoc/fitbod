@@ -96,7 +96,8 @@ public struct ExercisePRsView: View {
             BRUHeaderBar(
                 left: HeaderAction("‹") { dismiss() },
                 center: navTitle,
-                right: HeaderAction("ALL TIME") { }
+                // The range this screen covers, not a control.
+                right: .text("ALL TIME")
             )
 
             // 3-segment inverted-active intent toggle bar
@@ -160,6 +161,7 @@ public struct ExercisePRsView: View {
 
 private struct PRsHost: View {
     @Query private var sets: [SetEntry]
+    @Environment(\.weightUnit) private var defaultUnit
     let scope: ExercisePRsViewScope
     let intentFilter: ExercisePRsIntentFilter
 
@@ -371,20 +373,23 @@ private struct PRsHost: View {
 
     // MARK: - Row Text
 
+    /// The PR's value in the exercise's own unit. A set logged without an
+    /// RPE leaves the RPE out rather than showing a dash.
     private func rowText(kind: PRKind, set: SetEntry) -> String {
+        let unit = WeightUnit.effective(for: set.sessionExercise?.exercise, default: defaultUnit).rawValue
         let weightStr = formatWeight(set.weight)
-        let rpeStr = set.rpe.map { String(format: "%g", $0) } ?? "—"
+        let rpeStr = set.rpe.map { String(format: "%g", $0) }
         switch kind {
         case .weight:
-            return "\(weightStr) kg × \(set.reps) @ RPE \(rpeStr)"
+            return "\(weightStr) \(unit) × \(set.reps)" + (rpeStr.map { " @ RPE \($0)" } ?? "")
         case .reps:
-            return "\(set.reps) reps @ \(weightStr) kg, RPE \(rpeStr)"
+            return "\(set.reps) reps @ \(weightStr) \(unit)" + (rpeStr.map { ", RPE \($0)" } ?? "")
         case .volume:
             let tonnage = Int((set.weight * Double(set.reps)).rounded())
-            return "\(tonnage) kg single-set (\(weightStr) × \(set.reps))"
+            return "\(tonnage) \(unit) single-set (\(weightStr) × \(set.reps))"
         case .e1RM:
             let e1rm = OneRepMax.estimate(weight: set.weight, reps: set.reps).map { Int($0.rounded()) } ?? 0
-            return "\(e1rm) kg e1RM (\(weightStr) × \(set.reps))"
+            return "\(e1rm) \(unit) e1RM (\(weightStr) × \(set.reps))"
         }
     }
 

@@ -52,6 +52,7 @@ import UIKit
 public struct InSessionPRBanner: View {
     @Bindable public var state: InSessionPRState
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.weightUnit) private var defaultUnit
 
     public init(state: InSessionPRState) {
         self._state = Bindable(wrappedValue: state)
@@ -83,21 +84,23 @@ public struct InSessionPRBanner: View {
     private func slab(content: InSessionPRBannerContent) -> some View {
         VStack(spacing: 2) {
             // Layer 1: "PR" caption label
+            // Black on orange: white on bruSignal measures 2.96:1 and fails.
             Text("PR")
                 .font(BRUFont.labelSmall)
                 .tracking(1.5)
                 .textCase(.uppercase)
-                .foregroundStyle(Color.bruPaper)
+                .foregroundStyle(Color.bruOnSignal)
 
             // Layer 2: PR-kinds composite (BRUDisplay medium)
-            BRUDisplay(prCompositeLabel(kinds: content.kinds), size: .medium, color: Color.bruPaper)
+            BRUDisplay(prCompositeLabel(kinds: content.kinds), size: .medium, color: Color.bruOnSignal)
 
             // Layer 3: set-detail mono sub-line
             Text(setDetailMono(content: content))
                 .font(BRUFont.labelSmall)
                 .tracking(1.2)
                 .textCase(.uppercase)
-                .foregroundStyle(Color.bruPaper.opacity(0.8))
+                .multilineTextAlignment(.center)
+                .foregroundStyle(Color.bruOnSignal.opacity(0.8))
         }
         .frame(maxWidth: .infinity, minHeight: 44)
         .padding(.horizontal, 16)
@@ -124,8 +127,9 @@ public struct InSessionPRBanner: View {
     /// Formats the set-detail sub-line per UI-SPEC verbatim:
     /// "BENCH PRESS · 102.5 KG × 5"
     private func setDetailMono(content: InSessionPRBannerContent) -> String {
-        let weightStr = formatWeight(content.weight) + " KG"
-        return "· \(weightStr) × \(content.reps)"
+        let unit = content.unitOverride ?? defaultUnit
+        let set = "\(formatWeight(content.weight)) \(unit.rawValue) × \(content.reps)"
+        return content.exerciseName.isEmpty ? set : "\(content.exerciseName) · \(set)"
     }
 
     private func kindLabel(for kind: PRKind) -> String {
@@ -144,8 +148,17 @@ public struct InSessionPRBanner: View {
         return String(format: "%g", value)
     }
 
+    /// "Personal record, weight. Bench Press, 225 pounds, 5 reps."
     private func accessibilityLabel(content: InSessionPRBannerContent) -> String {
-        let joined = content.kinds.map { kindLabel(for: $0) }.joined(separator: ", ")
-        return "\(content.kinds.count) personal records: \(joined)"
+        let kinds = content.kinds.map(\.spokenName).joined(separator: ", ")
+        let lead = content.kinds.count == 1
+            ? "Personal record, \(kinds)."
+            : "\(content.kinds.count) personal records: \(kinds)."
+        let unit = content.unitOverride ?? defaultUnit
+        let unitName = unit == .kg ? "kilograms" : "pounds"
+        let set = "\(formatWeight(content.weight)) \(unitName), \(content.reps) reps."
+        return content.exerciseName.isEmpty
+            ? "\(lead) \(set)"
+            : "\(lead) \(content.exerciseName), \(set)"
     }
 }

@@ -7,7 +7,7 @@
 //  BRU conformance (03-UI-SPEC lines 388, 409, 494):
 //    - info.circle SF Symbol + Button block DELETED (was lines 101–113 of v1)
 //    - Color.accentColor DELETED (was on info.circle button)
-//    - Disclosure now triggered by .onLongPressGesture(minimumDuration: 0.4) on outer HStack
+//    - Disclosure uses a simultaneous long press so TextField editing cannot consume it
 //    - BRUFont.bodyEmphasis for editable weight value (was Font.body)
 //    - BRUFont.bodyDefault for range display (was Font.body)
 //    - BRUFont.labelMicro + .textCase(.uppercase) + .tracking(1.0) for "M" badge (was Font.caption)
@@ -31,8 +31,9 @@ public struct PrescriptionWeightCell: View {
     /// the editable TextField. Format: "{low} \u{2013} {high} {unitLabel}".
     public let range: ClosedRange<Double>?
     public let explanation: PrescriptionExplanation?
-    /// Unit label for the range display. Defaults to "kg".
-    public var unitLabel: String = "kg"
+    /// Unit label for the weight ("lb" or "kg"). No default: the caller
+    /// passes the exercise's effective unit.
+    public var unitLabel: String
     @Binding public var wasManualOverride: Bool
     public var isComplete: Bool = false
     public var onTapEmptyCell: () -> Void = {}
@@ -48,7 +49,7 @@ public struct PrescriptionWeightCell: View {
         prescribed: Double?,
         range: ClosedRange<Double>?,
         explanation: PrescriptionExplanation?,
-        unitLabel: String = "kg",
+        unitLabel: String,
         wasManualOverride: Binding<Bool>,
         isComplete: Bool = false,
         onTapEmptyCell: @escaping () -> Void = {},
@@ -79,9 +80,9 @@ public struct PrescriptionWeightCell: View {
                 TextField("—", text: $weightText)
                     .keyboardType(.decimalPad)
                     .focused($weightFocused)
-                    .frame(width: 60)
+                    .frame(minWidth: 60, minHeight: 44)
                     .font(BRUFont.bodyEmphasis)
-                    .foregroundStyle(Color.bruInk)
+                    .foregroundStyle(isComplete ? Color.bruSignalText : Color.bruInk)
                     .onChange(of: weightText) { _, new in
                         if let d = Double(new) {
                             weight = d
@@ -112,12 +113,16 @@ public struct PrescriptionWeightCell: View {
             }
         }
         .padding(.vertical, 12)
-        // Long-press disclosure replaces v1 info.circle button per 03-UI-SPEC line 388 + line 409
-        .onLongPressGesture(minimumDuration: 0.4) {
+        .contentShape(Rectangle())
+        // Observe the press alongside TextField's own selection gesture.
+        // A competing parent gesture can focus the editor without opening
+        // the explanation when the press lands on the number itself.
+        .simultaneousGesture(LongPressGesture(minimumDuration: 0.4).onEnded { _ in
             if explanation != nil {
+                weightFocused = false
                 showWhySheet = true
             }
-        }
+        })
         .onTapGesture {
             if range == nil && weightText.isEmpty { onTapEmptyCell() }
         }
@@ -129,9 +134,17 @@ public struct PrescriptionWeightCell: View {
         )
         .accessibilityHint(explanation != nil ? "Long press for prescription breakdown." : "")
         .accessibilityValue(range == nil ? "\(formatted(weight)) \(unitLabel)" : "")
+        .accessibilityActions {
+            if explanation != nil {
+                Button("Explain prescribed weight") {
+                    weightFocused = false
+                    showWhySheet = true
+                }
+            }
+        }
         .sheet(isPresented: $showWhySheet) {
             if let exp = explanation {
-                WhyThisWeightSheet(explanation: exp)
+                WhyThisWeightSheet(explanation: exp, unitLabel: unitLabel)
                     .presentationDetents([.medium])
             }
         }
@@ -181,6 +194,7 @@ public struct PrescriptionWeightCell: View {
             prescribed: 102.5,
             range: nil,
             explanation: explanation,
+            unitLabel: "lb",
             wasManualOverride: $wasManualOverride
         )
         .padding()
@@ -212,6 +226,7 @@ public struct PrescriptionWeightCell: View {
             prescribed: 100.0,
             range: nil,
             explanation: explanation,
+            unitLabel: "lb",
             wasManualOverride: $wasManualOverride
         )
         .padding()
@@ -243,6 +258,7 @@ public struct PrescriptionWeightCell: View {
             prescribed: 100.0,
             range: 95.0...105.0,
             explanation: explanation,
+            unitLabel: "lb",
             wasManualOverride: $wasManualOverride
         )
         .padding()

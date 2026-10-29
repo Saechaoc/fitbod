@@ -74,14 +74,15 @@ public enum CSVExporter {
     // MARK: - Public API
 
     /// Render the given `[SetEntry]` to a UTF-8 BOM + RFC 4180 CSV byte
-    /// stream. `userSettings` provides the `unit` column value
-    /// (defaults to "kg" when nil).
+    /// stream. `userSettings` provides the `unit` column value (the app
+    /// default when nil); an exercise's own unit wins for its rows.
     public static func render(setEntries: [SetEntry], userSettings: UserSettings?) -> Data {
-        let unit = userSettings?.unitsRaw ?? "kg"
+        let unit = userSettings?.unitsRaw ?? WeightUnit.default.rawValue
         var lines: [String] = []
         lines.append(headerColumns.map(rfc4180Quote).joined(separator: ","))
         for entry in setEntries {
-            lines.append(rowFor(entry: entry, unit: unit))
+            let rowUnit = entry.sessionExercise?.exercise?.unitOverride?.rawValue ?? unit
+            lines.append(rowFor(entry: entry, unit: rowUnit))
         }
         let body = lines.joined(separator: "\r\n") + "\r\n"
         var data = Data(utf8BOM)

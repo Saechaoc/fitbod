@@ -29,7 +29,7 @@ public struct InlineRPEChipRow: View {
     }
 
     public var body: some View {
-        HStack(spacing: 4) {                                                   // UI-SPEC xs
+        BRUFlowLayout(spacing: 4, lineSpacing: 4) {
             ForEach([6, 7, 8, 9, 10], id: \.self) { value in
                 let selected = Int(rpe ?? -1) == value
                 Button {
@@ -42,7 +42,7 @@ public struct InlineRPEChipRow: View {
                         .font(BRUFont.displayMedium)
                         .monospacedDigit()
                         .foregroundStyle(selected ? Color.bruPaper : Color.bruInk)
-                        .frame(minWidth: 32, minHeight: 32)
+                        .frame(minWidth: 44, minHeight: 44)
                         .background(selected ? Color.bruInk : Color.bruPaper)
                         .overlay(
                             Rectangle()

@@ -62,7 +62,7 @@ public struct SwapExerciseSheet: View {
                     }
                     try? ctx.save()
                     dismiss()
-                })
+                }, showsPickerHeader: false)
 
                 // Footer note per UI-SPEC verbatim line 391
                 Text("This swap applies to this session only. The routine template will not change.")   // UI-SPEC verbatim

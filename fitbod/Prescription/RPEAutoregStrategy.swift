@@ -48,6 +48,7 @@ public struct RPEAutoregStrategy: ProgressionStrategy {
         smallestIncrement: Double,
         plates: [(weight: Double, countPerSide: Int)],
         barWeight: Double,
+        unit: WeightUnit,
         minCalibrationSets: Int,
         lastSessionWeight: Double?,
         lastSessionReps: Int?,
@@ -63,7 +64,8 @@ public struct RPEAutoregStrategy: ProgressionStrategy {
             weight: lastSessionWeight,
             reps: lastSessionReps,
             rpe: lastSessionRPE,
-            date: lastSessionDate
+            date: lastSessionDate,
+            unit: unit
         )
 
         // MARK: Calibrated path
@@ -84,8 +86,8 @@ public struct RPEAutoregStrategy: ProgressionStrategy {
                 )
 
                 let pctDisplay = Int((pct * 100).rounded())
-                let computedLine = "Target e1RM \(Self.fmt1(calibratedE1RM)) kg → \(pctDisplay)% × \(targetRepsHigh) → \(Self.fmt1(rawTarget)) kg"
-                let roundedLine = "→ \(Self.fmtG(rounded)) kg (rounded down to \(Self.fmtG(smallestIncrement)) kg plates)"
+                let computedLine = "Target e1RM \(Self.fmt1(calibratedE1RM)) \(unit.rawValue) → \(pctDisplay)% × \(targetRepsHigh) → \(Self.fmt1(rawTarget)) \(unit.rawValue)"
+                let roundedLine = "→ \(Self.fmtG(rounded)) \(unit.rawValue) (rounded down to \(Self.fmtG(smallestIncrement)) \(unit.rawValue) plates)"
 
                 let exp = PrescriptionExplanation(
                     lastSessionLine: lastLine,
@@ -136,7 +138,7 @@ public struct RPEAutoregStrategy: ProgressionStrategy {
             )
             let range: ClosedRange<Double> = lowRounded...max(lowRounded, highRounded)
 
-            let roundedLine = "→ \(Self.fmtG(rounded)) kg (rounded down to \(Self.fmtG(smallestIncrement)) kg plates)"
+            let roundedLine = "→ \(Self.fmtG(rounded)) \(unit.rawValue) (rounded down to \(Self.fmtG(smallestIncrement)) \(unit.rawValue) plates)"
 
             let exp = PrescriptionExplanation(
                 lastSessionLine: lastLine,
@@ -158,7 +160,7 @@ public struct RPEAutoregStrategy: ProgressionStrategy {
             formulaName: "RPE autoregulation",
             computedLine: nil,
             roundedWeight: 0,
-            roundedLine: "No prior data — log a set to begin calibrating.",
+            roundedLine: "No prior data - log a set to begin calibrating.",
             status: .calibrating(current: history.count, threshold: minCalibrationSets),
             bumpOccurred: false,
             range: nil
@@ -182,15 +184,16 @@ private extension RPEAutoregStrategy {
     }
 
     /// Builds the "last session" line shown in the WhyThisWeightSheet.
-    /// Format: "{weight} kg × {reps} @ RPE {rpe} (May 15)"
+    /// Format: "{weight} {unit} × {reps} @ RPE {rpe} (May 15)"
     static func lastSessionLine(
         weight: Double?,
         reps: Int?,
         rpe: Double?,
-        date: Date?
+        date: Date?,
+        unit: WeightUnit
     ) -> String? {
         guard let weight, let reps, let rpe, let date else { return nil }
         let dateStr = date.formatted(.dateTime.month(.abbreviated).day())
-        return "\(fmtG(weight)) kg × \(reps) @ RPE \(String(format: "%.1f", rpe)) (\(dateStr))"
+        return "\(fmtG(weight)) \(unit.rawValue) × \(reps) @ RPE \(String(format: "%.1f", rpe)) (\(dateStr))"
     }
 }

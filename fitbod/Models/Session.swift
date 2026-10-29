@@ -76,4 +76,12 @@ extension Session {
     public var progressionKind: ProgressionKind {
         ProgressionKind(rawValue: progressionKindRaw) ?? .double
     }
+
+    /// The name shown for this workout: the log-time template name, else
+    /// the routine snapshot, else "Workout" for an ad-hoc session.
+    public var displayName: String {
+        if let templateName, !templateName.isEmpty { return templateName }
+        if !routineSnapshotName.isEmpty { return routineSnapshotName }
+        return "Workout"
+    }
 }

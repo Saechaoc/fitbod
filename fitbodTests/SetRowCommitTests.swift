@@ -166,19 +166,19 @@ struct SetRowCommitTests {
         // Zero weight branch — guard rejects.
         entry.weight = 0
         entry.reps = 5
-        let weightZeroOK = entry.weight > 0 && entry.reps > 0
+        let weightZeroOK = SessionSetActions.canComplete(entry)
         #expect(weightZeroOK == false)
 
         // Zero reps branch — guard rejects.
         entry.weight = 185
         entry.reps = 0
-        let repsZeroOK = entry.weight > 0 && entry.reps > 0
+        let repsZeroOK = SessionSetActions.canComplete(entry)
         #expect(repsZeroOK == false)
 
         // Both populated — guard accepts.
         entry.weight = 185
         entry.reps = 5
-        let bothOK = entry.weight > 0 && entry.reps > 0
+        let bothOK = SessionSetActions.canComplete(entry)
         #expect(bothOK == true)
 
         // Sanity: entry never mutated as a side effect of the guard check.

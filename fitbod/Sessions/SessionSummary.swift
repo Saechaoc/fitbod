@@ -128,7 +128,51 @@ public struct SessionSummary: Sendable, Equatable {
         return make(session: session, priorSets: prior)
     }
 
+    /// The records each finished session set, keyed by session id. One
+    /// chronological pass over every session, so each session is checked
+    /// against the records of the sessions that started before it: the
+    /// same rule `make` applies to one session. Sessions without a PR are
+    /// left out.
+    public static func prsBySession(_ sessions: [Session]) -> [UUID: SessionPRs] {
+        var table = PRTable()
+        var result: [UUID: SessionPRs] = [:]
+        let finished = sessions
+            .filter { $0.completedAt != nil }
+            .sorted { $0.startedAt < $1.startedAt }
+        for session in finished {
+            let sets = (session.exercises ?? [])
+                .flatMap { $0.sets ?? [] }
+                .filter { $0.isComplete && !$0.isWarmup }
+                .sorted { $0.completedAt < $1.completedAt }
+            // Grouped by logged exercise, as in `make`, so the count is the
+            // number of PR kinds the summary lists across its exercises.
+            var kindsByExercise: [UUID: Set<PRKind>] = [:]
+            for set in sets {
+                let hits = PRDetector.check(set: set, against: &table)
+                guard !hits.isEmpty, let seID = set.sessionExercise?.id else { continue }
+                kindsByExercise[seID, default: []].formUnion(hits)
+            }
+            guard !kindsByExercise.isEmpty else { continue }
+            let kinds = kindsByExercise.values.reduce(into: Set<PRKind>()) { $0.formUnion($1) }
+            result[session.id] = SessionPRs(
+                kinds: PRKind.allCases.filter { kinds.contains($0) },
+                count: kindsByExercise.values.reduce(0) { $0 + $1.count }
+            )
+        }
+        return result
+    }
+
     private static func isCountedWorkingSet(_ set: SetEntry) -> Bool {
         set.isComplete && !set.isWarmup && set.reps > 0
     }
+}
+
+/// The personal records one finished session set, as its history row
+/// shows them.
+public struct SessionPRs: Sendable, Equatable {
+    /// Every kind of record the session set, canonical order.
+    public let kinds: [PRKind]
+    /// One per exercise and kind, so weight records on two lifts count as
+    /// 2: the same total as the PR kinds the summary lists per exercise.
+    public let count: Int
 }

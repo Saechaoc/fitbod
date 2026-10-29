@@ -64,7 +64,7 @@ struct SessionLoggerCopyTests {
         )
         #expect(rowSrc.contains("\"—\""))                                        // weight/reps placeholder
         #expect(rowSrc.contains("SetCompletionGlyph"))                           // BRU completion glyph
-        #expect(rowSrc.contains("entry.weight > 0 && entry.reps > 0"))           // commit guard
+        #expect(rowSrc.contains("SessionSetActions.canComplete(entry)"))       // shared commit guard
 
         // SetTypeChip — UI-SPEC verbatim long-press menu labels (preserved).
         // System colors removed per BRU rewrite (02.1-07).

@@ -48,6 +48,7 @@ public struct PlateCalculatorSheet: View {
     // MARK: - Environment
 
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.weightUnit) private var weightUnit
 
     // MARK: - State
 
@@ -86,14 +87,8 @@ public struct PlateCalculatorSheet: View {
         return stack.totalWeight - parsedBar
     }
 
-    /// Unit label derived from bar weight heuristic; safe default is "kg".
-    /// Explicit `unitLabel` init param approach: add via a separate init if callers
-    /// need to override (plan-spec allows `String = "kg"` default).
-    private var unitLabel: String {
-        // Simple heuristic: bar weights above 30 are almost certainly in lb
-        // (Olympic lb bar = 45; kg bar = 20). Overridable via future init param if needed.
-        parsedBar > 30 ? "lb" : "kg"
-    }
+    /// The lifter's unit from Settings. Plate inventories are entered in it.
+    private var unitLabel: String { weightUnit.rawValue }
 
     /// Human-readable bar name for the Equipment grid.
     private var barName: String {

@@ -26,14 +26,14 @@ public struct PlateStackDisclosure: View {
     public let targetWeight: Double
     public let barWeight: Double
     public let plates: [PlateSpec]
-    /// Unit label for copy strings. Defaults to "kg".
+    /// Unit label for copy strings ("lb" or "kg").
     public let unitLabel: String
 
     public init(
         targetWeight: Double,
         barWeight: Double,
         plates: [PlateSpec],
-        unitLabel: String = "kg"
+        unitLabel: String
     ) {
         self.targetWeight = targetWeight
         self.barWeight = barWeight
@@ -115,7 +115,7 @@ public struct PlateStackDisclosure: View {
             .font(BRUFont.bodyDefault)
             .foregroundStyle(Color.bruMuted)
             .padding(.bottom, 4)
-        PlateStackDisclosure(targetWeight: 100, barWeight: 20, plates: plates)
+        PlateStackDisclosure(targetWeight: 100, barWeight: 20, plates: plates, unitLabel: "kg")
     }
     .padding()
     .background(Color.bruPaper)
@@ -137,7 +137,7 @@ public struct PlateStackDisclosure: View {
             .font(BRUFont.bodyDefault)
             .foregroundStyle(Color.bruMuted)
             .padding(.bottom, 4)
-        PlateStackDisclosure(targetWeight: 97.5, barWeight: 20, plates: plates)
+        PlateStackDisclosure(targetWeight: 97.5, barWeight: 20, plates: plates, unitLabel: "kg")
     }
     .padding()
     .background(Color.bruPaper)
@@ -154,7 +154,7 @@ public struct PlateStackDisclosure: View {
             .font(BRUFont.bodyDefault)
             .foregroundStyle(Color.bruMuted)
             .padding(.bottom, 4)
-        PlateStackDisclosure(targetWeight: 97.5, barWeight: 20, plates: plates)
+        PlateStackDisclosure(targetWeight: 97.5, barWeight: 20, plates: plates, unitLabel: "kg")
     }
     .padding()
     .background(Color.bruPaper)
@@ -171,7 +171,7 @@ public struct PlateStackDisclosure: View {
             .font(BRUFont.bodyDefault)
             .foregroundStyle(Color.bruMuted)
             .padding(.bottom, 4)
-        PlateStackDisclosure(targetWeight: 15, barWeight: 20, plates: plates)
+        PlateStackDisclosure(targetWeight: 15, barWeight: 20, plates: plates, unitLabel: "kg")
     }
     .padding()
     .background(Color.bruPaper)

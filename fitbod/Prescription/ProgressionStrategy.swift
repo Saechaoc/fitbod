@@ -45,7 +45,7 @@ public struct PrescriptionExplanation: Sendable {
     /// "Target e1RM 122 kg → 88% × 8 → 107 kg". Nil for double progression.
     public var computedLine: String?
 
-    /// The plate-rounded prescribed weight in kg.
+    /// The plate-rounded prescribed weight, in the exercise's unit.
     public let roundedWeight: Double
 
     /// Human-readable rounding explanation, e.g.
@@ -128,6 +128,9 @@ public struct PrescriptionExplanation: Sendable {
 /// `PreviousMatchingIntent.fetchTopWorkingSet(...)` and passed in directly.
 /// Passing scalars (not a struct) keeps strategies free of nested types beyond
 /// HistoryPoint.
+///
+/// Weights are plain numbers in whatever unit the lifter logs in. `unit` only
+/// labels the explanation text ("100 lb × 8"); the math never converts.
 public protocol ProgressionStrategy: Sendable {
     func prescribe(
         history: [HistoryPoint],
@@ -138,6 +141,7 @@ public protocol ProgressionStrategy: Sendable {
         smallestIncrement: Double,
         plates: [(weight: Double, countPerSide: Int)],
         barWeight: Double,
+        unit: WeightUnit,
         minCalibrationSets: Int,
         lastSessionWeight: Double?,
         lastSessionReps: Int?,

@@ -8,10 +8,12 @@
 // weight cell on every SetRow. Surfaces the most recent matching-intent prior
 // set for the exercise.
 //
-// UI-SPEC verbatim format:
-//   Populated:   "{w} × {r} @ {rpe} (MON)"   — BRUFont.bodyDefault mono bruMuted
-//   Empty:       "—"                           — BRUFont.bodyDefault mono bruMuted
-//   Other-intent fallback: "{w} × {r} (OTHER)" italic
+// Format:
+//   Populated:   "175×8 @8", or "175×8" when the RPE does not fit the
+//                80pt column — the compact set notation the exercise
+//                history uses. BRUFont.bodyDefault mono bruMuted.
+//   Empty:       "—"   — BRUFont.bodyDefault mono bruMuted
+//   VoiceOver:   "Previous: 175 × 8 @ 8 (Mon)" — the UI-SPEC long form.
 //
 // The query is delegated to PreviousMatchingIntent.fetchTopWorkingSet —
 // the shared helper introduced in plan 01-01. Fires ONCE per row in .task,
@@ -43,14 +45,15 @@ public struct PreviousColumn: View {
     public var body: some View {
         Group {
             if let hit = hint {
-                // The column is 80pt wide. Show the longest form that fits
-                // without truncation: full "175 × 8 @ 8 (Mon)", then without
-                // the day, then the bare "175×8". The full string stays the
-                // accessibility label.
+                // The column is 80pt wide. Every row uses the same compact
+                // notation, "175×8 @8", and drops only the RPE when even
+                // that does not fit. (Mixing the spaced long form on one
+                // exercise with the compact form on the next looked
+                // inconsistent.) The full string stays the accessibility
+                // label.
                 ViewThatFits(in: .horizontal) {
-                    hintText(formatHint(hit))
-                    hintText(formatHint(hit, includeDay: false))
-                    hintText(compactHint(hit))
+                    hintText(compactHint(hit, includeRPE: true))
+                    hintText(compactHint(hit, includeRPE: false))
                 }
                 .accessibilityElement(children: .ignore)
                 .accessibilityLabel("Previous: \(formatHint(hit))")
@@ -59,6 +62,8 @@ public struct PreviousColumn: View {
                     .font(BRUFont.bodyDefault)
                     .monospacedDigit()
                     .foregroundStyle(Color.bruMuted)
+                    // VoiceOver reads a bare dash as "em dash".
+                    .accessibilityLabel("No previous set")
             }
         }
         // Keyed on exerciseID so a mid-session swap re-queries.
@@ -72,10 +77,8 @@ public struct PreviousColumn: View {
         }
     }
 
-    /// Formats the matching-intent hit per UI-SPEC § Session logger line 545 + 580:
-    /// "{prev weight} × {prev reps} @ {prev RPE} ({day-of-week ref})"
-    /// e.g. "175 × 8 @ 8 (Mon)". RPE clause suppressed when the prior set
-    /// didn't record one. Weight renders without decimal when integer.
+    /// One muted, single-line hint that never truncates, so ViewThatFits
+    /// can tell whether it fits.
     private func hintText(_ text: String) -> some View {
         Text(text)
             .font(BRUFont.bodyDefault)
@@ -85,35 +88,26 @@ public struct PreviousColumn: View {
             .fixedSize(horizontal: true, vertical: false)
     }
 
-    /// "175×8" — the narrowest form.
-    private func compactHint(_ hit: PreviousMatchingIntentHit) -> String {
-        "\(formatWeight(hit.weight))×\(hit.reps)"
+    /// "175×8 @8", or "175×8" without the RPE (also when none was logged).
+    private func compactHint(_ hit: PreviousMatchingIntentHit, includeRPE: Bool) -> String {
+        let set = "\(formatNumber(hit.weight))×\(hit.reps)"
+        guard includeRPE, let rpe = hit.rpe else { return set }
+        return "\(set) @\(formatNumber(rpe))"
     }
 
-    private func formatWeight(_ weight: Double) -> String {
-        weight.truncatingRemainder(dividingBy: 1) == 0
-            ? "\(Int(weight))"
-            : String(format: "%.1f", weight)
+    /// Whole numbers drop the decimal: 100 → "100", 102.5 → "102.5".
+    private func formatNumber(_ value: Double) -> String {
+        value.truncatingRemainder(dividingBy: 1) == 0
+            ? "\(Int(value))"
+            : String(format: "%.1f", value)
     }
 
-    private func formatHint(_ hit: PreviousMatchingIntentHit, includeDay: Bool = true) -> String {
+    /// UI-SPEC long form for VoiceOver: "175 × 8 @ 8 (Mon)". The RPE clause
+    /// is left out when the prior set didn't record one.
+    private func formatHint(_ hit: PreviousMatchingIntentHit) -> String {
         let day = hit.sessionStartedAt.formatted(.dateTime.weekday(.abbreviated))
-        let rpeText: String
-        if let rpe = hit.rpe {
-            if rpe.truncatingRemainder(dividingBy: 1) == 0 {
-                rpeText = "@ \(Int(rpe))"
-            } else {
-                rpeText = String(format: "@ %.1f", rpe)
-            }
-        } else {
-            rpeText = ""
-        }
-        let w = formatWeight(hit.weight)
-        // UI-SPEC verbatim: "175 × 8 @ 8 (Mon)"
-        let dayText = includeDay ? " (\(day))" : ""
-        return "\(w) × \(hit.reps) \(rpeText)\(dayText)"
-            .replacingOccurrences(of: "  ", with: " ")
-            .trimmingCharacters(in: .whitespaces)
+        let rpeText = hit.rpe.map { " @ \(formatNumber($0))" } ?? ""
+        return "\(formatNumber(hit.weight)) × \(hit.reps)\(rpeText) (\(day))"
     }
 }
 

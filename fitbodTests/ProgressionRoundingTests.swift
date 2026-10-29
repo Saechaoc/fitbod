@@ -64,6 +64,7 @@ struct ProgressionRoundingTests {
             smallestIncrement: 2.5,                 // per-exercise override (vs 5.0 global)
             plates: standardKgPlates,
             barWeight: barWeight,
+            unit: .kg,
             minCalibrationSets: 10,
             lastSessionWeight: lastWeight,
             lastSessionReps: 12,
@@ -93,6 +94,7 @@ struct ProgressionRoundingTests {
             smallestIncrement: 2.5,                 // global default (caller-resolved)
             plates: standardKgPlates,
             barWeight: barWeight,
+            unit: .kg,
             minCalibrationSets: 10,
             lastSessionWeight: lastWeight,
             lastSessionReps: 12,
@@ -123,6 +125,7 @@ struct ProgressionRoundingTests {
             smallestIncrement: 5.0,                 // lb-style increment (already in kg)
             plates: standardKgPlates,
             barWeight: barWeight,
+            unit: .kg,
             minCalibrationSets: 10,
             lastSessionWeight: lastWeight,
             lastSessionReps: 12,
@@ -158,6 +161,7 @@ struct ProgressionRoundingTests {
             smallestIncrement: 1.0,                 // 2 × 0.5 kg plates
             plates: microPlates,
             barWeight: barWeight,
+            unit: .kg,
             minCalibrationSets: 10,
             lastSessionWeight: lastWeight,
             lastSessionReps: 12,
@@ -195,6 +199,7 @@ struct ProgressionRoundingTests {
                 smallestIncrement: increment,
                 plates: standardKgPlates,
                 barWeight: barWeight,
+                unit: .kg,
                 minCalibrationSets: 10,
                 lastSessionWeight: lastWeight,
                 lastSessionReps: 12,

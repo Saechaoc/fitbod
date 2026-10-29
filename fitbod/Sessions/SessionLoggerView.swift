@@ -50,6 +50,7 @@ public struct SessionLoggerView: View {
     @Environment(\.modelContext) private var ctx
     @Environment(\.dismiss) private var dismiss
     @Environment(\.scenePhase) private var scenePhase
+    @Environment(\.isKeyboardVisible) private var isKeyboardVisible
 
     @Bindable public var session: Session
     @State private var engine = RestTimerEngine.makeProduction()
@@ -91,15 +92,30 @@ public struct SessionLoggerView: View {
                 }
                 Section {
                     AddUnplannedExerciseButton(session: session)
+                        .padding(16)
+                        .listRowInsets(EdgeInsets())
+                        .listRowSeparator(.hidden)
+                        .listRowBackground(Color.bruPaper)
                 }
+                .listSectionSeparator(.hidden)
             }
-            .listStyle(.insetGrouped)
+            // Full-width exercise blocks on paper, ruled apart: no inset
+            // grouped cards, no system gray.
+            .listStyle(.plain)
+            .scrollContentBackground(.hidden)
+            .background(Color.bruPaper)
             .scrollDismissesKeyboard(.interactively)
         }
+        // The workout gets the full height; the header's ‹ leads back out.
+        .bruTabBarHidden()
         // Rest timer dock — bottom edge, above the home indicator, in
-        // thumb reach. Renders nothing while no rest is running.
+        // thumb reach. Renders nothing while no rest is running, and steps
+        // aside while the keyboard is up so it never covers the set being
+        // typed into (the countdown keeps running).
         .safeAreaInset(edge: .bottom, spacing: 0) {
-            RestTimerOverlay(engine: engine)
+            if !isKeyboardVisible {
+                RestTimerOverlay(engine: engine)
+            }
         }
         .animation(.easeOut(duration: 0.2), value: engine.isRunning)
         // Number pads have no return key: give the keyboard a Done.
@@ -107,9 +123,7 @@ public struct SessionLoggerView: View {
             ToolbarItemGroup(placement: .keyboard) {
                 Spacer()
                 Button {
-                    UIApplication.shared.sendAction(
-                        #selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil
-                    )
+                    dismissKeyboard()
                 } label: {
                     Text("DONE")
                         .font(BRUFont.labelSmall)
@@ -122,6 +136,8 @@ public struct SessionLoggerView: View {
         .navigationBarHidden(true)
         .safeAreaInset(edge: .top, spacing: 0) {
             bruHeader
+                .accessibilityElement(children: .contain)
+                .accessibilityIdentifier("workout.header")
         }
         // Phase 6 plan 06-07 — PR banner above the content (anti-layout-shift)
         .safeAreaInset(edge: .top, spacing: 0) {
@@ -269,7 +285,10 @@ public struct SessionLoggerView: View {
     /// Commits a set: flips isComplete, saves, observes for PR detection, starts rest timer.
     /// RESEARCH §6 Pitfall 2 — save MUST precede engine.start.
     private func commitSet(_ entry: SetEntry, for se: SessionExercise) {
-        guard entry.weight > 0 && entry.reps > 0 else { return }
+        guard SessionSetActions.canComplete(entry) else { return }
+        // The set is done, so typing is too: drop the keyboard so the rest
+        // dock and the next set are in view.
+        dismissKeyboard()
         // Flips isComplete, stamps completedAt and saves BEFORE the rest
         // timer starts (RESEARCH §6 Pitfall 2).
         SessionSetActions.complete(entry, at: .now, context: ctx)
@@ -301,6 +320,14 @@ public struct SessionLoggerView: View {
     /// Typing into the next set's empty cell ends the rest (SESS-04).
     private func stopRestIfRunning() {
         if engine.isRunning { engine.stop() }
+    }
+
+    /// Ends editing in whichever weight or reps field has focus; the
+    /// field's focus change then persists the edit.
+    private func dismissKeyboard() {
+        UIApplication.shared.sendAction(
+            #selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil
+        )
     }
 
     private func finish() {

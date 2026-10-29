@@ -57,7 +57,8 @@ struct Phase3BRUSurfacesTests {
         let disclosure = PlateStackDisclosure(
             targetWeight: 15,
             barWeight: 20,
-            plates: plates
+            plates: plates,
+            unitLabel: "kg"
         )
         #expect(disclosure.targetWeight < disclosure.barWeight)
     }
@@ -71,7 +72,8 @@ struct Phase3BRUSurfacesTests {
         let disclosure = PlateStackDisclosure(
             targetWeight: 97.5,
             barWeight: 20,
-            plates: plates
+            plates: plates,
+            unitLabel: "kg"
         )
         #expect(disclosure.targetWeight == 97.5)
     }
@@ -266,7 +268,7 @@ struct Phase3BRUSurfacesTests {
     @Test("warmupRampRowsInstantiates — 4-set barbell ramp with BRU tokens")
     func warmupRampRowsInstantiates() throws {
         // Proves: public init(warmupSets:onSkip:sessionExercise:topWorkingWeight:barWeight:
-        //         unitLabel:incrementLabel:) compiles and all BRU token + font references
+        //         plates:unitLabel:) compiles and all BRU token + font references
         // (Color.bruSignal, Color.bruInk, Color.bruMuted, Color.bruHair,
         //  BRUFont.displayMedium, BRUFont.bodyDefault, BRUFont.labelSmall, BRUFont.labelMicro,
         //  .custom("SpaceGrotesk-Bold", size: 22) for the weight numeral)
@@ -300,8 +302,8 @@ struct Phase3BRUSurfacesTests {
             sessionExercise: exercise,
             topWorkingWeight: 100,
             barWeight: 20,
-            unitLabel: "kg",
-            incrementLabel: "2.5 kg"
+            plates: [(25, 4), (20, 4), (10, 4), (5, 4), (2.5, 4), (1.25, 4)],
+            unitLabel: "kg"
         )
         let _: any View = view
         #expect(Bool(true), "WarmupRampRows(4-set barbell) instantiated successfully")
@@ -320,7 +322,10 @@ struct Phase3BRUSurfacesTests {
         let view = WarmupRampRows(
             warmupSets: [],
             onSkip: {},
-            sessionExercise: exercise
+            sessionExercise: exercise,
+            barWeight: 45,
+            plates: [(45, 4), (25, 2), (10, 4), (5, 4), (2.5, 4)],
+            unitLabel: "lb"
         )
         let _: any View = view
         #expect(Bool(true), "WarmupRampRows(empty) renders placeholder without crash")

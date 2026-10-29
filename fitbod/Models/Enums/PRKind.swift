@@ -29,6 +29,18 @@ public enum PRKind: String, CaseIterable, Sendable {
     case e1RM = "e1rm"
 }
 
+extension PRKind {
+    /// What VoiceOver says for this kind of record.
+    public var spokenName: String {
+        switch self {
+        case .weight: return "weight"
+        case .reps:   return "reps"
+        case .volume: return "volume"
+        case .e1RM:   return "estimated one-rep max"
+        }
+    }
+}
+
 /// Rep-range bucket used to partition the PR table so a 5RM weight
 /// PR does not compete with an 8RM weight PR.
 public enum RepBucket: String, CaseIterable, Sendable {

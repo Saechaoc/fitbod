@@ -22,12 +22,21 @@ import SwiftData
 
 public enum SessionSetActions {
 
+    /// Bodyweight uses added load, so zero is a valid recorded weight.
+    /// All sets need positive reps and a finite, non-negative weight.
+    @MainActor
+    public static func canComplete(_ entry: SetEntry) -> Bool {
+        guard entry.reps > 0, entry.weight.isFinite, entry.weight >= 0 else { return false }
+        let equipment = entry.sessionExercise?.exercise?.equipment
+        return entry.weight > 0 || equipment == .bodyweight || equipment == .weightedBodyweight
+    }
+
     /// Mark a set complete. Returns false (and changes nothing) when the
-    /// set has no weight or reps yet, matching SetRow's commit guard.
+    /// set's input is invalid, matching SetRow's commit guard.
     @MainActor
     @discardableResult
     public static func complete(_ entry: SetEntry, at date: Date = .now, context: ModelContext) -> Bool {
-        guard entry.weight > 0 && entry.reps > 0 else { return false }
+        guard canComplete(entry) else { return false }
         entry.isComplete = true
         entry.completedAt = date
         try? context.save()

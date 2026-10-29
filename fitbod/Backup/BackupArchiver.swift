@@ -154,7 +154,7 @@ public actor BackupArchiver {
         let muscleVolumeTargets = try fetchMuscleVolumeTargets().map(mapMuscleVolumeTarget)
         let plateInventories = try fetchPlateInventories().map(mapPlateInventory)
         let userSettings = try fetchUserSettings().map(mapUserSettings)
-        let unitSystem = userSettings?.unitsRaw ?? "kg"
+        let unitSystem = userSettings?.unitsRaw ?? WeightUnit.default.rawValue
 
         return ExportDocument(
             formatVersion: 1,

@@ -80,7 +80,7 @@ public struct WhyThisWeightSheet: View {
         reps: Int? = nil,
         rpe: Double? = nil,
         setTypeLabel: String = "TOP SET",
-        unitLabel: String = "kg"
+        unitLabel: String
     ) {
         self.explanation = explanation
         self.onUseSuggested = onUseSuggested
@@ -282,8 +282,8 @@ public struct WhyThisWeightSheet: View {
         if name.contains("double") {
             return "Double progression"
         }
-        let rpeStr = rpe.map { formattedRPE($0) } ?? "—"
-        return "Target @ RPE \(rpeStr)"
+        guard let rpe else { return "Target weight" }
+        return "Target @ RPE \(formattedRPE(rpe))"
     }
 
     private var step02Body: String {

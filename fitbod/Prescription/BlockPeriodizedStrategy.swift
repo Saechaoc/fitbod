@@ -20,6 +20,7 @@ public struct BlockPeriodizedStrategy: ProgressionStrategy {
         smallestIncrement: Double,
         plates: [(weight: Double, countPerSide: Int)],
         barWeight: Double,
+        unit: WeightUnit,
         minCalibrationSets: Int,
         lastSessionWeight: Double?,
         lastSessionReps: Int?,
@@ -39,7 +40,7 @@ public struct BlockPeriodizedStrategy: ProgressionStrategy {
                     formulaName: "Block periodized",
                     computedLine: "No block context - using baseline.",
                     roundedWeight: baseline,
-                    roundedLine: "-> \(Self.formattedKg(baseline)) kg (baseline)",
+                    roundedLine: "-> \(Self.formattedKg(baseline)) \(unit.rawValue) (baseline)",
                     status: .notApplicable
                 )
             )
@@ -60,11 +61,11 @@ public struct BlockPeriodizedStrategy: ProgressionStrategy {
             )
         }
 
-        let lastLine = Self.lastSessionLine(baseline: baseline, reps: lastSessionReps)
+        let lastLine = Self.lastSessionLine(baseline: baseline, reps: lastSessionReps, unit: unit)
         let contextLine = Self.phaseContextLine(for: block, on: today)
 
         if phase.kind == .deload {
-            let line = "Deload week: weight held at \(Self.formattedKg(baseline)) kg"
+            let line = "Deload week: weight held at \(Self.formattedKg(baseline)) \(unit.rawValue)"
             return (
                 weight: baseline,
                 explanation: PrescriptionExplanation(
@@ -72,7 +73,7 @@ public struct BlockPeriodizedStrategy: ProgressionStrategy {
                     formulaName: "Block periodized",
                     computedLine: line,
                     roundedWeight: baseline,
-                    roundedLine: "-> \(Self.formattedKg(baseline)) kg (baseline held)",
+                    roundedLine: "-> \(Self.formattedKg(baseline)) \(unit.rawValue) (baseline held)",
                     status: .notApplicable,
                     phaseContextLine: contextLine,
                     deloadNoteLine: "Working sets cut by ~50%. Weight held at baseline."
@@ -92,9 +93,9 @@ public struct BlockPeriodizedStrategy: ProgressionStrategy {
             explanation: PrescriptionExplanation(
                 lastSessionLine: lastLine,
                 formulaName: "Block periodized",
-                computedLine: "Phase \(phase.kind.rawValue): baseline \(Self.formattedKg(baseline)) kg x \(Self.formatMultiplier(phase.intensityMultiplier)) -> \(Self.formattedKg(rawTarget)) kg",
+                computedLine: "Phase \(phase.kind.rawValue): baseline \(Self.formattedKg(baseline)) \(unit.rawValue) x \(Self.formatMultiplier(phase.intensityMultiplier)) -> \(Self.formattedKg(rawTarget)) \(unit.rawValue)",
                 roundedWeight: rounded,
-                roundedLine: "-> \(Self.formattedKg(rounded)) kg (plate-rounded)",
+                roundedLine: "-> \(Self.formattedKg(rounded)) \(unit.rawValue) (plate-rounded)",
                 status: .notApplicable,
                 phaseContextLine: contextLine
             )
@@ -113,9 +114,9 @@ private extension BlockPeriodizedStrategy {
         return "\(phase.kind.rawValue) phase - Week \(weekIndex + 1) of \(totalWeeks)"
     }
 
-    static func lastSessionLine(baseline: Double, reps: Int?) -> String? {
+    static func lastSessionLine(baseline: Double, reps: Int?, unit: WeightUnit) -> String? {
         guard let reps else { return nil }
-        return "Last: \(formattedKg(baseline)) kg x \(reps)"
+        return "Last: \(formattedKg(baseline)) \(unit.rawValue) x \(reps)"
     }
 
     static func formatMultiplier(_ multiplier: Double) -> String {

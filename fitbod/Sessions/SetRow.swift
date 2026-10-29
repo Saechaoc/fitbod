@@ -16,11 +16,11 @@
 //
 // PRESERVED VERBATIM:
 //   - @Bindable SetEntry + all closures (onCommit, onTapEmptyCell)
-//   - Commit guard: entry.weight > 0 && entry.reps > 0 (T-02.1-07-01)
+//   - Shared commit validation; zero added weight is valid for bodyweight.
 //   - Haptic on commit (T-02.1-07-03)
 //   - PrescriptionWeightCell wiring + PlateStackDisclosure
 //   - Per-set notes sheet (PerSetNoteSheet)
-//   - Bodyweight signed weight keyboard (.numbersAndPunctuation per SESS-09)
+//   - Numeric weight keyboard; milestone entries use non-negative added load.
 //   - accessibilityLabel on note button + completion button
 //
 // BRU contract: NO capsule shapes / NO RoundedRectangle / NO accent color
@@ -52,6 +52,13 @@ public struct SetRow: View {
     @FocusState private var repsFocused: Bool
 
     @Query private var inventories: [PlateInventory]
+    @Environment(\.weightUnit) private var defaultUnit
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+
+    /// The exercise's own unit wins over the app-wide one.
+    private var unit: WeightUnit {
+        .effective(for: sessionExercise.exercise, default: defaultUnit)
+    }
 
     public init(
         entry: SetEntry,
@@ -83,19 +90,26 @@ public struct SetRow: View {
             // to line 2, indented to align under the PREV column.
             VStack(alignment: .leading, spacing: 6) {
                 // LINE 1 — numbers + action buttons
-                HStack(spacing: 8) {
+                inputLayout {
                     // S{N} / W{N} leading label — BRUFont.bodyDefault per UI-SPEC line 369
                     Text(setLabel)
                         .font(BRUFont.bodyDefault)
                         .foregroundStyle(Color.bruMuted)
-                        .frame(width: 32, alignment: .leading)
+                        .frame(width: dynamicTypeSize.isAccessibilitySize ? nil : 32, alignment: .leading)
 
                     PreviousColumn(
                         exerciseID: sessionExercise.exercise?.id,
                         intentRaw: sessionExercise.session?.intentRaw ?? Intent.strength.rawValue,
                         currentSessionID: sessionExercise.session?.id
                     )
-                    .frame(width: 80, alignment: .leading)
+                    .frame(width: dynamicTypeSize.isAccessibilitySize ? nil : 80, alignment: .leading)
+
+                    if dynamicTypeSize.isAccessibilitySize {
+                        Text("Weight (\(unit.rawValue))")
+                            .font(BRUFont.labelSmall)
+                            .foregroundStyle(Color.bruMuted)
+                            .accessibilityHidden(true)
+                    }
 
                     // Weight cell — PrescriptionWeightCell handles prescribed/range/override display.
                     // Tap on cell area (not info icon) toggles plate stack disclosure.
@@ -104,28 +118,40 @@ public struct SetRow: View {
                         prescribed: prescribed,
                         range: explanation?.range,
                         explanation: explanation,
+                        unitLabel: unit.rawValue,
                         wasManualOverride: $entry.wasManualOverride,
                         isComplete: entry.isComplete,
                         onTapEmptyCell: onTapEmptyCell,
                         onEditCommitted: onEditCommitted
                     )
-                    .frame(width: 60)
+                    .frame(width: dynamicTypeSize.isAccessibilitySize ? nil : 60)
                     .contentShape(Rectangle())
                     .onTapGesture {
                         togglePlateDisclosure()
                         if !entry.isComplete { onTapEmptyCell() }
                     }
+                    .accessibilityIdentifier("set.weight.\(identifierSuffix)")
                     // Completed set: weight/reps numerics turn bruSignal per UI-SPEC line 241
-                    .foregroundStyle(entry.isComplete ? Color.bruSignal : Color.bruInk)
+                    .foregroundStyle(entry.isComplete ? Color.bruSignalText : Color.bruInk)
 
-                    // Reps TextField — mono emphasis + bruSignal when complete
+                    if dynamicTypeSize.isAccessibilitySize {
+                        Text("Reps")
+                            .font(BRUFont.labelSmall)
+                            .foregroundStyle(Color.bruMuted)
+                            .accessibilityHidden(true)
+                    }
+
+                    // Reps TextField — mono emphasis + readable signal when complete
                     TextField("—", text: $repsText)                              // UI-SPEC verbatim "—"
                         .font(BRUFont.bodyEmphasis)
                         .monospacedDigit()
-                        .foregroundStyle(entry.isComplete ? Color.bruSignal : Color.bruInk)
+                        .foregroundStyle(entry.isComplete ? Color.bruSignalText : Color.bruInk)
                         .keyboardType(.numberPad)
                         .focused($repsFocused)
-                        .frame(width: 40)
+                        .frame(width: dynamicTypeSize.isAccessibilitySize ? nil : 44)
+                        .frame(minHeight: 44)
+                        .padding(.vertical, 4)
+                        .contentShape(Rectangle())
                         .onTapGesture {
                             if !entry.isComplete { onTapEmptyCell() }
                         }
@@ -141,8 +167,11 @@ public struct SetRow: View {
                         .onChange(of: repsFocused) { _, focused in
                             if !focused { onEditCommitted() }
                         }
+                        // The "—" placeholder would read as "em dash".
+                        .accessibilityLabel("Reps, set \(displayNumber)")
+                        .accessibilityIdentifier("set.reps.\(identifierSuffix)")
 
-                    Spacer(minLength: 0)
+                    if !dynamicTypeSize.isAccessibilitySize { Spacer(minLength: 0) }
 
                     // Per-set notes button — typographic "✎" glyph (NOT SF Symbol)
                     // per UI-SPEC line 199: "square.and.pencil → '✎' glyph"
@@ -162,12 +191,12 @@ public struct SetRow: View {
                     }
 
                     // Completion button — SetCompletionGlyph replaces SF Symbol checkmark
-                    // Guard: entry.weight > 0 && entry.reps > 0 (T-02.1-07-01)
+                    // Shared validation keeps UI and persistence behavior aligned.
                     // Tapping a completed set's checkmark un-completes it.
                     Button {
                         if entry.isComplete {
                             onUncomplete()
-                        } else if entry.weight > 0 && entry.reps > 0 {
+                        } else if SessionSetActions.canComplete(entry) {
                             onCommit()
                         }
                     } label: {
@@ -176,18 +205,20 @@ public struct SetRow: View {
                     .buttonStyle(.plain)
                     .frame(minWidth: 44, minHeight: 44)                          // UI-SPEC HIG 44pt
                     .contentShape(Rectangle())
+                    .disabled(!entry.isComplete && !SessionSetActions.canComplete(entry))
                     .accessibilityLabel(
                         entry.isComplete
                         ? "Set \(displayNumber) complete"
                         : "Mark set \(displayNumber) complete"
                     )
-                    .accessibilityHint(entry.isComplete ? "Double tap to mark as not done" : "")
+                    .accessibilityHint(entry.isComplete ? "Double tap to mark as not done" : "Enter valid reps and weight first; bodyweight exercises may use zero added weight")
+                    .accessibilityIdentifier("set.complete.\(identifierSuffix)")
                 }
 
                 // LINE 2 — RPE chips + set-type chip
                 // .padding(.leading, 40) = 32pt setLabel + 8pt gap,
                 // so chips align under the PREV column.
-                HStack(spacing: 8) {
+                inputLayout {
                     InlineRPEChipRow(rpe: Binding(
                         get: { entry.rpe },
                         set: { entry.rpe = $0; onEditCommitted() }
@@ -198,9 +229,9 @@ public struct SetRow: View {
                         set: { entry.setTypeRaw = $0; onEditCommitted() }
                     ))
 
-                    Spacer(minLength: 0)
+                    if !dynamicTypeSize.isAccessibilitySize { Spacer(minLength: 0) }
                 }
-                .padding(.leading, 40)
+                .padding(.leading, dynamicTypeSize.isAccessibilitySize ? 0 : 40)
             }
             .padding(.vertical, 12)                                              // UI-SPEC md
 
@@ -217,7 +248,8 @@ public struct SetRow: View {
                     PlateStackDisclosure(
                         targetWeight: targetWeight,
                         barWeight: barW,
-                        plates: inv.availablePlates
+                        plates: inv.availablePlates,
+                        unitLabel: unit.rawValue
                     )
                     .padding(.vertical, 8)
                 }
@@ -226,6 +258,12 @@ public struct SetRow: View {
         .onAppear {
             repsText = entry.reps == 0 ? "" : String(entry.reps)
         }
+    }
+
+    private var inputLayout: AnyLayout {
+        dynamicTypeSize.isAccessibilitySize
+            ? AnyLayout(VStackLayout(alignment: .leading, spacing: 8))
+            : AnyLayout(HStackLayout(spacing: 6))
     }
 
     // MARK: - Private helpers
@@ -241,6 +279,11 @@ public struct SetRow: View {
 
     private var displayNumber: Int {
         SessionSetActions.displayNumber(of: entry)
+    }
+
+    /// "{exercise position}.{set label}", e.g. "1.S2", for UI test queries.
+    private var identifierSuffix: String {
+        "\(sessionExercise.orderIndex + 1).\(setLabel)"
     }
 
     /// Toggles the plate-stack disclosure for this row.

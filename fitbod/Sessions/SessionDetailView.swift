@@ -24,7 +24,7 @@ import SwiftData
 public struct SessionDetailView: View {
     @Environment(\.modelContext) private var ctx
     @Environment(\.dismiss) private var dismiss
-    @Query private var settingsList: [UserSettings]
+    @Environment(\.weightUnit) private var weightUnit
 
     public let session: Session
     private let onDone: (() -> Void)?
@@ -69,15 +69,17 @@ public struct SessionDetailView: View {
         .background(Color.bruPaper.ignoresSafeArea())
         .navigationBarHidden(true)
         .safeAreaInset(edge: .top, spacing: 0) {
+            // After Finish the summary closes from its bottom Done button
+            // (one Done, not two); opened from history it goes back with ‹.
             BRUHeaderBar(
                 left: onDone == nil ? HeaderAction("‹") { dismiss() } : nil,
-                center: "Summary",
-                right: onDone.map { done in HeaderAction("DONE", isSignal: true) { done() } }
+                center: "Summary"
             )
         }
         .safeAreaInset(edge: .bottom, spacing: 0) {
             if let onDone {
                 BRUButton("Done", kind: .primary, size: .lg) { onDone() }
+                    .accessibilityIdentifier("summary.done")
                     .padding(.horizontal, 16)
                     .padding(.vertical, 12)
                     .background(Color.bruPaper)
@@ -97,8 +99,8 @@ public struct SessionDetailView: View {
                 .font(BRUFont.labelSmall)
                 .tracking(1.5)
                 .textCase(.uppercase)
-                .foregroundStyle(session.completedAt == nil ? Color.bruMuted : Color.bruSignal)
-            Text(displayName)
+                .foregroundStyle(session.completedAt == nil ? Color.bruMuted : Color.bruSignalText)
+            Text(session.displayName)
                 .font(BRUFont.displayLarge)
                 .tracking(-0.3)
                 .foregroundStyle(Color.bruInk)
@@ -140,7 +142,7 @@ public struct SessionDetailView: View {
             Text("PR")
                 .font(BRUFont.labelSmall)
                 .tracking(1.2)
-                .foregroundStyle(Color.bruPaper)
+                .foregroundStyle(Color.bruOnSignal)
                 .padding(.horizontal, 6)
                 .padding(.vertical, 2)
                 .background(Color.bruSignal)
@@ -171,7 +173,7 @@ public struct SessionDetailView: View {
                         .font(BRUFont.labelSmall)
                         .tracking(1.2)
                         .textCase(.uppercase)
-                        .foregroundStyle(Color.bruSignal)
+                        .foregroundStyle(Color.bruSignalText)
                 }
             }
             Spacer(minLength: 8)
@@ -183,7 +185,9 @@ public struct SessionDetailView: View {
                 Text(line.best.map(bestLabel) ?? "—")
                     .font(BRUFont.bodyEmphasis)
                     .monospacedDigit()
-                    .foregroundStyle(line.prKinds.isEmpty ? Color.bruInk : Color.bruSignal)
+                    .foregroundStyle(line.prKinds.isEmpty ? Color.bruInk : Color.bruSignalText)
+                    // VoiceOver reads a bare dash as "em dash".
+                    .accessibilityLabel(line.best.map(bestLabel) ?? "none")
             }
         }
         .padding(.horizontal, 16)
@@ -204,18 +208,12 @@ public struct SessionDetailView: View {
 
     // MARK: - Formatting
 
-    private var displayName: String {
-        if let name = session.templateName, !name.isEmpty { return name }
-        if !session.routineSnapshotName.isEmpty { return session.routineSnapshotName }
-        return "Workout"
-    }
-
     private var dateLine: String {
         session.startedAt.formatted(.dateTime.weekday(.abbreviated).month(.abbreviated).day().hour().minute())
     }
 
     private var unitLabel: String {
-        (settingsList.first?.weightUnit ?? .kg).rawValue
+        weightUnit.rawValue
     }
 
     private func durationLabel(_ seconds: Int) -> String {

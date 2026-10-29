@@ -247,6 +247,11 @@ public enum SessionFactory {
                 ?? userSettings?.defaultIncrementKg
                 ?? 2.5
             let minCalibrationSets = userSettings?.minCalibrationSets ?? 10
+            // Labels the explanation text only; weights are stored as entered.
+            let unit = WeightUnit.effective(
+                for: re.exercise,
+                default: userSettings?.weightUnit ?? .default
+            )
 
             // Fetch history for the strategy (RESEARCH §Pitfall 7 filter applied
             // inside fetchHistoryPoints — nil-RPE sets are excluded).
@@ -286,6 +291,7 @@ public enum SessionFactory {
                 smallestIncrement: smallestIncrement,
                 plates: plates,
                 barWeight: barWeight,
+                unit: unit,
                 minCalibrationSets: minCalibrationSets,
                 lastSessionWeight: lastSessionWeight,
                 lastSessionReps: lastSessionReps,
@@ -550,9 +556,9 @@ public enum SessionFactory {
         }
 
         // Fallback: construct a transient inventory using canonical defaults.
-        // Fetch UserSettings for the unit system; fall back to .kg if absent.
+        // Fetch UserSettings for the unit system; fall back to the app default.
         let settingsDescriptor = FetchDescriptor<UserSettings>()
-        let unit = (try? context.fetch(settingsDescriptor))?.first?.weightUnit ?? .kg
+        let unit = (try? context.fetch(settingsDescriptor))?.first?.weightUnit ?? .default
 
         let transient = PlateInventory()
         transient.equipmentKind = kind

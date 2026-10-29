@@ -168,7 +168,7 @@ struct SessionLoggerBRUCopyTests {
         #expect(source.contains("\"✎\""))                                        // UI-SPEC line 191
 
         // Commit guard preserved (T-02.1-07-01)
-        #expect(source.contains("entry.weight > 0 && entry.reps > 0"))
+        #expect(source.contains("SessionSetActions.canComplete(entry)"))
 
         // No banned tokens in functional code
         #expect(!source.contains("Color.accentColor"))

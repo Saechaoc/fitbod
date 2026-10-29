@@ -53,6 +53,8 @@ public struct SessionExerciseCard: View {
     @State private var expandedPlateSetID: UUID? = nil
     @Query private var settingsList: [UserSettings]
     @Query private var inventories: [PlateInventory]
+    @Environment(\.weightUnit) private var defaultUnit
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     // MARK: - Phase 5 state
 
@@ -106,7 +108,8 @@ public struct SessionExerciseCard: View {
                     Text(String(format: "%02d", (sessionExercise.orderIndex) + 1))
                         .font(BRUFont.displayMedium)
                         .foregroundStyle(Color.bruInk)
-                        .frame(width: 32, alignment: .leading)
+                        .frame(width: dynamicTypeSize.isAccessibilitySize ? nil : 32, alignment: .leading)
+                        .lineLimit(1)
 
                     VStack(alignment: .leading, spacing: 4) {
                         Text(exerciseName)
@@ -162,7 +165,8 @@ public struct SessionExerciseCard: View {
                             get: { !bannerDismissed },
                             set: { newValue in bannerDismissed = !newValue }
                         ),
-                        bumpedToWeight: exp.roundedWeight
+                        bumpedToWeight: exp.roundedWeight,
+                        unitLabel: unit.rawValue
                     )
                     BRUDivider(.hair)
                 }
@@ -170,10 +174,14 @@ public struct SessionExerciseCard: View {
                 // Phase 3 conditional: WarmupRampRows
                 let warmupSets = warmupEntries
                 if !warmupSets.isEmpty {
+                    let setup = plateSetup
                     WarmupRampRows(
                         warmupSets: warmupSets,
                         onSkip: { handleSkipWarmups() },
-                        sessionExercise: sessionExercise
+                        sessionExercise: sessionExercise,
+                        barWeight: setup.barWeight,
+                        plates: setup.plates,
+                        unitLabel: unit.rawValue
                     )
                     BRUDivider(.hair)
                 }
@@ -209,31 +217,35 @@ public struct SessionExerciseCard: View {
 
                 // Row 3: Column header strip per UI-SPEC line 367
                 // "S · PREVIOUS · WEIGHT · REPS · RPE" — labelSmall 9pt 1.2 bruMuted
-                HStack(spacing: 6) {
-                    Text("S")
-                        .font(BRUFont.labelSmall)
-                        .tracking(1.2)
-                        .frame(width: 32, alignment: .leading)
-                    Text("PREVIOUS")
-                        .font(BRUFont.labelSmall)
-                        .tracking(1.2)
-                        .frame(width: 80, alignment: .leading)
-                    Text("WEIGHT")
-                        .font(BRUFont.labelSmall)
-                        .tracking(1.2)
-                        .frame(width: 60, alignment: .leading)
-                    Text("REPS")
-                        .font(BRUFont.labelSmall)
-                        .tracking(1.2)
-                        .frame(width: 40, alignment: .leading)
-                    Text("RPE")
-                        .font(BRUFont.labelSmall)
-                        .tracking(1.2)
-                    Spacer()
+                // Stacked accessibility inputs carry their own labels; the
+                // fixed-width table headings would split into fragments.
+                if !dynamicTypeSize.isAccessibilitySize {
+                    HStack(spacing: 6) {
+                        Text("S")
+                            .font(BRUFont.labelSmall)
+                            .tracking(1.2)
+                            .frame(width: 32, alignment: .leading)
+                        Text("PREVIOUS")
+                            .font(BRUFont.labelSmall)
+                            .tracking(1.2)
+                            .frame(width: 80, alignment: .leading)
+                        Text("WEIGHT")
+                            .font(BRUFont.labelSmall)
+                            .tracking(1.2)
+                            .frame(width: 60, alignment: .leading)
+                        Text("REPS")
+                            .font(BRUFont.labelSmall)
+                            .tracking(1.2)
+                            .frame(width: 40, alignment: .leading)
+                        Text("RPE")
+                            .font(BRUFont.labelSmall)
+                            .tracking(1.2)
+                        Spacer()
+                    }
+                    .foregroundStyle(Color.bruMuted)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 6)
                 }
-                .foregroundStyle(Color.bruMuted)
-                .padding(.horizontal, 16)
-                .padding(.vertical, 6)
 
                 BRUDivider(.hair)
             }
@@ -286,25 +298,32 @@ public struct SessionExerciseCard: View {
                 }
             }
 
-            // "+ ADD SET" signal text button per UI-SPEC line 387
-            Button {
-                onAddSet(sessionExercise)
-            } label: {
-                Text("+ ADD SET")
-                    .font(BRUFont.labelSmall)
-                    .tracking(1.2)
-                    .textCase(.uppercase)
-                    .foregroundStyle(Color.bruSignal)
-                    .frame(maxWidth: .infinity, minHeight: 44)
-                    .contentShape(Rectangle())
+            // "+ ADD SET" signal text button per UI-SPEC line 387, then the
+            // 2pt ink rule that closes the exercise block.
+            VStack(spacing: 0) {
+                Button {
+                    onAddSet(sessionExercise)
+                } label: {
+                    Text("+ ADD SET")
+                        .font(BRUFont.labelSmall)
+                        .tracking(1.2)
+                        .textCase(.uppercase)
+                        .foregroundStyle(Color.bruSignalText)
+                        .frame(maxWidth: .infinity, minHeight: 44)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityIdentifier("card.addSet.\(sessionExercise.orderIndex + 1)")
+                .padding(.vertical, 4)
+
+                BRUDivider(.ink)
             }
-            .buttonStyle(.plain)
-            .padding(.vertical, 4)
             .cardRow()
         } header: {
             // Empty header — card header is embedded in body VStack above.
             EmptyView()
         }
+        .listSectionSeparator(.hidden)
         // Phase 5 PROG-06 — evaluate plateau signal on first appear + exercise change
         .task(id: sessionExercise.id) {
             evaluatePlateau()
@@ -421,6 +440,33 @@ public struct SessionExerciseCard: View {
             .sorted { $0.orderIndex < $1.orderIndex }
     }
 
+    // MARK: - Unit and plates
+
+    /// The exercise's own unit wins over the app-wide one.
+    private var unit: WeightUnit {
+        .effective(for: sessionExercise.exercise, default: defaultUnit)
+    }
+
+    /// Bar and plates for this exercise: the stored inventory for its
+    /// equipment, else the defaults for the unit. SessionFactory generates
+    /// the warm-up ramp from the same inventory, so the plates add up.
+    private var plateSetup: (barWeight: Double, plates: [(weight: Double, countPerSide: Int)]) {
+        let exercise = sessionExercise.exercise
+        let ekind = SessionFactory.equipmentKind(for: exercise?.equipment ?? .other)
+        if let inv = inventories.first(where: { $0.equipmentKind == ekind }) {
+            return (
+                exercise?.barWeightOverride ?? inv.barWeight,
+                inv.availablePlates.map { (weight: $0.weight, countPerSide: $0.countPerSide) }
+            )
+        }
+        return (
+            exercise?.barWeightOverride
+                ?? PlateInventoryDefaults.barWeight(for: ekind, unitSystem: unit),
+            PlateInventoryDefaults.make(for: ekind, unitSystem: unit)
+                .map { (weight: $0.weight, countPerSide: $0.countPerSide) }
+        )
+    }
+
     // MARK: - currentExplanation (Phase 3 plan 03-08)
 
     private func currentExplanation() -> PrescriptionExplanation? {
@@ -430,23 +476,7 @@ public struct SessionExerciseCard: View {
         let exerciseID = se.exercise?.id
         let intentRaw = se.session?.intentRaw ?? Intent.strength.rawValue
 
-        let ekind = SessionFactory.equipmentKind(
-            for: se.exercise?.equipment ?? .other
-        )
-        let inventory = inventories.first { $0.equipmentKind == ekind }
-
-        let barWeight: Double
-        let plates: [(weight: Double, countPerSide: Int)]
-        if let inv = inventory {
-            barWeight = se.exercise?.barWeightOverride ?? inv.barWeight
-            plates = inv.availablePlates.map { (weight: $0.weight, countPerSide: $0.countPerSide) }
-        } else {
-            let unit = userSettings?.weightUnit ?? .kg
-            barWeight = se.exercise?.barWeightOverride
-                ?? PlateInventoryDefaults.barWeight(for: ekind, unitSystem: unit)
-            plates = PlateInventoryDefaults.make(for: ekind, unitSystem: unit)
-                .map { (weight: $0.weight, countPerSide: $0.countPerSide) }
-        }
+        let (barWeight, plates) = plateSetup
 
         let smallestIncrement = se.exercise?.smallestIncrement
             ?? userSettings?.defaultIncrementKg
@@ -480,6 +510,7 @@ public struct SessionExerciseCard: View {
             smallestIncrement: smallestIncrement,
             plates: plates,
             barWeight: barWeight,
+            unit: unit,
             minCalibrationSets: minCalibrationSets,
             lastSessionWeight: lastHint?.weight,
             lastSessionReps: lastHint?.reps,
@@ -510,6 +541,7 @@ private extension View {
         self
             .listRowInsets(EdgeInsets())
             .listRowSeparator(.hidden)
+            .listRowBackground(Color.bruPaper)
     }
 }
 

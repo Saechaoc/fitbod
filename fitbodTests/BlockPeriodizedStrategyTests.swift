@@ -58,6 +58,7 @@ struct BlockPeriodizedStrategyTests {
             smallestIncrement: 0.5,
             plates: exactPlates,
             barWeight: 0,
+            unit: .kg,
             minCalibrationSets: 10,
             lastSessionWeight: lastSessionWeight,
             lastSessionReps: lastSessionReps,

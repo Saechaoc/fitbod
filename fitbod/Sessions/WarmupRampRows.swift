@@ -6,7 +6,7 @@
 //  brutalist visual system per 03-UI-SPEC v2 and why-weight.jsx lines 95–139.
 //
 //  Renders:
-//    • BRUSectionHead "Warm-up ramp" with right trailing "Plate {increment} · ×2 sides"
+//    • BRUSectionHead "Warm-up ramp" with right trailing "Plate {smallest plate} · ×2 sides"
 //    • Per-row 4-column grid: 36pt W{N} signal · 1fr weight+pct+reps · 1fr mini PlateStackViz · auto plate legend
 //    • "WORK SETS BEGIN AT" footer row (labelSmall left, displayMedium right)
 //    • "SKIP WARM-UPS" ghost text button in bruMuted
@@ -58,12 +58,13 @@ public struct WarmupRampRows: View {
     /// Top working weight, displayed in the "WORK SETS BEGIN AT" footer row.
     /// Defaults to sessionExercise.prescribedWeight if not provided.
     public let topWorkingWeight: Double
-    /// Bar weight used for PlateStackViz plate computation (defaults to 20 kg Olympic).
+    /// Bar weight for the plate math. Pass the same inventory the session
+    /// used to generate the ramp, so the plates shown add up to the weight.
     public let barWeight: Double
-    /// Unit label rendered after the working weight in the footer row (e.g. "kg", "lb").
+    /// Plates available per side, from the same inventory as `barWeight`.
+    public let plates: [(weight: Double, countPerSide: Int)]
+    /// Unit label for every weight in the block ("lb" or "kg").
     public let unitLabel: String
-    /// Increment label rendered in the section head right trailing (e.g. "2.5 kg").
-    public let incrementLabel: String
 
     // MARK: - Init
 
@@ -72,17 +73,23 @@ public struct WarmupRampRows: View {
         onSkip: @escaping () -> Void,
         sessionExercise: SessionExercise,
         topWorkingWeight: Double? = nil,
-        barWeight: Double = 20,
-        unitLabel: String = "kg",
-        incrementLabel: String = "2.5 kg"
+        barWeight: Double,
+        plates: [(weight: Double, countPerSide: Int)],
+        unitLabel: String
     ) {
         self.warmupSets = warmupSets
         self.onSkip = onSkip
         self.sessionExercise = sessionExercise
         self.topWorkingWeight = topWorkingWeight ?? sessionExercise.prescribedWeight ?? 0
         self.barWeight = barWeight
+        self.plates = plates
         self.unitLabel = unitLabel
-        self.incrementLabel = incrementLabel
+    }
+
+    /// "Plate 2.5 lb · ×2 sides": the smallest plate in the inventory.
+    private var plateNote: String? {
+        guard let smallest = plates.map(\.weight).filter({ $0 > 0 }).min() else { return nil }
+        return "Plate \(formatted(smallest)) \(unitLabel) · ×2 sides"
     }
 
     // MARK: - Sorted warmups
@@ -121,8 +128,8 @@ public struct WarmupRampRows: View {
                 .padding(.vertical, 10)
         } else {
             VStack(spacing: 0) {
-                // Section head with right trailing increment label per 03-UI-SPEC line 222–223.
-                BRUSectionHead("Warm-up ramp", right: "Plate \(incrementLabel) · ×2 sides")
+                // Section head with the smallest plate per 03-UI-SPEC line 222–223.
+                BRUSectionHead("Warm-up ramp", right: plateNote)
 
                 // One row per warm-up set entry
                 ForEach(sortedWarmups, id: \.id) { warmup in
@@ -253,9 +260,9 @@ public struct WarmupRampRows: View {
         case 2:
             return Self.ramp2[min(s.orderIndex, Self.ramp2.count - 1)].pct
         default:
-            guard count > 1 else { return 50 }
-            let step = 90 / max(count - 1, 1)
-            return 40 + s.orderIndex * step
+            // No standard ramp: show the real share of the working weight.
+            guard topWorkingWeight > 0 else { return 0 }
+            return Int((s.weight / topWorkingWeight * 100).rounded())
         }
     }
 
@@ -295,15 +302,10 @@ public struct WarmupRampRows: View {
     /// Returns empty array on PlateCalculator.solve failure — PlateStackViz degrades
     /// gracefully to sleeve + end cap only (Threat T-03.2-05 mitigation).
     private func computePlates(weight: Double, bar: Double) -> [PlateStackViz.PlateDenomination] {
-        // Build plate inventory from sessionExercise — fall back to standard barbell set
-        let defaultPlates: [(weight: Double, countPerSide: Int)] = [
-            (45, 4), (25, 2), (10, 4), (5, 4), (2.5, 4)
-        ]
-
         guard let stack = PlateCalculator.solve(
             target: weight,
             barWeight: bar,
-            plates: defaultPlates
+            plates: plates
         ) else {
             // solve returned nil — degrade to empty (T-03.2-05: no crash)
             return []
@@ -363,8 +365,8 @@ public struct WarmupRampRows: View {
             sessionExercise: exercise,
             topWorkingWeight: 100,
             barWeight: 20,
-            unitLabel: "kg",
-            incrementLabel: "2.5 kg"
+            plates: [(25, 4), (20, 4), (10, 4), (5, 4), (2.5, 4), (1.25, 4)],
+            unitLabel: "kg"
         )
         .background(Color.bruPaper)
     }
@@ -400,8 +402,8 @@ public struct WarmupRampRows: View {
             sessionExercise: exercise,
             topWorkingWeight: 30,
             barWeight: 10,
-            unitLabel: "kg",
-            incrementLabel: "2 kg"
+            plates: [(5, 4), (2.5, 4), (1.25, 4)],
+            unitLabel: "kg"
         )
         .background(Color.bruPaper)
     }
@@ -421,7 +423,10 @@ public struct WarmupRampRows: View {
         WarmupRampRows(
             warmupSets: [],
             onSkip: {},
-            sessionExercise: exercise
+            sessionExercise: exercise,
+            barWeight: 45,
+            plates: [(45, 4), (25, 2), (10, 4), (5, 4), (2.5, 4)],
+            unitLabel: "lb"
         )
         .background(Color.bruPaper)
     }

@@ -62,7 +62,9 @@ public struct AddUnplannedExerciseButton: View {
     /// SESS-06 — append a fresh SessionExercise + 3 planned SetEntry rows.
     /// The source Routine is untouched.
     private func append(exercise: Exercise) {
-        let nextOrderIndex = (session.exercises ?? []).count
+        // After the last exercise, even if one was removed mid-workout
+        // (a count would reuse a live index).
+        let nextOrderIndex = ((session.exercises ?? []).map(\.orderIndex).max() ?? -1) + 1
 
         let se = SessionExercise()
         se.exercise = exercise

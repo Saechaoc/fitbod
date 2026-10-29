@@ -76,7 +76,7 @@ public actor ExportService {
         let muscleVolumeTargets = try fetchMuscleVolumeTargets().map { mapMuscleVolumeTarget($0) }
         let plateInventories = try fetchPlateInventories().map { mapPlateInventory($0) }
         let userSettings = try fetchUserSettings().map { mapUserSettings($0) }
-        let unitSystem = userSettings?.unitsRaw ?? "kg"
+        let unitSystem = userSettings?.unitsRaw ?? WeightUnit.default.rawValue
 
         return ExportDocument(
             formatVersion: 1,

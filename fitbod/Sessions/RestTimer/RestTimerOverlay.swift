@@ -48,6 +48,7 @@ import SwiftUI
 public struct RestTimerOverlay: View {
     @Bindable public var engine: RestTimerEngine
     @State private var presentingExpanded = false
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     public init(engine: RestTimerEngine) {
         self.engine = engine
@@ -58,7 +59,7 @@ public struct RestTimerOverlay: View {
             bottomDock
                 .sheet(isPresented: $presentingExpanded) {
                     expandedSheet
-                        .presentationDetents([.medium])
+                        .presentationDetents(dynamicTypeSize.isAccessibilitySize ? [.large] : [.medium, .large])
                 }
                 .transition(.move(edge: .bottom))
         } else {
@@ -95,7 +96,7 @@ public struct RestTimerOverlay: View {
                             .font(BRUFont.labelSmall)
                             .tracking(1.2)
                             .textCase(.uppercase)
-                            .foregroundStyle(finished ? Color.bruSignal : Color.bruMuted)
+                            .foregroundStyle(finished ? Color.bruSignalText : Color.bruMuted)
                         Text(engine.currentExerciseName)
                             .font(BRUFont.bodyEmphasis)
                             .foregroundStyle(Color.bruInk)
@@ -108,7 +109,7 @@ public struct RestTimerOverlay: View {
                     Text(finished ? formatOverrun(engine.remaining) : formatRemaining(engine.remaining))
                         .font(BRUFont.displayMedium)
                         .monospacedDigit()
-                        .foregroundStyle(finished ? Color.bruSignal : Color.bruInk)
+                        .foregroundStyle(finished ? Color.bruSignalText : Color.bruInk)
 
                     Text("▸")
                         .font(BRUFont.bodyEmphasis)
@@ -120,6 +121,7 @@ public struct RestTimerOverlay: View {
                     presentingExpanded = true
                 }
                 .accessibilityElement(children: .combine)
+                .accessibilityIdentifier("rest.status")
                 .accessibilityLabel("Rest timer: \(remainingAccessibility)")
                 .accessibilityHint("Tap to expand controls")
                 .accessibilityAddTraits(.isButton)
@@ -133,15 +135,16 @@ public struct RestTimerOverlay: View {
 
                 // Row 2 — one-handed controls, each 44pt tall.
                 HStack(spacing: 8) {
-                    dockButton("−15s", accessibility: "Subtract 15 seconds") {
+                    dockButton("−15s", accessibility: "Subtract 15 seconds", identifier: "rest.minus15") {
                         engine.adjust(deltaSeconds: -15)
                     }
-                    dockButton("+15s", accessibility: "Add 15 seconds") {
+                    dockButton("+15s", accessibility: "Add 15 seconds", identifier: "rest.plus15") {
                         engine.adjust(deltaSeconds: 15)
                     }
                     dockButton(
                         finished ? "DONE" : "SKIP",
                         accessibility: finished ? "Dismiss rest timer" : "Skip remaining rest",
+                        identifier: "rest.skip",
                         isSignal: true
                     ) {
                         withAnimation(.easeOut(duration: 0.2)) { engine.stop() }
@@ -167,6 +170,7 @@ public struct RestTimerOverlay: View {
     private func dockButton(
         _ title: String,
         accessibility: String,
+        identifier: String,
         isSignal: Bool = false,
         action: @escaping () -> Void
     ) -> some View {
@@ -186,9 +190,16 @@ public struct RestTimerOverlay: View {
         }
         .buttonStyle(.plain)
         .accessibilityLabel(accessibility)
+        .accessibilityIdentifier(identifier)
     }
 
     // MARK: - Expanded sheet
+
+    /// iOS 26 draws a half-height sheet scaled down to its inset width
+    /// (386 of 402pt on an iPhone 17 Pro), so a 44pt control renders at
+    /// about 42pt. The controls a lifter hits mid-rest get 52pt, which
+    /// stays above 44pt at either detent.
+    private static let sheetControlHeight: CGFloat = 52
 
     /// `.medium`-detent sheet with BRU header, exercise name, 200pt arc,
     /// ±15s outlined-rectangle buttons, ghost SKIP, and muted footer.
@@ -226,6 +237,9 @@ public struct RestTimerOverlay: View {
                                 .font(BRUFont.displayHero)
                                 .monospacedDigit()
                                 .foregroundStyle(Color.bruInk)
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.5)
+                                .frame(width: 180)
                         }
                     }
 
@@ -238,7 +252,7 @@ public struct RestTimerOverlay: View {
                                 .font(BRUFont.labelSmall)
                                 .tracking(1.2)
                                 .foregroundStyle(Color.bruInk)
-                                .frame(minWidth: 80, minHeight: 44)
+                                .frame(minWidth: 80, minHeight: Self.sheetControlHeight)
                                 .overlay(
                                     Rectangle()
                                         .stroke(Color.bruInk, lineWidth: 1.5)
@@ -246,6 +260,7 @@ public struct RestTimerOverlay: View {
                         }
                         .buttonStyle(.plain)
                         .accessibilityLabel("Subtract 15 seconds")
+                        .accessibilityIdentifier("rest.expanded.minus15")
 
                         Button {
                             engine.adjust(deltaSeconds: 15)
@@ -254,7 +269,7 @@ public struct RestTimerOverlay: View {
                                 .font(BRUFont.labelSmall)
                                 .tracking(1.2)
                                 .foregroundStyle(Color.bruInk)
-                                .frame(minWidth: 80, minHeight: 44)
+                                .frame(minWidth: 80, minHeight: Self.sheetControlHeight)
                                 .overlay(
                                     Rectangle()
                                         .stroke(Color.bruInk, lineWidth: 1.5)
@@ -262,10 +277,11 @@ public struct RestTimerOverlay: View {
                         }
                         .buttonStyle(.plain)
                         .accessibilityLabel("Add 15 seconds")
+                        .accessibilityIdentifier("rest.expanded.plus15")
                     }
 
                     // SKIP ghost button
-                    BRUButton(engine.isFinished ? "DONE" : "SKIP", kind: .ghost, size: .md) {
+                    BRUButton(engine.isFinished ? "DONE" : "SKIP", kind: .ghost, size: .lg) {
                         presentingExpanded = false
                         engine.stop()
                     }

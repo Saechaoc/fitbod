@@ -48,11 +48,24 @@ public struct InSessionPRBannerContent: Sendable, Equatable {
     public let kinds: [PRKind]
     public let weight: Double
     public let reps: Int
+    /// Log-time exercise name; empty when the set has no exercise.
+    public let exerciseName: String
+    /// The exercise's own unit, if it has one. The banner falls back to
+    /// the app-wide unit from the environment.
+    public let unitOverride: WeightUnit?
 
-    public init(kinds: [PRKind], weight: Double, reps: Int) {
+    public init(
+        kinds: [PRKind],
+        weight: Double,
+        reps: Int,
+        exerciseName: String = "",
+        unitOverride: WeightUnit? = nil
+    ) {
         self.kinds = kinds
         self.weight = weight
         self.reps = reps
+        self.exerciseName = exerciseName
+        self.unitOverride = unitOverride
     }
 }
 
@@ -85,7 +98,9 @@ public final class InSessionPRState {
             currentBanner = InSessionPRBannerContent(
                 kinds: ordered,
                 weight: set.weight,
-                reps: set.reps
+                reps: set.reps,
+                exerciseName: set.sessionExercise?.displayName ?? "",
+                unitOverride: set.sessionExercise?.exercise?.unitOverride
             )
             #if canImport(UIKit)
             UINotificationFeedbackGenerator().notificationOccurred(.success)

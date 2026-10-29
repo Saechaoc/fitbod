@@ -23,7 +23,7 @@ public struct BumpBanner: View {
     public let bumpedToWeight: Double
     public let unitLabel: String
 
-    public init(isVisible: Binding<Bool>, bumpedToWeight: Double, unitLabel: String = "kg") {
+    public init(isVisible: Binding<Bool>, bumpedToWeight: Double, unitLabel: String) {
         self._isVisible = isVisible
         self.bumpedToWeight = bumpedToWeight
         self.unitLabel = unitLabel

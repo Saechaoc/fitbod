@@ -33,6 +33,7 @@ public struct DoubleProgressionStrategy: ProgressionStrategy {
         smallestIncrement: Double,
         plates: [(weight: Double, countPerSide: Int)],
         barWeight: Double,
+        unit: WeightUnit,
         minCalibrationSets: Int,
         lastSessionWeight: Double?,
         lastSessionReps: Int?,
@@ -50,7 +51,7 @@ public struct DoubleProgressionStrategy: ProgressionStrategy {
                 formulaName: "Double progression",
                 computedLine: nil,
                 roundedWeight: 0,
-                roundedLine: "No prior data — starting at prescribed weight.",
+                roundedLine: "No prior data - starting at prescribed weight.",
                 status: .notApplicable,
                 bumpOccurred: false,
                 range: nil
@@ -63,7 +64,8 @@ public struct DoubleProgressionStrategy: ProgressionStrategy {
             weight: lastWeight,
             reps: lastSessionReps,
             rpe: lastSessionRPE,
-            date: lastSessionDate
+            date: lastSessionDate,
+            unit: unit
         )
 
         // Determine if a bump is triggered.
@@ -83,7 +85,7 @@ public struct DoubleProgressionStrategy: ProgressionStrategy {
             plates: plates
         )
 
-        let roundedLine = "→ \(Self.formatWeight(rounded)) kg (rounded down to \(Self.formatWeight(smallestIncrement)) kg plates)"
+        let roundedLine = "→ \(Self.formatWeight(rounded)) \(unit.rawValue) (rounded down to \(Self.formatWeight(smallestIncrement)) \(unit.rawValue) plates)"
 
         let explanation = PrescriptionExplanation(
             lastSessionLine: lastLine,
@@ -109,16 +111,17 @@ private extension DoubleProgressionStrategy {
     }
 
     /// Builds the "last session" line shown in the WhyThisWeightSheet.
-    /// Format: "{weight} kg × {reps} @ RPE {rpe} (May 15)"
+    /// Format: "{weight} {unit} × {reps} @ RPE {rpe} (May 15)"
     /// Matches UI-SPEC § WhyThisWeightSheet and Phase 2 ExerciseHistoryView convention.
     static func lastSessionLine(
         weight: Double,
         reps: Int?,
         rpe: Double?,
-        date: Date?
+        date: Date?,
+        unit: WeightUnit
     ) -> String? {
         guard let reps, let rpe, let date else { return nil }
         let dateStr = date.formatted(.dateTime.month(.abbreviated).day())
-        return "\(formatWeight(weight)) kg × \(reps) @ RPE \(String(format: "%.1f", rpe)) (\(dateStr))"
+        return "\(formatWeight(weight)) \(unit.rawValue) × \(reps) @ RPE \(String(format: "%.1f", rpe)) (\(dateStr))"
     }
 }

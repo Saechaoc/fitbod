@@ -81,15 +81,15 @@ public struct PRStripFooter: View {
                     .fill(Color.bruInk)
                     .frame(width: 1)
 
-                // VOL PR cell — bruSignal fill + bruPaper text (UI-SPEC line 614)
+                // VOL PR cell — signal fill with readable constant-ink labels.
                 VStack(alignment: .leading, spacing: 4) {
                     Text("VOL PR")
                         .font(BRUFont.labelSmall)
                         .tracking(1.2)
-                        .foregroundStyle(Color.bruPaper)
+                        .foregroundStyle(Color.bruOnSignal)
                     Text(volPR)
                         .font(BRUFont.displayMedium)
-                        .foregroundStyle(Color.bruPaper)
+                        .foregroundStyle(Color.bruOnSignal)
                 }
                 .padding(.horizontal, 16)
                 .padding(.vertical, 12)

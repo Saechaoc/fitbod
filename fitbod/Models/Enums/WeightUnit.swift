@@ -2,8 +2,10 @@
 //  WeightUnit.swift
 //  fitbod
 //
-//  SET-01 anchor: pounds vs kilograms. Display-only toggle —
-//  history is stored in a single canonical unit and re-rendered on the fly.
+//  SET-01 anchor: pounds vs kilograms. A display label only: weights are
+//  stored exactly as entered and never converted, so switching the unit
+//  relabels existing numbers rather than recomputing them. An exercise's
+//  `unitOverride` wins over the app-wide unit for that exercise.
 //
 //  Persisted as `unitsRaw: String` on `UserSettings`
 //  (FOUND-03 / PITFALLS #9).
