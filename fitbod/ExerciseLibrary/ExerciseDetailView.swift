@@ -85,17 +85,10 @@ struct ExerciseDetailView: View {
     /// override). Per-exercise unitOverride takes precedence for display.
     @Query private var settingsList: [UserSettings]
 
-    /// Draft hydrated by the "Copy as Custom Exercise" action. Held as
-    /// optional state because it's only constructed at the moment the
-    /// CTA is tapped, and the sheet body needs the same instance across
-    /// re-renders so SwiftUI's `@Bindable` storage in the editor stays
-    /// stable for the lifetime of the presentation.
-    @State private var draftFromCopy: CustomExerciseDraft? = nil
-
-    /// Toggled true when the "Copy as Custom Exercise" CTA is tapped.
-    /// The sheet body reads `draftFromCopy` and presents the editor
-    /// when both are non-nil/true.
-    @State private var presentingCustomEditor = false
+    /// Draft for the Copy / Edit editor. Setting it presents the sheet,
+    /// so the sheet always gets the draft it was opened with (a separate
+    /// Bool flag let the first presentation render before the draft).
+    @State private var editorDraft: CustomExerciseDraft? = nil
 
     /// Unit label for the Prescription Settings fields. Per-exercise
     /// unitOverride takes precedence; falls back to global UserSettings;
@@ -143,14 +136,12 @@ struct ExerciseDetailView: View {
         }
         .background(Color.bruPaper.ignoresSafeArea())
         .navigationBarHidden(true)
-        .sheet(isPresented: $presentingCustomEditor) {
+        .sheet(item: $editorDraft) { draft in
             // Wrap the editor in its own NavigationStack so it owns its
             // toolbar (Save / Cancel). The editor dismisses itself on
             // save / discard / delete.
-            if let draft = draftFromCopy {
-                NavigationStack {
-                    CustomExerciseEditor(draft: draft)
-                }
+            NavigationStack {
+                CustomExerciseEditor(draft: draft)
             }
         }
     }
@@ -163,8 +154,7 @@ struct ExerciseDetailView: View {
             draft.imageData = exercise.imageData
             draft.editingExisting = exercise
         }
-        draftFromCopy = draft
-        presentingCustomEditor = true
+        editorDraft = draft
     }
 
     // MARK: - Hero

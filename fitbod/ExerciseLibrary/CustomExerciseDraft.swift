@@ -320,3 +320,6 @@ public final class CustomExerciseDraft {
             : "|" + primarySlugs.joined(separator: "|") + "|"
     }
 }
+
+/// Lets a presenter drive `.sheet(item:)` with the draft itself.
+extension CustomExerciseDraft: Identifiable {}
