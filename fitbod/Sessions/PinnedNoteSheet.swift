@@ -8,10 +8,9 @@
 // SessionExerciseCard's long-press menu "Edit Pinned Note" entry and from
 // tapping the inline PinnedNoteCapsule once a note exists.
 //
-// Binding semantics:
-//   Binds directly to @Bindable sessionExercise.pinnedNote: String? via a
-//   Binding(get:set:) that normalizes empty strings to nil on write, so the
-//   PinnedNoteCapsule render predicate stays a simple non-empty check.
+// Edit semantics (review item 33):
+//   The sheet edits a local copy of sessionExercise.pinnedNote. SAVE writes it back, with
+//   empty text stored as nil; CANCEL and swipe-down throw it away.
 //
 // BRU contract:
 //   NO .navigationTitle / NO .toolbar with system chrome
@@ -24,10 +23,14 @@ import SwiftData
 
 public struct PinnedNoteSheet: View {
     @Environment(\.dismiss) private var dismiss
-    @Bindable public var sessionExercise: SessionExercise
+    @Environment(\.modelContext) private var ctx
+    public let sessionExercise: SessionExercise
+    /// The edited copy; only SAVE writes it back.
+    @State private var text: String
 
     public init(sessionExercise: SessionExercise) {
         self.sessionExercise = sessionExercise
+        _text = State(initialValue: sessionExercise.pinnedNote ?? "")
     }
 
     public var body: some View {
@@ -39,19 +42,16 @@ public struct PinnedNoteSheet: View {
                     VStack(alignment: .leading, spacing: 16) {
                         // TextEditor with 2pt bruInk border per UI-SPEC line 575,
                         // on paper rather than the system's white text background
-                        TextEditor(text: Binding(
-                            get: { sessionExercise.pinnedNote ?? "" },
-                            set: { sessionExercise.pinnedNote = $0.isEmpty ? nil : $0 }
-                        ))
-                        .font(BRUFont.bodyDefault)
-                        .foregroundStyle(Color.bruInk)
-                        .scrollContentBackground(.hidden)
-                        .frame(minHeight: 200)
-                        .padding(8)
-                        .overlay(
-                            Rectangle()
-                                .stroke(Color.bruInk, lineWidth: 2)
-                        )
+                        TextEditor(text: $text)
+                            .font(BRUFont.bodyDefault)
+                            .foregroundStyle(Color.bruInk)
+                            .scrollContentBackground(.hidden)
+                            .frame(minHeight: 200)
+                            .padding(8)
+                            .overlay(
+                                Rectangle()
+                                    .stroke(Color.bruInk, lineWidth: 2)
+                            )
 
                         // Placeholder hint
                         Text("Shown above this exercise's sets")                  // placeholder hint
@@ -68,10 +68,17 @@ public struct PinnedNoteSheet: View {
                 BRUHeaderBar(
                     left: HeaderAction("CANCEL") { dismiss() },
                     center: "PINNED NOTE",                                         // UI-SPEC "Pinned Note", BRU caps
-                    right: HeaderAction("SAVE", isSignal: true) { dismiss() }
+                    right: HeaderAction("SAVE", isSignal: true) { save() }
                 )
             }
         }
+    }
+
+    /// Empty text is stored as nil so "has a note?" checks stay a nil check.
+    private func save() {
+        sessionExercise.pinnedNote = text.isEmpty ? nil : text
+        try? ctx.save()
+        dismiss()
     }
 }
 

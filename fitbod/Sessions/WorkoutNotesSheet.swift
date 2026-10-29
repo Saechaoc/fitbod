@@ -7,10 +7,9 @@
 // Workout-level notes editor. Replaces the default NavigationStack + Form +
 // .navigationTitle chrome with BRUHeaderBar + styled TextEditor.
 //
-// Binding semantics:
-//   Binds directly to @Bindable session.notes: String? via a Binding(get:set:)
-//   that normalizes empty strings to nil on write — keeps the persisted column
-//   free of blank entries so any downstream "has notes?" predicate stays simple.
+// Edit semantics (review item 33):
+//   The sheet edits a local copy of session.notes. SAVE writes it back, with
+//   empty text stored as nil; CANCEL and swipe-down throw it away.
 //
 // BRU contract:
 //   NO .navigationTitle / NO .toolbar with system chrome
@@ -23,10 +22,14 @@ import SwiftData
 
 public struct WorkoutNotesSheet: View {
     @Environment(\.dismiss) private var dismiss
-    @Bindable public var session: Session
+    @Environment(\.modelContext) private var ctx
+    public let session: Session
+    /// The edited copy; only SAVE writes it back.
+    @State private var text: String
 
     public init(session: Session) {
         self.session = session
+        _text = State(initialValue: session.notes ?? "")
     }
 
     public var body: some View {
@@ -40,18 +43,15 @@ public struct WorkoutNotesSheet: View {
                         Color.clear.frame(height: 46)
 
                         // TextEditor with 2pt bruInk border per UI-SPEC line 575
-                        TextEditor(text: Binding(
-                            get: { session.notes ?? "" },
-                            set: { session.notes = $0.isEmpty ? nil : $0 }
-                        ))
-                        .font(BRUFont.bodyDefault)
-                        .foregroundStyle(Color.bruInk)
-                        .frame(minHeight: 200)
-                        .padding(8)
-                        .overlay(
-                            Rectangle()
-                                .stroke(Color.bruInk, lineWidth: 2)
-                        )
+                        TextEditor(text: $text)
+                            .font(BRUFont.bodyDefault)
+                            .foregroundStyle(Color.bruInk)
+                            .frame(minHeight: 200)
+                            .padding(8)
+                            .overlay(
+                                Rectangle()
+                                    .stroke(Color.bruInk, lineWidth: 2)
+                            )
 
                         // Placeholder hint
                         Text("Notes for this session")                             // placeholder hint
@@ -68,10 +68,17 @@ public struct WorkoutNotesSheet: View {
                 BRUHeaderBar(
                     left: HeaderAction("CANCEL") { dismiss() },                    // UI-SPEC verbatim
                     center: "WORKOUT NOTES",                                       // UI-SPEC verbatim
-                    right: HeaderAction("SAVE", isSignal: true) { dismiss() }      // UI-SPEC verbatim
+                    right: HeaderAction("SAVE", isSignal: true) { save() }         // UI-SPEC verbatim
                 )
             }
         }
+    }
+
+    /// Empty text is stored as nil so "has a note?" checks stay a nil check.
+    private func save() {
+        session.notes = text.isEmpty ? nil : text
+        try? ctx.save()
+        dismiss()
     }
 }
 

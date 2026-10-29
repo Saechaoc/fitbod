@@ -5,19 +5,19 @@
 //  Wave-4 plan 04-03 — verifies the three notes-binding round-trips:
 //
 //    1. session.notes (workout-level) — written by WorkoutNotesSheet's
-//       Binding(get:set:) and persisted via SwiftData's relationship-
-//       managed save lifecycle.
+//       SAVE and persisted via SwiftData's relationship-managed save
+//       lifecycle.
 //    2. sessionExercise.pinnedNote (per-exercise) — written by
-//       PinnedNoteSheet's Binding(get:set:).
+//       PinnedNoteSheet's SAVE.
 //    3. setEntry.notes (per-set form notes) — written by PerSetNoteSheet's
-//       Binding(get:set:).
+//       SAVE.
 //
-//  All three sheets share the same write-through pattern:
-//    Binding(get: { model.field ?? "" }, set: { model.field = $0.isEmpty ? nil : $0 })
+//  All three sheets edit a local copy and write it back on SAVE only:
+//    model.field = text.isEmpty ? nil : text
 //
 //  This test exercises the SwiftData round-trip directly (in-memory
-//  ModelContainer over the baseline schema) — the sheet UI is pure SwiftUI binding so
-//  the semantic contract is the round-trip itself. The defensive
+//  ModelContainer over the baseline schema) — NoteSheetsUITests covers the sheets'
+//  SAVE / CANCEL / swipe-down behavior, so the contract here is the round-trip itself. The defensive
 //  empty-string → nil normalization is exercised by the fourth test.
 //
 //  Pattern matches SetRowCommitTests / MidSessionSwapTests — production
@@ -101,7 +101,7 @@ struct NotesPersistenceTests {
         ctx.insert(session)
         try ctx.save()
 
-        // Simulate the binding's set closure: empty string maps to nil.
+        // Simulate the sheets' SAVE: empty string maps to nil.
         // This is the defensive normalization shared by all three sheets
         // (WorkoutNotesSheet / PinnedNoteSheet / PerSetNoteSheet). Keeping
         // the column nil-on-empty means "has notes?" predicates stay

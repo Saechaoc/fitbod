@@ -42,6 +42,74 @@ final class NoteSheetsUITests: XCTestCase {
         attachScreenshot(of: app, named: "pinned-note-typed")
     }
 
+    /// Item 33: SAVE writes the note; CANCEL and swipe-down throw the edit away.
+    @MainActor
+    func testWorkoutNoteSavesOnlyOnSave() throws {
+        let app = UITestNavigation.openSeededWorkout()
+        assertSaveKeepsAndDismissDiscards(in: app, title: "Workout notes") {
+            app.buttons["More"].tap()
+            let item = app.buttons["Workout notes"]
+            XCTAssertTrue(item.waitForExistence(timeout: 5))
+            item.tap()
+        }
+    }
+
+    @MainActor
+    func testSetNoteSavesOnlyOnSave() throws {
+        let app = UITestNavigation.openSeededWorkout()
+        assertSaveKeepsAndDismissDiscards(in: app, title: "Set 1 note") { openSetNote(in: app) }
+    }
+
+    @MainActor
+    func testPinnedNoteSavesOnlyOnSave() throws {
+        let app = UITestNavigation.openSeededWorkout()
+        assertSaveKeepsAndDismissDiscards(in: app, title: "Pinned note") { openPinnedNote(in: app) }
+    }
+
+    @MainActor
+    private func assertSaveKeepsAndDismissDiscards(
+        in app: XCUIApplication, title: String, open: () -> Void,
+        file: StaticString = #filePath, line: UInt = #line
+    ) {
+        let header = element(app.staticTexts, title)
+        let editor = app.textViews.firstMatch
+        func reopen() {
+            open()
+            XCTAssertTrue(header.waitForExistence(timeout: 5), "\(title) sheet did not open", file: file, line: line)
+        }
+        func type(_ text: String) {
+            editor.tap()
+            editor.typeText(text)
+        }
+        func waitUntilClosed() {
+            let gone = XCTNSPredicateExpectation(predicate: NSPredicate(format: "exists == false"), object: header)
+            XCTAssertEqual(XCTWaiter().wait(for: [gone], timeout: 5), .completed,
+                           "\(title) sheet did not close", file: file, line: line)
+        }
+
+        reopen()
+        type("Kept")
+        element(app.buttons, "Save").tap()
+        waitUntilClosed()
+        reopen()
+        XCTAssertEqual(editor.value as? String, "Kept", "SAVE must write the note", file: file, line: line)
+
+        type(" draft")
+        element(app.buttons, "Cancel").tap()
+        waitUntilClosed()
+        reopen()
+        XCTAssertEqual(editor.value as? String, "Kept", "CANCEL must throw the edit away", file: file, line: line)
+
+        type(" draft")
+        header.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).press(
+            forDuration: 0.05,
+            thenDragTo: app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.95))
+        )
+        waitUntilClosed()
+        reopen()
+        XCTAssertEqual(editor.value as? String, "Kept", "Swipe-down must throw the edit away", file: file, line: line)
+    }
+
     @MainActor
     private func openSetNote(in app: XCUIApplication) {
         let note = app.buttons["Note for set 1"].firstMatch
