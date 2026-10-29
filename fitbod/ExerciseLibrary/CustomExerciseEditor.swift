@@ -84,6 +84,8 @@ struct CustomExerciseEditor: View {
     @State private var presentingMusclePicker = false
     @State private var presentingCancelConfirmation = false
     @State private var presentingDeleteConfirmation = false
+    @State private var persistenceError: String?
+    @State private var showingValidation = false
 
     var body: some View {
         Form {
@@ -101,27 +103,31 @@ struct CustomExerciseEditor: View {
                 }
             }
         }
-        .navigationTitle(navigationTitle)
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .cancellationAction) {
-                Button("Cancel") {
+        .font(BRUFont.bodyDefault)
+        .tint(Color.bruInk)
+        .scrollContentBackground(.hidden)
+        .background(Color.bruPaper)
+        .navigationBarHidden(true)
+        .safeAreaInset(edge: .top) {
+            BRUHeaderBar(
+                left: HeaderAction("Cancel") {
                     if isDirty {
                         presentingCancelConfirmation = true
                     } else {
                         dismiss()
                     }
-                }
-            }
-            ToolbarItem(placement: .confirmationAction) {
-                Button("Save", action: save)
-                    .disabled(!draft.isValid)
-                    .accessibilityHint(
-                        draft.isValid
-                            ? ""
-                            : "Add a primary muscle to enable saving"
-                    )
-            }
+                },
+                center: navigationTitle,
+                right: HeaderAction("Save", isSignal: draft.isValid, action: save)
+            )
+        }
+        .alert("Changes were not saved", isPresented: Binding(
+            get: { persistenceError != nil },
+            set: { if !$0 { persistenceError = nil } }
+        )) {
+            Button("OK", role: .cancel) { persistenceError = nil }
+        } message: {
+            Text(persistenceError ?? "Please try again.")
         }
         .sheet(isPresented: $presentingMusclePicker) {
             MusclePickerSheet { mg in
@@ -159,6 +165,13 @@ struct CustomExerciseEditor: View {
             TextField("e.g. Cambered Bar Bench Press", text: $draft.name)
                 .textInputAutocapitalization(.words)
                 .autocorrectionDisabled(false)
+                .accessibilityIdentifier("customExercise.name")
+            if showingValidation && draft.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                Text("Enter an exercise name.")
+                    .font(BRUFont.bodyDefault)
+                    .foregroundStyle(Color.bruSignalText)
+                    .accessibilityIdentifier("customExercise.nameError")
+            }
         }
     }
 
@@ -175,7 +188,7 @@ struct CustomExerciseEditor: View {
                 presentingMusclePicker = true
             } label: {
                 Label(addMuscleButtonLabel, systemImage: "plus")
-                    .foregroundStyle(Color.accentColor)
+                    .foregroundStyle(Color.bruSignalText)
             }
         } header: {
             Text("Muscles")
@@ -186,10 +199,10 @@ struct CustomExerciseEditor: View {
                 )
                 .font(.caption)
                 .foregroundStyle(.secondary)
-                if !draft.isValid && !draft.muscles.isEmpty {
+                if showingValidation && !draft.muscles.contains(where: { $0.role == .primary && $0.weight >= 0.5 }) {
                     Text("At least one primary muscle is required to save.")
-                        .font(.caption)
-                        .foregroundStyle(Color(.systemRed))
+                        .font(BRUFont.bodyDefault)
+                        .foregroundStyle(Color.bruSignalText)
                 }
             }
         }
@@ -281,19 +294,31 @@ struct CustomExerciseEditor: View {
     }
 
     private func save() {
+        showingValidation = true
+        guard draft.isValid else { return }
         if isEditing {
             draft.updateExisting(in: modelContext, allMuscles: allMuscles)
         } else {
             draft.materialize(into: modelContext, allMuscles: allMuscles)
         }
-        try? modelContext.save()
-        dismiss()
+        do {
+            try modelContext.save()
+            dismiss()
+        } catch {
+            modelContext.rollback()
+            persistenceError = "Your changes could not be stored. They are still in this form; try saving again."
+        }
     }
 
     private func deleteCustom() {
         guard let target = draft.editingExisting else { return }
-        try? ExerciseDeletion.delete(target, context: modelContext)
-        dismiss()
+        do {
+            try ExerciseDeletion.delete(target, context: modelContext)
+            dismiss()
+        } catch {
+            modelContext.rollback()
+            persistenceError = "The exercise could not be deleted. Try again."
+        }
     }
 }
 

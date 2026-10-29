@@ -59,6 +59,7 @@ struct MusclePickerSheet: View {
                                 .foregroundStyle(.secondary)
                         }
                     }
+                    .accessibilityIdentifier("musclePicker.\(mg.slug)")
                 }
             }
             .navigationTitle("Select Muscle")

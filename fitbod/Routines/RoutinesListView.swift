@@ -183,7 +183,10 @@ public struct RoutinesListView: View {
             }
             // Plan 02.1-10: session history surface — v1 reachability via Routines "+" menu
             .sheet(isPresented: $presentingSessionHistory) {
-                SessionHistoryView()
+                NavigationStack {
+                    SessionHistoryView()
+                        .sessionHistoryDestinations()
+                }
             }
             // UI-SPEC verbatim: "Workout in Progress" active-session-conflict alert
             .alert(
@@ -273,7 +276,7 @@ public struct RoutinesListView: View {
                         .font(BRUFont.labelSmall)
                         .textCase(.uppercase)
                         .tracking(1.2)
-                        .foregroundStyle(Color.bruSignal)
+                        .foregroundStyle(Color.bruSignalText)
                 }
                 .buttonStyle(.plain)
             }
@@ -299,7 +302,7 @@ public struct RoutinesListView: View {
                             .font(BRUFont.labelSmall)
                             .textCase(.uppercase)
                             .tracking(1.2)
-                            .foregroundStyle(Color.bruSignal)
+                            .foregroundStyle(Color.bruSignalText)
                     }
                     .buttonStyle(.plain)
                     .padding(.top, 8)

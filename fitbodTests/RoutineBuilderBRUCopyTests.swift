@@ -94,13 +94,16 @@ struct RoutineBuilderBRUCopyTests {
     func prescriptionChipsRenderInSpecOrder() throws {
         let editor = try source("PrescriptionEditorRow.swift")
 
-        // The 5 chip types should all be represented in the source
-        // Order: reps → RPE → progression-signal → rest → plate
-        #expect(editor.contains("reps"))          // reps chip label
-        #expect(editor.contains("RPE"))           // RPE chip label
-        #expect(editor.contains("autoreg") || editor.contains("Autoregulation"))  // signal progression chip
-        #expect(editor.contains("rest"))          // rest chip label
-        #expect(editor.contains("Plate"))         // plate chip label
+        // Render real per-exercise values, not static progression/plate labels.
+        // Progression is selected once in the parent session builder.
+        let reps = try #require(editor.range(of: "(repsChipLabel, Color.bruInk)"))
+        let rpe = try #require(editor.range(of: "(rpeChipLabel, Color.bruInk)"))
+        let rest = try #require(editor.range(of: "(restChipLabel, Color.bruInk)"))
+        #expect(reps.lowerBound < rpe.lowerBound)
+        #expect(rpe.lowerBound < rest.lowerBound)
+        #expect(editor.contains("BRUFlowLayout"))
+        #expect(!editor.contains("progressionChipLabel"))
+        #expect(!editor.contains("plateChipLabel"))
 
         // Verify BRUChip is used (structural test)
         #expect(editor.contains("BRUChip"))

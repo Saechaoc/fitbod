@@ -23,7 +23,7 @@
 //  .background(Color.bruPaper.ignoresSafeArea())
 //
 //  ## State shape (unchanged)
-//  Single @Bindable RoutineDraft. Dirty-check via draft.snapshotHash().
+//  One presentation-owned RoutineDraft. Dirty-check via draft.snapshotHash().
 //  Save via draft.save(into:context:). Discard via dismiss().
 //
 //  ## Phase 3.1 header pickers preserved
@@ -80,7 +80,10 @@ internal func isTemplateOnActiveBlock(
 public struct RoutineBuilderView: View {
     @Environment(\.modelContext) private var ctx
     @Environment(\.dismiss) private var dismiss
-    @Bindable public var draft: RoutineDraft
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    // The host may construct a fresh draft in its sheet closure on every redraw.
+    // Retain the initial reference so nested pickers never replace unsaved edits.
+    @State public var draft: RoutineDraft
 
     /// nil = create mode; non-nil = edit mode (existing SessionTemplate).
     public let editing: SessionTemplate?
@@ -108,7 +111,7 @@ public struct RoutineBuilderView: View {
         editing: SessionTemplate? = nil,
         onSaved: ((SessionTemplate) -> Void)? = nil
     ) {
-        self.draft = draft
+        self._draft = State(initialValue: draft)
         self.editing = editing
         self.onSaved = onSaved
     }
@@ -132,7 +135,9 @@ public struct RoutineBuilderView: View {
         NavigationStack {
             VStack(spacing: 0) {
                 // 1. Session name + chip row
-                nameAndChipBlock
+                if !dynamicTypeSize.isAccessibilitySize {
+                    nameAndChipBlock
+                }
 
                 // 2. Exercise list + add slot
                 exerciseScrollView
@@ -311,7 +316,7 @@ public struct RoutineBuilderView: View {
                         .font(BRUFont.labelSmall)
                         .tracking(1.0)
                         .textCase(.uppercase)
-                        .foregroundStyle(Color.bruSignal)
+                        .foregroundStyle(Color.bruSignalText)
                         .accessibilityLabel("Error: \(message)")
                 }
             }
@@ -328,7 +333,7 @@ public struct RoutineBuilderView: View {
     }
 
     private var chipRow: some View {
-        HStack(spacing: 6) {
+        BRUFlowLayout(spacing: 6, lineSpacing: 8) {
             // Intent chip — signal-fill when .strength
             Menu {
                 intentMenuItems
@@ -338,6 +343,8 @@ public struct RoutineBuilderView: View {
                     color: .bruSignal,
                     fill: draft.intent == .strength
                 )
+                .frame(minHeight: 44)
+                .contentShape(Rectangle())
             }
 
             // Estimated duration — derived from sets and rest (SessionTemplateSummary)
@@ -351,6 +358,8 @@ public struct RoutineBuilderView: View {
                     progressionMenuItems
                 } label: {
                     BRUChip("Linked → Block", color: .bruSignal, fill: false)
+                        .frame(minHeight: 44)
+                        .contentShape(Rectangle())
                 }
             } else {
                 // Progression chip when no block linked
@@ -358,6 +367,8 @@ public struct RoutineBuilderView: View {
                     progressionMenuItems
                 } label: {
                     BRUChip(progressionLabel(draft.progressionKind))
+                        .frame(minHeight: 44)
+                        .contentShape(Rectangle())
                 }
             }
         }
@@ -424,7 +435,17 @@ public struct RoutineBuilderView: View {
     private var exerciseScrollView: some View {
         ScrollView {
             LazyVStack(spacing: 0) {
-                ForEach(Array(draft.exercises.enumerated()), id: \.element.id) { i, exDraft in
+                if dynamicTypeSize.isAccessibilitySize {
+                    nameAndChipBlock
+                }
+                // New exercise drafts have nil persisted IDs; use their stable
+                // presentation identity so adding/reordering multiple rows is safe.
+                let rows = draft.exercises.enumerated().map {
+                    (index: $0.offset, exercise: $0.element, key: stableKey(for: $0.element))
+                }
+                ForEach(rows, id: \.key) { row in
+                    let i = row.index
+                    let exDraft = row.exercise
                     RoutineExerciseCard(
                         draft: exDraft,
                         hasBlock: draft.blockID != nil,
@@ -441,7 +462,10 @@ public struct RoutineBuilderView: View {
                         onRemoveFromSuperset: { ed in ed.supersetGroupID = nil },
                         onDuplicate: { ed in duplicateExercise(ed) },
                         onRemove: { ed in removeExercise(ed) },
-                        onEditWarmup: { ed in pendingWarmupSheet = ed }
+                        onEditWarmup: { ed in pendingWarmupSheet = ed },
+                        onMoveUp: i > 0 ? { moveExercise(from: i, to: i - 1) } : nil,
+                        onMoveDown: i + 1 < draft.exercises.count
+                            ? { moveExercise(from: i, to: i + 2) } : nil
                     )
                     // Swipe-to-delete (T-02.1-05-01 mitigation)
                     .swipeActions(edge: .trailing, allowsFullSwipe: true) {
@@ -470,6 +494,13 @@ public struct RoutineBuilderView: View {
     }
 
     // MARK: - Stable Key
+
+    private func moveExercise(from index: Int, to destination: Int) {
+        draft.exercises.move(fromOffsets: IndexSet(integer: index), toOffset: destination)
+        for (position, exercise) in draft.exercises.enumerated() {
+            exercise.orderIndex = position
+        }
+    }
 
     private func stableKey(for exDraft: RoutineExerciseDraft) -> UUID {
         if let id = exDraft.id { return id }

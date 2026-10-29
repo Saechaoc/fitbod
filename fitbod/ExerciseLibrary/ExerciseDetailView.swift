@@ -257,7 +257,7 @@ struct ExerciseDetailView: View {
                                     .font(BRUFont.labelMicro)
                                     .tracking(1.0)
                                     .textCase(.uppercase)
-                                    .foregroundStyle(Color.bruSignal)
+                                    .foregroundStyle(Color.bruSignalText)
                             }
                             Spacer()
                             Text("\(percent)%")

@@ -32,9 +32,12 @@
 //  ## Clear-filters action
 //
 //  When any facet has at least one selection (`!filterState.isEmpty`) a
-//  trailing "Clear filters" text button appears, calling `filterState.clear()`.
-//  Per UI-SPEC § Library screen the copy is verbatim "Clear filters"
-//  (no exclamation) and the foreground is the accent colour.
+//  "Clear filters" chip appears at the FRONT of the row and calls
+//  `filterState.clear()`. It leads the row so it is always on screen at
+//  390pt: the facet chips after it scroll, the clear action never does.
+//  It is an ink-filled chip (paper label), so it reads as an action and
+//  not as one more facet. The copy is verbatim "Clear filters" (no
+//  exclamation), matching `EmptyLibraryView`.
 //
 
 import SwiftUI
@@ -65,50 +68,64 @@ public struct ExerciseFilterBar: View {
     public var body: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 8) {
+                if !filterState.isEmpty {
+                    clearFiltersChip
+                }
+
                 FilterChip(
                     label: muscleLabel,
                     accessibilityName: muscleA11yLabel,
                     isActive: !filterState.selectedMuscleSlugs.isEmpty
                 ) { presentingSheet = .muscle }
+                .accessibilityIdentifier("library.filter.muscle")
 
                 FilterChip(
                     label: equipmentLabel,
                     accessibilityName: equipmentA11yLabel,
                     isActive: !filterState.selectedEquipmentRaw.isEmpty
                 ) { presentingSheet = .equipment }
+                .accessibilityIdentifier("library.filter.equipment")
 
                 FilterChip(
                     label: mechanicLabel,
                     accessibilityName: mechanicA11yLabel,
                     isActive: filterState.selectedMechanicRaw != nil
                 ) { presentingSheet = .mechanic }
+                .accessibilityIdentifier("library.filter.mechanic")
 
                 // Pattern facet hidden: the seeded catalog has no pattern
                 // data yet, so any selection returned zero rows. Restore
                 // once patterns are curated (docs/ROADMAP.md).
-
-                if !filterState.isEmpty {
-                    Button {
-                        filterState.clear()
-                    } label: {
-                        Text("Clear filters")
-                            .font(BRUFont.labelSmall)
-                            .tracking(1.2)
-                            .textCase(.uppercase)
-                            .foregroundStyle(Color.bruSignal)
-                            .padding(.horizontal, 8)
-                            .frame(minHeight: 44)
-                            .contentShape(Rectangle())
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel("Clear filters")
-                }
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 4)
         }
+        .accessibilityIdentifier("library.filters")
         .background(Color.bruPaper)
         .overlay(alignment: .bottom) { BRUDivider(.ink) }
+    }
+
+    /// Leading "Clear filters" chip. Same 36pt chip geometry as
+    /// `FilterChip`, inside a 44pt tappable frame.
+    private var clearFiltersChip: some View {
+        Button {
+            filterState.clear()
+        } label: {
+            Text("Clear filters")
+                .font(BRUFont.labelSmall)
+                .tracking(1.2)
+                .textCase(.uppercase)
+                .lineLimit(1)
+                .foregroundStyle(Color.bruPaper)
+                .padding(.horizontal, 12)
+                .frame(minHeight: 36)
+                .background(Color.bruInk)
+                .frame(minHeight: 44)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Clear filters")
+        .accessibilityIdentifier("library.clearFilters")
     }
 
     // MARK: - Chip-label composition

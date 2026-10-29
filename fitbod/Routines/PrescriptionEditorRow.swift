@@ -5,12 +5,10 @@
 //  Phase 2.1 Plan 05 REWRITE — replaces the 8-row VStack prescription
 //  editor with the BRU prescription chip row + SetRowsContainer.
 //
-//  Top row: 5-chip prescription in HStack (wrapping-safe):
+//  Top row: actual prescription values in a wrapping BRUFlowLayout:
 //    BRUChip("{repsMin}–{repsMax} reps")        ← ink outline
 //    BRUChip("RPE {rpeMin}–{rpeMax}")           ← ink outline
-//    BRUChip(progressionLabel, signal)           ← signal outline
 //    BRUChip("{rest} min rest")                  ← ink outline
-//    BRUChip("Plate {inc}")                      ← ink outline
 //
 //  Below: SetRowsContainer(exercise:) — the 1.5pt bruInk bordered per-set grid.
 //
@@ -61,21 +59,17 @@ public struct PrescriptionEditorRow: View {
     // MARK: - Chip Row
 
     private var chipRow: some View {
-        // Simple wrapping HStack for iOS 18; falls back gracefully on smaller screens.
-        // If ViewThatFits / Layout becomes necessary, retrofit without changing API.
+        // Constrain long labels and reflow at accessibility text sizes.
         let chips = [
             (repsChipLabel, Color.bruInk),
             (rpeChipLabel, Color.bruInk),
-            (progressionChipLabel, Color.bruSignal),
             (restChipLabel, Color.bruInk),
-            (plateChipLabel, Color.bruInk),
         ]
-        return HStack(spacing: 5) {
+        return BRUFlowLayout(spacing: 5, lineSpacing: 5) {
             ForEach(chips.indices, id: \.self) { i in
                 let (label, color) = chips[i]
                 BRUChip(label, color: color, fill: false, textCase: nil)
             }
-            Spacer(minLength: 0)
         }
     }
 
@@ -94,13 +88,6 @@ public struct PrescriptionEditorRow: View {
         return "RPE \(rpeStr)"
     }
 
-    private var progressionChipLabel: String {
-        // Phase 3.1 PIVOT-04: progressionKind is on RoutineDraft (parent).
-        // RoutineExerciseDraft no longer carries progressionKind.
-        // We show a static label here; the chip is signal-colored per UI-SPEC.
-        return "RPE autoreg"
-    }
-
     private var restChipLabel: String {
         let mins = draft.prescribedRestSeconds / 60
         let secs = draft.prescribedRestSeconds % 60
@@ -108,12 +95,6 @@ public struct PrescriptionEditorRow: View {
             return "\(mins) min rest"
         }
         return "\(draft.prescribedRestSeconds)s rest"
-    }
-
-    private var plateChipLabel: String {
-        // Plate increment — not yet modeled on RoutineExerciseDraft.
-        // Show a placeholder; future plan will wire plateIncrement field.
-        return "Plate ½ lb"
     }
 
     // MARK: - Advanced Section
@@ -137,8 +118,10 @@ public struct PrescriptionEditorRow: View {
                     .font(BRUFont.labelSmall)
                     .foregroundStyle(Color.bruMuted)
             }
+            .frame(minHeight: 44)
             .contentShape(Rectangle())
         }
+        .accessibilityIdentifier("prescription.details")
         .buttonStyle(.plain)
 
         if showingAdvanced {
@@ -159,18 +142,8 @@ public struct PrescriptionEditorRow: View {
     // MARK: - Sets
 
     private var setsStepper: some View {
-        Stepper(value: $draft.targetSets, in: 1...20) {
-            HStack {
-                Text("Sets")
-                    .font(BRUFont.bodyEmphasis)
-                    .foregroundStyle(Color.bruInk)
-                    .lineLimit(1)
-                Spacer()
-                Text("\(draft.targetSets)")
-                    .font(BRUFont.bodyDefault)
-                    .foregroundStyle(Color.bruMuted)
-            }
-        }
+        BRUStepper("Sets", value: $draft.targetSets, in: 1...20, step: 1) { "\($0)" }
+        .accessibilityIdentifier("prescription.sets")
     }
 
     // MARK: - Reps range
@@ -193,6 +166,9 @@ public struct PrescriptionEditorRow: View {
                 .keyboardType(.numberPad)
                 .multilineTextAlignment(.trailing)
                 .font(BRUFont.bodyDefault)
+                .frame(minHeight: 44)
+                .accessibilityLabel("Minimum target reps")
+                .accessibilityIdentifier("prescription.reps.low")
 
                 Text("–")
                     .foregroundStyle(Color.bruMuted)
@@ -207,6 +183,9 @@ public struct PrescriptionEditorRow: View {
                 .keyboardType(.numberPad)
                 .multilineTextAlignment(.trailing)
                 .font(BRUFont.bodyDefault)
+                .frame(minHeight: 44)
+                .accessibilityLabel("Maximum target reps")
+                .accessibilityIdentifier("prescription.reps.high")
             }
             .fixedSize(horizontal: true, vertical: false)
         }
@@ -260,18 +239,7 @@ public struct PrescriptionEditorRow: View {
     // MARK: - Rest
 
     private var restStepper: some View {
-        Stepper(value: $draft.prescribedRestSeconds, in: 0...600, step: 15) {
-            HStack {
-                Text("Rest")
-                    .font(BRUFont.bodyEmphasis)
-                    .foregroundStyle(Color.bruInk)
-                    .lineLimit(1)
-                Spacer()
-                Text("\(draft.prescribedRestSeconds)s")
-                    .font(BRUFont.bodyDefault)
-                    .foregroundStyle(Color.bruMuted)
-            }
-        }
+        BRUStepper("Rest", value: $draft.prescribedRestSeconds, in: 0...600, step: 15) { "\($0)s" }
     }
 
     // MARK: - Tempo
@@ -420,7 +388,7 @@ public struct PrescriptionEditorRow: View {
                             .font(BRUFont.labelSmall)
                             .tracking(1.2)
                             .textCase(.uppercase)
-                            .foregroundStyle(Color.bruSignal)
+                            .foregroundStyle(Color.bruSignalText)
                     }
                     .buttonStyle(.plain)
                 }

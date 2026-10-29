@@ -46,7 +46,7 @@ public struct PerSetOverrideRow: View {
                 .font(BRUFont.labelSmall)
                 .tracking(1.2)
                 .textCase(.uppercase)
-                .foregroundStyle(isTop ? Color.bruSignal : Color.bruInk)
+                .foregroundStyle(isTop ? Color.bruSignalText : Color.bruInk)
                 .frame(width: 60, alignment: .leading)
 
             Spacer()
@@ -61,10 +61,13 @@ public struct PerSetOverrideRow: View {
                 format: .number
             )
             .font(.bru(.grotesk, size: 18))
-            .foregroundStyle(isTop ? Color.bruSignal : Color.bruInk)
+            .foregroundStyle(isTop ? Color.bruSignalText : Color.bruInk)
             .keyboardType(.numberPad)
             .multilineTextAlignment(.trailing)
             .frame(width: 44)
+            .frame(minHeight: 44)
+            .contentShape(Rectangle())
+            .accessibilityLabel("Reps override, set \(draft.setIndex + 1)")
 
             // Column 4: RPE TextField displayMedium 18pt right-aligned
             TextField(
@@ -76,10 +79,13 @@ public struct PerSetOverrideRow: View {
                 format: .number.precision(.fractionLength(0...1))
             )
             .font(.bru(.grotesk, size: 18))
-            .foregroundStyle(isTop ? Color.bruSignal : Color.bruInk)
+            .foregroundStyle(isTop ? Color.bruSignalText : Color.bruInk)
             .keyboardType(.decimalPad)
             .multilineTextAlignment(.trailing)
             .frame(width: 44)
+            .frame(minHeight: 44)
+            .contentShape(Rectangle())
+            .accessibilityLabel("RPE override, set \(draft.setIndex + 1)")
         }
         .padding(.horizontal, 8)
         .padding(.vertical, 5)

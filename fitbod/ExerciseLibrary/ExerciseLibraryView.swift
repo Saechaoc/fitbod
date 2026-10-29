@@ -156,7 +156,12 @@ public struct ExerciseLibraryView: View {
                 .autocorrectionDisabled()
                 .submitLabel(.search)
                 .focused($searchFocused)
+                .onSubmit {
+                    debouncedSearch = searchText
+                    searchFocused = false
+                }
                 .accessibilityLabel("Search exercises")
+                .accessibilityIdentifier(isPicker ? "library.search.picker" : "library.search.browser")
             if !searchText.isEmpty {
                 Button {
                     searchText = ""
@@ -296,6 +301,7 @@ private struct FilteredExerciseList: View {
             }
             .buttonStyle(.plain)
             .accessibilityHint("Adds this exercise")
+            .accessibilityIdentifier("exercise.pick.\(ex.id.uuidString)")
         } else {
             NavigationLink(value: ex) {
                 ExerciseRow(exercise: ex, accessory: .loggedCount(loggedCount))

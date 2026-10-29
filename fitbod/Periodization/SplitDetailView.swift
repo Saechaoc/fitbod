@@ -201,6 +201,9 @@ public struct SplitDetailView: View {
                 .focused($nameFocused)
                 .submitLabel(.done)
                 .onSubmit(commitName)
+                .onChange(of: nameText) { _, value in
+                    if value.contains("\n") { commitName() }
+                }
                 .onChange(of: nameFocused) { _, focused in
                     if !focused { commitName() }
                 }
@@ -552,7 +555,7 @@ fileprivate struct SplitSlotRow: View {
         .gesture(reduceMotion || isEditing ? nil : reorderGesture)
         // VoiceOver: activate opens the session; reorder and remove are actions
         .accessibilityElement(children: isEditing ? .contain : .ignore)
-        .accessibilityLabel("Session \(slot.position + 1): \(slot.sessionTemplate?.name ?? "—")")
+        .accessibilityLabel("Session \(slot.position + 1): \(slot.sessionTemplate?.name ?? "empty")")
         .accessibilityAddTraits(isEditing ? [] : .isButton)
         .accessibilityHint(isEditing ? "" : "Opens the session. Touch and hold, then drag to reorder.")
         .accessibilityAction { if !isEditing { onOpen() } }

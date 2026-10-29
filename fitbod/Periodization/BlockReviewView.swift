@@ -15,6 +15,7 @@ import SwiftUI
 public struct BlockReviewView: View {
     @Environment(\.modelContext) private var ctx
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.weightUnit) private var weightUnit
 
     public let block: Block
 
@@ -108,7 +109,7 @@ public struct BlockReviewView: View {
                 statCell(
                     label: "TONNAGE",
                     value: BlockReviewStatistics.formattedKg(totalKg),
-                    subLabel: "KG TOTAL",
+                    subLabel: "\(weightUnit.rawValue.uppercased()) TOTAL",
                     valueColor: Color.bruSignal
                 )
                 Spacer()
@@ -212,7 +213,7 @@ public struct BlockReviewView: View {
                 Spacer()
                 // Delta display
                 HStack(spacing: 6) {
-                    Text(BlockReviewStatistics.formattedDelta(delta.delta))
+                    Text(BlockReviewStatistics.formattedDelta(delta.delta, unit: weightUnit))
                         .font(BRUFont.labelSmall)
                         .foregroundStyle(delta.delta > 0 ? Color.bruSignal : Color.bruInk)
                 }
@@ -504,9 +505,9 @@ public enum BlockReviewStatistics {
         value.formatted(.number.precision(.fractionLength(0)).grouping(.automatic))
     }
 
-    public static func formattedDelta(_ value: Double) -> String {
+    public static func formattedDelta(_ value: Double, unit: WeightUnit) -> String {
         let sign = value > 0 ? "+" : ""
-        return "\(sign)\(String(format: "%.1f", value)) kg"
+        return "\(sign)\(String(format: "%.1f", value)) \(unit.rawValue)"
     }
 }
 

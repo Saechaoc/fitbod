@@ -117,6 +117,10 @@ public struct SetRowsContainer: View {
                 .font(.bru(.grotesk, size: 18))
                 .foregroundStyle(Color.bruInk)
                 .multilineTextAlignment(.trailing)
+                // VoiceOver reads a bare dash as "em dash".
+                .accessibilityLabel(exercise.targetRPE == nil
+                                    ? "No target RPE"
+                                    : "RPE \(rpeString(exercise.targetRPE))")
         }
         .padding(.horizontal, 8)
         .padding(.vertical, 5)

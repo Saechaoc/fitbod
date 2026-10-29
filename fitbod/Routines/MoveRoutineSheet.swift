@@ -62,7 +62,7 @@ public struct MoveRoutineSheet: View {
                             if selected == nil {
                                 Text("✓")
                                     .font(BRUFont.displayMedium)
-                                    .foregroundStyle(Color.bruSignal)
+                                    .foregroundStyle(Color.bruSignalText)
                             }
                         }
                         .padding(.horizontal, 16)
@@ -88,7 +88,7 @@ public struct MoveRoutineSheet: View {
                                 if selected == folder.id {
                                     Text("✓")
                                         .font(BRUFont.displayMedium)
-                                        .foregroundStyle(Color.bruSignal)
+                                        .foregroundStyle(Color.bruSignalText)
                                 }
                             }
                             .padding(.horizontal, 16)

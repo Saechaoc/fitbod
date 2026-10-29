@@ -13,18 +13,18 @@
 //       no rows pass the active facets):
 //         - Heading: "No exercises match"
 //         - Body:    "Try fewer filters or a different name."
-//         - Action:  "Clear filters" (accent foreground text button)
+//         - Action:  "Clear filters" (ghost `BRUButton`)
 //
 //    2. Non-empty search (the user typed a query and zero rows match):
 //         - Heading: "No exercises match \"{query}\""
 //         - Body:    "Check spelling or create a custom exercise."
-//         - Action:  "Create Custom Exercise" (accent foreground text
-//                    button) — opens `CustomExerciseEditor` via the
+//         - Action:  "Create Custom Exercise" (signal `BRUButton`) -
+//                    opens `CustomExerciseEditor` via the
 //                    `onCreateCustom` closure dispatched by the parent.
 //
-//  Both variants share the same vertical hero layout (UI-SPEC § Spacing
-//  Scale 2xl/3xl): 48pt top padding above the SF Symbol; 32pt horizontal
-//  padding around the text block; centered.
+//  Both variants share the same vertical hero layout: 48pt top padding
+//  above a dashed-border "0" tile, 32pt horizontal padding around the
+//  text block, centered.
 //
 //  ## Closure-driven dispatch (FOUND-06)
 //
@@ -35,15 +35,12 @@
 //  decides whether the action means "clear filters" or "create custom
 //  exercise" and provides the matching callback.
 //
-//  ## Accent foreground vs `.tint`
+//  ## BRU tokens only
 //
-//  `.foregroundStyle(Color.accentColor)` is the correct API for the
-//  asset-catalog `AccentColor`. The view-level `.tint(_)` modifier
-//  propagates to compatible system controls (Toggle, NavigationLink
-//  chevron, etc.) but does not change the foreground style of a
-//  `Text`/`Button` label — that requires `.foregroundStyle(.accentColor)`
-//  or `Color.accentColor` explicitly. Same pattern as the "Copy as
-//  Custom Exercise" button in `ExerciseDetailView` (plan 03-03 D-1).
+//  Every color comes from the BRU tokens (`bruInk`, `bruMuted`, and the
+//  `BRUButton` kinds). The view never reads `Color.accentColor`: the
+//  asset-catalog AccentColor is not a BRU token and must not stand in
+//  for the signal color.
 //
 
 import SwiftUI

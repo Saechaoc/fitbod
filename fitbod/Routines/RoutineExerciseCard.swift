@@ -38,6 +38,8 @@ public struct RoutineExerciseCard: View {
     public let onDuplicate: (RoutineExerciseDraft) -> Void
     public let onRemove: (RoutineExerciseDraft) -> Void
     public let onEditWarmup: (RoutineExerciseDraft) -> Void
+    public let onMoveUp: (() -> Void)?
+    public let onMoveDown: (() -> Void)?
 
     public init(
         draft: RoutineExerciseDraft,
@@ -48,7 +50,9 @@ public struct RoutineExerciseCard: View {
         onRemoveFromSuperset: @escaping (RoutineExerciseDraft) -> Void = { _ in },
         onDuplicate: @escaping (RoutineExerciseDraft) -> Void = { _ in },
         onRemove: @escaping (RoutineExerciseDraft) -> Void = { _ in },
-        onEditWarmup: @escaping (RoutineExerciseDraft) -> Void = { _ in }
+        onEditWarmup: @escaping (RoutineExerciseDraft) -> Void = { _ in },
+        onMoveUp: (() -> Void)? = nil,
+        onMoveDown: (() -> Void)? = nil
     ) {
         self.draft = draft
         self.hasBlock = hasBlock
@@ -59,6 +63,8 @@ public struct RoutineExerciseCard: View {
         self.onDuplicate = onDuplicate
         self.onRemove = onRemove
         self.onEditWarmup = onEditWarmup
+        self.onMoveUp = onMoveUp
+        self.onMoveDown = onMoveDown
     }
 
     // MARK: Body
@@ -106,6 +112,8 @@ public struct RoutineExerciseCard: View {
             }
             Button("Make superset") { onAssignSuperset(draft) }
             Button("Duplicate exercise") { onDuplicate(draft) }
+            if let onMoveUp { Button("Move up", action: onMoveUp) }
+            if let onMoveDown { Button("Move down", action: onMoveDown) }
             Divider()
             Button("Remove", role: .destructive) { onRemove(draft) }
         }
@@ -120,7 +128,7 @@ public struct RoutineExerciseCard: View {
             if draft.supersetGroupID != nil {
                 Text("SS")
                     .font(.bru(.grotesk, size: 26))
-                    .foregroundStyle(Color.bruSignal)
+                    .foregroundStyle(Color.bruSignalText)
                     .frame(width: 28, alignment: .leading)
                     .lineLimit(1)
             } else {
@@ -147,11 +155,19 @@ public struct RoutineExerciseCard: View {
             }
             .frame(maxWidth: .infinity, alignment: .leading)
 
-            // Trailing: typographic drag handle "⋮⋮" (NOT an SF Symbol)
-            Text("⋮⋮")
-                .font(.system(size: 14))
-                .foregroundStyle(Color.bruMuted)
-                .accessibilityHidden(true)
+            // Explicit moves work with touch and VoiceOver, including in a ScrollView.
+            Menu {
+                Button("Move up") { onMoveUp?() }.disabled(onMoveUp == nil)
+                Button("Move down") { onMoveDown?() }.disabled(onMoveDown == nil)
+            } label: {
+                Text("⋮⋮")
+                    .font(.system(size: 14))
+                    .foregroundStyle(Color.bruMuted)
+                    .frame(minWidth: 44, minHeight: 44)
+                    .contentShape(Rectangle())
+            }
+            .accessibilityLabel("Reorder exercise \(index + 1)")
+            .accessibilityIdentifier("routine.exercise.reorder.\(index + 1)")
         }
         .onTapGesture {
             withAnimation(.easeInOut(duration: 0.18)) {

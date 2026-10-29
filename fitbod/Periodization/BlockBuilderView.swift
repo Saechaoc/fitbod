@@ -2168,6 +2168,8 @@ fileprivate struct NewBlockBottomActionBar: View {
                     Image(systemName: "bookmark.fill")
                         .font(.system(size: 12, weight: .semibold))
                         .foregroundStyle(canCreate ? .white : NewBlockScreenTokens.muted)
+                        // Decorative: VoiceOver would read "Bookmark" before the title.
+                        .accessibilityHidden(true)
 
                     Text(displayPrimaryTitle)
                         .font(NewBlockType.cta)
