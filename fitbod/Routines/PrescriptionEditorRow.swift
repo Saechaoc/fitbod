@@ -21,8 +21,9 @@
 //    "Track tempo" / "Track partial reps" / "Auto warm-up" /
 //    "Per-set overrides" / "Add Override" / "Remove"
 //
-//  Target reps are two steppers, so a value is never typed over and the
-//  low end can never pass the high end (Milestone 1 review item 5).
+//  Target reps are two steppers and target RPE is one chip row with an
+//  explicit no-target chip, so no number is ever typed over (Milestone 1
+//  review items 5 and 6).
 //
 //  BRU contract: NO accentColor / NO Image(systemName:) / NO Capsule /
 //  NO RoundedRectangle / NO Apple HIG semantic fonts
@@ -131,7 +132,7 @@ public struct PrescriptionEditorRow: View {
             VStack(alignment: .leading, spacing: 14) {
                 setsStepper
                 repsSteppers
-                rpeRangeRow
+                rpeRow
                 restStepper
                 tempoSection
                 partialRepsToggle
@@ -161,49 +162,19 @@ public struct PrescriptionEditorRow: View {
         }
     }
 
-    // MARK: - RPE range
+    // MARK: - Target RPE
 
-    private var rpeRangeRow: some View {
-        HStack {
+    /// One target RPE, picked like the logger's (long-press a chip for a
+    /// decimal), or no target at all.
+    private var rpeRow: some View {
+        VStack(alignment: .leading, spacing: 8) {
             Text("Target RPE")
                 .font(BRUFont.bodyEmphasis)
                 .foregroundStyle(Color.bruInk)
-                .lineLimit(1)
-                .fixedSize(horizontal: true, vertical: false)
-            Spacer()
-            HStack(spacing: 8) {
-                TextField(
-                    "low",
-                    value: Binding(
-                        get: { draft.targetRPE ?? 0 },
-                        set: { draft.targetRPE = $0 == 0 ? nil : $0 }
-                    ),
-                    format: .number.precision(.fractionLength(0...1))
-                )
-                .frame(width: 56)
-                .keyboardType(.decimalPad)
-                .multilineTextAlignment(.trailing)
-                .font(BRUFont.bodyDefault)
-
-                Text("–")
-                    .foregroundStyle(Color.bruMuted)
-                    .font(BRUFont.bodyDefault)
-
-                TextField(
-                    "high",
-                    value: Binding(
-                        get: { draft.targetRPE ?? 0 },
-                        set: { draft.targetRPE = $0 == 0 ? nil : $0 }
-                    ),
-                    format: .number.precision(.fractionLength(0...1))
-                )
-                .frame(width: 56)
-                .keyboardType(.decimalPad)
-                .multilineTextAlignment(.trailing)
-                .font(BRUFont.bodyDefault)
-            }
-            .fixedSize(horizontal: true, vertical: false)
+            InlineRPEChipRow(rpe: $draft.targetRPE, noneLabel: "No target")
         }
+        .accessibilityElement(children: .contain)
+        .accessibilityIdentifier("prescription.rpe")
     }
 
     // MARK: - Rest

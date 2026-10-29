@@ -1,6 +1,7 @@
 import XCTest
 
-/// Review item 5: target reps in the session editor's prescription details.
+/// Review items 5 and 6: target reps and target RPE in the session editor's
+/// prescription details.
 final class PrescriptionEditorUITests: XCTestCase {
 
     private let exerciseName = "Barbell Bench Press - Medium Grip"
@@ -33,6 +34,40 @@ final class PrescriptionEditorUITests: XCTestCase {
         XCTAssertEqual(high.value as? String, "8", "High reps must not step below low reps")
     }
 
+    /// Item 6: target RPE is one control. A chosen value and an explicit
+    /// "no target" both survive saving and reopening the session.
+    @MainActor
+    func testTargetRPEIsOneControlThatSurvivesReopening() throws {
+        let app = UITestNavigation.openEmptySessionBuilder()
+        let name = app.textFields["Session name"]
+        name.tap()
+        name.typeText("M1 RPE\n")
+        addExercise(in: app)
+        openDetails(in: app)
+        XCTAssertEqual(rpeControls(in: app).count, 1, "Target RPE must be a single control")
+        XCTAssertTrue(app.staticTexts["RPE 8"].exists, "A new bench press starts at RPE 8")
+        tapRPEChoice("RPE 9", in: app)
+        XCTAssertTrue(app.staticTexts["RPE 9"].waitForExistence(timeout: 5))
+        let shot = XCTAttachment(screenshot: app.screenshot())
+        shot.name = "prescription-details-rpe-9"
+        shot.lifetime = .keepAlways
+        add(shot)
+
+        save(in: app)
+        let session = app.staticTexts["M1 RPE"].firstMatch
+        XCTAssertTrue(session.waitForExistence(timeout: 15))
+        session.tap()
+        reopen(in: app)
+        XCTAssertTrue(app.staticTexts["RPE 9"].waitForExistence(timeout: 5), "A saved RPE must survive reopening")
+
+        tapRPEChoice("No target", in: app)
+        XCTAssertTrue(app.staticTexts["RPE —"].waitForExistence(timeout: 5))
+        save(in: app)
+        reopen(in: app)
+        XCTAssertTrue(app.staticTexts["RPE —"].waitForExistence(timeout: 5), "No target must survive reopening")
+        XCTAssertEqual(rpeControls(in: app).count, 1)
+    }
+
     /// Adds the bench press to the open session editor.
     @MainActor
     private func addExercise(in app: XCUIApplication) {
@@ -59,6 +94,38 @@ final class PrescriptionEditorUITests: XCTestCase {
         let details = app.buttons["prescription.details"]
         XCTAssertTrue(details.waitForExistence(timeout: 10))
         details.tap()
+    }
+
+    /// From the session's detail screen: Edit, then the prescription details.
+    @MainActor
+    private func reopen(in app: XCUIApplication) {
+        let edit = app.buttons.matching(NSPredicate(format: "label ==[c] %@", "Edit")).firstMatch
+        XCTAssertTrue(edit.waitForExistence(timeout: 15))
+        edit.tap()
+        openDetails(in: app)
+    }
+
+    @MainActor
+    private func save(in app: XCUIApplication) {
+        let save = app.buttons["Save session ▸"]
+        XCTAssertTrue(save.waitForExistence(timeout: 10))
+        save.tap()
+        let closed = XCTNSPredicateExpectation(predicate: NSPredicate(format: "exists == false"), object: save)
+        XCTAssertEqual(XCTWaiter().wait(for: [closed], timeout: 10), .completed, "Saving must close the editor")
+    }
+
+    @MainActor
+    private func rpeControls(in app: XCUIApplication) -> XCUIElementQuery {
+        app.descendants(matching: .any).matching(identifier: "prescription.rpe")
+    }
+
+    @MainActor
+    private func tapRPEChoice(_ label: String, in app: XCUIApplication) {
+        let choice = rpeControls(in: app).firstMatch.buttons
+            .matching(NSPredicate(format: "label ==[c] %@", label)).firstMatch
+        XCTAssertTrue(choice.waitForExistence(timeout: 10), "Missing RPE choice: \(label)")
+        UITestNavigation.reveal(choice, in: app)
+        choice.tap()
     }
 
     @MainActor
