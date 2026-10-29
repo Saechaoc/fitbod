@@ -1,0 +1,22 @@
+260610-hcv detect-changes substitute (GitNexus unavailable on this machine: Swift parser fails to load)
+Generated 2026-10-29 14:28 PDT before the fix commit, on branch hogfish
+
+## git diff --cached --stat
+ fitbod/Periodization/BlockBuilderView.swift    | 10 +++--
+ fitbodTests/NewBlockBuilderFidelityTests.swift | 62 +++++++++++++++++++++++++-
+ 2 files changed, 67 insertions(+), 5 deletions(-)
+
+## Changed symbols
+- NewBlockPhaseEditorRow.cardSurface (fitbod/Periodization/BlockBuilderView.swift): layout only. Removed Spacer(minLength: 6) between the title block and the stat grid; the title VStack now ends in .frame(maxWidth: .infinity, alignment: .leading). Comment updated.
+- NewBlockPhaseEditorRow.phaseRowDivider: doc comment only (34pt -> 30pt, matching the code).
+- NewBlockReadOnlyStatColumn: doc comment only (records the 32pt / 19pt narrowing).
+- NewBlockBuilderFidelityTests.phaseCardTextRendersInFullOnNarrowPhones() (fitbodTests/NewBlockBuilderFidelityTests.swift): new test.
+- NewBlockBuilderFidelityTests.recognizedText(inBuilderOfWidth:): new private test helper; file header comment and imports (SwiftData, SwiftUI, UIKit, Vision) added.
+
+## Affected flow
+BlockBuilderView -> NewBlockPhaseListSection -> NewBlockPhaseEditorRow.cardSurface (phase card rendering in the New Block / Edit Block builder). No gesture, data, persistence or copy changes.
+
+## Manual caller check (rg -n)
+  fitbod/Periodization/BlockBuilderView.swift:1216:                    NewBlockPhaseEditorRow(
+  fitbod/Periodization/BlockBuilderView.swift:1355:            cardSurface
+  fitbod/Periodization/BlockBuilderView.swift:1390:    private var cardSurface: some View {
