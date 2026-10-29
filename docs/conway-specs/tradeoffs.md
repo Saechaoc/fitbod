@@ -6,21 +6,43 @@ Product decisions are in [decisions.md](decisions.md), and they win over this fi
 
 ## Run setup
 
-### Serial dispatch in the main checkout
+### Parallel lanes in worktrees
 
-- Call: one code worker at a time, in `/Users/chrissaechao/Desktop/fitbod` on `main`, in ticket id order.
-- Rejected: parallel workers in separate worktrees.
-- Why: there are only two dedicated simulators, and UI tests cannot share them.
-  Many tickets touch the same hot files (`ProgramView.swift`, `BlockBuilderView.swift`, `SessionExerciseCard.swift`).
-  GitNexus `detect_changes` reads only the main checkout.
-- Exception: T31 needs no simulator and edits no repo file, so it may run beside a code worker.
+- Call: up to three code workers run at once, and each ticket gets its own Orca worktree and branch from the newest `main`.
+  Each lane has its own two simulators and its own DerivedData folder.
+  Two tickets that own the same file never run at the same time, and T42 to T46 run alone on the gate phones.
+  Phases still run in order, and a phase opens only after the gate of the phase before it passes.
+- Rejected: one worker at a time in the main checkout, which was this bundle's first plan.
+  `capacity_model.py` estimates about 107 hours for it, against about 64 with three lanes.
+- Rejected: several workers in one checkout, because they overwrite each other's edits and commit each other's files.
+- Rejected: four or more lanes, because the workers share one Mac's cores, and the model shows a fourth lane saving only about three hours.
+- Rejected: dropping the phase gates to keep lanes busy, which saves about four hours but lets one phase's regressions pile up under the next.
+- Why: the dependency critical path is about 29 hours, so one worker at a time leaves most of the run idle.
+  Every ticket's `owns` list already names its files, so the file check costs nothing.
+- Exception: T31 needs no simulator and edits no repo file, so it runs beside the lanes.
+
+### Merging lane work
+
+- Call: each worker rebases its branch onto `main` once, before its final runs, so its evidence comes from its commit on top of the newest `main`.
+  The coordinator merges with `git merge --ff-only`, so `main` stays a straight line of ticket commits.
+  If `main` moved after the worker's rebase, the coordinator rebases again and builds the app before it merges.
+- Rejected: merge commits, because they put an untested combination on `main` and make the history harder to review.
+- Rejected: rerunning every test after each merge, because the file check keeps tickets apart and the phase gates catch what slips through.
+
+### GitNexus in worktrees
+
+- Call: workers save `git diff --cached --stat` and their changed symbols in place of GitNexus `detect_changes`, which reads the main checkout and cannot see a worktree's staged files.
+  Workers still run `impact` where the index has Swift symbols, and check callers with `rg` where it has none, as on csaechao4's Mac.
+  The coordinator compares the whole run against the run base in Phase 8.
+- Rejected: indexing each worktree, because `gitnexus analyze` rewrites `.gitignore` and skill files, and every merge would leave the indexes stale.
 
 ### Workers skip GSD
 
 - Call: workers never run `/gsd-*`; the tickets and [run-log.md](run-log.md) are the planning record.
 - Rejected: one `/gsd-quick` per ticket inside each worker.
 - Why: it would run a second orchestrator inside the first one, and GSD executors have already run out of context on this repo's large `CLAUDE.md` and hot files.
-- Condition: the project `CLAUDE.md` forbids edits outside GSD unless the user says so, so the coordinator needs the user's explicit approval first.
+- Condition: the project `CLAUDE.md` forbids edits outside GSD unless the user says so.
+  The user approved this exception on 2026-10-29.
 
 ## Session editor
 

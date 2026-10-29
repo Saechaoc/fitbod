@@ -12,13 +12,35 @@ Each entry is a way this run can fail, and what limits the damage.
 ## Two tickets fight over one file
 
 - Failure: hot files such as `ProgramView.swift`, `BlockBuilderView.swift` and `SessionExerciseCard.swift` change under a worker.
-- Mitigation: serial dispatch, so only one code worker edits the tree at a time.
-  `capacity_model.py` prints the files that three or more tickets own, so the coordinator knows where regressions are likely.
+- Mitigation: a ticket never starts while a live ticket owns one of its files, and each worker edits only its own worktree.
+  `capacity_model.py` prints the files that three or more tickets own, so the coordinator knows where tickets will wait for each other and where regressions are likely.
+  The coordinator merges only as a fast-forward, after a rebase and a build when `main` moved.
+
+## The lanes overload the Mac
+
+- Failure: three workers build and run UI tests at the same time, so tests time out or turn flaky, and good work gets rejected.
+- Mitigation: each lane runs one simulator job at a time, with its own phones and DerivedData.
+  Gates and exclusive tickets run with no other worker.
+  The coordinator drops to two lanes when timeouts show, and notes it in the run log.
+
+## A merge breaks another lane's work
+
+- Failure: two tickets edit different files that depend on each other, so each one passes alone, and together they break the build or a flow.
+- Mitigation: each worker rebases onto `main` before its final runs, and the coordinator rebases and builds again when `main` moved after that.
+  Each phase gate runs the full suite on the merged `main`, and a failing gate gets a fix ticket before the next phase opens.
+
+## Ticket worktrees pile up
+
+- Failure: worktrees, branches and booted phones from finished tickets fill the disk, and later checks confuse them with live work.
+- Mitigation: the coordinator removes each worktree and its branch right after the merge.
+  Evidence lives in the main checkout, so nothing is lost with a worktree.
+  Phase 8 checks that no ticket worktree or branch is left, and shuts down the lane phones.
 
 ## GitNexus rates an edit CRITICAL
 
 - Failure: a worker stops, or ignores the rating.
 - Mitigation: [worker-rules.md](worker-rules.md) says to report every HIGH or CRITICAL rating and cover the named flows with tests.
+  In `manual` mode, where the index has no Swift symbols, the worker's own rating from its caller check takes GitNexus's place.
   The coordinator copies each rating into [run-log.md](run-log.md).
 
 ## A shared fix breaks a screen nobody tested
@@ -103,8 +125,9 @@ Each entry is a way this run can fail, and what limits the damage.
   Update at 14:47 on 2026-10-29: that effort now runs on the `csaechao4` Mac as Orca run `run_f64c6aa47f95`, with each quick task in its own git worktree under `~/orca/workspaces/fitbod/`.
   Two of its agents are still working there: `q-261029-a9s` (items 4, 5, 6 and 34) and `q-261028-uhg-t3` (item 3).
   Its `260610-hcv` fix for New Block phase titles at 390-393pt is on `main` as `3ff4a8a`.
+  Later on 2026-10-29 the user chose to let that run finish only those two tasks, start none of its queued plans (`261029-d6u` to `261029-di1`), and then continue with this bundle in parallel lanes.
 - Mitigation: only one effort runs.
-  The coordinator asks the user which one continues before creating an Orca run.
+  The user chose this bundle, so its coordinator creates no Orca run until the other effort has stopped.
   If this bundle continues, the other effort first finishes or stops, and the worktree checks in precondition 7 of [dispatch.md](dispatch.md) pass.
   The coordinator then maps each of that effort's commits to tickets by review item.
   It lists them with `git log --oneline 12aad09..HEAD` right before the first dispatch, because the list grew while this bundle was written.

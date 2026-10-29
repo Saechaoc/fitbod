@@ -37,30 +37,40 @@ Intended outcome:
 
 **Role change.**
 Approving this plan ends the "Codex finishes, Claude reviews" arrangement.
-I will implement, verify, commit and push.
-Codex must not edit this working tree while I work.
+A coordinator and its Orca workers implement, verify and commit, and the coordinator pushes.
+No other agent, Codex included, edits this repo or its worktrees while the run works.
 
 ## Ground rules
 
-- **Process.** Each phase below runs as one `/gsd-quick` task.
-  The GSD workflow spawns a planner and executors.
-  Each executor gets about two items, skips CLAUDE.md, and filters xcodebuild output.
-  Executors run one at a time, so no two of them ever share a simulator.
+- **Process.** The phases below run as the Orca tickets in `docs/conway-specs/`, which cover Phases 1-7.
+  Its `dispatch.md` is the coordinator's playbook, and its `worker-rules.md` binds every worker.
+  Workers skip GSD for this run, which the user approved on 2026-10-29.
+  The quick-task run finishes only its live tasks, `261028-uhg` Task 3 and `261029-a9s`, and starts none of its queued plans, `261029-d6u` to `261029-di1`.
+  Their commits map onto tickets before the first dispatch.
+- **Parallel lanes.** Up to three workers run at once, and each ticket gets its own git worktree and branch from the newest `main`.
+  Each lane has its own two simulators and its own DerivedData folder, so no two workers ever share a simulator.
+  Two tickets that own the same file never run at the same time, and the tickets that touch many files or run the full suite (T42-T46) run alone.
+  Phases still run in order, and a phase starts only after the previous phase's gate passes.
+  Each worker rebases onto `main` before its final runs.
+  The coordinator merges each accepted branch as a fast-forward, after another rebase and a build if `main` moved.
 - **Bug fixes.** I reproduce each bug first, with a UI test that drives the app the way a user would, and I watch it fail.
   For a visual defect, the reproduction is a screenshot test on the right phone, text size and appearance.
   Then I fix the bug, rerun the test, and keep it as a regression test.
-- **GitNexus.** I refresh the index first.
-  I run impact analysis before I edit each symbol, and report any HIGH or CRITICAL rating in my status updates.
-  I run `detect_changes(scope: staged)` before every commit.
+- **GitNexus.** The index is refreshed first, where GitNexus works.
+  Impact analysis runs before each symbol edit, and any HIGH or CRITICAL rating is reported.
+  In a worktree, `detect_changes` cannot see the staged files, so each worker saves `git diff --cached --stat` and its changed symbols before every commit, and the coordinator compares the whole run with its base before the push.
+  Where the index has no Swift symbols, as on csaechao4's Mac, workers check callers with `rg` instead, and nobody runs `gitnexus analyze`.
 - **Commits.** I stage exact paths only and never use `git add -A`, because the other terminal may be writing design files.
   Every commit builds, and its tests pass.
+  Workers commit on their own ticket branches, and only the coordinator moves `main`.
   Commits get no Co-Authored-By trailer, because your CLAUDE.md rule overrides the system reminder.
   Each message ends with the Claude-Session line.
   Nothing is pushed before Phase 8, and nothing is ever force-pushed.
-- **Simulators.** I use only my own two phones:
-  "sw6 iPhone 17e" `C2512FF6-0EC6-4044-8B18-53E451AB0899` (390pt wide) and "sw6 iPhone 17 Pro Max" `79CAC9F7-95DE-4AEB-84F6-660A8F2E36EE` (440pt wide).
-  Tests run serially with `-parallel-testing-enabled NO`.
-  I never use the personal iPhone 17 Pro or Codex's `fitbod-codex-*` devices.
+- **Simulators.** Each lane uses its own pair, "sw6-L<n> iPhone 17e" (390pt wide) and "sw6-L<n> iPhone 17 Pro Max" (440pt wide).
+  The phase gates and T42-T46 use "sw6 iPhone 17e" and "sw6 iPhone 17 Pro Max".
+  Simulator ids differ between Macs, so the run log records them, and workers pass them by id.
+  Tests run serially within each worker, with `-parallel-testing-enabled NO`.
+  No worker ever uses the personal iPhone 17 Pro or Codex's `fitbod-codex-*` devices.
 - **Code.** I follow the CLAUDE.md conventions: `@Observable` view state, `@Query` directly in views, SchemaV7 only, and BRU tokens and components.
   Every New Block edit runs all five New Block guardrail suites:
   `BlockBuilderViewCopyTests`, `NewBlockProgressionChartTests`, `NewBlockBuilderFidelityTests`, `BRUPeriodizationAuditTests` and `BRUPeriodizationRegressionTests`.
@@ -149,7 +159,7 @@ This phase covers items 22-25 and the copy additions under item 25.
   Screenshot every milestone screen, and fix anything that looks off.
 - Run `python3 docs/design-system/tokens_check.py` and `git diff --check`, and confirm there are no new build warnings.
 
-Command template (phone ids as listed under Ground rules):
+Command template (phone ids from the run log in `docs/conway-specs/run-log.md`):
 
 ```sh
 xcrun simctl ui "$SIM" content_size large   # or accessibility-extra-large
@@ -188,7 +198,8 @@ The milestone is done when all of these are true:
 - Fix commits land during Phases 1-5.
   Each one is a single change, builds, and has passing tests.
   Docs and evidence go in a final commit.
-- Run `detect_changes(scope: staged)`, then `git push origin main`.
+- Check that no ticket worktree or branch is left.
+- Compare the run with its base using `detect_changes`, or `git diff --stat` where the index has no Swift symbols, then run `git push origin main`.
   You authorized this push earlier, and approving this plan confirms it.
   CI does not run on pushes to main, so the local evidence is the record.
 - Report back in plain English: what changed, the evidence, the open flags and the roadmap.
@@ -226,11 +237,15 @@ The milestone is done when all of these are true:
 - If the design export reworks a screen heavily, the rebuild could grow large.
   I limit it to milestone screens and put the rest on the roadmap.
 - Some checks stay open flags, because a simulator cannot prove them: physical-device VoiceOver, haptics, notification permissions, and a fully offline journey.
+- Three lanes share one Mac, so UI tests can time out under load.
+  The coordinator drops to two lanes when that happens, and gates and T42-T46 run with no other worker.
+- Two tickets can pass alone and break each other once both are merged.
+  A rebase and a build before each merge, and the full suite at each phase gate, catch it.
 
 ## Appendix A - Defect checklist
 
 Items 1-25 are described in full, with fixes, in `docs/review-docs/fitbod-m1-review.md`.
-Items 26-47 exist only here, because their drafts were lost when the temporary folder was wiped.
+Phase 0 added items 26-47 to the same file, under "Second pass", so the table below is a summary.
 
 | # | P | Defect | Fix | Key files |
 |---|---|---|---|---|

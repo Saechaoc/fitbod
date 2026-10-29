@@ -1,22 +1,35 @@
 # Coordinator playbook
 
 This leaf is for the coordinator, not for workers.
-It says how to turn the tickets into Orca tasks, how to supervise each worker, and how to close the run.
+It says how to turn the tickets into Orca tasks, how to run several workers at once in their own worktrees, how to merge their work into `main`, and how to close the run.
 The Orca CLI is `/Applications/Orca.app/Contents/Resources/bin/orca`.
 Load the version-matched guide with `orca skills get orchestration` before the first command, and check each verb's `--help` before its first use.
+Every ticket gets a new worktree, so also read `orca skills get orchestration --reference references/placement-and-remote.md` before the first `worker-start`.
+
+## Terms
+
+- Main checkout: the repo's first worktree, the first line of `git worktree list`.
+  The coordinator works there, on `main`, and only the coordinator moves `main`.
+- Lane: a seat for one code worker, with its own two simulators and its own DerivedData folder.
+  The run has three lanes unless the run log says otherwise.
+- Ticket worktree: a new Orca worktree for one ticket, on its own branch from the newest `main`.
+  Its worker commits there, and the coordinator merges that branch into `main`.
+- Live ticket: a ticket that is dispatched and not yet merged, skipped or abandoned.
+- Exclusive ticket: T42, T43, T44, T45, T46, and the reruns of T44 and T45.
+  Each one touches many files or runs the full suite, so it runs with no other code worker, on the gate phones.
 
 ## Preconditions
 
 Do not dispatch anything until every line here is true, and each answer is recorded in [run-log.md](run-log.md):
 
 1. The user approved the workflow exception: workers skip GSD for this run.
+   The user approved it on 2026-10-29, together with parallel lanes in worktrees.
 2. The user chose an Orca setting for new agent tabs that lets workers build, test, edit and commit without stopping for every prompt.
    Orca has no flag for this; worker tabs follow that setting.
 3. `orca status --json` shows Orca running.
-4. `git status --porcelain` shows only the pre-existing paths listed in [worker-rules.md](worker-rules.md), plus untracked `.planning/quick/` folders from the other effort.
-   Lines for this bundle (`docs/conway-specs/`) and for `.gitignore`, which ignores its evidence, are expected.
+4. `git status --porcelain` in the main checkout shows no path except `docs/conway-specs/run-log.md` and the pre-existing paths listed in [worker-rules.md](worker-rules.md).
    Ask the user about any other path.
-5. `xcrun simctl list devices` shows both sw6 phones.
+5. `xcrun simctl list devices` shows the two gate phones, "sw6 iPhone 17e" and "sw6 iPhone 17 Pro Max".
 6. `python3 -I capacity_model.py` prints no validation errors.
    A warning that a `new:` file already exists means another effort did part of that ticket, so map it as line 7 says.
 7. No other agent, including Codex or another Claude session, is editing the working tree.
@@ -28,30 +41,70 @@ Do not dispatch anything until every line here is true, and each answer is recor
    List its commits with `git log --oneline 12aad09..HEAD` right before the first dispatch, because it was still committing when this bundle was finished.
    Every ticket it fully fixed is marked `skipped` in the run log, with its commit hashes.
 
-## Create the run
+## Set up the run
 
-Run `orca orchestration run-create --objective "Finish Milestone 1 (conway plan)" --json`, and record the run id in the run log.
-Record the run base too: the output of `git rev-parse --short HEAD`.
-T44 and Phase 8 compare against it, never against a hash from the plan or the review.
+1. Run `orca orchestration run-create --objective "Finish Milestone 1 (conway plan)" --json`, and record the run id in the run log.
+2. Record the run base: the output of `git rev-parse --short HEAD` in the main checkout.
+   T44 and Phase 8 compare against it, never against a hash from the plan or the review.
+   Also record `git rev-parse --short origin/main`, because `main` can already be ahead of it.
+3. Record the lane count: three on a Mac like csaechao4's (12 cores, 48 GB), two on a smaller one.
+   Drop to two whenever UI tests start timing out under load, and note it in the run log.
+   `capacity_model.py` shows that a fourth lane saves little.
+4. Create each lane's two phones once, on the iOS 27.0 runtime, for example `xcrun simctl create "sw6-L1 iPhone 17e" "iPhone 17e" com.apple.CoreSimulator.SimRuntime.iOS-27-0`.
+   Do the same for "iPhone 17 Pro Max", for every lane, and record each name and id in the run log.
+   Lane `n` builds into `~/Library/Developer/Xcode/DerivedData/fitbod-conway-L<n>`.
+5. The gate phones build into `~/Library/Developer/Xcode/DerivedData/fitbod-conway-gate`.
+   Gates and exclusive tickets use them, and nothing else does.
+6. Record the GitNexus mode.
+   It is `index` when `gitnexus impact BlockBuilderView --direction upstream --repo fitbod` finds the symbol, and `manual` when it does not.
+   On csaechao4's Mac it is `manual`, because GitNexus's Swift parser does not load there.
+   In `manual` mode, nobody runs `gitnexus analyze`, because it rewrites `.gitignore` and skill files.
+7. Record the worker agent flags.
+   On csaechao4's Mac, use `--agent copilot`, as the quick-task run there does; Orca takes no model or effort flag for Copilot.
+   Where Claude Code is set up, use `--agent claude --model claude-opus-5-5 --effort medium`, which the tickets were sized for.
 
-## Dispatch one ticket
+## Choose what starts next
 
-Take the lowest-numbered ticket that is not done and whose dependencies are done or skipped.
-Only one code worker runs at a time.
-T31 is the exception: it may run beside a code worker.
+Whenever a lane is free, start the lowest-numbered ticket that passes every check:
 
-1. Build the spec text: the task header below, then the full ticket file.
-2. Create the task with `orca orchestration task-create --run <run id> --task-title "<id> <title>" --spec "<spec text>" --deps '<JSON array of the Orca task ids of its dependencies>' --json`.
-3. Start the worker with `orca orchestration worker-start --task <task id> --worktree current --agent claude --model claude-opus-5-5 --effort medium --display-name "<id>" --json`.
+- Its status is `todo`, and every dependency is `done` or `skipped`.
+- Its phase is open: every ticket of each earlier phase is `done` or `skipped`, and every gate after those phases passed.
+- None of its `owns` paths, with `new:` removed, is owned by a live ticket.
+- No exclusive ticket is live.
+  An exclusive ticket also needs every other code worker to be finished, and nothing else starts while it waits for them.
+
+T31 needs no simulator and edits no repo file, so it takes no lane; start it as soon as Phase 2 opens.
+Fill every free lane before you wait again.
+The hotspot list from `capacity_model.py` shows which tickets will wait for each other's files.
+
+## Start one ticket
+
+1. Pick a free lane, or the gate phones for an exclusive ticket.
+2. Build the spec text: the task header below, then the full ticket file.
+3. Create the task with `orca orchestration task-create --run <run id> --task-title "<id> <title>" --spec "<spec text>" --deps '<JSON array of the Orca task ids of its dependencies>' --json`.
+4. Start the worker in a new worktree with `orca orchestration worker-start --task <task id> --worktree new-top-level --base-branch main --name conway-<id in lower case> <agent flags> --display-name "<id> <lane>" --json`.
    The call exits 0 only when the worker is ready.
-4. Record the task id and dispatch id in the run log.
+   `--base-branch main` matters: the local `main` holds every merged ticket, and the repo's default base may be `origin/main`, which does not until Phase 8.
+5. Check that `git -C <worktree> rev-parse HEAD` equals `git rev-parse main`.
+   If it does not, stop the worker with `orca orchestration worker-stop --dispatch <dispatch id>`, remove the worktree, and start the ticket again.
+6. Record the lane, the task id, the dispatch id, the worktree path and its branch in the run log.
+   The receipt names the worktree, and `git worktree list` shows its branch.
 
 The task header, with the brackets filled in:
 
-- Bundle: `/Users/chrissaechao/Desktop/fitbod/docs/conway-specs`.
+- Main checkout: `<absolute path>`.
+  Never edit, stage or commit there.
+- Bundle: `docs/conway-specs/` in your worktree.
+  The live run log is `<main checkout>/docs/conway-specs/run-log.md`.
 - Read `worker-rules.md` in the bundle before anything else, because it is part of this spec.
-- Your evidence folder is `evidence/<id>/` in the bundle.
-- Workflow exception: the user approved skipping GSD for this run on <date>.
+- Your evidence folder is `<main checkout>/docs/conway-specs/evidence/<id>/`.
+- Lane: <L1, L2, L3 or gate>.
+  Small phone: "<name>" `<id>`.
+  Large phone: "<name>" `<id>`.
+  DerivedData: `<path>`.
+- GitNexus mode: <index or manual>.
+- Workflow exception: the user approved skipping GSD for this run on 2026-10-29.
+- Live tickets beside you, and the files they own: <list, or "none">.
 - Shared test helpers so far: <the helper list from the run log>.
 - Notes from earlier tickets that touch your files: <any, or "none">.
 - Review items already fixed outside this run: <items with commit hashes, or "none">.
@@ -59,51 +112,73 @@ The task header, with the brackets filled in:
 ## Supervise
 
 - Wait with `orca orchestration check --wait --types "worker_done,escalation,question" --timeout-ms 900000 --json`.
+  Messages from every lane arrive in one queue; handle them in order.
 - Answer each question with `orca orchestration reply --id <message id>`.
   Answer from [decisions.md](decisions.md) and [tradeoffs.md](tradeoffs.md).
   Ask the user only about a product decision that neither file covers, and record the answer in both the run log and the right leaf.
-- After three empty waits in a row, run `orca orchestration worker-list --include-remote --json` to see whether the worker is alive.
+- Let a worker edit a file outside its `owns` list only after you check that no live ticket owns it.
+- After three empty waits in a row, run `orca orchestration worker-list --run <run id> --include-remote --json` to see whether the workers are alive.
 - If a worker is stuck or gone, load `orca skills get orchestration --reference references/recovery-and-cleanup.md` before you act.
 
 ## Accept or reject a worker_done
 
-Check all of this before you accept:
+Check all of this in the ticket worktree before you accept:
 
-1. `git log -1 --format=%H%n%B` shows a new commit that names the ticket and has no `Co-Authored-By` line.
-2. `git show --stat HEAD` lists only files from the ticket's `owns` list, their direct callers, their tests and allowed DEBUG seeds.
-   Nothing under `fitbod/Models/` or `fitbod/Persistence/` changed unless the ticket says so.
-3. `git status --porcelain` matches the worker's `status-before.txt`.
+1. `git -C <worktree> log --format=%H%n%B main..HEAD` shows the ticket's commits, which name the ticket and have no `Co-Authored-By` line.
+2. `git -C <worktree> diff --stat main...HEAD` lists only files from the ticket's `owns` list, their direct callers, their tests and allowed DEBUG seeds.
+   It lists no file that another live ticket owns, and nothing under `fitbod/Models/` or `fitbod/Persistence/` unless the ticket says so.
+3. `git -C <worktree> status --porcelain` matches the worker's `status-before.txt`.
 4. The evidence folder has every file [worker-rules.md](worker-rules.md) lists.
    Open at least one screenshot yourself.
-5. For an L ticket, or any result you doubt, rerun the repro test once on one phone.
+5. For an L ticket, or any result you doubt, rerun the repro test once on one of the ticket's phones.
 
-Then release the worker with `orca orchestration worker-release --dispatch <dispatch id>`, acknowledge the message with `orca orchestration check --ack <delivery id>`, and update the run log.
-Copy into the run log any HIGH or CRITICAL rating, removed control, new shared helper and out-of-scope finding the worker reports.
+If a check fails, follow Retry.
+Otherwise, merge.
+
+## Merge
+
+1. If `git merge-base --is-ancestor main <branch>` succeeds, the branch already sits on the newest `main`.
+   Otherwise, run `git -C <worktree> rebase main`.
+   If that stops on a conflict, run `git -C <worktree> rebase --abort`, and retry the ticket from the newest `main`.
+   If it is clean, build the app from the worktree with the ticket's large phone and DerivedData, and treat a failed build as a failed check.
+2. In the main checkout, run `git merge --ff-only <branch>`.
+   `main` never gets a merge commit.
+3. Release the worker with `orca orchestration worker-release --dispatch <dispatch id>`.
+   Release closes only the worker's terminal.
+4. Remove the worktree with `orca worktree rm --worktree path:<worktree> --json`, then delete its branch with `git branch -d <branch>` if it still exists.
+   If either one refuses, read `git -C <worktree> status` before you force anything, and ask the user when in doubt.
+5. Acknowledge the message with `orca orchestration check --ack <delivery id>`, mark the ticket `done` with its commit on `main`, and free the lane.
+6. Copy into the run log any HIGH or CRITICAL rating, removed control, new shared helper and out-of-scope finding the worker reports.
+7. Start the next tickets before you wait again.
 
 ## Retry
 
 - If the outcome is `failed`, or the commit fails your checks, retry once.
-  Use `worker-start --task <task id> --retry-of <dispatch id>` with the same placement and agent flags.
+  Use `worker-start --task <task id> --retry-of <dispatch id>`, and repeat the placement and agent flags, because a retry does not inherit them: a new worktree from the newest `main`, in the same lane.
   Add a short "What went wrong last time" note to the spec.
+- Before the retry, release the failed worker and remove its worktree.
+  Keep its branch only if it holds work worth reading, note it in the run log, and delete it in Phase 8.
 - After a second failure, split the ticket into smaller tickets or take it yourself, and say so in the run log.
 - A T46 retry continues from the first configuration that has no section in `findings.md` yet.
 
 ## Phase gates
 
-After the last ticket of each phase, run the gate before the next phase starts.
+A gate runs when every ticket of its phase is `done` or `skipped`, so no worker is live.
+The next phase opens only after the gate passes.
 
-| Gate | After |
-|---|---|
-| 1 | T17 |
-| 2 | T33 |
-| 3 | T38 |
-| 4 | T42 |
-| 5 | T43, or its skip |
+| Gate | Phase | Tickets |
+|---|---|---|
+| 1 | 1 | T01 to T17 |
+| 2 | 2 | T18 to T33 |
+| 3 | 3 | T34 to T38 |
+| 4 | 4 | T39 to T42 |
+| 5 | 5 | T43, or its skip |
 
-A gate is one full suite on the large phone at default text in light mode, plus a widget build.
+A gate is one full suite on the large gate phone at default text in light mode, plus a widget build.
+It runs on `main` in the main checkout, with the gate DerivedData.
 It passes with zero unexpected failures; the one known issue is allowed.
 Record the counts and the duration in the run log.
-If a gate fails, write a fix ticket and dispatch it before the next phase.
+If a gate fails, write a fix ticket in the same phase, dispatch it, and run the gate again.
 
 ## Design export checks
 
@@ -119,17 +194,23 @@ If a gate fails, write a fix ticket and dispatch it before the next phase.
 - Use the same front matter and sections as the existing tickets.
   Put each one in the phase where it was found, or in phase 6 for tour findings.
 - Run `python3 -I capacity_model.py` after you add tickets, and add rows to the run log.
-- After the findings are fixed, rerun T44 and T45 as new tasks before Phase 7.
+- Findings tickets follow the same lane and file rules, so several can run at once.
+- After the findings are fixed, rerun T44 and T45 as new exclusive tasks before Phase 7.
   Give each rerun its own evidence folder, such as `evidence/T44-r2/`, and record it in the run log, because T47 reads the latest one.
 
 ## Phase 8, for the coordinator only
 
-1. Run `gitnexus detect-changes --scope compare --base-ref <run base> --repo fitbod`, and check that the affected flows match the tickets.
-2. Run `git fetch origin`, then check that `origin/main` still equals the run base.
+1. Check that no ticket worktree is left: `git worktree list` shows no `conway-` worktree, and `git branch` shows no branch of this run.
+   Delete any branch you kept from a failed ticket.
+   Shut down the lane phones with `xcrun simctl shutdown <id>`, and leave deleting them to the user.
+2. Commit `docs/conway-specs/run-log.md` on `main`, staged by its exact path.
+3. In `index` mode, run `gitnexus detect-changes --scope compare --base-ref <run base> --repo fitbod`, and check that the affected flows match the tickets.
+   In `manual` mode, check `git diff --stat <run base>..main` against the tickets' `owns` lists instead.
+4. Run `git fetch origin`, then check that `origin/main` still equals the value you recorded at setup.
    If it moved, stop and ask the user, because someone else pushed during the run.
-3. Review `git log --oneline origin/main..main`.
-4. Check that no commit of this run has the trailer: `git log <run base>..main --format=%B` contains no `Co-Authored-By`.
-5. Push with `git push origin main`.
+5. Review `git log --oneline origin/main..main`.
+6. Check that no commit of this run has the trailer: `git log <run base>..main --format=%B` contains no `Co-Authored-By`.
+7. Push with `git push origin main`.
    It must be a fast-forward.
-   Never force-push, and never push `backup/main-before-build-purge-20261029`, `backup/m1-worktree-20261028` or `task/codex`, because they hold the old history with `build/`.
-6. Report to the user in plain English: what changed, the evidence, the open flags and the roadmap.
+   Never force-push, and never push a ticket branch, `backup/main-before-build-purge-20261029`, `backup/m1-worktree-20261028` or `task/codex`; the last three hold the old history with `build/`.
+8. Report to the user in plain English: what changed, the evidence, the open flags and the roadmap.

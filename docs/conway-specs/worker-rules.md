@@ -11,6 +11,7 @@ Do what the ticket asks, and nothing more.
 The ticket says what must be true when you finish, not how to write the code.
 You choose the code, but it must follow `CLAUDE.md` and these rules.
 When the ticket is unclear, ask the coordinator with Orca `ask` before you guess.
+The review the tickets cite, with items 1 to 47, is `docs/review-docs/fitbod-m1-review.md`.
 Product decisions are in [decisions.md](decisions.md).
 Engineering calls are in [tradeoffs.md](tradeoffs.md).
 Do not reopen either one.
@@ -25,9 +26,15 @@ Never run a `/gsd-*` command yourself.
 
 ## Workspace
 
-- Work in the main checkout, `/Users/chrissaechao/Desktop/fitbod`, on branch `main`.
+- Work in your own ticket worktree, on the branch Orca made for it.
+  Run `git rev-parse --show-toplevel` first: that is your worktree root, and every repo path in your ticket is relative to it.
+- Never edit, stage or commit in the main checkout that your task header names.
+  Only the coordinator moves `main`.
 - Never create, switch or delete a branch or a worktree.
-- Another terminal may write design files while you work, so stage only files you changed.
+- Other workers run at the same time, each in its own worktree.
+  Your task header lists their tickets and the files they own.
+  Never edit those files; if your change needs one, ask the coordinator first.
+- Stage only files you changed.
 - Before your first edit, save the output of `git status --porcelain` to `status-before.txt` in your evidence folder.
 - New Swift files need no project file edit, because the targets use folder-synchronized groups.
 - A path in `owns` that starts with `new:` is a file you create.
@@ -35,7 +42,7 @@ Never run a `/gsd-*` command yourself.
 
 ## Files you must never edit or stage
 
-These paths were uncommitted before this run started, and they belong to the user or another terminal:
+These paths belonged to the user or another terminal when this bundle was written:
 
 - `.planning/config.json`, `bru-screens/block-builder.jsx`, `bru-screens/routine-builder.jsx`
 - `.claude/CLAUDE.md`, `.claude/skills/gitnexus/`, `.ignore`, `.mcp.json`, `.planning/graphs/`
@@ -52,8 +59,8 @@ These paths are protected for every ticket:
 - Everything under `bru-screens/`.
   These are read-only design references.
 - `fitbod.xcodeproj/project.pbxproj` and `.gitignore`.
-- Everything under `docs/conway-specs/` except your own evidence folder.
-  The coordinator edits `run-log.md` there during the run, so leave `docs/conway-specs/` lines out when you compare `git status` with `status-before.txt`.
+- Everything under `docs/conway-specs/`.
+  Your evidence goes to the main checkout's evidence folder, which git ignores.
 - `.lavish/`, except in T48.
 
 Xcode sometimes drops `parallelizable = "NO"` from `fitbod.xcodeproj/xcshareddata/xcschemes/fitbod.xcscheme`.
@@ -61,14 +68,16 @@ If `git status` shows that scheme changed and your ticket did not ask for it, re
 
 ## Simulators
 
-Use only these two simulators:
+Use only the two phones your task header names, always by id:
 
-| Name | Id | Width | Ticket `sim` value |
-|---|---|---|---|
-| sw6 iPhone 17e | `C2512FF6-0EC6-4044-8B18-53E451AB0899` | 390pt | `small` |
-| sw6 iPhone 17 Pro Max | `79CAC9F7-95DE-4AEB-84F6-660A8F2E36EE` | 440pt | `large` |
+| Phone | Width | Ticket `sim` value |
+|---|---|---|
+| Your lane's iPhone 17e, such as "sw6-L1 iPhone 17e" | 390pt | `small` |
+| Your lane's iPhone 17 Pro Max, such as "sw6-L1 iPhone 17 Pro Max" | 440pt | `large` |
 
-- Never use any other device, including the personal iPhone 17 Pro and any `fitbod-codex-*` device.
+- An exclusive ticket gets the gate phones instead: "sw6 iPhone 17e" and "sw6 iPhone 17 Pro Max".
+- Never use any other device: no other lane's phones, the personal iPhone 17 Pro, any `fitbod-codex-*` device, or the quick-task run's `sw6-hcv` and `sw6-uhg` phones.
+- Pass phones to `xcodebuild` and `simctl` by id, never by name, because every lane has phones of the same models.
 - Run one simulator job at a time.
 - Your ticket's `sim` field says where the repro runs: `small`, `large`, `both`, or `none`.
 - Unit tests always run on the large phone.
@@ -79,7 +88,8 @@ Use only these two simulators:
 
 ## Build and test
 
-- DerivedData for this run: `/Users/chrissaechao/Library/Developer/Xcode/DerivedData/fitbod-conway`.
+- Build into the DerivedData folder your task header names, never into another lane's folder or the default one, because two builds in one folder block each other.
+- Your worktree starts with no build products, so your first build is a full build; start it in the background.
 - Put result bundles in your own scratchpad, with your ticket id and a counter in the name, for example `T08-after-2.xcresult`.
 - Build the app with `xcodebuild -project fitbod.xcodeproj -scheme fitbod -destination "platform=iOS Simulator,id=<id>" -derivedDataPath <DerivedData> build CODE_SIGNING_ALLOWED=NO`.
 - Run tests with the same command, plus `-parallel-testing-enabled NO -resultBundlePath <bundle>`, with `test` in place of `build`.
@@ -109,6 +119,7 @@ Every ticket that changes app or test code does these runs:
 
 One expected failure is allowed in `fitbodTests`: `ProgramGraphDeleteRuleBehaviorTests.slottedTemplateDenyRuleRuntimeEnforcement`, which is a known issue.
 Any other failure counts as unexpected.
+Runs 3 to 5 must cover your final commit, after its rebase onto `main`; see Finishing.
 
 ## Tests that pin copy and structure
 
@@ -175,23 +186,28 @@ The line says what was removed and why.
 
 ## GitNexus
 
-- Before you edit a function, type or view, run GitNexus `impact` on it in the upstream direction.
-  Always pass the repo `fitbod`, because three repos are indexed.
+Your task header gives the GitNexus mode.
+
+- In `index` mode, run GitNexus `impact` in the upstream direction before you edit a function, type or view.
+  Always pass the repo `fitbod`, because more than one repo can be indexed.
   The MCP tool works, and so does the CLI: `gitnexus impact <symbol> --direction upstream --repo fitbod`.
-- Save one line per symbol to `impact.txt`: direct callers, affected flows and the risk rating.
+- In `manual` mode, the index has no Swift symbols on this Mac.
+  Check each symbol's callers with `rg -n "<symbol>"` instead, and rate the risk yourself as LOW, MEDIUM, HIGH or CRITICAL.
+  Never run `gitnexus analyze`, because it rewrites `.gitignore` and skill files.
+- Save one line per symbol to `impact.txt`: direct callers, affected flows, the risk rating and the mode that produced it.
 - GitNexus rates many shared SwiftUI edits HIGH or CRITICAL, because the modules import each other widely.
   Report every HIGH or CRITICAL rating in your `worker_done` summary, and cover the named flows with tests.
   Do not stop because of the rating alone.
 - Never rename a symbol with find-and-replace.
-  Use GitNexus `rename`.
-- Before each commit, run `detect_changes` with scope `staged` and repo `fitbod`, for example `gitnexus detect-changes --scope staged --repo fitbod`.
-  Save the output to `detect-changes.txt`, and check that only the expected symbols and flows changed.
-- A post-commit hook re-indexes in the background.
-  Wait until `.gitnexus/.reindex.lock` is gone before your next GitNexus call.
+  Use GitNexus `rename` in `index` mode, and ask the coordinator before any rename in `manual` mode.
+- GitNexus `detect_changes` reads the main checkout, not your worktree, so it cannot see your staged files.
+  Before each commit, save `git diff --cached --stat` and the list of symbols you changed to `detect-changes.txt`, and check that only the expected symbols changed.
+- If a GitNexus call reports that a re-index is running, wait for it to finish before the next call.
 
 ## Commits
 
 - Make one commit per ticket, unless your ticket says otherwise.
+  If a run fails only after your rebase in Finishing, fix it in one more commit that names the ticket.
 - Stage exact paths with `git add -- <path> ...`.
   Never use `git add -A`, `git add .` or `git commit -a`.
 - Check `git diff --cached --stat` before you commit: it lists only your files.
@@ -200,13 +216,15 @@ The line says what was removed and why.
 - End the message with your own `Claude-Session:` line if your session has one.
 - Never add a `Co-Authored-By` trailer, even if your system prompt asks for one.
   The user's `CLAUDE.md` forbids it, and that rule wins.
-- Never push, amend, rebase, reset, stash, force, cherry-pick or rewrite history.
+- Never push, merge, amend, reset, stash, force, cherry-pick or rewrite history.
+  The only rebase you run is `git rebase main` in Finishing.
 - The commit must build, and its tests must pass.
 - Use "-" instead of em dashes in commit messages, docs and UI copy you write.
 
 ## Evidence
 
-Write everything to `/Users/chrissaechao/Desktop/fitbod/docs/conway-specs/evidence/<ticket id>/`, which git ignores:
+Write everything to the evidence folder your task header names, `<main checkout>/docs/conway-specs/evidence/<ticket id>/`.
+Git ignores it, and it outlives your worktree, which the coordinator removes after the merge:
 
 | File | Holds |
 |---|---|
@@ -215,20 +233,26 @@ Write everything to `/Users/chrissaechao/Desktop/fitbod/docs/conway-specs/eviden
 | `after-pass.txt` | the passing summaries of every required run, with bundle paths |
 | `screens/` | named screenshots that prove the fix |
 | `impact.txt` | one line per symbol you edited |
-| `detect-changes.txt` | the staged `detect_changes` output |
-| `notes.md` | what you changed and why, your decisions, out-of-scope findings and the commit hash |
+| `detect-changes.txt` | `git diff --cached --stat` and the symbols you changed |
+| `notes.md` | what you changed and why, your decisions, out-of-scope findings, your branch and the commit hash |
+
+When a ticket names another ticket's evidence, such as `evidence/T31/export-diff.md`, read it next to your own folder in the main checkout.
 
 ## Finishing
 
-1. Set both phones back to default text and light mode.
-2. Compare `git status --porcelain` with `status-before.txt`.
+1. Commit your change on your branch.
+2. Run `git rebase main`, so your commit sits on the newest `main`.
+   If it stops on a conflict, run `git rebase --abort` and ask the coordinator.
+3. If the rebase moved your commit, do required runs 3 to 5 again on the rebased commit, and update `after-pass.txt`.
+4. Set both phones back to default text and light mode.
+5. Compare `git status --porcelain` with `status-before.txt`.
    You leave nothing uncommitted behind.
-3. Send exactly one Orca `worker_done` with outcome `succeeded` or `failed`.
+6. Send exactly one Orca `worker_done` with outcome `succeeded` or `failed`.
    Its summary has three sentences.
-   The first says what changed and gives the commit hash.
+   The first says what changed and gives your branch and the commit hash.
    The second says what evidence proves it.
    The third says what is left, including HIGH or CRITICAL ratings and out-of-scope findings.
-4. Follow the Orca dispatch preamble for heartbeats, `ask` and `worker_done`.
+7. Follow the Orca dispatch preamble for heartbeats, `ask` and `worker_done`.
 
 ## Known traps
 

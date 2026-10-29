@@ -2,11 +2,11 @@
 
 Milestone 1 of Fitbod still has 47 open review defects and one new finding, and it has not been verified on both phones at AX3 and in dark mode.
 This bundle turns the approved plan (`.planning/noble-wishing-conway.md`) into 48 code-free tickets.
-A coordinator dispatches them one at a time to Opus 5.5 medium Orca workers in the main checkout.
+A coordinator runs them on up to three Orca workers at once, each ticket in its own git worktree, and merges each ticket into `main` after review.
 
 Status: ready to dispatch once every precondition in [dispatch.md](dispatch.md) holds.
 Nothing from this bundle has been dispatched.
-Another session is running the same plan, so read "Another session runs the same plan" in [risks.md](risks.md) first.
+The quick-task run of the same plan must finish its last two tasks first, so read "Another session runs the same plan" in [risks.md](risks.md) first.
 
 | Read this file | When you need |
 |---|---|
@@ -16,9 +16,9 @@ Another session is running the same plan, so read "Another session runs the same
 | [tradeoffs.md](tradeoffs.md) | engineering calls, with the options rejected |
 | [risks.md](risks.md) | failure modes and mitigations |
 | [worker-rules.md](worker-rules.md) | the rules every worker follows; part of every ticket |
-| [dispatch.md](dispatch.md) | the coordinator playbook, gates and Phase 8 |
-| [run-log.md](run-log.md) | approvals, the ticket ledger, gates and findings |
-| [capacity_model.py](capacity_model.py) | run it with `python3 -I` to validate the tickets and estimate time |
+| [dispatch.md](dispatch.md) | the coordinator playbook: lanes, worktrees, merging, gates and Phase 8 |
+| [run-log.md](run-log.md) | approvals, lanes, the ticket ledger, gates and findings |
+| [capacity_model.py](capacity_model.py) | run it with `python3 -I` to validate the tickets and estimate time for one to four lanes |
 | [changelog.md](changelog.md) | what changed in this bundle and why |
 | `tickets/` | one ticket per file, listed below |
 | `evidence/` | one folder per ticket, written by workers; git ignores it |

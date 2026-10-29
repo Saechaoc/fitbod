@@ -5,9 +5,10 @@ The coordinator re-checks the first group before the first dispatch.
 
 ## Repository state
 
-- The repo is `/Users/chrissaechao/Desktop/fitbod`, on branch `main`.
+- The bundle was written on another Mac, where the repo is `/Users/chrissaechao/Desktop/fitbod`.
+  The run now happens on csaechao4's Mac, where the main checkout is `/Users/csaechao4/orca/fitbod`, on branch `main`.
   When this bundle was finished at 10:36, `main` was at `e74c810`, four commits from the other effort after `12aad09`.
-- `origin/main` is still `12aad09`, so those four commits are not pushed yet.
+- At 15:26, `main` was at `a520c26` and `origin/main` at `c64dd8c`, so four docs commits were not pushed yet.
 - Phase 0 of the plan is done: the backup branch `backup/m1-worktree-20261028` exists, the seven commit groups are committed, and GitNexus was refreshed.
 - On 2026-10-29 another session rewrote the unpushed history to drop the tracked `build/` folder (5,358 files), then pushed `main`.
   `/build/` is now in `.gitignore`, and git tracks no file under `build/`.
@@ -15,7 +16,8 @@ The coordinator re-checks the first group before the first dispatch.
   `docs/review-docs/history-rewrite-20261029-commit-map.txt` maps each old hash to its new one, so old `4e43f88` is new `df108b0`.
 - The old history survives only on the local branches `backup/main-before-build-purge-20261029`, `backup/m1-worktree-20261028` and `task/codex`.
   None of them may ever be pushed.
-- The paths listed under "Files you must never edit or stage" in [worker-rules.md](worker-rules.md) were uncommitted before this run.
+- The paths listed under "Files you must never edit or stage" in [worker-rules.md](worker-rules.md) were uncommitted on the other Mac before this run.
+  On csaechao4's Mac, `git status` in the main checkout showed no uncommitted path apart from this bundle's own edits.
 - No app source changed between the Oct 5 review and Phase 0, so review items 1 to 47 still apply.
   Line numbers in the review refer to the Oct 5 snapshot.
 
@@ -28,10 +30,16 @@ The coordinator re-checks the first group before the first dispatch.
 
 ## Tools and devices
 
-- Xcode 26.5 (17F42) on an Apple M4 with 10 cores and 32 GB of memory.
+- The bundle was written beside Xcode 26.5 (17F42) on an Apple M4 with 10 cores and 32 GB of memory.
+- csaechao4's Mac has Xcode 27.1 (27A9275) on an Apple M4 Pro with 12 cores and 48 GB of memory, which carries three lanes.
 - The Orca CLI is `/Applications/Orca.app/Contents/Resources/bin/orca`.
-- The GitNexus CLI is the global `gitnexus` binary, and the index holds three repos, so every call passes `--repo fitbod`.
-- The two simulators in [worker-rules.md](worker-rules.md) exist and are reserved for this run.
+- On the other Mac, the GitNexus CLI is the global `gitnexus` binary, and the index holds three repos, so every call passes `--repo fitbod`.
+- On csaechao4's Mac, GitNexus's Swift parser does not load, so the index has no Swift symbols, and the run uses `manual` mode.
+  Running `gitnexus analyze` there rewrites `.gitignore` and skill files.
+- On csaechao4's Mac, the gate phones "sw6 iPhone 17e" (`FF89B400-1160-4818-8436-314B014D2614`) and "sw6 iPhone 17 Pro Max" (`69E32D56-148D-40A7-9D1B-543F6878B1D1`) use the iOS 27.0 runtime.
+  New phones need that runtime too, because creating them on iOS 27.1 failed there.
+  Simulator ids differ between Macs, so the run log records each lane's ids.
+- Orca's `worker-start --worktree new-top-level` gives each worker a new git worktree, and `worker-release` closes only the worker's terminal, so the coordinator removes worktrees itself.
 - The app and test targets use folder-synchronized groups, so new files need no project file edit.
 
 ## Code facts the tickets rely on

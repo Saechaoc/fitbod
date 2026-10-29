@@ -2,6 +2,22 @@
 
 Newest first.
 
+## 2026-10-29: parallel lanes in worktrees
+
+- What: up to three workers now run at once, each ticket in its own Orca worktree and branch from the newest `main`, with each lane's own simulators and DerivedData.
+- Why: the user asked for several agents in parallel and worktrees, and the serial run took about 107 hours against a 29-hour critical path.
+- What: [dispatch.md](dispatch.md) gains terms, run setup, start rules, a merge step and worktree cleanup.
+  A ticket waits while a live ticket owns one of its files, T42 to T46 run alone, and phases still wait for their gates.
+- What: the coordinator merges each accepted branch with `git merge --ff-only`, after a rebase and a build when `main` moved.
+- What: [worker-rules.md](worker-rules.md) now covers the worktree, the lane's phones by id, one `git rebase main` before the final runs, and evidence in the main checkout.
+  It drops the last paths and simulator ids from the other Mac.
+- What: GitNexus has an `index` and a `manual` mode, because the index on csaechao4's Mac has no Swift symbols, and `detect_changes` cannot see a worktree's staged files in either mode.
+- What: `capacity_model.py` simulates one to four lanes; it estimates about 64 hours with three lanes and shows little gain from a fourth.
+- What: [tradeoffs.md](tradeoffs.md) replaces the serial call, [risks.md](risks.md) gains three parallel risks, and [assumptions.md](assumptions.md) records csaechao4's Mac.
+- What: the run log records the two approvals, the lanes, and two more ledger columns.
+  T07 is skipped, because `c0f6773` and `2f6a955` fixed both of its items, and T25 and T33 note the other effort's work.
+- Why: the user chose to let the quick-task run finish its two live tasks and then continue with this bundle.
+
 ## 2026-10-29: review docs in the repo, and every worktree checked
 
 - What: the bundle now points at `docs/review-docs/fitbod-m1-review.md` and `docs/review-docs/history-rewrite-20261029-commit-map.txt`, which `dd42060` added to the repo.

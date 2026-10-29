@@ -1,5 +1,5 @@
 # capacity_model.py - run: python3 -I capacity_model.py
-# Checks the ticket bundle, then estimates how long a serial run takes.
+# Checks the ticket bundle, then estimates how long the run takes with one to four parallel lanes.
 # Edit only the inputs. Keep them in sync with dispatch.md and assumptions.md.
 # Standard library only, so isolated mode (-I) is safe.
 
@@ -19,8 +19,13 @@ GATE_MIN = 20  # full suite on the large phone (about 16 min at Phase 0) plus a 
 FINDINGS_TICKETS_GUESS = 6  # new tickets from Phase 6, each size M
 RERUN_TICKETS = ["T44", "T45"]  # rerun after the findings are fixed (dispatch.md)
 PHASE8_MIN = 20
-PARALLEL_OK = {"T31"}  # may run beside a code worker, so it adds no serial time
+PARALLEL_OK = {"T31"}  # takes no lane and runs beside the code workers, so it adds no serial time
 CONDITIONAL = {"T43"}  # skipped when no newer design export exists
+LANES = 3  # code workers at once, each ticket in its own worktree (dispatch.md)
+LANE_OPTIONS = (1, 2, 3, 4)  # lane counts the estimate compares
+SLOWDOWN = {1: 1.0, 2: 1.1, 3: 1.2, 4: 1.35}  # guess: workers share the Mac's cores, so each runs slower
+MERGE_MIN = 8  # coordinator rebase, build and fast-forward when main moved; parallel runs only
+EXCLUSIVE = {"T42", "T43", "T44", "T45", "T46"}  # run with no other code worker (dispatch.md)
 REVIEW_ITEMS = [str(n) for n in range(1, 48)] + ["N1"]
 HOTSPOT_MIN_OWNERS = 3
 
@@ -224,6 +229,13 @@ for f, rel in bundle_files({".md", ".py"}):
         if title not in headings[leaf]:
             errors.append(f"{rel}: no entry \"{title}\" in {leaf}.md")
 
+for name, group in (("PARALLEL_OK", PARALLEL_OK), ("CONDITIONAL", CONDITIONAL), ("EXCLUSIVE", EXCLUSIVE),
+                    ("GATE_AFTER", set(GATE_AFTER)), ("RERUN_TICKETS", set(RERUN_TICKETS))):
+    for tid in sorted(group - set(tickets)):
+        errors.append(f"capacity_model.py: {name} names {tid}, which has no ticket")
+if LANES not in LANE_OPTIONS or any(n not in SLOWDOWN for n in LANE_OPTIONS):
+    errors.append("capacity_model.py: LANES must be in LANE_OPTIONS, and each option needs a SLOWDOWN")
+
 # ---- Report validation ---------------------------------------------------------
 
 for w in warnings:
@@ -241,11 +253,110 @@ def worker_min(tid):
     return RUN_MINUTES.get(tid, SIZE_MINUTES[tickets[tid]["size"]])
 
 
+def work_min(minutes):
+    """Worker minutes plus the expected cost of retries."""
+    return minutes * (1 + RETRY_RATE * RETRY_COST)
+
+
 def ticket_min(tid):
-    return worker_min(tid) * (1 + RETRY_RATE * RETRY_COST) + COORDINATOR_REVIEW_MIN
+    return work_min(worker_min(tid)) + COORDINATOR_REVIEW_MIN
 
 
-print("Order (one code worker at a time; T31 may run beside one):")
+def plan_jobs(lanes, skip=frozenset(), gates=True):
+    """Returns the whole run as jobs: name -> worker minutes, coordinator minutes, deps,
+    owned files, lane use and run-alone flag.
+    Adds the guessed findings tickets, the T44 and T45 reruns and Phase 8.
+    With gates, each phase ends in a barrier that the next phase waits for; it is the phase gate
+    when the phase has one. A skipped ticket takes no time, and its gate goes too."""
+    jobs = {}
+    review = COORDINATOR_REVIEW_MIN + (MERGE_MIN if lanes > 1 else 0)
+
+    def add(name, work, fixed, deps, owns=(), lane=True, alone=False):
+        jobs[name] = {"work": work, "fixed": fixed, "deps": list(deps), "owns": set(owns),
+                      "lane": lane, "alone": alone}
+
+    phases = sorted({tickets[t]["phase"] for t in ids})
+    members = {p: [t for t in ids if tickets[t]["phase"] == p] for p in phases}
+    for tid in ids:
+        t = tickets[tid]
+        deps = list(t["depends_on"])
+        if gates and t["phase"] != phases[0]:
+            deps.append(f"end of phase {phases[phases.index(t['phase']) - 1]}")
+        owns = (p.removeprefix("new:") for p in t["owns"])
+        if tid in skip:
+            add(tid, 0, 0, deps, lane=False)
+        elif tid in PARALLEL_OK:
+            add(tid, 0, ticket_min(tid), deps, owns, lane=False)
+        else:
+            add(tid, work_min(worker_min(tid)), review, deps, owns, alone=tid in EXCLUSIVE)
+    findings_phase = tickets["T46"]["phase"]
+    findings = [f"finding {n + 1}" for n in range(FINDINGS_TICKETS_GUESS)]
+    for name in findings:  # unknown files, so the model lets them run side by side
+        add(name, work_min(SIZE_MINUTES["M"]), review, ["T46"])
+    previous = findings
+    for tid in RERUN_TICKETS:
+        add(f"{tid} rerun", work_min(worker_min(tid)), review, previous, alone=True)
+        previous = [f"{tid} rerun"]
+    members[findings_phase] += findings + previous
+    gate_phases = {tickets[t]["phase"] for t in GATE_AFTER if t not in skip}
+    if gates:
+        for p in phases:
+            gate = p in gate_phases
+            add(f"end of phase {p}", 0, GATE_MIN if gate else 0, members[p], lane=False, alone=gate)
+    else:
+        jobs["T47"]["deps"] += previous
+    add("Phase 8", 0, PHASE8_MIN, list(jobs), lane=False, alone=True)
+    return jobs
+
+
+def simulate(jobs, lanes):
+    """List-schedules the jobs on `lanes` workers, the way dispatch.md starts tickets.
+    A job starts when its deps are done, a lane is free, no running job owns one of its files,
+    and no job that runs alone is running. Earlier jobs go first, and a ready job that must run
+    alone stops later jobs from starting until it has started.
+    Worker minutes stretch by SLOWDOWN for the number of workers working at that moment;
+    coordinator minutes, gates and Phase 8 do not stretch.
+    Returns (finish minute, busy lane minutes, start minute per job, end minute per job)."""
+    pending, left, start, end = list(jobs), {}, {}, {}
+    now = 0.0
+    while pending or left:
+        hold = False
+        for name in list(pending):
+            job = jobs[name]
+            if not all(d in end for d in job["deps"]):
+                continue
+            if job["alone"] and left:
+                hold = True
+                continue
+            if (hold or any(jobs[r]["alone"] for r in left)
+                    or (job["lane"] and sum(jobs[r]["lane"] for r in left) >= lanes)
+                    or any(job["owns"] & jobs[r]["owns"] for r in left)):
+                continue
+            left[name] = [job["work"], job["fixed"]]
+            start[name] = now
+            pending.remove(name)
+        if not left:
+            raise RuntimeError(f"the schedule is stuck; waiting: {', '.join(pending[:5])}")
+        stretch = SLOWDOWN[max(1, sum(1 for w, _ in left.values() if w > 0))]
+        step = min(w * stretch if w > 0 else f for w, f in left.values())
+        now += step
+        for name in list(left):
+            w, f = left[name]
+            if w > 0:
+                w = 0.0 if w - step / stretch < 1e-6 else w - step / stretch
+            else:
+                f -= step
+            if w == 0.0 and f < 1e-6:
+                end[name] = now
+                del left[name]
+            else:
+                left[name] = [w, f]
+    busy = sum(end[j] - start[j] for j in jobs if jobs[j]["lane"])
+    return now, busy, start, end
+
+
+print(f"Order (lowest id first; up to {LANES} code workers at once, each ticket in its own worktree;"
+      " T31 runs beside them):")
 for phase in sorted({tickets[t]["phase"] for t in ids}):
     row = [t for t in ids if tickets[t]["phase"] == phase]
     gates = [f"gate {GATE_AFTER.index(t) + 1}" for t in row if t in GATE_AFTER]
@@ -280,7 +391,38 @@ chain = [max(finish, key=finish.get)]
 while tickets[chain[-1]]["depends_on"]:
     chain.append(max(tickets[chain[-1]]["depends_on"], key=finish.get))
 print(f"\nDependency critical path: {' -> '.join(reversed(chain))}")
-print(f"  {finish[chain[0]] / 60:.1f} h, a lower bound that only parallel workers could reach")
+print(f"  {finish[chain[0]] / 60:.1f} h, a lower bound for any number of lanes")
+
+print("\nParallel lanes: lowest id first, no two live tickets share an owned file, phases wait")
+print(f"for their gates, and {', '.join(sorted(EXCLUSIVE))} and the reruns run alone (dispatch.md).")
+print("Worker minutes stretch by SLOWDOWN, a guess for workers sharing the Mac's cores at once.")
+for n in LANE_OPTIONS:
+    stop, busy, _, _ = simulate(plan_jobs(n), n)
+    mark = "  <- the default in dispatch.md" if n == LANES else ""
+    print(f"  {n} lane{'s' if n > 1 else ' '}: {stop / 60:5.1f} h, lanes busy {busy / (n * stop):4.0%}{mark}")
+stop_skip, _, _, _ = simulate(plan_jobs(LANES, skip=CONDITIONAL), LANES)
+stop_free, _, _, _ = simulate(plan_jobs(LANES, gates=False), LANES)
+print(f"  At {LANES} lanes: {stop_skip / 60:.1f} h if {', '.join(sorted(CONDITIONAL))} is skipped, "
+      f"or {stop_free / 60:.1f} h without phase gates, which the run keeps (tradeoffs.md)")
+
+jobs = plan_jobs(LANES)
+stop, _, start, end = simulate(jobs, LANES)
+print(f"\nPhase windows at {LANES} lanes, in hours from the first dispatch:")
+for phase in sorted({tickets[t]["phase"] for t in ids}):
+    names = [t for t in ids if tickets[t]["phase"] == phase]
+    if phase == tickets["T46"]["phase"]:
+        names += [j for j in jobs if j.startswith("finding ") or j.endswith(" rerun")]
+    edges = sorted([(start[j], 1) for j in names if jobs[j]["lane"]]
+                   + [(end[j], -1) for j in names if jobs[j]["lane"]])
+    width = live = 0
+    for _, step in edges:
+        live += step
+        width = max(width, live)
+    barrier = f"end of phase {phase}"
+    gate = f", then a {GATE_MIN}-minute gate" if jobs[barrier]["fixed"] else ""
+    print(f"  Phase {phase}: {min(start[j] for j in names) / 60:5.1f} to {end[barrier] / 60:5.1f} h, "
+          f"up to {width} at once{gate}")
+print(f"  Phase 8: {start['Phase 8'] / 60:5.1f} to {stop / 60:5.1f} h")
 
 sim_min = sum(worker_min(t) for t in ids if tickets[t]["sim"] != "none")
 print(f"\nSimulator-bound worker time: {sim_min / 60:.1f} h of {sum(map(worker_min, ids)) / 60:.1f} h")
