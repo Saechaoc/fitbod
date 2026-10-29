@@ -3,3 +3,6 @@ fitbod.xcodeproj/xcuserdata/
 # CI output from scripts/ci/ios-ci.sh
 .ci/
 __pycache__/
+
+# Xcode build output
+/build/
