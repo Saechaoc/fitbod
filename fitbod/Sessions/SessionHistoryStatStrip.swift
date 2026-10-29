@@ -1,15 +1,19 @@
 // SessionHistoryStatStrip.swift
-// fitbod — Phase 2.1 Plan 10
+// fitbod
 //
-// NEW — 3-cell BRUReadout stat strip for SessionHistoryView.
-// UI-SPEC v2 § Session history view (line 448-450) + § Component Inventory (line 591).
+// 3-cell stat strip at the top of SessionHistoryView.
 //
 // Layout:
 //   ┌──────────────┬──────────────┬──────────────┐
-//   │Sessions · 30d│   Tonnage    │  Adherence   │
-//   │     14       │   71.2k ↑   │    93%       │
+//   │ Sessions     │ Tonnage · lb │ Per week     │
+//   │ 14           │ 71.2k        │ 3.5          │
+//   │ 30 days      │ 30 days      │ 4-week avg   │
 //   └──────────────┴──────────────┴──────────────┘
-//   1pt bruHair vertical separators between cells
+//   1pt bruHair vertical separators between cells. Tonnage covers the
+//   same 30 days as the session count. "Per week" averages the last
+//   4 weeks. The period sits in each cell's caption so every label fits
+//   on one line, even on a 390pt-wide phone; if large text still wraps a
+//   label, the cells bottom-align so the values stay level.
 //
 // BRU contract: NO Capsule() / NO RoundedRectangle / NO accentColor /
 //               NO Image(systemName:) / NO Color(.system*) /
@@ -19,47 +23,63 @@ import SwiftUI
 
 // MARK: - SessionHistoryStatStrip
 
-/// 3-cell stat strip at the top of SessionHistoryView.
-///
-/// - sessions: Count of completed sessions in the last 30 days.
-/// - tonnageLabel: Formatted total tonnage string (e.g. "71.2k"). Rendered in bruSignal.
-/// - adherence: Adherence percentage (0–100).
 public struct SessionHistoryStatStrip: View {
     private let sessions: Int
     private let tonnageLabel: String
-    private let adherence: Int
+    private let perWeekLabel: String
+    private let unit: WeightUnit
 
-    public init(sessions: Int, tonnageLabel: String, adherence: Int) {
+    /// - Parameters:
+    ///   - sessions: Finished sessions in the last 30 days.
+    ///   - tonnageLabel: Their total tonnage, formatted (e.g. "71.2k").
+    ///   - perWeekLabel: Average sessions per week over 4 weeks (e.g. "3.5").
+    ///   - unit: The weight unit the tonnage is in.
+    public init(sessions: Int, tonnageLabel: String, perWeekLabel: String, unit: WeightUnit) {
         self.sessions = sessions
         self.tonnageLabel = tonnageLabel
-        self.adherence = adherence
+        self.perWeekLabel = perWeekLabel
+        self.unit = unit
     }
 
     public var body: some View {
         HStack(spacing: 0) {
-            // Sessions · 30d
-            BRUReadout(label: "Sessions · 30d", value: "\(sessions)")
-                .padding(.horizontal, 16)
-                .padding(.vertical, 12)
-                .frame(maxWidth: .infinity, alignment: .leading)
+            cell(BRUReadout(
+                label: "Sessions",
+                value: "\(sessions)",
+                caption: "30 days",
+                accessibilityLabel: "Sessions in the last 30 days"
+            ))
 
             Rectangle().fill(Color.bruHair).frame(width: 1)
 
-            // Tonnage — bruSignal value per UI-SPEC line 449
-            BRUReadout(label: "Tonnage", value: tonnageLabel, valueColor: .bruSignal)
-                .padding(.horizontal, 16)
-                .padding(.vertical, 12)
-                .frame(maxWidth: .infinity, alignment: .leading)
+            cell(BRUReadout(
+                label: "Tonnage · \(unit.rawValue)",
+                value: tonnageLabel,
+                valueColor: .bruSignal,
+                caption: "30 days",
+                accessibilityLabel: "Tonnage in the last 30 days, \(unit == .kg ? "kilograms" : "pounds")"
+            ))
 
             Rectangle().fill(Color.bruHair).frame(width: 1)
 
-            // Adherence
-            BRUReadout(label: "Adherence", value: "\(adherence)%")
-                .padding(.horizontal, 16)
-                .padding(.vertical, 12)
-                .frame(maxWidth: .infinity, alignment: .leading)
+            cell(BRUReadout(
+                label: "Per week",
+                value: perWeekLabel,
+                caption: "4-week avg",
+                accessibilityLabel: "Sessions per week, last 4 weeks"
+            ))
         }
+        .fixedSize(horizontal: false, vertical: true)
         .background(Color.bruPaper)
+    }
+
+    /// Equal-width cell. Bottom alignment keeps the values level when
+    /// large text wraps one label onto two lines.
+    private func cell(_ readout: BRUReadout) -> some View {
+        readout
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomLeading)
     }
 }
 
@@ -68,7 +88,7 @@ public struct SessionHistoryStatStrip: View {
 #if DEBUG
 #Preview("SessionHistoryStatStrip") {
     VStack(spacing: 0) {
-        SessionHistoryStatStrip(sessions: 14, tonnageLabel: "71.2k", adherence: 93)
+        SessionHistoryStatStrip(sessions: 14, tonnageLabel: "71.2k", perWeekLabel: "3.5", unit: .lb)
         BRUDivider(.ink)
     }
     .background(Color.bruPaper)

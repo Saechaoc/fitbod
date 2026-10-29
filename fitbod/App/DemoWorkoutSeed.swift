@@ -8,11 +8,11 @@
 //    xcrun simctl launch <device> bodybuilding.fitbod -fitbod-seed-demo-workout
 //
 //  It creates a "Push A" session template from real catalog exercises,
-//  logs one finished Push A three days ago (so the PREVIOUS column and
-//  summary PRs have history), and starts today's Push A through
-//  SessionFactory.start, exactly like the Today CTA would. Today then
-//  shows the Resume slab. Idempotent: does nothing when a "Push A"
-//  template already exists. Compiled out of release builds.
+//  logs one finished Push A earlier this week (so the PREVIOUS column,
+//  summary PRs and Today's weekly volume have history), and starts
+//  today's Push A through SessionFactory.start, exactly like the Today
+//  CTA would. Today then shows the Resume slab. Idempotent: does nothing
+//  when a "Push A" template already exists. Compiled out of release builds.
 //
 
 import Foundation
@@ -68,23 +68,35 @@ enum DemoWorkoutSeed {
         }
         try? context.save()
 
-        // A finished Push A three days ago: every working set done at the
-        // bottom of the rep range.
-        let threeDaysAgo = Date.now.addingTimeInterval(-3 * 24 * 3600)
-        if let prior = try? SessionFactory.start(template: template, on: threeDaysAgo, context: context) {
+        // A finished Push A: every working set done at the bottom of the
+        // rep range. Weekly volume counts sessions by start date, so it
+        // starts three days ago, or at the start of the week when the week
+        // is younger than that; otherwise Today's volume would be empty on
+        // the first days of every week. Just after midnight on the first
+        // day there is no room before today's workout, so it falls back to
+        // last week.
+        let now = Date.now
+        let weekStartsMonday = (try? context.fetch(FetchDescriptor<UserSettings>()))?
+            .first?.weekStartsMonday ?? true
+        let weekStart = now.mondayAtMidnightForToday(weekStartsMonday: weekStartsMonday)
+        let priorStart = min(
+            max(now.addingTimeInterval(-3 * 24 * 3600), weekStart),
+            now.addingTimeInterval(-70 * 60)
+        )
+        if let prior = try? SessionFactory.start(template: template, on: priorStart, context: context) {
             for se in prior.exercises ?? [] {
                 for set in se.sets ?? [] where !set.isWarmup {
                     set.weight = priorWeights[se.exercise?.id ?? UUID()] ?? 20
                     set.reps = se.targetRepsLow
                     set.rpe = 8
                     set.isComplete = true
-                    set.completedAt = threeDaysAgo.addingTimeInterval(Double(set.orderIndex) * 180)
+                    set.completedAt = priorStart.addingTimeInterval(Double(set.orderIndex) * 180)
                 }
                 for warmup in (se.sets ?? []) where warmup.isWarmup {
                     warmup.isComplete = true
                 }
             }
-            prior.completedAt = threeDaysAgo.addingTimeInterval(55 * 60)
+            prior.completedAt = priorStart.addingTimeInterval(55 * 60)
             prior.totalDurationSeconds = 55 * 60
             try? context.save()
         }

@@ -70,13 +70,16 @@ struct FatigueSurfaceViewBRUTests {
 
     // MARK: - Test 1: Compose contract — verbatim BRU copy strings present
 
-    @Test("FatigueSurfaceView contains verbatim summary slab caption WORKING SETS · 7 DAYS")
+    @Test("FatigueSurfaceView summary slab caption names the calendar week it counts")
     func summaryCaptionPresent() throws {
         let source = try sourceContents()
+        // volume.jsx line 26 says "7 DAYS", but the total runs from the
+        // start of the calendar week, so the caption says THIS WEEK.
         #expect(
-            source.contains("WORKING SETS · 7 DAYS"),
-            "Summary slab must contain verbatim caption 'WORKING SETS · 7 DAYS' per volume.jsx line 26"
+            source.contains("WORKING SETS · THIS WEEK"),
+            "Summary slab must contain the caption 'WORKING SETS · THIS WEEK'"
         )
+        #expect(!source.contains("WORKING SETS · 7 DAYS"))
     }
 
     @Test("FatigueSurfaceView contains BRUSectionHead Volume This Week verbatim")

@@ -92,6 +92,16 @@ public struct SettingsView: View {
                             volumeTargetsSection(settings: settings)
                             exportSection
                             backupSection
+                            #if DEBUG
+                            BRUSectionHead("Developer")
+                            NavigationLink {
+                                BRUComponentGallery()
+                            } label: {
+                                BRURowLabel(label: "Component gallery", value: "Live examples")
+                            }
+                            .buttonStyle(.plain)
+                            .accessibilityIdentifier("settings.componentGallery")
+                            #endif
                         }
                     }
                 } else {
@@ -185,7 +195,7 @@ public struct SettingsView: View {
 
         BRUSectionHead("Units & Calibration")
 
-        // Weight unit. Display only: history stays in its canonical unit.
+        // Weight unit labels only; existing numeric loads are not converted.
         HStack(spacing: 12) {
             Text("Units")
                 .font(BRUFont.bodyEmphasis)
@@ -210,13 +220,14 @@ public struct SettingsView: View {
         .buttonStyle(.plain)
         BRUDivider(.hair)
 
-        // Stored in kilograms, so the value always reads in kg.
+        // Weights are stored as entered and never converted, so the
+        // increment is in the lifter's unit despite the property name.
         BRUStepper(
             "Default increment",
             value: $s.defaultIncrementKg,
             in: 0.25...10.0,
             step: 0.25
-        ) { String(format: "%g kg", $0) }
+        ) { String(format: "%g", $0) + " " + settings.weightUnit.rawValue }
         .padding(.horizontal, 16)
         .padding(.vertical, 8)
         .background(Color.bruPaper)
@@ -234,7 +245,7 @@ public struct SettingsView: View {
         BRUDivider(.ink)
 
         VStack(alignment: .leading, spacing: 6) {
-            Text("Units affect display only. Logged history is stored in a canonical unit and re-rendered on the fly.")
+            Text("Units change weight labels, not saved numbers. Existing loads are not converted. An exercise’s unit override takes priority.")
             Text("The default increment is used when an exercise has no increment of its own. Every progression strategy rounds to it.")
             Text("RPE autoregulation uses the Tuchscherer table until this many working sets are logged for an exercise.")
         }
@@ -351,7 +362,7 @@ public struct SettingsView: View {
                 .font(BRUFont.labelMicro)
                 .tracking(1.0)
                 .textCase(.uppercase)
-                .foregroundStyle(Color.bruSignal)
+                .foregroundStyle(Color.bruSignalText)
                 .padding(.horizontal, 16)
                 .padding(.bottom, 4)
         }
@@ -360,7 +371,7 @@ public struct SettingsView: View {
                 .font(BRUFont.labelMicro)
                 .tracking(1.0)
                 .textCase(.uppercase)
-                .foregroundStyle(Color.bruSignal)
+                .foregroundStyle(Color.bruSignalText)
                 .padding(.horizontal, 16)
                 .padding(.bottom, 4)
         }
@@ -472,7 +483,7 @@ public struct SettingsView: View {
                 .font(BRUFont.labelMicro)
                 .tracking(1.0)
                 .textCase(.uppercase)
-                .foregroundStyle(Color.bruSignal)
+                .foregroundStyle(Color.bruSignalText)
                 .padding(.horizontal, 16)
                 .padding(.bottom, 4)
         }

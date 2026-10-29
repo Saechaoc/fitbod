@@ -17,6 +17,7 @@
 // These tests are GREEN once Task 2 GREEN implementation ships.
 
 import Foundation
+import SwiftUI
 import Testing
 @testable import fitbod
 
@@ -94,9 +95,9 @@ struct MuscleVolumeBarBRUTests {
                 "accessibilityDescription must preserve D-06 verbatim zone.verb sentence per UI-SPEC §Accessibility Contract")
     }
 
-    // MARK: - Test 4: not-trained edge (total == 0) → "NOT TRAINED", opacity 0.5
+    // MARK: - Test 4: not-trained edge (total == 0) → "NOT TRAINED" in muted
 
-    @Test("not-trained edge (total == 0) renders chip NOT TRAINED and isNotTrained flag true")
+    @Test("not-trained edge (total == 0) renders a readable muted NOT TRAINED chip and count")
     func notTrainedEdgeChipIsNotTrained() {
         let bar = MuscleVolumeBar(
             muscle: makeMusclePure(),
@@ -107,6 +108,59 @@ struct MuscleVolumeBarBRUTests {
         #expect(bar.chipLabel == "NOT TRAINED",
                 "totalSetsRounded == 0 must render NOT TRAINED chip per UI-SPEC §Copy overlay")
         #expect(bar.isNotTrained == true,
-                "isNotTrained must be true when totalSetsRounded == 0 so the view applies opacity 0.5")
+                "isNotTrained must be true when totalSetsRounded == 0")
+        // bruFaint is a fill: as text on the paper row it can't be read.
+        #expect(bar.chipColor == .bruMuted, "NOT TRAINED chip outlines in bruMuted, as in the reference")
+        #expect(bar.chipShouldFill == false)
+        #expect(bar.countColor == .bruMuted, "the 0 count must stay readable")
+    }
+
+    // MARK: - Test 5: set count color per zone
+
+    @Test("set count reads in muted under MEV, ink when productive, signal text near and over MRV",
+          arguments: [(5, Color.bruMuted), (15, Color.bruInk), (21, Color.bruSignalText), (24, Color.bruSignalText)])
+    func countColorFollowsZone(sets: Int, expected: Color) {
+        let bar = MuscleVolumeBar(
+            muscle: makeMusclePure(),
+            target: makeTarget(mev: 8, mav: 18, mrv: 22),
+            total: WeightedSetTotal(directSets: Double(sets), indirectSets: 0),
+            delta: WeekOverWeekDelta(currentWeekTotal: Double(sets), previousWeekTotal: Double(sets))
+        )
+        #expect(bar.countColor == expected, "\(sets) sets is \(bar.zone)")
+    }
+
+    // MARK: - Test 6: shared axis
+
+    private func makeBar(sets: Int, mrv: Int = 22, axisSets: Int? = nil) -> MuscleVolumeBar {
+        let target = makeTarget(mev: 8, mav: 18, mrv: mrv)
+        let total = WeightedSetTotal(directSets: Double(sets), indirectSets: 0)
+        let delta = WeekOverWeekDelta(currentWeekTotal: Double(sets), previousWeekTotal: Double(sets))
+        if let axisSets {
+            return MuscleVolumeBar(muscle: makeMusclePure(), target: target, total: total,
+                                   delta: delta, axisSets: axisSets)
+        }
+        return MuscleVolumeBar(muscle: makeMusclePure(), target: target, total: total, delta: delta)
+    }
+
+    @Test("the track spans the reference's 25 sets by default, so MRV 22 sits inside it")
+    func axisDefaultsToTwentyFiveSets() {
+        let bar = makeBar(sets: 16)
+        #expect(MuscleVolumeBar.minimumAxisSets == 25)
+        #expect(bar.axisMax == 25)
+        #expect(bar.fillFraction == 16.0 / 25.0)
+    }
+
+    @Test("volume past MRV still grows the fill, up to the end of the track")
+    func fillShowsVolumePastMRV() {
+        #expect(makeBar(sets: 24).fillFraction > makeBar(sets: 22).fillFraction)
+        #expect(makeBar(sets: 40).fillFraction == 1)
+        #expect(makeBar(sets: 0).fillFraction == 0)
+    }
+
+    @Test("a row uses the shared axis, stretched only if its own MRV runs past it")
+    func axisFollowsSharedValueAndMRV() {
+        #expect(makeBar(sets: 10, axisSets: 30).axisMax == 30)
+        #expect(makeBar(sets: 10, mrv: 32).axisMax == 32)
+        #expect(makeBar(sets: 10, mrv: 32, axisSets: 30).axisMax == 32)
     }
 }

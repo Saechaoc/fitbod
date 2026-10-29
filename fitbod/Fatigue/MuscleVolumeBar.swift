@@ -8,9 +8,16 @@
 //    (1) Header HStack: uppercase muscle name (labelSmall, left)
 //        + tabular set-count displayMedium + "SETS" labelMicro (right)
 //    (2) 16pt bar track: bruBg2 background + 1.5pt bruInk outline
-//        + zone-color fill clipped to totalSets/mrv%; 2pt bruInk right-edge
-//        separator on the fill; 1pt bruInk MEV + MAV ticks; 1pt bruSignal
-//        MRV tick; 8pt mono bruMuted tick labels floating above.
+//        + zone-color fill for totalSets; 2pt bruInk right-edge separator
+//        on the fill; 1pt bruInk MEV + MAV ticks and a 1pt bruSignal MRV
+//        tick, each running 3pt past the track; 8pt mono tick labels just
+//        above their ticks (MRV in bruSignalText). A label is left out
+//        where it would collide with its neighbor, and all of them at
+//        accessibility text sizes; the footer legend has the values.
+//        The track spans one axis shared by every row, as in the
+//        reference: 25 sets, the largest RP default MRV, or the largest MRV
+//        on screen if a user target runs past that. MRV sits inside the
+//        track, so volume past MRV shows as fill beyond the MRV tick.
 //    (3) Footer HStack: BRUChip verb + 9pt mono bruMuted legend
 //
 //  Zone → bar fill color:
@@ -19,8 +26,15 @@
 //    .nearMRV    → bruSignal
 //    .overMRV    → bruSignal (+ pulse)
 //
+//  Set count color: bruMuted for untrained and under-MEV rows, bruInk when
+//  productive, bruSignalText near or over MRV. bruFaint is a fill color and
+//  too light to read as text, so the count never takes the faint fill.
+//
 //  Chip label/color/fill per UI-SPEC §Copy overlay:
-//    NOT TRAINED (total==0) → label "NOT TRAINED", color bruFaint, fill false, row opacity 0.5
+//    NOT TRAINED (total==0) → label "NOT TRAINED", color bruMuted, fill false
+//                             (UI-SPEC said bruFaint plus row opacity 0.5,
+//                             which left the row unreadable; the reference's
+//                             own data gives this verb BRU.muted)
 //    .belowMEV              → "UNDER MEV", bruAmber, fill true
 //    .productive + headroom ≥ 2 → "ADD A SET", bruGreen, fill false
 //    .productive            → "HOLD", bruInk, fill false
@@ -44,9 +58,19 @@ public struct MuscleVolumeBar: View {
     public let total: WeightedSetTotal
     public let delta: WeekOverWeekDelta
     public var isAdvisoryActive: Bool = false
+    /// Sets at the right end of the track. Rows in one list pass the same
+    /// value so their bars compare.
+    public var axisSets: Int = MuscleVolumeBar.minimumAxisSets
     public var onTap: (MuscleGroup) -> Void = { _ in }
 
+    /// The reference's axis: 25 sets, the largest RP default MRV.
+    public static let minimumAxisSets = 25
+
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    @Environment(\.displayScale) private var displayScale
+    /// About the width of a three-letter tick label, for the collision check.
+    @ScaledMetric(relativeTo: .caption2) private var tickLabelWidth: CGFloat = 16
     @State private var overMRVPulse: Bool = false
 
     public init(
@@ -55,6 +79,7 @@ public struct MuscleVolumeBar: View {
         total: WeightedSetTotal,
         delta: WeekOverWeekDelta,
         isAdvisoryActive: Bool = false,
+        axisSets: Int = MuscleVolumeBar.minimumAxisSets,
         onTap: @escaping (MuscleGroup) -> Void = { _ in }
     ) {
         self.muscle = muscle
@@ -62,6 +87,7 @@ public struct MuscleVolumeBar: View {
         self.total = total
         self.delta = delta
         self.isAdvisoryActive = isAdvisoryActive
+        self.axisSets = axisSets
         self.onTap = onTap
     }
 
@@ -100,7 +126,7 @@ public struct MuscleVolumeBar: View {
 
     /// BRU chip color per UI-SPEC §Copy overlay table.
     var chipColor: Color {
-        if isNotTrained { return .bruFaint }
+        if isNotTrained { return .bruMuted }
         switch zone {
         case .belowMEV:   return .bruAmber
         case .productive:
@@ -133,6 +159,28 @@ public struct MuscleVolumeBar: View {
         }
     }
 
+    /// Set count color. Untrained and under-MEV rows recede in muted text
+    /// rather than their faint bar fill, which is too light to read.
+    var countColor: Color {
+        if isNotTrained { return .bruMuted }
+        switch zone {
+        case .belowMEV:          return .bruMuted
+        case .productive:        return .bruInk
+        case .nearMRV, .overMRV: return .bruSignalText
+        }
+    }
+
+    /// The sets the track spans: the shared axis, stretched when this row's
+    /// own MRV runs past it, so the MRV tick always lands on the track.
+    var axisMax: Int {
+        max(axisSets, target.mrv, 1)
+    }
+
+    /// How much of the track the fill covers, from 0 to 1.
+    var fillFraction: Double {
+        min(Double(total.totalSetsRounded) / Double(axisMax), 1)
+    }
+
     /// The combined accessibility label — muscle name + set count + D-06 verbatim verb + delta.
     /// The chip label ("UNDER MEV", "ADD A SET", etc.) is NOT used here per
     /// UI-SPEC §Copy overlay: accessibility reads the full D-06 sentence.
@@ -154,7 +202,7 @@ public struct MuscleVolumeBar: View {
                 HStack(alignment: .lastTextBaseline, spacing: 6) {
                     Text("\(total.totalSetsRounded)")
                         .font(.bru(.grotesk, size: 24))
-                        .foregroundStyle(barFillColor)
+                        .foregroundStyle(countColor)
                     Text("SETS")
                         .font(BRUFont.labelMicro)
                         .tracking(1.0)
@@ -185,7 +233,6 @@ public struct MuscleVolumeBar: View {
                 .fill(Color.bruHair)
                 .frame(height: 1)
         }
-        .opacity(isNotTrained ? 0.5 : 1.0)
         .contentShape(Rectangle())
         .onTapGesture { onTap(muscle) }
         .accessibilityElement(children: .combine)
@@ -206,21 +253,12 @@ public struct MuscleVolumeBar: View {
     private var barTrack: some View {
         GeometryReader { geo in
             let width = geo.size.width
-            let mrvD = max(Double(target.mrv), 1.0)
-            let fillWidth = CGFloat(min(Double(total.totalSetsRounded) / mrvD, 1.0)) * width
-            let mevX = CGFloat(min(Double(target.mev) / mrvD, 1.0)) * width
-            let mavX = CGFloat(min(Double(target.mav) / mrvD, 1.0)) * width
-            // MRV tick sits at the right edge of the track (x = 1.0)
-            let mrvX = width
+            let height = geo.size.height
+            let fillWidth = snapped(CGFloat(fillFraction) * width)
 
             ZStack(alignment: .leading) {
-                // Track background + outline
                 Rectangle()
                     .fill(Color.bruBg2)
-                    .overlay(
-                        Rectangle()
-                            .stroke(Color.bruInk, lineWidth: 1.5)
-                    )
 
                 // Zone-color fill with 2pt bruInk right-edge separator
                 if fillWidth > 0 {
@@ -234,14 +272,21 @@ public struct MuscleVolumeBar: View {
                         }
                 }
 
-                // MEV tick (1pt bruInk) + floating label
-                tickMark(at: mevX, in: geo.size.height, color: .bruInk, label: "MEV")
+                // Outline drawn over the fill, so it keeps its full width there
+                Rectangle()
+                    .stroke(Color.bruInk, lineWidth: 1.5)
 
-                // MAV tick (1pt bruInk) + floating label
-                tickMark(at: mavX, in: geo.size.height, color: .bruInk, label: "MAV")
-
-                // MRV tick (1pt bruSignal) + floating signal label
-                tickMark(at: mrvX - 1, in: geo.size.height, color: .bruSignal, label: "MRV")
+                // `.position` keeps the ticks and labels out of the layout: a
+                // tick taller than the track would otherwise stretch it.
+                ForEach(ticks(trackWidth: width), id: \.label) { tick in
+                    Rectangle()
+                        .fill(tick.color)
+                        .frame(width: 1, height: height + Self.tickOverhang * 2)
+                        .position(x: tick.x + 0.5, y: height / 2)
+                    if tick.showsLabel {
+                        tickLabel(tick)
+                    }
+                }
 
                 // Advisory amber ring (Rectangle, NOT RoundedRectangle — sharp corner BRU rule)
                 if isAdvisoryActive {
@@ -259,19 +304,88 @@ public struct MuscleVolumeBar: View {
         }
     }
 
-    /// Renders a vertical tick at the given x offset with a floating label above.
-    @ViewBuilder
-    private func tickMark(at x: CGFloat, in height: CGFloat, color: Color, label: String) -> some View {
-        Rectangle()
-            .fill(color)
-            .frame(width: 1, height: height + 6)
-            .offset(x: x, y: -3)
-            .overlay(alignment: .top) {
-                Text(label)
+    // MARK: - Ticks
+
+    /// How far each tick runs past the track, above and below.
+    private static let tickOverhang: CGFloat = 3
+    /// The least space between two tick labels.
+    private static let tickLabelGap: CGFloat = 4
+
+    /// One threshold line on the bar, and where its label goes.
+    private struct Tick {
+        let label: String
+        let x: CGFloat               // leading edge of the 1pt line
+        let color: Color
+        let labelColor: Color
+        var labelAlignment: HorizontalAlignment = .center
+        var labelAnchorX: CGFloat = 0    // where the label's aligned edge sits
+        var showsLabel = false
+    }
+
+    /// The MEV, MAV and MRV ticks on a track `trackWidth` wide.
+    ///
+    /// A label centers on its tick unless that would cross an end of the
+    /// track; then it lines up with that end. A label that would run into
+    /// the kept label to its right is left out, so MRV keeps its label
+    /// first, then MAV. At accessibility text sizes every label is left
+    /// out; the footer legend has the values.
+    private func ticks(trackWidth width: CGFloat) -> [Tick] {
+        func x(_ sets: Int) -> CGFloat {
+            let fraction = min(Double(sets) / Double(axisMax), 1)
+            return min(snapped(CGFloat(fraction) * width), width - 1)
+        }
+        var ticks = [
+            Tick(label: "MEV", x: x(target.mev), color: .bruInk, labelColor: .bruMuted),
+            Tick(label: "MAV", x: x(target.mav), color: .bruInk, labelColor: .bruMuted),
+            Tick(label: "MRV", x: x(target.mrv), color: .bruSignal, labelColor: .bruSignalText),
+        ]
+        guard !dynamicTypeSize.isAccessibilitySize else { return ticks }
+
+        let labelWidth = tickLabelWidth
+        var nextLabelStart = CGFloat.infinity
+        for i in ticks.indices.reversed() {
+            let center = ticks[i].x + 0.5
+            let start: CGFloat
+            if center + labelWidth / 2 > width {
+                ticks[i].labelAlignment = .trailing
+                ticks[i].labelAnchorX = ticks[i].x + 1
+                start = ticks[i].x + 1 - labelWidth
+            } else if center - labelWidth / 2 < 0 {
+                ticks[i].labelAlignment = .leading
+                ticks[i].labelAnchorX = ticks[i].x
+                start = ticks[i].x
+            } else {
+                ticks[i].labelAnchorX = center
+                start = center - labelWidth / 2
+            }
+            if start + labelWidth + Self.tickLabelGap <= nextLabelStart {
+                ticks[i].showsLabel = true
+                nextLabelStart = start
+            }
+        }
+        return ticks
+    }
+
+    /// A tick's label, its baseline 2pt above the top of the tick.
+    ///
+    /// It hangs off a zero-size anchor so the text keeps its natural width;
+    /// overlaid on the 1pt tick itself, it would be squeezed to that width.
+    private func tickLabel(_ tick: Tick) -> some View {
+        Color.clear
+            .frame(width: 0, height: 0)
+            .overlay(alignment: Alignment(horizontal: tick.labelAlignment, vertical: .lastTextBaseline)) {
+                Text(tick.label)
                     .font(.bru(.mono, size: 8))
                     .kerning(0.5)
-                    .foregroundStyle(color == .bruSignal ? Color.bruSignal : Color.bruMuted)
-                    .offset(x: x - 10, y: -14)
+                    .foregroundStyle(tick.labelColor)
+                    .fixedSize()
             }
+            .position(x: tick.labelAnchorX, y: -(Self.tickOverhang + 2))
+    }
+
+    /// `value` rounded to the nearest device pixel, so 1pt lines stay sharp.
+    private func snapped(_ value: CGFloat) -> CGFloat {
+        let scale = max(displayScale, 1)
+        return (value * scale).rounded() / scale
     }
 }

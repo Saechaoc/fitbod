@@ -7,13 +7,13 @@
 // BRU primitives.
 //
 // Composition order (top to bottom per UI-SPEC line 533):
-//   safeAreaInset(top): BRUHeaderBar("Fitbod / Today", right: formatted date)
+//   safeAreaInset(top): BRUHeaderBar("Fitbod / Today", right: formatted date as plain text)
 //   ─── inside ScrollView VStack(spacing: 0) ───────────────────────────────
 //   [Defensive-top Phase 5 banners]
 //     DeloadWeekBanner  (phase.kind == .deload)
 //     DeloadAdvisoryBanner  (currentAdvisory != nil)
 //   [BRU Layer]
-//     TodayStatStrip  (Day streak / Sessions / W{N}/{M} trend)
+//     TodayStatStrip  (Day streak / Sessions → history / W{N}/{M} trend or This week)
 //     BlockContextBand  (Block chip + name + phase + WeekTickerCells)  — when block active
 //     ResumeWorkoutSlab  — when active session (completedAt == nil)
 //       OR BlackSlabCTA  — when no active session but routine scheduled
@@ -107,7 +107,10 @@ public struct TodayView: View {
                         totalSessions: allSessions.filter { $0.completedAt != nil }.count,
                         weekIndex: currentWeekIndex,
                         totalWeeks: currentTotalWeeks,
-                        trend: currentTrend
+                        trend: currentTrend,
+                        hasActiveBlock: !activeBlocks.isEmpty,
+                        sessionsThisWeek: sessionsThisWeek,
+                        onOpenHistory: { navigationPath.append(SessionHistoryRoute.list) }
                     )
 
                     // Block context band — only when a block is active
@@ -211,7 +214,7 @@ public struct TodayView: View {
                 BRUHeaderBar(
                     left: HeaderAction("Settings") { presentingSettings = true },
                     center: "Fitbod / Today",
-                    right: HeaderAction(formattedDate) { /* no-op — date label only */ }
+                    right: .text(formattedDate)
                 )
             }
             // ─── Navigation Destinations (preserved verbatim from Phase 4/5) ──
@@ -221,6 +224,8 @@ public struct TodayView: View {
                     SessionLoggerView(session: session)
                 }
             }
+            // Workout history from the Sessions stat cell.
+            .sessionHistoryDestinations()
             // Phase 5 plan 05 — per-muscle drill-down from heatmap + volume-bar taps.
             .navigationDestination(for: MuscleSlugRoute.self) { route in
                 switch route {
@@ -460,6 +465,15 @@ public struct TodayView: View {
         guard let block = activeBlocks.first else { return 1 }
         let total = (block.phases ?? []).reduce(0) { $0 + $1.weeks }
         return max(1, total)
+    }
+
+    /// Finished sessions since the start of this week (the lifter's
+    /// week-start setting; Monday by default).
+    private var sessionsThisWeek: Int {
+        let weekStartsMonday = settingsList.first?.weekStartsMonday ?? true
+        let weekStart = Calendar.current.startOfDay(for: .now)
+            .mondayAtMidnightForToday(weekStartsMonday: weekStartsMonday)
+        return allSessions.filter { $0.completedAt != nil && $0.startedAt >= weekStart }.count
     }
 
     /// Volume trend compared to prior week — .up when this week > last week.

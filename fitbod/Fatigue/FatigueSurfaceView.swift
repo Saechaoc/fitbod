@@ -13,8 +13,8 @@
 //    (3) Volume This Week   — BRUSectionHead + LazyVStack of MuscleVolumeBar rows
 //    (4) Muscle Heatmap     — BRUSectionHead + side-by-side FRONT + BACK grids
 //
-//  Empty-state: both volume section and heatmap section replaced by the
-//  verbatim UI-SPEC §Copywriting Contract empty-state copy.
+//  Empty-state: the legend, volume section and heatmap section are replaced
+//  by the verbatim UI-SPEC §Copywriting Contract empty-state copy.
 //
 //  Front/Back segmented Picker REMOVED per UI-SPEC line 268 — both sides
 //  render simultaneously via twin BodySilhouetteView instances.
@@ -96,11 +96,14 @@ public struct FatigueSurfaceView: View {
     }
 
     /// Net delta copy per bru-screens/volume.jsx line 32: `+N`, `-N`, or `±0`.
+    /// Rounded to whole sets like `WeekOverWeekDelta.deltaCopy`; the
+    /// stimulus-weighted sum is fractional and read "+29.0" unrounded.
     private var deltaCopy: String {
-        let net = visibleMuscles.reduce(0) { acc, muscle in
+        let sum = visibleMuscles.reduce(0.0) { acc, muscle in
             let d = FatigueModel.weekOverWeekDelta(muscleSlug: muscle.slug, weekStart: weekStart, in: ctx)
-            return acc + (d.currentWeekTotal - d.previousWeekTotal)
+            return acc + d.delta
         }
+        let net = Int(sum.rounded())
         if net > 0 { return "+\(net)" }
         if net < 0 { return "\(net)" }
         return "±0"
@@ -142,8 +145,9 @@ public struct FatigueSurfaceView: View {
     public var body: some View {
         VStack(spacing: 0) {
             summarySlab
-            legendStrip
             if hasVolumeData {
+                // The legend explains the bars, so it shows only with them.
+                legendStrip
                 volumeSection
                 heatmapSection
             } else {
@@ -158,7 +162,9 @@ public struct FatigueSurfaceView: View {
     private var summarySlab: some View {
         HStack(spacing: 0) {
             VStack(alignment: .leading, spacing: 2) {
-                Text("WORKING SETS · 7 DAYS")
+                // The reference says "7 DAYS", but the total runs from the
+                // start of the calendar week, so name the week instead.
+                Text("WORKING SETS · THIS WEEK")
                     .font(BRUFont.labelSmall)
                     .tracking(1.5)
                     .textCase(.uppercase)
@@ -211,11 +217,9 @@ public struct FatigueSurfaceView: View {
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 8)
-        .overlay(alignment: .bottom) {
-            Rectangle()
-                .fill(Color.bruInk)
-                .frame(height: 2)
-        }
+        // Left-aligned like the reference. Its 2pt rule comes from the
+        // section head right below, so the legend draws none of its own.
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private func legendCell(
@@ -244,10 +248,16 @@ public struct FatigueSurfaceView: View {
     // MARK: - (3) Volume section
 
     private var volumeSection: some View {
-        VStack(alignment: .leading, spacing: 0) {
+        let muscles = visibleMuscles
+        // One axis for every bar so the rows compare: the reference's 25
+        // sets, or the largest MRV on screen if a target runs past it.
+        let axisSets = muscles
+            .map { targetFor($0).mrv }
+            .reduce(MuscleVolumeBar.minimumAxisSets, max)
+        return VStack(alignment: .leading, spacing: 0) {
             BRUSectionHead("Volume This Week")
             LazyVStack(spacing: 0) {
-                ForEach(visibleMuscles, id: \.persistentModelID) { muscle in
+                ForEach(muscles, id: \.persistentModelID) { muscle in
                     let target = targetFor(muscle)
                     let total = FatigueModel.weeklyVolume(
                         muscleSlug: muscle.slug,
@@ -265,6 +275,7 @@ public struct FatigueSurfaceView: View {
                         total: total,
                         delta: delta,
                         isAdvisoryActive: isAdvisoryActive,
+                        axisSets: axisSets,
                         onTap: { tappedMuscle in
                             navigationPath.append(MuscleSlugRoute.detail(tappedMuscle.slug))
                         }

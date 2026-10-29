@@ -118,6 +118,7 @@ public struct ResumeWorkoutSlab: View {
                 // Primary — signal fill (Resume ▸)
                 BRUPillButton("Resume ▸", action: onResume)
                     .frame(maxWidth: .infinity)
+                    .accessibilityIdentifier("resumeSlab.resume")
 
                 // Secondary — ghost but on bruInk slab, so we invert:
                 // BRUButton.ghost defaults to bruInk text + bruInk outline on a paper bg.
@@ -145,6 +146,7 @@ public struct ResumeWorkoutSlab: View {
                 }
                 .buttonStyle(.plain)
                 .frame(maxWidth: .infinity)
+                .accessibilityIdentifier("resumeSlab.discard")
             }
         }
         .padding(.vertical, 18)

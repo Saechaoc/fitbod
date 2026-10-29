@@ -19,7 +19,7 @@
 //    positive Δ → Color.bruSignal (NOT accentColor)
 //    negative Δ → Color.bruMuted (NOT systemRed — regression is data not error)
 //                 U+2212 (true minus sign), e.g. "−2.5 kg"
-//    zero      → "—" em-dash U+2014, Color.bruFaint
+//    zero      → "—" em-dash U+2014, Color.bruMuted
 //    nil prior → "{exercise name} — no prior data" single-cell row
 //
 //  ## Empty state (UI-SPEC verbatim)
@@ -42,6 +42,7 @@ public struct SessionComparisonView: View {
     public let anchorSession: Session
     @Environment(\.modelContext) private var ctx
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.weightUnit) private var defaultUnit
     @State private var rows: [SessionComparisonRow] = []
     @State private var didLoad = false
 
@@ -155,9 +156,10 @@ public struct SessionComparisonView: View {
 
                 // Center (~30%) — Δ values
                 VStack(spacing: 2) {
-                    deltaView(value: row.deltaWeight, unit: "kg")
+                    let unitLabel = unit(for: row.exerciseID).rawValue
+                    deltaView(value: row.deltaWeight, unit: unitLabel)
                     deltaViewReps(value: row.deltaReps)
-                    deltaView(value: row.deltaE1RM, unit: "e1RM kg")
+                    deltaView(value: row.deltaE1RM, unit: "e1RM \(unitLabel)")
                 }
                 .frame(maxWidth: .infinity, alignment: .center)
 
@@ -176,6 +178,14 @@ public struct SessionComparisonView: View {
         }
     }
 
+    /// The exercise's own unit wins over the app-wide one.
+    private func unit(for exerciseID: UUID) -> WeightUnit {
+        let exercise = (anchorSession.exercises ?? [])
+            .first { $0.exercise?.id == exerciseID }?
+            .exercise
+        return .effective(for: exercise, default: defaultUnit)
+    }
+
     // MARK: - Δ Rendering
 
     @ViewBuilder
@@ -187,11 +197,13 @@ public struct SessionComparisonView: View {
                 // U+2212 minus sign (NOT U+002D hyphen) — preserved per BRU contract
                 BRUDisplay("\u{2212}\(formatWeight(abs(v))) \(unit)", size: .medium, color: .bruMuted)
             } else {
-                // Zero Δ — em-dash U+2014 in bruFaint
-                BRUDisplay("\u{2014}", size: .medium, color: .bruFaint)
+                // Zero Δ: em-dash U+2014 in bruMuted (bruFaint is a fill, too light for text)
+                BRUDisplay("\u{2014}", size: .medium, color: .bruMuted)
+                    .accessibilityLabel("No change")
             }
         } else {
-            BRUDisplay("\u{2014}", size: .medium, color: .bruFaint)
+            BRUDisplay("\u{2014}", size: .medium, color: .bruMuted)
+                .accessibilityLabel("No earlier set")
         }
     }
 
@@ -204,10 +216,12 @@ public struct SessionComparisonView: View {
                 // U+2212 minus sign (NOT hyphen)
                 BRUDisplay("\u{2212}\(abs(v)) reps", size: .medium, color: .bruMuted)
             } else {
-                BRUDisplay("\u{2014}", size: .medium, color: .bruFaint)
+                BRUDisplay("\u{2014}", size: .medium, color: .bruMuted)
+                    .accessibilityLabel("No change in reps")
             }
         } else {
-            BRUDisplay("\u{2014}", size: .medium, color: .bruFaint)
+            BRUDisplay("\u{2014}", size: .medium, color: .bruMuted)
+                .accessibilityLabel("No earlier set")
         }
     }
 

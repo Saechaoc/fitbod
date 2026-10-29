@@ -109,7 +109,9 @@ struct HistoryBRUCopyTests {
             encoding: .utf8
         )
         #expect(src.contains("\"History\""))
-        #expect(src.contains("\"FILTER\""))
+        // An inert FILTER action was removed; the list must navigate to summaries.
+        #expect(!src.contains("HeaderAction(\"FILTER\""))
+        #expect(src.contains("SessionHistoryRoute.summary(sessionID:"))
         #expect(src.contains("\"Past sessions\""))
     }
 
@@ -125,15 +127,16 @@ struct HistoryBRUCopyTests {
         #expect(src.contains("BRUSpark"))
     }
 
-    // MARK: - (7) SessionHistoryRow uses BRUCornerBadge
+    // MARK: - (7) SessionHistoryRow uses a readable inline PR badge
 
-    @Test("sessionHistoryRowUsesBRUCornerBadge — PR badge primitive present")
+    @Test("sessionHistoryRowUsesBRUCornerBadge — inline PR chip present")
     func sessionHistoryRowUsesBRUCornerBadge() throws {
         let src = try String(
             contentsOf: sessionsBase.appendingPathComponent("SessionHistoryRow.swift"),
             encoding: .utf8
         )
-        #expect(src.contains("BRUCornerBadge"))
+        #expect(src.contains("BRUChip(\"PR ·"))
+        #expect(src.contains("color: .bruSignal, fill: true"))
     }
 
     // MARK: - (8) Zero banned tokens across all 8 history files

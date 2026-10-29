@@ -3,7 +3,8 @@
 //  fitbod
 //
 //  Wave-3 RootView — replaces the interim stub from plan 01-02. Hosts
-//  the 4-tab bar (Today / Program / Progress / Settings) and wires
+//  the 4-tab bar (Today / Program / Progress / Library; Settings is a
+//  sheet from the Today header) and wires
 //  the one-time `ExerciseLibraryImporter.seedIfNeeded()` call
 //  off `.task { ... }` so the seed runs the first time the view
 //  appears, off the main thread (per the `@ModelActor` macro on the
@@ -33,19 +34,14 @@
 //
 //  RESEARCH § State of the Art and PITFALLS.md both forbid wrapping
 //  `TabView` in a parent `NavigationStack`. Each tab that needs a
-//  navigation surface owns one. The remaining interim tab host
-//  (`SettingsTabHost`) declares its own.
-//  (PlaceholderTabView deleted in Phase 2.1 Plan 11 — all tabs are real.
-//  LibraryTabHost removed when the Library tab was deleted in quick task
-//  260525-g32 follow-up; ExerciseLibraryView is still reachable from the
-//  routine builder.)
+//  navigation surface owns one.
 //
-//  ## Tab hosts
+//  ## When the tab bar hides
 //
-//  `SettingsTabHost` (plan 04-01 wired) is a one-line wrapper around the
-//  real settings view. Kept as a private struct rather than substituting
-//  the body directly into `tabBar` so future per-tab wrappers (analytics,
-//  tab-re-tap pop-to-root) can attach in one place per tab.
+//  The bar hides while the software keyboard is up (it would otherwise
+//  ride up on the keyboard and cover the field being edited) and while
+//  the selected tab's visible screen applies `.bruTabBarHidden()`, as the
+//  workout logger does.
 //
 
 import SwiftUI
@@ -55,6 +51,7 @@ import OSLog
 public struct RootView: View {
     @Environment(\.modelContext) private var modelContext
     @Query private var exercises: [Exercise]
+    @Query private var settingsList: [UserSettings]
     @State private var seedState = SeedState()
 
     /// Currently-selected tab. Bound to the tab-bar binding via a
@@ -69,6 +66,12 @@ public struct RootView: View {
 
     /// Library tab NavigationPath, cleared on Library-tab re-tap.
     @State private var libraryPath = NavigationPath()
+
+    /// True while the software keyboard is on screen.
+    @State private var keyboardVisible = false
+
+    /// Tabs whose visible screen asked to hide the tab bar.
+    @State private var tabsHidingBar: Set<Tab> = []
 
     private static let log = Logger(subsystem: "com.fitbod.app", category: "seed")
 
@@ -109,6 +112,7 @@ public struct RootView: View {
                 tabBar
             }
         }
+        .environment(\.weightUnit, settingsList.first?.weightUnit ?? .default)
         .task {
             await runSeed()
         }
@@ -172,47 +176,51 @@ public struct RootView: View {
     }
 
     private var tabBar: some View {
-        // Quick task 260524-ilf — BRU bottom nav.
-        //
-        // We do NOT use SwiftUI's TabView here: hiding the system tab
-        // bar from outside a NavigationStack is not reliably supported
-        // (`.toolbar(.hidden, for: .tabBar)` only takes effect on views
-        // inside the stack, and `.toolbarBackground(.hidden, …)` hides
-        // only the blur layer, not the chrome). Instead we VStack the
-        // selected tab's body above `BRUTabBar`, preserving each tab's
-        // own NavigationStack and the existing re-tap pop-to-root logic.
-        //
-        // Quick task 260525-g32 — BRUTabBar now self-extends its
-        // background through the bottom safe area via its own
-        // `.ignoresSafeArea(.container, edges: .bottom)` layer, so this
-        // VStack does NOT need its own bottom-safe-area filler. If a
-        // future change introduces a parent that paints behind the bar,
-        // re-add `.background(Color.bruTabSurface.ignoresSafeArea(...))`
-        // on the outer VStack here as a fallback.
+        // Native tab containment preserves each navigation stack and removes
+        // inactive destinations from accessibility, including their sheets.
+        // The system tab chrome is hidden; BRUTabBar supplies the controls.
         VStack(spacing: 0) {
             // Every tab stays alive; only the selected one is visible and
             // interactive. A `switch` here would rebuild the tab on each
             // switch and drop its navigation stack (e.g. a logger pushed
             // on Today) and its @State (library filters).
-            ZStack {
+            TabView(selection: $selectedTab) {
                 ForEach(Tab.allCases, id: \.self) { tab in
-                    let isSelected = tab == selectedTab
                     tabBody(tab)
-                        .opacity(isSelected ? 1 : 0)
-                        .allowsHitTesting(isSelected)
-                        .accessibilityHidden(!isSelected)
+                        .tag(tab)
+                        .toolbar(.hidden, for: .tabBar)
+                        .onPreferenceChange(BRUTabBarHiddenKey.self) { hidden in
+                            if hidden {
+                                tabsHidingBar.insert(tab)
+                            } else {
+                                tabsHidingBar.remove(tab)
+                            }
+                        }
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .environment(\.isKeyboardVisible, keyboardVisible)
 
-            BRUTabBar(active: selectedTab.bru) { bruTab in
-                tabSelection.wrappedValue = bruTab.rootTab
+            if showsTabBar {
+                BRUTabBar(active: selectedTab.bru) { bruTab in
+                    tabSelection.wrappedValue = bruTab.rootTab
+                }
+                // Cells declare minHeight (no max) so the bar must be
+                // vertically fixed-size — otherwise the VStack lets it
+                // expand to fill leftover space.
+                .fixedSize(horizontal: false, vertical: true)
             }
-            // Cells declare minHeight (no max) so the bar must be
-            // vertically fixed-size — otherwise the VStack lets it
-            // expand to fill leftover space.
-            .fixedSize(horizontal: false, vertical: true)
         }
+        .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillShowNotification)) { _ in
+            keyboardVisible = true
+        }
+        .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillHideNotification)) { _ in
+            keyboardVisible = false
+        }
+    }
+
+    private var showsTabBar: Bool {
+        !keyboardVisible && !tabsHidingBar.contains(selectedTab)
     }
 
     @ViewBuilder
@@ -310,10 +318,9 @@ private extension BRUTab {
 // line 170 (`TodayView()`) continues to work — Swift resolves TodayView to
 // the new file in the same module.
 
-// NOTE: SessionHistoryView (Phase 2.1 Plan 10) is surfaced from the Routines tab's
-// "+ NEW" confirmation dialog ("History" button → sheet). The wiring lives in
-// RoutinesListView.swift (`presentingSessionHistory` @State + `.sheet(isPresented:)`).
-// A future revision can promote SessionHistoryView into a dedicated tab.
+// NOTE: SessionHistoryView pushes on the Today stack (the "Sessions" stat
+// cell) and the Progress stack (the "Workouts" row) through
+// `SessionHistoryRoute` and `.sessionHistoryDestinations()`.
 
 /// Progress tab body — wraps the real `ProgressHomeView` (plan 06-08).
 /// `ProgressHomeView` owns its own `NavigationStack`, parameterized on

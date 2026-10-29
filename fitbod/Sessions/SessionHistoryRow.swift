@@ -1,17 +1,18 @@
 // SessionHistoryRow.swift
-// fitbod — Phase 2.1 Plan 10
+// fitbod
 //
-// NEW — 3-column row for SessionHistoryView.
-// UI-SPEC v2 § Session history view (line 455-457) + § Component Inventory (line 593).
+// One finished workout in SessionHistoryView. SessionHistoryView wraps it
+// in a NavigationLink to the workout's summary.
 //
-// Reference: bru-screens/session-history.jsx lines 53-85
-//
-// Layout (3-column HStack):
+// Layout (3 columns):
 //   ┌──────────┬─────────────────────────┬────────────┐
-//   │  TODAY   │  Push A                 │  4,610 lb  │
-//   │  WED 22  │  21 SETS · 52M          │  PR · e1RM │
+//   │  TODAY   │  Push A                 │  4,610 LB  │
+//   │  WED 22  │  21 SETS · 52M          │ PR · E1RM  │
 //   └──────────┴─────────────────────────┴────────────┘
-//   64pt leading date column with 1pt hair right-border
+//   64pt date column with a 1pt hair rule on its right. Past days show
+//   "MON 20" alone; today shows "TODAY" over the date. One record names
+//   its kind ("PR · E1RM"); several show the count ("PR × 4"), and the
+//   summary lists them. Rows without a PR show "›" instead of the badge.
 //
 // BRU contract: NO Capsule() / NO RoundedRectangle / NO accentColor /
 //               NO Image(systemName:) / NO Color(.system*) /
@@ -22,139 +23,151 @@ import SwiftData
 
 // MARK: - SessionHistoryRow
 
-/// 3-column row representing a completed session in SessionHistoryView.
-///
-/// - Leading 64pt column: date ("TODAY" or "MON 20") + optional day-of-week sub-line.
-///   Separated from middle column by a 1pt hair right-border.
-/// - Middle column: routine name (bodyEmphasis 14pt) + set/duration sub-line (labelSmall).
-/// - Trailing column: tonnage (displayMedium 18pt, monospaced) + optional PR badge.
 public struct SessionHistoryRow: View {
     public let session: Session
-    public let prBadges: [String]
+    /// The records this workout set. Nil for none.
+    public let prs: SessionPRs?
+    public let unit: WeightUnit
 
-    public init(session: Session, prBadges: [String] = []) {
+    public init(session: Session, prs: SessionPRs? = nil, unit: WeightUnit = .default) {
         self.session = session
-        self.prBadges = prBadges
+        self.prs = prs
+        self.unit = unit
     }
 
     public var body: some View {
         HStack(alignment: .center, spacing: 12) {
-            // Leading date column (64pt, hair right-border)
             VStack(alignment: .leading, spacing: 2) {
                 Text(dateLabel)
                     .font(BRUFont.displayMedium)
                     .tracking(0.5)
                     .foregroundStyle(Color.bruInk)
-
-                if !dayOfWeekLabel.isEmpty {
-                    Text(dayOfWeekLabel)
+                if isToday {
+                    Text(dayLabel)
                         .font(BRUFont.labelMicro)
                         .tracking(1.0)
-                        .textCase(.uppercase)
                         .foregroundStyle(Color.bruMuted)
                 }
             }
             .frame(width: 64, alignment: .leading)
-            .overlay(
+            .frame(maxHeight: .infinity)
+            .overlay(alignment: .trailing) {
                 Rectangle()
                     .fill(Color.bruHair)
-                    .frame(width: 1),
-                alignment: .trailing
-            )
+                    .frame(width: 1)
+            }
 
-            // Middle column: routine name + set/duration sub-line
             VStack(alignment: .leading, spacing: 4) {
-                Text(session.routineSnapshotName.isEmpty ? "Workout" : session.routineSnapshotName)
+                Text(session.displayName)
                     .font(BRUFont.bodyEmphasis)
                     .foregroundStyle(Color.bruInk)
-                    .lineLimit(1)
-
+                    .lineLimit(2)
                 Text(setDurationLabel)
                     .font(BRUFont.labelSmall)
                     .tracking(0.5)
-                    .textCase(.uppercase)
                     .foregroundStyle(Color.bruMuted)
             }
 
-            Spacer()
+            Spacer(minLength: 8)
 
-            // Trailing column: tonnage + PR badges
             VStack(alignment: .trailing, spacing: 4) {
-                Text(tonnageLabel)
+                Text("\(SessionHistoryFormat.compactTonnage(tonnage)) \(unit.rawValue.uppercased())")
                     .font(BRUFont.displayMedium)
                     .monospacedDigit()
                     .foregroundStyle(Color.bruInk)
-
-                if !prBadges.isEmpty {
-                    HStack(spacing: 4) {
-                        ForEach(prBadges, id: \.self) { badge in
-                            BRUCornerBadge(badge, fill: .bruSignal, textColor: .bruPaper)
-                        }
-                    }
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
+                if let prs, prs.count > 1 {
+                    BRUChip("PR × \(prs.count)", color: .bruSignal, fill: true)
+                } else if let kind = prs?.kinds.first {
+                    BRUChip("PR · \(Self.shortLabel(kind))", color: .bruSignal, fill: true)
+                } else {
+                    Text("›")
+                        .font(BRUFont.bodyEmphasis)
+                        .foregroundStyle(Color.bruMuted)
                 }
             }
         }
+        .fixedSize(horizontal: false, vertical: true)
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
+        .contentShape(Rectangle())
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(accessibilityText)
+        .accessibilityHint("Opens the workout summary")
     }
 
-    // MARK: - Computed
+    // MARK: - Derived values
 
-    /// "TODAY" if today; "{WEEKDAY} {day}" otherwise (e.g. "MON 20").
+    private var isToday: Bool { Calendar.current.isDateInToday(session.startedAt) }
+
+    private var tonnage: Double { SessionHistoryFormat.tonnage(of: session) }
+
+    /// Completed, non-warm-up sets.
+    private var workingSetCount: Int {
+        (session.exercises ?? [])
+            .flatMap { $0.sets ?? [] }
+            .filter { $0.isComplete && !$0.isWarmup }
+            .count
+    }
+
+    private var durationMinutes: Int? {
+        if let stored = session.totalDurationSeconds { return stored / 60 }
+        guard let completedAt = session.completedAt else { return nil }
+        return max(0, Int(completedAt.timeIntervalSince(session.startedAt) / 60))
+    }
+
+    /// "TODAY", or "MON 20" for any other day.
     private var dateLabel: String {
-        let cal = Calendar.current
-        if cal.isDateInToday(session.startedAt) {
-            return "TODAY"
-        }
-        let formatter = DateFormatter()
-        formatter.dateFormat = "EEE d"
-        return formatter.string(from: session.startedAt).uppercased()
+        isToday ? "TODAY" : dayLabel
     }
 
-    /// Day-of-week sub-line (empty when date label is "TODAY").
-    private var dayOfWeekLabel: String {
-        let cal = Calendar.current
-        if cal.isDateInToday(session.startedAt) { return "" }
-        // When date is not today, show full weekday abbreviation
-        let formatter = DateFormatter()
-        formatter.dateFormat = "EEE"
-        return formatter.string(from: session.startedAt).uppercased()
+    /// "MON 20".
+    private var dayLabel: String {
+        session.startedAt
+            .formatted(.dateTime.weekday(.abbreviated).day())
+            .replacingOccurrences(of: ",", with: "")
+            .uppercased()
     }
 
-    /// "{N} SETS · {duration}" e.g. "21 SETS · 52M"
+    /// "21 SETS · 52M", "1 SET · 1H 05M".
     private var setDurationLabel: String {
-        let allSets = (session.exercises ?? [])
-            .flatMap { $0.sets ?? [] }
-            .filter { $0.isComplete && !$0.isWarmup }
-        let setCount = allSets.count
-
-        let duration: String
-        if let completedAt = session.completedAt {
-            let minutes = Int(completedAt.timeIntervalSince(session.startedAt) / 60)
-            if minutes >= 60 {
-                let h = minutes / 60
-                let m = minutes % 60
-                duration = m > 0 ? "\(h)H\(m)M" : "\(h)H"
-            } else {
-                duration = "\(minutes)M"
-            }
-        } else {
-            duration = "—"
-        }
-
-        return "\(setCount) SETS · \(duration)"
+        let sets = workingSetCount == 1 ? "1 SET" : "\(workingSetCount) SETS"
+        guard let minutes = durationMinutes else { return sets }
+        let duration = minutes >= 60
+            ? "\(minutes / 60)H \(String(format: "%02d", minutes % 60))M"
+            : "\(minutes)M"
+        return "\(sets) · \(duration)"
     }
 
-    /// Total session tonnage (weight × reps for completed working sets).
-    private var tonnageLabel: String {
-        let total = (session.exercises ?? [])
-            .flatMap { $0.sets ?? [] }
-            .filter { $0.isComplete && !$0.isWarmup }
-            .reduce(0.0) { $0 + $1.weight * Double($1.reps) }
-        if total >= 1000 {
-            return String(format: "%.1fk", total / 1000)
+    private var accessibilityText: String {
+        var parts = [
+            session.displayName,
+            session.startedAt.formatted(.dateTime.weekday(.wide).month(.wide).day()),
+            workingSetCount == 1 ? "1 set" : "\(workingSetCount) sets",
+        ]
+        if let minutes = durationMinutes {
+            parts.append(minutes == 1 ? "1 minute" : "\(minutes) minutes")
         }
-        return "\(Int(total))"
+        let unitName = unit == .kg ? "kilograms" : "pounds"
+        parts.append("\(Int(tonnage.rounded()).formatted()) \(unitName) total")
+        if let prs {
+            // Same wording as the in-workout PR banner.
+            let kinds = prs.kinds.map(\.spokenName).joined(separator: ", ")
+            parts.append(prs.count == 1
+                ? "Personal record, \(kinds)"
+                : "\(prs.count) personal records: \(kinds)")
+        }
+        return parts.joined(separator: ", ")
+    }
+
+    static func shortLabel(_ kind: PRKind) -> String {
+        switch kind {
+        case .weight: return "Weight"
+        case .reps:   return "Reps"
+        case .volume: return "Vol"
+        case .e1RM:   return "e1RM"
+        }
     }
 }
 
@@ -173,9 +186,14 @@ private struct SessionHistoryRowPreviewHost: View {
     var body: some View {
         VStack(spacing: 0) {
             if let session = sessions.first {
-                SessionHistoryRow(session: session, prBadges: ["PR · e1RM"])
+                SessionHistoryRow(session: session, prs: SessionPRs(kinds: [.e1RM], count: 1))
                 BRUDivider(.hair)
-                SessionHistoryRow(session: session, prBadges: [])
+                SessionHistoryRow(
+                    session: session,
+                    prs: SessionPRs(kinds: [.weight, .reps, .volume, .e1RM], count: 4)
+                )
+                BRUDivider(.hair)
+                SessionHistoryRow(session: session)
             } else {
                 Text("No sessions")
                     .font(BRUFont.bodyDefault)

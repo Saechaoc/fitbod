@@ -63,6 +63,7 @@ public enum ProgressHomeRoute: Hashable, Sendable {
 
 public struct ProgressHomeView: View {
     @Binding public var path: NavigationPath
+    @Environment(\.weightUnit) private var weightUnit
     @Query private var recentSessionExercises: [SessionExercise]
     @Query private var completedSessions: [Session]
     @Query private var allExercises: [Exercise]
@@ -92,6 +93,7 @@ public struct ProgressHomeView: View {
 
                     ScrollView {
                         LazyVStack(spacing: 0) {
+                            historySection
                             recentSection
                             trendsSection
                             compareSection
@@ -107,10 +109,25 @@ public struct ProgressHomeView: View {
                 routeDestination(route)
             }
             .placeholderPRsDestination()
+            .sessionHistoryDestinations()
         }
     }
 
     // MARK: - Sections
+
+    /// History — every finished workout, newest first.
+    @ViewBuilder
+    private var historySection: some View {
+        BRUSectionHead("History")
+        progressRow(
+            title: "Workouts",
+            subtitle: historySubLabel,
+            identifier: "progress.history"
+        ) {
+            path.append(SessionHistoryRoute.list)
+        }
+        BRUDivider(.ink)
+    }
 
     /// Recent — top 10 most-recently-trained exercises with session count
     /// + last-logged relative date. Tap pushes ExerciseProgressView.
@@ -125,28 +142,9 @@ public struct ProgressHomeView: View {
             )
         } else {
             ForEach(Array(recentExercisesCondensed.enumerated()), id: \.element.id) { index, exercise in
-                Button {
+                progressRow(title: exercise.name, subtitle: recentSubLabel(for: exercise)) {
                     path.append(ExerciseProgressRoute.progress(exercise.id))
-                } label: {
-                    HStack(spacing: 12) {
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(exercise.name)
-                                .font(BRUFont.bodyEmphasis)
-                                .foregroundStyle(Color.bruInk)
-                            Text(recentSubLabel(for: exercise))
-                                .font(BRUFont.labelSmall)
-                                .foregroundStyle(Color.bruMuted)
-                        }
-                        Spacer()
-                        Text("›")
-                            .font(BRUFont.bodyEmphasis)
-                            .foregroundStyle(Color.bruMuted)
-                    }
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 12)
-                    .contentShape(Rectangle())
                 }
-                .buttonStyle(.plain)
 
                 if index < recentExercisesCondensed.count - 1 {
                     BRUDivider(.hair)
@@ -162,55 +160,15 @@ public struct ProgressHomeView: View {
     private var trendsSection: some View {
         BRUSectionHead("Trends")
 
-        // Weekly Tonnage row
-        Button {
+        progressRow(title: "Weekly Tonnage", subtitle: weeklyTonnageSubLabel) {
             path.append(ProgressHomeRoute.weeklyTonnage)
-        } label: {
-            HStack(spacing: 12) {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Weekly Tonnage")
-                        .font(BRUFont.bodyEmphasis)
-                        .foregroundStyle(Color.bruInk)
-                    Text(weeklyTonnageSubLabel)
-                        .font(BRUFont.labelSmall)
-                        .foregroundStyle(Color.bruMuted)
-                }
-                Spacer()
-                Text("›")
-                    .font(BRUFont.bodyEmphasis)
-                    .foregroundStyle(Color.bruMuted)
-            }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 12)
-            .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
 
         BRUDivider(.hair)
 
-        // Personal Records row
-        Button {
+        progressRow(title: "Personal Records", subtitle: allPRsSubLabel) {
             path.append(ProgressHomeRoute.allPRs)
-        } label: {
-            HStack(spacing: 12) {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Personal Records")
-                        .font(BRUFont.bodyEmphasis)
-                        .foregroundStyle(Color.bruInk)
-                    Text(allPRsSubLabel)
-                        .font(BRUFont.labelSmall)
-                        .foregroundStyle(Color.bruMuted)
-                }
-                Spacer()
-                Text("›")
-                    .font(BRUFont.bodyEmphasis)
-                    .foregroundStyle(Color.bruMuted)
-            }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 12)
-            .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
 
         BRUDivider(.ink)
     }
@@ -223,28 +181,9 @@ public struct ProgressHomeView: View {
         BRUSectionHead("Compare")
 
         if let anchor = completedSessions.first {
-            Button {
+            progressRow(title: "This week vs last week", subtitle: compareSubLabel) {
                 path.append(ProgressHomeRoute.sessionComparison(anchor.id))
-            } label: {
-                HStack(spacing: 12) {
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("This week vs last week")
-                            .font(BRUFont.bodyEmphasis)
-                            .foregroundStyle(Color.bruInk)
-                        Text(compareSubLabel)
-                            .font(BRUFont.labelSmall)
-                            .foregroundStyle(Color.bruMuted)
-                    }
-                    Spacer()
-                    Text("›")
-                        .font(BRUFont.bodyEmphasis)
-                        .foregroundStyle(Color.bruMuted)
-                }
-                .padding(.horizontal, 16)
-                .padding(.vertical, 12)
-                .contentShape(Rectangle())
             }
-            .buttonStyle(.plain)
         } else {
             bruEmptyState(
                 heading: "No comparable session yet",
@@ -285,6 +224,40 @@ public struct ProgressHomeView: View {
                 Text("Session not found")
             }
         }
+    }
+
+    // MARK: - Row
+
+    /// One drill-down row: title, muted sub-line, and a "›" that VoiceOver skips.
+    private func progressRow(
+        title: String,
+        subtitle: String,
+        identifier: String? = nil,
+        action: @escaping () -> Void
+    ) -> some View {
+        Button(action: action) {
+            HStack(spacing: 12) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(title)
+                        .font(BRUFont.bodyEmphasis)
+                        .foregroundStyle(Color.bruInk)
+                    Text(subtitle)
+                        .font(BRUFont.labelSmall)
+                        .foregroundStyle(Color.bruMuted)
+                }
+                Spacer()
+                Text("›")
+                    .font(BRUFont.bodyEmphasis)
+                    .foregroundStyle(Color.bruMuted)
+                    .accessibilityHidden(true)
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
+            .frame(minHeight: 44)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityIdentifier(identifier ?? "")
     }
 
     // MARK: - BRU empty state
@@ -338,11 +311,12 @@ public struct ProgressHomeView: View {
             $0.exercise?.id == exercise.id && $0.session?.completedAt != nil
         }
         let count = sessionsForEx.count
+        let sessions = count == 1 ? "1 session" : "\(count) sessions"
         guard let lastDate = sessionsForEx.compactMap(\.session?.startedAt).max() else {
-            return "\(count) sessions"
+            return sessions
         }
         let rel = lastDate.formatted(.relative(presentation: .named))
-        return "\(count) sessions · last logged \(rel)"
+        return "\(sessions) · last logged \(rel)"
     }
 
     private var weeklyTonnageSubLabel: String {
@@ -363,12 +337,29 @@ public struct ProgressHomeView: View {
         if total <= 0 {
             return "Log a workout to see this week's tonnage."
         }
-        return "\(Int(total.rounded())) kg this week"
+        return "\(Int(total.rounded()).formatted()) \(weightUnit.rawValue) this week"
     }
 
+    private var historySubLabel: String {
+        guard let last = completedSessions.first else {
+            return "Finish a workout to see it here."
+        }
+        let count = completedSessions.count
+        let finished = count == 1 ? "1 finished" : "\(count) finished"
+        return "\(finished) · last \(last.startedAt.formatted(.relative(presentation: .named)))"
+    }
+
+    /// Counts exercises with finished work, not the whole catalog.
     private var allPRsSubLabel: String {
-        let exerciseCount = allExercises.count
-        return "Browse PRs across \(exerciseCount) exercises"
+        let trained = Set(recentSessionExercises.compactMap { se -> UUID? in
+            guard se.session?.completedAt != nil else { return nil }
+            return se.exercise?.id
+        }).count
+        switch trained {
+        case 0:  return "Finish a workout to set your first records."
+        case 1:  return "Records for 1 exercise"
+        default: return "Records for \(trained) exercises"
+        }
     }
 
     private var compareSubLabel: String {

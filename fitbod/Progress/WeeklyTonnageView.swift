@@ -113,6 +113,7 @@ public struct WeeklyTonnageView: View {
 private struct WeeklyTonnageChartHost: View {
     @Query private var sets: [SetEntry]
     @Query private var userSettingsList: [UserSettings]
+    @Environment(\.weightUnit) private var weightUnit
     let filterState: ChartFilterState
     let provider: MuscleVolumeProvider
     let onBarTap: (Date) -> Void
@@ -172,11 +173,9 @@ private struct WeeklyTonnageChartHost: View {
 
     private func heroSummary(bars: [WeeklyTonnageBar]) -> some View {
         let total = bars.reduce(0.0) { $0 + $1.totalTonnage }
-        let totalKg = Int(total.rounded())
-        let unitLabel = "KG"
-        let totalFormatted = totalKg >= 1_000
-            ? String(format: "%d,%03d", totalKg / 1_000, totalKg % 1_000)
-            : "\(totalKg)"
+        // Tonnage mixes every exercise, so it reads in the app-wide unit.
+        let totalFormatted = Int(total.rounded()).formatted()
+        let unitLabel = weightUnit.rawValue.uppercased()
 
         return HStack(alignment: .lastTextBaseline) {
             VStack(alignment: .leading, spacing: 4) {
@@ -237,7 +236,7 @@ private struct WeeklyTonnageChartHost: View {
                         // Baseline mode: single bruInk bar
                         BarMark(
                             x: .value("Week", week.weekStart, unit: .weekOfYear),
-                            y: .value("Tonnage (kg)", week.totalTonnage)
+                            y: .value("Tonnage (\(weightUnit.rawValue))", week.totalTonnage)
                         )
                         .foregroundStyle(Color.bruInk)
                         .cornerRadius(0)
@@ -252,7 +251,7 @@ private struct WeeklyTonnageChartHost: View {
                         ForEach(week.muscleBreakdown ?? [], id: \.muscleID) { slice in
                             BarMark(
                                 x: .value("Week", week.weekStart, unit: .weekOfYear),
-                                y: .value("Tonnage (kg)", slice.tonnage)
+                                y: .value("Tonnage (\(weightUnit.rawValue))", slice.tonnage)
                             )
                             .foregroundStyle(by: .value("Muscle", slice.muscleName))
                             .cornerRadius(0)
