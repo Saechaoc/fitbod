@@ -161,7 +161,11 @@ public enum DeloadAdvisor {
             },
             sortBy: [SortDescriptor(\.startedAt, order: .reverse)]
         )
-        let allRecentSessions = (try? context.fetch(sessionDescriptor)) ?? []
+        let allRecentSessions = ((try? context.fetch(sessionDescriptor)) ?? [])
+            // Finished workouts only: a workout still being logged is not
+            // one of "the last 3 sessions", and its half-done sets would
+            // skew every signal.
+            .filter { $0.completedAt != nil }
 
         // --- Sig-1: top-set e1RM drop ---
         var sig1: Double? = nil
@@ -244,9 +248,11 @@ public enum DeloadAdvisor {
 
         // --- Sig-3: missed top of rep range ---
         var sig3: Double? = nil
-        // Take the last 3 sessions (any intent) and count working sets vs misses.
+        // Take the last 3 sessions (any intent) and count working sets vs
+        // misses. Like Sig-1 and Sig-2 it needs the full window: the banner
+        // says "over last 3 sessions", and one short session is no trend.
         let last3 = Array(allRecentSessions.prefix(3))
-        if !last3.isEmpty {
+        if last3.count == 3 {
             var total = 0
             var missed = 0
             for session in last3 {

@@ -187,6 +187,63 @@ struct DeloadAdvisorTests {
         #expect(hasSig3)
     }
 
+    @Test("Sig-3 needs three finished sessions before it can fire")
+    func sig3NeedsThreeSessions() throws {
+        let ctx = try FatigueTestFixtures.makeContext()
+        let ex = try makeBench(ctx)
+        let monday = mondayOfThisWeek()
+        // Two sessions, every set short of the top: not yet a trend.
+        try insertSessions(
+            ctx, ex: ex, weekStart: monday,
+            weightsReps: [(100, 5), (100, 5)],
+            targetRepsHigh: 8
+        )
+        let report = DeloadAdvisor.signalReport(weekStart: monday, in: ctx, settings: defaultSettings(ctx))
+        #expect(report.sig3_missedTopRatio == nil)
+        #expect(report.firedSignals.isEmpty)
+    }
+
+    @Test("A workout still being logged does not count toward the signals")
+    func unfinishedWorkoutIsIgnored() throws {
+        let ctx = try FatigueTestFixtures.makeContext()
+        let ex = try makeBench(ctx)
+        let monday = mondayOfThisWeek()
+        // Three finished sessions that hit the top of the range.
+        try insertSessions(
+            ctx, ex: ex, weekStart: monday,
+            weightsReps: [(100, 8), (100, 8), (100, 8)],
+            targetRepsHigh: 8
+        )
+        // Today's unfinished workout, newer than all of them, with three
+        // short sets. Counted, it would make 3 of 5 sets misses (60%).
+        let live = Session()
+        live.startedAt = monday
+        live.routineSnapshotName = "Test"
+        live.intentRaw = Intent.strength.rawValue
+        ctx.insert(live)
+        let se = SessionExercise()
+        se.session = live
+        se.exercise = ex
+        se.targetRepsHigh = 8
+        ctx.insert(se)
+        for i in 0..<3 {
+            let entry = SetEntry()
+            entry.sessionExercise = se
+            entry.orderIndex = i
+            entry.weight = 100
+            entry.reps = 5
+            entry.isComplete = true
+            entry.setTypeRaw = "working"
+            entry.completedAt = monday
+            ctx.insert(entry)
+        }
+        try ctx.save()
+
+        let report = DeloadAdvisor.signalReport(weekStart: monday, in: ctx, settings: defaultSettings(ctx))
+        #expect(report.sig3_missedTopRatio == 0)
+        #expect(report.firedSignals.isEmpty)
+    }
+
     // MARK: - 5. Multi-signal OR: any single signal → non-nil
 
     @Test("Any single signal firing → advisory non-nil (multi-signal OR)")
