@@ -27,12 +27,12 @@ fix_summary:
   fixed: 8
   skipped: 0
   fix_commits:
-    - CR-01/CR-02: 3b06c99
-    - WR-01: 225ae3b
-    - WR-02/WR-03: 05cf092
-    - WR-04: c830210
-    - WR-05: 6509956
-    - IN-01: 068bf70
+    - CR-01/CR-02: 64de079
+    - WR-01: c0e9800
+    - WR-02/WR-03: 38b02e9
+    - WR-04: 6239a6c
+    - WR-05: dbc7cab
+    - IN-01: aae4652
 ---
 
 # Phase 8: Code Review Report
@@ -50,7 +50,7 @@ Phase 8 delivers `TodayResolver`, `BlockLifecycleService`, `TrainingDaysWriter`,
 
 ## Critical Issues
 
-### CR-01: `SessionFactory.start` never sets `session.slot` — rotation resolver permanently returns slot 0  [FIXED — 3b06c99]
+### CR-01: `SessionFactory.start` never sets `session.slot` — rotation resolver permanently returns slot 0  [FIXED — 64de079]
 
 **File:** `fitbod/Sessions/SessionFactory.swift:110-140` / `fitbod/Views/TodayView.swift:366-379` / `fitbod/Views/TodayView.swift:398-401`
 
@@ -111,7 +111,7 @@ private func startWorkout(template: SessionTemplate, slot: SplitSessionSlot) {
 
 ---
 
-### CR-02: `TodayView` collapses `.emptySplit` into `.restDay` display path, violating spec §5 and the resolver's own contract  [FIXED — 3b06c99]
+### CR-02: `TodayView` collapses `.emptySplit` into `.restDay` display path, violating spec §5 and the resolver's own contract  [FIXED — 64de079]
 
 **File:** `fitbod/Views/TodayView.swift:374-378`
 
@@ -152,7 +152,7 @@ case .noBlock:
 
 ## Warnings
 
-### WR-01: `TodayResolver.resolveRotation` sorts by `startedAt` — spec review requirement says `completedAt desc`  [FIXED — 225ae3b]
+### WR-01: `TodayResolver.resolveRotation` sorts by `startedAt` — spec review requirement says `completedAt desc`  [FIXED — c0e9800]
 
 **File:** `fitbod/Periodization/TodayResolver.swift:106-108`
 
@@ -169,7 +169,7 @@ let descriptor = FetchDescriptor<Session>(
 
 ---
 
-### WR-02: `ArchivedBlockConfig.write` drops `BlockPhase.notes` — data loss, spec §6 "full BlockPhase field mirror" violated  [FIXED — 05cf092]
+### WR-02: `ArchivedBlockConfig.write` drops `BlockPhase.notes` — data loss, spec §6 "full BlockPhase field mirror" violated  [FIXED — 38b02e9]
 
 **File:** `fitbod/Models/ArchivedBlockConfig.swift:192-202`
 
@@ -189,7 +189,7 @@ ArchivedPhaseDTO(
 
 ---
 
-### WR-03: `ArchivedBlockConfig.write` drops exercise `notes` and hardcodes `generateWarmups: false` — data loss, spec §6 "full SessionExerciseTemplate prescription mirror" violated  [FIXED — 05cf092]
+### WR-03: `ArchivedBlockConfig.write` drops exercise `notes` and hardcodes `generateWarmups: false` — data loss, spec §6 "full SessionExerciseTemplate prescription mirror" violated  [FIXED — 38b02e9]
 
 **File:** `fitbod/Models/ArchivedBlockConfig.swift:211-231`
 
@@ -211,7 +211,7 @@ ArchivedExerciseDTO(
 
 ---
 
-### WR-04: `BlockLifecycleService.end` has no guard — can archive a draft or ready block, producing corrupt state  [FIXED — c830210]
+### WR-04: `BlockLifecycleService.end` has no guard — can archive a draft or ready block, producing corrupt state  [FIXED — 6239a6c]
 
 **File:** `fitbod/Periodization/BlockLifecycleService.swift:113-123`
 
@@ -238,7 +238,7 @@ Add `case notActive` to `BlockLifecycleError` and a corresponding `BlockLifecycl
 
 ---
 
-### WR-05: `TrainingDaysWriterTests.regionChangeDoesNotResort` is tautological — does not prove region-change stability  [FIXED — 6509956]
+### WR-05: `TrainingDaysWriterTests.regionChangeDoesNotResort` is tautological — does not prove region-change stability  [FIXED — dbc7cab]
 
 **File:** `fitbodTests/TrainingDaysWriterTests.swift:51-84`
 
@@ -270,7 +270,7 @@ func regionChangeDoesNotResort() throws {
 
 ## Info
 
-### IN-01: `TodayResolverTests` missing explicit "repeat" rotation behavior test (spec §9)  [FIXED — 068bf70]
+### IN-01: `TodayResolverTests` missing explicit "repeat" rotation behavior test (spec §9)  [FIXED — aae4652]
 
 **File:** `fitbodTests/TodayResolverTests.swift`
 

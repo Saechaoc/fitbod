@@ -26,7 +26,7 @@ metrics:
 
 | Task | Name | Commit | Files |
 |------|------|--------|-------|
-| 1 | Increase footer top padding (spacing-only) | e6abd05 | fitbod/Periodization/BlockBuilderView.swift |
+| 1 | Increase footer top padding (spacing-only) | 0d12a6f | fitbod/Periodization/BlockBuilderView.swift |
 
 ---
 
@@ -89,7 +89,7 @@ None. This is a pure spacing change with no new network endpoints, auth paths, f
 ## Self-Check
 
 - [x] `fitbod/Periodization/BlockBuilderView.swift` modified — confirmed
-- [x] Commit `e6abd05` exists — confirmed
+- [x] Commit `0d12a6f` exists — confirmed
 - [x] `.padding(.top, 24)` set — verified via grep
 - [x] `bottomActionHeight = 86` set — verified via grep
 - [x] All three guardrail suites GREEN — confirmed by xcodebuild output

@@ -143,17 +143,17 @@ The `saveIfValid` `draft.isActive = true` line is preserved exactly as today's b
 | `fitbodTests/BlockBuilderViewCopyTests.swift`              | Line 36 anchor swap                                                                     |
 | `fitbodTests/NewBlockBuilderFidelityTests.swift`           | requiredType append + requiredCopy line ~116 swap                                       |
 
-Single atomic commit on `main`: **`dc58019`** (`feat(new-block): START FROM TEMPLATE band + SAVE TEMPLATE CTA (260528-dum)`).
+Single atomic commit on `main`: **`9dbee51`** (`feat(new-block): START FROM TEMPLATE band + SAVE TEMPLATE CTA (260528-dum)`).
 
 ## Self-Check
 
 | Claim                                                              | Verification                                                                          |
 | ------------------------------------------------------------------ | ------------------------------------------------------------------------------------- |
-| `fitbod/Periodization/BlockBuilderView.swift` modified             | `git show --stat dc58019` lists it                                                    |
-| `fitbodTests/BlockBuilderViewCopyTests.swift` modified             | `git show --stat dc58019` lists it                                                    |
-| `fitbodTests/NewBlockBuilderFidelityTests.swift` modified          | `git show --stat dc58019` lists it                                                    |
-| Commit `dc58019` exists                                            | `git log --oneline -3` shows it                                                       |
+| `fitbod/Periodization/BlockBuilderView.swift` modified             | `git show --stat 9dbee51` lists it                                                    |
+| `fitbodTests/BlockBuilderViewCopyTests.swift` modified             | `git show --stat 9dbee51` lists it                                                    |
+| `fitbodTests/NewBlockBuilderFidelityTests.swift` modified          | `git show --stat 9dbee51` lists it                                                    |
+| Commit `9dbee51` exists                                            | `git log --oneline -3` shows it                                                       |
 | Three test suites GREEN                                            | `xcodebuild test` printed `** TEST SUCCEEDED **`                                      |
-| No out-of-scope files staged                                       | `git show --stat dc58019` shows exactly 3 files                                       |
+| No out-of-scope files staged                                       | `git show --stat 9dbee51` shows exactly 3 files                                       |
 
 ## Self-Check: PASSED

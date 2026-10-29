@@ -15,12 +15,12 @@ New Block now saves a reusable INACTIVE template, has an editable Days Per Week 
 ## Commits (on `main`)
 | Task | Commit | What |
 |------|--------|------|
-| 1 | `a532157` | Save inactive (`isActive=false`) + strip New Block activation + delete "WILL ACTIVATE ON SAVE"/days badge row + Hypertrophy Meso phase population |
-| 2 | `a73921a` | Editable Days Per Week −/+ stepper (reuses `NewBlockStepperButton`), clamp `1...7`; "3–6" hint dropped (didn't fit the 74pt band; CONTEXT permits) |
-| 3 | `0a4900b` | Replaced inline preset chips with STARTING POINT summary row + CHANGE → `NewBlockTemplateSheet` (`.sheet`, title "Start From Template", 6 full-width non-truncating rows, `.medium` detent); `NewBlockTemplatePresetsBand` removed; `NewBlockPresetChip` kept |
-| 4 | `e066d18` | `NewBlockSettingsSectionHeader` ("BLOCK SETTINGS"); 4-zone order; bottom-clip fix via `GeometryReader` → `.padding(.bottom, bottomActionHeight + geo.safeAreaInsets.bottom + sectionGap)` (runtime, not hardcoded); `draftID` keying preserved |
-| 5 | `4e441b8` | Bottom bar polish: balanced full-height halves, `ctaTracking` token (killed bare literal), legible disabled "NAME FIRST ↑"; `SAVE TEMPLATE ▸` / `SAVE CHANGES ▸` / top-bar `SAVE` byte-identical |
-| 6 | `b3d5daa` | Tests: removed WILL-ACTIVATE copy anchor (+ added STARTING POINT / Start From Template anchors); flipped fidelity `draft.isActive` → `!isActive`; swapped required-type `NewBlockTemplatePresetsBand` → `NewBlockStartingPointBand`; new `BlockBuilderViewActivationTests` (save-inactive + clamp) |
+| 1 | `1ac99ce` | Save inactive (`isActive=false`) + strip New Block activation + delete "WILL ACTIVATE ON SAVE"/days badge row + Hypertrophy Meso phase population |
+| 2 | `d1b52cd` | Editable Days Per Week −/+ stepper (reuses `NewBlockStepperButton`), clamp `1...7`; "3–6" hint dropped (didn't fit the 74pt band; CONTEXT permits) |
+| 3 | `003d3e3` | Replaced inline preset chips with STARTING POINT summary row + CHANGE → `NewBlockTemplateSheet` (`.sheet`, title "Start From Template", 6 full-width non-truncating rows, `.medium` detent); `NewBlockTemplatePresetsBand` removed; `NewBlockPresetChip` kept |
+| 4 | `8f47162` | `NewBlockSettingsSectionHeader` ("BLOCK SETTINGS"); 4-zone order; bottom-clip fix via `GeometryReader` → `.padding(.bottom, bottomActionHeight + geo.safeAreaInsets.bottom + sectionGap)` (runtime, not hardcoded); `draftID` keying preserved |
+| 5 | `f2f8622` | Bottom bar polish: balanced full-height halves, `ctaTracking` token (killed bare literal), legible disabled "NAME FIRST ↑"; `SAVE TEMPLATE ▸` / `SAVE CHANGES ▸` / top-bar `SAVE` byte-identical |
+| 6 | `0a7ec78` | Tests: removed WILL-ACTIVATE copy anchor (+ added STARTING POINT / Start From Template anchors); flipped fidelity `draft.isActive` → `!isActive`; swapped required-type `NewBlockTemplatePresetsBand` → `NewBlockStartingPointBand`; new `BlockBuilderViewActivationTests` (save-inactive + clamp) |
 
 ## Verification (independently re-run by orchestrator)
 - `xcodebuild build` → **BUILD SUCCEEDED** (iPhone 17 Pro Max sim; iPhone 16 not installed on this machine).

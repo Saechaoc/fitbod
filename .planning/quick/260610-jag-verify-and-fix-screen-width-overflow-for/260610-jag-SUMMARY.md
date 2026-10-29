@@ -144,7 +144,7 @@ All other visually-accessible screens render cleanly at 390pt. BlockBuilderView 
 
 **Decision trail:** Live-session visual capture was impossible (SwiftData in-memory fetch cache ignores external SQLite injection; simctl has no tap injection). User confirmed they rarely use the live session screen, so no lived-experience ground truth existed. Root cause traced to UI-SPEC v2 line 376 ("RPE inline-chip row | 5 chips") — the spec itself is geometrically infeasible in one line at ANY supported width (min ~532pt vs ~350pt @ 390 / ~400pt @ 440). User chose **Option C-equivalent: two-line row** via AskUserQuestion (over single-chip-expand).
 
-**Fix applied** (`fitbod/Sessions/SetRow.swift`, commit `4bf6f19`):
+**Fix applied** (`fitbod/Sessions/SetRow.swift`, commit `b719adb`):
 - Line 1: `S{N}` label (32) + PreviousColumn (80) + PrescriptionWeightCell (60) + reps TextField (40) + Spacer + ✎ note (44) + completion glyph (44) = 340pt min ≤ 350pt available ✓
 - Line 2: InlineRPEChipRow + SetTypeChip + Spacer, indented `.padding(.leading, 40)` to align under PREV
 - All modifiers/gestures/sheets/a11y preserved verbatim; InlineRPEChipRow.swift and SetTypeChip.swift untouched; outer VStack + plate-disclosure structure unchanged

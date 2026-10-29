@@ -1,6 +1,6 @@
 {
   "audited_at": "2026-10-04T18:17:41.135561+00:00",
-  "head": "27687f8b55fdda7c9b6ea5b696a2f52eaa896fce",
+  "head": "2bb5a91d03ec8fe1e4920d2e49483dfb7615cb5c",
   "working_tree": "Includes existing uncommitted user/Claude and milestone changes. This audit made documentation corrections only.",
   "native_build": {
     "command": "xcodebuild -project fitbod.xcodeproj -scheme fitbod -configuration Debug -destination 'generic/platform=iOS Simulator' -derivedDataPath /private/tmp/fitbod-codex-m1-audit-build-20261004 build CODE_SIGNING_ALLOWED=NO",

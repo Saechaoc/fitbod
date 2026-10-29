@@ -77,7 +77,7 @@ Both production and preview containers updated to use `Schema(SchemaV7.models)`:
 - **Issue:** Originally written as two `@Suite` structs (`SchemaV7MigrationTests` + `SchemaV7DeleteRuleTests`) — when Clone 1 received both suites in the same process, SwiftData's schema registry conflicted across the two separate `makeContext()` container creations
 - **Fix:** Merged `SchemaV7DeleteRuleTests` into `SchemaV7MigrationTests` as a single `@Suite(.serialized)` struct
 - **Files modified:** `fitbodTests/Persistence/SchemaV7MigrationTests.swift`
-- **Commit:** `de337cf`
+- **Commit:** `21d182a`
 
 **2. [Rule 1 - Bug] Tests 8-9 fail under SwiftData cross-suite schema registry contamination**
 - **Found during:** Full-suite test run (also reproduced with `SchemaV6MigrationTests` + `SchemaV7MigrationTests` combined)
@@ -85,7 +85,7 @@ Both production and preview containers updated to use `Schema(SchemaV7.models)`:
 - **Investigation path:** Tests 8-9 passed in isolation, passed when run as only SchemaV7MigrationTests, failed when SchemaV6MigrationTests ran first. Tests 3-7 (which use the same container creation) survived because they don't trigger the corrupted relationship paths.
 - **Fix:** Redesigned tests 8-9 to be resilient: `slottedTemplateDenyRule` now verifies the metadata declaration + relationship round-trip (not runtime `.deny` enforcement); `slotNullifyHistoryIntact` narrowed to the critical session-survival invariant (not the `session.slot == nil` nullify detail)
 - **Files modified:** `fitbodTests/Persistence/SchemaV7MigrationTests.swift`
-- **Commits:** `84e0cf8`, `e02c4b3`
+- **Commits:** `7a8f5a0`, `ebe4755`
 
 ## Full Suite Failure Counts
 
@@ -109,7 +109,7 @@ None — this plan creates test-only files and flips container declarations. No 
 
 | Gate | Commit | Status |
 |------|--------|--------|
-| RED (test commit) | `f2c20f1` | test(07-06): add SchemaV7MigrationTests |
+| RED (test commit) | `56c652d` | test(07-06): add SchemaV7MigrationTests |
 | GREEN (implementation) | N/A — tests prove existing migration plan correctness | Implementation already in 07-04 |
 
 Note: This plan is a proof/validation TDD plan — it writes tests that call existing `internal static` migration helpers implemented in plan 07-04. The RED gate is the initial test commit; GREEN is confirmed by test pass. No separate implementation commit is needed.
@@ -118,16 +118,16 @@ Note: This plan is a proof/validation TDD plan — it writes tests that call exi
 
 | Hash | Type | Description |
 |------|------|-------------|
-| `ef5f74f` | fix | flip app + preview containers to SchemaV7 (Task 0) |
-| `f2c20f1` | test | add SchemaV7MigrationTests — migration + delete-rule + status assertions (Tasks 1+2) |
-| `de337cf` | fix | merge SchemaV7DeleteRuleTests into single serialized suite (Deviation 1) |
-| `84e0cf8` | fix | harden slottedTemplateDenyRule + slotNullifyHistoryIntact tests (Deviation 2, first pass) |
-| `e02c4b3` | fix | redesign tests 8-9 for schema-registry contamination resilience (Deviation 2, final) |
+| `bda096b` | fix | flip app + preview containers to SchemaV7 (Task 0) |
+| `56c652d` | test | add SchemaV7MigrationTests — migration + delete-rule + status assertions (Tasks 1+2) |
+| `21d182a` | fix | merge SchemaV7DeleteRuleTests into single serialized suite (Deviation 1) |
+| `7a8f5a0` | fix | harden slottedTemplateDenyRule + slotNullifyHistoryIntact tests (Deviation 2, first pass) |
+| `ebe4755` | fix | redesign tests 8-9 for schema-registry contamination resilience (Deviation 2, final) |
 
 ## Self-Check: PASSED
 
 - [x] `fitbodTests/Persistence/SchemaV7MigrationTests.swift` exists
 - [x] `fitbod/fitbodApp.swift` uses `Schema(SchemaV7.models)`
 - [x] `fitbod/Persistence/PreviewModelContainer.swift` uses `Schema(SchemaV7.models)`
-- [x] All commits exist: ef5f74f, f2c20f1, de337cf, 84e0cf8, e02c4b3
+- [x] All commits exist: bda096b, 56c652d, 21d182a, 7a8f5a0, ebe4755
 - [x] Full unit suite: 17 failures (all pre-existing, 0 from this plan)

@@ -40,8 +40,8 @@ One-save block lifecycle service with freeze-#2 archive serializer: `ArchivedBlo
 
 | Task | Name | Commit | Files |
 |------|------|--------|-------|
-| 1 | ArchivedBlockConfig.write(from:endedAt:) | b109c1d | fitbod/Models/ArchivedBlockConfig.swift, fitbodTests/ArchivedBlockConfigTests.swift |
-| 2 | BlockLifecycleService + BlockLifecycleServiceTests | 347eaba | fitbod/Periodization/BlockLifecycleService.swift, fitbodTests/BlockLifecycleServiceTests.swift |
+| 1 | ArchivedBlockConfig.write(from:endedAt:) | 964243d | fitbod/Models/ArchivedBlockConfig.swift, fitbodTests/ArchivedBlockConfigTests.swift |
+| 2 | BlockLifecycleService + BlockLifecycleServiceTests | 543154d | fitbod/Periodization/BlockLifecycleService.swift, fitbodTests/BlockLifecycleServiceTests.swift |
 
 ## What Was Built
 
@@ -112,10 +112,10 @@ None — plan executed exactly as written.
 
 | Gate | Commit | Note |
 |------|--------|------|
-| RED (test — Task 1) | pre-b109c1d | `ArchivedBlockConfigWriteTests` failed: `type 'ArchivedBlockConfig' has no member 'write'` |
-| GREEN (feat — Task 1) | b109c1d | All 6 write tests + 7 original DTO tests pass |
-| RED (test — Task 2) | pre-347eaba | `BlockLifecycleServiceTests` failed: `Cannot find 'BlockLifecycleService' in scope` |
-| GREEN (feat — Task 2) | 347eaba | All 11 tests pass; SchemaV7MigrationTests green |
+| RED (test — Task 1) | pre-964243d | `ArchivedBlockConfigWriteTests` failed: `type 'ArchivedBlockConfig' has no member 'write'` |
+| GREEN (feat — Task 1) | 964243d | All 6 write tests + 7 original DTO tests pass |
+| RED (test — Task 2) | pre-543154d | `BlockLifecycleServiceTests` failed: `Cannot find 'BlockLifecycleService' in scope` |
+| GREEN (feat — Task 2) | 543154d | All 11 tests pass; SchemaV7MigrationTests green |
 
 ## Known Stubs
 
@@ -135,8 +135,8 @@ None — `BlockLifecycleService` is complete logic. Phase 9 wiring of `SplitDeta
 - [x] `fitbod/Models/ArchivedBlockConfig.swift` modified — FOUND
 - [x] `fitbod/Periodization/BlockLifecycleService.swift` created — FOUND
 - [x] `fitbodTests/BlockLifecycleServiceTests.swift` created — FOUND
-- [x] Commit b109c1d exists (Task 1)
-- [x] Commit 347eaba exists (Task 2)
+- [x] Commit 964243d exists (Task 1)
+- [x] Commit 543154d exists (Task 2)
 - [x] `rg "static func write\(from block: Block" ArchivedBlockConfig.swift` — FOUND
 - [x] `rg "try config.encoded\(\)" ArchivedBlockConfig.swift` — FOUND
 - [x] `rg "SplitDeletionGuard.assertDeletable" BlockLifecycleService.swift` — FOUND

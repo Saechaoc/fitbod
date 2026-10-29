@@ -38,8 +38,8 @@ CR-02 carry-over resolved: `SessionFactory.start` gains `activeBlock: Block? = n
 
 | Task | Name | Commit | Files |
 |------|------|--------|-------|
-| 1 | Migrate SessionFactory.start to activeBlock parameter + deprecate legacy edge | 2ca96df | fitbod/Sessions/SessionFactory.swift, fitbod/Models/SessionTemplate.swift, fitbodTests/SessionFactoryTests.swift |
-| 2 | SessionFactoryTests — prescription uses activeBlock not template.block | ee16260 | fitbodTests/SessionFactoryTests.swift |
+| 1 | Migrate SessionFactory.start to activeBlock parameter + deprecate legacy edge | f93c731 | fitbod/Sessions/SessionFactory.swift, fitbod/Models/SessionTemplate.swift, fitbodTests/SessionFactoryTests.swift |
+| 2 | SessionFactoryTests — prescription uses activeBlock not template.block | 32f692a | fitbodTests/SessionFactoryTests.swift |
 
 ## What Was Built
 
@@ -93,7 +93,7 @@ Helper `makeDeloadBlock(ctx:daysAgo:)` builds a Block with a 1-week deload phase
 - **Issue:** The pre-Phase-8 test set `routine.block = block` and asserted `session.block?.id == block.id` via the factory snapshot. After migration the factory ignores `template.block`, so this test would fail.
 - **Fix:** Updated the test to pass `activeBlock: block` explicitly. The test now exercises the correct Phase 8 code path.
 - **Files modified:** `fitbodTests/SessionFactoryTests.swift`
-- **Commit:** 2ca96df (included in Task 1 commit)
+- **Commit:** f93c731 (included in Task 1 commit)
 
 ## Threat Coverage
 
@@ -110,8 +110,8 @@ None.
 - [x] `fitbod/Sessions/SessionFactory.swift` modified — FOUND
 - [x] `fitbod/Models/SessionTemplate.swift` modified — FOUND
 - [x] `fitbodTests/SessionFactoryTests.swift` modified — FOUND
-- [x] Commit 2ca96df exists (Task 1)
-- [x] Commit ee16260 exists (Task 2)
+- [x] Commit f93c731 exists (Task 1)
+- [x] Commit 32f692a exists (Task 2)
 - [x] `rg "activeBlock: Block" fitbod/Sessions/SessionFactory.swift` — FOUND (line 112)
 - [x] Zero prescription-path `template.block` reads in start(): `rg "template.block" fitbod/Sessions/SessionFactory.swift` returns only doc comment
 - [x] `rg "DEPRECATED.Phase 8" fitbod/Models/SessionTemplate.swift` — FOUND (line 52)

@@ -51,7 +51,7 @@ Three blockers were found: two test failures (a test suite runs against a schema
 
 ### CR-01: `BlockDraftSaveTests` uses `SchemaV5` but creates `Split`/`SplitSessionSlot` (V7-only models)
 
-**Status:** FIXED (commit e653958) — line 17 now `Schema(SchemaV7.models)`. All 9 BlockDraftSaveTests cases pass (were crashing under V5).
+**Status:** FIXED (commit 8c16102) — line 17 now `Schema(SchemaV7.models)`. All 9 BlockDraftSaveTests cases pass (were crashing under V5).
 
 **File:** `fitbodTests/BlockDraftSaveTests.swift:17`
 
@@ -75,7 +75,7 @@ private func makeContext() throws -> ModelContext {
 
 ### CR-02: `addSlot` reads `split.slots?.count` after relationship assignment — potential off-by-one position
 
-**Status:** FIXED (commit e5763a6) — sentinel position + end-pinned stable sort; test mirrors the fix and asserts contiguity. Requires human verification (logic change).
+**Status:** FIXED (commit 25f8140) — sentinel position + end-pinned stable sort; test mirrors the fix and asserts contiguity. Requires human verification (logic change).
 
 **File:** `fitbod/Periodization/SplitDetailView.swift:539-544`
 
@@ -112,7 +112,7 @@ private func addSlot(for template: SessionTemplate) {
 
 ### CR-03: `weekCarousel` reads `block.split?.slots?.count` for completed (archived) blocks — violates spec §6 no-live-template-read rule
 
-**Status:** FIXED (commit c328907) — completed blocks derive scheduledCount from decoded ArchivedBlockConfig; nil/undecodable archive omits the count (no 0/0 lie). rg confirmed no live block.split reads in archived render path. Requires human verification (logic change).
+**Status:** FIXED (commit 627f618) — completed blocks derive scheduledCount from decoded ArchivedBlockConfig; nil/undecodable archive omits the count (no 0/0 lie). rg confirmed no live block.split reads in archived render path. Requires human verification (logic change).
 
 **File:** `fitbod/Periodization/BlockOverviewScreen.swift:474`
 
@@ -138,7 +138,7 @@ let scheduledCount: Int = {
 
 ### WR-01: `startBlank()` is dead code — popover bypasses it, test pin passes incorrectly
 
-**Status:** FIXED (commit c62c403) — popover '+ New block' now calls startBlank(); function kept (test pin still matches). ProgramViewFidelityTests green.
+**Status:** FIXED (commit 578f709) — popover '+ New block' now calls startBlank(); function kept (test pin still matches). ProgramViewFidelityTests green.
 
 **File:** `fitbod/Periodization/ProgramView.swift:283`
 
@@ -156,7 +156,7 @@ BRUActionPopoverItem(title: "+ New block") {
 
 ### WR-02: `try? ctx.save()` silently swallows errors in archive and reorder paths — data loss risk
 
-**Status:** FIXED (commit 9ec4038) — SplitDetailView archive/reorder/remove/moveSlot and BlockOverviewScreen mode/day/end now do/catch with a 'Couldn't save. Try again.' BRU alert. Archive does not dismiss and reverts isArchived on failure. SlotPickerSheet.addSlot and SplitPickerSheet.attachOrSwap try? left as-is (outside cited scope). Requires human verification (error-path control flow).
+**Status:** FIXED (commit b4e26ec) — SplitDetailView archive/reorder/remove/moveSlot and BlockOverviewScreen mode/day/end now do/catch with a 'Couldn't save. Try again.' BRU alert. Archive does not dismiss and reverts isArchived on failure. SlotPickerSheet.addSlot and SplitPickerSheet.attachOrSwap try? left as-is (outside cited scope). Requires human verification (error-path control flow).
 
 **File:** `fitbod/Periodization/SplitDetailView.swift:244` (archive), `283` (commitReorder), `320` (removeSlot), `334` (moveSlot); `fitbod/Periodization/BlockOverviewScreen.swift:189` (end block)
 
@@ -183,7 +183,7 @@ For reorder/remove paths, at minimum log via `os.Logger` rather than `try?`. For
 
 ### WR-03: `NewBlockSplitBand` mismatch hint uses hardcoded amber color instead of `Color.bruAmber` token
 
-**Status:** FIXED (commit bba90f4) — hardcoded RGB replaced with Color.bruAmber. 3 copy-guardrail suites green.
+**Status:** FIXED (commit 4ec24fb) — hardcoded RGB replaced with Color.bruAmber. 3 copy-guardrail suites green.
 
 **File:** `fitbod/Periodization/BlockBuilderView.swift:1964`
 
@@ -198,7 +198,7 @@ For reorder/remove paths, at minimum log via `os.Logger` rather than `try?`. For
 
 ### WR-04: `NewBlockSplitBand` mismatch hint suppressed when `slotCount == 0`, diverging from `BlockOverviewScreen` behavior
 
-**Status:** FIXED (commit bba90f4) — `slotCount > 0` guard dropped; hint now shows whenever a split is attached and counts differ (matches BlockOverviewScreen), hidden only when no split attached. Requires human verification (condition change).
+**Status:** FIXED (commit 4ec24fb) — `slotCount > 0` guard dropped; hint now shows whenever a split is attached and counts differ (matches BlockOverviewScreen), hidden only when no split attached. Requires human verification (condition change).
 
 **File:** `fitbod/Periodization/BlockBuilderView.swift:1960`
 
@@ -216,7 +216,7 @@ if draft.trainingDays.count != slotCount {
 
 ### WR-05: `SplitPickerSheet` uses `List` with `navigationTitle` — BRU contract violation
 
-**Status:** FIXED (commit 83522e4) — replaced List/.navigationTitle with ScrollView + BRUSectionHead("Choose Routine") + row + BRUDivider(.hair) on bruPaper, nav bar hidden (matches SlotPickerSheet).
+**Status:** FIXED (commit 203a2f7) — replaced List/.navigationTitle with ScrollView + BRUSectionHead("Choose Routine") + row + BRUDivider(.hair) on bruPaper, nav bar hidden (matches SlotPickerSheet).
 
 **File:** `fitbod/Periodization/BlockOverviewScreen.swift:1124,1141`
 
@@ -273,7 +273,7 @@ Recommend updating the spec rather than changing the implementation.
 
 ### IN-02: `noWorkoutScheduledEmptyState` "+ NEW ROUTINE" button has a no-op action
 
-**Status:** FIXED (commit 2ecec1d) — wired to present RoutineBuilderView(draft: RoutineDraft()) sheet on Today's own NavigationStack (same flow ProgramView uses). Non-cross-tab. Empty-state copy pin preserved.
+**Status:** FIXED (commit ba0b0cb) — wired to present RoutineBuilderView(draft: RoutineDraft()) sheet on Today's own NavigationStack (same flow ProgramView uses). Non-cross-tab. Empty-state copy pin preserved.
 
 **File:** `fitbod/Views/TodayView.swift:313`
 
@@ -296,7 +296,7 @@ presentingNewRoutineFromEmpty = true
 
 ### IN-03: `BlockOverviewScreen.phaseRow` background uses `BlockPhaseColors.rowTint(for: .intensification)` for ALL "now" rows regardless of actual phase kind
 
-**Status:** FIXED (commit 1e89d17) — phase.kind is available at the call site; now `rowTint(for: phase.kind)`.
+**Status:** FIXED (commit 9bd0ff8) — phase.kind is available at the call site; now `rowTint(for: phase.kind)`.
 
 **File:** `fitbod/Periodization/BlockOverviewScreen.swift:786`
 

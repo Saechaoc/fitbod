@@ -1,10 +1,10 @@
 # Milestone 1 journey audit (2026-10-02, in progress)
 
-Hands-on audit of the workout journey on the iPhone 17e simulator (fresh install, main @ 4f991f1).
+Hands-on audit of the workout journey on the iPhone 17e simulator (fresh install, main @ c8b81f8).
 
 ## Fixed
 
-- `BottomActionBar` stretched to full height and hid the whole routine builder (commit 4f991f1).
+- `BottomActionBar` stretched to full height and hid the whole routine builder (commit c8b81f8).
 
 ## Open: P0 (blocks the journey)
 

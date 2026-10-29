@@ -98,11 +98,11 @@ None — plan executed exactly as written. The `BlockTemplatesTests.swift` exhau
 ## Repo Hygiene Confirmation
 
 - `git add -A` was never used.
-- Only the 10 files listed in `files_modified` were staged across the two commits (`d54c8df` and `8f40d4d`).
+- Only the 10 files listed in `files_modified` were staged across the two commits (`1e8b18f` and `608d123`).
 - Pre-existing WIP files (`.planning/config.json`, `.planning/research/STACK.md`, `CLAUDE.md`, `fitbodTests/NewBlockBuilderFidelityTests.swift`) remain unstaged.
 
 ## Self-Check
 
 **Commits:**
-- `d54c8df` — feat: Task 1 source changes (7 files)
-- `8f40d4d` — test: Task 2 test changes (3 files)
+- `1e8b18f` — feat: Task 1 source changes (7 files)
+- `608d123` — test: Task 2 test changes (3 files)

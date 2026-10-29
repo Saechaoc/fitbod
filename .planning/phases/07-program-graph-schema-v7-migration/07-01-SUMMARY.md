@@ -46,10 +46,10 @@ metrics:
 
 | Task | Name | Commit | Files |
 |------|------|--------|-------|
-| 1 (RED) | SchedulingMode failing test | e9a750c | fitbodTests/SchedulingModeTests.swift |
-| 1 (GREEN) | SchedulingMode enum | 90f9c51 | fitbod/Models/Enums/SchedulingMode.swift |
-| 2 (RED) | ArchivedBlockConfig failing tests | 6b9b48f | fitbodTests/ArchivedBlockConfigTests.swift |
-| 2 (GREEN) | ArchivedBlockConfig DTO | 336ce00 | fitbod/Models/ArchivedBlockConfig.swift |
+| 1 (RED) | SchedulingMode failing test | 70db9c7 | fitbodTests/SchedulingModeTests.swift |
+| 1 (GREEN) | SchedulingMode enum | 6bb5248 | fitbod/Models/Enums/SchedulingMode.swift |
+| 2 (RED) | ArchivedBlockConfig failing tests | 17b9120 | fitbodTests/ArchivedBlockConfigTests.swift |
+| 2 (GREEN) | ArchivedBlockConfig DTO | f43224a | fitbod/Models/ArchivedBlockConfig.swift |
 
 ## What Was Built
 
@@ -91,4 +91,4 @@ No new network endpoints, auth paths, file access patterns, or schema changes at
 - `fitbod/Models/ArchivedBlockConfig.swift` — FOUND
 - `fitbodTests/SchedulingModeTests.swift` — FOUND
 - `fitbodTests/ArchivedBlockConfigTests.swift` — FOUND
-- Commits e9a750c, 90f9c51, 6b9b48f, 336ce00 — all present in git log
+- Commits 70db9c7, 6bb5248, 17b9120, f43224a — all present in git log

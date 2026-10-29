@@ -4,13 +4,13 @@
 **Status:** Ready for planning
 **Scope confirmed by user:** EVERYTHING — visual redesign + List refactor + gestures.
 
-> ⚠️ LARGE single-file change to a churn hotspot (`fitbod/Periodization/BlockBuilderView.swift`, ~1202 lines at HEAD 20a7137). SwiftUI/BRU — NOT web; the brief's "Tailwind/styled-components" phrasing is generic. Keep the diff to the Phases section. Read the file FRESH (Reads in this repo can be stale — cross-check `git show HEAD:`).
+> ⚠️ LARGE single-file change to a churn hotspot (`fitbod/Periodization/BlockBuilderView.swift`, ~1202 lines at HEAD c5b692e). SwiftUI/BRU — NOT web; the brief's "Tailwind/styled-components" phrasing is generic. Keep the diff to the Phases section. Read the file FRESH (Reads in this repo can be stale — cross-check `git show HEAD:`).
 
 <domain>
 ## Task Boundary
 Redesign the Phases section of the New Block editor: per-phase color, timeline/preview bar, phase cards, and the section header — PLUS convert the phase list to a SwiftUI `List` and add gestures (swipe-delete + undo, drag-reorder, inline-editable metric steppers, add-phase type-picker). All inside `BlockBuilderView.swift`. Do not touch `ProgramView.swift` or the shared public `BlockPhaseColors` API (used by 5 other screens).
 
-## Current structure (HEAD 20a7137, post-af6aaff)
+## Current structure (HEAD c5b692e, post-afa03ba)
 - Body: `NavigationStack { ZStack(alignment:.bottom) { VStack { NewBlockTopBar; GeometryReader { ScrollView { VStack(spacing:0) { NameBand; MetricsBand; PhasesHeader; TimelinePreview; ForEach phases { NewBlockPhaseEditorRow }; NewBlockAddPhaseSlot; LinkedRoutinesBand?; errorBand? } .padding(.bottom, actionBar+safeArea) } } }; NewBlockBottomActionBar } }` + sheets/confirms on the NavigationStack.
 - `NewBlockPhasesHeader(phaseCount:addPhase:)` — "PHASES · N" + "+ ADD PHASE" (APPLY PRESET already removed last task).
 - `NewBlockTimelinePreview` — "PREVIEW" + GeometryReader proportional segments, 1.5pt ink outer stroke, height 44; below: "W1" … "W{total}". previewHeight token=120.

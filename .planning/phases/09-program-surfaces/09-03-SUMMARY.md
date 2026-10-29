@@ -48,8 +48,8 @@ metrics:
 
 | Task | Name | Commit | Files |
 |------|------|--------|-------|
-| 1 | EmptySplitFixIt view + SplitDetailRoute destination on Today's stack | 0e76497 | TodayView.swift |
-| 2 | TodayViewBRUCopyTests — pin emptySplit fix-it copy, assert rest-day copy still present | 7f1065e | TodayViewBRUCopyTests.swift |
+| 1 | EmptySplitFixIt view + SplitDetailRoute destination on Today's stack | 5b6fd68 | TodayView.swift |
+| 2 | TodayViewBRUCopyTests — pin emptySplit fix-it copy, assert rest-day copy still present | 124344f | TodayViewBRUCopyTests.swift |
 
 ---
 
@@ -108,8 +108,8 @@ No new network endpoints, auth paths, or trust-boundary schema changes. Threat m
 
 - [x] `fitbod/Views/TodayView.swift` modified — EmptySplitFixIt struct present, SplitDetailRoute destination registered
 - [x] `fitbodTests/TodayViewBRUCopyTests.swift` modified — 3 new tests added
-- [x] Commit 0e76497 exists (Task 1)
-- [x] Commit 7f1065e exists (Task 2)
+- [x] Commit 5b6fd68 exists (Task 1)
+- [x] Commit 124344f exists (Task 2)
 - [x] Build: SUCCEEDED
 - [x] TodayViewBRUCopyTests: 23/23 PASSED
 - [x] `.restDay` / `.noBlock` branches and `noWorkoutScheduledEmptyState` byte-unchanged

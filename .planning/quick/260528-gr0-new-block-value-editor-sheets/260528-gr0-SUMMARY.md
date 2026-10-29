@@ -45,7 +45,7 @@ key_files:
 
 ## Commit
 
-`af6aaff1dfc6c3121a4c3303c3b9f10078509f1e`
+`afa03ba66719d7379894a6ab329e3917d4ca30f0`
 
 ## Build Result
 
@@ -67,6 +67,6 @@ None — plan executed exactly as written.
 
 - `fitbod/Periodization/BlockBuilderView.swift` — exists, contains `NewBlockDurationSheet`, `NewBlockDaysSheet`, `onEditWeeks`, `onEditDays`, all required anchors
 - `fitbodTests/BlockBuilderViewCopyTests.swift` — `"APPLY PRESET"` assertion removed, `"Apply Preset?"` kept
-- Commit `af6aaff` confirmed in git log
+- Commit `afa03ba` confirmed in git log
 - BUILD SUCCEEDED on iPhone 17 simulator
 - All 9 unique test cases passed (5 + 3 + 1)

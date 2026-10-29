@@ -2,7 +2,7 @@
 phase: 08-scheduler-resolver-block-lifecycle
 verified: 2026-06-11T19:55:00Z
 status: human_needed
-score: 18/18 must-have truths source-verified; all 6 phase-8-introduced regressions resolved (plan 08-06, commit de0166b)
+score: 18/18 must-have truths source-verified; all 6 phase-8-introduced regressions resolved (plan 08-06, commit 4d9a84f)
 overrides_applied: 0
 re_verification:
   previous_status: gaps_found
@@ -10,7 +10,7 @@ re_verification:
   gaps_closed:
     - "All 6 phase-8-introduced test failures (SessionBlockSnapshotTests x3, DeloadVolumeApplicationTests x2, WarmupDeloadIntegrationTests x1) now pass"
     - "templateBlockSentinelIgnored stays green — legacy template.block prescription read confirmed dead"
-    - "Production code untouched by plan 08-06 (commit de0166b: 3 test files only)"
+    - "Production code untouched by plan 08-06 (commit 4d9a84f: 3 test files only)"
   gaps_remaining: []
   regressions: []
 deferred: []
@@ -29,7 +29,7 @@ human_verification:
 
 **Verified:** 2026-06-11
 **Status:** human_needed
-**Re-verification:** Yes — after gap closure (plan 08-06, commit de0166b)
+**Re-verification:** Yes — after gap closure (plan 08-06, commit 4d9a84f)
 
 ## Gap Closure Re-verification (Plan 08-06)
 
@@ -37,7 +37,7 @@ human_verification:
 
 | Check | Result |
 |-------|--------|
-| `git show de0166b --stat`: only 3 test files modified | PASS — production code untouched |
+| `git show 4d9a84f --stat`: only 3 test files modified | PASS — production code untouched |
 | `xcodebuild ... -only-testing:fitbodTests/SessionBlockSnapshotTests -only-testing:fitbodTests/DeloadVolumeApplicationTests -only-testing:fitbodTests/WarmupDeloadIntegrationTests -only-testing:fitbodTests/SessionFactoryTests` | PASS — ** TEST SUCCEEDED **, 0 failures |
 | `xcodebuild ... -only-testing:fitbodTests/TodayResolverTests -only-testing:fitbodTests/BlockLifecycleServiceTests` | PASS — ** TEST SUCCEEDED **, 0 failures |
 | `templateBlockSentinelIgnored` isolated run | PASS — legacy template.block read confirmed dead |
@@ -155,5 +155,5 @@ Documented baseline is now **11** pre-existing failures (10 originally documente
 ---
 
 _Initial verified: 2026-06-11_
-_Re-verified: 2026-06-11 (post plan 08-06, commit de0166b)_
+_Re-verified: 2026-06-11 (post plan 08-06, commit 4d9a84f)_
 _Verifier: Claude (gsd-verifier)_

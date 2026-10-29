@@ -57,8 +57,8 @@ metrics:
 
 | Task | Name | Commit | Files |
 |------|------|--------|-------|
-| 1 | Empty-state gate + BLOCKS section + nav destinations + .edit(Block) | 09de6de | ProgramView.swift |
-| 2 | ROUTINES section + update ProgramViewFidelityTests | 0e7208a | ProgramView.swift (routinesSection already in Task 1), ProgramViewFidelityTests.swift |
+| 1 | Empty-state gate + BLOCKS section + nav destinations + .edit(Block) | 3145159 | ProgramView.swift |
+| 2 | ROUTINES section + update ProgramViewFidelityTests | 86c62f5 | ProgramView.swift (routinesSection already in Task 1), ProgramViewFidelityTests.swift |
 
 ---
 
@@ -171,8 +171,8 @@ No new network endpoints, auth paths, or trust-boundary schema changes. All read
 
 - [x] `fitbod/Periodization/ProgramView.swift` exists and modified
 - [x] `fitbodTests/ProgramViewFidelityTests.swift` exists and modified
-- [x] Commit 09de6de exists (Task 1)
-- [x] Commit 0e7208a exists (Task 2)
+- [x] Commit 3145159 exists (Task 1)
+- [x] Commit 86c62f5 exists (Task 2)
 - [x] Build: SUCCEEDED
 - [x] ProgramViewFidelityTests: 7/7 PASSED (including new programViewPinsBlocksAndRoutinesSectionCopy)
 - [x] NewBlockBuilderFidelityTests: all PASSED (3 copy-guardrail suites green)

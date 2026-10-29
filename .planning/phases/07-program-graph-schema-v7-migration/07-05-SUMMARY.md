@@ -65,8 +65,8 @@ metrics:
 
 | Task | Description | Commit |
 |------|-------------|--------|
-| 1 | Test-target entity rename (migration/persistence/model files) + InMemoryContainer flip + count-pin refresh | `52b1957` |
-| 2 | ExportDocument version bump to v7 + golden fixture regen + guardrail suites green | `d325e83` |
+| 1 | Test-target entity rename (migration/persistence/model files) + InMemoryContainer flip + count-pin refresh | `da55d52` |
+| 2 | ExportDocument version bump to v7 + golden fixture regen + guardrail suites green | `dbf8474` |
 
 ---
 
@@ -185,5 +185,5 @@ None. No new network endpoints, auth paths, file access patterns, or schema chan
 - `fitbodTests/SchemaV4MigrationTests.swift` — contains `schemas.count == 7`: FOUND
 - `fitbod/Export/ExportDTOs.swift` — contains `canonicalSchemaVersion = "v7"`: FOUND
 - `fitbodTests/Phase6/Fixtures/json/example-export.json` — contains `"schemaVersion" : "v7"`: FOUND
-- Commit `52b1957` exists: FOUND
-- Commit `d325e83` exists: FOUND
+- Commit `da55d52` exists: FOUND
+- Commit `dbf8474` exists: FOUND

@@ -79,9 +79,9 @@ metrics:
 
 | Task | Name | Commit | Files |
 |------|------|--------|-------|
-| 1 | New entities + Block/Session V7 fields + derived status | fffe616 | Split.swift (new), SplitSessionSlot.swift (new), Block.swift, Session.swift |
-| 2 | Adapt remaining app clusters | 362193f | BlockBuilderView, BlockOverviewScreen, MesocycleWeekPage, TodayView, BlackSlabCTA, LiftListRow, BackupArchiver, BackupRestorer, ExportService |
-| 2 (Rule 3) | SchemaV1 blocking compile fix | 362193f | SchemaV1.swift |
+| 1 | New entities + Block/Session V7 fields + derived status | 9e2688f | Split.swift (new), SplitSessionSlot.swift (new), Block.swift, Session.swift |
+| 2 | Adapt remaining app clusters | aafcc11 | BlockBuilderView, BlockOverviewScreen, MesocycleWeekPage, TodayView, BlackSlabCTA, LiftListRow, BackupArchiver, BackupRestorer, ExportService |
+| 2 (Rule 3) | SchemaV1 blocking compile fix | aafcc11 | SchemaV1.swift |
 
 ## What Was Built
 
@@ -133,14 +133,14 @@ metrics:
 - **Issue:** Both files use `Routine`/`RoutineExercise` as @Model type references, which no longer exist at module scope. They were not caught by 07-02 because they weren't in the Routines/Sessions cluster scope at that time.
 - **Fix:** Updated to `SessionTemplate`/`SessionExerciseTemplate` throughout (struct property types + preview container setup)
 - **Files modified:** `fitbod/Views/BlackSlabCTA.swift`, `fitbod/Views/LiftListRow.swift`
-- **Commit:** 362193f
+- **Commit:** aafcc11
 
 **2. [Rule 3 - Blocking] SchemaV1 referenced deleted top-level Routine/RoutineExercise**
 - **Found during:** Task 2 build verification (post-Backup/Export fixes)
 - **Issue:** `SchemaV1.models` array had `Routine.self` and `RoutineExercise.self` — types no longer exist as top-level. Analogous to the SchemaV2 fix made by 07-02.
 - **Fix:** Updated to `SessionTemplate.self` / `SessionExerciseTemplate.self` with inline comments noting the V7 rename
 - **Files modified:** `fitbod/Persistence/SchemaV1.swift`
-- **Commit:** 362193f
+- **Commit:** aafcc11
 
 ### Behavior Changes (Documented Per Plan Output Spec)
 
@@ -184,4 +184,4 @@ T-07-07 (TodayView resolver stub): accepted per disposition — behavior change 
 - `fitbod/Models/Block.swift` contains `derivedStatus`, `split`, `schedulingModeRaw`, `trainingDaysJoined`, `archivedConfigJSON`; does NOT contain `var routines` — VERIFIED
 - `fitbod/Models/Session.swift` contains `template`, `slot`, `templateName`, `sourceRoutineID`, `routineSnapshotName` — VERIFIED
 - Build result: `** BUILD SUCCEEDED **` — VERIFIED
-- Commits fffe616, 362193f — both present in git log
+- Commits 9e2688f, aafcc11 — both present in git log

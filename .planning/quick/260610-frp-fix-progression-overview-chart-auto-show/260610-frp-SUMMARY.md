@@ -44,7 +44,7 @@ All four were corrected in a single atomic commit.
 
 | Task | Name | Commit | Files |
 |------|------|--------|-------|
-| 1 | Gate selection chrome behind user interaction (nil at rest) | aa189bc | fitbod/Periodization/BlockBuilderView.swift |
+| 1 | Gate selection chrome behind user interaction (nil at rest) | d6d10d8 | fitbod/Periodization/BlockBuilderView.swift |
 | 2 | Build + run all four New Block guardrail suites | (no new files) | — |
 
 ## Changes Made
@@ -85,6 +85,6 @@ None — this change removes state mutation from a chart view. No new network en
 - `fitbod/Periodization/BlockBuilderView.swift` — modified, not a new file. Confirmed by commit diff (1 file changed, 4 insertions, 8 deletions).
 
 ### Commits exist
-- `aa189bc` — fix(quick-260610-frp): gate progression chart selection chrome behind user interaction
+- `d6d10d8` — fix(quick-260610-frp): gate progression chart selection chrome behind user interaction
 
 ## Self-Check: PASSED

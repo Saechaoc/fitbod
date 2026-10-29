@@ -36,11 +36,11 @@ Migrated 3 pre-V7 test suites (6 failing tests) to pass `activeBlock:` explicitl
 
 | Task | Name | Commit | Files |
 |------|------|--------|-------|
-| 1 | Pass activeBlock explicitly in the three pre-V7 suites | de0166b | SessionBlockSnapshotTests.swift, DeloadVolumeApplicationTests.swift, WarmupDeloadIntegrationTests.swift |
+| 1 | Pass activeBlock explicitly in the three pre-V7 suites | 4d9a84f | SessionBlockSnapshotTests.swift, DeloadVolumeApplicationTests.swift, WarmupDeloadIntegrationTests.swift |
 
 ## What Was Built
 
-The CR-01 migration (commit `2ca96df`, plan 08-04) moved `SessionFactory.start` prescription resolution off the deprecated `template.block` edge onto the new `activeBlock:` parameter. Three pre-V7 test suites had not been updated to pass `activeBlock:`, causing 6 test failures:
+The CR-01 migration (commit `f93c731`, plan 08-04) moved `SessionFactory.start` prescription resolution off the deprecated `template.block` edge onto the new `activeBlock:` parameter. Three pre-V7 test suites had not been updated to pass `activeBlock:`, causing 6 test failures:
 
 - **SessionBlockSnapshotTests** (3 failures): tests expected `session.block` to be populated but `activeBlock` was nil → `session.block` stayed nil
 - **DeloadVolumeApplicationTests** (2 failures): deload phase was not resolved → set counts not halved
@@ -99,7 +99,7 @@ None — test-only change, no new production surface introduced.
 - [x] `fitbodTests/SessionBlockSnapshotTests.swift` modified — verified
 - [x] `fitbodTests/DeloadVolumeApplicationTests.swift` modified — verified
 - [x] `fitbodTests/WarmupDeloadIntegrationTests.swift` modified — verified
-- [x] Commit de0166b exists — verified
+- [x] Commit 4d9a84f exists — verified
 - [x] No production code modified
 - [x] `templateBlockSentinelIgnored` still green (in SessionFactoryTests targeted run)
 - [x] Full fitbodTests baseline: 10 documented + 1 baseline-incomplete (BlocksSection, pre-existing)

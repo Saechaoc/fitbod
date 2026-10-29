@@ -74,9 +74,9 @@ metrics:
 
 | Task | Name | Commit | Files |
 |------|------|--------|-------|
-| 1 | Rename model entities + adapt direct relatives | fb79723 | SessionTemplate.swift (new), SessionExerciseTemplate.swift (new), RoutineExerciseSetOverride.swift, Block.swift; deleted Routine.swift, RoutineExercise.swift |
-| 2 | Adapt Routines + Sessions consumer clusters | 5b71137 | RoutineDraft.swift, RoutineRow.swift, RoutinesListView.swift, RoutineDuplicator.swift, MoveRoutineSheet.swift, SupersetAssignmentSheet.swift, RoutineBuilderView.swift, SessionFactory.swift |
-| 2 (Rule 3) | Auto-fix additional blocking compile errors | 43098ab | ExerciseDeletion.swift, LiftListSection.swift, SchemaV2.swift, SchemaV5.swift, SchemaV6.swift |
+| 1 | Rename model entities + adapt direct relatives | c7fe503 | SessionTemplate.swift (new), SessionExerciseTemplate.swift (new), RoutineExerciseSetOverride.swift, Block.swift; deleted Routine.swift, RoutineExercise.swift |
+| 2 | Adapt Routines + Sessions consumer clusters | 4ef4445 | RoutineDraft.swift, RoutineRow.swift, RoutinesListView.swift, RoutineDuplicator.swift, MoveRoutineSheet.swift, SupersetAssignmentSheet.swift, RoutineBuilderView.swift, SessionFactory.swift |
+| 2 (Rule 3) | Auto-fix additional blocking compile errors | 3302738 | ExerciseDeletion.swift, LiftListSection.swift, SchemaV2.swift, SchemaV5.swift, SchemaV6.swift |
 
 ## What Was Built
 
@@ -120,28 +120,28 @@ metrics:
 - **Issue:** GitNexus MCP `gitnexus_rename` is available but the plan pre-authorizes the mechanical compiler-error-driven rename as the fallback
 - **Fix:** Performed precise word-boundary mechanical rename. No over-broad substring replacements; KEEP-NAME allowlist respected throughout
 - **Files modified:** All files listed above
-- **Commit:** fb79723, 5b71137
+- **Commit:** c7fe503, 4ef4445
 
 **2. [Rule 3 - Blocking] ExerciseDeletion.swift referenced deleted RoutineExercise type**
 - **Found during:** Post-Task 2 build verification
 - **Issue:** `FetchDescriptor<RoutineExercise>()` — `RoutineExercise` no longer exists; compile error
 - **Fix:** Updated to `FetchDescriptor<SessionExerciseTemplate>()`
 - **Files modified:** `fitbod/ExerciseLibrary/ExerciseDeletion.swift`
-- **Commit:** 43098ab
+- **Commit:** 3302738
 
 **3. [Rule 3 - Blocking] LiftListSection.swift referenced deleted Routine/RoutineExercise types**
 - **Found during:** Post-Task 2 build verification
 - **Issue:** `let routine: Routine?`, `[RoutineExercise]` — both types no longer exist
 - **Fix:** Updated to `SessionTemplate?`, `[SessionExerciseTemplate]`, preview `ModelContainer` types updated, `RoutineExercise()` → `SessionExerciseTemplate()`, `re.routine` → `re.sessionTemplate`
 - **Files modified:** `fitbod/Views/LiftListSection.swift`
-- **Commit:** 43098ab
+- **Commit:** 3302738
 
 **4. [Rule 3 - Blocking] SchemaV2/V5/V6 referenced deleted top-level Routine/RoutineExercise**
 - **Found during:** Post-Task 2 build verification
 - **Issue:** SchemaV2 models array and SchemaV5/V6 typealias RHS pointed at `fitbod.Routine`/`fitbod.RoutineExercise` — types no longer exist as top-level
 - **Fix:** SchemaV2 models array entries → `SessionTemplate.self`/`SessionExerciseTemplate.self`; SchemaV5/V6 typealias RHS → `fitbod.SessionTemplate`/`fitbod.SessionExerciseTemplate` (alias names Routine/RoutineExercise kept for models-array back-compat; 07-04 will finalize these files with nested historical @Model classes)
 - **Files modified:** `fitbod/Persistence/SchemaV2.swift`, `fitbod/Persistence/SchemaV5.swift`, `fitbod/Persistence/SchemaV6.swift`
-- **Commit:** 43098ab
+- **Commit:** 3302738
 
 ### Plan Exit State Verified
 
@@ -171,4 +171,4 @@ No new network endpoints, auth paths, or file access patterns introduced. The en
 - `RoutineExerciseSetOverride.routineExercise` field type `SessionExerciseTemplate?` — VERIFIED
 - `RoutineExerciseSetOverride` struct name unchanged — VERIFIED
 - No SchemaV*.swift nested @Model classes modified (SchemaV3.swift, SchemaV4.swift untouched)
-- Commits fb79723, 5b71137, 43098ab — all present in git log
+- Commits c7fe503, 4ef4445, 3302738 — all present in git log

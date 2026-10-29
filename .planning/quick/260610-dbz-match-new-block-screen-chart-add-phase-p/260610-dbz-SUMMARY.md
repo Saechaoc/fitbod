@@ -25,8 +25,8 @@ metrics:
 
 | Task | Name | Commit | Key Changes |
 |------|------|--------|-------------|
-| 1 | Restyle progression chart | e869f53 | Series swap, title-case colored labels, weekAxisValues, .chartYAxis(.hidden), band opacity 0.18, legend swap |
-| 2 | ADD PHASE pill, gap, dividers | 076b007 | White card capsule pill, spacing 6→10pt, phaseRowDivider, center-aligned stat columns width 38 |
+| 1 | Restyle progression chart | 90de73e | Series swap, title-case colored labels, weekAxisValues, .chartYAxis(.hidden), band opacity 0.18, legend swap |
+| 2 | ADD PHASE pill, gap, dividers | f08c452 | White card capsule pill, spacing 6→10pt, phaseRowDivider, center-aligned stat columns width 38 |
 
 ## Changes Made
 
@@ -73,7 +73,7 @@ None — purely visual/layout changes to a local SwiftUI view with no network en
 ## Self-Check: PASSED
 
 - `fitbod/Periodization/BlockBuilderView.swift` exists and is modified
-- Commits `e869f53` and `076b007` exist in git log
+- Commits `90de73e` and `f08c452` exist in git log
 - No other source files modified (only pre-existing untracked/modified files in git status)
 - `"+ ADD PHASE"` quoted literal present via `.accessibilityLabel("+ ADD PHASE")`
 - `ForEach(phases, id: \.draftID)` literal preserved in chart phase-label block

@@ -12,15 +12,15 @@ files_modified:
   - fitbod/Periodization/BlockBuilderView.swift
   - fitbodTests/NewBlockBuilderFidelityTests.swift
 commits:
-  - hash: 1d8150c
+  - hash: 66a59e6
     message: "feat(new-block): semantic phase badge colors + bruBlue token (260528-utc T1)"
-  - hash: e772aa1
+  - hash: 9fb5e95
     message: "feat(new-block): progression line chart replaces timeline, delete orphans (260528-utc T2)"
-  - hash: 82b4533
+  - hash: e1faa97
     message: "feat(new-block): metrics cards with icons + Peak/SHARPEN OUTPUT copy (260528-utc T3)"
-  - hash: 82e2ec4
+  - hash: 40d07ab
     message: "feat(new-block): read-only phase rows + NewBlockPhaseEditorSheet (260528-utc T4)"
-  - hash: 9a85624
+  - hash: 0eb627f
     message: "feat(new-block): coral + ADD PHASE in header, remove dashed slot, update fidelity test (260528-utc T5)"
 ---
 
@@ -96,7 +96,7 @@ Restyled BlockBuilderView to match final-design.png: bruBlue token + semantic ba
 - **Issue:** After swapping badge colors away from palette helpers, `let isDeload = draft.kind == .deload` was removed from the chip binding block, but the variable was still referenced 10 lines later by the DELOAD chip conditional display
 - **Fix:** Re-added `let isDeload = draft.kind == .deload` directly above the new `chipFill`/`chipLabel` bindings
 - **Files modified:** `fitbod/Periodization/BlockBuilderView.swift`
-- **Commit:** 1d8150c
+- **Commit:** 66a59e6
 
 None beyond the above — plan executed as written for all other tasks.
 
@@ -119,7 +119,7 @@ None — all changes are pure UI/view layer within a single-user local app; no n
 - [x] No `NewBlockAddPhaseSlot` in `BlockBuilderView.swift`
 - [x] `NewBlockPhaseEditorSheet` in `BlockBuilderView.swift`
 - [x] `"Peak"` and `"SHARPEN OUTPUT"` in `BlockBuilderView.swift`; no `"Realization"`
-- [x] All 5 commits exist: 1d8150c, e772aa1, 82b4533, 82e2ec4, 9a85624
+- [x] All 5 commits exist: 66a59e6, 9fb5e95, e1faa97, 40d07ab, 0eb627f
 - [x] `NewBlockBuilderFidelityTests` passes (5/5)
 
 ## Self-Check: PASSED
@@ -128,17 +128,17 @@ None — all changes are pure UI/view layer within a single-user local app; no n
 
 ## Follow-up (post-execution) — pixel-match `final-design-2.png` metrics
 
-After the 5 plan tasks, the user supplied a second reference (`bru-screens/New-block/final-design-2.png`) showing the **DAYS PER WEEK** cell with inline `− 4 +` steppers (the original `final-design.png` did not show them). One additional commit (`40a17f2`) closes that gap:
+After the 5 plan tasks, the user supplied a second reference (`bru-screens/New-block/final-design-2.png`) showing the **DAYS PER WEEK** cell with inline `− 4 +` steppers (the original `final-design.png` did not show them). One additional commit (`098c040`) closes that gap:
 
 - **`NewBlockMetricsBand` reworked** to match design-2: a single rounded card (cornerRadius 12) split by a hairline divider.
   - **TOTAL WEEKS** — read-only number (it is `draft.totalWeeks`, the computed sum of phase durations); the cell still taps through to `NewBlockDurationSheet`.
   - **DAYS PER WEEK** — inline `−`/`+` steppers adjusting `draft.daysPerWeek`, clamped `1...7` (matches `BlockBuilderViewActivationTests.daysPerWeekClampsToOneThroughSeven`). Reuses `NewBlockStepperButton`.
   - Removed the `"TAP TO EDIT"` hint lines and the per-label SF Symbol icons to match design-2's cleaner labels.
 - **Deleted the now-redundant `NewBlockDaysSheet`** and its plumbing (`presentingDaysSheet` state, the `onEditDays` closure param, the `.sheet`) — the inline steppers fully replace the 1–7 picker sheet. No test referenced it.
-- **Fixed a stale copy guardrail** in `fitbodTests/BlockBuilderViewCopyTests.swift`: it still asserted the removed `"PREVIEW"` string. This was a **pre-existing regression from T2** (timeline→chart) — the executor updated only `NewBlockBuilderFidelityTests` and its T5 verify ran only that one suite, so `BlockBuilderViewCopyTests` was silently red from commit `e772aa1`. Realigned the assertion to `"PROGRESSION OVERVIEW"`.
+- **Fixed a stale copy guardrail** in `fitbodTests/BlockBuilderViewCopyTests.swift`: it still asserted the removed `"PREVIEW"` string. This was a **pre-existing regression from T2** (timeline→chart) — the executor updated only `NewBlockBuilderFidelityTests` and its T5 verify ran only that one suite, so `BlockBuilderViewCopyTests` was silently red from commit `9fb5e95`. Realigned the assertion to `"PROGRESSION OVERVIEW"`.
 
 **Decisions:** kept the labels verbatim as `TOTAL WEEKS` / `DAYS PER WEEK` (not design-2's `DAYS / WEEK`) because two suites assert those exact literals and per-vs-slash was not the user's flagged concern. The metrics card uses on-system tokens (paper fill + hair border); design-2's near-white card fill has no BRU token, so the structure matches but the fill stays on-system.
 
 **Verification (follow-up):** `BUILD SUCCEEDED` on iPhone 17 Pro; `NewBlockBuilderFidelityTests` (5/5), `BlockBuilderViewCopyTests` (1/1), `BlockBuilderViewActivationTests` (3/3) all pass. Note: the copy-test fix initially appeared to still fail due to a **stale incremental test build** — a `touch` of the test file forced recompilation and it passed.
 
-**Commit:** `40a17f2` — `feat(new-block): pixel-match metrics to final-design-2 — inline days/week steppers (260528-utc)`
+**Commit:** `098c040` — `feat(new-block): pixel-match metrics to final-design-2 — inline days/week steppers (260528-utc)`

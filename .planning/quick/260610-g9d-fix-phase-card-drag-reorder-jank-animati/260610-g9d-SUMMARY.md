@@ -31,14 +31,14 @@ User report: drag movement "sorta snappy and slow."
 
 ## Commit anomaly (parallel session)
 
-The working-tree edits were swept into the concurrent session's whole-file commit **4cdb65b** (`fix(260610-g8d-01): remove discard-changes confirmation modal from New Block`) before this task could commit separately. Verified all g9d changes present at HEAD (`NewBlockPhaseListSection`, `gapOffset`, `0.25` arm) and merged state passes all suites. Transient build failure mid-task (`cannot find 'initialSnapshot'`) was that session's discard-flow WIP mid-flight, not g9d edits. History note: 4cdb65b is mixed-concern (discard-modal removal + drag perf).
+The working-tree edits were swept into the concurrent session's whole-file commit **7c4c169** (`fix(260610-g8d-01): remove discard-changes confirmation modal from New Block`) before this task could commit separately. Verified all g9d changes present at HEAD (`NewBlockPhaseListSection`, `gapOffset`, `0.25` arm) and merged state passes all suites. Transient build failure mid-task (`cannot find 'initialSnapshot'`) was that session's discard-flow WIP mid-flight, not g9d edits. History note: 7c4c169 is mixed-concern (discard-modal removal + drag perf).
 
 ## Verification
 
 - Build + all 4 suites green post-merge: BlockBuilderViewCopy · NewBlockBuilderFidelity · BlockBuilderViewActivation · NewBlockProgressionChart.
 - Drag feel (1:1 tracking, no boundary rubber-band, faster arm): pending human verify on device.
 
-## R2 — row-local @GestureState drag (4a5e00e)
+## R2 — row-local @GestureState drag (fa0bbbc)
 
 User: still snappy/not smooth after r1. R1's animation split was correct but the dominant cost remained: per-frame `dragOffsetY` writes re-evaluated the whole section body (all rows × fresh closures → no body skipping), debug build amplifying it.
 

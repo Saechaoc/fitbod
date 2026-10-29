@@ -2,7 +2,7 @@
 status: complete
 quick_id: 260527-th4
 date: 2026-05-28
-commit: 50be53b
+commit: 210edb9
 ---
 
 # Quick Task 260527-th4 — Summary
@@ -47,4 +47,4 @@ Out of scope (intentionally NOT staged): `.claude/`, `.mcp.json`, `.repowise/`, 
 
 ## Commit
 
-`50be53b` — `fix(new-block): name band tappable + full-screen redesign`
+`210edb9` — `fix(new-block): name band tappable + full-screen redesign`

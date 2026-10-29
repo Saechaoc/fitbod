@@ -147,11 +147,11 @@ No new network endpoints, auth paths, file access patterns, or schema changes in
 - fitbod/Periodization/BlockBuilderView.swift: present, 2055 lines
 - fitbod/Periodization/BlockPhaseColors.swift: present, phaseLabelInk(for:) added
 - fitbodTests/NewBlockProgressionChartTests.swift: present, 5 tests
-- Commit a16dac0: confirmed in git log
+- Commit 3a06b97: confirmed in git log
 
 ## Orchestrator Follow-up (post-executor)
 
-- **0622846** `fix(new-block): clamp progression callout pill inside plot bounds` — screenshot probe showed the W1 default-selection pill clipping past the plot's leading edge (truncated "WK 1" prefix, collided with HIGH label). Pill width now measured via `onGeometryChange`; center-x clamped to `[halfWidth+4, plotWidth-halfWidth-4]`.
+- **a1d144b** `fix(new-block): clamp progression callout pill inside plot bounds` — screenshot probe showed the W1 default-selection pill clipping past the plot's leading edge (truncated "WK 1" prefix, collided with HIGH label). Pill width now measured via `onGeometryChange`; center-x clamped to `[halfWidth+4, plotWidth-halfWidth-4]`.
 - Visual evidence: throwaway XCUITest probe (HYPERTROPHY MESO preset, iPhone 17 Pro Max) screenshot diffed against reference.png — in-band single phase labels (indigo/rust/ochre), volume area mass with deload floor-drop, bold intensity hero line, HIGH/LOW anchors, truthful legend pills, ring + rule + fully-visible callout at W1, bands cut between weeks, series end at W8. Probe test reverted; not committed.
 - Re-ran all 4 suites after clamp fix: green.
 - Task 2 (human-verify): scrub drag + haptic tick remain to be felt on device/simulator by the user.

@@ -110,13 +110,13 @@ Build green. All 5 guardrail test suites green (64 test cases, 0 failures).
 
 | # | Finding | File | Lines | Status | Commit |
 |---|---------|------|-------|--------|--------|
-| UI-01 | NewBlockSplitPickerSheet: replace List with BRU ScrollView pattern | BlockBuilderView.swift | 2048–2083 | FIXED | a024c2c |
-| UI-02 | DayToggleChip/NewBlockDayToggleChip: add full weekday accessibilityLabel | BlockOverviewScreen.swift, BlockBuilderView.swift | ~1094, ~2019 | FIXED | 9e38add |
-| UI-03 | SplitDetailView: gate spring animation on accessibilityReduceMotion | SplitDetailView.swift | 199 | FIXED | 8014337 |
-| UI-04 | SplitDetailView usedIn chips: adopt status badge colors | SplitDetailView.swift | 230 | FIXED | bcc5052 |
-| UI-05 | BlockOverviewScreen mismatch hint: guard block.split != nil | BlockOverviewScreen.swift | 722 | FIXED | 61d5c05 |
-| UI-06 | SplitDetailView screen background: bruBg → bruPaper | SplitDetailView.swift | 124 | FIXED | 8defe21 |
-| UI-07a | BlockOverviewScreen phase rows: raw .custom font → BRUFont.labelSmall | BlockOverviewScreen.swift | 801–805, 939–944 | FIXED | 02ecb38 |
+| UI-01 | NewBlockSplitPickerSheet: replace List with BRU ScrollView pattern | BlockBuilderView.swift | 2048–2083 | FIXED | 0808e7f |
+| UI-02 | DayToggleChip/NewBlockDayToggleChip: add full weekday accessibilityLabel | BlockOverviewScreen.swift, BlockBuilderView.swift | ~1094, ~2019 | FIXED | fd3028a |
+| UI-03 | SplitDetailView: gate spring animation on accessibilityReduceMotion | SplitDetailView.swift | 199 | FIXED | f41a79e |
+| UI-04 | SplitDetailView usedIn chips: adopt status badge colors | SplitDetailView.swift | 230 | FIXED | 544f144 |
+| UI-05 | BlockOverviewScreen mismatch hint: guard block.split != nil | BlockOverviewScreen.swift | 722 | FIXED | a2a9be7 |
+| UI-06 | SplitDetailView screen background: bruBg → bruPaper | SplitDetailView.swift | 124 | FIXED | 9e6ee27 |
+| UI-07a | BlockOverviewScreen phase rows: raw .custom font → BRUFont.labelSmall | BlockOverviewScreen.swift | 801–805, 939–944 | FIXED | e61325b |
 | UI-07b | BlockBuilderView NewBlockSplitBand section head | BlockBuilderView.swift | 1858–1865 | NOTED: consistent with local token world — left as NewBlockType.chrome | — |
 
 **Tests:** BUILD SUCCEEDED · SplitDetailViewTests ✓ · BlockOverviewScreenCopyTests ✓ · BlockBuilderViewCopyTests ✓ · NewBlockBuilderFidelityTests ✓ · ProgramViewFidelityTests ✓ (64 passed, 0 failed)

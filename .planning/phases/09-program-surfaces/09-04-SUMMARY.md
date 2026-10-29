@@ -57,8 +57,8 @@ metrics:
 
 | Task | Name | Commit | Files |
 |------|------|--------|-------|
-| 1 | Live-mode controls — split band, mode picker, day-chips, Start/End, swap-confirm | 858885e | BlockOverviewScreen.swift |
-| 2 | Archived mode + ArchiveUnreadableView + copy test suite | afc555c | BlockOverviewScreen.swift, BlockOverviewScreenCopyTests.swift |
+| 1 | Live-mode controls — split band, mode picker, day-chips, Start/End, swap-confirm | 6adaf07 | BlockOverviewScreen.swift |
+| 2 | Archived mode + ArchiveUnreadableView + copy test suite | 25172b4 | BlockOverviewScreen.swift, BlockOverviewScreenCopyTests.swift |
 
 ---
 
@@ -125,7 +125,7 @@ Source-introspection tests reading `BlockOverviewScreen.swift` via `#filePath`-r
 - **Issue:** `guard let jsonString = block.archivedConfigJSON else { ... return }` is invalid in `@ViewBuilder` — the result-builder DSL does not allow bare `return` in the guard-else branch when the outer function has an opaque return type.
 - **Fix:** Restructured to `if let jsonString = block.archivedConfigJSON { ... } else { ... }` which is idiomatic for SwiftUI `@ViewBuilder`.
 - **Files modified:** fitbod/Periodization/BlockOverviewScreen.swift
-- **Commit:** 858885e (included in original Task 1 commit after rebuild)
+- **Commit:** 6adaf07 (included in original Task 1 commit after rebuild)
 
 ---
 
@@ -151,8 +151,8 @@ Threat mitigations confirmed:
 
 - [x] `fitbod/Periodization/BlockOverviewScreen.swift` exists (extended, ~860 lines)
 - [x] `fitbodTests/BlockOverviewScreenCopyTests.swift` exists (153 lines, 14 tests)
-- [x] Commit 858885e exists (Task 1)
-- [x] Commit afc555c exists (Task 2)
+- [x] Commit 6adaf07 exists (Task 1)
+- [x] Commit 25172b4 exists (Task 2)
 - [x] Build: SUCCEEDED (iPhone 17 Pro)
 - [x] BlockOverviewScreenCopyTests: 14/14 PASSED
 - [x] BlockOverviewScreenWeekCarouselTests: 6/6 PASSED (regression verified)

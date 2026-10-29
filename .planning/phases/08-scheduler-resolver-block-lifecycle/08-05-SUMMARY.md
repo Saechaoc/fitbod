@@ -35,8 +35,8 @@ SPEC-8-TODAY shipped: TodayResolver wired into TodayView.todaysRoutine; startWor
 
 | # | Name | Commit | Files |
 |---|------|--------|-------|
-| 1 | Wire TodayView.todaysRoutine to TodayResolver + pass activeBlock to startWorkout | `aad28da` | fitbod/Views/TodayView.swift |
-| 2 | Confirm/refine BlockOverviewScreen membership checks + resolve TODOs + membership assertion test | `dc71317` | fitbod/Periodization/BlockOverviewScreen.swift, fitbodTests/BlockOverviewScreenWeekCarouselTests.swift |
+| 1 | Wire TodayView.todaysRoutine to TodayResolver + pass activeBlock to startWorkout | `00cd34f` | fitbod/Views/TodayView.swift |
+| 2 | Confirm/refine BlockOverviewScreen membership checks + resolve TODOs + membership assertion test | `0a01340` | fitbod/Periodization/BlockOverviewScreen.swift, fitbodTests/BlockOverviewScreenWeekCarouselTests.swift |
 
 ## What Was Built
 
@@ -89,5 +89,5 @@ None introduced by this plan. The `.emptySplit` case intentionally returns `nil`
 - `fitbod/Views/TodayView.swift` — modified, exists
 - `fitbod/Periodization/BlockOverviewScreen.swift` — modified, exists
 - `fitbodTests/BlockOverviewScreenWeekCarouselTests.swift` — modified, exists
-- Commit `aad28da` — verified in git log
-- Commit `dc71317` — verified in git log
+- Commit `00cd34f` — verified in git log
+- Commit `0a01340` — verified in git log

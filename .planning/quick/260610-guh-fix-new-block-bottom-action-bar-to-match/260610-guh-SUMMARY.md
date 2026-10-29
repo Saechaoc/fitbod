@@ -26,7 +26,7 @@ metrics:
 
 | Task | Name | Commit | Files |
 |------|------|--------|-------|
-| 1 | Add cta font token + restyle NewBlockBottomActionBar | 5cfa764 | fitbod/Periodization/BlockBuilderView.swift |
+| 1 | Add cta font token + restyle NewBlockBottomActionBar | 9aa9a56 | fitbod/Periodization/BlockBuilderView.swift |
 | 2 | Run guardrail + fidelity test suites | (no commit — test-only) | — |
 | 3 | Human visual diff against final-design.png | pending-human | — |
 
@@ -111,7 +111,7 @@ None. The bottom action bar is fully wired — `canCreate` and `isEditing` flow 
 
 ## Self-Check
 
-- [x] `fitbod/Periodization/BlockBuilderView.swift` modified and committed at 5cfa764
+- [x] `fitbod/Periodization/BlockBuilderView.swift` modified and committed at 9aa9a56
 - [x] `NewBlockType.cta` present in source
 - [x] `primaryTitle` literals `"NAME FIRST ↑"`, `"SAVE TEMPLATE ▸"`, `"CANCEL"` preserved verbatim
 - [x] `displayPrimaryTitle` strips arrows for display

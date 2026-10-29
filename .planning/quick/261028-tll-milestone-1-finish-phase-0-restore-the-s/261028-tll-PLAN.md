@@ -26,7 +26,7 @@ must_haves:
     - "fitbod.xcscheme is identical to HEAD again, so the fitbodUITests TestableReference declares parallelizable = \"NO\" and UI tests run serially"
     - "GitNexus was refreshed with analyze --index-only, and CLAUDE.md, AGENTS.md and the gitnexus skill files were not rewritten"
     - "Before each group commit the GitNexus index was current for HEAD, and detect-changes --scope staged ran on exactly that group's staged paths with its full output saved"
-    - "main has exactly seven new commits on 27687f8, in order 01-design to 07-docs-reference, each holding exactly its manifest's paths with content identical to backup/m1-worktree-20261028"
+    - "main has exactly seven new commits on 2bb5a91, in order 01-design to 07-docs-reference, each holding exactly its manifest's paths with content identical to backup/m1-worktree-20261028"
     - "Each commit message is the group's commit-plan.md subject, the fixed Codex provenance body and the Claude-Session line, with no Co-Authored-By trailer"
     - "No app, test, widget or project path is left uncommitted, and every excluded path is still uncommitted"
     - "BASELINE.md records the build result, exact unit plus UI test counts and every failure for a serial run of the committed tip on sw6 iPhone 17 Pro Max at default text in light mode"
@@ -61,7 +61,7 @@ must_haves:
       contains: "may lose its first typed character"
   key_links:
     - from: "docs/verification/closeout/commit-groups/0*.paths"
-      to: "commits 27687f8..HEAD"
+      to: "commits 2bb5a91..HEAD"
       via: "git --literal-pathspecs add --pathspec-from-file plus an exact staged-name comparison"
       pattern: "pathspec-from-file"
     - from: "post-commit hook reindex"
@@ -85,7 +85,7 @@ Finish Phase 0 of the user-approved plan `/Users/chrissaechao/.claude/plans/nobl
 Restore the serial UI-test scheme setting, refresh the GitNexus index, and commit Codex's seven prepared groups exactly as prepared.
 Then, as orchestrator-owned work, record a baseline build and full test run on the committed tip and complete the review record.
 
-Purpose: all milestone work sits uncommitted on top of 27687f8.
+Purpose: all milestone work sits uncommitted on top of 2bb5a91.
 Committing it in Codex's reviewable groups protects it, and the baseline gives Phases 1-8 exact numbers to compare against.
 
 Output: seven commits on main (not pushed), a restored scheme, seven detect-changes reports, `261028-tll-SUMMARY.md`, `261028-tll-BASELINE.md`, and an updated review record outside the repo.
@@ -136,7 +136,7 @@ Do not run those checks in Tasks 1 and 2.
 <interfaces>
 Repository and references:
 
-- Repo root: `/Users/chrissaechao/Desktop/fitbod`, branch `main`, starting HEAD `27687f8`.
+- Repo root: `/Users/chrissaechao/Desktop/fitbod`, branch `main`, starting HEAD `2bb5a91`.
 - Backup of the whole working tree (tracked plus untracked, respecting .gitignore): local branch `backup/m1-worktree-20261028` at `4cc8d1b`.
   It is the drift reference for every check below.
   Do not create another backup, and do not move or delete this branch.
@@ -190,7 +190,7 @@ Never use any other simulator.
   <action>
 Step 1 - Preconditions (approved plan Phase 0 step 1, the backup, is already done: verify it, never recreate it).
 `git symbolic-ref --short HEAD` prints `main`.
-`git rev-parse HEAD` starts with `27687f8`.
+`git rev-parse HEAD` starts with `2bb5a91`.
 `git rev-parse backup/m1-worktree-20261028` starts with `4cc8d1b`.
 `git diff --cached --quiet` exits 0, so the index is empty.
 Record `git rev-parse origin/main` for the final no-push check.
@@ -253,14 +253,14 @@ No path in that file may start with one of the code prefixes.
 Record its line count: the orchestrator expects 847, and a different count is reported, not a reason to stop.
   </action>
   <verify>
-    <automated>cd /Users/chrissaechao/Desktop/fitbod && git diff --quiet HEAD -- fitbod.xcodeproj/xcshareddata/xcschemes/fitbod.xcscheme && git diff --cached --quiet && for m in docs/verification/closeout/commit-groups/0*.paths; do bash "$SCRATCH/check-group.sh" "$m" "$SCRATCH/verify.index" || exit 1; done && rm -f "$SCRATCH/verify.index" && test "$(git rev-list --count 27687f8..HEAD)" = 0 && echo TASK1-OK   # replace $SCRATCH with your scratchpad path</automated>
+    <automated>cd /Users/chrissaechao/Desktop/fitbod && git diff --quiet HEAD -- fitbod.xcodeproj/xcshareddata/xcschemes/fitbod.xcscheme && git diff --cached --quiet && for m in docs/verification/closeout/commit-groups/0*.paths; do bash "$SCRATCH/check-group.sh" "$m" "$SCRATCH/verify.index" || exit 1; done && rm -f "$SCRATCH/verify.index" && test "$(git rev-list --count 2bb5a91..HEAD)" = 0 && echo TASK1-OK   # replace $SCRATCH with your scratchpad path</automated>
   </verify>
   <done>
 The scheme is identical to HEAD.
 `gitnexus status` reports the index up to date, and the guard hashes are unchanged.
 All 137 recorded hashes match, and the seven subjects match commit-manifest.json.
 All seven groups print PASS in a temporary index, and no file fails the size or name screen.
-The real index is still empty, HEAD is still 27687f8, and the status snapshot and excluded list are saved.
+The real index is still empty, HEAD is still 2bb5a91, and the status snapshot and excluded list are saved.
   </done>
 </task>
 
@@ -311,11 +311,11 @@ Record the full `git rev-parse HEAD`.
 
 After group 07:
 1. Run `bash $SCRATCH/wait-gitnexus.sh` once more, so the last background reindex has finished.
-2. Range checks: `git rev-list --count 27687f8..HEAD` prints 7.
-`git log --reverse --format=%s 27687f8..HEAD` prints the seven subjects in order.
-`git diff --name-only --no-renames -z 27687f8 HEAD`, sorted, equals the seven manifests concatenated, CR-stripped and sorted (303 paths).
-`git log --format=%B 27687f8..HEAD | grep -ciE '^co-authored-by:'` prints 0.
-`git log --format='%(trailers:key=Claude-Session,valueonly)' 27687f8..HEAD | grep -c 'session_01VB2pKGXuLZEuzD4fWeJUgN'` prints 7.
+2. Range checks: `git rev-list --count 2bb5a91..HEAD` prints 7.
+`git log --reverse --format=%s 2bb5a91..HEAD` prints the seven subjects in order.
+`git diff --name-only --no-renames -z 2bb5a91 HEAD`, sorted, equals the seven manifests concatenated, CR-stripped and sorted (303 paths).
+`git log --format=%B 2bb5a91..HEAD | grep -ciE '^co-authored-by:'` prints 0.
+`git log --format='%(trailers:key=Claude-Session,valueonly)' 2bb5a91..HEAD | grep -c 'session_01VB2pKGXuLZEuzD4fWeJUgN'` prints 7.
 3. `git diff --quiet HEAD -- fitbod.xcodeproj/xcshareddata/xcschemes/fitbod.xcscheme` still exits 0.
 If it does not, Xcode rewrote the scheme: repeat the Task 1 step 3 edit (never commit the scheme) and report it.
 4. Status checks: write the paths from `git status --porcelain=v1 -z --untracked-files=all` (same pipeline as Task 1), minus paths under QDIR, to `$SCRATCH/status-after.txt`.
@@ -329,10 +329,10 @@ Record `git rev-list --count origin/main..HEAD` for information only.
 7. Write the SUMMARY described in the output section, then stop at Task 3 and return a checkpoint.
   </action>
   <verify>
-    <automated>cd /Users/chrissaechao/Desktop/fitbod && test "$(git rev-list --count 27687f8..HEAD)" = 7 && cat docs/verification/closeout/commit-groups/0*.paths | tr -d '\r' | LC_ALL=C sort > "$SCRATCH/all.txt" && git diff --name-only --no-renames -z 27687f8 HEAD | tr '\0' '\n' | LC_ALL=C sort | cmp -s - "$SCRATCH/all.txt" && test "$(git log --format=%B 27687f8..HEAD | grep -ciE '^co-authored-by:')" = 0 && test -z "$(git status --porcelain=v1 -z --untracked-files=all | tr '\0' '\n' | cut -c4- | grep -E '^(fitbod/|fitbodTests/|fitbodUITests/|FitbodWidgets|fitbod\.xcodeproj/)')" && git diff --quiet HEAD -- fitbod.xcodeproj/xcshareddata/xcschemes/fitbod.xcscheme && test "$(ls .planning/quick/261028-tll-milestone-1-finish-phase-0-restore-the-s/261028-tll-detect-0*.txt | wc -l | tr -d ' ')" = 7 && echo TASK2-OK   # replace $SCRATCH with your scratchpad path</automated>
+    <automated>cd /Users/chrissaechao/Desktop/fitbod && test "$(git rev-list --count 2bb5a91..HEAD)" = 7 && cat docs/verification/closeout/commit-groups/0*.paths | tr -d '\r' | LC_ALL=C sort > "$SCRATCH/all.txt" && git diff --name-only --no-renames -z 2bb5a91 HEAD | tr '\0' '\n' | LC_ALL=C sort | cmp -s - "$SCRATCH/all.txt" && test "$(git log --format=%B 2bb5a91..HEAD | grep -ciE '^co-authored-by:')" = 0 && test -z "$(git status --porcelain=v1 -z --untracked-files=all | tr '\0' '\n' | cut -c4- | grep -E '^(fitbod/|fitbodTests/|fitbodUITests/|FitbodWidgets|fitbod\.xcodeproj/)')" && git diff --quiet HEAD -- fitbod.xcodeproj/xcshareddata/xcschemes/fitbod.xcscheme && test "$(ls .planning/quick/261028-tll-milestone-1-finish-phase-0-restore-the-s/261028-tll-detect-0*.txt | wc -l | tr -d ' ')" = 7 && echo TASK2-OK   # replace $SCRATCH with your scratchpad path</automated>
   </verify>
   <done>
-main has seven new commits on 27687f8, in group order, each holding exactly its manifest's paths with content identical to the backup branch.
+main has seven new commits on 2bb5a91, in group order, each holding exactly its manifest's paths with content identical to the backup branch.
 Every message equals its message file, carries the Claude-Session line and has no Co-Authored-By trailer.
 Seven detect-changes files exist in QDIR, and each risk level is recorded.
 No code-prefix path and no manifest path is uncommitted, every excluded path is still uncommitted, the scheme matches HEAD, and the guard hashes are unchanged.
@@ -431,8 +431,8 @@ Nothing is committed under .planning, and nothing is pushed.
 
 <verification>
 - `git diff --quiet HEAD -- fitbod.xcodeproj/xcshareddata/xcschemes/fitbod.xcscheme` exits 0.
-- `git rev-list --count 27687f8..HEAD` prints 7, and `git log --reverse --format=%s 27687f8..HEAD` prints the seven subjects in order.
-- `git diff --name-only --no-renames 27687f8 HEAD` lists exactly the 303 manifest paths.
+- `git rev-list --count 2bb5a91..HEAD` prints 7, and `git log --reverse --format=%s 2bb5a91..HEAD` prints the seven subjects in order.
+- `git diff --name-only --no-renames 2bb5a91 HEAD` lists exactly the 303 manifest paths.
 - No commit message in the range has a Co-Authored-By line, and all seven carry the Claude-Session line.
 - `git status --porcelain=v1 --untracked-files=all` lists no code-prefix path and no manifest path.
 - Seven detect-changes files exist in QDIR, and the SUMMARY records each risk level and each full commit hash.

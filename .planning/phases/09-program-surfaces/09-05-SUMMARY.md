@@ -58,8 +58,8 @@ metrics:
 
 | Task | Name | Commit | Files |
 |------|------|--------|-------|
-| 1 | Extend BlockDraft (split/mode/days fields + save path) and fix endDate-as-completed bug | 95c7f0b | BlockDraft.swift, BlockDraftSaveTests.swift |
-| 2 | Replace NewBlockLinkedRoutinesBand with split band; update co-located copy test; run all 3 guardrail suites | 64eea24 | BlockBuilderView.swift, BlockBuilderViewCopyTests.swift |
+| 1 | Extend BlockDraft (split/mode/days fields + save path) and fix endDate-as-completed bug | 79abeec | BlockDraft.swift, BlockDraftSaveTests.swift |
+| 2 | Replace NewBlockLinkedRoutinesBand with split band; update co-located copy test; run all 3 guardrail suites | 8d441aa | BlockBuilderView.swift, BlockBuilderViewCopyTests.swift |
 
 ---
 
@@ -128,7 +128,7 @@ metrics:
 - **Issue:** Existing test "saving draft persists block and ordered phases" asserted `block.endDate == startDate.addingTimeInterval(Double(8 * 7) * 86_400)` — this relied on the old unconditional endDate write. Removing that write made the test fail.
 - **Fix:** Updated the assertion to `block.endDate == nil` (correct per spec §3/§4 and T-09-13).
 - **Files modified:** fitbodTests/BlockDraftSaveTests.swift
-- **Commit:** 95c7f0b (included in Task 1)
+- **Commit:** 79abeec (included in Task 1)
 
 ---
 
@@ -155,8 +155,8 @@ Threat mitigations confirmed:
 - [x] `fitbod/Periodization/BlockBuilderView.swift` exists (NewBlockSplitBand + NewBlockSplitPickerSheet)
 - [x] `fitbodTests/BlockBuilderViewCopyTests.swift` exists (updated pins)
 - [x] `fitbodTests/BlockDraftSaveTests.swift` exists (fixed + 4 new tests)
-- [x] Commit 95c7f0b exists (Task 1)
-- [x] Commit 64eea24 exists (Task 2)
+- [x] Commit 79abeec exists (Task 1)
+- [x] Commit 8d441aa exists (Task 2)
 - [x] Build: SUCCEEDED (iPhone 17 Pro)
 - [x] BlockDraftSave tests: ALL PASSED (8 tests including 4 new behavior tests)
 - [x] BlockBuilderViewCopyTests: PASSED

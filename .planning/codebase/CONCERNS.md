@@ -151,7 +151,7 @@ The V3→V4 stage is a CUSTOM migration (`fitbod/Persistence/FitbodSchemaMigrati
 
 ### Quick task velocity has spiked (14 tasks in `260524*`–`260528*` window)
 
-`260522-jgo`, `260524-ilf`, `260525-g32`, `260525-gen`, `260525-gop`, `260527-th4`, `260528-c6i`, `260528-cby`, `260528-dum`, `260528-ejb`, `260528-gox`, `260528-gr0`, `260528-l4s` — every commit between `1641dc6` and `f174380` is a New-Block iteration. The user is operating in rapid-iteration mode on the New Block screen, which explains the `BlockBuilderView.swift` churn but means design briefs in `bru-screens/New-block/` (untracked working-tree files) will continue to lag the committed implementation. The memory pointer `feedback_ui_briefs_lag_committed_code.md` is current and accurate.
+`260522-jgo`, `260524-ilf`, `260525-g32`, `260525-gen`, `260525-gop`, `260527-th4`, `260528-c6i`, `260528-cby`, `260528-dum`, `260528-ejb`, `260528-gox`, `260528-gr0`, `260528-l4s` — every commit between `15cb5d9` and `faa2677` is a New-Block iteration. The user is operating in rapid-iteration mode on the New Block screen, which explains the `BlockBuilderView.swift` churn but means design briefs in `bru-screens/New-block/` (untracked working-tree files) will continue to lag the committed implementation. The memory pointer `feedback_ui_briefs_lag_committed_code.md` is current and accurate.
 
 ### Untracked design assets
 

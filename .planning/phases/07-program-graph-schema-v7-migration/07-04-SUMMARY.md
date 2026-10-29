@@ -58,8 +58,8 @@ metrics:
 
 | Task | Name | Commit | Files |
 |------|------|--------|-------|
-| 1 | SchemaV7 + SchemaV6 nested-type expansion | f1aeee1 | SchemaV7.swift (new), SchemaV6.swift |
-| 2 | migrateV6toV7 custom stage + 7-step helpers + stash structs | ee20baa | FitbodSchemaMigrationPlan.swift |
+| 1 | SchemaV7 + SchemaV6 nested-type expansion | c032cc8 | SchemaV7.swift (new), SchemaV6.swift |
+| 2 | migrateV6toV7 custom stage + 7-step helpers + stash structs | f41dbd8 | FitbodSchemaMigrationPlan.swift |
 
 ## What Was Built
 
@@ -122,14 +122,14 @@ metrics:
 - **Issue:** Plan referred to `phase.kindRaw` but `BlockPhase` persists its kind as `nameRaw: String` (computed accessor is `kind: BlockPhaseKind`). Using `kindRaw` would have caused a compile error.
 - **Fix:** Used `phase.nameRaw` per actual BlockPhase model definition
 - **Files modified:** `fitbod/Persistence/FitbodSchemaMigrationPlan.swift`
-- **Commit:** ee20baa
+- **Commit:** f41dbd8
 
 **2. [Rule 2 - Missing Critical] Removed stale V7-rename typealiases from SchemaV6**
 - **Found during:** Task 1 — SchemaV6 previously had `typealias Routine = fitbod.SessionTemplate` and `typealias RoutineExercise = fitbod.SessionExerciseTemplate` (forwarding aliases added by 07-02)
 - **Issue:** These typealiases conflict with the new nested `@Model final class Routine` and `@Model final class RoutineExercise` declarations — Swift requires distinct names. The nested @Model types are the correct V6 on-disk shape representations.
 - **Fix:** Removed the `Routine` and `RoutineExercise` typealiases from SchemaV6's typealias block; the nested @Model types stand on their own
 - **Files modified:** `fitbod/Persistence/SchemaV6.swift`
-- **Commit:** f1aeee1
+- **Commit:** c032cc8
 
 ## Schema State After Plan 04
 
@@ -168,4 +168,4 @@ Threat mitigations from the plan's STRIDE register:
 - `SchemaV6.swift` does NOT contain `SchemaV5.models` (code reference) — VERIFIED
 - `FitbodSchemaMigrationPlan.swift` contains `SchemaV7.self`, `migrateV6toV7`, `MigrationStage.custom`, `stashV6Routines`, `materializeSessionTemplates`, `struct RoutineStash: Sendable`, `struct SessionRoutineStash: Sendable`, `FetchDescriptor<SchemaV6.Routine>` — VERIFIED
 - Build result: `** BUILD SUCCEEDED **` — VERIFIED
-- Commits f1aeee1, ee20baa — both present in git log
+- Commits c032cc8, f41dbd8 — both present in git log

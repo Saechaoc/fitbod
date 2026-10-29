@@ -106,7 +106,7 @@ Build succeeded with zero errors. SourceKit emitted no stale "Cannot find type" 
 - **Issue:** The plan assumes `BlockNameField.swift` is a tracked file with the `text.isEmpty ? displayLarge : display` ternary. In reality the file was untracked — created in working-tree state by sibling quick task `260528-c6i-extract-reusable-blocknamefield-swiftui-`, but never committed.
 - **Fix:** Applied Task 1's edit (ternary → single `displayLarge` literal) directly in the working tree, then `git add fitbod/Periodization/BlockNameField.swift` for the first time. Commit shows up as `create mode 100644` instead of a normal modification. End-state code is identical to what the plan asked for.
 - **Files modified:** `fitbod/Periodization/BlockNameField.swift` (newly tracked).
-- **Commit:** `8f699ac`.
+- **Commit:** `7081fb1`.
 
 ### `[Rule 1 — Plan reconciliation]` Task 2 commit folds in the 260528-c6i extraction
 
@@ -114,7 +114,7 @@ Build succeeded with zero errors. SourceKit emitted no stale "Cannot find type" 
 - **Issue:** `BlockBuilderView.swift` carried 44 lines of pre-existing uncommitted working-tree changes from sibling quick task 260528-c6i — the extraction of `NewBlockNameBand`'s inlined ZStack into a single `BlockNameField(…)` call. These edits are entangled with the new spacing-token work in the same file; splitting them out would have required a rewrite + stage-by-hunk dance that risked introducing a non-compiling intermediate state.
 - **Fix:** Staged `BlockBuilderView.swift` as a single diff — Task 2's commit therefore includes both (a) the extraction and (b) the named-token rhythm pass. The commit message explicitly calls out the folded-in extraction so a future bisect or code-archaeology pass can see what happened.
 - **Files modified:** `fitbod/Periodization/BlockBuilderView.swift` (32 insertions, 57 deletions — the deletions are mostly the inlined name-field plumbing being replaced by the `BlockNameField(…)` call).
-- **Commit:** `4097d3a`.
+- **Commit:** `186bc47`.
 
 ### Step-B walkbacks
 
@@ -130,13 +130,13 @@ Build succeeded with zero errors. SourceKit emitted no stale "Cannot find type" 
 
 **Files exist:**
 
-- `fitbod/Periodization/BlockNameField.swift` — FOUND (76 lines, single 44pt `displayLarge` literal; tracked since commit `8f699ac`).
-- `fitbod/Periodization/BlockBuilderView.swift` — FOUND (4 new spacing tokens + 18 token consumption sites; modified by commit `4097d3a`).
+- `fitbod/Periodization/BlockNameField.swift` — FOUND (76 lines, single 44pt `displayLarge` literal; tracked since commit `7081fb1`).
+- `fitbod/Periodization/BlockBuilderView.swift` — FOUND (4 new spacing tokens + 18 token consumption sites; modified by commit `186bc47`).
 
 **Commits exist:**
 
-- `8f699ac` — FOUND: `fix(new-block): kill name-field font shrink (260528-cby task 1)`
-- `4097d3a` — FOUND: `fix(new-block): tighten vertical rhythm via spacing tokens (260528-cby task 2)`
+- `7081fb1` — FOUND: `fix(new-block): kill name-field font shrink (260528-cby task 1)`
+- `186bc47` — FOUND: `fix(new-block): tighten vertical rhythm via spacing tokens (260528-cby task 2)`
 
 **Plan grep verifiers re-run post-commit:**
 

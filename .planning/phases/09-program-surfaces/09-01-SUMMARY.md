@@ -58,9 +58,9 @@ metrics:
 
 | Task | Name | Commit | Files |
 |------|------|--------|-------|
-| 1 | SplitDetailRoute + LiveEditBanner + SplitDetailView skeleton | a5c8efc | SplitDetailRoute.swift, LiveEditBanner.swift, SplitDetailView.swift |
-| 2 (RED) | Failing SplitDetailViewTests | d1a6289 | SplitDetailViewTests.swift |
-| 2 (GREEN) | Fix tests to all-pass | 450aea0 | SplitDetailViewTests.swift |
+| 1 | SplitDetailRoute + LiveEditBanner + SplitDetailView skeleton | 1756fbe | SplitDetailRoute.swift, LiveEditBanner.swift, SplitDetailView.swift |
+| 2 (RED) | Failing SplitDetailViewTests | bb681df | SplitDetailViewTests.swift |
+| 2 (GREEN) | Fix tests to all-pass | 9b6027a | SplitDetailViewTests.swift |
 
 ---
 
@@ -146,8 +146,8 @@ No new network endpoints, auth paths, or trust-boundary schema changes introduce
 - [x] `fitbod/Design/LiveEditBanner.swift` exists
 - [x] `fitbod/Periodization/SplitDetailView.swift` exists (min_lines 200: ~530 lines)
 - [x] `fitbodTests/SplitDetailViewTests.swift` exists
-- [x] Commit a5c8efc exists (Task 1)
-- [x] Commit d1a6289 exists (Task 2 RED)
-- [x] Commit 450aea0 exists (Task 2 GREEN)
+- [x] Commit 1756fbe exists (Task 1)
+- [x] Commit bb681df exists (Task 2 RED)
+- [x] Commit 9b6027a exists (Task 2 GREEN)
 - [x] Build: SUCCEEDED
 - [x] SplitDetailViewTests: 4/4 PASSED

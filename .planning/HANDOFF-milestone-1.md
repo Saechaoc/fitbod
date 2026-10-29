@@ -36,12 +36,12 @@ TODO:
 - [ ] E2E: install over the V6 backup (it must move aside and launch) and over a V7 backup (data intact). Backups are in `/private/tmp/claude-501/-Users-chrissaechao-Desktop-fitbod/b2492cc7-cf6c-449b-aa8f-c5d306df7945/scratchpad/store-backups/`. That folder is temporary, so copy anything you need into the repo or another durable place first.
 - [ ] Remove the historical-build git worktrees that agent registered (`git worktree list`).
 
-### 2. Branch `m1-journey` in `/Users/chrissaechao/Desktop/fitbod-m1` (orchestrator; latest commit 92bc370)
+### 2. Branch `m1-journey` in `/Users/chrissaechao/Desktop/fitbod-m1` (orchestrator; latest commit 8bb0c7e)
 
 Done (builds; verified in the simulator unless noted):
-- **Design system:** fa3d307 makes BRU fonts scale with Dynamic Type and adds condensed Bebas roles; `Font.bru(_:size:)` replaces every ad-hoc `Font.custom`. BRUButton has pressed and disabled states and full hit areas (sm is now 36pt). `bruHitArea()` covers small text buttons, and BRUDashedSlot, tab cells and header actions now take taps across their whole area.
-- **Bar fix:** 4f991f1 (on main) stopped BottomActionBar from covering the routine builder.
-- **Journey routing (92bc370):**
+- **Design system:** f01ef58 makes BRU fonts scale with Dynamic Type and adds condensed Bebas roles; `Font.bru(_:size:)` replaces every ad-hoc `Font.custom`. BRUButton has pressed and disabled states and full hit areas (sm is now 36pt). `bruHitArea()` covers small text buttons, and BRUDashedSlot, tab cells and header actions now take taps across their whole area.
+- **Bar fix:** c8b81f8 (on main) stopped BottomActionBar from covering the routine builder.
+- **Journey routing (8bb0c7e):**
   - **Routines:** "+ New routine" creates a routine and opens it. The routine screen has an editable name, an Edit mode (move up/down, remove), Archive, and an empty state. New sessions are attached automatically.
   - **Starting a workout:** `SessionTemplateDetailView` has Start workout and Edit. `WorkoutStarter` reports in-progress conflicts and errors instead of hiding them. Today shows a "Start a workout" picker (`TodaySessionPicker`) whenever nothing is scheduled.
   - **Builder:** no Day tabs, a real duration chip, a wrapping name field, specific validation messages, and working Duplicate and Archive.
@@ -63,7 +63,7 @@ TODO on this branch:
 
 ### 3. Branch `m1-logger` in `/Users/chrissaechao/Desktop/fitbod-logger` (logger agent; stopped on a rate limit)
 
-Committed: 01b498b (rest deadline persisted per session plus bottom timer dock), ca47e9d (resume slab: counts completed sets, ticks, confirms discard), d684165 (DEBUG `-fitbod-seed-demo-workout` launch argument), aac66a6.
+Committed: b9ecbe1 (rest deadline persisted per session plus bottom timer dock), 9c61031 (resume slab: counts completed sets, ticks, confirms discard), eaae542 (DEBUG `-fitbod-seed-demo-workout` launch argument), be6e46b.
 Uncommitted: `Sessions/PreviousColumn.swift`, `Sessions/RestTimer/RestTimerOverlay.swift` (its last note was "Now apply the UI fixes").
 Its simulator: "fitbod-logger iPhone 17" D409C89C-DE67-4970-A801-AE3A71378E56.
 

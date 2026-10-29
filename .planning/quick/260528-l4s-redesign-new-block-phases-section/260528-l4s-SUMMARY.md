@@ -14,15 +14,15 @@ date: 2026-05-28
 - Guard suites green: NewBlockBuilderFidelityTests, BlockBuilderViewCopyTests, BlockBuilderViewActivationTests.
 - Executed as 6 atomic commits across 4 chunked sequential executors (single file → no parallelism).
 
-## Commits (base: 956a9ee — a concurrent fast task shifted the base off 20a7137; linear, no conflict)
+## Commits (base: bbfc78b — a concurrent fast task shifted the base off c5b692e; linear, no conflict)
 | SHA | Decision | What |
 |-----|----------|------|
-| `1641dc6` | D1 | Local 5-slot ordered phase palette (index-keyed); same color on timeline segment + card number chip; deload solid muted; `NewBlockDeloadStripes` retired |
-| `269a6e0` | D4 | Lighter timeline (no 1.5pt ink box), cumulative W{n} boundary ticks, narrow-segment label drop |
-| `39b97dc` | D3+D2 | Cards decluttered (boxes→hair dividers) + inline-editable Weeks/Vol/Int steppers; signed-% Volume w/ Hold@0; baseline legend |
-| `a61091f` | D5+D6 | Header stateful `Preset: {Custom\|name} ▾` Menu (routes existing Apply Preset? confirm); single full-width bottom `+ ADD PHASE` → add-phase type picker (4 kinds, swatches); deleted the one `↘ PRESETS` test assertion |
-| `d5341c3` | D7a | Body → SwiftUI `List(.plain)` with pinned PHASES section header; bottom action bar kept as ZStack overlay + 104pt clear-spacer clearance |
-| `f174380` | D7b | `.onMove` reorder via EditMode toggle in pinned header (native handle; decorative `⋮⋮` removed); `.swipeActions` delete + "Phase deleted · UNDO" toast (`@MainActor Task.sleep(4s)`, prior-task cancel, `isCancelled` guard) |
+| `15cb5d9` | D1 | Local 5-slot ordered phase palette (index-keyed); same color on timeline segment + card number chip; deload solid muted; `NewBlockDeloadStripes` retired |
+| `c7fe46b` | D4 | Lighter timeline (no 1.5pt ink box), cumulative W{n} boundary ticks, narrow-segment label drop |
+| `97661b3` | D3+D2 | Cards decluttered (boxes→hair dividers) + inline-editable Weeks/Vol/Int steppers; signed-% Volume w/ Hold@0; baseline legend |
+| `c2c1d2b` | D5+D6 | Header stateful `Preset: {Custom\|name} ▾` Menu (routes existing Apply Preset? confirm); single full-width bottom `+ ADD PHASE` → add-phase type picker (4 kinds, swatches); deleted the one `↘ PRESETS` test assertion |
+| `cb88325` | D7a | Body → SwiftUI `List(.plain)` with pinned PHASES section header; bottom action bar kept as ZStack overlay + 104pt clear-spacer clearance |
+| `faa2677` | D7b | `.onMove` reorder via EditMode toggle in pinned header (native handle; decorative `⋮⋮` removed); `.swipeActions` delete + "Phase deleted · UNDO" toast (`@MainActor Task.sleep(4s)`, prior-task cancel, `isCancelled` guard) |
 
 ## The two key decisions (as requested)
 

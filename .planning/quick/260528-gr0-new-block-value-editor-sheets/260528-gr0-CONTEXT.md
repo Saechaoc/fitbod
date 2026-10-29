@@ -19,7 +19,7 @@ editor sheets**, and trim a redundant in-editor preset entry.
 <already_done>
 ## Already shipped in committed code — DO NOT touch / re-build
 
-Verified by reading the real `BlockBuilderView.swift` + `ProgramView.swift` at HEAD (cd9f4a0):
+Verified by reading the real `BlockBuilderView.swift` + `ProgramView.swift` at HEAD (b099c60):
 
 - **STARTING POINT band: already removed.** No `NewBlockStartingPointBand` exists. Body is
   NameBand → MetricsBand → PhasesHeader → TimelinePreview → phase rows → AddPhaseSlot.

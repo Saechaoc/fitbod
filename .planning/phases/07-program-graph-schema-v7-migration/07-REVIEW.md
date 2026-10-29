@@ -306,17 +306,17 @@ Scope: all 5 Critical + all 6 Warnings (Info skipped). Result: 10 fixed, 1 skipp
 
 | ID | Status | Commit | Notes |
 |----|--------|--------|-------|
-| CR-01 | fixed | `ad3db76` | Added nested `SchemaV1.Routine`/`.RoutineExercise` + `SchemaV2.Routine`/`.RoutineExercise` (V1/V2 on-disk shapes); replaced V7-renamed entries in both models arrays. `String(describing:)` resolves to `Routine`/`RoutineExercise` so V1/V2 tests still hold. |
+| CR-01 | fixed | `cea6479` | Added nested `SchemaV1.Routine`/`.RoutineExercise` + `SchemaV2.Routine`/`.RoutineExercise` (V1/V2 on-disk shapes); replaced V7-renamed entries in both models arrays. `String(describing:)` resolves to `Routine`/`RoutineExercise` so V1/V2 tests still hold. |
 | CR-02 | **skipped** | — | False premise. `SessionTemplate.block` is NOT a dead orphan — `SessionFactory` reads `template.block` to resolve the scheduled `BlockPhase` (volume/intensity multipliers) at log time, and `RoutineDraft`/`RoutineDuplicator` carry it. 8+ tests set `routine.block`. Removing it breaks the build and severs block-phase periodization. Proper removal = Phase 8 resolver migration, out of scope. WR-04 (stale comment) was fixed instead. |
-| CR-03 | fixed | `a088fe3` | `try?` → `try` on `context.save()` in `bumpPlateauToleranceDefault`. |
-| CR-04 | fixed (requires human verification) | `e75f514` | Added `SchemaV7DeleteRuleBehaviorTests` — isolated `.serialized` suite with its own container that attempts `ctx.delete(template)` while slotted. Runtime `.deny` enforcement is SDK-flaky (documented), so wrapped in `withKnownIssue(isIntermittent:)` + a portable survival invariant. Confirm the runtime deny fires in your environment. |
-| CR-05 | fixed | `ced4253` | `BlockOverviewScreen` `#Preview` now uses `Schema(SchemaV7.models)`. |
-| WR-01 | fixed | `b67d539` | Test 9 now asserts `session.slot == nil` after slot deletion (nullify half). |
-| WR-02 | fixed | `80596c4` | Step 4 re-fetches sessions after step 2/3 mutations. |
-| WR-03 | fixed | `bb0feb3` | New `SplitDeletionGuard` (`canDelete`/`assertDeletable` + `SplitDeletionError`) + `SplitDeletionGuardTests` (5 cases). Phase 8 wires it into `SplitDetailView`. |
-| WR-04 | fixed | `49f4b99` | Corrected stale `SessionTemplate.block` doc comment (no longer claims `Block.routines` inverse exists). |
-| WR-05 | fixed | `f2f1012` | Added V7 fields to `ExportBlockDTO` (`schedulingModeRaw`, `trainingDaysJoined`, `archivedConfigJSON`, `splitName`) and `ExportSessionDTO` (`templateName`, `slotPosition`, `slotSplitName`); updated both mappers, restorer (data-loss-critical scalars), round-trip test, snapshot fixture. Golden `example-export.json` emptied → snapshot test regenerates it on first run (documented behavior; expect one red then green). |
-| WR-06 | fixed | `0085fdf` | `PreviewModelContainer` docstring `SchemaV4` → `SchemaV7`. |
+| CR-03 | fixed | `d401622` | `try?` → `try` on `context.save()` in `bumpPlateauToleranceDefault`. |
+| CR-04 | fixed (requires human verification) | `17cbb4e` | Added `SchemaV7DeleteRuleBehaviorTests` — isolated `.serialized` suite with its own container that attempts `ctx.delete(template)` while slotted. Runtime `.deny` enforcement is SDK-flaky (documented), so wrapped in `withKnownIssue(isIntermittent:)` + a portable survival invariant. Confirm the runtime deny fires in your environment. |
+| CR-05 | fixed | `59ba71d` | `BlockOverviewScreen` `#Preview` now uses `Schema(SchemaV7.models)`. |
+| WR-01 | fixed | `438e488` | Test 9 now asserts `session.slot == nil` after slot deletion (nullify half). |
+| WR-02 | fixed | `146194a` | Step 4 re-fetches sessions after step 2/3 mutations. |
+| WR-03 | fixed | `1f94c6e` | New `SplitDeletionGuard` (`canDelete`/`assertDeletable` + `SplitDeletionError`) + `SplitDeletionGuardTests` (5 cases). Phase 8 wires it into `SplitDetailView`. |
+| WR-04 | fixed | `603f7e8` | Corrected stale `SessionTemplate.block` doc comment (no longer claims `Block.routines` inverse exists). |
+| WR-05 | fixed | `e48c1cf` | Added V7 fields to `ExportBlockDTO` (`schedulingModeRaw`, `trainingDaysJoined`, `archivedConfigJSON`, `splitName`) and `ExportSessionDTO` (`templateName`, `slotPosition`, `slotSplitName`); updated both mappers, restorer (data-loss-critical scalars), round-trip test, snapshot fixture. Golden `example-export.json` emptied → snapshot test regenerates it on first run (documented behavior; expect one red then green). |
+| WR-06 | fixed | `cf8dc60` | `PreviewModelContainer` docstring `SchemaV4` → `SchemaV7`. |
 
 Build verification: `xcodebuild build-for-testing` (iPhone 17 sim) compiles all modified source. (The worktree required copying the untracked `fitbod/Design/BRUActionPopover.swift` — a pre-existing dependency of `ProgramView.swift` unrelated to these fixes.)
 

@@ -44,7 +44,7 @@ The function reads `calendar.firstWeekday` (1=Sun, 2=Mon per NSCalendar contract
 
 | # | Name | Status | Commit |
 |---|------|--------|--------|
-| 1 | TrainingDaysWriter.sort + TrainingDaysWriterTests | Done | b69e33b (impl), 3f5306f (tests RED) |
+| 1 | TrainingDaysWriter.sort + TrainingDaysWriterTests | Done | 3692577 (impl), 1356c36 (tests RED) |
 
 ## Deviations from Plan
 
@@ -54,8 +54,8 @@ None — plan executed exactly as written.
 
 | Gate | Commit | Note |
 |------|--------|------|
-| RED (test) | 3f5306f | 4 failing tests; compile error confirmed TrainingDaysWriter absent |
-| GREEN (feat) | b69e33b | All 4 tests pass; no refactor needed |
+| RED (test) | 1356c36 | 4 failing tests; compile error confirmed TrainingDaysWriter absent |
+| GREEN (feat) | 3692577 | All 4 tests pass; no refactor needed |
 
 ## Threat Coverage
 
@@ -67,8 +67,8 @@ None — plan executed exactly as written.
 
 - `fitbod/Periodization/TrainingDaysWriter.swift` exists — FOUND
 - `fitbodTests/TrainingDaysWriterTests.swift` exists — FOUND
-- Commit `3f5306f` (RED) exists — FOUND
-- Commit `b69e33b` (GREEN) exists — FOUND
+- Commit `1356c36` (RED) exists — FOUND
+- Commit `3692577` (GREEN) exists — FOUND
 - `rg -c "@Test" fitbodTests/TrainingDaysWriterTests.swift` → 4 — FOUND
 - `using calendar: Calendar = .current` in implementation — FOUND
 - `firstWeekday` consulted in implementation — FOUND

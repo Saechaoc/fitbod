@@ -2,7 +2,7 @@
 
 ## What was run
 
-- Tip: `f60df5031ef2ae5325c45855804a56198bb74439` ("docs: record milestone evidence and open release flags"), the last of the seven group commits.
+- Tip: `3c5aaf2f0649595a4c52ce09f1ce9b606a2346f0` ("docs: record milestone evidence and open release flags"), the last of the seven group commits.
 - Device: "sw6 iPhone 17 Pro Max", `79CAC9F7-95DE-4AEB-84F6-660A8F2E36EE`, iOS 26.5 runtime.
 - Text size `large` (the default) and light appearance, both checked with `xcrun simctl ui` before the run.
 - Xcode 26.5 (17F42).

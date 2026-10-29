@@ -48,7 +48,7 @@ metrics:
 
 | Task | Name | Commit | Files |
 |------|------|--------|-------|
-| 1 | Live-edit banner in RoutineBuilderView with Swift reachability + test | d7864a0 | RoutineBuilderView.swift, RoutineBuilderLiveEditTests.swift |
+| 1 | Live-edit banner in RoutineBuilderView with Swift reachability + test | 5385cab | RoutineBuilderView.swift, RoutineBuilderLiveEditTests.swift |
 
 ---
 
@@ -104,7 +104,7 @@ No new network endpoints, auth paths, or trust-boundary schema changes. Threat m
 
 - [x] `fitbod/Routines/RoutineBuilderView.swift` modified — contains `LiveEditBanner` and `isTemplateOnActiveBlock`
 - [x] `fitbodTests/RoutineBuilderLiveEditTests.swift` created
-- [x] Commit d7864a0 exists
+- [x] Commit 5385cab exists
 - [x] Build: SUCCEEDED (iPhone 17 Pro simulator)
 - [x] RoutineBuilderLiveEditTests: 4/4 PASSED
 - [x] NewBlockBuilderFidelityTests: 6/6 PASSED (guardrail)

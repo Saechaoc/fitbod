@@ -10,7 +10,7 @@ requires:
 provides:
   - Serial UI-test setting restored in fitbod.xcscheme (left uncommitted on purpose)
   - GitNexus index refreshed with analyze --index-only and current for HEAD before every commit
-  - Seven group commits on main on top of 27687f8 (303 paths, nothing pushed)
+  - Seven group commits on main on top of 2bb5a91 (303 paths, nothing pushed)
   - Seven detect-changes reports in the quick directory
 affects: [milestone-1 phases 1-8, task 3 baseline run]
 
@@ -93,7 +93,7 @@ The orchestrator should recheck the scheme right before the Task 3 run.
 - `gitnexus analyze --index-only` ran at the start and took 33.7 s (incremental: changed=9, added=17).
 - The graph then held 11,949 nodes, 233,681 edges, 474 clusters and 219 flows.
 - `gitnexus status` printed `Status:` with a green check mark and `up-to-date`, and `Indexed commit` equalled `Current commit`.
-- That wording appeared before every group (indexed commits 27687f8, 507ae46, 0d970a4, d27215d, 95f26ef, 8324bdf, 66a8f60) and after the last commit (f60df50).
+- That wording appeared before every group (indexed commits 2bb5a91, 1152fde, fe970ae, 8ff2a88, b1fe165, eacdec2, 0bf7c02) and after the last commit (3c5aaf2).
 - Every wait for `.gitnexus/.reindex.lock` returned on its first poll, because the post-commit reindex had already finished.
 - Guard hashes (CLAUDE.md, AGENTS.md and the six `.claude/skills/gitnexus` files, 8 files) were identical after the refresh and after group 07.
 
@@ -118,13 +118,13 @@ The flows are the ones the report names, which lists at most 10.
 
 | Group | Paths | Shortstat | Commit | Risk | Notable affected flows | Detect file |
 | --- | --- | --- | --- | --- | --- | --- |
-| 01-design | 27 | 27 files changed, 573 insertions(+), 100 deletions(-) | `507ae46d5441c889f3df079b9eee736e361472d6` | high (6 flows) | RowView -> BRUDisplay; ArchivedConfigView -> BRUChip; E1RMSection -> BRUChip; SizeThatFits -> Row; PlaceSubviews -> Row; ActiveTabContent -> BRUSectionHead | `261028-tll-detect-01-design.txt` |
-| 02-logger | 46 | 46 files changed, 771 insertions(+), 267 deletions(-) | `0d970a4d46e751dfce9e0302955836c88deadbfd` | critical (58 flows) | RenderJSON -> ExportExerciseDTO, ExportMuscleGroupDTO, FetchExercises, FetchMuscleGroups; RenderCSV -> Estimate, FormatISO, FormatDouble, Data; RunRestore -> FetchExercises, FetchMuscleGroups | `261028-tll-detect-02-logger.txt` |
-| 03-authoring | 19 | 19 files changed, 245 insertions(+), 158 deletions(-) | `d27215d2708487d8de86ae3cfccc65dcef2e8a66` | medium (4 flows) | E1RMSection -> FormattedDelta, BRUChip; HeroBand -> CompletedWorkingSets; DefaultSetRow -> Double | `261028-tll-detect-03-authoring.txt` |
-| 04-navigation | 20 | 20 files changed, 974 insertions(+), 509 deletions(-) | `95f26efc12f11775da950c5bf1a9829f2cdd7c66` | high (11 flows) | RowView -> BRUDisplay, FormatWeight, AccessibilityLabel; RunIfRequested -> SortedPhases, Days, PreviousMatchingIntentHit, Make, EquipmentKind, MondayAtMidnightForToday, Double | `261028-tll-detect-04-navigation.txt` |
-| 05-deload | 2 | 2 files changed, 66 insertions(+), 3 deletions(-) | `8324bdfaf5ff095b8161bddd5f50b07888c417cd` | medium (3 flows) | RefreshAdvisory -> Estimate, Array, Double | `261028-tll-detect-05-deload.txt` |
-| 06-ui-tests | 24 | 24 files changed, 1147 insertions(+), 636 deletions(-) | `66a8f60ac3fda5ba342cb0271f0bf2308d1fc33c` | low (0 flows) | none reported | `261028-tll-detect-06-ui-tests.txt` |
-| 07-docs-reference | 165 | 165 files changed, 9486 insertions(+), 2 deletions(-) | `f60df5031ef2ae5325c45855804a56198bb74439` | high (11 flows) | DarkVariant -> RestForKind; IOSKeyboard -> Key; DCFocusOverlay and K -> SetFocus; OnWheel, OnHostMsg and OnGestureChange -> Apply; DcExport -> ScrapeCss and ToDataURL; Main -> Parse_component (the 10 listed come from JavaScript and Python files, none from Swift) | `261028-tll-detect-07-docs-reference.txt` |
+| 01-design | 27 | 27 files changed, 573 insertions(+), 100 deletions(-) | `1152fde22b0142a9b161ab083c5450b8882a4a30` | high (6 flows) | RowView -> BRUDisplay; ArchivedConfigView -> BRUChip; E1RMSection -> BRUChip; SizeThatFits -> Row; PlaceSubviews -> Row; ActiveTabContent -> BRUSectionHead | `261028-tll-detect-01-design.txt` |
+| 02-logger | 46 | 46 files changed, 771 insertions(+), 267 deletions(-) | `fe970ae47812c69b227a0ad74a6f964004e64cce` | critical (58 flows) | RenderJSON -> ExportExerciseDTO, ExportMuscleGroupDTO, FetchExercises, FetchMuscleGroups; RenderCSV -> Estimate, FormatISO, FormatDouble, Data; RunRestore -> FetchExercises, FetchMuscleGroups | `261028-tll-detect-02-logger.txt` |
+| 03-authoring | 19 | 19 files changed, 245 insertions(+), 158 deletions(-) | `8ff2a88bcd51f3f2c80877bc5e574191eaf253f6` | medium (4 flows) | E1RMSection -> FormattedDelta, BRUChip; HeroBand -> CompletedWorkingSets; DefaultSetRow -> Double | `261028-tll-detect-03-authoring.txt` |
+| 04-navigation | 20 | 20 files changed, 974 insertions(+), 509 deletions(-) | `b1fe1656cb03d3ecb0ef45d8b756f9e6ce377725` | high (11 flows) | RowView -> BRUDisplay, FormatWeight, AccessibilityLabel; RunIfRequested -> SortedPhases, Days, PreviousMatchingIntentHit, Make, EquipmentKind, MondayAtMidnightForToday, Double | `261028-tll-detect-04-navigation.txt` |
+| 05-deload | 2 | 2 files changed, 66 insertions(+), 3 deletions(-) | `eacdec2f7e58276e06fa7247f711ff2ebb1b3831` | medium (3 flows) | RefreshAdvisory -> Estimate, Array, Double | `261028-tll-detect-05-deload.txt` |
+| 06-ui-tests | 24 | 24 files changed, 1147 insertions(+), 636 deletions(-) | `0bf7c0235598645ee27b16ee9a318a409c92d123` | low (0 flows) | none reported | `261028-tll-detect-06-ui-tests.txt` |
+| 07-docs-reference | 165 | 165 files changed, 9486 insertions(+), 2 deletions(-) | `3c5aaf2f0649595a4c52ce09f1ce9b606a2346f0` | high (11 flows) | DarkVariant -> RestForKind; IOSKeyboard -> Key; DCFocusOverlay and K -> SetFocus; OnWheel, OnHostMsg and OnGestureChange -> Apply; DcExport -> ScrapeCss and ToDataURL; Main -> Parse_component (the 10 listed come from JavaScript and Python files, none from Swift) | `261028-tll-detect-07-docs-reference.txt` |
 
 For every group, the files that detect-changes named were all inside the group's manifest.
 After each commit all four checks passed: empty index, committed paths equal to the manifest, stored message equal to the message file, and content equal to the backup branch.
@@ -132,8 +132,8 @@ No commit deleted a file.
 
 ## Final checks
 
-- Range: `git rev-list --count 27687f8..HEAD` is 7, and the subjects are in the plan's order.
-- Paths: `git diff --name-only 27687f8 HEAD` equals the seven manifests, 303 paths.
+- Range: `git rev-list --count 2bb5a91..HEAD` is 7, and the subjects are in the plan's order.
+- Paths: `git diff --name-only 2bb5a91 HEAD` equals the seven manifests, 303 paths.
 - Messages: 0 Co-Authored-By lines, and 7 of 7 carry the Claude-Session trailer.
 - Scheme: equal to HEAD.
 - Status: no code-prefix path is uncommitted, no manifest path appears in `git status`, and every excluded path is still uncommitted.
@@ -204,7 +204,7 @@ All mitigations in the plan's threat register were applied except the Task 3 sch
 ## Task 3
 
 Task 3 done (orchestrator).
-The app and the widget built on the committed tip `f60df50`.
+The app and the widget built on the committed tip `3c5aaf2`.
 The serial full suite on "sw6 iPhone 17 Pro Max" at default text in light mode ran 1,026 tests: 1,023 passed, 2 failed, 0 skipped and 1 expected failure.
 The two failures are app bugs from the review: item 5 in `MilestoneOneJourneyUITests` and item 4 in `WhyThisWeightSheetBRUUITests/testWhyThisWeightSectionHeadVisible`.
 Two of Codex's four unverified fixes now pass.

@@ -37,8 +37,8 @@ Pure scheduler engine: `TodayResolution` enum (4-case public contract for Phase 
 
 | Task | Name | Commit | Files |
 |------|------|--------|-------|
-| 1 | TodayResolver + TodayResolution enum | 3facc5a | fitbod/Periodization/TodayResolver.swift |
-| 2 | TodayResolverTests spec §9 suite | d4b624d | fitbodTests/TodayResolverTests.swift |
+| 1 | TodayResolver + TodayResolution enum | b5019aa | fitbod/Periodization/TodayResolver.swift |
+| 2 | TodayResolverTests spec §9 suite | d0d7b0c | fitbodTests/TodayResolverTests.swift |
 
 ## What Was Built
 
@@ -110,7 +110,7 @@ No new threat surface introduced. `T-08-01` (Pitfall-3 zero-slot guard) and `T-0
 
 - [x] `fitbod/Periodization/TodayResolver.swift` — created (190 lines)
 - [x] `fitbodTests/TodayResolverTests.swift` — created (463 lines)
-- [x] Commit 3facc5a exists (feat: TodayResolver)
-- [x] Commit d4b624d exists (test: TodayResolverTests)
+- [x] Commit b5019aa exists (feat: TodayResolver)
+- [x] Commit d0d7b0c exists (test: TodayResolverTests)
 - [x] All 14 tests pass
 - [x] BUILD SUCCEEDED

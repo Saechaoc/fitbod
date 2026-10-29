@@ -41,7 +41,7 @@ Removed the discard confirmation modal from `BlockBuilderView` along with all fo
 
 | # | Name | Commit | Files |
 |---|------|--------|-------|
-| 1 | Remove discard confirmation modal and its dead support code; update copy guardrail | 4cdb65b | BlockBuilderView.swift, BlockBuilderViewCopyTests.swift |
+| 1 | Remove discard confirmation modal and its dead support code; update copy guardrail | 7c4c169 | BlockBuilderView.swift, BlockBuilderViewCopyTests.swift |
 | 2 | Clean simulator build + full New Block guardrail suite green | (verify only — no source edits) | — |
 
 ## Verification Results
@@ -72,5 +72,5 @@ None. Pure local UI-state removal with no new network, persistence, or input sur
 
 - `fitbod/Periodization/BlockBuilderView.swift` — exists, modified
 - `fitbodTests/BlockBuilderViewCopyTests.swift` — exists, modified
-- Commit `4cdb65b` — verified in git log
+- Commit `7c4c169` — verified in git log
 - All four guardrail suites green — TEST SUCCEEDED

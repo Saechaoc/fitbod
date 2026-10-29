@@ -43,9 +43,9 @@ Closed three verified regressions blocking Phase 7's named deliverable ("SchemaV
 
 | Task | Name | Commit | Files |
 |------|------|--------|-------|
-| 1 | Wire nullify delete-rules for Session.slot and legacy SessionTemplate.block | a53b59c | Block.swift, SplitSessionSlot.swift, Session.swift, SessionTemplate.swift |
-| 2 | Make migration suite deterministic + fix V6 count-pin | aa0a072 | SchemaV7MigrationTests.swift, SchemaV6MigrationTests.swift, FitbodSchemaMigrationPlan.swift |
-| 3 | Restore V5 chain with nested Routine/RoutineExercise @Model types | b2d14a8 | SchemaV5.swift |
+| 1 | Wire nullify delete-rules for Session.slot and legacy SessionTemplate.block | 56a56ff | Block.swift, SplitSessionSlot.swift, Session.swift, SessionTemplate.swift |
+| 2 | Make migration suite deterministic + fix V6 count-pin | 962d478 | SchemaV7MigrationTests.swift, SchemaV6MigrationTests.swift, FitbodSchemaMigrationPlan.swift |
+| 3 | Restore V5 chain with nested Routine/RoutineExercise @Model types | a6d5961 | SchemaV5.swift |
 
 ## What Was Built
 
@@ -120,6 +120,6 @@ All key files exist:
 - FOUND: 07-07-SUMMARY.md
 
 All commits exist:
-- a53b59c: fix(07-07): wire nullify delete-rules for Session.slot and legacy SessionTemplate.block
-- aa0a072: fix(07-07): make migration suite deterministic + fix V6 count-pin
-- b2d14a8: fix(07-07): restore pre-V7 chain at V5 with nested Routine/RoutineExercise @Model types
+- 56a56ff: fix(07-07): wire nullify delete-rules for Session.slot and legacy SessionTemplate.block
+- 962d478: fix(07-07): make migration suite deterministic + fix V6 count-pin
+- a6d5961: fix(07-07): restore pre-V7 chain at V5 with nested Routine/RoutineExercise @Model types
