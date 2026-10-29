@@ -1,0 +1,44 @@
+[
+  {
+    "attachments" : [
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "C2512FF6-0EC6-4044-8B18-53E451AB0899",
+        "deviceName" : "sw6 iPhone 17e",
+        "exportedFileName" : "3B9C6B6C-0BDA-4681-BC2C-E04A59875DF2.txt",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "zz-issues_0_3C235948-86A6-4847-B31A-F05CDF3E44FA.txt",
+        "timestamp" : 1791231008.939
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "C2512FF6-0EC6-4044-8B18-53E451AB0899",
+        "deviceName" : "sw6 iPhone 17e",
+        "exportedFileName" : "AD2EBFFD-C3C2-40BF-ACC2-7D6D66B3F695.png",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "002-R2-today_0_08CFD341-DEB4-40EB-AE4A-403DE3E324F8.png",
+        "timestamp" : 1791231008.938
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "C2512FF6-0EC6-4044-8B18-53E451AB0899",
+        "deviceName" : "sw6 iPhone 17e",
+        "exportedFileName" : "DF70D657-6A01-40D3-B97F-5B30A289747C.txt",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "001-R2-after-label-tap-tree_0_BA4729B7-88D0-4668-96F0-2CF459449830.txt",
+        "timestamp" : 1791231005.919
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "C2512FF6-0EC6-4044-8B18-53E451AB0899",
+        "deviceName" : "sw6 iPhone 17e",
+        "exportedFileName" : "EFDE84CC-5B9A-41D4-921D-F0A0E96318E8.png",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "001-R2-after-label-tap_0_5A1C2936-B9FE-4458-A7E1-38FD7F4E45A5.png",
+        "timestamp" : 1791231005.752
+      }
+    ],
+    "testIdentifier" : "ReviewProbeUITests/testR2_skipWarmups()",
+    "testIdentifierURL" : "test://com.apple.xcode/fitbod/fitbodUITests/ReviewProbeUITests/testR2_skipWarmups"
+  }
+]

@@ -1,0 +1,186 @@
+Optional(Attributes: Application, 0x1148e4140, pid: 56764, label: 'fitbod'
+Element subtree:
+ →Application, 0x1148e4140, pid: 56764, label: 'fitbod'
+    Window (Main), 0x1148e4280, {{0.0, 0.0}, {440.0, 956.0}}
+      Other, 0x1148e4000, {{0.0, 0.0}, {440.0, 956.0}}
+        Other, 0x1148e4780, {{0.0, 0.0}, {440.0, 956.0}}
+          Other, 0x1148e48c0, {{0.0, 0.0}, {440.0, 956.0}}
+            Other, 0x1148e4a00, {{0.0, 0.0}, {440.0, 956.0}}
+              Other, 0x1148e4b40, {{0.0, 0.0}, {440.0, 893.0}}
+                Other, 0x1148e4c80, {{0.0, 0.0}, {440.0, 893.0}}
+                  Other, 0x1148e4dc0, {{0.0, 0.0}, {440.0, 893.0}}
+                    Other, 0x1148e4f00, {{0.0, 0.0}, {440.0, 893.0}}
+                      Other, 0x1148e5040, {{0.0, 0.0}, {440.0, 893.0}}
+                        Other, 0x1148e5180, {{0.0, 0.0}, {440.0, 893.0}}
+                          Other, 0x1148e52c0, {{0.0, 0.0}, {440.0, 893.0}}
+                            Other, 0x1148e5400, {{0.0, 0.0}, {440.0, 893.0}}
+                              Other, 0x1148e5540, {{0.0, 0.0}, {440.0, 893.0}}
+                                Other, 0x1148e5680, {{0.0, 0.0}, {440.0, 893.0}}
+                                  Other, 0x1148e57c0, {{0.0, 0.0}, {440.0, 893.0}}
+                                    StaticText, 0x1148e5900, {{191.5, 76.7}, {57.0, 14.7}}, label: 'Library'
+                                    Button, 0x1148e5a40, {{371.3, 62.0}, {64.7, 44.0}}, label: '+ New'
+                                    StaticText, 0x1148e5b80, {{16.0, 119.2}, {17.0, 33.7}}, label: '⌕'
+                                    TextField, 0x1148e5cc0, {{0.0, 108.0}, {440.0, 56.0}}, identifier: 'library.search.browser', label: 'Search exercises', placeholderValue: 'Search exercises'
+                                    ScrollView, 0x1148e5e00, {{0.0, 164.0}, {440.0, 52.0}}, identifier: 'library.filters'
+                                      Other, 0x1148e5f40, {{0.0, 164.0}, {300.0, 52.0}}
+                                        Button, 0x1148e6080, {{16.0, 168.0}, {71.0, 44.0}}, identifier: 'library.filter.muscle', label: 'Muscle filter'
+                                        Button, 0x1148e61c0, {{95.0, 168.0}, {94.3, 44.0}}, identifier: 'library.filter.equipment', label: 'Equipment filter'
+                                        Button, 0x1148e6300, {{197.3, 168.0}, {86.7, 44.0}}, identifier: 'library.filter.mechanic', label: 'Mechanic filter'
+                                    ScrollView, 0x1148e6440, {{0.0, 216.0}, {440.0, 677.0}}
+                                      Other, 0x1148e6580, {{0.0, 216.0}, {440.0, 63853.0}}
+                                        Other, 0x1148e66c0, {{0.0, 226.0}, {440.0, 1391.7}}
+                                          StaticText, 0x1148e6800, {{16.0, 226.0}, {101.7, 14.7}}, label: '702 EXERCISES'
+                                          Button, 0x1148e6940, {{0.0, 289.3}, {440.0, 79.7}}, label: '3/4 Sit-Up, Abdominals, Bodyweight, Compound, Logged 0 times'
+                                            StaticText, 0x1148e6a80, {{16.0, 303.3}, {89.0, 23.0}}, label: '3/4 Sit-Up'
+                                            StaticText, 0x1148e6bc0, {{15.2, 333.6}, {91.8, 22.2}}, label: 'Abdominals'
+                                            StaticText, 0x1148e6d00, {{111.6, 333.6}, {91.8, 22.2}}, label: 'Bodyweight'
+                                            StaticText, 0x1148e6e40, {{207.9, 333.6}, {76.2, 22.2}}, label: 'Compound'
+                                            Other, 0x1148e6f80, {{385.3, 312.8}, {38.7, 32.7}}, label: 'Logged 0 times'
+                                              StaticText, 0x1148e70c0, {{407.0, 312.8}, {17.0, 18.7}}, label: '0×'
+                                              StaticText, 0x1148e7200, {{385.3, 333.5}, {38.7, 12.0}}, label: 'LOGGED'
+                                          Button, 0x1148e7340, {{0.0, 408.7}, {440.0, 79.7}}, label: 'Ab Crunch Machine, Abdominals, Machine, Isolation, Logged 0 times'
+                                            StaticText, 0x1148e7480, {{16.0, 422.7}, {168.7, 23.0}}, label: 'Ab Crunch Machine'
+                                            StaticText, 0x1148e75c0, {{15.2, 452.9}, {91.8, 22.2}}, label: 'Abdominals'
+                                            StaticText, 0x1148e7700, {{111.6, 452.9}, {68.2, 22.2}}, label: 'Machine'
+                                            StaticText, 0x1148e7840, {{184.2, 452.9}, {83.8, 22.2}}, label: 'Isolation'
+                                            Other, 0x1148e7980, {{385.3, 432.2}, {38.7, 32.7}}, label: 'Logged 0 times'
+                                              StaticText, 0x1148e7ac0, {{407.0, 432.2}, {17.0, 18.7}}, label: '0×'
+                                              StaticText, 0x1148e7c00, {{385.3, 452.8}, {38.7, 12.0}}, label: 'LOGGED'
+                                          Button, 0x1148e7d40, {{0.0, 489.3}, {440.0, 79.7}}, label: 'Ab Roller, Abdominals, Other, Compound, Logged 0 times'
+                                            StaticText, 0x1148e7e80, {{16.0, 503.3}, {77.0, 23.0}}, label: 'Ab Roller'
+                                            StaticText, 0x102e67c00, {{15.2, 533.6}, {91.8, 22.2}}, label: 'Abdominals'
+                                            StaticText, 0x102e67e80, {{111.6, 533.6}, {52.8, 22.2}}, label: 'Other'
+                                            StaticText, 0x102e67d40, {{168.9, 533.6}, {76.2, 22.2}}, label: 'Compound'
+                                            Other, 0x102e67840, {{385.3, 512.8}, {38.7, 32.7}}, label: 'Logged 0 times'
+                                              StaticText, 0x102e67ac0, {{407.0, 512.8}, {17.0, 18.7}}, label: '0×'
+                                              StaticText, 0x102e67980, {{385.3, 533.5}, {38.7, 12.0}}, label: 'LOGGED'
+                                          Button, 0x102e67700, {{0.0, 570.0}, {440.0, 79.7}}, label: 'Advanced Kettlebell Windmill, Abdominals, Kettlebell, Isolation, Logged 0 times'
+                                            StaticText, 0x102e675c0, {{16.0, 584.0}, {251.0, 23.0}}, label: 'Advanced Kettlebell Windmill'
+                                            StaticText, 0x102e67480, {{15.2, 614.2}, {91.8, 22.2}}, label: 'Abdominals'
+                                            StaticText, 0x102e67340, {{111.6, 614.2}, {91.8, 22.2}}, label: 'Kettlebell'
+                                            StaticText, 0x112c27200, {{207.9, 614.2}, {83.8, 22.2}}, label: 'Isolation'
+                                            Other, 0x112c24b40, {{385.3, 593.5}, {38.7, 32.7}}, label: 'Logged 0 times'
+                                              StaticText, 0x112c26f80, {{407.0, 593.5}, {17.0, 18.7}}, label: '0×'
+                                              StaticText, 0x112c24a00, {{385.3, 614.2}, {38.7, 12.0}}, label: 'LOGGED'
+                                          Button, 0x112c24dc0, {{0.0, 650.7}, {440.0, 79.7}}, label: 'Air Bike, Abdominals, Bodyweight, Compound, Logged 0 times'
+                                            StaticText, 0x112c24f00, {{16.0, 664.7}, {64.7, 23.0}}, label: 'Air Bike'
+                                            StaticText, 0x112c25040, {{15.2, 694.9}, {91.8, 22.2}}, label: 'Abdominals'
+                                            StaticText, 0x112c25180, {{111.6, 694.9}, {91.8, 22.2}}, label: 'Bodyweight'
+                                            StaticText, 0x112c252c0, {{207.9, 694.9}, {76.2, 22.2}}, label: 'Compound'
+                                            Other, 0x112c25400, {{385.3, 674.2}, {38.7, 32.7}}, label: 'Logged 0 times'
+                                              StaticText, 0x112c25540, {{407.0, 674.2}, {17.0, 18.7}}, label: '0×'
+                                              StaticText, 0x112c25680, {{385.3, 694.8}, {38.7, 12.0}}, label: 'LOGGED'
+                                          Button, 0x112c257c0, {{0.0, 731.3}, {440.0, 79.7}}, label: 'Alternate Hammer Curl, Biceps, Dumbbell, Isolation, Logged 0 times'
+                                            StaticText, 0x112c25900, {{16.0, 745.3}, {195.0, 23.0}}, label: 'Alternate Hammer Curl'
+                                            StaticText, 0x112c25a40, {{15.2, 775.6}, {60.5, 22.2}}, label: 'Biceps'
+                                            StaticText, 0x112c25b80, {{80.2, 775.6}, {76.2, 22.2}}, label: 'Dumbbell'
+                                            StaticText, 0x112c25cc0, {{160.9, 775.6}, {83.8, 22.2}}, label: 'Isolation'
+                                            Other, 0x112c24280, {{385.3, 754.8}, {38.7, 32.7}}, label: 'Logged 0 times'
+                                              StaticText, 0x112c243c0, {{407.0, 754.8}, {17.0, 18.7}}, label: '0×'
+                                              StaticText, 0x112c24500, {{385.3, 775.5}, {38.7, 12.0}}, label: 'LOGGED'
+                                          Button, 0x112c27e80, {{0.0, 812.0}, {440.0, 79.7}}, label: 'Alternate Heel Touchers, Abdominals, Bodyweight, Isolation, Logged 0 times'
+                                            StaticText, 0x112c27480, {{16.0, 826.0}, {206.3, 23.0}}, label: 'Alternate Heel Touchers'
+                                            StaticText, 0x112c27ac0, {{15.2, 856.2}, {91.8, 22.2}}, label: 'Abdominals'
+                                            StaticText, 0x112c27d40, {{111.6, 856.2}, {91.8, 22.2}}, label: 'Bodyweight'
+                                            StaticText, 0x112c27c00, {{207.9, 856.2}, {83.8, 22.2}}, label: 'Isolation'
+                                            Other, 0x112c27980, {{385.3, 835.5}, {38.7, 32.7}}, label: 'Logged 0 times'
+                                              StaticText, 0x112c27840, {{407.0, 835.5}, {17.0, 18.7}}, label: '0×'
+                                              StaticText, 0x112c27700, {{385.3, 856.2}, {38.7, 12.0}}, label: 'LOGGED'
+                                          Button, 0x112c275c0, {{0.0, 892.7}, {440.0, 79.7}}, label: 'Alternate Incline Dumbbell Curl, Biceps, Dumbbell, Isolation, Logged 0 times'
+                                            StaticText, 0x112c24780, {{16.0, 906.7}, {268.0, 23.0}}, label: 'Alternate Incline Dumbbell Curl'
+                                            StaticText, 0x112c26440, {{15.2, 936.9}, {60.5, 22.2}}, label: 'Biceps'
+                                            StaticText, 0x112c27340, {{80.2, 936.9}, {76.2, 22.2}}, label: 'Dumbbell'
+                                            StaticText, 0x112c26580, {{160.9, 936.9}, {83.8, 22.2}}, label: 'Isolation'
+                                            Other, 0x112c26300, {{385.3, 916.2}, {38.7, 32.7}}, label: 'Logged 0 times'
+                                              StaticText, 0x112c261c0, {{407.0, 916.2}, {17.0, 18.7}}, label: '0×'
+                                              StaticText, 0x112c26080, {{385.3, 936.8}, {38.7, 12.0}}, label: 'LOGGED'
+                                          Button, 0x112c248c0, {{0.0, 973.3}, {440.0, 79.7}}, label: 'Alternating Cable Shoulder Press, Shoulders, Cable, Compound, Logged 0 times'
+                                            StaticText, 0x112c24640, {{16.0, 987.3}, {285.3, 23.0}}, label: 'Alternating Cable Shoulder Press'
+                                            StaticText, 0x112c26a80, {{15.2, 1017.6}, {83.8, 22.2}}, label: 'Shoulders'
+                                            StaticText, 0x112c26d00, {{103.6, 1017.6}, {52.8, 22.2}}, label: 'Cable'
+                                            StaticText, 0x112c24140, {{160.9, 1017.6}, {76.2, 22.2}}, label: 'Compound'
+                                            Other, 0x112c24000, {{385.3, 996.8}, {38.7, 32.7}}, label: 'Logged 0 times'
+                                              StaticText, 0x112c26bc0, {{407.0, 996.8}, {17.0, 18.7}}, label: '0×'
+                                              StaticText, 0x112c26940, {{385.3, 1017.5}, {38.7, 12.0}}, label: 'LOGGED'
+                                          Button, 0x112c26800, {{0.0, 1054.0}, {440.0, 79.7}}, label: 'Alternating Deltoid Raise, Shoulders, Dumbbell, Isolation, Logged 0 times'
+                                            StaticText, 0x112c266c0, {{16.0, 1068.0}, {216.0, 23.0}}, label: 'Alternating Deltoid Raise'
+                                            StaticText, 0x112c25e00, {{15.2, 1098.2}, {83.8, 22.2}}, label: 'Shoulders'
+                                            StaticText, 0x112c24c80, {{103.6, 1098.2}, {76.2, 22.2}}, label: 'Dumbbell'
+                                            StaticText, 0x112c270c0, {{184.2, 1098.2}, {83.8, 22.2}}, label: 'Isolation'
+                                            Other, 0x112dc4000, {{385.3, 1077.5}, {38.7, 32.7}}, label: 'Logged 0 times'
+                                              StaticText, 0x112dc4140, {{407.0, 1077.5}, {17.0, 18.7}}, label: '0×'
+                                              StaticText, 0x112dc4280, {{385.3, 1098.2}, {38.7, 12.0}}, label: 'LOGGED'
+                                          Button, 0x112dc43c0, {{0.0, 1134.7}, {440.0, 79.7}}, label: 'Alternating Floor Press, Chest, Kettlebell, Compound, Logged 0 times'
+                                            StaticText, 0x112dc4500, {{16.0, 1148.7}, {197.7, 23.0}}, label: 'Alternating Floor Press'
+                                            StaticText, 0x112dc4640, {{15.2, 1178.9}, {52.8, 22.2}}, label: 'Chest'
+                                            StaticText, 0x112dc4780, {{72.6, 1178.9}, {91.8, 22.2}}, label: 'Kettlebell'
+                                            StaticText, 0x112dc48c0, {{168.9, 1178.9}, {76.2, 22.2}}, label: 'Compound'
+                                            Other, 0x112dc4a00, {{385.3, 1158.2}, {38.7, 32.7}}, label: 'Logged 0 times'
+                                              StaticText, 0x112dc4b40, {{407.0, 1158.2}, {17.0, 18.7}}, label: '0×'
+                                              StaticText, 0x112dc4c80, {{385.3, 1178.8}, {38.7, 12.0}}, label: 'LOGGED'
+                                          Button, 0x112dc4dc0, {{0.0, 1215.3}, {440.0, 79.7}}, label: 'Alternating Hang Clean, Hamstrings, Kettlebell, Compound, Logged 0 times'
+                                            StaticText, 0x112dc4f00, {{16.0, 1229.3}, {200.3, 23.0}}, label: 'Alternating Hang Clean'
+                                            StaticText, 0x112dc5040, {{15.2, 1259.6}, {91.8, 22.2}}, label: 'Hamstrings'
+                                            StaticText, 0x112dc5180, {{111.6, 1259.6}, {91.8, 22.2}}, label: 'Kettlebell'
+                                            StaticText, 0x112dc52c0, {{207.9, 1259.6}, {76.2, 22.2}}, label: 'Compound'
+                                            Other, 0x112dc5400, {{385.3, 1238.8}, {38.7, 32.7}}, label: 'Logged 0 times'
+                                              StaticText, 0x112dc5540, {{407.0, 1238.8}, {17.0, 18.7}}, label: '0×'
+                                              StaticText, 0x112dc5680, {{385.3, 1259.5}, {38.7, 12.0}}, label: 'LOGGED'
+                                          Button, 0x112dc57c0, {{0.0, 1296.0}, {440.0, 79.7}}, label: 'Alternating Kettlebell Press, Shoulders, Kettlebell, Compound, Logged 0 times'
+                                            StaticText, 0x112dc5900, {{16.0, 1310.0}, {236.3, 23.0}}, label: 'Alternating Kettlebell Press'
+                                            StaticText, 0x112dc5a40, {{15.2, 1340.2}, {83.8, 22.2}}, label: 'Shoulders'
+                                            StaticText, 0x112dc5b80, {{103.6, 1340.2}, {91.8, 22.2}}, label: 'Kettlebell'
+                                            StaticText, 0x112dc5cc0, {{199.9, 1340.2}, {76.2, 22.2}}, label: 'Compound'
+                                            Other, 0x112dc5e00, {{385.3, 1319.5}, {38.7, 32.7}}, label: 'Logged 0 times'
+                                              StaticText, 0x112dc5f40, {{407.0, 1319.5}, {17.0, 18.7}}, label: '0×'
+                                              StaticText, 0x112dc6080, {{385.3, 1340.2}, {38.7, 12.0}}, label: 'LOGGED'
+                                          Button, 0x112dc61c0, {{0.0, 1376.7}, {440.0, 79.7}}, label: 'Alternating Kettlebell Row, Middle Back, Kettlebell, Isolation, Logged 0 times'
+                                            StaticText, 0x112dc6300, {{16.0, 1390.7}, {226.0, 23.0}}, label: 'Alternating Kettlebell Row'
+                                            StaticText, 0x112dc6440, {{15.2, 1420.9}, {99.5, 22.2}}, label: 'Middle Back'
+                                            StaticText, 0x112dc6580, {{119.2, 1420.9}, {91.8, 22.2}}, label: 'Kettlebell'
+                                            StaticText, 0x112dc66c0, {{215.6, 1420.9}, {83.8, 22.2}}, label: 'Isolation'
+                                            Other, 0x112dc6800, {{385.3, 1400.2}, {38.7, 32.7}}, label: 'Logged 0 times'
+                                              StaticText, 0x112dc6940, {{407.0, 1400.2}, {17.0, 18.7}}, label: '0×'
+                                              StaticText, 0x112dc6a80, {{385.3, 1420.8}, {38.7, 12.0}}, label: 'LOGGED'
+                                          Button, 0x112dc6bc0, {{0.0, 1457.3}, {440.0, 79.7}}, label: 'Alternating Renegade Row, Middle Back, Kettlebell, Compound, Logged 0 times'
+                                            StaticText, 0x112dc6d00, {{16.0, 1471.3}, {230.7, 23.0}}, label: 'Alternating Renegade Row'
+                                            StaticText, 0x112dc6e40, {{15.2, 1501.6}, {99.5, 22.2}}, label: 'Middle Back'
+                                            StaticText, 0x112dc6f80, {{119.2, 1501.6}, {91.8, 22.2}}, label: 'Kettlebell'
+                                            StaticText, 0x112dc70c0, {{215.6, 1501.6}, {76.2, 22.2}}, label: 'Compound'
+                                            Other, 0x112dc7200, {{385.3, 1480.8}, {38.7, 32.7}}, label: 'Logged 0 times'
+                                              StaticText, 0x112dc7340, {{407.0, 1480.8}, {17.0, 18.7}}, label: '0×'
+                                              StaticText, 0x112dc7480, {{385.3, 1501.5}, {38.7, 12.0}}, label: 'LOGGED'
+                                          Button, 0x112dc75c0, {{0.0, 1538.0}, {440.0, 79.7}}, label: 'Anti-Gravity Press, Shoulders, Barbell, Compound, Logged 0 times'
+                                            StaticText, 0x112dc7700, {{16.0, 1552.0}, {157.3, 23.0}}, label: 'Anti-Gravity Press'
+                                            StaticText, 0x112dc7840, {{15.2, 1582.2}, {83.8, 22.2}}, label: 'Shoulders'
+                                            StaticText, 0x112dc7980, {{103.6, 1582.2}, {68.2, 22.2}}, label: 'Barbell'
+                                            StaticText, 0x112dc7ac0, {{176.2, 1582.2}, {76.2, 22.2}}, label: 'Compound'
+                                            Other, 0x112dc7c00, {{385.3, 1561.5}, {38.7, 32.7}}, label: 'Logged 0 times'
+                                              StaticText, 0x112dc7d40, {{407.0, 1561.5}, {17.0, 18.7}}, label: '0×'
+                                              StaticText, 0x112dc7e80, {{385.3, 1582.2}, {38.7, 12.0}}, label: 'LOGGED'
+                                          StaticText, 0x1148c4000, {{0.0, 250.7}, {440.0, 38.7}}, label: '3'
+                                          StaticText, 0x1148c4140, {{0.0, 370.0}, {440.0, 38.7}}, label: 'A'
+                                      Other, 0x1148c4280, {{407.0, 216.0}, {30.0, 677.0}}, label: 'Vertical scroll bar, 95 pages', value: 0%
+                                        Other, 0x1148c43c0, {{434.0, 219.0}, {3.0, 36.0}}
+                                      Other, 0x1148c4500, {{407.0, 216.0}, {30.0, 677.0}}, label: 'Vertical scroll bar, 95 pages', value: 0%
+                                        Other, 0x1148c4640, {{434.0, 219.0}, {3.0, 36.0}}
+                            Other, 0x1148c4780, {{0.0, 0.0}, {440.0, 893.0}}
+                              Other, 0x1148c48c0, {{0.0, 0.0}, {440.0, 893.0}}
+                Other, 0x1148c4a00, {{0.0, 810.0}, {440.0, 83.0}}
+                  Other, 0x1148c4b40, {{0.0, 0.0}, {440.0, 893.0}}
+                  Other, 0x1148c4c80, {{0.0, 810.0}, {440.0, 83.0}}
+              Button, 0x1148c4dc0, {{0.0, 895.0}, {110.0, 61.0}}, identifier: 'Today', label: 'Today'
+              Button, 0x1148c4f00, {{110.0, 895.0}, {110.0, 61.0}}, identifier: 'Program', label: 'Program'
+              Button, 0x1148c5040, {{220.0, 895.0}, {110.0, 61.0}}, identifier: 'Progress', label: 'Progress'
+              Button, 0x1148c5180, {{330.0, 895.0}, {110.0, 61.0}}, identifier: 'Library', label: 'Library', Selected
+    Window, 0x1148c52c0, {{0.0, 0.0}, {440.0, 956.0}}
+      Other, 0x1148c5400, {{0.0, 0.0}, {440.0, 956.0}}
+        Other, 0x1148c5540, {{0.0, 0.0}, {440.0, 956.0}}
+Path to element:
+ →Application, 0x1148e4140, pid: 56764, label: 'fitbod'
+Query chain:
+ →Find: Target Application 'bodybuilding.fitbod'
+  Output: {
+    Application, 0x1148c5680, pid: 56764, label: 'fitbod'
+  }
+)

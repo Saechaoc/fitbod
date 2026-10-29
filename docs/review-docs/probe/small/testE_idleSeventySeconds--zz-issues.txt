@@ -1,0 +1,2 @@
+[0] E before idle: name='Probe Zercher Squat' Chest=true keyboard=1
+[0] E after idle: name='Probe Zercher Squat' Chest=true keyboard=1

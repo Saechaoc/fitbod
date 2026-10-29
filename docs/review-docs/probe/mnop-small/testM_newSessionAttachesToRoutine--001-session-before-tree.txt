@@ -1,0 +1,127 @@
+Optional(Attributes: Application, 0x105bffac0, pid: 58382, label: 'fitbod'
+Element subtree:
+ →Application, 0x105bffac0, pid: 58382, label: 'fitbod'
+    Window (Main), 0x105bffc00, {{0.0, 0.0}, {390.0, 844.0}}
+      Other, 0x105bffd40, {{0.0, 0.0}, {390.0, 844.0}}
+        Other, 0x105bffe80, {{0.0, 0.0}, {390.0, 844.0}}
+          Other, 0x105bfe1c0, {{-390.0, -844.0}, {1170.0, 2532.0}}, identifier: 'PopoverDismissRegion', label: 'dismiss popup'
+          Other, 0x105bfe300, {{0.0, 0.0}, {390.0, 844.0}}
+            Other, 0x105bfe440, {{0.0, 0.0}, {390.0, 844.0}}
+              Other, 0x105bfe580, {{0.0, 0.0}, {390.0, 781.0}}
+                Other, 0x105bfe6c0, {{0.0, 0.0}, {390.0, 781.0}}
+                  Other, 0x105bff340, {{0.0, 0.0}, {390.0, 781.0}}
+                    Other, 0x105bff480, {{0.0, 0.0}, {390.0, 781.0}}
+                      Other, 0x105bfcf00, {{0.0, 0.0}, {390.0, 781.0}}
+                        Other, 0x105bfd180, {{0.0, 0.0}, {390.0, 781.0}}
+                          Other, 0x105bfd2c0, {{0.0, 0.0}, {390.0, 781.0}}
+                            Other, 0x105bfd400, {{0.0, 0.0}, {390.0, 781.0}}
+                              Other, 0x105bfd540, {{0.0, 0.0}, {390.0, 781.0}}
+                                Other, 0x105bfd680, {{0.0, 0.0}, {390.0, 781.0}}
+                                  Other, 0x105bfd7c0, {{0.0, 0.0}, {390.0, 781.0}}
+                                    Button, 0x105bfd900, {{4.0, 47.0}, {72.7, 44.0}}, label: 'BACK'
+                                    StaticText, 0x105bfda40, {{166.5, 61.7}, {57.0, 14.7}}, label: 'Routine'
+                                    Button, 0x105bfdb80, {{329.3, 47.0}, {56.7, 44.0}}, label: 'Edit'
+                                    ScrollView, 0x105bfdcc0, {{0.0, 93.0}, {390.0, 688.0}}
+                                      Other, 0x105bfde00, {{0.0, 93.0}, {390.0, 579.0}}
+                                        Other, 0x105bfdf40, {{0.0, 109.0}, {390.0, 547.0}}
+                                          StaticText, 0x105bfe080, {{16.0, 109.0}, {93.7, 14.7}}, label: 'ROUTINE NAME'
+                                          TextField, 0x102a6b340, {{16.0, 129.7}, {358.0, 48.0}}, label: 'Routine name', value: Probe Routine
+                                            Other, 0x102a6b480, {{16.0, 129.7}, {0.0, 0.0}}, identifier: '_UITextSelectionRangeAdjustmentContainerView'
+                                              Other, 0x102a6b5c0, {{16.0, 129.7}, {0.0, 0.0}}, identifier: 'com.apple.text.grabber.leading'
+                                                Other, 0x102a6b700, {{8.8, 116.2}, {16.5, 16.5}}
+                                                Other, 0x102a6b840, {{16.0, 129.7}, {2.0, 0.0}}
+                                              Other, 0x102a6b980, {{16.0, 129.7}, {0.0, 0.0}}, identifier: 'com.apple.text.grabber.leading'
+                                                Other, 0x102a6bac0, {{8.8, 116.2}, {16.5, 16.5}}
+                                                Other, 0x102a6bc00, {{16.0, 129.7}, {2.0, 0.0}}
+                                            Other, 0x1129cca00, {{16.0, 150.7}, {358.0, 24.0}}, label: 'Horizontal scroll bar, 1 page', value: 0%
+                                              Other, 0x1129cf0c0, {{19.0, 171.7}, {352.0, 3.0}}
+                                          StaticText, 0x1129cf200, {{16.0, 183.7}, {226.3, 14.7}}, label: '0 SESSIONS · ROTATES IN ORDER'
+                                          StaticText, 0x1129cd2c0, {{16.0, 229.3}, {64.3, 18.0}}, label: 'Sessions'
+                                          Button, 0x1129cc780, {{260.3, 216.3}, {125.7, 44.0}}, label: '+ ADD SESSION'
+                                          StaticText, 0x1129cc8c0, {{123.0, 294.3}, {144.0, 33.7}}, label: 'No sessions yet'
+                                          StaticText, 0x1129cfc00, {{31.2, 340.0}, {327.7, 34.3}}, label: 'A routine is an ordered list of sessions, like Push, Pull, Legs. Add the first one.'
+                                          Button, 0x1129cda40, {{65.0, 386.3}, {260.0, 44.0}}, label: '+ Add session'
+                                          StaticText, 0x1129ce6c0, {{0.0, 464.3}, {390.0, 46.0}}, label: 'Used in'
+                                          StaticText, 0x1129ce800, {{16.0, 522.3}, {242.0, 17.3}}, label: 'Not linked to any active block.'
+                                          Button, 0x1129cea80, {{16.0, 569.7}, {358.0, 44.0}}, label: 'Archive routine'
+                                          StaticText, 0x1129cebc0, {{16.0, 621.7}, {320.0, 34.3}}, label: 'Archived routines leave Program but keep their logged history.'
+                                      Other, 0x1129ced00, {{357.0, 93.0}, {30.0, 688.0}}, label: 'Vertical scroll bar, 1 page', value: 0%
+                                        Other, 0x1129cee40, {{384.0, 268.0}, {3.0, 525.7}}
+                                      Other, 0x1129cef80, {{357.0, 93.0}, {30.0, 688.0}}, label: 'Vertical scroll bar, 1 page', value: 0%
+                                        Other, 0x1129cf840, {{384.0, 268.0}, {3.0, 525.7}}
+                            Other, 0x1129cf980, {{0.0, 0.0}, {390.0, 781.0}}
+                              Other, 0x1129cfac0, {{0.0, 0.0}, {390.0, 781.0}}
+                Other, 0x1129cfd40, {{0.0, 698.0}, {390.0, 83.0}}
+                  Other, 0x1129cfe80, {{0.0, 0.0}, {390.0, 781.0}}
+                  Other, 0x1129cd040, {{0.0, 698.0}, {390.0, 83.0}}
+              Button, 0x1129cd180, {{0.0, 783.0}, {97.7, 61.0}}, identifier: 'Today', label: 'Today', Selected
+              Button, 0x1129ce580, {{97.7, 783.0}, {97.3, 61.0}}, identifier: 'Program', label: 'Program'
+              Button, 0x1129cd400, {{195.0, 783.0}, {97.7, 61.0}}, identifier: 'Progress', label: 'Progress'
+              Button, 0x1129cd540, {{292.7, 783.0}, {97.3, 61.0}}, identifier: 'Library', label: 'Library'
+      Other, 0x1129cd680, {{0.0, 0.0}, {390.0, 844.0}}
+        Other, 0x1129cd7c0, {{-390.0, -844.0}, {1170.0, 2532.0}}, identifier: 'PopoverDismissRegion', label: 'dismiss popup'
+      Other, 0x1129cd900, {{0.0, 0.0}, {390.0, 844.0}}
+        Other, 0x1129cde00, {{-390.0, -844.0}, {1170.0, 2532.0}}
+        Other, 0x1129ce440, {{0.0, 57.0}, {390.0, 787.0}}
+          Other, 0x1129ccb40, {{0.0, 57.0}, {390.0, 787.0}}
+            Other, 0x1129ccc80, {{0.0, 57.0}, {390.0, 787.0}}
+              Other, 0x1129ccdc0, {{0.0, 57.0}, {390.0, 787.0}}
+                Other, 0x1129ccf00, {{0.0, 57.0}, {390.0, 787.0}}
+                  Other, 0x1129cf340, {{0.0, 57.0}, {390.0, 787.0}}
+                    Other, 0x1129cf5c0, {{0.0, 57.0}, {390.0, 787.0}}
+                      Other, 0x1129cf700, {{0.0, 57.0}, {390.0, 787.0}}
+                        Other, 0x112bf0000, {{0.0, 57.0}, {390.0, 787.0}}
+                          Other, 0x112bf0140, {{0.0, 57.0}, {390.0, 787.0}}
+                            StaticText, 0x112bf0280, {{16.0, 125.0}, {93.7, 14.7}}, label: 'SESSION NAME'
+                            TextField, 0x112bf03c0, {{16.0, 149.7}, {358.0, 48.0}}, label: 'Session name', value: Probe Session
+                              Other, 0x112bf0500, {{16.0, 149.7}, {0.0, 0.0}}, identifier: '_UITextSelectionRangeAdjustmentContainerView'
+                                Other, 0x112bf0640, {{16.0, 149.7}, {0.0, 0.0}}, identifier: 'com.apple.text.grabber.leading'
+                                  Other, 0x112bf0780, {{8.8, 136.2}, {16.5, 16.5}}
+                                  Other, 0x112bf08c0, {{16.0, 149.7}, {2.0, 0.0}}
+                                Other, 0x112bf0a00, {{16.0, 149.7}, {0.0, 0.0}}, identifier: 'com.apple.text.grabber.leading'
+                                  Other, 0x112bf0b40, {{8.8, 136.2}, {16.5, 16.5}}
+                                  Other, 0x112bf0c80, {{16.0, 149.7}, {2.0, 0.0}}
+                              Other, 0x112bf0dc0, {{16.0, 170.7}, {358.0, 24.0}}, label: 'Horizontal scroll bar, 1 page', value: 0%
+                                Other, 0x112bf0f00, {{19.0, 191.7}, {352.0, 3.0}}
+                            Button, 0x112bf1040, {{16.0, 207.7}, {74.7, 44.0}}, label: 'Strength'
+                              Button, 0x112bf1180, {{16.0, 207.7}, {74.7, 44.0}}
+                                StaticText, 0x112bf12c0, {{16.0, 207.7}, {74.7, 44.0}}, label: 'Strength'
+                            StaticText, 0x112bf1400, {{95.9, 218.6}, {68.2, 22.2}}, label: '~11 min'
+                            Button, 0x112bf1540, {{169.3, 207.7}, {152.7, 44.0}}, label: 'Double Progression'
+                              Button, 0x112bf1680, {{169.3, 207.7}, {152.7, 44.0}}
+                                StaticText, 0x112bf17c0, {{169.3, 207.7}, {152.7, 44.0}}, label: 'Double Progression'
+                            ScrollView, 0x112bf1900, {{0.0, 263.7}, {390.0, 580.3}}
+                              Other, 0x112bf1a40, {{0.0, 263.7}, {390.0, 222.0}}
+                                Other, 0x112bf1b80, {{0.0, 263.7}, {390.0, 141.7}}
+                                  Button, 0x112bf1cc0, {{0.0, 263.7}, {390.0, 77.7}}, identifier: 'routine.exercise.reorder.1', label: '01, Barbell Bench Press - Medium Grip, barbell · 3×4–6 · 180s'
+                                    StaticText, 0x112bf1e00, {{16.0, 285.8}, {21.0, 33.3}}, label: '01'
+                                    StaticText, 0x112bf1f40, {{54.0, 275.7}, {185.0, 37.0}}, label: 'Barbell Bench Press - Medium Grip'
+                                    StaticText, 0x112bf2080, {{54.0, 314.7}, {156.3, 14.7}}, label: 'barbell · 3×4–6 · 180s'
+                                    Button, 0x112bf21c0, {{330.0, 280.7}, {44.0, 44.0}}, identifier: 'routine.exercise.reorder.1', label: 'Reorder exercise 1'
+                                      Button, 0x112bf2300, {{330.0, 280.7}, {44.0, 44.0}}
+                                        StaticText, 0x112bf2440, {{330.0, 280.7}, {44.0, 44.0}}, label: '⋮⋮'
+                                  Button, 0x112bf2580, {{12.0, 354.3}, {366.0, 51.0}}, label: 'Add exercise'
+                                    StaticText, 0x112bf26c0, {{28.0, 368.3}, {11.3, 23.0}}, label: '+'
+                                    StaticText, 0x112bf2800, {{49.3, 372.5}, {93.7, 14.7}}, label: 'Add exercise'
+                                    StaticText, 0x112bf2940, {{252.7, 372.5}, {109.3, 14.7}}, label: '↘ FROM LIBRARY'
+                              Other, 0x112bf2a80, {{357.0, 284.7}, {30.0, 479.3}}, label: 'Vertical scroll bar, 1 page', value: 0%
+                                Other, 0x112bf2bc0, {{384.0, 545.0}, {3.0, 216.0}}
+                              Other, 0x112bf2d00, {{357.0, 284.7}, {30.0, 479.3}}, label: 'Vertical scroll bar, 1 page', value: 0%
+                                Other, 0x112bf2e40, {{384.0, 545.0}, {3.0, 216.0}}
+                            Button, 0x112bf2f80, {{0.0, 766.0}, {194.0, 44.0}}, label: 'Discard'
+                            Button, 0x112bf30c0, {{196.0, 766.0}, {194.0, 44.0}}, label: 'Save session ▸'
+                            Button, 0x112bf3200, {{4.0, 57.0}, {72.7, 44.0}}, label: 'Back'
+                            StaticText, 0x112bf3340, {{150.3, 71.7}, {89.3, 14.7}}, label: 'New session'
+                    Other, 0x112bf3480, {{0.0, 57.0}, {390.0, 787.0}}
+                      Other, 0x112bf35c0, {{0.0, 57.0}, {390.0, 787.0}}
+    Window, 0x112bf3700, {{0.0, 0.0}, {390.0, 844.0}}
+      Other, 0x112bf3840, {{0.0, 0.0}, {390.0, 844.0}}
+        Other, 0x112bf3980, {{0.0, 0.0}, {390.0, 844.0}}
+Path to element:
+ →Application, 0x105bffac0, pid: 58382, label: 'fitbod'
+Query chain:
+ →Find: Target Application 'bodybuilding.fitbod'
+  Output: {
+    Application, 0x112bf3ac0, pid: 58382, label: 'fitbod'
+  }
+)

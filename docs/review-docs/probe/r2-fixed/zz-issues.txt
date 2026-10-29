@@ -1,0 +1,3 @@
+[0] R2 slab before: 0 SETS LOGGED
+[0] R2 slab after tap 14pt above label: 4 SETS LOGGED
+[1] R2 slab after tap on label: 4 SETS LOGGED

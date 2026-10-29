@@ -1,0 +1,3 @@
+[0] F after muscle: name='Probe Zercher Squat' Chest=true keyboard=1
+[0] F after refocus: name='Probe Zercher Squat' Chest=true keyboard=1
+[0] F after typing more: name='Probe Zercher Squat X' Chest=true keyboard=1

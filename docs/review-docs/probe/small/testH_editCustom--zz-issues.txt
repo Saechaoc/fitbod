@@ -1,0 +1,3 @@
+[0] H after save: editor still open=false
+[1] H Edit #1: editor shown=false name='<no field>' Chest=true keyboard=0
+[2] H Edit #2: editor shown=true name='Probe Zercher Squat' Chest=true keyboard=0

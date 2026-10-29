@@ -1,0 +1,214 @@
+Optional(Attributes: Application, 0x112d7e580, pid: 57160, label: 'fitbod'
+Element subtree:
+ →Application, 0x112d7e580, pid: 57160, label: 'fitbod'
+    Window (Main), 0x112d7d2c0, {{0.0, 0.0}, {440.0, 956.0}}
+      Other, 0x112d7d400, {{0.0, 0.0}, {440.0, 956.0}}
+        Other, 0x112d7d540, {{0.0, 0.0}, {440.0, 956.0}}
+          Other, 0x112d7d680, {{-440.0, -956.0}, {1320.0, 2868.0}}, identifier: 'PopoverDismissRegion', label: 'dismiss popup'
+          Other, 0x112d7d7c0, {{0.0, 0.0}, {440.0, 956.0}}
+            Other, 0x112d7d900, {{0.0, 0.0}, {440.0, 956.0}}
+              Other, 0x112d7da40, {{0.0, 0.0}, {440.0, 956.0}}
+                Other, 0x112d7db80, {{0.0, 0.0}, {440.0, 956.0}}
+                  Other, 0x112d7dcc0, {{0.0, 0.0}, {440.0, 956.0}}
+                    Other, 0x112d7de00, {{0.0, 0.0}, {440.0, 956.0}}
+                      Other, 0x112d7df40, {{0.0, 0.0}, {440.0, 956.0}}
+                        Other, 0x112d7e080, {{0.0, 0.0}, {440.0, 956.0}}
+                          Other, 0x112d7e1c0, {{0.0, 0.0}, {440.0, 956.0}}
+                            Other, 0x1148de300, {{0.0, 0.0}, {440.0, 956.0}}
+                              Other, 0x1148dd900, {{0.0, 0.0}, {440.0, 956.0}}
+                                Other, 0x1148ddcc0, {{0.0, 0.0}, {440.0, 956.0}}
+                                  Other, 0x1148dcb40, {{0.0, 0.0}, {440.0, 956.0}}
+                                    Button, 0x1148def80, {{4.0, 62.0}, {72.7, 44.0}}, label: 'BACK'
+                                    StaticText, 0x1148debc0, {{191.5, 76.7}, {57.0, 14.7}}, label: 'Routine'
+                                    Button, 0x1148dc280, {{379.3, 62.0}, {56.7, 44.0}}, label: 'Edit'
+                                    ScrollView, 0x1148dee40, {{0.0, 108.0}, {440.0, 848.0}}
+                                      Other, 0x1148ddf40, {{0.0, 108.0}, {440.0, 579.0}}
+                                        Other, 0x1148dfd40, {{0.0, 124.0}, {440.0, 547.0}}
+                                          StaticText, 0x1148de080, {{16.0, 124.0}, {93.7, 14.7}}, label: 'ROUTINE NAME'
+                                          TextField, 0x1148de1c0, {{16.0, 144.7}, {408.0, 48.0}}, label: 'Routine name', value: Probe Routine
+                                            Other, 0x1148de6c0, {{16.0, 144.7}, {0.0, 0.0}}, identifier: '_UITextSelectionRangeAdjustmentContainerView'
+                                              Other, 0x1148de940, {{16.0, 144.7}, {0.0, 0.0}}, identifier: 'com.apple.text.grabber.leading'
+                                                Other, 0x1148de800, {{8.8, 131.2}, {16.5, 16.5}}
+                                                Other, 0x1148de580, {{16.0, 144.7}, {2.0, 0.0}}
+                                              Other, 0x1148de440, {{16.0, 144.7}, {0.0, 0.0}}, identifier: 'com.apple.text.grabber.leading'
+                                                Other, 0x1148dc780, {{8.8, 131.2}, {16.5, 16.5}}
+                                                Other, 0x1148dc640, {{16.0, 144.7}, {2.0, 0.0}}
+                                            Other, 0x1148dc140, {{16.0, 165.7}, {408.0, 24.0}}, label: 'Horizontal scroll bar, 1 page', value: 0%
+                                              Other, 0x1148dc3c0, {{19.0, 186.7}, {402.0, 3.0}}
+                                          StaticText, 0x1148df700, {{16.0, 198.7}, {226.3, 14.7}}, label: '0 SESSIONS · ROTATES IN ORDER'
+                                          StaticText, 0x1148df5c0, {{16.0, 244.3}, {64.3, 18.0}}, label: 'Sessions'
+                                          Button, 0x1148dd040, {{310.3, 231.3}, {125.7, 44.0}}, label: '+ ADD SESSION'
+                                          StaticText, 0x1148ddb80, {{148.0, 309.3}, {144.0, 33.7}}, label: 'No sessions yet'
+                                          StaticText, 0x1148dda40, {{16.0, 355.0}, {408.0, 34.3}}, label: 'A routine is an ordered list of sessions, like Push, Pull, Legs. Add the first one.'
+                                          Button, 0x1148dd540, {{90.0, 401.3}, {260.0, 44.0}}, label: '+ Add session'
+                                          StaticText, 0x1148dd7c0, {{0.0, 479.3}, {440.0, 46.0}}, label: 'Used in'
+                                          StaticText, 0x1148dd680, {{16.0, 537.3}, {242.0, 17.3}}, label: 'Not linked to any active block.'
+                                          Button, 0x1148df480, {{16.0, 584.7}, {408.0, 44.0}}, label: 'Archive routine'
+                                          StaticText, 0x1148df840, {{16.0, 636.7}, {366.7, 34.3}}, label: 'Archived routines leave Program but keep their logged history.'
+                                      Other, 0x1148dde00, {{407.0, 136.0}, {30.0, 502.0}}, label: 'Vertical scroll bar, 2 pages', value: 0%
+                                        Other, 0x1148dc500, {{434.0, 139.0}, {3.0, 469.0}}
+                                      Other, 0x1148df340, {{407.0, 136.0}, {30.0, 502.0}}, label: 'Vertical scroll bar, 2 pages', value: 0%
+                                        Other, 0x1148dd2c0, {{434.0, 139.0}, {3.0, 469.0}}
+                            Other, 0x1148dcc80, {{0.0, 0.0}, {440.0, 956.0}}
+                              Other, 0x1148dcdc0, {{0.0, 0.0}, {440.0, 956.0}}
+                Other, 0x1148dc000, {{0.0, 873.0}, {440.0, 83.0}}
+                  Other, 0x1148dd180, {{0.0, 0.0}, {440.0, 956.0}}
+                  Other, 0x1148dcf00, {{0.0, 873.0}, {440.0, 83.0}}
+      Other, 0x102e67340, {{0.0, 0.0}, {440.0, 956.0}}
+        Other, 0x102e670c0, {{-440.0, -956.0}, {1320.0, 2868.0}}, identifier: 'PopoverDismissRegion', label: 'dismiss popup'
+      Other, 0x102e67ac0, {{0.0, 0.0}, {440.0, 956.0}}
+        Other, 0x102e675c0, {{-440.0, -956.0}, {1320.0, 2868.0}}
+        Other, 0x102e67480, {{0.0, 72.0}, {440.0, 884.0}}
+          Other, 0x102e67840, {{0.0, 72.0}, {440.0, 884.0}}
+            Other, 0x102e67700, {{0.0, 72.0}, {440.0, 884.0}}
+              Other, 0x1148d1180, {{0.0, 72.0}, {440.0, 884.0}}
+                Other, 0x1148d1040, {{0.0, 72.0}, {440.0, 884.0}}
+                  Other, 0x1148d0f00, {{0.0, 72.0}, {440.0, 884.0}}
+                    Other, 0x1148d0b40, {{0.0, 72.0}, {440.0, 884.0}}
+                      Other, 0x1148d0dc0, {{0.0, 72.0}, {440.0, 884.0}}
+                        Other, 0x1148d21c0, {{0.0, 72.0}, {440.0, 884.0}}
+                          Other, 0x1148d0780, {{0.0, 72.0}, {440.0, 884.0}}
+                            StaticText, 0x1148d2940, {{16.0, 140.0}, {93.7, 14.7}}, label: 'SESSION NAME'
+                            TextField, 0x1148d0a00, {{16.0, 164.7}, {408.0, 48.0}}, label: 'Session name', value: Probe Session
+                              Other, 0x1148d08c0, {{16.0, 164.7}, {0.0, 0.0}}, identifier: '_UITextSelectionRangeAdjustmentContainerView'
+                                Other, 0x1148d0c80, {{16.0, 164.7}, {0.0, 0.0}}, identifier: 'com.apple.text.grabber.leading'
+                                  Other, 0x112d766c0, {{8.8, 151.2}, {16.5, 16.5}}
+                                  Other, 0x112d76800, {{16.0, 164.7}, {2.0, 0.0}}
+                                Other, 0x112d77200, {{16.0, 164.7}, {0.0, 0.0}}, identifier: 'com.apple.text.grabber.leading'
+                                  Other, 0x112d77340, {{8.8, 151.2}, {16.5, 16.5}}
+                                  Other, 0x112d775c0, {{16.0, 164.7}, {2.0, 0.0}}
+                              Other, 0x112d77700, {{16.0, 185.7}, {408.0, 24.0}}, label: 'Horizontal scroll bar, 1 page', value: 0%
+                                Other, 0x112d77840, {{19.0, 206.7}, {402.0, 3.0}}
+                            Button, 0x112d77980, {{16.0, 222.7}, {74.7, 44.0}}, label: 'Strength'
+                              Button, 0x112d77ac0, {{16.0, 222.7}, {74.7, 44.0}}
+                                StaticText, 0x112d77c00, {{16.0, 222.7}, {74.7, 44.0}}, label: 'Strength'
+                            StaticText, 0x112d77d40, {{95.9, 233.6}, {68.2, 22.2}}, label: '~33 min'
+                            Button, 0x112d77e80, {{169.3, 222.7}, {152.7, 44.0}}, label: 'Double Progression'
+                              Button, 0x112d77480, {{169.3, 222.7}, {152.7, 44.0}}
+                                StaticText, 0x112d76580, {{169.3, 222.7}, {152.7, 44.0}}, label: 'Double Progression'
+                            ScrollView, 0x112d770c0, {{0.0, 278.7}, {440.0, 677.3}}
+                              Other, 0x112d76300, {{0.0, 234.7}, {440.0, 960.0}}
+                                Other, 0x112d74f00, {{0.0, 234.7}, {440.0, 879.7}}
+                                  Button, 0x112d75040, {{0.0, 234.7}, {440.0, 677.7}}, identifier: 'routine.exercise.reorder.1', label: '01, Barbell Bench Press - Medium Grip, barbell · 3×6–10 · 180s'
+                                    StaticText, 0x112d75180, {{16.0, 252.0}, {21.0, 33.3}}, label: '01'
+                                    StaticText, 0x112d752c0, {{54.0, 251.0}, {277.3, 18.7}}, label: 'Barbell Bench Press - Medium Grip'
+                                    StaticText, 0x112d75400, {{54.0, 271.7}, {163.3, 14.7}}, label: 'barbell · 3×6–10 · 180s'
+                                    Button, 0x112d75cc0, {{380.0, 246.7}, {44.0, 44.0}}, identifier: 'routine.exercise.reorder.1', label: 'Reorder exercise 1'
+                                      Button, 0x112d75e00, {{380.0, 246.7}, {44.0, 44.0}}
+                                        StaticText, 0x112d75f40, {{380.0, 246.7}, {44.0, 44.0}}, label: '⋮⋮'
+                                  StaticText, 0x112d76080, {{15.2, 305.9}, {83.8, 22.2}}, label: '6–10 reps'
+                                  StaticText, 0x112d761c0, {{102.6, 305.9}, {52.8, 22.2}}, label: 'RPE 8'
+                                  StaticText, 0x112d76a80, {{158.9, 305.9}, {91.8, 22.2}}, label: '3 min rest'
+                                  StaticText, 0x112d76bc0, {{24.0, 347.8}, {12.7, 12.0}}, label: 'S1'
+                                  StaticText, 0x112d76d00, {{54.0, 346.5}, {31.3, 14.7}}, label: 'WORK'
+                                  StaticText, 0x112d76e40, {{358.3, 342.3}, {22.3, 23.0}}, label: '×6'
+                                  StaticText, 0x112d76f80, {{386.7, 342.3}, {29.3, 23.0}}, label: 'RPE 8'
+                                  StaticText, 0x1148c4000, {{24.0, 381.8}, {12.7, 12.0}}, label: 'S2'
+                                  StaticText, 0x1148c4140, {{54.0, 380.5}, {31.3, 14.7}}, label: 'WORK'
+                                  StaticText, 0x1148c4280, {{358.3, 376.3}, {22.3, 23.0}}, label: '×6'
+                                  StaticText, 0x1148c43c0, {{386.7, 376.3}, {29.3, 23.0}}, label: 'RPE 8'
+                                  StaticText, 0x1148c4500, {{24.0, 415.8}, {12.7, 12.0}}, label: 'S3'
+                                  StaticText, 0x1148c4640, {{54.0, 414.5}, {31.3, 14.7}}, label: 'WORK'
+                                  StaticText, 0x1148c4780, {{358.3, 410.3}, {22.3, 23.0}}, label: '×6'
+                                  StaticText, 0x1148c48c0, {{386.7, 410.3}, {29.3, 23.0}}, label: 'RPE 8'
+                                  Button, 0x1148c4a00, {{16.0, 448.3}, {408.0, 44.0}}, identifier: 'prescription.details', label: 'HIDE DETAILS, ▴'
+                                    StaticText, 0x1148c4b40, {{16.0, 463.0}, {93.7, 14.7}}, label: 'HIDE DETAILS'
+                                    StaticText, 0x1148c4c80, {{417.3, 463.0}, {6.7, 14.7}}, label: '▴'
+                                  Other, 0x1148c4dc0, {{16.0, 502.3}, {408.0, 44.0}}, identifier: 'prescription.sets', label: 'Sets', value: 3
+                                    StaticText, 0x1148c4f00, {{16.0, 515.0}, {33.7, 18.7}}, label: 'Sets'
+                                    Button, 0x1148c5040, {{272.0, 502.3}, {44.0, 44.0}}, label: '−'
+                                    StaticText, 0x1148c5180, {{343.7, 515.0}, {8.7, 18.7}}, label: '3'
+                                    Button, 0x1148c52c0, {{380.0, 502.3}, {44.0, 44.0}}, label: '+'
+                                  StaticText, 0x1148c5400, {{16.0, 573.0}, {33.7, 18.7}}, label: 'Reps'
+                                  TextField, 0x1148c5540, {{304.0, 573.0}, {48.0, 19.0}}, identifier: 'prescription.reps.low', label: 'Minimum target reps', placeholderValue: 'low', value: 6
+                                  StaticText, 0x1148c5680, {{360.0, 573.7}, {8.0, 17.3}}, label: '–'
+                                  TextField, 0x1148c57c0, {{376.0, 573.0}, {48.0, 19.0}}, identifier: 'prescription.reps.high', label: 'Maximum target reps', placeholderValue: 'high', value: 10, Keyboard Focused
+                                  StaticText, 0x1148c5900, {{16.0, 618.5}, {84.3, 18.7}}, label: 'Target RPE'
+                                  TextField, 0x1148c5a40, {{288.0, 618.3}, {56.0, 19.0}}, placeholderValue: 'low', value: 8
+                                  StaticText, 0x1148c5b80, {{352.0, 619.2}, {8.0, 17.3}}, label: '–'
+                                  TextField, 0x1148c5cc0, {{368.0, 618.3}, {56.0, 19.0}}, placeholderValue: 'high', value: 8
+                                  Other, 0x1148c5e00, {{16.0, 651.3}, {408.0, 44.0}}, label: 'Rest', value: 180s
+                                    StaticText, 0x1148c5f40, {{16.0, 664.0}, {33.7, 18.7}}, label: 'Rest'
+                                    Button, 0x1148c6080, {{272.0, 651.3}, {44.0, 44.0}}, label: '−'
+                                    StaticText, 0x1148c61c0, {{331.2, 664.0}, {33.7, 18.7}}, label: '180s'
+                                    Button, 0x1148c6300, {{380.0, 651.3}, {44.0, 44.0}}, label: '+'
+                                  Switch, 0x1148c6440, {{16.0, 709.3}, {408.0, 28.0}}, label: 'Track tempo', value: 0
+                                    StaticText, 0x1148c6580, {{16.0, 714.0}, {92.7, 18.7}}, label: 'Track tempo'
+                                    Switch, 0x1148c66c0, {{363.0, 709.3}, {63.0, 28.0}}, value: 0
+                                  Switch, 0x1148c6800, {{16.0, 751.3}, {408.0, 28.0}}, label: 'Track partial reps', value: 0
+                                    StaticText, 0x1148c6940, {{16.0, 756.0}, {151.3, 18.7}}, label: 'Track partial reps'
+                                    Switch, 0x1148c6a80, {{363.0, 751.3}, {63.0, 28.0}}, value: 0
+                                  Switch, 0x1148c6bc0, {{16.0, 793.3}, {408.0, 28.0}}, label: 'Auto warm-up', value: 1
+                                    StaticText, 0x1148c6d00, {{16.0, 798.0}, {101.0, 18.7}}, label: 'Auto warm-up'
+                                    Switch, 0x1148c6e40, {{363.0, 793.3}, {63.0, 28.0}}, value: 1
+                                  StaticText, 0x1148c6f80, {{16.0, 825.3}, {398.0, 34.3}}, label: 'Generates a 4-set ramp (40% × 5, 60% × 3, 75% × 2, 90% × 1) based on your plate inventory.'
+                                  Button, 0x1148c70c0, {{16.0, 873.7}, {408.0, 18.7}}, label: 'Per-set overrides, 3 sets default, ▾'
+                                    StaticText, 0x1148c7200, {{16.0, 873.7}, {143.0, 18.7}}, label: 'Per-set overrides'
+                                    StaticText, 0x1148c7340, {{300.0, 874.3}, {109.3, 17.3}}, label: '3 sets default'
+                                    StaticText, 0x1148c7480, {{417.3, 875.7}, {6.7, 14.7}}, label: '▾'
+                                  Button, 0x1148c75c0, {{0.0, 913.3}, {440.0, 68.0}}, identifier: 'routine.exercise.reorder.2', label: '02, Seated Cable Rows, cable · 3×8–12 · 180s'
+                                    StaticText, 0x1148c7700, {{16.0, 930.7}, {21.0, 33.3}}, label: '02'
+                                    StaticText, 0x1148c7840, {{54.0, 929.7}, {143.0, 18.7}}, label: 'Seated Cable Rows'
+                                    StaticText, 0x1148c7980, {{54.0, 950.3}, {149.3, 14.7}}, label: 'cable · 3×8–12 · 180s'
+                                    Button, 0x1148c7ac0, {{380.0, 925.3}, {44.0, 44.0}}, identifier: 'routine.exercise.reorder.2', label: 'Reorder exercise 2'
+                                      Button, 0x1148c7c00, {{380.0, 925.3}, {44.0, 44.0}}
+                                        StaticText, 0x1148c7d40, {{380.0, 925.3}, {44.0, 44.0}}, label: '⋮⋮'
+                                  Button, 0x1148c7e80, {{0.0, 982.3}, {440.0, 68.0}}, identifier: 'routine.exercise.reorder.3', label: '03, Barbell Squat, barbell · 3×4–6 · 180s'
+                                    StaticText, 0x1148cc000, {{16.0, 999.7}, {21.0, 33.3}}, label: '03'
+                                    StaticText, 0x1148cc140, {{54.0, 998.7}, {109.3, 18.7}}, label: 'Barbell Squat'
+                                    StaticText, 0x1148cc280, {{54.0, 1019.3}, {156.3, 14.7}}, label: 'barbell · 3×4–6 · 180s'
+                                    Button, 0x1148cc3c0, {{380.0, 994.3}, {44.0, 44.0}}, identifier: 'routine.exercise.reorder.3', label: 'Reorder exercise 3'
+                                      Button, 0x1148cc500, {{380.0, 994.3}, {44.0, 44.0}}
+                                        StaticText, 0x1148cc640, {{380.0, 994.3}, {44.0, 44.0}}, label: '⋮⋮'
+                                  Button, 0x1148cc780, {{12.0, 1063.3}, {416.0, 51.0}}, label: 'Add exercise'
+                                    StaticText, 0x1148cc8c0, {{28.0, 1077.3}, {11.3, 23.0}}, label: '+'
+                                    StaticText, 0x1148cca00, {{49.3, 1081.5}, {93.7, 14.7}}, label: 'Add exercise'
+                                    StaticText, 0x1148ccb40, {{302.7, 1081.5}, {109.3, 14.7}}, label: '↘ FROM LIBRARY'
+                              Other, 0x1148ccc80, {{407.0, 306.7}, {30.0, 285.3}}, label: 'Vertical scroll bar, 4 pages', value: 7%
+                                Other, 0x1148ccdc0, {{434.0, 319.0}, {3.0, 143.0}}
+                              Other, 0x1148ccf00, {{407.0, 306.7}, {30.0, 285.3}}, label: 'Vertical scroll bar, 4 pages', value: 7%
+                                Other, 0x1148cd040, {{434.0, 319.0}, {3.0, 143.0}}
+                            Button, 0x1148cd180, {{0.0, 594.0}, {219.0, 44.0}}, label: 'Discard'
+                            Button, 0x1148cd2c0, {{221.0, 594.0}, {219.0, 44.0}}, label: 'Save session ▸'
+                            Button, 0x1148cd400, {{4.0, 72.0}, {72.7, 44.0}}, label: 'Back'
+                            StaticText, 0x1148cd540, {{175.3, 86.7}, {89.3, 14.7}}, label: 'New session'
+                    Other, 0x1148cd680, {{0.0, 72.0}, {440.0, 884.0}}
+                      Other, 0x1148cd7c0, {{0.0, 72.0}, {440.0, 884.0}}
+    Window, 0x1148cd900, {{0.0, 0.0}, {440.0, 956.0}}
+      Other, 0x1148cda40, {{0.0, 0.0}, {440.0, 956.0}}
+        Other, 0x1148cdb80, {{0.0, 0.0}, {440.0, 956.0}}
+        Other, 0x1148cdcc0, {{0.0, 638.0}, {440.0, 318.0}}
+          Other, 0x1148cde00, {{0.0, 638.0}, {440.0, 318.0}}, identifier: 'inputView'
+    Window, 0x1148cdf40, {{0.0, 0.0}, {440.0, 956.0}}
+      Other, 0x1148ce080, {{0.0, 0.0}, {440.0, 956.0}}
+        Other, 0x1148ce1c0, {{0.0, 638.0}, {440.0, 318.0}}
+          Other, 0x1148ce300, {{0.0, 638.0}, {440.0, 318.0}}
+            Other, 0x1148ce440, {{0.0, 638.0}, {440.0, 318.0}}
+              Other, 0x1148ce580, {{0.0, 638.0}, {440.0, 318.0}}
+          Other, 0x1148ce6c0, {{0.0, 655.0}, {440.0, 243.0}}
+            Keyboard, 0x1148ce800, {{0.0, 655.0}, {440.0, 243.0}}
+              Other, 0x1148ce940, {{0.0, 655.0}, {440.0, 243.0}}
+                Other, 0x1148cea80, {{0.0, 655.0}, {440.0, 243.0}}, identifier: 'UIKeyboardLayoutStar Preview'
+                  Key, 0x1148cebc0, {{4.7, 662.0}, {145.0, 56.0}}, label: '1'
+                  Key, 0x1148ced00, {{149.7, 662.0}, {145.3, 56.0}}, label: '2'
+                  Key, 0x1148cee40, {{295.0, 662.0}, {145.0, 56.0}}, label: '3'
+                  Key, 0x1148cef80, {{4.7, 718.0}, {145.0, 56.0}}, label: '4'
+                  Key, 0x1148cf0c0, {{149.7, 718.0}, {145.3, 56.0}}, label: '5'
+                  Key, 0x1148cf200, {{295.0, 718.0}, {145.0, 56.0}}, label: '6'
+                  Key, 0x1148cf340, {{4.7, 774.0}, {145.0, 56.0}}, label: '7'
+                  Key, 0x1148cf480, {{149.7, 774.0}, {145.3, 56.0}}, label: '8'
+                  Key, 0x1148cf5c0, {{295.0, 774.0}, {145.0, 56.0}}, label: '9'
+                  Key, 0x1148cf700, {{4.7, 830.0}, {145.0, 56.0}}
+                  Key, 0x1148cf840, {{149.7, 830.0}, {145.3, 56.0}}, label: '0'
+                  Key, 0x1148cf980, {{295.0, 830.0}, {145.0, 56.0}}, label: 'Delete'
+          Other, 0x1148cfac0, {{0.0, 655.0}, {440.0, 301.0}}
+            Button, 0x1148cfc00, {{357.4, 887.4}, {80.1, 68.7}}, identifier: 'dictation', label: 'Dictate', Disabled
+              StaticText, 0x1148cfd40, {{357.4, 887.4}, {0.0, 0.0}}
+Path to element:
+ →Application, 0x112d7e580, pid: 57160, label: 'fitbod'
+Query chain:
+ →Find: Target Application 'bodybuilding.fitbod'
+  Output: {
+    Application, 0x1148cfe80, pid: 57160, label: 'fitbod'
+  }
+)

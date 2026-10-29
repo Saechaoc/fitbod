@@ -1,0 +1,82 @@
+Optional(Attributes: Application, 0x116e3fc00, pid: 1641, label: 'fitbod'
+Element subtree:
+ →Application, 0x116e3fc00, pid: 1641, label: 'fitbod'
+    Window (Main), 0x116e3de00, {{0.0, 0.0}, {390.0, 844.0}}
+      Other, 0x116e3cb40, {{0.0, 0.0}, {390.0, 844.0}}
+        Other, 0x116e3cc80, {{0.0, 0.0}, {390.0, 844.0}}
+          Other, 0x116e3cdc0, {{0.0, 0.0}, {390.0, 844.0}}
+            Other, 0x116e3cf00, {{0.0, 0.0}, {390.0, 844.0}}
+              Other, 0x116e3d040, {{0.0, 0.0}, {390.0, 781.0}}
+                Other, 0x116e3d180, {{0.0, 0.0}, {390.0, 781.0}}
+                  Other, 0x116e3d2c0, {{0.0, 0.0}, {390.0, 781.0}}
+                    Other, 0x116e3df40, {{0.0, 0.0}, {390.0, 781.0}}
+                      Other, 0x116e3e080, {{0.0, 0.0}, {390.0, 781.0}}
+                        Other, 0x116e3e1c0, {{0.0, 0.0}, {390.0, 781.0}}
+                          Other, 0x116e3c640, {{0.0, 0.0}, {390.0, 781.0}}
+                            Other, 0x116e3c780, {{0.0, 0.0}, {390.0, 781.0}}
+                              Other, 0x116e3c8c0, {{0.0, 0.0}, {390.0, 781.0}}
+                                Other, 0x116e3ca00, {{0.0, 0.0}, {390.0, 781.0}}
+                                  Other, 0x116e3d400, {{0.0, 0.0}, {390.0, 781.0}}
+                                    StaticText, 0x116e3d540, {{16.0, 56.8}, {60.7, 14.3}}, label: 'PROGRAM'
+                                    Button, 0x116e3d7c0, {{335.0, 56.8}, {39.0, 14.3}}, label: '+ NEW'
+                                    ScrollView, 0x116e3d900, {{0.0, 81.0}, {390.0, 700.0}}
+                                      Other, 0x116e3da40, {{0.0, 81.0}, {390.0, 805.0}}
+                                        Other, 0x116e3db80, {{0.0, 101.0}, {390.0, 783.0}}
+                                          StaticText, 0x116e3dcc0, {{32.0, 101.0}, {47.0, 14.7}}, label: 'RESUME'
+                                          StaticText, 0x116e3fac0, {{32.0, 119.7}, {50.7, 18.7}}, label: 'Push A'
+                                          StaticText, 0x116e3fe80, {{32.0, 142.3}, {99.7, 14.7}}, label: '12:19 · 0 sets'
+                                          Button, 0x109fecb40, {{163.7, 103.0}, {194.3, 52.0}}, label: 'Resume ▸'
+                                          StaticText, 0x109fed900, {{16.0, 197.5}, {128.3, 13.0}}, label: 'ACTIVE BLOCK · NONE'
+                                          StaticText, 0x109feda40, {{16.0, 205.2}, {271.0, 81.7}}, label: 'NO PROGRAM'
+                                          StaticText, 0x109fedb80, {{16.0, 289.0}, {355.3, 73.7}}, label: 'A block schedules routines across weeks and phases — accumulation, intensification, peak, deload. You can also lift without a block, but Fitbod really earns its keep when you’re running one.'
+                                          Button, 0x109fedcc0, {{16.0, 403.0}, {358.0, 71.0}}, label: '+ DEFINE BLOCK ▶︎'
+                                          StaticText, 0x109fede00, {{20.0, 487.5}, {79.0, 13.0}}, label: 'WEEKS · 4-12'
+                                          StaticText, 0x109fedf40, {{113.0, 487.5}, {77.3, 13.0}}, label: 'PHASES · 1-4'
+                                          StaticText, 0x109fee080, {{204.3, 487.5}, {108.7, 13.0}}, label: 'DELOAD OPTIONAL'
+                                          StaticText, 0x109fee1c0, {{20.0, 512.5}, {49.3, 13.0}}, label: 'CUSTOM'
+                                          StaticText, 0x109fee300, {{16.0, 552.3}, {176.7, 14.3}}, label: 'Or start from a template'
+                                          StaticText, 0x109fef340, {{307.7, 552.3}, {66.3, 14.3}}, label: '4 presets'
+                                          Button, 0x109fef480, {{0.0, 573.0}, {390.0, 77.0}}, label: '5W, Hypertrophy meso, POPULAR, 4 / WK · INTERMEDIATE, ACCUM 3 · INTNS 1 · DELOAD 1, ›'
+                                            StaticText, 0x109fef5c0, {{16.0, 592.2}, {30.7, 38.7}}, label: '5W'
+                                            StaticText, 0x106e63700, {{88.0, 586.7}, {132.3, 19.7}}, label: 'Hypertrophy meso'
+                                            StaticText, 0x106e63840, {{226.2, 590.0}, {54.3, 13.0}}, label: 'POPULAR'
+                                            StaticText, 0x106e62f80, {{88.0, 608.3}, {131.0, 13.0}}, label: '4 / WK · INTERMEDIATE'
+                                            StaticText, 0x106e63c00, {{88.0, 623.3}, {170.7, 13.0}}, label: 'ACCUM 3 · INTNS 1 · DELOAD 1'
+                                            StaticText, 0x106e63d40, {{367.0, 601.8}, {7.0, 19.3}}, label: '›'
+                                          Button, 0x106e63e80, {{0.0, 651.0}, {390.0, 77.0}}, label: '4W, Linear strength, 3 / WK · BEGINNER, BUILD 3 · TEST 1, ›'
+                                            StaticText, 0x106e630c0, {{16.0, 670.2}, {30.7, 38.7}}, label: '4W'
+                                            StaticText, 0x106e63200, {{88.0, 664.7}, {110.0, 19.7}}, label: 'Linear strength'
+                                            StaticText, 0x106e63340, {{88.0, 686.3}, {104.7, 13.0}}, label: '3 / WK · BEGINNER'
+                                            StaticText, 0x106e63480, {{88.0, 701.3}, {93.0, 13.0}}, label: 'BUILD 3 · TEST 1'
+                                            StaticText, 0x106e635c0, {{367.0, 679.8}, {7.0, 19.3}}, label: '›'
+                                          Button, 0x116fc8000, {{0.0, 729.0}, {390.0, 77.0}}, label: '8W, Powerbuilding, 5 / WK · ADVANCED, ACCUM 3 · INTNS 2 · PEAK 2 · DELOAD 1, ›'
+                                            StaticText, 0x116fc8140, {{16.0, 748.2}, {30.7, 38.7}}, label: '8W'
+                                            StaticText, 0x116fc8280, {{88.0, 742.7}, {102.7, 19.7}}, label: 'Powerbuilding'
+                                            StaticText, 0x116fc83c0, {{88.0, 764.3}, {108.0, 13.0}}, label: '5 / WK · ADVANCED'
+                                            StaticText, 0x116fc8500, {{88.0, 779.3}, {223.0, 13.0}}, label: 'ACCUM 3 · INTNS 2 · PEAK 2 · DELOAD 1'
+                                            StaticText, 0x116fc8640, {{367.0, 757.8}, {7.0, 19.3}}, label: '›'
+                                          Button, 0x116fc8780, {{0.0, 807.0}, {390.0, 77.0}}, label: '4W, 5 / 3 / 1 cycle, 4 / WK · INTERMEDIATE, WEEK 1 · 2 · 3 · DELOAD, ›'
+                                            StaticText, 0x116fc88c0, {{16.0, 826.2}, {30.7, 38.7}}, label: '4W'
+                                            StaticText, 0x116fc8a00, {{88.0, 820.7}, {97.0, 19.7}}, label: '5 / 3 / 1 cycle'
+                                            StaticText, 0x116fc8b40, {{88.0, 842.3}, {131.0, 13.0}}, label: '4 / WK · INTERMEDIATE'
+                                            StaticText, 0x116fc8c80, {{88.0, 857.3}, {132.0, 13.0}}, label: 'WEEK 1 · 2 · 3 · DELOAD'
+                                            StaticText, 0x116fc8dc0, {{367.0, 835.8}, {7.0, 19.3}}, label: '›'
+                                    Button, 0x116fc8f00, {{176.0, 85.0}, {200.0, 40.0}}, label: '+ New block'
+                                    Button, 0x116fc9040, {{176.0, 126.0}, {200.0, 40.0}}, label: '+ New routine'
+                            Other, 0x116fc9180, {{0.0, 0.0}, {390.0, 781.0}}
+                              Other, 0x116fc92c0, {{0.0, 0.0}, {390.0, 781.0}}
+                Other, 0x116fc9400, {{0.0, 698.0}, {390.0, 83.0}}
+                  Other, 0x116fc9540, {{0.0, 0.0}, {390.0, 781.0}}
+                  Other, 0x116fc9680, {{0.0, 698.0}, {390.0, 83.0}}
+              Button, 0x116fc97c0, {{0.0, 783.0}, {97.7, 61.0}}, identifier: 'Today', label: 'Today'
+              Button, 0x116fc9900, {{97.7, 783.0}, {97.3, 61.0}}, identifier: 'Program', label: 'Program', Selected
+              Button, 0x116fc9a40, {{195.0, 783.0}, {97.7, 61.0}}, identifier: 'Progress', label: 'Progress'
+              Button, 0x116fc9b80, {{292.7, 783.0}, {97.3, 61.0}}, identifier: 'Library', label: 'Library'
+Path to element:
+ →Application, 0x116e3fc00, pid: 1641, label: 'fitbod'
+Query chain:
+ →Find: Target Application 'bodybuilding.fitbod'
+  Output: {
+    Application, 0x116fc9cc0, pid: 1641, label: 'fitbod'
+  }
+)

@@ -1,0 +1,3 @@
+[1] I swipe: sheet still open=false alerts+dialogs=0
+[2] I swipe: 'Probe Session' on routine=false
+[2] I swipe: reopened sheet name='Name this session' bench row=false

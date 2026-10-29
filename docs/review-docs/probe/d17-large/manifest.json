@@ -1,0 +1,638 @@
+[
+  {
+    "attachments" : [
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "79CAC9F7-95DE-4AEB-84F6-660A8F2E36EE",
+        "deviceName" : "sw6 iPhone 17 Pro Max",
+        "exportedFileName" : "10884869-B6FF-4D60-BBF7-F78E488A0C94.txt",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "zz-issues_0_074C9D02-AB00-434B-B9D3-307F187B57BB.txt",
+        "timestamp" : 1791214223.117
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "79CAC9F7-95DE-4AEB-84F6-660A8F2E36EE",
+        "deviceName" : "sw6 iPhone 17 Pro Max",
+        "exportedFileName" : "8E36D89C-B716-4A17-AA50-E3E57F804B8D",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "UI Snapshot 2026-10-05 at 08.30.23 AM",
+        "timestamp" : 1791214223.027
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "79CAC9F7-95DE-4AEB-84F6-660A8F2E36EE",
+        "deviceName" : "sw6 iPhone 17 Pro Max",
+        "exportedFileName" : "5063749D-3F42-4612-9D35-F8D235129841",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "UI Snapshot 2026-10-05 at 08.30.21 AM",
+        "timestamp" : 1791214221.926
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "79CAC9F7-95DE-4AEB-84F6-660A8F2E36EE",
+        "deviceName" : "sw6 iPhone 17 Pro Max",
+        "exportedFileName" : "899A543A-0FD6-475F-B259-901177352D1F",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "UI Snapshot 2026-10-05 at 08.30.20 AM",
+        "timestamp" : 1791214220.824
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "79CAC9F7-95DE-4AEB-84F6-660A8F2E36EE",
+        "deviceName" : "sw6 iPhone 17 Pro Max",
+        "exportedFileName" : "E0A5C2BD-E70A-45AA-9C9D-3CA5B842A971",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "UI Snapshot 2026-10-05 at 08.30.19 AM",
+        "timestamp" : 1791214219.556
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "79CAC9F7-95DE-4AEB-84F6-660A8F2E36EE",
+        "deviceName" : "sw6 iPhone 17 Pro Max",
+        "exportedFileName" : "B32A2362-BC32-46E9-AE08-F1DB7B14CB8E",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "Synthesized Event 2026-10-05 at 08.30.20 AM",
+        "timestamp" : 1791214220.057
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "79CAC9F7-95DE-4AEB-84F6-660A8F2E36EE",
+        "deviceName" : "sw6 iPhone 17 Pro Max",
+        "exportedFileName" : "815834AA-226D-4F40-BC6A-E0B0CC71CA53",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "UI Snapshot 2026-10-05 at 08.30.18 AM",
+        "timestamp" : 1791214218.058
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "79CAC9F7-95DE-4AEB-84F6-660A8F2E36EE",
+        "deviceName" : "sw6 iPhone 17 Pro Max",
+        "exportedFileName" : "A9BF3B88-0EB8-4FDF-8C2D-0C74F431DA96",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "Synthesized Event 2026-10-05 at 08.30.18 AM",
+        "timestamp" : 1791214218.558
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "79CAC9F7-95DE-4AEB-84F6-660A8F2E36EE",
+        "deviceName" : "sw6 iPhone 17 Pro Max",
+        "exportedFileName" : "E5EE03A1-18DD-44F9-A5EA-88E20D1CB73E",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "UI Snapshot 2026-10-05 at 08.30.16 AM",
+        "timestamp" : 1791214216.558
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "79CAC9F7-95DE-4AEB-84F6-660A8F2E36EE",
+        "deviceName" : "sw6 iPhone 17 Pro Max",
+        "exportedFileName" : "3421B8C3-53B0-4F77-B80D-666D2A1A3076",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "Synthesized Event 2026-10-05 at 08.30.17 AM",
+        "timestamp" : 1791214217.065
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "79CAC9F7-95DE-4AEB-84F6-660A8F2E36EE",
+        "deviceName" : "sw6 iPhone 17 Pro Max",
+        "exportedFileName" : "1BF19310-4913-4265-99F0-EC1AE7C27251",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "UI Snapshot 2026-10-05 at 08.30.14 AM",
+        "timestamp" : 1791214214.95
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "79CAC9F7-95DE-4AEB-84F6-660A8F2E36EE",
+        "deviceName" : "sw6 iPhone 17 Pro Max",
+        "exportedFileName" : "EA6464AF-2D6E-4C00-8D8A-0AA3930CF307",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "Synthesized Event 2026-10-05 at 08.30.15 AM",
+        "timestamp" : 1791214215.45
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "79CAC9F7-95DE-4AEB-84F6-660A8F2E36EE",
+        "deviceName" : "sw6 iPhone 17 Pro Max",
+        "exportedFileName" : "9EC86A27-BEDC-4AD0-85CB-BD9CBF4E64F3",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "UI Snapshot 2026-10-05 at 08.30.13 AM",
+        "timestamp" : 1791214213.34
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "79CAC9F7-95DE-4AEB-84F6-660A8F2E36EE",
+        "deviceName" : "sw6 iPhone 17 Pro Max",
+        "exportedFileName" : "79B3329C-012B-417B-A767-E9F4A969C915",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "Synthesized Event 2026-10-05 at 08.30.13 AM",
+        "timestamp" : 1791214213.84
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "79CAC9F7-95DE-4AEB-84F6-660A8F2E36EE",
+        "deviceName" : "sw6 iPhone 17 Pro Max",
+        "exportedFileName" : "61FED386-294D-433B-8B85-402396F37AD5",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "UI Snapshot 2026-10-05 at 08.30.11 AM",
+        "timestamp" : 1791214211.818
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "79CAC9F7-95DE-4AEB-84F6-660A8F2E36EE",
+        "deviceName" : "sw6 iPhone 17 Pro Max",
+        "exportedFileName" : "85A1B4A8-8420-4109-8B63-5B42D28F390E",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "Synthesized Event 2026-10-05 at 08.30.12 AM",
+        "timestamp" : 1791214212.338
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "79CAC9F7-95DE-4AEB-84F6-660A8F2E36EE",
+        "deviceName" : "sw6 iPhone 17 Pro Max",
+        "exportedFileName" : "2B2BE055-0C8D-452C-95C3-C39CD7AB6E98",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "UI Snapshot 2026-10-05 at 08.30.10 AM",
+        "timestamp" : 1791214210.272
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "79CAC9F7-95DE-4AEB-84F6-660A8F2E36EE",
+        "deviceName" : "sw6 iPhone 17 Pro Max",
+        "exportedFileName" : "9AB8DD0E-202A-4CBF-BADF-BFF3E4F75D47",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "Synthesized Event 2026-10-05 at 08.30.10 AM",
+        "timestamp" : 1791214210.76
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "79CAC9F7-95DE-4AEB-84F6-660A8F2E36EE",
+        "deviceName" : "sw6 iPhone 17 Pro Max",
+        "exportedFileName" : "91A3A885-A2A7-4AF4-922D-62DC5A78527F",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "UI Snapshot 2026-10-05 at 08.30.08 AM",
+        "timestamp" : 1791214208.765
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "79CAC9F7-95DE-4AEB-84F6-660A8F2E36EE",
+        "deviceName" : "sw6 iPhone 17 Pro Max",
+        "exportedFileName" : "71C957C9-D216-4411-9137-B4B8814A0094",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "Synthesized Event 2026-10-05 at 08.30.09 AM",
+        "timestamp" : 1791214209.271
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "79CAC9F7-95DE-4AEB-84F6-660A8F2E36EE",
+        "deviceName" : "sw6 iPhone 17 Pro Max",
+        "exportedFileName" : "AC344420-396A-4510-917C-E5BE3D5C6F59",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "UI Snapshot 2026-10-05 at 08.30.07 AM",
+        "timestamp" : 1791214207.258
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "79CAC9F7-95DE-4AEB-84F6-660A8F2E36EE",
+        "deviceName" : "sw6 iPhone 17 Pro Max",
+        "exportedFileName" : "52699681-D6B5-42DC-B655-9E467CC5D6F1",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "Synthesized Event 2026-10-05 at 08.30.07 AM",
+        "timestamp" : 1791214207.76
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "79CAC9F7-95DE-4AEB-84F6-660A8F2E36EE",
+        "deviceName" : "sw6 iPhone 17 Pro Max",
+        "exportedFileName" : "8788579B-CA0E-4804-B82F-317C7692FF06",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "UI Snapshot 2026-10-05 at 08.30.05 AM",
+        "timestamp" : 1791214205.753
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "79CAC9F7-95DE-4AEB-84F6-660A8F2E36EE",
+        "deviceName" : "sw6 iPhone 17 Pro Max",
+        "exportedFileName" : "339119C2-9184-4CC0-ADDA-6D609AEC4D83",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "Synthesized Event 2026-10-05 at 08.30.06 AM",
+        "timestamp" : 1791214206.258
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "79CAC9F7-95DE-4AEB-84F6-660A8F2E36EE",
+        "deviceName" : "sw6 iPhone 17 Pro Max",
+        "exportedFileName" : "CDDDE33C-5722-4F1D-B608-88685D393C1D",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "UI Snapshot 2026-10-05 at 08.30.04 AM",
+        "timestamp" : 1791214204.241
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "79CAC9F7-95DE-4AEB-84F6-660A8F2E36EE",
+        "deviceName" : "sw6 iPhone 17 Pro Max",
+        "exportedFileName" : "266A7AF3-EF5D-4858-8E5C-A47FFA8B71FB",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "Synthesized Event 2026-10-05 at 08.30.04 AM",
+        "timestamp" : 1791214204.741
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "79CAC9F7-95DE-4AEB-84F6-660A8F2E36EE",
+        "deviceName" : "sw6 iPhone 17 Pro Max",
+        "exportedFileName" : "21A30226-1C97-4153-95A2-B819A6A98189",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "UI Snapshot 2026-10-05 at 08.30.02 AM",
+        "timestamp" : 1791214202.741
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "79CAC9F7-95DE-4AEB-84F6-660A8F2E36EE",
+        "deviceName" : "sw6 iPhone 17 Pro Max",
+        "exportedFileName" : "92374BB3-0056-41CE-9163-8BD12D787F06",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "Synthesized Event 2026-10-05 at 08.30.03 AM",
+        "timestamp" : 1791214203.241
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "79CAC9F7-95DE-4AEB-84F6-660A8F2E36EE",
+        "deviceName" : "sw6 iPhone 17 Pro Max",
+        "exportedFileName" : "A42950EB-2AD7-4855-93E0-46647E041435",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "UI Snapshot 2026-10-05 at 08.30.01 AM",
+        "timestamp" : 1791214201.115
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "79CAC9F7-95DE-4AEB-84F6-660A8F2E36EE",
+        "deviceName" : "sw6 iPhone 17 Pro Max",
+        "exportedFileName" : "F02DB84A-A131-4859-90EC-70433A198891",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "Synthesized Event 2026-10-05 at 08.30.01 AM",
+        "timestamp" : 1791214201.623
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "79CAC9F7-95DE-4AEB-84F6-660A8F2E36EE",
+        "deviceName" : "sw6 iPhone 17 Pro Max",
+        "exportedFileName" : "0C2C7341-F1CB-4ECB-8B85-E5848DF106F6",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "UI Snapshot 2026-10-05 at 08.29.59 AM",
+        "timestamp" : 1791214199.602
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "79CAC9F7-95DE-4AEB-84F6-660A8F2E36EE",
+        "deviceName" : "sw6 iPhone 17 Pro Max",
+        "exportedFileName" : "543153FB-8BF2-47C6-A28C-65527FA8333C",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "Synthesized Event 2026-10-05 at 08.30.00 AM",
+        "timestamp" : 1791214200.106
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "79CAC9F7-95DE-4AEB-84F6-660A8F2E36EE",
+        "deviceName" : "sw6 iPhone 17 Pro Max",
+        "exportedFileName" : "C49640F8-C4F8-4C82-B52F-ABC8127063E4.txt",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "002-I swipe-after-tree_0_B0A60DE0-C2CA-418D-8DB0-11E78DE77F46.txt",
+        "timestamp" : 1791214198.217
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "79CAC9F7-95DE-4AEB-84F6-660A8F2E36EE",
+        "deviceName" : "sw6 iPhone 17 Pro Max",
+        "exportedFileName" : "D7180B96-6ECB-49DC-B10A-715B113B32BE.png",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "002-I swipe-after_0_AF7E3A83-BF02-43E4-9A0B-7EAA29E9CD44.png",
+        "timestamp" : 1791214198.1
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "79CAC9F7-95DE-4AEB-84F6-660A8F2E36EE",
+        "deviceName" : "sw6 iPhone 17 Pro Max",
+        "exportedFileName" : "FC8F8051-ED2B-4214-9184-A68065912EBC",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "UI Snapshot 2026-10-05 at 08.29.53 AM",
+        "timestamp" : 1791214193.954
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "79CAC9F7-95DE-4AEB-84F6-660A8F2E36EE",
+        "deviceName" : "sw6 iPhone 17 Pro Max",
+        "exportedFileName" : "BFD83700-2055-44E3-B800-5B884F09A735",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "Synthesized Event 2026-10-05 at 08.29.55 AM",
+        "timestamp" : 1791214195.546
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "79CAC9F7-95DE-4AEB-84F6-660A8F2E36EE",
+        "deviceName" : "sw6 iPhone 17 Pro Max",
+        "exportedFileName" : "CC47F973-07E0-4451-A38A-77C983FDE41A.txt",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "001-session-before-tree_0_C97DCF78-5B63-4243-9C1E-947F30326603.txt",
+        "timestamp" : 1791214193.915
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "79CAC9F7-95DE-4AEB-84F6-660A8F2E36EE",
+        "deviceName" : "sw6 iPhone 17 Pro Max",
+        "exportedFileName" : "5B38658D-BBE4-4EB7-9D04-131F876525C2.png",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "001-session-before_0_E2DA11C4-0A9B-4AEE-AE89-88CBFA9AE74E.png",
+        "timestamp" : 1791214193.766
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "79CAC9F7-95DE-4AEB-84F6-660A8F2E36EE",
+        "deviceName" : "sw6 iPhone 17 Pro Max",
+        "exportedFileName" : "95555CFE-50B5-4ED4-BC26-CC82DF76EBFF",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "UI Snapshot 2026-10-05 at 08.29.51 AM",
+        "timestamp" : 1791214191.913
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "79CAC9F7-95DE-4AEB-84F6-660A8F2E36EE",
+        "deviceName" : "sw6 iPhone 17 Pro Max",
+        "exportedFileName" : "EBA80B2C-BCE5-4566-B4CB-9D25EDEB8972",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "Synthesized Event 2026-10-05 at 08.29.52 AM",
+        "timestamp" : 1791214192.203
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "79CAC9F7-95DE-4AEB-84F6-660A8F2E36EE",
+        "deviceName" : "sw6 iPhone 17 Pro Max",
+        "exportedFileName" : "02F85462-8D26-43B3-A04B-EBF90C08BA53",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "UI Snapshot 2026-10-05 at 08.29.49 AM",
+        "timestamp" : 1791214189.975
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "79CAC9F7-95DE-4AEB-84F6-660A8F2E36EE",
+        "deviceName" : "sw6 iPhone 17 Pro Max",
+        "exportedFileName" : "36AA1A88-44EA-4D18-81C8-ADE8AFE065FC",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "Synthesized Event 2026-10-05 at 08.29.50 AM",
+        "timestamp" : 1791214190.725
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "79CAC9F7-95DE-4AEB-84F6-660A8F2E36EE",
+        "deviceName" : "sw6 iPhone 17 Pro Max",
+        "exportedFileName" : "3A624274-4519-4DF2-A368-5B2ED598128C",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "UI Snapshot 2026-10-05 at 08.29.49 AM",
+        "timestamp" : 1791214189.261
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "79CAC9F7-95DE-4AEB-84F6-660A8F2E36EE",
+        "deviceName" : "sw6 iPhone 17 Pro Max",
+        "exportedFileName" : "69BA2554-3C79-4DBF-B609-3DC9E7F5D190",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "Synthesized Event 2026-10-05 at 08.29.49 AM",
+        "timestamp" : 1791214189.55
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "79CAC9F7-95DE-4AEB-84F6-660A8F2E36EE",
+        "deviceName" : "sw6 iPhone 17 Pro Max",
+        "exportedFileName" : "B1BA09F8-C35E-448D-AD8F-D7366AC53F93",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "UI Snapshot 2026-10-05 at 08.29.45 AM",
+        "timestamp" : 1791214185.969
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "79CAC9F7-95DE-4AEB-84F6-660A8F2E36EE",
+        "deviceName" : "sw6 iPhone 17 Pro Max",
+        "exportedFileName" : "3D9BC3A3-6B34-49E1-AAE0-2A1CE38534CE",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "Synthesized Event 2026-10-05 at 08.29.46 AM",
+        "timestamp" : 1791214186.256
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "79CAC9F7-95DE-4AEB-84F6-660A8F2E36EE",
+        "deviceName" : "sw6 iPhone 17 Pro Max",
+        "exportedFileName" : "276F00EE-4ADA-4EE3-99DB-4E0F798692E2",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "UI Snapshot 2026-10-05 at 08.29.44 AM",
+        "timestamp" : 1791214184.278
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "79CAC9F7-95DE-4AEB-84F6-660A8F2E36EE",
+        "deviceName" : "sw6 iPhone 17 Pro Max",
+        "exportedFileName" : "C1D7FF33-650E-41F4-9880-0785625718E2",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "Synthesized Event 2026-10-05 at 08.29.44 AM",
+        "timestamp" : 1791214184.493
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "79CAC9F7-95DE-4AEB-84F6-660A8F2E36EE",
+        "deviceName" : "sw6 iPhone 17 Pro Max",
+        "exportedFileName" : "23C699DA-B4D6-4532-8449-A803C05C5554",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "UI Snapshot 2026-10-05 at 08.29.43 AM",
+        "timestamp" : 1791214183.763
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "79CAC9F7-95DE-4AEB-84F6-660A8F2E36EE",
+        "deviceName" : "sw6 iPhone 17 Pro Max",
+        "exportedFileName" : "29B78344-7771-44B6-B21E-FA4ED451B911",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "Synthesized Event 2026-10-05 at 08.29.44 AM",
+        "timestamp" : 1791214184.174
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "79CAC9F7-95DE-4AEB-84F6-660A8F2E36EE",
+        "deviceName" : "sw6 iPhone 17 Pro Max",
+        "exportedFileName" : "33445A1B-4D04-47B8-A879-EFED3F209E91",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "UI Snapshot 2026-10-05 at 08.29.43 AM",
+        "timestamp" : 1791214183.05
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "79CAC9F7-95DE-4AEB-84F6-660A8F2E36EE",
+        "deviceName" : "sw6 iPhone 17 Pro Max",
+        "exportedFileName" : "3B5530D2-3914-4691-9CE9-FFA9896D689D",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "Synthesized Event 2026-10-05 at 08.29.43 AM",
+        "timestamp" : 1791214183.337
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "79CAC9F7-95DE-4AEB-84F6-660A8F2E36EE",
+        "deviceName" : "sw6 iPhone 17 Pro Max",
+        "exportedFileName" : "1BD923AA-4130-4FCD-96C8-5561A0C84E26",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "UI Snapshot 2026-10-05 at 08.29.40 AM",
+        "timestamp" : 1791214180.046
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "79CAC9F7-95DE-4AEB-84F6-660A8F2E36EE",
+        "deviceName" : "sw6 iPhone 17 Pro Max",
+        "exportedFileName" : "D07A6F7A-1CEC-4DE1-A6CD-1CEC9E33779F",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "Synthesized Event 2026-10-05 at 08.29.40 AM",
+        "timestamp" : 1791214180.332
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "79CAC9F7-95DE-4AEB-84F6-660A8F2E36EE",
+        "deviceName" : "sw6 iPhone 17 Pro Max",
+        "exportedFileName" : "BA0178AB-45AF-4BFC-86EA-7A3007BE95A6",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "UI Snapshot 2026-10-05 at 08.29.38 AM",
+        "timestamp" : 1791214178.151
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "79CAC9F7-95DE-4AEB-84F6-660A8F2E36EE",
+        "deviceName" : "sw6 iPhone 17 Pro Max",
+        "exportedFileName" : "302681FD-E854-467D-A56A-272BF05EAC29",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "Synthesized Event 2026-10-05 at 08.29.38 AM",
+        "timestamp" : 1791214178.442
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "79CAC9F7-95DE-4AEB-84F6-660A8F2E36EE",
+        "deviceName" : "sw6 iPhone 17 Pro Max",
+        "exportedFileName" : "C3E3625F-43D1-4607-8232-FCD58709D673",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "UI Snapshot 2026-10-05 at 08.29.36 AM",
+        "timestamp" : 1791214176.341
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "79CAC9F7-95DE-4AEB-84F6-660A8F2E36EE",
+        "deviceName" : "sw6 iPhone 17 Pro Max",
+        "exportedFileName" : "FCD46993-C668-415C-A594-1AFFF1EF3CFA",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "Synthesized Event 2026-10-05 at 08.29.36 AM",
+        "timestamp" : 1791214176.556
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "79CAC9F7-95DE-4AEB-84F6-660A8F2E36EE",
+        "deviceName" : "sw6 iPhone 17 Pro Max",
+        "exportedFileName" : "B1265914-7BBA-40B8-B74F-F04DA1A7F2F0",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "UI Snapshot 2026-10-05 at 08.29.35 AM",
+        "timestamp" : 1791214175.568
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "79CAC9F7-95DE-4AEB-84F6-660A8F2E36EE",
+        "deviceName" : "sw6 iPhone 17 Pro Max",
+        "exportedFileName" : "12762D20-40C6-4354-85E5-3DA2BDEC2E21",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "Synthesized Event 2026-10-05 at 08.29.36 AM",
+        "timestamp" : 1791214176.242
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "79CAC9F7-95DE-4AEB-84F6-660A8F2E36EE",
+        "deviceName" : "sw6 iPhone 17 Pro Max",
+        "exportedFileName" : "046C89B3-787E-4286-A9FE-B2DC0F9F629B",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "UI Snapshot 2026-10-05 at 08.29.35 AM",
+        "timestamp" : 1791214175.14
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "79CAC9F7-95DE-4AEB-84F6-660A8F2E36EE",
+        "deviceName" : "sw6 iPhone 17 Pro Max",
+        "exportedFileName" : "E6A14C0E-A88D-4C76-A0D4-8EE094A9C2AD",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "Synthesized Event 2026-10-05 at 08.29.35 AM",
+        "timestamp" : 1791214175.509
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "79CAC9F7-95DE-4AEB-84F6-660A8F2E36EE",
+        "deviceName" : "sw6 iPhone 17 Pro Max",
+        "exportedFileName" : "B28A6834-7E0A-4DE9-8E03-F97CB02D8057",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "UI Snapshot 2026-10-05 at 08.29.34 AM",
+        "timestamp" : 1791214174.318
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "79CAC9F7-95DE-4AEB-84F6-660A8F2E36EE",
+        "deviceName" : "sw6 iPhone 17 Pro Max",
+        "exportedFileName" : "E8AE78DD-16F3-436E-A966-52543CAE5587",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "Synthesized Event 2026-10-05 at 08.29.34 AM",
+        "timestamp" : 1791214174.603
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "79CAC9F7-95DE-4AEB-84F6-660A8F2E36EE",
+        "deviceName" : "sw6 iPhone 17 Pro Max",
+        "exportedFileName" : "6373084A-E506-4914-959A-851DAB1C033C",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "UI Snapshot 2026-10-05 at 08.29.31 AM",
+        "timestamp" : 1791214171.26
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "79CAC9F7-95DE-4AEB-84F6-660A8F2E36EE",
+        "deviceName" : "sw6 iPhone 17 Pro Max",
+        "exportedFileName" : "788AD88B-F305-459C-AF8D-DE1C53B5DCA9",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "Synthesized Event 2026-10-05 at 08.29.31 AM",
+        "timestamp" : 1791214171.545
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "79CAC9F7-95DE-4AEB-84F6-660A8F2E36EE",
+        "deviceName" : "sw6 iPhone 17 Pro Max",
+        "exportedFileName" : "3AE17688-006B-45E1-9BF7-896190D39034",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "Synthesized Event 2026-10-05 at 08.29.30 AM",
+        "timestamp" : 1791214170.002
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "79CAC9F7-95DE-4AEB-84F6-660A8F2E36EE",
+        "deviceName" : "sw6 iPhone 17 Pro Max",
+        "exportedFileName" : "88F1E56A-C0C3-4034-8AEE-C45AABCA985C.mp4",
+        "isAssociatedWithFailure" : false,
+        "suggestedHumanReadableName" : "Screen Recording 2026-10-05 at 08.29.23 AM.mp4",
+        "timestamp" : 1791214163.505
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "79CAC9F7-95DE-4AEB-84F6-660A8F2E36EE",
+        "deviceName" : "sw6 iPhone 17 Pro Max",
+        "exportedFileName" : "145B5158-52F1-4A82-A8D4-04D0D9F5B9B6.txt",
+        "isAssociatedWithFailure" : true,
+        "suggestedHumanReadableName" : "App UI hierarchy for bodybuilding_0_6A5FC049-C0B5-435C-8DCF-8516CD5A61B6.fitbod",
+        "timestamp" : 1791214223.083
+      },
+      {
+        "configurationName" : "Test Scheme Action",
+        "deviceId" : "79CAC9F7-95DE-4AEB-84F6-660A8F2E36EE",
+        "deviceName" : "sw6 iPhone 17 Pro Max",
+        "exportedFileName" : "AEA33957-E620-4236-82EF-0D24B040F091",
+        "isAssociatedWithFailure" : true,
+        "suggestedHumanReadableName" : "UI Snapshot 2026-10-05 at 08.30.23 AM",
+        "timestamp" : 1791214223.083
+      }
+    ],
+    "testIdentifier" : "ReviewProbeUITests/testI_sessionSheetSwipeDown()",
+    "testIdentifierURL" : "test://com.apple.xcode/fitbod/fitbodUITests/ReviewProbeUITests/testI_sessionSheetSwipeDown"
+  }
+]

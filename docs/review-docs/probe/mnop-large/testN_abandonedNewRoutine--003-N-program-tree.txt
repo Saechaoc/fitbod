@@ -1,0 +1,48 @@
+Optional(Attributes: Application, 0x1140d21c0, pid: 59186, label: 'fitbod'
+Element subtree:
+ →Application, 0x1140d21c0, pid: 59186, label: 'fitbod'
+    Window (Main), 0x1140d2080, {{0.0, 0.0}, {440.0, 956.0}}
+      Other, 0x1140d1f40, {{0.0, 0.0}, {440.0, 956.0}}
+        Other, 0x1140d1e00, {{0.0, 0.0}, {440.0, 956.0}}
+          Other, 0x1140d1a40, {{0.0, 0.0}, {440.0, 956.0}}
+            Other, 0x1140d1cc0, {{0.0, 0.0}, {440.0, 956.0}}
+              Other, 0x1140d1b80, {{0.0, 0.0}, {440.0, 893.0}}
+                Other, 0x1140d17c0, {{0.0, 0.0}, {440.0, 893.0}}
+                  Other, 0x1140d1900, {{0.0, 0.0}, {440.0, 893.0}}
+                    Other, 0x1140d1680, {{0.0, 0.0}, {440.0, 893.0}}
+                      Other, 0x1140d1540, {{0.0, 0.0}, {440.0, 893.0}}
+                        Other, 0x1140d1400, {{0.0, 0.0}, {440.0, 893.0}}
+                          Other, 0x1140d1180, {{0.0, 0.0}, {440.0, 893.0}}
+                            Other, 0x1140d12c0, {{0.0, 0.0}, {440.0, 893.0}}
+                              Other, 0x1140d0f00, {{0.0, 0.0}, {440.0, 893.0}}
+                                Other, 0x1140d1040, {{0.0, 0.0}, {440.0, 893.0}}
+                                  Other, 0x1140d0c80, {{0.0, 0.0}, {440.0, 893.0}}
+                                    StaticText, 0x1140d0dc0, {{16.0, 71.8}, {60.7, 14.3}}, label: 'PROGRAM'
+                                    Button, 0x1140d0a00, {{385.0, 71.8}, {39.0, 14.3}}, label: '+ NEW'
+                                    ScrollView, 0x1140d0b40, {{0.0, 96.0}, {440.0, 797.0}}
+                                      Other, 0x1140d0780, {{0.0, 96.0}, {440.0, 205.0}}
+                                        Other, 0x1140d08c0, {{0.0, 96.0}, {440.0, 203.0}}
+                                          StaticText, 0x1140d0500, {{0.0, 96.0}, {440.0, 46.0}}, label: 'Blocks'
+                                          StaticText, 0x1140d0640, {{0.0, 144.0}, {440.0, 46.0}}, label: 'Routines'
+                                          Button, 0x1140d0280, {{0.0, 190.0}, {440.0, 64.0}}, label: 'Untitled routine, 0 sessions, ›'
+                                            StaticText, 0x1140d03c0, {{16.0, 202.0}, {134.7, 18.7}}, label: 'Untitled routine'
+                                            StaticText, 0x1140d0000, {{16.0, 224.7}, {78.0, 17.3}}, label: '0 sessions'
+                                            StaticText, 0x1140d0140, {{415.3, 212.7}, {8.7, 18.7}}, label: '›'
+                                          Button, 0x1140d2d00, {{0.0, 255.0}, {440.0, 44.0}}, label: '+ NEW ROUTINE'
+                            Other, 0x1140d2e40, {{0.0, 0.0}, {440.0, 893.0}}
+                              Other, 0x1140d2f80, {{0.0, 0.0}, {440.0, 893.0}}
+                Other, 0x1140d30c0, {{0.0, 810.0}, {440.0, 83.0}}
+                  Other, 0x1140d3200, {{0.0, 0.0}, {440.0, 893.0}}
+                  Other, 0x1140d3340, {{0.0, 810.0}, {440.0, 83.0}}
+              Button, 0x1140d3480, {{0.0, 895.0}, {110.0, 61.0}}, identifier: 'Today', label: 'Today'
+              Button, 0x1140d2440, {{110.0, 895.0}, {110.0, 61.0}}, identifier: 'Program', label: 'Program', Selected
+              Button, 0x1140d2580, {{220.0, 895.0}, {110.0, 61.0}}, identifier: 'Progress', label: 'Progress'
+              Button, 0x1140d26c0, {{330.0, 895.0}, {110.0, 61.0}}, identifier: 'Library', label: 'Library'
+Path to element:
+ →Application, 0x1140d21c0, pid: 59186, label: 'fitbod'
+Query chain:
+ →Find: Target Application 'bodybuilding.fitbod'
+  Output: {
+    Application, 0x1140d2300, pid: 59186, label: 'fitbod'
+  }
+)

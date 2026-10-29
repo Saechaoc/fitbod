@@ -1,0 +1,4 @@
+[0] G header Copy #1: editor shown=false name='<no field>' Chest=true keyboard=0
+[1] G header Copy #2: editor shown=true name='Barbell Bench Press - Medium Grip (Copy)' Chest=true keyboard=0
+[2] G bottom CTA #1: editor shown=true name='Barbell Bench Press - Medium Grip (Copy)' Chest=true keyboard=0
+[3] G bottom CTA #2: editor shown=true name='Barbell Bench Press - Medium Grip (Copy)' Chest=true keyboard=0

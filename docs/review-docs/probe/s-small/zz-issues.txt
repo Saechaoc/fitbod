@@ -1,0 +1,2 @@
+[0] S NECK frame=(101.0, 592.9999999999998, 44.0, 44.0)
+[2] S no hittable chest

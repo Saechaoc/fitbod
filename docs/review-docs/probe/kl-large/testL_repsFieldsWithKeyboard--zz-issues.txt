@@ -1,0 +1,8 @@
+[2] L before focus: low='4' (304.0, 617.0, 48.0, 19.0) high='6' (376.0, 617.0, 48.0, 19.0) save=(221.0, 878.0, 219.0, 44.0)
+[2] L low tapped: focus=true hittable=true keyboard=(0.0, 655.0, 440.0, 243.0) low=(304.0, 573.0, 48.0, 19.0) save=(221.0, 594.0, 219.0, 44.0)
+[2] L keys:  toolbars=0
+[3] L low after double-tap+'6': low='6'
+[3] L high tapped: focus=true low focus=false
+[3] L high after double-tap+'10': high='10' low='6'
+[4] L high after trailing tap+delete+'10': high='10'
+[4] L after scroll drag: keyboard visible=true

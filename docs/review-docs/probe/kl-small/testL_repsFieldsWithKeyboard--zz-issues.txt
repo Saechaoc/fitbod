@@ -1,0 +1,6 @@
+[2] L before focus: low='4' (254.0, 611.6666666666666, 48.0, 19.0) high='6' (326.0, 611.6666666666666, 48.0, 19.0) save=(196.0, 766.0, 194.0, 44.0)
+[2] L low tapped: focus=true hittable=true keyboard=(0.0, 861.0, 390.0, 233.0) low=(254.0, 611.6666666666666, 48.0, 19.0) save=(196.0, 766.0, 194.0, 44.0)
+[2] L keys:  toolbars=0
+[3] L low after double-tap+'6': low='6'
+[3] L high not hittable with keyboard up: (326.0, 521.0, 48.0, 19.0) save=(196.0, 492.0, 194.0, 44.0)
+[3] L after scroll drag: keyboard visible=true

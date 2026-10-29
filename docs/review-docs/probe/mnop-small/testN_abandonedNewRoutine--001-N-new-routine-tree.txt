@@ -1,0 +1,60 @@
+Optional(Attributes: Application, 0x1129cc000, pid: 59100, label: 'fitbod'
+Element subtree:
+ →Application, 0x1129cc000, pid: 59100, label: 'fitbod'
+    Window (Main), 0x1129cc280, {{0.0, 0.0}, {390.0, 844.0}}
+      Other, 0x1129cdcc0, {{0.0, 0.0}, {390.0, 844.0}}
+        Other, 0x1129cde00, {{0.0, 0.0}, {390.0, 844.0}}
+          Other, 0x1129cdf40, {{0.0, 0.0}, {390.0, 844.0}}
+            Other, 0x1129ce080, {{0.0, 0.0}, {390.0, 844.0}}
+              Other, 0x1129ce1c0, {{0.0, 0.0}, {390.0, 781.0}}
+                Other, 0x1129ce300, {{0.0, 0.0}, {390.0, 781.0}}
+                  Other, 0x1129ce440, {{0.0, 0.0}, {390.0, 781.0}}
+                    Other, 0x1129ce580, {{0.0, 0.0}, {390.0, 781.0}}
+                      Other, 0x1129ce6c0, {{0.0, 0.0}, {390.0, 781.0}}
+                        Other, 0x1129ce800, {{0.0, 0.0}, {390.0, 781.0}}
+                          Other, 0x1129ce940, {{0.0, 0.0}, {390.0, 781.0}}
+                            Other, 0x1129cea80, {{0.0, 0.0}, {390.0, 781.0}}
+                              Other, 0x1129cebc0, {{0.0, 0.0}, {390.0, 781.0}}
+                                Other, 0x1129ced00, {{0.0, 0.0}, {390.0, 781.0}}
+                                  Other, 0x1129cee40, {{0.0, 0.0}, {390.0, 781.0}}
+                                    Button, 0x1129cef80, {{4.0, 47.0}, {72.7, 44.0}}, label: 'BACK'
+                                    StaticText, 0x1129cf0c0, {{166.5, 61.7}, {57.0, 14.7}}, label: 'Routine'
+                                    Button, 0x1129cf340, {{329.3, 47.0}, {56.7, 44.0}}, label: 'Edit'
+                                    ScrollView, 0x1129cf480, {{0.0, 93.0}, {390.0, 688.0}}
+                                      Other, 0x1129cdb80, {{0.0, 93.0}, {390.0, 579.0}}
+                                        Other, 0x1129cc3c0, {{0.0, 109.0}, {390.0, 547.0}}
+                                          StaticText, 0x1129cc500, {{16.0, 109.0}, {93.7, 14.7}}, label: 'ROUTINE NAME'
+                                          TextField, 0x1129cc640, {{16.0, 129.7}, {358.0, 48.0}}, label: 'Routine name', value: Untitled routine
+                                            Other, 0x1129cc780, {{16.0, 150.7}, {358.0, 24.0}}, label: 'Horizontal scroll bar, 1 page', value: 0%
+                                              Other, 0x1129cc8c0, {{19.0, 171.7}, {352.0, 3.0}}
+                                          StaticText, 0x1129cca00, {{16.0, 183.7}, {226.3, 14.7}}, label: '0 SESSIONS · ROTATES IN ORDER'
+                                          StaticText, 0x1129ccb40, {{16.0, 229.3}, {64.3, 18.0}}, label: 'Sessions'
+                                          Button, 0x1129ccc80, {{260.3, 216.3}, {125.7, 44.0}}, label: '+ ADD SESSION'
+                                          StaticText, 0x1129ccdc0, {{123.0, 294.3}, {144.0, 33.7}}, label: 'No sessions yet'
+                                          StaticText, 0x1129ccf00, {{31.2, 340.0}, {327.7, 34.3}}, label: 'A routine is an ordered list of sessions, like Push, Pull, Legs. Add the first one.'
+                                          Button, 0x1129cd040, {{65.0, 386.3}, {260.0, 44.0}}, label: '+ Add session'
+                                          StaticText, 0x1129cd180, {{0.0, 464.3}, {390.0, 46.0}}, label: 'Used in'
+                                          StaticText, 0x1129cd2c0, {{16.0, 522.3}, {242.0, 17.3}}, label: 'Not linked to any active block.'
+                                          Button, 0x1129cd400, {{16.0, 569.7}, {358.0, 44.0}}, label: 'Archive routine'
+                                          StaticText, 0x1129cd540, {{16.0, 621.7}, {320.0, 34.3}}, label: 'Archived routines leave Program but keep their logged history.'
+                                      Other, 0x1129cd680, {{357.0, 93.0}, {30.0, 688.0}}, label: 'Vertical scroll bar, 1 page', value: 0%
+                                        Other, 0x1129cd7c0, {{384.0, 818.0}, {3.0, 7.0}}
+                                      Other, 0x1129cd900, {{357.0, 93.0}, {30.0, 688.0}}, label: 'Vertical scroll bar, 1 page', value: 0%
+                                        Other, 0x1129cda40, {{384.0, 818.0}, {3.0, 7.0}}
+                            Other, 0x1129cf200, {{0.0, 0.0}, {390.0, 781.0}}
+                              Other, 0x1129cf5c0, {{0.0, 0.0}, {390.0, 781.0}}
+                Other, 0x1129cf700, {{0.0, 698.0}, {390.0, 83.0}}
+                  Other, 0x1129cf840, {{0.0, 0.0}, {390.0, 781.0}}
+                  Other, 0x1129cf980, {{0.0, 698.0}, {390.0, 83.0}}
+              Button, 0x1129cfac0, {{0.0, 783.0}, {97.7, 61.0}}, identifier: 'Today', label: 'Today', Selected
+              Button, 0x1129cfc00, {{97.7, 783.0}, {97.3, 61.0}}, identifier: 'Program', label: 'Program'
+              Button, 0x1129cfd40, {{195.0, 783.0}, {97.7, 61.0}}, identifier: 'Progress', label: 'Progress'
+              Button, 0x1129cfe80, {{292.7, 783.0}, {97.3, 61.0}}, identifier: 'Library', label: 'Library'
+Path to element:
+ →Application, 0x1129cc000, pid: 59100, label: 'fitbod'
+Query chain:
+ →Find: Target Application 'bodybuilding.fitbod'
+  Output: {
+    Application, 0x1129cc140, pid: 59100, label: 'fitbod'
+  }
+)

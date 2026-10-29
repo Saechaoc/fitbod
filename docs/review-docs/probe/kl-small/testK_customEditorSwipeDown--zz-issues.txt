@@ -1,0 +1,2 @@
+[1] K swipe: editor still open=false alerts+dialogs=0
+[2] K reopened: name='e.g. Cambered Bar Bench Press' Chest=true keyboard=0

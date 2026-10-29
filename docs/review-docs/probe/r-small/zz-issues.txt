@@ -1,0 +1,5 @@
+[0] R skip frame=(144.16666666666669, 608.6666666666666, 101.66666666666666, 14.666666666666629)
+[0] R warm-ups shown after tap 14pt above skip centre=true
+[1] R warm-ups shown after tap on skip label=true
+[1] R +NEW frame=(335.0, 56.833333333333336, 39.0, 14.333333333333336)
+[1] R New menu after tap 14pt below + NEW centre=true

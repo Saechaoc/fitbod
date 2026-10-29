@@ -1,0 +1,5 @@
+[0] B keyboard before CTA: 1
+[0] B opened: name='e.g. Cambered Bar Bench Press' Chest=false keyboard=0
+[1] B after typing: name='Probe Zercher Squat' Chest=false keyboard=1
+[1] B after save attempt: name='Probe Zercher Squat' Chest=false keyboard=1
+[1] B after muscle: name='Probe Zercher Squat' Chest=true keyboard=1

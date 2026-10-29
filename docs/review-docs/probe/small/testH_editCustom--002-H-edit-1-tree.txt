@@ -1,0 +1,90 @@
+Optional(Attributes: Application, 0x118d11540, pid: 32270, label: 'fitbod'
+Element subtree:
+ →Application, 0x118d11540, pid: 32270, label: 'fitbod'
+    Window (Main), 0x118d11cc0, {{0.0, 0.0}, {390.0, 844.0}}
+      Other, 0x118d10140, {{0.0, 0.0}, {390.0, 844.0}}
+        Other, 0x118d11a40, {{0.0, 0.0}, {390.0, 844.0}}
+          Other, 0x118d11900, {{-390.0, -844.0}, {1170.0, 2532.0}}
+          Other, 0x118d12080, {{0.0, 0.0}, {390.0, 844.0}}
+            Other, 0x118d12d00, {{0.0, 0.0}, {390.0, 844.0}}
+              Other, 0x118d121c0, {{0.0, 0.0}, {390.0, 781.0}}
+                Other, 0x118d10c80, {{0.0, 0.0}, {390.0, 781.0}}
+                  Other, 0x118d10dc0, {{0.0, 0.0}, {390.0, 781.0}}
+                    Other, 0x118d10f00, {{0.0, 0.0}, {390.0, 781.0}}
+                      Other, 0x118d11040, {{0.0, 0.0}, {390.0, 781.0}}
+                        Other, 0x118d11180, {{0.0, 0.0}, {390.0, 781.0}}
+                          Other, 0x118d112c0, {{0.0, 0.0}, {390.0, 781.0}}
+                            Other, 0x118d11400, {{0.0, 0.0}, {390.0, 781.0}}
+                              Other, 0x118d10640, {{0.0, 0.0}, {390.0, 781.0}}
+                                Other, 0x118d11680, {{0.0, 0.0}, {390.0, 781.0}}
+                                  Other, 0x118d11b80, {{0.0, 0.0}, {390.0, 781.0}}
+                                    Button, 0x118d13e80, {{4.0, 47.0}, {72.7, 44.0}}, label: 'BACK'
+                                    StaticText, 0x118d13d40, {{162.5, 61.7}, {65.0, 14.7}}, label: 'Exercise'
+                                    Button, 0x118d13c00, {{329.3, 47.0}, {56.7, 44.0}}, label: 'Edit'
+                                    ScrollView, 0x118d13ac0, {{0.0, 93.0}, {390.0, 688.0}}
+                                      Other, 0x118d13980, {{0.0, 93.0}, {390.0, 941.7}}
+                                        StaticText, 0x118d13840, {{16.0, 109.0}, {274.7, 48.0}}, label: 'Probe Zercher Squat'
+                                        StaticText, 0x118d12800, {{15.2, 166.2}, {52.8, 22.2}}, label: 'Chest'
+                                        StaticText, 0x118d126c0, {{72.6, 166.2}, {68.2, 22.2}}, label: 'Barbell'
+                                        StaticText, 0x118d11e00, {{145.2, 166.2}, {76.2, 22.2}}, label: 'Compound'
+                                        StaticText, 0x118d117c0, {{225.9, 166.2}, {60.5, 22.2}}, label: 'Custom'
+                                        StaticText, 0x118d81180, {{0.0, 205.7}, {390.0, 46.0}}, label: 'Recent performance'
+                                        StaticText, 0x118d80f00, {{16.0, 267.7}, {312.0, 34.3}}, label: 'Not logged yet. Your best set from each workout will show here.'
+                                        Button, 0x118d80640, {{0.0, 318.0}, {390.0, 52.0}}, label: 'View all history, ›'
+                                          StaticText, 0x118d812c0, {{16.0, 334.7}, {134.7, 18.7}}, label: 'View all history'
+                                          StaticText, 0x118d1b840, {{365.3, 332.5}, {8.7, 23.0}}, label: '›'
+                                        StaticText, 0x118d1a940, {{16.0, 386.0}, {63.3, 18.0}}, label: 'Muscles'
+                                        StaticText, 0x118d1bd40, {{311.3, 387.7}, {62.7, 14.7}}, label: 'Stimulus'
+                                        Other, 0x118d1a6c0, {{16.0, 434.0}, {358.0, 28.7}}, label: 'Chest, primary, 100 percent'
+                                          StaticText, 0x118d18640, {{16.0, 434.0}, {42.0, 18.7}}, label: 'Chest'
+                                          StaticText, 0x118d19400, {{66.0, 437.3}, {45.0, 12.0}}, label: 'PRIMARY'
+                                          StaticText, 0x118d19180, {{340.3, 434.0}, {33.7, 18.7}}, label: '100%'
+                                        StaticText, 0x118d1ae40, {{0.0, 480.7}, {390.0, 46.0}}, label: 'PRESCRIPTION SETTINGS'
+                                        StaticText, 0x118d1a300, {{16.0, 557.3}, {140.7, 14.7}}, label: 'SMALLEST INCREMENT'
+                                        TextField, 0x118d18dc0, {{214.3, 542.7}, {136.0, 44.0}}, label: 'Smallest Increment', placeholderValue: 'e.g. 2.5'
+                                        StaticText, 0x118d1a580, {{358.3, 556.0}, {15.7, 17.3}}, label: 'lb'
+                                        StaticText, 0x118d1a440, {{16.0, 592.7}, {281.0, 34.3}}, label: 'Weight advances by this amount each progression step.'
+                                        StaticText, 0x118d19900, {{16.0, 659.7}, {148.3, 14.7}}, label: 'BAR WEIGHT OVERRIDE'
+                                        TextField, 0x118d1bac0, {{214.3, 645.0}, {136.0, 44.0}}, label: 'Bar Weight Override', placeholderValue: 'Default'
+                                        StaticText, 0x118d19cc0, {{358.3, 658.3}, {15.7, 17.3}}, label: 'lb'
+                                        StaticText, 0x118d19b80, {{16.0, 695.0}, {343.3, 34.3}}, label: 'Use for specialty bars (safety squat, Swiss bar, women's bar).'
+                                        StaticText, 0x118d19a40, {{16.0, 747.3}, {86.0, 14.7}}, label: 'WEIGHT UNIT'
+                                        Button, 0x118d197c0, {{16.0, 770.0}, {121.3, 44.0}}, label: 'WEIGHT UNIT: SYSTEM DEFAULT', Selected
+                                        Button, 0x118d19680, {{143.3, 770.0}, {27.7, 44.0}}, label: 'WEIGHT UNIT: KG'
+                                        Button, 0x118d1bc00, {{177.0, 770.0}, {27.7, 44.0}}, label: 'WEIGHT UNIT: LB'
+                                        StaticText, 0x118d19540, {{16.0, 822.0}, {343.3, 34.3}}, label: 'Overrides the global unit for this exercise only. History stored in canonical unit.'
+                                        StaticText, 0x118d18000, {{16.0, 888.3}, {134.7, 18.0}}, label: 'Plateau Detection'
+                                        StaticText, 0x118d7c000, {{264.7, 890.0}, {109.3, 14.7}}, label: 'Using defaults'
+                                        Switch, 0x118d7c140, {{16.0, 932.3}, {358.0, 44.0}}, label: 'Override global settings', value: 0
+                                        StaticText, 0x118d7c280, {{16.0, 988.3}, {335.7, 34.3}}, label: 'Global defaults: 4 sessions, 2% tolerance. Set in Settings.'
+                                      Other, 0x118d7c3c0, {{357.0, 93.0}, {30.0, 688.0}}, label: 'Vertical scroll bar, 2 pages', value: 0%
+                                        Other, 0x118d7c500, {{384.0, 96.0}, {3.0, 556.3}}
+                                      Other, 0x118d7c640, {{357.0, 93.0}, {30.0, 688.0}}, label: 'Vertical scroll bar, 2 pages', value: 0%
+                                        Other, 0x118d7c780, {{384.0, 96.0}, {3.0, 556.3}}
+                            Other, 0x118d7c8c0, {{0.0, 0.0}, {390.0, 781.0}}
+                              Other, 0x118d7ca00, {{0.0, 0.0}, {390.0, 781.0}}
+                Other, 0x118d7cb40, {{0.0, 698.0}, {390.0, 83.0}}
+                  Other, 0x118d7cc80, {{0.0, 0.0}, {390.0, 781.0}}
+                  Other, 0x118d7cdc0, {{0.0, 698.0}, {390.0, 83.0}}
+              Button, 0x118d7cf00, {{0.0, 783.0}, {97.7, 61.0}}, identifier: 'Today', label: 'Today'
+              Button, 0x118d7d040, {{97.7, 783.0}, {97.3, 61.0}}, identifier: 'Program', label: 'Program'
+              Button, 0x118d7d180, {{195.0, 783.0}, {97.7, 61.0}}, identifier: 'Progress', label: 'Progress'
+              Button, 0x118d7d2c0, {{292.7, 783.0}, {97.3, 61.0}}, identifier: 'Library', label: 'Library', Selected
+      Other, 0x118d7d400, {{0.0, 0.0}, {390.0, 844.0}}
+        Other, 0x118d7d540, {{-390.0, -844.0}, {1170.0, 2532.0}}
+        Other, 0x118d7d680, {{0.0, 47.0}, {390.0, 797.0}}
+          Other, 0x118d7d7c0, {{0.0, 47.0}, {390.0, 797.0}}
+            Other, 0x118d7d900, {{0.0, 47.0}, {390.0, 797.0}}
+              Other, 0x118d7da40, {{0.0, 47.0}, {390.0, 797.0}}
+                Other, 0x118d7db80, {{0.0, 47.0}, {390.0, 797.0}}
+    Window, 0x118d7dcc0, {{0.0, 0.0}, {390.0, 844.0}}
+      Other, 0x118d7de00, {{0.0, 0.0}, {390.0, 844.0}}
+        Other, 0x118d7df40, {{0.0, 0.0}, {390.0, 844.0}}
+Path to element:
+ →Application, 0x118d11540, pid: 32270, label: 'fitbod'
+Query chain:
+ →Find: Target Application 'bodybuilding.fitbod'
+  Output: {
+    Application, 0x118d7e080, pid: 32270, label: 'fitbod'
+  }
+)

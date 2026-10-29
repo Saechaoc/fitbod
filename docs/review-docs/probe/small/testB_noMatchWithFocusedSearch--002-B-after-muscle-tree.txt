@@ -1,0 +1,234 @@
+Optional(Attributes: Application, 0x118a10b40, pid: 28684, label: 'fitbod'
+Element subtree:
+ →Application, 0x118a10b40, pid: 28684, label: 'fitbod'
+    Window (Main), 0x118a12940, {{0.0, 0.0}, {390.0, 844.0}}
+      Other, 0x118a12300, {{0.0, 0.0}, {390.0, 844.0}}
+        Other, 0x118a12440, {{0.0, 0.0}, {390.0, 844.0}}
+          Other, 0x118a12f80, {{-390.0, -844.0}, {1170.0, 2532.0}}
+          Other, 0x118a10f00, {{0.0, 0.0}, {390.0, 844.0}}
+            Other, 0x118a11040, {{0.0, 0.0}, {390.0, 844.0}}
+              Other, 0x118a11180, {{0.0, 0.0}, {390.0, 781.0}}
+                Other, 0x118a112c0, {{0.0, 0.0}, {390.0, 781.0}}
+                  Other, 0x118a11400, {{0.0, 0.0}, {390.0, 781.0}}
+                    Other, 0x118a11680, {{0.0, 0.0}, {390.0, 781.0}}
+                      Other, 0x118a117c0, {{0.0, 0.0}, {390.0, 781.0}}
+                        Other, 0x118a11900, {{0.0, 0.0}, {390.0, 781.0}}
+                          Other, 0x118a11a40, {{0.0, 0.0}, {390.0, 781.0}}
+                            Other, 0x118a11b80, {{0.0, 0.0}, {390.0, 781.0}}
+                              Other, 0x118a11cc0, {{0.0, 0.0}, {390.0, 781.0}}
+                                Other, 0x118a11e00, {{0.0, 0.0}, {390.0, 781.0}}
+                                  Other, 0x118a11f40, {{0.0, 0.0}, {390.0, 781.0}}
+                                    StaticText, 0x118a12080, {{166.5, 61.7}, {57.0, 14.7}}, label: 'Library'
+                                    Button, 0x118a12800, {{321.3, 47.0}, {64.7, 44.0}}, label: '+ New'
+                                    StaticText, 0x118a10c80, {{16.0, 104.2}, {17.0, 33.7}}, label: '⌕'
+                                    TextField, 0x118a12a80, {{0.0, 93.0}, {390.0, 56.0}}, identifier: 'library.search.browser', label: 'Search exercises', placeholderValue: 'Search exercises', value: Zercher
+                                    Button, 0x118a12bc0, {{330.0, 99.0}, {44.0, 44.0}}, label: 'Clear search'
+                                    ScrollView, 0x118a12d00, {{0.0, 149.0}, {390.0, 52.0}}, identifier: 'library.filters'
+                                      Other, 0x118a12e40, {{0.0, 149.0}, {496.3, 52.0}}
+                                        Button, 0x118a10000, {{16.0, 153.0}, {125.7, 44.0}}, identifier: 'library.clearFilters', label: 'CLEAR FILTERS'
+                                        Button, 0x118a10140, {{149.7, 153.0}, {102.3, 44.0}}, identifier: 'library.filter.muscle', label: 'Muscle filter, 1 selected', Selected
+                                        Button, 0x118a10280, {{260.0, 153.0}, {125.7, 44.0}}, identifier: 'library.filter.equipment', label: 'Equipment filter, 1 selected', Selected
+                                        Button, 0x118a103c0, {{393.7, 153.0}, {86.7, 44.0}}, identifier: 'library.filter.mechanic', label: 'Mechanic filter'
+                                    StaticText, 0x118a10500, {{159.0, 249.0}, {72.0, 72.0}}, label: '0'
+                                    StaticText, 0x118a10640, {{55.7, 333.0}, {278.7, 33.7}}, label: 'No exercises match "Zercher"'
+                                    StaticText, 0x118a10780, {{89.7, 378.7}, {210.7, 34.3}}, label: 'Check spelling or create a custom exercise.'
+                                    Button, 0x118a108c0, {{55.0, 433.0}, {280.0, 44.0}}, label: 'CREATE CUSTOM EXERCISE'
+                            Other, 0x118a10a00, {{0.0, 0.0}, {390.0, 781.0}}
+                              Other, 0x118a11540, {{0.0, 0.0}, {390.0, 781.0}}
+                Other, 0x118a10dc0, {{0.0, 698.0}, {390.0, 83.0}}
+                  Other, 0x118a12580, {{0.0, 0.0}, {390.0, 781.0}}
+                  Other, 0x118a126c0, {{0.0, 698.0}, {390.0, 83.0}}
+              Button, 0x118a130c0, {{0.0, 783.0}, {97.7, 61.0}}, identifier: 'Today', label: 'Today'
+              Button, 0x118a13200, {{97.7, 783.0}, {97.3, 61.0}}, identifier: 'Program', label: 'Program'
+              Button, 0x118a13340, {{195.0, 783.0}, {97.7, 61.0}}, identifier: 'Progress', label: 'Progress'
+              Button, 0x118a13480, {{292.7, 783.0}, {97.3, 61.0}}, identifier: 'Library', label: 'Library', Selected
+      Other, 0x118a135c0, {{0.0, 0.0}, {390.0, 844.0}}
+        Other, 0x118a13700, {{-390.0, -844.0}, {1170.0, 2532.0}}
+        Other, 0x118a13840, {{0.0, 47.0}, {390.0, 797.0}}
+          Other, 0x118a13980, {{0.0, 47.0}, {390.0, 797.0}}
+            Other, 0x118a13ac0, {{0.0, 47.0}, {390.0, 797.0}}
+              Other, 0x118a13c00, {{0.0, 47.0}, {390.0, 797.0}}
+                Other, 0x118a13d40, {{0.0, 47.0}, {390.0, 797.0}}
+                  Other, 0x118a13e80, {{0.0, 47.0}, {390.0, 797.0}}
+                    Other, 0x118963e80, {{0.0, 47.0}, {390.0, 797.0}}
+                      Other, 0x106e7b700, {{0.0, 47.0}, {390.0, 797.0}}
+                        Other, 0x116c1e800, {{0.0, 47.0}, {390.0, 797.0}}
+                          Other, 0x116c1e940, {{0.0, 47.0}, {390.0, 797.0}}
+                            CollectionView, 0x1189fc000, {{0.0, 47.0}, {390.0, 797.0}}
+                              Other, 0x1189fc140, {{-16.0, -1493.0}, {422.0, 1701.0}}
+                              Cell, 0x1189fc280, {{16.0, 101.0}, {358.0, 37.3}}
+                                Other, 0x1189fc3c0, {{16.0, 101.0}, {358.0, 37.3}}
+                                Other, 0x1189fc500, {{16.0, 101.0}, {358.0, 37.3}}
+                                  Other, 0x1189fc640, {{16.0, 101.0}, {358.0, 37.3}}
+                                    Other, 0x1189fc780, {{16.0, 101.0}, {358.0, 37.3}}
+                                      StaticText, 0x1189fc8c0, {{16.0, 101.0}, {358.0, 37.3}}, label: 'Name'
+                              Cell, 0x1189fca00, {{16.0, 138.3}, {358.0, 52.0}}
+                                Other, 0x1189fcb40, {{16.0, 138.3}, {358.0, 52.0}}
+                                  Other, 0x1189fcc80, {{16.0, 138.3}, {358.0, 52.0}}
+                                Other, 0x1189fcdc0, {{16.0, 138.3}, {358.0, 52.0}}
+                                  Other, 0x1189fcf00, {{16.0, 138.3}, {358.0, 52.0}}
+                                    Other, 0x1189fd040, {{16.0, 138.3}, {358.0, 52.0}}
+                                      TextField, 0x1189fd180, {{32.0, 155.0}, {326.0, 19.0}}, identifier: 'customExercise.name', placeholderValue: 'e.g. Cambered Bar Bench Press', value: Probe Zercher Squat, Keyboard Focused
+                              Other, 0x1189fd2c0, {{-16.0, 208.0}, {422.0, 257.7}}
+                              Cell, 0x1189fd400, {{16.0, 208.0}, {358.0, 37.3}}
+                                Other, 0x1189fd540, {{16.0, 208.0}, {358.0, 37.3}}
+                                Other, 0x1189fd680, {{16.0, 208.0}, {358.0, 37.3}}
+                                  Other, 0x1189fd7c0, {{16.0, 208.0}, {358.0, 37.3}}
+                                    Other, 0x1189fd900, {{16.0, 208.0}, {358.0, 37.3}}
+                                      StaticText, 0x1189fda40, {{16.0, 208.0}, {358.0, 37.3}}, label: 'Muscles'
+                              Cell, 0x1189fdb80, {{16.0, 245.3}, {358.0, 108.0}}
+                                Other, 0x1189fdcc0, {{16.0, 245.3}, {358.0, 108.0}}
+                                  Other, 0x1189fde00, {{16.0, 245.3}, {358.0, 108.0}}
+                                Other, 0x1189fdf40, {{16.0, 245.3}, {358.0, 108.0}}
+                                  Other, 0x1189fe080, {{16.0, 245.3}, {358.0, 108.0}}
+                                    Other, 0x1189fe1c0, {{16.0, 245.3}, {358.0, 108.0}}
+                                      StaticText, 0x1189fe300, {{32.0, 269.7}, {45.0, 20.3}}, label: 'Chest'
+                                      SegmentedControl, 0x1189fe440, {{135.7, 264.3}, {200.0, 31.0}}
+                                        Button, 0x1189fe580, {{135.7, 264.3}, {100.0, 32.0}}, label: 'Primary', Selected
+                                        Button, 0x1189fe6c0, {{235.7, 264.3}, {100.0, 32.0}}, label: 'Secondary'
+                                      Button, 0x1189fe800, {{344.7, 272.7}, {12.3, 14.3}}, identifier: 'trash', label: 'Remove Chest'
+                                      Slider, 0x1189fe940, {{32.0, 303.3}, {270.0, 31.0}}, label: 'Stimulus weight for Chest', value: 100 percent
+                                      StaticText, 0x1189fea80, {{311.7, 308.7}, {46.3, 20.3}}, label: '100%'
+                              Cell, 0x1189febc0, {{16.0, 353.3}, {358.0, 52.0}}
+                                Other, 0x1189fed00, {{16.0, 353.3}, {358.0, 52.0}}
+                                  Other, 0x1189fee40, {{16.0, 353.3}, {358.0, 52.0}}
+                                Other, 0x1189fef80, {{16.0, 353.3}, {358.0, 52.0}}
+                                  Other, 0x1189ff0c0, {{16.0, 353.3}, {358.0, 52.0}}
+                                    Other, 0x1189ff200, {{16.0, 353.3}, {358.0, 52.0}}
+                                      Button, 0x1189ff340, {{16.0, 353.3}, {358.0, 52.0}}, label: 'Add Another Muscle'
+                                        Image, 0x1189ff480, {{37.3, 372.7}, {13.7, 13.7}}, identifier: 'plus', label: 'Add'
+                                        StaticText, 0x1189ff5c0, {{37.3, 370.7}, {175.3, 17.3}}, label: 'Add Another Muscle'
+                              Other, 0x1189ff700, {{32.0, 352.3}, {326.0, 1.0}}
+                              Cell, 0x1189ff840, {{16.0, 405.3}, {358.0, 60.3}}
+                                Other, 0x1189ff980, {{16.0, 405.3}, {358.0, 60.3}}
+                                Other, 0x1189ffac0, {{16.0, 405.3}, {358.0, 60.3}}
+                                  Other, 0x1189ffc00, {{16.0, 405.3}, {358.0, 60.3}}
+                                    Other, 0x1189ffd40, {{16.0, 405.3}, {358.0, 60.3}}
+                                      StaticText, 0x1189ffe80, {{16.0, 405.3}, {358.0, 60.3}}, label: 'How much this exercise contributes to weekly volume for that muscle. 100% for primary, 50% for assisting muscles.'
+                              Other, 0x1189ac000, {{-16.0, 465.7}, {422.0, 107.0}}
+                              Cell, 0x1189ac140, {{16.0, 465.7}, {358.0, 37.3}}
+                                Other, 0x1189ac280, {{16.0, 465.7}, {358.0, 37.3}}
+                                Other, 0x1189ac3c0, {{16.0, 465.7}, {358.0, 37.3}}
+                                  Other, 0x1189ac500, {{16.0, 465.7}, {358.0, 37.3}}
+                                    Other, 0x1189ac640, {{16.0, 465.7}, {358.0, 37.3}}
+                                      StaticText, 0x1189ac780, {{16.0, 465.7}, {358.0, 37.3}}, label: 'Equipment'
+                              Cell, 0x1189ac8c0, {{16.0, 503.0}, {358.0, 52.0}}
+                                Other, 0x1189aca00, {{16.0, 503.0}, {358.0, 52.0}}
+                                  Other, 0x1189acb40, {{16.0, 503.0}, {358.0, 52.0}}
+                                Other, 0x1189acc80, {{16.0, 503.0}, {358.0, 52.0}}
+                                  Other, 0x1189acdc0, {{16.0, 503.0}, {358.0, 52.0}}
+                                    Other, 0x1189acf00, {{16.0, 503.0}, {358.0, 52.0}}
+                                      StaticText, 0x1189ad040, {{32.0, 520.3}, {70.3, 17.3}}, label: 'Equipment'
+                                      Button, 0x1189ad180, {{32.0, 510.3}, {326.0, 34.3}}, label: 'Equipment, Barbell'
+                                        StaticText, 0x1189ad2c0, {{288.3, 517.3}, {53.0, 20.3}}, label: 'Barbell'
+                              Other, 0x1189ad400, {{-16.0, 572.3}, {422.0, 116.0}}
+                              Cell, 0x1189ad540, {{16.0, 572.3}, {358.0, 37.3}}
+                                Other, 0x1189ad680, {{16.0, 572.3}, {358.0, 37.3}}
+                                Other, 0x1189ad7c0, {{16.0, 572.3}, {358.0, 37.3}}
+                                  Other, 0x1189ad900, {{16.0, 572.3}, {358.0, 37.3}}
+                                    Other, 0x1189ada40, {{16.0, 572.3}, {358.0, 37.3}}
+                                      StaticText, 0x1189adb80, {{16.0, 572.3}, {358.0, 37.3}}, label: 'Mechanic'
+                              Cell, 0x1189adcc0, {{16.0, 609.7}, {358.0, 61.0}}
+                                Other, 0x1189ade00, {{16.0, 609.7}, {358.0, 61.0}}
+                                  Other, 0x1189adf40, {{16.0, 609.7}, {358.0, 61.0}}
+                                Other, 0x1189ae080, {{16.0, 609.7}, {358.0, 61.0}}
+                                  Other, 0x1189ae1c0, {{16.0, 609.7}, {358.0, 61.0}}
+                                    Other, 0x1189ae300, {{16.0, 609.7}, {358.0, 61.0}}
+                                      SegmentedControl, 0x1189ae440, {{32.0, 624.7}, {326.0, 31.0}}
+                                        Button, 0x1189ae580, {{32.0, 624.7}, {163.0, 32.0}}, label: 'Compound', Selected
+                                        Button, 0x1189ae6c0, {{195.0, 624.7}, {163.0, 32.0}}, label: 'Isolation'
+                              Other, 0x1189ae800, {{-16.0, 688.3}, {422.0, 1703.3}}
+                              Cell, 0x1189ae940, {{16.0, 688.3}, {358.0, 37.3}}
+                                Other, 0x1189aea80, {{16.0, 688.3}, {358.0, 37.3}}
+                                Other, 0x1189aebc0, {{16.0, 688.3}, {358.0, 37.3}}
+                                  Other, 0x1189aed00, {{16.0, 688.3}, {358.0, 37.3}}
+                                    Other, 0x1189aee40, {{16.0, 688.3}, {358.0, 37.3}}
+                                      StaticText, 0x1189aef80, {{16.0, 688.3}, {358.0, 37.3}}, label: 'Image (optional)'
+                              Cell, 0x1189af0c0, {{16.0, 725.7}, {358.0, 52.0}}
+                                Other, 0x1189af200, {{16.0, 725.7}, {358.0, 52.0}}
+                                  Other, 0x1189af340, {{16.0, 725.7}, {358.0, 52.0}}
+                                Other, 0x1189af480, {{16.0, 725.7}, {358.0, 52.0}}
+                                  Other, 0x1189af5c0, {{16.0, 725.7}, {358.0, 52.0}}
+                                    Other, 0x1189af700, {{16.0, 725.7}, {358.0, 52.0}}
+                                      Button, 0x1189af840, {{16.0, 725.7}, {358.0, 52.0}}, label: 'Add Photo'
+                                        Image, 0x1189af980, {{34.3, 744.3}, {19.3, 15.0}}, identifier: 'photo', label: 'Photo'
+                                        StaticText, 0x1189afac0, {{34.3, 743.0}, {108.0, 17.3}}, label: 'Add Photo'
+                              Other, 0x1189afc00, {{357.0, 101.0}, {30.0, 695.7}}, label: 'Vertical scroll bar, 1 page', value: 0%
+                                Other, 0x1189afd40, {{384.0, 116.3}, {3.0, 677.3}}
+                              Other, 0x1189afe80, {{357.0, 101.0}, {30.0, 695.7}}, label: 'Vertical scroll bar, 1 page', value: 0%
+                                Other, 0x1189f4000, {{384.0, 116.3}, {3.0, 677.3}}
+                            Button, 0x1189f4140, {{4.0, 47.0}, {72.7, 44.0}}, label: 'Cancel'
+                            StaticText, 0x1189f4280, {{146.3, 61.7}, {97.3, 14.7}}, label: 'New Exercise'
+                            Button, 0x1189f43c0, {{329.3, 47.0}, {56.7, 44.0}}, label: 'Save'
+                    Other, 0x1189f4500, {{0.0, 47.0}, {390.0, 797.0}}
+                      Other, 0x1189f4640, {{0.0, 47.0}, {390.0, 797.0}}
+    Window, 0x1189f4780, {{0.0, 0.0}, {390.0, 844.0}}
+      Other, 0x1189f48c0, {{0.0, 0.0}, {390.0, 844.0}}
+        Other, 0x1189f4a00, {{0.0, 0.0}, {390.0, 844.0}}
+    Window, 0x1189f4b40, {{0.0, 0.0}, {390.0, 844.0}}
+      Other, 0x1189f4c80, {{0.0, 0.0}, {390.0, 844.0}}
+        Other, 0x1189f4dc0, {{0.0, 844.0}, {390.0, 311.0}}
+          Other, 0x1189f4f00, {{0.0, 844.0}, {390.0, 78.0}}, identifier: 'SystemInputAssistantView'
+            Other, 0x1189f5040, {{0.0, 844.0}, {390.0, 78.0}}
+              Other, 0x1189f5180, {{0.0, 844.0}, {390.0, 78.0}}, identifier: 'CenterPageView'
+                Other, 0x1189f52c0, {{0.0, 244.0}, {390.0, 1278.0}}
+                  ScrollView, 0x1189f5400, {{0.0, 844.0}, {390.0, 78.0}}
+                Other, 0x1189f5540, {{0.0, 844.0}, {390.0, 78.0}}
+                  Other, 0x1189f5680, {{0.0, 844.0}, {390.0, 78.0}}, label: 'Typing Predictions'
+                    Other, 0x1189f57c0, {{0.0, 844.0}, {390.0, 78.0}}
+                      Other, 0x1189f5900, {{0.0, 844.0}, {390.0, 78.0}}
+                        Other, 0x1189f5a40, {{0.0, 844.0}, {130.0, 78.0}}, label: '“Squat”'
+                        Other, 0x1189f5b80, {{130.0, 844.0}, {130.0, 78.0}}, label: 'Squats'
+                        Other, 0x1189f5cc0, {{260.0, 844.0}, {130.0, 78.0}}, label: 'Squatting'
+          Other, 0x1189f5e00, {{0.0, 844.0}, {390.0, 311.0}}
+            Other, 0x1189f5f40, {{0.0, 844.0}, {390.0, 311.0}}
+              Other, 0x1189f6080, {{0.0, 844.0}, {390.0, 311.0}}
+          Other, 0x1189f61c0, {{0.0, 922.0}, {390.0, 233.0}}
+            Keyboard, 0x1189f6300, {{0.0, 922.0}, {390.0, 233.0}}
+              Other, 0x1189f6440, {{0.0, 922.0}, {390.0, 233.0}}
+                Other, 0x1189f6580, {{0.0, 922.0}, {390.0, 233.0}}, identifier: 'UIKeyboardLayoutStar Preview'
+                  Key, 0x1189f66c0, {{0.0, 922.0}, {0.0, 0.0}}, label: 'Padding-Left'
+                  Key, 0x1189f6800, {{0.0, 922.0}, {0.0, 0.0}}, label: 'Padding-Right'
+                  Key, 0x1189f6940, {{0.0, 922.0}, {0.0, 0.0}}, label: 'Padding-Left'
+                  Key, 0x1189f6a80, {{0.0, 922.0}, {0.0, 0.0}}, label: 'Padding-Right'
+                  Key, 0x1189f6bc0, {{0.0, 922.0}, {0.0, 0.0}}, label: 'Padding-Left'
+                  Key, 0x1189f6d00, {{0.0, 922.0}, {0.0, 0.0}}, label: 'Padding-Right'
+                  Key, 0x1189f6e40, {{4.7, 929.0}, {38.0, 54.0}}, label: 'q'
+                  Key, 0x1189f6f80, {{42.7, 929.0}, {38.3, 54.0}}, label: 'w'
+                  Key, 0x1189f70c0, {{81.0, 929.0}, {38.3, 54.0}}, label: 'e'
+                  Key, 0x1189f7200, {{119.3, 929.0}, {38.3, 54.0}}, label: 'r'
+                  Key, 0x1189f7340, {{157.7, 929.0}, {38.3, 54.0}}, label: 't'
+                  Key, 0x1189f7480, {{196.0, 929.0}, {38.3, 54.0}}, label: 'y'
+                  Key, 0x1189f75c0, {{234.3, 929.0}, {38.3, 54.0}}, label: 'u'
+                  Key, 0x1189f7700, {{272.7, 929.0}, {38.3, 54.0}}, label: 'i'
+                  Key, 0x1189f7840, {{311.0, 929.0}, {38.3, 54.0}}, label: 'o'
+                  Key, 0x1189f7980, {{349.3, 929.0}, {38.3, 54.0}}, label: 'p'
+                  Key, 0x1189f7ac0, {{23.7, 983.0}, {38.3, 54.0}}, label: 'a'
+                  Key, 0x1189f7c00, {{62.0, 983.0}, {38.3, 54.0}}, label: 's'
+                  Key, 0x1189f7d40, {{100.3, 983.0}, {38.3, 54.0}}, label: 'd'
+                  Key, 0x1189f7e80, {{138.7, 983.0}, {38.3, 54.0}}, label: 'f'
+                  Key, 0x118964000, {{177.0, 983.0}, {38.0, 54.0}}, label: 'g'
+                  Key, 0x118964140, {{215.0, 983.0}, {38.3, 54.0}}, label: 'h'
+                  Key, 0x118964280, {{253.3, 983.0}, {38.3, 54.0}}, label: 'j'
+                  Key, 0x1189643c0, {{291.7, 983.0}, {38.3, 54.0}}, label: 'k'
+                  Key, 0x118964500, {{330.0, 983.0}, {38.3, 54.0}}, label: 'l'
+                  Button, 0x118964640, {{4.7, 1037.0}, {49.7, 54.0}}, identifier: 'shift', label: 'shift'
+                  Key, 0x118964780, {{62.0, 1037.0}, {38.3, 54.0}}, label: 'z'
+                  Key, 0x1189648c0, {{100.3, 1037.0}, {38.3, 54.0}}, label: 'x'
+                  Key, 0x118964a00, {{138.7, 1037.0}, {38.3, 54.0}}, label: 'c'
+                  Key, 0x118964b40, {{177.0, 1037.0}, {38.0, 54.0}}, label: 'v'
+                  Key, 0x118964c80, {{215.0, 1037.0}, {38.3, 54.0}}, label: 'b'
+                  Key, 0x118964dc0, {{253.3, 1037.0}, {38.3, 54.0}}, label: 'n'
+                  Key, 0x118964f00, {{291.7, 1037.0}, {38.3, 54.0}}, label: 'm'
+                  Key, 0x118965040, {{337.7, 1037.0}, {50.0, 54.0}}, identifier: 'delete', label: 'delete'
+                  Key, 0x118965180, {{4.7, 1091.0}, {95.7, 54.0}}, identifier: 'more', label: 'numbers'
+                  Key, 0x1189652c0, {{100.3, 1091.0}, {191.3, 54.0}}, identifier: 'space', label: ' '
+                  Button, 0x118965400, {{291.7, 1091.0}, {96.0, 54.0}}, identifier: 'Return', label: 'return'
+Path to element:
+ →Application, 0x118a10b40, pid: 28684, label: 'fitbod'
+Query chain:
+ →Find: Target Application 'bodybuilding.fitbod'
+  Output: {
+    Application, 0x118965540, pid: 28684, label: 'fitbod'
+  }
+)

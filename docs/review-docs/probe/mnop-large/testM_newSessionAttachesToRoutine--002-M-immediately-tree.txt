@@ -1,0 +1,111 @@
+Optional(Attributes: Application, 0x1130e9e00, pid: 58471, label: 'fitbod'
+Element subtree:
+ →Application, 0x1130e9e00, pid: 58471, label: 'fitbod'
+    Window (Main), 0x1130e8c80, {{0.0, 0.0}, {440.0, 956.0}}
+      Other, 0x1130e8dc0, {{0.0, 0.0}, {440.0, 956.0}}
+        Other, 0x1130e8f00, {{0.0, 0.0}, {440.0, 956.0}}
+          Other, 0x1130e9040, {{-440.0, -956.0}, {1320.0, 2868.0}}
+          Other, 0x1130e9180, {{0.0, 0.0}, {440.0, 956.0}}
+            Other, 0x1130e92c0, {{0.0, 0.0}, {440.0, 956.0}}
+              Other, 0x1130e9400, {{0.0, 0.0}, {440.0, 893.0}}
+                Other, 0x1130e9540, {{0.0, 0.0}, {440.0, 893.0}}
+                  Other, 0x1130e9680, {{0.0, 0.0}, {440.0, 893.0}}
+                    Other, 0x1130e97c0, {{0.0, 0.0}, {440.0, 893.0}}
+                      Other, 0x1130e9900, {{0.0, 0.0}, {440.0, 893.0}}
+                        Other, 0x1130e9a40, {{0.0, 0.0}, {440.0, 893.0}}
+                          Other, 0x1130e9b80, {{0.0, 0.0}, {440.0, 893.0}}
+                            Other, 0x1130ea300, {{0.0, 0.0}, {440.0, 893.0}}
+                              Other, 0x1130e88c0, {{0.0, 0.0}, {440.0, 893.0}}
+                                Other, 0x1130e8a00, {{0.0, 0.0}, {440.0, 893.0}}
+                                  Other, 0x1130e8b40, {{0.0, 0.0}, {440.0, 893.0}}
+                                    Button, 0x1130e8640, {{4.0, 62.0}, {72.7, 44.0}}, label: 'BACK'
+                                    StaticText, 0x1130e8780, {{191.5, 76.7}, {57.0, 14.7}}, label: 'Routine'
+                                    Button, 0x1130e8500, {{379.3, 62.0}, {56.7, 44.0}}, label: 'Edit'
+                                    ScrollView, 0x1130e83c0, {{0.0, 108.0}, {440.0, 785.0}}
+                                      Other, 0x1130e8280, {{0.0, 108.0}, {440.0, 444.0}}
+                                        Other, 0x1130e8140, {{0.0, 124.0}, {440.0, 411.7}}
+                                          StaticText, 0x1130e8000, {{16.0, 124.0}, {93.7, 14.7}}, label: 'ROUTINE NAME'
+                                          TextField, 0x1130e9f40, {{16.0, 144.7}, {408.0, 48.0}}, label: 'Routine name', value: Probe Routine
+                                            Other, 0x1130ea080, {{16.0, 144.7}, {0.0, 0.0}}, identifier: '_UITextSelectionRangeAdjustmentContainerView'
+                                              Other, 0x1130ea1c0, {{16.0, 144.7}, {0.0, 0.0}}, identifier: 'com.apple.text.grabber.leading'
+                                                Other, 0x1130ea440, {{8.8, 131.2}, {16.5, 16.5}}
+                                                Other, 0x1130ea580, {{16.0, 144.7}, {2.0, 0.0}}
+                                              Other, 0x1130ea6c0, {{16.0, 144.7}, {0.0, 0.0}}, identifier: 'com.apple.text.grabber.leading'
+                                                Other, 0x1130ea800, {{8.8, 131.2}, {16.5, 16.5}}
+                                                Other, 0x1130ea940, {{16.0, 144.7}, {2.0, 0.0}}
+                                            Other, 0x1130eaa80, {{16.0, 165.7}, {408.0, 24.0}}, label: 'Horizontal scroll bar, 1 page', value: 0%
+                                              Other, 0x1130eabc0, {{19.0, 186.7}, {402.0, 3.0}}
+                                          StaticText, 0x1130ead00, {{16.0, 198.7}, {218.7, 14.7}}, label: '1 SESSION · ROTATES IN ORDER'
+                                          StaticText, 0x1130eae40, {{16.0, 244.3}, {64.3, 18.0}}, label: 'Sessions'
+                                          Button, 0x1130eaf80, {{310.3, 231.3}, {125.7, 44.0}}, label: '+ ADD SESSION'
+                                          Button, 0x1130eb0c0, {{0.0, 277.3}, {440.0, 64.7}}, label: 'Session 1: Probe Session'
+                                            StaticText, 0x1130eb200, {{16.0, 296.3}, {17.7, 26.7}}, label: '01'
+                                            StaticText, 0x1130eb340, {{60.0, 289.3}, {122.3, 23.0}}, label: 'Probe Session'
+                                            StaticText, 0x1130eb480, {{60.0, 315.3}, {220.7, 14.7}}, label: '1 exercise · 3 sets · ~11 min'
+                                            StaticText, 0x1130eb5c0, {{415.3, 298.2}, {8.7, 23.0}}, label: '›'
+                                          StaticText, 0x1130eb700, {{0.0, 344.0}, {440.0, 46.0}}, label: 'Used in'
+                                          StaticText, 0x1130eb840, {{16.0, 402.0}, {242.0, 17.3}}, label: 'Not linked to any active block.'
+                                          Button, 0x1130eb980, {{16.0, 449.3}, {408.0, 44.0}}, label: 'Archive routine'
+                                          StaticText, 0x1130ebac0, {{16.0, 501.3}, {366.7, 34.3}}, label: 'Archived routines leave Program but keep their logged history.'
+                                      Other, 0x1130ebc00, {{407.0, 108.0}, {30.0, 785.0}}, label: 'Vertical scroll bar, 1 page', value: 0%
+                                        Other, 0x1130ebd40, {{434.0, 380.0}, {3.0, 511.0}}
+                                      Other, 0x1130ebe80, {{407.0, 108.0}, {30.0, 785.0}}, label: 'Vertical scroll bar, 1 page', value: 0%
+                                        Other, 0x102a63340, {{434.0, 380.0}, {3.0, 511.0}}
+                            Other, 0x102a63480, {{0.0, 0.0}, {440.0, 893.0}}
+                              Other, 0x102a63980, {{0.0, 0.0}, {440.0, 893.0}}
+                Other, 0x102a63c00, {{0.0, 810.0}, {440.0, 83.0}}
+                  Other, 0x102a63ac0, {{0.0, 0.0}, {440.0, 893.0}}
+                  Other, 0x102a635c0, {{0.0, 810.0}, {440.0, 83.0}}
+              Button, 0x102a63840, {{0.0, 895.0}, {110.0, 61.0}}, identifier: 'Today', label: 'Today', Selected
+              Button, 0x102a63700, {{110.0, 895.0}, {110.0, 61.0}}, identifier: 'Program', label: 'Program'
+              Button, 0x105bfbac0, {{220.0, 895.0}, {110.0, 61.0}}, identifier: 'Progress', label: 'Progress'
+              Button, 0x105bfbc00, {{330.0, 895.0}, {110.0, 61.0}}, identifier: 'Library', label: 'Library'
+      Other, 0x105bfbd40, {{0.0, 0.0}, {440.0, 956.0}}
+        Other, 0x105bfbe80, {{-440.0, -956.0}, {1320.0, 2868.0}}
+        Other, 0x105bfa300, {{8.0, 956.0}, {424.0, 496.9}}
+          Button, 0x105bfa440, {{183.4, 951.2}, {73.2, 24.1}}, label: 'Sheet Grabber'
+          Other, 0x105bfa580, {{8.0, 956.0}, {424.0, 496.9}}
+            Other, 0x105bfa6c0, {{8.0, 956.0}, {424.0, 496.9}}
+              Other, 0x105bfb340, {{8.0, 956.0}, {424.0, 496.9}}
+                Other, 0x105bfb480, {{8.0, 956.0}, {424.0, 496.9}}
+                  Other, 0x105bf8f00, {{8.0, 956.0}, {424.0, 496.9}}
+                    Other, 0x105bf9180, {{8.0, 956.0}, {424.0, 496.9}}
+                      Other, 0x105bf92c0, {{8.0, 956.0}, {424.0, 496.9}}
+                        Other, 0x105bf9400, {{8.0, 956.0}, {424.0, 496.9}}
+                          Other, 0x105bf9540, {{8.0, 956.0}, {424.0, 496.9}}
+                            Button, 0x105bf9680, {{11.9, 956.0}, {70.0, 42.4}}, label: 'Cancel'
+                            StaticText, 0x105bf97c0, {{177.0, 970.1}, {86.1, 14.1}}, label: 'Add session'
+                            ScrollView, 0x105bf9cc0, {{8.0, 1000.3}, {424.0, 452.6}}
+                              Other, 0x105bf9e00, {{8.0, 1000.3}, {424.0, 163.8}}
+                                Other, 0x105bf9f40, {{8.0, 1000.3}, {424.0, 162.5}}
+                                  Button, 0x105bfa080, {{8.0, 1000.3}, {424.0, 54.0}}, label: '+ New session'
+                                  StaticText, 0x105bf9b80, {{8.0, 1056.2}, {424.0, 44.3}}, label: 'Existing sessions'
+                                  Button, 0x105bf9a40, {{8.0, 1100.5}, {424.0, 62.3}}, label: 'Probe Session, 1 exercise · 3 sets · ~11 min, + Add'
+                                    StaticText, 0x105bf9900, {{23.4, 1112.1}, {117.9, 22.2}}, label: 'Probe Session'
+                                    StaticText, 0x105bfa1c0, {{23.4, 1137.2}, {212.6, 14.1}}, label: '1 exercise · 3 sets · ~11 min'
+                                    StaticText, 0x105bf9040, {{378.7, 1124.6}, {37.9, 14.1}}, label: '+ ADD'
+                              Other, 0x105bfb980, {{400.2, 1000.3}, {28.9, 406.3}}, label: 'Vertical scroll bar, 1 page', value: 0%
+                                Other, 0x105bfaf80, {{426.2, 1367.2}, {2.9, 23.1}}
+                              Other, 0x105bfb200, {{400.2, 1000.3}, {28.9, 406.3}}, label: 'Vertical scroll bar, 1 page', value: 0%
+                                Other, 0x105bfb0c0, {{426.2, 1367.2}, {2.9, 23.1}}
+                    Other, 0x105bf8000, {{8.0, 956.0}, {424.0, 496.9}}
+                      Other, 0x105bf8140, {{8.0, 956.0}, {424.0, 496.9}}
+          Other, 0x105bf8280, {{8.0, 956.0}, {424.0, 496.9}}
+            Other, 0x105bf83c0, {{8.0, 956.0}, {424.0, 496.9}}
+              Other, 0x105bf8500, {{8.0, 956.0}, {424.0, 496.9}}
+                Other, 0x105bf8640, {{8.0, 956.0}, {424.0, 496.9}}
+                  Other, 0x105bf8780, {{8.0, 956.0}, {424.0, 496.9}}
+                    Other, 0x105bf88c0, {{8.0, 956.0}, {424.0, 496.9}}
+                Other, 0x105bf8a00, {{8.0, 956.0}, {424.0, 496.9}}
+                  Other, 0x105bf8b40, {{8.0, 956.0}, {424.0, 496.9}}
+    Window, 0x105bf8c80, {{0.0, 0.0}, {440.0, 956.0}}
+      Other, 0x105bf8dc0, {{0.0, 0.0}, {440.0, 956.0}}
+        Other, 0x105bfa800, {{0.0, 0.0}, {440.0, 956.0}}
+Path to element:
+ →Application, 0x1130e9e00, pid: 58471, label: 'fitbod'
+Query chain:
+ →Find: Target Application 'bodybuilding.fitbod'
+  Output: {
+    Application, 0x105bfa940, pid: 58471, label: 'fitbod'
+  }
+)
