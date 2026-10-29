@@ -1,0 +1,5 @@
+# Third-party agent skills and archived plans are not project knowledge
+.agents/
+.claude/skills/
+.claude/agents/
+.planning/archived-phases/

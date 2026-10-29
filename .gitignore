@@ -8,3 +8,12 @@ build/
 DerivedData/
 *.xcresult
 __pycache__/
+
+# graphify: local cache; rebuild with `graphify update .` (no LLM or API key needed)
+graphify-out/
+
+# GSD: /gsd-graphify build copies graphify-out/ artifacts into .planning/graphs/ on each machine
+.planning/graphs/
+
+# Repowise: its index is machine-local; the project does not configure its MCP server
+.repowise/

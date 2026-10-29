@@ -1,0 +1,4 @@
+# Older commits contain generated tool output; diff it as binary so diffs and logs stay readable.
+graphify-out/** -diff
+.planning/graphs/** -diff
+.repowise/** -diff

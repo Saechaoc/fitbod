@@ -52,7 +52,7 @@ fitbod/                              # Repo root
 │   └── Phase6/                      # Progress + Settings BRU UI smoke tests
 └── .planning/                       # GSD planning artifacts (out-of-tree)
     ├── codebase/                    # This document + STACK / INTEGRATIONS / ARCHITECTURE
-    └── graphs/                      # graphify snapshot — graph.json + GRAPH_REPORT.md
+    └── graphs/                      # Local /gsd-graphify copy of graphify-out/ (gitignored)
 ```
 
 ## Directory Purposes
@@ -279,9 +279,11 @@ fitbod/                              # Repo root
 
 **`fitbod/Resources/Fonts/`** — Five font files committed alongside `LICENSES/`. Registered via `UIAppFonts` in `Info.plist`. Bebas Neue + Geist are limited to the Program empty-state hero per inline comment in `ProgramView.swift`.
 
-**`.planning/graphs/`** — `graphify` snapshot (graph.json + GRAPH_REPORT.md). Generated, not authored. Useful for community/module discovery; not used at runtime.
+**`graphify-out/`** — `graphify` knowledge graph (`graph.json`, `GRAPH_REPORT.md`, cache). Generated, not authored, and ignored by git; rebuild it on each machine with `graphify update .` (no LLM or API key needed). Useful for community/module discovery; not used at runtime. `/gsd-graphify build` copies the graph into `.planning/graphs/` for GSD's planner and researcher; that copy is ignored by git and graphify.
 
-**`build/`, `graphify-out/`, `.gitnexus/`, `.repowise/`, `.claude/`** — Build outputs / tooling caches. Not part of the app target. Excluded via `.gitignore`.
+**`build/`, `.gitnexus/`, `.repowise/`** — Build outputs / tooling caches. Not part of the app target. Excluded via `.gitignore`.
+
+**`.claude/`** — Tracked agent definitions, Swift rules and skills. Not part of the app target.
 
 **Xcode project model:** `fitbod.xcodeproj` uses synchronized file-system groups (`PBXFileSystemSynchronizedRootGroup`, `objectVersion = 77`). New files dropped into existing folders are picked up automatically — no manual `.pbxproj` edits required for typical adds. Adding a brand-new top-level folder under `fitbod/` requires an Xcode project sync (open the project once).
 
