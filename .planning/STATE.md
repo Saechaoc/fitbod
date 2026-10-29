@@ -3,7 +3,7 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-last_updated: "2026-06-11T22:00:00.000Z"
+last_updated: "2026-10-29T14:30:00.000Z"
 progress:
   total_phases: 15
   completed_phases: 15
@@ -14,7 +14,9 @@ progress:
 
 # Project State: Fitbod
 
-**Last updated:** 2026-06-11 (post 07-07 gap closure — nullify delete-rules wired for Session.slot + SessionTemplate.block (Block.legacyTemplates CR-02 carry-over); SchemaV7MigrationTests deterministic (combined V6+V7 test container + stash entry-reset); SchemaV6 count-pin fixed (16==16); SchemaV5 CR-01 fixed (nested Routine/RoutineExercise @Model types restore V5 entity names); Phase 7 exit gate: 5 regressions closed, 1 pre-existing BRU copy-introspection failure unchanged)
+**Last updated:** 2026-10-29 (Milestone 1 finish, phase 0 done: Codex's seven groups committed, baseline 1,023 of 1,026 passed with 2 known app-bug failures and 1 expected failure)
+
+Last activity: 2026-10-29 - Completed quick task 261028-tll: Milestone 1 finish, phase 0 (scheme, GitNexus refresh, seven group commits, baseline run, review record)
 
 ---
 
@@ -318,7 +320,8 @@ None.
 
 | Task | Updated | Status | Evidence |
 | --- | --- | --- | --- |
-| 261003-9k8 — usable workout milestone | 2026-10-05 | Open: four UI failures have prepared fixes; full AX3 journeys, final rerun and commits/push remain. Current sandbox blocks simulator and repository metadata access. | [Continuation summary](./quick/261003-9k8-complete-milestone-1-usable-workout-app/261003-9k8-SUMMARY.md) |
+| 261003-9k8 - usable workout milestone | 2026-10-28 | Superseded by the row below: its seven commit groups are committed (507ae46 to f60df50), and its four prepared fixes were run (two pass, two still fail on app bugs). | [Continuation summary](./quick/261003-9k8-complete-milestone-1-usable-workout-app/261003-9k8-SUMMARY.md) |
+| 261028 - Milestone 1 finish | 2026-10-29 | In progress under the approved plan (phases 0-8). Phase 0 is done: baseline on the committed tip ran 1,026 tests with 1,023 passed, 2 failed (review items 4 and 5) and 1 expected failure. Phase 1A (quick task 261028-uhg) is next. Nothing is pushed yet. | [Phase 0 summary](./quick/261028-tll-milestone-1-finish-phase-0-restore-the-s/261028-tll-SUMMARY.md), [baseline](./quick/261028-tll-milestone-1-finish-phase-0-restore-the-s/261028-tll-BASELINE.md) |
 
 ### Quick Tasks Completed
 
@@ -352,6 +355,7 @@ None.
 | 260610-fast-bar-drop | Close bottom gap under New Block action bar (gsd-fast, complements h3v's top-padding move): buttons still floated ~42pt above screen bottom (34pt home-indicator inset + 8pt bottom padding) — `.padding(.bottom, 8)` → `-14` sinks bar into safe area leaving ~20pt (matches final-design.png screenMargin). Landed on top of h3v's top 24 (parallel session, discovered mid-edit). Paper bg already ignoresSafeArea → no see-through. 1-file fix; build green; suites not rerun (numeric-only change — grep-verified fidelity test only asserts struct name) | 2026-06-10 | bc644d9 | — (fast task, no dir) |
 | 260610-ihl | Add Realization as 5th phase kind in New Block (final-design-2.png shows Peak and Realization as separate rows; code had merged them — `.realization` rendered "Peak"): BlockPhaseKind += `case peak` (order accum·intens·peak·realization·deload, raw "peak", SwiftData-safe). `.peak` inherits the old Peak identity verbatim — "Peak"/SHARPEN OUTPUT copy, bruGreen badge, forest label ink; `.realization` becomes "Realization"/TEST MAXES with new plum palette (badge #7A3C6E, ink #4E2646). defaultMultipliers: .peak (0.8, 0.95), .realization unchanged (0.6, 0.97). Engine cycle now intens→peak→realization→deload. BlockOverviewScreen captions PEAK · −20% VOL / REALIZATION · −40% VOL. template(for: .peak)→powerliftingPeak; stock template arrays bit-identical (presets unchanged). sevenWeekPhases preview fixture → 5 bands matching mockup; stale "covered by .realization" comment deleted. Add Phase sheet gains the Realization row automatically via allCases. Tests: EnumTests 4→5 cases, BlockTemplatesTests +.peak mapping arm, PeriodizationEngineTests cycle map. 171 tests green across all 5 introspection guardrail suites + unit suites (d54c8df + 8f40d4d) | 2026-06-10 | 8f40d4d | [260610-ihl-add-missing-realization-phase-option-to-](./quick/260610-ihl-add-missing-realization-phase-option-to-/) |
 | 260610-jag | iPhone 15+ width support (390pt min): audited 13 screens at 390pt (iPhone 17e sim + arithmetic checks) — all PASS except SetRow, whose main HStack needed ~532pt min and overflowed at ALL widths incl. 440pt Pro Max (pre-existing; UI-SPEC line 376's single-line 5-chip RPE row is geometrically infeasible). User-approved fix: two-line set row — line 1 S/PREV/WEIGHT/REPS + ✎ + completion (340pt min), line 2 RPE chips + type chip indented 40pt under PREV. Before/after ImageRenderer proof at 350pt + 400pt content widths. Zero new test failures (14 pre-existing in unrelated suites, stash-verified). Cosmetic follow-up: SessionExerciseCard "RPE" column header now misaligned. Device floor decision recorded: verify all future UI at 390-393pt, not just Pro Max | 2026-06-10 | 4bf6f19 | [260610-jag-verify-and-fix-screen-width-overflow-for](./quick/260610-jag-verify-and-fix-screen-width-overflow-for/) |
+| 261028-tll | Milestone 1 finish, phase 0: restore the serial UI-test scheme setting, refresh GitNexus, run a baseline build and full suite on the large phone, commit Codex's seven prepared groups, and complete the review record | 2026-10-29 | f60df50 | [261028-tll-milestone-1-finish-phase-0-restore-the-s](./quick/261028-tll-milestone-1-finish-phase-0-restore-the-s/) |
 
 ---
 

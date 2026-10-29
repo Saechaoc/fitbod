@@ -1,0 +1,33 @@
+Changes: 62 files, 461 symbols
+Affected processes: 11
+Risk level: high
+
+Changed symbols:
+  undefined Milestone 1 baseline → CLAUDE.md
+  undefined Conventions → CLAUDE.md
+  undefined SwiftData → CLAUDE.md
+  undefined GitNexus — Code Intelligence → CLAUDE.md
+  undefined Fitbod Session → bru-screens/Fitbod-Session/README.md
+  undefined What is where → bru-screens/Fitbod-Session/README.md
+  undefined Differences from the project → bru-screens/Fitbod-Session/README.md
+  undefined Viewing the canvas → bru-screens/Fitbod-Session/README.md
+  undefined PhoneFrame → bru-screens/Fitbod-Session/app.jsx
+  undefined Phone → bru-screens/Fitbod-Session/app.jsx
+  undefined App → bru-screens/Fitbod-Session/app.jsx
+  undefined SIZE → bru-screens/Fitbod-Session/app.jsx
+  undefined BruPhone → bru-screens/Fitbod-Session/bru-theme.jsx
+  undefined BruTabBar → bru-screens/Fitbod-Session/bru-theme.jsx
+  undefined BruHeader → bru-screens/Fitbod-Session/bru-theme.jsx
+  ... and 446 more
+
+Affected execution flows:
+  • DarkVariant → RestForKind (3 steps) — changed: restForKind, logSet, DarkVariant
+  • IOSKeyboard → Key (3 steps) — changed: row, key, IOSKeyboard
+  • DCFocusOverlay → SetFocus (3 steps) — changed: setFocus, DCFocusOverlay, go
+  • K → SetFocus (3 steps) — changed: setFocus, go, k
+  • OnWheel → Apply (3 steps) — changed: apply, zoomAt, onWheel
+  • OnHostMsg → Apply (3 steps) — changed: apply, zoomAt, onHostMsg
+  • OnGestureChange → Apply (3 steps) — changed: apply, zoomAt, onGestureChange
+  • DcExport → ScrapeCss (3 steps) — changed: dcExport, scrapeCss, walk
+  • DcExport → ToDataURL (3 steps) — changed: dcExport, toDataURL, cloneStyled
+  • Main → Parse_component (3 steps) — changed: parse_component, load_tokens, main

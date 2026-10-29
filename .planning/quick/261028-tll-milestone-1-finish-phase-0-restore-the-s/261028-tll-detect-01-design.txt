@@ -1,0 +1,29 @@
+Changes: 26 files, 122 symbols
+Affected processes: 6
+Risk level: high
+
+Changed symbols:
+  undefined BRUButton → fitbod/Design/BRUButton.swift
+  undefined BRUButtonStyle → fitbod/Design/BRUButton.swift
+  undefined signal → fitbod/Design/BRUButton.swift
+  undefined textColor → fitbod/Design/BRUButton.swift
+  undefined borderColor → fitbod/Design/BRUButton.swift
+  undefined showBorder → fitbod/Design/BRUButton.swift
+  undefined sm → fitbod/Design/BRUButton.swift
+  undefined minHeight → fitbod/Design/BRUButton.swift
+  undefined makeBody → fitbod/Design/BRUButton.swift
+  undefined fillColor → fitbod/Design/BRUButton.swift
+  undefined textColor → fitbod/Design/BRUButton.swift
+  undefined Kind → fitbod/Design/BRUButton.swift
+  undefined Size → fitbod/Design/BRUButton.swift
+  undefined init → fitbod/Design/BRUButton.swift
+  undefined body → fitbod/Design/BRUChip.swift
+  ... and 107 more
+
+Affected execution flows:
+  • RowView → BRUDisplay (3 steps) — changed: BRUDisplay
+  • ArchivedConfigView → BRUChip (3 steps) — changed: BRUChip
+  • E1RMSection → BRUChip (3 steps) — changed: BRUChip
+  • SizeThatFits → Row (3 steps) — changed: arrange
+  • PlaceSubviews → Row (3 steps) — changed: arrange, placeSubviews
+  • ActiveTabContent → BRUSectionHead (3 steps) — changed: BRUSectionHead

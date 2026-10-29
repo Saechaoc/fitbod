@@ -1,0 +1,21 @@
+Changes: 24 files, 266 symbols
+Affected processes: 0
+Risk level: low
+
+Changed symbols:
+  undefined app → fitbodUITests/BodySilhouetteUITests.swift
+  undefined front → fitbodUITests/BodySilhouetteUITests.swift
+  undefined back → fitbodUITests/BodySilhouetteUITests.swift
+  undefined BodySilhouetteUITests → fitbodUITests/BodySilhouetteUITests.swift
+  undefined testHeatmapSectionRendersOnTodayTab → fitbodUITests/BodySilhouetteUITests.swift
+  undefined testFrontAndBackRenderSideBySide → fitbodUITests/BodySilhouetteUITests.swift
+  undefined selectTodayTab → fitbodUITests/DeloadAdvisoryBannerUITests.swift
+  undefined DeloadAdvisoryBannerUITests → fitbodUITests/DeloadAdvisoryBannerUITests.swift
+  undefined app → fitbodUITests/HistoryAndTodayUITests.swift
+  undefined sessions → fitbodUITests/HistoryAndTodayUITests.swift
+  undefined rows → fitbodUITests/HistoryAndTodayUITests.swift
+  undefined bar → fitbodUITests/HistoryAndTodayUITests.swift
+  undefined shot → fitbodUITests/HistoryAndTodayUITests.swift
+  undefined setUpWithError → fitbodUITests/HistoryAndTodayUITests.swift
+  undefined testTodayHistoryAndSettingsReturnToTheSameWorkout → fitbodUITests/HistoryAndTodayUITests.swift
+  ... and 251 more

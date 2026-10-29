@@ -1,0 +1,33 @@
+Changes: 46 files, 223 symbols
+Affected processes: 58
+Risk level: critical
+
+Changed symbols:
+  undefined EnvironmentValues → fitbod/App/WeightUnitEnvironment.swift
+  undefined WeightUnit → fitbod/App/WeightUnitEnvironment.swift
+  undefined weightUnit → fitbod/App/WeightUnitEnvironment.swift
+  undefined effective → fitbod/App/WeightUnitEnvironment.swift
+  undefined buildExportDocument → fitbod/Backup/BackupArchiver.swift
+  undefined BackupArchiver → fitbod/Backup/BackupArchiver.swift
+  undefined body → fitbod/ExerciseLibrary/PRStripFooter.swift
+  undefined PRStripFooter → fitbod/ExerciseLibrary/PRStripFooter.swift
+  undefined lines → fitbod/Export/CSVExporter.swift
+  undefined render → fitbod/Export/CSVExporter.swift
+  undefined CSVExporter → fitbod/Export/CSVExporter.swift
+  undefined ExportService → fitbod/Export/ExportService.swift
+  undefined snapshotDocument → fitbod/Export/ExportService.swift
+  undefined spokenName → fitbod/Models/Enums/PRKind.swift
+  undefined PRKind → fitbod/Models/Enums/PRKind.swift
+  ... and 208 more
+
+Affected execution flows:
+  • RenderJSON → ExportExerciseDTO (5 steps) — changed: snapshotDocument
+  • RenderJSON → ExportMuscleGroupDTO (5 steps) — changed: snapshotDocument
+  • RenderJSON → FetchExercises (4 steps) — changed: snapshotDocument
+  • RenderJSON → FetchMuscleGroups (4 steps) — changed: snapshotDocument
+  • RenderCSV → Estimate (6 steps) — changed: render
+  • RenderCSV → FormatISO (5 steps) — changed: render
+  • RenderCSV → FormatDouble (5 steps) — changed: render
+  • RenderCSV → Data (4 steps) — changed: render
+  • RunRestore → FetchExercises (5 steps) — changed: buildExportDocument
+  • RunRestore → FetchMuscleGroups (5 steps) — changed: buildExportDocument

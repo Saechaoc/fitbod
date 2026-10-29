@@ -1,0 +1,33 @@
+Changes: 20 files, 185 symbols
+Affected processes: 11
+Risk level: high
+
+Changed symbols:
+  undefined now → fitbod/App/DemoWorkoutSeed.swift
+  undefined weekStartsMonday → fitbod/App/DemoWorkoutSeed.swift
+  undefined weekStart → fitbod/App/DemoWorkoutSeed.swift
+  undefined priorStart → fitbod/App/DemoWorkoutSeed.swift
+  undefined seed → fitbod/App/DemoWorkoutSeed.swift
+  undefined isKeyboardVisible → fitbod/App/KeyboardVisibility.swift
+  undefined EnvironmentValues → fitbod/App/KeyboardVisibility.swift
+  undefined seedState → fitbod/App/RootView.swift
+  undefined keyboardVisible → fitbod/App/RootView.swift
+  undefined tabsHidingBar → fitbod/App/RootView.swift
+  undefined log → fitbod/App/RootView.swift
+  undefined body → fitbod/App/RootView.swift
+  undefined tabBar → fitbod/App/RootView.swift
+  undefined showsTabBar → fitbod/App/RootView.swift
+  undefined RootView → fitbod/App/RootView.swift
+  ... and 170 more
+
+Affected execution flows:
+  • RowView → BRUDisplay (3 steps) — changed: deltaView, rowView
+  • RowView → FormatWeight (3 steps) — changed: deltaView, rowView
+  • RowView → AccessibilityLabel (3 steps) — changed: deltaView, rowView
+  • RunIfRequested → SortedPhases (5 steps) — changed: seed
+  • RunIfRequested → Days (5 steps) — changed: seed
+  • RunIfRequested → PreviousMatchingIntentHit (5 steps) — changed: seed
+  • RunIfRequested → Make (4 steps) — changed: seed
+  • RunIfRequested → EquipmentKind (4 steps) — changed: seed
+  • RunIfRequested → MondayAtMidnightForToday (3 steps) — changed: seed
+  • RunIfRequested → Double (3 steps) — changed: seed

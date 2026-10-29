@@ -1,0 +1,27 @@
+Changes: 19 files, 73 symbols
+Affected processes: 4
+Risk level: medium
+
+Changed symbols:
+  undefined showingValidation → fitbod/ExerciseLibrary/CustomExerciseEditor.swift
+  undefined body → fitbod/ExerciseLibrary/CustomExerciseEditor.swift
+  undefined nameSection → fitbod/ExerciseLibrary/CustomExerciseEditor.swift
+  undefined musclesSection → fitbod/ExerciseLibrary/CustomExerciseEditor.swift
+  undefined save → fitbod/ExerciseLibrary/CustomExerciseEditor.swift
+  undefined deleteCustom → fitbod/ExerciseLibrary/CustomExerciseEditor.swift
+  undefined CustomExerciseEditor → fitbod/ExerciseLibrary/CustomExerciseEditor.swift
+  undefined muscleSection → fitbod/ExerciseLibrary/ExerciseDetailView.swift
+  undefined ExerciseDetailView → fitbod/ExerciseLibrary/ExerciseDetailView.swift
+  undefined body → fitbod/ExerciseLibrary/ExerciseFilterBar.swift
+  undefined clearFiltersChip → fitbod/ExerciseLibrary/ExerciseFilterBar.swift
+  undefined ExerciseFilterBar → fitbod/ExerciseLibrary/ExerciseFilterBar.swift
+  undefined searchField → fitbod/ExerciseLibrary/ExerciseLibraryView.swift
+  undefined row → fitbod/ExerciseLibrary/ExerciseLibraryView.swift
+  undefined ExerciseLibraryView → fitbod/ExerciseLibrary/ExerciseLibraryView.swift
+  ... and 58 more
+
+Affected execution flows:
+  • E1RMSection → FormattedDelta (3 steps) — changed: formattedDelta, e1RMRow
+  • E1RMSection → BRUChip (3 steps) — changed: e1RMRow
+  • HeroBand → CompletedWorkingSets (3 steps) — changed: heroBand
+  • DefaultSetRow → Double (4 steps) — changed: defaultSetRow

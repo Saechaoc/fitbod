@@ -1,0 +1,19 @@
+Changes: 2 files, 9 symbols
+Affected processes: 3
+Risk level: medium
+
+Changed symbols:
+  undefined DeloadAdvisor → fitbod/Fatigue/DeloadAdvisor.swift
+  undefined allRecentSessions → fitbod/Fatigue/DeloadAdvisor.swift
+  undefined last3 → fitbod/Fatigue/DeloadAdvisor.swift
+  undefined total → fitbod/Fatigue/DeloadAdvisor.swift
+  undefined signalReport → fitbod/Fatigue/DeloadAdvisor.swift
+  undefined live → fitbodTests/Fatigue/DeloadAdvisorTests.swift
+  undefined sig3NeedsThreeSessions → fitbodTests/Fatigue/DeloadAdvisorTests.swift
+  undefined unfinishedWorkoutIsIgnored → fitbodTests/Fatigue/DeloadAdvisorTests.swift
+  undefined DeloadAdvisorTests → fitbodTests/Fatigue/DeloadAdvisorTests.swift
+
+Affected execution flows:
+  • RefreshAdvisory → Estimate (5 steps) — changed: signalReport
+  • RefreshAdvisory → Array (4 steps) — changed: signalReport
+  • RefreshAdvisory → Double (4 steps) — changed: signalReport
