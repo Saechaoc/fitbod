@@ -1,16 +1,20 @@
 # Worker rules
 
 These rules are part of every ticket in this bundle.
-Read them before you read your ticket.
-If your ticket and these rules disagree, stop and ask the coordinator.
+Read them before your effective brief and base ticket.
+The brief identifies the attempt and mode, and only its explicit rerun/refresh fields override the base ticket and generic commit instructions.
+Protected paths, safety rules and every other applicable constraint remain in force.
+Original work and its retries retain the base ticket's implementation and acceptance requirements.
+If the brief is missing, contradictory or unclear about an override, stop and ask the coordinator rather than guessing.
 
 ## Your job
 
-You implement one ticket.
-Do what the ticket asks, and nothing more.
-The ticket says what must be true when you finish, not how to write the code.
+You implement, verify or refresh one ticket under its effective brief.
+Do only its permitted actions within its effective ownership and scoped acceptance.
+The base ticket is reference where the brief explicitly overrides it.
+For implementation work, the ticket says what must be true when you finish, not how to write the code.
 You choose the code, but it must follow `CLAUDE.md` and these rules.
-When the ticket is unclear, ask the coordinator with Orca `ask` before you guess.
+When the effective brief or an applicable base-ticket instruction is unclear, ask the coordinator with Orca `ask` before you guess.
 The review the tickets cite, with items 1 to 47, is `docs/review-docs/fitbod-m1-review.md`.
 Product decisions are in [decisions.md](decisions.md).
 Engineering calls are in [tradeoffs.md](tradeoffs.md).
@@ -35,14 +39,16 @@ Never run a `/gsd-*` command yourself.
 - Never create, switch or delete a branch or a worktree.
 - Other workers run at the same time, each in its own worktree.
   Your task header lists their tickets and the files they own or hold.
-- Before you edit any file outside your `owns` list, ask the coordinator and wait for a yes, even for a UI test your change broke, a test that pins copy, or `docs/ROADMAP.md`.
-  This narrows the Ownership section of every ticket, because another worker may be editing that file.
-- If the coordinator replies "wait", finish and commit everything else, then ask again; it answers once the file is free.
-  After the yes, run `git rebase main` as Finishing says, so you edit the newest version of the file, and make that edit in one more commit.
+- For original work/retries, before editing outside effective `owns`, ask the coordinator and wait for a yes, even for a UI test your change broke, a test that pins copy, or `docs/ROADMAP.md`.
+  This narrows the original Ownership section because another worker may be editing that file.
+- Read-only T44/T45/T46 verification reruns have effective `owns: []` and write evidence only, with no tracked edits, staging, commits or edit grants.
+  Docs refreshes may edit only their explicitly listed document/image paths and cannot widen scope through a generic ask.
+- If the coordinator replies "wait", finish and commit any other authorized changes, then ask again; it answers only after the file is safely freed.
+  After the yes, follow Finishing's conditional rebase, so you edit the newest version of the file, and commit the authorized edit.
 - If your task header says lane "gate", no other code worker runs beside you.
-  Then follow your ticket's Ownership section without asking.
-- Stage only files you changed.
-- Before your first edit, save the output of `git status --porcelain` to `status-before.txt` in your evidence folder.
+  Follow the effective brief, not overridden base-ticket permissions; the gate exception never allows verification edits or expands refresh scope.
+- Stage only authorized files you changed in commit-capable work.
+- Before starting work, including read-only verification, save `git status --porcelain` to `status-before.txt` in your evidence folder.
 - New Swift files need no project file edit, because the targets use folder-synchronized groups.
 - A path in `owns` that starts with `new:` is a file you create.
   If that file already exists, another effort made it, so add to it, keep its tests, and say so in `notes.md`.
@@ -67,7 +73,7 @@ These paths are protected for every ticket:
   These are read-only design references.
 - `fitbod.xcodeproj/project.pbxproj` and `.gitignore`.
 - Everything under `docs/conway-specs/` except your own evidence folder, which git ignores.
-- `.lavish/`, except in T48.
+- `.lavish/`, except paths authorized by T48's effective brief.
 
 Xcode sometimes drops `parallelizable = "NO"` from `fitbod.xcodeproj/xcshareddata/xcschemes/fitbod.xcscheme`.
 If `git status` shows that scheme changed and your ticket did not ask for it, restore it from `HEAD` before you commit.
@@ -176,7 +182,8 @@ When you change `BlockBuilderView.swift`, `BlockDraft.swift`, `BlockPhaseEditorR
 - Match the surrounding code's naming, comment density and idiom.
 - Line numbers in tickets come from the Oct 5 snapshot and may have moved.
   Find code by its text or symbol name.
-- You may add DEBUG-only seed or launch helpers next to `fitbod/App/DemoWorkoutSeed.swift` when a UI test would otherwise need many slow setup steps.
+- For original work/retries only, you may add DEBUG-only seed or launch helpers next to `fitbod/App/DemoWorkoutSeed.swift` when a UI test would otherwise need many slow setup steps.
+  This allowance never applies to read-only verification or docs refreshes.
 
 ## Removed controls
 
@@ -189,7 +196,9 @@ If `docs/ROADMAP.md` is not in your `owns` list, ask the coordinator before you 
 
 - If you find a bug outside your ticket, do not fix it.
   Write it in `notes.md` and in your `worker_done` summary, and the coordinator turns it into a new ticket.
-- Fix a failing or flaky test outside your ticket only when it blocks your acceptance, and say so.
+- For original work/retries, fix a failing or flaky test outside your ticket only when it blocks acceptance and Workspace's ownership permission allows it, and say so.
+  Read-only verification and docs refreshes never fix app/test code, even when a failure or flaky test blocks acceptance.
+  Record those findings for separate fix tickets, without adding reveal steps or reauthoring persistence assertions during a rerun.
 
 ## GitNexus
 
@@ -213,8 +222,11 @@ Your task header gives the GitNexus mode.
 
 ## Commits
 
-- Make one commit per ticket, unless your ticket says otherwise.
+- Make one commit for authorized changes in a commit-capable attempt, unless its effective brief says otherwise.
   If a run fails only after your rebase in Finishing, or the coordinator made you wait for a file, add one more commit that names the ticket.
+- Original no-file tickets, read-only verification reruns and "not reproduced" results make no tracked edits or commits and skip staging, committing and commit-rebase steps.
+  If commit-capable work needs no authorized changes, report why and do not manufacture an empty commit.
+  T47 docs refreshes and T48 review-page-only refreshes may commit their explicitly authorized changes.
 - Stage exact paths with `git add -- <path> ...`.
   Never use `git add -A`, `git add .` or `git commit -a`.
 - Check `git diff --cached --stat` before you commit: it lists only your files.
@@ -225,25 +237,33 @@ Your task header gives the GitNexus mode.
   The user's `CLAUDE.md` forbids it, and that rule wins.
 - Never push, merge, amend, reset, stash, force, cherry-pick or rewrite history.
   The only rebase you run is `git rebase main` in Finishing.
-- The commit must build, and its tests must pass.
+- A code-changing commit must build and its required tests must pass under the ticket's acceptance.
+  A docs-only refresh instead meets its scoped documentation acceptance.
 - Use "-" instead of em dashes in commit messages, docs and UI copy you write.
 
 ## Evidence
 
-Write everything to `docs/conway-specs/evidence/<ticket id>/` in your worktree.
+Write evidence to the unique `docs/conway-specs/evidence/<attempt id>/` output folder named in your effective brief.
+Keep input evidence and prior attempts intact.
 Git ignores it, and the coordinator copies it to the main checkout before it removes your worktree:
 
 | File | Holds |
 |---|---|
-| `status-before.txt` | `git status --porcelain` before your first edit |
+| `status-before.txt` | `git status --porcelain` before starting work, even for read-only verification |
+| `status-after.txt` | the same status check before finishing, compared with `status-before.txt` |
 | `repro-fail.txt` | the failing repro summary |
-| `after-pass.txt` | the passing summaries of every required run, with bundle paths |
+| `after-pass.txt` | every required run's summary and counts, including failures, with bundle paths |
 | `screens/` | named screenshots that prove the fix |
 | `impact.txt` | one line per symbol you edited |
 | `detect-changes.txt` | `git diff --cached --stat` and the symbols you changed |
-| `notes.md` | what you changed and why, your decisions, out-of-scope findings, your branch and the commit hash |
+| `notes.md` | attempt/mode, tested commit, evidence inputs/output, decisions and findings, plus branch/delivery commit only when one exists |
 
-A ticket that changes no code, such as T44, skips `repro-fail.txt`, `impact.txt` and `detect-changes.txt`, and its ticket says which files it writes instead.
+No-commit results, including evidence-only verification reruns, skip `repro-fail.txt`, `impact.txt` and `detect-changes.txt`, and the effective brief names their required reports instead.
+Docs-only work skips repro and symbol-impact evidence, but keeps the staged scope check when committing authorized changes.
+T44 reruns retain the full report contract; T45 reruns record the existing AX3/dark runs and default-light relaunch checks on both phones without editing tests.
+T46 reruns record captures, findings and screenshot notes for exactly the requested pairs, including P1 findings and attempted-state evidence for unreachable screens.
+They do not inherit original T46's 264-image or test-authoring requirements, which still apply to its first run and implementation retries.
+Complete evidence reports failures truthfully and never implies every check passed.
 
 When a ticket names another ticket's evidence, such as `evidence/T31/export-diff.md`, read it next to your own folder; the coordinator copies it into your worktree before you start.
 T47 and T48 also get a copy of the coordinator's run log there, as `run-log.md`.
@@ -251,17 +271,20 @@ If anything is missing, ask the coordinator.
 
 ## Finishing
 
-1. Commit your change on your branch.
-2. Run `git rebase main`, so your commit sits on the newest `main`.
+1. For commit-capable work with authorized changes, commit them on your branch.
+   No-commit results and attempts with no authorized changes skip steps 1 to 3, never invent a commit, and report the tested commit instead.
+2. Only when you have authorized commits, run `git rebase main`, so they sit on the newest `main`.
    If it stops on a conflict, run `git rebase --abort` and ask the coordinator.
-3. If the rebase moved your commit, do required runs 3 to 5 again on the rebased commit, and update `after-pass.txt`.
+3. If the rebase moved a code-changing commit, do required runs 3 to 5 again on it and update `after-pass.txt`.
+   For docs-only refreshes, recheck the scoped documentation acceptance against the rebased commit and its cited evidence.
 4. Set both phones back to default text and light mode.
-5. Compare `git status --porcelain` with `status-before.txt`.
-   You leave nothing uncommitted behind.
+5. Save `git status --porcelain` as `status-after.txt` and compare it with `status-before.txt`.
+   Leave no new tracked or staged changes behind, including in read-only verification.
 6. Send exactly one Orca `worker_done` with outcome `succeeded` or `failed`.
+   For verification reruns, `succeeded` means the required evidence is complete, even with recorded failed checks; use `failed` when that evidence could not be completed.
    Its summary has three sentences.
-   The first says what changed and gives your branch and the commit hash.
-   The second says what evidence proves it.
+   The first names the attempt and what changed or was verified, giving the branch/delivery commit for committed work or the tested commit for a no-commit result.
+   The second gives the unique evidence folder and what it proves, without calling failed checks passing.
    The third says what is left, including HIGH or CRITICAL ratings and out-of-scope findings.
 7. Follow the Orca dispatch preamble for heartbeats, `ask` and `worker_done`.
 

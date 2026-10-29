@@ -1,7 +1,7 @@
 # Run log
 
 The coordinator keeps this file current in the main checkout.
-Workers never read or edit it; their task header carries what they need from it.
+Workers never read or edit this live copy; their effective brief and any supplied evidence copy carry what they need.
 
 ## Approvals
 
@@ -41,7 +41,24 @@ The DerivedData folders live in `~/Library/Developer/Xcode/DerivedData/`.
 ## Ledger
 
 Status is one of: todo, dispatched, done, failed, skipped.
-Done means merged into `main`.
+Done means accepted and safely settled: merged delivery commits, accepted evidence-only results with a tested commit, or fully evidenced replacement completion.
+A reported outcome is separate from settlement state and never by itself frees resources or satisfies dependencies.
+
+Keep per-attempt history in Notes, including the unique attempt id, mode/effective brief, effective ownership and acceptance, task/dispatch ids, lane and worktree/branch.
+Record input and output evidence folders, the base and actual tested commit, and any delivery commit on `main`.
+The Commit column holds delivery commits or replacement commit references, not an invented commit for an evidence-only result.
+Notes record reported outcome, acceptance/rejection, settlement `pending` or `settled`, release/recovery receipts, positive execution-stop proof and safe cleanup authority.
+While pending, retain the attempt's lane, normalized owned/held reservations and pending-wait records even if its reported outcome is failed or it is fenced.
+Snapshot the deduplicated owned-plus-held paths before clearing bookkeeping, and mark the attempt settled/non-live before release or waiter handoff.
+Retain previous attempt/task/dispatch identities, evidence and any useful unmerged-work retention decision.
+
+For a split, Notes map the failed parent to every replacement id and map each original acceptance requirement to its replacement commits/evidence.
+Children inherit the original phase and prerequisites, never a dependency on the failed parent, and are registered through dispatch.md's new-ticket/index process.
+Keep the parent failed and blocking dependents and phase completion until every child is accepted and safely settled and their combined evidence covers the entire original acceptance.
+Record that coverage check and accepted delivery/tested commit references, then explicitly mark the parent done without adding dependencies on higher-numbered replacements.
+
+For T46 reruns, record each requested screen/phone/text-size/appearance pair, tested commit, evidence path and pass/finding/unreachable state.
+Keep the accepted full-tour evidence, including implementation retries, and prior reruns so T47 can select the newest applicable capture per pair, not mistake a partial rerun for a complete replacement tour.
 
 | Ticket | Phase | Status | Lane | Branch | Task id | Dispatch id | Commit | Notes |
 |---|---|---|---|---|---|---|---|---|
@@ -112,9 +129,14 @@ Workers list new helpers in their notes, and the coordinator copies them here fo
 
 ## Held files
 
-Files outside a live ticket's `owns` list that its worker may edit, as [dispatch.md](dispatch.md) says.
-Each line names the ticket and the file; strike the line when you settle the ticket.
-A worker told to wait gets its own line with the message id of its pending ask, so the coordinator can answer it when the file is freed.
+Granted files outside a live attempt's effective `owns` list, plus pending file asks, as [dispatch.md](dispatch.md) says.
+Each grant or wait names the normalized path, ticket, unique requester attempt, dispatch id and ask message id; waits also record their order.
+Owned paths remain reservations too, even when there are no grants here.
+On safe settlement, first mark the old attempt non-live, then release the normalized union of its effective owned and granted held paths and retire only its own pending asks.
+Strike those lines with the settlement reference rather than erasing their history.
+For each freed path, recheck all remaining live reservations and grant only the oldest eligible pending ask from the same still-live requester attempt, recording its new hold before replying.
+Never grant to ended, superseded or fenced attempts, and preserve uncertain/fenced wait records without replies or cancellation until recovery resolves their safety state.
+Later eligible asks keep waiting, and no path is handed off while any live attempt still reserves it.
 
 - None yet.
 

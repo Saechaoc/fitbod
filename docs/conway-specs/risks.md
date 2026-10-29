@@ -12,8 +12,11 @@ Each entry is a way this run can fail, and what limits the damage.
 ## Two tickets fight over one file
 
 - Failure: hot files such as `ProgramView.swift`, `BlockBuilderView.swift` and `SessionExerciseCard.swift` change under a worker.
-- Mitigation: a ticket never starts while a live ticket owns or holds one of its files, and each worker edits only its own worktree.
-  A worker asks before it edits any file outside its `owns` list, and the coordinator then holds that file for it until it settles the ticket, whether it merged or not.
+- Mitigation: a ticket never starts while any live attempt owns or holds one of its effective brief's files, and each worker edits only its own worktree.
+  Ownership and grants follow the effective brief, including read-only and refresh restrictions.
+  Safe settlement marks the old attempt non-live before releasing the normalized union of owned paths with `new:` stripped and granted held files, whether it merged or failed.
+  The coordinator rechecks remaining reservations and hands each free path only to the oldest eligible live requester attempt, never an ended, superseded or fenced one.
+  Uncertain attempts retain their reservations and wait records until recovery resolves their safety state.
   `capacity_model.py` prints the files that three or more tickets own, so the coordinator knows where tickets will wait for each other and where regressions are likely.
   The coordinator merges only as a fast-forward, after a rebase and a build when `main` moved.
 
@@ -33,14 +36,19 @@ Each entry is a way this run can fail, and what limits the damage.
 ## Ticket worktrees pile up
 
 - Failure: worktrees, branches and booted phones from finished tickets fill the disk, and later checks confuse them with live work.
-- Mitigation: the coordinator settles every ticket that ends, merged or not, and removes its worktree and branch then.
-  It first copies the ticket's evidence to the main checkout, so nothing is lost with a worktree.
-  Phase 8 checks that no ticket worktree or branch is left, and shuts down the lane phones.
+- Mitigation: dispatch.md's settlement guard requires positive execution-stop proof and safe cleanup authority before removal or resource reuse, for every ending.
+  Accepted valid `worker_done` plus confirmed normal release is the ordinary path; abandonment, idle/timeout and a successful command exit alone are not stop proof.
+  `release_pending`, `release_unknown` or other uncertainty preserves the worktree, branch, lane, reservations and waits until receipt-directed recovery resolves it.
+  Archive evidence before authorized removal and retain useful unmerged work with its disposition recorded.
+  Phase 8 cleanup, retries and deadlock handling cannot bypass this guard.
 
 ## The final code is not what was verified
 
 - Failure: T48 changes the component gallery, and a late finding can change code, after T44 and T45 verified the build, so the push carries code nobody ran in full.
-- Mitigation: Phase 8 compares the code with the commit the latest T44 tested, reruns T44, and T45 when a journey screen changed, and refreshes the docs that cite those runs before the push.
+- Mitigation: Phase 8 compares final code with the actual tested commit, dispatches explicit read-only T44/T45 verification briefs as needed, and scopes affected T46 reruns to exact screen/configuration pairs.
+  Findings become separate fix tickets, never edits or fake commits inside verification.
+  T47 refreshes only its explicit docs/cited-image scope, then T48 refreshes only the local unpublished review page, without inheriting gallery/test work.
+  The ledger preserves per-attempt and per-pair evidence, and complete reports are not claims that failed checks passed.
 
 ## GitNexus rates an edit CRITICAL
 
@@ -148,7 +156,9 @@ Each entry is a way this run can fail, and what limits the damage.
 
 - Failure: an L ticket on a hot file runs out of context before it commits.
 - Mitigation: tickets are scoped to one concern each.
-  If a worker fails twice, the coordinator splits the ticket.
+  After two failures and safe settlement, the coordinator registers replacements with the original phase and prerequisites, never a dependency on the failed parent.
+  The parent stays failed and blocking until every replacement is accepted and safely settled and their combined evidence covers all original acceptance.
+  Record the mapping, coverage and accepted commits/evidence in the ledger, then explicitly mark the parent done without backwards numeric dependencies.
 
 ## Simulator results do not match a real phone
 
