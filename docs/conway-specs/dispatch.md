@@ -120,6 +120,9 @@ The task header, with the brackets filled in:
   Ask the user only about a product decision that neither file covers, and record the answer in both the run log and the right leaf.
 - When a worker asks to edit a file outside its `owns` list, say yes only if no live ticket owns or holds that file.
   Once you say yes, the file is held by that ticket; list it in the run log under "Held files".
+- If another live ticket owns or holds the file, reply "wait", and answer the worker's next ask with yes only after that ticket merges.
+  If two workers would end up waiting on each other, tell the later one to stop with outcome `failed`, and retry it after the other merges.
+- Exclusive and Phase 7 tickets run with no other code worker, so their workers follow their ticket's Ownership section without asking.
 - After three empty waits in a row, run `orca orchestration worker-list --run <run id> --include-remote --json` to see whether the workers are alive.
 - If a worker is stuck or gone, load `orca skills get orchestration --reference references/recovery-and-cleanup.md` before you act.
 
@@ -129,6 +132,7 @@ Check all of this in the ticket worktree before you accept:
 
 1. `git -C <worktree> log --format=%H%n%B main..HEAD` shows the ticket's commits, which name the ticket and have no `Co-Authored-By` line.
 2. `git -C <worktree> diff --stat main...HEAD` lists only files from the ticket's `owns` list, the files it holds, and new DEBUG seed files next to `fitbod/App/DemoWorkoutSeed.swift`.
+   For an exclusive or Phase 7 ticket, it may also list any file its Ownership section allows.
    It lists nothing under `fitbod/Models/` or `fitbod/Persistence/` unless the ticket says so.
 3. `git -C <worktree> status --porcelain` matches the worker's `status-before.txt`.
 4. The evidence folder in the worktree has every file [worker-rules.md](worker-rules.md) lists.

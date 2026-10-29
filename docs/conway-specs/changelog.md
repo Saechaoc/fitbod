@@ -13,6 +13,11 @@ Newest first.
 - What: a rejected ticket whose worker reported `succeeded` is retried as a new task.
 - Why: Orca accepts `--retry-of` only for a failed or stopped attempt.
 - What: dropped the phase-window report from `capacity_model.py`, which no doc used.
+- What: when a requested file is owned or held, the coordinator replies "wait"; the worker commits everything else, asks again, and edits the file in one more commit after its rebase.
+  Two workers never wait on each other: the later one stops and is retried.
+- Why: the playbook said when to grant a file but not what happens otherwise, and T04 and T09 can both need `WorkoutLoggerJourneyUITests` at the same time.
+- What: exclusive and Phase 7 tickets follow their own Ownership section without asking, and accept check 2 allows those files.
+- Why: they run alone, and T42, T43 and T47 get files by kind, such as "any app or test file that has a warning", which they would otherwise have to ask for one by one.
 
 ## 2026-10-29: parallel lanes in worktrees
 

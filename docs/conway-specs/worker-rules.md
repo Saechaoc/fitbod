@@ -37,6 +37,10 @@ Never run a `/gsd-*` command yourself.
   Your task header lists their tickets and the files they own or hold.
 - Before you edit any file outside your `owns` list, ask the coordinator and wait for a yes, even for a UI test your change broke, a test that pins copy, or `docs/ROADMAP.md`.
   This narrows the Ownership section of every ticket, because another worker may be editing that file.
+- If the coordinator replies "wait", finish and commit everything else, then ask again; it answers once the file is free.
+  After the yes, run `git rebase main` as Finishing says, so you edit the newest version of the file, and make that edit in one more commit.
+- If your task header says lane "gate", or your ticket is in Phase 7, no other code worker runs beside you.
+  Then follow your ticket's Ownership section without asking.
 - Stage only files you changed.
 - Before your first edit, save the output of `git status --porcelain` to `status-before.txt` in your evidence folder.
 - New Swift files need no project file edit, because the targets use folder-synchronized groups.
@@ -210,7 +214,7 @@ Your task header gives the GitNexus mode.
 ## Commits
 
 - Make one commit per ticket, unless your ticket says otherwise.
-  If a run fails only after your rebase in Finishing, fix it in one more commit that names the ticket.
+  If a run fails only after your rebase in Finishing, or the coordinator made you wait for a file, add one more commit that names the ticket.
 - Stage exact paths with `git add -- <path> ...`.
   Never use `git add -A`, `git add .` or `git commit -a`.
 - Check `git diff --cached --stat` before you commit: it lists only your files.
