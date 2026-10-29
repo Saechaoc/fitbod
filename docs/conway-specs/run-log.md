@@ -114,6 +114,7 @@ Workers list new helpers in their notes, and the coordinator copies them here fo
 
 Files outside a live ticket's `owns` list that its worker may edit, as [dispatch.md](dispatch.md) says.
 Each line names the ticket and the file; strike the line when the ticket merges.
+A worker told to wait gets its own line with the message id of its pending ask, so the coordinator can answer it after that merge.
 
 - None yet.
 

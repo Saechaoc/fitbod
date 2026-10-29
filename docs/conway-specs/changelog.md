@@ -18,6 +18,10 @@ Newest first.
 - Why: the playbook said when to grant a file but not what happens otherwise, and T04 and T09 can both need `WorkoutLoggerJourneyUITests` at the same time.
 - What: exclusive and Phase 7 tickets follow their own Ownership section without asking, and accept check 2 allows those files.
 - Why: they run alone, and T42, T43 and T47 get files by kind, such as "any app or test file that has a warning", which they would otherwise have to ask for one by one.
+- What: the coordinator acknowledges a waiting worker's second ask at once, notes its message id under "Held files", and replies yes to the oldest waiting ask when the file is freed.
+- Why: Orca replays the oldest unacknowledged batch and hides newer mail, so holding the ask unacknowledged would hide the holder's `worker_done` and stall the run.
+- What: T47 and T48 are exclusive tickets now, and the exemption from asking covers exclusive tickets only.
+- Why: a findings ticket made during T47 lands in Phase 7 and could run beside T47 or T48, so "Phase 7 runs alone" was not always true.
 
 ## 2026-10-29: parallel lanes in worktrees
 

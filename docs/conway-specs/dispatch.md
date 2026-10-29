@@ -17,7 +17,7 @@ Every ticket gets a new worktree, so also read `orca skills get orchestration --
 - Live ticket: a ticket that is dispatched and not yet merged, skipped or abandoned.
 - Held file: a file outside a live ticket's `owns` list that you let its worker edit.
   It stays held until that ticket merges, and no other ticket may edit it meanwhile.
-- Exclusive ticket: T42, T43, T44, T45, T46, and the reruns of T44 and T45.
+- Exclusive ticket: T42 to T48, and the reruns of T44 and T45.
   Each one touches many files or runs the full suite, so it runs with no other code worker, on the gate phones.
 
 ## Preconditions
@@ -120,9 +120,11 @@ The task header, with the brackets filled in:
   Ask the user only about a product decision that neither file covers, and record the answer in both the run log and the right leaf.
 - When a worker asks to edit a file outside its `owns` list, say yes only if no live ticket owns or holds that file.
   Once you say yes, the file is held by that ticket; list it in the run log under "Held files".
-- If another live ticket owns or holds the file, reply "wait", and answer the worker's next ask with yes only after that ticket merges.
+- If another live ticket owns or holds the file, reply "wait".
+  When the worker asks again, acknowledge that delivery without replying, and note the ask's message id under "Held files" in the run log.
+  Orca keeps the ask pending, and Merge step 6 says when to answer it.
   If two workers would end up waiting on each other, tell the later one to stop with outcome `failed`, and retry it after the other merges.
-- Exclusive and Phase 7 tickets run with no other code worker, so their workers follow their ticket's Ownership section without asking.
+- Exclusive tickets run with no other code worker, so their workers follow their ticket's Ownership section without asking.
 - After three empty waits in a row, run `orca orchestration worker-list --run <run id> --include-remote --json` to see whether the workers are alive.
 - If a worker is stuck or gone, load `orca skills get orchestration --reference references/recovery-and-cleanup.md` before you act.
 
@@ -132,7 +134,7 @@ Check all of this in the ticket worktree before you accept:
 
 1. `git -C <worktree> log --format=%H%n%B main..HEAD` shows the ticket's commits, which name the ticket and have no `Co-Authored-By` line.
 2. `git -C <worktree> diff --stat main...HEAD` lists only files from the ticket's `owns` list, the files it holds, and new DEBUG seed files next to `fitbod/App/DemoWorkoutSeed.swift`.
-   For an exclusive or Phase 7 ticket, it may also list any file its Ownership section allows.
+   For an exclusive ticket, it may also list any file its Ownership section allows.
    It lists nothing under `fitbod/Models/` or `fitbod/Persistence/` unless the ticket says so.
 3. `git -C <worktree> status --porcelain` matches the worker's `status-before.txt`.
 4. The evidence folder in the worktree has every file [worker-rules.md](worker-rules.md) lists.
@@ -156,6 +158,8 @@ Otherwise, merge.
 5. Remove the worktree with `orca worktree rm --worktree path:<worktree> --json`, then delete its branch with `git branch -d <branch>` if it still exists.
    If either one refuses, read `git -C <worktree> status` before you force anything, and ask the user when in doubt.
 6. Acknowledge the message with `orca orchestration check --ack <delivery id>`, mark the ticket `done` with its commit on `main`, and free the lane and the ticket's held files.
+   Then, for each freed file, answer the oldest pending ask that waits for it with `orca orchestration reply --id <message id> --body yes --json`, and move the file to that worker's ticket under "Held files".
+   Later asks for the same file keep waiting.
 7. Copy into the run log any HIGH or CRITICAL rating, removed control, new shared helper and out-of-scope finding the worker reports.
 8. Start the next tickets before you wait again.
 

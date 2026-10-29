@@ -39,7 +39,7 @@ Never run a `/gsd-*` command yourself.
   This narrows the Ownership section of every ticket, because another worker may be editing that file.
 - If the coordinator replies "wait", finish and commit everything else, then ask again; it answers once the file is free.
   After the yes, run `git rebase main` as Finishing says, so you edit the newest version of the file, and make that edit in one more commit.
-- If your task header says lane "gate", or your ticket is in Phase 7, no other code worker runs beside you.
+- If your task header says lane "gate", no other code worker runs beside you.
   Then follow your ticket's Ownership section without asking.
 - Stage only files you changed.
 - Before your first edit, save the output of `git status --porcelain` to `status-before.txt` in your evidence folder.

@@ -25,7 +25,7 @@ LANES = 3  # code workers at once, each ticket in its own worktree (dispatch.md)
 LANE_OPTIONS = (1, 2, 3, 4)  # lane counts the estimate compares
 SLOWDOWN = {1: 1.0, 2: 1.1, 3: 1.2, 4: 1.35}  # guess: workers share the Mac's cores, so each runs slower
 MERGE_MIN = 8  # coordinator rebase, build and fast-forward when main moved; parallel runs only
-EXCLUSIVE = {"T42", "T43", "T44", "T45", "T46"}  # run with no other code worker (dispatch.md)
+EXCLUSIVE = {"T42", "T43", "T44", "T45", "T46", "T47", "T48"}  # run with no other code worker (dispatch.md)
 REVIEW_ITEMS = [str(n) for n in range(1, 48)] + ["N1"]
 HOTSPOT_MIN_OWNERS = 3
 
