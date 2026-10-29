@@ -22,11 +22,15 @@ on:
       - "docs/**"
       - ".planning/**"
       - "**/*.md"
+      - ".agents/**"
+      - "skills-lock.json"
   pull_request:
     paths-ignore:
       - "docs/**"
       - ".planning/**"
       - "**/*.md"
+      - ".agents/**"
+      - "skills-lock.json"
   workflow_dispatch:
 
 permissions:

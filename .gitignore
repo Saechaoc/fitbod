@@ -1,8 +1,10 @@
-fitbod.xcodeproj/xcuserdata/
+xcuserdata/
+.DS_Store
 
-# CI output from scripts/ci/ios-ci.sh
+# Build and test output; scripts/ci/ios-ci.sh writes everything to .ci/
 .ci/
+.build/
+build/
+DerivedData/
+*.xcresult
 __pycache__/
-
-# Xcode build output
-/build/
