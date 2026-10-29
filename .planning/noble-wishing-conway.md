@@ -137,7 +137,8 @@ This phase covers items 22-25 and the copy additions under item 25.
 
 ## Phase 5 - Design refresh
 
-- **Detect the export.** I run `git status --porcelain bru-screens/` and look for files under `bru-screens/` newer than 2026-10-28.
+- **Detect the export.** The coordinator runs `git status --porcelain bru-screens/` in the main checkout, and lists files under `bru-screens/` that a commit after 2026-10-28 changed.
+  File dates in a checkout only show when it was checked out, so they do not count.
   The June copy landed in `bru-screens/Fitbod-Session/`.
 - **If the export is there:**
   - I compare it with the Oct 2 snapshot.
@@ -200,6 +201,8 @@ The milestone is done when all of these are true:
   Each one is a single change, builds, and has passing tests.
   Docs and evidence go in a final commit.
 - Check that no ticket worktree or branch is left.
+- If T48 or a late finding changed app or test code after the last full verification run, run T44 again on the final code, and T45 too when a journey screen changed.
+  Then update the verification docs and the review page to cite those runs, before the push.
 - Compare the run with its base using `detect_changes`, or `git diff --stat` where the index has no Swift symbols, then run `git push origin main`.
   You authorized this push earlier, and approving this plan confirms it.
   CI does not run on pushes to main, so the local evidence is the record.

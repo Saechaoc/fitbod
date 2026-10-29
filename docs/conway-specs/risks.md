@@ -13,7 +13,7 @@ Each entry is a way this run can fail, and what limits the damage.
 
 - Failure: hot files such as `ProgramView.swift`, `BlockBuilderView.swift` and `SessionExerciseCard.swift` change under a worker.
 - Mitigation: a ticket never starts while a live ticket owns or holds one of its files, and each worker edits only its own worktree.
-  A worker asks before it edits any file outside its `owns` list, and the coordinator then holds that file for it until it merges.
+  A worker asks before it edits any file outside its `owns` list, and the coordinator then holds that file for it until it settles the ticket, whether it merged or not.
   `capacity_model.py` prints the files that three or more tickets own, so the coordinator knows where tickets will wait for each other and where regressions are likely.
   The coordinator merges only as a fast-forward, after a rebase and a build when `main` moved.
 
@@ -33,9 +33,14 @@ Each entry is a way this run can fail, and what limits the damage.
 ## Ticket worktrees pile up
 
 - Failure: worktrees, branches and booted phones from finished tickets fill the disk, and later checks confuse them with live work.
-- Mitigation: the coordinator removes each worktree and its branch right after the merge.
+- Mitigation: the coordinator settles every ticket that ends, merged or not, and removes its worktree and branch then.
   It first copies the ticket's evidence to the main checkout, so nothing is lost with a worktree.
   Phase 8 checks that no ticket worktree or branch is left, and shuts down the lane phones.
+
+## The final code is not what was verified
+
+- Failure: T48 changes the component gallery, and a late finding can change code, after T44 and T45 verified the build, so the push carries code nobody ran in full.
+- Mitigation: Phase 8 compares the code with the commit the latest T44 tested, reruns T44, and T45 when a journey screen changed, and refreshes the docs that cite those runs before the push.
 
 ## GitNexus rates an edit CRITICAL
 

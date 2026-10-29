@@ -2,6 +2,24 @@
 
 Newest first.
 
+## 2026-10-29: fixes for unattended dispatch
+
+- What: a "Settle a ticket" step now runs for every ending: merged, done without a commit, failed, rejected, stopped, split or abandoned.
+  It releases the worker, copies the evidence, removes the worktree, frees the lane and held files, retires the ticket's own waiting asks, and answers the oldest ask waiting for each freed file.
+- Why: held files were freed only on a merge, so a stopped worker in a mutual wait kept its file, and neither ticket could finish.
+- What: Supervise is one loop: handle every message in a delivery, then acknowledge the delivery once.
+- Why: `--ack` covers the whole batch, and failed or rejected results skipped the only ack, so their delivery replayed ahead of newer results.
+- What: acceptance knows no-commit results, such as T44 or "not reproduced", checks only the evidence a ticket's kind and acceptance ask for, and reruns a repro only where one exists.
+- What: tasks take no `--deps`, because the ledger is the dependency record and skipped tickets have no task; the ledger keeps each ticket's latest task id.
+- What: every task header gives the run base, and T47 and T48 get a copy of the live run log.
+  The evidence copy list now covers T33 and T41's result for T47, and the coordinator checks that every input is there before it starts a worker.
+- What: the coordinator does T31 itself in the main checkout, finds design changes with git instead of file dates, and keeps a copy of any export in `evidence/T31/export/`.
+- Why: a new worktree has none of the uncommitted design files or home folders that T31 searches, and checkouts give every file a fresh date.
+- What: after the findings are fixed, the touched T46 screens are captured again, and Phase 8 reruns T44, and T45 if needed, when code changed after the verification, then refreshes T47's docs and T48's review page.
+- What: new findings tickets get an index.md row before validation, and coordinator changes to the bundle are committed by exact path as they happen; Phase 8 also checks that nothing is left uncommitted.
+- What: questions are answered with `orca orchestration reply --id <message id> --body "<answer>" --json`, because `--body` is required.
+- What: `capacity_model.py` adds the T46 rerun and the Phase 8 reruns, so it now estimates about 114 hours serial and about 72 with three lanes.
+
 ## 2026-10-29: review fixes for the parallel run
 
 - What: workers keep their evidence inside their own worktree, and the coordinator copies it to the main checkout before it removes the worktree.

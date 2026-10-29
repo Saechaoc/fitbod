@@ -14,13 +14,13 @@ Product decisions are in [decisions.md](decisions.md), and they win over this fi
   T42 to T48 run alone on the gate phones.
   Phases still run in order, and a phase opens only after the gate of the phase before it passes.
 - Rejected: one worker at a time in the main checkout, which was this bundle's first plan.
-  `capacity_model.py` estimates about 107 hours for it, against about 64 with three lanes.
+  `capacity_model.py` estimates about 114 hours for it, against about 72 with three lanes.
 - Rejected: several workers in one checkout, because they overwrite each other's edits and commit each other's files.
 - Rejected: four or more lanes, because the workers share one Mac's cores, and the model shows a fourth lane saving only about three hours.
 - Rejected: dropping the phase gates to keep lanes busy, which saves about four hours but lets one phase's regressions pile up under the next.
 - Why: the dependency critical path is about 29 hours, so one worker at a time leaves most of the run idle.
   Every ticket's `owns` list already names its files, so the file check costs nothing.
-- Exception: T31 needs no simulator and edits no repo file, so it runs beside the lanes.
+- Exception: the coordinator does T31 itself in the main checkout, beside the lanes, because a worker's new worktree has neither the uncommitted design files nor the home folders that T31 searches.
 
 ### Merging lane work
 

@@ -30,12 +30,12 @@ The verification docs describe runs from before this closeout, and some of their
 ## Change
 
 1. Rewrite the run tables in `VERIFICATION.md` from the latest T44, T45 and T46 evidence: for each run, the phone name and id, text size, appearance, counts, duration and result bundle name.
-   The run log names the latest evidence folders, including any reruns.
+   The run log copy in your evidence folder names the latest evidence folders, including any reruns, and its ledger gives each ticket's commit and outcome.
 2. Replace the large-text limitation with what T45 proved.
    Find it by its text ("at large text"), not by a line number.
 3. In `BASELINE-20261003.md`, add a note next to the `iphone-pro-max-ax3-dark-workout.png` link: the capture shows the item 10 defect and is replaced by a newer capture, which you link.
    Keep the old image file.
-4. Copy into `docs/verification/` only the screenshots the docs cite, including dark-mode Program screenshots from T46, under the names T46 gave them.
+4. Copy into `docs/verification/` only the screenshots the docs cite, including dark-mode Program screenshots from T46 or its reruns, using the newest capture of each screen, under the names they were given.
 5. In `MILESTONE-1-CLOSEOUT.md`, add a table of review items 1 to 47 and finding N1.
    Each row gives the ticket, the commit and the evidence (a test name or a screenshot), or the reason the item was removed or deferred.
 6. Replace the deny-rule flag with the text of `evidence/T40/closeout-statement.md`, and add T41's backup result.

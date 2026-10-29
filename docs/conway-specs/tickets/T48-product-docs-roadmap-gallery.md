@@ -25,10 +25,11 @@ This run added shared components, removed controls, and moved some work to the r
 ## Change
 
 1. Update `CORE-SCREENS.md` so each screen's states and interactions match the build.
-2. Update `SETUP.md` with the two simulators and their ids, the DerivedData path, serial test runs with `-parallel-testing-enabled NO`, and the DEBUG launch flags.
-   The worker rules list all four.
+2. Update `SETUP.md` with the gate phones, the lanes' DerivedData folders, serial test runs with `-parallel-testing-enabled NO`, and the DEBUG launch flags.
+   Say that simulator ids differ between Macs.
+   The run log copy in your evidence folder lists the phones and folders, and the worker rules list the rest.
 3. Check that `ROADMAP.md` has each of these, and add any that is missing:
-   - every removed control from the run log, under "Removed in Milestone 1 closeout";
+   - every removed control from the run log copy, under "Removed in Milestone 1 closeout";
    - whether a first log counts as a PR (decision 9);
    - the readout font and the dark slab glare;
    - the full inline routine creator from `bru-screens/create-flows.jsx`;

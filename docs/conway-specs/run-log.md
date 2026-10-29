@@ -75,7 +75,7 @@ Done means merged into `main`.
 | T28 | 2 | todo | | | | | | |
 | T29 | 2 | todo | | | | | | |
 | T30 | 2 | todo | | | | | | |
-| T31 | 2 | todo | | | | | | |
+| T31 | 2 | todo | | | | | | The coordinator does it in the main checkout; see dispatch.md |
 | T32 | 2 | todo | | | | | | |
 | T33 | 2 | todo | | | | | | Item 42 mostly fixed in `e74c810` (other effort): BRU header, bordered editor and both audits; still open are a test that the capsule shows a saved note and the dark and AX3 screenshots, and its hint reads "Shown above this exercise's sets"; the notes suite is `NoteSheetsUITests`; dispatch it trimmed, or skip it after a look |
 | T34 | 3 | todo | | | | | | |
@@ -113,8 +113,8 @@ Workers list new helpers in their notes, and the coordinator copies them here fo
 ## Held files
 
 Files outside a live ticket's `owns` list that its worker may edit, as [dispatch.md](dispatch.md) says.
-Each line names the ticket and the file; strike the line when the ticket merges.
-A worker told to wait gets its own line with the message id of its pending ask, so the coordinator can answer it after that merge.
+Each line names the ticket and the file; strike the line when you settle the ticket.
+A worker told to wait gets its own line with the message id of its pending ask, so the coordinator can answer it when the file is freed.
 
 - None yet.
 

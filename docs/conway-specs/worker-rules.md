@@ -243,8 +243,11 @@ Git ignores it, and the coordinator copies it to the main checkout before it rem
 | `detect-changes.txt` | `git diff --cached --stat` and the symbols you changed |
 | `notes.md` | what you changed and why, your decisions, out-of-scope findings, your branch and the commit hash |
 
+A ticket that changes no code, such as T44, skips `repro-fail.txt`, `impact.txt` and `detect-changes.txt`, and its ticket says which files it writes instead.
+
 When a ticket names another ticket's evidence, such as `evidence/T31/export-diff.md`, read it next to your own folder; the coordinator copies it into your worktree before you start.
-If it is missing, ask the coordinator.
+T47 and T48 also get a copy of the coordinator's run log there, as `run-log.md`.
+If anything is missing, ask the coordinator.
 
 ## Finishing
 

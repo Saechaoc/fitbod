@@ -17,9 +17,11 @@ RETRY_COST = 0.5  # a retry costs this share of the ticket again
 GATE_AFTER = ["T17", "T33", "T38", "T42", "T43"]  # phase gates in dispatch.md
 GATE_MIN = 20  # full suite on the large phone (about 16 min at Phase 0) plus a widget build
 FINDINGS_TICKETS_GUESS = 6  # new tickets from Phase 6, each size M
-RERUN_TICKETS = ["T44", "T45"]  # rerun after the findings are fixed (dispatch.md)
+RERUN_TICKETS = ["T44", "T45", "T46"]  # rerun after the findings are fixed (dispatch.md)
+FINAL_RERUNS = ["T44", "T47", "T48"]  # T48 changes app code after the runs, so Phase 8 reruns these (dispatch.md)
+RERUN_MINUTES = {"T46": 120, "T48": 30}  # these reruns cover only the touched screens or the review page
 PHASE8_MIN = 20
-PARALLEL_OK = {"T31"}  # takes no lane and runs beside the code workers, so it adds no serial time
+PARALLEL_OK = {"T31"}  # the coordinator does it beside the lanes, so it adds no serial time
 CONDITIONAL = {"T43"}  # skipped when no newer design export exists
 LANES = 3  # code workers at once, each ticket in its own worktree (dispatch.md)
 LANE_OPTIONS = (1, 2, 3, 4)  # lane counts the estimate compares
@@ -230,7 +232,8 @@ for f, rel in bundle_files({".md", ".py"}):
             errors.append(f"{rel}: no entry \"{title}\" in {leaf}.md")
 
 for name, group in (("PARALLEL_OK", PARALLEL_OK), ("CONDITIONAL", CONDITIONAL), ("EXCLUSIVE", EXCLUSIVE),
-                    ("GATE_AFTER", set(GATE_AFTER)), ("RERUN_TICKETS", set(RERUN_TICKETS))):
+                    ("GATE_AFTER", set(GATE_AFTER)), ("RERUN_TICKETS", set(RERUN_TICKETS)),
+                    ("FINAL_RERUNS", set(FINAL_RERUNS)), ("RERUN_MINUTES", set(RERUN_MINUTES))):
     for tid in sorted(group - set(tickets)):
         errors.append(f"capacity_model.py: {name} names {tid}, which has no ticket")
 if LANES not in LANE_OPTIONS or any(n not in SLOWDOWN for n in LANE_OPTIONS):
@@ -260,6 +263,14 @@ def work_min(minutes):
 
 def ticket_min(tid):
     return work_min(worker_min(tid)) + COORDINATOR_REVIEW_MIN
+
+
+def rerun_work(tid):
+    return work_min(RERUN_MINUTES.get(tid, worker_min(tid)))
+
+
+def words(items):
+    return items[0] if len(items) == 1 else f"{', '.join(items[:-1])} and {items[-1]}"
 
 
 def plan_jobs(lanes, skip=frozenset(), gates=True):
@@ -295,7 +306,7 @@ def plan_jobs(lanes, skip=frozenset(), gates=True):
         add(name, work_min(SIZE_MINUTES["M"]), review, ["T46"])
     previous = findings
     for tid in RERUN_TICKETS:
-        add(f"{tid} rerun", work_min(worker_min(tid)), review, previous, alone=True)
+        add(f"{tid} rerun", rerun_work(tid), review, previous, alone=True)
         previous = [f"{tid} rerun"]
     members[findings_phase] += findings + previous
     gate_phases = {tickets[t]["phase"] for t in GATE_AFTER if t not in skip}
@@ -305,6 +316,10 @@ def plan_jobs(lanes, skip=frozenset(), gates=True):
             add(f"end of phase {p}", 0, GATE_MIN if gate else 0, members[p], lane=False, alone=gate)
     else:
         jobs["T47"]["deps"] += previous
+    final = [f"end of phase {phases[-1]}"] if gates else ["T48"]
+    for tid in FINAL_RERUNS:  # the code T48 changes needs fresh runs and docs before the push
+        add(f"{tid} final rerun", rerun_work(tid), review, final, alone=True)
+        final = [f"{tid} final rerun"]
     add("Phase 8", 0, PHASE8_MIN, list(jobs), lane=False, alone=True)
     return jobs
 
@@ -370,8 +385,9 @@ for tid in ids:
 gates_min = len(GATE_AFTER) * GATE_MIN
 findings_min = FINDINGS_TICKETS_GUESS * (SIZE_MINUTES["M"] * (1 + RETRY_RATE * RETRY_COST)
                                          + COORDINATOR_REVIEW_MIN)
-reruns_min = sum(ticket_min(t) for t in RERUN_TICKETS)
-total = sum(phase_min.values()) + gates_min + findings_min + reruns_min + PHASE8_MIN
+reruns_min = sum(rerun_work(t) + COORDINATOR_REVIEW_MIN for t in RERUN_TICKETS)
+final_min = sum(rerun_work(t) + COORDINATOR_REVIEW_MIN for t in FINAL_RERUNS)
+total = sum(phase_min.values()) + gates_min + findings_min + reruns_min + final_min + PHASE8_MIN
 skipped = sum(ticket_min(t) + (GATE_MIN if t in GATE_AFTER else 0) for t in CONDITIONAL)
 
 print("\nSerial hours, including retries and coordinator checks:")
@@ -379,7 +395,8 @@ for phase, minutes in sorted(phase_min.items()):
     print(f"  Phase {phase}: {minutes / 60:5.1f} h")
 print(f"  Gates:   {gates_min / 60:5.1f} h")
 print(f"  Findings ({FINDINGS_TICKETS_GUESS} guessed M tickets): {findings_min / 60:.1f} h")
-print(f"  Reruns of {' and '.join(RERUN_TICKETS)}: {reruns_min / 60:.1f} h")
+print(f"  Reruns of {words(RERUN_TICKETS)}: {reruns_min / 60:.1f} h")
+print(f"  Final reruns of {words(FINAL_RERUNS)}: {final_min / 60:.1f} h")
 print(f"  Phase 8: {PHASE8_MIN / 60:5.1f} h")
 print(f"  Total:   {total / 60:5.1f} h, or {(total - skipped) / 60:.1f} h if "
       f"{', '.join(sorted(CONDITIONAL))} is skipped")
