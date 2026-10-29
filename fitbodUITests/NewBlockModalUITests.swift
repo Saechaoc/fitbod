@@ -25,7 +25,11 @@ final class NewBlockModalUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["NEW BLOCK"].waitForExistence(timeout: 5))
         XCTAssertTrue(app.staticTexts["NAME YOUR BLOCK"].waitForExistence(timeout: 5))
         XCTAssertTrue(app.staticTexts["PHASES · 3"].waitForExistence(timeout: 5))
-        XCTAssertTrue(app.buttons["NAME FIRST ↑"].waitForExistence(timeout: 5))
+        // The save button reads NAME FIRST and stays disabled until the
+        // block has a name. Its bookmark icon is decorative.
+        let save = app.buttons["NAME FIRST"]
+        XCTAssertTrue(save.waitForExistence(timeout: 5))
+        XCTAssertFalse(save.isEnabled)
 
         let screenshot = XCTAttachment(screenshot: app.screenshot())
         screenshot.name = "New Block blank modal"

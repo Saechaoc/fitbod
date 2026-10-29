@@ -8,7 +8,7 @@
 //
 //  Confirms:
 //    1. BRUHeaderBar "Settings" center label renders after navigation
-//       to the Settings tab in BRUTabBar.
+//       to the Settings sheet in BRUTabBar.
 //    2. Export section: "CSV" and "JSON" BRUDisplay card labels are
 //       present; optional captions "ONE ROW PER SET" + "VERSION-STAMPED"
 //       are checked via case-insensitive predicates.
@@ -51,15 +51,10 @@ final class SettingsBRUUITests: XCTestCase {
         }
     }
 
-    /// Tap the Settings tab in BRUTabBar.
+    /// Tap the Settings sheet in BRUTabBar.
     @MainActor
     private func selectSettingsTab() {
-        let settingsTab = app.tabBars.buttons.matching(
-            NSPredicate(format: "label CONTAINS[c] 'settings'")
-        ).firstMatch
-        if settingsTab.waitForExistence(timeout: 10) {
-            settingsTab.tap()
-        }
+        UITestNavigation.openSettings(in: app)
     }
 
     /// Swipe up until the target staticText label is visible, up to maxSwipes.
@@ -79,7 +74,7 @@ final class SettingsBRUUITests: XCTestCase {
     // MARK: - Test 1: BRUHeaderBar "Settings" title renders
 
     /// Asserts:
-    ///   - Settings tab is tappable in the BRUTabBar.
+    ///   - Settings sheet is tappable in the BRUTabBar.
     ///   - BRUHeaderBar center label "Settings" exists after tab navigation.
     @MainActor
     func testSettingsTabRendersWithBRUHeaderBar() throws {
@@ -89,11 +84,11 @@ final class SettingsBRUUITests: XCTestCase {
 
         // BRUHeaderBar renders "Settings" as a plain Text staticText.
         let settingsHeader = app.staticTexts.matching(
-            NSPredicate(format: "label == 'Settings'")
+            NSPredicate(format: "label ==[c] 'Settings'")
         ).firstMatch
         XCTAssertTrue(
             settingsHeader.waitForExistence(timeout: 10),
-            "Expected BRUHeaderBar center label 'Settings' on the Settings tab — " +
+            "Expected BRUHeaderBar center label 'Settings' on the Settings sheet — " +
             "BRUHeaderBar not rendered or label changed (Plan 06.1-05 regression)."
         )
     }
@@ -113,9 +108,9 @@ final class SettingsBRUUITests: XCTestCase {
         waitForSeedComplete()
         selectSettingsTab()
 
-        // Wait for the header to confirm we are on the Settings tab
+        // Wait for the header to confirm we are on the Settings sheet
         _ = app.staticTexts.matching(
-            NSPredicate(format: "label == 'Settings'")
+            NSPredicate(format: "label ==[c] 'Settings'")
         ).firstMatch.waitForExistence(timeout: 10)
 
         // Scroll to find the Export section (past Units, Volume Targets, Smart Progression)
@@ -172,7 +167,7 @@ final class SettingsBRUUITests: XCTestCase {
 
         // Wait for Settings header
         _ = app.staticTexts.matching(
-            NSPredicate(format: "label == 'Settings'")
+            NSPredicate(format: "label ==[c] 'Settings'")
         ).firstMatch.waitForExistence(timeout: 10)
 
         // Scroll past Export grid to reach the Backup section

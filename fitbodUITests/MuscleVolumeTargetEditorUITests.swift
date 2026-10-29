@@ -2,7 +2,7 @@
 //  MuscleVolumeTargetEditorUITests.swift
 //  fitbodUITests
 //
-//  Phase 5 SET-05 — smoke test that the Settings tab's "Volume
+//  Phase 5 SET-05 — smoke test that the Settings sheet's "Volume
 //  Targets" surface is reachable, expanding a muscle reveals the
 //  Stepper editor, and the global "Reset All to RP Defaults" button
 //  is present.
@@ -34,8 +34,7 @@ final class MuscleVolumeTargetEditorUITests: XCTestCase {
 
     @MainActor
     private func selectSettingsTab(_ app: XCUIApplication) {
-        let settings = app.tabBars.buttons["Settings"]
-        if settings.waitForExistence(timeout: 10) { settings.tap() }
+        UITestNavigation.openSettings(in: app)
     }
 
     @MainActor
@@ -49,7 +48,7 @@ final class MuscleVolumeTargetEditorUITests: XCTestCase {
         // the NavigationLink label). Use the predicate to pick the first
         // visible one.
         let header = app.staticTexts.matching(
-            NSPredicate(format: "label == 'Volume Targets'")
+            NSPredicate(format: "label ==[c] 'Volume Targets'")
         ).firstMatch
         XCTAssertTrue(header.waitForExistence(timeout: 10))
     }
@@ -63,15 +62,16 @@ final class MuscleVolumeTargetEditorUITests: XCTestCase {
 
         // Tap the row labeled "Volume Targets" to navigate.
         let row = app.buttons.matching(
-            NSPredicate(format: "label CONTAINS 'Volume Targets' AND label CONTAINS '17 muscles'")
+            NSPredicate(format: "label CONTAINS[c] 'Volume Targets' AND label CONTAINS[c] '17 muscles'")
         ).firstMatch
         XCTAssertTrue(row.waitForExistence(timeout: 10))
+        UITestNavigation.reveal(row, in: app)
         row.tap()
 
         // BRU header bar replaces system navigation bar — assert the BRUHeaderBar
         // center Text element "Volume Targets" is present rather than a nav bar title.
         let headerText = app.staticTexts.matching(
-            NSPredicate(format: "label == 'Volume Targets'")
+            NSPredicate(format: "label ==[c] 'Volume Targets'")
         ).firstMatch
         XCTAssertTrue(headerText.waitForExistence(timeout: 5),
                       "BRUHeaderBar center 'Volume Targets' must be visible")

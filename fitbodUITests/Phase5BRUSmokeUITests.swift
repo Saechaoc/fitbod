@@ -53,15 +53,14 @@ final class Phase5BRUSmokeUITests: XCTestCase {
     /// Tap the Today tab. Handles simulator last-active-tab persistence.
     @MainActor
     private func selectTodayTab() {
-        let today = app.tabBars.buttons["Today"]
+        let today = app.buttons["Today"]
         if today.waitForExistence(timeout: 10) { today.tap() }
     }
 
-    /// Tap the Settings tab.
+    /// Tap the Settings sheet.
     @MainActor
     private func selectSettingsTab() {
-        let settings = app.tabBars.buttons["Settings"]
-        if settings.waitForExistence(timeout: 10) { settings.tap() }
+        UITestNavigation.openSettings(in: app)
     }
 
     /// Swipe up until the target staticText is reachable OR maxSwipes exhausted.
@@ -80,7 +79,7 @@ final class Phase5BRUSmokeUITests: XCTestCase {
 
     /// Asserts:
     ///   - "Volume This Week" BRUSectionHead is reachable on the Today tab.
-    ///   - "WORKING SETS · 7 DAYS" cover-slab caption is present.
+    ///   - "WORKING SETS · THIS WEEK" cover-slab caption is present.
     ///   - "FRONT" and "BACK" are present as static Text labels (side-by-side
     ///     heatmap layout from Plan 05.1-04/05 — NOT a segmented Picker).
     @MainActor
@@ -91,10 +90,10 @@ final class Phase5BRUSmokeUITests: XCTestCase {
 
         // Cover-slab caption — always present at the top of FatigueSurfaceView
         // regardless of data state (it's part of the fixed ink-slab summary).
-        let coverCaption = app.staticTexts["WORKING SETS · 7 DAYS"]
+        let coverCaption = app.staticTexts["WORKING SETS · THIS WEEK"]
         XCTAssertTrue(
             coverCaption.waitForExistence(timeout: 30),
-            "Expected 'WORKING SETS · 7 DAYS' cover-slab caption on Today tab — FatigueSurfaceView not mounted or cover slab changed."
+            "Expected 'WORKING SETS · THIS WEEK' cover-slab caption on Today tab - FatigueSurfaceView not mounted or cover slab changed."
         )
 
         // Volume This Week BRUSectionHead — scroll until in the hierarchy
@@ -211,18 +210,19 @@ final class Phase5BRUSmokeUITests: XCTestCase {
         // The Volume Targets row renders as a Button with label containing
         // "Volume Targets" and "17 muscles" (see MuscleVolumeTargetEditorUITests baseline).
         let row = app.buttons.matching(
-            NSPredicate(format: "label CONTAINS 'Volume Targets' AND label CONTAINS '17 muscles'")
+            NSPredicate(format: "label CONTAINS[c] 'Volume Targets' AND label CONTAINS[c] '17 muscles'")
         ).firstMatch
         XCTAssertTrue(
             row.waitForExistence(timeout: 10),
             "Expected 'Volume Targets' navigation row in Settings — MuscleVolumeTargetEditor entry point missing."
         )
+        UITestNavigation.reveal(row, in: app)
         row.tap()
 
         // BRUHeaderBar center label — BRU reskin replaced .navigationTitle with a
         // custom BRUHeaderBar Text element (Plan 05.1-06).
         let headerLabel = app.staticTexts.matching(
-            NSPredicate(format: "label == 'Volume Targets'")
+            NSPredicate(format: "label ==[c] 'Volume Targets'")
         ).firstMatch
         XCTAssertTrue(
             headerLabel.waitForExistence(timeout: 5),

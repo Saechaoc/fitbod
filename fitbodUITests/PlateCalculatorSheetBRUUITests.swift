@@ -9,7 +9,7 @@
 // ("PER SIDE") via accessibility. These are compile-and-launch smoke checks.
 //
 // NAVIGATION PATH:
-//   Settings tab → Smart Progression section → "Plate Inventory" row →
+//   Settings sheet → Smart Progression section → "Plate Inventory" row →
 //   PlateInventoryEditor → "•••" header button → PlateCalculatorSheet
 //
 // CONTRACT ENFORCER: The actual view-instantiation contract (init signature,
@@ -41,13 +41,10 @@ final class PlateCalculatorSheetBRUUITests: XCTestCase {
         }
     }
 
-    /// Navigate to Settings tab.
+    /// Navigate to Settings sheet.
     @MainActor
     private func selectSettingsTab(_ app: XCUIApplication) {
-        let settings = app.tabBars.buttons["Settings"]
-        if settings.waitForExistence(timeout: 10) {
-            settings.tap()
-        }
+        UITestNavigation.openSettings(in: app)
     }
 
     /// Navigate into PlateInventoryEditor from Settings → "Plate Inventory" row.
@@ -59,6 +56,7 @@ final class PlateCalculatorSheetBRUUITests: XCTestCase {
         guard plateInventoryRow.waitForExistence(timeout: 10) else {
             return false
         }
+        UITestNavigation.reveal(plateInventoryRow, in: app)
         plateInventoryRow.tap()
         return true
     }
@@ -70,7 +68,7 @@ final class PlateCalculatorSheetBRUUITests: XCTestCase {
     private func tapPlateCalculatorMenu(_ app: XCUIApplication) -> Bool {
         // PlateInventoryEditor BRUHeaderBar right action is "•••"
         // (PlateInventoryEditor.swift line 60: HeaderAction("•••") { showCalculatorSheet = true })
-        let menuButton = app.staticTexts["•••"]
+        let menuButton = app.buttons["More"]
         guard menuButton.waitForExistence(timeout: 8) else {
             return false
         }
@@ -95,19 +93,21 @@ final class PlateCalculatorSheetBRUUITests: XCTestCase {
         selectSettingsTab(app)
 
         guard navigateToPlateInventory(app) else {
-            throw XCTSkip(
+            XCTFail(
                 "Settings → Plate Inventory row not found — seed may not be complete " +
                 "or Smart Progression section is not visible on this simulator state. " +
                 "BRU contract enforced by Phase3BRUSurfacesTests.plateCalculatorSheetInstantiates."
             )
+            return
         }
 
         guard tapPlateCalculatorMenu(app) else {
-            throw XCTSkip(
+            XCTFail(
                 "'•••' button not found in PlateInventoryEditor header — " +
                 "may require plates to be seeded first. " +
                 "BRU contract enforced by Phase3BRUSurfacesTests.plateCalculatorSheetInstantiates."
             )
+            return
         }
 
         // Assert that the TARGET display band is visible in the calculator sheet.
@@ -134,17 +134,19 @@ final class PlateCalculatorSheetBRUUITests: XCTestCase {
         selectSettingsTab(app)
 
         guard navigateToPlateInventory(app) else {
-            throw XCTSkip(
+            XCTFail(
                 "Settings → Plate Inventory row not found. " +
                 "PER SIDE zone contract enforced by Phase3BRUSurfacesTests.plateCalculatorSheetInstantiates."
             )
+            return
         }
 
         guard tapPlateCalculatorMenu(app) else {
-            throw XCTSkip(
+            XCTFail(
                 "'•••' button not found in PlateInventoryEditor. " +
                 "PER SIDE zone contract enforced by Phase3BRUSurfacesTests.plateCalculatorSheetInstantiates."
             )
+            return
         }
 
         // Assert that the PER SIDE plate stack zone label is visible.

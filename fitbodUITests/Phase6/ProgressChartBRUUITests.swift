@@ -56,7 +56,7 @@ final class ProgressChartBRUUITests: XCTestCase {
     /// Tap the Progress tab in BRUTabBar.
     @MainActor
     private func selectProgressTab() {
-        let progressTab = app.tabBars.buttons.matching(
+        let progressTab = app.buttons.matching(
             NSPredicate(format: "label CONTAINS[c] 'progress'")
         ).firstMatch
         if progressTab.waitForExistence(timeout: 10) {
@@ -69,25 +69,12 @@ final class ProgressChartBRUUITests: XCTestCase {
     @MainActor
     @discardableResult
     private func tapFirstRecentRowIfAvailable() -> Bool {
-        // Recent rows have a sub-line like "N sessions · last logged ..."
-        // Match by searching for a row containing "sessions" sub-label text.
-        let recentRow = app.buttons.matching(
-            NSPredicate(format: "label CONTAINS[c] 'sessions'")
-        ).firstMatch
-
-        // Also try staticTexts in case the row is not a Button accessibility element
-        let recentRowText = app.staticTexts.matching(
-            NSPredicate(format: "label CONTAINS[c] 'sessions'")
-        ).firstMatch
-
-        if recentRow.waitForExistence(timeout: 5) {
-            recentRow.tap()
-            return true
-        } else if recentRowText.waitForExistence(timeout: 3) {
-            recentRowText.tap()
-            return true
-        }
-        return false
+        let row = app.buttons.matching(NSPredicate(
+            format: "label BEGINSWITH %@", "Barbell Bench Press"
+        )).firstMatch
+        UITestNavigation.reveal(row, in: app)
+        row.tap()
+        return true
     }
 
     // MARK: - Test 1: ExerciseProgressView renders or empty-state visible
@@ -101,6 +88,7 @@ final class ProgressChartBRUUITests: XCTestCase {
     ///        - Test passes (chart view unreachable by design)
     @MainActor
     func testExerciseProgressViewRendersOrEmptyState() throws {
+        app.launchArguments = UITestNavigation.seededWorkout
         app.launch()
         waitForSeedComplete()
         selectProgressTab()
@@ -165,6 +153,7 @@ final class ProgressChartBRUUITests: XCTestCase {
     /// header "Progress" is still visible (no-regression check).
     @MainActor
     func testProgressChartUsesBRUHeaderBar() throws {
+        app.launchArguments = UITestNavigation.seededWorkout
         app.launch()
         waitForSeedComplete()
         selectProgressTab()
@@ -196,7 +185,7 @@ final class ProgressChartBRUUITests: XCTestCase {
             )
 
             // BRU dismiss chevron "‹" should be visible as a staticText
-            let bruBackChevron = app.staticTexts["‹"]
+            let bruBackChevron = app.buttons["Back"]
             XCTAssertTrue(
                 bruBackChevron.waitForExistence(timeout: 5),
                 "Expected BRU dismiss chevron '‹' staticText in BRUHeaderBar — " +

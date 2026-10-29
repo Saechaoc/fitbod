@@ -51,7 +51,7 @@ final class ProgressHomeBRUUITests: XCTestCase {
     @MainActor
     private func selectProgressTab() {
         // BRUTabBar uses accessibility identifier matching the label text.
-        let progressTab = app.tabBars.buttons.matching(
+        let progressTab = app.buttons.matching(
             NSPredicate(format: "label CONTAINS[c] 'progress'")
         ).firstMatch
         if progressTab.waitForExistence(timeout: 10) {
@@ -66,7 +66,7 @@ final class ProgressHomeBRUUITests: XCTestCase {
     ///   - BRUHeaderBar center label "Progress" exists after tab navigation.
     @MainActor
     func testProgressTabRendersWithBRUHeaderBar() throws {
-        app.launch()
+        app = UITestNavigation.launch(UITestNavigation.freshStore)
         waitForSeedComplete()
         selectProgressTab()
 
@@ -93,7 +93,7 @@ final class ProgressHomeBRUUITests: XCTestCase {
     /// BRUSectionHead uppercase/mixed-case rendering variants.
     @MainActor
     func testProgressHomeSectionHeadsVisible() throws {
-        app.launch()
+        app = UITestNavigation.launch(UITestNavigation.freshStore)
         waitForSeedComplete()
         selectProgressTab()
 
@@ -147,11 +147,11 @@ final class ProgressHomeBRUUITests: XCTestCase {
     ///     (confirms the view rendered, not a blank screen).
     @MainActor
     func testProgressTabIsAccessible() throws {
-        app.launch()
+        app = UITestNavigation.launch(UITestNavigation.freshStore)
         waitForSeedComplete()
 
         // Assert the tab exists and is hittable before tapping
-        let progressTab = app.tabBars.buttons.matching(
+        let progressTab = app.buttons.matching(
             NSPredicate(format: "label CONTAINS[c] 'progress'")
         ).firstMatch
         XCTAssertTrue(

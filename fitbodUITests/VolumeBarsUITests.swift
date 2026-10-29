@@ -66,7 +66,7 @@ final class VolumeBarsUITests: XCTestCase {
     /// the last-active tab on the simulator's saved state).
     @MainActor
     private func selectTodayTab(_ app: XCUIApplication) {
-        let today = app.tabBars.buttons["Today"]
+        let today = app.buttons["Today"]
         if today.waitForExistence(timeout: 10) {
             today.tap()
         }
@@ -90,30 +90,12 @@ final class VolumeBarsUITests: XCTestCase {
 
     @MainActor
     func testEitherEmptyStateOrVerbCopyIsVisible() throws {
-        let app = XCUIApplication()
-        app.launch()
-        waitForSeedComplete(app)
-        selectTodayTab(app)
-
-        _ = app.staticTexts["Volume This Week"].waitForExistence(timeout: 30)
-        _ = scrollUntilVisible(app, text: "Volume This Week")
-
-        // Either the empty-state OR one of the D-06 verb strings
-        // should be visible — depending on the simulator's existing
-        // data state. We don't reset the store; we just assert that
-        // SOMETHING the volume surface owns is rendered.
-        let emptyState = app.staticTexts["No sets logged this week"]
-        let belowMEV = app.staticTexts["Below MEV — add volume"]
-        let productive = app.staticTexts["Productive range — hold/progress"]
-        let nearMRV = app.staticTexts["Near MRV — deload soon if performance or recovery drops."]
-        let overMRV = app.staticTexts["Over MRV — deload recommended."]
-
-        let any = emptyState.exists
-              || belowMEV.exists
-              || productive.exists
-              || nearMRV.exists
-              || overMRV.exists
-
-        XCTAssertTrue(any, "Expected either the empty-state copy or a D-06 verb string on the Today tab. The volume surface rendered neither — bars are not being produced.")
+        let app = UITestNavigation.launch(UITestNavigation.seededWorkout)
+        let bar = app.descendants(matching: .any).matching(NSPredicate(
+            format: "label BEGINSWITH %@ AND label CONTAINS %@", "Chest:", "sets this week,"
+        )).firstMatch
+        UITestNavigation.reveal(bar, in: app)
+        XCTAssertTrue(bar.label.contains("Below MEV") || bar.label.contains("Productive")
+                      || bar.label.contains("Near MRV") || bar.label.contains("Over MRV"))
     }
 }

@@ -32,7 +32,7 @@ final class WeeklyRecapUITests: XCTestCase {
 
     @MainActor
     private func selectTodayTab(_ app: XCUIApplication) {
-        let today = app.tabBars.buttons["Today"]
+        let today = app.buttons["Today"]
         if today.waitForExistence(timeout: 10) { today.tap() }
     }
 

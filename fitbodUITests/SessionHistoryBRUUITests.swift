@@ -4,13 +4,8 @@
 // Phase 2.1 Plan 11 — BRU surface smoke tests for SessionHistoryView.
 // UI-REVIEW Wave G item 67 / UI-SPEC § SessionHistoryView (lines 370-396).
 //
-// PURPOSE: Verify that SessionHistoryView is reachable from the Routines tab
-// "+ NEW" menu and that its BRU header ("History") and section head
-// ("Past sessions" / empty state) are accessible.
-//
-// APPROACH: Launch app → navigate Routines tab → tap "+ NEW" BRUHeaderBar
-// right action → tap "History" in the confirmation dialog → assert "History"
-// header visible. Mirrors VolumeBarsUITests.swift helpers.
+// History is reachable from Progress → Workouts and Today → Sessions.
+// These cases use a dedicated store and fail if the route disappears.
 //
 
 import XCTest
@@ -34,88 +29,59 @@ final class SessionHistoryBRUUITests: XCTestCase {
     }
 
     @MainActor
-    private func selectRoutinesTab(_ app: XCUIApplication) {
-        let routines = app.tabBars.buttons["Routines"]
-        if routines.waitForExistence(timeout: 10) {
-            routines.tap()
-        }
+    private func selectProgressTab(_ app: XCUIApplication) {
+        let progress = app.buttons["Progress"]
+        XCTAssertTrue(progress.waitForExistence(timeout: 90))
+        progress.tap()
     }
 
-    /// Navigate to SessionHistoryView via Routines → "+ NEW" → "History".
+    /// Navigate to SessionHistoryView via Progress → Workouts.
     /// Returns true if navigation succeeded.
     @MainActor
     @discardableResult
     private func navigateToSessionHistory(_ app: XCUIApplication) -> Bool {
-        selectRoutinesTab(app)
+        selectProgressTab(app)
 
-        // Wait for Routines BRU header to appear
-        _ = app.staticTexts["Routines"].waitForExistence(timeout: 15)
-
-        // Tap the "+ NEW" button (BRUHeaderBar right action — isSignal=true so it's a signal chip)
-        let newButton = app.staticTexts["+ NEW"]
-        guard newButton.waitForExistence(timeout: 8) else { return false }
-        newButton.tap()
-
-        // Tap "History" in the confirmation dialog
-        let historyButton = app.buttons["History"]
-        guard historyButton.waitForExistence(timeout: 5) else { return false }
+        let historyButton = app.buttons["progress.history"]
+        guard historyButton.waitForExistence(timeout: 10) else { return false }
+        UITestNavigation.reveal(historyButton, in: app)
         historyButton.tap()
         return true
     }
 
     // MARK: - Tests
 
-    /// Smoke test 1: SessionHistoryView is reachable from Routines "+ NEW" menu
-    /// and renders with a "History" BRU header.
+    /// The seeded finished workout opens from Progress; the active one stays out.
     @MainActor
-    func testSessionHistoryReachableFromRoutinesMenu() throws {
+    func testFinishedWorkoutOpensFromProgressHistory() throws {
         let app = XCUIApplication()
+        app.launchArguments = ["-fitbod-reset-store", "-fitbod-seed-demo-workout"]
         app.launch()
         waitForSeedComplete(app)
 
-        let didNavigate = navigateToSessionHistory(app)
-        guard didNavigate else {
-            // "+ NEW" or "History" button not found — navigation could not complete.
-            // This may indicate a simulator state issue; log but don't hard-fail.
-            throw XCTSkip("Could not navigate to SessionHistoryView — '+ NEW' or 'History' button not found in UI hierarchy. Check that RoutinesListView.presentingNewMenu is wired correctly.")
-        }
-
-        // Assert the BRU "History" header is visible
-        let historyHeader = app.staticTexts["History"]
-        let headerVisible = historyHeader.waitForExistence(timeout: 10)
-        XCTAssertTrue(headerVisible,
-                      "BRU 'History' header not found after navigating via Routines → + NEW → History")
+        XCTAssertTrue(navigateToSessionHistory(app))
+        let rows = app.buttons.matching(identifier: "history.row")
+        XCTAssertTrue(rows.firstMatch.waitForExistence(timeout: 10))
+        XCTAssertEqual(rows.count, 1, "Only the finished seeded workout belongs in History")
+        rows.firstMatch.tap()
+        XCTAssertTrue(app.staticTexts["WORKOUT COMPLETE"].waitForExistence(timeout: 10))
+        app.buttons["Back"].firstMatch.tap()
+        XCTAssertTrue(rows.firstMatch.waitForExistence(timeout: 10))
     }
 
-    /// Smoke test 2: On a fresh-install simulator (no completed sessions),
-    /// SessionHistoryView renders the BRU empty-state copy.
-    ///
-    /// Dual-branch: if sessions exist, asserts "Past sessions" section head instead.
-    /// Either confirms the surface mounted and rendered content.
+    /// Fresh stores show an explicit empty state through the same route.
     @MainActor
-    func testSessionHistoryEmptyStateOrPastSessionsVisible() throws {
+    func testFreshStoreShowsHistoryEmptyState() throws {
         let app = XCUIApplication()
+        app.launchArguments = ["-fitbod-reset-store"]
         app.launch()
         waitForSeedComplete(app)
 
-        let didNavigate = navigateToSessionHistory(app)
-        guard didNavigate else {
-            throw XCTSkip("Could not navigate to SessionHistoryView — navigation path not established.")
-        }
-
-        // Wait for the sheet to present
-        _ = app.staticTexts["History"].waitForExistence(timeout: 10)
-
-        // Dual-branch: either empty state OR "Past sessions" section head
+        XCTAssertTrue(navigateToSessionHistory(app))
         let emptyHeading = app.staticTexts["No sessions yet"]
         let emptyBody = app.staticTexts["Finish a workout to see it here."]
-        let pastSessionsHead = app.staticTexts["PAST SESSIONS"]
-
-        let anyVisible = emptyHeading.exists
-                      || emptyBody.exists
-                      || pastSessionsHead.exists
-
-        XCTAssertTrue(anyVisible,
-                      "SessionHistoryView rendered neither the empty-state copy nor 'PAST SESSIONS' section head — surface may not have mounted correctly")
+        XCTAssertTrue(emptyHeading.waitForExistence(timeout: 10))
+        XCTAssertTrue(emptyBody.exists)
+        XCTAssertEqual(app.buttons.matching(identifier: "history.row").count, 0)
     }
 }
