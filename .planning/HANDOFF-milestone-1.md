@@ -1,7 +1,7 @@
 # Handoff: Milestone 1 (usable workout app)
 
 Written 2026-10-03 at the end of a session that hit its usage limit.
-Start a new session by reading this file, then `.planning/quick/milestone-1-journey-audit.md` (full issue list and decisions).
+Start a new session by reading this file, then `.planning/archived-phases/milestone-1-journey-audit.md` (full issue list and decisions).
 
 ## Goal (from the user's request)
 

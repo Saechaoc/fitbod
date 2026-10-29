@@ -155,7 +155,7 @@ The V3→V4 stage is a CUSTOM migration (`fitbod/Persistence/FitbodSchemaMigrati
 
 ### Untracked design assets
 
-`bru-screens/New-block/` and `bru-screens/New-modal/` are present in the working tree but unignored AND untracked (`git status`). The committed `bru-screens/` directory holds `.jsx` mockups (`block-builder.jsx`, `block-overview.jsx`, etc.); the newer `.png`/`.html` assets live alongside but were never added. Pattern repeats with `.planning/quick/260528-c6i-extract-reusable-blocknamefield-swiftui-/` (planning artifact for the most recent quick task — untracked).
+`bru-screens/New-block/` and `bru-screens/New-modal/` are present in the working tree but unignored AND untracked (`git status`). The committed `bru-screens/` directory holds `.jsx` mockups (`block-builder.jsx`, `block-overview.jsx`, etc.); the newer `.png`/`.html` assets live alongside but were never added. Pattern repeats with `.planning/archived-phases/260528-c6i-extract-reusable-blocknamefield-swiftui-/` (planning artifact for the most recent quick task — untracked).
 
 ### Working-tree drift: `fitbod/Design/BRUActionPopover.swift` is untracked but **imported by committed code**
 
