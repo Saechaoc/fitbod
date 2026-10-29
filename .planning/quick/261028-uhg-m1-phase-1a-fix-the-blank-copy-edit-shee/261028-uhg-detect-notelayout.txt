@@ -1,0 +1,11 @@
+Changes: 3 files, 6 symbols
+Affected processes: 0
+Risk level: low
+
+Changed symbols:
+  undefined body → fitbod/Sessions/PerSetNoteSheet.swift
+  undefined PerSetNoteSheet → fitbod/Sessions/PerSetNoteSheet.swift
+  undefined body → fitbod/Sessions/WorkoutNotesSheet.swift
+  undefined WorkoutNotesSheet → fitbod/Sessions/WorkoutNotesSheet.swift
+  undefined assertSaveKeepsAndDismissDiscards → fitbodUITests/NoteSheetsUITests.swift
+  undefined NoteSheetsUITests → fitbodUITests/NoteSheetsUITests.swift

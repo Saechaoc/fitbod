@@ -1,0 +1,7 @@
+Changes: 3 files, 2 symbols
+Affected processes: 0
+Risk level: low
+
+Changed symbols:
+  undefined body → fitbod/ExerciseLibrary/ExerciseDetailView.swift
+  undefined ExerciseDetailView → fitbod/ExerciseLibrary/ExerciseDetailView.swift

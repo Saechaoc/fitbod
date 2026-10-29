@@ -1,0 +1,21 @@
+Changes: 5 files, 29 symbols
+Affected processes: 0
+Risk level: low
+
+Changed symbols:
+  undefined body → fitbod/Sessions/PerSetNoteSheet.swift
+  undefined ex → fitbod/Sessions/PerSetNoteSheet.swift
+  undefined se → fitbod/Sessions/PerSetNoteSheet.swift
+  undefined entry → fitbod/Sessions/PerSetNoteSheet.swift
+  undefined PerSetNoteSheet → fitbod/Sessions/PerSetNoteSheet.swift
+  undefined sessionExercise → fitbod/Sessions/PinnedNoteSheet.swift
+  undefined body → fitbod/Sessions/PinnedNoteSheet.swift
+  undefined container → fitbod/Sessions/PinnedNoteSheet.swift
+  undefined ctx → fitbod/Sessions/PinnedNoteSheet.swift
+  undefined se → fitbod/Sessions/PinnedNoteSheet.swift
+  undefined init → fitbod/Sessions/PinnedNoteSheet.swift
+  undefined PinnedNoteSheet → fitbod/Sessions/PinnedNoteSheet.swift
+  undefined session → fitbod/Sessions/WorkoutNotesSheet.swift
+  undefined body → fitbod/Sessions/WorkoutNotesSheet.swift
+  undefined container → fitbod/Sessions/WorkoutNotesSheet.swift
+  ... and 14 more

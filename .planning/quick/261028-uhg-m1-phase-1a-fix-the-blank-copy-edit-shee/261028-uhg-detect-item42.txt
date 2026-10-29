@@ -1,0 +1,15 @@
+Changes: 4 files, 10 symbols
+Affected processes: 0
+Risk level: low
+
+Changed symbols:
+  undefined dismiss → fitbod/Sessions/PinnedNoteSheet.swift
+  undefined sessionExercise → fitbod/Sessions/PinnedNoteSheet.swift
+  undefined body → fitbod/Sessions/PinnedNoteSheet.swift
+  undefined PinnedNoteSheet → fitbod/Sessions/PinnedNoteSheet.swift
+  undefined init → fitbod/Sessions/PinnedNoteSheet.swift
+  undefined Phase3BRUGrepAuditTests → fitbodTests/Phase3BRUGrepAuditTests.swift
+  undefined excludedFileSuffixes → fitbodTests/Phase3BRUGrepAuditTests.swift
+  undefined note → fitbodUITests/NoteSheetsUITests.swift
+  undefined openSetNote → fitbodUITests/NoteSheetsUITests.swift
+  undefined NoteSheetsUITests → fitbodUITests/NoteSheetsUITests.swift

@@ -1,0 +1,4077 @@
+{
+  "/Users/chrissaechao/Desktop/fitbod/.mcp.json": {
+    "mtime": 1779941464.042192,
+    "ast_hash": "ccebf0affa0a85658437c9ef167b6505",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.gitnexus/meta.json": {
+    "mtime": 1779993164.7814052,
+    "ast_hash": "c8d193bed6f348cec84d1807db7255a1",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.gitnexus/parse-cache/7c6d49543a8029c925a9791ea9c275fdd00bfac4ff886070a803744abf00d8b6.json": {
+    "mtime": 1779993164.805064,
+    "ast_hash": "50d0289739c18e910ee78dc71d6300a5",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.gitnexus/parse-cache/5f4051e8ca63d1049ae5c78bb5e5af41ac7df25e7f719b51c8710b2948d8c708.json": {
+    "mtime": 1779993164.8143432,
+    "ast_hash": "ddd25d8fee2c1b9ec9a4e0ff6a2b85b4",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.gitnexus/parse-cache/index.json": {
+    "mtime": 1779993164.814634,
+    "ast_hash": "ec45be8314c25a66178e573a89e70280",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/bru-screens/weekly-recap.jsx": {
+    "mtime": 1779828062.2853794,
+    "ast_hash": "9279ddc6d40e3839271120eb00b42a7a",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/bru-screens/block-review.jsx": {
+    "mtime": 1779828062.2845187,
+    "ast_hash": "45ce478a630e7242132f6da3ccb494e6",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/bru-screens/plateau.jsx": {
+    "mtime": 1779828062.284869,
+    "ast_hash": "93e847f739d41c1a2fa497e9b413db5e",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/bru-screens/session-history.jsx": {
+    "mtime": 1779828062.2851346,
+    "ast_hash": "cc07e157c137992aee63e3a6a5f480ae",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/bru-screens/routine-builder.jsx": {
+    "mtime": 1779828062.285064,
+    "ast_hash": "a433a47132aa4ff0f6f39025ee34bfad",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/bru-screens/exercise-detail.jsx": {
+    "mtime": 1779828062.2846334,
+    "ast_hash": "11fd711fd3452249d5236ea01053512f",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/bru-screens/progress-chart.jsx": {
+    "mtime": 1779828062.2849429,
+    "ast_hash": "848ffa5ff6ea9b1b1739bdea0239091a",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/bru-screens/heatmap.jsx": {
+    "mtime": 1779828062.2846916,
+    "ast_hash": "f80a2005979d3205423db6a82aaca45b",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/bru-screens/plate-calc.jsx": {
+    "mtime": 1779828062.2848065,
+    "ast_hash": "c08e1872e6c16e7ed4c0df6b6a7097ca",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/bru-screens/block-overview.jsx": {
+    "mtime": 1779828062.284453,
+    "ast_hash": "a9852ba4d5b77d9422ff4a2fd4db2a6e",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/bru-screens/today.jsx": {
+    "mtime": 1779828062.2852635,
+    "ast_hash": "2cdf78521ab560df520956528c867681",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/bru-screens/custom-exercise.jsx": {
+    "mtime": 1779828062.2845752,
+    "ast_hash": "1600be14e456cc1ed92fd5aa58b44a7c",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/bru-screens/block-builder.jsx": {
+    "mtime": 1779828062.2843935,
+    "ast_hash": "d0aa101dcb06fe25c253237011a0216f",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/bru-screens/volume.jsx": {
+    "mtime": 1779828062.2853208,
+    "ast_hash": "5a425211c08a735b142db9e897a2366f",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/bru-screens/why-weight.jsx": {
+    "mtime": 1779828062.2854402,
+    "ast_hash": "f74e0707f3d775874feabd14780b0b1b",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/bru-screens/settings.jsx": {
+    "mtime": 1779828062.2852013,
+    "ast_hash": "a5eb4f253c895a9552208c218caba3a3",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/bru-screens/library.jsx": {
+    "mtime": 1779828062.28475,
+    "ast_hash": "9564ae485a235cb44301a3be938d15ff",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodUITests/MuscleVolumeTargetEditorUITests.swift": {
+    "mtime": 1779828063.475983,
+    "ast_hash": "a8abc44589d812927a94800b11e769eb",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodUITests/PrescriptionWeightCellBRUUITests.swift": {
+    "mtime": 1779828063.476984,
+    "ast_hash": "7a3097779a6aba3453b2b9c6e6664cda",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodUITests/RoutineBuilderBRUUITests.swift": {
+    "mtime": 1779828063.4770875,
+    "ast_hash": "6294ce91a834032ba41e3a311041a63b",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodUITests/NewBlockModalUITests.swift": {
+    "mtime": 1780003178.8038504,
+    "ast_hash": "108eb119fede3a8dcb1861afe403aa05",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodUITests/BodySilhouetteUITests.swift": {
+    "mtime": 1779828063.47582,
+    "ast_hash": "4024bba72bed74f26e735f9ea9f1de97",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodUITests/fitbodUITestsLaunchTests.swift": {
+    "mtime": 1778471874.5927274,
+    "ast_hash": "f49de836be34419d832cc327c24ea463",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodUITests/WeeklyRecapUITests.swift": {
+    "mtime": 1779828063.4774585,
+    "ast_hash": "a7f5dc76883b3271958a20ac35c6c6cb",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodUITests/DeloadAdvisoryBannerUITests.swift": {
+    "mtime": 1779828063.4759016,
+    "ast_hash": "4ff49b7c84d598496e8427c66b120ff3",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodUITests/VolumeBarsUITests.swift": {
+    "mtime": 1779828063.477398,
+    "ast_hash": "9f211f81a64dd8eca858210f09978f9e",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodUITests/Phase5BRUSmokeUITests.swift": {
+    "mtime": 1779828063.4762132,
+    "ast_hash": "6d6712169775be4bafd8918acb0cca6d",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodUITests/SessionHistoryBRUUITests.swift": {
+    "mtime": 1779828063.4771922,
+    "ast_hash": "b87e5ab48ba53644091fa92d7f3a058c",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodUITests/PlateauOverrideUITests.swift": {
+    "mtime": 1779828063.4768782,
+    "ast_hash": "b7234a861e0b4ed4cec37bef2532bda9",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodUITests/PlateCalculatorSheetBRUUITests.swift": {
+    "mtime": 1779828063.476774,
+    "ast_hash": "0597bfdb914c622066a9583067b42542",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodUITests/PerMuscleDetailUITests.swift": {
+    "mtime": 1779828063.4760692,
+    "ast_hash": "6f900ca375df9cd6641e860373f6b6b6",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodUITests/WhyThisWeightSheetBRUUITests.swift": {
+    "mtime": 1779828063.477569,
+    "ast_hash": "6e41774cab5cb0190c03ff47e2711aff",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodUITests/fitbodUITests.swift": {
+    "mtime": 1778471874.5919993,
+    "ast_hash": "7b5d55458d9c1dbe95210860a2d20fa8",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodUITests/SessionLoggerBRUUITests.swift": {
+    "mtime": 1779828063.4772944,
+    "ast_hash": "b27e0dfb49df0c825b3b0c31e1c15ee9",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodUITests/Phase6/SettingsBRUUITests.swift": {
+    "mtime": 1779828063.4766574,
+    "ast_hash": "ac84982a3dfe03b8b67a32a5728dc070",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodUITests/Phase6/ProgressHomeBRUUITests.swift": {
+    "mtime": 1779828063.4765267,
+    "ast_hash": "afb32f8010e7fee9e5dd3fe8dced2317",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodUITests/Phase6/ProgressChartBRUUITests.swift": {
+    "mtime": 1779828063.476409,
+    "ast_hash": "b98a7970b2031df1ff2b42423f617b15",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/fitbodApp.swift": {
+    "mtime": 1779828063.4572582,
+    "ast_hash": "7228163f4ed05d6036ee4e26e92f8f56",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Settings/SettingsView.swift": {
+    "mtime": 1779828063.4557498,
+    "ast_hash": "ec710d6f4cc0644555da167fdc8dbda1",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Settings/PlateInventorySeeder.swift": {
+    "mtime": 1779494499.6025767,
+    "ast_hash": "708723da140ddffa42f67f0e332a4d11",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Settings/MuscleVolumeTargetEditor.swift": {
+    "mtime": 1779828063.4553108,
+    "ast_hash": "88ae96cd273e4c51fe49d61b7c936b25",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Settings/PlateInventoryEditor.swift": {
+    "mtime": 1779828063.4555929,
+    "ast_hash": "86ae849cd65e96c5ed7fde825b260991",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Settings/PlateInventory+Defaults.swift": {
+    "mtime": 1779494480.9830382,
+    "ast_hash": "69dd725e99cf105c301d1d2e650b8fc0",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Settings/PlateCalculatorSheet.swift": {
+    "mtime": 1779828063.4554403,
+    "ast_hash": "9c670a4d666ffcc3cababb3dd35af1df",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Design/CalibratingProgressMeter.swift": {
+    "mtime": 1779828063.4336536,
+    "ast_hash": "5e209b18bf255b92b531403586168292",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Design/Color+BRU.swift": {
+    "mtime": 1779828063.4337564,
+    "ast_hash": "1c20cd7aafe836bdcc627a910d7840b1",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Design/BRUFont.swift": {
+    "mtime": 1779828063.4328744,
+    "ast_hash": "137a77102ff2d409b150eb6dca9e3dd7",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Design/BRUPillButton.swift": {
+    "mtime": 1779828063.4331243,
+    "ast_hash": "b4ce29b0ca14766f5870cefca64e2ca6",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Design/BRUHeaderBar.swift": {
+    "mtime": 1779828063.433004,
+    "ast_hash": "f9ffb4b3c42d4d23f70e401f6afb5a45",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Design/BRUPhoneFrame.swift": {
+    "mtime": 1779828063.4330633,
+    "ast_hash": "545d5eee883606dc3b24223cd62acf57",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Design/BRUSpark.swift": {
+    "mtime": 1779828063.4333475,
+    "ast_hash": "1f31a01d7d2175086e97b3a88aa46fdb",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Design/PlateStackViz.swift": {
+    "mtime": 1779828063.4338858,
+    "ast_hash": "f3580f709a2cbd0162a210f234b27919",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Design/BRUTabBar.swift": {
+    "mtime": 1779828063.433543,
+    "ast_hash": "3d059d46cc135c930e81d8670c4f4dfa",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Design/BRUDisplay.swift": {
+    "mtime": 1779828063.4327528,
+    "ast_hash": "f13acde6ce46ca5109a7a3790e54c023",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Design/SetCompletionGlyph.swift": {
+    "mtime": 1779828063.4340603,
+    "ast_hash": "1382fb7a57008abe34203033c1559a65",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Design/BRUReadout.swift": {
+    "mtime": 1779828063.4331882,
+    "ast_hash": "60f8ded455b08bb8f90591006d27c053",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Design/BRUChip.swift": {
+    "mtime": 1779828063.4325225,
+    "ast_hash": "a1647e7dcefc37a5cc257a8ac1455158",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Design/BRUButton.swift": {
+    "mtime": 1779828063.4324198,
+    "ast_hash": "0e6051b691f17d0d943d0d3ae81ce4a4",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Design/BRUSectionHead.swift": {
+    "mtime": 1779828063.4332924,
+    "ast_hash": "9de876640de47dad8c75eba50a2990b4",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Design/BRUActionPopover.swift": {
+    "mtime": 1779833715.994362,
+    "ast_hash": "fffed65ac54acefd14bb31ff7c7a254a",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Design/BRUSupersetBracket.swift": {
+    "mtime": 1779828063.4334438,
+    "ast_hash": "89f9ccf38ae75a35ec1c5d06faee1cf6",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Design/BRUDashedSlot.swift": {
+    "mtime": 1779828063.4326465,
+    "ast_hash": "34694151ebf1330d461db41020bed83d",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Design/PlateTallyRow.swift": {
+    "mtime": 1779828063.4339952,
+    "ast_hash": "df3efafa3c6748210c97a3ac10d1dcd2",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Design/BRUCornerBadge.swift": {
+    "mtime": 1779828063.4325805,
+    "ast_hash": "ca8237a363203d68f6804120836ff9ae",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Design/BRUDivider.swift": {
+    "mtime": 1779828063.432818,
+    "ast_hash": "cdecfe4e2ef1ab8057ba8e3f3dbbb462",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Fatigue/MuscleVolumeTargetStepper.swift": {
+    "mtime": 1779828063.4372516,
+    "ast_hash": "3e60727ea00ad2284036e6c49efa93ea",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Fatigue/MuscleRegionPaths.swift": {
+    "mtime": 1779828063.436931,
+    "ast_hash": "7406f4b2c64d82af8ec6bf80adba759d",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Fatigue/MuscleVolumeTargetSeeder.swift": {
+    "mtime": 1779828063.4371417,
+    "ast_hash": "fd54e3ca5207789948d6ba3d43153dc6",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Fatigue/StallBadge.swift": {
+    "mtime": 1779828063.437779,
+    "ast_hash": "d8a512cd903a39dfc75edd597cb41f75",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Fatigue/PerMuscleDetailView.swift": {
+    "mtime": 1779828063.4374368,
+    "ast_hash": "3095ed83ccf7ec541fdaa78d70b8906f",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Fatigue/RPVolumeLandmarks.swift": {
+    "mtime": 1779828063.4377027,
+    "ast_hash": "e6c0c53ba15df19be72baed5a7411df1",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Fatigue/DeloadAdvisor.swift": {
+    "mtime": 1779828063.4361656,
+    "ast_hash": "bde52270f2b6c76d7b5908524a71a39f",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Fatigue/MondayAtMidnight.swift": {
+    "mtime": 1779828063.4367893,
+    "ast_hash": "740d265b1e9bc11f2d84d6d4ba819b3d",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Fatigue/DeloadSignalDetailSheet.swift": {
+    "mtime": 1779828063.4363544,
+    "ast_hash": "f77d721524fb36cebf4f879bd528e89a",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Fatigue/TryVariationSheet.swift": {
+    "mtime": 1779828063.4381523,
+    "ast_hash": "dbc89efb665eec885b919a957b7cd8bb",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Fatigue/WeeklyRecapSheet.swift": {
+    "mtime": 1779828063.438387,
+    "ast_hash": "91d20713aab1d09e20d73ce8ff45faed",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Fatigue/BodySilhouetteView.swift": {
+    "mtime": 1779828063.4359298,
+    "ast_hash": "65e261ea0c7f695948691804f00f3f94",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Fatigue/MuscleVolumeBar.swift": {
+    "mtime": 1779828063.4370766,
+    "ast_hash": "819b355f4804fb7608bc767e6930aed9",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Fatigue/DeloadAdvisoryBanner.swift": {
+    "mtime": 1779828063.4362373,
+    "ast_hash": "3fe418db7209c46716a910691e04988c",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Fatigue/FatigueModel.swift": {
+    "mtime": 1779828063.4365144,
+    "ast_hash": "5eb977a1ef25df2413143b58ea3bf259",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Fatigue/StimulusWeightSeeder.swift": {
+    "mtime": 1779828063.4378533,
+    "ast_hash": "b1df72cf0172d942c89ba407c974b0f0",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Fatigue/SuggestedActionChip.swift": {
+    "mtime": 1779828063.4380338,
+    "ast_hash": "8f6f474dce906cce54c02d15eacd2aa0",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Fatigue/VolumeZone.swift": {
+    "mtime": 1779828063.438223,
+    "ast_hash": "c5c8fe5fc34d6c0c999daf7e3e08afec",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Fatigue/StimulusWeightTable.swift": {
+    "mtime": 1779828063.437939,
+    "ast_hash": "61de0c979e664ab39bb2d31e6755770d",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Fatigue/PlateauDetector.swift": {
+    "mtime": 1779828063.4376261,
+    "ast_hash": "f96abd98c4d3bb5481766cea35ad26ef",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Fatigue/FatigueSurfaceView.swift": {
+    "mtime": 1779828063.4367163,
+    "ast_hash": "86004e7956d2fd0833f83c8b3480289d",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/App/RootView.swift": {
+    "mtime": 1779828063.4298737,
+    "ast_hash": "ca1c9626b0dd8565c2faca1a20f1fa37",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/App/SeedState.swift": {
+    "mtime": 1778482237.198436,
+    "ast_hash": "6e1283f8615239b689f3694b6d159cdc",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Progress/SessionComparator.swift": {
+    "mtime": 1779828063.44555,
+    "ast_hash": "12fc73609ba9e647b6bc8a42ce7fbdd9",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Progress/ExerciseProgressView.swift": {
+    "mtime": 1779828063.4445875,
+    "ast_hash": "a670a91c3b29460af7e58404ab7652ab",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Progress/SeriesToggleChipRow.swift": {
+    "mtime": 1779828063.4454117,
+    "ast_hash": "c1a17658ef9989246151cf3469870064",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Progress/ProgressFilterChip.swift": {
+    "mtime": 1779828063.4450366,
+    "ast_hash": "6afd8ad36f515496b2e596c18b8cf6e6",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Progress/SeriesBuilder.swift": {
+    "mtime": 1779828063.4453127,
+    "ast_hash": "54a20b0e2a2ee07b09c734152693f062",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Progress/WeekDetailView.swift": {
+    "mtime": 1779828063.4457512,
+    "ast_hash": "3361beb5bc05a28218f780a10b0b0f11",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Progress/PRDetector.swift": {
+    "mtime": 1779828063.4448712,
+    "ast_hash": "3fd7ea16803b1127357ae7a10fcc4355",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Progress/WeeklyTonnageView.swift": {
+    "mtime": 1779828063.4461582,
+    "ast_hash": "a278e3b6d75582afa5fb859e4f4aba4c",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Progress/ProgressHomeView.swift": {
+    "mtime": 1779828063.445212,
+    "ast_hash": "ee8a1fcfa8f81d1c9641c2410942ff23",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Progress/ExercisePRsView.swift": {
+    "mtime": 1779828063.444387,
+    "ast_hash": "bc17b3fd90c316eafc69a78e794fb7c9",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Progress/ChartFilterState.swift": {
+    "mtime": 1779828063.4441967,
+    "ast_hash": "10e01ec1a5f82bf021eec0525903de4d",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Progress/MuscleVolumeProvider.swift": {
+    "mtime": 1779828063.4446616,
+    "ast_hash": "20abb4cfbacebbb24afae47eb1adfd99",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Progress/WeeklyTonnageAggregator.swift": {
+    "mtime": 1779828063.445871,
+    "ast_hash": "b344d793275443709542e759e61482da",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Progress/WeeklyTonnageFilterChips.swift": {
+    "mtime": 1779828063.4459798,
+    "ast_hash": "653698464a308c96ecaf64d9834ec9de",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Progress/ProgressColors.swift": {
+    "mtime": 1779828063.4449377,
+    "ast_hash": "14aecc3901074ae05434b408225a5b07",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Progress/OneRepMax.swift": {
+    "mtime": 1779828063.4447331,
+    "ast_hash": "a950c1533bee23cba4f345b6fd6d8234",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Progress/SessionComparisonView.swift": {
+    "mtime": 1779828063.4456766,
+    "ast_hash": "9cc1952499dd6ae3a789bea571f0892f",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Resources/ExerciseSeed/exercises.json": {
+    "mtime": 1778520508.448568,
+    "ast_hash": "2d30a665c77618d8c4276651c9c32aa0",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Assets.xcassets/Contents.json": {
+    "mtime": 1778471873.9228358,
+    "ast_hash": "9deb2ada1cc834bbebf8bbad9c8978a1",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Assets.xcassets/bruAmber.colorset/Contents.json": {
+    "mtime": 1779828063.4303992,
+    "ast_hash": "a524892576d2995fa3a869e7962a2242",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Assets.xcassets/bruMuted.colorset/Contents.json": {
+    "mtime": 1779828063.431119,
+    "ast_hash": "88fa6114e12dad544b3786c9c6747c49",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Assets.xcassets/bruPaper.colorset/Contents.json": {
+    "mtime": 1779828063.431212,
+    "ast_hash": "10064e0d1c92c0c27148b03e24c891fc",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Assets.xcassets/VolumeNearMRVAmber.colorset/Contents.json": {
+    "mtime": 1779828063.4300964,
+    "ast_hash": "d17026bf4d1371ffd98e91e072f906f8",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Assets.xcassets/VolumeProductiveGreen.colorset/Contents.json": {
+    "mtime": 1779828063.4303071,
+    "ast_hash": "0ea332df0781cc71634889716f2747ea",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Assets.xcassets/AppIcon.appiconset/Contents.json": {
+    "mtime": 1778479517.0867338,
+    "ast_hash": "c5d5aeafe79232c2195e36ca041e38c5",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Assets.xcassets/AccentColor.colorset/Contents.json": {
+    "mtime": 1778479517.085049,
+    "ast_hash": "a6ec1cf4193e44a152db4090b87707d5",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Assets.xcassets/bruTabSurface.colorset/Contents.json": {
+    "mtime": 1779828063.4314861,
+    "ast_hash": "2ca8e71c62367ef335c0b97775ee7bde",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Assets.xcassets/bruTabSeparator.colorset/Contents.json": {
+    "mtime": 1779828063.4313853,
+    "ast_hash": "6c316e165cebdbb20bf0a4e528124ecc",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Assets.xcassets/bruSignal.colorset/Contents.json": {
+    "mtime": 1779828063.4313004,
+    "ast_hash": "1004f20867025b86a70e36163835a299",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Assets.xcassets/bruBg.colorset/Contents.json": {
+    "mtime": 1779828063.4304802,
+    "ast_hash": "8f93eaccc0ecd0f139e8c21eaac3f117",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Assets.xcassets/bruFaint.colorset/Contents.json": {
+    "mtime": 1779828063.4306872,
+    "ast_hash": "8c8b3f2d204b5d4232d6e1bc0488e9e5",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Assets.xcassets/VolumeBelowMEVGray.colorset/Contents.json": {
+    "mtime": 1779828063.4299903,
+    "ast_hash": "c985b6ce51f357b7a811d580b6a40aa2",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Assets.xcassets/bruGreen.colorset/Contents.json": {
+    "mtime": 1779828063.430794,
+    "ast_hash": "335bcb1de3dd64d092f29b557e648f4e",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Assets.xcassets/VolumeOverMRVRed.colorset/Contents.json": {
+    "mtime": 1779828063.430215,
+    "ast_hash": "c01f96fd2887e1ca5f2ec5d838dc7d9b",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Assets.xcassets/bruInk.colorset/Contents.json": {
+    "mtime": 1779828063.4310226,
+    "ast_hash": "00ecf810273bdccd563e3ef2c13ad9be",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Assets.xcassets/bruBg2.colorset/Contents.json": {
+    "mtime": 1779828063.430576,
+    "ast_hash": "a0857fae8106e3be191d7a99a2bd9cdf",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Assets.xcassets/bruHair.colorset/Contents.json": {
+    "mtime": 1779828063.4309068,
+    "ast_hash": "bdd490c1092389aac27ed24fa43a2850",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Prescription/DoubleProgressionStrategy.swift": {
+    "mtime": 1779828063.4433079,
+    "ast_hash": "08219dab2e572e5e5fe0128438e5568d",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Prescription/PlateCalculator.swift": {
+    "mtime": 1779493965.540717,
+    "ast_hash": "58176b1f8afc99a476b5880d4ea8f68c",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Prescription/HybridStrategy.swift": {
+    "mtime": 1779828063.4434614,
+    "ast_hash": "54458918e00a1c5b8abe2fcfe51653a5",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Prescription/ProgressionStrategy.swift": {
+    "mtime": 1779828063.4437497,
+    "ast_hash": "e504b5339ffaf37e4acdf44c4e0262a8",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Prescription/FatigueAdvisory.swift": {
+    "mtime": 1779828063.4433818,
+    "ast_hash": "e0ca7d1c420d6b85f53c1f50be1f8d27",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Prescription/BlockPeriodizedStrategy.swift": {
+    "mtime": 1779828063.4431124,
+    "ast_hash": "e929052577f12724420b96e40bc1862f",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Prescription/StubFatigueAdvisory.swift": {
+    "mtime": 1779828063.4440906,
+    "ast_hash": "b3aaa3bea5962ac5668e2b86d708e3f0",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Prescription/Calibration.swift": {
+    "mtime": 1779494075.1833613,
+    "ast_hash": "951fbaf1275c2f9ebdf3f794766ed069",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Prescription/TuchschererTable.swift": {
+    "mtime": 1779493734.140848,
+    "ast_hash": "751577be671daaeffb2a92a647fea3f3",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Prescription/RPEAutoregStrategy.swift": {
+    "mtime": 1779828063.4440155,
+    "ast_hash": "0362d8a64c1e69c278f92751db8b85c1",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Prescription/OneRepMaxEstimator.swift": {
+    "mtime": 1779828063.443524,
+    "ast_hash": "04afbcb3f0540db14d44ff3705a7ab53",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Prescription/PeriodizationEngine.swift": {
+    "mtime": 1779828063.4435954,
+    "ast_hash": "9304b8abece148d5198d8fdac6fc8820",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Prescription/ProgressionStrategyFactory.swift": {
+    "mtime": 1779828063.4438677,
+    "ast_hash": "e10f93d7171fe2f7328469c5a78372a0",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Prescription/WarmupRamp.swift": {
+    "mtime": 1779496587.0494106,
+    "ast_hash": "4b205b103ec67aac5d8c4d760b87f619",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Models/WarmupConfig.swift": {
+    "mtime": 1779492321.0813944,
+    "ast_hash": "761b8c4b3fd27f508f18c483ae3c75a8",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Models/Exercise+Preview.swift": {
+    "mtime": 1778480470.7630107,
+    "ast_hash": "63fd8fbb4dda6c1270092ea7d222a474",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Models/ExerciseMuscleStimulus.swift": {
+    "mtime": 1779828063.43951,
+    "ast_hash": "e819dd283d3117db21b5e5162d3f7322",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Models/Session.swift": {
+    "mtime": 1779828063.440034,
+    "ast_hash": "f362a932774e69cee314dbf5a2a890f8",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Models/RoutineFolder.swift": {
+    "mtime": 1778517409.5052361,
+    "ast_hash": "dfe3c9e362167551d095eea177555b7d",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Models/PlateInventory.swift": {
+    "mtime": 1779492345.9061227,
+    "ast_hash": "f922acac170fd8acbd845b63b6d3fe18",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Models/SessionExercise.swift": {
+    "mtime": 1779828063.440159,
+    "ast_hash": "fb87530dca8cd51ab281ba41f28c45e6",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Models/BlockPhase.swift": {
+    "mtime": 1778479798.5250258,
+    "ast_hash": "5483b741093ac920b3dadfdf2b851044",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Models/Block.swift": {
+    "mtime": 1779828063.4389608,
+    "ast_hash": "33508787e5605da3998c96c3c856fa9e",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Models/RoutineExerciseSetOverride.swift": {
+    "mtime": 1778517422.9019842,
+    "ast_hash": "035395bfe49f636fa6ac70866d058ec7",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Models/MuscleVolumeTarget.swift": {
+    "mtime": 1779828063.4396288,
+    "ast_hash": "c413973f9303667e8c332b921495cef9",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Models/RoutineExercise.swift": {
+    "mtime": 1779828063.439861,
+    "ast_hash": "f7a264bb55b2f0db3083764c1540f69c",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Models/SetEntry.swift": {
+    "mtime": 1779828063.4402611,
+    "ast_hash": "01c6035350d9666ba24904e2d69b486f",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Models/Exercise.swift": {
+    "mtime": 1779828063.4394023,
+    "ast_hash": "1a9776a07359632c603afdb02f12f5ce",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Models/UserSettings.swift": {
+    "mtime": 1779828063.4403713,
+    "ast_hash": "e2c30dbdeb9a1b9a7477692224d84a41",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Models/Routine.swift": {
+    "mtime": 1779828063.4397354,
+    "ast_hash": "2cb6314b07ae1506278e689804f18103",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Models/PlateSpec.swift": {
+    "mtime": 1779492312.9849226,
+    "ast_hash": "b3727cb09be3e02e5cb476926c5eb82b",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Models/MuscleGroup.swift": {
+    "mtime": 1778479745.6628706,
+    "ast_hash": "db8635ca8e4374390b6648d688b0625f",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Models/SupersetGroup.swift": {
+    "mtime": 1778517416.3996723,
+    "ast_hash": "54c851eb4581ebd41652a9599b951f6f",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Models/Enums/EquipmentKind.swift": {
+    "mtime": 1779492303.3347332,
+    "ast_hash": "a6ae2b37bb41cac956d01652c513c2dc",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Models/Enums/Equipment.swift": {
+    "mtime": 1778479690.0802698,
+    "ast_hash": "567bd9972c0e238536b225bc3bdbad6b",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Models/Enums/BlockPhaseKind.swift": {
+    "mtime": 1778479704.9401538,
+    "ast_hash": "e740c31bc97145155fec7dd346a16aa1",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Models/Enums/ProgressionKind.swift": {
+    "mtime": 1778479687.0196106,
+    "ast_hash": "db8d6ace4a81cd47716c11179ac0759b",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Models/Enums/SeriesKind.swift": {
+    "mtime": 1779828063.4391592,
+    "ast_hash": "e90f2b1da0aa510debba3c3e115948f8",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Models/Enums/PRKind.swift": {
+    "mtime": 1779828063.4390712,
+    "ast_hash": "49889cf291aa54977ebbfc9de8d45a91",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Models/Enums/Force.swift": {
+    "mtime": 1778479694.2705953,
+    "ast_hash": "af95139d01972add0673c45a89a2d4d3",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Models/Enums/WeightUnit.swift": {
+    "mtime": 1778479702.6597478,
+    "ast_hash": "99c7a6f0da412915c83d3947903be8d4",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Models/Enums/SetType.swift": {
+    "mtime": 1778479707.2990365,
+    "ast_hash": "b11c4c7cf02790de52c150d1129d0816",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Models/Enums/Mechanic.swift": {
+    "mtime": 1778479692.3640194,
+    "ast_hash": "2ba87fd098b8e2956606c612f9941c4e",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Models/Enums/TonnageSliceMode.swift": {
+    "mtime": 1779828063.4392266,
+    "ast_hash": "7c2b58a7f0cef038ec4b55d761779975",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Models/Enums/Pattern.swift": {
+    "mtime": 1778479698.842882,
+    "ast_hash": "cc25c330967b41584694d033f7474599",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Models/Enums/MuscleRegion.swift": {
+    "mtime": 1778479700.7481065,
+    "ast_hash": "85bb2887a6a7bd2b23eb7514a006deaf",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Models/Enums/Level.swift": {
+    "mtime": 1778479696.2036333,
+    "ast_hash": "dc3144a981fdc3e5ec8723ecfc352a71",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Models/Enums/Intent.swift": {
+    "mtime": 1778479684.7589464,
+    "ast_hash": "6bd13b3cfdd556bba4a1a34080b65930",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Routines/SetRowsContainer.swift": {
+    "mtime": 1779828063.4503398,
+    "ast_hash": "56657501c56e39efa0f68987ea8f59c9",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Routines/RoutineFolderDraft.swift": {
+    "mtime": 1778520212.5876865,
+    "ast_hash": "4162972b5a4eb865a82d762d441303d2",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Routines/WarmupConfigSheet.swift": {
+    "mtime": 1779828063.4506593,
+    "ast_hash": "91b250816d96f9df965efda05c716284",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Routines/InlineExerciseSearchRow.swift": {
+    "mtime": 1779828063.4484718,
+    "ast_hash": "44c6c3a98bbe0c8fa5483ba5e46a6059",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Routines/PrescriptionDefaults.swift": {
+    "mtime": 1779828063.4489439,
+    "ast_hash": "65b21170562c0e3252b3251bf974793d",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Routines/RoutineBuilderDayTabs.swift": {
+    "mtime": 1779828063.4492662,
+    "ast_hash": "7e3be65fb48662a5537a0ef1de9697c2",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Routines/RoutineExerciseCard.swift": {
+    "mtime": 1779828063.4499118,
+    "ast_hash": "fa60b8bd3b027bfb3cb06b7e0ec652d3",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Routines/RoutineDraft.swift": {
+    "mtime": 1779828063.449589,
+    "ast_hash": "ace8b8f7fd5f41b94f1f8f1397b22c22",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Routines/BottomActionBar.swift": {
+    "mtime": 1779828063.4483364,
+    "ast_hash": "72d712e3548443c8487616a6ae1eabf0",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Routines/RoutinesListView.swift": {
+    "mtime": 1779828063.4501972,
+    "ast_hash": "40665aee564524c813563bca9e896531",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Routines/RoutineDuplicator.swift": {
+    "mtime": 1779828063.4497612,
+    "ast_hash": "e169bb5420f1e9fe274e33bf50dd8985",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Routines/PerSetOverrideRow.swift": {
+    "mtime": 1779828063.4488392,
+    "ast_hash": "176a3f67c6ffb389da506a0993e150fc",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Routines/MoveRoutineSheet.swift": {
+    "mtime": 1779828063.4486177,
+    "ast_hash": "880043cb6d499b4b5c6ac91bdc0fdc62",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Routines/SupersetAssignmentSheet.swift": {
+    "mtime": 1779828063.4504836,
+    "ast_hash": "10c91e72f77b88f6c453fd571786076d",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Routines/NewFolderSheet.swift": {
+    "mtime": 1779828063.4487362,
+    "ast_hash": "b59d4fb8915c6f9feda1a16b66abf796",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Routines/RoutineRow.swift": {
+    "mtime": 1779828063.450046,
+    "ast_hash": "5b86b8492450902735e1b9b8ae44801c",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Routines/RoutineBuilderView.swift": {
+    "mtime": 1779828063.4494205,
+    "ast_hash": "e2e6ba01b0324bc37ccd95c55090436d",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Routines/PrescriptionEditorRow.swift": {
+    "mtime": 1779828063.4491627,
+    "ast_hash": "0b10af30070f41fae70f6d5f0fe072ca",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Sessions/SwapExerciseSheet.swift": {
+    "mtime": 1779828063.4543989,
+    "ast_hash": "7c4dd32f279500b280877f1d6ec5c026",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Sessions/CalibratingBadge.swift": {
+    "mtime": 1779828063.4512079,
+    "ast_hash": "7aa7e2a4d43b322143703cca4972036b",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Sessions/WarmupRampRows.swift": {
+    "mtime": 1779828063.4548008,
+    "ast_hash": "e0186a6e6f38ccb26762eb5b86aa74a9",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Sessions/SessionFactory.swift": {
+    "mtime": 1779828063.4534159,
+    "ast_hash": "16fe436b457f9344da9fe86398eced34",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Sessions/SessionHistoryStatStrip.swift": {
+    "mtime": 1779828063.4535985,
+    "ast_hash": "0e5e283b51e4e32b5dfee4e58f7ddd6b",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Sessions/SessionHistoryRow.swift": {
+    "mtime": 1779828063.4535367,
+    "ast_hash": "e392d47407a5223466cf08832ef8b2ab",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Sessions/InlineRPEChipRow.swift": {
+    "mtime": 1779828063.4518235,
+    "ast_hash": "e04ae58db621342abb3c21f067f8026d",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Sessions/WorkoutNotesSheet.swift": {
+    "mtime": 1779828063.4551964,
+    "ast_hash": "bb6db994a82fa99fb9722a745dd9bf50",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Sessions/WorkoutHeaderToolbar.swift": {
+    "mtime": 1779828063.4550948,
+    "ast_hash": "096ee06e616c750cef459c84e632e99a",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Sessions/PreviousMatchingIntent.swift": {
+    "mtime": 1779828063.452709,
+    "ast_hash": "31ee4449134544f10befc72f1cd2d027",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Sessions/PerSetNoteSheet.swift": {
+    "mtime": 1779828063.4520464,
+    "ast_hash": "5bd0f29b7037bb1de4ab1cf0bf0627d7",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Sessions/SetTypeChip.swift": {
+    "mtime": 1779828063.454255,
+    "ast_hash": "0d27d2453696a0e4b43b68c3cc725e73",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Sessions/PinnedNoteCapsule.swift": {
+    "mtime": 1779828063.452139,
+    "ast_hash": "9db8dbeb355dafa307903517dd3f1c88",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Sessions/BumpBanner.swift": {
+    "mtime": 1779828063.450939,
+    "ast_hash": "d30277d9e8bb8516b3f567b5fe864b87",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Sessions/SessionExerciseCard.swift": {
+    "mtime": 1779828063.4532752,
+    "ast_hash": "0f8f9763545d4ccf6a9b1ed877eddc65",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Sessions/InSessionPRState.swift": {
+    "mtime": 1779828063.4516954,
+    "ast_hash": "07d22a8295de028b5557570018f88a71",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Sessions/PlateStackDisclosure.swift": {
+    "mtime": 1779828063.452296,
+    "ast_hash": "e0829026519ad641f89d59936c56c7bf",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Sessions/WeeklyTonnageSparkCard.swift": {
+    "mtime": 1779828063.4548712,
+    "ast_hash": "aadb57c6505325c0a24e6af8ec405720",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Sessions/SessionHistoryView.swift": {
+    "mtime": 1779828063.4537048,
+    "ast_hash": "4ec2e048f5c87f80e7f8a04b10537e28",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Sessions/DecimalRPEPickerSheet.swift": {
+    "mtime": 1779828063.4514663,
+    "ast_hash": "b28f82ff9789e5d26c469263036ae31b",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Sessions/InSessionPRBanner.swift": {
+    "mtime": 1779828063.4515913,
+    "ast_hash": "754fc38743a0b50d53ee5931966e7589",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Sessions/ResumeWorkoutBanner.swift": {
+    "mtime": 1779828063.4531121,
+    "ast_hash": "6e6d804d811b34f119000594690db2a9",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Sessions/PrescriptionWeightCell.swift": {
+    "mtime": 1779828063.4524665,
+    "ast_hash": "300f8d5b115b2cd12b535618d2f1020c",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Sessions/PinnedNoteSheet.swift": {
+    "mtime": 1778523403.387855,
+    "ast_hash": "58125e3bfc3720600d349431b560b1c8",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Sessions/AddUnplannedExerciseButton.swift": {
+    "mtime": 1779828063.4508417,
+    "ast_hash": "1e08b6f48c2eec8e73a7b363b309da2b",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Sessions/TempoEntryRow.swift": {
+    "mtime": 1779828063.4545736,
+    "ast_hash": "6d279c035f621c1a4d408c780c3d336a",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Sessions/SessionLoggerView.swift": {
+    "mtime": 1779828063.4539044,
+    "ast_hash": "5e6689c926a22ae0d460b3650dcd39dd",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Sessions/SetRow.swift": {
+    "mtime": 1779828063.4540896,
+    "ast_hash": "c84c4168f23b4dbb14e3ab7a9b8cd84e",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Sessions/PartialRepsRow.swift": {
+    "mtime": 1779828063.4519434,
+    "ast_hash": "37c6247ed1f3225a3f9cef464554da3a",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Sessions/PreviousColumn.swift": {
+    "mtime": 1779828063.452574,
+    "ast_hash": "52deba72f7034fd3915c304da086b092",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Sessions/WhyThisWeightSheet.swift": {
+    "mtime": 1779828063.4550006,
+    "ast_hash": "a3956a15436efb5cf4481798bc4c34b0",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Sessions/ClusterSubRepChipRow.swift": {
+    "mtime": 1779828063.451349,
+    "ast_hash": "30c602782d2d7b7840872badd6173e8c",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Sessions/RestTimer/RestTimerEngine.swift": {
+    "mtime": 1778519889.929599,
+    "ast_hash": "77cc76cce6ee51a52e1f68bee3acba67",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Sessions/RestTimer/RestTimerNotificationScheduler.swift": {
+    "mtime": 1778518836.4484653,
+    "ast_hash": "77107f3bf7d14a0b4379194c6d0ceb16",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Sessions/RestTimer/RestTimerProgressArc.swift": {
+    "mtime": 1779828063.4529736,
+    "ast_hash": "02470e28196b6dd408e80e5b6952c3ec",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Sessions/RestTimer/RestTimerAttributes.swift": {
+    "mtime": 1778519450.4698286,
+    "ast_hash": "f0e8f486b84a8aee49036102804f473d",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Sessions/RestTimer/RestTimerLiveActivityBridge.swift": {
+    "mtime": 1778519489.9285848,
+    "ast_hash": "5aca4bf8e1b12ac8eedb5044a4422c0a",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Sessions/RestTimer/RestTimerOverlay.swift": {
+    "mtime": 1779828063.4528742,
+    "ast_hash": "d271fbeeb9e758049f7b850ac70cf596",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Sessions/RestTimer/RestTimerActivityController.swift": {
+    "mtime": 1779483415.2933717,
+    "ast_hash": "1003acb3e96b7354b3aeb0a741dba970",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Persistence/SchemaV5.swift": {
+    "mtime": 1779828063.4429307,
+    "ast_hash": "e5e99fa0108be49b5ae3b9caf2613e58",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Persistence/SchemaV3.swift": {
+    "mtime": 1779828063.4427304,
+    "ast_hash": "c7a6cb6d9af69a6dfe838676d08a0441",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Persistence/SchemaV1.swift": {
+    "mtime": 1778480121.5287178,
+    "ast_hash": "ad289982b2a683da83a0bae14d9ec6d9",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Persistence/FitbodSchemaMigrationPlan.swift": {
+    "mtime": 1779828063.4424505,
+    "ast_hash": "a79e164c620d3c5e900e0000db5816bb",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Persistence/SchemaV6.swift": {
+    "mtime": 1779828063.442996,
+    "ast_hash": "5512b7dedee3ad06c6cb77b21b31cb2c",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Persistence/PreviewModelContainer.swift": {
+    "mtime": 1779828063.4425597,
+    "ast_hash": "c25460e63e3370465e04fdc3a25dc419",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Persistence/SchemaV4.swift": {
+    "mtime": 1779828063.442863,
+    "ast_hash": "d47a43230bb90ed6a926a19cfa203fe9",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Persistence/SchemaV2.swift": {
+    "mtime": 1778517624.0480347,
+    "ast_hash": "b2122d7e0b93842e41b3a461d2359a55",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Periodization/MesocycleWeekPage.swift": {
+    "mtime": 1779828063.4420567,
+    "ast_hash": "7b093e44b54c81584c67413dcafed19e",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Periodization/BlockPhaseDraft.swift": {
+    "mtime": 1779828063.4411175,
+    "ast_hash": "4d6012bd41689dfb4d1b1a1903becad7",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Periodization/BlockTemplates.swift": {
+    "mtime": 1779828063.4416,
+    "ast_hash": "1cbc90ea3b8a705999d5b728677e262d",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Periodization/BlockOverviewScreen.swift": {
+    "mtime": 1779828063.4409342,
+    "ast_hash": "4b75cb6a25738eb63fab43678adbd2c7",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Periodization/BlockRow.swift": {
+    "mtime": 1779828063.4415195,
+    "ast_hash": "471166da949cb5a1b60fddb1631d515b",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Periodization/BlockBuilderView.swift": {
+    "mtime": 1780009391.8690736,
+    "ast_hash": "6420a54f570f69fcfaefd8bc739d04c7",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Periodization/BlockPhaseColors.swift": {
+    "mtime": 1779828063.441035,
+    "ast_hash": "3dedfccc57d836dddb873b071fbcdc14",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Periodization/ProgramView.swift": {
+    "mtime": 1780003150.747312,
+    "ast_hash": "0848e81a101cfa3c4179d39867a0b107",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Periodization/MesocycleWeekContext.swift": {
+    "mtime": 1779828063.4419343,
+    "ast_hash": "df9c32bf86e0f5ff35063de86e2baa68",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Periodization/BlockNameField.swift": {
+    "mtime": 1779983895.4995692,
+    "ast_hash": "fd22229a2eb6b71fad56fa952673e40b",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Periodization/StartBlockCTA.swift": {
+    "mtime": 1779828063.442245,
+    "ast_hash": "d5aa6c823cfd622d26ed5e437d1133b4",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Periodization/BlockReviewView.swift": {
+    "mtime": 1779828063.44143,
+    "ast_hash": "0a1d5516093f980148c7e7a127a27ea7",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Periodization/BlockCard.swift": {
+    "mtime": 1779828063.4407532,
+    "ast_hash": "93ebfe0ce04247d142193ed62205f302",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Periodization/BlockDraft.swift": {
+    "mtime": 1779990337.0237992,
+    "ast_hash": "95a4b5505ec2692b86b0eeb864e68680",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Periodization/DeloadWeekBanner.swift": {
+    "mtime": 1779828063.4417589,
+    "ast_hash": "0a90e345c53c44d21a78eae894afdf32",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Periodization/BlockPhaseEditorRow.swift": {
+    "mtime": 1779828063.4412327,
+    "ast_hash": "b1934a2e16378d8877a96947a5611701",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Periodization/E1RMHelper.swift": {
+    "mtime": 1779828063.4418304,
+    "ast_hash": "61ced607c07901bfe312fb0a3ea10f7b",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Periodization/BlockPickerMenu.swift": {
+    "mtime": 1779828063.4413168,
+    "ast_hash": "6d0917824cc2fa08b695aadc07395ee5",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Periodization/ConsiderDeloadBanner.swift": {
+    "mtime": 1779828063.4416816,
+    "ast_hash": "cea4c8c686ca6400d8c35cccd428639e",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Export/ExportService.swift": {
+    "mtime": 1779828063.4356215,
+    "ast_hash": "7a6f5ed59b2146e9aa0b0ecddc033a3e",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Export/JSONFile.swift": {
+    "mtime": 1779828063.435771,
+    "ast_hash": "22277d96862ec5107629177fec770eee",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Export/CSVExporter.swift": {
+    "mtime": 1779828063.4352615,
+    "ast_hash": "50939ba0e4a32f368dceb8f52a7d50b3",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Export/JSONExporter.swift": {
+    "mtime": 1779828063.4356973,
+    "ast_hash": "51e6797cd6816d0e79a9cf93470c53a9",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Export/ExportDTOs.swift": {
+    "mtime": 1779828063.4354153,
+    "ast_hash": "5ae01390b4682c1ee01d69b2ffa89813",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Export/CSVFile.swift": {
+    "mtime": 1779828063.4353378,
+    "ast_hash": "a6bf16696d1d78ef86b8a2f949ba1164",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Backup/UTType+FitbodBackup.swift": {
+    "mtime": 1779828063.432011,
+    "ast_hash": "c786a7d98dc9eaebdf660b025a8cb59d",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Backup/ZIPWriter.swift": {
+    "mtime": 1779828063.4322624,
+    "ast_hash": "7ad6f8c3c58b5a8a10a08852ef9d8924",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Backup/BackupManifest.swift": {
+    "mtime": 1779828063.431707,
+    "ast_hash": "90fced57b1089728cf8ee6bcc3ead92c",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Backup/BackupArchiver.swift": {
+    "mtime": 1779828063.431607,
+    "ast_hash": "d39992e50f487c2d4e3da0d853dc57f8",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Backup/BackupRestorer.swift": {
+    "mtime": 1779828063.4318287,
+    "ast_hash": "5a08e8647066891a3872f53fcf0ba8db",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Backup/FitbodBackupFile.swift": {
+    "mtime": 1779828063.4319375,
+    "ast_hash": "b731ffb586da21db3cb9f3f4fe726e6d",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Backup/ZIPReader.swift": {
+    "mtime": 1779828063.4321463,
+    "ast_hash": "f383b9d4a5181054b8b87a3de598fa7d",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Views/TodayStatStrip.swift": {
+    "mtime": 1779828063.4568055,
+    "ast_hash": "784e98fb0ae8b5db3710c09cd3a254fd",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Views/LiftListRow.swift": {
+    "mtime": 1779828063.4564052,
+    "ast_hash": "a799cf9a6f2b534f82196e14efd13440",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Views/LiftListSection.swift": {
+    "mtime": 1779828063.4565415,
+    "ast_hash": "3db366db30acfc1df1138bd79d9a2384",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Views/IntentChip.swift": {
+    "mtime": 1779828063.4562519,
+    "ast_hash": "bfde6ab7de304b8da0712b2cf00c44d3",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Views/BlockContextBand.swift": {
+    "mtime": 1779828063.4560568,
+    "ast_hash": "220700847201fa408a122b76a667adab",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Views/BlackSlabCTA.swift": {
+    "mtime": 1779828063.4559429,
+    "ast_hash": "b050b40b31bd9803d905c3a00ec15216",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Views/ResumeWorkoutSlab.swift": {
+    "mtime": 1779828063.456661,
+    "ast_hash": "fb726270252e10ffe73ee689594ceec8",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Views/TodayView.swift": {
+    "mtime": 1779828063.4570272,
+    "ast_hash": "f101648aa407dbb57e9949258033903e",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Views/WeekTickerCells.swift": {
+    "mtime": 1779828063.4571376,
+    "ast_hash": "f9c57dedfb919a82114c464f47617f72",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/ExerciseLibrary/CustomExerciseEditor.swift": {
+    "mtime": 1779828063.4342852,
+    "ast_hash": "230dc2b8b9965fd69fdcc8a3992d8975",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/ExerciseLibrary/MuscleWeightRow.swift": {
+    "mtime": 1778483522.3928318,
+    "ast_hash": "85fa6ea8987cbb2e44f9c742a9385a3e",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/ExerciseLibrary/MusclePickerSheet.swift": {
+    "mtime": 1778483432.1352649,
+    "ast_hash": "e33dc650c8f193f3e2bcae88fd7e7281",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/ExerciseLibrary/ExerciseLibraryImporter.swift": {
+    "mtime": 1778520575.5125458,
+    "ast_hash": "56b412696894a3e0d205559a78ceeea3",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/ExerciseLibrary/FilterState.swift": {
+    "mtime": 1778520572.7014754,
+    "ast_hash": "e04be466e3a88aed6e0c60417b330ccc",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/ExerciseLibrary/CustomExerciseImagePicker.swift": {
+    "mtime": 1779828063.4343886,
+    "ast_hash": "0524995df13bc9cc00bf3d43f8ec09e0",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/ExerciseLibrary/FilterChip.swift": {
+    "mtime": 1778486643.3287377,
+    "ast_hash": "6f865468c37f5acfb4f29a0085e7ed28",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/ExerciseLibrary/ExerciseFilterBar.swift": {
+    "mtime": 1778486643.3278923,
+    "ast_hash": "160a081c0110a024b7ad5a800733d7ed",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/ExerciseLibrary/EquipmentMapper.swift": {
+    "mtime": 1778481102.276687,
+    "ast_hash": "cee5a5101de595dd462ccb772aaadd95",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/ExerciseLibrary/FilterPickerSheet.swift": {
+    "mtime": 1778482718.0958302,
+    "ast_hash": "317298d2ad29fd3c2807c316ff23ad09",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/ExerciseLibrary/EmptyLibraryView.swift": {
+    "mtime": 1778484869.818272,
+    "ast_hash": "2cc83d5ec15df71c5140274d665c5816",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/ExerciseLibrary/ExerciseRow.swift": {
+    "mtime": 1778482729.805403,
+    "ast_hash": "15d278c5c590ad485164a09093a0d27d",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/ExerciseLibrary/MuscleRegionMap.swift": {
+    "mtime": 1778481111.0431707,
+    "ast_hash": "83839792d86516eafc7367eb6d2dd749",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/ExerciseLibrary/ExerciseDetailView.swift": {
+    "mtime": 1779828063.4345613,
+    "ast_hash": "620623086084b94624127abb93df6a55",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/ExerciseLibrary/ExerciseHistoryView.swift": {
+    "mtime": 1779828063.4348173,
+    "ast_hash": "990d0c78c62eb7e6c2d85d1b9dad4e40",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/ExerciseLibrary/ExerciseDTO.swift": {
+    "mtime": 1778481092.7106223,
+    "ast_hash": "00fde40a046fc545d34e9731d1bd27c5",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/ExerciseLibrary/SeedError.swift": {
+    "mtime": 1778481669.5303893,
+    "ast_hash": "316e1924e0104c7f26f51f8e26368f08",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/ExerciseLibrary/ExerciseDeletion.swift": {
+    "mtime": 1779828063.4344494,
+    "ast_hash": "6fe15d6295a876e5fd8b3510a8b27604",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/ExerciseLibrary/IntentFilterChipRow.swift": {
+    "mtime": 1779828063.4349866,
+    "ast_hash": "725534b5beaae715d95a83917c079341",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/ExerciseLibrary/ExerciseHistoryRow.swift": {
+    "mtime": 1779828063.434714,
+    "ast_hash": "7ebec2a20cdde1e4d97b429efd221e3a",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/ExerciseLibrary/CustomExerciseDraft.swift": {
+    "mtime": 1778486643.3277714,
+    "ast_hash": "dcaecbb241f397d5ca962621cfb88fb1",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/ExerciseLibrary/PRStripFooter.swift": {
+    "mtime": 1779828063.435101,
+    "ast_hash": "29dd160f08b57c732ef23b715b5022e6",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/ExerciseLibrary/ExerciseLibraryView.swift": {
+    "mtime": 1778521104.4951506,
+    "ast_hash": "989c83fdd270223cc34c1c646a99148f",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodTests/RestTimerEngineTests.swift": {
+    "mtime": 1778518958.129534,
+    "ast_hash": "344d72e03ea87935032a5165cb755a5b",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodTests/RestTimerNotificationSchedulerTests.swift": {
+    "mtime": 1778518959.084013,
+    "ast_hash": "9283e34a8c77c32e7ff10bbf3d56f499",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodTests/RoutinesListBRUCopyTests.swift": {
+    "mtime": 1779828063.4709628,
+    "ast_hash": "5213b485e9f4529f75c429ba875128f6",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodTests/PreviousMatchingIntentTests.swift": {
+    "mtime": 1779828063.469636,
+    "ast_hash": "95566d954927a8fe8e72674cfe191b3b",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodTests/WarmupDeloadIntegrationTests.swift": {
+    "mtime": 1779828063.4755428,
+    "ast_hash": "0b3438df745927b5003ca57887006dc8",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodTests/Phase3BRUSurfacesTests.swift": {
+    "mtime": 1779828063.4653833,
+    "ast_hash": "52dbc2a90b740b82b50c466066b78789",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodTests/StallBadgeBRUTests.swift": {
+    "mtime": 1779828063.474109,
+    "ast_hash": "c910293f018e20fa864646b2f92c1583",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodTests/HybridStrategyTests.swift": {
+    "mtime": 1779828063.4637682,
+    "ast_hash": "eb3bd49444ac9c1b89332c57056a0774",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodTests/BlockReviewTriggerTests.swift": {
+    "mtime": 1779828063.4595048,
+    "ast_hash": "c343449815450614c4530f0fc18edacb",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodTests/SetRowCommitTests.swift": {
+    "mtime": 1779828063.473918,
+    "ast_hash": "6c6297137f195bdd36502c199e3a5bce",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodTests/ActiveSessionConflictTests.swift": {
+    "mtime": 1779828063.457442,
+    "ast_hash": "e40ec4fc745a8bc677fa2d275d362d86",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodTests/BlockBuilderViewActivationTests.swift": {
+    "mtime": 1779992185.2675712,
+    "ast_hash": "ad2a7868f7d6e5a666c6a91258ce10e0",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodTests/EmptyStateTests.swift": {
+    "mtime": 1778484946.9022982,
+    "ast_hash": "63315eff3f583b141ab560a57ce3789f",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodTests/BlockPeriodizedStrategyTests.swift": {
+    "mtime": 1779828063.4592519,
+    "ast_hash": "20e9bf2fb6879f903909182a0121c69b",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodTests/RoutineBuilderHeaderPickersTests.swift": {
+    "mtime": 1779828063.4705303,
+    "ast_hash": "0117434b66f332981280c8cb2ead4535",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodTests/DeloadAdvisoryBannerBRUTests.swift": {
+    "mtime": 1779828063.4602077,
+    "ast_hash": "58a9241603a1af49f01b82fc4b7026c1",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodTests/SeedTests.swift": {
+    "mtime": 1779828063.4724586,
+    "ast_hash": "0f4743cb47d8362fa2cf68f1d785753f",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodTests/PlateInventoryTests.swift": {
+    "mtime": 1779828063.46871,
+    "ast_hash": "257c36ab898cb7520081d3d64c24f8d7",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodTests/AddUnplannedExerciseTests.swift": {
+    "mtime": 1779828063.4576232,
+    "ast_hash": "7a3beb44c0ea63c33a77ccf113afc911",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodTests/ExerciseHistoryIntentSplitTests.swift": {
+    "mtime": 1779828063.4607284,
+    "ast_hash": "61278cf07a1c27cdc53577a465bf03f4",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodTests/TodayViewBlockStackingTests.swift": {
+    "mtime": 1779828063.474702,
+    "ast_hash": "6c976cd1d78b52452789d638ba46cd7e",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodTests/BlockDraftSaveTests.swift": {
+    "mtime": 1779828063.458984,
+    "ast_hash": "64d16a625357b6f8a9d5be3caa5ac6d1",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodTests/BlockBuilderViewCopyTests.swift": {
+    "mtime": 1780005368.6229408,
+    "ast_hash": "4169388e0f9e54f8e64626ab759bca8b",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodTests/SingleActiveBlockInvariantTests.swift": {
+    "mtime": 1779828063.4739962,
+    "ast_hash": "74e065c7a6d4fe5b33b9bec95e8b1d40",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodTests/CustomExerciseDraftTests.swift": {
+    "mtime": 1779828063.4600885,
+    "ast_hash": "830ab3cbe33b40e3087424b4b88998a5",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodTests/RoutinesListCopyTests.swift": {
+    "mtime": 1779828063.4711013,
+    "ast_hash": "f4e2517f3dc63593d935bc267882dad3",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodTests/IndexedQueryTests.swift": {
+    "mtime": 1778520569.9851177,
+    "ast_hash": "cffe2adb1abcee7592c7014fe1817ed5",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodTests/PreviousColumnQueryTests.swift": {
+    "mtime": 1779828063.469276,
+    "ast_hash": "d2de2fca460050f0771c1569564ba717",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodTests/BRUCompositePrimitivesTests.swift": {
+    "mtime": 1779828063.4577374,
+    "ast_hash": "eecb6d824ec568a2400deb39520efc4f",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodTests/BRUGrepAuditTests.swift": {
+    "mtime": 1779828063.4582477,
+    "ast_hash": "939639d72dbf569dbfe2e873a9ac406e",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodTests/HistoryBRUCopyTests.swift": {
+    "mtime": 1779828063.4636497,
+    "ast_hash": "42fa91d790b10cfd70dc65ec7329d36f",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodTests/TuchschererTableTests.swift": {
+    "mtime": 1779493779.1958988,
+    "ast_hash": "6fe1fe658ad43c72945472cd058b8eeb",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodTests/NewBlockBuilderFidelityTests.swift": {
+    "mtime": 1780009027.6498463,
+    "ast_hash": "b3eaf44425795de16139a73772de4eee",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodTests/FatigueAdvisoryCanonicalityTests.swift": {
+    "mtime": 1779828063.463536,
+    "ast_hash": "4b0330b1836548e631dfbeb74f460dfe",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodTests/SessionLoggerBRUCopyTests.swift": {
+    "mtime": 1779828063.473355,
+    "ast_hash": "c8dcd23669cae9121ecbb482c7b9c5cc",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodTests/SessionBlockSnapshotTests.swift": {
+    "mtime": 1779828063.4727025,
+    "ast_hash": "dd8c85ba4f832bbe73f8a4a037150de0",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodTests/BlocksSectionTests.swift": {
+    "mtime": 1779828063.4596975,
+    "ast_hash": "ac1e38807e65470d65fcf12bfb7f7f11",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodTests/SupersetGroupTests.swift": {
+    "mtime": 1779828063.4743226,
+    "ast_hash": "85c1177f2e7415a3a75d25df55f3583c",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodTests/PeriodizationEngineTests.swift": {
+    "mtime": 1779828063.464826,
+    "ast_hash": "27f094bb481876811fa853c5370fd778",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodTests/DoubleProgressionStrategyTests.swift": {
+    "mtime": 1779496284.4912913,
+    "ast_hash": "82cabb39cfb8b1776301862819ef4601",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodTests/EnumPersistenceTests.swift": {
+    "mtime": 1779828063.4605443,
+    "ast_hash": "5f847b09e21a548e46f8d08391579584",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodTests/MidSessionSwapTests.swift": {
+    "mtime": 1779828063.4641588,
+    "ast_hash": "cd296e5cc8301714e0e5e81fa411d63f",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodTests/BRUPeriodizationAuditTests.swift": {
+    "mtime": 1779828063.458337,
+    "ast_hash": "25105bc8d0d54bb6cb0b9ad0bd3902ab",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodTests/CascadeRuleTests.swift": {
+    "mtime": 1779828063.4599228,
+    "ast_hash": "15fda608131f09305f533dc8c3ed2c1d",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodTests/UserSettingsTests.swift": {
+    "mtime": 1779828063.4750085,
+    "ast_hash": "c77ad8910636e57a69637b04d2837a9b",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodTests/RestTimerBRUCopyTests.swift": {
+    "mtime": 1779828063.4698873,
+    "ast_hash": "110838968f4d888ed006870d660e73af",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodTests/RoutineDuplicationTests.swift": {
+    "mtime": 1779828063.470853,
+    "ast_hash": "e38453bc5a8affccb040a0930e454435",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodTests/RestTimerActivityControllerTests.swift": {
+    "mtime": 1778519656.2178671,
+    "ast_hash": "43a674b1eb5dbb3e64eeab647bcd442b",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodTests/DeloadVolumeApplicationTests.swift": {
+    "mtime": 1779828063.4603589,
+    "ast_hash": "7aa980e337752e5e611817470bd5b586",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodTests/PlateCalculatorTests.swift": {
+    "mtime": 1779493993.3396127,
+    "ast_hash": "e9c8ba22323edd13d513ebbfb95e61c7",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodTests/WarmupRampTests.swift": {
+    "mtime": 1779828063.475704,
+    "ast_hash": "bab65524816b911db9b34cd1199d2559",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodTests/ExerciseLibraryPickerModeTests.swift": {
+    "mtime": 1778521125.0273323,
+    "ast_hash": "a0f32e34b1ef8e175f25bdaae5c237a7",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodTests/EnumTests.swift": {
+    "mtime": 1778480597.8253467,
+    "ast_hash": "55691b79e752b72ad8eae62a297f7944",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodTests/RoutineBlockLinkageTests.swift": {
+    "mtime": 1779828063.470122,
+    "ast_hash": "db926fcb099dc7c9a78591535e3bb593",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodTests/PrescriptionExplanationTests.swift": {
+    "mtime": 1779828063.46912,
+    "ast_hash": "90fc3b45af12a41214881d06bac48fa3",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodTests/PerMuscleDetailViewBRUTests.swift": {
+    "mtime": 1779828063.4647014,
+    "ast_hash": "e4ec19dbf09fe372f12948925dd1728d",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodTests/BlockOverviewScreenWeekCarouselTests.swift": {
+    "mtime": 1779828063.4591305,
+    "ast_hash": "37384bab5dc6cb46942607d88130efa7",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodTests/MuscleVolumeBarBRUTests.swift": {
+    "mtime": 1779828063.464256,
+    "ast_hash": "60e1f28ed55933424e48eb9b19068b06",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodTests/BlockCardWeekNavigationTests.swift": {
+    "mtime": 1779828063.4589138,
+    "ast_hash": "53ade1bd353c55e18fd428dbd20f0881",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodTests/ProgramViewFidelityTests.swift": {
+    "mtime": 1780003175.4719677,
+    "ast_hash": "3c2c05607a9f67e47dfa325579a728fb",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodTests/PrescriptionEditorBlockCaseFilterTests.swift": {
+    "mtime": 1779828063.4689448,
+    "ast_hash": "8587b25b522ecdf64085ec36f6c842e3",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodTests/BlockReviewMathTests.swift": {
+    "mtime": 1779828063.4593894,
+    "ast_hash": "f39b7e46e1f6dd19ed67a0ecf382d923",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodTests/BRUPrimitivesTests.swift": {
+    "mtime": 1779828063.4587,
+    "ast_hash": "6a360077bc2040761d03deee657369fd",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodTests/BRUFoundationsTests.swift": {
+    "mtime": 1779828063.458084,
+    "ast_hash": "2d08cd1719b9bf9873bec60ace769845",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodTests/Phase3BRUPrimitivesTests.swift": {
+    "mtime": 1779828063.4652004,
+    "ast_hash": "f5783ed2413dadc2f075b8064ec5e606",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodTests/RPEAutoregStrategyTests.swift": {
+    "mtime": 1779496498.577101,
+    "ast_hash": "80c6b4912949e3ee92d59dab0463305b",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodTests/SettingsUnitsIntegrationTests.swift": {
+    "mtime": 1778484959.9208374,
+    "ast_hash": "5adada84b3b0459198faf2f5f5cf2d8d",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodTests/SessionFactoryTests.swift": {
+    "mtime": 1779828063.473117,
+    "ast_hash": "ab7a3f1f737b1145859a6087af9e65bb",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodTests/RoutineBuilderBRUCopyTests.swift": {
+    "mtime": 1779828063.4702272,
+    "ast_hash": "039cbb5284ea3beff2eb6bb9323d05d9",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodTests/RoutineDraftValidationTests.swift": {
+    "mtime": 1779828063.4706972,
+    "ast_hash": "2530efca72940451bc6036ef91da0b80",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodTests/ProgressionRoundingTests.swift": {
+    "mtime": 1779496324.2356288,
+    "ast_hash": "8195f3655371be262df419519839ef7e",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodTests/MuscleVolumeTargetEditorBRUTests.swift": {
+    "mtime": 1779828063.4643674,
+    "ast_hash": "eec6fbc10cedeb98b4150ffcf5302f38",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodTests/SchemaV1Tests.swift": {
+    "mtime": 1779828063.4714305,
+    "ast_hash": "1cb26d12bb1236e45ec333469de990ed",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodTests/SessionFactoryPhase3Tests.swift": {
+    "mtime": 1779828063.472845,
+    "ast_hash": "9fcd68f76bd70ba86ce43a304a2adf0b",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodTests/WarmupConfigTests.swift": {
+    "mtime": 1779828063.475361,
+    "ast_hash": "d97ea821a805f6bc5d9ee9079ecffa0c",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodTests/TodayViewBRUCopyTests.swift": {
+    "mtime": 1779828063.4745715,
+    "ast_hash": "d269a4a0029e1a0ebb644cb2e0549177",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodTests/BRUPeriodizationRegressionTests.swift": {
+    "mtime": 1779828063.458448,
+    "ast_hash": "b85356f9be44f444a17f7520151eae86",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodTests/MuscleVolumeTargetStepperBRUTests.swift": {
+    "mtime": 1779828063.4644637,
+    "ast_hash": "e2fc91b5ac750f45ac3e949fb464dbcc",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodTests/DTODecodingTests.swift": {
+    "mtime": 1778520560.2217615,
+    "ast_hash": "705be45e2714dd7fcd9863a41d9f7ac4",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodTests/SchemaV4MigrationTests.swift": {
+    "mtime": 1779828063.4722328,
+    "ast_hash": "737f100bdb86843e88e77f9870cfb68b",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodTests/RoutineBuilderCopyTests.swift": {
+    "mtime": 1779828063.470377,
+    "ast_hash": "2d9f1e704b624d966c9fc5aa83de7994",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodTests/Phase3BRUGrepAuditTests.swift": {
+    "mtime": 1779828063.4650776,
+    "ast_hash": "85e3dbb818acc276f48c444bd3fa741d",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodTests/BlockTemplatesTests.swift": {
+    "mtime": 1779828063.4595826,
+    "ast_hash": "bc01d64040f9b7fdbbc3d16fc6baa6e3",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodTests/PrescriptionDefaultsTests.swift": {
+    "mtime": 1779828063.4688632,
+    "ast_hash": "cf433ba05b5206d8de76d3a8d08afa0b",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodTests/RestTimerOverlayCopyTests.swift": {
+    "mtime": 1779828063.4700217,
+    "ast_hash": "5e84b04bf30f9d52ff54dea4a3e9351c",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodTests/BRUPhase5GrepAuditTests.swift": {
+    "mtime": 1779828063.458617,
+    "ast_hash": "d88d33808674698f9e3136c804fa967b",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodTests/ManualOverrideTests.swift": {
+    "mtime": 1779828063.463992,
+    "ast_hash": "edc2e982afed4fdc06b187c074855b53",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodTests/SchemaV3MigrationTests.swift": {
+    "mtime": 1779828063.4720309,
+    "ast_hash": "c97c8473d73e7abdbe3cfbb388e16702",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodTests/ExerciseHistoryViewCopyTests.swift": {
+    "mtime": 1779828063.4608345,
+    "ast_hash": "c131ddd54ea7e38b09b2ae558220d159",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodTests/OptionalRowRenderingTests.swift": {
+    "mtime": 1778523128.6942155,
+    "ast_hash": "68b1c7213804d3c1747748ad36c5ad04",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodTests/FilterStatePredicateTests.swift": {
+    "mtime": 1778518671.4592757,
+    "ast_hash": "430da3ab77251ea00cfdea753ce6631e",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodTests/SchemaV2MigrationTests.swift": {
+    "mtime": 1779828063.4717405,
+    "ast_hash": "3122fc494aca7fd3d359b9cf59daf741",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodTests/SessionLoggerCopyTests.swift": {
+    "mtime": 1779828063.473555,
+    "ast_hash": "bf013e1136cf652f134e9c099df99f61",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodTests/BRUCorePrimitivesTests.swift": {
+    "mtime": 1779828063.457891,
+    "ast_hash": "18a1b4b9018c067fe57ff273d8bf03cc",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodTests/NotesPersistenceTests.swift": {
+    "mtime": 1779828063.4646025,
+    "ast_hash": "2ee1bc141bceae9457554e8b1c4f2652",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodTests/SessionWidgetsBRUCopyTests.swift": {
+    "mtime": 1779828063.4737413,
+    "ast_hash": "41cf08d23ea61a352ddfff36a082ec9f",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodTests/RoutineFolderDraftTests.swift": {
+    "mtime": 1778520483.8200192,
+    "ast_hash": "ed9f95181465a7b6a96d2a521b82e1ed",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodTests/SuggestedActionChipBRUTests.swift": {
+    "mtime": 1779828063.4742222,
+    "ast_hash": "3301d53d3fd0686f31e839aa51b1eb02",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodTests/TestSupport/InMemoryContainer.swift": {
+    "mtime": 1779828063.4744236,
+    "ast_hash": "2849f42202b7ea201433bd778b8ce1b3",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodTests/Fatigue/StimulusWeightSeederTests.swift": {
+    "mtime": 1779828063.4629488,
+    "ast_hash": "a3cac4cd88f0d1b69cd5439f74c43899",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodTests/Fatigue/DeloadAdvisorTests.swift": {
+    "mtime": 1779828063.46144,
+    "ast_hash": "290046372643977725249b79fea68fec",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodTests/Fatigue/MuscleVolumeTargetSeederTests.swift": {
+    "mtime": 1779828063.462542,
+    "ast_hash": "0e19c366fd4ba19ecc62b632f9141288",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodTests/Fatigue/FatigueModelWeeklyVolumeTests.swift": {
+    "mtime": 1779828063.4615462,
+    "ast_hash": "a5df51e6add89bb52f0871c20f1bdb5b",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodTests/Fatigue/WeeklyRecapTriggerTests.swift": {
+    "mtime": 1779828063.4634519,
+    "ast_hash": "714acb6c48c2c7a7bfc2934c663efdee",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodTests/Fatigue/VolumeZoneVerbCopyTests.swift": {
+    "mtime": 1779828063.463229,
+    "ast_hash": "9969a144d821412693e150b147d6d3a6",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodTests/Fatigue/OneRepMaxEstimatorTests.swift": {
+    "mtime": 1779828063.4626153,
+    "ast_hash": "d78f0d7b2523c5a409e25f22d668d633",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodTests/Fatigue/BodySilhouetteViewBRUTests.swift": {
+    "mtime": 1779828063.461,
+    "ast_hash": "1db46fa12053a6f60d51766d093f2668",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodTests/Fatigue/PlateauDetectorTests.swift": {
+    "mtime": 1779828063.4628012,
+    "ast_hash": "edb6ec6b8728523b4f058f8ae2fbbaf4",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodTests/Fatigue/FatigueSurfaceViewBRUTests.swift": {
+    "mtime": 1779828063.4617186,
+    "ast_hash": "e877fb9fafc99f62e60aabca9931628a",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodTests/Fatigue/FatigueTestFixtures.swift": {
+    "mtime": 1779828063.4619517,
+    "ast_hash": "ae088c86e273fc9577b935cefc3c3de8",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodTests/Fatigue/SuggestedActionTests.swift": {
+    "mtime": 1779828063.463094,
+    "ast_hash": "bcd6cff903f4eac8ababb24ff4950249",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodTests/Fatigue/WeeklyRecapSheetBRUTests.swift": {
+    "mtime": 1779828063.4633794,
+    "ast_hash": "16277efc6fd0449e4919672a6a66221a",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodTests/Fatigue/MuscleRegionPathsTests.swift": {
+    "mtime": 1779828063.4624274,
+    "ast_hash": "d9b003fd583b7002eafb95a78c712f19",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodTests/Fatigue/VolumeZoneTests.swift": {
+    "mtime": 1779828063.4631608,
+    "ast_hash": "52427448721bbe82d7f1e77ebc68e678",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodTests/Fatigue/FrequencyHitsTests.swift": {
+    "mtime": 1779828063.462299,
+    "ast_hash": "d361a363c9caa2006f83ddede310a4a8",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodTests/Persistence/SchemaV6MigrationTests.swift": {
+    "mtime": 1779828063.4650137,
+    "ast_hash": "790321f8bc9d981e70a4a2aafabb0649",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodTests/Phase6/BackupArchiverTests.swift": {
+    "mtime": 1779828063.465725,
+    "ast_hash": "3382e50c18469579cef7f614788a6a69",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodTests/Phase6/PRsAndComparisonCopyTests.swift": {
+    "mtime": 1779828063.4673119,
+    "ast_hash": "15f238d26a638cc1bd83f40c72713469",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodTests/Phase6/BackupRoundTripTests.swift": {
+    "mtime": 1779828063.4658043,
+    "ast_hash": "0bec8702434515370099313cdacac1c2",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodTests/Phase6/ExportDocumentSnapshotTests.swift": {
+    "mtime": 1779828063.4664006,
+    "ast_hash": "51930698b1491db90129e5f49482a507",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodTests/Phase6/BackupVersionSkewTests.swift": {
+    "mtime": 1779828063.4659941,
+    "ast_hash": "7fc98196bc7a12429de049c72b554634",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodTests/Phase6/CSVExporterTests.swift": {
+    "mtime": 1779828063.4661472,
+    "ast_hash": "5ba7610f0fea27cc17e8d918c804dd59",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodTests/Phase6/SeriesBuilderTests.swift": {
+    "mtime": 1779828063.467435,
+    "ast_hash": "c25f181fe59d21d54d4f123b8d083ccd",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodTests/Phase6/PRDetectorTests.swift": {
+    "mtime": 1779828063.4672437,
+    "ast_hash": "0bd791b6a03dcb3ef68fced6d09de063",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodTests/Phase6/InSessionPRStateTests.swift": {
+    "mtime": 1779828063.466956,
+    "ast_hash": "0b68421b6da91a636fb64ca499d6a54f",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodTests/Phase6/WeeklyTonnageFilterStateTests.swift": {
+    "mtime": 1779828063.4682312,
+    "ast_hash": "5f31051d74782ae34e79f057dbb722f8",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodTests/Phase6/ZIPRoundTripTests.swift": {
+    "mtime": 1779828063.4685242,
+    "ast_hash": "76c152be712f160673d83232c93f1d90",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodTests/Phase6/WeeklyTonnageViewCopyTests.swift": {
+    "mtime": 1779828063.4684021,
+    "ast_hash": "3632f15a0ee6b8d62ad57bc4eee860ef",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodTests/Phase6/OneRepMaxTests.swift": {
+    "mtime": 1779828063.4671075,
+    "ast_hash": "cddcad9f112f6382dbcd8d04d91997d2",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodTests/Phase6/SessionComparatorTests.swift": {
+    "mtime": 1779828063.4676328,
+    "ast_hash": "99676735729311cb6d2d39043c1e8e05",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodTests/Phase6/ExerciseProgressViewCopyTests.swift": {
+    "mtime": 1779828063.4662201,
+    "ast_hash": "82b7b421def94b8d5b1f6ae20e36da1c",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodTests/Phase6/WeeklyTonnageAggregatorTests.swift": {
+    "mtime": 1779828063.4680934,
+    "ast_hash": "7fd16fe122dd768cf4e2b6442ecfb20f",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodTests/Phase6/JSONExporterTests.swift": {
+    "mtime": 1779828063.4670348,
+    "ast_hash": "62968e428d5bb5c32439fea8da28f5e2",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodTests/Phase6/BRU/BRUGrepAuditPhase6Tests.swift": {
+    "mtime": 1779828063.4656205,
+    "ast_hash": "cb3b48784e3243129524a737e968562d",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodTests/Phase6/Support/SchemaNamesRegressionTest.swift": {
+    "mtime": 1779828063.467903,
+    "ast_hash": "9196b5884cff26b6e2d68b2a2b6fa01a",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodTests/Phase6/Fixtures/SessionFixtures.swift": {
+    "mtime": 1779828063.466613,
+    "ast_hash": "22ea35f70ea96c90fe2ff6c4b8b699f1",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodTests/Phase6/Fixtures/PRFixtures.swift": {
+    "mtime": 1779828063.4665513,
+    "ast_hash": "a576f3ba3837e61686e4734229567659",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbodTests/Phase6/Fixtures/json/example-export.json": {
+    "mtime": 1779828063.4668522,
+    "ast_hash": "067bd0cfc7d7a62083cc9d7e121d2525",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/FitbodWidgets/RestTimerLockScreenView.swift": {
+    "mtime": 1779828062.268168,
+    "ast_hash": "aa0c84a7d0887e9bc76895fe95330126",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/FitbodWidgets/FitbodWidgetsBundle.swift": {
+    "mtime": 1778597701.5240505,
+    "ast_hash": "449c1eb61ddc235640c75008b350dc0e",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/FitbodWidgets/RestTimerLiveActivity.swift": {
+    "mtime": 1779828062.268076,
+    "ast_hash": "8847d395f92d70eb7635fce9a4f754eb",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/FitbodWidgets/RestTimerDynamicIslandCompactView.swift": {
+    "mtime": 1779828062.2678883,
+    "ast_hash": "d39f75a6e3fef5518df6a4572ca37b6f",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/FitbodWidgets/RestTimerDynamicIslandExpandedView.swift": {
+    "mtime": 1779828062.2679555,
+    "ast_hash": "4dccdb92c990b92dd2c3edbeb6d765db",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/scripts/generate_app_icon.swift": {
+    "mtime": 1778479516.9066663,
+    "ast_hash": "d1dc117c674dd49842119ff94a847edf",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/config.json": {
+    "mtime": 1780009355.896014,
+    "ast_hash": "69928dec7dc53c94996984f00f5aef32",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/04-periodization-blocks/04-QUESTIONS.json": {
+    "mtime": 1779489540.0651598,
+    "ast_hash": "e721346a7f039461545b9ff0d6f6a6c5",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.repowise/state.json": {
+    "mtime": 1780009341.9044514,
+    "ast_hash": "6b83b3ef1dcb9e0e6a59ef5e0b5f2df6",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.repowise/knowledge-graph.json": {
+    "mtime": 1779941464.1077547,
+    "ast_hash": "d67f47e860e56616ed4213fb1246d9ee",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.repowise/mcp.json": {
+    "mtime": 1779941464.0420654,
+    "ast_hash": "ccebf0affa0a85658437c9ef167b6505",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/AGENTS.md": {
+    "mtime": 1779993164.8374953,
+    "ast_hash": "4c628133099f8677e2414d8fbde76349",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/CLAUDE.md": {
+    "mtime": 1779993164.837909,
+    "ast_hash": "01354359edfa2e4e97975afa18abd080",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/bru-screens/New-modal/new-modal.html": {
+    "mtime": 1779828554.8861797,
+    "ast_hash": "2c83f40634f2af2432446aa86933b321",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/bru-screens/New-block/new-block-blank.html": {
+    "mtime": 1779828297.014151,
+    "ast_hash": "05453dc5ac52705177b5c9a099eba2e8",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/bru-screens/New-block/new-block-named.html": {
+    "mtime": 1779828328.2490153,
+    "ast_hash": "ebe72128892412adc70cb1ab4f27dfc3",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/bru-screens/Program/empty-state.html": {
+    "mtime": 1779828062.282115,
+    "ast_hash": "e31912d606e75a7a359a7c280c424ee0",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Resources/Fonts/LICENSES/SpaceGrotesk-OFL.txt": {
+    "mtime": 1779828063.447832,
+    "ast_hash": "3be7b8b182ccd96e48989b4e57311193",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Resources/Fonts/LICENSES/BebasNeue-OFL.txt": {
+    "mtime": 1779828063.4475658,
+    "ast_hash": "58d71c1277650b56ed3aa6162f88c1de",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Resources/Fonts/LICENSES/JetBrainsMono-OFL.txt": {
+    "mtime": 1779828063.4477692,
+    "ast_hash": "2025a2ee80175b15561a8232e67d74d5",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Resources/Fonts/LICENSES/Geist-OFL.txt": {
+    "mtime": 1779828063.44767,
+    "ast_hash": "fe4cc681382eff30e91c042d87f245aa",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Resources/ExerciseSeed/SOURCE.md": {
+    "mtime": 1778520524.6837656,
+    "ast_hash": "232245fd8317c046d41c2a9999b3d561",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Resources/ExerciseSeed/SEED_VERSION.txt": {
+    "mtime": 1778520526.7535167,
+    "ast_hash": "26ab0db90d72e28ad0ba1e22ee510510",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.claude/CLAUDE.md": {
+    "mtime": 1779941464.0894947,
+    "ast_hash": "7920720ff0d3586bef5378c57d095b76",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.claude/skills/gitnexus/gitnexus-refactoring/SKILL.md": {
+    "mtime": 1779993164.8403041,
+    "ast_hash": "9ba618bb478c9fe1efb360d255a25eba",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.claude/skills/gitnexus/gitnexus-debugging/SKILL.md": {
+    "mtime": 1779993164.8393664,
+    "ast_hash": "3998c14d1bb3558b716ea55d9971826b",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.claude/skills/gitnexus/gitnexus-exploring/SKILL.md": {
+    "mtime": 1779993164.8385952,
+    "ast_hash": "e938f38cf262c7daad36be1794517ca2",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.claude/skills/gitnexus/gitnexus-guide/SKILL.md": {
+    "mtime": 1779993164.8408065,
+    "ast_hash": "52a6df29e7e6161fc0ccfc3a42a1cb88",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.claude/skills/gitnexus/gitnexus-cli/SKILL.md": {
+    "mtime": 1779993164.8420615,
+    "ast_hash": "8bc4ec1bb5ba25c3da58052cdaf14e43",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.claude/skills/gitnexus/gitnexus-impact-analysis/SKILL.md": {
+    "mtime": 1779993164.8398118,
+    "ast_hash": "aad191ea3512d8a10e3749f24cabca46",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/FitbodWidgets/SOURCES.md": {
+    "mtime": 1778597701.524364,
+    "ast_hash": "ac55d5d09bb24e8b7c559ac24c408085",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/REQUIREMENTS.md": {
+    "mtime": 1779828062.2331047,
+    "ast_hash": "b207eab51603077c6c2e4d82a7737b9c",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/BRU-SCREENS-WIRING-CHECKLIST.md": {
+    "mtime": 1779828062.2329283,
+    "ast_hash": "1db8146d8b9144be1aa0bae7cc12892a",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/PROJECT.md": {
+    "mtime": 1779592799.4769192,
+    "ast_hash": "fec4e94305d24bf06585323018a7d749",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/STATE.md": {
+    "mtime": 1780008190.6600215,
+    "ast_hash": "5df74b43102287011c1d2630ab3297d3",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/ROADMAP.md": {
+    "mtime": 1779828062.233265,
+    "ast_hash": "2ada898cef526cc3d92769ad5e119ade",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/v1.0-MILESTONE-AUDIT.md": {
+    "mtime": 1779828062.2678096,
+    "ast_hash": "bbeac12c31be0486c10bab4b86db77dc",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/research/STACK.md": {
+    "mtime": 1778473974.6940424,
+    "ast_hash": "c56ae7958d721f738040ea52647d9fa7",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/research/ARCHITECTURE.md": {
+    "mtime": 1778474157.1930127,
+    "ast_hash": "3a89fa6e32efc1ba65e6194fe5f337b1",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/research/PITFALLS.md": {
+    "mtime": 1778474085.369605,
+    "ast_hash": "9a6b154cba6de930e59a69853432e37b",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/research/SUMMARY.md": {
+    "mtime": 1778474516.091367,
+    "ast_hash": "9c41c9918908f2d3e58237ced19e19d4",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/research/FEATURES.md": {
+    "mtime": 1778474217.2082808,
+    "ast_hash": "1eb42fd4c180146dee0b31e897d210ac",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/backlog/block-template-active-split.md": {
+    "mtime": 1779987495.7937262,
+    "ast_hash": "6fbdfa957a3ac5d4ffc37491fc4ac494",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/quick/260528-c6i-extract-reusable-blocknamefield-swiftui-/260528-c6i-PLAN.md": {
+    "mtime": 1779983468.512601,
+    "ast_hash": "51f9ca5332a2a235b0baf0b290e0cde8",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/quick/260525-g32-fix-brutabbar-visual-mockup-match/260525-g32-PLAN.md": {
+    "mtime": 1779828062.2548704,
+    "ast_hash": "f57e381366425358cb17e0c848e7a1e8",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/quick/260525-gop-fix-all-build-warnings-and-do-not-change/260525-gop-PLAN.md": {
+    "mtime": 1779828062.2550023,
+    "ast_hash": "b18e19cd81b2c91529bca8f19199e343",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/quick/260522-jgo-fix-swift-6-concurrency-error-in-custome/260522-jgo-SUMMARY.md": {
+    "mtime": 1779484119.9866126,
+    "ast_hash": "c548abfa7c54a06e2828ad3e7d02a5fd",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/quick/260522-jgo-fix-swift-6-concurrency-error-in-custome/260522-jgo-PLAN.md": {
+    "mtime": 1779483745.568122,
+    "ast_hash": "797b922ce6a54cc6726b79291252c446",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/quick/260528-l4s-redesign-new-block-phases-section/260528-l4s-PLAN.md": {
+    "mtime": 1780008182.0325894,
+    "ast_hash": "0e5ea31d60170b96ee6623097f97d632",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/quick/260528-l4s-redesign-new-block-phases-section/260528-l4s-CONTEXT.md": {
+    "mtime": 1780007851.7123287,
+    "ast_hash": "259961282a50541b6f633ccfe2f91fe6",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/quick/260528-dum-restructure-new-block-screen-ui-per-trai/260528-dum-SUMMARY.md": {
+    "mtime": 1779988181.7545252,
+    "ast_hash": "f6011037741b93626bd651b4bfca565b",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/quick/260528-dum-restructure-new-block-screen-ui-per-trai/260528-dum-PLAN.md": {
+    "mtime": 1779987803.9959211,
+    "ast_hash": "4ad168bf4d2cce36e82fd75506953109",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/quick/training-block-spec/spec.md": {
+    "mtime": 1779986637.3278358,
+    "ast_hash": "b00ae87e223db94c285b6a1539671425",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/quick/260528-gr0-new-block-value-editor-sheets/260528-gr0-PLAN.md": {
+    "mtime": 1780005172.4961224,
+    "ast_hash": "b89ce0612249fa431fcb10fdf2bd7822",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/quick/260528-gr0-new-block-value-editor-sheets/260528-gr0-SUMMARY.md": {
+    "mtime": 1780005532.8414347,
+    "ast_hash": "062edf6c5491c754d7d8ab532d63e735",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/quick/260528-gr0-new-block-value-editor-sheets/260528-gr0-CONTEXT.md": {
+    "mtime": 1780004672.7275715,
+    "ast_hash": "8292deb0fbf9654e2882db8fa9726462",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/quick/260528-ejb-refactor-new-block-screen-reduce-clutter/260528-ejb-PLAN.md": {
+    "mtime": 1779990048.282772,
+    "ast_hash": "e3397a2e07e10a84f540fd0b5669f9a8",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/quick/260528-ejb-refactor-new-block-screen-reduce-clutter/260528-ejb-CONTEXT.md": {
+    "mtime": 1779989709.0480638,
+    "ast_hash": "f0122d26c1ec15f549a63d6d09db627e",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/quick/260528-ejb-refactor-new-block-screen-reduce-clutter/260528-ejb-SUMMARY.md": {
+    "mtime": 1779992525.0057054,
+    "ast_hash": "b32800c15481c6ba171282d3ef0d4453",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/quick/260528-cby-fix-new-block-screen-blockbuilderview-sw/260528-cby-PLAN.md": {
+    "mtime": 1779983798.5074,
+    "ast_hash": "b97f50a2bb6102f2d490ef55eb7b0679",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/quick/260528-cby-fix-new-block-screen-blockbuilderview-sw/260528-cby-SUMMARY.md": {
+    "mtime": 1779984217.721591,
+    "ast_hash": "3956025820ae7b772b6e2c093c60c4f0",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/quick/260524-ilf-wire-brutabbar-into-rootview/SUMMARY.md": {
+    "mtime": 1779828062.2547219,
+    "ast_hash": "002efff5187086fc92f3622b1d535472",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/quick/260524-ilf-wire-brutabbar-into-rootview/PLAN.md": {
+    "mtime": 1779828062.254621,
+    "ast_hash": "b4f07adf66d306b4b7a83f1c168c4b72",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/quick/260528-gox-relocate-new-block-preset-selection-to-b/260528-gox-SUMMARY.md": {
+    "mtime": 1779996270.9596891,
+    "ast_hash": "9691dc9d43845842aed641465c94f607",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/quick/260528-gox-relocate-new-block-preset-selection-to-b/260528-gox-PLAN.md": {
+    "mtime": 1779995295.107698,
+    "ast_hash": "af3b1c50c8bc342e27a50f0b60bdc173",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/quick/260527-th4-make-name-your-block-field-tappable-text/260527-th4-SUMMARY.md": {
+    "mtime": 1779980944.7574363,
+    "ast_hash": "9459c946c14285dd5a3f787348bc5461",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/quick/260527-th4-make-name-your-block-field-tappable-text/260527-th4-PLAN.md": {
+    "mtime": 1779944697.726118,
+    "ast_hash": "b74ee067246acef7a4e6ef9d8b37db68",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/02-core-loop-routines-sessions/PLAN-INDEX.md": {
+    "mtime": 1778517236.758132,
+    "ast_hash": "abdb42509b5838549728c61a4340d6c5",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/02-core-loop-routines-sessions/03-03-SUMMARY.md": {
+    "mtime": 1778521991.6640162,
+    "ast_hash": "1bad1c7ecd04bef49dec0e749cf3af8b",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/02-core-loop-routines-sessions/04-03-PLAN.md": {
+    "mtime": 1778517076.6168005,
+    "ast_hash": "63e68ffe2951c817e0b378ac4c2d9404",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/02-core-loop-routines-sessions/02-CONTEXT.md": {
+    "mtime": 1778514874.623246,
+    "ast_hash": "fc6bec92a6f0839f14c26453661790e5",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/02-core-loop-routines-sessions/deferred-items.md": {
+    "mtime": 1778518071.182039,
+    "ast_hash": "9db9805f3264f4d2a24cb1ab72b92965",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/02-core-loop-routines-sessions/02-UI-SPEC.md": {
+    "mtime": 1779828062.2352693,
+    "ast_hash": "7b1dafc486b200a7208b6b0d397de7b3",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/02-core-loop-routines-sessions/03-01-PLAN.md": {
+    "mtime": 1778516551.7967129,
+    "ast_hash": "4f61cb2ee648ce8604ae662d9f9c8781",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/02-core-loop-routines-sessions/04-02-PLAN.md": {
+    "mtime": 1778517016.08398,
+    "ast_hash": "ef32080809f6d5928d3f15118cf830ff",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/02-core-loop-routines-sessions/04-03-SUMMARY.md": {
+    "mtime": 1778523647.6108537,
+    "ast_hash": "d8956496db043d71c7ed463823e5e2ac",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/02-core-loop-routines-sessions/02-02-SUMMARY.md": {
+    "mtime": 1778519790.33108,
+    "ast_hash": "f23c110df24cb56849525f1ca624ba36",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/02-core-loop-routines-sessions/03-02-PLAN.md": {
+    "mtime": 1778516680.969126,
+    "ast_hash": "8c79b78dde66dd6643e77a4ec6460aa5",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/02-core-loop-routines-sessions/03-01-SUMMARY.md": {
+    "mtime": 1778520662.721856,
+    "ast_hash": "20aa55489919e77d7b01fc9eca7e3af8",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/02-core-loop-routines-sessions/01-01-PLAN.md": {
+    "mtime": 1778516159.6050549,
+    "ast_hash": "d8b49f3c01319cd88f2647a508cfe4c0",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/02-core-loop-routines-sessions/04-01-PLAN.md": {
+    "mtime": 1778516908.857661,
+    "ast_hash": "5adbd5c917d877f6e7037f8ee4a113a6",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/02-core-loop-routines-sessions/02-RESEARCH.md": {
+    "mtime": 1778515785.0408823,
+    "ast_hash": "7f62c9f783374c09dde4ed6ea49a4784",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/02-core-loop-routines-sessions/04-01-SUMMARY.md": {
+    "mtime": 1778522724.6415393,
+    "ast_hash": "2672fb0dc3b2efc2c5dd1a698f096127",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/02-core-loop-routines-sessions/00-01-SUMMARY.md": {
+    "mtime": 1778517540.4525402,
+    "ast_hash": "85a359af7c69a6199293d157e551fe4e",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/02-core-loop-routines-sessions/03-03-PLAN.md": {
+    "mtime": 1778516784.4374197,
+    "ast_hash": "4f3d3e0d8f2df9eacbebd9e5474e1321",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/02-core-loop-routines-sessions/00-02-SUMMARY.md": {
+    "mtime": 1778517863.8269525,
+    "ast_hash": "d2eab4f47db3bb7505d251a4e6294518",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/02-core-loop-routines-sessions/01-01-SUMMARY.md": {
+    "mtime": 1778518476.0168765,
+    "ast_hash": "5e9ef47cb7ca8896a0fbe78d3721ac3e",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/02-core-loop-routines-sessions/05-01-SUMMARY.md": {
+    "mtime": 1778524283.6753545,
+    "ast_hash": "e18b8d60409f195cfad0b75a5ede1eb4",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/02-core-loop-routines-sessions/04-02-SUMMARY.md": {
+    "mtime": 1778523287.3815887,
+    "ast_hash": "7c8183599c309c5bb3dc2780947430d4",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/02-core-loop-routines-sessions/02-01-SUMMARY.md": {
+    "mtime": 1778519110.335843,
+    "ast_hash": "80fc3392a7a72a907b47fb99cccff005",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/02-core-loop-routines-sessions/00-02-PLAN.md": {
+    "mtime": 1778516044.8056183,
+    "ast_hash": "311994edade9f4cada4d62382bdd7606",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/02-core-loop-routines-sessions/03-02-SUMMARY.md": {
+    "mtime": 1778521511.6470256,
+    "ast_hash": "66c0ac57c47d876b2ffa6a53ffda073a",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/02-core-loop-routines-sessions/02-01-PLAN.md": {
+    "mtime": 1778516249.4163628,
+    "ast_hash": "60a422715b6a45a39afe9f8909ff7105",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/02-core-loop-routines-sessions/05-01-PLAN.md": {
+    "mtime": 1778517174.0762653,
+    "ast_hash": "c710ecb252977fbcbb95111fc4c69183",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/02-core-loop-routines-sessions/02-03-PLAN.md": {
+    "mtime": 1778516433.6820824,
+    "ast_hash": "7534c5867d47fa35237c6fc2a31afcb7",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/02-core-loop-routines-sessions/02-UI-REVIEW.md": {
+    "mtime": 1779828062.2350163,
+    "ast_hash": "3e0b2ec322e194a4cb9590350688b4c2",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/02-core-loop-routines-sessions/02-03-SUMMARY.md": {
+    "mtime": 1778520067.386127,
+    "ast_hash": "ab37e7a25e31dc648229724fbd424258",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/02-core-loop-routines-sessions/02-02-PLAN.md": {
+    "mtime": 1778516358.2891033,
+    "ast_hash": "05e932175537ff3a1775a01689befa13",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/02-core-loop-routines-sessions/00-01-PLAN.md": {
+    "mtime": 1778515978.097335,
+    "ast_hash": "6ee7c9242942ad8c9573ced3e0b6a7ca",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/07-bru-visual-rewrite/07-CONTEXT.md": {
+    "mtime": 1779828062.254022,
+    "ast_hash": "a9bec39610aedea2be43814fb411a6be",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/07-bru-visual-rewrite/07-DISCUSSION-LOG.md": {
+    "mtime": 1779828062.254145,
+    "ast_hash": "ae9bc1a74d7a8b9b1faa546605708cca",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/03.1-session-level-intent-progression-refactor/03.1-VERIFICATION.md": {
+    "mtime": 1779828062.2409396,
+    "ast_hash": "ee98b52b57d508f516677543ee173746",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/03.1-session-level-intent-progression-refactor/03.1-CONTEXT.md": {
+    "mtime": 1779828062.2407594,
+    "ast_hash": "888fd4fdcbece45af916fae48e077b26",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/03.1-session-level-intent-progression-refactor/03.1-UI-SPEC.md": {
+    "mtime": 1779828062.240857,
+    "ast_hash": "e71424f8d6b3700f3b4141f43ddc570e",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/03.1-session-level-intent-progression-refactor/03.1-03-SUMMARY.md": {
+    "mtime": 1779828062.2396038,
+    "ast_hash": "9f1a9d8ace8c34bd413ae7cda8ba586e",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/03.1-session-level-intent-progression-refactor/03.1-07-PLAN.md": {
+    "mtime": 1779828062.2403808,
+    "ast_hash": "f9371305b5746b59095588e13119e613",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/03.1-session-level-intent-progression-refactor/03.1-06-PLAN.md": {
+    "mtime": 1779828062.24017,
+    "ast_hash": "18528bc5602de03b624dd36127f143d0",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/03.1-session-level-intent-progression-refactor/03.1-06-SUMMARY.md": {
+    "mtime": 1779828062.2402894,
+    "ast_hash": "d83911d570c404104fc5d7dfe0aeb3db",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/03.1-session-level-intent-progression-refactor/03.1-04-PLAN.md": {
+    "mtime": 1779828062.2397115,
+    "ast_hash": "61531436f54091b8a054ae43f4a8cdde",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/03.1-session-level-intent-progression-refactor/03.1-01-SUMMARY.md": {
+    "mtime": 1779828062.2391953,
+    "ast_hash": "31fba299dfd92dfbbfb771edb55e67c8",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/03.1-session-level-intent-progression-refactor/03.1-04-SUMMARY.md": {
+    "mtime": 1779828062.239823,
+    "ast_hash": "6c84578601952987bf8b946752b42650",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/03.1-session-level-intent-progression-refactor/03.1-05-PLAN.md": {
+    "mtime": 1779828062.2399604,
+    "ast_hash": "a8f8a696408e7e4320ba7f5ef4b2b838",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/03.1-session-level-intent-progression-refactor/03.1-07-SUMMARY.md": {
+    "mtime": 1779828062.240487,
+    "ast_hash": "774c6159382441e32699d34cb6207607",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/03.1-session-level-intent-progression-refactor/03.1-08-PLAN.md": {
+    "mtime": 1779828062.2405803,
+    "ast_hash": "1e7f1ea526e3589e2e19fc43ab61b5a7",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/03.1-session-level-intent-progression-refactor/03.1-01-PLAN.md": {
+    "mtime": 1779828062.2389243,
+    "ast_hash": "db4ea8cde1a3449510bb2b92d7aff685",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/03.1-session-level-intent-progression-refactor/03.1-02-SUMMARY.md": {
+    "mtime": 1779828062.239404,
+    "ast_hash": "3f29235d5312ce8245afeb56dad1a184",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/03.1-session-level-intent-progression-refactor/03.1-05-SUMMARY.md": {
+    "mtime": 1779828062.2400808,
+    "ast_hash": "39d20286a3e592afc03b5608a443a153",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/03.1-session-level-intent-progression-refactor/03.1-03-PLAN.md": {
+    "mtime": 1779828062.2395067,
+    "ast_hash": "718669f36b91f4b7f13742cb3150c54f",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/03.1-session-level-intent-progression-refactor/03.1-08-SUMMARY.md": {
+    "mtime": 1779828062.2406754,
+    "ast_hash": "fd04e88f2370d84a651a3a9e16ec0db7",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/03.1-session-level-intent-progression-refactor/03.1-02-PLAN.md": {
+    "mtime": 1779828062.2393012,
+    "ast_hash": "efb2527e0a48f74a053bb9e4f57de7bd",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/02.1-bru-visual-rewrite/PLAN-INDEX.md": {
+    "mtime": 1779828062.2383676,
+    "ast_hash": "4138f7db323ebe4e3b1743c235b00610",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/02.1-bru-visual-rewrite/02.1-04-SUMMARY.md": {
+    "mtime": 1779828062.2362082,
+    "ast_hash": "a116889eb2c41110b4da8696f9a8f69e",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/02.1-bru-visual-rewrite/02.1-06-PLAN.md": {
+    "mtime": 1779828062.2367177,
+    "ast_hash": "60425ec0013463dff2e153304e126557",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/02.1-bru-visual-rewrite/02.1-09-SUMMARY.md": {
+    "mtime": 1779828062.2377708,
+    "ast_hash": "0db858ae78fd3092d7a534c50fdcc9e0",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/02.1-bru-visual-rewrite/02.1-10-SUMMARY.md": {
+    "mtime": 1779828062.2380242,
+    "ast_hash": "cbb803c3897491111f9da4feeebecd64",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/02.1-bru-visual-rewrite/02.1-07-PLAN.md": {
+    "mtime": 1779828062.2369585,
+    "ast_hash": "20d359a0483b480ed7073adb227e77e2",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/02.1-bru-visual-rewrite/02.1-01-SUMMARY.md": {
+    "mtime": 1779828062.2355428,
+    "ast_hash": "083a4dcfb2360874026a6881ede16aa0",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/02.1-bru-visual-rewrite/02.1-06-SUMMARY.md": {
+    "mtime": 1779828062.2368526,
+    "ast_hash": "eea048528bf2797c755cb88e6131c338",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/02.1-bru-visual-rewrite/02.1-05-PLAN.md": {
+    "mtime": 1779828062.236471,
+    "ast_hash": "b8315341a6d5d9365ac16810d25bee47",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/02.1-bru-visual-rewrite/02.1-04-PLAN.md": {
+    "mtime": 1779828062.236082,
+    "ast_hash": "3e4c5b3d3e8db4ccffba7e1c9bff3c9e",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/02.1-bru-visual-rewrite/02.1-03-SUMMARY.md": {
+    "mtime": 1779828062.2359865,
+    "ast_hash": "a0b7a3a71334e08178deebd5ef52bcbf",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/02.1-bru-visual-rewrite/02.1-11-SUMMARY.md": {
+    "mtime": 1779828062.238263,
+    "ast_hash": "45568d0f6a971aa6afd391f34507c9e6",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/02.1-bru-visual-rewrite/02.1-08-PLAN.md": {
+    "mtime": 1779828062.2371933,
+    "ast_hash": "43a3b69ce5ced7624872b9c3de78839b",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/02.1-bru-visual-rewrite/02.1-11-PLAN.md": {
+    "mtime": 1779828062.238141,
+    "ast_hash": "fccbdb68d87e009a98804ff8d2fc39bc",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/02.1-bru-visual-rewrite/02.1-01-PLAN.md": {
+    "mtime": 1779828062.235457,
+    "ast_hash": "c3ccc16cf73facc4ec5406d19c9c8aea",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/02.1-bru-visual-rewrite/02.1-05-SUMMARY.md": {
+    "mtime": 1779828062.2366235,
+    "ast_hash": "5a13dd3434b2d74a24402d74cb992900",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/02.1-bru-visual-rewrite/02.1-10-PLAN.md": {
+    "mtime": 1779828062.2378912,
+    "ast_hash": "e3ee87a0ade73518534f218d93841fef",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/02.1-bru-visual-rewrite/02.1-08-SUMMARY.md": {
+    "mtime": 1779828062.2373877,
+    "ast_hash": "1f7c754a4da7b904ab653e8de0649134",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/02.1-bru-visual-rewrite/02.1-09-PLAN.md": {
+    "mtime": 1779828062.2375534,
+    "ast_hash": "4ce211dd7fa9c49940546d4586515ee8",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/02.1-bru-visual-rewrite/02.1-02-PLAN.md": {
+    "mtime": 1779828062.2356296,
+    "ast_hash": "f82db077147241858a728695e70690df",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/02.1-bru-visual-rewrite/02.1-02-SUMMARY.md": {
+    "mtime": 1779828062.2357528,
+    "ast_hash": "60db5a61c1366c0925560fa539b3c2d0",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/02.1-bru-visual-rewrite/02.1-07-SUMMARY.md": {
+    "mtime": 1779828062.2370818,
+    "ast_hash": "383494a185e5f5afa0f8df679a73a9e2",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/02.1-bru-visual-rewrite/02.1-03-PLAN.md": {
+    "mtime": 1779828062.2358367,
+    "ast_hash": "49fb00c6ac70e86f8815ffe28daa0793",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/05.1-bru-visual-rewrite-fatigue-volume-reskin-phase-5-surfaces-vo/05.1-06-PLAN.md": {
+    "mtime": 1779828062.2501147,
+    "ast_hash": "4dd09fffb6c37cadf551735e030227fd",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/05.1-bru-visual-rewrite-fatigue-volume-reskin-phase-5-surfaces-vo/05.1-01-SUMMARY.md": {
+    "mtime": 1779828062.2491279,
+    "ast_hash": "91a48332f194b2eb86d7911a2a9f61a3",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/05.1-bru-visual-rewrite-fatigue-volume-reskin-phase-5-surfaces-vo/deferred-items.md": {
+    "mtime": 1779828062.2505863,
+    "ast_hash": "4eb9eb38956859fcacf13c8c21311f85",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/05.1-bru-visual-rewrite-fatigue-volume-reskin-phase-5-surfaces-vo/05.1-07-PLAN.md": {
+    "mtime": 1779828062.2503042,
+    "ast_hash": "59539dc3b59087bd34a9593da94a8cff",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/05.1-bru-visual-rewrite-fatigue-volume-reskin-phase-5-surfaces-vo/05.1-04-SUMMARY.md": {
+    "mtime": 1779828062.2498293,
+    "ast_hash": "6170d4f6a82006dcf32c79a54d1ccee7",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/05.1-bru-visual-rewrite-fatigue-volume-reskin-phase-5-surfaces-vo/05.1-03-SUMMARY.md": {
+    "mtime": 1779828062.2495995,
+    "ast_hash": "ab86013494ef4650d6de971c7e869882",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/05.1-bru-visual-rewrite-fatigue-volume-reskin-phase-5-surfaces-vo/05.1-05-PLAN.md": {
+    "mtime": 1779828062.2499623,
+    "ast_hash": "20a7c77e9e494798421dd473fca7d344",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/05.1-bru-visual-rewrite-fatigue-volume-reskin-phase-5-surfaces-vo/05.1-04-PLAN.md": {
+    "mtime": 1779828062.2496908,
+    "ast_hash": "60b036bc95f8a3664256e7a2f6d8e3f1",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/05.1-bru-visual-rewrite-fatigue-volume-reskin-phase-5-surfaces-vo/05.1-06-SUMMARY.md": {
+    "mtime": 1779828062.2502258,
+    "ast_hash": "10a1a299395abe4a285004150d294e7f",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/05.1-bru-visual-rewrite-fatigue-volume-reskin-phase-5-surfaces-vo/05.1-08-PLAN.md": {
+    "mtime": 1779828062.2504463,
+    "ast_hash": "513efd6e440c7242ffd8cbe7c9f89cb5",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/05.1-bru-visual-rewrite-fatigue-volume-reskin-phase-5-surfaces-vo/05.1-08-SUMMARY.md": {
+    "mtime": 1779828062.2505178,
+    "ast_hash": "ef4ad8bc6a3b30a7ccec8d11e628b3e3",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/05.1-bru-visual-rewrite-fatigue-volume-reskin-phase-5-surfaces-vo/05.1-01-PLAN.md": {
+    "mtime": 1779828062.2489977,
+    "ast_hash": "1f3dc5c16aaa090159513d4bcd93b430",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/05.1-bru-visual-rewrite-fatigue-volume-reskin-phase-5-surfaces-vo/05.1-05-SUMMARY.md": {
+    "mtime": 1779828062.250035,
+    "ast_hash": "fa1a7c423c0dbbaece0896de9aaf2ba5",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/05.1-bru-visual-rewrite-fatigue-volume-reskin-phase-5-surfaces-vo/05.1-02-PLAN.md": {
+    "mtime": 1779828062.2493212,
+    "ast_hash": "9dd78b27ec2aa2f38948273e405f7b41",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/05.1-bru-visual-rewrite-fatigue-volume-reskin-phase-5-surfaces-vo/05.1-07-SUMMARY.md": {
+    "mtime": 1779828062.250372,
+    "ast_hash": "e3281059dc25b3a0ee93d1daf82441bb",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/05.1-bru-visual-rewrite-fatigue-volume-reskin-phase-5-surfaces-vo/05.1-02-SUMMARY.md": {
+    "mtime": 1779828062.2493985,
+    "ast_hash": "9d1d240badfcbf6a923d79126d2fc395",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/05.1-bru-visual-rewrite-fatigue-volume-reskin-phase-5-surfaces-vo/05.1-03-PLAN.md": {
+    "mtime": 1779828062.2495298,
+    "ast_hash": "a9c0e935dcd93069b1524c4808c23af4",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/01-foundation-exercise-library/PLAN-INDEX.md": {
+    "mtime": 1778478078.8273594,
+    "ast_hash": "254c7274174b0e8155c167ffaf7d9a1c",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/01-foundation-exercise-library/03-03-SUMMARY.md": {
+    "mtime": 1778484495.6338527,
+    "ast_hash": "f0fe460736eea80090ffb2c58c50e112",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/01-foundation-exercise-library/01-02-PLAN.md": {
+    "mtime": 1778478265.7323241,
+    "ast_hash": "697140e95abd094c10caaf72df6f265b",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/01-foundation-exercise-library/deferred-items.md": {
+    "mtime": 1778479544.308227,
+    "ast_hash": "7e8d34e7e00a4780c458c6a219af3195",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/01-foundation-exercise-library/01-RESEARCH.md": {
+    "mtime": 1778477925.5285163,
+    "ast_hash": "6613ee02a6f1b0e33eff3bfc90d78c62",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/01-foundation-exercise-library/03-01-PLAN.md": {
+    "mtime": 1778478515.3908997,
+    "ast_hash": "c2b335d18af5b9ccae3c084a2680bd79",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/01-foundation-exercise-library/01-UI-REVIEW.md": {
+    "mtime": 1779828062.2346478,
+    "ast_hash": "8305686d727e026288e2edff711d1d7b",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/01-foundation-exercise-library/01-03-PLAN.md": {
+    "mtime": 1778478318.4181454,
+    "ast_hash": "2ca7136ef72680f97315c3c19baa0b8e",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/01-foundation-exercise-library/01-VERIFICATION.md": {
+    "mtime": 1778514767.2639089,
+    "ast_hash": "d9906accb74674e5f32855488790be1f",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/01-foundation-exercise-library/02-02-SUMMARY.md": {
+    "mtime": 1778481996.7072287,
+    "ast_hash": "e392e3862969d834ebf21c8c858158cd",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/01-foundation-exercise-library/03-02-PLAN.md": {
+    "mtime": 1778478634.8460288,
+    "ast_hash": "172c96f713645601eb4e4270a36c52c5",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/01-foundation-exercise-library/03-01-SUMMARY.md": {
+    "mtime": 1778482436.923132,
+    "ast_hash": "6c11c67d7a14c59e9687e7ac16c16619",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/01-foundation-exercise-library/01-01-PLAN.md": {
+    "mtime": 1778478230.4232314,
+    "ast_hash": "a5c9a6cb386c2febf9a130d232855227",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/01-foundation-exercise-library/04-01-PLAN.md": {
+    "mtime": 1778478861.7374358,
+    "ast_hash": "191bbfc45eb28e44265153f3a2ad0c89",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/01-foundation-exercise-library/04-01-SUMMARY.md": {
+    "mtime": 1778485170.5126295,
+    "ast_hash": "9044a2c55e798878dd0c1ce209532fca",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/01-foundation-exercise-library/00-01-SUMMARY.md": {
+    "mtime": 1778479598.3187842,
+    "ast_hash": "84228e75af6a544fa164124fe3d446a8",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/01-foundation-exercise-library/03-03-PLAN.md": {
+    "mtime": 1778479114.7701616,
+    "ast_hash": "3e4124d742a68f1a628a25c9a721db45",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/01-foundation-exercise-library/01-02-SUMMARY.md": {
+    "mtime": 1778480251.6099777,
+    "ast_hash": "82aca33609e4274b36e8343cc6fb7d83",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/01-foundation-exercise-library/03-04-SUMMARY.md": {
+    "mtime": 1778483865.980403,
+    "ast_hash": "23c8c0b6743dec3a1caf50aa57acbdf5",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/01-foundation-exercise-library/00-02-SUMMARY.md": {
+    "mtime": 1778479576.9632204,
+    "ast_hash": "92ad52284dd0337c0660c81294cd57a4",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/01-foundation-exercise-library/01-01-SUMMARY.md": {
+    "mtime": 1778480013.2102194,
+    "ast_hash": "60b77b80fe43050ff98ad03f90d92f29",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/01-foundation-exercise-library/01-REVIEW.md": {
+    "mtime": 1778486630.1771472,
+    "ast_hash": "c2a0dab5d405098f4deb4a4b2f5fcf86",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/01-foundation-exercise-library/02-01-SUMMARY.md": {
+    "mtime": 1778481332.5724785,
+    "ast_hash": "749d99a36084dbdc05e0e1e70c6e652e",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/01-foundation-exercise-library/00-02-PLAN.md": {
+    "mtime": 1778478143.2674634,
+    "ast_hash": "a76ae9add746372dc01e7284e7f58d4f",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/01-foundation-exercise-library/03-02-SUMMARY.md": {
+    "mtime": 1778483047.5313387,
+    "ast_hash": "382eed92e4435e1e1d3f6f6e009f9ded",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/01-foundation-exercise-library/02-01-PLAN.md": {
+    "mtime": 1778478380.9031503,
+    "ast_hash": "9e1fb178b10c75e01069d64787c7101e",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/01-foundation-exercise-library/01-03-SUMMARY.md": {
+    "mtime": 1778480747.727783,
+    "ast_hash": "311279345d4def64af99d1b739f1db53",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/01-foundation-exercise-library/03-04-PLAN.md": {
+    "mtime": 1778478793.10455,
+    "ast_hash": "1d2273349f535190ebfc232951a8276d",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/01-foundation-exercise-library/01-CONTEXT.md": {
+    "mtime": 1778477190.181871,
+    "ast_hash": "2ac426849488f4e56680cb7b86202ecb",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/01-foundation-exercise-library/02-02-PLAN.md": {
+    "mtime": 1778478453.292072,
+    "ast_hash": "54e950d69382ca7e36b035d63d08b41d",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/01-foundation-exercise-library/00-01-PLAN.md": {
+    "mtime": 1778478111.2948616,
+    "ast_hash": "06e30eb55b27ef6624fead1d888c95f8",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/01-foundation-exercise-library/01-UI-SPEC.md": {
+    "mtime": 1779828062.2348466,
+    "ast_hash": "658fe36972de92e1350ae8ffdeaf5385",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/05-fatigue-model-plateau-detection/05-DISCUSSION-LOG.md": {
+    "mtime": 1779493391.8375885,
+    "ast_hash": "8315fbfa283cb4d5838ed44862d51725",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/05-fatigue-model-plateau-detection/05-05-SUMMARY.md": {
+    "mtime": 1779828062.248147,
+    "ast_hash": "b5d5e1dbdfc0525343cbf8a4b1c0a0b5",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/05-fatigue-model-plateau-detection/05-05-PLAN.md": {
+    "mtime": 1779510029.7392833,
+    "ast_hash": "fb9657f659819fd217a34c9e94d050eb",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/05-fatigue-model-plateau-detection/05-VALIDATION.md": {
+    "mtime": 1779509606.0209308,
+    "ast_hash": "25e5bc491b9db465ba68a6c8806dd16b",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/05-fatigue-model-plateau-detection/05-COMPLETION-SUMMARY.md": {
+    "mtime": 1779828062.2483873,
+    "ast_hash": "1e03816f609f759bc4922b2117f6dcdc",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/05-fatigue-model-plateau-detection/05-04-PLAN.md": {
+    "mtime": 1779509693.0587115,
+    "ast_hash": "d22601921fde24758fa81ec3d9bbd6ff",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/05-fatigue-model-plateau-detection/05-06-PLAN.md": {
+    "mtime": 1779510038.0440137,
+    "ast_hash": "bc8a50887df2a784810a6fdaae1565be",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/05-fatigue-model-plateau-detection/05-UI-SPEC.md": {
+    "mtime": 1779828062.248647,
+    "ast_hash": "591e30818279b0c95d307862a7ddfa37",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/05-fatigue-model-plateau-detection/05-02-SUMMARY.md": {
+    "mtime": 1779828062.2477732,
+    "ast_hash": "d5118034b6d700dff6044a6d820e45d5",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/05-fatigue-model-plateau-detection/05-CONTEXT.md": {
+    "mtime": 1779493342.9152813,
+    "ast_hash": "68a2421d1a96654c84c870a9804157a7",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/05-fatigue-model-plateau-detection/05-RESEARCH.md": {
+    "mtime": 1779495342.403978,
+    "ast_hash": "4a4f8f2e418b2ff9c20119404647c214",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/05-fatigue-model-plateau-detection/05-02-PLAN.md": {
+    "mtime": 1779497826.087886,
+    "ast_hash": "a6726e54a7df1d1807e5d0016f81c13f",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/05-fatigue-model-plateau-detection/05-PATTERNS.md": {
+    "mtime": 1779496890.8902826,
+    "ast_hash": "b38ce05769b2fe7afe3d6e7bcdab9ca5",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/05-fatigue-model-plateau-detection/05-01-SUMMARY.md": {
+    "mtime": 1779828062.2476356,
+    "ast_hash": "0f42f0b7213e2adb2455f44a3b071344",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/05-fatigue-model-plateau-detection/05-03-PLAN.md": {
+    "mtime": 1779509734.209972,
+    "ast_hash": "fc59b5c6ae0bb534cadad4d15c40f643",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/05-fatigue-model-plateau-detection/05-VERIFICATION.md": {
+    "mtime": 1779828062.2487755,
+    "ast_hash": "3f0ce761f234b0139d076b34748c3b3a",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/05-fatigue-model-plateau-detection/05-04-SUMMARY.md": {
+    "mtime": 1779828062.2479246,
+    "ast_hash": "4c7dca0e9b406ae84f686acb6d69aa78",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/05-fatigue-model-plateau-detection/05-01-PLAN.md": {
+    "mtime": 1779509647.4048603,
+    "ast_hash": "2397e3cc09947ba40c0cbd7f5bb24f29",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/05-fatigue-model-plateau-detection/05-03-SUMMARY.md": {
+    "mtime": 1779828062.2478466,
+    "ast_hash": "6bbd80f8fa2c6c250274035d76223ea8",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/05-fatigue-model-plateau-detection/05-06-SUMMARY.md": {
+    "mtime": 1779828062.248238,
+    "ast_hash": "c29710694e467c47dec3b29f3a6e2ee7",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/04-periodization-blocks/04-03-PLAN.md": {
+    "mtime": 1779493612.259846,
+    "ast_hash": "abe18e80db42bae0cbddc3edc16e3fa2",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/04-periodization-blocks/04-QUESTIONS.html": {
+    "mtime": 1779489088.0715852,
+    "ast_hash": "f3fb1c0dc5de011435c9c88e822203d3",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/04-periodization-blocks/04-06-SUMMARY.md": {
+    "mtime": 1779828062.2436137,
+    "ast_hash": "f41981bf73db18160bdf8f8f8e63a94d",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/04-periodization-blocks/04-04a-PLAN.md": {
+    "mtime": 1779495634.4262912,
+    "ast_hash": "9b57f30740a81ce85bdecc8067b7d89e",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/04-periodization-blocks/04-DISCUSSION-LOG.md": {
+    "mtime": 1779489841.4657483,
+    "ast_hash": "cf4827e69dd6c5bbfa0ef53253bd5211",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/04-periodization-blocks/04-PATTERNS.md": {
+    "mtime": 1779492870.1727316,
+    "ast_hash": "4bab2bf6854219e87bbd052e9cccd709",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/04-periodization-blocks/04-02-PLAN.md": {
+    "mtime": 1779493493.7441041,
+    "ast_hash": "b89b996bac7223cf395861158f5a4e7e",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/04-periodization-blocks/04-RESEARCH.md": {
+    "mtime": 1779492266.1511638,
+    "ast_hash": "3e53bcc38dd46ddd755afc7f9289930d",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/04-periodization-blocks/04-03-SUMMARY.md": {
+    "mtime": 1779828062.2432752,
+    "ast_hash": "308458a11a1c264a7add125d0d720416",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/04-periodization-blocks/04-04b-PLAN.md": {
+    "mtime": 1779496296.0459335,
+    "ast_hash": "9ed49ea25fd84c9ee0901925d2db3ef0",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/04-periodization-blocks/04-04b-SUMMARY.md": {
+    "mtime": 1779828062.2433848,
+    "ast_hash": "fa1f62a1caa52ece5be32146dd42324b",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/04-periodization-blocks/04-01-PLAN.md": {
+    "mtime": 1779495489.6490576,
+    "ast_hash": "0949b45396eaa4f53f4511694fcd9d14",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/04-periodization-blocks/04-01-SUMMARY.md": {
+    "mtime": 1779828062.2431366,
+    "ast_hash": "ea740c5b20517f4311d84fff91fb42d2",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/04-periodization-blocks/04-08-PLAN.md": {
+    "mtime": 1779496208.8420827,
+    "ast_hash": "7ea6d4c77d58cd5110dd3258bb33ca2b",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/04-periodization-blocks/04-02-SUMMARY.md": {
+    "mtime": 1779828062.2432072,
+    "ast_hash": "474a1bb989b577535a22440ca3ed1d38",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/04-periodization-blocks/04-07-SUMMARY.md": {
+    "mtime": 1779828062.2437086,
+    "ast_hash": "9b3aa0cfe92bf2cfda869c393d7cc1a3",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/04-periodization-blocks/04-05-PLAN.md": {
+    "mtime": 1779493921.712432,
+    "ast_hash": "30fc2ee46af36c983464ab62b9ef5b6f",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/04-periodization-blocks/04-COMPLETION-SUMMARY.md": {
+    "mtime": 1779828062.2439997,
+    "ast_hash": "37f0821ac1dee32693c44da6b67805ce",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/04-periodization-blocks/04-04a-SUMMARY.md": {
+    "mtime": 1779828062.2433324,
+    "ast_hash": "051c3ca0e8c632709dcc0ee9841a841e",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/04-periodization-blocks/04-UI-SPEC.md": {
+    "mtime": 1779828062.2445123,
+    "ast_hash": "0d4dc4c11bce0523a6d0f4ab43706831",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/04-periodization-blocks/04-VERIFICATION.md": {
+    "mtime": 1779828062.2446563,
+    "ast_hash": "1c7e7e9a2ef1fd5d25c71826521c84ba",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/04-periodization-blocks/04-UI-REVIEW.md": {
+    "mtime": 1779828062.2443426,
+    "ast_hash": "8027eccd2b4ce0814f0dae829679c753",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/04-periodization-blocks/04-VALIDATION.md": {
+    "mtime": 1779496136.3882365,
+    "ast_hash": "cc8c3a8e2016429197fd824774de5d53",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/04-periodization-blocks/04-PROGRESS.md": {
+    "mtime": 1779828062.2442455,
+    "ast_hash": "d99add96ae23a1f1f0e25a64d4303053",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/04-periodization-blocks/04-07-PLAN.md": {
+    "mtime": 1779496066.7091835,
+    "ast_hash": "342552ab5615f5cf5e69f3943f3c8af0",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/04-periodization-blocks/04-CONTEXT.md": {
+    "mtime": 1779489753.570279,
+    "ast_hash": "1bc791fc865d9973b30d542ac272567b",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/04-periodization-blocks/04-05-SUMMARY.md": {
+    "mtime": 1779828062.2435281,
+    "ast_hash": "e9deb28c7eb110fd34cf987c34641543",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/04-periodization-blocks/04-08-SUMMARY.md": {
+    "mtime": 1779828062.2439194,
+    "ast_hash": "e0ba7586c93ede0a735b919574505402",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/04-periodization-blocks/04-06-PLAN.md": {
+    "mtime": 1779495946.681661,
+    "ast_hash": "4af18b5c3539422b3554fde740669e05",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/04.1-bru-visual-rewrite-periodization-blocks/04.1-CONTEXT.md": {
+    "mtime": 1779828062.2467327,
+    "ast_hash": "a04fa7f8c7c1a04200da08f5d70c13bc",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/04.1-bru-visual-rewrite-periodization-blocks/PLAN-INDEX.md": {
+    "mtime": 1779828062.2475207,
+    "ast_hash": "7f5f11d164da880e333ff9a431628c57",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/04.1-bru-visual-rewrite-periodization-blocks/04.1-06-SUMMARY.md": {
+    "mtime": 1779828062.246151,
+    "ast_hash": "9f12ea04b3c7739b7d46b24ad14354a7",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/04.1-bru-visual-rewrite-periodization-blocks/04.1-07-PLAN.md": {
+    "mtime": 1779828062.2462516,
+    "ast_hash": "fb5abf62b3631f4755cfd9644667e62f",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/04.1-bru-visual-rewrite-periodization-blocks/04.1-03-SUMMARY.md": {
+    "mtime": 1779828062.2454426,
+    "ast_hash": "101ce339a00b49f618820b303925126d",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/04.1-bru-visual-rewrite-periodization-blocks/04.1-06-PLAN.md": {
+    "mtime": 1779828062.2460315,
+    "ast_hash": "798687f3cd34bbcba989e4fa74fd02fd",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/04.1-bru-visual-rewrite-periodization-blocks/04.1-04-PLAN.md": {
+    "mtime": 1779828062.2455583,
+    "ast_hash": "12fbf5d0cfac813c5689b8b6aa3b85ea",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/04.1-bru-visual-rewrite-periodization-blocks/04.1-VERIFICATION.md": {
+    "mtime": 1779828062.2474067,
+    "ast_hash": "47622eb491c6676592a3e57131b18d20",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/04.1-bru-visual-rewrite-periodization-blocks/04.1-04-SUMMARY.md": {
+    "mtime": 1779828062.2456777,
+    "ast_hash": "273ed789472aa122f247af90c7913d9d",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/04.1-bru-visual-rewrite-periodization-blocks/04.1-01-SUMMARY.md": {
+    "mtime": 1779828062.2450697,
+    "ast_hash": "d9f22a97e1a07970bd23ac1849811c8c",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/04.1-bru-visual-rewrite-periodization-blocks/04.1-05-PLAN.md": {
+    "mtime": 1779828062.2458012,
+    "ast_hash": "7eb848106876f98070e9dc218a0e9f2a",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/04.1-bru-visual-rewrite-periodization-blocks/04.1-02-SUMMARY.md": {
+    "mtime": 1779828062.2452617,
+    "ast_hash": "8a5bc143ab3b852dfca5f86ee6e99f12",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/04.1-bru-visual-rewrite-periodization-blocks/04.1-08-PLAN.md": {
+    "mtime": 1779828062.2464726,
+    "ast_hash": "5350a0f138bcc3961163a129ac72b41e",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/04.1-bru-visual-rewrite-periodization-blocks/04.1-01-PLAN.md": {
+    "mtime": 1779828062.2448432,
+    "ast_hash": "0ef1acbf4c3d3d8a5ff49decb02dc247",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/04.1-bru-visual-rewrite-periodization-blocks/04.1-07-SUMMARY.md": {
+    "mtime": 1779828062.2463715,
+    "ast_hash": "e15a06f56355cb3c5ed0898e3f47863e",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/04.1-bru-visual-rewrite-periodization-blocks/04.1-03-PLAN.md": {
+    "mtime": 1779828062.2453578,
+    "ast_hash": "9a09e4bfbaebefc56bb79a84013c3aac",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/04.1-bru-visual-rewrite-periodization-blocks/04.1-HUMAN-UAT.md": {
+    "mtime": 1779828062.2470179,
+    "ast_hash": "47658e29b3728a046eccbb943f90c28b",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/04.1-bru-visual-rewrite-periodization-blocks/04.1-PATTERNS.md": {
+    "mtime": 1779828062.247149,
+    "ast_hash": "9c0564d140bc8b53170ada5f7ae3a80d",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/04.1-bru-visual-rewrite-periodization-blocks/04.1-DISCUSSION-LOG.md": {
+    "mtime": 1779828062.2469177,
+    "ast_hash": "66e9fb3ab3b2348ae827c8b3e408ccc6",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/04.1-bru-visual-rewrite-periodization-blocks/04.1-02-PLAN.md": {
+    "mtime": 1779828062.2451947,
+    "ast_hash": "e3a4f61fe4429dffcf7b1c8f7dc713e6",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/04.1-bru-visual-rewrite-periodization-blocks/04.1-08-SUMMARY.md": {
+    "mtime": 1779828062.246593,
+    "ast_hash": "2e915048ead111952731574f846a96b5",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/04.1-bru-visual-rewrite-periodization-blocks/04.1-REVIEW.md": {
+    "mtime": 1779828062.247256,
+    "ast_hash": "15cd5d04c49f5bd584c8aa356330fe31",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/04.1-bru-visual-rewrite-periodization-blocks/04.1-05-SUMMARY.md": {
+    "mtime": 1779828062.245937,
+    "ast_hash": "42e49f92642b836412322f28c2c1d5fd",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/06.1-bru-visual-rewrite-progress-export-reskin-phase-6-surfaces-p/06.1-02-PLAN.md": {
+    "mtime": 1779828062.2524903,
+    "ast_hash": "56b8ccdb1590ee2ec8dc832a9a1adb26",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/06.1-bru-visual-rewrite-progress-export-reskin-phase-6-surfaces-p/06.1-03-PLAN.md": {
+    "mtime": 1779828062.2527368,
+    "ast_hash": "38bc347a27fd23420dc12de3d0e8017f",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/06.1-bru-visual-rewrite-progress-export-reskin-phase-6-surfaces-p/06.1-05-SUMMARY.md": {
+    "mtime": 1779828062.253461,
+    "ast_hash": "8cb5a4879b8804b17704de47416291b0",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/06.1-bru-visual-rewrite-progress-export-reskin-phase-6-surfaces-p/06.1-02-SUMMARY.md": {
+    "mtime": 1779828062.2526028,
+    "ast_hash": "052beb7417b7d6c214cac3c17ef95052",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/06.1-bru-visual-rewrite-progress-export-reskin-phase-6-surfaces-p/06.1-01-PLAN.md": {
+    "mtime": 1779828062.2522826,
+    "ast_hash": "9aa4edf66cd1b35498248ff654d1cc92",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/06.1-bru-visual-rewrite-progress-export-reskin-phase-6-surfaces-p/06.1-07-SUMMARY.md": {
+    "mtime": 1779828062.2538702,
+    "ast_hash": "f45d0cc4cd57d64be66f91a5c8b6c068",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/06.1-bru-visual-rewrite-progress-export-reskin-phase-6-surfaces-p/06.1-04-SUMMARY.md": {
+    "mtime": 1779828062.2532334,
+    "ast_hash": "24e0f58db694ce698438564eea760ee1",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/06.1-bru-visual-rewrite-progress-export-reskin-phase-6-surfaces-p/06.1-05-PLAN.md": {
+    "mtime": 1779828062.2533581,
+    "ast_hash": "4fc9992d06b9936883767f9bb04608b0",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/06.1-bru-visual-rewrite-progress-export-reskin-phase-6-surfaces-p/06.1-01-SUMMARY.md": {
+    "mtime": 1779828062.2523553,
+    "ast_hash": "17754ce3925487263ff6f8e667e1cf4a",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/06.1-bru-visual-rewrite-progress-export-reskin-phase-6-surfaces-p/06.1-04-PLAN.md": {
+    "mtime": 1779828062.2531686,
+    "ast_hash": "7d73e12886ec7e4f5d0bb605349d5e66",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/06.1-bru-visual-rewrite-progress-export-reskin-phase-6-surfaces-p/06.1-06-PLAN.md": {
+    "mtime": 1779828062.253565,
+    "ast_hash": "ef363a4c4ba01f0ccb52ee7cd605094b",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/06.1-bru-visual-rewrite-progress-export-reskin-phase-6-surfaces-p/06.1-06-SUMMARY.md": {
+    "mtime": 1779828062.2536342,
+    "ast_hash": "100319e6c0555de0c80615aa36d36d25",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/06.1-bru-visual-rewrite-progress-export-reskin-phase-6-surfaces-p/06.1-03-SUMMARY.md": {
+    "mtime": 1779828062.2528038,
+    "ast_hash": "01f5914446936ce9b3844c27e4d6d646",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/06.1-bru-visual-rewrite-progress-export-reskin-phase-6-surfaces-p/06.1-07-PLAN.md": {
+    "mtime": 1779828062.2537575,
+    "ast_hash": "8f8dfe415c2d3670fcf9fc2000045132",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/03.2-bru-visual-rewrite-prescription-warm-ups-reskin-phase-3-surf/03.2-02-PLAN.md": {
+    "mtime": 1779828062.2413132,
+    "ast_hash": "62671fcdcacbea16074d03b709d2bad1",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/03.2-bru-visual-rewrite-prescription-warm-ups-reskin-phase-3-surf/03.2-06-SUMMARY.md": {
+    "mtime": 1779828062.2420316,
+    "ast_hash": "b1924277197a7dcf3c07bf6467fc2be2",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/03.2-bru-visual-rewrite-prescription-warm-ups-reskin-phase-3-surf/03.2-03-SUMMARY.md": {
+    "mtime": 1779828062.2416153,
+    "ast_hash": "60e00fda1b18728f322deac2f0d0133b",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/03.2-bru-visual-rewrite-prescription-warm-ups-reskin-phase-3-surf/03.2-03-PLAN.md": {
+    "mtime": 1779828062.2415392,
+    "ast_hash": "b25051bb24b2f21a048be2e18fb6788c",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/03.2-bru-visual-rewrite-prescription-warm-ups-reskin-phase-3-surf/03.2-09-SUMMARY.md": {
+    "mtime": 1779828062.242851,
+    "ast_hash": "6ecdd0cbd8cf4ef559778cfe795e3be9",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/03.2-bru-visual-rewrite-prescription-warm-ups-reskin-phase-3-surf/03.2-08-PLAN.md": {
+    "mtime": 1779828062.242572,
+    "ast_hash": "d8e1c227d440466aec00370a8b47b2c4",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/03.2-bru-visual-rewrite-prescription-warm-ups-reskin-phase-3-surf/03.2-04-SUMMARY.md": {
+    "mtime": 1779828062.2417545,
+    "ast_hash": "1ebaa4ba506d8de73a23a99adb0ec685",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/03.2-bru-visual-rewrite-prescription-warm-ups-reskin-phase-3-surf/03.2-01-PLAN.md": {
+    "mtime": 1779828062.2411077,
+    "ast_hash": "974e2876bf410784159a7cc4b8c84e03",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/03.2-bru-visual-rewrite-prescription-warm-ups-reskin-phase-3-surf/03.2-01-SUMMARY.md": {
+    "mtime": 1779828062.2411852,
+    "ast_hash": "df4b5b7460ea9f8142913a30d8d9f983",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/03.2-bru-visual-rewrite-prescription-warm-ups-reskin-phase-3-surf/03.2-10-PLAN.md": {
+    "mtime": 1779828062.2429273,
+    "ast_hash": "5100da8a4d2ebfc14e4ca0dd20f833f3",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/03.2-bru-visual-rewrite-prescription-warm-ups-reskin-phase-3-surf/03.2-09-PLAN.md": {
+    "mtime": 1779828062.242779,
+    "ast_hash": "b88e969d043b0be8a67afdf273c6024b",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/03.2-bru-visual-rewrite-prescription-warm-ups-reskin-phase-3-surf/03.2-10-SUMMARY.md": {
+    "mtime": 1779828062.2430568,
+    "ast_hash": "ca33b9efdf5821367f62276aec5cf521",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/03.2-bru-visual-rewrite-prescription-warm-ups-reskin-phase-3-surf/03.2-02-SUMMARY.md": {
+    "mtime": 1779828062.2413902,
+    "ast_hash": "132c2d442ef301fcf9241315b432fbbd",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/03.2-bru-visual-rewrite-prescription-warm-ups-reskin-phase-3-surf/03.2-05-PLAN.md": {
+    "mtime": 1779828062.2418253,
+    "ast_hash": "bd0727412b0138fa3cfc7b95948c85b5",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/03.2-bru-visual-rewrite-prescription-warm-ups-reskin-phase-3-surf/03.2-04-PLAN.md": {
+    "mtime": 1779828062.2416863,
+    "ast_hash": "e723ac346eeab50d082b681d333d6da2",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/03.2-bru-visual-rewrite-prescription-warm-ups-reskin-phase-3-surf/03.2-07-SUMMARY.md": {
+    "mtime": 1779828062.2424953,
+    "ast_hash": "c079adfa2ba8cf0039313a18c58e8ae1",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/03.2-bru-visual-rewrite-prescription-warm-ups-reskin-phase-3-surf/03.2-06-PLAN.md": {
+    "mtime": 1779828062.2419696,
+    "ast_hash": "255ceeb1ad235e9a1048f6c708830d70",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/03.2-bru-visual-rewrite-prescription-warm-ups-reskin-phase-3-surf/03.2-08-SUMMARY.md": {
+    "mtime": 1779828062.2426572,
+    "ast_hash": "76ce9fe0d293e6ba987aa7bef06f76e9",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/03.2-bru-visual-rewrite-prescription-warm-ups-reskin-phase-3-surf/03.2-05-SUMMARY.md": {
+    "mtime": 1779828062.2418952,
+    "ast_hash": "9bd40b7acb3400c2a22aceb4abe7fd3e",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/03.2-bru-visual-rewrite-prescription-warm-ups-reskin-phase-3-surf/03.2-07-PLAN.md": {
+    "mtime": 1779828062.242405,
+    "ast_hash": "76f3a3aa0630aa17585bba0764ad6fb3",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/06-progress-views-export-polish/06-VERIFICATION.md": {
+    "mtime": 1779828062.2520618,
+    "ast_hash": "d6effc2e6964e5fe4f94b53f2d2c8326",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/06-progress-views-export-polish/06-09-PLAN.md": {
+    "mtime": 1779493733.6111577,
+    "ast_hash": "9e638a6113525c7b4df3957b23cc2095",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/06-progress-views-export-polish/06-VALIDATION.md": {
+    "mtime": 1779490196.6175544,
+    "ast_hash": "ea128b0be5f8651a58ee2ea507d92535",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/06-progress-views-export-polish/06-10-PLAN.md": {
+    "mtime": 1779493997.8257554,
+    "ast_hash": "b8ffdf8e5c4b580aa2d4c170d4b653c8",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/06-progress-views-export-polish/06-08-SUMMARY.md": {
+    "mtime": 1779828062.251336,
+    "ast_hash": "312f0c28191f612e0aa04cede7abaed5",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/06-progress-views-export-polish/06-01-PLAN.md": {
+    "mtime": 1779493633.274747,
+    "ast_hash": "1c75e4d045dcc847407c934b136cebd9",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/06-progress-views-export-polish/06-08-PLAN.md": {
+    "mtime": 1779494418.3056576,
+    "ast_hash": "9f9450f8bd6f46c861df3e29745ba98d",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/06-progress-views-export-polish/06-05-SUMMARY.md": {
+    "mtime": 1779828062.2509937,
+    "ast_hash": "17426e784ed8c95547b70f1e1e8d985d",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/06-progress-views-export-polish/06-02-SUMMARY.md": {
+    "mtime": 1779828062.2508056,
+    "ast_hash": "a3b350e97db715a8679e7e69fb8a0bf5",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/06-progress-views-export-polish/06-03-PLAN.md": {
+    "mtime": 1779493633.275037,
+    "ast_hash": "3dd0eab87baff84c352864651673f109",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/06-progress-views-export-polish/06-DISCUSSION-LOG.md": {
+    "mtime": 1779489424.914491,
+    "ast_hash": "555d2ffe077a0783281bd665fd4a5297",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/06-progress-views-export-polish/06-07-SUMMARY.md": {
+    "mtime": 1779828062.2512283,
+    "ast_hash": "4b4aeddd419582d864c7dfe65f8733ee",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/06-progress-views-export-polish/06-02-PLAN.md": {
+    "mtime": 1779494399.820634,
+    "ast_hash": "e0050df7f953db0a3bb01a7b7e122c9c",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/06-progress-views-export-polish/06-07-PLAN.md": {
+    "mtime": 1779493905.7538326,
+    "ast_hash": "5dba9eff99eea4764c13843a667563d1",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/06-progress-views-export-polish/06-UI-SPEC.md": {
+    "mtime": 1779828062.2519376,
+    "ast_hash": "d3a34c0ec82eddcea73dbb1c545ecb6a",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/06-progress-views-export-polish/06-09-SUMMARY.md": {
+    "mtime": 1779828062.2514398,
+    "ast_hash": "1c80a8d71bace0d3a41a05307a3b90ba",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/06-progress-views-export-polish/06-CONTEXT.md": {
+    "mtime": 1779494361.5850122,
+    "ast_hash": "337def2cb6528c6a53396b11d52ec124",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/06-progress-views-export-polish/06-04-SUMMARY.md": {
+    "mtime": 1779828062.2509325,
+    "ast_hash": "1866f4e369e1c45868f1f5126d313eb9",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/06-progress-views-export-polish/06-01-SUMMARY.md": {
+    "mtime": 1779828062.250696,
+    "ast_hash": "d0a5dcfcd5560c1751b66de0d529b65f",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/06-progress-views-export-polish/06-09b-SUMMARY.md": {
+    "mtime": 1779828062.2515619,
+    "ast_hash": "4e4e9c01c6246495e9012f72e5ee3652",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/06-progress-views-export-polish/06-10-SUMMARY.md": {
+    "mtime": 1779828062.2516892,
+    "ast_hash": "59da8632b47856c4a4bd399ecc63e979",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/06-progress-views-export-polish/06-06-PLAN.md": {
+    "mtime": 1779493958.1269383,
+    "ast_hash": "a57f5754d437c5c2b4b95456eabe8205",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/06-progress-views-export-polish/06-04-PLAN.md": {
+    "mtime": 1779493633.2752638,
+    "ast_hash": "2b5a8a21b49ef60e3d365eb96df333d6",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/06-progress-views-export-polish/06-06-SUMMARY.md": {
+    "mtime": 1779828062.251096,
+    "ast_hash": "d681e281022d197b94216339e7e324dd",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/06-progress-views-export-polish/06-05-PLAN.md": {
+    "mtime": 1779494388.7449238,
+    "ast_hash": "5fb8a17412ef7d349e3600f0f1a34ea3",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/06-progress-views-export-polish/06-03-SUMMARY.md": {
+    "mtime": 1779828062.2508721,
+    "ast_hash": "c6b4223a0ad475e36caf8eac49a8a0dd",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/06-progress-views-export-polish/06-PATTERNS.md": {
+    "mtime": 1779491169.2926073,
+    "ast_hash": "167bbe00c1ee10fad60f4fe3ea3408ba",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/06-progress-views-export-polish/06-09b-PLAN.md": {
+    "mtime": 1779493997.825548,
+    "ast_hash": "c5442eb8a3fa6e422ee4b94d8e411b22",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/06-progress-views-export-polish/06-RESEARCH.md": {
+    "mtime": 1779493091.5224133,
+    "ast_hash": "ad5b17ef5100678fcecfb93ec75d42ed",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/03-smart-prescription-warm-ups/03-03-SUMMARY.md": {
+    "mtime": 1779494247.8011038,
+    "ast_hash": "aca8748bffaa4972008754ecf1b2216e",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/03-smart-prescription-warm-ups/03-08-PLAN.md": {
+    "mtime": 1779491801.3304775,
+    "ast_hash": "52ebdf87cc2cdc2d0138f9198887838a",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/03-smart-prescription-warm-ups/03-01-PLAN.md": {
+    "mtime": 1779489203.7014134,
+    "ast_hash": "32da6265daa8f773b46ed97bb86aa187",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/03-smart-prescription-warm-ups/03-06-SUMMARY.md": {
+    "mtime": 1779497521.9676502,
+    "ast_hash": "325d685eea358e04766e63414f342c0b",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/03-smart-prescription-warm-ups/03-02-PLAN.md": {
+    "mtime": 1779491213.8563156,
+    "ast_hash": "1a14bcfb3e562290481eefb815162386",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/03-smart-prescription-warm-ups/03-01-SUMMARY.md": {
+    "mtime": 1779492543.4442658,
+    "ast_hash": "00ab2b2f70ccd4692621602afe89cce3",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/03-smart-prescription-warm-ups/03-03-PLAN.md": {
+    "mtime": 1779491205.04425,
+    "ast_hash": "2f59cec127ebc2d59063993c3a668217",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/03-smart-prescription-warm-ups/03-04-SUMMARY.md": {
+    "mtime": 1779494851.3026807,
+    "ast_hash": "0590677273475604f82f447546fe9f80",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/03-smart-prescription-warm-ups/03-06-PLAN.md": {
+    "mtime": 1779491407.3662035,
+    "ast_hash": "6471ea2612c9a189392b8653f06a0db9",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/03-smart-prescription-warm-ups/03-07-SUMMARY.md": {
+    "mtime": 1779495397.2777612,
+    "ast_hash": "01f8be700fe164331b1d9b0823ce3643",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/03-smart-prescription-warm-ups/03-02-SUMMARY.md": {
+    "mtime": 1779493597.7908945,
+    "ast_hash": "a993cb5e4dcdc356dcf9fead4eda65e9",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/03-smart-prescription-warm-ups/03-CONTEXT.md": {
+    "mtime": 1779491006.1436882,
+    "ast_hash": "e1bdfaea7748f65b3b6d74aa9e1b691b",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/03-smart-prescription-warm-ups/03-07-PLAN.md": {
+    "mtime": 1779490127.0052378,
+    "ast_hash": "7f531a3b2e3500e587b2d5eed1e6edcf",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/03-smart-prescription-warm-ups/03-UI-SPEC.md": {
+    "mtime": 1779828062.23872,
+    "ast_hash": "47e56be61bbdc215a90736c41f82c981",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/03-smart-prescription-warm-ups/03-UI-REVIEW.md": {
+    "mtime": 1779828062.238507,
+    "ast_hash": "d7f5710d545c4311f96860ad7867fc5d",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/03-smart-prescription-warm-ups/03-RESEARCH.md": {
+    "mtime": 1779491039.4928885,
+    "ast_hash": "065b3d4da0eb37d0f713d7b65bce34a7",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/03-smart-prescription-warm-ups/03-08-SUMMARY.md": {
+    "mtime": 1779508575.7211645,
+    "ast_hash": "4e203c431b93954bed4e5fc24f4f05b3",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/03-smart-prescription-warm-ups/03-05-PLAN.md": {
+    "mtime": 1779489843.7893622,
+    "ast_hash": "89adb7f65fc2dd7969f7583675e68c27",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/03-smart-prescription-warm-ups/03-PATTERNS.md": {
+    "mtime": 1779488804.6594293,
+    "ast_hash": "91b1cd4697a1bc085a29d1ca8fc07301",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/03-smart-prescription-warm-ups/03-05-SUMMARY.md": {
+    "mtime": 1779496963.2731702,
+    "ast_hash": "62032cdc4602191e552d3cb9ca0d2279",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/03-smart-prescription-warm-ups/03-04-PLAN.md": {
+    "mtime": 1779489660.59745,
+    "ast_hash": "de93675e0b1c8547358b93b83f0a1b50",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/phases/03-smart-prescription-warm-ups/03-VALIDATION.md": {
+    "mtime": 1779491062.3593838,
+    "ast_hash": "2acc371317acfcdf61c1cc51d6191af6",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/bru-screens/New-modal/new-modal.png": {
+    "mtime": 1779828532.2772124,
+    "ast_hash": "7357db2c1a7124b10fa3113aee035e08",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/bru-screens/New-block/new-block-named.png": {
+    "mtime": 1779828310.4108727,
+    "ast_hash": "2c298a3f780095359c2451218ab72e80",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/bru-screens/New-block/new-block.png": {
+    "mtime": 1779828009.8700516,
+    "ast_hash": "122c4d04ee8d6e375a6cfdd312b86641",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/bru-screens/Program/empty-state.png": {
+    "mtime": 1779828062.2842407,
+    "ast_hash": "8d1499d9a671ab83fd448be084e7329e",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/bru-screens/Program/Program _ row swipe.png": {
+    "mtime": 1779828062.269987,
+    "ast_hash": "4d67be63fa4b00c9428fb5deaf6c1eb6",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/bru-screens/Program/New Menu.png": {
+    "mtime": 1779828062.2690175,
+    "ast_hash": "c4e2b775dc4d2d712288c2273cb3c3ef",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/fitbod/Assets.xcassets/AppIcon.appiconset/AppIcon-1024.png": {
+    "mtime": 1778479517.0776541,
+    "ast_hash": "99d5b76664dd3790c71e93ed529be565",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/scratch/today-after-volbar.png": {
+    "mtime": 1779828062.2667444,
+    "ast_hash": "6a9ce0a9b3215bd0c7270aad90b6047c",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/scratch/program-current-spacing-fix.png": {
+    "mtime": 1779828062.2638469,
+    "ast_hash": "83d044bdebd396c6c8095395695dc47a",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/scratch/program-current.png": {
+    "mtime": 1779828062.2648132,
+    "ast_hash": "457c7a1515ee8f5e51f31e06b85eb037",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/scratch/today-after-fatigue.png": {
+    "mtime": 1779828062.266274,
+    "ast_hash": "6eaba3d442518a1b4886f56a7f465513",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/scratch/program-current-final.png": {
+    "mtime": 1779828062.2629402,
+    "ast_hash": "d9340cda248a6a2408672d6e27ab2f0c",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/scratch/program-current-2.png": {
+    "mtime": 1779828062.2561226,
+    "ast_hash": "b40e75121829174b5fe9732bc772cece",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/scratch/program-current-3.png": {
+    "mtime": 1779828062.2569928,
+    "ast_hash": "fd79b27a2289da87ef085f6f0aa3cea0",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/scratch/today-current.png": {
+    "mtime": 1779828062.2674081,
+    "ast_hash": "8b09903deb901bef1af9d53a50554f13",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/scratch/program-current-4.png": {
+    "mtime": 1779828062.2580364,
+    "ast_hash": "57c335b91144c506a2b42d0a08996909",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/scratch/program-current-5.png": {
+    "mtime": 1779828062.2587552,
+    "ast_hash": "38d4d0a6173c9adc3f6d786b4c22e68f",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/scratch/program-current-7.png": {
+    "mtime": 1779828062.2611103,
+    "ast_hash": "eda29d4c2a2c6c3f7da6ca4e72debcbc",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/scratch/program-current-6.png": {
+    "mtime": 1779828062.2603908,
+    "ast_hash": "b83a97f28662571f4212b30a3c45001c",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/scratch/today-after-cta.png": {
+    "mtime": 1779828062.265356,
+    "ast_hash": "6a7b19cb4e686aea943883e28bb7fe94",
+    "semantic_hash": ""
+  },
+  "/Users/chrissaechao/Desktop/fitbod/.planning/scratch/program-current-before-tap.png": {
+    "mtime": 1779828062.2620943,
+    "ast_hash": "ef237ebfd4ec8ed5bd0784b360f6369c",
+    "semantic_hash": ""
+  }
+}

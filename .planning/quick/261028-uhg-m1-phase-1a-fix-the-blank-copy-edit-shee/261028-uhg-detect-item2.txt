@@ -1,0 +1,28 @@
+Changes: 8 files, 26 symbols
+Affected processes: 5
+Risk level: medium
+
+Changed symbols:
+  undefined bannerBody → fitbod/Sessions/ResumeWorkoutBanner.swift
+  undefined ResumeWorkoutBanner → fitbod/Sessions/ResumeWorkoutBanner.swift
+  undefined body → fitbod/Sessions/SessionExerciseCard.swift
+  undefined cardRow → fitbod/Sessions/SessionExerciseCard.swift
+  undefined SessionExerciseCard → fitbod/Sessions/SessionExerciseCard.swift
+  undefined View → fitbod/Sessions/SessionExerciseCard.swift
+  undefined body → fitbod/Sessions/SessionLoggerView.swift
+  undefined bruHeader → fitbod/Sessions/SessionLoggerView.swift
+  undefined SessionLoggerView → fitbod/Sessions/SessionLoggerView.swift
+  undefined WarmupRampRows → fitbod/Sessions/WarmupRampRows.swift
+  undefined body → fitbod/Sessions/WarmupRampRows.swift
+  undefined skipWarmUpsButton → fitbod/Sessions/WarmupRampRows.swift
+  undefined pctForSet → fitbod/Sessions/WarmupRampRows.swift
+  undefined repsForSet → fitbod/Sessions/WarmupRampRows.swift
+  undefined rpeForSet → fitbod/Sessions/WarmupRampRows.swift
+  ... and 11 more
+
+Affected execution flows:
+  • BannerBody → Date (3 steps) — changed: bannerBody
+  • BannerBody → UserDefaultsRestTimerStore (3 steps) — changed: bannerBody
+  • BannerBody → LiveNotificationScheduler (3 steps) — changed: bannerBody
+  • BannerBody → RestTimerActivityController (3 steps) — changed: bannerBody
+  • BannerBody → Load (3 steps) — changed: bannerBody

@@ -1,19 +1,46 @@
-// Phase 2 · Routine Builder
-// Single-screen builder · per-exercise prescription · supersets · drag-reorder
+// Phase 2 · RoutineBuilderView (PIVOT 2026-05-22)
+// Routine-level Intent + Progression pickers at top. Per-exercise rows
+// hold rep range + RPE range + per-set overrides + rest, not intent/progression.
 
 function BruRoutineBuilderScreen() {
   return (
     <BruPhone right={<span>SAVE</span>}>
-      <BruHeader left="‹ Back" center="Edit routine" right="•••" />
+      <BruHeader left="‹ Routines" center="Edit routine" right="•••" />
 
-      {/* Routine name + intent */}
-      <div style={{ padding: '14px 16px 12px', borderBottom: `2px solid ${BRU.ink}` }}>
-        <BruDisplay size={32} style={{ whiteSpace: 'nowrap', lineHeight: 1 }}>Upper hypertrophy</BruDisplay>
-        <div style={{ display: 'flex', gap: 6, marginTop: 10, flexWrap: 'wrap' }}>
-          <BruChip fill>Hypertrophy</BruChip>
-          <BruChip>4 days / wk</BruChip>
-          <BruChip>~52 min</BruChip>
-          <BruChip color={BRU.signal}>Linked → Block 03</BruChip>
+      {/* Routine name */}
+      <div style={{ padding: '14px 16px 10px', borderBottom: `1px solid ${BRU.ink}` }}>
+        <div style={{ fontSize: 9, color: BRU.muted, letterSpacing: 1.2, fontWeight: 700 }}>
+          ROUTINE NAME
+        </div>
+        <BruDisplay size={28} style={{ whiteSpace: 'nowrap', lineHeight: 1, marginTop: 4 }}>
+          Push A
+        </BruDisplay>
+        <div style={{ display: 'flex', gap: 5, marginTop: 8 }}>
+          <BruChip color={BRU.signal}>Linked → Block 03 · W3</BruChip>
+        </div>
+      </div>
+
+      {/* PIVOT — Intent + Progression pickers at routine level */}
+      <div style={{ display: 'flex', borderBottom: `2px solid ${BRU.ink}` }}>
+        <div style={{ flex: 1, padding: '10px 14px', borderRight: `1px solid ${BRU.ink}` }}>
+          <div style={{ fontSize: 9, color: BRU.muted, letterSpacing: 1.2, fontWeight: 700 }}>
+            SESSION INTENT
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between',
+            alignItems: 'baseline', marginTop: 4 }}>
+            <BruDisplay size={20}>Hypertrophy</BruDisplay>
+            <span style={{ color: BRU.muted, fontSize: 14 }}>›</span>
+          </div>
+        </div>
+        <div style={{ flex: 1, padding: '10px 14px' }}>
+          <div style={{ fontSize: 9, color: BRU.muted, letterSpacing: 1.2, fontWeight: 700 }}>
+            PROGRESSION
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between',
+            alignItems: 'baseline', marginTop: 4 }}>
+            <BruDisplay size={20}>Double prog.</BruDisplay>
+            <span style={{ color: BRU.muted, fontSize: 14 }}>›</span>
+          </div>
         </div>
       </div>
 
@@ -48,16 +75,12 @@ function BruRoutineBuilderScreen() {
               <div style={{ fontSize: 10, color: BRU.muted, letterSpacing: 0.5,
                 textTransform: 'uppercase', marginTop: 1 }}>Barbell · top set + back-off</div>
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 2,
-              color: BRU.muted, fontSize: 12 }}>
-              <span>⋮⋮</span>
-            </div>
+            <span style={{ color: BRU.muted, fontSize: 12 }}>⋮⋮</span>
           </div>
-          {/* Prescription pills row */}
+          {/* Prescription pills row — rep range + RPE + rest (intent/progression now routine-level) */}
           <div style={{ display: 'flex', gap: 5, marginTop: 8, flexWrap: 'wrap' }}>
             <BruChip>6–8 reps</BruChip>
             <BruChip>RPE 8–9</BruChip>
-            <BruChip color={BRU.signal}>RPE autoreg</BruChip>
             <BruChip>3 min rest</BruChip>
             <BruChip>Plate ½ lb</BruChip>
           </div>
@@ -107,7 +130,7 @@ function BruRoutineBuilderScreen() {
             <div style={{ flex: 1 }}>
               <div style={{ fontSize: 15, fontWeight: 600, letterSpacing: -0.2 }}>Incline DB Press</div>
               <div style={{ fontSize: 10, color: BRU.muted, letterSpacing: 0.5,
-                textTransform: 'uppercase', marginTop: 1 }}>3 × 10 · RPE 8 · Double progression</div>
+                textTransform: 'uppercase', marginTop: 1 }}>3 × 10 · RPE 8 · 60 s rest</div>
             </div>
             <span style={{ color: BRU.muted, fontSize: 12 }}>⋮⋮</span>
           </div>
@@ -117,7 +140,7 @@ function BruRoutineBuilderScreen() {
             <div style={{ flex: 1 }}>
               <div style={{ fontSize: 15, fontWeight: 600, letterSpacing: -0.2 }}>Cable Fly</div>
               <div style={{ fontSize: 10, color: BRU.muted, letterSpacing: 0.5,
-                textTransform: 'uppercase', marginTop: 1 }}>3 × 12 · RPE 9 · 60 s rest</div>
+                textTransform: 'uppercase', marginTop: 1 }}>3 × 12 · RPE 9 · 90 s rest</div>
             </div>
             <span style={{ color: BRU.muted, fontSize: 12 }}>⋮⋮</span>
           </div>
@@ -125,7 +148,7 @@ function BruRoutineBuilderScreen() {
 
         {/* Compact rows */}
         {[
-          { n: 3, name: 'Tricep Pushdown', spec: '4 × 12 · RPE 9' },
+          { n: 3, name: 'Tricep Pushdown', spec: '4 × 12 · RPE 9 · 90 s' },
           { n: 4, name: 'OH Tricep Ext', spec: '3 × 15 · RPE 9 · cluster' },
         ].map(e => (
           <div key={e.n} style={{
@@ -159,9 +182,7 @@ function BruRoutineBuilderScreen() {
 
       {/* Bottom bar */}
       <div style={{ display: 'flex', borderTop: `2px solid ${BRU.ink}` }}>
-        <BruButton kind="ghost" size="md" style={{ borderRight: `2px solid ${BRU.ink}`, border: 'none' }}>
-          Discard
-        </BruButton>
+        <BruButton kind="ghost" size="md">Discard</BruButton>
         <BruButton kind="primary" size="md">Save routine ▸</BruButton>
       </div>
       <div style={{ height: 24, background: BRU.bg }} />

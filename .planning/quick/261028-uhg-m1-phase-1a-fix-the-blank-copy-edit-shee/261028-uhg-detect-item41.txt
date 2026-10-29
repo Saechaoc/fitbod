@@ -1,0 +1,7 @@
+Changes: 2 files, 2 symbols
+Affected processes: 0
+Risk level: low
+
+Changed symbols:
+  undefined body → fitbod/Sessions/PerSetNoteSheet.swift
+  undefined PerSetNoteSheet → fitbod/Sessions/PerSetNoteSheet.swift
