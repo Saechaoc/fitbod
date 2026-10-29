@@ -20,7 +20,7 @@ The milestone is done when all of these are true:
 
 ## Scope
 
-- Review items 1 to 25 are described in `~/Desktop/fitbod-review/fitbod-m1-review.md`.
+- Review items 1 to 25 are described in `docs/review-docs/fitbod-m1-review.md`.
 - Review items 26 to 47 are described in the same file, under "Second pass", and in Appendix A of the plan.
 - Finding N1: backup and restore drop routines.
   It was found while this bundle was written, and T41 covers it.

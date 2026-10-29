@@ -12,7 +12,7 @@ The coordinator re-checks the first group before the first dispatch.
 - On 2026-10-29 another session rewrote the unpushed history to drop the tracked `build/` folder (5,358 files), then pushed `main`.
   `/build/` is now in `.gitignore`, and git tracks no file under `build/`.
 - Hashes from before that rewrite, such as `4e43f88` in the plan and the review, no longer exist on `main`.
-  `/Users/chrissaechao/Desktop/fitbod-review/history-rewrite-20261029-commit-map.txt` maps each old hash to its new one, so old `4e43f88` is new `df108b0`.
+  `docs/review-docs/history-rewrite-20261029-commit-map.txt` maps each old hash to its new one, so old `4e43f88` is new `df108b0`.
 - The old history survives only on the local branches `backup/main-before-build-purge-20261029`, `backup/m1-worktree-20261028` and `task/codex`.
   None of them may ever be pushed.
 - The paths listed under "Files you must never edit or stage" in [worker-rules.md](worker-rules.md) were uncommitted before this run.

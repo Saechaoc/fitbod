@@ -248,5 +248,5 @@ Write everything to `/Users/chrissaechao/Desktop/fitbod/docs/conway-specs/eviden
 - The smallest supported phone is 390pt wide.
   Check layouts on the small phone, not only the large one.
 - History was rewritten on 2026-10-29, so commit hashes in the plan or the review, such as `4e43f88`, no longer exist on `main`.
-  Look up an old hash in `/Users/chrissaechao/Desktop/fitbod-review/history-rewrite-20261029-commit-map.txt` before you use it.
+  Look up an old hash in `docs/review-docs/history-rewrite-20261029-commit-map.txt` before you use it.
 - Swift 6 and ActivityKit: import ActivityKit with `@preconcurrency`, and build activity content inside the task body, never from captured outer state.

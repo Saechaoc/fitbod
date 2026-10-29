@@ -27,11 +27,11 @@ Status is one of: todo, dispatched, done, failed, skipped.
 | T02 | 1 | todo | | | | `Session.loggedSetCount` exists since `4d7e07e` (other effort) |
 | T03 | 1 | todo | | | | Item 1 fixed in `ba8e0fa` (other effort); item 19 open |
 | T04 | 1 | todo | | | | Item 2 fixed in `4d7e07e` (other effort); item 25 nits open |
-| T05 | 1 | todo | | | | |
-| T06 | 1 | todo | | | | |
+| T05 | 1 | todo | | | | Item 3 in progress in the other effort's worktree `q-261028-uhg-t3` at 14:47 |
+| T06 | 1 | todo | | | | Items 5 and 6 in progress in the other effort's worktree `q-261029-a9s` at 14:47 |
 | T07 | 1 | todo | | | | Item 41 fixed in `c0f6773` (other effort); item 33 in progress there at 10:39 |
-| T08 | 1 | todo | | | | |
-| T09 | 1 | todo | | | | |
+| T08 | 1 | todo | | | | Item 34 in progress in the other effort's worktree `q-261029-a9s` at 14:47; item 14 is queued there as `261029-dfd` |
+| T09 | 1 | todo | | | | Item 4 in progress in the other effort's worktree `q-261029-a9s` at 14:47; item 18 is queued there as `261029-dfd` |
 | T10 | 1 | todo | | | | |
 | T11 | 1 | todo | | | | |
 | T12 | 1 | todo | | | | |
@@ -61,7 +61,7 @@ Status is one of: todo, dispatched, done, failed, skipped.
 | T36 | 3 | todo | | | | |
 | T37 | 3 | todo | | | | |
 | T38 | 3 | todo | | | | |
-| T39 | 4 | todo | | | | |
+| T39 | 4 | todo | | | | Item 5 (number entry in the journey test) in progress in `q-261029-a9s` at 14:47 |
 | T40 | 4 | todo | | | | |
 | T41 | 4 | todo | | | | |
 | T42 | 4 | todo | | | | |

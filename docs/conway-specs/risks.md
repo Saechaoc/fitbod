@@ -100,9 +100,12 @@ Each entry is a way this run can fail, and what limits the damage.
   None of them is pushed yet.
   At 10:39 its worker `task_2375eb69fb1b` was live, with uncommitted edits in the three note sheets, `NotesPersistenceTests` and `NoteSheetsUITests`, which matches item 33.
   Two efforts on one checkout overwrite each other's edits, commit each other's files and fight over the two simulators.
+  Update at 14:47 on 2026-10-29: that effort now runs on the `csaechao4` Mac as Orca run `run_f64c6aa47f95`, with each quick task in its own git worktree under `~/orca/workspaces/fitbod/`.
+  Two of its agents are still working there: `q-261029-a9s` (items 4, 5, 6 and 34) and `q-261028-uhg-t3` (item 3).
+  Its `260610-hcv` fix for New Block phase titles at 390-393pt is on `main` as `3ff4a8a`.
 - Mitigation: only one effort runs.
   The coordinator asks the user which one continues before creating an Orca run.
-  If this bundle continues, the other effort first finishes or stops, and `orca orchestration worker-list --include-remote --json` shows no live worker in the main checkout.
+  If this bundle continues, the other effort first finishes or stops, and the worktree checks in precondition 7 of [dispatch.md](dispatch.md) pass.
   The coordinator then maps each of that effort's commits to tickets by review item.
   It lists them with `git log --oneline 12aad09..HEAD` right before the first dispatch, because the list grew while this bundle was written.
   A capacity-model warning that a `new:` file already exists is another sign of overlap.

@@ -21,7 +21,9 @@ Do not dispatch anything until every line here is true, and each answer is recor
    A warning that a `new:` file already exists means another effort did part of that ticket, so map it as line 7 says.
 7. No other agent, including Codex or another Claude session, is editing the working tree.
    On 2026-10-29 another session was already running this plan with its own Orca run (see "Another session runs the same plan" in [risks.md](risks.md)).
-   That effort must be finished or stopped first, and `orca orchestration worker-list --include-remote --json` must show no live worker in the main checkout.
+   That effort must be finished or stopped first.
+   Its workers run in their own git worktrees, so check all of them, not only the main checkout: `git worktree list` shows only the main checkout, and `orca worktree ps --json` shows no `working` agent in any other fitbod worktree.
+   Orca sees only its own machine, so also ask the user whether that effort still runs on another machine.
    List its commits with `git log --oneline 12aad09..HEAD` right before the first dispatch, because it was still committing when this bundle was finished.
    Every ticket it fully fixed is marked `skipped` in the run log, with its commit hashes.
 
