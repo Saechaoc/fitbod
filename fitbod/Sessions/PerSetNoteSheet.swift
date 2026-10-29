@@ -69,7 +69,7 @@ public struct PerSetNoteSheet: View {
             .safeAreaInset(edge: .top, spacing: 0) {
                 BRUHeaderBar(
                     left: HeaderAction("CANCEL") { dismiss() },                    // UI-SPEC verbatim
-                    center: "SET \(entry.orderIndex + 1) NOTE",                    // UI-SPEC verbatim format
+                    center: "SET \(SessionSetActions.displayNumber(of: entry)) NOTE", // UI-SPEC verbatim format
                     right: HeaderAction("SAVE", isSignal: true) { dismiss() }      // UI-SPEC verbatim
                 )
             }
