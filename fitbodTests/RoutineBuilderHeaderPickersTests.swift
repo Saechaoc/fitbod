@@ -219,6 +219,44 @@ struct RoutineBuilderHeaderPickersTests {
         #expect(draft.snapshotHash() != afterIntent)
     }
 
+    /// Review item 3: the session editor resists a swipe-down, and Back
+    /// asks first, only while this hash differs from the one taken when
+    /// the editor opened. So every exercise field the editor saves must
+    /// move it, including the order of exercises added in this visit.
+    @Test("editing or reordering exercises makes snapshotHash return a different value")
+    @MainActor
+    func snapshotHashRespondsToExerciseEdits() throws {
+        let context = ModelContext(try FitbodModelContainer.make(inMemory: true))
+        let bench = Exercise()
+        let squat = Exercise()
+        context.insert(bench)
+        context.insert(squat)
+        let edits: [(String, (RoutineDraft) -> Void)] = [
+            ("reps", { $0.exercises[0].targetRepsLow = 6 }),
+            ("RPE", { $0.exercises[0].targetRPE = 9 }),
+            ("rest", { $0.exercises[0].prescribedRestSeconds = 180 }),
+            ("tempo", { $0.exercises[0].tempo = "3-1-1" }),
+            ("tempo tracking", { $0.exercises[0].tracksTempo = true }),
+            ("partial reps", { $0.exercises[0].tracksPartialReps = true }),
+            ("superset", { $0.exercises[0].supersetGroupID = UUID() }),
+            ("warm-ups", { $0.exercises[0].warmupOverride = WarmupConfig(enabled: false) }),
+            ("per-set target", { $0.exercises[0].setOverrides[0].targetRPE = 7 }),
+            ("order", { $0.exercises.swapAt(0, 1) }),
+        ]
+        for (field, edit) in edits {
+            let draft = RoutineDraft()
+            for exercise in [bench, squat] {
+                let row = RoutineExerciseDraft()
+                row.exercise = exercise
+                row.appendOverride(setIndex: 0)
+                draft.exercises.append(row)
+            }
+            let opened = draft.snapshotHash()
+            edit(draft)
+            #expect(draft.snapshotHash() != opened, "Editing the \(field) must count as unsaved")
+        }
+    }
+
     // MARK: - Source-file reader (Tests 4 + 5)
 
     /// Ascend from this test file at

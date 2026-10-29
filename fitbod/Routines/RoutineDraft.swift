@@ -308,21 +308,33 @@ public final class RoutineDraft {
         }
     }
 
-    /// Cheap fingerprint for the routine-builder dirty-check. Captures the
-    /// load-bearing inputs that change in a normal builder session: name,
-    /// blockID, exercise count + per-exercise targetSets sum + joined ids,
-    /// AND (Phase 3.1) the two new session-level picker fields. Used by
-    /// `RoutineBuilderView.hasUnsavedChanges` to decide whether tapping
-    /// Cancel surfaces the discard-confirmation dialog.
+    /// Cheap fingerprint for the routine-builder dirty-check: every field
+    /// `save(into:context:)` writes, with the exercises and their per-set
+    /// overrides in order. `RoutineBuilderView.hasUnsavedChanges` compares
+    /// it with the one taken when the builder opened, to decide whether
+    /// Back and Discard ask first and whether a swipe-down is resisted.
     ///
     /// Internal (not private) access so the unit-test target can call
     /// it via `@testable import fitbod`. Relocated in Phase 3.1 from
     /// `RoutineBuilderView` (where it was `private func`) to this draft
     /// so Test #6 in `RoutineBuilderHeaderPickersTests` is viable.
     func snapshotHash() -> String {
-        let counts = exercises.map { $0.targetSets }.reduce(0, +)
-        let ids = exercises.map { $0.id?.uuidString ?? "new" }.joined(separator: ",")
-        return "\(name)|\(blockID?.uuidString ?? "nil")|\(exercises.count)|\(counts)|\(ids)|\(intent.rawValue)|\(progressionKind.rawValue)"
+        func text(_ value: Any?) -> String { value.map { "\($0)" } ?? "nil" }
+        let rows = exercises.map { ex in
+            let overrides = ex.setOverrides.map { od in
+                ([od.setIndex, od.targetRepsLow, od.targetRepsHigh, od.targetRPE] as [Any?])
+                    .map(text).joined(separator: ":")
+            }
+            let fields: [Any?] = [
+                ex.id, ex.exercise?.id, ex.targetSets, ex.targetRepsLow, ex.targetRepsHigh,
+                ex.targetRPE, ex.prescribedRestSeconds, ex.tempo, ex.tracksTempo,
+                ex.tracksPartialReps, ex.supersetGroupID, ex.warmupOverride,
+                overrides.joined(separator: ";"),
+            ]
+            return fields.map(text).joined(separator: "/")
+        }
+        let fields: [Any?] = [name, notes, folderID, blockID, intent.rawValue, progressionKind.rawValue]
+        return (fields.map(text) + [rows.joined(separator: ",")]).joined(separator: "|")
     }
 }
 
