@@ -37,10 +37,10 @@ final class MilestoneOneJourneyUITests: XCTestCase {
         tapFilter("library.filter.equipment")
         tap("Barbell")
         tap("Done")
-        replace(app.textFields["library.search.browser"], with: "Barbell Bench")
+        enter("Barbell Bench", into: app.textFields["library.search.browser"])
         XCTAssertTrue(app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH %@", "Barbell Bench Press")).firstMatch.waitForExistence(timeout: 10))
         attach("02a-muscle-equipment-filtered")
-        replace(app.textFields["library.search.browser"], with: "M1-no-such-exercise")
+        enter("M1-no-such-exercise", into: app.textFields["library.search.browser"])
         XCTAssertTrue(app.staticTexts["No exercises match \"M1-no-such-exercise\""].waitForExistence(timeout: 10))
         attach("02b-no-matches")
         tap("Clear search")
@@ -51,14 +51,14 @@ final class MilestoneOneJourneyUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["customExercise.nameError"].waitForExistence(timeout: 5))
         attach("03-custom-validation")
         let exerciseName = "M1 Cambered Bar Bench Press with Medium Grip"
-        replace(app.textFields["customExercise.name"], with: exerciseName)
+        enter(exerciseName, into: app.textFields["customExercise.name"])
         tap("Add Primary Muscle")
         let chest = app.buttons["musclePicker.chest"]
         XCTAssertTrue(chest.waitForExistence(timeout: 10))
         chest.tap()
         tap("Save")
         XCTAssertTrue(app.textFields["library.search.browser"].waitForExistence(timeout: 10))
-        replace(app.textFields["library.search.browser"], with: "M1 Cambered")
+        enter("M1 Cambered", into: app.textFields["library.search.browser"])
         let custom = app.staticTexts[exerciseName]
         XCTAssertTrue(custom.waitForExistence(timeout: 10))
         custom.tap()
@@ -70,19 +70,19 @@ final class MilestoneOneJourneyUITests: XCTestCase {
         tap("+ New routine")
         let routineName = field("Routine name")
         XCTAssertTrue(routineName.waitForExistence(timeout: 10))
-        replace(routineName, with: "M1 Upper Body")
+        enter("M1 Upper Body", into: routineName)
         routineName.typeText("\n")
         tap("+ Add session")
         tap("+ New session")
         let sessionName = field("Session name")
         XCTAssertTrue(sessionName.waitForExistence(timeout: 10))
-        replace(sessionName, with: "M1 Push A")
+        enter("M1 Push A", into: sessionName)
         sessionName.typeText("\n")
         attach("05-session-empty")
         tap("Add exercise")
         let pickerSearch = app.textFields["library.search.picker"]
         XCTAssertTrue(pickerSearch.waitForExistence(timeout: 10))
-        replace(pickerSearch, with: "M1 Cambered")
+        enter("M1 Cambered", into: pickerSearch)
         let pickedExercise = app.buttons.matching(NSPredicate(
             format: "identifier BEGINSWITH %@ AND label BEGINSWITH[c] %@",
             "exercise.pick.", exerciseName
@@ -128,13 +128,13 @@ final class MilestoneOneJourneyUITests: XCTestCase {
         let sets = app.otherElements["prescription.sets"].firstMatch
         XCTAssertTrue(sets.waitForExistence(timeout: 10))
         reveal(sets)
-        // The shared control is one adjustable VoiceOver element. Tap its
-        // visible minus cell (44 + 64 + 44pt control, anchored at the right).
-        sets.coordinate(withNormalizedOffset: CGVector(dx: 1, dy: 0.5))
-            .withOffset(CGVector(dx: -130, dy: 0)).tap()
-        XCTAssertEqual(sets.value as? String, "2")
-        replace(app.textFields["prescription.reps.low"], with: "6")
-        replace(app.textFields["prescription.reps.high"], with: "10")
+        UITestNavigation.step(sets, to: 2)
+        let repsLow = app.otherElements["prescription.reps.low"].firstMatch
+        reveal(repsLow)
+        UITestNavigation.step(repsLow, to: 6)
+        let repsHigh = app.otherElements["prescription.reps.high"].firstMatch
+        reveal(repsHigh)
+        UITestNavigation.step(repsHigh, to: 10)
         attach("06a-edit-prescription")
         tap("Save session ▸")
         tap("Start workout ▸")
@@ -153,9 +153,9 @@ final class MilestoneOneJourneyUITests: XCTestCase {
         let weight = app.textFields.matching(NSPredicate(format: "identifier BEGINSWITH %@", "set.weight.1.S1")).firstMatch
         let weightInput = weight.exists ? weight : app.textFields["—"].firstMatch
         reveal(weightInput)
-        replace(weightInput, with: "80")
+        enter("80", into: weightInput)
         let reps = app.textFields["set.reps.1.S1"]
-        replace(reps, with: "8")
+        enter("8", into: reps)
         reveal(app.buttons["set.complete.1.S1"])
         app.buttons["set.complete.1.S1"].tap()
         XCTAssertTrue(app.buttons["rest.plus15"].waitForExistence(timeout: 10))
@@ -246,7 +246,7 @@ final class MilestoneOneJourneyUITests: XCTestCase {
         reveal(reps)
         XCTAssertTrue(reps.waitForExistence(timeout: 15))
         attach("layout-workout-before-entry")
-        replace(reps, with: "8")
+        enter("8", into: reps)
         // XCUITest may call a cell hittable even when the fixed header covers
         // it. Finish keyboard entry, then ensure the target is visibly below
         // that header before tapping (especially with accessibility text).
@@ -367,7 +367,7 @@ final class MilestoneOneJourneyUITests: XCTestCase {
     private func pickExercise(_ name: String) {
         let search = app.textFields["library.search.picker"]
         XCTAssertTrue(search.waitForExistence(timeout: 10))
-        replace(search, with: name)
+        enter(name, into: search)
         let row = app.buttons.matching(NSPredicate(
             format: "identifier BEGINSWITH %@ AND label BEGINSWITH[c] %@", "exercise.pick.", name
         )).firstMatch
@@ -375,8 +375,13 @@ final class MilestoneOneJourneyUITests: XCTestCase {
         row.tap()
     }
 
+    /// Types the way a user does: tap the field, then type. A prefilled name
+    /// is selected with a triple tap and typed over, as a user would, so
+    /// nothing depends on where a tap leaves the caret. A number is never
+    /// deleted first, so leftover digits fail the check below; a
+    /// delete-first helper once hid reps entry that turned 10 into 106.
     @MainActor
-    private func replace(_ element: XCUIElement, with text: String) {
+    private func enter(_ text: String, into element: XCUIElement) {
         reveal(element)
         if element.identifier.hasPrefix("library.search.") {
             let clear = app.buttons["Clear search"]
@@ -387,29 +392,17 @@ final class MilestoneOneJourneyUITests: XCTestCase {
         }
         element.tap()
         let existing = (element.value as? String) ?? ""
-        let placeholder = element.placeholderValue ?? ""
-        let count = existing == placeholder ? 0 : existing.count
-        if count > 0 {
-            if element.identifier.hasPrefix("prescription.") || element.identifier.hasPrefix("set.") {
-                // Put the caret after the value. Double-tapping a numeric
-                // field can leave a caret instead of selecting its contents.
-                element.coordinate(withNormalizedOffset: CGVector(dx: 0.98, dy: 0.5)).tap()
-                element.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: count) + text)
-            } else {
-                // Tap after a multiline field's last line before deleting.
-                element.coordinate(withNormalizedOffset: CGVector(dx: 0.98, dy: 0.9)).tap()
-                element.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: count) + text)
-            }
-        } else {
-            element.typeText(text)
+        if !element.identifier.hasPrefix("set."), !existing.isEmpty, existing != element.placeholderValue {
+            element.tap(withNumberOfTaps: 3, numberOfTouches: 1)
         }
+        element.typeText(text)
         let actual = (element.value as? String) ?? ""
         if element.identifier.hasPrefix("set.weight.") {
             // The accessible weight includes its unit, unlike reps and names.
             let numericValue = actual.split(separator: " ").first.map(String.init) ?? ""
-            XCTAssertEqual(Double(numericValue), Double(text), "Weight replacement must preserve the entered load")
+            XCTAssertEqual(Double(numericValue), Double(text), "Weight entry must keep the entered load")
         } else {
-            XCTAssertEqual(actual, text, "Text replacement must not retain a prefix or suffix")
+            XCTAssertEqual(actual, text, "Typing must not add a prefix or suffix")
         }
     }
 

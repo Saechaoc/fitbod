@@ -17,9 +17,12 @@
 //  Per-set overrides remain fully editable inside SetRowsContainer.
 //
 //  Verbatim copy preserved for RoutineBuilderCopyTests:
-//    "Sets" / "Reps" / "Target RPE" / "Rest" / "Track tempo" /
-//    "Track partial reps" / "Auto warm-up" / "Per-set overrides" /
-//    "Add Override" / "Remove"
+//    "Sets" / "Min reps" / "Max reps" / "Target RPE" / "Rest" /
+//    "Track tempo" / "Track partial reps" / "Auto warm-up" /
+//    "Per-set overrides" / "Add Override" / "Remove"
+//
+//  Target reps are two steppers, so a value is never typed over and the
+//  low end can never pass the high end (Milestone 1 review item 5).
 //
 //  BRU contract: NO accentColor / NO Image(systemName:) / NO Capsule /
 //  NO RoundedRectangle / NO Apple HIG semantic fonts
@@ -127,7 +130,7 @@ public struct PrescriptionEditorRow: View {
         if showingAdvanced {
             VStack(alignment: .leading, spacing: 14) {
                 setsStepper
-                repsRangeRow
+                repsSteppers
                 rpeRangeRow
                 restStepper
                 tempoSection
@@ -148,46 +151,13 @@ public struct PrescriptionEditorRow: View {
 
     // MARK: - Reps range
 
-    private var repsRangeRow: some View {
-        HStack {
-            Text("Reps")
-                .font(BRUFont.bodyEmphasis)
-                .foregroundStyle(Color.bruInk)
-                .lineLimit(1)
-                .fixedSize(horizontal: true, vertical: false)
-            Spacer()
-            HStack(spacing: 8) {
-                TextField(
-                    "low",
-                    value: $draft.targetRepsLow,
-                    format: .number
-                )
-                .frame(width: 48)
-                .keyboardType(.numberPad)
-                .multilineTextAlignment(.trailing)
-                .font(BRUFont.bodyDefault)
-                .frame(minHeight: 44)
-                .accessibilityLabel("Minimum target reps")
+    /// Each end of the range stops at the other, so low never passes high.
+    private var repsSteppers: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            BRUStepper("Min reps", value: $draft.targetRepsLow, in: draft.targetRepsLowRange, step: 1) { "\($0)" }
                 .accessibilityIdentifier("prescription.reps.low")
-
-                Text("–")
-                    .foregroundStyle(Color.bruMuted)
-                    .font(BRUFont.bodyDefault)
-
-                TextField(
-                    "high",
-                    value: $draft.targetRepsHigh,
-                    format: .number
-                )
-                .frame(width: 48)
-                .keyboardType(.numberPad)
-                .multilineTextAlignment(.trailing)
-                .font(BRUFont.bodyDefault)
-                .frame(minHeight: 44)
-                .accessibilityLabel("Maximum target reps")
+            BRUStepper("Max reps", value: $draft.targetRepsHigh, in: draft.targetRepsHighRange, step: 1) { "\($0)" }
                 .accessibilityIdentifier("prescription.reps.high")
-            }
-            .fixedSize(horizontal: true, vertical: false)
         }
     }
 
