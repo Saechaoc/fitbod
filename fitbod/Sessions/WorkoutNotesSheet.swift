@@ -39,13 +39,12 @@ public struct WorkoutNotesSheet: View {
 
                 ScrollView {
                     VStack(alignment: .leading, spacing: 16) {
-                        // Spacer for BRUHeaderBar height (46pt = 44pt + 2pt rule)
-                        Color.clear.frame(height: 46)
-
-                        // TextEditor with 2pt bruInk border per UI-SPEC line 575
+                        // TextEditor with 2pt bruInk border per UI-SPEC line 575,
+                        // on paper rather than the system's white text background
                         TextEditor(text: $text)
                             .font(BRUFont.bodyDefault)
                             .foregroundStyle(Color.bruInk)
+                            .scrollContentBackground(.hidden)
                             .frame(minHeight: 200)
                             .padding(8)
                             .overlay(
@@ -59,11 +58,11 @@ public struct WorkoutNotesSheet: View {
                             .tracking(0.5)
                             .foregroundStyle(Color.bruMuted)
                     }
-                    .padding(.horizontal, 16)
-                    .padding(.bottom, 16)
+                    .padding(16)
                 }
             }
             .navigationBarHidden(true)
+            // The inset already places the content below the header.
             .safeAreaInset(edge: .top, spacing: 0) {
                 BRUHeaderBar(
                     left: HeaderAction("CANCEL") { dismiss() },                    // UI-SPEC verbatim

@@ -93,6 +93,7 @@ final class NoteSheetsUITests: XCTestCase {
         waitUntilClosed()
         reopen()
         XCTAssertEqual(editor.value as? String, "Kept", "SAVE must write the note", file: file, line: line)
+        attachScreenshot(of: app, named: "\(title) sheet")
 
         type(" draft")
         element(app.buttons, "Cancel").tap()
