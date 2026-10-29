@@ -43,11 +43,12 @@ completed: 2026-10-29
 
 The eight Task 1 edits were already present, and the six guardrail suites passed.
 Rendering the builder at the plan's target widths showed that titles still truncated at 393pt ("Accumulati…", "Intensificati…") and at 390pt, the iPhone 17e width.
-One small layout fix (commit `07fba3d`) now shows every title and subtitle in full at 390, 393, 402 and 440pt.
+One small layout fix (commit `3ff4a8a`) now shows every title and subtitle in full at 390, 393, 402 and 440pt.
 A new regression test failed before the fix and passes after it, and all six guardrail suites plus `NewBlockModalUITests` pass.
 A human should glance at the PNGs listed under "Human check".
 
-Branch: `hogfish` (Orca worktree). Nothing pushed or merged.
+Built on branch `hogfish` (Orca worktree), where the fix was `07fba3d`.
+A `git pull --rebase` replayed it onto `main` as `3ff4a8a`, which is pushed.
 
 ## Task 1: Tighten phase-row layout (already applied, verified)
 
@@ -113,7 +114,7 @@ Because the must-have "titles render in full on a 393-402pt iPhone" failed at 39
 
 | Commit | Message |
 |---|---|
-| `07fba3d` | fix(new-block): show full phase titles on 390-393pt iPhones |
+| `3ff4a8a` | fix(new-block): show full phase titles on 390-393pt iPhones |
 
 Detect file: `260610-hcv-detect-phaserow.txt` (a `git diff --cached --stat` substitute and the changed symbols).
 
