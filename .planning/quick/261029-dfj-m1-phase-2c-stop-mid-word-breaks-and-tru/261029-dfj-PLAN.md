@@ -19,7 +19,7 @@ must_haves:
 ---
 
 <objective>
-Fix review items 37 and 46, as part of Phase 2 of the approved plan `/Users/chrissaechao/.claude/plans/noble-wishing-conway.md`.
+Fix review items 37 and 46, as part of Phase 2 of the approved plan `.planning/noble-wishing-conway.md`.
 Both are listed, with file and line pointers, in `/Users/chrissaechao/Desktop/fitbod-review/fitbod-m1-review.md`, sections 37 and 46.
 </objective>
 

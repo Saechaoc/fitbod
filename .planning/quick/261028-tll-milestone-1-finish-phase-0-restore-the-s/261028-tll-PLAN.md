@@ -81,7 +81,7 @@ must_haves:
 # Quick task 261028-tll: Milestone 1 finish, phase 0
 
 <objective>
-Finish Phase 0 of the user-approved plan `/Users/chrissaechao/.claude/plans/noble-wishing-conway.md`.
+Finish Phase 0 of the user-approved plan `.planning/noble-wishing-conway.md`.
 Restore the serial UI-test scheme setting, refresh the GitNexus index, and commit Codex's seven prepared groups exactly as prepared.
 Then, as orchestrator-owned work, record a baseline build and full test run on the committed tip and complete the review record.
 

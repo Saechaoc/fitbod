@@ -21,7 +21,7 @@ must_haves:
 ---
 
 <objective>
-Fix review items 15, 44, 45 and 47, as part of Phase 2 of the approved plan `/Users/chrissaechao/.claude/plans/noble-wishing-conway.md`.
+Fix review items 15, 44, 45 and 47, as part of Phase 2 of the approved plan `.planning/noble-wishing-conway.md`.
 Item 15 has a full section in `/Users/chrissaechao/Desktop/fitbod-review/fitbod-m1-review.md`; items 44, 45 and 47 have short sections there.
 </objective>
 

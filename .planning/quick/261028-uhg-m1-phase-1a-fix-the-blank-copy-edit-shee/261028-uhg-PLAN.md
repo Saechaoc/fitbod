@@ -33,7 +33,7 @@ must_haves:
 ---
 
 <objective>
-Fix Milestone 1 review items 1, 2, 3, 33, 41 and 42, as part of Phase 1 of the approved plan `/Users/chrissaechao/.claude/plans/noble-wishing-conway.md`.
+Fix Milestone 1 review items 1, 2, 3, 33, 41 and 42, as part of Phase 1 of the approved plan `.planning/noble-wishing-conway.md`.
 Each fix starts with a UI test that reproduces the bug the way a user meets it, and that test stays as a regression test.
 
 Full descriptions, causes and suggested fixes for every item are in `/Users/chrissaechao/Desktop/fitbod-review/fitbod-m1-review.md`.
