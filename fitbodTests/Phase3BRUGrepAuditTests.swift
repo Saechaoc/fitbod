@@ -86,11 +86,11 @@ struct Phase3BRUGrepAuditTests {
         "fitbod/Sessions/PartialRepsRow.swift",
         "fitbod/Sessions/PerSetNoteSheet.swift",
         "fitbod/Sessions/PinnedNoteCapsule.swift",
+        "fitbod/Sessions/PinnedNoteSheet.swift",
         "fitbod/Sessions/TempoEntryRow.swift",
         "fitbod/Sessions/PreviousColumn.swift",
         // Phase 6 Sessions surfaces
         "fitbod/Sessions/InSessionPRBanner.swift",
-        "fitbod/Sessions/PinnedNoteSheet.swift",
         // Behavior files (not views)
         "fitbod/Sessions/SessionFactory.swift",
         "fitbod/Sessions/PreviousMatchingIntent.swift",

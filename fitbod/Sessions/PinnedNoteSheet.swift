@@ -1,36 +1,26 @@
+// PinnedNoteSheet.swift
+// fitbod
 //
-//  PinnedNoteSheet.swift
-//  fitbod
+// BRU rewrite — Milestone 1 review item 42.
+// Mirrors WorkoutNotesSheet: BRUHeaderBar + styled TextEditor.
 //
-//  Wave-4 plan 04-03 — per-exercise pinned-note editor. Presented as a
-//  sheet from the SessionExerciseCard's long-press menu "Edit Pinned Note"
-//  entry (anchored as a TODO in plan 04-02; this plan ships the real
-//  sheet) AND from tapping the inline `PinnedNoteCapsule` when a pinned
-//  note is already populated.
+// Per-exercise pinned-note editor. Presented as a sheet from the
+// SessionExerciseCard's long-press menu "Edit Pinned Note" entry and from
+// tapping the inline PinnedNoteCapsule once a note exists.
 //
-//  ## UI-SPEC § Session logger verbatim copy
+// Binding semantics:
+//   Binds directly to @Bindable sessionExercise.pinnedNote: String? via a
+//   Binding(get:set:) that normalizes empty strings to nil on write, so the
+//   PinnedNoteCapsule render predicate stays a simple non-empty check.
 //
-//      Pinned-note tap action navigation title:    "Pinned Note"
-//      Pinned-note sheet "Save" / "Cancel" toolbar:    "Save" / "Cancel"
-//
-//  ## Binding semantics
-//
-//  Binds directly to the `@Bindable sessionExercise: SessionExercise`'s
-//  `pinnedNote: String?` field with the same empty-string → nil
-//  normalization as the other two notes sheets — this allows the inline
-//  `PinnedNoteCapsule` render predicate (`if let note = se.pinnedNote,
-//  !note.isEmpty`) to be the simple non-nil check.
-//
-//  Both "Save" and "Cancel" toolbar buttons simply dismiss the sheet —
-//  the TextField writes through on every keystroke via the binding, so
-//  "Save" is a UX affordance rather than a persistence action. This
-//  matches the UI-SPEC's `WorkoutNotesSheet` pattern (Done-only) extended
-//  with an explicit Cancel because the pinned note is a longer-lived
-//  surface (it persists across sessions via the snapshot field on
-//  SessionExercise, so users want a clear "I changed my mind" exit).
-//
+// BRU contract:
+//   NO .navigationTitle / NO .toolbar with system chrome
+//   NO Capsule() / NO RoundedRectangle / NO accentColor
+//   NO Image(systemName:) / NO .font(.body/.headline/.title/.caption)
+//   NO Color(.system*)
 
 import SwiftUI
+import SwiftData
 
 public struct PinnedNoteSheet: View {
     @Environment(\.dismiss) private var dismiss
@@ -42,24 +32,58 @@ public struct PinnedNoteSheet: View {
 
     public var body: some View {
         NavigationStack {
-            Form {
-                Section {
-                    TextField("Pinned note", text: Binding(
-                        get: { sessionExercise.pinnedNote ?? "" },
-                        set: { sessionExercise.pinnedNote = $0.isEmpty ? nil : $0 }
-                    ), axis: .vertical)
-                    .lineLimit(3...)
+            ZStack(alignment: .top) {
+                Color.bruPaper.ignoresSafeArea()
+
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 16) {
+                        // TextEditor with 2pt bruInk border per UI-SPEC line 575,
+                        // on paper rather than the system's white text background
+                        TextEditor(text: Binding(
+                            get: { sessionExercise.pinnedNote ?? "" },
+                            set: { sessionExercise.pinnedNote = $0.isEmpty ? nil : $0 }
+                        ))
+                        .font(BRUFont.bodyDefault)
+                        .foregroundStyle(Color.bruInk)
+                        .scrollContentBackground(.hidden)
+                        .frame(minHeight: 200)
+                        .padding(8)
+                        .overlay(
+                            Rectangle()
+                                .stroke(Color.bruInk, lineWidth: 2)
+                        )
+
+                        // Placeholder hint
+                        Text("Shown above this exercise's sets")                  // placeholder hint
+                            .font(BRUFont.labelSmall)
+                            .tracking(0.5)
+                            .foregroundStyle(Color.bruMuted)
+                    }
+                    .padding(16)
                 }
             }
-            .navigationTitle("Pinned Note")                                    // UI-SPEC verbatim
-            .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
-                    Button("Cancel") { dismiss() }
-                }
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button("Save") { dismiss() }
-                }
+            .navigationBarHidden(true)
+            // The inset already places the content below the header.
+            .safeAreaInset(edge: .top, spacing: 0) {
+                BRUHeaderBar(
+                    left: HeaderAction("CANCEL") { dismiss() },
+                    center: "PINNED NOTE",                                         // UI-SPEC "Pinned Note", BRU caps
+                    right: HeaderAction("SAVE", isSignal: true) { dismiss() }
+                )
             }
         }
     }
 }
+
+#if DEBUG
+#Preview("pinned note sheet") {
+    let container = PreviewModelContainer.make()
+    let ctx = ModelContext(container)
+    let se = SessionExercise()
+    se.pinnedNote = "Pause one second on the chest"
+    ctx.insert(se)
+    try? ctx.save()
+    return PinnedNoteSheet(sessionExercise: se)
+        .modelContainer(container)
+}
+#endif

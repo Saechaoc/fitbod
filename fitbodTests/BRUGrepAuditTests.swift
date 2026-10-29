@@ -41,7 +41,6 @@ struct BRUGrepAuditTests {
     private static let excludedFileSuffixes: Set<String> = [
         // Phase 6 surfaces deferred per UI-SPEC line 721
         "fitbod/Sessions/InSessionPRBanner.swift",
-        "fitbod/Sessions/PinnedNoteSheet.swift",
         // Behavior files (not views)
         "fitbod/Sessions/SessionFactory.swift",
         "fitbod/Sessions/PreviousMatchingIntent.swift",
