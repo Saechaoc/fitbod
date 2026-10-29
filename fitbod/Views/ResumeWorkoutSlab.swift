@@ -49,13 +49,6 @@ public struct ResumeWorkoutSlab: View {
         return session.routineSnapshotName
     }
 
-    /// Completed sets only. Planned (not yet done) rows are not "logged".
-    private var setsLogged: Int {
-        (session.exercises ?? []).reduce(0) { total, exercise in
-            total + (exercise.sets ?? []).filter { $0.isComplete }.count
-        }
-    }
-
     /// Elapsed time string: "mm:ss" for < 60 min, "h:mm" for >= 60 min
     private func elapsedString(at now: Date) -> String {
         let elapsed = now.timeIntervalSince(session.startedAt)
@@ -103,7 +96,7 @@ public struct ResumeWorkoutSlab: View {
                     .font(BRUFont.labelSmall)
                     .foregroundStyle(Color.bruPaper.opacity(0.3))
 
-                Text(setsLogged == 1 ? "1 set logged" : "\(setsLogged) sets logged")
+                Text(session.loggedSetCount == 1 ? "1 set logged" : "\(session.loggedSetCount) sets logged")
                     .font(BRUFont.labelSmall)
                     .tracking(1.2)
                     .textCase(.uppercase)
@@ -126,7 +119,7 @@ public struct ResumeWorkoutSlab: View {
                 // We implement this directly rather than through BRUButton to avoid coupling
                 // BRUButton to caller context. See threat model T-02.1-04-01 note.
                 Button {
-                    if setsLogged > 0 {
+                    if session.loggedSetCount > 0 {
                         confirmingDiscard = true
                     } else {
                         discard()
@@ -157,9 +150,9 @@ public struct ResumeWorkoutSlab: View {
             Button("Discard", role: .destructive) { discard() }
             Button("Cancel", role: .cancel) {}
         } message: {
-            Text(setsLogged == 1
+            Text(session.loggedSetCount == 1
                  ? "1 logged set will be deleted."
-                 : "\(setsLogged) logged sets will be deleted.")
+                 : "\(session.loggedSetCount) logged sets will be deleted.")
         }
     }
 

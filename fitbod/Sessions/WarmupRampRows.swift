@@ -10,6 +10,7 @@
 //    • Per-row 4-column grid: 36pt W{N} signal · 1fr weight+pct+reps · 1fr mini PlateStackViz · auto plate legend
 //    • "WORK SETS BEGIN AT" footer row (labelSmall left, displayMedium right)
 //    • "SKIP WARM-UPS" ghost text button in bruMuted
+//    • "WARM-UPS SKIPPED" line with UNDO in place of the ramp once every warm-up is skipped
 //    • "Warm up however you'd like." placeholder when warmupSets is empty
 //
 //  Design tokens:
@@ -46,13 +47,15 @@ import SwiftData
 ///
 /// Renders a `BRUSectionHead` header, one row per warm-up `SetEntry`, a "WORK SETS BEGIN AT"
 /// footer row, and a "SKIP WARM-UPS" ghost text button. When `warmupSets` is empty, renders
-/// only the "Warm up however you'd like." placeholder (no header, no footer).
+/// only the "Warm up however you'd like." placeholder (no header, no footer). Once every
+/// warm-up is skipped, the ramp collapses to a "WARM-UPS SKIPPED" line with UNDO.
 public struct WarmupRampRows: View {
 
     // MARK: - Public properties
 
     public let warmupSets: [SetEntry]
     public let onSkip: () -> Void
+    public let onUndoSkip: () -> Void
     /// The parent SessionExercise — used to read prescribedWeight for pct computation.
     public let sessionExercise: SessionExercise
     /// Top working weight, displayed in the "WORK SETS BEGIN AT" footer row.
@@ -71,6 +74,7 @@ public struct WarmupRampRows: View {
     public init(
         warmupSets: [SetEntry],
         onSkip: @escaping () -> Void,
+        onUndoSkip: @escaping () -> Void = {},
         sessionExercise: SessionExercise,
         topWorkingWeight: Double? = nil,
         barWeight: Double,
@@ -79,6 +83,7 @@ public struct WarmupRampRows: View {
     ) {
         self.warmupSets = warmupSets
         self.onSkip = onSkip
+        self.onUndoSkip = onUndoSkip
         self.sessionExercise = sessionExercise
         self.topWorkingWeight = topWorkingWeight ?? sessionExercise.prescribedWeight ?? 0
         self.barWeight = barWeight
@@ -126,6 +131,9 @@ public struct WarmupRampRows: View {
                 .foregroundStyle(Color.bruMuted)
                 .padding(.horizontal, 16)
                 .padding(.vertical, 10)
+        } else if warmupSets.allSatisfy(\.isComplete) {
+            // Warm-ups are only completed by SKIP WARM-UPS; the rows have no tap target.
+            skippedRow
         } else {
             VStack(spacing: 0) {
                 // Section head with the smallest plate per 03-UI-SPEC line 222–223.
@@ -238,15 +246,46 @@ public struct WarmupRampRows: View {
             onSkip()
         } label: {
             // NOT signal — skipping is structural, not aspirational per 03-UI-SPEC line 229.
+            // Frame and hit shape sit inside the label, and the plain style keeps the
+            // card header's tap gesture from swallowing the tap.
             Text("SKIP WARM-UPS")
                 .font(BRUFont.labelSmall)
                 .foregroundStyle(Color.bruMuted)
                 .textCase(.uppercase)
                 .tracking(1.2)
+                .frame(maxWidth: .infinity, minHeight: 44, alignment: .center)
+                .contentShape(Rectangle())
         }
-        .frame(maxWidth: .infinity, minHeight: 44, alignment: .center)
+        .buttonStyle(.plain)
         .accessibilityLabel("Skip all warm-up sets")
         .accessibilityHint("Marks warm-ups as done without logging them.")
+    }
+
+    // MARK: - "WARM-UPS SKIPPED" line
+
+    private var skippedRow: some View {
+        HStack {
+            Text("WARM-UPS SKIPPED")
+                .font(BRUFont.labelSmall)
+                .foregroundStyle(Color.bruMuted)
+                .textCase(.uppercase)
+                .tracking(1.2)
+            Spacer()
+            Button {
+                onUndoSkip()
+            } label: {
+                Text("UNDO")
+                    .font(BRUFont.labelSmall)
+                    .foregroundStyle(Color.bruInk)
+                    .textCase(.uppercase)
+                    .tracking(1.2)
+                    .frame(minWidth: 44, minHeight: 44, alignment: .trailing)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Undo skipped warm-ups")
+        }
+        .padding(.horizontal, 16)
     }
 
     // MARK: - Ramp math helpers

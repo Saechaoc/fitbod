@@ -154,7 +154,7 @@ public struct SessionLoggerView: View {
                 presentingFinishConfirm = false
             }
         } message: {
-            Text("\(loggedSetCount) sets logged · \(elapsedLabel)")              // UI-SPEC verbatim format
+            Text("\(session.loggedSetCount) sets logged · \(elapsedLabel)")      // UI-SPEC verbatim format
         }
         // Discard workout confirmation
         .alert(
@@ -244,7 +244,7 @@ public struct SessionLoggerView: View {
             ) {
                 Button("Workout notes") { presentingWorkoutNotes = true }        // UI-SPEC verbatim
                 Button("Finish") { presentingFinishConfirm = true }              // UI-SPEC verbatim
-                if loggedSetCount == 0 {
+                if session.loggedSetCount == 0 {
                     Button("Discard", role: .destructive) {                      // UI-SPEC verbatim
                         presentingDiscardConfirm = true
                     }
@@ -266,12 +266,6 @@ public struct SessionLoggerView: View {
 
     private var sortedExercises: [SessionExercise] {
         (session.exercises ?? []).sorted { $0.orderIndex < $1.orderIndex }
-    }
-
-    private var loggedSetCount: Int {
-        sortedExercises.reduce(0) { sum, se in
-            sum + (se.sets ?? []).filter { $0.isComplete }.count
-        }
     }
 
     /// "M:SS" elapsed label — computed off Date.now (matches PITFALLS-doc #4).

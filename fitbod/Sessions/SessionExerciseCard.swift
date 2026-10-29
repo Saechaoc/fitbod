@@ -178,6 +178,7 @@ public struct SessionExerciseCard: View {
                     WarmupRampRows(
                         warmupSets: warmupSets,
                         onSkip: { handleSkipWarmups() },
+                        onUndoSkip: { handleUndoSkipWarmups() },
                         sessionExercise: sessionExercise,
                         barWeight: setup.barWeight,
                         plates: setup.plates,
@@ -529,6 +530,13 @@ public struct SessionExerciseCard: View {
     private func handleSkipWarmups() {
         for warmup in warmupEntries {
             warmup.isComplete = true
+        }
+        try? ctx.save()
+    }
+
+    private func handleUndoSkipWarmups() {
+        for warmup in warmupEntries {
+            warmup.isComplete = false
         }
         try? ctx.save()
     }

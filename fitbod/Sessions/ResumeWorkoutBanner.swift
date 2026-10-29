@@ -77,7 +77,7 @@ public struct ResumeWorkoutBanner: View {
                     .foregroundStyle(Color.bruInk)
 
                 TimelineView(.periodic(from: active.startedAt, by: 1)) { _ in
-                    Text("\(elapsedLabel(for: active)) · \(setCount(for: active)) sets")
+                    Text("\(elapsedLabel(for: active)) · \(active.loggedSetCount) sets")
                         .font(BRUFont.labelSmall)
                         .tracking(0.5)
                         .foregroundStyle(Color.bruMuted)
@@ -132,14 +132,6 @@ public struct ResumeWorkoutBanner: View {
             return String(format: "%d:%02d", hours, mins)
         }
         return String(format: "%d:%02d", minutes, seconds)
-    }
-
-    /// Returns the count of completed sets in the session.
-    private func setCount(for session: Session) -> Int {
-        (session.exercises ?? [])
-            .flatMap { $0.sets ?? [] }
-            .filter { $0.isComplete }
-            .count
     }
 }
 

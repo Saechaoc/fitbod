@@ -84,4 +84,13 @@ extension Session {
         if !routineSnapshotName.isEmpty { return routineSnapshotName }
         return "Workout"
     }
+
+    /// Completed working sets. Warm-ups never count, done or skipped. The
+    /// one count behind the logger header, its Finish check and both resume
+    /// surfaces.
+    public var loggedSetCount: Int {
+        (exercises ?? []).reduce(0) { total, exercise in
+            total + (exercise.sets ?? []).filter { $0.isComplete && !$0.isWarmup }.count
+        }
+    }
 }
