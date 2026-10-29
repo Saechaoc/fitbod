@@ -5,7 +5,7 @@ Newest first.
 ## 2026-10-29: review docs in the repo, and every worktree checked
 
 - What: the bundle now points at `docs/review-docs/fitbod-m1-review.md` and `docs/review-docs/history-rewrite-20261029-commit-map.txt`, which `dd42060` added to the repo.
-- What: dispatch precondition 7 and the matching risk now check every git worktree with `git worktree list` and `orca worktree ps --json`, not only the main checkout.
+- What: dispatch precondition 7 and the matching risk now check every git worktree: `orca worktree ps --json` must show no working agent outside the main checkout, and each other worktree in `git worktree list` needs the user's word that it is idle.
 - Why: the other effort runs each quick task in its own worktree, so a check of the main checkout passed while two of its agents were working.
 - What: the risk and the run log record those two agents, in `q-261029-a9s` and `q-261028-uhg-t3`, as of 14:47.
 
