@@ -40,10 +40,13 @@ public struct WhyThisWeightSheet: View {
 
     public let explanation: PrescriptionExplanation
 
-    /// Called (and sheet dismissed) when the user taps "Use {weight} ▸"
-    /// while a manual override is active. Plan 03-08 wires this to write
-    /// roundedWeight back to SetEntry.actualWeight.
+    /// Called (and the sheet dismissed) when the user taps "Use {weight} ▸".
+    /// PrescriptionWeightCell writes `roundedWeight` into the set's weight.
     public var onUseSuggested: (() -> Void)?
+
+    /// Called (and the sheet dismissed) when the user taps "Override".
+    /// PrescriptionWeightCell then focuses the weight field.
+    public var onOverride: (() -> Void)?
 
     /// Target reps for the hero slab sub-band. Nil renders "—".
     public let reps: Int?
@@ -70,6 +73,7 @@ public struct WhyThisWeightSheet: View {
     /// - Parameters:
     ///   - explanation: The prescription data object from `ProgressionStrategy.prescribe(...)`.
     ///   - onUseSuggested: Optional callback invoked when the user accepts the suggestion.
+    ///   - onOverride: Optional callback invoked when the user chooses Override.
     ///   - reps: Target reps for the hero sub-band. Nil = no prior prescription.
     ///   - rpe: Target RPE for the hero sub-band. Nil for double-progression exercises.
     ///   - setTypeLabel: Trailing set-type label in the hero status line (e.g. "TOP SET").
@@ -77,6 +81,7 @@ public struct WhyThisWeightSheet: View {
     public init(
         explanation: PrescriptionExplanation,
         onUseSuggested: (() -> Void)? = nil,
+        onOverride: (() -> Void)? = nil,
         reps: Int? = nil,
         rpe: Double? = nil,
         setTypeLabel: String = "TOP SET",
@@ -84,6 +89,7 @@ public struct WhyThisWeightSheet: View {
     ) {
         self.explanation = explanation
         self.onUseSuggested = onUseSuggested
+        self.onOverride = onOverride
         self.reps = reps
         self.rpe = rpe
         self.setTypeLabel = setTypeLabel
@@ -446,6 +452,7 @@ public struct WhyThisWeightSheet: View {
     private var footerBar: some View {
         HStack(spacing: 0) {
             BRUButton("Override", kind: .ghost, size: .md) {
+                onOverride?()
                 dismiss()
             }
             .frame(maxWidth: .infinity)

@@ -1,4 +1,4 @@
-// Long-press a real prescribed weight to verify its explanation sheet.
+// Open a real prescribed weight's explanation sheet with its WHY control.
 import XCTest
 
 final class WhyThisWeightSheetBRUUITests: XCTestCase {
@@ -28,7 +28,7 @@ final class WhyThisWeightSheetBRUUITests: XCTestCase {
 
 
     @MainActor
-    func testWhyThisWeightHeroSlabAppearsAfterLongPress() throws {
+    func testWhyThisWeightHeroSlabAppearsAfterWhyTap() throws {
         let app = UITestNavigation.openSeededWorkout()
         UITestNavigation.openWeightExplanation(in: app)
     }
