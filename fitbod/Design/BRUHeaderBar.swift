@@ -45,12 +45,25 @@ import SwiftUI
 public struct HeaderAction {
     public let label: String
     public let isSignal: Bool
-    public let action: @MainActor () -> Void
+    /// Nil renders a plain label with no tap action (see `text(_:)`).
+    public let action: (@MainActor () -> Void)?
 
     public init(_ label: String, isSignal: Bool = false, action: @escaping @MainActor () -> Void) {
         self.label = label
         self.isSignal = isSignal
         self.action = action
+    }
+
+    private init(text: String) {
+        self.label = text
+        self.isSignal = false
+        self.action = nil
+    }
+
+    /// A plain, non-tappable label, such as today's date. VoiceOver reads it
+    /// as text, not as a button.
+    public static func text(_ label: String) -> HeaderAction {
+        HeaderAction(text: label)
     }
 }
 
@@ -138,9 +151,9 @@ public struct BRUHeaderBar: View {
         switch mode {
         case .actions(let left, let center, let right):
             BRUHeaderChrome(center: center) {
-                if let left { HeaderLabelButton(label: left.label, isSignal: left.isSignal, action: left.action) }
+                if let left { HeaderActionView(item: left) }
             } right: {
-                if let right { HeaderLabelButton(label: right.label, isSignal: right.isSignal, action: right.action) }
+                if let right { HeaderActionView(item: right) }
             }
         case .slots(let left, let center, let right):
             BRUHeaderChrome(center: center) {
@@ -165,6 +178,7 @@ private enum BRUHeaderMetrics {
 
 /// Three equal columns so the title stays centred whatever the side labels are.
 private struct BRUHeaderChrome<Left: View, Right: View>: View {
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     let center: String?
     @ViewBuilder let left: Left
@@ -172,13 +186,21 @@ private struct BRUHeaderChrome<Left: View, Right: View>: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            HStack(spacing: 0) {
-                left
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                centerView
-                    .frame(maxWidth: .infinity, alignment: .center)
-                right
-                    .frame(maxWidth: .infinity, alignment: .trailing)
+            Group {
+                if dynamicTypeSize.isAccessibilitySize {
+                    VStack(spacing: 0) {
+                        centerView
+                            .frame(maxWidth: .infinity)
+                            .padding(.top, 8)
+                        HStack {
+                            left
+                            Spacer(minLength: 12)
+                            right
+                        }
+                    }
+                } else {
+                    standardRow
+                }
             }
             .padding(.horizontal, BRUHeaderMetrics.horizontalPadding)
             .frame(minHeight: BRUHeaderMetrics.minRowHeight)
@@ -187,6 +209,27 @@ private struct BRUHeaderChrome<Left: View, Right: View>: View {
             Rectangle()
                 .fill(Color.bruInk)
                 .frame(height: BRUHeaderMetrics.ruleHeight)
+        }
+    }
+
+    private var standardRow: some View {
+        HStack(spacing: 0) {
+                // Each side sits next to a Spacer so its column keeps its
+                // third of the row even when the side is empty. A frame on
+                // an empty view collapses to nothing and would pull the
+                // title off centre.
+                HStack(spacing: 0) {
+                    left
+                    Spacer(minLength: 0)
+                }
+                .frame(maxWidth: .infinity)
+                centerView
+                    .frame(maxWidth: .infinity, alignment: .center)
+                HStack(spacing: 0) {
+                    Spacer(minLength: 0)
+                    right
+                }
+                .frame(maxWidth: .infinity)
         }
     }
 
@@ -199,14 +242,28 @@ private struct BRUHeaderChrome<Left: View, Right: View>: View {
                 .textCase(.uppercase)
                 .foregroundStyle(Color.bruInk)
                 .multilineTextAlignment(.center)
-                .lineLimit(2)
-                .minimumScaleFactor(0.85)
+                .lineLimit(dynamicTypeSize.isAccessibilitySize ? 3 : (center.contains(" ") ? 2 : 1))
+                .minimumScaleFactor(center.contains(" ") ? 0.85 : 0.65)
                 .accessibilityAddTraits(.isHeader)
         }
     }
 }
 
 // MARK: - Labels
+
+/// A `HeaderAction`: a button when it has an action, plain text otherwise.
+private struct HeaderActionView: View {
+
+    let item: HeaderAction
+
+    var body: some View {
+        if let action = item.action {
+            HeaderLabelButton(label: item.label, isSignal: item.isSignal, action: action)
+        } else {
+            HeaderLabelText(label: item.label, isSignal: item.isSignal)
+        }
+    }
+}
 
 /// One tappable header label. The visible text stays small; `bruHitArea()`
 /// keeps the touch target comfortable without moving the layout.
@@ -224,6 +281,18 @@ private struct HeaderLabelButton: View {
                 .bruHitArea()
         }
         .buttonStyle(.plain)
+        .accessibilityLabel(Self.spokenLabel(for: label))
+    }
+
+    /// Glyph-only labels get a word, so VoiceOver says "Back" rather than
+    /// "single left-pointing angle quotation mark".
+    static func spokenLabel(for label: String) -> String {
+        switch label.trimmingCharacters(in: .whitespaces) {
+        case "‹", "‹ Back": return "Back"
+        case "•••":         return "More"
+        case "×", "✕":      return "Close"
+        default:            return label
+        }
     }
 }
 
@@ -237,7 +306,7 @@ private struct HeaderLabelText: View {
             .font(BRUFont.labelSmall)
             .tracking(BRUHeaderMetrics.tracking)
             .textCase(.uppercase)
-            .foregroundStyle(isSignal ? Color.bruSignal : Color.bruInk)
+            .foregroundStyle(isSignal ? Color.bruSignalText : Color.bruInk)
             .lineLimit(1)
             .minimumScaleFactor(0.85)
     }

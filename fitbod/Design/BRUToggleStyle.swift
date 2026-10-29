@@ -9,6 +9,7 @@
 import SwiftUI
 
 public struct BRUToggleStyle: ToggleStyle {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     public init() {}
 
     public func makeBody(configuration: Configuration) -> some View {
@@ -38,11 +39,11 @@ public struct BRUToggleStyle: ToggleStyle {
                 .frame(width: 52, height: 28)
                 .overlay(Rectangle().strokeBorder(isOn ? Color.bruSignal : Color.bruInk, lineWidth: 2))
             Rectangle()
-                .fill(isOn ? Color.bruPaper : Color.bruInk)
+                .fill(isOn ? Color.bruOnSignal : Color.bruInk)
                 .frame(width: 20, height: 20)
                 .padding(4)
         }
-        .animation(.easeOut(duration: 0.12), value: isOn)
+        .animation(reduceMotion ? nil : .easeOut(duration: 0.12), value: isOn)
     }
 }
 

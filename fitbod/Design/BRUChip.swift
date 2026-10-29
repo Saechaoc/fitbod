@@ -66,13 +66,13 @@ public struct BRUChip: View {
             .font(BRUFont.labelSmall)
             .tracking(1.2)
             .textCase(textCase)
-            .foregroundStyle(fill ? Color.bruPaper : color)
+            .foregroundStyle(fill ? color.bruLabelOnFill : color.bruTextOnPaper)
             .padding(.horizontal, 6)
             .padding(.vertical, 3)
             .background(fill ? color : Color.clear)
             .overlay(
                 Rectangle()
-                    .stroke(color, lineWidth: 1.5)
+                    .stroke(fill ? color : color.bruTextOnPaper, lineWidth: 1.5)
             )
             // VoiceOver must read the un-uppercased source string, not the visually
             // transformed uppercase version (UI-SPEC line 686 — T-02.1-02-03).

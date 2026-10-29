@@ -222,13 +222,18 @@ struct BRUPrimitivesTests {
         _ = BRUPillButton("Apply changes ▸", fill: .bruInk) {}
 
         let source = try loadSource(for: "BRUPillButton")
+        let sharedStyle = try loadSource(for: "BRUButton")
         let codeOnly = try loadCodeOnly(for: "BRUPillButton")
-        #expect(source.contains("Color.bruPaper") || source.contains(".bruPaper"),
-                "BRUPillButton.swift must reference bruPaper for text color")
-        #expect(source.contains("BRUFont.labelSmall"),
-                "BRUPillButton.swift must reference BRUFont.labelSmall for button text")
-        #expect(source.contains(".tracking("),
-                "BRUPillButton.swift must apply .tracking() for letterspacing")
+        #expect(sharedStyle.contains("return .bruOnSignal"),
+                "Signal labels must use readable constant ink rather than paper")
+        #expect(sharedStyle.contains(".font(size.font)"),
+                "The shared style must supply the size-specific Dynamic Type font")
+        #expect(source.contains("size: .lg"),
+                "The full-width CTA uses the shared large size")
+        #expect(source.contains(".buttonStyle(BRUButtonStyle("),
+                "The CTA must delegate pressed/disabled rendering to the shared style")
+        #expect(sharedStyle.contains(".tracking("),
+                "The shared button style must apply letterspacing")
         #expect(!codeOnly.contains("Capsule()"),
                 "BRUPillButton.swift must NOT use Capsule() in code — rectangular shape only")
     }

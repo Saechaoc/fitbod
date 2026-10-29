@@ -29,7 +29,7 @@ public struct BRUFlowLayout: Layout {
         for row in arrange(subviews: subviews, maxWidth: bounds.width) {
             var x = bounds.minX
             for index in row.indices {
-                let size = subviews[index].sizeThatFits(.unspecified)
+                let size = subviews[index].sizeThatFits(ProposedViewSize(width: bounds.width, height: nil))
                 subviews[index].place(
                     at: CGPoint(x: x, y: y + (row.height - size.height) / 2),
                     proposal: ProposedViewSize(size)
@@ -50,7 +50,10 @@ public struct BRUFlowLayout: Layout {
         var rows: [Row] = []
         var current = Row()
         for index in subviews.indices {
-            let size = subviews[index].sizeThatFits(.unspecified)
+            let size = subviews[index].sizeThatFits(ProposedViewSize(
+                width: maxWidth.isFinite ? max(0, maxWidth) : nil,
+                height: nil
+            ))
             let needed = current.indices.isEmpty ? size.width : current.width + spacing + size.width
             if needed > maxWidth, !current.indices.isEmpty {
                 rows.append(current)
@@ -64,3 +67,16 @@ public struct BRUFlowLayout: Layout {
         return rows
     }
 }
+
+#if DEBUG
+#Preview("BRUFlowLayout · long labels") {
+    BRUFlowLayout(spacing: 8) {
+        BRUChip("Barbell")
+        BRUChip("Chest Supported Dumbbell Row with Neutral Grip", textCase: nil)
+        BRUChip("Hypertrophy")
+    }
+    .padding(16)
+    .frame(width: 390)
+    .environment(\.dynamicTypeSize, .accessibility3)
+}
+#endif

@@ -84,7 +84,7 @@ public struct BRUDisplay: View {
     public init(_ text: String, size: BRUDisplaySize = .large, color: Color? = nil) {
         self.text = text
         self.size = size
-        self.color = color ?? .bruInk
+        self.color = (color ?? .bruInk).bruTextOnPaper
     }
 
     // MARK: - Body

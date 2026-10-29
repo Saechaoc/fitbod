@@ -21,11 +21,10 @@ import SwiftUI
 ///
 /// Three `Kind` variants control the fill + text + border treatment:
 /// - `.primary` — ink fill, paper text (solid ink slab)
-/// - `.signal`  — signal fill, paper text (strong CTA)
+/// - `.signal`  — signal fill, constant ink text (strong CTA)
 /// - `.ghost`   — transparent fill, ink text, 1.5pt ink outline
 ///
-/// Three `Size` variants set the minimum tap-target height (all ≥ 32pt,
-/// meeting BRU's 44pt touch-target mandate for `.md` and `.lg`).
+/// Three `Size` variants provide at least BRU's 44pt touch-target floor.
 ///
 /// `.buttonStyle(.plain)` is mandatory — it suppresses Apple's default bordered
 /// and borderless chrome tinting that would violate the BRU contract (T-02.1-02-02).
@@ -37,7 +36,7 @@ public struct BRUButton: View {
     public enum Kind {
         /// Ink fill with paper text — default strong action.
         case primary
-        /// Signal fill with paper text — the single primary CTA per screen.
+        /// Signal fill with constant ink text — the primary CTA per screen.
         case signal
         /// Transparent fill with ink text and a 1.5pt ink outline — secondary / destructive-neutral.
         case ghost
@@ -52,23 +51,24 @@ public struct BRUButton: View {
 
         fileprivate var textColor: Color {
             switch self {
-            case .primary, .signal: return .bruPaper
-            case .ghost:            return .bruInk
+            case .primary: return .bruPaper
+            case .signal:  return .bruOnSignal
+            case .ghost:   return .bruInk
             }
         }
 
         fileprivate var borderColor: Color {
             switch self {
             case .primary: return .bruInk
-            case .signal:  return .bruSignal
+            case .signal:  return .bruInk
             case .ghost:   return .bruInk
             }
         }
 
         fileprivate var showBorder: Bool {
             switch self {
-            case .primary, .signal: return false
-            case .ghost:            return true
+            case .primary: return false
+            case .signal, .ghost: return true
             }
         }
     }
@@ -77,7 +77,7 @@ public struct BRUButton: View {
 
     /// The vertical size tier of the button.
     public enum Size {
-        /// 36pt minimum height — compact inline actions.
+        /// 44pt minimum height — compact typography, comfortable touch target.
         case sm
         /// 44pt minimum height — standard tappable controls (iOS HIG touch target).
         case md
@@ -87,9 +87,8 @@ public struct BRUButton: View {
         /// Minimum height for the button's frame.
         public var minHeight: CGFloat {
             switch self {
-            case .sm: return 36
-            case .md: return 44
-            case .lg: return 52
+            case .sm, .md: return BRUMetrics.touchTarget
+            case .lg: return BRUMetrics.primaryActionHeight
             }
         }
     }
@@ -151,6 +150,13 @@ public struct BRUButton: View {
 public struct BRUButtonStyle: ButtonStyle {
     let kind: BRUButton.Kind
     let size: BRUButton.Size
+    let fill: Color?
+
+    public init(kind: BRUButton.Kind, size: BRUButton.Size, fill: Color? = nil) {
+        self.kind = kind
+        self.size = size
+        self.fill = fill
+    }
 
     @Environment(\.isEnabled) private var isEnabled
 
@@ -160,13 +166,13 @@ public struct BRUButtonStyle: ButtonStyle {
             .font(size.font)
             .tracking(size.tracking)
             .foregroundStyle(textColor(pressed: pressed))
-            .padding(.horizontal, 12)
+            .padding(.horizontal, BRUMetrics.Spacing.group)
             .padding(.vertical, 6)
             .frame(maxWidth: .infinity, minHeight: size.minHeight)
             .background(fillColor(pressed: pressed))
             .overlay(
                 Rectangle()
-                    .strokeBorder(borderColor, lineWidth: showBorder ? 1.5 : 0)
+                    .strokeBorder(borderColor, lineWidth: showBorder ? BRUMetrics.Border.outline : 0)
             )
             .contentShape(Rectangle())
     }
@@ -181,14 +187,14 @@ public struct BRUButtonStyle: ButtonStyle {
 
     private func fillColor(pressed: Bool) -> Color {
         guard isEnabled else { return .bruFaint }
-        guard pressed else { return kind.fillColor }
+        guard pressed else { return fill ?? kind.fillColor }
         return kind == .ghost ? .bruInk : .bruInk.opacity(0.85)
     }
 
     private func textColor(pressed: Bool) -> Color {
         guard isEnabled else { return .bruMuted }
-        if pressed && kind == .ghost { return .bruPaper }
-        return kind.textColor
+        if pressed { return .bruPaper }
+        return fill?.bruLabelOnFill ?? kind.textColor
     }
 }
 

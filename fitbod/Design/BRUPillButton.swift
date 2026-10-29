@@ -1,7 +1,7 @@
 // BRUPillButton.swift
 // fitbod — Phase 2.1 Plan 03
 //
-// The primary CTA button: signal-fill rectangle with paper text.
+// The primary CTA button: signal-fill rectangle with constant ink text.
 // Despite the "Pill" name, this is a RECTANGLE — no rounded corners.
 // UI-SPEC v2 line 522: "Pill" name is a misnomer; it's a rectangle.
 //
@@ -26,7 +26,7 @@ import SwiftUI
 ///
 /// NO rounded corners (the "Pill" name is a misnomer per UI-SPEC v2 line 522).
 /// Full-width by default via `frame(maxWidth: .infinity)`.
-/// Text: `BRUFont.labelSmall` 11pt UPPERCASE 1.2 letterspacing `bruPaper`.
+/// Shared BRUButtonStyle supplies scaled type, a 52pt floor and readable labels.
 public struct BRUPillButton: View {
 
     // MARK: Properties
@@ -56,15 +56,9 @@ public struct BRUPillButton: View {
     public var body: some View {
         Button(action: action) {
             Text(label)
-                .font(BRUFont.labelSmall)
-                .tracking(1.2)
                 .textCase(.uppercase)
-                .foregroundStyle(Color.bruPaper)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 16)
-                .background(fill)
         }
-        .buttonStyle(.plain)
+        .buttonStyle(BRUButtonStyle(kind: fill == .bruInk ? .primary : .signal, size: .lg, fill: fill))
     }
 }
 

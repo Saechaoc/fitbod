@@ -59,6 +59,24 @@ public extension Color {
     /// Single accent role — CTAs, PR badges, upward trend indicators.
     static let bruSignal: Color = Color("bruSignal")
 
+    /// Accessible orange text on paper and other paper-role surfaces.
+    static let bruSignalText: Color = Color("bruSignalText")
+
+    /// Accessible orange text on adaptive ink panels.
+    static let bruSignalOnInk: Color = Color("bruSignalOnInk")
+
+    /// Constant near-black labels on signal, amber and green fills.
+    /// This foreground must not invert in dark mode.
+    static let bruOnSignal: Color = Color("bruOnSignal")
+
+    var bruTextOnPaper: Color {
+        self == .bruSignal ? .bruSignalText : self
+    }
+
+    var bruLabelOnFill: Color {
+        self == .bruSignal || self == .bruAmber || self == .bruGreen ? .bruOnSignal : .bruPaper
+    }
+
     /// Recessed fill `#E8E5DD` (light) / `#222220` (dark).
     /// Completed/past ticker cells, deemphasized filled areas.
     static let bruFaint: Color = Color("bruFaint")
@@ -106,3 +124,22 @@ public extension Color {
     /// Accumulation phase badge color — indicates the volume-building phase.
     static let bruBlue: Color = Color("bruBlue")
 }
+
+#if DEBUG
+#Preview("BRU semantic foregrounds") {
+    VStack(alignment: .leading, spacing: 16) {
+        Text("Readable signal on paper").foregroundStyle(Color.bruSignalText)
+        Text("Readable signal on ink")
+            .foregroundStyle(Color.bruSignalOnInk)
+            .padding(16)
+            .background(Color.bruInk)
+        Text("Label on signal fill")
+            .foregroundStyle(Color.bruOnSignal)
+            .padding(16)
+            .background(Color.bruSignal)
+    }
+    .font(BRUFont.bodyEmphasis)
+    .padding(16)
+    .background(Color.bruPaper)
+}
+#endif

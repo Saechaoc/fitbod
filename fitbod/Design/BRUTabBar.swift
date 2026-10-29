@@ -4,10 +4,12 @@
 // Chrome primitive: replaces the SwiftUI default TabView tab bar chrome.
 //
 // WIRING NOTE (threat T-02.1-03-01):
-//   Use BRUTabBar via `.safeAreaInset(edge: .bottom)` on the TabView, combined
-//   with `.toolbarBackground(.hidden, for: .tabBar)` to hide the default bar.
-//   NEVER wrap the TabView in a parent NavigationStack (UI-SPEC v2 line 58).
-//   Plan 02.1-04 wires this into RootView.
+//   RootView uses native TabView containment with system chrome hidden,
+//   then adds BRUTabBar. Each tab owns its NavigationStack; never wrap the tabs
+//   in a parent NavigationStack (UI-SPEC v2 line 58).
+//   RootView hides the bar while the software keyboard is up, so the bar
+//   never rides up over the field being edited, and while the selected
+//   tab's visible screen applies `.bruTabBarHidden()` (the workout logger).
 //
 // TAB COUNT: 4 tabs (today / program / progress / library).
 //   Settings is not a tab. It is a sheet opened by the "Settings" button
@@ -67,12 +69,13 @@ public enum BRUTab: String, CaseIterable, Sendable {
 /// the labels. The `BRUTab.glyph` property is retained for potential
 /// reuse elsewhere but is no longer rendered in the bar.
 /// Active tab: bruInk fill, bruPaper text. Inactive tabs sit directly
-/// on the warm paper surface with no vertical separators.
+/// on the warm `bruBg` surface with no vertical separators.
 ///
 /// Accessibility: each cell carries `.isButton`. The active cell additionally
 /// carries `.isSelected` per UI-SPEC v2 line 689 so VoiceOver announces
 /// "selected" on the active tab.
 public struct BRUTabBar: View {
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     // MARK: Properties
 
@@ -84,7 +87,6 @@ public struct BRUTabBar: View {
     private static let mockupSelectedHeight: CGFloat = 29
     private static let mockupSelectedTopInset: CGFloat = 8
     private static let mockupBottomSafeOverlap: CGFloat = 34
-    private static let mockupSurface = Color(red: 240 / 255, green: 237 / 255, blue: 229 / 255)
 
     // MARK: Init
 
@@ -101,18 +103,26 @@ public struct BRUTabBar: View {
                 .fill(Color.bruInk)
                 .frame(height: Self.mockupTopRuleHeight)
 
-            HStack(spacing: 0) {
-                ForEach(BRUTab.allCases, id: \.rawValue) { tab in
-                    tabCell(tab)
+            if dynamicTypeSize.isAccessibilitySize {
+                LazyVGrid(columns: [GridItem(.flexible(), spacing: 0), GridItem(.flexible(), spacing: 0)], spacing: 0) {
+                    ForEach(BRUTab.allCases, id: \.rawValue) { tab in
+                        tabCell(tab)
+                    }
                 }
+            } else {
+                HStack(spacing: 0) {
+                    ForEach(BRUTab.allCases, id: \.rawValue) { tab in
+                        tabCell(tab)
+                    }
+                }
+                .frame(height: Self.mockupCellHeight)
             }
-            .frame(height: Self.mockupCellHeight)
         }
         .background(
-            Self.mockupSurface
+            Color.bruBg
                 .ignoresSafeArea(.container, edges: .bottom)
         )
-        .padding(.bottom, -Self.mockupBottomSafeOverlap)
+        .padding(.bottom, dynamicTypeSize.isAccessibilitySize ? 0 : -Self.mockupBottomSafeOverlap)
     }
 
     // MARK: Cell
@@ -124,6 +134,18 @@ public struct BRUTabBar: View {
         Button {
             onSelect(tab)
         } label: {
+            if dynamicTypeSize.isAccessibilitySize {
+                Text(tab.label)
+                    .font(.bru(.grotesk, size: 10))
+                    .tracking(1.5)
+                    .textCase(.uppercase)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
+                    .foregroundStyle(isActive ? Color.bruPaper : Color.bruInk)
+                    .frame(maxWidth: .infinity, minHeight: 52)
+                    .background(isActive ? Color.bruInk : Color.bruBg)
+                    .contentShape(Rectangle())
+            } else {
             ZStack(alignment: .top) {
                 if isActive {
                     Rectangle()
@@ -138,7 +160,7 @@ public struct BRUTabBar: View {
                     .textCase(.uppercase)
                     .lineLimit(1)
                     .minimumScaleFactor(0.8)
-                    .foregroundStyle(isActive ? Self.mockupSurface : Color.bruInk)
+                    .foregroundStyle(isActive ? Color.bruPaper : Color.bruInk)
                     .frame(maxWidth: .infinity)
                     .frame(height: Self.mockupSelectedHeight)
                     .padding(.top, Self.mockupSelectedTopInset)
@@ -146,12 +168,34 @@ public struct BRUTabBar: View {
             .frame(height: Self.mockupCellHeight, alignment: .top)
             .frame(maxWidth: .infinity)
             .contentShape(Rectangle())
+            }
         }
         .buttonStyle(.plain)
         .frame(maxWidth: .infinity)
         .accessibilityIdentifier(tab.label)
         // Accessibility: .isSelected on the active tab per UI-SPEC v2 line 689
         .accessibilityAddTraits(isActive ? [.isButton, .isSelected] : [.isButton])
+    }
+}
+
+// MARK: - Hiding the bar
+
+/// True when a screen asks `RootView` to hide the tab bar. Any `true` in
+/// the selected tab's visible hierarchy wins.
+struct BRUTabBarHiddenKey: PreferenceKey {
+    static let defaultValue = false
+
+    static func reduce(value: inout Bool, nextValue: () -> Bool) {
+        value = value || nextValue()
+    }
+}
+
+extension View {
+    /// Hides the bottom tab bar while this screen is on screen. For screens
+    /// that need the full height and lead back out with their own header,
+    /// such as the workout logger.
+    func bruTabBarHidden(_ hidden: Bool = true) -> some View {
+        preference(key: BRUTabBarHiddenKey.self, value: hidden)
     }
 }
 

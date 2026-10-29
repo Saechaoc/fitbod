@@ -105,6 +105,8 @@ public struct BRUDashedSlot: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+        .accessibilityLabel(label)
+        .accessibilityHint(hint ?? "")
     }
 }
 

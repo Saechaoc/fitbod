@@ -78,7 +78,7 @@ public struct BRUSectionHead: View {
                                 .font(BRUFont.labelSmall)
                                 .tracking(1.2)
                                 .textCase(.uppercase)
-                                .foregroundStyle(Color.bruSignal)
+                                .foregroundStyle(Color.bruSignalText)
                                 .bruHitArea()
                         }
                         .buttonStyle(.plain)

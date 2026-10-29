@@ -49,7 +49,7 @@ public struct BRUStepper<Value: Strideable>: View where Value.Stride: SignedNume
                     .monospacedDigit()
                     .foregroundStyle(Color.bruInk)
                     .padding(.horizontal, 8)
-                    .frame(minWidth: 64, minHeight: 44)
+                    .frame(minWidth: 64, minHeight: BRUMetrics.touchTarget)
                     .overlay(alignment: .top) { Rectangle().fill(Color.bruInk).frame(height: 2) }
                     .overlay(alignment: .bottom) { Rectangle().fill(Color.bruInk).frame(height: 2) }
                 stepButton("+", enabled: canIncrement) { value = value.advanced(by: step) }
@@ -79,7 +79,7 @@ public struct BRUStepper<Value: Strideable>: View where Value.Stride: SignedNume
             Text(glyph)
                 .font(BRUFont.condensedLabel)
                 .foregroundStyle(enabled ? Color.bruPaper : Color.bruMuted)
-                .frame(width: 44, height: 44)
+                .frame(width: BRUMetrics.touchTarget, height: BRUMetrics.touchTarget)
                 .background(enabled ? Color.bruInk : Color.bruFaint)
                 .contentShape(Rectangle())
         }

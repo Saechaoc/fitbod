@@ -49,7 +49,12 @@ public struct BRUCornerBadge: View {
     public init(_ label: String, fill: Color? = nil, textColor: Color? = nil) {
         self.label = label
         self.fill = fill ?? .bruSignal
-        self.textColor = textColor ?? .bruPaper
+        let resolvedFill = fill ?? .bruSignal
+        if let textColor, textColor != .bruPaper {
+            self.textColor = textColor
+        } else {
+            self.textColor = resolvedFill.bruLabelOnFill
+        }
     }
 
     // MARK: Body

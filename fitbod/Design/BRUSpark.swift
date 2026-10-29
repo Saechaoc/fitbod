@@ -21,7 +21,11 @@ import SwiftUI
 /// - The trailing bar (index `n-1`) renders in `Color.bruSignal` when
 ///   `highlightTrailing` is true — visualizing the most-recent week.
 /// - All other bars render in `Color.bruInk`.
-/// - Background: `Color.bruBg2`. Outer border: 1.5pt `Color.bruInk`.
+/// - A zero value draws a short `Color.bruMuted` stub, so every slot stays
+///   visible and one real bar never floats alone in an empty box. A small
+///   real value never draws shorter than the stub.
+/// - Background: `Color.bruBg2`. Outer border: 1.5pt `Color.bruInk`, with
+///   the bars inset 6pt from it, as in the reference.
 ///
 /// Height comes from the parent frame. Typical use: `.frame(width: 80, height: 32)`.
 /// The bars are bottom-aligned; proportional to `values.max()`.
@@ -46,32 +50,35 @@ public struct BRUSpark: View {
             let n = values.count
             guard n > 0 else { return }
 
-            let maxV = values.max() ?? 1
-            let safeMax = maxV > 0 ? maxV : 1
+            let maxV = values.max() ?? 0
             let gap: CGFloat = 4
             let barW = (size.width - gap * CGFloat(n - 1)) / CGFloat(n)
+            let stub = min(Self.stubHeight, size.height)
 
             for (i, v) in values.enumerated() {
-                let h = size.height * CGFloat(v / safeMax)
+                let isEmpty = v <= 0 || maxV <= 0
+                let h = isEmpty ? stub : max(stub, size.height * CGFloat(v / maxV))
                 let isTrailing = (i == n - 1) && highlightTrailing
+                let color: Color = isEmpty ? .bruMuted : (isTrailing ? .bruSignal : .bruInk)
                 let rect = CGRect(
                     x: CGFloat(i) * (barW + gap),
                     y: size.height - h,
                     width: barW,
                     height: h
                 )
-                ctx.fill(
-                    Path(rect),
-                    with: .color(isTrailing ? Color.bruSignal : Color.bruInk)
-                )
+                ctx.fill(Path(rect), with: .color(color))
             }
         }
+        .padding(6)
         .background(Color.bruBg2)
         .overlay(
             Rectangle()
                 .stroke(Color.bruInk, lineWidth: 1.5)
         )
     }
+
+    /// Height of the stub a zero value draws.
+    private static let stubHeight: CGFloat = 2
 }
 
 // MARK: - Previews
@@ -95,6 +102,10 @@ public struct BRUSpark: View {
 
         // No trailing highlight
         BRUSpark(values: [58, 62, 64, 61, 66, 68, 70, 71], highlightTrailing: false)
+            .frame(width: 100, height: 40)
+
+        // Sparse: empty weeks keep their stubs
+        BRUSpark(values: [0, 0, 0, 12, 0, 0, 0, 58])
             .frame(width: 100, height: 40)
     }
     .padding()
