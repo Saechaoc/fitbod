@@ -281,6 +281,8 @@ public struct RoutineBuilderView: View {
             draft.enforceBlockProgressionEligibility()
             initialSnapshot = draft.snapshotHash()
         }
+        // A swipe would skip the discard dialog that Back and Discard show.
+        .interactiveDismissDisabled(hasUnsavedChanges)
     }
 
     // MARK: - Name + Chip Block

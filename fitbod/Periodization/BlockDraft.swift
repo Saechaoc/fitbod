@@ -168,3 +168,45 @@ public final class BlockDraft {
         }
     }
 }
+
+// MARK: - Unsaved edits
+
+extension BlockDraft {
+    /// Value copy of every field the builder edits. The builder takes one
+    /// when it opens and compares it with the live `snapshot()` to tell
+    /// whether the draft holds unsaved edits.
+    public func snapshot() -> Snapshot {
+        Snapshot(
+            name: name,
+            daysPerWeek: daysPerWeek,
+            phases: phases.map {
+                Snapshot.Phase(
+                    kind: $0.kind,
+                    weeks: $0.weeks,
+                    volumeMultiplier: $0.volumeMultiplier,
+                    intensityMultiplier: $0.intensityMultiplier
+                )
+            },
+            splitID: split?.id,
+            schedulingMode: schedulingMode,
+            // Toggling a day off and on again reorders the array, not the selection.
+            trainingDays: trainingDays.sorted()
+        )
+    }
+
+    public struct Snapshot: Equatable, Sendable {
+        public struct Phase: Equatable, Sendable {
+            public let kind: BlockPhaseKind
+            public let weeks: Int
+            public let volumeMultiplier: Double
+            public let intensityMultiplier: Double
+        }
+
+        public let name: String
+        public let daysPerWeek: Int
+        public let phases: [Phase]
+        public let splitID: UUID?
+        public let schedulingMode: SchedulingMode
+        public let trainingDays: [Int]
+    }
+}

@@ -29,6 +29,7 @@ public struct BlockBuilderView: View {
     @State private var pendingDelete: (phase: BlockPhaseDraft, index: Int)? = nil
     @State private var undoTask: Task<Void, Never>? = nil
     @State private var presentingSplitPicker = false
+    @State private var initialSnapshot: BlockDraft.Snapshot? = nil
 
     init(draft: BlockDraft, editing: Block? = nil, initialPreset: NewBlockPreset? = nil) {
         self.draft = draft
@@ -185,15 +186,22 @@ public struct BlockBuilderView: View {
             if let preset = initialPreset, preset != .blank {
                 applyPreset(preset)
             }
+            initialSnapshot = draft.snapshot()
         }
         .onDisappear {
             undoTask?.cancel()
             undoTask = nil
         }
+        // A stray swipe must not throw edits away; CANCEL stays the way out.
+        .interactiveDismissDisabled(hasUnsavedChanges)
     }
 
     private func cancel() {
         dismiss()
+    }
+
+    private var hasUnsavedChanges: Bool {
+        initialSnapshot.map { $0 != draft.snapshot() } ?? false
     }
 
     private func saveIfValid() {

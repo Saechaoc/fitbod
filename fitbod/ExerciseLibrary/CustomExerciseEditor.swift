@@ -156,6 +156,8 @@ struct CustomExerciseEditor: View {
                 initialSnapshot = draft.snapshot()
             }
         }
+        // A swipe would skip the discard dialog that Cancel shows.
+        .interactiveDismissDisabled(isDirty)
     }
 
     // MARK: - Sections
