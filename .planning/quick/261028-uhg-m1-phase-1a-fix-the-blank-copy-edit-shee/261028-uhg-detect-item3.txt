@@ -1,0 +1,27 @@
+GitNexus unavailable on this machine (Swift parser fails to load) - substitute for 'gitnexus detect-changes --scope staged'.
+Risk level (own estimate): low - additive modifiers on three editor roots and a new additive BlockDraft API; no signature changed.
+
+$ git diff --cached --stat
+ fitbod/ExerciseLibrary/CustomExerciseEditor.swift |   2 +
+ fitbod/Periodization/BlockBuilderView.swift       |   8 ++
+ fitbod/Periodization/BlockDraft.swift             |  42 +++++++
+ fitbod/Routines/RoutineBuilderView.swift          |   2 +
+ fitbodTests/BlockDraftSnapshotTests.swift         |  66 ++++++++++
+ fitbodUITests/EditorSwipeDismissUITests.swift     | 140 ++++++++++++++++++++++
+ 6 files changed, 260 insertions(+)
+
+Changed symbols:
+  modified RoutineBuilderView.body (adds .interactiveDismissDisabled(hasUnsavedChanges)) -> fitbod/Routines/RoutineBuilderView.swift
+  modified CustomExerciseEditor.body (adds .interactiveDismissDisabled(isDirty)) -> fitbod/ExerciseLibrary/CustomExerciseEditor.swift
+  modified BlockBuilderView.body (.task records the opened snapshot; adds .interactiveDismissDisabled(hasUnsavedChanges)) -> fitbod/Periodization/BlockBuilderView.swift
+  added    BlockBuilderView.initialSnapshot (@State) -> fitbod/Periodization/BlockBuilderView.swift
+  added    BlockBuilderView.hasUnsavedChanges (private computed) -> fitbod/Periodization/BlockBuilderView.swift
+  added    BlockDraft.snapshot() -> fitbod/Periodization/BlockDraft.swift
+  added    BlockDraft.Snapshot, BlockDraft.Snapshot.Phase (Equatable, Sendable) -> fitbod/Periodization/BlockDraft.swift
+  added    EditorSwipeDismissUITests (3 tests + helpers) -> fitbodUITests/EditorSwipeDismissUITests.swift
+  added    BlockDraftSnapshotTests (3 tests) -> fitbodTests/BlockDraftSnapshotTests.swift
+
+Affected flows (manual caller check): the sheets that present the three editors -
+  RoutineBuilderView: SplitDetailView.swift:734 (SlotPickerSheet + New session), SessionTemplateDetailView.swift:67, RoutinesListView.swift:163,168 (no presenter in the app)
+  CustomExerciseEditor: ExerciseLibraryView.swift:139 (+ New), ExerciseDetailView.swift:144 (COPY / EDIT)
+  BlockBuilderView: TodayView.swift:281,283, BlockCard.swift:34, BlockReviewView.swift:65, ProgramView.swift:204,206,208 (fullScreenCover), RoutinesListView.swift:178,180 and BlockPickerMenu.swift:56 (no presenter in the app)

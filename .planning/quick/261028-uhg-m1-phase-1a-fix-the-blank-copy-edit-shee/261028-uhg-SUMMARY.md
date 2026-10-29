@@ -161,3 +161,140 @@ The call sites needed no change: each sheet's `init` signature is unchanged.
 
 - Commit order 41, 42, 33, so the item 33 test ran against the BRU Pinned sheet.
 - The extra side-fix commit `639ff4e` (user rule: fix clearly-off UI along the way).
+
+## Task 3: Item 3 - editor sheets resist swipe-down while they hold unsaved edits
+
+### Commit
+
+| Item | Commit | Message |
+|---|---|---|
+| 3 | `78625e7` | fix(editors): a swipe-down no longer throws away unsaved edits |
+
+Built on branch `archerfish` (Orca worktree `q-261028-uhg-t3`) on top of `0ebd71e`, where the commit was `d6e64aa`.
+The coordinator rebased it onto `main` (`50225e1`) as `78625e7` and reran the tests listed under "Coordinator check after the rebase".
+Detect file: `261028-uhg-detect-item3.txt`.
+GitNexus is unavailable on this machine, so the file holds `git diff --cached --stat`, the changed symbols and the presenting flows, with my own risk estimate (low).
+
+### Files touched
+
+- `fitbod/Routines/RoutineBuilderView.swift` (+2), `fitbod/ExerciseLibrary/CustomExerciseEditor.swift` (+2), `fitbod/Periodization/BlockBuilderView.swift` (+8), `fitbod/Periodization/BlockDraft.swift` (+42).
+- New `fitbodUITests/EditorSwipeDismissUITests.swift` and `fitbodTests/BlockDraftSnapshotTests.swift`.
+- Not touched: `PrescriptionEditorRow.swift`, `RoutineDraft.swift`, `BlockNameField.swift`, `BlockPhaseEditorRow.swift`.
+
+### What changed
+
+- Session editor (`RoutineBuilderView`): `.interactiveDismissDisabled(hasUnsavedChanges)` on its root view, reusing the flag behind "Discard changes?".
+- Custom exercise editor (`CustomExerciseEditor`): `.interactiveDismissDisabled(isDirty)`, reusing the flag behind "Discard Changes?".
+- New Block builder (`BlockBuilderView`): it had no change tracking, and its CANCEL and "< PROGRAM" close without asking.
+  New `BlockDraft.snapshot()` returns an `Equatable` copy of every field the builder edits: name, days per week, each phase's kind, weeks, volume and intensity in order, the attached routine's id, the scheduling mode, and the training days.
+  The training days are sorted, so toggling a day off and on again is not an edit.
+  The builder does not edit `startDate` or `isActive`, so the snapshot leaves them out.
+  The builder stores the snapshot in `.task`, after applying any preset chosen before it opened, and `hasUnsavedChanges` compares it with the live snapshot.
+- Each modifier sits on the editor's own root, so every presenter gets the guard with no call-site change.
+  Pickers and sheets that an editor presents keep their own swipe behavior.
+- A guarded swipe is resisted silently; Cancel and Back keep their dialogs.
+
+### Editor sheets
+
+Every `.sheet(` and `.fullScreenCover(` in `fitbod/` was checked.
+
+Guarded (an editor with a dirty flag):
+
+| Editor | Presented from | Dirty flag |
+|---|---|---|
+| Session editor, `RoutineBuilderView` | `SplitDetailView.swift:728` (+ Add session, then + New session), `SessionTemplateDetailView.swift:65` (edit), `RoutinesListView.swift:161,166` | `hasUnsavedChanges`, from `RoutineDraft.snapshotHash()` |
+| Custom exercise editor, `CustomExerciseEditor` | `ExerciseLibraryView.swift:135` (+ New), `ExerciseDetailView.swift:139` (COPY, EDIT) | `isDirty`, from `CustomExerciseDraft.snapshot()` |
+| New Block builder, `BlockBuilderView` | Sheets: `TodayView.swift:277` (Start a block, block overview edit), `BlockCard.swift:32` (Edit Block), `BlockReviewView.swift:63` (next block), `RoutinesListView.swift:174`, `BlockPickerMenu.swift:55`. Full-screen cover: `ProgramView.swift:201`, where swipe-down never applied. | New `hasUnsavedChanges`, from `BlockDraft.snapshot()` |
+
+Left alone:
+
+| Sheet | Reason |
+|---|---|
+| `WorkoutNotesSheet` (`SessionLoggerView.swift:176`), `PinnedNoteSheet` (`SessionLoggerView.swift:180`), `PerSetNoteSheet` (`SetRow.swift:189`) | Decision 4: swipe-down throws the local copy away (covered by `NoteSheetsUITests`). |
+| `NewBlockDurationSheet` (`BlockBuilderView.swift:143`), `NewBlockPhaseEditorSheet` (`BlockBuilderView.swift:1392`), `SupersetAssignmentSheet` (`RoutineBuilderView.swift:192`), `WarmupConfigSheet` (`RoutineBuilderView.swift:203`) | They write to the parent editor's draft as you go; the parent's guard protects whatever its flag tracks (see the first follow-up below). |
+| `NewFolderSheet`, `MoveRoutineSheet` (`RoutinesListView.swift:155,158`) | No dirty flag, and CANCEL closes without asking. `RoutinesListView`, like `BlockPickerMenu`, has no presenter in the app, only previews. |
+| `AddPlateSheet` (`PlateInventoryEditor.swift:93`) | One text field and no dirty flag; its Cancel closes without asking. |
+| `SettingsView` (`TodayView.swift:314`) and the editors pushed inside it | They write through to the model ("Save inventory" is a documented no-op), so nothing is unsaved. |
+| `DecimalRPEPickerSheet` (`InlineRPEChipRow.swift:60`, in the logger) | Bound live to the set's RPE; Cancel and Done both just close. |
+| Pickers that act on one tap: `FilterPickerSheet`, `MusclePickerSheet`, the exercise pickers (`RoutineBuilderView.swift:216`, `InlineExerciseSearchRow.swift:35`, `AddUnplannedExerciseButton.swift:44`), `SwapExerciseSheet`, `TryVariationSheet`, `SlotPickerSheet`, `SplitPickerSheet`, and the New Block template, add-phase, routine, start-choice and preset pickers | No draft. |
+| Read-only or immediate: `BlockReviewView`, the deload signal sheets (`TodayView.swift:292`, `SessionExerciseCard.swift:341`), `WeeklyRecapSheet`, `WhyThisWeightSheet`, `SessionHistoryView`, `PlateCalculatorSheet`, the expanded rest timer, the routine swap confirmation (`BlockOverviewScreen.swift:185`), and the workout summary cover (`SessionLoggerView.swift:200`) | Nothing to lose. |
+| `.sheet(isPresented: .constant(true))` in `WhyThisWeightSheet`, `WarmupConfigSheet`, `DecimalRPEPickerSheet`, `PlateCalculatorSheet` | `#Preview` only. |
+
+### Tests added
+
+- `fitbodUITests/EditorSwipeDismissUITests.swift`, 3 tests.
+  Each one drags from the editor's header to the bottom of the screen while the editor is untouched, and asserts that it closes.
+  It then reopens the editor, makes one change, drags again, and asserts that the editor is still on screen and still holds the change.
+  Finally it leaves through the editor's own exit.
+  - `testSessionEditorResistsSwipeDownOnlyWithUnsavedEdits`: Today, + New routine, + Add session, + New session.
+    The change types the session name "Push C", as in the review's repro.
+    Back then shows "Discard changes?", and Discard closes the editor.
+  - `testCustomExerciseEditorResistsSwipeDownOnlyWithUnsavedEdits`: Library, + New.
+    The change sets Mechanic to Isolation, which needs no keyboard (see the simulator keyboard note in Task 1).
+    Cancel then shows "Discard Changes?", and Discard closes the editor.
+  - `testNewBlockBuilderResistsSwipeDownOnlyWithUnsavedEdits`: Today on a fresh store, Start a block, which presents the builder as a sheet.
+    The change picks FIXED WEEKLY scheduling.
+    CANCEL then closes the builder.
+- `fitbodTests/BlockDraftSnapshotTests.swift` (Swift Testing, 3 tests): each of ten builder edits changes the snapshot; undoing a phase delete restores it; toggling a training day off and on again does not count.
+
+### Failing-first evidence (before the fix)
+
+On the Pro Max, in each test the untouched swipe closed the editor, and the run then failed at the guarded swipe:
+
+- `EditorSwipeDismissUITests.swift:27: XCTAssertFalse failed - A swipe-down must not close a session editor with unsaved edits`.
+- `EditorSwipeDismissUITests.swift:52: XCTAssertFalse failed - A swipe-down must not close a custom exercise editor with unsaved edits`.
+- `EditorSwipeDismissUITests.swift:76: XCTAssertFalse failed - A swipe-down must not close a New Block builder with unsaved edits`.
+- An earlier draft of the test, which used `XCTWaiter`, failed the same three steps with `XCTAssertEqual failed: ("XCTWaiterResult(rawValue: 1)") is not equal to ("XCTWaiterResult(rawValue: 2)")`.
+  The final version uses `waitForNonExistence` and also checks that the edit survived the swipe.
+- Unit, before `BlockDraft.snapshot()` existed: `BlockDraftSnapshotTests.swift:37:32: error: value of type 'BlockDraft' has no member 'snapshot'`.
+- 17e: one run with only the three `.interactiveDismissDisabled` lines taken out (the rest of the change does nothing without them) failed the same three tests at the same lines, with the same messages.
+  The lines were then put back, and `git diff` against `d6e64aa` is empty.
+
+### Results after the fix
+
+| Run | Pro Max `BD457ACF` | 17e `E42692EE` |
+|---|---|---|
+| `EditorSwipeDismissUITests` (3) | pass | pass |
+| `BlockDraftSnapshotTests` (3) | pass | pass |
+| `RoutineBuilderBRUUITests` (2), `NewBlockModalUITests` (1), `ExerciseCopyEditSheetUITests` (2) | pass, 5 of 5 | not run |
+| The six New Block guardrail suites together (`BlockBuilderViewCopy`, `BlockBuilderViewActivation`, `NewBlockBuilderFidelity`, `NewBlockProgressionChart`, `BRUPeriodizationAudit`, `BRUPeriodizationRegression`), plus every other suite that reads a touched file or uses `BlockDraft` (`Phase3BRUGrepAudit`, `BRUGrepAudit`, `BRUPhase5GrepAudit`, `PrescriptionEditorBlockCaseFilter`, `RoutineBuilderBRUCopy`, `RoutineBuilderCopy`, `RoutineBuilderHeaderPickers`, `RoutineBuilderLiveEdit`, `BlockDraftSave`, `SingleActiveBlockInvariant`, `CustomExerciseDraft`, `BlockDraftSnapshot`): 18 suites, 105 tests | pass | not run |
+
+No new build warnings.
+The only warning is still the existing deprecated `Text` `+` in `BlockBuilderView.swift`, now at line 744 (it was 736; this change adds 8 lines above it).
+Both phones were checked afterwards at light appearance and the default `large` text size, then shut down.
+
+### Coordinator check after the rebase
+
+After rebasing onto `main` (`50225e1`, which includes the 260610-hcv phase-row change in `BlockBuilderView.swift`), the coordinator reran on the Pro Max `BD457ACF`:
+`EditorSwipeDismissUITests` (3 of 3 pass), and `BlockDraftSnapshotTests` with the six New Block guardrail suites (38 tests in 7 suites, all pass).
+
+### Impact ratings
+
+GitNexus unavailable - manual caller check (`rg`), with my own estimate:
+
+| Symbol | Risk | Callers checked |
+|---|---|---|
+| `RoutineBuilderView` (body) | LOW | `SplitDetailView.swift:734`, `SessionTemplateDetailView.swift:67`, `RoutinesListView.swift:163,168`, `ProgramViewFidelityTests.swift:193`, own preview |
+| `CustomExerciseEditor` (body) | LOW | `ExerciseLibraryView.swift:139`, `ExerciseDetailView.swift:144`, own preview |
+| `BlockBuilderView` (body, new `initialSnapshot` and `hasUnsavedChanges`) | LOW | `TodayView.swift:281,283`, `BlockCard.swift:34`, `BlockReviewView.swift:65`, `ProgramView.swift:204,206,208`, `RoutinesListView.swift:178,180`, `BlockPickerMenu.swift:56`, own previews |
+| `BlockDraft` (new `snapshot()` and `Snapshot`) | LOW | Additive extension; no existing member or initializer changed |
+| `RoutineBuilderView.hasUnsavedChanges`, `CustomExerciseEditor.isDirty` (private) | LOW | Own file only: the discard handler and the new modifier |
+
+No signature changed, so no caller needed an edit.
+
+### Deviations and observations
+
+- The review doc (`docs/review-docs/fitbod-m1-review.md`, item 3) reached this worker mid-task.
+  The fix and the session editor test match its cause, fix and test.
+  Its suggestion to check the workout notes editor is settled by decision 4.
+- `BlockBuilderView.swift` is also being edited by another worker (phase-row layout).
+  This change stays within 8 lines near the top of the view, and the snapshot code lives in `BlockDraft.swift`.
+- The builder's body now reads every phase's fields through the snapshot, so a phase stepper tap re-evaluates the builder's body.
+  The drag reorder from 260610-g9d is unaffected: per-frame drag state stays in the row's `@GestureState`, and `draft.phases` changes once, on drop.
+- Follow-up, needs `RoutineDraft.swift` (owned by the target reps and RPE worker): `RoutineDraft.snapshotHash()` (`RoutineDraft.swift:322-326`) covers only the name, block, intent, progression, exercise count, total set count and exercise ids.
+  Editing an exercise's target reps, RPE, rest, warm-ups, per-set overrides or superset, or reordering exercises added in the same visit, leaves the session editor clean.
+  Neither Back's dialog nor the new swipe guard protects those edits.
+- Follow-up, product decision: New Block's CANCEL and "< PROGRAM" still close without asking; only the swipe is guarded.
+  A "Discard changes?" dialog there could reuse `hasUnsavedChanges`.
+- Optional, from the review: a guarded swipe is resisted silently.
+  Bridging `UIAdaptivePresentationControllerDelegate.presentationControllerDidAttemptToDismiss` would show the Discard dialog instead.
