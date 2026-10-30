@@ -375,7 +375,7 @@ public struct BlockBuilderView: View {
         Text(message)
             .font(NewBlockType.label)
             .tracking(NewBlockScreenTokens.labelTracking)
-            .foregroundStyle(NewBlockScreenTokens.signal)
+            .foregroundStyle(NewBlockScreenTokens.signalText)
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(NewBlockScreenTokens.cardPadding)
             .background(
@@ -395,6 +395,8 @@ fileprivate enum NewBlockScreenTokens {
     static let hair   = Color.bruHair
     static let faint  = Color.bruFaint
     static let signal = Color.bruSignal
+    // Signal-colored text on paper-role surfaces; `signal` stays the fill.
+    static let signalText = Color.bruSignalText
 
     // Card surface system (rounded-card restyle 260528-vi2)
     static let card        = Color.bruPaper
@@ -566,7 +568,7 @@ fileprivate struct NewBlockTopBar: View {
             if let onSave {
                 Button(action: onSave) {
                     saveDraftLabel
-                        .foregroundStyle(canSave ? NewBlockScreenTokens.signal : NewBlockScreenTokens.muted)
+                        .foregroundStyle(canSave ? NewBlockScreenTokens.signalText : NewBlockScreenTokens.muted)
                 }
                 .buttonStyle(.plain)
                 .disabled(!canSave)
@@ -868,7 +870,7 @@ fileprivate struct NewBlockPhasesHeader: View {
             Button(action: onAddPhase) {
                 capsule(
                     Text("+ ")
-                        .foregroundStyle(NewBlockScreenTokens.signal)
+                        .foregroundStyle(NewBlockScreenTokens.signalText)
                     + Text("ADD PHASE")
                         .foregroundStyle(NewBlockScreenTokens.ink)
                 )
@@ -2041,7 +2043,7 @@ fileprivate struct NewBlockSplitBand: View {
                             Text("SWAP ▸")
                                 .font(NewBlockType.label)
                                 .tracking(NewBlockScreenTokens.labelTracking)
-                                .foregroundStyle(NewBlockScreenTokens.signal)
+                                .foregroundStyle(NewBlockScreenTokens.signalText)
                                 .frame(minWidth: 44, minHeight: 44)
                         }
                         .buttonStyle(.plain)
@@ -2058,7 +2060,7 @@ fileprivate struct NewBlockSplitBand: View {
                             Text("+ ATTACH ▸")
                                 .font(NewBlockType.label)
                                 .tracking(NewBlockScreenTokens.labelTracking)
-                                .foregroundStyle(NewBlockScreenTokens.signal)
+                                .foregroundStyle(NewBlockScreenTokens.signalText)
                                 .frame(minWidth: 44, minHeight: 44)
                         }
                         .buttonStyle(.plain)
@@ -2237,7 +2239,7 @@ fileprivate struct NewBlockSplitPickerSheet: View {
                                     if split.id == selectedSplit?.id {
                                         Text("✓")
                                             .font(NewBlockType.cta)
-                                            .foregroundStyle(NewBlockScreenTokens.signal)
+                                            .foregroundStyle(NewBlockScreenTokens.signalText)
                                     }
                                 }
                                 .frame(minHeight: 44)
@@ -2277,7 +2279,7 @@ fileprivate struct NewBlockUndoToast: View {
                 Text("UNDO")
                     .font(NewBlockType.chrome)
                     .tracking(NewBlockScreenTokens.chipTracking)
-                    .foregroundStyle(NewBlockScreenTokens.signal)
+                    .foregroundStyle(NewBlockScreenTokens.signalText)
                     .frame(minWidth: 44, minHeight: 44)
             }
             .buttonStyle(.plain)

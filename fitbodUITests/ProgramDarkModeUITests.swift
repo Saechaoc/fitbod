@@ -10,8 +10,13 @@
 //
 //  The run sets the phone's appearance with `xcrun simctl ui`. Each test
 //  checks the screen's paper against bruPaper in that appearance and
-//  measures text contrast in a screenshot. The phase color checks hold in
-//  dark mode, the mode the ticket sets contrast for.
+//  measures text contrast in a screenshot. The phase badge checks hold in
+//  dark mode, the mode T16 sets contrast for.
+//
+//  T73: in light mode, orange text on Program and New Block's paper used
+//  the bright bruSignal fill color and read at 2.95:1, and the chart's
+//  INTENS. and ACCUM. labels read at 2.42:1 and 4.43:1 on their bands.
+//  Signal text and the chart labels now read at 4.5:1 in both modes.
 //
 
 import XCTest
@@ -117,8 +122,9 @@ final class ProgramDarkModeUITests: XCTestCase {
 
     /// New Block with all five phase kinds: Accumulation, Intensification
     /// and Deload from the blank block, then Peak and Realization from
-    /// + ADD PHASE. In dark mode each chart label reads on its phase band,
-    /// and each phase badge's number reads on its fill as large text.
+    /// + ADD PHASE. Each chart label reads on its phase band in both modes,
+    /// and in dark mode each phase badge's number reads on its fill as large
+    /// text.
     @MainActor
     func testNewBlockPhaseColorsRead() throws {
         let app = UITestNavigation.launch(UITestNavigation.freshStore)
@@ -144,10 +150,8 @@ final class ProgramDarkModeUITests: XCTestCase {
         waitUntilStill(labels[0])
         UITestNavigation.saveScreenshot("T16", "new-block-chart", appearance: appearance)
         let chart = XCUIScreen.main.screenshot()
-        if checksContrast {
-            for label in labels {
-                assertContrast(of: label, atLeast: 4.5, in: chart)
-            }
+        for label in labels {
+            assertContrast(of: label, atLeast: 4.5, in: chart)
         }
 
         for (index, kind) in ["Accumulation", "Intensification", "Deload", "Peak", "Realization"].enumerated() {
@@ -161,6 +165,54 @@ final class ProgramDarkModeUITests: XCTestCase {
         UITestNavigation.saveScreenshot("T16", "new-block-phases", appearance: appearance)
     }
 
+    // MARK: - Signal text
+
+    /// T73: + NEW ROUTINE is orange text on Program's paper and reads at
+    /// 4.5:1.
+    @MainActor
+    func testNewRoutineReadsOnPaper() throws {
+        let app = UITestNavigation.launch(UITestNavigation.activeBlock)
+        UITestNavigation.selectTab("Program", in: app)
+        let newRoutine = app.buttons.labeled("+ NEW ROUTINE")
+        XCTAssertTrue(newRoutine.waitForExistence(timeout: 10), "Program must offer + NEW ROUTINE")
+        UITestNavigation.reveal(newRoutine, in: app)
+        waitUntilStill(newRoutine)
+        UITestNavigation.saveScreenshot("T73", "program", appearance: appearance)
+        let screenshot = XCUIScreen.main.screenshot()
+
+        assertPaper(at: CGPoint(x: 6, y: newRoutine.frame.midY), in: screenshot, "Program's + NEW ROUTINE row")
+        // The row spans the page with its text at the trailing edge. The inset
+        // keeps the rules above and below the row out of the reading.
+        assertContrast(in: newRoutine.frame.insetBy(dx: 0, dy: 4), atLeast: 4.5, in: screenshot, "+ NEW ROUTINE")
+    }
+
+    /// T73: on a named New Block, SAVE DRAFT in the top bar and + ATTACH ▸
+    /// in the routine band are orange text on paper and read at 4.5:1.
+    @MainActor
+    func testNamedNewBlockSignalTextReadsOnPaper() throws {
+        let app = UITestNavigation.launch(UITestNavigation.freshStore)
+        openBlankNewBlock(in: app)
+        nameBlock("Signal Block", in: app)
+        let saveDraft = app.buttons.labeled("SAVE DRAFT")
+        XCTAssertTrue(saveDraft.waitForExistence(timeout: 10), "A named block must offer SAVE DRAFT")
+        XCTAssertTrue(saveDraft.isEnabled, "SAVE DRAFT must take a named block")
+        waitUntilStill(saveDraft)
+        UITestNavigation.saveScreenshot("T73", "new-block", appearance: appearance)
+        var screenshot = XCUIScreen.main.screenshot()
+
+        assertPaper(at: CGPoint(x: 6, y: saveDraft.frame.midY), in: screenshot, "New Block's top bar")
+        assertContrast(of: saveDraft, atLeast: 4.5, in: screenshot)
+
+        let attach = app.buttons.labeled("+ ATTACH ▸")
+        XCTAssertTrue(attach.waitForExistence(timeout: 10), "New Block must offer + ATTACH")
+        revealAboveBottomBar(attach, in: app)
+        UITestNavigation.saveScreenshot("T73", "new-block-routine", appearance: appearance)
+        screenshot = XCUIScreen.main.screenshot()
+
+        assertPaper(at: CGPoint(x: 6, y: attach.frame.midY), in: screenshot, "New Block's routine band")
+        assertContrast(of: attach, atLeast: 4.5, in: screenshot)
+    }
+
     // MARK: - Navigation
 
     /// Program → + NEW → + New block → Blank Block.
@@ -172,6 +224,22 @@ final class ProgramDarkModeUITests: XCTestCase {
         hittable(app.buttons, "Blank Block", file: file, line: line).tap()
         XCTAssertTrue(app.staticTexts.labeled("NEW BLOCK").waitForExistence(timeout: 10), "New Block never opened",
                       file: file, line: line)
+    }
+
+    /// Names the block the way a user does. `typeText` can drop the first
+    /// character, so it types once the field has keyboard focus, then
+    /// presses return to put the keyboard away.
+    @MainActor
+    private func nameBlock(_ name: String, in app: XCUIApplication,
+                           file: StaticString = #filePath, line: UInt = #line) {
+        let field = app.textFields.firstMatch
+        XCTAssertTrue(field.waitForExistence(timeout: 10), "Missing the block name field", file: file, line: line)
+        field.tap()
+        let focused = XCTNSPredicateExpectation(predicate: NSPredicate(format: "hasKeyboardFocus == true"), object: field)
+        XCTAssertEqual(XCTWaiter().wait(for: [focused], timeout: 5), .completed,
+                       "The block name field never took keyboard focus", file: file, line: line)
+        field.typeText(name + "\n")
+        XCTAssertEqual(field.value as? String, name, "The block name field must hold \(name)", file: file, line: line)
     }
 
     /// The top template row. A row's label starts with its weeks:

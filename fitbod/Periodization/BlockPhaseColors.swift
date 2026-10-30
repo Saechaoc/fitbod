@@ -14,6 +14,7 @@ public enum BlockPhaseColors {
     // phase bands are dark.
     private static let realization = Color("phaseRealization")
     private static let accumulationLabel = Color("phaseAccumulationLabel")
+    private static let intensificationLabel = Color("phaseIntensificationLabel")
     private static let peakLabel = Color("phasePeakLabel")
     private static let realizationLabel = Color("phaseRealizationLabel")
     private static let deloadLabel = Color("phaseDeloadLabel")
@@ -93,11 +94,11 @@ public enum BlockPhaseColors {
     public static func phaseLabelInk(for kind: BlockPhaseKind) -> Color {
         switch kind {
         case .accumulation:
-            // bruBlue's #2F5ACF, a deep saturated indigo — passes on 0.18 blue tint.
+            // Deep indigo #2A52BF, darker than bruBlue's #2F5ACF — passes on 0.18 blue tint.
             return accumulationLabel
         case .intensification:
-            // bruSignal #FF5C1A is burnt orange/rust — passes on 0.18 peach tint.
-            return Color.bruSignal
+            // Deep burnt orange #A83000 — passes on 0.18 signal tint, where bruSignalText does not.
+            return intensificationLabel
         case .peak:
             // Deepened forest green — passes on 0.18 green tint. Inherited from former .realization identity.
             return peakLabel

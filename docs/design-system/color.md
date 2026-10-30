@@ -39,6 +39,22 @@ Run `python3 docs/design-system/tokens_check.py` to print this table from the as
 `AccentColor` is the app's global tint. It colors system alerts, confirmation dialogs and the text cursor, so it uses the ink values to keep system chrome neutral.
 No BRU screen reads it directly.
 
+New Block's phase colors come from `BlockPhaseColors` in `fitbod/Periodization/BlockPhaseColors.swift`.
+Accumulation, intensification, peak and deload fill with `bruBlue`, `bruSignal`, `bruGreen` and `bruAmber`; realization and the chart labels use these phase colorsets:
+
+| Colorset | Light | Dark | Use |
+| --- | --- | --- | --- |
+| `phaseRealization` | `#7A3C6E` | `#C68BBE` | Realization fill: phase badge, Add Phase swatch, chart band and rail |
+| `phaseAccumulationLabel` | `#2A52BF` | `#9DB6F5` | ACCUM. label on the progression chart |
+| `phaseIntensificationLabel` | `#A83000` | `#FF7A3D` | INTENS. label on the progression chart |
+| `phasePeakLabel` | `#22603C` | `#8FD9A8` | PEAK label on the progression chart |
+| `phaseRealizationLabel` | `#4E2646` | `#E0B8D8` | REAL. label on the progression chart |
+| `phaseDeloadLabel` | `#8A5C18` | `#F2C46E` | DELOAD label on the progression chart |
+
+Each chart label sits on its phase band, the phase fill at 0.18 opacity over `bruPaper`, and reads at 4.5:1 or more there in both modes.
+The lowest are DELOAD at 4.86:1 and ACCUM. at 5.05:1 in light mode.
+`tokens_check.py` does not check these band pairs; `ProgramDarkModeUITests` measures them on screen.
+
 ## Contrast
 
 Required: 4.5:1 for text, 3:1 for large text (at least 18pt regular or 14pt bold) and for control boundaries.
