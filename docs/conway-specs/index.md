@@ -72,6 +72,9 @@ The quick-task run of the same plan must finish its last two tasks first, so rea
 | [T72](tickets/T72-one-sample-per-workout.md) | The plateau and RPE-creep checks count each workout once |
 | [T73](tickets/T73-signal-text-on-paper.md) | Orange text on Program and New Block reads clearly in light mode |
 | [T74](tickets/T74-add-phase-sheet-header.md) | The Add Phase sheet has a BRU header and a CANCEL |
+| [T75](tickets/T75-swap-rebuilds-warmups.md) | A swap rebuilds the warm-ups for the new exercise, and the swap tests drive the real swap |
+| [T76](tickets/T76-added-exercise-prescription.md) | An exercise added mid-workout gets its prescription |
+| [T77](tickets/T77-plate-inventory-list.md) | Plate Inventory's swipe-to-delete works on iOS 26 and closes like other rows |
 
 ### Phase 2: P2 defects
 
