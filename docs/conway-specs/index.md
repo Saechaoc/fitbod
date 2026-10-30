@@ -90,6 +90,7 @@ The quick-task run of the same plan must finish its last two tasks first, so rea
 | [T92](tickets/T92-workout-sets-in-order.md) | History and plateau checks read every set of a workout in order |
 | [T93](tickets/T93-deload-and-comparison-whole-workout.md) | Deload advice and session comparison read every log of a workout in order |
 | [T94](tickets/T94-exercise-rows-per-workout.md) | Exercise screens show one row per workout |
+| [T95](tickets/T95-stable-exercise-names.md) | The deload banner and session comparison name their exercises steadily |
 
 ### Phase 2: P2 defects
 
