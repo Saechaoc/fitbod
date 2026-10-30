@@ -80,6 +80,7 @@ The quick-task run of the same plan must finish its last two tasks first, so rea
 | [T80](tickets/T80-calibrating-weight-cell.md) | A calibrating set's weight can be typed, and shows once chosen |
 | [T81](tickets/T81-heatmap-figure-labels.md) | VoiceOver names each heatmap figure once |
 | [T82](tickets/T82-e1rm-chart-voiceover.md) | VoiceOver reads each e1RM point's rounded weight |
+| [T83](tickets/T83-action-popover-fit.md) | The action popover's items stay whole and take a 44pt tap |
 
 ### Phase 2: P2 defects
 
