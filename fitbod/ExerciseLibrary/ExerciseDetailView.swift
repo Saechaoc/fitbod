@@ -509,7 +509,7 @@ struct ExerciseDetailView: View {
                     }
                 }
 
-                Text("Global defaults: \(settings.plateauWindowSessions) sessions, \(Int((settings.plateauTolerance * 100).rounded()))% tolerance. Set in Settings.")
+                Text("Global defaults: \(settings.plateauWindowSessions) sessions, \(Int((settings.plateauTolerance * 100).rounded()))% tolerance.")
                     .font(BRUFont.bodyDefault)
                     .foregroundStyle(Color.bruMuted)
             }

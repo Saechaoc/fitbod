@@ -51,8 +51,9 @@ struct PlateauDetectorTests {
     }
 
     /// Insert N sessions of `exercise` at `intent`, each with one
-    /// working set (`weight × reps`, optional rpe). startedAt offsets
-    /// each session by `i * 86_400` seconds before `now`.
+    /// working set (`weight × reps`, optional rpe). The last pair is the
+    /// newest session, started at `now`; each earlier pair starts one
+    /// more day (86_400 seconds) back.
     @discardableResult
     private func insertSessions(
         _ ctx: ModelContext,
@@ -65,7 +66,7 @@ struct PlateauDetectorTests {
         var sessions: [Session] = []
         for (i, wr) in weightsReps.enumerated() {
             let session = Session()
-            // Most-recent session is index 0; earlier sessions are further back.
+            // The last pair is the newest session; earlier pairs are further back.
             session.startedAt = now.addingTimeInterval(-Double(weightsReps.count - 1 - i) * 86_400)
             session.completedAt = session.startedAt.addingTimeInterval(60 * 45)
             session.routineSnapshotName = "Test"
@@ -336,5 +337,57 @@ struct PlateauDetectorTests {
         } else {
             Issue.record("Expected .progressing, got \(result)")
         }
+    }
+
+    // MARK: - 10. .stalled payload covers exactly the window used (T64, F40)
+
+    /// Eight finished strength sessions, more than any window under test,
+    /// each with its own top-set e1RM. Even all eight sit within the
+    /// default 2% tolerance (1.75 / 100.875 ≈ 1.7%), so any window stalls.
+    private static let stallWeights: [Double] = [100, 100.25, 100.5, 100.75, 101, 101.25, 101.5, 101.75]
+
+    /// The e1RMs of the newest `window` sessions `stallWeights` inserts.
+    private static func newestE1RMs(_ window: Int) -> [Double] {
+        stallWeights.suffix(window).compactMap { OneRepMaxEstimator.estimate(weight: $0, reps: 5) }
+    }
+
+    @Test(".stalled carries one e1RM per session of the exercise's plateauWindowOverride")
+    func stalledPayloadMatchesWindowOverride() throws {
+        let ctx = try FatigueTestFixtures.makeContext()
+        let muscles = try makeMuscles(ctx)
+        let ex = try makeBenchExercise(ctx, muscles: muscles)
+        try insertSessions(ctx, exercise: ex, intent: .strength, weightsReps: Self.stallWeights.map { ($0, 5) })
+        let settings = defaultSettings(ctx)
+        // The override (6) differs from the user's window (4) and from the eight sessions logged.
+        ex.plateauWindowOverride = 6
+        try ctx.save()
+
+        let result = PlateauDetector.evaluate(exerciseID: ex.id, intent: .strength, in: ctx, settings: settings)
+        guard case .stalled(let e1RMs, _) = result else {
+            Issue.record("Expected .stalled, got \(result)")
+            return
+        }
+        #expect(e1RMs.count == 6, "Expected one e1RM per session of the 6-session override window, got \(e1RMs.count)")
+        #expect(e1RMs.sorted() == Self.newestE1RMs(6).sorted(), "Expected the e1RMs of the 6 newest sessions, got \(e1RMs)")
+    }
+
+    @Test(".stalled carries one e1RM per session of the user's plateauWindowSessions without an override")
+    func stalledPayloadMatchesUserWindow() throws {
+        let ctx = try FatigueTestFixtures.makeContext()
+        let muscles = try makeMuscles(ctx)
+        let ex = try makeBenchExercise(ctx, muscles: muscles)
+        try insertSessions(ctx, exercise: ex, intent: .strength, weightsReps: Self.stallWeights.map { ($0, 5) })
+        let settings = defaultSettings(ctx)
+        // The exercise has no override; the user's window (5) differs from the default 4 and from the eight sessions logged.
+        settings.plateauWindowSessions = 5
+        try ctx.save()
+
+        let result = PlateauDetector.evaluate(exerciseID: ex.id, intent: .strength, in: ctx, settings: settings)
+        guard case .stalled(let e1RMs, _) = result else {
+            Issue.record("Expected .stalled, got \(result)")
+            return
+        }
+        #expect(e1RMs.count == 5, "Expected one e1RM per session of the user's 5-session window, got \(e1RMs.count)")
+        #expect(e1RMs.sorted() == Self.newestE1RMs(5).sorted(), "Expected the e1RMs of the 5 newest sessions, got \(e1RMs)")
     }
 }
