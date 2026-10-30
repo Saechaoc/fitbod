@@ -44,8 +44,14 @@ Status is one of: todo, dispatched, done, failed, skipped.
 Done means accepted and safely settled: merged delivery commits, accepted evidence-only results with a tested commit, or fully evidenced replacement completion.
 A reported outcome is separate from settlement state and never by itself frees resources or satisfies dependencies.
 
-Keep per-attempt history in Notes, including the unique attempt id, mode/effective brief, effective ownership and acceptance, task/dispatch ids, lane and worktree/branch.
-Record input and output evidence folders, the base and actual tested commit, and any delivery commit on `main`.
+Keep per-attempt history in Notes, including the unique attempt id, mode/effective brief, retry failure note, effective ownership and acceptance, task/dispatch ids, lane and worktree/branch.
+Record the fresh worktree-local `docs/conway-specs/evidence/attempt-brief.md` and its exact settlement archive at `docs/conway-specs/evidence/<attempt id>/attempt-brief.md`, plus the unique output folder, base and actual tested commit, and any delivery commit on `main`.
+The stored task spec stays an invariant loader; a native failed/stopped retry reuses its task with a fresh brief, while a rejected successful attempt gets a new task.
+For each input binding, record its role, local relative alias, source attempt/archive, acceptance and safe-settlement state, tested commit, delivery commit or none, and exact required files validated before launch.
+Accepted dependencies must come from ledger-selected accepted/settled archives, not failed/rejected/unsettled attempts or directory recency; preserve all original archives and freeze the brief and local inputs during execution.
+For example, accepted/settled T40-r2 supplies T41's local `evidence/T40/{notes.md,delete-paths.md}` and T47's local `evidence/T40/closeout-statement.md`, leaving failed T40 separately archived.
+Label an original T46 retry's own safely settled failed source at local `evidence/T46/` as `failed/resume`, never accepted dependency evidence.
+Record `evidence/run-log.md` separately as a coordinator snapshot with source path, run id and snapshot time, without inventing producer acceptance or delivery commits.
 The Commit column holds delivery commits or replacement commit references, not an invented commit for an evidence-only result.
 Notes record reported outcome, acceptance/rejection, settlement `pending` or `settled`, release/recovery receipts, positive execution-stop proof and safe cleanup authority.
 While pending, retain the attempt's lane, normalized owned/held reservations and pending-wait records even if its reported outcome is failed or it is fenced.
@@ -123,7 +129,7 @@ Keep the accepted full-tour evidence, including implementation retries, and prio
 
 ## Shared test helpers
 
-Workers list new helpers in their notes, and the coordinator copies them here for later task headers.
+Workers list new helpers in their notes, and the coordinator copies them here for later on-disk attempt briefs.
 
 - None yet.
 

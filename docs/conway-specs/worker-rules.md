@@ -1,11 +1,14 @@
 # Worker rules
 
 These rules are part of every ticket in this bundle.
-Read them before your effective brief and base ticket.
+The stored task spec is an invariant loader: read these rules, then the authoritative `docs/conway-specs/evidence/attempt-brief.md` in your worktree, then the local base ticket file it names.
+Every brief/header reference below means that on-disk brief, never cached task-prompt metadata.
 The brief identifies the attempt and mode, and only its explicit rerun/refresh fields override the base ticket and generic commit instructions.
 Protected paths, safety rules and every other applicable constraint remain in force.
 Original work and its retries retain the base ticket's implementation and acceptance requirements.
-If the brief is missing, contradictory or unclear about an override, stop and ask the coordinator rather than guessing.
+Before work, check the brief's worktree/branch and dispatch base against your actual root/branch and initial HEAD.
+If the brief, named ticket or required input is missing, contradictory, launch/worktree-mismatched or unclear about an override, stop and ask the coordinator; never fall back to an old spec, cached prompt or previous brief.
+The coordinator writes a fresh brief before every launch, including native retries; it and all supplied inputs are read-only and immutable during your attempt.
 
 ## Your job
 
@@ -24,8 +27,8 @@ Do not reopen either one.
 
 The project `CLAUDE.md` says to start edits through a `/gsd-*` command.
 This run replaces that workflow with these tickets and [run-log.md](run-log.md).
-The header of your task says whether the user approved this exception.
-If the header does not say so, ask the coordinator before you edit any file.
+Your on-disk brief says whether the user approved this exception.
+If that brief does not say so, ask the coordinator before you edit any file.
 Never run a `/gsd-*` command yourself.
 
 ## Workspace
@@ -38,14 +41,14 @@ Never run a `/gsd-*` command yourself.
   Only the coordinator works there and moves `main`.
 - Never create, switch or delete a branch or a worktree.
 - Other workers run at the same time, each in its own worktree.
-  Your task header lists their tickets and the files they own or hold.
+  Your on-disk brief lists their tickets and the files they own or hold.
 - For original work/retries, before editing outside effective `owns`, ask the coordinator and wait for a yes, even for a UI test your change broke, a test that pins copy, or `docs/ROADMAP.md`.
   This narrows the original Ownership section because another worker may be editing that file.
 - Read-only T44/T45/T46 verification reruns have effective `owns: []` and write evidence only, with no tracked edits, staging, commits or edit grants.
   Docs refreshes may edit only their explicitly listed document/image paths and cannot widen scope through a generic ask.
 - If the coordinator replies "wait", finish and commit any other authorized changes, then ask again; it answers only after the file is safely freed.
   After the yes, follow Finishing's conditional rebase, so you edit the newest version of the file, and commit the authorized edit.
-- If your task header says lane "gate", no other code worker runs beside you.
+- If your on-disk brief says lane "gate", no other code worker runs beside you.
   Follow the effective brief, not overridden base-ticket permissions; the gate exception never allows verification edits or expands refresh scope.
 - Stage only authorized files you changed in commit-capable work.
 - Before starting work, including read-only verification, save `git status --porcelain` to `status-before.txt` in your evidence folder.
@@ -80,7 +83,7 @@ If `git status` shows that scheme changed and your ticket did not ask for it, re
 
 ## Simulators
 
-Use only the two phones your task header names, always by id:
+Use only the two phones your on-disk brief names, always by id:
 
 | Phone | Width | Ticket `sim` value |
 |---|---|---|
@@ -100,7 +103,7 @@ Use only the two phones your task header names, always by id:
 
 ## Build and test
 
-- Build into the DerivedData folder your task header names, never into another lane's folder or the default one, because two builds in one folder block each other.
+- Build into the DerivedData folder your on-disk brief names, never into another lane's folder or the default one, because two builds in one folder block each other.
 - Your worktree starts with no build products, so your first build is a full build; start it in the background.
 - Put result bundles in your own scratchpad, with your ticket id and a counter in the name, for example `T08-after-2.xcresult`.
 - Build the app with `xcodebuild -project fitbod.xcodeproj -scheme fitbod -destination "platform=iOS Simulator,id=<id>" -derivedDataPath <DerivedData> build CODE_SIGNING_ALLOWED=NO`.
@@ -202,7 +205,7 @@ If `docs/ROADMAP.md` is not in your `owns` list, ask the coordinator before you 
 
 ## GitNexus
 
-Your task header gives the GitNexus mode.
+Your on-disk brief gives the GitNexus mode.
 
 - In `index` mode, run GitNexus `impact` in the upstream direction before you edit a function, type or view.
   Always pass the repo `fitbod`, because more than one repo can be indexed.
@@ -244,7 +247,9 @@ Your task header gives the GitNexus mode.
 ## Evidence
 
 Write evidence to the unique `docs/conway-specs/evidence/<attempt id>/` output folder named in your effective brief.
-Keep input evidence and prior attempts intact.
+Keep the fixed brief, input aliases, run-log snapshot and prior attempts intact; only your new output is writable.
+Resolve paths and reject escapes from the worktree or equal/ancestor/descendant collisions between input alias roots, fixed brief/run-log files and the output folder.
+Never write `<output folder>/attempt-brief.md`: the coordinator reserves it for the exact frozen brief archived at settlement.
 Git ignores it, and the coordinator copies it to the main checkout before it removes your worktree:
 
 | File | Holds |
@@ -265,9 +270,14 @@ T46 reruns record captures, findings and screenshot notes for exactly the reques
 They do not inherit original T46's 264-image or test-authoring requirements, which still apply to its first run and implementation retries.
 Complete evidence reports failures truthfully and never implies every check passed.
 
-When a ticket names another ticket's evidence, such as `evidence/T31/export-diff.md`, read it next to your own folder; the coordinator copies it into your worktree before you start.
-T47 and T48 also get a copy of the coordinator's run log there, as `run-log.md`.
-If anything is missing, ask the coordinator.
+Read dependency evidence only through the brief's explicit local bindings under `docs/conway-specs/evidence/`, copied before launch from ledger-selected accepted AND safely settled archives; check every required file, not just folder non-emptiness.
+The bindings record source attempt/archive, acceptance/settlement, tested and delivery commits (or no delivery), required files and destination; never choose another folder by recency or use external symlinks.
+Unchanged ticket paths remain valid: `evidence/T31/export-diff.md` and named snapshots, T41's `evidence/T40/notes.md` and `delete-paths.md`, and T47's `evidence/T40/closeout-statement.md` plus its other bound reports/captures.
+For accepted/settled T40-r2, local `evidence/T40/` contains that attempt's required files, not failed T40's evidence; original archives are never renamed or overwritten.
+The sole failed-input exception is an original T46 retry's own safely settled `failed/resume` binding at local `evidence/T46/`, not accepted dependency evidence.
+Preserve that input, copy only its coverage files to your distinct output, and resume the full original tour; partial verification reruns never replace accepted full-tour coverage.
+T47 and T48's `evidence/run-log.md` is a frozen coordinator snapshot with recorded provenance, not accepted producer evidence or a live log.
+Stop and ask on any missing required file, mismatched provenance or failed/rejected/unsettled dependency source; do not substitute other evidence.
 
 ## Finishing
 

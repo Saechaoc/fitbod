@@ -89,49 +89,63 @@ The hotspot list from `capacity_model.py` shows which tickets will wait for each
 ## Start one ticket
 
 Prepare an effective brief before checking ownership or reserving a lane, including for gate workers.
-It names the base ticket, mode (`original`, `retry`, `verification-rerun` or `docs-refresh`), unique attempt id, base/tested commit, unique evidence output folder, input evidence folders, effective ownership, permitted actions and scoped acceptance.
+It names the local base ticket, mode (`original`, `retry`, `verification-rerun` or `docs-refresh`), unique attempt id, base/tested commit, unique evidence output folder, explicit input bindings, effective ownership, permitted actions and scoped acceptance.
 Only explicitly named rerun/refresh fields override the base ticket and generic commit instructions; protected paths, safety rules and every other applicable constraint remain in force.
 Original work and its retries retain the original implementation and acceptance requirements.
-Reject a missing or contradictory brief rather than guessing its scope.
+The stored task spec is only an invariant loader; the authoritative attempt metadata lives in the worktree-local `docs/conway-specs/evidence/attempt-brief.md`.
+Reject a missing, contradictory or launch/worktree-mismatched brief or input; never fall back to an old spec, cached prompt or previous brief.
 
 1. Pick a free lane, or the gate phones for an exclusive ticket.
-2. Create the ticket worktree from the newest `main` with `orca worktree create --repo path:<main checkout> --name conway-<id in lower case> --base-branch main --json`.
+2. Create a fresh attempt worktree from the newest `main` with `orca worktree create --repo path:<main checkout> --name conway-<attempt id in lower case> --base-branch main --json`.
    `--base-branch main` matters: the local `main` holds every merged ticket, and the repo's default base may be `origin/main`, which does not until Phase 8.
 3. Check that `git -C <worktree> rev-parse HEAD` equals `git rev-parse main`.
    If it does not, do not start a worker; recreate only a confirmed-unused worktree with safe cleanup authority, or resolve uncertainty through "Settle a ticket".
-4. Copy into `<worktree>/docs/conway-specs/evidence/` every input evidence folder the brief names, and check that none is missing or empty:
-   - T32, T33 and T43 read T31's folder, which holds `export-diff.md` and any export snapshot.
-   - T41 reads T40's folder.
-   - T47 reads T40 and T41, the latest T44 and T45, and the accepted full T46 tour, including implementation retries, plus applicable per-pair rerun folders.
-   - A retry of original T46 reads its failed attempt's folder, copied in as `T46`; preserve that input and carry its coverage into the retry's distinct output folder before resuming.
+4. Bind each dependency input from a ledger-selected accepted AND safely settled producer archive in the main checkout to the stable local alias its unchanged consumer ticket reads.
+   Record its role, source attempt/archive, acceptance/settlement, tested commit, delivery commit or none, exact required files and worktree-relative destination in the brief and ledger.
+   Copy those files into fresh aliases in EACH consumer worktree; verify source provenance/commits and every required source and copied file before launch, not merely nonempty folders.
+   Missing files, mismatched provenance, failed/rejected or unsettled dependency attempts block launch; never select by directory recency, rename/overwrite original archives or use external symlinks.
+   All `evidence/...` aliases below are under that worktree's `docs/conway-specs/`.
+   - T32, T33 and T43 bind `evidence/T31/export-diff.md`; if it names a newer export, also bind every required snapshot file under `evidence/T31/export/`.
+   - T41 binds `evidence/T40/notes.md` and `evidence/T40/delete-paths.md`; T47 binds `evidence/T40/closeout-statement.md`.
+     For failed T40 followed by accepted/settled T40-r2, copy the required T40-r2 files to local `evidence/T40/` in BOTH consumers; main's T40 and T40-r2 archives remain intact, and failed T40 is not accepted input.
+   - T47 also binds T41's backup results, the latest accepted/settled T44/T45 reports and captures, and the accepted full T46 tour, including implementation retries, plus applicable accepted/settled per-pair reruns.
+     Enumerate every required report/capture file; partial reruns never replace full-tour coverage.
+   - Exception: an original T46 retry binds its OWN safely settled failed attempt to local `evidence/T46/`, explicitly labeled `failed/resume`, not accepted dependency evidence.
+     Require its recorded `findings.md`, `notes.md` and completed captures; preserve that input and carry only its coverage files into the retry's distinct output before resuming, never its archived brief.
 
-   For T47 and T48, also copy the live run log to `<worktree>/docs/conway-specs/evidence/run-log.md`, because they need its ledger, removed controls and evidence folder names.
+   For T47 and T48, copy the live run log to `<worktree>/docs/conway-specs/evidence/run-log.md` as a coordinator snapshot with source/run/time provenance, not accepted producer evidence.
+   Resolve paths before checking that input alias roots, the fixed brief/run-log files and the new output folder stay inside the worktree and are pairwise disjoint: reject escaping paths and equal/ancestor/descendant collisions.
+   Reserve `<output folder>/attempt-brief.md` for settlement's archived brief, never worker output.
    Git ignores the evidence folder, so nothing reaches a new worktree unless you copy it.
    Workers stay inside their worktree, because Copilot CLI asks before it changes files outside its folder, and nobody is there to answer.
-5. Build the spec text: the effective brief in the task header below, then the full base ticket clearly marked as reference wherever the brief overrides it.
+5. Before EVERY launch, including native retries, persist a fresh coordinator-written `docs/conway-specs/evidence/attempt-brief.md` in that fresh worktree using the sole template below.
+   Check its attempt/base, worktree/branch, mode, failure note, output and validated bindings against the intended ledger launch; make the brief and all input copies, including the run-log snapshot, worker-read-only and immutable throughout execution.
    Never dispatch an unchanged implementation ticket as a verification rerun or narrow refresh contract.
-6. Create the task with `orca orchestration task-create --run <run id> --task-title "<id> <title>" --spec "<spec text>" --json`.
+6. For a new task, store ONLY this invariant loader: `orca orchestration task-create --run <run id> --task-title "<id> <title>" --spec "In this worker's worktree, read docs/conway-specs/worker-rules.md, then docs/conway-specs/evidence/attempt-brief.md, then the local base ticket file named in that brief. Follow the rules and brief; stop on missing or mismatched inputs." --json`.
+   Do not concatenate the brief or ticket into the spec or embed attempt-specific data; native failed/stopped retries skip task-create as "Retry" says.
    Pass no `--deps`: you create a task only when its dependencies are done or skipped, the ledger is the dependency record, and a skipped ticket has no task to name.
    The ledger's Task id column holds the ticket's latest task; when a retry gets a new task, move the old id to Notes.
-7. Start the worker in that worktree with `orca orchestration worker-start --task <task id> --worktree path:<worktree> <agent flags> --json`.
+7. Start the worker in that worktree with `orca orchestration worker-start --task <task id> --worktree path:<worktree> <agent flags> --json`, adding `--retry-of` only as "Retry" permits.
    The call exits 0 only when the worker is ready.
 8. Record the brief, attempt id, lane, task id, dispatch id, worktree path and branch in the run log.
    `git worktree list` shows the branch.
 
-The task header, with the brackets filled in:
+The sole on-disk brief template, written to `docs/conway-specs/evidence/attempt-brief.md` with the brackets filled in:
 
 - Bundle: `docs/conway-specs/` in your worktree.
-- Read `worker-rules.md` in the bundle before anything else, because it is part of this spec.
-- Base ticket: `<id and path>`; mode: `<mode>`; unique attempt id: `<id, such as T45-r2>`.
+- Read `worker-rules.md` in the bundle before this brief, then read the named base ticket from this worktree.
+- Base ticket: `<id and worktree-relative path>`; mode: `<mode>`; unique attempt id: `<id, such as T45-r2>`.
+- Launch worktree/branch: `<absolute worktree root and branch>`.
 - Base/tested commit at dispatch: `<hash>`; record the actual tested commit in your result if authorized work changes it.
+- What went wrong last time: `<prior dispatch and failure/rejection note, or none>`.
 - Effective `owns`: `<exact paths, preserving any new: prefixes, or []>`.
 - Permitted actions and explicit overridden base-ticket fields: `<implementation, read-only verification or scoped document edits>`.
 - Scoped acceptance and required evidence: `<checks, runs or exact screen/configuration pairs and output files>`.
 - Your unique evidence output folder is `docs/conway-specs/evidence/<attempt id>/` in your worktree.
   Never overwrite a prior attempt's evidence.
-- Input evidence folders: `<exact folders and their attempts/tested commits, or none>`.
+- Input bindings: `<role: accepted dependency or failed/resume; worktree-relative alias -> source attempt/archive; acceptance/settlement; tested commit; delivery commit or none; exact required files, or none>`.
 - Run base: `<run base>`.
-- Run log copy: `docs/conway-specs/evidence/run-log.md` for T47 and T48, or "none".
+- Run log copy: `docs/conway-specs/evidence/run-log.md` for T47 and T48, or "none"; coordinator snapshot provenance: `<source path, run id and snapshot time, or none>`.
   Read that copy, not the older `docs/conway-specs/run-log.md` in your worktree.
 - Lane: <L1, L2, L3 or gate>.
   Small phone: "<name>" `<id>`.
@@ -249,7 +263,8 @@ A reported ending is not a safely settled attempt.
    For abandonment, `release_pending`, `release_unknown` or any uncertainty, keep settlement pending and preserve the worktree, branch, lane, owned/held reservations and pending waits without replies or cancellations.
    Load the version-matched `orca skills get orchestration --reference references/recovery-and-cleanup.md` and follow the receipt's prescribed recovery, recording the receipt, positive stop proof and cleanup authority before resuming.
    Do not substitute blanket force cleanup, retry or lane replacement for unresolved recovery.
-3. Archive the attempt's evidence and brief in the main checkout's `docs/conway-specs/evidence/<attempt id>/` before any authorized removal.
+3. Archive the attempt's output in the main checkout's unique `docs/conway-specs/evidence/<attempt id>/`, with a byte-for-byte copy of its worktree-local `docs/conway-specs/evidence/attempt-brief.md` as `<attempt id>/attempt-brief.md`, before any authorized removal.
+   Verify that the exact frozen brief was preserved, record its archive path, and never reconstruct it from a stored spec or overwrite the reserved filename with worker output.
    Preserve prior attempts and record failed/rejected outcomes in the ledger rather than overwriting evidence folders.
 4. Remove the worktree with `orca worktree rm --worktree path:<worktree> --json` only when authorized, then delete its branch with `git branch -d <branch>` only when safe and authorized.
    For useful unmerged work, retain its branch and, if needed to preserve that work, its worktree, and record the reason and authorized disposition for Phase 8.
@@ -269,13 +284,15 @@ A reported ending is not a safely settled attempt.
 
 ## Retry
 
-- Retry a failed or rejected ticket once, only after it safely settles, in a new worktree made as "Start one ticket" says, in the same lane and with the same agent flags.
+- Retry a failed, stopped or rejected ticket once, only after it safely settles, in a new worktree made as "Start one ticket" says, in the same lane and with the same agent flags.
   An unresolved attempt still reserves its resources and cannot be replaced in that lane.
   Give the retry a unique attempt/evidence folder and retain the failed brief's scope; `retry` mode is for original work, while reattempted verification or refresh keeps its own mode and overrides.
-  Add a short "What went wrong last time" note to the spec.
-- If the worker's outcome was `failed`, start the retry with `orca orchestration worker-start --task <task id> --retry-of <dispatch id> --worktree path:<new worktree> <agent flags> --json`.
-- If the worker reported `succeeded` but you rejected the result, create a new task for the retry and start it without `--retry-of`.
+  Write current attempt/base/output/input metadata and a short "What went wrong last time" note into the fresh immutable on-disk brief, never into the stored spec.
+- If the worker's outcome was `failed` or `stopped`, reuse its existing task and explicitly skip task-create: `orca orchestration worker-start --task <existing task id> --retry-of <dispatch id> --worktree path:<new worktree> <agent flags> --json`.
+  The exact same stored loader reads the new worktree's fresh brief and local base ticket; it does not retain the old attempt's metadata.
+- If the worker reported `succeeded` but you rejected the result, create a new task with that same invariant loader and start it without `--retry-of`.
   Orca accepts `--retry-of` only for a failed or stopped attempt, and refuses a succeeded one with `task_not_startable`.
+- Installed `task-update` cannot modify specs, and `worker-start --task` and `--spec` are alternatives, not a way to override a reused task's spec.
 - After a second failure and safe settlement, split the ticket into smaller tickets or take it yourself, and say so in the run log.
   Register real replacement children through the new-ticket/index process in "New findings", inheriting the parent's phase and prerequisites, never a dependency on the failed parent.
   Record the parent-to-child mapping and each original acceptance requirement's replacement coverage in the parent's Notes.
