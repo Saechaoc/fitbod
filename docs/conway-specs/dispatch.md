@@ -225,6 +225,7 @@ When workers go quiet:
 Match `worker_done` to its attempt and effective brief.
 First get the stop proof in "Settle a ticket" step 2, including the terminal close for a `retained` receipt, so nothing in the worktree changes while you check it.
 While that proof is pending, record the `worker_done` as pending in the run log, acknowledge its batch as usual, and come back to it after later waits.
+While any `worker_done` is pending, wait with `--timeout-ms 120000` instead of 900000, so a finished ticket's lane does not sit idle until another lane sends a message.
 Then check all of this in that worktree:
 
 1. `git -C <worktree> log --format=%H%n%B main..HEAD` shows the ticket's commits, which name the ticket and have no `Co-Authored-By` line.
