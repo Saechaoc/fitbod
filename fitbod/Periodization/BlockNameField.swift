@@ -17,8 +17,8 @@ import SwiftUI
 // namespace once a second consumer (a second BRU primitive) lands.
 
 fileprivate enum BlockNameFieldTokens {
-    static let ink   = Color(red: 10 / 255,  green: 10 / 255,  blue: 10 / 255)
-    static let muted = Color(red: 126 / 255, green: 123 / 255, blue: 114 / 255)
+    static let ink   = Color.bruInk
+    static let muted = Color.bruMuted
     static let labelTracking: CGFloat = 2.2
 }
 

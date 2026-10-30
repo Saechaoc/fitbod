@@ -371,16 +371,17 @@ public struct BlockBuilderView: View {
 // MARK: - Tokens
 
 fileprivate enum NewBlockScreenTokens {
-    static let paper  = Color(red: 240 / 255, green: 237 / 255, blue: 229 / 255)
-    static let ink    = Color(red: 10 / 255,  green: 10 / 255,  blue: 10 / 255)
-    static let muted  = Color(red: 126 / 255, green: 123 / 255, blue: 114 / 255)
-    static let hair   = Color(red: 212 / 255, green: 209 / 255, blue: 202 / 255)
-    static let faint  = Color(red: 232 / 255, green: 229 / 255, blue: 221 / 255)
-    static let signal = Color(red: 255 / 255, green: 77 / 255,  blue: 46 / 255)
+    // Adaptive BRU tokens, so New Block and its sheets turn dark with the app.
+    static let paper  = Color.bruPaper
+    static let ink    = Color.bruInk
+    static let muted  = Color.bruMuted
+    static let hair   = Color.bruHair
+    static let faint  = Color.bruFaint
+    static let signal = Color.bruSignal
 
     // Card surface system (rounded-card restyle 260528-vi2)
-    static let card        = Color(red: 252 / 255, green: 251 / 255, blue: 248 / 255) // #FCFBF8 warm white
-    static let cardStroke  = Color(red: 225 / 255, green: 222 / 255, blue: 214 / 255) // #E1DED6 faint border
+    static let card        = Color.bruPaper
+    static let cardStroke  = Color.bruHair
     static let cardShadow  = Color.black.opacity(0.06)
 
     static let screenMargin: CGFloat    = 20  // uniform L/R margin for ALL main-scroll content
@@ -434,7 +435,7 @@ fileprivate enum NewBlockType {
 
 // MARK: - bruCard modifier
 
-// 260528-vi2: shared card surface modifier — warm white fill, faint border, soft drop shadow.
+// 260528-vi2: shared card surface modifier — paper fill, hairline border, soft drop shadow.
 private extension View {
     func bruCard(radius: CGFloat = NewBlockScreenTokens.cardRadius) -> some View {
         self
@@ -1604,7 +1605,7 @@ fileprivate struct NewBlockPhaseEditorRow: View {
                 Text("Delete")
                     .font(NewBlockType.chrome)
                     .tracking(NewBlockScreenTokens.chipTracking)
-                    .foregroundStyle(.white)
+                    .foregroundStyle(NewBlockScreenTokens.signal.bruLabelOnFill)
                     .frame(width: Swipe.revealWidth)
                     .frame(maxHeight: .infinity)
                     .contentShape(Rectangle())
@@ -1971,7 +1972,7 @@ fileprivate struct NewBlockAddPhaseTypeSheet: View {
 
 // Phase 9 split band — replaces the old NewBlockLinkedRoutinesBand.
 // Always visible (optionality expressed via "None — saves as draft" copy).
-// Uses NewBlockScreenTokens token world (NOT Color.bru* — different token system).
+// Uses NewBlockScreenTokens, New Block's names for the adaptive Color.bru* tokens.
 // ModeChip / DayToggleChip are copy-adapted from BlockOverviewScreen (fileprivate
 // there; do NOT import or reference them — separate token worlds per 09-RESEARCH Pattern 3).
 fileprivate struct NewBlockSplitBand: View {
@@ -2113,7 +2114,7 @@ fileprivate struct NewBlockSplitBand: View {
 }
 
 // Mode chip for the split band — copy-adapted from BlockOverviewScreen.ModeChip
-// using NewBlockScreenTokens instead of Color.bru* (separate token worlds).
+// using NewBlockScreenTokens.
 fileprivate struct NewBlockModeChip: View {
     let label: String
     let selected: Bool
@@ -2306,14 +2307,14 @@ fileprivate struct NewBlockBottomActionBar: View {
                 HStack(spacing: 8) {
                     Image(systemName: "bookmark.fill")
                         .font(.system(size: 12, weight: .semibold))
-                        .foregroundStyle(canCreate ? .white : NewBlockScreenTokens.muted)
+                        .foregroundStyle(canCreate ? NewBlockScreenTokens.paper : NewBlockScreenTokens.muted)
                         // Decorative: VoiceOver would read "Bookmark" before the title.
                         .accessibilityHidden(true)
 
                     Text(displayPrimaryTitle)
                         .font(NewBlockType.cta)
                         .tracking(2.5)
-                        .foregroundStyle(canCreate ? .white : NewBlockScreenTokens.muted)
+                        .foregroundStyle(canCreate ? NewBlockScreenTokens.paper : NewBlockScreenTokens.muted)
                 }
                 .frame(maxWidth: .infinity)
                 .frame(height: 52)
@@ -2508,6 +2509,6 @@ private func sevenWeekPhases() -> [BlockPhaseDraft] {
 #Preview("Progression chart — 7-week") {
     NewBlockProgressionChart(phases: sevenWeekPhases())
         .padding(20)
-        .background(Color(red: 240 / 255, green: 237 / 255, blue: 229 / 255))
+        .background(NewBlockScreenTokens.paper)
 }
 #endif

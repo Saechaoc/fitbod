@@ -618,7 +618,7 @@ fileprivate struct NewBlockStartChoiceSheet: View {
             ProgramScreenTokens.screenBackground.ignoresSafeArea()
 
             VStack(spacing: 0) {
-                // Title (left-aligned, editorial — high contrast on cream)
+                // Title (left-aligned, editorial — high contrast on paper)
                 VStack(alignment: .leading, spacing: 6) {
                     Text("CREATE BLOCK")
                         .font(.bru(.condensed, size: 30))
@@ -726,7 +726,7 @@ fileprivate struct NewBlockPresetPickerSheet: View {
             ProgramScreenTokens.screenBackground.ignoresSafeArea()
 
             VStack(spacing: 0) {
-                // Title (left-aligned, editorial — high contrast on cream)
+                // Title (left-aligned, editorial — high contrast on paper)
                 Text("CHOOSE PRESET")
                     .font(.bru(.condensed, size: 30))
                     .tracking(1.5)
@@ -786,11 +786,12 @@ fileprivate struct NewBlockPresetPickerSheet: View {
 // MARK: - ProgramScreenTokens
 
 fileprivate enum ProgramScreenTokens {
-    static let screenBackground = Color(red: 240 / 255, green: 237 / 255, blue: 229 / 255)
-    static let ink = Color(red: 10 / 255, green: 10 / 255, blue: 10 / 255)
-    static let muted = Color(red: 126 / 255, green: 123 / 255, blue: 114 / 255)
+    // Adaptive BRU tokens, so Program turns dark with the other tabs.
+    static let screenBackground = Color.bruPaper
+    static let ink = Color.bruInk
+    static let muted = Color.bruMuted
     static let blackDividerThickness: CGFloat = 2
-    static let lightRowDividerColor = Color(red: 212 / 255, green: 209 / 255, blue: 202 / 255)
+    static let lightRowDividerColor = Color.bruHair
     static let lightRowDividerThickness: CGFloat = 1
     static let horizontalPagePadding: CGFloat = 16
 
@@ -817,7 +818,7 @@ fileprivate enum ProgramScreenTokens {
 
     static let ctaTopSpacing: CGFloat = 16
     static let ctaHeight: CGFloat = 71
-    static let ctaColor = Color(red: 255 / 255, green: 77 / 255, blue: 46 / 255)
+    static let ctaColor = Color.bruSignal
     static let ctaBottomSpacing: CGFloat = 10
     static let ctaFontSize: CGFloat = 28
 
@@ -1019,7 +1020,7 @@ fileprivate struct NoProgramHero: View {
             Text("+ DEFINE BLOCK ▶︎")
                 .font(.bru(.condensed, size: ProgramScreenTokens.ctaFontSize))
                 .tracking(ProgramScreenTokens.noProgramLetterSpacing)
-                .foregroundStyle(.white)
+                .foregroundStyle(ProgramScreenTokens.ctaColor.bruLabelOnFill)
             .frame(maxWidth: .infinity)
             .frame(minHeight: ProgramScreenTokens.ctaHeight)
             .background(ProgramScreenTokens.ctaColor)
