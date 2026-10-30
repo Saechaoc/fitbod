@@ -30,6 +30,11 @@
 //  VoiceOver: one element per muscle, on its leftmost block, and on
 //       FRONT when both sides draw it. The label is the muscle's name
 //       and the value is its zone. NECK is decorative and hidden.
+//       The blocks that speak form one group per figure, named "Front"
+//       or "Back" (T62): VoiceOver names the figure as it enters it and
+//       reads all of its muscles before the other figure's. The other
+//       blocks sit in a hidden layer outside the group, because SwiftUI
+//       does not keep a hidden block hidden inside a group.
 //
 //  BodySide enum preserved verbatim from Phase 5. Front/Back segmented
 //  control is REMOVED — FatigueSurfaceView (Plan 05.1-05) renders both
@@ -124,12 +129,16 @@ public struct BodySilhouetteView: View {
             }
 
             // Per-region blocks, each placed by the center of its exact
-            // grid rect, with its tap area exactly that rect.
-            ForEach(Array(regions.enumerated()), id: \.offset) { _, region in
-                let r = region.rect(cell: cell)
-                regionBlock(region, size: r.size)
-                    .position(x: r.midX, y: r.midY)
-            }
+            // grid rect, with its tap area exactly that rect. The blocks
+            // that speak for their muscles form one VoiceOver group named
+            // for the figure (T62), so VoiceOver finishes this figure before
+            // the one beside it. The rest sit in their own hidden layer,
+            // because a group does not keep a hidden block hidden.
+            blocks(regions.filter { !speaksForMuscle($0) })
+                .accessibilityHidden(true)
+            blocks(regions.filter { speaksForMuscle($0) })
+                .accessibilityElement(children: .contain)
+                .accessibilityLabel(figureName)
         }
         .frame(width: containerW, height: containerH)
         .overlay(
@@ -138,12 +147,24 @@ public struct BodySilhouetteView: View {
         )
     }
 
-    // MARK: - Region block
+    // MARK: - Region blocks
+
+    /// One layer of blocks, each placed by the center of its exact grid
+    /// rect.
+    private func blocks(_ layer: [GridRegion]) -> some View {
+        ZStack(alignment: .topLeading) {
+            ForEach(Array(layer.enumerated()), id: \.offset) { _, region in
+                let r = region.rect(cell: Self.cell)
+                regionBlock(region, size: r.size)
+                    .position(x: r.midX, y: r.midY)
+            }
+        }
+    }
 
     /// One block: zone fill, 1pt bruInk border and centered label. NECK is
-    /// decorative: it opens nothing and VoiceOver skips it. A muscle block
-    /// opens the muscle's detail screen, and VoiceOver reads only the
-    /// block that speaks for the muscle.
+    /// decorative: it opens nothing. A muscle block opens the muscle's
+    /// detail screen and carries the muscle's VoiceOver label, value, hint
+    /// and button trait; `body` hides the blocks VoiceOver skips.
     @ViewBuilder
     private func regionBlock(_ region: GridRegion, size: CGSize) -> some View {
         let fillColor = bruColor(for: zoneByMuscleSlug[region.slug])
@@ -170,7 +191,6 @@ public struct BodySilhouetteView: View {
             block
                 .contentShape(Rectangle())
                 .onTapGesture {}
-                .accessibilityHidden(true)
         } else {
             block
                 .contentShape(Rectangle())
@@ -180,7 +200,6 @@ public struct BodySilhouetteView: View {
                 .accessibilityValue(accessibilityValue(for: region))
                 .accessibilityHint("Tap to see details.")
                 .accessibilityAddTraits(.isButton)
-                .accessibilityHidden(!speaksForMuscle(region))
         }
     }
 
@@ -193,6 +212,15 @@ public struct BodySilhouetteView: View {
         case .belowMEV:           return .bruFaint
         case .productive:         return .bruInk
         case .nearMRV, .overMRV:  return .bruSignal
+        }
+    }
+
+    /// The figure's VoiceOver name, which VoiceOver speaks as it enters
+    /// the figure: the label shown above the grid, "Front" or "Back".
+    private var figureName: String {
+        switch side {
+        case .front: "Front"
+        case .back: "Back"
         }
     }
 
@@ -211,9 +239,12 @@ public struct BodySilhouetteView: View {
     }
 
     /// VoiceOver reads each muscle once, on its leftmost block, and on
-    /// FRONT when both sides draw the muscle. The muscle's other blocks
-    /// stay tappable but are hidden from VoiceOver.
+    /// FRONT when both sides draw the muscle. It skips the muscle's other
+    /// blocks, which stay tappable, and the decorative NECK.
     private func speaksForMuscle(_ region: GridRegion) -> Bool {
+        if isDecorative(region) {
+            return false
+        }
         if side == .back, MuscleRegionPaths.front.contains(where: { $0.slug == region.slug }) {
             return false
         }

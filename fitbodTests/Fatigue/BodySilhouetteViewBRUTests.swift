@@ -8,8 +8,10 @@
 //  Tests:
 //  1. Size contract — container frame is 140pt × 168pt
 //  2. Palette mapping — bruColor(for:) maps each VolumeZone correctly
-//  3. Accessibility — per-region label reads D-06 verbatim verb sentence
-//  4. Tap routing — onTap fires with the canonical slug
+//  3. Accessibility — a muscle's VoiceOver label is its display name and
+//     its value is the zone's D-06 verbatim verb as a sentence
+//  4. Tap routing — onTap fires with the canonical slug; the decorative
+//     NECK swallows its own taps and never calls onTap
 //
 
 import Foundation
@@ -71,27 +73,29 @@ struct BodySilhouetteViewBRUTests {
         #expect(color == Color.bruBg2)
     }
 
-    // MARK: - 3. Accessibility — D-06 verbatim verb
+    // MARK: - 3. Accessibility — muscle name label, D-06 verbatim verb value
 
-    @Test("Chest region accessibility label uses D-06 verb for .productive zone")
+    @Test("Chest region accessibility value uses D-06 verb for .productive zone")
     func accessibilityChestProductive() {
         let view = makeView(zones: ["chest": .productive],
                             names: ["chest": "Chest"])
-        // The a11y label accessor is private; we verify via the VolumeZone.verb contract
-        // directly (the view constructs: "\(displayName): \(verb).")
+        // The a11y label and value accessors are private; we verify via the
+        // VolumeZone.verb contract directly. The view's label is the muscle's
+        // display name ("Chest") and its value is the verb as a sentence:
+        // "\(verb)."
         let expectedVerb = VolumeZone.productive.verb
-        let expectedLabel = "Chest: \(expectedVerb)."
+        let expectedValue = "\(expectedVerb)."
         // Verify the verb string is the D-06 verbatim value
         #expect(expectedVerb == "Productive range — hold/progress")
-        #expect(expectedLabel == "Chest: Productive range — hold/progress.")
-        // Verify view has the zone wired so it would render this label
+        #expect(expectedValue == "Productive range — hold/progress.")
+        // Verify view has the zone wired so it would render this value
         #expect(view.zoneByMuscleSlug["chest"] == .productive)
     }
 
-    @Test("Accessibility label uses 'Not trained' verb when slug absent from zoneByMuscleSlug")
+    @Test("Accessibility value uses 'Not trained' when slug absent from zoneByMuscleSlug")
     func accessibilityNotTrained() {
         let view = makeView(zones: [:], names: ["chest": "Chest"])
-        // No zone for chest → label should use "Not trained"
+        // No zone for chest → value should read "Not trained."
         #expect(view.zoneByMuscleSlug["chest"] == nil)
         // Confirm verb for belowMEV zone is the D-06 string (not "Not trained")
         #expect(VolumeZone.belowMEV.verb == "Below MEV — add volume")
@@ -125,14 +129,15 @@ struct BodySilhouetteViewBRUTests {
         _ = makeView(zones: [:]) { slug in
             tappedSlugs.append(slug)
         }
-        // Decorative NECK region should be guarded in the view;
-        // the tap guard is "guard !region.slug.hasSuffix("-decorative")"
+        // The view treats a region as decorative when its slug ends in
+        // "-decorative". NECK's block swallows its own taps with an empty
+        // tap gesture, so it never calls onTap, and VoiceOver skips it.
         let frontRegions = MuscleRegionPaths.regions(for: .front)
         let neckRegion = frontRegions.first { $0.slug == "neck-decorative" }
         #expect(neckRegion != nil)
-        // Verify it ends with "-decorative" so the guard would fire
+        // Verify it ends with "-decorative" so the view treats it as decorative
         #expect(neckRegion?.slug.hasSuffix("-decorative") == true)
-        // The view's onTap guard prevents routing; tappedSlugs stays empty
+        // NECK never calls onTap; tappedSlugs stays empty
         #expect(tappedSlugs.isEmpty)
     }
 

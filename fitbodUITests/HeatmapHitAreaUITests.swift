@@ -14,6 +14,10 @@
 //      label is the muscle and its value is the zone. VoiceOver skips the
 //      muscle's other blocks and NECK.
 //
+//  T62: VoiceOver reads one figure at a time, every FRONT muscle before
+//  any BACK muscle, and names each figure, "Front" or "Back", as it
+//  enters it.
+//
 //  XCUI cannot see the blocks VoiceOver skips, so the tests tap blocks
 //  where the grid draws them: 14pt cells in a 140 x 168pt box, 8pt under
 //  its FRONT or BACK label.
@@ -126,6 +130,35 @@ final class HeatmapHitAreaUITests: XCTestCase {
             )
         }
     }
+
+    @MainActor
+    func testVoiceOverReadsFrontBeforeBack() throws {
+        let app = openHeatmap()
+        UITestNavigation.saveScreenshot("T62", "heatmap")
+        let tree = XCTAttachment(string: app.debugDescription)
+        tree.name = "T62-heatmap-accessibility-tree"
+        tree.lifetime = .keepAlways
+        add(tree)
+        let elements = try gridElements(in: app)
+        let order = elements.map(\.description).joined(separator: "\n")
+        let read = XCTAttachment(string: order)
+        read.name = "T62-heatmap-voiceover-order"
+        read.lifetime = .keepAlways
+        add(read)
+
+        let lastFront = try XCTUnwrap(elements.lastIndex { $0.side == .front }, "VoiceOver reads no FRONT muscle")
+        let firstBack = try XCTUnwrap(elements.firstIndex { $0.side == .back }, "VoiceOver reads no BACK muscle")
+        XCTAssertLessThan(
+            lastFront, firstBack,
+            "VoiceOver must read every FRONT muscle before any BACK muscle, but reads:\n\(order)"
+        )
+        for element in elements {
+            XCTAssertEqual(
+                element.figure, element.side.figureName,
+                "VoiceOver must name the \(element.side.rawValue) figure as it enters it, but reads \(element)"
+            )
+        }
+    }
 }
 
 // MARK: - Grid
@@ -173,6 +206,9 @@ private extension HeatmapHitAreaUITests {
     enum Side: String, CaseIterable {
         case front = "FRONT"
         case back = "BACK"
+
+        /// The name VoiceOver speaks as it enters the figure.
+        var figureName: String { rawValue.capitalized }
 
         var blocks: [Block] {
             switch self {
@@ -224,18 +260,22 @@ private extension HeatmapHitAreaUITests {
     struct GridElement: CustomStringConvertible {
         let side: Side
         let box: CGRect
+        /// The label of the figure VoiceOver reads the element in, which it
+        /// speaks as it enters the figure, or nil outside a named figure.
+        let figure: String?
         let label: String
         let value: String
         let frame: CGRect
         let isButton: Bool
 
-        /// `FRONT button "Chest" at (42, 14), 27 x 27`, in points from the
-        /// top-left corner of its box.
+        /// `FRONT button "Chest" at (42, 14), 27 x 27 in figure "Front"`,
+        /// in points from the top-left corner of its box.
         var description: String {
             let x = Self.points(frame.minX - box.minX)
             let y = Self.points(frame.minY - box.minY)
             let kind = isButton ? "button" : "element"
-            return "\(side.rawValue) \(kind) \"\(label)\" at (\(x), \(y)), \(Self.points(frame.width)) x \(Self.points(frame.height))"
+            let place = figure.map { " in figure \"\($0)\"" } ?? " in no named figure"
+            return "\(side.rawValue) \(kind) \"\(label)\" at (\(x), \(y)), \(Self.points(frame.width)) x \(Self.points(frame.height))\(place)"
         }
 
         private static func points(_ value: CGFloat) -> String {
@@ -265,32 +305,42 @@ private extension HeatmapHitAreaUITests {
         return app
     }
 
-    /// The heatmap's accessibility elements: each outermost labeled element
-    /// that starts inside a grid, read in one snapshot of the screen, FRONT
-    /// first and top to bottom. VoiceOver does not read an element's
-    /// children on their own, so the walk stops at each element it keeps.
+    /// The heatmap's accessibility elements, in the order VoiceOver reads
+    /// them: each outermost labeled element that starts inside a grid, from
+    /// one snapshot of the screen walked with every node's children in
+    /// order. VoiceOver does not read an element's children on their own,
+    /// so the walk stops at each element it keeps. A labeled group that
+    /// fits in a grid, give or take its 2pt border, is a figure: VoiceOver
+    /// speaks its label as it enters the group, then reads the group's
+    /// elements one by one.
     @MainActor
     func gridElements(in app: XCUIApplication) throws -> [GridElement] {
         let boxes = Side.allCases.map { (side: $0, box: box($0, in: app)) }
         var found: [GridElement] = []
-        var pending = [try app.snapshot()]
-        while let node = pending.popLast() {
+        func visit(_ node: XCUIElementSnapshot, figure: String?) {
+            if !node.label.isEmpty, node.elementType == .other, !node.children.isEmpty,
+               boxes.contains(where: { $0.box.insetBy(dx: -2, dy: -2).contains(node.frame) }) {
+                node.children.forEach { visit($0, figure: node.label) }
+                return
+            }
             guard !node.label.isEmpty,
                   let grid = boxes.first(where: { $0.box.insetBy(dx: -0.5, dy: -0.5).contains(node.frame.origin) })
             else {
-                pending.append(contentsOf: node.children)
-                continue
+                node.children.forEach { visit($0, figure: figure) }
+                return
             }
             found.append(GridElement(
                 side: grid.side,
                 box: grid.box,
+                figure: figure,
                 label: node.label,
                 value: node.value as? String ?? "",
                 frame: node.frame,
                 isButton: node.elementType == .button
             ))
         }
-        return found.sorted { ($0.side == .front ? 0 : 1, $0.frame.minY, $0.frame.minX) < ($1.side == .front ? 0 : 1, $1.frame.minY, $1.frame.minX) }
+        visit(try app.snapshot(), figure: nil)
+        return found
     }
 
     /// Every way the heatmap's buttons miss their blocks: outside their box,
