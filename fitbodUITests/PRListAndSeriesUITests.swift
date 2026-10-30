@@ -161,6 +161,32 @@ final class PRListAndSeriesUITests: XCTestCase {
         UITestNavigation.saveScreenshot("T13", "prs-1", textSize: .ax3)
     }
 
+    /// T57: at AX3 the PR list's intent toggle keeps every label whole. A
+    /// label that breaks mid-word, such as STRENG/TH, takes two lines, so
+    /// its segment grows taller than ALL's one-line segment.
+    @MainActor
+    func testIntentToggleLabelsStayWholeAtAX3() throws {
+        let app = UITestNavigation.launch(UITestNavigation.progressHistory, textSize: .ax3)
+        UITestNavigation.selectTab("Progress", in: app)
+        let records = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Personal Records")).firstMatch
+        UITestNavigation.reveal(records, in: app)
+        records.tap()
+
+        let segments = ["STRENGTH", "HYPERTROPHY", "ALL"].map { app.buttons[$0] }
+        XCTAssertTrue(segments[2].waitForExistence(timeout: 10), "The PR list's intent toggle never appeared")
+        UITestNavigation.saveScreenshot("T57", "prs-toggle", textSize: .ax3)
+        let oneLine = segments[2].frame.height
+        for segment in segments {
+            UITestNavigation.assertTapTarget(segment)
+            UITestNavigation.assertHeight(segment, atMost: oneLine + 1)
+        }
+        for (index, segment) in segments.enumerated() {
+            for other in segments[(index + 1)...] {
+                UITestNavigation.assertNoOverlap(segment, other)
+            }
+        }
+    }
+
     // MARK: - Chart readout
 
     /// The legend's keys under the chart, left to right, uppercased.

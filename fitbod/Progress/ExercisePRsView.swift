@@ -14,7 +14,7 @@
 //  ## Layout (Phase 6.1 BRU reskin — 06.1-03)
 //
 //  BRUHeaderBar(left: back, center: nav title, right: "ALL TIME")
-//  3-segment inverted-active intent toggle bar
+//  3-segment inverted-active intent toggle bar (stacked at accessibility sizes)
 //  BRUDivider(.ink)
 //  ScrollView → LazyVStack of 4 sections (Weight / Reps / Volume / e1RM)
 //
@@ -26,8 +26,11 @@
 //  distinct set (same exercise, weight and reps), dated when it was
 //  first logged like PRDetector's tie rule, ranked by the bucket's
 //  measure across exercises, at most three rows per exercise. Each row
-//  names its exercise. Acceptable at v1 single-user scale per CONTEXT
-//  D-12 ("computed on-demand from SetEntry history; NOT denormalized").
+//  names its exercise. Only the working sets PR detection counts
+//  (`PRDetector.isWorkingSet`) rank, so drop, failure and rest-pause sets
+//  and sets without weight never show. Acceptable at v1 single-user scale
+//  per CONTEXT D-12 ("computed on-demand from SetEntry history; NOT
+//  denormalized").
 //
 //  Every section has the same buckets and a set shows once per section,
 //  so bucket and row ids include the kind: repeated ids leave the later
@@ -93,6 +96,7 @@ public struct ExercisePRsView: View {
     public let scope: ExercisePRsViewScope
     @State private var intentFilter: ExercisePRsIntentFilter = .all
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     public init(scope: ExercisePRsViewScope) {
         self.scope = scope
@@ -121,7 +125,14 @@ public struct ExercisePRsView: View {
     // MARK: - Intent Toggle
 
     private var intentToggle: some View {
-        HStack(spacing: 0) {
+        let isAccessibilitySize = dynamicTypeSize.isAccessibilitySize
+        // At accessibility sizes the segments stack, as in TodayStatStrip, so
+        // each label gets the full width and never breaks mid-word.
+        let segments = isAccessibilitySize
+            ? AnyLayout(VStackLayout(spacing: 0))
+            : AnyLayout(HStackLayout(spacing: 0))
+
+        return segments {
             ForEach(Array(ExercisePRsIntentFilter.allCases.enumerated()), id: \.element) { index, filter in
                 let isSelected = intentFilter == filter
                 let isLast = index == ExercisePRsIntentFilter.allCases.count - 1
@@ -138,14 +149,17 @@ public struct ExercisePRsView: View {
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 10)
                         .background(isSelected ? Color.bruInk : Color.clear)
+                        // The whole segment is the tap target, not just its
+                        // text: a plain button ignores the clear background.
+                        .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
 
                 if !isLast {
                     Rectangle()
                         .fill(Color.bruInk)
-                        .frame(width: 1)
-                        .frame(maxHeight: .infinity)
+                        .frame(width: isAccessibilitySize ? nil : 1,
+                               height: isAccessibilitySize ? 1 : nil)
                 }
             }
         }
@@ -178,7 +192,9 @@ private struct PRsHost: View {
         self.intentFilter = intentFilter
         // Broad predicate + Swift post-filter: a multi-level optional chain
         // (entry.sessionExercise?.exercise?.id) inside #Predicate crashes
-        // SwiftData at fetch time ("Unsupported function expression").
+        // SwiftData at fetch time ("Unsupported function expression"). The
+        // scope and the working-set rule (PRDetector.isWorkingSet, which
+        // reads the computed setType) are applied in Swift.
         _sets = Query(
             filter: #Predicate<SetEntry> { entry in
                 entry.isComplete && !entry.isWarmup
@@ -188,12 +204,15 @@ private struct PRsHost: View {
         )
     }
 
+    /// The scope's working sets, the only sets PR detection counts. With
+    /// none, the list shows its empty state rather than empty sections.
     private var scopedSets: [SetEntry] {
+        let working = sets.filter { PRDetector.isWorkingSet($0) }
         switch scope {
         case .forExercise(let exerciseID):
-            return sets.filter { $0.sessionExercise?.exercise?.id == exerciseID }
+            return working.filter { $0.sessionExercise?.exercise?.id == exerciseID }
         case .allExercises:
-            return sets
+            return working
         }
     }
 
@@ -419,18 +438,19 @@ private struct PRRowItem: Identifiable {
 
 // MARK: - Bucket ranking
 
-/// The rows one bucket lists. A distinct set is one exercise, weight and
+/// The rows one bucket lists. Only working sets rank, as in PR detection
+/// (`PRDetector.isWorkingSet`). A distinct set is one exercise, weight and
 /// reps, kept from when it was first logged (PRDetector's tie rule). The
 /// sets are ranked by the bucket's measure across exercises, with at most
 /// three rows per exercise. Detecting PRs stays PRDetector's job.
 enum PRBucketRanking {
     static let rowsPerExercise = 3
 
-    /// - Parameter sets: one bucket's completed work sets, already scoped
-    ///   and filtered by intent.
+    /// - Parameter sets: one bucket's completed sets, already scoped and
+    ///   filtered by intent. Sets PR detection never counts are skipped.
     static func rows(kind: PRKind, sets: [SetEntry]) -> [SetEntry] {
         var firstLogged: [SetKey: SetEntry] = [:]
-        for entry in sets {
+        for entry in sets where PRDetector.isWorkingSet(entry) {
             let key = SetKey(exercise: exerciseKey(entry), weight: entry.weight, reps: entry.reps)
             if let kept = firstLogged[key], kept.completedAt <= entry.completedAt { continue }
             firstLogged[key] = entry

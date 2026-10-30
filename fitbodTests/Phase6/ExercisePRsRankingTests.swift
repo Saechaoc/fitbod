@@ -5,7 +5,8 @@
 //  T13, review item 31 — the PR list's bucket rows (PRBucketRanking):
 //  a distinct set is one exercise, weight and reps, kept from when it was
 //  first logged; rows are ranked by the bucket's measure across exercises,
-//  at most three per exercise.
+//  at most three per exercise. T57: only the working sets PR detection
+//  counts (PRDetector.isWorkingSet) rank.
 //
 
 import Foundation
@@ -108,5 +109,21 @@ struct ExercisePRsRankingTests {
         let rows = PRBucketRanking.rows(kind: .e1RM, sets: sets)
 
         #expect(describe(rows) == ["Bench 85.0x8", "Bench 80.0x10"])
+    }
+
+    @Test("ranksWorkingSetsOnly — a heavier drop set and a set without weight never rank, as PR detection never counts them")
+    func ranksWorkingSetsOnly() throws {
+        let ctx = ModelContext(try InMemoryContainer.makeCurrent())
+        let sets = log([
+            ("Bench", [(0, 100, 5, 8), (1, 95, 6, 8), (2, 110, 5, 9), (3, 0, 8, nil)]),
+        ], in: ctx)
+        // The 110 x 5 is a drop set and the 0 x 8 has no weight, so
+        // PRDetector.isWorkingSet rejects both.
+        sets[2].setTypeRaw = SetType.drop.rawValue
+
+        #expect(describe(PRBucketRanking.rows(kind: .weight, sets: sets)) == ["Bench 100.0x5", "Bench 95.0x6"])
+        #expect(describe(PRBucketRanking.rows(kind: .reps, sets: sets)) == ["Bench 95.0x6", "Bench 100.0x5"])
+        #expect(describe(PRBucketRanking.rows(kind: .volume, sets: sets)) == ["Bench 95.0x6", "Bench 100.0x5"])
+        #expect(describe(PRBucketRanking.rows(kind: .e1RM, sets: sets)) == ["Bench 100.0x5", "Bench 95.0x6"])
     }
 }
