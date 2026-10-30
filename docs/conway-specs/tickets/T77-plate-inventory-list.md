@@ -6,7 +6,7 @@ items: []
 depends_on: []
 size: M
 sim: both
-owns: [fitbod/Settings/PlateInventoryEditor.swift, new:fitbodUITests/PlateInventoryDeleteUITests.swift]
+owns: [fitbod/Settings/PlateInventoryEditor.swift, new:fitbodUITests/PlateInventorySwipeUITests.swift]
 ---
 
 # T77: Plate Inventory's swipe-to-delete works on iOS 26 and closes like other rows
@@ -44,7 +44,7 @@ Ask before you edit anything else.
 
 ## Repro first
 
-In `fitbodUITests/PlateInventoryDeleteUITests.swift`, on the small phone:
+In `fitbodUITests/PlateInventorySwipeUITests.swift`, on the small phone:
 
 - Swipe two rows, and assert that only one Delete shows.
 - Tap the PLATES AVAILABLE head, and assert that no Delete shows.
