@@ -593,13 +593,12 @@ public struct WeeklyRecapSheet: View {
 
     @MainActor
     private func musclesHitLastWeek(minSets: Int) -> [MuscleRow] {
-        allMuscles.compactMap { muscle in
-            let count = FatigueModel.frequencyHits(
-                muscleSlug: muscle.slug,
-                weekStart: priorWeekStart,
-                minContribution: Double(minSets),
-                in: ctx
-            )
+        // One read of the week for every muscle; each count equals
+        // `FatigueModel.frequencyHits` for that muscle.
+        let contributions = FatigueModel.contributionsPerSession(weekStart: priorWeekStart, in: ctx)
+        let minContribution = Double(minSets)
+        return allMuscles.compactMap { muscle in
+            let count = (contributions[muscle.slug] ?? [:]).values.filter { $0 >= minContribution }.count
             guard count > 0 else { return nil }
             return MuscleRow(slug: muscle.slug, displayName: muscle.displayName, count: count)
         }
@@ -608,13 +607,10 @@ public struct WeeklyRecapSheet: View {
 
     @MainActor
     private func musclesUnderTrainedLastWeek() -> [UnderTrainedRow] {
-        allMuscles.compactMap { muscle in
+        let volumes = FatigueModel.weeklyVolumes(weekStart: priorWeekStart, in: ctx)
+        return allMuscles.compactMap { muscle in
             guard let target = allTargets.first(where: { $0.muscle?.slug == muscle.slug }) else { return nil }
-            let total = FatigueModel.weeklyVolume(
-                muscleSlug: muscle.slug,
-                weekStart: priorWeekStart,
-                in: ctx
-            )
+            let total = volumes[muscle.slug] ?? WeightedSetTotal(directSets: 0, indirectSets: 0)
             let rounded = total.totalSetsRounded
             guard rounded > 0 && rounded < target.mev else { return nil }
             return UnderTrainedRow(
@@ -648,76 +644,30 @@ public struct WeeklyRecapSheet: View {
 
     @MainActor
     private func tonnageInRange(from start: Date, to end: Date) -> Double {
-        let workingKinds: Set<String> = ["working", "drop", "failure", "rest_pause"]
-        let descriptor = FetchDescriptor<SetEntry>(
-            predicate: #Predicate<SetEntry> { e in
-                e.isComplete == true && e.isWarmup == false
-            }
-        )
-        let all = (try? ctx.fetch(descriptor)) ?? []
-        return all
-            .filter { entry in
-                guard workingKinds.contains(entry.setTypeRaw) else { return false }
-                guard let started = entry.sessionExercise?.session?.startedAt else { return false }
-                return started >= start && started < end
-            }
+        FatigueModel.completedWorkingSets(startedFrom: start, before: end, in: ctx)
             .reduce(0.0) { $0 + ($1.weight * Double($1.reps)) }
     }
 
     @MainActor
     private func weeklyTotalSetsCount() -> Int {
-        let start = priorWeekStart
-        let end   = weekStart
-        let workingKinds: Set<String> = ["working", "drop", "failure", "rest_pause"]
-        let descriptor = FetchDescriptor<SetEntry>(
-            predicate: #Predicate<SetEntry> { e in
-                e.isComplete == true && e.isWarmup == false
-            }
-        )
-        let all = (try? ctx.fetch(descriptor)) ?? []
-        return all.filter { entry in
-            guard workingKinds.contains(entry.setTypeRaw) else { return false }
-            guard let started = entry.sessionExercise?.session?.startedAt else { return false }
-            return started >= start && started < end
-        }.count
+        FatigueModel.completedWorkingSets(startedFrom: priorWeekStart, before: weekStart, in: ctx).count
     }
 
     @MainActor
     private func weeklySetsDelta() -> Int {
         let thisWeekSets = weeklyTotalSetsCount()
         let prior = priorWeekStart.addingTimeInterval(-7 * 86_400)
-        let workingKinds: Set<String> = ["working", "drop", "failure", "rest_pause"]
-        let descriptor = FetchDescriptor<SetEntry>(
-            predicate: #Predicate<SetEntry> { e in
-                e.isComplete == true && e.isWarmup == false
-            }
-        )
-        let all = (try? ctx.fetch(descriptor)) ?? []
-        let priorSets = all.filter { entry in
-            guard workingKinds.contains(entry.setTypeRaw) else { return false }
-            guard let started = entry.sessionExercise?.session?.startedAt else { return false }
-            return started >= prior && started < priorWeekStart
-        }.count
+        let priorSets = FatigueModel.completedWorkingSets(startedFrom: prior, before: priorWeekStart, in: ctx).count
         return thisWeekSets - priorSets
     }
 
     @MainActor
     private func weeklyAvgRPE() -> Double {
-        let start = priorWeekStart
-        let end   = weekStart
-        let workingKinds: Set<String> = ["working", "drop", "failure", "rest_pause"]
-        let descriptor = FetchDescriptor<SetEntry>(
-            predicate: #Predicate<SetEntry> { e in
-                e.isComplete == true && e.isWarmup == false
+        let rpeEntries = FatigueModel.completedWorkingSets(startedFrom: priorWeekStart, before: weekStart, in: ctx)
+            .filter { entry in
+                guard let rpe = entry.rpe, rpe > 0 else { return false }
+                return true
             }
-        )
-        let all = (try? ctx.fetch(descriptor)) ?? []
-        let rpeEntries = all.filter { entry in
-            guard workingKinds.contains(entry.setTypeRaw) else { return false }
-            guard let rpe = entry.rpe, rpe > 0 else { return false }
-            guard let started = entry.sessionExercise?.session?.startedAt else { return false }
-            return started >= start && started < end
-        }
         guard !rpeEntries.isEmpty else { return 0 }
         let total = rpeEntries.reduce(0.0) { $0 + ($1.rpe ?? 0) }
         return total / Double(rpeEntries.count)
@@ -728,24 +678,9 @@ public struct WeeklyRecapSheet: View {
         let start     = priorWeekStart
         let end       = weekStart
         let priorStart = priorWeekStart.addingTimeInterval(-7 * 86_400)
-        let workingKinds: Set<String> = ["working", "drop", "failure", "rest_pause"]
 
-        let lastWeekDescriptor = FetchDescriptor<SetEntry>(
-            predicate: #Predicate<SetEntry> { entry in
-                entry.isComplete == true && entry.isWarmup == false
-            }
-        )
-        let allCompleted = (try? ctx.fetch(lastWeekDescriptor)) ?? []
-        let lastWeekEntries = allCompleted.filter { entry in
-            guard workingKinds.contains(entry.setTypeRaw) else { return false }
-            guard let started = entry.sessionExercise?.session?.startedAt else { return false }
-            return started >= start && started < end
-        }
-        let priorWeekEntries = allCompleted.filter { entry in
-            guard workingKinds.contains(entry.setTypeRaw) else { return false }
-            guard let started = entry.sessionExercise?.session?.startedAt else { return false }
-            return started >= priorStart && started < start
-        }
+        let lastWeekEntries = FatigueModel.completedWorkingSets(startedFrom: start, before: end, in: ctx)
+        let priorWeekEntries = FatigueModel.completedWorkingSets(startedFrom: priorStart, before: start, in: ctx)
 
         // Group by exercise, count working sets
         var setCountByExercise: [UUID: (exercise: Exercise, count: Int)] = [:]

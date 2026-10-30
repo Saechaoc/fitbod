@@ -69,12 +69,41 @@ public struct FatigueSurfaceView: View {
         return Date.now.mondayAtMidnightForToday(weekStartsMonday: weekStartsMonday)
     }
 
+    /// This week's and last week's volume for every muscle. `body` reads
+    /// them once and hands them to every section: each read fetches a week
+    /// of sets, and reading per muscle in each section repeated that about
+    /// two hundred times per render.
+    private struct WeekVolumes {
+        let thisWeek: [String: WeightedSetTotal]
+        let lastWeek: [String: WeightedSetTotal]
+
+        /// Equals `FatigueModel.weeklyVolume` for the muscle.
+        func total(_ slug: String) -> WeightedSetTotal {
+            thisWeek[slug] ?? WeightedSetTotal(directSets: 0, indirectSets: 0)
+        }
+
+        /// Equals `FatigueModel.weekOverWeekDelta` for the muscle.
+        func delta(_ slug: String) -> WeekOverWeekDelta {
+            WeekOverWeekDelta(
+                currentWeekTotal: total(slug).totalSets,
+                previousWeekTotal: (lastWeek[slug] ?? WeightedSetTotal(directSets: 0, indirectSets: 0)).totalSets
+            )
+        }
+    }
+
+    private func readWeekVolumes() -> WeekVolumes {
+        let start = weekStart
+        return WeekVolumes(
+            thisWeek: FatigueModel.weeklyVolumes(weekStart: start, in: ctx),
+            lastWeek: FatigueModel.weeklyVolumes(weekStart: start.addingTimeInterval(-7 * 86_400), in: ctx)
+        )
+    }
+
     /// Muscles with non-zero weekly volume OR a non-zero MEV target.
     /// Sorted alphabetically by displayName for stable ordering.
-    private var visibleMuscles: [MuscleGroup] {
+    private func visibleMuscles(_ volumes: WeekVolumes) -> [MuscleGroup] {
         let withVolume = allMuscles.filter { muscle in
-            let total = FatigueModel.weeklyVolume(muscleSlug: muscle.slug, weekStart: weekStart, in: ctx)
-            if total.totalSetsRounded >= 1 { return true }
+            if volumes.total(muscle.slug).totalSetsRounded >= 1 { return true }
             if let row = allTargets.first(where: { $0.muscle?.slug == muscle.slug }), row.mev > 0 {
                 return true
             }
@@ -83,25 +112,19 @@ public struct FatigueSurfaceView: View {
         return withVolume.sorted { $0.displayName < $1.displayName }
     }
 
-    /// True when there is any volume data or configured MEV target to display.
-    private var hasVolumeData: Bool {
-        !visibleMuscles.isEmpty
-    }
-
     /// Sum of `totalSetsRounded` across all visible muscles — displayed in the summary slab.
-    private var weeklyTotalRounded: Int {
-        visibleMuscles.reduce(0) { acc, muscle in
-            acc + FatigueModel.weeklyVolume(muscleSlug: muscle.slug, weekStart: weekStart, in: ctx).totalSetsRounded
+    private func weeklyTotalRounded(_ muscles: [MuscleGroup], _ volumes: WeekVolumes) -> Int {
+        muscles.reduce(0) { acc, muscle in
+            acc + volumes.total(muscle.slug).totalSetsRounded
         }
     }
 
     /// Net delta copy per bru-screens/volume.jsx line 32: `+N`, `-N`, or `±0`.
     /// Rounded to whole sets like `WeekOverWeekDelta.deltaCopy`; the
     /// stimulus-weighted sum is fractional and read "+29.0" unrounded.
-    private var deltaCopy: String {
-        let sum = visibleMuscles.reduce(0.0) { acc, muscle in
-            let d = FatigueModel.weekOverWeekDelta(muscleSlug: muscle.slug, weekStart: weekStart, in: ctx)
-            return acc + d.delta
+    private func deltaCopy(_ muscles: [MuscleGroup], _ volumes: WeekVolumes) -> String {
+        let sum = muscles.reduce(0.0) { acc, muscle in
+            acc + volumes.delta(muscle.slug).delta
         }
         let net = Int(sum.rounded())
         if net > 0 { return "+\(net)" }
@@ -119,11 +142,11 @@ public struct FatigueSurfaceView: View {
 
     /// Zone map for BodySilhouetteView — all muscles, not just visibleMuscles,
     /// so the heatmap can show context for untrained muscles.
-    private var zoneMap: [String: VolumeZone] {
+    private func zoneMap(_ volumes: WeekVolumes) -> [String: VolumeZone] {
         var result: [String: VolumeZone] = [:]
         for muscle in allMuscles {
             let target = allTargets.first { $0.muscle?.slug == muscle.slug } ?? transientTarget(for: muscle)
-            let total = FatigueModel.weeklyVolume(muscleSlug: muscle.slug, weekStart: weekStart, in: ctx)
+            let total = volumes.total(muscle.slug)
             let zone = FatigueModel.volumeZone(
                 currentSets: total.totalSetsRounded,
                 mev: target.mev,
@@ -143,13 +166,15 @@ public struct FatigueSurfaceView: View {
     // MARK: - Body
 
     public var body: some View {
+        let volumes = readWeekVolumes()
+        let muscles = visibleMuscles(volumes)
         VStack(spacing: 0) {
-            summarySlab
-            if hasVolumeData {
+            summarySlab(muscles, volumes)
+            if !muscles.isEmpty {
                 // The legend explains the bars, so it shows only with them.
                 legendStrip
-                volumeSection
-                heatmapSection
+                volumeSection(muscles, volumes)
+                heatmapSection(volumes)
             } else {
                 emptyState
             }
@@ -159,7 +184,7 @@ public struct FatigueSurfaceView: View {
     // MARK: - (1) Summary ink slab
 
     /// Full-bleed bruInk slab per bru-screens/volume.jsx lines 22–35.
-    private var summarySlab: some View {
+    private func summarySlab(_ muscles: [MuscleGroup], _ volumes: WeekVolumes) -> some View {
         HStack(spacing: 0) {
             VStack(alignment: .leading, spacing: 2) {
                 // The reference says "7 DAYS", but the total runs from the
@@ -169,7 +194,7 @@ public struct FatigueSurfaceView: View {
                     .tracking(1.5)
                     .textCase(.uppercase)
                     .foregroundStyle(Color.bruPaper.opacity(0.6))
-                BRUDisplay("\(weeklyTotalRounded)", size: .hero, color: .bruPaper)
+                BRUDisplay("\(weeklyTotalRounded(muscles, volumes))", size: .hero, color: .bruPaper)
             }
             Spacer()
             VStack(alignment: .trailing, spacing: 2) {
@@ -178,7 +203,7 @@ public struct FatigueSurfaceView: View {
                     .tracking(1.5)
                     .textCase(.uppercase)
                     .foregroundStyle(Color.bruPaper.opacity(0.6))
-                BRUDisplay(deltaCopy, size: .large, color: .bruSignal)
+                BRUDisplay(deltaCopy(muscles, volumes), size: .large, color: .bruSignal)
                 Text("STIMULUS-WEIGHTED")
                     .font(BRUFont.labelMicro)
                     .tracking(1.0)
@@ -247,8 +272,7 @@ public struct FatigueSurfaceView: View {
 
     // MARK: - (3) Volume section
 
-    private var volumeSection: some View {
-        let muscles = visibleMuscles
+    private func volumeSection(_ muscles: [MuscleGroup], _ volumes: WeekVolumes) -> some View {
         // One axis for every bar so the rows compare: the reference's 25
         // sets, or the largest MRV on screen if a target runs past it.
         let axisSets = muscles
@@ -259,21 +283,11 @@ public struct FatigueSurfaceView: View {
             LazyVStack(spacing: 0) {
                 ForEach(muscles, id: \.persistentModelID) { muscle in
                     let target = targetFor(muscle)
-                    let total = FatigueModel.weeklyVolume(
-                        muscleSlug: muscle.slug,
-                        weekStart: weekStart,
-                        in: ctx
-                    )
-                    let delta = FatigueModel.weekOverWeekDelta(
-                        muscleSlug: muscle.slug,
-                        weekStart: weekStart,
-                        in: ctx
-                    )
                     MuscleVolumeBar(
                         muscle: muscle,
                         target: target,
-                        total: total,
-                        delta: delta,
+                        total: volumes.total(muscle.slug),
+                        delta: volumes.delta(muscle.slug),
                         isAdvisoryActive: isAdvisoryActive,
                         axisSets: axisSets,
                         onTap: { tappedMuscle in
@@ -287,8 +301,10 @@ public struct FatigueSurfaceView: View {
 
     // MARK: - (4) Heatmap section
 
-    private var heatmapSection: some View {
-        VStack(alignment: .leading, spacing: 0) {
+    private func heatmapSection(_ volumes: WeekVolumes) -> some View {
+        let zones = zoneMap(volumes)
+        let names = nameMap
+        return VStack(alignment: .leading, spacing: 0) {
             BRUSectionHead("Muscle Heatmap", right: weekLabel)
             // Each figure says its own name, "Front" or "Back", as VoiceOver
             // enters it, so VoiceOver skips the labels above them (T81).
@@ -302,8 +318,8 @@ public struct FatigueSurfaceView: View {
                         .accessibilityHidden(true)
                     BodySilhouetteView(
                         side: .front,
-                        zoneByMuscleSlug: zoneMap,
-                        muscleDisplayNames: nameMap,
+                        zoneByMuscleSlug: zones,
+                        muscleDisplayNames: names,
                         onTap: { slug in
                             navigationPath.append(MuscleSlugRoute.detail(slug))
                         }
@@ -318,8 +334,8 @@ public struct FatigueSurfaceView: View {
                         .accessibilityHidden(true)
                     BodySilhouetteView(
                         side: .back,
-                        zoneByMuscleSlug: zoneMap,
-                        muscleDisplayNames: nameMap,
+                        zoneByMuscleSlug: zones,
+                        muscleDisplayNames: names,
                         onTap: { slug in
                             navigationPath.append(MuscleSlugRoute.detail(slug))
                         }

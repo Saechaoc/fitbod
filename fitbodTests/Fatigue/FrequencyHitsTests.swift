@@ -200,4 +200,34 @@ struct FrequencyHitsTests {
         let hits = FatigueModel.frequencyHits(muscleSlug: "chest", weekStart: monday, in: ctx)
         #expect(hits == 0)
     }
+
+    // MARK: - 6. Every muscle from one read
+
+    @Test("contributionsPerSession matches contributionPerSession for every muscle")
+    func batchedContributionsMatchPerMuscle() throws {
+        let ctx = try FatigueTestFixtures.makeContext()
+        let muscles = try seedMuscles(ctx)
+        let ex = try makeBenchPress(in: ctx, muscles: muscles)
+        let monday = mondayOfThisWeek()
+        try makeSession(in: ctx, startedAt: monday, exercise: ex, sets: [
+            (100, 5, false, true, "working"),
+            (90, 8, false, true, "drop"),
+            (60, 5, true, true, "warmup"),
+            (100, 5, false, false, "working"),
+        ])
+        try makeSession(in: ctx, startedAt: monday.addingTimeInterval(2 * 86_400), exercise: ex, sets: [
+            (100, 5, false, true, "working"),
+        ])
+        try makeSession(in: ctx, startedAt: monday.addingTimeInterval(-7 * 86_400), exercise: ex, sets: [
+            (100, 5, false, true, "working"),
+        ])
+
+        let batched = FatigueModel.contributionsPerSession(weekStart: monday, in: ctx)
+        for slug in ["chest", "shoulders", "triceps", "biceps"] {
+            let single = FatigueModel.contributionPerSession(muscleSlug: slug, weekStart: monday, in: ctx)
+            #expect((batched[slug] ?? [:]) == single)
+        }
+        #expect(batched["chest"]?.count == 2)
+        #expect(batched["biceps"] == nil)
+    }
 }

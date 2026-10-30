@@ -16,11 +16,11 @@
 //  fatigue math in body.
 //
 //  Why "pure" matters: D-04 explicitly forbids a denormalized snapshot
-//  entity. The volume math runs on demand inside views — at 1-year scale
-//  (~4500 SetEntry rows × 17 muscles per render = ~76K traversals) this
-//  is well under the Pitfall #6 perf ceiling. If profiling later shows
-//  regression, the migration path is a `@State` memo or a snapshot
-//  entity — neither needed for v1.
+//  entity. The volume math runs on demand inside views, so it must stay
+//  proportional to one week of training, not to all history:
+//  `completedWorkingSets` reads only the window's workouts, and
+//  `weeklyVolumes` totals every muscle from one read so a screen showing
+//  all muscles does not repeat the read per muscle.
 //
 //  Predicate semantics live behind Pitfall #1 local-let captures so
 //  SwiftData's related-entity-ID compare footguns don't bite.
@@ -124,6 +124,44 @@ public enum FatigueModel {
         return WeightedSetTotal(directSets: directSum, indirectSets: indirectSum)
     }
 
+    // MARK: - weeklyVolumes
+
+    /// `weeklyVolume` for every muscle at once, keyed by muscle slug, from
+    /// one read of the week's sets. A muscle with no stimulus this week has
+    /// no key; read it as zero. Each total matches
+    /// `weeklyVolume(muscleSlug:weekStart:in:)`, which sums the same sets
+    /// in the same order.
+    @MainActor
+    public static func weeklyVolumes(
+        weekStart: Date,
+        in context: ModelContext
+    ) -> [String: WeightedSetTotal] {
+        let entries = fetchWorkingSets(weekStart: weekStart, in: context)
+
+        var direct: [String: Double] = [:]
+        var indirect: [String: Double] = [:]
+        for entry in entries {
+            guard let stimuli = entry.sessionExercise?.exercise?.muscleStimuli else { continue }
+            for stimulus in stimuli {
+                guard let slug = stimulus.muscle?.slug else { continue }
+                switch stimulus.role {
+                case "primary":   direct[slug, default: 0.0] += stimulus.weight
+                case "secondary": indirect[slug, default: 0.0] += stimulus.weight
+                default:          break
+                }
+            }
+        }
+
+        var totals: [String: WeightedSetTotal] = [:]
+        for slug in Set(direct.keys).union(indirect.keys) {
+            totals[slug] = WeightedSetTotal(
+                directSets: direct[slug] ?? 0.0,
+                indirectSets: indirect[slug] ?? 0.0
+            )
+        }
+        return totals
+    }
+
     // MARK: - contributionPerSession
 
     /// Per-session stimulus-weighted contribution to a single muscle,
@@ -156,6 +194,31 @@ public enum FatigueModel {
             }
         }
         return perSession
+    }
+
+    /// `contributionPerSession` for every muscle at once, keyed by muscle
+    /// slug, from one read of the week's sets. Each muscle's dictionary is
+    /// identical to `contributionPerSession(muscleSlug:weekStart:in:)`.
+    @MainActor
+    public static func contributionsPerSession(
+        weekStart: Date,
+        in context: ModelContext
+    ) -> [String: [UUID: Double]] {
+        let entries = fetchWorkingSets(weekStart: weekStart, in: context)
+
+        var perMuscle: [String: [UUID: Double]] = [:]
+        for entry in entries {
+            guard
+                let sessionID = entry.sessionExercise?.session?.id,
+                let stimuli = entry.sessionExercise?.exercise?.muscleStimuli
+            else { continue }
+            for stimulus in stimuli {
+                guard let slug = stimulus.muscle?.slug else { continue }
+                // Both primary and secondary contributions count for D-03.
+                perMuscle[slug, default: [:]][sessionID, default: 0.0] += stimulus.weight
+            }
+        }
+        return perMuscle
     }
 
     // MARK: - frequencyHits
@@ -214,37 +277,81 @@ public enum FatigueModel {
 
     // MARK: - Internal helpers
 
-    /// Shared SetEntry fetch for weekly aggregation. Pitfall #1
-    /// local-let captures live here. Pitfall #3: `isWarmup == false`
-    /// AND `workingKinds.contains(setTypeRaw)` — both guards in effect
-    /// to defend against mis-categorized rows.
-    ///
-    /// Implementation note: the #Predicate body is intentionally
-    /// minimal — only `isComplete` and `isWarmup` gates live there.
-    /// The multi-hop `sessionExercise?.session?.startedAt` traversal
-    /// AND the `workingKinds.contains(setTypeRaw)` array-contains
-    /// gate are both Swift post-filters because Swift 6's type
-    /// checker times out trying to compose all of them inside the
-    /// macro body, and Pitfall #1 already advises against multi-hop
-    /// optional chains inside #Predicate.
+    /// The working sets `weeklyVolume` sums for the week starting at
+    /// `weekStart`.
     @MainActor
     private static func fetchWorkingSets(
         weekStart: Date,
         in context: ModelContext
     ) -> [SetEntry] {
-        let weekEnd = weekStart.addingTimeInterval(7 * 86_400)
-        let descriptor = FetchDescriptor<SetEntry>(
+        completedWorkingSets(
+            startedFrom: weekStart,
+            before: weekStart.addingTimeInterval(7 * 86_400),
+            in: context
+        )
+    }
+
+    /// Completed working sets of the workouts started in `[start, end)`,
+    /// in the order a fetch of every completed non-warm-up set returns
+    /// them. Pitfall #3: a set counts only when `isWarmup == false` AND
+    /// `setTypeRaw` is one of `workingKinds`, to defend against
+    /// mis-categorized rows.
+    ///
+    /// Only the window's workouts are read: an indexed `startedAt` fetch,
+    /// then `Session.exercises` and `SessionExercise.sets`. Fetching every
+    /// completed set in history and walking
+    /// `sessionExercise?.session?.startedAt` per row (a multi-hop chain
+    /// cannot go inside #Predicate, Pitfall #1) cost about 0.3 s per call
+    /// with a year and a half of history. An identifier-only fetch then
+    /// restores that full fetch's order: callers sum stimulus weights such
+    /// as 0.3, which are not exact binary fractions, so another order could
+    /// move a total across a rounding boundary. (While the context holds
+    /// unsaved changes, both fetches return rows in hash order, which can
+    /// change from one fetch to the next.)
+    @MainActor
+    static func completedWorkingSets(
+        startedFrom start: Date,
+        before end: Date,
+        in context: ModelContext
+    ) -> [SetEntry] {
+        let sessionDescriptor = FetchDescriptor<Session>(
+            predicate: #Predicate<Session> { session in
+                session.startedAt >= start && session.startedAt < end
+            }
+        )
+        let sessions = (try? context.fetch(sessionDescriptor)) ?? []
+
+        var inWindow: [PersistentIdentifier: SetEntry] = [:]
+        var traversalOrder: [SetEntry] = []
+        for session in sessions {
+            for sessionExercise in session.exercises ?? [] {
+                for entry in sessionExercise.sets ?? []
+                where entry.isComplete && !entry.isWarmup && workingKinds.contains(entry.setTypeRaw) {
+                    if inWindow.updateValue(entry, forKey: entry.persistentModelID) == nil {
+                        traversalOrder.append(entry)
+                    }
+                }
+            }
+        }
+        guard !inWindow.isEmpty else { return [] }
+
+        let orderDescriptor = FetchDescriptor<SetEntry>(
             predicate: #Predicate<SetEntry> { entry in
                 entry.isComplete == true && entry.isWarmup == false
             }
         )
-        let rows = (try? context.fetch(descriptor)) ?? []
-        return rows.filter { entry in
-            // Pitfall #3: workingKinds gate via Swift array-contains.
-            guard workingKinds.contains(entry.setTypeRaw) else { return false }
-            // Multi-hop optional chain — Pitfall #1 forbids inside #Predicate.
-            guard let started = entry.sessionExercise?.session?.startedAt else { return false }
-            return started >= weekStart && started < weekEnd
+        let order = (try? context.fetchIdentifiers(orderDescriptor)) ?? []
+        var result: [SetEntry] = []
+        result.reserveCapacity(inWindow.count)
+        for id in order {
+            if let entry = inWindow.removeValue(forKey: id) {
+                result.append(entry)
+            }
         }
+        // Never drop a set the identifier fetch missed; keep it, last.
+        if !inWindow.isEmpty {
+            result.append(contentsOf: traversalOrder.filter { inWindow[$0.persistentModelID] != nil })
+        }
+        return result
     }
 }

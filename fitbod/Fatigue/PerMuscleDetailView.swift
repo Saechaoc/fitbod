@@ -284,21 +284,10 @@ public struct PerMuscleDetailView: View {
 
     @MainActor
     private func computeContributingExercises() -> [ContributingExercise] {
-        let workingKinds: Set<String> = ["working", "drop", "failure", "rest_pause"]
         let weekEnd = weekStart.addingTimeInterval(7 * 86_400)
         let targetSlug = muscleSlug
 
-        let descriptor = FetchDescriptor<SetEntry>(
-            predicate: #Predicate<SetEntry> { entry in
-                entry.isComplete == true && entry.isWarmup == false
-            }
-        )
-        let rows = (try? ctx.fetch(descriptor)) ?? []
-        let filtered = rows.filter { entry in
-            guard workingKinds.contains(entry.setTypeRaw) else { return false }
-            guard let started = entry.sessionExercise?.session?.startedAt else { return false }
-            return started >= weekStart && started < weekEnd
-        }
+        let filtered = FatigueModel.completedWorkingSets(startedFrom: weekStart, before: weekEnd, in: ctx)
 
         var contribByExercise: [UUID: (name: String, direct: Double, indirect: Double)] = [:]
         for entry in filtered {
