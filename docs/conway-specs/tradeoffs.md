@@ -230,6 +230,12 @@ Product decisions are in [decisions.md](decisions.md), and they win over this fi
 - Rejected: the dash, which reads as missing data, most often in a block's first week.
 - Rejected: the phase and the arrow together, which do not fit a third of the 390pt phone at default text.
 
+### Progress chart header
+
+- Coordinator answer, 2026-10-30 (T56 question `msg_e46887f4f33b`): the exercise's progress chart puts "Progress" in its header bar and shows the whole exercise name in a full-width heading row directly under the bar, which wraps instead of cutting the name off.
+  This follows `bru-screens/progress-chart.jsx` ("Bench · Progress") and the exercise detail screen's short "Exercise" bar.
+- Rejected: letting `BRUHeaderBar` titles take three lines at default text, which would change the shared header on every screen whose title is cut off today.
+
 ### Progress chart chips
 
 - Coordinator answer, 2026-10-30 (T13 question `msg_ba0f59859f56`): the chart's chips are single-select, as in `bru-screens/progress-chart.jsx`, with E1RM selected by default, because e1RM, volume and RPE cannot share a Y axis.
