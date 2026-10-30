@@ -145,6 +145,25 @@ struct MuscleVolumeTargetSeederTests {
         #expect(after3 == 17)
     }
 
+    @Test("A re-run with nothing to change saves no rows")
+    func rerunWithNothingToChangeSavesNoRows() throws {
+        let ctx = try FatigueTestFixtures.makeContext()
+        _ = try seedAllMuscles(ctx)
+        MuscleVolumeTargetSeeder.seedIfNeeded(in: ctx)
+
+        let saved = SavedRowCount()
+        let observer = NotificationCenter.default.addObserver(
+            forName: ModelContext.didSave, object: ctx, queue: nil
+        ) { note in
+            saved.updated += (note.userInfo?[ModelContext.NotificationKey.updatedIdentifiers.rawValue]
+                as? [PersistentIdentifier])?.count ?? 0
+        }
+        defer { NotificationCenter.default.removeObserver(observer) }
+
+        MuscleVolumeTargetSeeder.seedIfNeeded(in: ctx)
+        #expect(saved.updated == 0)
+    }
+
     // MARK: - 5. All RP landmarks are monotonic (T-05-02 defense-in-depth)
 
     @Test("All RP landmarks satisfy MV ≤ MEV < MAV < MRV (T-05-02 defense-in-depth)")

@@ -161,6 +161,26 @@ struct StimulusWeightSeederTests {
         #expect(countAfterSecond == countAfterThird)
     }
 
+    @Test("A re-run with nothing to change saves no rows")
+    func rerunWithNothingToChangeSavesNoRows() throws {
+        let ctx = try FatigueTestFixtures.makeContext()
+        _ = try seedAllMuscles(ctx)
+        _ = try seedCuratedExercises(ctx)
+        StimulusWeightSeeder.seedIfNeeded(in: ctx)
+
+        let saved = SavedRowCount()
+        let observer = NotificationCenter.default.addObserver(
+            forName: ModelContext.didSave, object: ctx, queue: nil
+        ) { note in
+            saved.updated += (note.userInfo?[ModelContext.NotificationKey.updatedIdentifiers.rawValue]
+                as? [PersistentIdentifier])?.count ?? 0
+        }
+        defer { NotificationCenter.default.removeObserver(observer) }
+
+        StimulusWeightSeeder.seedIfNeeded(in: ctx)
+        #expect(saved.updated == 0)
+    }
+
     // MARK: - 5. T-05-01 clamp
 
     @Test("clampedWeight pins weights outside [0,1] (T-05-01)")

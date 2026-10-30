@@ -50,7 +50,9 @@ import OSLog
 
 public struct RootView: View {
     @Environment(\.modelContext) private var modelContext
-    @Query private var exercises: [Exercise]
+    /// The splash only asks whether the library is empty, so one row is
+    /// enough: the whole catalog is ~700 rows, re-fetched on every change.
+    @Query(RootView.anyExercise) private var exercises: [Exercise]
     @Query private var settingsList: [UserSettings]
     @State private var seedState = SeedState()
 
@@ -74,6 +76,12 @@ public struct RootView: View {
     @State private var tabsHidingBar: Set<Tab> = []
 
     private static let log = Logger(subsystem: "com.fitbod.app", category: "seed")
+
+    private static var anyExercise: FetchDescriptor<Exercise> {
+        var descriptor = FetchDescriptor<Exercise>()
+        descriptor.fetchLimit = 1
+        return descriptor
+    }
 
     public init() {}
 

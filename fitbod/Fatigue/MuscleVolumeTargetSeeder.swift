@@ -46,10 +46,12 @@ public enum MuscleVolumeTargetSeeder {
             if let target = existing {
                 // Skip user-edited rows — VOL-03 / SET-05 preservation.
                 if target.userEdited { continue }
-                target.mv = landmark.mv
-                target.mev = landmark.mev
-                target.mav = landmark.mav
-                target.mrv = landmark.mrv
+                // Write only what differs: an equal assignment still marks
+                // the row changed, so every launch saved all 17 rows.
+                if target.mv != landmark.mv { target.mv = landmark.mv }
+                if target.mev != landmark.mev { target.mev = landmark.mev }
+                if target.mav != landmark.mav { target.mav = landmark.mav }
+                if target.mrv != landmark.mrv { target.mrv = landmark.mrv }
             } else {
                 let newTarget = MuscleVolumeTarget()
                 newTarget.muscle = muscle

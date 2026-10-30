@@ -154,3 +154,9 @@ enum FatigueTestFixtures {
         fatalError("FatigueTestFixtures.intentSplitHistory — not yet implemented; see Phase 5 plan 03 (intent-split per-exercise stream isolation).")
     }
 }
+
+/// Rows `ModelContext.didSave` reported as updated, summed by a
+/// notification observer. A class so the observer closure can add to it.
+final class SavedRowCount: @unchecked Sendable {
+    var updated = 0
+}

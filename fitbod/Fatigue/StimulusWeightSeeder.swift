@@ -39,11 +39,19 @@ public enum StimulusWeightSeeder {
     /// triple has no existing stimulus on the Exercise) are inserted.
     ///
     /// Re-runs on every launch are safe: rows whose curated values
-    /// already match the table are written-through with the same
-    /// values (idempotent at the value level too).
+    /// already match the table are left untouched, so a launch with
+    /// nothing to update saves nothing.
     ///
     /// - Parameter context: The main ModelContext.
     public static func seedIfNeeded(in context: ModelContext) {
+        // Every muscle from one fetch (slugs are unique) instead of one
+        // fetch per curated pair.
+        let muscles = (try? context.fetch(FetchDescriptor<MuscleGroup>())) ?? []
+        var muscleBySlug: [String: MuscleGroup] = [:]
+        for muscle in muscles where muscleBySlug[muscle.slug] == nil {
+            muscleBySlug[muscle.slug] = muscle
+        }
+
         for (canonicalName, triples) in StimulusWeightTable.overrides {
             // 1. Locate the matching Exercise by canonicalName.
             let target = canonicalName
@@ -55,10 +63,7 @@ public enum StimulusWeightSeeder {
             for triple in triples {
                 // 2a. Locate the muscle by slug.
                 let slug = triple.muscleSlug
-                let muscleDescriptor = FetchDescriptor<MuscleGroup>(
-                    predicate: #Predicate<MuscleGroup> { $0.slug == slug }
-                )
-                guard let muscle = (try? context.fetch(muscleDescriptor))?.first else { continue }
+                guard let muscle = muscleBySlug[slug] else { continue }
 
                 // 2b. Find or create the ExerciseMuscleStimulus row.
                 let stims = exercise.muscleStimuli ?? []
@@ -66,8 +71,12 @@ public enum StimulusWeightSeeder {
                 if let row = existing {
                     // 2c. Skip user-edited rows (idempotency anchor).
                     if row.userEditedWeight { continue }
-                    row.role = triple.role
-                    row.weight = clampedWeight(triple.weight)
+                    // 2d. Write only what differs. Assigning an equal value
+                    // still marks the row changed, so every launch saved the
+                    // whole table and re-rendered every view reading it.
+                    let weight = clampedWeight(triple.weight)
+                    if row.role != triple.role { row.role = triple.role }
+                    if row.weight != weight { row.weight = weight }
                 } else {
                     let newStim = ExerciseMuscleStimulus()
                     newStim.role = triple.role
