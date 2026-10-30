@@ -23,6 +23,11 @@ public struct BlockBuilderView: View {
     @State private var saveError: String? = nil
     @State private var selectedPreset: NewBlockPreset = .blank
     @State private var didApplyInitialPreset = false
+    /// The pick from the preset sheet, handled once the sheet has closed.
+    @State private var pickedPreset: NewBlockPreset? = nil
+    /// The phases the builder opened with or the last preset set; phases that
+    /// differ from these hold the user's edits.
+    @State private var presetPhases: [BlockDraft.Snapshot.Phase]? = nil
     @State private var pendingPresetToApply: NewBlockPreset? = nil
     @State private var presentingApplyPresetConfirm = false
     @State private var presentingAddPhaseTypePicker = false
@@ -71,6 +76,7 @@ public struct BlockBuilderView: View {
                             // screen body (name band, metrics, Swift Charts card).
                             NewBlockPhaseListSection(
                                 draft: draft,
+                                onPreset: editing == nil ? { presentPresetPicker() } : nil,
                                 onDelete: { beginPendingDelete($0) },
                                 onAddPhase: { presentingAddPhaseTypePicker = true }
                             )
@@ -127,18 +133,10 @@ public struct BlockBuilderView: View {
             .navigationBarHidden(true)
             .animation(.easeInOut(duration: 0.2), value: pendingDelete != nil)
         }
-        .sheet(isPresented: $presentingTemplateSheet) {
+        .sheet(isPresented: $presentingTemplateSheet, onDismiss: handlePickedPreset) {
             NewBlockTemplateSheet(
                 selected: selectedPreset,
-                onSelect: { preset in
-                    presentingTemplateSheet = false
-                    if presetWouldReplacePhases(preset) {
-                        pendingPresetToApply = preset
-                        presentingApplyPresetConfirm = true
-                    } else {
-                        applyPreset(preset)
-                    }
-                }
+                onSelect: { pickedPreset = $0 }
             )
         }
         .sheet(isPresented: $presentingDurationSheet) {
@@ -160,21 +158,22 @@ public struct BlockBuilderView: View {
             )
         }
         .confirmationDialog(
-            "Apply Preset?",
+            "Replace your phases?",
             isPresented: $presentingApplyPresetConfirm,
-            titleVisibility: .visible
-        ) {
-            Button("Apply", role: .destructive) {
-                if let p = pendingPresetToApply {
-                    applyPreset(p)
-                }
+            titleVisibility: .visible,
+            presenting: pendingPresetToApply
+        ) { preset in
+            Button("Replace phases", role: .destructive) {
+                applyPreset(preset)
                 pendingPresetToApply = nil
             }
-            Button("Cancel", role: .cancel) {
+            // iOS 26 hides a cancel-role button, so the way back is a plain one.
+            // It keeps the edited phases and drops the whole pick, name included.
+            Button("Keep my phases") {
                 pendingPresetToApply = nil
             }
-        } message: {
-            Text("This will replace your current phases and settings.")
+        } message: { preset in
+            Text("\(preset.template.name) replaces the phases you edited.")
         }
         .confirmationDialog(
             discardTitle,
@@ -197,6 +196,7 @@ public struct BlockBuilderView: View {
                 applyPreset(preset)
             }
             initialSnapshot = draft.snapshot()
+            presetPhases = initialSnapshot?.phases
         }
         .onDisappear {
             undoTask?.cancel()
@@ -239,25 +239,45 @@ public struct BlockBuilderView: View {
         presentingTemplateSheet = true
     }
 
-    private func presetWouldReplacePhases(_ preset: NewBlockPreset) -> Bool {
-        preset == .hypertrophyMeso && !draft.phases.isEmpty
+    /// Runs once the preset sheet has closed, so the "Replace your phases?"
+    /// dialog never races the sheet's dismissal.
+    private func handlePickedPreset() {
+        guard let preset = pickedPreset else { return }
+        pickedPreset = nil
+        if presetWouldReplacePhases(preset) {
+            pendingPresetToApply = preset
+            presentingApplyPresetConfirm = true
+        } else {
+            applyPreset(preset)
+        }
     }
 
-    private func applyPreset(_ preset: NewBlockPreset) {
-        draft.name = preset.displayName
-        draft.daysPerWeek = 4
-        selectedPreset = preset
+    /// Only edited phases are worth asking about: phases that differ from the
+    /// ones the builder opened with or the last preset set, and from the
+    /// picked preset's own.
+    private func presetWouldReplacePhases(_ preset: NewBlockPreset) -> Bool {
+        let current = draft.snapshot().phases
+        return current != (presetPhases ?? current) && current != preset.snapshotPhases
+    }
 
-        if preset == .hypertrophyMeso {
-            draft.phases = BlockTemplates.hypertrophy.phases.map { phase in
-                BlockPhaseDraft(
-                    kind: phase.kind,
-                    weeks: phase.weeks,
-                    volumeMultiplier: phase.volumeMultiplier,
-                    intensityMultiplier: phase.intensityMultiplier
-                )
-            }
+    /// Sets the preset's phases, and its name by the preset name rule.
+    /// Days per week stay as they are.
+    private func applyPreset(_ preset: NewBlockPreset) {
+        draft.name = preset.name(replacing: draft.name, previous: selectedPreset)
+        draft.phases = preset.template.phases.map { phase in
+            BlockPhaseDraft(
+                kind: phase.kind,
+                weeks: phase.weeks,
+                volumeMultiplier: phase.volumeMultiplier,
+                intensityMultiplier: phase.intensityMultiplier
+            )
         }
+        selectedPreset = preset
+        presetPhases = preset.snapshotPhases
+        // The deleted phase's undo would splice it into the preset's phases.
+        undoTask?.cancel()
+        undoTask = nil
+        pendingDelete = nil
     }
 
     // D6: kind-parameterized append used by the add-phase type picker.
@@ -401,57 +421,57 @@ private extension View {
 
 // MARK: - Preset model
 
-internal enum NewBlockPreset: Hashable, CaseIterable {
-    case blank
-    case hypertrophyMeso
-    case linearStrength
-    case powerbuilding
-    case offSeason
-    case preMeet
+/// One choice in New Block's preset pickers: BLANK, then the templates of
+/// `BlockTemplates.catalog`, the one template catalog, in its order.
+internal struct NewBlockPreset: Hashable, Identifiable {
+    let template: BlockTemplate
 
-    /// Uppercase chip label rendered in the template sheet and STARTING POINT band.
-    var chipLabel: String {
-        switch self {
-        case .blank:           return "BLANK"
-        case .hypertrophyMeso: return "HYPERTROPHY MESO"
-        case .linearStrength:  return "LINEAR STRENGTH"
-        case .powerbuilding:   return "POWERBUILDING"
-        case .offSeason:       return "OFF-SEASON"
-        case .preMeet:         return "PRE-MEET"
+    var id: String { template.id }
+
+    /// Starts empty: `BlockTemplates.blank` has no phases.
+    static let blank = NewBlockPreset(template: BlockTemplates.blank)
+
+    /// BLANK first, then the catalog.
+    static let all: [NewBlockPreset] = [.blank] + BlockTemplates.catalog.map(NewBlockPreset.init)
+
+    /// The picker row label: "BLANK", or the template's name in capitals.
+    var label: String {
+        self == .blank ? "BLANK" : template.name.uppercased()
+    }
+
+    /// The template's phases in the form `BlockDraft.Snapshot` compares.
+    var snapshotPhases: [BlockDraft.Snapshot.Phase] {
+        template.phases.map {
+            BlockDraft.Snapshot.Phase(
+                kind: $0.kind,
+                weeks: $0.weeks,
+                volumeMultiplier: $0.volumeMultiplier,
+                intensityMultiplier: $0.intensityMultiplier
+            )
         }
     }
 
-    /// Title-cased name applied to `draft.name` when the chip is tapped.
-    /// `BLANK` returns the empty string so tapping it clears the draft name.
-    var displayName: String {
-        switch self {
-        case .blank:           return ""
-        case .hypertrophyMeso: return "Hypertrophy Meso"
-        case .linearStrength:  return "Linear Strength"
-        case .powerbuilding:   return "Powerbuilding"
-        case .offSeason:       return "Off-Season"
-        case .preMeet:         return "Pre-Meet"
-        }
+    /// The block name after picking this preset (the "Preset name rule"):
+    /// its own name while the current name is empty or still the previous
+    /// preset's, otherwise the name the user typed.
+    func name(replacing current: String, previous: NewBlockPreset) -> String {
+        let isEmpty = current.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        return isEmpty || current == previous.template.name ? template.name : current
     }
 
-    /// Case-insensitive match of an existing draft name against the preset
-    /// list. Falls back to `.blank` when the name is empty or doesn't match.
+    /// The preset an existing draft name matches, ignoring case, or BLANK.
     static func matching(name: String) -> NewBlockPreset {
         let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty else { return .blank }
-        let lower = trimmed.lowercased()
-        for preset in NewBlockPreset.all where preset != .blank {
-            if preset.displayName.lowercased() == lower {
-                return preset
-            }
-        }
-        return .blank
+        return all.first { $0.template.name.caseInsensitiveCompare(trimmed) == .orderedSame } ?? .blank
     }
 
-    /// Spec-locked chip order: BLANK first, then the 5 named presets.
-    static let all: [NewBlockPreset] = [
-        .blank, .hypertrophyMeso, .linearStrength, .powerbuilding, .offSeason, .preMeet,
-    ]
+    static func == (lhs: NewBlockPreset, rhs: NewBlockPreset) -> Bool {
+        lhs.id == rhs.id
+    }
+
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
+    }
 }
 
 // MARK: - Top Bar
@@ -556,8 +576,10 @@ fileprivate struct NewBlockPresetChip: View {
     }
 }
 
-// MARK: - Template Sheet (kept for fidelity test — wired to presentingTemplateSheet)
+// MARK: - Template Sheet
 
+/// New Block's preset picker: BLANK, then the catalog. A pick reports the
+/// preset and closes the sheet; CANCEL closes it without one.
 fileprivate struct NewBlockTemplateSheet: View {
     let selected: NewBlockPreset
     let onSelect: (NewBlockPreset) -> Void
@@ -565,62 +587,57 @@ fileprivate struct NewBlockTemplateSheet: View {
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
-        NavigationStack {
-            VStack(alignment: .leading, spacing: 0) {
-                Text("Choose a preset or build from scratch.")
-                    .font(NewBlockType.label)
-                    .tracking(0.4)
-                    .foregroundStyle(NewBlockScreenTokens.muted)
-                    .padding(.horizontal, NewBlockScreenTokens.sidePadding)
-                    .padding(.top, NewBlockScreenTokens.rowGap)
-                    .padding(.bottom, NewBlockScreenTokens.sectionGap)
+        VStack(spacing: 0) {
+            BRUHeaderBar.slots(left: .cancel, center: "Start From Template")
 
-                Rectangle()
-                    .fill(NewBlockScreenTokens.ink)
-                    .frame(height: NewBlockScreenTokens.rule)
+            ScrollView {
+                VStack(alignment: .leading, spacing: 0) {
+                    Text("Choose a preset or build from scratch.")
+                        .font(BRUFont.bodyDefault)
+                        .foregroundStyle(Color.bruMuted)
+                        .padding(.horizontal, NewBlockScreenTokens.sidePadding)
+                        .padding(.vertical, NewBlockScreenTokens.sectionGap)
 
-                VStack(spacing: 0) {
-                    ForEach(NewBlockPreset.all, id: \.self) { preset in
-                        let isSelected = preset == selected
-                        let rowLabel = preset == .blank ? "FROM SCRATCH" : preset.chipLabel
+                    BRUDivider(.ink)
 
-                        Button {
-                            onSelect(preset)
-                            dismiss()
-                        } label: {
-                            HStack(spacing: NewBlockScreenTokens.rowGap) {
-                                Text(rowLabel)
-                                    .font(NewBlockType.chrome)
-                                    .tracking(NewBlockScreenTokens.chipTracking)
-                                    .foregroundStyle(NewBlockScreenTokens.ink)
-                                    .frame(maxWidth: .infinity, alignment: .leading)
-
-                                if isSelected {
-                                    Text("✓")
-                                        .font(NewBlockType.chrome)
-                                        .foregroundStyle(NewBlockScreenTokens.ink)
-                                }
-                            }
-                            .padding(.horizontal, NewBlockScreenTokens.sidePadding)
-                            .frame(maxWidth: .infinity)
-                            .frame(height: 48)
-                            .background(isSelected ? NewBlockScreenTokens.faint : NewBlockScreenTokens.paper)
-                        }
-                        .buttonStyle(.plain)
-
-                        Rectangle()
-                            .fill(NewBlockScreenTokens.hair)
-                            .frame(height: NewBlockScreenTokens.rule)
+                    ForEach(NewBlockPreset.all) { preset in
+                        presetRow(preset)
+                        BRUDivider(.hair)
                     }
                 }
-
-                Spacer()
             }
-            .background(NewBlockScreenTokens.paper.ignoresSafeArea())
-            .navigationTitle("Start From Template")
-            .navigationBarTitleDisplayMode(.inline)
         }
+        .background(Color.bruPaper.ignoresSafeArea())
         .presentationDetents([.medium])
+    }
+
+    private func presetRow(_ preset: NewBlockPreset) -> some View {
+        let isSelected = preset == selected
+        return Button {
+            onSelect(preset)
+            dismiss()
+        } label: {
+            HStack(spacing: NewBlockScreenTokens.rowGap) {
+                Text(preset.label)
+                    .font(BRUFont.labelLarge)
+                    .tracking(1.5)
+                    .foregroundStyle(Color.bruInk)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+
+                if isSelected {
+                    Text("✓")
+                        .font(BRUFont.labelLarge)
+                        .foregroundStyle(Color.bruInk)
+                        .accessibilityHidden(true)
+                }
+            }
+            .padding(.horizontal, NewBlockScreenTokens.sidePadding)
+            .frame(maxWidth: .infinity, minHeight: 48)
+            .background(isSelected ? Color.bruFaint : Color.bruPaper)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityAddTraits(isSelected ? .isSelected : [])
     }
 }
 
@@ -743,45 +760,75 @@ fileprivate struct NewBlockStepperButton: View {
 
 // 260528-vi2: simplified to PHASES · N (left) + + ADD PHASE (right, coral).
 // REORDER/DONE toggle and Preset menu removed — reorder is in per-card context menu.
+// T10: NEW BLOCK shows PRESET ▾ beside + ADD PHASE; it opens the preset sheet.
 fileprivate struct NewBlockPhasesHeader: View {
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+
     let phaseCount: Int
+    let onPreset: (() -> Void)?
     let onAddPhase: () -> Void
 
     var body: some View {
-        HStack(spacing: NewBlockScreenTokens.rowGap) {
+        headerLayout {
             Text("PHASES · \(phaseCount)")
                 .font(NewBlockType.chrome)
                 .tracking(NewBlockScreenTokens.chipTracking)
                 .foregroundStyle(NewBlockScreenTokens.ink)
 
-            Spacer()
+            if !dynamicTypeSize.isAccessibilitySize {
+                Spacer()
+            }
+
+            if let onPreset {
+                Button(action: onPreset) {
+                    capsule(
+                        Text("PRESET ▾")
+                            .foregroundStyle(NewBlockScreenTokens.ink)
+                    )
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Preset")
+            }
 
             // White card capsule "+ ADD PHASE" — two-tone coral/ink label (260610-dbz)
             Button(action: onAddPhase) {
-                (
+                capsule(
                     Text("+ ")
                         .foregroundStyle(NewBlockScreenTokens.signal)
                     + Text("ADD PHASE")
                         .foregroundStyle(NewBlockScreenTokens.ink)
                 )
-                .font(NewBlockType.chrome)
-                .tracking(NewBlockScreenTokens.chipTracking)
-                .padding(.horizontal, 12)
-                .padding(.vertical, 7)
-                .background(NewBlockScreenTokens.card, in: Capsule())
-                .overlay(
-                    Capsule()
-                        .stroke(NewBlockScreenTokens.cardStroke,
-                                lineWidth: NewBlockScreenTokens.cardStrokeWidth)
-                )
-                .shadow(color: NewBlockScreenTokens.cardShadow, radius: 6, x: 0, y: 2)
-                .frame(minHeight: 44)
             }
             .buttonStyle(.plain)
             .accessibilityLabel("+ ADD PHASE")
         }
         .frame(minHeight: NewBlockScreenTokens.phasesHeaderHeight)
         .background(NewBlockScreenTokens.paper)
+    }
+
+    /// At accessibility sizes the title and each control get a line of their own.
+    private var headerLayout: AnyLayout {
+        dynamicTypeSize.isAccessibilitySize
+            ? AnyLayout(VStackLayout(alignment: .leading, spacing: NewBlockScreenTokens.rowGap))
+            : AnyLayout(HStackLayout(spacing: NewBlockScreenTokens.rowGap))
+    }
+
+    /// The white card capsule both header controls wear, 44pt tall.
+    private func capsule(_ label: Text) -> some View {
+        label
+            .font(NewBlockType.chrome)
+            .tracking(NewBlockScreenTokens.chipTracking)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 7)
+            .background(NewBlockScreenTokens.card, in: Capsule())
+            .overlay(
+                Capsule()
+                    .stroke(NewBlockScreenTokens.cardStroke,
+                            lineWidth: NewBlockScreenTokens.cardStrokeWidth)
+            )
+            .shadow(color: NewBlockScreenTokens.cardShadow, radius: 6, x: 0, y: 2)
+            .frame(minHeight: 44)
     }
 }
 
@@ -1213,6 +1260,8 @@ fileprivate struct NewBlockProgressionChart: View {
 // toast and the add-phase sheet stay with the parent via closures.
 fileprivate struct NewBlockPhaseListSection: View {
     let draft: BlockDraft
+    /// Opens the preset picker; nil hides PRESET ▾, as in EDIT BLOCK.
+    let onPreset: (() -> Void)?
     let onDelete: (BlockPhaseDraft) -> Void
     let onAddPhase: () -> Void
 
@@ -1230,6 +1279,7 @@ fileprivate struct NewBlockPhaseListSection: View {
         VStack(alignment: .leading, spacing: 10) {
             NewBlockPhasesHeader(
                 phaseCount: draft.phases.count,
+                onPreset: onPreset,
                 onAddPhase: onAddPhase
             )
 

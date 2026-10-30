@@ -27,8 +27,9 @@
 //    accumulation/intensification/peak/deload keywords.
 //  - Coral "+ DEFINE BLOCK ▶" CTA with the measured 71pt height.
 //  - Feature chips rendered by a wrapping layout using fixed chip tokens.
-//  - ProgramTemplateSection: compact ProgramTemplateHeader + four
-//    ProgramTemplateRow presets mapped to existing BlockTemplates.
+//  - ProgramTemplateSection: compact ProgramTemplateHeader + one
+//    ProgramTemplateRow per BlockTemplates.catalog template, showing only
+//    its weeks, name and phases.
 //
 //  ## Scope decisions (260525-gen)
 //
@@ -131,9 +132,9 @@ public struct ProgramView: View {
                                     defineAction: { presentingStartChoice = true }
                                 )
                                 ProgramTemplateSection(
-                                    presets: ProgramView.templatePresets,
-                                    onSelect: { preset in
-                                        pendingBlockBuilder = .template(preset.template)
+                                    rows: ProgramView.templateRows,
+                                    onSelect: { row in
+                                        pendingBlockBuilder = .template(row.template)
                                     }
                                 )
                             } else {
@@ -289,40 +290,9 @@ public struct ProgramView: View {
 
     // MARK: Static data
 
-    fileprivate static let templatePresets: [ProgramTemplatePreset] = [
-        ProgramTemplatePreset(
-            weeks: "5W",
-            title: "Hypertrophy meso",
-            cadence: "4 / WK · INTERMEDIATE",
-            phaseDescriptor: "ACCUM 3 · INTNS 1 · DELOAD 1",
-            popular: true,
-            template: BlockTemplates.hypertrophy
-        ),
-        ProgramTemplatePreset(
-            weeks: "4W",
-            title: "Linear strength",
-            cadence: "3 / WK · BEGINNER",
-            phaseDescriptor: "BUILD 3 · TEST 1",
-            popular: false,
-            template: BlockTemplates.generic
-        ),
-        ProgramTemplatePreset(
-            weeks: "8W",
-            title: "Powerbuilding",
-            cadence: "5 / WK · ADVANCED",
-            phaseDescriptor: "ACCUM 3 · INTNS 2 · PEAK 2 · DELOAD 1",
-            popular: false,
-            template: BlockTemplates.powerliftingPeak
-        ),
-        ProgramTemplatePreset(
-            weeks: "4W",
-            title: "5 / 3 / 1 cycle",
-            cadence: "4 / WK · INTERMEDIATE",
-            phaseDescriptor: "WEEK 1 · 2 · 3 · DELOAD",
-            popular: false,
-            template: BlockTemplates.blank
-        ),
-    ]
+    /// One row per catalog template, in catalog order.
+    static let templateRows: [ProgramTemplateRowContent] =
+        BlockTemplates.catalog.map(ProgramTemplateRowContent.init)
 
     private enum PendingBlockBuilder: Identifiable {
         case newBlock(NewBlockPreset?)
@@ -333,7 +303,7 @@ public struct ProgramView: View {
             switch self {
             case .newBlock(let preset):
                 if let preset = preset {
-                    return "new-block-preset-\(preset.displayName)"
+                    return "new-block-preset-\(preset.id)"
                 } else {
                     return "new-block-scratch"
                 }
@@ -711,7 +681,7 @@ fileprivate struct NewBlockStartChoiceSheet: View {
                             Text("Use Preset")
                                 .font(.bru(.grotesk, size: 15))
                                 .foregroundStyle(ProgramScreenTokens.ink)
-                            Text("Start from Hypertrophy, Strength, Powerbuilding, etc.")
+                            Text("Start from \(BlockTemplates.catalog.map(\.name).formatted(.list(type: .or))).")
                                 .font(.bru(.grotesk, size: 11))
                                 .tracking(ProgramScreenTokens.headerLetterSpacing)
                                 .foregroundStyle(ProgramScreenTokens.muted)
@@ -770,7 +740,7 @@ fileprivate struct NewBlockPresetPickerSheet: View {
                         onSelect(preset)
                     } label: {
                         HStack(alignment: .center, spacing: 0) {
-                            Text(preset == .blank ? "FROM SCRATCH" : preset.chipLabel)
+                            Text(preset == .blank ? "FROM SCRATCH" : preset.label)
                                 .font(.bru(.grotesk, size: 13))
                                 .tracking(1.5)
                                 .foregroundStyle(ProgramScreenTokens.ink)
@@ -861,11 +831,8 @@ fileprivate enum ProgramScreenTokens {
     static let templateMetaFontSize: CGFloat = 10
     static let templateMetaLineHeight: CGFloat = 13
     static let templateTextSpacing: CGFloat = 2
-    static let popularBadgeSpacing: CGFloat = 2
     static let templateWeeksFontSize: CGFloat = 32
     static let templateWeeksWidth: CGFloat = 56
-    static let popularBadgeWidth: CGFloat = 62
-    static let popularBadgeHeight: CGFloat = 18
 
     static let bottomTabBarHeight: CGFloat = 63
     static let selectedTabWidth: CGFloat = 99
@@ -953,17 +920,17 @@ fileprivate struct ProgramTemplateHeaderDivider: View {
     }
 }
 
-// MARK: - ProgramTemplatePreset
+// MARK: - ProgramTemplateRowContent
 
-fileprivate struct ProgramTemplatePreset: Identifiable {
-    let weeks: String
-    let title: String
-    let cadence: String
-    let phaseDescriptor: String
-    let popular: Bool
+/// What one template row shows: only facts its template holds, such as
+/// "8W", "Hypertrophy Meso" and "ACCUM 5 · INTNS 2 · DELOAD 1".
+struct ProgramTemplateRowContent: Identifiable {
     let template: BlockTemplate
 
-    var id: String { "\(weeks)-\(title)" }
+    var id: String { template.id }
+    var weeks: String { "\(template.totalWeeks)W" }
+    var title: String { template.name }
+    var phases: String { template.phaseSummary }
 }
 
 // MARK: - NoProgramHero
@@ -1173,21 +1140,21 @@ fileprivate struct ProgramChipFlow: Layout {
 
 fileprivate struct ProgramTemplateSection: View {
 
-    let presets: [ProgramTemplatePreset]
-    let onSelect: (ProgramTemplatePreset) -> Void
+    let rows: [ProgramTemplateRowContent]
+    let onSelect: (ProgramTemplateRowContent) -> Void
 
     var body: some View {
         VStack(spacing: 0) {
             ProgramTemplateHeader(
                 title: "Or start from a template",
-                right: "\(presets.count) presets"
+                right: BRUCountLabel.text(rows.count, "preset")
             )
 
-            ForEach(Array(presets.enumerated()), id: \.element.id) { index, preset in
-                ProgramTemplateRow(preset: preset) {
-                    onSelect(preset)
+            ForEach(Array(rows.enumerated()), id: \.element.id) { index, row in
+                ProgramTemplateRow(content: row) {
+                    onSelect(row)
                 }
-                if index < presets.count - 1 {
+                if index < rows.count - 1 {
                     ProgramHairDivider()
                 }
             }
@@ -1228,46 +1195,30 @@ fileprivate struct ProgramTemplateHeader: View {
 
 // MARK: - ProgramTemplateRow
 
-/// One preset row: large condensed weeks label on the left, stacked
-/// title / cadence / phase block in the middle (with optional POPULAR
-/// badge inline next to the title), chevron on the right.
+/// One template row: large condensed weeks label on the left, the
+/// template's name over its phases in the middle, chevron on the right.
 fileprivate struct ProgramTemplateRow: View {
 
-    let preset: ProgramTemplatePreset
+    let content: ProgramTemplateRowContent
     let action: () -> Void
 
     var body: some View {
         Button(action: action) {
             HStack(alignment: .center, spacing: 16) {
-                Text(preset.weeks)
+                Text(content.weeks)
                     .font(.bru(.condensed, size: ProgramScreenTokens.templateWeeksFontSize))
                     .foregroundStyle(ProgramScreenTokens.ink)
                     .frame(width: ProgramScreenTokens.templateWeeksWidth, alignment: .leading)
 
                 VStack(alignment: .leading, spacing: ProgramScreenTokens.templateTextSpacing) {
-                    HStack(spacing: ProgramScreenTokens.popularBadgeSpacing) {
-                        Text(preset.title)
-                            .font(.bru(.text, size: ProgramScreenTokens.templateTitleFontSize))
-                            .fontWeight(.semibold)
-                            .foregroundStyle(ProgramScreenTokens.ink)
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.9)
-                        if preset.popular {
-                            popularBadge
-                        }
-                        Spacer(minLength: 0)
-                    }
-
-                    Text(preset.cadence)
-                        .font(ProgramTypography.templateMeta)
-                        .tracking(ProgramScreenTokens.headerLetterSpacing)
-                        .textCase(.uppercase)
-                        .foregroundStyle(ProgramScreenTokens.muted)
-                        .frame(height: ProgramScreenTokens.templateMetaLineHeight, alignment: .leading)
+                    Text(content.title)
+                        .font(.bru(.text, size: ProgramScreenTokens.templateTitleFontSize))
+                        .fontWeight(.semibold)
+                        .foregroundStyle(ProgramScreenTokens.ink)
                         .lineLimit(1)
-                        .minimumScaleFactor(0.85)
+                        .minimumScaleFactor(0.9)
 
-                    Text(preset.phaseDescriptor)
+                    Text(content.phases)
                         .font(ProgramTypography.templateMeta)
                         .tracking(ProgramScreenTokens.headerLetterSpacing)
                         .textCase(.uppercase)
@@ -1276,6 +1227,7 @@ fileprivate struct ProgramTemplateRow: View {
                         .lineLimit(1)
                         .minimumScaleFactor(0.85)
                 }
+                .frame(maxWidth: .infinity, alignment: .leading)
 
                 Text("›")
                     .font(.system(size: 16, weight: .regular))
@@ -1288,15 +1240,6 @@ fileprivate struct ProgramTemplateRow: View {
         }
         .buttonStyle(.plain)
         .background(ProgramScreenTokens.screenBackground)
-    }
-
-    private var popularBadge: some View {
-        Text("POPULAR")
-            .font(.bru(.grotesk, size: 10))
-            .tracking(1.5)
-            .foregroundStyle(.white)
-            .frame(width: ProgramScreenTokens.popularBadgeWidth, height: ProgramScreenTokens.popularBadgeHeight)
-            .background(ProgramScreenTokens.ctaColor)
     }
 }
 

@@ -9,6 +9,7 @@
 
 import Foundation
 import Testing
+@testable import fitbod
 
 @Suite("ProgramView fidelity")
 struct ProgramViewFidelityTests {
@@ -116,6 +117,39 @@ struct ProgramViewFidelityTests {
         #expect(source.contains("A block schedules routines across weeks and phases — "))
         #expect(source.contains("accumulation, intensification, peak, deload."))
         #expect(source.contains("You can also lift without a block, but Fitbod really earns its keep when you’re running one."))
+    }
+
+    @MainActor
+    @Test("Each template row shows only its template's weeks, name and phases")
+    func templateRowsComeFromTheirTemplates() {
+        let rows = ProgramView.templateRows
+
+        #expect(rows.map(\.template.name) == BlockTemplates.catalog.map(\.name))
+        for row in rows {
+            let weeks = row.template.phases.reduce(0) { $0 + $1.weeks }
+            let phases = row.template.phases.map { "\($0.kind.shortLabel) \($0.weeks)" }
+            #expect(row.weeks == "\(weeks)W")
+            #expect(row.title == row.template.name)
+            #expect(row.phases == phases.joined(separator: " · "))
+        }
+        #expect(rows.map(\.weeks) == ["8W", "8W", "8W", "4W"])
+        #expect(rows.map(\.phases) == [
+            "ACCUM 5 · INTNS 2 · DELOAD 1",
+            "ACCUM 4 · INTNS 2 · REAL 1 · DELOAD 1",
+            "ACCUM 3 · INTNS 3 · REAL 1 · DELOAD 1",
+            "ACCUM 1 · INTNS 1 · REAL 1 · DELOAD 1",
+        ])
+    }
+
+    @Test("Template rows drop the cadence, level and POPULAR copy no data backs")
+    func templateRowsDropUnbackedCopy() throws {
+        let codeOnly = try codeOnly("fitbod", "Periodization", "ProgramView.swift")
+
+        #expect(codeOnly.contains("BlockTemplates.catalog.map(ProgramTemplateRowContent.init)"),
+                "Program's template rows must be built from the one catalog.")
+        for unbacked in ["POPULAR", "/ WK", "BEGINNER", "INTERMEDIATE", "ADVANCED", "Powerbuilding", "5 / 3 / 1"] {
+            #expect(!codeOnly.contains(unbacked), "ProgramView must not hand-write \(unbacked).")
+        }
     }
 
     @Test("ProgramView pins BLOCKS and ROUTINES section copy (Phase 9 Plan 02)")

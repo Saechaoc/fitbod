@@ -101,11 +101,7 @@ struct NewBlockBuilderFidelityTests {
             "SAVE",
             "BLOCK NAME",
             "NAME YOUR BLOCK",
-            "HYPERTROPHY MESO",
-            "LINEAR STRENGTH",
-            "POWERBUILDING",
-            "OFF-SEASON",
-            "PRE-MEET",
+            "PRESET ▾",
             "TOTAL WEEKS",
             "DAYS PER WEEK",
             "PHASES ·",
@@ -122,6 +118,14 @@ struct NewBlockBuilderFidelityTests {
             "SAVE TEMPLATE ▸",
         ] {
             #expect(source.contains(requiredCopy), "Missing New Block copy: \(requiredCopy)")
+        }
+
+        // The presets come from BlockTemplates.catalog (T10): BLANK, then the
+        // catalog's names. The undefined presets are gone.
+        #expect(source.contains("BlockTemplates.catalog.map(NewBlockPreset.init)"),
+                "New Block's presets must be built from the one template catalog.")
+        for removedPreset in ["LINEAR STRENGTH", "POWERBUILDING", "OFF-SEASON", "PRE-MEET", "Off-Season", "Pre-Meet"] {
+            #expect(!source.contains(removedPreset), "New Block must not offer the removed preset \(removedPreset)")
         }
     }
 

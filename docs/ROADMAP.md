@@ -64,3 +64,10 @@ design system; add a component only when multiple real screens need it.
   the currently unwired `RoutinesListView` before reusing or removing it.
 - Extend CI coverage deliberately: the existing workflow runs on `claude/**`,
   PRs and manual dispatch; a direct push to `main` does not trigger it.
+
+## Removed in Milestone 1 closeout
+
+- New Block's Off-Season preset, because it had no definition: picking it only
+  renamed the block. Presets now come from the one block template catalog.
+- New Block's Pre-Meet preset, because it had no definition: picking it only
+  renamed the block. Presets now come from the one block template catalog.
