@@ -52,6 +52,7 @@ The quick-task run of the same plan must finish its last two tasks first, so rea
 | [T52](tickets/T52-rpe-creep-skips-empty-workouts.md) | RPE creep skips workouts without a logged set |
 | [T53](tickets/T53-stall-badge-window.md) | Stall badge names the exercise's own window |
 | [T54](tickets/T54-custom-exercise-name-trim.md) | Custom exercise names save without outer spaces |
+| [T55](tickets/T55-pinned-note-capsule-tap-target.md) | Pinned note capsule takes taps across 44 points |
 
 ### Phase 2: P2 defects
 
