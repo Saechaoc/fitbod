@@ -133,20 +133,24 @@ public struct ProgressHomeView: View {
     /// + last-logged relative date. Tap pushes ExerciseProgressView.
     @ViewBuilder
     private var recentSection: some View {
+        // Read once per render; each read sorts every logged exercise row.
+        let recent = recentExercisesCondensed
+        let stats = recentStats
+
         BRUSectionHead("Recent")
 
-        if recentExercisesCondensed.isEmpty {
+        if recent.isEmpty {
             bruEmptyState(
                 heading: "No history yet",
                 body: "Log a session to start seeing your progress."
             )
         } else {
-            ForEach(Array(recentExercisesCondensed.enumerated()), id: \.element.id) { index, exercise in
-                progressRow(title: exercise.name, subtitle: recentSubLabel(for: exercise)) {
+            ForEach(Array(recent.enumerated()), id: \.element.id) { index, exercise in
+                progressRow(title: exercise.name, subtitle: recentSubLabel(stats[exercise.id])) {
                     path.append(ExerciseProgressRoute.progress(exercise.id))
                 }
 
-                if index < recentExercisesCondensed.count - 1 {
+                if index < recent.count - 1 {
                     BRUDivider(.hair)
                 }
             }
@@ -306,13 +310,31 @@ public struct ProgressHomeView: View {
         return result
     }
 
-    private func recentSubLabel(for exercise: Exercise) -> String {
-        let sessionsForEx = recentSessionExercises.filter {
-            $0.exercise?.id == exercise.id && $0.session?.completedAt != nil
+    /// Per exercise: how many logged rows from finished workouts it has,
+    /// and the latest of their workout start dates. One pass over the rows.
+    private struct RecentStat {
+        var count = 0
+        var lastDate: Date?
+    }
+
+    private var recentStats: [UUID: RecentStat] {
+        var stats: [UUID: RecentStat] = [:]
+        for se in recentSessionExercises {
+            guard let id = se.exercise?.id,
+                  let session = se.session,
+                  session.completedAt != nil else { continue }
+            var stat = stats[id] ?? RecentStat()
+            stat.count += 1
+            stat.lastDate = max(stat.lastDate ?? session.startedAt, session.startedAt)
+            stats[id] = stat
         }
-        let count = sessionsForEx.count
+        return stats
+    }
+
+    private func recentSubLabel(_ stat: RecentStat?) -> String {
+        let count = stat?.count ?? 0
         let sessions = count == 1 ? "1 session" : "\(count) sessions"
-        guard let lastDate = sessionsForEx.compactMap(\.session?.startedAt).max() else {
+        guard let lastDate = stat?.lastDate else {
             return sessions
         }
         let rel = lastDate.formatted(.relative(presentation: .named))
