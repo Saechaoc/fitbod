@@ -17,6 +17,10 @@
 //    8. volumeSumsLoggedWorkSetsPerWorkout — logged work sets, per workout
 //    9. averageRPESkipsWorkoutsWithoutRPE — no RPE, no point
 //
+//  T58 (finding F29) — the e1RM series per workout:
+//
+//   10. e1RMPlotsOnePairPerWorkout — an exercise logged twice in one workout
+//
 //  Hermetic via InMemoryContainer.makeCurrent() — SwiftData @Model
 //  classes need a ModelContext to be valid even when SeriesBuilder
 //  itself is pure (it reads properties off the @Model rows).
@@ -71,6 +75,32 @@ struct SeriesBuilderTests {
             ctx.insert(entry)
         }
         return se
+    }
+
+    /// Log `first`'s exercise again, later in the same workout, with
+    /// completed working sets.
+    private func logAgain(
+        _ first: SessionExercise,
+        in ctx: ModelContext,
+        sets: [(weight: Double, reps: Int)]
+    ) throws -> SessionExercise {
+        let session = try #require(first.session)
+        let again = SessionExercise()
+        ctx.insert(again)
+        again.session = session
+        again.exercise = first.exercise
+        for (i, set) in sets.enumerated() {
+            let entry = SetEntry()
+            ctx.insert(entry)
+            entry.sessionExercise = again
+            entry.orderIndex = i
+            entry.weight = set.weight
+            entry.reps = set.reps
+            entry.isComplete = true
+            entry.setTypeRaw = "working"
+            entry.completedAt = session.startedAt.addingTimeInterval(Double(30 + i) * 60)
+        }
+        return again
     }
 
     // MARK: - 1. emits both points
@@ -286,5 +316,48 @@ struct SeriesBuilderTests {
         #expect(points.map(\.value) == [9])
         #expect(points.first?.date == Date(timeIntervalSince1970: 1_700_604_800))
         #expect(SeriesBuilder.volumePoints(from: [unrated, rated]).count == 2)
+    }
+
+    // MARK: - 10. e1RM plots one top set and one average per workout (T58)
+
+    @Test("e1RMPlotsOnePairPerWorkout — an exercise logged twice in one workout")
+    func e1RMPlotsOnePairPerWorkout() throws {
+        let ctx = try makeContext()
+        let monday = Date(timeIntervalSince1970: 1_700_000_000)
+        let nextMonday = Date(timeIntervalSince1970: 1_700_604_800)
+        let first = makeSessionExercise(
+            in: ctx,
+            startedAt: monday,
+            intentRaw: Intent.strength.rawValue,
+            sets: [
+                (100, 5, false, true, "working"),
+                (100, 3, false, true, "working"),
+            ]
+        )
+        // Logged again in the same workout: 105 x 5 is the workout's top
+        // set, and the 12-rep set has no e1RM.
+        let again = try logAgain(first, in: ctx, sets: [(105, 5), (60, 12)])
+        let single = makeSessionExercise(
+            in: ctx,
+            startedAt: nextMonday,
+            intentRaw: Intent.hypertrophy.rawValue,
+            sets: [(100, 8, false, true, "working")]
+        )
+
+        let points = SeriesBuilder.buildPoints(from: [first, again, single])
+        let workout = points.filter { $0.date == monday }
+        #expect(workout.filter { $0.kind == .topSet }.count == 1)
+        #expect(workout.filter { $0.kind == .allSetAvg }.count == 1)
+
+        let topSet = try #require(workout.first { $0.kind == .topSet })
+        let average = try #require(workout.first { $0.kind == .allSetAvg })
+        let e1 = try #require(OneRepMax.estimate(weight: 100, reps: 5))
+        let e2 = try #require(OneRepMax.estimate(weight: 100, reps: 3))
+        let e3 = try #require(OneRepMax.estimate(weight: 105, reps: 5))
+        #expect(abs(topSet.e1RM - e3) < 0.001)
+        #expect(abs(average.e1RM - (e1 + e2 + e3) / 3) < 0.001)
+
+        // A workout that logs the exercise once plots as it does alone.
+        #expect(points.filter { $0.date == nextMonday } == SeriesBuilder.buildPoints(from: [single]))
     }
 }
