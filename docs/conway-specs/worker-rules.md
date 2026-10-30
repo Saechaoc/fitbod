@@ -275,7 +275,9 @@ The bindings record source attempt/archive, acceptance/settlement, tested and de
 Unchanged ticket paths remain valid: `evidence/T31/export-diff.md` and named snapshots, T41's `evidence/T40/notes.md` and `delete-paths.md`, and T47's `evidence/T40/closeout-statement.md` plus its other bound reports/captures.
 For accepted/settled T40-r2, local `evidence/T40/` contains that attempt's required files, not failed T40's evidence; original archives are never renamed or overwritten.
 The sole failed-input exception is an original T46 retry's own safely settled `failed/resume` binding at local `evidence/T46/`, not accepted dependency evidence.
-Preserve that input, copy only its coverage files to your distinct output, and resume the full original tour; partial verification reruns never replace accepted full-tour coverage.
+Reuse that input only when its findings, notes and captures cover every recorded completed configuration; preserve it and copy only those coverage files to your distinct output.
+When the brief records no reusable coverage and supplies no resume binding, start the full original tour from its first configuration rather than requiring nonexistent failed-attempt files.
+Partial verification reruns never replace accepted full-tour coverage.
 T47 and T48's `evidence/run-log.md` is a frozen coordinator snapshot with recorded provenance, not accepted producer evidence or a live log.
 Stop and ask on any missing required file, mismatched provenance or failed/rejected/unsettled dependency source; do not substitute other evidence.
 

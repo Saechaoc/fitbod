@@ -111,7 +111,9 @@ Reject a missing, contradictory or launch/worktree-mismatched brief or input; ne
    - T47 also binds T41's backup results, the latest accepted/settled T44/T45 reports and captures, and the accepted full T46 tour, including implementation retries, plus applicable accepted/settled per-pair reruns.
      Enumerate every required report/capture file; partial reruns never replace full-tour coverage.
    - Exception: an original T46 retry binds its OWN safely settled failed attempt to local `evidence/T46/`, explicitly labeled `failed/resume`, not accepted dependency evidence.
-     Require its recorded `findings.md`, `notes.md` and completed captures; preserve that input and carry only its coverage files into the retry's distinct output before resuming, never its archived brief.
+     Reuse coverage only when `findings.md`, `notes.md` and every capture for the recorded completed configurations are present.
+     If no configuration completed or that coverage is incomplete, preserve the failed archive, omit the resume binding and restart the full tour from its first configuration.
+     Otherwise preserve that input and carry only its coverage files into the retry's distinct output before resuming, never its archived brief.
 
    For T47 and T48, copy the live run log to `<worktree>/docs/conway-specs/evidence/run-log.md` as a coordinator snapshot with source/run/time provenance, not accepted producer evidence.
    Resolve paths before checking that input alias roots, the fixed brief/run-log files and the new output folder stay inside the worktree and are pairwise disjoint: reject escaping paths and equal/ancestor/descendant collisions.
@@ -300,7 +302,7 @@ A reported ending is not a safely settled attempt.
   Keep the parent `failed`, blocking dependents and phase completion while any child is unaccepted/unsettled or any original acceptance remains uncovered.
   After all children are accepted and safely settled, verify their combined evidence against the full original acceptance, record their accepted delivery/tested commits and evidence, then explicitly mark the parent `done`.
   One completed child, or all children with a coverage gap, is insufficient.
-- A retry of original T46 continues from the first configuration that has no section in `findings.md` yet, from the folder that "Start one ticket" copies in, and still owes full original coverage.
+- A retry of original T46 with a validated resume binding continues from the first configuration not covered by that input; without reusable coverage it starts from the first configuration, and either path still owes full original coverage.
   A scoped verification rerun is not such an implementation retry.
 
 ## Phase gates
