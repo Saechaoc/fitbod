@@ -82,6 +82,7 @@ The quick-task run of the same plan must finish its last two tasks first, so rea
 | [T82](tickets/T82-e1rm-chart-voiceover.md) | VoiceOver reads each e1RM point's rounded weight |
 | [T83](tickets/T83-action-popover-fit.md) | The action popover's items stay whole and take a 44pt tap |
 | [T84](tickets/T84-previous-top-set-whole-workout.md) | The previous top set reads the whole workout |
+| [T86](tickets/T86-block-review-fixes.md) | The block review fits its screen, names what Start next opens, and stops once a block starts |
 
 ### Phase 2: P2 defects
 
@@ -103,6 +104,7 @@ The quick-task run of the same plan must finish its last two tasks first, so rea
 | [T31](tickets/T31-design-export-check.md) | Design export check |
 | [T32](tickets/T32-custom-exercise-editor-bru.md) | Custom exercise editor and muscle picker in BRU |
 | [T33](tickets/T33-pinned-note-bru.md) | Pinned Note sheet in BRU |
+| [T87](tickets/T87-today-sheet-order.md) | Today shows the block review and the weekly recap one at a time |
 
 ### Phase 3: P3 polish and copy
 

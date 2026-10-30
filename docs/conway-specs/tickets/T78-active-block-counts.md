@@ -35,8 +35,10 @@ These are findings F69, F71 and F75, which the T12 worker found on the active bl
 ## Change
 
 1. The week strip, its sessions-done count and the NOW phase's count leave out empty workouts, as decision 6 says.
-2. After its last planned week, an active block shows "PLAN COMPLETE" in place of its week on the overview hero, the overview's week strip header and Program's block row, and no phase shows NOW.
-   The strip header shows no ‹ › week links, Program's row drops its phase name, and VoiceOver says "plan complete" where it said the week.
+2. After its last planned week, an active block shows "PLAN COMPLETE" as the overview hero's headline, in place of "‹phase› week", with no week, volume or intensity row under it.
+   It also shows "PLAN COMPLETE" in place of its week on the overview's week strip header and on Program's block row.
+   Every phase row shows DONE, and none shows NOW.
+   The strip header shows no ‹ › week links, Program's row drops its phase name, no day cell speaks a phase name, and VoiceOver says "plan complete" where it said the week.
    On Today's band, a "PLAN COMPLETE" chip takes the phase chip's place, and the week ticker shows every week as past and none as current.
    See "A block past its plan" in [../tradeoffs.md](../tradeoffs.md).
 3. The strip's day labels grow with text size and stay whole on the small phone at AX3.
@@ -60,7 +62,7 @@ Ask before you edit anything else.
   Today it marks both and reads "2 / 2".
 - In the same file, at default text and at AX3, assert that a strip day label is taller at AX3.
   Today it is the same 9pt at both.
-- In `fitbodTests/BlockPastPlanTests.swift`, for an active block that started five weeks ago with a four-week plan, assert that the overview hero, the overview's week strip header, Program's block row and Today's band chip read "PLAN COMPLETE", that the band's ticker has no current week, and that no phase is current.
+- In `fitbodTests/BlockPastPlanTests.swift`, for an active block that started five weeks ago with a four-week plan, assert that the overview hero's headline, the overview's week strip header, Program's block row and Today's band chip read "PLAN COMPLETE", that the band's ticker has no current week, and that every phase is done and none is current.
   Today they show week 1.
 - Add a launch flag to `BlockStatesSeed` that seeds the same blocks with Spring Block started five weeks ago instead of three days ago, so its four-week plan is over.
 
@@ -78,6 +80,8 @@ Ask before you edit anything else.
 - "SESSIONS DONE" is near line 707, the 9pt labels near line 787, and "In progress" near line 995.
 - The callers that treat nil as week 1 are near line 312 of `BlockOverviewScreen.swift`, line 450 of `ProgramView.swift` and line 55 of `BlockContextBand.swift`; the band's "Accumulation" fallback is near line 42.
 - The overview's strip header and its ‹ › links are near lines 657–669 of `BlockOverviewScreen.swift`, and the hero's VoiceOver label near line 537.
+  The hero's headline is near line 497 and its week, volume and intensity row near lines 504–525; `SessionFactory` applies no phase after the plan, so those numbers would be wrong.
+  The phase rows' NOW and DONE are near lines 971–972, and a day cell speaks a phase name near line 774.
   Program's row puts the phase beside the week near lines 470 and 486, and speaks it near line 521.
 - `WeekTickerCells` shows a week as past when its number is below `currentWeek`.
 - `BlockStatesSeed` starts Spring Block near line 113 through `BlockLifecycleService.start(block:context:now:)`.

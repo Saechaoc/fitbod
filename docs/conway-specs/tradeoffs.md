@@ -152,9 +152,15 @@ Product decisions are in [decisions.md](decisions.md), and they win over this fi
 
 ### A block past its plan
 
-- Coordinator call, 2026-10-30 (T12 finding F71, decided under autopilot; the user can revisit it): after its last planned week, an active block shows "PLAN COMPLETE" where its week would be on the block overview's hero and week strip header and on Program's block row, and in place of the phase chip on Today's block band, whose week ticker marks no week as current.
-  No phase shows NOW or sits beside the week, and VoiceOver says "plan complete" in place of the week, until the lifter ends the block.
+- Coordinator call, 2026-10-30 (T12 finding F71, decided under autopilot; the user can revisit it): after its last planned week, an active block shows "PLAN COMPLETE" as the block overview hero's headline, where its week would be on the week strip header and on Program's block row, and in place of the phase chip on Today's block band, whose week ticker marks no week as current.
+  Every phase shows DONE and none shows NOW; no phase name, phase volume or phase intensity shows; and VoiceOver says "plan complete" in place of the week, until the lifter ends the block.
 - Rejected: falling back to week 1, which reads as a fresh block; showing a week past the plan, such as "W6 / 4", which reads as an error; and ending the block by itself, because only the lifter ends a block.
+
+### The block review
+
+- Coordinator call, 2026-10-30 (T70 findings F94 and F96, decided under autopilot; the user can revisit it): while no block is active, Today opens the review of the block that ended last until the lifter acknowledges it with Start next; Plan custom puts it off, and starting any block stops it.
+  The review's recommendation names the template Start next opens, with its total weeks.
+- Rejected: reopening the review during the next block, which covers Today on every visit; and a recommendation that names a phase and a placeholder length while Start next opens a different template.
 
 ### Archived routines
 
