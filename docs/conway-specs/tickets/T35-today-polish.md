@@ -21,6 +21,7 @@ On Today:
 - On the small phone in light mode, the divider under the CHEST row is stepped: its left part sits a few pixels higher than the rest.
 - At AX3, the legend (UNDER MEV, MEV → MAV, MRV) wraps awkwardly.
 - At AX3, the header's left and right items ran together as "SETTINGS MON · OCT 5" in the review snapshot.
+- At AX3 on the small phone, the header cuts the date to "FRI · OCT…" (findings F9 and F81).
 - With an active block, the third stat shows a dash under "W1 / 5".
 - With no active block, the "No active block." card is inset 32pt instead of 16pt, its sentence-case heading clashes with the card above it, and its "Start a block" link is hard to read.
 
@@ -36,7 +37,7 @@ On Today:
 1. The tick labels get their own row above the bar, with clear space below the muscle name, and every label stays inside the bar's width.
 2. Find the cause of the stepped divider and fix it, so the divider is one straight line.
 3. At accessibility sizes, the legend stacks its three items, and each label stays on one line.
-4. At AX3, the header's left and right items never touch.
+4. At AX3, the header's left and right items never touch, and the date shows whole.
    `BRUHeaderBar` already has an accessibility branch, so reproduce this before you change it.
 5. When the week trend is flat, the third stat shows the current phase's short label instead of the dash (see "Today's third stat" in [../tradeoffs.md](../tradeoffs.md)).
    Use the same short labels that Program's template rows use since T10, such as "ACCUM".
@@ -64,8 +65,8 @@ With the demo seed, write `TodayPolishUITests`:
 - On both phones, assert with frame checks that no tick label intersects the muscle name, and that the MRV label lies inside the bar.
 - On the small phone in light mode, save a screenshot, sample the divider under the first volume row at several points across its width, and assert they share one y position.
 - At AX3 on the small phone, assert that the legend items do not intersect and that each is one line tall.
-- At AX3 on the small phone, assert that the header's left item ends at least 8pt before its right item starts.
-  Record in `notes.md` whether this one fails.
+- At AX3 on the small phone, assert that the header's left item ends at least 8pt before its right item starts, and that the date is not cut off.
+  Record in `notes.md` whether each check fails.
 - With an active block in week 1 and no workouts, assert that the third stat's value is the phase's short label.
 - With no active block, assert that the card's heading starts at the same x as the card above it.
 

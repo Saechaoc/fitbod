@@ -76,6 +76,9 @@ The quick-task run of the same plan must finish its last two tasks first, so rea
 | [T76](tickets/T76-added-exercise-prescription.md) | An exercise added mid-workout gets its prescription |
 | [T77](tickets/T77-plate-inventory-list.md) | Plate Inventory's swipe-to-delete works on iOS 26 and closes like other rows |
 | [T78](tickets/T78-active-block-counts.md) | The active block's week and session counts tell the truth |
+| [T79](tickets/T79-no-history-why-sheet.md) | Why this weight with no history shows no zero weight |
+| [T80](tickets/T80-calibrating-weight-cell.md) | A calibrating set's weight can be typed, and shows once chosen |
+| [T81](tickets/T81-heatmap-figure-labels.md) | VoiceOver names each heatmap figure once |
 
 ### Phase 2: P2 defects
 

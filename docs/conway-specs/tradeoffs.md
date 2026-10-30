@@ -98,8 +98,16 @@ Product decisions are in [decisions.md](decisions.md), and they win over this fi
 
 - Call: a prescribed weight of 0 means no prescription, so the field shows its empty placeholder.
 - Coordinator answer, 2026-10-30 (T61 question `msg_1fc9fe1525bb`): a calibrating range of 0 to 0 shows a read-only dash in `bruMuted`, styled like the empty placeholder, and VoiceOver reads it as "none".
-  It stays read-only like every calibrating range.
-- Rejected: treating a 0-to-0 range as no range, which would make that calibrating cell editable and let Override focus it, a behavior no calibrating range has.
+  Like every calibrating range, it shows until the lifter picks a weight (see "Calibrating weight cell").
+- Rejected: treating a 0-to-0 range as no range, which would make that calibrating cell an open field before the lifter picks a weight, unlike every other calibrating range.
+
+### Calibrating weight cell
+
+- Coordinator call, 2026-10-30 (T61 finding F78, decided under autopilot from decision 8; the user can revisit it): an open calibrating set shows its range until the lifter picks a weight.
+  Override in Why this weight turns the cell into the weight field, holding the set's weight, and focuses it.
+  After Use or a typed weight, the cell shows that weight, and a completed set shows the weight it logged.
+- Rejected: keeping every calibrating cell read-only, because the set then logs last session's weight, which the lifter can neither see nor change, and Override has no field to focus.
+- Rejected: replacing the range with a plain field, because the range is the calibrating prescription.
 
 ## Program and blocks
 
