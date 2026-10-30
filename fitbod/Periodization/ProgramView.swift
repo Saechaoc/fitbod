@@ -36,6 +36,9 @@
 //  The measured heights are minimums, so larger text grows the hero, CTA,
 //  chips and rows instead of drawing over them. At accessibility sizes
 //  NO PROGRAM wraps, and the template header and rows stack their parts.
+//  The chrome header grows with its text, and + NEW's popover opens under
+//  its measured height. CREATE BLOCK and CHOOSE PRESET open at full height
+//  and scroll, and every row's chevron scales with the text.
 //
 //  ## Scope decisions (260525-gen)
 //
@@ -104,8 +107,10 @@ public struct ProgramView: View {
     @State private var presentingPresetPicker = false
     @State private var stagedBuilder: PendingBlockBuilder? = nil
     @State private var showAllDone = false
+    @State private var headerHeight = ProgramChromeHeader.totalHeight
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     // MARK: Init
 
@@ -118,6 +123,10 @@ public struct ProgramView: View {
             ZStack(alignment: .topTrailing) {
                 VStack(spacing: 0) {
                     ProgramChromeHeader(onNew: { showingNewPopover = true })
+                        .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { headerHeight = $0 }
+                        // + NEW's 44pt target overhangs the header; in front
+                        // of the scroll view, the overhang takes taps.
+                        .zIndex(1)
 
                     ScrollView {
                         LazyVStack(spacing: 0) {
@@ -239,13 +248,19 @@ public struct ProgramView: View {
                         stagedBuilder = .newBlock(chosenPreset)
                         presentingPresetPicker = false
                     }
-                    .presentationDetents([.medium])
+                    .presentationDetents(blockSheetDetents)
                     .presentationDragIndicator(.visible)
                 }
-                .presentationDetents([.medium])
+                .presentationDetents(blockSheetDetents)
                 .presentationDragIndicator(.visible)
             }
         }
+    }
+
+    /// CREATE BLOCK and CHOOSE PRESET open at half height, or at full height
+    /// at accessibility sizes, where their rows outgrow half the screen.
+    private var blockSheetDetents: Set<PresentationDetent> {
+        dynamicTypeSize.isAccessibilitySize ? [.large] : [.medium]
     }
 
     // MARK: Popover
@@ -271,7 +286,7 @@ public struct ProgramView: View {
                     },
                 ]
             )
-            .padding(.top, ProgramChromeHeader.totalHeight + ProgramScreenTokens.newPopoverTopGap)
+            .padding(.top, headerHeight + ProgramScreenTokens.newPopoverTopGap)
             .padding(.trailing, ProgramScreenTokens.newPopoverTrailingPadding)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -613,6 +628,8 @@ fileprivate struct NewBlockStartChoiceSheet: View {
     let onScratch: () -> Void
     let onPreset: () -> Void
 
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+
     var body: some View {
         ZStack {
             ProgramScreenTokens.screenBackground.ignoresSafeArea()
@@ -663,11 +680,10 @@ fileprivate struct NewBlockStartChoiceSheet: View {
                                 .foregroundStyle(ProgramScreenTokens.muted)
                         }
                         Spacer()
-                        Text("›")
-                            .font(.system(size: 16, weight: .regular))
-                            .foregroundStyle(ProgramScreenTokens.muted)
+                        ProgramRowChevron()
                     }
                     .padding(.horizontal, ProgramScreenTokens.horizontalPagePadding)
+                    .padding(.vertical, choiceVerticalPadding)
                     .frame(minHeight: 64)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .contentShape(Rectangle())
@@ -693,11 +709,10 @@ fileprivate struct NewBlockStartChoiceSheet: View {
                                 .foregroundStyle(ProgramScreenTokens.muted)
                         }
                         Spacer()
-                        Text("›")
-                            .font(.system(size: 16, weight: .regular))
-                            .foregroundStyle(ProgramScreenTokens.muted)
+                        ProgramRowChevron()
                     }
                     .padding(.horizontal, ProgramScreenTokens.horizontalPagePadding)
+                    .padding(.vertical, choiceVerticalPadding)
                     .frame(minHeight: 64)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .contentShape(Rectangle())
@@ -712,7 +727,14 @@ fileprivate struct NewBlockStartChoiceSheet: View {
 
                 Spacer()
             }
+            .modifier(ProgramSheetScroll())
         }
+    }
+
+    /// Room above and below a choice's wrapped text at accessibility sizes.
+    /// At standard sizes the 64pt minimum height holds it.
+    private var choiceVerticalPadding: CGFloat {
+        dynamicTypeSize.isAccessibilitySize ? 12 : 0
     }
 }
 
@@ -753,9 +775,7 @@ fileprivate struct NewBlockPresetPickerSheet: View {
                                 .lineLimit(1)
                                 .minimumScaleFactor(0.85)
                             Spacer()
-                            Text("›")
-                                .font(.system(size: 16, weight: .regular))
-                                .foregroundStyle(ProgramScreenTokens.muted)
+                            ProgramRowChevron()
                         }
                         .padding(.horizontal, ProgramScreenTokens.horizontalPagePadding)
                         .frame(height: 52)
@@ -779,6 +799,25 @@ fileprivate struct NewBlockPresetPickerSheet: View {
 
                 Spacer()
             }
+            .modifier(ProgramSheetScroll())
+        }
+    }
+}
+
+// MARK: - ProgramSheetScroll
+
+/// A block sheet's content, scrolling at accessibility sizes, where it can
+/// outgrow even the full-height sheet. At standard sizes it stays as is.
+fileprivate struct ProgramSheetScroll: ViewModifier {
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+
+    func body(content: Content) -> some View {
+        if dynamicTypeSize.isAccessibilitySize {
+            ScrollView {
+                content
+            }
+        } else {
+            content
         }
     }
 }
@@ -857,7 +896,11 @@ fileprivate enum ProgramTypography {
 // MARK: - ProgramChromeHeader
 
 fileprivate struct ProgramChromeHeader: View {
+    /// The height at default text. Larger text grows the row, so ProgramView
+    /// opens + NEW's popover under the header's measured height.
     static let totalHeight: CGFloat = ProgramScreenTokens.topHeaderHeight
+    /// How far + NEW's 44pt target hangs below the header at default text.
+    private static let newTargetOverhang: CGFloat = BRUMetrics.touchTarget - totalHeight
 
     let onNew: () -> Void
 
@@ -880,24 +923,38 @@ fileprivate struct ProgramChromeHeader: View {
                         .font(ProgramTypography.chromeLabel)
                         .tracking(ProgramScreenTokens.headerLetterSpacing)
                         .foregroundStyle(ProgramScreenTokens.ink)
+                        // Lifts the text inside its 44pt target, so the target
+                        // starts at the header's top edge and hangs below the
+                        // header, never into the status bar, which takes no taps.
+                        .padding(.bottom, Self.newTargetOverhang)
+                        .frame(minWidth: BRUMetrics.touchTarget, minHeight: BRUMetrics.touchTarget, alignment: .trailing)
+                        .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
+                // The target takes no height in the row, whose height comes
+                // from PROGRAM in the same font, and keeps its text level
+                // with PROGRAM.
+                .padding(.top, -(BRUMetrics.touchTarget - Self.newTargetOverhang) / 2)
+                .padding(.bottom, -(BRUMetrics.touchTarget + Self.newTargetOverhang) / 2)
             }
             .padding(.horizontal, ProgramScreenTokens.horizontalPagePadding)
-            .frame(height: ProgramScreenTokens.topHeaderRowHeight)
+            .padding(.vertical, 4)
+            .frame(minHeight: ProgramScreenTokens.topHeaderRowHeight)
             .frame(maxWidth: .infinity)
             .background(ProgramScreenTokens.screenBackground)
 
             rule
         }
-        .frame(height: Self.totalHeight)
         .background(ProgramScreenTokens.screenBackground)
     }
 
+    /// A 2pt rule. It takes no taps, so + NEW's target takes them where it
+    /// hangs over the bottom rule.
     private var rule: some View {
         Rectangle()
             .fill(ProgramScreenTokens.ink)
             .frame(height: ProgramScreenTokens.blackDividerThickness)
+            .allowsHitTesting(false)
     }
 }
 
@@ -1238,8 +1295,6 @@ fileprivate struct ProgramTemplateRow: View {
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     /// The measured 56pt weeks column, scaled with the weeks label.
     @ScaledMetric(relativeTo: .largeTitle) private var weeksWidth: CGFloat = ProgramScreenTokens.templateWeeksWidth
-    /// The 16pt chevron, scaled like body text.
-    @ScaledMetric(relativeTo: .body) private var chevronSize: CGFloat = 16
 
     var body: some View {
         Button(action: action) {
@@ -1268,9 +1323,7 @@ fileprivate struct ProgramTemplateRow: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                 }
 
-                Text("›")
-                    .font(.system(size: chevronSize, weight: .regular))
-                    .foregroundStyle(ProgramScreenTokens.muted)
+                ProgramRowChevron()
             }
             .padding(.horizontal, ProgramScreenTokens.horizontalPagePadding)
             .padding(.vertical, 12)
@@ -1287,6 +1340,20 @@ fileprivate struct ProgramTemplateRow: View {
         dynamicTypeSize.isAccessibilitySize
             ? AnyLayout(VStackLayout(alignment: .leading, spacing: 4))
             : AnyLayout(HStackLayout(alignment: .center, spacing: 16))
+    }
+}
+
+// MARK: - ProgramRowChevron
+
+/// The muted "›" closing a template row or a block sheet's row: 16pt at
+/// default text, scaled like body text so it grows with the row's words.
+fileprivate struct ProgramRowChevron: View {
+    @ScaledMetric(relativeTo: .body) private var size: CGFloat = 16
+
+    var body: some View {
+        Text("›")
+            .font(.system(size: size, weight: .regular))
+            .foregroundStyle(ProgramScreenTokens.muted)
     }
 }
 
