@@ -355,6 +355,24 @@ public final class RoutineExerciseDraft: Identifiable {
 
     public var targetRepsLow: Int = 8
     public var targetRepsHigh: Int = 12
+
+    /// The most reps either end of the target range can step to.
+    public static let maxTargetReps = 50
+
+    /// What the low end of the rep range can step through. It stops at
+    /// the high end, so low can never pass high. Stored values outside
+    /// the bounds (typed before the editor used steppers) still give a
+    /// valid range that the user can step back from.
+    public var targetRepsLowRange: ClosedRange<Int> {
+        1...min(max(targetRepsHigh, 1), Self.maxTargetReps)
+    }
+
+    /// What the high end can step through. It stops at the low end, so
+    /// high can never drop below low.
+    public var targetRepsHighRange: ClosedRange<Int> {
+        min(max(targetRepsLow, 1), Self.maxTargetReps)...Self.maxTargetReps
+    }
+
     public var targetRPE: Double? = 8.0
     public var prescribedRestSeconds: Int = 120
     // Phase 3.1 PIVOT-04 — `progressionKind: ProgressionKind` REMOVED.

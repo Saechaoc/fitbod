@@ -3,19 +3,18 @@
 //  fitbod
 //
 //  Wave-4 plan 06-09b — `@ModelActor` off-main rendering service for
-//  the EXP-01 (CSV) + EXP-02 (JSON) exports. SettingsView kicks off
-//  rendering via `Task { let file = try await ExportService(...).renderCSV() }`
-//  and assigns the resulting Sendable `CSVFile` / `JSONFile` back on
-//  the main actor to wire into `ShareLink`.
+//  the EXP-01 (CSV) + EXP-02 (JSON) exports. Settings' share items
+//  (`CSVExportItem` / `JSONExportItem`) call it when the share sheet
+//  asks for a file, and hand the rendered `CSVFile` / `JSONFile`
+//  bytes to the share sheet.
 //
 //  ## Why @ModelActor (RESEARCH §Pitfall 13)
 //
 //  `ShareLink`'s `DataRepresentation` runs its byte-producer closure
 //  on the caller's thread. If we built the bytes from inside the
 //  closure, a large export would block the main thread while the
-//  share sheet animated in. ExportService renders the bytes off main
-//  first, hands back a value-typed Transferable, and ShareLink's
-//  closure becomes a trivial pass-through.
+//  share sheet animated in. ExportService renders the bytes off main;
+//  the share item's async closure only awaits it.
 //
 //  ## snapshotDocument
 //

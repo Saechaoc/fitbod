@@ -23,8 +23,8 @@
 //    - RoutineBuilderView: "New routine" / "Routine name" /
 //      "Discard changes?" / "Discard" / "Keep editing" / "Cancel"
 //    - InlineExerciseSearchRow: "Add exercise"
-//    - PrescriptionEditorRow: "Sets" / "Reps" / "Target RPE" /
-//      "Rest" / "Track tempo" / "Track partial reps" /
+//    - PrescriptionEditorRow: "Sets" / "Min reps" / "Max reps" /
+//      "Target RPE" / "Rest" / "Track tempo" / "Track partial reps" /
 //      "Auto warm-up" / "Per-set overrides" / "Remove"
 //
 //  Phase 3.1 (PIVOT-04 / D-10) — REMOVED from PrescriptionEditorRow:
@@ -73,10 +73,11 @@ struct RoutineBuilderCopyTests {
             contentsOf: base.appendingPathComponent("PrescriptionEditorRow.swift"),
             encoding: .utf8
         )
-        // Field labels — BRU advanced section (Sets / Reps / Target RPE /
-        // Rest / Tempo / Partials / Auto warm-up / Per-set overrides).
+        // Field labels — BRU advanced section (Sets / Min reps / Max reps /
+        // Target RPE / Rest / Tempo / Partials / Auto warm-up / Per-set overrides).
         #expect(editor.contains("\"Sets\""))
-        #expect(editor.contains("\"Reps\""))
+        #expect(editor.contains("\"Min reps\""))
+        #expect(editor.contains("\"Max reps\""))
         #expect(editor.contains("\"Target RPE\""))
         #expect(editor.contains("\"Rest\""))
         #expect(editor.contains("\"Track tempo\""))

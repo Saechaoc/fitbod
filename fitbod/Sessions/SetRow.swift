@@ -4,7 +4,9 @@
 // BRU rewrite — Phase 2.1 Plan 07 (Wave 3, UI-REVIEW item 33).
 // UI-SPEC v2 § Session logger line 367-389.
 //
-// Per-set logging row: [S{N}] [Previous] [Weight] [Reps] [RPE chips] [SetTypeChip] [✎] [SetCompletionGlyph]
+// Per-set logging row, two lines:
+//   [S{N}] [Previous] [Weight] [Reps] [✎] [SetCompletionGlyph]
+//   [WHY] [RPE chips] [SetTypeChip]
 //
 // KEY CHANGES from v1:
 //   - SF Symbol checkmark.circle.fill → SetCompletionGlyph(isComplete:)
@@ -49,6 +51,8 @@ public struct SetRow: View {
 
     @State private var repsText: String = ""
     @State private var presentingSetNote: Bool = false
+    /// The WHY control opens Why-this-weight; the weight cell presents it.
+    @State private var explainingWeight: Bool = false
     @FocusState private var repsFocused: Bool
 
     @Query private var inventories: [PlateInventory]
@@ -122,7 +126,8 @@ public struct SetRow: View {
                         wasManualOverride: $entry.wasManualOverride,
                         isComplete: entry.isComplete,
                         onTapEmptyCell: onTapEmptyCell,
-                        onEditCommitted: onEditCommitted
+                        onEditCommitted: onEditCommitted,
+                        isExplaining: $explainingWeight
                     )
                     .frame(width: dynamicTypeSize.isAccessibilitySize ? nil : 60)
                     .contentShape(Rectangle())
@@ -215,10 +220,16 @@ public struct SetRow: View {
                     .accessibilityIdentifier("set.complete.\(identifierSuffix)")
                 }
 
-                // LINE 2 — RPE chips + set-type chip
-                // .padding(.leading, 40) = 32pt setLabel + 8pt gap,
-                // so chips align under the PREV column.
+                // LINE 2 — WHY + RPE chips + set-type chip
+                // WHY takes the 40pt indent under the set label, so the chips
+                // move 10pt right and line 2 still fits a set-type chip at
+                // 390pt. Rows without an explanation keep the indent, which
+                // aligns the chips under the PREV column.
                 inputLayout {
+                    if explanation != nil {
+                        whyButton
+                    }
+
                     InlineRPEChipRow(rpe: Binding(
                         get: { entry.rpe },
                         set: { entry.rpe = $0; onEditCommitted() }
@@ -231,7 +242,7 @@ public struct SetRow: View {
 
                     if !dynamicTypeSize.isAccessibilitySize { Spacer(minLength: 0) }
                 }
-                .padding(.leading, dynamicTypeSize.isAccessibilitySize ? 0 : 40)
+                .padding(.leading, dynamicTypeSize.isAccessibilitySize || explanation != nil ? 0 : 40)
             }
             .padding(.vertical, 12)                                              // UI-SPEC md
 
@@ -264,6 +275,24 @@ public struct SetRow: View {
         dynamicTypeSize.isAccessibilitySize
             ? AnyLayout(VStackLayout(alignment: .leading, spacing: 8))
             : AnyLayout(HStackLayout(spacing: 6))
+    }
+
+    /// Opens Why-this-weight (Milestone 1 decision 8). The weight cell
+    /// presents the sheet and ends editing first.
+    private var whyButton: some View {
+        Button {
+            explainingWeight = true
+        } label: {
+            Text("WHY")
+                .font(BRUFont.labelSmall)
+                .tracking(1.2)
+                .foregroundStyle(Color.bruInk)
+                .frame(minWidth: 44, minHeight: 44, alignment: .leading)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Why this weight")
+        .accessibilityIdentifier("set.why.\(identifierSuffix)")
     }
 
     // MARK: - Private helpers

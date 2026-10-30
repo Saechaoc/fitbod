@@ -53,4 +53,21 @@ enum UITestNavigation {
         }
         XCTAssertTrue(element.exists && element.isHittable, "Expected a visible control: \(element)")
     }
+
+    /// Taps a BRUStepper's visible − or + cell until it reads `target`, the
+    /// way a user steps it.
+    static func step(_ stepper: XCUIElement, to target: Int, file: StaticString = #filePath, line: UInt = #line) {
+        for _ in 0..<30 {
+            guard let value = Int(stepper.value as? String ?? ""), value != target else { break }
+            tapStepper(stepper, increment: value < target)
+        }
+        XCTAssertEqual(stepper.value as? String, String(target), "The stepper must reach \(target)", file: file, line: line)
+    }
+
+    /// A BRUStepper is one adjustable element. At default text sizes its
+    /// trailing 152pt are [− 44][value 64][+ 44].
+    static func tapStepper(_ stepper: XCUIElement, increment: Bool) {
+        stepper.coordinate(withNormalizedOffset: CGVector(dx: 1, dy: 0.5))
+            .withOffset(CGVector(dx: increment ? -22 : -130, dy: 0)).tap()
+    }
 }

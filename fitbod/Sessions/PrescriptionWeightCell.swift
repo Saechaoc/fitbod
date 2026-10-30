@@ -7,7 +7,10 @@
 //  BRU conformance (03-UI-SPEC lines 388, 409, 494):
 //    - info.circle SF Symbol + Button block DELETED (was lines 101–113 of v1)
 //    - Color.accentColor DELETED (was on info.circle button)
-//    - Disclosure uses a simultaneous long press so TextField editing cannot consume it
+//    - Why-this-weight opens from SetRow's visible WHY control or the
+//      "Why this weight" accessibility action (Milestone 1 decision 8). The
+//      long press that replaced info.circle never fired reliably on a cell
+//      holding a TextField, so it is gone.
 //    - BRUFont.bodyEmphasis for editable weight value (was Font.body)
 //    - BRUFont.bodyDefault for range display (was Font.body)
 //    - BRUFont.labelMicro + .textCase(.uppercase) + .tracking(1.0) for "M" badge (was Font.caption)
@@ -15,11 +18,13 @@
 //
 //  Layout:
 //    [weight input OR read-only range] [M badge?]
-//    Long-press on HStack opens WhyThisWeightSheet when explanation != nil.
+//    The cell presents WhyThisWeightSheet when explanation != nil. Opening it
+//    ends editing, so the keyboard never covers the sheet. Use writes the
+//    suggested weight into the set; Override closes the sheet and focuses
+//    the weight field.
 //
-//  Long-press disclosure replaces v1 info.circle button per 03-UI-SPEC line 388 + line 409.
 //  The 44pt touch target is preserved via the cell's vertical padding (12pt) +
-//  TextField height + the gesture-recognizing HStack contact area.
+//  TextField height.
 //
 
 import SwiftUI
@@ -39,9 +44,14 @@ public struct PrescriptionWeightCell: View {
     public var onTapEmptyCell: () -> Void = {}
     /// Fired when the weight field loses focus so the caller can persist.
     public var onEditCommitted: () -> Void = {}
+    /// SetRow's WHY control opens Why-this-weight through this binding.
+    /// Without one (previews), the cell keeps the state itself.
+    private let isExplaining: Binding<Bool>?
 
     @State private var weightText: String = ""
     @State private var showWhySheet: Bool = false
+    /// Set by Override: the weight field takes focus once the sheet is gone.
+    @State private var focusAfterSheet = false
     @FocusState private var weightFocused: Bool
 
     public init(
@@ -53,7 +63,8 @@ public struct PrescriptionWeightCell: View {
         wasManualOverride: Binding<Bool>,
         isComplete: Bool = false,
         onTapEmptyCell: @escaping () -> Void = {},
-        onEditCommitted: @escaping () -> Void = {}
+        onEditCommitted: @escaping () -> Void = {},
+        isExplaining: Binding<Bool>? = nil
     ) {
         self._weight = weight
         self.prescribed = prescribed
@@ -64,6 +75,7 @@ public struct PrescriptionWeightCell: View {
         self.isComplete = isComplete
         self.onTapEmptyCell = onTapEmptyCell
         self.onEditCommitted = onEditCommitted
+        self.isExplaining = isExplaining
     }
 
     public var body: some View {
@@ -86,8 +98,7 @@ public struct PrescriptionWeightCell: View {
                     .onChange(of: weightText) { _, new in
                         if let d = Double(new) {
                             weight = d
-                            wasManualOverride = (prescribed != nil) &&
-                                abs(d - (prescribed ?? d)) > 0.001
+                            wasManualOverride = isManualOverride(d)
                         }
                     }
                     .onChange(of: weightFocused) { _, focused in
@@ -114,15 +125,6 @@ public struct PrescriptionWeightCell: View {
         }
         .padding(.vertical, 12)
         .contentShape(Rectangle())
-        // Observe the press alongside TextField's own selection gesture.
-        // A competing parent gesture can focus the editor without opening
-        // the explanation when the press lands on the number itself.
-        .simultaneousGesture(LongPressGesture(minimumDuration: 0.4).onEnded { _ in
-            if explanation != nil {
-                weightFocused = false
-                showWhySheet = true
-            }
-        })
         .onTapGesture {
             if range == nil && weightText.isEmpty { onTapEmptyCell() }
         }
@@ -132,20 +134,30 @@ public struct PrescriptionWeightCell: View {
                 ? "Prescribed weight range: \(formatted(range!.lowerBound)) to \(formatted(range!.upperBound)) \(unitLabel)"
                 : "Prescribed weight: \(formatted(weight)) \(unitLabel)"
         )
-        .accessibilityHint(explanation != nil ? "Long press for prescription breakdown." : "")
         .accessibilityValue(range == nil ? "\(formatted(weight)) \(unitLabel)" : "")
         .accessibilityActions {
             if explanation != nil {
-                Button("Explain prescribed weight") {
-                    weightFocused = false
-                    showWhySheet = true
-                }
+                Button("Why this weight") { explaining.wrappedValue = true }
             }
         }
-        .sheet(isPresented: $showWhySheet) {
+        .sheet(isPresented: explaining, onDismiss: focusAfterOverride) {
             if let exp = explanation {
-                WhyThisWeightSheet(explanation: exp, unitLabel: unitLabel)
-                    .presentationDetents([.medium])
+                WhyThisWeightSheet(
+                    explanation: exp,
+                    onUseSuggested: { use(exp.roundedWeight) },
+                    onOverride: { focusAfterSheet = true },
+                    unitLabel: unitLabel
+                )
+                .presentationDetents([.medium])
+            }
+        }
+        // However the sheet opens, end editing first so the keyboard never
+        // covers it; the field's focus change persists any edit.
+        .onChange(of: explaining.wrappedValue) { _, open in
+            if open {
+                UIApplication.shared.sendAction(
+                    #selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil
+                )
             }
         }
         .onAppear {
@@ -163,6 +175,31 @@ public struct PrescriptionWeightCell: View {
     }
 
     // MARK: - Private helpers
+
+    /// SetRow's binding when it passes one, otherwise the cell's own state.
+    private var explaining: Binding<Bool> {
+        isExplaining ?? $showWhySheet
+    }
+
+    /// A weight that differs from the prescription is a manual override.
+    private func isManualOverride(_ d: Double) -> Bool {
+        (prescribed != nil) && abs(d - (prescribed ?? d)) > 0.001
+    }
+
+    /// Use in Why-this-weight: the suggested weight becomes the set's weight.
+    private func use(_ suggested: Double) {
+        weightText = formatted(suggested)
+        weight = suggested
+        wasManualOverride = isManualOverride(suggested)
+        onEditCommitted()
+    }
+
+    /// Override in Why-this-weight: once the sheet is gone, focus the field.
+    private func focusAfterOverride() {
+        guard focusAfterSheet else { return }
+        focusAfterSheet = false
+        weightFocused = true
+    }
 
     /// Formats a Double without trailing zeros: "100" not "100.0", "102.5" not "102.500".
     private func formatted(_ d: Double) -> String {

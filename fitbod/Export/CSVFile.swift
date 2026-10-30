@@ -3,8 +3,8 @@
 //  fitbod
 //
 //  Wave-4 plan 06-09b — `Transferable` value type wrapping pre-rendered
-//  CSV bytes. Consumed by `ShareLink(item:)` in `SettingsView` to
-//  surface the EXP-01 export via the system share sheet (Files /
+//  CSV bytes. `ExportService.renderCSV()` returns it, and Settings'
+//  `CSVExportItem` hands its bytes to the system share sheet (Files /
 //  iCloud Drive / AirDrop).
 //
 //  ## Why a value type

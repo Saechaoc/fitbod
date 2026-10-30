@@ -10,10 +10,11 @@ extension UITestNavigation {
         return app
     }
 
+    /// One tap on set 1's WHY control, as a user opens Why-this-weight.
     static func openWeightExplanation(in app: XCUIApplication) {
-        let weight = app.descendants(matching: .any).matching(identifier: "set.weight.1.S1").firstMatch
-        reveal(weight, in: app)
-        weight.press(forDuration: 1.2)
+        let why = app.buttons["set.why.1.S1"]
+        reveal(why, in: app)
+        why.tap()
         XCTAssertTrue(app.staticTexts.matching(NSPredicate(
             format: "label CONTAINS[c] %@", "RECOMMENDED"
         )).firstMatch.waitForExistence(timeout: 10))
