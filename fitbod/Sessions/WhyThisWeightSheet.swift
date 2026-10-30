@@ -17,7 +17,8 @@
 //    3. Numbered step blocks (01 / 02 / 03) in VStack(spacing: 8)
 //       - When .calibrating: CalibratingProgressMeter between step 02 and step 03
 //    4. Footer bar: 2pt bruInk top rule + BRUButton(.ghost) "Override" +
-//       BRUButton(.signal) "Use {weight} ▸"
+//       BRUButton(.signal) "Use {weight} ▸". A suggestion of 0 is no
+//       suggestion, so the bar shows Override alone.
 //    5. Bottom safe-area filler: 24pt bruBg rectangle
 //
 //  Presentation: .presentationDetents([.medium]) — NOT expandable per 03-UI-SPEC line 410.
@@ -458,17 +459,28 @@ public struct WhyThisWeightSheet: View {
             }
             .frame(maxWidth: .infinity)
 
-            BRUButton("Use \(formatted(explanation.roundedWeight)) ▸", kind: .signal, size: .md) {
-                onUseSuggested?()
-                dismiss()
+            if let useTitle {
+                BRUButton(useTitle, kind: .signal, size: .md) {
+                    onUseSuggested?()
+                    dismiss()
+                }
+                .frame(maxWidth: .infinity)
             }
-            .frame(maxWidth: .infinity)
         }
         .overlay(alignment: .top) {
             Rectangle()
                 .fill(Color.bruInk)
                 .frame(height: 2)
         }
+    }
+
+    /// The Use button's title, or nil when the sheet offers no Use. A
+    /// strategy with no history suggests 0, which is no suggestion: Use
+    /// would only empty the weight field, so the sheet keeps its
+    /// explanation and Override and drops Use.
+    var useTitle: String? {
+        guard explanation.roundedWeight > 0 else { return nil }
+        return "Use \(formatted(explanation.roundedWeight)) ▸"
     }
 
     // MARK: - Phase 3.1 Status Text Helpers

@@ -166,6 +166,48 @@ final class WhyThisWeightControlUITests: XCTestCase {
         }
     }
 
+    /// Ticket T61: an exercise with no history has no suggestion, which the
+    /// strategies give as 0. Why-this-weight keeps its explanation and
+    /// Override but offers no Use, which would only empty the weight field.
+    @MainActor
+    func testNoHistoryWhyOffersNoUse() throws {
+        let app = UITestNavigation.openEmptySessionBuilder()
+        let name = app.textFields["Session name"]
+        name.tap()
+        name.typeText("T61 First Bench\n")
+        app.buttons["Add exercise"].tap()
+        let search = app.textFields["library.search.picker"]
+        XCTAssertTrue(search.waitForExistence(timeout: 10))
+        search.tap()
+        search.typeText("Barbell Bench Press - Medium Grip")
+        let pick = app.buttons.matching(NSPredicate(
+            format: "identifier BEGINSWITH %@ AND label BEGINSWITH[c] %@",
+            "exercise.pick.", "Barbell Bench Press - Medium Grip"
+        )).firstMatch
+        XCTAssertTrue(pick.waitForExistence(timeout: 10))
+        pick.tap()
+        let save = app.buttons["Save session ▸"]
+        XCTAssertTrue(save.waitForExistence(timeout: 10))
+        save.tap()
+        let session = app.staticTexts["T61 First Bench"].firstMatch
+        XCTAssertTrue(session.waitForExistence(timeout: 15))
+        session.tap()
+        let start = app.buttons.labeled("Start workout ▸")
+        XCTAssertTrue(start.waitForExistence(timeout: 15))
+        UITestNavigation.reveal(start, in: app)
+        start.tap()
+        XCTAssertTrue(weightField(in: app).waitForExistence(timeout: 15))
+
+        tapWhy(in: app)
+        let heading = app.staticTexts.matching(NSPredicate(format: "label ==[c] %@", "Why this weight")).firstMatch
+        XCTAssertTrue(heading.waitForExistence(timeout: 5), "WHY must open Why-this-weight")
+        let override = app.buttons.matching(NSPredicate(format: "label ==[c] %@", "Override")).firstMatch
+        XCTAssertTrue(override.waitForExistence(timeout: 5), "Override must stay")
+        let use = app.buttons.matching(NSPredicate(format: "label BEGINSWITH[c] %@", "Use ")).firstMatch
+        XCTAssertFalse(use.exists, "A suggestion of 0 is no suggestion, so the sheet must not offer Use")
+        UITestNavigation.saveScreenshot("T61", "why-no-history")
+    }
+
     @MainActor
     private func tapWhy(in app: XCUIApplication) {
         let why = app.buttons["set.why.1.S1"]

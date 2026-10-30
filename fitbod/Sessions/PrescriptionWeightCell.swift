@@ -22,6 +22,8 @@
 //    as a superscript right after the digits, inside the cell's own width,
 //    so it never reaches the reps column (review item 18). A prescribed
 //    weight of 0 is no prescription: the field keeps its "—" placeholder.
+//    A calibrating range of 0 to 0 is no suggestion either: the read-only
+//    cell shows the same "—", and VoiceOver reads "none".
 //    The cell presents WhyThisWeightSheet when explanation != nil. Opening it
 //    ends editing, so the keyboard never covers the sheet. Use writes the
 //    suggested weight into the set and clears the badge; Override closes the
@@ -37,7 +39,8 @@ public struct PrescriptionWeightCell: View {
     @Binding public var weight: Double
     public let prescribed: Double?
     /// When non-nil, renders the read-only calibrating-range Text instead of
-    /// the editable TextField. Format: "{low} \u{2013} {high} {unitLabel}".
+    /// the editable TextField. Format: "{low} \u{2013} {high} {unitLabel}";
+    /// a range of 0 to 0 shows the field's "—" placeholder instead.
     public let range: ClosedRange<Double>?
     public let explanation: PrescriptionExplanation?
     /// Unit label for the weight ("lb" or "kg"). No default: the caller
@@ -87,10 +90,19 @@ public struct PrescriptionWeightCell: View {
             if let r = range {
                 // MARK: Read-only calibrating-range display
                 // 03-UI-SPEC line 206 verbatim: "{low} \u{2013} {high} unit" with U+2013 en-dash
-                Text("\(formatted(r.lowerBound)) \u{2013} \(formatted(r.upperBound)) \(unitLabel)")
-                    .font(BRUFont.bodyDefault)
-                    .foregroundStyle(Color.bruMuted)
-                    .accessibilityValue("\(formatted(r.lowerBound)) to \(formatted(r.upperBound)) \(unitLabel), calibrating")
+                if let text = rangeText {
+                    Text(text)
+                        .font(BRUFont.bodyDefault)
+                        .foregroundStyle(Color.bruMuted)
+                        .accessibilityValue("\(formatted(r.lowerBound)) to \(formatted(r.upperBound)) \(unitLabel), calibrating")
+                } else {
+                    // A range of 0 to 0 is no suggestion: the field's empty
+                    // "—", in its font and place, read as "none".
+                    Text("—")
+                        .font(BRUFont.bodyEmphasis)
+                        .foregroundStyle(Color.bruMuted)
+                        .frame(minWidth: 60, minHeight: 44, alignment: .leading)
+                }
             } else {
                 // MARK: Editable weight TextField
                 TextField("—", text: $weightText)
@@ -126,12 +138,8 @@ public struct PrescriptionWeightCell: View {
             if range == nil && weightText.isEmpty { onTapEmptyCell() }
         }
         // Accessibility per 03-UI-SPEC line 494
-        .accessibilityLabel(
-            range != nil
-                ? "Prescribed weight range: \(formatted(range!.lowerBound)) to \(formatted(range!.upperBound)) \(unitLabel)"
-                : "Prescribed weight: \(weightDescription)"
-        )
-        .accessibilityValue(range == nil ? weightDescription : "")
+        .accessibilityLabel(accessibilityLabelText)
+        .accessibilityValue(accessibilityValueText)
         // Like SetRow's visible WHY, only an open set offers the action.
         .accessibilityActions {
             if explanation != nil && !isComplete {
@@ -200,6 +208,29 @@ public struct PrescriptionWeightCell: View {
     /// placeholder.
     private var weightDescription: String {
         weightText.isEmpty ? "none" : "\(formatted(weight)) \(unitLabel)"
+    }
+
+    /// The read-only calibrating range, "95 – 105 lb", or nil when there is
+    /// none to show. A range of 0 to 0, a bodyweight lift calibrating with
+    /// no added load, is no suggestion, so the cell shows the field's "—".
+    var rangeText: String? {
+        guard let range, range.upperBound > 0 else { return nil }
+        return "\(formatted(range.lowerBound)) \u{2013} \(formatted(range.upperBound)) \(unitLabel)"
+    }
+
+    /// VoiceOver's label: the calibrating range, or what the field shows.
+    /// A range of 0 to 0 reads like the empty field.
+    var accessibilityLabelText: String {
+        guard let range else { return "Prescribed weight: \(weightDescription)" }
+        guard rangeText != nil else { return "Prescribed weight: none" }
+        return "Prescribed weight range: \(formatted(range.lowerBound)) to \(formatted(range.upperBound)) \(unitLabel)"
+    }
+
+    /// VoiceOver's value: the field's reading, or "none" for a range of 0
+    /// to 0. A range's text has its own.
+    var accessibilityValueText: String {
+        guard range != nil else { return weightDescription }
+        return rangeText == nil ? "none" : ""
     }
 
     /// The "M" as a superscript right after the digits. A hidden copy of
