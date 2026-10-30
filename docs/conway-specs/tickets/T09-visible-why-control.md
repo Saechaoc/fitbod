@@ -30,7 +30,7 @@ An exercise with no history shows a weight of "0", which reads like a real targe
 
 ## Change
 
-1. Each incomplete work set that has an explanation shows a small "WHY" text control in its weight cell (see "Visible WHY control" in [../tradeoffs.md](../tradeoffs.md)).
+1. Each incomplete work set that has an explanation shows a small "WHY" text control at the leading end of its second line, the RPE-chip line (see "Visible WHY control" in [../tradeoffs.md](../tradeoffs.md)).
 2. WHY has a 44pt target and fits the 390pt phone at default text and at AX3.
 3. The weight cell has the VoiceOver action "Why this weight".
 4. Tapping WHY dismisses the keyboard and opens the sheet (decision 8).

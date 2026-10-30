@@ -12,6 +12,10 @@ Newest first.
 - What: the coordinator gets that stop proof, including the terminal close, before the acceptance checks, not only before the merge.
 - Why: a worker that skipped step 8 could commit while the coordinator checked it, and the merge would take that unreviewed commit.
 - What: "When workers go quiet" notes that settled workers whose terminals were closed show `unverifiable` with `requiresAction: true` and no next action in `worker-list`, and says to ignore them.
+- What: a `worker_done` whose stop proof is still pending is recorded as pending, and its batch is acknowledged as usual, so it does not hold up the other lanes' messages.
+- Why: the user's review hook keeps every Copilot worker `working` for a few minutes after `worker_done`, so that wait is the normal case.
+- What: "Visible WHY control" in [tradeoffs.md](tradeoffs.md) and T09's change 1 now describe the WHY placement on `main`, at the leading end of the set's chip line.
+- Why: the quick-task run shipped that placement in `5d234ba`, because the weight cell's line has only about 18pt free at 390pt, and T09 would otherwise move WHY back.
 - What: [worker-rules.md](worker-rules.md) Finishing step 8 tells workers to start no new work after `worker_done`, and Copilot workers to call `task_complete` right away.
 - Why: Copilot's autopilot otherwise prompts a worker to keep going after `worker_done`.
 

@@ -223,7 +223,8 @@ When workers go quiet:
 ## Accept or reject a worker_done
 
 Match `worker_done` to its attempt and effective brief.
-First get the stop proof in "Settle a ticket" step 2, including the terminal close for a `retained` receipt, so nothing in the worktree changes while you check it; while that proof is pending, come back to this `worker_done` after later waits.
+First get the stop proof in "Settle a ticket" step 2, including the terminal close for a `retained` receipt, so nothing in the worktree changes while you check it.
+While that proof is pending, record the `worker_done` as pending in the run log, acknowledge its batch as usual, and come back to it after later waits.
 Then check all of this in that worktree:
 
 1. `git -C <worktree> log --format=%H%n%B main..HEAD` shows the ticket's commits, which name the ticket and have no `Co-Authored-By` line.

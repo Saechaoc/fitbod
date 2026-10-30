@@ -84,11 +84,13 @@ Product decisions are in [decisions.md](decisions.md), and they win over this fi
 
 ### Visible WHY control
 
-- Call: a small "WHY" text control in the weight cell of each incomplete work set that has an explanation.
-  It has a 44pt target, fits the 390pt phone at default text and AX3, and has the VoiceOver action "Why this weight".
+- Call: a small "WHY" text control at the leading end of the second line of each incomplete work set that has an explanation, the line with the RPE chips.
+  It has a 44pt target and fits the 390pt phone at default text and AX3, and the weight cell keeps the VoiceOver action "Why this weight".
   The long-press path is removed.
   Use writes the suggested weight, clears the manual-override flag and closes the sheet.
   Override closes the sheet and focuses the weight field.
+- Rejected: WHY inside the weight cell, because the set row's first line has only about 18pt free at 390pt; the quick-task run chose the chip line instead and shipped it in `5d234ba` on 2026-10-29.
+- Rejected: WHY at the trailing end of the chip line, because a set-type chip then wraps the RPE chips at 390pt.
 - Rejected: the long press, because the text field swallows it and nobody can discover it.
 - Rejected: an SF Symbol info button, because BRU screens use text labels.
 
