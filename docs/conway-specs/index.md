@@ -79,6 +79,7 @@ The quick-task run of the same plan must finish its last two tasks first, so rea
 | [T79](tickets/T79-no-history-why-sheet.md) | Why this weight shows no zero weight and no unknown plate size |
 | [T80](tickets/T80-calibrating-weight-cell.md) | A calibrating set's weight can be typed, and shows once chosen |
 | [T81](tickets/T81-heatmap-figure-labels.md) | VoiceOver names each heatmap figure once |
+| [T82](tickets/T82-e1rm-chart-voiceover.md) | VoiceOver reads each e1RM point's rounded weight |
 
 ### Phase 2: P2 defects
 
