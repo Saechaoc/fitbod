@@ -1,0 +1,73 @@
+---
+id: T78
+title: The active block's week and session counts tell the truth
+phase: 1
+items: []
+depends_on: []
+size: M
+sim: small
+owns: [fitbod/Periodization/BlockOverviewScreen.swift, fitbod/Periodization/ProgramView.swift, fitbod/Views/BlockContextBand.swift, new:fitbodUITests/BlockWeekCountsUITests.swift, new:fitbodTests/BlockPastPlanTests.swift]
+---
+
+# T78: The active block's week and session counts tell the truth
+
+Read [../worker-rules.md](../worker-rules.md) first; it is part of this ticket.
+
+## Problem
+
+These are findings F69, F71 and F75, which the T12 worker found on the active block's overview.
+
+- The week strip, its "SESSIONS DONE" count and the NOW phase's "In progress" count include empty workouts.
+  With T12's seed, the empty finished "Upper B" shows as a done day, and the strip reads "2 / 2 SESSIONS DONE · 0 LEFT".
+  Decision 6 leaves empty workouts out of session counts, and T12's completed-block list already does.
+- An active block past its last planned week falls back to week 1: "W1 / 4" on the hero, phase 1 NOW, and "Week 1 of 4" on Program and Today.
+  `PeriodizationEngine.weekIndex` returns nil after the plan, and the callers treat nil as week 1.
+- The strip's day labels use a fixed 9pt font, which does not grow with text size.
+
+## Target
+
+- The active strip and phase counts in `fitbod/Periodization/BlockOverviewScreen.swift`.
+- The week text on the overview hero, Program's active block row in `fitbod/Periodization/ProgramView.swift`, and Today's block band in `fitbod/Views/BlockContextBand.swift`.
+
+## Change
+
+1. The week strip, its sessions-done count and the NOW phase's count leave out empty workouts, as decision 6 says.
+2. After its last planned week, an active block shows "PLAN COMPLETE" in place of its week on the overview hero, Program's block row and Today's block band, and no phase shows NOW.
+   See "A block past its plan" in [../tradeoffs.md](../tradeoffs.md).
+3. The strip's day labels grow with text size and stay whole on the small phone at AX3.
+4. Before its last planned week, a block reads as it does today.
+
+## Constraints
+
+- No schema change, and do not change how `PeriodizationEngine` computes weeks.
+- Use `SessionSetActions.isEmptyWorkout` for the empty-workout rule; do not write a second one.
+- Keep the multi-hop optional chains out of `#Predicate`, as `CLAUDE.md` says.
+
+## Ownership
+
+You may edit the files in `owns`, plus block and Today tests your change breaks.
+Ask before you edit anything else.
+
+## Repro first
+
+- In `fitbodUITests/BlockWeekCountsUITests.swift`, on the small phone with T12's seed (`UITestNavigation.blockStates`), open Spring Block's overview from Today.
+  Assert that the strip marks only Upper A's day as done and that the count reads one of two sessions done.
+  Today it marks both and reads "2 / 2".
+- In the same file, at default text and at AX3, assert that a strip day label is taller at AX3.
+  Today it is the same 9pt at both.
+- In `fitbodTests/BlockPastPlanTests.swift`, for an active block that started five weeks ago with a four-week plan, assert that the overview, Program and Today's band show "PLAN COMPLETE" and that no phase is current.
+  Today they show week 1.
+
+## Observable acceptance
+
+- The repro tests pass, the UI tests on the small phone.
+- `BlockOverviewStatesUITests` and `BlockLifecycleEntryPointsUITests` pass on the small phone.
+- `BlockOverviewStatesTests` and `BlockNumberingTests` pass with `fitbodTests`.
+- Screenshots of Spring Block's strip at default text and AX3 on the small phone are in `screens/`.
+
+## Hints
+
+- `weekSessions` is the `@Query` near line 150 of `BlockOverviewScreen.swift`, and `dayState` near line 355 marks a day done from it.
+- "SESSIONS DONE" is near line 707, the 9pt labels near line 787, and "In progress" near line 995.
+- The callers that treat nil as week 1 are near line 312 of `BlockOverviewScreen.swift`, line 450 of `ProgramView.swift` and line 55 of `BlockContextBand.swift`.
+- T12's completed-block list leaves empty workouts out near line 1155.

@@ -142,6 +142,11 @@ Product decisions are in [decisions.md](decisions.md), and they win over this fi
 - Why: `Block` has a start date but no creation timestamp, and a schema change is not allowed.
   A number can shift when a start date changes, and that is acceptable.
 
+### A block past its plan
+
+- Coordinator call, 2026-10-30 (T12 finding F71, decided under autopilot; the user can revisit it): after its last planned week, an active block shows "PLAN COMPLETE" where its week would be on the overview hero, Today's block band and Program's block row, and no phase shows NOW, until the lifter ends it.
+- Rejected: falling back to week 1, which reads as a fresh block; showing a week past the plan, such as "W6 / 4", which reads as an error; and ending the block by itself, because only the lifter ends a block.
+
 ### Archived routines
 
 - Call: Program shows an "Archived routines" entry only when at least one routine is archived.
