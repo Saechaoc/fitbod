@@ -26,10 +26,16 @@
 //    "NO PROGRAM" headline, Geist paragraph with inline bold on the
 //    accumulation/intensification/peak/deload keywords.
 //  - Coral "+ DEFINE BLOCK ▶" CTA with the measured 71pt height.
-//  - Feature chips rendered by a wrapping layout using fixed chip tokens.
+//  - Feature chips rendered by a wrapping layout using measured chip tokens.
 //  - ProgramTemplateSection: compact ProgramTemplateHeader + one
 //    ProgramTemplateRow per BlockTemplates.catalog template, showing only
 //    its weeks, name and phases.
+//
+//  ## Accessibility sizes
+//
+//  The measured heights are minimums, so larger text grows the hero, CTA,
+//  chips and rows instead of drawing over them. At accessibility sizes
+//  NO PROGRAM wraps, and the template header and rows stack their parts.
 //
 //  ## Scope decisions (260525-gen)
 //
@@ -942,6 +948,10 @@ fileprivate struct NoProgramHero: View {
 
     let defineAction: () -> Void
 
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    /// The measured 70pt headline line box, scaled with the headline.
+    @ScaledMetric(relativeTo: .largeTitle) private var headlineLineHeight: CGFloat = ProgramScreenTokens.noProgramLineHeight
+
     var body: some View {
         VStack(spacing: 0) {
             VStack(alignment: .leading, spacing: 0) {
@@ -950,7 +960,7 @@ fileprivate struct NoProgramHero: View {
                     .tracking(ProgramScreenTokens.heroCaptionLetterSpacing)
                     .textCase(.uppercase)
                     .foregroundStyle(ProgramScreenTokens.muted)
-                    .frame(height: ProgramScreenTokens.heroCaptionLineHeight, alignment: .center)
+                    .frame(minHeight: ProgramScreenTokens.heroCaptionLineHeight, alignment: .center)
 
                 heroHeadline
                     .padding(.top, ProgramScreenTokens.captionToHeadlineSpacing)
@@ -961,7 +971,7 @@ fileprivate struct NoProgramHero: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.horizontal, ProgramScreenTokens.horizontalPagePadding)
             .padding(.top, ProgramScreenTokens.heroTopPadding)
-            .frame(height: ProgramScreenTokens.heroCopyHeight, alignment: .top)
+            .frame(minHeight: ProgramScreenTokens.heroCopyHeight, alignment: .top)
 
             ProgramInkDivider()
 
@@ -978,13 +988,17 @@ fileprivate struct NoProgramHero: View {
         }
     }
 
+    /// Bebas Neue's own line box is taller than the mockup's, so standard
+    /// sizes keep the measured one. At accessibility sizes the headline
+    /// drops it and wraps rather than truncate to "NO PROGR…".
     private var heroHeadline: some View {
         Text("NO PROGRAM")
             .font(.bru(.condensed, size: ProgramScreenTokens.noProgramFontSize))
             .foregroundStyle(ProgramScreenTokens.ink)
             .tracking(ProgramScreenTokens.noProgramLetterSpacing)
-            .frame(height: ProgramScreenTokens.noProgramLineHeight, alignment: .center)
-            .lineLimit(1)
+            .fixedSize(horizontal: false, vertical: dynamicTypeSize.isAccessibilitySize)
+            .frame(height: dynamicTypeSize.isAccessibilitySize ? nil : headlineLineHeight, alignment: .center)
+            .lineLimit(dynamicTypeSize.isAccessibilitySize ? nil : 1)
             .frame(maxWidth: .infinity, alignment: .leading)
     }
 
@@ -1007,7 +1021,7 @@ fileprivate struct NoProgramHero: View {
                 .tracking(ProgramScreenTokens.noProgramLetterSpacing)
                 .foregroundStyle(.white)
             .frame(maxWidth: .infinity)
-            .frame(height: ProgramScreenTokens.ctaHeight)
+            .frame(minHeight: ProgramScreenTokens.ctaHeight)
             .background(ProgramScreenTokens.ctaColor)
         }
         .buttonStyle(.plain)
@@ -1035,13 +1049,16 @@ fileprivate struct NoProgramHero: View {
 fileprivate struct ProgramFeatureChip: View {
     let label: String
 
+    /// The measured 20pt chip height, scaled with the chip's label.
+    @ScaledMetric(relativeTo: .caption2) private var minHeight: CGFloat = ProgramScreenTokens.chipHeight
+
     var body: some View {
         Text(label)
             .font(.bru(.grotesk, size: ProgramScreenTokens.chipFontSize))
             .tracking(ProgramScreenTokens.chipLetterSpacing)
             .foregroundStyle(ProgramScreenTokens.ink)
             .padding(.horizontal, ProgramScreenTokens.chipHorizontalPadding)
-            .frame(height: ProgramScreenTokens.chipHeight)
+            .frame(minHeight: minHeight)
             .overlay(
                 Rectangle()
                     .stroke(ProgramScreenTokens.ink, lineWidth: ProgramScreenTokens.chipBorderWidth)
@@ -1170,13 +1187,17 @@ fileprivate struct ProgramTemplateHeader: View {
     let title: String
     let right: String
 
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+
     var body: some View {
         VStack(spacing: 0) {
-            HStack(alignment: .center) {
+            headerLayout {
                 Text(title)
                     .foregroundStyle(ProgramScreenTokens.ink)
 
-                Spacer()
+                if !dynamicTypeSize.isAccessibilitySize {
+                    Spacer()
+                }
 
                 Text(right)
                     .foregroundStyle(ProgramScreenTokens.muted)
@@ -1185,11 +1206,21 @@ fileprivate struct ProgramTemplateHeader: View {
             .tracking(ProgramScreenTokens.headerLetterSpacing)
             .textCase(.uppercase)
             .padding(.horizontal, ProgramScreenTokens.horizontalPagePadding)
-            .frame(height: ProgramScreenTokens.templateHeaderHeight - ProgramScreenTokens.templateHeaderDividerThickness)
+            .padding(.vertical, 4)
+            .frame(minHeight: ProgramScreenTokens.templateHeaderHeight - ProgramScreenTokens.templateHeaderDividerThickness)
+            .frame(maxWidth: .infinity, alignment: .leading)
             .background(ProgramScreenTokens.screenBackground)
 
             ProgramTemplateHeaderDivider()
         }
+    }
+
+    /// Title and count on one line, or the count under the title at
+    /// accessibility sizes.
+    private var headerLayout: AnyLayout {
+        dynamicTypeSize.isAccessibilitySize
+            ? AnyLayout(VStackLayout(alignment: .leading, spacing: 4))
+            : AnyLayout(HStackLayout(alignment: .center))
     }
 }
 
@@ -1197,49 +1228,86 @@ fileprivate struct ProgramTemplateHeader: View {
 
 /// One template row: large condensed weeks label on the left, the
 /// template's name over its phases in the middle, chevron on the right.
+/// At accessibility sizes the weeks, name and phases stack and wrap.
 fileprivate struct ProgramTemplateRow: View {
 
     let content: ProgramTemplateRowContent
     let action: () -> Void
 
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    /// The measured 56pt weeks column, scaled with the weeks label.
+    @ScaledMetric(relativeTo: .largeTitle) private var weeksWidth: CGFloat = ProgramScreenTokens.templateWeeksWidth
+    /// The 16pt chevron, scaled like body text.
+    @ScaledMetric(relativeTo: .body) private var chevronSize: CGFloat = 16
+
     var body: some View {
         Button(action: action) {
             HStack(alignment: .center, spacing: 16) {
-                Text(content.weeks)
-                    .font(.bru(.condensed, size: ProgramScreenTokens.templateWeeksFontSize))
-                    .foregroundStyle(ProgramScreenTokens.ink)
-                    .frame(width: ProgramScreenTokens.templateWeeksWidth, alignment: .leading)
-
-                VStack(alignment: .leading, spacing: ProgramScreenTokens.templateTextSpacing) {
-                    Text(content.title)
-                        .font(.bru(.text, size: ProgramScreenTokens.templateTitleFontSize))
-                        .fontWeight(.semibold)
+                partsLayout {
+                    Text(content.weeks)
+                        .font(.bru(.condensed, size: ProgramScreenTokens.templateWeeksFontSize))
                         .foregroundStyle(ProgramScreenTokens.ink)
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.9)
+                        .frame(width: weeksWidth, alignment: .leading)
 
-                    Text(content.phases)
-                        .font(ProgramTypography.templateMeta)
-                        .tracking(ProgramScreenTokens.headerLetterSpacing)
-                        .textCase(.uppercase)
-                        .foregroundStyle(ProgramScreenTokens.muted)
-                        .frame(height: ProgramScreenTokens.templateMetaLineHeight, alignment: .leading)
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.85)
+                    VStack(alignment: .leading, spacing: ProgramScreenTokens.templateTextSpacing) {
+                        Text(content.title)
+                            .font(.bru(.text, size: ProgramScreenTokens.templateTitleFontSize))
+                            .fontWeight(.semibold)
+                            .foregroundStyle(ProgramScreenTokens.ink)
+                            .modifier(ProgramRowTextFit(minimumScaleFactor: 0.9))
+
+                        Text(content.phases)
+                            .font(ProgramTypography.templateMeta)
+                            .tracking(ProgramScreenTokens.headerLetterSpacing)
+                            .textCase(.uppercase)
+                            .foregroundStyle(ProgramScreenTokens.muted)
+                            .frame(minHeight: ProgramScreenTokens.templateMetaLineHeight, alignment: .leading)
+                            .modifier(ProgramRowTextFit(minimumScaleFactor: 0.85))
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 }
-                .frame(maxWidth: .infinity, alignment: .leading)
 
                 Text("›")
-                    .font(.system(size: 16, weight: .regular))
+                    .font(.system(size: chevronSize, weight: .regular))
                     .foregroundStyle(ProgramScreenTokens.muted)
             }
             .padding(.horizontal, ProgramScreenTokens.horizontalPagePadding)
-            .frame(height: ProgramScreenTokens.templateRowHeight)
+            .padding(.vertical, 12)
+            .frame(minHeight: ProgramScreenTokens.templateRowHeight)
             .frame(maxWidth: .infinity, alignment: .leading)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .background(ProgramScreenTokens.screenBackground)
+    }
+
+    /// Weeks beside the name and phases, or above them at accessibility sizes.
+    private var partsLayout: AnyLayout {
+        dynamicTypeSize.isAccessibilitySize
+            ? AnyLayout(VStackLayout(alignment: .leading, spacing: 4))
+            : AnyLayout(HStackLayout(alignment: .center, spacing: 16))
+    }
+}
+
+// MARK: - ProgramRowTextFit
+
+/// A template row's name or phases: one line at standard sizes, shrinking
+/// a little to fit. At accessibility sizes it wraps to every line it needs
+/// and keeps that height, since a stack splitting the row's height between
+/// two wrapping texts would cut one short with "…".
+fileprivate struct ProgramRowTextFit: ViewModifier {
+    let minimumScaleFactor: CGFloat
+
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+
+    func body(content: Content) -> some View {
+        if dynamicTypeSize.isAccessibilitySize {
+            content.fixedSize(horizontal: false, vertical: true)
+        } else {
+            content
+                .lineLimit(1)
+                .minimumScaleFactor(minimumScaleFactor)
+        }
     }
 }
 

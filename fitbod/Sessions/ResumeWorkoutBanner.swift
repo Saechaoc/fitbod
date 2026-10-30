@@ -37,6 +37,7 @@ import SwiftData
 
 public struct ResumeWorkoutBanner: View {
     @Environment(\.modelContext) private var ctx
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @Query(filter: #Predicate<Session> { $0.completedAt == nil })
     private var activeSessions: [Session]
 
@@ -63,7 +64,7 @@ public struct ResumeWorkoutBanner: View {
 
     @ViewBuilder
     private func bannerBody(active: Session) -> some View {
-        HStack(spacing: 12) {
+        bannerLayout {
             // Left: stacked labels
             VStack(alignment: .leading, spacing: 4) {
                 Text("RESUME")                                                      // UI-SPEC verbatim
@@ -84,9 +85,11 @@ public struct ResumeWorkoutBanner: View {
                 }
             }
 
-            Spacer()
+            if !dynamicTypeSize.isAccessibilitySize {
+                Spacer()
+            }
 
-            // Right: Resume CTA
+            // Right: Resume CTA; under the labels at accessibility sizes
             BRUPillButton("Resume ▸") {                                            // UI-SPEC verbatim
                 onResume(active)
             }
@@ -119,6 +122,14 @@ public struct ResumeWorkoutBanner: View {
                 discardConfirm = false
             }
         }
+    }
+
+    /// Labels beside the pill, or the pill under the labels at accessibility
+    /// sizes, where a pill squeezed beside them breaks "RESUME" mid-word.
+    private var bannerLayout: AnyLayout {
+        dynamicTypeSize.isAccessibilitySize
+            ? AnyLayout(VStackLayout(alignment: .leading, spacing: 12))
+            : AnyLayout(HStackLayout(spacing: 12))
     }
 
     /// Formats elapsed time since session start as "HH:MM" or "MM:SS".
