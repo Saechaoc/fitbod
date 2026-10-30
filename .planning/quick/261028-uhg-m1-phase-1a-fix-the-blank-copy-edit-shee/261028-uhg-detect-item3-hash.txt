@@ -1,0 +1,13 @@
+Post-review fix 1 (review finding 1). GitNexus unavailable on this machine - substitute for 'gitnexus detect-changes --scope staged'.
+Risk level (own estimate): low - one internal function body; Back and Discard now also ask after target edits, which is the intended change.
+
+$ git diff --cached --stat
+ fitbod/Routines/RoutineDraft.swift                 | 30 ++++++++++++-----
+ fitbodTests/RoutineBuilderHeaderPickersTests.swift | 38 ++++++++++++++++++++++
+ 2 files changed, 59 insertions(+), 9 deletions(-)
+
+Changed symbols:
+  modified RoutineDraft.snapshotHash() (now every field save(into:context:) writes, exercises and per-set overrides in order) -> fitbod/Routines/RoutineDraft.swift
+  added    RoutineBuilderHeaderPickersTests.snapshotHashRespondsToExerciseEdits() -> fitbodTests/RoutineBuilderHeaderPickersTests.swift
+
+Callers (manual check): RoutineBuilderView.swift:282 (baseline in .onAppear), RoutineBuilderView.swift:525 (hasUnsavedChanges: Back/Discard dialog and the swipe guard); RoutineBuilderHeaderPickersTests (2 tests).
