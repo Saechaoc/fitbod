@@ -6,9 +6,9 @@
 //  per CONTEXT D-10..D-13.
 //
 //  evaluate(exerciseID:intent:in:settings:now:) reads the last N
-//  intent-matched SessionExercise rows from FINISHED sessions
-//  (completedAt != nil) for the target exercise, computes
-//  the top-set e1RM per session via OneRepMaxEstimator (Brzycki ≤6 /
+//  intent-matched FINISHED sessions (completedAt != nil) that log the
+//  target exercise, computes the top-set e1RM per session, across every
+//  time the session logs the exercise, via OneRepMaxEstimator (Brzycki ≤6 /
 //  Epley 6–10 / nil >10 per PROG-02), and returns:
 //    - .notEnoughData when fewer than N e1RM-eligible sessions remain
 //    - .stalled(e1RMs:rangeRatio:) when (max - min) / mean ≤ tolerance
@@ -74,14 +74,16 @@ public enum PlateauDetector {
     ///
     /// Algorithm:
     ///   1. Look up the Exercise to resolve N + tolerance overrides.
-    ///   2. Fetch the last N intent-matched SessionExercise rows (over-fetch by 2× to survive high-rep filtering).
-    ///   3. Compute the top-set e1RM per row via OneRepMaxEstimator (PROG-02 high-rep suppression in-loop).
+    ///   2. Fetch the intent-matched sessions that log the exercise, newest first.
+    ///   3. Compute the top-set e1RM per session via OneRepMaxEstimator (PROG-02 high-rep suppression in-loop).
     ///   4. Take the most recent N e1RM-eligible sessions; if fewer remain, return `.notEnoughData`.
     ///   5. Compute `mean`, `range`, `rangeRatio`; classify against tolerance.
     ///
     /// Only FINISHED sessions (`completedAt != nil`) count, the same rule as
     /// `PreviousMatchingIntent.fetchTopWorkingSet`, so a set logged in the
-    /// workout in progress never feeds its own stall signal.
+    /// workout in progress never feeds its own stall signal. A session that
+    /// logs the exercise several times counts once, with its top set across
+    /// all of those logs.
     @MainActor
     public static func evaluate(
         exerciseID: UUID,
@@ -101,32 +103,16 @@ public enum PlateauDetector {
 
         guard windowN > 0 else { return .notEnoughData }
 
-        // 2. Fetch intent-matched SessionExercise rows (over-fetch buffer for
-        //    high-rep filtering). Sort by parent session.startedAt DESC.
-        //    Pitfall #1: keep multi-hop traversal out of #Predicate.
-        let targetIntentRaw = intent.rawValue
-        let seDescriptor = FetchDescriptor<SessionExercise>(
-            predicate: #Predicate<SessionExercise> { se in
-                se.exercise?.id == targetExerciseID
-            }
-        )
-        let allMatching = (try? context.fetch(seDescriptor)) ?? []
-        // Finished-session + intent filter via parent Session (multi-hop
-        // optional → Swift post-filter). Also drop SessionExercises without
-        // a parent session (orphan rows).
-        let intentMatched = allMatching.compactMap { se -> (SessionExercise, Date)? in
-            guard let session = se.session, session.completedAt != nil else { return nil }
-            guard session.intentRaw == targetIntentRaw else { return nil }
-            return (se, session.startedAt)
-        }
-        let sortedDesc = intentMatched.sorted { $0.1 > $1.1 }
+        // 2. Fetch the finished intent-matched sessions, newest first: one
+        //    entry per session, however many times it logs the exercise.
+        let sessions = finishedSessionLogs(exerciseID: exerciseID, intent: intent, in: context)
 
         // 3. Compute per-session top-set e1RM. Skip sessions where no
         //    working set has a defined e1RM (all-high-rep sessions).
         var e1RMs: [Double] = []
-        for (se, _) in sortedDesc {
-            guard let top = topSetE1RM(for: se) else { continue }
-            e1RMs.append(top)
+        for logs in sessions {
+            guard let top = topSet(in: logs) else { continue }
+            e1RMs.append(top.e1RM)
             if e1RMs.count >= windowN { break }
         }
 
@@ -216,19 +202,67 @@ public enum PlateauDetector {
 
     // MARK: - Helpers
 
-    /// Compute the top-set e1RM for one SessionExercise. The "top" set
+    /// One session's top set: the e1RM it ranks by, plus the load and RPE
+    /// the RPE-creep check reads.
+    private typealias TopSet = (e1RM: Double, weight: Double, rpe: Double?)
+
+    /// The exercise's logs in each FINISHED session (`completedAt != nil`)
+    /// of `intent`, newest session first, each session's logs in workout
+    /// order. A session that logs the exercise several times is one entry,
+    /// so it takes one place in a window, as in `SeriesBuilder.buildPoints`.
+    ///
+    /// Pitfall #1: the fetch predicate keeps the optional chain on a single
+    /// hop; the finished and intent gates on the parent Session run as Swift
+    /// post-filters, which also drop SessionExercises without a parent
+    /// session (orphan rows).
+    @MainActor
+    private static func finishedSessionLogs(
+        exerciseID: UUID,
+        intent: Intent,
+        in context: ModelContext
+    ) -> [[SessionExercise]] {
+        let targetExerciseID = exerciseID
+        let targetIntentRaw = intent.rawValue
+        let seDescriptor = FetchDescriptor<SessionExercise>(
+            predicate: #Predicate<SessionExercise> { se in
+                se.exercise?.id == targetExerciseID
+            }
+        )
+        let all = (try? context.fetch(seDescriptor)) ?? []
+        // Each session's logs, in the order the sessions first appear.
+        var sessions: [(startedAt: Date, logs: [SessionExercise])] = []
+        var sessionIndex: [UUID: Int] = [:]
+        for se in all {
+            guard let session = se.session, session.completedAt != nil else { continue }
+            guard session.intentRaw == targetIntentRaw else { continue }
+            if let index = sessionIndex[session.id] {
+                sessions[index].logs.append(se)
+            } else {
+                sessionIndex[session.id] = sessions.count
+                sessions.append((session.startedAt, [se]))
+            }
+        }
+        return sessions
+            .sorted { $0.startedAt > $1.startedAt }
+            .map { $0.logs.sorted { $0.orderIndex < $1.orderIndex } }
+    }
+
+    /// The top set across one session's logs of the exercise. The "top" set
     /// is the working set with the highest OneRepMaxEstimator output
     /// (NOT necessarily the heaviest weight — high-reps-at-lower-weight
-    /// can produce a higher e1RM via Epley). Returns nil if no working
-    /// set has a defined e1RM (all sets suppressed at >10 reps).
-    private static func topSetE1RM(for se: SessionExercise) -> Double? {
-        let sets = se.sets ?? []
-        var best: Double? = nil
-        for set in sets {
-            guard set.isComplete, !set.isWarmup, set.reps > 0 else { continue }
-            guard workingKinds.contains(set.setTypeRaw) else { continue }
-            if let e = OneRepMaxEstimator.estimate(weight: set.weight, reps: set.reps) {
-                if best == nil || e > best! { best = e }
+    /// can produce a higher e1RM via Epley). On a tie the first set read
+    /// wins, and the logs are read in workout order. Returns nil if no
+    /// working set has a defined e1RM (all sets suppressed at >10 reps).
+    private static func topSet(in logs: [SessionExercise]) -> TopSet? {
+        var best: TopSet? = nil
+        for se in logs {
+            for set in (se.sets ?? []) {
+                guard set.isComplete, !set.isWarmup, set.reps > 0 else { continue }
+                guard workingKinds.contains(set.setTypeRaw) else { continue }
+                guard let e = OneRepMaxEstimator.estimate(weight: set.weight, reps: set.reps) else { continue }
+                if best == nil || e > best!.e1RM {
+                    best = (e1RM: e, weight: set.weight, rpe: set.rpe)
+                }
             }
         }
         return best
@@ -253,7 +287,8 @@ public enum PlateauDetector {
     /// the workout in progress never enters the window, even before a set
     /// is logged. A finished session with no top set (no logged working set,
     /// or none with an e1RM) is skipped, also as in `evaluate`, so it never
-    /// takes a place in the window.
+    /// takes a place in the window. A session that logs the exercise several
+    /// times takes one place, with its top set across all of those logs.
     @MainActor
     private static func hasRPECreep(
         exerciseID: UUID,
@@ -269,40 +304,13 @@ public enum PlateauDetector {
         let windowN = exercise.plateauWindowOverride ?? settings.plateauWindowSessions
         let increment = max(exercise.smallestIncrement ?? settings.defaultIncrementKg, 0.5)
 
-        let targetIntentRaw = intent.rawValue
-        let seDescriptor = FetchDescriptor<SessionExercise>(
-            predicate: #Predicate<SessionExercise> { se in
-                se.exercise?.id == targetExerciseID
-            }
-        )
-        let all = (try? context.fetch(seDescriptor)) ?? []
-        let intentMatched = all.compactMap { se -> (SessionExercise, Date)? in
-            guard let session = se.session, session.completedAt != nil else { return nil }
-            guard session.intentRaw == targetIntentRaw else { return nil }
-            return (se, session.startedAt)
-        }
-        let sortedDesc = intentMatched.sorted { $0.1 > $1.1 }
-
         // For each session collect the top working set's (weight, rpe), most
         // recent first. Like evaluate, skip sessions with no top set and stop
         // at N, so both checks read the same N sessions.
         var picks: [(weight: Double, rpe: Double?)] = []
-        for (se, _) in sortedDesc {
-            var topE: Double? = nil
-            var topWeight = 0.0
-            var topRPE: Double? = nil
-            for set in (se.sets ?? []) {
-                guard set.isComplete, !set.isWarmup, set.reps > 0 else { continue }
-                guard workingKinds.contains(set.setTypeRaw) else { continue }
-                guard let e = OneRepMaxEstimator.estimate(weight: set.weight, reps: set.reps) else { continue }
-                if topE == nil || e > topE! {
-                    topE = e
-                    topWeight = set.weight
-                    topRPE = set.rpe
-                }
-            }
-            guard topE != nil else { continue }
-            picks.append((weight: topWeight, rpe: topRPE))
+        for logs in finishedSessionLogs(exerciseID: exerciseID, intent: intent, in: context) {
+            guard let top = topSet(in: logs) else { continue }
+            picks.append((weight: top.weight, rpe: top.rpe))
             if picks.count >= windowN { break }
         }
         picks.reverse()                                  // oldest first

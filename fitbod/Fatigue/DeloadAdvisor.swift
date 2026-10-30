@@ -194,15 +194,22 @@ public enum DeloadAdvisor {
         var perPair: [String: [(weight: Double, rpe: Double, startedAt: Date, name: String, intent: Intent, smallestIncrement: Double?)]] = [:]
         for session in last3WeekSessions {
             guard let intent = Intent(rawValue: session.intentRaw) else { continue }
-            for se in (session.exercises ?? []) {
+            // One pick per exercise per session, read across every time the
+            // session logs it, so the 3 sessions compared are 3 different
+            // workouts. Logs run in workout order, so a tie goes to the
+            // earlier log.
+            var logsByExercise: [UUID: (exercise: Exercise, logs: [SessionExercise])] = [:]
+            for se in (session.exercises ?? []).sorted(by: { $0.orderIndex < $1.orderIndex }) {
                 guard let exercise = se.exercise else { continue }
+                logsByExercise[exercise.id, default: (exercise, [])].logs.append(se)
+            }
+            for (exercise, logs) in logsByExercise.values {
                 let key = "\(exercise.id.uuidString)|\(session.intentRaw)"
-                var picks: [(weight: Double, rpe: Double, startedAt: Date, name: String, intent: Intent, smallestIncrement: Double?)] = []
-                // Find the top-set in this session-exercise (highest e1RM working set).
+                // Find the top-set across these logs (highest e1RM working set).
                 var bestE: Double? = nil
                 var bestWeight = 0.0
                 var bestRPE: Double? = nil
-                for set in (se.sets ?? []) {
+                for set in logs.flatMap({ $0.sets ?? [] }) {
                     guard set.isComplete, !set.isWarmup, set.reps > 0 else { continue }
                     guard workingKinds.contains(set.setTypeRaw) else { continue }
                     guard let e = OneRepMaxEstimator.estimate(weight: set.weight, reps: set.reps) else { continue }
@@ -213,7 +220,7 @@ public enum DeloadAdvisor {
                     }
                 }
                 guard bestE != nil, let rpe = bestRPE else { continue }
-                picks.append((
+                perPair[key, default: []].append((
                     weight: bestWeight,
                     rpe: rpe,
                     startedAt: session.startedAt,
@@ -221,7 +228,6 @@ public enum DeloadAdvisor {
                     intent: intent,
                     smallestIncrement: exercise.smallestIncrement
                 ))
-                perPair[key, default: []].append(contentsOf: picks)
             }
         }
         // For each pair, find the worst RPE creep.
