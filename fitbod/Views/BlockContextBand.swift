@@ -35,13 +35,13 @@ public struct BlockContextBand: View {
 
     // MARK: - Computed
 
-    /// Phase display name — derived from BlockPhaseKind raw value, title-cased.
-    private var currentPhase: BlockPhase? {
-        PeriodizationEngine.phase(for: block, on: .now)
-    }
-
-    private var phaseDisplayName: String {
-        guard let phase = currentPhase else { return "Accumulation" }
+    /// The chip beside the block's name: its phase, or PLAN COMPLETE once
+    /// its plan is over (tradeoffs.md "A block past its plan").
+    static func chipLabel(for block: Block, on date: Date) -> String {
+        if PlanWeek.of(block, on: date) == .complete {
+            return PlanWeek.completeLabel
+        }
+        guard let phase = PeriodizationEngine.phase(for: block, on: date) else { return "Accumulation" }
         // Capitalize first letter of each word (BlockPhaseKind raw values are lowercase)
         return phase.kind.rawValue
             .split(separator: " ")
@@ -50,10 +50,14 @@ public struct BlockContextBand: View {
             .capitalized
     }
 
-    /// 1-based current week in the block (0 when before start, nil when complete)
-    private var currentWeekNumber: Int {
-        guard let idx = PeriodizationEngine.weekIndex(for: block, on: .now) else { return 1 }
-        return idx + 1  // weekIndex is 0-based
+    /// The ticker's current week, from 1: week 1 before the block starts,
+    /// and past every week once its plan is over, so none is current.
+    static func tickerWeek(for block: Block, on date: Date) -> Int {
+        switch PlanWeek.of(block, on: date) {
+        case .week(let index): return index + 1
+        case .complete: return MesocycleWeekPage.totalWeeks(of: block) + 1
+        case nil: return 1
+        }
     }
 
     /// Total weeks in the block across all phases
@@ -95,13 +99,13 @@ public struct BlockContextBand: View {
 
                     Spacer()
 
-                    BRUChip(phaseDisplayName, color: .bruSignal, fill: true)
+                    BRUChip(Self.chipLabel(for: block, on: .now), color: .bruSignal, fill: true)
                 }
 
                 // Week ticker cells row
                 if totalWeeks > 0 {
                     WeekTickerCells(
-                        currentWeek: currentWeekNumber,
+                        currentWeek: Self.tickerWeek(for: block, on: .now),
                         totalWeeks: min(totalWeeks, 5),  // display up to 5 cells per today.jsx
                         deloadWeeks: deloadWeeks
                     )

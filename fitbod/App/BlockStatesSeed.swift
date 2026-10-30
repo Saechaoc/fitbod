@@ -29,18 +29,27 @@
 //  Idempotent: does nothing when a "States Routine" routine already
 //  exists. Compiled out of release builds.
 //
+//  `-fitbod-seed-block-states-past-plan` seeds the same blocks and
+//  workouts with Spring Block started five weeks ago, so its four-week
+//  plan is over and it shows PLAN COMPLETE (T78).
+//
 
 import Foundation
 import SwiftData
 
 enum BlockStatesSeed {
     static let launchArgument = "-fitbod-seed-block-states"
+    static let pastPlanLaunchArgument = "-fitbod-seed-block-states-past-plan"
 
     @MainActor
     static func runIfRequested(in context: ModelContext) {
         #if DEBUG
-        guard ProcessInfo.processInfo.arguments.contains(launchArgument) else { return }
-        seed(in: context)
+        let arguments = ProcessInfo.processInfo.arguments
+        if arguments.contains(pastPlanLaunchArgument) {
+            seed(activeStartedDaysAgo: 35, in: context)
+        } else if arguments.contains(launchArgument) {
+            seed(activeStartedDaysAgo: 3, in: context)
+        }
         #endif
     }
 
@@ -61,7 +70,7 @@ enum BlockStatesSeed {
     private static let day: TimeInterval = 24 * 3600
 
     @MainActor
-    private static func seed(in context: ModelContext) {
+    private static func seed(activeStartedDaysAgo: Int, in context: ModelContext) {
         let existing = (try? context.fetch(FetchDescriptor<Split>())) ?? []
         guard !existing.contains(where: { $0.name == routineName }) else { return }
         let catalog = (try? context.fetch(FetchDescriptor<Exercise>())) ?? []
@@ -109,8 +118,10 @@ enum BlockStatesSeed {
         )
         try? context.save()
         // Starting goes through the lifecycle service, as the Start button
-        // does, dated three days ago.
-        try? BlockLifecycleService.start(block: active, context: context, now: now.addingTimeInterval(-3 * day))
+        // does, dated three days ago, or five weeks ago for the past plan.
+        try? BlockLifecycleService.start(
+            block: active, context: context, now: now.addingTimeInterval(-Double(activeStartedDaysAgo) * day)
+        )
 
         if let upperA = slots.first, let template = upperA.sessionTemplate,
            let workout = try? SessionFactory.start(

@@ -24,7 +24,8 @@
 //    [completed] safeAreaFiller
 //
 //  Before its start date a block shows no NOW, current week or progress
-//  (T12); only a started active block has a current week.
+//  (T12); only a started active block has a current week. Past its last
+//  planned week it reads PLAN COMPLETE, with every phase DONE (T78).
 //
 //  Read-only in archived (completed) mode per spec §6.
 //  All mutations route through BlockLifecycleService / TrainingDaysWriter.
@@ -118,6 +119,60 @@ enum CompletedPhaseState: Equatable, Sendable {
             firstDay += weeks * 7
         }
         return states
+    }
+}
+
+// MARK: - PlanWeek
+
+/// Where a started active block is in its plan: a planned week, or past
+/// its last planned week until the lifter ends it (tradeoffs.md "A block
+/// past its plan"). `PeriodizationEngine` has no week after the plan.
+enum PlanWeek: Equatable, Sendable {
+    /// A planned week, from 0.
+    case week(Int)
+    /// Past the last planned week.
+    case complete
+
+    /// What the block overview, Program's block row and Today's band show
+    /// in place of the week once the plan is over.
+    static let completeLabel = "PLAN COMPLETE"
+
+    /// Where `block` is on `date`, or nil when it is not active or has not
+    /// started.
+    static func of(_ block: Block, on date: Date) -> PlanWeek? {
+        guard block.derivedStatus == .active, date >= block.startDate else { return nil }
+        return PeriodizationEngine.weekIndex(for: block, on: date).map(PlanWeek.week) ?? .complete
+    }
+}
+
+// MARK: - PhaseProgress
+
+/// A live block's phase as its phase list marks it: DONE before the
+/// current week, NOW in it, and neither ahead of it.
+enum PhaseProgress: Equatable, Sendable {
+    case done
+    case current
+    case upcoming
+
+    /// One per phase, in order. A block without a week marks no phase, and
+    /// a complete plan marks every phase done.
+    static func of(phaseWeeks: [Int], at planWeek: PlanWeek?) -> [PhaseProgress] {
+        var firstWeek = 0
+        var progress: [PhaseProgress] = []
+        for weeks in phaseWeeks {
+            switch planWeek {
+            case .complete:
+                progress.append(.done)
+            case .week(let index) where index >= firstWeek + weeks:
+                progress.append(.done)
+            case .week(let index) where index >= firstWeek:
+                progress.append(.current)
+            case .week, nil:
+                progress.append(.upcoming)
+            }
+            firstWeek += weeks
+        }
+        return progress
     }
 }
 
@@ -230,8 +285,8 @@ public struct BlockOverviewScreen: View {
             ScrollView {
                 VStack(spacing: 0) {
                     heroBand
-                    if let currentWeekIndex {
-                        weekCarousel(weekIndex: currentWeekIndex)
+                    if let planWeek {
+                        weekCarousel(planWeek)
                     }
 
                     if block.derivedStatus != .completed {
@@ -303,21 +358,21 @@ public struct BlockOverviewScreen: View {
         MesocycleWeekPage.totalWeeks(of: block)
     }
 
-    /// The block's current week, from 0. Only an active block has one, from
-    /// its start date on: before then nothing shows NOW, a current week or
-    /// progress. An active block past its last week falls back to week 1,
-    /// as before.
+    /// Where the block is in its plan. Only an active block has a week,
+    /// from its start date on: before then nothing shows NOW, a current
+    /// week or progress. Past its last planned week its plan is complete.
+    private var planWeek: PlanWeek? {
+        PlanWeek.of(block, on: .now)
+    }
+
+    /// The block's current week, from 0, while its plan runs.
     private var currentWeekIndex: Int? {
-        guard block.derivedStatus == .active, Date.now >= block.startDate else { return nil }
-        return PeriodizationEngine.weekIndex(for: block, on: .now) ?? 0
+        guard case .week(let index) = planWeek else { return nil }
+        return index
     }
 
     private var currentWeekContext: MesocycleWeekContext? {
         currentWeekIndex.flatMap { PeriodizationEngine.weekContext(for: block, weekIndex: $0, on: .now) }
-    }
-
-    private var phaseKindCapitalized: String {
-        (currentWeekContext?.phaseKind.rawValue ?? "Accumulation").capitalized
     }
 
     /// The week's volume change in percent, or nil when volume holds.
@@ -348,7 +403,7 @@ public struct BlockOverviewScreen: View {
 
     /// Derives the display state for a given calendar day cell.
     /// - today: the cell date is today
-    /// - done: a session linked to this block was logged on that day
+    /// - done: a workout on this block that counts was logged on that day
     /// - next: the next training day, the only day that shows NEXT
     /// - upcoming: a later day, which shows no state label
     /// - rest: everything else
@@ -363,13 +418,8 @@ public struct BlockOverviewScreen: View {
         if cal.isDate(cellDate, inSameDayAs: todayDate) {
             return .today
         }
-        let sessionLinked = weekSessions.contains { session in
+        let sessionLinked = countedWeekWorkouts.contains { session in
             cal.isDate(session.startedAt, inSameDayAs: cellDate)
-            && (session.slot?.split?.id == block.split?.id
-                // Phase 8: slot-based membership is primary (resolver sets session.slot);
-                // block?.id fallback covers pre-resolver / legacy-edge sessions
-                // (spec §8, RESEARCH Pitfall 7).
-                || session.block?.id == block.id)
         }
         if sessionLinked {
             return .done
@@ -415,14 +465,22 @@ public struct BlockOverviewScreen: View {
     /// Returns the routine name for the session logged on a given day, if any.
     private func routineNameForCell(at cellDate: Date) -> String? {
         let cal = Calendar.current
-        return weekSessions.first { session in
+        return countedWeekWorkouts.first { session in
             cal.isDate(session.startedAt, inSameDayAs: cellDate)
+        }.map { $0.routineSnapshotName.isEmpty ? nil : $0.routineSnapshotName } ?? nil
+    }
+
+    /// This week's workouts on this block that count. An empty workout stays
+    /// in history but out of the strip and its counts (decision 6).
+    private var countedWeekWorkouts: [Session] {
+        weekSessions.filter { session in
+            !SessionSetActions.isEmptyWorkout(session)
             && (session.slot?.split?.id == block.split?.id
                 // Phase 8: slot-based membership is primary (resolver sets session.slot);
                 // block?.id fallback covers pre-resolver / legacy-edge sessions
                 // (spec §8, RESEARCH Pitfall 7).
                 || session.block?.id == block.id)
-        }.map { $0.routineSnapshotName.isEmpty ? nil : $0.routineSnapshotName } ?? nil
+        }
     }
 
     private func hasPR(cellDate: Date) -> Bool {
@@ -433,14 +491,15 @@ public struct BlockOverviewScreen: View {
     // MARK: - Hero Band
 
     /// The hero follows the derived status. A started active block shows
-    /// its current week; ready, draft and not-yet-started active blocks show
-    /// their plan; a completed block shows when it ended.
+    /// its current week, or PLAN COMPLETE past its plan; ready, draft and
+    /// not-yet-started active blocks show their plan; a completed block
+    /// shows when it ended.
     @ViewBuilder
     private var heroBand: some View {
         if block.derivedStatus == .completed {
             completedHeroBand
-        } else if let currentWeekIndex {
-            activeHeroBand(weekIndex: currentWeekIndex)
+        } else if let planWeek {
+            activeHeroBand(planWeek)
         } else {
             plannedHeroBand
         }
@@ -485,7 +544,7 @@ public struct BlockOverviewScreen: View {
         }
     }
 
-    private func activeHeroBand(weekIndex: Int) -> some View {
+    private func activeHeroBand(_ planWeek: PlanWeek) -> some View {
         VStack(alignment: .leading, spacing: 0) {
             // Top row: ACTIVE BLOCK label + DAYS REMAINING
             heroTopRow(
@@ -493,39 +552,42 @@ public struct BlockOverviewScreen: View {
                 detailColor: Color.bruSignal
             )
 
-            // Phase-week hero label (42pt displayHero)
-            Text("\(phaseKindCapitalized) week")
+            // Phase-week hero label (42pt displayHero), or PLAN COMPLETE
+            Text(Self.heroHeadline(planWeek, of: block))
                 .font(BRUFont.displayHero)
                 .foregroundStyle(Color.bruPaper)
                 .padding(.top, 6)
 
-            // Bottom row: week position + vol + intensity
-            HStack(spacing: 12) {
-                Text("W\(weekIndex + 1) / \(totalWeeks)")
-                    .font(BRUFont.labelSmall)
-                    .textCase(.uppercase)
-                    .tracking(1.2)
-                    .foregroundStyle(Color.bruPaper)
-                Text("·")
-                    .font(BRUFont.labelSmall)
-                    .foregroundStyle(Color.bruPaper.opacity(0.4))
-                    .accessibilityHidden(true)
-                Text(volMultiplierLabel)
-                    .font(BRUFont.labelSmall)
-                    .textCase(.uppercase)
-                    .tracking(1.2)
-                    .foregroundStyle(Color.bruSignal)
-                Text("·")
-                    .font(BRUFont.labelSmall)
-                    .foregroundStyle(Color.bruPaper.opacity(0.4))
-                    .accessibilityHidden(true)
-                Text(intMultiplierLabel)
-                    .font(BRUFont.labelSmall)
-                    .textCase(.uppercase)
-                    .tracking(1.2)
-                    .foregroundStyle(Color.bruPaper)
+            // Bottom row: week position + vol + intensity. After the plan
+            // there is no week, and SessionFactory applies no phase.
+            if case .week(let weekIndex) = planWeek {
+                HStack(spacing: 12) {
+                    Text("W\(weekIndex + 1) / \(totalWeeks)")
+                        .font(BRUFont.labelSmall)
+                        .textCase(.uppercase)
+                        .tracking(1.2)
+                        .foregroundStyle(Color.bruPaper)
+                    Text("·")
+                        .font(BRUFont.labelSmall)
+                        .foregroundStyle(Color.bruPaper.opacity(0.4))
+                        .accessibilityHidden(true)
+                    Text(volMultiplierLabel)
+                        .font(BRUFont.labelSmall)
+                        .textCase(.uppercase)
+                        .tracking(1.2)
+                        .foregroundStyle(Color.bruSignal)
+                    Text("·")
+                        .font(BRUFont.labelSmall)
+                        .foregroundStyle(Color.bruPaper.opacity(0.4))
+                        .accessibilityHidden(true)
+                    Text(intMultiplierLabel)
+                        .font(BRUFont.labelSmall)
+                        .textCase(.uppercase)
+                        .tracking(1.2)
+                        .foregroundStyle(Color.bruPaper)
+                }
+                .padding(.top, 10)
             }
-            .padding(.top, 10)
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 14)
@@ -534,8 +596,23 @@ public struct BlockOverviewScreen: View {
         // CONTEXT D-15 accessibility
         .accessibilityElement(children: .combine)
         .accessibilityLabel(
-            "\(heroSpokenStatus): \(block.name), \(phaseKindCapitalized) week, week \(weekIndex + 1) of \(totalWeeks), \(volumeSpoken), intensity \(intensityPercent)%, \(BRUCountLabel.text(computedDaysRemaining, "day")) remaining."
+            "\(heroSpokenStatus): \(block.name), \(heroSpokenWeek(planWeek)), \(BRUCountLabel.text(computedDaysRemaining, "day")) remaining."
         )
+    }
+
+    /// The active hero's headline: the current phase's week, such as
+    /// "Accumulation week", or PLAN COMPLETE past the plan.
+    static func heroHeadline(_ planWeek: PlanWeek, of block: Block) -> String {
+        guard case .week(let weekIndex) = planWeek else { return PlanWeek.completeLabel }
+        let kind = PeriodizationEngine.weekContext(for: block, weekIndex: weekIndex)?.phaseKind.rawValue
+        return "\((kind ?? "Accumulation").capitalized) week"
+    }
+
+    /// The week as VoiceOver reads it on the active hero, with its volume
+    /// and intensity, or "plan complete" past the plan.
+    private func heroSpokenWeek(_ planWeek: PlanWeek) -> String {
+        guard case .week(let weekIndex) = planWeek else { return "plan complete" }
+        return "\(Self.heroHeadline(planWeek, of: block)), week \(weekIndex + 1) of \(totalWeeks), \(volumeSpoken), intensity \(intensityPercent)%"
     }
 
     /// The volume change as VoiceOver reads it: "volume hold" or "volume +10%".
@@ -652,27 +729,30 @@ public struct BlockOverviewScreen: View {
     /// Only a started active block shows it: a completed block, or one that
     /// has not started, has no day states (T12).
     @ViewBuilder
-    private func weekCarousel(weekIndex: Int) -> some View {
+    private func weekCarousel(_ planWeek: PlanWeek) -> some View {
         let cal = Calendar.current
-        let prevWeek = weekIndex > 0 ? "‹ W\(weekIndex)" : ""
-        let nextWeek = (weekIndex + 1 < totalWeeks) ? "W\(weekIndex + 2) ›" : ""
+        // Links to the weeks either side; a complete plan has none.
+        let links: (previous: String, next: String) = {
+            guard case .week(let weekIndex) = planWeek else { return ("", "") }
+            return (weekIndex > 0 ? "‹ W\(weekIndex)" : "", weekIndex + 1 < totalWeeks ? "W\(weekIndex + 2) ›" : "")
+        }()
 
         VStack(spacing: 0) {
             // Week navigation header
             HStack {
-                Text(prevWeek)
+                Text(links.previous)
                     .font(BRUFont.labelSmall)
                     .textCase(.uppercase)
                     .tracking(1.5)
                     .foregroundStyle(Color.bruInk)
                 Spacer()
-                Text("WEEK \(weekIndex + 1) OF \(totalWeeks)")
+                Text(Self.stripHeader(planWeek, of: block))
                     .font(BRUFont.labelSmall)
                     .textCase(.uppercase)
                     .tracking(1.5)
                     .foregroundStyle(Color.bruInk)
                 Spacer()
-                Text(nextWeek)
+                Text(links.next)
                     .font(BRUFont.labelSmall)
                     .textCase(.uppercase)
                     .tracking(1.5)
@@ -680,9 +760,13 @@ public struct BlockOverviewScreen: View {
             }
             .padding(.bottom, 10)
 
-            // 7-day M–S grid — state derived from @Query data and Date.now only
+            // 7-day M–S grid — state derived from @Query data and Date.now only.
+            // Two columns at accessibility sizes, so day labels stay whole.
             LazyVGrid(
-                columns: Array(repeating: GridItem(.flexible(), spacing: 4), count: 7),
+                columns: Array(
+                    repeating: GridItem(.flexible(), spacing: 4),
+                    count: dynamicTypeSize.isAccessibilitySize ? 2 : 7
+                ),
                 spacing: 4
             ) {
                 ForEach(0..<7, id: \.self) { offset in
@@ -728,6 +812,12 @@ public struct BlockOverviewScreen: View {
         }
     }
 
+    /// The week strip's header: "WEEK 2 OF 4", or PLAN COMPLETE past the plan.
+    static func stripHeader(_ planWeek: PlanWeek, of block: Block) -> String {
+        guard case .week(let weekIndex) = planWeek else { return PlanWeek.completeLabel }
+        return "WEEK \(weekIndex + 1) OF \(MesocycleWeekPage.totalWeeks(of: block))"
+    }
+
     @ViewBuilder
     private func dayCell(for cellDate: Date, offset: Int) -> some View {
         let cal = Calendar.current
@@ -769,9 +859,11 @@ public struct BlockOverviewScreen: View {
         let secondaryLabel = routineName ?? stateLabel?.shown
 
         let weekdayLong = cal.weekdaySymbols[safe: (cal.component(.weekday, from: cellDate) - 1)] ?? dayLetter
+        // A day without a routine speaks the week's phase; past the plan
+        // there is none.
         let accessLabel = [
             weekdayLong,
-            routineName ?? (state == .rest ? "rest day" : phaseKindCapitalized),
+            routineName ?? (state == .rest ? "rest day" : currentWeekContext.map { $0.phaseKind.rawValue.capitalized }),
             stateLabel?.spoken,
         ].compactMap { $0 }.joined(separator: ", ")
 
@@ -784,7 +876,7 @@ public struct BlockOverviewScreen: View {
 
             // A blank line keeps a later day as tall as the others.
             Text(secondaryLabel ?? " ")
-                .font(.bru(.monoBold, size: 9))
+                .font(BRUFont.labelMicro)
                 .textCase(.uppercase)
                 .tracking(0.5)
                 .foregroundStyle(textColor.opacity(state == .rest ? 0.5 : 1.0))
@@ -947,9 +1039,10 @@ public struct BlockOverviewScreen: View {
             BRUSectionHead("Phase progression", right: "WHAT'S NEXT")
 
             let phases = (block.phases ?? []).sorted { $0.orderIndex < $1.orderIndex }
+            let progress = PhaseProgress.of(phaseWeeks: phases.map(\.weeks), at: planWeek)
             VStack(spacing: 0) {
                 ForEach(Array(phases.enumerated()), id: \.element.id) { index, phase in
-                    phaseRow(phase: phase, index: index, allPhases: phases)
+                    phaseRow(phase: phase, index: index, allPhases: phases, progress: progress[index])
                     Rectangle()
                         .fill(Color.bruHair)
                         .frame(height: 1)
@@ -959,17 +1052,15 @@ public struct BlockOverviewScreen: View {
     }
 
     @ViewBuilder
-    private func phaseRow(phase: BlockPhase, index: Int, allPhases: [BlockPhase]) -> some View {
+    private func phaseRow(phase: BlockPhase, index: Int, allPhases: [BlockPhase], progress: PhaseProgress) -> some View {
         // Compute cumulative week range for this phase
         let priorWeeks = allPhases.prefix(index).reduce(0) { $0 + $1.weeks }
         let startWeek = priorWeeks + 1
         let endWeek = priorWeeks + phase.weeks
         let weekRange = startWeek == endWeek ? "W\(startWeek)" : "W\(startWeek)–W\(endWeek)"
 
-        // Determine if this phase is current, past, or upcoming. A block
-        // without a current week has neither a NOW nor a DONE phase.
-        let isNow = currentWeekIndex.map { $0 >= priorWeeks && $0 < priorWeeks + phase.weeks } ?? false
-        let isDone = currentWeekIndex.map { $0 >= priorWeeks + phase.weeks } ?? false
+        let isNow = progress == .current
+        let isDone = progress == .done
         let isDeload = phase.kind == .deload
 
         // Kind descriptor per JSX reference
@@ -986,13 +1077,7 @@ public struct BlockOverviewScreen: View {
         // Summary copy
         let summaryText: String = {
             if isNow {
-                let done = weekSessions.filter { s in
-                    // Phase 8: slot-based membership is primary (resolver sets session.slot);
-                    // block?.id fallback covers pre-resolver / legacy-edge sessions
-                    // (spec §8, RESEARCH Pitfall 7).
-                    s.slot?.split?.id == block.split?.id || s.block?.id == block.id
-                }.count
-                return "In progress · \(done) sessions"
+                return "In progress · \(BRUCountLabel.text(countedWeekWorkouts.count, "session"))"
             } else if isDone {
                 return "Completed"
             } else {

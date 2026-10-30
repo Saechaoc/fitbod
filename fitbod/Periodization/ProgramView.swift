@@ -315,6 +315,26 @@ public struct ProgramView: View {
     static let templateRows: [ProgramTemplateRowContent] =
         BlockTemplates.catalog.map(ProgramTemplateRowContent.init)
 
+    /// What an active block's row says about its week: a badge beside its
+    /// status, "W2 · INTENSIFICATION", a line under its name, "Week 2 of 4 ·
+    /// Intensification", and what VoiceOver reads, "Week 2 of 4,
+    /// Intensification". Past its last planned week the badge reads PLAN
+    /// COMPLETE and the line goes (tradeoffs.md "A block past its plan").
+    static func activeBlockWeek(of block: Block, on date: Date) -> (badge: String, line: String?, spoken: String) {
+        // An active block before its start date reads as week 1.
+        guard case .week(let weekIndex) = PlanWeek.of(block, on: date) ?? .week(0) else {
+            return (PlanWeek.completeLabel, nil, "Plan complete")
+        }
+        let totalWeeks = MesocycleWeekPage.totalWeeks(of: block)
+        let kind = PeriodizationEngine.weekContext(for: block, weekIndex: weekIndex, on: date)?.phaseKind.rawValue
+        let phase = (kind ?? "Accumulation").capitalized
+        return (
+            "W\(weekIndex + 1) · \(phase.uppercased())",
+            "Week \(weekIndex + 1) of \(totalWeeks) · \(phase)",
+            "Week \(weekIndex + 1) of \(totalWeeks), \(phase)"
+        )
+    }
+
     private enum PendingBlockBuilder: Identifiable {
         case newBlock(NewBlockPreset?)
         case template(BlockTemplate)
@@ -461,17 +481,8 @@ fileprivate struct BlockStatusCard: View {
 
     private var derivedStatus: BlockStatus { block.derivedStatus }
 
-    private var weekIndex: Int {
-        PeriodizationEngine.weekIndex(for: block, on: today) ?? 0
-    }
-
-    private var totalWeeks: Int {
-        MesocycleWeekPage.totalWeeks(of: block)
-    }
-
-    private var phaseLabel: String {
-        let ctx = PeriodizationEngine.weekContext(for: block, weekIndex: weekIndex, on: today)
-        return (ctx?.phaseKind.rawValue ?? "Accumulation").capitalized
+    private var activeWeek: (badge: String, line: String?, spoken: String) {
+        ProgramView.activeBlockWeek(of: block, on: today)
     }
 
     var body: some View {
@@ -482,7 +493,7 @@ fileprivate struct BlockStatusCard: View {
                     statusChip
                     Spacer()
                     if derivedStatus == .active {
-                        Text("W\(weekIndex + 1) · \(phaseLabel.uppercased())")
+                        Text(activeWeek.badge)
                             .font(BRUFont.labelSmall)
                             .textCase(.uppercase)
                             .tracking(1.2)
@@ -497,8 +508,8 @@ fileprivate struct BlockStatusCard: View {
                     .fixedSize(horizontal: false, vertical: true)
 
                 // Active progress line
-                if derivedStatus == .active {
-                    Text("Week \(weekIndex + 1) of \(totalWeeks) · \(phaseLabel)")
+                if derivedStatus == .active, let line = activeWeek.line {
+                    Text(line)
                         .font(BRUFont.bodyDefault)
                         .foregroundStyle(Color.bruMuted)
                         .fixedSize(horizontal: false, vertical: true)
@@ -533,7 +544,7 @@ fileprivate struct BlockStatusCard: View {
         let name = block.name.isEmpty ? "Untitled Block" : block.name
         switch derivedStatus {
         case .active:
-            return "ACTIVE block: \(name). Week \(weekIndex + 1) of \(totalWeeks), \(phaseLabel)."
+            return "ACTIVE block: \(name). \(activeWeek.spoken)."
         case .ready:
             return "READY block: \(name)"
         case .draft:
