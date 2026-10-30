@@ -12,7 +12,10 @@
 //
 //  Centralizing the query prevents the two surfaces from drifting on
 //  subtle semantics (working-set filter, warmup exclusion, "top set"
-//  tie-breaking, intent split for ROUTINE-08).
+//  tie-breaking, intent split for ROUTINE-08). Its session walk,
+//  `lastWorkingSets`, also gives SessionFactory.lastSessionWorkingReps
+//  the reps behind double progression's bump, so the bump and the
+//  previous top set always read the same workout.
 //
 //  Phase 3.1 (PIVOT-05 / D-13): the filter source moved from
 //  SessionExercise.intentRaw (gone) to Session.intentRaw via post-fetch
@@ -25,10 +28,10 @@
 //  RESEARCH §6 Pitfall 1 — the new chain `se.session?.intentRaw` is a
 //  multi-level optional chain on SessionExercise. Pitfall 1 still
 //  forbids that shape INSIDE #Predicate (the related-entity ID compare
-//  returns empty results on iOS 17/18). The fix mirrors
-//  SessionFactory.fetchHistoryPoints / lastSessionWorkingReps: drop the
-//  intent filter from #Predicate, post-filter ALL fetched results by
-//  both exerciseID AND session.intentRaw in Swift.
+//  returns empty results on iOS 17/18). The fix drops the intent filter
+//  from #Predicate, which keeps only the single-hop exerciseID gate (as
+//  in PlateauDetector.finishedSessionLogs), and post-filters
+//  session.intentRaw in Swift.
 //
 
 import Foundation
@@ -63,25 +66,18 @@ public enum PreviousMatchingIntent {
     ///   - explicitly committed (`isComplete == true`)
     ///
     /// A session that logs the exercise more than once counts once: its
-    /// top working set is read across all of those logs, and on a tie in
-    /// weight the earlier log's set (lower `orderIndex`) wins.
+    /// top working set is read across all of those logs. On a tie in
+    /// weight the earlier set wins, by log and then by set (lower
+    /// `orderIndex` both times), whatever order SwiftData returns them in.
     ///
     /// The "matching-intent" half is the load-bearing piece of ROUTINE-08
     /// (`same routine recurring with different intent maintains separate
     /// per-intent histories per exercise`). A strength session's top
     /// working set MUST NOT seed a hypertrophy session and vice versa.
     ///
-    /// Performance (Phase 3.1): the descriptor fetches ALL SessionExercise
-    /// rows (no #Predicate filter on intent, since `se.session?.intentRaw`
-    /// is a multi-level optional chain that triggers Pitfall 1). The
-    /// Swift post-filter step keeps only rows matching both exerciseID
-    /// AND parent-session intent, groups them by session, then sorts the
-    /// sessions by startedAt and keeps the 5 most-recent. At single-user
-    /// single-month-of-data scale (hundreds of SessionExercise rows) the
-    /// unfiltered fetch + Swift filter is sub-millisecond. Future
-    /// optimization (Phase 6) could fetch matching Sessions first via the
-    /// new `#Index<Session>([\.intentRaw])`, then flat-map to their
-    /// exercises.
+    /// The session walk (which sessions count, the five-session walk back,
+    /// the working-set filter and the order the sets come in) is
+    /// `lastWorkingSets`, shared with `SessionFactory.lastSessionWorkingReps`.
     ///
     /// Only FINISHED sessions count as "previous" (`completedAt != nil`),
     /// most recent first. The in-progress session and any abandoned,
@@ -95,38 +91,82 @@ public enum PreviousMatchingIntent {
         context: ModelContext,
         excludingSessionID: UUID? = nil
     ) -> PreviousMatchingIntentHit? {
+        guard let last = lastWorkingSets(
+            exerciseID: exerciseID,
+            intentRaw: intentRaw,
+            context: context,
+            excludingSessionID: excludingSessionID
+        ) else { return nil }
+
+        // The sets come in workout order, then set order, and `max(by:)`
+        // keeps the first of equal elements, so the earlier set wins a tie
+        // in weight, inside one log as across logs.
+        guard let topSet = last.sets.max(by: { $0.weight < $1.weight }) else { return nil }
+        return PreviousMatchingIntentHit(
+            weight: topSet.weight,
+            reps: topSet.reps,
+            rpe: topSet.rpe,
+            sessionStartedAt: last.session.startedAt
+        )
+    }
+
+    /// The working sets of the most recent matching-intent session that
+    /// has any, read across every log of the exercise in it: in workout
+    /// order, then set order (`orderIndex` both times), never in the order
+    /// SwiftData returns them. A working set is non-warmup, logged
+    /// (`reps > 0`) and committed (`isComplete == true`). Returns nil when
+    /// no such session exists.
+    ///
+    /// A session that logs the exercise more than once counts once, as in
+    /// `PlateauDetector.finishedSessionLogs`. Only FINISHED sessions
+    /// (`completedAt != nil`) of `intentRaw` count, never
+    /// `excludingSessionID`. A session whose logs hold no working set is
+    /// skipped, and the walk back stops after five sessions.
+    ///
+    /// `fetchTopWorkingSet` and `SessionFactory.lastSessionWorkingReps`
+    /// both read it, so the previous top set and double progression's bump
+    /// always come from the same workout.
+    ///
+    /// Performance (Phase 3.1): the #Predicate gates on the exercise only,
+    /// a single-hop optional chain with its ID captured as a local first
+    /// (RESEARCH §6 Pitfall 1). The finished, excluded-session and intent
+    /// gates read the parent Session (`se.session?.intentRaw` is the
+    /// multi-level chain Pitfall 1 forbids inside #Predicate), so they run
+    /// as Swift post-filters, which also drop orphan rows. At single-user
+    /// scale (hundreds of SessionExercise rows) the post-filter is
+    /// sub-millisecond. Future optimization (Phase 6) could fetch matching
+    /// Sessions first via `#Index<Session>([\.intentRaw])`, then flat-map
+    /// to their exercises.
+    static func lastWorkingSets(
+        exerciseID: UUID?,
+        intentRaw: String,
+        context: ModelContext,
+        excludingSessionID: UUID? = nil
+    ) -> (session: Session, sets: [SetEntry])? {
         guard let exerciseID else { return nil }
 
-        // Phase 3.1 (PIVOT-05 / D-13): no #Predicate filter — both the
-        // intent gate (`session?.intentRaw`) and the exerciseID gate
-        // (`exercise?.id`) are post-filtered in Swift. The intent chain
-        // is multi-level optional which Pitfall 1 forbids inside the
-        // predicate body; the exerciseID chain is single-level optional
-        // and could in principle live inside #Predicate, but keeping
-        // both gates side-by-side in Swift mirrors
-        // SessionFactory.fetchHistoryPoints and keeps the workaround
-        // shape consistent across the three queries.
-        //
+        // RESEARCH §6 Pitfall 1 — local-let captures before #Predicate.
         // SortDescriptor on optional keypath (\.session?.startedAt)
         // also caused type-checking failures in the Swift 6 toolchain
         // — sort in Swift after fetch.
         let targetID = exerciseID
         let targetIntent = intentRaw
 
-        let descriptor = FetchDescriptor<SessionExercise>()
+        let descriptor = FetchDescriptor<SessionExercise>(
+            predicate: #Predicate { se in se.exercise?.id == targetID }
+        )
 
         guard let all = try? context.fetch(descriptor) else { return nil }
 
         // Each matching session's logs of the exercise, in the order the
         // sessions first appear. A session that logs the exercise several
-        // times is one entry, as in `PlateauDetector.finishedSessionLogs`.
+        // times is one entry.
         var sessions: [(session: Session, logs: [SessionExercise])] = []
         var sessionIndex: [UUID: Int] = [:]
         for se in all {
             guard let session = se.session,
                   session.completedAt != nil,
                   session.id != excludingSessionID,
-                  se.exercise?.id == targetID,
                   session.intentRaw == targetIntent
             else { continue }
             if let index = sessionIndex[session.id] {
@@ -142,30 +182,18 @@ public enum PreviousMatchingIntent {
             .prefix(5)
 
         for (session, logs) in recent {
-            // The logs are read in workout order, and a later log's set
-            // replaces the pick only when it is heavier, so the earlier
-            // log's set wins a tie in weight.
-            var heaviest: SetEntry?
-            for se in logs.sorted(by: { $0.orderIndex < $1.orderIndex }) {
-                let workingSets = (se.sets ?? []).filter { entry in
-                    !entry.isWarmup && entry.reps > 0 && entry.isComplete
+            let workingSets = logs
+                .sorted { $0.orderIndex < $1.orderIndex }
+                .flatMap { se in
+                    (se.sets ?? [])
+                        .filter { !$0.isWarmup && $0.reps > 0 && $0.isComplete }
+                        .sorted { $0.orderIndex < $1.orderIndex }
                 }
-                guard let logTop = workingSets.max(by: { $0.weight < $1.weight }) else { continue }
-                if let best = heaviest, best.weight >= logTop.weight { continue }
-                heaviest = logTop
-            }
-            guard let topSet = heaviest else {
-                // This session logged the exercise but no working set was
-                // committed (e.g., user discarded mid-session). Walk back
-                // further until we find one with committed working sets.
-                continue
-            }
-            return PreviousMatchingIntentHit(
-                weight: topSet.weight,
-                reps: topSet.reps,
-                rpe: topSet.rpe,
-                sessionStartedAt: session.startedAt
-            )
+            // This session logged the exercise but no working set was
+            // committed (e.g., user discarded mid-session). Walk back
+            // further until we find one with committed working sets.
+            guard !workingSets.isEmpty else { continue }
+            return (session, workingSets)
         }
         return nil
     }

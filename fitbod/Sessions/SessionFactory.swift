@@ -550,16 +550,15 @@ public enum SessionFactory {
     /// matching (exerciseID, intentRaw). Powers DoubleProgressionStrategy's bump
     /// trigger. Returns empty array if no prior session exists.
     ///
-    /// Phase 3.1 PIVOT-05 / D-13: intent is a SESSION-level field after
-    /// Plan 02. The #Predicate gates on `se.exercise?.id == targetID`
-    /// only; the intent gate moves to the Swift post-filter as
-    /// `se.session?.intentRaw == targetIntent`. Pitfall 1 forbids the
-    /// multi-level optional chain `se.session?.intentRaw` inside the
-    /// #Predicate (mirrors PreviousMatchingIntent's pattern). The Phase 1
-    /// #Index<SessionExercise>([\.intentRaw]) is gone; the new
-    /// #Index<Session>([\.intentRaw]) (Plan 02) is one indirection away
-    /// and does not accelerate this specific query. Acceptable at
-    /// single-user scale per CONTEXT.md performance notes.
+    /// A session that logs the exercise more than once counts once: its reps
+    /// are read across all of those logs, in workout order and then set order.
+    /// A session whose logs hold no working set is skipped, and the walk back
+    /// stops after five sessions. The walk is
+    /// `PreviousMatchingIntent.lastWorkingSets`, which also picks
+    /// `fetchTopWorkingSet`'s session, so the bump reads the same workout as
+    /// the previous top set. Its fetch keeps the Phase 3.1 PIVOT-05 / D-13
+    /// shape: the #Predicate gates on the exercise only, and the session-level
+    /// intent gate is a Swift post-filter (RESEARCH §Pitfall 1).
     ///
     /// Only FINISHED sessions (`completedAt != nil`) count, the same rule
     /// as `PreviousMatchingIntent.fetchTopWorkingSet`, so a set logged in
@@ -569,46 +568,11 @@ public enum SessionFactory {
         intentRaw: String,
         context: ModelContext
     ) -> [Int] {
-        guard let exerciseID else { return [] }
-
-        // RESEARCH §Pitfall 1 — local-let captures.
-        let targetID = exerciseID
-        let targetIntent = intentRaw
-
-        // Predicate gates on exerciseID only (single-level optional chain
-        // is safe inside #Predicate per RESEARCH §Pitfall 1 — the
-        // workaround is the local-let capture above). The intent gate
-        // lives in the Swift post-filter because the new
-        // `se.session?.intentRaw` chain is multi-level optional which
-        // Pitfall 1 forbids inside #Predicate. Mirrors
-        // PreviousMatchingIntent's post-Plan-07 descriptor + filter pattern.
-        // SortDescriptor on optional keypaths (\.session?.startedAt) can cause
-        // type-checking failures in the Swift 6 toolchain — sort in Swift.
-        let descriptor = FetchDescriptor<SessionExercise>(
-            predicate: #Predicate { se in se.exercise?.id == targetID }
-        )
-
-        guard let allSes = try? context.fetch(descriptor) else { return [] }
-        // Swift post-filter for finished sessions and intent (PIVOT-05 —
-        // read from parent Session via the SessionExercise.session
-        // relation), then sort by session startedAt descending and take
-        // the 5 most-recent candidates.
-        let recent = allSes
-            .filter { $0.session?.completedAt != nil && $0.session?.intentRaw == targetIntent }
-            .sorted { ($0.session?.startedAt ?? .distantPast) > ($1.session?.startedAt ?? .distantPast) }
-            .prefix(5)
-
-        for se in recent {
-            let workingSets = (se.sets ?? []).filter { entry in
-                !entry.isWarmup && entry.reps > 0 && entry.isComplete
-            }
-            if !workingSets.isEmpty {
-                return workingSets
-                    .sorted { $0.orderIndex < $1.orderIndex }
-                    .map { $0.reps }
-            }
-        }
-        return []
+        PreviousMatchingIntent.lastWorkingSets(
+            exerciseID: exerciseID,
+            intentRaw: intentRaw,
+            context: context
+        )?.sets.map(\.reps) ?? []
     }
 
     /// Returns the PlateInventory for the given equipment kind. If no row
