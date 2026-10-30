@@ -1931,69 +1931,71 @@ fileprivate struct NewBlockPhaseEditorSheet: View {
 
 // MARK: - Add Phase and Linked Routines
 
+/// + ADD PHASE's picker. A pick adds that phase type and closes the sheet;
+/// CANCEL closes it without one.
 fileprivate struct NewBlockAddPhaseTypeSheet: View {
     let onSelect: (BlockPhaseKind) -> Void
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
-        NavigationStack {
-            VStack(alignment: .leading, spacing: 0) {
-                Text("Choose a phase type to add.")
-                    .font(NewBlockType.label)
-                    .tracking(0.4)
-                    .foregroundStyle(NewBlockScreenTokens.muted)
-                    .padding(.horizontal, NewBlockScreenTokens.sidePadding)
-                    .padding(.top, NewBlockScreenTokens.rowGap)
-                    .padding(.bottom, NewBlockScreenTokens.sectionGap)
+        VStack(spacing: 0) {
+            BRUHeaderBar.slots(left: .cancel, center: "Add Phase")
 
-                Rectangle()
-                    .fill(NewBlockScreenTokens.ink)
-                    .frame(height: NewBlockScreenTokens.rule)
-
-                ForEach(BlockPhaseKind.allCases, id: \.self) { kind in
-                    let swatchColor = BlockPhaseColors.badgeColor(for: kind)
-
-                    Button {
-                        onSelect(kind)
-                        dismiss()
-                    } label: {
-                        HStack(spacing: NewBlockScreenTokens.sectionGap) {
-                            RoundedRectangle(cornerRadius: 4)
-                                .fill(swatchColor)
-                                .frame(width: 28, height: 28)
-
-                            VStack(alignment: .leading, spacing: NewBlockScreenTokens.microGap) {
-                                Text(NewBlockPhaseText.title(for: kind))
-                                    .font(NewBlockType.phaseTitle)
-                                    .fontWeight(.semibold)
-                                    .foregroundStyle(NewBlockScreenTokens.ink)
-                                Text(NewBlockPhaseText.subtitle(for: kind))
-                                    .font(NewBlockType.label)
-                                    .tracking(1.2)
-                                    .foregroundStyle(NewBlockScreenTokens.muted)
-                            }
-
-                            Spacer()
-                        }
+            ScrollView {
+                VStack(alignment: .leading, spacing: 0) {
+                    Text("Choose a phase type to add.")
+                        .font(NewBlockType.label)
+                        .tracking(0.4)
+                        .foregroundStyle(NewBlockScreenTokens.muted)
                         .padding(.horizontal, NewBlockScreenTokens.sidePadding)
-                        .frame(maxWidth: .infinity)
-                        .frame(minHeight: 44)
-                        .padding(.vertical, NewBlockScreenTokens.tightGap)
-                        .background(NewBlockScreenTokens.paper)
-                    }
-                    .buttonStyle(.plain)
+                        .padding(.top, NewBlockScreenTokens.rowGap)
+                        .padding(.bottom, NewBlockScreenTokens.sectionGap)
 
                     Rectangle()
-                        .fill(NewBlockScreenTokens.hair)
+                        .fill(NewBlockScreenTokens.ink)
                         .frame(height: NewBlockScreenTokens.rule)
-                }
 
-                Spacer()
+                    ForEach(BlockPhaseKind.allCases, id: \.self) { kind in
+                        let swatchColor = BlockPhaseColors.badgeColor(for: kind)
+
+                        Button {
+                            onSelect(kind)
+                            dismiss()
+                        } label: {
+                            HStack(spacing: NewBlockScreenTokens.sectionGap) {
+                                RoundedRectangle(cornerRadius: 4)
+                                    .fill(swatchColor)
+                                    .frame(width: 28, height: 28)
+
+                                VStack(alignment: .leading, spacing: NewBlockScreenTokens.microGap) {
+                                    Text(NewBlockPhaseText.title(for: kind))
+                                        .font(NewBlockType.phaseTitle)
+                                        .fontWeight(.semibold)
+                                        .foregroundStyle(NewBlockScreenTokens.ink)
+                                    Text(NewBlockPhaseText.subtitle(for: kind))
+                                        .font(NewBlockType.label)
+                                        .tracking(1.2)
+                                        .foregroundStyle(NewBlockScreenTokens.muted)
+                                }
+
+                                Spacer()
+                            }
+                            .padding(.horizontal, NewBlockScreenTokens.sidePadding)
+                            .frame(maxWidth: .infinity)
+                            .frame(minHeight: 44)
+                            .padding(.vertical, NewBlockScreenTokens.tightGap)
+                            .background(NewBlockScreenTokens.paper)
+                        }
+                        .buttonStyle(.plain)
+
+                        Rectangle()
+                            .fill(NewBlockScreenTokens.hair)
+                            .frame(height: NewBlockScreenTokens.rule)
+                    }
+                }
             }
-            .background(NewBlockScreenTokens.paper.ignoresSafeArea())
-            .navigationTitle("Add Phase")
-            .navigationBarTitleDisplayMode(.inline)
         }
+        .background(NewBlockScreenTokens.paper.ignoresSafeArea())
         .presentationDetents([.medium])
     }
 }
