@@ -32,7 +32,7 @@ These are findings F103, F104 and F105, which the T79 worker found on Why this w
 
 ## Change
 
-1. The logger passes the set's target reps, target RPE and set type into Why this weight, so the hero shows them and steps 01 and 02 use them.
+1. The logger passes the set's rep range, target RPE and set type into Why this weight, so the hero shows them, for example "×8–12" for an 8 to 12 range, and steps 01 and 02 use them.
 2. A last top set logged without an RPE still shows as the last session in step 01, with its weight, reps and date and no RPE, and step 02 no longer says "No prior data" for it.
 3. The steps block fills the sheet's width: its numerals line up with the section head, and its closing rule spans the sheet, whatever the text's length.
 4. Suggestions, prescription math, and T61's and T79's rules for a suggestion of 0 stay as they are.
@@ -40,7 +40,7 @@ These are findings F103, F104 and F105, which the T79 worker found on Why this w
 ## Constraints
 
 - Change only how a last session is described, not what the strategies prescribe.
-- Keep `WhyThisWeightSheet`'s initializer as it is; it already takes reps, RPE and the set type.
+- `WhyThisWeightSheet`'s `reps` may change from one number to the set's rep range; keep its other parameters as they are.
 
 ## Ownership
 
@@ -51,7 +51,7 @@ Ask before you edit anything else.
 
 - In `fitbodTests/WhySheetInputsTests.swift`, build a double-progression explanation from a last top set logged without an RPE, and assert that its last-session line names that set's weight, reps and date.
   It fails today.
-- In `fitbodUITests/WhyThisWeightControlUITests.swift`, with the demo seed on the small phone, open Push A's Why this weight and assert that the hero shows the set's target reps and RPE, not dashes.
+- In `fitbodUITests/WhyThisWeightControlUITests.swift`, with the demo seed on the small phone, open Push A's Why this weight and assert that the hero shows the set's rep range and target RPE, not dashes.
   It fails today.
 
 ## Observable acceptance
@@ -65,5 +65,6 @@ Ask before you edit anything else.
 
 - The cell opens the sheet near line 158 of `PrescriptionWeightCell.swift`; `SetRow` builds the cell near line 136 and has the set and its exercise.
 - `WhyThisWeightSheet.init` takes `reps`, `rpe` and `setTypeLabel` near line 86.
+- `SessionExercise` holds the range as `targetRepsLow` and `targetRepsHigh`, and the target RPE as `targetRPE`.
 - `lastSessionLine` is near line 116 of `DoubleProgressionStrategy.swift` and near line 188 of `RPEAutoregStrategy.swift`.
 - `stepsBlock` is near line 253 of `WhyThisWeightSheet.swift`.
