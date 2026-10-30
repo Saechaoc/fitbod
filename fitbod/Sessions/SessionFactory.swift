@@ -427,6 +427,10 @@ public enum SessionFactory {
     /// gone; the new #Index<Session>([\.intentRaw]) (Plan 02) is one
     /// indirection away and does not accelerate this specific query.
     /// Acceptable at single-user scale per CONTEXT.md performance notes.
+    ///
+    /// Only sets from FINISHED sessions (`completedAt != nil`) count, the
+    /// same rule as `PreviousMatchingIntent.fetchTopWorkingSet`. A set
+    /// logged in the workout in progress never feeds its own explanation.
     internal static func fetchHistoryPoints(
         exerciseID: UUID?,
         intentRaw: String,
@@ -459,6 +463,7 @@ public enum SessionFactory {
         let entries = all.filter { entry in
             entry.reps > 0
                 && entry.weight > 0
+                && entry.sessionExercise?.session?.completedAt != nil
                 && entry.sessionExercise?.session?.intentRaw == targetIntent
                 && entry.sessionExercise?.exercise?.id == targetID
         }
@@ -490,6 +495,10 @@ public enum SessionFactory {
     /// #Index<Session>([\.intentRaw]) (Plan 02) is one indirection away
     /// and does not accelerate this specific query. Acceptable at
     /// single-user scale per CONTEXT.md performance notes.
+    ///
+    /// Only FINISHED sessions (`completedAt != nil`) count, the same rule
+    /// as `PreviousMatchingIntent.fetchTopWorkingSet`, so a set logged in
+    /// the workout in progress cannot change its own bump decision.
     internal static func lastSessionWorkingReps(
         exerciseID: UUID?,
         intentRaw: String,
@@ -515,12 +524,12 @@ public enum SessionFactory {
         )
 
         guard let allSes = try? context.fetch(descriptor) else { return [] }
-        // Swift post-filter for intent (PIVOT-05 — read from parent
-        // Session via the SessionExercise.session relation), then sort by
-        // session startedAt descending and take the 5 most-recent
-        // candidates.
+        // Swift post-filter for finished sessions and intent (PIVOT-05 —
+        // read from parent Session via the SessionExercise.session
+        // relation), then sort by session startedAt descending and take
+        // the 5 most-recent candidates.
         let recent = allSes
-            .filter { $0.session?.intentRaw == targetIntent }
+            .filter { $0.session?.completedAt != nil && $0.session?.intentRaw == targetIntent }
             .sorted { ($0.session?.startedAt ?? .distantPast) > ($1.session?.startedAt ?? .distantPast) }
             .prefix(5)
 
