@@ -113,6 +113,7 @@ The quick-task run of the same plan must finish its last two tasks first, so rea
 | [T36](tickets/T36-rest-sheet-and-rpe-chips.md) | Rest sheet and RPE chips |
 | [T37](tickets/T37-library-and-detail-polish.md) | Library and exercise detail polish |
 | [T38](tickets/T38-program-new-block-settings-small-fixes.md) | Small fixes on Program, New Block and Settings |
+| [T85](tickets/T85-pr-row-phrases.md) | PR rows keep "@ RPE" and the kind label whole |
 
 ### Phase 4: test health
 
