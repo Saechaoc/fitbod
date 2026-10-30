@@ -32,7 +32,7 @@ These are findings F98 and F99, which the T75 worker found.
 
 ## Change
 
-1. With "Skip warm-ups this session only" on, the next workout start builds no ramp for that exercise and then clears the flag, so the start after it builds the ramp again.
+1. With "Skip warm-ups this session only" on, the next workout start builds no ramp for that exercise, exactly as when its warm-up is off, so the next qualifying compound gets the ramp; it then clears the flag, so the start after it builds the ramp again.
 2. The flag is cleared at that start even though no ramp was built, so it never keeps suppressing the ramp.
 3. A swap rebuilds skipped warm-ups as well as pending ones, and the rebuilt rows stay skipped, so UNDO brings back the new exercise's ramp.
 4. Everything else about warm-ups stays as it is, including a ramp only on the first qualifying compound and no ramp in a deload week.
