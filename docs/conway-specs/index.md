@@ -64,6 +64,7 @@ The quick-task run of the same plan must finish its last two tasks first, so rea
 | [T64](tickets/T64-plateau-footer-and-window-test.md) | The plateau footer stops pointing to a missing setting, and a test pins the stall window |
 | [T65](tickets/T65-edit-keeps-active-block.md) | Saving an edit keeps the active block active |
 | [T66](tickets/T66-tab-bar-bleed.md) | The tab bar's fill stays out of the home indicator area at large text |
+| [T67](tickets/T67-lifecycle-entry-points.md) | Ending a block and swapping its routine go through the lifecycle service |
 
 ### Phase 2: P2 defects
 
