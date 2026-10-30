@@ -24,6 +24,11 @@
 //    weight of 0 is no prescription: the field keeps its "—" placeholder.
 //    A calibrating range of 0 to 0 is no suggestion either: the read-only
 //    cell shows the same "—", and VoiceOver reads "none".
+//    An open calibrating set shows its range until the lifter picks a
+//    weight (ticket T80). Override brings in the weight field, holding the
+//    set's weight; a weight typed away from the prescription, or one that
+//    equals a suggestion above 0, then keeps showing, and a logged set
+//    shows the weight it logged.
 //    The cell presents WhyThisWeightSheet when explanation != nil. Opening it
 //    ends editing, so the keyboard never covers the sheet. Use writes the
 //    suggested weight into the set and clears the badge; Override closes the
@@ -38,9 +43,11 @@ import SwiftUI
 public struct PrescriptionWeightCell: View {
     @Binding public var weight: Double
     public let prescribed: Double?
-    /// When non-nil, renders the read-only calibrating-range Text instead of
-    /// the editable TextField. Format: "{low} \u{2013} {high} {unitLabel}";
-    /// a range of 0 to 0 shows the field's "—" placeholder instead.
+    /// When non-nil, the set is calibrating: until the lifter picks a
+    /// weight, an open set renders the read-only range Text instead of the
+    /// editable TextField (see `showsRange`). Format:
+    /// "{low} \u{2013} {high} {unitLabel}"; a range of 0 to 0 shows the
+    /// field's "—" placeholder instead.
     public let range: ClosedRange<Double>?
     public let explanation: PrescriptionExplanation?
     /// Unit label for the weight ("lb" or "kg"). No default: the caller
@@ -55,10 +62,13 @@ public struct PrescriptionWeightCell: View {
     /// Without one (previews), the cell keeps the state itself.
     private let isExplaining: Binding<Bool>?
 
-    @State private var weightText: String = ""
+    @State private var weightText: String
     @State private var showWhySheet: Bool = false
     /// Set by Override: the weight field takes focus once the sheet is gone.
     @State private var focusAfterSheet = false
+    /// Set by Override on a calibrating set: the weight field stands in for
+    /// the range until editing ends.
+    @State private var isOverridingRange = false
     @FocusState private var weightFocused: Bool
 
     public init(
@@ -83,11 +93,14 @@ public struct PrescriptionWeightCell: View {
         self.onTapEmptyCell = onTapEmptyCell
         self.onEditCommitted = onEditCommitted
         self.isExplaining = isExplaining
+        // The field's text starts as the set's weight; onAppear seeds a
+        // prescription into an empty set.
+        self._weightText = State(initialValue: Self.text(for: weight.wrappedValue))
     }
 
     public var body: some View {
         HStack(spacing: 4) {
-            if let r = range {
+            if showsRange, let r = range {
                 // MARK: Read-only calibrating-range display
                 // 03-UI-SPEC line 206 verbatim: "{low} \u{2013} {high} unit" with U+2013 en-dash
                 if let text = rangeText {
@@ -120,14 +133,19 @@ public struct PrescriptionWeightCell: View {
                         wasManualOverride = isManualOverride(d)
                     }
                     .onChange(of: weightFocused) { _, focused in
-                        if !focused { onEditCommitted() }
+                        if !focused {
+                            // A calibrating set keeps the field only for a
+                            // weight the lifter picked.
+                            isOverridingRange = false
+                            onEditCommitted()
+                        }
                     }
-                    // Reflect weight changes made outside the field (swap
-                    // re-seed, plateau "drop intensity") without fighting
-                    // the user's own typing.
-                    .onChange(of: weight) { _, new in
-                        if !weightFocused, Double(weightText) != new {
-                            weightText = new > 0 ? formatted(new) : ""
+                    // Override on a calibrating set brings the field in;
+                    // it takes focus as it appears.
+                    .onAppear {
+                        if isOverridingRange && focusAfterSheet {
+                            focusAfterSheet = false
+                            weightFocused = true
                         }
                     }
             }
@@ -135,7 +153,7 @@ public struct PrescriptionWeightCell: View {
         .padding(.vertical, 12)
         .contentShape(Rectangle())
         .onTapGesture {
-            if range == nil && weightText.isEmpty { onTapEmptyCell() }
+            if !showsRange && weightText.isEmpty { onTapEmptyCell() }
         }
         // Accessibility per 03-UI-SPEC line 494
         .accessibilityLabel(accessibilityLabelText)
@@ -149,7 +167,7 @@ public struct PrescriptionWeightCell: View {
         // MARK: Manual override "M" badge
         // Added after the cell's accessibility so the badge keeps its own label.
         .overlay(alignment: .leading) {
-            if range == nil && wasManualOverride && !weightText.isEmpty {
+            if !showsRange && wasManualOverride && !weightText.isEmpty {
                 overrideBadge
             }
         }
@@ -173,19 +191,27 @@ public struct PrescriptionWeightCell: View {
                 )
             }
         }
+        // Reflect weight changes made outside the field (swap re-seed,
+        // plateau "drop intensity") without fighting the user's own typing.
+        // The text keeps up while a calibrating set shows its range too, so
+        // the field holds the set's weight when it comes in.
+        .onChange(of: weight) { _, new in
+            if !weightFocused, Double(weightText) != new {
+                weightText = Self.text(for: new)
+            }
+        }
         .onAppear {
             // Seed the text field from the prescribed weight or current weight.
             // With no prescription, a weight of 0 keeps the "—" placeholder.
-            // Only seed when range == nil (read-only mode doesn't use weightText).
-            if range == nil {
-                if let p = prescription, weight == 0 {
-                    // The prescription itself is never a manual override.
-                    weightText = formatted(p)
-                    weight = p
-                    wasManualOverride = false
-                } else if weight > 0 {
-                    weightText = formatted(weight)
-                }
+            // A calibrating set never takes the prescription: it keeps the
+            // weight its workout seeded until the lifter picks one.
+            if range == nil, let p = prescription, weight == 0 {
+                // The prescription itself is never a manual override.
+                weightText = formatted(p)
+                weight = p
+                wasManualOverride = false
+            } else if weight > 0 {
+                weightText = formatted(weight)
             }
         }
     }
@@ -210,6 +236,26 @@ public struct PrescriptionWeightCell: View {
         weightText.isEmpty ? "none" : "\(formatted(weight)) \(unitLabel)"
     }
 
+    /// Whether the cell shows its calibrating range, or the dash for a
+    /// range of 0 to 0, in place of the weight field. An open calibrating
+    /// set shows its range until the lifter picks a weight: Override brings
+    /// in the field, and a weight typed away from the prescription or one
+    /// that equals a suggestion above 0, as Use writes it, keeps showing.
+    /// A logged set shows the weight it logged.
+    var showsRange: Bool {
+        guard range != nil, !isComplete, !isOverridingRange, !weightFocused else { return false }
+        return !wasManualOverride && !holdsSuggestion
+    }
+
+    /// The set's weight is a suggestion above 0: Why-this-weight's, which
+    /// Use writes, or the prescription.
+    private var holdsSuggestion: Bool {
+        [explanation?.roundedWeight, prescription].contains { suggestion in
+            guard let suggestion, suggestion > 0 else { return false }
+            return abs(weight - suggestion) <= 0.001
+        }
+    }
+
     /// The read-only calibrating range, "95 – 105 lb", or nil when there is
     /// none to show. A range of 0 to 0, a bodyweight lift calibrating with
     /// no added load, is no suggestion, so the cell shows the field's "—".
@@ -221,7 +267,7 @@ public struct PrescriptionWeightCell: View {
     /// VoiceOver's label: the calibrating range, or what the field shows.
     /// A range of 0 to 0 reads like the empty field.
     var accessibilityLabelText: String {
-        guard let range else { return "Prescribed weight: \(weightDescription)" }
+        guard showsRange, let range else { return "Prescribed weight: \(weightDescription)" }
         guard rangeText != nil else { return "Prescribed weight: none" }
         return "Prescribed weight range: \(formatted(range.lowerBound)) to \(formatted(range.upperBound)) \(unitLabel)"
     }
@@ -229,7 +275,7 @@ public struct PrescriptionWeightCell: View {
     /// VoiceOver's value: the field's reading, or "none" for a range of 0
     /// to 0. A range's text has its own.
     var accessibilityValueText: String {
-        guard range != nil else { return weightDescription }
+        guard showsRange else { return weightDescription }
         return rangeText == nil ? "none" : ""
     }
 
@@ -257,30 +303,46 @@ public struct PrescriptionWeightCell: View {
     }
 
     /// A typed weight that differs from the prescription is a manual override.
-    private func isManualOverride(_ d: Double) -> Bool {
-        guard let p = prescription else { return false }
+    /// A calibrating range is the prescription: one of 0 to 0 prescribes no
+    /// load, so a load typed over it is a change too.
+    func isManualOverride(_ d: Double) -> Bool {
+        guard let p = prescription ?? (range == nil ? nil : 0) else { return false }
         return abs(d - p) > 0.001
     }
 
     /// Use in Why-this-weight: the suggested weight becomes the set's weight,
     /// and the set is no longer marked as changed from the prescription.
     private func use(_ suggested: Double) {
-        weightText = suggested > 0 ? formatted(suggested) : ""
+        weightText = Self.text(for: suggested)
         weight = suggested
         wasManualOverride = false
         onEditCommitted()
     }
 
     /// Override in Why-this-weight: once the sheet is gone, focus the field.
+    /// A calibrating set showing its range has no field yet, so Override
+    /// brings it in, holding the set's weight, and it takes focus as it
+    /// appears.
     private func focusAfterOverride() {
         guard focusAfterSheet else { return }
-        focusAfterSheet = false
-        weightFocused = true
+        if showsRange {
+            weightText = Self.text(for: weight)
+            isOverridingRange = true
+        } else {
+            focusAfterSheet = false
+            weightFocused = true
+        }
     }
 
     /// Formats a Double without trailing zeros: "100" not "100.0", "102.5" not "102.500".
     private func formatted(_ d: Double) -> String {
         String(format: "%g", d)
+    }
+
+    /// The field's text for a weight: "102.5", or empty for 0 so the field
+    /// shows its "—" placeholder.
+    private static func text(for weight: Double) -> String {
+        weight > 0 ? String(format: "%g", weight) : ""
     }
 }
 
@@ -351,7 +413,8 @@ public struct PrescriptionWeightCell: View {
 }
 
 #Preview("calibrating range (read-only)") {
-    @Previewable @State var weight: Double = 100.0
+    // Last workout's weight, away from the suggestion: the set shows its range.
+    @Previewable @State var weight: Double = 110.0
     @Previewable @State var wasManualOverride: Bool = false
     let explanation = PrescriptionExplanation(
         lastSessionLine: "100 kg \u{00D7} 8 @ RPE 8.5 (May 15)",
