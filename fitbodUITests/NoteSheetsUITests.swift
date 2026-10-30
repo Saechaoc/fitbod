@@ -29,9 +29,9 @@ final class NoteSheetsUITests: XCTestCase {
     func testPinnedNoteSheetIsBRU() throws {
         let app = UITestNavigation.openSeededWorkout()
         openPinnedNote(in: app)
-        XCTAssertTrue(element(app.staticTexts, "Pinned note").waitForExistence(timeout: 5))
-        XCTAssertTrue(element(app.buttons, "Cancel").exists)
-        XCTAssertTrue(element(app.buttons, "Save").exists)
+        XCTAssertTrue(app.staticTexts.labeled("Pinned note").waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons.labeled("Cancel").exists)
+        XCTAssertTrue(app.buttons.labeled("Save").exists)
         XCTAssertFalse(app.navigationBars["Pinned Note"].exists, "The sheet must not use the system navigation bar")
         attachScreenshot(of: app, named: "pinned-note-empty")
 
@@ -71,7 +71,7 @@ final class NoteSheetsUITests: XCTestCase {
         in app: XCUIApplication, title: String, open: () -> Void,
         file: StaticString = #filePath, line: UInt = #line
     ) {
-        let header = element(app.staticTexts, title)
+        let header = app.staticTexts.labeled(title)
         let editor = app.textViews.firstMatch
         func reopen() {
             open()
@@ -89,23 +89,20 @@ final class NoteSheetsUITests: XCTestCase {
 
         reopen()
         type("Kept")
-        element(app.buttons, "Save").tap()
+        app.buttons.labeled("Save").tap()
         waitUntilClosed()
         reopen()
         XCTAssertEqual(editor.value as? String, "Kept", "SAVE must write the note", file: file, line: line)
         attachScreenshot(of: app, named: "\(title) sheet")
 
         type(" draft")
-        element(app.buttons, "Cancel").tap()
+        app.buttons.labeled("Cancel").tap()
         waitUntilClosed()
         reopen()
         XCTAssertEqual(editor.value as? String, "Kept", "CANCEL must throw the edit away", file: file, line: line)
 
         type(" draft")
-        header.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).press(
-            forDuration: 0.05,
-            thenDragTo: app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.95))
-        )
+        UITestNavigation.dragSheetDown(from: header, in: app)
         waitUntilClosed()
         reopen()
         XCTAssertEqual(editor.value as? String, "Kept", "Swipe-down must throw the edit away", file: file, line: line)
@@ -133,11 +130,5 @@ final class NoteSheetsUITests: XCTestCase {
         shot.name = name
         shot.lifetime = .keepAlways
         add(shot)
-    }
-
-    /// BRU labels reach accessibility uppercased, so match without case.
-    @MainActor
-    private func element(_ query: XCUIElementQuery, _ label: String) -> XCUIElement {
-        query.matching(NSPredicate(format: "label ==[c] %@", label)).firstMatch
     }
 }
