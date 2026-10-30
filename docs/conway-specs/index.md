@@ -83,6 +83,7 @@ The quick-task run of the same plan must finish its last two tasks first, so rea
 | [T83](tickets/T83-action-popover-fit.md) | The action popover's items stay whole and take a 44pt tap |
 | [T84](tickets/T84-previous-top-set-whole-workout.md) | The previous top set reads the whole workout |
 | [T86](tickets/T86-block-review-fixes.md) | The block review fits its screen, names what Start next opens, and stops once a block starts |
+| [T88](tickets/T88-warmup-skip-and-swap.md) | "Skip warm-ups this session only" skips, and a swap rebuilds skipped warm-ups |
 
 ### Phase 2: P2 defects
 
