@@ -69,6 +69,7 @@ The quick-task run of the same plan must finish its last two tasks first, so rea
 | [T69](tickets/T69-builder-back-names-its-tab.md) | The block builder's back control names the tab it opened from |
 | [T70](tickets/T70-block-review-after-end.md) | The block review opens after a block ends |
 | [T71](tickets/T71-pr-toggle-every-size.md) | The PR list's intent toggle fits every text size and says which is selected |
+| [T72](tickets/T72-one-sample-per-workout.md) | The plateau and RPE-creep checks count each workout once |
 
 ### Phase 2: P2 defects
 
