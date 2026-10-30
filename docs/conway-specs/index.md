@@ -59,6 +59,7 @@ The quick-task run of the same plan must finish its last two tasks first, so rea
 | [T59](tickets/T59-swap-resets-prescription.md) | Swapping an exercise resets its prescription and override marks |
 | [T60](tickets/T60-plate-inventory-swipe-delete.md) | Plate inventory rows delete with a swipe |
 | [T61](tickets/T61-zero-suggestion-placeholder.md) | A zero suggestion reads as no suggestion |
+| [T62](tickets/T62-heatmap-voiceover-order.md) | VoiceOver reads the heatmap one figure at a time |
 
 ### Phase 2: P2 defects
 
