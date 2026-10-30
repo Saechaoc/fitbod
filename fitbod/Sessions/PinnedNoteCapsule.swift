@@ -16,6 +16,8 @@
 //   Glyph:       InkSquareGlyph — 8pt ink square + 2pt offset notch via Canvas + Path (UI-SPEC line 368)
 //   Text:        BRUFont.bodyDefault bruInk
 //   Shape:       Rectangle (NOT Capsule — UI-SPEC line 349)
+//   Hit area:    44pt minimum band around the drawn box via .frame(minHeight: 44)
+//                and a rectangular content shape on the Button's label
 //
 // BRU contract:
 //   NO system yellow color token — explicitly banned per UI-SPEC line 221
@@ -81,6 +83,11 @@ public struct PinnedNoteCapsule: View {
                 Rectangle()
                     .stroke(Color.bruInk, lineWidth: 1.5)                         // UI-SPEC line 332 / 368
             )
+            // The drawn box is about 33pt tall. The 44pt band and a
+            // rectangular hit shape sit inside the label, so the button's own
+            // frame and hit area cover the whole band, not just the box.
+            .frame(minHeight: 44)
+            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .accessibilityLabel("Pinned note: \(note)")                                // UI-SPEC verbatim a11y
