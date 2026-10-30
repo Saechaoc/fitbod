@@ -128,6 +128,9 @@ Product decisions are in [decisions.md](decisions.md), and they win over this fi
   In edit mode, only the bottom "SAVE CHANGES" shows.
 - Rejected: the bottom action keeping today's rule (a name and one phase), because it would label a draft as ready.
 - Why: block status is derived (completed, active, ready, draft), so "ready" must mean what `Block.derivedStatus` says.
+- Coordinator answer, 2026-10-30 (T11 question `msg_a6f628a01128`): `Block.derivedStatus` checked only the routine, its sessions and the training days, not the name or the phases.
+  T11 moves the full rule above into one shared function that `Block.derivedStatus` and New Block's bottom action both use, so a block without a name or a phase is a draft and cannot be started.
+  Completed and active keep their precedence.
 
 ### Block numbers
 
