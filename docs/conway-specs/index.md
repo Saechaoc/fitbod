@@ -85,6 +85,7 @@ The quick-task run of the same plan must finish its last two tasks first, so rea
 | [T86](tickets/T86-block-review-fixes.md) | The block review fits its screen, names what Start next opens, and stops once a block starts |
 | [T88](tickets/T88-warmup-skip-and-swap.md) | "Skip warm-ups this session only" skips, and a swap rebuilds skipped warm-ups |
 | [T89](tickets/T89-why-sheet-inputs.md) | Why this weight shows the set's targets, its last session and full-width steps |
+| [T90](tickets/T90-shared-ui-test-helpers.md) | UI tests share one set of helpers |
 
 ### Phase 2: P2 defects
 
