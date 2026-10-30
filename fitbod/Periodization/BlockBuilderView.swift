@@ -30,6 +30,7 @@ public struct BlockBuilderView: View {
     @State private var undoTask: Task<Void, Never>? = nil
     @State private var presentingSplitPicker = false
     @State private var initialSnapshot: BlockDraft.Snapshot? = nil
+    @State private var presentingDiscardConfirm = false
 
     init(draft: BlockDraft, editing: Block? = nil, initialPreset: NewBlockPreset? = nil) {
         self.draft = draft
@@ -175,6 +176,15 @@ public struct BlockBuilderView: View {
         } message: {
             Text("This will replace your current phases and settings.")
         }
+        .confirmationDialog(
+            discardTitle,
+            isPresented: $presentingDiscardConfirm,
+            titleVisibility: .visible
+        ) {
+            Button("Discard", role: .destructive) { dismiss() }
+            // iOS 26 hides a cancel-role button, so the way back is a plain one.
+            Button("Keep editing") {}
+        }
         .onAppear {
             if initialPreset == nil {
                 selectedPreset = NewBlockPreset.matching(name: draft.name)
@@ -196,8 +206,18 @@ public struct BlockBuilderView: View {
         .interactiveDismissDisabled(hasUnsavedChanges)
     }
 
+    /// CANCEL and "< PROGRAM" ask before they throw unsaved edits away.
     private func cancel() {
-        dismiss()
+        if hasUnsavedChanges {
+            presentingDiscardConfirm = true
+        } else {
+            dismiss()
+        }
+    }
+
+    /// In EDIT BLOCK, Discard keeps the saved block and drops only the edits.
+    private var discardTitle: String {
+        editing == nil ? "Discard this block?" : "Discard changes?"
     }
 
     private var hasUnsavedChanges: Bool {

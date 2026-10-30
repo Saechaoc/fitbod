@@ -37,8 +37,8 @@
 //  ## Discard / Delete confirmations (UI-SPEC verbatim)
 //
 //  - "Discard Changes?" `.confirmationDialog` — "Discard" (destructive)
-//    + "Keep Editing" (cancel). Only presented when the snapshot
-//    diff says the draft is dirty.
+//    + "Keep editing" (a plain button, because iOS 26 hides a cancel-role
+//    one). Only presented when the snapshot diff says the draft is dirty.
 //  - "Delete \"{name}\"?" `.alert` — "Delete" (destructive) + "Cancel".
 //    Message: "Logged session history for this exercise will be
 //    preserved." (Cosmetic in Phase 1 since no sessions exist yet —
@@ -140,7 +140,8 @@ struct CustomExerciseEditor: View {
             titleVisibility: .visible
         ) {
             Button("Discard", role: .destructive) { dismiss() }
-            Button("Keep Editing", role: .cancel) {}
+            // iOS 26 hides a cancel-role button, so the way back is a plain one.
+            Button("Keep editing") {}
         }
         .alert(
             "Delete \"\(draft.name)\"?",

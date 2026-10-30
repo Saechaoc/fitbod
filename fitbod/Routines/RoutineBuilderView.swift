@@ -182,7 +182,8 @@ public struct RoutineBuilderView: View {
             Button("Discard", role: .destructive) {
                 dismiss()
             }
-            Button("Keep editing", role: .cancel) {
+            // iOS 26 hides a cancel-role button, so the way back is a plain one.
+            Button("Keep editing") {
                 presentingDiscardConfirm = false
             }
         } message: {
