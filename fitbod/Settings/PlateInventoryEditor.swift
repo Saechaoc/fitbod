@@ -8,6 +8,8 @@
 //  BRU reskin (03.2-06): Stepper → PlateTallyRow; Form/Section → ScrollView/VStack;
 //  ContentUnavailableView → custom BRU empty-state; Picker(.segmented) → custom HStack tab strip;
 //  Color.accentColor → BRU tokens; .navigationTitle → BRUHeaderBar.
+//  T77: ScrollView/VStack → a plain List of BRU rows, so a plate row's swipe-to-delete
+//  works on iOS 26 and closes like other rows.
 //
 //  UI-SPEC §PlateInventoryEditor (verbatim copy in all labels / alerts / empty states).
 //  Pattern: PATTERNS.md @Query + @Bindable write-through (SettingsView analog).
@@ -63,15 +65,28 @@ public struct PlateInventoryEditor: View {
             // Custom bruInk-styled tab strip (replaces Picker(.segmented))
             equipmentTabStrip
 
-            // Content scroll area
-            ScrollView {
-                if let inv = activeInventory {
-                    @Bindable var binv = inv
-                    activeTabContent(binv: binv)
-                } else {
-                    emptyInventoryState
+            // Content list. Swipe actions work only in a List on iOS 26, and a
+            // List keeps one row's Delete open at a time and closes it on a tap
+            // outside the rows or a scroll.
+            List {
+                Group {
+                    if let inv = activeInventory {
+                        @Bindable var binv = inv
+                        activeTabContent(binv: binv)
+                    } else {
+                        emptyInventoryState
+                    }
                 }
+                // Rows draw their own rules and padding: no inset, no system
+                // separator, paper background.
+                .listRowInsets(EdgeInsets())
+                .listRowSeparator(.hidden)
+                .listRowBackground(Color.bruPaper)
             }
+            .listStyle(.plain)
+            .scrollContentBackground(.hidden)
+            // Rows keep their own heights instead of the 44pt list minimum.
+            .environment(\.defaultMinListRowHeight, 0)
 
             // Footer — 2pt bruInk top rule + ghost "Save inventory" + primary "Done ▸"
             footerBar
@@ -185,13 +200,13 @@ public struct PlateInventoryEditor: View {
 
     @ViewBuilder
     private func activeTabContent(binv: PlateInventory) -> some View {
+        // Bar weight section — one list row
         VStack(spacing: 0) {
-            // Bar weight section
             barWeightSection(binv: binv)
-
-            // Plates per side section
-            platesSection(binv: binv)
         }
+
+        // Plates per side section — its head, then a list row per plate
+        platesSection(binv: binv)
     }
 
     // MARK: - Bar weight section
@@ -265,20 +280,18 @@ public struct PlateInventoryEditor: View {
 
         } else {
             // Plate tally rows — PlateTallyRow replaces Stepper (03.2-06 must_have)
-            LazyVStack(spacing: 0) {
-                ForEach(
-                    binv.availablePlates.sorted(by: { $0.weight > $1.weight }),
-                    id: \.weight
-                ) { plate in
-                    PlateTallyRow(
-                        weight: plate.weight,
-                        count: stepperBinding(for: plate, on: binv),
-                        unitLabel: unitLabel
-                    )
-                    .swipeActions(edge: .trailing, allowsFullSwipe: false) {
-                        Button("Delete", role: .destructive) {               // UI-SPEC verbatim
-                            delete(plate: plate, from: binv)
-                        }
+            ForEach(
+                binv.availablePlates.sorted(by: { $0.weight > $1.weight }),
+                id: \.weight
+            ) { plate in
+                PlateTallyRow(
+                    weight: plate.weight,
+                    count: stepperBinding(for: plate, on: binv),
+                    unitLabel: unitLabel
+                )
+                .swipeActions(edge: .trailing, allowsFullSwipe: false) {
+                    Button("Delete", role: .destructive) {                   // UI-SPEC verbatim
+                        delete(plate: plate, from: binv)
                     }
                 }
             }
