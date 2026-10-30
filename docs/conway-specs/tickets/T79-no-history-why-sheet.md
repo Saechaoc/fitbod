@@ -1,6 +1,6 @@
 ---
 id: T79
-title: Why this weight with no history shows no zero weight
+title: Why this weight shows no zero weight and no unknown plate size
 phase: 1
 items: []
 depends_on: []
@@ -9,7 +9,7 @@ sim: small
 owns: [fitbod/Sessions/WhyThisWeightSheet.swift, fitbodTests/ZeroSuggestionTests.swift, fitbodUITests/WhyThisWeightControlUITests.swift]
 ---
 
-# T79: Why this weight with no history shows no zero weight
+# T79: Why this weight shows no zero weight and no unknown plate size
 
 Read [../worker-rules.md](../worker-rules.md) first; it is part of this ticket.
 
@@ -21,6 +21,8 @@ T61 (`737958b`) stopped the sheet offering "Use 0 ▸", but the rest of the shee
 - The hero shows a 128pt "0 LB" as the RECOMMENDED weight, and VoiceOver reads "Recommended weight 0 lb".
 - Step 03 reads "ROUNDED TO PLATE ? LB" over a body of "0".
   `incrementText()` finds no plate size in the no-history `roundedLine`, so it returns "?".
+- Step 03 shows the same "?" for every block-periodized or hybrid suggestion, at any weight.
+  Their `roundedLine`s, such as "-> 100 lb (plate-rounded)", name no plate size.
 - Step 02 says the sheet is "starting at prescribed weight", although there is no prescribed weight.
 
 "Empty prescribed weight" in [../tradeoffs.md](../tradeoffs.md) says a weight of 0 is no prescription.
@@ -28,13 +30,14 @@ T61 (`737958b`) stopped the sheet offering "Use 0 ▸", but the rest of the shee
 ## Target
 
 - The hero, step 02 and step 03 of `fitbod/Sessions/WhyThisWeightSheet.swift`, for a suggestion of 0.
+- Step 03's label, for every suggestion.
 
 ## Change
 
 1. For a suggestion of 0, the hero shows the empty weight field's dash in place of the number and unit, and its VoiceOver label starts "Recommended weight: none".
 2. Where step 02 says "starting at prescribed weight", which it does only with no last session, no computed line and no bump, it reads `"No prior data \u{2014} choose a starting weight."` instead.
 3. For a suggestion of 0, the sheet leaves out step 03, since there is nothing to round.
-4. Step 03 never shows "?": when it cannot read a plate size, its label leaves the size out.
+4. Step 03 never shows "?": when it cannot read a plate size, its label leaves out the size and its unit and reads "Rounded to plate".
 5. Every other step 02 text, such as block periodization's "log a baseline session first" or "Weight holds." for a lift last logged at 0, and every suggestion above 0, reads exactly as it does today.
 
 ## Constraints
@@ -50,7 +53,7 @@ Ask before you edit anything else.
 ## Repro first
 
 - In `fitbodTests/ZeroSuggestionTests.swift`, for T61's no-history explanation, assert that the hero shows the dash, its VoiceOver label starts "Recommended weight: none", step 02 reads the new sentence, and the sheet has no step 03.
-  Add a case whose `roundedLine` has no plate size, and assert that step 03's label has no "?".
+  For a block-periodized suggestion above 0, whose `roundedLine` reads "-> 100 lb (plate-rounded)", assert that step 03's label reads "Rounded to plate", with no "?".
   Add a suggestion of 0 with a last session, and assert that step 02 still reads "Weight holds.".
   The first two fail today.
 - In `fitbodUITests/WhyThisWeightControlUITests.swift`, extend `testNoHistoryWhyOffersNoUse` to assert that the sheet shows no "0" hero.

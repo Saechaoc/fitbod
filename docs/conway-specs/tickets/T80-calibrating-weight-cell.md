@@ -35,7 +35,7 @@ With RPE autoregulation, an exercise with some history, but fewer sets than cali
 ## Change
 
 1. On an open calibrating set, Override closes the sheet, turns the cell into the weight field holding the set's weight, and focuses it, as decision 8 says.
-2. An open calibrating set shows its weight in place of the range once it has a manual override or its weight equals the suggestion, so a typed weight or Use keeps showing for the rest of the workout.
+2. An open calibrating set shows its weight in place of the range once it has a manual override or its weight equals a suggestion above 0, so a typed weight or Use keeps showing for the rest of the workout.
 3. A completed calibrating set shows the weight it logged, never the range.
 4. Otherwise an open calibrating set still shows its range, and a 0-to-0 range still shows T61's dash.
 5. The range shows whole inside the weight column on the small phone, at default text and at AX3.
