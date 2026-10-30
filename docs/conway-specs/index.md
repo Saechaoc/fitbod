@@ -87,6 +87,7 @@ The quick-task run of the same plan must finish its last two tasks first, so rea
 | [T89](tickets/T89-why-sheet-inputs.md) | Why this weight shows the set's targets, its last session and full-width steps |
 | [T90](tickets/T90-shared-ui-test-helpers.md) | UI tests share one set of helpers |
 | [T91](tickets/T91-bump-reps-whole-workout.md) | Bump reps read the whole workout |
+| [T92](tickets/T92-workout-sets-in-order.md) | History and plateau checks read every set of a workout in order |
 
 ### Phase 2: P2 defects
 
