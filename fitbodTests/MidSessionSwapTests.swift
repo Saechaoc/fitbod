@@ -3,12 +3,10 @@
 //  fitbodTests
 //
 //  Wave-4 plan 04-02 — pins the SESS-05 contract for mid-session swap.
-//  The production swap surface is the `SwapExerciseSheet` view (a
-//  SwiftUI struct that calls `sessionExercise.exercise = exercise` in
-//  its `onSelect` closure). These tests re-implement the same mutation
-//  semantics against the production model entities — same exact
-//  mutation as the view's onSelect closure — so the contract is
-//  verified independently of SwiftUI's view instantiation.
+//  The production swap surface is the `SwapExerciseSheet` view, whose
+//  `onSelect` closure calls `SwapExerciseSheet.swap`. These tests drive
+//  that same function against the production model entities, so the
+//  contract is verified without instantiating the SwiftUI sheet view.
 //
 //  Four `@Test` functions cover:
 //
@@ -39,35 +37,6 @@ struct MidSessionSwapTests {
     private func makeContext() throws -> ModelContext {
         let container = try FitbodModelContainer.make(inMemory: true)
         return ModelContext(container)
-    }
-
-    /// Mirrors the production `SwapExerciseSheet`'s onSelect closure —
-    /// kept as a hermetic copy so the test exercises the semantic
-    /// contract without instantiating the SwiftUI sheet view.
-    ///
-    /// Phase 3.1 (PIVOT-02 / PIVOT-05): intent is session-level. The
-    /// hint lookup reads `sessionExercise.session?.intentRaw` with the
-    /// FOUND-03 .strength default-string fallback, matching the
-    /// production SwapExerciseSheet's post-Plan-03 implementation.
-    private func performSwap(
-        sessionExercise: SessionExercise,
-        to exercise: Exercise,
-        context: ModelContext
-    ) {
-        sessionExercise.exercise = exercise
-        let hint = PreviousMatchingIntent.fetchTopWorkingSet(
-            exerciseID: exercise.id,
-            intentRaw: sessionExercise.session?.intentRaw ?? Intent.strength.rawValue,
-            context: context
-        )?.weight ?? 0
-        let pendingSets = (sessionExercise.sets ?? [])
-            .filter { !$0.isComplete }
-        for set in pendingSets {
-            set.weight = hint
-            set.reps = 0
-            set.rpe = nil
-        }
-        try? context.save()
     }
 
     /// Builds a routine + active session with one SessionExercise
@@ -142,7 +111,7 @@ struct MidSessionSwapTests {
         let ctx = try makeContext()
         let fx = try makeFixture(ctx: ctx)
 
-        performSwap(sessionExercise: fx.sessionExercise, to: fx.ohp, context: ctx)
+        SwapExerciseSheet.swap(fx.sessionExercise, to: fx.ohp, context: ctx)
 
         // SE.exercise now points at OHP.
         #expect(fx.sessionExercise.exercise?.id == fx.ohp.id)
@@ -188,7 +157,7 @@ struct MidSessionSwapTests {
         #expect(pendingBefore.allSatisfy { $0.weight == 135 })
 
         // Swap Bench → OHP.
-        performSwap(sessionExercise: fx.sessionExercise, to: fx.ohp, context: ctx)
+        SwapExerciseSheet.swap(fx.sessionExercise, to: fx.ohp, context: ctx)
 
         // Post-swap: pending sets re-seeded at 95 (the OHP strength hint).
         let pendingAfter = (fx.sessionExercise.sets ?? [])
@@ -218,7 +187,7 @@ struct MidSessionSwapTests {
         try ctx.save()
 
         // Swap Bench → OHP.
-        performSwap(sessionExercise: fx.sessionExercise, to: fx.ohp, context: ctx)
+        SwapExerciseSheet.swap(fx.sessionExercise, to: fx.ohp, context: ctx)
 
         // Committed set retains its values; pending sets (sets 2-3) get re-seeded.
         #expect(firstSet.weight == 145)
@@ -240,7 +209,7 @@ struct MidSessionSwapTests {
         let ctx = try makeContext()
         let fx = try makeFixture(ctx: ctx)
 
-        performSwap(sessionExercise: fx.sessionExercise, to: fx.ohp, context: ctx)
+        SwapExerciseSheet.swap(fx.sessionExercise, to: fx.ohp, context: ctx)
 
         // Routine prescription field set stays identical to pre-swap.
         #expect(fx.routineExercise.exercise?.id == fx.bench.id)

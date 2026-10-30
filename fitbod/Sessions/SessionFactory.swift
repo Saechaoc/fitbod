@@ -44,6 +44,8 @@
 //      exercise.
 //    - Block B (Warmup): invokes WarmupRamp.shouldGenerate /
 //      WarmupRamp.generate for the first qualifying compound exercise.
+//      The step is `warmupRamp(for:...)`, which a mid-workout swap
+//      reuses to rebuild a pending ramp for the new exercise.
 //    - Internal-static helpers: fetchHistoryPoints, lastSessionWorkingReps,
 //      plateInventory(for:context:), equipmentKind(for:) — declared
 //      `internal static` so SessionExerciseCard.currentExplanation() can
@@ -242,32 +244,21 @@ public enum SessionFactory {
                 userSettings: userSettings,
                 context: context
             )
-            let prescribedWeight = prescription.weight
-            let barWeight = prescription.barWeight
-            let plates = prescription.plates
-            se.prescribedWeight = prescribedWeight
+            se.prescribedWeight = prescription.weight
 
             // ─── Block B — Warmup ───
             //
             // Only the FIRST qualifying compound per session receives a ramp.
             // warmupGenerated tracks whether any prior exercise in this loop
-            // already received one.
-            var warmupSetCount = 0
-            if !warmupGenerated && WarmupRamp.shouldGenerate(
+            // already received one. A mid-workout swap runs the same step
+            // to rebuild a pending ramp for the new exercise.
+            let warmupSets = warmupGenerated ? [] : Self.warmupRamp(
                 for: se,
+                prescription: prescription,
                 deloadActive: scheduledDeloadActive,
-                topWorkingWeight: prescribedWeight,
-                barWeight: barWeight,
                 warmupConfig: re.warmupOverride
-            ) {
-                let isUnilateral = re.exercise?.equipment == .dumbbell
-                let warmupSets = WarmupRamp.generate(
-                    top: prescribedWeight,
-                    bar: barWeight,
-                    plates: plates,
-                    isUnilateral: isUnilateral
-                )
-                warmupSetCount = warmupSets.count
+            )
+            if !warmupSets.isEmpty {
                 for warmup in warmupSets {
                     warmup.sessionExercise = se
                     context.insert(warmup)
@@ -308,7 +299,7 @@ public enum SessionFactory {
             for setIndex in 0..<plannedWorkingSetCount {
                 let entry = SetEntry()
                 entry.sessionExercise = se
-                entry.orderIndex = setIndex + warmupSetCount   // shifted past warm-up slots
+                entry.orderIndex = setIndex + warmupSets.count   // shifted past warm-up slots
                 entry.weight = seedWeight
                 entry.reps = 0
                 entry.rpe = nil
@@ -437,6 +428,35 @@ public enum SessionFactory {
             barWeight: barWeight,
             plates: plates,
             previousSet: previousSet
+        )
+    }
+
+    // MARK: - Warm-up step (Block B)
+
+    /// The warm-up step (Phase 3 plan 03-08): the ramp `WarmupRamp` builds
+    /// for `sessionExercise` from its prescription, or none when
+    /// `WarmupRamp.shouldGenerate` says it gets none. The rows are not
+    /// inserted. `start` runs it for the first qualifying exercise; a
+    /// mid-workout swap runs it to rebuild a pending ramp for the new
+    /// exercise, so the swapped exercise gets what a fresh start gives it.
+    static func warmupRamp(
+        for sessionExercise: SessionExercise,
+        prescription: ExercisePrescription,
+        deloadActive: Bool,
+        warmupConfig: WarmupConfig?
+    ) -> [SetEntry] {
+        guard WarmupRamp.shouldGenerate(
+            for: sessionExercise,
+            deloadActive: deloadActive,
+            topWorkingWeight: prescription.weight,
+            barWeight: prescription.barWeight,
+            warmupConfig: warmupConfig
+        ) else { return [] }
+        return WarmupRamp.generate(
+            top: prescription.weight,
+            bar: prescription.barWeight,
+            plates: prescription.plates,
+            isUnilateral: sessionExercise.exercise?.equipment == .dumbbell
         )
     }
 

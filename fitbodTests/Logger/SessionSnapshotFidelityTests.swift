@@ -95,15 +95,13 @@ struct SessionSnapshotFidelityTests {
 
     @Test("swap writes the new exercise name snapshot")
     func swapWritesSnapshot() throws {
-        // SwapExerciseSheet mutates exercise + snapshot together; mirror it.
         let ctx = try LoggerFixtures.makeContext()
         let bench = LoggerFixtures.exercise("Bench", in: ctx)
         let incline = LoggerFixtures.exercise("Incline Bench", in: ctx)
         let template = try LoggerFixtures.template("Push A", exercises: [bench], in: ctx)
         let session = try SessionFactory.start(template: template, context: ctx)
         let se = try #require(session.exercises?.first)
-        se.exercise = incline
-        se.exerciseNameSnapshot = incline.name
+        SwapExerciseSheet.swap(se, to: incline, context: ctx)
         incline.name = "Incline (renamed)"
         #expect(se.displayName == "Incline Bench")
     }

@@ -66,8 +66,8 @@ public struct SwapExerciseSheet: View {
 
     /// SESS-05 — mutates SessionExercise.exercise ONLY. The source
     /// RoutineExercise.exercise is untouched. The new exercise gets the
-    /// prescription a workout start would give it, and the pending sets
-    /// are re-seeded for it. Saves immediately.
+    /// prescription and warm-up ramp a workout start would give it, and
+    /// the pending working sets are re-seeded for it. Saves immediately.
     @MainActor
     static func swap(_ sessionExercise: SessionExercise, to exercise: Exercise, context: ModelContext) {
         guard let session = sessionExercise.session else { return }
@@ -87,14 +87,15 @@ public struct SwapExerciseSheet: View {
             context: context
         )
         sessionExercise.prescribedWeight = prescription.weight
+        rebuildPendingWarmups(of: sessionExercise, in: session, prescription: prescription, context: context)
 
-        // Re-seed pending sets with the new exercise's matching-intent hint,
-        // as a workout start seeds them. A weight typed for the old exercise
-        // is gone, so its "M" goes too. Committed sets are immutable
-        // (PITFALLS-doc #1).
+        // Re-seed pending working sets with the new exercise's
+        // matching-intent hint, as a workout start seeds them. A weight
+        // typed for the old exercise is gone, so its "M" goes too.
+        // Committed sets are immutable (PITFALLS-doc #1).
         let hint = prescription.previousSet?.weight ?? 0
         let pendingSets = (sessionExercise.sets ?? [])
-            .filter { !$0.isComplete }
+            .filter { !$0.isComplete && !$0.isWarmup }
         for set in pendingSets {
             set.weight = hint
             set.reps = 0
@@ -102,6 +103,50 @@ public struct SwapExerciseSheet: View {
             set.wasManualOverride = false
         }
         try? context.save()
+    }
+
+    /// Replaces the pending warm-ups with the ramp SessionFactory's warm-up
+    /// step builds for the new exercise, or removes them when it builds
+    /// none. Without pending warm-ups nothing changes: a swap never adds a
+    /// ramp, and warm-ups already done stay as they were.
+    @MainActor
+    private static func rebuildPendingWarmups(
+        of sessionExercise: SessionExercise,
+        in session: Session,
+        prescription: SessionFactory.ExercisePrescription,
+        context: ModelContext
+    ) {
+        let sets = SessionSetActions.ordered(sessionExercise)
+        let pendingWarmups = sets.filter { $0.isWarmup && !$0.isComplete }
+        guard !pendingWarmups.isEmpty else { return }
+
+        // The deload check a start makes, on this workout's block and start
+        // date. The template row's warm-up setting allowed this ramp, so
+        // the default applies.
+        let scheduledPhase = session.block.flatMap {
+            PeriodizationEngine.phase(for: $0, on: session.startedAt)
+        }
+        let ramp = SessionFactory.warmupRamp(
+            for: sessionExercise,
+            prescription: prescription,
+            deloadActive: scheduledPhase?.kind == .deload,
+            warmupConfig: nil
+        )
+        for warmup in pendingWarmups {
+            context.delete(warmup)
+        }
+        for warmup in ramp {
+            context.insert(warmup)
+            warmup.sessionExercise = sessionExercise
+        }
+
+        // Warm-ups done, then the new ramp, then the working sets, numbered
+        // contiguously as SessionSetActions keeps them.
+        let kept = sets.filter { !($0.isWarmup && !$0.isComplete) }
+        let rows = kept.filter(\.isWarmup) + ramp + kept.filter { !$0.isWarmup }
+        for (index, row) in rows.enumerated() where row.orderIndex != index {
+            row.orderIndex = index
+        }
     }
 }
 
