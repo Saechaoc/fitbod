@@ -306,4 +306,4 @@ Product decisions are in [decisions.md](decisions.md), and they win over this fi
 - Coordinator answer, 2026-10-30 (T16 question `msg_d225ceba4e40`): text on a signal, amber or green fill uses `bruOnSignal`, the constant near-black label, in light and dark mode.
   `Color.bruLabelOnFill` in `Color+BRU.swift` and the Milestone 1 closeout ("Signal CTA labels are black for contrast") already say so.
   Other fills, such as the blue and plum phase badges and the ink primary button, keep `bruPaper` labels.
-- Rejected: white labels on signal fills in light mode, which reach only 2.95 to 3.31:1.
+- Rejected: white labels (3.09 to 3.31:1) or `bruPaper` labels (2.95:1) on signal fills in light mode.
