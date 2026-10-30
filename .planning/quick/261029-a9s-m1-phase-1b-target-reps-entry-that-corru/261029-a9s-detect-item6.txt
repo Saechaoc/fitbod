@@ -1,0 +1,18 @@
+GitNexus unavailable on this machine (Swift parser fails to load); substitute for detect-changes --scope staged.
+
+$ git diff --cached --stat
+ fitbod/Routines/PrescriptionEditorRow.swift   | 53 +++++---------------
+ fitbod/Sessions/InlineRPEChipRow.swift        | 35 +++++++++++++-
+ fitbodUITests/PrescriptionEditorUITests.swift | 69 ++++++++++++++++++++++++++-
+ 3 files changed, 114 insertions(+), 43 deletions(-)
+
+Changed symbols:
+  PrescriptionEditorRow.rpeRangeRow (removed) -> fitbod/Routines/PrescriptionEditorRow.swift
+  PrescriptionEditorRow.rpeRow (new) -> fitbod/Routines/PrescriptionEditorRow.swift
+  PrescriptionEditorRow.advancedSection (uses rpeRow) -> fitbod/Routines/PrescriptionEditorRow.swift
+  InlineRPEChipRow.init(rpe:noneLabel:) (new defaulted parameter) -> fitbod/Sessions/InlineRPEChipRow.swift
+  InlineRPEChipRow.body (optional no-target chip) -> fitbod/Sessions/InlineRPEChipRow.swift
+  PrescriptionEditorUITests.testTargetRPEIsOneControlThatSurvivesReopening (new) -> fitbodUITests/PrescriptionEditorUITests.swift
+
+Manual caller check: InlineRPEChipRow <- SetRow.swift:222 (logger, unchanged: no noneLabel), PrescriptionEditorRow (new), own previews; PrescriptionEditorRow <- RoutineExerciseCard.swift:91.
+Affected flows: session editor prescription details; logger RPE chips unchanged by default. Risk (own estimate): LOW-MEDIUM.

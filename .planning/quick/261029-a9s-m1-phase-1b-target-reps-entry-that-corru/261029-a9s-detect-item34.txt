@@ -1,0 +1,24 @@
+GitNexus unavailable on this machine (Swift parser fails to load); substitute for detect-changes --scope staged.
+
+$ git diff --cached --stat
+ fitbod/Backup/FitbodBackupFile.swift      |   6 +-
+ fitbod/Export/CSVFile.swift               |   4 +-
+ fitbod/Export/ExportService.swift         |  13 +--
+ fitbod/Export/ExportShareItems.swift      |  99 ++++++++++++++++
+ fitbod/Export/JSONFile.swift              |   4 +-
+ fitbod/Settings/SettingsView.swift        | 182 +++++++-----------------------
+ fitbodTests/ExportShareItemsTests.swift   |  76 +++++++++++++
+ fitbodUITests/SettingsExportUITests.swift |  62 ++++++++++
+ 8 files changed, 290 insertions(+), 156 deletions(-)
+
+Changed symbols:
+  CSVExportItem, JSONExportItem, BackupShareItem, ExportRenderReport, ShareItemRendering.run (new) -> fitbod/Export/ExportShareItems.swift
+  SettingsView.exportSection / backupSection (one ShareLink each) -> fitbod/Settings/SettingsView.swift
+  SettingsView.csvFile/jsonFile/csvRendering/jsonRendering/backupFile/backupRendering (removed state) -> fitbod/Settings/SettingsView.swift
+  SettingsView.renderCSV / renderJSON / renderBackup (removed) -> fitbod/Settings/SettingsView.swift
+  ExportCard.isLoading (removed) -> fitbod/Settings/SettingsView.swift
+  Header comments only: ExportService.swift, CSVFile.swift, JSONFile.swift, FitbodBackupFile.swift
+  SettingsExportUITests (new), ExportShareItemsTests (new)
+
+Manual caller check: SettingsView <- TodayView.swift (sheet), previews; ExportService / BackupArchiver unchanged (ExportService.renderCSV/renderJSON, BackupArchiver.archive now called from the share items); CSVFile/JSONFile/FitbodBackupFile unchanged types.
+Affected flows: Settings Export CSV / Export JSON / backup CREATE. Risk (own estimate): LOW-MEDIUM.

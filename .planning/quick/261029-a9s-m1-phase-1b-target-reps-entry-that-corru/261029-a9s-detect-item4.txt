@@ -1,0 +1,25 @@
+GitNexus unavailable on this machine (Swift parser fails to load); substitute for detect-changes --scope staged.
+
+$ git diff --cached --stat
+ fitbod/Sessions/PrescriptionWeightCell.swift     |  85 ++++++++++-----
+ fitbod/Sessions/SetRow.swift                     |  41 +++++--
+ fitbod/Sessions/WhyThisWeightSheet.swift         |  13 ++-
+ fitbodTests/SetRowWhyLayoutTests.swift           |  81 ++++++++++++++
+ fitbodUITests/WhyThisWeightControlUITests.swift  | 132 +++++++++++++++++++++++
+ fitbodUITests/WhyThisWeightSheetBRUUITests.swift |   4 +-
+ fitbodUITests/WorkoutUITestNavigation.swift      |   7 +-
+ 7 files changed, 325 insertions(+), 38 deletions(-)
+
+Changed symbols:
+  WhyThisWeightSheet.onOverride (new) + init(explanation:onUseSuggested:onOverride:...) (new defaulted parameter) -> fitbod/Sessions/WhyThisWeightSheet.swift
+  WhyThisWeightSheet.footerBar (Override calls onOverride) -> fitbod/Sessions/WhyThisWeightSheet.swift
+  PrescriptionWeightCell.init (new defaulted isExplaining) -> fitbod/Sessions/PrescriptionWeightCell.swift
+  PrescriptionWeightCell.body (long press removed; action renamed 'Why this weight'; sheet wires Use/Override; ends editing on open) -> fitbod/Sessions/PrescriptionWeightCell.swift
+  PrescriptionWeightCell.explaining / isManualOverride / use / focusAfterOverride (new) -> fitbod/Sessions/PrescriptionWeightCell.swift
+  SetRow.whyButton (new), SetRow.explainingWeight (new), SetRow.body line 2 -> fitbod/Sessions/SetRow.swift
+  UITestNavigation.openWeightExplanation (taps WHY) -> fitbodUITests/WorkoutUITestNavigation.swift
+  WhyThisWeightSheetBRUUITests.testWhyThisWeightHeroSlabAppearsAfterLongPress -> ...AfterWhyTap -> fitbodUITests/WhyThisWeightSheetBRUUITests.swift
+  WhyThisWeightControlUITests (new), SetRowWhyLayoutTests (new)
+
+Manual caller check: WhyThisWeightSheet <- PrescriptionWeightCell (+ previews, Phase3BRUSurfacesTests x4, unchanged); PrescriptionWeightCell <- SetRow.swift:116 (+ previews, Phase3BRUSurfacesTests x2, unchanged); SetRow <- SessionExerciseCard.swift:265 (+ preview).
+Affected flows: workout logger set rows (every set), Why-this-weight sheet. Risk (own estimate): MEDIUM (every logger row).

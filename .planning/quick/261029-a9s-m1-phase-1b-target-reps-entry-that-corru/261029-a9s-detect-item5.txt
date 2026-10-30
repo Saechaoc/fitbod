@@ -1,0 +1,27 @@
+GitNexus unavailable on this machine (Swift parser fails to load); substitute for detect-changes --scope staged.
+
+$ git diff --cached --stat
+ fitbod/Routines/PrescriptionEditorRow.swift    | 54 +++++---------------
+ fitbod/Routines/RoutineDraft.swift             | 18 +++++++
+ fitbodTests/RoutineBuilderCopyTests.swift      | 11 ++--
+ fitbodTests/TargetRepsRangeTests.swift         | 53 +++++++++++++++++++
+ fitbodUITests/MilestoneOneJourneyUITests.swift | 65 +++++++++++------------
+ fitbodUITests/PrescriptionEditorUITests.swift  | 71 ++++++++++++++++++++++++++
+ fitbodUITests/UITestNavigation.swift           | 17 ++++++
+ 7 files changed, 206 insertions(+), 83 deletions(-)
+
+Changed symbols:
+  RoutineExerciseDraft.maxTargetReps (new static) -> fitbod/Routines/RoutineDraft.swift
+  RoutineExerciseDraft.targetRepsLowRange (new computed) -> fitbod/Routines/RoutineDraft.swift
+  RoutineExerciseDraft.targetRepsHighRange (new computed) -> fitbod/Routines/RoutineDraft.swift
+  PrescriptionEditorRow.repsRangeRow (removed) -> fitbod/Routines/PrescriptionEditorRow.swift
+  PrescriptionEditorRow.repsSteppers (new) -> fitbod/Routines/PrescriptionEditorRow.swift
+  PrescriptionEditorRow.advancedSection (uses repsSteppers) -> fitbod/Routines/PrescriptionEditorRow.swift
+  RoutineBuilderCopyTests.verbatimCopy ("Reps" -> "Min reps"/"Max reps") -> fitbodTests/RoutineBuilderCopyTests.swift
+  TargetRepsRangeTests (new suite) -> fitbodTests/TargetRepsRangeTests.swift
+  UITestNavigation.step / tapStepper (new) -> fitbodUITests/UITestNavigation.swift
+  PrescriptionEditorUITests (new) -> fitbodUITests/PrescriptionEditorUITests.swift
+  MilestoneOneJourneyUITests.replace -> enter; reps/sets via steppers -> fitbodUITests/MilestoneOneJourneyUITests.swift
+
+Manual caller check: PrescriptionEditorRow <- RoutineExerciseCard.swift:91 (+ own preview); RoutineExerciseDraft ranges <- PrescriptionEditorRow only.
+Affected flows: session editor prescription details (create and edit). Risk (own estimate): LOW-MEDIUM.
