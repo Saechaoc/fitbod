@@ -14,7 +14,6 @@
 //  110 lb, and Why this weight suggests 100 lb.
 //
 
-import Vision
 import XCTest
 
 extension UITestNavigation {
@@ -72,7 +71,7 @@ final class CalibratingWeightUITests: XCTestCase {
             XCTAssertEqual(field.value as? String, "102.5 lb", "The typed weight must keep showing at \(size)")
             XCTAssertFalse(rangeText("1.S1", in: app).exists, "The range must not come back at \(size)")
             XCTAssertTrue(overrideMark("1.S1", in: app).exists, "A typed weight away from the suggestion shows its M at \(size)")
-            revealInLogger(field, in: app)
+            UITestNavigation.revealInLogger(field, in: app)
             UITestNavigation.saveScreenshot("T80", "calibrating-typed-weight", textSize: size)
 
             let use = openWhy(of: "1.S2", in: app)
@@ -105,12 +104,12 @@ final class CalibratingWeightUITests: XCTestCase {
         for size in [UITestNavigation.TextSize.default, .ax3] {
             let app = openWorkout(textSize: size)
             let reps = app.textFields["set.reps.1.S1"]
-            revealInLogger(reps, in: app)
+            UITestNavigation.revealInLogger(reps, in: app)
             focus(reps)
             reps.typeText("5")
             XCTAssertEqual(reps.value as? String, "5", "Set 1 must read the typed reps at \(size)")
             let complete = app.buttons["set.complete.1.S1"]
-            revealInLogger(complete, in: app)
+            UITestNavigation.revealInLogger(complete, in: app)
             complete.tap()
             let logged = XCTNSPredicateExpectation(predicate: NSPredicate(format: "label == %@", "Set 1 complete"), object: complete)
             XCTAssertEqual(XCTWaiter().wait(for: [logged], timeout: 5), .completed, "Set 1 must be logged at \(size)")
@@ -119,7 +118,7 @@ final class CalibratingWeightUITests: XCTestCase {
             XCTAssertTrue(field.waitForExistence(timeout: 5), "A logged set must show its weight, not the range, at \(size)")
             XCTAssertEqual(field.value as? String, "110 lb", "A logged set must show the weight it logged at \(size)")
             XCTAssertFalse(rangeText("1.S1", in: app).exists, "A logged set must never show the range at \(size)")
-            revealInLogger(field, in: app)
+            UITestNavigation.revealInLogger(field, in: app)
             UITestNavigation.saveScreenshot("T80", "calibrating-completed", textSize: size)
             revealSet("1.S2", in: app)
             XCTAssertTrue(rangeText("1.S2", in: app).exists, "The open set 2 keeps its range at \(size)")
@@ -136,7 +135,7 @@ final class CalibratingWeightUITests: XCTestCase {
             let app = openWorkout(textSize: size)
             let range = rangeText("1.S1", in: app)
             XCTAssertTrue(range.waitForExistence(timeout: 10), "An untouched calibrating set must show its range at \(size)")
-            revealInLogger(range, in: app)
+            UITestNavigation.revealInLogger(range, in: app)
             let reps = app.textFields["set.reps.1.S1"]
             let previous = try XCTUnwrap(previousColumn(before: reps, in: app), "Set 1 must show its PREVIOUS column at \(size)")
 
@@ -149,7 +148,7 @@ final class CalibratingWeightUITests: XCTestCase {
             UITestNavigation.assertNoOverlap(range, previous)
 
             let screenshot = XCUIScreen.main.screenshot()
-            let shown = try readText(in: range.frame.insetBy(dx: -4, dy: -4), of: screenshot)
+            let shown = try UITestNavigation.readText(in: range.frame.insetBy(dx: -4, dy: -4), of: screenshot)
             XCTAssertEqual(
                 lettersAndDigits(shown), lettersAndDigits("95 – 105 lb"),
                 "The screen must show the range whole at \(size), but it reads \"\(shown)\""
@@ -187,7 +186,7 @@ final class CalibratingWeightUITests: XCTestCase {
         revealSet(set, in: app)
         let why = app.buttons["set.why.\(set)"]
         XCTAssertTrue(why.waitForExistence(timeout: 5), "Set \(set) must show WHY")
-        revealInLogger(why, in: app)
+        UITestNavigation.revealInLogger(why, in: app)
         why.tap()
         XCTAssertTrue(app.buttons.labeled("Override").waitForExistence(timeout: 5), "WHY must open Why this weight")
         return app
@@ -199,11 +198,11 @@ final class CalibratingWeightUITests: XCTestCase {
     private func revealSet(_ set: String, in app: XCUIApplication) {
         let reps = app.textFields["set.reps.\(set)"]
         for _ in 0..<10 where !reps.exists {
-            let (top, bottom) = visibleSpan(in: app)
-            drag(from: bottom - 20, to: top + 20, in: app)
+            let (top, bottom) = UITestNavigation.loggerSpan(in: app)
+            UITestNavigation.dragLogger(from: bottom - 20, to: top + 20, in: app)
         }
         XCTAssertTrue(reps.exists, "Set \(set) never loaded")
-        revealInLogger(reps, in: app)
+        UITestNavigation.revealInLogger(reps, in: app)
     }
 
     /// WHY, then Override, which must close the sheet.
@@ -235,53 +234,6 @@ final class CalibratingWeightUITests: XCTestCase {
             if waitForFocus(field, timeout: 2) { return }
         }
         XCTFail("\(field.identifier) never took keyboard focus")
-    }
-
-    /// Scrolls the logger until `element` sits between the fixed workout
-    /// header and the keyboard's DONE bar or the rest dock, where a user
-    /// can see and tap it. XCUITest calls rows under the header hittable,
-    /// so a tap there would land on the header.
-    @MainActor
-    private func revealInLogger(_ element: XCUIElement, in app: XCUIApplication) {
-        for _ in 0..<12 {
-            let (top, bottom) = visibleSpan(in: app)
-            if element.frame.minY >= top && element.frame.maxY <= bottom { return }
-            let delta = (top + bottom) / 2 - element.frame.midY
-            let startY = delta > 0 ? top + 20 : bottom - 20
-            drag(from: startY, to: min(bottom - 20, max(top + 20, startY + delta)), in: app)
-        }
-        XCTFail("Could not scroll \(element) into view")
-    }
-
-    /// The logger's visible span, in screen points: below the fixed workout
-    /// header, above the keyboard's DONE bar or the rest dock.
-    @MainActor
-    private func visibleSpan(in app: XCUIApplication) -> (top: CGFloat, bottom: CGFloat) {
-        let header = app.otherElements["workout.header"].firstMatch
-        let top = (header.exists ? header.frame.maxY : 0) + 8
-        let keyboard = app.keyboards.firstMatch
-        // The DONE bar sits on top of the number pad.
-        var bottom = keyboard.exists ? keyboard.frame.minY - 66 : app.frame.maxY - 24
-        let dock = app.descendants(matching: .any).matching(identifier: "rest.status").firstMatch
-        if !keyboard.exists && dock.exists {
-            bottom = min(bottom, dock.frame.minY - 16)
-        }
-        return (top, bottom)
-    }
-
-    /// A slow drag down the logger in the rows' trailing margin, clear of
-    /// their controls: at AX3 a field spans the row, and a drag that starts
-    /// on it does not scroll the list.
-    @MainActor
-    private func drag(from startY: CGFloat, to endY: CGFloat, in app: XCUIApplication) {
-        let x = app.frame.width - 8
-        let origin = app.coordinate(withNormalizedOffset: .zero)
-        origin.withOffset(CGVector(dx: x, dy: startY)).press(
-            forDuration: 0.1,
-            thenDragTo: origin.withOffset(CGVector(dx: x, dy: endY)),
-            withVelocity: .slow,
-            thenHoldForDuration: 0.2
-        )
     }
 
     // MARK: - Elements
@@ -330,7 +282,7 @@ final class CalibratingWeightUITests: XCTestCase {
         textSize: UITestNavigation.TextSize
     ) -> CGRect {
         switch textSize {
-        case .default:
+        case .default, .xl, .xxl, .xxxl:
             return CGRect(
                 x: previous.frame.maxX, y: app.frame.minY,
                 width: reps.frame.minX - previous.frame.maxX, height: app.frame.height
@@ -358,28 +310,6 @@ final class CalibratingWeightUITests: XCTestCase {
     }
 
     // MARK: - Screenshot reader
-
-    /// The text drawn inside `rect`, in screen points, read line by line
-    /// from the top.
-    @MainActor
-    private func readText(in rect: CGRect, of screenshot: XCUIScreenshot) throws -> String {
-        let image = screenshot.image
-        let cgImage = try XCTUnwrap(image.cgImage, "The screenshot has no pixels")
-        let pixels = CGRect(
-            x: rect.minX * image.scale, y: rect.minY * image.scale,
-            width: rect.width * image.scale, height: rect.height * image.scale
-        ).integral.intersection(CGRect(x: 0, y: 0, width: cgImage.width, height: cgImage.height))
-        let crop = try XCTUnwrap(pixels.isEmpty ? nil : cgImage.cropping(to: pixels), "Cannot crop \(rect) from the screenshot")
-        let request = VNRecognizeTextRequest()
-        request.recognitionLevel = .accurate
-        request.usesLanguageCorrection = false
-        try VNImageRequestHandler(cgImage: crop).perform([request])
-        // Vision's boxes start at the bottom left: higher lines first.
-        return (request.results ?? [])
-            .sorted { ($0.boundingBox.midY, -$0.boundingBox.minX) > ($1.boundingBox.midY, -$1.boundingBox.minX) }
-            .compactMap { $0.topCandidates(1).first?.string }
-            .joined(separator: " ")
-    }
 
     /// Uppercased letters and digits only, so line breaks, spacing and how
     /// the dash is read do not matter. A range cut short loses its last

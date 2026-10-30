@@ -14,7 +14,6 @@
 //  the popover's edges are found by the pixels of its white surface.
 //
 
-import Vision
 import XCTest
 
 final class ActionPopoverFitUITests: XCTestCase {
@@ -109,7 +108,7 @@ final class ActionPopoverFitUITests: XCTestCase {
                 XCTAssertTrue(row.frame.insetBy(dx: 1, dy: 1).contains(letters),
                               "\(title)'s letters at \(letters) must lie inside its row at \(row.frame)")
             }
-            let shown = try readText(in: row.frame.insetBy(dx: 1, dy: 1), of: screenshot)
+            let shown = try UITestNavigation.readText(in: row.frame.insetBy(dx: 1, dy: 1), of: screenshot)
             XCTAssertTrue(lettersAndDigits(shown).contains(lettersAndDigits(title)),
                           "The popover must show \"\(title)\" whole inside its row, but it reads \"\(shown)\"")
         }
@@ -117,22 +116,6 @@ final class ActionPopoverFitUITests: XCTestCase {
     }
 
     // MARK: - Screenshot readers
-
-    /// The text drawn inside `rect`, in screen points, read line by line
-    /// from the top.
-    @MainActor
-    private func readText(in rect: CGRect, of screenshot: XCUIScreenshot) throws -> String {
-        let crop = try XCTUnwrap(pixels(in: rect, of: screenshot)?.image, "Cannot crop \(rect) from the screenshot")
-        let request = VNRecognizeTextRequest()
-        request.recognitionLevel = .accurate
-        request.usesLanguageCorrection = false
-        try VNImageRequestHandler(cgImage: crop).perform([request])
-        // Vision's boxes start at the bottom left: higher lines first.
-        return (request.results ?? [])
-            .sorted { ($0.boundingBox.midY, -$0.boundingBox.minX) > ($1.boundingBox.midY, -$1.boundingBox.minX) }
-            .compactMap { $0.topCandidates(1).first?.string }
-            .joined(separator: " ")
-    }
 
     /// Uppercased letters and digits only, so line breaks and spacing do
     /// not matter.
@@ -146,7 +129,7 @@ final class ActionPopoverFitUITests: XCTestCase {
     private func box(
         of color: UITestNavigation.RGB, within tolerance: Int, in rect: CGRect, of screenshot: XCUIScreenshot
     ) -> CGRect? {
-        guard let crop = pixels(in: rect, of: screenshot) else { return nil }
+        guard let crop = UITestNavigation.pixels(in: rect, of: screenshot) else { return nil }
         let width = Int(crop.frame.width)
         var (left, right, top, bottom) = (Int.max, Int.min, Int.max, Int.min)
         for row in 0..<Int(crop.frame.height) {
@@ -168,29 +151,5 @@ final class ActionPopoverFitUITests: XCTestCase {
             width: CGFloat(right - left + 1) / scale,
             height: CGFloat(bottom - top + 1) / scale
         )
-    }
-
-    /// The pixels of `rect`, in screen points, cut from the screenshot: where
-    /// they lie in device pixels, the cut image, and its sRGB bytes row by
-    /// row from the top.
-    @MainActor
-    private func pixels(in rect: CGRect, of screenshot: XCUIScreenshot) -> (frame: CGRect, image: CGImage, bytes: [UInt8])? {
-        let image = screenshot.image
-        guard let cgImage = image.cgImage, let sRGB = CGColorSpace(name: CGColorSpace.sRGB) else { return nil }
-        let frame = CGRect(
-            x: rect.minX * image.scale, y: rect.minY * image.scale,
-            width: rect.width * image.scale, height: rect.height * image.scale
-        ).integral.intersection(CGRect(x: 0, y: 0, width: cgImage.width, height: cgImage.height))
-        guard !frame.isEmpty, let crop = cgImage.cropping(to: frame) else { return nil }
-        var bytes = [UInt8](repeating: 0, count: crop.width * crop.height * 4)
-        let drawn = bytes.withUnsafeMutableBytes { buffer -> Bool in
-            guard let context = CGContext(
-                data: buffer.baseAddress, width: crop.width, height: crop.height, bitsPerComponent: 8,
-                bytesPerRow: crop.width * 4, space: sRGB, bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
-            ) else { return false }
-            context.draw(crop, in: CGRect(x: 0, y: 0, width: crop.width, height: crop.height))
-            return true
-        }
-        return drawn ? (frame, crop, bytes) : nil
     }
 }

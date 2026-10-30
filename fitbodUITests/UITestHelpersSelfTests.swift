@@ -62,7 +62,7 @@ final class UITestHelpersSelfTests: XCTestCase {
     /// screenshots with its tokens, and each makes the heading taller than
     /// the size before it.
     @MainActor
-    func testLargerTextSizesPinTheirCategoriesAndNameScreenshots() {
+    func testSizesBetweenDefaultAndAX3PinTheirCategoriesAndNameScreenshots() {
         let sizes: [(size: UITestNavigation.TextSize, category: String, token: String)] = [
             (.xl, "UICTContentSizeCategoryXL", "xl"),
             (.xxl, "UICTContentSizeCategoryXXL", "xxl"),

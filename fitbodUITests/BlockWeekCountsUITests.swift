@@ -11,7 +11,6 @@
 //  with nothing logged.
 //
 
-import Vision
 import XCTest
 
 final class BlockWeekCountsUITests: XCTestCase {
@@ -112,7 +111,7 @@ final class BlockWeekCountsUITests: XCTestCase {
         if row.label != "ACTIVE block: Spring Block. Plan complete." {
             problems.append("Program's row reads \"\(row.label)\"")
         }
-        let rowText = Self.letters(try readText(in: row.frame, of: programShot))
+        let rowText = Self.letters(try UITestNavigation.readText(in: row.frame, of: programShot))
         if !rowText.contains("PLANCOMPLETE") || rowText.contains("WEEK") || rowText.contains("ACCUMULATION") {
             problems.append("Program's row shows \"\(rowText)\"")
         }
@@ -127,7 +126,7 @@ final class BlockWeekCountsUITests: XCTestCase {
             || hero.label.localizedCaseInsensitiveContains("week") {
             problems.append("The hero reads \"\(hero.label)\"")
         }
-        let heroText = Self.letters(try readText(in: hero.frame, of: overviewShot))
+        let heroText = Self.letters(try UITestNavigation.readText(in: hero.frame, of: overviewShot))
         if !heroText.contains("PLANCOMPLETE") || heroText.contains("VOL") || heroText.contains("INT") {
             problems.append("The hero shows \"\(heroText)\"")
         }
@@ -230,7 +229,7 @@ final class BlockWeekCountsUITests: XCTestCase {
             XCTAssertLessThanOrEqual(cell.frame.maxX, window.maxX + 0.5, "\(day) runs off screen at \(textSize)")
             // A later day shows no label.
             guard let shown = Self.shownLabel(of: cell.label) else { continue }
-            let lines = try textLines(in: cell.frame.insetBy(dx: -2, dy: -2), of: XCUIScreen.main.screenshot())
+            let lines = try UITestNavigation.textLines(in: cell.frame.insetBy(dx: -2, dy: -2), of: XCUIScreen.main.screenshot())
             let words = Set(lines.flatMap { $0.text.split(separator: " ").map { Self.letters(String($0)) } })
             for word in shown.split(separator: " ").map({ Self.letters(String($0)) }) where !words.contains(word) {
                 XCTFail("\(day) must show \"\(shown)\" whole at \(textSize), but it reads \(lines.map(\.text))")
@@ -283,42 +282,6 @@ final class BlockWeekCountsUITests: XCTestCase {
             )
         }
         XCTFail("\(element) never came wholly inside the overview's scroll view at \(scroll.frame)")
-    }
-
-    /// The lines of text drawn inside `rect`, in screen points, each with
-    /// the box around it in screen points.
-    @MainActor
-    private func textLines(in rect: CGRect, of screenshot: XCUIScreenshot) throws -> [(text: String, box: CGRect)] {
-        let image = screenshot.image
-        let cgImage = try XCTUnwrap(image.cgImage, "The screenshot has no pixels")
-        let pixels = CGRect(
-            x: rect.minX * image.scale, y: rect.minY * image.scale,
-            width: rect.width * image.scale, height: rect.height * image.scale
-        ).integral.intersection(CGRect(x: 0, y: 0, width: cgImage.width, height: cgImage.height))
-        let crop = try XCTUnwrap(pixels.isEmpty ? nil : cgImage.cropping(to: pixels), "Cannot crop \(rect) from the screenshot")
-        let request = VNRecognizeTextRequest()
-        request.recognitionLevel = .accurate
-        request.usesLanguageCorrection = false
-        try VNImageRequestHandler(cgImage: crop).perform([request])
-        let frame = CGRect(x: pixels.minX / image.scale, y: pixels.minY / image.scale,
-                           width: pixels.width / image.scale, height: pixels.height / image.scale)
-        // Vision's boxes are fractions of the crop, from its bottom left.
-        return (request.results ?? [])
-            .sorted { $0.boundingBox.midY > $1.boundingBox.midY }
-            .compactMap { observation in
-                guard let text = observation.topCandidates(1).first?.string else { return nil }
-                let box = observation.boundingBox
-                return (text, CGRect(
-                    x: frame.minX + box.minX * frame.width, y: frame.minY + (1 - box.maxY) * frame.height,
-                    width: box.width * frame.width, height: box.height * frame.height
-                ))
-            }
-    }
-
-    /// The text drawn inside `rect`, read line by line from the top.
-    @MainActor
-    private func readText(in rect: CGRect, of screenshot: XCUIScreenshot) throws -> String {
-        try textLines(in: rect, of: screenshot).map(\.text).joined(separator: " ")
     }
 
     /// Uppercased letters and digits only, with Vision's 0 for the mono O.
