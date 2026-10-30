@@ -7,9 +7,7 @@ final class HistoryAndTodayUITests: XCTestCase {
 
     @MainActor
     func testTodayHistoryAndSettingsReturnToTheSameWorkout() throws {
-        let app = XCUIApplication()
-        app.launchArguments = ["-fitbod-reset-store", "-fitbod-seed-demo-workout"]
-        app.launch()
+        let app = UITestNavigation.launch(UITestNavigation.seededWorkout)
         let sessions = app.buttons["today.sessions"]
         XCTAssertTrue(sessions.waitForExistence(timeout: 90))
         sessions.tap()
@@ -37,9 +35,7 @@ final class HistoryAndTodayUITests: XCTestCase {
 
     @MainActor
     func testVolumeRowsHaveReadableLabelsAndOpenDetails() throws {
-        let app = XCUIApplication()
-        app.launchArguments = ["-fitbod-reset-store", "-fitbod-seed-demo-workout"]
-        app.launch()
+        let app = UITestNavigation.launch(UITestNavigation.seededWorkout)
         XCTAssertTrue(app.buttons["Today"].waitForExistence(timeout: 90))
         let bar = app.descendants(matching: .any).matching(NSPredicate(
             format: "label BEGINSWITH %@ AND label CONTAINS %@", "Chest:", "sets this week,"
