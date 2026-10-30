@@ -38,6 +38,7 @@ Each entry is a way this run can fail, and what limits the damage.
 - Failure: worktrees, branches and booted phones from finished tickets fill the disk, and later checks confuse them with live work.
 - Mitigation: dispatch.md's settlement guard requires positive execution-stop proof and safe cleanup authority before removal or resource reuse, for every ending.
   Accepted valid `worker_done` plus confirmed normal release is the ordinary path; abandonment, idle/timeout and a successful command exit alone are not stop proof.
+  A `retained` release receipt, the normal result for Copilot workers, counts only when `worker-show` reports stage `settled` and `orca worktree ps` shows the worker's agent `done`.
   `release_pending`, `release_unknown` or other uncertainty preserves the worktree, branch, lane, reservations and waits until receipt-directed recovery resolves it.
   Archive evidence before authorized removal and retain useful unmerged work with its disposition recorded.
   Phase 8 cleanup, retries and deadlock handling cannot bypass this guard.

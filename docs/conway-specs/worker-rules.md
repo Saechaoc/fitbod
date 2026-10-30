@@ -299,6 +299,8 @@ Stop and ask on any missing required file, mismatched provenance or failed/rejec
    The second gives the unique evidence folder and what it proves, without calling failed checks passing.
    The third says what is left, including HIGH or CRITICAL ratings and out-of-scope findings.
 7. Follow the Orca dispatch preamble for heartbeats, `ask` and `worker_done`.
+8. After `worker_done`, stop: start no new work, even if your agent prompts you to keep going.
+   A Copilot CLI worker calls its `task_complete` tool once, right after `worker_done`, and ends its turn, so the coordinator sees it idle and can settle the ticket.
 
 ## Known traps
 

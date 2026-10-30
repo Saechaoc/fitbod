@@ -261,7 +261,12 @@ A reported ending is not a safely settled attempt.
 2. Require recorded positive execution-stop proof and safe cleanup authority before destructive cleanup, resource reuse or file handoff.
    The ordinary path is a valid `worker_done` accepted for that attempt, whatever its reported outcome, plus confirmed normal release through `orca orchestration worker-release --dispatch <dispatch id>`.
    A successful command exit alone is not confirmation of release.
-   `worker-abandon` fences orchestration, not necessarily execution; abandonment, idle, timeout and missing heartbeats are not stop proof.
+   A receipt of `retained` with `processAction: none` is also normal: Orca settled the worker but kept its terminal open, as it did for every Copilot worker in the 2026-10-29 quick-task run.
+   Together with the accepted `worker_done`, it counts as confirmed release and as stop proof when `orca orchestration worker-show --dispatch <dispatch id> --json` reports stage `settled` and `orca worktree ps --json` shows the worker's agent in that worktree as `done`.
+   If that agent is still `working`, it took on more work after `worker_done`, often because the user typed into it.
+   Keep settlement pending and check again after your next wait; if it is still working, ask the user before you merge or touch that worktree.
+   The `orca worktree rm` in step 4 closes a retained terminal.
+   `worker-abandon` fences orchestration, not necessarily execution; abandonment, idle, timeout and missing heartbeats are not stop proof on their own.
    For abandonment, `release_pending`, `release_unknown` or any uncertainty, keep settlement pending and preserve the worktree, branch, lane, owned/held reservations and pending waits without replies or cancellations.
    Load the version-matched `orca skills get orchestration --reference references/recovery-and-cleanup.md` and follow the receipt's prescribed recovery, recording the receipt, positive stop proof and cleanup authority before resuming.
    Do not substitute blanket force cleanup, retry or lane replacement for unresolved recovery.
