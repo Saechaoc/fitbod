@@ -49,6 +49,8 @@ The quick-task run of the same plan must finish its last two tasks first, so rea
 | [T49](tickets/T49-rpe-chip-hold-opens-decimal-picker.md) | Holding an RPE chip opens the decimal picker |
 | [T50](tickets/T50-why-uses-finished-workouts.md) | WHY suggests from finished workouts only |
 | [T51](tickets/T51-plateau-uses-finished-workouts.md) | Plateau check reads finished workouts only |
+| [T52](tickets/T52-rpe-creep-skips-empty-workouts.md) | RPE creep skips workouts without a logged set |
+| [T53](tickets/T53-stall-badge-window.md) | Stall badge names the exercise's own window |
 
 ### Phase 2: P2 defects
 
