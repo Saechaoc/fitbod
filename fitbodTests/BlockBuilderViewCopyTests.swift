@@ -43,11 +43,18 @@ struct BlockBuilderViewCopyTests {
         #expect(builder.contains("\"FIXED WEEKLY\""))
         #expect(builder.contains("\"+ ATTACH ▸\""))
         #expect(builder.contains("\"SWAP ▸\""))
+        // T11: New Block's two saves, and the missing pieces the bottom action names.
+        #expect(builder.contains("\"SAVE DRAFT\""))
+        #expect(builder.contains("\"SAVE AS READY ▸\""))
+        #expect(builder.contains("\"SAVE CHANGES ▸\""))
         #expect(builder.contains("\"NAME FIRST ↑\""))
-        #expect(builder.contains("\"SAVE TEMPLATE ▸\""))
+        #expect(builder.contains("\"ADD A PHASE\""))
+        #expect(builder.contains("\"PICK A ROUTINE\""))
+        #expect(builder.contains("\"ROUTINE IS EMPTY\""))
+        #expect(builder.contains("\"PICK \\(BRUCountLabel.text(count, \"DAY\"))\""))
+        #expect(!builder.contains("SAVE TEMPLATE"))
         #expect(builder.contains("\"Couldn't save block. Try again.\""))
         #expect(builder.contains("\"CANCEL\""))
-        #expect(builder.contains("\"SAVE\""))
 
         let row = try String(
             contentsOf: base.appendingPathComponent("BlockPhaseEditorRow.swift"),

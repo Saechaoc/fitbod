@@ -311,9 +311,15 @@ struct ProgramGraphInvariantTests {
         activeBlock.isActive = true
         #expect(activeBlock.derivedStatus == .active)
 
-        // ready: split wired + ≥1 slot + mode == .rotation (no trainingDays needed).
+        // ready: name + ≥1 phase + split wired + ≥1 slot + mode == .rotation (no trainingDays needed).
         let readyBlock = Block()
         ctx.insert(readyBlock)
+        readyBlock.name = "Ready"
+        let phase = BlockPhase()
+        ctx.insert(phase)
+        phase.block = readyBlock
+        phase.nameRaw = BlockPhaseKind.accumulation.rawValue
+        phase.weeks = 1
         let split = Split()
         ctx.insert(split)
         let template = SessionTemplate()

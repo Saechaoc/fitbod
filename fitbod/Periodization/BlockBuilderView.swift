@@ -49,8 +49,10 @@ public struct BlockBuilderView: View {
                 VStack(spacing: 0) {
                     NewBlockTopBar(
                         title: editing == nil ? "NEW BLOCK" : "EDIT BLOCK",
+                        canSave: draft.hasName,
                         onBack: cancel,
-                        onSave: saveIfValid
+                        // EDIT BLOCK saves only from the bottom bar.
+                        onSave: editing == nil ? { saveDraft() } : nil
                     )
 
                     // 260528-vi2: ScrollView/LazyVStack card layout replaces the old
@@ -120,10 +122,10 @@ public struct BlockBuilderView: View {
             // (not a ZStack overlay) so its paper background reliably extends
             // through the home-indicator zone — a ZStack-overlay background's
             // ignoresSafeArea bleed does not engage, leaving a see-through strip
-            // where scrolled phase cards show below CANCEL / SAVE TEMPLATE.
+            // where scrolled phase cards show below CANCEL and the primary action.
             .safeAreaInset(edge: .bottom, spacing: 0) {
                 NewBlockBottomActionBar(
-                    canCreate: draft.isValid,
+                    missingPiece: primaryMissingPiece,
                     isEditing: editing != nil,
                     onCancel: cancel,
                     onPrimary: saveIfValid
@@ -224,8 +226,29 @@ public struct BlockBuilderView: View {
         initialSnapshot.map { $0 != draft.snapshot() } ?? false
     }
 
+    /// What the bottom action waits for. NEW BLOCK's SAVE AS READY needs
+    /// every piece of a ready block; EDIT BLOCK's SAVE CHANGES keeps
+    /// today's rule, a name and a phase.
+    private var primaryMissingPiece: BlockMissingPiece? {
+        guard editing != nil else { return draft.missingPiece }
+        if draft.isValid { return nil }
+        return draft.hasName ? .phase : .name
+    }
+
+    /// SAVE AS READY, or SAVE CHANGES in EDIT BLOCK.
     private func saveIfValid() {
-        guard draft.isValid else { return }
+        guard primaryMissingPiece == nil else { return }
+        save()
+    }
+
+    /// SAVE DRAFT saves the block as it is, once it has a name.
+    private func saveDraft() {
+        guard draft.hasName else { return }
+        save()
+    }
+
+    /// Neither save activates a block.
+    private func save() {
         do {
             draft.isActive = false
             try draft.save(into: ctx)
@@ -477,10 +500,13 @@ internal struct NewBlockPreset: Hashable, Identifiable {
 // MARK: - Top Bar
 
 // 260528-vi2: no ink rules; sits on paper, borderless.
+// T11: the top action is SAVE DRAFT, which needs only a name; EDIT BLOCK has none.
 fileprivate struct NewBlockTopBar: View {
     let title: String
+    let canSave: Bool
     let onBack: () -> Void
-    let onSave: () -> Void
+    /// SAVE DRAFT; nil in EDIT BLOCK, which saves only from the bottom bar.
+    let onSave: (() -> Void)?
 
     var body: some View {
         HStack(alignment: .center) {
@@ -503,18 +529,31 @@ fileprivate struct NewBlockTopBar: View {
 
             Spacer()
 
-            Button(action: onSave) {
-                Text("SAVE")
-                    .font(NewBlockType.chrome)
-                    .tracking(NewBlockScreenTokens.chipTracking)
-                    .foregroundStyle(NewBlockScreenTokens.signal)
-                    .frame(maxHeight: .infinity)
+            if let onSave {
+                Button(action: onSave) {
+                    saveDraftLabel
+                        .foregroundStyle(canSave ? NewBlockScreenTokens.signal : NewBlockScreenTokens.muted)
+                }
+                .buttonStyle(.plain)
+                .disabled(!canSave)
+            } else {
+                // Holds the title where NEW BLOCK has it.
+                saveDraftLabel
+                    .hidden()
+                    .accessibilityHidden(true)
             }
-            .buttonStyle(.plain)
         }
         .padding(.horizontal, NewBlockScreenTokens.sidePadding)
         .frame(height: NewBlockScreenTokens.topBarRowHeight)
         .background(NewBlockScreenTokens.paper)
+    }
+
+    private var saveDraftLabel: some View {
+        Text("SAVE DRAFT")
+            .font(NewBlockType.chrome)
+            .tracking(NewBlockScreenTokens.chipTracking)
+            .frame(minWidth: 44, maxHeight: .infinity)
+            .contentShape(Rectangle())
     }
 }
 
@@ -2216,14 +2255,21 @@ fileprivate struct NewBlockUndoToast: View {
 
 // MARK: - Bottom Bar
 
-// 260528-vi2: ghost CANCEL (left, intrinsic width) + filled rounded SAVE TEMPLATE (right, fills remaining).
+// 260528-vi2: ghost CANCEL (left, intrinsic width) + filled rounded primary action (right, fills remaining).
 // 260610-guh: restyle — outlined CANCEL pill, bookmark.fill icon, cta-size typography, drop trailing glyphs from display.
+// T11: the primary action reads SAVE AS READY (SAVE CHANGES in EDIT BLOCK) and, while
+// disabled, names the first missing piece.
 // No heavy 3pt rule. Sits on paper with screen-margin insets.
 fileprivate struct NewBlockBottomActionBar: View {
-    let canCreate: Bool
+    /// What the primary action waits for; nil once it can save.
+    let missingPiece: BlockMissingPiece?
     let isEditing: Bool
     let onCancel: () -> Void
     let onPrimary: () -> Void
+
+    private var canCreate: Bool {
+        missingPiece == nil
+    }
 
     var body: some View {
         HStack(spacing: 12) {
@@ -2278,16 +2324,31 @@ fileprivate struct NewBlockBottomActionBar: View {
     }
 
     private var primaryTitle: String {
-        if !canCreate {
-            return "NAME FIRST ↑"
+        if let missingPiece {
+            return missingPiece.actionTitle
         }
-        return isEditing ? "SAVE CHANGES ▸" : "SAVE TEMPLATE ▸"
+        return isEditing ? "SAVE CHANGES ▸" : "SAVE AS READY ▸"
     }
 
     private var displayPrimaryTitle: String {
         primaryTitle
             .replacingOccurrences(of: " ▸", with: "")
             .replacingOccurrences(of: " ↑", with: "")
+    }
+}
+
+// MARK: - Missing pieces
+
+extension BlockMissingPiece {
+    /// What New Block's bottom action reads while this piece is missing.
+    var actionTitle: String {
+        switch self {
+        case .name:                    return "NAME FIRST ↑"
+        case .phase:                   return "ADD A PHASE"
+        case .routine:                 return "PICK A ROUTINE"
+        case .session:                 return "ROUTINE IS EMPTY"
+        case .trainingDays(let count): return "PICK \(BRUCountLabel.text(count, "DAY"))"
+        }
     }
 }
 

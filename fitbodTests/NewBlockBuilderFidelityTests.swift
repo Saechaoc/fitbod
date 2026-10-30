@@ -98,7 +98,7 @@ struct NewBlockBuilderFidelityTests {
         for requiredCopy in [
             "< PROGRAM",
             "NEW BLOCK",
-            "SAVE",
+            "SAVE DRAFT",
             "BLOCK NAME",
             "NAME YOUR BLOCK",
             "PRESET ▾",
@@ -115,7 +115,7 @@ struct NewBlockBuilderFidelityTests {
             "RECOVER",
             "CANCEL",
             "NAME FIRST ↑",
-            "SAVE TEMPLATE ▸",
+            "SAVE AS READY ▸",
         ] {
             #expect(source.contains(requiredCopy), "Missing New Block copy: \(requiredCopy)")
         }

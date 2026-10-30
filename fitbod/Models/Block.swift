@@ -38,6 +38,19 @@ public enum BlockStatus: String, Sendable {
     case draft
 }
 
+/// The first piece a block still needs before it is ready, in the order
+/// New Block names them.
+public enum BlockMissingPiece: Equatable, Sendable {
+    case name
+    case phase
+    case routine
+    /// The routine has no sessions.
+    case session
+    /// Fixed weekly scheduling needs one training day per session; the
+    /// count is the routine's session count.
+    case trainingDays(Int)
+}
+
 @Model
 public final class Block {
     @Attribute(.unique) public var id: UUID = UUID()
@@ -105,7 +118,7 @@ extension Block {
     }
 
     /// Derived lifecycle status — ordered precedence switch per spec §3.
-    /// completed (endDate != nil) → active (isActive) → ready (split wired + slot count matches) → draft
+    /// completed (endDate != nil) → active (isActive) → ready (no missing piece) → draft
     public var derivedStatus: BlockStatus {
         if endDate != nil {
             return .completed
@@ -113,13 +126,47 @@ extension Block {
         if isActive {
             return .active
         }
-        let slotCount = split?.slots?.count ?? 0
-        let isReady = split != nil
-            && slotCount >= 1
-            && (schedulingMode == .rotation || trainingDays.count == slotCount)
-        if isReady {
-            return .ready
+        return missingPiece == nil ? .ready : .draft
+    }
+
+    /// The first piece this block lacks before it is ready, or nil.
+    public var missingPiece: BlockMissingPiece? {
+        Block.firstMissingPiece(
+            name: name,
+            phaseCount: phases?.count ?? 0,
+            sessionCount: split.map { $0.slots?.count ?? 0 },
+            schedulingMode: schedulingMode,
+            trainingDayCount: trainingDays.count
+        )
+    }
+
+    /// The one readiness rule, shared by `derivedStatus` and New Block's
+    /// SAVE AS READY: a name, at least one phase, and a routine with at
+    /// least one session, whose training days match its sessions under
+    /// fixed weekly scheduling. `sessionCount` is nil when no routine is
+    /// attached. Returns the first piece missing, or nil when ready.
+    public static func firstMissingPiece(
+        name: String,
+        phaseCount: Int,
+        sessionCount: Int?,
+        schedulingMode: SchedulingMode,
+        trainingDayCount: Int
+    ) -> BlockMissingPiece? {
+        if name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            return .name
         }
-        return .draft
+        if phaseCount < 1 {
+            return .phase
+        }
+        guard let sessionCount else {
+            return .routine
+        }
+        if sessionCount < 1 {
+            return .session
+        }
+        if schedulingMode == .fixedWeekly && trainingDayCount != sessionCount {
+            return .trainingDays(sessionCount)
+        }
+        return nil
     }
 }

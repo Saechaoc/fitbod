@@ -37,6 +37,7 @@ struct BlockLifecycleServiceTests {
 
     /// Builds a Block with `slotCount` slots wired through a Split — derivedStatus == .ready.
     /// Uses rotation mode so slot count alone satisfies .ready (no trainingDays constraint).
+    /// T11: ready also needs a name and at least one phase.
     private func makeReadyBlock(name: String, slotCount: Int = 1, context: ModelContext) throws -> Block {
         let split = Split()
         context.insert(split)
@@ -62,6 +63,12 @@ struct BlockLifecycleServiceTests {
         block.startDate = Date(timeIntervalSince1970: 0)
         block.schedulingModeRaw = "rotation"
         block.split = split
+
+        let phase = BlockPhase()
+        context.insert(phase)
+        phase.block = block
+        phase.nameRaw = BlockPhaseKind.accumulation.rawValue
+        phase.weeks = 1
 
         try context.save()
 

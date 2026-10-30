@@ -71,3 +71,6 @@ design system; add a component only when multiple real screens need it.
   renamed the block. Presets now come from the one block template catalog.
 - New Block's Pre-Meet preset, because it had no definition: picking it only
   renamed the block. Presets now come from the one block template catalog.
+- EDIT BLOCK's top SAVE, because the top save now saves a draft (SAVE DRAFT),
+  which only a new block needs. EDIT BLOCK saves with its bottom SAVE CHANGES
+  alone.

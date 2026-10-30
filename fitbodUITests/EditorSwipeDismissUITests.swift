@@ -176,14 +176,14 @@ final class EditorSwipeDismissUITests: XCTestCase {
     @MainActor
     func testEditBlockCancelAsksOnlyWithUnsavedEdits() throws {
         let app = UITestNavigation.launch(UITestNavigation.freshStore)
-        // A template row opens a named block with phases, so SAVE needs no typing.
+        // A template row opens a named block with phases, so SAVE DRAFT needs no typing.
         UITestNavigation.selectTab("Program", in: app)
         let template = app.buttons.matching(NSPredicate(format: "label CONTAINS[c] %@", "Hypertrophy meso")).firstMatch
         UITestNavigation.reveal(template, in: app)
         template.tap()
         XCTAssertTrue(app.staticTexts.labeled("NEW BLOCK").waitForExistence(timeout: 10))
-        hittable(app.buttons, "SAVE").tap()
-        assertCloses(app.staticTexts.labeled("NEW BLOCK"), "SAVE must close the New Block builder")
+        hittable(app.buttons, "SAVE DRAFT").tap()
+        assertCloses(app.staticTexts.labeled("NEW BLOCK"), "SAVE DRAFT must close the New Block builder")
 
         let card = app.buttons.labeled("DRAFT block: Hypertrophy Meso")
         UITestNavigation.reveal(card, in: app)

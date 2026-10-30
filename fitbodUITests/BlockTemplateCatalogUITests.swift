@@ -198,8 +198,8 @@ final class BlockTemplateCatalogUITests: XCTestCase {
         pickPreset("HYPERTROPHY MESO", in: app)
         XCTAssertEqual(builderPhases(in: app), Self.catalog[0].phases)
         XCTAssertEqual(blockName(in: app), "Hypertrophy Meso")
-        hittable(app.buttons, "SAVE").tap()
-        XCTAssertTrue(app.staticTexts.labeled("NEW BLOCK").waitForNonExistence(timeout: 5), "SAVE must close New Block")
+        hittable(app.buttons, "SAVE DRAFT").tap()
+        XCTAssertTrue(app.staticTexts.labeled("NEW BLOCK").waitForNonExistence(timeout: 5), "SAVE DRAFT must close New Block")
 
         UITestNavigation.selectTab("Program", in: app)
         let card = app.buttons.labeled("DRAFT block: Hypertrophy Meso")

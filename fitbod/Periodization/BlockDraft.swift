@@ -83,8 +83,27 @@ public final class BlockDraft {
         self.trainingDays = block.trainingDays
     }
 
+    /// SAVE DRAFT needs only a name (decision 3).
+    public var hasName: Bool {
+        !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+
+    /// Today's save rule, which EDIT BLOCK's SAVE CHANGES keeps: a name and
+    /// at least one phase.
     public var isValid: Bool {
-        !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && !phases.isEmpty
+        hasName && !phases.isEmpty
+    }
+
+    /// The first piece the block would lack once saved, by `Block`'s one
+    /// readiness rule, or nil when SAVE AS READY would save a ready block.
+    public var missingPiece: BlockMissingPiece? {
+        Block.firstMissingPiece(
+            name: name,
+            phaseCount: phases.count,
+            sessionCount: split.map { $0.slots?.count ?? 0 },
+            schedulingMode: schedulingMode,
+            trainingDayCount: trainingDays.count
+        )
     }
 
     public var totalWeeks: Int {
