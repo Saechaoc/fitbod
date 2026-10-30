@@ -26,6 +26,8 @@
 //  prior. A workout that logs an exercise more than once gives one row,
 //  in the order of its first log, read across every log of it; the
 //  prior side reads every log of it in the most recent matching workout.
+//  Each row takes its name from its first log's `displayName`, the name
+//  the workout logged it under, else the live name.
 //
 //  ## D-05 Top working set
 //
@@ -121,8 +123,8 @@ public enum SessionComparator {
     /// Compare every exercise in `current` against its most-recent
     /// matching prior workout per the corrected D-22 rule.
     /// Returns one row per exercise in `current`, in the order of its
-    /// first log (`orderIndex` asc). Each side reads every log of the
-    /// exercise in its workout.
+    /// first log (`orderIndex` asc), named as that log was logged. Each
+    /// side reads every log of the exercise in its workout.
     public static func compare(
         current: Session,
         context: ModelContext,
@@ -150,7 +152,9 @@ public enum SessionComparator {
 
         for (exercise, logs) in groups {
             let exerciseID = exercise?.id ?? UUID()
-            let exerciseName = exercise?.name ?? ""
+            // The name the workout logged it under, so renaming or deleting
+            // the exercise in the library later never renames the row.
+            let exerciseName = logs.first?.displayName ?? ""
             let thisTop = topWorkingSet(in: logs)
             let priorLogs = findPriorMatch(
                 exerciseID: exercise?.id,

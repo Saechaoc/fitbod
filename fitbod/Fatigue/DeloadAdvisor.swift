@@ -232,9 +232,9 @@ public enum DeloadAdvisor {
                 ))
             }
         }
-        // For each pair, find the worst RPE creep.
-        var worstCreep: (amount: Double, name: String, intent: Intent)? = nil
-        for picks in perPair.values where picks.count >= 3 {
+        // For each pair, find its RPE creep.
+        var creeps: [(amount: Double, name: String, intent: Intent, lastStartedAt: Date, key: String)] = []
+        for (key, picks) in perPair where picks.count >= 3 {
             let sortedAsc = picks.sorted { $0.startedAt < $1.startedAt }
             let lastThree = Array(sortedAsc.suffix(3))
             // Anchor load = median weight; matched within max(smallestIncrement, 0.5kg).
@@ -247,9 +247,28 @@ public enum DeloadAdvisor {
             // Diff between first and last RPE (3-session window per RESEARCH §3.3).
             let creep = rpes.last! - rpes.first!
             if creep >= 1.0 {
-                if worstCreep == nil || creep > worstCreep!.amount {
-                    worstCreep = (amount: creep, name: matched.last!.name, intent: matched.last!.intent)
-                }
+                let last = matched.last!
+                creeps.append((
+                    amount: creep,
+                    name: last.name,
+                    intent: last.intent,
+                    lastStartedAt: last.startedAt,
+                    key: key
+                ))
+            }
+        }
+        // Name the worst creep: the pairs sort biggest creep first, and `min`
+        // takes the first. `perPair` yields its pairs in an order Swift seeds
+        // per launch, so a tie in creep goes to the pair whose last matched
+        // workout is the newest, then to the first by name, then to the pair
+        // key, and the signal names the same exercise every launch.
+        let worstCreep = creeps.min { lhs, rhs in
+            if lhs.amount != rhs.amount { return lhs.amount > rhs.amount }
+            if lhs.lastStartedAt != rhs.lastStartedAt { return lhs.lastStartedAt > rhs.lastStartedAt }
+            switch lhs.name.localizedStandardCompare(rhs.name) {
+            case .orderedAscending: return true
+            case .orderedDescending: return false
+            case .orderedSame: return lhs.key < rhs.key
             }
         }
         let sig2: Double? = worstCreep?.amount
