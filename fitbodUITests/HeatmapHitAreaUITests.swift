@@ -18,9 +18,12 @@
 //  any BACK muscle, and names each figure, "Front" or "Back", as it
 //  enters it.
 //
-//  XCUI cannot see the blocks VoiceOver skips, so the tests tap blocks
-//  where the grid draws them: 14pt cells in a 140 x 168pt box, 8pt under
-//  its FRONT or BACK label.
+//  T81: VoiceOver skips the FRONT and BACK labels above the figures, so
+//  it says each figure's name once, as it enters the figure.
+//
+//  XCUI cannot see the blocks or the labels VoiceOver skips, so the tests
+//  tap blocks where the grid draws them: 14pt cells in a 140 x 168pt box,
+//  found from its figure, whose frame spans the blocks VoiceOver reads.
 //
 
 import XCTest
@@ -159,6 +162,43 @@ final class HeatmapHitAreaUITests: XCTestCase {
             )
         }
     }
+
+    @MainActor
+    func testVoiceOverNamesEachFigureOnce() throws {
+        let app = openHeatmap()
+        settleAtEnd(app)
+        UITestNavigation.saveScreenshot("T81", "heatmap")
+        let tree = XCTAttachment(string: app.debugDescription)
+        tree.name = "T81-heatmap-accessibility-tree"
+        tree.lifetime = .keepAlways
+        add(tree)
+        let read = try readingOrder(in: app)
+        let heatmap = read[(read.firstIndex { $0.label == "Muscle Heatmap" } ?? read.startIndex)...]
+        let order = heatmap.map(\.description).joined(separator: "\n")
+        let attachment = XCTAttachment(string: order)
+        attachment.name = "T81-heatmap-voiceover-order"
+        attachment.lifetime = .keepAlways
+        add(attachment)
+
+        let labels = Side.allCases.map(\.rawValue)
+        let firstFigure = try XCTUnwrap(read.firstIndex { $0.figure != nil }, "VoiceOver reads no figure:\n\(order)")
+        XCTAssertFalse(
+            read[..<firstFigure].contains { labels.contains($0.label) },
+            "VoiceOver must read no FRONT or BACK label before the figures, which say their own names, but reads:\n\(order)"
+        )
+        XCTAssertFalse(
+            read[firstFigure...].contains { labels.contains($0.label) },
+            "VoiceOver must skip the FRONT and BACK labels after the figures too, but reads:\n\(order)"
+        )
+        // T62's figures keep their names, and VoiceOver enters each once.
+        let entered = read.compactMap(\.figure).reduce(into: [String]()) { names, name in
+            if names.last != name { names.append(name) }
+        }
+        XCTAssertEqual(
+            entered, Side.allCases.map(\.figureName),
+            "VoiceOver must enter the Front figure, then the Back figure, once each:\n\(order)"
+        )
+    }
 }
 
 // MARK: - Grid
@@ -284,11 +324,23 @@ private extension HeatmapHitAreaUITests {
         }
     }
 
-    /// The side's 140 x 168pt grid, centred 8pt under its FRONT or BACK label.
+    /// The side's 140 x 168pt grid. XCUI cannot see the FRONT and BACK
+    /// labels VoiceOver skips (T81), so the grid is found from its figure:
+    /// the figure's frame spans the blocks VoiceOver reads, so it starts at
+    /// the leftmost column and the top row that those blocks start in.
     @MainActor
     func box(_ side: Side, in app: XCUIApplication) -> CGRect {
-        let label = app.staticTexts[side.rawValue].frame
-        return CGRect(x: label.midX - 70, y: label.maxY + 8, width: 140, height: 168)
+        let spoken = side.blocks.filter(\.isSpoken)
+        let column = spoken.map(\.x).min() ?? 0
+        let row = spoken.map(\.y).min() ?? 0
+        let frame = figure(side, in: app).frame
+        return CGRect(x: frame.minX - CGFloat(column) * 14, y: frame.minY - CGFloat(row) * 14, width: 140, height: 168)
+    }
+
+    /// The side's figure: the VoiceOver group named "Front" or "Back" (T62).
+    @MainActor
+    func figure(_ side: Side, in app: XCUIApplication) -> XCUIElement {
+        app.otherElements.matching(NSPredicate(format: "label == %@", side.figureName)).firstMatch
     }
 
     /// Launches the demo seed and scrolls Today to its last section, MUSCLE
@@ -296,7 +348,7 @@ private extension HeatmapHitAreaUITests {
     @MainActor
     func openHeatmap(textSize: UITestNavigation.TextSize = .default) -> XCUIApplication {
         let app = UITestNavigation.launch(UITestNavigation.seededWorkout, textSize: textSize)
-        UITestNavigation.reveal(app.staticTexts[Side.back.rawValue], in: app)
+        UITestNavigation.reveal(figure(.back, in: app), in: app)
         let tabBarTop = UITestNavigation.tab("Today", in: app).frame.minY
         for _ in 0..<5 where box(.back, in: app).maxY > tabBarTop {
             app.swipeUp(velocity: .slow)
@@ -318,8 +370,7 @@ private extension HeatmapHitAreaUITests {
         let boxes = Side.allCases.map { (side: $0, box: box($0, in: app)) }
         var found: [GridElement] = []
         func visit(_ node: XCUIElementSnapshot, figure: String?) {
-            if !node.label.isEmpty, node.elementType == .other, !node.children.isEmpty,
-               boxes.contains(where: { $0.box.insetBy(dx: -2, dy: -2).contains(node.frame) }) {
+            if isFigure(node, in: boxes.map(\.box)) {
                 node.children.forEach { visit($0, figure: node.label) }
                 return
             }
@@ -341,6 +392,70 @@ private extension HeatmapHitAreaUITests {
         }
         visit(try app.snapshot(), figure: nil)
         return found
+    }
+
+    /// True for a figure: a labeled group that fits in a grid, give or take
+    /// its 2pt border.
+    @MainActor
+    func isFigure(_ node: XCUIElementSnapshot, in boxes: [CGRect]) -> Bool {
+        !node.label.isEmpty && node.elementType == .other && !node.children.isEmpty
+            && boxes.contains { $0.insetBy(dx: -2, dy: -2).contains(node.frame) }
+    }
+
+    /// One element VoiceOver reads: its label, and the figure VoiceOver
+    /// reads it in, or nil outside the figures.
+    struct Reading: CustomStringConvertible {
+        let label: String
+        let figure: String?
+
+        /// `"Chest" in figure "Front"`, or `"Muscle Heatmap"`.
+        var description: String {
+            figure.map { "\"\(label)\" in figure \"\($0)\"" } ?? "\"\(label)\""
+        }
+    }
+
+    /// Every element VoiceOver reads on the screen, in order, from one
+    /// snapshot walked like `gridElements` but over the whole screen: each
+    /// outermost labeled element, and inside a figure each of its elements.
+    @MainActor
+    func readingOrder(in app: XCUIApplication) throws -> [Reading] {
+        let boxes = Side.allCases.map { box($0, in: app) }
+        var read: [Reading] = []
+        func visit(_ node: XCUIElementSnapshot, figure: String?) {
+            if isFigure(node, in: boxes) {
+                node.children.forEach { visit($0, figure: node.label) }
+            } else if node.label.isEmpty {
+                node.children.forEach { visit($0, figure: figure) }
+            } else {
+                read.append(Reading(label: node.label, figure: figure))
+            }
+        }
+        // The application's own label is the app's name, not an element.
+        try app.snapshot().children.forEach { visit($0, figure: nil) }
+        return read
+    }
+
+    /// Swipes Today to its end, where the heatmap is the last section, then
+    /// waits until the screen stops changing, so the heatmap's screenshot
+    /// has the same pixels on every run.
+    @MainActor
+    func settleAtEnd(_ app: XCUIApplication) {
+        var last = box(.back, in: app)
+        for _ in 0..<5 {
+            app.swipeUp()
+            let now = box(.back, in: app)
+            if now == last { break }
+            last = now
+        }
+        // The scroll bar fades a moment after the scroll stops.
+        var screen = XCUIScreen.main.screenshot().pngRepresentation
+        let deadline = Date.now.addingTimeInterval(10)
+        while Date.now < deadline {
+            Thread.sleep(forTimeInterval: 1)
+            let next = XCUIScreen.main.screenshot().pngRepresentation
+            if next == screen { return }
+            screen = next
+        }
     }
 
     /// Every way the heatmap's buttons miss their blocks: outside their box,

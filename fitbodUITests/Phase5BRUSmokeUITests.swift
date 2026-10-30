@@ -7,7 +7,7 @@
 //  PerMuscleDetailView (bar tap → detail), MuscleVolumeTargetEditor (Settings).
 //
 //  These tests assert BRU chrome renders correctly end-to-end:
-//    1. FatigueSurfaceView: side-by-side FRONT + BACK heatmap labels present
+//    1. FatigueSurfaceView: side-by-side Front + Back heatmap figures present
 //       (confirms Plan 05.1-04/05 deleted the Picker; FRONT + BACK are now
 //       static Text labels, not segmented-control buttons).
 //    2. PerMuscleDetailView: all 4 BRU section heads reachable via bar tap.
@@ -80,8 +80,9 @@ final class Phase5BRUSmokeUITests: XCTestCase {
     /// Asserts:
     ///   - "Volume This Week" BRUSectionHead is reachable on the Today tab.
     ///   - "WORKING SETS · THIS WEEK" cover-slab caption is present.
-    ///   - "FRONT" and "BACK" are present as static Text labels (side-by-side
-    ///     heatmap layout from Plan 05.1-04/05 — NOT a segmented Picker).
+    ///   - The "Front" and "Back" figures are present under the FRONT and BACK
+    ///     labels (side-by-side heatmap layout from Plan 05.1-04/05 — NOT a
+    ///     segmented Picker).
     @MainActor
     func testFatigueSurfaceViewRenders() throws {
         app.launch()
@@ -105,28 +106,30 @@ final class Phase5BRUSmokeUITests: XCTestCase {
             "Expected 'Volume This Week' BRUSectionHead on Today tab — FatigueSurfaceView section head missing or renamed."
         )
 
-        // Scroll further to reach the Muscle Heatmap section where FRONT + BACK labels live.
+        // Scroll further to reach the Muscle Heatmap section where the Front + Back figures live.
         _ = scrollUntilVisible(text: "Muscle Heatmap")
 
-        // FRONT + BACK as staticText labels (Plan 05.1-04/05 replaced the
-        // Picker with a side-by-side VStack layout — these are Text(), not
-        // segmented-control buttons).
-        let frontLabel = app.staticTexts["FRONT"]
-        let backLabel = app.staticTexts["BACK"]
+        // The Front + Back figures, found by the VoiceOver groups named for
+        // them (T62): VoiceOver, and so XCUI, skips the FRONT + BACK Text
+        // labels above them (T81). Plan 05.1-04/05 replaced the Picker with
+        // a side-by-side VStack layout, so these are no segmented-control
+        // buttons.
+        let frontFigure = app.otherElements["Front"]
+        let backFigure = app.otherElements["Back"]
 
         // Scroll a few more swipes to bring the heatmap section into frame.
         for _ in 0..<4 {
-            if frontLabel.exists && backLabel.exists { break }
+            if frontFigure.exists && backFigure.exists { break }
             app.swipeUp()
         }
 
         XCTAssertTrue(
-            frontLabel.exists,
-            "Expected 'FRONT' static label in side-by-side Muscle Heatmap — Plan 05.1-04/05 HStack layout not rendering."
+            frontFigure.exists,
+            "Expected the 'Front' figure in side-by-side Muscle Heatmap — Plan 05.1-04/05 HStack layout not rendering."
         )
         XCTAssertTrue(
-            backLabel.exists,
-            "Expected 'BACK' static label in side-by-side Muscle Heatmap — Plan 05.1-04/05 HStack layout not rendering."
+            backFigure.exists,
+            "Expected the 'Back' figure in side-by-side Muscle Heatmap — Plan 05.1-04/05 HStack layout not rendering."
         )
     }
 

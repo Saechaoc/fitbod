@@ -29,12 +29,16 @@ final class BodySilhouetteUITests: XCTestCase {
     @MainActor
     func testFrontAndBackRenderSideBySide() throws {
         let app = UITestNavigation.launch(UITestNavigation.seededWorkout)
-        let front = app.staticTexts["FRONT"]
-        let back = app.staticTexts["BACK"]
+        // VoiceOver, and so XCUI, skips the FRONT and BACK labels (T81), so
+        // find each figure by the VoiceOver group named for it (T62). Its
+        // frame spans only the blocks VoiceOver reads, so the two figures
+        // differ in height and their tops, not their middles, line up.
+        let front = app.otherElements["Front"]
+        let back = app.otherElements["Back"]
         UITestNavigation.reveal(back, in: app)
         XCTAssertTrue(front.isHittable)
         XCTAssertLessThan(front.frame.maxX, back.frame.minX)
-        XCTAssertEqual(front.frame.midY, back.frame.midY, accuracy: 1)
+        XCTAssertEqual(front.frame.minY, back.frame.minY, accuracy: 1)
         XCTAssertEqual(app.segmentedControls.count, 0)
     }
 }

@@ -290,6 +290,8 @@ public struct FatigueSurfaceView: View {
     private var heatmapSection: some View {
         VStack(alignment: .leading, spacing: 0) {
             BRUSectionHead("Muscle Heatmap", right: weekLabel)
+            // Each figure says its own name, "Front" or "Back", as VoiceOver
+            // enters it, so VoiceOver skips the labels above them (T81).
             HStack(alignment: .top, spacing: 20) {
                 VStack(spacing: 8) {
                     Text("FRONT")
@@ -297,6 +299,7 @@ public struct FatigueSurfaceView: View {
                         .tracking(1.2)
                         .textCase(.uppercase)
                         .foregroundStyle(Color.bruInk)
+                        .accessibilityHidden(true)
                     BodySilhouetteView(
                         side: .front,
                         zoneByMuscleSlug: zoneMap,
@@ -312,6 +315,7 @@ public struct FatigueSurfaceView: View {
                         .tracking(1.2)
                         .textCase(.uppercase)
                         .foregroundStyle(Color.bruInk)
+                        .accessibilityHidden(true)
                     BodySilhouetteView(
                         side: .back,
                         zoneByMuscleSlug: zoneMap,
