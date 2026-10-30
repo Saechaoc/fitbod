@@ -188,11 +188,14 @@ public struct SessionExerciseCard: View {
                 }
 
                 // Phase 5: Plateau badges (only when stalled)
-                if case .stalled = plateauSignal {
+                // The detector returns one e1RM per session in the window it
+                // used, the exercise's own window or the user's setting, so
+                // the badge names that window.
+                if case .stalled(let e1RMs, _) = plateauSignal {
                     HStack(spacing: 8) {
                         StallBadge(
                             exerciseName: exerciseName,
-                            sessionCount: settingsList.first?.plateauWindowSessions ?? 4
+                            sessionCount: e1RMs.count
                         )
                         if let action = suggestedAction {
                             SuggestedActionChip(action: action) {
