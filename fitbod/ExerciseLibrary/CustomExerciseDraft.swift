@@ -9,7 +9,7 @@
 //  custom `Exercise` and gates the Save button via a PURE-VALUE-TYPE
 //  `isValid` computed property — testable WITHOUT a `ModelContainer`
 //  (FOUND-07 in microcosm; the testability invariant is verified by the
-//  10 `CustomExerciseDraftTests` functions).
+//  13 `CustomExerciseDraftTests` functions).
 //
 //  ## Why this file is load-bearing (PITFALLS #5)
 //
@@ -83,7 +83,11 @@ public final class CustomExerciseDraft {
 
     // MARK: - Fields
 
-    /// User-facing exercise name. Trimmed before the `isValid` check.
+    /// User-facing exercise name, kept as typed so the editor's field
+    /// and `snapshot()` show the user's own text. Trimmed of leading and
+    /// trailing whitespace before the `isValid` check and when
+    /// `materialize(into:allMuscles:)` or `updateExisting(in:allMuscles:)`
+    /// saves it.
     public var name: String = ""
 
     /// Equipment kind. Always non-nil (default `.barbell`); per UI-SPEC
@@ -223,7 +227,8 @@ public final class CustomExerciseDraft {
         into ctx: ModelContext,
         allMuscles: [MuscleGroup]
     ) -> Exercise {
-        let canonical = name
+        let trimmedName = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        let canonical = trimmedName
             .lowercased()
             .folding(options: .diacriticInsensitive, locale: .current)
 
@@ -233,7 +238,7 @@ public final class CustomExerciseDraft {
             : "|" + primarySlugs.joined(separator: "|") + "|"
 
         let ex = Exercise(
-            name: name,
+            name: trimmedName,
             canonicalName: canonical,
             equipmentRaw: equipment.rawValue,
             mechanicRaw: mechanic.rawValue,
@@ -283,8 +288,9 @@ public final class CustomExerciseDraft {
         allMuscles: [MuscleGroup]
     ) {
         guard let target = editingExisting else { return }
-        target.name = name
-        target.canonicalName = name
+        let trimmedName = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        target.name = trimmedName
+        target.canonicalName = trimmedName
             .lowercased()
             .folding(options: .diacriticInsensitive, locale: .current)
         target.equipmentRaw = equipment.rawValue

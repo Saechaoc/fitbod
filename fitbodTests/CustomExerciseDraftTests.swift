@@ -3,7 +3,7 @@
 //  fitbodTests
 //
 //  Validation gate for `CustomExerciseDraft.isValid` (PITFALLS #5 +
-//  FOUND-07 in microcosm). The 10 tests below cover every branch of
+//  FOUND-07 in microcosm). The 13 tests below cover every branch of
 //  the rule:
 //
 //    `isValid == true` iff:
@@ -11,16 +11,18 @@
 //      2. ≥1 MuscleAssignment with role == .primary AND weight >= 0.5.
 //
 //  Plus `materialize(into:)` end-to-end (proves the insert-then-relate
-//  ordering and the `primaryMuscleSlugsJoined` denormalization) and a
-//  `snapshot()` equality test (proves the dirty-detection contract the
+//  ordering and the `primaryMuscleSlugsJoined` denormalization), three
+//  saved-name tests (prove `materialize` and `updateExisting(in:)` store
+//  `name` and `canonicalName` without outer whitespace, ticket T54) and
+//  a `snapshot()` equality test (proves the dirty-detection contract the
 //  editor's `Discard Changes?` confirmation relies on).
 //
 //  These tests are deliberately decoupled from the SwiftUI editor view
 //  — they exercise the pure value-type validation logic in isolation.
 //  That is the FOUND-07 invariant: the validation contract lives in a
 //  testable type that doesn't require `ModelContainer` for the truth-
-//  table tests (`materialize` does need a container; the other 9 do
-//  not).
+//  table tests (the four save tests do need a container; the other 9
+//  do not).
 //
 
 import Foundation
@@ -138,6 +140,84 @@ struct CustomExerciseDraftTests {
         #expect(stim.weight == 1.0)
         #expect(stim.exercise?.id == ex.id)
         #expect(stim.muscle?.slug == "chest")
+    }
+
+    // MARK: - Saved name (ticket T54, finding F16)
+
+    @Test("Materialize saves the name without outer spaces")
+    func materializeTrimsName() throws {
+        let container = try InMemoryContainer.makeEmpty()
+        let ctx = ModelContext(container)
+
+        let quads = MuscleGroup(slug: "quadriceps", displayName: "Quadriceps", region: .lower)
+        ctx.insert(quads)
+        try ctx.save()
+
+        let d = CustomExerciseDraft()
+        d.name = " Zercher Squat "
+        d.muscles = [.init(slug: "quadriceps", role: .primary, weight: 1.0)]
+        d.materialize(into: ctx, allMuscles: [quads])
+        try ctx.save()
+
+        let exercises = try ctx.fetch(FetchDescriptor<Exercise>())
+        #expect(exercises.count == 1)
+        let ex = try #require(exercises.first)
+        #expect(ex.name == "Zercher Squat")
+        #expect(ex.canonicalName == "zercher squat")
+        // The editor's field keeps what was typed.
+        #expect(d.name == " Zercher Squat ")
+    }
+
+    @Test("Update saves the edited name without outer spaces")
+    func updateExistingTrimsName() throws {
+        let container = try InMemoryContainer.makeEmpty()
+        let ctx = ModelContext(container)
+
+        let quads = MuscleGroup(slug: "quadriceps", displayName: "Quadriceps", region: .lower)
+        ctx.insert(quads)
+        let existing = Exercise(
+            name: "Zercher",
+            canonicalName: "zercher",
+            equipmentRaw: "barbell",
+            mechanicRaw: "compound",
+            isCustom: true
+        )
+        ctx.insert(existing)
+        try ctx.save()
+
+        let d = CustomExerciseDraft()
+        d.editingExisting = existing
+        d.name = " Zercher Squat "
+        d.muscles = [.init(slug: "quadriceps", role: .primary, weight: 1.0)]
+        d.updateExisting(in: ctx, allMuscles: [quads])
+        try ctx.save()
+
+        let exercises = try ctx.fetch(FetchDescriptor<Exercise>())
+        #expect(exercises.count == 1)
+        let ex = try #require(exercises.first)
+        #expect(ex.name == "Zercher Squat")
+        #expect(ex.canonicalName == "zercher squat")
+        #expect(d.name == " Zercher Squat ")
+    }
+
+    @Test("Saving keeps inner spaces and drops outer line breaks")
+    func materializeKeepsInnerSpaces() throws {
+        let container = try InMemoryContainer.makeEmpty()
+        let ctx = ModelContext(container)
+
+        let quads = MuscleGroup(slug: "quadriceps", displayName: "Quadriceps", region: .lower)
+        ctx.insert(quads)
+        try ctx.save()
+
+        let d = CustomExerciseDraft()
+        d.name = "\nZercher  Squat \n"
+        d.muscles = [.init(slug: "quadriceps", role: .primary, weight: 1.0)]
+        d.materialize(into: ctx, allMuscles: [quads])
+        try ctx.save()
+
+        let ex = try #require(try ctx.fetch(FetchDescriptor<Exercise>()).first)
+        #expect(ex.name == "Zercher  Squat")
+        #expect(ex.canonicalName == "zercher  squat")
     }
 
     // MARK: - Snapshot / dirty detection
