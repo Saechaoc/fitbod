@@ -138,6 +138,12 @@ public struct SetRow: View {
                         prescribed: prescribed,
                         range: explanation?.range,
                         explanation: explanation,
+                        targetReps: Self.targetReps(
+                            low: sessionExercise.targetRepsLow,
+                            high: sessionExercise.targetRepsHigh
+                        ),
+                        targetRPE: sessionExercise.targetRPE,
+                        setType: entry.setType,
                         unitLabel: unit.rawValue,
                         wasManualOverride: $entry.wasManualOverride,
                         isComplete: entry.isComplete,
@@ -315,6 +321,13 @@ public struct SetRow: View {
         .buttonStyle(.plain)
         .accessibilityLabel("Why this weight")
         .accessibilityIdentifier("set.why.\(identifierSuffix)")
+    }
+
+    /// The exercise's rep range for Why-this-weight, such as 5...8, or nil
+    /// when its targets make no range.
+    static func targetReps(low: Int, high: Int) -> ClosedRange<Int>? {
+        guard low > 0, low <= high else { return nil }
+        return low...high
     }
 
     // MARK: - Private helpers

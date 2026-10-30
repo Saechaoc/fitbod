@@ -29,7 +29,8 @@
 //    set's weight; a weight typed away from the prescription, or one that
 //    equals a suggestion above 0, then keeps showing, and a logged set
 //    shows the weight it logged.
-//    The cell presents WhyThisWeightSheet when explanation != nil. Opening it
+//    The cell presents WhyThisWeightSheet when explanation != nil, with the
+//    set's rep range, target RPE and set type for its hero. Opening it
 //    ends editing, so the keyboard never covers the sheet. Use writes the
 //    suggested weight into the set and clears the badge; Override closes the
 //    sheet and focuses the weight field.
@@ -50,6 +51,11 @@ public struct PrescriptionWeightCell: View {
     /// field's "—" placeholder instead.
     public let range: ClosedRange<Double>?
     public let explanation: PrescriptionExplanation?
+    /// The set's rep range, target RPE and type, which Why-this-weight's
+    /// hero and steps show.
+    public let targetReps: ClosedRange<Int>?
+    public let targetRPE: Double?
+    public let setType: SetType
     /// Unit label for the weight ("lb" or "kg"). No default: the caller
     /// passes the exercise's effective unit.
     public var unitLabel: String
@@ -76,6 +82,9 @@ public struct PrescriptionWeightCell: View {
         prescribed: Double?,
         range: ClosedRange<Double>?,
         explanation: PrescriptionExplanation?,
+        targetReps: ClosedRange<Int>? = nil,
+        targetRPE: Double? = nil,
+        setType: SetType = .default,
         unitLabel: String,
         wasManualOverride: Binding<Bool>,
         isComplete: Bool = false,
@@ -87,6 +96,9 @@ public struct PrescriptionWeightCell: View {
         self.prescribed = prescribed
         self.range = range
         self.explanation = explanation
+        self.targetReps = targetReps
+        self.targetRPE = targetRPE
+        self.setType = setType
         self.unitLabel = unitLabel
         self._wasManualOverride = wasManualOverride
         self.isComplete = isComplete
@@ -177,6 +189,9 @@ public struct PrescriptionWeightCell: View {
                     explanation: exp,
                     onUseSuggested: { use(exp.roundedWeight) },
                     onOverride: { focusAfterSheet = true },
+                    reps: targetReps,
+                    rpe: targetRPE,
+                    setTypeLabel: SetTypeChip.label(for: setType),
                     unitLabel: unitLabel
                 )
                 .presentationDetents([.medium])

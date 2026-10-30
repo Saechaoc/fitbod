@@ -184,7 +184,7 @@ struct Phase3BRUSurfacesTests {
         )
         let sheet = WhyThisWeightSheet(
             explanation: explanation,
-            reps: 8,
+            reps: 8...8,
             rpe: 9.0,
             setTypeLabel: "TOP SET",
             unitLabel: "lb"
@@ -208,7 +208,7 @@ struct Phase3BRUSurfacesTests {
         )
         let sheet = WhyThisWeightSheet(
             explanation: explanation,
-            reps: 8,
+            reps: 8...8,
             rpe: 8.5,
             setTypeLabel: "TOP SET",
             unitLabel: "kg"
@@ -231,7 +231,7 @@ struct Phase3BRUSurfacesTests {
         )
         let sheet = WhyThisWeightSheet(
             explanation: explanation,
-            reps: 8,
+            reps: 8...8,
             rpe: nil,
             setTypeLabel: "TOP SET",
             unitLabel: "kg"
@@ -254,7 +254,7 @@ struct Phase3BRUSurfacesTests {
         )
         let sheet = WhyThisWeightSheet(
             explanation: explanation,
-            reps: 5,
+            reps: 5...5,
             rpe: nil,
             setTypeLabel: "WORKING SET",
             unitLabel: "kg"

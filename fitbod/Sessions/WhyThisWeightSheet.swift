@@ -14,9 +14,13 @@
 //       - Unit suffix: displayLarge bruPaper 60% opacity
 //       - A suggestion of 0 is no suggestion: the numeral and unit give way
 //         to the empty weight field's "—" in bruPaper 60% opacity
-//       - 2pt bruPaper top rule → 2-column REPS | RPE sub-band
+//       - 2pt bruPaper top rule → 2-column REPS | RPE sub-band: the set's
+//         rep range, "×8–12", and target RPE, which the logger passes in
 //    2. BRUSectionHead("Why this weight", right: "−")
-//    3. Numbered step blocks (01 / 02 / 03) in VStack(spacing: 8)
+//    3. Numbered step blocks (01 / 02 / 03) in VStack(spacing: 8), filling
+//       the sheet's width, so the numerals line up with the section head
+//       and the 2pt bruInk rule below them spans the sheet
+//       - Step 01's reps in reserve come from the last session's RPE
 //       - When .calibrating: CalibratingProgressMeter between step 02 and step 03
 //       - A suggestion of 0 has nothing to round, so step 03 is left out
 //    4. Footer bar: 2pt bruInk top rule + BRUButton(.ghost) "Override" +
@@ -53,10 +57,12 @@ public struct WhyThisWeightSheet: View {
     /// PrescriptionWeightCell then focuses the weight field.
     public var onOverride: (() -> Void)?
 
-    /// Target reps for the hero slab sub-band. Nil renders "—".
-    public let reps: Int?
+    /// The set's rep range for the hero slab sub-band, "×8–12", or "×8"
+    /// for a range of one count. Nil renders "—".
+    public let reps: ClosedRange<Int>?
 
-    /// Target RPE for the hero slab sub-band. Nil renders "—".
+    /// Target RPE for the hero slab sub-band, and step 02's "Target @ RPE"
+    /// label. Nil renders "—".
     public let rpe: Double?
 
     /// Set-type label for the hero slab trailing indicator, e.g. "TOP SET".
@@ -79,7 +85,7 @@ public struct WhyThisWeightSheet: View {
     ///   - explanation: The prescription data object from `ProgressionStrategy.prescribe(...)`.
     ///   - onUseSuggested: Optional callback invoked when the user accepts the suggestion.
     ///   - onOverride: Optional callback invoked when the user chooses Override.
-    ///   - reps: Target reps for the hero sub-band. Nil = no prior prescription.
+    ///   - reps: The set's rep range for the hero sub-band. Nil = no prior prescription.
     ///   - rpe: Target RPE for the hero sub-band. Nil for double-progression exercises.
     ///   - setTypeLabel: Trailing set-type label in the hero status line (e.g. "TOP SET").
     ///   - unitLabel: Weight unit string appended to numerals (e.g. "kg", "lb").
@@ -87,7 +93,7 @@ public struct WhyThisWeightSheet: View {
         explanation: PrescriptionExplanation,
         onUseSuggested: (() -> Void)? = nil,
         onOverride: (() -> Void)? = nil,
-        reps: Int? = nil,
+        reps: ClosedRange<Int>? = nil,
         rpe: Double? = nil,
         setTypeLabel: String = "TOP SET",
         unitLabel: String
@@ -188,7 +194,7 @@ public struct WhyThisWeightSheet: View {
                         .textCase(.uppercase)
                         .tracking(1.2)
 
-                    Text(reps.map { "×\($0)" } ?? "×—")
+                    Text(heroRepsText)
                         .font(BRUFont.displayLarge)
                         .foregroundStyle(Color.bruPaper)
                 }
@@ -237,14 +243,27 @@ public struct WhyThisWeightSheet: View {
         hasSuggestion ? formatted(explanation.roundedWeight) : "—"
     }
 
+    /// The hero's reps: the set's rep range, "×8–12", or "×8" for a range
+    /// of one count, or "×—" with none.
+    var heroRepsText: String {
+        "×\(reps.map { repsText($0, joinedBy: "\u{2013}") } ?? "—")"
+    }
+
     /// VoiceOver reads a suggestion of 0 like the empty weight field: "none".
     var heroAccessibilityLabel: String {
         let weightStr = hasSuggestion
             ? "Recommended weight \(formatted(explanation.roundedWeight)) \(unitLabel)"
             : "Recommended weight: none"
-        let repsStr = reps.map { "\($0)" } ?? "unknown"
+        let repsStr = reps.map { repsText($0, joinedBy: " to ") } ?? "unknown"
         let rpeStr = rpe.map { formattedRPE($0) } ?? "not applicable"
         return "\(weightStr), reps \(repsStr), RPE \(rpeStr), \(setTypeLabel)"
+    }
+
+    /// "8–12" joined by `separator`, or "8" for a range of one count.
+    private func repsText(_ range: ClosedRange<Int>, joinedBy separator: String) -> String {
+        range.lowerBound == range.upperBound
+            ? "\(range.lowerBound)"
+            : "\(range.lowerBound)\(separator)\(range.upperBound)"
     }
 
     // MARK: - Steps Block
@@ -286,6 +305,10 @@ public struct WhyThisWeightSheet: View {
                 step03Row(label: step03Label)
             }
         }
+        // The steps fill the sheet's width, however short their text, so
+        // the numerals line up with the section head and the rule below
+        // spans the sheet.
+        .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
         // 2pt bruInk bottom rule closes the steps section
@@ -298,15 +321,29 @@ public struct WhyThisWeightSheet: View {
 
     // MARK: - Step helpers
 
-    private var step01SubCopy: String? {
-        guard explanation.lastSessionLine != nil, let rpeVal = rpe else { return nil }
-        let rir = (10.0 - rpeVal) / 2.0
+    /// Step 01's reps in reserve: 10 less the last session's RPE, as
+    /// bru-screens/why-weight.jsx shows it. A last session logged without
+    /// an RPE, or at RPE 10, has none to show.
+    var step01SubCopy: String? {
+        guard let lastRPE = lastSessionRPE else { return nil }
+        let rir = 10.0 - lastRPE
         if rir <= 0 { return nil }
-        let formatted = rir == rir.rounded() ? String(Int(rir)) : String(format: "%.1f", rir)
-        return "You had ~\(formatted) reps in reserve."
+        let reps = rir == rir.rounded()
+            ? BRUCountLabel.text(Int(rir), "rep")
+            : "\(String(format: "%.1f", rir)) reps"
+        return "You had ~\(reps) in reserve."
     }
 
-    private var step02Label: String {
+    /// The last session's RPE, read from its line, "100 lb × 5 @ RPE 8.0
+    /// (Oct 26)", or nil when it has none.
+    private var lastSessionRPE: Double? {
+        guard let line = explanation.lastSessionLine,
+              let range = line.range(of: #"@ RPE \d+(\.\d+)?"#, options: .regularExpression)
+        else { return nil }
+        return Double(line[range].dropFirst("@ RPE ".count))
+    }
+
+    var step02Label: String {
         let name = explanation.formulaName.lowercased()
         if name.contains("double") {
             return "Double progression"
@@ -592,7 +629,7 @@ public struct WhyThisWeightSheet: View {
         .sheet(isPresented: .constant(true)) {
             WhyThisWeightSheet(
                 explanation: explanation,
-                reps: 8,
+                reps: 6...8,
                 rpe: 9.0,
                 setTypeLabel: "TOP SET",
                 unitLabel: "lb"
@@ -620,7 +657,7 @@ public struct WhyThisWeightSheet: View {
         .sheet(isPresented: .constant(true)) {
             WhyThisWeightSheet(
                 explanation: explanation,
-                reps: 8,
+                reps: 6...8,
                 rpe: 8.5,
                 setTypeLabel: "TOP SET",
                 unitLabel: "kg"
@@ -645,7 +682,7 @@ public struct WhyThisWeightSheet: View {
         .sheet(isPresented: .constant(true)) {
             WhyThisWeightSheet(
                 explanation: explanation,
-                reps: 8,
+                reps: 8...12,
                 rpe: nil,
                 setTypeLabel: "TOP SET",
                 unitLabel: "kg"
@@ -670,7 +707,7 @@ public struct WhyThisWeightSheet: View {
         .sheet(isPresented: .constant(true)) {
             WhyThisWeightSheet(
                 explanation: explanation,
-                reps: 5,
+                reps: 5...5,
                 rpe: nil,
                 setTypeLabel: "WORKING SET",
                 unitLabel: "kg"
@@ -699,7 +736,7 @@ public struct WhyThisWeightSheet: View {
             WhyThisWeightSheet(
                 explanation: explanation,
                 onUseSuggested: { /* write back to SetEntry.actualWeight in plan 03-08 */ },
-                reps: 8,
+                reps: 6...8,
                 rpe: 8.5,
                 setTypeLabel: "TOP SET",
                 unitLabel: "kg"

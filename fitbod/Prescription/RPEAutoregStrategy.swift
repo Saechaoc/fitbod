@@ -154,9 +154,11 @@ public struct RPEAutoregStrategy: ProgressionStrategy {
         }
 
         // MARK: Calibrating path — no prior session data
+        // A last top set without an RPE gives no e1RM to calibrate from,
+        // so nothing is suggested, but it is still the last session.
 
         let exp = PrescriptionExplanation(
-            lastSessionLine: nil,
+            lastSessionLine: lastLine,
             formulaName: "RPE autoregulation",
             computedLine: nil,
             roundedWeight: 0,
@@ -184,7 +186,9 @@ private extension RPEAutoregStrategy {
     }
 
     /// Builds the "last session" line shown in the WhyThisWeightSheet.
-    /// Format: "{weight} {unit} × {reps} @ RPE {rpe} (May 15)"
+    /// Format: "{weight} {unit} × {reps} @ RPE {rpe} (May 15)". A top set
+    /// logged without an RPE is still the last session: "{weight} {unit} ×
+    /// {reps} (May 15)".
     static func lastSessionLine(
         weight: Double?,
         reps: Int?,
@@ -192,8 +196,9 @@ private extension RPEAutoregStrategy {
         date: Date?,
         unit: WeightUnit
     ) -> String? {
-        guard let weight, let reps, let rpe, let date else { return nil }
+        guard let weight, let reps, let date else { return nil }
         let dateStr = date.formatted(.dateTime.month(.abbreviated).day())
-        return "\(fmtG(weight)) \(unit.rawValue) × \(reps) @ RPE \(String(format: "%.1f", rpe)) (\(dateStr))"
+        let rpeStr = rpe.map { " @ RPE \(String(format: "%.1f", $0))" } ?? ""
+        return "\(fmtG(weight)) \(unit.rawValue) × \(reps)\(rpeStr) (\(dateStr))"
     }
 }

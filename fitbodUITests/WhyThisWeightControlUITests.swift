@@ -226,6 +226,66 @@ final class WhyThisWeightControlUITests: XCTestCase {
         XCTAssertFalse(stepThree.exists, "A suggestion of 0 has nothing to round, so the sheet must leave out step 03")
     }
 
+    /// Ticket T89 (finding F103): the hero shows the set's rep range and
+    /// type. Push A's bench is a working set for 5 to 8 reps with no target
+    /// RPE, so the hero reads "×5–8" and "WORKING", not "×—" and "TOP SET".
+    /// Saves the hero.
+    @MainActor
+    func testWhyHeroShowsSetRepRangeAndType() throws {
+        let app = UITestNavigation.openSeededWorkout()
+        tapWhy(in: app)
+        let hero = whyHero(in: app)
+        XCTAssertTrue(hero.waitForExistence(timeout: 5), "WHY must open Why-this-weight's hero")
+        UITestNavigation.saveScreenshot("T89", "push-a-why-hero")
+        XCTAssertTrue(hero.label.contains(", reps 5 to 8,"), "The hero must show the set's 5 to 8 rep range: \(hero.label)")
+        XCTAssertTrue(hero.label.hasSuffix(", Working"), "The hero must name the set's type: \(hero.label)")
+    }
+
+    /// Ticket T89 (finding F103): with a target RPE, the hero shows it, and
+    /// step 02 reads "Target @ RPE 8". Calibrating Bench is a working set for
+    /// 6 to 8 reps at RPE 8. Saves the hero, then the steps.
+    @MainActor
+    func testWhyShowsSetTargetRPE() throws {
+        let app = UITestNavigation.launch(UITestNavigation.calibratingSet)
+        resumeWorkout(in: app)
+        tapWhy(in: app)
+        let hero = whyHero(in: app)
+        XCTAssertTrue(hero.waitForExistence(timeout: 5), "WHY must open Why-this-weight's hero")
+        UITestNavigation.saveScreenshot("T89", "calibrating-why-hero")
+        let stepTwo = whyStep("02", in: app)
+        scrollWhySheet(toShow: stepTwo, in: app)
+        UITestNavigation.saveScreenshot("T89", "calibrating-why-steps")
+        XCTAssertTrue(hero.label.contains(", reps 6 to 8, RPE 8, Working"),
+                      "The hero must show the set's rep range, target RPE and type: \(hero.label)")
+        XCTAssertTrue(stepTwo.label.localizedCaseInsensitiveContains("Target @ RPE 8"),
+                      "Step 02 must name the set's target RPE: \(stepTwo.label)")
+    }
+
+    /// Ticket T89 (finding F105): the steps fill the sheet's width, however
+    /// short their text. Their numerals line up with the section head, and
+    /// their closing 2pt rule, 12pt below step 03, spans the sheet. Saves
+    /// Push A's sheet scrolled to its steps.
+    @MainActor
+    func testWhyStepsFillSheetWidth() throws {
+        let app = UITestNavigation.openSeededWorkout()
+        tapWhy(in: app)
+        let stepThree = whyStep("03", in: app)
+        XCTAssertTrue(stepThree.waitForExistence(timeout: 5), "Push A's suggestion must have a step 03")
+        scrollWhySheet(toShow: stepThree, below: 12, in: app)
+        UITestNavigation.saveScreenshot("T89", "push-a-why-steps")
+        let heading = app.staticTexts.matching(NSPredicate(format: "label ==[c] %@", "Why this weight")).firstMatch
+        for index in ["01", "02", "03"] {
+            XCTAssertEqual(whyStep(index, in: app).frame.minX, heading.frame.minX, accuracy: 0.5,
+                           "Step \(index)'s numeral must line up with the section head")
+        }
+        let sheet = whySheet(in: app)
+        let rule = stepThree.frame.maxY + 11
+        let screenshot = XCUIScreen.main.screenshot()
+        for x in [sheet.frame.minX + 4, sheet.frame.maxX - 4] {
+            UITestNavigation.assertColor(at: CGPoint(x: x, y: rule), in: screenshot, is: UITestNavigation.RGB(hex: 0x0A0A0A))
+        }
+    }
+
     @MainActor
     private func tapWhy(in app: XCUIApplication) {
         let why = app.buttons["set.why.1.S1"]
@@ -242,6 +302,37 @@ final class WhyThisWeightControlUITests: XCTestCase {
         shot.name = name
         shot.lifetime = .keepAlways
         add(shot)
+    }
+
+    /// Why-this-weight's scrolling content, above its footer bar.
+    @MainActor
+    private func whySheet(in app: XCUIApplication) -> XCUIElement {
+        app.scrollViews.containing(NSPredicate(format: "label ==[c] %@", "Why this weight")).firstMatch
+    }
+
+    /// Why-this-weight's hero, one element read as "Recommended weight …".
+    @MainActor
+    private func whyHero(in app: XCUIApplication) -> XCUIElement {
+        whySheet(in: app).descendants(matching: .any)
+            .matching(NSPredicate(format: "label BEGINSWITH %@", "Recommended weight")).firstMatch
+    }
+
+    /// A Why-this-weight step, one element read from its numeral, "01".
+    @MainActor
+    private func whyStep(_ index: String, in app: XCUIApplication) -> XCUIElement {
+        whySheet(in: app).descendants(matching: .any)
+            .matching(NSPredicate(format: "label BEGINSWITH %@", index)).firstMatch
+    }
+
+    /// Scrolls Why-this-weight until `element`, and `below` points under
+    /// it, show above the footer bar.
+    @MainActor
+    private func scrollWhySheet(toShow element: XCUIElement, below: CGFloat = 0, in app: XCUIApplication) {
+        let sheet = whySheet(in: app)
+        for _ in 0..<4 where !(element.exists && element.frame.maxY + below <= sheet.frame.maxY) {
+            sheet.swipeUp(velocity: .slow)
+        }
+        XCTAssertLessThanOrEqual(element.frame.maxY + below, sheet.frame.maxY, "Scrolling the sheet must show \(element)")
     }
 
     @MainActor

@@ -111,7 +111,9 @@ private extension DoubleProgressionStrategy {
     }
 
     /// Builds the "last session" line shown in the WhyThisWeightSheet.
-    /// Format: "{weight} {unit} × {reps} @ RPE {rpe} (May 15)"
+    /// Format: "{weight} {unit} × {reps} @ RPE {rpe} (May 15)". A top set
+    /// logged without an RPE is still the last session: "{weight} {unit} ×
+    /// {reps} (May 15)".
     /// Matches UI-SPEC § WhyThisWeightSheet and Phase 2 ExerciseHistoryView convention.
     static func lastSessionLine(
         weight: Double,
@@ -120,8 +122,9 @@ private extension DoubleProgressionStrategy {
         date: Date?,
         unit: WeightUnit
     ) -> String? {
-        guard let reps, let rpe, let date else { return nil }
+        guard let reps, let date else { return nil }
         let dateStr = date.formatted(.dateTime.month(.abbreviated).day())
-        return "\(formatWeight(weight)) \(unit.rawValue) × \(reps) @ RPE \(String(format: "%.1f", rpe)) (\(dateStr))"
+        let rpeStr = rpe.map { " @ RPE \(String(format: "%.1f", $0))" } ?? ""
+        return "\(formatWeight(weight)) \(unit.rawValue) × \(reps)\(rpeStr) (\(dateStr))"
     }
 }
