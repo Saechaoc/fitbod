@@ -184,6 +184,8 @@ Product decisions are in [decisions.md](decisions.md), and they win over this fi
   This is an explicit exception to the 44pt rule.
 - Why: the blocks tile a grid, so padding can only steal a neighbor's taps.
   The volume list on the same screen gives every muscle a full-width row, and that list is the large-target path.
+- Coordinator answer, 2026-10-30 (T14 question `msg_fb20781d0586`): iOS still sends a tap that lands on nothing tappable to the nearest block within about 8pt.
+  That never steals a tap that lands on a block, so empty grid cells keep that system behavior; only the decorative NECK swallows its own taps, so it opens nothing.
 
 ### Heatmap VoiceOver
 
