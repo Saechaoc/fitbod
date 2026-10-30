@@ -113,6 +113,7 @@ The quick-task run of the same plan must finish its last two tasks first, so rea
 | [T32](tickets/T32-custom-exercise-editor-bru.md) | Custom exercise editor and muscle picker in BRU |
 | [T33](tickets/T33-pinned-note-bru.md) | Pinned Note sheet in BRU |
 | [T87](tickets/T87-today-sheet-order.md) | Today shows the block review and the weekly recap one at a time |
+| [T96](tickets/T96-history-pr-count.md) | Exercise history counts its real PRs and stops writing state while it draws |
 
 ### Phase 3: P3 polish and copy
 

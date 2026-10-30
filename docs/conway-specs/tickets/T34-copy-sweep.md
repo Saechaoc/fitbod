@@ -21,6 +21,7 @@ Several labels still break the app's copy rules:
 - Two dialogs say "You can review it from the Routines tab", but the tab is called Program.
 - The logger's exercise menu says "Remove from Session", but a logged workout is a "workout" on screen.
 - History's PER WEEK shows 0.2 for one workout in four weeks, because it rounds 0.25 to one decimal.
+- Exercise history calls logged workouts sessions: its stat strip reads "Sessions · 30d" and its count line "12 sets across 4 sessions" (found by T94).
 
 Nothing stops these mistakes from coming back.
 
@@ -39,6 +40,7 @@ The copy sites listed in Hints, and one new source test in `fitbodTests/`.
    - contains "Routines tab", "in Routines" or "Remove from Session", or
    - puts an interpolated count directly before one of the plural nouns in step 1, instead of using the plural helper.
 6. Fix every site the new test reports, even ones not listed in Hints.
+7. Exercise history's "Sessions · 30d" becomes "Workouts · 30d", and its count line reads "12 sets across 4 workouts", through the plural helper.
 
 ## Constraints
 
@@ -76,4 +78,5 @@ All of these fail today.
 - "Routines tab": `BlockCard.swift:61` and `BlockOverviewScreen.swift:198`.
 - "Remove from Session": `SessionExerciseCard.swift:147`.
 - PER WEEK: `perWeekLabel` in `SessionHistoryView.swift`, near line 104.
+- Exercise history's stat label is near `ExerciseHistoryView.swift:146`, and its count line is the line 181 above.
 - `SplitDetailView.swift:211` already handles the singular by hand, which is fine.
