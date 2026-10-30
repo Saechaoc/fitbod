@@ -109,6 +109,10 @@ Product decisions are in [decisions.md](decisions.md), and they win over this fi
   The cadence and level text and the POPULAR tag go, because no data backs them.
   5/3/1 Cycle uses the same per-kind multipliers as the other templates.
 - Rejected: keeping the hand-written row text, because it describes blocks the app does not build.
+- Coordinator answer, 2026-10-29 (T10 question `msg_fec355c7066c`): decision 2 assumes a preset picker inside New Block, but `6efb2a6` dropped its PHASES-header menu during a layout refactor, so nothing opened it.
+  New Block's PHASES header gets a visible "PRESET ▾" control with a 44pt target, in new-block mode only, and it opens the preset sheet in BRU style with a visible CANCEL.
+  Both preset sheets list BLANK, then the four catalog templates; Program's first row keeps its FROM SCRATCH label and its default draft.
+  In New Block, BLANK applies the empty template under the "Preset name rule", and "Keep my phases" cancels the whole pick.
 
 ### Preset name rule
 
