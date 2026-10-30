@@ -218,10 +218,13 @@ When workers go quiet:
 - After three empty waits in a row, run `orca orchestration worker-list --run <run id> --include-remote --json` to see whether the workers are alive.
 - If a worker is stuck or gone, load `orca skills get orchestration --reference references/recovery-and-cleanup.md` before you act.
   Idle, timeout and missing heartbeats are not execution-stop proof; use the settlement guard below.
+- In `worker-list`, a settled ticket whose terminal you closed shows `unverifiable` with `requiresAction: true` and no next action; that is expected, so ignore those rows.
 
 ## Accept or reject a worker_done
 
-Match `worker_done` to its attempt and effective brief, and check all of this in that worktree:
+Match `worker_done` to its attempt and effective brief.
+First get the stop proof in "Settle a ticket" step 2, including the terminal close for a `retained` receipt, so nothing in the worktree changes while you check it; while that proof is pending, come back to this `worker_done` after later waits.
+Then check all of this in that worktree:
 
 1. `git -C <worktree> log --format=%H%n%B main..HEAD` shows the ticket's commits, which name the ticket and have no `Co-Authored-By` line.
    For a no-commit result, it shows nothing.
@@ -263,7 +266,7 @@ A reported ending is not a safely settled attempt.
    A successful command exit alone is not confirmation of release.
    A receipt of `retained` with `processAction: none` is also normal: Orca settled the worker but kept its terminal open, as it did for every Copilot worker in the 2026-10-29 quick-task run.
    Together with the accepted `worker_done`, it counts as confirmed release when `orca orchestration worker-show --dispatch <dispatch id> --json` reports stage `settled` and `orca worktree ps --json` shows the worker's agent in that worktree as `done`.
-   Then, before you rebase, merge or archive anything, close that agent with `orca terminal close --terminal <worker.agentTerminalHandle from worker-show> --json`; a receipt with `ptyKilled: true` is the stop proof, so the agent cannot start another turn in the worktree.
+   Then, before you check, rebase, merge or archive anything, close that agent with `orca terminal close --terminal <worker.agentTerminalHandle from worker-show> --json`; a receipt with `ptyKilled: true` is the stop proof, so the agent cannot start another turn in the worktree.
    If that agent is still `working`, it took on more work after `worker_done`, often because the user typed into it.
    Keep settlement pending, never close it or touch its worktree while it works, and check again after later waits.
    Ask the user only if it is still working 15 minutes after its `worker_done`.
