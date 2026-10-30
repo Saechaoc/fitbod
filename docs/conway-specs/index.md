@@ -53,6 +53,9 @@ The quick-task run of the same plan must finish its last two tasks first, so rea
 | [T53](tickets/T53-stall-badge-window.md) | Stall badge names the exercise's own window |
 | [T54](tickets/T54-custom-exercise-name-trim.md) | Custom exercise names save without outer spaces |
 | [T55](tickets/T55-pinned-note-capsule-tap-target.md) | Pinned note capsule takes taps across 44 points |
+| [T56](tickets/T56-progress-chart-unit-and-fit.md) | Progress chart hero shows the right unit, and its name and PR mark fit |
+| [T57](tickets/T57-pr-list-working-sets-and-ax3-toggle.md) | PR list ranks working sets only, and its intent toggle fits AX3 |
+| [T58](tickets/T58-e1rm-one-point-per-workout.md) | e1RM chart plots one point per workout |
 
 ### Phase 2: P2 defects
 
