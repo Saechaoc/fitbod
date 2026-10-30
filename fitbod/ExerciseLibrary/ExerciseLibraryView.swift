@@ -37,7 +37,10 @@ public struct ExerciseLibraryView: View {
     @State private var searchText: String = ""
     @State private var debouncedSearch: String = ""
     @State private var presentingFacet: ExerciseFilterBar.FilterFacet? = nil
-    @State private var presentingNewCustom = false
+    /// Draft for the custom exercise editor. Setting it presents the sheet,
+    /// so the sheet keeps this one draft while it is up: a redraw of the
+    /// library cannot swap in a fresh draft and wipe the user's input.
+    @State private var newCustomDraft: CustomExerciseDraft? = nil
     @FocusState private var searchFocused: Bool
 
     /// Internal navigation path used when the caller does not provide
@@ -100,7 +103,7 @@ public struct ExerciseLibraryView: View {
                 BRUHeaderBar.slots(
                     left: isPicker ? .cancel : nil,
                     center: isPicker ? "Add exercise" : "Library",
-                    right: .action("+ New") { presentingNewCustom = true }
+                    right: .action("+ New") { openNewCustom() }
                 )
             }
             searchField
@@ -114,7 +117,7 @@ public struct ExerciseLibraryView: View {
                 activeQuery: debouncedSearch,
                 hasActiveFilters: !filterState.isEmpty,
                 clearFiltersAction: filterState.clear,
-                createCustomAction: { presentingNewCustom = true },
+                createCustomAction: { openNewCustom(named: searchText) },
                 onSelect: onSelect
             )
         }
@@ -132,13 +135,24 @@ public struct ExerciseLibraryView: View {
         .sheet(item: $presentingFacet) { facet in
             FilterPickerSheet(facet: facet, filterState: filterState)
         }
-        .sheet(isPresented: $presentingNewCustom) {
-            // Fresh draft per presentation; the editor saves and dismisses,
-            // and the inner @Query picks up the new row.
+        .sheet(item: $newCustomDraft) { draft in
+            // The editor saves and dismisses, and the inner @Query picks up
+            // the new row.
             NavigationStack {
-                CustomExerciseEditor(draft: CustomExerciseDraft())
+                CustomExerciseEditor(draft: draft)
             }
         }
+    }
+
+    // MARK: - New custom exercise
+
+    /// Opens the custom exercise editor on a fresh draft. The no-match
+    /// state passes the search text, so the name starts as what the user
+    /// searched for.
+    private func openNewCustom(named name: String = "") {
+        let draft = CustomExerciseDraft()
+        draft.name = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        newCustomDraft = draft
     }
 
     // MARK: - Search field
@@ -359,8 +373,9 @@ private struct FilteredExerciseList: View {
 //
 // NOTE 2: The interim `NewCustomExerciseRequest` navigation token
 // (plan 03-02 D-5) was removed by plan 03-04. Plan 03-04 wired the
-// "+" toolbar button directly to a `.sheet(isPresented:)` presenting
-// the real `CustomExerciseEditor` wrapped in a `NavigationStack`.
+// "+" toolbar button directly to a sheet presenting the real
+// `CustomExerciseEditor` wrapped in a `NavigationStack`. Review item 19
+// drives that sheet with `.sheet(item:)` on the draft itself.
 
 
 #Preview("With fixture") {
