@@ -152,9 +152,12 @@ public enum PreviousMatchingIntent {
         let targetID = exerciseID
         let targetIntent = intentRaw
 
-        let descriptor = FetchDescriptor<SessionExercise>(
+        var descriptor = FetchDescriptor<SessionExercise>(
             predicate: #Predicate { se in se.exercise?.id == targetID }
         )
+        // The filter below reads every row's session: one fetch, not one
+        // fault per row.
+        descriptor.relationshipKeyPathsForPrefetching = [\.session]
 
         guard let all = try? context.fetch(descriptor) else { return nil }
 

@@ -484,14 +484,17 @@ public enum SessionFactory {
     /// local-capture workaround.
     ///
     /// Phase 3.1 PIVOT-05 / D-13: intent is a SESSION-level field after
-    /// Plan 02. The intent post-filter now traverses
-    /// `entry.sessionExercise?.session?.intentRaw` (was
-    /// `entry.sessionExercise?.intentRaw`). The Pitfall 1 multi-level
-    /// optional chain is contained inside the Swift filter step, NOT the
-    /// #Predicate. The Phase 1 #Index<SessionExercise>([\.intentRaw]) is
-    /// gone; the new #Index<Session>([\.intentRaw]) (Plan 02) is one
-    /// indirection away and does not accelerate this specific query.
-    /// Acceptable at single-user scale per CONTEXT.md performance notes.
+    /// Plan 02. The #Predicate gates on the single-level `se.exercise?.id`
+    /// only, as `PreviousMatchingIntent.lastWorkingSets` does; the
+    /// finished-session and intent gates read the parent `Session` in a
+    /// Swift post-filter, because those multi-level chains are kept out of
+    /// #Predicate.
+    ///
+    /// Only that exercise's rows are read. The logger rebuilds every card's
+    /// explanation on each render, and fetching all completed sets in
+    /// history here cost ~0.3 s per call with a year and a half of logs.
+    /// The sets are then sorted by `completedAt`, newest first, which is
+    /// the order the former all-history `completedAt` sort produced.
     ///
     /// Only sets from FINISHED sessions (`completedAt != nil`) count, the
     /// same rule as `PreviousMatchingIntent.fetchTopWorkingSet`. A set
@@ -507,31 +510,26 @@ public enum SessionFactory {
         let targetID = exerciseID
         let targetIntent = intentRaw
 
-        // Use a broader predicate (completed + non-warmup) and post-filter by
-        // exercise+intent in Swift — the multi-level optional chaining
-        // (entry.sessionExercise?.exercise?.id, and now
-        // entry.sessionExercise?.session?.intentRaw) causes type-checking
-        // timeouts inside #Predicate on the Swift 6 toolchain (RESEARCH §Pitfall 1).
-        let descriptor = FetchDescriptor<SetEntry>(
-            predicate: #Predicate { entry in
-                entry.isWarmup == false && entry.isComplete == true
-            },
-            sortBy: [SortDescriptor(\SetEntry.completedAt, order: .reverse)]
+        var descriptor = FetchDescriptor<SessionExercise>(
+            predicate: #Predicate { se in se.exercise?.id == targetID }
         )
+        // Every row's session and sets are read below: load them in bulk
+        // instead of one fault per row.
+        descriptor.relationshipKeyPathsForPrefetching = [\.session, \.sets]
+        guard let sessionExercises = try? context.fetch(descriptor) else { return [] }
 
-        // Fetch all completed non-warmup sets, then filter in Swift.
-        // fetchLimit not set here because we filter further; cap the
-        // compactMap result to 50 points below. PIVOT-05: intent is read
-        // from the parent Session via the SessionExercise.session relation.
-        guard let all = try? context.fetch(descriptor) else { return [] }
-
-        let entries = all.filter { entry in
-            entry.reps > 0
-                && entry.weight > 0
-                && entry.sessionExercise?.session?.completedAt != nil
-                && entry.sessionExercise?.session?.intentRaw == targetIntent
-                && entry.sessionExercise?.exercise?.id == targetID
+        var entries: [SetEntry] = []
+        for se in sessionExercises {
+            guard let session = se.session,
+                  session.completedAt != nil,
+                  session.intentRaw == targetIntent
+            else { continue }
+            for entry in se.sets ?? []
+            where !entry.isWarmup && entry.isComplete && entry.reps > 0 && entry.weight > 0 {
+                entries.append(entry)
+            }
         }
+        entries.sort { $0.completedAt > $1.completedAt }
 
         return entries.prefix(50).compactMap { entry -> HistoryPoint? in
             // RESEARCH §Pitfall 7: skip nil-RPE entries.
@@ -624,11 +622,15 @@ public enum SessionFactory {
 // in-session detector (InSessionPRState.observeSave) never re-queries
 // SwiftData on a per-set commit.
 //
-// The fetch is ONE broad predicate (completed, non-warm-up) with the
-// exercise gate applied in Swift. A multi-level optional chain such as
+// The fetch reads only the session's exercises: one SessionExercise fetch
+// per exercise on the single-level `se.exercise?.id` gate, then their
+// sets. A multi-level optional chain such as
 // `entry.sessionExercise?.exercise?.id` inside #Predicate compiles but
 // throws NSInvalidArgumentException at fetch time ("Unsupported function
-// expression TERNARY(...)"), which crashed the logger on every open.
+// expression TERNARY(...)"), which crashed the logger on every open. A
+// broad fetch of every completed set with that gate in Swift avoided the
+// crash but took ~0.3 s per seed with a year and a half of history, on
+// every logger open, un-complete and set delete.
 
 extension SessionFactory {
 
@@ -636,25 +638,39 @@ extension SessionFactory {
     /// the exercises in `session` (including sets already logged in this
     /// session, so a resumed workout keeps its in-session PRs).
     ///
+    /// Sets are fed to the table oldest first by `completedAt`, so on
+    /// equal values the earlier set keeps the record.
+    ///
     /// Returns an empty `PRTable` when the session has no exercises or
-    /// the fetch fails; the in-session banner then simply emits no PRs
+    /// a fetch fails; the in-session banner then simply emits no PRs
     /// until the first set lands and seeds the table inline.
     @MainActor
     public static func seedPRTable(for session: Session, context: ModelContext) async -> PRTable {
-        let exerciseIDs = Set((session.exercises ?? []).compactMap { $0.exercise?.id })
+        var seen: Set<UUID> = []
+        let exerciseIDs = (session.exercises ?? [])
+            .sorted { $0.orderIndex < $1.orderIndex }
+            .compactMap { $0.exercise?.id }
+            .filter { seen.insert($0).inserted }
         guard !exerciseIDs.isEmpty else { return PRTable() }
 
-        let descriptor = FetchDescriptor<SetEntry>(
-            predicate: #Predicate<SetEntry> { entry in
-                entry.isComplete && !entry.isWarmup
-            },
-            sortBy: [SortDescriptor(\.completedAt)]
-        )
-        guard let candidates = try? context.fetch(descriptor) else { return PRTable() }
-        let relevant = candidates.filter { entry in
-            guard let id = entry.sessionExercise?.exercise?.id else { return false }
-            return exerciseIDs.contains(id)
+        var candidates: [SetEntry] = []
+        for exerciseID in exerciseIDs {
+            let targetID = exerciseID
+            var descriptor = FetchDescriptor<SessionExercise>(
+                predicate: #Predicate<SessionExercise> { se in
+                    se.exercise?.id == targetID
+                }
+            )
+            // The table reads every row's sets and session.
+            descriptor.relationshipKeyPathsForPrefetching = [\.sets, \.session]
+            guard let sessionExercises = try? context.fetch(descriptor) else { return PRTable() }
+            for se in sessionExercises {
+                for entry in se.sets ?? [] where entry.isComplete && !entry.isWarmup {
+                    candidates.append(entry)
+                }
+            }
         }
-        return PRDetector.buildTable(from: relevant)
+        candidates.sort { $0.completedAt < $1.completedAt }
+        return PRDetector.buildTable(from: candidates)
     }
 }

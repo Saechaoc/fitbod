@@ -39,4 +39,25 @@ struct SeedPRTableTests {
         #expect(weightPR?.weight == 105)
         #expect(table.record(exerciseID: squat.id, intent: .strength, kind: .weight, bucket: .strength) == nil)
     }
+
+    @Test("a tied record stays with the set logged first")
+    func tiedRecordKeepsEarlierSet() async throws {
+        let ctx = try LoggerFixtures.makeContext()
+        let bench = LoggerFixtures.exercise("Bench", in: ctx)
+        let older = Date.now.addingTimeInterval(-14 * day)
+        let newer = Date.now.addingTimeInterval(-7 * day)
+        // The newer workout is saved first, so saving order and time order differ.
+        try LoggerFixtures.session(exercise: bench, startedAt: newer, completedAt: newer.addingTimeInterval(3600),
+                                   sets: [(100, 5, true)], in: ctx)
+        try LoggerFixtures.session(exercise: bench, startedAt: older, completedAt: older.addingTimeInterval(3600),
+                                   sets: [(100, 5, true)], in: ctx)
+        let current = try LoggerFixtures.session(exercise: bench, startedAt: .now, completedAt: nil,
+                                                 sets: [(0, 0, false)], in: ctx)
+
+        let table = await SessionFactory.seedPRTable(for: current, context: ctx)
+
+        let weightPR = table.record(exerciseID: bench.id, intent: .strength, kind: .weight, bucket: .strength)
+        #expect(weightPR?.weight == 100)
+        #expect(weightPR?.sessionStartedAt == older)
+    }
 }

@@ -54,6 +54,29 @@ struct WhyUsesFinishedWorkoutsTests {
         #expect(points.allSatisfy { $0.date == lastWeek })
     }
 
+    @Test("e1RM history is the 50 newest sets, newest first")
+    func historyPointsAreNewestFifty() throws {
+        let ctx = try LoggerFixtures.makeContext()
+        let ex = LoggerFixtures.exercise("Bench", in: ctx)
+        let starts = [21.0, 14.0, 7.0].map { Date.now.addingTimeInterval(-$0 * day) }
+        var sessions: [Session] = []
+        for start in starts {
+            sessions.append(try LoggerFixtures.session(
+                exercise: ex, startedAt: start, completedAt: start.addingTimeInterval(3600),
+                sets: Array(repeating: (weight: 100.0, reps: 5, complete: true), count: 20), in: ctx
+            ))
+        }
+        try logRPE(8, on: sessions, in: ctx)
+
+        let points = SessionFactory.fetchHistoryPoints(
+            exerciseID: ex.id, intentRaw: Intent.strength.rawValue, context: ctx
+        )
+        let expectedDates = Array(repeating: starts[2], count: 20)
+            + Array(repeating: starts[1], count: 20)
+            + Array(repeating: starts[0], count: 10)
+        #expect(points.map(\.date) == expectedDates)
+    }
+
     @Test("a set logged mid-workout keeps the bump the workout was built with")
     func bumpHoldsMidWorkout() throws {
         let ctx = try LoggerFixtures.makeContext()
