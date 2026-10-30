@@ -229,9 +229,10 @@ Product decisions are in [decisions.md](decisions.md), and they win over this fi
 - Coordinator answer, 2026-10-29 (T08 question `msg_45fa1f7ecb19`): `d936b32`, already on `main`, renders inside the `@ModelActor` services `ExportService` and `BackupArchiver`, each with its own context, and only the rendered bytes or file URL leave the actor.
   That meets this call's intent, because no model object crosses a thread, so it stays as shipped.
   New export or backup code keeps that rule: read models only inside the actor or on the main actor, and pass only values out.
-- Coordinator answer, 2026-10-29 (T08 question `msg_f9ef49e59aaf`): the render must also keep the main thread free.
-  On the small phone, CREATE's share sheet appeared 6.5 to 7.6 s after the tap, with the app busy the whole time, while Export CSV and Export JSON took about 1.4 s.
-  T08 moves that render off the main thread and times its one-tap tests from the tap, so each share sheet appears within 5 seconds of it.
+- Coordinator answer, 2026-10-29 (T08 questions `msg_f9ef49e59aaf` and `msg_f7ac507690ab`): on the small phone, CREATE's share sheet appeared 6.3 to 7.6 s after the tap, while Export CSV and Export JSON took about 1.4 s.
+  The backup render itself runs off the main thread in about 0.2 s; the share sheet loaded the backup's `FileRepresentation` three times, about 2 s apart, before it showed.
+  CSV and JSON use a `DataRepresentation`, which renders only when an activity asks for it.
+  So the backup shares as a `DataRepresentation` of the same ZIP bytes with the same file name, and the one-tap tests time each share sheet from the tap.
 
 ### Backup keeps routines (finding N1)
 
