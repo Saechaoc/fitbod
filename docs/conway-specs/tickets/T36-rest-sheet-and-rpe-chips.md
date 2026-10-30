@@ -21,6 +21,8 @@ The lifter has to drag the sheet up to skip the rest.
 
 At AX3, the "10" in the RPE chip row touches its border, because the chips have a minimum size and no padding.
 
+At AX3 on the small phone, the REST label inside the rest dock's 40pt progress ring runs past the ring (found by T80).
+
 ## Target
 
 - The expanded rest sheet's detents in `fitbod/Sessions/RestTimer/RestTimerOverlay.swift`.
@@ -34,6 +36,8 @@ At AX3, the "10" in the RPE chip row touches its border, because the chips have 
 3. Keep the 52pt control height.
 4. Each RPE chip has padding inside its border, so no digit touches the border at any text size.
 5. The chips keep their 44pt minimum, and at AX3 they wrap to a second line instead of being clipped.
+6. Below accessibility sizes, the dock's REST label stays inside its 40pt ring.
+   At accessibility sizes, the ring drops the label, because RESTING beside it says the same and grows with the text.
 
 ## Constraints
 
@@ -52,18 +56,21 @@ With the demo seed:
 - On both phones at default text, log a set, expand the rest bar, and assert that SKIP is hittable and that its frame lies above the bottom of the screen, without any drag.
 - At AX3 on the small phone, save a screenshot of the RPE chips.
   Sample a column of pixels 3pt inside the left and right borders of the "10" chip, and assert they are all the chip's fill color.
+- At AX3 on the small phone, log a set, save a screenshot of the rest dock, and assert that the dock shows no REST label or one at most 40pt wide.
 
-Both fail today.
+All three fail today.
 
 ## Observable acceptance
 
 - Every repro test passes on the phones it names.
 - A UI test taps SKIP right after expanding the sheet, and the rest ends.
 - `SessionLoggerBRUUITests` and `WorkoutLoggerJourneyUITests` pass on both phones.
-- Screenshots of the expanded rest sheet on both phones, and of the RPE chips at AX3, are in `screens/`.
+- At default text on the small phone, the REST label shows inside the ring.
+- Screenshots of the expanded rest sheet on both phones, and of the RPE chips and the rest dock at AX3, are in `screens/`.
 
 ## Hints
 
 - The detents are near `RestTimerOverlay.swift:60-62`, and the 52pt control height is near line 202.
 - SwiftUI can measure the content's height with `onGeometryChange`, and `.presentationDetents` accepts a height detent.
 - The chip frame is near `InlineRPEChipRow.swift:41-50`, inside a `BRUFlowLayout`.
+- The dock's ring and REST label are near `RestTimerOverlay.swift:78-91`; `@Environment(\.dynamicTypeSize)` and `isAccessibilitySize` tell when to drop the label.
