@@ -6,7 +6,8 @@
 //  per CONTEXT D-10..D-13.
 //
 //  evaluate(exerciseID:intent:in:settings:now:) reads the last N
-//  intent-matched SessionExercise rows for the target exercise, computes
+//  intent-matched SessionExercise rows from FINISHED sessions
+//  (completedAt != nil) for the target exercise, computes
 //  the top-set e1RM per session via OneRepMaxEstimator (Brzycki ≤6 /
 //  Epley 6–10 / nil >10 per PROG-02), and returns:
 //    - .notEnoughData when fewer than N e1RM-eligible sessions remain
@@ -77,6 +78,10 @@ public enum PlateauDetector {
     ///   3. Compute the top-set e1RM per row via OneRepMaxEstimator (PROG-02 high-rep suppression in-loop).
     ///   4. Take the most recent N e1RM-eligible sessions; if fewer remain, return `.notEnoughData`.
     ///   5. Compute `mean`, `range`, `rangeRatio`; classify against tolerance.
+    ///
+    /// Only FINISHED sessions (`completedAt != nil`) count, the same rule as
+    /// `PreviousMatchingIntent.fetchTopWorkingSet`, so a set logged in the
+    /// workout in progress never feeds its own stall signal.
     @MainActor
     public static func evaluate(
         exerciseID: UUID,
@@ -106,10 +111,11 @@ public enum PlateauDetector {
             }
         )
         let allMatching = (try? context.fetch(seDescriptor)) ?? []
-        // Intent filter via parent Session (multi-hop optional → Swift post-filter).
-        // Also drop SessionExercises without a parent session (orphan rows).
+        // Finished-session + intent filter via parent Session (multi-hop
+        // optional → Swift post-filter). Also drop SessionExercises without
+        // a parent session (orphan rows).
         let intentMatched = allMatching.compactMap { se -> (SessionExercise, Date)? in
-            guard let session = se.session else { return nil }
+            guard let session = se.session, session.completedAt != nil else { return nil }
             guard session.intentRaw == targetIntentRaw else { return nil }
             return (se, session.startedAt)
         }
@@ -242,6 +248,10 @@ public enum PlateauDetector {
     /// sessions used by evaluate, identifies a "matched load" (the modal
     /// top-set weight across the window within ±max(smallestIncrement, 0.5kg)),
     /// and compares avg of last 2 sessions' RPE vs avg of first 2.
+    ///
+    /// Only FINISHED sessions (`completedAt != nil`) count, as in `evaluate`:
+    /// the workout in progress never enters the window, even before a set
+    /// is logged.
     @MainActor
     private static func hasRPECreep(
         exerciseID: UUID,
@@ -265,7 +275,7 @@ public enum PlateauDetector {
         )
         let all = (try? context.fetch(seDescriptor)) ?? []
         let intentMatched = all.compactMap { se -> (SessionExercise, Date)? in
-            guard let session = se.session else { return nil }
+            guard let session = se.session, session.completedAt != nil else { return nil }
             guard session.intentRaw == targetIntentRaw else { return nil }
             return (se, session.startedAt)
         }
