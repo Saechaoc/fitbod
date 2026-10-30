@@ -32,10 +32,10 @@ T61 (`737958b`) stopped the sheet offering "Use 0 ▸", but the rest of the shee
 ## Change
 
 1. For a suggestion of 0, the hero shows the empty weight field's dash in place of the number and unit, and its VoiceOver label starts "Recommended weight: none".
-2. For a suggestion of 0, step 02 reads `"No prior data \u{2014} choose a starting weight."`, in the style of the other step 02 lines.
+2. Where step 02 says "starting at prescribed weight", which it does only with no last session, no computed line and no bump, it reads `"No prior data \u{2014} choose a starting weight."` instead.
 3. For a suggestion of 0, the sheet leaves out step 03, since there is nothing to round.
 4. Step 03 never shows "?": when it cannot read a plate size, its label leaves the size out.
-5. A suggestion above 0 reads exactly as it does today.
+5. Every other step 02 text, such as block periodization's "log a baseline session first" or "Weight holds." for a lift last logged at 0, and every suggestion above 0, reads exactly as it does today.
 
 ## Constraints
 
@@ -51,7 +51,8 @@ Ask before you edit anything else.
 
 - In `fitbodTests/ZeroSuggestionTests.swift`, for T61's no-history explanation, assert that the hero shows the dash, its VoiceOver label starts "Recommended weight: none", step 02 reads the new sentence, and the sheet has no step 03.
   Add a case whose `roundedLine` has no plate size, and assert that step 03's label has no "?".
-  These fail today.
+  Add a suggestion of 0 with a last session, and assert that step 02 still reads "Weight holds.".
+  The first two fail today.
 - In `fitbodUITests/WhyThisWeightControlUITests.swift`, extend `testNoHistoryWhyOffersNoUse` to assert that the sheet shows no "0" hero.
 
 ## Observable acceptance

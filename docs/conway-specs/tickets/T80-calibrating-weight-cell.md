@@ -35,9 +35,9 @@ With RPE autoregulation, an exercise with some history, but fewer sets than cali
 ## Change
 
 1. On an open calibrating set, Override closes the sheet, turns the cell into the weight field holding the set's weight, and focuses it, as decision 8 says.
-2. Once the lifter types a weight or taps Use, the open set's cell shows that weight in place of the range, for the rest of the workout.
+2. An open calibrating set shows its weight in place of the range once it has a manual override or its weight equals the suggestion, so a typed weight or Use keeps showing for the rest of the workout.
 3. A completed calibrating set shows the weight it logged, never the range.
-4. An open calibrating set the lifter has not changed still shows its range, and a 0-to-0 range still shows T61's dash.
+4. Otherwise an open calibrating set still shows its range, and a 0-to-0 range still shows T61's dash.
 5. The range shows whole inside the weight column on the small phone, at default text and at AX3.
 6. Sets without a range behave exactly as they do today.
 
@@ -58,6 +58,7 @@ Ask before you edit anything else.
 
 - Write `fitbod/App/CalibratingSetSeed.swift` with its own launch argument.
   It seeds a session whose only exercise uses RPE autoregulation and has one earlier workout, so starting the session shows a calibrating range.
+  The earlier weight differs from the suggestion, so an untouched set shows the range.
 - In `fitbodUITests/CalibratingWeightUITests.swift`, on the small phone with that seed:
   - Open WHY on the first open set, tap Override, and assert that a weight field has focus.
   - Type a weight, and assert that the cell shows it.
