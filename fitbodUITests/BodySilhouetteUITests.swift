@@ -6,10 +6,9 @@
 //  front and back silhouettes side by side. UI-SPEC line 268 removed the
 //  Front/Back segmented picker, so both sides show at once.
 //
-//  Tap-to-navigate-into-PerMuscleDetailView is exercised in
-//  PerMuscleDetailUITests via the volume-bar tap path (the bar's
-//  accessibility tree is more stable than the per-region Path
-//  hit-test geometry across simulator runs).
+//  Heatmap taps, hit areas and VoiceOver are exercised in
+//  HeatmapHitAreaUITests (T14). PerMuscleDetailUITests reaches the
+//  detail screen through the volume bars.
 //
 
 import XCTest

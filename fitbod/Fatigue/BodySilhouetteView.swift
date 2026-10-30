@@ -22,8 +22,14 @@
 //    .overMRV    → bruSignal
 //    absent      → bruBg2 (not trained)
 //
-//  Tap: .contentShape(Rectangle()); regions < 44pt wrapped in
-//       .frame(minWidth: 44, minHeight: 44) per UI-SPEC §Spacing.
+//  Tap: each block is placed by the center of its exact rect, and its
+//       tap area is that rect, with no 44pt padding (T14): the blocks
+//       tile the grid, so padding would only steal a neighbour's taps.
+//       The volume list on the same screen is the large-target path.
+//
+//  VoiceOver: one element per muscle, on its leftmost block, and on
+//       FRONT when both sides draw it. The label is the muscle's name
+//       and the value is its zone. NECK is decorative and hidden.
 //
 //  BodySide enum preserved verbatim from Phase 5. Front/Back segmented
 //  control is REMOVED — FatigueSurfaceView (Plan 05.1-05) renders both
@@ -117,41 +123,12 @@ public struct BodySilhouetteView: View {
                 }
             }
 
-            // Per-region block overlays
+            // Per-region blocks, each placed by the center of its exact
+            // grid rect, with its tap area exactly that rect.
             ForEach(Array(regions.enumerated()), id: \.offset) { _, region in
                 let r = region.rect(cell: cell)
-                let fillColor = bruColor(for: zoneByMuscleSlug[region.slug])
-                let isDarkFill = fillColor == Color.bruInk || fillColor == Color.bruSignal
-                let textColor: Color = isDarkFill ? .bruPaper : .bruInk
-
-                ZStack {
-                    Rectangle()
-                        .fill(fillColor)
-                    Rectangle()
-                        .stroke(Color.bruInk, lineWidth: 1)
-                    Text(region.displayLabel)
-                        .font(.system(size: 7, weight: .bold, design: .default))
-                        .kerning(0.4)
-                        .foregroundStyle(textColor)
-                        .minimumScaleFactor(0.5)
-                        .lineLimit(1)
-                        .multilineTextAlignment(.center)
-                }
-                .frame(width: r.width, height: r.height)
-                .frame(
-                    minWidth: needsHitPadding(region: region) ? 44 : 0,
-                    minHeight: needsHitPadding(region: region) ? 44 : 0
-                )
-                .contentShape(Rectangle())
-                .offset(x: r.minX, y: r.minY)
-                .onTapGesture {
-                    guard !region.slug.hasSuffix("-decorative") else { return }
-                    onTap(region.slug)
-                }
-                .accessibilityElement(children: .ignore)
-                .accessibilityLabel(accessibilityLabel(for: region))
-                .accessibilityHint("Tap to see details.")
-                .accessibilityAddTraits(.isButton)
+                regionBlock(region, size: r.size)
+                    .position(x: r.midX, y: r.midY)
             }
         }
         .frame(width: containerW, height: containerH)
@@ -159,6 +136,52 @@ public struct BodySilhouetteView: View {
             Rectangle()
                 .stroke(Color.bruInk, lineWidth: 2)
         )
+    }
+
+    // MARK: - Region block
+
+    /// One block: zone fill, 1pt bruInk border and centered label. NECK is
+    /// decorative: it opens nothing and VoiceOver skips it. A muscle block
+    /// opens the muscle's detail screen, and VoiceOver reads only the
+    /// block that speaks for the muscle.
+    @ViewBuilder
+    private func regionBlock(_ region: GridRegion, size: CGSize) -> some View {
+        let fillColor = bruColor(for: zoneByMuscleSlug[region.slug])
+        let isDarkFill = fillColor == Color.bruInk || fillColor == Color.bruSignal
+        let textColor: Color = isDarkFill ? .bruPaper : .bruInk
+        let block = ZStack {
+            Rectangle()
+                .fill(fillColor)
+            Rectangle()
+                .stroke(Color.bruInk, lineWidth: 1)
+            Text(region.displayLabel)
+                .font(.system(size: 7, weight: .bold, design: .default))
+                .kerning(0.4)
+                .foregroundStyle(textColor)
+                .minimumScaleFactor(0.5)
+                .lineLimit(1)
+                .multilineTextAlignment(.center)
+        }
+        .frame(width: size.width, height: size.height)
+
+        if isDecorative(region) {
+            // NECK takes its own taps and does nothing with them, so touch
+            // fuzzing never hands them to a neighbouring block.
+            block
+                .contentShape(Rectangle())
+                .onTapGesture {}
+                .accessibilityHidden(true)
+        } else {
+            block
+                .contentShape(Rectangle())
+                .onTapGesture { onTap(region.slug) }
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel(accessibilityLabel(for: region))
+                .accessibilityValue(accessibilityValue(for: region))
+                .accessibilityHint("Tap to see details.")
+                .accessibilityAddTraits(.isButton)
+                .accessibilityHidden(!speaksForMuscle(region))
+        }
     }
 
     // MARK: - Helpers (internal for test visibility)
@@ -173,24 +196,31 @@ public struct BodySilhouetteView: View {
         }
     }
 
-    /// Accessibility label for a region — D-06 verbatim verb per
-    /// UI-SPEC §Accessibility Contract. Decorative regions return only
-    /// their display label.
+    /// VoiceOver label for a muscle block: the muscle's display name,
+    /// such as "Chest".
     private func accessibilityLabel(for region: GridRegion) -> String {
-        guard !region.slug.hasSuffix("-decorative") else {
-            return region.displayLabel
-        }
-        let zone = zoneByMuscleSlug[region.slug]
-        let displayName = muscleDisplayNames[region.slug]
+        muscleDisplayNames[region.slug]
             ?? MuscleRegionMap.displayName(for: region.slug)
-        let verb = zone?.verb ?? "Not trained"
-        return "\(displayName): \(verb)."
     }
 
-    /// Returns true when the region's rendered rect is smaller than
-    /// 44pt in either dimension — these require an expanded hit area.
-    private func needsHitPadding(region: GridRegion) -> Bool {
-        let r = region.rect()
-        return r.width < 44 || r.height < 44
+    /// VoiceOver value for a muscle block: the zone's D-06 verbatim verb
+    /// per UI-SPEC §Accessibility Contract, as a sentence.
+    private func accessibilityValue(for region: GridRegion) -> String {
+        let verb = zoneByMuscleSlug[region.slug]?.verb ?? "Not trained"
+        return verb.hasSuffix(".") ? verb : "\(verb)."
+    }
+
+    /// VoiceOver reads each muscle once, on its leftmost block, and on
+    /// FRONT when both sides draw the muscle. The muscle's other blocks
+    /// stay tappable but are hidden from VoiceOver.
+    private func speaksForMuscle(_ region: GridRegion) -> Bool {
+        if side == .back, MuscleRegionPaths.front.contains(where: { $0.slug == region.slug }) {
+            return false
+        }
+        return !regions.contains { $0.slug == region.slug && $0.gridX < region.gridX }
+    }
+
+    private func isDecorative(_ region: GridRegion) -> Bool {
+        region.slug.hasSuffix("-decorative")
     }
 }
