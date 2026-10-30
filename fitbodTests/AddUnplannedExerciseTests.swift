@@ -3,13 +3,12 @@
 //  fitbodTests
 //
 //  Wave-4 plan 04-02 — pins the SESS-06 contract for the bottom-of-
-//  session "+ Add Exercise" affordance. The production surface is
-//  `AddUnplannedExerciseButton.append(exercise:)`; these tests
-//  re-implement the same append semantics against the production model
-//  entities so the contract is verified without instantiating the
-//  SwiftUI sheet.
+//  session "+ Add Exercise" affordance. Each test calls the production
+//  `AddUnplannedExerciseButton.append(exercise:to:context:)` against an
+//  in-memory store, so the contract is verified without instantiating
+//  the SwiftUI sheet.
 //
-//  Three `@Test` functions cover:
+//  Four `@Test` functions cover:
 //
 //    1. appendsSessionExerciseToActiveSession — SESS-06 — a new SE row
 //       lands on `session.exercises` with orderIndex past the existing
@@ -19,6 +18,9 @@
 //    3. seedsThreeDefaultSetsWithMatchingIntentHint — three planned
 //       SetEntry rows materialize with weight = PreviousMatchingIntent
 //       hint (or 0 if no prior matching session exists).
+//    4. addedExercisePrescribesLikeAFreshStart — ticket T76 (finding
+//       F65) — the added exercise gets the prescribed weight a fresh
+//       workout start gives it.
 //
 
 import Foundation
@@ -35,51 +37,6 @@ struct AddUnplannedExerciseTests {
     private func makeContext() throws -> ModelContext {
         let container = try FitbodModelContainer.make(inMemory: true)
         return ModelContext(container)
-    }
-
-    /// Mirrors the production `AddUnplannedExerciseButton.append(exercise:)`
-    /// — kept as a hermetic copy so the test exercises the semantic
-    /// contract without instantiating the SwiftUI button.
-    ///
-    /// Phase 3.1 (PIVOT-02 / PIVOT-05): intent is session-level. The
-    /// unplanned exercise inherits the parent Session's intent through
-    /// the session relationship; the per-exercise default helper
-    /// (`defaultIntent(for:)`) is gone. PreviousMatchingIntent reads
-    /// intentRaw from `session.intentRaw`.
-    private func appendUnplanned(
-        exercise: Exercise,
-        to session: Session,
-        context: ModelContext
-    ) {
-        let nextOrderIndex = (session.exercises ?? []).count
-
-        let se = SessionExercise()
-        se.exercise = exercise
-        se.orderIndex = nextOrderIndex
-        se.session = session
-        se.targetSets = 3
-        se.targetRepsLow = 8
-        se.targetRepsHigh = 12
-        se.prescribedRestSeconds = exercise.mechanic == .compound ? 180 : 90
-        context.insert(se)
-
-        let hint = PreviousMatchingIntent.fetchTopWorkingSet(
-            exerciseID: exercise.id,
-            intentRaw: session.intentRaw,
-            context: context
-        )?.weight ?? 0
-        for i in 0..<3 {
-            let entry = SetEntry()
-            entry.sessionExercise = se
-            entry.orderIndex = i
-            entry.weight = hint
-            entry.reps = 0
-            entry.setTypeRaw = SetType.working.rawValue
-            entry.isComplete = false
-            entry.completedAt = .now
-            context.insert(entry)
-        }
-        try? context.save()
     }
 
     /// Active session + routine with one existing exercise. Returns the
@@ -142,7 +99,7 @@ struct AddUnplannedExerciseTests {
         // SessionFactory.start on the one-exercise routine).
         #expect((fx.session.exercises ?? []).count == 1)
 
-        appendUnplanned(exercise: fx.curl, to: fx.session, context: ctx)
+        AddUnplannedExerciseButton.append(exercise: fx.curl, to: fx.session, context: ctx)
 
         let exercises = (fx.session.exercises ?? [])
             .sorted { $0.orderIndex < $1.orderIndex }
@@ -158,7 +115,7 @@ struct AddUnplannedExerciseTests {
         let ctx = try makeContext()
         let fx = try makeFixture(ctx: ctx)
 
-        appendUnplanned(exercise: fx.curl, to: fx.session, context: ctx)
+        AddUnplannedExerciseButton.append(exercise: fx.curl, to: fx.session, context: ctx)
 
         // The routine still has exactly one RoutineExercise.
         #expect((fx.routine.exercises ?? []).count == 1)
@@ -198,7 +155,7 @@ struct AddUnplannedExerciseTests {
         ctx.insert(priorSet)
         try ctx.save()
 
-        appendUnplanned(exercise: fx.curl, to: fx.session, context: ctx)
+        AddUnplannedExerciseButton.append(exercise: fx.curl, to: fx.session, context: ctx)
 
         let exercises = (fx.session.exercises ?? [])
             .sorted { $0.orderIndex < $1.orderIndex }
@@ -220,5 +177,44 @@ struct AddUnplannedExerciseTests {
         #expect(newSE.targetRepsLow == 8)
         #expect(newSE.targetRepsHigh == 12)
         #expect(newSE.prescribedRestSeconds == 90)
+    }
+
+    // MARK: - 4. T76 — the added exercise gets its prescription
+
+    @Test("addedExercisePrescribesLikeAFreshStart — prescribedWeight is what a fresh start prescribes")
+    func addedExercisePrescribesLikeAFreshStart() throws {
+        let ctx = try LoggerFixtures.makeContext()
+        // Both workouts start on this day, so they prescribe for the same date.
+        let today = Date(timeIntervalSince1970: 1_800_000_000)
+        let bench = LoggerFixtures.exercise("Bench", in: ctx)
+        let press = LoggerFixtures.exercise("OHP", in: ctx)
+        // The press's last workout hit 12 reps, the top of an added
+        // exercise's 8-12, on every set, so double progression adds an
+        // increment to its 60.
+        let lastWeek = today.addingTimeInterval(-7 * 24 * 3600)
+        try LoggerFixtures.session(exercise: press, startedAt: lastWeek, completedAt: lastWeek.addingTimeInterval(3600),
+                                   sets: [(60, 12, true), (60, 12, true), (60, 12, true)], in: ctx)
+
+        // What a fresh start prescribes for the press at an added
+        // exercise's targets. The probe workout is deleted again, so the
+        // next one can start.
+        let pressTemplate = try LoggerFixtures.template("Press Day", exercises: [press], repsLow: 8, repsHigh: 12, in: ctx)
+        let probe = try SessionFactory.start(template: pressTemplate, on: today, context: ctx)
+        let freshStart = try #require(probe.exercises?.first?.prescribedWeight)
+        ctx.delete(probe)
+        try ctx.save()
+        try #require(freshStart > 60)
+
+        let benchTemplate = try LoggerFixtures.template("Bench Day", exercises: [bench], in: ctx)
+        let session = try SessionFactory.start(template: benchTemplate, on: today, context: ctx)
+
+        AddUnplannedExerciseButton.append(exercise: press, to: session, context: ctx)
+
+        let added = try #require(session.exercises?.first { $0.exercise?.id == press.id })
+        #expect(added.prescribedWeight == freshStart)
+        // The planned sets are still seeded from the last workout.
+        let sets = added.sets ?? []
+        #expect(sets.count == 3)
+        #expect(sets.allSatisfy { $0.weight == 60 })
     }
 }

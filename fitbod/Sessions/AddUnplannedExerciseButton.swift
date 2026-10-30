@@ -44,7 +44,7 @@ public struct AddUnplannedExerciseButton: View {
         .sheet(isPresented: $presentingPicker) {
             NavigationStack {
                 ExerciseLibraryView(onSelect: { exercise in
-                    append(exercise: exercise)
+                    Self.append(exercise: exercise, to: session, context: ctx)
                     presentingPicker = false
                 })
                 .navigationBarHidden(true)
@@ -60,8 +60,10 @@ public struct AddUnplannedExerciseButton: View {
     }
 
     /// SESS-06 — append a fresh SessionExercise + 3 planned SetEntry rows.
-    /// The source Routine is untouched.
-    private func append(exercise: Exercise) {
+    /// The source Routine is untouched. The new exercise gets the
+    /// prescription a workout start would give it. Saves immediately.
+    @MainActor
+    static func append(exercise: Exercise, to session: Session, context: ModelContext) {
         // After the last exercise, even if one was removed mid-workout
         // (a count would reuse a live index).
         let nextOrderIndex = ((session.exercises ?? []).map(\.orderIndex).max() ?? -1) + 1
@@ -76,15 +78,24 @@ public struct AddUnplannedExerciseButton: View {
         se.targetRepsLow = 8
         se.targetRepsHigh = 12
         se.prescribedRestSeconds = exercise.mechanic == .compound ? 180 : 90
-        ctx.insert(se)
+        context.insert(se)
+
+        // SessionFactory's prescription step, with this workout's intent,
+        // strategy, block and start date.
+        let prescription = SessionFactory.prescription(
+            for: exercise,
+            targetRepsLow: se.targetRepsLow,
+            targetRepsHigh: se.targetRepsHigh,
+            targetRPE: se.targetRPE,
+            in: session,
+            strategy: ProgressionStrategyFactory.make(for: session.progressionKind),
+            userSettings: (try? context.fetch(FetchDescriptor<UserSettings>()))?.first,
+            context: context
+        )
+        se.prescribedWeight = prescription.weight
 
         // Seed 3 planned sets with the matching-intent weight hint
-        let hint = PreviousMatchingIntent.fetchTopWorkingSet(
-            exerciseID: exercise.id,
-            intentRaw: session.intentRaw,
-            context: ctx,
-            excludingSessionID: session.id
-        )?.weight ?? 0
+        let hint = prescription.previousSet?.weight ?? 0
         for i in 0..<3 {
             let entry = SetEntry()
             entry.sessionExercise = se
@@ -94,9 +105,9 @@ public struct AddUnplannedExerciseButton: View {
             entry.setTypeRaw = SetType.working.rawValue
             entry.isComplete = false
             entry.completedAt = .now
-            ctx.insert(entry)
+            context.insert(entry)
         }
-        try? ctx.save()
+        try? context.save()
     }
 }
 
