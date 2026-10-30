@@ -11,7 +11,10 @@
 //
 //  ## Layout (top to bottom)
 //
-//    BRUHeaderBar (‹ dismiss | exercise.name | optional EXPORT)
+//    BRUHeaderBar (‹ dismiss | PROGRESS)
+//    ↓
+//    Name row (the exercise's whole name, wrapping: the bar's middle
+//    third cuts long names short on the 390pt phone)
 //    ↓
 //    ProgressChartHost (owns @Query, renders hero + chips + chart)
 //      ├─ HeroSummaryBand (caption · BRUDisplay value · BRUChip delta · mono sub-line)
@@ -46,6 +49,8 @@
 //      (all-set avg, lineStyle(StrokeStyle(lineWidth: 2, dash: [6, 3]))
 //       strength)    symbol(.circle) symbolSize(40)
 //    PR RuleMark → foregroundStyle(Color.bruSignal) lineStyle(dash [4, 2])
+//    PR label → chart overlay, just above the rule at the plot's
+//               trailing edge, kept inside the plot
 //    Y grid → bruHair dashed [2, 3]
 //    Axes   → BRUFont.labelSmall bruMuted
 //    Background → Color.bruBg
@@ -77,8 +82,10 @@ public struct ExerciseProgressView: View {
         VStack(spacing: 0) {
             BRUHeaderBar(
                 left: HeaderAction("‹") { dismiss() },
-                center: exercise.name
+                center: "Progress"
             )
+            nameRow
+            BRUDivider(.hair)
 
             ProgressChartHost(
                 exercise: exercise,
@@ -90,6 +97,23 @@ public struct ExerciseProgressView: View {
         }
         .background(Color.bruPaper.ignoresSafeArea())
         .navigationBarHidden(true)
+    }
+
+    /// The exercise's whole name in the bar's title style. The bar gives
+    /// its title a third of the row, so the name gets the full width here
+    /// and wraps instead of being cut short.
+    private var nameRow: some View {
+        Text(exercise.name)
+            .font(BRUFont.labelSmall)
+            .tracking(1.5)
+            .textCase(.uppercase)
+            .foregroundStyle(Color.bruInk)
+            .multilineTextAlignment(.center)
+            .fixedSize(horizontal: false, vertical: true)
+            .frame(maxWidth: .infinity)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 8)
+            .accessibilityAddTraits(.isHeader)
     }
 }
 
@@ -246,15 +270,20 @@ private struct ProgressChartHost: View {
 
     /// How VoiceOver reads a point's value.
     private func spokenValue(_ value: Double) -> String {
-        let unit = WeightUnit.effective(for: exercise, default: defaultUnit).rawValue
         switch metric {
         case .e1RM, .topSet:
-            return "\(Int(value.rounded())) \(unit)"
+            return "\(Int(value.rounded())) \(unit.rawValue)"
         case .volume:
-            return "\(Int(value.rounded()).formatted()) \(unit)"
+            return "\(Int(value.rounded()).formatted()) \(unit.rawValue)"
         case .averageRPE:
             return "RPE \(value.formatted(.number.precision(.fractionLength(0...1))))"
         }
+    }
+
+    /// The unit this exercise's weights are labeled in: its own override,
+    /// else the lifter's setting. A label only; the numbers are as logged.
+    private var unit: WeightUnit {
+        WeightUnit.effective(for: exercise, default: defaultUnit)
     }
 
     // MARK: - Hero summary band
@@ -282,10 +311,11 @@ private struct ProgressChartHost: View {
     @ViewBuilder
     private func heroBand(allPoints: [E1RMSeriesPoint]) -> some View {
         let hero = heroValues(from: allPoints)
+        let unitLabel = unit.rawValue.uppercased()
         let delta = hero.latest - hero.earliest
         let deltaSigned = delta >= 0
-            ? "+ \(String(format: "%.0f", delta)) LB"
-            : "- \(String(format: "%.0f", abs(delta))) LB"
+            ? "+ \(String(format: "%.0f", delta)) \(unitLabel)"
+            : "- \(String(format: "%.0f", abs(delta))) \(unitLabel)"
         let weeksLabel = "\(hero.weeks) WEEK\(hero.weeks == 1 ? "" : "S")"
 
         HStack(alignment: .lastTextBaseline) {
@@ -296,7 +326,7 @@ private struct ProgressChartHost: View {
                     .textCase(.uppercase)
                     .foregroundStyle(Color.bruMuted)
                 BRUDisplay(
-                    "\(String(format: "%.0f", hero.latest)) LB",
+                    "\(String(format: "%.0f", hero.latest)) \(unitLabel)",
                     size: .hero
                 )
             }
@@ -305,7 +335,7 @@ private struct ProgressChartHost: View {
 
             VStack(alignment: .trailing, spacing: 6) {
                 BRUChip(deltaSigned, color: .bruSignal, fill: true, textCase: nil)
-                Text("FROM \(String(format: "%.0f", hero.earliest)) LB")
+                Text("FROM \(String(format: "%.0f", hero.earliest)) \(unitLabel)")
                     .font(BRUFont.labelMicro)
                     .tracking(1.2)
                     .textCase(.uppercase)
@@ -353,18 +383,11 @@ private struct ProgressChartHost: View {
 
         VStack(alignment: .leading, spacing: 8) {
             Chart {
-                // PR RuleMark — dashed bruSignal with inline label
+                // PR RuleMark — dashed bruSignal; its label is a chart overlay
                 if prValue > 0 {
                     RuleMark(y: .value("PR", prValue))
                         .foregroundStyle(Color.bruSignal)
                         .lineStyle(StrokeStyle(lineWidth: 1, dash: [4, 2]))
-                        .annotation(position: .topTrailing) {
-                            Text("PR \(String(format: "%.0f", prValue))")
-                                .font(BRUFont.labelMicro)
-                                .tracking(1.0)
-                                .textCase(.uppercase)
-                                .foregroundStyle(Color.bruSignal)
-                        }
                 }
 
                 // Data series — one line per series, so the lines never join
@@ -421,6 +444,13 @@ private struct ProgressChartHost: View {
             .frame(minHeight: 240)
             .accessibilityLabel(metric.chartName)
             .accessibilityIdentifier("progress.chart")
+            // After the chart's label and identifier, so the PR label
+            // keeps its own text for VoiceOver.
+            .chartOverlay { proxy in
+                if prValue > 0 {
+                    prLabel(prValue, proxy: proxy)
+                }
+            }
             // A new chart per chip: morphing marks between e1RM, volume
             // and RPE scales gives SwiftUI non-finite frames mid-animation.
             .id(metric)
@@ -442,6 +472,29 @@ private struct ProgressChartHost: View {
         }
         .padding(.bottom, 16)
         .background(Color.bruBg)
+    }
+
+    /// The PR rule's label: just above the rule, 4pt in from the plot's
+    /// trailing edge, and never above the plot's top, so it stays inside
+    /// the chart. An overlay, because Charts keeps mark annotations out of
+    /// reach of VoiceOver.
+    private func prLabel(_ value: Double, proxy: ChartProxy) -> some View {
+        GeometryReader { geometry in
+            if let plotFrame = proxy.plotFrame,
+               let ruleY = proxy.position(forY: value) {
+                let plot = geometry[plotFrame]
+                Text("PR \(String(format: "%.0f", value))")
+                    .font(BRUFont.labelMicro)
+                    .tracking(1.0)
+                    .textCase(.uppercase)
+                    .foregroundStyle(Color.bruSignal)
+                    .padding(.trailing, 4)
+                    // Bottom 2pt above the rule, top no higher than the plot's.
+                    .alignmentGuide(.top) { label in min(0, label.height + 2 - ruleY) }
+                    .frame(width: plot.width, height: plot.height, alignment: .topTrailing)
+                    .offset(x: plot.minX, y: plot.minY)
+            }
+        }
     }
 
     // MARK: - Legend

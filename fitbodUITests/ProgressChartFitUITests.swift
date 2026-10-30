@@ -1,0 +1,198 @@
+//
+//  ProgressChartFitUITests.swift
+//  fitbodUITests
+//
+//  Ticket T56, findings F24, F25 and F26, on ProgressHistorySeed's four
+//  finished workouts of the bench press:
+//
+//    - The hero above the chart labels its value, its change and its FROM
+//      line with the exercise's own unit, as the chart's readouts do: KG
+//      once the bench press's unit override is kg, never LB.
+//    - The screen shows the bench press's whole name at default text.
+//      XCUI reads the full label even when the screen cuts it short, so
+//      the test reads the name off a screenshot.
+//    - The PR label sits fully inside the chart: it is inside the chart's
+//      frame, and nothing in the PR label's color is drawn right of it.
+//
+
+import Vision
+import XCTest
+
+final class ProgressChartFitUITests: XCTestCase {
+    private let benchPress = "Barbell Bench Press - Medium Grip"
+    /// bruSignal in light mode, the PR label's color.
+    private static let signal = UITestNavigation.RGB(hex: 0xFF5C1A)
+
+    override func setUpWithError() throws {
+        // Each check reports, so one failure does not hide the rest.
+        continueAfterFailure = true
+    }
+
+    // MARK: - F24: the hero's unit
+
+    @MainActor
+    func testHeroReadsTheExercisesUnit() throws {
+        let app = UITestNavigation.launch(UITestNavigation.progressHistory)
+        setBenchPressUnit(to: "kg", in: app)
+        openBenchPressChart(in: app)
+
+        let hero: [(part: String, pattern: String)] = [
+            ("value", #"^\d+ (LB|KG)$"#),
+            ("change", #"^[+-] \d+ (LB|KG)$"#),
+            ("FROM line", #"^FROM \d+ (LB|KG)$"#),
+        ]
+        for (part, pattern) in hero {
+            let text = app.staticTexts.matching(NSPredicate(format: "label MATCHES[c] %@", pattern)).firstMatch
+            XCTAssertTrue(text.waitForExistence(timeout: 5), "The hero shows no \(part)")
+            XCTAssertTrue(
+                text.label.uppercased().hasSuffix(" KG"),
+                "The hero's \(part) must read KG, the bench press's unit, not \"\(text.label)\""
+            )
+        }
+        UITestNavigation.saveScreenshot("T56", "chart-kg")
+    }
+
+    // MARK: - F26: the whole name
+
+    @MainActor
+    func testScreenShowsTheWholeName() throws {
+        let app = UITestNavigation.launch(UITestNavigation.progressHistory)
+        openBenchPressChart(in: app)
+
+        let name = app.staticTexts[benchPress].firstMatch
+        XCTAssertTrue(name.waitForExistence(timeout: 5), "The screen does not name the bench press")
+        UITestNavigation.assertInside(name, app.windows.firstMatch)
+        UITestNavigation.assertNoOverlap(name, app.buttons["Back"].firstMatch)
+
+        let screenshot = XCUIScreen.main.screenshot()
+        UITestNavigation.saveScreenshot("T56", "header")
+        let shown = try readText(in: name.frame.insetBy(dx: -4, dy: -4), of: screenshot)
+        XCTAssertEqual(
+            lettersAndDigits(shown), lettersAndDigits(benchPress),
+            "The screen must show the bench press's whole name, but it reads \"\(shown)\""
+        )
+    }
+
+    // MARK: - F25: the PR label
+
+    @MainActor
+    func testPRLabelSitsInsideTheChart() throws {
+        let app = UITestNavigation.launch(UITestNavigation.progressHistory)
+        openBenchPressChart(in: app)
+        let chart = app.otherElements["progress.chart"]
+        XCTAssertTrue(chart.waitForExistence(timeout: 5), "The chart never appeared")
+        // Let the chart's short transition settle before reading pixels.
+        Thread.sleep(forTimeInterval: 0.5)
+
+        let screenshot = XCUIScreen.main.screenshot()
+        UITestNavigation.saveScreenshot("T56", "chart-pr")
+        let window = app.windows.firstMatch.frame
+        let rightOfChart = CGRect(
+            x: chart.frame.maxX + 1, y: chart.frame.minY,
+            width: window.maxX - chart.frame.maxX - 1, height: chart.frame.height
+        )
+        let spill = try signalPixels(in: rightOfChart, of: screenshot)
+        XCTAssertEqual(spill, 0, "\(spill) pixels in the PR label's color are drawn right of the chart, so the label runs out of it")
+
+        let label = app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH %@", "PR ")).firstMatch
+        XCTAssertTrue(label.exists, "The PR label is not on screen as text, so its frame cannot be checked")
+        UITestNavigation.assertInside(label, chart)
+    }
+
+    // MARK: - Navigation
+
+    /// Library → the seeded bench press → its weight unit chip.
+    @MainActor
+    private func setBenchPressUnit(to unit: String, in app: XCUIApplication) {
+        UITestNavigation.selectTab("Library", in: app)
+        let search = app.textFields["library.search.browser"]
+        XCTAssertTrue(search.waitForExistence(timeout: 10))
+        search.tap()
+        let focused = XCTNSPredicateExpectation(predicate: NSPredicate(format: "hasKeyboardFocus == true"), object: search)
+        XCTAssertEqual(XCTWaiter().wait(for: [focused], timeout: 5), .completed, "Search never took keyboard focus")
+        search.typeText("Barbell Bench Press")
+        XCTAssertEqual(search.value as? String, "Barbell Bench Press", "Search must read what was typed")
+        let row = app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH %@", benchPress)).firstMatch
+        XCTAssertTrue(row.waitForExistence(timeout: 10))
+        row.tap()
+
+        // The chip's uppercase style reaches its label: "WEIGHT UNIT: KG".
+        let chip = app.buttons.matching(NSPredicate(format: "label ==[c] %@", "Weight unit: \(unit)")).firstMatch
+        UITestNavigation.reveal(chip, in: app, maxSwipes: 20)
+        chip.tap()
+        let selected = XCTNSPredicateExpectation(predicate: NSPredicate(format: "isSelected == true"), object: chip)
+        XCTAssertEqual(XCTWaiter().wait(for: [selected], timeout: 5), .completed, "The \(unit) chip is not selected after a tap")
+    }
+
+    /// Progress → the bench press's row → its chart.
+    @MainActor
+    private func openBenchPressChart(in app: XCUIApplication) {
+        UITestNavigation.selectTab("Progress", in: app)
+        let row = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", benchPress)).firstMatch
+        UITestNavigation.reveal(row, in: app)
+        row.tap()
+        XCTAssertTrue(app.buttons["e1RM"].waitForExistence(timeout: 10), "The progress chart never opened")
+    }
+
+    // MARK: - Screenshot readers
+
+    /// The text drawn inside `rect`, in screen points, read line by line
+    /// from the top.
+    @MainActor
+    private func readText(in rect: CGRect, of screenshot: XCUIScreenshot) throws -> String {
+        let crop = try XCTUnwrap(crop(rect, of: screenshot), "Cannot crop \(rect) from the screenshot")
+        let request = VNRecognizeTextRequest()
+        request.recognitionLevel = .accurate
+        request.usesLanguageCorrection = false
+        try VNImageRequestHandler(cgImage: crop).perform([request])
+        // Vision's boxes start at the bottom left: higher lines first.
+        return (request.results ?? [])
+            .sorted { ($0.boundingBox.midY, -$0.boundingBox.minX) > ($1.boundingBox.midY, -$1.boundingBox.minX) }
+            .compactMap { $0.topCandidates(1).first?.string }
+            .joined(separator: " ")
+    }
+
+    /// How many pixels inside `rect`, in screen points, are close to the
+    /// PR label's color.
+    @MainActor
+    private func signalPixels(in rect: CGRect, of screenshot: XCUIScreenshot) throws -> Int {
+        let crop = try XCTUnwrap(crop(rect, of: screenshot), "Cannot crop \(rect) from the screenshot")
+        let sRGB = try XCTUnwrap(CGColorSpace(name: CGColorSpace.sRGB))
+        let width = crop.width
+        let height = crop.height
+        var bytes = [UInt8](repeating: 0, count: width * height * 4)
+        let drawn = bytes.withUnsafeMutableBytes { buffer -> Bool in
+            guard let context = CGContext(
+                data: buffer.baseAddress, width: width, height: height, bitsPerComponent: 8,
+                bytesPerRow: width * 4, space: sRGB, bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
+            ) else { return false }
+            context.draw(crop, in: CGRect(x: 0, y: 0, width: width, height: height))
+            return true
+        }
+        XCTAssertTrue(drawn, "Cannot read the pixels of \(rect)")
+        return stride(from: 0, to: bytes.count, by: 4).filter { index in
+            let color = UITestNavigation.RGB(red: Int(bytes[index]), green: Int(bytes[index + 1]), blue: Int(bytes[index + 2]))
+            return color.distance(to: Self.signal) <= 40
+        }.count
+    }
+
+    /// `rect`, in screen points, cut from the screenshot's device pixels.
+    @MainActor
+    private func crop(_ rect: CGRect, of screenshot: XCUIScreenshot) -> CGImage? {
+        let image = screenshot.image
+        guard let cgImage = image.cgImage else { return nil }
+        let pixels = CGRect(
+            x: rect.minX * image.scale, y: rect.minY * image.scale,
+            width: rect.width * image.scale, height: rect.height * image.scale
+        ).integral.intersection(CGRect(x: 0, y: 0, width: cgImage.width, height: cgImage.height))
+        guard !pixels.isNull, !pixels.isEmpty else { return nil }
+        return cgImage.cropping(to: pixels)
+    }
+
+    /// Uppercased letters and digits only, so line breaks, spacing and how
+    /// a dash is read do not matter. A name cut short loses its last
+    /// letters.
+    private func lettersAndDigits(_ text: String) -> String {
+        String(text.uppercased().filter { $0.isLetter || $0.isNumber })
+    }
+}
