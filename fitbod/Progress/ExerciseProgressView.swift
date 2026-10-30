@@ -272,12 +272,19 @@ private struct ProgressChartHost: View {
     private func spokenValue(_ value: Double) -> String {
         switch metric {
         case .e1RM, .topSet:
-            return "\(Int(value.rounded())) \(unit.rawValue)"
+            return "\(wholeWeight(value)) \(unit.rawValue)"
         case .volume:
-            return "\(Int(value.rounded()).formatted()) \(unit.rawValue)"
+            return "\(wholeWeight(value).formatted()) \(unit.rawValue)"
         case .averageRPE:
             return "RPE \(value.formatted(.number.precision(.fractionLength(0...1))))"
         }
+    }
+
+    /// A weight in whole units, halves up, so the hero, the PR label and
+    /// VoiceOver all read 112.5 as 113. `%.0f` rounds a half to the even
+    /// number instead.
+    private func wholeWeight(_ value: Double) -> Int {
+        Int(value.rounded())
     }
 
     /// The unit this exercise's weights are labeled in: its own override,
@@ -312,10 +319,13 @@ private struct ProgressChartHost: View {
     private func heroBand(allPoints: [E1RMSeriesPoint]) -> some View {
         let hero = heroValues(from: allPoints)
         let unitLabel = unit.rawValue.uppercased()
-        let delta = hero.latest - hero.earliest
+        let latest = wholeWeight(hero.latest)
+        let earliest = wholeWeight(hero.earliest)
+        // The change is the value minus the FROM number, as both are shown.
+        let delta = latest - earliest
         let deltaSigned = delta >= 0
-            ? "+ \(String(format: "%.0f", delta)) \(unitLabel)"
-            : "- \(String(format: "%.0f", abs(delta))) \(unitLabel)"
+            ? "+ \(delta) \(unitLabel)"
+            : "- \(abs(delta)) \(unitLabel)"
         let weeksLabel = "\(hero.weeks) WEEK\(hero.weeks == 1 ? "" : "S")"
 
         HStack(alignment: .lastTextBaseline) {
@@ -326,7 +336,7 @@ private struct ProgressChartHost: View {
                     .textCase(.uppercase)
                     .foregroundStyle(Color.bruMuted)
                 BRUDisplay(
-                    "\(String(format: "%.0f", hero.latest)) \(unitLabel)",
+                    "\(latest) \(unitLabel)",
                     size: .hero
                 )
             }
@@ -335,7 +345,7 @@ private struct ProgressChartHost: View {
 
             VStack(alignment: .trailing, spacing: 6) {
                 BRUChip(deltaSigned, color: .bruSignal, fill: true, textCase: nil)
-                Text("FROM \(String(format: "%.0f", hero.earliest)) \(unitLabel)")
+                Text(verbatim: "FROM \(earliest) \(unitLabel)")
                     .font(BRUFont.labelMicro)
                     .tracking(1.2)
                     .textCase(.uppercase)
@@ -383,11 +393,13 @@ private struct ProgressChartHost: View {
 
         VStack(alignment: .leading, spacing: 8) {
             Chart {
-                // PR RuleMark — dashed bruSignal; its label is a chart overlay
+                // PR RuleMark — dashed bruSignal; its label is a chart
+                // overlay, and VoiceOver reads the PR once, by that label
                 if prValue > 0 {
                     RuleMark(y: .value("PR", prValue))
                         .foregroundStyle(Color.bruSignal)
                         .lineStyle(StrokeStyle(lineWidth: 1, dash: [4, 2]))
+                        .accessibilityHidden(true)
                 }
 
                 // Data series — one line per series, so the lines never join
@@ -483,7 +495,7 @@ private struct ProgressChartHost: View {
             if let plotFrame = proxy.plotFrame,
                let ruleY = proxy.position(forY: value) {
                 let plot = geometry[plotFrame]
-                Text("PR \(String(format: "%.0f", value))")
+                Text(verbatim: "PR \(wholeWeight(value))")
                     .font(BRUFont.labelMicro)
                     .tracking(1.0)
                     .textCase(.uppercase)

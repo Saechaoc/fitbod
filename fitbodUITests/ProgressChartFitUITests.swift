@@ -14,6 +14,16 @@
 //    - The PR label sits fully inside the chart: it is inside the chart's
 //      frame, and nothing in the PR label's color is drawn right of it.
 //
+//  Ticket T68, finding F50, on the same seed:
+//
+//    - The hero adds up: its change is its value minus its FROM number,
+//      as both are shown.
+//    - A weight rounds halves up: the bench press's earliest and best
+//      e1RM, 112.5, reads 113 on the PR label and to VoiceOver on the
+//      TOP SET chip, where each point is read by its own value.
+//      VoiceOver reads the PR once, by its label, not the PR rule's
+//      unrounded 112.5.
+//
 
 import Vision
 import XCTest
@@ -97,6 +107,46 @@ final class ProgressChartFitUITests: XCTestCase {
         let label = app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH %@", "PR ")).firstMatch
         XCTAssertTrue(label.exists, "The PR label is not on screen as text, so its frame cannot be checked")
         UITestNavigation.assertInside(label, chart)
+    }
+
+    // MARK: - F50: the hero adds up
+
+    @MainActor
+    func testHeroAndPRLabelAddUp() throws {
+        let app = UITestNavigation.launch(UITestNavigation.progressHistory)
+        openBenchPressChart(in: app)
+
+        let value = try heroNumber("value", matching: #"^\d+ (LB|KG)$"#, in: app)
+        let change = try heroNumber("change", matching: #"^[+-] \d+ (LB|KG)$"#, in: app)
+        let from = try heroNumber("FROM line", matching: #"^FROM \d+ (LB|KG)$"#, in: app)
+        XCTAssertEqual(
+            value.number - from.number, change.number,
+            "The hero reads \"\(value.label)\", \"\(change.label)\" and \"\(from.label)\": its value minus its FROM number must be its change"
+        )
+
+        let label = app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH %@", "PR ")).firstMatch
+        XCTAssertTrue(label.waitForExistence(timeout: 5), "The chart shows no PR label")
+        XCTAssertEqual(label.label, "PR 113", "The PR label must round the bench press's best e1RM, 112.5, half up")
+        UITestNavigation.saveScreenshot("T68", "hero-pr")
+
+        app.buttons["TOP SET"].tap()
+        let best = app.otherElements.matching(NSPredicate(format: "value == %@", "113 lb")).firstMatch
+        XCTAssertTrue(best.waitForExistence(timeout: 5), "VoiceOver must read the bench press's best e1RM, 112.5, as 113 lb")
+        let rule = app.otherElements.matching(NSPredicate(format: "value == %@", "112.5")).firstMatch
+        XCTAssertFalse(rule.exists, "VoiceOver must read the PR once, by its label, not the PR rule's unrounded 112.5")
+    }
+
+    /// The hero's `part` that matches `pattern`, and its number, negative
+    /// after a "-" sign.
+    @MainActor
+    private func heroNumber(
+        _ part: String, matching pattern: String, in app: XCUIApplication
+    ) throws -> (label: String, number: Int) {
+        let text = app.staticTexts.matching(NSPredicate(format: "label MATCHES[c] %@", pattern)).firstMatch
+        XCTAssertTrue(text.waitForExistence(timeout: 5), "The hero shows no \(part)")
+        let label = text.label
+        let number = try XCTUnwrap(Int(label.filter(\.isNumber)), "The hero's \(part), \"\(label)\", shows no number")
+        return (label, label.hasPrefix("-") ? -number : number)
     }
 
     // MARK: - Navigation
