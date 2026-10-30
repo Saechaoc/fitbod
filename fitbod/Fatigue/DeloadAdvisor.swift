@@ -196,8 +196,10 @@ public enum DeloadAdvisor {
             guard let intent = Intent(rawValue: session.intentRaw) else { continue }
             // One pick per exercise per session, read across every time the
             // session logs it, so the 3 sessions compared are 3 different
-            // workouts. Logs run in workout order, so a tie goes to the
-            // earlier log.
+            // workouts. The logs run in workout order and each log's sets
+            // in set order (`orderIndex` both times), whatever order
+            // SwiftData returns them in, so a tie in e1RM goes to the
+            // earlier set.
             var logsByExercise: [UUID: (exercise: Exercise, logs: [SessionExercise])] = [:]
             for se in (session.exercises ?? []).sorted(by: { $0.orderIndex < $1.orderIndex }) {
                 guard let exercise = se.exercise else { continue }
@@ -209,7 +211,7 @@ public enum DeloadAdvisor {
                 var bestE: Double? = nil
                 var bestWeight = 0.0
                 var bestRPE: Double? = nil
-                for set in logs.flatMap({ $0.sets ?? [] }) {
+                for set in logs.flatMap({ ($0.sets ?? []).sorted(by: { $0.orderIndex < $1.orderIndex }) }) {
                     guard set.isComplete, !set.isWarmup, set.reps > 0 else { continue }
                     guard workingKinds.contains(set.setTypeRaw) else { continue }
                     guard let e = OneRepMaxEstimator.estimate(weight: set.weight, reps: set.reps) else { continue }

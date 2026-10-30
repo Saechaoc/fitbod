@@ -21,16 +21,20 @@
 //    3. prior.session?.sourceRoutineID == current.session?.sourceRoutineID
 //    4. currentSession.startedAt - prior.session.startedAt ∈ (0, 14d)
 //
-//  Per-SessionExercise (not per-session) so multi-exercise sessions
-//  surface row-by-row diffs even when a single exercise pair lacks a
-//  comparable prior.
+//  Per exercise (not per session) so multi-exercise sessions surface
+//  row-by-row diffs even when a single exercise pair lacks a comparable
+//  prior. A workout that logs an exercise more than once gives one row,
+//  in the order of its first log, read across every log of it; the
+//  prior side reads every log of it in the most recent matching workout.
 //
 //  ## D-05 Top working set
 //
-//  Among the SessionExercise's working sets (filtered to
-//  setType==.working && !isWarmup && isComplete && reps > 0 && weight > 0),
+//  Among the working sets of one workout's logs of the exercise (filtered
+//  to setType==.working && !isWarmup && isComplete && reps > 0 && weight > 0),
 //  pick the entry with the highest `OneRepMax.estimate(weight:reps:)`.
 //  Tiebreaker 1: highest weight. Tiebreaker 2: latest completedAt.
+//  The sets are read in log order, then set order (`orderIndex` both
+//  times), so on a full tie the earlier set wins.
 //  This matters for high-volume hypertrophy sessions where a higher-
 //  rep lighter set produces a higher e1RM than a heavier single —
 //  D-05 wants the chart series to reflect the actual training stimulus,
@@ -38,8 +42,8 @@
 //
 //  ## Performance
 //
-//  One #Predicate fetch per current SessionExercise. For a 6-exercise
-//  session that's six fetches at view-appear. Phase 1's
+//  One #Predicate fetch per exercise in the current session. For a
+//  6-exercise session that's six fetches at view-appear. Phase 1's
 //  `#Index<SessionExercise>([\.intentRaw])` doesn't help much here
 //  (Phase 3.1 moved intent off SessionExercise) but Phase 1's
 //  `#Index<Session>([\.sourceRoutineID])` is the index that the
@@ -115,29 +119,46 @@ public enum SessionComparator {
     // MARK: - Public API
 
     /// Compare every exercise in `current` against its most-recent
-    /// matching prior SessionExercise per the corrected D-22 rule.
-    /// Returns one row per current SessionExercise sorted by
-    /// `orderIndex` asc.
+    /// matching prior workout per the corrected D-22 rule.
+    /// Returns one row per exercise in `current`, in the order of its
+    /// first log (`orderIndex` asc). Each side reads every log of the
+    /// exercise in its workout.
     public static func compare(
         current: Session,
         context: ModelContext,
         windowDays: Int = 14
     ) -> [SessionComparisonRow] {
-        let exercises = (current.exercises ?? []).sorted { $0.orderIndex < $1.orderIndex }
-        var rows: [SessionComparisonRow] = []
-        rows.reserveCapacity(exercises.count)
+        // Each exercise's logs, in the order of its first log. A log whose
+        // exercise was deleted from the library stays a row of its own.
+        var groups: [(exercise: Exercise?, logs: [SessionExercise])] = []
+        var groupIndex: [UUID: Int] = [:]
+        for se in (current.exercises ?? []).sorted(by: { $0.orderIndex < $1.orderIndex }) {
+            guard let exercise = se.exercise else {
+                groups.append((nil, [se]))
+                continue
+            }
+            if let index = groupIndex[exercise.id] {
+                groups[index].logs.append(se)
+            } else {
+                groupIndex[exercise.id] = groups.count
+                groups.append((exercise, [se]))
+            }
+        }
 
-        for se in exercises {
-            let exerciseID = se.exercise?.id ?? UUID()
-            let exerciseName = se.exercise?.name ?? ""
-            let thisTop = topWorkingSet(in: se)
-            let priorSE = findPriorMatch(
-                current: se,
+        var rows: [SessionComparisonRow] = []
+        rows.reserveCapacity(groups.count)
+
+        for (exercise, logs) in groups {
+            let exerciseID = exercise?.id ?? UUID()
+            let exerciseName = exercise?.name ?? ""
+            let thisTop = topWorkingSet(in: logs)
+            let priorLogs = findPriorMatch(
+                exerciseID: exercise?.id,
                 currentSession: current,
                 context: context,
                 windowDays: windowDays
             )
-            let lastTop = priorSE.flatMap { topWorkingSet(in: $0) }
+            let lastTop = topWorkingSet(in: priorLogs)
 
             let dWeight: Double? = (thisTop != nil && lastTop != nil)
                 ? thisTop!.weight - lastTop!.weight
@@ -165,21 +186,23 @@ public enum SessionComparator {
         return rows
     }
 
-    /// Find the most-recent prior SessionExercise matching the
+    /// Find the most-recent prior workout matching the
     /// `(sourceRoutineID, exerciseID, intent)` triple within the
-    /// strict 14-day window (> 0 days, < windowDays days).
+    /// strict 14-day window (> 0 days, < windowDays days), and return
+    /// every log of the exercise in it, in workout order (`orderIndex`).
     ///
-    /// Returns nil for any freestanding session (nil sourceRoutineID)
-    /// because there's no template to match against.
+    /// Returns no logs for any freestanding session (nil sourceRoutineID)
+    /// because there's no template to match against, nor when no prior
+    /// workout matches.
     public static func findPriorMatch(
-        current: SessionExercise,
+        exerciseID: UUID?,
         currentSession: Session,
         context: ModelContext,
         windowDays: Int = 14
-    ) -> SessionExercise? {
+    ) -> [SessionExercise] {
         // Local-let captures for the #Predicate (RESEARCH Pitfall 3).
-        guard let targetExerciseID = current.exercise?.id else { return nil }
-        guard let targetRoutineID = currentSession.sourceRoutineID else { return nil }
+        guard let targetExerciseID = exerciseID else { return [] }
+        guard let targetRoutineID = currentSession.sourceRoutineID else { return [] }
         let targetIntent = currentSession.intentRaw
         let upper = currentSession.startedAt
         let lower = currentSession.startedAt.addingTimeInterval(-Double(windowDays) * 86_400)
@@ -204,45 +227,56 @@ public enum SessionComparator {
         for session in sorted {
             // Walk the session's exercises in Swift — Phase 1 cascade
             // rule keeps these eager-loaded with the parent Session.
-            if let match = (session.exercises ?? []).first(where: {
-                $0.exercise?.id == targetExerciseID
-            }) {
-                return match
+            let logs = (session.exercises ?? [])
+                .filter { $0.exercise?.id == targetExerciseID }
+                .sorted { $0.orderIndex < $1.orderIndex }
+            if !logs.isEmpty {
+                return logs
             }
         }
-        return nil
+        return []
     }
 
     // MARK: - Top set selection (D-05)
 
-    /// Pick the top working set of a `SessionExercise` per CONTEXT D-05:
-    /// highest `OneRepMax.estimate` → highest weight → latest completedAt.
-    private static func topWorkingSet(in se: SessionExercise) -> TopSetSummary? {
-        let workingSets = (se.sets ?? []).filter { entry in
-            entry.setType == .working
-                && !entry.isWarmup
-                && entry.isComplete
-                && entry.weight > 0
-                && entry.reps > 0
-        }
-        guard !workingSets.isEmpty else { return nil }
+    /// Pick the top working set across one workout's `logs` of an
+    /// exercise per CONTEXT D-05: highest `OneRepMax.estimate` → highest
+    /// weight → latest completedAt. The logs are read in workout order and
+    /// each log's sets in set order (`orderIndex` both times), whatever
+    /// order SwiftData returns them in, so on a full tie the earlier set
+    /// wins.
+    private static func topWorkingSet(in logs: [SessionExercise]) -> TopSetSummary? {
+        let workingSets = logs
+            .sorted { $0.orderIndex < $1.orderIndex }
+            .flatMap { se in
+                (se.sets ?? [])
+                    .filter { entry in
+                        entry.setType == .working
+                            && !entry.isWarmup
+                            && entry.isComplete
+                            && entry.weight > 0
+                            && entry.reps > 0
+                    }
+                    .sorted { $0.orderIndex < $1.orderIndex }
+            }
 
-        // Sort by e1RM desc, then weight desc, then completedAt desc.
-        let sorted = workingSets.sorted { (lhs, rhs) in
+        // Rank by e1RM, then weight, then completedAt. `max(by:)` keeps
+        // the first of equal elements, so a full tie goes to the earlier set.
+        let top = workingSets.max { (lhs, rhs) in
             let lhsE = OneRepMax.estimate(weight: lhs.weight, reps: lhs.reps) ?? 0
             let rhsE = OneRepMax.estimate(weight: rhs.weight, reps: rhs.reps) ?? 0
-            if lhsE != rhsE { return lhsE > rhsE }
-            if lhs.weight != rhs.weight { return lhs.weight > rhs.weight }
-            return lhs.completedAt > rhs.completedAt
+            if lhsE != rhsE { return lhsE < rhsE }
+            if lhs.weight != rhs.weight { return lhs.weight < rhs.weight }
+            return lhs.completedAt < rhs.completedAt
         }
-        guard let top = sorted.first else { return nil }
+        guard let top else { return nil }
         return TopSetSummary(
             weight: top.weight,
             reps: top.reps,
             rpe: top.rpe,
             e1RM: OneRepMax.estimate(weight: top.weight, reps: top.reps),
             setEntryID: top.id,
-            sessionStartedAt: se.session?.startedAt ?? top.completedAt
+            sessionStartedAt: logs.first?.session?.startedAt ?? top.completedAt
         )
     }
 }
