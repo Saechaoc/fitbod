@@ -97,6 +97,9 @@ Product decisions are in [decisions.md](decisions.md), and they win over this fi
 ### Empty prescribed weight
 
 - Call: a prescribed weight of 0 means no prescription, so the field shows its empty placeholder.
+- Coordinator answer, 2026-10-30 (T61 question `msg_1fc9fe1525bb`): a calibrating range of 0 to 0 shows a read-only dash in `bruMuted`, styled like the empty placeholder, and VoiceOver reads it as "none".
+  It stays read-only like every calibrating range.
+- Rejected: treating a 0-to-0 range as no range, which would make that calibrating cell editable and let Override focus it, a behavior no calibrating range has.
 
 ## Program and blocks
 
