@@ -275,6 +275,7 @@ public struct RootView: View {
             StalledExerciseSeed.runIfRequested(in: modelContext) // DEBUG-only E2E hook; no-op without the launch argument
             ProgressHistorySeed.runIfRequested(in: modelContext) // DEBUG-only E2E hook; no-op without the launch argument
             ActiveBlockSeed.runIfRequested(in: modelContext) // DEBUG-only E2E hook; no-op without the launch argument
+            BlockStatesSeed.runIfRequested(in: modelContext) // DEBUG-only E2E hook; no-op without the launch argument
 
             seedState.phase = .ready
         } catch {

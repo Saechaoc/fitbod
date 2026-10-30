@@ -19,6 +19,9 @@ public struct BlockReviewView: View {
 
     public let block: Block
 
+    /// Every block, for the block number.
+    @Query private var allBlocks: [Block]
+
     @State private var pendingNextBlockBuilder: BlockTemplate? = nil
     @State private var acknowledgeError: String? = nil
 
@@ -80,12 +83,12 @@ public struct BlockReviewView: View {
             start: blockStart,
             end: blockEnd
         )
-        let weekOfYear = Calendar.current.component(.weekOfYear, from: blockStart)
+        let blockNumber = BlockNumbering.number(of: block, among: allBlocks)
         let formattedRange = formattedDateRange(start: blockStart, end: blockEnd)
 
         return VStack(alignment: .leading, spacing: 0) {
             // Top label row
-            Text("BLOCK \(weekOfYear) · COMPLETE · \(formattedRange)")
+            Text("BLOCK \(blockNumber) · COMPLETE · \(formattedRange)")
                 .font(BRUFont.labelSmall)
                 .textCase(.uppercase)
                 .tracking(1.5)
@@ -246,7 +249,7 @@ public struct BlockReviewView: View {
     private func recommendedNextBand(recommendedKind: BlockPhaseKind) -> some View {
         let recommendedKindLabel = BlockPhaseColors.phaseLabel(recommendedKind).capitalized
         let recommendedWeeks = 4  // Phase 6 will compute from block history; placeholder per spec
-        let weekOfYear = Calendar.current.component(.weekOfYear, from: block.startDate)
+        let blockNumber = BlockNumbering.number(of: block, among: allBlocks)
 
         return VStack(spacing: 0) {
             HStack(alignment: .lastTextBaseline) {
@@ -261,7 +264,7 @@ public struct BlockReviewView: View {
                         .foregroundStyle(Color.bruInk)
                 }
                 Spacer()
-                Text("BASED ON BLOCK \(weekOfYear)")
+                Text("BASED ON BLOCK \(blockNumber)")
                     .font(BRUFont.labelMicro)
                     .textCase(.uppercase)
                     .tracking(1.2)
