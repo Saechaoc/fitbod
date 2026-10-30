@@ -226,6 +226,9 @@ Product decisions are in [decisions.md](decisions.md), and they win over this fi
 - Call: Export CSV, Export JSON and CREATE backup each use one `ShareLink` whose `Transferable` file renders when the share sheet asks for it.
   SwiftData reads happen on the main actor, and only value snapshots cross to other threads.
 - Rejected: render first, then swap the card to a `ShareLink`, which needs two taps.
+- Coordinator answer, 2026-10-29 (T08 question `msg_45fa1f7ecb19`): `d936b32`, already on `main`, renders inside the `@ModelActor` services `ExportService` and `BackupArchiver`, each with its own context, and only the rendered bytes or file URL leave the actor.
+  That meets this call's intent, because no model object crosses a thread, so it stays as shipped.
+  New export or backup code keeps that rule: read models only inside the actor or on the main actor, and pass only values out.
 
 ### Backup keeps routines (finding N1)
 
