@@ -26,6 +26,11 @@ public struct BRUActionPopover: View {
     public let items: [BRUActionPopoverItem]
     public let width: CGFloat
 
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    /// How far the titles have grown from their default size;
+    /// `BRUFont.displayMedium` scales like `.title3`.
+    @ScaledMetric(relativeTo: .title3) private var textScale: CGFloat = 1
+
     public init(
         items: [BRUActionPopoverItem],
         width: CGFloat = BRUActionPopoverTokens.width
@@ -40,11 +45,14 @@ public struct BRUActionPopover: View {
                 Button {
                     item.action()
                 } label: {
+                    // A title too long for the row wraps, and the row grows
+                    // with it past its 44pt minimum.
                     Text(item.title)
                         .font(BRUFont.displayMedium)
                         .foregroundStyle(Color.bruInk)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .frame(height: BRUActionPopoverTokens.rowHeight)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .padding(.vertical, BRUActionPopoverTokens.verticalPadding)
+                        .frame(maxWidth: .infinity, minHeight: BRUActionPopoverTokens.rowHeight, alignment: .leading)
                         .padding(.horizontal, BRUActionPopoverTokens.horizontalPadding)
                         .contentShape(Rectangle())
                 }
@@ -57,19 +65,25 @@ public struct BRUActionPopover: View {
                 }
             }
         }
-        .frame(width: width)
+        // At accessibility sizes the popover widens with its titles, up to
+        // the width it is offered less a gutter, so it stays on screen.
+        .frame(minWidth: width, maxWidth: dynamicTypeSize.isAccessibilitySize ? width * textScale : width)
         .background(Color.bruTabSurface)
         .overlay(
             Rectangle()
                 .stroke(Color.bruHair, lineWidth: BRUActionPopoverTokens.borderWidth)
         )
+        .padding(.leading, dynamicTypeSize.isAccessibilitySize ? BRUMetrics.Spacing.gutter : 0)
     }
 }
 
 public enum BRUActionPopoverTokens {
     public static let width: CGFloat = 200
-    public static let rowHeight: CGFloat = 40
+    /// The least row height, a 44pt tap target. Larger text grows the row.
+    public static let rowHeight: CGFloat = 44
     public static let horizontalPadding: CGFloat = 16
+    /// Keeps a wrapped title clear of the rules above and below its row.
+    public static let verticalPadding: CGFloat = 8
     public static let dividerHeight: CGFloat = 1
     public static let borderWidth: CGFloat = 1
 }

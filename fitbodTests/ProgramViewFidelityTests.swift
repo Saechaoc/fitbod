@@ -199,8 +199,8 @@ struct ProgramViewFidelityTests {
                     "The reusable action popover should be available to future BRU menus.")
             #expect(popoverSource.contains("struct BRUActionPopoverItem"),
                     "Popover rows should be data-driven instead of hard-coded inside ProgramView.")
-            #expect(popoverSource.contains("static let rowHeight: CGFloat = 40"),
-                    "The two-row popover should match the compact New-modal reference height.")
+            #expect(popoverSource.contains("static let rowHeight: CGFloat = 44"),
+                    "Each popover row should be at least a 44pt tap target.")
         }
 
         #expect(programSource.contains("@State private var showingNewPopover = false"),
