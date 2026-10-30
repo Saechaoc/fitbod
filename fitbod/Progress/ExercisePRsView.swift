@@ -18,13 +18,20 @@
 //  BRUDivider(.ink)
 //  ScrollView → LazyVStack of 4 sections (Weight / Reps / Volume / e1RM)
 //
-//  ## Top 3 PRs per (kind, bucket)
+//  ## Rows per (kind, bucket)
 //
 //  PRDetector.PRTable holds ONE PRRecord per slot (the current best).
-//  This view needs the top-3 history, so it does its own post-fetch
-//  sort over the @Query<SetEntry> result by the kind's PR criterion.
-//  Acceptable at v1 single-user scale per CONTEXT D-12 ("computed
-//  on-demand from SetEntry history; NOT denormalized").
+//  This view lists up to three records per exercise, so it ranks the
+//  @Query<SetEntry> result itself (`PRBucketRanking`): one row per
+//  distinct set (same exercise, weight and reps), dated when it was
+//  first logged like PRDetector's tie rule, ranked by the bucket's
+//  measure across exercises, at most three rows per exercise. Each row
+//  names its exercise. Acceptable at v1 single-user scale per CONTEXT
+//  D-12 ("computed on-demand from SetEntry history; NOT denormalized").
+//
+//  Every section has the same buckets and a set shows once per section,
+//  so bucket and row ids include the kind: repeated ids leave the later
+//  buckets blank in the LazyVStack.
 //
 //  ## Empty state (UI-SPEC verbatim)
 //
@@ -162,6 +169,7 @@ public struct ExercisePRsView: View {
 private struct PRsHost: View {
     @Query private var sets: [SetEntry]
     @Environment(\.weightUnit) private var defaultUnit
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     let scope: ExercisePRsViewScope
     let intentFilter: ExercisePRsIntentFilter
 
@@ -235,8 +243,8 @@ private struct PRsHost: View {
     private func prSection(kind: PRKind, label: String, sets: [SetEntry]) -> some View {
         BRUSectionHead(label)
 
-        ForEach(bucketsToRender(kind: kind), id: \.rawValue) { bucket in
-            bucketBlock(kind: kind, bucket: bucket, sets: sets)
+        ForEach(bucketsToRender(kind: kind).map { PRBucketID(kind: kind, bucket: $0) }, id: \.self) { id in
+            bucketBlock(kind: id.kind, bucket: id.bucket, sets: sets)
         }
 
         if kind == .e1RM {
@@ -262,9 +270,9 @@ private struct PRsHost: View {
     @ViewBuilder
     private func bucketBlock(kind: PRKind, bucket: RepBucket, sets: [SetEntry]) -> some View {
         let bucketSets = sets.filter { RepBucket.bucket(for: $0.reps) == bucket }
-        let topThreeEntries = topThree(kind: kind, sets: bucketSets)
+        let rows = PRBucketRanking.rows(kind: kind, sets: bucketSets)
 
-        if !topThreeEntries.isEmpty {
+        if !rows.isEmpty {
             // Bucket sub-header
             Text(bucketLabel(bucket: bucket).uppercased())
                 .font(BRUFont.labelSmall)
@@ -274,22 +282,26 @@ private struct PRsHost: View {
                 .padding(.horizontal, 16)
                 .padding(.vertical, 6)
 
-            ForEach(Array(topThreeEntries.enumerated()), id: \.offset) { index, entry in
+            let bucketID = PRBucketID(kind: kind, bucket: bucket)
+            ForEach(rows.map { PRRowItem(id: bucketID.rowID($0), entry: $0) }) { item in
+                let entry = item.entry
                 NavigationLink(
                     value: PRsRouteDestination.session(date: entry.completedAt, setEntryID: entry.id)
                 ) {
                     prRow(kind: kind, entry: entry)
                 }
                 .buttonStyle(.plain)
+                .accessibilityLabel("\(PRBucketRanking.exerciseName(entry)), \(prKindLabel(kind: kind)), \(rowText(kind: kind, set: entry))")
+                .accessibilityValue(entry.completedAt.formatted(date: .abbreviated, time: .omitted))
 
-                if index < topThreeEntries.count - 1 {
+                if entry.id != rows.last?.id {
                     BRUDivider(.hair)
                 }
             }
         }
     }
 
-    // MARK: - PR Row (3-column BRU layout per bru-screens/progress-chart.jsx)
+    // MARK: - PR Row (exercise name over the 3-column BRU layout per bru-screens/progress-chart.jsx)
 
     private func prRow(kind: PRKind, entry: SetEntry) -> some View {
         let isCurrentDay = Calendar.current.isDateInToday(entry.completedAt)
@@ -297,29 +309,36 @@ private struct PRsHost: View {
         let kindLabel = prKindLabel(kind: kind)
         let valueText = rowText(kind: kind, set: entry)
         let dateText = entry.completedAt.formatted(.dateTime.month().day().year()).uppercased()
+        let isAccessibilitySize = dynamicTypeSize.isAccessibilitySize
+        // At accessibility sizes the three columns stack, as in TodayStatStrip.
+        let columns = isAccessibilitySize
+            ? AnyLayout(VStackLayout(alignment: .leading, spacing: 4))
+            : AnyLayout(HStackLayout(spacing: 10))
 
-        return HStack(spacing: 10) {
-            // (a) Leading ~110pt fixed — kind label
-            VStack(alignment: .leading, spacing: 2) {
+        return VStack(alignment: .leading, spacing: 4) {
+            Text(PRBucketRanking.exerciseName(entry))
+                .font(BRUFont.bodyEmphasis)
+                .foregroundStyle(Color.bruInk)
+                .frame(maxWidth: .infinity, alignment: .leading)
+
+            columns {
+                // (a) Leading ~110pt fixed — kind label
                 Text(kindLabel.uppercased())
                     .font(BRUFont.labelSmall)
                     .tracking(1.2)
                     .foregroundStyle(rowKindColor)
-            }
-            .frame(width: 110, alignment: .leading)
+                    .frame(width: isAccessibilitySize ? nil : 110, alignment: .leading)
 
-            // (b) Center — PR value display
-            BRUDisplay(valueText, size: .medium)
-                .frame(maxWidth: .infinity, alignment: .center)
+                // (b) Center — PR value display
+                BRUDisplay(valueText, size: .medium)
+                    .frame(maxWidth: .infinity, alignment: isAccessibilitySize ? .leading : .center)
 
-            // (c) Trailing — mono date
-            VStack(alignment: .trailing, spacing: 2) {
+                // (c) Trailing — mono date
                 Text(dateText)
                     .font(BRUFont.labelMicro)
                     .tracking(0.5)
                     .foregroundStyle(Color.bruMuted)
             }
-            .frame(alignment: .trailing)
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 10)
@@ -349,28 +368,6 @@ private struct PRsHost: View {
         }
     }
 
-    // MARK: - Top 3
-
-    private func topThree(kind: PRKind, sets: [SetEntry]) -> [SetEntry] {
-        let sorted: [SetEntry]
-        switch kind {
-        case .weight:
-            sorted = sets.sorted { $0.weight > $1.weight }
-        case .reps:
-            sorted = sets.sorted { $0.reps > $1.reps }
-        case .volume:
-            sorted = sets.sorted { ($0.weight * Double($0.reps)) > ($1.weight * Double($1.reps)) }
-        case .e1RM:
-            // Score sets by e1RM; suppress nil (reps > 10) from the sort.
-            let scored = sets.compactMap { entry -> (entry: SetEntry, score: Double)? in
-                guard let score = OneRepMax.estimate(weight: entry.weight, reps: entry.reps) else { return nil }
-                return (entry, score)
-            }
-            sorted = scored.sorted { $0.score > $1.score }.map(\.entry)
-        }
-        return Array(sorted.prefix(3))
-    }
-
     // MARK: - Row Text
 
     /// The PR's value in the exercise's own unit. A set logged without an
@@ -398,6 +395,105 @@ private struct PRsHost: View {
             return String(Int(value))
         }
         return String(format: "%g", value)
+    }
+}
+
+// MARK: - Row ids
+
+/// A bucket within one section. Every section has the same buckets and
+/// lists a set once, so ids that pair the kind and bucket with the set stay
+/// unique across the whole list.
+private struct PRBucketID: Hashable {
+    let kind: PRKind
+    let bucket: RepBucket
+
+    func rowID(_ entry: SetEntry) -> String {
+        "\(kind.rawValue)-\(bucket.rawValue)-\(entry.id.uuidString)"
+    }
+}
+
+private struct PRRowItem: Identifiable {
+    let id: String
+    let entry: SetEntry
+}
+
+// MARK: - Bucket ranking
+
+/// The rows one bucket lists. A distinct set is one exercise, weight and
+/// reps, kept from when it was first logged (PRDetector's tie rule). The
+/// sets are ranked by the bucket's measure across exercises, with at most
+/// three rows per exercise. Detecting PRs stays PRDetector's job.
+enum PRBucketRanking {
+    static let rowsPerExercise = 3
+
+    /// - Parameter sets: one bucket's completed work sets, already scoped
+    ///   and filtered by intent.
+    static func rows(kind: PRKind, sets: [SetEntry]) -> [SetEntry] {
+        var firstLogged: [SetKey: SetEntry] = [:]
+        for entry in sets {
+            let key = SetKey(exercise: exerciseKey(entry), weight: entry.weight, reps: entry.reps)
+            if let kept = firstLogged[key], kept.completedAt <= entry.completedAt { continue }
+            firstLogged[key] = entry
+        }
+
+        let ranked = firstLogged.values
+            .compactMap { entry -> (entry: SetEntry, score: Double)? in
+                measure(kind, entry).map { (entry, $0) }
+            }
+            .sorted { lhs, rhs in
+                if lhs.score != rhs.score { return lhs.score > rhs.score }
+                let lhsTie = tiebreak(kind, lhs.entry)
+                let rhsTie = tiebreak(kind, rhs.entry)
+                if lhsTie != rhsTie { return lhsTie > rhsTie }
+                if lhs.entry.completedAt != rhs.entry.completedAt {
+                    return lhs.entry.completedAt < rhs.entry.completedAt
+                }
+                return lhs.entry.id.uuidString < rhs.entry.id.uuidString
+            }
+
+        var shown: [String: Int] = [:]
+        return ranked.compactMap { pair in
+            let exercise = exerciseKey(pair.entry)
+            let count = shown[exercise, default: 0]
+            guard count < rowsPerExercise else { return nil }
+            shown[exercise] = count + 1
+            return pair.entry
+        }
+    }
+
+    /// The bucket's measure, or nil when the set has none (no e1RM above
+    /// 10 reps).
+    private static func measure(_ kind: PRKind, _ entry: SetEntry) -> Double? {
+        switch kind {
+        case .weight: return entry.weight
+        case .reps:   return Double(entry.reps)
+        case .volume: return entry.weight * Double(entry.reps)
+        case .e1RM:   return OneRepMax.estimate(weight: entry.weight, reps: entry.reps)
+        }
+    }
+
+    /// The exercise's catalog name, so one exercise reads the same in every
+    /// row, else the logged name of an exercise no longer in the catalog.
+    static func exerciseName(_ entry: SetEntry) -> String {
+        guard let logged = entry.sessionExercise else { return "" }
+        return logged.exercise?.name ?? logged.displayName
+    }
+
+    /// Breaks a tie on the measure: more reps at the same weight, otherwise
+    /// more weight.
+    private static func tiebreak(_ kind: PRKind, _ entry: SetEntry) -> Double {
+        kind == .weight ? Double(entry.reps) : entry.weight
+    }
+
+    private static func exerciseKey(_ entry: SetEntry) -> String {
+        guard let logged = entry.sessionExercise else { return "" }
+        return logged.exercise?.id.uuidString ?? "name:\(logged.displayName)"
+    }
+
+    private struct SetKey: Hashable {
+        let exercise: String
+        let weight: Double
+        let reps: Int
     }
 }
 

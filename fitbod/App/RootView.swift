@@ -273,6 +273,7 @@ public struct RootView: View {
             MuscleVolumeTargetSeeder.seedIfNeeded(in: modelContext)
             DemoWorkoutSeed.runIfRequested(in: modelContext) // DEBUG-only E2E hook; no-op without the launch argument
             StalledExerciseSeed.runIfRequested(in: modelContext) // DEBUG-only E2E hook; no-op without the launch argument
+            ProgressHistorySeed.runIfRequested(in: modelContext) // DEBUG-only E2E hook; no-op without the launch argument
 
             seedState.phase = .ready
         } catch {

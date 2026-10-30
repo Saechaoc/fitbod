@@ -52,13 +52,14 @@ struct ExerciseProgressViewCopyTests {
         // labels (e1RM, TOP SET, VOLUME, AVG RPE) replaced the prior chip row labels.
         // SeriesKind.displayLabel ("Top set", "All-set avg") continues to exist in
         // SeriesKind.swift as the chart foreground style scale keys.
+        // T13 made the chips single-select, so one series always shows and the
+        // empty-selection copy "Select a series to display." is gone.
         let required: [String] = [
             "Top set",        // SeriesKind.displayLabel — chart scale key
             "All-set avg",    // SeriesKind.displayLabel — chart scale key
             "Not enough data",
             "Log 2 sessions to see your trend.",
             "Sets above 10 reps aren't shown in e1RM.",
-            "Select a series to display.",
             "HYPERTROPHY",    // BRU legend row (replaced "Solid: Strength" pre-BRU)
             "STRENGTH",       // BRU legend row (replaced "Dashed: Hypertrophy" pre-BRU)
         ]

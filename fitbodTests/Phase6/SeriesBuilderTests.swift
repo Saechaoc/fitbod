@@ -3,13 +3,19 @@
 //  fitbodTests
 //
 //  Wave-3 plan 06-05 — pure-function tests for SeriesBuilder.
-//  Five @Test functions:
 //
 //    1. emitsTopSetAndAvgPerSession — 2 points per session w/ usable e1RM
 //    2. excludesWarmupAndIncompleteSets — non-working/incomplete filtered out
 //    3. skipsSessionWhenAllRepsAboveTen — PROG-02 suppression empties session
 //    4. topSetByE1RMTiebreaker — D-05 ordering verified by example
 //    5. allSetAvgIsArithmeticMean — D-06 explicit-mean correctness
+//
+//  T13 (review item 32) — the VOLUME and AVG RPE chips' series:
+//
+//    6. averageRPEIsMeanRPEOfWorkSets — RPE 7, 8 and 9 give 8
+//    7. threeSeriesSkipWarmupsAndBlankRPEs — all three series of one workout
+//    8. volumeSumsLoggedWorkSetsPerWorkout — logged work sets, per workout
+//    9. averageRPESkipsWorkoutsWithoutRPE — no RPE, no point
 //
 //  Hermetic via InMemoryContainer.makeCurrent() — SwiftData @Model
 //  classes need a ModelContext to be valid even when SeriesBuilder
@@ -31,11 +37,13 @@ struct SeriesBuilderTests {
 
     /// Build a single SessionExercise with the provided sets and
     /// return the SessionExercise (parent Session also inserted).
+    /// `rpes[i]`, when present, is the RPE of the i-th set.
     private func makeSessionExercise(
         in ctx: ModelContext,
         startedAt: Date,
         intentRaw: String,
-        sets: [(weight: Double, reps: Int, isWarmup: Bool, isComplete: Bool, setTypeRaw: String)]
+        sets: [(weight: Double, reps: Int, isWarmup: Bool, isComplete: Bool, setTypeRaw: String)],
+        rpes: [Double?] = []
     ) -> SessionExercise {
         let exercise = Exercise(
             name: "Test", canonicalName: "test",
@@ -58,6 +66,7 @@ struct SeriesBuilderTests {
             entry.isWarmup = tup.isWarmup
             entry.isComplete = tup.isComplete
             entry.setTypeRaw = tup.setTypeRaw
+            entry.rpe = i < rpes.count ? rpes[i] : nil
             entry.completedAt = startedAt.addingTimeInterval(Double(i) * 60)
             ctx.insert(entry)
         }
@@ -177,5 +186,105 @@ struct SeriesBuilderTests {
         let e3 = try #require(OneRepMax.estimate(weight: 100, reps: 3))
         let expected = (e1 + e2 + e3) / 3.0
         #expect(abs(avg.e1RM - expected) < 0.001)
+    }
+
+    // MARK: - 6. AVG RPE is the mean RPE (review item 32)
+
+    @Test("averageRPEIsMeanRPEOfWorkSets — work sets at RPE 7, 8 and 9 give 8")
+    func averageRPEIsMeanRPEOfWorkSets() throws {
+        let ctx = try makeContext()
+        let se = makeSessionExercise(
+            in: ctx,
+            startedAt: Date(timeIntervalSince1970: 1_700_000_000),
+            intentRaw: Intent.hypertrophy.rawValue,
+            sets: [
+                (100, 5, false, true, "working"),
+                (100, 5, false, true, "working"),
+                (100, 5, false, true, "working"),
+            ],
+            rpes: [7, 8, 9]
+        )
+        let points = SeriesBuilder.averageRPEPoints(from: [se])
+        #expect(points.count == 1)
+        let point = try #require(points.first)
+        #expect(abs(point.value - 8) < 0.001)
+    }
+
+    // MARK: - 7. All three series skip warm-ups and blank RPEs
+
+    @Test("threeSeriesSkipWarmupsAndBlankRPEs — e1RM, VOLUME and AVG RPE of one workout")
+    func threeSeriesSkipWarmupsAndBlankRPEs() throws {
+        let ctx = try makeContext()
+        let se = makeSessionExercise(
+            in: ctx,
+            startedAt: Date(timeIntervalSince1970: 1_700_000_000),
+            intentRaw: Intent.hypertrophy.rawValue,
+            sets: [
+                (60,  5, true,  true, "warmup"),   // RPE 5 — a warm-up never counts
+                (100, 5, false, true, "working"),  // RPE 8
+                (100, 5, false, true, "working"),  // no RPE — skipped by AVG RPE only
+            ],
+            rpes: [5, 8, nil]
+        )
+        let e1RM = try #require(OneRepMax.estimate(weight: 100, reps: 5))
+        #expect(SeriesBuilder.buildPoints(from: [se]).map(\.e1RM) == [e1RM, e1RM])
+        #expect(SeriesBuilder.volumePoints(from: [se]).map(\.value) == [1000])
+        #expect(SeriesBuilder.averageRPEPoints(from: [se]).map(\.value) == [8])
+    }
+
+    // MARK: - 8. VOLUME reads every logged work set of the workout
+
+    @Test("volumeSumsLoggedWorkSetsPerWorkout — completed non-warm-ups, across the workout")
+    func volumeSumsLoggedWorkSetsPerWorkout() throws {
+        let ctx = try makeContext()
+        let se = makeSessionExercise(
+            in: ctx,
+            startedAt: Date(timeIntervalSince1970: 1_700_000_000),
+            intentRaw: Intent.strength.rawValue,
+            sets: [
+                (100, 5,  false, false, "working"), // excluded — not completed
+                (100, 5,  false, true,  "working"), // 500
+                (70,  12, false, true,  "drop"),    // 840 — a logged work set
+            ]
+        )
+        // The same exercise logged again later in the same workout.
+        let again = SessionExercise()
+        ctx.insert(again)
+        again.session = se.session
+        again.exercise = se.exercise
+        let extra = SetEntry()
+        ctx.insert(extra)
+        extra.sessionExercise = again
+        extra.weight = 90
+        extra.reps = 8
+        extra.isComplete = true
+
+        let points = SeriesBuilder.volumePoints(from: [se, again])
+        #expect(points.map(\.value) == [2060])
+        #expect(points.first?.intent == .strength)
+    }
+
+    // MARK: - 9. AVG RPE leaves out workouts without an RPE
+
+    @Test("averageRPESkipsWorkoutsWithoutRPE — no RPE logged, no point")
+    func averageRPESkipsWorkoutsWithoutRPE() throws {
+        let ctx = try makeContext()
+        let unrated = makeSessionExercise(
+            in: ctx,
+            startedAt: Date(timeIntervalSince1970: 1_700_000_000),
+            intentRaw: Intent.hypertrophy.rawValue,
+            sets: [(100, 5, false, true, "working")]
+        )
+        let rated = makeSessionExercise(
+            in: ctx,
+            startedAt: Date(timeIntervalSince1970: 1_700_604_800),
+            intentRaw: Intent.hypertrophy.rawValue,
+            sets: [(100, 5, false, true, "working")],
+            rpes: [9]
+        )
+        let points = SeriesBuilder.averageRPEPoints(from: [unrated, rated])
+        #expect(points.map(\.value) == [9])
+        #expect(points.first?.date == Date(timeIntervalSince1970: 1_700_604_800))
+        #expect(SeriesBuilder.volumePoints(from: [unrated, rated]).count == 2)
     }
 }
