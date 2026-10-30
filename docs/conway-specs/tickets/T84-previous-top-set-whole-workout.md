@@ -30,12 +30,12 @@ T58 and T72 fixed the same cause in the progress series and the plateau checks.
 
 1. A finished workout that logged the exercise more than once counts once, and its top set is the heaviest working set across all of its logs.
 2. On a tie in weight, the earlier log's set wins.
-3. A workout whose logs have no working set is still skipped, and the walk back still stops after five workouts.
+3. A workout whose logs have no working set is still skipped, and the walk back stops after five workouts, where today it stops after five logs.
 4. Everything else stays as it is: the intent and finished-workout rules, the excluded session, and the hit's fields.
 
 ## Constraints
 
-- Keep `fetchTopWorkingSet`'s signature and `PreviousMatchingIntentHit` as they are; six callers use them.
+- Keep `fetchTopWorkingSet`'s signature and `PreviousMatchingIntentHit` as they are; five callers use them.
 - Do not change the progression strategies or `SessionFactory`.
 
 ## Ownership
