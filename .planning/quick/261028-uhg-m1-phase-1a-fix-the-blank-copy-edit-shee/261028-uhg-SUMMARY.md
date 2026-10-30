@@ -179,7 +179,7 @@ GitNexus is unavailable on this machine, so the file holds `git diff --cached --
 
 - `fitbod/Routines/RoutineBuilderView.swift` (+2), `fitbod/ExerciseLibrary/CustomExerciseEditor.swift` (+2), `fitbod/Periodization/BlockBuilderView.swift` (+8), `fitbod/Periodization/BlockDraft.swift` (+42).
 - New `fitbodUITests/EditorSwipeDismissUITests.swift` and `fitbodTests/BlockDraftSnapshotTests.swift`.
-- Not touched: `PrescriptionEditorRow.swift`, `RoutineDraft.swift`, `BlockNameField.swift`, `BlockPhaseEditorRow.swift`.
+- Not touched by `78625e7`: `PrescriptionEditorRow.swift`, `RoutineDraft.swift`, `BlockNameField.swift`, `BlockPhaseEditorRow.swift` (`RoutineDraft.swift` changed later, in the fix under "After the review").
 
 ### What changed
 
@@ -191,7 +191,7 @@ GitNexus is unavailable on this machine, so the file holds `git diff --cached --
   The builder does not edit `startDate` or `isActive`, so the snapshot leaves them out.
   The builder stores the snapshot in `.task`, after applying any preset chosen before it opened, and `hasUnsavedChanges` compares it with the live snapshot.
 - Each modifier sits on the editor's own root, so every presenter gets the guard with no call-site change.
-  Pickers and sheets that an editor presents keep their own swipe behavior.
+  Pickers and sheets that an editor presents keep their own swipe behavior (checked by the New Block test since the review).
 - A guarded swipe is resisted silently; Cancel and Back keep their dialogs.
 
 ### Editor sheets
@@ -211,7 +211,8 @@ Left alone:
 | Sheet | Reason |
 |---|---|
 | `WorkoutNotesSheet` (`SessionLoggerView.swift:176`), `PinnedNoteSheet` (`SessionLoggerView.swift:180`), `PerSetNoteSheet` (`SetRow.swift:189`) | Decision 4: swipe-down throws the local copy away (covered by `NoteSheetsUITests`). |
-| `NewBlockDurationSheet` (`BlockBuilderView.swift:143`), `NewBlockPhaseEditorSheet` (`BlockBuilderView.swift:1392`), `SupersetAssignmentSheet` (`RoutineBuilderView.swift:192`), `WarmupConfigSheet` (`RoutineBuilderView.swift:203`) | They write to the parent editor's draft as you go; the parent's guard protects whatever its flag tracks (see the first follow-up below). |
+| `NewBlockDurationSheet` (`BlockBuilderView.swift:143`), `NewBlockPhaseEditorSheet` (`BlockBuilderView.swift:1392`), `SupersetAssignmentSheet` (`RoutineBuilderView.swift:192`) | They write to the parent editor's draft as you go, and the parent's guard protects those edits (for the session editor, since the fix in "After the review" below). |
+| `WarmupConfigSheet` (`RoutineBuilderView.swift:203`) | It keeps a local copy of its two toggles: SAVE writes them, and CANCEL and swipe-down throw them away, as its header comment (T-03.2-18) intends, like the note sheets. |
 | `NewFolderSheet`, `MoveRoutineSheet` (`RoutinesListView.swift:155,158`) | No dirty flag, and CANCEL closes without asking. `RoutinesListView`, like `BlockPickerMenu`, has no presenter in the app, only previews. |
 | `AddPlateSheet` (`PlateInventoryEditor.swift:93`) | One text field and no dirty flag; its Cancel closes without asking. |
 | `SettingsView` (`TodayView.swift:314`) and the editors pushed inside it | They write through to the model ("Save inventory" is a documented no-op), so nothing is unsaved. |
@@ -291,10 +292,33 @@ No signature changed, so no caller needed an edit.
   This change stays within 8 lines near the top of the view, and the snapshot code lives in `BlockDraft.swift`.
 - The builder's body now reads every phase's fields through the snapshot, so a phase stepper tap re-evaluates the builder's body.
   The drag reorder from 260610-g9d is unaffected: per-frame drag state stays in the row's `@GestureState`, and `draft.phases` changes once, on drop.
-- Follow-up, needs `RoutineDraft.swift` (owned by the target reps and RPE worker): `RoutineDraft.snapshotHash()` (`RoutineDraft.swift:322-326`) covers only the name, block, intent, progression, exercise count, total set count and exercise ids.
-  Editing an exercise's target reps, RPE, rest, warm-ups, per-set overrides or superset, or reordering exercises added in the same visit, leaves the session editor clean.
-  Neither Back's dialog nor the new swipe guard protects those edits.
+- Fixed after the review (see "After the review"): `RoutineDraft.snapshotHash()` used to cover only the name, block, intent, progression, exercise count, total set count and exercise ids.
+  Editing an exercise's target reps, RPE, rest, warm-ups, per-set overrides or superset, or reordering exercises added in the same visit, left the session editor clean.
+  Neither Back's dialog nor the new swipe guard protected those edits.
 - Follow-up, product decision: New Block's CANCEL and "< PROGRAM" still close without asking; only the swipe is guarded.
   A "Discard changes?" dialog there could reuse `hasUnsavedChanges`.
 - Optional, from the review: a guarded swipe is resisted silently.
   Bridging `UIAdaptivePresentationControllerDelegate.presentationControllerDidAttemptToDismiss` would show the Discard dialog instead.
+
+### After the review
+
+A ponytail review of `0ebd71e..5fb605f` reported three findings and one point it could not check; the user asked for them to be fixed.
+
+| Review point | What changed | Commit |
+|---|---|---|
+| 1, must fix: the session editor's fingerprint (`RoutineDraft.snapshotHash()`) missed most exercise edits, so a swipe-down closed the editor and lost them, and Back closed without asking | The fingerprint now holds every field `save(into:context:)` writes: the session's name, notes, folder, block, intent and progression, and for each exercise in order its row id, catalog exercise, sets, reps, RPE, rest, tempo, tempo and partial-rep tracking, superset, warm-up override and per-set targets. | `6631230` |
+| 2, should fix: this SUMMARY said `WarmupConfigSheet` writes as you go | The row under "Editor sheets" is corrected. | SUMMARY only |
+| 3, nice to have: the note sheet and editor swipe tests each had their own label lookup and sheet drag | Both now use `XCUIElementQuery.labeled(_:)` and `UITestNavigation.dragSheetDown(from:in:)` from the new `fitbodUITests/SheetUITestNavigation.swift`, a separate file because the `undine` branch appends to `UITestNavigation.swift`. | `10d32fd` |
+| Not checked: whether a picker opened from an edited editor still swipes away | The New Block test now opens the routine picker, which has no close button, from an edited builder; a swipe closes it, and the builder stays open. | `10d32fd` |
+
+- Behavior change: in the session editor, Back and Discard now also ask "Discard changes?" after edits that only touch exercise targets; before, they closed and lost those edits.
+- Failing first (Pro Max): the new `RoutineBuilderHeaderPickersTests.snapshotHashRespondsToExerciseEdits` failed all ten cases on the old fingerprint, for example "Editing the rest must count as unsaved" (also reps, RPE, tempo, tempo tracking, partial reps, superset, warm-ups, per-set target and order).
+- After `6631230` (Pro Max): `RoutineBuilderHeaderPickers`, `RoutineDraftValidation`, `RoutineBlockLinkage`, `ProgramViewFidelity`, `RoutineBuilderLiveEdit`, `RoutineBuilderCopy` and `RoutineBuilderBRUCopy` (7 suites, 42 tests), `RoutineBuilderBRUUITests` (2) and `EditorSwipeDismissUITests` (3) pass.
+  The first `EditorSwipeDismissUITests` run failed once before any editor opened: the Today helper found "+ New routine" but never saw it hittable after 12 swipes.
+  `RoutineBuilderBRUUITests` passed through the same helper in that run, and the re-run passed 3 of 3.
+- After `10d32fd`: `EditorSwipeDismissUITests` (3) and `NoteSheetsUITests` (5) pass on the Pro Max and the 17e.
+- No new warnings in the touched files.
+- Merge check with `git merge-tree` (no refs changed): this branch merges cleanly with `main` and with `undine`, which also edits `RoutineDraft.swift` in a separate hunk near `targetRepsHigh`.
+  With `hogfish` the code merges cleanly; its only conflict, in its own `260610-hcv-SUMMARY.md`, already exists between `main` and `hogfish`.
+- Detect files: `261028-uhg-detect-item3-hash.txt` and `261028-uhg-detect-item3-tests.txt`.
+- The Task 3 dispatch had already settled, so these two commits were not reported to the coordinator.

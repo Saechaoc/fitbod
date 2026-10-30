@@ -1,0 +1,16 @@
+Post-review fix 3 and the review's not-checked item (test code only). GitNexus unavailable on this machine - substitute for 'gitnexus detect-changes --scope staged'.
+Risk level (own estimate): low - UI test target only; no app code.
+
+$ git diff --cached --stat
+ fitbodUITests/EditorSwipeDismissUITests.swift | 52 ++++++++++++---------------
+ fitbodUITests/NoteSheetsUITests.swift         | 23 ++++--------
+ fitbodUITests/SheetUITestNavigation.swift     | 22 ++++++++++++
+ 3 files changed, 51 insertions(+), 46 deletions(-)
+
+Changed symbols:
+  added    XCUIElementQuery.labeled(_:), UITestNavigation.dragSheetDown(from:in:) -> fitbodUITests/SheetUITestNavigation.swift
+  removed  NoteSheetsUITests.element(_:_:) (calls now use labeled; the swipe step uses dragSheetDown) -> fitbodUITests/NoteSheetsUITests.swift
+  removed  EditorSwipeDismissUITests.element(_:_:), EditorSwipeDismissUITests.swipeDown(from:in:) -> fitbodUITests/EditorSwipeDismissUITests.swift
+  modified EditorSwipeDismissUITests.testNewBlockBuilderResistsSwipeDownOnlyWithUnsavedEdits (an edited builder's routine picker still swipes away) -> fitbodUITests/EditorSwipeDismissUITests.swift
+
+Why a new file: the undine branch appends to UITestNavigation.swift; a separate extension file (like WorkoutUITestNavigation.swift) avoids a merge conflict.
