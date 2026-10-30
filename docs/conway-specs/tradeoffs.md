@@ -223,6 +223,17 @@ Product decisions are in [decisions.md](decisions.md), and they win over this fi
 - Rejected: the dash, which reads as missing data, most often in a block's first week.
 - Rejected: the phase and the arrow together, which do not fit a third of the 390pt phone at default text.
 
+### Progress chart chips
+
+- Coordinator answer, 2026-10-30 (T13 question `msg_ba0f59859f56`): the chart's chips are single-select, as in `bru-screens/progress-chart.jsx`, with E1RM selected by default, because e1RM, volume and RPE cannot share a Y axis.
+  E1RM keeps today's two e1RM lines, the top set and the all-set average, and TOP SET keeps its meaning, the top-set e1RM line alone.
+  VOLUME is weight times reps summed over logged work sets per workout, and AVG RPE is the mean RPE of the logged work sets that have one.
+
+### PR list
+
+- Coordinator answer, 2026-10-30 (T13 question `msg_ba0f59859f56`): each bucket is one list ranked across exercises by the bucket's measure, with at most three rows per exercise, and each row names its exercise (T13 changes 1 and 2).
+  The same exercise, weight and reps count as one set, dated when it was first logged, as `PRDetector` breaks ties.
+
 ## Export and backup
 
 ### One-tap share
