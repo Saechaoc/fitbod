@@ -571,7 +571,7 @@ private struct ProgressEntryRow: View {
 /// The last five finished workouts that included this exercise: date,
 /// best working set and working-set count. This is the "previous
 /// performance" a lifter checks before choosing today's load.
-private struct RecentPerformanceList: View {
+struct RecentPerformanceList: View {
     let unitLabel: String
     @Query private var logged: [SessionExercise]
 
@@ -589,20 +589,39 @@ private struct RecentPerformanceList: View {
         let workingSets: Int
     }
 
-    private var entries: [Entry] {
-        logged.compactMap { item -> Entry? in
+    /// One entry per finished workout, newest first, at most five. An
+    /// entry reads the working sets of every log of the exercise in its
+    /// workout: in log order, then set order (`orderIndex` both times),
+    /// whatever order SwiftData returns them in. `max(by:)` keeps the
+    /// first of equal elements, so the earlier set wins a tie for the
+    /// best set.
+    static func entries(from logged: [SessionExercise]) -> [Entry] {
+        let finishedLogs = logged.compactMap { item -> (session: Session, log: SessionExercise)? in
             guard let session = item.session, session.completedAt != nil else { return nil }
-            let working = (item.sets ?? []).filter { $0.isComplete && !$0.isWarmup }
-            guard let best = working.max(by: { ($0.weight, $0.reps) < ($1.weight, $1.reps) }) else { return nil }
-            return Entry(id: item.id, date: session.startedAt, best: best, workingSets: working.count)
+            return (session, item)
         }
-        .sorted { $0.date > $1.date }
-        .prefix(5)
-        .map { $0 }
+        return Dictionary(grouping: finishedLogs) { $0.session.id }
+            .values
+            .compactMap { pairs -> Entry? in
+                guard let session = pairs.first?.session else { return nil }
+                let working = pairs
+                    .map(\.log)
+                    .sorted { $0.orderIndex < $1.orderIndex }
+                    .flatMap { log in
+                        (log.sets ?? [])
+                            .filter { $0.isComplete && !$0.isWarmup }
+                            .sorted { $0.orderIndex < $1.orderIndex }
+                    }
+                guard let best = working.max(by: { ($0.weight, $0.reps) < ($1.weight, $1.reps) }) else { return nil }
+                return Entry(id: session.id, date: session.startedAt, best: best, workingSets: working.count)
+            }
+            .sorted { $0.date > $1.date }
+            .prefix(5)
+            .map { $0 }
     }
 
     var body: some View {
-        let entries = entries
+        let entries = Self.entries(from: logged)
         BRUSectionHead("Recent performance", right: entries.isEmpty ? nil : "Best set")
         if entries.isEmpty {
             Text("Not logged yet. Your best set from each workout will show here.")

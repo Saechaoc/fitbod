@@ -123,8 +123,10 @@ private struct FlexWrap<Item: Hashable, Content: View>: View {
         return VStack(alignment: .leading, spacing: 4) {
             ForEach(rows.indices, id: \.self) { rowIndex in
                 HStack(spacing: 4) {
-                    ForEach(rows[rowIndex], id: \.self) { item in
-                        content(item)
+                    // A chip's id is its place in the row, so repeated
+                    // chips, such as three sets of 100×5 @8, all show.
+                    ForEach(rows[rowIndex].indices, id: \.self) { index in
+                        content(rows[rowIndex][index])
                     }
                 }
             }

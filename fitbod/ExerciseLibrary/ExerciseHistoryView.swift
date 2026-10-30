@@ -194,7 +194,7 @@ private struct FilteredHistoryContent: View {
         if completed.isEmpty {
             emptyState
         } else {
-            ForEach(grouped, id: \.dateKey) { group in
+            ForEach(grouped) { group in
                 Section {
                     ForEach(group.entries) { entry in
                         ExerciseHistoryRow(entry: entry)
@@ -356,15 +356,20 @@ private struct FilteredHistoryContent: View {
 
 extension ExerciseHistoryView {
 
-    struct DateGroup {
+    /// One workout's row. Its id is the workout's, so two workouts on one
+    /// day are two rows.
+    struct DateGroup: Identifiable {
+        let id: UUID
         let dateKey: String
         let dateLabel: String
+        let startedAt: Date
         let entries: [HistoryEntry]
     }
 
-    /// One row per workout, newest date first, from the completed working
-    /// sets the history shows. A row reads every log of the exercise in its
-    /// workout, so its top set, e1RM, set count and chips cover all of them.
+    /// One row per workout, newest date first and, on one date, newest
+    /// workout first, from the completed working sets the history shows.
+    /// A row reads every log of the exercise in its workout, so its top
+    /// set, e1RM, set count and chips cover all of them.
     static func groupedByDate(
         from sets: [(setEntry: SetEntry, sessionExercise: SessionExercise)]
     ) -> [DateGroup] {
@@ -444,9 +449,15 @@ extension ExerciseHistoryView {
                     setCount: allSetsForSession.count,
                     setChips: chips
                 )
-                return DateGroup(dateKey: dateKey, dateLabel: dateLabel, entries: [entry])
+                return DateGroup(
+                    id: session.id,
+                    dateKey: dateKey,
+                    dateLabel: dateLabel,
+                    startedAt: date,
+                    entries: [entry]
+                )
             }
-            .sorted { $0.dateKey > $1.dateKey }
+            .sorted { ($0.dateKey, $0.startedAt) > ($1.dateKey, $1.startedAt) }
     }
 
     private static func formatDateLabel(_ date: Date) -> String {
