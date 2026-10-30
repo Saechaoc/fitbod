@@ -134,7 +134,7 @@ private struct FilteredHistoryContent: View {
         let countsByIntent = buildCounts()
         let totalCount = completed.count
         let sessionCount = Set(sessionExercises.compactMap { $0.session?.id }).count
-        let grouped = groupedByDate(from: completed)
+        let grouped = ExerciseHistoryView.groupedByDate(from: completed)
         let prFooter = prStats(from: completed)
 
         // Inform outer view of history count so it can show/hide PROGRESS affordance
@@ -276,15 +276,96 @@ private struct FilteredHistoryContent: View {
         return counts
     }
 
-    // MARK: - Date grouping
+    // MARK: - PR footer stats
 
-    private struct DateGroup {
+    private struct PRStats {
+        let topWeight: String
+        let topReps: String
+        let volPR: String
+    }
+
+    private func prStats(
+        from sets: [(setEntry: SetEntry, sessionExercise: SessionExercise)]
+    ) -> PRStats {
+        let allSets = sets.map { $0.setEntry }
+        let topWeight = allSets.max(by: { $0.weight < $1.weight })
+        let topReps = allSets.max(by: { $0.reps < $1.reps })
+
+        let topWeightLabel: String
+        if let tw = topWeight {
+            topWeightLabel = tw.weight.truncatingRemainder(dividingBy: 1) == 0
+                ? "\(Int(tw.weight))"
+                : String(format: "%.1f", tw.weight)
+        } else {
+            topWeightLabel = "—"
+        }
+
+        let topRepsLabel = topReps.map { "\($0.reps)" } ?? "—"
+
+        // Volume PR = session with highest total volume
+        let bySession = Dictionary(grouping: sets) { $0.sessionExercise.session?.id }
+        let sessionVols = bySession.values.map { pairs in
+            pairs.reduce(0.0) { $0 + $1.setEntry.weight * Double($1.setEntry.reps) }
+        }
+        let maxVol = sessionVols.max() ?? 0
+        let volLabel: String
+        if maxVol >= 1000 {
+            volLabel = String(format: "%.1fk", maxVol / 1000)
+        } else if maxVol > 0 {
+            volLabel = "\(Int(maxVol))"
+        } else {
+            volLabel = "—"
+        }
+
+        return PRStats(topWeight: topWeightLabel, topReps: topRepsLabel, volPR: volLabel)
+    }
+
+    // MARK: - Empty state
+
+    @ViewBuilder private var emptyState: some View {
+        VStack(spacing: 16) {
+            Spacer().frame(height: 48)
+            if intentFilter == nil {
+                Text("No logged sets yet")              // UI-SPEC verbatim
+                    .font(BRUFont.displayMedium)
+                    .foregroundStyle(Color.bruInk)
+                Text("Log this exercise in a workout to see history.")  // UI-SPEC verbatim
+                    .font(BRUFont.bodyDefault)
+                    .foregroundStyle(Color.bruMuted)
+                    .multilineTextAlignment(.center)
+            } else {
+                Text("No \(intentFilter!.rawValue.capitalized) sets")   // UI-SPEC verbatim format
+                    .font(BRUFont.displayMedium)
+                    .foregroundStyle(Color.bruInk)
+                Text("Try a different intent filter.")                   // UI-SPEC verbatim
+                    .font(BRUFont.bodyDefault)
+                    .foregroundStyle(Color.bruMuted)
+                    .multilineTextAlignment(.center)
+                BRUButton("SHOW ALL", kind: .signal, size: .md) {       // UI-SPEC verbatim
+                    intentFilter = nil
+                }
+            }
+            Spacer()
+        }
+        .padding(.horizontal, 32)
+        .frame(maxWidth: .infinity)
+    }
+}
+
+// MARK: - Date grouping
+
+extension ExerciseHistoryView {
+
+    struct DateGroup {
         let dateKey: String
         let dateLabel: String
         let entries: [HistoryEntry]
     }
 
-    private func groupedByDate(
+    /// One row per workout, newest date first, from the completed working
+    /// sets the history shows. A row reads every log of the exercise in its
+    /// workout, so its top set, e1RM, set count and chips cover all of them.
+    static func groupedByDate(
         from sets: [(setEntry: SetEntry, sessionExercise: SessionExercise)]
     ) -> [DateGroup] {
         // Group by session identity (same session = same date group)
@@ -303,10 +384,17 @@ private struct FilteredHistoryContent: View {
                 let dateLabel = Self.formatDateLabel(date)
                 let intent = session.intent
 
-                // All working sets for this session
-                let allSetsForSession = (firstPair.sessionExercise.sets ?? [])
-                    .filter { $0.isComplete && !$0.isWarmup }
-                    .sorted { $0.orderIndex < $1.orderIndex }
+                // All working sets for this session, across every log of the
+                // exercise in it: in log order, then set order (`orderIndex`
+                // both times), whatever order SwiftData returns them in.
+                // `max(by:)` keeps the first of equal elements, so the
+                // earlier set wins a tie for the top set.
+                let allSetsForSession = pairs
+                    .sorted {
+                        ($0.sessionExercise.orderIndex, $0.setEntry.orderIndex)
+                            < ($1.sessionExercise.orderIndex, $1.setEntry.orderIndex)
+                    }
+                    .map(\.setEntry)
 
                 let topSet = allSetsForSession.max(by: {
                     $0.weight * Double($0.reps) < $1.weight * Double($1.reps)
@@ -383,81 +471,6 @@ private struct FilteredHistoryContent: View {
         case .endurance:   return "END"
         case .technique:   return "TECH"
         }
-    }
-
-    // MARK: - PR footer stats
-
-    private struct PRStats {
-        let topWeight: String
-        let topReps: String
-        let volPR: String
-    }
-
-    private func prStats(
-        from sets: [(setEntry: SetEntry, sessionExercise: SessionExercise)]
-    ) -> PRStats {
-        let allSets = sets.map { $0.setEntry }
-        let topWeight = allSets.max(by: { $0.weight < $1.weight })
-        let topReps = allSets.max(by: { $0.reps < $1.reps })
-
-        let topWeightLabel: String
-        if let tw = topWeight {
-            topWeightLabel = tw.weight.truncatingRemainder(dividingBy: 1) == 0
-                ? "\(Int(tw.weight))"
-                : String(format: "%.1f", tw.weight)
-        } else {
-            topWeightLabel = "—"
-        }
-
-        let topRepsLabel = topReps.map { "\($0.reps)" } ?? "—"
-
-        // Volume PR = session with highest total volume
-        let bySession = Dictionary(grouping: sets) { $0.sessionExercise.session?.id }
-        let sessionVols = bySession.values.map { pairs in
-            pairs.reduce(0.0) { $0 + $1.setEntry.weight * Double($1.setEntry.reps) }
-        }
-        let maxVol = sessionVols.max() ?? 0
-        let volLabel: String
-        if maxVol >= 1000 {
-            volLabel = String(format: "%.1fk", maxVol / 1000)
-        } else if maxVol > 0 {
-            volLabel = "\(Int(maxVol))"
-        } else {
-            volLabel = "—"
-        }
-
-        return PRStats(topWeight: topWeightLabel, topReps: topRepsLabel, volPR: volLabel)
-    }
-
-    // MARK: - Empty state
-
-    @ViewBuilder private var emptyState: some View {
-        VStack(spacing: 16) {
-            Spacer().frame(height: 48)
-            if intentFilter == nil {
-                Text("No logged sets yet")              // UI-SPEC verbatim
-                    .font(BRUFont.displayMedium)
-                    .foregroundStyle(Color.bruInk)
-                Text("Log this exercise in a workout to see history.")  // UI-SPEC verbatim
-                    .font(BRUFont.bodyDefault)
-                    .foregroundStyle(Color.bruMuted)
-                    .multilineTextAlignment(.center)
-            } else {
-                Text("No \(intentFilter!.rawValue.capitalized) sets")   // UI-SPEC verbatim format
-                    .font(BRUFont.displayMedium)
-                    .foregroundStyle(Color.bruInk)
-                Text("Try a different intent filter.")                   // UI-SPEC verbatim
-                    .font(BRUFont.bodyDefault)
-                    .foregroundStyle(Color.bruMuted)
-                    .multilineTextAlignment(.center)
-                BRUButton("SHOW ALL", kind: .signal, size: .md) {       // UI-SPEC verbatim
-                    intentFilter = nil
-                }
-            }
-            Spacer()
-        }
-        .padding(.horizontal, 32)
-        .frame(maxWidth: .infinity)
     }
 }
 

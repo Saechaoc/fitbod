@@ -204,7 +204,7 @@ public enum PlateauDetector {
 
     /// One session's top set: the e1RM it ranks by, plus the load and RPE
     /// the RPE-creep check reads.
-    private typealias TopSet = (e1RM: Double, weight: Double, rpe: Double?)
+    typealias TopSet = (e1RM: Double, weight: Double, rpe: Double?)
 
     /// The exercise's logs in each FINISHED session (`completedAt != nil`)
     /// of `intent`, newest session first, each session's logs in workout
@@ -250,13 +250,15 @@ public enum PlateauDetector {
     /// The top set across one session's logs of the exercise. The "top" set
     /// is the working set with the highest OneRepMaxEstimator output
     /// (NOT necessarily the heaviest weight — high-reps-at-lower-weight
-    /// can produce a higher e1RM via Epley). On a tie the first set read
-    /// wins, and the logs are read in workout order. Returns nil if no
-    /// working set has a defined e1RM (all sets suppressed at >10 reps).
-    private static func topSet(in logs: [SessionExercise]) -> TopSet? {
+    /// can produce a higher e1RM via Epley). The logs are read in workout
+    /// order and each log's sets in set order (`orderIndex` both times),
+    /// whatever order they come in, so on a tie in e1RM the earlier set
+    /// wins. Returns nil if no working set has a defined e1RM (all sets
+    /// suppressed at >10 reps).
+    static func topSet(in logs: [SessionExercise]) -> TopSet? {
         var best: TopSet? = nil
-        for se in logs {
-            for set in (se.sets ?? []) {
+        for se in logs.sorted(by: { $0.orderIndex < $1.orderIndex }) {
+            for set in (se.sets ?? []).sorted(by: { $0.orderIndex < $1.orderIndex }) {
                 guard set.isComplete, !set.isWarmup, set.reps > 0 else { continue }
                 guard workingKinds.contains(set.setTypeRaw) else { continue }
                 guard let e = OneRepMaxEstimator.estimate(weight: set.weight, reps: set.reps) else { continue }
