@@ -126,7 +126,7 @@ final class NewBlockSavesUITests: XCTestCase {
         expectBottomAction("SAVE AS READY", enabled: true, in: app)
 
         let fixedWeekly = app.buttons.labeled("FIXED WEEKLY scheduling")
-        UITestNavigation.reveal(fixedWeekly, in: app)
+        revealAboveBottomBar(fixedWeekly, in: app)
         fixedWeekly.tap()
         expectBottomAction("PICK 2 DAYS", enabled: false, in: app)
         UITestNavigation.saveScreenshot("T11", "new-block-pick-2-days")
@@ -250,7 +250,7 @@ final class NewBlockSavesUITests: XCTestCase {
         file: StaticString = #filePath, line: UInt = #line
     ) {
         let open = app.buttons.labeled(control)
-        UITestNavigation.reveal(open, in: app)
+        revealAboveBottomBar(open, in: app, file: file, line: line)
         open.tap()
         let picker = app.staticTexts.labeled("Choose Routine")
         XCTAssertTrue(picker.waitForExistence(timeout: 5), "\(control) must open the routine picker", file: file, line: line)
@@ -265,9 +265,30 @@ final class NewBlockSavesUITests: XCTestCase {
         let day = app.descendants(matching: .any)
             .matching(NSPredicate(format: "label == %@ AND (value == 'on' OR value == 'off')", weekday)).firstMatch
         XCTAssertTrue(day.waitForExistence(timeout: 5), "Missing the \(weekday) chip", file: file, line: line)
-        UITestNavigation.reveal(day, in: app)
+        revealAboveBottomBar(day, in: app, file: file, line: line)
         day.tap()
-        XCTAssertEqual(day.value as? String, "on", "\(weekday) must turn on", file: file, line: line)
+        let on = XCTNSPredicateExpectation(predicate: NSPredicate(format: "value == 'on'"), object: day)
+        XCTAssertEqual(XCTWaiter().wait(for: [on], timeout: 3), .completed, "\(weekday) must turn on", file: file, line: line)
+    }
+
+    /// Scrolls New Block until `element` sits above its bottom bar. The bar
+    /// covers the end of the scroll view, where a tap reaches the bar.
+    @MainActor
+    private func revealAboveBottomBar(
+        _ element: XCUIElement, in app: XCUIApplication,
+        file: StaticString = #filePath, line: UInt = #line
+    ) {
+        // The bar's 52pt buttons sit 24pt below its top edge; CANCEL's frame is its text.
+        let barTop = hittable(app.buttons, "Cancel", file: file, line: line).frame.midY - 50
+        for _ in 0..<8 {
+            if element.exists && element.isHittable && element.frame.maxY < barTop { return }
+            if let scroll = app.scrollViews.allElementsBoundByIndex.last(where: { $0.isHittable }) {
+                scroll.swipeUp(velocity: .slow)
+            } else {
+                app.swipeUp(velocity: .slow)
+            }
+        }
+        XCTAssertLessThan(element.frame.maxY, barTop, "\(element) must scroll above the bottom bar", file: file, line: line)
     }
 
     /// The builder's only text field. Its placeholder "NAME YOUR BLOCK" is
@@ -286,13 +307,15 @@ final class NewBlockSavesUITests: XCTestCase {
         return saves.allElementsBoundByIndex.min { $0.frame.minY < $1.frame.minY } ?? saves.firstMatch
     }
 
-    /// The bottom bar's primary action: the button to the right of CANCEL
-    /// whose frame spans CANCEL's middle. Its frame is taller than CANCEL's.
+    /// The bottom bar's primary action: the tappable button to the right of
+    /// CANCEL whose frame spans CANCEL's middle. Its frame is taller than
+    /// CANCEL's, and the tab bar under New Block shares the band.
     @MainActor
     private func bottomAction(in app: XCUIApplication, file: StaticString = #filePath, line: UInt = #line) -> XCUIElement {
         let cancel = hittable(app.buttons, "Cancel", file: file, line: line).frame
         let action = app.buttons.allElementsBoundByIndex
             .filter { $0.frame.minY < cancel.midY && $0.frame.maxY > cancel.midY && $0.frame.minX > cancel.maxX }
+            .filter(\.isHittable)
             .min { $0.frame.minX < $1.frame.minX }
         XCTAssertNotNil(action, "New Block has no action beside CANCEL", file: file, line: line)
         return action ?? app.buttons.labeled("Cancel")
