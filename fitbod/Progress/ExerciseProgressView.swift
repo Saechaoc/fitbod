@@ -421,6 +421,9 @@ private struct ProgressChartHost: View {
             .frame(minHeight: 240)
             .accessibilityLabel(metric.chartName)
             .accessibilityIdentifier("progress.chart")
+            // A new chart per chip: morphing marks between e1RM, volume
+            // and RPE scales gives SwiftUI non-finite frames mid-animation.
+            .id(metric)
             .padding(.horizontal, 16)
             .padding(.top, 12)
 
