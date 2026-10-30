@@ -186,7 +186,98 @@ No new build warnings; the only warning is the existing `BlockBuilderView.swift:
   Its conditions are met: 44x44 with no overlap (6pt gap to the first chip, own line below the done button), the "Why this weight" action stays on the weight cell, WHY stays visible and tappable at AX3 (above), and `SetRowWhyLayoutTests` checks DROP, FAIL and W-UP rows at 358pt.
 - The sheet's hero still shows "×—" and "@—": `PrescriptionWeightCell` never passed reps or RPE to `WhyThisWeightSheet` (pre-existing, outside this task).
 - Focusing a set's reps or weight field scrolls that row under the fixed workout header (in the failure hierarchy, set 1's row sat at y 53-171 under a header ending at y 180). This is pre-existing keyboard avoidance in the logger; the journey test's own reveal works around it.
-- A working set's `SetTypeChip` label is `EmptyView`, so the logger has no way to give a working set a type; the layout test builds typed sets in code.
+- A working set's `SetTypeChip` label is `EmptyView`, so its type changed only through the set-type menu, which opened on a hold anywhere in the set row; since `c25645e` (T49, below) the set label opens that menu. The layout test builds typed sets in code.
 - On iOS 26 the share sheet is a card that closes on a tap outside it (`PopoverDismissRegion`); it has no Close button.
 - The UI tests close the share sheet without sharing, so they never make the items render; `ExportShareItemsTests` covers rendering. The backup is still written to the Documents directory, as before.
 - Both simulators are left at the default text size (`large`) and light appearance.
+
+## Follow-up after review: holding an RPE chip in the session editor
+
+A review of `48e09ca..HEAD` found five problems. The user asked to fix the first and log the rest. The other four, plus one found while fixing the first, are in `.planning/backlog/phase-1b-review-follow-ups.md`.
+
+| Finding | Commit | Message |
+|---|---|---|
+| 1 | `c35e0eb` | fix(routines): holding an RPE chip in the session editor sets a decimal target |
+
+- **Problem:** after item 6, a target such as 8.5 comes only from holding an RPE chip. In the open editor that hold opened the exercise card's menu instead, because the card's `.contextMenu` covered the whole card.
+- **Second cause, found while fixing:** with the menu moved, the hold still did nothing. `InlineRPEChipRow` put `.onLongPressGesture` on a `Button`, which swallows it, so the decimal picker never opened anywhere, the logger included.
+- **Fix:** the card's menu now opens from the title row only (the tap-to-expand area is unchanged), and each chip watches the hold with `.simultaneousGesture(LongPressGesture(minimumDuration: 0.5))`. The source anchors in `SessionLoggerCopyTests.verbatimCopy` and `SessionLoggerBRUCopyTests.inlineRPEChipRowExposesFiveValues` follow.
+- **Test:** `PrescriptionEditorUITests/testHoldingAnRPEChipSetsADecimalTarget`: holding the title opens the card menu, holding "RPE 8" opens the wheel, and 8.5 then Done shows "RPE 8.5".
+- **Failing first (Pro Max):** `PrescriptionEditorUITests.swift:96`, "Holding an RPE chip must open the decimal picker", with the card menu (Edit prescription / Edit warm-up… / Duplicate exercise / Remove) in the failure hierarchy. With only the menu moved, the same line failed with no menu and no picker.
+- **Logger, unchanged at `c35e0eb` (fixed in `c25645e`, T49 below):** holding an RPE chip in the logger opens the set-type menu for the whole set row, because `SetTypeChip`'s `.contextMenu` sits in a `List` row. A logger test of the hold failed for that reason and was not kept. A throwaway check found no stray picker after closing that menu, after tapping a chip, or after choosing a menu item.
+- **Results, Pro Max** (branch rebased on `main` `9be17d6`): `PrescriptionEditorUITests` 3/3, `RoutineBuilderBRUUITests` 2/2, `SessionLoggerBRUUITests` 3/3, `MilestoneOneJourneyUITests` 3/3, `WorkoutLoggerJourneyUITests` 6/6, `NoteSheetsUITests` 5/5, `EditorSwipeDismissUITests` 3/3, and 34 unit tests in 5 suites (`SessionLoggerCopyTests`, `SessionLoggerBRUCopyTests`, `RoutineBuilderBRUCopyTests`, `BRUGrepAuditTests`, `Phase3BRUGrepAuditTests`).
+- **Results, 17e:** `PrescriptionEditorUITests` 3/3, `MilestoneOneJourneyUITests` 3/3, `RoutineBuilderBRUUITests` 2/2, `SessionLoggerBRUUITests` 3/3. The idle flake hit twice, each time right after a tap on the exercise picker's search field and before any changed view was on screen; after a reboot the stalled tests passed. No new build warnings.
+- **Impact (GitNexus unavailable - manual caller check):** `RoutineExerciseCard`: `RoutineBuilderView.swift:451` and previews, LOW. `InlineRPEChipRow`: `SetRow.swift:233` (every logger row), `PrescriptionEditorRow.swift:174` and previews, MEDIUM. Detect file: `261029-a9s-detect-review1.txt`.
+
+## T49: holding an RPE chip opens the decimal picker, in the editor and the logger
+
+The user asked this worktree to own conway ticket T49 (`docs/conway-specs/tickets/T49-rpe-chip-hold-opens-decimal-picker.md`, added on `main` in `815e3f6`), and to fix the three findings of a second review of `d936b32..c35e0eb`. T49 also covers backlog item 5. Nothing under `docs/conway-specs/` was edited, and `undine` was not rebased, merged or pushed.
+
+| Commit | Message |
+|---|---|
+| `c35e0eb` | fix(routines): holding an RPE chip in the session editor sets a decimal target (see above) |
+| `c25645e` | fix(sessions): hold an RPE chip for a half step in the logger and the editor |
+
+### T49 coverage
+
+| T49 | Status | How |
+|---|---|---|
+| Change 1: a hold opens the picker with that chip's value, in the editor and the logger | Done | Chip hold (`c35e0eb`); picker starts at the held value; set-type menus no longer take the hold (`c25645e`) |
+| Change 2: the picked value is written | Done | Done writes the target in the editor and the set's RPE in the logger; Cancel and a swipe-down write nothing |
+| Change 3: the card's menu opens from the title row with the same items, not inside the open editor | Done | `RoutineExerciseCard` (`c35e0eb`) |
+| Change 4: a stored half step shows as itself on screen and to VoiceOver | Done | Its own selected chip "8.5", label "RPE 8.5", selected trait; chip 8 is not selected |
+| Change 5: a tap sets a whole number; NO TARGET clears | Done | Unchanged; the tap is ignored only while a hold's picker is up |
+| Repro 1, editor hold | Passes | `PrescriptionEditorUITests/testHoldingAnRPEChipSetsADecimalTarget` |
+| Repro 2, logger hold | Passes | `RPEDecimalHoldUITests/testHoldingAnRPEChipInTheLoggerSetsAHalfStep` |
+| Repro 3, 8.5 survives reopening, chip 8 not selected | Passes | `PrescriptionEditorUITests/testAHalfStepTargetSurvivesReopeningAsItsOwnChip` |
+| Card menu from the title row; Remove works | Passes | End of `testHoldingAnRPEChipSetsADecimalTarget` |
+| `PrescriptionEditorUITests`, `SessionLoggerBRUUITests`, `WorkoutLoggerJourneyUITests` on both phones | Pass | Results below |
+| `fitbodTests` | Passes | Both phones |
+| Screenshots of the open picker in the editor and the logger, default text, both phones | Saved | `screens/` in this folder, not the ticket's evidence folder, because `docs/conway-specs/` was off limits |
+
+### What changed
+
+- **Chip row** (`InlineRPEChipRow`): the hold opens the picker at the held value. The chip's tap also fires when a hold ends; it is now ignored while the hold's picker is up, so a hold alone never picks the chip. A stored value that is not a whole number, such as 8.5, gets its own selected chip between 8 and 9, and selection compares exact values, so chip 8 is no longer selected for 8.5. Selected chips, including NO TARGET, carry the selected trait for VoiceOver.
+- **Picker** (`DecimalRPEPickerSheet`, now `init(initial:onDone:)`): the wheel keeps its own value. Done hands it to `onDone`; Cancel and a swipe-down drop it. The start value snaps to the wheel's half steps, so an old typed target such as 7.8 still opens on a wheel value.
+- **Set-type chip** (`SetTypeChip`): a `Menu` with tap-to-cycle as its primary action replaces the `.contextMenu`. In a `List` row a context menu takes a hold anywhere in the row, which is why the logger's RPE hold opened the set-type menu. A tap still cycles, and a hold opens the same five items, now built from one list (`SetTypeMenuItems`).
+- **Set label** (`SetRow`): a working set shows no set-type chip, so the row-wide hold was its only way to get a type. The set label (S1) now opens the same menu on a tap. Its target is 44pt wide over the 32pt column, using negative padding so nothing moves. VoiceOver reads "Set 1 type", with the type as its value.
+- **Tests**: `PrescriptionEditorUITests` extends the hold test (title-row menu, Cancel keeps the target, the picker starts at the held number, a hold alone picks nothing, Done saves 8.5 as its own chip, Remove) and adds the reopening test. The new `RPEDecimalHoldUITests` has the logger hold and `testSetTypeMenusLeaveTheRPEChipHoldFree`: the set label types a working set, a tap on the chip still cycles, the RPE hold still opens the picker on a typed set, and a hold on the chip opens its menu. `UITestNavigation.tapPickerButton` is shared. The source anchors in `SessionLoggerCopyTests.verbatimCopy` and `SessionLoggerBRUCopyTests.inlineRPEChipRowExposesFiveValues` now require `simultaneousGesture(LongPressGesture(minimumDuration: 0.5)`, so the old `.onLongPressGesture` fails them.
+
+### Failing first (Pro Max; line numbers are from the test file at the time of each run)
+
+- Cancel, at `c35e0eb`: `PrescriptionEditorUITests.swift:93`, "Cancel must keep the old target". After Cancel the target read "RPE 8.5".
+- The tap that ends a hold, with only the picker fix: `PrescriptionEditorUITests.swift:98`, "A hold alone must not pick the chip". Holding 9 and tapping Cancel left "RPE 9".
+- T49 repro 3, at `c35e0eb`: `PrescriptionEditorUITests.swift:165`, "The half step must show as its own chip". After reopening, "RPE 8.5" showed only in the summary, next to chips 6 to 10.
+- T49 repro 2, at `c35e0eb`: `RPEDecimalHoldUITests.swift:22`, "Holding an RPE chip in the logger must open the decimal picker". The set-type menu (Working, Warm-up, Drop Set, To Failure, Rest-Pause) opened instead.
+- T49 repro 1: before `c35e0eb`, `PrescriptionEditorUITests.swift:96` failed with the card's menu on screen (see the follow-up above).
+
+### Results at `c25645e`
+
+- **Pro Max:** `fitbodTests` 989 tests in 161 suites passed with 1 known issue (the expected `ProgramGraphDeleteRuleBehaviorTests` one). 37 UI tests in 13 suites passed: `EditorSwipeDismissUITests` 3, `MilestoneOneJourneyUITests` 3, `NoteSheetsUITests` 5, `PrescriptionEditorUITests` 4, `PrescriptionWeightCellBRUUITests` 1, `RPEDecimalHoldUITests` 2, `RoutineBuilderBRUUITests` 2, `SessionLoggerBRUUITests` 3, `SkipWarmupsUITests` 1, `WhyThisWeightControlUITests` 3, `WhyThisWeightSheetBRUUITests` 3, `WorkoutLoggerJourneyUITests` 6, `WorkoutSwapJourneyUITests` 1. The first run hung at the exercise picker's search field in `testHoldingAnRPEChipSetsADecimalTarget` (60 s per step, before any changed view was on screen). After a reboot, a second run passed every test the first had not reached.
+- **17e:** one run, with no hang. `fitbodTests` 989 tests in 161 suites passed with the same 1 known issue, and the same 37 UI tests passed.
+- The app and the widget (`FitbodWidgetsExtension`) build. The only warning is the existing `BlockBuilderView.swift:744`.
+- After the runs, a comment-only edit in `SetRow.swift` went into the commit; its build and 27 source-reading tests passed again on the Pro Max.
+- Merge check: `git merge-tree --write-tree main c25645e`, with `main` at `d806fe2`, reports no conflicts. The code `main` gained since `5b9be27` reads set RPE as `Double?`, so half steps suit it.
+
+### Screens (default text, light)
+
+- `screens/t49-editor-picker-promax.png`, `screens/t49-editor-picker-17e.png`: the session editor after holding 9 while the target is 8. The wheel starts at 9.0 and the summary still reads RPE 8.
+- `screens/t49-logger-picker-promax.png`, `screens/t49-logger-picker-17e.png`: the workout logger after holding set 1's 8. The wheel starts at 8.0.
+- `screens/t49-logger-half-step-promax.png`, `screens/t49-logger-half-step-17e.png`: set 1 after Done with 8.5. The chips read 6 7 8 8.5 9 10, with only 8.5 selected; at 390pt all six still fit on WHY's line.
+- `screens/t49-editor-half-step-promax.png`, `screens/t49-editor-half-step-17e.png`: the reopened session. RPE 8.5 shows in the summary and on every set row (@8.5), and the target row has a selected 8.5 chip. The "•••" where the exercise number should be is T29's existing issue.
+
+### Second review of `d936b32..c35e0eb`
+
+1. Cancel in the picker did not cancel: fixed in `c25645e`. Fixing it also answered that review's "Not checked" question: the chip's tap does fire when a hold ends. It is now ignored while the hold's picker is up.
+2. The hand-off did not say that the target RPE control differs from T06's plan. T49 now records that T06 is skipped and the editor keeps the chip row. Since `c25645e` the chips also give half steps, so the "whole numbers only" reason in `tradeoffs.md` "RPE entry" no longer holds.
+3. The hold's source anchors also matched the old code: they now require `simultaneousGesture(LongPressGesture(minimumDuration: 0.5)`.
+
+### Deviations and notes
+
+- `SetTypeChip.swift` and `SetRow.swift` are outside T49's `owns`. T49 says to ask before editing the set-type file; the user's request covered the logger hold. T09 and T39 own `SetRow.swift` and are both todo in `main`'s run log. The change there is the set label's menu and one shared binding.
+- The picker keeps "CANCEL" and "DONE", the UI-SPEC's verbatim labels, although worker-rules ask for "CANCEL" and "SAVE" on sheets that edit data.
+- The editor tests use the empty-session flow, not a seeded session, because the T01 helpers are not on `main` yet.
+- Not checked: how VoiceOver users reach the half-step picker. There is no named action for it.
+- Impact (GitNexus unavailable - manual caller check): `InlineRPEChipRow` MEDIUM (every logger row and the editor), `SetTypeChip` MEDIUM, `SetRow` MEDIUM (one caller, `SessionExerciseCard.swift:265`), `DecimalRPEPickerSheet` LOW (one caller). Detect file: `261029-a9s-detect-t49.txt`.
+- Left: backlog items 1 to 4 in `.planning/backlog/phase-1b-review-follow-ups.md`.
+- Both simulators are left at the default text size and light appearance.

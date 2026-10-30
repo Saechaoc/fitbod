@@ -1,0 +1,19 @@
+# 261029-a9s detect substitute: review finding 1 (GitNexus unavailable on this machine)
+# git diff --cached --stat
+ fitbod/Routines/RoutineExerciseCard.swift     | 49 ++++++++++++++-------------
+ fitbod/Sessions/InlineRPEChipRow.swift        |  6 ++--
+ fitbodTests/SessionLoggerBRUCopyTests.swift   |  2 +-
+ fitbodTests/SessionLoggerCopyTests.swift      |  2 +-
+ fitbodUITests/PrescriptionEditorUITests.swift | 31 +++++++++++++++++
+ 5 files changed, 63 insertions(+), 27 deletions(-)
+
+Changed symbols:
+- RoutineExerciseCard.headerRow (fitbod/Routines/RoutineExerciseCard.swift): gains .contentShape(Rectangle()) and the card's .contextMenu, moved unchanged from cardBody; tap-to-expand keeps its old content-only hit area.
+- RoutineExerciseCard.cardBody: loses .contentShape(Rectangle()) and .contextMenu.
+- InlineRPEChipRow.body (fitbod/Sessions/InlineRPEChipRow.swift): each integer chip watches the hold with .simultaneousGesture(LongPressGesture(minimumDuration: 0.5)) instead of .onLongPressGesture, which its Button swallowed.
+- PrescriptionEditorUITests.testHoldingAnRPEChipSetsADecimalTarget (new UI test).
+- SessionLoggerCopyTests.verbatimCopy and SessionLoggerBRUCopyTests.inlineRPEChipRowExposesFiveValues: source anchor now LongPressGesture(minimumDuration: 0.5).
+
+GitNexus unavailable - manual caller check (rg -n "RoutineExerciseCard\(|InlineRPEChipRow\("):
+- RoutineExerciseCard: RoutineBuilderView.swift:451 (+ previews RoutineExerciseCard.swift:213, :230). Own estimate: LOW.
+- InlineRPEChipRow: SetRow.swift:233 (workout logger, every set row), PrescriptionEditorRow.swift:174 (session editor), previews InlineRPEChipRow.swift:103-124. Own estimate: MEDIUM, as every logger row renders it; in the logger the set-type menu still takes the hold (pre-existing, backlog item 5), and a throwaway check found no stray picker after closing that menu, tapping a chip or choosing a menu item.

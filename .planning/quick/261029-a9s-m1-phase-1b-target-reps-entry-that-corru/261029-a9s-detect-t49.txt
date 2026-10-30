@@ -1,0 +1,26 @@
+# 261029-a9s detect substitute: conway ticket T49 and second-review findings 1 and 3 (GitNexus unavailable on this machine)
+# git diff --cached --stat
+ fitbod/Sessions/DecimalRPEPickerSheet.swift   |  21 +++--
+ fitbod/Sessions/InlineRPEChipRow.swift        |  48 +++++++----
+ fitbod/Sessions/SetRow.swift                  |  37 ++++++--
+ fitbod/Sessions/SetTypeChip.swift             |  50 ++++++-----
+ fitbodTests/SessionLoggerBRUCopyTests.swift   |   2 +-
+ fitbodTests/SessionLoggerCopyTests.swift      |   2 +-
+ fitbodUITests/PrescriptionEditorUITests.swift | 120 ++++++++++++++++++++++----
+ fitbodUITests/RPEDecimalHoldUITests.swift     |  88 +++++++++++++++++++
+ fitbodUITests/WorkoutUITestNavigation.swift   |  13 +++
+ 9 files changed, 310 insertions(+), 71 deletions(-)
+
+Changed symbols:
+- InlineRPEChipRow.body, new chipValues and label(for:) (fitbod/Sessions/InlineRPEChipRow.swift): a hold opens the picker at the held value; the tap that ends a hold is ignored while the picker is up; a stored value that is not a whole number gets its own selected chip ("8.5", "RPE 8.5"); selection compares exact values; selected chips carry the isSelected trait.
+- DecimalRPEPickerSheet.init(initial:onDone:) replaces init(rpe:) (fitbod/Sessions/DecimalRPEPickerSheet.swift): the wheel keeps its own value, snapped to the 6.0-10.0 half steps; Done calls onDone, Cancel and a swipe-down write nothing.
+- SetTypeChip.body (fitbod/Sessions/SetTypeChip.swift): Menu with primaryAction (tap cycles) replaces Button + .contextMenu; new static order and label(for:) (was private accessibilityLabel(for:)); new SetTypeMenuItems view.
+- SetRow.body and new setTypeRaw binding (fitbod/Sessions/SetRow.swift): the set label is a Menu with SetTypeMenuItems, 44pt target, accessibility "Set N type" with the type as value, identifier set.type.<exercise>.<label>.
+- Tests: PrescriptionEditorUITests.testHoldingAnRPEChipSetsADecimalTarget (extended), testAHalfStepTargetSurvivesReopeningAsItsOwnChip (new), helpers holdRPEChip, rpeChip, assertHalfStepChip, cardTitle, attachScreenshot; new RPEDecimalHoldUITests (2 tests); UITestNavigation.tapPickerButton (new, shared); copy anchors in SessionLoggerCopyTests.verbatimCopy and SessionLoggerBRUCopyTests.inlineRPEChipRowExposesFiveValues.
+
+GitNexus unavailable - manual caller check (rg -n "DecimalRPEPickerSheet\(|InlineRPEChipRow\(|SetTypeChip\(|SetTypeMenuItems\(|SetRow\(|tapPickerButton\("):
+- DecimalRPEPickerSheet: InlineRPEChipRow.swift:103 (only caller) + its preview. API change is internal to the module. Own estimate: LOW.
+- InlineRPEChipRow: SetRow.swift:249 (workout logger, every set row), PrescriptionEditorRow.swift:174 (session editor target RPE), previews. Own estimate: MEDIUM (every logger row and the editor; covered by the logger and editor UI suites on both phones).
+- SetTypeChip / SetTypeMenuItems: SetRow.swift:102 and :254, previews. Own estimate: MEDIUM (every logger row; set-type menu behavior moved from the row to the chip and the set label).
+- SetRow: SessionExerciseCard.swift:265 (+ preview). SetRowsContainer.swift matches are defaultSetRow(index:), not SetRow. Own estimate: MEDIUM.
+- UITestNavigation.tapPickerButton: PrescriptionEditorUITests, RPEDecimalHoldUITests. LOW.
