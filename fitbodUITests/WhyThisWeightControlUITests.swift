@@ -169,6 +169,9 @@ final class WhyThisWeightControlUITests: XCTestCase {
     /// Ticket T61: an exercise with no history has no suggestion, which the
     /// strategies give as 0. Why-this-weight keeps its explanation and
     /// Override but offers no Use, which would only empty the weight field.
+    /// Ticket T79: nor does its hero show a 0. It shows the empty weight
+    /// field's dash, read as "none", and with nothing to round, the steps
+    /// end at 02. Saves the hero, then the sheet scrolled to its steps.
     @MainActor
     func testNoHistoryWhyOffersNoUse() throws {
         let app = UITestNavigation.openEmptySessionBuilder()
@@ -206,6 +209,21 @@ final class WhyThisWeightControlUITests: XCTestCase {
         let use = app.buttons.matching(NSPredicate(format: "label BEGINSWITH[c] %@", "Use ")).firstMatch
         XCTAssertFalse(use.exists, "A suggestion of 0 is no suggestion, so the sheet must not offer Use")
         UITestNavigation.saveScreenshot("T61", "why-no-history")
+
+        let sheet = app.scrollViews.containing(NSPredicate(format: "label ==[c] %@", "Why this weight")).firstMatch
+        let hero = sheet.descendants(matching: .any)
+            .matching(NSPredicate(format: "label BEGINSWITH %@", "Recommended weight")).firstMatch
+        XCTAssertTrue(hero.exists, "The sheet must show its hero")
+        UITestNavigation.saveScreenshot("T79", "why-no-history-hero")
+        let stepTwo = sheet.descendants(matching: .any).matching(NSPredicate(format: "label BEGINSWITH %@", "02")).firstMatch
+        sheet.swipeUp(velocity: .slow)
+        sheet.swipeUp(velocity: .slow)
+        XCTAssertTrue(stepTwo.isHittable, "Scrolling the sheet must show step 02")
+        UITestNavigation.saveScreenshot("T79", "why-no-history-steps")
+        XCTAssertTrue(hero.label.hasPrefix("Recommended weight: none"),
+                      "A suggestion of 0 must show the empty weight's dash, not a 0: \(hero.label)")
+        let stepThree = sheet.descendants(matching: .any).matching(NSPredicate(format: "label BEGINSWITH %@", "03")).firstMatch
+        XCTAssertFalse(stepThree.exists, "A suggestion of 0 has nothing to round, so the sheet must leave out step 03")
     }
 
     @MainActor

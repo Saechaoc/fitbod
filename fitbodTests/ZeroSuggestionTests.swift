@@ -7,6 +7,11 @@
 //  shows the weight field's empty "—", which VoiceOver reads as "none".
 //  Suggestions and ranges above 0 keep their numbers.
 //
+//  Ticket T79 (findings F76 and F77): nor does Why-this-weight show a 0.
+//  Its hero shows the empty field's "—", step 02 asks for a starting
+//  weight, and step 03 is left out. Step 03 never shows "?" for a plate
+//  size it cannot read.
+//
 
 import SwiftUI
 import Testing
@@ -30,6 +35,50 @@ struct ZeroSuggestionTests {
         #expect(explanation.roundedWeight == 0)
         let sheet = WhyThisWeightSheet(explanation: explanation, unitLabel: "lb")
         #expect(sheet.useTitle == nil)
+    }
+
+    // MARK: - Why-this-weight's hero and steps
+
+    @Test("WHY shows no 0 for an exercise with no history: the hero's dash and no step 03")
+    func whyShowsNoZeroWithoutHistory() {
+        let sheet = WhyThisWeightSheet(explanation: noHistorySuggestion(), unitLabel: "lb")
+        #expect(sheet.heroWeightText == "\u{2014}")
+        #expect(sheet.heroAccessibilityLabel.hasPrefix("Recommended weight: none"))
+        #expect(sheet.step02Body == "No prior data \u{2014} choose a starting weight.")
+        #expect(sheet.step03Label == nil)
+    }
+
+    @Test("WHY keeps step 02's \"Weight holds.\" for a lift last logged at 0")
+    func whyHoldsZeroAfterLastSession() {
+        let explanation = DoubleProgressionStrategy().prescribe(
+            history: [],
+            targetRepsLow: 6,
+            targetRepsHigh: 8,
+            targetRPE: nil,
+            lastSessionRepsArray: [6],
+            smallestIncrement: 2.5,
+            plates: [],
+            barWeight: 0,
+            unit: .lb,
+            minCalibrationSets: 10,
+            lastSessionWeight: 0,
+            lastSessionReps: 6,
+            lastSessionRPE: 8,
+            lastSessionDate: Date(timeIntervalSince1970: 1_790_000_000)
+        ).explanation
+        #expect(explanation.roundedWeight == 0)
+        #expect(explanation.lastSessionLine != nil)
+        let sheet = WhyThisWeightSheet(explanation: explanation, unitLabel: "lb")
+        #expect(sheet.step02Body == "Weight holds.")
+    }
+
+    @Test("Step 03 names a plate size only when it can read one, and never shows ?")
+    func stepThreeNamesOnlyAReadablePlateSize() {
+        let block = blockSuggestion()
+        #expect(block.roundedLine == "-> 100 lb (plate-rounded)")
+        #expect(WhyThisWeightSheet(explanation: block, unitLabel: "lb").step03Label == "Rounded to plate")
+        #expect(WhyThisWeightSheet(explanation: suggestion(102.5), unitLabel: "lb").step03Label
+                == "Rounded to plate 2.5 lb")
     }
 
     // MARK: - The read-only calibrating range
@@ -88,6 +137,31 @@ struct ZeroSuggestionTests {
             lastSessionReps: nil,
             lastSessionRPE: nil,
             lastSessionDate: nil
+        ).explanation
+    }
+
+    /// What block periodization explains for a bench last logged at 100 lb,
+    /// in a phase at full intensity. Its rounded line names no plate size.
+    private func blockSuggestion() -> PrescriptionExplanation {
+        let block = Block()
+        block.phases = [BlockPhase()]
+        return BlockPeriodizedStrategy().prescribe(
+            history: [],
+            targetRepsLow: 6,
+            targetRepsHigh: 8,
+            targetRPE: 8,
+            lastSessionRepsArray: [8],
+            smallestIncrement: 2.5,
+            plates: [(weight: 25, countPerSide: 2), (weight: 2.5, countPerSide: 2)],
+            barWeight: 45,
+            unit: .lb,
+            minCalibrationSets: 10,
+            lastSessionWeight: 100,
+            lastSessionReps: 8,
+            lastSessionRPE: 8,
+            lastSessionDate: nil,
+            block: block,
+            today: block.startDate
         ).explanation
     }
 

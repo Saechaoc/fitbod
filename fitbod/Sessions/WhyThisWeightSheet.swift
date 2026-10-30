@@ -12,10 +12,13 @@
 //         (Font.custom override justified: BRUFont.displayHero = 56pt enum default;
 //          03-UI-SPEC line 87 / why-weight.jsx line 17 mandate 128pt for THIS hero)
 //       - Unit suffix: displayLarge bruPaper 60% opacity
+//       - A suggestion of 0 is no suggestion: the numeral and unit give way
+//         to the empty weight field's "—" in bruPaper 60% opacity
 //       - 2pt bruPaper top rule → 2-column REPS | RPE sub-band
 //    2. BRUSectionHead("Why this weight", right: "−")
 //    3. Numbered step blocks (01 / 02 / 03) in VStack(spacing: 8)
 //       - When .calibrating: CalibratingProgressMeter between step 02 and step 03
+//       - A suggestion of 0 has nothing to round, so step 03 is left out
 //    4. Footer bar: 2pt bruInk top rule + BRUButton(.ghost) "Override" +
 //       BRUButton(.signal) "Use {weight} ▸". A suggestion of 0 is no
 //       suggestion, so the bar shows Override alone.
@@ -157,14 +160,16 @@ public struct WhyThisWeightSheet: View {
             // Font face is BRU-canonical (SpaceGrotesk-Bold) — future font-substitution
             // audits will catch drift. This is the only Font.custom call in this file.
             HStack(alignment: .lastTextBaseline, spacing: 6) {
-                Text(formatted(explanation.roundedWeight))
+                Text(heroWeightText)
                     .font(.bru(.grotesk, size: 128, relativeTo: .largeTitle))
-                    .foregroundStyle(Color.bruPaper)
+                    .foregroundStyle(hasSuggestion ? Color.bruPaper : Color.bruPaper.opacity(0.6))
 
-                Text(unitLabel.uppercased())
-                    .font(BRUFont.displayLarge)
-                    .foregroundStyle(Color.bruPaper.opacity(0.6))
-                    .padding(.bottom, 12)
+                if hasSuggestion {
+                    Text(unitLabel.uppercased())
+                        .font(BRUFont.displayLarge)
+                        .foregroundStyle(Color.bruPaper.opacity(0.6))
+                        .padding(.bottom, 12)
+                }
             }
 
             // 2pt bruPaper top rule before REPS | RPE sub-band
@@ -221,11 +226,25 @@ public struct WhyThisWeightSheet: View {
         .accessibilityLabel(heroAccessibilityLabel)
     }
 
-    private var heroAccessibilityLabel: String {
-        let weightStr = formatted(explanation.roundedWeight)
+    /// A strategy with no history suggests 0, which is no suggestion.
+    private var hasSuggestion: Bool {
+        explanation.roundedWeight > 0
+    }
+
+    /// The hero's weight, or the empty weight field's "—", with no unit,
+    /// for a suggestion of 0.
+    var heroWeightText: String {
+        hasSuggestion ? formatted(explanation.roundedWeight) : "—"
+    }
+
+    /// VoiceOver reads a suggestion of 0 like the empty weight field: "none".
+    var heroAccessibilityLabel: String {
+        let weightStr = hasSuggestion
+            ? "Recommended weight \(formatted(explanation.roundedWeight)) \(unitLabel)"
+            : "Recommended weight: none"
         let repsStr = reps.map { "\($0)" } ?? "unknown"
         let rpeStr = rpe.map { formattedRPE($0) } ?? "not applicable"
-        return "Recommended weight \(weightStr) \(unitLabel), reps \(repsStr), RPE \(rpeStr), \(setTypeLabel)"
+        return "\(weightStr), reps \(repsStr), RPE \(rpeStr), \(setTypeLabel)"
     }
 
     // MARK: - Steps Block
@@ -262,8 +281,10 @@ public struct WhyThisWeightSheet: View {
                 .padding(.vertical, 12)
             }
 
-            // Step 03: Plate rounding
-            step03Row
+            // Step 03: Plate rounding, left out for a suggestion of 0
+            if let step03Label {
+                step03Row(label: step03Label)
+            }
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
@@ -294,16 +315,19 @@ public struct WhyThisWeightSheet: View {
         return "Target @ RPE \(formattedRPE(rpe))"
     }
 
-    private var step02Body: String {
+    var step02Body: String {
         if let computed = explanation.computedLine {
             return computed
         }
         // Double progression branches
         if explanation.bumpOccurred {
-            return "All sets cleared top of range last time → bumping by \(incrementText()) \(unitLabel)."
+            return "All sets cleared top of range last time → bumping by \(incrementText() ?? "?") \(unitLabel)."
         }
         if explanation.lastSessionLine == nil {
-            return "No prior data — starting at prescribed weight."
+            // With no suggestion, there is no prescribed weight to start at.
+            return hasSuggestion
+                ? "No prior data — starting at prescribed weight."
+                : "No prior data \u{2014} choose a starting weight."
         }
         // Held (partial reps)
         return "Weight holds."
@@ -327,9 +351,18 @@ public struct WhyThisWeightSheet: View {
         }
     }
 
+    /// Step 03's label, or nil to leave step 03 out: a suggestion of 0 has
+    /// nothing to round. A plate size roundedLine does not name is left
+    /// out with its unit, never shown as "?".
+    var step03Label: String? {
+        guard hasSuggestion else { return nil }
+        guard let increment = incrementText() else { return "Rounded to plate" }
+        return "Rounded to plate \(increment) \(unitLabel)"
+    }
+
     // Step 03 uses a custom attributed body (signal for rounded weight)
     @ViewBuilder
-    private var step03Row: some View {
+    private func step03Row(label: String) -> some View {
         HStack(alignment: .firstTextBaseline, spacing: 12) {
             // Step index numeral — bruSignal displayMedium 22pt (03-UI-SPEC line 88)
             Text("03")
@@ -339,7 +372,7 @@ public struct WhyThisWeightSheet: View {
 
             VStack(alignment: .leading, spacing: 4) {
                 // Label
-                Text("Rounded to plate \(incrementText()) \(unitLabel)")
+                Text(label)
                     .font(BRUFont.bodyEmphasis)
                     .foregroundStyle(Color.bruInk)
                     .textCase(.uppercase)
@@ -479,7 +512,7 @@ public struct WhyThisWeightSheet: View {
     /// would only empty the weight field, so the sheet keeps its
     /// explanation and Override and drops Use.
     var useTitle: String? {
-        guard explanation.roundedWeight > 0 else { return nil }
+        guard hasSuggestion else { return nil }
         return "Use \(formatted(explanation.roundedWeight)) ▸"
     }
 
@@ -508,7 +541,8 @@ public struct WhyThisWeightSheet: View {
     }
 
     // MARK: - Formatting Helpers
-    // incrementText() preserved verbatim from v1 lines 222-235 — only relocated.
+    // incrementText() comes from v1 lines 222-235, relocated; it now returns
+    // nil, not "?", when roundedLine names no plate size.
 
     private func formatted(_ weight: Double) -> String {
         let isWhole = weight.truncatingRemainder(dividingBy: 1) == 0
@@ -520,10 +554,10 @@ public struct WhyThisWeightSheet: View {
         return isWhole ? String(Int(rpeValue)) : String(format: "%g", rpeValue)
     }
 
-    /// Parses the plate increment from roundedLine.
-    /// Preserved verbatim from v1 lines 222-235.
+    /// Parses the plate increment from roundedLine, or nil when it names
+    /// none, as block-periodized and hybrid lines do.
     /// Format: "→ 102.5 kg (rounded down to 2.5 kg plates)"
-    private func incrementText() -> String {
+    private func incrementText() -> String? {
         let line = explanation.roundedLine
         if let range = line.range(of: #"to (\d+\.?\d*) \w+ plates"#, options: .regularExpression) {
             let match = String(line[range])
@@ -532,7 +566,7 @@ public struct WhyThisWeightSheet: View {
                 return parts[1]
             }
         }
-        return "?"
+        return nil
     }
 }
 
