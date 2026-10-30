@@ -65,6 +65,9 @@ The quick-task run of the same plan must finish its last two tasks first, so rea
 | [T65](tickets/T65-edit-keeps-active-block.md) | Saving an edit keeps the active block active |
 | [T66](tickets/T66-tab-bar-bleed.md) | The tab bar's fill stays out of the home indicator area at large text |
 | [T67](tickets/T67-lifecycle-entry-points.md) | Ending a block and swapping its routine go through the lifecycle service |
+| [T68](tickets/T68-progress-hero-adds-up.md) | The progress chart's hero numbers add up |
+| [T69](tickets/T69-builder-back-names-its-tab.md) | The block builder's back control names the tab it opened from |
+| [T70](tickets/T70-block-review-after-end.md) | The block review opens after a block ends |
 
 ### Phase 2: P2 defects
 
