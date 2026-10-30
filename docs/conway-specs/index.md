@@ -56,6 +56,9 @@ The quick-task run of the same plan must finish its last two tasks first, so rea
 | [T56](tickets/T56-progress-chart-unit-and-fit.md) | Progress chart hero shows the right unit, and its name and PR mark fit |
 | [T57](tickets/T57-pr-list-working-sets-and-ax3-toggle.md) | PR list ranks working sets only, and its intent toggle fits AX3 |
 | [T58](tickets/T58-e1rm-one-point-per-workout.md) | e1RM chart plots one point per workout |
+| [T59](tickets/T59-swap-resets-prescription.md) | Swapping an exercise resets its prescription and override marks |
+| [T60](tickets/T60-plate-inventory-swipe-delete.md) | Plate inventory rows delete with a swipe |
+| [T61](tickets/T61-zero-suggestion-placeholder.md) | A zero suggestion reads as no suggestion |
 
 ### Phase 2: P2 defects
 
