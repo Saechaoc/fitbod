@@ -60,6 +60,7 @@ The quick-task run of the same plan must finish its last two tasks first, so rea
 | [T60](tickets/T60-plate-inventory-swipe-delete.md) | Plate inventory rows delete with a swipe |
 | [T61](tickets/T61-zero-suggestion-placeholder.md) | A zero suggestion reads as no suggestion |
 | [T62](tickets/T62-heatmap-voiceover-order.md) | VoiceOver reads the heatmap one figure at a time |
+| [T63](tickets/T63-program-header-and-sheets-ax3.md) | Program's header and block sheets fit AX3, and + NEW takes a 44pt tap |
 
 ### Phase 2: P2 defects
 
