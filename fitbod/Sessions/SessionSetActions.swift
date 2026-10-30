@@ -16,6 +16,9 @@
 //  Every mutation saves immediately. A logged workout must survive the
 //  app being killed between sets, so nothing here waits for autosave.
 //
+//  `isEmptyWorkout` is the one empty-workout rule (decision 6), built on
+//  `Session.loggedSetCount`, for session counts and Compare.
+//
 
 import Foundation
 import SwiftData
@@ -123,6 +126,13 @@ public enum SessionSetActions {
         guard let owner = entry.sessionExercise else { return entry.orderIndex + 1 }
         let peers = ordered(owner).filter { $0.isWarmup == entry.isWarmup }
         return (peers.firstIndex(where: { $0.id == entry.id }) ?? entry.orderIndex) + 1
+    }
+
+    /// A finished workout with no logged work sets. History keeps it, but
+    /// session counts and Compare leave it out. A workout still in
+    /// progress is never empty.
+    public static func isEmptyWorkout(_ session: Session) -> Bool {
+        session.completedAt != nil && session.loggedSetCount == 0
     }
 
     private static func renumber(_ sessionExercise: SessionExercise, excluding removedID: UUID) {
