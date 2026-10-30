@@ -29,6 +29,10 @@ final class BlockLifecycleEntryPointsUITests: XCTestCase {
         XCTAssertTrue(app.buttons.labeled("END BLOCK").waitForNonExistence(timeout: 5),
                       "An ended block offers no END BLOCK")
         hittable(app.buttons, "Back").tap()
+        // T70: Today opens the ended block's review; Plan custom puts it off.
+        let review = app.staticTexts.labeled("Block review")
+        hittable(app.buttons, "Plan custom").tap()
+        XCTAssertTrue(review.waitForNonExistence(timeout: 5), "Plan custom must close the review")
         assertNoActiveBlockOnToday(in: app)
 
         UITestNavigation.selectTab("Program", in: app)
@@ -39,8 +43,11 @@ final class BlockLifecycleEntryPointsUITests: XCTestCase {
         XCTAssertFalse(activeBlockCards(in: app).firstMatch.exists, "Program must list no active block")
         UITestNavigation.saveScreenshot("T67", "program-ended-block")
 
-        // Reopened, the app reads the block back as ended.
+        // Reopened, the app reads the block back as ended, and the review
+        // the lifter put off opens again.
         UITestNavigation.relaunch(app)
+        hittable(app.buttons, "Plan custom").tap()
+        XCTAssertTrue(review.waitForNonExistence(timeout: 5), "Plan custom must close the review")
         assertNoActiveBlockOnToday(in: app)
         UITestNavigation.selectTab("Program", in: app)
         XCTAssertTrue(app.buttons.labeled("DONE block: Live Block").waitForExistence(timeout: 10),

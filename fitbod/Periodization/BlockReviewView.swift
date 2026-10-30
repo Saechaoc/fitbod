@@ -470,28 +470,38 @@ public enum BlockReviewStatistics {
             ?? .accumulation
     }
 
-    public static func triggerDescriptor(now _: Date = Date.now) -> FetchDescriptor<Block> {
+    /// Blocks with an end date, the latest end first. `BlockLifecycleService`
+    /// gives a block its end date in the save that ends it, so an active
+    /// block has none.
+    public static func triggerDescriptor() -> FetchDescriptor<Block> {
         return FetchDescriptor<Block>(
             predicate: #Predicate<Block> { block in
-                block.isActive == true
-                    && block.reviewedAt == nil
+                block.endDate != nil
             },
-            sortBy: [SortDescriptor(\Block.endDate)]
+            sortBy: [SortDescriptor(\Block.endDate, order: .reverse)]
         )
     }
 
+    /// The block whose review Today opens: the block that ended last, until
+    /// the lifter acknowledges its review. A block that ended before it
+    /// never opens one.
     @MainActor
     public static func pendingReviewBlocks(
         context: ModelContext,
         now: Date = Date.now
     ) throws -> [Block] {
-        try context.fetch(triggerDescriptor(now: now))
-            .filter { block in
-                guard let endDate = block.endDate else { return false }
-                return endDate < now
-            }
+        // Older builds saved a block's planned end as its end date; one still
+        // ahead is not an ending.
+        let lastEnded = try context.fetch(triggerDescriptor()).first { block in
+            guard let endDate = block.endDate else { return false }
+            return endDate <= now
+        }
+        guard let lastEnded, lastEnded.reviewedAt == nil else { return [] }
+        return [lastEnded]
     }
 
+    /// Records the review. The block already ended through
+    /// `BlockLifecycleService`, so nothing else on it changes.
     @MainActor
     public static func acknowledge(
         block: Block,
@@ -500,7 +510,6 @@ public enum BlockReviewStatistics {
     ) throws {
         try context.transaction {
             block.reviewedAt = now
-            block.isActive = false
             try context.save()
         }
     }

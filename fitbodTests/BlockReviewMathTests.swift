@@ -213,20 +213,25 @@ struct BlockReviewMathTests {
         #expect(BlockReviewStatistics.recommendedNextKind(for: block) == .deload)
     }
 
-    @Test("acknowledge sets reviewedAt and deactivates")
-    func acknowledgeSetsReviewedAtAndDeactivates() throws {
+    @Test("acknowledge records reviewedAt and changes nothing else on the block")
+    func acknowledgeRecordsOnlyReviewedAt() throws {
         let context = try makeContext()
         let block = makeBlock()
         context.insert(block)
         try context.save()
+        let start = block.startDate
+        let end = block.endDate
+        let reviewedAt = Date(timeIntervalSince1970: 1_700_010_000)
 
-        try BlockReviewStatistics.acknowledge(block: block, context: context, now: Date(timeIntervalSince1970: 1_700_010_000))
+        try BlockReviewStatistics.acknowledge(block: block, context: context, now: reviewedAt)
 
-        #expect(block.reviewedAt != nil)
-        #expect(block.isActive == false)
+        #expect(block.reviewedAt == reviewedAt)
+        #expect(block.isActive, "Acknowledging never writes isActive")
+        #expect(block.startDate == start)
+        #expect(block.endDate == end)
     }
 
-    @Test("acknowledge transaction wrapper is present")
+    @Test("acknowledge writes only reviewedAt, in a transaction")
     func acknowledgeTransactionWrapperIsPresent() throws {
         let source = try String(
             contentsOf: URL(fileURLWithPath: #filePath)
@@ -238,6 +243,6 @@ struct BlockReviewMathTests {
 
         #expect(source.contains("try context.transaction"))
         #expect(source.contains("block.reviewedAt = now"))
-        #expect(source.contains("block.isActive = false"))
+        #expect(!source.contains("isActive = "), "Only BlockLifecycleService ends a block")
     }
 }

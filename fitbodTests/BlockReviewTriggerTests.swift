@@ -2,7 +2,10 @@
 //  BlockReviewTriggerTests.swift
 //  fitbodTests
 //
-//  Phase 4 coverage for end-of-block review trigger wiring and copy.
+//  Ticket T70, finding F53. BlockLifecycleService.end gives an ended block
+//  its end date, and Today opens the review of the block that ended last
+//  until the lifter acknowledges it. A block that ended before it never
+//  opens one. The copy checks pin the review's BRU layout and Today's sheet.
 //
 
 import Foundation
@@ -14,107 +17,111 @@ import Testing
 @Suite("BlockReviewTrigger", .serialized)
 struct BlockReviewTriggerTests {
     private let day: TimeInterval = 86_400
+    private let started = Date(timeIntervalSince1970: 1_780_000_000)
 
     private func makeContext() throws -> ModelContext {
         let container = try FitbodModelContainer.make(inMemory: true)
         return ModelContext(container)
     }
 
-    private func insertBlock(
-        in context: ModelContext,
-        now: Date,
-        isActive: Bool,
-        endOffsetDays: Double?,
-        reviewedAt: Date? = nil
-    ) throws -> Block {
+    /// A named one-phase rotation block on a one-session routine, started
+    /// through BlockLifecycleService at `start`.
+    private func startBlock(_ name: String, at start: Date, in context: ModelContext) throws -> Block {
+        let split = Split()
+        context.insert(split)
+        split.name = "\(name) Routine"
+        let template = SessionTemplate()
+        context.insert(template)
+        template.name = "\(name) Day"
+        let slot = SplitSessionSlot()
+        context.insert(slot)
+        slot.position = 0
+        slot.split = split
+        slot.sessionTemplate = template
+
         let block = Block()
-        block.name = "Review Candidate"
-        block.startDate = now.addingTimeInterval(-14 * day)
-        block.endDate = endOffsetDays.map { now.addingTimeInterval($0 * day) }
-        block.isActive = isActive
-        block.reviewedAt = reviewedAt
         context.insert(block)
+        block.name = name
+        block.split = split
+        let phase = BlockPhase()
+        context.insert(phase)
+        phase.block = block
+        phase.nameRaw = BlockPhaseKind.accumulation.rawValue
+        phase.weeks = 4
         try context.save()
+
+        try BlockLifecycleService.start(block: block, context: context, now: start)
         return block
     }
 
-    private func pendingReviews(in context: ModelContext, now: Date) throws -> [Block] {
-        try BlockReviewStatistics.pendingReviewBlocks(context: context, now: now)
+    private func pendingReviews(in context: ModelContext, now: Date) throws -> [UUID] {
+        try BlockReviewStatistics.pendingReviewBlocks(context: context, now: now).map(\.id)
     }
 
-    @Test("trigger predicate matches ended active unreviewed block")
-    func triggerPredicateMatchesEndedActiveUnreviewedBlock() throws {
+    @Test("a block that BlockLifecycleService.end ends opens its review")
+    func endedBlockOpensItsReview() throws {
         let context = try makeContext()
-        let now = Date(timeIntervalSince1970: 1_700_000_000)
-        _ = try insertBlock(in: context, now: now, isActive: true, endOffsetDays: -1)
+        let block = try startBlock("Strength", at: started, in: context)
+        #expect(try pendingReviews(in: context, now: started + day).isEmpty, "An active block has no review")
 
-        #expect(try pendingReviews(in: context, now: now).count == 1)
+        try BlockLifecycleService.end(block: block, context: context, now: started + 7 * day)
+
+        #expect(try pendingReviews(in: context, now: started + 7 * day) == [block.id])
     }
 
-    @Test("trigger excludes active but unended block")
-    func triggerExcludesActiveButUnendedBlock() throws {
+    @Test("the review keeps opening until the lifter acknowledges it")
+    func reviewKeepsOpeningUntilAcknowledged() throws {
         let context = try makeContext()
-        let now = Date(timeIntervalSince1970: 1_700_000_000)
-        _ = try insertBlock(in: context, now: now, isActive: true, endOffsetDays: 7)
+        let block = try startBlock("Strength", at: started, in: context)
+        let ended = started + 7 * day
+        try BlockLifecycleService.end(block: block, context: context, now: ended)
+        #expect(try pendingReviews(in: context, now: ended + day) == [block.id])
+        #expect(try pendingReviews(in: context, now: ended + 30 * day) == [block.id])
 
-        #expect(try pendingReviews(in: context, now: now).isEmpty)
+        try BlockReviewStatistics.acknowledge(block: block, context: context, now: ended + 30 * day)
+
+        #expect(try pendingReviews(in: context, now: ended + 31 * day).isEmpty)
     }
 
-    @Test("trigger excludes ended but inactive block")
-    func triggerExcludesEndedButInactiveBlock() throws {
+    @Test("only the block that ended last opens a review")
+    func onlyTheBlockThatEndedLastOpensAReview() throws {
         let context = try makeContext()
-        let now = Date(timeIntervalSince1970: 1_700_000_000)
-        _ = try insertBlock(in: context, now: now, isActive: false, endOffsetDays: -1)
+        let base = try startBlock("Base", at: started, in: context)
+        try BlockLifecycleService.end(block: base, context: context, now: started + 7 * day)
+        let peak = try startBlock("Peak", at: started + 8 * day, in: context)
+        try BlockLifecycleService.end(block: peak, context: context, now: started + 14 * day)
+        let now = started + 15 * day
 
-        #expect(try pendingReviews(in: context, now: now).isEmpty)
+        #expect(try pendingReviews(in: context, now: now) == [peak.id])
+
+        try BlockReviewStatistics.acknowledge(block: peak, context: context, now: now)
+        #expect(try pendingReviews(in: context, now: now).isEmpty,
+                "A block that ended before the last one never opens a review")
     }
 
-    @Test("trigger excludes ended active but reviewed block")
-    func triggerExcludesEndedActiveButReviewedBlock() throws {
+    @Test("starting the next block ends the active one, which opens its review")
+    func blockEndedByStartingTheNextOpensItsReview() throws {
         let context = try makeContext()
-        let now = Date(timeIntervalSince1970: 1_700_000_000)
-        _ = try insertBlock(
-            in: context,
-            now: now,
-            isActive: true,
-            endOffsetDays: -1,
-            reviewedAt: now.addingTimeInterval(-day)
-        )
+        let base = try startBlock("Base", at: started, in: context)
+        _ = try startBlock("Peak", at: started + 7 * day, in: context)
 
-        #expect(try pendingReviews(in: context, now: now).isEmpty)
+        #expect(try pendingReviews(in: context, now: started + 8 * day) == [base.id])
     }
 
-    @Test("trigger excludes block with nil end date")
-    func triggerExcludesBlockWithNilEndDate() throws {
+    @Test("a planned end date still ahead neither opens a review nor hides one")
+    func plannedEndDateAheadIsNotAnEnding() throws {
         let context = try makeContext()
-        let now = Date(timeIntervalSince1970: 1_700_000_000)
-        _ = try insertBlock(in: context, now: now, isActive: true, endOffsetDays: nil)
+        let block = try startBlock("Strength", at: started, in: context)
+        let ended = started + 7 * day
+        try BlockLifecycleService.end(block: block, context: context, now: ended)
+        // Older builds saved a block's planned end as its end date.
+        let planned = Block()
+        context.insert(planned)
+        planned.name = "Planned"
+        planned.endDate = ended + 60 * day
+        try context.save()
 
-        #expect(try pendingReviews(in: context, now: now).isEmpty)
-    }
-
-    @Test("trigger returns at least one if invariant is violated")
-    func triggerReturnsAtLeastOneIfInvariantIsViolated() throws {
-        let context = try makeContext()
-        let now = Date(timeIntervalSince1970: 1_700_000_000)
-        _ = try insertBlock(in: context, now: now, isActive: true, endOffsetDays: -1)
-        _ = try insertBlock(in: context, now: now, isActive: true, endOffsetDays: -2)
-
-        let matches = try pendingReviews(in: context, now: now)
-        #expect(matches.count >= 1)
-        #expect(matches.first != nil)
-    }
-
-    @Test("acknowledgment removes block from trigger set")
-    func acknowledgmentRemovesBlockFromTriggerSet() throws {
-        let context = try makeContext()
-        let now = Date(timeIntervalSince1970: 1_700_000_000)
-        let block = try insertBlock(in: context, now: now, isActive: true, endOffsetDays: -1)
-        #expect(try pendingReviews(in: context, now: now).count == 1)
-
-        try BlockReviewStatistics.acknowledge(block: block, context: context, now: now)
-
-        #expect(try pendingReviews(in: context, now: now).isEmpty)
+        #expect(try pendingReviews(in: context, now: ended + day) == [block.id])
     }
 
     // Phase 04.1 BRU-reskin: placeholder copy tests updated to match the new BRU layout.
