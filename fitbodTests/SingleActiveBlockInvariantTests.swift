@@ -18,8 +18,8 @@ struct SingleActiveBlockInvariantTests {
         return ModelContext(container)
     }
 
-    @Test("saving an active draft deactivates prior active blocks")
-    func savingActiveDraftDeactivatesPriorActiveBlocks() throws {
+    @Test("saving a draft marked active neither starts it nor ends the active block")
+    func savingActiveDraftNeitherStartsItNorEndsActiveBlock() throws {
         let context = try makeContext()
         let prior = Block()
         prior.name = "Prior"
@@ -34,10 +34,11 @@ struct SingleActiveBlockInvariantTests {
         try next.save(into: context)
         try context.save()
 
+        // T65: only BlockLifecycleService starts or ends a block.
         let active = try context.fetch(FetchDescriptor<Block>(predicate: #Predicate { $0.isActive == true }))
         #expect(active.count == 1)
-        #expect(active.first?.name == "Next")
-        #expect(prior.isActive == false)
+        #expect(active.first?.name == "Prior")
+        #expect(prior.endDate == nil)
     }
 
     @Test("saving an inactive draft keeps the existing active block")

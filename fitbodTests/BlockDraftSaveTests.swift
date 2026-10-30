@@ -57,7 +57,6 @@ struct BlockDraftSaveTests {
         let draft = BlockDraft(template: BlockTemplates.generic)
         draft.name = "  Powerlifting Peak Q3  "
         draft.startDate = startDate
-        draft.isActive = true
 
         try draft.save(into: context)
         try context.save()
@@ -67,7 +66,8 @@ struct BlockDraftSaveTests {
         let block = try #require(blocks.first)
         #expect(block.name == "Powerlifting Peak Q3")
         #expect(block.startDate == startDate)
-        #expect(block.isActive == true)
+        // T65: a saved draft is never active; only BlockLifecycleService.start starts a block.
+        #expect(block.isActive == false)
         // endDate is NOT written by the builder (spec §3/§4 — freeze marker set only by
         // BlockLifecycleService.end). A builder-saved block must have endDate == nil.
         #expect(block.endDate == nil)

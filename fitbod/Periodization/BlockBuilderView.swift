@@ -247,10 +247,10 @@ public struct BlockBuilderView: View {
         save()
     }
 
-    /// Neither save activates a block.
+    /// No save starts or ends a block, and SAVE CHANGES keeps the edited
+    /// block's active state.
     private func save() {
         do {
-            draft.isActive = false
             try draft.save(into: ctx)
             dismiss()
         } catch {

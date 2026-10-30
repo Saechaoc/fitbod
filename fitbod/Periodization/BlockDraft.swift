@@ -2,8 +2,9 @@
 //  BlockDraft.swift
 //  fitbod
 //
-//  Ephemeral editor state for BlockBuilderView. The draft is the only
-//  Phase 4 writer that enforces the one-active-block invariant.
+//  Ephemeral editor state for BlockBuilderView. Saving a draft never
+//  starts, ends or deactivates a block; BlockLifecycleService does, and
+//  keeps at most one block active.
 //
 
 import Foundation
@@ -15,6 +16,8 @@ public final class BlockDraft {
     public var id: UUID? = nil
     public var name: String = ""
     public var startDate: Date = .now
+    /// The edited block's active state when the draft opened. `save(into:)`
+    /// never writes it back.
     public var isActive: Bool = false
     public var daysPerWeek: Int = 4
     public var phases: [BlockPhaseDraft] = []
@@ -116,17 +119,6 @@ public final class BlockDraft {
 
     public func save(into context: ModelContext) throws {
         try context.transaction {
-            if isActive {
-                let myID = id
-                let descriptor = FetchDescriptor<Block>(
-                    predicate: #Predicate<Block> { $0.isActive == true }
-                )
-                let activeBlocks = try context.fetch(descriptor)
-                for block in activeBlocks where block.id != myID {
-                    block.isActive = false
-                }
-            }
-
             let block: Block
             if let existingID = id {
                 let targetID = existingID
@@ -155,7 +147,10 @@ public final class BlockDraft {
             // Preserving any pre-existing endDate (e.g. re-editing a completed block)
             // is intentional — we do not clear it. computedEndDate stays available for
             // display purposes (projected total weeks) but is never persisted by the builder.
-            block.isActive = isActive
+            // isActive is never written here either: an edited block keeps its stored
+            // state (SAVE CHANGES on the active block keeps it active), a new block stays
+            // inactive, and no other block is touched. Only BlockLifecycleService starts
+            // or ends a block (T65).
 
             // V7 program-graph fields — direct split write is permitted here because the
             // builder operates in a draft/ready context (pre-activation). Post-activation
