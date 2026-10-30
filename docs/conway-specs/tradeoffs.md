@@ -191,6 +191,8 @@ Product decisions are in [decisions.md](decisions.md), and they win over this fi
   The left half carries the label and value, and the right half is hidden from VoiceOver.
   NECK is decorative, so it is hidden and is not a button.
 - Rejected: hiding the whole grid, because the per-muscle values are useful to VoiceOver users.
+- Coordinator answer, 2026-10-30 (T14 question `msg_b4478642c64e`): a muscle drawn on both figures, Shoulders and Calves, has its element on FRONT only; its BACK copies stay tappable but are hidden from VoiceOver.
+  The element's label is the muscle's name, such as "Chest", and its value is the zone text, so VoiceOver speaks the same words as before.
 
 ## Progress and history
 
