@@ -6,7 +6,7 @@ items: []
 depends_on: []
 size: S
 sim: small
-owns: [fitbod/Progress/ExercisePRsView.swift, new:fitbodTests/PRRowTextTests.swift]
+owns: [fitbod/Progress/ExercisePRsView.swift, fitbodUITests/PRListAndSeriesUITests.swift, new:fitbodTests/PRRowTextTests.swift]
 ---
 
 # T85: PR rows keep "@ RPE" and the kind label whole
@@ -44,8 +44,10 @@ Ask before you edit anything else.
 
 ## Repro first
 
-- In `fitbodTests/PRRowTextTests.swift`, assert that a weight PR's value for 160 lb × 3 at RPE 9 cannot break between "@" and "RPE 9", and that the kind label cannot break inside "WEIGHT PR".
-  Both fail today.
+- In `fitbodTests/PRRowTextTests.swift`, assert that a weight PR's value for 160 lb × 3 at RPE 9 cannot break between "@" and "RPE 9".
+  It fails today.
+- In `fitbodUITests/PRListAndSeriesUITests.swift`, at xxxLarge on the small phone with the progress history seed, assert with frames that each kind label is one line tall.
+  It fails today.
 - Save screenshots of the PR list on the small phone at default text and at xxxLarge, with the progress history seed, before the fix.
 
 ## Observable acceptance
@@ -57,4 +59,6 @@ Ask before you edit anything else.
 ## Hints
 
 - `prRow` is near line 328 of `ExercisePRsView.swift`, and `rowText` builds the value near line 403.
-- A no-break space keeps two words on one line.
+- A no-break space keeps "@ RPE 9" together.
+  "WEIGHT PR" is wider than the 110pt column at xxxLarge, so that column must grow or the row must stack there; a no-break space alone would cut the label inside a word.
+- The file's `LargerTextSize` already launches at xxxLarge.
