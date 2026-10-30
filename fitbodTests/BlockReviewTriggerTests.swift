@@ -7,6 +7,9 @@
 //  until the lifter acknowledges it. A block that ended before it never
 //  opens one. The copy checks pin the review's BRU layout and Today's sheet.
 //
+//  Ticket T86, finding F96. While any block is active, no review opens, so
+//  a review put off with Plan custom stops once the lifter starts a block.
+//
 
 import Foundation
 import SwiftData
@@ -99,13 +102,34 @@ struct BlockReviewTriggerTests {
                 "A block that ended before the last one never opens a review")
     }
 
-    @Test("starting the next block ends the active one, which opens its review")
-    func blockEndedByStartingTheNextOpensItsReview() throws {
+    @Test("no review opens while a newer block is active")
+    func noReviewOpensWhileANewerBlockIsActive() throws {
         let context = try makeContext()
         let base = try startBlock("Base", at: started, in: context)
-        _ = try startBlock("Peak", at: started + 7 * day, in: context)
-
+        try BlockLifecycleService.end(block: base, context: context, now: started + 7 * day)
         #expect(try pendingReviews(in: context, now: started + 8 * day) == [base.id])
+
+        _ = try startBlock("Peak", at: started + 9 * day, in: context)
+
+        #expect(try pendingReviews(in: context, now: started + 10 * day).isEmpty,
+                "An active block stops the review of the block that ended before it")
+    }
+
+    @Test("starting the next block ends the active one, whose review never opens")
+    func blockEndedByStartingTheNextNeverOpensItsReview() throws {
+        let context = try makeContext()
+        let base = try startBlock("Base", at: started, in: context)
+        let peak = try startBlock("Peak", at: started + 7 * day, in: context)
+        #expect(base.endDate != nil, "Starting Peak must end Base")
+
+        #expect(try pendingReviews(in: context, now: started + 8 * day).isEmpty,
+                "No review opens while Peak is active")
+
+        try BlockLifecycleService.end(block: peak, context: context, now: started + 14 * day)
+        #expect(try pendingReviews(in: context, now: started + 15 * day) == [peak.id])
+        try BlockReviewStatistics.acknowledge(block: peak, context: context, now: started + 15 * day)
+        #expect(try pendingReviews(in: context, now: started + 16 * day).isEmpty,
+                "A block that ended before the last one never opens a review")
     }
 
     @Test("a planned end date still ahead neither opens a review nor hides one")

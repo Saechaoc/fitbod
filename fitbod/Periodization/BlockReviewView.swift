@@ -16,6 +16,7 @@ public struct BlockReviewView: View {
     @Environment(\.modelContext) private var ctx
     @Environment(\.dismiss) private var dismiss
     @Environment(\.weightUnit) private var weightUnit
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     public let block: Block
 
@@ -34,7 +35,8 @@ public struct BlockReviewView: View {
     public var body: some View {
         let blockStart = block.startDate
         let blockEnd = block.endDate ?? Date.now
-        let recommendedKind = BlockReviewStatistics.recommendedNextKind(for: block)
+        // The band names the template Start next opens.
+        let nextTemplate = BlockTemplates.template(for: BlockReviewStatistics.recommendedNextKind(for: block))
 
         NavigationStack {
             VStack(spacing: 0) {
@@ -48,7 +50,7 @@ public struct BlockReviewView: View {
                     VStack(spacing: 0) {
                         heroBand(blockStart: blockStart, blockEnd: blockEnd)
                         e1RMSection(blockStart: blockStart, blockEnd: blockEnd)
-                        recommendedNextBand(recommendedKind: recommendedKind)
+                        recommendedNextBand(nextTemplate: nextTemplate)
                         if let acknowledgeError {
                             Text(acknowledgeError)
                                 .font(BRUFont.labelSmall)
@@ -59,7 +61,7 @@ public struct BlockReviewView: View {
                     }
                 }
 
-                bottomActionBar(recommendedKind: recommendedKind)
+                bottomActionBar(nextTemplate: nextTemplate)
                 safeAreaFiller
             }
         }
@@ -247,30 +249,31 @@ public struct BlockReviewView: View {
 
     // MARK: - Recommended Next Band
 
-    private func recommendedNextBand(recommendedKind: BlockPhaseKind) -> some View {
-        let recommendedKindLabel = BlockPhaseColors.phaseLabel(recommendedKind).capitalized
-        let recommendedWeeks = 4  // Phase 6 will compute from block history; placeholder per spec
+    private func recommendedNextBand(nextTemplate: BlockTemplate) -> some View {
         let blockNumber = BlockNumbering.number(of: block, among: allBlocks)
 
         return VStack(spacing: 0) {
-            HStack(alignment: .lastTextBaseline) {
+            recommendedNextLayout {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("RECOMMENDED NEXT BLOCK")
                         .font(BRUFont.labelSmall)
                         .textCase(.uppercase)
                         .tracking(1.5)
                         .foregroundStyle(Color.bruInk)
-                    Text("\(recommendedKindLabel) · \(recommendedWeeks) weeks")
+                    Text("\(nextTemplate.name) · \(BRUCountLabel.text(nextTemplate.totalWeeks, "week"))")
                         .font(BRUFont.displayLarge)
                         .foregroundStyle(Color.bruInk)
                 }
-                Spacer()
+                if !dynamicTypeSize.isAccessibilitySize {
+                    Spacer()
+                }
                 Text("BASED ON BLOCK \(blockNumber)")
                     .font(BRUFont.labelMicro)
                     .textCase(.uppercase)
                     .tracking(1.2)
                     .foregroundStyle(Color.bruMuted)
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.horizontal, 16)
             .padding(.vertical, 12)
         }
@@ -280,11 +283,21 @@ public struct BlockReviewView: View {
                 .fill(Color.bruInk)
                 .frame(height: 2)
         }
+        .accessibilityElement(children: .contain)
+        .accessibilityIdentifier("blockReview.recommendedNext")
+    }
+
+    /// At accessibility sizes BASED ON BLOCK goes under the recommendation,
+    /// so neither squeezes the other into words broken across lines.
+    private var recommendedNextLayout: AnyLayout {
+        dynamicTypeSize.isAccessibilitySize
+            ? AnyLayout(VStackLayout(alignment: .leading, spacing: 8))
+            : AnyLayout(HStackLayout(alignment: .lastTextBaseline))
     }
 
     // MARK: - Bottom Action Bar
 
-    private func bottomActionBar(recommendedKind: BlockPhaseKind) -> some View {
+    private func bottomActionBar(nextTemplate: BlockTemplate) -> some View {
         HStack(spacing: 0) {
             BRUButton("Plan custom", kind: .ghost) {
                 dismiss()
@@ -294,14 +307,19 @@ public struct BlockReviewView: View {
                 .frame(width: 2)
             BRUButton("Start next ▸", kind: .signal) {
                 acknowledge()
-                pendingNextBlockBuilder = BlockTemplates.template(for: recommendedKind)
+                pendingNextBlockBuilder = nextTemplate
             }
         }
+        // The divider has no height of its own. Without this the bar takes
+        // all the height the review offers and covers the band.
+        .fixedSize(horizontal: false, vertical: true)
         .overlay(alignment: .top) {
             Rectangle()
                 .fill(Color.bruInk)
                 .frame(height: 2)
         }
+        .accessibilityElement(children: .contain)
+        .accessibilityIdentifier("blockReview.actionBar")
     }
 
     // MARK: - Safe-Area Filler
@@ -484,12 +502,15 @@ public enum BlockReviewStatistics {
 
     /// The block whose review Today opens: the block that ended last, until
     /// the lifter acknowledges its review. A block that ended before it
-    /// never opens one.
+    /// never opens one, and no review opens while any block is active, so
+    /// starting a block stops a review the lifter put off.
     @MainActor
     public static func pendingReviewBlocks(
         context: ModelContext,
         now: Date = Date.now
     ) throws -> [Block] {
+        let active = FetchDescriptor<Block>(predicate: #Predicate<Block> { $0.isActive == true })
+        guard try context.fetchCount(active) == 0 else { return [] }
         // Older builds saved a block's planned end as its end date; one still
         // ahead is not an ending.
         let lastEnded = try context.fetch(triggerDescriptor()).first { block in
