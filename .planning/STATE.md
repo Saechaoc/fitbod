@@ -16,7 +16,7 @@ progress:
 
 **Last updated:** 2026-10-29 (Milestone 1 finish, phase 0 done: Codex's seven groups committed, baseline 1,023 of 1,026 passed with 2 known app-bug failures and 1 expected failure)
 
-Last activity: 2026-10-30 - Completed quick task 261029-nse: Fix Conway retry brief delivery and accepted evidence aliases
+Last activity: 2026-10-29 - Merged quick tasks 261028-uhg (Milestone 1 Phase 1A) and 261029-a9s (Phase 1B); the quick-task run ends here and docs/conway-specs continues Milestone 1
 
 ---
 
@@ -321,7 +321,7 @@ None.
 | Task | Updated | Status | Evidence |
 | --- | --- | --- | --- |
 | 261003-9k8 - usable workout milestone | 2026-10-28 | Superseded by the row below: its seven commit groups are committed (1152fde to 3c5aaf2), and its four prepared fixes were run (two pass, two still fail on app bugs). | [Continuation summary](./archived-phases/261003-9k8-complete-milestone-1-usable-workout-app/261003-9k8-SUMMARY.md) |
-| 261028 - Milestone 1 finish | 2026-10-29 | In progress under the approved plan (phases 0-8). Phase 0 is done: baseline on the committed tip ran 1,026 tests with 1,023 passed, 2 failed (review items 4 and 5) and 1 expected failure. Phase 1A (quick task 261028-uhg) is in progress. | [Phase 0 summary](./quick/261028-tll-milestone-1-finish-phase-0-restore-the-s/261028-tll-SUMMARY.md), [baseline](./quick/261028-tll-milestone-1-finish-phase-0-restore-the-s/261028-tll-BASELINE.md) |
+| 261028 - Milestone 1 finish | 2026-10-29 | In progress under the approved plan (phases 0-8). Phase 0 is done: baseline on the committed tip ran 1,026 tests with 1,023 passed, 2 failed (review items 4 and 5) and 1 expected failure. Phase 1A (quick task 261028-uhg, items 1, 2, 3, 33, 41 and 42) and Phase 1B (261029-a9s, items 4, 5, 6 and 34) are done and merged on `main`, and both baseline failures now pass. The quick-task run stopped there by the user's choice: plans 261029-d6u to 261029-di1 were not started, and the rest of Milestone 1 continues as the ticket bundle in `docs/conway-specs/`. | [Phase 0 summary](./quick/261028-tll-milestone-1-finish-phase-0-restore-the-s/261028-tll-SUMMARY.md), [baseline](./quick/261028-tll-milestone-1-finish-phase-0-restore-the-s/261028-tll-BASELINE.md), [Phase 1A](./quick/261028-uhg-m1-phase-1a-fix-the-blank-copy-edit-shee/261028-uhg-SUMMARY.md), [Phase 1B](./quick/261029-a9s-m1-phase-1b-target-reps-entry-that-corru/261029-a9s-SUMMARY.md) |
 
 ### Quick Tasks Completed
 
@@ -360,6 +360,8 @@ None.
 | 260610-hcv | Fix phase row text cut-off in New Block: the plan's eight width edits were already in the code, but OCR renders still showed "Accumulati…" and "Intensificati…" at 390 and 393pt, so the title block now takes the Spacer's 14pt. New Vision test at 390/393/402pt failed first and passes; six New Block guardrail suites and NewBlockModalUITests green. Open, pre-existing: tapping the red Delete after a partial swipe closes the card instead of deleting | 2026-10-29 | 3ff4a8a | [260610-hcv-fix-phase-row-text-cut-off-in-new-block-](./quick/260610-hcv-fix-phase-row-text-cut-off-in-new-block-/) |
 | 261029-n3k | Fix Conway dispatch owned/held-file handoff, proof-gated cleanup, split-parent completion, and read-only verification reruns | 2026-10-29 | 65c02ae | [261029-n3k-fix-conway-dispatch-settlement-safe-clea](./quick/261029-n3k-fix-conway-dispatch-settlement-safe-clea/) |
 | 261029-nse | Fix native retry brief delivery and accepted evidence aliases, including tour retries without saved coverage | 2026-10-30 | cb7e341 | [261029-nse-fix-conway-retry-brief-delivery-and-acce](./quick/261029-nse-fix-conway-retry-brief-delivery-and-acce/) |
+| 261028-uhg | Milestone 1 Phase 1A: COPY and EDIT open a filled editor on the first tap (1), SKIP WARM-UPS works and never counts as logged sets (2), note sheets edit a local copy that only SAVE writes, SET 1 NOTE, BRU Pinned Note (33, 41, 42), and the session editor, custom exercise editor and New Block builder resist swipe-down while they hold unsaved edits (3), with the session editor's change check covering every exercise field it saves. Each fix has a failing-first test; the combined tree ran 990 unit tests (1 known issue) and the affected UI suites green. Open: New Block CANCEL closes without asking | 2026-10-29 | 26b2042 | [261028-uhg-m1-phase-1a-fix-the-blank-copy-edit-shee](./quick/261028-uhg-m1-phase-1a-fix-the-blank-copy-edit-shee/) |
+| 261029-a9s | Milestone 1 Phase 1B: target reps are steppers where low never passes high (5), target RPE is one chip control with NO TARGET (6), a visible WHY at the start of each set's chip line opens Why-this-weight with the keyboard dismissed, Use writes the suggestion and Override focuses the weight (4), and Export CSV, Export JSON and backup CREATE share on one tap (34). Both baseline UI failures pass. Open: Why sheet hero shows x-/@-, focused set rows scroll under the workout header, openSeededWorkout fails at AX3 | 2026-10-29 | 004bbc8 | [261029-a9s-m1-phase-1b-target-reps-entry-that-corru](./quick/261029-a9s-m1-phase-1b-target-reps-entry-that-corru/) |
 
 ---
 
