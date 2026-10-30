@@ -347,7 +347,9 @@ public struct SettingsView: View {
 
     /// Backup section: BRUSectionHead + 2pt bruInk-outlined panel.
     /// Panel top: FULL BACKUP header + last-backup display + entity count.
-    /// Panel footer: CREATE (ghost ShareLink) | RESTORE (signal) split by 1pt bruInk divider.
+    /// Panel footer: CREATE (signal ShareLink) | RESTORE (ghost) split by 1pt bruInk divider.
+    /// CREATE is the primary action; RESTORE replaces all data, so it is
+    /// the secondary one and asks first (Milestone 1 review item 14).
     @ViewBuilder
     private var backupSection: some View {
         BRUSectionHead("Backup")
@@ -371,10 +373,10 @@ public struct SettingsView: View {
 
             BRUDivider(.ink)
 
-            // Footer - CREATE (ghost) | RESTORE (signal) split by 1pt line
+            // Footer - CREATE (signal) | RESTORE (ghost) split by 1pt line
             HStack(spacing: 0) {
-                // CREATE - one ShareLink; the archive is written when the
-                // share sheet asks for it.
+                // CREATE - one ShareLink, signal fill; the archive is built
+                // when the share sheet asks for it.
                 ShareLink(
                     item: BackupShareItem(container: modelContext.container) { succeeded in
                         backupError = succeeded ? nil : "Couldn't create backup. Try again."
@@ -385,8 +387,9 @@ public struct SettingsView: View {
                         .font(BRUFont.labelSmall)
                         .tracking(1.2)
                         .textCase(.uppercase)
-                        .foregroundStyle(Color.bruInk)
+                        .foregroundStyle(Color.bruOnSignal)
                         .frame(maxWidth: .infinity, minHeight: 44)
+                        .background(Color.bruSignal)
                         .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
@@ -396,24 +399,25 @@ public struct SettingsView: View {
                     .fill(Color.bruInk)
                     .frame(width: 1)
 
-                // RESTORE button - signal fill
+                // RESTORE button - ghost; the destructive confirm comes
+                // after the file is picked.
                 Button {
                     showingImporter = true
                 } label: {
                     Group {
                         if isRestoring {
                             ProgressView()
-                                .tint(Color.bruPaper)
+                                .tint(Color.bruInk)
                         } else {
                             Text("RESTORE")
                                 .font(BRUFont.labelSmall)
                                 .tracking(1.2)
                                 .textCase(.uppercase)
-                                .foregroundStyle(Color.bruPaper)
+                                .foregroundStyle(Color.bruInk)
                         }
                     }
                     .frame(maxWidth: .infinity, minHeight: 44)
-                    .background(Color.bruSignal)
+                    .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
                 .disabled(isRestoring)

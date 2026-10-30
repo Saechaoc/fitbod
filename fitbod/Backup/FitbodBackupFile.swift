@@ -4,26 +4,25 @@
 //
 //  Wave-5 plan 06-10 — `Transferable` value type wrapping an on-disk
 //  `.fitbodbackup` archive URL. `BackupArchiver.archive(outputURL:)`
-//  returns it, and Settings' `BackupShareItem` shares its file through
-//  the system share sheet (Files / iCloud Drive / AirDrop).
+//  writes the archive and returns it, for restore's side file and the
+//  backup tests.
 //
-//  ## Why FileRepresentation (not DataRepresentation)
+//  ## Settings shares data, not this file
 //
-//  Symmetric to CSVFile / JSONFile in 06-09b, but those wrap pre-
-//  rendered Data; backups can be 10+ MB once images are included, so
-//  holding the bytes in memory while ShareLink presents is wasteful.
-//  The archiver writes to `documentDirectory/fitbod-backup-YYYY-MM-DD.fitbodbackup`
-//  and ShareLink references the file by URL — system share sheet
-//  takes ownership without re-reading the bytes through our process.
+//  Backup CREATE in Settings shares `BackupShareItem`, which hands the
+//  share sheet the same archive's bytes from
+//  `BackupArchiver.archiveData(now:)`. Shared as this file, the archive
+//  was built three times before the share sheet appeared, more than six
+//  seconds after the tap (review item 34). The share sheet holds the
+//  bytes in memory, which costs little: ZIPWriter builds the whole
+//  archive in memory before it is written anyway.
 //
 //  ## suggestedFileName
 //
 //  Locked at archive time by `BackupArchiver.archive(outputURL:)`.
 //  Standard form: `fitbod-backup-2026-05-23.fitbodbackup`.
 //
-//  [CITED: CONTEXT D-30 + D-31 + RESEARCH §Pattern 5 REVISED +
-//   Pitfall 13 (FileRepresentation over DataRepresentation for
-//   large payloads)]
+//  [CITED: CONTEXT D-30 + D-31 + RESEARCH §Pattern 5 REVISED]
 //
 
 import CoreTransferable

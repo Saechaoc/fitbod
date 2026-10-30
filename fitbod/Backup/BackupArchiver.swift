@@ -47,14 +47,53 @@ public actor BackupArchiver {
     private static let log = Logger(subsystem: "com.fitbod.app", category: "backup")
 
     /// Build a `.fitbodbackup` ZIP archive from the current SwiftData
-    /// store and write it to disk. Returns a Transferable file value
-    /// that the caller hands to ShareLink.
+    /// store and write it to disk. Returns the written file. Restore's
+    /// side file and the backup tests use it.
     ///
-    /// - Parameter outputURL: optional output URL; defaults to
-    ///   documentDirectory/fitbod-backup-YYYY-MM-DD.fitbodbackup.
-    public func archive(outputURL: URL? = nil) async throws -> FitbodBackupFile {
+    /// - Parameters:
+    ///   - outputURL: optional output URL; defaults to
+    ///     documentDirectory/fitbod-backup-YYYY-MM-DD.fitbodbackup.
+    ///   - now: the archive's timestamp. Tests fix it.
+    public func archive(outputURL: URL? = nil, now: Date = .now) async throws -> FitbodBackupFile {
+        let (zipBytes, imageCount) = try zipArchive(now: now)
+
+        // 9. Resolve outputURL — caller override or
+        //    documentDirectory/fitbod-backup-YYYY-MM-DD.fitbodbackup.
+        let resolvedURL: URL
+        if let outputURL {
+            resolvedURL = outputURL
+        } else {
+            let dir = try FileManager.default.url(
+                for: .documentDirectory,
+                in: .userDomainMask,
+                appropriateFor: nil,
+                create: true
+            )
+            let filename = Self.dailyFilename(now: now)
+            resolvedURL = dir.appendingPathComponent(filename)
+        }
+
+        // 10. Atomic write.
+        try zipBytes.write(to: resolvedURL, options: .atomic)
+
+        Self.log.info("BackupArchiver wrote \(zipBytes.count) bytes (manifest+store+\(imageCount) images) to \(resolvedURL.lastPathComponent, privacy: .public)")
+
+        return FitbodBackupFile(url: resolvedURL, filename: resolvedURL.lastPathComponent)
+    }
+
+    /// The same archive's bytes, unwritten, for Settings' CREATE share
+    /// item. Only the bytes leave the actor.
+    ///
+    /// - Parameter now: the archive's timestamp. Tests fix it.
+    public func archiveData(now: Date = .now) throws -> Data {
+        try zipArchive(now: now).bytes
+    }
+
+    /// Steps 1 to 8: the ZIP bytes and how many images they hold, every
+    /// timestamp in them `now`.
+    private func zipArchive(now: Date) throws -> (bytes: Data, imageCount: Int) {
         // 1. Build the full ExportDocument from current ModelContext.
-        let doc = try buildExportDocument()
+        let doc = try buildExportDocument(now: now)
 
         // 2. Encode store.json via 06-09b's JSONExporter (shared encoder
         //    config; byte-identical to JSON export).
@@ -71,7 +110,7 @@ public actor BackupArchiver {
             return ZIPWriter.Entry(
                 path: "images/\(ex.id.uuidString).jpg",
                 data: imageData,
-                lastModified: .now
+                lastModified: now
             )
         }
 
@@ -79,7 +118,7 @@ public actor BackupArchiver {
         let manifest = BackupManifest(
             formatVersion: 1,
             schemaVersion: ExportDocument.canonicalSchemaVersion,
-            createdAt: .now,
+            createdAt: now,
             checksum: checksum,
             imageCount: imageEntries.count
         )
@@ -91,36 +130,13 @@ public actor BackupArchiver {
         //    reading the archive top-down sees it first), then
         //    store.json, then images.
         var entries: [ZIPWriter.Entry] = [
-            ZIPWriter.Entry(path: "manifest.json", data: manifestJSON, lastModified: .now),
-            ZIPWriter.Entry(path: "store.json", data: storeJSON, lastModified: .now),
+            ZIPWriter.Entry(path: "manifest.json", data: manifestJSON, lastModified: now),
+            ZIPWriter.Entry(path: "store.json", data: storeJSON, lastModified: now),
         ]
         entries.append(contentsOf: imageEntries)
 
         // 8. Write the ZIP container.
-        let zipBytes = try ZIPWriter.write(entries: entries)
-
-        // 9. Resolve outputURL — caller override or
-        //    documentDirectory/fitbod-backup-YYYY-MM-DD.fitbodbackup.
-        let resolvedURL: URL
-        if let outputURL {
-            resolvedURL = outputURL
-        } else {
-            let dir = try FileManager.default.url(
-                for: .documentDirectory,
-                in: .userDomainMask,
-                appropriateFor: nil,
-                create: true
-            )
-            let filename = Self.dailyFilename(now: .now)
-            resolvedURL = dir.appendingPathComponent(filename)
-        }
-
-        // 10. Atomic write.
-        try zipBytes.write(to: resolvedURL, options: .atomic)
-
-        Self.log.info("BackupArchiver wrote \(zipBytes.count) bytes (manifest+store+\(imageEntries.count) images) to \(resolvedURL.lastPathComponent, privacy: .public)")
-
-        return FitbodBackupFile(url: resolvedURL, filename: resolvedURL.lastPathComponent)
+        return (try ZIPWriter.write(entries: entries), imageEntries.count)
     }
 
     // MARK: - Filename
@@ -142,7 +158,7 @@ public actor BackupArchiver {
     // Keeping the snapshot code path local to this actor is faster
     // and preserves the canonical mapping rules.
 
-    private func buildExportDocument() throws -> ExportDocument {
+    private func buildExportDocument(now: Date) throws -> ExportDocument {
         let exercises = try fetchExercises().map(mapExercise)
         let muscleGroups = try fetchMuscleGroups().map(mapMuscleGroup)
         let muscleStimuli = try fetchMuscleStimuli().map(mapMuscleStimulus)
@@ -159,7 +175,7 @@ public actor BackupArchiver {
         return ExportDocument(
             formatVersion: 1,
             schemaVersion: ExportDocument.canonicalSchemaVersion,
-            exportedAt: Date.now,
+            exportedAt: now,
             unitSystem: unitSystem,
             exercises: exercises,
             routines: routines,

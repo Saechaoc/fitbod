@@ -11,6 +11,11 @@
 //  `BackupArchiver`). Each item reports whether rendering worked, so
 //  Settings keeps showing its inline error when it fails.
 //
+//  All three are data. As a file, the backup was built three times, about
+//  two seconds apart, before the share sheet appeared, so CREATE took
+//  over six seconds to open it. The share sheet asks for data only when
+//  an activity, such as Save to Files, needs it.
+//
 
 import CoreTransferable
 import Foundation
@@ -60,23 +65,30 @@ public struct JSONExportItem: Transferable, Sendable {
     }
 }
 
-/// A `.fitbodbackup` archive, written when shared.
+/// A `.fitbodbackup` archive, built when shared.
 public struct BackupShareItem: Transferable, Sendable {
     public let container: ModelContainer
     public let report: ExportRenderReport
+    /// The archive's timestamp at each render. Tests fix it.
+    let now: @Sendable () -> Date
 
     public init(container: ModelContainer, report: @escaping ExportRenderReport) {
+        self.init(container: container, now: { .now }, report: report)
+    }
+
+    init(container: ModelContainer, now: @escaping @Sendable () -> Date, report: @escaping ExportRenderReport) {
         self.container = container
+        self.now = now
         self.report = report
     }
 
     public static var transferRepresentation: some TransferRepresentation {
-        FileRepresentation(exportedContentType: .fitbodBackup) { item in
+        DataRepresentation(exportedContentType: .fitbodBackup) { item in
             try await ShareItemRendering.run(report: item.report) {
-                SentTransferredFile(try await BackupArchiver(modelContainer: item.container).archive().url)
+                try await BackupArchiver(modelContainer: item.container).archiveData(now: item.now())
             }
         }
-        .suggestedFileName { _ in BackupArchiver.dailyFilename(now: .now) }
+        .suggestedFileName { item in BackupArchiver.dailyFilename(now: item.now()) }
     }
 }
 
