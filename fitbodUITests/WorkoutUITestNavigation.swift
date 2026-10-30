@@ -20,6 +20,19 @@ extension UITestNavigation {
         )).firstMatch.waitForExistence(timeout: 10))
     }
 
+    /// Taps a button in the decimal RPE picker's header and waits for the
+    /// picker to close. A screen under the sheet can show a button with the
+    /// same label, so this takes the lowest one.
+    static func tapPickerButton(_ label: String, in app: XCUIApplication) {
+        let wheel = app.pickerWheels.firstMatch
+        let button = app.buttons.matching(NSPredicate(format: "label ==[c] %@", label))
+            .allElementsBoundByIndex.max(by: { $0.frame.minY < $1.frame.minY })
+        XCTAssertNotNil(button, "Missing picker button: \(label)")
+        button?.tap()
+        let closed = XCTNSPredicateExpectation(predicate: NSPredicate(format: "exists == false"), object: wheel)
+        XCTAssertEqual(XCTWaiter().wait(for: [closed], timeout: 5), .completed, "\(label) must close the picker")
+    }
+
     static func openEmptySessionBuilder() -> XCUIApplication {
         let app = launch(freshStore)
         let newRoutine = app.buttons["+ New routine"]

@@ -9,8 +9,11 @@
 // — all current types use bruInk except `working` which renders NO chip.
 //
 // Tap cycles set type:  working → warmup → drop → failure → restPause → working
-// Long-press presents a .contextMenu for direct selection (UI-SPEC verbatim
-// labels "Working" / "Warm-up" / "Drop Set" / "To Failure" / "Rest-Pause").
+// Long-press opens a Menu for direct selection (UI-SPEC verbatim labels
+// "Working" / "Warm-up" / "Drop Set" / "To Failure" / "Rest-Pause").
+// It is a Menu, not a .contextMenu: in a List row a context menu takes a
+// hold anywhere in the row, including the RPE chips' hold for a half step.
+// A working set has no chip, so `SetRow`'s set label opens the same menu.
 //
 // BRU contract: NO capsule shapes / NO RoundedRectangle / NO accent color
 //               NO Image(systemName:) / NO Color(.system*) / NO .font(.caption)
@@ -27,8 +30,8 @@ public struct SetTypeChip: View {
 
     public var body: some View {
         let current = SetType(rawValue: setTypeRaw) ?? .working
-        Button {
-            cycleType()
+        Menu {
+            SetTypeMenuItems(setTypeRaw: $setTypeRaw)
         } label: {
             // Working sets render NO chip per UI-SPEC line 378.
             // All other types render a BRUChip with ink outline;
@@ -45,38 +48,45 @@ public struct SetTypeChip: View {
             case .restPause:
                 BRUChip("RP", color: .bruInk)
             }
+        } primaryAction: {
+            cycleType()
         }
         .buttonStyle(.plain)
-        .accessibilityLabel(accessibilityLabel(for: current))
+        .accessibilityLabel(Self.label(for: current))
         .accessibilityHint("Tap to cycle set type. Tap and hold for menu")  // UI-SPEC verbatim a11y
-        .contextMenu {
-            Button("Working")    { setTypeRaw = SetType.working.rawValue }   // UI-SPEC verbatim
-            Button("Warm-up")    { setTypeRaw = SetType.warmup.rawValue }
-            Button("Drop Set")   { setTypeRaw = SetType.drop.rawValue }
-            Button("To Failure") { setTypeRaw = SetType.failure.rawValue }
-            Button("Rest-Pause") { setTypeRaw = SetType.restPause.rawValue }
-        }
     }
 
-    // MARK: - Private helpers
+    // MARK: - Helpers
 
-    /// Cycles through the set types in canonical order.
-    /// Order: working → warmup → drop → failure → restPause → working.
+    /// Menu order, and the order a tap cycles through.
+    static let order: [SetType] = [.working, .warmup, .drop, .failure, .restPause]
+
     private func cycleType() {
-        let order: [SetType] = [.working, .warmup, .drop, .failure, .restPause]
         let current = SetType(rawValue: setTypeRaw) ?? .working
-        let idx = order.firstIndex(of: current) ?? 0
-        setTypeRaw = order[(idx + 1) % order.count].rawValue
+        let idx = Self.order.firstIndex(of: current) ?? 0
+        setTypeRaw = Self.order[(idx + 1) % Self.order.count].rawValue
     }
 
-    /// Accessibility label uses the long-press menu label format per UI-SPEC line 692.
-    private func accessibilityLabel(for type: SetType) -> String {
+    /// The menu labels (UI-SPEC verbatim), also the accessibility label per
+    /// UI-SPEC line 692.
+    static func label(for type: SetType) -> String {
         switch type {
         case .working:   return "Working"
         case .warmup:    return "Warm-up"
         case .drop:      return "Drop Set"
         case .failure:   return "To Failure"
         case .restPause: return "Rest-Pause"
+        }
+    }
+}
+
+/// The set-type menu, shared by the chip and `SetRow`'s set label.
+struct SetTypeMenuItems: View {
+    @Binding var setTypeRaw: String
+
+    var body: some View {
+        ForEach(SetTypeChip.order, id: \.self) { type in
+            Button(SetTypeChip.label(for: type)) { setTypeRaw = type.rawValue }
         }
     }
 }

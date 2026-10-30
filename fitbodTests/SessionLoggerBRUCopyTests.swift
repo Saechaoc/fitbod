@@ -140,7 +140,7 @@ struct SessionLoggerBRUCopyTests {
         #expect(source.contains("Color.bruPaper"))
 
         // Long-press to decimal sheet preserved
-        #expect(source.contains("LongPressGesture(minimumDuration: 0.5)"))
+        #expect(source.contains("simultaneousGesture(LongPressGesture(minimumDuration: 0.5)"))
         #expect(source.contains("DecimalRPEPickerSheet"))
 
         // No banned tokens

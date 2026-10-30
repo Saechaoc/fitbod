@@ -89,7 +89,7 @@ struct SessionLoggerCopyTests {
             encoding: .utf8
         )
         #expect(rpeSrc.contains("[6, 7, 8, 9, 10]"))
-        #expect(rpeSrc.contains("LongPressGesture(minimumDuration: 0.5)"))
+        #expect(rpeSrc.contains("simultaneousGesture(LongPressGesture(minimumDuration: 0.5)"))
         #expect(rpeSrc.contains("DecimalRPEPickerSheet"))
 
         // DecimalRPEPickerSheet — wheel picker + stride preserved.

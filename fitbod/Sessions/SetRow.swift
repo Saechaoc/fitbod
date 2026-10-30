@@ -96,10 +96,26 @@ public struct SetRow: View {
                 // LINE 1 — numbers + action buttons
                 inputLayout {
                     // S{N} / W{N} leading label — BRUFont.bodyDefault per UI-SPEC line 369
-                    Text(setLabel)
-                        .font(BRUFont.bodyDefault)
-                        .foregroundStyle(Color.bruMuted)
-                        .frame(width: dynamicTypeSize.isAccessibilitySize ? nil : 32, alignment: .leading)
+                    // A tap opens the set-type menu; a working set has no
+                    // set-type chip, so this is where its type changes.
+                    Menu {
+                        SetTypeMenuItems(setTypeRaw: setTypeRaw)
+                    } label: {
+                        Text(setLabel)
+                            .font(BRUFont.bodyDefault)
+                            .foregroundStyle(Color.bruMuted)
+                            .frame(width: dynamicTypeSize.isAccessibilitySize ? nil : 32, alignment: .leading)
+                            // A 44pt target over the 32pt column; the
+                            // negative padding below keeps the layout.
+                            .padding(.horizontal, 6)
+                            .frame(minHeight: 44)
+                            .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .padding(.horizontal, -6)
+                    .accessibilityLabel("Set \(displayNumber) type")
+                    .accessibilityValue(SetTypeChip.label(for: SetType(rawValue: entry.setTypeRaw) ?? .working))
+                    .accessibilityIdentifier("set.type.\(identifierSuffix)")
 
                     PreviousColumn(
                         exerciseID: sessionExercise.exercise?.id,
@@ -235,10 +251,7 @@ public struct SetRow: View {
                         set: { entry.rpe = $0; onEditCommitted() }
                     ))
 
-                    SetTypeChip(setTypeRaw: Binding(
-                        get: { entry.setTypeRaw },
-                        set: { entry.setTypeRaw = $0; onEditCommitted() }
-                    ))
+                    SetTypeChip(setTypeRaw: setTypeRaw)
 
                     if !dynamicTypeSize.isAccessibilitySize { Spacer(minLength: 0) }
                 }
@@ -313,6 +326,14 @@ public struct SetRow: View {
     /// "{exercise position}.{set label}", e.g. "1.S2", for UI test queries.
     private var identifierSuffix: String {
         "\(sessionExercise.orderIndex + 1).\(setLabel)"
+    }
+
+    /// Shared by the set label's menu and the set-type chip.
+    private var setTypeRaw: Binding<String> {
+        Binding(
+            get: { entry.setTypeRaw },
+            set: { entry.setTypeRaw = $0; onEditCommitted() }
+        )
     }
 
     /// Toggles the plate-stack disclosure for this row.
