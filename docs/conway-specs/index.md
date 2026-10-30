@@ -70,6 +70,8 @@ The quick-task run of the same plan must finish its last two tasks first, so rea
 | [T70](tickets/T70-block-review-after-end.md) | The block review opens after a block ends |
 | [T71](tickets/T71-pr-toggle-every-size.md) | The PR list's intent toggle fits every text size and says which is selected |
 | [T72](tickets/T72-one-sample-per-workout.md) | The plateau and RPE-creep checks count each workout once |
+| [T73](tickets/T73-signal-text-on-paper.md) | Orange text on Program and New Block reads clearly in light mode |
+| [T74](tickets/T74-add-phase-sheet-header.md) | The Add Phase sheet has a BRU header and a CANCEL |
 
 ### Phase 2: P2 defects
 
