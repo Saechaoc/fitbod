@@ -39,7 +39,9 @@
 //  Phase 3 (plan 03-08) additions:
 //    - Block A (Prescription): invokes ProgressionStrategyFactory to
 //      compute prescribedWeight per exercise (RESEARCH §SessionFactory
-//      Hook Point).
+//      Hook Point). The step is `prescription(for:...)`, which a
+//      mid-workout swap (SwapExerciseSheet.swap) reuses for the new
+//      exercise.
 //    - Block B (Warmup): invokes WarmupRamp.shouldGenerate /
 //      WarmupRamp.generate for the first qualifying compound exercise.
 //    - Internal-static helpers: fetchHistoryPoints, lastSessionWorkingReps,
@@ -217,89 +219,32 @@ public enum SessionFactory {
 
             context.insert(se)
 
-            // Resolve "previous matching-intent weight" for the planned
-            // `SetEntry` rows. Returns nil for the first-ever logged
-            // session of this (exercise, intent) tuple → set rows default
-            // weight = 0. PIVOT-02: intent is sourced from the snapshotted
-            // session-level field, not the per-exercise field (which no
-            // longer exists post-Plan-02).
-            let previousHint = PreviousMatchingIntent.fetchTopWorkingSet(
-                exerciseID: re.exercise?.id,
-                intentRaw: session.intentRaw,
-                context: context
-            )
-
             // ─── Phase 3 (plan 03-08) RESEARCH §SessionFactory Hook Point ───
             //
-            // Block A — Prescription: invoke ProgressionStrategyFactory to
-            // compute the prescribed weight for this exercise+intent, then
-            // store it on the snapshotted SessionExercise row. The caller
+            // Block A — Prescription: `prescription(for:...)` computes the
+            // prescribed weight for this exercise+intent, then it is stored
+            // on the snapshotted SessionExercise row. The caller
             // (SessionExerciseCard.currentExplanation) recomputes the full
             // PrescriptionExplanation at render time — SessionFactory only
-            // needs to persist the scalar `prescribedWeight` so the SetEntry
-            // rows can be seeded with it.
+            // needs to persist the scalar `prescribedWeight`. A mid-workout
+            // swap runs the same step for the new exercise.
             //
-            let ekind = Self.equipmentKind(for: re.exercise?.equipment ?? .other)
-            let inventory = Self.plateInventory(for: ekind, context: context)
-            let barWeight = re.exercise?.barWeightOverride ?? inventory.barWeight
-            let plates = inventory.availablePlates.map { (weight: $0.weight, countPerSide: $0.countPerSide) }
-            let smallestIncrement = re.exercise?.smallestIncrement
-                ?? userSettings?.defaultIncrementKg
-                ?? 2.5
-            let minCalibrationSets = userSettings?.minCalibrationSets ?? 10
-            // Labels the explanation text only; weights are stored as entered.
-            let unit = WeightUnit.effective(
-                for: re.exercise,
-                default: userSettings?.weightUnit ?? .default
-            )
-
-            // Fetch history for the strategy (RESEARCH §Pitfall 7 filter applied
-            // inside fetchHistoryPoints — nil-RPE sets are excluded).
-            // PIVOT-02: intentRaw sourced from session-level snapshot.
-            let historyPoints = Self.fetchHistoryPoints(
-                exerciseID: re.exercise?.id,
-                intentRaw: session.intentRaw,
-                context: context
-            )
-
-            // Fetch the last session's working-set reps array for DoubleProgression
-            // bump detection. PIVOT-02: intentRaw sourced from session-level snapshot.
-            let lastRepsArray = Self.lastSessionWorkingReps(
-                exerciseID: re.exercise?.id,
-                intentRaw: session.intentRaw,
-                context: context
-            )
-
-            // Previous-intent scalars (already fetched above for the SetEntry hint).
-            let lastSessionWeight = previousHint?.weight
-            let lastSessionReps = previousHint?.reps
-            let lastSessionRPE = previousHint?.rpe
-            let lastSessionDate = previousHint?.sessionStartedAt
-
             // D-14 — reuse the session-level strategy instance hoisted
             // above the loop (one strategy per session, used for every
-            // SessionExercise). The instance is stateless so reuse is
-            // safe; the per-exercise variation lives in the prescribe()
-            // call's history + history-derived inputs.
-            let strategy = sessionStrategy
-            let (prescribedWeight, _) = strategy.prescribe(
-                history: historyPoints,
+            // SessionExercise).
+            let prescription = Self.prescription(
+                for: re.exercise,
                 targetRepsLow: re.targetRepsLow,
                 targetRepsHigh: re.targetRepsHigh,
                 targetRPE: re.targetRPE,
-                lastSessionRepsArray: lastRepsArray.isEmpty ? nil : lastRepsArray,
-                smallestIncrement: smallestIncrement,
-                plates: plates,
-                barWeight: barWeight,
-                unit: unit,
-                minCalibrationSets: minCalibrationSets,
-                lastSessionWeight: lastSessionWeight,
-                lastSessionReps: lastSessionReps,
-                lastSessionRPE: lastSessionRPE,
-                lastSessionDate: lastSessionDate,
-                block: activeBlock,
-                today: date
+                in: session,
+                strategy: sessionStrategy,
+                userSettings: userSettings,
+                context: context
             )
+            let prescribedWeight = prescription.weight
+            let barWeight = prescription.barWeight
+            let plates = prescription.plates
             se.prescribedWeight = prescribedWeight
 
             // ─── Block B — Warmup ───
@@ -346,8 +291,10 @@ public enum SessionFactory {
             //
             // Working set orderIndex is shifted up by the number of warm-up
             // rows inserted in Block B so warm-up rows occupy indices 0..N-1
-            // and working sets start at N.
-            let seedWeight = lastSessionWeight ?? 0
+            // and working sets start at N. With no previous matching-intent
+            // set (the first logged session of this exercise and intent),
+            // set rows default to weight 0.
+            let seedWeight = prescription.previousSet?.weight ?? 0
             let plannedWorkingSetCount: Int
             if scheduledDeloadActive, let scheduledBlockPhase {
                 plannedWorkingSetCount = max(
@@ -395,6 +342,102 @@ public enum SessionFactory {
         )
         descriptor.fetchLimit = 1
         return (try? context.fetch(descriptor))?.first
+    }
+
+    // MARK: - Prescription step (Block A)
+
+    /// One exercise's prescription: the prescribed weight, plus the bar,
+    /// plates and previous matching-intent set it was computed from, which
+    /// `start` reuses for the warm-up ramp and the planned sets.
+    struct ExercisePrescription {
+        let weight: Double
+        let barWeight: Double
+        let plates: [(weight: Double, countPerSide: Int)]
+        let previousSet: PreviousMatchingIntentHit?
+    }
+
+    /// The prescription step (Phase 3 plan 03-08): the weight `strategy`
+    /// prescribes for `exercise` in `session`, from the session's intent,
+    /// block and start date and the exercise's finished history. `start`
+    /// runs it for every exercise; a mid-workout swap runs it for the new
+    /// exercise, so a swapped exercise gets what a fresh start gives it.
+    static func prescription(
+        for exercise: Exercise?,
+        targetRepsLow: Int,
+        targetRepsHigh: Int,
+        targetRPE: Double?,
+        in session: Session,
+        strategy: any ProgressionStrategy,
+        userSettings: UserSettings?,
+        context: ModelContext
+    ) -> ExercisePrescription {
+        // Resolve "previous matching-intent weight". PIVOT-02: intent is
+        // sourced from the snapshotted session-level field. Only finished
+        // sessions count, so `session` never feeds its own prescription.
+        let previousSet = PreviousMatchingIntent.fetchTopWorkingSet(
+            exerciseID: exercise?.id,
+            intentRaw: session.intentRaw,
+            context: context,
+            excludingSessionID: session.id
+        )
+
+        let ekind = equipmentKind(for: exercise?.equipment ?? .other)
+        let inventory = plateInventory(for: ekind, context: context)
+        let barWeight = exercise?.barWeightOverride ?? inventory.barWeight
+        let plates = inventory.availablePlates.map { (weight: $0.weight, countPerSide: $0.countPerSide) }
+        let smallestIncrement = exercise?.smallestIncrement
+            ?? userSettings?.defaultIncrementKg
+            ?? 2.5
+        let minCalibrationSets = userSettings?.minCalibrationSets ?? 10
+        // Labels the explanation text only; weights are stored as entered.
+        let unit = WeightUnit.effective(
+            for: exercise,
+            default: userSettings?.weightUnit ?? .default
+        )
+
+        // Fetch history for the strategy (RESEARCH §Pitfall 7 filter applied
+        // inside fetchHistoryPoints — nil-RPE sets are excluded).
+        // PIVOT-02: intentRaw sourced from session-level snapshot.
+        let historyPoints = fetchHistoryPoints(
+            exerciseID: exercise?.id,
+            intentRaw: session.intentRaw,
+            context: context
+        )
+
+        // Fetch the last session's working-set reps array for DoubleProgression
+        // bump detection. PIVOT-02: intentRaw sourced from session-level snapshot.
+        let lastRepsArray = lastSessionWorkingReps(
+            exerciseID: exercise?.id,
+            intentRaw: session.intentRaw,
+            context: context
+        )
+
+        // The strategy instance is stateless, so one per session is safe
+        // (D-14); the per-exercise variation lives in these inputs.
+        let (weight, _) = strategy.prescribe(
+            history: historyPoints,
+            targetRepsLow: targetRepsLow,
+            targetRepsHigh: targetRepsHigh,
+            targetRPE: targetRPE,
+            lastSessionRepsArray: lastRepsArray.isEmpty ? nil : lastRepsArray,
+            smallestIncrement: smallestIncrement,
+            plates: plates,
+            barWeight: barWeight,
+            unit: unit,
+            minCalibrationSets: minCalibrationSets,
+            lastSessionWeight: previousSet?.weight,
+            lastSessionReps: previousSet?.reps,
+            lastSessionRPE: previousSet?.rpe,
+            lastSessionDate: previousSet?.sessionStartedAt,
+            block: session.block,
+            today: session.startedAt
+        )
+        return ExercisePrescription(
+            weight: weight,
+            barWeight: barWeight,
+            plates: plates,
+            previousSet: previousSet
+        )
     }
 
     // MARK: - Internal-static helpers (plan 03-08)

@@ -39,28 +39,7 @@ public struct SwapExerciseSheet: View {
             VStack(spacing: 0) {
                 // Exercise library — NOT rewritten (out of Phase 2.1 scope per UI-SPEC line 724)
                 ExerciseLibraryView(onSelect: { exercise in
-                    // SESS-05 — mutate SessionExercise.exercise ONLY.
-                    // The source RoutineExercise.exercise is untouched.
-                    sessionExercise.exercise = exercise
-                    sessionExercise.exerciseNameSnapshot = exercise.name
-
-                    // Re-seed pending sets with the new exercise's matching-intent hint.
-                    // Committed sets are immutable (PITFALLS-doc #1).
-                    // PIVOT-02 / PIVOT-05: intent is read from the parent Session.
-                    let hint = PreviousMatchingIntent.fetchTopWorkingSet(
-                        exerciseID: exercise.id,
-                        intentRaw: sessionExercise.session?.intentRaw ?? Intent.strength.rawValue,
-                        context: ctx,
-                        excludingSessionID: sessionExercise.session?.id
-                    )?.weight ?? 0
-                    let pendingSets = (sessionExercise.sets ?? [])
-                        .filter { !$0.isComplete }
-                    for set in pendingSets {
-                        set.weight = hint
-                        set.reps = 0
-                        set.rpe = nil
-                    }
-                    try? ctx.save()
+                    Self.swap(sessionExercise, to: exercise, context: ctx)
                     dismiss()
                 }, showsPickerHeader: false)
 
@@ -81,6 +60,48 @@ public struct SwapExerciseSheet: View {
                 )
             }
         }
+    }
+
+    // MARK: - Swap
+
+    /// SESS-05 — mutates SessionExercise.exercise ONLY. The source
+    /// RoutineExercise.exercise is untouched. The new exercise gets the
+    /// prescription a workout start would give it, and the pending sets
+    /// are re-seeded for it. Saves immediately.
+    @MainActor
+    static func swap(_ sessionExercise: SessionExercise, to exercise: Exercise, context: ModelContext) {
+        guard let session = sessionExercise.session else { return }
+        sessionExercise.exercise = exercise
+        sessionExercise.exerciseNameSnapshot = exercise.name
+
+        // SessionFactory's prescription step, with this workout's intent,
+        // strategy, block and start date.
+        let prescription = SessionFactory.prescription(
+            for: exercise,
+            targetRepsLow: sessionExercise.targetRepsLow,
+            targetRepsHigh: sessionExercise.targetRepsHigh,
+            targetRPE: sessionExercise.targetRPE,
+            in: session,
+            strategy: ProgressionStrategyFactory.make(for: session.progressionKind),
+            userSettings: (try? context.fetch(FetchDescriptor<UserSettings>()))?.first,
+            context: context
+        )
+        sessionExercise.prescribedWeight = prescription.weight
+
+        // Re-seed pending sets with the new exercise's matching-intent hint,
+        // as a workout start seeds them. A weight typed for the old exercise
+        // is gone, so its "M" goes too. Committed sets are immutable
+        // (PITFALLS-doc #1).
+        let hint = prescription.previousSet?.weight ?? 0
+        let pendingSets = (sessionExercise.sets ?? [])
+            .filter { !$0.isComplete }
+        for set in pendingSets {
+            set.weight = hint
+            set.reps = 0
+            set.rpe = nil
+            set.wasManualOverride = false
+        }
+        try? context.save()
     }
 }
 
