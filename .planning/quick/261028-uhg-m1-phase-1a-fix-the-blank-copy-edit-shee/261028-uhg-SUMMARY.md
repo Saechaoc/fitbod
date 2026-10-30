@@ -302,7 +302,7 @@ No signature changed, so no caller needed an edit.
 
 ### After the review
 
-A ponytail review of `0ebd71e..5fb605f` reported three findings and one point it could not check; the user asked for them to be fixed.
+A ponytail review of `d6e64aa` (rebased as `78625e7`) and the Task 3 SUMMARY reported three findings and one point it could not check; the user asked for them to be fixed.
 
 | Review point | What changed | Commit |
 |---|---|---|
