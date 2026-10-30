@@ -47,6 +47,7 @@ The quick-task run of the same plan must finish its last two tasks first, so rea
 | [T16](tickets/T16-program-and-new-block-dark-mode.md) | Program and New Block in dark mode |
 | [T17](tickets/T17-stripe-height-and-button-bleed.md) | Stripe height and button bleed |
 | [T49](tickets/T49-rpe-chip-hold-opens-decimal-picker.md) | Holding an RPE chip opens the decimal picker |
+| [T50](tickets/T50-why-uses-finished-workouts.md) | WHY suggests from finished workouts only |
 
 ### Phase 2: P2 defects
 
