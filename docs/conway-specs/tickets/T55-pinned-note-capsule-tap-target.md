@@ -27,7 +27,7 @@ So it takes taps only on its drawn box, about 33pt tall, which is under the 44pt
 ## Change
 
 1. The capsule takes a tap anywhere in a band at least 44pt tall around its drawn box.
-2. The capsule looks exactly as it does today, and the header row keeps its layout.
+2. The drawn capsule looks exactly as it does today; the header row may grow only by what the 44pt band needs.
 3. A tap still opens the Pinned Note sheet, and the accessibility label and hint stay the same.
 
 ## Constraints
@@ -53,12 +53,13 @@ Both fail today.
 ## Observable acceptance
 
 - The repro tests pass on the small phone.
-- A crop of the header row with the capsule is pixel-identical before and after the change; both crops are in `screens/`.
+- A crop of the drawn capsule is pixel-identical before and after the change, and screenshots of the header row before and after are in `screens/`.
 - `SessionLoggerBRUUITests` and `SkipWarmupsUITests` pass on the small phone.
 - `fitbodTests` passes.
 
 ## Hints
 
 - T04 fixed the same problem on the STALLED row's suggested-action chip: `git show 4476234 -- fitbod/Fatigue/SuggestedActionChip.swift`.
+  That chip already had a 44pt frame outside its button, so its row kept its height; the capsule has none, so its row may grow.
 - `SessionExerciseCard.swift` near line 155 places the capsule in the header's second row.
 - The capsule's padding is near line 78 and its button style near line 85.
