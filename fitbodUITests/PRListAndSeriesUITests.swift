@@ -167,6 +167,71 @@ final class PRListAndSeriesUITests: XCTestCase {
     @MainActor
     func testIntentToggleLabelsStayWholeAtAX3() throws {
         let app = UITestNavigation.launch(UITestNavigation.progressHistory, textSize: .ax3)
+        let segments = openIntentToggle(in: app)
+        UITestNavigation.saveScreenshot("T57", "prs-toggle", textSize: .ax3)
+        assertSegmentsStayWhole(segments)
+    }
+
+    /// T71: the sizes between default text and the accessibility sizes keep
+    /// every label whole too. In a row, a third of the small phone is too
+    /// narrow for HYPERTROPHY from xxLarge up: it broke as HYPERTROP/HY and
+    /// made the row taller than ALL's selected fill.
+    @MainActor
+    func testIntentToggleLabelsStayWholeFromXLargeToXXXLarge() throws {
+        for size in LargerTextSize.allCases {
+            XCTContext.runActivity(named: "Text size \(size.rawValue)") { _ in
+                let app = UITestNavigation.launch(size.launchArguments + UITestNavigation.progressHistory)
+                let segments = openIntentToggle(in: app)
+                saveScreenshot("T71", "prs-toggle", size: size)
+                assertSegmentsStayWhole(segments)
+            }
+        }
+    }
+
+    /// T71: at default text the toggle is one row of three equal segments,
+    /// each a 44pt tap target, and VoiceOver hears which one is selected.
+    @MainActor
+    func testIntentToggleIsOneRowOfTargetsThatMarkTheSelectedOne() throws {
+        let app = UITestNavigation.launch(UITestNavigation.progressHistory)
+        let segments = openIntentToggle(in: app)
+        UITestNavigation.saveScreenshot("T71", "prs-toggle")
+        assertSegmentsStayWhole(segments)
+        let all = segments[2]
+        for segment in segments {
+            XCTAssertEqual(segment.frame.minY, all.frame.minY, accuracy: 0.5, "\(segment.label) is not in one row with ALL")
+            XCTAssertEqual(segment.frame.width, all.frame.width, accuracy: 1, "\(segment.label) is not as wide as ALL")
+        }
+        XCTAssertEqual(
+            segments.sorted { $0.frame.minX < $1.frame.minX }.map(\.label),
+            ["STRENGTH", "HYPERTROPHY", "ALL"],
+            "The segments must read STRENGTH, HYPERTROPHY, ALL from left to right"
+        )
+
+        assertOnlySelected("ALL", among: segments)
+        segments[0].tap()
+        let selected = XCTNSPredicateExpectation(predicate: NSPredicate(format: "isSelected == true"), object: segments[0])
+        XCTAssertEqual(XCTWaiter().wait(for: [selected], timeout: 5), .completed, "STRENGTH is not selected after a tap")
+        assertOnlySelected("STRENGTH", among: segments)
+    }
+
+    // MARK: - Intent toggle
+
+    /// Text sizes between default text and the accessibility sizes, which
+    /// `UITestNavigation.TextSize` cannot pin. The raw value is the text
+    /// size token in screenshot names.
+    private enum LargerTextSize: String, CaseIterable {
+        case xl, xxl, xxxl
+
+        /// Like a `TextSize`'s, these go before the other launch arguments.
+        var launchArguments: [String] {
+            ["-UIPreferredContentSizeCategoryName", "UICTContentSizeCategory\(rawValue.uppercased())"]
+        }
+    }
+
+    /// Opens Personal Records from the Progress tab and returns the intent
+    /// toggle's STRENGTH, HYPERTROPHY and ALL segments.
+    @MainActor
+    private func openIntentToggle(in app: XCUIApplication) -> [XCUIElement] {
         UITestNavigation.selectTab("Progress", in: app)
         let records = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Personal Records")).firstMatch
         UITestNavigation.reveal(records, in: app)
@@ -174,7 +239,13 @@ final class PRListAndSeriesUITests: XCTestCase {
 
         let segments = ["STRENGTH", "HYPERTROPHY", "ALL"].map { app.buttons[$0] }
         XCTAssertTrue(segments[2].waitForExistence(timeout: 10), "The PR list's intent toggle never appeared")
-        UITestNavigation.saveScreenshot("T57", "prs-toggle", textSize: .ax3)
+        return segments
+    }
+
+    /// Every segment is a full tap target, apart from the others, and no
+    /// taller than ALL's one-line segment, so no label wraps mid-word.
+    @MainActor
+    private func assertSegmentsStayWhole(_ segments: [XCUIElement]) {
         let oneLine = segments[2].frame.height
         for segment in segments {
             UITestNavigation.assertTapTarget(segment)
@@ -185,6 +256,30 @@ final class PRListAndSeriesUITests: XCTestCase {
                 UITestNavigation.assertNoOverlap(segment, other)
             }
         }
+    }
+
+    /// Only `label`'s segment carries the selected trait VoiceOver reads.
+    @MainActor
+    private func assertOnlySelected(_ label: String, among segments: [XCUIElement]) {
+        for segment in segments {
+            XCTAssertEqual(
+                segment.isSelected, segment.label == label,
+                "\(segment.label) must \(segment.label == label ? "" : "not ")report the selected trait while \(label) is selected"
+            )
+        }
+    }
+
+    /// Saves a screenshot named the way `UITestNavigation.saveScreenshot`
+    /// names them, for a text size `TextSize` has no case for.
+    @MainActor
+    private func saveScreenshot(_ ticket: String, _ screen: String, size: LargerTextSize) {
+        let screenshot = XCUIScreen.main.screenshot()
+        let points = Int(screenshot.image.size.width.rounded())
+        let phone = [390: "small", 440: "large"][points] ?? "\(points)pt"
+        let attachment = XCTAttachment(screenshot: screenshot)
+        attachment.name = [ticket, screen, phone, size.rawValue, UITestNavigation.Appearance.light.rawValue].joined(separator: "-")
+        attachment.lifetime = .keepAlways
+        XCTContext.runActivity(named: "Screenshot \(attachment.name ?? screen)") { $0.add(attachment) }
     }
 
     // MARK: - Chart readout

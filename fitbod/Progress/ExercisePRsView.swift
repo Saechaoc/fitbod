@@ -14,7 +14,7 @@
 //  ## Layout (Phase 6.1 BRU reskin — 06.1-03)
 //
 //  BRUHeaderBar(left: back, center: nav title, right: "ALL TIME")
-//  3-segment inverted-active intent toggle bar (stacked at accessibility sizes)
+//  3-segment inverted-active intent toggle bar (stacked above default text)
 //  BRUDivider(.ink)
 //  ScrollView → LazyVStack of 4 sections (Weight / Reps / Volume / e1RM)
 //
@@ -125,10 +125,12 @@ public struct ExercisePRsView: View {
     // MARK: - Intent Toggle
 
     private var intentToggle: some View {
-        let isAccessibilitySize = dynamicTypeSize.isAccessibilitySize
-        // At accessibility sizes the segments stack, as in TodayStatStrip, so
-        // each label gets the full width and never breaks mid-word.
-        let segments = isAccessibilitySize
+        // Above default text the segments stack, as in TodayStatStrip, so each
+        // label gets the full width: in a third of the 390pt phone,
+        // HYPERTROPHY nearly touches its dividers at xLarge and breaks
+        // mid-word from xxLarge.
+        let isStacked = dynamicTypeSize >= .xLarge
+        let segments = isStacked
             ? AnyLayout(VStackLayout(spacing: 0))
             : AnyLayout(HStackLayout(spacing: 0))
 
@@ -146,20 +148,21 @@ public struct ExercisePRsView: View {
                         .font(BRUFont.labelSmall)
                         .tracking(1.2)
                         .foregroundStyle(isSelected ? Color.bruPaper : Color.bruInk)
-                        .frame(maxWidth: .infinity)
                         .padding(.vertical, 10)
+                        .frame(maxWidth: .infinity, minHeight: BRUMetrics.touchTarget)
                         .background(isSelected ? Color.bruInk : Color.clear)
                         // The whole segment is the tap target, not just its
                         // text: a plain button ignores the clear background.
                         .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
+                .accessibilityAddTraits(isSelected ? .isSelected : [])
 
                 if !isLast {
                     Rectangle()
                         .fill(Color.bruInk)
-                        .frame(width: isAccessibilitySize ? nil : 1,
-                               height: isAccessibilitySize ? 1 : nil)
+                        .frame(width: isStacked ? nil : 1,
+                               height: isStacked ? 1 : nil)
                 }
             }
         }
