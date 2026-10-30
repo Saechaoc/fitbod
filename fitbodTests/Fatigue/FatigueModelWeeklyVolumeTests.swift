@@ -456,45 +456,7 @@ struct FatigueModelWeeklyVolumeTests {
         #expect(FatigueModel.volumeZone(currentSets: 22, mev: 8, mav: 14, mrv: 22) == .overMRV)
     }
 
-    // MARK: - 12. Every muscle from one read
-
-    @Test("weeklyVolumes totals every muscle exactly as weeklyVolume does")
-    func weeklyVolumesMatchesWeeklyVolume() throws {
-        let ctx = try FatigueTestFixtures.makeContext()
-        let bench = try makeBenchPressExercise(in: ctx)
-        // Weights such as 0.3 are not exact binary fractions, so the
-        // totals only match if the same sets are summed in the same order.
-        let dips = try makeExercise("Dips", stimuli: [
-            ("triceps", "primary", 0.6),
-            ("chest", "secondary", 0.3),
-            ("shoulders", "secondary", 0.4),
-        ], in: ctx)
-        let monday = mondayOfThisWeek()
-        try makeSession(in: ctx, startedAt: monday, exercise: bench, sets: [
-            (100, 5, false, true, "working"),
-            (100, 5, false, true, "working"),
-            (60, 5, true, true, "warmup"),
-        ])
-        try makeSession(in: ctx, startedAt: monday.addingTimeInterval(86_400), exercise: dips, sets: [
-            (0, 10, false, true, "working"),
-            (0, 10, false, true, "failure"),
-            (0, 10, false, true, "working"),
-            (0, 10, false, false, "working"),
-        ])
-        try makeSession(in: ctx, startedAt: monday.addingTimeInterval(-86_400), exercise: dips, sets: [
-            (0, 10, false, true, "working"),
-        ])
-
-        let batched = FatigueModel.weeklyVolumes(weekStart: monday, in: ctx)
-        for slug in ["chest", "shoulders", "triceps", "back"] {
-            let single = FatigueModel.weeklyVolume(muscleSlug: slug, weekStart: monday, in: ctx)
-            #expect((batched[slug] ?? WeightedSetTotal(directSets: 0, indirectSets: 0)) == single)
-        }
-        #expect(batched["back"] == nil)
-        #expect(batched["chest"]?.directSets == 2.0)
-    }
-
-    // MARK: - 13. The week's sets, in the order a full fetch returns them
+    // MARK: - 12. The week's sets, in the order a full fetch returns them
 
     @Test("completedWorkingSets returns the week's working sets in full-fetch order")
     func completedWorkingSetsMatchesFullFetch() throws {
@@ -565,29 +527,5 @@ struct FatigueModelWeeklyVolumeTests {
         #expect(ctx.hasChanges)
         let pending = FatigueModel.completedWorkingSets(startedFrom: monday, before: weekEnd, in: ctx)
         #expect(Set(pending.map(\.persistentModelID)) == Set(expected).subtracting([undone.persistentModelID]))
-    }
-
-    /// An exercise with the given (muscle slug, role, weight) stimuli. The
-    /// muscles must already exist (see `seedMuscles`).
-    private func makeExercise(
-        _ name: String,
-        stimuli: [(slug: String, role: String, weight: Double)],
-        in ctx: ModelContext
-    ) throws -> Exercise {
-        let muscles = try ctx.fetch(FetchDescriptor<MuscleGroup>())
-        let ex = Exercise()
-        ctx.insert(ex)
-        ex.name = name
-        ex.canonicalName = name.lowercased()
-        for item in stimuli {
-            let stimulus = ExerciseMuscleStimulus()
-            ctx.insert(stimulus)
-            stimulus.role = item.role
-            stimulus.weight = item.weight
-            stimulus.muscle = muscles.first { $0.slug == item.slug }
-            stimulus.exercise = ex
-        }
-        try ctx.save()
-        return ex
     }
 }

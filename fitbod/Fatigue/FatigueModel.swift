@@ -89,48 +89,34 @@ public enum FatigueModel {
 
     /// Stimulus-weighted weekly volume for one muscle, for the week
     /// starting at `weekStart` (inclusive) and ending at `weekStart +
-    /// 7d` (exclusive). Returns the direct/indirect split per D-07.
-    ///
-    /// Algorithm:
-    ///   1. Fetch SetEntry rows in the week window via a Pitfall #1
-    ///      local-let-captured #Predicate.
-    ///   2. In-memory join through `entry.sessionExercise.exercise.muscleStimuli`
-    ///      (multi-hop traversal is not safe inside #Predicate per
-    ///      Pitfall #1 — must live in Swift).
-    ///   3. For each matching stimulus, branch on role:
-    ///        "primary"   → directSum += stimulus.weight
-    ///        "secondary" → indirectSum += stimulus.weight
-    ///        default     → skip.
+    /// 7d` (exclusive). Returns the direct/indirect split per D-07; a
+    /// muscle nothing hit this week reads zero. Read from
+    /// `weeklyVolumes`, so one muscle and every muscle always agree.
     @MainActor
     public static func weeklyVolume(
         muscleSlug: String,
         weekStart: Date,
         in context: ModelContext
     ) -> WeightedSetTotal {
-        let entries = fetchWorkingSets(weekStart: weekStart, in: context)
-
-        var directSum = 0.0
-        var indirectSum = 0.0
-        for entry in entries {
-            guard let stimuli = entry.sessionExercise?.exercise?.muscleStimuli else { continue }
-            for stimulus in stimuli where stimulus.muscle?.slug == muscleSlug {
-                switch stimulus.role {
-                case "primary":   directSum += stimulus.weight
-                case "secondary": indirectSum += stimulus.weight
-                default:          break
-                }
-            }
-        }
-        return WeightedSetTotal(directSets: directSum, indirectSets: indirectSum)
+        weeklyVolumes(weekStart: weekStart, in: context)[muscleSlug]
+            ?? WeightedSetTotal(directSets: 0, indirectSets: 0)
     }
 
     // MARK: - weeklyVolumes
 
     /// `weeklyVolume` for every muscle at once, keyed by muscle slug, from
     /// one read of the week's sets. A muscle with no stimulus this week has
-    /// no key; read it as zero. Each total matches
-    /// `weeklyVolume(muscleSlug:weekStart:in:)`, which sums the same sets
-    /// in the same order.
+    /// no key.
+    ///
+    /// Algorithm:
+    ///   1. Read the week's completed working sets (`completedWorkingSets`).
+    ///   2. In-memory join through `entry.sessionExercise.exercise.muscleStimuli`
+    ///      (multi-hop traversal is not safe inside #Predicate per
+    ///      Pitfall #1 — must live in Swift).
+    ///   3. For each stimulus, branch on role:
+    ///        "primary"   → direct += stimulus.weight
+    ///        "secondary" → indirect += stimulus.weight
+    ///        default     → skip.
     @MainActor
     public static func weeklyVolumes(
         weekStart: Date,
@@ -167,7 +153,7 @@ public enum FatigueModel {
     /// Per-session stimulus-weighted contribution to a single muscle,
     /// summed across the session's working sets. Returned as a
     /// `[Session.id: contribution]` dictionary so `frequencyHits` can
-    /// thresh-and-count.
+    /// thresh-and-count. Read from `contributionsPerSession`.
     ///
     /// `role` is collapsed for this calculation — both primary and
     /// secondary contributions count toward the frequency-hit threshold
@@ -180,25 +166,12 @@ public enum FatigueModel {
         weekStart: Date,
         in context: ModelContext
     ) -> [UUID: Double] {
-        let entries = fetchWorkingSets(weekStart: weekStart, in: context)
-
-        var perSession: [UUID: Double] = [:]
-        for entry in entries {
-            guard
-                let sessionID = entry.sessionExercise?.session?.id,
-                let stimuli = entry.sessionExercise?.exercise?.muscleStimuli
-            else { continue }
-            for stimulus in stimuli where stimulus.muscle?.slug == muscleSlug {
-                // Both primary and secondary contributions count for D-03.
-                perSession[sessionID, default: 0.0] += stimulus.weight
-            }
-        }
-        return perSession
+        contributionsPerSession(weekStart: weekStart, in: context)[muscleSlug] ?? [:]
     }
 
     /// `contributionPerSession` for every muscle at once, keyed by muscle
-    /// slug, from one read of the week's sets. Each muscle's dictionary is
-    /// identical to `contributionPerSession(muscleSlug:weekStart:in:)`.
+    /// slug, from one read of the week's sets. A muscle nothing hit this
+    /// week has no key.
     @MainActor
     public static func contributionsPerSession(
         weekStart: Date,
