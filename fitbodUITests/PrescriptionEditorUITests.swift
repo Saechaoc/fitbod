@@ -68,6 +68,37 @@ final class PrescriptionEditorUITests: XCTestCase {
         XCTAssertEqual(rpeControls(in: app).count, 1)
     }
 
+    /// A decimal target such as 8.5 comes from holding an RPE chip. The
+    /// card's own press-and-hold menu must not take that press, and it must
+    /// still open from the card's title row.
+    @MainActor
+    func testHoldingAnRPEChipSetsADecimalTarget() throws {
+        let app = UITestNavigation.openEmptySessionBuilder()
+        addExercise(in: app)
+        openDetails(in: app)
+
+        let title = app.staticTexts.matching(NSPredicate(format: "label == %@", exerciseName))
+            .allElementsBoundByIndex.first(where: { $0.isHittable })
+        XCTAssertNotNil(title, "The exercise's card must be visible")
+        title?.press(forDuration: 1.0)
+        let menuItem = app.buttons["Edit prescription"]
+        XCTAssertTrue(menuItem.waitForExistence(timeout: 5), "The card's menu must still open from its title row")
+        // The menu item collapses the card; open the details again.
+        menuItem.tap()
+        openDetails(in: app)
+
+        let chip = rpeControls(in: app).firstMatch.buttons
+            .matching(NSPredicate(format: "label ==[c] %@", "RPE 8")).firstMatch
+        XCTAssertTrue(chip.waitForExistence(timeout: 10))
+        UITestNavigation.reveal(chip, in: app)
+        chip.press(forDuration: 1.0)
+        let wheel = app.pickerWheels.firstMatch
+        XCTAssertTrue(wheel.waitForExistence(timeout: 5), "Holding an RPE chip must open the decimal picker")
+        wheel.adjust(toPickerWheelValue: "8.5")
+        app.buttons.matching(NSPredicate(format: "label ==[c] %@", "Done")).firstMatch.tap()
+        XCTAssertTrue(app.staticTexts["RPE 8.5"].waitForExistence(timeout: 5))
+    }
+
     /// Adds the bench press to the open session editor.
     @MainActor
     private func addExercise(in app: XCUIApplication) {

@@ -17,7 +17,7 @@
 //  When supersetGroupID != nil: wrapped in BRUSupersetBracket.
 //  Leading index shows "SS" in bruSignal when in a superset.
 //
-//  Long-press contextMenu preserved from Phase 3.
+//  Long-press contextMenu preserved from Phase 3, on the title row only.
 //  All @Bindable bindings, drag-handle .onMove, warmup-config-sheet trigger
 //  are preserved from Phase 3.1.
 //
@@ -95,28 +95,6 @@ public struct RoutineExerciseCard: View {
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
-        .contentShape(Rectangle())
-        .contextMenu {
-            Button("Edit prescription") {
-                withAnimation(.easeInOut(duration: 0.18)) {
-                    isExpanded.toggle()
-                }
-            }
-            Button("Edit warm-up…") {
-                onEditWarmup(draft)
-            }
-            if draft.supersetGroupID == nil {
-                Button("Move to superset…") { onAssignSuperset(draft) }
-            } else {
-                Button("Remove from superset") { onRemoveFromSuperset(draft) }
-            }
-            Button("Make superset") { onAssignSuperset(draft) }
-            Button("Duplicate exercise") { onDuplicate(draft) }
-            if let onMoveUp { Button("Move up", action: onMoveUp) }
-            if let onMoveDown { Button("Move down", action: onMoveDown) }
-            Divider()
-            Button("Remove", role: .destructive) { onRemove(draft) }
-        }
     }
 
     // MARK: - Header Row
@@ -173,6 +151,31 @@ public struct RoutineExerciseCard: View {
             withAnimation(.easeInOut(duration: 0.18)) {
                 isExpanded.toggle()
             }
+        }
+        // On the title row only: a menu on the whole card would also take
+        // long presses inside the open editor, where holding an RPE chip
+        // opens the decimal picker.
+        .contentShape(Rectangle())
+        .contextMenu {
+            Button("Edit prescription") {
+                withAnimation(.easeInOut(duration: 0.18)) {
+                    isExpanded.toggle()
+                }
+            }
+            Button("Edit warm-up…") {
+                onEditWarmup(draft)
+            }
+            if draft.supersetGroupID == nil {
+                Button("Move to superset…") { onAssignSuperset(draft) }
+            } else {
+                Button("Remove from superset") { onRemoveFromSuperset(draft) }
+            }
+            Button("Make superset") { onAssignSuperset(draft) }
+            Button("Duplicate exercise") { onDuplicate(draft) }
+            if let onMoveUp { Button("Move up", action: onMoveUp) }
+            if let onMoveDown { Button("Move down", action: onMoveDown) }
+            Divider()
+            Button("Remove", role: .destructive) { onRemove(draft) }
         }
         .accessibilityElement(children: .combine)
         .accessibilityAddTraits(.isButton)

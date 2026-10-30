@@ -55,10 +55,12 @@ public struct InlineRPEChipRow: View {
                         )
                 }
                 .buttonStyle(.plain)
-                .onLongPressGesture(minimumDuration: 0.5) {
+                // A Button swallows .onLongPressGesture, so the hold is
+                // watched alongside the button's own tap.
+                .simultaneousGesture(LongPressGesture(minimumDuration: 0.5).onEnded { _ in
                     longPressedValue = Double(value)
                     presentingPicker = true
-                }
+                })
                 .accessibilityLabel("RPE \(value)")                            // UI-SPEC verbatim a11y
             }
             if let noneLabel {
