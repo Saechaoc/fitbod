@@ -145,7 +145,7 @@ final class EditorSwipeDismissUITests: XCTestCase {
         UITestNavigation.saveScreenshot("T05", "new-block-name-after-swipe")
     }
 
-    /// CANCEL and "< PROGRAM" close an untouched New Block at once, and ask
+    /// CANCEL and "< TODAY" close an untouched New Block at once, and ask
     /// before they throw away an edited one.
     @MainActor
     func testNewBlockCancelAsksOnlyWithUnsavedEdits() throws {
@@ -165,8 +165,8 @@ final class EditorSwipeDismissUITests: XCTestCase {
         assertStaysOpen(title, "Keep editing must leave the New Block builder open")
         XCTAssertEqual(name.value as? String, "Summer Base", "Keep editing must keep the name")
 
-        hittable(app.buttons, "< PROGRAM").tap()
-        XCTAssertTrue(dialog.waitForExistence(timeout: 5), "< PROGRAM must also ask before it discards an edited block")
+        hittable(app.buttons, "< TODAY").tap()
+        XCTAssertTrue(dialog.waitForExistence(timeout: 5), "< TODAY must also ask before it discards an edited block")
         hittable(app.buttons, "Discard").tap()
         assertCloses(title, "Discard must close the New Block builder")
     }

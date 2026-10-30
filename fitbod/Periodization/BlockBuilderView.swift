@@ -10,6 +10,20 @@ import SwiftData
 import SwiftUI
 
 public struct BlockBuilderView: View {
+    /// The tab that opened the builder. The back control names it.
+    enum Origin {
+        case program
+        case today
+
+        /// "< PROGRAM", as the mock shows, or "< TODAY".
+        var backLabel: String {
+            switch self {
+            case .program: return "< PROGRAM"
+            case .today:   return "< TODAY"
+            }
+        }
+    }
+
     @Environment(\.modelContext) private var ctx
     @Environment(\.dismiss) private var dismiss
     @Bindable public var draft: BlockDraft
@@ -17,6 +31,7 @@ public struct BlockBuilderView: View {
     public let editing: Block?
 
     private let initialPreset: NewBlockPreset?
+    private let origin: Origin
 
     @State private var presentingTemplateSheet = false
     @State private var presentingDurationSheet = false
@@ -37,10 +52,11 @@ public struct BlockBuilderView: View {
     @State private var initialSnapshot: BlockDraft.Snapshot? = nil
     @State private var presentingDiscardConfirm = false
 
-    init(draft: BlockDraft, editing: Block? = nil, initialPreset: NewBlockPreset? = nil) {
+    init(draft: BlockDraft, editing: Block? = nil, initialPreset: NewBlockPreset? = nil, origin: Origin = .program) {
         self.draft = draft
         self.editing = editing
         self.initialPreset = initialPreset
+        self.origin = origin
     }
 
     public var body: some View {
@@ -49,6 +65,7 @@ public struct BlockBuilderView: View {
                 VStack(spacing: 0) {
                     NewBlockTopBar(
                         title: editing == nil ? "NEW BLOCK" : "EDIT BLOCK",
+                        origin: origin,
                         canSave: draft.hasName,
                         onBack: cancel,
                         // EDIT BLOCK saves only from the bottom bar.
@@ -209,7 +226,7 @@ public struct BlockBuilderView: View {
         .interactiveDismissDisabled(hasUnsavedChanges)
     }
 
-    /// CANCEL and "< PROGRAM" ask before they throw unsaved edits away.
+    /// CANCEL and the back control ask before they throw unsaved edits away.
     private func cancel() {
         if hasUnsavedChanges {
             presentingDiscardConfirm = true
@@ -509,8 +526,10 @@ internal struct NewBlockPreset: Hashable, Identifiable {
 
 // 260528-vi2: no ink rules; sits on paper, borderless.
 // T11: the top action is SAVE DRAFT, which needs only a name; EDIT BLOCK has none.
+// T69: the back control names the tab that opened the builder.
 fileprivate struct NewBlockTopBar: View {
     let title: String
+    let origin: BlockBuilderView.Origin
     let canSave: Bool
     let onBack: () -> Void
     /// SAVE DRAFT; nil in EDIT BLOCK, which saves only from the bottom bar.
@@ -519,11 +538,18 @@ fileprivate struct NewBlockTopBar: View {
     var body: some View {
         HStack(alignment: .center) {
             Button(action: onBack) {
-                Text("< PROGRAM")
-                    .font(NewBlockType.chrome)
-                    .tracking(NewBlockScreenTokens.chipTracking)
-                    .foregroundStyle(NewBlockScreenTokens.ink)
-                    .frame(maxHeight: .infinity)
+                ZStack(alignment: .leading) {
+                    // Holds the title where "< PROGRAM" has it.
+                    Text(BlockBuilderView.Origin.program.backLabel)
+                        .hidden()
+                        .accessibilityHidden(true)
+                    Text(origin.backLabel)
+                }
+                .font(NewBlockType.chrome)
+                .tracking(NewBlockScreenTokens.chipTracking)
+                .foregroundStyle(NewBlockScreenTokens.ink)
+                .frame(minWidth: 44, maxHeight: .infinity)
+                .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
 

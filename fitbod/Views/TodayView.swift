@@ -278,9 +278,9 @@ public struct TodayView: View {
                 NavigationStack {
                     switch pending {
                     case .template(let template):
-                        BlockBuilderView(draft: BlockDraft(template: template))
+                        BlockBuilderView(draft: BlockDraft(template: template), origin: .today)
                     case .edit(let block):
-                        BlockBuilderView(draft: BlockDraft(block: block), editing: block)
+                        BlockBuilderView(draft: BlockDraft(block: block), editing: block, origin: .today)
                     }
                 }
             }

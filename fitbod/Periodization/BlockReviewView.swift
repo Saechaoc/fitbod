@@ -65,7 +65,8 @@ public struct BlockReviewView: View {
         }
         .sheet(item: $pendingNextBlockBuilder) { template in
             NavigationStack {
-                BlockBuilderView(draft: BlockDraft(template: template))
+                // Only Today presents the review.
+                BlockBuilderView(draft: BlockDraft(template: template), origin: .today)
             }
         }
     }
