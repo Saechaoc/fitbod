@@ -35,8 +35,8 @@ import Foundation
 import SwiftData
 
 /// One hit from the previous-matching-intent query: the top working set
-/// of the most recent matching `SessionExercise` for an (exerciseID,
-/// intentRaw) tuple.
+/// of the most recent matching session for an (exerciseID, intentRaw)
+/// tuple, across every `SessionExercise` in it that logged the exercise.
 public struct PreviousMatchingIntentHit: Sendable {
     public let weight: Double
     public let reps: Int
@@ -62,6 +62,10 @@ public enum PreviousMatchingIntent {
     ///   - actually logged (`reps > 0`)
     ///   - explicitly committed (`isComplete == true`)
     ///
+    /// A session that logs the exercise more than once counts once: its
+    /// top working set is read across all of those logs, and on a tie in
+    /// weight the earlier log's set (lower `orderIndex`) wins.
+    ///
     /// The "matching-intent" half is the load-bearing piece of ROUTINE-08
     /// (`same routine recurring with different intent maintains separate
     /// per-intent histories per exercise`). A strength session's top
@@ -71,12 +75,12 @@ public enum PreviousMatchingIntent {
     /// rows (no #Predicate filter on intent, since `se.session?.intentRaw`
     /// is a multi-level optional chain that triggers Pitfall 1). The
     /// Swift post-filter step keeps only rows matching both exerciseID
-    /// AND parent-session intent, then sorts by session.startedAt and
-    /// keeps the 5 most-recent. At single-user single-month-of-data
-    /// scale (hundreds of SessionExercise rows) the unfiltered fetch +
-    /// Swift filter is sub-millisecond. Future optimization (Phase 6)
-    /// could fetch matching Sessions first via the new
-    /// `#Index<Session>([\.intentRaw])`, then flat-map to their
+    /// AND parent-session intent, groups them by session, then sorts the
+    /// sessions by startedAt and keeps the 5 most-recent. At single-user
+    /// single-month-of-data scale (hundreds of SessionExercise rows) the
+    /// unfiltered fetch + Swift filter is sub-millisecond. Future
+    /// optimization (Phase 6) could fetch matching Sessions first via the
+    /// new `#Index<Session>([\.intentRaw])`, then flat-map to their
     /// exercises.
     ///
     /// Only FINISHED sessions count as "previous" (`completedAt != nil`),
@@ -113,23 +117,45 @@ public enum PreviousMatchingIntent {
 
         guard let all = try? context.fetch(descriptor) else { return nil }
 
-        let recent = all
-            .filter { se in
-                guard let session = se.session,
-                      session.completedAt != nil,
-                      session.id != excludingSessionID
-                else { return false }
-                return se.exercise?.id == targetID && session.intentRaw == targetIntent
+        // Each matching session's logs of the exercise, in the order the
+        // sessions first appear. A session that logs the exercise several
+        // times is one entry, as in `PlateauDetector.finishedSessionLogs`.
+        var sessions: [(session: Session, logs: [SessionExercise])] = []
+        var sessionIndex: [UUID: Int] = [:]
+        for se in all {
+            guard let session = se.session,
+                  session.completedAt != nil,
+                  session.id != excludingSessionID,
+                  se.exercise?.id == targetID,
+                  session.intentRaw == targetIntent
+            else { continue }
+            if let index = sessionIndex[session.id] {
+                sessions[index].logs.append(se)
+            } else {
+                sessionIndex[session.id] = sessions.count
+                sessions.append((session, [se]))
             }
-            .sorted { ($0.session?.startedAt ?? .distantPast) > ($1.session?.startedAt ?? .distantPast) }
+        }
+
+        let recent = sessions
+            .sorted { $0.session.startedAt > $1.session.startedAt }
             .prefix(5)
 
-        for se in recent {
-            let workingSets = (se.sets ?? []).filter { entry in
-                !entry.isWarmup && entry.reps > 0 && entry.isComplete
+        for (session, logs) in recent {
+            // The logs are read in workout order, and a later log's set
+            // replaces the pick only when it is heavier, so the earlier
+            // log's set wins a tie in weight.
+            var heaviest: SetEntry?
+            for se in logs.sorted(by: { $0.orderIndex < $1.orderIndex }) {
+                let workingSets = (se.sets ?? []).filter { entry in
+                    !entry.isWarmup && entry.reps > 0 && entry.isComplete
+                }
+                guard let logTop = workingSets.max(by: { $0.weight < $1.weight }) else { continue }
+                if let best = heaviest, best.weight >= logTop.weight { continue }
+                heaviest = logTop
             }
-            guard let topSet = workingSets.max(by: { $0.weight < $1.weight }) else {
-                // This SessionExercise was started but no working set was
+            guard let topSet = heaviest else {
+                // This session logged the exercise but no working set was
                 // committed (e.g., user discarded mid-session). Walk back
                 // further until we find one with committed working sets.
                 continue
@@ -138,7 +164,7 @@ public enum PreviousMatchingIntent {
                 weight: topSet.weight,
                 reps: topSet.reps,
                 rpe: topSet.rpe,
-                sessionStartedAt: se.session?.startedAt ?? .distantPast
+                sessionStartedAt: session.startedAt
             )
         }
         return nil
