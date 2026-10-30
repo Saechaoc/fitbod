@@ -262,10 +262,11 @@ A reported ending is not a safely settled attempt.
    The ordinary path is a valid `worker_done` accepted for that attempt, whatever its reported outcome, plus confirmed normal release through `orca orchestration worker-release --dispatch <dispatch id>`.
    A successful command exit alone is not confirmation of release.
    A receipt of `retained` with `processAction: none` is also normal: Orca settled the worker but kept its terminal open, as it did for every Copilot worker in the 2026-10-29 quick-task run.
-   Together with the accepted `worker_done`, it counts as confirmed release and as stop proof when `orca orchestration worker-show --dispatch <dispatch id> --json` reports stage `settled` and `orca worktree ps --json` shows the worker's agent in that worktree as `done`.
+   Together with the accepted `worker_done`, it counts as confirmed release when `orca orchestration worker-show --dispatch <dispatch id> --json` reports stage `settled` and `orca worktree ps --json` shows the worker's agent in that worktree as `done`.
+   Then, before you rebase, merge or archive anything, close that agent with `orca terminal close --terminal <worker.agentTerminalHandle from worker-show> --json`; a receipt with `ptyKilled: true` is the stop proof, so the agent cannot start another turn in the worktree.
    If that agent is still `working`, it took on more work after `worker_done`, often because the user typed into it.
-   Keep settlement pending and check again after your next wait; if it is still working, ask the user before you merge or touch that worktree.
-   The `orca worktree rm` in step 4 closes a retained terminal.
+   Keep settlement pending, never close it or touch its worktree while it works, and check again after later waits.
+   Ask the user only if it is still working 15 minutes after its `worker_done`.
    `worker-abandon` fences orchestration, not necessarily execution; abandonment, idle, timeout and missing heartbeats are not stop proof on their own.
    For abandonment, `release_pending`, `release_unknown` or any uncertainty, keep settlement pending and preserve the worktree, branch, lane, owned/held reservations and pending waits without replies or cancellations.
    Load the version-matched `orca skills get orchestration --reference references/recovery-and-cleanup.md` and follow the receipt's prescribed recovery, recording the receipt, positive stop proof and cleanup authority before resuming.

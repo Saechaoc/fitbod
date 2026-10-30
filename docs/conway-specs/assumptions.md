@@ -41,7 +41,7 @@ The coordinator re-checks the first group before the first dispatch.
   Simulator ids differ between Macs, so the run log records each lane's ids.
 - `orca worktree create --base-branch main` makes each ticket worktree from the local `main`, as the quick-task run's worktree branches show ("Created from refs/heads/main").
   `worker-start --worktree path:<worktree>` then starts a worker in it.
-  `worker-release` closes only the worker's terminal, so the coordinator removes worktrees itself.
+  `worker-release` closes only the worker's terminal, and for Copilot workers it kept even that open (`retained`) in the 2026-10-29 quick-task run, so the coordinator closes retained terminals and removes worktrees itself.
 - Copilot CLI asks before it changes files outside its working folder, so workers keep their evidence inside their worktree.
 - The app and test targets use folder-synchronized groups, so new files need no project file edit.
 

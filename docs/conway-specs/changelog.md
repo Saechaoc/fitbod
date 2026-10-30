@@ -5,8 +5,10 @@ Newest first.
 ## 2026-10-29: retained releases settle Copilot workers
 
 - What: "Settle a ticket" step 2 counts a `retained` release receipt as confirmed release when `worker-show` reports stage `settled` and `orca worktree ps` shows the worker's agent `done`.
-  An agent still `working` keeps settlement pending, and the coordinator asks the user if it stays that way.
+  The coordinator then closes that agent's terminal before any rebase, merge or archive, and the `ptyKilled: true` receipt is the stop proof.
+  An agent still `working` keeps settlement pending, and the coordinator asks the user only if it is still working 15 minutes after its `worker_done`.
 - Why: all three Copilot workers in the 2026-10-29 quick-task run came back `retained` with `processAction: none`, and the playbook treated every receipt other than a release as uncertain, so no ticket could merge or free its lane.
+- Why: an open terminal let a worker that skipped step 8 start a new turn during the coordinator's rebase, and asking at the next wait could stop an unattended run over a few seconds' delay.
 - What: [worker-rules.md](worker-rules.md) Finishing step 8 tells workers to start no new work after `worker_done`, and Copilot workers to call `task_complete` right away.
 - Why: Copilot's autopilot otherwise prompts a worker to keep going after `worker_done`.
 
