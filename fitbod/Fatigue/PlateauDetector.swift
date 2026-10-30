@@ -251,7 +251,9 @@ public enum PlateauDetector {
     ///
     /// Only FINISHED sessions (`completedAt != nil`) count, as in `evaluate`:
     /// the workout in progress never enters the window, even before a set
-    /// is logged.
+    /// is logged. A finished session with no top set (no logged working set,
+    /// or none with an e1RM) is skipped, also as in `evaluate`, so it never
+    /// takes a place in the window.
     @MainActor
     private static func hasRPECreep(
         exerciseID: UUID,
@@ -279,13 +281,13 @@ public enum PlateauDetector {
             guard session.intentRaw == targetIntentRaw else { return nil }
             return (se, session.startedAt)
         }
-        let sortedAsc = intentMatched.sorted { $0.1 < $1.1 }
-        let trimmed = Array(sortedAsc.suffix(windowN))   // most-recent N, ASC
-        guard trimmed.count >= 4 else { return false }   // need ≥2 + ≥2 pairs
+        let sortedDesc = intentMatched.sorted { $0.1 > $1.1 }
 
-        // For each session collect the top working set's (weight, rpe).
+        // For each session collect the top working set's (weight, rpe), most
+        // recent first. Like evaluate, skip sessions with no top set and stop
+        // at N, so both checks read the same N sessions.
         var picks: [(weight: Double, rpe: Double?)] = []
-        for (se, _) in trimmed {
+        for (se, _) in sortedDesc {
             var topE: Double? = nil
             var topWeight = 0.0
             var topRPE: Double? = nil
@@ -299,9 +301,12 @@ public enum PlateauDetector {
                     topRPE = set.rpe
                 }
             }
+            guard topE != nil else { continue }
             picks.append((weight: topWeight, rpe: topRPE))
+            if picks.count >= windowN { break }
         }
-        guard picks.count >= 4 else { return false }
+        picks.reverse()                                  // oldest first
+        guard picks.count >= 4 else { return false }     // need ≥2 + ≥2 pairs
         // Use the modal load: the most common weight bucket within `increment`.
         // Simplified — use the median weight as the "matched load" anchor.
         let weights = picks.map { $0.weight }.sorted()
