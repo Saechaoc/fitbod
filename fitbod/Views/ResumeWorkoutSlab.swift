@@ -96,7 +96,7 @@ public struct ResumeWorkoutSlab: View {
                     .font(BRUFont.labelSmall)
                     .foregroundStyle(Color.bruPaper.opacity(0.3))
 
-                Text(session.loggedSetCount == 1 ? "1 set logged" : "\(session.loggedSetCount) sets logged")
+                Text("\(BRUCountLabel.text(session.loggedSetCount, "set")) logged")
                     .font(BRUFont.labelSmall)
                     .tracking(1.2)
                     .textCase(.uppercase)
@@ -150,9 +150,7 @@ public struct ResumeWorkoutSlab: View {
             Button("Discard", role: .destructive) { discard() }
             Button("Cancel", role: .cancel) {}
         } message: {
-            Text(session.loggedSetCount == 1
-                 ? "1 logged set will be deleted."
-                 : "\(session.loggedSetCount) logged sets will be deleted.")
+            Text("\(BRUCountLabel.text(session.loggedSetCount, "logged set")) will be deleted.")
         }
     }
 

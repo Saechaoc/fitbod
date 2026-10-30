@@ -14,7 +14,7 @@
 // UI-SPEC verbatim copy:
 //   Leading label:  "RESUME"              (labelSmall bruMuted)
 //   Routine name:   routineSnapshotName   (bodyEmphasis bruInk)
-//   Meta:           "{elapsed} · {sets} sets" (labelSmall bruMuted)
+//   Meta:           "{elapsed} · 1 set" / "{elapsed} · {n} sets" (labelSmall bruMuted)
 //   CTA:            BRUPillButton("Resume ▸")
 //
 // Style: 2pt bruInk-bordered Rectangle slim band per UI-SPEC line 583.
@@ -77,7 +77,7 @@ public struct ResumeWorkoutBanner: View {
                     .foregroundStyle(Color.bruInk)
 
                 TimelineView(.periodic(from: active.startedAt, by: 1)) { _ in
-                    Text("\(elapsedLabel(for: active)) · \(active.loggedSetCount) sets")
+                    Text("\(elapsedLabel(for: active)) · \(BRUCountLabel.text(active.loggedSetCount, "set"))")
                         .font(BRUFont.labelSmall)
                         .tracking(0.5)
                         .foregroundStyle(Color.bruMuted)

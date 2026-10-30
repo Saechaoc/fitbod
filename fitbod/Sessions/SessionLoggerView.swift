@@ -37,6 +37,10 @@
 //     both persist immediately via SessionSetActions. Weight/reps edits
 //     save when a field loses focus and when the app leaves the foreground.
 //   - Finish presents SessionDetailView as the workout summary.
+//   - Finish with no logged work set offers Discard workout instead
+//     (decision 6), and the Finish and Discard dialogs show a visible
+//     Keep logging, because iOS 26 hides cancel-role buttons. Discard is
+//     now a confirmation dialog too.
 //
 // BRU contract: NO navigationTitle / NO .toolbar with system chrome
 //               NO Capsule() / NO RoundedRectangle / NO accentColor
@@ -143,26 +147,36 @@ public struct SessionLoggerView: View {
         .safeAreaInset(edge: .top, spacing: 0) {
             InSessionPRBanner(state: prState)
         }
-        // Finish workout confirmation (system chrome acceptable per UI-SPEC line 261)
+        // Finish workout confirmation (system chrome acceptable per UI-SPEC line 261).
+        // With no logged work set there is nothing to save, so it offers
+        // Discard workout instead of Finish (decision 6); this dialog is the
+        // question, so Discard workout deletes at once. iOS 26 hides
+        // cancel-role buttons, so Keep logging has no role.
         .confirmationDialog(
             "Finish workout?",                                                   // UI-SPEC verbatim
             isPresented: $presentingFinishConfirm,
             titleVisibility: .visible
         ) {
-            Button("Finish") { finish() }                                        // UI-SPEC verbatim
-            Button("Keep logging", role: .cancel) {                              // UI-SPEC verbatim
+            if session.loggedSetCount == 0 {
+                Button("Discard workout", role: .destructive) { discard() }
+            } else {
+                Button("Finish") { finish() }                                    // UI-SPEC verbatim
+            }
+            Button("Keep logging") {                                             // UI-SPEC verbatim
                 presentingFinishConfirm = false
             }
         } message: {
-            Text("\(session.loggedSetCount) sets logged · \(elapsedLabel)")      // UI-SPEC verbatim format
+            Text("\(BRUCountLabel.text(session.loggedSetCount, "set")) logged · \(elapsedLabel)") // UI-SPEC format
         }
-        // Discard workout confirmation
-        .alert(
+        // Discard workout confirmation. A dialog like Finish, not an alert:
+        // an alert adds its own visible Cancel beside Keep logging.
+        .confirmationDialog(
             "Discard workout?",                                                  // UI-SPEC verbatim
-            isPresented: $presentingDiscardConfirm
+            isPresented: $presentingDiscardConfirm,
+            titleVisibility: .visible
         ) {
             Button("Discard", role: .destructive) { discard() }                  // UI-SPEC verbatim
-            Button("Cancel", role: .cancel) {                                    // UI-SPEC verbatim
+            Button("Keep logging") {
                 presentingDiscardConfirm = false
             }
         } message: {

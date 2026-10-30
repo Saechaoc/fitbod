@@ -9,7 +9,9 @@
 //   - Label uses BRU short forms (uppercase): ADD VOLUME / DROP INTENSITY /
 //     CONSIDER DELOAD / TRY VARIATION
 //   - Rendered as BRUChip(label, color: .bruInk, fill: false) — outline ink chip
-//   - 44pt minimum hit area via .frame(minHeight: 44) on the Button
+//   - 44pt minimum hit area via .frame(minHeight: 44) and a rectangular
+//     content shape on the Button's label (a frame outside the Button does
+//     not grow what it takes taps on)
 //   - NO Color.accentColor / NO Capsule() / NO .font(.caption)
 //
 //  Public init signature UNCHANGED: (action: SuggestedAction, onTap: () -> Void)
@@ -74,10 +76,13 @@ public struct SuggestedActionChip: View {
 
     public var body: some View {
         Button(action: onTap) {
+            // Frame and hit shape sit inside the label, so the whole 44pt
+            // band takes the tap rather than the card header's tap gesture.
             BRUChip(brShortLabel, color: .bruInk, fill: false)
+                .frame(minHeight: 44)
+                .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .frame(minHeight: 44)
         .accessibilityLabel(accessibilityChipLabel)
         .accessibilityHint(action.accessibilityHint)
         .accessibilityAddTraits(.isButton)
