@@ -36,8 +36,14 @@ struct SetRowWhyLayoutTests {
         range: nil
     )
 
-    /// Height of a set row with an explanation (so it shows WHY) at `width`.
-    private func rowHeight(setType: SetType, width: CGFloat) throws -> CGFloat {
+    /// Height of a set row with an explanation (so it shows WHY unless the
+    /// set is logged) at `width`.
+    private func rowHeight(
+        setType: SetType,
+        width: CGFloat,
+        isComplete: Bool = false,
+        dynamicTypeSize: DynamicTypeSize = .large
+    ) throws -> CGFloat {
         let ctx = container.mainContext
         let exercise = Exercise.previewSample(
             name: "Barbell Bench Press - Medium Grip", equipment: .barbell, mechanic: .compound
@@ -55,6 +61,8 @@ struct SetRowWhyLayoutTests {
         entry.sessionExercise = sessionExercise
         entry.setTypeRaw = setType.rawValue
         entry.weight = 102.5
+        entry.reps = isComplete ? 5 : 0
+        entry.isComplete = isComplete
         try ctx.save()
 
         let row = SetRow(
@@ -65,6 +73,7 @@ struct SetRowWhyLayoutTests {
             onCommit: {},
             onTapEmptyCell: {}
         )
+        .environment(\.dynamicTypeSize, dynamicTypeSize)
         .modelContainer(container)
         return UIHostingController(rootView: row)
             .sizeThatFits(in: CGSize(width: width, height: .greatestFiniteMagnitude))
@@ -77,5 +86,19 @@ struct SetRowWhyLayoutTests {
         let working = try rowHeight(setType: .working, width: 358)
         let typed = try rowHeight(setType: setType, width: 358)
         #expect(typed == working, "A \(setType.rawValue) chip must not wrap the RPE chips at 390pt")
+    }
+
+    /// Ticket T09: a logged set shows no WHY. At default text it keeps WHY's
+    /// space, so its chip line matches an open set's; at AX3, where WHY has
+    /// a line of its own, the logged row drops that line.
+    @Test("A logged set has no WHY line at AX3 and keeps its chip line at 390pt")
+    func loggedSetHasNoWhy() throws {
+        let open = try rowHeight(setType: .working, width: 358)
+        let logged = try rowHeight(setType: .working, width: 358, isComplete: true)
+        #expect(logged == open, "Hiding WHY must not move a logged set's chips at 390pt")
+
+        let openAX3 = try rowHeight(setType: .working, width: 358, dynamicTypeSize: .accessibility3)
+        let loggedAX3 = try rowHeight(setType: .working, width: 358, isComplete: true, dynamicTypeSize: .accessibility3)
+        #expect(loggedAX3 < openAX3, "At AX3 a logged set must not keep a line for WHY")
     }
 }

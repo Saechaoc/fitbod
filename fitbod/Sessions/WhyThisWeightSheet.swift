@@ -41,7 +41,8 @@ public struct WhyThisWeightSheet: View {
     public let explanation: PrescriptionExplanation
 
     /// Called (and the sheet dismissed) when the user taps "Use {weight} ▸".
-    /// PrescriptionWeightCell writes `roundedWeight` into the set's weight.
+    /// PrescriptionWeightCell writes `roundedWeight` into the set's weight
+    /// and clears its manual-override flag.
     public var onUseSuggested: (() -> Void)?
 
     /// Called (and the sheet dismissed) when the user taps "Override".

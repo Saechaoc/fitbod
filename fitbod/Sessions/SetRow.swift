@@ -6,7 +6,7 @@
 //
 // Per-set logging row, two lines:
 //   [S{N}] [Previous] [Weight] [Reps] [✎] [SetCompletionGlyph]
-//   [WHY] [RPE chips] [SetTypeChip]
+//   [WHY, open sets only] [RPE chips] [SetTypeChip]
 //
 // KEY CHANGES from v1:
 //   - SF Symbol checkmark.circle.fill → SetCompletionGlyph(isComplete:)
@@ -240,10 +240,19 @@ public struct SetRow: View {
                 // WHY takes the 40pt indent under the set label, so the chips
                 // move 10pt right and line 2 still fits a set-type chip at
                 // 390pt. Rows without an explanation keep the indent, which
-                // aligns the chips under the PREV column.
+                // aligns the chips under the PREV column. A logged set shows
+                // no WHY but keeps its space, so its chips stay in line with
+                // the open sets'; at AX sizes WHY has a line of its own,
+                // which a logged set drops.
                 inputLayout {
                     if explanation != nil {
-                        whyButton
+                        if !entry.isComplete {
+                            whyButton
+                        } else if !dynamicTypeSize.isAccessibilitySize {
+                            whyButton
+                                .hidden()
+                                .accessibilityHidden(true)
+                        }
                     }
 
                     InlineRPEChipRow(rpe: Binding(

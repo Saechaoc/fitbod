@@ -67,6 +67,105 @@ final class WhyThisWeightControlUITests: XCTestCase {
         XCTAssertTrue(app.keyboards.firstMatch.exists)
     }
 
+    /// Ticket T09: a logged set shows no WHY, because its weight is history,
+    /// not a suggestion to take. The open set below keeps WHY, and the
+    /// logged row keeps WHY's space, so both rows' RPE chips stay in line.
+    @MainActor
+    func testLoggedSetHidesWhy() throws {
+        let app = UITestNavigation.openSeededWorkout()
+        XCTAssertTrue(app.buttons["set.why.1.S1"].waitForExistence(timeout: 5), "An open set shows WHY")
+        let reps = app.textFields["set.reps.1.S1"]
+        revealInLogger(reps, in: app)
+        reps.tap()
+        XCTAssertTrue(app.keyboards.firstMatch.waitForExistence(timeout: 5))
+        reps.typeText("6")
+        let complete = app.buttons["set.complete.1.S1"]
+        revealInLogger(complete, in: app)
+        complete.tap()
+        let logged = XCTNSPredicateExpectation(
+            predicate: NSPredicate(format: "label == %@", "Set 1 complete"), object: complete
+        )
+        XCTAssertEqual(XCTWaiter().wait(for: [logged], timeout: 5), .completed, "Set 1 must be logged")
+
+        XCTAssertTrue(waitUntilGone(app.buttons["set.why.1.S1"]), "A logged set must not show WHY")
+        let openWhy = app.buttons["set.why.1.S2"]
+        XCTAssertTrue(openWhy.exists, "The open set 2 keeps its WHY")
+        attachScreenshot(of: app, named: "logged-set-without-why")
+
+        // Set 1's chips sit between its checkmark and set 2's line; set 2's
+        // share a line with its WHY.
+        let chips = app.buttons.matching(NSPredicate(format: "label == %@", "RPE 6")).allElementsBoundByIndex
+        let secondRowTop = app.buttons["set.complete.1.S2"].frame.minY
+        let loggedChip = chips.first { $0.frame.minY >= complete.frame.maxY - 1 && $0.frame.maxY <= secondRowTop + 1 }
+        let openChip = chips.first { abs($0.frame.midY - openWhy.frame.midY) < 2 }
+        guard let loggedChip, let openChip else {
+            return XCTFail("Missing set 1 or set 2 RPE chips: \(chips.map(\.frame))")
+        }
+        XCTAssertEqual(loggedChip.frame.minX, openChip.frame.minX, accuracy: 0.5,
+                       "A logged set's RPE chips must stay in line with an open set's")
+    }
+
+    /// Ticket T09: Use clears "changed from prescription" even when the
+    /// suggestion differs from the prescription stored when the workout
+    /// started. Without the barbell's 2.5 and 1.25 lb plates the bench's
+    /// 100 lb rounds down to 95 lb, so Use writes 95 against a stored 100.
+    /// The mark stays clear after a relaunch.
+    @MainActor
+    func testUseClearsOverrideMarkWhenSuggestionDiffersFromPrescription() throws {
+        let app = UITestNavigation.launch(UITestNavigation.seededWorkout)
+        removeSmallBarbellPlates(in: app)
+        resumeWorkout(in: app)
+        let weight = weightField(in: app)
+        XCTAssertEqual(numericWeight(weight), 100, "The set starts at the prescription stored at the start")
+        XCTAssertFalse(overrideMark(in: app).exists)
+
+        tapWhy(in: app)
+        let use = app.buttons.matching(NSPredicate(format: "label BEGINSWITH[c] %@", "Use ")).firstMatch
+        XCTAssertTrue(use.waitForExistence(timeout: 5))
+        XCTAssertTrue(use.label.hasPrefix("Use 95 "), "Without small plates the suggestion is 95 lb: \(use.label)")
+        use.tap()
+        XCTAssertTrue(waitUntilGone(use), "Use must close the sheet")
+        XCTAssertEqual(numericWeight(weight), 95, "Use must write the suggested weight into the set")
+        XCTAssertFalse(overrideMark(in: app).waitForExistence(timeout: 2),
+                       "Use must clear the set's \"changed from prescription\" mark")
+
+        UITestNavigation.relaunch(app)
+        resumeWorkout(in: app)
+        XCTAssertEqual(numericWeight(weightField(in: app)), 95)
+        XCTAssertFalse(overrideMark(in: app).waitForExistence(timeout: 2),
+                       "The cleared mark must stay cleared after a relaunch")
+    }
+
+    /// Ticket T09: WHY keeps a 44pt target and stays on the 390pt screen at
+    /// default text and at AX3, where the set row stacks its fields, and it
+    /// never covers the RPE chips. Saves set 1's row at both sizes.
+    @MainActor
+    func testWhyFitsAtDefaultTextAndAX3() throws {
+        for size in [UITestNavigation.TextSize.default, .ax3] {
+            let app = UITestNavigation.launch(UITestNavigation.seededWorkout, textSize: size)
+            let resume = app.buttons["resumeSlab.resume"]
+            UITestNavigation.reveal(resume, in: app)
+            resume.tap()
+            let why = app.buttons["set.why.1.S1"]
+            UITestNavigation.reveal(why, in: app)
+            revealInLogger(why, in: app)
+            UITestNavigation.assertTapTarget(why)
+            XCTAssertGreaterThanOrEqual(why.frame.minX, app.frame.minX, "WHY must start on screen at \(size)")
+            XCTAssertLessThanOrEqual(why.frame.maxX, app.frame.maxX, "WHY must end on screen at \(size)")
+            let chip = app.buttons.matching(NSPredicate(format: "label == %@", "RPE 6")).allElementsBoundByIndex
+                .filter { $0.frame.minY >= why.frame.minY - 1 }
+                .min { $0.frame.minY < $1.frame.minY }
+            XCTAssertNotNil(chip, "Set 1's RPE chips must follow its WHY at \(size)")
+            if let chip {
+                // Brings the chips into view with WHY for the screenshot.
+                revealInLogger(chip, in: app)
+                UITestNavigation.assertNoOverlap(why, chip)
+            }
+            UITestNavigation.saveScreenshot("T09", "set-row-why", textSize: size)
+            app.terminate()
+        }
+    }
+
     @MainActor
     private func tapWhy(in app: XCUIApplication) {
         let why = app.buttons["set.why.1.S1"]
@@ -116,6 +215,63 @@ final class WhyThisWeightControlUITests: XCTestCase {
     @MainActor
     private func weightField(in app: XCUIApplication) -> XCUIElement {
         app.textFields.matching(identifier: "set.weight.1.S1").firstMatch
+    }
+
+    /// Set 1's "M" mark. It shares the weight cell's identifier, and the
+    /// cell's only static text is that mark.
+    @MainActor
+    private func overrideMark(in app: XCUIApplication) -> XCUIElement {
+        app.staticTexts.matching(identifier: "set.weight.1.S1").firstMatch
+    }
+
+    /// Opens today's workout from Today's resume slab.
+    @MainActor
+    private func resumeWorkout(in app: XCUIApplication) {
+        let resume = app.buttons["resumeSlab.resume"]
+        XCTAssertTrue(resume.waitForExistence(timeout: 10))
+        resume.tap()
+        XCTAssertTrue(app.textFields["set.reps.1.S1"].waitForExistence(timeout: 10))
+    }
+
+    /// Settings > Plate Inventory: takes every 2.5 and 1.25 lb plate off the
+    /// barbell, the way a lifter records plates they do not have.
+    @MainActor
+    private func removeSmallBarbellPlates(in app: XCUIApplication) {
+        UITestNavigation.openSettings(in: app)
+        let inventory = app.buttons.labeled("Plate Inventory")
+        UITestNavigation.reveal(inventory, in: app)
+        inventory.tap()
+        let done = app.buttons.labeled("Done ▸")
+        XCTAssertTrue(done.waitForExistence(timeout: 10))
+        for plate in ["2.5 lb plate", "1.25 lb plate"] {
+            // Plate rows load as they scroll in; a tap must clear the footer bar.
+            let row = app.descendants(matching: .any).labeled(plate)
+            for _ in 0..<6 {
+                if row.exists && row.frame.maxY < done.frame.minY { break }
+                app.swipeUp(velocity: .slow)
+            }
+            XCTAssertTrue(row.exists && row.frame.maxY < done.frame.minY, "The \(plate) row must be on screen")
+            // Tapping the last filled tally box takes one plate off.
+            for _ in 0..<4 {
+                guard let count = (row.value as? String)?.split(separator: " ").first.flatMap({ Int($0) }),
+                      count > 0 else { break }
+                tallyBox(count - 1, of: row).tap()
+            }
+            XCTAssertEqual(row.value as? String, "0 per side", "The \(plate) must be off the barbell")
+        }
+        done.tap()
+        let close = app.buttons["Close"]
+        XCTAssertTrue(close.waitForExistence(timeout: 10))
+        close.tap()
+    }
+
+    /// The center of a plate row's tally box. The row is laid out as
+    /// [16 | 90 plate | 10 | four boxes 3pt apart | 10 | 80 count | 16].
+    @MainActor
+    private func tallyBox(_ index: Int, of row: XCUIElement) -> XCUICoordinate {
+        let box = (row.frame.width - 222 - 9) / 4
+        let x = 116 + CGFloat(index) * (box + 3) + box / 2
+        return row.coordinate(withNormalizedOffset: .zero).withOffset(CGVector(dx: x, dy: row.frame.height / 2))
     }
 
     /// The accessible weight reads "100 lb"; keep the number.

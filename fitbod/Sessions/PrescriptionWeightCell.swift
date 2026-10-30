@@ -13,15 +13,19 @@
 //      holding a TextField, so it is gone.
 //    - BRUFont.bodyEmphasis for editable weight value (was Font.body)
 //    - BRUFont.bodyDefault for range display (was Font.body)
-//    - BRUFont.labelMicro + .textCase(.uppercase) + .tracking(1.0) for "M" badge (was Font.caption)
+//    - BRUFont.labelMicro + .tracking(1.0) for the "M" badge (was Font.caption)
 //    - Zero Color(.system*), zero RoundedRectangle, zero Capsule, zero SF Symbols
 //
 //  Layout:
-//    [weight input OR read-only range] [M badge?]
+//    [weight input OR read-only range]
+//    The "M" badge marks a weight typed away from the prescription. It sits
+//    as a superscript right after the digits, inside the cell's own width,
+//    so it never reaches the reps column (review item 18). A prescribed
+//    weight of 0 is no prescription: the field keeps its "—" placeholder.
 //    The cell presents WhyThisWeightSheet when explanation != nil. Opening it
 //    ends editing, so the keyboard never covers the sheet. Use writes the
-//    suggested weight into the set; Override closes the sheet and focuses
-//    the weight field.
+//    suggested weight into the set and clears the badge; Override closes the
+//    sheet and focuses the weight field.
 //
 //  The 44pt touch target is preserved via the cell's vertical padding (12pt) +
 //  TextField height.
@@ -95,11 +99,13 @@ public struct PrescriptionWeightCell: View {
                     .frame(minWidth: 60, minHeight: 44)
                     .font(BRUFont.bodyEmphasis)
                     .foregroundStyle(isComplete ? Color.bruSignalText : Color.bruInk)
+                    // Only typing changes the weight and the override flag.
+                    // Seeding, Use and changes made outside the field write
+                    // both themselves, so a weight Use wrote stays unmarked.
                     .onChange(of: weightText) { _, new in
-                        if let d = Double(new) {
-                            weight = d
-                            wasManualOverride = isManualOverride(d)
-                        }
+                        guard weightFocused, let d = Double(new) else { return }
+                        weight = d
+                        wasManualOverride = isManualOverride(d)
                     }
                     .onChange(of: weightFocused) { _, focused in
                         if !focused { onEditCommitted() }
@@ -112,15 +118,6 @@ public struct PrescriptionWeightCell: View {
                             weightText = new > 0 ? formatted(new) : ""
                         }
                     }
-
-                // MARK: Manual override "M" badge
-                if wasManualOverride {
-                    Text("M")
-                        .font(BRUFont.labelMicro)
-                        .foregroundStyle(Color.bruMuted)
-                        .textCase(.uppercase)
-                        .tracking(1.0)
-                }
             }
         }
         .padding(.vertical, 12)
@@ -132,12 +129,20 @@ public struct PrescriptionWeightCell: View {
         .accessibilityLabel(
             range != nil
                 ? "Prescribed weight range: \(formatted(range!.lowerBound)) to \(formatted(range!.upperBound)) \(unitLabel)"
-                : "Prescribed weight: \(formatted(weight)) \(unitLabel)"
+                : "Prescribed weight: \(weightDescription)"
         )
-        .accessibilityValue(range == nil ? "\(formatted(weight)) \(unitLabel)" : "")
+        .accessibilityValue(range == nil ? weightDescription : "")
+        // Like SetRow's visible WHY, only an open set offers the action.
         .accessibilityActions {
-            if explanation != nil {
+            if explanation != nil && !isComplete {
                 Button("Why this weight") { explaining.wrappedValue = true }
+            }
+        }
+        // MARK: Manual override "M" badge
+        // Added after the cell's accessibility so the badge keeps its own label.
+        .overlay(alignment: .leading) {
+            if range == nil && wasManualOverride && !weightText.isEmpty {
+                overrideBadge
             }
         }
         .sheet(isPresented: explaining, onDismiss: focusAfterOverride) {
@@ -162,11 +167,14 @@ public struct PrescriptionWeightCell: View {
         }
         .onAppear {
             // Seed the text field from the prescribed weight or current weight.
+            // With no prescription, a weight of 0 keeps the "—" placeholder.
             // Only seed when range == nil (read-only mode doesn't use weightText).
             if range == nil {
-                if let p = prescribed, weight == 0 {
+                if let p = prescription, weight == 0 {
+                    // The prescription itself is never a manual override.
                     weightText = formatted(p)
                     weight = p
+                    wasManualOverride = false
                 } else if weight > 0 {
                     weightText = formatted(weight)
                 }
@@ -181,16 +189,54 @@ public struct PrescriptionWeightCell: View {
         isExplaining ?? $showWhySheet
     }
 
-    /// A weight that differs from the prescription is a manual override.
-    private func isManualOverride(_ d: Double) -> Bool {
-        (prescribed != nil) && abs(d - (prescribed ?? d)) > 0.001
+    /// The prescribed weight, or nil when there is none. A strategy with no
+    /// history prescribes 0, which is no prescription.
+    private var prescription: Double? {
+        guard let prescribed, prescribed > 0 else { return nil }
+        return prescribed
     }
 
-    /// Use in Why-this-weight: the suggested weight becomes the set's weight.
+    /// What the field shows, for VoiceOver: "100 lb", or "none" over the
+    /// placeholder.
+    private var weightDescription: String {
+        weightText.isEmpty ? "none" : "\(formatted(weight)) \(unitLabel)"
+    }
+
+    /// The "M" as a superscript right after the digits. A hidden copy of
+    /// the digits takes their width; when the cell is too narrow, it
+    /// truncates first, so the badge stays inside the cell. Taps pass
+    /// through to the field.
+    private var overrideBadge: some View {
+        HStack(alignment: .top, spacing: 2) {
+            Text(weightText)
+                .font(BRUFont.bodyEmphasis)
+                .lineLimit(1)
+                .hidden()
+                .accessibilityHidden(true)
+            Text("M")
+                .font(BRUFont.labelMicro)
+                .foregroundStyle(Color.bruMuted)
+                .tracking(1.0)
+                .fixedSize()
+                .layoutPriority(1)
+                // No .textCase(.uppercase): it would uppercase this label too.
+                .accessibilityLabel("changed from prescription")
+        }
+        .allowsHitTesting(false)
+    }
+
+    /// A typed weight that differs from the prescription is a manual override.
+    private func isManualOverride(_ d: Double) -> Bool {
+        guard let p = prescription else { return false }
+        return abs(d - p) > 0.001
+    }
+
+    /// Use in Why-this-weight: the suggested weight becomes the set's weight,
+    /// and the set is no longer marked as changed from the prescription.
     private func use(_ suggested: Double) {
-        weightText = formatted(suggested)
+        weightText = suggested > 0 ? formatted(suggested) : ""
         weight = suggested
-        wasManualOverride = isManualOverride(suggested)
+        wasManualOverride = false
         onEditCommitted()
     }
 
