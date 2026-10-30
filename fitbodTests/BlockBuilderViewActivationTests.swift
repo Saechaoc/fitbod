@@ -2,7 +2,10 @@
 //  BlockBuilderViewActivationTests.swift
 //  fitbodTests
 //
-//  260528-ejb: New Block saves an INACTIVE template; Days Per Week clamps 1...7.
+//  260528-ejb: New Block saves an inactive block; Days Per Week clamps 1...7.
+//  Every builder save (SAVE DRAFT, SAVE AS READY, SAVE CHANGES) calls
+//  BlockDraft.save(into:) on the draft as it is. That save never writes
+//  isActive (T65); only BlockLifecycleService starts or ends a block.
 //
 
 import Foundation
@@ -29,7 +32,7 @@ struct BlockBuilderViewActivationTests {
         let context = try makeContext()
         let draft = BlockDraft(template: BlockTemplates.generic)
         draft.name = "Inactive Template"
-        draft.isActive = false   // mirrors BlockBuilderView.saveIfValid()
+        // The builder saves the draft as it is, with no activation step.
 
         try draft.save(into: context)
         try context.save()
@@ -43,7 +46,7 @@ struct BlockBuilderViewActivationTests {
     @Test("Days Per Week stepper clamps to the inclusive 1...7 range")
     func daysPerWeekClampsToOneThroughSeven() {
         let draft = BlockDraft.newBlock()
-        // Mirrors the private BlockBuilderView.adjustDaysPerWeek(by:) clamp.
+        // Mirrors the clamp in BlockBuilderView's DAYS PER WEEK − / + steppers.
         func adjust(by delta: Int) {
             draft.daysPerWeek = min(7, max(1, draft.daysPerWeek + delta))
         }

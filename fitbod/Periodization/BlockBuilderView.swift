@@ -88,6 +88,7 @@ public struct BlockBuilderView: View {
                             // NewBlockLinkedRoutinesBand conditional block).
                             NewBlockSplitBand(
                                 draft: draft,
+                                canChangeRoutine: canChangeRoutine,
                                 presentSplitPicker: { presentingSplitPicker = true }
                             )
 
@@ -220,6 +221,12 @@ public struct BlockBuilderView: View {
     /// In EDIT BLOCK, Discard keeps the saved block and drops only the edits.
     private var discardTitle: String {
         editing == nil ? "Discard this block?" : "Discard changes?"
+    }
+
+    /// SWAP and + ATTACH follow BlockLifecycleService's rule: an active
+    /// block keeps its routine until it ends (T67).
+    private var canChangeRoutine: Bool {
+        editing?.derivedStatus != .active
     }
 
     private var hasUnsavedChanges: Bool {
@@ -1969,6 +1976,8 @@ fileprivate struct NewBlockAddPhaseTypeSheet: View {
 // there; do NOT import or reference them — separate token worlds per 09-RESEARCH Pattern 3).
 fileprivate struct NewBlockSplitBand: View {
     @Bindable var draft: BlockDraft
+    /// False while the edited block is active, so it offers no SWAP or + ATTACH.
+    let canChangeRoutine: Bool
     let presentSplitPicker: () -> Void
 
     var body: some View {
@@ -1998,31 +2007,35 @@ fileprivate struct NewBlockSplitBand: View {
                         .font(NewBlockType.label)
                         .tracking(NewBlockScreenTokens.labelTracking)
                         .foregroundStyle(NewBlockScreenTokens.muted)
-                    Button {
-                        presentSplitPicker()
-                    } label: {
-                        Text("SWAP ▸")
-                            .font(NewBlockType.label)
-                            .tracking(NewBlockScreenTokens.labelTracking)
-                            .foregroundStyle(NewBlockScreenTokens.signal)
-                            .frame(minWidth: 44, minHeight: 44)
+                    if canChangeRoutine {
+                        Button {
+                            presentSplitPicker()
+                        } label: {
+                            Text("SWAP ▸")
+                                .font(NewBlockType.label)
+                                .tracking(NewBlockScreenTokens.labelTracking)
+                                .foregroundStyle(NewBlockScreenTokens.signal)
+                                .frame(minWidth: 44, minHeight: 44)
+                        }
+                        .buttonStyle(.plain)
                     }
-                    .buttonStyle(.plain)
                 } else {
                     Text("None — saves as draft")
                         .font(NewBlockType.label)
                         .tracking(NewBlockScreenTokens.labelTracking)
                         .foregroundStyle(NewBlockScreenTokens.muted)
-                    Button {
-                        presentSplitPicker()
-                    } label: {
-                        Text("+ ATTACH ▸")
-                            .font(NewBlockType.label)
-                            .tracking(NewBlockScreenTokens.labelTracking)
-                            .foregroundStyle(NewBlockScreenTokens.signal)
-                            .frame(minWidth: 44, minHeight: 44)
+                    if canChangeRoutine {
+                        Button {
+                            presentSplitPicker()
+                        } label: {
+                            Text("+ ATTACH ▸")
+                                .font(NewBlockType.label)
+                                .tracking(NewBlockScreenTokens.labelTracking)
+                                .foregroundStyle(NewBlockScreenTokens.signal)
+                                .frame(minWidth: 44, minHeight: 44)
+                        }
+                        .buttonStyle(.plain)
                     }
-                    .buttonStyle(.plain)
                 }
             }
             .padding(.horizontal, NewBlockScreenTokens.sidePadding)

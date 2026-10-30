@@ -4,7 +4,8 @@
 //
 //  Ephemeral editor state for BlockBuilderView. Saving a draft never
 //  starts, ends or deactivates a block; BlockLifecycleService does, and
-//  keeps at most one block active.
+//  keeps at most one block active. A saved block also takes a new routine
+//  only through BlockLifecycleService, which refuses an active block.
 //
 
 import Foundation
@@ -23,8 +24,9 @@ public final class BlockDraft {
     public var phases: [BlockPhaseDraft] = []
 
     // V7 program-graph fields — wired by the Phase 9 split band.
-    // split is written directly in BlockDraft.save (builder is pre-activation;
-    // BlockLifecycleService.attachSplit / swapSplit are for post-activation mutations).
+    // save(into:) writes split directly only onto a new block; a saved block
+    // changes routine through BlockLifecycleService.attachSplit / swapSplit,
+    // which refuse an active block (T67).
     public var split: Split? = nil
     public var schedulingMode: SchedulingMode = .rotation
     // trainingDays written ONLY via TrainingDaysWriter.sort at save time (T-09-14).
@@ -118,25 +120,29 @@ public final class BlockDraft {
     }
 
     public func save(into context: ModelContext) throws {
+        let existing = try savedBlock(in: context)
+        // A saved block takes a new routine only through the lifecycle service,
+        // which refuses an active block. It runs before any other write, so a
+        // refused save leaves the block as it was (T67).
+        if let existing, let split, existing.split?.id != split.id {
+            if existing.split == nil {
+                try BlockLifecycleService.attachSplit(split, to: existing, context: context)
+            } else {
+                try BlockLifecycleService.swapSplit(split, on: existing, context: context)
+            }
+        }
+
         try context.transaction {
             let block: Block
-            if let existingID = id {
-                let targetID = existingID
-                let descriptor = FetchDescriptor<Block>(
-                    predicate: #Predicate<Block> { $0.id == targetID }
-                )
-                if let existing = try context.fetch(descriptor).first {
-                    block = existing
-                } else {
-                    let inserted = Block()
-                    context.insert(inserted)
-                    block = inserted
-                }
+            if let existing {
+                block = existing
             } else {
                 let inserted = Block()
                 context.insert(inserted)
                 block = inserted
-                id = inserted.id
+                if id == nil {
+                    id = inserted.id
+                }
             }
 
             block.name = name.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -152,10 +158,12 @@ public final class BlockDraft {
             // inactive, and no other block is touched. Only BlockLifecycleService starts
             // or ends a block (T65).
 
-            // V7 program-graph fields — direct split write is permitted here because the
-            // builder operates in a draft/ready context (pre-activation). Post-activation
-            // mutations must use BlockLifecycleService.attachSplit / swapSplit instead.
-            block.split = split
+            // V7 program-graph fields. Only a new block, never active, takes the
+            // draft's routine directly; a saved block's routine changed above,
+            // through BlockLifecycleService.
+            if existing == nil {
+                block.split = split
+            }
             block.schedulingMode = schedulingMode
             // trainingDays written ONLY via TrainingDaysWriter.sort to ensure sort-at-write
             // invariant (T-09-14 / SPEC-8-TRAININGDAYS).
@@ -180,6 +188,15 @@ public final class BlockDraft {
 
             try context.save()
         }
+    }
+
+    /// The saved block this draft edits, or nil for a new block.
+    private func savedBlock(in context: ModelContext) throws -> Block? {
+        guard let targetID = id else { return nil }
+        let descriptor = FetchDescriptor<Block>(
+            predicate: #Predicate<Block> { $0.id == targetID }
+        )
+        return try context.fetch(descriptor).first
     }
 }
 
