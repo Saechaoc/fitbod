@@ -38,7 +38,7 @@ T61 (`737958b`) stopped the sheet offering "Use 0 ▸", but the rest of the shee
 2. Where step 02 says "starting at prescribed weight", which it does only with no last session, no computed line and no bump, it reads `"No prior data \u{2014} choose a starting weight."` instead.
 3. For a suggestion of 0, the sheet leaves out step 03, since there is nothing to round.
 4. Step 03 never shows "?": when it cannot read a plate size, its label leaves out the size and its unit and reads "Rounded to plate".
-5. Every other step 02 text, such as block periodization's "log a baseline session first" or "Weight holds." for a lift last logged at 0, and every suggestion above 0, reads exactly as it does today.
+5. Every other step 02 text, such as block periodization's "log a baseline session first" or "Weight holds." for a lift last logged at 0, and every suggestion above 0, apart from change 4's label, reads exactly as it does today.
 
 ## Constraints
 

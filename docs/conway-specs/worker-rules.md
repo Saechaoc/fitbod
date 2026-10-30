@@ -107,7 +107,8 @@ Use only the two phones your on-disk brief names, always by id:
 - Your worktree starts with no build products, so your first build is a full build; start it in the background.
 - Put result bundles in your own scratchpad, with your ticket id and a counter in the name, for example `T08-after-2.xcresult`.
 - Build the app with `xcodebuild -project fitbod.xcodeproj -scheme fitbod -destination "platform=iOS Simulator,id=<id>" -derivedDataPath <DerivedData> build CODE_SIGNING_ALLOWED=NO`.
-- Run tests with the same command, plus `-parallel-testing-enabled NO -resultBundlePath <bundle>`, with `test` in place of `build`.
+- Run tests with the same command, plus `-parallel-testing-enabled NO -collect-test-diagnostics never -resultBundlePath <bundle>`, with `test` in place of `build`.
+  Without `-collect-test-diagnostics never`, a run with any failure or known issue waits up to ten minutes in `simctl diagnose` before it writes its bundle.
 - Choose tests with one `-only-testing:` flag each, for example `-only-testing:fitbodTests` or `-only-testing:fitbodUITests/NewBlockModalUITests`.
 - Build the widget with the `FitbodWidgetsExtension` scheme and the same flags.
 - Save each full log to a file in your scratchpad and read only the summary lines, because xcodebuild output is huge.
