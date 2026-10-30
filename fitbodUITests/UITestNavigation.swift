@@ -1,3 +1,4 @@
+import Vision
 import XCTest
 
 /// Shared navigation through the real four-tab shell and Today settings sheet.
@@ -20,13 +21,24 @@ enum UITestNavigation {
     /// setting, and its token in screenshot names.
     enum TextSize: String {
         case `default`
+        case xl
+        case xxl
+        case xxxl
         case ax3
 
-        /// The content size launch argument: Large, the default, or
-        /// accessibility extra large, which is AX3.
+        /// The content size launch argument: Large, the default; extra
+        /// large, extra extra large and extra extra extra large, the sizes
+        /// between it and the accessibility sizes; or accessibility extra
+        /// large, which is AX3.
         var launchArguments: [String] {
-            ["-UIPreferredContentSizeCategoryName",
-             self == .ax3 ? "UICTContentSizeCategoryAccessibilityXL" : "UICTContentSizeCategoryL"]
+            let category = switch self {
+            case .default: "L"
+            case .xl: "XL"
+            case .xxl: "XXL"
+            case .xxxl: "XXXL"
+            case .ax3: "AccessibilityXL"
+            }
+            return ["-UIPreferredContentSizeCategoryName", "UICTContentSizeCategory\(category)"]
         }
     }
 
@@ -129,11 +141,19 @@ enum UITestNavigation {
     static func reveal(_ element: XCUIElement, in app: XCUIApplication, maxSwipes: Int = 12) {
         for _ in 0..<maxSwipes {
             if element.exists && element.isHittable { return }
-            let scroll = app.scrollViews.allElementsBoundByIndex.last(where: { $0.isHittable })
-            if let scroll { scroll.swipeUp(velocity: .slow) }
-            else { app.swipeUp(velocity: .slow) }
+            swipeUp(in: app)
         }
         XCTAssertTrue(element.exists && element.isHittable, "Expected a visible control: \(element)")
+    }
+
+    /// Swipes slowly up on the last scroll view a user can tap, which is
+    /// the one on top, or on the app when there is none.
+    private static func swipeUp(in app: XCUIApplication) {
+        if let scroll = app.scrollViews.allElementsBoundByIndex.last(where: { $0.isHittable }) {
+            scroll.swipeUp(velocity: .slow)
+        } else {
+            app.swipeUp(velocity: .slow)
+        }
     }
 
     /// Taps a BRUStepper's visible − or + cell until it reads `target`, the
@@ -323,23 +343,10 @@ extension UITestNavigation {
     /// screenshot, or nil when the point is off the image. Screenshot
     /// pixels are device pixels, so the point is scaled by the screen scale.
     static func color(at point: CGPoint, in screenshot: XCUIScreenshot) -> RGB? {
-        let image = screenshot.image
-        let x = Int((point.x * image.scale).rounded(.down))
-        let y = Int((point.y * image.scale).rounded(.down))
-        guard let cgImage = image.cgImage,
-              (0..<cgImage.width).contains(x), (0..<cgImage.height).contains(y),
-              let pixel = cgImage.cropping(to: CGRect(x: x, y: y, width: 1, height: 1)),
-              let sRGB = CGColorSpace(name: CGColorSpace.sRGB) else { return nil }
-        var bytes = [UInt8](repeating: 0, count: 4)
-        let drawn = bytes.withUnsafeMutableBytes { buffer -> Bool in
-            guard let context = CGContext(
-                data: buffer.baseAddress, width: 1, height: 1, bitsPerComponent: 8, bytesPerRow: 4,
-                space: sRGB, bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
-            ) else { return false }
-            context.draw(pixel, in: CGRect(x: 0, y: 0, width: 1, height: 1))
-            return true
-        }
-        return drawn ? RGB(red: Int(bytes[0]), green: Int(bytes[1]), blue: Int(bytes[2])) : nil
+        let scale = screenshot.image.scale
+        let pixel = CGRect(x: (point.x * scale).rounded(.down), y: (point.y * scale).rounded(.down), width: 1, height: 1)
+        guard let cut = crop(pixel, of: screenshot), let bytes = sRGBBytes(of: cut.image) else { return nil }
+        return RGB(red: Int(bytes[0]), green: Int(bytes[1]), blue: Int(bytes[2]))
     }
 
     /// Fails unless the color at `point` is within `tolerance` of `expected`
@@ -362,6 +369,83 @@ extension UITestNavigation {
         }
         guard actual.distance(to: expected) > tolerance else { return nil }
         return "The pixel at \(place) is \(actual), not \(expected) within \(tolerance)"
+    }
+}
+
+// MARK: - Screenshot readers
+
+extension UITestNavigation {
+    /// The pixels of `rect`, in screen points, cut from a full-screen
+    /// screenshot: where they lie in its device pixels, and their sRGB
+    /// bytes, four to a pixel, row by row from the top. Nil when `rect` is
+    /// off the screenshot.
+    static func pixels(in rect: CGRect, of screenshot: XCUIScreenshot) -> (frame: CGRect, bytes: [UInt8])? {
+        guard let cut = crop(devicePixels(of: rect, in: screenshot), of: screenshot),
+              let bytes = sRGBBytes(of: cut.image) else { return nil }
+        return (cut.frame, bytes)
+    }
+
+    /// The lines of text drawn inside `rect`, in screen points, read from
+    /// the top, each with the box around it in screen points.
+    static func textLines(in rect: CGRect, of screenshot: XCUIScreenshot) throws -> [(text: String, box: CGRect)] {
+        let cut = try XCTUnwrap(crop(devicePixels(of: rect, in: screenshot), of: screenshot),
+                                "Cannot crop \(rect) from the screenshot")
+        let request = VNRecognizeTextRequest()
+        request.recognitionLevel = .accurate
+        request.usesLanguageCorrection = false
+        try VNImageRequestHandler(cgImage: cut.image).perform([request])
+        let scale = screenshot.image.scale
+        let frame = CGRect(x: cut.frame.minX / scale, y: cut.frame.minY / scale,
+                           width: cut.frame.width / scale, height: cut.frame.height / scale)
+        // Vision's boxes are fractions of the crop, from its bottom left:
+        // higher lines first, then left to right.
+        return (request.results ?? [])
+            .sorted { ($0.boundingBox.midY, -$0.boundingBox.minX) > ($1.boundingBox.midY, -$1.boundingBox.minX) }
+            .compactMap { observation in
+                guard let text = observation.topCandidates(1).first?.string else { return nil }
+                let box = observation.boundingBox
+                return (text, CGRect(
+                    x: frame.minX + box.minX * frame.width, y: frame.minY + (1 - box.maxY) * frame.height,
+                    width: box.width * frame.width, height: box.height * frame.height
+                ))
+            }
+    }
+
+    /// The text drawn inside `rect`, in screen points, read line by line
+    /// from the top.
+    static func readText(in rect: CGRect, of screenshot: XCUIScreenshot) throws -> String {
+        try textLines(in: rect, of: screenshot).map(\.text).joined(separator: " ")
+    }
+
+    /// The device pixels that cover `rect`, in screen points.
+    private static func devicePixels(of rect: CGRect, in screenshot: XCUIScreenshot) -> CGRect {
+        let scale = screenshot.image.scale
+        return CGRect(x: rect.minX * scale, y: rect.minY * scale, width: rect.width * scale, height: rect.height * scale)
+            .integral
+    }
+
+    /// The part of the screenshot inside `pixels`, in device pixels, and
+    /// where that part lies. Nil when no pixel of `pixels` is on it.
+    private static func crop(_ pixels: CGRect, of screenshot: XCUIScreenshot) -> (image: CGImage, frame: CGRect)? {
+        guard let image = screenshot.image.cgImage else { return nil }
+        let frame = pixels.intersection(CGRect(x: 0, y: 0, width: image.width, height: image.height))
+        guard !frame.isEmpty, let cut = image.cropping(to: frame) else { return nil }
+        return (cut, frame)
+    }
+
+    /// `image`'s sRGB bytes, four to a pixel, row by row from the top.
+    private static func sRGBBytes(of image: CGImage) -> [UInt8]? {
+        guard let sRGB = CGColorSpace(name: CGColorSpace.sRGB) else { return nil }
+        var bytes = [UInt8](repeating: 0, count: image.width * image.height * 4)
+        let drawn = bytes.withUnsafeMutableBytes { buffer -> Bool in
+            guard let context = CGContext(
+                data: buffer.baseAddress, width: image.width, height: image.height, bitsPerComponent: 8,
+                bytesPerRow: image.width * 4, space: sRGB, bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
+            ) else { return false }
+            context.draw(image, in: CGRect(x: 0, y: 0, width: image.width, height: image.height))
+            return true
+        }
+        return drawn ? bytes : nil
     }
 }
 
@@ -406,5 +490,193 @@ extension UITestNavigation {
         let edge = app.coordinate(withNormalizedOffset: CGVector(dx: 0, dy: 0.5)).withOffset(CGVector(dx: 1, dy: 0))
         let across = app.coordinate(withNormalizedOffset: CGVector(dx: 0.8, dy: 0.5))
         edge.press(forDuration: 0.05, thenDragTo: across, withVelocity: .default, thenHoldForDuration: 0)
+    }
+}
+
+// MARK: - Controls
+
+extension UITestNavigation {
+    /// The match a user can tap: a sheet or a dialog leaves same-named
+    /// controls under it. A label matches in any case, and so does a label
+    /// that goes on after a comma, the way a row reads its texts, such as
+    /// "Live Routine, 1 session", unless `exactLabel` is true.
+    @discardableResult
+    static func hittable(
+        _ query: XCUIElementQuery, _ label: String, exactLabel: Bool = false,
+        file: StaticString = #filePath, line: UInt = #line
+    ) -> XCUIElement {
+        let predicate = exactLabel
+            ? NSPredicate(format: "label ==[c] %@", label)
+            : NSPredicate(format: "label ==[c] %@ OR label BEGINSWITH[c] %@", label, label + ",")
+        let matches = query.matching(predicate)
+        XCTAssertTrue(matches.firstMatch.waitForExistence(timeout: 10), "Missing \(label)", file: file, line: line)
+        for _ in 0..<10 {
+            if let match = matches.allElementsBoundByIndex.first(where: { $0.isHittable }) { return match }
+            Thread.sleep(forTimeInterval: 0.5)
+        }
+        XCTFail("No tappable \(label)", file: file, line: line)
+        return matches.firstMatch
+    }
+
+    /// Waits until a push, a sheet or a scroll stops moving `element`: its
+    /// frame holds for one `interval`. It gives up after `timeout` seconds.
+    static func waitUntilStill(_ element: XCUIElement, interval: TimeInterval = 0.25, timeout: TimeInterval = 5) {
+        var last = element.frame
+        let deadline = Date.now.addingTimeInterval(timeout)
+        while Date.now < deadline {
+            Thread.sleep(forTimeInterval: interval)
+            let frame = element.frame
+            if frame == last { return }
+            last = frame
+        }
+    }
+
+    /// Types `text` once the field has keyboard focus, because `typeText`
+    /// can drop the first character, and checks that the field holds it.
+    /// By default it replaces the field's text, with a tap near the trailing
+    /// edge so the cursor lands after any text already there, then presses
+    /// return to put the keyboard away. With `replacing` false it taps the
+    /// field and types after its text; a decimal pad has no return key, so
+    /// it takes `pressingReturn` false.
+    static func type(
+        _ text: String, into field: XCUIElement, replacing: Bool = true, pressingReturn: Bool = true,
+        file: StaticString = #filePath, line: UInt = #line
+    ) {
+        XCTAssertTrue(field.waitForExistence(timeout: 10), "Missing \(field)", file: file, line: line)
+        if replacing {
+            field.coordinate(withNormalizedOffset: CGVector(dx: 0.95, dy: 0.5)).tap()
+        } else {
+            field.tap()
+        }
+        let focused = XCTNSPredicateExpectation(predicate: NSPredicate(format: "hasKeyboardFocus == true"), object: field)
+        XCTAssertEqual(XCTWaiter().wait(for: [focused], timeout: 5), .completed,
+                       "The field never took keyboard focus", file: file, line: line)
+        // An empty field reports its placeholder as its value.
+        if replacing, let current = field.value as? String, !current.isEmpty, current != field.placeholderValue {
+            field.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: current.count))
+        }
+        field.typeText(pressingReturn ? text + "\n" : text)
+        let value = field.value as? String ?? ""
+        XCTAssertEqual(value == field.placeholderValue ? "" : value, text,
+                       "The field must hold the typed text", file: file, line: line)
+    }
+}
+
+// MARK: - Block builder
+
+extension UITestNavigation {
+    /// How `revealAboveBottomBar(_:in:scroll:)` moves a block builder's page.
+    enum PageScroll {
+        /// Swipes the page up.
+        case swipeUp
+        /// Drags the page up or down in its leading margin, clear of the
+        /// phase cards' swipe gesture, until the element also sits 20pt
+        /// below New Block's title, and lets it settle after each drag.
+        case dragInMargin
+    }
+
+    /// Scrolls a block builder until a tappable `label` sits above its
+    /// bottom bar, which covers the end of the scroll view, and returns
+    /// that match. A sheet leaves the screen under it in the tree, so only
+    /// a tappable match counts.
+    @discardableResult
+    static func revealAboveBottomBar(
+        _ query: XCUIElementQuery, _ label: String, in app: XCUIApplication,
+        file: StaticString = #filePath, line: UInt = #line
+    ) -> XCUIElement {
+        let barTop = bottomBarTop(in: app, file: file, line: line)
+        let matches = query.matching(NSPredicate(format: "label ==[c] %@", label))
+        for _ in 0..<8 {
+            if let match = matches.allElementsBoundByIndex.first(where: { $0.isHittable && $0.frame.maxY < barTop }) {
+                return match
+            }
+            swipeUp(in: app)
+        }
+        XCTFail("\(label) must scroll above the bottom bar", file: file, line: line)
+        return matches.firstMatch
+    }
+
+    /// Scrolls a block builder until `element` sits above its bottom bar,
+    /// which covers the end of the scroll view, where a tap reaches the bar.
+    static func revealAboveBottomBar(
+        _ element: XCUIElement, in app: XCUIApplication, scroll: PageScroll = .swipeUp,
+        file: StaticString = #filePath, line: UInt = #line
+    ) {
+        let barTop = bottomBarTop(in: app, file: file, line: line)
+        switch scroll {
+        case .swipeUp:
+            for _ in 0..<8 {
+                if element.exists && element.isHittable && element.frame.maxY < barTop { return }
+                swipeUp(in: app)
+            }
+            XCTAssertLessThan(element.frame.maxY, barTop, "\(element) must scroll above the bottom bar", file: file, line: line)
+        case .dragInMargin:
+            let pageTop = app.staticTexts.labeled("NEW BLOCK").frame.maxY + 20
+            let window = app.windows.firstMatch
+            for _ in 0..<8 {
+                let frame = element.frame
+                if frame.minY >= pageTop && frame.maxY <= barTop { return }
+                let distance = frame.maxY > barTop ? -(frame.maxY - barTop + 80) : pageTop - frame.minY + 80
+                let start = window.coordinate(withNormalizedOffset: .zero).withOffset(CGVector(dx: 8, dy: (pageTop + barTop) / 2))
+                let end = start.withOffset(CGVector(dx: 0, dy: max(-300, min(300, distance))))
+                start.press(forDuration: 0.05, thenDragTo: end, withVelocity: .slow, thenHoldForDuration: 0.3)
+                waitUntilStill(element)
+            }
+            XCTFail("\(element) must scroll between New Block's bars", file: file, line: line)
+        }
+    }
+
+    /// The top of a block builder's bottom bar. The bar's 52pt buttons sit
+    /// 24pt below its top edge, and CANCEL's frame is its text.
+    private static func bottomBarTop(in app: XCUIApplication, file: StaticString, line: UInt) -> CGFloat {
+        hittable(app.buttons, "Cancel", file: file, line: line).frame.midY - 50
+    }
+}
+
+// MARK: - Workout logger
+
+extension UITestNavigation {
+    /// Scrolls the logger until `element` sits between the fixed workout
+    /// header and the keyboard's DONE bar or the rest dock, where a user
+    /// can see and tap it. XCUITest calls rows under the header hittable,
+    /// so a tap there would land on the header.
+    static func revealInLogger(_ element: XCUIElement, in app: XCUIApplication, file: StaticString = #filePath, line: UInt = #line) {
+        for _ in 0..<12 {
+            let (top, bottom) = loggerSpan(in: app)
+            if element.frame.minY >= top && element.frame.maxY <= bottom { return }
+            let delta = (top + bottom) / 2 - element.frame.midY
+            let startY = delta > 0 ? top + 20 : bottom - 20
+            dragLogger(from: startY, to: min(bottom - 20, max(top + 20, startY + delta)), in: app)
+        }
+        XCTFail("Could not scroll \(element) into view", file: file, line: line)
+    }
+
+    /// The logger's visible span, in screen points: below the fixed workout
+    /// header, above the keyboard's DONE bar or the rest dock.
+    static func loggerSpan(in app: XCUIApplication) -> (top: CGFloat, bottom: CGFloat) {
+        let header = app.otherElements["workout.header"].firstMatch
+        let top = (header.exists ? header.frame.maxY : 0) + 8
+        let keyboard = app.keyboards.firstMatch
+        // The DONE bar sits on top of the number pad.
+        var bottom = keyboard.exists ? keyboard.frame.minY - 66 : app.frame.maxY - 24
+        let dock = app.descendants(matching: .any).matching(identifier: "rest.status").firstMatch
+        if !keyboard.exists && dock.exists {
+            bottom = min(bottom, dock.frame.minY - 16)
+        }
+        return (top, bottom)
+    }
+
+    /// A slow drag down the logger in the rows' trailing margin, clear of
+    /// their controls: at AX3 a field spans the row, and a drag that starts
+    /// on it does not scroll the list.
+    static func dragLogger(from startY: CGFloat, to endY: CGFloat, in app: XCUIApplication) {
+        let x = app.frame.width - 8
+        let origin = app.coordinate(withNormalizedOffset: .zero)
+        origin.withOffset(CGVector(dx: x, dy: startY)).press(
+            forDuration: 0.1,
+            thenDragTo: origin.withOffset(CGVector(dx: x, dy: endY)),
+            withVelocity: .slow,
+            thenHoldForDuration: 0.2
+        )
     }
 }

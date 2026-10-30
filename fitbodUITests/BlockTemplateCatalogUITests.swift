@@ -62,7 +62,7 @@ final class BlockTemplateCatalogUITests: XCTestCase {
     @MainActor
     func testPickingAPresetKeepsDaysPerWeek() throws {
         let app = openBlankNewBlock()
-        hittable(app.buttons, "Decrease days per week").tap()
+        UITestNavigation.hittable(app.buttons, "Decrease days per week").tap()
         XCTAssertEqual(daysPerWeek(in: app), "3 days per week")
         pickPreset("HYPERTROPHY MESO", in: app)
         XCTAssertEqual(daysPerWeek(in: app), "3 days per week", "Picking a preset must leave days per week alone")
@@ -96,7 +96,7 @@ final class BlockTemplateCatalogUITests: XCTestCase {
             assertShows(promised, in: app, row: row.label)
             XCTAssertEqual(blockName(in: app), template.name)
             XCTAssertEqual(daysPerWeek(in: app), "4 days per week")
-            hittable(app.buttons, "Cancel").tap()
+            UITestNavigation.hittable(app.buttons, "Cancel").tap()
             XCTAssertTrue(app.staticTexts.labeled("NEW BLOCK").waitForNonExistence(timeout: 5),
                           "CANCEL must close an untouched New Block at once")
         }
@@ -108,7 +108,7 @@ final class BlockTemplateCatalogUITests: XCTestCase {
     @MainActor
     func testEveryPresetSetsItsPhases() throws {
         let app = openBlankNewBlock()
-        hittable(app.buttons, "Decrease days per week").tap()
+        UITestNavigation.hittable(app.buttons, "Decrease days per week").tap()
 
         openPresetPicker(in: app)
         let labels = ["BLANK"] + Self.catalog.map { $0.name.uppercased() }
@@ -119,7 +119,7 @@ final class BlockTemplateCatalogUITests: XCTestCase {
         XCTAssertTrue(row("BLANK", in: app).isSelected, "A blank New Block starts on BLANK")
         UITestNavigation.saveScreenshot("T10", "new-block-preset-picker")
         let sheet = UITestNavigation.topSheet(in: app) ?? app
-        hittable(sheet.buttons, "Cancel").tap()
+        UITestNavigation.hittable(sheet.buttons, "Cancel").tap()
         XCTAssertTrue(row("BLANK", in: app).waitForNonExistence(timeout: 5),
                       "CANCEL must close the picker without picking")
         XCTAssertEqual(builderPhases(in: app), "ACCUM 2 · INTNS 2 · DELOAD 1")
@@ -151,14 +151,14 @@ final class BlockTemplateCatalogUITests: XCTestCase {
         let dialog = app.staticTexts.labeled("Replace your phases?")
         XCTAssertTrue(dialog.waitForExistence(timeout: 5), "Picking a preset over edited phases must ask first")
         UITestNavigation.saveScreenshot("T10", "replace-phases-dialog")
-        hittable(app.buttons, "Keep my phases").tap()
+        UITestNavigation.hittable(app.buttons, "Keep my phases").tap()
         XCTAssertTrue(dialog.waitForNonExistence(timeout: 5))
         XCTAssertEqual(builderPhases(in: app), "ACCUM 3 · INTNS 2 · DELOAD 1", "Keep my phases must keep the edit")
         XCTAssertEqual(blockName(in: app), "", "Keep my phases cancels the whole pick")
 
         pickPreset("POWERLIFTING PEAK", in: app)
         XCTAssertTrue(dialog.waitForExistence(timeout: 5))
-        hittable(app.buttons, "Replace phases").tap()
+        UITestNavigation.hittable(app.buttons, "Replace phases").tap()
         XCTAssertTrue(dialog.waitForNonExistence(timeout: 5))
         XCTAssertEqual(builderPhases(in: app), Self.catalog[2].phases)
         XCTAssertEqual(blockName(in: app), "Powerlifting Peak")
@@ -169,14 +169,14 @@ final class BlockTemplateCatalogUITests: XCTestCase {
     @MainActor
     func testProgramPresetSheetOpensTheTemplate() throws {
         let app = openProgram()
-        hittable(app.buttons, "+ NEW").tap()
-        hittable(app.buttons, "+ New block").tap()
-        hittable(app.buttons, "Use Preset").tap()
+        UITestNavigation.hittable(app.buttons, "+ NEW").tap()
+        UITestNavigation.hittable(app.buttons, "+ New block").tap()
+        UITestNavigation.hittable(app.buttons, "Use Preset").tap()
         XCTAssertTrue(app.staticTexts.labeled("CHOOSE PRESET").waitForExistence(timeout: 5))
         assertListed(["FROM SCRATCH"] + Self.catalog.map { $0.name.uppercased() }, in: app)
         UITestNavigation.saveScreenshot("T10", "program-choose-preset")
 
-        hittable(app.buttons, "5/3/1 CYCLE").tap()
+        UITestNavigation.hittable(app.buttons, "5/3/1 CYCLE").tap()
         assertNewBlockOpen(in: app)
         XCTAssertEqual(builderPhases(in: app), Self.catalog[3].phases)
         XCTAssertEqual(blockName(in: app), "5/3/1 Cycle")
@@ -198,14 +198,14 @@ final class BlockTemplateCatalogUITests: XCTestCase {
         pickPreset("HYPERTROPHY MESO", in: app)
         XCTAssertEqual(builderPhases(in: app), Self.catalog[0].phases)
         XCTAssertEqual(blockName(in: app), "Hypertrophy Meso")
-        hittable(app.buttons, "SAVE DRAFT").tap()
+        UITestNavigation.hittable(app.buttons, "SAVE DRAFT").tap()
         XCTAssertTrue(app.staticTexts.labeled("NEW BLOCK").waitForNonExistence(timeout: 5), "SAVE DRAFT must close New Block")
 
         UITestNavigation.selectTab("Program", in: app)
         let card = app.buttons.labeled("DRAFT block: Hypertrophy Meso")
         UITestNavigation.reveal(card, in: app)
         card.tap()
-        hittable(app.buttons, "EDIT").tap()
+        UITestNavigation.hittable(app.buttons, "EDIT").tap()
         XCTAssertTrue(app.staticTexts.labeled("EDIT BLOCK").waitForExistence(timeout: 10))
         XCTAssertTrue(app.buttons.labeled("+ ADD PHASE").exists)
         XCTAssertFalse(app.buttons.labeled("Preset").exists, "EDIT BLOCK must not offer presets")
@@ -225,9 +225,9 @@ final class BlockTemplateCatalogUITests: XCTestCase {
     @MainActor
     private func openBlankNewBlock() -> XCUIApplication {
         let app = openProgram()
-        hittable(app.buttons, "+ NEW").tap()
-        hittable(app.buttons, "+ New block").tap()
-        hittable(app.buttons, "Blank Block").tap()
+        UITestNavigation.hittable(app.buttons, "+ NEW").tap()
+        UITestNavigation.hittable(app.buttons, "+ New block").tap()
+        UITestNavigation.hittable(app.buttons, "Blank Block").tap()
         assertNewBlockOpen(in: app)
         return app
     }
@@ -361,7 +361,7 @@ final class BlockTemplateCatalogUITests: XCTestCase {
 
     @MainActor
     private func closeDurationSheet(in app: XCUIApplication) {
-        hittable(app.buttons, "Done").tap()
+        UITestNavigation.hittable(app.buttons, "Done").tap()
         XCTAssertTrue(app.staticTexts.labeled("Edit Block Duration").waitForNonExistence(timeout: 5))
     }
 
@@ -389,7 +389,7 @@ final class BlockTemplateCatalogUITests: XCTestCase {
     @MainActor
     private func pickPreset(_ label: String, in app: XCUIApplication) {
         openPresetPicker(in: app)
-        hittable(app.buttons, label).tap()
+        UITestNavigation.hittable(app.buttons, label).tap()
         XCTAssertTrue(row("BLANK", in: app).waitForNonExistence(timeout: 5), "Picking \(label) must close the picker")
     }
 
@@ -409,22 +409,5 @@ final class BlockTemplateCatalogUITests: XCTestCase {
             XCTAssertGreaterThan(element.frame.minY, lastY, "\(label) is out of catalog order", file: file, line: line)
             lastY = element.frame.minY
         }
-    }
-
-    /// The match a user can tap: a sheet leaves same-named controls under it.
-    @MainActor
-    @discardableResult
-    private func hittable(
-        _ query: XCUIElementQuery, _ label: String,
-        file: StaticString = #filePath, line: UInt = #line
-    ) -> XCUIElement {
-        let matches = query.matching(NSPredicate(format: "label ==[c] %@ OR label BEGINSWITH[c] %@", label, label + ","))
-        XCTAssertTrue(matches.firstMatch.waitForExistence(timeout: 10), "Missing \(label)", file: file, line: line)
-        for _ in 0..<10 {
-            if let match = matches.allElementsBoundByIndex.first(where: { $0.isHittable }) { return match }
-            Thread.sleep(forTimeInterval: 0.5)
-        }
-        XCTFail("No tappable \(label)", file: file, line: line)
-        return matches.firstMatch
     }
 }

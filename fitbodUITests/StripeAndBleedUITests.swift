@@ -76,7 +76,7 @@ final class StripeAndBleedUITests: XCTestCase {
         inventory.tap()
         let strip = app.otherElements["plateInventory.tabStrip"]
         XCTAssertTrue(strip.waitForExistence(timeout: 10), "Plate Inventory must show its tab strip")
-        waitUntilStill(strip)
+        UITestNavigation.waitUntilStill(strip, interval: 0.3)
         UITestNavigation.saveScreenshot("T17", "plate-inventory-tabs")
         UITestNavigation.assertHeight(strip, atMost: 60)
 
@@ -104,7 +104,7 @@ final class StripeAndBleedUITests: XCTestCase {
         let app = UITestNavigation.launch(UITestNavigation.activeBlock)
         openSeededSessionEditor(in: app)
         let save = app.buttons["Save session ▸"]
-        waitUntilStill(save)
+        UITestNavigation.waitUntilStill(save, interval: 0.3)
         UITestNavigation.saveScreenshot("T17", "session-editor-bottom-bar")
         let screenshot = XCUIScreen.main.screenshot()
         let frame = save.frame
@@ -137,7 +137,7 @@ final class StripeAndBleedUITests: XCTestCase {
         UITestNavigation.reveal(disabled, in: app)
         XCTAssertTrue(enabled.isHittable)
         XCTAssertFalse(disabled.isEnabled)
-        waitUntilStill(disabled)
+        UITestNavigation.waitUntilStill(disabled, interval: 0.3)
         UITestNavigation.saveScreenshot("T17", "button-states")
 
         let screenshot = XCUIScreen.main.screenshot()
@@ -177,7 +177,7 @@ final class StripeAndBleedUITests: XCTestCase {
         let banners = app.descendants(matching: .any).matching(identifier: "liveEditBanner")
         XCTAssertTrue(banners.firstMatch.waitForExistence(timeout: 10), "A routine on an active block must show the live-edit banner")
         let banner = banners.allElementsBoundByIndex.last(where: \.isHittable) ?? banners.firstMatch
-        waitUntilStill(banner)
+        UITestNavigation.waitUntilStill(banner, interval: 0.3)
         return banner
     }
 
@@ -191,19 +191,6 @@ final class StripeAndBleedUITests: XCTestCase {
         for y in [frame.minY + 3, frame.midY, frame.maxY - 6] {
             UITestNavigation.assertColor(at: CGPoint(x: frame.minX + 2, y: y), in: screenshot, is: Self.signal)
             UITestNavigation.assertColor(at: CGPoint(x: frame.minX + 6, y: y), in: screenshot, is: Self.bg2)
-        }
-    }
-
-    /// Waits until a push or a sheet stops moving `element`.
-    @MainActor
-    private func waitUntilStill(_ element: XCUIElement, timeout: TimeInterval = 5) {
-        var last = element.frame
-        let deadline = Date.now.addingTimeInterval(timeout)
-        while Date.now < deadline {
-            Thread.sleep(forTimeInterval: 0.3)
-            let frame = element.frame
-            if frame == last { return }
-            last = frame
         }
     }
 }

@@ -1,6 +1,7 @@
 import XCTest
 
-/// Uses every shared UI test helper at least once. The first two tests are
+/// Uses every T01 launch, screenshot, frame, pixel and gesture helper at
+/// least once, and checks the text sizes T90 added. The first two tests are
 /// the fresh-store repro: the check can fail, and two launches with the
 /// reset flag in one test process both start fresh.
 final class UITestHelpersSelfTests: XCTestCase {
@@ -54,6 +55,30 @@ final class UITestHelpersSelfTests: XCTestCase {
         XCTAssertTrue(defaultName.hasPrefix("T01-today-empty-") && defaultName.hasSuffix("-default-light"), defaultName)
         XCTAssertTrue(ax3Name.hasPrefix("T01-today-empty-") && ax3Name.hasSuffix("-ax3-light"), ax3Name)
         XCTAssertFalse(ax3Name.contains("pt-"), "A lane phone must be named small or large: \(ax3Name)")
+    }
+
+    /// The sizes between default text and AX3 pass the content size
+    /// categories PRListAndSeriesUITests once passed by hand, name their
+    /// screenshots with its tokens, and each makes the heading taller than
+    /// the size before it.
+    @MainActor
+    func testLargerTextSizesPinTheirCategoriesAndNameScreenshots() {
+        let sizes: [(size: UITestNavigation.TextSize, category: String, token: String)] = [
+            (.xl, "UICTContentSizeCategoryXL", "xl"),
+            (.xxl, "UICTContentSizeCategoryXXL", "xxl"),
+            (.xxxl, "UICTContentSizeCategoryXXXL", "xxxl"),
+        ]
+        var shorter = (token: "default", height: headingHeight(at: .default))
+        for (size, category, token) in sizes {
+            XCTAssertEqual(size.launchArguments, ["-UIPreferredContentSizeCategoryName", category])
+            let height = headingHeight(at: size)
+            let name = UITestNavigation.saveScreenshot("T90", "today-empty", textSize: size)
+            XCTContext.runActivity(named: "\"Build your first routine\" is \(String(format: "%.1f", height))pt tall at \(token)") { _ in }
+            XCTAssertGreaterThan(height, shorter.height, "\(token) must make the heading taller than \(shorter.token)")
+            XCTAssertTrue(name.hasPrefix("T90-today-empty-") && name.hasSuffix("-\(token)-light"), name)
+            XCTAssertFalse(name.contains("pt-"), "A lane phone must be named small or large: \(name)")
+            shorter = (token, height)
+        }
     }
 
     @MainActor
@@ -147,5 +172,15 @@ final class UITestHelpersSelfTests: XCTestCase {
         for word in words {
             XCTAssertTrue(problem.contains(word), "\"\(problem)\" must mention \(word)", file: file, line: line)
         }
+    }
+
+    /// Launches a fresh store at `textSize` and returns the height of
+    /// Today's "Build your first routine".
+    @MainActor
+    private func headingHeight(at textSize: UITestNavigation.TextSize) -> CGFloat {
+        let app = UITestNavigation.launch(UITestNavigation.freshStore, textSize: textSize)
+        let heading = app.staticTexts.labeled("Build your first routine")
+        UITestNavigation.reveal(heading, in: app)
+        return heading.frame.height
     }
 }

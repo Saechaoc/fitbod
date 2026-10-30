@@ -19,7 +19,7 @@ final class CustomExerciseEntryUITests: XCTestCase {
         UITestNavigation.selectTab("Library", in: app)
         searchWithNoMatch("Zercher Probe", in: app)
 
-        hittable(app.buttons, "Create Custom Exercise").tap()
+        UITestNavigation.hittable(app.buttons, "Create Custom Exercise", exactLabel: true).tap()
         let name = app.textFields["customExercise.name"]
         XCTAssertTrue(name.waitForExistence(timeout: 3), "One tap on CREATE CUSTOM EXERCISE must open the editor")
         XCTAssertEqual(name.value as? String, "Zercher Probe", "The name must start as the search text")
@@ -38,15 +38,15 @@ final class CustomExerciseEntryUITests: XCTestCase {
         let name = app.textFields["customExercise.name"]
 
         for attempt in ["first", "second"] {
-            hittable(app.buttons, "Create Custom Exercise").tap()
+            UITestNavigation.hittable(app.buttons, "Create Custom Exercise", exactLabel: true).tap()
             XCTAssertTrue(name.waitForExistence(timeout: 3), "The \(attempt) tap must open the editor")
             XCTAssertEqual(name.value as? String, "Zercher Probe",
                            "The \(attempt) editor must hold the search text without its spaces")
-            hittable(app.buttons, "Cancel").tap()
+            UITestNavigation.hittable(app.buttons, "Cancel", exactLabel: true).tap()
             XCTAssertTrue(name.waitForNonExistence(timeout: 5), "CANCEL must close an untouched editor")
         }
 
-        hittable(app.buttons, "+ New").tap()
+        UITestNavigation.hittable(app.buttons, "+ New", exactLabel: true).tap()
         XCTAssertTrue(name.waitForExistence(timeout: 3))
         XCTAssertEqual(text(of: name), "", "+ NEW must start with an empty name")
     }
@@ -63,19 +63,19 @@ final class CustomExerciseEntryUITests: XCTestCase {
         open(source, in: app)
         let name = app.textFields["customExercise.name"]
 
-        hittable(app.buttons, "Copy").tap()
+        UITestNavigation.hittable(app.buttons, "Copy", exactLabel: true).tap()
         XCTAssertTrue(name.waitForExistence(timeout: 3), "One tap on COPY must open a filled editor")
         XCTAssertEqual(name.value as? String, copyName)
-        hittable(app.buttons, "Cancel").tap()
+        UITestNavigation.hittable(app.buttons, "Cancel", exactLabel: true).tap()
         XCTAssertTrue(name.waitForNonExistence(timeout: 5), "CANCEL must close an untouched copy")
 
-        hittable(app.buttons, "Copy").tap()
+        UITestNavigation.hittable(app.buttons, "Copy", exactLabel: true).tap()
         XCTAssertTrue(name.waitForExistence(timeout: 3), "COPY must reopen a filled editor")
         XCTAssertEqual(name.value as? String, copyName)
-        hittable(app.buttons, "Save").tap()
+        UITestNavigation.hittable(app.buttons, "Save", exactLabel: true).tap()
         XCTAssertTrue(name.waitForNonExistence(timeout: 5), "SAVE must close the editor")
 
-        hittable(app.buttons, "Back").tap()
+        UITestNavigation.hittable(app.buttons, "Back", exactLabel: true).tap()
         XCTAssertTrue(app.staticTexts[copyName].waitForExistence(timeout: 10), "The copy must be a new exercise")
         XCTAssertTrue(app.staticTexts[source].exists, "The built-in exercise must stay")
         XCTAssertTrue(app.staticTexts.labeled("2 matches").exists)
@@ -91,23 +91,23 @@ final class CustomExerciseEntryUITests: XCTestCase {
         open("Zercher Probe", in: app)
         let name = app.textFields["customExercise.name"]
 
-        hittable(app.buttons, "Edit").tap()
+        UITestNavigation.hittable(app.buttons, "Edit", exactLabel: true).tap()
         XCTAssertTrue(name.waitForExistence(timeout: 3), "One tap on EDIT must open a filled editor")
         XCTAssertEqual(name.value as? String, "Zercher Probe")
-        hittable(app.buttons, "Cancel").tap()
+        UITestNavigation.hittable(app.buttons, "Cancel", exactLabel: true).tap()
         XCTAssertTrue(name.waitForNonExistence(timeout: 5), "CANCEL must close an untouched edit")
 
-        hittable(app.buttons, "Edit").tap()
+        UITestNavigation.hittable(app.buttons, "Edit", exactLabel: true).tap()
         XCTAssertTrue(name.waitForExistence(timeout: 3), "EDIT must reopen a filled editor")
         XCTAssertEqual(name.value as? String, "Zercher Probe")
         replaceText(of: name, with: "Zercher Probe Edited")
-        hittable(app.buttons, "Save").tap()
+        UITestNavigation.hittable(app.buttons, "Save", exactLabel: true).tap()
         XCTAssertTrue(name.waitForNonExistence(timeout: 5), "SAVE must close the editor")
         XCTAssertTrue(app.staticTexts["Zercher Probe Edited"].waitForExistence(timeout: 5),
                       "The detail screen must show the new name")
 
         // The Library still searches "Zercher Probe", which both names match.
-        hittable(app.buttons, "Back").tap()
+        UITestNavigation.hittable(app.buttons, "Back", exactLabel: true).tap()
         XCTAssertTrue(app.staticTexts["Zercher Probe Edited"].waitForExistence(timeout: 10))
         XCTAssertFalse(app.staticTexts["Zercher Probe"].exists, "The edit must rename the exercise, not add one")
         XCTAssertTrue(app.staticTexts.labeled("1 match").exists)
@@ -142,15 +142,15 @@ final class CustomExerciseEntryUITests: XCTestCase {
     @MainActor
     private func createFromNoMatch(_ exerciseName: String, in app: XCUIApplication) {
         searchWithNoMatch(exerciseName, in: app)
-        hittable(app.buttons, "Create Custom Exercise").tap()
+        UITestNavigation.hittable(app.buttons, "Create Custom Exercise", exactLabel: true).tap()
         let name = app.textFields["customExercise.name"]
         XCTAssertTrue(name.waitForExistence(timeout: 3))
         XCTAssertEqual(name.value as? String, exerciseName)
-        hittable(app.buttons, "Add Primary Muscle").tap()
+        UITestNavigation.hittable(app.buttons, "Add Primary Muscle", exactLabel: true).tap()
         let chest = app.buttons["musclePicker.chest"]
         XCTAssertTrue(chest.waitForExistence(timeout: 10))
         chest.tap()
-        hittable(app.buttons, "Save").tap()
+        UITestNavigation.hittable(app.buttons, "Save", exactLabel: true).tap()
         XCTAssertTrue(name.waitForNonExistence(timeout: 5), "SAVE must close the editor")
     }
 
@@ -200,22 +200,5 @@ final class CustomExerciseEntryUITests: XCTestCase {
     private func text(of field: XCUIElement) -> String {
         let value = field.value as? String ?? ""
         return value == field.placeholderValue ? "" : value
-    }
-
-    /// The match a user can tap. A sheet leaves same-named controls, such as
-    /// the Library's own Cancel, underneath it.
-    @MainActor
-    private func hittable(
-        _ query: XCUIElementQuery, _ label: String,
-        file: StaticString = #filePath, line: UInt = #line
-    ) -> XCUIElement {
-        let matches = query.matching(NSPredicate(format: "label ==[c] %@", label))
-        XCTAssertTrue(matches.firstMatch.waitForExistence(timeout: 10), "Missing \(label)", file: file, line: line)
-        for _ in 0..<10 {
-            if let match = matches.allElementsBoundByIndex.first(where: { $0.isHittable }) { return match }
-            Thread.sleep(forTimeInterval: 0.5)
-        }
-        XCTFail("No tappable \(label)", file: file, line: line)
-        return matches.firstMatch
     }
 }

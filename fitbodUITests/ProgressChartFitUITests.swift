@@ -25,7 +25,6 @@
 //      unrounded 112.5.
 //
 
-import Vision
 import XCTest
 
 final class ProgressChartFitUITests: XCTestCase {
@@ -76,7 +75,7 @@ final class ProgressChartFitUITests: XCTestCase {
 
         let screenshot = XCUIScreen.main.screenshot()
         UITestNavigation.saveScreenshot("T56", "header")
-        let shown = try readText(in: name.frame.insetBy(dx: -4, dy: -4), of: screenshot)
+        let shown = try UITestNavigation.readText(in: name.frame.insetBy(dx: -4, dy: -4), of: screenshot)
         XCTAssertEqual(
             lettersAndDigits(shown), lettersAndDigits(benchPress),
             "The screen must show the bench press's whole name, but it reads \"\(shown)\""
@@ -186,57 +185,15 @@ final class ProgressChartFitUITests: XCTestCase {
 
     // MARK: - Screenshot readers
 
-    /// The text drawn inside `rect`, in screen points, read line by line
-    /// from the top.
-    @MainActor
-    private func readText(in rect: CGRect, of screenshot: XCUIScreenshot) throws -> String {
-        let crop = try XCTUnwrap(crop(rect, of: screenshot), "Cannot crop \(rect) from the screenshot")
-        let request = VNRecognizeTextRequest()
-        request.recognitionLevel = .accurate
-        request.usesLanguageCorrection = false
-        try VNImageRequestHandler(cgImage: crop).perform([request])
-        // Vision's boxes start at the bottom left: higher lines first.
-        return (request.results ?? [])
-            .sorted { ($0.boundingBox.midY, -$0.boundingBox.minX) > ($1.boundingBox.midY, -$1.boundingBox.minX) }
-            .compactMap { $0.topCandidates(1).first?.string }
-            .joined(separator: " ")
-    }
-
     /// How many pixels inside `rect`, in screen points, are close to the
     /// PR label's color.
     @MainActor
     private func signalPixels(in rect: CGRect, of screenshot: XCUIScreenshot) throws -> Int {
-        let crop = try XCTUnwrap(crop(rect, of: screenshot), "Cannot crop \(rect) from the screenshot")
-        let sRGB = try XCTUnwrap(CGColorSpace(name: CGColorSpace.sRGB))
-        let width = crop.width
-        let height = crop.height
-        var bytes = [UInt8](repeating: 0, count: width * height * 4)
-        let drawn = bytes.withUnsafeMutableBytes { buffer -> Bool in
-            guard let context = CGContext(
-                data: buffer.baseAddress, width: width, height: height, bitsPerComponent: 8,
-                bytesPerRow: width * 4, space: sRGB, bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
-            ) else { return false }
-            context.draw(crop, in: CGRect(x: 0, y: 0, width: width, height: height))
-            return true
-        }
-        XCTAssertTrue(drawn, "Cannot read the pixels of \(rect)")
+        let bytes = try XCTUnwrap(UITestNavigation.pixels(in: rect, of: screenshot), "Cannot read the pixels of \(rect)").bytes
         return stride(from: 0, to: bytes.count, by: 4).filter { index in
             let color = UITestNavigation.RGB(red: Int(bytes[index]), green: Int(bytes[index + 1]), blue: Int(bytes[index + 2]))
             return color.distance(to: Self.signal) <= 40
         }.count
-    }
-
-    /// `rect`, in screen points, cut from the screenshot's device pixels.
-    @MainActor
-    private func crop(_ rect: CGRect, of screenshot: XCUIScreenshot) -> CGImage? {
-        let image = screenshot.image
-        guard let cgImage = image.cgImage else { return nil }
-        let pixels = CGRect(
-            x: rect.minX * image.scale, y: rect.minY * image.scale,
-            width: rect.width * image.scale, height: rect.height * image.scale
-        ).integral.intersection(CGRect(x: 0, y: 0, width: cgImage.width, height: cgImage.height))
-        guard !pixels.isNull, !pixels.isEmpty else { return nil }
-        return cgImage.cropping(to: pixels)
     }
 
     /// Uppercased letters and digits only, so line breaks, spacing and how

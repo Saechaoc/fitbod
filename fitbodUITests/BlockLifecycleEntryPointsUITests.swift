@@ -22,16 +22,16 @@ final class BlockLifecycleEntryPointsUITests: XCTestCase {
     func testEndBlockFromTodaysBandCompletesTheBlock() throws {
         let app = UITestNavigation.launch(UITestNavigation.activeBlock)
         openActiveBlockOverview(in: app)
-        hittable(app.buttons, "END BLOCK").tap()
+        UITestNavigation.hittable(app.buttons, "END BLOCK").tap()
         let alert = app.alerts["End block?"]
         XCTAssertTrue(alert.waitForExistence(timeout: 5), "END BLOCK must ask before it ends the block")
         alert.buttons["End Block"].tap()
         XCTAssertTrue(app.buttons.labeled("END BLOCK").waitForNonExistence(timeout: 5),
                       "An ended block offers no END BLOCK")
-        hittable(app.buttons, "Back").tap()
+        UITestNavigation.hittable(app.buttons, "Back").tap()
         // T70: Today opens the ended block's review; Plan custom puts it off.
         let review = app.staticTexts.labeled("Block review")
-        hittable(app.buttons, "Plan custom").tap()
+        UITestNavigation.hittable(app.buttons, "Plan custom").tap()
         XCTAssertTrue(review.waitForNonExistence(timeout: 5), "Plan custom must close the review")
         assertNoActiveBlockOnToday(in: app)
 
@@ -46,7 +46,7 @@ final class BlockLifecycleEntryPointsUITests: XCTestCase {
         // Reopened, the app reads the block back as ended, and the review
         // the lifter put off opens again.
         UITestNavigation.relaunch(app)
-        hittable(app.buttons, "Plan custom").tap()
+        UITestNavigation.hittable(app.buttons, "Plan custom").tap()
         XCTAssertTrue(review.waitForNonExistence(timeout: 5), "Plan custom must close the review")
         assertNoActiveBlockOnToday(in: app)
         UITestNavigation.selectTab("Program", in: app)
@@ -62,9 +62,9 @@ final class BlockLifecycleEntryPointsUITests: XCTestCase {
     func testEditBlockOffersNoRoutineChangeForTheActiveBlock() throws {
         let app = UITestNavigation.launch(UITestNavigation.activeBlock)
         openActiveBlockOverview(in: app)
-        hittable(app.buttons, "EDIT BLOCK ▸").tap()
+        UITestNavigation.hittable(app.buttons, "EDIT BLOCK ▸").tap()
         XCTAssertTrue(editBlockTitle(in: app).waitForExistence(timeout: 10), "EDIT BLOCK ▸ must open EDIT BLOCK")
-        revealAboveBottomBar(app.staticTexts, "Live Routine", in: app)
+        UITestNavigation.revealAboveBottomBar(app.staticTexts, "Live Routine", in: app)
         UITestNavigation.saveScreenshot("T67", "edit-active-block-routine")
         XCTAssertFalse(app.buttons.labeled("SWAP ▸").exists, "EDIT BLOCK must not offer SWAP for the active block")
         XCTAssertFalse(app.buttons.labeled("+ ATTACH ▸").exists,
@@ -77,28 +77,28 @@ final class BlockLifecycleEntryPointsUITests: XCTestCase {
     func testEditBlockStillGivesADraftBlockARoutine() throws {
         let app = UITestNavigation.launch(UITestNavigation.activeBlock)
         UITestNavigation.selectTab("Program", in: app)
-        hittable(app.buttons, "+ NEW").tap()
-        hittable(app.buttons, "+ New block").tap()
-        hittable(app.buttons, "Blank Block").tap()
+        UITestNavigation.hittable(app.buttons, "+ NEW").tap()
+        UITestNavigation.hittable(app.buttons, "+ New block").tap()
+        UITestNavigation.hittable(app.buttons, "Blank Block").tap()
         let newBlock = app.staticTexts.labeled("NEW BLOCK")
         XCTAssertTrue(newBlock.waitForExistence(timeout: 10), "New Block never opened")
-        type("Next Block", into: app.textFields.firstMatch)
-        hittable(app.buttons, "SAVE DRAFT").tap()
+        UITestNavigation.type("Next Block", into: app.textFields.firstMatch)
+        UITestNavigation.hittable(app.buttons, "SAVE DRAFT").tap()
         XCTAssertTrue(newBlock.waitForNonExistence(timeout: 5), "SAVE DRAFT must close New Block")
 
         let draft = app.buttons.labeled("DRAFT block: Next Block")
         XCTAssertTrue(draft.waitForExistence(timeout: 10), "Program must list the new block as a draft")
         UITestNavigation.reveal(draft, in: app)
         draft.tap()
-        hittable(app.buttons, "EDIT").tap()
+        UITestNavigation.hittable(app.buttons, "EDIT").tap()
         XCTAssertTrue(editBlockTitle(in: app).waitForExistence(timeout: 10), "EDIT must open EDIT BLOCK")
         pickRoutine("Live Routine", from: "+ ATTACH ▸", in: app)
-        revealAboveBottomBar(app.buttons, "SWAP ▸", in: app)
+        UITestNavigation.revealAboveBottomBar(app.buttons, "SWAP ▸", in: app)
         UITestNavigation.saveScreenshot("T67", "edit-draft-block-routine")
-        hittable(app.buttons, "SAVE CHANGES").tap()
+        UITestNavigation.hittable(app.buttons, "SAVE CHANGES").tap()
         XCTAssertTrue(editBlockTitle(in: app).waitForNonExistence(timeout: 5), "SAVE CHANGES must close EDIT BLOCK")
 
-        hittable(app.buttons, "Back").tap()
+        UITestNavigation.hittable(app.buttons, "Back").tap()
         XCTAssertTrue(app.buttons.labeled("READY block: Next Block").waitForExistence(timeout: 10),
                       "With a routine, Program must list the block as ready")
     }
@@ -143,77 +143,11 @@ final class BlockLifecycleEntryPointsUITests: XCTestCase {
         _ routine: String, from control: String, in app: XCUIApplication,
         file: StaticString = #filePath, line: UInt = #line
     ) {
-        revealAboveBottomBar(app.buttons, control, in: app, file: file, line: line).tap()
+        UITestNavigation.revealAboveBottomBar(app.buttons, control, in: app, file: file, line: line).tap()
         let picker = app.staticTexts.labeled("Choose Routine")
         XCTAssertTrue(picker.waitForExistence(timeout: 5), "\(control) must open the routine picker", file: file, line: line)
-        hittable(app.buttons, routine, file: file, line: line).tap()
+        UITestNavigation.hittable(app.buttons, routine, file: file, line: line).tap()
         XCTAssertTrue(picker.waitForNonExistence(timeout: 5), "Picking \(routine) must close the routine picker",
                       file: file, line: line)
-    }
-
-    /// Scrolls the builder until a tappable `label` sits above its bottom
-    /// bar, which covers the end of the scroll view. A sheet leaves the
-    /// screen under it in the tree, so only a tappable match counts.
-    @MainActor
-    @discardableResult
-    private func revealAboveBottomBar(
-        _ query: XCUIElementQuery, _ label: String, in app: XCUIApplication,
-        file: StaticString = #filePath, line: UInt = #line
-    ) -> XCUIElement {
-        // The bar's 52pt buttons sit 24pt below its top edge; CANCEL's frame is its text.
-        let barTop = hittable(app.buttons, "Cancel", file: file, line: line).frame.midY - 50
-        let matches = query.matching(NSPredicate(format: "label ==[c] %@", label))
-        for _ in 0..<8 {
-            if let match = matches.allElementsBoundByIndex.first(where: { $0.isHittable && $0.frame.maxY < barTop }) {
-                return match
-            }
-            if let scroll = app.scrollViews.allElementsBoundByIndex.last(where: { $0.isHittable }) {
-                scroll.swipeUp(velocity: .slow)
-            } else {
-                app.swipeUp(velocity: .slow)
-            }
-        }
-        XCTFail("\(label) must scroll above the bottom bar", file: file, line: line)
-        return matches.firstMatch
-    }
-
-    /// Replaces the field's text once it has keyboard focus, because
-    /// `typeText` can drop the first character, then presses return to put
-    /// the keyboard away.
-    @MainActor
-    private func type(
-        _ text: String, into field: XCUIElement,
-        file: StaticString = #filePath, line: UInt = #line
-    ) {
-        XCTAssertTrue(field.waitForExistence(timeout: 10), "Missing \(field)", file: file, line: line)
-        field.coordinate(withNormalizedOffset: CGVector(dx: 0.95, dy: 0.5)).tap()
-        let focused = XCTNSPredicateExpectation(predicate: NSPredicate(format: "hasKeyboardFocus == true"), object: field)
-        XCTAssertEqual(XCTWaiter().wait(for: [focused], timeout: 5), .completed,
-                       "The field never took keyboard focus", file: file, line: line)
-        // An empty field reports its placeholder as its value.
-        if let current = field.value as? String, !current.isEmpty, current != field.placeholderValue {
-            field.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: current.count))
-        }
-        field.typeText(text + "\n")
-        let value = field.value as? String ?? ""
-        XCTAssertEqual(value == field.placeholderValue ? "" : value, text,
-                       "The field must hold the typed text", file: file, line: line)
-    }
-
-    /// The match a user can tap: a sheet leaves same-named controls under it.
-    @MainActor
-    @discardableResult
-    private func hittable(
-        _ query: XCUIElementQuery, _ label: String,
-        file: StaticString = #filePath, line: UInt = #line
-    ) -> XCUIElement {
-        let matches = query.matching(NSPredicate(format: "label ==[c] %@ OR label BEGINSWITH[c] %@", label, label + ","))
-        XCTAssertTrue(matches.firstMatch.waitForExistence(timeout: 10), "Missing \(label)", file: file, line: line)
-        for _ in 0..<10 {
-            if let match = matches.allElementsBoundByIndex.first(where: { $0.isHittable }) { return match }
-            Thread.sleep(forTimeInterval: 0.5)
-        }
-        XCTFail("No tappable \(label)", file: file, line: line)
-        return matches.firstMatch
     }
 }

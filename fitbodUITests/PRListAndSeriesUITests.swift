@@ -178,11 +178,11 @@ final class PRListAndSeriesUITests: XCTestCase {
     /// made the row taller than ALL's selected fill.
     @MainActor
     func testIntentToggleLabelsStayWholeFromXLargeToXXXLarge() throws {
-        for size in LargerTextSize.allCases {
+        for size: UITestNavigation.TextSize in [.xl, .xxl, .xxxl] {
             XCTContext.runActivity(named: "Text size \(size.rawValue)") { _ in
-                let app = UITestNavigation.launch(size.launchArguments + UITestNavigation.progressHistory)
+                let app = UITestNavigation.launch(UITestNavigation.progressHistory, textSize: size)
                 let segments = openIntentToggle(in: app)
-                saveScreenshot("T71", "prs-toggle", size: size)
+                UITestNavigation.saveScreenshot("T71", "prs-toggle", textSize: size)
                 assertSegmentsStayWhole(segments)
             }
         }
@@ -215,18 +215,6 @@ final class PRListAndSeriesUITests: XCTestCase {
     }
 
     // MARK: - Intent toggle
-
-    /// Text sizes between default text and the accessibility sizes, which
-    /// `UITestNavigation.TextSize` cannot pin. The raw value is the text
-    /// size token in screenshot names.
-    private enum LargerTextSize: String, CaseIterable {
-        case xl, xxl, xxxl
-
-        /// Like a `TextSize`'s, these go before the other launch arguments.
-        var launchArguments: [String] {
-            ["-UIPreferredContentSizeCategoryName", "UICTContentSizeCategory\(rawValue.uppercased())"]
-        }
-    }
 
     /// Opens Personal Records from the Progress tab and returns the intent
     /// toggle's STRENGTH, HYPERTROPHY and ALL segments.
@@ -267,19 +255,6 @@ final class PRListAndSeriesUITests: XCTestCase {
                 "\(segment.label) must \(segment.label == label ? "" : "not ")report the selected trait while \(label) is selected"
             )
         }
-    }
-
-    /// Saves a screenshot named the way `UITestNavigation.saveScreenshot`
-    /// names them, for a text size `TextSize` has no case for.
-    @MainActor
-    private func saveScreenshot(_ ticket: String, _ screen: String, size: LargerTextSize) {
-        let screenshot = XCUIScreen.main.screenshot()
-        let points = Int(screenshot.image.size.width.rounded())
-        let phone = [390: "small", 440: "large"][points] ?? "\(points)pt"
-        let attachment = XCTAttachment(screenshot: screenshot)
-        attachment.name = [ticket, screen, phone, size.rawValue, UITestNavigation.Appearance.light.rawValue].joined(separator: "-")
-        attachment.lifetime = .keepAlways
-        XCTContext.runActivity(named: "Screenshot \(attachment.name ?? screen)") { $0.add(attachment) }
     }
 
     // MARK: - Chart readout

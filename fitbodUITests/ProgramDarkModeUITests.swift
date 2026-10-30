@@ -43,7 +43,7 @@ final class ProgramDarkModeUITests: XCTestCase {
         let title = row.staticTexts[name]
         XCTAssertTrue(title.waitForExistence(timeout: 10), "Missing the template name \(name)")
         UITestNavigation.reveal(row, in: app)
-        waitUntilStill(title)
+        UITestNavigation.waitUntilStill(title)
         UITestNavigation.saveScreenshot("T16", "program-empty", appearance: appearance)
         let screenshot = XCUIScreen.main.screenshot()
 
@@ -63,7 +63,7 @@ final class ProgramDarkModeUITests: XCTestCase {
         let routineTitle = routine.staticTexts["Live Routine"]
         XCTAssertTrue(blockTitle.waitForExistence(timeout: 10), "Program must list the active Live Block")
         XCTAssertTrue(routineTitle.waitForExistence(timeout: 10), "Program must list Live Routine")
-        waitUntilStill(blockTitle)
+        UITestNavigation.waitUntilStill(blockTitle)
         UITestNavigation.saveScreenshot("T16", "program-block", appearance: appearance)
         let screenshot = XCUIScreen.main.screenshot()
 
@@ -84,7 +84,7 @@ final class ProgramDarkModeUITests: XCTestCase {
         let placeholder = app.staticTexts.labeled("NAME YOUR BLOCK")
         XCTAssertTrue(nameLabel.waitForExistence(timeout: 10), "Missing the block name field")
         XCTAssertTrue(placeholder.exists, "The empty block name field must show its placeholder")
-        waitUntilStill(title)
+        UITestNavigation.waitUntilStill(title)
         UITestNavigation.saveScreenshot("T16", "new-block", appearance: appearance)
         let screenshot = XCUIScreen.main.screenshot()
 
@@ -103,12 +103,12 @@ final class ProgramDarkModeUITests: XCTestCase {
         openBlankNewBlock(in: app)
         let attach = app.buttons.labeled("+ ATTACH ▸")
         XCTAssertTrue(attach.waitForExistence(timeout: 10), "New Block must offer + ATTACH")
-        revealAboveBottomBar(attach, in: app)
+        UITestNavigation.revealAboveBottomBar(attach, in: app, scroll: .dragInMargin)
         attach.tap()
         XCTAssertTrue(app.staticTexts.labeled("Choose Routine").waitForExistence(timeout: 10),
                       "+ ATTACH must open CHOOSE ROUTINE")
-        let routine = hittable(app.buttons, "Live Routine")
-        waitUntilStill(routine)
+        let routine = UITestNavigation.hittable(app.buttons, "Live Routine")
+        UITestNavigation.waitUntilStill(routine)
         UITestNavigation.saveScreenshot("T16", "choose-routine", appearance: appearance)
         let screenshot = XCUIScreen.main.screenshot()
 
@@ -131,11 +131,11 @@ final class ProgramDarkModeUITests: XCTestCase {
         openBlankNewBlock(in: app)
         let prompt = app.staticTexts.labeled("Choose a phase type to add.")
         for kind in ["Peak", "Realization"] {
-            hittable(app.buttons, "+ ADD PHASE").tap()
+            UITestNavigation.hittable(app.buttons, "+ ADD PHASE").tap()
             XCTAssertTrue(prompt.waitForExistence(timeout: 10), "+ ADD PHASE must open its sheet")
-            let choice = hittable(app.buttons, kind)
+            let choice = UITestNavigation.hittable(app.buttons, kind)
             if kind == "Peak" {
-                waitUntilStill(choice)
+                UITestNavigation.waitUntilStill(choice)
                 UITestNavigation.saveScreenshot("T16", "add-phase", appearance: appearance)
             }
             choice.tap()
@@ -147,7 +147,7 @@ final class ProgramDarkModeUITests: XCTestCase {
         for label in labels {
             XCTAssertTrue(label.waitForExistence(timeout: 10), "The chart must label every phase: \(label)")
         }
-        waitUntilStill(labels[0])
+        UITestNavigation.waitUntilStill(labels[0])
         UITestNavigation.saveScreenshot("T16", "new-block-chart", appearance: appearance)
         let chart = XCUIScreen.main.screenshot()
         for label in labels {
@@ -156,8 +156,8 @@ final class ProgramDarkModeUITests: XCTestCase {
 
         for (index, kind) in ["Accumulation", "Intensification", "Deload", "Peak", "Realization"].enumerated() {
             let badge = phaseBadge(index + 1, kind, in: app)
-            revealAboveBottomBar(badge, in: app)
-            waitUntilStill(badge)
+            UITestNavigation.revealAboveBottomBar(badge, in: app, scroll: .dragInMargin)
+            UITestNavigation.waitUntilStill(badge)
             if checksContrast {
                 assertContrast(of: badge, atLeast: 3, in: XCUIScreen.main.screenshot())
             }
@@ -176,7 +176,7 @@ final class ProgramDarkModeUITests: XCTestCase {
         let newRoutine = app.buttons.labeled("+ NEW ROUTINE")
         XCTAssertTrue(newRoutine.waitForExistence(timeout: 10), "Program must offer + NEW ROUTINE")
         UITestNavigation.reveal(newRoutine, in: app)
-        waitUntilStill(newRoutine)
+        UITestNavigation.waitUntilStill(newRoutine)
         UITestNavigation.saveScreenshot("T73", "program", appearance: appearance)
         let screenshot = XCUIScreen.main.screenshot()
 
@@ -196,7 +196,7 @@ final class ProgramDarkModeUITests: XCTestCase {
         let saveDraft = app.buttons.labeled("SAVE DRAFT")
         XCTAssertTrue(saveDraft.waitForExistence(timeout: 10), "A named block must offer SAVE DRAFT")
         XCTAssertTrue(saveDraft.isEnabled, "SAVE DRAFT must take a named block")
-        waitUntilStill(saveDraft)
+        UITestNavigation.waitUntilStill(saveDraft)
         UITestNavigation.saveScreenshot("T73", "new-block", appearance: appearance)
         var screenshot = XCUIScreen.main.screenshot()
 
@@ -205,7 +205,7 @@ final class ProgramDarkModeUITests: XCTestCase {
 
         let attach = app.buttons.labeled("+ ATTACH ▸")
         XCTAssertTrue(attach.waitForExistence(timeout: 10), "New Block must offer + ATTACH")
-        revealAboveBottomBar(attach, in: app)
+        UITestNavigation.revealAboveBottomBar(attach, in: app, scroll: .dragInMargin)
         UITestNavigation.saveScreenshot("T73", "new-block-routine", appearance: appearance)
         screenshot = XCUIScreen.main.screenshot()
 
@@ -219,27 +219,19 @@ final class ProgramDarkModeUITests: XCTestCase {
     @MainActor
     private func openBlankNewBlock(in app: XCUIApplication, file: StaticString = #filePath, line: UInt = #line) {
         UITestNavigation.selectTab("Program", in: app)
-        hittable(app.buttons, "+ NEW", file: file, line: line).tap()
-        hittable(app.buttons, "+ New block", file: file, line: line).tap()
-        hittable(app.buttons, "Blank Block", file: file, line: line).tap()
+        UITestNavigation.hittable(app.buttons, "+ NEW", file: file, line: line).tap()
+        UITestNavigation.hittable(app.buttons, "+ New block", file: file, line: line).tap()
+        UITestNavigation.hittable(app.buttons, "Blank Block", file: file, line: line).tap()
         XCTAssertTrue(app.staticTexts.labeled("NEW BLOCK").waitForExistence(timeout: 10), "New Block never opened",
                       file: file, line: line)
     }
 
-    /// Names the block the way a user does. `typeText` can drop the first
-    /// character, so it types once the field has keyboard focus, then
-    /// presses return to put the keyboard away.
+    /// Names the block the way a user does, typing into the empty field
+    /// and pressing return.
     @MainActor
     private func nameBlock(_ name: String, in app: XCUIApplication,
                            file: StaticString = #filePath, line: UInt = #line) {
-        let field = app.textFields.firstMatch
-        XCTAssertTrue(field.waitForExistence(timeout: 10), "Missing the block name field", file: file, line: line)
-        field.tap()
-        let focused = XCTNSPredicateExpectation(predicate: NSPredicate(format: "hasKeyboardFocus == true"), object: field)
-        XCTAssertEqual(XCTWaiter().wait(for: [focused], timeout: 5), .completed,
-                       "The block name field never took keyboard focus", file: file, line: line)
-        field.typeText(name + "\n")
-        XCTAssertEqual(field.value as? String, name, "The block name field must hold \(name)", file: file, line: line)
+        UITestNavigation.type(name, into: app.textFields.firstMatch, replacing: false, file: file, line: line)
     }
 
     /// The top template row. A row's label starts with its weeks:
@@ -259,59 +251,6 @@ final class ProgramDarkModeUITests: XCTestCase {
         let texts = app.staticTexts.matching(NSPredicate(format: "label == %@", "Phase \(number): \(kind)"))
         XCTAssertTrue(texts.firstMatch.waitForExistence(timeout: 10), "Missing phase \(number), \(kind)")
         return texts.allElementsBoundByIndex.min { $0.frame.minX < $1.frame.minX } ?? texts.firstMatch
-    }
-
-    /// Drags New Block's page until `element` sits between the top bar and
-    /// the bottom bar, which covers the end of the scroll view. The drag
-    /// starts in the page margin, clear of the phase cards' swipe gesture.
-    @MainActor
-    private func revealAboveBottomBar(_ element: XCUIElement, in app: XCUIApplication,
-                                      file: StaticString = #filePath, line: UInt = #line) {
-        // The bar's 52pt buttons sit 24pt below its top edge; CANCEL's frame is its text.
-        let barTop = hittable(app.buttons, "Cancel", file: file, line: line).frame.midY - 50
-        let pageTop = app.staticTexts.labeled("NEW BLOCK").frame.maxY + 20
-        let window = app.windows.firstMatch
-        for _ in 0..<8 {
-            let frame = element.frame
-            if frame.minY >= pageTop && frame.maxY <= barTop { return }
-            let distance = frame.maxY > barTop ? -(frame.maxY - barTop + 80) : pageTop - frame.minY + 80
-            let start = window.coordinate(withNormalizedOffset: .zero).withOffset(CGVector(dx: 8, dy: (pageTop + barTop) / 2))
-            let end = start.withOffset(CGVector(dx: 0, dy: max(-300, min(300, distance))))
-            start.press(forDuration: 0.05, thenDragTo: end, withVelocity: .slow, thenHoldForDuration: 0.3)
-            waitUntilStill(element)
-        }
-        XCTFail("\(element) must scroll between New Block's bars", file: file, line: line)
-    }
-
-    /// The match a user can tap: a sheet or cover leaves same-named
-    /// controls under it.
-    @MainActor
-    @discardableResult
-    private func hittable(
-        _ query: XCUIElementQuery, _ label: String,
-        file: StaticString = #filePath, line: UInt = #line
-    ) -> XCUIElement {
-        let matches = query.matching(NSPredicate(format: "label ==[c] %@ OR label BEGINSWITH[c] %@", label, label + ","))
-        XCTAssertTrue(matches.firstMatch.waitForExistence(timeout: 10), "Missing \(label)", file: file, line: line)
-        for _ in 0..<10 {
-            if let match = matches.allElementsBoundByIndex.first(where: { $0.isHittable }) { return match }
-            Thread.sleep(forTimeInterval: 0.5)
-        }
-        XCTFail("No tappable \(label)", file: file, line: line)
-        return matches.firstMatch
-    }
-
-    /// Waits until `element` stops moving, so a sheet or scroll has settled
-    /// before a screenshot.
-    @MainActor
-    private func waitUntilStill(_ element: XCUIElement) {
-        var last = element.frame
-        for _ in 0..<20 {
-            Thread.sleep(forTimeInterval: 0.25)
-            let frame = element.frame
-            if frame == last { return }
-            last = frame
-        }
     }
 
     // MARK: - Colors
@@ -358,7 +297,7 @@ final class ProgramDarkModeUITests: XCTestCase {
 // MARK: - Text contrast
 
 /// A text's glyph color and the background behind it, read from a
-/// screenshot the way `UITestNavigation.color(at:in:)` reads one pixel.
+/// screenshot with `UITestNavigation.pixels(in:of:)`.
 private struct TextContrast {
     let glyph: UITestNavigation.RGB
     let background: UITestNavigation.RGB
@@ -376,25 +315,7 @@ private struct TextContrast {
     /// the screenshot.
     @MainActor
     init?(in region: CGRect, of screenshot: XCUIScreenshot) {
-        let image = screenshot.image
-        guard let cgImage = image.cgImage, let sRGB = CGColorSpace(name: CGColorSpace.sRGB) else { return nil }
-        let pixels = CGRect(x: region.minX * image.scale, y: region.minY * image.scale,
-                            width: region.width * image.scale, height: region.height * image.scale)
-            .integral
-            .intersection(CGRect(x: 0, y: 0, width: cgImage.width, height: cgImage.height))
-        guard !pixels.isEmpty, let crop = cgImage.cropping(to: pixels) else { return nil }
-        let width = crop.width
-        let height = crop.height
-        var bytes = [UInt8](repeating: 0, count: width * height * 4)
-        let drawn = bytes.withUnsafeMutableBytes { buffer -> Bool in
-            guard let context = CGContext(
-                data: buffer.baseAddress, width: width, height: height, bitsPerComponent: 8, bytesPerRow: width * 4,
-                space: sRGB, bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
-            ) else { return false }
-            context.draw(crop, in: CGRect(x: 0, y: 0, width: width, height: height))
-            return true
-        }
-        guard drawn else { return nil }
+        guard let bytes = UITestNavigation.pixels(in: region, of: screenshot)?.bytes else { return nil }
 
         var counts: [UInt32: Int] = [:]
         for offset in stride(from: 0, to: bytes.count, by: 4) {

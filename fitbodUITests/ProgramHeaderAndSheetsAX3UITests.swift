@@ -23,7 +23,6 @@
 //  accessibility element, are found by their pixels.
 //
 
-import Vision
 import XCTest
 
 final class ProgramHeaderAndSheetsAX3UITests: XCTestCase {
@@ -219,7 +218,7 @@ final class ProgramHeaderAndSheetsAX3UITests: XCTestCase {
                            "\(choice.name) keeps the template rows' 16pt chevron")
         }
 
-        hittableButton("Use Preset", in: app).tap()
+        UITestNavigation.hittable(app.buttons, "Use Preset").tap()
         XCTAssertTrue(app.staticTexts["CHOOSE PRESET"].waitForExistence(timeout: 5), "Use Preset must open CHOOSE PRESET")
         UITestNavigation.saveScreenshot("T63", "choose-preset")
         XCTAssertGreaterThan(app.staticTexts["CHOOSE PRESET"].frame.minY, app.frame.height / 3,
@@ -332,8 +331,8 @@ final class ProgramHeaderAndSheetsAX3UITests: XCTestCase {
     /// Program → + NEW → + New block: the CREATE BLOCK sheet.
     @MainActor
     private func openCreateBlock(in app: XCUIApplication) {
-        hittableButton("+ NEW", in: app).tap()
-        hittableButton("+ New block", in: app).tap()
+        UITestNavigation.hittable(app.buttons, "+ NEW").tap()
+        UITestNavigation.hittable(app.buttons, "+ New block").tap()
         XCTAssertTrue(app.staticTexts["CREATE BLOCK"].waitForExistence(timeout: 5), "+ New block must open CREATE BLOCK")
     }
 
@@ -383,19 +382,6 @@ final class ProgramHeaderAndSheetsAX3UITests: XCTestCase {
                       "\(element.label) at \(element.frame) never came wholly on screen", file: file, line: line)
     }
 
-    /// The match a user can tap: a sheet leaves same-named controls under it.
-    @MainActor
-    private func hittableButton(_ label: String, in app: XCUIApplication, file: StaticString = #filePath, line: UInt = #line) -> XCUIElement {
-        let matches = app.buttons.matching(NSPredicate(format: "label ==[c] %@ OR label BEGINSWITH[c] %@", label, label + ","))
-        XCTAssertTrue(matches.firstMatch.waitForExistence(timeout: 10), "Missing \(label)", file: file, line: line)
-        for _ in 0..<10 {
-            if let match = matches.allElementsBoundByIndex.first(where: { $0.isHittable }) { return match }
-            Thread.sleep(forTimeInterval: 0.5)
-        }
-        XCTFail("No tappable \(label)", file: file, line: line)
-        return matches.firstMatch
-    }
-
     // MARK: - Frames
 
     @MainActor
@@ -416,31 +402,9 @@ final class ProgramHeaderAndSheetsAX3UITests: XCTestCase {
         _ text: String, at frame: CGRect, of screenshot: XCUIScreenshot,
         file: StaticString = #filePath, line: UInt = #line
     ) throws {
-        let shown = try readText(in: frame.insetBy(dx: -4, dy: -4), of: screenshot)
+        let shown = try UITestNavigation.readText(in: frame.insetBy(dx: -4, dy: -4), of: screenshot)
         XCTAssertTrue(lettersAndDigits(shown).contains(lettersAndDigits(text)),
                       "The screen must show \"\(text)\" whole, but it reads \"\(shown)\"", file: file, line: line)
-    }
-
-    /// The text drawn inside `rect`, in screen points, read line by line
-    /// from the top.
-    @MainActor
-    private func readText(in rect: CGRect, of screenshot: XCUIScreenshot) throws -> String {
-        let image = screenshot.image
-        let cgImage = try XCTUnwrap(image.cgImage, "The screenshot has no pixels")
-        let pixels = CGRect(
-            x: rect.minX * image.scale, y: rect.minY * image.scale,
-            width: rect.width * image.scale, height: rect.height * image.scale
-        ).integral.intersection(CGRect(x: 0, y: 0, width: cgImage.width, height: cgImage.height))
-        let crop = try XCTUnwrap(pixels.isEmpty ? nil : cgImage.cropping(to: pixels), "Cannot crop \(rect) from the screenshot")
-        let request = VNRecognizeTextRequest()
-        request.recognitionLevel = .accurate
-        request.usesLanguageCorrection = false
-        try VNImageRequestHandler(cgImage: crop).perform([request])
-        // Vision's boxes start at the bottom left: higher lines first.
-        return (request.results ?? [])
-            .sorted { ($0.boundingBox.midY, -$0.boundingBox.minX) > ($1.boundingBox.midY, -$1.boundingBox.minX) }
-            .compactMap { $0.topCandidates(1).first?.string }
-            .joined(separator: " ")
     }
 
     /// Uppercased letters and digits only, so line breaks, spacing and the
@@ -456,7 +420,7 @@ final class ProgramHeaderAndSheetsAX3UITests: XCTestCase {
     private func inkRuns(at x: CGFloat, through bottom: CGFloat, of screenshot: XCUIScreenshot) -> [ClosedRange<CGFloat>] {
         let scale = screenshot.image.scale
         let column = CGRect(x: (x * scale).rounded(.down) / scale, y: 0, width: 1 / scale, height: bottom)
-        guard let strip = pixels(in: column, of: screenshot) else { return [] }
+        guard let strip = UITestNavigation.pixels(in: column, of: screenshot) else { return [] }
         let width = Int(strip.frame.width)
         let height = Int(strip.frame.height)
         var runs: [ClosedRange<CGFloat>] = []
@@ -478,7 +442,7 @@ final class ProgramHeaderAndSheetsAX3UITests: XCTestCase {
     /// such as one of the header's rules, holds no letters.
     @MainActor
     private func inkBounds(in rect: CGRect, of screenshot: XCUIScreenshot) -> CGRect? {
-        guard let crop = pixels(in: rect, of: screenshot) else { return nil }
+        guard let crop = UITestNavigation.pixels(in: rect, of: screenshot) else { return nil }
         let width = Int(crop.frame.width)
         var box = CGRect.null
         for row in 0..<Int(crop.frame.height) {
@@ -490,29 +454,6 @@ final class ProgramHeaderAndSheetsAX3UITests: XCTestCase {
         let scale = screenshot.image.scale
         return CGRect(x: (crop.frame.minX + box.minX) / scale, y: (crop.frame.minY + box.minY) / scale,
                       width: box.width / scale, height: box.height / scale)
-    }
-
-    /// The pixels of `rect`, in screen points, cut from the screenshot: where
-    /// they lie in device pixels, and their sRGB bytes row by row from the top.
-    @MainActor
-    private func pixels(in rect: CGRect, of screenshot: XCUIScreenshot) -> (frame: CGRect, bytes: [UInt8])? {
-        let image = screenshot.image
-        guard let cgImage = image.cgImage, let sRGB = CGColorSpace(name: CGColorSpace.sRGB) else { return nil }
-        let frame = CGRect(
-            x: rect.minX * image.scale, y: rect.minY * image.scale,
-            width: rect.width * image.scale, height: rect.height * image.scale
-        ).integral.intersection(CGRect(x: 0, y: 0, width: cgImage.width, height: cgImage.height))
-        guard !frame.isEmpty, let crop = cgImage.cropping(to: frame) else { return nil }
-        var bytes = [UInt8](repeating: 0, count: crop.width * crop.height * 4)
-        let drawn = bytes.withUnsafeMutableBytes { buffer -> Bool in
-            guard let context = CGContext(
-                data: buffer.baseAddress, width: crop.width, height: crop.height, bitsPerComponent: 8,
-                bytesPerRow: crop.width * 4, space: sRGB, bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
-            ) else { return false }
-            context.draw(crop, in: CGRect(x: 0, y: 0, width: crop.width, height: crop.height))
-            return true
-        }
-        return drawn ? (frame, bytes) : nil
     }
 
     /// Whether pixel number `index` of `bytes` is within `tolerance` of ink.

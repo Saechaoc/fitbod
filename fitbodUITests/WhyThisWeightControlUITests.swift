@@ -35,7 +35,7 @@ final class WhyThisWeightControlUITests: XCTestCase {
     func testUseWritesSuggestedWeight() throws {
         let app = UITestNavigation.openSeededWorkout()
         let weight = weightField(in: app)
-        revealInLogger(weight, in: app)
+        UITestNavigation.revealInLogger(weight, in: app)
         // Put the caret after the prescribed weight, then type a different one.
         weight.coordinate(withNormalizedOffset: CGVector(dx: 0.9, dy: 0.5)).tap()
         weight.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: 6) + "90")
@@ -75,12 +75,12 @@ final class WhyThisWeightControlUITests: XCTestCase {
         let app = UITestNavigation.openSeededWorkout()
         XCTAssertTrue(app.buttons["set.why.1.S1"].waitForExistence(timeout: 5), "An open set shows WHY")
         let reps = app.textFields["set.reps.1.S1"]
-        revealInLogger(reps, in: app)
+        UITestNavigation.revealInLogger(reps, in: app)
         reps.tap()
         XCTAssertTrue(app.keyboards.firstMatch.waitForExistence(timeout: 5))
         reps.typeText("6")
         let complete = app.buttons["set.complete.1.S1"]
-        revealInLogger(complete, in: app)
+        UITestNavigation.revealInLogger(complete, in: app)
         complete.tap()
         let logged = XCTNSPredicateExpectation(
             predicate: NSPredicate(format: "label == %@", "Set 1 complete"), object: complete
@@ -148,7 +148,7 @@ final class WhyThisWeightControlUITests: XCTestCase {
             resume.tap()
             let why = app.buttons["set.why.1.S1"]
             UITestNavigation.reveal(why, in: app)
-            revealInLogger(why, in: app)
+            UITestNavigation.revealInLogger(why, in: app)
             UITestNavigation.assertTapTarget(why)
             XCTAssertGreaterThanOrEqual(why.frame.minX, app.frame.minX, "WHY must start on screen at \(size)")
             XCTAssertLessThanOrEqual(why.frame.maxX, app.frame.maxX, "WHY must end on screen at \(size)")
@@ -158,7 +158,7 @@ final class WhyThisWeightControlUITests: XCTestCase {
             XCTAssertNotNil(chip, "Set 1's RPE chips must follow its WHY at \(size)")
             if let chip {
                 // Brings the chips into view with WHY for the screenshot.
-                revealInLogger(chip, in: app)
+                UITestNavigation.revealInLogger(chip, in: app)
                 UITestNavigation.assertNoOverlap(why, chip)
             }
             UITestNavigation.saveScreenshot("T09", "set-row-why", textSize: size)
@@ -232,36 +232,8 @@ final class WhyThisWeightControlUITests: XCTestCase {
         XCTAssertTrue(why.waitForExistence(timeout: 5), "Set 1 must show a visible WHY control")
         XCTAssertGreaterThanOrEqual(why.frame.width, 44)
         XCTAssertGreaterThanOrEqual(why.frame.height, 44)
-        revealInLogger(why, in: app)
+        UITestNavigation.revealInLogger(why, in: app)
         why.tap()
-    }
-
-    /// Scrolls the logger until `element` sits between the fixed workout
-    /// header and the keyboard's DONE bar, where a user can see and tap it.
-    /// XCUITest calls rows under the header hittable, so a tap there would
-    /// land on the header.
-    @MainActor
-    private func revealInLogger(_ element: XCUIElement, in app: XCUIApplication) {
-        for _ in 0..<10 {
-            let header = app.otherElements["workout.header"].firstMatch
-            let top = (header.exists ? header.frame.maxY : 0) + 8
-            let keyboard = app.keyboards.firstMatch
-            // The DONE bar sits on top of the number pad.
-            let bottom = keyboard.exists ? keyboard.frame.minY - 66 : app.frame.maxY - 24
-            if element.frame.minY >= top && element.frame.maxY <= bottom { return }
-            let delta = (top + bottom) / 2 - element.frame.midY
-            let x = app.frame.width - 24
-            let startY = delta > 0 ? top + 20 : bottom - 20
-            let endY = min(bottom - 20, max(top + 20, startY + delta))
-            let origin = app.coordinate(withNormalizedOffset: .zero)
-            origin.withOffset(CGVector(dx: x, dy: startY)).press(
-                forDuration: 0.1,
-                thenDragTo: origin.withOffset(CGVector(dx: x, dy: endY)),
-                withVelocity: .slow,
-                thenHoldForDuration: 0.2
-            )
-        }
-        XCTFail("Could not scroll \(element) into view")
     }
 
     @MainActor

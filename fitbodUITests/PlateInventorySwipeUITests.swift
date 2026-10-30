@@ -86,7 +86,7 @@ final class PlateInventorySwipeUITests: XCTestCase {
         openPlateInventory(in: app)
         let plate = plateRow("35", in: app)
         XCTAssertTrue(plate.waitForExistence(timeout: 10), "A fresh barbell inventory lists a 35 lb plate")
-        waitUntilStill(plate)
+        UITestNavigation.waitUntilStill(plate, interval: 0.3)
         UITestNavigation.saveScreenshot("T77", "plate-inventory")
         // The row spans the screen and keeps its own padding: no list insets.
         let window = app.windows.firstMatch.frame
@@ -99,15 +99,16 @@ final class PlateInventorySwipeUITests: XCTestCase {
         plate.swipeLeft()
         let delete = app.buttons["Delete"]
         XCTAssertTrue(delete.waitForExistence(timeout: 5), "Swiping a plate row left must show Delete")
-        waitUntilStill(delete)
+        UITestNavigation.waitUntilStill(delete, interval: 0.3)
         UITestNavigation.saveScreenshot("T77", "plate-delete")
         delete.tap()
-        XCTAssertTrue(waitForAbsence(plate), "Delete must remove the 35 lb plate")
+        XCTAssertTrue(plate.waitForNonExistence(timeout: 5), "Delete must remove the 35 lb plate")
         XCTAssertTrue(plateRow("45", in: app).exists, "Delete must keep the other plates")
 
         // Leave the screen and open it again.
         app.buttons.labeled("Done ▸").tap()
-        XCTAssertTrue(waitForAbsence(app.otherElements["plateInventory.tabStrip"]), "Done must leave Plate Inventory")
+        XCTAssertTrue(app.otherElements["plateInventory.tabStrip"].waitForNonExistence(timeout: 5),
+                      "Done must leave Plate Inventory")
         openPlateInventory(in: app)
         XCTAssertTrue(plateRow("45", in: app).waitForExistence(timeout: 10))
         XCTAssertFalse(plateRow("35", in: app).exists, "The deleted plate must stay gone when Plate Inventory opens again")
@@ -131,7 +132,7 @@ final class PlateInventorySwipeUITests: XCTestCase {
 
         let plate45 = plateRow("45", in: app)
         XCTAssertTrue(plate45.waitForExistence(timeout: 10), "A fresh barbell inventory lists a 45 lb plate")
-        waitUntilStill(plate45)
+        UITestNavigation.waitUntilStill(plate45, interval: 0.3)
         XCTAssertEqual(plate45.value as? String, "4 per side")
         // The four tally boxes start 116pt in (16pt padding, the 90pt weight
         // column, 10pt spacing) and end 106pt before the trailing edge, 3pt
@@ -144,7 +145,8 @@ final class PlateInventorySwipeUITests: XCTestCase {
         let add = app.buttons.labeled("+ ADD PLATE")
         revealAboveFooter(add, in: app)
         add.tap()
-        type("15", into: app.textFields.matching(NSPredicate(format: "placeholderValue == %@", "e.g. 25")).firstMatch)
+        let weight = app.textFields.matching(NSPredicate(format: "placeholderValue == %@", "e.g. 25")).firstMatch
+        UITestNavigation.type("15", into: weight, replacing: false, pressingReturn: false)
         app.buttons.labeled("Add").tap()
         XCTAssertTrue(plateRow("15", in: app).waitForExistence(timeout: 10), "+ ADD PLATE must add a 15 lb plate")
 
@@ -154,7 +156,7 @@ final class PlateInventorySwipeUITests: XCTestCase {
         let alert = app.alerts["Reset plate inventory?"]
         XCTAssertTrue(alert.waitForExistence(timeout: 5), "RESET TO DEFAULTS must ask first")
         alert.buttons["Reset"].tap()
-        XCTAssertTrue(waitForAbsence(plateRow("15", in: app)), "Reset must drop the added plate")
+        XCTAssertTrue(plateRow("15", in: app).waitForNonExistence(timeout: 5), "Reset must drop the added plate")
         XCTAssertTrue(waitForValue(plate45, "4 per side"), "Reset must restore the default count")
     }
 
@@ -199,7 +201,7 @@ final class PlateInventorySwipeUITests: XCTestCase {
     @MainActor
     private func openDelete(on row: XCUIElement, in app: XCUIApplication, file: StaticString = #filePath, line: UInt = #line) {
         XCTAssertTrue(row.waitForExistence(timeout: 10), "Missing \(row)", file: file, line: line)
-        waitUntilStill(row)
+        UITestNavigation.waitUntilStill(row, interval: 0.3)
         row.swipeLeft()
         XCTAssertEqual(settledDeletes(in: app).count, 1, "Swiping a plate row left must show its Delete", file: file, line: line)
     }
@@ -221,41 +223,9 @@ final class PlateInventorySwipeUITests: XCTestCase {
         return shown
     }
 
-    /// Types into a field once it has keyboard focus, because `typeText`
-    /// can drop the first character. A decimal pad has no return key.
-    @MainActor
-    private func type(_ text: String, into field: XCUIElement, file: StaticString = #filePath, line: UInt = #line) {
-        XCTAssertTrue(field.waitForExistence(timeout: 10), "Missing \(field)", file: file, line: line)
-        field.tap()
-        let focused = XCTNSPredicateExpectation(predicate: NSPredicate(format: "hasKeyboardFocus == true"), object: field)
-        XCTAssertEqual(XCTWaiter().wait(for: [focused], timeout: 5), .completed,
-                       "The field never took keyboard focus", file: file, line: line)
-        field.typeText(text)
-        XCTAssertEqual(field.value as? String, text, "The field must hold the typed text", file: file, line: line)
-    }
-
-    @MainActor
-    private func waitForAbsence(_ element: XCUIElement, timeout: TimeInterval = 5) -> Bool {
-        let gone = XCTNSPredicateExpectation(predicate: NSPredicate(format: "exists == false"), object: element)
-        return XCTWaiter().wait(for: [gone], timeout: timeout) == .completed
-    }
-
     @MainActor
     private func waitForValue(_ element: XCUIElement, _ value: String, timeout: TimeInterval = 5) -> Bool {
         let matches = XCTNSPredicateExpectation(predicate: NSPredicate(format: "value == %@", value), object: element)
         return XCTWaiter().wait(for: [matches], timeout: timeout) == .completed
-    }
-
-    /// Waits until a push or a swipe stops moving `element`.
-    @MainActor
-    private func waitUntilStill(_ element: XCUIElement, timeout: TimeInterval = 5) {
-        var last = element.frame
-        let deadline = Date.now.addingTimeInterval(timeout)
-        while Date.now < deadline {
-            Thread.sleep(forTimeInterval: 0.3)
-            let frame = element.frame
-            if frame == last { return }
-            last = frame
-        }
     }
 }
