@@ -80,6 +80,10 @@ public struct TodayView: View {
     // MARK: - Body
 
     public var body: some View {
+        // Resolved once per render: a rotation resolve fetches every
+        // finished workout, and the CTA, picker and lift list all need it.
+        let resolution = todaysResolution
+        let todaysRoutine = Self.scheduledRoutine(in: resolution)
         NavigationStack(path: $navigationPath) {
             ScrollView {
                 VStack(spacing: 0) {
@@ -136,7 +140,7 @@ public struct TodayView: View {
                             }
                         )
                     } else {
-                        switch todaysResolution {
+                        switch resolution {
                         case .session(let slot):
                             if let routine = slot.sessionTemplate {
                                 // Scheduled routine → Black slab CTA. CR-01: keep
@@ -345,13 +349,14 @@ public struct TodayView: View {
                 Text(startError ?? "")
             }
             // ─── Lifecycle (preserved verbatim from Phase 4/5) ───────────────
+            // Both run on every appearance. The advisory and recap checks
+            // live only in onAppear: running them from the task as well
+            // repeated the deload evaluation each time Today appeared.
             .task {
                 pendingBlockReview = (try? BlockReviewStatistics.pendingReviewBlocks(
                     context: ctx,
                     now: Date.now
                 ))?.first
-                refreshAdvisory()
-                checkWeeklyRecap()
             }
             .onAppear {
                 refreshAdvisory()
@@ -517,8 +522,8 @@ public struct TodayView: View {
     /// The session template scheduled for today (nil unless the resolver
     /// returns `.session(slot)` with a non-nil template). Drives
     /// `LiftListSection`'s exercise preview.
-    private var todaysRoutine: SessionTemplate? {
-        if case .session(let slot) = todaysResolution {
+    private static func scheduledRoutine(in resolution: TodayResolution) -> SessionTemplate? {
+        if case .session(let slot) = resolution {
             return slot.sessionTemplate
         }
         return nil
