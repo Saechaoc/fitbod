@@ -139,12 +139,17 @@ public struct PlateInventoryEditor: View {
                     }
                 }
             }
+            // The separators have no height of their own. Without this the
+            // strip takes a share of the free height beside the plates.
+            .fixedSize(horizontal: false, vertical: true)
             .background(Color.bruPaper)
             // Outer 1.5pt bruInk border around the full strip (per UI-SPEC line 441)
             .overlay {
                 Rectangle()
                     .stroke(Color.bruInk, lineWidth: 1.5)
             }
+            .accessibilityElement(children: .contain)
+            .accessibilityIdentifier("plateInventory.tabStrip")
             .padding(.horizontal, 16)
             .padding(.vertical, 8)
 

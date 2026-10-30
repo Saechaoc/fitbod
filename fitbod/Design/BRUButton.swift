@@ -169,7 +169,9 @@ public struct BRUButtonStyle: ButtonStyle {
             .padding(.horizontal, BRUMetrics.Spacing.group)
             .padding(.vertical, 6)
             .frame(maxWidth: .infinity, minHeight: size.minHeight)
-            .background(fillColor(pressed: pressed))
+            // A color background ignores the safe area by default, so a button
+            // on the home indicator area would paint into it. Stop at the frame.
+            .background(fillColor(pressed: pressed), ignoresSafeAreaEdges: [])
             .overlay(
                 Rectangle()
                     .strokeBorder(borderColor, lineWidth: showBorder ? BRUMetrics.Border.outline : 0)

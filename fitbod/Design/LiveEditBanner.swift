@@ -11,6 +11,7 @@
 //      4pt bruSignal left stripe
 //      VStack: "ACTIVE BLOCK" label + body text
 //      Spacer
+//  .fixedSize(horizontal: false, vertical: true)
 //  .frame(minHeight: 44)
 //  .background(Color.bruBg2)
 //  .overlay(alignment: .bottom) { BRUDivider(.ink) }
@@ -69,6 +70,9 @@ public struct LiveEditBanner: View {
 
             Spacer()
         }
+        // The stripe has no height of its own. Without this the row takes a
+        // share of any free height beside it and the band grows to half a screen.
+        .fixedSize(horizontal: false, vertical: true)
         .frame(minHeight: 44)
         .background(Color.bruBg2)
         .overlay(alignment: .bottom) {
@@ -77,6 +81,7 @@ public struct LiveEditBanner: View {
         // Accessibility: combine children so VoiceOver reads as a single element
         .accessibilityElement(children: .combine)
         .accessibilityLabel("Active block warning: Part of active block — edits apply to upcoming workouts.")
+        .accessibilityIdentifier("liveEditBanner")
     }
 }
 
