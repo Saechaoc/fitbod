@@ -143,7 +143,10 @@ public struct BRUTabBar: View {
                     .minimumScaleFactor(0.8)
                     .foregroundStyle(isActive ? Color.bruPaper : Color.bruInk)
                     .frame(maxWidth: .infinity, minHeight: 52)
-                    .background(isActive ? Color.bruInk : Color.bruBg)
+                    // A color background ignores the safe area by default, so
+                    // the bottom row would paint into the home indicator area.
+                    // Stop at the cell.
+                    .background(isActive ? Color.bruInk : Color.bruBg, ignoresSafeAreaEdges: [])
                     .contentShape(Rectangle())
             } else {
             ZStack(alignment: .top) {
