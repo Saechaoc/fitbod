@@ -40,12 +40,13 @@
 //    - Block A (Prescription): invokes ProgressionStrategyFactory to
 //      compute prescribedWeight per exercise (RESEARCH §SessionFactory
 //      Hook Point). The step is `prescription(for:...)`, which a
-//      mid-workout swap (SwapExerciseSheet.swap) reuses for the new
+//      mid-workout swap (SwapExerciseSheet.swap) and an exercise added
+//      mid-workout (AddUnplannedExerciseButton.append) reuse for that
 //      exercise.
 //    - Block B (Warmup): invokes WarmupRamp.shouldGenerate /
 //      WarmupRamp.generate for the first qualifying compound exercise.
 //      The step is `warmupRamp(for:...)`, which a mid-workout swap
-//      reuses to rebuild a pending ramp for the new exercise.
+//      reuses to rebuild a pending or skipped ramp for the new exercise.
 //    - Internal-static helpers: fetchHistoryPoints, lastSessionWorkingReps,
 //      plateInventory(for:context:), equipmentKind(for:) — declared
 //      `internal static` so SessionExerciseCard.currentExplanation() can
@@ -229,7 +230,7 @@ public enum SessionFactory {
             // (SessionExerciseCard.currentExplanation) recomputes the full
             // PrescriptionExplanation at render time — SessionFactory only
             // needs to persist the scalar `prescribedWeight`. A mid-workout
-            // swap runs the same step for the new exercise.
+            // swap or added exercise runs the same step for that exercise.
             //
             // D-14 — reuse the session-level strategy instance hoisted
             // above the loop (one strategy per session, used for every
@@ -251,7 +252,7 @@ public enum SessionFactory {
             // Only the FIRST qualifying compound per session receives a ramp.
             // warmupGenerated tracks whether any prior exercise in this loop
             // already received one. A mid-workout swap runs the same step
-            // to rebuild a pending ramp for the new exercise.
+            // to rebuild a pending or skipped ramp for the new exercise.
             let warmupSets = warmupGenerated ? [] : Self.warmupRamp(
                 for: se,
                 prescription: prescription,
@@ -264,15 +265,14 @@ public enum SessionFactory {
                     context.insert(warmup)
                 }
                 warmupGenerated = true
+            }
 
-                // RESEARCH §Pitfall 5 / Area 3: reset skipNextSession after
-                // consumption so it doesn't suppress the ramp permanently.
-                if re.warmupOverride?.skipNextSession == true {
-                    re.warmupOverride = WarmupConfig(
-                        enabled: re.warmupOverride?.enabled ?? true,
-                        skipNextSession: false
-                    )
-                }
+            // RESEARCH §Pitfall 5 / Area 3: "Skip warm-ups this session
+            // only" lasts one start. Clear it here even though this start
+            // built no ramp for the exercise, so it never suppresses the
+            // ramp at the next start. The warm-up on/off setting stays.
+            if let override = re.warmupOverride, override.skipNextSession {
+                re.warmupOverride = WarmupConfig(enabled: override.enabled, skipNextSession: false)
             }
 
             // Pre-populate planned `SetEntry` rows. Each set carries the
@@ -351,7 +351,8 @@ public enum SessionFactory {
     /// prescribes for `exercise` in `session`, from the session's intent,
     /// block and start date and the exercise's finished history. `start`
     /// runs it for every exercise; a mid-workout swap runs it for the new
-    /// exercise, so a swapped exercise gets what a fresh start gives it.
+    /// exercise and `AddUnplannedExerciseButton.append` for an added one,
+    /// so either gets what a fresh start gives it.
     static func prescription(
         for exercise: Exercise?,
         targetRepsLow: Int,
@@ -437,8 +438,9 @@ public enum SessionFactory {
     /// for `sessionExercise` from its prescription, or none when
     /// `WarmupRamp.shouldGenerate` says it gets none. The rows are not
     /// inserted. `start` runs it for the first qualifying exercise; a
-    /// mid-workout swap runs it to rebuild a pending ramp for the new
-    /// exercise, so the swapped exercise gets what a fresh start gives it.
+    /// mid-workout swap runs it to rebuild a pending or skipped ramp for
+    /// the new exercise, so the swapped exercise gets what a fresh start
+    /// gives it.
     static func warmupRamp(
         for sessionExercise: SessionExercise,
         prescription: ExercisePrescription,

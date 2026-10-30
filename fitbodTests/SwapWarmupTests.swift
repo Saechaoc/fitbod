@@ -3,10 +3,15 @@
 //  fitbodTests
 //
 //  Ticket T75 (findings F64 and F66). Swapping an exercise mid-workout
-//  replaces its pending warm-up ramp with the one a workout start would
-//  build for the new exercise from its new prescribed weight, or removes
-//  it when the new exercise would get none. A swap never adds a ramp to
-//  an exercise that had none, and warm-ups already done stay as they were.
+//  replaces its warm-up ramp with the one a workout start would build for
+//  the new exercise from its new prescribed weight, or removes it when the
+//  new exercise would get none. A swap never adds a ramp to an exercise
+//  that had none.
+//
+//  Ticket T88 (finding F99). SKIP WARM-UPS is the only way to complete a
+//  warm-up, so a swap rebuilds skipped warm-ups as well as pending ones,
+//  and the rebuilt ramp stays skipped: UNDO brings back the new
+//  exercise's ramp, not the old one's.
 //
 
 import Foundation
@@ -29,16 +34,19 @@ struct SwapWarmupTests {
             .map { (weight: $0.weight, countPerSide: $0.countPerSide) }
     }
 
-    @Test("a swap to push-ups removes the pending warm-up ramp")
-    func swapToPushUpsRemovesRamp() throws {
+    @Test("a swap to push-ups removes the warm-up ramp, pending or skipped", arguments: [false, true])
+    func swapToPushUpsRemovesRamp(skipped: Bool) throws {
         let ctx = try LoggerFixtures.makeContext()
         let fx = try makeFixture(in: ctx)
         let bench = try startWorkout(fx, in: ctx).bench
         try #require(pendingWarmups(of: bench).count == 4)
+        if skipped {
+            try markWarmups(of: bench, complete: true, in: ctx)
+        }
 
         SwapExerciseSheet.swap(bench, to: fx.pushUps, context: ctx)
 
-        #expect(pendingWarmups(of: bench).isEmpty)
+        #expect(warmups(of: bench).isEmpty)
         // The working sets move up to the top, numbered from 0.
         #expect(SessionSetActions.ordered(bench).map(\.orderIndex) == [0, 1, 2])
     }
@@ -74,41 +82,47 @@ struct SwapWarmupTests {
         #expect((row.sets ?? []).allSatisfy { !$0.isWarmup })
     }
 
-    @Test("skipped warm-ups stay as they were, and no ramp is added")
-    func swapKeepsSkippedWarmups() throws {
+    @Test("skipped warm-ups are rebuilt for the new exercise and stay skipped, so UNDO brings back its ramp")
+    func swapRebuildsSkippedWarmups() throws {
         let ctx = try LoggerFixtures.makeContext()
         let fx = try makeFixture(in: ctx)
         let bench = try startWorkout(fx, in: ctx).bench
-        // SKIP WARM-UPS marks every warm-up done.
-        let skipped = warmups(of: bench)
-        for warmup in skipped { warmup.isComplete = true }
-        try ctx.save()
-        let before = skipped.map(Row.init)
+        // SKIP WARM-UPS
+        try markWarmups(of: bench, complete: true, in: ctx)
 
         SwapExerciseSheet.swap(bench, to: fx.squat, context: ctx)
 
-        #expect(warmups(of: bench).map(Row.init) == before)
+        #expect(!warmups(of: bench).isEmpty)
+        #expect(warmups(of: bench).allSatisfy { $0.isComplete })
+        // UNDO
+        try markWarmups(of: bench, complete: false, in: ctx)
+        let top = try #require(bench.prescribedWeight)
+        let ramp = WarmupRamp.generate(top: top, bar: bar, plates: plates, isUnilateral: false)
+        let restored = pendingWarmups(of: bench)
+        #expect(restored.map(\.weight) == ramp.map(\.weight))
+        #expect(restored.map(\.reps) == ramp.map(\.reps))
+        #expect(SessionSetActions.ordered(bench).map(\.orderIndex) == Array(0..<7))
     }
 
-    @Test("a warm-up already done stays as it was, ahead of the rebuilt ramp")
-    func swapKeepsDoneWarmupAheadOfRebuiltRamp() throws {
+    @Test("a ramp only partly done is rebuilt in full, still to do")
+    func swapRebuildsPartlyDoneRampToDo() throws {
         let ctx = try LoggerFixtures.makeContext()
         let fx = try makeFixture(in: ctx)
         let bench = try startWorkout(fx, in: ctx).bench
         let done = try #require(warmups(of: bench).first)
         done.isComplete = true
         try ctx.save()
-        let before = Row(done)
 
         SwapExerciseSheet.swap(bench, to: fx.squat, context: ctx)
 
         let top = try #require(bench.prescribedWeight)
         let ramp = WarmupRamp.generate(top: top, bar: bar, plates: plates, isUnilateral: false)
-        #expect(warmups(of: bench).first.map(Row.init) == before)
-        let rebuilt = pendingWarmups(of: bench)
+        let rebuilt = warmups(of: bench)
         #expect(rebuilt.map(\.weight) == ramp.map(\.weight))
         #expect(rebuilt.map(\.reps) == ramp.map(\.reps))
-        #expect(SessionSetActions.ordered(bench).map(\.orderIndex) == Array(0..<8))
+        // Only a ramp skipped in full shows as skipped, so the card keeps a ramp to do.
+        #expect(rebuilt.allSatisfy { !$0.isComplete })
+        #expect(SessionSetActions.ordered(bench).map(\.orderIndex) == Array(0..<7))
     }
 
     // MARK: - Helpers
@@ -117,23 +131,6 @@ struct SwapWarmupTests {
         let template: SessionTemplate
         let squat: Exercise
         let pushUps: Exercise
-    }
-
-    /// One set as stored, to show a warm-up stayed as it was.
-    private struct Row: Equatable {
-        let id: UUID
-        let orderIndex: Int
-        let weight: Double
-        let reps: Int
-        let isComplete: Bool
-
-        init(_ entry: SetEntry) {
-            id = entry.id
-            orderIndex = entry.orderIndex
-            weight = entry.weight
-            reps = entry.reps
-            isComplete = entry.isComplete
-        }
     }
 
     /// A template of a barbell bench press then a barbell row, each with a
@@ -182,5 +179,14 @@ struct SwapWarmupTests {
 
     private func pendingWarmups(of sessionExercise: SessionExercise) -> [SetEntry] {
         warmups(of: sessionExercise).filter { !$0.isComplete }
+    }
+
+    /// What SKIP WARM-UPS (`complete: true`) and UNDO (`complete: false`)
+    /// do on the card: flip every warm-up at once.
+    private func markWarmups(of sessionExercise: SessionExercise, complete: Bool, in ctx: ModelContext) throws {
+        for warmup in warmups(of: sessionExercise) {
+            warmup.isComplete = complete
+        }
+        try ctx.save()
     }
 }

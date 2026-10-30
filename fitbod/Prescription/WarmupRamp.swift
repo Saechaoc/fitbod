@@ -10,6 +10,8 @@
 //  shouldGenerate guards:
 //    - deloadActive == true → skip (deload flag always false until Phase 4)
 //    - warmupConfig?.enabled == false → skip (user-disabled per-exercise)
+//    - warmupConfig?.skipNextSession == true → skip ("Skip warm-ups this
+//      session only"; SessionFactory.start clears it at that start)
 //    - exercise?.mechanic != .compound → skip (machines, cables, bodyweight)
 //    - equipment NOT in {.barbell, .dumbbell} → skip
 //    - topWorkingWeight < 1.5 × barWeight → skip (too light, no ramp needed)
@@ -41,8 +43,8 @@ public enum WarmupRamp {
     ///   - topWorkingWeight: The top prescribed working weight for this exercise.
     ///   - barWeight: The bar weight for the equipment (0 for dumbbell pairs).
     ///   - warmupConfig: Optional per-exercise warm-up override from `RoutineExercise.warmupOverride`.
-    ///     When nil, default auto-warm-up behavior is used. When non-nil with `.enabled == false`,
-    ///     the ramp is skipped.
+    ///     When nil, default auto-warm-up behavior is used. When non-nil with `.enabled == false`
+    ///     or `.skipNextSession == true`, the ramp is skipped.
     /// - Returns: `true` if a ramp should be generated; `false` if any guard trips.
     public static func shouldGenerate(
         for sessionExercise: SessionExercise,
@@ -54,8 +56,9 @@ public enum WarmupRamp {
         // Guard 1: deload week → skip
         guard !deloadActive else { return false }
 
-        // Guard 2: user explicitly disabled warm-up for this exercise → skip
-        if let config = warmupConfig, !config.enabled { return false }
+        // Guard 2: user disabled warm-up for this exercise, or skipped it
+        // for the next workout only → skip
+        if let config = warmupConfig, !config.enabled || config.skipNextSession { return false }
 
         // Guard 3: exercise metadata required
         guard let exercise = sessionExercise.exercise else { return false }

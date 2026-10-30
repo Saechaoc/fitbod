@@ -105,10 +105,12 @@ public struct SwapExerciseSheet: View {
         try? context.save()
     }
 
-    /// Replaces the pending warm-ups with the ramp SessionFactory's warm-up
-    /// step builds for the new exercise, or removes them when it builds
-    /// none. Without pending warm-ups nothing changes: a swap never adds a
-    /// ramp, and warm-ups already done stay as they were.
+    /// Replaces the warm-ups, pending or skipped, with the ramp
+    /// SessionFactory's warm-up step builds for the new exercise, or
+    /// removes them when it builds none. Only SKIP WARM-UPS completes a
+    /// warm-up, so a ramp the card shows as skipped (every warm-up done)
+    /// stays skipped, and UNDO brings back the new exercise's ramp.
+    /// Without warm-ups nothing changes: a swap never adds a ramp.
     @MainActor
     private static func rebuildPendingWarmups(
         of sessionExercise: SessionExercise,
@@ -117,8 +119,9 @@ public struct SwapExerciseSheet: View {
         context: ModelContext
     ) {
         let sets = SessionSetActions.ordered(sessionExercise)
-        let pendingWarmups = sets.filter { $0.isWarmup && !$0.isComplete }
-        guard !pendingWarmups.isEmpty else { return }
+        let warmups = sets.filter(\.isWarmup)
+        guard !warmups.isEmpty else { return }
+        let skipped = warmups.allSatisfy(\.isComplete)
 
         // The deload check a start makes, on this workout's block and start
         // date. The template row's warm-up setting allowed this ramp, so
@@ -132,18 +135,18 @@ public struct SwapExerciseSheet: View {
             deloadActive: scheduledPhase?.kind == .deload,
             warmupConfig: nil
         )
-        for warmup in pendingWarmups {
+        for warmup in warmups {
             context.delete(warmup)
         }
         for warmup in ramp {
             context.insert(warmup)
             warmup.sessionExercise = sessionExercise
+            warmup.isComplete = skipped
         }
 
-        // Warm-ups done, then the new ramp, then the working sets, numbered
-        // contiguously as SessionSetActions keeps them.
-        let kept = sets.filter { !($0.isWarmup && !$0.isComplete) }
-        let rows = kept.filter(\.isWarmup) + ramp + kept.filter { !$0.isWarmup }
+        // The new ramp, then the working sets, numbered contiguously as
+        // SessionSetActions keeps them.
+        let rows = ramp + sets.filter { !$0.isWarmup }
         for (index, row) in rows.enumerated() where row.orderIndex != index {
             row.orderIndex = index
         }
