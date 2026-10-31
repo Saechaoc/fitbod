@@ -228,6 +228,7 @@ Your on-disk brief gives the GitNexus mode.
 
 - Make one commit for authorized changes in a commit-capable attempt, unless its effective brief says otherwise.
   If a run fails only after your rebase in Finishing, or the coordinator made you wait for a file, add one more commit that names the ticket.
+  If your own review before `worker_done` finds something to fix, fix it in a further commit that names the ticket and the finding, because you never amend.
 - Original no-file tickets, read-only verification reruns and "not reproduced" results make no tracked edits or commits and skip staging, committing and commit-rebase steps.
   If commit-capable work needs no authorized changes, report why and do not manufacture an empty commit.
   T47 docs refreshes and T48 review-page-only refreshes may commit their explicitly authorized changes.

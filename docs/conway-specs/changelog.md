@@ -2,6 +2,11 @@
 
 Newest first.
 
+## 2026-10-31: a review fix gets its own commit
+
+- What: the worker rules' Commits section allows a further commit that names the ticket for each fix that a worker's own review finds before `worker_done`.
+- Why: workers never amend, so a review fix needs a new commit, and T18, T19, T21, T24 and T26 each landed one or more such commits under a rule that allowed only one commit.
+
 ## 2026-10-31: each ticket is archived once it is done
 
 - What: "Settle a ticket" gains step 8: once a ticket is done or skipped, the coordinator archives it as the 2026-10-30 archive did, removing its file and index row and adding it to `ARCHIVED`.
