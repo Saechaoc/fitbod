@@ -370,6 +370,44 @@ final class MilestoneOneJourneyUITests: XCTestCase {
         XCTAssertTrue(dock.waitForExistence(timeout: 10), "The rest dock comes back once the keyboard leaves")
     }
 
+    /// A sheet over a field being edited hides the keyboard but not the
+    /// editing, so the tab bar stays away under it. However the custom
+    /// exercise sheet closes over Library's focused search, by Cancel, a
+    /// swipe down or Save, a keyboard or the tab bar is back on screen, never
+    /// neither (T101).
+    @MainActor // XCUIApplication and XCUIElement are main-actor types.
+    func testClosingTheCustomExerciseSheetOverAFocusedSearchBringsBackAKeyboardOrTheTabBar() throws {
+        app = UITestNavigation.launch(UITestNavigation.freshStore)
+        UITestNavigation.selectTab("Library", in: app)
+        let search = app.textFields["library.search.browser"]
+        XCTAssertTrue(search.exists || search.waitForExistence(timeout: 10))
+        search.tap()
+        search.typeText("Zercher Probe")
+        let name = app.textFields["customExercise.name"]
+        let libraryTab = UITestNavigation.tab("Library", in: app)
+        // Save comes last: once the exercise exists, the search has a match
+        // and offers no Create Custom Exercise.
+        for close in ["Cancel", "a swipe down", "Save"] {
+            UITestNavigation.hittable(app.buttons, "Create Custom Exercise", exactLabel: true).tap()
+            XCTAssertTrue(name.waitForExistence(timeout: 5), "Create Custom Exercise must open the sheet")
+            if close == "a swipe down" {
+                UITestNavigation.swipeSheetDown(in: app)
+            } else {
+                if close == "Save" {
+                    UITestNavigation.hittable(app.buttons, "Add Primary Muscle", exactLabel: true).tap()
+                    let chest = app.buttons["musclePicker.chest"]
+                    XCTAssertTrue(chest.waitForExistence(timeout: 10))
+                    chest.tap()
+                }
+                UITestNavigation.hittable(app.buttons, close, exactLabel: true).tap()
+            }
+            XCTAssertTrue(name.waitForNonExistence(timeout: 5), "\(close) must close the sheet")
+            let keyboard = app.keyboards.firstMatch
+            XCTAssertTrue(eitherAppears(keyboard, libraryTab), "After \(close), a keyboard or the tab bar must be on screen")
+            XCTContext.runActivity(named: "After \(close): keyboard \(keyboard.exists), tab bar \(libraryTab.exists)") { _ in }
+        }
+    }
+
     @MainActor
     private func field(_ name: String) -> XCUIElement {
         let query = NSPredicate(format: "label ==[c] %@ OR placeholderValue ==[c] %@", name, name)
@@ -485,6 +523,20 @@ final class MilestoneOneJourneyUITests: XCTestCase {
         } else {
             XCTAssertEqual(actual, text, "Typing must not add a prefix or suffix")
         }
+    }
+
+    /// True once `first` or `second` exists, checked every 100 ms for up to
+    /// five seconds, the ceiling; false if neither shows by then.
+    @MainActor // XCUIElement is a main-actor type.
+    private func eitherAppears(_ first: XCUIElement, _ second: XCUIElement) -> Bool {
+        let deadline = Date.now.addingTimeInterval(5)
+        repeat {
+            if first.exists || second.exists { return true }
+            // Polls the condition above in 100 ms steps; XCTWaiter takes no
+            // "either" predicate over two queries.
+            Thread.sleep(forTimeInterval: 0.1)
+        } while Date.now < deadline
+        return false
     }
 
     /// Fails if `element` shows at any of eight checks over about a second
