@@ -311,6 +311,8 @@ public struct BlockOverviewScreen: View {
             safeAreaFiller
         }
         .background(Color.bruBg.ignoresSafeArea())
+        // The BRU header's ‹ BACK is the only back control, at the top.
+        .navigationBarHidden(true)
         .sheet(isPresented: $presentingSplitPicker) {
             SplitPickerSheet(block: block)
         }
