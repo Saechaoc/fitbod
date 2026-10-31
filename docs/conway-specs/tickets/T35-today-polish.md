@@ -6,7 +6,7 @@ items: [22, 24, 25]
 depends_on: [T10, T27]
 size: L
 sim: both
-owns: [fitbod/Fatigue/MuscleVolumeBar.swift, fitbod/Fatigue/FatigueSurfaceView.swift, fitbod/Views/TodayStatStrip.swift, fitbod/Views/TodayView.swift, fitbod/Periodization/StartBlockCTA.swift, fitbod/Design/BRUHeaderBar.swift, new:fitbodUITests/TodayPolishUITests.swift]
+owns: [fitbod/Fatigue/MuscleVolumeBar.swift, fitbod/Fatigue/FatigueSurfaceView.swift, fitbod/Views/TodayStatStrip.swift, fitbod/Views/TodayView.swift, fitbod/Periodization/StartBlockCTA.swift, fitbod/Design/BRUHeaderBar.swift, fitbod/Views/BlackSlabCTA.swift, fitbod/Views/BlockContextBand.swift, new:fitbodUITests/TodayPolishUITests.swift]
 ---
 
 # T35: Today polish
@@ -48,6 +48,7 @@ On Today:
    - its heading uses the same uppercase display style as the card above it, applied as a text case so VoiceOver reads words
    - its link uses `bruSignalText` instead of `bruSignal`
 7. At xxLarge and xxxLarge on the small phone, every stat strip label shows whole, with no word broken across lines.
+8. At xxLarge and xxxLarge on the small phone, the start slab's meta line keeps each number with its noun, such as "1 EXERCISE" and "~11 MIN", and the block band never breaks a phase name inside a word, such as "ACCUMULA" over "TION" (findings F178 and F179, from T27's worker).
 
 ## Constraints
 
@@ -72,6 +73,7 @@ With the demo seed, write `TodayPolishUITests`:
   Record in `notes.md` whether each check fails.
 - At AX3 on the small phone, open the New routine name step and assert that no header action's touch area overlaps the stacked title.
 - At xxLarge and xxxLarge on the small phone, run the same header check, and read the stat strip's labels with the shared `readText`, asserting that each label is whole on one line.
+- At xxxLarge on the small phone, with an active block in its accumulation phase, assert that the start slab keeps "1" on the line of "EXERCISE" and that the block band reads "ACCUMULATION" whole.
 - With an active block in week 1 and no workouts, assert that the third stat's value is the phase's short label.
 - With no active block, assert that the card's heading starts at the same x as the card above it.
 
