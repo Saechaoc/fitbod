@@ -18,6 +18,15 @@
 //  Use it without the other seed flags. Idempotent: does nothing when a
 //  "Live Routine" routine already exists. Compiled out of release builds.
 //
+//  `-fitbod-seed-ended-block-recap` seeds the same routine and block, but
+//  starts Live Block the week before last, logs one finished Live Push
+//  workout in the middle of last week with every work set done, and ends
+//  the block through BlockLifecycleService.end. Its review is left
+//  unacknowledged and this week's recap unseen, so Today's next visit has
+//  both due (T87). Launch it without the other seed flags, including
+//  `-fitbod-seed-active-block`, and with `-fitbod-start-program`: on a
+//  fresh store Today can first show before the seed runs.
+//
 
 import Foundation
 import SwiftData
@@ -28,25 +37,74 @@ enum ActiveBlockSeed {
     @MainActor
     static func runIfRequested(in context: ModelContext) {
         #if DEBUG
-        guard ProcessInfo.processInfo.arguments.contains(launchArgument) else { return }
-        seed(in: context)
+        let arguments = ProcessInfo.processInfo.arguments
+        if arguments.contains(launchArgument) {
+            seed(in: context)
+        } else if arguments.contains(endedBlockRecapLaunchArgument) {
+            seedEndedBlockWithRecap(in: context)
+        }
         #endif
     }
 
     #if DEBUG
+    static let endedBlockRecapLaunchArgument = "-fitbod-seed-ended-block-recap"
     static let routineName = "Live Routine"
     static let sessionName = "Live Push"
     static let blockName = "Live Block"
     private static let exerciseNames = ["Barbell Bench Press - Medium Grip", "Bench Press - Powerlifting"]
+    private static let day: TimeInterval = 24 * 3600
 
     @MainActor
     private static func seed(in context: ModelContext) {
+        guard let live = makeLiveBlock(in: context) else { return }
+        // Starting goes through the lifecycle service, as the Start button
+        // does, so the block is active exactly the way a user's would be.
+        try? BlockLifecycleService.start(block: live.block, context: context)
+    }
+
+    @MainActor
+    private static func seedEndedBlockWithRecap(in context: ModelContext) {
+        guard let live = makeLiveBlock(in: context), let template = live.slot.sessionTemplate else { return }
+        let now = Date.now
+        let weekStartsMonday = (try? context.fetch(FetchDescriptor<UserSettings>()))?.first?.weekStartsMonday ?? true
+        // Today's recap covers the week before this one.
+        let lastWeek = now.mondayAtMidnightForToday(weekStartsMonday: weekStartsMonday).addingTimeInterval(-7 * day)
+        try? BlockLifecycleService.start(block: live.block, context: context, now: lastWeek.addingTimeInterval(-7 * day))
+
+        if let workout = try? SessionFactory.start(
+            template: template, slot: live.slot, activeBlock: live.block,
+            on: lastWeek.addingTimeInterval(3.5 * day), context: context
+        ) {
+            for se in workout.exercises ?? [] {
+                for set in se.sets ?? [] {
+                    set.isComplete = true
+                    guard !set.isWarmup else { continue }
+                    set.weight = 100
+                    set.reps = 5
+                    set.rpe = 8
+                    set.completedAt = workout.startedAt.addingTimeInterval(Double(set.orderIndex) * 180)
+                }
+            }
+            workout.completedAt = workout.startedAt.addingTimeInterval(45 * 60)
+            workout.totalDurationSeconds = 45 * 60
+            try? context.save()
+        }
+
+        // Ending goes through the lifecycle service, as END BLOCK does.
+        try? BlockLifecycleService.end(block: live.block, context: context, now: now)
+    }
+
+    /// Live Push on Live Routine, and Live Block on that routine, saved but
+    /// not started. Nil when Live Routine exists or the catalog has no
+    /// bench press.
+    @MainActor
+    private static func makeLiveBlock(in context: ModelContext) -> (block: Block, slot: SplitSessionSlot)? {
         let existing = (try? context.fetch(FetchDescriptor<Split>())) ?? []
-        guard !existing.contains(where: { $0.name == routineName }) else { return }
+        guard !existing.contains(where: { $0.name == routineName }) else { return nil }
         let exercises = (try? context.fetch(FetchDescriptor<Exercise>())) ?? []
         guard let bench = exerciseNames.lazy.compactMap({ name in
             exercises.first { $0.name == name }
-        }).first else { return }
+        }).first else { return nil }
 
         let template = SessionTemplate()
         context.insert(template)
@@ -86,10 +144,7 @@ enum ActiveBlockSeed {
         phase.nameRaw = BlockPhaseKind.accumulation.rawValue
         phase.weeks = 4
         try? context.save()
-
-        // Starting goes through the lifecycle service, as the Start button
-        // does, so the block is active exactly the way a user's would be.
-        try? BlockLifecycleService.start(block: block, context: context)
+        return (block, slot)
     }
     #endif
 }

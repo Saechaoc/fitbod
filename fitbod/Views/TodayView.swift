@@ -74,6 +74,9 @@ public struct TodayView: View {
     @State private var presentingSignalSheet: Bool = false
     // Phase 5 plan 06 — weekly recap state.
     @State private var presentingWeeklyRecap: Bool = false
+    /// The recap was due on a visit that showed a block review; it shows
+    /// once the review closes.
+    @State private var recapAfterReview: Bool = false
     /// Session detail pushed from the Start-a-workout picker.
     @State private var openedTemplate: SessionTemplate? = nil
     /// A workout already in progress when the user tried to start another.
@@ -299,7 +302,8 @@ public struct TodayView: View {
                     }
                 }
             }
-            .sheet(item: $pendingBlockReview) { block in
+            // A recap due on the same visit waits for the review to close.
+            .sheet(item: $pendingBlockReview, onDismiss: showRecapAfterReview) { block in
                 BlockReviewView(block: block)
                     .presentationDetents([.large])
             }
@@ -315,13 +319,15 @@ public struct TodayView: View {
                     DeloadSignalDetailSheet(report: report)
                 }
             }
-            // Phase 5 plan 06 — VOL-07 weekly recap sheet.
+            // Phase 5 plan 06 — VOL-07 weekly recap sheet. The recap is
+            // marked seen once it shows, never while it waits.
             .sheet(isPresented: $presentingWeeklyRecap) {
                 if let settings = settingsList.first {
                     let weekStart = Date.now.mondayAtMidnightForToday(
                         weekStartsMonday: settings.weekStartsMonday
                     )
                     WeeklyRecapSheet(weekStart: weekStart)
+                        .onAppear { markRecapSeen(weekStart, in: settings) }
                 }
             }
             .sheet(isPresented: $presentingSettings) {
@@ -358,18 +364,19 @@ public struct TodayView: View {
                 Text(startError ?? "")
             }
             // ─── Lifecycle (preserved verbatim from Phase 4/5) ───────────────
-            // Both run on every appearance. The advisory and recap checks
-            // live only in onAppear: running them from the task as well
-            // repeated the deload evaluation each time Today appeared.
+            // Both run on every appearance. The advisory check lives only in
+            // onAppear: running it from the task as well repeated the deload
+            // evaluation each time Today appeared. The recap check follows
+            // the review's, so a review due on the same visit shows first.
             .task {
                 pendingBlockReview = (try? BlockReviewStatistics.pendingReviewBlocks(
                     context: ctx,
                     now: Date.now
                 ))?.first
+                checkWeeklyRecap()
             }
             .onAppear {
                 refreshAdvisory()
-                checkWeeklyRecap()
             }
             // The empty workouts behind the all-time Sessions total, read
             // when the finished workouts change, never per render.
@@ -601,13 +608,31 @@ public struct TodayView: View {
             hasSessionsLastWeek: hasSessions
         )
 
-        if decision.shouldMarkSeen {
-            settings.weeklyRecapShownForWeekStart = thisMonday
-            try? ctx.save()
-        }
+        // A recap to show is marked seen once it shows. SwiftUI shows one
+        // sheet at a time, so it waits for a review due on the same visit.
         if decision.shouldPresent {
-            presentingWeeklyRecap = true
+            if pendingBlockReview == nil {
+                presentingWeeklyRecap = true
+            } else {
+                recapAfterReview = true
+            }
+        } else if decision.shouldMarkSeen {
+            markRecapSeen(thisMonday, in: settings)
         }
+    }
+
+    /// Shows the recap that waited for the block review to close.
+    @MainActor
+    private func showRecapAfterReview() {
+        guard recapAfterReview else { return }
+        recapAfterReview = false
+        presentingWeeklyRecap = true
+    }
+
+    @MainActor
+    private func markRecapSeen(_ weekStart: Date, in settings: UserSettings) {
+        settings.weeklyRecapShownForWeekStart = weekStart
+        try? ctx.save()
     }
 
     @MainActor

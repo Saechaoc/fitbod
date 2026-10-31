@@ -194,7 +194,7 @@ struct BlockReviewTriggerTests {
         let source = try source("fitbod/Views/TodayView.swift")
 
         #expect(source.contains("pendingBlockReview"))
-        #expect(source.contains(".sheet(item: $pendingBlockReview)"))
+        #expect(source.contains(".sheet(item: $pendingBlockReview, onDismiss: showRecapAfterReview)"))
         #expect(source.contains("BlockReviewView(block: block)"))
         #expect(source.contains("BlockReviewStatistics.pendingReviewBlocks"))
     }
