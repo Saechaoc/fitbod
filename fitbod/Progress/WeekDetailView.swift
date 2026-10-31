@@ -64,7 +64,7 @@ public struct WeekDetailView: View {
     }
 
     public var body: some View {
-        let workouts = WeekDetailGrouping.workouts(
+        let detail = WeekDetailGrouping.detail(
             counting: sets,
             inWeekStarting: weekStart,
             weekStartsMonday: weekStartsMonday
@@ -76,15 +76,15 @@ public struct WeekDetailView: View {
                 center: navTitle
             )
 
-            if workouts.isEmpty {
+            if detail.workouts.isEmpty {
                 emptyState
             } else {
                 ScrollView {
                     VStack(spacing: 0) {
-                        totalBand(workouts)
+                        totalBand(detail)
                         BRUDivider(.ink)
                         LazyVStack(spacing: 0) {
-                            ForEach(workouts) { workout in
+                            ForEach(detail.workouts) { workout in
                                 workoutRow(workout)
                                 BRUDivider(.hair)
                             }
@@ -102,16 +102,14 @@ public struct WeekDetailView: View {
     /// The week's total, which is its bar's: the tonnage of every set it
     /// lists, in the app-wide unit, which relabels the stored numbers
     /// without converting them.
-    private func totalBand(_ workouts: [WeekDetailWorkout]) -> some View {
-        let total = workouts.reduce(0.0) { $0 + $1.tonnage }
-
-        return VStack(alignment: .leading, spacing: 4) {
-            Text("TOTAL · \(BRUCountLabel.text(workouts.count, "WORKOUT"))")
+    private func totalBand(_ detail: WeekDetail) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text("TOTAL · \(BRUCountLabel.text(detail.workouts.count, "WORKOUT"))")
                 .font(BRUFont.labelSmall)
                 .tracking(1.5)
                 .foregroundStyle(Color.bruMuted)
             HStack(alignment: .lastTextBaseline, spacing: 4) {
-                BRUDisplay(Int(total.rounded()).formatted(), size: .large)
+                BRUDisplay(Int(detail.total.rounded()).formatted(), size: .large)
                 Text(weightUnit.rawValue.uppercased())
                     .font(BRUFont.bodyDefault)
                     .tracking(0.5)
@@ -189,25 +187,37 @@ struct WeekDetailWorkout: Identifiable, Equatable {
     let tonnage: Double
 }
 
+/// A Weekly Tonnage week as its detail shows it.
+struct WeekDetail {
+    /// The workouts whose sets its bar counts, newest first.
+    let workouts: [WeekDetailWorkout]
+    /// Σ (weight × reps) of the counted sets, added one by one in the order
+    /// given, completion order, as WeeklyTonnageAggregator adds its bar, so
+    /// the two match to the last bit. Added per workout first, decimal
+    /// weights could round a unit apart from the bar.
+    let total: Double
+}
+
 /// The week detail's grouping, apart from the view so tests can call it.
 enum WeekDetailGrouping {
-    /// The workouts whose sets the bar of the week from `weekStart` counts,
-    /// newest first. A set counts as the aggregator counts it, in the week
-    /// that holds its completion time in the shared week calendar, so the
-    /// workouts' tonnage adds up to the bar, and a workout that runs past
-    /// midnight at a week's end shows each set in the week it was done in.
-    static func workouts(
+    /// The week from `weekStart` as its detail shows it. A set counts as
+    /// the aggregator counts it, in the week that holds its completion time
+    /// in the shared week calendar, so a workout that runs past midnight at
+    /// a week's end shows each set in the week it was done in.
+    static func detail(
         counting sets: [SetEntry],
         inWeekStarting weekStart: Date,
         weekStartsMonday: Bool
-    ) -> [WeekDetailWorkout] {
+    ) -> WeekDetail {
         let calendar = WeeklyTonnageAggregator.weekCalendar(weekStartsMonday: weekStartsMonday)
         var byWorkout: [UUID?: [SetEntry]] = [:]
+        var total = 0.0
         for set in sets where WeeklyTonnageAggregator.counts(set)
             && calendar.dateInterval(of: .weekOfYear, for: set.completedAt)?.start == weekStart {
             byWorkout[set.sessionExercise?.session?.id, default: []].append(set)
+            total += set.weight * Double(set.reps)
         }
-        return byWorkout
+        let workouts = byWorkout
             .map { id, sets in
                 WeekDetailWorkout(
                     id: id,
@@ -217,5 +227,6 @@ enum WeekDetailGrouping {
                 )
             }
             .sorted { $0.day > $1.day }
+        return WeekDetail(workouts: workouts, total: total)
     }
 }

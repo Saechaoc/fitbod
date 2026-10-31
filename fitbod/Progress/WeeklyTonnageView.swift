@@ -143,6 +143,9 @@ private struct WeeklyTonnageChartHost: View {
     let weekStartsMonday: Bool
     let provider: MuscleVolumeProvider
     let onBarTap: (Date) -> Void
+    /// The moment the query and the axis both read the range from, so they
+    /// never disagree on its weeks, even past midnight at a week's end.
+    private let now: Date
 
     init(
         filterState: ChartFilterState,
@@ -150,8 +153,9 @@ private struct WeeklyTonnageChartHost: View {
         provider: MuscleVolumeProvider,
         onBarTap: @escaping (Date) -> Void
     ) {
+        let now = Date.now
         let calendar = WeeklyTonnageAggregator.weekCalendar(weekStartsMonday: weekStartsMonday)
-        let lowerBound = filterState.timeRange.lowerBound(now: Date.now, calendar: calendar)
+        let lowerBound = filterState.timeRange.lowerBound(now: now, calendar: calendar)
         if let lower = lowerBound {
             let lowerLet = lower
             _sets = Query(
@@ -174,6 +178,7 @@ private struct WeeklyTonnageChartHost: View {
         self.weekStartsMonday = weekStartsMonday
         self.provider = provider
         self.onBarTap = onBarTap
+        self.now = now
     }
 
     var body: some View {
@@ -267,7 +272,7 @@ private struct WeeklyTonnageChartHost: View {
         let domain = WeeklyTonnageChartWeeks.domain(
             for: filterState.timeRange,
             bars: bars,
-            now: Date.now,
+            now: now,
             calendar: calendar
         )
         let weeks = WeeklyTonnageChartWeeks.weekStarts(in: domain, calendar: calendar)

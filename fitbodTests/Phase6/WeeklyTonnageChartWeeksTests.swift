@@ -212,27 +212,32 @@ struct WeeklyTonnageChartWeeksTests {
 
     // MARK: - The week detail counts what its bar counts (T104)
 
-    /// A "Late Push" workout that starts at 23:00 on `start` with three
-    /// working sets of 100 x 5 completed at `completions`.
-    private func lateWorkout(startingAt start: Date, completedAt completions: [Date], in context: ModelContext) -> [SetEntry] {
+    /// A finished workout named `name`, started at `start`, with one
+    /// working set per entry of `sets`.
+    private func workout(
+        _ name: String,
+        startingAt start: Date,
+        sets: [(weight: Double, reps: Int, completedAt: Date)],
+        in context: ModelContext
+    ) -> [SetEntry] {
         let session = Session()
         context.insert(session)
         session.startedAt = start
-        session.completedAt = completions.max()
-        session.routineSnapshotName = "Late Push"
+        session.completedAt = sets.map(\.completedAt).max()
+        session.routineSnapshotName = name
         let exercise = SessionExercise()
         context.insert(exercise)
         exercise.session = session
-        return completions.map { completedAt in
+        return sets.map { logged in
             let set = SetEntry()
             context.insert(set)
             set.sessionExercise = exercise
-            set.weight = 100
-            set.reps = 5
+            set.weight = logged.weight
+            set.reps = logged.reps
             set.setTypeRaw = SetType.working.rawValue
             set.isWarmup = false
             set.isComplete = true
-            set.completedAt = completedAt
+            set.completedAt = logged.completedAt
             return set
         }
     }
@@ -246,8 +251,8 @@ struct WeeklyTonnageChartWeeksTests {
         // The last evening of a week: Sunday 3 May 2026 when weeks start on
         // Monday, Saturday 2 May when they start on Sunday.
         let lastEvening = Self.date(2026, 5, weekStartsMonday ? 3 : 2, hour: 23)
-        let afterMidnight = [70.0, 73, 76].map { lastEvening.addingTimeInterval($0 * 60) }
-        let sets = lateWorkout(startingAt: lastEvening, completedAt: afterMidnight, in: context)
+        let afterMidnight = [70.0, 73, 76].map { (weight: 100.0, reps: 5, completedAt: lastEvening.addingTimeInterval($0 * 60)) }
+        let sets = workout("Late Push", startingAt: lastEvening, sets: afterMidnight, in: context)
 
         let bars = WeeklyTonnageAggregator.aggregate(
             sets: sets,
@@ -259,20 +264,20 @@ struct WeeklyTonnageChartWeeksTests {
         #expect(bars.count == 1)
         #expect(bar.weekStart == Self.date(2026, 5, weekStartsMonday ? 4 : 3), "The bar counts the sets in the new week")
 
-        let detail = WeekDetailGrouping.workouts(counting: sets, inWeekStarting: bar.weekStart, weekStartsMonday: weekStartsMonday)
-        #expect(detail.map(\.name) == ["Late Push"], "The bar's week must list the workout whose sets it counts")
-        #expect(detail.map(\.tonnage).reduce(0, +) == bar.totalTonnage, "The week detail must total the bar")
+        let detail = WeekDetailGrouping.detail(counting: sets, inWeekStarting: bar.weekStart, weekStartsMonday: weekStartsMonday)
+        #expect(detail.workouts.map(\.name) == ["Late Push"], "The bar's week must list the workout whose sets it counts")
+        #expect(detail.total == bar.totalTonnage, "The week detail must total the bar")
         let weekBefore = try #require(Self.local.date(byAdding: .day, value: -7, to: bar.weekStart))
-        let before = WeekDetailGrouping.workouts(counting: sets, inWeekStarting: weekBefore, weekStartsMonday: weekStartsMonday)
-        #expect(before.isEmpty, "The week the workout started in has no bar for it, so its detail must not list it")
+        let before = WeekDetailGrouping.detail(counting: sets, inWeekStarting: weekBefore, weekStartsMonday: weekStartsMonday)
+        #expect(before.workouts.isEmpty, "The week the workout started in has no bar for it, so its detail must not list it")
     }
 
     @Test("A workout split by midnight at a week's end counts each set in the week it was completed in", arguments: [true, false])
     func workoutSplitAtMidnightCountsEachPartInItsWeek(weekStartsMonday: Bool) throws {
         let context = try makeContext()
         let lastEvening = Self.date(2026, 5, weekStartsMonday ? 3 : 2, hour: 23)
-        let completions = [40.0, 70, 73].map { lastEvening.addingTimeInterval($0 * 60) }
-        let sets = lateWorkout(startingAt: lastEvening, completedAt: completions, in: context)
+        let completions = [40.0, 70, 73].map { (weight: 100.0, reps: 5, completedAt: lastEvening.addingTimeInterval($0 * 60)) }
+        let sets = workout("Late Push", startingAt: lastEvening, sets: completions, in: context)
 
         let bars = WeeklyTonnageAggregator.aggregate(
             sets: sets,
@@ -282,10 +287,36 @@ struct WeeklyTonnageChartWeeksTests {
         )
         #expect(bars.map(\.totalTonnage) == [500, 1000])
         for bar in bars {
-            let detail = WeekDetailGrouping.workouts(counting: sets, inWeekStarting: bar.weekStart, weekStartsMonday: weekStartsMonday)
-            #expect(detail.map(\.name) == ["Late Push"], "The week of \(bar.weekStart) must list the workout")
-            #expect(detail.map(\.tonnage).reduce(0, +) == bar.totalTonnage, "The week of \(bar.weekStart) must total its bar")
+            let detail = WeekDetailGrouping.detail(counting: sets, inWeekStarting: bar.weekStart, weekStartsMonday: weekStartsMonday)
+            #expect(detail.workouts.map(\.name) == ["Late Push"], "The week of \(bar.weekStart) must list the workout")
+            #expect(detail.total == bar.totalTonnage, "The week of \(bar.weekStart) must total its bar")
         }
+    }
+
+    @Test("The week detail's total is its bar's to the last bit, with decimal weights")
+    func detailTotalIsTheBarsToTheLastBit() throws {
+        let context = try makeContext()
+        // Two workouts in one week: added workout by workout, their decimal
+        // tonnage comes to 3881.5 ("3,882"); added set by set, as the bar
+        // adds it, to 3881.4999999999995 ("3,881").
+        func logged(_ sets: [(weight: Double, reps: Int)], from start: Date) -> [(weight: Double, reps: Int, completedAt: Date)] {
+            sets.enumerated().map { ($0.element.weight, $0.element.reps, start.addingTimeInterval(Double($0.offset) * 180)) }
+        }
+        let monday = Self.date(2026, 5, 4, hour: 9)
+        let tuesday = Self.date(2026, 5, 5, hour: 9)
+        let sets = workout("Upper", startingAt: monday, sets: logged([(91.8, 2), (106.7, 7), (31.2, 2), (197.2, 8)], from: monday), in: context)
+            + workout("Lower", startingAt: tuesday, sets: logged([(49.2, 6), (128.1, 2), (20, 3), (116.6, 6)], from: tuesday), in: context)
+
+        let bar = try #require(WeeklyTonnageAggregator.aggregate(
+            sets: sets,
+            weekStartsMonday: true,
+            selectedMuscleIDs: [],
+            provider: UnweightedMuscleVolumeProvider()
+        ).first)
+        let detail = WeekDetailGrouping.detail(counting: sets, inWeekStarting: bar.weekStart, weekStartsMonday: true)
+        #expect(detail.workouts.map(\.name) == ["Lower", "Upper"])
+        #expect(detail.total == bar.totalTonnage, "The detail totals \(detail.total), its bar \(bar.totalTonnage)")
+        #expect(Int(detail.total.rounded()) == Int(bar.totalTonnage.rounded()))
     }
 
     // MARK: - The chart works out its own weeks (T104)
