@@ -34,8 +34,11 @@ import SwiftData
 import Testing
 @testable import fitbod
 
+// Main actor: the tests build SwiftData models in a ModelContext, as the
+// app does on the main actor. Not serialized: each test makes its own
+// in-memory container and shares nothing mutable.
 @MainActor
-@Suite("WeeklyTonnageChartWeeks (T23, review item 38)", .serialized)
+@Suite("WeeklyTonnageChartWeeks (T23, review item 38)")
 struct WeeklyTonnageChartWeeksTests {
 
     // MARK: - Fixtures

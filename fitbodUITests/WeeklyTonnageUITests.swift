@@ -37,6 +37,8 @@
 
 import XCTest
 
+/// Every test and helper here is @MainActor because XCUIApplication and
+/// XCUIElement are main-actor isolated.
 final class WeeklyTonnageUITests: XCTestCase {
     /// bruInk and bruPaper in light mode.
     private static let ink = UITestNavigation.RGB(hex: 0x0A0A0A)
@@ -108,8 +110,9 @@ final class WeeklyTonnageUITests: XCTestCase {
         let app = launch(weeks: 8)
         setUnit("lb", in: app)
         openWeeklyTonnage(in: app)
+        let eightWeeks = app.staticTexts["TOTAL · 8 WEEKS"]
         XCTAssertTrue(
-            app.staticTexts["TOTAL · 8 WEEKS"].waitForExistence(timeout: 5),
+            eightWeeks.exists || eightWeeks.waitForExistence(timeout: 5),
             "Eight weeks of data must read TOTAL · 8 WEEKS, not \(rangeLabel(in: app))"
         )
         XCTAssertEqual(drawnBarCount(in: app), 8, "Eight weeks of data must draw eight bars in Last 26 wk")
@@ -157,7 +160,7 @@ final class WeeklyTonnageUITests: XCTestCase {
         let calendar = Calendar(identifier: .gregorian)
 
         let chart = app.otherElements["weeklyTonnage.chart"]
-        XCTAssertTrue(chart.waitForExistence(timeout: 5), "Missing the chart")
+        XCTAssertTrue(chart.exists || chart.waitForExistence(timeout: 5), "Missing the chart")
         let screenshot = XCUIScreen.main.screenshot()
         let dates = try axisDates(in: chart.frame, of: screenshot)
         XCTAssertGreaterThanOrEqual(dates.count, 2, "Read too few axis dates: \(dates.map(\.text))")
@@ -185,7 +188,7 @@ final class WeeklyTonnageUITests: XCTestCase {
         XCTAssertEqual(calendar.component(.weekday, from: week), firstWeekday, "\(title.label) must start on \(setting)")
 
         let workout = app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH %@", "Sun, ")).firstMatch
-        XCTAssertTrue(workout.waitForExistence(timeout: 5), "\(title.label) must list the Sunday workout")
+        XCTAssertTrue(workout.exists || workout.waitForExistence(timeout: 5), "\(title.label) must list the Sunday workout")
         // The row reads its day, then its tonnage: "Sun, Oct 25 · 1,500 lb".
         let day = workout.label.components(separatedBy: " · ").first ?? workout.label
         let sunday = try XCTUnwrap(Self.date(day, format: "EEE, MMM d", near: week), "Cannot read \(workout.label)")
@@ -214,21 +217,26 @@ final class WeeklyTonnageUITests: XCTestCase {
 
     /// Weekly Tonnage crashed inside Swift Charts about one open in six,
     /// on a Dictionary key that broke Hashable, right after its row was
-    /// tapped on the progress history seed. Twenty fresh launches each open
-    /// it there and read the whole screen, as VoiceOver does, and the app
-    /// must still be running every time.
+    /// tapped on the progress history seed. Twenty fresh launches of the app
+    /// each open it there and read the whole screen, as VoiceOver does, and
+    /// the app must still be running every time. Only the first launch
+    /// resets and seeds the store; the other nineteen reopen the app on it,
+    /// a new process each time, without importing the catalog again.
     @MainActor
     func testOpensTwentyTimesWithoutCrashing() throws {
+        let app = UITestNavigation.launch(UITestNavigation.progressHistory)
         var downOn: [Int] = []
         for open in 1...20 {
-            let app = UITestNavigation.launch(UITestNavigation.progressHistory)
+            if open > 1 {
+                UITestNavigation.relaunch(app)
+            }
             openWeeklyTonnage(in: app)
-            let drawn = app.otherElements["weeklyTonnage.chart"].waitForExistence(timeout: 10)
+            let chart = app.otherElements["weeklyTonnage.chart"]
+            let drawn = chart.exists || chart.waitForExistence(timeout: 10)
             _ = try? app.snapshot()
             if !drawn || app.state != .runningForeground {
                 downOn.append(open)
             }
-            app.terminate()
         }
         XCTAssertEqual(downOn, [], "Weekly Tonnage must open every time, but the app went down on opens \(downOn) of 20")
     }
@@ -245,12 +253,13 @@ final class WeeklyTonnageUITests: XCTestCase {
         let weeks = 10
         let app = launch(weeks: weeks)
         openWeeklyTonnage(in: app)
+        let range = app.staticTexts["TOTAL · \(weeks) WEEKS"]
         XCTAssertTrue(
-            app.staticTexts["TOTAL · \(weeks) WEEKS"].waitForExistence(timeout: 5),
+            range.exists || range.waitForExistence(timeout: 5),
             "Last 26 wk must hold all \(weeks) weeks of data, not \(rangeLabel(in: app))"
         )
         let chart = app.otherElements["weeklyTonnage.chart"]
-        XCTAssertTrue(chart.waitForExistence(timeout: 5), "Missing the chart")
+        XCTAssertTrue(chart.exists || chart.waitForExistence(timeout: 5), "Missing the chart")
         UITestNavigation.saveScreenshot("T104", "tonnage-26wk")
 
         let elements = try chartElements(in: chart)
@@ -278,9 +287,9 @@ final class WeeklyTonnageUITests: XCTestCase {
         let title = app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH %@", "Week of ")).firstMatch
         XCTAssertTrue(title.waitForExistence(timeout: 5), "Activating \(target.label) must open its week")
         XCTAssertEqual(title.label, target.label, "Activating \(target.label) opened another week")
-        let total = target.value.replacingOccurrences(of: " lb", with: "")
+        let total = app.staticTexts[target.value.replacingOccurrences(of: " lb", with: "")]
         XCTAssertTrue(
-            app.staticTexts[total].waitForExistence(timeout: 5),
+            total.exists || total.waitForExistence(timeout: 5),
             "\(target.label)'s detail must total the bar's \(target.value), but shows \(heroTotal(in: app) ?? "no total")"
         )
         UITestNavigation.saveScreenshot("T104", "week-detail")
@@ -334,7 +343,8 @@ final class WeeklyTonnageUITests: XCTestCase {
 
         detailBack.tap()
         XCTAssertTrue(title.waitForNonExistence(timeout: 5), "‹ BACK must close the week detail")
-        XCTAssertTrue(app.buttons["Last 8 weeks"].waitForExistence(timeout: 5), "‹ BACK must return to the chart")
+        let rangeChip = app.buttons["Last 8 weeks"]
+        XCTAssertTrue(rangeChip.exists || rangeChip.waitForExistence(timeout: 5), "‹ BACK must return to the chart")
         chartBack.tap()
         XCTAssertTrue(app.buttons["Last 8 weeks"].waitForNonExistence(timeout: 5), "‹ BACK must close the chart")
     }
@@ -355,7 +365,7 @@ final class WeeklyTonnageUITests: XCTestCase {
     private func openWeeklyTonnage(in app: XCUIApplication) {
         UITestNavigation.selectTab("Progress", in: app)
         let row = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Weekly Tonnage")).firstMatch
-        XCTAssertTrue(row.waitForExistence(timeout: 10), "Progress must offer Weekly Tonnage")
+        XCTAssertTrue(row.exists || row.waitForExistence(timeout: 10), "Progress must offer Weekly Tonnage")
         row.tap()
         XCTAssertTrue(app.buttons["Last 8 weeks"].waitForExistence(timeout: 5), "Weekly Tonnage did not open")
     }
@@ -365,7 +375,7 @@ final class WeeklyTonnageUITests: XCTestCase {
     private func setUnit(_ unit: String, in app: XCUIApplication) {
         UITestNavigation.openSettings(in: app)
         let option = app.buttons.labeled(unit)
-        XCTAssertTrue(option.waitForExistence(timeout: 5), "Missing the \(unit) unit")
+        XCTAssertTrue(option.exists || option.waitForExistence(timeout: 5), "Missing the \(unit) unit")
         option.tap()
         XCTAssertTrue(option.isSelected, "Units must switch to \(unit)")
         app.buttons["Close"].tap()
@@ -403,7 +413,7 @@ final class WeeklyTonnageUITests: XCTestCase {
     @MainActor
     private func back(on screen: String, in app: XCUIApplication) throws -> XCUIElement {
         let back = UITestNavigation.hittable(app.buttons, "Back", exactLabel: true)
-        UITestNavigation.waitUntilStill(back, interval: 0.3)
+        UITestNavigation.waitUntilStill(back, interval: 0.1)
         let shown = UITestNavigation.latin(try UITestNavigation.readText(in: back.frame, of: XCUIScreen.main.screenshot()))
         XCTAssertTrue(shown.contains("BACK"), "\(screen) must go back with ‹ BACK, but its back control reads \"\(shown)\"")
         UITestNavigation.assertTapTarget(back)
