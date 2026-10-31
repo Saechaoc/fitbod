@@ -56,7 +56,7 @@ final class AddPhaseSheetUITests: XCTestCase {
         UITestNavigation.hittable(app.buttons, "Peak").tap()
         XCTAssertTrue(prompt.waitForNonExistence(timeout: 5), "Picking Peak must close the sheet")
         XCTAssertEqual(phaseCount(in: app), before + 1, "Picking Peak must add a phase")
-        XCTAssertTrue(app.staticTexts.labeled("Phase \(before + 1): Peak").waitForExistence(timeout: 5),
+        XCTAssertTrue(app.buttons.labeled("Phase \(before + 1): Peak").waitForExistence(timeout: 5),
                       "Peak must be the new last phase")
     }
 

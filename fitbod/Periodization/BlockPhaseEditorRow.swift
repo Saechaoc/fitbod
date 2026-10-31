@@ -58,7 +58,35 @@ public struct BlockPhaseEditorRow: View {
             .padding(.horizontal, 16)
         }
         .background(BlockPhaseColors.rowTint(for: draft.kind))
+        // T24: one element per row, so VoiceOver reads its label once rather
+        // than once per child. Its value reads the grid, its weeks adjust with
+        // a swipe up or down, and its other controls are its actions.
+        .accessibilityElement(children: .ignore)
         .accessibilityLabel("Phase \(displayIndex): \(BlockPhaseColors.phaseLabel(draft.kind))")
+        .accessibilityValue(settingsSummary)
+        .accessibilityAdjustableAction { direction in
+            switch direction {
+            case .increment: increaseWeeks()
+            case .decrement: decreaseWeeks()
+            @unknown default: break
+            }
+        }
+        .accessibilityActions {
+            Button("Increase volume", action: increaseVolume)
+            Button("Decrease volume", action: decreaseVolume)
+            Button("Increase intensity", action: increaseIntensity)
+            Button("Decrease intensity", action: decreaseIntensity)
+            ForEach(BlockPhaseKind.allCases.filter { $0 != draft.kind }, id: \.self) { kind in
+                Button("Change to \(BlockPhaseColors.phaseLabel(kind))") { draft.kind = kind }
+            }
+        }
+    }
+
+    /// The grid as VoiceOver reads it: "4 weeks, volume ×1, intensity ×0.75".
+    private var settingsSummary: String {
+        "\(BRUCountLabel.text(draft.weeks, "week")), "
+            + "volume ×\(formatMultiplier(draft.volumeMultiplier)), "
+            + "intensity ×\(formatMultiplier(draft.intensityMultiplier))"
     }
 
     // MARK: - Data grid cells
@@ -75,18 +103,14 @@ public struct BlockPhaseEditorRow: View {
                 .font(BRUFont.displayMedium)
                 .foregroundStyle(Color.bruInk)
             HStack(spacing: 0) {
-                Button {
-                    if draft.weeks > 1 { draft.weeks -= 1 }
-                } label: {
+                Button(action: decreaseWeeks) {
                     Text("−")
                         .font(BRUFont.bodyDefault)
                         .foregroundStyle(Color.bruInk)
                         .frame(maxWidth: .infinity, minHeight: 44)
                 }
                 .buttonStyle(.plain)
-                Button {
-                    if draft.weeks < 12 { draft.weeks += 1 }
-                } label: {
+                Button(action: increaseWeeks) {
                     Text("+")
                         .font(BRUFont.bodyDefault)
                         .foregroundStyle(Color.bruInk)
@@ -110,20 +134,14 @@ public struct BlockPhaseEditorRow: View {
                 .font(BRUFont.displayMedium)
                 .foregroundStyle(Color.bruInk)
             HStack(spacing: 0) {
-                Button {
-                    let newValue = (draft.volumeMultiplier - 0.05).rounded(toPlaces: 2)
-                    if newValue >= 0.3 { draft.volumeMultiplier = newValue }
-                } label: {
+                Button(action: decreaseVolume) {
                     Text("−")
                         .font(BRUFont.bodyDefault)
                         .foregroundStyle(Color.bruInk)
                         .frame(maxWidth: .infinity, minHeight: 44)
                 }
                 .buttonStyle(.plain)
-                Button {
-                    let newValue = (draft.volumeMultiplier + 0.05).rounded(toPlaces: 2)
-                    if newValue <= 1.5 { draft.volumeMultiplier = newValue }
-                } label: {
+                Button(action: increaseVolume) {
                     Text("+")
                         .font(BRUFont.bodyDefault)
                         .foregroundStyle(Color.bruInk)
@@ -147,20 +165,14 @@ public struct BlockPhaseEditorRow: View {
                 .font(BRUFont.displayMedium)
                 .foregroundStyle(Color.bruInk)
             HStack(spacing: 0) {
-                Button {
-                    let newValue = (draft.intensityMultiplier - 0.01).rounded(toPlaces: 2)
-                    if newValue >= 0.3 { draft.intensityMultiplier = newValue }
-                } label: {
+                Button(action: decreaseIntensity) {
                     Text("−")
                         .font(BRUFont.bodyDefault)
                         .foregroundStyle(Color.bruInk)
                         .frame(maxWidth: .infinity, minHeight: 44)
                 }
                 .buttonStyle(.plain)
-                Button {
-                    let newValue = (draft.intensityMultiplier + 0.01).rounded(toPlaces: 2)
-                    if newValue <= 1.1 { draft.intensityMultiplier = newValue }
-                } label: {
+                Button(action: increaseIntensity) {
                     Text("+")
                         .font(BRUFont.bodyDefault)
                         .foregroundStyle(Color.bruInk)
@@ -170,6 +182,36 @@ public struct BlockPhaseEditorRow: View {
             }
         }
         .overlay(Rectangle().stroke(Color.bruInk, lineWidth: 1))
+    }
+
+    // MARK: - Steps (the − and + buttons and the row's VoiceOver actions)
+
+    private func decreaseWeeks() {
+        if draft.weeks > 1 { draft.weeks -= 1 }
+    }
+
+    private func increaseWeeks() {
+        if draft.weeks < 12 { draft.weeks += 1 }
+    }
+
+    private func decreaseVolume() {
+        let newValue = (draft.volumeMultiplier - 0.05).rounded(toPlaces: 2)
+        if newValue >= 0.3 { draft.volumeMultiplier = newValue }
+    }
+
+    private func increaseVolume() {
+        let newValue = (draft.volumeMultiplier + 0.05).rounded(toPlaces: 2)
+        if newValue <= 1.5 { draft.volumeMultiplier = newValue }
+    }
+
+    private func decreaseIntensity() {
+        let newValue = (draft.intensityMultiplier - 0.01).rounded(toPlaces: 2)
+        if newValue >= 0.3 { draft.intensityMultiplier = newValue }
+    }
+
+    private func increaseIntensity() {
+        let newValue = (draft.intensityMultiplier + 0.01).rounded(toPlaces: 2)
+        if newValue <= 1.1 { draft.intensityMultiplier = newValue }
     }
 
     // MARK: - Kind menu

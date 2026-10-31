@@ -311,19 +311,21 @@ final class BlockTemplateCatalogUITests: XCTestCase {
     /// "ACCUM 5 · INTNS 2 · DELOAD 1", read from the duration sheet that
     /// TOTAL WEEKS opens. Each sheet row is "01", the phase title, − weeks +.
     /// The screens under the sheet put other texts on the same lines, so a
-    /// row's weeks are the bare number between its − and +.
+    /// row's weeks are the bare number between its − and +. Every lookup
+    /// stays in the sheet: New Block's phase cards under it list their own
+    /// "01", title and weeks to XCUITest (T24).
     @MainActor
     private func builderPhases(in app: XCUIApplication) -> String {
-        openDurationSheet(in: app)
-        let titles = app.staticTexts.matching(NSPredicate(format: "label IN %@", Array(Self.shortLabels.keys)))
-        let numbers = app.staticTexts.matching(NSPredicate(format: "label MATCHES %@", "^[0-9]+$"))
+        let sheet = openDurationSheet(in: app)
+        let titles = sheet.staticTexts.matching(NSPredicate(format: "label IN %@", Array(Self.shortLabels.keys)))
+        let numbers = sheet.staticTexts.matching(NSPredicate(format: "label MATCHES %@", "^[0-9]+$"))
         var phases: [String] = []
         for index in 1...12 {
-            let number = app.staticTexts.labeled(String(format: "%02d", index))
+            let number = sheet.staticTexts.labeled(String(format: "%02d", index))
             guard number.exists else { break }
             let title = sameRow(as: number, in: titles).first?.label ?? "?"
-            let minus = sameRow(as: number, in: steppers("\u{2212}", in: app)).first
-            let plus = sameRow(as: number, in: steppers("+", in: app)).first
+            let minus = sameRow(as: number, in: steppers("\u{2212}", in: sheet)).first
+            let plus = sameRow(as: number, in: steppers("+", in: sheet)).first
             let weeks = sameRow(as: number, in: numbers).first { text in
                 guard let minus, let plus else { return false }
                 return text.frame.midX > minus.frame.maxX && text.frame.midX < plus.frame.minX
@@ -337,10 +339,10 @@ final class BlockTemplateCatalogUITests: XCTestCase {
     /// One more week for the first phase, through the duration sheet's +.
     @MainActor
     private func addWeekToFirstPhase(in app: XCUIApplication) {
-        openDurationSheet(in: app)
-        let number = app.staticTexts.labeled("01")
+        let sheet = openDurationSheet(in: app)
+        let number = sheet.staticTexts.labeled("01")
         XCTAssertTrue(number.exists, "The duration sheet lists no phases")
-        let plus = sameRow(as: number, in: steppers("+", in: app)).first
+        let plus = sameRow(as: number, in: steppers("+", in: sheet)).first
         XCTAssertNotNil(plus, "The first phase has no + in the duration sheet")
         plus?.tap()
         closeDurationSheet(in: app)
@@ -348,15 +350,25 @@ final class BlockTemplateCatalogUITests: XCTestCase {
 
     /// The duration sheet's − or + buttons.
     @MainActor
-    private func steppers(_ glyph: String, in app: XCUIApplication) -> XCUIElementQuery {
-        app.buttons.matching(NSPredicate(format: "label == %@", glyph))
+    private func steppers(_ glyph: String, in sheet: XCUIElement) -> XCUIElementQuery {
+        sheet.buttons.matching(NSPredicate(format: "label == %@", glyph))
     }
 
+    /// Taps TOTAL WEEKS and returns the duration sheet it opens, the last
+    /// layer's view that starts below the top of the screen, once it stops
+    /// sliding up; the whole app if none shows. The half-height sheet floats
+    /// 8pt above the bottom of the screen, so UITestNavigation.topSheet(in:),
+    /// which looks for a sheet that reaches the bottom, does not find it.
     @MainActor
-    private func openDurationSheet(in app: XCUIApplication) {
+    private func openDurationSheet(in app: XCUIApplication) -> XCUIElement {
         totalWeeksCell(in: app).tap()
         XCTAssertTrue(app.staticTexts.labeled("Edit Block Duration").waitForExistence(timeout: 5),
                       "TOTAL WEEKS must open the duration sheet")
+        let layer = app.windows.firstMatch.children(matching: .other).allElementsBoundByIndex.last
+        guard let sheet = layer?.children(matching: .other).allElementsBoundByIndex.first(where: { $0.frame.minY > 0.5 })
+        else { return app }
+        UITestNavigation.waitUntilStill(sheet)
+        return sheet
     }
 
     @MainActor

@@ -1495,6 +1495,13 @@ fileprivate struct NewBlockPhaseEditorRow: View {
     private var revealed: Bool { swipeOffset < -1 }
     private var visibleOffset: CGFloat { min(0, swipeOffset + swipeDrag) }
 
+    /// The stat columns as VoiceOver reads them: "1 week, volume Hold, intensity 75%".
+    private var settingsSummary: String {
+        "\(BRUCountLabel.text(draft.weeks, "week")), "
+            + "volume \(NewBlockPhaseText.volumeValue(draft.volumeMultiplier)), "
+            + "intensity \(NewBlockPhaseText.intensityValue(draft.intensityMultiplier))"
+    }
+
     /// 1pt × 30pt hairline divider between stat columns (260610-dbz; 34 → 30pt in 260610-hcv).
     private var phaseRowDivider: some View {
         Rectangle()
@@ -1508,26 +1515,29 @@ fileprivate struct NewBlockPhaseEditorRow: View {
             cardSurface
                 .offset(x: visibleOffset)
                 .contentShape(Rectangle())
-                .onTapGesture {
-                    if revealed {
-                        withAnimation(.spring(response: 0.3, dampingFraction: 0.9)) { swipeOffset = 0 }
-                    } else {
-                        presentingEditor = true
-                    }
-                }
+                .onTapGesture { tapCard() }
                 .simultaneousGesture(swipeGesture)
+                // T24: one element per card, so VoiceOver reads its label once
+                // rather than once per text. Its value reads the stat columns,
+                // activating it does what a tap does, and the ⋮⋮ drag and the
+                // swipe to Delete are its actions. A revealed Delete button
+                // stays an element of its own.
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel("Phase \(displayIndex): \(BlockPhaseColors.phaseLabel(draft.kind))")
+                .accessibilityValue(settingsSummary)
+                .accessibilityAddTraits(.isButton)
+                .accessibilityAction { tapCard() }
+                .accessibilityActions {
+                    Button("Move Up") { onMoveUp() }
+                    Button("Move Down") { onMoveDown() }
+                    Button("Delete Phase") { onDelete() }
+                }
         }
         // Finger tracking 1:1. Gesture transactions carry no animation, and the
         // parent's reorder springs run in their own withAnimation transactions,
         // so nothing ever rubber-bands this offset mid-drag.
         .offset(y: dragTranslation)
         .onGeometryChange(for: CGFloat.self, of: { $0.size.width }, action: { cardWidth = $0 })
-        .accessibilityLabel("Phase \(displayIndex): \(BlockPhaseColors.phaseLabel(draft.kind))")
-        .accessibilityActions {
-            Button("Move Up") { onMoveUp() }
-            Button("Move Down") { onMoveDown() }
-            Button("Delete Phase") { onDelete() }
-        }
         // A row that gets lifted to reorder must not also be sitting half-open.
         .onChange(of: isDragging) { _, nowDragging in
             if nowDragging, swipeOffset != 0 {
@@ -1706,6 +1716,16 @@ fileprivate struct NewBlockPhaseEditorRow: View {
                 liveTarget = nil
                 onReorderEnded()
             }
+    }
+
+    // A tap on a half-open card closes it; otherwise it opens the phase editor.
+    // VoiceOver's activate runs the same path.
+    private func tapCard() {
+        if revealed {
+            withAnimation(.spring(response: 0.3, dampingFraction: 0.9)) { swipeOffset = 0 }
+        } else {
+            presentingEditor = true
+        }
     }
 
     // Route both full-swipe and the revealed Delete button through the existing

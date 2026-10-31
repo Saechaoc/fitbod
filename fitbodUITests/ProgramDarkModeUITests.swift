@@ -155,11 +155,12 @@ final class ProgramDarkModeUITests: XCTestCase {
         }
 
         for (index, kind) in ["Accumulation", "Intensification", "Deload", "Peak", "Realization"].enumerated() {
-            let badge = phaseBadge(index + 1, kind, in: app)
-            UITestNavigation.revealAboveBottomBar(badge, in: app, scroll: .dragInMargin)
-            UITestNavigation.waitUntilStill(badge)
+            let card = phaseCard(index + 1, kind, in: app)
+            UITestNavigation.revealAboveBottomBar(card, in: app, scroll: .dragInMargin)
+            UITestNavigation.waitUntilStill(card)
             if checksContrast {
-                assertContrast(of: badge, atLeast: 3, in: XCUIScreen.main.screenshot())
+                assertContrast(in: phaseBadge(of: card), atLeast: 3, in: XCUIScreen.main.screenshot(),
+                               "Phase \(index + 1)'s badge number")
             }
         }
         UITestNavigation.saveScreenshot("T16", "new-block-phases", appearance: appearance)
@@ -244,13 +245,21 @@ final class ProgramDarkModeUITests: XCTestCase {
         return try XCTUnwrap(rows.first, "Program shows no template rows")
     }
 
-    /// The number in phase `number`'s badge: the leading text of its card,
-    /// which labels each of its texts "Phase 1: Accumulation".
+    /// Phase `number`'s card, which VoiceOver reads as one button labeled
+    /// "Phase 1: Accumulation" (T24).
     @MainActor
-    private func phaseBadge(_ number: Int, _ kind: String, in app: XCUIApplication) -> XCUIElement {
-        let texts = app.staticTexts.matching(NSPredicate(format: "label == %@", "Phase \(number): \(kind)"))
-        XCTAssertTrue(texts.firstMatch.waitForExistence(timeout: 10), "Missing phase \(number), \(kind)")
-        return texts.allElementsBoundByIndex.min { $0.frame.minX < $1.frame.minX } ?? texts.firstMatch
+    private func phaseCard(_ number: Int, _ kind: String, in app: XCUIApplication) -> XCUIElement {
+        let card = app.buttons.matching(NSPredicate(format: "label == %@", "Phase \(number): \(kind)")).firstMatch
+        XCTAssertTrue(card.waitForExistence(timeout: 10), "Missing phase \(number), \(kind)")
+        return card
+    }
+
+    /// The badge holding a card's number: a 36pt square 17pt in from the
+    /// card's leading edge, past its 5pt rail and 12pt padding, centered
+    /// top to bottom. The 3pt inset keeps its rounded corners out.
+    @MainActor
+    private func phaseBadge(of card: XCUIElement) -> CGRect {
+        CGRect(x: card.frame.minX + 17, y: card.frame.midY - 18, width: 36, height: 36).insetBy(dx: 3, dy: 3)
     }
 
     // MARK: - Colors
