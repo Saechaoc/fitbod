@@ -9,7 +9,7 @@
 //
 //  ## Layout (Phase 6.1 BRU reskin — 06.1-03)
 //
-//  BRUHeaderBar(center: "This week vs last week")
+//  BRUHeaderBar(left: "‹ Back", center: "This week vs last week")
 //  Column header row (dates + Δ) — BRUFont.labelMicro .bruMuted uppercase
 //  BRUDivider(.ink)
 //  ScrollView → LazyVStack per-exercise 3-column rows
@@ -23,6 +23,10 @@
 //                 U+2212 (true minus sign), e.g. "−2.5 kg"
 //    zero      → "—" em-dash U+2014, Color.bruMuted
 //    nil prior → "{exercise name} — no prior data" single-cell row
+//
+//  Set weights and weight changes print as logged ("102.5 × 5", "+2.5 lb").
+//  An e1RM change rounds to one decimal ("+2.8 e1RM lb"), a whole one
+//  shows none ("+5 e1RM lb"), and one that rounds to zero shows "—".
 //
 //  ## Empty state (UI-SPEC verbatim)
 //
@@ -55,7 +59,7 @@ public struct SessionComparisonView: View {
     public var body: some View {
         VStack(spacing: 0) {
             BRUHeaderBar(
-                left: HeaderAction("‹") { dismiss() },
+                left: HeaderAction("‹ Back") { dismiss() },
                 center: "This week vs last week",
                 right: nil
             )
@@ -150,7 +154,7 @@ public struct SessionComparisonView: View {
                         .font(BRUFont.bodyEmphasis)
                         .foregroundStyle(Color.bruInk)
                     if let top = row.thisWeekTopSet {
-                        Text("\(formatWeight(top.weight)) × \(top.reps)")
+                        Text("\(Self.formatWeight(top.weight)) × \(top.reps)")
                             .font(BRUFont.bodyDefault)
                             .foregroundStyle(Color.bruInk)
                     }
@@ -160,16 +164,16 @@ public struct SessionComparisonView: View {
                 // Center (~30%) — Δ values
                 VStack(spacing: 2) {
                     let unitLabel = unit(for: row.exerciseID).rawValue
-                    deltaView(value: row.deltaWeight, unit: unitLabel)
+                    deltaView(value: row.deltaWeight, unit: unitLabel, format: Self.formatWeight)
                     deltaViewReps(value: row.deltaReps)
-                    deltaView(value: row.deltaE1RM, unit: "e1RM \(unitLabel)")
+                    deltaView(value: row.deltaE1RM, unit: "e1RM \(unitLabel)", format: Self.formatE1RMChange)
                 }
                 .frame(maxWidth: .infinity, alignment: .center)
 
                 // Trailing (~35%) — last-week value
                 VStack(alignment: .leading, spacing: 2) {
                     if let top = row.lastWeekTopSet {
-                        Text("\(formatWeight(top.weight)) × \(top.reps)")
+                        Text("\(Self.formatWeight(top.weight)) × \(top.reps)")
                             .font(BRUFont.bodyDefault)
                             .foregroundStyle(Color.bruInk)
                     }
@@ -191,18 +195,21 @@ public struct SessionComparisonView: View {
 
     // MARK: - Δ Rendering
 
+    /// `format` writes the size of the change. A change it writes as zero,
+    /// such as an e1RM change under 0.05, is no change.
     @ViewBuilder
-    private func deltaView(value: Double?, unit: String) -> some View {
+    private func deltaView(value: Double?, unit: String, format: (Double) -> String) -> some View {
         if let v = value {
-            if v > 0 {
-                BRUDisplay("+\(formatWeight(v)) \(unit)", size: .medium, color: .bruSignal)
-            } else if v < 0 {
-                // U+2212 minus sign (NOT U+002D hyphen) — preserved per BRU contract
-                BRUDisplay("\u{2212}\(formatWeight(abs(v))) \(unit)", size: .medium, color: .bruMuted)
-            } else {
+            let shown = format(abs(v))
+            if shown == format(0) {
                 // Zero Δ: em-dash U+2014 in bruMuted (bruFaint is a fill, too light for text)
                 BRUDisplay("\u{2014}", size: .medium, color: .bruMuted)
                     .accessibilityLabel("No change")
+            } else if v > 0 {
+                BRUDisplay("+\(shown) \(unit)", size: .medium, color: .bruSignal)
+            } else {
+                // U+2212 minus sign (NOT U+002D hyphen) — preserved per BRU contract
+                BRUDisplay("\u{2212}\(shown) \(unit)", size: .medium, color: .bruMuted)
             }
         } else {
             BRUDisplay("\u{2014}", size: .medium, color: .bruMuted)
@@ -248,10 +255,18 @@ public struct SessionComparisonView: View {
 
     // MARK: - Formatting
 
-    private func formatWeight(_ value: Double) -> String {
+    /// A set weight or a weight change as logged, such as "102.25".
+    static func formatWeight(_ value: Double) -> String {
         if value.truncatingRemainder(dividingBy: 1) == 0 {
             return String(Int(value))
         }
         return String(format: "%g", value)
+    }
+
+    /// An e1RM change to one decimal, halves away from zero, such as "3.2"
+    /// for 3.16667, and a whole one without, such as "5". The estimate
+    /// keeps every digit of its formula, which "%g" would print.
+    static func formatE1RMChange(_ value: Double) -> String {
+        formatWeight((value * 10).rounded() / 10)
     }
 }
