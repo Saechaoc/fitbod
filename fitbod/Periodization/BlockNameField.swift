@@ -54,10 +54,13 @@ public struct BlockNameField: View {
 
             ZStack(alignment: .leading) {
                 if text.isEmpty {
+                    // T25: at accessibility sizes the placeholder shrinks to
+                    // its one line rather than end in "…".
                     Text(placeholder)
                         .font(BlockNameFieldType.displayLarge)
                         .foregroundStyle(BlockNameFieldTokens.muted)
                         .lineLimit(1)
+                        .minimumScaleFactor(0.5)
                         .allowsHitTesting(false)
                 }
 

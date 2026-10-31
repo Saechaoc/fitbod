@@ -529,7 +529,10 @@ internal struct NewBlockPreset: Hashable, Identifiable {
 // 260528-vi2: no ink rules; sits on paper, borderless.
 // T11: the top action is SAVE DRAFT, which needs only a name; EDIT BLOCK has none.
 // T69: the back control names the tab that opened the builder.
+// T25: at accessibility sizes the title takes a line of its own, under the actions.
 fileprivate struct NewBlockTopBar: View {
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+
     let title: String
     let origin: BlockBuilderView.Origin
     let canSave: Bool
@@ -538,6 +541,14 @@ fileprivate struct NewBlockTopBar: View {
     let onSave: (() -> Void)?
 
     var body: some View {
+        if dynamicTypeSize.isAccessibilitySize {
+            accessibilityLayout
+        } else {
+            standardRow
+        }
+    }
+
+    private var standardRow: some View {
         HStack(alignment: .center) {
             Button(action: onBack) {
                 ZStack(alignment: .leading) {
@@ -557,21 +568,13 @@ fileprivate struct NewBlockTopBar: View {
 
             Spacer()
 
-            Text(title)
-                .font(NewBlockType.chrome)
-                .tracking(NewBlockScreenTokens.chipTracking)
-                .foregroundStyle(NewBlockScreenTokens.ink)
+            titleText
                 .frame(maxHeight: .infinity)
 
             Spacer()
 
-            if let onSave {
-                Button(action: onSave) {
-                    saveDraftLabel
-                        .foregroundStyle(canSave ? NewBlockScreenTokens.signalText : NewBlockScreenTokens.muted)
-                }
-                .buttonStyle(.plain)
-                .disabled(!canSave)
+            if onSave != nil {
+                saveButton
             } else {
                 // Holds the title where NEW BLOCK has it.
                 saveDraftLabel
@@ -584,11 +587,78 @@ fileprivate struct NewBlockTopBar: View {
         .background(NewBlockScreenTokens.paper)
     }
 
+    /// The back and save actions share a row, or take a line each when the
+    /// row is too narrow for both; the title goes under them.
+    private var accessibilityLayout: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            ViewThatFits(in: .horizontal) {
+                HStack(spacing: NewBlockScreenTokens.rowGap) {
+                    accessibilityBackButton
+                    Spacer(minLength: 0)
+                    if onSave != nil {
+                        saveButton
+                    }
+                }
+                VStack(alignment: .leading, spacing: 0) {
+                    accessibilityBackButton
+                    if onSave != nil {
+                        saveButton
+                            .frame(maxWidth: .infinity, alignment: .trailing)
+                    }
+                }
+            }
+
+            titleText
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.bottom, NewBlockScreenTokens.rowGap)
+        }
+        .padding(.horizontal, NewBlockScreenTokens.sidePadding)
+        .background(NewBlockScreenTokens.paper)
+    }
+
+    /// The back control without the placeholder that holds the one-row
+    /// title in place.
+    private var accessibilityBackButton: some View {
+        Button(action: onBack) {
+            Text(origin.backLabel)
+                .font(NewBlockType.chrome)
+                .tracking(NewBlockScreenTokens.chipTracking)
+                .foregroundStyle(NewBlockScreenTokens.ink)
+                .frame(minWidth: 44, minHeight: 44, alignment: .leading)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+    }
+
+    private var titleText: some View {
+        Text(title)
+            .font(NewBlockType.chrome)
+            .tracking(NewBlockScreenTokens.chipTracking)
+            .foregroundStyle(NewBlockScreenTokens.ink)
+    }
+
+    private var saveButton: some View {
+        Button {
+            onSave?()
+        } label: {
+            saveDraftLabel
+                .foregroundStyle(canSave ? NewBlockScreenTokens.signalText : NewBlockScreenTokens.muted)
+        }
+        .buttonStyle(.plain)
+        .disabled(!canSave)
+    }
+
     private var saveDraftLabel: some View {
         Text("SAVE DRAFT")
             .font(NewBlockType.chrome)
             .tracking(NewBlockScreenTokens.chipTracking)
-            .frame(minWidth: 44, maxHeight: .infinity)
+            // The one-row bar stretches it to its 50pt height; the stacked
+            // bar gives it a 44pt line of its own.
+            .frame(
+                minWidth: 44,
+                minHeight: dynamicTypeSize.isAccessibilitySize ? 44 : nil,
+                maxHeight: dynamicTypeSize.isAccessibilitySize ? nil : .infinity
+            )
             .contentShape(Rectangle())
     }
 }
@@ -815,6 +885,8 @@ fileprivate struct NewBlockRoundStepper: View {
 }
 
 fileprivate struct NewBlockStepperButton: View {
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+
     let label: String
     let action: () -> Void
 
@@ -824,10 +896,71 @@ fileprivate struct NewBlockStepperButton: View {
                 .font(NewBlockType.chrome)
                 .tracking(0)
                 .foregroundStyle(NewBlockScreenTokens.ink)
-                .frame(width: 32, height: 30)
+                // T25: a 48pt tap target at accessibility sizes.
+                .frame(
+                    width: dynamicTypeSize.isAccessibilitySize ? 48 : 32,
+                    height: dynamicTypeSize.isAccessibilitySize ? 48 : 30
+                )
+                .contentShape(Rectangle())
                 .overlay(Rectangle().stroke(NewBlockScreenTokens.ink, lineWidth: 1.5))
         }
         .buttonStyle(.plain)
+    }
+}
+
+/// One row of New Block's editor sheets: its label views, one of them with a
+/// flexible frame that fills the row, then a − value + stepper. At
+/// accessibility sizes the stepper goes under the label, the value takes the
+/// width it needs rather than end in "…", and the row grows to fit (T25).
+fileprivate struct NewBlockSheetStepperRow<Label: View>: View {
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+
+    let value: String
+    /// The value's width at standard sizes.
+    let valueWidth: CGFloat
+    let onDecrement: () -> Void
+    let onIncrement: () -> Void
+    @ViewBuilder let label: () -> Label
+
+    var body: some View {
+        Group {
+            if dynamicTypeSize.isAccessibilitySize {
+                VStack(alignment: .leading, spacing: NewBlockScreenTokens.tightGap) {
+                    HStack(spacing: NewBlockScreenTokens.rowGap) {
+                        label()
+                    }
+                    HStack(spacing: NewBlockScreenTokens.rowGap) {
+                        stepper
+                    }
+                }
+                .padding(.vertical, NewBlockScreenTokens.rowGap)
+            } else {
+                HStack(spacing: NewBlockScreenTokens.rowGap) {
+                    label()
+                    stepper
+                }
+            }
+        }
+        .padding(.horizontal, NewBlockScreenTokens.sidePadding)
+        .frame(minHeight: 56, maxHeight: dynamicTypeSize.isAccessibilitySize ? nil : 56)
+        .background(NewBlockScreenTokens.paper)
+        .overlay(alignment: .bottom) {
+            Rectangle()
+                .fill(NewBlockScreenTokens.hair)
+                .frame(height: NewBlockScreenTokens.rule)
+        }
+    }
+
+    @ViewBuilder
+    private var stepper: some View {
+        NewBlockStepperButton(label: "−", action: onDecrement)
+        Text(value)
+            .font(NewBlockType.number)
+            .foregroundStyle(NewBlockScreenTokens.ink)
+            .lineLimit(dynamicTypeSize.isAccessibilitySize ? 1 : nil)
+            .frame(width: dynamicTypeSize.isAccessibilitySize ? nil : valueWidth, alignment: .center)
+            .frame(minWidth: dynamicTypeSize.isAccessibilitySize ? valueWidth : nil)
+        NewBlockStepperButton(label: "+", action: onIncrement)
     }
 }
 
@@ -926,6 +1059,37 @@ private struct NewBlockPhaseBand: Identifiable {
     let kind: BlockPhaseKind
 }
 
+/// Centers one label over each phase band (T25). Its ideal width is the
+/// narrowest plot in which every band holds its label with room to spare,
+/// so a `ViewThatFits` can fall back to shorter labels, and then to none,
+/// before a label spills into its neighbor's band.
+private struct NewBlockPhaseLabelRow: Layout {
+    /// A band's start and end, as fractions of the plot's width.
+    struct Band {
+        let start: CGFloat
+        let end: CGFloat
+    }
+
+    let bands: [Band]
+    /// The least space between a label and its band's edges.
+    var inset: CGFloat = 2
+
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+        let sizes = subviews.map { $0.sizeThatFits(.unspecified) }
+        let narrowest = zip(bands, sizes).map { band, size in
+            (size.width + 2 * inset) / max(band.end - band.start, .leastNonzeroMagnitude)
+        }.max() ?? 0
+        return CGSize(width: proposal.width ?? narrowest, height: sizes.map(\.height).max() ?? 0)
+    }
+
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+        for (band, subview) in zip(bands, subviews) {
+            let x = bounds.minX + (band.start + band.end) / 2 * bounds.width
+            subview.place(at: CGPoint(x: x, y: bounds.midY), anchor: .center, proposal: .unspecified)
+        }
+    }
+}
+
 /// Swift Charts progression card — shows Volume (AreaMark, translucent gray) and
 /// Intensity (bold LineMark + ring PointMark) with colored phase-band regions,
 /// in-band phase labels per contiguous span, HIGH/LOW anchors, vertical RuleMark
@@ -935,6 +1099,8 @@ private struct NewBlockPhaseBand: Identifiable {
 fileprivate struct NewBlockProgressionChart: View {
     let phases: [BlockPhaseDraft]
 
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+
     // Selected week for scrub / callout pill. Starts nil — selection chrome
     // (ring, RuleMark, callout pill) appears only after the user taps or scrubs.
     @State private var selectedWeek: Int? = nil
@@ -942,6 +1108,11 @@ fileprivate struct NewBlockProgressionChart: View {
     // Measured callout pill width, used to clamp the pill inside the plot
     // area so edge-week selections (W1, last week) don't clip the pill.
     @State private var calloutWidth: CGFloat = 0
+
+    // T25: the chart's width and its widest week label, measured so the
+    // week axis labels only as many weeks as fit side by side.
+    @State private var chartWidth: CGFloat = 0
+    @State private var weekLabelWidth: CGFloat = 0
 
     /// Expand phases into per-week data points (Volume + Intensity series).
     private var points: [NewBlockProgressionPoint] {
@@ -1004,10 +1175,41 @@ fileprivate struct NewBlockProgressionChart: View {
     }
 
     /// X-axis week labels: every week when totalWeeks <= 8; strided for longer blocks.
+    /// T25: the stride grows until no label comes within weekLabelGap of the
+    /// next, and it counts back from the last week, so the last week always
+    /// has its label and Swift Charts never drops one that collides.
     private var weekAxisValues: [Int] {
         guard totalWeeks >= 1 else { return [] }
-        let step = totalWeeks <= 8 ? 1 : Int(ceil(Double(totalWeeks) / 8.0))
-        return Array(stride(from: 1, through: totalWeeks, by: max(1, step)))
+        var step = totalWeeks <= 8 ? 1 : Int(ceil(Double(totalWeeks) / 8.0))
+        while step < totalWeeks, !weekLabelsClear(stride(from: totalWeeks, through: 1, by: -step)) {
+            step += 1
+        }
+        return Array(stride(from: totalWeeks, through: 1, by: -max(1, step)).reversed())
+    }
+
+    /// How far a week label moves left of where Swift Charts draws it, which
+    /// starts weekLabelLead after its tick. Near the plot's trailing edge a
+    /// label moves to center on its tick, or to end with the plot, rather
+    /// than run past the edge, where Swift Charts would drop it (T25).
+    private func weekLabelShift(for week: Int) -> CGFloat {
+        guard chartWidth > 0, weekLabelWidth > 0 else { return 0 }
+        let tick = (CGFloat(week) - 0.5) * chartWidth / CGFloat(totalWeeks)
+        let lead = ChartLayout.weekLabelLead
+        if tick + lead + weekLabelWidth <= chartWidth { return 0 }
+        if tick + weekLabelWidth / 2 <= chartWidth { return lead + weekLabelWidth / 2 }
+        return tick + lead + weekLabelWidth - chartWidth
+    }
+
+    /// True when no two of `weeks`' labels, each as wide as the widest,
+    /// come within weekLabelGap of each other.
+    private func weekLabelsClear(_ weeks: StrideThrough<Int>) -> Bool {
+        guard chartWidth > 0, weekLabelWidth > 0 else { return true }
+        let weekWidth = chartWidth / CGFloat(totalWeeks)
+        let starts = weeks.map {
+            (CGFloat($0) - 0.5) * weekWidth + ChartLayout.weekLabelLead - weekLabelShift(for: $0)
+        }
+        .sorted()
+        return zip(starts, starts.dropFirst()).allSatisfy { $1 - $0 >= weekLabelWidth + ChartLayout.weekLabelGap }
     }
 
     /// Y domain derived from all plotted data, padded for visual breathing room.
@@ -1043,63 +1245,162 @@ fileprivate struct NewBlockProgressionChart: View {
         static let plotAreaHeight: CGFloat = 156
         static let emptyStateHeight: CGFloat = 156
         static let weekLabelSpacing: CGFloat = 8
+        /// The least space between two week labels.
+        static let weekLabelGap: CGFloat = 8
+        /// How far after its tick Swift Charts starts a week label.
+        static let weekLabelLead: CGFloat = 4
+        /// Where a phase label's middle sits below the top of the plot.
+        static let phaseLabelY: CGFloat = 12
+        /// The HIGH and LOW anchors' leading edge at accessibility sizes.
+        static let anchorInset: CGFloat = 8
+        /// The space between HIGH or LOW and its gridline at accessibility sizes.
+        static let anchorGap: CGFloat = 2
+    }
+
+    /// Each contiguous span's start and end, as fractions of the plot's width.
+    private var spanFractions: [NewBlockPhaseLabelRow.Band] {
+        let weeks = CGFloat(max(1, totalWeeks))
+        return contiguousPhaseSpans.map {
+            NewBlockPhaseLabelRow.Band(start: CGFloat($0.start) / weeks, end: CGFloat($0.end) / weeks)
+        }
+    }
+
+    /// One label per contiguous span: today's abbreviations ("ACCUM."), or
+    /// Program's short labels ("ACCUM") when those do not fit their bands,
+    /// or none when even those do not; the bands' colors and the phase cards
+    /// below still name the phases (T25).
+    private var phaseLabels: some View {
+        ViewThatFits(in: .horizontal) {
+            phaseLabelRow { NewBlockPhaseText.abbreviation(for: $0).uppercased() }
+            phaseLabelRow { $0.shortLabel }
+            Color.clear
+                .frame(width: 0, height: 0)
+        }
+    }
+
+    private func phaseLabelRow(_ text: @escaping (BlockPhaseKind) -> String) -> some View {
+        NewBlockPhaseLabelRow(bands: spanFractions) {
+            ForEach(Array(contiguousPhaseSpans.enumerated()), id: \.offset) { _, span in
+                Text(text(span.kind))
+                    .font(NewBlockType.micro)
+                    .tracking(0.8)
+                    .foregroundStyle(BlockPhaseColors.phaseLabelInk(for: span.kind))
+            }
+        }
+    }
+
+    /// HIGH or LOW. As the mock draws it, the anchor sits on its gridline
+    /// near the plot's leading edge. At accessibility sizes it would cover
+    /// the phase labels and run past that edge, so it starts 8pt inside the
+    /// plot and stands between the two gridlines, under HIGH's and over LOW's.
+    @ViewBuilder
+    private func anchorLabel(_ text: String, centerX: CGFloat, lineY: CGFloat, below: Bool, in size: CGSize) -> some View {
+        let label = Text(text)
+            .font(NewBlockType.micro)
+            .tracking(0.6)
+            .foregroundStyle(NewBlockScreenTokens.muted)
+        if dynamicTypeSize.isAccessibilitySize {
+            label
+                .fixedSize()
+                .padding(.leading, ChartLayout.anchorInset)
+                .padding(below ? .top : .bottom, ChartLayout.anchorGap)
+                .frame(
+                    width: size.width,
+                    height: max(0, below ? size.height - lineY : lineY),
+                    alignment: below ? .topLeading : .bottomLeading
+                )
+                .position(x: size.width / 2, y: below ? (lineY + size.height) / 2 : lineY / 2)
+        } else {
+            label
+                .position(x: centerX, y: lineY)
+        }
+    }
+
+    private var chartTitle: some View {
+        Text("PROGRESSION OVERVIEW")
+            .font(NewBlockType.label)
+            .tracking(NewBlockScreenTokens.labelTracking)
+            .foregroundStyle(NewBlockScreenTokens.muted)
+    }
+
+    // Legend pill chips — VOLUME: dashed line glyph; INTENSITY: line-dot-line glyph.
+    // The series marker strings "Volume" / "Intensity" remain in the marks below.
+
+    /// VOLUME chip — three short dashes.
+    private var volumeLegendChip: some View {
+        HStack(spacing: 4) {
+            HStack(spacing: 2) {
+                ForEach(0..<3, id: \.self) { _ in
+                    Rectangle()
+                        .fill(NewBlockScreenTokens.muted)
+                        .frame(width: 4, height: 1)
+                }
+            }
+            Text("VOLUME")
+                .font(NewBlockType.micro)
+                .tracking(1.2)
+                .foregroundStyle(NewBlockScreenTokens.muted)
+        }
+        .padding(.horizontal, 8)
+        .padding(.vertical, 5)
+        .background(NewBlockScreenTokens.card, in: Capsule())
+        .overlay(Capsule().stroke(NewBlockScreenTokens.hair, lineWidth: 0.75))
+    }
+
+    /// INTENSITY chip — line-dot-line.
+    private var intensityLegendChip: some View {
+        HStack(spacing: 4) {
+            HStack(spacing: 2) {
+                Rectangle()
+                    .fill(NewBlockScreenTokens.ink)
+                    .frame(width: 8, height: 1.5)
+                Circle()
+                    .fill(NewBlockScreenTokens.ink)
+                    .frame(width: 4, height: 4)
+                Rectangle()
+                    .fill(NewBlockScreenTokens.ink)
+                    .frame(width: 8, height: 1.5)
+            }
+            Text("INTENSITY")
+                .font(NewBlockType.micro)
+                .tracking(1.2)
+                .foregroundStyle(NewBlockScreenTokens.ink)
+        }
+        .padding(.horizontal, 8)
+        .padding(.vertical, 5)
+        .background(NewBlockScreenTokens.card, in: Capsule())
+        .overlay(Capsule().stroke(NewBlockScreenTokens.hair, lineWidth: 0.75))
     }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            // Title row + legend pill chips
-            HStack(alignment: .center) {
-                Text("PROGRESSION OVERVIEW")
-                    .font(NewBlockType.label)
-                    .tracking(NewBlockScreenTokens.labelTracking)
-                    .foregroundStyle(NewBlockScreenTokens.muted)
+            // Title row + legend pill chips. T25: when the row is too narrow
+            // for both, as on the 390pt phone, the legend goes under the
+            // title, and its chips wrap between each other, never mid-word.
+            ViewThatFits(in: .horizontal) {
+                HStack(alignment: .center) {
+                    chartTitle
 
-                Spacer()
+                    Spacer()
 
-                // Legend pill chips — VOLUME: dashed line glyph; INTENSITY: line-dot-line glyph.
-                // The series marker strings "Volume" / "Intensity" remain in the marks below.
-                HStack(spacing: 8) {
-                    // VOLUME chip — three short dashes
-                    HStack(spacing: 4) {
-                        HStack(spacing: 2) {
-                            ForEach(0..<3, id: \.self) { _ in
-                                Rectangle()
-                                    .fill(NewBlockScreenTokens.muted)
-                                    .frame(width: 4, height: 1)
-                            }
-                        }
-                        Text("VOLUME")
-                            .font(NewBlockType.micro)
-                            .tracking(1.2)
-                            .foregroundStyle(NewBlockScreenTokens.muted)
+                    HStack(spacing: 8) {
+                        volumeLegendChip
+                        intensityLegendChip
                     }
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 5)
-                    .background(NewBlockScreenTokens.card, in: Capsule())
-                    .overlay(Capsule().stroke(NewBlockScreenTokens.hair, lineWidth: 0.75))
+                }
 
-                    // INTENSITY chip — line-dot-line
-                    HStack(spacing: 4) {
-                        HStack(spacing: 2) {
-                            Rectangle()
-                                .fill(NewBlockScreenTokens.ink)
-                                .frame(width: 8, height: 1.5)
-                            Circle()
-                                .fill(NewBlockScreenTokens.ink)
-                                .frame(width: 4, height: 4)
-                            Rectangle()
-                                .fill(NewBlockScreenTokens.ink)
-                                .frame(width: 8, height: 1.5)
+                VStack(alignment: .leading, spacing: NewBlockScreenTokens.rowGap) {
+                    chartTitle
+                    ViewThatFits(in: .horizontal) {
+                        HStack(spacing: 8) {
+                            volumeLegendChip
+                            intensityLegendChip
                         }
-                        Text("INTENSITY")
-                            .font(NewBlockType.micro)
-                            .tracking(1.2)
-                            .foregroundStyle(NewBlockScreenTokens.ink)
+                        VStack(alignment: .leading, spacing: 8) {
+                            volumeLegendChip
+                            intensityLegendChip
+                        }
                     }
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 5)
-                    .background(NewBlockScreenTokens.card, in: Capsule())
-                    .overlay(Capsule().stroke(NewBlockScreenTokens.hair, lineWidth: 0.75))
                 }
             }
             .padding(.bottom, 14)
@@ -1205,8 +1506,12 @@ fileprivate struct NewBlockProgressionChart: View {
                 .chartXAxis {
                     AxisMarks(values: weekAxisValues) { value in
                         if let week = value.as(Int.self) {
-                            AxisValueLabel {
-                                Text("W\(week)")
+                            // T25: once measured, weekAxisValues spaces the labels
+                            // apart, so Swift Charts need not drop any.
+                            AxisValueLabel(
+                                collisionResolution: weekLabelWidth > 0 ? .disabled : .automatic
+                            ) {
+                                let label = Text("W\(week)")
                                     .font(NewBlockType.micro)
                                     .foregroundStyle(
                                         week == (selectedWeek ?? -1)
@@ -1215,6 +1520,18 @@ fileprivate struct NewBlockProgressionChart: View {
                                     )
                                     .fontWeight(week == (selectedWeek ?? -1) ? .semibold : .regular)
                                     .padding(.top, ChartLayout.weekLabelSpacing)
+                                let shift = weekLabelShift(for: week)
+                                if shift > 0 {
+                                    // Swift Charts drops a label whose frame runs past
+                                    // the plot, so a moved label lays out 1pt wide and
+                                    // draws in full where it moved to.
+                                    label
+                                        .fixedSize()
+                                        .frame(width: 1, alignment: .leading)
+                                        .offset(x: -shift)
+                                } else {
+                                    label
+                                }
                             }
                         }
                     }
@@ -1238,6 +1555,18 @@ fileprivate struct NewBlockProgressionChart: View {
                 .chartPlotStyle { plotArea in
                     plotArea.frame(height: ChartLayout.plotAreaHeight)
                 }
+                // T25: the chart's width and its widest week label (the last,
+                // in the selected label's weight) set the week axis's stride.
+                .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { chartWidth = $0 }
+                .background(alignment: .topLeading) {
+                    Text("W\(totalWeeks)")
+                        .font(NewBlockType.micro)
+                        .fontWeight(.semibold)
+                        .fixedSize()
+                        .hidden()
+                        .accessibilityHidden(true)
+                        .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { weekLabelWidth = $0 }
+                }
                 .accessibilityLabel(
                     "Progression overview, \(totalWeeks) weeks, \(contiguousPhaseSpans.count) phases. " +
                     "Volume and intensity by week. \(selectedWeek.map { "Selected week \($0)." } ?? "No week selected.")"
@@ -1248,16 +1577,13 @@ fileprivate struct NewBlockProgressionChart: View {
                 .chartOverlay { proxy in
                     GeometryReader { geo in
                         ZStack(alignment: .topLeading) {
-                            // Per-span phase abbreviation centered inside the band
-                            ForEach(Array(contiguousPhaseSpans.enumerated()), id: \.offset) { _, span in
-                                let midWeek = Double(span.start + span.end) / 2.0 + 0.5
-                                let xPos = proxy.position(forX: midWeek) ?? (geo.size.width / 2)
-                                Text(NewBlockPhaseText.abbreviation(for: span.kind).uppercased())
-                                    .font(NewBlockType.micro)
-                                    .tracking(0.8)
-                                    .foregroundStyle(BlockPhaseColors.phaseLabelInk(for: span.kind))
-                                    .position(x: xPos, y: 12)
-                            }
+                            // Per-span phase abbreviation centered inside the band,
+                            // in the longest form every band holds (T25).
+                            let plotStart = proxy.position(forX: 0.5) ?? 0
+                            let plotEnd = proxy.position(forX: Double(totalWeeks) + 0.5) ?? geo.size.width
+                            phaseLabels
+                                .frame(width: max(0, plotEnd - plotStart))
+                                .position(x: (plotStart + plotEnd) / 2, y: ChartLayout.phaseLabelY)
 
                             // HIGH / LOW y-anchor labels on the leading edge
                             let lo = yDomain.lowerBound
@@ -1266,17 +1592,8 @@ fileprivate struct NewBlockProgressionChart: View {
                             let highY = proxy.position(forY: lo + range * 0.82) ?? 0
                             let lowY  = proxy.position(forY: lo + range * 0.18) ?? geo.size.height
 
-                            Text("HIGH")
-                                .font(NewBlockType.micro)
-                                .tracking(0.6)
-                                .foregroundStyle(NewBlockScreenTokens.muted)
-                                .position(x: 18, y: highY)
-
-                            Text("LOW")
-                                .font(NewBlockType.micro)
-                                .tracking(0.6)
-                                .foregroundStyle(NewBlockScreenTokens.muted)
-                                .position(x: 16, y: lowY)
+                            anchorLabel("HIGH", centerX: 18, lineY: highY, below: true, in: geo.size)
+                            anchorLabel("LOW", centerX: 16, lineY: lowY, below: false, in: geo.size)
 
                             // Value callout pill above the selected week
                             if let sel = selectedWeek,
@@ -1470,6 +1787,11 @@ fileprivate struct NewBlockPhaseEditorRow: View {
 
     @State private var presentingEditor = false
 
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    /// The phase number badge's side: 36pt at default text, and as large as
+    /// its index at larger sizes (T25).
+    @ScaledMetric(relativeTo: .title) private var badgeSide: CGFloat = 36
+
     // 260610-g9d r2: finger-tracking offset is row-local @GestureState so per-frame
     // drag updates invalidate only this card's body — never the parent section.
     // Auto-resets (with a spring matching endReorder's) on gesture end/cancel.
@@ -1503,10 +1825,11 @@ fileprivate struct NewBlockPhaseEditorRow: View {
     }
 
     /// 1pt × 30pt hairline divider between stat columns (260610-dbz; 34 → 30pt in 260610-hcv).
+    /// At accessibility sizes it runs the stat grid's full height (T25).
     private var phaseRowDivider: some View {
         Rectangle()
             .fill(NewBlockScreenTokens.hair)
-            .frame(width: 1, height: 30)
+            .frame(width: 1, height: dynamicTypeSize.isAccessibilitySize ? nil : 30)
     }
 
     var body: some View {
@@ -1550,86 +1873,126 @@ fileprivate struct NewBlockPhaseEditorRow: View {
     }
 
     // The warm card itself (rail + content), offset over the Delete affordance.
+    // T25: at accessibility sizes the content takes two rows, the badge and
+    // title over the stat grid, chevron and handle.
     private var cardSurface: some View {
         HStack(spacing: 0) {
-            let chipFill  = BlockPhaseColors.badgeColor(for: draft.kind)
-            let chipLabel = BlockPhaseColors.badgeLabelColor(for: draft.kind)
-
             // 260528-vi2 r2: colored left rail — anchors the phase color to the
             // card's left edge (clipped to the rounded corner by .bruCard).
             Rectangle()
-                .fill(chipFill)
+                .fill(BlockPhaseColors.badgeColor(for: draft.kind))
                 .frame(width: 5)
 
-            HStack(alignment: .center, spacing: 8) {
-                // Semantic badge (phase color + Bebas index)
-                Text(String(format: "%02d", displayIndex))
-                    .font(NewBlockType.phaseIndex)
-                    .foregroundStyle(chipLabel)
-                    .frame(width: 36, height: 36)
-                    .background(chipFill)
-                    .clipShape(RoundedRectangle(cornerRadius: 9, style: .continuous))
-
-                // Phase title + subtitle. The block fills the width up to the stat grid
-                // itself rather than sitting beside a Spacer, so the title gets that
-                // Spacer's 14pt back and fits on 390pt phones (260610-hcv).
-                VStack(alignment: .leading, spacing: 3) {
-                    Text(NewBlockPhaseText.title(for: draft.kind))
-                        .font(NewBlockType.phaseTitle)
-                        .fontWeight(.semibold)
-                        .foregroundStyle(NewBlockScreenTokens.ink)
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.75)
-
-                    Text(NewBlockPhaseText.subtitle(for: draft.kind))
-                        .font(NewBlockType.label)
-                        .tracking(0.7)
-                        .foregroundStyle(NewBlockScreenTokens.muted)
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.8)
+            Group {
+                if dynamicTypeSize.isAccessibilitySize {
+                    VStack(alignment: .leading, spacing: 12) {
+                        HStack(alignment: .center, spacing: 8) {
+                            phaseBadge
+                            phaseTitleBlock
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                        }
+                        HStack(alignment: .center, spacing: 8) {
+                            statGrid
+                            chevron
+                            dragHandle
+                        }
+                    }
+                } else {
+                    HStack(alignment: .center, spacing: 8) {
+                        phaseBadge
+                        // Phase title + subtitle. The block fills the width up to the stat grid
+                        // itself rather than sitting beside a Spacer, so the title gets that
+                        // Spacer's 14pt back and fits on 390pt phones (260610-hcv).
+                        phaseTitleBlock
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                        statGrid
+                        chevron
+                        dragHandle
+                    }
                 }
-                .frame(maxWidth: .infinity, alignment: .leading)
-
-                // Stat grid: hairline dividers before each column + chevron (260610-dbz)
-                HStack(alignment: .top, spacing: 5) {
-                    phaseRowDivider
-                    NewBlockReadOnlyStatColumn(
-                        label: "WEEKS",
-                        value: "\(draft.weeks)"
-                    )
-                    phaseRowDivider
-                    NewBlockReadOnlyStatColumn(
-                        label: "VOL",
-                        value: NewBlockPhaseText.volumeValue(draft.volumeMultiplier)
-                    )
-                    phaseRowDivider
-                    NewBlockReadOnlyStatColumn(
-                        label: "INT",
-                        value: NewBlockPhaseText.intensityValue(draft.intensityMultiplier)
-                    )
-                }
-
-                // Chevron affordance
-                Image(systemName: "chevron.right")
-                    .font(.system(size: 12, weight: .semibold))
-                    .foregroundStyle(NewBlockScreenTokens.muted)
-
-                // Drag handle — typographic ⋮⋮ (matches RoutineExerciseCard); long-press
-                // then drag to reorder. Gesture is scoped to the handle so the card body
-                // stays free for swipe-to-delete and tap-to-edit.
-                Text("⋮⋮")
-                    .font(.system(size: 16, weight: .bold))
-                    .foregroundStyle(NewBlockScreenTokens.muted)
-                    .frame(width: 18, height: 44)
-                    .contentShape(Rectangle())
-                    .highPriorityGesture(reorderGesture)
-                    .accessibilityHidden(true)
             }
             .padding(.leading, 12)
             .padding(.trailing, NewBlockScreenTokens.cardPadding)
             .padding(.vertical, 12)
         }
         .bruCard(radius: NewBlockScreenTokens.phaseCardRadius)
+    }
+
+    // Semantic badge (phase color + Bebas index)
+    private var phaseBadge: some View {
+        Text(String(format: "%02d", displayIndex))
+            .font(NewBlockType.phaseIndex)
+            .foregroundStyle(BlockPhaseColors.badgeLabelColor(for: draft.kind))
+            .lineLimit(1)
+            .minimumScaleFactor(0.5)
+            .frame(width: badgeSide, height: badgeSide)
+            .background(BlockPhaseColors.badgeColor(for: draft.kind))
+            .clipShape(RoundedRectangle(cornerRadius: 9, style: .continuous))
+    }
+
+    private var phaseTitleBlock: some View {
+        VStack(alignment: .leading, spacing: 3) {
+            Text(NewBlockPhaseText.title(for: draft.kind))
+                .font(NewBlockType.phaseTitle)
+                .fontWeight(.semibold)
+                .foregroundStyle(NewBlockScreenTokens.ink)
+                .lineLimit(1)
+                .minimumScaleFactor(dynamicTypeSize.isAccessibilitySize ? 0.5 : 0.75)
+
+            // At accessibility sizes the subtitle wraps between its words.
+            Text(NewBlockPhaseText.subtitle(for: draft.kind))
+                .font(NewBlockType.label)
+                .tracking(0.7)
+                .foregroundStyle(NewBlockScreenTokens.muted)
+                .lineLimit(dynamicTypeSize.isAccessibilitySize ? nil : 1)
+                .minimumScaleFactor(0.8)
+        }
+    }
+
+    // Stat grid: hairline dividers before each column + chevron (260610-dbz).
+    // At accessibility sizes the grid has its own row, so it needs no leading
+    // divider, and its columns share the row's width.
+    private var statGrid: some View {
+        HStack(alignment: .top, spacing: 5) {
+            if !dynamicTypeSize.isAccessibilitySize {
+                phaseRowDivider
+            }
+            NewBlockReadOnlyStatColumn(
+                label: "WEEKS",
+                value: "\(draft.weeks)"
+            )
+            phaseRowDivider
+            NewBlockReadOnlyStatColumn(
+                label: "VOL",
+                value: NewBlockPhaseText.volumeValue(draft.volumeMultiplier)
+            )
+            phaseRowDivider
+            NewBlockReadOnlyStatColumn(
+                label: "INT",
+                value: NewBlockPhaseText.intensityValue(draft.intensityMultiplier)
+            )
+        }
+        .fixedSize(horizontal: false, vertical: dynamicTypeSize.isAccessibilitySize)
+    }
+
+    // Chevron affordance
+    private var chevron: some View {
+        Image(systemName: "chevron.right")
+            .font(.system(size: 12, weight: .semibold))
+            .foregroundStyle(NewBlockScreenTokens.muted)
+    }
+
+    // Drag handle — typographic ⋮⋮ (matches RoutineExerciseCard); long-press
+    // then drag to reorder. Gesture is scoped to the handle so the card body
+    // stays free for swipe-to-delete and tap-to-edit.
+    private var dragHandle: some View {
+        Text("⋮⋮")
+            .font(.system(size: 16, weight: .bold))
+            .foregroundStyle(NewBlockScreenTokens.muted)
+            .frame(width: 18, height: 44)
+            .contentShape(Rectangle())
+            .highPriorityGesture(reorderGesture)
+            .accessibilityHidden(true)
     }
 
     // Trailing red Delete affordance revealed behind the card on swipe-left.
@@ -1644,6 +2007,9 @@ fileprivate struct NewBlockPhaseEditorRow: View {
                     .font(NewBlockType.chrome)
                     .tracking(NewBlockScreenTokens.chipTracking)
                     .foregroundStyle(NewBlockScreenTokens.signal.bruLabelOnFill)
+                    // T25: shrinks to the revealed width rather than break.
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.5)
                     .frame(width: Swipe.revealWidth)
                     .frame(maxHeight: .infinity)
                     .contentShape(Rectangle())
@@ -1740,7 +2106,11 @@ fileprivate struct NewBlockPhaseEditorRow: View {
 /// 260610-dbz: center-aligned + narrowed to 38pt (was 40pt left-aligned in 260528-vi2 r2)
 /// to compensate for the added hairline dividers and keep the title block from being squeezed.
 /// 260610-hcv: narrowed again to 32pt with a 19pt value for the same reason.
+/// T25: at accessibility sizes the column shares its row's width, and its
+/// label shrinks to fit rather than break mid-word.
 fileprivate struct NewBlockReadOnlyStatColumn: View {
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+
     let label: String
     let value: String
 
@@ -1751,6 +2121,8 @@ fileprivate struct NewBlockReadOnlyStatColumn: View {
                 .tracking(0.8)
                 .foregroundStyle(NewBlockScreenTokens.muted)
                 .multilineTextAlignment(.center)
+                .lineLimit(dynamicTypeSize.isAccessibilitySize ? 1 : nil)
+                .minimumScaleFactor(dynamicTypeSize.isAccessibilitySize ? 0.5 : 1)
             Text(value)
                 .font(.bru(.condensed, size: 19))
                 .foregroundStyle(NewBlockScreenTokens.ink)
@@ -1758,7 +2130,8 @@ fileprivate struct NewBlockReadOnlyStatColumn: View {
                 .minimumScaleFactor(0.8)
                 .multilineTextAlignment(.center)
         }
-        .frame(width: 32, alignment: .center)
+        .frame(width: dynamicTypeSize.isAccessibilitySize ? nil : 32, alignment: .center)
+        .frame(maxWidth: dynamicTypeSize.isAccessibilitySize ? .infinity : nil)
     }
 }
 
@@ -1811,6 +2184,7 @@ fileprivate enum NewBlockPhaseText {
 fileprivate struct NewBlockPhaseEditorSheet: View {
     @Bindable var draft: BlockPhaseDraft
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     var body: some View {
         NavigationStack {
@@ -1828,35 +2202,32 @@ fileprivate struct NewBlockPhaseEditorSheet: View {
                 ScrollView {
                     VStack(spacing: 0) {
                         // WEEKS row
-                        HStack(spacing: NewBlockScreenTokens.rowGap) {
+                        NewBlockSheetStepperRow(
+                            value: "\(draft.weeks)",
+                            valueWidth: 36,
+                            onDecrement: { draft.weeks = max(1, draft.weeks - 1) },
+                            onIncrement: { draft.weeks = min(52, draft.weeks + 1) }
+                        ) {
                             Text("WEEKS")
                                 .font(NewBlockType.label)
                                 .tracking(NewBlockScreenTokens.labelTracking)
                                 .foregroundStyle(NewBlockScreenTokens.muted)
                                 .frame(maxWidth: .infinity, alignment: .leading)
-
-                            NewBlockStepperButton(label: "−") {
-                                draft.weeks = max(1, draft.weeks - 1)
-                            }
-                            Text("\(draft.weeks)")
-                                .font(NewBlockType.number)
-                                .foregroundStyle(NewBlockScreenTokens.ink)
-                                .frame(width: 36, alignment: .center)
-                            NewBlockStepperButton(label: "+") {
-                                draft.weeks = min(52, draft.weeks + 1)
-                            }
-                        }
-                        .padding(.horizontal, NewBlockScreenTokens.sidePadding)
-                        .frame(height: 56)
-                        .background(NewBlockScreenTokens.paper)
-                        .overlay(alignment: .bottom) {
-                            Rectangle()
-                                .fill(NewBlockScreenTokens.hair)
-                                .frame(height: NewBlockScreenTokens.rule)
                         }
 
                         // VOL row
-                        HStack(spacing: NewBlockScreenTokens.rowGap) {
+                        NewBlockSheetStepperRow(
+                            value: NewBlockPhaseText.volumeValue(draft.volumeMultiplier),
+                            valueWidth: 52,
+                            onDecrement: {
+                                let newVal = draft.volumeMultiplier - 0.05
+                                draft.volumeMultiplier = (max(0.4, newVal) * 100).rounded() / 100
+                            },
+                            onIncrement: {
+                                let newVal = draft.volumeMultiplier + 0.05
+                                draft.volumeMultiplier = (min(1.6, newVal) * 100).rounded() / 100
+                            }
+                        ) {
                             VStack(alignment: .leading, spacing: NewBlockScreenTokens.microGap) {
                                 Text("VOLUME")
                                     .font(NewBlockType.label)
@@ -1867,31 +2238,21 @@ fileprivate struct NewBlockPhaseEditorSheet: View {
                                     .foregroundStyle(NewBlockScreenTokens.muted)
                             }
                             .frame(maxWidth: .infinity, alignment: .leading)
-
-                            NewBlockStepperButton(label: "−") {
-                                let newVal = draft.volumeMultiplier - 0.05
-                                draft.volumeMultiplier = (max(0.4, newVal) * 100).rounded() / 100
-                            }
-                            Text(NewBlockPhaseText.volumeValue(draft.volumeMultiplier))
-                                .font(NewBlockType.number)
-                                .foregroundStyle(NewBlockScreenTokens.ink)
-                                .frame(width: 52, alignment: .center)
-                            NewBlockStepperButton(label: "+") {
-                                let newVal = draft.volumeMultiplier + 0.05
-                                draft.volumeMultiplier = (min(1.6, newVal) * 100).rounded() / 100
-                            }
-                        }
-                        .padding(.horizontal, NewBlockScreenTokens.sidePadding)
-                        .frame(height: 56)
-                        .background(NewBlockScreenTokens.paper)
-                        .overlay(alignment: .bottom) {
-                            Rectangle()
-                                .fill(NewBlockScreenTokens.hair)
-                                .frame(height: NewBlockScreenTokens.rule)
                         }
 
                         // INT row
-                        HStack(spacing: NewBlockScreenTokens.rowGap) {
+                        NewBlockSheetStepperRow(
+                            value: NewBlockPhaseText.intensityValue(draft.intensityMultiplier),
+                            valueWidth: 52,
+                            onDecrement: {
+                                let newVal = draft.intensityMultiplier - 0.05
+                                draft.intensityMultiplier = (max(0.5, newVal) * 100).rounded() / 100
+                            },
+                            onIncrement: {
+                                let newVal = draft.intensityMultiplier + 0.05
+                                draft.intensityMultiplier = (min(1.0, newVal) * 100).rounded() / 100
+                            }
+                        ) {
                             VStack(alignment: .leading, spacing: NewBlockScreenTokens.microGap) {
                                 Text("INTENSITY")
                                     .font(NewBlockType.label)
@@ -1902,27 +2263,6 @@ fileprivate struct NewBlockPhaseEditorSheet: View {
                                     .foregroundStyle(NewBlockScreenTokens.muted)
                             }
                             .frame(maxWidth: .infinity, alignment: .leading)
-
-                            NewBlockStepperButton(label: "−") {
-                                let newVal = draft.intensityMultiplier - 0.05
-                                draft.intensityMultiplier = (max(0.5, newVal) * 100).rounded() / 100
-                            }
-                            Text(NewBlockPhaseText.intensityValue(draft.intensityMultiplier))
-                                .font(NewBlockType.number)
-                                .foregroundStyle(NewBlockScreenTokens.ink)
-                                .frame(width: 52, alignment: .center)
-                            NewBlockStepperButton(label: "+") {
-                                let newVal = draft.intensityMultiplier + 0.05
-                                draft.intensityMultiplier = (min(1.0, newVal) * 100).rounded() / 100
-                            }
-                        }
-                        .padding(.horizontal, NewBlockScreenTokens.sidePadding)
-                        .frame(height: 56)
-                        .background(NewBlockScreenTokens.paper)
-                        .overlay(alignment: .bottom) {
-                            Rectangle()
-                                .fill(NewBlockScreenTokens.hair)
-                                .frame(height: NewBlockScreenTokens.rule)
                         }
                     }
                 }
@@ -1945,7 +2285,9 @@ fileprivate struct NewBlockPhaseEditorSheet: View {
             .background(NewBlockScreenTokens.paper.ignoresSafeArea())
             .navigationBarHidden(true)
         }
-        .presentationDetents([.medium])
+        // T25: at accessibility sizes the sheet opens at full height, where its
+        // taller rows all fit.
+        .presentationDetents(dynamicTypeSize.isAccessibilitySize ? [.large] : [.medium])
     }
 }
 
@@ -2026,6 +2368,8 @@ fileprivate struct NewBlockAddPhaseTypeSheet: View {
 // ModeChip / DayToggleChip are copy-adapted from BlockOverviewScreen (fileprivate
 // there; do NOT import or reference them — separate token worlds per 09-RESEARCH Pattern 3).
 fileprivate struct NewBlockSplitBand: View {
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+
     @Bindable var draft: BlockDraft
     /// False while the edited block is active, so it offers no SWAP or + ATTACH.
     let canChangeRoutine: Bool
@@ -2048,27 +2392,20 @@ fileprivate struct NewBlockSplitBand: View {
                 .frame(height: NewBlockScreenTokens.heavyRule)
 
             // Split picker row
-            HStack(spacing: NewBlockScreenTokens.rowGap) {
+            rowLayout {
                 Text("Routine")
                     .font(NewBlockType.cta)
                     .foregroundStyle(NewBlockScreenTokens.ink)
-                Spacer()
+                if !dynamicTypeSize.isAccessibilitySize {
+                    Spacer()
+                }
                 if let split = draft.split {
                     Text(split.name)
                         .font(NewBlockType.label)
                         .tracking(NewBlockScreenTokens.labelTracking)
                         .foregroundStyle(NewBlockScreenTokens.muted)
                     if canChangeRoutine {
-                        Button {
-                            presentSplitPicker()
-                        } label: {
-                            Text("SWAP ▸")
-                                .font(NewBlockType.label)
-                                .tracking(NewBlockScreenTokens.labelTracking)
-                                .foregroundStyle(NewBlockScreenTokens.signalText)
-                                .frame(minWidth: 44, minHeight: 44)
-                        }
-                        .buttonStyle(.plain)
+                        routineButton("SWAP ▸")
                     }
                 } else {
                     Text("None — saves as draft")
@@ -2076,20 +2413,12 @@ fileprivate struct NewBlockSplitBand: View {
                         .tracking(NewBlockScreenTokens.labelTracking)
                         .foregroundStyle(NewBlockScreenTokens.muted)
                     if canChangeRoutine {
-                        Button {
-                            presentSplitPicker()
-                        } label: {
-                            Text("+ ATTACH ▸")
-                                .font(NewBlockType.label)
-                                .tracking(NewBlockScreenTokens.labelTracking)
-                                .foregroundStyle(NewBlockScreenTokens.signalText)
-                                .frame(minWidth: 44, minHeight: 44)
-                        }
-                        .buttonStyle(.plain)
+                        routineButton("+ ATTACH ▸")
                     }
                 }
             }
             .padding(.horizontal, NewBlockScreenTokens.sidePadding)
+            .padding(.vertical, dynamicTypeSize.isAccessibilitySize ? NewBlockScreenTokens.rowGap : 0)
             .frame(minHeight: 44)
 
             Rectangle()
@@ -2097,21 +2426,29 @@ fileprivate struct NewBlockSplitBand: View {
                 .frame(height: NewBlockScreenTokens.rule)
 
             // Scheduling mode picker row
-            HStack(spacing: NewBlockScreenTokens.rowGap) {
+            rowLayout {
                 Text("Scheduling")
                     .font(NewBlockType.cta)
                     .foregroundStyle(NewBlockScreenTokens.ink)
-                Spacer()
-                HStack(spacing: NewBlockScreenTokens.tightGap) {
-                    NewBlockModeChip("ROTATION", selected: draft.schedulingMode == .rotation) {
-                        draft.schedulingMode = .rotation
+                if dynamicTypeSize.isAccessibilitySize {
+                    // The chips share a line when they fit, or take one each.
+                    ViewThatFits(in: .horizontal) {
+                        HStack(spacing: NewBlockScreenTokens.tightGap) {
+                            modeChips
+                        }
+                        VStack(spacing: NewBlockScreenTokens.tightGap) {
+                            modeChips
+                        }
                     }
-                    NewBlockModeChip("FIXED WEEKLY", selected: draft.schedulingMode == .fixedWeekly) {
-                        draft.schedulingMode = .fixedWeekly
+                } else {
+                    Spacer()
+                    HStack(spacing: NewBlockScreenTokens.tightGap) {
+                        modeChips
                     }
                 }
             }
             .padding(.horizontal, NewBlockScreenTokens.sidePadding)
+            .padding(.vertical, dynamicTypeSize.isAccessibilitySize ? NewBlockScreenTokens.rowGap : 0)
             .frame(minHeight: 44)
 
             // Day-chip row (shown only when fixedWeekly)
@@ -2120,7 +2457,7 @@ fileprivate struct NewBlockSplitBand: View {
                     .fill(NewBlockScreenTokens.hair)
                     .frame(height: NewBlockScreenTokens.rule)
 
-                HStack(spacing: 4) {
+                dayChipLayout {
                     let weekdays: [(Int, String, String)] = [
                         (2, "M", "Monday"), (3, "T", "Tuesday"), (4, "W", "Wednesday"),
                         (5, "T", "Thursday"), (6, "F", "Friday"), (7, "S", "Saturday"), (1, "S", "Sunday")
@@ -2161,11 +2498,56 @@ fileprivate struct NewBlockSplitBand: View {
         }
         .background(NewBlockScreenTokens.paper)
     }
+
+    /// A row's label beside its value and controls, or, at accessibility
+    /// sizes, over them, each on a line of its own (T25).
+    private var rowLayout: AnyLayout {
+        dynamicTypeSize.isAccessibilitySize
+            ? AnyLayout(VStackLayout(alignment: .leading, spacing: NewBlockScreenTokens.tightGap))
+            : AnyLayout(HStackLayout(spacing: NewBlockScreenTokens.rowGap))
+    }
+
+    /// The seven days in a row, or, at accessibility sizes, four to a row,
+    /// so each day stays a 44pt tap target (T25).
+    private var dayChipLayout: AnyLayout {
+        dynamicTypeSize.isAccessibilitySize
+            ? AnyLayout(NewBlockDayGridLayout(columns: 4, spacing: 4))
+            : AnyLayout(HStackLayout(spacing: 4))
+    }
+
+    /// SWAP ▸ or + ATTACH ▸, which opens the routine picker. The whole 44pt
+    /// frame takes the tap.
+    private func routineButton(_ title: String) -> some View {
+        Button {
+            presentSplitPicker()
+        } label: {
+            Text(title)
+                .font(NewBlockType.label)
+                .tracking(NewBlockScreenTokens.labelTracking)
+                .foregroundStyle(NewBlockScreenTokens.signalText)
+                .frame(minWidth: 44, minHeight: 44)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+    }
+
+    @ViewBuilder
+    private var modeChips: some View {
+        NewBlockModeChip("ROTATION", selected: draft.schedulingMode == .rotation) {
+            draft.schedulingMode = .rotation
+        }
+        NewBlockModeChip("FIXED WEEKLY", selected: draft.schedulingMode == .fixedWeekly) {
+            draft.schedulingMode = .fixedWeekly
+        }
+    }
 }
 
 // Mode chip for the split band — copy-adapted from BlockOverviewScreen.ModeChip
 // using NewBlockScreenTokens.
+// T25: at accessibility sizes it is a 44pt tap target.
 fileprivate struct NewBlockModeChip: View {
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+
     let label: String
     let selected: Bool
     let action: () -> Void
@@ -2186,7 +2568,7 @@ fileprivate struct NewBlockModeChip: View {
                 .foregroundStyle(selected ? NewBlockScreenTokens.paper : NewBlockScreenTokens.ink)
                 .padding(.horizontal, 8)
                 .padding(.vertical, 5)
-                .frame(maxWidth: .infinity)
+                .frame(maxWidth: .infinity, minHeight: dynamicTypeSize.isAccessibilitySize ? 44 : nil)
                 .background(selected ? NewBlockScreenTokens.ink : Color.clear)
                 .overlay(
                     Rectangle()
@@ -2201,7 +2583,10 @@ fileprivate struct NewBlockModeChip: View {
 }
 
 // Day toggle chip for the split band — copy-adapted from BlockOverviewScreen.DayToggleChip.
+// T25: at accessibility sizes it grows to its letter and to a 44pt tap target.
 fileprivate struct NewBlockDayToggleChip: View {
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+
     let letter: String
     let weekdayName: String   // full name e.g. "Monday" — used for accessibilityLabel
     let selected: Bool
@@ -2216,7 +2601,7 @@ fileprivate struct NewBlockDayToggleChip: View {
                 .tracking(NewBlockScreenTokens.chipTracking)
                 .foregroundStyle(selected ? NewBlockScreenTokens.paper : NewBlockScreenTokens.muted)
                 .frame(maxWidth: .infinity)
-                .frame(height: 28)
+                .frame(minHeight: dynamicTypeSize.isAccessibilitySize ? 44 : 28)
                 .background(selected ? NewBlockScreenTokens.ink : NewBlockScreenTokens.faint)
                 .overlay(
                     Rectangle()
@@ -2228,6 +2613,45 @@ fileprivate struct NewBlockDayToggleChip: View {
         .accessibilityLabel(weekdayName)
         .accessibilityAddTraits(.isToggle)
         .accessibilityValue(selected ? "on" : "off")
+    }
+}
+
+/// Lays its subviews out left to right in rows of `columns` equal cells,
+/// each row as tall as its tallest subview (T25).
+private struct NewBlockDayGridLayout: Layout {
+    let columns: Int
+    let spacing: CGFloat
+
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+        let width = proposal.width ?? CGFloat(columns) * 44 + CGFloat(columns - 1) * spacing
+        let rows = rowHeights(of: subviews, cell: cellWidth(in: width))
+        return CGSize(width: width, height: rows.reduce(0, +) + CGFloat(max(0, rows.count - 1)) * spacing)
+    }
+
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+        let cell = cellWidth(in: bounds.width)
+        var y = bounds.minY
+        for (row, height) in rowHeights(of: subviews, cell: cell).enumerated() {
+            for column in 0..<columns where row * columns + column < subviews.count {
+                subviews[row * columns + column].place(
+                    at: CGPoint(x: bounds.minX + CGFloat(column) * (cell + spacing), y: y),
+                    proposal: ProposedViewSize(width: cell, height: height)
+                )
+            }
+            y += height + spacing
+        }
+    }
+
+    private func cellWidth(in width: CGFloat) -> CGFloat {
+        max(0, (width - CGFloat(columns - 1) * spacing) / CGFloat(columns))
+    }
+
+    private func rowHeights(of subviews: Subviews, cell: CGFloat) -> [CGFloat] {
+        stride(from: 0, to: subviews.count, by: columns).map { start in
+            subviews[start..<min(start + columns, subviews.count)]
+                .map { $0.sizeThatFits(ProposedViewSize(width: cell, height: nil)).height }
+                .max() ?? 0
+        }
     }
 }
 
@@ -2323,8 +2747,12 @@ fileprivate struct NewBlockUndoToast: View {
 // 260610-guh: restyle — outlined CANCEL pill, bookmark.fill icon, cta-size typography, drop trailing glyphs from display.
 // T11: the primary action reads SAVE AS READY (SAVE CHANGES in EDIT BLOCK) and, while
 // disabled, names the first missing piece.
+// T25: CANCEL's whole outlined pill takes the tap. At accessibility sizes the two
+// buttons stack, CANCEL first, and the primary label wraps between words.
 // No heavy 3pt rule. Sits on paper with screen-margin insets.
 fileprivate struct NewBlockBottomActionBar: View {
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+
     /// What the primary action waits for; nil once it can save.
     let missingPiece: BlockMissingPiece?
     let isEditing: Bool
@@ -2336,15 +2764,16 @@ fileprivate struct NewBlockBottomActionBar: View {
     }
 
     var body: some View {
-        HStack(spacing: 12) {
+        buttonLayout {
             // Ghost-outlined CANCEL button — faint border, muted text, no fill
             Button(action: onCancel) {
                 Text("CANCEL")
                     .font(NewBlockType.cta)
                     .tracking(2.5)
                     .foregroundStyle(NewBlockScreenTokens.muted)
-                    .frame(height: 52)
+                    .frame(maxWidth: dynamicTypeSize.isAccessibilitySize ? .infinity : nil, minHeight: 52)
                     .padding(.horizontal, 22)
+                    .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
             .overlay(
@@ -2365,9 +2794,13 @@ fileprivate struct NewBlockBottomActionBar: View {
                         .font(NewBlockType.cta)
                         .tracking(2.5)
                         .foregroundStyle(canCreate ? NewBlockScreenTokens.paper : NewBlockScreenTokens.muted)
+                        // Centering would also shift one line by its trailing tracking.
+                        .multilineTextAlignment(dynamicTypeSize.isAccessibilitySize ? .center : .leading)
                 }
+                .padding(.horizontal, NewBlockScreenTokens.cardPadding)
+                .padding(.vertical, NewBlockScreenTokens.rowGap)
                 .frame(maxWidth: .infinity)
-                .frame(height: 52)
+                .frame(minHeight: 52)
                 .background(canCreate ? NewBlockScreenTokens.ink : NewBlockScreenTokens.faint)
                 .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
             }
@@ -2385,6 +2818,13 @@ fileprivate struct NewBlockBottomActionBar: View {
         // the safe-area edge leaves a see-through strip below the bar. Sized
         // intrinsically (~70pt) — safeAreaInset placement needs no rigid frame.
         .background(NewBlockScreenTokens.paper.ignoresSafeArea(edges: .bottom))
+    }
+
+    /// Side by side, or stacked at accessibility sizes.
+    private var buttonLayout: AnyLayout {
+        dynamicTypeSize.isAccessibilitySize
+            ? AnyLayout(VStackLayout(spacing: 12))
+            : AnyLayout(HStackLayout(spacing: 12))
     }
 
     private var primaryTitle: String {
@@ -2431,6 +2871,7 @@ fileprivate struct NewBlockInkRule: View {
 fileprivate struct NewBlockDurationSheet: View {
     @Bindable var draft: BlockDraft
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     var body: some View {
         NavigationStack {
@@ -2465,35 +2906,25 @@ fileprivate struct NewBlockDurationSheet: View {
                     VStack(spacing: 0) {
                         ForEach(Array(draft.phases.enumerated()), id: \.element.draftID) { index, phase in
                             let phaseBinding = $draft.phases[index]
-                            HStack(spacing: NewBlockScreenTokens.rowGap) {
+                            NewBlockSheetStepperRow(
+                                value: "\(phase.weeks)",
+                                valueWidth: 28,
+                                onDecrement: { phaseBinding.weeks.wrappedValue = max(1, phase.weeks - 1) },
+                                onIncrement: { phaseBinding.weeks.wrappedValue = phase.weeks + 1 }
+                            ) {
                                 Text(String(format: "%02d", index + 1))
                                     .font(NewBlockType.phaseIndex)
                                     .foregroundStyle(NewBlockScreenTokens.ink)
-                                    .frame(width: 32, alignment: .leading)
+                                    .frame(width: dynamicTypeSize.isAccessibilitySize ? nil : 32, alignment: .leading)
 
+                                // At accessibility sizes the title has the line to itself,
+                                // beside its index, and shrinks to fit rather than end in "…".
                                 Text(NewBlockPhaseText.title(for: phase.kind))
                                     .font(NewBlockType.phaseTitle)
                                     .foregroundStyle(NewBlockScreenTokens.ink)
+                                    .lineLimit(dynamicTypeSize.isAccessibilitySize ? 1 : nil)
+                                    .minimumScaleFactor(dynamicTypeSize.isAccessibilitySize ? 0.5 : 1)
                                     .frame(maxWidth: .infinity, alignment: .leading)
-
-                                NewBlockStepperButton(label: "−") {
-                                    phaseBinding.weeks.wrappedValue = max(1, phase.weeks - 1)
-                                }
-                                Text("\(phase.weeks)")
-                                    .font(NewBlockType.number)
-                                    .foregroundStyle(NewBlockScreenTokens.ink)
-                                    .frame(width: 28, alignment: .center)
-                                NewBlockStepperButton(label: "+") {
-                                    phaseBinding.weeks.wrappedValue = phase.weeks + 1
-                                }
-                            }
-                            .padding(.horizontal, NewBlockScreenTokens.sidePadding)
-                            .frame(height: 56)
-                            .background(NewBlockScreenTokens.paper)
-                            .overlay(alignment: .bottom) {
-                                Rectangle()
-                                    .fill(NewBlockScreenTokens.hair)
-                                    .frame(height: NewBlockScreenTokens.rule)
                             }
                         }
                     }
@@ -2517,7 +2948,9 @@ fileprivate struct NewBlockDurationSheet: View {
             .background(NewBlockScreenTokens.paper.ignoresSafeArea())
             .navigationBarHidden(true)
         }
-        .presentationDetents([.medium])
+        // T25: at accessibility sizes the sheet opens at full height, where its
+        // taller rows all fit.
+        .presentationDetents(dynamicTypeSize.isAccessibilitySize ? [.large] : [.medium])
     }
 }
 
