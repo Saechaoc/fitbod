@@ -40,7 +40,6 @@ Every Phase 1 ticket is done and archived.
 | [T32](tickets/T32-custom-exercise-editor-bru.md) | Custom exercise editor and muscle picker in BRU |
 | [T33](tickets/T33-pinned-note-bru.md) | Pinned Note sheet in BRU |
 | [T96](tickets/T96-history-pr-count.md) | Exercise history counts its real PRs and stops writing state while it draws |
-| [T97](tickets/T97-calibrating-step-copy.md) | Why this weight explains RPE autoregulation's calibrating suggestions |
 | [T99](tickets/T99-block-review-prs-and-ax3.md) | The block review counts its PRs and keeps its stats whole at AX3 |
 | [T101](tickets/T101-ui-tests-idle-after-typing.md) | UI tests stop waiting a minute per step after typing |
 | [T102](tickets/T102-compare-rounding-and-back.md) | Compare rounds its e1RM changes and goes back with ‹ BACK |

@@ -110,6 +110,7 @@ ARCHIVED = {
     "T93": (1, [], ["fitbodTests/WholeWorkoutReadersTests.swift"]),
     "T94": (1, [], ["fitbodTests/ExerciseRowsPerWorkoutTests.swift"]),
     "T95": (1, [], ["fitbodTests/StableExerciseNamesTests.swift"]),
+    "T97": (2, [], ["fitbodTests/CalibratingStepCopyTests.swift"]),
     "T100": (1, [], []),
 }
 
