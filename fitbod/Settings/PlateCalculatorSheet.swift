@@ -166,8 +166,10 @@ public struct PlateCalculatorSheet: View {
 
     /// Target display band: 14pt top padding, 16pt horizontal, 2pt bruInk bottom rule.
     /// Per 03-UI-SPEC lines 240-244 / plate-calc.jsx lines 24-43.
-    /// No value wraps inside a number (T19). At accessibility sizes TARGET stacks over
-    /// its readout and the chips move under the weight, the way TodayStatStrip stacks.
+    /// No value wraps inside a number (T19). Above the default text size the chips
+    /// move under the weight: beside them on the small phone, even "100" showed as
+    /// "1…" at XXL. At accessibility sizes TARGET also stacks over its readout, the
+    /// way TodayStatStrip stacks.
     private var targetBand: some View {
         VStack(alignment: .leading, spacing: 0) {
             // Top row: "TARGET" label + "BAR X + PLATES Y" right label
@@ -196,7 +198,7 @@ public struct PlateCalculatorSheet: View {
 
             // Hero row: 96pt weight + unit label + quick-adjust chips
             Group {
-                if dynamicTypeSize.isAccessibilitySize {
+                if dynamicTypeSize > .large {
                     VStack(alignment: .leading, spacing: 10) {
                         HStack(alignment: .lastTextBaseline, spacing: 6) {
                             heroWeight
@@ -213,9 +215,13 @@ public struct PlateCalculatorSheet: View {
                     }
                 } else {
                     HStack(alignment: .lastTextBaseline, spacing: 6) {
-                        heroWeight
-                        heroUnit
-                        Spacer()
+                        // The weight and its unit take every point the chips leave.
+                        HStack(alignment: .lastTextBaseline, spacing: 6) {
+                            heroWeight
+                            heroUnit
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+
                         quickAdjustChips
                     }
                 }
@@ -246,7 +252,7 @@ public struct PlateCalculatorSheet: View {
     /// Font.custom override — BRUFont enum supplies the typeface name
     /// (SpaceGrotesk-Bold) but the 96pt size is a load-bearing spec exception
     /// requiring Font.custom directly (BRUFont.displayHero is 56pt).
-    /// It takes its room first, and shrinks rather than wrap inside the number.
+    /// It shrinks rather than wrap inside the number.
     private var heroWeight: some View {
         Text(formatted(parsedTarget))
             .font(.bru(.grotesk, size: 96, relativeTo: .largeTitle))
@@ -255,7 +261,6 @@ public struct PlateCalculatorSheet: View {
             .tracking(-0.5)
             .lineLimit(1)
             .minimumScaleFactor(0.5)
-            .layoutPriority(1)
     }
 
     private var heroUnit: some View {

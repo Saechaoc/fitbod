@@ -194,6 +194,32 @@ final class PlateCalculatorSheetBRUUITests: XCTestCase {
         try assertValuesStayWhole(textSize: .ax3)
     }
 
+    /// The chips raise the target from 60 to 137.5, which stays whole. At
+    /// default text the chips sit beside it; above that they sit under it,
+    /// because beside them on the small phone 137.5 showed as "13…" at XL
+    /// and 100 as "1…" at XXL and XXXL.
+    @MainActor
+    func testRaisedTargetStaysWhole() throws {
+        for size in [UITestNavigation.TextSize.default, .xxxl] {
+            let (app, _) = openCalculator(textSize: size)
+            let add5 = app.buttons.labeled("Add 5 lb")
+            for _ in 0..<15 { add5.tap() }
+            app.buttons.labeled("Add 2.5 lb").tap()
+            let target = app.staticTexts.labeled("137.5")
+            XCTAssertTrue(target.waitForExistence(timeout: 5), "The chips must raise the target to 137.5 at \(size)")
+            UITestNavigation.waitUntilStill(target)
+            UITestNavigation.saveScreenshot("T19", "calculator-137_5", textSize: size)
+            XCTAssertEqual(try UITestNavigation.numberProblems(in: target), [], "137.5 must show whole at \(size)")
+            if size == .default {
+                XCTAssertTrue((target.frame.minY...target.frame.maxY).contains(add5.frame.midY),
+                              "At default text the chips must sit beside the target")
+            } else {
+                XCTAssertGreaterThanOrEqual(add5.frame.minY, target.frame.maxY, "At \(size) the chips must sit under the target")
+            }
+            app.terminate()
+        }
+    }
+
     // MARK: - T19 helpers
 
     /// Settings → Plate Inventory → ••• on a fresh store at `textSize`,

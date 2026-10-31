@@ -194,9 +194,10 @@ extension UITestNavigation {
         return String(text.uppercased().map { twins[$0] ?? $0 })
     }
 
-    /// A problem for each number in `element`'s label that the screen
-    /// splits across lines, such as "1.2" over "5". XCUI reads the whole
-    /// label however the text wraps, so the lines come off a screenshot.
+    /// A problem for each number in `element`'s label that the screen does
+    /// not show whole on one line: split, such as "1.2" over "5", or cut
+    /// short, such as "1…". XCUI reads the whole label however the text
+    /// wraps or truncates, so the lines come off a screenshot.
     static func numberProblems(in element: XCUIElement) throws -> [String] {
         let screenshot = XCUIScreen.main.screenshot()
         let lines = try textLines(in: element.frame.insetBy(dx: -4, dy: -4), of: screenshot).map(\.text)
@@ -207,7 +208,7 @@ extension UITestNavigation {
         let broken = numbers(in: element.label).filter { number in
             number.count > 1 && !shown.contains { $0.contains(number) }
         }
-        return broken.isEmpty ? [] : ["\"\(element.label)\" splits \(broken) across lines: the screen reads \(lines)"]
+        return broken.isEmpty ? [] : ["\"\(element.label)\" does not show \(broken) whole on one line: the screen reads \(lines)"]
     }
 
     /// The numbers in `text`, such as ["45", "2.5"].
