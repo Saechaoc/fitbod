@@ -126,6 +126,7 @@ The quick-task run of the same plan must finish its last two tasks first, so rea
 | [T37](tickets/T37-library-and-detail-polish.md) | Library and exercise detail polish |
 | [T38](tickets/T38-program-new-block-settings-small-fixes.md) | Small fixes on Program, New Block and Settings |
 | [T85](tickets/T85-pr-row-phrases.md) | PR rows keep "@ RPE" and the kind label whole |
+| [T98](tickets/T98-chart-audio-graph-rounding.md) | The progress chart's audio graph reads rounded values |
 
 ### Phase 4: test health
 
