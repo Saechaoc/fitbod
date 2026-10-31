@@ -683,6 +683,8 @@ fileprivate struct NewBlockNameBand: View {
                 .font(.system(size: 18))
                 .foregroundStyle(NewBlockScreenTokens.muted)
                 .padding(.top, 28)
+                // Decorative: VoiceOver would read "Compose" after the name field.
+                .accessibilityHidden(true)
         }
         .padding(.top, 8)
         .padding(.bottom, 4)
@@ -915,6 +917,11 @@ fileprivate struct NewBlockStepperButton: View {
 fileprivate struct NewBlockSheetStepperRow<Label: View>: View {
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
+    /// The stat the steppers change, as VoiceOver names it, and its value as
+    /// VoiceOver reads it, such as "weeks" and "1 week": the steppers read
+    /// "Decrease weeks" and "Increase weeks", with that value (T105). Without
+    /// one they read "−" and "+".
+    var stat: (name: String, value: String)? = nil
     let value: String
     /// The value's width at standard sizes.
     let valueWidth: CGFloat
@@ -953,14 +960,26 @@ fileprivate struct NewBlockSheetStepperRow<Label: View>: View {
 
     @ViewBuilder
     private var stepper: some View {
-        NewBlockStepperButton(label: "−", action: onDecrement)
+        stepperButton("−", direction: "Decrease", action: onDecrement)
         Text(value)
             .font(NewBlockType.number)
             .foregroundStyle(NewBlockScreenTokens.ink)
             .lineLimit(dynamicTypeSize.isAccessibilitySize ? 1 : nil)
             .frame(width: dynamicTypeSize.isAccessibilitySize ? nil : valueWidth, alignment: .center)
             .frame(minWidth: dynamicTypeSize.isAccessibilitySize ? valueWidth : nil)
-        NewBlockStepperButton(label: "+", action: onIncrement)
+        stepperButton("+", direction: "Increase", action: onIncrement)
+    }
+
+    /// A − or + stepper, named for VoiceOver when the row has a stat.
+    @ViewBuilder
+    private func stepperButton(_ glyph: String, direction: String, action: @escaping () -> Void) -> some View {
+        if let stat {
+            NewBlockStepperButton(label: glyph, action: action)
+                .accessibilityLabel("\(direction) \(stat.name)")
+                .accessibilityValue(stat.value)
+        } else {
+            NewBlockStepperButton(label: glyph, action: action)
+        }
     }
 }
 
@@ -1567,16 +1586,27 @@ fileprivate struct NewBlockProgressionChart: View {
                         .accessibilityHidden(true)
                         .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { weekLabelWidth = $0 }
                 }
-                .accessibilityLabel(
-                    "Progression overview, \(totalWeeks) weeks, \(contiguousPhaseSpans.count) phases. " +
-                    "Volume and intensity by week. \(selectedWeek.map { "Selected week \($0)." } ?? "No week selected.")"
-                )
                 // ── Phase-label overlay (one label per contiguous span) ────────────────
                 // 260610-ey9: phase labels emitted per contiguous span, not per phase.
                 // Required: ForEach(phases, id: \.draftID) — used in timeline and phase-list rows.
                 .chartOverlay { proxy in
                     GeometryReader { geo in
                         ZStack(alignment: .topLeading) {
+                            #if DEBUG
+                            // An invisible element over the plot, so UI tests
+                            // can read the plot's frame; VoiceOver reads the
+                            // card's summary instead. Compiled out of release
+                            // builds.
+                            if let plotFrame = proxy.plotFrame {
+                                let plot = geo[plotFrame]
+                                Color.clear
+                                    .frame(width: plot.width, height: plot.height)
+                                    .accessibilityElement()
+                                    .accessibilityIdentifier("newBlock.progression.plot")
+                                    .position(x: plot.midX, y: plot.midY)
+                            }
+                            #endif
+
                             // Per-span phase abbreviation centered inside the band,
                             // in the longest form every band holds (T25).
                             let plotStart = proxy.position(forX: 0.5) ?? 0
@@ -1640,6 +1670,28 @@ fileprivate struct NewBlockProgressionChart: View {
         }
         .padding(NewBlockScreenTokens.cardPadding)
         .bruCard()
+        // T105: VoiceOver reads the card as one element that sums it up,
+        // rather than its title, legend, marks and labels one by one.
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Progression overview")
+        .accessibilityValue(summary)
+    }
+
+    /// What VoiceOver reads for the chart: the block's length, then its
+    /// first and last weeks' volume and intensity.
+    private var summary: String {
+        guard let first = phases.first, let last = phases.last else {
+            return "Add phases to preview progression"
+        }
+        let length = "\(BRUCountLabel.text(totalWeeks, "week")), \(BRUCountLabel.text(phases.count, "phase"))."
+        guard totalWeeks > 1 else { return "\(length) \(weekSummary(1, of: first))" }
+        return "\(length) \(weekSummary(1, of: first)) \(weekSummary(totalWeeks, of: last))"
+    }
+
+    /// "Week 1: volume Hold, intensity 75%."
+    private func weekSummary(_ week: Int, of phase: BlockPhaseDraft) -> String {
+        "Week \(week): volume \(NewBlockPhaseText.volumeValue(phase.volumeMultiplier)), "
+            + "intensity \(NewBlockPhaseText.intensityValue(phase.intensityMultiplier))."
     }
 }
 
@@ -1659,11 +1711,20 @@ fileprivate struct NewBlockPhaseListSection: View {
 
     @State private var draggingPhaseID: UUID? = nil
     @State private var dragTargetIndex: Int? = nil
+    /// Each card's measured height, by phase, so a drag steps by the cards'
+    /// own heights at any text size (T105).
+    @State private var cardHeights: [UUID: CGFloat] = [:]
 
-    // One row pitch = card height + the 10pt VStack gap.
-    private var phasePitch: CGFloat { NewBlockScreenTokens.phaseRowHeight + 10 }
+    /// The paper between phase cards (260610-dbz).
+    private static let cardSpacing: CGFloat = 10
 
     private static let reorderSpring: Animation = .spring(response: 0.28, dampingFraction: 0.86)
+
+    /// The cards' heights in order; a card not yet measured counts as the
+    /// standard row height.
+    private var heights: [CGFloat] {
+        draft.phases.map { cardHeights[$0.draftID] ?? NewBlockScreenTokens.phaseRowHeight }
+    }
 
     var body: some View {
         // 260528-vi2 r2: header + cards in one tight 10pt VStack so the header sits
@@ -1681,14 +1742,14 @@ fileprivate struct NewBlockPhaseListSection: View {
             // this section. The row reports only boundary crossings; all reorder
             // animation here is explicit withAnimation — no .animation(value:)
             // modifiers to leak springs onto the held card.
-            VStack(alignment: .leading, spacing: 10) {
+            VStack(alignment: .leading, spacing: Self.cardSpacing) {
                 ForEach(Array(draft.phases.enumerated()), id: \.element.draftID) { index, phase in
                     NewBlockPhaseEditorRow(
                         draft: phase,
                         displayIndex: index + 1,
                         rowIndex: index,
                         rowCount: draft.phases.count,
-                        reorderPitch: phasePitch,
+                        slotOffsets: NewBlockReorderSlots.offsets(from: index, heights: heights, spacing: Self.cardSpacing),
                         isDragging: draggingPhaseID == phase.draftID,
                         onDelete: { onDelete(phase) },
                         onMoveUp: { movePhase(phase, by: -1) },
@@ -1697,6 +1758,7 @@ fileprivate struct NewBlockPhaseListSection: View {
                         onReorderTarget: { target in retarget(target) },
                         onReorderEnded: { endReorder() }
                     )
+                    .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { cardHeights[phase.draftID] = $0 }
                     // Siblings part to open the landing gap (spring via retarget's
                     // explicit withAnimation transaction).
                     .offset(y: gapOffset(rowIndex: index, phaseID: phase.draftID))
@@ -1759,9 +1821,41 @@ fileprivate struct NewBlockPhaseListSection: View {
               phaseID != activeID,
               let from = draft.phases.firstIndex(where: { $0.draftID == activeID }),
               let target = dragTargetIndex else { return 0 }
-        if from < target, rowIndex > from, rowIndex <= target { return -phasePitch }
-        if from > target, rowIndex >= target, rowIndex < from { return phasePitch }
+        // Siblings part by the lifted card's own height (T105).
+        let pitch = (cardHeights[activeID] ?? NewBlockScreenTokens.phaseRowHeight) + Self.cardSpacing
+        if from < target, rowIndex > from, rowIndex <= target { return -pitch }
+        if from > target, rowIndex >= target, rowIndex < from { return pitch }
         return 0
+    }
+}
+
+/// Where a dragged phase card lands (T105). Each slot's offset is how far
+/// the card moves to sit in it, from the measured heights of the cards it
+/// passes, so the card lands on the slot nearest its center, switching at
+/// the midpoint between two slots, whatever the cards' heights.
+fileprivate enum NewBlockReorderSlots {
+    /// The offset of each slot for the card at `index`, top to bottom: 0
+    /// for its own slot, and the heights plus `spacing` of the cards it
+    /// passes on the way to any other.
+    static func offsets(from index: Int, heights: [CGFloat], spacing: CGFloat) -> [CGFloat] {
+        heights.indices.map { slot in
+            if slot > index {
+                return heights[(index + 1)...slot].reduce(0) { $0 + $1 + spacing }
+            }
+            return -heights[slot..<index].reduce(0) { $0 + $1 + spacing }
+        }
+    }
+
+    /// The slot a drag of `translation` reaches, as a fraction: whole at
+    /// each slot's offset and in proportion between two, so it rounds to a
+    /// slot once the card passes the midpoint; held to the first and last.
+    static func position(of translation: CGFloat, among offsets: [CGFloat]) -> Double {
+        guard let next = offsets.firstIndex(where: { $0 > translation }) else {
+            return Double(max(offsets.count - 1, 0))
+        }
+        guard next > 0 else { return 0 }
+        let span = offsets[next] - offsets[next - 1]
+        return Double(next - 1) + Double((translation - offsets[next - 1]) / span)
     }
 }
 
@@ -1776,7 +1870,8 @@ fileprivate struct NewBlockPhaseEditorRow: View {
     let displayIndex: Int
     let rowIndex: Int
     let rowCount: Int
-    let reorderPitch: CGFloat
+    /// Each slot's offset from this card's own, from NewBlockReorderSlots.
+    let slotOffsets: [CGFloat]
     let isDragging: Bool
     let onDelete: () -> Void
     let onMoveUp: () -> Void
@@ -1836,10 +1931,11 @@ fileprivate struct NewBlockPhaseEditorRow: View {
         ZStack(alignment: .trailing) {
             deleteBackground
             cardSurface
-                .offset(x: visibleOffset)
+                // T105: the tap area moves with the card, so a revealed Delete
+                // takes its own tap, and a tap on the rest of the card closes it.
                 .contentShape(Rectangle())
                 .onTapGesture { tapCard() }
-                .simultaneousGesture(swipeGesture)
+                .offset(x: visibleOffset)
                 // T24: one element per card, so VoiceOver reads its label once
                 // rather than once per text. Its value reads the stat columns,
                 // activating it does what a tap does, and the ⋮⋮ drag and the
@@ -1851,11 +1947,19 @@ fileprivate struct NewBlockPhaseEditorRow: View {
                 .accessibilityAddTraits(.isButton)
                 .accessibilityAction { tapCard() }
                 .accessibilityActions {
-                    Button("Move Up") { onMoveUp() }
-                    Button("Move Down") { onMoveDown() }
+                    // T105: only the moves the card can make.
+                    if rowIndex > 0 {
+                        Button("Move Up") { onMoveUp() }
+                    }
+                    if rowIndex < rowCount - 1 {
+                        Button("Move Down") { onMoveDown() }
+                    }
                     Button("Delete Phase") { onDelete() }
                 }
         }
+        // The swipe still starts anywhere on the row, the revealed Delete
+        // included, and measures in the row's resting frame.
+        .simultaneousGesture(swipeGesture)
         // Finger tracking 1:1. Gesture transactions carry no animation, and the
         // parent's reorder springs run in their own withAnimation transactions,
         // so nothing ever rubber-bands this offset mid-drag.
@@ -2049,9 +2153,13 @@ fileprivate struct NewBlockPhaseEditorRow: View {
     // stays row-local in @GestureState; only drop-slot boundary crossings are
     // reported up (with hysteresis so hovering at a boundary doesn't flicker the
     // sibling gap open/closed).
+    // T105: the drag measures in the global space, which the card's own offset
+    // does not move, so the card follows the finger 1:1. In the handle's local
+    // space each offset fed back into the next reading, and the card took about
+    // half the finger's travel. The page holds still while the handle drags.
     private var reorderGesture: some Gesture {
         LongPressGesture(minimumDuration: 0.25)
-            .sequenced(before: DragGesture(minimumDistance: 0))
+            .sequenced(before: DragGesture(minimumDistance: 0, coordinateSpace: .global))
             .updating($dragTranslation) { value, state, _ in
                 if case .second(true, let drag?) = value {
                     state = drag.translation.height
@@ -2063,10 +2171,10 @@ fileprivate struct NewBlockPhaseEditorRow: View {
                     liveTarget = rowIndex
                     onReorderBegan()
                 case .second(true, let drag?):
-                    let raw = Double(rowIndex) + Double(drag.translation.height / reorderPitch)
+                    let raw = NewBlockReorderSlots.position(of: drag.translation.height, among: slotOffsets)
                     let current = liveTarget ?? rowIndex
-                    // Hysteresis: re-target only once the finger passes 0.55 of a
-                    // pitch beyond the current slot's center.
+                    // Hysteresis: re-target only once the card passes 0.55 of the
+                    // way from the current slot to the next.
                     if abs(raw - Double(current)) > 0.55 {
                         let next = min(max(Int(raw.rounded()), 0), rowCount - 1)
                         if next != current {
@@ -2203,6 +2311,7 @@ fileprivate struct NewBlockPhaseEditorSheet: View {
                     VStack(spacing: 0) {
                         // WEEKS row
                         NewBlockSheetStepperRow(
+                            stat: ("weeks", BRUCountLabel.text(draft.weeks, "week")),
                             value: "\(draft.weeks)",
                             valueWidth: 36,
                             onDecrement: { draft.weeks = max(1, draft.weeks - 1) },
@@ -2217,6 +2326,7 @@ fileprivate struct NewBlockPhaseEditorSheet: View {
 
                         // VOL row
                         NewBlockSheetStepperRow(
+                            stat: ("volume", NewBlockPhaseText.volumeValue(draft.volumeMultiplier)),
                             value: NewBlockPhaseText.volumeValue(draft.volumeMultiplier),
                             valueWidth: 52,
                             onDecrement: {
@@ -2242,6 +2352,7 @@ fileprivate struct NewBlockPhaseEditorSheet: View {
 
                         // INT row
                         NewBlockSheetStepperRow(
+                            stat: ("intensity", NewBlockPhaseText.intensityValue(draft.intensityMultiplier)),
                             value: NewBlockPhaseText.intensityValue(draft.intensityMultiplier),
                             valueWidth: 52,
                             onDecrement: {
