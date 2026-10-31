@@ -614,7 +614,7 @@ fileprivate struct SplitSlotRow: View {
             isEnabled: !(reduceMotion || isEditing),
             onBegan: beginReorder,
             onMoved: moveReorder,
-            onEnded: endReorder
+            onEnded: endReorder(completed:)
         ))
         // VoiceOver: activate opens the session; reorder and remove are actions
         .accessibilityElement(children: isEditing ? .contain : .ignore)
@@ -686,7 +686,12 @@ fileprivate struct SplitSlotRow: View {
         }
     }
 
-    private func endReorder() {
+    /// Drops the row where the finger lifted. A drag cut off before then,
+    /// by the app leaving the screen or Edit, puts the session back.
+    private func endReorder(completed: Bool) {
+        if !completed {
+            onReorderTarget(rowIndex)
+        }
         liveTarget = nil
         onReorderEnded()
         withAnimation(.spring(response: 0.28, dampingFraction: 0.86)) {
@@ -707,7 +712,8 @@ fileprivate struct SlotReorderPress: UIGestureRecognizerRepresentable {
     let isEnabled: Bool
     let onBegan: () -> Void
     let onMoved: (CGFloat) -> Void
-    let onEnded: () -> Void
+    /// True when the finger lifted, false when the press was cancelled.
+    let onEnded: (Bool) -> Void
 
     final class Coordinator {
         var startY: CGFloat = 0
@@ -735,8 +741,10 @@ fileprivate struct SlotReorderPress: UIGestureRecognizerRepresentable {
             onBegan()
         case .changed:
             onMoved(y - context.coordinator.startY)
-        case .ended, .cancelled:
-            onEnded()
+        case .ended:
+            onEnded(true)
+        case .cancelled:
+            onEnded(false)
         default:
             break
         }
