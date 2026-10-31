@@ -15,7 +15,9 @@
 //  which needs iOS 27. It reads speech and moves the focus, and a swipe up
 //  or down steps through the focused element's actions. A tap or a double
 //  tap from XCUITest bypasses VoiceOver, so these tests read the actions by
-//  name and the other tests use the controls the way a touch does.
+//  name and the other tests use the controls the way a touch does. Only
+//  Xcode 27's SDK has the service, so under Xcode 26 (Swift 6.3), which
+//  docs/SETUP.md names, the VoiceOver tests compile to a skip.
 //
 
 import XCTest
@@ -108,6 +110,7 @@ final class PhaseRowsVoiceOverUITests: XCTestCase {
     /// VoiceOver reads each phase card once, with its settings, as a button.
     @MainActor
     func testVoiceOverReadsEachPhaseOnce() throws {
+        #if compiler(>=6.4)
         guard #available(iOS 27.0, *) else { throw XCTSkip("Driving VoiceOver needs iOS 27") }
         _ = openNewBlockWithTwoPhases()
         let voiceOver = try startVoiceOver()
@@ -127,6 +130,9 @@ final class PhaseRowsVoiceOverUITests: XCTestCase {
             XCTAssertTrue(read.contains(settings), "VoiceOver must read \(label)'s settings, \"\(settings)\": \(read)")
             XCTAssertTrue(read.contains("Button"), "VoiceOver must read \(label) as a button: \(read)")
         }
+        #else
+        throw XCTSkip("Driving VoiceOver needs Xcode 27's XCUIVoiceOverService")
+        #endif
     }
 
     /// With a phase card focused, VoiceOver's actions are Move Up, Move Down
@@ -134,6 +140,7 @@ final class PhaseRowsVoiceOverUITests: XCTestCase {
     /// who cannot make those gestures.
     @MainActor
     func testVoiceOverOffersEachPhaseCardAction() throws {
+        #if compiler(>=6.4)
         guard #available(iOS 27.0, *) else { throw XCTSkip("Driving VoiceOver needs iOS 27") }
         let app = openNewBlockWithTwoPhases()
         let voiceOver = try startVoiceOver()
@@ -156,6 +163,9 @@ final class PhaseRowsVoiceOverUITests: XCTestCase {
         for action in ["Move Up", "Move Down", "Delete Phase"] {
             XCTAssertTrue(actions.contains(action), "VoiceOver must offer \(action) on \(Self.peak), not only \(actions)")
         }
+        #else
+        throw XCTSkip("Driving VoiceOver needs Xcode 27's XCUIVoiceOverService")
+        #endif
     }
 
     // MARK: - Helpers
@@ -207,6 +217,7 @@ final class PhaseRowsVoiceOverUITests: XCTestCase {
         return done
     }
 
+    #if compiler(>=6.4)
     /// Turns VoiceOver on until the test ends.
     @available(iOS 27.0, *)
     @MainActor
@@ -218,4 +229,5 @@ final class PhaseRowsVoiceOverUITests: XCTestCase {
         if !voiceOver.isEnabled { try voiceOver.enable() }
         return voiceOver
     }
+    #endif
 }
