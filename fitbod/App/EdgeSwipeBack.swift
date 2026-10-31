@@ -72,4 +72,12 @@ private final class EdgeSwipeBack: NSObject, UIGestureRecognizerDelegate {
     func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldRequireFailureOf other: UIGestureRecognizer) -> Bool {
         systemDelegate?.gestureRecognizer?(gestureRecognizer, shouldRequireFailureOf: other) ?? false
     }
+
+    func gestureRecognizer(
+        _ gestureRecognizer: UIGestureRecognizer, shouldBeRequiredToFailBy other: UIGestureRecognizer
+    ) -> Bool {
+        // Scroll views wait for the swipe to fail, as under a shown bar, so
+        // a swipe that starts on a row that scrolls sideways still goes back.
+        other is UIPanGestureRecognizer && other.view is UIScrollView
+    }
 }

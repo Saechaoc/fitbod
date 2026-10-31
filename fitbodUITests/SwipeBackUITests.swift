@@ -196,6 +196,17 @@ final class SwipeBackUITests: XCTestCase {
         assertSwipeBack(from: tonnageChart(in: app), "Weekly Tonnage", to: tonnage, in: app)
     }
 
+    /// A swipe that starts on the muscle chips, a row that scrolls
+    /// sideways, goes back too, as it does where the system bar shows.
+    @MainActor
+    func testSwipeOnWeeklyTonnagesChipsSwipesBackToProgress() throws {
+        let app = openProgress()
+        let tonnage = button(beginningWith: "Weekly Tonnage", in: app)
+        open(tonnage, in: app)
+        assertSwipeBack(from: tonnageChart(in: app), "Weekly Tonnage", to: tonnage, in: app,
+                        alongRowOf: button(beginningWith: "Abdominals", in: app))
+    }
+
     /// A tap on the tonnage chart opens that week's workouts.
     @MainActor
     func testWeekDetailSwipesBackToWeeklyTonnage() throws {
@@ -496,6 +507,18 @@ final class SwipeBackUITests: XCTestCase {
         control.tap()
     }
 
+    /// `UITestNavigation.swipeBack(in:)` along the row of `row` instead of
+    /// across the middle of the screen.
+    @MainActor
+    private func swipeBack(alongRowOf row: XCUIElement, in app: XCUIApplication) {
+        let y = row.frame.midY
+        let screen = app.coordinate(withNormalizedOffset: .zero)
+        screen.withOffset(CGVector(dx: 1, dy: y)).press(
+            forDuration: 0.05, thenDragTo: screen.withOffset(CGVector(dx: app.frame.width * 0.8, dy: y)),
+            withVelocity: .default, thenHoldForDuration: 0
+        )
+    }
+
     /// Waits until `element` has left the screen: it is gone, or something
     /// covers it. Volume Targets' rows stay in the accessibility tree for
     /// seconds after it closes, by its ‹ as well.
@@ -518,13 +541,14 @@ final class SwipeBackUITests: XCTestCase {
     // MARK: - Checks
 
     /// Waits for the pushed screen, marked by `screen`, to settle, swipes
-    /// back from the left edge, and checks that the screen closes and
-    /// `opener`, the control that opened it, can be tapped again, where it
-    /// was when `open` tapped it.
+    /// back from the left edge, across the middle of the screen or along the
+    /// row of `row`, and checks that the screen closes and `opener`, the
+    /// control that opened it, can be tapped again, where it was when `open`
+    /// tapped it.
     @MainActor
     private func assertSwipeBack(
         from screen: XCUIElement, _ name: String, to opener: XCUIElement, in app: XCUIApplication,
-        file: StaticString = #filePath, line: UInt = #line
+        alongRowOf row: XCUIElement? = nil, file: StaticString = #filePath, line: UInt = #line
     ) {
         XCTAssertTrue(screen.waitForExistence(timeout: 15), "\(name) never opened", file: file, line: line)
         // A swipe during a push does nothing, and XCUI reports where views
@@ -532,7 +556,11 @@ final class SwipeBackUITests: XCTestCase {
         // accessibility tree once the push is over.
         _ = opener.waitForNonExistence(timeout: 5)
         UITestNavigation.waitUntilStill(screen, interval: 0.3)
-        UITestNavigation.swipeBack(in: app)
+        if let row {
+            swipeBack(alongRowOf: row, in: app)
+        } else {
+            UITestNavigation.swipeBack(in: app)
+        }
         XCTAssertTrue(waitUntilGone(screen),
                       "An edge swipe on \(name) must go back, but \(name) is still on screen", file: file, line: line)
         XCTAssertTrue(waitUntilHittable(opener, timeout: 5),
@@ -558,12 +586,7 @@ final class SwipeBackUITests: XCTestCase {
         XCTAssertTrue(header.exists, "\(name) must show its header", file: file, line: line)
         let before = root.frame
         let barsBefore = systemBars(in: app)
-        let y = header.frame.midY
-        let screen = app.coordinate(withNormalizedOffset: .zero)
-        screen.withOffset(CGVector(dx: 1, dy: y)).press(
-            forDuration: 0.05, thenDragTo: screen.withOffset(CGVector(dx: app.frame.width * 0.8, dy: y)),
-            withVelocity: .default, thenHoldForDuration: 0
-        )
+        swipeBack(alongRowOf: header, in: app)
         UITestNavigation.waitUntilStill(root, interval: 0.3)
         XCTAssertTrue(root.exists && root.isHittable, "A swipe on \(name) must leave it on screen", file: file, line: line)
         XCTAssertEqual(root.frame, before, "A swipe on \(name) must not move it", file: file, line: line)
