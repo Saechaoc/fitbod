@@ -16,7 +16,7 @@ progress:
 
 **Last updated:** 2026-10-29 (Milestone 1 finish, phase 0 done: Codex's seven groups committed, baseline 1,023 of 1,026 passed with 2 known app-bug failures and 1 expected failure)
 
-Last activity: 2026-10-29 - Merged quick tasks 261028-uhg (Milestone 1 Phase 1A) and 261029-a9s (Phase 1B); the quick-task run ends here and docs/conway-specs continues Milestone 1
+Last activity: 2026-10-31 - Completed quick task 261031-072: Audit the iOS test suite for performance and write docs/test-performance-guide.md
 
 ---
 
@@ -362,6 +362,7 @@ None.
 | 261029-nse | Fix native retry brief delivery and accepted evidence aliases, including tour retries without saved coverage | 2026-10-30 | cb7e341 | [261029-nse-fix-conway-retry-brief-delivery-and-acce](./quick/261029-nse-fix-conway-retry-brief-delivery-and-acce/) |
 | 261028-uhg | Milestone 1 Phase 1A: COPY and EDIT open a filled editor on the first tap (1), SKIP WARM-UPS works and never counts as logged sets (2), note sheets edit a local copy that only SAVE writes, SET 1 NOTE, BRU Pinned Note (33, 41, 42), and the session editor, custom exercise editor and New Block builder resist swipe-down while they hold unsaved edits (3), with the session editor's change check covering every exercise field it saves. Each fix has a failing-first test; the combined tree ran 990 unit tests (1 known issue) and the affected UI suites green. Open: New Block CANCEL closes without asking | 2026-10-29 | 26b2042 | [261028-uhg-m1-phase-1a-fix-the-blank-copy-edit-shee](./quick/261028-uhg-m1-phase-1a-fix-the-blank-copy-edit-shee/) |
 | 261029-a9s | Milestone 1 Phase 1B: target reps are steppers where low never passes high (5), target RPE is one chip control with NO TARGET (6), a visible WHY at the start of each set's chip line opens Why-this-weight with the keyboard dismissed, Use writes the suggestion and Override focuses the weight (4), and Export CSV, Export JSON and backup CREATE share on one tap (34). Both baseline UI failures pass. Open: Why sheet hero shows x-/@-, focused set rows scroll under the workout header, openSeededWorkout fails at AX3 | 2026-10-29 | 004bbc8 | [261029-a9s-m1-phase-1b-target-reps-entry-that-corru](./quick/261029-a9s-m1-phase-1b-target-reps-entry-that-corru/) |
+| 261031-072 | Audit the iOS test suite for performance and write docs/test-performance-guide.md: the unit target executes 1,118 tests in 22 s; a 24-test UI sample averages 25.6 s per test serially and runs 2.25 times faster on four clones; no recorded run reaches 200 minutes, which is consistent with the 202-test UI bundle (55 on Oct 28) run serially on both phones. The guide holds the diagnosis, do-and-don't rules, examples on real files, a prioritized plan, a measurement plan and a per-test checklist, all as proposals | 2026-10-31 | 68a1df54 | [261031-072-audit-the-ios-test-suite-for-performance](./quick/261031-072-audit-the-ios-test-suite-for-performance/) |
 
 ---
 
