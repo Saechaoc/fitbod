@@ -576,6 +576,8 @@ public struct WeeklyRecapSheet: View {
         return SessionSetActions.countedWorkouts((try? ctx.fetch(descriptor)) ?? []).count
     }
 
+    /// The routines of last week's workouts that count as sessions, the
+    /// ones "Last week you logged N sessions." counts.
     @MainActor
     private func lastWeekRoutinesCount() -> Int {
         let start = priorWeekStart
@@ -586,7 +588,7 @@ public struct WeeklyRecapSheet: View {
             }
         )
         let sessions = (try? ctx.fetch(descriptor)) ?? []
-        return Set(sessions.map { $0.routineSnapshotName }).count
+        return Set(SessionSetActions.countedWorkouts(sessions).map(\.routineSnapshotName)).count
     }
 
     @MainActor

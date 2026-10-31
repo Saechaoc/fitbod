@@ -4,7 +4,8 @@
 //
 //  T103, findings F152, F211, F212, F214 and F215. The weekly recap is due
 //  only when last week has a workout that counts as a session, one with
-//  logged work sets (decision 6), and its sessions chip counts only those.
+//  logged work sets (decision 6), and its sessions chip and its count of
+//  the routines those sessions span count only those.
 //  Each test seeds last week on a fresh store, so its result never depends
 //  on what the phone held before, and finds the recap by its header title,
 //  such as "Week 44 · recap", so the absence check fails when the recap
@@ -20,9 +21,9 @@ extension UITestNavigation {
     /// left due (see DemoWorkoutSeed). Program opens first, because on a
     /// fresh store Today can show before the seed and mark the recap seen.
     static let emptyLastWeek = [resetFlag, "-fitbod-seed-empty-last-week", "-fitbod-start-program"]
-    /// A fresh store plus a logged Push A and then an empty one last week,
-    /// with this week's recap left due (see DemoWorkoutSeed). Program opens
-    /// first, as with `emptyLastWeek`.
+    /// A fresh store plus a logged Push A and then an empty Pull B, a second
+    /// routine's workout, last week, with this week's recap left due (see
+    /// DemoWorkoutSeed). Program opens first, as with `emptyLastWeek`.
     static let recapWithEmpty = [resetFlag, "-fitbod-seed-recap-with-empty", "-fitbod-start-program"]
 }
 
@@ -64,6 +65,15 @@ final class WeeklyRecapUITests: XCTestCase {
         let sessions = app.staticTexts.matching(NSPredicate(format: "label MATCHES %@", #"\d+ / \d+ sessions"#)).firstMatch
         XCTAssertTrue(sessions.exists, "The recap's cover shows no sessions chip")
         XCTAssertEqual(sessions.label, "1 / 1 sessions", "The empty workout must not count as a session")
+        XCTAssertTrue(
+            app.staticTexts["Last week you logged 1 session."].exists,
+            "The recap's Sessions section must count the one logged workout"
+        )
+        let across = app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH %@", "Across ")).firstMatch
+        XCTAssertFalse(
+            across.exists,
+            "Last week's one session is one routine's, but the recap reads \"\(across.label)\""
+        )
 
         let prChip = app.staticTexts["No PRs this wk"]
         XCTAssertTrue(prChip.exists, "The recap's cover shows no PR chip")

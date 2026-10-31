@@ -465,17 +465,17 @@ public struct TodayView: View {
     /// workout that counts as a session. A streak that reached yesterday
     /// still stands today. `workouts` is newest first. `emptyWorkoutIDs`
     /// are the empty workouts among them (decision 6), which Today caches,
-    /// so the streak reads no sets.
+    /// so the streak reads no sets, and it reads workouts only as far back
+    /// as the streak goes.
     static func dayStreak(
         of workouts: [Session],
         excluding emptyWorkoutIDs: Set<PersistentIdentifier>,
         now: Date = .now,
         calendar: Calendar = .current
     ) -> Int {
-        let completed = workouts.filter {
+        let completed = workouts.lazy.filter {
             $0.completedAt != nil && !emptyWorkoutIDs.contains($0.persistentModelID)
         }
-        guard !completed.isEmpty else { return 0 }
 
         var streak = 0
         var checkDate = calendar.startOfDay(for: now)

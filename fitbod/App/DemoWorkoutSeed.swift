@@ -36,7 +36,8 @@
 //    -fitbod-seed-empty-last-week     an empty Push A on the fourth day of
 //                                     last week
 //    -fitbod-seed-recap-with-empty    a logged Push A on the second day of
-//                                     last week, then an empty one on the
+//                                     last week, then an empty Pull B, a
+//                                     second routine's workout, on the
 //                                     fourth
 //
 
@@ -67,11 +68,8 @@ enum DemoWorkoutSeed {
         } else if arguments.contains(emptyLastWeekArgument) {
             seedFinished([(lastWeekAgo(3.5 * day, in: context), 5, false)], leavingRecapDue: true, in: context)
         } else if arguments.contains(recapWithEmptyArgument) {
-            seedFinished(
-                [(lastWeekAgo(1.5 * day, in: context), 55, true), (lastWeekAgo(3.5 * day, in: context), 5, false)],
-                leavingRecapDue: true,
-                in: context
-            )
+            seedFinished([(lastWeekAgo(1.5 * day, in: context), 55, true)], leavingRecapDue: true, in: context)
+            seedEmptyPullB(startedAgo: lastWeekAgo(3.5 * day, in: context), in: context)
         }
         #endif
     }
@@ -160,6 +158,32 @@ enum DemoWorkoutSeed {
         return now.timeIntervalSince(lastWeek.addingTimeInterval(offset))
     }
 
+    /// An empty workout of "Pull B", a second routine of the catalog's
+    /// barbell row: started `startedAgo` and finished five minutes later
+    /// with nothing logged. Nothing when Pull B already exists.
+    @MainActor
+    private static func seedEmptyPullB(startedAgo: TimeInterval, in context: ModelContext) {
+        let templates = (try? context.fetch(FetchDescriptor<SessionTemplate>())) ?? []
+        let exercises = (try? context.fetch(FetchDescriptor<Exercise>())) ?? []
+        guard !templates.contains(where: { $0.name == "Pull B" }),
+              let row = exercises.first(where: { $0.name == "Bent Over Barbell Row" }) else { return }
+
+        let pullB = SessionTemplate()
+        context.insert(pullB)
+        pullB.name = "Pull B"
+        pullB.intentRaw = Intent.hypertrophy.rawValue
+        let item = SessionExerciseTemplate()
+        context.insert(item)
+        item.sessionTemplate = pullB
+        item.exercise = row
+        item.orderIndex = 0
+        item.targetSets = 3
+        item.targetRepsLow = 8
+        item.targetRepsHigh = 12
+        try? context.save()
+        finishPushA(pullB, startedAt: Date.now.addingTimeInterval(-startedAgo), minutes: 5, weights: nil, in: context)
+    }
+
     /// The "Push A" template from real catalog exercises, and the weight
     /// each exercise is first logged at. Nil when it already exists.
     @MainActor
@@ -193,10 +217,10 @@ enum DemoWorkoutSeed {
         return (template, priorWeights)
     }
 
-    /// Starts a Push A at `start` and finishes it `minutes` later. With
-    /// `weights`, every set is done: the warm-ups, and each working set at
-    /// the bottom of its rep range. Without, nothing is logged, so it is
-    /// an empty workout.
+    /// Starts a workout of `template`, a Push A or the Pull B, at `start`
+    /// and finishes it `minutes` later. With `weights`, every set is done:
+    /// the warm-ups, and each working set at the bottom of its rep range.
+    /// Without, nothing is logged, so it is an empty workout.
     @MainActor
     private static func finishPushA(
         _ template: SessionTemplate,
