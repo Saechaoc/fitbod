@@ -23,6 +23,17 @@
 //    - Screenshots of the chart with one week and with eight weeks, in lb
 //      and in kg.
 //
+//  Ticket T104, findings F158 to F162 and F165:
+//
+//    - Weekly Tonnage opens in twenty fresh launches in a row on the
+//      progress history seed, where it crashed, without the app crashing.
+//    - With Last 26 wk, VoiceOver reads each week with data as its own
+//      element, by its week and its tonnage, rather than a month at a time,
+//      and activating one opens that week, whose total equals the bar.
+//    - Last 8 wk holds the eight whole weeks that end with this one, so
+//      nine weeks of data never read more than eight weeks.
+//    - The chart and its week detail go back with ‹ BACK.
+//
 
 import XCTest
 
@@ -105,7 +116,9 @@ final class WeeklyTonnageUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["TONNAGE (LB)"].exists, "The axis title must read TONNAGE (LB)")
         UITestNavigation.saveScreenshot("T23", "tonnage-8wk-26wk-lb")
         app.buttons["Last 8 weeks"].tap()
-        XCTAssertEqual(drawnBarCount(in: app), 8, "Eight weeks of data must draw eight bars in Last 8 wk")
+        // Last 8 wk holds the eight whole weeks that end with this one (T104).
+        let inLastEight = Self.seededWeeks(8, inLast: 8, weekStartsMonday: true)
+        XCTAssertEqual(drawnBarCount(in: app), inLastEight, "Last 8 wk must draw the \(inLastEight) weeks of data in its eight whole weeks")
         UITestNavigation.saveScreenshot("T23", "tonnage-8wk-8wk-lb")
 
         setUnit("kg", in: app)
@@ -158,7 +171,7 @@ final class WeeklyTonnageUITests: XCTestCase {
 
         // Swift Charts reports bars at frames other than the drawn ones, so
         // tap the middle of the newest bar as drawn.
-        let spokenWeeks = chart.otherElements.matching(NSPredicate(format: "label BEGINSWITH %@", "Week of "))
+        let spokenWeeks = chart.descendants(matching: .any).matching(NSPredicate(format: "label BEGINSWITH %@", "Week of "))
         let newestSpoken = spokenWeeks.allElementsBoundByIndex.max { $0.frame.midX < $1.frame.midX }?.label
         let drawn = drawnBars(in: chart.frame, of: screenshot)
         let newest = try XCTUnwrap(drawn.bars.last, "The chart draws no bars")
@@ -173,7 +186,9 @@ final class WeeklyTonnageUITests: XCTestCase {
 
         let workout = app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH %@", "Sun, ")).firstMatch
         XCTAssertTrue(workout.waitForExistence(timeout: 5), "\(title.label) must list the Sunday workout")
-        let sunday = try XCTUnwrap(Self.date(workout.label, format: "EEE, MMM d", near: week), "Cannot read \(workout.label)")
+        // The row reads its day, then its tonnage: "Sun, Oct 25 · 1,500 lb".
+        let day = workout.label.components(separatedBy: " · ").first ?? workout.label
+        let sunday = try XCTUnwrap(Self.date(day, format: "EEE, MMM d", near: week), "Cannot read \(workout.label)")
         let weekEnd = try XCTUnwrap(calendar.date(byAdding: .day, value: 7, to: week))
         XCTAssertTrue(
             week <= sunday && sunday < weekEnd,
@@ -193,6 +208,135 @@ final class WeeklyTonnageUITests: XCTestCase {
             "With no block, the block filter must send you to Program"
         )
         UITestNavigation.saveScreenshot("T23", "block-filter-empty")
+    }
+
+    // MARK: - T104: twenty opens without a crash
+
+    /// Weekly Tonnage crashed inside Swift Charts about one open in six,
+    /// on a Dictionary key that broke Hashable, right after its row was
+    /// tapped on the progress history seed. Twenty fresh launches each open
+    /// it there and read the whole screen, as VoiceOver does, and the app
+    /// must still be running every time.
+    @MainActor
+    func testOpensTwentyTimesWithoutCrashing() throws {
+        var downOn: [Int] = []
+        for open in 1...20 {
+            let app = UITestNavigation.launch(UITestNavigation.progressHistory)
+            openWeeklyTonnage(in: app)
+            let drawn = app.otherElements["weeklyTonnage.chart"].waitForExistence(timeout: 10)
+            _ = try? app.snapshot()
+            if !drawn || app.state != .runningForeground {
+                downOn.append(open)
+            }
+            app.terminate()
+        }
+        XCTAssertEqual(downOn, [], "Weekly Tonnage must open every time, but the app went down on opens \(downOn) of 20")
+    }
+
+    // MARK: - T104: one VoiceOver element per week
+
+    /// With Last 26 wk, VoiceOver read the bars a month at a time, such as
+    /// "Sep 1, 2026 to Oct 1, 2026", and could not open a week. Each week
+    /// with data must be its own element, named by its week and read as its
+    /// tonnage, and activating one must open that week, whose total is the
+    /// bar's.
+    @MainActor
+    func testEachWeekIsItsOwnVoiceOverElement() throws {
+        let weeks = 10
+        let app = launch(weeks: weeks)
+        openWeeklyTonnage(in: app)
+        XCTAssertTrue(
+            app.staticTexts["TOTAL · \(weeks) WEEKS"].waitForExistence(timeout: 5),
+            "Last 26 wk must hold all \(weeks) weeks of data, not \(rangeLabel(in: app))"
+        )
+        let chart = app.otherElements["weeklyTonnage.chart"]
+        XCTAssertTrue(chart.waitForExistence(timeout: 5), "Missing the chart")
+        UITestNavigation.saveScreenshot("T104", "tonnage-26wk")
+
+        let elements = try chartElements(in: chart)
+        let heard = elements.map { "\($0.label): \($0.value)" }.joined(separator: "\n")
+        let weekElements = elements.filter { $0.label.hasPrefix("Week of ") }
+        XCTAssertEqual(weekElements.count, weeks, "VoiceOver must read each of the \(weeks) weeks by itself, but hears:\n\(heard)")
+        XCTAssertEqual(Set(weekElements.map(\.label)).count, weekElements.count, "Two elements name the same week:\n\(heard)")
+        let calendar = Calendar(identifier: .gregorian)
+        for element in weekElements {
+            XCTAssertNotNil(
+                element.value.range(of: "^[0-9][0-9,]* lb$", options: .regularExpression),
+                "\(element.label) must read its tonnage in lb, not \"\(element.value)\""
+            )
+            let week = Self.date(element.label, format: "'Week of 'MMM d, yyyy")
+            XCTAssertEqual(week.map { calendar.component(.weekday, from: $0) }, 2, "\(element.label) must name a Monday week")
+        }
+        let stretches = elements.filter { $0.label.contains(" to ") || $0.value.contains(" to ") }
+        XCTAssertEqual(stretches.map(\.label), [], "No element may read a stretch of weeks:\n\(heard)")
+
+        // Activate the fourth newest week, as VoiceOver's double tap does,
+        // at the element's own place on the chart.
+        let byAge = weekElements.sorted { $0.frame.midX > $1.frame.midX }
+        let target = try XCTUnwrap(byAge.dropFirst(3).first, "Too few week elements to pick one:\n\(heard)")
+        chart.descendants(matching: .any).matching(NSPredicate(format: "label == %@", target.label)).firstMatch.tap()
+        let title = app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH %@", "Week of ")).firstMatch
+        XCTAssertTrue(title.waitForExistence(timeout: 5), "Activating \(target.label) must open its week")
+        XCTAssertEqual(title.label, target.label, "Activating \(target.label) opened another week")
+        let total = target.value.replacingOccurrences(of: " lb", with: "")
+        XCTAssertTrue(
+            app.staticTexts[total].waitForExistence(timeout: 5),
+            "\(target.label)'s detail must total the bar's \(target.value), but shows \(heroTotal(in: app) ?? "no total")"
+        )
+        UITestNavigation.saveScreenshot("T104", "week-detail")
+    }
+
+    // MARK: - T104: Last 8 wk holds whole weeks
+
+    /// Last 8 wk rolled its lower bound with the clock, so it could hold
+    /// nine weeks. It holds the eight whole weeks that end with this one:
+    /// with nine weeks of Sunday workouts, it counts only the Sundays in
+    /// those weeks.
+    @MainActor
+    func testLastEightWeeksHoldsEightWholeWeeks() throws {
+        let app = launch(weeks: 9)
+        let expected = Self.seededWeeks(9, inLast: 8, weekStartsMonday: true)
+        openWeeklyTonnage(in: app)
+        app.buttons["Last 8 weeks"].tap()
+        let label = "TOTAL · \(expected) WEEK\(expected == 1 ? "" : "S")"
+        XCTAssertTrue(
+            app.staticTexts[label].waitForExistence(timeout: 5),
+            "Last 8 wk must count the \(expected) weeks of data in its eight whole weeks, \(label), not \(rangeLabel(in: app))"
+        )
+        XCTAssertEqual(drawnBarCount(in: app), expected, "Last 8 wk must draw the \(expected) weeks in its eight whole weeks")
+        UITestNavigation.saveScreenshot("T104", "tonnage-8wk-9wk-data")
+    }
+
+    // MARK: - T104: ‹ BACK
+
+    /// The chart and its week detail are pushed screens, so each goes back
+    /// with ‹ BACK rather than a bare ‹. VoiceOver calls both "Back", so the
+    /// shown text comes off a screenshot.
+    @MainActor
+    func testChartAndWeekDetailGoBackWithBack() throws {
+        let app = launch(weeks: 2)
+        openWeeklyTonnage(in: app)
+        let chartBack = try back(on: "Weekly Tonnage", in: app)
+        UITestNavigation.saveScreenshot("T104", "tonnage-back")
+
+        // Tap the middle of the newest bar as drawn.
+        let chart = app.otherElements["weeklyTonnage.chart"]
+        XCTAssertTrue(chart.waitForExistence(timeout: 5), "Missing the chart")
+        let drawn = drawnBars(in: chart.frame, of: XCUIScreen.main.screenshot())
+        let newest = try XCTUnwrap(drawn.bars.last, "The chart draws no bars")
+        app.coordinate(withNormalizedOffset: .zero)
+            .withOffset(CGVector(dx: (newest.lowerBound + newest.upperBound) / 2, dy: drawn.row))
+            .tap()
+        let title = app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH %@", "Week of ")).firstMatch
+        XCTAssertTrue(title.waitForExistence(timeout: 5), "Tapping a bar must open its week")
+        let detailBack = try back(on: "The week detail", in: app)
+        UITestNavigation.saveScreenshot("T104", "week-detail-back")
+
+        detailBack.tap()
+        XCTAssertTrue(title.waitForNonExistence(timeout: 5), "‹ BACK must close the week detail")
+        XCTAssertTrue(app.buttons["Last 8 weeks"].waitForExistence(timeout: 5), "‹ BACK must return to the chart")
+        chartBack.tap()
+        XCTAssertTrue(app.buttons["Last 8 weeks"].waitForNonExistence(timeout: 5), "‹ BACK must close the chart")
     }
 
     // MARK: - Navigation
@@ -252,6 +396,59 @@ final class WeeklyTonnageUITests: XCTestCase {
         let chart = app.otherElements["weeklyTonnage.chart"]
         XCTAssertTrue(chart.waitForExistence(timeout: 5), "Missing the chart")
         return drawnBars(in: chart.frame, of: XCUIScreen.main.screenshot()).bars.count
+    }
+
+    /// The header's back control, which VoiceOver calls "Back", once its
+    /// screenshot text reads ‹ BACK.
+    @MainActor
+    private func back(on screen: String, in app: XCUIApplication) throws -> XCUIElement {
+        let back = UITestNavigation.hittable(app.buttons, "Back", exactLabel: true)
+        UITestNavigation.waitUntilStill(back, interval: 0.3)
+        let shown = UITestNavigation.latin(try UITestNavigation.readText(in: back.frame, of: XCUIScreen.main.screenshot()))
+        XCTAssertTrue(shown.contains("BACK"), "\(screen) must go back with ‹ BACK, but its back control reads \"\(shown)\"")
+        UITestNavigation.assertTapTarget(back)
+        return back
+    }
+
+    /// The label, value and frame of every element inside the chart that
+    /// has a label, as VoiceOver meets them.
+    @MainActor
+    private func chartElements(in chart: XCUIElement) throws -> [(label: String, value: String, frame: CGRect)] {
+        var found: [(label: String, value: String, frame: CGRect)] = []
+        func walk(_ node: XCUIElementSnapshot) {
+            if !node.label.isEmpty {
+                found.append((node.label, node.value as? String ?? "", node.frame))
+            }
+            node.children.forEach(walk)
+        }
+        try chart.snapshot().children.forEach(walk)
+        return found
+    }
+
+    /// How many of the `weeks` Sundays that WeeklyTonnageSeed logs fall in
+    /// the last `range` whole weeks, this one included, as the week-start
+    /// setting starts them.
+    private static func seededWeeks(_ weeks: Int, inLast range: Int, weekStartsMonday: Bool, now: Date = .now) -> Int {
+        var calendar = Calendar(identifier: .iso8601)
+        calendar.firstWeekday = weekStartsMonday ? 2 : 1
+        guard let thisWeek = calendar.dateInterval(of: .weekOfYear, for: now)?.start,
+              let first = calendar.date(byAdding: .weekOfYear, value: 1 - range, to: thisWeek) else { return 0 }
+        return seededSundays(weeks, now: now).filter { $0 >= first }.count
+    }
+
+    /// The starts of the `weeks` workouts WeeklyTonnageSeed logs, newest
+    /// first, worked out as the seed does: 09:00 on the latest Sunday, or
+    /// earlier that Sunday so the hour-long workout is over, else 09:00 the
+    /// Sunday before, then a week apart.
+    private static func seededSundays(_ weeks: Int, now: Date) -> [Date] {
+        let calendar = Calendar(identifier: .gregorian)
+        let today = calendar.startOfDay(for: now)
+        let daysSinceSunday = calendar.component(.weekday, from: today) - 1
+        guard let sunday = calendar.date(byAdding: .day, value: -daysSinceSunday, to: today),
+              let nine = calendar.date(bySettingHour: 9, minute: 0, second: 0, of: sunday) else { return [] }
+        let latest = now.addingTimeInterval(-3600)
+        guard let newest = latest >= sunday ? min(nine, latest) : calendar.date(byAdding: .day, value: -7, to: nine) else { return [] }
+        return (0..<weeks).compactMap { calendar.date(byAdding: .day, value: -7 * $0, to: newest) }
     }
 
     /// The bars drawn in `frame`: the runs of bruInk, in points, across the

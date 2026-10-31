@@ -10,7 +10,7 @@
 //
 //  - NavigationStack wrapper removed; BRUHeaderBar replaces .navigationTitle.
 //  - Hero total band: uppercase BRUFont.labelSmall caption + BRUDisplay(.large) value.
-//  - BarMark baseline fill: Color.bruInk (single-color mode).
+//  - Bar fill (a RectangleMark over each week's span): Color.bruInk (single-color mode).
 //  - Stacked-bar (muscle filter active): Plan B — system palette per muscle name.
 //    WeeklyTonnageAggregator groups slices by muscle, not by intent. Extending
 //    the aggregator to carry intent would be a new data-path change (deviation
@@ -29,15 +29,21 @@
 //
 //  ## Weeks
 //
-//  The chart bins its bars, marks its x axis and snaps bar taps with the
-//  aggregator's rule, the user's week-start setting, through
-//  `WeeklyTonnageChartWeeks`, never the device calendar. Its x axis covers
-//  the whole selected range, so one week of data draws one narrow bar.
+//  The chart places its bars, marks its x axis and snaps bar taps in the
+//  aggregator's week calendar, `WeeklyTonnageAggregator.weekCalendar`, with
+//  the user's week-start setting, never the device calendar. It works out
+//  each bar's week itself and hands Swift Charts plain dates, never a
+//  calendar or a date unit to bin by. Last 8 wk and Last 26 wk hold 8 and
+//  26 whole weeks, this one included, so the label never reads more weeks
+//  than the range. Its x axis covers the whole selected range, so one week
+//  of data draws one narrow bar.
 //
 //  ## Bar tap → WeekDetailView (CONTEXT D-21)
 //
 //  A .chartOverlay + GeometryReader hit-test translates the x-coordinate to
 //  the start of its chart week, then triggers navigationDestination.
+//  VoiceOver reads one element per week with data, over its bar, which
+//  opens the same week when activated.
 //
 //  [CITED: CONTEXT D-18..D-21 + UI-SPEC v2 §Design Pivot #7 + §Reference mockup map]
 //
@@ -49,17 +55,23 @@ import SwiftUI
 // MARK: - TimeRangeChoice → lowerBound helper
 
 extension TimeRangeChoice {
-    /// Inclusive lower bound for the `@Query<SetEntry>` predicate.
-    /// `nil` means "no lower bound" (All time).
-    public func lowerBound(now: Date) -> Date? {
+    /// Inclusive lower bound for the `@Query<SetEntry>` predicate: the
+    /// start of the week 7 (Last 8 wk) or 25 (Last 26 wk) weeks before the
+    /// one that holds `now`, in `calendar`, so the range holds 8 or 26
+    /// whole weeks, this one included. `nil` means "no lower bound" (All
+    /// time).
+    public func lowerBound(now: Date, calendar: Calendar) -> Date? {
+        let weeks: Int
         switch self {
         case .last8wk:
-            return Calendar.current.date(byAdding: .weekOfYear, value: -8, to: now)
+            weeks = 8
         case .last26wk:
-            return Calendar.current.date(byAdding: .weekOfYear, value: -26, to: now)
+            weeks = 26
         case .allTime:
             return nil
         }
+        let thisWeek = calendar.dateInterval(of: .weekOfYear, for: now)?.start ?? now
+        return calendar.date(byAdding: .weekOfYear, value: 1 - weeks, to: thisWeek)
     }
 }
 
@@ -67,6 +79,7 @@ extension TimeRangeChoice {
 
 public struct WeeklyTonnageView: View {
     @Environment(\.dismiss) private var dismiss
+    @Query private var userSettingsList: [UserSettings]
     @State private var filterState = ChartFilterState()
     @State private var navigationDestination: Date?
     private let provider: MuscleVolumeProvider
@@ -76,9 +89,11 @@ public struct WeeklyTonnageView: View {
     }
 
     public var body: some View {
+        let weekStartsMonday = userSettingsList.first?.weekStartsMonday ?? true
+
         VStack(spacing: 0) {
             BRUHeaderBar(
-                left: HeaderAction("‹") { dismiss() },
+                left: HeaderAction("‹ Back") { dismiss() },
                 center: "Weekly Tonnage"
             )
 
@@ -98,6 +113,7 @@ public struct WeeklyTonnageView: View {
                     // Chart host (holds @Query)
                     WeeklyTonnageChartHost(
                         filterState: filterState,
+                        weekStartsMonday: weekStartsMonday,
                         provider: provider,
                         onBarTap: { date in
                             navigationDestination = date
@@ -110,7 +126,7 @@ public struct WeeklyTonnageView: View {
         .background(Color.bruPaper.ignoresSafeArea())
         .navigationBarHidden(true)
         .navigationDestination(item: $navigationDestination) { weekStart in
-            WeekDetailView(weekStart: weekStart)
+            WeekDetailView(weekStart: weekStart, weekStartsMonday: weekStartsMonday)
         }
     }
 }
@@ -119,18 +135,23 @@ public struct WeeklyTonnageView: View {
 
 private struct WeeklyTonnageChartHost: View {
     @Query private var sets: [SetEntry]
-    @Query private var userSettingsList: [UserSettings]
     @Environment(\.weightUnit) private var weightUnit
+    /// Where each bar's week lies on the chart, read off the chart's proxy
+    /// after it lays out, so VoiceOver's week elements cover their bars.
+    @State private var weekSlots: [Date: CGRect] = [:]
     let filterState: ChartFilterState
+    let weekStartsMonday: Bool
     let provider: MuscleVolumeProvider
     let onBarTap: (Date) -> Void
 
     init(
         filterState: ChartFilterState,
+        weekStartsMonday: Bool,
         provider: MuscleVolumeProvider,
         onBarTap: @escaping (Date) -> Void
     ) {
-        let lowerBound = filterState.timeRange.lowerBound(now: Date.now)
+        let calendar = WeeklyTonnageAggregator.weekCalendar(weekStartsMonday: weekStartsMonday)
+        let lowerBound = filterState.timeRange.lowerBound(now: Date.now, calendar: calendar)
         if let lower = lowerBound {
             let lowerLet = lower
             _sets = Query(
@@ -149,14 +170,13 @@ private struct WeeklyTonnageChartHost: View {
                 sort: \.completedAt
             )
         }
-        _userSettingsList = Query()
         self.filterState = filterState
+        self.weekStartsMonday = weekStartsMonday
         self.provider = provider
         self.onBarTap = onBarTap
     }
 
     var body: some View {
-        let weekStartsMonday = userSettingsList.first?.weekStartsMonday ?? true
         let bars = WeeklyTonnageAggregator.aggregate(
             sets: sets,
             weekStartsMonday: weekStartsMonday,
@@ -263,17 +283,22 @@ private struct WeeklyTonnageChartHost: View {
                 .padding(.top, 8)
 
             Chart {
-                ForEach(bars, id: \.weekStart) { week in
+                // Each bar over the middle of its week. Swift Charts gets
+                // plain dates, never a calendar or unit to bin by.
+                ForEach(WeeklyTonnageChartWeeks.plotted(bars, calendar: calendar)) { week in
                     if filterState.selectedMuscles.isEmpty {
-                        // Baseline mode: single bruInk bar
-                        BarMark(
-                            x: .value("Week", week.weekStart, unit: .weekOfYear, calendar: calendar),
-                            y: .value("Tonnage (\(weightUnit.rawValue))", week.totalTonnage)
+                        // Baseline mode: single bruInk bar, a rectangle over
+                        // its span, since BarMark takes no date span
+                        RectangleMark(
+                            xStart: .value("Week", week.span.lowerBound),
+                            xEnd: .value("Week", week.span.upperBound),
+                            yStart: .value("Tonnage (\(weightUnit.rawValue))", 0.0),
+                            yEnd: .value("Tonnage (\(weightUnit.rawValue))", week.bar.totalTonnage)
                         )
                         .foregroundStyle(Color.bruInk)
                         .cornerRadius(0)
-                        .accessibilityLabel(spokenWeek(week.weekStart))
-                        .accessibilityValue(spokenTonnage(week.totalTonnage))
+                        .accessibilityLabel(spokenWeek(week.bar.weekStart))
+                        .accessibilityValue(spokenTonnage(week.bar.totalTonnage))
                     } else {
                         // Muscle-stacked mode (Plan B): system palette per muscle name.
                         // WeeklyTonnageAggregator groups by muscle, not intent.
@@ -282,15 +307,17 @@ private struct WeeklyTonnageChartHost: View {
                         // Plan B is explicitly permitted by UI-SPEC §Design Pivot #7
                         // disclaimer: "sketch fidelity lets the system palette stand for
                         // stacked muscle mode."
-                        ForEach(week.muscleBreakdown ?? [], id: \.muscleID) { slice in
-                            BarMark(
-                                x: .value("Week", week.weekStart, unit: .weekOfYear, calendar: calendar),
-                                y: .value("Tonnage (\(weightUnit.rawValue))", slice.tonnage)
+                        ForEach(WeeklyTonnageChartWeeks.stacked(week.bar.muscleBreakdown ?? [])) { stack in
+                            RectangleMark(
+                                xStart: .value("Week", week.span.lowerBound),
+                                xEnd: .value("Week", week.span.upperBound),
+                                yStart: .value("Tonnage (\(weightUnit.rawValue))", stack.base),
+                                yEnd: .value("Tonnage (\(weightUnit.rawValue))", stack.base + stack.slice.tonnage)
                             )
-                            .foregroundStyle(by: .value("Muscle", slice.muscleName))
+                            .foregroundStyle(by: .value("Muscle", stack.slice.muscleName))
                             .cornerRadius(0)
-                            .accessibilityLabel("\(spokenWeek(week.weekStart)), \(slice.muscleName)")
-                            .accessibilityValue(spokenTonnage(slice.tonnage))
+                            .accessibilityLabel("\(spokenWeek(week.bar.weekStart)), \(stack.slice.muscleName)")
+                            .accessibilityValue(spokenTonnage(stack.slice.tonnage))
                         }
                     }
                 }
@@ -337,11 +364,17 @@ private struct WeeklyTonnageChartHost: View {
             .chartYScale(domain: .automatic(includesZero: true))
             .accessibilityIdentifier("weeklyTonnage.chart")
             .frame(minHeight: 280)
-            .padding(.horizontal, 12)
-            .padding(.vertical, 8)
+            // Replaces the marks' elements rather than hiding the marks,
+            // which would take the chart's audio graph with them.
+            .accessibilityChildren {
+                weekElements(bars)
+            }
             // Preserve existing bar-tap → WeekDetailView drill logic
             .chartOverlay { proxy in
                 GeometryReader { geometry in
+                    let slots = proxy.plotFrame.map { plotFrame in
+                        Self.slots(of: bars, calendar: calendar, proxy: proxy, plot: geometry[plotFrame])
+                    } ?? [:]
                     Rectangle()
                         .fill(Color.clear)
                         .contentShape(Rectangle())
@@ -355,41 +388,99 @@ private struct WeeklyTonnageChartHost: View {
                             guard let interval = calendar.dateInterval(of: .weekOfYear, for: date) else { return }
                             onBarTap(interval.start)
                         }
+                        // VoiceOver opens weeks through the week elements.
+                        .accessibilityHidden(true)
+                        .onChange(of: slots, initial: true) { _, slots in
+                            weekSlots = slots
+                        }
+                }
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
+        }
+    }
+
+    // MARK: - VoiceOver's weeks
+
+    /// Each bar's week on the chart: from its week start to the next, the
+    /// plot's full height, in the chart's space.
+    private static func slots(
+        of bars: [WeeklyTonnageBar],
+        calendar: Calendar,
+        proxy: ChartProxy,
+        plot: CGRect
+    ) -> [Date: CGRect] {
+        var slots: [Date: CGRect] = [:]
+        for week in bars {
+            guard let next = calendar.date(byAdding: .weekOfYear, value: 1, to: week.weekStart),
+                  let start = proxy.position(forX: week.weekStart),
+                  let end = proxy.position(forX: next) else { continue }
+            slots[week.weekStart] = CGRect(x: plot.minX + start, y: plot.minY, width: end - start, height: plot.height)
+        }
+        return slots
+    }
+
+    /// VoiceOver's elements for the chart: one per week with data, over
+    /// its bar, named by its week and read as its tonnage, that opens the
+    /// week when activated, as a tap on its bar does. Swift Charts' own
+    /// read many weeks a month at a time, such as "Sep 1, 2026 to Oct 1,
+    /// 2026", and opened nothing.
+    private func weekElements(_ bars: [WeeklyTonnageBar]) -> some View {
+        ZStack(alignment: .topLeading) {
+            ForEach(bars, id: \.weekStart) { week in
+                if let slot = weekSlots[week.weekStart] {
+                    Rectangle()
+                        .frame(width: slot.width, height: slot.height)
+                        .position(x: slot.midX, y: slot.midY)
+                        .accessibilityLabel(spokenWeek(week.weekStart))
+                        .accessibilityValue(spokenValue(of: week))
+                        .accessibilityAddTraits(.isButton)
+                        .accessibilityAction { onBarTap(week.weekStart) }
                 }
             }
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+    }
+
+    /// What VoiceOver reads for a week: its tonnage, or with a muscle
+    /// filter on, each muscle's part of it, as the bar stacks them.
+    private func spokenValue(of week: WeeklyTonnageBar) -> String {
+        guard let slices = week.muscleBreakdown else { return spokenTonnage(week.totalTonnage) }
+        guard !slices.isEmpty else { return spokenTonnage(0) }
+        return slices.map { "\($0.muscleName), \(spokenTonnage($0.tonnage))" }.joined(separator: "; ")
     }
 }
 
 // MARK: - WeeklyTonnageChartWeeks
 
-/// The weeks the Weekly Tonnage chart draws. It bins its bars, marks its
-/// axis and snaps bar taps with the aggregator's rule, the user's
-/// week-start setting, never the device calendar, which starts weeks on
-/// Sunday in the US, so a Sunday workout sits in the same week on the chart
-/// as in the totals. Its axis covers the whole selected range, so one week
-/// of data draws one narrow bar.
+/// The weeks the Weekly Tonnage chart draws. It places its bars, marks its
+/// axis and snaps bar taps in `WeeklyTonnageAggregator.weekCalendar`, the
+/// aggregator's own calendar with the user's week-start setting, never the
+/// device calendar, which starts weeks on Sunday in the US, so a Sunday
+/// workout sits in the same week on the chart as in the totals. Its axis
+/// covers the whole selected range, so one week of data draws one narrow
+/// bar.
 enum WeeklyTonnageChartWeeks {
-    /// The calendar `WeeklyTonnageAggregator` buckets weeks with.
+    /// The calendar the chart draws its weeks in: the one
+    /// `WeeklyTonnageAggregator` buckets them with.
     static func calendar(weekStartsMonday: Bool) -> Calendar {
-        var calendar = Calendar(identifier: .iso8601)
-        calendar.firstWeekday = weekStartsMonday ? 2 : 1
-        return calendar
+        WeeklyTonnageAggregator.weekCalendar(weekStartsMonday: weekStartsMonday)
     }
 
-    /// The x axis's weeks: from the week that holds the range's rolling
-    /// lower bound through the end of the current week, usually 9 weeks for
-    /// Last 8 wk and 27 for Last 26 wk. All time starts at the oldest bar's
-    /// week, but never later than Last 8 wk does. A bar outside those weeks
-    /// widens them, so no bar is drawn off the plot.
+    /// The x axis's weeks: the range's whole weeks through the end of the
+    /// current week, 8 for Last 8 wk and 26 for Last 26 wk. All time
+    /// starts at the oldest bar's week, but never later than Last 8 wk
+    /// does. A bar outside those weeks widens them, so no bar is drawn off
+    /// the plot.
     static func domain(
         for range: TimeRangeChoice,
         bars: [WeeklyTonnageBar],
         now: Date,
         calendar: Calendar
     ) -> ClosedRange<Date> {
-        let lowerBound = range.lowerBound(now: now) ?? TimeRangeChoice.last8wk.lowerBound(now: now) ?? now
-        let firstWeek = calendar.dateInterval(of: .weekOfYear, for: lowerBound)?.start ?? lowerBound
+        let firstWeek = range.lowerBound(now: now, calendar: calendar)
+            ?? TimeRangeChoice.last8wk.lowerBound(now: now, calendar: calendar)
+            ?? now
         let currentWeekEnd = calendar.dateInterval(of: .weekOfYear, for: now)?.end ?? now
         let oldest = bars.map(\.weekStart).min() ?? firstWeek
         let newestEnd = bars.map(\.weekStart).max()
@@ -417,5 +508,48 @@ enum WeeklyTonnageChartWeeks {
         let starts = weeks.dropLast()
         let stride = max(1, (starts.count + 4) / 5)
         return starts.enumerated().filter { $0.offset % stride == 0 }.map(\.element)
+    }
+
+    /// Where the bar of the week from `weekStart` is drawn: the middle 70%
+    /// of its week, as wide as Swift Charts drew a week-binned bar, so
+    /// neighbors keep a gap. The chart works out each week here and hands
+    /// Swift Charts plain dates, never a unit or calendar to bin by: Weekly
+    /// Tonnage crashed now and then inside Swift Charts, on a Dictionary
+    /// key that broke Hashable, once it was given a calendar to bin weeks.
+    static func barSpan(of weekStart: Date, calendar: Calendar) -> ClosedRange<Date> {
+        let weekEnd = calendar.date(byAdding: .weekOfYear, value: 1, to: weekStart)
+            ?? weekStart.addingTimeInterval(7 * 24 * 3600)
+        let inset = weekEnd.timeIntervalSince(weekStart) * 0.15
+        return weekStart.addingTimeInterval(inset)...weekEnd.addingTimeInterval(-inset)
+    }
+
+    /// A bar as the chart plots it: its week's totals, and the span of its
+    /// week it is drawn over. Its id is its week start.
+    struct PlottedWeek: Identifiable {
+        let bar: WeeklyTonnageBar
+        let span: ClosedRange<Date>
+        var id: Date { bar.weekStart }
+    }
+
+    /// `bars` as the chart plots them, each over `barSpan(of:calendar:)`.
+    static func plotted(_ bars: [WeeklyTonnageBar], calendar: Calendar) -> [PlottedWeek] {
+        bars.map { PlottedWeek(bar: $0, span: barSpan(of: $0.weekStart, calendar: calendar)) }
+    }
+
+    /// One muscle's part of a stacked bar, from `base` up.
+    struct StackedSlice: Identifiable {
+        let slice: MuscleSlice
+        let base: Double
+        var id: UUID { slice.muscleID }
+    }
+
+    /// A week's muscle slices stacked bottom up in their order, each from
+    /// the top of the one below it.
+    static func stacked(_ slices: [MuscleSlice]) -> [StackedSlice] {
+        var base = 0.0
+        return slices.map { slice in
+            defer { base += slice.tonnage }
+            return StackedSlice(slice: slice, base: base)
+        }
     }
 }

@@ -20,15 +20,16 @@
 //    provider:           injected `MuscleVolumeProvider` (D-20 seam).
 //
 //  Algorithm:
-//    1. Filter input to working-only sets:
+//    1. Filter input to working-only sets (`counts(_:)`):
 //          set.setType == .working
 //       && !set.isWarmup
 //       && set.isComplete
 //       && set.weight > 0
 //       && set.reps > 0
 //    2. Bucket each surviving set by its ISO week start computed
-//       through `Calendar(identifier: .iso8601)` with
-//       `firstWeekday = weekStartsMonday ? 2 : 1`.
+//       through `weekCalendar(weekStartsMonday:)`: ISO 8601 with
+//       `firstWeekday = weekStartsMonday ? 2 : 1`. The chart and the
+//       week detail read the same calendar.
 //    3. Per bucket: totalTonnage = Σ (weight × reps).
 //    4. If selectedMuscleIDs is empty → muscleBreakdown = nil.
 //       Else: for every working set in the bucket call
@@ -85,6 +86,26 @@ public struct MuscleSlice: Sendable, Equatable {
 /// array of weekly bars suitable for Swift Charts `BarMark` rendering.
 public enum WeeklyTonnageAggregator {
 
+    /// The calendar Weekly Tonnage buckets weeks with: ISO 8601, its weeks
+    /// starting on Monday or Sunday by the week-start setting, never the
+    /// device calendar's first weekday. The chart draws its weeks and the
+    /// week detail gathers its sets with it too, so all three agree.
+    public static func weekCalendar(weekStartsMonday: Bool) -> Calendar {
+        var calendar = Calendar(identifier: .iso8601)
+        calendar.firstWeekday = weekStartsMonday ? 2 : 1
+        return calendar
+    }
+
+    /// Whether the totals count `entry`: a completed working set, not a
+    /// warm-up, with weight and reps.
+    public static func counts(_ entry: SetEntry) -> Bool {
+        entry.setType == .working
+            && !entry.isWarmup
+            && entry.isComplete
+            && entry.weight > 0
+            && entry.reps > 0
+    }
+
     /// Aggregate working-set tonnage into per-week bars.
     ///
     /// See file header for the algorithm and filtering contract.
@@ -96,20 +117,13 @@ public enum WeeklyTonnageAggregator {
     ) -> [WeeklyTonnageBar] {
 
         // 1. Working-set filter (defense in depth — every property checked).
-        let working = sets.filter { entry in
-            entry.setType == .working
-                && !entry.isWarmup
-                && entry.isComplete
-                && entry.weight > 0
-                && entry.reps > 0
-        }
+        let working = sets.filter(counts)
         guard !working.isEmpty else { return [] }
 
-        // 2. Bucket by ISO week start. Construct an ISO8601 calendar value
-        //    we own so the input weekStartsMonday flag is the ONLY source
-        //    of firstWeekday — never read from Calendar.current.firstWeekday.
-        var calendar = Calendar(identifier: .iso8601)
-        calendar.firstWeekday = weekStartsMonday ? 2 : 1
+        // 2. Bucket by ISO week start in the shared week calendar, so the
+        //    input weekStartsMonday flag is the ONLY source of firstWeekday,
+        //    never Calendar.current.firstWeekday.
+        let calendar = weekCalendar(weekStartsMonday: weekStartsMonday)
 
         // Group SetEntries by their week-start key. Skip any whose
         // dateInterval cannot resolve (impossible in practice but

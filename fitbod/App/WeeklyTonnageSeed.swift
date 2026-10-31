@@ -84,8 +84,9 @@ enum WeeklyTonnageSeed {
 
     /// The newest workout's start: 09:00 on the latest Sunday, or earlier
     /// that Sunday so its hour-long workout is over by `now`, else 09:00 the
-    /// Sunday before. It is always less than a week old, so all eight weeks
-    /// sit inside Last 8 wk.
+    /// Sunday before. It is always less than a week old. Last 8 wk holds
+    /// whole weeks, so with weeks starting on Monday the oldest of eight
+    /// workouts falls out of it unless the newest is today's.
     private static func newestStart(before now: Date, in calendar: Calendar) -> Date? {
         let today = calendar.startOfDay(for: now)
         let daysSinceSunday = calendar.component(.weekday, from: today) - 1
