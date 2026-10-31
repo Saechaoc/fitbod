@@ -145,6 +145,21 @@ final class SwipeBackUITests: XCTestCase {
         assertSwipeBack(from: logger(in: app), "the workout logger", to: resume, in: app)
     }
 
+    /// Program lists archived routines once one is archived (T20).
+    @MainActor
+    func testArchivedRoutinesSwipeBackToProgram() throws {
+        let app = UITestNavigation.launch(UITestNavigation.freshStore)
+        UITestNavigation.selectTab("Program", in: app)
+        UITestNavigation.hittable(app.buttons, "+ NEW").tap()
+        UITestNavigation.hittable(app.buttons, "+ New routine").tap()
+        open(app.buttons.labeled("Archive routine"), in: app)
+        UITestNavigation.hittable(app.buttons, "Archive", exactLabel: true).tap()
+        let archived = app.buttons.labeled("Archived routines")
+        open(archived, in: app)
+        let restore = button(beginningWith: "Restore ", in: app)
+        assertSwipeBack(from: restore, "Archived routines", to: archived, in: app)
+    }
+
     // MARK: - Progress
 
     @MainActor
