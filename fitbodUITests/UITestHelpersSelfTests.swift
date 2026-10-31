@@ -137,7 +137,7 @@ final class UITestHelpersSelfTests: XCTestCase {
     /// and later, and `topSheet(in:)` still finds it, so `swipeSheetDown`
     /// closes it (F171). New Block's Edit Block Duration sheet opens at
     /// half height at default text.
-    @MainActor
+    @MainActor // XCUIApplication and XCUIElement are main-actor types.
     func testTopSheetFindsAHalfHeightSheetAndSwipesItDown() {
         let app = UITestNavigation.launch(UITestNavigation.freshStore, textSize: .default)
         UITestNavigation.selectTab("Program", in: app)
@@ -147,7 +147,7 @@ final class UITestHelpersSelfTests: XCTestCase {
         let newBlock = app.staticTexts.labeled("NEW BLOCK")
         XCTAssertTrue(newBlock.waitForExistence(timeout: 10), "New Block never opened")
         let totalWeeks = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Total weeks, ")).firstMatch
-        XCTAssertTrue(totalWeeks.waitForExistence(timeout: 5), "Missing TOTAL WEEKS")
+        XCTAssertTrue(totalWeeks.exists || totalWeeks.waitForExistence(timeout: 5), "Missing TOTAL WEEKS")
         totalWeeks.tap()
         let title = app.staticTexts.labeled("Edit Block Duration")
         XCTAssertTrue(title.waitForExistence(timeout: 5), "TOTAL WEEKS must open the duration sheet")

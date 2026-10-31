@@ -159,8 +159,9 @@ final class MilestoneOneJourneyUITests: XCTestCase {
             .press(forDuration: 0.1, thenDragTo: app.coordinate(withNormalizedOffset: CGVector(dx: 0.05, dy: rowY)))
         // A full swipe deletes the set and leaves no Delete button, but its
         // row takes a moment to animate away; a shorter swipe leaves Delete.
-        if !added.waitForNonExistence(timeout: 2) { tap("Delete") }
-        XCTAssertTrue(added.waitForNonExistence(timeout: 5), "The swiped set must be deleted")
+        let swipedAway = added.waitForNonExistence(timeout: 2)
+        if !swipedAway { tap("Delete") }
+        XCTAssertTrue(swipedAway || added.waitForNonExistence(timeout: 5), "The swiped set must be deleted")
         let weight = app.textFields.matching(NSPredicate(format: "identifier BEGINSWITH %@", "set.weight.1.S1")).firstMatch
         let weightInput = weight.exists ? weight : app.textFields["—"].firstMatch
         reveal(weightInput)
@@ -301,12 +302,12 @@ final class MilestoneOneJourneyUITests: XCTestCase {
     /// editing, stay away in between (T101). Exercise detail's two fields
     /// sit on Library's stack above its tab bar; the logger's reps fields
     /// sit above the rest dock.
-    @MainActor
+    @MainActor // XCUIApplication and XCUIElement are main-actor types.
     func testFocusMovingStraightBetweenFieldsKeepsTabBarAndRestDockAway() throws {
         app = UITestNavigation.launch(UITestNavigation.seededWorkout)
         UITestNavigation.selectTab("Library", in: app)
         let search = app.textFields["library.search.browser"]
-        XCTAssertTrue(search.waitForExistence(timeout: 10))
+        XCTAssertTrue(search.exists || search.waitForExistence(timeout: 10))
         enter("Barbell Bench Press", into: search)
         search.typeText("\n")
         let bench = app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH %@", "Barbell Bench Press - Medium Grip"))
@@ -322,7 +323,8 @@ final class MilestoneOneJourneyUITests: XCTestCase {
 
         barWeight.tap()
         XCTAssertTrue(libraryTab.waitForNonExistence(timeout: 5), "The tab bar must leave while a field is edited")
-        XCTAssertTrue(app.keyboards.firstMatch.waitForExistence(timeout: 5))
+        let keyboard = app.keyboards.firstMatch
+        XCTAssertTrue(keyboard.exists || keyboard.waitForExistence(timeout: 5))
         XCTAssertTrue(increment.isHittable, "The field above must show above the keyboard")
         increment.tap()
         expectStaysAway(libraryTab, "Focus moving straight to the next field must not bring the tab bar back")
@@ -333,7 +335,7 @@ final class MilestoneOneJourneyUITests: XCTestCase {
 
         UITestNavigation.selectTab("Today", in: app)
         let resume = app.buttons["resumeSlab.resume"]
-        XCTAssertTrue(resume.waitForExistence(timeout: 10))
+        XCTAssertTrue(resume.exists || resume.waitForExistence(timeout: 10))
         reveal(resume)
         resume.tap()
         // A tap on an empty set's cell ends the rest, and one on a done
@@ -341,7 +343,7 @@ final class MilestoneOneJourneyUITests: XCTestCase {
         // and the focus then moves between the two done sets.
         for set in ["S1", "S2"] {
             let reps = app.textFields["set.reps.1.\(set)"]
-            XCTAssertTrue(reps.waitForExistence(timeout: 15))
+            XCTAssertTrue(reps.exists || reps.waitForExistence(timeout: 15))
             enter("8", into: reps)
         }
         let keyboardDone = app.toolbars.buttons["DONE"].firstMatch
@@ -485,9 +487,10 @@ final class MilestoneOneJourneyUITests: XCTestCase {
         }
     }
 
-    /// Fails if `element` shows at any of several checks over about a
-    /// second after a step.
-    @MainActor
+    /// Fails if `element` shows at any of eight checks over about a second
+    /// after a step. Staying away is the claim, so there is no condition to
+    /// wait on: the 100 ms pause only spaces the checks.
+    @MainActor // XCUIElement is a main-actor type.
     private func expectStaysAway(_ element: XCUIElement, _ message: String, file: StaticString = #filePath, line: UInt = #line) {
         for _ in 0..<8 {
             XCTAssertFalse(element.exists, message, file: file, line: line)
