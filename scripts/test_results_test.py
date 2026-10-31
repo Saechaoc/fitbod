@@ -1,4 +1,6 @@
 """python3 scripts/test_results_test.py — checks the coverage guard and the shard split."""
+import contextlib
+import io
 import json
 import os
 import subprocess
@@ -69,11 +71,23 @@ class CoverageTests(unittest.TestCase):
         self.assertEqual(out.returncode, 1)
         self.assertIn("unexpected: fitbod (123) encountered an error()", out.stdout)
 
+    def test_an_unfinished_test_fails(self):
+        out = self.run_coverage(ran(*ALL[:-1], case("fitbodUITests/TodayUITests/testOpens", "Unknown")))
+        self.assertEqual(out.returncode, 1)
+        self.assertIn("without a result: fitbodUITests/TodayUITests/testOpens()", out.stdout)
+
     def test_started_counts_only_real_tests(self):
         pseudo = {"nodeType": "Test Case", "nodeIdentifier": "fitbod (123) encountered an error"}
         nodes = ran(ALL[0], pseudo)["testNodes"]
-        self.assertEqual(sum(bool(n.get("nodeIdentifierURL"))
-                             for n in test_results.test_cases(nodes)), 1)
+        printed = io.StringIO()
+        real_reader = test_results.bundle_tests
+        test_results.bundle_tests = lambda bundle: nodes
+        try:
+            with contextlib.redirect_stdout(printed):
+                test_results.started("unused.xcresult")
+        finally:
+            test_results.bundle_tests = real_reader
+        self.assertEqual(printed.getvalue().strip(), "1")
 
 
 class ShardTests(unittest.TestCase):

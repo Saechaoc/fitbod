@@ -126,6 +126,12 @@ xcrun simctl bootstatus "$DEVICE" -b >/dev/null
 
 [[ "$TIER" == fast || $# -eq 0 ]] || { echo "full takes no test args; it runs everything" >&2; exit 2; }
 
+if [[ "$TIER" == full ]]; then
+  # The coverage guard decides whether a sharded run counts; check it first.
+  python3 "$ROOT/scripts/test_results_test.py" > "$RUN/self-test.log" 2>&1 ||
+    { echo "scripts/test_results_test.py failed; see $RUN/self-test.log" >&2; exit 1; }
+fi
+
 step "build-for-testing"
 xb "$RUN/build.log" "${flags[@]}" build-for-testing
 xctestrun="$(ls -t "$DD"/Build/Products/*.xctestrun | head -1)"
