@@ -9,6 +9,9 @@
 //    logged set (lastSessionWeight / percent(reps:rpe:)), then applies the
 //    target reps/RPE percent to derive the point estimate. Expands ±5% into a
 //    plate-rounded range. Returns range != nil and status .calibrating(...).
+//    Its computed line shows that e1RM, the target's percent and the raw
+//    target, in the calibrated line's shape. A last set without an RPE
+//    gives no e1RM, so nothing is suggested, and the explanation says why.
 //
 //  CALIBRATED (history.count >= minCalibrationSets):
 //    Calls Calibration.predict(history:targetReps:targetRPE:) for the Gaussian-
@@ -138,12 +141,14 @@ public struct RPEAutoregStrategy: ProgressionStrategy {
             )
             let range: ClosedRange<Double> = lowRounded...max(lowRounded, highRounded)
 
+            let pctDisplay = Int((targetPct * 100).rounded())
+            let computedLine = "Last session e1RM \(Self.fmt1(e1RM)) \(unit.rawValue) → \(pctDisplay)% × \(targetRepsHigh) → \(Self.fmt1(rawTarget)) \(unit.rawValue)"
             let roundedLine = "→ \(Self.fmtG(rounded)) \(unit.rawValue) (rounded down to \(Self.fmtG(smallestIncrement)) \(unit.rawValue) plates)"
 
             let exp = PrescriptionExplanation(
                 lastSessionLine: lastLine,
                 formulaName: "RPE autoregulation",
-                computedLine: nil,
+                computedLine: computedLine,
                 roundedWeight: rounded,
                 roundedLine: roundedLine,
                 status: .calibrating(current: history.count, threshold: minCalibrationSets),
@@ -155,14 +160,15 @@ public struct RPEAutoregStrategy: ProgressionStrategy {
 
         // MARK: Calibrating path — no prior session data
         // A last top set without an RPE gives no e1RM to calibrate from,
-        // so nothing is suggested, but it is still the last session.
+        // so nothing is suggested, but it is still the last session: the
+        // computed line says why, and the rounded line asks for a weight.
 
         let exp = PrescriptionExplanation(
             lastSessionLine: lastLine,
             formulaName: "RPE autoregulation",
-            computedLine: nil,
+            computedLine: lastLine == nil ? nil : "Last session has no RPE to calibrate from. Log one on this set.",
             roundedWeight: 0,
-            roundedLine: "No prior data - log a set to begin calibrating.",
+            roundedLine: lastLine == nil ? "No prior data - log a set to begin calibrating." : "Choose a starting weight.",
             status: .calibrating(current: history.count, threshold: minCalibrationSets),
             bumpOccurred: false,
             range: nil

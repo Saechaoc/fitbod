@@ -80,10 +80,11 @@ struct WhySheetInputsTests {
         #expect(explanation.lastSessionLine == "100 lb × 5 (\(lastDay))")
         let sheet = WhyThisWeightSheet(explanation: explanation, unitLabel: "lb")
         #expect(!sheet.step02Body.hasPrefix("No prior data"))
-        // T61 and T79: a suggestion of 0 still shows the dash, no Use and no step 03.
+        // T61 and T79: a suggestion of 0 still shows the dash and no Use.
+        // T97: with no RPE to calibrate from, step 03 asks for a starting weight.
         #expect(sheet.heroWeightText == "\u{2014}")
         #expect(sheet.useTitle == nil)
-        #expect(sheet.step03Label == nil)
+        #expect(sheet.step03Label == "Starting weight")
     }
 
     @Test("With no last session, both strategies still have no last-session line")

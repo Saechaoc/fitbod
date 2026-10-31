@@ -22,7 +22,9 @@
 //       and the 2pt bruInk rule below them spans the sheet
 //       - Step 01's reps in reserve come from the last session's RPE
 //       - When .calibrating: CalibratingProgressMeter between step 02 and step 03
-//       - A suggestion of 0 has nothing to round, so step 03 is left out
+//       - A suggestion of 0 has nothing to round, so step 03 is left out,
+//         unless it asks for a starting weight: RPE autoregulation has no
+//         RPE to calibrate from in the last session
 //    4. Footer bar: 2pt bruInk top rule + BRUButton(.ghost) "Override" +
 //       BRUButton(.signal) "Use {weight} ▸". A suggestion of 0 is no
 //       suggestion, so the bar shows Override alone.
@@ -300,9 +302,20 @@ public struct WhyThisWeightSheet: View {
                 .padding(.vertical, 12)
             }
 
-            // Step 03: Plate rounding, left out for a suggestion of 0
+            // Step 03: Plate rounding, or the ask for a starting weight;
+            // left out for any other suggestion of 0
             if let step03Label {
-                step03Row(label: step03Label)
+                if let startingWeightPrompt {
+                    stepRow(
+                        index: "03",
+                        label: step03Label,
+                        body: startingWeightPrompt,
+                        bodyColor: Color.bruInk,
+                        subCopy: nil
+                    )
+                } else {
+                    step03Row(label: step03Label)
+                }
             }
         }
         // The steps fill the sheet's width, however short their text, so
@@ -344,8 +357,7 @@ public struct WhyThisWeightSheet: View {
     }
 
     var step02Label: String {
-        let name = explanation.formulaName.lowercased()
-        if name.contains("double") {
+        if isDoubleProgression {
             return "Double progression"
         }
         guard let rpe else { return "Target weight" }
@@ -366,8 +378,13 @@ public struct WhyThisWeightSheet: View {
                 ? "No prior data — starting at prescribed weight."
                 : "No prior data \u{2014} choose a starting weight."
         }
-        // Held (partial reps)
-        return "Weight holds."
+        // Held (partial reps). Only double progression holds a weight; any
+        // other strategy without a computed line has its rounded line.
+        return isDoubleProgression ? "Weight holds." : explanation.roundedLine
+    }
+
+    private var isDoubleProgression: Bool {
+        explanation.formulaName.lowercased().contains("double")
     }
 
     private var step02BodyColor: Color {
@@ -389,12 +406,36 @@ public struct WhyThisWeightSheet: View {
     }
 
     /// Step 03's label, or nil to leave step 03 out: a suggestion of 0 has
-    /// nothing to round. A plate size roundedLine does not name is left
-    /// out with its unit, never shown as "?".
+    /// nothing to round, unless step 03 asks for a starting weight. A plate
+    /// size roundedLine does not name is left out with its unit, never
+    /// shown as "?".
     var step03Label: String? {
+        if startingWeightPrompt != nil { return "Starting weight" }
         guard hasSuggestion else { return nil }
         guard let increment = incrementText() else { return "Rounded to plate" }
         return "Rounded to plate \(increment) \(unitLabel)"
+    }
+
+    /// Step 03's body as it reads, or nil when step 03 is left out: the ask
+    /// for a starting weight, or "{raw} → {rounded} ({plate list})".
+    var step03Text: String? {
+        guard step03Label != nil else { return nil }
+        if let startingWeightPrompt { return startingWeightPrompt }
+        let runs = roundingRuns
+        return runs.raw + runs.rounded + runs.plates
+    }
+
+    /// What step 03 asks for when nothing is suggested after a last
+    /// session, or nil. With no RPE in the last session, RPE autoregulation
+    /// has nothing to calibrate from, so its rounded line asks for a
+    /// starting weight instead of rounding one. Every other suggestion of 0
+    /// rounds nothing, "→ 0 lb", and step 03 is left out.
+    private var startingWeightPrompt: String? {
+        let line = explanation.roundedLine
+        guard !hasSuggestion, explanation.lastSessionLine != nil,
+              !line.hasPrefix("→"), !line.hasPrefix("->")
+        else { return nil }
+        return line
     }
 
     // Step 03 uses a custom attributed body (signal for rounded weight)
@@ -426,23 +467,33 @@ public struct WhyThisWeightSheet: View {
 
     @ViewBuilder
     private var step03Body: some View {
-        // Compute raw weight (un-rounded) from roundedLine if possible
-        let raw = rawWeightFromLine ?? explanation.roundedWeight
-        let roundedStr = formatted(explanation.roundedWeight)
-        let rawStr = formatted(raw)
-        let showArrow = abs(raw - explanation.roundedWeight) > 0.01
-        let prefix = Text(showArrow ? "\(rawStr) → " : "")
+        let runs = roundingRuns
+        let prefix = Text(runs.raw)
             .font(BRUFont.bodyDefault)
             .foregroundStyle(Color.bruInk)
-        let rounded = Text(roundedStr)
+        let rounded = Text(runs.rounded)
             .font(BRUFont.bodyDefault)
             .foregroundStyle(Color.bruSignal)
             .bold()
-        let suffix = Text(plateListSuffix)
+        let suffix = Text(runs.plates)
             .font(BRUFont.bodyDefault)
             .foregroundStyle(Color.bruMuted)
 
         Text("\(prefix)\(rounded)\(suffix)")
+    }
+
+    /// Step 03's rounding in three runs: the raw weight and its arrow,
+    /// empty when nothing was rounded; the rounded weight; and the plate
+    /// list, empty when roundedLine names none.
+    private var roundingRuns: (raw: String, rounded: String, plates: String) {
+        // The raw (un-rounded) weight ends computedLine, when there is one
+        let raw = rawWeightFromLine ?? explanation.roundedWeight
+        let showArrow = abs(raw - explanation.roundedWeight) > 0.01
+        return (
+            raw: showArrow ? "\(formatted(raw)) → " : "",
+            rounded: formatted(explanation.roundedWeight),
+            plates: plateListSuffix
+        )
     }
 
     private var plateListSuffix: String {
