@@ -56,6 +56,13 @@ public struct TodayView: View {
     @Query(sort: \Session.startedAt, order: .reverse)
     private var allSessions: [Session]
 
+    /// The finished workouts that are empty (decision 6), and the finished
+    /// workouts they were worked out for. Reading them means reading every
+    /// set, so they are filled when the finished workouts change, never per
+    /// render. Until then the total counts every finished workout.
+    @State private var emptyWorkoutIDs: Set<PersistentIdentifier> = []
+    @State private var emptyWorkoutsKey: [PersistentIdentifier]?
+
     // MARK: - Navigation / Sheet State (preserved verbatim from Phase 4/5)
 
     @State private var navigationPath = NavigationPath()
@@ -84,6 +91,8 @@ public struct TodayView: View {
         // finished workout, and the CTA, picker and lift list all need it.
         let resolution = todaysResolution
         let todaysRoutine = Self.scheduledRoutine(in: resolution)
+        let finished = allSessions.filter { $0.completedAt != nil }
+        let finishedIDs = finished.map(\.persistentModelID)
         NavigationStack(path: $navigationPath) {
             ScrollView {
                 VStack(spacing: 0) {
@@ -108,7 +117,9 @@ public struct TodayView: View {
                     // Stat strip — always visible
                     TodayStatStrip(
                         streak: computedStreak,
-                        totalSessions: allSessions.filter { $0.completedAt != nil }.count,
+                        totalSessions: emptyWorkoutIDs.isEmpty
+                            ? finished.count
+                            : finished.count(where: { !emptyWorkoutIDs.contains($0.persistentModelID) }),
                         weekIndex: currentWeekIndex,
                         totalWeeks: currentTotalWeeks,
                         trend: currentTrend,
@@ -362,6 +373,17 @@ public struct TodayView: View {
                 refreshAdvisory()
                 checkWeeklyRecap()
             }
+            // The empty workouts behind the all-time Sessions total, read
+            // when the finished workouts change, never per render.
+            .task(id: finishedIDs) {
+                guard emptyWorkoutsKey != finishedIDs else { return }
+                emptyWorkoutIDs = SessionSetActions.emptyWorkoutIDs(
+                    among: finished,
+                    known: emptyWorkoutsKey.map { (finished: $0, empty: emptyWorkoutIDs) },
+                    in: ctx
+                )
+                emptyWorkoutsKey = finishedIDs
+            }
         }
     }
 
@@ -472,35 +494,33 @@ public struct TodayView: View {
         return max(1, total)
     }
 
-    /// Finished sessions since the start of this week (the lifter's
-    /// week-start setting; Monday by default).
+    /// Sessions since the start of this week (the lifter's week-start
+    /// setting; Monday by default): this week's workouts that count.
     private var sessionsThisWeek: Int {
         let weekStartsMonday = settingsList.first?.weekStartsMonday ?? true
         let weekStart = Calendar.current.startOfDay(for: .now)
             .mondayAtMidnightForToday(weekStartsMonday: weekStartsMonday)
-        return allSessions.filter { $0.completedAt != nil && $0.startedAt >= weekStart }.count
+        return SessionSetActions.countedWorkouts(allSessions.filter { $0.startedAt >= weekStart }).count
     }
 
     /// Volume trend compared to prior week — .up when this week > last week.
     private var currentTrend: TrendDirection {
-        // Simple heuristic: compare completed sessions count this week vs last week.
+        // Simple heuristic: compare session counts this week vs last week.
         guard let settings = settingsList.first else { return .flat }
         let cal = Calendar.current
         let today = cal.startOfDay(for: .now)
         let thisMonday = today.mondayAtMidnightForToday(weekStartsMonday: settings.weekStartsMonday)
         let lastMonday = thisMonday.addingTimeInterval(-7 * 86_400)
 
-        let thisWeekCount = allSessions.filter { s in
-            s.completedAt != nil &&
+        let thisWeekCount = SessionSetActions.countedWorkouts(allSessions.filter { s in
             s.startedAt >= thisMonday &&
             s.startedAt < thisMonday.addingTimeInterval(7 * 86_400)
-        }.count
+        }).count
 
-        let lastWeekCount = allSessions.filter { s in
-            s.completedAt != nil &&
+        let lastWeekCount = SessionSetActions.countedWorkouts(allSessions.filter { s in
             s.startedAt >= lastMonday &&
             s.startedAt < thisMonday
-        }.count
+        }).count
 
         if thisWeekCount > lastWeekCount { return .up }
         if thisWeekCount < lastWeekCount { return .down }

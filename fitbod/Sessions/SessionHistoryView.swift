@@ -16,6 +16,10 @@
 //   BRUSectionHead("Past sessions", right: "{N} sessions")
 //   SessionHistoryRow per session (BRUDivider(.hair) between)
 //
+// The list shows every finished workout. Empty ones, finished with no
+// logged work sets, are left out of the strip and the header's count
+// (decision 6).
+//
 // ## Empty state
 //   "No sessions yet" / "Finish a workout to see it here."
 //
@@ -41,15 +45,20 @@ public struct SessionHistoryView: View {
 
     /// Records per session id, rebuilt whenever the list changes.
     @State private var prs: [UUID: SessionPRs] = [:]
+    /// The finished workouts that count as sessions, for the header, worked
+    /// out with the records. Nil until then, when the header counts every
+    /// finished workout.
+    @State private var sessionCount: Int?
 
     public init() {}
 
     public var body: some View {
+        let recent = recentSessions
         ScrollView {
             LazyVStack(spacing: 0) {
                 SessionHistoryStatStrip(
-                    sessions: recentSessions.count,
-                    tonnageLabel: SessionHistoryFormat.compactTonnage(tonnage(of: recentSessions)),
+                    sessions: recent.count,
+                    tonnageLabel: SessionHistoryFormat.compactTonnage(tonnage(of: recent)),
                     perWeekLabel: perWeekLabel,
                     unit: weightUnit
                 )
@@ -61,7 +70,7 @@ public struct SessionHistoryView: View {
 
                 BRUSectionHead(
                     "Past sessions",
-                    right: sessions.count == 1 ? "1 session" : "\(sessions.count) sessions"
+                    right: BRUCountLabel.text(sessionCount ?? sessions.count, "session")
                 )
 
                 if sessions.isEmpty {
@@ -89,21 +98,24 @@ public struct SessionHistoryView: View {
         }
         .task(id: sessions.map(\.id)) {
             prs = SessionSummary.prsBySession(sessions)
+            // The records pass has just read every finished workout's sets,
+            // so the shared rule reads nothing more from the store here.
+            sessionCount = SessionSetActions.countedWorkouts(sessions).count
         }
     }
 
     // MARK: - Stat strip
 
-    /// Finished sessions that started in the last 30 days.
+    /// The last 30 days' workouts that count as sessions.
     private var recentSessions: [Session] {
         let cutoff = Calendar.current.date(byAdding: .day, value: -30, to: .now) ?? .now
-        return sessions.filter { $0.startedAt >= cutoff }
+        return Array(SessionSetActions.countedWorkouts(sessions.filter { $0.startedAt >= cutoff }))
     }
 
     /// Average sessions per week over the last 4 weeks, e.g. "2.5".
     private var perWeekLabel: String {
         let cutoff = Calendar.current.date(byAdding: .day, value: -28, to: .now) ?? .now
-        let count = sessions.filter { $0.startedAt >= cutoff }.count
+        let count = SessionSetActions.countedWorkouts(sessions.filter { $0.startedAt >= cutoff }).count
         return (Double(count) / 4).formatted(.number.precision(.fractionLength(0...1)))
     }
 

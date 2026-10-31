@@ -14,6 +14,8 @@
 //  BRUDivider(.ink)
 //  ScrollView → LazyVStack per-exercise 3-column rows
 //
+//  Exercise names, this week's column and its date share one left edge.
+//
 //  ## Δ rendering rules (BRU contract — 06.1-03)
 //
 //    positive Δ → Color.bruSignal (NOT accentColor)
@@ -94,7 +96,7 @@ public struct SessionComparisonView: View {
                 .font(BRUFont.labelMicro)
                 .tracking(1.2)
                 .foregroundStyle(Color.bruMuted)
-                .frame(maxWidth: .infinity, alignment: .trailing)
+                .frame(maxWidth: .infinity, alignment: .leading)
 
             Text("Δ")
                 .font(BRUFont.labelMicro)
@@ -141,8 +143,9 @@ public struct SessionComparisonView: View {
         } else {
             // 3-column layout: this-week | Δ | last-week
             HStack(spacing: 8) {
-                // Leading (~35%) — exercise name + this-week value
-                VStack(alignment: .trailing, spacing: 2) {
+                // Leading (~35%) — exercise name + this-week value, on the
+                // same left edge as every other row's name
+                VStack(alignment: .leading, spacing: 2) {
                     Text(row.exerciseName)
                         .font(BRUFont.bodyEmphasis)
                         .foregroundStyle(Color.bruInk)
@@ -152,7 +155,7 @@ public struct SessionComparisonView: View {
                             .foregroundStyle(Color.bruInk)
                     }
                 }
-                .frame(maxWidth: .infinity, alignment: .trailing)
+                .frame(maxWidth: .infinity, alignment: .leading)
 
                 // Center (~30%) — Δ values
                 VStack(spacing: 2) {

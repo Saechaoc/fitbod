@@ -20,6 +20,8 @@
 //    2. prior.session?.intentRaw    == current.session?.intentRaw
 //    3. prior.session?.sourceRoutineID == current.session?.sourceRoutineID
 //    4. currentSession.startedAt - prior.session.startedAt ∈ (0, 14d)
+//    5. prior.session counts as a session: finished and not empty
+//       (`SessionSetActions.countedWorkouts`, decision 6)
 //
 //  Per exercise (not per session) so multi-exercise sessions surface
 //  row-by-row diffs even when a single exercise pair lacks a comparable
@@ -194,6 +196,8 @@ public enum SessionComparator {
     /// `(sourceRoutineID, exerciseID, intent)` triple within the
     /// strict 14-day window (> 0 days, < windowDays days), and return
     /// every log of the exercise in it, in workout order (`orderIndex`).
+    /// Only a workout that counts as a session matches, so an unfinished
+    /// or empty one is passed over for the one before it (decision 6).
     ///
     /// Returns no logs for any freestanding session (nil sourceRoutineID)
     /// because there's no template to match against, nor when no prior
@@ -228,7 +232,7 @@ public enum SessionComparator {
         let candidateSessions = (try? context.fetch(sessionDescriptor)) ?? []
         let sorted = candidateSessions.sorted { $0.startedAt > $1.startedAt }
 
-        for session in sorted {
+        for session in SessionSetActions.countedWorkouts(sorted) {
             // Walk the session's exercises in Swift — Phase 1 cascade
             // rule keeps these eager-loaded with the parent Session.
             let logs = (session.exercises ?? [])

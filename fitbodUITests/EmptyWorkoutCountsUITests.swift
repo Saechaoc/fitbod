@@ -1,0 +1,214 @@
+//
+//  EmptyWorkoutCountsUITests.swift
+//  fitbodUITests
+//
+//  T22, review items 39 and 40. An empty workout, one finished with no
+//  logged work sets, stays in History but is left out of every session
+//  count and of Compare (decision 6). On DemoWorkoutSeed's logged Push A
+//  followed by an empty one:
+//
+//    - Progress's Recent rows read "1 session", and the chart a row opens
+//      still asks for 2 sessions.
+//    - Compare shows its locked state.
+//    - Today counts 1 session in all and this week.
+//    - History's stat strip and its "Past sessions" header count 1
+//      session, and the list still shows both workouts.
+//
+//  With logged Push As six days and one day ago and an empty one between
+//  them, Compare sets the two logged workouts side by side, and its
+//  exercise names share one left edge.
+//
+
+import XCTest
+
+extension UITestNavigation {
+    /// A fresh store plus a logged Push A 30 minutes ago and an empty one
+    /// 15 minutes ago (see DemoWorkoutSeed).
+    static let emptyWorkout = [resetFlag, "-fitbod-seed-empty-workout"]
+    /// A fresh store plus logged Push As six days and one day ago, and an
+    /// empty one three days ago (see DemoWorkoutSeed).
+    static let emptyBetween = [resetFlag, "-fitbod-seed-empty-between"]
+}
+
+final class EmptyWorkoutCountsUITests: XCTestCase {
+    /// Every catalog name DemoWorkoutSeed's Push A may use.
+    private let pushANames = [
+        "Barbell Bench Press - Medium Grip", "Bench Press - Powerlifting",
+        "Incline Dumbbell Press",
+        "Barbell Shoulder Press", "Dumbbell Shoulder Press",
+        "Cable Seated Lateral Raise", "Side Lateral Raise",
+        "Triceps Pushdown", "Triceps Pushdown - Rope Attachment",
+    ]
+
+    override func setUpWithError() throws {
+        continueAfterFailure = false
+    }
+
+    // MARK: - One logged workout, then an empty one
+
+    @MainActor
+    func testProgressCountsOnlyTheLoggedWorkout() throws {
+        let app = UITestNavigation.launch(UITestNavigation.emptyWorkout)
+        UITestNavigation.selectTab("Progress", in: app)
+
+        let bench = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Barbell Bench Press")).firstMatch
+        XCTAssertTrue(bench.waitForExistence(timeout: 10), "Progress shows no bench press row")
+        let settled = settle(bench, NSPredicate(format: "label CONTAINS %@", "1 session ·"))
+        XCTAssertTrue(settled, "The empty workout must not count as a session: \(bench.label)")
+        let recentRows = app.buttons.matching(NSPredicate(format: "label CONTAINS %@", "last logged"))
+        for row in recentRows.allElementsBoundByIndex {
+            XCTAssertTrue(
+                row.label.contains("1 session ·"),
+                "The empty workout must not count as a session: \(row.label)"
+            )
+        }
+        UITestNavigation.saveScreenshot("T22", "progress-count")
+
+        bench.tap()
+        let locked = app.staticTexts.matching(NSPredicate(format: "label == %@", "Log 2 sessions to see your trend.")).firstMatch
+        XCTAssertTrue(locked.waitForExistence(timeout: 10), "With 1 session the chart must still ask for 2")
+        UITestNavigation.saveScreenshot("T22", "chart-locked")
+    }
+
+    @MainActor
+    func testCompareStaysLockedWithOneLoggedWorkout() throws {
+        let app = UITestNavigation.launch(UITestNavigation.emptyWorkout)
+        UITestNavigation.selectTab("Progress", in: app)
+        scrollToCompare(in: app)
+
+        XCTAssertFalse(
+            compareRow(in: app).exists,
+            "With one logged workout there is nothing to compare, but Compare offers This week vs last week"
+        )
+        XCTAssertTrue(app.staticTexts["No comparable session yet"].exists, "Compare must show its locked state")
+        XCTAssertTrue(app.staticTexts["Log a routine twice to compare."].exists, "Compare must show its locked state")
+        UITestNavigation.saveScreenshot("T22", "compare-locked")
+    }
+
+    @MainActor
+    func testTodayCountsOnlyTheLoggedWorkout() throws {
+        let app = UITestNavigation.launch(UITestNavigation.emptyWorkout)
+        let sessions = app.buttons["today.sessions"]
+        XCTAssertTrue(sessions.waitForExistence(timeout: 10))
+        XCTAssertTrue(
+            settle(sessions, NSPredicate(format: "value == %@", "1")),
+            "Today's session total must leave the empty workout out, but it reads \(sessions.value as? String ?? "nothing")"
+        )
+
+        // Both workouts started within the last 30 minutes, so they are in
+        // this week unless the week (Monday, the fresh store's setting)
+        // began even more recently.
+        var calendar = Calendar.current
+        calendar.firstWeekday = 2
+        if let weekStart = calendar.dateInterval(of: .weekOfYear, for: Date())?.start,
+           Date().timeIntervalSince(weekStart) > 45 * 60 {
+            let thisWeek = element(labeled: "Sessions this week", in: app)
+            XCTAssertTrue(thisWeek.exists, "Today shows no This week count")
+            XCTAssertEqual(thisWeek.value as? String, "1", "This week's count must leave the empty workout out")
+        }
+        UITestNavigation.saveScreenshot("T22", "today-count")
+    }
+
+    @MainActor
+    func testHistoryCountsOnlyTheLoggedWorkout() throws {
+        let app = UITestNavigation.launch(UITestNavigation.emptyWorkout)
+        let sessions = app.buttons["today.sessions"]
+        XCTAssertTrue(sessions.waitForExistence(timeout: 10))
+        sessions.tap()
+
+        let rows = app.buttons.matching(identifier: "history.row")
+        XCTAssertTrue(rows.firstMatch.waitForExistence(timeout: 10))
+        XCTAssertEqual(rows.count, 2, "History must still list the empty workout")
+
+        let strip = element(labeled: "Sessions in the last 30 days", in: app)
+        XCTAssertTrue(strip.exists, "History shows no Sessions count")
+        XCTAssertEqual(strip.value as? String, "1", "History's Sessions count must leave the empty workout out")
+        let perWeek = element(labeled: "Sessions per week, last 4 weeks", in: app)
+        XCTAssertEqual(
+            perWeek.value as? String,
+            (1.0 / 4).formatted(.number.precision(.fractionLength(0...1))),
+            "History's Per week must average 1 session over 4 weeks"
+        )
+        let header = app.staticTexts.matching(NSPredicate(format: "label ==[c] %@", "1 session")).firstMatch
+        XCTAssertTrue(header.waitForExistence(timeout: 10), "The Past sessions header must count 1 session")
+        UITestNavigation.saveScreenshot("T22", "history-count")
+    }
+
+    // MARK: - An empty workout between two logged ones
+
+    @MainActor
+    func testCompareSetsTheTwoLoggedWorkoutsSideBySide() throws {
+        let launchedAt = Date()
+        let app = UITestNavigation.launch(UITestNavigation.emptyBetween)
+        UITestNavigation.selectTab("Progress", in: app)
+        scrollToCompare(in: app)
+        let row = compareRow(in: app)
+        XCTAssertTrue(row.exists, "Two logged workouts must unlock Compare")
+        row.tap()
+
+        let latest = headerDate(daysAgo: 1, since: launchedAt, in: app)
+        XCTAssertTrue(latest.waitForExistence(timeout: 10), "Compare must open on the latest logged workout, a day ago")
+        let earlier = headerDate(daysAgo: 6, since: launchedAt, in: app)
+        XCTAssertTrue(
+            earlier.exists,
+            "Compare must set the latest logged workout against the one six days ago, past the empty one between them"
+        )
+        XCTAssertLessThan(latest.frame.minX, earlier.frame.minX, "The latest workout's date leads, the earlier one's trails")
+
+        let names = app.staticTexts.matching(NSPredicate(format: "label IN %@", pushANames)).allElementsBoundByIndex
+        XCTAssertGreaterThanOrEqual(names.count, 2, "Compare shows fewer than two exercises side by side")
+        let edges = names.map(\.frame.minX)
+        if let first = edges.min(), let last = edges.max() {
+            XCTAssertLessThanOrEqual(
+                last - first, 0.5,
+                "Compare's exercise names must share one left edge, but they start at \(edges.map { Int($0.rounded()) })"
+            )
+        }
+        UITestNavigation.saveScreenshot("T22", "compare-two-workouts")
+    }
+
+    // MARK: - Helpers
+
+    /// Waits until `element` matches `predicate`. The all-time counts leave
+    /// empty workouts out once a screen has read them, a moment after it
+    /// appears.
+    @MainActor
+    private func settle(_ element: XCUIElement, _ predicate: NSPredicate, timeout: TimeInterval = 10) -> Bool {
+        let expectation = XCTNSPredicateExpectation(predicate: predicate, object: element)
+        return XCTWaiter().wait(for: [expectation], timeout: timeout) == .completed
+    }
+
+    /// Progress's "This week vs last week" row.
+    @MainActor
+    private func compareRow(in app: XCUIApplication) -> XCUIElement {
+        app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "This week vs last week")).firstMatch
+    }
+
+    /// Scrolls Progress down until its Compare section sits above the tab
+    /// bar. Hidden tabs keep their scroll views, so it swipes the one a
+    /// user can touch.
+    @MainActor
+    private func scrollToCompare(in app: XCUIApplication) {
+        UITestNavigation.reveal(app.staticTexts["Compare"], in: app)
+        app.scrollViews.allElementsBoundByIndex.last(where: { $0.isHittable })?.swipeUp(velocity: .slow)
+    }
+
+    /// A stat strip cell, by what VoiceOver calls it.
+    @MainActor
+    private func element(labeled label: String, in app: XCUIApplication) -> XCUIElement {
+        app.descendants(matching: .any).matching(NSPredicate(format: "label == %@", label)).firstMatch
+    }
+
+    /// Compare's column date for a workout the seed started `daysAgo` days
+    /// before launch, as in "OCT 29". It accepts the day before a midnight
+    /// that passed since launch too.
+    @MainActor
+    private func headerDate(daysAgo: Double, since launchedAt: Date, in app: XCUIApplication) -> XCUIElement {
+        let labels = Set([launchedAt, Date()].map { now in
+            now.addingTimeInterval(-daysAgo * 24 * 3600)
+                .formatted(.dateTime.month(.abbreviated).day())
+                .uppercased()
+        })
+        return app.staticTexts.matching(NSPredicate(format: "label IN %@", Array(labels))).firstMatch
+    }
+}

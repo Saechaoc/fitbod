@@ -17,7 +17,9 @@
 //  app being killed between sets, so nothing here waits for autosave.
 //
 //  `isEmptyWorkout` is the one empty-workout rule (decision 6), built on
-//  `Session.loggedSetCount`, for session counts and Compare.
+//  `Session.loggedSetCount`. `countedWorkouts` applies it for Compare and
+//  windowed session counts; `emptyWorkoutIDs` applies it to a whole history
+//  for the all-time counts to cache, reading only what they have not.
 //
 
 import Foundation
@@ -134,6 +136,57 @@ public enum SessionSetActions {
     public static func isEmptyWorkout(_ session: Session) -> Bool {
         session.completedAt != nil && session.loggedSetCount == 0
     }
+
+    /// The workouts that count as sessions, in the order given: finished
+    /// ones that are not empty. Lazy, so a reader that stops early, such as
+    /// Compare taking the latest two, reads no further workouts' sets.
+    /// Compare and the windowed session counts read these; History still
+    /// lists every finished workout.
+    public static func countedWorkouts(_ sessions: [Session]) -> LazyFilterSequence<[Session]> {
+        sessions.lazy.filter { $0.completedAt != nil && !isEmptyWorkout($0) }
+    }
+
+    /// The ids of the empty workouts among `finished`, for an all-time
+    /// session count to cache per set of finished workouts instead of
+    /// reading them per render. `known` is an earlier answer: the finished
+    /// workouts it covered, and the empty ones among them. Covered workouts
+    /// keep their answers and only the missing ones are read. When there is
+    /// no earlier answer, or many workouts are missing, as after a restore,
+    /// two prefetching fetches bring every finished workout's exercises and
+    /// sets in at once, instead of a store trip per workout and per exercise.
+    @MainActor
+    public static func emptyWorkoutIDs(
+        among finished: [Session],
+        known: (finished: [PersistentIdentifier], empty: Set<PersistentIdentifier>)?,
+        in context: ModelContext
+    ) -> Set<PersistentIdentifier> {
+        // shortcut: a finished workout's sets never change in the app, so a
+        // covered workout keeps its answer. Only SessionLoggerView, with the
+        // cards and sheets it hosts, edits sets, and every way into it
+        // (Today's resume slab, ResumeWorkoutBanner, starting a workout)
+        // opens a workout in progress. Finish shows the read-only
+        // SessionDetailView in a full-screen cover whose dismissal closes the
+        // logger, and History opens the same SessionDetailView.
+        // BackupRestorer.performRestore replaces every workout with new rows,
+        // so all of their ids go missing.
+        let covered = Set(known?.finished ?? [])
+        let missing = finished.filter { !covered.contains($0.persistentModelID) }
+        if known == nil || missing.count > batchedReadThreshold {
+            var workouts = FetchDescriptor<Session>(predicate: #Predicate { $0.completedAt != nil })
+            workouts.relationshipKeyPathsForPrefetching = [\.exercises]
+            var exercises = FetchDescriptor<SessionExercise>()
+            exercises.relationshipKeyPathsForPrefetching = [\.sets]
+            _ = try? context.fetch(workouts)
+            _ = try? context.fetch(exercises)
+        }
+        let ids = Set(finished.map(\.persistentModelID))
+        return (known?.empty ?? []).intersection(ids)
+            .union(missing.filter(isEmptyWorkout).map(\.persistentModelID))
+    }
+
+    /// Missing workouts past this many, as after a restore, are read in one
+    /// batched pass; fewer, such as the one a finish adds, are read directly.
+    private static let batchedReadThreshold = 32
 
     private static func renumber(_ sessionExercise: SessionExercise, excluding removedID: UUID) {
         let survivors = ordered(sessionExercise).filter { $0.id != removedID && !$0.isDeleted }

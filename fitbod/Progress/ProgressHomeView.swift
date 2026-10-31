@@ -15,7 +15,7 @@
 //  Section 2 — Trends: "Weekly Tonnage" row + "Personal Records" row.
 //
 //  Section 3 — Compare: "This week vs last week" row anchored on the
-//  most recent completed session.
+//  latest workout that counts as a session; locked until two count.
 //
 //  ## Navigation routes
 //
@@ -63,10 +63,17 @@ public enum ProgressHomeRoute: Hashable, Sendable {
 
 public struct ProgressHomeView: View {
     @Binding public var path: NavigationPath
+    @Environment(\.modelContext) private var ctx
     @Environment(\.weightUnit) private var weightUnit
     @Query private var recentSessionExercises: [SessionExercise]
     @Query private var completedSessions: [Session]
     @Query private var allExercises: [Exercise]
+    /// The finished workouts that are empty (decision 6), and the finished
+    /// workouts they were worked out for. Reading them means reading every
+    /// set, so they are filled when the finished workouts change, never per
+    /// render. Until then Recent counts every finished workout.
+    @State private var emptyWorkoutIDs: Set<PersistentIdentifier> = []
+    @State private var emptyWorkoutsKey: [PersistentIdentifier]?
 
     public init(path: Binding<NavigationPath>) {
         self._path = path
@@ -87,7 +94,7 @@ public struct ProgressHomeView: View {
         // Read the finished workouts before the pass over logged rows. The
         // pass reads each row's workout and, run before this query, costs
         // ~12 ms more per body with a year and a half of logs.
-        let _ = completedSessions
+        let finishedIDs = completedSessions.map(\.persistentModelID)
         // One pass over the logged rows feeds both Recent and Trends.
         let stats = recentStats
         NavigationStack(path: $path) {
@@ -117,6 +124,15 @@ public struct ProgressHomeView: View {
             .placeholderPRsDestination()
             .sessionHistoryDestinations()
         }
+        .task(id: finishedIDs) {
+            guard emptyWorkoutsKey != finishedIDs else { return }
+            emptyWorkoutIDs = SessionSetActions.emptyWorkoutIDs(
+                among: completedSessions,
+                known: emptyWorkoutsKey.map { (finished: $0, empty: emptyWorkoutIDs) },
+                in: ctx
+            )
+            emptyWorkoutsKey = finishedIDs
+        }
     }
 
     // MARK: - Sections
@@ -136,7 +152,8 @@ public struct ProgressHomeView: View {
     }
 
     /// Recent — top 10 most-recently-trained exercises with session count
-    /// + last-logged relative date. Tap pushes ExerciseProgressView.
+    /// + last-logged relative date. Tap pushes ExerciseProgressView. Only
+    /// workouts that count as sessions train an exercise.
     @ViewBuilder
     private func recentSection(_ stats: [UUID: RecentStat]) -> some View {
         // Read once per render; each read sorts every logged exercise row.
@@ -183,13 +200,14 @@ public struct ProgressHomeView: View {
     }
 
     /// Compare — single "This week vs last week" row anchored on the
-    /// most recent completed session. Empty state when no completed
-    /// sessions exist.
+    /// latest workout that counts as a session. Empty state until two
+    /// count, since an empty workout is never compared (decision 6).
     @ViewBuilder
     private var compareSection: some View {
         BRUSectionHead("Compare")
 
-        if let anchor = completedSessions.first {
+        let latest = latestCountedWorkouts
+        if latest.count == 2, let anchor = latest.first {
             progressRow(title: "This week vs last week", subtitle: compareSubLabel) {
                 path.append(ProgressHomeRoute.sessionComparison(anchor.id))
             }
@@ -289,15 +307,35 @@ public struct ProgressHomeView: View {
 
     // MARK: - Helpers
 
-    /// Top-10 most-recently-trained Exercise rows. Dedupes by
-    /// exercise.id keeping the most-recent SessionExercise.
+    /// A finished workout not known to be empty. A lookup in the cached
+    /// empty workouts, never a read of the workout's sets.
+    private func countsAsSession(_ session: Session) -> Bool {
+        guard session.completedAt != nil else { return false }
+        return emptyWorkoutIDs.isEmpty || !emptyWorkoutIDs.contains(session.persistentModelID)
+    }
+
+    /// The latest two workouts that count as sessions, newest first, by the
+    /// shared rule. It stops at the second, so it reads only the newest
+    /// workouts' sets.
+    private var latestCountedWorkouts: [Session] {
+        var latest: [Session] = []
+        for workout in SessionSetActions.countedWorkouts(completedSessions) {
+            latest.append(workout)
+            if latest.count == 2 { break }
+        }
+        return latest
+    }
+
+    /// Top-10 most-recently-trained Exercise rows from workouts that count
+    /// as sessions. Dedupes by exercise.id keeping the most-recent
+    /// SessionExercise.
     private var recentExercisesCondensed: [Exercise] {
         // Sort SessionExercise rows by parent session's startedAt desc.
         let sorted = recentSessionExercises
             .compactMap { se -> (SessionExercise, Date)? in
-                guard let started = se.session?.startedAt,
-                      se.session?.completedAt != nil else { return nil }
-                return (se, started)
+                guard let session = se.session,
+                      countsAsSession(session) else { return nil }
+                return (se, session.startedAt)
             }
             .sorted { $0.1 > $1.1 }
             .map(\.0)
@@ -315,8 +353,9 @@ public struct ProgressHomeView: View {
         return result
     }
 
-    /// Per exercise: how many logged rows from finished workouts it has,
-    /// and the latest of their workout start dates. One pass over the rows.
+    /// Per exercise: how many logged rows from workouts that count as
+    /// sessions it has, and the latest of their workout start dates. One
+    /// pass over the rows.
     private struct RecentStat {
         var count = 0
         var lastDate: Date?
@@ -327,7 +366,7 @@ public struct ProgressHomeView: View {
         for se in recentSessionExercises {
             guard let id = se.exercise?.id,
                   let session = se.session,
-                  session.completedAt != nil else { continue }
+                  countsAsSession(session) else { continue }
             var stat = stats[id] ?? RecentStat()
             stat.count += 1
             stat.lastDate = max(stat.lastDate ?? session.startedAt, session.startedAt)
@@ -337,8 +376,7 @@ public struct ProgressHomeView: View {
     }
 
     private func recentSubLabel(_ stat: RecentStat?) -> String {
-        let count = stat?.count ?? 0
-        let sessions = count == 1 ? "1 session" : "\(count) sessions"
+        let sessions = BRUCountLabel.text(stat?.count ?? 0, "session")
         guard let lastDate = stat?.lastDate else {
             return sessions
         }
