@@ -515,12 +515,16 @@ final class SwipeBackUITests: XCTestCase {
     }
 
     /// Names the routine on its name step and saves it, which opens the
-    /// routine's editor in the step's place.
+    /// routine's editor in the step's place. It returns once the step has
+    /// left the accessibility tree, at the end of that transition: a swipe
+    /// during it does nothing (T96 saw one fail in six runs on the small
+    /// phone).
     @MainActor
     private func nameNewRoutine(in app: XCUIApplication, file: StaticString = #filePath, line: UInt = #line) {
         UITestNavigation.type("Upper Lower", into: nameStep(in: app), file: file, line: line)
         UITestNavigation.hittable(app.buttons, "Save", exactLabel: true, file: file, line: line).tap()
         XCTAssertTrue(addSession(in: app).waitForExistence(timeout: 10), "SAVE must open the routine", file: file, line: line)
+        _ = nameStep(in: app).waitForNonExistence(timeout: 5)
     }
 
     /// The session screen's START WORKOUT ▸.
