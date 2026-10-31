@@ -157,6 +157,7 @@ The sole on-disk brief template, written to `docs/conway-specs/evidence/attempt-
 - Workflow exception: the user approved skipping GSD for this run on 2026-10-29.
 - Live tickets beside you, and the files they own or hold: <list, or "none">.
 - Shared test helpers so far: <the helper list from the run log>.
+- Test performance: follow `docs/test-performance-guide.md` as worker-rules' Test performance section says, with the test command from its Build and test section.
 - Notes from earlier tickets that touch your files: <any, or "none">.
 - Review items already fixed outside this run: <items with commit hashes, or "none">.
 
@@ -237,7 +238,8 @@ Then check all of this in that worktree:
 3. `git -C <worktree> status --porcelain` matches the worker's `status-before.txt`.
 4. The attempt's evidence folder has the files [worker-rules.md](worker-rules.md) and its effective acceptance require, with the actual tested commit and truthful results.
    If the ticket saves screenshots, open at least one yourself.
-5. For an L ticket with a repro test, or any result you doubt, rerun the repro test once on one of the ticket's phones.
+   Read the Test performance list in `notes.md`, and check each new or changed test against section 6 of [the test performance guide](../test-performance-guide.md).
+5. For an L ticket with a repro test, or any result you doubt, rerun the repro test once on one of the ticket's phones, with the test command from worker-rules' Build and test.
 
 If a check fails, record the rejection and enter settlement, then follow Retry only after safe settlement completes.
 If every check passes, merge authorized commits or accept the no-commit evidence, but mark the ticket `done` only after safe settlement.
@@ -336,9 +338,11 @@ The next phase opens only after the gate passes.
 
 A gate is one full suite on the large gate phone at default text in light mode, plus a widget build.
 It runs on `main` in the main checkout, with the gate DerivedData.
+It uses the build and test flags from worker-rules' Build and test, so a test that runs past its allowance fails the gate.
 It passes with zero unexpected failures; the one known issue is allowed.
-Record the counts and the duration in the run log.
+Record the counts, the duration and the 20 slowest cases in the run log, as section 5.3 of [the test performance guide](../test-performance-guide.md) tracks them.
 If a gate fails, write a fix ticket in the same phase, dispatch it, and run the gate again.
+Any helper agent you start for a gate, a rerun or other test work gets the guide and worker-rules' Test performance section in its prompt.
 
 ## Design export checks
 
@@ -366,6 +370,7 @@ If a gate fails, write a fix ticket in the same phase, dispatch it, and run the 
 ## Bundle changes
 
 - During the run, only you edit the bundle: the run log, new tickets and their index.md rows, and answers you add to decisions.md or tradeoffs.md.
+- A rule change the user asks for gets an entry in changelog.md, and a status message to every live worker that spells it out, because their worktrees hold the old rules.
 - Commit each of these changes except the run log on `main` as soon as you make it, staged by exact path.
   Workers cannot commit bundle files, new worktrees start from `main`, and Phase 8 pushes only what is committed.
 - The run log is committed in Phase 8.

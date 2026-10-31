@@ -106,9 +106,11 @@ Use only the two phones your on-disk brief names, always by id:
 - Build into the DerivedData folder your on-disk brief names, never into another lane's folder or the default one, because two builds in one folder block each other.
 - Your worktree starts with no build products, so your first build is a full build; start it in the background.
 - Put result bundles in your own scratchpad, with your ticket id and a counter in the name, for example `T08-after-2.xcresult`.
-- Build the app with `xcodebuild -project fitbod.xcodeproj -scheme fitbod -destination "platform=iOS Simulator,id=<id>" -derivedDataPath <DerivedData> build CODE_SIGNING_ALLOWED=NO`.
-- Run tests with the same command, plus `-parallel-testing-enabled NO -collect-test-diagnostics never -resultBundlePath <bundle>`, with `test` in place of `build`.
+- Build the app with `xcodebuild -project fitbod.xcodeproj -scheme fitbod -destination "platform=iOS Simulator,id=<id>" -derivedDataPath <DerivedData> build CODE_SIGNING_ALLOWED=NO COMPILER_INDEX_STORE_ENABLE=NO`.
+- Run tests with the same command, plus `-parallel-testing-enabled NO -collect-test-diagnostics never -test-timeouts-enabled YES -default-test-execution-time-allowance 420 -maximum-test-execution-time-allowance 900 -resultBundlePath <bundle>`, with `test` in place of `build`.
   Without `-collect-test-diagnostics never`, a run with any failure or known issue waits up to ten minutes in `simctl diagnose` before it writes its bundle.
+  A test that runs past its allowance fails; report it as a failure, and never raise the allowance to make it pass.
+- Never clean or delete your DerivedData to fix a test, never add `-retry-tests-on-failure`, and never set `-parallel-testing-enabled YES`.
 - Choose tests with one `-only-testing:` flag each, for example `-only-testing:fitbodTests` or `-only-testing:fitbodUITests/NewBlockModalUITests`.
 - Build the widget with the `FitbodWidgetsExtension` scheme and the same flags.
 - Save each full log to a file in your scratchpad and read only the summary lines, because xcodebuild output is huge.
@@ -150,7 +152,9 @@ When you change `BlockBuilderView.swift`, `BlockDraft.swift`, `BlockPhaseEditorR
 
 ## Reproduce first
 
-- Every bug fix starts with a UI test that drives the app the way a user would.
+- Every bug fix starts with a repro test that fails for the reason your ticket describes.
+  Use the test your ticket's Repro names.
+  Where it names none, pick the cheapest test that proves the bug, as Test performance says: a UI test that drives the app the way a user would when only the running app shows the bug, and a unit test otherwise.
 - A visual defect needs a UI test on the right phone, text size and appearance.
   It saves a named screenshot and checks frames wherever it can.
 - XCUI reads the full label even when the screen shows "…" or "•••".
@@ -161,6 +165,33 @@ When you change `BlockBuilderView.swift`, `BlockDraft.swift`, `BlockPhaseEditorR
 - Keep the repro test as the regression test.
 - If the bug does not reproduce, do not change app code.
   Save the evidence, explain it in `notes.md`, and finish with outcome `succeeded` and the words "not reproduced" in your summary.
+
+## Test performance
+
+[docs/test-performance-guide.md](../test-performance-guide.md), the guide, is part of these rules for every test you write, change or run.
+Read its section 2 and its section 6 checklist before you write or change a test.
+Your ticket says what a test must prove, and where it names a test type, suite or phone, the ticket wins.
+The guide's sections 3 and 4 are proposals: apply none of them outside your effective `owns`.
+The `appears` helper, an animations-off launch flag and a data-only reset do not exist yet; use them only once a ticket adds them.
+
+- Pick the cheapest test that proves the behavior (guide 2.1).
+  Logic, copy and a view's content belong in `fitbodTests`, as a model or service test or a hosted view.
+  A UI test is for what only the running app shows: a route, a sheet, a tap that reaches the store, the keyboard, a relaunch, or layout and pixels at a real phone width, text size and appearance.
+- In a unit test, build the smallest fixture in its own `FitbodModelContainer.make(inMemory: true)` container and its own `UserDefaults(suiteName:)`.
+  Import the 702-exercise catalog only to test the importer, never touch `UserDefaults.standard`, and pass in a date, clock, calendar or scheduler instead of waiting for one (guide 2.2 to 2.5).
+- In a UI test, launch once through the launch helpers with the smallest seeded state, and find elements by accessibility identifier (guide 2.7).
+  Read `exists` before `waitForExistence` when the element is probably on screen already, for example `XCTAssertTrue(field.exists || field.waitForExistence(timeout: 10))`, and never wait for an element you just asserted (guide 2.6).
+- Never sleep a fixed time.
+  Wait on a condition with a timeout that is a ceiling, and poll in 50 to 100 ms steps.
+  A wait the behavior needs, such as a long press or the rest timer, gets a comment that names it.
+- Keep screenshots and `keepAlways` attachments for images someone reads: your evidence screens and layout checks.
+- Add no `runsForEachTargetApplicationUIConfiguration`, no `measure` block without a baseline, no copy of a test per phone or text size whose assertions do not change with it, and no `.serialized` or `@MainActor` without a reason written beside it (guide 2.8 and 2.10).
+- Run each new or changed test three times, with `-test-iterations 3` and its own `-only-testing:` flag or in three runs, on one of your phones; unit tests use the large one.
+  Budgets from guide 5.4: a unit case over 1 s needs a comment that names why, a UI case adds at most 30 s, and a journey at most 90 s.
+  A test over budget, or with mixed results across the three runs, is a finding to fix or explain, never one to retry.
+- In `notes.md`, keep a "Test performance" list: one line per new or changed test with its type, why a cheaper test could not prove it for a UI test, its three durations, and any wait with its reason.
+- Do not rewrite or delete tests outside your ticket to follow the guide.
+  Record each one that breaks it as a finding in `notes.md`.
 
 ## Code rules
 
@@ -263,7 +294,7 @@ Git ignores it, and the coordinator copies it to the main checkout before it rem
 | `screens/` | named screenshots that prove the fix |
 | `impact.txt` | one line per symbol you edited |
 | `detect-changes.txt` | `git diff --cached --stat` and the symbols you changed |
-| `notes.md` | attempt/mode, tested commit, evidence inputs/output, decisions and findings, plus branch/delivery commit only when one exists |
+| `notes.md` | attempt/mode, tested commit, evidence inputs/output, decisions and findings, the Test performance list, plus branch/delivery commit only when one exists |
 
 No-commit results, including evidence-only verification reruns, skip `repro-fail.txt`, `impact.txt` and `detect-changes.txt`, and the effective brief names their required reports instead.
 Docs-only work skips repro and symbol-impact evidence, but keeps the staged scope check when committing authorized changes.
@@ -319,6 +350,7 @@ Stop and ask on any missing required file, mismatched provenance or failed/rejec
 - `-fitbod-reset-store` works on the initial launch only.
   Persistence tests must relaunch without it.
 - Screenshot attachments need the keepAlways lifetime, or a passing test drops them.
+  Give it only to screenshots someone reads.
 - The smallest supported phone is 390pt wide.
   Check layouts on the small phone, not only the large one.
 - History was rewritten on 2026-10-29, so commit hashes in the plan or the review, such as `4e43f88`, no longer exist on `main`.
