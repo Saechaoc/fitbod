@@ -137,8 +137,8 @@ final class SessionEditorPolishUITests: XCTestCase {
         XCTAssertEqual(problems, [], "Every label in the editor must be whole at the default text size")
     }
 
-    /// At AX3 the number, set labels, WORK, Track partial reps, the
-    /// overrides count and + ADD EXERCISE are drawn whole, inside the
+    /// At AX3 the number, set labels, WORK, Track partial reps and
+    /// + ADD EXERCISE are drawn whole, inside the
     /// screen, and the set labels grow with the text. The routine is made
     /// at the default size, then the app reopens at AX3.
     @MainActor
@@ -319,37 +319,6 @@ final class SessionEditorPolishUITests: XCTestCase {
         let warmup = toggle("Auto warm-up", in: app)
         shot("editor-toggles")
         check(UITestNavigation.insideProblem(warmup, window))
-
-        // Per-set overrides: the count, then one override row.
-        let count = sheet.staticTexts.labeled("3 sets default")
-        showInEditor(count, in: app)
-        shot("editor-overrides")
-        check(UITestNavigation.insideProblem(count, window))
-        expectDrawn("3 SETS DEFAULT", in: count)
-        let disclosure = sheet.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Per-set overrides")).firstMatch
-        showInEditor(disclosure, in: app)
-        check(UITestNavigation.tapTargetProblem(disclosure))
-        disclosure.tap()
-        let add = sheet.buttons.labeled("+ ADD OVERRIDE")
-        XCTAssertTrue(add.waitForExistence(timeout: 5), "Per-set overrides must open")
-        showInEditor(add, in: app)
-        add.tap()
-        let fields = sheet.textFields.matching(NSPredicate(format: "label == %@", "RPE override, set 1"))
-        XCTAssertTrue(fields.firstMatch.waitForExistence(timeout: 5), "+ ADD OVERRIDE must add an override row")
-        let overrideRPE = fields.allElementsBoundByIndex.max { $0.frame.minY < $1.frame.minY } ?? fields.firstMatch
-        showInEditor(overrideRPE, in: app)
-        shot("editor-override-row")
-        check(UITestNavigation.insideProblem(overrideRPE, window))
-        let lowest = { (label: String) in
-            sheet.staticTexts.matching(NSPredicate(format: "label == %@", label))
-                .allElementsBoundByIndex.max { $0.frame.minY < $1.frame.minY }
-        }
-        if let overrideLabel = lowest("S1"), let overrideKind = lowest("WORK") {
-            checkSetRow(overrideLabel, overrideKind, in: window, into: &problems)
-        }
-        let oneOverride = sheet.staticTexts.labeled("1 override")
-        showInEditor(oneOverride, in: app)
-        check(UITestNavigation.insideProblem(oneOverride, window))
 
         // + ADD EXERCISE.
         let addExercise = sheet.buttons.labeled("Add exercise")

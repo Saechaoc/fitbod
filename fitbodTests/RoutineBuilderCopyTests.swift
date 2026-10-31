@@ -25,7 +25,8 @@
 //    - InlineExerciseSearchRow: "Add exercise"
 //    - PrescriptionEditorRow: "Sets" / "Min reps" / "Max reps" /
 //      "Target RPE" / "Rest" / "Track tempo" / "Track partial reps" /
-//      "Auto warm-up" / "Per-set overrides" / "Remove"
+//      "Auto warm-up" (T110 removed "Per-set overrides" and its
+//      "+ ADD OVERRIDE" / "Remove", which the logger never applied)
 //
 //  Phase 3.1 (PIVOT-04 / D-10) — REMOVED from PrescriptionEditorRow:
 //  "Intent" / "Progression" picker labels. Verbatim assertions for the
@@ -74,7 +75,7 @@ struct RoutineBuilderCopyTests {
             encoding: .utf8
         )
         // Field labels — BRU advanced section (Sets / Min reps / Max reps /
-        // Target RPE / Rest / Tempo / Partials / Auto warm-up / Per-set overrides).
+        // Target RPE / Rest / Tempo / Partials / Auto warm-up).
         #expect(editor.contains("\"Sets\""))
         #expect(editor.contains("\"Min reps\""))
         #expect(editor.contains("\"Max reps\""))
@@ -83,9 +84,8 @@ struct RoutineBuilderCopyTests {
         #expect(editor.contains("\"Track tempo\""))
         #expect(editor.contains("\"Track partial reps\""))
         #expect(editor.contains("\"Auto warm-up\""))
-        #expect(editor.contains("\"Per-set overrides\""))
-        // Per-set override add button: "+ ADD OVERRIDE" (signal text per UI-SPEC)
-        #expect(editor.contains("+ ADD OVERRIDE") || editor.contains("\"Add Override\""))
-        #expect(editor.contains("\"Remove\""))
+        // T110: no per-set overrides, which the logger never applies.
+        #expect(!editor.contains("\"Per-set overrides\""))
+        #expect(!editor.contains("+ ADD OVERRIDE"))
     }
 }

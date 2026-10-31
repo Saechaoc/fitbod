@@ -1,7 +1,8 @@
 // SetRowsContainer.swift
 // fitbod — Phase 2.1 Plan 05
 //
-// Container drawing the outer 1.5pt bruInk rectangle around per-set rows.
+// Container drawing the outer 1.5pt bruInk rectangle around per-set rows,
+// one per working set at the exercise's own prescription (T110).
 // Each row uses the 4-column grid:
 //   "S{N}" labelSmall (24pt wide) | set-kind labelSmall UPPERCASE (60pt wide) |
 //   ×{N} displayMedium 18pt right-aligned | @{N} displayMedium 18pt right-aligned
@@ -9,7 +10,6 @@
 // and at accessibility sizes they drop their column widths, which would
 // clip them (Milestone 1 review item 13).
 // 1pt bruHair separators between rows via BRUDivider(.hair).
-// TOP rows get 6% signal tint background + bruSignal text for kind + RPE.
 //
 // Reference: bru-screens/routine-builder.jsx lines 65-90
 // UI-SPEC: SetRowsContainer binds to RoutineExerciseDraft for derived sets.
@@ -20,15 +20,13 @@ import SwiftUI
 
 // MARK: - SetRowsContainer
 
-/// Outer 1.5pt bruInk rectangle wrapping per-set rows derived from `RoutineExerciseDraft`.
+/// Outer 1.5pt bruInk rectangle wrapping one row per working set of a
+/// `RoutineExerciseDraft`, each showing the exercise's own prescription.
 ///
-/// Derives the display rows from the draft's set overrides + base prescription:
-/// - Warm-up sets (if `warmupOverride` has a custom set count or is nil → auto ramp)
-/// - Working sets from `targetSets`
-/// - Per-set overrides applied on top
-///
-/// Each row is a `PerSetOverrideRow` separated by a 1pt `bruHair` divider.
-/// The outer border is a 1.5pt `bruInk` `Rectangle` stroke via `.overlay`.
+/// Stored per-set overrides are not shown: the logger builds every working
+/// set from the exercise's prescription and never applies them (T110).
+/// Rows are separated by a 1pt `bruHair` divider; the outer border is a
+/// 1.5pt `bruInk` `Rectangle` stroke via `.overlay`.
 public struct SetRowsContainer: View {
 
     // MARK: Properties
@@ -44,25 +42,12 @@ public struct SetRowsContainer: View {
     // MARK: Body
 
     public var body: some View {
+        let rows = Self.rows(for: exercise)
         VStack(spacing: 0) {
-            let overrides = exercise.setOverrides
-            ForEach(Array(overrides.enumerated()), id: \.element.id) { index, override in
-                // Determine if this is a TOP set via kind
-                let isTop = isTopSet(override: override, index: index)
-                PerSetOverrideRow(draft: override, isTop: isTop)
-
-                if index < overrides.count - 1 {
+            ForEach(rows, id: \.setNumber) { row in
+                setRow(row)
+                if row.setNumber < rows.count {
                     BRUDivider(.hair)
-                }
-            }
-
-            // If no overrides exist, show a placeholder for the target sets count
-            if exercise.setOverrides.isEmpty {
-                ForEach(0..<exercise.targetSets, id: \.self) { index in
-                    defaultSetRow(index: index)
-                    if index < exercise.targetSets - 1 {
-                        BRUDivider(.hair)
-                    }
                 }
             }
         }
@@ -73,46 +58,50 @@ public struct SetRowsContainer: View {
         )
     }
 
-    // MARK: Helpers
+    // MARK: Rows
 
-    /// Determines if a per-set override represents the TOP set.
-    /// Currently checks if override has the highest RPE among all overrides.
-    /// This is a heuristic — the canonical TOP detection will be data-model-driven
-    /// once SetKind is added to PerSetOverrideDraft in a future plan.
-    private func isTopSet(override: PerSetOverrideDraft, index: Int) -> Bool {
-        // For now: no automatic TOP detection from override alone.
-        // The PerSetOverrideRow receives `isTop` from the parent;
-        // in the current model we have no set-kind field on PerSetOverrideDraft.
-        // Default: false. Parent (PrescriptionEditorRow) can mark TOP externally.
-        return false
+    /// One set row: its number, reps and RPE.
+    struct Row: Equatable {
+        let setNumber: Int
+        let reps: Int
+        let rpe: Double?
     }
 
-    /// A read-only display row for a set that has no override, shown when
-    /// `setOverrides` is empty. Renders the base prescription as a non-editable
-    /// row matching the SET {N} × {reps} @ {rpe} format.
+    /// The rows the set list shows for `exercise`: every working set at the
+    /// exercise's own prescription, as the logger will log it, whatever
+    /// overrides it stores.
+    static func rows(for exercise: RoutineExerciseDraft) -> [Row] {
+        (0..<exercise.targetSets).map {
+            Row(setNumber: $0 + 1, reps: exercise.targetRepsLow, rpe: exercise.targetRPE)
+        }
+    }
+
+    // MARK: Helpers
+
+    /// A read-only display row matching the S{N} WORK ×{reps} @{rpe} format.
     @ViewBuilder
-    private func defaultSetRow(index: Int) -> some View {
+    private func setRow(_ row: Row) -> some View {
         HStack(spacing: 6) {
             // S{N} and the set kind — WORK for default working sets
-            SetRowLabels(setNumber: index + 1, kind: "WORK", kindColor: .bruInk)
+            SetRowLabels(setNumber: row.setNumber, kind: "WORK", kindColor: .bruInk)
 
             Spacer()
 
             // Reps — displayMedium 18pt right-aligned
-            Text("×\(exercise.targetRepsLow)")
+            Text("×\(row.reps)")
                 .font(BRUFont.displayMedium)
                 .foregroundStyle(Color.bruInk)
                 .multilineTextAlignment(.trailing)
 
             // RPE — displayMedium 18pt right-aligned
-            Text("@\(rpeString(exercise.targetRPE))")
+            Text("@\(rpeString(row.rpe))")
                 .font(BRUFont.displayMedium)
                 .foregroundStyle(Color.bruInk)
                 .multilineTextAlignment(.trailing)
                 // VoiceOver reads a bare dash as "em dash".
-                .accessibilityLabel(exercise.targetRPE == nil
+                .accessibilityLabel(row.rpe == nil
                                     ? "No target RPE"
-                                    : "RPE \(rpeString(exercise.targetRPE))")
+                                    : "RPE \(rpeString(row.rpe))")
         }
         .padding(.horizontal, 8)
         .padding(.vertical, 5)
@@ -167,21 +156,7 @@ struct SetRowLabels: View {
 // MARK: - Preview
 
 #if DEBUG
-#Preview("SetRowsContainer — with overrides") {
-    let draft = RoutineExerciseDraft()
-    draft.targetSets = 3
-    draft.targetRepsLow = 8
-    draft.targetRepsHigh = 12
-    draft.targetRPE = 8.0
-    // Add a couple of overrides
-    _ = draft.appendOverride(setIndex: 0)
-    _ = draft.appendOverride(setIndex: 1)
-    return SetRowsContainer(exercise: draft)
-        .padding(16)
-        .background(Color.bruPaper)
-}
-
-#Preview("SetRowsContainer — no overrides (shows defaults)") {
+#Preview("SetRowsContainer") {
     let draft = RoutineExerciseDraft()
     draft.targetSets = 4
     draft.targetRepsLow = 10
