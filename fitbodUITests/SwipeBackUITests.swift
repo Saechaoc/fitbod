@@ -201,14 +201,12 @@ final class SwipeBackUITests: XCTestCase {
     func testWeekDetailSwipesBackToWeeklyTonnage() throws {
         let app = openProgress()
         open(button(beginningWith: "Weekly Tonnage", in: app), in: app)
-        let axis = tonnageChart(in: app)
-        XCTAssertTrue(axis.waitForExistence(timeout: 10), "Weekly Tonnage must open")
-        UITestNavigation.waitUntilStill(axis, interval: 0.3)
-        // The plot starts under the axis title and is at least 280pt tall.
-        app.coordinate(withNormalizedOffset: .zero)
-            .withOffset(CGVector(dx: app.frame.midX, dy: axis.frame.maxY + 140)).tap()
+        let chart = tonnageChart(in: app)
+        XCTAssertTrue(chart.waitForExistence(timeout: 10), "Weekly Tonnage must open")
+        UITestNavigation.waitUntilStill(chart, interval: 0.3)
+        chart.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
         let week = app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH[c] %@", "Week of ")).firstMatch
-        assertSwipeBack(from: week, "the week's workouts", to: axis, in: app)
+        assertSwipeBack(from: week, "the week's workouts", to: chart, in: app)
     }
 
     @MainActor
@@ -434,10 +432,9 @@ final class SwipeBackUITests: XCTestCase {
         app.buttons["e1RM"]
     }
 
-    /// Weekly Tonnage's axis title, which sits right above its chart.
     @MainActor
     private func tonnageChart(in app: XCUIApplication) -> XCUIElement {
-        app.staticTexts["TONNAGE (KG)"]
+        app.otherElements["weeklyTonnage.chart"]
     }
 
     @MainActor
