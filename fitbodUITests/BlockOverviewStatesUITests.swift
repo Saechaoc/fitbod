@@ -210,7 +210,7 @@ final class BlockOverviewStatesUITests: XCTestCase {
 
     @MainActor
     private func goBack(in app: XCUIApplication) {
-        let back = app.buttons["Back"].firstMatch
+        let back = UITestNavigation.hittable(app.buttons, "Back")
         XCTAssertTrue(back.waitForExistence(timeout: 10), "The block overview must offer ‹ BACK")
         back.tap()
         XCTAssertTrue(hero(in: app).waitForNonExistence(timeout: 10), "‹ BACK must close the block overview")
