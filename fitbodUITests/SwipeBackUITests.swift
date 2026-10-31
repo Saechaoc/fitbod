@@ -115,14 +115,15 @@ final class SwipeBackUITests: XCTestCase {
         assertSwipeBack(from: app.buttons["Session 1: Live Push"], "the routine", to: card, in: app)
     }
 
+    /// The routine's + ADD SESSION marks it: the session row stays scaled
+    /// down after the tap that opens it (see the T18 notes).
     @MainActor
     func testSessionSwipesBackToRoutine() throws {
         let app = UITestNavigation.launch(UITestNavigation.activeBlock)
         UITestNavigation.selectTab("Program", in: app)
         open(button(beginningWith: "Live Routine", in: app), in: app)
-        let session = app.buttons["Session 1: Live Push"]
-        open(session, in: app)
-        assertSwipeBack(from: startWorkout(in: app), "the session", to: session, in: app)
+        open(app.buttons["Session 1: Live Push"], in: app)
+        assertSwipeBack(from: startWorkout(in: app), "the session", to: addSession(in: app), in: app)
     }
 
     @MainActor
