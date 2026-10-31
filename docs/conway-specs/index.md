@@ -31,53 +31,7 @@ To read an archived ticket, `git log --diff-filter=D -1 -- 'docs/conway-specs/ti
 
 ### Phase 1: P0 and P1 defects
 
-| Ticket | Title |
-|---|---|
-| [T49](tickets/T49-rpe-chip-hold-opens-decimal-picker.md) | Holding an RPE chip opens the decimal picker |
-| [T50](tickets/T50-why-uses-finished-workouts.md) | WHY suggests from finished workouts only |
-| [T51](tickets/T51-plateau-uses-finished-workouts.md) | Plateau check reads finished workouts only |
-| [T52](tickets/T52-rpe-creep-skips-empty-workouts.md) | RPE creep skips workouts without a logged set |
-| [T53](tickets/T53-stall-badge-window.md) | Stall badge names the exercise's own window |
-| [T54](tickets/T54-custom-exercise-name-trim.md) | Custom exercise names save without outer spaces |
-| [T55](tickets/T55-pinned-note-capsule-tap-target.md) | Pinned note capsule takes taps across 44 points |
-| [T56](tickets/T56-progress-chart-unit-and-fit.md) | Progress chart hero shows the right unit, and its name and PR mark fit |
-| [T57](tickets/T57-pr-list-working-sets-and-ax3-toggle.md) | PR list ranks working sets only, and its intent toggle fits AX3 |
-| [T58](tickets/T58-e1rm-one-point-per-workout.md) | e1RM chart plots one point per workout |
-| [T59](tickets/T59-swap-resets-prescription.md) | Swapping an exercise resets its prescription and override marks |
-| [T60](tickets/T60-plate-inventory-swipe-delete.md) | Plate inventory rows delete with a swipe |
-| [T61](tickets/T61-zero-suggestion-placeholder.md) | A zero suggestion reads as no suggestion |
-| [T62](tickets/T62-heatmap-voiceover-order.md) | VoiceOver reads the heatmap one figure at a time |
-| [T63](tickets/T63-program-header-and-sheets-ax3.md) | Program's header and block sheets fit AX3, and + NEW takes a 44pt tap |
-| [T64](tickets/T64-plateau-footer-and-window-test.md) | The plateau footer stops pointing to a missing setting, and a test pins the stall window |
-| [T65](tickets/T65-edit-keeps-active-block.md) | Saving an edit keeps the active block active |
-| [T66](tickets/T66-tab-bar-bleed.md) | The tab bar's fill stays out of the home indicator area at large text |
-| [T67](tickets/T67-lifecycle-entry-points.md) | Ending a block and swapping its routine go through the lifecycle service |
-| [T68](tickets/T68-progress-hero-adds-up.md) | The progress chart's hero numbers add up |
-| [T69](tickets/T69-builder-back-names-its-tab.md) | The block builder's back control names the tab it opened from |
-| [T70](tickets/T70-block-review-after-end.md) | The block review opens after a block ends |
-| [T71](tickets/T71-pr-toggle-every-size.md) | The PR list's intent toggle fits every text size and says which is selected |
-| [T72](tickets/T72-one-sample-per-workout.md) | The plateau and RPE-creep checks count each workout once |
-| [T73](tickets/T73-signal-text-on-paper.md) | Orange text on Program and New Block reads clearly in light mode |
-| [T74](tickets/T74-add-phase-sheet-header.md) | The Add Phase sheet has a BRU header and a CANCEL |
-| [T75](tickets/T75-swap-rebuilds-warmups.md) | A swap rebuilds the warm-ups for the new exercise, and the swap tests drive the real swap |
-| [T76](tickets/T76-added-exercise-prescription.md) | An exercise added mid-workout gets its prescription |
-| [T77](tickets/T77-plate-inventory-list.md) | Plate Inventory's swipe-to-delete works on iOS 26 and closes like other rows |
-| [T78](tickets/T78-active-block-counts.md) | The active block's week and session counts tell the truth |
-| [T79](tickets/T79-no-history-why-sheet.md) | Why this weight shows no zero weight and no unknown plate size |
-| [T80](tickets/T80-calibrating-weight-cell.md) | A calibrating set's weight can be typed, and shows once chosen |
-| [T81](tickets/T81-heatmap-figure-labels.md) | VoiceOver names each heatmap figure once |
-| [T82](tickets/T82-e1rm-chart-voiceover.md) | VoiceOver reads each e1RM point's rounded weight |
-| [T83](tickets/T83-action-popover-fit.md) | The action popover's items stay whole and take a 44pt tap |
-| [T84](tickets/T84-previous-top-set-whole-workout.md) | The previous top set reads the whole workout |
-| [T86](tickets/T86-block-review-fixes.md) | The block review fits its screen, names what Start next opens, and stops once a block starts |
-| [T88](tickets/T88-warmup-skip-and-swap.md) | "Skip warm-ups this session only" skips, and a swap rebuilds skipped warm-ups |
-| [T89](tickets/T89-why-sheet-inputs.md) | Why this weight shows the set's targets, its last session and full-width steps |
-| [T90](tickets/T90-shared-ui-test-helpers.md) | UI tests share one set of helpers |
-| [T91](tickets/T91-bump-reps-whole-workout.md) | Bump reps read the whole workout |
-| [T92](tickets/T92-workout-sets-in-order.md) | History and plateau checks read every set of a workout in order |
-| [T93](tickets/T93-deload-and-comparison-whole-workout.md) | Deload advice and session comparison read every log of a workout in order |
-| [T94](tickets/T94-exercise-rows-per-workout.md) | Exercise screens show one row per workout |
-| [T95](tickets/T95-stable-exercise-names.md) | The deload banner and session comparison name their exercises steadily |
+Every Phase 1 ticket is done and archived.
 
 ### Phase 2: P2 defects
 
