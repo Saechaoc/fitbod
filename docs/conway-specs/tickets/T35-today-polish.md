@@ -40,6 +40,7 @@ On Today:
 3. At accessibility sizes, the legend stacks its three items, and each label stays on one line.
 4. At AX3, and at xxLarge and xxxLarge on the small phone, the header's left and right items never touch, and the date shows whole.
    `BRUHeaderBar` already has an accessibility branch, so reproduce this before you change it.
+   At accessibility sizes, the actions' touch areas also stay clear of the title stacked under them (finding F176, from T21's worker).
 5. When the week trend is flat, the third stat shows the current phase's short label instead of the dash (see "Today's third stat" in [../tradeoffs.md](../tradeoffs.md)).
    Use the same short labels that Program's template rows use since T10, such as "ACCUM".
 6. The "No active block." card:
@@ -69,6 +70,7 @@ With the demo seed, write `TodayPolishUITests`:
 - At AX3 on the small phone, assert that the legend items do not intersect and that each is one line tall.
 - At AX3 on the small phone, assert that the header's left item ends at least 8pt before its right item starts, and that the date is not cut off.
   Record in `notes.md` whether each check fails.
+- At AX3 on the small phone, open the New routine name step and assert that no header action's touch area overlaps the stacked title.
 - At xxLarge and xxxLarge on the small phone, run the same header check, and read the stat strip's labels with the shared `readText`, asserting that each label is whole on one line.
 - With an active block in week 1 and no workouts, assert that the third stat's value is the phase's short label.
 - With no active block, assert that the card's heading starts at the same x as the card above it.
