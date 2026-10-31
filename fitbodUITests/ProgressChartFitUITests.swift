@@ -24,6 +24,14 @@
 //      VoiceOver reads the PR once, by its label, not the PR rule's
 //      unrounded 112.5.
 //
+//  Ticket T82, finding F84, on the same seed:
+//
+//    - On the default E1RM chip, VoiceOver reads each point by itself, as
+//      on the other chips: its series and date, then its rounded weight.
+//      Swift Charts read a date's top set and all-set average as one
+//      element, "112.5 to 109.71, 2 values", with no unit or series.
+//    - No element on the chart's screen reads the unrounded 112.5.
+//
 
 import XCTest
 
@@ -146,6 +154,55 @@ final class ProgressChartFitUITests: XCTestCase {
         let label = text.label
         let number = try XCTUnwrap(Int(label.filter(\.isNumber)), "The hero's \(part), \"\(label)\", shows no number")
         return (label, label.hasPrefix("-") ? -number : number)
+    }
+
+    // MARK: - F84: each e1RM point by itself
+
+    @MainActor
+    func testE1RMPointsReadTheirOwnRoundedWeights() throws {
+        // The seed logs the first workout four weeks before the launch.
+        let fourWeeks: TimeInterval = 4 * 7 * 24 * 3600
+        let beforeLaunch = Date.now.addingTimeInterval(-fourWeeks)
+        let app = UITestNavigation.launch(UITestNavigation.progressHistory)
+        let afterLaunch = Date.now.addingTimeInterval(-fourWeeks)
+        openBenchPressChart(in: app)
+        let chart = app.otherElements["progress.chart"]
+        XCTAssertTrue(chart.waitForExistence(timeout: 5), "The chart never appeared")
+        // Let the chart's short transition settle before the screenshot.
+        Thread.sleep(forTimeInterval: 0.5)
+        UITestNavigation.saveScreenshot("T82", "chart-e1rm")
+
+        let readout = try elementTexts(in: app)
+        let heard = readout.map { "\($0.label): \($0.value)" }.joined(separator: "\n")
+        // The first workout's top set, 112.5, and its all-set average, 109.71.
+        for (series, value) in [("Top set", "113 lb"), ("All-set avg", "110 lb")] {
+            // Either day, should the launch cross midnight.
+            let labels = Set([beforeLaunch, afterLaunch].map { "\(series), \($0.formatted(date: .abbreviated, time: .omitted))" })
+            XCTAssertTrue(
+                readout.contains { labels.contains($0.label) && $0.value == value },
+                "VoiceOver must read the first workout's \(series.lowercased()) by itself as \(labels.sorted()) and \"\(value)\", but the screen reads:\n\(heard)"
+            )
+        }
+        let unrounded = readout.filter { $0.label.contains("112.5") || $0.value.contains("112.5") }
+        XCTAssertTrue(
+            unrounded.isEmpty,
+            "No element may read the unrounded 112.5, but these do:\n\(unrounded.map { "\($0.label): \($0.value)" }.joined(separator: "\n"))"
+        )
+    }
+
+    /// The label and value of every element on screen that has either.
+    @MainActor
+    private func elementTexts(in app: XCUIApplication) throws -> [(label: String, value: String)] {
+        var texts: [(label: String, value: String)] = []
+        func walk(_ node: XCUIElementSnapshot) {
+            let value = node.value as? String ?? ""
+            if !node.label.isEmpty || !value.isEmpty {
+                texts.append((node.label, value))
+            }
+            node.children.forEach(walk)
+        }
+        walk(try app.snapshot())
+        return texts
     }
 
     // MARK: - Navigation

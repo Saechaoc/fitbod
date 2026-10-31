@@ -32,8 +32,8 @@
 //    VOLUME   SeriesBuilder.volumePoints, one line per intent
 //    AVG RPE  SeriesBuilder.averageRPEPoints, one line per intent
 //
-//  Each point carries a VoiceOver label (series, date) and value
-//  ("112 lb", "2,140 lb", "RPE 7.6"). The PR rule and the
+//  VoiceOver reads each point by itself, by its series and date, then
+//  its value ("112 lb", "2,140 lb", "RPE 7.6"). The PR rule and the
 //  above-10-reps caption are e1RM only. The legend names the lines
 //  drawn: TOP SET and ALL-SET AVG on e1RM, TOP SET alone on TOP SET,
 //  HYPERTROPHY · N SESSIONS and STRENGTH · N SESSIONS on VOLUME and
@@ -424,8 +424,6 @@ private struct ProgressChartHost: View {
                     .foregroundStyle(point.isPrimary ? Color.bruInk : Color.bruSignal)
                     .symbol(point.isPrimary ? .square : .circle)
                     .symbolSize(point.isPrimary ? 50 : 40)
-                    .accessibilityLabel("\(point.series), \(point.date.formatted(date: .abbreviated, time: .omitted))")
-                    .accessibilityValue(spokenValue(point.value))
                 }
             }
             .chartXScale(domain: .automatic(includesZero: false))
@@ -456,6 +454,11 @@ private struct ProgressChartHost: View {
             .frame(minHeight: 240)
             .accessibilityLabel(metric.chartName)
             .accessibilityIdentifier("progress.chart")
+            // Replaces the marks' elements rather than hiding the marks,
+            // which would take the chart's audio graph with them.
+            .accessibilityChildren {
+                pointElements(points)
+            }
             // After the chart's label and identifier, so the PR label
             // keeps its own text for VoiceOver.
             .chartOverlay { proxy in
@@ -505,6 +508,29 @@ private struct ProgressChartHost: View {
                     .alignmentGuide(.top) { label in min(0, label.height + 2 - ruleY) }
                     .frame(width: plot.width, height: plot.height, alignment: .topTrailing)
                     .offset(x: plot.minX, y: plot.minY)
+            }
+        }
+    }
+
+    /// VoiceOver's elements for the points: one per point, read by its
+    /// series and date, then its value. Swift Charts' own group the points
+    /// in a stretch of dates, so e1RM's top set and all-set average read
+    /// as one unrounded range. Each date is a column, left to right, with
+    /// the top set above the all-set average as drawn, and a container,
+    /// so VoiceOver reads a date's points before the next date's.
+    @ViewBuilder
+    private func pointElements(_ points: [ChartPoint]) -> some View {
+        let byDate = Dictionary(grouping: points, by: \.date)
+        HStack(spacing: 0) {
+            ForEach(byDate.keys.sorted(), id: \.self) { date in
+                VStack(spacing: 0) {
+                    ForEach(byDate[date, default: []].sorted { $0.isPrimary && !$1.isPrimary }) { point in
+                        Rectangle()
+                            .accessibilityLabel("\(point.series), \(date.formatted(date: .abbreviated, time: .omitted))")
+                            .accessibilityValue(spokenValue(point.value))
+                    }
+                }
+                .accessibilityElement(children: .contain)
             }
         }
     }
