@@ -10,7 +10,10 @@
 //
 // Labels: "ALL · {N}" / "STRENGTH · {N}" / "HYPER · {N}" /
 //         "POWER · {N}" / "ENDUR · {N}" / "TECH · {N}"
-// Each chip has equal flex width. 1pt bruInk vertical separators between.
+// Each chip has equal flex width while every label fits on one line; when
+// they do not (the small phone, large text), the strip scrolls sideways and
+// each chip keeps its label's width, so no label breaks inside a word.
+// 1pt bruInk vertical separators between.
 // 2pt bruInk rules top + bottom are drawn by the parent layout; this view
 // provides them via BRUDivider(.ink) wrappers.
 
@@ -38,30 +41,37 @@ public struct IntentFilterChipRow: View {
     public var body: some View {
         VStack(spacing: 0) {
             BRUDivider(.ink)
-            HStack(spacing: 0) {
-                // "ALL" chip
-                chipButton(label: "ALL", count: totalCount, isSelected: filter == nil) {
-                    filter = nil
-                }
-                Rectangle().fill(Color.bruInk).frame(width: 1)
-
-                // Per-intent chips
-                ForEach(IntentFilter.allCases, id: \.rawValue) { item in
-                    chipButton(
-                        label: item.shortLabel,
-                        count: counts[item.intent] ?? 0,
-                        isSelected: filter == item.intent
-                    ) {
-                        filter = item.intent
-                    }
-                    if item != IntentFilter.allCases.last {
-                        Rectangle().fill(Color.bruInk).frame(width: 1)
-                    }
-                }
+            ViewThatFits(in: .horizontal) {
+                chips.frame(maxWidth: .infinity)
+                ScrollView(.horizontal, showsIndicators: false) { chips }
             }
-            .frame(maxWidth: .infinity)
             BRUDivider(.ink)
         }
+    }
+
+    private var chips: some View {
+        HStack(spacing: 0) {
+            // "ALL" chip
+            chipButton(label: "ALL", count: totalCount, isSelected: filter == nil) {
+                filter = nil
+            }
+            Rectangle().fill(Color.bruInk).frame(width: 1)
+
+            // Per-intent chips
+            ForEach(IntentFilter.allCases, id: \.rawValue) { item in
+                chipButton(
+                    label: item.shortLabel,
+                    count: counts[item.intent] ?? 0,
+                    isSelected: filter == item.intent
+                ) {
+                    filter = item.intent
+                }
+                if item != IntentFilter.allCases.last {
+                    Rectangle().fill(Color.bruInk).frame(width: 1)
+                }
+            }
+        }
+        .fixedSize(horizontal: false, vertical: true)
     }
 
     // MARK: - Private
@@ -81,11 +91,13 @@ public struct IntentFilterChipRow: View {
                 .font(BRUFont.labelSmall)
                 .tracking(1.2)
                 .textCase(.uppercase)
+                .fixedSize()
                 // UI-SPEC line 244: selected = bruInk fill + bruPaper text (NOT signal)
                 .foregroundStyle(isSelected ? Color.bruPaper : Color.bruInk)
                 .frame(maxWidth: .infinity)
-                .padding(.horizontal, 4)
+                .padding(.horizontal, 8)
                 .padding(.vertical, 10)
+                .frame(minHeight: 44)
                 .background(isSelected ? Color.bruInk : Color.bruPaper)
                 .accessibilityAddTraits(isSelected ? [.isButton, .isSelected] : [.isButton])
         }

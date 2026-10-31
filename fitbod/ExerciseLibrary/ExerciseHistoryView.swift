@@ -13,7 +13,7 @@
 //   IntentFilterChipRow full-bleed strip (2pt rules drawn internally)
 //   set-count summary row
 //   BRUDivider(.hair)
-//   date-grouped sections with ExerciseHistoryRow items
+//   one ExerciseHistoryRow per workout, newest first; the row carries the date
 //   PRStripFooter at bottom
 //
 // ## Empty states (UI-SPEC verbatim)
@@ -64,7 +64,7 @@ public struct ExerciseHistoryView: View {
     /// Library list.
     public var body: some View {
         ScrollView {
-            LazyVStack(spacing: 0, pinnedViews: [.sectionHeaders]) {
+            LazyVStack(spacing: 0) {
                 // Exercise name sub-line
                 HStack {
                     Text(exercise.name)
@@ -139,36 +139,13 @@ private struct FilteredHistoryContent: View {
         let grouped = ExerciseHistoryView.groupedByDate(from: completed)
         let prFooter = prStats(from: completed)
 
-        // 3-cell stat strip
-        HStack(spacing: 0) {
-            BRUReadout(
-                label: "Sessions · 30d",
-                value: "\(sessions30d)"
-            )
-            .padding(.horizontal, 16)
-            .padding(.vertical, 12)
-            .frame(maxWidth: .infinity, alignment: .leading)
-
-            Rectangle().fill(Color.bruHair).frame(width: 1)
-
-            BRUReadout(
-                label: "Tonnage",
-                value: tonnageLabel(from: completed),
-                valueColor: .bruSignal
-            )
-            .padding(.horizontal, 16)
-            .padding(.vertical, 12)
-            .frame(maxWidth: .infinity, alignment: .leading)
-
-            Rectangle().fill(Color.bruHair).frame(width: 1)
-
-            BRUReadout(
-                label: "PRs · 30d",
-                value: "\(ExerciseHistoryView.prs30d(from: completed))"
-            )
-            .padding(.horizontal, 16)
-            .padding(.vertical, 12)
-            .frame(maxWidth: .infinity, alignment: .leading)
+        // 3-cell stat strip: side by side while every label fits on one
+        // line, stacked otherwise, so no label breaks inside a word.
+        let tonnage = tonnageLabel(from: completed)
+        let prs = ExerciseHistoryView.prs30d(from: completed)
+        ViewThatFits(in: .horizontal) {
+            HStack(spacing: 0) { statCells(sideBySide: true, tonnage: tonnage, prs: prs) }
+            VStack(alignment: .leading, spacing: 0) { statCells(sideBySide: false, tonnage: tonnage, prs: prs) }
         }
         // Inform outer view of history count so it can show/hide PROGRESS
         // affordance. It runs after the view draws: a state change from
@@ -195,27 +172,15 @@ private struct FilteredHistoryContent: View {
 
         BRUDivider(.hair)
 
-        // Content: empty state or date-grouped sections
+        // Content: empty state or one row per workout
         if completed.isEmpty {
             emptyState
         } else {
-            ForEach(grouped) { group in
-                Section {
-                    ForEach(group.entries) { entry in
-                        ExerciseHistoryRow(entry: entry)
-                        BRUDivider(.hair)
-                    }
-                } header: {
-                    HStack {
-                        Text(group.dateLabel)
-                            .font(BRUFont.displayMedium)
-                            .foregroundStyle(Color.bruInk)
-                        Spacer()
-                    }
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 12)
-                    .background(Color.bruPaper)
-                }
+            // One row per workout, which shows its date. Date sections
+            // keyed by the workout hid their one row, which had the same id.
+            ForEach(grouped.flatMap(\.entries)) { entry in
+                ExerciseHistoryRow(entry: entry)
+                BRUDivider(.hair)
             }
 
             // PR strip footer
@@ -225,6 +190,32 @@ private struct FilteredHistoryContent: View {
                 volPR: prFooter.volPR
             )
         }
+    }
+
+    // MARK: - Stat strip
+
+    /// The strip's three cells. Side by side, each label keeps its one-line
+    /// width and the cells share what is left; stacked, rules divide them.
+    @ViewBuilder
+    private func statCells(sideBySide: Bool, tonnage: String, prs: Int) -> some View {
+        statCell(BRUReadout(label: "Sessions · 30d", value: "\(sessions30d)"), sideBySide: sideBySide)
+        statRule(sideBySide: sideBySide)
+        statCell(BRUReadout(label: "Tonnage", value: tonnage, valueColor: .bruSignal), sideBySide: sideBySide)
+        statRule(sideBySide: sideBySide)
+        statCell(BRUReadout(label: "PRs · 30d", value: "\(prs)"), sideBySide: sideBySide)
+    }
+
+    private func statCell(_ readout: BRUReadout, sideBySide: Bool) -> some View {
+        readout
+            .fixedSize(horizontal: sideBySide, vertical: false)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
+            .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private func statRule(sideBySide: Bool) -> some View {
+        Rectangle().fill(Color.bruHair)
+            .frame(width: sideBySide ? 1 : nil, height: sideBySide ? nil : 1)
     }
 
     // MARK: - Computed properties
@@ -368,6 +359,19 @@ extension ExerciseHistoryView {
         now: Date = .now
     ) -> Int {
         let cutoff = Calendar.current.date(byAdding: .day, value: -30, to: now) ?? now
+        let prSetIDs = prSets(from: sets)
+        return sets.filter { pair in
+            prSetIDs.contains(ObjectIdentifier(pair.setEntry))
+                && (pair.sessionExercise.session?.startedAt ?? .distantPast) >= cutoff
+        }.count
+    }
+
+    /// The sets that set a personal record, by the replay `prs30d`
+    /// describes, at any date. A history row shows "★ PR" when its
+    /// workout has one.
+    static func prSets(
+        from sets: [(setEntry: SetEntry, sessionExercise: SessionExercise)]
+    ) -> Set<ObjectIdentifier> {
         let oldestFirst = sets.sorted { a, b in
             let aStart = a.sessionExercise.session?.startedAt ?? .distantPast
             let bStart = b.sessionExercise.session?.startedAt ?? .distantPast
@@ -375,15 +379,11 @@ extension ExerciseHistoryView {
                 < (bStart, b.setEntry.completedAt, b.sessionExercise.orderIndex, b.setEntry.orderIndex)
         }
         var table = PRTable()
-        var count = 0
-        for pair in oldestFirst {
-            let kinds = PRDetector.check(set: pair.setEntry, against: &table)
-            let startedAt = pair.sessionExercise.session?.startedAt ?? .distantPast
-            if !kinds.isEmpty && startedAt >= cutoff {
-                count += 1
-            }
+        var prSetIDs: Set<ObjectIdentifier> = []
+        for pair in oldestFirst where !PRDetector.check(set: pair.setEntry, against: &table).isEmpty {
+            prSetIDs.insert(ObjectIdentifier(pair.setEntry))
         }
-        return count
+        return prSetIDs
     }
 }
 
@@ -392,7 +392,8 @@ extension ExerciseHistoryView {
 extension ExerciseHistoryView {
 
     /// One workout's row. Its id is the workout's, so two workouts on one
-    /// day are two rows.
+    /// day are two rows. The list shows its one entry, not a date section,
+    /// so the date shows once, in the row.
     struct DateGroup: Identifiable {
         let id: UUID
         let dateKey: String
@@ -408,6 +409,7 @@ extension ExerciseHistoryView {
     static func groupedByDate(
         from sets: [(setEntry: SetEntry, sessionExercise: SessionExercise)]
     ) -> [DateGroup] {
+        let prSetIDs = prSets(from: sets)
         // Group by session identity (same session = same date group)
         let bySession = Dictionary(grouping: sets) { pair -> String in
             pair.sessionExercise.session?.id.uuidString ?? UUID().uuidString
@@ -478,7 +480,7 @@ extension ExerciseHistoryView {
                     id: UUID(uuidString: sessionID) ?? UUID(),
                     dateLabel: dateLabel,
                     intentLabel: Self.shortIntentLabel(intent),
-                    isPR: false, // Phase 6 PROG-01 will wire actual PR detection
+                    isPR: allSetsForSession.contains { prSetIDs.contains(ObjectIdentifier($0)) },
                     e1RMLabel: e1RMLabel,
                     topSetLabel: topSetLabel,
                     setCount: allSetsForSession.count,
