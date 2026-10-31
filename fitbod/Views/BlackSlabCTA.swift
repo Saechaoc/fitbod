@@ -27,8 +27,12 @@ import SwiftData
 /// └──────────────────────────────────────────────┘
 /// ```
 ///
+/// At accessibility sizes the meta line stacks its parts, one per line,
+/// since one line would break "EXERCISES" mid-word.
+///
 /// Reference: bru-screens/today.jsx lines 59-80.
 public struct BlackSlabCTA: View {
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     // MARK: - Properties
 
@@ -81,26 +85,22 @@ public struct BlackSlabCTA: View {
             // 12pt gap then meta strip
             Spacer().frame(height: 12)
 
-            HStack(spacing: 0) {
-                Text("\(exerciseCount) exercises")
+            metaLayout {
+                Text(BRUCountLabel.text(exerciseCount, "exercise"))
                     .font(BRUFont.labelSmall)
                     .tracking(1.2)
                     .textCase(.uppercase)
                     .foregroundStyle(Color.bruPaper)
 
-                Text("  ·  ")
-                    .font(BRUFont.labelSmall)
-                    .foregroundStyle(Color.bruPaper.opacity(0.5))
+                metaSeparator
 
-                Text("\(setCount) sets")
+                Text(BRUCountLabel.text(setCount, "set"))
                     .font(BRUFont.labelSmall)
                     .tracking(1.2)
                     .textCase(.uppercase)
                     .foregroundStyle(Color.bruPaper)
 
-                Text("  ·  ")
-                    .font(BRUFont.labelSmall)
-                    .foregroundStyle(Color.bruPaper.opacity(0.5))
+                metaSeparator
 
                 Text("~\(estimatedMinutes) min")
                     .font(BRUFont.labelSmall)
@@ -118,6 +118,23 @@ public struct BlackSlabCTA: View {
         .padding(.horizontal, 16)
         .background(Color.bruInk)
         .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    /// The meta line's parts on one line, or stacked at accessibility sizes.
+    private var metaLayout: AnyLayout {
+        dynamicTypeSize.isAccessibilitySize
+            ? AnyLayout(VStackLayout(alignment: .leading, spacing: 4))
+            : AnyLayout(HStackLayout(spacing: 0))
+    }
+
+    /// The dot between two meta parts on one line; stacked parts need none.
+    @ViewBuilder
+    private var metaSeparator: some View {
+        if !dynamicTypeSize.isAccessibilitySize {
+            Text("  ·  ")
+                .font(BRUFont.labelSmall)
+                .foregroundStyle(Color.bruPaper.opacity(0.5))
+        }
     }
 }
 

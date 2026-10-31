@@ -28,10 +28,14 @@ import SwiftData
 /// └──────────────────────────────────────────────┘
 /// ```
 ///
+/// At accessibility sizes RESUME ▸ spans the slab with DISCARD under it,
+/// since half the slab is too narrow to keep "RESUME ▸" on one line.
+///
 /// Note: The ghost variant's "Discard" button uses bruPaper text + bruPaper outline
 /// because the slab background is bruInk — this inverts BRUButton.ghost's defaults
 /// (which assume a paper background). A comment in the code documents this inversion.
 public struct ResumeWorkoutSlab: View {
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     // MARK: - Properties
 
@@ -107,7 +111,7 @@ public struct ResumeWorkoutSlab: View {
             // 16pt gap then two equal-width action buttons
             Spacer().frame(height: 16)
 
-            HStack(spacing: 8) {
+            actionLayout {
                 // Primary — signal fill (Resume ▸)
                 BRUPillButton("Resume ▸", action: onResume)
                     .frame(maxWidth: .infinity)
@@ -159,6 +163,13 @@ public struct ResumeWorkoutSlab: View {
     private func discard() {
         RestTimerEngine.clearPersisted(sessionID: session.id)
         onDiscard()
+    }
+
+    /// RESUME ▸ beside DISCARD, or above it at accessibility sizes.
+    private var actionLayout: AnyLayout {
+        dynamicTypeSize.isAccessibilitySize
+            ? AnyLayout(VStackLayout(spacing: 8))
+            : AnyLayout(HStackLayout(spacing: 8))
     }
 }
 

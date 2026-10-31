@@ -24,8 +24,15 @@ import SwiftData
 /// ──────────────────────────────────────────────────  1pt bruHair
 /// ```
 ///
+/// The number column scales with its type, so "01" stays on one line. At
+/// accessibility sizes the chip moves under the name and sub-line, since
+/// beside them it broke "COMPOUND" over two lines.
+///
 /// Reference: bru-screens/today.jsx lines 92-108.
 public struct LiftListRow: View {
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    /// The 32pt number column, scaled like its 22pt type.
+    @ScaledMetric(relativeTo: .title2) private var numberWidth: CGFloat = 32
 
     // MARK: - Properties
 
@@ -57,13 +64,14 @@ public struct LiftListRow: View {
     public var body: some View {
         VStack(spacing: 0) {
             HStack(spacing: 10) {
-                // Leading index — 32pt wide, displayMedium 22pt, zero-padded
+                // Leading index — 32pt wide at default text, displayMedium 22pt, zero-padded
                 Text(String(format: "%02d", index))
                     .font(.bru(.grotesk, size: 22))
                     .foregroundStyle(Color.bruInk)
-                    .frame(width: 32, alignment: .leading)
+                    .fixedSize()
+                    .frame(width: numberWidth, alignment: .leading)
 
-                // Middle — name + sub-line
+                // Middle — name + sub-line, then the chip at accessibility sizes
                 VStack(alignment: .leading, spacing: 2) {
                     Text(exerciseName)
                         .font(BRUFont.bodyEmphasis)
@@ -75,14 +83,18 @@ public struct LiftListRow: View {
                         .tracking(0.5)
                         .textCase(.uppercase)
                         .foregroundStyle(Color.bruMuted)
+
+                    if dynamicTypeSize.isAccessibilitySize {
+                        chip
+                            .padding(.top, 4)
+                    }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
 
-                // Trailing — COMPOUND (signal) or WORK (ink)
-                BRUChip(
-                    isFirstCompound ? "Compound" : "Work",
-                    color: isFirstCompound ? .bruSignal : .bruInk
-                )
+                // Trailing — the chip beside the name at standard sizes
+                if !dynamicTypeSize.isAccessibilitySize {
+                    chip
+                }
             }
             .padding(.vertical, 11)
             .padding(.horizontal, 16)
@@ -91,6 +103,15 @@ public struct LiftListRow: View {
             BRUDivider(.hair)
         }
         .background(Color.bruPaper)
+    }
+
+    /// COMPOUND (signal) or WORK (ink), never broken over two lines.
+    private var chip: some View {
+        BRUChip(
+            isFirstCompound ? "Compound" : "Work",
+            color: isFirstCompound ? .bruSignal : .bruInk
+        )
+        .fixedSize()
     }
 }
 
