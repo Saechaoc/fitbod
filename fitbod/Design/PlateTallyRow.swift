@@ -9,7 +9,8 @@
 // Spec: 03-UI-SPEC.md lines 49, 270, 442, 503
 //
 // COLUMN LAYOUT (3-column HStack):
-//   Column 1 — 90pt wide: plate icon (16×28pt bruInk Rectangle) + weight number
+//   Column 1 — 90pt wide at default text: plate icon (16×28pt bruInk Rectangle) + weight
+//              number, whose 68pt share grows with its type (T19)
 //   Column 2 — flexible:  4 equal-width tally boxes, 20pt tall
 //   Column 3 — 80pt wide: "×{count}" or "NONE" right-aligned
 //
@@ -46,6 +47,11 @@ public struct PlateTallyRow: View {
     @Binding public var count: Int
     public let unitLabel: String
 
+    /// The weight number's 68pt share of the 90pt column, scaled like its
+    /// 20pt type, so a weight such as "1.25" stays on one line at
+    /// accessibility sizes.
+    @ScaledMetric(relativeTo: .title3) private var weightWidth: CGFloat = 68
+
     // MARK: Init
 
     public init(weight: Double, count: Binding<Int>, unitLabel: String) {
@@ -58,9 +64,8 @@ public struct PlateTallyRow: View {
 
     public var body: some View {
         HStack(spacing: 10) {
-            // Column 1 — 90pt: plate icon + weight number
+            // Column 1 — 90pt at default text: plate icon + weight number
             plateIconColumn
-                .frame(width: 90, alignment: .leading)
 
             // Column 2 — flexible: 4-box tally marks
             tallyColumn
@@ -111,6 +116,8 @@ public struct PlateTallyRow: View {
             Text(formatted(weight))
                 .font(.bru(.grotesk, size: 20))
                 .foregroundStyle(Color.bruInk)
+                .fixedSize()
+                .frame(width: weightWidth, alignment: .leading)
         }
     }
 

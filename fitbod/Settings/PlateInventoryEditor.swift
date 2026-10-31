@@ -10,6 +10,8 @@
 //  Color.accentColor → BRU tokens; .navigationTitle → BRUHeaderBar.
 //  T77: ScrollView/VStack → a plain List of BRU rows, so a plate row's swipe-to-delete
 //  works on iOS 26 and closes like other rows.
+//  T19: the header gains ‹ BACK, since the system bar stays hidden, and the footer
+//  drops "Save inventory": every edit already saves as it is made.
 //
 //  UI-SPEC §PlateInventoryEditor (verbatim copy in all labels / alerts / empty states).
 //  Pattern: PATTERNS.md @Query + @Bindable write-through (SettingsView analog).
@@ -58,6 +60,7 @@ public struct PlateInventoryEditor: View {
         VStack(spacing: 0) {
             // BRUHeaderBar — replaces .navigationTitle (03.2-06 must_have)
             BRUHeaderBar(
+                left: HeaderAction("‹ Back") { dismiss() },
                 center: "Plate Inventory",
                 right: HeaderAction("•••") { showCalculatorSheet = true }
             )
@@ -88,7 +91,7 @@ public struct PlateInventoryEditor: View {
             // Rows keep their own heights instead of the 44pt list minimum.
             .environment(\.defaultMinListRowHeight, 0)
 
-            // Footer — 2pt bruInk top rule + ghost "Save inventory" + primary "Done ▸"
+            // Footer — 2pt bruInk top rule + primary "Done ▸"
             footerBar
 
             // 24pt bruBg safe-area filler
@@ -328,9 +331,9 @@ public struct PlateInventoryEditor: View {
 
     // MARK: - Footer bar
 
-    /// 2pt bruInk top rule + ghost "Save inventory" (half-width) + primary "Done ▸" (half-width)
-    /// T-03.2-12 note: @Bindable write-through already persists all changes; the ghost Save
-    /// button is a visual continuity gesture matching plate-calc.jsx mockup, not a state mutation.
+    /// 2pt bruInk top rule + full-width primary "Done ▸".
+    /// No save button: @Bindable write-through and `try? ctx.save()` in the row
+    /// bindings persist every change as it is made (T19 removed "Save inventory").
     private var footerBar: some View {
         VStack(spacing: 0) {
             // 2pt bruInk top rule
@@ -338,19 +341,9 @@ public struct PlateInventoryEditor: View {
                 .fill(Color.bruInk)
                 .frame(height: 2)
 
-            HStack(spacing: 0) {
-                // Ghost "Save inventory" — visual gesture per plate-calc.jsx line 133
-                BRUButton("Save inventory", kind: .ghost) {
-                    // No-op: @Bindable + try? ctx.save() in stepperBinding already write-through.
-                    // This button provides visual continuity with the mockup (T-03.2-12 accepted).
-                }
-                .frame(maxWidth: .infinity)
-
-                // Primary "Done ▸" — dismisses the view
-                BRUButton("Done ▸", kind: .primary) {
-                    dismiss()
-                }
-                .frame(maxWidth: .infinity)
+            // Primary "Done ▸" — dismisses the view
+            BRUButton("Done ▸", kind: .primary) {
+                dismiss()
             }
         }
     }

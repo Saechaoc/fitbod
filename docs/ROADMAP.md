@@ -74,3 +74,10 @@ design system; add a component only when multiple real screens need it.
 - EDIT BLOCK's top SAVE, because the top save now saves a draft (SAVE DRAFT),
   which only a new block needs. EDIT BLOCK saves with its bottom SAVE CHANGES
   alone.
+- Plate Inventory's SAVE INVENTORY, because it did nothing: each plate edit
+  saves as it is made. ‹ BACK and Done ▸ leave the screen.
+- The plate calculator's "•••", because it opened nothing.
+- The plate calculator's footer Save, because it did nothing: the calculator
+  only reads the plate inventory, which Plate Inventory edits.
+- The plate calculator's footer Done, because DONE in its header now closes
+  the sheet.

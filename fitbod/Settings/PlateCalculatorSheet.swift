@@ -7,14 +7,16 @@
 //  architecture replaced with BRU composition per plate-calc.jsx verbatim.
 //
 //  Architecture (top→bottom, VStack(spacing: 0)):
-//    BRUHeaderBar ← left "‹" / center "Plate calculator" / right "•••"
+//    BRUHeaderBar ← center "Plate calculator" / right "DONE"
 //    targetBand   ← "TARGET" label + 96pt displayHero weight + unit + 4 BRUChip quick-adjust
 //    [barExceedsTargetError] ← inline signal caption if parsedBar > parsedTarget
 //    plateStackZone ← bruBg2 fill + 2pt bruInk rules top+bottom + "PER SIDE" + PlateStackViz
 //    equipmentGrid  ← BRUSectionHead + 2-column grid with 1pt hair separator + 2pt ink bottom
 //    platesAvailableList ← BRUSectionHead + LazyVStack PlateTallyRow rows (read-only .constant)
-//    footerBar  ← 2pt bruInk top rule + ghost "Save inventory" + primary "Done ▸"
-//    bruBgFiller ← 24pt bruBg
+//
+//  T19: the calculator only shows information, so it closes with the header's DONE.
+//  Its "‹", "•••" and footer "Save inventory" / "Done ▸" (and the 24pt bruBg filler
+//  under that footer) are gone. Its values never wrap inside a number.
 //
 //  Input init unchanged: `public init(equipment: PlateEquipmentKind, inventory: PlateInventory)`
 //  Computed math (parsedTarget, parsedBar, barWeightExceedsTarget, solvedStack) preserved verbatim.
@@ -49,6 +51,7 @@ public struct PlateCalculatorSheet: View {
 
     @Environment(\.dismiss) private var dismiss
     @Environment(\.weightUnit) private var weightUnit
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     // MARK: - State
 
@@ -137,8 +140,6 @@ public struct PlateCalculatorSheet: View {
                         platesAvailableList
                     }
                 }
-                footerBar
-                bruBgFiller
             }
             .background(Color.bruPaper)
             .navigationBarHidden(true)
@@ -152,13 +153,12 @@ public struct PlateCalculatorSheet: View {
 
     // MARK: - Header Bar
 
-    /// BRU header bar: "‹" dismiss / "Plate calculator" / "•••" menu.
-    /// Per 03-UI-SPEC lines 237-239 / plate-calc.jsx line 22.
+    /// BRU header bar: "Plate calculator" in the center, DONE on the right.
+    /// A sheet that only shows information closes with DONE (T19).
     private var headerBar: some View {
         BRUHeaderBar(
-            left: HeaderAction("‹") { dismiss() },
             center: "Plate calculator",
-            right: HeaderAction("•••") { /* future menu */ }
+            right: HeaderAction("Done") { dismiss() }
         )
     }
 
@@ -166,52 +166,58 @@ public struct PlateCalculatorSheet: View {
 
     /// Target display band: 14pt top padding, 16pt horizontal, 2pt bruInk bottom rule.
     /// Per 03-UI-SPEC lines 240-244 / plate-calc.jsx lines 24-43.
+    /// No value wraps inside a number (T19). At accessibility sizes TARGET stacks over
+    /// its readout and the chips move under the weight, the way TodayStatStrip stacks.
     private var targetBand: some View {
         VStack(alignment: .leading, spacing: 0) {
             // Top row: "TARGET" label + "BAR X + PLATES Y" right label
-            HStack(alignment: .firstTextBaseline) {
+            targetLabelLayout {
                 Text("Target")
                     .font(BRUFont.labelSmall)
                     .foregroundStyle(Color.bruInk)
                     .textCase(.uppercase)
                     .tracking(1.5)
+                    .fixedSize()
 
-                Spacer()
+                if !dynamicTypeSize.isAccessibilitySize {
+                    Spacer()
+                }
 
+                // Takes its room before the spacer, and wraps only between words.
                 Text("Bar \(formatted(parsedBar)) + Plates \(formatted(totalPlateWeight))")
                     .font(BRUFont.labelSmall)
                     .foregroundStyle(Color.bruMuted)
                     .textCase(.uppercase)
                     .tracking(1.2)
+                    .layoutPriority(1)
             }
             .padding(.top, 14)
             .padding(.horizontal, 16)
 
             // Hero row: 96pt weight + unit label + quick-adjust chips
-            HStack(alignment: .lastTextBaseline, spacing: 6) {
-                // 96pt hero weight per 03-UI-SPEC line 87 / plate-calc.jsx line 34
-                // Font.custom override — BRUFont enum supplies the typeface name
-                // (SpaceGrotesk-Bold) but the 96pt size is a load-bearing spec exception
-                // requiring Font.custom directly (BRUFont.displayHero is 56pt).
-                Text(formatted(parsedTarget))
-                    .font(.bru(.grotesk, size: 96, relativeTo: .largeTitle))
-                    .foregroundStyle(Color.bruInk)
-                    // Negative letterspacing per displayHero spec (-0.5)
-                    .tracking(-0.5)
-
-                Text(unitLabel.uppercased())
-                    .font(BRUFont.displayLarge)
-                    .foregroundStyle(Color.bruMuted)
-
-                Spacer()
-
-                // Quick-adjust chips per 03-UI-SPEC line 244 (item 25):
-                // BRUChip ink-outline, NOT signal — plate-calc.jsx line 37 shows BruChip without color override.
-                HStack(spacing: 4) {
-                    quickAdjustChip(label: "−5", delta: -5)
-                    quickAdjustChip(label: "−2.5", delta: -2.5)
-                    quickAdjustChip(label: "+2.5", delta: 2.5)
-                    quickAdjustChip(label: "+5", delta: 5)
+            Group {
+                if dynamicTypeSize.isAccessibilitySize {
+                    VStack(alignment: .leading, spacing: 10) {
+                        HStack(alignment: .lastTextBaseline, spacing: 6) {
+                            heroWeight
+                            heroUnit
+                        }
+                        // One row of chips when it fits, else minus over plus.
+                        ViewThatFits(in: .horizontal) {
+                            quickAdjustChips
+                            VStack(alignment: .leading, spacing: 4) {
+                                subtractChips.fixedSize()
+                                addChips.fixedSize()
+                            }
+                        }
+                    }
+                } else {
+                    HStack(alignment: .lastTextBaseline, spacing: 6) {
+                        heroWeight
+                        heroUnit
+                        Spacer()
+                        quickAdjustChips
+                    }
                 }
             }
             .padding(.horizontal, 16)
@@ -223,6 +229,61 @@ public struct PlateCalculatorSheet: View {
             Rectangle()
                 .fill(Color.bruInk)
                 .frame(height: 2)
+        }
+    }
+
+    /// TARGET beside its readout, or over it at accessibility sizes.
+    private var targetLabelLayout: AnyLayout {
+        dynamicTypeSize.isAccessibilitySize
+            ? AnyLayout(VStackLayout(alignment: .leading, spacing: 4))
+            : AnyLayout(HStackLayout(alignment: .firstTextBaseline))
+    }
+
+    /// 96pt hero weight per 03-UI-SPEC line 87 / plate-calc.jsx line 34.
+    /// Font.custom override — BRUFont enum supplies the typeface name
+    /// (SpaceGrotesk-Bold) but the 96pt size is a load-bearing spec exception
+    /// requiring Font.custom directly (BRUFont.displayHero is 56pt).
+    /// It takes its room first, and shrinks rather than wrap inside the number.
+    private var heroWeight: some View {
+        Text(formatted(parsedTarget))
+            .font(.bru(.grotesk, size: 96, relativeTo: .largeTitle))
+            .foregroundStyle(Color.bruInk)
+            // Negative letterspacing per displayHero spec (-0.5)
+            .tracking(-0.5)
+            .lineLimit(1)
+            .minimumScaleFactor(0.5)
+            .layoutPriority(1)
+    }
+
+    private var heroUnit: some View {
+        Text(unitLabel.uppercased())
+            .font(BRUFont.displayLarge)
+            .foregroundStyle(Color.bruMuted)
+            .fixedSize()
+    }
+
+    /// Quick-adjust chips per 03-UI-SPEC line 244 (item 25):
+    /// BRUChip ink-outline, NOT signal — plate-calc.jsx line 37 shows BruChip without color override.
+    /// Each chip keeps its whole width, so "−2.5" never wraps as "−2." over "5".
+    private var quickAdjustChips: some View {
+        HStack(spacing: 4) {
+            subtractChips
+            addChips
+        }
+        .fixedSize()
+    }
+
+    private var subtractChips: some View {
+        HStack(spacing: 4) {
+            quickAdjustChip(label: "−5", delta: -5)
+            quickAdjustChip(label: "−2.5", delta: -2.5)
+        }
+    }
+
+    private var addChips: some View {
+        HStack(spacing: 4) {
+            quickAdjustChip(label: "+2.5", delta: 2.5)
+            quickAdjustChip(label: "+5", delta: 5)
         }
     }
 
@@ -393,41 +454,6 @@ public struct PlateCalculatorSheet: View {
                 }
             }
         }
-    }
-
-    // MARK: - Footer Bar
-
-    /// Ghost "Save inventory" + primary "Done ▸" footer bar.
-    /// Per 03-UI-SPEC lines 254-255 / plate-calc.jsx lines 131-135.
-    private var footerBar: some View {
-        VStack(spacing: 0) {
-            // 2pt bruInk top rule per plate-calc.jsx line 132
-            Rectangle()
-                .fill(Color.bruInk)
-                .frame(height: 2)
-
-            HStack(spacing: 0) {
-                BRUButton("Save inventory", kind: .ghost) {
-                    // No-op in calculator context; PlateInventoryEditor handles mutations.
-                }
-                .frame(maxWidth: .infinity)
-
-                BRUButton("Done ▸", kind: .primary) {
-                    dismiss()
-                }
-                .frame(maxWidth: .infinity)
-            }
-        }
-    }
-
-    // MARK: - BruBg Filler
-
-    /// 24pt bruBg safe-area filler below footer per 03-UI-SPEC line 67 (xl spacing token).
-    /// Per plate-calc.jsx line 136: `<div style={{ height: 24, background: BRU.bg }} />`.
-    private var bruBgFiller: some View {
-        Rectangle()
-            .fill(Color.bruBg)
-            .frame(height: 24)
     }
 }
 
