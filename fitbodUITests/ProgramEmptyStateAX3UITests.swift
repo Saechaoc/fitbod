@@ -108,7 +108,10 @@ final class ProgramEmptyStateAX3UITests: XCTestCase {
     // MARK: - Default text keeps the layout from T10
 
     /// At default text the hero, chips and rows keep their measured sizes:
-    /// a 71pt button, chips 3 + 1 on two lines, and 77pt rows.
+    /// a 71pt button, the chip lines the phone draws, and 77pt rows. On the
+    /// small phone WEEKS, PHASES and DELOAD OPTIONAL share the first chip
+    /// line and CUSTOM wraps to a second; on the large phone all four chips
+    /// share one line.
     @MainActor
     func testEmptyProgramKeepsItsLayoutAtDefaultText() throws {
         let app = openEmptyProgram(textSize: .default)
@@ -121,7 +124,17 @@ final class ProgramEmptyStateAX3UITests: XCTestCase {
         let firstLine = chips[0].frame.minY
         XCTAssertEqual(chips.prefix(3).map { $0.frame.minY.rounded() }, Array(repeating: firstLine.rounded(), count: 3),
                        "WEEKS, PHASES and DELOAD OPTIONAL share the first chip line")
-        XCTAssertGreaterThan(chips[3].frame.minY, firstLine, "CUSTOM wraps to the second chip line")
+        switch UITestNavigation.phone {
+        case "small":
+            XCTAssertGreaterThan(chips[3].frame.minY, firstLine, "CUSTOM wraps to the second chip line on the small phone")
+        case "large":
+            XCTAssertEqual(chips[3].frame.minY.rounded(), firstLine.rounded(),
+                           "CUSTOM shares the one chip line with the other three on the large phone")
+        case let phone:
+            XCTFail("No chip lines are measured for a \(phone) wide phone")
+        }
+        // Chips on one line sit side by side, not over each other.
+        assertNoTwoOverlap(chips)
 
         let rows = templateRows(in: app)
         // Scrolled to the end, the last row and the section's closing rule show.

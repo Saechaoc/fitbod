@@ -205,6 +205,13 @@ extension UITestNavigation {
         return name
     }
 
+    /// The phone this test runs on, named from the screen's width the way
+    /// `saveScreenshot` names it: "small", "large", or the width, such as
+    /// "402pt", on any other phone.
+    static var phone: String {
+        phoneName(width: XCUIScreen.main.screenshot().image.size.width)
+    }
+
     private static func phoneName(width: CGFloat) -> String {
         let points = Int(width.rounded())
         if points == 390 { return "small" }
