@@ -66,7 +66,7 @@ If one of them passes today, say so in `notes.md`.
 
 - Every repro test passes on both phones.
 - Every numeric field in Hints selects its value on focus; `notes.md` lists each field with the test that covers it.
-- `MilestoneOneJourneyUITests`, `WorkoutLoggerJourneyUITests`, `PlateauOverrideUITests`, `WorkoutSwapJourneyUITests` and `PrescriptionControlsUITests` pass on both phones.
+- `MilestoneOneJourneyUITests`, `WorkoutLoggerJourneyUITests`, `PlateauOverrideUITests`, `WorkoutSwapJourneyUITests` and `PrescriptionEditorUITests` pass on both phones.
 - No UI test clears a numeric field before it types, and `notes.md` names the search that shows it.
 
 ## Hints

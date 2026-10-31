@@ -80,7 +80,7 @@ All three fail today.
 - Every repro test passes on both phones.
 - A UI test creates an exercise with one primary and one secondary muscle, saves it, reopens it with Edit, and finds both muscles with their roles and weights.
 - `Phase3BRUGrepAuditTests` passes with the four files no longer excluded.
-- `ExerciseCopyEditSheetUITests`, `DirtySheetDismissUITests`, `CustomExerciseEntryUITests` and `MilestoneOneJourneyUITests` pass on both phones.
+- `ExerciseCopyEditSheetUITests`, `EditorSwipeDismissUITests`, `CustomExerciseEntryUITests` and `MilestoneOneJourneyUITests` pass on both phones.
 - Screenshots of the editor and the picker, at default text and AX3, in light and dark mode on the small phone, are in `screens/`.
 
 ## Hints

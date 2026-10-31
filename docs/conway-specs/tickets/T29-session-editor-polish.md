@@ -72,7 +72,7 @@ On both phones, open a session with two exercises in the session editor:
 
 - Every repro test passes on both phones.
 - The AX3 screenshots show no clipped, truncated or mid-word labels.
-- `RoutineBuilderBRUUITests` and `PrescriptionControlsUITests` pass on both phones.
+- `RoutineBuilderBRUUITests` and `PrescriptionEditorUITests` pass on both phones.
 - Screenshots of the editor at default text and AX3, in light and dark mode on the small phone, are in `screens/`.
 
 ## Hints

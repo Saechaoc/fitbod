@@ -54,7 +54,7 @@ Both fail today.
 
 - The repro test passes on the small phone.
 - A UI test types a note, taps SAVE, and sees the capsule show the note.
-- `NotesSheetsUITests` passes on the small phone, and `NotesPersistenceTests` passes in `fitbodTests`.
+- `NoteSheetsUITests` passes on the small phone, and `NotesPersistenceTests` passes in `fitbodTests`.
 - Both BRU audit suites pass with the file no longer excluded.
 - Screenshots of the sheet in light and dark mode, at default text and AX3, are in `screens/`.
 
