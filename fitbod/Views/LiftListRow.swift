@@ -43,7 +43,7 @@ public struct LiftListRow: View {
     // MARK: - Computed
 
     private var exerciseName: String {
-        routineExercise.exercise?.canonicalName ?? routineExercise.exercise?.name ?? "Exercise"
+        routineExercise.exercise?.name ?? "Exercise"
     }
 
     private var setSubLine: String {

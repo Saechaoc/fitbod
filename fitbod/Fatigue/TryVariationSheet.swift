@@ -171,7 +171,7 @@ private struct TryVariationRow: View {
     var body: some View {
         Button(action: onTap) {
             HStack {
-                Text(exercise.canonicalName)
+                Text(exercise.name)
                     .font(BRUFont.bodyEmphasis)
                     .foregroundStyle(Color.bruInk)
                 Spacer()

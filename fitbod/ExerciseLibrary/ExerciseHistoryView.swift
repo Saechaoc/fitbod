@@ -7,7 +7,7 @@
 // ## Composition
 //
 //   BRUHeaderBar (safeAreaInset .top, navigationBarHidden)
-//   exercise.canonicalName in BRUFont.displayLarge 32pt
+//   exercise.name in BRUFont.displayLarge 32pt
 //   3-cell stat strip: 'Sessions · 30d' / 'Tonnage' bruSignal / 'PRs · 30d'
 //   BRUDivider(.ink)
 //   IntentFilterChipRow full-bleed strip (2pt rules drawn internally)
@@ -64,7 +64,7 @@ public struct ExerciseHistoryView: View {
                 LazyVStack(spacing: 0, pinnedViews: [.sectionHeaders]) {
                     // Exercise name sub-line
                     HStack {
-                        Text(exercise.canonicalName)
+                        Text(exercise.name)
                             .font(BRUFont.displayLarge)
                             .foregroundStyle(Color.bruInk)
                         Spacer()

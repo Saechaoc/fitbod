@@ -698,7 +698,7 @@ public struct WeeklyRecapSheet: View {
             guard let lw = lastWeekE1RM, let pw = priorWeekE1RM else {
                 return ProgressRow(
                     exerciseID: entry.exercise.id,
-                    exerciseName: entry.exercise.canonicalName,
+                    exerciseName: entry.exercise.name,
                     deltaCopy: "—",
                     deltaColor: .bruMuted
                 )
@@ -708,7 +708,7 @@ public struct WeeklyRecapSheet: View {
             let copy  = "\(sign)\(String(format: "%.1f", delta)) \(unitLabel) e1RM"
             return ProgressRow(
                 exerciseID: entry.exercise.id,
-                exerciseName: entry.exercise.canonicalName,
+                exerciseName: entry.exercise.name,
                 deltaCopy: copy,
                 deltaColor: Self.deltaColor(for: delta)
             )

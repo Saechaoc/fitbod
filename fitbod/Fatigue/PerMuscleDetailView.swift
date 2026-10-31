@@ -11,7 +11,7 @@
 //    1. This Week — total sets + BRUChip zone badge + delta line
 //    2. Contributing Exercises — DESC by weighted-set count
 //    3. Frequency This Week — sessions ≥ frequencyHitMinSets
-//    4. Adjust Targets — DisclosureGroup → MuscleVolumeTargetStepper
+//    4. Adjust Targets — "Edit volume targets" row (▾/▴) → MuscleVolumeTargetStepper inline
 //
 //  BRU contract — ZERO banned tokens:
 //    No Color.accentColor, Color(.system*), RoundedRectangle(cornerRadius:),
@@ -229,23 +229,37 @@ public struct PerMuscleDetailView: View {
         VStack(alignment: .leading, spacing: 0) {
             BRUSectionHead("Adjust Targets")
             if let target = persistedTarget {
-                DisclosureGroup(
-                    isExpanded: $adjustTargetsExpanded,
-                    content: {
-                        MuscleVolumeTargetStepper(target: target, showsResetButton: true)
-                            .padding(.horizontal, 16)
-                            .padding(.vertical, 12)
-                    },
-                    label: {
-                        Text("Adjust targets")
-                            .font(BRUFont.labelSmall)
-                            .tracking(1.2)
-                            .textCase(.uppercase)
-                            .foregroundStyle(Color.bruInk)
+                // Opens the targets in place, so it carries the expand
+                // marker, not a navigation "›".
+                Button {
+                    withAnimation(.easeInOut(duration: 0.18)) {
+                        adjustTargetsExpanded.toggle()
                     }
-                )
-                .padding(.horizontal, 16)
-                .padding(.vertical, 12)
+                } label: {
+                    HStack(spacing: 8) {
+                        Text("Edit volume targets")
+                            .font(BRUFont.bodyEmphasis)
+                            .foregroundStyle(Color.bruInk)
+                        Spacer(minLength: 8)
+                        Text(adjustTargetsExpanded ? "▴" : "▾")
+                            .font(BRUFont.labelSmall)
+                            .foregroundStyle(Color.bruMuted)
+                            .accessibilityHidden(true)
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 11)
+                    .frame(minHeight: 44)
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityValue(adjustTargetsExpanded ? "Expanded" : "Collapsed")
+
+                if adjustTargetsExpanded {
+                    MuscleVolumeTargetStepper(target: target, showsResetButton: true)
+                        .padding(.horizontal, 32)
+                        .padding(.top, 12)
+                        .padding(.bottom, 24)
+                }
             } else {
                 BRUButton("CREATE TARGET ROW", kind: .primary) {
                     createPersistentTarget(for: muscle)
@@ -295,7 +309,7 @@ public struct PerMuscleDetailView: View {
             let exID = exercise.id
             let stimuli = exercise.muscleStimuli ?? []
             for stim in stimuli where stim.muscle?.slug == targetSlug {
-                var existing = contribByExercise[exID] ?? (name: exercise.canonicalName, direct: 0, indirect: 0)
+                var existing = contribByExercise[exID] ?? (name: exercise.name, direct: 0, indirect: 0)
                 switch stim.role {
                 case "primary":   existing.direct += stim.weight
                 case "secondary": existing.indirect += stim.weight
