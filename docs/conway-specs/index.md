@@ -78,6 +78,7 @@ Every other Phase 1 ticket is done and archived.
 | [T38](tickets/T38-program-new-block-settings-small-fixes.md) | Small fixes on Program, New Block and Settings |
 | [T85](tickets/T85-pr-row-phrases.md) | PR rows keep "@ RPE" and the kind label whole |
 | [T98](tickets/T98-chart-audio-graph-rounding.md) | The progress chart's audio graph reads rounded values |
+| [T106](tickets/T106-sideways-drag-does-not-open-rows.md) | A sideways drag on a row does not open it |
 
 ### Phase 4: test health
 

@@ -21,6 +21,7 @@ Read [../worker-rules.md](../worker-rules.md) first; it is part of this ticket.
 - The volume target rows expand when tapped, but nothing shows that they can.
 - The session editor, opened from a routine, is a sheet that closes with "‹ BACK", while other editing sheets close with "CANCEL".
 - At default text on the small phone, the ARCHIVED ROUTINES title wraps onto two lines in its header (finding F149, from T20's screenshots).
+- After Volume Targets closes, its muscle rows stay in the accessibility tree for more than 12 seconds, so VoiceOver may still find them (finding F182, from T18's worker).
 
 ## Target
 
@@ -39,6 +40,7 @@ Read [../worker-rules.md](../worker-rules.md) first; it is part of this ticket.
 5. The session editor's left header action reads "CANCEL" (see "Sheet close labels" in [../tradeoffs.md](../tradeoffs.md)).
    It keeps today's behavior: with unsaved changes it asks before it discards.
 6. At default text on the small phone, the ARCHIVED ROUTINES title fits on one line in its header, in the BRU header font.
+7. Volume Targets' rows leave the accessibility tree as soon as the screen closes, as Plate Inventory's do.
 
 ## Constraints
 
@@ -61,6 +63,7 @@ On the small phone, write `SmallFixesUITests`:
 - Open a session from a routine, and assert that the session editor's left header action is "CANCEL".
 - Save screenshots of New Block's bottom bar in light and dark mode, sample CANCEL's text and background, and assert a contrast of at least 4.5:1.
 - Archive a routine, open Program's Archived routines, and assert that its title is one line tall.
+- Close Volume Targets with "‹ BACK", and assert that its first muscle row is gone from the accessibility tree within 2 seconds.
 
 All of these fail today.
 

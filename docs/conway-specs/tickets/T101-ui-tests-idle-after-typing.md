@@ -6,7 +6,7 @@ items: []
 depends_on: []
 size: L
 sim: both
-owns: [fitbodUITests/UITestNavigation.swift]
+owns: [fitbodUITests/UITestNavigation.swift, fitbodUITests/MilestoneOneJourneyUITests.swift, new:fitbodTests/EdgeSwipeBackGuardTests.swift]
 ---
 
 # T101: UI tests stop waiting a minute per step after typing
@@ -29,6 +29,11 @@ In T24's runs, `BlockNameTypingUITests` testKeyTapsTypeTheWholeName took 1481 se
 T24's worker also found that `UITestNavigation.topSheet(in:)` returns nil for half-height sheets, which float 8pt above the bottom of the screen on iOS 26 and later.
 So `swipeSheetDown(in:)` cannot find them either, which may explain the flaky sheet swipes of finding F135.
 
+T18's review left two more test gaps:
+
+- `EdgeSwipeBack.swift` overrides `viewDidLoad` in an extension of `UINavigationController`, which is safe only while UIKit's class has no `viewDidLoad` of its own, and no test checks that (finding F184).
+- After `MilestoneOneJourneyUITests` swipes the logger's S3 set fully away, it checks for the row at once and then waits for a Delete button that a full swipe never leaves, so it fails when the check lands during the delete animation (finding F185).
+
 ## Target
 
 - Whatever keeps an animation running after a text field edit, which change 1 finds.
@@ -47,6 +52,8 @@ So `swipeSheetDown(in:)` cannot find them either, which may explain the flaky sh
 3. Remove the probe and its launch flag before your final commit.
 4. In `notes.md`, name what kept animating, quote the probe lines that show it, and say why your change stops it.
 5. `UITestNavigation.topSheet(in:)` also finds half-height sheets, which float 8pt above the bottom of the screen on iOS 26 and later, so `swipeSheetDown(in:)` can close them too (finding F171, from T24's worker).
+6. `EdgeSwipeBackGuardTests` fails if `UINavigationController` ever gets a `viewDidLoad` of its own, which the extension's override would replace.
+7. `MilestoneOneJourneyUITests` waits for a fully swiped set to disappear before it looks for a Delete button.
 
 ## Constraints
 
@@ -75,6 +82,7 @@ If the fix needs an app file, ask for it, and name the cause the probe found.
 - No log from those runs holds "App animations complete notification not received".
 - `fitbodTests` passes on the large phone with only the known issue, and the app and the widget build.
 - `UITestHelpersSelfTests` passes on both phones, including the half-height sheet case.
+- `EdgeSwipeBackGuardTests` passes with `fitbodTests`, and `MilestoneOneJourneyUITests` passes on both phones.
 
 ## Hints
 
@@ -82,3 +90,5 @@ If the fix needs an app file, ask for it, and name the cause the probe found.
 - `fitbod/App/DebugLaunchReset.swift` shows how the app reads a launch flag, and the DEBUG launch helpers sit next to `fitbod/App/DemoWorkoutSeed.swift`.
 - `UITestNavigation.launch` builds the launch arguments for most UI tests, and `topSheet(in:)` is near `UITestNavigation.swift:484`.
 - Read the app's log with `xcrun simctl spawn <phone id> log show --last 5m --predicate 'process == "fitbod"'`.
+- `class_copyMethodList` lists a category's method and the class's own under the same selector, so two `viewDidLoad` entries on `UINavigationController` mean UIKit added its own.
+- The journey's delete check is near `MilestoneOneJourneyUITests.swift:157-161`; T18's notes suggest `if !added.waitForNonExistence(timeout: 2) { tap("Delete") }`.
