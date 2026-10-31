@@ -70,7 +70,7 @@ final class PinnedNoteSheetBRUUITests: XCTestCase {
         capsule.tap()
         XCTAssertTrue(header(in: app).waitForExistence(timeout: 5), "The capsule must open the Pinned Note sheet")
         XCTAssertEqual(editor.value as? String, Self.note, "The sheet must open on the saved note")
-        clear(editor)
+        UITestNavigation.type("", into: editor, pressingReturn: false)
         app.buttons.labeled("Save").tap()
         XCTAssertTrue(header(in: app).waitForNonExistence(timeout: 5), "SAVE must close the Pinned Note sheet")
         XCTAssertTrue(capsule.waitForNonExistence(timeout: 5), "An emptied note saves as no note, so the capsule must hide")
@@ -155,18 +155,6 @@ final class PinnedNoteSheetBRUUITests: XCTestCase {
     @MainActor
     private func header(in app: XCUIApplication) -> XCUIElement {
         app.staticTexts.labeled("Pinned note")
-    }
-
-    /// Deletes the editor's text from its end, the way a user empties it.
-    @MainActor
-    private func clear(_ editor: XCUIElement, file: StaticString = #filePath, line: UInt = #line) {
-        editor.coordinate(withNormalizedOffset: CGVector(dx: 0.95, dy: 0.9)).tap()
-        let focused = XCTNSPredicateExpectation(predicate: NSPredicate(format: "hasKeyboardFocus == true"), object: editor)
-        XCTAssertEqual(XCTWaiter().wait(for: [focused], timeout: 5), .completed,
-                       "The editor never took keyboard focus", file: file, line: line)
-        let text = editor.value as? String ?? ""
-        editor.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: text.count))
-        XCTAssertEqual(editor.value as? String ?? "", "", "The editor must be empty", file: file, line: line)
     }
 
     // MARK: - Checks
