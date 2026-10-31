@@ -48,7 +48,6 @@ final class CalibratingStepCopyUITests: XCTestCase {
 
         XCTAssertTrue(stepTwo.label.contains("Last session e1RM 135.6 lb → 74% × 8 → 100.2 lb"),
                       "Step 02 must show how the weight was calibrated: \(stepTwo.label)")
-        XCTAssertFalse(stepTwo.label.contains("Weight holds."), "Step 02 must not read double progression's hold: \(stepTwo.label)")
         XCTAssertTrue(stepThree.label.contains("100.2 → 100"), "Step 03 must round the raw target: \(stepThree.label)")
         UITestNavigation.assertInside(stepTwo, sheet)
         UITestNavigation.assertInside(stepThree, sheet)

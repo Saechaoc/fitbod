@@ -55,18 +55,16 @@ struct CalibratingStepCopyTests {
     }
 
     @Test("Every other suggestion of 0 after a last session still leaves step 03 out", arguments: [
-        "RPE autoregulation", "Double progression",
+        RPEAutoregStrategy() as any ProgressionStrategy, DoubleProgressionStrategy(), HybridStrategy(),
     ])
-    func otherZeroSuggestionsLeaveStepThreeOut(formula: String) {
+    func otherZeroSuggestionsLeaveStepThreeOut(strategy: any ProgressionStrategy) {
         // A bodyweight lift last logged with no added load rounds to 0.
-        let explanation = formula == "RPE autoregulation"
-            ? rpeAutoregulation(lastWeight: 0, lastRPE: 8, barWeight: 0).explanation
-            : DoubleProgressionStrategy().prescribe(
-                history: [], targetRepsLow: 3, targetRepsHigh: 5, targetRPE: nil,
-                lastSessionRepsArray: [3], smallestIncrement: 2.5, plates: [], barWeight: 0, unit: .lb,
-                minCalibrationSets: 10, lastSessionWeight: 0, lastSessionReps: 3, lastSessionRPE: 8,
-                lastSessionDate: lastDate
-            ).explanation
+        let explanation = strategy.prescribe(
+            history: [HistoryPoint(e1RM: 150, date: lastDate)], targetRepsLow: 3, targetRepsHigh: 5, targetRPE: 8,
+            lastSessionRepsArray: [3], smallestIncrement: 2.5, plates: plates, barWeight: 0, unit: .lb,
+            minCalibrationSets: 10, lastSessionWeight: 0, lastSessionReps: 3, lastSessionRPE: 8,
+            lastSessionDate: lastDate, block: nil, today: lastDate.addingTimeInterval(7 * 86_400)
+        ).explanation
         #expect(explanation.roundedWeight == 0)
         #expect(explanation.lastSessionLine != nil)
         let sheet = WhyThisWeightSheet(explanation: explanation, unitLabel: "lb")
@@ -92,13 +90,8 @@ struct CalibratingStepCopyTests {
     // MARK: - Helpers
 
     /// RPE autoregulation, still calibrating, for a 3 to 5 rep bench at
-    /// RPE 8, its last top set `lastWeight` x 8 at `lastRPE`, a week before
-    /// today.
-    private func rpeAutoregulation(
-        lastWeight: Double = 110,
-        lastRPE: Double?,
-        barWeight: Double = 45
-    ) -> (weight: Double, explanation: PrescriptionExplanation) {
+    /// RPE 8, its last top set 110 x 8 at `lastRPE`, a week before today.
+    private func rpeAutoregulation(lastRPE: Double?) -> (weight: Double, explanation: PrescriptionExplanation) {
         RPEAutoregStrategy().prescribe(
             history: [HistoryPoint(e1RM: 150, date: lastDate)],
             targetRepsLow: 3,
@@ -107,10 +100,10 @@ struct CalibratingStepCopyTests {
             lastSessionRepsArray: [8, 8, 8],
             smallestIncrement: 2.5,
             plates: plates,
-            barWeight: barWeight,
+            barWeight: 45,
             unit: .lb,
             minCalibrationSets: 10,
-            lastSessionWeight: lastWeight,
+            lastSessionWeight: 110,
             lastSessionReps: 8,
             lastSessionRPE: lastRPE,
             lastSessionDate: lastDate,
