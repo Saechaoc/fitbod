@@ -69,12 +69,23 @@ final class SwipeBackUITests: XCTestCase {
         assertSwipeBack(from: endBlock(in: app), "the block overview", to: band, in: app)
     }
 
+    /// + New routine opens the name step (T21); no routine exists until SAVE.
     @MainActor
     func testNewRoutineSwipesBackToToday() throws {
         let app = UITestNavigation.launch(UITestNavigation.freshStore)
         let newRoutine = app.buttons["+ New routine"]
         open(newRoutine, in: app)
-        assertSwipeBack(from: addSession(in: app), "the new routine", to: newRoutine, in: app)
+        assertSwipeBack(from: nameStep(in: app), "the new routine's name step", to: newRoutine, in: app)
+    }
+
+    /// SAVE puts the routine's editor in the name step's place, so a swipe
+    /// from the editor goes back to Today.
+    @MainActor
+    func testSavedRoutineSwipesBackToToday() throws {
+        let app = UITestNavigation.launch(UITestNavigation.freshStore)
+        open(app.buttons["+ New routine"], in: app)
+        nameNewRoutine(in: app)
+        assertSwipeBack(from: addSession(in: app), "the new routine", to: app.buttons["today.sessions"], in: app)
     }
 
     /// Today lists a routine's sessions when nothing is scheduled, and a
@@ -83,6 +94,7 @@ final class SwipeBackUITests: XCTestCase {
     func testSessionFromTodaySwipesBackToToday() throws {
         let app = UITestNavigation.launch(UITestNavigation.progressHistory)
         open(app.buttons["+ New routine"], in: app)
+        nameNewRoutine(in: app)
         open(addSession(in: app), in: app)
         let existing = button(beginningWith: "Bench & Squat", in: app)
         XCTAssertTrue(existing.waitForExistence(timeout: 10), "Add session must list the seeded session")
@@ -146,6 +158,16 @@ final class SwipeBackUITests: XCTestCase {
         assertSwipeBack(from: logger(in: app), "the workout logger", to: resume, in: app)
     }
 
+    /// + NEW's + New routine opens the name step on Program's stack (T21).
+    @MainActor
+    func testNewRoutineSwipesBackToProgram() throws {
+        let app = UITestNavigation.launch(UITestNavigation.freshStore)
+        UITestNavigation.selectTab("Program", in: app)
+        UITestNavigation.hittable(app.buttons, "+ NEW").tap()
+        UITestNavigation.hittable(app.buttons, "+ New routine").tap()
+        assertSwipeBack(from: nameStep(in: app), "the new routine's name step", to: app.staticTexts["PROGRAM"], in: app)
+    }
+
     /// Program lists archived routines once one is archived (T20).
     @MainActor
     func testArchivedRoutinesSwipeBackToProgram() throws {
@@ -153,6 +175,7 @@ final class SwipeBackUITests: XCTestCase {
         UITestNavigation.selectTab("Program", in: app)
         UITestNavigation.hittable(app.buttons, "+ NEW").tap()
         UITestNavigation.hittable(app.buttons, "+ New routine").tap()
+        nameNewRoutine(in: app)
         open(app.buttons.labeled("Archive routine"), in: app)
         UITestNavigation.hittable(app.buttons, "Archive", exactLabel: true).tap()
         let archived = app.buttons.labeled("Archived routines")
@@ -349,7 +372,7 @@ final class SwipeBackUITests: XCTestCase {
         assertRootIgnoresSwipe(program, alongRowOf: program, "Program", in: app)
         UITestNavigation.hittable(app.buttons, "+ NEW").tap()
         UITestNavigation.hittable(app.buttons, "+ New routine").tap()
-        assertBackControlReturns(from: addSession(in: app), to: program, in: app)
+        assertBackControlReturns(from: nameStep(in: app), to: program, in: app)
 
         UITestNavigation.selectTab("Progress", in: app)
         let workouts = app.buttons["progress.history"]
@@ -430,6 +453,21 @@ final class SwipeBackUITests: XCTestCase {
     @MainActor
     private func addSession(in app: XCUIApplication) -> XCUIElement {
         app.buttons.labeled("+ Add session")
+    }
+
+    /// The name field of the step + New routine opens.
+    @MainActor
+    private func nameStep(in app: XCUIApplication) -> XCUIElement {
+        app.textFields["newRoutine.name"]
+    }
+
+    /// Names the routine on its name step and saves it, which opens the
+    /// routine's editor in the step's place.
+    @MainActor
+    private func nameNewRoutine(in app: XCUIApplication, file: StaticString = #filePath, line: UInt = #line) {
+        UITestNavigation.type("Upper Lower", into: nameStep(in: app), file: file, line: line)
+        UITestNavigation.hittable(app.buttons, "Save", exactLabel: true, file: file, line: line).tap()
+        XCTAssertTrue(addSession(in: app).waitForExistence(timeout: 10), "SAVE must open the routine", file: file, line: line)
     }
 
     /// The session screen's START WORKOUT ▸.
