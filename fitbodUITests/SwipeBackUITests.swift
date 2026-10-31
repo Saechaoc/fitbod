@@ -298,6 +298,7 @@ final class SwipeBackUITests: XCTestCase {
         open(inventory, in: app)
         let plates = app.otherElements["plateInventory.tabStrip"]
         XCTAssertTrue(plates.waitForExistence(timeout: 10), "Plate Inventory must open")
+        _ = inventory.waitForNonExistence(timeout: 5)
         UITestNavigation.waitUntilStill(plates, interval: 0.3)
         let before = plates.frame
 
@@ -526,6 +527,10 @@ final class SwipeBackUITests: XCTestCase {
         file: StaticString = #filePath, line: UInt = #line
     ) {
         XCTAssertTrue(screen.waitForExistence(timeout: 15), "\(name) never opened", file: file, line: line)
+        // A swipe during a push does nothing, and XCUI reports where views
+        // end up, not where they are mid-push. The screen under leaves the
+        // accessibility tree once the push is over.
+        _ = opener.waitForNonExistence(timeout: 5)
         UITestNavigation.waitUntilStill(screen, interval: 0.3)
         UITestNavigation.swipeBack(in: app)
         XCTAssertTrue(waitUntilGone(screen),
