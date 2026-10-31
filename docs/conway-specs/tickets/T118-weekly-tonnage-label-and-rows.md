@@ -1,5 +1,5 @@
 ---
-id: T115
+id: T118
 title: Weekly Tonnage keeps its previous-best label whole, and its week rows open their workouts
 phase: 3
 items: []
@@ -9,7 +9,7 @@ sim: small
 owns: [fitbod/Progress/WeeklyTonnageView.swift, fitbod/Progress/WeekDetailView.swift, fitbodUITests/WeeklyTonnageUITests.swift]
 ---
 
-# T115: Weekly Tonnage keeps its previous-best label whole, and its week rows open their workouts
+# T118: Weekly Tonnage keeps its previous-best label whole, and its week rows open their workouts
 
 Read [../worker-rules.md](../worker-rules.md) first; it is part of this ticket.
 

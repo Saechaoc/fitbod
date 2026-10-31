@@ -60,7 +60,7 @@ Every Phase 1 ticket is done and archived.
 | [T111](tickets/T111-session-editor-rows-announced-removable.md) | Session editor rows are announced, removable and easy to hit |
 | [T113](tickets/T113-block-review-pr-marks.md) | The block review's PR marks agree, and its stats read cheaply and whole |
 | [T114](tickets/T114-recap-target-from-plan.md) | The weekly recap measures last week against its plan |
-| [T115](tickets/T115-weekly-tonnage-label-and-rows.md) | Weekly Tonnage keeps its previous-best label whole, and its week rows open their workouts |
+| [T118](tickets/T118-weekly-tonnage-label-and-rows.md) | Weekly Tonnage keeps its previous-best label whole, and its week rows open their workouts |
 
 ### Phase 4: test health
 
@@ -70,7 +70,7 @@ Every Phase 1 ticket is done and archived.
 | [T40](tickets/T40-slotted-session-delete-guard.md) | Slotted session delete guard |
 | [T41](tickets/T41-backup-keeps-routines.md) | Backup keeps routines |
 | [T42](tickets/T42-zero-build-warnings.md) | Zero build warnings |
-| [T116](tickets/T116-progress-ui-tests-budgets.md) | Progress UI tests fit the test budgets |
+| [T119](tickets/T119-progress-ui-tests-budgets.md) | Progress UI tests fit the test budgets |
 
 ### Phase 5: design refresh
 

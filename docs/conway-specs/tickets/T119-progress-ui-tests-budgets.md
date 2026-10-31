@@ -1,15 +1,15 @@
 ---
-id: T116
+id: T119
 title: Progress UI tests fit the test budgets
 phase: 4
 items: []
-depends_on: [T104, T115]
+depends_on: [T104, T118]
 size: M
 sim: small
 owns: [fitbodUITests/WeeklyTonnageUITests.swift, fitbodUITests/Phase6/ProgressHomeBRUUITests.swift, fitbod/Progress/ProgressHomeView.swift]
 ---
 
-# T116: Progress UI tests fit the test budgets
+# T119: Progress UI tests fit the test budgets
 
 Read [../worker-rules.md](../worker-rules.md) first; it is part of this ticket.
 Read [../../test-performance-guide.md](../../test-performance-guide.md) too; this ticket applies it.
