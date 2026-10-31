@@ -37,7 +37,6 @@ Every Phase 1 ticket is done and archived.
 
 | Ticket | Title |
 |---|---|
-| [T33](tickets/T33-pinned-note-bru.md) | Pinned Note sheet in BRU |
 | [T101](tickets/T101-ui-tests-idle-after-typing.md) | UI tests stop waiting a minute per step after typing |
 | [T102](tickets/T102-compare-rounding-and-back.md) | Compare rounds its e1RM changes and goes back with ‹ BACK |
 | [T103](tickets/T103-streak-and-recap-skip-empty-workouts.md) | Today's day streak and the weekly recap skip empty workouts |

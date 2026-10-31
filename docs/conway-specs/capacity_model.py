@@ -65,6 +65,7 @@ ARCHIVED = {
     "T30": (2, ["21"], ["fitbodTests/ExerciseDisplayNameSourceTests.swift", "fitbodUITests/ExerciseDisplayNameUITests.swift"]),
     "T31": (2, [], []),
     "T32": (2, ["20"], ["fitbodUITests/CustomExerciseEditorBRUUITests.swift"]),
+    "T33": (2, ["42"], ["fitbodUITests/PinnedNoteSheetBRUUITests.swift"]),
     "T49": (1, [], ["fitbodUITests/RPEDecimalHoldUITests.swift"]),
     "T50": (1, [], ["fitbodTests/WhyUsesFinishedWorkoutsTests.swift"]),
     "T51": (1, [], ["fitbodTests/PlateauUsesFinishedWorkoutsTests.swift"]),
