@@ -31,6 +31,11 @@ At every size:
 - The "⋮⋮" control looks like a drag handle, but it opens a menu.
   Its row also merges its children for accessibility, so element identifiers repeat.
 
+T20's worker also found findings F145 and F147 in the session editor:
+
+- The "Archive session" dialog offers only a cancel-role "Cancel", which iOS 26 hides, so it has no visible way back.
+- Archive session ignores archived routines, so a session archived while its routine is archived comes back inside that routine when it is restored, and Today's Start a workout then leaves the routine out.
+
 ## Target
 
 The session editor: `RoutineBuilderView`, `RoutineExerciseCard`, `PrescriptionEditorRow`, `SetRowsContainer` and `PerSetOverrideRow`, all in `fitbod/Routines/`.
@@ -46,6 +51,9 @@ The session editor: `RoutineBuilderView`, `RoutineExerciseCard`, `PrescriptionEd
 7. Rest time shows as minutes and seconds in the subtitle, the chip and the stepper, such as "3:00" (see "Rest time format" in [../tradeoffs.md](../tradeoffs.md)).
 8. A labeled BRU "MOVE" control replaces "⋮⋮" and opens the same menu (see "Reorder control").
 9. The exercise row stops merging its children, so each identifier is unique.
+10. The "Archive session" dialog gets a visible plain "Keep session" button, which closes it and changes nothing, as T20 did for "Archive routine?".
+11. Archive session also counts archived routines that hold the session, so it stays blocked while any routine holds it.
+    Its alert marks an archived routine's name with "(archived)".
 
 ## Constraints
 
@@ -68,6 +76,11 @@ On both phones, open a session with two exercises in the session editor:
 - Assert that each row's element identifiers match exactly one element.
 - At AX3 on the small phone, save screenshots of the editor and write one line per defect in `notes.md`.
 
+Also on the small phone:
+
+- Open "Archive session", and assert that a visible "Keep session" closes it and keeps the session.
+- Open a routine's session from Today, archive that routine from Program, then try to archive the session from its editor, and assert that the alert blocks it and names the routine with "(archived)".
+
 ## Observable acceptance
 
 - Every repro test passes on both phones.
@@ -83,3 +96,4 @@ On both phones, open a session with two exercises in the session editor:
 - The number is 26pt grotesk in a 28pt frame near `RoutineExerciseCard.swift:130-138`; "⋮⋮" is near 163, the merge near 177 and the subtitle's rest near 200.
 - The chip's rest text is near `PrescriptionEditorRow.swift:95`, and the stepper's near 242.
 - The rest timer already shows minutes and seconds, so reuse its formatter if it has one.
+- `requestArchive` in `RoutineBuilderView.swift` skips routines whose `isArchived` is true, and T20's "Archive routine?" dialog in `fitbod/Periodization/SplitDetailView.swift` shows the visible plain button.
