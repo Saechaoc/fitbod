@@ -39,7 +39,6 @@ Every Phase 1 ticket is done and archived.
 |---|---|
 | [T32](tickets/T32-custom-exercise-editor-bru.md) | Custom exercise editor and muscle picker in BRU |
 | [T33](tickets/T33-pinned-note-bru.md) | Pinned Note sheet in BRU |
-| [T96](tickets/T96-history-pr-count.md) | Exercise history counts its real PRs and stops writing state while it draws |
 | [T99](tickets/T99-block-review-prs-and-ax3.md) | The block review counts its PRs and keeps its stats whole at AX3 |
 | [T101](tickets/T101-ui-tests-idle-after-typing.md) | UI tests stop waiting a minute per step after typing |
 | [T102](tickets/T102-compare-rounding-and-back.md) | Compare rounds its e1RM changes and goes back with ‹ BACK |
@@ -47,6 +46,7 @@ Every Phase 1 ticket is done and archived.
 | [T104](tickets/T104-weekly-tonnage-weeks-detail-voiceover.md) | Weekly Tonnage stops crashing, keeps whole weeks and works with VoiceOver |
 | [T105](tickets/T105-new-block-delete-and-voiceover-names.md) | New Block's revealed Delete deletes, and VoiceOver reads its controls by name |
 | [T110](tickets/T110-per-set-overrides-removed.md) | The session editor stops offering per-set overrides that the logger ignores |
+| [T112](tickets/T112-exercise-history-rows.md) | Exercise history shows its workouts again |
 
 ### Phase 3: P3 polish and copy
 
