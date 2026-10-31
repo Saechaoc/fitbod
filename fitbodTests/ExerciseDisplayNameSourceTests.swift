@@ -5,8 +5,8 @@
 //  T30, review item 21. `Exercise.canonicalName` is the lowercased search
 //  key, "barbell bench press - medium grip"; screens show `Exercise.name`.
 //  These files once put the key on screen, so in them it may only sort or
-//  search: as a key path, on either side of a comparison, or as the text a
-//  search looks in. Any other use could feed text on screen.
+//  search: as a sort key path, on either side of a comparison, or as the
+//  text a search looks in. Any other use could feed text on screen.
 //
 
 import Foundation
@@ -47,6 +47,7 @@ struct ExerciseDisplayNameSourceTests {
             "exerciseName: entry.exercise.canonicalName,",
             "routineExercise.exercise?.canonicalName ?? routineExercise.exercise?.name ?? \"Exercise\"",
             "Text(\"\\(exercise.canonicalName) sets\")",
+            "Text(exercises.map(\\.canonicalName).joined(separator: \", \"))",
         ]
         for code in shown {
             #expect(Self.displayUses(in: code).count == 1, "The check must catch: \(code)")
@@ -83,14 +84,17 @@ struct ExerciseDisplayNameSourceTests {
         }
     }
 
-    /// True when the `canonicalName` at `range` is a key path, either side
-    /// of a comparison, or the text a search looks in.
+    /// True when the `canonicalName` at `range` is a sort key path, either
+    /// side of a comparison, or the text a search looks in.
     private static func sortsOrSearches(_ code: String, at range: Range<String.Index>) -> Bool {
         let before = code[..<range.lowerBound]
         // The receiver, such as `$0.`, `entry.exercise.` or `\Exercise.`.
         let receiver = before.reversed().prefix { $0.isLetter || $0.isNumber || "$_?!.\\".contains($0) }
-        if receiver.contains("\\") { return true }
         let lead = before.dropLast(receiver.count).trimmingCharacters(in: .whitespaces)
+        if receiver.contains("\\") {
+            // Only as a sort order: `map(\.canonicalName)` could feed text.
+            return ["sort:", "SortDescriptor(", "KeyPathComparator("].contains { lead.hasSuffix($0) }
+        }
         let after = code[range.upperBound...].trimmingCharacters(in: .whitespaces)
         let comparisons = ["<", ">", "==", "!="]
         let searches = [".contains(", ".localizedStandardContains(", ".hasPrefix("]
