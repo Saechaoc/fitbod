@@ -215,13 +215,17 @@ struct ProgramViewFidelityTests {
                 "The second popover row should match the supplied New-modal copy.")
         #expect(programSource.contains("startBlank()"),
                 "The New block action opens the start-choice sheet.")
-        // UI "Routine" is code `Split`. "+ New routine" creates the Split and
-        // pushes its detail screen; it must not open the session builder,
-        // which would create an orphaned SessionTemplate (journey audit P0).
+        // UI "Routine" is code `Split`. "+ New routine" opens the name step,
+        // whose SAVE creates the Split and opens its detail screen; it must
+        // not open the session builder, which would create an orphaned
+        // SessionTemplate (journey audit P0).
         #expect(programSource.contains("startNewRoutine()"),
                 "The New routine row should call startNewRoutine().")
-        #expect(programSource.contains("RoutineCreator.create(context: ctx)"),
-                "startNewRoutine() should create the routine through RoutineCreator.")
+        #expect(programSource.contains("navigationPath.append(NewRoutineRoute.name)"),
+                "startNewRoutine() should open the name step.")
+        let nameStepSource = try source("fitbod", "Routines", "NewRoutineNameScreen.swift")
+        #expect(nameStepSource.contains("RoutineCreator.create(named: trimmedName, context: ctx)"),
+                "The name step's SAVE should create the routine through RoutineCreator.")
         #expect(programSource.contains("navigationPath.append(SplitDetailRoute.detail(splitID: split.id))"),
                 "startNewRoutine() should open the new routine's detail screen.")
         #expect(!programSource.contains("RoutineBuilderView(draft: RoutineDraft())"),

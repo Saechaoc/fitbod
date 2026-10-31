@@ -68,10 +68,19 @@ final class MilestoneOneJourneyUITests: XCTestCase {
         XCTAssertTrue(app.buttons["Today"].waitForExistence(timeout: 10))
         app.buttons["Today"].tap()
         tap("+ New routine")
+        // The name step: SAVE stays off until the routine has a name, and
+        // replaces the step with the routine's editor.
         let routineName = field("Routine name")
         XCTAssertTrue(routineName.waitForExistence(timeout: 10))
+        XCTAssertFalse(app.buttons.labeled("Save").isEnabled, "SAVE must wait for a routine name")
         enter("M1 Upper Body", into: routineName)
         routineName.typeText("\n")
+        attach("04a-routine-name-step")
+        tap("Save")
+        XCTAssertTrue(app.staticTexts.labeled("New routine").waitForNonExistence(timeout: 10),
+                      "SAVE must replace the name step with the routine's editor")
+        XCTAssertEqual(field("Routine name").value as? String, "M1 Upper Body",
+                       "The routine's editor must show the saved name")
         tap("+ Add session")
         tap("+ New session")
         let sessionName = field("Session name")

@@ -102,8 +102,8 @@ final class NewBlockSavesUITests: XCTestCase {
     func testBottomActionNamesEachMissingPieceThenSavesAsReady() throws {
         let app = UITestNavigation.launch(UITestNavigation.seededWorkout)
         discardWorkoutInProgress(in: app)
-        let emptyRoutine = makeRoutine(adding: [], in: app)
-        let routine = makeRoutine(adding: ["Push A", "Push A"], in: app)
+        let emptyRoutine = makeRoutine("Empty Routine", adding: [], in: app)
+        let routine = makeRoutine("Push Routine", adding: ["Push A", "Push A"], in: app)
 
         openStartABlock(in: app)
         UITestNavigation.type("", into: nameField(in: app))
@@ -312,19 +312,21 @@ final class NewBlockSavesUITests: XCTestCase {
         ))
     }
 
-    /// Makes a routine on Program the way a user does, adds the named
-    /// existing sessions in order, and returns the name "+ New routine"
-    /// gives it, such as "Untitled routine 2".
+    /// Makes a routine named `name` on Program the way a user does: the name
+    /// step, then SAVE, then the named existing sessions in order. Returns
+    /// the name.
     @MainActor
-    private func makeRoutine(adding sessions: [String], in app: XCUIApplication) -> String {
+    private func makeRoutine(_ name: String, adding sessions: [String], in app: XCUIApplication) -> String {
         UITestNavigation.selectTab("Program", in: app)
         UITestNavigation.hittable(app.buttons, "+ NEW").tap()
         UITestNavigation.hittable(app.buttons, "+ New routine").tap()
+        UITestNavigation.type(name, into: app.textFields["newRoutine.name"])
+        UITestNavigation.hittable(app.buttons, "Save", exactLabel: true).tap()
+        XCTAssertTrue(app.textFields["newRoutine.name"].waitForNonExistence(timeout: 10), "SAVE must leave the name step")
         let field = app.descendants(matching: .any).matching(NSPredicate(
-            format: "label ==[c] %@ AND value BEGINSWITH %@", "Routine name", "Untitled routine"
+            format: "label ==[c] %@ AND value BEGINSWITH %@", "Routine name", name
         )).firstMatch
         XCTAssertTrue(field.waitForExistence(timeout: 10), "+ New routine must open the new routine")
-        let name = field.value as? String ?? ""
 
         let picker = app.staticTexts.labeled("Existing sessions")
         for session in sessions {

@@ -33,7 +33,7 @@ final class ActionPopoverFitUITests: XCTestCase {
 
     /// At AX3 each item shows its whole title inside its row, inside the
     /// popover, which stays on screen. A tap just above + New routine's
-    /// bottom edge opens the new routine.
+    /// bottom edge opens the name step, whose SAVE opens the new routine.
     @MainActor
     func testItemsShowTheirWholeTitlesAtAX3() throws {
         let app = openNewPopover(textSize: .ax3)
@@ -41,8 +41,10 @@ final class ActionPopoverFitUITests: XCTestCase {
         let rows = try assertItemsFit(in: app)
 
         rows[1].coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 1)).withOffset(CGVector(dx: 0, dy: -3)).tap()
+        UITestNavigation.type("Upper Lower", into: app.textFields["newRoutine.name"])
+        UITestNavigation.hittable(app.buttons, "Save", exactLabel: true).tap()
         let name = app.descendants(matching: .any).matching(NSPredicate(
-            format: "label ==[c] %@ AND value BEGINSWITH %@", "Routine name", "Untitled routine"
+            format: "label ==[c] %@ AND value BEGINSWITH %@ AND identifier != %@", "Routine name", "Upper Lower", "newRoutine.name"
         )).firstMatch
         XCTAssertTrue(name.waitForExistence(timeout: 10),
                       "A tap just above + New routine's bottom edge must open the new routine")

@@ -39,24 +39,34 @@ import SwiftUI
 /// Define once per use-site; BRUHeaderBar holds it by value (no reference capture issues).
 ///
 /// - Parameters:
-///   - label:    Display text, rendered in `BRUFont.labelSmall` uppercase with 1.5 tracking.
-///   - isSignal: When `true`, the label renders in `Color.bruSignal` instead of `Color.bruInk`.
-///   - action:   Closure invoked on tap.
+///   - label:     Display text, rendered in `BRUFont.labelSmall` uppercase with 1.5 tracking.
+///   - isSignal:  When `true`, the label renders in `Color.bruSignal` instead of `Color.bruInk`.
+///   - isEnabled: When `false`, the label renders in `Color.bruMuted` and the button is
+///                disabled, so VoiceOver reads it as dimmed, such as SAVE before a name.
+///   - action:    Closure invoked on tap.
 public struct HeaderAction {
     public let label: String
     public let isSignal: Bool
+    public let isEnabled: Bool
     /// Nil renders a plain label with no tap action (see `text(_:)`).
     public let action: (@MainActor () -> Void)?
 
-    public init(_ label: String, isSignal: Bool = false, action: @escaping @MainActor () -> Void) {
+    public init(
+        _ label: String,
+        isSignal: Bool = false,
+        isEnabled: Bool = true,
+        action: @escaping @MainActor () -> Void
+    ) {
         self.label = label
         self.isSignal = isSignal
+        self.isEnabled = isEnabled
         self.action = action
     }
 
     private init(text: String) {
         self.label = text
         self.isSignal = false
+        self.isEnabled = true
         self.action = nil
     }
 
@@ -258,7 +268,7 @@ private struct HeaderActionView: View {
 
     var body: some View {
         if let action = item.action {
-            HeaderLabelButton(label: item.label, isSignal: item.isSignal, action: action)
+            HeaderLabelButton(label: item.label, isSignal: item.isSignal, isEnabled: item.isEnabled, action: action)
         } else {
             HeaderLabelText(label: item.label, isSignal: item.isSignal)
         }
@@ -266,21 +276,31 @@ private struct HeaderActionView: View {
 }
 
 /// One tappable header label. The visible text stays small; `bruHitArea()`
-/// keeps the touch target comfortable without moving the layout.
+/// keeps the touch target comfortable without moving the layout. A disabled
+/// label shows in bruMuted as it is, since the plain style would fade it
+/// past the muted token.
 private struct HeaderLabelButton: View {
 
     let label: String
     let isSignal: Bool
+    var isEnabled = true
     let action: @MainActor () -> Void
 
     var body: some View {
+        if isEnabled {
+            button.buttonStyle(.plain)
+        } else {
+            button.buttonStyle(MutedHeaderLabelStyle()).disabled(true)
+        }
+    }
+
+    private var button: some View {
         Button {
             action()
         } label: {
-            HeaderLabelText(label: label, isSignal: isSignal)
+            HeaderLabelText(label: label, isSignal: isSignal, isMuted: !isEnabled)
                 .bruHitArea()
         }
-        .buttonStyle(.plain)
         .accessibilityLabel(Self.spokenLabel(for: label))
     }
 
@@ -300,15 +320,24 @@ private struct HeaderLabelText: View {
 
     let label: String
     let isSignal: Bool
+    var isMuted = false
 
     var body: some View {
         Text(label)
             .font(BRUFont.labelSmall)
             .tracking(BRUHeaderMetrics.tracking)
             .textCase(.uppercase)
-            .foregroundStyle(isSignal ? Color.bruSignalText : Color.bruInk)
+            .foregroundStyle(isMuted ? Color.bruMuted : isSignal ? Color.bruSignalText : Color.bruInk)
             .lineLimit(1)
             .minimumScaleFactor(0.85)
+    }
+}
+
+/// A disabled header label's style: the label as it is, which
+/// `HeaderLabelButton` mutes.
+private struct MutedHeaderLabelStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
     }
 }
 

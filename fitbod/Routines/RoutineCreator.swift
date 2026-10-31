@@ -2,10 +2,9 @@
 // fitbod
 //
 // Creates a routine (UI term; code entity `Split`). Program and Today both
-// create routines the same way: insert an "Untitled routine" immediately and
-// open its detail screen, where it is renamed and filled with sessions.
-// Creating the row first means a half-built routine is always visible in
-// Program's ROUTINES list instead of being lost.
+// open the same name step (`NewRoutineNameScreen`), and its SAVE is the only
+// caller, so a routine exists only once the user has named it. Leaving the
+// step creates nothing (tradeoffs.md "New routine flow").
 
 import Foundation
 import SwiftData
@@ -13,12 +12,14 @@ import SwiftData
 @MainActor
 public enum RoutineCreator {
 
-    /// Inserts and saves a new routine. Returns nil if the save failed.
-    public static func create(context: ModelContext) -> Split? {
-        let existing = (try? context.fetch(FetchDescriptor<Split>()))?.map(\.name) ?? []
+    /// Inserts and saves a routine named `name`, trimmed. Returns nil for a
+    /// blank name, or if the save failed.
+    public static func create(named name: String, context: ModelContext) -> Split? {
+        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return nil }
         let split = Split()
         context.insert(split)
-        split.name = nextUntitledName(existing: existing)
+        split.name = trimmed
         do {
             try context.save()
             return split
@@ -26,16 +27,5 @@ public enum RoutineCreator {
             context.delete(split)
             return nil
         }
-    }
-
-    /// "Untitled routine", then "Untitled routine 2", "Untitled routine 3"…
-    /// skipping names already taken.
-    public static func nextUntitledName(existing: [String]) -> String {
-        let base = "Untitled routine"
-        let taken = Set(existing)
-        guard taken.contains(base) else { return base }
-        var n = 2
-        while taken.contains("\(base) \(n)") { n += 1 }
-        return "\(base) \(n)"
     }
 }

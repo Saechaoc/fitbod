@@ -38,6 +38,9 @@ extension UITestNavigation {
         let newRoutine = app.buttons["+ New routine"]
         reveal(newRoutine, in: app)
         newRoutine.tap()
+        // + New routine opens the name step; SAVE opens the routine.
+        type("Push Pull Legs", into: app.textFields["newRoutine.name"])
+        hittable(app.buttons, "Save", exactLabel: true).tap()
         let addSession = app.buttons["+ Add session"]
         XCTAssertTrue(addSession.waitForExistence(timeout: 10))
         addSession.tap()

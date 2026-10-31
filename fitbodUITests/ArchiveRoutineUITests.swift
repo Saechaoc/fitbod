@@ -290,19 +290,22 @@ final class ArchiveRoutineUITests: XCTestCase {
         )
     }
 
-    /// Makes a routine the way a user does: `newRoutine` opens an untitled
-    /// routine, and + Add session adds the seeded session. The routine stays
-    /// open. Returns the name + New routine gives it, such as "Untitled
-    /// routine".
+    /// Makes a routine the way a user does: `newRoutine` opens the name
+    /// step, a typed name and SAVE open the routine, and + Add session adds
+    /// the seeded session. The routine stays open. Returns its name.
     @MainActor
     private func makeRoutine(
         from newRoutine: XCUIElement, in app: XCUIApplication,
         file: StaticString = #filePath, line: UInt = #line
     ) -> String {
+        let name = "Upper Lower"
         newRoutine.tap()
-        let field = routineNameField(in: app)
+        UITestNavigation.type(name, into: app.textFields["newRoutine.name"], file: file, line: line)
+        UITestNavigation.hittable(app.buttons, "Save", exactLabel: true, file: file, line: line).tap()
+        XCTAssertTrue(app.textFields["newRoutine.name"].waitForNonExistence(timeout: 10), "SAVE must leave the name step",
+                      file: file, line: line)
+        let field = routineNameField(in: app, value: name)
         XCTAssertTrue(field.waitForExistence(timeout: 10), "+ New routine must open the new routine", file: file, line: line)
-        let name = field.value as? String ?? ""
         let picker = app.staticTexts.labeled("Existing sessions")
         UITestNavigation.hittable(app.buttons, "+ Add session", file: file, line: line).tap()
         XCTAssertTrue(picker.waitForExistence(timeout: 10), "+ Add session must list the existing sessions", file: file, line: line)
@@ -314,7 +317,7 @@ final class ArchiveRoutineUITests: XCTestCase {
 
     /// The open routine's name field, whose value begins with `value`.
     @MainActor
-    private func routineNameField(in app: XCUIApplication, value: String = "Untitled routine") -> XCUIElement {
+    private func routineNameField(in app: XCUIApplication, value: String) -> XCUIElement {
         app.descendants(matching: .any).matching(NSPredicate(
             format: "label ==[c] %@ AND value BEGINSWITH %@", "Routine name", value
         )).firstMatch
@@ -345,7 +348,7 @@ final class ArchiveRoutineUITests: XCTestCase {
         app.staticTexts.labeled("Archive routine?")
     }
 
-    /// Program's ROUTINES row, read as "Untitled routine, 1 sessions".
+    /// Program's ROUTINES row, read as "Upper Lower, 1 sessions".
     @MainActor
     private func programRow(_ name: String, in app: XCUIApplication) -> XCUIElement {
         app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", name + ",")).firstMatch
@@ -363,7 +366,7 @@ final class ArchiveRoutineUITests: XCTestCase {
     }
 
     /// An ARCHIVED ROUTINES row's name and session count, read as
-    /// "Untitled routine, 1 session".
+    /// "Upper Lower, 1 session".
     @MainActor
     private func archivedRow(_ name: String, in app: XCUIApplication) -> XCUIElement {
         app.descendants(matching: .any).matching(NSPredicate(format: "label BEGINSWITH %@", name + ",")).firstMatch

@@ -74,9 +74,6 @@ public struct TodayView: View {
     @State private var presentingSignalSheet: Bool = false
     // Phase 5 plan 06 — weekly recap state.
     @State private var presentingWeeklyRecap: Bool = false
-    // Phase 9 IN-02 — "+ NEW ROUTINE" from the empty state. Presents the same
-    // new-routine builder ProgramView uses, as a sheet on Today's OWN surface
-    // (no cross-tab navigation).
     /// Session detail pushed from the Start-a-workout picker.
     @State private var openedTemplate: SessionTemplate? = nil
     /// A workout already in progress when the user tried to start another.
@@ -288,6 +285,9 @@ public struct TodayView: View {
                     }
                 }
             }
+            // The name step "+ New routine" opens; its SAVE swaps it for the
+            // routine's SplitDetailView.
+            .newRoutineDestination(path: $navigationPath)
             // ─── Sheets (preserved verbatim from Phase 4/5) ──────────────────
             .sheet(item: $pendingBlockBuilder) { pending in
                 NavigationStack {
@@ -324,8 +324,6 @@ public struct TodayView: View {
                     WeeklyRecapSheet(weekStart: weekStart)
                 }
             }
-            // Phase 9 IN-02 — "+ NEW ROUTINE" empty-state sheet. Same builder flow
-            // ProgramView's "+ New routine" presents, on Today's own surface.
             .sheet(isPresented: $presentingSettings) {
                 SettingsView(onClose: { presentingSettings = false })
             }
@@ -581,12 +579,11 @@ public struct TodayView: View {
         }
     }
 
-    /// Creates an untitled routine and opens it on Today's own stack.
+    /// Opens the name step on Today's own stack. The routine exists only once
+    /// the user saves its name there.
     @MainActor
     private func startNewRoutine() {
-        if let split = RoutineCreator.create(context: ctx) {
-            navigationPath.append(SplitDetailRoute.detail(splitID: split.id))
-        }
+        navigationPath.append(NewRoutineRoute.name)
     }
 
     // MARK: - Phase 5 plan 06 weekly recap (preserved verbatim from Phase 4/5)

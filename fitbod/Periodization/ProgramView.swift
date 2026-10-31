@@ -47,8 +47,9 @@
 //  - Drops the search bar, folder/routine list, New Folder / History menu,
 //    and the active-session conflict alert that lived in RoutinesListView.
 //  - "+ NEW" opens the custom BRU action popover from bru-screens/New-modal:
-//    "+ New block" routes to a blank block builder, "+ New routine" creates
-//    a routine (code `Split`) and pushes its SplitDetailView.
+//    "+ New block" routes to a blank block builder, "+ New routine" pushes
+//    the name step (NewRoutineNameScreen), whose SAVE creates the routine
+//    (code `Split`) and swaps the step for its SplitDetailView.
 //  - The hero CTA still routes directly to the blank-block flow.
 //
 //  ## Font departures from the design system
@@ -74,7 +75,8 @@ import SwiftData
 /// Program tab body — BRU brutalist surface for periodization.
 /// Empty-state (NoProgramHero + ProgramTemplateSection) is shown ONLY when
 /// there are zero blocks AND zero non-archived splits. When either exists the
-/// BLOCKS and ROUTINES sections are rendered instead. In both states an
+/// BLOCKS and ROUTINES sections are rendered instead, and BLOCKS offers
+/// + DEFINE BLOCK ▶ until the first block exists. In both states an
 /// "Archived routines" entry follows while at least one split is archived
 /// (tradeoffs.md "Archived routines").
 ///
@@ -227,6 +229,7 @@ public struct ProgramView: View {
             .navigationDestination(for: ArchivedRoutinesRoute.self) { _ in
                 ArchivedRoutinesView()
             }
+            .newRoutineDestination(path: $navigationPath)
             .fullScreenCover(item: $pendingBlockBuilder) { pending in
                 switch pending {
                 case .newBlock(let chosenPreset):
@@ -313,13 +316,11 @@ public struct ProgramView: View {
         presentingStartChoice = true
     }
 
-    /// "+ New routine" creates the routine (UI term; code `Split`) right
-    /// away and opens it, where the user names it and adds sessions. An
-    /// untitled routine still shows in ROUTINES so it is never orphaned.
+    /// "+ New routine" opens the name step. The routine (UI term; code
+    /// `Split`) exists only once the user saves its name there, so backing
+    /// out leaves nothing in ROUTINES.
     private func startNewRoutine() {
-        if let split = RoutineCreator.create(context: ctx) {
-            navigationPath.append(SplitDetailRoute.detail(splitID: split.id))
-        }
+        navigationPath.append(NewRoutineRoute.name)
     }
 
     // MARK: Static data
@@ -393,6 +394,10 @@ public struct ProgramView: View {
     private var blocksSection: some View {
         BRUSectionHead("Blocks")
 
+        if allBlocks.isEmpty {
+            noBlocksRow
+        }
+
         let liveBlocks = orderedBlocks.filter { $0.derivedStatus != .completed }
         let doneBlocks = orderedBlocks.filter { $0.derivedStatus == .completed }
         let visibleDone = showAllDone ? doneBlocks : Array(doneBlocks.prefix(3))
@@ -442,6 +447,47 @@ public struct ProgramView: View {
         }
 
         BRUDivider(.ink)
+    }
+
+    /// BLOCKS once a routine has taken the first-run screen's place but no
+    /// block exists: it says so and offers the hero's + DEFINE BLOCK ▶,
+    /// which opens CREATE BLOCK. At accessibility sizes the action moves
+    /// under the words.
+    private var noBlocksRow: some View {
+        noBlocksLayout {
+            Text("No blocks yet.")
+                .font(BRUFont.bodyDefault)
+                .foregroundStyle(Color.bruMuted)
+                .fixedSize(horizontal: false, vertical: true)
+
+            if !dynamicTypeSize.isAccessibilitySize {
+                Spacer(minLength: 12)
+            }
+
+            Button {
+                presentingStartChoice = true
+            } label: {
+                Text("+ DEFINE BLOCK ▶︎")
+                    .font(BRUFont.labelSmall)
+                    .tracking(1.2)
+                    .foregroundStyle(Color.bruSignalText)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .frame(minWidth: BRUMetrics.touchTarget, minHeight: BRUMetrics.touchTarget)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(.horizontal, ProgramScreenTokens.horizontalPagePadding)
+        .padding(.vertical, dynamicTypeSize.isAccessibilitySize ? 8 : 0)
+        .frame(maxWidth: .infinity, minHeight: BRUMetrics.touchTarget, alignment: .leading)
+    }
+
+    /// The words and the action on one line, or the action under the words
+    /// at accessibility sizes.
+    private var noBlocksLayout: AnyLayout {
+        dynamicTypeSize.isAccessibilitySize
+            ? AnyLayout(VStackLayout(alignment: .leading, spacing: 4))
+            : AnyLayout(HStackLayout(alignment: .center, spacing: 0))
     }
 
     // MARK: - ROUTINES section
