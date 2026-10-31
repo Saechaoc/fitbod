@@ -13,8 +13,8 @@ import XCTest
 /// the control that opened it shows again where it was. No pushed screen
 /// asks before it leaves: the editors that ask (the routine builder, the
 /// block builder and the custom exercise editor) open as sheets. An
-/// exercise's history is not covered: VIEW ALL HISTORY returns to the
-/// Library list instead of opening it (see the T18 notes).
+/// exercise's history and its chart open on Library's stack (T96); before,
+/// VIEW ALL HISTORY returned to the Library list (see the T18 notes).
 final class SwipeBackUITests: XCTestCase {
     /// The control `open` tapped last, and where it sat.
     private var lastOpened: (control: XCUIElement, frame: CGRect)?
@@ -290,6 +290,59 @@ final class SwipeBackUITests: XCTestCase {
         assertSwipeBack(from: chart(in: app), "the bench press's chart", to: viewChart, in: app)
     }
 
+    /// Ticket T96. VIEW ALL HISTORY opens the bench press's history, with
+    /// its PR count and PROGRESS, and PROGRESS opens its chart, both on
+    /// Library's stack. VIEW ALL HISTORY went back to the Library list,
+    /// because the history pushed a stack of its own. ‹ BACK twice returns
+    /// to the bench press.
+    @MainActor
+    func testExerciseHistoryAndItsChartOpenOnLibrarysStack() throws {
+        let app = openBenchPress()
+        let viewAll = viewAllHistory(in: app)
+        open(viewAll, in: app)
+        let prs = historyPRs(in: app)
+        XCTAssertTrue(prs.waitForExistence(timeout: 10), "VIEW ALL HISTORY must open the bench press's history")
+        UITestNavigation.waitUntilStill(prs, interval: 0.3)
+        XCTAssertTrue(waitUntilHittable(prs, timeout: 2), "The history must stay open, not go back to the Library list")
+        // The seed's four bench workouts are all from the last 30 days, and
+        // ten of their thirteen work sets beat the records before them.
+        XCTAssertEqual(prs.value as? String, "10", "PRs · 30d must count the bench press's PR sets")
+        let progress = historyProgress(in: app)
+        XCTAssertTrue(waitUntilHittable(progress), "The history must offer PROGRESS")
+        UITestNavigation.saveScreenshot("T96", "exercise-history")
+
+        open(progress, in: app)
+        let progressChart = chart(in: app)
+        XCTAssertTrue(progressChart.waitForExistence(timeout: 10), "PROGRESS must open the bench press's chart")
+        UITestNavigation.waitUntilStill(progressChart, interval: 0.3)
+        XCTAssertTrue(waitUntilHittable(progressChart, timeout: 2), "The chart must stay open")
+
+        UITestNavigation.hittable(app.buttons, "Back").tap()
+        XCTAssertTrue(waitUntilHittable(progress), "‹ BACK on the chart must return to the history")
+        XCTAssertTrue(prs.exists, "‹ BACK on the chart must return to the history")
+        UITestNavigation.hittable(app.buttons, "Back").tap()
+        XCTAssertTrue(waitUntilHittable(viewAll), "‹ BACK on the history must return to the bench press")
+    }
+
+    /// T96: the history opens on Library's stack, so it swipes back.
+    @MainActor
+    func testExerciseHistorySwipesBackToExercise() throws {
+        let app = openBenchPress()
+        let viewAll = viewAllHistory(in: app)
+        open(viewAll, in: app)
+        assertSwipeBack(from: historyPRs(in: app), "the bench press's history", to: viewAll, in: app)
+    }
+
+    /// T96: the history's PROGRESS pushes its chart on Library's stack.
+    @MainActor
+    func testHistoryChartSwipesBackToHistory() throws {
+        let app = openBenchPress()
+        open(viewAllHistory(in: app), in: app)
+        let progress = historyProgress(in: app)
+        open(progress, in: app)
+        assertSwipeBack(from: chart(in: app), "the history's chart", to: progress, in: app)
+    }
+
     // MARK: - Settings
 
     /// Review item 35: the swipe did nothing on Plate Inventory.
@@ -496,6 +549,18 @@ final class SwipeBackUITests: XCTestCase {
     @MainActor
     private func viewAllHistory(in app: XCUIApplication) -> XCUIElement {
         button(beginningWith: "View all history", in: app)
+    }
+
+    /// An exercise's history, by its PRs · 30d cell, whose value is the count.
+    @MainActor
+    private func historyPRs(in app: XCUIApplication) -> XCUIElement {
+        app.descendants(matching: .any).matching(NSPredicate(format: "label == %@", "PRs · 30d")).firstMatch
+    }
+
+    /// The history header's PROGRESS, not the Progress tab.
+    @MainActor
+    private func historyProgress(in app: XCUIApplication) -> XCUIElement {
+        app.buttons.matching(NSPredicate(format: "label ==[c] %@ AND identifier != %@", "PROGRESS", "Progress")).firstMatch
     }
 
     @MainActor

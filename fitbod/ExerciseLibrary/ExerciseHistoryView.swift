@@ -48,7 +48,8 @@ public struct ExerciseHistoryView: View {
     /// nil = "ALL" — no intent filter. Bound to IntentFilterChipRow.
     @State private var intentFilter: Intent? = nil
 
-    /// Navigation state for "PROGRESS" HeaderAction — presents ExerciseProgressView.
+    /// Navigation state for "PROGRESS" HeaderAction — pushes ExerciseProgressView
+    /// on the stack that pushed this view (Library's).
     @State private var presentingProgress = false
 
     /// Whether the exercise has any logged set entries (drives PROGRESS affordance visibility).
@@ -58,45 +59,46 @@ public struct ExerciseHistoryView: View {
         self.exercise = exercise
     }
 
+    /// No NavigationStack of its own: the view is pushed on Library's stack,
+    /// one stack per tab. A nested stack sent VIEW ALL HISTORY back to the
+    /// Library list.
     public var body: some View {
-        NavigationStack {
-            ScrollView {
-                LazyVStack(spacing: 0, pinnedViews: [.sectionHeaders]) {
-                    // Exercise name sub-line
-                    HStack {
-                        Text(exercise.name)
-                            .font(BRUFont.displayLarge)
-                            .foregroundStyle(Color.bruInk)
-                        Spacer()
-                    }
-                    .padding(.horizontal, 16)
-                    .padding(.top, 16)
-                    .padding(.bottom, 8)
-
-                    // Inner query view — re-keyed on intentFilter to rebuild @Query predicate
-                    FilteredHistoryContent(
-                        exercise: exercise,
-                        intentFilter: $intentFilter,
-                        onHistoryChanged: { count in
-                            hasHistory = count > 0
-                        }
-                    )
+        ScrollView {
+            LazyVStack(spacing: 0, pinnedViews: [.sectionHeaders]) {
+                // Exercise name sub-line
+                HStack {
+                    Text(exercise.name)
+                        .font(BRUFont.displayLarge)
+                        .foregroundStyle(Color.bruInk)
+                    Spacer()
                 }
-            }
-            .background(Color.bruPaper.ignoresSafeArea())
-            .navigationBarHidden(true)
-            .navigationDestination(isPresented: $presentingProgress) {
-                ExerciseProgressView(exercise: exercise)
-            }
-            .safeAreaInset(edge: .top) {
-                BRUHeaderBar(
-                    left: HeaderAction("‹", action: { dismiss() }),
-                    center: "History",
-                    right: hasHistory
-                        ? HeaderAction("PROGRESS", isSignal: false, action: { presentingProgress = true })
-                        : nil
+                .padding(.horizontal, 16)
+                .padding(.top, 16)
+                .padding(.bottom, 8)
+
+                // Inner query view — re-keyed on intentFilter to rebuild @Query predicate
+                FilteredHistoryContent(
+                    exercise: exercise,
+                    intentFilter: $intentFilter,
+                    onHistoryChanged: { count in
+                        hasHistory = count > 0
+                    }
                 )
             }
+        }
+        .background(Color.bruPaper.ignoresSafeArea())
+        .navigationBarHidden(true)
+        .navigationDestination(isPresented: $presentingProgress) {
+            ExerciseProgressView(exercise: exercise)
+        }
+        .safeAreaInset(edge: .top) {
+            BRUHeaderBar(
+                left: HeaderAction("‹", action: { dismiss() }),
+                center: "History",
+                right: hasHistory
+                    ? HeaderAction("PROGRESS", isSignal: false, action: { presentingProgress = true })
+                    : nil
+            )
         }
     }
 }
@@ -137,9 +139,6 @@ private struct FilteredHistoryContent: View {
         let grouped = ExerciseHistoryView.groupedByDate(from: completed)
         let prFooter = prStats(from: completed)
 
-        // Inform outer view of history count so it can show/hide PROGRESS affordance
-        let _ = onHistoryChanged(totalCount)
-
         // 3-cell stat strip
         HStack(spacing: 0) {
             BRUReadout(
@@ -165,11 +164,17 @@ private struct FilteredHistoryContent: View {
 
             BRUReadout(
                 label: "PRs · 30d",
-                value: "\(prs30d)"
+                value: "\(ExerciseHistoryView.prs30d(from: completed))"
             )
             .padding(.horizontal, 16)
             .padding(.vertical, 12)
             .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        // Inform outer view of history count so it can show/hide PROGRESS
+        // affordance. It runs after the view draws: a state change from
+        // `body` is a change during a view update.
+        .onChange(of: totalCount, initial: true) { _, count in
+            onHistoryChanged(count)
         }
         BRUDivider(.ink)
 
@@ -245,14 +250,6 @@ private struct FilteredHistoryContent: View {
             ($0.session?.startedAt ?? .distantPast) >= cutoff
         }
         return Set(recentSEs.compactMap { $0.session?.id }).count
-    }
-
-    /// Count of PR entries in the last 30 days (placeholder — detected by e1RM increase).
-    private var prs30d: Int {
-        // Simplified PR count: sessions where e1RM exceeded all prior e1RMs
-        // Full PR detection deferred to Phase 6 plan 06-05 (PROG-01).
-        // Returns 0 as a safe placeholder until that plan ships.
-        0
     }
 
     /// Tonnage display label (e.g. "71.2k").
@@ -349,6 +346,44 @@ private struct FilteredHistoryContent: View {
         }
         .padding(.horizontal, 32)
         .frame(maxWidth: .infinity)
+    }
+}
+
+// MARK: - PR count
+
+extension ExerciseHistoryView {
+
+    /// The working sets from the last 30 days that set a personal record, by
+    /// the in-workout PR banner's check: every set the history shows is
+    /// replayed oldest first through `PRDetector.check(set:against:)` from an
+    /// empty table, and a set counts when it tops any PR kind. A set is from
+    /// the last 30 days when its workout started in them, the window
+    /// "Sessions · 30d" counts.
+    ///
+    /// Oldest first is by workout start, then the time each set was logged,
+    /// then log order and set order, whatever order SwiftData returns the
+    /// sets in. On equal values the earlier set keeps the record.
+    static func prs30d(
+        from sets: [(setEntry: SetEntry, sessionExercise: SessionExercise)],
+        now: Date = .now
+    ) -> Int {
+        let cutoff = Calendar.current.date(byAdding: .day, value: -30, to: now) ?? now
+        let oldestFirst = sets.sorted { a, b in
+            let aStart = a.sessionExercise.session?.startedAt ?? .distantPast
+            let bStart = b.sessionExercise.session?.startedAt ?? .distantPast
+            return (aStart, a.setEntry.completedAt, a.sessionExercise.orderIndex, a.setEntry.orderIndex)
+                < (bStart, b.setEntry.completedAt, b.sessionExercise.orderIndex, b.setEntry.orderIndex)
+        }
+        var table = PRTable()
+        var count = 0
+        for pair in oldestFirst {
+            let kinds = PRDetector.check(set: pair.setEntry, against: &table)
+            let startedAt = pair.sessionExercise.session?.startedAt ?? .distantPast
+            if !kinds.isEmpty && startedAt >= cutoff {
+                count += 1
+            }
+        }
+        return count
     }
 }
 
@@ -493,8 +528,10 @@ extension ExerciseHistoryView {
     let exercises = try! container.mainContext.fetch(FetchDescriptor<Exercise>())
     if let first = exercises.first {
         return AnyView(
-            ExerciseHistoryView(exercise: first)
-                .modelContainer(container)
+            NavigationStack {
+                ExerciseHistoryView(exercise: first)
+            }
+            .modelContainer(container)
         )
     }
     return AnyView(Text("No exercises").modelContainer(container))
