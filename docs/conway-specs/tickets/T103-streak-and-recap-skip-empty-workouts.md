@@ -6,7 +6,7 @@ items: []
 depends_on: [T22]
 size: M
 sim: small
-owns: [fitbod/Views/TodayView.swift, fitbod/Fatigue/WeeklyRecapSheet.swift, fitbod/App/DemoWorkoutSeed.swift, fitbodTests/EmptyWorkoutCountTests.swift, fitbodUITests/EmptyWorkoutCountsUITests.swift]
+owns: [fitbod/Views/TodayView.swift, fitbod/Fatigue/WeeklyRecapSheet.swift, fitbod/App/DemoWorkoutSeed.swift, fitbodTests/EmptyWorkoutCountTests.swift, fitbodUITests/EmptyWorkoutCountsUITests.swift, fitbodUITests/WeeklyRecapUITests.swift]
 ---
 
 # T103: Today's day streak and the weekly recap skip empty workouts
@@ -15,18 +15,20 @@ Read [../worker-rules.md](../worker-rules.md) first; it is part of this ticket.
 
 ## Problem
 
-These are findings F151 and F152, which T22's worker found.
+These are findings F151 and F152, which T22's worker found, and finding F211, which T30's worker found.
 Decision 6 leaves empty workouts out of session counts, and T22 did that for Today's Sessions, This week and trend, Progress, History and Compare.
 
 - Today's Day streak still counts a day whose only finished workout is empty.
   In T22's screenshot it reads 2 while Sessions reads 1, because the empty workout fell on the next day.
 - An empty workout last week still makes the weekly recap due.
 - The recap's "N / M sessions" chip still counts empty workouts.
+- `WeeklyRecapUITests` launches with a plain `app.launch()`, so whether the recap shows depends on the workouts the phone's store already holds.
 
 ## Target
 
 - The Day streak and the recap trigger in `fitbod/Views/TodayView.swift`.
 - The sessions count in `fitbod/Fatigue/WeeklyRecapSheet.swift`.
+- The launches in `fitbodUITests/WeeklyRecapUITests.swift`.
 
 ## Change
 
@@ -35,6 +37,7 @@ Decision 6 leaves empty workouts out of session counts, and T22 did that for Tod
 3. The recap's sessions chip counts only workouts that count as sessions.
 4. Use T22's shared rule, `SessionSetActions.countedWorkouts` or Today's cached empty workout ids, and never write a second rule.
 5. Nothing reads every workout's sets on each render, so Today keeps T22's timings.
+6. `WeeklyRecapUITests` launches through `UITestNavigation.launch` with a seed that sets last week's workouts, so its result never depends on what the phone held before.
 
 ## Constraints
 
@@ -60,7 +63,7 @@ Ask before you edit anything else.
 
 - The repro tests pass, the UI tests on the small phone.
 - `WeeklyRecapTriggerTests`, `WeeklyRecapSheetBRUTests` and `TodayViewBRUCopyTests` pass with `fitbodTests`.
-- `WeeklyRecapUITests` and `HistoryAndTodayUITests` pass on the small phone.
+- `WeeklyRecapUITests` and `HistoryAndTodayUITests` pass on the small phone, `WeeklyRecapUITests` also right after a store reset.
 - Screenshots of Today's strip and of the recap from the repro seeds are in `screens/`.
 
 ## Hints
