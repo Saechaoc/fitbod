@@ -38,7 +38,6 @@ Every Phase 1 ticket is done and archived.
 | Ticket | Title |
 |---|---|
 | [T29](tickets/T29-session-editor-polish.md) | Session editor polish |
-| [T30](tickets/T30-exercise-display-names.md) | Exercise display names |
 | [T32](tickets/T32-custom-exercise-editor-bru.md) | Custom exercise editor and muscle picker in BRU |
 | [T33](tickets/T33-pinned-note-bru.md) | Pinned Note sheet in BRU |
 | [T87](tickets/T87-today-sheet-order.md) | Today shows the block review and the weekly recap one at a time |
@@ -65,6 +64,7 @@ Every Phase 1 ticket is done and archived.
 | [T106](tickets/T106-sideways-drag-does-not-open-rows.md) | A sideways drag on a row does not open it |
 | [T107](tickets/T107-plate-screens-tabs-targets-stack.md) | The plate screens keep their tabs whole and their controls easy to hit |
 | [T108](tickets/T108-block-overview-and-routine-at-ax3.md) | The block overview and the routine screen read cleanly at AX3 |
+| [T109](tickets/T109-muscle-screen-steppers-order-tests.md) | The muscle screen uses BRU steppers, keeps a stable order and is always tested |
 
 ### Phase 4: test health
 
