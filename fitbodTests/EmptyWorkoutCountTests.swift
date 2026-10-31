@@ -12,6 +12,9 @@
 //  for the all-time counts to cache, and an updated cache agrees with a
 //  full read.
 //
+//  Ticket T103, finding F151. Today's Day streak leaves out the empty
+//  workouts Today caches, so a day whose only workout is empty adds no day.
+//
 
 import Foundation
 import SwiftData
@@ -161,5 +164,35 @@ struct EmptyWorkoutCountTests {
 
         let row = try #require(SessionComparator.compare(current: current, context: ctx).first)
         #expect(row.lastWeekTopSet?.weight == 100)
+    }
+
+    // MARK: Day streak
+
+    /// Today's Day streak from `now`, with the empty workouts Today caches.
+    private func dayStreak() throws -> Int {
+        let finished = try finishedWorkouts()
+        let empty = SessionSetActions.emptyWorkoutIDs(among: finished, known: nil, in: ctx)
+        var utc = Calendar(identifier: .gregorian)
+        utc.timeZone = try #require(TimeZone(identifier: "UTC"))
+        return TodayView.dayStreak(of: finished, excluding: empty, now: now, calendar: utc)
+    }
+
+    @Test("An empty workout yesterday breaks the Day streak between two logged ones")
+    func dayStreakSkipsADayWithOnlyAnEmptyWorkout() throws {
+        try workout(daysAgo: 2, logged: true)
+        try workout(daysAgo: 1, logged: false)
+        try workout(daysAgo: 0, logged: true)
+
+        let streak = try dayStreak()
+        #expect(streak == 1)
+    }
+
+    @Test("An empty workout today adds no day to a streak that reaches yesterday")
+    func dayStreakPassesOverAnEmptyWorkoutToday() throws {
+        try workout(daysAgo: 1, logged: true)
+        try workout(daysAgo: 0, logged: false)
+
+        let streak = try dayStreak()
+        #expect(streak == 1)
     }
 }

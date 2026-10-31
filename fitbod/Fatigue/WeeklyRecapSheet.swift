@@ -5,7 +5,8 @@
 //  Phase 5.1 Plan 07 — BRU reskin of the VOL-07 weekly recap sheet.
 //  Structure: BRUHeaderBar + cover ink slab + 2×2 metric grid +
 //  Sessions section + Muscles Hit section + Records broken section +
-//  Under-Trained section + Progress section + quote section + footer buttons.
+//  Under-Trained section + Progress section + quote section + footer
+//  Start button.
 //
 //  Copywriting Contract verbatim strings preserved per UI-SPEC §WeeklyRecapSheet.
 //  WeeklyRecapTrigger + RootView mount + .sheet wiring untouched.
@@ -179,7 +180,8 @@ public struct WeeklyRecapSheet: View {
                 .fixedSize(horizontal: false, vertical: true)
 
             HStack(spacing: 6) {
-                BRUChip(prChipLabel, color: .bruPaper, fill: true, textCase: nil)
+                // A signal fill, as on every PR chip, so the label reads on it.
+                BRUChip(prChipLabel, color: .bruSignal, fill: true, textCase: nil)
                 BRUChip("\(sessionsLogged) / \(sessionsTarget) sessions",
                         color: .bruPaper, fill: false, textCase: nil)
                 BRUChip("\(tonnageFormatted) \(unitLabel)",
@@ -551,13 +553,8 @@ public struct WeeklyRecapSheet: View {
     // MARK: - Footer button strip
 
     private var footerButtonStrip: some View {
-        HStack(spacing: 0) {
-            BRUButton("All recaps", kind: .ghost) {
-                // Deferred placeholder — deep-link target is Phase 6 work
-            }
-            BRUButton("Start W\(nextWeekNumber) \u{25B8}", kind: .primary) {
-                dismiss()
-            }
+        BRUButton("Start W\(nextWeekNumber) \u{25B8}", kind: .primary) {
+            dismiss()
         }
         .overlay(alignment: .top) {
             Rectangle().fill(Color.bruInk).frame(height: 2)
@@ -566,6 +563,7 @@ public struct WeeklyRecapSheet: View {
 
     // MARK: - Data computations
 
+    /// Last week's workouts that count as sessions (decision 6).
     @MainActor
     private func lastWeekSessionsCount() -> Int {
         let start = priorWeekStart
@@ -575,7 +573,7 @@ public struct WeeklyRecapSheet: View {
                 $0.startedAt >= start && $0.startedAt < end && $0.completedAt != nil
             }
         )
-        return (try? ctx.fetchCount(descriptor)) ?? 0
+        return SessionSetActions.countedWorkouts((try? ctx.fetch(descriptor)) ?? []).count
     }
 
     @MainActor

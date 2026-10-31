@@ -18,6 +18,9 @@
 //  them, Compare sets the two logged workouts side by side, and its
 //  exercise names share one left edge.
 //
+//  T103, finding F151. With a logged Push A yesterday and an empty one
+//  today, Today's Day streak counts only yesterday.
+//
 
 import XCTest
 
@@ -28,6 +31,9 @@ extension UITestNavigation {
     /// A fresh store plus logged Push As six days and one day ago, and an
     /// empty one three days ago (see DemoWorkoutSeed).
     static let emptyBetween = [resetFlag, "-fitbod-seed-empty-between"]
+    /// A fresh store plus a logged Push A a day ago and an empty one two
+    /// minutes ago (see DemoWorkoutSeed).
+    static let emptyToday = [resetFlag, "-fitbod-seed-empty-today"]
 }
 
 final class EmptyWorkoutCountsUITests: XCTestCase {
@@ -165,6 +171,23 @@ final class EmptyWorkoutCountsUITests: XCTestCase {
             )
         }
         UITestNavigation.saveScreenshot("T22", "compare-two-workouts")
+    }
+
+    // MARK: - A logged workout yesterday, an empty one today
+
+    @MainActor
+    func testDayStreakCountsOnlyTheLoggedWorkout() throws {
+        let app = UITestNavigation.launch(UITestNavigation.emptyToday)
+        let streak = element(labeled: "Day streak", in: app)
+        XCTAssertTrue(streak.waitForExistence(timeout: 10), "Today shows no Day streak")
+        // The empty workout started two minutes before launch: in the first
+        // two minutes after midnight it fell yesterday, beside the logged
+        // one, and the streak reads 1 under any rule.
+        XCTAssertTrue(
+            settle(streak, NSPredicate(format: "value == %@", "1 day")),
+            "The empty workout today must not add a day to the streak, but it reads \(streak.value as? String ?? "nothing")"
+        )
+        UITestNavigation.saveScreenshot("T103", "today-streak")
     }
 
     // MARK: - Helpers

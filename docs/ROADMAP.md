@@ -81,3 +81,5 @@ design system; add a component only when multiple real screens need it.
   only reads the plate inventory, which Plate Inventory edits.
 - The plate calculator's footer Done, because DONE in its header now closes
   the sheet.
+- The weekly recap's ALL RECAPS, because it did nothing: no screen lists past
+  recaps. START W{N} ▸ now fills the recap's footer.

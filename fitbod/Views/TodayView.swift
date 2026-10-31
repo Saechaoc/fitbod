@@ -59,7 +59,8 @@ public struct TodayView: View {
     /// The finished workouts that are empty (decision 6), and the finished
     /// workouts they were worked out for. Reading them means reading every
     /// set, so they are filled when the finished workouts change, never per
-    /// render. Until then the total counts every finished workout.
+    /// render. Until then the total and the Day streak count every finished
+    /// workout.
     @State private var emptyWorkoutIDs: Set<PersistentIdentifier> = []
     @State private var emptyWorkoutsKey: [PersistentIdentifier]?
 
@@ -116,7 +117,7 @@ public struct TodayView: View {
 
                     // Stat strip — always visible
                     TodayStatStrip(
-                        streak: computedStreak,
+                        streak: Self.dayStreak(of: finished, excluding: emptyWorkoutIDs),
                         totalSessions: emptyWorkoutIDs.isEmpty
                             ? finished.count
                             : finished.count(where: { !emptyWorkoutIDs.contains($0.persistentModelID) }),
@@ -378,8 +379,9 @@ public struct TodayView: View {
             .onAppear {
                 refreshAdvisory()
             }
-            // The empty workouts behind the all-time Sessions total, read
-            // when the finished workouts change, never per render.
+            // The empty workouts behind the all-time Sessions total and the
+            // Day streak, read when the finished workouts change, never per
+            // render.
             .task(id: finishedIDs) {
                 guard emptyWorkoutsKey != finishedIDs else { return }
                 emptyWorkoutIDs = SessionSetActions.emptyWorkoutIDs(
@@ -459,22 +461,31 @@ public struct TodayView: View {
 
     // MARK: - BRU Helper Properties (NEW — stat strip / block context inputs)
 
-    /// Consecutive day streak — count of unique calendar days with at least one
-    /// completed session (completedAt != nil), working backwards from today.
-    private var computedStreak: Int {
-        let completed = allSessions.filter { $0.completedAt != nil }
+    /// The Day streak: consecutive days, back from `now`, with a finished
+    /// workout that counts as a session. A streak that reached yesterday
+    /// still stands today. `workouts` is newest first. `emptyWorkoutIDs`
+    /// are the empty workouts among them (decision 6), which Today caches,
+    /// so the streak reads no sets.
+    static func dayStreak(
+        of workouts: [Session],
+        excluding emptyWorkoutIDs: Set<PersistentIdentifier>,
+        now: Date = .now,
+        calendar: Calendar = .current
+    ) -> Int {
+        let completed = workouts.filter {
+            $0.completedAt != nil && !emptyWorkoutIDs.contains($0.persistentModelID)
+        }
         guard !completed.isEmpty else { return 0 }
 
-        let cal = Calendar.current
         var streak = 0
-        var checkDate = cal.startOfDay(for: .now)
+        var checkDate = calendar.startOfDay(for: now)
 
         for session in completed {
-            let sessionDay = cal.startOfDay(for: session.startedAt)
+            let sessionDay = calendar.startOfDay(for: session.startedAt)
             if sessionDay == checkDate {
                 if streak == 0 { streak = 1 }
                 // already counted this day
-            } else if let expectedPrior = cal.date(byAdding: .day, value: -1, to: checkDate),
+            } else if let expectedPrior = calendar.date(byAdding: .day, value: -1, to: checkDate),
                       sessionDay == expectedPrior {
                 streak += 1
                 checkDate = expectedPrior
@@ -635,6 +646,8 @@ public struct TodayView: View {
         try? ctx.save()
     }
 
+    /// Last week's workouts that count as sessions (decision 6), so an
+    /// empty workout alone leaves the recap undue.
     @MainActor
     private func lastWeekSessionsCount(start: Date, end: Date) -> Int {
         let descriptor = FetchDescriptor<Session>(
@@ -642,7 +655,7 @@ public struct TodayView: View {
                 $0.startedAt >= start && $0.startedAt < end && $0.completedAt != nil
             }
         )
-        return (try? ctx.fetchCount(descriptor)) ?? 0
+        return SessionSetActions.countedWorkouts((try? ctx.fetch(descriptor)) ?? []).count
     }
 
     // MARK: - Phase 5 deload advisory helpers (preserved verbatim from Phase 4/5)

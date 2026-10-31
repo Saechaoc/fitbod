@@ -14,16 +14,30 @@
 //  CTA would. Today then shows the Resume slab. Idempotent: does nothing
 //  when a "Push A" template already exists. Compiled out of release builds.
 //
-//  Two more flags seed finished Push As around an empty workout, one
-//  finished with no logged work sets (decision 6), for the session counts
-//  and Compare. Each logged Push A lifts 2.5 more than the one before.
-//  Neither leaves a workout in progress, and both mark this week's recap
-//  seen, so Today opens without a sheet:
+//  Three more flags seed finished Push As around an empty workout, one
+//  finished with no logged work sets (decision 6), for the session counts,
+//  Compare and the Day streak. Each logged Push A lifts 2.5 more than the
+//  one before. None leaves a workout in progress, and each marks this
+//  week's recap seen, so Today opens without a sheet:
 //
 //    -fitbod-seed-empty-workout   a logged Push A 30 minutes ago, then an
 //                                 empty one 15 minutes ago
 //    -fitbod-seed-empty-between   logged Push As six days and one day
 //                                 ago, and an empty one three days ago
+//    -fitbod-seed-empty-today     a logged Push A a day ago, then an empty
+//                                 one two minutes ago
+//
+//  Two flags seed last week, the week the weekly recap covers, in the
+//  lifter's week (Monday by default), and leave this week's recap due, so
+//  Today's next visit decides whether it shows. Launch them with
+//  `-fitbod-start-program`: on a fresh store Today can first show before
+//  the seed runs, and it would mark the recap seen.
+//
+//    -fitbod-seed-empty-last-week     an empty Push A on the fourth day of
+//                                     last week
+//    -fitbod-seed-recap-with-empty    a logged Push A on the second day of
+//                                     last week, then an empty one on the
+//                                     fourth
 //
 
 import Foundation
@@ -33,18 +47,31 @@ enum DemoWorkoutSeed {
     static let launchArgument = "-fitbod-seed-demo-workout"
     static let emptyWorkoutArgument = "-fitbod-seed-empty-workout"
     static let emptyBetweenArgument = "-fitbod-seed-empty-between"
+    static let emptyTodayArgument = "-fitbod-seed-empty-today"
+    static let emptyLastWeekArgument = "-fitbod-seed-empty-last-week"
+    static let recapWithEmptyArgument = "-fitbod-seed-recap-with-empty"
 
     @MainActor
     static func runIfRequested(in context: ModelContext) {
         #if DEBUG
         let arguments = ProcessInfo.processInfo.arguments
+        let day: TimeInterval = 24 * 3600
         if arguments.contains(launchArgument) {
             seed(in: context)
         } else if arguments.contains(emptyWorkoutArgument) {
             seedFinished([(30 * 60, 10, true), (15 * 60, 5, false)], in: context)
         } else if arguments.contains(emptyBetweenArgument) {
-            let day: TimeInterval = 24 * 3600
             seedFinished([(6 * day, 55, true), (3 * day, 55, false), (1 * day, 55, true)], in: context)
+        } else if arguments.contains(emptyTodayArgument) {
+            seedFinished([(1 * day, 55, true), (2 * 60, 1, false)], in: context)
+        } else if arguments.contains(emptyLastWeekArgument) {
+            seedFinished([(lastWeekAgo(3.5 * day, in: context), 5, false)], leavingRecapDue: true, in: context)
+        } else if arguments.contains(recapWithEmptyArgument) {
+            seedFinished(
+                [(lastWeekAgo(1.5 * day, in: context), 55, true), (lastWeekAgo(3.5 * day, in: context), 5, false)],
+                leavingRecapDue: true,
+                in: context
+            )
         }
         #endif
     }
@@ -90,9 +117,11 @@ enum DemoWorkoutSeed {
 
     /// Finished Push As, oldest first: how long ago each started, how many
     /// minutes it ran, and whether its sets were logged or none were.
+    /// This week's recap is marked seen unless `leavingRecapDue`.
     @MainActor
     private static func seedFinished(
         _ workouts: [(startedAgo: TimeInterval, minutes: Int, logged: Bool)],
+        leavingRecapDue: Bool = false,
         in context: ModelContext
     ) {
         guard let pushA = makePushA(in: context) else { return }
@@ -108,6 +137,7 @@ enum DemoWorkoutSeed {
             )
             if workout.logged { loggedCount += 1 }
         }
+        guard !leavingRecapDue else { return }
 
         // A workout last week would open Today on the weekly recap.
         if let settings = (try? context.fetch(FetchDescriptor<UserSettings>()))?.first {
@@ -116,6 +146,18 @@ enum DemoWorkoutSeed {
             )
             try? context.save()
         }
+    }
+
+    /// How long ago the moment `offset` after the start of last week was,
+    /// in the lifter's week, as Today's recap reckons it.
+    @MainActor
+    private static func lastWeekAgo(_ offset: TimeInterval, in context: ModelContext) -> TimeInterval {
+        let now = Date.now
+        let weekStartsMonday = (try? context.fetch(FetchDescriptor<UserSettings>()))?
+            .first?.weekStartsMonday ?? true
+        let lastWeek = now.mondayAtMidnightForToday(weekStartsMonday: weekStartsMonday)
+            .addingTimeInterval(-7 * 24 * 3600)
+        return now.timeIntervalSince(lastWeek.addingTimeInterval(offset))
     }
 
     /// The "Push A" template from real catalog exercises, and the weight
