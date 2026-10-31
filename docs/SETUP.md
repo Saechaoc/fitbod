@@ -56,6 +56,9 @@ The full tier keeps each guarantee of the serial run:
   `python3 scripts/test_results.py timings <bundle> > scripts/ui-test-timings.json`.
 - The run merges every bundle and fails unless the merged result ran exactly
   the tests the build enumerates: none missing, none extra, none run twice.
+  `python3 scripts/test_results_test.py` checks that guard in under a second.
+- Each worktree builds into its own DerivedData folder by default, so two
+  worktrees running tests at once never test each other's build.
 - Unit tests never run in parallel processes, and their host app starts
   from an uninstalled app in both tiers, so a store left by a UI run cannot
   change their result.

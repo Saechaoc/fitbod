@@ -24,7 +24,8 @@
 #   FITBOD_TEST_WORKERS  UI shards for `full` (default 2; 1 = serial). Four
 #                        shards on the 12-core M4 failed 1-2 typing and
 #                        sheet tests per run that pass serially; two did not.
-#   FITBOD_TEST_DD       DerivedData (default /tmp/fitbod-test-dd).
+#   FITBOD_TEST_DD       DerivedData (default /tmp/fitbod-test-dd-<hash of
+#                        this worktree>, so two worktrees never share one).
 #   FITBOD_TEST_OUT      result bundles and logs (default /tmp/fitbod-test-out).
 #
 # Why not `-parallel-testing-enabled YES`: xcodebuild reuses cached clones
@@ -43,7 +44,7 @@ shift
 
 DEVICE="${FITBOD_TEST_DEVICE:?set FITBOD_TEST_DEVICE to a dedicated simulator UDID}"
 WORKERS="${FITBOD_TEST_WORKERS:-2}"
-DD="${FITBOD_TEST_DD:-/tmp/fitbod-test-dd}"
+DD="${FITBOD_TEST_DD:-/tmp/fitbod-test-dd-$(printf %s "$ROOT" | shasum | cut -c1-8)}"
 OUT="${FITBOD_TEST_OUT:-/tmp/fitbod-test-out}"
 STAMP="$(date +%Y%m%d-%H%M%S)"
 RUN="$OUT/$TIER-$STAMP"
@@ -69,7 +70,7 @@ xb() {
   local log="$1"; shift
   local status=0
   xcodebuild "$@" > "$log" 2>&1 || status=$?
-  grep -E "^\*\* .* (SUCCEEDED|FAILED) \*\*|\.swift:[0-9]+:[0-9]+: error:" "$log" | tail -20 || true
+  grep -E "^\*\* .* (SUCCEEDED|FAILED) \*\*|^xcodebuild: error:|\.swift:[0-9]+:[0-9]+: error:" "$log" | tail -20 || true
   return "$status"
 }
 
@@ -104,6 +105,8 @@ xctest() {
     xb "$log" test-without-building -destination "platform=iOS Simulator,id=$udid" \
       "${test_flags[@]}" -parallel-testing-enabled NO -resultBundlePath "$bundle" "$@" || code=$?
     [[ $code -ne 0 ]] || return 0
+    # A bad argument fails before testing starts; a reboot would not help it.
+    if grep -q "^xcodebuild: error:" "$log" && ! grep -q "^Testing started" "$log"; then return "$code"; fi
     started="$(python3 "$ROOT/scripts/test_results.py" started "$bundle" 2>/dev/null || echo 0)"
     [[ $attempt -eq 1 && "$started" -eq 0 ]] || return "$code"
     echo "   no test started on $udid; rebooting it and retrying once" >&2

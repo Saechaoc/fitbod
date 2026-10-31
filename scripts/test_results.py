@@ -20,6 +20,7 @@ leave unfinished any test.
 """
 import collections
 import json
+import os
 import subprocess
 import sys
 
@@ -46,28 +47,38 @@ def enumerated(path):
     return found
 
 
-def ran(path):
-    results = collections.defaultdict(list)
-
-    def walk(node):
+def test_cases(nodes):
+    """Every "Test Case" node of `xcresulttool get test-results tests` output."""
+    for node in nodes:
         if node.get("nodeType") == "Test Case":
-            url = node.get("nodeIdentifierURL", "")
-            # test://com.apple.xcode/<project>/<bundle>/<class>/<test>
-            key = "/".join(url.split("/")[4:]) if url else node.get("nodeIdentifier", "")
-            # Results name XCTest methods without "()"; the enumeration adds it.
-            if not key.endswith(")"):
-                key += "()"
-            results[key].append(node.get("result"))
-            return
-        for child in node.get("children", []) or []:
-            walk(child)
+            yield node
+        else:
+            yield from test_cases(node.get("children", []) or [])
 
-    for node in json.load(open(path))["testNodes"]:
-        walk(node)
+
+def bundle_tests(bundle):
+    out = subprocess.check_output(
+        ["xcrun", "xcresulttool", "get", "test-results", "tests", "--path", bundle])
+    return json.loads(out)["testNodes"]
+
+
+def ran_from(nodes):
+    results = collections.defaultdict(list)
+    for node in test_cases(nodes):
+        url = node.get("nodeIdentifierURL", "")
+        # test://com.apple.xcode/<project>/<bundle>/<class>/<test>
+        key = "/".join(url.split("/")[4:]) if url else node.get("nodeIdentifier", "")
+        # Results name XCTest methods without "()"; the enumeration adds it.
+        if not key.endswith(")"):
+            key += "()"
+        results[key].append(node.get("result"))
     return results
 
 
 def summary(bundle):
+    if not os.path.isdir(bundle):
+        print(f"   no result bundle at {bundle}; see the log next to it")
+        return
     out = subprocess.check_output(
         ["xcrun", "xcresulttool", "get", "test-results", "summary", "--path", bundle])
     d = json.loads(out)
@@ -81,7 +92,7 @@ def summary(bundle):
 
 def coverage(enumerated_path, ran_path):
     want = enumerated(enumerated_path)
-    got = ran(ran_path)
+    got = ran_from(json.load(open(ran_path))["testNodes"])
     missing = sorted(want - got.keys())
     extra = sorted(got.keys() - want)
     repeated = sorted(k for k, v in got.items() if len(v) > 1)
@@ -120,42 +131,18 @@ def shard(enumerated_path, timings_path, count):
 
 
 def timings(bundle):
-    out = subprocess.check_output(
-        ["xcrun", "xcresulttool", "get", "test-results", "tests", "--path", bundle])
     seconds = collections.defaultdict(float)
-
-    def walk(node):
-        if node.get("nodeType") == "Test Case":
-            parts = node.get("nodeIdentifierURL", "").split("/")
-            if len(parts) > 6 and parts[4] == UI_BUNDLE:
-                seconds[parts[5]] += node.get("durationInSeconds") or 0.0
-            return
-        for child in node.get("children", []) or []:
-            walk(child)
-
-    for node in json.loads(out)["testNodes"]:
-        walk(node)
+    for node in test_cases(bundle_tests(bundle)):
+        parts = node.get("nodeIdentifierURL", "").split("/")
+        if len(parts) > 6 and parts[4] == UI_BUNDLE:
+            seconds[parts[5]] += node.get("durationInSeconds") or 0.0
     print(json.dumps({k: round(v, 1) for k, v in sorted(seconds.items())}, indent=2))
 
 
 def started(bundle):
-    out = subprocess.check_output(
-        ["xcrun", "xcresulttool", "get", "test-results", "tests", "--path", bundle])
-    count = 0
-
-    def walk(node):
-        nonlocal count
-        # A runner that never bootstraps reports one pseudo test case, named
-        # "<app> (<pid>) encountered an error", with no identifier URL.
-        if node.get("nodeType") == "Test Case":
-            count += bool(node.get("nodeIdentifierURL"))
-            return
-        for child in node.get("children", []) or []:
-            walk(child)
-
-    for node in json.loads(out)["testNodes"]:
-        walk(node)
-    print(count)
+    # A runner that never bootstraps reports one pseudo test case, named
+    # "<app> (<pid>) encountered an error", with no identifier URL.
+    print(sum(bool(n.get("nodeIdentifierURL")) for n in test_cases(bundle_tests(bundle))))
 
 
 if __name__ == "__main__":
