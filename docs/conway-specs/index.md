@@ -38,7 +38,6 @@ Every Phase 1 ticket is done and archived.
 | Ticket | Title |
 |---|---|
 | [T33](tickets/T33-pinned-note-bru.md) | Pinned Note sheet in BRU |
-| [T99](tickets/T99-block-review-prs-and-ax3.md) | The block review counts its PRs and keeps its stats whole at AX3 |
 | [T101](tickets/T101-ui-tests-idle-after-typing.md) | UI tests stop waiting a minute per step after typing |
 | [T102](tickets/T102-compare-rounding-and-back.md) | Compare rounds its e1RM changes and goes back with ‹ BACK |
 | [T103](tickets/T103-streak-and-recap-skip-empty-workouts.md) | Today's day streak and the weekly recap skip empty workouts |
@@ -63,6 +62,7 @@ Every Phase 1 ticket is done and archived.
 | [T108](tickets/T108-block-overview-and-routine-at-ax3.md) | The block overview and the routine screen read cleanly at AX3 |
 | [T109](tickets/T109-muscle-screen-steppers-order-tests.md) | The muscle screen uses BRU steppers, keeps a stable order and is always tested |
 | [T111](tickets/T111-session-editor-rows-announced-removable.md) | Session editor rows are announced, removable and easy to hit |
+| [T113](tickets/T113-block-review-pr-marks.md) | The block review's PR marks agree, and its stats read cheaply and whole |
 
 ### Phase 4: test health
 
