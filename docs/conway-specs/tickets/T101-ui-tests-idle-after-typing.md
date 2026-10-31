@@ -24,6 +24,10 @@ In that gate run, `CustomExerciseEntryUITests` took 1006 seconds instead of 48 f
 Phase 1 workers' logs show the same stall in 22 tests on both phones, most often in `NewBlockSavesUITests` testBottomActionNamesEachMissingPieceThenSavesAsReady.
 During a stall the app uses no CPU, and its XCTest agent logs "Received request to notify when animations are idle" with no reply.
 So some animation keeps running without the app's code drawing each frame.
+In T24's runs, `BlockNameTypingUITests` testKeyTapsTypeTheWholeName took 1481 seconds instead of about 45, because each of its key taps waited a minute before and after.
+
+T24's worker also found that `UITestNavigation.topSheet(in:)` returns nil for half-height sheets, which float 8pt above the bottom of the screen on iOS 26 and later.
+So `swipeSheetDown(in:)` cannot find them either, which may explain the flaky sheet swipes of finding F135.
 
 ## Target
 
@@ -42,6 +46,7 @@ So some animation keeps running without the app's code drawing each frame.
    If the system starts it, turn it off for UI test launches through the shared launch helpers, without changing what a user sees.
 3. Remove the probe and its launch flag before your final commit.
 4. In `notes.md`, name what kept animating, quote the probe lines that show it, and say why your change stops it.
+5. `UITestNavigation.topSheet(in:)` also finds half-height sheets, which float 8pt above the bottom of the screen on iOS 26 and later, so `swipeSheetDown(in:)` can close them too (finding F171, from T24's worker).
 
 ## Constraints
 
@@ -59,7 +64,9 @@ If the fix needs an app file, ask for it, and name the cause the probe found.
 ## Repro first
 
 - With the probe on, run `NewBlockSavesUITests` on the large phone again and again until a step logs "App animations complete notification not received", and save that run's log.
-  If ten runs bring no stall, try `CustomExerciseEntryUITests` and `EditorSwipeDismissUITests`, which also stalled in Phase 1.
+  If ten runs bring no stall, try `BlockNameTypingUITests`, `CustomExerciseEntryUITests` and `EditorSwipeDismissUITests`, which also stalled.
+- In `UITestHelpersSelfTests`, open New Block's Edit Block Duration sheet and assert that `topSheet(in:)` finds it.
+  It returns nil today.
 
 ## Observable acceptance
 
@@ -67,10 +74,11 @@ If the fix needs an app file, ask for it, and name the cause the probe found.
 - After the fix, `NewBlockSavesUITests`, `CustomExerciseEntryUITests` and `EditorSwipeDismissUITests` run five times on each phone and pass each time.
 - No log from those runs holds "App animations complete notification not received".
 - `fitbodTests` passes on the large phone with only the known issue, and the app and the widget build.
+- `UITestHelpersSelfTests` passes on both phones, including the half-height sheet case.
 
 ## Hints
 
 - XCUITest waits for the app to go idle before and after each step, and the 60-second message means the app's XCTest agent still saw an animation running.
 - `fitbod/App/DebugLaunchReset.swift` shows how the app reads a launch flag, and the DEBUG launch helpers sit next to `fitbod/App/DemoWorkoutSeed.swift`.
-- `UITestNavigation.launch` builds the launch arguments for most UI tests.
+- `UITestNavigation.launch` builds the launch arguments for most UI tests, and `topSheet(in:)` is near `UITestNavigation.swift:484`.
 - Read the app's log with `xcrun simctl spawn <phone id> log show --last 5m --predicate 'process == "fitbod"'`.

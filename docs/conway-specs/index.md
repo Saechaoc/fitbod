@@ -65,6 +65,7 @@ Every other Phase 1 ticket is done and archived.
 | [T102](tickets/T102-compare-rounding-and-back.md) | Compare rounds its e1RM changes and goes back with ‹ BACK |
 | [T103](tickets/T103-streak-and-recap-skip-empty-workouts.md) | Today's day streak and the weekly recap skip empty workouts |
 | [T104](tickets/T104-weekly-tonnage-weeks-detail-voiceover.md) | Weekly Tonnage stops crashing, keeps whole weeks and works with VoiceOver |
+| [T105](tickets/T105-new-block-delete-and-voiceover-names.md) | New Block's revealed Delete deletes, and VoiceOver reads its controls by name |
 
 ### Phase 3: P3 polish and copy
 
