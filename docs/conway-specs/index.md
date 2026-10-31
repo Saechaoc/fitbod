@@ -20,32 +20,19 @@ The quick-task run of the same plan must finish its last two tasks first, so rea
 | [run-log.md](run-log.md) | approvals, lanes, the ticket ledger, gates and findings |
 | [capacity_model.py](capacity_model.py) | run it with `python3 -I` to validate the tickets and estimate time for one to four lanes |
 | [changelog.md](changelog.md) | what changed in this bundle and why |
-| `tickets/` | one ticket per file, listed below |
+| `tickets/` | one open ticket per file, listed below |
 | `evidence/` | one folder per ticket, written by workers; git ignores it |
 
 ## Tickets
+
+Completed tickets are archived: their files leave `tickets/`, their rows leave the tables below, and `ARCHIVED` in [capacity_model.py](capacity_model.py) keeps each one's id, phase, review items and planned new files.
+Archived ids are never reused.
+To read an archived ticket, `git log --diff-filter=D -1 -- 'docs/conway-specs/tickets/T01-*'` names the commit that removed it, and `git show <commit>^:<path>` prints it.
 
 ### Phase 1: P0 and P1 defects
 
 | Ticket | Title |
 |---|---|
-| [T01](tickets/T01-ui-test-foundation.md) | UI test foundation |
-| [T02](tickets/T02-shared-counts-and-plurals.md) | Shared counts and plural helper |
-| [T03](tickets/T03-library-copy-edit-first-tap.md) | Library Copy and Edit open on the first tap |
-| [T04](tickets/T04-skip-warmups-and-logged-counts.md) | Skip warm-ups works, and counts stay honest |
-| [T05](tickets/T05-dirty-editors-resist-swipe-down.md) | Dirty editors resist swipe-down |
-| [T06](tickets/T06-reps-and-rpe-controls.md) | Reps and RPE controls in the session editor |
-| [T07](tickets/T07-notes-sheets-local-copy.md) | Notes sheets edit a local copy |
-| [T08](tickets/T08-one-tap-export-and-backup.md) | One-tap export and backup |
-| [T09](tickets/T09-visible-why-control.md) | Visible WHY control, Use and Override |
-| [T10](tickets/T10-one-block-template-catalog.md) | One block template catalog |
-| [T11](tickets/T11-new-block-two-saves.md) | New Block's two saves |
-| [T12](tickets/T12-block-overview-states.md) | Block overview states |
-| [T13](tickets/T13-pr-list-and-series-chips.md) | PR list and progress chips |
-| [T14](tickets/T14-heatmap-hit-areas.md) | Heatmap hit areas and VoiceOver |
-| [T15](tickets/T15-program-empty-state-ax3.md) | Program empty state and Resume pill at AX3 |
-| [T16](tickets/T16-program-and-new-block-dark-mode.md) | Program and New Block in dark mode |
-| [T17](tickets/T17-stripe-height-and-button-bleed.md) | Stripe height and button bleed |
 | [T49](tickets/T49-rpe-chip-hold-opens-decimal-picker.md) | Holding an RPE chip opens the decimal picker |
 | [T50](tickets/T50-why-uses-finished-workouts.md) | WHY suggests from finished workouts only |
 | [T51](tickets/T51-plateau-uses-finished-workouts.md) | Plateau check reads finished workouts only |

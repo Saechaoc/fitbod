@@ -30,6 +30,27 @@ MERGE_MIN = 8  # coordinator rebase, build and fast-forward when main moved; par
 EXCLUSIVE = {"T42", "T43", "T44", "T45", "T46", "T47", "T48"}  # run with no other code worker (dispatch.md)
 REVIEW_ITEMS = [str(n) for n in range(1, 48)] + ["N1"]
 HOTSPOT_MIN_OWNERS = 3
+# Completed tickets whose files were removed from tickets/: id -> (phase, review items, files it planned to create).
+# They count as done for depends_on, review item coverage and created files, and their ids are never reused.
+ARCHIVED = {
+    "T01": (1, [], ["fitbodUITests/UITestHelpersSelfTests.swift"]),
+    "T02": (1, ["2", "25", "40"], ["fitbod/Design/BRUCountLabel.swift", "fitbodTests/LoggedWorkSetCountTests.swift"]),
+    "T03": (1, ["1", "19"], ["fitbodUITests/CustomExerciseEntryUITests.swift"]),
+    "T04": (1, ["2", "25"], ["fitbodUITests/SkipWarmupsUITests.swift"]),
+    "T05": (1, ["3", "25"], ["fitbodUITests/DirtySheetDismissUITests.swift"]),
+    "T06": (1, ["5", "6"], ["fitbodUITests/PrescriptionControlsUITests.swift", "fitbodTests/PrescriptionRangeTests.swift"]),
+    "T07": (1, ["33", "41"], ["fitbodUITests/NotesSheetsUITests.swift"]),
+    "T08": (1, ["34", "14"], ["fitbodUITests/OneTapShareUITests.swift"]),
+    "T09": (1, ["4", "18"], []),
+    "T10": (1, ["26", "27"], ["fitbodUITests/BlockTemplateCatalogUITests.swift"]),
+    "T11": (1, ["36"], ["fitbodTests/BlockReadinessTests.swift", "fitbodUITests/NewBlockSavesUITests.swift"]),
+    "T12": (1, ["28", "29", "25"], ["fitbodUITests/BlockOverviewStatesUITests.swift", "fitbodTests/BlockNumberingTests.swift"]),
+    "T13": (1, ["31", "32"], ["fitbodUITests/PRListAndSeriesUITests.swift"]),
+    "T14": (1, ["7"], ["fitbodUITests/HeatmapHitAreaUITests.swift"]),
+    "T15": (1, ["8"], ["fitbodUITests/ProgramEmptyStateAX3UITests.swift"]),
+    "T16": (1, ["9"], ["fitbodTests/AdaptiveColorSourceTests.swift", "fitbodUITests/ProgramDarkModeUITests.swift"]),
+    "T17": (1, ["30", "16"], ["fitbodUITests/StripeAndBleedUITests.swift"]),
+}
 
 BUNDLE = pathlib.Path(__file__).resolve().parent
 REPO = BUNDLE.parents[1]  # the bundle lives in <repo>/docs/conway-specs
@@ -78,6 +99,15 @@ def num(tid):
     return int(tid[1:])
 
 
+def phase_of(tid):
+    return tickets[tid]["phase"] if tid in tickets else ARCHIVED[tid][0]
+
+
+def open_deps(tid):
+    """Dependencies that still have a ticket file; an archived one is done."""
+    return [d for d in tickets[tid]["depends_on"] if d in tickets]
+
+
 def bundle_files(suffixes):
     for f in sorted(BUNDLE.rglob("*")):
         rel = f.relative_to(BUNDLE)
@@ -108,6 +138,9 @@ for path in sorted(TICKETS.glob("T*.md")):
         continue
     if tid in tickets:
         errors.append(f"{path.name}: duplicate id {tid}")
+        continue
+    if tid in ARCHIVED:
+        errors.append(f"{path.name}: {tid} is archived, so a new ticket needs a new id")
         continue
     if not path.name.startswith(tid + "-"):
         errors.append(f"{path.name}: the file name does not start with its id")
@@ -143,11 +176,11 @@ for tid in ids:
         if TWO_SENTENCES.search(QUOTED.sub('""', LIST_MARKER.sub("", line))):
             warnings.append(f"{t['file']}:{n}: may hold two sentences: {line.strip()[:80]}")
     for dep in t["depends_on"]:
-        if dep not in tickets:
+        if dep not in tickets and dep not in ARCHIVED:
             errors.append(f"{tid}: depends on {dep}, which does not exist")
         elif num(dep) >= num(tid):
             errors.append(f"{tid}: depends on {dep}, which is not earlier")
-        elif tickets[dep]["phase"] > t["phase"]:
+        elif phase_of(dep) > t["phase"]:
             errors.append(f"{tid}: depends on {dep}, which is in a later phase")
 
 covered = {}
@@ -156,11 +189,17 @@ for tid in ids:
         if item not in REVIEW_ITEMS:
             errors.append(f"{tid}: unknown review item {item}")
         covered.setdefault(item, []).append(tid)
+for tid, (_, items, _) in ARCHIVED.items():
+    for item in items:
+        covered.setdefault(item, []).append(tid)
 uncovered = [i for i in REVIEW_ITEMS if i not in covered]
 if uncovered:
     errors.append(f"review items with no ticket: {', '.join(uncovered)}")
 
 created = {}  # repo path -> ticket that creates it
+for tid, (_, _, new_files) in ARCHIVED.items():
+    for path in new_files:
+        created[path] = tid
 for tid in ids:
     for p in tickets[tid]["owns"]:
         if not p.startswith("new:"):
@@ -234,7 +273,7 @@ for f, rel in bundle_files({".md", ".py"}):
 for name, group in (("PARALLEL_OK", PARALLEL_OK), ("CONDITIONAL", CONDITIONAL), ("EXCLUSIVE", EXCLUSIVE),
                     ("GATE_AFTER", set(GATE_AFTER)), ("RERUN_TICKETS", set(RERUN_TICKETS)),
                     ("FINAL_RERUNS", set(FINAL_RERUNS)), ("RERUN_MINUTES", set(RERUN_MINUTES))):
-    for tid in sorted(group - set(tickets)):
+    for tid in sorted(group - set(tickets) - set(ARCHIVED)):
         errors.append(f"capacity_model.py: {name} names {tid}, which has no ticket")
 if LANES not in LANE_OPTIONS or any(n not in SLOWDOWN for n in LANE_OPTIONS):
     errors.append("capacity_model.py: LANES must be in LANE_OPTIONS, and each option needs a SLOWDOWN")
@@ -290,7 +329,7 @@ def plan_jobs(lanes, skip=frozenset(), gates=True):
     members = {p: [t for t in ids if tickets[t]["phase"] == p] for p in phases}
     for tid in ids:
         t = tickets[tid]
-        deps = list(t["depends_on"])
+        deps = open_deps(tid)
         if gates and t["phase"] != phases[0]:
             deps.append(f"end of phase {phases[phases.index(t['phase']) - 1]}")
         owns = (p.removeprefix("new:") for p in t["owns"])
@@ -309,7 +348,7 @@ def plan_jobs(lanes, skip=frozenset(), gates=True):
         add(f"{tid} rerun", rerun_work(tid), review, previous, alone=True)
         previous = [f"{tid} rerun"]
     members[findings_phase] += findings + previous
-    gate_phases = {tickets[t]["phase"] for t in GATE_AFTER if t not in skip}
+    gate_phases = {phase_of(t) for t in GATE_AFTER if t not in skip}
     if gates:
         for p in phases:
             gate = p in gate_phases
@@ -374,7 +413,7 @@ print(f"Order (lowest id first; up to {LANES} code workers at once, each ticket 
       " T31 runs beside them):")
 for phase in sorted({tickets[t]["phase"] for t in ids}):
     row = [t for t in ids if tickets[t]["phase"] == phase]
-    gates = [f"gate {GATE_AFTER.index(t) + 1}" for t in row if t in GATE_AFTER]
+    gates = [f"gate {n + 1}" for n, t in enumerate(GATE_AFTER) if phase_of(t) == phase]
     print(f"  Phase {phase}: {' '.join(row)}" + (f"  | {', '.join(gates)}" if gates else ""))
 print("  Phase 8: coordinator only")
 
@@ -403,10 +442,10 @@ print(f"  Total:   {total / 60:5.1f} h, or {(total - skipped) / 60:.1f} h if "
 
 finish = {}
 for tid in ids:  # deps always have lower ids, so id order is a topological order
-    finish[tid] = max((finish[d] for d in tickets[tid]["depends_on"]), default=0) + ticket_min(tid)
+    finish[tid] = max((finish[d] for d in open_deps(tid)), default=0) + ticket_min(tid)
 chain = [max(finish, key=finish.get)]
-while tickets[chain[-1]]["depends_on"]:
-    chain.append(max(tickets[chain[-1]]["depends_on"], key=finish.get))
+while open_deps(chain[-1]):
+    chain.append(max(open_deps(chain[-1]), key=finish.get))
 print(f"\nDependency critical path: {' -> '.join(reversed(chain))}")
 print(f"  {finish[chain[0]] / 60:.1f} h, a lower bound for any number of lanes")
 

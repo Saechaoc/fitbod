@@ -2,6 +2,13 @@
 
 Newest first.
 
+## 2026-10-30: completed tickets are archived
+
+- What: tickets verified complete on `main` are archived: their files leave `tickets/`, their rows leave index.md, and `ARCHIVED` in `capacity_model.py` keeps each one's id, phase, review items and planned new files.
+- Why: the user asked to remove the tickets that are done, and one read-only worker per ticket checked each against `main` before its file was removed.
+- What: `capacity_model.py` counts an archived ticket as done for `depends_on`, review item coverage, created files and its ticket groups, schedules only open dependencies, and rejects a new ticket that reuses an archived id.
+- Why: most open tickets depend on archived ones, such as T01, so without this the check fails for each of them.
+
 ## 2026-10-29: retained releases settle Copilot workers
 
 - What: "Settle a ticket" step 2 counts a `retained` release receipt as confirmed release when `worker-show` reports stage `settled` and `orca worktree ps` shows the worker's agent `done`.
