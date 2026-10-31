@@ -64,6 +64,7 @@ Every other Phase 1 ticket is done and archived.
 | [T101](tickets/T101-ui-tests-idle-after-typing.md) | UI tests stop waiting a minute per step after typing |
 | [T102](tickets/T102-compare-rounding-and-back.md) | Compare rounds its e1RM changes and goes back with ‹ BACK |
 | [T103](tickets/T103-streak-and-recap-skip-empty-workouts.md) | Today's day streak and the weekly recap skip empty workouts |
+| [T104](tickets/T104-weekly-tonnage-weeks-detail-voiceover.md) | Weekly Tonnage keeps whole weeks, matches its week detail and works with VoiceOver |
 
 ### Phase 3: P3 polish and copy
 

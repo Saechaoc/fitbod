@@ -25,11 +25,11 @@ Words break in the middle on the small phone:
 
 At every size, Program's active block row shows the phase twice: "W1 · ACCUMULATION" at the top right, and "Week 1 of 5 · Accumulation" under the name.
 
-T20's worker also found findings F146, F147 and F148 on these screens:
+T20's worker also found findings F147 and F148 on these screens, and T18's worker found F156:
 
-- Program's ROUTINES row reads "1 sessions" for a routine with one session, because it skips the shared plural helper.
 - The routine screen's "Remove Session?" dialog offers only a cancel-role "Cancel", which iOS 26 hides, so it has no visible way back.
 - At AX3, XCUITest swipes on the routine screen started a session row's reorder drag instead of scrolling, and nobody has checked it with a finger yet.
+- A session row enters its reorder state on touch-down, so after a tap opens a session and you come back, the row is still scaled to 97%.
 
 ## Target
 
@@ -47,10 +47,10 @@ T20's worker also found findings F146, F147 and F148 on these screens:
 4. The routine editor's slot number shows "01" in full at every text size.
 5. "REMOVE" and the exercise count in each slot row stay whole.
 6. On the large phone at default text, these screens look as they do today.
-7. Program's ROUTINES row counts sessions with the shared plural helper, so one session reads "1 session".
-8. The "Remove Session?" dialog gets a visible plain "Keep session" button, which closes it and changes nothing, as T20 did for "Archive routine?".
-9. At AX3, a quick swipe that starts on a session row scrolls the routine screen.
+7. The "Remove Session?" dialog gets a visible plain "Keep session" button, which closes it and changes nothing, as T20 did for "Archive routine?".
+8. At AX3, a quick swipe that starts on a session row scrolls the routine screen.
    If the row's reorder gesture catches that swipe, make the reorder start only after a long press.
+9. A tap that opens a session leaves its row at full size when you come back.
 
 ## Constraints
 
@@ -72,14 +72,14 @@ On the small phone, with a block named "Powerbuilding" in its accumulation phase
 - Assert with frame checks that the slot number and "REMOVE" are each one line tall at AX3.
 - Assert that the name tag's frame lies inside the screen at AX3.
 - Assert that the block row's phase name appears in exactly one element.
-- Assert that a routine with one session reads "1 session" in Program's ROUTINES row.
 - Open "Remove Session?", and assert that a visible "Keep session" closes it and keeps the session.
 - At AX3, press a session row for under 0.1 s, drag up, and assert that the screen scrolls and no reorder starts.
+- Tap a session row, go back with "‹ BACK", and assert that the row's frame matches its frame before the tap.
 
 ## Observable acceptance
 
 - Every frame check passes on the small phone at default text and at AX3.
-- The ROUTINES row count, "Keep session" and AX3 scroll repro tests pass on the small phone.
+- The "Keep session", AX3 scroll and row-size repro tests pass on the small phone.
 - The new screenshots show no word broken in the middle.
 - `BlockOverviewScreenCopyTests` and `ProgramViewFidelityTests` pass with `fitbodTests`.
 - Screenshots before and after, for each screen and text size, are in `screens/`.
@@ -91,5 +91,5 @@ On the small phone, with a block named "Powerbuilding" in its accumulation phase
   Find the block row's phase text and name tag by their text in the same file.
   The two phase texts are near `ProgramView.swift:494` and 510.
 - The slot number is near `SplitDetailView.swift:518-521`, "Remove" is near 574-579, and the meta line is near 211.
-- `RoutineSplitRow` in `ProgramView.swift` builds the "N sessions" text, and `BRUCountLabel.text(_:_:)` is the shared plural helper.
+- `RoutineSplitRow`'s "1 sessions" in `ProgramView.swift` is T34's, so leave it.
 - T20's "Archive routine?" dialog in `SplitDetailView.swift` shows the visible plain button.
