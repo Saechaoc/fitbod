@@ -6,7 +6,7 @@ items: []
 depends_on: [T29, T110]
 size: M
 sim: small
-owns: [fitbod/Routines/RoutineExerciseCard.swift, fitbod/Routines/PrescriptionEditorRow.swift, fitbodUITests/PrescriptionEditorUITests.swift, fitbodUITests/MilestoneOneJourneyUITests.swift, new:fitbodUITests/SessionEditorRowsUITests.swift]
+owns: [fitbod/Routines/RoutineExerciseCard.swift, fitbod/Routines/PrescriptionEditorRow.swift, fitbod/Routines/PerSetOverrideRow.swift, fitbodUITests/PrescriptionEditorUITests.swift, fitbodUITests/MilestoneOneJourneyUITests.swift, new:fitbodUITests/SessionEditorRowsUITests.swift]
 ---
 
 # T111: Session editor rows are announced, removable and easy to hit
@@ -21,6 +21,7 @@ These are findings F217, F219 and F220, which T29's worker found in the session 
 - The exercise rows' swipe actions do nothing, because the editor lists its rows in a stack, not a `List`.
   So an exercise can be removed only from its long-press menu, which nothing on screen shows.
 - The tempo fields are 40pt wide and about 17pt tall at default text, under the 44pt target.
+- Since T110, nothing shows `PerSetOverrideRow`: only its own previews and two tests that read its source refer to it (finding F256, from the coordinator's review of T110-ext).
 
 ## Target
 
@@ -33,6 +34,7 @@ These are findings F217, F219 and F220, which T29's worker found in the session 
 2. The swipe actions that cannot fire go.
 3. Each exercise can be removed without a long press, through a visible REMOVE control in its open editor, which asks before it removes, as the long-press Remove does today.
 4. Each tempo field has a touch target at least 44pt tall, with its look unchanged at default text.
+5. Delete `fitbod/Routines/PerSetOverrideRow.swift`, with `RoutineBuilderBRUCopyTests.topSetRowUsesBruSignal` and its line in `Phase3BRUGrepAuditTests`' file list.
 
 ## Constraints
 
@@ -42,7 +44,7 @@ These are findings F217, F219 and F220, which T29's worker found in the session 
 
 ## Ownership
 
-You may edit the files in `owns`, plus session editor tests your change breaks.
+You may edit the files in `owns`, plus session editor tests your change breaks, and `Phase3BRUGrepAuditTests` for change 5.
 Ask before you edit anything else.
 
 ## Repro first

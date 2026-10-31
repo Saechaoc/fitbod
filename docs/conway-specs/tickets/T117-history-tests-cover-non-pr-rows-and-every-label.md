@@ -34,6 +34,7 @@ These are findings F-ext-5 and F-ext-6, which T112-ext's worker and the coordina
 2. A test asserts that this workout's row shows no "★ PR", and that a workout that set a PR still shows it.
 3. The word check covers every intent chip and every stat label, on both phones, at default text and at AX3.
 4. The word check fails when any crop shows a word broken over two lines, rather than passing when one crop reads it whole.
+5. The suite's wait for a hittable control polls in 50 to 100 ms steps, not 0.25 s, as `docs/test-performance-guide.md` section 2.6 says (finding F257).
 
 ## Constraints
 
