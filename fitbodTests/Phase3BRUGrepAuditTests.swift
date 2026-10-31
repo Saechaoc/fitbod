@@ -23,7 +23,9 @@
 //   fitbod/ExerciseLibrary/ (ExerciseDetailView only — the rest of ExerciseLibrary is
 //                           Phase 1. ExerciseDetailView is excluded from THIS audit
 //                           because its Phase-1 sections may still reference legacy
-//                           tokens; those are Phase 1 / Phase 06 scope. See SUMMARY.)
+//                           tokens; those are Phase 1 / Phase 06 scope. See SUMMARY.
+//                           The custom exercise editor and its muscle picker are
+//                           audited since their BRU rewrite, review item 20.)
 //   fitbod/Design/        (CalibratingProgressMeter, PlateStackViz, PlateTallyRow —
 //                          Wave 1 BRU primitives)
 //
@@ -100,20 +102,19 @@ struct Phase3BRUGrepAuditTests {
         // ExerciseDetailView has Phase-1 sections that may reference legacy tokens;
         // Phase 3.2-08 only audited the Prescription Settings section. Defer the
         // full ExerciseDetailView audit to a future BRU rewrite phase. See SUMMARY.
+        // The custom exercise editor (CustomExerciseEditor, CustomExerciseImagePicker,
+        // MusclePickerSheet, MuscleWeightRow) is BRU since review item 20, so the
+        // audit covers it.
         "fitbod/ExerciseLibrary/ExerciseDetailView.swift",
         "fitbod/ExerciseLibrary/ExerciseLibraryView.swift",
         "fitbod/ExerciseLibrary/ExerciseHistoryView.swift",
         "fitbod/ExerciseLibrary/ExerciseHistoryRow.swift",
         "fitbod/ExerciseLibrary/ExerciseRow.swift",
-        "fitbod/ExerciseLibrary/CustomExerciseEditor.swift",
-        "fitbod/ExerciseLibrary/CustomExerciseImagePicker.swift",
         "fitbod/ExerciseLibrary/EmptyLibraryView.swift",
         "fitbod/ExerciseLibrary/ExerciseFilterBar.swift",
         "fitbod/ExerciseLibrary/FilterChip.swift",
         "fitbod/ExerciseLibrary/FilterPickerSheet.swift",
         "fitbod/ExerciseLibrary/IntentFilterChipRow.swift",
-        "fitbod/ExerciseLibrary/MusclePickerSheet.swift",
-        "fitbod/ExerciseLibrary/MuscleWeightRow.swift",
         "fitbod/ExerciseLibrary/PRStripFooter.swift",
         // Non-view behavior files in ExerciseLibrary
         "fitbod/ExerciseLibrary/CustomExerciseDraft.swift",

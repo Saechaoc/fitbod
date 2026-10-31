@@ -2,21 +2,18 @@
 //  MusclePickerSheet.swift
 //  fitbod
 //
-//  Wave-3 plan 03-04 — modal `@Query<MuscleGroup>`-driven list used
-//  by the custom-exercise editor when the user taps "Add Primary
-//  Muscle" / "Add Another Muscle". Tapping a row calls the supplied
-//  `onSelect` closure and dismisses; "Cancel" toolbar button dismisses
+//  The sheet the custom exercise editor opens from "+ ADD MUSCLE". A BRU
+//  sheet (review item 20): a `BRUHeaderBar` with CANCEL and "Add muscle",
+//  no system navigation bar, and one row per muscle. Tapping a row calls
+//  the supplied `onSelect` closure and dismisses; CANCEL dismisses
 //  without selection.
 //
-//  ## Why a sheet, not a Picker
+//  ## Rows show the name alone
 //
-//  The 17-muscle taxonomy (chest / triceps / lats / biceps / quads /
-//  hamstrings / glutes / calves / shoulders / abs / lower_back /
-//  forearms / traps / abductors / adductors / middle_back / neck) is
-//  larger than a typical Picker is comfortable surfacing, and we want
-//  the region label as secondary metadata. UI-SPEC § Custom exercise
-//  editor names the surface "Select Muscle" and locks the sheet
-//  affordance.
+//  Each row shows only the muscle's display name, and the rows sort by
+//  display name. The coarse region ("Upper", "Lower", "Core") used to sit
+//  beside it, and "Lower Back · Upper" read as an error. The stored region
+//  is unchanged, because the Library filters read it.
 //
 //  ## Closure-driven selection (not a binding)
 //
@@ -39,37 +36,48 @@ struct MusclePickerSheet: View {
     let onSelect: (MuscleGroup) -> Void
 
     @Environment(\.dismiss) private var dismiss
-    @Query(sort: \MuscleGroup.slug) private var muscles: [MuscleGroup]
+    @Query private var muscles: [MuscleGroup]
 
     var body: some View {
-        NavigationStack {
-            List {
-                ForEach(muscles) { mg in
-                    Button {
-                        onSelect(mg)
-                        dismiss()
-                    } label: {
-                        HStack {
-                            Text(mg.displayName)
-                                .font(.body)
-                                .foregroundStyle(.primary)
-                            Spacer()
-                            Text(mg.region.rawValue.capitalized)
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        }
+        VStack(spacing: 0) {
+            BRUHeaderBar(
+                left: HeaderAction("Cancel") { dismiss() },
+                center: "Add muscle"
+            )
+            ScrollView {
+                VStack(spacing: 0) {
+                    ForEach(sortedMuscles) { mg in
+                        row(mg)
                     }
-                    .accessibilityIdentifier("musclePicker.\(mg.slug)")
-                }
-            }
-            .navigationTitle("Select Muscle")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { dismiss() }
                 }
             }
         }
+        .background(Color.bruPaper.ignoresSafeArea())
+    }
+
+    /// Display-name order, the way a reader scans the list.
+    private var sortedMuscles: [MuscleGroup] {
+        muscles.sorted { $0.displayName.localizedStandardCompare($1.displayName) == .orderedAscending }
+    }
+
+    private func row(_ mg: MuscleGroup) -> some View {
+        Button {
+            onSelect(mg)
+            dismiss()
+        } label: {
+            Text(mg.displayName)
+                .font(BRUFont.displayMedium)
+                .foregroundStyle(Color.bruInk)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, BRUMetrics.Spacing.gutter)
+                .padding(.vertical, BRUMetrics.Spacing.related)
+                .frame(minHeight: BRUMetrics.primaryActionHeight)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .overlay(alignment: .bottom) { BRUDivider(.hair) }
+        .accessibilityLabel(mg.displayName)
+        .accessibilityIdentifier("musclePicker.\(mg.slug)")
     }
 }
 
