@@ -37,8 +37,6 @@ Every Phase 1 ticket is done and archived.
 
 | Ticket | Title |
 |---|---|
-| [T19](tickets/T19-plate-inventory-and-calculator.md) | Plate Inventory and the plate calculator |
-| [T26](tickets/T26-block-hero-program-routine-text-fit.md) | Block hero, Program rows and routine editor text fit |
 | [T29](tickets/T29-session-editor-polish.md) | Session editor polish |
 | [T30](tickets/T30-exercise-display-names.md) | Exercise display names |
 | [T32](tickets/T32-custom-exercise-editor-bru.md) | Custom exercise editor and muscle picker in BRU |
