@@ -50,6 +50,15 @@ ARCHIVED = {
     "T15": (1, ["8"], ["fitbodUITests/ProgramEmptyStateAX3UITests.swift"]),
     "T16": (1, ["9"], ["fitbodTests/AdaptiveColorSourceTests.swift", "fitbodUITests/ProgramDarkModeUITests.swift"]),
     "T17": (1, ["30", "16"], ["fitbodUITests/StripeAndBleedUITests.swift"]),
+    "T18": (2, ["35", "43"], ["fitbod/App/EdgeSwipeBack.swift", "fitbodUITests/SwipeBackUITests.swift"]),
+    "T20": (2, ["44"], ["fitbod/Periodization/ArchivedRoutinesView.swift", "fitbodUITests/ArchiveRoutineUITests.swift"]),
+    "T21": (2, ["15"], ["fitbod/Routines/NewRoutineNameScreen.swift", "fitbodUITests/NewRoutineFlowUITests.swift"]),
+    "T22": (2, ["39", "40"], ["fitbodTests/EmptyWorkoutCountTests.swift", "fitbodUITests/EmptyWorkoutCountsUITests.swift"]),
+    "T23": (2, ["38", "25"], ["fitbodUITests/WeeklyTonnageUITests.swift"]),
+    "T24": (2, ["45", "47"], ["fitbodUITests/PhaseRowsVoiceOverUITests.swift", "fitbodUITests/BlockNameTypingUITests.swift"]),
+    "T27": (2, ["46", "24", "25"], ["fitbodUITests/TodayAX3UITests.swift"]),
+    "T28": (2, ["10", "11", "25"], ["fitbodUITests/RampAndStripsAX3UITests.swift"]),
+    "T31": (2, [], []),
     "T49": (1, [], ["fitbodUITests/RPEDecimalHoldUITests.swift"]),
     "T50": (1, [], ["fitbodTests/WhyUsesFinishedWorkoutsTests.swift"]),
     "T51": (1, [], ["fitbodTests/PlateauUsesFinishedWorkoutsTests.swift"]),
@@ -95,6 +104,7 @@ ARCHIVED = {
     "T93": (1, [], ["fitbodTests/WholeWorkoutReadersTests.swift"]),
     "T94": (1, [], ["fitbodTests/ExerciseRowsPerWorkoutTests.swift"]),
     "T95": (1, [], ["fitbodTests/StableExerciseNamesTests.swift"]),
+    "T100": (1, [], []),
 }
 
 BUNDLE = pathlib.Path(__file__).resolve().parent

@@ -294,6 +294,10 @@ A reported ending is not a safely settled attempt.
    Never grant to an ended, superseded or fenced attempt; preserve uncertain or fenced wait records without replying or cancelling until their safety state is resolved.
    Record the new grant under "Held files" before answering `orca orchestration reply --id <message id> --body yes --json`.
    Later eligible asks keep waiting, and a path still reserved by any live attempt remains unavailable.
+8. Once a ticket is `done` or `skipped`, archive it, as the user asked on 2026-10-31.
+   Delete its file from `tickets/`, remove its row from [index.md](index.md), and add its id, phase, review items and planned new files to `ARCHIVED` in `capacity_model.py`.
+   Run `python3 -I capacity_model.py`, then commit those paths by exact path.
+   Its evidence folder and its ledger row stay, and later tickets may still name it.
 
 ## Retry
 

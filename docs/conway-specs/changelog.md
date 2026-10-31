@@ -2,6 +2,12 @@
 
 Newest first.
 
+## 2026-10-31: each ticket is archived once it is done
+
+- What: "Settle a ticket" gains step 8: once a ticket is done or skipped, the coordinator archives it as the 2026-10-30 archive did, removing its file and index row and adding it to `ARCHIVED`.
+- Why: the user asked that a completed ticket be archived by removing it, so `tickets/` holds only open work.
+- What: T18, T20 to T24, T27, T28, T31 and T100 are archived.
+
 ## 2026-10-30: ticket ids can have three digits
 
 - What: `capacity_model.py` accepts ticket ids with two or three digits, in the ticket files and in index.md.

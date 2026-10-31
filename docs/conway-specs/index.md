@@ -31,30 +31,17 @@ To read an archived ticket, `git log --diff-filter=D -1 -- 'docs/conway-specs/ti
 
 ### Phase 1: P0 and P1 defects
 
-Every other Phase 1 ticket is done and archived.
-
-| Ticket | Title |
-|---|---|
-| [T100](tickets/T100-empty-program-chip-lines-per-phone.md) | The empty Program test expects the chip lines each phone draws |
+Every Phase 1 ticket is done and archived.
 
 ### Phase 2: P2 defects
 
 | Ticket | Title |
 |---|---|
-| [T18](tickets/T18-swipe-back-everywhere.md) | Swipe-back on every pushed screen |
 | [T19](tickets/T19-plate-inventory-and-calculator.md) | Plate Inventory and the plate calculator |
-| [T20](tickets/T20-archive-and-restore-routines.md) | Archive asks first, and restore works |
-| [T21](tickets/T21-name-first-new-routine.md) | Name-first new routine |
-| [T22](tickets/T22-compare-and-session-counts.md) | Compare and session counts skip empty workouts |
-| [T23](tickets/T23-weekly-tonnage.md) | Weekly Tonnage fixes |
-| [T24](tickets/T24-phase-rows-voiceover-and-block-name.md) | Phase rows in VoiceOver, and the block name field |
 | [T25](tickets/T25-new-block-layout-small-and-ax3.md) | New Block layout on the small phone and at AX3 |
 | [T26](tickets/T26-block-hero-program-routine-text-fit.md) | Block hero, Program rows and routine editor text fit |
-| [T27](tickets/T27-today-ax3.md) | Today at AX3 |
-| [T28](tickets/T28-warmup-ramp-and-stat-strips-ax3.md) | Warm-up ramp and stat strips at AX3 |
 | [T29](tickets/T29-session-editor-polish.md) | Session editor polish |
 | [T30](tickets/T30-exercise-display-names.md) | Exercise display names |
-| [T31](tickets/T31-design-export-check.md) | Design export check |
 | [T32](tickets/T32-custom-exercise-editor-bru.md) | Custom exercise editor and muscle picker in BRU |
 | [T33](tickets/T33-pinned-note-bru.md) | Pinned Note sheet in BRU |
 | [T87](tickets/T87-today-sheet-order.md) | Today shows the block review and the weekly recap one at a time |
