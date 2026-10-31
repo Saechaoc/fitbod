@@ -86,6 +86,11 @@ public struct BlockReviewView: View {
             start: blockStart,
             end: blockEnd
         )
+        let prsCount = BlockReviewStatistics.prCount(
+            context: ctx,
+            start: blockStart,
+            end: blockEnd
+        )
         let blockNumber = BlockNumbering.number(of: block, among: allBlocks)
         let formattedRange = formattedDateRange(start: blockStart, end: blockEnd)
 
@@ -103,29 +108,32 @@ public struct BlockReviewView: View {
                 .foregroundStyle(Color.bruPaper)
                 .padding(.top, 4)
 
-            // Three-column stat row
-            HStack(spacing: 0) {
+            // Three-column stat row, stacked at accessibility sizes
+            statRowLayout {
                 statCell(
                     label: "SESSIONS",
                     value: "\(sessionsCount)",
                     subLabel: "LOGGED",
                     valueColor: Color.bruPaper
                 )
-                Spacer()
+                statSeparator
                 statCell(
                     label: "TONNAGE",
                     value: BlockReviewStatistics.formattedKg(totalKg),
                     subLabel: "\(weightUnit.rawValue.uppercased()) TOTAL",
                     valueColor: Color.bruSignal
                 )
-                Spacer()
+                statSeparator
                 statCell(
                     label: "PRS",
-                    value: "—",
-                    subLabel: "COMING IN PHASE 6",
+                    value: "\(prsCount)",
+                    subLabel: "THIS BLOCK",
                     valueColor: Color.bruPaper
                 )
             }
+            // The rule above the stats spans the row, so the row spans the
+            // band in both layouts.
+            .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.top, 14)
             .overlay(alignment: .top) {
                 Rectangle()
@@ -162,6 +170,29 @@ public struct BlockReviewView: View {
                     .tracking(1.0)
                     .foregroundStyle(Color.bruPaper.opacity(0.6))
             }
+        }
+        .accessibilityElement(children: .contain)
+        .accessibilityIdentifier("blockReview.stat.\(label.lowercased())")
+    }
+
+    /// At accessibility sizes the three stats stack, so none squeezes its
+    /// label into a word broken across lines.
+    private var statRowLayout: AnyLayout {
+        dynamicTypeSize.isAccessibilitySize
+            ? AnyLayout(VStackLayout(alignment: .leading, spacing: 14))
+            : AnyLayout(HStackLayout(spacing: 0))
+    }
+
+    /// Between two stats: the row's free width at default text, and a rule
+    /// between stacked stats, so each sub-label stays with its own value.
+    @ViewBuilder
+    private var statSeparator: some View {
+        if dynamicTypeSize.isAccessibilitySize {
+            Rectangle()
+                .fill(Color.bruPaper.opacity(0.3))
+                .frame(height: 1)
+        } else {
+            Spacer()
         }
     }
 
@@ -395,6 +426,48 @@ public enum BlockReviewStatistics {
             completedWorkingSets(context: context, start: start, end: end)
                 .compactMap { $0.sessionExercise?.session?.id }
         ).count
+    }
+
+    /// The working sets logged during the block that set a PR, by the
+    /// in-workout banner's check. The lifter's finished history replays
+    /// oldest first through `PRDetector.check(set:against:)` from an empty
+    /// table, so a set counts only when it beats every set logged before
+    /// it, in the block or before it.
+    @MainActor
+    public static func prCount(context: ModelContext, start: Date, end: Date) -> Int {
+        // Records are kept per exercise, so only the history of the lifts
+        // logged during the block can set its PRs. One fetch per lift on the
+        // single-level `se.exercise?.id` gate, as `SessionFactory` seeds the
+        // banner's table: a fetch of every set is slow on a long history.
+        let exerciseIDs = Set(
+            completedWorkingSets(context: context, start: start, end: end)
+                .compactMap { $0.sessionExercise?.exercise?.id }
+        )
+        var history: [SetEntry] = []
+        for exerciseID in exerciseIDs {
+            let targetID = exerciseID
+            var descriptor = FetchDescriptor<SessionExercise>(
+                predicate: #Predicate<SessionExercise> { se in
+                    se.exercise?.id == targetID
+                }
+            )
+            descriptor.relationshipKeyPathsForPrefetching = [\.sets, \.session]
+            let rows = (try? context.fetch(descriptor)) ?? []
+            for row in rows where row.session?.completedAt != nil {
+                history += (row.sets ?? []).filter { $0.isComplete && !$0.isWarmup }
+            }
+        }
+        history.sort { $0.completedAt < $1.completedAt }
+
+        var table = PRTable()
+        var count = 0
+        for set in history {
+            let records = PRDetector.check(set: set, against: &table)
+            if !records.isEmpty && set.completedAt >= start && set.completedAt <= end {
+                count += 1
+            }
+        }
+        return count
     }
 
     @MainActor

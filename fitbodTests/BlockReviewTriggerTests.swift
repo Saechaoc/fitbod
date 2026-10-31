@@ -149,7 +149,8 @@ struct BlockReviewTriggerTests {
     }
 
     // Phase 04.1 BRU-reskin: placeholder copy tests updated to match the new BRU layout.
-    // The PRs section was deleted (moved to hero band stat cell with "COMING IN PHASE 6" sub-label).
+    // The PRs section was deleted (moved to hero band stat cell, whose sub-label T99 changed from
+    // "COMING IN PHASE 6" to "THIS BLOCK" once PRS counted the block's PRs).
     // "No logged sets in this block." moved to TONNAGE = "0" hero value — empty state is handled by
     // workingSetCount == 0 mapping to zero TONNAGE. The e1RM empty-state copy is preserved verbatim.
     @Test("BlockReviewView placeholder copy is verbatim (BRU 04.1)")
@@ -158,8 +159,8 @@ struct BlockReviewTriggerTests {
 
         // e1RM empty-state copy preserved verbatim (plan spec: "Not enough sessions logged to compute deltas.")
         #expect(source.contains("\"Not enough sessions logged to compute deltas.\""))
-        // PRs stat cell sub-label in hero band (Phase 6 placeholder — replaces old Section("PRs hit"))
-        #expect(source.contains("\"COMING IN PHASE 6\""))
+        // PRs stat cell sub-label in hero band (T99: PRS counts the block's PRs, so the Phase 6 placeholder is gone)
+        #expect(source.contains("\"THIS BLOCK\""))
         // BRU section head copy (04.1 spec)
         #expect(source.contains("\"e1RM movement\""))
     }

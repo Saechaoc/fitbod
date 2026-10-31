@@ -8,6 +8,10 @@ import XCTest
 /// tall as its buttons, so the RECOMMENDED NEXT BLOCK band shows whole above
 /// it; the band names the template Start next opens; and once the lifter
 /// starts a block, a review put off with Plan custom no longer opens.
+///
+/// Ticket T99, findings F141 and F142. The hero's PRS stat counts the sets
+/// that set a PR during the block, and at accessibility sizes the hero's
+/// three stats stack, so no label breaks mid-word.
 final class BlockReviewAfterEndUITests: XCTestCase {
 
     @MainActor
@@ -180,6 +184,44 @@ final class BlockReviewAfterEndUITests: XCTestCase {
         XCTAssertTrue(reviewTitle(in: app).waitForExistence(timeout: 10), "Ending the started block must open its review")
         XCTAssertTrue(app.staticTexts.labeled("Summer Block").exists, "The review must be the block that ended last")
         XCTAssertFalse(app.staticTexts.labeled("Spring Block").exists, "The review put off before the start must not return")
+    }
+
+    // MARK: - T99
+
+    /// F141: at AX3 on the small phone the hero's stat row split "SESSIONS"
+    /// mid-word and crowded its three stats. At accessibility sizes the
+    /// stats stack, one under the other, so each label shows whole on one
+    /// line.
+    @MainActor
+    func testHeroStatsStackWholeAtAX3() throws {
+        let app = openEndedBlocksReview(textSize: .ax3)
+        UITestNavigation.waitUntilStill(heroStat("sessions", in: app))
+        UITestNavigation.saveScreenshot("T99", "review-hero", textSize: .ax3)
+
+        var problems = heroStatLayoutProblems(in: app, stacked: true)
+        problems += try heroStatLabelProblems(in: app)
+        UITestNavigation.saveScreenshot("T99", "review-hero-prs", textSize: .ax3)
+        XCTAssertTrue(problems.isEmpty, problems.joined(separator: "\n"))
+    }
+
+    /// F142: PRS showed a dash over "COMING IN PHASE 6". The seeded block's
+    /// one workout logged the lifter's first bench sets, all 100 x 5, so
+    /// only the first set a PR. At default text the three stats keep their
+    /// row, each label whole on one line.
+    @MainActor
+    func testHeroCountsTheBlocksPRs() throws {
+        let app = openEndedBlocksReview()
+        let prs = heroStat("prs", in: app)
+        UITestNavigation.waitUntilStill(prs)
+        UITestNavigation.saveScreenshot("T99", "review-hero")
+
+        var problems = heroStatLayoutProblems(in: app, stacked: false)
+        problems += try heroStatLabelProblems(in: app)
+        let shown = prs.staticTexts.allElementsBoundByIndex.map(\.label)
+        if shown != ["PRS", "1", "THIS BLOCK"] {
+            problems.append("The PRS stat reads \(shown), not [\"PRS\", \"1\", \"THIS BLOCK\"]")
+        }
+        XCTAssertTrue(problems.isEmpty, problems.joined(separator: "\n"))
     }
 
     // MARK: - Helpers
@@ -358,5 +400,115 @@ final class BlockReviewAfterEndUITests: XCTestCase {
         XCTAssertTrue(app.buttons.labeled("END BLOCK").waitForExistence(timeout: 10),
                       "START BLOCK must make \(block) the active block", file: file, line: line)
         UITestNavigation.hittable(app.buttons, "Back", file: file, line: line).tap()
+    }
+
+    // MARK: - T99 helpers
+
+    /// Launches on Program with Live Block ended after one finished Live
+    /// Push workout last week (T87's seed), waits until the seed has ended
+    /// the block, then makes the first visit to Today, which opens the
+    /// block's review.
+    @MainActor
+    private func openEndedBlocksReview(
+        textSize: UITestNavigation.TextSize = .default, file: StaticString = #filePath, line: UInt = #line
+    ) -> XCUIApplication {
+        let app = UITestNavigation.launch(UITestNavigation.endedBlockWithRecap, textSize: textSize, file: file, line: line)
+        XCTAssertTrue(app.buttons.labeled("DONE block: Live Block").waitForExistence(timeout: 30),
+                      "The seed must end Live Block before Today's first visit", file: file, line: line)
+        UITestNavigation.selectTab("Today", in: app)
+        assertReviewOpens(in: app, "Today's first visit after the block ended must open its review", file: file, line: line)
+        return app
+    }
+
+    /// The hero's stats, by name.
+    private static let heroStatNames = ["sessions", "tonnage", "prs"]
+
+    /// One of the hero's stats: its label, value and sub-label.
+    @MainActor
+    private func heroStat(_ name: String, in app: XCUIApplication) -> XCUIElement {
+        app.otherElements["blockReview.stat.\(name)"]
+    }
+
+    /// Each hero stat out of place. At accessibility sizes each stat sits
+    /// under the one before it; at default text each sits to its right, in
+    /// the same row. No stat overlaps another or runs off the screen's sides.
+    @MainActor
+    private func heroStatLayoutProblems(in app: XCUIApplication, stacked: Bool) -> [String] {
+        let stats = Self.heroStatNames.map { heroStat($0, in: app) }
+        guard stats.allSatisfy(\.exists) else { return ["The hero must show its SESSIONS, TONNAGE and PRS stats"] }
+        let screen = app.frame
+        var problems: [String] = []
+        for (name, stat) in zip(Self.heroStatNames, stats) {
+            let frame = stat.frame
+            if frame.minX < screen.minX - 0.5 || frame.maxX > screen.maxX + 0.5 {
+                problems.append("The \(name) stat spans x \(frame.minX) to \(frame.maxX), past the \(screen.width)pt screen")
+            }
+        }
+        for index in stats.indices.dropFirst() {
+            let (before, stat) = (stats[index - 1], stats[index])
+            let (beforeName, name) = (Self.heroStatNames[index - 1], Self.heroStatNames[index])
+            if let overlap = UITestNavigation.overlapProblem(before, stat) {
+                problems.append(overlap)
+            }
+            let (above, frame) = (before.frame, stat.frame)
+            if stacked && frame.minY < above.maxY - 0.5 {
+                problems.append("The \(name) stat starts at y \(frame.minY), not under the \(beforeName) stat, which ends at y \(above.maxY)")
+            }
+            if !stacked && (frame.minX < above.maxX - 0.5 || frame.minY >= above.maxY || frame.maxY <= above.minY) {
+                problems.append("The \(name) stat at \(frame) is not beside the \(beforeName) stat at \(above), in its row")
+            }
+        }
+        return problems
+    }
+
+    /// Each stat label or sub-label that is not whole on one line, read from
+    /// the screen once its stat is in view. XCUI reads the whole label
+    /// however the text wraps. Every label shares one font, so one taller
+    /// than the shortest by half a line wraps; Vision can read spaces into
+    /// tracked capitals, so the shown text is compared by its letters.
+    @MainActor
+    private func heroStatLabelProblems(in app: XCUIApplication) throws -> [String] {
+        let stats = Self.heroStatNames.map { heroStat($0, in: app) }
+        // The values are numbers; the labels are the texts with letters.
+        let labels = stats.map { stat in
+            stat.staticTexts.allElementsBoundByIndex.filter { $0.label.contains(where: \.isLetter) }
+        }
+        guard let oneLine = labels.joined().map(\.frame.height).min() else {
+            return ["The hero's stats show no labels"]
+        }
+        var problems: [String] = []
+        for (stat, statLabels) in zip(stats, labels) {
+            scrollIntoView(stat, in: app)
+            let screenshot = XCUIScreen.main.screenshot()
+            for label in statLabels {
+                let frame = label.frame
+                if frame.height > oneLine * 1.5 {
+                    problems.append("The stat label \"\(label.label)\" is \(frame.height)pt tall, more than one \(oneLine)pt line")
+                }
+                let shown = try UITestNavigation.readText(in: frame.insetBy(dx: -4, dy: -2), of: screenshot)
+                if Self.letters(shown) != Self.letters(label.label) {
+                    problems.append("The stat label \"\(label.label)\" reads \"\(shown)\" on the screen")
+                }
+            }
+        }
+        return problems
+    }
+
+    /// Swipes the review until `element` lies whole in its scroll view,
+    /// above the action bar, the way a lifter scrolls to it, or gives up.
+    @MainActor
+    private func scrollIntoView(_ element: XCUIElement, in app: XCUIApplication) {
+        let scroll = reviewScrollView(in: app)
+        for _ in 0..<6 {
+            let visible = scroll.frame.insetBy(dx: -0.5, dy: -0.5)
+            let frame = element.frame
+            if visible.contains(frame) && frame.maxY <= actionBar(in: app).frame.minY + 0.5 { return }
+            if frame.minY < visible.minY {
+                scroll.swipeDown(velocity: .slow)
+            } else {
+                scroll.swipeUp(velocity: .slow)
+            }
+            UITestNavigation.waitUntilStill(element)
+        }
     }
 }
