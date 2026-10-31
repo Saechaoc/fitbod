@@ -329,21 +329,20 @@ public struct ProgramView: View {
     static let templateRows: [ProgramTemplateRowContent] =
         BlockTemplates.catalog.map(ProgramTemplateRowContent.init)
 
-    /// What an active block's row says about its week: a badge beside its
-    /// status, "W2 · INTENSIFICATION", a line under its name, "Week 2 of 4 ·
-    /// Intensification", and what VoiceOver reads, "Week 2 of 4,
-    /// Intensification". Past its last planned week the badge reads PLAN
-    /// COMPLETE and the line goes (tradeoffs.md "A block past its plan").
-    static func activeBlockWeek(of block: Block, on date: Date) -> (badge: String, line: String?, spoken: String) {
+    /// What an active block's row says about its week: a line under its
+    /// name, "Week 2 of 4 · Intensification", the only place the row names
+    /// its phase, and what VoiceOver reads, "Week 2 of 4, Intensification".
+    /// Past its last planned week the line reads PLAN COMPLETE (tradeoffs.md
+    /// "A block past its plan").
+    static func activeBlockWeek(of block: Block, on date: Date) -> (line: String, spoken: String) {
         // An active block before its start date reads as week 1.
         guard case .week(let weekIndex) = PlanWeek.of(block, on: date) ?? .week(0) else {
-            return (PlanWeek.completeLabel, nil, "Plan complete")
+            return (PlanWeek.completeLabel, "Plan complete")
         }
         let totalWeeks = MesocycleWeekPage.totalWeeks(of: block)
         let kind = PeriodizationEngine.weekContext(for: block, weekIndex: weekIndex, on: date)?.phaseKind.rawValue
         let phase = (kind ?? "Accumulation").capitalized
         return (
-            "W\(weekIndex + 1) · \(phase.uppercased())",
             "Week \(weekIndex + 1) of \(totalWeeks) · \(phase)",
             "Week \(weekIndex + 1) of \(totalWeeks), \(phase)"
         )
@@ -581,25 +580,14 @@ fileprivate struct BlockStatusCard: View {
 
     private var derivedStatus: BlockStatus { block.derivedStatus }
 
-    private var activeWeek: (badge: String, line: String?, spoken: String) {
+    private var activeWeek: (line: String, spoken: String) {
         ProgramView.activeBlockWeek(of: block, on: today)
     }
 
     var body: some View {
         Button(action: onTap) {
             VStack(alignment: .leading, spacing: 4) {
-                // Status chip row
-                HStack(spacing: 8) {
-                    statusChip
-                    Spacer()
-                    if derivedStatus == .active {
-                        Text(activeWeek.badge)
-                            .font(BRUFont.labelSmall)
-                            .textCase(.uppercase)
-                            .tracking(1.2)
-                            .foregroundStyle(Color.bruMuted)
-                    }
-                }
+                statusChip
 
                 // Block name
                 Text(block.name.isEmpty ? "Untitled Block" : block.name)
@@ -607,13 +595,13 @@ fileprivate struct BlockStatusCard: View {
                     .foregroundStyle(Color.bruInk)
                     .fixedSize(horizontal: false, vertical: true)
 
-                // Active progress line
-                if derivedStatus == .active, let line = activeWeek.line {
-                    Text(line)
+                // Active progress line, the row's one mention of its phase.
+                // It wraps between words at accessibility sizes.
+                if derivedStatus == .active {
+                    Text(activeWeek.line)
                         .font(BRUFont.bodyDefault)
                         .foregroundStyle(Color.bruMuted)
                         .fixedSize(horizontal: false, vertical: true)
-                        .lineLimit(1)
                 }
             }
             .padding(.horizontal, ProgramScreenTokens.horizontalPagePadding)
@@ -664,6 +652,8 @@ fileprivate struct RoutineSplitRow: View {
     let split: Split
     let onTap: () -> Void
 
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+
     // Session count = number of slots in the split.
     private var sessionCount: Int { split.slots?.count ?? 0 }
 
@@ -679,20 +669,24 @@ fileprivate struct RoutineSplitRow: View {
     var body: some View {
         Button(action: onTap) {
             HStack(spacing: 12) {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(split.name.isEmpty ? "Untitled Routine" : split.name)
-                        .font(BRUFont.bodyEmphasis)
-                        .foregroundStyle(Color.bruInk)
+                partsLayout {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(split.name.isEmpty ? "Untitled Routine" : split.name)
+                            .font(BRUFont.bodyEmphasis)
+                            .foregroundStyle(Color.bruInk)
 
-                    Text("\(sessionCount) sessions")
-                        .font(BRUFont.bodyDefault)
-                        .foregroundStyle(Color.bruMuted)
-                }
+                        Text("\(sessionCount) sessions")
+                            .font(BRUFont.bodyDefault)
+                            .foregroundStyle(Color.bruMuted)
+                    }
 
-                Spacer()
+                    if !dynamicTypeSize.isAccessibilitySize {
+                        Spacer()
+                    }
 
-                if !liveBlockNames.isEmpty {
-                    UsageTagFlow(names: liveBlockNames)
+                    if !liveBlockNames.isEmpty {
+                        UsageTagFlow(names: liveBlockNames)
+                    }
                 }
 
                 Text("›")
@@ -707,19 +701,37 @@ fileprivate struct RoutineSplitRow: View {
         }
         .buttonStyle(.plain)
     }
+
+    /// The name beside its block tags, or above them at accessibility
+    /// sizes, where a tag beside the name runs off the screen.
+    private var partsLayout: AnyLayout {
+        dynamicTypeSize.isAccessibilitySize
+            ? AnyLayout(VStackLayout(alignment: .leading, spacing: 8))
+            : AnyLayout(HStackLayout(spacing: 12))
+    }
 }
 
 // MARK: - UsageTagFlow
 
 /// Wrapping horizontal flow of usage tag chips using ProgramChipFlow layout.
+/// At accessibility sizes the tags stack, one to a line, and a tag wider
+/// than the row wraps its words instead of running off the screen.
 /// Renders nothing when names is empty (no "unused" label).
 fileprivate struct UsageTagFlow: View {
 
     let names: [String]
 
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+
     var body: some View {
         if names.isEmpty {
             EmptyView()
+        } else if dynamicTypeSize.isAccessibilitySize {
+            VStack(alignment: .leading, spacing: ProgramScreenTokens.chipRowSpacing) {
+                ForEach(names, id: \.self) { name in
+                    BRUChip(name)
+                }
+            }
         } else {
             ProgramChipFlow(
                 spacing: ProgramScreenTokens.chipSpacing,

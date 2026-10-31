@@ -554,10 +554,8 @@ public struct BlockOverviewScreen: View {
                 detailColor: Color.bruSignal
             )
 
-            // Phase-week hero label (42pt displayHero), or PLAN COMPLETE
-            Text(Self.heroHeadline(planWeek, of: block))
-                .font(BRUFont.displayHero)
-                .foregroundStyle(Color.bruPaper)
+            // Phase-week hero label (56pt displayHero), or PLAN COMPLETE
+            HeroHeadline(text: Self.heroHeadline(planWeek, of: block))
                 .padding(.top, 6)
 
             // Bottom row: week position + vol + intensity. After the plan
@@ -631,9 +629,7 @@ public struct BlockOverviewScreen: View {
         return VStack(alignment: .leading, spacing: 0) {
             heroTopRow(detail: detail.text, detailColor: Color.bruSignal)
 
-            Text(blockDisplayName)
-                .font(BRUFont.displayHero)
-                .foregroundStyle(Color.bruPaper)
+            HeroHeadline(text: blockDisplayName)
                 .padding(.top, 6)
 
             if let plan {
@@ -704,9 +700,7 @@ public struct BlockOverviewScreen: View {
             heroTopRow(detail: endedText, detailColor: Color.bruMuted)
 
             // Phase-week hero label
-            Text(block.name)
-                .font(BRUFont.displayHero)
-                .foregroundStyle(Color.bruPaper)
+            HeroHeadline(text: block.name)
                 .padding(.top, 6)
         }
         .padding(.horizontal, 16)
@@ -1398,6 +1392,57 @@ public struct BlockOverviewScreen: View {
         Rectangle()
             .fill(Color.bruBg)
             .frame(height: 24)
+    }
+}
+
+// MARK: - HeroHeadline (fileprivate)
+
+/// A hero's headline in the 56pt display font. It breaks only between
+/// words: when its widest word is wider than the hero, the whole headline
+/// scales down until that word fits, so "Accumulation" and "Powerbuilding"
+/// stay whole on the small phone.
+fileprivate struct HeroHeadline: View {
+    let text: String
+
+    /// The width the headline may fill.
+    @State private var width: CGFloat = 0
+    /// The widest word's width in the full-size font.
+    @State private var widestWord: CGFloat = 0
+
+    var body: some View {
+        Text(text)
+            .font(font)
+            .foregroundStyle(Color.bruPaper)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { width = $0 }
+            .background(alignment: .topLeading) {
+                // Each word on its own line, so the stack is as wide as the
+                // widest one.
+                VStack(alignment: .leading, spacing: 0) {
+                    ForEach(Array(words.enumerated()), id: \.offset) { _, word in
+                        Text(word)
+                    }
+                }
+                .font(BRUFont.displayHero)
+                .fixedSize()
+                .hidden()
+                .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { widestWord = $0 }
+            }
+    }
+
+    private var words: [Substring] {
+        text.split(whereSeparator: \.isWhitespace)
+    }
+
+    /// The display font, or a smaller size of it when the widest word would
+    /// not fit. A point of width slack keeps rounding from breaking that
+    /// word, and the size drops one more point because type renders at a
+    /// whole point size, which can round the scaled size up.
+    private var font: Font {
+        guard width > 1, widestWord > width - 1 else { return BRUFont.displayHero }
+        let size = BRUDisplaySize.hero.pointSize
+        return .bru(.grotesk, size: size * (width - 1) / widestWord - 1,
+                    relativeTo: BRUFont.textStyle(forPointSize: size))
     }
 }
 

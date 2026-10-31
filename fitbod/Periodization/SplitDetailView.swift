@@ -16,9 +16,10 @@
 //      Archive section ("Archive routine")
 //    }
 //
-//  Drag-reorder: hysteresis-gated row-local @GestureState pattern (copy-adapted
-//  from NewBlockPhaseListSection / NewBlockPhaseEditorRow in BlockBuilderView.swift).
-//  NOT List .onMove - List chrome violates BRU contract.
+//  Drag-reorder: a row-local UIKit long press (SlotReorderPress) with hysteresis-
+//  gated targets copy-adapted from NewBlockPhaseListSection / NewBlockPhaseEditorRow
+//  in BlockBuilderView.swift. It begins only after the press, so a swipe that starts
+//  on a row scrolls the page. NOT List .onMove - List chrome violates BRU contract.
 //
 //  Reindex-on-write: positions become 0..<n contiguous after every add/remove/reorder.
 //  Single ctx.save() per mutation (no multi-write windows).
@@ -38,6 +39,7 @@
 
 import SwiftUI
 import SwiftData
+import UIKit
 
 // MARK: - Reindex Helper
 
@@ -60,6 +62,7 @@ public struct SplitDetailView: View {
     @Environment(\.modelContext) private var ctx
     @Environment(\.dismiss) private var dismiss
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     // MARK: - Stored
 
@@ -143,6 +146,8 @@ public struct SplitDetailView: View {
                     archiveSection
                 }
             }
+            // A session row's reorder drag moves the row, not the page.
+            .scrollDisabled(draggingSlotID != nil)
         }
         .background(Color.bruPaper.ignoresSafeArea())   // fix-6: bruPaper per 60/30/10 doctrine
         .navigationBarHidden(true)
@@ -191,7 +196,8 @@ public struct SplitDetailView: View {
                 }
                 slotPendingRemoval = nil
             }
-            Button("Cancel", role: .cancel) {
+            // iOS 26 hides a cancel-role button, so the way back is a plain one.
+            Button("Keep session") {
                 slotPendingRemoval = nil
             }
         }
@@ -357,11 +363,13 @@ public struct SplitDetailView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
         } else {
             ForEach(liveBlocks, id: \.id) { block in
-                HStack {
+                usedInLayout {
                     Text(block.name)
                         .font(BRUFont.bodyEmphasis)
                         .foregroundStyle(Color.bruInk)
-                    Spacer()
+                    if !dynamicTypeSize.isAccessibilitySize {
+                        Spacer()
+                    }
                     // Status badge colors mirror ProgramView.statusChip:
                     //   ACTIVE  = bruSignal fill  (highest urgency)
                     //   READY   = bruSignal outline
@@ -378,6 +386,7 @@ public struct SplitDetailView: View {
                 .padding(.horizontal, 16)
                 .padding(.vertical, 12)
                 .frame(minHeight: 44)
+                .frame(maxWidth: .infinity, alignment: .leading)
 
                 if block.id != liveBlocks.last?.id {
                     BRUDivider(.hair)
@@ -386,6 +395,14 @@ public struct SplitDetailView: View {
         }
 
         BRUDivider(.ink)
+    }
+
+    /// A Used in row's block name beside its status, or above it at
+    /// accessibility sizes, where both on one line break the name.
+    private var usedInLayout: AnyLayout {
+        dynamicTypeSize.isAccessibilitySize
+            ? AnyLayout(VStackLayout(alignment: .leading, spacing: 6))
+            : AnyLayout(HStackLayout())
     }
 
     // MARK: - Archive
@@ -535,49 +552,56 @@ fileprivate struct SplitSlotRow: View {
     var onMoveDown: () -> Void
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
-    // Row-local drag translation - reset with spring on gesture end
-    @GestureState(
-        resetTransaction: Transaction(
-            animation: .spring(response: 0.28, dampingFraction: 0.86)
-        )
-    )
-    private var dragTranslation: CGFloat = 0
+    // Row-local drag translation - reset with spring on reorder end
+    @State private var dragTranslation: CGFloat = 0
 
     @State private var liveTarget: Int? = nil
 
     var body: some View {
-        HStack(spacing: 12) {
-            // Position number (1-based)
-            Text(String(format: "%02d", slot.position + 1))
-                .font(BRUFont.condensedLabel)
-                .foregroundStyle(Color.bruMuted)
-                .frame(width: 32, alignment: .leading)
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(alignment: dynamicTypeSize.isAccessibilitySize ? .firstTextBaseline : .center, spacing: 12) {
+                // Position number (1-based). The 32pt column holds "01" up to
+                // the largest standard size; at accessibility sizes it takes
+                // its own width, so it never wraps a digit.
+                Text(String(format: "%02d", slot.position + 1))
+                    .font(BRUFont.condensedLabel)
+                    .foregroundStyle(Color.bruMuted)
+                    .fixedSize()
+                    .frame(width: dynamicTypeSize.isAccessibilitySize ? nil : 32, alignment: .leading)
 
-            // Session template name + summary line
-            VStack(alignment: .leading, spacing: 3) {
-                Text(slot.sessionTemplate?.name ?? "—")
-                    .font(BRUFont.displayMedium)
-                    .foregroundStyle(Color.bruInk)
-                    .fixedSize(horizontal: false, vertical: true)
-                if let template = slot.sessionTemplate {
-                    Text(SessionTemplateSummary(template: template).line)
-                        .font(BRUFont.labelSmall)
-                        .tracking(1.0)
-                        .textCase(.uppercase)
+                // Session template name + summary line
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(slot.sessionTemplate?.name ?? "—")
+                        .font(BRUFont.displayMedium)
+                        .foregroundStyle(Color.bruInk)
+                        .fixedSize(horizontal: false, vertical: true)
+                    if let template = slot.sessionTemplate {
+                        Text(SessionTemplateSummary(template: template).line)
+                            .font(BRUFont.labelSmall)
+                            .tracking(1.0)
+                            .textCase(.uppercase)
+                            .foregroundStyle(Color.bruMuted)
+                    }
+                }
+
+                Spacer(minLength: 8)
+
+                if !isEditing {
+                    Text("›")
+                        .font(BRUFont.displayMedium)
                         .foregroundStyle(Color.bruMuted)
+                        .accessibilityHidden(true)
+                } else if !dynamicTypeSize.isAccessibilitySize {
+                    editControls
                 }
             }
 
-            Spacer(minLength: 8)
-
-            if isEditing {
+            // At accessibility sizes the edit controls go under the session,
+            // so its name, its summary and REMOVE each keep their words.
+            if isEditing && dynamicTypeSize.isAccessibilitySize {
                 editControls
-            } else {
-                Text("›")
-                    .font(BRUFont.displayMedium)
-                    .foregroundStyle(Color.bruMuted)
-                    .accessibilityHidden(true)
             }
         }
         .padding(.horizontal, 16)
@@ -586,7 +610,12 @@ fileprivate struct SplitSlotRow: View {
         .contentShape(Rectangle())
         .offset(y: isDragging ? dragTranslation : 0)
         .onTapGesture { if !isEditing { onOpen() } }
-        .gesture(reduceMotion || isEditing ? nil : reorderGesture)
+        .gesture(SlotReorderPress(
+            isEnabled: !(reduceMotion || isEditing),
+            onBegan: beginReorder,
+            onMoved: moveReorder,
+            onEnded: endReorder
+        ))
         // VoiceOver: activate opens the session; reorder and remove are actions
         .accessibilityElement(children: isEditing ? .contain : .ignore)
         .accessibilityLabel("Session \(slot.position + 1): \(slot.sessionTemplate?.name ?? "empty")")
@@ -632,43 +661,85 @@ fileprivate struct SplitSlotRow: View {
         .accessibilityLabel(label)
     }
 
-    // MARK: - Hysteresis Reorder Gesture
+    // MARK: - Hysteresis Reorder
 
-    // Long-press gate + drag - copy-adapted from NewBlockPhaseEditorRow (BlockBuilderView.swift
-    // lines 1511-1543). Hysteresis threshold 0.55 pitch so hovering at a boundary doesn't
+    // Hysteresis copy-adapted from NewBlockPhaseEditorRow (BlockBuilderView.swift
+    // lines 1511-1543). Threshold 0.55 pitch so hovering at a boundary doesn't
     // flicker the sibling gap open/closed.
-    private var reorderGesture: some Gesture {
-        LongPressGesture(minimumDuration: 0.25)
-            .sequenced(before: DragGesture(minimumDistance: 0))
-            .updating($dragTranslation) { value, state, _ in
-                if case .second(true, let drag?) = value {
-                    state = drag.translation.height
-                }
+
+    private func beginReorder() {
+        liveTarget = rowIndex
+        onReorderBegan()
+    }
+
+    private func moveReorder(by translation: CGFloat) {
+        dragTranslation = translation
+        guard let current = liveTarget else { return }
+        let raw = Double(rowIndex) + Double(translation / reorderPitch)
+        // Hysteresis: re-target only when >0.55 pitch beyond current slot center
+        if abs(raw - Double(current)) > 0.55 {
+            let next = min(max(Int(raw.rounded()), 0), rowCount - 1)
+            if next != current {
+                liveTarget = next
+                onReorderTarget(next)
             }
-            .onChanged { value in
-                switch value {
-                case .first(true):
-                    liveTarget = rowIndex
-                    onReorderBegan()
-                case .second(true, let drag?):
-                    let raw = Double(rowIndex) + Double(drag.translation.height / reorderPitch)
-                    let current = liveTarget ?? rowIndex
-                    // Hysteresis: re-target only when >0.55 pitch beyond current slot center
-                    if abs(raw - Double(current)) > 0.55 {
-                        let next = min(max(Int(raw.rounded()), 0), rowCount - 1)
-                        if next != current {
-                            liveTarget = next
-                            onReorderTarget(next)
-                        }
-                    }
-                default:
-                    break
-                }
-            }
-            .onEnded { _ in
-                liveTarget = nil
-                onReorderEnded()
-            }
+        }
+    }
+
+    private func endReorder() {
+        liveTarget = nil
+        onReorderEnded()
+        withAnimation(.spring(response: 0.28, dampingFraction: 0.86)) {
+            dragTranslation = 0
+        }
+    }
+}
+
+// MARK: - SlotReorderPress
+
+/// A session row's reorder gesture: UIKit's long press, which begins only
+/// once the finger has rested on the row for a quarter second, then reports
+/// how far the finger has moved up or down. Until it begins, a swipe that
+/// starts on the row scrolls the page and a tap opens the session; a
+/// SwiftUI long press took the touch at touch-down, which stopped the page
+/// scrolling and left a tapped row marked as dragging.
+fileprivate struct SlotReorderPress: UIGestureRecognizerRepresentable {
+    let isEnabled: Bool
+    let onBegan: () -> Void
+    let onMoved: (CGFloat) -> Void
+    let onEnded: () -> Void
+
+    final class Coordinator {
+        var startY: CGFloat = 0
+    }
+
+    func makeCoordinator(converter: CoordinateSpaceConverter) -> Coordinator {
+        Coordinator()
+    }
+
+    func makeUIGestureRecognizer(context: Context) -> UILongPressGestureRecognizer {
+        let press = UILongPressGestureRecognizer()
+        press.minimumPressDuration = 0.25
+        return press
+    }
+
+    func updateUIGestureRecognizer(_ recognizer: UILongPressGestureRecognizer, context: Context) {
+        recognizer.isEnabled = isEnabled
+    }
+
+    func handleUIGestureRecognizerAction(_ recognizer: UILongPressGestureRecognizer, context: Context) {
+        let y = context.converter.location(in: .global).y
+        switch recognizer.state {
+        case .began:
+            context.coordinator.startY = y
+            onBegan()
+        case .changed:
+            onMoved(y - context.coordinator.startY)
+        case .ended, .cancelled:
+            onEnded()
+        default:
+            break
+        }
     }
 }
 

@@ -60,8 +60,7 @@ struct BlockPastPlanTests {
         #expect(BlockOverviewScreen.stripHeader(planWeek, of: block) == "PLAN COMPLETE")
 
         let row = ProgramView.activeBlockWeek(of: block, on: now)
-        #expect(row.badge == "PLAN COMPLETE")
-        #expect(row.line == nil, "Program's row drops its week and phase line")
+        #expect(row.line == "PLAN COMPLETE", "Program's row shows PLAN COMPLETE in place of its week and phase")
         #expect(row.spoken == "Plan complete")
 
         #expect(BlockContextBand.chipLabel(for: block, on: now) == "PLAN COMPLETE")
@@ -96,7 +95,6 @@ struct BlockPastPlanTests {
         #expect(BlockOverviewScreen.stripHeader(planWeek, of: block) == "WEEK \(day.week) OF 4")
 
         let row = ProgramView.activeBlockWeek(of: block, on: now)
-        #expect(row.badge == "W\(day.week) · \(day.phase.uppercased())")
         #expect(row.line == "Week \(day.week) of 4 · \(day.phase)")
         #expect(row.spoken == "Week \(day.week) of 4, \(day.phase)")
 

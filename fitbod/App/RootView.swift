@@ -286,6 +286,7 @@ public struct RootView: View {
             BlockStatesSeed.runIfRequested(in: modelContext) // DEBUG-only E2E hook; no-op without the launch argument
             CalibratingSetSeed.runIfRequested(in: modelContext) // DEBUG-only E2E hook; no-op without the launch argument
             WeeklyTonnageSeed.runIfRequested(in: modelContext) // DEBUG-only E2E hook; no-op without the launch arguments
+            PowerbuildingSeed.runIfRequested(in: modelContext) // DEBUG-only E2E hook; no-op without the launch argument
 
             seedState.phase = .ready
         } catch {
