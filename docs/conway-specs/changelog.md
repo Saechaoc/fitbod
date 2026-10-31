@@ -2,6 +2,11 @@
 
 Newest first.
 
+## 2026-10-30: ticket ids can have three digits
+
+- What: `capacity_model.py` accepts ticket ids with two or three digits, in the ticket files and in index.md.
+- Why: T01 to T99 are all taken and archived ids are never reused, so Gate 1's fix ticket is T100.
+
 ## 2026-10-30: completed tickets are archived
 
 - What: tickets verified complete on `main` are archived: their files leave `tickets/`, their rows leave index.md, and `ARCHIVED` in `capacity_model.py` keeps each one's id, phase, review items and planned new files.

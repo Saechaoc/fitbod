@@ -178,7 +178,7 @@ for path in sorted(TICKETS.glob("T*.md")):
         errors.append(f"{path.name}: front matter lacks {', '.join(missing)}")
         continue
     tid = meta["id"]
-    if not re.fullmatch(r"T\d{2}", tid):
+    if not re.fullmatch(r"T\d{2,3}", tid):
         errors.append(f"{path.name}: bad id {tid!r}")
         continue
     if tid in tickets:
@@ -284,7 +284,7 @@ for name in sorted(set(TEST_NAME.findall(rules_text))):
 
 index = (BUNDLE / "index.md").read_text(encoding="utf-8")
 listed = {tid: (file, title.strip())
-          for tid, file, title in re.findall(r"\| \[(T\d{2})\]\(tickets/([^)]+)\) \| ([^|]+)\|", index)}
+          for tid, file, title in re.findall(r"\| \[(T\d{2,3})\]\(tickets/([^)]+)\) \| ([^|]+)\|", index)}
 for tid in ids:
     if tid not in listed:
         errors.append(f"index.md: {tid} is not listed")

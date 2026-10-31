@@ -31,7 +31,11 @@ To read an archived ticket, `git log --diff-filter=D -1 -- 'docs/conway-specs/ti
 
 ### Phase 1: P0 and P1 defects
 
-Every Phase 1 ticket is done and archived.
+Every other Phase 1 ticket is done and archived.
+
+| Ticket | Title |
+|---|---|
+| [T100](tickets/T100-empty-program-chip-lines-per-phone.md) | The empty Program test expects the chip lines each phone draws |
 
 ### Phase 2: P2 defects
 
