@@ -22,9 +22,9 @@ final class MilestoneOneJourneyUITests: XCTestCase {
 
     @MainActor
     func testAuthorRoutineLogRelaunchFinishAndHistory() throws {
-        app = XCUIApplication()
-        app.launchArguments = ["-fitbod-reset-store"]
-        app.launch()
+        // The shared launch fails unless the reset really happened: a run's
+        // first launch can lose its arguments and open the last run's store.
+        app = UITestNavigation.launch(UITestNavigation.freshStore)
         XCTAssertTrue(app.buttons["Library"].waitForExistence(timeout: 90))
         attach("01-today-empty")
 
@@ -221,9 +221,7 @@ final class MilestoneOneJourneyUITests: XCTestCase {
 
     @MainActor
     func testComponentGalleryInteractions() throws {
-        app = XCUIApplication()
-        app.launchArguments = ["-fitbod-reset-store"]
-        app.launch()
+        app = UITestNavigation.launch(UITestNavigation.freshStore)
         XCTAssertTrue(app.buttons["Today"].waitForExistence(timeout: 90))
         tap("Settings")
         let gallery = app.buttons["settings.componentGallery"]
@@ -244,9 +242,7 @@ final class MilestoneOneJourneyUITests: XCTestCase {
     /// Run with simctl content_size set before launch; no fixed text-size override.
     @MainActor
     func testWorkoutLayoutAndTouchTargets() throws {
-        app = XCUIApplication()
-        app.launchArguments = ["-fitbod-reset-store", "-fitbod-seed-demo-workout"]
-        app.launch()
+        app = UITestNavigation.launch(UITestNavigation.seededWorkout)
         let resume = app.buttons["resumeSlab.resume"]
         XCTAssertTrue(resume.waitForExistence(timeout: 90))
         reveal(resume)
