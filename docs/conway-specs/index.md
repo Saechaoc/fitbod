@@ -102,6 +102,7 @@ To read an archived ticket, `git log --diff-filter=D -1 -- 'docs/conway-specs/ti
 | [T87](tickets/T87-today-sheet-order.md) | Today shows the block review and the weekly recap one at a time |
 | [T96](tickets/T96-history-pr-count.md) | Exercise history counts its real PRs and stops writing state while it draws |
 | [T97](tickets/T97-calibrating-step-copy.md) | Why this weight explains RPE autoregulation's calibrating suggestions |
+| [T99](tickets/T99-block-review-prs-and-ax3.md) | The block review counts its PRs and keeps its stats whole at AX3 |
 
 ### Phase 3: P3 polish and copy
 
