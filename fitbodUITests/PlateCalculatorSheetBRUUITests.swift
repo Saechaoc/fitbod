@@ -286,6 +286,13 @@ final class PlateCalculatorSheetBRUUITests: XCTestCase {
         let target = app.staticTexts.labeled("Target")
         let unit = app.staticTexts.labeled("LB")
         XCTAssertTrue(target.exists && unit.exists, "The calculator must show TARGET and its unit", file: file, line: line)
+        // TARGET keeps the sheet's 16pt margin, which a medium sheet draws
+        // smaller by its width over the window's.
+        let sheet = try XCTUnwrap(app.scrollViews.allElementsBoundByIndex.last { $0.isHittable },
+                                  "The calculator must scroll", file: file, line: line)
+        let margin = 16 * sheet.frame.width / app.windows.firstMatch.frame.width
+        XCTAssertEqual(target.frame.minX, sheet.frame.minX + margin, accuracy: 1.5,
+                       "TARGET must start on the sheet's 16pt margin", file: file, line: line)
         let startsWith = { (prefix: String) in
             app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH[c] %@", prefix)).firstMatch
         }

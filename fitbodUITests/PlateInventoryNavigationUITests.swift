@@ -203,7 +203,10 @@ extension UITestNavigation {
         // A shown number may run on from a digit Vision reads into a
         // neighbor, such as a plate's bar read as "1" in "12.5".
         let shown = lines.flatMap { numbers(in: readable($0)) }
-        let broken = numbers(in: element.label).filter { number in !shown.contains { $0.contains(number) } }
+        // A one-digit number cannot break across lines.
+        let broken = numbers(in: element.label).filter { number in
+            number.count > 1 && !shown.contains { $0.contains(number) }
+        }
         return broken.isEmpty ? [] : ["\"\(element.label)\" splits \(broken) across lines: the screen reads \(lines)"]
     }
 

@@ -224,6 +224,9 @@ public struct PlateCalculatorSheet: View {
             .padding(.top, 2)
             .padding(.bottom, 14)
         }
+        // At accessibility sizes nothing in the band stretches, so it fills
+        // the sheet's width itself and keeps TARGET on the 16pt margin.
+        .frame(maxWidth: .infinity, alignment: .leading)
         .overlay(alignment: .bottom) {
             // 2pt bruInk bottom rule per plate-calc.jsx line 25
             Rectangle()
