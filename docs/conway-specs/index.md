@@ -61,6 +61,7 @@ Every other Phase 1 ticket is done and archived.
 | [T96](tickets/T96-history-pr-count.md) | Exercise history counts its real PRs and stops writing state while it draws |
 | [T97](tickets/T97-calibrating-step-copy.md) | Why this weight explains RPE autoregulation's calibrating suggestions |
 | [T99](tickets/T99-block-review-prs-and-ax3.md) | The block review counts its PRs and keeps its stats whole at AX3 |
+| [T101](tickets/T101-ui-tests-idle-after-typing.md) | UI tests stop waiting a minute per step after typing |
 
 ### Phase 3: P3 polish and copy
 
