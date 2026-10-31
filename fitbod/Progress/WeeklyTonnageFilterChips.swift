@@ -18,9 +18,10 @@
 //  `Set<String>` Binding. The entire row is visually disabled
 //  (`.opacity(0.5)` + `.disabled(true)`) when no `Block` entities
 //  exist (`@Query<Block>.isEmpty`) — i.e. until Phase 4 ships. A
-//  footer caption reads (UI-SPEC verbatim):
+//  footer caption sends the lifter to the Program tab, where blocks are
+//  defined:
 //
-//      "No block data yet — define a block in Routines."
+//      "No block data yet. Define a block in Program."
 //
 //  ## Row 3 — MuscleChipRow
 //
@@ -107,7 +108,7 @@ public struct BlockPhaseChipRow: View {
                 .padding(.horizontal, 16)
             }
             if disabled {
-                Text("No block data yet — define a block in Routines.")
+                Text("No block data yet. Define a block in Program.")
                     .font(BRUFont.labelSmall)
                     .tracking(1.0)
                     .foregroundStyle(Color.bruMuted)

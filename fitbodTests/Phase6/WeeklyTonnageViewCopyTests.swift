@@ -47,12 +47,14 @@ struct WeeklyTonnageViewCopyTests {
         #expect(chips.contains("\"Last 26 wk\""))
         #expect(chips.contains("\"All time\""))
 
-        // Block-phase chips + disabled-footer copy
+        // Block-phase chips + disabled-footer copy. The footer names the
+        // Program tab, where blocks are defined (T23).
         #expect(chips.contains("\"Accumulation\""))
         #expect(chips.contains("\"Intensification\""))
         #expect(chips.contains("\"Realization\""))
         #expect(chips.contains("\"Deload\""))
-        #expect(chips.contains("\"No block data yet — define a block in Routines.\""))
+        #expect(chips.contains("\"No block data yet. Define a block in Program.\""))
+        #expect(!chips.contains("define a block in Routines"))
 
         // Muscle-chip footer
         #expect(chips.contains("\"Tap a muscle to break the bar by stimulus.\""))
@@ -65,7 +67,12 @@ struct WeeklyTonnageViewCopyTests {
         #expect(view.contains("\"Not enough data\""))
         #expect(view.contains("\"Log one week of training to see tonnage.\""))
         #expect(view.contains("\"Weekly Tonnage\""))
-        #expect(view.contains("TOTAL"))      // BRU hero band caption (replaced "kg over" pre-BRU)
+        // T23: the hero counts weeks with the shared plural rule ("TOTAL · 1 WEEK"),
+        // and the axis title names the unit setting instead of a fixed KG.
+        #expect(view.contains("\"TOTAL · \\(BRUCountLabel.text(bars.count, \"WEEK\"))\""))
+        #expect(view.contains("\"TONNAGE (\\(unitLabel))\""))
+        #expect(!view.contains("WEEKS\")"))
+        #expect(!view.contains("\"TONNAGE (KG)\""))
 
         // Week-detail nav title + empty state copy
         #expect(detail.contains("\"Week of"))
