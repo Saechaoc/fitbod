@@ -8,7 +8,7 @@
 //  Top row: actual prescription values in a wrapping BRUFlowLayout:
 //    BRUChip("{repsMin}–{repsMax} reps")        ← ink outline
 //    BRUChip("RPE {rpeMin}–{rpeMax}")           ← ink outline
-//    BRUChip("{rest} min rest")                  ← ink outline
+//    BRUChip("{m:ss} rest")                      ← ink outline
 //
 //  Below: SetRowsContainer(exercise:) — the 1.5pt bruInk bordered per-set grid.
 //
@@ -25,6 +25,12 @@
 //  explicit no-target chip, so no number is ever typed over (Milestone 1
 //  review items 5 and 6).
 //
+//  Rest reads as minutes and seconds, such as "3:00", in the chip and the
+//  stepper, as on the rest timer. The three switches use the BRU toggle
+//  style, and at accessibility sizes their labels wrap, the tempo fields
+//  drop their fixed widths and the overrides count moves under its label,
+//  so nothing is clipped (Milestone 1 review items 12 and 13).
+//
 //  BRU contract: NO accentColor / NO Image(systemName:) / NO Capsule /
 //  NO RoundedRectangle / NO Apple HIG semantic fonts
 //
@@ -32,6 +38,7 @@
 import SwiftUI
 
 public struct PrescriptionEditorRow: View {
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @Bindable public var draft: RoutineExerciseDraft
     public let hasBlock: Bool
 
@@ -93,12 +100,7 @@ public struct PrescriptionEditorRow: View {
     }
 
     private var restChipLabel: String {
-        let mins = draft.prescribedRestSeconds / 60
-        let secs = draft.prescribedRestSeconds % 60
-        if secs == 0 {
-            return "\(mins) min rest"
-        }
-        return "\(draft.prescribedRestSeconds)s rest"
+        "\(restClock(draft.prescribedRestSeconds)) rest"
     }
 
     // MARK: - Advanced Section
@@ -180,40 +182,56 @@ public struct PrescriptionEditorRow: View {
     // MARK: - Rest
 
     private var restStepper: some View {
-        BRUStepper("Rest", value: $draft.prescribedRestSeconds, in: 0...600, step: 15) { "\($0)s" }
+        BRUStepper("Rest", value: $draft.prescribedRestSeconds, in: 0...600, step: 15) { restClock($0) }
+            .accessibilityIdentifier("prescription.rest")
     }
 
     // MARK: - Tempo
 
     @ViewBuilder
     private var tempoSection: some View {
-        Toggle(isOn: $draft.tracksTempo) {
-            Text("Track tempo")
-                .font(BRUFont.bodyEmphasis)
-                .foregroundStyle(Color.bruInk)
-        }
-        .lineLimit(1)
+        Toggle("Track tempo", isOn: $draft.tracksTempo)
+            .toggleStyle(.bru)
 
         if draft.tracksTempo {
-            HStack {
-                Text("Tempo")
-                    .font(BRUFont.bodyDefault)
-                    .foregroundStyle(Color.bruMuted)
-                    .lineLimit(1)
-                    .fixedSize(horizontal: true, vertical: false)
-                Spacer()
-                HStack(spacing: 6) {
-                    tempoField(index: 0, placeholder: "Ecc")
-                    tempoField(index: 1, placeholder: "Bot")
-                    tempoField(index: 2, placeholder: "Con")
-                    tempoField(index: 3, placeholder: "Top")
+            if dynamicTypeSize.isAccessibilitySize {
+                // Four 40pt fields would clip their text, so they share the
+                // row under the label instead.
+                VStack(alignment: .leading, spacing: 8) {
+                    tempoLabel
+                    tempoFields(width: nil)
                 }
-                .fixedSize(horizontal: true, vertical: false)
+            } else {
+                HStack {
+                    tempoLabel
+                        .lineLimit(1)
+                        .fixedSize(horizontal: true, vertical: false)
+                    Spacer()
+                    tempoFields(width: 40)
+                        .fixedSize(horizontal: true, vertical: false)
+                }
             }
         }
     }
 
-    private func tempoField(index: Int, placeholder: String) -> some View {
+    private var tempoLabel: some View {
+        Text("Tempo")
+            .font(BRUFont.bodyDefault)
+            .foregroundStyle(Color.bruMuted)
+    }
+
+    /// The four tempo fields, each `width` wide, or sharing the row when
+    /// `width` is nil.
+    private func tempoFields(width: CGFloat?) -> some View {
+        HStack(spacing: 6) {
+            tempoField(index: 0, placeholder: "Ecc", width: width)
+            tempoField(index: 1, placeholder: "Bot", width: width)
+            tempoField(index: 2, placeholder: "Con", width: width)
+            tempoField(index: 3, placeholder: "Top", width: width)
+        }
+    }
+
+    private func tempoField(index: Int, placeholder: String, width: CGFloat?) -> some View {
         let parts = (draft.tempo ?? "").split(separator: "-").map(String.init)
         let current = index < parts.count ? parts[index] : ""
         let binding = Binding<String>(
@@ -227,7 +245,7 @@ public struct PrescriptionEditorRow: View {
             }
         )
         return TextField(placeholder, text: binding)
-            .frame(width: 40)
+            .frame(width: width)
             .keyboardType(.numberPad)
             .multilineTextAlignment(.center)
             .font(BRUFont.bodyDefault)
@@ -236,12 +254,8 @@ public struct PrescriptionEditorRow: View {
     // MARK: - Partial reps
 
     private var partialRepsToggle: some View {
-        Toggle(isOn: $draft.tracksPartialReps) {
-            Text("Track partial reps")
-                .font(BRUFont.bodyEmphasis)
-                .foregroundStyle(Color.bruInk)
-        }
-        .lineLimit(1)
+        Toggle("Track partial reps", isOn: $draft.tracksPartialReps)
+            .toggleStyle(.bru)
     }
 
     // MARK: - Auto warm-up
@@ -252,7 +266,7 @@ public struct PrescriptionEditorRow: View {
 
     private var autoWarmupToggle: some View {
         VStack(alignment: .leading, spacing: 4) {
-            Toggle(isOn: Binding(
+            Toggle("Auto warm-up", isOn: Binding(
                 get: { draft.warmupOverride?.enabled ?? true },
                 set: { newValue in
                     let skipNext = draft.warmupOverride?.skipNextSession ?? false
@@ -265,11 +279,8 @@ public struct PrescriptionEditorRow: View {
                         )
                     }
                 }
-            )) {
-                Text("Auto warm-up")
-                    .font(BRUFont.bodyEmphasis)
-                    .foregroundStyle(Color.bruInk)
-            }
+            ))
+            .toggleStyle(.bru)
 
             Text(
                 warmupEnabled
@@ -290,21 +301,32 @@ public struct PrescriptionEditorRow: View {
                     showingPerSetOverrides.toggle()
                 }
             } label: {
-                HStack(spacing: 8) {
-                    Text("Per-set overrides")
-                        .font(BRUFont.bodyEmphasis)
-                        .foregroundStyle(Color.bruInk)
-                        .lineLimit(1)
-                        .fixedSize(horizontal: true, vertical: false)
-                    Spacer(minLength: 8)
-                    Text(overrideSummary)
-                        .font(BRUFont.bodyDefault)
-                        .foregroundStyle(Color.bruMuted)
-                        .lineLimit(1)
-                    Text(showingPerSetOverrides ? "▴" : "▾")
-                        .font(BRUFont.labelSmall)
-                        .foregroundStyle(Color.bruMuted)
+                Group {
+                    if dynamicTypeSize.isAccessibilitySize {
+                        // Beside the label, the count would be pushed off
+                        // the right edge.
+                        VStack(alignment: .leading, spacing: 4) {
+                            overridesTitle
+                            HStack(alignment: .firstTextBaseline, spacing: 8) {
+                                overridesCount
+                                Spacer(minLength: 0)
+                                overridesGlyph
+                            }
+                        }
+                    } else {
+                        HStack(spacing: 8) {
+                            overridesTitle
+                                .lineLimit(1)
+                                .fixedSize(horizontal: true, vertical: false)
+                            Spacer(minLength: 8)
+                            // Wraps rather than clips when the label leaves it little room.
+                            overridesCount
+                                .multilineTextAlignment(.trailing)
+                            overridesGlyph
+                        }
+                    }
                 }
+                .frame(minHeight: 44)
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
@@ -338,11 +360,29 @@ public struct PrescriptionEditorRow: View {
         }
     }
 
+    private var overridesTitle: some View {
+        Text("Per-set overrides")
+            .font(BRUFont.bodyEmphasis)
+            .foregroundStyle(Color.bruInk)
+    }
+
+    private var overridesCount: some View {
+        Text(overrideSummary)
+            .font(BRUFont.bodyDefault)
+            .foregroundStyle(Color.bruMuted)
+    }
+
+    private var overridesGlyph: some View {
+        Text(showingPerSetOverrides ? "▴" : "▾")
+            .font(BRUFont.labelSmall)
+            .foregroundStyle(Color.bruMuted)
+    }
+
     private var overrideSummary: String {
         if draft.setOverrides.isEmpty {
-            return "\(draft.targetSets) sets default"
+            return "\(BRUCountLabel.text(draft.targetSets, "set")) default"
         }
-        return "\(draft.setOverrides.count) override\(draft.setOverrides.count == 1 ? "" : "s")"
+        return BRUCountLabel.text(draft.setOverrides.count, "override")
     }
 
     private func addOverride() {
@@ -355,6 +395,14 @@ public struct PrescriptionEditorRow: View {
     private func removeOverride(_ override: PerSetOverrideDraft) {
         draft.setOverrides.removeAll { $0 === override }
     }
+}
+
+// MARK: - Rest time
+
+/// Rest as minutes and seconds, such as "3:00" for 180 seconds, the way the
+/// rest timer counts it down.
+func restClock(_ seconds: Int) -> String {
+    String(format: "%d:%02d", seconds / 60, seconds % 60)
 }
 
 // MARK: - Preview

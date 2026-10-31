@@ -7,19 +7,27 @@
 //
 //  Layout (collapsed):
 //    HStack:
-//      leading: index zero-padded "01" SpaceGrotesk-Bold 26pt (28pt wide)
+//      leading: index zero-padded "01" SpaceGrotesk-Bold 26pt, at its own
+//        width (a 28pt column cut it to "•••")
 //      middle VStack:
 //        name: JetBrainsMono-Bold 14pt (BRUFont.bodyEmphasis)
-//        sub-line: "{equipment} · {spec}" labelSmall 10pt UPPERCASE bruMuted
-//      trailing: "⋮⋮" drag handle in bruMuted (NOT an SF Symbol)
+//        sub-line: "{equipment} · {sets}×{reps} · {m:ss}" labelSmall UPPERCASE bruMuted
+//      trailing: MOVE chip opening the Move up / Move down menu (NOT an SF
+//        Symbol, and not the ⋮⋮ glyph, which looked like a drag handle)
+//    At accessibility sizes the three stack, so the name keeps the width.
+//
+//  The row does not merge its children for accessibility: the number, the
+//  name, the sub-line and MOVE each keep their own unique identifier. The
+//  name stays a static text, and its hint says a double tap, which reaches
+//  the row's tap gesture, opens or closes the editor.
 //
 //  When expanded: PrescriptionEditorRow mounted inline.
 //  When supersetGroupID != nil: wrapped in BRUSupersetBracket.
 //  Leading index shows "SS" in bruSignal when in a superset.
 //
 //  Long-press contextMenu preserved from Phase 3, on the title row only.
-//  All @Bindable bindings, drag-handle .onMove, warmup-config-sheet trigger
-//  are preserved from Phase 3.1.
+//  All @Bindable bindings, the reorder menu and the warmup-config-sheet
+//  trigger are preserved from Phase 3.1.
 //
 //  BRU contract: NO accentColor / NO Image(systemName:) / NO Capsule /
 //  NO RoundedRectangle / NO Apple HIG semantic fonts
@@ -28,6 +36,7 @@
 import SwiftUI
 
 public struct RoutineExerciseCard: View {
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @Bindable public var draft: RoutineExerciseDraft
     public let hasBlock: Bool
     public let index: Int
@@ -100,68 +109,18 @@ public struct RoutineExerciseCard: View {
     // MARK: - Header Row
 
     private var headerRow: some View {
-        HStack(alignment: .center, spacing: 10) {
-            // Leading index — zero-padded "01", "02", … in SpaceGrotesk-Bold 26pt
-            // When in a superset: show "SS" in bruSignal instead of numeric index
-            if draft.supersetGroupID != nil {
-                Text("SS")
-                    .font(.bru(.grotesk, size: 26))
-                    .foregroundStyle(Color.bruSignalText)
-                    .frame(width: 28, alignment: .leading)
-                    .lineLimit(1)
-            } else {
-                Text(String(format: "%02d", index + 1))
-                    .font(.bru(.grotesk, size: 26))
-                    .foregroundStyle(Color.bruInk)
-                    .frame(width: 28, alignment: .leading)
-                    .lineLimit(1)
-            }
-
-            // Middle: name + sub-line
-            VStack(alignment: .leading, spacing: 2) {
-                Text(draft.exercise?.name ?? "Exercise")
-                    .font(BRUFont.bodyEmphasis)
-                    .foregroundStyle(Color.bruInk)
-                    .multilineTextAlignment(.leading)
-
-                Text(subLine)
-                    .font(BRUFont.labelSmall)
-                    .tracking(0.5)
-                    .textCase(.uppercase)
-                    .foregroundStyle(Color.bruMuted)
-                    .lineLimit(1)
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-
-            // Explicit moves work with touch and VoiceOver, including in a ScrollView.
-            Menu {
-                Button("Move up") { onMoveUp?() }.disabled(onMoveUp == nil)
-                Button("Move down") { onMoveDown?() }.disabled(onMoveDown == nil)
-            } label: {
-                Text("⋮⋮")
-                    .font(.system(size: 14))
-                    .foregroundStyle(Color.bruMuted)
-                    .frame(minWidth: 44, minHeight: 44)
-                    .contentShape(Rectangle())
-            }
-            .accessibilityLabel("Reorder exercise \(index + 1)")
-            .accessibilityIdentifier("routine.exercise.reorder.\(index + 1)")
+        headerLayout {
+            indexLabel
+            titleBlock
+            moveControl
         }
-        .onTapGesture {
-            withAnimation(.easeInOut(duration: 0.18)) {
-                isExpanded.toggle()
-            }
-        }
+        .onTapGesture { toggleExpanded() }
         // On the title row only: a menu on the whole card would also take
         // long presses inside the open editor, where holding an RPE chip
         // opens the decimal picker.
         .contentShape(Rectangle())
         .contextMenu {
-            Button("Edit prescription") {
-                withAnimation(.easeInOut(duration: 0.18)) {
-                    isExpanded.toggle()
-                }
-            }
+            Button("Edit prescription") { toggleExpanded() }
             Button("Edit warm-up…") {
                 onEditWarmup(draft)
             }
@@ -177,9 +136,72 @@ public struct RoutineExerciseCard: View {
             Divider()
             Button("Remove", role: .destructive) { onRemove(draft) }
         }
-        .accessibilityElement(children: .combine)
-        .accessibilityAddTraits(.isButton)
-        .accessibilityHint(isExpanded ? "Collapses prescription editor" : "Expands prescription editor")
+    }
+
+    /// Side by side normally; stacked at accessibility text sizes, where the
+    /// number and MOVE would squeeze the name into a narrow column.
+    private var headerLayout: AnyLayout {
+        dynamicTypeSize.isAccessibilitySize
+            ? AnyLayout(VStackLayout(alignment: .leading, spacing: 8))
+            : AnyLayout(HStackLayout(alignment: .center, spacing: 10))
+    }
+
+    /// Zero-padded "01", "02", … in SpaceGrotesk-Bold 26pt, or "SS" in
+    /// bruSignal when in a superset. It takes its own width, so the number
+    /// is never cut.
+    private var indexLabel: some View {
+        let inSuperset = draft.supersetGroupID != nil
+        let number = String(format: "%02d", index + 1)
+        return Text(inSuperset ? "SS" : number)
+            .font(.bru(.grotesk, size: 26))
+            .monospacedDigit()
+            .foregroundStyle(inSuperset ? Color.bruSignalText : Color.bruInk)
+            .lineLimit(1)
+            .fixedSize()
+            .accessibilityLabel(inSuperset ? "Superset" : number)
+            .accessibilityIdentifier("routine.exercise.number.\(index + 1)")
+    }
+
+    /// Name + sub-line. A tap on the row, the name included, opens and
+    /// closes the prescription editor.
+    private var titleBlock: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(draft.exercise?.name ?? "Exercise")
+                .font(BRUFont.bodyEmphasis)
+                .foregroundStyle(Color.bruInk)
+                .multilineTextAlignment(.leading)
+                .accessibilityIdentifier("routine.exercise.name.\(index + 1)")
+                .accessibilityHint(isExpanded ? "Collapses prescription editor" : "Expands prescription editor")
+
+            Text(subLine)
+                .font(BRUFont.labelSmall)
+                .tracking(0.5)
+                .textCase(.uppercase)
+                .foregroundStyle(Color.bruMuted)
+                .fixedSize(horizontal: false, vertical: true)
+                .accessibilityIdentifier("routine.exercise.summary.\(index + 1)")
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    /// Explicit moves work with touch and VoiceOver, including in a ScrollView.
+    private var moveControl: some View {
+        Menu {
+            Button("Move up") { onMoveUp?() }.disabled(onMoveUp == nil)
+            Button("Move down") { onMoveDown?() }.disabled(onMoveDown == nil)
+        } label: {
+            BRUChip("Move")
+                .frame(minWidth: 44, minHeight: 44)
+                .contentShape(Rectangle())
+        }
+        .accessibilityLabel("Move exercise \(index + 1)")
+        .accessibilityIdentifier("routine.exercise.reorder.\(index + 1)")
+    }
+
+    private func toggleExpanded() {
+        withAnimation(.easeInOut(duration: 0.18)) {
+            isExpanded.toggle()
+        }
     }
 
     // MARK: - Sub-line
@@ -195,12 +217,12 @@ public struct RoutineExerciseCard: View {
         return "\(equipment) · \(summary)"
     }
 
-    /// "3×8–12 · 180s" — sets × reps · rest.
+    /// "3×8–12 · 3:00" — sets × reps · rest.
     private var prescriptionSummary: String {
         let reps = draft.targetRepsLow == draft.targetRepsHigh
             ? "\(draft.targetRepsLow)"
             : "\(draft.targetRepsLow)–\(draft.targetRepsHigh)"
-        return "\(draft.targetSets)×\(reps) · \(draft.prescribedRestSeconds)s"
+        return "\(draft.targetSets)×\(reps) · \(restClock(draft.prescribedRestSeconds))"
     }
 }
 

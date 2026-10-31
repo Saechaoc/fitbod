@@ -3,8 +3,11 @@
 //
 // Container drawing the outer 1.5pt bruInk rectangle around per-set rows.
 // Each row uses the 4-column grid:
-//   "S{N}" mono 10pt (24pt wide) | set-kind labelSmall UPPERCASE (60pt wide) |
+//   "S{N}" labelSmall (24pt wide) | set-kind labelSmall UPPERCASE (60pt wide) |
 //   ×{N} displayMedium 18pt right-aligned | @{N} displayMedium 18pt right-aligned
+// The first two columns are SetRowLabels: both labels grow with the text,
+// and at accessibility sizes they drop their column widths, which would
+// clip them (Milestone 1 review item 13).
 // 1pt bruHair separators between rows via BRUDivider(.hair).
 // TOP rows get 6% signal tint background + bruSignal text for kind + RPE.
 //
@@ -90,31 +93,20 @@ public struct SetRowsContainer: View {
     @ViewBuilder
     private func defaultSetRow(index: Int) -> some View {
         HStack(spacing: 6) {
-            // S{N} mono 10pt — 24pt wide
-            Text("S\(index + 1)")
-                .font(.system(size: 10, design: .monospaced))
-                .foregroundStyle(Color.bruInk)
-                .frame(width: 24, alignment: .leading)
-
-            // Set kind label — WORK for default working sets
-            Text("WORK")
-                .font(BRUFont.labelSmall)
-                .tracking(1.2)
-                .textCase(.uppercase)
-                .foregroundStyle(Color.bruInk)
-                .frame(width: 60, alignment: .leading)
+            // S{N} and the set kind — WORK for default working sets
+            SetRowLabels(setNumber: index + 1, kind: "WORK", kindColor: .bruInk)
 
             Spacer()
 
             // Reps — displayMedium 18pt right-aligned
             Text("×\(exercise.targetRepsLow)")
-                .font(.bru(.grotesk, size: 18))
+                .font(BRUFont.displayMedium)
                 .foregroundStyle(Color.bruInk)
                 .multilineTextAlignment(.trailing)
 
             // RPE — displayMedium 18pt right-aligned
             Text("@\(rpeString(exercise.targetRPE))")
-                .font(.bru(.grotesk, size: 18))
+                .font(BRUFont.displayMedium)
                 .foregroundStyle(Color.bruInk)
                 .multilineTextAlignment(.trailing)
                 // VoiceOver reads a bare dash as "em dash".
@@ -133,6 +125,42 @@ public struct SetRowsContainer: View {
             return String(Int(rpe))
         }
         return String(format: "%.1f", rpe)
+    }
+}
+
+// MARK: - SetRowLabels
+
+/// A set row's first two columns: "S{N}" and the set's kind, such as WORK,
+/// both in labelSmall so they grow with the text. Below accessibility sizes
+/// the columns keep the rows lined up; at accessibility sizes those widths
+/// would clip the labels, so each label takes its own width.
+struct SetRowLabels: View {
+    let setNumber: Int
+    let kind: String
+    let kindColor: Color
+
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    @ScaledMetric(relativeTo: .caption2) private var setColumnWidth: CGFloat = 24
+    @ScaledMetric(relativeTo: .caption2) private var kindColumnWidth: CGFloat = 60
+
+    var body: some View {
+        Text("S\(setNumber)")
+            .font(BRUFont.labelSmall)
+            .foregroundStyle(Color.bruInk)
+            .frame(width: column(setColumnWidth), alignment: .leading)
+            // Without its column, the set label keeps a gap from the kind.
+            .padding(.trailing, dynamicTypeSize.isAccessibilitySize ? 8 : 0)
+
+        Text(kind)
+            .font(BRUFont.labelSmall)
+            .tracking(1.2)
+            .textCase(.uppercase)
+            .foregroundStyle(kindColor)
+            .frame(width: column(kindColumnWidth), alignment: .leading)
+    }
+
+    private func column(_ width: CGFloat) -> CGFloat? {
+        dynamicTypeSize.isAccessibilitySize ? nil : width
     }
 }
 

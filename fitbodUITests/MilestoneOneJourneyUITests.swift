@@ -103,25 +103,25 @@ final class MilestoneOneJourneyUITests: XCTestCase {
         tap("Add exercise")
         pickExercise("Incline Dumbbell Press")
         let reorderSecond = app.buttons.matching(NSPredicate(format:
-            "identifier == %@ AND label == %@", "routine.exercise.reorder.2", "Reorder exercise 2"
+            "identifier == %@ AND label == %@", "routine.exercise.reorder.2", "Move exercise 2"
         )).firstMatch
         XCTAssertTrue(reorderSecond.waitForExistence(timeout: 10))
         reveal(reorderSecond)
         reorderSecond.tap()
         tap("Move up")
-        XCTAssertTrue(app.buttons.matching(NSPredicate(format:
+        XCTAssertTrue(app.staticTexts.matching(NSPredicate(format:
             "identifier == %@ AND label BEGINSWITH %@",
-            "routine.exercise.reorder.1", "01, Incline Dumbbell Press"
+            "routine.exercise.name.1", "Incline Dumbbell Press"
         )).firstMatch.waitForExistence(timeout: 5))
         let reorderFirst = app.buttons.matching(NSPredicate(format:
-            "identifier == %@ AND label == %@", "routine.exercise.reorder.1", "Reorder exercise 1"
+            "identifier == %@ AND label == %@", "routine.exercise.reorder.1", "Move exercise 1"
         )).firstMatch
         reveal(reorderFirst)
         reorderFirst.tap()
         tap("Move down")
-        XCTAssertTrue(app.buttons.matching(NSPredicate(format:
-            "identifier == %@ AND label CONTAINS %@ AND label BEGINSWITH %@",
-            "routine.exercise.reorder.1", exerciseName, "01,"
+        XCTAssertTrue(app.staticTexts.matching(NSPredicate(format:
+            "identifier == %@ AND label == %@",
+            "routine.exercise.name.1", exerciseName
         )).firstMatch.waitForExistence(timeout: 5))
         attach("06-session-populated")
         tap("Save session ▸")

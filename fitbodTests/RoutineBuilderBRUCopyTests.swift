@@ -10,7 +10,8 @@
 //    3. BottomActionBar labels are verbatim: "Discard" + "Save routine ▸".
 //    4. Dashed slot copy is verbatim: "Add exercise" + "↘ FROM LIBRARY".
 //    5. Prescription chips render in spec order (source-anchor).
-//    6. Drag handle is the typographic "⋮⋮" glyph (source-anchor).
+//    6. The reorder control is a labeled MOVE chip, not the "⋮⋮" glyph or
+//       an SF Symbol (source-anchor; T29).
 //    7. Discard confirmation copy is verbatim (source-anchor).
 //    8. TOP set row uses bruSignal tint (source-anchor via PerSetOverrideRow).
 //
@@ -112,13 +113,15 @@ struct RoutineBuilderBRUCopyTests {
         #expect(editor.contains("SetRowsContainer"))
     }
 
-    // MARK: - 6. Drag handle is typographic "⋮⋮" (NOT SF Symbol)
+    // MARK: - 6. Reorder control is a labeled MOVE chip (NOT "⋮⋮", NOT SF Symbol)
 
-    @Test("dragHandleIsTypographic — RoutineExerciseCard uses '⋮⋮' text glyph not SF Symbol")
+    @Test("dragHandleIsTypographic — RoutineExerciseCard's reorder menu opens from a MOVE chip, not '⋮⋮' or an SF Symbol")
     func dragHandleIsTypographic() throws {
         let card = try source("RoutineExerciseCard.swift")
-        // Typographic glyph must be present
-        #expect(card.contains("\"⋮⋮\""))
+        // T29: "⋮⋮" looked like a drag handle but opened a menu, so a
+        // labeled control replaces it.
+        #expect(card.contains("BRUChip(\"Move\")"))
+        #expect(!card.contains("\"⋮⋮\""))
         // SF Symbol drag handle must NOT be present
         #expect(!card.contains("line.3.horizontal"))
         #expect(!card.contains("arrow.up.arrow.down"))

@@ -249,7 +249,8 @@ public struct RoutineBuilderView: View {
             titleVisibility: .visible
         ) {
             Button("Archive session", role: .destructive) { archiveSession() }
-            Button("Cancel", role: .cancel) {}
+            // iOS 26 hides a cancel-role button, so the way back is a plain one.
+            Button("Keep session") {}
         } message: {
             Text("It disappears from pickers. Workouts you already logged keep their history.")
         }
@@ -482,10 +483,12 @@ public struct RoutineBuilderView: View {
                     BRUDivider(.hair)
                 }
 
-                // BRUDashedSlot — "+ Add exercise ↘ FROM LIBRARY"
+                // BRUDashedSlot — "+ Add exercise ↘ FROM LIBRARY". At
+                // accessibility sizes the hint would squeeze the label until
+                // it breaks mid-word, so the label stands alone.
                 BRUDashedSlot(
                     label: "Add exercise",
-                    hint: "↘ FROM LIBRARY",
+                    hint: dynamicTypeSize.isAccessibilitySize ? nil : "↘ FROM LIBRARY",
                     leadingGlyph: "+",
                     action: { presentingLibraryPicker = true }
                 )
@@ -591,6 +594,9 @@ public struct RoutineBuilderView: View {
 
     /// Archiving a session that a routine still schedules would leave a hole
     /// in the rotation, so it is blocked until the session is removed there.
+    /// An archived routine holds it too: restoring that routine would bring
+    /// the archived session back inside it, so the alert names it with
+    /// "(archived)" to say where to look.
     private func requestArchive() {
         guard let editing else { return }
         let templateID = editing.id
@@ -598,8 +604,8 @@ public struct RoutineBuilderView: View {
             predicate: #Predicate<SplitSessionSlot> { $0.sessionTemplate?.id == templateID }
         ))) ?? []
         let routineNames = Set(slots.compactMap { slot -> String? in
-            guard let split = slot.split, !split.isArchived else { return nil }
-            return split.name
+            guard let split = slot.split else { return nil }
+            return split.isArchived ? "\(split.name) (archived)" : split.name
         })
         if routineNames.isEmpty {
             presentingArchiveConfirm = true
