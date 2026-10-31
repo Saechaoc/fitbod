@@ -192,6 +192,7 @@ The `appears` helper, an animations-off launch flag and a data-only reset do not
 - In `notes.md`, keep a "Test performance" list: one line per new or changed test with its type, why a cheaper test could not prove it for a UI test, its three durations, and any wait with its reason.
 - Do not rewrite or delete tests outside your ticket to follow the guide.
   Record each one that breaks it as a finding in `notes.md`.
+- When you hand test work to a subagent, put the guide's path, this section and the test command from Build and test in its prompt.
 
 ## Code rules
 

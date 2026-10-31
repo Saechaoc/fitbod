@@ -7,6 +7,7 @@ Newest first.
 - What: worker-rules gains a Test performance section that makes `docs/test-performance-guide.md` part of every ticket: the cheapest test that proves a behavior, no fixed sleeps, three timed runs of each new or changed test against the guide's budgets, and a Test performance list in `notes.md`.
 - What: the build and test commands add `COMPILER_INDEX_STORE_ENABLE=NO` and a per-test allowance of 420 s, at most 900 s; Reproduce first takes the test type from the ticket's Repro, or else the cheapest test that proves the bug.
 - What: dispatch.md's acceptance checks read that list, gates use the same flags and record the 20 slowest cases, the brief names the guide, helper agents get it in their prompt, and a rule change the user asks for reaches live workers as a status message.
+- What: a worker that hands test work to a subagent puts the guide, the Test performance section and the test command in its prompt.
 - Why: the user asked that workers and subagents use the guide, and Gate 1's full run took 201 minutes, 107 of them in four tests stalled by F144.
 
 ## 2026-10-31: a review fix gets its own commit
