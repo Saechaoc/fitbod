@@ -23,6 +23,7 @@ Several labels still break the app's copy rules:
 - History's PER WEEK shows 0.2 for one workout in four weeks, because it rounds 0.25 to one decimal.
 - Exercise history calls logged workouts sessions: its stat strip reads "Sessions · 30d" and its count line "12 sets across 4 sessions" (found by T94).
 - Seven pushed screens go back with a bare "‹", and the weekly recap sheet closes with one, against "Sheet close labels" in [../tradeoffs.md](../tradeoffs.md) (finding F163, from T22 and T23's screenshots).
+- On the small phone, the weekly recap's header title wraps as "WEEK 44" over "· RECAP", so a line starts with the dot (finding F213, from T87's worker).
 
 Nothing stops these mistakes from coming back.
 
@@ -43,6 +44,7 @@ The copy sites listed in Hints, and one new source test in `fitbodTests/`.
 6. Fix every site the new test reports, even ones not listed in Hints.
 7. Exercise history's "Sessions · 30d" becomes "Workouts · 30d", and its count line reads "12 sets across 4 workouts", through the plural helper.
 8. The pushed screens in Hints go back with "‹ BACK", and the weekly recap sheet closes with "DONE" on the right, as "Sheet close labels" says.
+9. With DONE in place, the recap's header title never starts a line with "·" on the small phone, at default text or at AX3.
 
 ## Constraints
 
@@ -65,6 +67,7 @@ Ask before you edit anything else.
 - In the same suite, open an exercise's menu in the logger and assert that "Remove from workout" exists.
 - Write a unit test for the per-week value: one workout in four weeks gives "0.25", two give "0.5", and eight give "2".
 - In the UI suite, open each screen in Hints' back-label list and assert that it shows "‹ BACK", and that the weekly recap shows "DONE".
+- Open the weekly recap on the small phone, and assert with the shared `readText` that no line of its header title starts with "·".
 
 All of these fail today.
 
