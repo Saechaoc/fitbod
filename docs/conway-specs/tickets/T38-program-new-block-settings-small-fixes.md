@@ -4,9 +4,9 @@ title: Small fixes on Program, New Block and Settings
 phase: 3
 items: [25]
 depends_on: [T11, T16, T25, T29]
-size: M
+size: L
 sim: small
-owns: [fitbod/Periodization/BlockBuilderView.swift, fitbod/Settings/MuscleVolumeTargetEditor.swift, fitbod/Routines/RoutineBuilderView.swift, fitbod/Periodization/ArchivedRoutinesView.swift, new:fitbodUITests/SmallFixesUITests.swift]
+owns: [fitbod/Periodization/BlockBuilderView.swift, fitbod/Periodization/BlockNameField.swift, fitbod/Settings/MuscleVolumeTargetEditor.swift, fitbod/Routines/RoutineBuilderView.swift, fitbod/Periodization/ArchivedRoutinesView.swift, new:fitbodUITests/SmallFixesUITests.swift]
 ---
 
 # T38: Small fixes on Program, New Block and Settings
@@ -22,6 +22,9 @@ Read [../worker-rules.md](../worker-rules.md) first; it is part of this ticket.
 - The session editor, opened from a routine, is a sheet that closes with "‹ BACK", while other editing sheets close with "CANCEL".
 - At default text on the small phone, the ARCHIVED ROUTINES title wraps onto two lines in its header (finding F149, from T20's screenshots).
 - After Volume Targets closes, its muscle rows stay in the accessibility tree for more than 12 seconds, so VoiceOver may still find them (finding F182, from T18's worker).
+- New Block's mode chips, day chips and sheet steppers are smaller than 44pt at default text (finding F193, from T25's worker).
+- At AX3, a named block's name field cuts its value off, such as "GENERIC STREN…" (finding F192).
+- At AX3, the progression chart's LOW label sits under the intensity line's first point (finding F190, from T25's screenshots).
 
 ## Target
 
@@ -41,6 +44,9 @@ Read [../worker-rules.md](../worker-rules.md) first; it is part of this ticket.
    It keeps today's behavior: with unsaved changes it asks before it discards.
 6. At default text on the small phone, the ARCHIVED ROUTINES title fits on one line in its header, in the BRU header font.
 7. Volume Targets' rows leave the accessibility tree as soon as the screen closes, as Plate Inventory's do.
+8. New Block's mode chips, day chips and sheet steppers each have a touch target of at least 44pt, with their look unchanged.
+9. At AX3 the block name field shows a named block's whole name, wrapping between words if it must.
+10. At AX3 the chart's HIGH and LOW labels stay clear of the plotted lines.
 
 ## Constraints
 
@@ -64,6 +70,8 @@ On the small phone, write `SmallFixesUITests`:
 - Save screenshots of New Block's bottom bar in light and dark mode, sample CANCEL's text and background, and assert a contrast of at least 4.5:1.
 - Archive a routine, open Program's Archived routines, and assert that its title is one line tall.
 - Close Volume Targets with "‹ BACK", and assert that its first muscle row is gone from the accessibility tree within 2 seconds.
+- Assert that each New Block mode chip, day chip and sheet stepper is at least 44pt in each dimension.
+- At AX3, pick the Generic Strength Meso preset, and assert that the name field reads the whole name.
 
 All of these fail today.
 

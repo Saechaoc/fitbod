@@ -56,6 +56,7 @@ ARCHIVED = {
     "T22": (2, ["39", "40"], ["fitbodTests/EmptyWorkoutCountTests.swift", "fitbodUITests/EmptyWorkoutCountsUITests.swift"]),
     "T23": (2, ["38", "25"], ["fitbodUITests/WeeklyTonnageUITests.swift"]),
     "T24": (2, ["45", "47"], ["fitbodUITests/PhaseRowsVoiceOverUITests.swift", "fitbodUITests/BlockNameTypingUITests.swift"]),
+    "T25": (2, ["37", "46"], ["fitbodUITests/NewBlockLayoutUITests.swift"]),
     "T27": (2, ["46", "24", "25"], ["fitbodUITests/TodayAX3UITests.swift"]),
     "T28": (2, ["10", "11", "25"], ["fitbodUITests/RampAndStripsAX3UITests.swift"]),
     "T31": (2, [], []),

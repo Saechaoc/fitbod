@@ -6,7 +6,7 @@ items: []
 depends_on: [T24]
 size: M
 sim: small
-owns: [fitbod/Periodization/BlockBuilderView.swift, fitbodUITests/PhaseRowsVoiceOverUITests.swift]
+owns: [fitbod/Periodization/BlockBuilderView.swift, fitbodUITests/PhaseRowsVoiceOverUITests.swift, fitbodUITests/NewBlockLayoutUITests.swift]
 ---
 
 # T105: New Block's revealed Delete deletes, and VoiceOver reads its controls by name
@@ -25,6 +25,8 @@ These are findings F166 to F169, F172 and F173, which T24's worker found.
 - The phase editor sheet's steppers read only "−" and "+", with no stat name.
 - VoiceOver lists Move Up on the first phase card and Move Down on the last, where they do nothing.
 - A run killed during `PhaseRowsVoiceOverUITests` can leave VoiceOver on, because each test turns it off only in its teardown.
+- Dragging a phase card to reorder it moves by a fixed 110pt step, so at AX3, where T25's cards are about 200pt tall, a drag lands on the wrong slot (finding F191, from T25's worker).
+- No committed test pins the chart's middle label step, Program's short labels such as "ACCUM" (finding F194).
 
 ## Target
 
@@ -40,6 +42,8 @@ These are findings F166 to F169, F172 and F173, which T24's worker found.
 5. Each phase editor stepper reads its stat and direction, such as "Increase weeks", with the stat's value.
 6. A phase card lists Move Up and Move Down only where the move is possible.
 7. Each VoiceOver test also turns VoiceOver off at its start, so one killed run cannot leave the next with VoiceOver on.
+8. A drag reorders phase cards by their measured heights, so a drag at AX3 lands on the slot under the finger.
+9. `NewBlockLayoutUITests` pins the chart's short-label step.
 
 ## Constraints
 
@@ -60,11 +64,12 @@ On the small phone:
   It stays the same today.
 - With VoiceOver on, assert that the name band reads no "Compose", that the chart reads one element, and that a phase editor stepper's label names its stat.
 - Assert that the first phase card lists no Move Up and the last lists no Move Down.
+- At AX3, drag the first of three phase cards down by two cards' height, and assert that it lands third.
 
 ## Observable acceptance
 
 - The repro tests pass on the small phone.
-- `PhaseRowsVoiceOverUITests`, `NewBlockModalUITests` and `AddPhaseSheetUITests` pass on the small phone.
+- `PhaseRowsVoiceOverUITests`, `NewBlockLayoutUITests`, `NewBlockModalUITests` and `AddPhaseSheetUITests` pass on the small phone.
 - `fitbodTests` passes, including the six New Block guardrail suites.
 - A screenshot of a revealed Delete before and after the tap is in `screens/`.
 

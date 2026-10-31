@@ -38,7 +38,6 @@ Every Phase 1 ticket is done and archived.
 | Ticket | Title |
 |---|---|
 | [T19](tickets/T19-plate-inventory-and-calculator.md) | Plate Inventory and the plate calculator |
-| [T25](tickets/T25-new-block-layout-small-and-ax3.md) | New Block layout on the small phone and at AX3 |
 | [T26](tickets/T26-block-hero-program-routine-text-fit.md) | Block hero, Program rows and routine editor text fit |
 | [T29](tickets/T29-session-editor-polish.md) | Session editor polish |
 | [T30](tickets/T30-exercise-display-names.md) | Exercise display names |
