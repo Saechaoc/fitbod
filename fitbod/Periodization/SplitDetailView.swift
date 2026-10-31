@@ -25,6 +25,9 @@
 //
 //  Archive: routes through BlockLifecycleService.assertSplitDeletable → SplitDeletionGuard.
 //  Deny alert title/body verbatim from UI-SPEC Copywriting Contract.
+//  Once the deny rule passes, archive asks "Archive routine?" first, with a
+//  visible "Keep routine" (decision 7). A saved archive sends every open copy
+//  of this screen back to its list, including one in the other tab.
 //
 //  BRU contract: NO Capsule / NO RoundedRectangle / NO Image(systemName:) /
 //    NO .font(.body/.headline/.title*)
@@ -65,6 +68,7 @@ public struct SplitDetailView: View {
     // MARK: - UI State
 
     @State private var showArchiveDenied: Bool = false
+    @State private var confirmingArchive: Bool = false
     @State private var showSaveError: Bool = false
     @State private var presentingSlotPicker: Bool = false
 
@@ -77,6 +81,10 @@ public struct SplitDetailView: View {
 
     // Session detail push (tap a slot row)
     @State private var openedTemplate: SessionTemplate? = nil
+
+    // Set when the routine is archived while this screen is open. A screen
+    // covered by a session opened from it closes once it is back on top.
+    @State private var archivedWhileOpen = false
 
     // Edit mode: shows move / remove controls on each session row
     @State private var isEditing = false
@@ -144,6 +152,24 @@ public struct SplitDetailView: View {
         } message: {
             Text("This routine is linked to an active or upcoming block. End or complete that block first.")
         }
+        // Archive confirmation, asked only once the deny rule passes. iOS 26
+        // hides a cancel-role button, so the way back is a plain one.
+        .confirmationDialog(
+            "Archive routine?",
+            isPresented: $confirmingArchive,
+            titleVisibility: .visible
+        ) {
+            Button("Archive", role: .destructive) { archive() }
+            Button("Keep routine") {}
+        } message: {
+            Text("You can restore it from Archived routines on Program.")
+        }
+        // An archive from either tab closes this screen, so a copy still
+        // open in the other tab goes back to its list too.
+        .onChange(of: split.isArchived) { _, archived in
+            archivedWhileOpen = archived
+            if archived { dismiss() }
+        }
         // Save failure alert (reorder / remove / archive persistence errors)
         .alert("Couldn't Save", isPresented: $showSaveError) {
             Button("OK", role: .cancel) {}
@@ -179,7 +205,10 @@ public struct SplitDetailView: View {
         .navigationDestination(item: $openedTemplate) { template in
             SessionTemplateDetailView(template: template)
         }
-        .onAppear { nameText = split.name }
+        .onAppear {
+            nameText = split.name
+            if archivedWhileOpen { dismiss() }
+        }
         // Sensory feedback when drag starts/ends
         .sensoryFeedback(trigger: draggingSlotID) { _, newValue in
             newValue != nil ? .impact(weight: .medium) : nil
@@ -305,7 +334,7 @@ public struct SplitDetailView: View {
     private var archiveSection: some View {
         VStack(alignment: .leading, spacing: 8) {
             BRUButton("Archive routine", kind: .ghost) { attemptArchive() }
-            Text("Archived routines leave Program but keep their logged history.")
+            Text("An archived routine keeps its logged history. Restore it from Archived routines on Program.")
                 .font(BRUFont.bodyDefault)
                 .foregroundStyle(Color.bruMuted)
         }
@@ -370,13 +399,18 @@ public struct SplitDetailView: View {
             return
         }
 
-        // Persist the archive flag. On save failure, revert the in-memory flag and do
-        // NOT dismiss - otherwise the split would vanish from the list while the store
-        // still holds it (reappears on next launch).
+        // Second gate: the user confirms.
+        confirmingArchive = true
+    }
+
+    private func archive() {
+        // Persist the archive flag. On save failure, revert the in-memory flag so the
+        // screen stays open - otherwise the split would vanish from the list while the
+        // store still holds it (reappears on next launch). A saved archive closes the
+        // screen through onChange(of: split.isArchived).
         split.isArchived = true
         do {
             try ctx.save()
-            dismiss()
         } catch {
             split.isArchived = false
             showSaveError = true

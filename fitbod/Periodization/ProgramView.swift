@@ -74,7 +74,9 @@ import SwiftData
 /// Program tab body — BRU brutalist surface for periodization.
 /// Empty-state (NoProgramHero + ProgramTemplateSection) is shown ONLY when
 /// there are zero blocks AND zero non-archived splits. When either exists the
-/// BLOCKS and ROUTINES sections are rendered instead.
+/// BLOCKS and ROUTINES sections are rendered instead. In both states an
+/// "Archived routines" entry follows while at least one split is archived
+/// (tradeoffs.md "Archived routines").
 ///
 /// THREADING NOTE: `derivedStatus` is a computed property on Block and is NOT
 /// addressable in #Predicate. All status-based ordering and usage-tag filtering
@@ -99,6 +101,10 @@ public struct ProgramView: View {
         sort: [SortDescriptor(\Split.name)]
     )
     private var allSplits: [Split]
+
+    // Archived splits only, for the "Archived routines" entry.
+    @Query(filter: #Predicate<Split> { $0.isArchived })
+    private var archivedSplits: [Split]
 
     @State private var navigationPath = NavigationPath()
     @State private var pendingBlockBuilder: PendingBlockBuilder? = nil
@@ -155,6 +161,10 @@ public struct ProgramView: View {
                             } else {
                                 blocksSection
                                 routinesSection
+                            }
+
+                            if !archivedSplits.isEmpty {
+                                archivedRoutinesEntry
                             }
                         }
                     }
@@ -213,6 +223,9 @@ public struct ProgramView: View {
                             .foregroundStyle(Color.bruMuted)
                     }
                 }
+            }
+            .navigationDestination(for: ArchivedRoutinesRoute.self) { _ in
+                ArchivedRoutinesView()
             }
             .fullScreenCover(item: $pendingBlockBuilder) { pending in
                 switch pending {
@@ -464,6 +477,47 @@ public struct ProgramView: View {
         .buttonStyle(.plain)
 
         BRUDivider(.ink)
+    }
+
+    // MARK: - Archived routines entry
+
+    /// Opens the archived routines, where each one can be restored.
+    private var archivedRoutinesEntry: some View {
+        let count = archivedSplits.count
+        return VStack(spacing: 0) {
+            Button {
+                navigationPath.append(ArchivedRoutinesRoute.list)
+            } label: {
+                HStack(spacing: 12) {
+                    Text("Archived routines")
+                        .font(BRUFont.labelSmall)
+                        .textCase(.uppercase)
+                        .tracking(1.2)
+                        .foregroundStyle(Color.bruInk)
+                        .fixedSize(horizontal: false, vertical: true)
+
+                    Spacer(minLength: 8)
+
+                    Text("\(count)")
+                        .font(BRUFont.labelSmall)
+                        .foregroundStyle(Color.bruMuted)
+
+                    Text("›")
+                        .font(BRUFont.bodyEmphasis)
+                        .foregroundStyle(Color.bruMuted)
+                }
+                .padding(.horizontal, ProgramScreenTokens.horizontalPagePadding)
+                .padding(.vertical, 12)
+                .frame(minHeight: 44)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Archived routines")
+            .accessibilityValue(BRUCountLabel.text(count, "routine"))
+
+            BRUDivider(.ink)
+        }
     }
 }
 
