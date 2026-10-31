@@ -116,6 +116,7 @@ ARCHIVED = {
     "T97": (2, [], ["fitbodTests/CalibratingStepCopyTests.swift"]),
     "T99": (2, [], ["fitbodTests/BlockReviewPRCountTests.swift"]),
     "T100": (1, [], []),
+    "T102": (2, [], []),
 }
 
 BUNDLE = pathlib.Path(__file__).resolve().parent
