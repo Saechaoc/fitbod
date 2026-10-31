@@ -42,6 +42,7 @@ Every Phase 1 ticket is done and archived.
 | [T105](tickets/T105-new-block-delete-and-voiceover-names.md) | New Block's revealed Delete deletes, and VoiceOver reads its controls by name |
 | [T110](tickets/T110-per-set-overrides-removed.md) | The session editor stops offering per-set overrides that the logger ignores |
 | [T112](tickets/T112-exercise-history-rows.md) | Exercise history shows its workouts again |
+| [T115](tickets/T115-session-editor-ax3-scroll-hang.md) | The session editor scrolls at AX3 without hanging |
 
 ### Phase 3: P3 polish and copy
 
@@ -61,6 +62,7 @@ Every Phase 1 ticket is done and archived.
 | [T111](tickets/T111-session-editor-rows-announced-removable.md) | Session editor rows are announced, removable and easy to hit |
 | [T113](tickets/T113-block-review-pr-marks.md) | The block review's PR marks agree, and its stats read cheaply and whole |
 | [T114](tickets/T114-recap-target-from-plan.md) | The weekly recap measures last week against its plan |
+| [T116](tickets/T116-history-top-set-is-its-e1rm-set.md) | Exercise history's TOP line names the set its e1RM comes from |
 
 ### Phase 4: test health
 
@@ -70,6 +72,7 @@ Every Phase 1 ticket is done and archived.
 | [T40](tickets/T40-slotted-session-delete-guard.md) | Slotted session delete guard |
 | [T41](tickets/T41-backup-keeps-routines.md) | Backup keeps routines |
 | [T42](tickets/T42-zero-build-warnings.md) | Zero build warnings |
+| [T117](tickets/T117-history-tests-cover-non-pr-rows-and-every-label.md) | Exercise history's tests cover a row without a PR and every label |
 
 ### Phase 5: design refresh
 
