@@ -46,17 +46,20 @@ struct BlockReviewPRCountTests {
         return block
     }
 
-    /// A workout of `exercise` on `date` with one working set of `weight`
-    /// x `reps`, finished an hour later unless `finished` is false.
+    /// A workout of `exercise` on `date`, finished an hour later unless
+    /// `finished` is false, with one working set of `weight` x `reps`
+    /// logged ten minutes in as set `setOrder`.
+    @discardableResult
     private func logWorkout(
         of exercise: Exercise,
         on date: Date,
         weight: Double,
         reps: Int,
+        setOrder: Int = 0,
         block: Block? = nil,
         finished: Bool = true,
         in context: ModelContext
-    ) {
+    ) -> SessionExercise {
         let session = Session()
         context.insert(session)
         session.startedAt = date
@@ -68,12 +71,27 @@ struct BlockReviewPRCountTests {
         sessionExercise.session = session
         sessionExercise.exercise = exercise
 
+        logSet(weight: weight, reps: reps, order: setOrder, at: date + 600, of: sessionExercise, in: context)
+        return sessionExercise
+    }
+
+    /// A completed working set of `weight` x `reps`, set `order` of
+    /// `sessionExercise`, logged at `date`.
+    private func logSet(
+        weight: Double,
+        reps: Int,
+        order: Int,
+        at date: Date,
+        of sessionExercise: SessionExercise,
+        in context: ModelContext
+    ) {
         let set = SetEntry()
         context.insert(set)
         set.sessionExercise = sessionExercise
+        set.orderIndex = order
         set.weight = weight
         set.reps = reps
-        set.completedAt = date + 600
+        set.completedAt = date
         set.isComplete = true
         set.setTypeRaw = SetType.working.rawValue
     }
@@ -110,5 +128,20 @@ struct BlockReviewPRCountTests {
 
         let count = try prCount(of: block, in: context)
         #expect(count == 1, "Only the finished 105 x 5 in the block counts")
+    }
+
+    @Test("sets logged at the same moment replay in their set order, as exercise history does")
+    func setsLoggedTogetherReplayInSetOrder() throws {
+        let context = try makeContext()
+        let bench = makeBench(in: context)
+        let block = makeBlock(in: context)
+        let date = started + 7 * day
+        // Set 2 is saved before set 1, and both carry the same time.
+        let workout = logWorkout(of: bench, on: date, weight: 105, reps: 5, setOrder: 1, block: block, in: context)
+        logSet(weight: 100, reps: 5, order: 0, at: date + 600, of: workout, in: context)
+        try context.save()
+
+        let count = try prCount(of: block, in: context)
+        #expect(count == 2, "Set 1's 100 x 5 sets the first records, then set 2's 105 x 5 beats them")
     }
 }

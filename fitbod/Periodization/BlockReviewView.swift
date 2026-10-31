@@ -433,6 +433,10 @@ public enum BlockReviewStatistics {
     /// oldest first through `PRDetector.check(set:against:)` from an empty
     /// table, so a set counts only when it beats every set logged before
     /// it, in the block or before it.
+    ///
+    /// Oldest first is by workout start, then the time each set was logged,
+    /// then log order and set order, as exercise history replays it, so sets
+    /// logged at the same moment always replay in one order.
     @MainActor
     public static func prCount(context: ModelContext, start: Date, end: Date) -> Int {
         // Records are kept per exercise, so only the history of the lifts
@@ -443,7 +447,7 @@ public enum BlockReviewStatistics {
             completedWorkingSets(context: context, start: start, end: end)
                 .compactMap { $0.sessionExercise?.exercise?.id }
         )
-        var history: [SetEntry] = []
+        var history: [(setEntry: SetEntry, sessionExercise: SessionExercise)] = []
         for exerciseID in exerciseIDs {
             let targetID = exerciseID
             var descriptor = FetchDescriptor<SessionExercise>(
@@ -454,16 +458,24 @@ public enum BlockReviewStatistics {
             descriptor.relationshipKeyPathsForPrefetching = [\.sets, \.session]
             let rows = (try? context.fetch(descriptor)) ?? []
             for row in rows where row.session?.completedAt != nil {
-                history += (row.sets ?? []).filter { $0.isComplete && !$0.isWarmup }
+                for entry in row.sets ?? [] where entry.isComplete && !entry.isWarmup {
+                    history.append((entry, row))
+                }
             }
         }
-        history.sort { $0.completedAt < $1.completedAt }
+        history.sort { a, b in
+            let aStart = a.sessionExercise.session?.startedAt ?? .distantPast
+            let bStart = b.sessionExercise.session?.startedAt ?? .distantPast
+            return (aStart, a.setEntry.completedAt, a.sessionExercise.orderIndex, a.setEntry.orderIndex)
+                < (bStart, b.setEntry.completedAt, b.sessionExercise.orderIndex, b.setEntry.orderIndex)
+        }
 
         var table = PRTable()
         var count = 0
-        for set in history {
-            let records = PRDetector.check(set: set, against: &table)
-            if !records.isEmpty && set.completedAt >= start && set.completedAt <= end {
+        for pair in history {
+            let records = PRDetector.check(set: pair.setEntry, against: &table)
+            let completedAt = pair.setEntry.completedAt
+            if !records.isEmpty && completedAt >= start && completedAt <= end {
                 count += 1
             }
         }
