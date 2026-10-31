@@ -19,6 +19,7 @@ This is finding F183, which T18's worker found.
 A sideways drag that starts and ends on a full-width row button presses it: Program's template rows, History's rows, the PR rows and Library's rows.
 So an edge swipe on a root screen that starts on a row opens that row, while the same swipe on a pushed screen goes back.
 T28's worker also saw a History row break its weekday, "WED" as "WE" over "D", at AX3 on the large phone (finding F187).
+In T104's runs, `SwipeBackUITests.testWeeklyTonnageSwipesBackToProgress` failed 1 of 9 times because its edge swipe did not go back and Weekly Tonnage stayed on screen (finding F243, from T104's worker).
 
 ## Target
 
@@ -31,6 +32,7 @@ T28's worker also saw a History row break its weekday, "WED" as "WE" over "D", a
 3. One shared row button style does this, and all four rows use it.
 4. VoiceOver's activate still opens each row.
 5. At AX3 on both phones, a History row keeps its weekday whole.
+6. `testWeeklyTonnageSwipesBackToProgress` goes back every time: find what its edge swipe races, and fix the wait rather than retrying the swipe.
 
 ## Constraints
 
@@ -50,10 +52,12 @@ On the small phone:
   Each opens its row today.
 - Tap each of those rows, and assert that it opens.
 - At AX3 on the large phone, assert with the shared `readText` that a History row's weekday reads whole on one line.
+- Run `SwipeBackUITests/testWeeklyTonnageSwipesBackToProgress` with `-test-iterations 10 -run-tests-until-failure`, and record in `notes.md` whether and when it fails.
 
 ## Observable acceptance
 
 - The repro tests pass on the phones they name.
+- `testWeeklyTonnageSwipesBackToProgress` passes 10 of 10 with `-test-iterations 10` on the small phone.
 - `SwipeBackUITests`, `ProgramEmptyStateAX3UITests`, `SessionHistoryBRUUITests` and `PRListAndSeriesUITests` pass on the small phone.
 - `fitbodTests` passes, and the app and the widget build.
 

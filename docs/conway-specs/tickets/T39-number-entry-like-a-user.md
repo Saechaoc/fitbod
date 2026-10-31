@@ -19,6 +19,7 @@ Item 5 turned a target of 6 reps into 16: the user tapped the field and typed, a
 T06 replaced the reps fields with steppers, but every other number field still works the same way.
 The UI tests did not catch item 5, because they clear a field before they type, which no user does.
 Some screens with number pads also have no DONE key, and a focused field can sit under the keyboard or a bottom bar.
+The shared `UITestNavigation.hittable` helper polls in 0.5 s steps, which `docs/test-performance-guide.md` section 2.6 says not to do (finding F247, from T104's worker).
 
 ## Target
 
@@ -36,6 +37,7 @@ Some screens with number pads also have no DONE key, and a focused field can sit
    It taps a field, waits for keyboard focus, types without clearing the field first, and returns the field's value.
 5. Move every UI test that enters a number onto the new helper.
    Remove a private typing helper once nothing uses it.
+6. `UITestNavigation.hittable` polls in 50 to 100 ms steps, with the same overall ceiling.
 
 ## Constraints
 

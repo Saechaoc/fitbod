@@ -75,3 +75,4 @@ Before you edit, list in `notes.md` each claim in the four docs that the new evi
 - The run log's ticket ledger gives each ticket's commit and outcome.
 - `rg -n "png" docs/VERIFICATION.md docs/MILESTONE-1-CLOSEOUT.md` finds every image link.
 - Review items and their severities are in Appendix A of the plan, `.planning/noble-wishing-conway.md`.
+- T116 makes Weekly Tonnage's 20-open crash check opt-in; `docs/VERIFICATION.md` says how to run it, with `TEST_RUNNER_FITBOD_SOAK=1`.
