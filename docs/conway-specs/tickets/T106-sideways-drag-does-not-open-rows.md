@@ -5,7 +5,7 @@ phase: 3
 items: []
 depends_on: [T18]
 size: M
-sim: small
+sim: both
 owns: [new:fitbod/Design/BRURowButtonStyle.swift, fitbod/Periodization/ProgramView.swift, fitbod/Sessions/SessionHistoryRow.swift, fitbod/Progress/ExercisePRsView.swift, fitbod/ExerciseLibrary/ExerciseRow.swift, fitbodUITests/SwipeBackUITests.swift]
 ---
 
@@ -18,6 +18,7 @@ Read [../worker-rules.md](../worker-rules.md) first; it is part of this ticket.
 This is finding F183, which T18's worker found.
 A sideways drag that starts and ends on a full-width row button presses it: Program's template rows, History's rows, the PR rows and Library's rows.
 So an edge swipe on a root screen that starts on a row opens that row, while the same swipe on a pushed screen goes back.
+T28's worker also saw a History row break its weekday, "WED" as "WE" over "D", at AX3 on the large phone (finding F187).
 
 ## Target
 
@@ -29,6 +30,7 @@ So an edge swipe on a root screen that starts on a row opens that row, while the
 2. A tap still opens the row at once, and a vertical scroll that starts on a row still scrolls.
 3. One shared row button style does this, and all four rows use it.
 4. VoiceOver's activate still opens each row.
+5. At AX3 on both phones, a History row keeps its weekday whole.
 
 ## Constraints
 
@@ -47,10 +49,11 @@ On the small phone:
 - On Program's template list, History, an exercise's PR list and Library, drag from a row's left edge 200pt to the right, and assert that no screen opened.
   Each opens its row today.
 - Tap each of those rows, and assert that it opens.
+- At AX3 on the large phone, assert with the shared `readText` that a History row's weekday reads whole on one line.
 
 ## Observable acceptance
 
-- The repro tests pass on the small phone.
+- The repro tests pass on the phones they name.
 - `SwipeBackUITests`, `ProgramEmptyStateAX3UITests`, `SessionHistoryBRUUITests` and `PRListAndSeriesUITests` pass on the small phone.
 - `fitbodTests` passes, and the app and the widget build.
 

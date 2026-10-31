@@ -17,6 +17,7 @@ Read [../worker-rules.md](../worker-rules.md) first; it is part of this ticket.
 
 The app builds with warnings, including deprecation warnings for joining `Text` values with `+`.
 Warnings hide new problems, and the milestone requires a clean build.
+The UI tests also log the runtime warning "Invalid frame dimension (negative or non-finite).", which the gate runs report many times and T28's worker saw in the logger's default-text tests (finding F188).
 
 ## Target
 
@@ -30,6 +31,7 @@ Every warning from building the app, the widget and both test targets.
    For the `Text` concatenation warnings, use the replacement that Apple's deprecation message names.
 4. Build again from clean, and save the result to `warnings-after.txt`.
    It must list no warnings.
+5. Find the view that asks for a negative or non-finite frame, and fix it at its source, so the logger's UI tests log no "Invalid frame dimension" warning.
 
 ## Constraints
 
@@ -40,7 +42,7 @@ Every warning from building the app, the widget and both test targets.
 
 ## Ownership
 
-You may edit any app or test file that has a warning, only to fix that warning.
+You may edit any app or test file that has a warning, only to fix that warning, and the view behind the runtime warning in change 5.
 Ask before you edit a file for any other reason.
 
 ## Repro first
@@ -52,6 +54,7 @@ Count the warnings with a search for "warning:" in the saved build logs.
 ## Observable acceptance
 
 - `warnings-after.txt` shows zero warnings for the app, the widget and both test targets.
+- `SessionLoggerBRUUITests` on the large phone logs no "Invalid frame dimension" warning in its result bundle.
 - `fitbodTests` passes on the large phone.
 - The UI suites in every file you changed pass on the large phone.
 - Screenshots of any screen whose `Text` you changed, before and after, are in `screens/` and look the same.
