@@ -37,7 +37,6 @@ Every Phase 1 ticket is done and archived.
 
 | Ticket | Title |
 |---|---|
-| [T29](tickets/T29-session-editor-polish.md) | Session editor polish |
 | [T32](tickets/T32-custom-exercise-editor-bru.md) | Custom exercise editor and muscle picker in BRU |
 | [T33](tickets/T33-pinned-note-bru.md) | Pinned Note sheet in BRU |
 | [T96](tickets/T96-history-pr-count.md) | Exercise history counts its real PRs and stops writing state while it draws |
@@ -48,6 +47,7 @@ Every Phase 1 ticket is done and archived.
 | [T103](tickets/T103-streak-and-recap-skip-empty-workouts.md) | Today's day streak and the weekly recap skip empty workouts |
 | [T104](tickets/T104-weekly-tonnage-weeks-detail-voiceover.md) | Weekly Tonnage stops crashing, keeps whole weeks and works with VoiceOver |
 | [T105](tickets/T105-new-block-delete-and-voiceover-names.md) | New Block's revealed Delete deletes, and VoiceOver reads its controls by name |
+| [T110](tickets/T110-per-set-overrides-removed.md) | The session editor stops offering per-set overrides that the logger ignores |
 
 ### Phase 3: P3 polish and copy
 
@@ -64,6 +64,7 @@ Every Phase 1 ticket is done and archived.
 | [T107](tickets/T107-plate-screens-tabs-targets-stack.md) | The plate screens keep their tabs whole and their controls easy to hit |
 | [T108](tickets/T108-block-overview-and-routine-at-ax3.md) | The block overview and the routine screen read cleanly at AX3 |
 | [T109](tickets/T109-muscle-screen-steppers-order-tests.md) | The muscle screen uses BRU steppers, keeps a stable order and is always tested |
+| [T111](tickets/T111-session-editor-rows-announced-removable.md) | Session editor rows are announced, removable and easy to hit |
 
 ### Phase 4: test health
 

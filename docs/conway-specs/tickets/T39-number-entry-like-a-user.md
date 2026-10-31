@@ -6,7 +6,7 @@ items: [5]
 depends_on: [T06, T09, T19, T29, T37, T38]
 size: L
 sim: both
-owns: [fitbod/Sessions/PrescriptionWeightCell.swift, fitbod/Sessions/SetRow.swift, fitbod/Sessions/PartialRepsRow.swift, fitbod/Sessions/TempoEntryRow.swift, fitbod/Routines/PerSetOverrideRow.swift, fitbod/Routines/PrescriptionEditorRow.swift, fitbod/Routines/RoutineBuilderView.swift, fitbod/ExerciseLibrary/ExerciseDetailView.swift, fitbod/Settings/PlateInventoryEditor.swift, fitbodUITests/UITestNavigation.swift, new:fitbod/Design/SelectAllOnFocus.swift, new:fitbodUITests/NumberEntryUITests.swift]
+owns: [fitbod/Sessions/PrescriptionWeightCell.swift, fitbod/Sessions/SetRow.swift, fitbod/Sessions/PartialRepsRow.swift, fitbod/Sessions/TempoEntryRow.swift, fitbod/Routines/PrescriptionEditorRow.swift, fitbod/Routines/RoutineBuilderView.swift, fitbod/ExerciseLibrary/ExerciseDetailView.swift, fitbod/Settings/PlateInventoryEditor.swift, fitbodUITests/UITestNavigation.swift, new:fitbod/Design/SelectAllOnFocus.swift, new:fitbodUITests/NumberEntryUITests.swift]
 ---
 
 # T39: Number entry like a user
@@ -53,7 +53,7 @@ Ask before you edit anything else.
 
 With the new helper, on both phones, write `NumberEntryUITests`:
 
-- In the session editor, give a set override 6 reps, then tap that field, type 8, and assert that it reads 8.
+- In the session editor, give a tempo field 2, then tap that field, type 3, and assert that it reads 3.
 - In the logger, tap a work set's weight field that shows a value, type a new weight, and assert that the field shows only the new weight.
 - In Plate Inventory, tap the bar weight, type 20, and assert that it reads 20.
 - For each of these fields, assert that the field's frame lies above the keyboard and above any bottom bar.
@@ -71,10 +71,10 @@ If one of them passes today, say so in `notes.md`.
 
 ## Hints
 
-- Numeric fields: `PrescriptionWeightCell.swift:81`, `SetRow.swift:149`, `PartialRepsRow.swift:48`, `TempoEntryRow.swift:67`, `PerSetOverrideRow.swift:65` and 83, the tempo fields near `PrescriptionEditorRow.swift:290`, `ExerciseDetailView.swift:370`, and `PlateInventoryEditor.swift:210` and 433.
+- Numeric fields: `PrescriptionWeightCell.swift:81`, `SetRow.swift:149`, `PartialRepsRow.swift:48`, `TempoEntryRow.swift:67`, the tempo fields near `PrescriptionEditorRow.swift:290`, `ExerciseDetailView.swift:370`, and `PlateInventoryEditor.swift:210` and 433.
 - Find them all with a search for `keyboardType(.decimalPad)` and `keyboardType(.numberPad)`.
 - The logger's DONE is a keyboard toolbar near `SessionLoggerView.swift:123`.
 - Put each DONE on the screen, not on each row, because a keyboard toolbar on every row shows one DONE per row.
-- The session editor is `RoutineBuilderView`, which holds `PrescriptionEditorRow` and `PerSetOverrideRow`.
+- The session editor is `RoutineBuilderView`, which holds `PrescriptionEditorRow`; T110 removed its per-set overrides.
 - SwiftUI's `TextField` accepts a text selection binding on iOS 18 and later.
 - `MilestoneOneJourneyUITests.swift` has a private `replace(_:with:)` helper near line 379.
