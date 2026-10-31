@@ -480,15 +480,22 @@ extension UITestNavigation {
     /// The sheet on top, or nil when none is up. UIKit adds each
     /// presentation to the window as a new layer; a sheet is the view in
     /// the last layer that starts below the top of the screen and reaches
-    /// its bottom. A full-screen cover starts at the top, so it is no sheet.
+    /// its bottom, or floats just above it, as a half-height sheet does on
+    /// iOS 26 and later. A full-screen cover starts at the top, so it is no
+    /// sheet.
     static func topSheet(in app: XCUIApplication) -> XCUIElement? {
         let window = app.windows.firstMatch
         guard let layer = window.children(matching: .other).allElementsBoundByIndex.last else { return nil }
         let bottom = window.frame.maxY
         return layer.children(matching: .other).allElementsBoundByIndex.first {
-            $0.frame.minY > 0.5 && abs($0.frame.maxY - bottom) < 1
+            let gap = bottom - $0.frame.maxY
+            return $0.frame.minY > 0.5 && gap > -1 && gap < floatingSheetGap + 1
         }
     }
+
+    /// How far a half-height sheet floats above the bottom of the screen on
+    /// iOS 26 and later.
+    private static let floatingSheetGap: CGFloat = 8
 
     /// Swipes right from the left edge of the screen, the system's back
     /// gesture on a pushed screen. It starts 1pt inside the edge: from
