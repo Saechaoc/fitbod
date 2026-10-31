@@ -88,7 +88,7 @@ struct Phase3BRUGrepAuditTests {
         "fitbod/Sessions/PartialRepsRow.swift",
         "fitbod/Sessions/PerSetNoteSheet.swift",
         "fitbod/Sessions/PinnedNoteCapsule.swift",
-        "fitbod/Sessions/PinnedNoteSheet.swift",
+        // PinnedNoteSheet is BRU since review item 42, so this audit covers it too.
         "fitbod/Sessions/TempoEntryRow.swift",
         "fitbod/Sessions/PreviousColumn.swift",
         // Phase 6 Sessions surfaces

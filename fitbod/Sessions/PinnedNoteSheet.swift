@@ -54,7 +54,7 @@ public struct PinnedNoteSheet: View {
                             )
 
                         // Placeholder hint
-                        Text("Shown above this exercise's sets")                  // placeholder hint
+                        Text("Note for this exercise")                             // placeholder hint
                             .font(BRUFont.labelSmall)
                             .tracking(0.5)
                             .foregroundStyle(Color.bruMuted)
