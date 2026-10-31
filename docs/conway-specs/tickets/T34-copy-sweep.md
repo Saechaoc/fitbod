@@ -89,3 +89,4 @@ All of these fail today.
 - `SplitDetailView.swift:211` already handles the singular by hand, which is fine.
 - Back-label list, each a bare "‹" today: `ExerciseHistoryView.swift:93`, `ExerciseProgressView.swift:84`, `ExercisePRsView.swift:108`, History in `SessionHistoryView.swift:97`, Summary in `SessionHistoryRoute.swift:64`, `SessionDetailView.swift:75` when opened from History, and `PerMuscleDetailView.swift:103`.
 - The weekly recap's "‹" is near `WeeklyRecapSheet.swift:143`.
+- `WeeklyRecapUITests` (T103) finds the recap by its header title, "Week N · recap", and by its "Start W" button; if the title text changes, update that query in the same commit.

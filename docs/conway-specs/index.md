@@ -38,7 +38,6 @@ Every Phase 1 ticket is done and archived.
 | Ticket | Title |
 |---|---|
 | [T101](tickets/T101-ui-tests-idle-after-typing.md) | UI tests stop waiting a minute per step after typing |
-| [T103](tickets/T103-streak-and-recap-skip-empty-workouts.md) | Today's day streak and the weekly recap skip empty workouts |
 | [T104](tickets/T104-weekly-tonnage-weeks-detail-voiceover.md) | Weekly Tonnage stops crashing, keeps whole weeks and works with VoiceOver |
 | [T105](tickets/T105-new-block-delete-and-voiceover-names.md) | New Block's revealed Delete deletes, and VoiceOver reads its controls by name |
 | [T110](tickets/T110-per-set-overrides-removed.md) | The session editor stops offering per-set overrides that the logger ignores |
@@ -61,6 +60,7 @@ Every Phase 1 ticket is done and archived.
 | [T109](tickets/T109-muscle-screen-steppers-order-tests.md) | The muscle screen uses BRU steppers, keeps a stable order and is always tested |
 | [T111](tickets/T111-session-editor-rows-announced-removable.md) | Session editor rows are announced, removable and easy to hit |
 | [T113](tickets/T113-block-review-pr-marks.md) | The block review's PR marks agree, and its stats read cheaply and whole |
+| [T114](tickets/T114-recap-target-from-plan.md) | The weekly recap measures last week against its plan |
 
 ### Phase 4: test health
 
