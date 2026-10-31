@@ -2,6 +2,12 @@
 
 Newest first.
 
+## 2026-10-31: the coordinator pushes `main` after every commit
+
+- What: after each commit on `main`, a merged ticket included, the coordinator pushes `main` to `origin` as a fast-forward, and commits the run log with each bundle commit.
+- What: Phase 8's own push stays as the last one, and its `origin/main` check compares against the commit last pushed.
+- Why: the user asked that every change be pushed so the remote stays up to date.
+
 ## 2026-10-31: tests follow the test performance guide
 
 - What: worker-rules gains a Test performance section that makes `docs/test-performance-guide.md` part of every ticket: the cheapest test that proves a behavior, no fixed sleeps, three timed runs of each new or changed test against the guide's budgets, and a Test performance list in `notes.md`.

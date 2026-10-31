@@ -257,6 +257,7 @@ Meet the execution-stop proof and cleanup-authority guard in "Settle a ticket" b
 2. In the main checkout, run `git merge --ff-only <branch>`.
    `main` never gets a merge commit.
 3. Settle the ticket as `done`, with its commit on `main`.
+4. Push `main` as "Bundle changes" says.
 
 ## Settle a ticket
 
@@ -371,9 +372,12 @@ Any helper agent you start for a gate, a rerun or other test work gets the guide
 
 - During the run, only you edit the bundle: the run log, new tickets and their index.md rows, and answers you add to decisions.md or tradeoffs.md.
 - A rule change the user asks for gets an entry in changelog.md, and a status message to every live worker that spells it out, because their worktrees hold the old rules.
-- Commit each of these changes except the run log on `main` as soon as you make it, staged by exact path.
-  Workers cannot commit bundle files, new worktrees start from `main`, and Phase 8 pushes only what is committed.
-- The run log is committed in Phase 8.
+- Commit each of these changes on `main` as soon as you make it, staged by exact path, with the run log as it stands.
+  Workers cannot commit bundle files, new worktrees start from `main`, and only what is committed reaches `origin`.
+- After every commit on `main`, a merged ticket included, push it with `git push origin main`, so the remote stays up to date (the user's rule, 2026-10-31).
+  It must be a fast-forward; if `origin` refuses it, run `git fetch origin` and stop and ask the user, because someone else pushed.
+  Never force-push, and never push a ticket branch.
+- The run log is committed with each of these commits, and a last time in Phase 8.
 
 ## Phase 8, for the coordinator only
 
@@ -383,7 +387,7 @@ Any helper agent you start for a gate, a rerun or other test work gets the guide
    Run T45 again too when a change touches a screen in its journeys, and scope any affected T46 pairs as "New findings" says.
    Then dispatch T47 as `T47-r2` with an explicit `docs-refresh` brief listing its permitted docs and cited images, so they cite the new runs.
    Dispatch T48 as `T48-r2` with the review-page-only `docs-refresh` brief, not its original gallery/test work.
-   Push only after the latest T44 and T45 evidence matches the final code.
+   Report only after the latest T44 and T45 evidence matches the final code.
 2. Stop Phase 8 cleanup if any attempt is live or pending settlement; preserve its worktree, branch, lane, reservations and waits until receipt-directed recovery proves execution stopped and authorizes cleanup.
    Apply "Settle a ticket" to retained failed work too, archiving useful work before any authorized removal of its worktree or branch.
    Do not force-delete retained branches merely to finish the run.
@@ -393,7 +397,7 @@ Any helper agent you start for a gate, a rerun or other test work gets the guide
    Then `git status --porcelain` in the main checkout must show nothing; ask the user about any path that is left.
 4. In `index` mode, run `gitnexus detect-changes --scope compare --base-ref <run base> --repo fitbod`, and check that the affected flows match the tickets.
    In `manual` mode, check `git diff --stat <run base>..main` against the effective briefs' ownership and authorized grants instead.
-5. Run `git fetch origin`, then check that `origin/main` still equals the value you recorded at setup.
+5. Run `git fetch origin`, then check that `origin/main` still equals the commit you last pushed.
    If it moved, stop and ask the user, because someone else pushed during the run.
 6. Review `git log --oneline origin/main..main`.
 7. Check that no commit of this run has the trailer: `git log <run base>..main --format=%B` contains no `Co-Authored-By`.
