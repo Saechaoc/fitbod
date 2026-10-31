@@ -13,7 +13,10 @@
 //   same 30 days as the session count. "Per week" averages the last
 //   4 weeks. The period sits in each cell's caption so every label fits
 //   on one line, even on a 390pt-wide phone; if large text still wraps a
-//   label, the cells bottom-align so the values stay level.
+//   label, the cells bottom-align so the values stay level. At
+//   accessibility sizes the cells stack, one under another with 1pt
+//   bruHair rules between them, as TodayStatStrip's do, so no label or
+//   value breaks inside itself.
 //
 // BRU contract: NO Capsule() / NO RoundedRectangle / NO accentColor /
 //               NO Image(systemName:) / NO Color(.system*) /
@@ -24,6 +27,8 @@ import SwiftUI
 // MARK: - SessionHistoryStatStrip
 
 public struct SessionHistoryStatStrip: View {
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+
     private let sessions: Int
     private let tonnageLabel: String
     private let perWeekLabel: String
@@ -42,7 +47,7 @@ public struct SessionHistoryStatStrip: View {
     }
 
     public var body: some View {
-        HStack(spacing: 0) {
+        statLayout {
             cell(BRUReadout(
                 label: "Sessions",
                 value: "\(sessions)",
@@ -50,7 +55,7 @@ public struct SessionHistoryStatStrip: View {
                 accessibilityLabel: "Sessions in the last 30 days"
             ))
 
-            Rectangle().fill(Color.bruHair).frame(width: 1)
+            divider
 
             cell(BRUReadout(
                 label: "Tonnage · \(unit.rawValue)",
@@ -60,7 +65,7 @@ public struct SessionHistoryStatStrip: View {
                 accessibilityLabel: "Tonnage in the last 30 days, \(unit == .kg ? "kilograms" : "pounds")"
             ))
 
-            Rectangle().fill(Color.bruHair).frame(width: 1)
+            divider
 
             cell(BRUReadout(
                 label: "Per week",
@@ -80,6 +85,20 @@ public struct SessionHistoryStatStrip: View {
             .padding(.horizontal, 16)
             .padding(.vertical, 12)
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomLeading)
+    }
+
+    /// 1pt bruHair rule between cells: upright beside them, flat once they stack.
+    private var divider: some View {
+        Rectangle()
+            .fill(Color.bruHair)
+            .frame(width: dynamicTypeSize.isAccessibilitySize ? nil : 1,
+                   height: dynamicTypeSize.isAccessibilitySize ? 1 : nil)
+    }
+
+    private var statLayout: AnyLayout {
+        dynamicTypeSize.isAccessibilitySize
+            ? AnyLayout(VStackLayout(alignment: .leading, spacing: 0))
+            : AnyLayout(HStackLayout(spacing: 0))
     }
 }
 

@@ -25,6 +25,7 @@ public struct SessionDetailView: View {
     @Environment(\.modelContext) private var ctx
     @Environment(\.dismiss) private var dismiss
     @Environment(\.weightUnit) private var weightUnit
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     public let session: Session
     private let onDone: (() -> Void)?
@@ -116,24 +117,40 @@ public struct SessionDetailView: View {
         .padding(.vertical, 20)
     }
 
+    /// Three columns, or at accessibility sizes one cell under another, as
+    /// TodayStatStrip's are, so no label or value breaks inside itself.
     private func statStrip(_ summary: SessionSummary) -> some View {
-        HStack(spacing: 0) {
+        statLayout {
             BRUReadout(label: "Duration", value: durationLabel(summary.durationSeconds))
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.horizontal, 16)
                 .padding(.vertical, 14)
-            Rectangle().fill(Color.bruInk).frame(width: 1)
+            statDivider
             BRUReadout(label: "Sets", value: "\(summary.workingSetCount)")
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.horizontal, 16)
                 .padding(.vertical, 14)
-            Rectangle().fill(Color.bruInk).frame(width: 1)
+            statDivider
             BRUReadout(label: "Volume · \(unitLabel)", value: volumeLabel(summary.totalVolume))
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.horizontal, 16)
                 .padding(.vertical, 14)
         }
         .fixedSize(horizontal: false, vertical: true)
+    }
+
+    /// 1pt bruInk rule between cells: upright beside them, flat once they stack.
+    private var statDivider: some View {
+        Rectangle()
+            .fill(Color.bruInk)
+            .frame(width: dynamicTypeSize.isAccessibilitySize ? nil : 1,
+                   height: dynamicTypeSize.isAccessibilitySize ? 1 : nil)
+    }
+
+    private var statLayout: AnyLayout {
+        dynamicTypeSize.isAccessibilitySize
+            ? AnyLayout(VStackLayout(alignment: .leading, spacing: 0))
+            : AnyLayout(HStackLayout(spacing: 0))
     }
 
     private func prBand(_ summary: SessionSummary) -> some View {

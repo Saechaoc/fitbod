@@ -8,6 +8,9 @@
 //  Renders:
 //    • BRUSectionHead "Warm-up ramp" with right trailing "Plate {smallest plate} · ×2 sides"
 //    • Per-row 4-column grid: 36pt W{N} signal · 1fr weight+pct+reps · 1fr mini PlateStackViz · auto plate legend
+//    • At accessibility sizes each row stacks instead: W{N} and the weight, then reps/RPE and
+//      the mini PlateStackViz, then the plate legend on its own line
+//    • "BAR" as the plate legend when the bar alone makes the weight
 //    • "WORK SETS BEGIN AT" footer row (labelSmall left, displayMedium right)
 //    • "SKIP WARM-UPS" ghost text button in bruMuted
 //    • "WARM-UPS SKIPPED" line with UNDO in place of the ramp once every warm-up is skipped
@@ -28,7 +31,7 @@
 //  Mini PlateStackViz at heightScale 0.3 yields ~18pt tall plates per 03-UI-SPEC line 51.
 //  Labels are suppressed at heightScale < 0.5 per PlateStackViz.isMini contract.
 //
-//  Threat mitigation T-03.2-05: computePlates returns empty array on PlateCalculator.solve
+//  Threat mitigation T-03.2-05: plateStack returns nil on PlateCalculator.solve
 //  failure; PlateStackViz renders sleeve + end cap only — no crash.
 //
 //  Banned tokens: zero Color(.system*) / zero Capsule / zero RoundedRectangle /
@@ -50,6 +53,8 @@ import SwiftData
 /// only the "Warm up however you'd like." placeholder (no header, no footer). Once every
 /// warm-up is skipped, the ramp collapses to a "WARM-UPS SKIPPED" line with UNDO.
 public struct WarmupRampRows: View {
+
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     // MARK: - Public properties
 
@@ -157,66 +162,136 @@ public struct WarmupRampRows: View {
         }
     }
 
-    // MARK: - Warmup row (4-column grid)
+    // MARK: - Warmup row
+
+    /// One warm-up set: a 4-column grid, or stacked at accessibility sizes
+    /// so no label or number breaks inside itself. VoiceOver reads the row
+    /// once; the plate drawing inside it does not read on its own.
+    private func warmupRow(_ warmup: SetEntry) -> some View {
+        let stack = plateStack(for: warmup.weight)
+        return rowContent(warmup, stack: stack)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 10)
+            // Accessibility per 03-UI-SPEC line 500
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel(accessibilityLabel(for: warmup, stack: stack))
+    }
 
     @ViewBuilder
-    private func warmupRow(_ warmup: SetEntry) -> some View {
-        let pct = pctForSet(warmup)
-        let reps = repsForSet(warmup)
-        let rpe = rpeForSet(warmup)
-        let plates = computePlates(weight: warmup.weight, bar: barWeight)
+    private func rowContent(_ warmup: SetEntry, stack: PlateStack?) -> some View {
+        if dynamicTypeSize.isAccessibilitySize {
+            stackedRow(warmup, stack: stack)
+        } else {
+            gridRow(warmup, stack: stack)
+        }
+    }
 
+    /// 36pt W{N} · 1fr weight+pct+reps · 1fr mini PlateStackViz · auto plate legend.
+    private func gridRow(_ warmup: SetEntry, stack: PlateStack?) -> some View {
         HStack(spacing: 10) {
-            // Column 1 — 36pt: W{N} in displayMedium bruSignal per 03-UI-SPEC reserved-for item 23
-            Text("W\(warmup.orderIndex + 1)")
-                .font(BRUFont.displayMedium)
-                .foregroundStyle(Color.bruSignal)
+            // Column 1 — 36pt: W{N}
+            setLabel(warmup)
                 .frame(width: 36, alignment: .leading)
 
             // Column 2 — 1fr: weight numeral + pct suffix + reps/rpe sub-line
             VStack(alignment: .leading, spacing: 2) {
-                // Weight + pct per 03-UI-SPEC line 225
-                HStack(alignment: .firstTextBaseline, spacing: 4) {
-                    // displayMedium at 22pt requires .custom because BRUFont.displayMedium is 18pt
-                    // The spec calls for 22pt for the weight numeral (03-UI-SPEC line 88 / why-weight.jsx line 111)
-                    Text(formatted(warmup.weight))
-                        .font(.bru(.grotesk, size: 22))
-                        .foregroundStyle(Color.bruInk)
-                    Text("\(pct)%")
-                        .font(BRUFont.bodyDefault)
-                        .foregroundStyle(Color.bruInk.opacity(0.5))
-                }
-                // ×reps @ rpe sub-line per 03-UI-SPEC line 226
-                Text("×\(reps) @ \(rpeFormatted(rpe))")
-                    .font(BRUFont.bodyDefault)
-                    .foregroundStyle(Color.bruMuted)
+                weightLine(warmup)
+                repsLine(warmup)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
 
-            // Column 3 — 1fr: mini PlateStackViz at heightScale 0.3 per 03-UI-SPEC line 51
-            // "Mini plate viz at 0.3 scale yields ~18pt tall plates per 03-UI-SPEC line 51
-            //  'mini PlateStackViz at 18pt height, scaled'."
-            PlateStackViz(
-                platesPerSide: plates,
-                barLabel: "\(formatted(barWeight)) \(unitLabel)",
-                heightScale: 0.3,
-                showLegend: false
-            )
-            .frame(maxWidth: .infinity)
+            // Column 3 — 1fr: mini PlateStackViz
+            plateViz(stack)
+                .frame(maxWidth: .infinity)
 
             // Column 4 — auto: plate legend "45+25+10" per 03-UI-SPEC line 227
-            Text(platesList(plates))
-                .font(BRUFont.labelMicro)
-                .foregroundStyle(Color.bruMuted)
-                .tracking(0.5)
+            plateLegend(plateText(stack, separator: "+"))
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 10)
-        // Accessibility per 03-UI-SPEC line 500
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel(
-            "Warm-up set \(warmup.orderIndex + 1): \(formatted(warmup.weight)) \(unitLabel) × \(reps) reps at \(pct)% of working weight. Plates: \(platesList(plates))."
+    }
+
+    /// W{N} and the weight, then reps, RPE and the plate drawing, then the
+    /// plate legend on its own line. The label sizes to fit, and the legend
+    /// can only wrap after a "+" (a zero-width space follows each one).
+    private func stackedRow(_ warmup: SetEntry, stack: PlateStack?) -> some View {
+        let legend = plateText(stack, separator: "+\u{200B}")
+        return VStack(alignment: .leading, spacing: 4) {
+            HStack(alignment: .firstTextBaseline, spacing: 10) {
+                setLabel(warmup)
+                weightLine(warmup)
+            }
+            .fixedSize()
+
+            HStack(spacing: 10) {
+                repsLine(warmup)
+                plateViz(stack)
+            }
+
+            if !legend.isEmpty {
+                plateLegend(legend)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    /// W{N} in displayMedium bruSignal per 03-UI-SPEC reserved-for item 23.
+    private func setLabel(_ warmup: SetEntry) -> some View {
+        Text("W\(warmup.orderIndex + 1)")
+            .font(BRUFont.displayMedium)
+            .foregroundStyle(Color.bruSignal)
+    }
+
+    /// Weight + pct per 03-UI-SPEC line 225.
+    private func weightLine(_ warmup: SetEntry) -> some View {
+        HStack(alignment: .firstTextBaseline, spacing: 4) {
+            // displayMedium at 22pt requires .custom because BRUFont.displayMedium is 18pt
+            // The spec calls for 22pt for the weight numeral (03-UI-SPEC line 88 / why-weight.jsx line 111)
+            Text(formatted(warmup.weight))
+                .font(.bru(.grotesk, size: 22))
+                .foregroundStyle(Color.bruInk)
+            Text("\(pctForSet(warmup))%")
+                .font(BRUFont.bodyDefault)
+                .foregroundStyle(Color.bruInk.opacity(0.5))
+        }
+    }
+
+    /// ×reps @ rpe sub-line per 03-UI-SPEC line 226.
+    private func repsLine(_ warmup: SetEntry) -> some View {
+        Text("×\(repsForSet(warmup)) @ \(rpeFormatted(rpeForSet(warmup)))")
+            .font(BRUFont.bodyDefault)
+            .foregroundStyle(Color.bruMuted)
+    }
+
+    /// Mini PlateStackViz at heightScale 0.3 per 03-UI-SPEC line 51
+    /// ("mini PlateStackViz at 18pt height, scaled").
+    private func plateViz(_ stack: PlateStack?) -> some View {
+        PlateStackViz(
+            platesPerSide: stack?.platesPerSide ?? [],
+            barLabel: "\(formatted(barWeight)) \(unitLabel)",
+            heightScale: 0.3,
+            showLegend: false
         )
+    }
+
+    /// The plate legend: "45+25+10", or "BAR" for the bar alone.
+    private func plateLegend(_ text: String) -> some View {
+        Text(text)
+            .font(BRUFont.labelMicro)
+            .foregroundStyle(Color.bruMuted)
+            .textCase(.uppercase)
+            .tracking(0.5)
+    }
+
+    /// "Warm-up set 4: 90 lb for 1 rep at 90% of working weight. Plates
+    /// per side: 10, 10, 2.5." The bar-only row ends "Bar only."
+    private func accessibilityLabel(for warmup: SetEntry, stack: PlateStack?) -> String {
+        let reps = BRUCountLabel.text(repsForSet(warmup), "rep")
+        let set = "Warm-up set \(warmup.orderIndex + 1): \(formatted(warmup.weight)) \(unitLabel) for \(reps) at \(pctForSet(warmup))% of working weight."
+        guard let stack else { return set }
+        if stack.platesPerSide.isEmpty {
+            return barWeight > 0 ? set + " Bar only." : set
+        }
+        return set + " Plates per side: \(plateWeights(stack.platesPerSide).joined(separator: ", "))."
     }
 
     // MARK: - "WORK SETS BEGIN AT" footer row
@@ -337,27 +412,27 @@ public struct WarmupRampRows: View {
 
     // MARK: - Plate helpers
 
-    /// Computes plates-per-side for a warm-up set weight.
-    /// Returns empty array on PlateCalculator.solve failure — PlateStackViz degrades
-    /// gracefully to sleeve + end cap only (Threat T-03.2-05 mitigation).
-    private func computePlates(weight: Double, bar: Double) -> [PlateStackViz.PlateDenomination] {
-        guard let stack = PlateCalculator.solve(
-            target: weight,
-            barWeight: bar,
-            plates: plates
-        ) else {
-            // solve returned nil — degrade to empty (T-03.2-05: no crash)
-            return []
-        }
-        return stack.platesPerSide
+    /// The plates per side that load a warm-up set's weight on the bar:
+    /// none for the bar alone. Nil on PlateCalculator.solve failure —
+    /// PlateStackViz degrades gracefully to sleeve + end cap only
+    /// (Threat T-03.2-05 mitigation).
+    private func plateStack(for weight: Double) -> PlateStack? {
+        PlateCalculator.solve(target: weight, barWeight: barWeight, plates: plates)
     }
 
-    /// Renders the auto plate legend as "45+25+10" per 03-UI-SPEC line 227.
-    private func platesList(_ plates: [PlateStackViz.PlateDenomination]) -> String {
-        guard !plates.isEmpty else { return "" }
-        return plates.flatMap { denomination in
+    /// The plate legend's text: the plates per side joined by `separator`,
+    /// "Bar" for the bar alone, and empty when no plates make the weight.
+    private func plateText(_ stack: PlateStack?, separator: String) -> String {
+        guard let stack else { return "" }
+        if stack.platesPerSide.isEmpty { return barWeight > 0 ? "Bar" : "" }
+        return plateWeights(stack.platesPerSide).joined(separator: separator)
+    }
+
+    /// One formatted weight per plate on a side, heaviest first: ["10", "10", "2.5"].
+    private func plateWeights(_ plates: [PlateStackViz.PlateDenomination]) -> [String] {
+        plates.flatMap { denomination in
             Array(repeating: formatted(denomination.weight), count: denomination.count)
-        }.joined(separator: "+")
+        }
     }
 
     // MARK: - Formatting helpers
