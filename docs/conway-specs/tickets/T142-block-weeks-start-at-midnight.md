@@ -6,7 +6,7 @@ items: []
 depends_on: [T139]
 size: M
 sim: small
-owns: [fitbod/Prescription/PeriodizationEngine.swift, fitbod/Fatigue/PlateauDetector.swift, fitbod/Periodization/BlockDraft.swift, fitbod/Periodization/BlockOverviewScreen.swift, fitbodTests/PeriodizationEngineTests.swift]
+owns: [fitbod/Prescription/PeriodizationEngine.swift, fitbod/Fatigue/PlateauDetector.swift, fitbod/Periodization/BlockDraft.swift, fitbod/Periodization/BlockOverviewScreen.swift, fitbod/Views/TodayView.swift, fitbodTests/PeriodizationEngineTests.swift]
 ---
 
 # T142: A block week starts at local midnight on its first day
@@ -26,6 +26,7 @@ This is finding F359, which T139's worker found.
 ## Target
 
 - `PeriodizationEngine.days(from:to:)`, and `weekContext`'s week start, which adds 7 × 86,400 s.
+- Today's week math: `currentTrend` near `TodayView.swift:537` and `checkWeeklyRecap` near `TodayView.swift:625` still step 7 × 86,400 s from this week's start (finding F363, from T139's worker).
 - Block-week math outside the engine:
   - `PlateauDetector`'s Branch 3, `isInBlockWeekThreeWithDeloadComing`;
   - `computedDaysRemaining` near `BlockOverviewScreen.swift:349`;
@@ -37,6 +38,7 @@ This is finding F359, which T139's worker found.
 2. The engine takes a calendar, `.current` by default, so a test can choose the time zone.
 3. The spans in Target use the same count, so every screen and the prescription agree on the week.
 4. `startDate` keeps the instant the block started; only the counting changes.
+5. Today's trend and its weekly-recap check take last week from `FatigueModel.date(byAddingWeeks:to:calendar:)`, as the recap itself does since T139, so twice a year Today neither shows a recap for an empty week nor skips one.
 
 ## Constraints
 
@@ -62,7 +64,7 @@ In `PeriodizationEngineTests`, with a calendar in `America/Los_Angeles`:
 
 - The repro tests pass with `fitbodTests` on the large phone.
 - `SuggestedActionTests`' Branch 3 test builds its block start with calendar math and passes on any day, a daylight-saving week included.
-- `BlockWeekCountsUITests` and `BlockOverviewStatesUITests` pass on the small phone.
+- `BlockWeekCountsUITests`, `BlockOverviewStatesUITests` and `WeeklyRecapUITests` pass on the small phone.
 - `fitbodTests` passes, and the app and the widget build.
 
 ## Hints
