@@ -278,6 +278,13 @@ Product decisions are in [decisions.md](decisions.md), and they win over this fi
 - Coordinator answer, 2026-10-30 (T13 question `msg_ba0f59859f56`): each bucket is one list ranked across exercises by the bucket's measure, with at most three rows per exercise, and each row names its exercise (T13 changes 1 and 2).
   The same exercise, weight and reps count as one set, dated when it was first logged, as `PRDetector` breaks ties.
 
+### Progress chart lines
+
+- Coordinator call, 2026-11-01 (T98 finding F297, decided under autopilot; the user can revisit it): on VOLUME and AVG RPE, every intent the chart draws gets its own line style and a legend key, as "POWER · 1 SESSION".
+  POWER, ENDURANCE and TECHNIQUE keys appear only when the chart draws those lines, and HYPERTROPHY and STRENGTH keep their keys and look (T129).
+- Rejected: folding the other intents into STRENGTH's line, which mixes workouts trained for different goals.
+- Rejected: always showing all five keys, which crowds the small phone with keys for lines that are not there.
+
 ## Export and backup
 
 ### One-tap share
@@ -324,6 +331,13 @@ Product decisions are in [decisions.md](decisions.md), and they win over this fi
   A stored weight that is not on a tick stays as it is until the user taps a tick.
 - Rejected: keeping the stock slider, because BRU has no slider and the design shows ticks.
 - Why: the editor's defaults are 100% for a primary muscle and 50% for a secondary one, and both are ticks.
+
+### Re-seeding the catalog
+
+- Coordinator call, 2026-11-01 (T98 finding F296, decided under autopilot; the user can revisit it): a re-seed updates the seeded catalog in place, by `externalID` and muscle `slug`, and deletes nothing (T128).
+  A seeded exercise that the bundled dataset no longer lists stays as it is.
+- Rejected: deleting and inserting the catalog again, as the importer does today, which drops custom exercises, edited weights and targets, and history's exercise links.
+- Rejected: deleting dropped exercises that nothing references, which saves a few rows and risks deleting one the lifter archived on purpose.
 
 ## Design references
 
