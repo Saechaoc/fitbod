@@ -79,8 +79,10 @@ final class LibraryPolishUITests: XCTestCase {
 
     // MARK: - Exercise detail
 
-    /// VIEW ALL HISTORY ends in the same chevron, at the same size and in
-    /// the same color, as the progress chart row under it.
+    /// At default text the RECENT PERFORMANCE head keeps BEST SET beside
+    /// its title, as every section head did before T37. VIEW ALL HISTORY
+    /// ends in the same chevron, at the same size and in the same color, as
+    /// the progress chart row under it.
     @MainActor
     func testHistoryRowEndsInTheNavigationRowChevron() throws {
         let app = openBenchPress()
@@ -90,6 +92,13 @@ final class LibraryPolishUITests: XCTestCase {
         XCTAssertTrue(progress.exists, "The seeded bench press has logged sets, so it must offer its progress chart")
         bringIntoView(history, progress, below: app.buttons["Copy"], in: app)
         UITestNavigation.saveScreenshot("T37", "exercise-detail-history-row", appearance: appearance)
+
+        let title = app.staticTexts.labeled("Recent performance")
+        let best = app.staticTexts.labeled("Best set")
+        XCTAssertGreaterThan(best.frame.minX, title.frame.maxX,
+                             "At default text BEST SET must sit beside the title, but it is at \(best.frame) and the title at \(title.frame)")
+        XCTAssertEqual(best.frame.midY, title.frame.midY, accuracy: 2, "At default text BEST SET must sit on the title's row")
+
         let screenshot = XCUIScreen.main.screenshot()
         let historyChevron = try XCTUnwrap(RowChevron(endOf: history.frame, in: screenshot),
                                            "VIEW ALL HISTORY must end in a chevron")
