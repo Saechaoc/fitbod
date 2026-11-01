@@ -25,7 +25,7 @@ Record these when you set up the run, as [dispatch.md](dispatch.md) says.
 | gate | "sw6 iPhone 17e" `FF89B400-1160-4818-8436-314B014D2614` | "sw6 iPhone 17 Pro Max" `69E32D56-148D-40A7-9D1B-543F6878B1D1` | `fitbod-conway-gate` |  |
 | L1 | "sw6-L1 iPhone 17e" `D0B5079C-B4ED-463B-AE2C-01D0FF469435` | "sw6-L1 iPhone 17 Pro Max" `A74927B1-3476-4659-9AAD-E6CABA6A9902` | `fitbod-conway-L1` | T111 |
 | L2 | "sw6-L2 iPhone 17e" `5615455C-A8B6-4129-9E3B-53A7F161D758` | "sw6-L2 iPhone 17 Pro Max" `D305B715-794C-4BEB-B49E-89368B415E7E` | `fitbod-conway-L2` | T116 |
-| L3 | "sw6-L3 iPhone 17e" `C4F388E4-0731-49C1-9AEB-30FF32EBE64E` | "sw6-L3 iPhone 17 Pro Max" `1505840C-CEEF-428C-B65D-C0B988A88465` | `fitbod-conway-L3` | T114 |
+| L3 | "sw6-L3 iPhone 17e" `C4F388E4-0731-49C1-9AEB-30FF32EBE64E` | "sw6-L3 iPhone 17 Pro Max" `1505840C-CEEF-428C-B65D-C0B988A88465` | `fitbod-conway-L3` | T118 |
 
 The DerivedData folders live in `~/Library/Developer/Xcode/DerivedData/`.
 
@@ -145,6 +145,10 @@ The DerivedData folders live in `~/Library/Developer/Xcode/DerivedData/`.
 - 2026-11-01 06:20 T113 accepted and merged at d991da8 (rebased onto 1533c8f, build ok; c732895, 3f4b3b5, d991da8), pushed. Review: PRs replay once on appear into @State (BlockReviewPRs count + exerciseIDs), so the PRS stat and the e1RM rows' PR chips agree; TONNAGE one line via lineLimit(1) + minimumScaleFactor(0.4) with stats as tall as the tallest so labels stay level; granted -fitbod-seed-ended-heavy-block shares T87's seed through a weight parameter; hosted BlockReviewHeroLayoutTests replaced the 17 s UI case; screens viewed (1,200,000 on one line). BlockReviewView MEDIUM. Findings F324 to F330: new Phase 3 T138 (F324-F327), T134 change 5 (F328), F329 recorded, F330 helpers list. T116 dispatched on L2 (task_f8fdf5c10c57, ctx_0c0bdc34645b) with the F296 heads-up. Next new ticket id: T139.
 - 2026-11-01 06:24 T114 question msg_f4f6dd21b4ed: grant fix. fitbodUITests/EmptyWorkoutCountsUITests.swift granted and held for T114: one-line update at line 135, fractionLength(0...1) -> (0...2), expecting '0.25', in a separate commit naming F331; the test pinned T103's one-decimal rule that T34 changed. No live attempt reserves the file.
 - 2026-11-01 06:27 T116 question msg_be7854b10128: A. TOP = the set with the highest row e1RM (the set the e1RM label comes from), earlier set wins ties, no e1RM change; fallback to most-volume when every row e1RM <= 0; the Repro fixture changes to one where volume and e1RM disagree (85x8 @8, 80x10 @9, 75x12 @9 -> TOP 85x8 @8). Item 5 approved as proposed: count exactly the workouts the list shows (a completed non-warm-up set of the exercise under the intent filter; an in-progress workout with such a set shows a row and counts); screenshot from ExerciseHistoryRowsUITests' keepAlways shot; add a true e1RM tie to HistoryTopSetTests. Recorded in tradeoffs.md, with F332 (two e1RM formulas) open for the user.
+- 2026-11-01 06:37 T114 question msg_ba6a3b74809b: accept identity. Tested 021841f; rebased branch f8b540c on 84d2fcd differs only in docs/conway-specs (docs-only main move), so runs 3-5 stand; the identity check goes in after-pass.txt; no rerun.
+- 2026-11-01 06:37 Standing answer sent to live workers T111 and T116 (and to be repeated for later launches): when main moves by docs only after the tested commit, do not rebase or rerun; report the tested commit, and the coordinator's merge rebases and builds (as answered for T108, T113 and T114).
+- 2026-11-01 06:39 T116 question msg_deb899b8ede1: yes. fitbodTests/ExerciseRowsPerWorkoutTests.swift and fitbodTests/WorkoutSetsInOrderTests.swift granted and held for T116: grouping-only renames (groupedByDate -> rows(from:prSetIDs:), DateGroup -> HistoryEntry, ids, one doc line), every assertion and fixture unchanged, as the ticket's constraint names them.
+- 2026-11-01 06:42 T114 accepted and merged fast-forward at f8b540c (0586c91, f8b540c), pushed. Review: sessionsTarget walks last week's seven days with calendar math and counts each day once when a started fixed-weekly block covers it and lists its weekday; chip 'N / M sessions' or 'N sessions'; headline per tradeoffs 'Weekly recap target'; chips stack at accessibility sizes; F331's stale pin fixed in its own commit; screens viewed ('1 / 4 sessions', AX3 chips whole). WeeklyRecapSheet MEDIUM. Findings F333, F334 -> new Phase 3 T139; -fitbod-seed-recap-with-plan added to the helpers list. T118 dispatched on L3 (task_0eef9fbb2189, ctx_8b2e3e4c8478) with both standing notes. Next new ticket id: T140.
 
 ## Ledger
 
@@ -289,11 +293,11 @@ Keep the accepted full-tour evidence, including implementation retries, and prio
 | T111 | 3 | dispatched | L1 | `conway-t111` | `task_5822969c2fc1` | `ctx_a30e9bb3febc` |  | T111: original, lane L1, base `e859eaa`, worktree `/Users/csaechao4/orca/workspaces/fitbod/conway-t111`; task `task_5822969c2fc1` dispatch `ctx_a30e9bb3febc`; reported -; settlement pending |
 | T112 | 2 | done |  |  |  |  | `24b9594` | Built outside the run per the user (2026-10-31 15:06): branch conway-t112 will be pushed; the coordinator rebases it onto main, reruns the ticket's required runs on a free lane and merges it ff-only. \| external run 84fc149, coordinator retest PASSED at b0d40a2 (unit, UI 39/39 both phones, widget), rebased to 24b9594, built, merged |
 | T113 | 3 | done | L2 | `conway-t113` | `task_c5ce792d3e3c` | `ctx_f3e65f129d90` | `d991da8`, `3f4b3b5`, `c732895` | T113: original, lane L2, base `ce5fed4`, worktree `/Users/csaechao4/orca/workspaces/fitbod/conway-t113`; task `task_c5ce792d3e3c` dispatch `ctx_f3e65f129d90`; reported succeeded; settlement settled; stop proof: accepted worker_done + worker-release retained/none + worker-show settled + agent done + terminal close term_310237b0-3aa8-44eb-ba8f-eb353c717a20 ptyKilled (2026-11-01 06:18); brief archived at `docs/conway-specs/evidence/T113/attempt-brief.md`; coordinator rebased onto 1533c8f and built (2026-11-01 06:19) |
-| T114 | 3 | dispatched | L3 | `conway-t114` | `task_f44e9b66d556` | `ctx_54401b5b83a1` |  | T114: original, lane L3, base `84e1e73`, worktree `/Users/csaechao4/orca/workspaces/fitbod/conway-t114`; task `task_f44e9b66d556` dispatch `ctx_54401b5b83a1`; reported -; settlement pending |
+| T114 | 3 | done | L3 | `conway-t114` | `task_f44e9b66d556` | `ctx_54401b5b83a1` | `f8b540c`, `0586c91` | T114: original, lane L3, base `84e1e73`, worktree `/Users/csaechao4/orca/workspaces/fitbod/conway-t114`; task `task_f44e9b66d556` dispatch `ctx_54401b5b83a1`; reported succeeded; settlement settled; stop proof: accepted worker_done + worker-release released (processAction closed_agent_terminal) 2026-11-01 06:40; brief archived at `docs/conway-specs/evidence/T114/attempt-brief.md` |
 | T115 | 2 | done |  |  |  |  |  | from external run (e711f12, merged as 48d18c6) \| coordinator check planned after T101+T110 (run note 17:35) \| coordinator check at 38d6a5d: 3/3 small (78.9, 72.0, 71.9 s) + large 76.0 s, no stall/busy lines; not reproduced on iOS 27.x; 26.5 runtime not installed |
 | T116 | 3 | dispatched | L2 | `conway-t116` | `task_f8fdf5c10c57` | `ctx_0c0bdc34645b` |  | from external run (e711f12, merged as 48d18c6) / T116: original, lane L2, base `d991da8`, worktree `/Users/csaechao4/orca/workspaces/fitbod/conway-t116`; task `task_f8fdf5c10c57` dispatch `ctx_0c0bdc34645b`; reported -; settlement pending |
 | T117 | 4 | todo |  |  |  |  |  | from external run (e711f12, merged as 48d18c6) |
-| T118 | 3 | todo |  |  |  |  |  |  |
+| T118 | 3 | dispatched | L3 | `conway-t118` | `task_0eef9fbb2189` | `ctx_8b2e3e4c8478` |  | T118: original, lane L3, base `f8b540c`, worktree `/Users/csaechao4/orca/workspaces/fitbod/conway-t118`; task `task_0eef9fbb2189` dispatch `ctx_8b2e3e4c8478`; reported -; settlement pending |
 | T119 | 4 | todo |  |  |  |  |  |  |
 | T120 | 3 | todo |  |  |  |  |  |  |
 | T121 | 4 | todo |  |  |  |  |  |  |
@@ -314,6 +318,7 @@ Keep the accepted full-tour evidence, including implementation retries, and prio
 | T136 | 3 | todo |  |  |  |  |  |  |
 | T137 | 3 | todo |  |  |  |  |  |  |
 | T138 | 3 | todo |  |  |  |  |  |  |
+| T139 | 3 | todo |  |  |  |  |  |  |
 
 ## Phase gates
 
@@ -342,6 +347,7 @@ Workers list new helpers in their notes, and the coordinator copies them here fo
 - T103 (`2443fb3`): three DEBUG seed flags in `fitbod/App/DemoWorkoutSeed.swift` next to T22's empty-workout flags, for real and empty workouts yesterday/today and last week with this week's recap left unseen; WeeklyRecapUITests launches through `UITestNavigation.launch` with them and finds the recap by its header title
 - T113 (`c732895`): DEBUG launch flag `-fitbod-seed-ended-heavy-block` in `fitbod/App/ActiveBlockSeed.swift`, T87's ended Live Block seed with work sets of 80,000 x 5, so the block's TONNAGE is 1,200,000; launch it alone, the way `-fitbod-seed-ended-block-recap` is launched
 - T98 (`f27a159`): hosted-view pattern in `fitbodTests/ProgressChartDescriptorTests.swift` that finds SwiftUI accessibility elements: a UIWindow on the app's connected UIWindowScene, `isHidden = false`, a depth-first walk of `accessibilityElements` and subviews, polling `RunLoop.main` at 50 ms with a 10 s ceiling (hosted accessibility trees are otherwise order-dependent, F315)
+- T114 (`0586c91`): DEBUG launch flag `-fitbod-seed-recap-with-plan` in `fitbod/App/DemoWorkoutSeed.swift`, beside T103's recap flags: a fixed-weekly block on Mon/Tue/Thu/Fri (a four-slot routine reusing Push A) started through BlockLifecycleService the week before last, one logged Push A last week, and this week's recap due, so the recap reads '1 / 4 sessions'
 
 ## Held files
 
@@ -449,9 +455,11 @@ Later eligible asks keep waiting, and no path is handed off while any live attem
 - grant `fitbodUITests/PerSetOverridesRemovedUITests.swift`: ticket T111, attempt T111, dispatch `ctx_a30e9bb3febc`, message `msg_e7403f7b7da8`, order 93, 2026-11-01 04:17
 - ~~grant `fitbod/App/ActiveBlockSeed.swift`: ticket T113, attempt T113, dispatch `ctx_f3e65f129d90`, message `msg_29aff21712e3`, order 94, 2026-11-01 04:43~~ (settled T113 2026-11-01 06:19)
 - ~~grant `fitbodTests/BlockReviewHeroLayoutTests.swift`: ticket T113, attempt T113, dispatch `ctx_f3e65f129d90`, message `msg_4276114a8dc1`, order 95, 2026-11-01 05:34~~ (settled T113 2026-11-01 06:19)
-- grant `fitbodUITests/WeeklyRecapUITests.swift`: ticket T114, attempt T114, dispatch `ctx_54401b5b83a1`, message `msg_60dca411b68c`, order 96, 2026-11-01 05:55
-- grant `fitbod/App/DemoWorkoutSeed.swift`: ticket T114, attempt T114, dispatch `ctx_54401b5b83a1`, message `msg_60dca411b68c`, order 97, 2026-11-01 05:55
-- grant `fitbodUITests/EmptyWorkoutCountsUITests.swift`: ticket T114, attempt T114, dispatch `ctx_54401b5b83a1`, message `msg_f4f6dd21b4ed`, order 98, 2026-11-01 06:24
+- ~~grant `fitbodUITests/WeeklyRecapUITests.swift`: ticket T114, attempt T114, dispatch `ctx_54401b5b83a1`, message `msg_60dca411b68c`, order 96, 2026-11-01 05:55~~ (settled T114 2026-11-01 06:41)
+- ~~grant `fitbod/App/DemoWorkoutSeed.swift`: ticket T114, attempt T114, dispatch `ctx_54401b5b83a1`, message `msg_60dca411b68c`, order 97, 2026-11-01 05:55~~ (settled T114 2026-11-01 06:41)
+- ~~grant `fitbodUITests/EmptyWorkoutCountsUITests.swift`: ticket T114, attempt T114, dispatch `ctx_54401b5b83a1`, message `msg_f4f6dd21b4ed`, order 98, 2026-11-01 06:24~~ (settled T114 2026-11-01 06:41)
+- grant `fitbodTests/ExerciseRowsPerWorkoutTests.swift`: ticket T116, attempt T116, dispatch `ctx_0c0bdc34645b`, message `msg_deb899b8ede1`, order 99, 2026-11-01 06:39
+- grant `fitbodTests/WorkoutSetsInOrderTests.swift`: ticket T116, attempt T116, dispatch `ctx_0c0bdc34645b`, message `msg_deb899b8ede1`, order 100, 2026-11-01 06:39
 
 ## HIGH and CRITICAL impact ratings
 
@@ -808,3 +816,5 @@ Each one becomes a ticket from T49 on.
 - F330 (T113): the new -fitbod-seed-ended-heavy-block flag added to the briefs' shared-helper list (state helpers), with T98's hosted-view pattern.
 - F331 (T114 run): EmptyWorkoutCountsUITests.testHistoryCountsOnlyTheLoggedWorkout (line 135) still pins History's per-week rate at fractionLength(0...1) = '0.2', but T34's d227a1c moved SessionHistoryFormat.perWeek to (0...2) per tradeoffs 'Per-week rate', so the app shows '0.25' and the test fails on main since c1af210 -> fixed by T114 under a grant (separate commit naming F331). T34's runs did not include this suite.
 - F332 (T116 question): the exercise history row's e1RM uses its own RPE-adjusted formula, weight x (1 + (reps + 10 - (rpe ?? 8)) / 30), while the progress chart's TOP SET line, PlateauDetector and PRDetector use OneRepMaxEstimator, so one set can show different e1RMs on different screens; T116's ticket example (Oct 24 '107.5x2') assumed the chart's formula -> open question for the user (tradeoffs.md 'Exercise history's TOP set'), no ticket.
+- F333 (T114 out-of-scope): the weekly recap finds the prior week with 7 x 86,400 s, an hour off across daylight saving (the recap after the spring change reads 'MAR 1 -> MAR 8'); the same fixed-seconds week math is in PerMuscleDetailView.swift:300, FatigueModel.swift:228/262 and DeloadAdvisor.swift:156, with 86,400 s spans in PlateauDetector -> new Phase 3 T139.
+- F334 (T114 out-of-scope): the recap's Muscles Hit rows with equal counts reorder between launches -> T139 change 4.
