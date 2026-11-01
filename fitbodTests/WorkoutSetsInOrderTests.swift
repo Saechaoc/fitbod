@@ -70,7 +70,7 @@ struct WorkoutSetsInOrderTests {
 
     /// The exercise's history rows, built the way `ExerciseHistoryView`
     /// builds them: its fetch, its completed working sets with no intent
-    /// filter, then its grouping. `readInReverse` hands the sets over in
+    /// filter, then its rows. `readInReverse` hands the sets over in
     /// the reverse of the fetch's order, as SwiftData may return them.
     private func historyRows(_ exercise: Exercise, readInReverse: Bool, in ctx: ModelContext) throws -> [HistoryEntry] {
         let targetID = exercise.id
@@ -83,8 +83,8 @@ struct WorkoutSetsInOrderTests {
                 .filter { $0.isComplete && !$0.isWarmup }
                 .map { (setEntry: $0, sessionExercise: se) }
         }
-        return ExerciseHistoryView.groupedByDate(from: readInReverse ? Array(sets.reversed()) : sets)
-            .flatMap(\.entries)
+        let shown = readInReverse ? Array(sets.reversed()) : sets
+        return ExerciseHistoryView.rows(from: shown, prSetIDs: ExerciseHistoryView.prSets(from: shown))
     }
 
     /// A finished strength workout started two days ago that logs

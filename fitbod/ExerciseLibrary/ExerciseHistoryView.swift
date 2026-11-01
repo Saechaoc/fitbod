@@ -135,17 +135,21 @@ private struct FilteredHistoryContent: View {
         let completed = completedSets
         let countsByIntent = buildCounts()
         let totalCount = completed.count
-        let sessionCount = Set(sessionExercises.compactMap { $0.session?.id }).count
-        let grouped = ExerciseHistoryView.groupedByDate(from: completed)
+        // The PR replay runs once: the rows' "★ PR" and "PRs · 30d" read it.
+        let prSetIDs = ExerciseHistoryView.prSets(from: completed)
+        let rows = ExerciseHistoryView.rows(from: completed, prSetIDs: prSetIDs)
         let prFooter = prStats(from: completed)
 
         // 3-cell stat strip: side by side while every label fits on one
         // line, stacked otherwise, so no label breaks inside a word.
+        let workouts = ExerciseHistoryView.workouts30d(from: completed)
         let tonnage = tonnageLabel(from: completed)
-        let prs = ExerciseHistoryView.prs30d(from: completed)
+        let prs = ExerciseHistoryView.prs30d(from: completed, prSetIDs: prSetIDs)
         ViewThatFits(in: .horizontal) {
-            HStack(spacing: 0) { statCells(sideBySide: true, tonnage: tonnage, prs: prs) }
-            VStack(alignment: .leading, spacing: 0) { statCells(sideBySide: false, tonnage: tonnage, prs: prs) }
+            HStack(spacing: 0) { statCells(sideBySide: true, workouts: workouts, tonnage: tonnage, prs: prs) }
+            VStack(alignment: .leading, spacing: 0) {
+                statCells(sideBySide: false, workouts: workouts, tonnage: tonnage, prs: prs)
+            }
         }
         // Inform outer view of history count so it can show/hide PROGRESS
         // affordance. It runs after the view draws: a state change from
@@ -158,9 +162,9 @@ private struct FilteredHistoryContent: View {
         // Intent filter chip row (2pt rules drawn internally)
         IntentFilterChipRow(filter: $intentFilter, counts: countsByIntent)
 
-        // Set-count summary row
+        // Set-count summary row: the sets and the workouts the list shows
         HStack {
-            Text("\(BRUCountLabel.text(totalCount, "set")) across \(BRUCountLabel.text(sessionCount, "workout"))")
+            Text("\(BRUCountLabel.text(totalCount, "set")) across \(BRUCountLabel.text(rows.count, "workout"))")
                 .font(BRUFont.labelSmall)
                 .tracking(1.2)
                 .textCase(.uppercase)
@@ -176,9 +180,8 @@ private struct FilteredHistoryContent: View {
         if completed.isEmpty {
             emptyState
         } else {
-            // One row per workout, which shows its date. Date sections
-            // keyed by the workout hid their one row, which had the same id.
-            ForEach(grouped.flatMap(\.entries)) { entry in
+            // One row per workout, which shows its date.
+            ForEach(rows) { entry in
                 ExerciseHistoryRow(entry: entry)
                 BRUDivider(.hair)
             }
@@ -197,8 +200,8 @@ private struct FilteredHistoryContent: View {
     /// The strip's three cells. Side by side, each label keeps its one-line
     /// width and the cells share what is left; stacked, rules divide them.
     @ViewBuilder
-    private func statCells(sideBySide: Bool, tonnage: String, prs: Int) -> some View {
-        statCell(BRUReadout(label: "Workouts · 30d", value: "\(sessions30d)"), sideBySide: sideBySide)
+    private func statCells(sideBySide: Bool, workouts: Int, tonnage: String, prs: Int) -> some View {
+        statCell(BRUReadout(label: "Workouts · 30d", value: "\(workouts)"), sideBySide: sideBySide)
         statRule(sideBySide: sideBySide)
         statCell(BRUReadout(label: "Tonnage", value: tonnage, valueColor: .bruSignal), sideBySide: sideBySide)
         statRule(sideBySide: sideBySide)
@@ -222,25 +225,7 @@ private struct FilteredHistoryContent: View {
 
     /// All completed working sets, post-filtered by intent if filter is active.
     private var completedSets: [(setEntry: SetEntry, sessionExercise: SessionExercise)] {
-        let intentGate: String? = intentFilter?.rawValue
-        return sessionExercises.flatMap { se in
-            (se.sets ?? [])
-                .filter { $0.isComplete && !$0.isWarmup }
-                .map { (setEntry: $0, sessionExercise: se) }
-        }
-        .filter { pair in
-            guard let targetIntent = intentGate else { return true }
-            return pair.sessionExercise.session?.intentRaw == targetIntent
-        }
-    }
-
-    /// Count of sessions in the last 30 days.
-    private var sessions30d: Int {
-        let cutoff = Calendar.current.date(byAdding: .day, value: -30, to: .now) ?? .now
-        let recentSEs = sessionExercises.filter {
-            ($0.session?.startedAt ?? .distantPast) >= cutoff
-        }
-        return Set(recentSEs.compactMap { $0.session?.id }).count
+        ExerciseHistoryView.completedSets(from: sessionExercises, intent: intentFilter)
     }
 
     /// Tonnage display label (e.g. "71.2k").
@@ -340,6 +325,50 @@ private struct FilteredHistoryContent: View {
     }
 }
 
+// MARK: - Shown sets and workouts
+
+extension ExerciseHistoryView {
+
+    /// The sets the history shows: the completed working sets of the
+    /// exercise's logs, from the workouts of `intent`, or of any intent
+    /// when it is nil.
+    static func completedSets(
+        from logs: [SessionExercise],
+        intent: Intent?
+    ) -> [(setEntry: SetEntry, sessionExercise: SessionExercise)] {
+        let intentGate: String? = intent?.rawValue
+        return logs.flatMap { se in
+            (se.sets ?? [])
+                .filter { $0.isComplete && !$0.isWarmup }
+                .map { (setEntry: $0, sessionExercise: se) }
+        }
+        .filter { pair in
+            guard let targetIntent = intentGate else { return true }
+            return pair.sessionExercise.session?.intentRaw == targetIntent
+        }
+    }
+
+    /// "Workouts · 30d": the workouts the list shows, one row each, that
+    /// started in the last 30 days. A workout shows once it has a set in
+    /// `sets`, so one in progress counts from its first completed working
+    /// set, and an empty one never counts.
+    static func workouts30d(
+        from sets: [(setEntry: SetEntry, sessionExercise: SessionExercise)],
+        now: Date = .now
+    ) -> Int {
+        let cutoff = last30DaysStart(now: now)
+        return Set(sets.compactMap { pair -> UUID? in
+            guard let session = pair.sessionExercise.session, session.startedAt >= cutoff else { return nil }
+            return session.id
+        }).count
+    }
+
+    /// The start of the last 30 days, the window both "· 30d" cells count.
+    private static func last30DaysStart(now: Date) -> Date {
+        Calendar.current.date(byAdding: .day, value: -30, to: now) ?? now
+    }
+}
+
 // MARK: - PR count
 
 extension ExerciseHistoryView {
@@ -349,7 +378,7 @@ extension ExerciseHistoryView {
     /// replayed oldest first through `PRDetector.check(set:against:)` from an
     /// empty table, and a set counts when it tops any PR kind. A set is from
     /// the last 30 days when its workout started in them, the window
-    /// "Sessions · 30d" counts.
+    /// "Workouts · 30d" counts.
     ///
     /// Oldest first is by workout start, then the time each set was logged,
     /// then log order and set order, whatever order SwiftData returns the
@@ -358,8 +387,17 @@ extension ExerciseHistoryView {
         from sets: [(setEntry: SetEntry, sessionExercise: SessionExercise)],
         now: Date = .now
     ) -> Int {
-        let cutoff = Calendar.current.date(byAdding: .day, value: -30, to: now) ?? now
-        let prSetIDs = prSets(from: sets)
+        prs30d(from: sets, prSetIDs: prSets(from: sets), now: now)
+    }
+
+    /// `prs30d(from:now:)` from `prSetIDs`, the replay's result for the
+    /// same sets, which the history's rows read too, so it runs once.
+    static func prs30d(
+        from sets: [(setEntry: SetEntry, sessionExercise: SessionExercise)],
+        prSetIDs: Set<ObjectIdentifier>,
+        now: Date = .now
+    ) -> Int {
+        let cutoff = last30DaysStart(now: now)
         return sets.filter { pair in
             prSetIDs.contains(ObjectIdentifier(pair.setEntry))
                 && (pair.sessionExercise.session?.startedAt ?? .distantPast) >= cutoff
@@ -387,114 +425,93 @@ extension ExerciseHistoryView {
     }
 }
 
-// MARK: - Date grouping
+// MARK: - Rows
 
 extension ExerciseHistoryView {
 
-    /// One workout's row. Its id is the workout's, so two workouts on one
-    /// day are two rows. The list shows its one entry, not a date section,
-    /// so the date shows once, in the row.
-    struct DateGroup: Identifiable {
-        let id: UUID
-        let dateKey: String
-        let dateLabel: String
-        let startedAt: Date
-        let entries: [HistoryEntry]
+    /// One row per workout, newest first, from the completed working sets
+    /// the history shows. A row's id is its workout's, so two workouts on
+    /// one day are two rows, and the row shows the date. A row reads every
+    /// log of the exercise in its workout, so its top set, e1RM, set count
+    /// and chips cover all of them. `prSetIDs` is `prSets(from:)` for the
+    /// same sets: a row shows "★ PR" when one of its sets is in it.
+    static func rows(
+        from sets: [(setEntry: SetEntry, sessionExercise: SessionExercise)],
+        prSetIDs: Set<ObjectIdentifier>
+    ) -> [HistoryEntry] {
+        Dictionary(grouping: sets) { $0.sessionExercise.session?.id }
+            .values
+            .compactMap { pairs -> (startedAt: Date, entry: HistoryEntry)? in
+                guard let session = pairs.first?.sessionExercise.session else { return nil }
+                return (session.startedAt, row(for: session, from: pairs, prSetIDs: prSetIDs))
+            }
+            .sorted { $0.startedAt > $1.startedAt }
+            .map(\.entry)
     }
 
-    /// One row per workout, newest date first and, on one date, newest
-    /// workout first, from the completed working sets the history shows.
-    /// A row reads every log of the exercise in its workout, so its top
-    /// set, e1RM, set count and chips cover all of them.
-    static func groupedByDate(
-        from sets: [(setEntry: SetEntry, sessionExercise: SessionExercise)]
-    ) -> [DateGroup] {
-        let prSetIDs = prSets(from: sets)
-        // Group by session identity (same session = same date group)
-        let bySession = Dictionary(grouping: sets) { pair -> String in
-            pair.sessionExercise.session?.id.uuidString ?? UUID().uuidString
-        }
-
-        return bySession
-            .compactMap { (sessionID, pairs) -> DateGroup? in
-                guard let firstPair = pairs.first,
-                      let session = firstPair.sessionExercise.session else { return nil }
-                let date = session.startedAt
-                let dateKey = ISO8601DateFormatter().string(
-                    from: Calendar.current.startOfDay(for: date)
-                )
-                let dateLabel = Self.formatDateLabel(date)
-                let intent = session.intent
-
-                // All working sets for this session, across every log of the
-                // exercise in it: in log order, then set order (`orderIndex`
-                // both times), whatever order SwiftData returns them in.
-                // `max(by:)` keeps the first of equal elements, so the
-                // earlier set wins a tie for the top set.
-                let allSetsForSession = pairs
-                    .sorted {
-                        ($0.sessionExercise.orderIndex, $0.setEntry.orderIndex)
-                            < ($1.sessionExercise.orderIndex, $1.setEntry.orderIndex)
-                    }
-                    .map(\.setEntry)
-
-                let topSet = allSetsForSession.max(by: {
-                    $0.weight * Double($0.reps) < $1.weight * Double($1.reps)
-                })
-                let topSetLabel = topSet.map { set -> String in
-                    let w = set.weight.truncatingRemainder(dividingBy: 1) == 0
-                        ? "\(Int(set.weight))"
-                        : String(format: "%.1f", set.weight)
-                    if let rpe = set.rpe {
-                        let rpeStr = rpe.truncatingRemainder(dividingBy: 1) == 0
-                            ? "\(Int(rpe))" : String(format: "%.1f", rpe)
-                        return "\(w)×\(set.reps) @\(rpeStr)"
-                    }
-                    return "\(w)×\(set.reps)"
-                } ?? "—"
-
-                let e1RM = allSetsForSession.compactMap { set -> Double? in
-                    let rpe = set.rpe ?? 8.0
-                    let rir = 10.0 - rpe
-                    return set.weight * (1 + (Double(set.reps) + rir) / 30.0)
-                }.max() ?? 0
-                let e1RMLabel = e1RM > 0
-                    ? (e1RM.truncatingRemainder(dividingBy: 1) == 0
-                       ? "\(Int(e1RM))"
-                       : String(format: "%.1f", e1RM))
-                    : "—"
-
-                let chips = allSetsForSession.map { set -> String in
-                    let w = set.weight.truncatingRemainder(dividingBy: 1) == 0
-                        ? "\(Int(set.weight))"
-                        : String(format: "%.1f", set.weight)
-                    if let rpe = set.rpe {
-                        let rpeStr = rpe.truncatingRemainder(dividingBy: 1) == 0
-                            ? "\(Int(rpe))" : String(format: "%.1f", rpe)
-                        return "\(w)×\(set.reps) @\(rpeStr)"
-                    }
-                    return "\(w)×\(set.reps)"
-                }
-
-                let entry = HistoryEntry(
-                    id: UUID(uuidString: sessionID) ?? UUID(),
-                    dateLabel: dateLabel,
-                    intentLabel: Self.shortIntentLabel(intent),
-                    isPR: allSetsForSession.contains { prSetIDs.contains(ObjectIdentifier($0)) },
-                    e1RMLabel: e1RMLabel,
-                    topSetLabel: topSetLabel,
-                    setCount: allSetsForSession.count,
-                    setChips: chips
-                )
-                return DateGroup(
-                    id: session.id,
-                    dateKey: dateKey,
-                    dateLabel: dateLabel,
-                    startedAt: date,
-                    entries: [entry]
-                )
+    /// One workout's row, from its pairs in `sets`.
+    private static func row(
+        for session: Session,
+        from pairs: [(setEntry: SetEntry, sessionExercise: SessionExercise)],
+        prSetIDs: Set<ObjectIdentifier>
+    ) -> HistoryEntry {
+        // All working sets for this session, across every log of the
+        // exercise in it: in log order, then set order (`orderIndex`
+        // both times), whatever order SwiftData returns them in.
+        let sets = pairs
+            .sorted {
+                ($0.sessionExercise.orderIndex, $0.setEntry.orderIndex)
+                    < ($1.sessionExercise.orderIndex, $1.setEntry.orderIndex)
             }
-            .sorted { ($0.dateKey, $0.startedAt) > ($1.dateKey, $1.startedAt) }
+            .map(\.setEntry)
+
+        // The top set is the set the e1RM comes from, the one with the
+        // highest e1RM. When no set has an e1RM, all of them 0 or less so
+        // the e1RM reads "—", it is the set with the most volume, weight
+        // times reps. `max(by:)` keeps the first of equal elements, so the
+        // earlier set wins a tie either way.
+        let best = sets.max { e1RM(of: $0) < e1RM(of: $1) }
+        let bestE1RM = best.map(e1RM(of:)) ?? 0
+        let topSet = bestE1RM > 0
+            ? best
+            : sets.max { $0.weight * Double($0.reps) < $1.weight * Double($1.reps) }
+        let e1RMLabel = bestE1RM > 0
+            ? (bestE1RM.truncatingRemainder(dividingBy: 1) == 0
+               ? "\(Int(bestE1RM))"
+               : String(format: "%.1f", bestE1RM))
+            : "—"
+
+        return HistoryEntry(
+            id: session.id,
+            dateLabel: formatDateLabel(session.startedAt),
+            intentLabel: shortIntentLabel(session.intent),
+            isPR: sets.contains { prSetIDs.contains(ObjectIdentifier($0)) },
+            e1RMLabel: e1RMLabel,
+            topSetLabel: topSet.map(setLabel) ?? "—",
+            setCount: sets.count,
+            setChips: sets.map(setLabel)
+        )
+    }
+
+    /// A set's e1RM as a row shows it: Epley on the reps done plus the
+    /// reps left, 10 - RPE, with RPE 8 when none was logged.
+    private static func e1RM(of set: SetEntry) -> Double {
+        let rpe = set.rpe ?? 8.0
+        let rir = 10.0 - rpe
+        return set.weight * (1 + (Double(set.reps) + rir) / 30.0)
+    }
+
+    /// A set as its chip and the TOP line read, such as "107.5×2 @9.5".
+    private static func setLabel(_ set: SetEntry) -> String {
+        let w = set.weight.truncatingRemainder(dividingBy: 1) == 0
+            ? "\(Int(set.weight))"
+            : String(format: "%.1f", set.weight)
+        if let rpe = set.rpe {
+            let rpeStr = rpe.truncatingRemainder(dividingBy: 1) == 0
+                ? "\(Int(rpe))" : String(format: "%.1f", rpe)
+            return "\(w)×\(set.reps) @\(rpeStr)"
+        }
+        return "\(w)×\(set.reps)"
     }
 
     private static func formatDateLabel(_ date: Date) -> String {
