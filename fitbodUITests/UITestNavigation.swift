@@ -459,23 +459,37 @@ extension UITestNavigation {
 // MARK: - Gestures
 
 extension UITestNavigation {
-    /// Swipes the sheet on top down from its top edge to the bottom of the
-    /// screen, the way a user flicks it away. Waits up to five seconds for
-    /// a sheet that is still sliding up.
+    /// Swipes the sheet on top down from its header to the bottom of the
+    /// screen, the way a user flicks it away. The drag starts 24pt inside the
+    /// sheet and at least 70pt from the top of the screen: from the sheet's
+    /// very top edge, just below the 390pt phone's status bar, iOS once
+    /// dragged a notification banner into Notification Center instead (T101).
+    /// Waits up to five seconds for a sheet that is still sliding up.
     static func swipeSheetDown(in app: XCUIApplication, file: StaticString = #filePath, line: UInt = #line) {
         let deadline = Date.now.addingTimeInterval(5)
         var sheet = topSheet(in: app)
         while sheet == nil && Date.now < deadline {
-            Thread.sleep(forTimeInterval: 0.25)
+            // Polls for a sheet that is still sliding up, in 0.1 s steps.
+            Thread.sleep(forTimeInterval: 0.1)
             sheet = topSheet(in: app)
         }
         guard let sheet else {
             return XCTFail("No sheet is on screen to swipe down", file: file, line: line)
         }
-        let topEdge = sheet.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0)).withOffset(CGVector(dx: 0, dy: 6))
+        let frame = sheet.frame
+        let header = app.coordinate(withNormalizedOffset: .zero)
+            .withOffset(CGVector(dx: frame.midX, dy: max(frame.minY + sheetHeaderDepth, clearOfStatusBar)))
         let bottom = app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.98))
-        topEdge.press(forDuration: 0.05, thenDragTo: bottom, withVelocity: .fast, thenHoldForDuration: 0)
+        header.press(forDuration: 0.05, thenDragTo: bottom, withVelocity: .fast, thenHoldForDuration: 0)
     }
+
+    /// How far into a sheet `swipeSheetDown` starts its drag: inside a BRU
+    /// sheet's 44pt header row.
+    private static let sheetHeaderDepth: CGFloat = 24
+
+    /// How far from the top of the screen the drag starts at least: below
+    /// both phones' status bars, where iOS pulls down Notification Center.
+    private static let clearOfStatusBar: CGFloat = 70
 
     /// The sheet on top, or nil when none is up. UIKit adds each
     /// presentation to the window as a new layer; a sheet is the view in
