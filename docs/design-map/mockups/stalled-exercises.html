@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Stalled exercises</title>
+<link rel="stylesheet" href="bru-tokens.css">
+<link rel="stylesheet" href="status-bar.css">
+<script>
+  (function () {
+    var q = new URLSearchParams(location.search);
+    var theme = q.get("theme") === "dark" ? "dark" : "light";
+    var w = q.get("w") === "440" ? 440 : 390;
+    document.documentElement.dataset.theme = theme;
+    document.documentElement.dataset.w = String(w);
+  })();
+</script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: var(--bru-paper); color: var(--bru-ink); }
+  body { position: relative; }
+
+  /* Phone frame: 390 x 844 (17e) or 440 x 956 (17 Pro Max). */
+  .phone { position: absolute; left: 0; top: 0; width: 390px; height: 844px; overflow: hidden;
+           background: var(--bru-paper); display: flex; flex-direction: column; }
+  html[data-w="440"] .phone { width: 440px; height: 956px; }
+
+
+  /* Navigation header, as on exercise-progress. */
+  .nav { height: 44px; flex: none; position: relative; display: flex; align-items: center; justify-content: center; }
+  .nav .back { position: absolute; left: calc(var(--bru-spacing-gutter) - 12px); top: 0; width: 44px; height: 100%; display: flex; align-items: center; justify-content: center; }
+  /* BRUHeaderMetrics.tracking */
+  .nav > span { letter-spacing: 1.5px; }
+  .rule-ink { height: var(--bru-border-structural); background: var(--bru-ink); flex: none; }
+  .rule-hair { height: var(--bru-border-hairline); background: var(--bru-hair); flex: none; }
+
+  .scroll { flex: 1; overflow: hidden; }
+
+  /* Summary band: the one signal element on the screen. */
+  .band { padding: var(--bru-spacing-group) var(--bru-spacing-gutter); display: flex; flex-direction: column; gap: var(--bru-spacing-related); }
+  .band .top { display: flex; align-items: center; gap: var(--bru-spacing-related); }
+  .badge { background: var(--bru-signal); color: var(--bru-paper); padding: 2px 6px; }
+  .muted { color: var(--bru-muted); }
+  .plain { text-transform: none; letter-spacing: 0; }
+
+  /* Section head, as BRUSectionHead (Space Grotesk 14, uppercase). */
+  .section { display: flex; align-items: center; justify-content: space-between;
+             padding: var(--bru-spacing-group) var(--bru-spacing-gutter); min-height: 44px; }
+  .section .h { font-size: 14px; text-transform: uppercase; }
+
+  /* Rows, as ProgressHomeView.progressRow, plus the logger's chip. */
+  .row { display: flex; align-items: center; gap: var(--bru-spacing-related);
+         padding: var(--bru-spacing-group) var(--bru-spacing-gutter) var(--bru-spacing-tight); }
+  .row .text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: var(--bru-spacing-tight); }
+  .row .name { overflow-wrap: break-word; }
+  .row .chev { flex: none; width: 24px; text-align: right; color: var(--bru-muted); }
+  .chiprow { display: flex; align-items: center; min-height: var(--bru-touch-target);
+             padding: 0 var(--bru-spacing-gutter) var(--bru-spacing-tight); }
+  .chip { border: var(--bru-border-outline) solid var(--bru-ink); padding: 4px 8px; background: transparent; color: var(--bru-ink); }
+
+  .foot { padding: var(--bru-spacing-group) var(--bru-spacing-gutter); }
+
+  /* Tab bar, as on the Progress screenshots. */
+  .tabs { flex: none; height: 62px; background: var(--bru-bg); border-top: var(--bru-border-structural) solid var(--bru-ink);
+          display: grid; grid-template-columns: repeat(4, 1fr); align-items: start; padding-top: 8px; }
+  html[data-w="440"] .tabs { height: 63px; }
+  .tab { height: 29px; display: flex; align-items: center; justify-content: center; }
+  .tab.on { background: var(--bru-ink); color: var(--bru-paper); }
+
+  /* Notes beside the frame, outside the rendered window. */
+  aside { position: absolute; top: 16px; left: 414px; width: 420px; color: var(--bru-ink); line-height: 1.5; }
+  html[data-w="440"] aside { left: 464px; }
+  aside p { margin-bottom: var(--bru-spacing-related); }
+</style>
+</head>
+<body>
+<div class="phone" role="img" aria-label="Stalled exercises mock-up">
+  <div class="status"><span class="time">9:41</span><span class="icons"><i class="signal"></i><i class="wifi"></i><i class="battery"></i></span></div>
+
+  <div class="nav">
+    <span class="back bru-label-small">‹</span>
+    <span class="title bru-label-small">Stalled</span>
+  </div>
+  <div class="rule-ink"></div>
+
+  <div class="scroll">
+    <div class="band">
+      <div class="top">
+        <span class="badge bru-label-small">Stalled</span>
+        <span class="bru-body-emphasis">4 exercises</span>
+      </div>
+      <span class="bru-label-small plain muted">Top-set e1RM flat over each exercise's window of one intent: by default 4 workouts within 2%.</span>
+    </div>
+
+    <div class="rule-ink"></div>
+    <div class="section"><span class="h bru-display-medium">Hypertrophy</span><span class="bru-label-small muted">2</span></div>
+    <div class="rule-ink"></div>
+
+    <div class="row">
+      <div class="text">
+        <span class="name bru-body-emphasis">Barbell Bench Press - Medium Grip</span>
+        <span class="bru-label-small plain muted">flat 4 workouts · top 205 × 8 @ 8.5</span>
+      </div>
+      <span class="chev bru-body-emphasis">›</span>
+    </div>
+    <div class="chiprow"><span class="chip bru-label-small">Add volume</span></div>
+    <div class="rule-hair"></div>
+
+    <div class="row">
+      <div class="text">
+        <span class="name bru-body-emphasis">Barbell Curl</span>
+        <span class="bru-label-small plain muted">flat 4 workouts · top 75 × 10 @ 9</span>
+      </div>
+      <span class="chev bru-body-emphasis">›</span>
+    </div>
+    <div class="chiprow"><span class="chip bru-label-small">Drop intensity</span></div>
+
+    <div class="rule-ink"></div>
+    <div class="section"><span class="h bru-display-medium">Strength</span><span class="bru-label-small muted">2</span></div>
+    <div class="rule-ink"></div>
+
+    <div class="row">
+      <div class="text">
+        <span class="name bru-body-emphasis">Barbell Squat</span>
+        <span class="bru-label-small plain muted">flat 5 workouts · top 315 × 3 @ 9</span>
+      </div>
+      <span class="chev bru-body-emphasis">›</span>
+    </div>
+    <div class="chiprow"><span class="chip bru-label-small">Drop intensity</span></div>
+    <div class="rule-hair"></div>
+
+    <div class="row">
+      <div class="text">
+        <span class="name bru-body-emphasis">Barbell Deadlift</span>
+        <span class="bru-label-small plain muted">flat 4 workouts · top 405 × 2 @ 8.5</span>
+      </div>
+      <span class="chev bru-body-emphasis">›</span>
+    </div>
+    <div class="chiprow"><span class="chip bru-label-small">Try variation</span></div>
+    <div class="rule-ink"></div>
+
+    <div class="foot">
+      <span class="bru-label-small plain muted">Set the window and tolerance for one exercise in its Library page.</span>
+    </div>
+  </div>
+
+  <nav class="tabs">
+    <span class="tab bru-label-small">Today</span>
+    <span class="tab bru-label-small">Program</span>
+    <span class="tab on bru-label-small">Progress</span>
+    <span class="tab bru-label-small">Library</span>
+  </nav>
+</div>
+
+<aside class="bru-body-default">
+  <p>Based on progress (header, section heads, rows, tab bar), logger --stalled and --add-volume (STALLED badge, outline action chips) and exercise-progress (back header).</p>
+  <p>In: a new "Stalled" row on Progress, under Trends, whose sub-line counts stalled exercises. Out: ‹ back to Progress, or a row to exercise-progress.</p>
+  <p>Row body opens that exercise's chart for the stalled intent. The chip runs the logger's route: ADD VOLUME to muscle detail, DROP INTENSITY to the prescription, TRY VARIATION to alternatives, CONSIDER DELOAD to Fatigue signals.</p>
+  <p>Rows follow PlateauDetector: grouped by intent, one chip per row, first match of volume below MAV, RPE creep of 1.0 at matched load, block week 3+ with deload within 14 days, else TRY VARIATION. Squat shows a 5-workout window override.</p>
+  <p>Open: should the signal badge sit once in the band (as drawn) or on each row; where the prescription opens outside a workout; whether exercise-progress needs a stall mark; and the empty state copy.</p>
+</aside>
+</body>
+</html>

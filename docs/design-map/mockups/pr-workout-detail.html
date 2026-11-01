@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>PR workout</title>
+<link rel="stylesheet" href="bru-tokens.css">
+<link rel="stylesheet" href="status-bar.css">
+<script>
+  (function () {
+    var q = new URLSearchParams(location.search);
+    var theme = q.get("theme") === "dark" ? "dark" : "light";
+    var w = q.get("w") === "440" ? 440 : 390;
+    document.documentElement.dataset.theme = theme;
+    document.documentElement.dataset.w = String(w);
+  })();
+</script>
+<style>
+  :root { --w: 390px; --h: 844px; --tabbar: 62px; }
+  :root[data-w="440"] { --w: 440px; --h: 956px; --tabbar: 63px; }
+  html, body { margin: 0; padding: 0; background: var(--bru-paper); }
+  * { box-sizing: border-box; }
+  .frame { position: absolute; top: 0; left: 0; width: var(--w); height: var(--h); overflow: hidden;
+           background: var(--bru-paper); color: var(--bru-ink); display: flex; flex-direction: column; }
+
+
+  /* header */
+  .header { height: 46px; flex: none; display: flex; align-items: center; justify-content: center; position: relative;
+            border-bottom: var(--bru-border-structural) solid var(--bru-ink); }
+  /* BRUHeaderMetrics.tracking */
+  .header > span { letter-spacing: 1.5px; }
+  .header .back { position: absolute; left: calc(var(--bru-spacing-gutter) - 12px); top: 0; width: var(--bru-touch-target); height: var(--bru-touch-target);
+                  display: flex; align-items: center; justify-content: center; }
+
+  .scroll { flex: 1; overflow: hidden; }
+
+  .hero { padding: 20px var(--bru-spacing-gutter); display: flex; flex-direction: column; gap: var(--bru-spacing-related); }
+  .muted { color: var(--bru-muted); }
+
+  .stats { display: flex; border-top: var(--bru-border-structural) solid var(--bru-ink); }
+  .stat { flex: 1 1 0; min-width: 0; padding: 14px var(--bru-spacing-gutter); display: flex; flex-direction: column; gap: var(--bru-spacing-related); }
+  .stat + .stat { border-left: var(--bru-border-hairline) solid var(--bru-ink); }
+
+  .section { display: flex; justify-content: space-between; align-items: center; padding: 14px var(--bru-spacing-gutter);
+             border-top: var(--bru-border-structural) solid var(--bru-ink); border-bottom: var(--bru-border-structural) solid var(--bru-ink); }
+
+  .ex { padding: 14px var(--bru-spacing-gutter); border-bottom: var(--bru-border-hairline) solid var(--bru-hair);
+        display: flex; justify-content: space-between; gap: var(--bru-spacing-group); }
+  .ex .left { display: flex; flex-direction: column; gap: var(--bru-spacing-tight); min-width: 0; }
+  .ex .right { display: flex; flex-direction: column; align-items: flex-end; gap: var(--bru-spacing-tight); flex: none; }
+
+  .record-ex { padding: 14px var(--bru-spacing-gutter) var(--bru-spacing-gutter); border-bottom: var(--bru-border-hairline) solid var(--bru-hair); }
+  .record-ex .left { display: flex; flex-direction: column; gap: var(--bru-spacing-tight); }
+  .sets { margin-top: var(--bru-spacing-group); border-top: var(--bru-border-hairline) solid var(--bru-hair); }
+  .set { height: var(--bru-touch-target); display: flex; align-items: center; gap: var(--bru-spacing-group);
+         border-bottom: var(--bru-border-hairline) solid var(--bru-hair); padding: 0 var(--bru-spacing-related); }
+  .set .n { width: 24px; flex: none; }
+  .set .v { flex: 1; min-width: 0; white-space: nowrap; }
+  .set .r { flex: none; }
+  .set.record { outline: var(--bru-border-structural) solid var(--bru-ink); outline-offset: calc(-1 * var(--bru-border-structural)); background: var(--bru-faint); }
+  .badge { background: var(--bru-signal); color: var(--bru-on-signal); padding: 2px 6px; flex: none; }
+
+  /* tab bar */
+  .tabbar { height: var(--tabbar); flex: none; background: var(--bru-bg); border-top: var(--bru-border-structural) solid var(--bru-ink);
+            display: flex; align-items: flex-start; padding-top: 7px; position: relative; }
+  .tab { flex: 1 1 0; height: 28px; display: flex; align-items: center; justify-content: center; color: var(--bru-ink); }
+  .tab.on { background: var(--bru-ink); color: var(--bru-paper); }
+
+  aside { position: absolute; top: 16px; left: calc(var(--w) + 24px); width: 460px; color: var(--bru-ink); line-height: 1.5; }
+  aside p { margin: 0 0 6px; }
+</style>
+</head>
+<body>
+<div class="frame">
+  <div class="status"><span class="time">9:41</span><span class="icons"><i class="signal"></i><i class="wifi"></i><i class="battery"></i></span></div>
+
+  <div class="header">
+    <span class="back bru-label-small" aria-label="Back">‹</span>
+    <span class="bru-label-small">Workout</span>
+  </div>
+
+  <div class="scroll">
+    <div class="hero">
+      <span class="bru-label-small muted">Weight PR · 1-6 reps</span>
+      <span class="bru-display-large">Lower A</span>
+      <span class="bru-label-small muted">Sat, Oct 24 at 6:12 PM</span>
+    </div>
+
+    <div class="stats">
+      <div class="stat"><span class="bru-label-small muted">Duration</span><span class="bru-display-medium">62m</span></div>
+      <div class="stat"><span class="bru-label-small muted">Sets</span><span class="bru-display-medium">16</span></div>
+      <div class="stat"><span class="bru-label-small muted">Volume · lb</span><span class="bru-display-medium">9,940</span></div>
+    </div>
+
+    <div class="section">
+      <span class="bru-display-medium">EXERCISES</span>
+      <span class="bru-label-small muted">5</span>
+    </div>
+
+    <div class="record-ex">
+      <div class="left">
+        <span class="bru-body-emphasis">Barbell Squat</span>
+        <span class="bru-label-small muted">4 sets · 2,185 lb</span>
+      </div>
+      <div class="sets">
+        <div class="set"><span class="n bru-label-small muted">1</span><span class="v bru-body-emphasis">135 lb × 5</span><span class="r bru-label-small muted">@ 7</span></div>
+        <div class="set"><span class="n bru-label-small muted">2</span><span class="v bru-body-emphasis">150 lb × 3</span><span class="r bru-label-small muted">@ 8</span></div>
+        <div class="set record"><span class="n bru-label-small">3</span><span class="v bru-body-emphasis">160 lb × 3</span><span class="badge bru-label-small">PR</span><span class="r bru-label-small">@ 9</span></div>
+        <div class="set"><span class="n bru-label-small muted">4</span><span class="v bru-body-emphasis">145 lb × 4</span><span class="r bru-label-small muted">@ 8.5</span></div>
+      </div>
+    </div>
+
+    <div class="ex">
+      <div class="left"><span class="bru-body-emphasis">Romanian Deadlift</span><span class="bru-label-small muted">3 sets · 2,400 lb</span></div>
+      <div class="right"><span class="bru-label-micro muted">Best</span><span class="bru-body-emphasis">100 × 8 @ 8</span></div>
+    </div>
+    <div class="ex">
+      <div class="left"><span class="bru-body-emphasis">Leg Press</span><span class="bru-label-small muted">3 sets · 3,240 lb</span></div>
+      <div class="right"><span class="bru-label-micro muted">Best</span><span class="bru-body-emphasis">110 × 10 @ 8</span></div>
+    </div>
+    <div class="ex">
+      <div class="left"><span class="bru-body-emphasis">Lying Leg Curls</span><span class="bru-label-small muted">3 sets · 675 lb</span></div>
+      <div class="right"><span class="bru-label-micro muted">Best</span><span class="bru-body-emphasis">25 × 10 @ 8</span></div>
+    </div>
+    <div class="ex">
+      <div class="left"><span class="bru-body-emphasis">Standing Calf Raises</span><span class="bru-label-small muted">3 sets · 1,440 lb</span></div>
+      <div class="right"><span class="bru-label-micro muted">Best</span><span class="bru-body-emphasis">40 × 12 @ 8</span></div>
+    </div>
+  </div>
+
+  <div class="tabbar">
+    <span class="tab bru-label-small">Today</span>
+    <span class="tab bru-label-small">Program</span>
+    <span class="tab on bru-label-small">Progress</span>
+    <span class="tab bru-label-small">Library</span>
+  </div>
+</div>
+
+<aside class="bru-body-default">
+  <p><b>PR workout (pr-workout-detail).</b> Replaces the pr-session placeholder. Based on workout-summary (header, stat row, exercise rows) and prs (the record's words: Weight PR, 1-6 reps).</p>
+  <p>In: tap a record row on Personal records (prs). Out: ‹ or the edge swipe returns to Personal records; the tab bar stays, PROGRESS selected.</p>
+  <p>The header says Workout, not Session. The eyebrow names the record's kind and rep range from the row that was tapped.</p>
+  <p>The record's exercise comes first and shows every set; the record set has a 2 pt ink outline and the screen's only signal mark, the PR badge.</p>
+  <p>The other exercises use the summary row: sets, volume and BEST. They are not tappable, as on the summary.</p>
+  <p>Open: should the record exercise stay in workout order instead of first? Should warm-up sets show? Should the screen link to the exercise's progress chart? What shows if the workout was deleted (the record outlives it)? Should other records set in this workout be marked too?</p>
+</aside>
+</body>
+</html>

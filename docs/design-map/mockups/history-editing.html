@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Edit workout</title>
+<link rel="stylesheet" href="bru-tokens.css">
+<link rel="stylesheet" href="status-bar.css">
+<script>
+  const q = new URLSearchParams(location.search);
+  const theme = q.get("theme") === "dark" ? "dark" : "light";
+  const w = q.get("w") === "440" ? 440 : 390;
+  document.documentElement.dataset.theme = theme;
+  document.documentElement.dataset.w = String(w);
+  document.documentElement.style.setProperty("--frame-w", w + "px");
+  document.documentElement.style.setProperty("--frame-h", (w === 440 ? 956 : 844) + "px");
+</script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: var(--bru-bg); color: var(--bru-ink); }
+  .frame { position: absolute; top: 0; left: 0; width: var(--frame-w); height: var(--frame-h);
+    background: var(--bru-paper); overflow: hidden; display: flex; flex-direction: column; }
+  .muted { color: var(--bru-muted); }
+
+
+  /* Header: CANCEL, title, SAVE, as on Workout notes. */
+  .header { height: 46px; flex: none; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center;
+    padding: 0 var(--bru-spacing-gutter); border-bottom: var(--bru-border-structural) solid var(--bru-ink); }
+  /* BRUHeaderMetrics.tracking */
+  .header > span { letter-spacing: 1.5px; }
+  .header .action { min-height: var(--bru-touch-target); display: flex; align-items: center; }
+  .header .right { justify-content: flex-end; color: var(--bru-signal-text); }
+
+  .scroll { flex: 1; overflow: hidden; }
+
+  .title { padding: var(--bru-spacing-gutter) var(--bru-spacing-gutter) var(--bru-spacing-group); }
+  .title .name { margin-top: 6px; }
+
+  .when { display: flex; gap: var(--bru-spacing-related); padding: 0 var(--bru-spacing-gutter) var(--bru-spacing-gutter); }
+  .when .field { flex: 1; min-width: 0; }
+  .when .field .bru-label-micro { display: block; margin-bottom: var(--bru-spacing-tight); }
+  .box { min-height: var(--bru-touch-target); display: flex; align-items: center; justify-content: space-between;
+    padding: 0 var(--bru-spacing-group); border: var(--bru-border-outline) solid var(--bru-ink); white-space: nowrap; }
+
+  .section { display: flex; justify-content: space-between; align-items: center; padding: 10px var(--bru-spacing-gutter);
+    border-top: var(--bru-border-structural) solid var(--bru-ink); border-bottom: var(--bru-border-structural) solid var(--bru-ink); }
+
+  .exercise { border-bottom: var(--bru-border-hairline) solid var(--bru-hair); }
+  .ex-head { padding: var(--bru-spacing-group) var(--bru-spacing-gutter) var(--bru-spacing-related); }
+  .ex-head .meta { display: block; margin-top: var(--bru-spacing-tight); }
+
+  /* Set grid: S, WEIGHT, REPS, RPE, delete. Same column order as the logger. */
+  .row { display: grid; grid-template-columns: 34px minmax(0, 1.5fr) minmax(0, 1fr) minmax(0, 1fr) 44px;
+    column-gap: var(--bru-spacing-related); align-items: center; padding: 0 var(--bru-spacing-gutter); }
+  .cols { padding-bottom: var(--bru-spacing-tight); }
+  .set { min-height: 52px; border-top: var(--bru-border-hairline) solid var(--bru-hair); }
+  .cell { height: 36px; display: flex; align-items: center; padding: 0 10px; border: var(--bru-border-hairline) solid var(--bru-hair);
+    background: var(--bru-bg); }
+  .cell.changed { border: var(--bru-border-structural) solid var(--bru-ink); background: var(--bru-paper); }
+  .was { grid-column: 2 / 5; padding-bottom: var(--bru-spacing-related); margin-top: -2px; }
+  .del { width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; }
+  .add { min-height: var(--bru-touch-target); display: flex; align-items: center; padding: 0 var(--bru-spacing-gutter);
+    border-top: var(--bru-border-hairline) solid var(--bru-hair); }
+
+  /* Bottom bar replaces the tab bar while editing, like the after-Finish DONE bar. */
+  .bottom { flex: none; padding: var(--bru-spacing-group) var(--bru-spacing-gutter) 34px; background: var(--bru-paper);
+    border-top: var(--bru-border-structural) solid var(--bru-ink); }
+  .ghost { min-height: var(--bru-touch-target); display: flex; align-items: center; justify-content: center;
+    border: var(--bru-border-outline) solid var(--bru-ink); }
+
+  aside { position: absolute; top: 24px; left: calc(var(--frame-w) + 24px); width: 420px; }
+  aside p { margin-bottom: var(--bru-spacing-related); }
+</style>
+</head>
+<body>
+<div class="frame">
+  <div class="status"><span class="time">9:41</span><span class="icons"><i class="signal"></i><i class="wifi"></i><i class="battery"></i></span></div>
+
+  <div class="header">
+    <span class="action bru-label-small">Cancel</span>
+    <span class="bru-label-small">Edit workout</span>
+    <span class="action right bru-label-small">Save</span>
+  </div>
+
+  <div class="scroll">
+    <div class="title">
+      <span class="bru-label-small muted">Editing</span>
+      <div class="name bru-display-large">Push A</div>
+    </div>
+
+    <div class="when">
+      <div class="field" style="flex:1.4">
+        <span class="bru-label-micro muted">Date</span>
+        <div class="box"><span class="bru-label-large">Wed, Oct 28</span><span class="bru-body-emphasis">›</span></div>
+      </div>
+      <div class="field">
+        <span class="bru-label-micro muted">Start</span>
+        <div class="box"><span class="bru-label-large">9:39 PM</span><span class="bru-body-emphasis">›</span></div>
+      </div>
+    </div>
+
+    <div class="section">
+      <span class="bru-display-medium">EXERCISES</span>
+      <span class="bru-label-small muted">3</span>
+    </div>
+
+    <div class="exercise">
+      <div class="ex-head">
+        <div class="bru-body-emphasis">Barbell Bench Press - Medium Grip</div>
+        <span class="meta bru-label-small muted">3 sets · 1,500 lb</span>
+      </div>
+      <div class="row cols bru-label-micro muted"><span>S</span><span>Weight</span><span>Reps</span><span>RPE</span><span></span></div>
+      <div class="row set">
+        <span class="bru-body-default muted">S1</span>
+        <span class="cell bru-body-emphasis">100</span><span class="cell bru-body-emphasis">5</span><span class="cell bru-body-emphasis">8</span>
+        <span class="del bru-display-medium" aria-label="Delete set 1">−</span>
+      </div>
+      <div class="row set">
+        <span class="bru-body-default muted">S2</span>
+        <span class="cell bru-body-emphasis">100</span><span class="cell bru-body-emphasis">5</span><span class="cell bru-body-emphasis">8</span>
+        <span class="del bru-display-medium" aria-label="Delete set 2">−</span>
+      </div>
+      <div class="row set">
+        <span class="bru-body-default muted">S3</span>
+        <span class="cell changed bru-body-emphasis">100</span><span class="cell bru-body-emphasis">5</span><span class="cell bru-body-emphasis">8</span>
+        <span class="del bru-display-medium" aria-label="Delete set 3">−</span>
+        <span class="was bru-label-micro muted">Was 10 × 5 @ 8</span>
+      </div>
+      <div class="add bru-label-small">+ Add set</div>
+    </div>
+
+    <div class="exercise">
+      <div class="ex-head">
+        <div class="bru-body-emphasis">Incline Dumbbell Press</div>
+        <span class="meta bru-label-small muted">3 sets · 720 lb</span>
+      </div>
+      <div class="row cols bru-label-micro muted"><span>S</span><span>Weight</span><span>Reps</span><span>RPE</span><span></span></div>
+      <div class="row set">
+        <span class="bru-body-default muted">S1</span>
+        <span class="cell bru-body-emphasis">30</span><span class="cell bru-body-emphasis">8</span><span class="cell bru-body-emphasis">8</span>
+        <span class="del bru-display-medium" aria-label="Delete set 1">−</span>
+      </div>
+      <div class="row set">
+        <span class="bru-body-default muted">S2</span>
+        <span class="cell bru-body-emphasis">30</span><span class="cell bru-body-emphasis">8</span><span class="cell bru-body-emphasis">8</span>
+        <span class="del bru-display-medium" aria-label="Delete set 2">−</span>
+      </div>
+      <div class="row set">
+        <span class="bru-body-default muted">S3</span>
+        <span class="cell bru-body-emphasis">30</span><span class="cell bru-body-emphasis">8</span><span class="cell bru-body-emphasis">7.5</span>
+        <span class="del bru-display-medium" aria-label="Delete set 3">−</span>
+      </div>
+      <div class="add bru-label-small">+ Add set</div>
+    </div>
+
+    <div class="exercise">
+      <div class="ex-head">
+        <div class="bru-body-emphasis">Barbell Shoulder Press</div>
+        <span class="meta bru-label-small muted">3 sets · 900 lb</span>
+      </div>
+      <div class="row cols bru-label-micro muted"><span>S</span><span>Weight</span><span>Reps</span><span>RPE</span><span></span></div>
+      <div class="row set">
+        <span class="bru-body-default muted">S1</span>
+        <span class="cell bru-body-emphasis">50</span><span class="cell bru-body-emphasis">6</span><span class="cell bru-body-emphasis">8</span>
+        <span class="del bru-display-medium" aria-label="Delete set 1">−</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="bottom">
+    <div class="ghost bru-label-large">Delete workout</div>
+  </div>
+</div>
+
+<aside class="bru-body-default">
+  <p>Based on workout-summary (header, title block, EXERCISES head, exercise rows), logger and logger--set-logged (S / WEIGHT / REPS / RPE set grid), and the CANCEL / title / SAVE header of workout-notes.</p>
+  <p>Way in: History, a workout row, then EDIT on the Summary header (right slot, empty today). Way out: SAVE writes the changes and returns to the Summary; CANCEL returns without them, asking first if anything changed.</p>
+  <p>Date and Start open a date picker and a time picker; they set when the workout happened.</p>
+  <p>Each weight, reps and RPE cell is a number field; RPE opens the decimal RPE picker. A changed cell gets a 2pt ink border and a "Was" line with the logged value.</p>
+  <p>− deletes that set at once (SAVE or CANCEL decides). + Add set appends a set copied from the last one.</p>
+  <p>Delete workout opens a confirmation dialog, then returns to History.</p>
+  <p>Open: pinned Delete workout bar or the end of the list? Should Duration be editable? Can an exercise be added, removed or reordered here? Do records, progression and volume recompute on SAVE, and does the lifter see which records moved?</p>
+</aside>
+</body>
+</html>

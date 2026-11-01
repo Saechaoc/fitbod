@@ -1,0 +1,33 @@
+/* The iOS status bar as the design-map screenshots draw it, measured at 2x from
+   screens/img/17e-default-light-history.png and its 17promax twin.
+   A page sets html[data-w] to 390 (iPhone 17e) or 440 (iPhone 17 Pro Max) and writes:
+   <div class="status"><span class="time">9:41</span><span class="icons"><i class="signal"></i><i class="wifi"></i><i class="battery"></i></span></div>
+   The clock uses the bundled Space Grotesk, because pages load no other font. */
+
+.status { position: relative; flex: none; height: 47px; color: var(--bru-ink); }
+.status .time { position: absolute; left: 35.5px; top: 14px; font: 16px/22px "SpaceGrotesk-SemiBold", sans-serif; }
+.status .icons { position: absolute; right: 18.5px; top: 18.5px; height: 12.5px; display: flex; align-items: center; gap: 5.5px; }
+.status .icons i { display: block; flex: none; box-sizing: border-box; }
+.status .signal, .status .wifi { background: currentColor; mask-repeat: no-repeat; mask-size: 100% 100%; }
+.status .signal {
+  width: 17px; height: 11.5px;
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 17 11.5' preserveAspectRatio='none'%3E%3Crect x='0' y='7.5' width='3.2' height='4' rx='0.8'/%3E%3Crect x='4.6' y='5.2' width='3.2' height='6.3' rx='0.8'/%3E%3Crect x='9.2' y='2.6' width='3.2' height='8.9' rx='0.8'/%3E%3Crect x='13.8' y='0' width='3.2' height='11.5' rx='0.8'/%3E%3C/svg%3E");
+}
+.status .wifi {
+  width: 16px; height: 12px;
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0.4 16 11.5' preserveAspectRatio='none'%3E%3Cpath d='M0.01 3.81A11.3 11.3 0 0 1 15.99 3.81L14.29 5.51A8.9 8.9 0 0 0 1.71 5.51Z'/%3E%3Cpath d='M2.84 6.64A7.3 7.3 0 0 1 13.16 6.64L11.46 8.34A4.9 4.9 0 0 0 4.54 8.34Z'/%3E%3Cpath d='M8 11.8L5.67 9.47A3.3 3.3 0 0 1 10.33 9.47Z'/%3E%3C/svg%3E");
+}
+/* The body, then its cap drawn 1 pt to the right, as on iOS. */
+.status .battery { position: relative; width: 22.5px; height: 12.5px; margin-right: 2.5px; padding: 1.5px;
+  border: 1px solid var(--bru-muted); border-radius: 3.5px; }
+.status .battery::before { content: ""; display: block; height: 100%; background: var(--bru-green); border-radius: 1.5px; }
+.status .battery::after { content: ""; position: absolute; right: -3.5px; top: 50%; width: 1.5px; height: 4px;
+  transform: translateY(-50%); background: var(--bru-muted); border-radius: 0 1px 1px 0; }
+
+html[data-w="440"] .status { height: 62px; }
+html[data-w="440"] .status .time { left: 65px; top: 20.5px; font-size: 18.5px; line-height: 26px; }
+html[data-w="440"] .status .icons { right: 40.5px; top: 25px; height: 14.5px; gap: 7.5px; }
+html[data-w="440"] .status .signal { width: 21.5px; height: 13.5px; }
+html[data-w="440"] .status .wifi { width: 19px; height: 14px; }
+html[data-w="440"] .status .battery { width: 28.5px; height: 14.5px; margin-right: 3px; border-radius: 4px; }
+html[data-w="440"] .status .battery::after { right: -4px; width: 2px; height: 5px; }

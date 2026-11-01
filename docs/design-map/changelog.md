@@ -2,6 +2,15 @@
 
 Newest first: one entry for each stage of [plan.md](plan.md) up to S2, then one for each commit.
 
+## 2026-11-01: S6, missing screens and mock-ups
+
+- Wrote [missing-screens.md](missing-screens.md): 41 screens and states that the workflows need and the app lacks, of which 4 are `must`, 23 `should` and 14 `nice`.
+  It also has a row for each Milestone 1 removal and each of the four open product decisions.
+- Drew a BRU mock-up for each `must`: editing a finished workout, stalled exercises outside a workout, past weekly recaps, and what a record row opens.
+  Each is a standalone HTML page on the app's own tokens, with PNGs at 390 and 440 pt in light and dark.
+- `tools/tokens_to_css.py` writes `mockups/bru-tokens.css` from the asset catalog, `BRUFont.swift` and `BRUMetrics.swift`.
+  `tools/render_mockups.sh` renders the PNGs with headless Chrome, and `mockups/status-bar.css` draws the status bar as the screenshots show it.
+
 ## 2026-11-01: S5, workflows
 
 - Wrote the 11 workflow files in `workflows/`, one for each job a lifter does in the app, from the first launch to a backup and restore.
