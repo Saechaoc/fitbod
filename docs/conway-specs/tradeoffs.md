@@ -235,6 +235,12 @@ Product decisions are in [decisions.md](decisions.md), and they win over this fi
 - Coordinator answer, 2026-10-30 (T14 question `msg_b4478642c64e`): a muscle drawn on both figures, Shoulders and Calves, has its element on FRONT only; its BACK copies stay tappable but are hidden from VoiceOver.
   The element's label is the muscle's name, such as "Chest", and its value is the zone text, so VoiceOver speaks the same words as before.
 
+### Contributing exercises order
+
+- Coordinator answer, 2026-11-01 (T109 question `msg_b6fee190e95c`, decided under autopilot; the user can revisit it): a muscle's CONTRIBUTING EXERCISES rows stay ranked by weighted sets, and only rows with exactly the same weighted sets sort by exercise name, with a final id tiebreak so the order never changes between renders.
+  So 3.0 weighted sets still rank above 2.5, though both rows read "3 sets".
+- Rejected: ranking by the rounded count shown, then by name, which drops the weighted ranking to sort rows alphabetically that contribute different amounts.
+
 ## Progress and history
 
 ### Shared counts
