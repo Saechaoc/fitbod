@@ -63,4 +63,4 @@ Ask before you edit anything else, such as `UITestNavigation.swift`.
 
 ## Hints
 
-- T106's `ponytail-review.md`, in the main checkout's `docs/conway-specs/evidence/T106/`, describes the index-based lookups.
+- T106's `ponytail-review.md`, in `docs/conway-specs/evidence/T106/`, describes the index-based lookups.

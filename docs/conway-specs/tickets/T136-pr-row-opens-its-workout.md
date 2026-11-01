@@ -59,4 +59,4 @@ On the small phone, with `ProgressHistorySeed`'s seed:
 ## Hints
 
 - The PR row's route carries the PR set's `setEntryID`; its `SetEntry` leads to its `Session`.
-- T106's notes in the main checkout's `docs/conway-specs/evidence/T106/notes.md` describe the stub.
+- T106's notes in `docs/conway-specs/evidence/T106/notes.md` describe the stub.

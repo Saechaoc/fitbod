@@ -62,6 +62,6 @@ Ask before you edit anything else, such as the rest timer's scheduler.
 
 ## Hints
 
-- T101's notes in the main checkout's `docs/conway-specs/evidence/T101/notes.md` describe the banner, with screenshots of it and of the Notification Center it opened.
+- T101's notes in `docs/conway-specs/evidence/T101/notes.md` describe the banner, with screenshots of it and of the Notification Center it opened.
 - `RestTimerNotificationScheduler.swift` wraps `UNUserNotificationCenter`; `removeAllPendingNotificationRequests()` and `removeAllDeliveredNotifications()` clear both kinds.
 - `DebugLaunchReset.swift` already handles `-fitbod-reset-store` and the `debug.resetSignal` element that `UITestNavigation.launch` waits for.

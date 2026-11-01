@@ -56,6 +56,6 @@ In `BRUSectionHeadLayoutTests`, host a section head with an action at AX3 and at
 
 ## Hints
 
-- T37's notes in the main checkout's `docs/conway-specs/evidence/T37/` describe the overlap, and `review.md` there has the finding.
+- T37's notes in `docs/conway-specs/evidence/T37/` describe the overlap, and `review.md` there has the finding.
 - T35's `BRUHeaderMetrics.actionHitReach` in `fitbod/Design/BRUHeaderBar.swift` shows one way to keep the space.
 - `bruHitArea(_:)` in `fitbod/Design/BRUHitArea.swift` sets the hit margin.

@@ -67,4 +67,4 @@ On the small phone:
 ## Hints
 
 - `RoutineBuilderView` avoids the same trap by keeping its first draft in `@State` (`RoutineBuilderView.swift:114`); its comment says the host may build a fresh draft on every redraw.
-- T38's notes in the main checkout's `docs/conway-specs/evidence/T38/notes.md`, under Findings, describe the probe.
+- T38's notes in `docs/conway-specs/evidence/T38/notes.md`, under Findings, describe the probe.

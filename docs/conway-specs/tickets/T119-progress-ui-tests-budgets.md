@@ -64,6 +64,6 @@ Ask before you edit anything else.
 
 ## Hints
 
-- T104's per-case durations are under "Test performance" in the main checkout's `docs/conway-specs/evidence/T104/notes.md`.
+- T104's per-case durations are under "Test performance" in `docs/conway-specs/evidence/T104/notes.md`.
 - `UITestNavigation.launch` waits up to 90 s for the Today tab, so a test that launches through it needs no splash wait.
 - `xcodebuild` passes each `TEST_RUNNER_`-prefixed variable to the test runner without its prefix.

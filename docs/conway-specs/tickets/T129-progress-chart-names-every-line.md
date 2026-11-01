@@ -65,5 +65,5 @@ Ask before you edit anything else.
 
 ## Hints
 
-- T98's notes in the main checkout's `docs/conway-specs/evidence/T98/notes.md` describe the unnamed lines and the axis.
+- T98's notes in `docs/conway-specs/evidence/T98/notes.md` describe the unnamed lines and the axis.
 - `ChartPoint.intent` already carries each point's intent.

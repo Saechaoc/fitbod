@@ -59,4 +59,4 @@ On the small phone, in `RoutineSessionDragUITests`, with T26's `-fitbod-seed-pow
 
 - `slotPitch` is near `SplitDetailView.swift:123`, the slot math near line 678, and the recognizer near line 726.
 - `NewBlockReorderSlots` in `BlockBuilderView.swift` turns measured heights into slot offsets and a fractional slot position.
-- T105's notes in the main checkout's `docs/conway-specs/evidence/T105/notes.md` describe how its drag tests place the handle with long margin drags.
+- T105's notes in `docs/conway-specs/evidence/T105/notes.md` describe how its drag tests place the handle with long margin drags.

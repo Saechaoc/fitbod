@@ -64,5 +64,5 @@ Ask before you move any other hosted accessibility test to the shared way.
 
 ## Hints
 
-- T106's notes in the main checkout's `docs/conway-specs/evidence/T106/notes.md`, under "VoiceOver's activate" and Findings, record what it tried.
+- T106's notes in `docs/conway-specs/evidence/T106/notes.md`, under "VoiceOver's activate" and Findings, record what it tried.
 - `fitbodTests/ProgressChartDescriptorTests.swift` holds T98's hosting and polling.

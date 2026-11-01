@@ -62,5 +62,5 @@ In `WeekWindowCalendarTests`, with a calendar in a time zone that observes dayli
 
 ## Hints
 
-- T114's notes in the main checkout's `docs/conway-specs/evidence/T114/notes.md` describe the DST case.
+- T114's notes in `docs/conway-specs/evidence/T114/notes.md` describe the DST case.
 - Pass a calendar into the functions you test, rather than reading `Calendar.current` inside them, so a test can choose the time zone.

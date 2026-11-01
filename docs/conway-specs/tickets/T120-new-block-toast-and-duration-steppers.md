@@ -65,5 +65,5 @@ On the small phone, in `NewBlockToastAndDurationUITests`:
 
 - `NewBlockUndoToast` is near `BlockBuilderView.swift:2830`, and its divider is the `Rectangle` with `.frame(width: NewBlockScreenTokens.rule)`.
 - The duration sheet builds one `NewBlockSheetStepperRow` per phase; T105 gave that row a `stat:` parameter.
-- T105's notes in the main checkout's `docs/conway-specs/evidence/T105/notes.md` describe the scroll drag that opened an editor, and `screens/T105-delete-tapped-small-default-light.png` shows the toast.
+- T105's notes in `docs/conway-specs/evidence/T105/notes.md` describe the scroll drag that opened an editor, and `screens/T105-delete-tapped-small-default-light.png` shows the toast.
 - The comment above `BlockTemplateCatalogUITests.openDurationSheet` says `UITestNavigation.topSheet(in:)` misses half-height sheets; since T101 it finds them, so the test can use it (finding F268).

@@ -69,5 +69,5 @@ All of these fail today.
 - The name is near `RoutineExerciseCard.swift:166`, and the long-press menu's Remove is in its `contextMenu`.
 - `PrescriptionEditorUITests` and `MilestoneOneJourneyUITests` find the name through `app.staticTexts` with the identifier `routine.exercise.name.<n>`.
 - The tempo fields are built by `tempoField(index:placeholder:width:)` in `PrescriptionEditorRow.swift`.
-- T29's notes and screenshots are in the main checkout's `docs/conway-specs/evidence/T29/`.
+- T29's notes and screenshots are in `docs/conway-specs/evidence/T29/`.
 - T110 left a duplicated phrase in `PrescriptionEditorRow.swift`'s header comment, "the tempo fields / and the tempo fields drop their fixed widths"; fix it while you edit that file (finding F-ext-8 from the review of T110-ext).

@@ -62,6 +62,6 @@ On the small phone, in `LoggerPlateStackUITests`:
 
 ## Hints
 
-- T107's notes in the main checkout's `docs/conway-specs/evidence/T107/notes.md` record the taps its probe tried.
+- T107's notes in `docs/conway-specs/evidence/T107/notes.md` record the taps its probe tried.
 - `PlateStackLayoutTests` already renders the logger's 0.6-scale stack at default, XXXL and AX3.
 - T39, in phase 4, changes the same weight field so that focus selects its whole value; keep the focus handling simple enough for that.

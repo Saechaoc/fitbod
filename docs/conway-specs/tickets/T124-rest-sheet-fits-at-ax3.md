@@ -60,5 +60,5 @@ Both fail today.
 
 ## Hints
 
-- T36's screenshots in the main checkout's `docs/conway-specs/evidence/T36/screens/`, such as `T36-rest-sheet-small-ax3-light.png`, show both, and so does `docs/verification/closeout/iphone-17e-ax3-expanded-rest.png`.
+- T36's screenshots in `docs/conway-specs/evidence/T36/screens/`, such as `T36-rest-sheet-small-ax3-light.png`, show both, and so does `docs/verification/closeout/iphone-17e-ax3-expanded-rest.png`.
 - T36's chip test reads digit pixels against a border with `UITestNavigation.pixels(in:of:)`; the same approach fits the ring.

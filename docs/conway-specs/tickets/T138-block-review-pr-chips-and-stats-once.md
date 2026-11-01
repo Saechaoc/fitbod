@@ -59,5 +59,5 @@ On the small phone, with `-fitbod-seed-ended-block-recap`:
 
 ## Hints
 
-- T113's notes in the main checkout's `docs/conway-specs/evidence/T113/notes.md` list these findings.
+- T113's notes in `docs/conway-specs/evidence/T113/notes.md` list these findings.
 - T113's `.onAppear` that fills `prs` shows the pattern for change 2.

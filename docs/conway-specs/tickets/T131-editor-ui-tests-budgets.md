@@ -54,4 +54,4 @@ Ask before you edit anything else, such as `UITestNavigation.swift`.
 
 ## Hints
 
-- T38's notes in the main checkout's `docs/conway-specs/evidence/T38/notes.md`, under Test performance, list the durations.
+- T38's notes in `docs/conway-specs/evidence/T38/notes.md`, under Test performance, list the durations.

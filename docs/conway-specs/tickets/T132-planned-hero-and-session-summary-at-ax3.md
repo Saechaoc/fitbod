@@ -66,6 +66,6 @@ Both fail today.
 
 ## Hints
 
-- T108's notes in the main checkout's `docs/conway-specs/evidence/T108/notes.md`, under Findings, describe both breaks; see `screens/T108-draft-attach-small-ax3-light.png` and `screens/T108-routine-small-ax3-light.png` there.
+- T108's notes in `docs/conway-specs/evidence/T108/notes.md`, under Findings, describe both breaks; see `screens/T108-draft-attach-small-ax3-light.png` and `screens/T108-routine-small-ax3-light.png` there.
 - `UITestNavigation.textLines` reads text line by line; `readText` joins the lines with spaces.
 - No-break spaces kept T85's and T108's labels whole.

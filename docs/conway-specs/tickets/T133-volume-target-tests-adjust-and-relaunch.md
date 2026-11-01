@@ -61,5 +61,5 @@ Ask before you edit anything else.
 
 ## Hints
 
-- T109's notes in the main checkout's `docs/conway-specs/evidence/T109/notes.md`, under Findings, describe each gap.
+- T109's notes in `docs/conway-specs/evidence/T109/notes.md`, under Findings, describe each gap.
 - `-fitbod-reset-store` works on the initial launch only, so the relaunch must launch without it.
