@@ -259,6 +259,8 @@ public struct ProgressHomeView: View {
     // MARK: - Row
 
     /// One drill-down row: title, muted sub-line, and a "›" that VoiceOver skips.
+    /// It opens only on a tap (T137), so a sideways drag or an edge swipe
+    /// that starts on it opens nothing.
     private func progressRow(
         title: String,
         subtitle: String,
@@ -286,7 +288,7 @@ public struct ProgressHomeView: View {
             .frame(minHeight: 44)
             .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.bruRow)
         .accessibilityIdentifier(identifier ?? "")
     }
 
