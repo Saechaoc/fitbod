@@ -37,6 +37,7 @@ The user asked for a faster UI suite; T143 cut it to 77 cases that guard data, a
 3. Each listed case fits 30 s, and the journey fits 90 s, with the same data assertions.
    Where one cannot, `notes.md` says what its time is spent on.
 4. `MilestoneOneJourneyUITests` attaches its screenshot and accessibility tree only when a test fails, and its `reveal` scrolls in long drags and waits with `UITestNavigation.waitUntilStill`.
+5. `WorkoutLoggerJourneyUITests` launches through `UITestNavigation.launch`, so a run of that suite alone never opens the previous run's store (finding F11, seen again by T123's worker).
 
 ## Constraints
 

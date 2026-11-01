@@ -86,7 +86,8 @@ created. This preserves the old files but does not convert their contents.
 Compatible additive changes open in place. Settings offers backup and export.
 
 The DEBUG-only `-fitbod-reset-store` launch argument moves the active store
-aside and clears seed stamps. It is for dedicated test simulators. Normal
+aside, clears seed stamps, and removes the app's pending and delivered
+notifications. It is for dedicated test simulators. Normal
 launches do not reset data. Do not pass this argument when verifying relaunch.
 
 `-fitbod-seed-demo-workout` adds deterministic active and finished workouts for

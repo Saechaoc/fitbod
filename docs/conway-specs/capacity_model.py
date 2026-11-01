@@ -143,6 +143,7 @@ ARCHIVED = {
     "T116": (3, [], ["fitbodTests/HistoryTopSetTests.swift"]),
     "T118": (3, [], []),
     "T122": (3, [], ["fitbodUITests/RoutineSessionDragUITests.swift"]),
+    "T123": (4, [], []),
     "T125": (3, [], ["fitbodUITests/LoggerPlateStackUITests.swift"]),
     "T128": (3, [], []),
     "T129": (3, [], []),

@@ -65,7 +65,6 @@ Every Phase 2 ticket is done and archived.
 | [T117](tickets/T117-history-tests-cover-non-pr-rows-and-every-label.md) | Exercise history's tests cover a row without a PR and every label |
 | [T119](tickets/T119-progress-ui-tests-budgets.md) | The kept UI tests fit the test budgets |
 | [T121](tickets/T121-new-block-ui-tests-budgets.md) | New Block UI tests fit the test budgets |
-| [T123](tickets/T123-ui-runs-clear-rest-notifications.md) | A reset launch clears leftover rest notifications |
 | [T131](tickets/T131-editor-ui-tests-budgets.md) | The session editor's UI tests fit the test budgets |
 | [T135](tickets/T135-shared-ui-test-helpers.md) | UI suites share one copy of their helpers, and the swipe-back suite finds rows by name and fits its budgets |
 
