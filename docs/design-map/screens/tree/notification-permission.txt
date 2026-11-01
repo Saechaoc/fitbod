@@ -1,0 +1,173 @@
+Element subtree:
+ →Application, pid: 9898, label: 'fitbod'
+    Window (Main), {{0.0, 0.0}, {390.0, 844.0}}
+      Other, {{0.0, 0.0}, {1.0, 1.0}}, identifier: 'debug.resetSignal', label: 'Reset signal', value: fresh
+      Other, {{0.0, 0.0}, {390.0, 844.0}}
+        Other, {{0.0, 0.0}, {390.0, 844.0}}
+          Other, {{0.0, 0.0}, {390.0, 844.0}}
+            Other, {{0.0, 0.0}, {390.0, 844.0}}
+              Other, {{0.0, 0.0}, {390.0, 844.0}}
+                Other, {{0.0, 0.0}, {390.0, 844.0}}
+                  Other, {{0.0, 0.0}, {390.0, 844.0}}
+                    Other, {{0.0, 0.0}, {390.0, 844.0}}
+                      Other, {{0.0, 0.0}, {390.0, 844.0}}
+                        Other, {{0.0, 0.0}, {390.0, 844.0}}
+                          Other, {{0.0, 0.0}, {390.0, 844.0}}
+                            Other, {{0.0, 0.0}, {390.0, 844.0}}
+                              Other, {{0.0, 0.0}, {390.0, 844.0}}
+                                Other, {{0.0, 0.0}, {390.0, 844.0}}
+                                  Other, {{0.0, 0.0}, {390.0, 844.0}}
+                                    CollectionView, {{0.0, 0.0}, {390.0, 844.0}}
+                                      Other, {{0.0, -1686.0}, {390.0, 2673.0}}
+                                      Cell, {{0.0, 2.0}, {389.7, 502.0}}
+                                        Other, {{0.0, 2.0}, {389.7, 502.0}}
+                                          Other, {{0.0, 2.0}, {389.7, 502.0}}
+                                            Other, {{0.0, 2.0}, {389.7, 502.0}}
+                                        Other, {{0.0, 2.0}, {389.7, 502.0}}
+                                          Other, {{0.0, 2.0}, {389.7, 502.0}}
+                                            Other, {{0.0, 2.0}, {389.7, 502.0}}
+                                              StaticText, {{16.0, 14.0}, {20.0, 23.0}}, label: '01'
+                                              StaticText, {{60.0, 17.3}, {277.3, 18.7}}, label: 'Barbell Bench Press - Medium Grip'
+                                              StaticText, {{60.0, 40.0}, {125.0, 14.7}}, label: 'Barbell · 3 SETS'
+                                              StaticText, {{16.0, 81.7}, {108.7, 18.0}}, label: 'Warm-up ramp'
+                                              StaticText, {{186.3, 83.3}, {187.3, 14.7}}, label: 'Plate 1.25 lb · ×2 sides'
+                                              Other, {{16.0, 123.7}, {357.7, 47.7}}, label: 'Warm-up set 1: 45 lb for 5 reps at 40% of working weight. Bar only.'
+                                                StaticText, {{16.0, 136.0}, {24.3, 23.0}}, label: 'W1'
+                                                StaticText, {{62.0, 123.7}, {27.3, 28.3}}, label: '45'
+                                                StaticText, {{93.3, 132.0}, {23.7, 17.3}}, label: '40%'
+                                                StaticText, {{62.0, 154.0}, {47.0, 17.3}}, label: '×5 @ 4'
+                                                Other, {{269.0, 138.4}, {17.0, 18.6}}, label: 'Bar: 45 lb. No plates loaded.'
+                                                StaticText, {{355.7, 141.5}, {18.0, 12.0}}, label: 'Bar'
+                                              Other, {{16.0, 192.3}, {357.7, 47.7}}, label: 'Warm-up set 2: 60 lb for 3 reps at 60% of working weight. Plates per side: 5, 2.5.'
+                                                StaticText, {{16.0, 204.7}, {27.0, 23.0}}, label: 'W2'
+                                                StaticText, {{62.0, 192.3}, {28.0, 28.3}}, label: '60'
+                                                StaticText, {{94.0, 200.7}, {23.7, 17.3}}, label: '60%'
+                                                StaticText, {{62.0, 222.7}, {47.0, 17.3}}, label: '×3 @ 5'
+                                                Other, {{257.7, 207.0}, {22.0, 18.6}}, label: 'Bar: 45 lb. Plates each side: one 5, one 2.5. Total: 15.'
+                                                StaticText, {{344.0, 210.2}, {29.7, 12.0}}, label: '5+2.5'
+                                              Other, {{16.0, 261.0}, {357.7, 47.7}}, label: 'Warm-up set 3: 75 lb for 2 reps at 75% of working weight. Plates per side: 10, 5.'
+                                                StaticText, {{16.0, 273.3}, {27.3, 23.0}}, label: 'W3'
+                                                StaticText, {{62.0, 261.0}, {25.7, 28.3}}, label: '75'
+                                                StaticText, {{91.7, 269.3}, {23.7, 17.3}}, label: '75%'
+                                                StaticText, {{62.0, 291.3}, {47.0, 17.3}}, label: '×2 @ 6'
+                                                Other, {{262.3, 275.7}, {21.6, 18.6}}, label: 'Bar: 45 lb. Plates each side: one 10, one 5. Total: 30.'
+                                                StaticText, {{350.0, 278.8}, {23.7, 12.0}}, label: '10+5'
+                                              Other, {{16.0, 329.7}, {357.7, 47.7}}, label: 'Warm-up set 4: 90 lb for 1 rep at 90% of working weight. Plates per side: 10, 10, 2.5.'
+                                                StaticText, {{16.0, 342.0}, {27.7, 23.0}}, label: 'W4'
+                                                StaticText, {{62.0, 329.7}, {28.0, 28.3}}, label: '90'
+                                                StaticText, {{94.0, 338.0}, {23.7, 17.3}}, label: '90%'
+                                                StaticText, {{62.0, 360.0}, {47.0, 17.3}}, label: '×1 @ 7'
+                                                Other, {{239.0, 344.4}, {24.0, 18.6}}, label: 'Bar: 45 lb. Plates each side: 2 10, one 2.5. Total: 45.'
+                                                StaticText, {{320.3, 347.5}, {53.3, 12.0}}, label: '10+10+2.5'
+                                              StaticText, {{16.0, 402.5}, {140.7, 14.7}}, label: 'WORK SETS BEGIN AT'
+                                              StaticText, {{315.7, 398.3}, {58.0, 23.0}}, label: '100 LB'
+                                              Button, {{0.0, 431.3}, {389.7, 44.0}}, label: 'SKIP ALL WARM-UP SETS'
+                                              StaticText, {{16.0, 482.3}, {8.0, 14.7}}, label: 'S'
+                                              StaticText, {{54.0, 482.3}, {62.7, 14.7}}, label: 'PREVIOUS'
+                                              StaticText, {{140.0, 482.3}, {47.0, 14.7}}, label: 'WEIGHT'
+                                              StaticText, {{206.0, 482.3}, {31.3, 14.7}}, label: 'REPS'
+                                              StaticText, {{252.0, 482.3}, {23.7, 14.7}}, label: 'RPE'
+                                      Cell, {{0.0, 504.0}, {389.7, 143.0}}
+                                        Other, {{0.0, 504.0}, {389.7, 143.0}}
+                                          Other, {{0.0, 504.0}, {389.7, 143.0}}
+                                            Other, {{0.0, 504.0}, {389.7, 143.0}}
+                                        Other, {{0.0, 504.0}, {389.7, 143.0}}
+                                          Other, {{0.0, 504.0}, {389.7, 143.0}}
+                                            Other, {{0.0, 504.0}, {389.7, 143.0}}
+                                              Button, {{10.0, 528.0}, {44.0, 44.0}}, identifier: 'set.type.1.S1', label: 'Set 1 type', value: Working
+                                                Button, {{10.0, 528.0}, {44.0, 44.0}}
+                                                  StaticText, {{10.0, 528.0}, {44.0, 44.0}}, label: 'S1'
+                                              Other, {{54.0, 541.3}, {62.7, 17.3}}, label: 'Previous: 100 × 5 @ 8 (Wed)'
+                                                StaticText, {{54.0, 541.3}, {62.7, 17.3}}, label: '100×5 @8'
+                                              TextField, {{140.0, 516.0}, {60.0, 68.0}}, identifier: 'set.weight.1.S1', label: 'Prescribed weight: 100 lb', placeholderValue: '—', value: 100 lb
+                                              TextField, {{206.0, 524.0}, {44.0, 52.0}}, identifier: 'set.reps.1.S1', label: 'Reps, set 1', placeholderValue: '—', value: 6
+                                              Button, {{279.7, 528.0}, {44.0, 44.0}}, label: 'Note for set 1'
+                                              Button, {{329.7, 528.0}, {44.0, 44.0}}, identifier: 'set.complete.1.S1', label: 'Set 1 complete'
+                                              Other, {{0.0, 0.0}, {0.0, 0.0}}
+                                              Button, {{65.2, 589.2}, {45.5, 45.5}}, label: 'RPE 6'
+                                              Button, {{113.2, 589.2}, {45.5, 45.5}}, label: 'RPE 7'
+                                              Button, {{161.2, 589.2}, {45.5, 45.5}}, label: 'RPE 8'
+                                              Button, {{209.2, 589.2}, {45.5, 45.5}}, label: 'RPE 9'
+                                              Button, {{257.2, 589.2}, {45.5, 45.5}}, label: 'RPE 10'
+                                              Button, {{0.0, 0.0}, {0.0, 0.0}}, label: 'Working'
+                                                Button, {{308.0, 612.0}, {0.0, 0.0}}
+                                      Cell, {{0.0, 647.0}, {389.7, 143.0}}
+                                        Other, {{0.0, 647.0}, {389.7, 143.0}}
+                                          Other, {{0.0, 647.0}, {389.7, 143.0}}
+                                            Other, {{0.0, 647.0}, {389.7, 143.0}}
+                                        Other, {{0.0, 647.0}, {389.7, 143.0}}
+                                          Other, {{0.0, 647.0}, {389.7, 143.0}}
+                                            Other, {{0.0, 647.0}, {389.7, 143.0}}
+                                              Button, {{10.0, 671.0}, {44.0, 44.0}}, identifier: 'set.type.1.S2', label: 'Set 2 type', value: Working
+                                                Button, {{10.0, 671.0}, {44.0, 44.0}}
+                                                  StaticText, {{10.0, 671.0}, {44.0, 44.0}}, label: 'S2'
+                                              Other, {{54.0, 684.3}, {62.7, 17.3}}, label: 'Previous: 100 × 5 @ 8 (Wed)'
+                                                StaticText, {{54.0, 684.3}, {62.7, 17.3}}, label: '100×5 @8'
+                                              TextField, {{140.0, 659.0}, {60.0, 68.0}}, identifier: 'set.weight.1.S2', label: 'Prescribed weight: 100 lb', placeholderValue: '—', value: 100 lb
+                                              TextField, {{206.0, 667.0}, {44.0, 52.0}}, identifier: 'set.reps.1.S2', label: 'Reps, set 2', placeholderValue: '—'
+                                              Button, {{279.7, 671.0}, {44.0, 44.0}}, label: 'Note for set 2'
+                                              Button, {{329.7, 671.0}, {44.0, 44.0}}, identifier: 'set.complete.1.S2', label: 'Mark set 2 complete', Disabled
+                                              Button, {{16.0, 733.0}, {44.0, 44.0}}, identifier: 'set.why.1.S2', label: 'Why this weight'
+                                              Button, {{65.2, 732.2}, {45.5, 45.5}}, label: 'RPE 6'
+                                              Button, {{113.2, 732.2}, {45.5, 45.5}}, label: 'RPE 7'
+                                              Button, {{161.2, 732.2}, {45.5, 45.5}}, label: 'RPE 8'
+                                              Button, {{209.2, 732.2}, {45.5, 45.5}}, label: 'RPE 9'
+                                              Button, {{257.2, 732.2}, {45.5, 45.5}}, label: 'RPE 10'
+                                              Button, {{0.0, 0.0}, {0.0, 0.0}}, label: 'Working'
+                                                Button, {{308.0, 755.0}, {0.0, 0.0}}
+                                      Cell, {{0.0, 790.0}, {389.7, 143.0}}
+                                        Other, {{0.0, 790.0}, {389.7, 143.0}}
+                                          Other, {{0.0, 790.0}, {389.7, 143.0}}
+                                            Other, {{0.0, 790.0}, {389.7, 143.0}}
+                                        Other, {{0.0, 790.0}, {389.7, 143.0}}
+                                          Other, {{0.0, 790.0}, {389.7, 143.0}}
+                                            Other, {{0.0, 790.0}, {389.7, 143.0}}
+                                              Button, {{10.0, 814.0}, {44.0, 44.0}}, identifier: 'set.type.1.S3', label: 'Set 3 type', value: Working
+                                                Button, {{10.0, 814.0}, {44.0, 44.0}}
+                                                  StaticText, {{10.0, 814.0}, {44.0, 44.0}}, label: 'S3'
+                                              Other, {{54.0, 827.3}, {62.7, 17.3}}, label: 'Previous: 100 × 5 @ 8 (Wed)'
+                                                StaticText, {{54.0, 827.3}, {62.7, 17.3}}, label: '100×5 @8'
+                                              TextField, {{140.0, 802.0}, {60.0, 68.0}}, identifier: 'set.weight.1.S3', label: 'Prescribed weight: 100 lb', placeholderValue: '—', value: 100 lb
+                                              TextField, {{206.0, 810.0}, {44.0, 52.0}}, identifier: 'set.reps.1.S3', label: 'Reps, set 3', placeholderValue: '—'
+                                              Button, {{279.7, 814.0}, {44.0, 44.0}}, label: 'Note for set 3'
+                                              Button, {{329.7, 814.0}, {44.0, 44.0}}, identifier: 'set.complete.1.S3', label: 'Mark set 3 complete', Disabled
+                                              Button, {{16.0, 876.0}, {44.0, 44.0}}, identifier: 'set.why.1.S3', label: 'Why this weight'
+                                              Button, {{65.2, 875.2}, {45.5, 45.5}}, label: 'RPE 6'
+                                              Button, {{113.2, 875.2}, {45.5, 45.5}}, label: 'RPE 7'
+                                              Button, {{161.2, 875.2}, {45.5, 45.5}}, label: 'RPE 8'
+                                              Button, {{209.2, 875.2}, {45.5, 45.5}}, label: 'RPE 9'
+                                              Button, {{257.2, 875.2}, {45.5, 45.5}}, label: 'RPE 10'
+                                              Button, {{0.0, 0.0}, {0.0, 0.0}}, label: 'Working'
+                                                Button, {{308.0, 898.0}, {0.0, 0.0}}
+                                      Other, {{356.7, 237.0}, {30.0, 455.0}}, label: 'Vertical scroll bar, 6 pages', value: 11%
+                                        Other, {{383.7, 276.3}, {3.0, 130.0}}
+                                      Other, {{356.7, 237.0}, {30.0, 455.0}}, label: 'Vertical scroll bar, 6 pages', value: 11%
+                                        Other, {{383.7, 276.3}, {3.0, 130.0}}
+                                    Button, {{16.0, 702.0}, {358.0, 44.0}}, identifier: 'rest.status', label: 'Rest timer: 2 minutes 56 seconds'
+                                      StaticText, {{22.2, 718.0}, {27.7, 12.0}}, label: 'REST'
+                                      StaticText, {{68.0, 706.3}, {54.7, 14.7}}, label: 'RESTING'
+                                      StaticText, {{68.0, 723.0}, {210.3, 18.7}}, label: 'Barbell Bench Press - Medium Grip'
+                                      StaticText, {{314.3, 712.5}, {39.0, 23.0}}, label: '2:56'
+                                      StaticText, {{365.3, 714.7}, {8.7, 18.7}}, label: '▸'
+                                    Button, {{16.0, 756.0}, {114.0, 44.0}}, identifier: 'rest.minus15', label: 'Subtract 15 seconds'
+                                    Button, {{138.0, 756.0}, {114.0, 44.0}}, identifier: 'rest.plus15', label: 'Add 15 seconds'
+                                    Button, {{260.0, 756.0}, {114.0, 44.0}}, identifier: 'rest.skip', label: 'Skip remaining rest'
+                                    Other, {{0.0, 0.0}, {390.0, 237.0}}, identifier: 'workout.header'
+                                      Button, {{4.0, 119.3}, {44.0, 44.0}}, label: 'Back'
+                                      StaticText, {{166.5, 134.0}, {57.0, 14.7}}, label: 'Workout'
+                                      Button, {{337.7, 119.3}, {48.3, 44.0}}, label: 'More'
+                                      StaticText, {{16.0, 175.3}, {58.3, 23.0}}, label: 'Push A'
+                                      StaticText, {{332.0, 177.5}, {42.0, 18.7}}, label: '12:25'
+                                      StaticText, {{15.2, 203.6}, {99.5, 22.2}}, label: 'INTENT: HYPERTROPHY'
+                                    Button, {{0.0, 47.0}, {390.3, 72.3}}, label: '3 personal records: reps, volume, estimated one-rep max. Barbell Bench Press - Medium Grip, 100 pounds, 6 reps.'
+                                      StaticText, {{186.8, 55.0}, {16.3, 14.7}}, label: 'PR'
+                                      StaticText, {{67.7, 71.7}, {254.7, 23.0}}, label: 'REP PR · VOLUME PR · E1RM PR'
+                                      StaticText, {{15.8, 96.7}, {358.3, 14.7}}, label: 'Barbell Bench Press - Medium Grip · 100 lb × 6'
+                            Other, {{0.0, 0.0}, {390.0, 844.0}}
+                              Other, {{0.0, 0.0}, {390.0, 844.0}}
+                Other, {{0.0, 761.0}, {390.0, 83.0}}
+                  Other, {{0.0, 0.0}, {390.0, 844.0}}
+                  Other, {{0.0, 761.0}, {390.0, 83.0}}
+    Window, {{0.0, 0.0}, {390.0, 844.0}}
+      Other, {{0.0, 0.0}, {390.0, 844.0}}
+        Other, {{0.0, 0.0}, {390.0, 844.0}}

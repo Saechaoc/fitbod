@@ -1,0 +1,295 @@
+Element subtree:
+ →Application, pid: 60812, label: 'fitbod'
+    Window (Main), {{0.0, 0.0}, {390.0, 844.0}}
+      Other, {{0.0, 0.0}, {1.0, 1.0}}, identifier: 'debug.resetSignal', label: 'Reset signal', value: fresh
+      Other, {{0.0, 0.0}, {390.0, 844.0}}
+        Other, {{0.0, 0.0}, {390.0, 844.0}}
+          Other, {{-390.0, -844.0}, {1170.0, 2532.0}}
+          Other, {{0.0, 0.0}, {390.0, 844.0}}
+            Other, {{0.0, 0.0}, {390.0, 844.0}}
+              Other, {{0.0, 0.0}, {390.0, 844.0}}
+                Other, {{0.0, 0.0}, {390.0, 844.0}}
+                  Other, {{0.0, 0.0}, {390.0, 844.0}}
+                    Other, {{0.0, 0.0}, {390.0, 844.0}}
+                      Other, {{0.0, 0.0}, {390.0, 844.0}}
+                        Other, {{0.0, 0.0}, {390.0, 844.0}}
+                          Other, {{0.0, 0.0}, {390.0, 844.0}}
+                            Other, {{0.0, 0.0}, {390.0, 844.0}}
+                              Other, {{0.0, 0.0}, {390.0, 844.0}}
+                                Other, {{0.0, 0.0}, {390.0, 844.0}}
+                                  Other, {{0.0, 0.0}, {390.0, 844.0}}
+                                    CollectionView, {{0.0, 0.0}, {390.0, 844.0}}
+                                      Other, {{0.0, -425.7}, {390.0, 576.3}}
+                                      Cell, {{0.0, -46.3}, {390.0, 143.0}}
+                                        Other, {{0.0, -46.3}, {390.0, 143.0}}
+                                          Other, {{0.0, -46.3}, {390.0, 143.0}}
+                                            Other, {{0.0, -46.3}, {390.0, 143.0}}
+                                        Other, {{0.0, -46.3}, {390.0, 143.0}}
+                                          Other, {{0.0, -46.3}, {390.0, 143.0}}
+                                            Other, {{0.0, -46.3}, {390.0, 143.0}}
+                                              Button, {{10.0, -22.3}, {44.0, 44.0}}, identifier: 'set.type.4.S3', label: 'Set 3 type', value: Working
+                                                Button, {{10.0, -22.3}, {44.0, 44.0}}
+                                                  StaticText, {{10.0, -22.3}, {44.0, 44.0}}, label: 'S3'
+                                              Other, {{54.0, -9.0}, {62.7, 17.3}}, label: 'Previous: 10 × 12 @ 8 (Wed)'
+                                                StaticText, {{54.0, -9.0}, {62.7, 17.3}}, label: '10×12 @8'
+                                              TextField, {{140.0, -34.3}, {60.0, 68.0}}, identifier: 'set.weight.4.S3', label: 'Prescribed weight: 10 lb', placeholderValue: '—', value: 10 lb
+                                              TextField, {{206.0, -26.3}, {44.0, 52.0}}, identifier: 'set.reps.4.S3', label: 'Reps, set 3', placeholderValue: '—'
+                                              Button, {{280.0, -22.3}, {44.0, 44.0}}, label: 'Note for set 3'
+                                              Button, {{330.0, -22.3}, {44.0, 44.0}}, identifier: 'set.complete.4.S3', label: 'Mark set 3 complete', Disabled
+                                              Button, {{16.0, 39.7}, {44.0, 44.0}}, identifier: 'set.why.4.S3', label: 'Why this weight'
+                                              Button, {{65.2, 38.9}, {45.5, 45.5}}, label: 'RPE 6'
+                                              Button, {{113.2, 38.9}, {45.5, 45.5}}, label: 'RPE 7'
+                                              Button, {{161.2, 38.9}, {45.5, 45.5}}, label: 'RPE 8'
+                                              Button, {{209.2, 38.9}, {45.5, 45.5}}, label: 'RPE 9'
+                                              Button, {{257.2, 38.9}, {45.5, 45.5}}, label: 'RPE 10'
+                                              Button, {{0.0, 0.0}, {0.0, 0.0}}, label: 'Working'
+                                                Button, {{308.0, 61.7}, {0.0, 0.0}}
+                                      Cell, {{0.0, 96.7}, {390.0, 54.0}}
+                                        Other, {{0.0, 96.7}, {390.0, 54.0}}
+                                          Other, {{0.0, 96.7}, {390.0, 54.0}}
+                                            Other, {{0.0, 96.7}, {390.0, 54.0}}
+                                        Other, {{0.0, 96.7}, {390.0, 54.0}}
+                                          Other, {{0.0, 96.7}, {390.0, 54.0}}
+                                            Other, {{0.0, 96.7}, {390.0, 54.0}}
+                                              Button, {{0.0, 96.7}, {390.0, 54.0}}, identifier: 'card.addSet.4', label: '+ ADD SET'
+                                      Cell, {{0.0, 150.7}, {390.0, 93.3}}
+                                        Other, {{0.0, 150.7}, {390.0, 93.3}}
+                                          Other, {{0.0, 150.7}, {390.0, 93.3}}
+                                            Other, {{0.0, 150.7}, {390.0, 93.3}}
+                                        Other, {{0.0, 150.7}, {390.0, 93.3}}
+                                          Other, {{0.0, 150.7}, {390.0, 93.3}}
+                                            Other, {{0.0, 150.7}, {390.0, 93.3}}
+                                              StaticText, {{16.0, 162.7}, {22.7, 23.0}}, label: '05'
+                                              StaticText, {{60.0, 166.0}, {134.7, 18.7}}, label: 'Triceps Pushdown'
+                                              StaticText, {{60.0, 188.7}, {109.3, 14.7}}, label: 'Cable · 3 SETS'
+                                              StaticText, {{16.0, 222.3}, {8.0, 14.7}}, label: 'S'
+                                              StaticText, {{54.0, 222.3}, {62.7, 14.7}}, label: 'PREVIOUS'
+                                              StaticText, {{140.0, 222.3}, {47.0, 14.7}}, label: 'WEIGHT'
+                                              StaticText, {{206.0, 222.3}, {31.3, 14.7}}, label: 'REPS'
+                                              StaticText, {{252.0, 222.3}, {23.7, 14.7}}, label: 'RPE'
+                                      Other, {{0.0, 150.7}, {390.0, 576.3}}
+                                      Cell, {{0.0, 244.0}, {390.0, 143.0}}
+                                        Other, {{0.0, 244.0}, {390.0, 143.0}}
+                                          Other, {{0.0, 244.0}, {390.0, 143.0}}
+                                            Other, {{0.0, 244.0}, {390.0, 143.0}}
+                                        Other, {{0.0, 244.0}, {390.0, 143.0}}
+                                          Other, {{0.0, 244.0}, {390.0, 143.0}}
+                                            Other, {{0.0, 244.0}, {390.0, 143.0}}
+                                              Button, {{10.0, 268.0}, {44.0, 44.0}}, identifier: 'set.type.5.S1', label: 'Set 1 type', value: Working
+                                                Button, {{10.0, 268.0}, {44.0, 44.0}}
+                                                  StaticText, {{10.0, 268.0}, {44.0, 44.0}}, label: 'S1'
+                                              Other, {{54.0, 281.3}, {62.7, 17.3}}, label: 'Previous: 25 × 10 @ 8 (Wed)'
+                                                StaticText, {{54.0, 281.3}, {62.7, 17.3}}, label: '25×10 @8'
+                                              TextField, {{140.0, 256.0}, {60.0, 68.0}}, identifier: 'set.weight.5.S1', label: 'Prescribed weight: 25 lb', placeholderValue: '—', value: 25 lb
+                                              TextField, {{206.0, 264.0}, {44.0, 52.0}}, identifier: 'set.reps.5.S1', label: 'Reps, set 1', placeholderValue: '—'
+                                              Button, {{280.0, 268.0}, {44.0, 44.0}}, label: 'Note for set 1'
+                                              Button, {{330.0, 268.0}, {44.0, 44.0}}, identifier: 'set.complete.5.S1', label: 'Mark set 1 complete', Disabled
+                                              Button, {{16.0, 330.0}, {44.0, 44.0}}, identifier: 'set.why.5.S1', label: 'Why this weight'
+                                              Button, {{65.2, 329.2}, {45.5, 45.5}}, label: 'RPE 6'
+                                              Button, {{113.2, 329.2}, {45.5, 45.5}}, label: 'RPE 7'
+                                              Button, {{161.2, 329.2}, {45.5, 45.5}}, label: 'RPE 8'
+                                              Button, {{209.2, 329.2}, {45.5, 45.5}}, label: 'RPE 9'
+                                              Button, {{257.2, 329.2}, {45.5, 45.5}}, label: 'RPE 10'
+                                              Button, {{0.0, 0.0}, {0.0, 0.0}}, label: 'Working'
+                                                Button, {{308.0, 352.0}, {0.0, 0.0}}
+                                      Cell, {{0.0, 387.0}, {390.0, 143.0}}
+                                        Other, {{0.0, 387.0}, {390.0, 143.0}}
+                                          Other, {{0.0, 387.0}, {390.0, 143.0}}
+                                            Other, {{0.0, 387.0}, {390.0, 143.0}}
+                                        Other, {{0.0, 387.0}, {390.0, 143.0}}
+                                          Other, {{0.0, 387.0}, {390.0, 143.0}}
+                                            Other, {{0.0, 387.0}, {390.0, 143.0}}
+                                              Button, {{10.0, 411.0}, {44.0, 44.0}}, identifier: 'set.type.5.S2', label: 'Set 2 type', value: Working
+                                                Button, {{10.0, 411.0}, {44.0, 44.0}}
+                                                  StaticText, {{10.0, 411.0}, {44.0, 44.0}}, label: 'S2'
+                                              Other, {{54.0, 424.3}, {62.7, 17.3}}, label: 'Previous: 25 × 10 @ 8 (Wed)'
+                                                StaticText, {{54.0, 424.3}, {62.7, 17.3}}, label: '25×10 @8'
+                                              TextField, {{140.0, 399.0}, {60.0, 68.0}}, identifier: 'set.weight.5.S2', label: 'Prescribed weight: 25 lb', placeholderValue: '—', value: 25 lb
+                                              TextField, {{206.0, 407.0}, {44.0, 52.0}}, identifier: 'set.reps.5.S2', label: 'Reps, set 2', placeholderValue: '—'
+                                              Button, {{280.0, 411.0}, {44.0, 44.0}}, label: 'Note for set 2'
+                                              Button, {{330.0, 411.0}, {44.0, 44.0}}, identifier: 'set.complete.5.S2', label: 'Mark set 2 complete', Disabled
+                                              Button, {{16.0, 473.0}, {44.0, 44.0}}, identifier: 'set.why.5.S2', label: 'Why this weight'
+                                              Button, {{65.2, 472.2}, {45.5, 45.5}}, label: 'RPE 6'
+                                              Button, {{113.2, 472.2}, {45.5, 45.5}}, label: 'RPE 7'
+                                              Button, {{161.2, 472.2}, {45.5, 45.5}}, label: 'RPE 8'
+                                              Button, {{209.2, 472.2}, {45.5, 45.5}}, label: 'RPE 9'
+                                              Button, {{257.2, 472.2}, {45.5, 45.5}}, label: 'RPE 10'
+                                              Button, {{0.0, 0.0}, {0.0, 0.0}}, label: 'Working'
+                                                Button, {{308.0, 495.0}, {0.0, 0.0}}
+                                      Cell, {{0.0, 530.0}, {390.0, 143.0}}
+                                        Other, {{0.0, 530.0}, {390.0, 143.0}}
+                                          Other, {{0.0, 530.0}, {390.0, 143.0}}
+                                            Other, {{0.0, 530.0}, {390.0, 143.0}}
+                                        Other, {{0.0, 530.0}, {390.0, 143.0}}
+                                          Other, {{0.0, 530.0}, {390.0, 143.0}}
+                                            Other, {{0.0, 530.0}, {390.0, 143.0}}
+                                              Button, {{10.0, 554.0}, {44.0, 44.0}}, identifier: 'set.type.5.S3', label: 'Set 3 type', value: Working
+                                                Button, {{10.0, 554.0}, {44.0, 44.0}}
+                                                  StaticText, {{10.0, 554.0}, {44.0, 44.0}}, label: 'S3'
+                                              Other, {{54.0, 567.3}, {62.7, 17.3}}, label: 'Previous: 25 × 10 @ 8 (Wed)'
+                                                StaticText, {{54.0, 567.3}, {62.7, 17.3}}, label: '25×10 @8'
+                                              TextField, {{140.0, 542.0}, {60.0, 68.0}}, identifier: 'set.weight.5.S3', label: 'Prescribed weight: 25 lb', placeholderValue: '—', value: 25 lb
+                                              TextField, {{206.0, 550.0}, {44.0, 52.0}}, identifier: 'set.reps.5.S3', label: 'Reps, set 3', placeholderValue: '—'
+                                              Button, {{280.0, 554.0}, {44.0, 44.0}}, label: 'Note for set 3'
+                                              Button, {{330.0, 554.0}, {44.0, 44.0}}, identifier: 'set.complete.5.S3', label: 'Mark set 3 complete', Disabled
+                                              Button, {{16.0, 616.0}, {44.0, 44.0}}, identifier: 'set.why.5.S3', label: 'Why this weight'
+                                              Button, {{65.2, 615.2}, {45.5, 45.5}}, label: 'RPE 6'
+                                              Button, {{113.2, 615.2}, {45.5, 45.5}}, label: 'RPE 7'
+                                              Button, {{161.2, 615.2}, {45.5, 45.5}}, label: 'RPE 8'
+                                              Button, {{209.2, 615.2}, {45.5, 45.5}}, label: 'RPE 9'
+                                              Button, {{257.2, 615.2}, {45.5, 45.5}}, label: 'RPE 10'
+                                              Button, {{0.0, 0.0}, {0.0, 0.0}}, label: 'Working'
+                                                Button, {{308.0, 638.0}, {0.0, 0.0}}
+                                      Cell, {{0.0, 673.0}, {390.0, 54.0}}
+                                        Other, {{0.0, 673.0}, {390.0, 54.0}}
+                                          Other, {{0.0, 673.0}, {390.0, 54.0}}
+                                            Other, {{0.0, 673.0}, {390.0, 54.0}}
+                                        Other, {{0.0, 673.0}, {390.0, 54.0}}
+                                          Other, {{0.0, 673.0}, {390.0, 54.0}}
+                                            Other, {{0.0, 673.0}, {390.0, 54.0}}
+                                              Button, {{0.0, 673.0}, {390.0, 54.0}}, identifier: 'card.addSet.5', label: '+ ADD SET'
+                                      Cell, {{0.0, 727.0}, {390.0, 83.0}}
+                                        Other, {{0.0, 727.0}, {390.0, 83.0}}
+                                          Other, {{0.0, 727.0}, {390.0, 83.0}}
+                                            Other, {{0.0, 727.0}, {390.0, 83.0}}
+                                        Other, {{0.0, 727.0}, {390.0, 83.0}}
+                                          Other, {{0.0, 727.0}, {390.0, 83.0}}
+                                            Other, {{0.0, 727.0}, {390.0, 83.0}}
+                                              Button, {{0.0, 727.0}, {390.0, 83.0}}, label: '+ ADD EXERCISE'
+                                                StaticText, {{32.0, 757.0}, {11.3, 23.0}}, label: '+'
+                                                StaticText, {{53.3, 761.2}, {109.3, 14.7}}, label: '+ ADD EXERCISE'
+                                                StaticText, {{248.7, 761.2}, {109.3, 14.7}}, label: '↘ FROM LIBRARY'
+                                      Other, {{0.0, 727.0}, {390.0, 1771.0}}
+                                      Other, {{357.0, 164.7}, {30.0, 632.0}}, label: 'Vertical scroll bar, 6 pages', value: 100%
+                                        Other, {{384.0, 647.7}, {3.0, 146.0}}
+                                      Other, {{357.0, 164.7}, {30.0, 632.0}}, label: 'Vertical scroll bar, 6 pages', value: 100%
+                                        Other, {{384.0, 647.7}, {3.0, 146.0}}
+                                    Other, {{0.0, 0.0}, {390.0, 164.7}}, identifier: 'workout.header'
+                                      Button, {{4.0, 47.0}, {44.0, 44.0}}, label: 'Back'
+                                      StaticText, {{166.5, 61.7}, {57.0, 14.7}}, label: 'Workout'
+                                      Button, {{337.7, 47.0}, {48.3, 44.0}}, label: 'More'
+                                      StaticText, {{16.0, 103.0}, {58.3, 23.0}}, label: 'Push A'
+                                      StaticText, {{332.0, 105.2}, {42.0, 18.7}}, label: '13:16'
+                                      StaticText, {{15.2, 131.2}, {99.5, 22.2}}, label: 'INTENT: HYPERTROPHY'
+                            Other, {{0.0, 0.0}, {390.0, 844.0}}
+                              Other, {{0.0, 0.0}, {390.0, 844.0}}
+                Other, {{0.0, 761.0}, {390.0, 83.0}}
+                  Other, {{0.0, 0.0}, {390.0, 844.0}}
+                  Other, {{0.0, 761.0}, {390.0, 83.0}}
+      Other, {{0.0, 0.0}, {390.0, 844.0}}
+        Other, {{-390.0, -844.0}, {1170.0, 2532.0}}
+        Other, {{0.0, 47.0}, {390.0, 797.0}}
+          Other, {{0.0, 47.0}, {390.0, 797.0}}
+            Other, {{0.0, 47.0}, {390.0, 797.0}}
+              Other, {{0.0, 47.0}, {390.0, 797.0}}
+                Other, {{0.0, 47.0}, {390.0, 797.0}}
+                  Other, {{0.0, 47.0}, {390.0, 797.0}}
+                    Other, {{0.0, 47.0}, {390.0, 797.0}}
+                      Other, {{0.0, 47.0}, {390.0, 797.0}}
+                        Other, {{0.0, 47.0}, {390.0, 797.0}}
+                          Other, {{0.0, 47.0}, {390.0, 797.0}}
+                            Button, {{4.0, 93.0}, {72.7, 44.0}}, label: 'Cancel'
+                            StaticText, {{146.3, 107.7}, {97.3, 14.7}}, label: 'Add exercise'
+                            Button, {{321.3, 93.0}, {64.7, 44.0}}, label: '+ New'
+                            StaticText, {{16.0, 150.2}, {17.0, 33.7}}, label: '⌕'
+                            TextField, {{0.0, 139.0}, {390.0, 56.0}}, identifier: 'library.search.picker', label: 'Search exercises', placeholderValue: 'Search exercises'
+                            ScrollView, {{0.0, 195.0}, {390.0, 52.0}}, identifier: 'library.filters'
+                              Other, {{0.0, 195.0}, {300.0, 52.0}}
+                                Button, {{16.0, 199.0}, {71.0, 44.0}}, identifier: 'library.filter.muscle', label: 'Muscle filter'
+                                Button, {{95.0, 199.0}, {94.3, 44.0}}, identifier: 'library.filter.equipment', label: 'Equipment filter'
+                                Button, {{197.3, 199.0}, {86.7, 44.0}}, identifier: 'library.filter.mechanic', label: 'Mechanic filter'
+                            ScrollView, {{0.0, 247.0}, {390.0, 597.0}}
+                              Other, {{0.0, 247.0}, {390.0, 22106.0}}
+                                Other, {{0.0, 257.0}, {390.0, 1149.7}}
+                                  StaticText, {{16.0, 257.0}, {101.7, 14.7}}, label: '702 EXERCISES'
+                                  Button, {{0.0, 320.3}, {390.0, 79.7}}, identifier: 'exercise.pick.4CCF5246-C071-4B07-9B1E-148A4FB10106', label: '3/4 Sit-Up, Abdominals, Bodyweight, Compound'
+                                    StaticText, {{16.0, 334.3}, {89.0, 23.0}}, label: '3/4 Sit-Up'
+                                    StaticText, {{15.2, 364.6}, {91.8, 22.2}}, label: 'Abdominals'
+                                    StaticText, {{111.6, 364.6}, {91.8, 22.2}}, label: 'Bodyweight'
+                                    StaticText, {{207.9, 364.6}, {76.2, 22.2}}, label: 'Compound'
+                                    StaticText, {{334.7, 352.8}, {39.3, 14.7}}, label: '+ ADD'
+                                  Button, {{0.0, 439.7}, {390.0, 79.7}}, identifier: 'exercise.pick.AF0CBEDA-160E-4213-8EFD-65C52D9E5D87', label: 'Ab Crunch Machine, Abdominals, Machine, Isolation'
+                                    StaticText, {{16.0, 453.7}, {168.7, 23.0}}, label: 'Ab Crunch Machine'
+                                    StaticText, {{15.2, 483.9}, {91.8, 22.2}}, label: 'Abdominals'
+                                    StaticText, {{111.6, 483.9}, {68.2, 22.2}}, label: 'Machine'
+                                    StaticText, {{184.2, 483.9}, {83.8, 22.2}}, label: 'Isolation'
+                                    StaticText, {{334.7, 472.2}, {39.3, 14.7}}, label: '+ ADD'
+                                  Button, {{0.0, 520.3}, {390.0, 79.7}}, identifier: 'exercise.pick.FFA192BF-8356-40D4-8289-3E4688B6D71D', label: 'Ab Roller, Abdominals, Other, Compound'
+                                    StaticText, {{16.0, 534.3}, {77.0, 23.0}}, label: 'Ab Roller'
+                                    StaticText, {{15.2, 564.6}, {91.8, 22.2}}, label: 'Abdominals'
+                                    StaticText, {{111.6, 564.6}, {52.8, 22.2}}, label: 'Other'
+                                    StaticText, {{168.9, 564.6}, {76.2, 22.2}}, label: 'Compound'
+                                    StaticText, {{334.7, 552.8}, {39.3, 14.7}}, label: '+ ADD'
+                                  Button, {{0.0, 601.0}, {390.0, 79.7}}, identifier: 'exercise.pick.493F347E-853E-46ED-9338-76578BE9922E', label: 'Advanced Kettlebell Windmill, Abdominals, Kettlebell, Isolation'
+                                    StaticText, {{16.0, 615.0}, {251.0, 23.0}}, label: 'Advanced Kettlebell Windmill'
+                                    StaticText, {{15.2, 645.2}, {91.8, 22.2}}, label: 'Abdominals'
+                                    StaticText, {{111.6, 645.2}, {91.8, 22.2}}, label: 'Kettlebell'
+                                    StaticText, {{207.9, 645.2}, {83.8, 22.2}}, label: 'Isolation'
+                                    StaticText, {{334.7, 633.5}, {39.3, 14.7}}, label: '+ ADD'
+                                  Button, {{0.0, 681.7}, {390.0, 79.7}}, identifier: 'exercise.pick.D299B29A-5D1C-4E61-996F-C5621990FBF9', label: 'Air Bike, Abdominals, Bodyweight, Compound'
+                                    StaticText, {{16.0, 695.7}, {64.7, 23.0}}, label: 'Air Bike'
+                                    StaticText, {{15.2, 725.9}, {91.8, 22.2}}, label: 'Abdominals'
+                                    StaticText, {{111.6, 725.9}, {91.8, 22.2}}, label: 'Bodyweight'
+                                    StaticText, {{207.9, 725.9}, {76.2, 22.2}}, label: 'Compound'
+                                    StaticText, {{334.7, 714.2}, {39.3, 14.7}}, label: '+ ADD'
+                                  Button, {{0.0, 762.3}, {390.0, 79.7}}, identifier: 'exercise.pick.2A8D993A-21DD-4C50-9DCE-F97F9F3442D2', label: 'Alternate Hammer Curl, Biceps, Dumbbell, Isolation'
+                                    StaticText, {{16.0, 776.3}, {195.0, 23.0}}, label: 'Alternate Hammer Curl'
+                                    StaticText, {{15.2, 806.6}, {60.5, 22.2}}, label: 'Biceps'
+                                    StaticText, {{80.2, 806.6}, {76.2, 22.2}}, label: 'Dumbbell'
+                                    StaticText, {{160.9, 806.6}, {83.8, 22.2}}, label: 'Isolation'
+                                    StaticText, {{334.7, 794.8}, {39.3, 14.7}}, label: '+ ADD'
+                                  Button, {{0.0, 843.0}, {390.0, 79.7}}, identifier: 'exercise.pick.E948915D-96E4-454B-A5E2-88D081C597CE', label: 'Alternate Heel Touchers, Abdominals, Bodyweight, Isolation'
+                                    StaticText, {{16.0, 857.0}, {206.3, 23.0}}, label: 'Alternate Heel Touchers'
+                                    StaticText, {{15.2, 887.2}, {91.8, 22.2}}, label: 'Abdominals'
+                                    StaticText, {{111.6, 887.2}, {91.8, 22.2}}, label: 'Bodyweight'
+                                    StaticText, {{207.9, 887.2}, {83.8, 22.2}}, label: 'Isolation'
+                                    StaticText, {{334.7, 875.5}, {39.3, 14.7}}, label: '+ ADD'
+                                  Button, {{0.0, 923.7}, {390.0, 79.7}}, identifier: 'exercise.pick.C2F15A17-FBCA-4AFE-97D6-9B95036DCBC7', label: 'Alternate Incline Dumbbell Curl, Biceps, Dumbbell, Isolation'
+                                    StaticText, {{16.0, 937.7}, {268.0, 23.0}}, label: 'Alternate Incline Dumbbell Curl'
+                                    StaticText, {{15.2, 967.9}, {60.5, 22.2}}, label: 'Biceps'
+                                    StaticText, {{80.2, 967.9}, {76.2, 22.2}}, label: 'Dumbbell'
+                                    StaticText, {{160.9, 967.9}, {83.8, 22.2}}, label: 'Isolation'
+                                    StaticText, {{334.7, 956.2}, {39.3, 14.7}}, label: '+ ADD'
+                                  Button, {{0.0, 1004.3}, {390.0, 79.7}}, identifier: 'exercise.pick.D1989A9E-6B8B-440B-A63E-C056BA911542', label: 'Alternating Cable Shoulder Press, Shoulders, Cable, Compound'
+                                    StaticText, {{16.0, 1018.3}, {285.3, 23.0}}, label: 'Alternating Cable Shoulder Press'
+                                    StaticText, {{15.2, 1048.6}, {83.8, 22.2}}, label: 'Shoulders'
+                                    StaticText, {{103.6, 1048.6}, {52.8, 22.2}}, label: 'Cable'
+                                    StaticText, {{160.9, 1048.6}, {76.2, 22.2}}, label: 'Compound'
+                                    StaticText, {{334.7, 1036.8}, {39.3, 14.7}}, label: '+ ADD'
+                                  Button, {{0.0, 1085.0}, {390.0, 79.7}}, identifier: 'exercise.pick.4837A022-79EE-424B-A15B-8CE2744E1C1B', label: 'Alternating Deltoid Raise, Shoulders, Dumbbell, Isolation'
+                                    StaticText, {{16.0, 1099.0}, {216.0, 23.0}}, label: 'Alternating Deltoid Raise'
+                                    StaticText, {{15.2, 1129.2}, {83.8, 22.2}}, label: 'Shoulders'
+                                    StaticText, {{103.6, 1129.2}, {76.2, 22.2}}, label: 'Dumbbell'
+                                    StaticText, {{184.2, 1129.2}, {83.8, 22.2}}, label: 'Isolation'
+                                    StaticText, {{334.7, 1117.5}, {39.3, 14.7}}, label: '+ ADD'
+                                  Button, {{0.0, 1165.7}, {390.0, 79.7}}, identifier: 'exercise.pick.190E13F9-CEBD-49E0-9FC4-F6D4A334F751', label: 'Alternating Floor Press, Chest, Kettlebell, Compound'
+                                    StaticText, {{16.0, 1179.7}, {197.7, 23.0}}, label: 'Alternating Floor Press'
+                                    StaticText, {{15.2, 1209.9}, {52.8, 22.2}}, label: 'Chest'
+                                    StaticText, {{72.6, 1209.9}, {91.8, 22.2}}, label: 'Kettlebell'
+                                    StaticText, {{168.9, 1209.9}, {76.2, 22.2}}, label: 'Compound'
+                                    StaticText, {{334.7, 1198.2}, {39.3, 14.7}}, label: '+ ADD'
+                                  Button, {{0.0, 1246.3}, {390.0, 79.7}}, identifier: 'exercise.pick.A6533F0D-1DD4-450C-A84E-8FB5B31B45CB', label: 'Alternating Hang Clean, Hamstrings, Kettlebell, Compound'
+                                    StaticText, {{16.0, 1260.3}, {200.3, 23.0}}, label: 'Alternating Hang Clean'
+                                    StaticText, {{15.2, 1290.6}, {91.8, 22.2}}, label: 'Hamstrings'
+                                    StaticText, {{111.6, 1290.6}, {91.8, 22.2}}, label: 'Kettlebell'
+                                    StaticText, {{207.9, 1290.6}, {76.2, 22.2}}, label: 'Compound'
+                                    StaticText, {{334.7, 1278.8}, {39.3, 14.7}}, label: '+ ADD'
+                                  Button, {{0.0, 1327.0}, {390.0, 79.7}}, identifier: 'exercise.pick.81A2F03A-E7DB-4D0A-8B07-ADA9A5B46D04', label: 'Alternating Kettlebell Press, Shoulders, Kettlebell, Compound'
+                                    StaticText, {{16.0, 1341.0}, {236.3, 23.0}}, label: 'Alternating Kettlebell Press'
+                                    StaticText, {{15.2, 1371.2}, {83.8, 22.2}}, label: 'Shoulders'
+                                    StaticText, {{103.6, 1371.2}, {91.8, 22.2}}, label: 'Kettlebell'
+                                    StaticText, {{199.9, 1371.2}, {76.2, 22.2}}, label: 'Compound'
+                                    StaticText, {{334.7, 1359.5}, {39.3, 14.7}}, label: '+ ADD'
+                                  StaticText, {{0.0, 281.7}, {390.0, 38.7}}, label: '3'
+                                  StaticText, {{0.0, 401.0}, {390.0, 38.7}}, label: 'A'
+                              Other, {{357.0, 268.0}, {30.0, 528.7}}, label: 'Vertical scroll bar, 40 pages', value: 0%
+                                Other, {{384.0, 271.0}, {3.0, 36.0}}
+                              Other, {{357.0, 268.0}, {30.0, 528.7}}, label: 'Vertical scroll bar, 40 pages', value: 0%
+                                Other, {{384.0, 271.0}, {3.0, 36.0}}
+                            Button, {{4.0, 47.0}, {72.7, 44.0}}, label: 'CANCEL'
+                            StaticText, {{146.3, 61.7}, {97.3, 14.7}}, label: 'ADD EXERCISE'
+                    Other, {{0.0, 47.0}, {390.0, 797.0}}
+                      Other, {{0.0, 47.0}, {390.0, 797.0}}
+    Window, {{0.0, 0.0}, {390.0, 844.0}}
+      Other, {{0.0, 0.0}, {390.0, 844.0}}
+        Other, {{0.0, 0.0}, {390.0, 844.0}}

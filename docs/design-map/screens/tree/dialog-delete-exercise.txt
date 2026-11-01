@@ -1,0 +1,171 @@
+Element subtree:
+ →Application, pid: 59643, label: 'fitbod'
+    Window (Main), {{0.0, 0.0}, {390.0, 844.0}}
+      Other, {{0.0, 0.0}, {1.0, 1.0}}, identifier: 'debug.resetSignal', label: 'Reset signal', value: fresh
+      Other, {{0.0, 0.0}, {390.0, 844.0}}
+        Other, {{0.0, 0.0}, {390.0, 844.0}}
+          Other, {{-390.0, -844.0}, {1170.0, 2532.0}}
+          Other, {{0.0, 0.0}, {390.0, 844.0}}
+            Other, {{0.0, 0.0}, {390.0, 844.0}}
+              Other, {{0.0, 0.0}, {390.0, 781.0}}
+                Other, {{0.0, 0.0}, {390.0, 781.0}}
+                  Other, {{0.0, 0.0}, {390.0, 781.0}}
+                    Other, {{0.0, 0.0}, {390.0, 781.0}}
+                      Other, {{0.0, 0.0}, {390.0, 781.0}}
+                        Other, {{0.0, 0.0}, {390.0, 781.0}}
+                          Other, {{0.0, 0.0}, {390.0, 781.0}}
+                            Other, {{0.0, 0.0}, {390.0, 781.0}}
+                              Other, {{0.0, 0.0}, {390.0, 781.0}}
+                                Other, {{0.0, 0.0}, {390.0, 781.0}}
+                                  Other, {{0.0, 0.0}, {390.0, 781.0}}
+                                    Button, {{4.0, 47.0}, {72.7, 44.0}}, label: 'BACK'
+                                    StaticText, {{162.5, 61.7}, {65.0, 14.7}}, label: 'Exercise'
+                                    Button, {{329.3, 47.0}, {56.7, 44.0}}, label: 'Edit'
+                                    ScrollView, {{0.0, 93.0}, {390.0, 688.0}}
+                                      Other, {{0.0, 93.0}, {390.0, 924.7}}
+                                        StaticText, {{16.0, 109.0}, {249.7, 48.0}}, label: 'Tour Custom Press'
+                                        StaticText, {{15.2, 166.2}, {52.8, 22.2}}, label: 'Chest'
+                                        StaticText, {{72.6, 166.2}, {68.2, 22.2}}, label: 'Barbell'
+                                        StaticText, {{145.2, 166.2}, {76.2, 22.2}}, label: 'Compound'
+                                        StaticText, {{225.9, 166.2}, {60.5, 22.2}}, label: 'Custom'
+                                        StaticText, {{0.0, 205.7}, {390.0, 46.0}}, label: 'Recent performance'
+                                        StaticText, {{16.0, 267.7}, {312.0, 34.3}}, label: 'Not logged yet. Your best set from each workout will show here.'
+                                        Button, {{0.0, 318.0}, {390.0, 52.0}}, label: 'View all history, ›'
+                                          StaticText, {{16.0, 334.7}, {134.7, 18.7}}, label: 'View all history'
+                                          StaticText, {{365.3, 332.5}, {8.7, 23.0}}, label: '›'
+                                        StaticText, {{16.0, 386.0}, {63.3, 18.0}}, label: 'Muscles'
+                                        StaticText, {{311.3, 387.7}, {62.7, 14.7}}, label: 'Stimulus'
+                                        Other, {{16.0, 434.0}, {358.0, 28.7}}, label: 'Chest, primary, 100 percent'
+                                          StaticText, {{16.0, 434.0}, {42.0, 18.7}}, label: 'Chest'
+                                          StaticText, {{66.0, 437.3}, {45.0, 12.0}}, label: 'PRIMARY'
+                                          StaticText, {{340.3, 434.0}, {33.7, 18.7}}, label: '100%'
+                                        StaticText, {{0.0, 480.7}, {390.0, 46.0}}, label: 'PRESCRIPTION SETTINGS'
+                                        StaticText, {{16.0, 557.3}, {140.7, 14.7}}, label: 'SMALLEST INCREMENT'
+                                        TextField, {{214.3, 542.7}, {136.0, 44.0}}, label: 'Smallest Increment', placeholderValue: 'e.g. 2.5'
+                                        StaticText, {{358.3, 556.0}, {15.7, 17.3}}, label: 'lb'
+                                        StaticText, {{16.0, 592.7}, {281.0, 34.3}}, label: 'Weight advances by this amount each progression step.'
+                                        StaticText, {{16.0, 659.7}, {148.3, 14.7}}, label: 'BAR WEIGHT OVERRIDE'
+                                        TextField, {{214.3, 645.0}, {136.0, 44.0}}, label: 'Bar Weight Override', placeholderValue: 'Default'
+                                        StaticText, {{358.3, 658.3}, {15.7, 17.3}}, label: 'lb'
+                                        StaticText, {{16.0, 695.0}, {343.3, 34.3}}, label: 'Use for specialty bars (safety squat, Swiss bar, women's bar).'
+                                        StaticText, {{16.0, 747.3}, {86.0, 14.7}}, label: 'WEIGHT UNIT'
+                                        Button, {{16.0, 770.0}, {121.3, 44.0}}, label: 'WEIGHT UNIT: SYSTEM DEFAULT', Selected
+                                        Button, {{143.3, 770.0}, {27.7, 44.0}}, label: 'WEIGHT UNIT: KG'
+                                        Button, {{177.0, 770.0}, {27.7, 44.0}}, label: 'WEIGHT UNIT: LB'
+                                        StaticText, {{16.0, 822.0}, {343.3, 34.3}}, label: 'Overrides the global unit for this exercise only. History stored in canonical unit.'
+                                        StaticText, {{16.0, 888.3}, {134.7, 18.0}}, label: 'Plateau Detection'
+                                        StaticText, {{264.7, 890.0}, {109.3, 14.7}}, label: 'Using defaults'
+                                        Switch, {{16.0, 932.3}, {358.0, 44.0}}, label: 'Override global settings', value: 0
+                                        StaticText, {{16.0, 988.3}, {327.7, 17.3}}, label: 'Global defaults: 4 sessions, 2% tolerance.'
+                                      Other, {{357.0, 93.0}, {30.0, 688.0}}, label: 'Vertical scroll bar, 2 pages', value: 0%
+                                        Other, {{384.0, 818.0}, {3.0, 7.0}}
+                                      Other, {{357.0, 93.0}, {30.0, 688.0}}, label: 'Vertical scroll bar, 2 pages', value: 0%
+                                        Other, {{384.0, 818.0}, {3.0, 7.0}}
+                            Other, {{0.0, 0.0}, {390.0, 781.0}}
+                              Other, {{0.0, 0.0}, {390.0, 781.0}}
+                Other, {{0.0, 698.0}, {390.0, 83.0}}
+                  Other, {{0.0, 0.0}, {390.0, 781.0}}
+                  Other, {{0.0, 698.0}, {390.0, 83.0}}
+              Button, {{0.0, 783.0}, {97.7, 61.0}}, identifier: 'Today', label: 'Today'
+              Button, {{97.7, 783.0}, {97.3, 61.0}}, identifier: 'Program', label: 'Program'
+              Button, {{195.0, 783.0}, {97.7, 61.0}}, identifier: 'Progress', label: 'Progress'
+              Button, {{292.7, 783.0}, {97.3, 61.0}}, identifier: 'Library', label: 'Library', Selected
+      Other, {{0.0, 0.0}, {390.0, 844.0}}
+        Other, {{-390.0, -844.0}, {1170.0, 2532.0}}
+        Other, {{0.0, 47.0}, {390.0, 797.0}}
+          Other, {{0.0, 47.0}, {390.0, 797.0}}
+            Other, {{0.0, 47.0}, {390.0, 797.0}}
+              Other, {{0.0, 47.0}, {390.0, 797.0}}
+                Other, {{0.0, 47.0}, {390.0, 797.0}}
+                  Other, {{0.0, 47.0}, {390.0, 797.0}}
+                    Other, {{0.0, 47.0}, {390.0, 797.0}}
+                      Other, {{0.0, 47.0}, {390.0, 797.0}}
+                        Other, {{0.0, 47.0}, {390.0, 797.0}}
+                          Other, {{0.0, 47.0}, {390.0, 797.0}}
+                            ScrollView, {{0.0, 47.0}, {390.0, 797.0}}
+                              Other, {{0.0, 93.0}, {390.0, 734.0}}
+                                TextField, {{16.0, 132.0}, {358.0, 35.3}}, identifier: 'customExercise.name', placeholderValue: 'e.g. Cambered Bar Bench Press', value: Tour Custom Press
+                                StaticText, {{0.0, 185.7}, {390.0, 46.0}}, label: 'Classification'
+                                Button, {{0.0, 231.7}, {390.0, 55.3}}, identifier: 'customExercise.equipment', label: 'Equipment', value: Barbell
+                                  StaticText, {{16.0, 241.7}, {70.3, 14.7}}, label: 'Equipment'
+                                  StaticText, {{16.0, 258.3}, {59.0, 18.7}}, label: 'Barbell'
+                                  StaticText, {{365.3, 250.0}, {8.7, 18.7}}, label: '›'
+                                Other, {{179.0, 294.0}, {199.0, 44.0}}, label: 'Mechanic'
+                                  Button, {{179.0, 294.0}, {98.7, 44.0}}, label: 'Compound', Selected
+                                  Button, {{271.7, 294.0}, {106.3, 44.0}}, label: 'Isolation'
+                                StaticText, {{16.0, 358.0}, {188.3, 18.0}}, label: 'Primary muscle stimulus'
+                                StaticText, {{311.3, 359.7}, {62.7, 14.7}}, label: 'Required'
+                                Other, {{16.0, 402.0}, {358.0, 96.0}}, identifier: 'customExercise.muscle.chest'
+                                  Button, {{16.0, 402.0}, {66.7, 44.0}}, identifier: 'customExercise.role.chest', label: 'PRIMARY'
+                                  StaticText, {{92.7, 414.7}, {42.0, 18.7}}, label: 'Chest'
+                                  Button, {{327.0, 402.0}, {47.0, 44.0}}, identifier: 'customExercise.remove.chest', label: 'REMOVE CHEST'
+                                  Other, {{16.0, 454.0}, {188.0, 44.0}}, label: 'Stimulus weight for Chest'
+                                    Button, {{16.0, 454.0}, {44.0, 44.0}}, identifier: 'customExercise.weight.chest.25', label: '25 percent'
+                                    Button, {{64.0, 454.0}, {44.0, 44.0}}, identifier: 'customExercise.weight.chest.50', label: '50 percent'
+                                    Button, {{112.0, 454.0}, {44.0, 44.0}}, identifier: 'customExercise.weight.chest.75', label: '75 percent'
+                                    Button, {{160.0, 454.0}, {44.0, 44.0}}, identifier: 'customExercise.weight.chest.100', label: '100 percent', Selected
+                                  StaticText, {{340.3, 466.7}, {33.7, 18.7}}, identifier: 'customExercise.percent.chest', label: '100%'
+                                StaticText, {{0.0, 510.0}, {390.0, 46.0}}, label: 'Secondary stimulus'
+                                Button, {{16.0, 572.0}, {358.0, 51.0}}, label: 'Add Another Muscle'
+                                  StaticText, {{32.0, 586.0}, {11.3, 23.0}}, label: '+'
+                                  StaticText, {{53.3, 590.2}, {78.3, 14.7}}, label: 'Add muscle'
+                                StaticText, {{16.0, 649.0}, {42.0, 18.0}}, label: 'Image'
+                                StaticText, {{311.3, 650.7}, {62.7, 14.7}}, label: 'Optional'
+                                Button, {{16.0, 693.0}, {86.0, 44.0}}, label: 'ADD PHOTO'
+                                Button, {{16.0, 767.0}, {358.0, 44.0}}, label: 'Delete exercise'
+                              Other, {{357.0, 93.0}, {30.0, 680.3}}, label: 'Vertical scroll bar, 2 pages', value: 0%
+                                Other, {{384.0, 96.0}, {3.0, 631.7}}
+                              Other, {{357.0, 93.0}, {30.0, 680.3}}, label: 'Vertical scroll bar, 2 pages', value: 0%
+                                Other, {{384.0, 96.0}, {3.0, 631.7}}
+                            Button, {{4.0, 47.0}, {72.7, 44.0}}, label: 'Cancel'
+                            StaticText, {{142.3, 61.7}, {105.3, 14.7}}, label: 'Edit exercise'
+                            Button, {{329.3, 47.0}, {56.7, 44.0}}, label: 'Save'
+                            Other, {{0.0, 773.3}, {390.0, 70.7}}, identifier: 'customExercise.status', label: 'Valid, 1 primary mapped. Ready to save.'
+                              StaticText, {{16.0, 785.3}, {187.3, 14.7}}, label: 'Valid · 1 primary mapped'
+                              StaticText, {{272.3, 785.3}, {101.7, 14.7}}, label: 'Ready to save'
+                    Other, {{0.0, 47.0}, {390.0, 797.0}}
+                      Other, {{0.0, 47.0}, {390.0, 797.0}}
+      Other, {{0.0, 0.0}, {390.0, 844.0}}
+        Other, {{0.0, 0.0}, {390.0, 844.0}}
+        Other, {{0.0, 0.0}, {390.0, 844.0}}
+        Alert, {{35.0, 342.3}, {320.0, 172.3}}, label: 'Delete "Tour Custom Press"?'
+          Other, {{35.0, 342.3}, {320.0, 172.3}}
+            Other, {{35.0, 342.3}, {320.0, 172.3}}
+              Other, {{35.0, 342.3}, {320.0, 172.3}}
+              Other, {{35.0, 342.3}, {320.0, 172.3}}
+                ScrollView, {{35.0, 342.3}, {320.0, 92.3}}
+                  Other, {{35.0, 342.3}, {320.0, 92.3}}
+                    StaticText, {{65.0, 364.3}, {260.0, 20.3}}, label: 'Delete "Tour Custom Press"?'
+                    StaticText, {{65.0, 392.3}, {260.0, 38.0}}, label: 'Logged session history for this exercise will be preserved.'
+                  Other, {{322.0, 342.3}, {30.0, 92.3}}, label: 'Vertical scroll bar, 1 page', value: 0%
+                    Other, {{349.0, 303.3}, {3.0, 36.0}}
+                  Other, {{35.0, 401.7}, {320.0, 30.0}}, label: 'Horizontal scroll bar, 1 page', value: 0%
+                    Other, {{-4.0, 428.7}, {36.0, 3.0}}
+                  Other, {{322.0, 342.3}, {30.0, 92.3}}, label: 'Vertical scroll bar, 1 page', value: 0%
+                    Other, {{349.0, 303.3}, {3.0, 36.0}}
+                  Other, {{35.0, 401.7}, {320.0, 30.0}}, label: 'Horizontal scroll bar, 1 page', value: 0%
+                    Other, {{-4.0, 428.7}, {36.0, 3.0}}
+                ScrollView, {{35.0, 434.7}, {320.0, 80.0}}
+                  Other, {{35.0, 434.7}, {320.0, 80.0}}
+                    Other, {{51.0, 450.7}, {288.0, 48.0}}
+                      Button, {{51.0, 450.7}, {140.0, 48.0}}, label: 'Cancel'
+                      Button, {{199.0, 450.7}, {140.0, 48.0}}, label: 'Delete'
+                  Other, {{322.0, 434.7}, {30.0, 80.0}}, label: 'Vertical scroll bar, 1 page', value: 0%
+                    Other, {{349.0, 524.7}, {3.0, 7.0}}
+                  Other, {{35.0, 481.7}, {320.0, 30.0}}, label: 'Horizontal scroll bar, 1 page', value: 0%
+                    Other, {{125.0, 508.7}, {7.0, 3.0}}
+                  Other, {{322.0, 434.7}, {30.0, 80.0}}, label: 'Vertical scroll bar, 1 page', value: 0%
+                    Other, {{349.0, 524.7}, {3.0, 7.0}}
+                  Other, {{35.0, 481.7}, {320.0, 30.0}}, label: 'Horizontal scroll bar, 1 page', value: 0%
+                    Other, {{125.0, 508.7}, {7.0, 3.0}}
+          Other, {{35.0, 342.3}, {320.0, 172.3}}
+            Other, {{35.0, 342.3}, {320.0, 172.3}}
+              Other, {{35.0, 342.3}, {320.0, 172.3}}
+                Other, {{35.0, 342.3}, {320.0, 172.3}}
+                  Other, {{35.0, 342.3}, {320.0, 172.3}}
+                    Other, {{35.0, 342.3}, {390.0, 844.0}}
+                Other, {{35.0, 342.3}, {320.0, 172.3}}
+                  Other, {{35.0, 342.3}, {390.0, 844.0}}
+    Window, {{0.0, 0.0}, {390.0, 844.0}}
+      Other, {{0.0, 0.0}, {390.0, 844.0}}
+        Other, {{0.0, 0.0}, {390.0, 844.0}}

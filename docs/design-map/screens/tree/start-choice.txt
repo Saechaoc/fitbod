@@ -1,0 +1,73 @@
+Element subtree:
+ →Application, pid: 74205, label: 'fitbod'
+    Window (Main), {{0.0, 0.0}, {390.0, 844.0}}
+      Other, {{0.0, 0.0}, {1.0, 1.0}}, identifier: 'debug.resetSignal', label: 'Reset signal', value: fresh
+      Other, {{0.0, 0.0}, {390.0, 844.0}}
+        Other, {{0.0, 0.0}, {390.0, 844.0}}
+          Other, {{-390.0, -844.0}, {1170.0, 2532.0}}, identifier: 'PopoverDismissRegion', label: 'dismiss popup'
+          Other, {{0.0, 0.0}, {390.0, 844.0}}
+            Other, {{0.0, 0.0}, {390.0, 844.0}}
+              Other, {{0.0, 0.0}, {390.0, 781.0}}
+                Other, {{0.0, 0.0}, {390.0, 781.0}}
+                  Other, {{0.0, 0.0}, {390.0, 781.0}}
+                    Other, {{0.0, 0.0}, {390.0, 781.0}}
+                      Other, {{0.0, 0.0}, {390.0, 781.0}}
+                        Other, {{0.0, 0.0}, {390.0, 781.0}}
+                          Other, {{0.0, 0.0}, {390.0, 781.0}}
+                            Other, {{0.0, 0.0}, {390.0, 781.0}}
+                              Other, {{0.0, 0.0}, {390.0, 781.0}}
+                                Other, {{0.0, 0.0}, {390.0, 781.0}}
+                                  Other, {{0.0, 0.0}, {390.0, 781.0}}
+                                    ScrollView, {{0.0, 81.0}, {390.0, 700.0}}
+                                      Other, {{0.0, 81.0}, {390.0, 295.0}}
+                                        Other, {{0.0, 81.0}, {390.0, 292.7}}
+                                          StaticText, {{0.0, 81.0}, {390.0, 46.0}}, label: 'Blocks'
+                                          Button, {{0.0, 127.0}, {390.0, 88.7}}, label: 'ACTIVE block: Live Block. Week 1 of 4, Accumulation.'
+                                            StaticText, {{15.2, 138.2}, {60.5, 22.2}}, label: 'ACTIVE'
+                                            StaticText, {{16.0, 163.7}, {84.3, 18.7}}, label: 'Live Block'
+                                            StaticText, {{16.0, 186.3}, {203.0, 17.3}}, label: 'Week 1 of 4 · Accumulation'
+                                          StaticText, {{0.0, 218.7}, {390.0, 46.0}}, label: 'Routines'
+                                          Button, {{0.0, 264.7}, {390.0, 64.0}}, label: 'Live Routine, 1 sessions, Live Block, ›'
+                                            StaticText, {{16.0, 276.7}, {101.0, 18.7}}, label: 'Live Routine'
+                                            StaticText, {{16.0, 299.3}, {78.0, 17.3}}, label: '1 sessions'
+                                            StaticText, {{148.2, 285.6}, {91.8, 22.2}}, label: 'Live Block'
+                                            StaticText, {{365.3, 287.3}, {8.7, 18.7}}, label: '›'
+                                          Button, {{0.0, 329.7}, {390.0, 44.0}}, label: '+ NEW ROUTINE'
+                                    StaticText, {{16.0, 56.8}, {60.7, 14.3}}, label: 'PROGRAM'
+                                    Button, {{330.0, 47.0}, {44.0, 44.0}}, label: '+ NEW'
+                            Other, {{0.0, 0.0}, {390.0, 781.0}}
+                              Other, {{0.0, 0.0}, {390.0, 781.0}}
+                Other, {{0.0, 698.0}, {390.0, 83.0}}
+                  Other, {{0.0, 0.0}, {390.0, 781.0}}
+                  Other, {{0.0, 698.0}, {390.0, 83.0}}
+              Button, {{0.0, 783.0}, {97.7, 61.0}}, identifier: 'Today', label: 'Today'
+              Button, {{97.7, 783.0}, {97.3, 61.0}}, identifier: 'Program', label: 'Program', Selected
+              Button, {{195.0, 783.0}, {97.7, 61.0}}, identifier: 'Progress', label: 'Progress'
+              Button, {{292.7, 783.0}, {97.3, 61.0}}, identifier: 'Library', label: 'Library'
+      Other, {{0.0, 0.0}, {390.0, 844.0}}
+        Other, {{-390.0, -844.0}, {1170.0, 2532.0}}, identifier: 'PopoverDismissRegion', label: 'dismiss popup'
+        Other, {{8.0, 393.6}, {374.0, 442.4}}
+          Button, {{158.6, 388.8}, {72.9, 24.0}}, label: 'Sheet Grabber', value: Half screen
+          Other, {{8.0, 393.6}, {374.0, 442.4}}
+            Other, {{8.0, 393.6}, {374.0, 442.4}}
+              Other, {{8.0, 393.6}, {374.0, 442.4}}
+                Other, {{8.0, 393.6}, {374.0, 442.4}}
+                  StaticText, {{23.3, 416.6}, {141.9, 34.5}}, label: 'CREATE BLOCK'
+                  StaticText, {{23.3, 456.9}, {316.5, 16.3}}, label: 'Choose a starting point for your reusable training block.'
+                  StaticText, {{23.3, 492.4}, {147.4, 13.7}}, label: 'CHOOSE STARTING POINT'
+                  Button, {{8.0, 517.6}, {374.0, 61.4}}, label: 'Blank Block, Build your own phases manually., ›'
+                    StaticText, {{23.3, 530.2}, {81.2, 18.5}}, label: 'Blank Block'
+                    StaticText, {{23.3, 552.6}, {203.0, 13.7}}, label: 'Build your own phases manually.'
+                    StaticText, {{359.9, 539.0}, {6.7, 18.5}}, label: '›'
+                  Button, {{8.0, 580.0}, {374.0, 61.4}}, label: 'Use Preset, Start from Hypertrophy Meso, Generic Strength Meso, Powerlifting Peak, or 5/3/1 Cycle., ›'
+                    StaticText, {{23.3, 585.9}, {73.8, 18.5}}, label: 'Use Preset'
+                    StaticText, {{23.3, 608.2}, {299.5, 27.2}}, label: 'Start from Hypertrophy Meso, Generic Strength Meso, Powerlifting Peak, or 5/3/1 Cycle.'
+                    StaticText, {{359.9, 601.4}, {6.7, 18.5}}, label: '›'
+          Other, {{8.0, 393.6}, {374.0, 442.4}}
+            Other, {{8.0, 393.6}, {374.0, 442.4}}
+              Other, {{8.0, 393.6}, {374.0, 442.4}}
+                Other, {{8.0, 393.6}, {374.0, 442.4}}
+                  Other, {{8.0, 393.6}, {374.0, 442.4}}
+                    Other, {{8.0, 393.6}, {374.0, 442.4}}
+                Other, {{8.0, 393.6}, {374.0, 442.4}}
+                  Other, {{8.0, 393.6}, {374.0, 442.4}}

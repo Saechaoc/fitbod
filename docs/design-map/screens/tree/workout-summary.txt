@@ -1,0 +1,82 @@
+Element subtree:
+ →Application, pid: 9898, label: 'fitbod'
+    Window (Main), {{0.0, 0.0}, {390.0, 844.0}}
+      Other, {{0.0, 0.0}, {1.0, 1.0}}, identifier: 'debug.resetSignal', label: 'Reset signal', value: fresh
+      Other, {{0.0, 0.0}, {390.0, 844.0}}
+        Other, {{0.0, 0.0}, {390.0, 844.0}}
+          Other, {{0.0, 0.0}, {390.0, 844.0}}
+            Other, {{0.0, 0.0}, {390.0, 844.0}}
+              Other, {{0.0, 0.0}, {390.0, 781.0}}
+                Other, {{0.0, 0.0}, {390.0, 781.0}}
+                  Other, {{0.0, 0.0}, {390.0, 781.0}}
+                    Other, {{0.0, 0.0}, {390.0, 781.0}}
+                      Other, {{0.0, 0.0}, {390.0, 781.0}}
+                        Other, {{0.0, 0.0}, {390.0, 781.0}}
+                          Other, {{0.0, 0.0}, {390.0, 781.0}}
+                            Other, {{0.0, 0.0}, {390.0, 781.0}}
+                              Other, {{0.0, 0.0}, {390.0, 781.0}}
+                                Other, {{0.0, 0.0}, {390.0, 781.0}}
+                                  Other, {{0.0, 0.0}, {390.0, 781.0}}
+                                    ScrollView, {{0.0, 0.0}, {390.0, 781.0}}
+                                      Other, {{0.0, 93.0}, {390.0, 818.7}}
+                                        StaticText, {{16.0, 113.0}, {129.7, 14.7}}, label: 'WORKOUT COMPLETE'
+                                        StaticText, {{16.0, 135.7}, {102.0, 41.0}}, label: 'Push A'
+                                        StaticText, {{16.0, 184.7}, {171.7, 14.7}}, label: 'Wed, Oct 28 at 9:39 PM'
+                                        Other, {{16.0, 235.3}, {62.7, 41.7}}, label: 'Duration', value: 55m
+                                          StaticText, {{16.0, 235.3}, {62.7, 14.7}}, label: 'Duration'
+                                          StaticText, {{16.0, 254.0}, {37.0, 23.0}}, label: '55m'
+                                        Other, {{146.3, 235.3}, {31.3, 41.7}}, label: 'Sets', value: 15
+                                          StaticText, {{146.3, 235.3}, {31.3, 14.7}}, label: 'Sets'
+                                          StaticText, {{146.3, 254.0}, {19.0, 23.0}}, label: '15'
+                                        Other, {{276.7, 235.3}, {86.0, 41.7}}, label: 'Volume · lb', value: 4,230
+                                          StaticText, {{276.7, 235.3}, {86.0, 14.7}}, label: 'Volume · lb'
+                                          StaticText, {{276.7, 254.0}, {50.3, 23.0}}, label: '4,230'
+                                        StaticText, {{22.0, 309.0}, {15.7, 14.7}}, label: 'PR'
+                                        StaticText, {{51.7, 307.0}, {218.7, 18.7}}, label: 'New records on 5 exercises'
+                                        StaticText, {{16.0, 353.7}, {71.0, 18.0}}, label: 'Exercises'
+                                        StaticText, {{366.0, 355.3}, {8.0, 14.7}}, label: '5'
+                                        StaticText, {{16.0, 399.7}, {358.0, 89.0}}, label: 'Barbell Bench Press - Medium Grip, 3 sets · 1,500 lb, PR · Weight · Reps · Volume · e1RM, BEST, 100 × 5 @ 8'
+                                          StaticText, {{16.0, 399.7}, {185.0, 37.0}}, label: 'Barbell Bench Press - Medium Grip'
+                                          StaticText, {{16.0, 440.7}, {132.7, 14.7}}, label: '3 sets · 1,500 lb'
+                                          StaticText, {{16.0, 459.3}, {218.7, 29.3}}, label: 'PR · Weight · Reps · Volume · e1RM'
+                                          StaticText, {{346.3, 399.7}, {27.7, 12.0}}, label: 'BEST'
+                                          StaticText, {{281.3, 415.7}, {92.7, 18.7}}, label: '100 × 5 @ 8'
+                                        StaticText, {{16.0, 517.7}, {358.0, 70.7}}, label: 'Incline Dumbbell Press, 3 sets · 720 lb, PR · Weight · Reps · Volume · e1RM, BEST, 30 × 8 @ 8'
+                                          StaticText, {{16.0, 517.7}, {185.0, 18.7}}, label: 'Incline Dumbbell Press'
+                                          StaticText, {{16.0, 540.3}, {117.3, 14.7}}, label: '3 sets · 720 lb'
+                                          StaticText, {{16.0, 559.0}, {218.7, 29.3}}, label: 'PR · Weight · Reps · Volume · e1RM'
+                                          StaticText, {{346.3, 517.7}, {27.7, 12.0}}, label: 'BEST'
+                                          StaticText, {{289.7, 533.7}, {84.3, 18.7}}, label: '30 × 8 @ 8'
+                                        StaticText, {{16.0, 617.3}, {358.0, 70.7}}, label: 'Barbell Shoulder Press, 3 sets · 900 lb, PR · Weight · Reps · Volume · e1RM, BEST, 50 × 6 @ 8'
+                                          StaticText, {{16.0, 617.3}, {185.0, 18.7}}, label: 'Barbell Shoulder Press'
+                                          StaticText, {{16.0, 640.0}, {117.3, 14.7}}, label: '3 sets · 900 lb'
+                                          StaticText, {{16.0, 658.7}, {218.7, 29.3}}, label: 'PR · Weight · Reps · Volume · e1RM'
+                                          StaticText, {{346.3, 617.3}, {27.7, 12.0}}, label: 'BEST'
+                                          StaticText, {{289.7, 633.3}, {84.3, 18.7}}, label: '50 × 6 @ 8'
+                                        StaticText, {{16.0, 717.0}, {358.0, 56.0}}, label: 'Cable Seated Lateral Raise, 3 sets · 360 lb, PR · Weight · Reps · Volume, BEST, 10 × 12 @ 8'
+                                          StaticText, {{16.0, 717.0}, {218.7, 18.7}}, label: 'Cable Seated Lateral Raise'
+                                          StaticText, {{16.0, 739.7}, {117.3, 14.7}}, label: '3 sets · 360 lb'
+                                          StaticText, {{16.0, 758.3}, {210.7, 14.7}}, label: 'PR · Weight · Reps · Volume'
+                                          StaticText, {{346.3, 717.0}, {27.7, 12.0}}, label: 'BEST'
+                                          StaticText, {{281.3, 733.0}, {92.7, 18.7}}, label: '10 × 12 @ 8'
+                                        StaticText, {{16.0, 802.0}, {358.0, 70.7}}, label: 'Triceps Pushdown, 3 sets · 750 lb, PR · Weight · Reps · Volume · e1RM, BEST, 25 × 10 @ 8'
+                                          StaticText, {{16.0, 802.0}, {134.7, 18.7}}, label: 'Triceps Pushdown'
+                                          StaticText, {{16.0, 824.7}, {117.3, 14.7}}, label: '3 sets · 750 lb'
+                                          StaticText, {{16.0, 843.3}, {218.7, 29.3}}, label: 'PR · Weight · Reps · Volume · e1RM'
+                                          StaticText, {{346.3, 802.0}, {27.7, 12.0}}, label: 'BEST'
+                                          StaticText, {{281.3, 818.0}, {92.7, 18.7}}, label: '25 × 10 @ 8'
+                                      Other, {{357.0, 93.0}, {30.0, 688.0}}, label: 'Vertical scroll bar, 2 pages', value: 0%
+                                        Other, {{384.0, 96.0}, {3.0, 584.3}}
+                                      Other, {{357.0, 93.0}, {30.0, 688.0}}, label: 'Vertical scroll bar, 2 pages', value: 0%
+                                        Other, {{384.0, 96.0}, {3.0, 584.3}}
+                                    Button, {{4.0, 47.0}, {44.0, 44.0}}, label: 'Back'
+                                    StaticText, {{166.5, 61.7}, {57.0, 14.7}}, label: 'Summary'
+                            Other, {{0.0, 0.0}, {390.0, 781.0}}
+                              Other, {{0.0, 0.0}, {390.0, 781.0}}
+                Other, {{0.0, 698.0}, {390.0, 83.0}}
+                  Other, {{0.0, 0.0}, {390.0, 781.0}}
+                  Other, {{0.0, 698.0}, {390.0, 83.0}}
+              Button, {{0.0, 783.0}, {97.7, 61.0}}, identifier: 'Today', label: 'Today', Selected
+              Button, {{97.7, 783.0}, {97.3, 61.0}}, identifier: 'Program', label: 'Program'
+              Button, {{195.0, 783.0}, {97.7, 61.0}}, identifier: 'Progress', label: 'Progress'
+              Button, {{292.7, 783.0}, {97.3, 61.0}}, identifier: 'Library', label: 'Library'

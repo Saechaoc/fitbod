@@ -1,0 +1,111 @@
+Element subtree:
+ →Application, pid: 62469, label: 'fitbod'
+    Window (Main), {{0.0, 0.0}, {390.0, 844.0}}
+      Other, {{0.0, 0.0}, {1.0, 1.0}}, identifier: 'debug.resetSignal', label: 'Reset signal', value: fresh
+      Other, {{0.0, 0.0}, {390.0, 844.0}}
+        Other, {{0.0, 0.0}, {390.0, 844.0}}
+          Other, {{0.0, 0.0}, {390.0, 844.0}}
+            Other, {{0.0, 0.0}, {390.0, 844.0}}
+              Other, {{0.0, 0.0}, {390.0, 781.0}}
+                Other, {{0.0, 0.0}, {390.0, 781.0}}
+                  Other, {{0.0, 0.0}, {390.0, 781.0}}
+                    Other, {{0.0, 0.0}, {390.0, 781.0}}
+                      Other, {{0.0, 0.0}, {390.0, 781.0}}
+                        Other, {{0.0, 0.0}, {390.0, 781.0}}
+                          Other, {{0.0, 0.0}, {390.0, 781.0}}
+                            Other, {{0.0, 0.0}, {390.0, 781.0}}
+                              Other, {{0.0, 0.0}, {390.0, 781.0}}
+                                Other, {{0.0, 0.0}, {390.0, 781.0}}
+                                  Other, {{0.0, 0.0}, {390.0, 781.0}}
+                                    Button, {{4.0, 47.0}, {44.0, 44.0}}, label: 'Back'
+                                    StaticText, {{158.5, 54.3}, {73.0, 29.3}}, label: 'Personal Records'
+                                    StaticText, {{309.0, 61.7}, {65.0, 14.7}}, label: 'ALL TIME'
+                                    Button, {{16.0, 101.0}, {118.7, 44.0}}, label: 'STRENGTH'
+                                    Button, {{135.7, 101.0}, {118.7, 44.0}}, label: 'HYPERTROPHY'
+                                    Button, {{255.3, 101.0}, {118.7, 44.0}}, label: 'ALL', Selected
+                                    ScrollView, {{0.0, 155.0}, {390.0, 626.0}}
+                                      Other, {{0.0, 155.0}, {390.0, 6175.0}}
+                                        Other, {{0.0, 155.0}, {390.0, 1265.7}}
+                                          StaticText, {{0.0, 155.0}, {390.0, 46.0}}, label: 'Weight'
+                                          StaticText, {{16.0, 207.0}, {62.7, 14.7}}, label: '1–6 REPS'
+                                          Button, {{0.0, 227.7}, {390.0, 88.7}}, label: 'Barbell Squat, Weight PR, 160 lb × 3 @ RPE 9', value: Oct 24, 2026
+                                            StaticText, {{16.0, 237.7}, {109.3, 18.7}}, label: 'Barbell Squat'
+                                            StaticText, {{16.0, 276.0}, {70.3, 14.7}}, label: 'WEIGHT PR'
+                                            StaticText, {{159.2, 260.3}, {110.7, 46.0}}, label: '160 lb × 3 @ RPE 9'
+                                            StaticText, {{303.0, 277.3}, {71.0, 12.0}}, label: 'OCT 24, 2026'
+                                          Button, {{0.0, 317.3}, {390.0, 88.7}}, label: 'Barbell Squat, Weight PR, 150 lb × 3 @ RPE 9', value: Oct 10, 2026
+                                            StaticText, {{16.0, 327.3}, {109.3, 18.7}}, label: 'Barbell Squat'
+                                            StaticText, {{16.0, 365.7}, {70.3, 14.7}}, label: 'WEIGHT PR'
+                                            StaticText, {{159.3, 350.0}, {110.3, 46.0}}, label: '150 lb × 3 @ RPE 9'
+                                            StaticText, {{303.0, 367.0}, {71.0, 12.0}}, label: 'OCT 10, 2026'
+                                          Button, {{0.0, 407.0}, {390.0, 88.7}}, label: 'Barbell Squat, Weight PR, 145 lb × 4 @ RPE 8.5', value: Oct 24, 2026
+                                            StaticText, {{16.0, 417.0}, {109.3, 18.7}}, label: 'Barbell Squat'
+                                            StaticText, {{16.0, 455.3}, {70.3, 14.7}}, label: 'WEIGHT PR'
+                                            StaticText, {{159.2, 439.7}, {110.7, 46.0}}, label: '145 lb × 4 @ RPE 8.5'
+                                            StaticText, {{303.0, 456.7}, {71.0, 12.0}}, label: 'OCT 24, 2026'
+                                          Button, {{0.0, 496.7}, {390.0, 88.7}}, label: 'Barbell Bench Press - Medium Grip, Weight PR, 107.5 lb × 2 @ RPE 9.5', value: Oct 24, 2026
+                                            StaticText, {{16.0, 506.7}, {277.3, 18.7}}, label: 'Barbell Bench Press - Medium Grip'
+                                            StaticText, {{16.0, 545.0}, {70.3, 14.7}}, label: 'WEIGHT PR'
+                                            StaticText, {{152.7, 529.3}, {123.7, 46.0}}, label: '107.5 lb × 2 @ RPE 9.5'
+                                            StaticText, {{303.0, 546.3}, {71.0, 12.0}}, label: 'OCT 24, 2026'
+                                          Button, {{0.0, 586.3}, {390.0, 88.7}}, label: 'Barbell Bench Press - Medium Grip, Weight PR, 105 lb × 3 @ RPE 9', value: Oct 10, 2026
+                                            StaticText, {{16.0, 596.3}, {277.3, 18.7}}, label: 'Barbell Bench Press - Medium Grip'
+                                            StaticText, {{16.0, 634.7}, {70.3, 14.7}}, label: 'WEIGHT PR'
+                                            StaticText, {{159.3, 619.0}, {110.3, 46.0}}, label: '105 lb × 3 @ RPE 9'
+                                            StaticText, {{303.0, 636.0}, {71.0, 12.0}}, label: 'OCT 10, 2026'
+                                          Button, {{0.0, 676.0}, {390.0, 88.7}}, label: 'Barbell Bench Press - Medium Grip, Weight PR, 102.5 lb × 4 @ RPE 8', value: Oct 10, 2026
+                                            StaticText, {{16.0, 686.0}, {277.3, 18.7}}, label: 'Barbell Bench Press - Medium Grip'
+                                            StaticText, {{16.0, 724.3}, {70.3, 14.7}}, label: 'WEIGHT PR'
+                                            StaticText, {{151.2, 708.7}, {126.7, 46.0}}, label: '102.5 lb × 4 @ RPE 8'
+                                            StaticText, {{303.0, 725.7}, {71.0, 12.0}}, label: 'OCT 10, 2026'
+                                          StaticText, {{16.0, 770.7}, {70.3, 14.7}}, label: '7–10 REPS'
+                                          Button, {{0.0, 791.3}, {390.0, 88.7}}, label: 'Barbell Squat, Weight PR, 130 lb × 8 @ RPE 8', value: Oct 17, 2026
+                                            StaticText, {{16.0, 801.3}, {109.3, 18.7}}, label: 'Barbell Squat'
+                                            StaticText, {{16.0, 839.7}, {70.3, 14.7}}, label: 'WEIGHT PR'
+                                            StaticText, {{159.3, 824.0}, {110.3, 46.0}}, label: '130 lb × 8 @ RPE 8'
+                                            StaticText, {{303.0, 841.0}, {71.0, 12.0}}, label: 'OCT 17, 2026'
+                                          Button, {{0.0, 881.0}, {390.0, 88.7}}, label: 'Barbell Squat, Weight PR, 125 lb × 10 @ RPE 9', value: Oct 17, 2026
+                                            StaticText, {{16.0, 891.0}, {109.3, 18.7}}, label: 'Barbell Squat'
+                                            StaticText, {{16.0, 929.3}, {70.3, 14.7}}, label: 'WEIGHT PR'
+                                            StaticText, {{155.5, 913.7}, {118.0, 46.0}}, label: '125 lb × 10 @ RPE 9'
+                                            StaticText, {{303.0, 930.7}, {71.0, 12.0}}, label: 'OCT 17, 2026'
+                                          Button, {{0.0, 970.7}, {390.0, 65.7}}, label: 'Barbell Squat, Weight PR, 120 lb × 8 @ RPE 7', value: Oct 3, 2026
+                                            StaticText, {{16.0, 980.7}, {109.3, 18.7}}, label: 'Barbell Squat'
+                                            StaticText, {{16.0, 1007.5}, {70.3, 14.7}}, label: 'WEIGHT PR'
+                                            StaticText, {{139.2, 1003.3}, {156.7, 23.0}}, label: '120 lb × 8 @ RPE 7'
+                                            StaticText, {{309.0, 1008.8}, {65.0, 12.0}}, label: 'OCT 3, 2026'
+                                          Button, {{0.0, 1037.3}, {390.0, 65.7}}, label: 'Barbell Bench Press - Medium Grip, Weight PR, 85 lb × 8 @ RPE 8', value: Oct 17, 2026
+                                            StaticText, {{16.0, 1047.3}, {277.3, 18.7}}, label: 'Barbell Bench Press - Medium Grip'
+                                            StaticText, {{16.0, 1074.2}, {70.3, 14.7}}, label: 'WEIGHT PR'
+                                            StaticText, {{140.2, 1070.0}, {148.7, 23.0}}, label: '85 lb × 8 @ RPE 8'
+                                            StaticText, {{303.0, 1075.5}, {71.0, 12.0}}, label: 'OCT 17, 2026'
+                                          Button, {{0.0, 1104.0}, {390.0, 88.7}}, label: 'Barbell Bench Press - Medium Grip, Weight PR, 80 lb × 10 @ RPE 9', value: Oct 17, 2026
+                                            StaticText, {{16.0, 1114.0}, {277.3, 18.7}}, label: 'Barbell Bench Press - Medium Grip'
+                                            StaticText, {{16.0, 1152.3}, {70.3, 14.7}}, label: 'WEIGHT PR'
+                                            StaticText, {{159.0, 1136.7}, {111.0, 46.0}}, label: '80 lb × 10 @ RPE 9'
+                                            StaticText, {{303.0, 1153.7}, {71.0, 12.0}}, label: 'OCT 17, 2026'
+                                          Button, {{0.0, 1193.7}, {390.0, 88.7}}, label: 'Barbell Bench Press - Medium Grip, Weight PR, 80 lb × 8 @ RPE 6.5', value: Oct 3, 2026
+                                            StaticText, {{16.0, 1203.7}, {277.3, 18.7}}, label: 'Barbell Bench Press - Medium Grip'
+                                            StaticText, {{16.0, 1242.0}, {70.3, 14.7}}, label: 'WEIGHT PR'
+                                            StaticText, {{166.5, 1226.3}, {102.0, 46.0}}, label: '80 lb × 8 @ RPE 6.5'
+                                            StaticText, {{309.0, 1243.3}, {65.0, 12.0}}, label: 'OCT 3, 2026'
+                                          StaticText, {{16.0, 1288.3}, {62.7, 14.7}}, label: '11+ REPS'
+                                          Button, {{0.0, 1309.0}, {390.0, 65.7}}, label: 'Barbell Bench Press - Medium Grip, Weight PR, 75 lb × 12 @ RPE 9', value: Oct 17, 2026
+                                            StaticText, {{16.0, 1319.0}, {277.3, 18.7}}, label: 'Barbell Bench Press - Medium Grip'
+                                            StaticText, {{16.0, 1345.8}, {70.3, 14.7}}, label: 'WEIGHT PR'
+                                            StaticText, {{136.3, 1341.7}, {156.3, 23.0}}, label: '75 lb × 12 @ RPE 9'
+                                            StaticText, {{303.0, 1347.2}, {71.0, 12.0}}, label: 'OCT 17, 2026'
+                                          StaticText, {{0.0, 1374.7}, {390.0, 46.0}}, label: 'Reps'
+                                      Other, {{357.0, 155.0}, {30.0, 626.0}}, label: 'Vertical scroll bar, 10 pages', value: 0%
+                                        Other, {{384.0, 818.0}, {3.0, 7.0}}
+                                      Other, {{357.0, 155.0}, {30.0, 626.0}}, label: 'Vertical scroll bar, 10 pages', value: 0%
+                                        Other, {{384.0, 818.0}, {3.0, 7.0}}
+                            Other, {{0.0, 0.0}, {390.0, 781.0}}
+                              Other, {{0.0, 0.0}, {390.0, 781.0}}
+                Other, {{0.0, 698.0}, {390.0, 83.0}}
+                  Other, {{0.0, 0.0}, {390.0, 781.0}}
+                  Other, {{0.0, 698.0}, {390.0, 83.0}}
+              Button, {{0.0, 783.0}, {97.7, 61.0}}, identifier: 'Today', label: 'Today'
+              Button, {{97.7, 783.0}, {97.3, 61.0}}, identifier: 'Program', label: 'Program'
+              Button, {{195.0, 783.0}, {97.7, 61.0}}, identifier: 'Progress', label: 'Progress', Selected
+              Button, {{292.7, 783.0}, {97.3, 61.0}}, identifier: 'Library', label: 'Library'

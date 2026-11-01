@@ -1,0 +1,59 @@
+Element subtree:
+ →Application, pid: 9898, label: 'fitbod'
+    Window (Main), {{0.0, 0.0}, {390.0, 844.0}}
+      Other, {{0.0, 0.0}, {1.0, 1.0}}, identifier: 'debug.resetSignal', label: 'Reset signal', value: fresh
+      Other, {{0.0, 0.0}, {390.0, 844.0}}
+        Other, {{0.0, 0.0}, {390.0, 844.0}}
+          Other, {{0.0, 0.0}, {390.0, 844.0}}
+            Other, {{0.0, 0.0}, {390.0, 844.0}}
+              Other, {{0.0, 0.0}, {390.0, 781.0}}
+                Other, {{0.0, 0.0}, {390.0, 781.0}}
+                  Other, {{0.0, 0.0}, {390.0, 781.0}}
+                    Other, {{0.0, 0.0}, {390.0, 781.0}}
+                      Other, {{0.0, 0.0}, {390.0, 781.0}}
+                        Other, {{0.0, 0.0}, {390.0, 781.0}}
+                          Other, {{0.0, 0.0}, {390.0, 781.0}}
+                            Other, {{0.0, 0.0}, {390.0, 781.0}}
+                              Other, {{0.0, 0.0}, {390.0, 781.0}}
+                                Other, {{0.0, 0.0}, {390.0, 781.0}}
+                                  Other, {{0.0, 0.0}, {390.0, 781.0}}
+                                    ScrollView, {{0.0, 0.0}, {390.0, 781.0}}
+                                      Other, {{0.0, 93.0}, {390.0, 312.0}}
+                                        Other, {{0.0, 105.0}, {390.0, 298.7}}
+                                          Other, {{16.0, 105.0}, {62.7, 60.3}}, label: 'Sessions in the last 30 days', value: 1
+                                            StaticText, {{16.0, 105.0}, {62.7, 14.7}}, label: 'Sessions'
+                                            StaticText, {{16.0, 123.7}, {8.3, 23.0}}, label: '1'
+                                            StaticText, {{16.0, 150.7}, {54.7, 14.7}}, label: '30 days'
+                                          Other, {{146.3, 105.0}, {93.7, 60.3}}, label: 'Tonnage in the last 30 days, pounds', value: 4,230
+                                            StaticText, {{146.3, 105.0}, {93.7, 14.7}}, label: 'Tonnage · lb'
+                                            StaticText, {{146.3, 123.7}, {50.3, 23.0}}, label: '4,230'
+                                            StaticText, {{146.3, 150.7}, {54.7, 14.7}}, label: '30 days'
+                                          Other, {{276.7, 105.0}, {78.3, 60.3}}, label: 'Sessions per week, last 4 weeks', value: 0.2
+                                            StaticText, {{276.7, 105.0}, {62.7, 14.7}}, label: 'Per week'
+                                            StaticText, {{276.7, 123.7}, {27.7, 23.0}}, label: '0.2'
+                                            StaticText, {{276.7, 150.7}, {78.3, 14.7}}, label: '4-week avg'
+                                          StaticText, {{16.0, 191.3}, {170.3, 14.7}}, label: 'WEEKLY TONNAGE · 8 WK'
+                                          Other, {{15.2, 213.2}, {359.5, 61.5}}
+                                          StaticText, {{16.0, 300.0}, {100.7, 18.0}}, label: 'Past sessions'
+                                          StaticText, {{303.7, 301.7}, {70.3, 14.7}}, label: '1 session'
+                                          Button, {{0.0, 332.0}, {390.0, 71.7}}, identifier: 'history.row', label: 'Push A, Wednesday, October 28, 15 sets, 55 minutes, 4,230 pounds total, 19 personal records: weight, reps, volume, estimated one-rep max'
+                                            StaticText, {{16.0, 344.8}, {45.0, 46.0}}, label: 'WED 28'
+                                            StaticText, {{92.0, 349.2}, {50.7, 18.7}}, label: 'Push A'
+                                            StaticText, {{92.0, 371.8}, {92.3, 14.7}}, label: '15 SETS · 55M'
+                                            StaticText, {{297.7, 344.0}, {76.3, 23.0}}, label: '4,230 LB'
+                                            StaticText, {{306.6, 370.2}, {68.2, 22.2}}, label: 'PR × 19'
+                                      Other, {{357.0, 93.0}, {30.0, 688.0}}, label: 'Vertical scroll bar, 1 page', value: 0%
+                                        Other, {{384.0, 472.0}, {3.0, 306.0}}
+                                      Other, {{357.0, 93.0}, {30.0, 688.0}}, label: 'Vertical scroll bar, 1 page', value: 0%
+                                        Other, {{384.0, 472.0}, {3.0, 306.0}}
+                                    Button, {{4.0, 47.0}, {44.0, 44.0}}, label: 'Back'
+                                    StaticText, {{166.5, 61.7}, {57.0, 14.7}}, label: 'History'
+                            Other, {{0.0, 0.0}, {390.0, 781.0}}
+                              Other, {{0.0, 0.0}, {390.0, 781.0}}
+                Other, {{0.0, 698.0}, {390.0, 83.0}}
+                  Other, {{0.0, 0.0}, {390.0, 781.0}}
+                  Other, {{0.0, 698.0}, {390.0, 83.0}}
+              Button, {{0.0, 783.0}, {97.7, 61.0}}, identifier: 'Today', label: 'Today', Selected
+              Button, {{97.7, 783.0}, {97.3, 61.0}}, identifier: 'Program', label: 'Program'
+              Button, {{195.0, 783.0}, {97.7, 61.0}}, identifier: 'Progress', label: 'Progress'
+              Button, {{292.7, 783.0}, {97.3, 61.0}}, identifier: 'Library', label: 'Library'

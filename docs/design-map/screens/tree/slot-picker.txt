@@ -1,0 +1,94 @@
+Element subtree:
+ →Application, pid: 76872, label: 'fitbod'
+    Window (Main), {{0.0, 0.0}, {390.0, 844.0}}
+      Other, {{0.0, 0.0}, {1.0, 1.0}}, identifier: 'debug.resetSignal', label: 'Reset signal', value: fresh
+      Other, {{0.0, 0.0}, {390.0, 844.0}}
+        Other, {{0.0, 0.0}, {390.0, 844.0}}
+          Other, {{-390.0, -844.0}, {1170.0, 2532.0}}, identifier: 'PopoverDismissRegion', label: 'dismiss popup'
+          Other, {{0.0, 0.0}, {390.0, 844.0}}
+            Other, {{0.0, 0.0}, {390.0, 844.0}}
+              Other, {{0.0, 0.0}, {390.0, 781.0}}
+                Other, {{0.0, 0.0}, {390.0, 781.0}}
+                  Other, {{0.0, 0.0}, {390.0, 781.0}}
+                    Other, {{0.0, 0.0}, {390.0, 781.0}}
+                      Other, {{0.0, 0.0}, {390.0, 781.0}}
+                        Other, {{0.0, 0.0}, {390.0, 781.0}}
+                          Other, {{0.0, 0.0}, {390.0, 781.0}}
+                            Other, {{0.0, 0.0}, {390.0, 781.0}}
+                              Other, {{0.0, 0.0}, {390.0, 781.0}}
+                                Other, {{0.0, 0.0}, {390.0, 781.0}}
+                                  Other, {{0.0, 0.0}, {390.0, 781.0}}
+                                    Button, {{4.0, 47.0}, {72.7, 44.0}}, label: 'BACK'
+                                    StaticText, {{166.5, 61.7}, {57.0, 14.7}}, label: 'Routine'
+                                    Button, {{329.3, 47.0}, {56.7, 44.0}}, label: 'Edit'
+                                    ScrollView, {{0.0, 93.0}, {390.0, 688.0}}
+                                      Other, {{0.0, 93.0}, {390.0, 579.0}}
+                                        Other, {{0.0, 109.0}, {390.0, 547.0}}
+                                          StaticText, {{16.0, 109.0}, {93.7, 14.7}}, label: 'ROUTINE NAME'
+                                          TextField, {{16.0, 129.7}, {358.0, 48.0}}, label: 'Routine name', value: Upper Lower
+                                            Other, {{16.0, 150.7}, {358.0, 24.0}}, label: 'Horizontal scroll bar, 1 page', value: 0%
+                                              Other, {{19.0, 171.7}, {352.0, 3.0}}
+                                          StaticText, {{16.0, 183.7}, {226.3, 14.7}}, label: '0 SESSIONS · ROTATES IN ORDER'
+                                          StaticText, {{16.0, 229.3}, {64.3, 18.0}}, label: 'Sessions'
+                                          Button, {{260.3, 216.3}, {125.7, 44.0}}, label: '+ ADD SESSION'
+                                          StaticText, {{123.0, 294.3}, {144.0, 33.7}}, label: 'No sessions yet'
+                                          StaticText, {{31.2, 340.0}, {327.7, 34.3}}, label: 'A routine is an ordered list of sessions, like Push, Pull, Legs. Add the first one.'
+                                          Button, {{65.0, 386.3}, {260.0, 44.0}}, label: '+ Add session'
+                                          StaticText, {{0.0, 464.3}, {390.0, 46.0}}, label: 'Used in'
+                                          StaticText, {{16.0, 522.3}, {242.0, 17.3}}, label: 'Not linked to any active block.'
+                                          Button, {{16.0, 569.7}, {358.0, 44.0}}, label: 'Archive routine'
+                                          StaticText, {{16.0, 621.7}, {358.0, 34.3}}, label: 'An archived routine keeps its logged history. Restore it from Archived routines on Program.'
+                                      Other, {{357.0, 93.0}, {30.0, 688.0}}, label: 'Vertical scroll bar, 1 page', value: 0%
+                                        Other, {{384.0, 205.0}, {3.0, 573.0}}
+                                      Other, {{357.0, 93.0}, {30.0, 688.0}}, label: 'Vertical scroll bar, 1 page', value: 0%
+                                        Other, {{384.0, 205.0}, {3.0, 573.0}}
+                            Other, {{0.0, 0.0}, {390.0, 781.0}}
+                              Other, {{0.0, 0.0}, {390.0, 781.0}}
+                Other, {{0.0, 698.0}, {390.0, 83.0}}
+                  Other, {{0.0, 0.0}, {390.0, 781.0}}
+                  Other, {{0.0, 698.0}, {390.0, 83.0}}
+              Button, {{0.0, 783.0}, {97.7, 61.0}}, identifier: 'Today', label: 'Today'
+              Button, {{97.7, 783.0}, {97.3, 61.0}}, identifier: 'Program', label: 'Program', Selected
+              Button, {{195.0, 783.0}, {97.7, 61.0}}, identifier: 'Progress', label: 'Progress'
+              Button, {{292.7, 783.0}, {97.3, 61.0}}, identifier: 'Library', label: 'Library'
+      Other, {{0.0, 0.0}, {390.0, 844.0}}
+        Other, {{-390.0, -844.0}, {1170.0, 2532.0}}, identifier: 'PopoverDismissRegion', label: 'dismiss popup'
+        Other, {{8.0, 393.6}, {374.0, 442.4}}
+          Button, {{158.6, 388.8}, {72.9, 24.0}}, label: 'Sheet Grabber', value: Half screen
+          Other, {{8.0, 393.6}, {374.0, 442.4}}
+            Other, {{8.0, 393.6}, {374.0, 442.4}}
+              Other, {{8.0, 393.6}, {374.0, 442.4}}
+                Other, {{8.0, 393.6}, {374.0, 442.4}}
+                  Other, {{8.0, 393.6}, {374.0, 442.4}}
+                    Other, {{8.0, 393.6}, {374.0, 442.4}}
+                      Other, {{8.0, 393.6}, {374.0, 442.4}}
+                        Other, {{8.0, 393.6}, {374.0, 442.4}}
+                          Other, {{8.0, 393.6}, {374.0, 442.4}}
+                            Button, {{11.8, 393.6}, {69.7, 42.2}}, label: 'Cancel'
+                            StaticText, {{152.2, 407.7}, {85.7, 14.1}}, label: 'Add session'
+                            ScrollView, {{8.0, 437.7}, {374.0, 398.3}}
+                              Other, {{8.0, 437.7}, {374.0, 163.0}}
+                                Other, {{8.0, 437.7}, {374.0, 161.7}}
+                                  Button, {{8.0, 437.7}, {374.0, 53.7}}, label: '+ New session'
+                                  StaticText, {{8.0, 493.3}, {374.0, 44.1}}, label: 'Existing sessions'
+                                  Button, {{8.0, 537.4}, {374.0, 62.0}}, label: 'Bench & Squat, 2 exercises · 6 sets · ~22 min, + Add'
+                                    StaticText, {{23.3, 548.9}, {121.2, 22.1}}, label: 'Bench & Squat'
+                                    StaticText, {{23.3, 573.9}, {218.6, 14.1}}, label: '2 exercises · 6 sets · ~22 min'
+                                    StaticText, {{328.9, 561.4}, {37.7, 14.1}}, label: '+ ADD'
+                              Other, {{350.4, 437.7}, {28.8, 358.5}}, label: 'Vertical scroll bar, 1 page', value: 0%
+                                Other, {{376.2, 576.1}, {2.9, 157.3}}
+                              Other, {{350.4, 437.7}, {28.8, 358.5}}, label: 'Vertical scroll bar, 1 page', value: 0%
+                                Other, {{376.2, 576.1}, {2.9, 157.3}}
+                    Other, {{8.0, 393.6}, {374.0, 442.4}}
+                      Other, {{8.0, 393.6}, {374.0, 442.4}}
+          Other, {{8.0, 393.6}, {374.0, 442.4}}
+            Other, {{8.0, 393.6}, {374.0, 442.4}}
+              Other, {{8.0, 393.6}, {374.0, 442.4}}
+                Other, {{8.0, 393.6}, {374.0, 442.4}}
+                  Other, {{8.0, 393.6}, {374.0, 442.4}}
+                    Other, {{8.0, 393.6}, {374.0, 442.4}}
+                Other, {{8.0, 393.6}, {374.0, 442.4}}
+                  Other, {{8.0, 393.6}, {374.0, 442.4}}
+    Window, {{0.0, 0.0}, {390.0, 844.0}}
+      Other, {{0.0, 0.0}, {390.0, 844.0}}
+        Other, {{0.0, 0.0}, {390.0, 844.0}}

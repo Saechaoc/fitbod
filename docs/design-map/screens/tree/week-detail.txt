@@ -1,0 +1,43 @@
+Element subtree:
+ →Application, pid: 63603, label: 'fitbod'
+    Window (Main), {{0.0, 0.0}, {390.0, 844.0}}
+      Other, {{0.0, 0.0}, {1.0, 1.0}}, identifier: 'debug.resetSignal', label: 'Reset signal', value: fresh
+      Other, {{0.0, 0.0}, {390.0, 844.0}}
+        Other, {{0.0, 0.0}, {390.0, 844.0}}
+          Other, {{0.0, 0.0}, {390.0, 844.0}}
+            Other, {{0.0, 0.0}, {390.0, 844.0}}
+              Other, {{0.0, 0.0}, {390.0, 781.0}}
+                Other, {{0.0, 0.0}, {390.0, 781.0}}
+                  Other, {{0.0, 0.0}, {390.0, 781.0}}
+                    Other, {{0.0, 0.0}, {390.0, 781.0}}
+                      Other, {{0.0, 0.0}, {390.0, 781.0}}
+                        Other, {{0.0, 0.0}, {390.0, 781.0}}
+                          Other, {{0.0, 0.0}, {390.0, 781.0}}
+                            Other, {{0.0, 0.0}, {390.0, 781.0}}
+                              Other, {{0.0, 0.0}, {390.0, 781.0}}
+                                Other, {{0.0, 0.0}, {390.0, 781.0}}
+                                  Other, {{0.0, 0.0}, {390.0, 781.0}}
+                                    Button, {{4.0, 47.0}, {72.7, 44.0}}, label: 'Back'
+                                    StaticText, {{146.3, 54.3}, {97.3, 29.3}}, label: 'Week of Oct 19, 2026'
+                                    ScrollView, {{0.0, 93.0}, {390.0, 688.0}}
+                                      Other, {{0.0, 93.0}, {390.0, 150.7}}
+                                        StaticText, {{16.0, 107.0}, {138.0, 14.7}}, label: 'TOTAL · 1 WORKOUT'
+                                        StaticText, {{16.0, 125.7}, {83.3, 41.0}}, label: '1,500'
+                                        StaticText, {{103.3, 143.7}, {16.7, 17.3}}, label: 'LB'
+                                        Other, {{16.0, 194.7}, {358.0, 35.3}}
+                                          StaticText, {{16.0, 194.7}, {109.3, 18.7}}, label: 'Tonnage Weeks'
+                                          StaticText, {{16.0, 215.3}, {163.0, 14.7}}, label: 'Sun, Oct 25 · 1,500 lb'
+                                          StaticText, {{365.3, 203.0}, {8.7, 18.7}}, label: '›'
+                                      Other, {{357.0, 93.0}, {30.0, 688.0}}, label: 'Vertical scroll bar, 1 page', value: 0%
+                                        Other, {{384.0, 818.0}, {3.0, 7.0}}
+                                      Other, {{357.0, 93.0}, {30.0, 688.0}}, label: 'Vertical scroll bar, 1 page', value: 0%
+                                        Other, {{384.0, 818.0}, {3.0, 7.0}}
+                            Other, {{0.0, 0.0}, {390.0, 781.0}}
+                              Other, {{0.0, 0.0}, {390.0, 781.0}}
+                Other, {{0.0, 698.0}, {390.0, 83.0}}
+                  Other, {{0.0, 0.0}, {390.0, 781.0}}
+                  Other, {{0.0, 698.0}, {390.0, 83.0}}
+              Button, {{0.0, 783.0}, {97.7, 61.0}}, identifier: 'Today', label: 'Today'
+              Button, {{97.7, 783.0}, {97.3, 61.0}}, identifier: 'Program', label: 'Program'
+              Button, {{195.0, 783.0}, {97.7, 61.0}}, identifier: 'Progress', label: 'Progress', Selected
+              Button, {{292.7, 783.0}, {97.3, 61.0}}, identifier: 'Library', label: 'Library'

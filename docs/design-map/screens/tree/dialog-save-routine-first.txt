@@ -1,0 +1,151 @@
+Element subtree:
+ →Application, pid: 36047, label: 'fitbod'
+    Window (Main), {{0.0, 0.0}, {390.0, 844.0}}
+      Other, {{0.0, 0.0}, {1.0, 1.0}}, identifier: 'debug.resetSignal', label: 'Reset signal', value: fresh
+      Other, {{0.0, 0.0}, {390.0, 844.0}}
+        Other, {{0.0, 0.0}, {390.0, 844.0}}
+          Other, {{-390.0, -844.0}, {1170.0, 2532.0}}, identifier: 'PopoverDismissRegion', label: 'dismiss popup'
+          Other, {{0.0, 0.0}, {390.0, 844.0}}
+            Other, {{0.0, 0.0}, {390.0, 844.0}}
+              Other, {{0.0, 0.0}, {390.0, 781.0}}
+                Other, {{0.0, 0.0}, {390.0, 781.0}}
+                  Other, {{0.0, 0.0}, {390.0, 781.0}}
+                    Other, {{0.0, 0.0}, {390.0, 781.0}}
+                      Other, {{0.0, 0.0}, {390.0, 781.0}}
+                        Other, {{0.0, 0.0}, {390.0, 781.0}}
+                          Other, {{0.0, 0.0}, {390.0, 781.0}}
+                            Other, {{0.0, 0.0}, {390.0, 781.0}}
+                              Other, {{0.0, 0.0}, {390.0, 781.0}}
+                                Other, {{0.0, 0.0}, {390.0, 781.0}}
+                                  Other, {{0.0, 0.0}, {390.0, 781.0}}
+                                    Button, {{4.0, 47.0}, {72.7, 44.0}}, label: 'BACK'
+                                    StaticText, {{166.5, 61.7}, {57.0, 14.7}}, label: 'Routine'
+                                    Button, {{329.3, 47.0}, {56.7, 44.0}}, label: 'Edit'
+                                    ScrollView, {{0.0, 93.0}, {390.0, 688.0}}
+                                      Other, {{0.0, 93.0}, {390.0, 579.0}}
+                                        Other, {{0.0, 109.0}, {390.0, 547.0}}
+                                          StaticText, {{16.0, 109.0}, {93.7, 14.7}}, label: 'ROUTINE NAME'
+                                          TextField, {{16.0, 129.7}, {358.0, 48.0}}, label: 'Routine name', value: Push Pull Legs
+                                            Other, {{16.0, 150.7}, {358.0, 24.0}}, label: 'Horizontal scroll bar, 1 page', value: 0%
+                                              Other, {{19.0, 171.7}, {352.0, 3.0}}
+                                          StaticText, {{16.0, 183.7}, {226.3, 14.7}}, label: '0 SESSIONS · ROTATES IN ORDER'
+                                          StaticText, {{16.0, 229.3}, {64.3, 18.0}}, label: 'Sessions'
+                                          Button, {{260.3, 216.3}, {125.7, 44.0}}, label: '+ ADD SESSION'
+                                          StaticText, {{123.0, 294.3}, {144.0, 33.7}}, label: 'No sessions yet'
+                                          StaticText, {{31.2, 340.0}, {327.7, 34.3}}, label: 'A routine is an ordered list of sessions, like Push, Pull, Legs. Add the first one.'
+                                          Button, {{65.0, 386.3}, {260.0, 44.0}}, label: '+ Add session'
+                                          StaticText, {{0.0, 464.3}, {390.0, 46.0}}, label: 'Used in'
+                                          StaticText, {{16.0, 522.3}, {242.0, 17.3}}, label: 'Not linked to any active block.'
+                                          Button, {{16.0, 569.7}, {358.0, 44.0}}, label: 'Archive routine'
+                                          StaticText, {{16.0, 621.7}, {358.0, 34.3}}, label: 'An archived routine keeps its logged history. Restore it from Archived routines on Program.'
+                                      Other, {{357.0, 93.0}, {30.0, 688.0}}, label: 'Vertical scroll bar, 1 page', value: 0%
+                                        Other, {{384.0, 268.0}, {3.0, 525.7}}
+                                      Other, {{357.0, 93.0}, {30.0, 688.0}}, label: 'Vertical scroll bar, 1 page', value: 0%
+                                        Other, {{384.0, 268.0}, {3.0, 525.7}}
+                            Other, {{0.0, 0.0}, {390.0, 781.0}}
+                              Other, {{0.0, 0.0}, {390.0, 781.0}}
+                Other, {{0.0, 698.0}, {390.0, 83.0}}
+                  Other, {{0.0, 0.0}, {390.0, 781.0}}
+                  Other, {{0.0, 698.0}, {390.0, 83.0}}
+              Button, {{0.0, 783.0}, {97.7, 61.0}}, identifier: 'Today', label: 'Today'
+              Button, {{97.7, 783.0}, {97.3, 61.0}}, identifier: 'Program', label: 'Program', Selected
+              Button, {{195.0, 783.0}, {97.7, 61.0}}, identifier: 'Progress', label: 'Progress'
+              Button, {{292.7, 783.0}, {97.3, 61.0}}, identifier: 'Library', label: 'Library'
+      Other, {{0.0, 0.0}, {390.0, 844.0}}
+        Other, {{-390.0, -844.0}, {1170.0, 2532.0}}, identifier: 'PopoverDismissRegion', label: 'dismiss popup'
+      Other, {{0.0, 0.0}, {390.0, 844.0}}
+        Other, {{-390.0, -844.0}, {1170.0, 2532.0}}
+        Other, {{0.0, 57.0}, {390.0, 787.0}}
+          Other, {{0.0, 57.0}, {390.0, 787.0}}
+            Other, {{0.0, 57.0}, {390.0, 787.0}}
+              Other, {{0.0, 57.0}, {390.0, 787.0}}
+                Other, {{0.0, 57.0}, {390.0, 787.0}}
+                  Other, {{0.0, 57.0}, {390.0, 787.0}}
+                    Other, {{0.0, 57.0}, {390.0, 787.0}}
+                      Other, {{0.0, 57.0}, {390.0, 787.0}}
+                        Other, {{0.0, 57.0}, {390.0, 787.0}}
+                          Other, {{0.0, 57.0}, {390.0, 787.0}}
+                            StaticText, {{16.0, 125.0}, {93.7, 14.7}}, label: 'SESSION NAME'
+                            TextField, {{16.0, 149.7}, {358.0, 48.0}}, label: 'Session name', value: Push A
+                              Other, {{16.0, 149.7}, {0.0, 0.0}}, identifier: '_UITextSelectionRangeAdjustmentContainerView'
+                                Other, {{16.0, 149.7}, {0.0, 0.0}}, identifier: 'com.apple.text.grabber.leading'
+                                  Other, {{8.8, 136.2}, {16.5, 16.5}}
+                                  Other, {{16.0, 149.7}, {2.0, 0.0}}
+                                Other, {{16.0, 149.7}, {0.0, 0.0}}, identifier: 'com.apple.text.grabber.leading'
+                                  Other, {{8.8, 136.2}, {16.5, 16.5}}
+                                  Other, {{16.0, 149.7}, {2.0, 0.0}}
+                              Other, {{16.0, 170.7}, {358.0, 24.0}}, label: 'Horizontal scroll bar, 1 page', value: 0%
+                                Other, {{19.0, 191.7}, {352.0, 3.0}}
+                            Button, {{16.0, 207.7}, {74.7, 44.0}}, label: 'Strength'
+                              Button, {{16.0, 207.7}, {74.7, 44.0}}
+                                StaticText, {{16.0, 207.7}, {74.7, 44.0}}, label: 'Strength'
+                            StaticText, {{95.9, 218.6}, {68.2, 22.2}}, label: '~11 min'
+                            Button, {{169.3, 207.7}, {152.7, 44.0}}, label: 'Double Progression'
+                              Button, {{169.3, 207.7}, {152.7, 44.0}}
+                                StaticText, {{169.3, 207.7}, {152.7, 44.0}}, label: 'Double Progression'
+                            ScrollView, {{0.0, 263.7}, {390.0, 580.3}}
+                              Other, {{0.0, 263.7}, {390.0, 222.0}}
+                                Other, {{12.0, 275.7}, {366.0, 129.7}}
+                                  StaticText, {{16.0, 285.8}, {32.3, 33.3}}, identifier: 'routine.exercise.number.1', label: '01'
+                                  StaticText, {{58.3, 275.7}, {185.0, 37.0}}, identifier: 'routine.exercise.name.1', label: 'Barbell Bench Press - Medium Grip'
+                                  StaticText, {{58.3, 314.7}, {156.3, 14.7}}, identifier: 'routine.exercise.summary.1', label: 'barbell · 3×4–6 · 3:00'
+                                  Button, {{330.0, 280.7}, {44.0, 44.0}}, identifier: 'routine.exercise.reorder.1', label: 'Move exercise 1'
+                                    Button, {{330.0, 280.7}, {44.0, 44.0}}
+                                      StaticText, {{330.0, 280.7}, {44.0, 44.0}}, label: 'Move'
+                                  Button, {{12.0, 354.3}, {366.0, 51.0}}, label: 'Add exercise'
+                                    StaticText, {{28.0, 368.3}, {11.3, 23.0}}, label: '+'
+                                    StaticText, {{49.3, 372.5}, {93.7, 14.7}}, label: 'Add exercise'
+                                    StaticText, {{252.7, 372.5}, {109.3, 14.7}}, label: '↘ FROM LIBRARY'
+                              Other, {{357.0, 284.7}, {30.0, 479.3}}, label: 'Vertical scroll bar, 1 page', value: 0%
+                                Other, {{384.0, 566.0}, {3.0, 195.0}}
+                              Other, {{357.0, 284.7}, {30.0, 479.3}}, label: 'Vertical scroll bar, 1 page', value: 0%
+                                Other, {{384.0, 566.0}, {3.0, 195.0}}
+                            Button, {{0.0, 766.0}, {194.0, 44.0}}, label: 'Discard'
+                            Button, {{196.0, 766.0}, {194.0, 44.0}}, label: 'Save session ▸'
+                            Button, {{4.0, 57.0}, {72.7, 44.0}}, label: 'Back'
+                            StaticText, {{150.3, 71.7}, {89.3, 14.7}}, label: 'New session'
+                    Other, {{0.0, 57.0}, {390.0, 787.0}}
+                      Other, {{0.0, 57.0}, {390.0, 787.0}}
+      Other, {{0.0, 0.0}, {390.0, 844.0}}
+        Other, {{0.0, 0.0}, {390.0, 844.0}}
+        Other, {{0.0, 0.0}, {390.0, 844.0}}
+        Alert, {{35.0, 342.3}, {320.0, 172.3}}, label: 'Save Routine First'
+          Other, {{35.0, 342.3}, {320.0, 172.3}}
+            Other, {{35.0, 342.3}, {320.0, 172.3}}
+              Other, {{35.0, 342.3}, {320.0, 172.3}}
+              Other, {{35.0, 342.3}, {320.0, 172.3}}
+                ScrollView, {{35.0, 342.3}, {320.0, 92.3}}
+                  Other, {{35.0, 342.3}, {320.0, 92.3}}
+                    StaticText, {{65.0, 364.3}, {260.0, 20.3}}, label: 'Save Routine First'
+                    StaticText, {{65.0, 392.3}, {260.0, 38.0}}, label: 'Save the routine before grouping exercises into a superset.'
+                  Other, {{322.0, 342.3}, {30.0, 92.3}}, label: 'Vertical scroll bar, 1 page', value: 0%
+                    Other, {{349.0, 303.3}, {3.0, 36.0}}
+                  Other, {{35.0, 401.7}, {320.0, 30.0}}, label: 'Horizontal scroll bar, 1 page', value: 0%
+                    Other, {{-4.0, 428.7}, {36.0, 3.0}}
+                  Other, {{322.0, 342.3}, {30.0, 92.3}}, label: 'Vertical scroll bar, 1 page', value: 0%
+                    Other, {{349.0, 303.3}, {3.0, 36.0}}
+                  Other, {{35.0, 401.7}, {320.0, 30.0}}, label: 'Horizontal scroll bar, 1 page', value: 0%
+                    Other, {{-4.0, 428.7}, {36.0, 3.0}}
+                ScrollView, {{35.0, 434.7}, {320.0, 80.0}}
+                  Other, {{35.0, 434.7}, {320.0, 80.0}}
+                    Other, {{51.0, 450.7}, {288.0, 48.0}}
+                      Button, {{51.0, 450.7}, {288.0, 48.0}}, label: 'OK'
+                  Other, {{322.0, 434.7}, {30.0, 80.0}}, label: 'Vertical scroll bar, 1 page', value: 0%
+                    Other, {{349.0, 524.7}, {3.0, 7.0}}
+                  Other, {{35.0, 481.7}, {320.0, 30.0}}, label: 'Horizontal scroll bar, 1 page', value: 0%
+                    Other, {{125.0, 508.7}, {7.0, 3.0}}
+                  Other, {{322.0, 434.7}, {30.0, 80.0}}, label: 'Vertical scroll bar, 1 page', value: 0%
+                    Other, {{349.0, 524.7}, {3.0, 7.0}}
+                  Other, {{35.0, 481.7}, {320.0, 30.0}}, label: 'Horizontal scroll bar, 1 page', value: 0%
+                    Other, {{125.0, 508.7}, {7.0, 3.0}}
+          Other, {{35.0, 342.3}, {320.0, 172.3}}
+            Other, {{35.0, 342.3}, {320.0, 172.3}}
+              Other, {{35.0, 342.3}, {320.0, 172.3}}
+                Other, {{35.0, 342.3}, {320.0, 172.3}}
+                  Other, {{35.0, 342.3}, {320.0, 172.3}}
+                    Other, {{35.0, 342.3}, {390.0, 844.0}}
+                Other, {{35.0, 342.3}, {320.0, 172.3}}
+                  Other, {{35.0, 342.3}, {390.0, 844.0}}
+    Window, {{0.0, 0.0}, {390.0, 844.0}}
+      Other, {{0.0, 0.0}, {390.0, 844.0}}
+        Other, {{0.0, 0.0}, {390.0, 844.0}}

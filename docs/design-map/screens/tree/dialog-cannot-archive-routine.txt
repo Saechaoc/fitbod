@@ -1,0 +1,105 @@
+Element subtree:
+ →Application, pid: 87437, label: 'fitbod'
+    Window (Main), {{0.0, 0.0}, {390.0, 844.0}}
+      Other, {{0.0, 0.0}, {1.0, 1.0}}, identifier: 'debug.resetSignal', label: 'Reset signal', value: fresh
+      Other, {{0.0, 0.0}, {390.0, 844.0}}
+        Other, {{0.0, 0.0}, {390.0, 844.0}}
+          Other, {{0.0, 0.0}, {390.0, 844.0}}
+            Other, {{0.0, 0.0}, {390.0, 844.0}}
+              Other, {{0.0, 0.0}, {390.0, 781.0}}
+                Other, {{0.0, 0.0}, {390.0, 781.0}}
+                  Other, {{0.0, 0.0}, {390.0, 781.0}}
+                    Other, {{0.0, 0.0}, {390.0, 781.0}}
+                      Other, {{0.0, 0.0}, {390.0, 781.0}}
+                        Other, {{0.0, 0.0}, {390.0, 781.0}}
+                          Other, {{0.0, 0.0}, {390.0, 781.0}}
+                            Other, {{0.0, 0.0}, {390.0, 781.0}}
+                              Other, {{0.0, 0.0}, {390.0, 781.0}}
+                                Other, {{0.0, 0.0}, {390.0, 781.0}}
+                                  Other, {{0.0, 0.0}, {390.0, 781.0}}
+                                    Button, {{4.0, 47.0}, {72.7, 44.0}}, label: 'BACK'
+                                    StaticText, {{166.5, 61.7}, {57.0, 14.7}}, label: 'Routine'
+                                    Button, {{329.3, 47.0}, {56.7, 44.0}}, label: 'Edit'
+                                    StaticText, {{0.0, 93.0}, {390.0, 73.0}}, identifier: 'liveEditBanner', label: 'Active block warning: Part of active block — edits apply to upcoming workouts.'
+                                      StaticText, {{16.0, 103.0}, {93.7, 14.7}}, label: 'ACTIVE BLOCK'
+                                      StaticText, {{16.0, 121.7}, {296.7, 34.3}}, label: 'Part of active block — edits apply to upcoming workouts.'
+                                    ScrollView, {{0.0, 166.0}, {390.0, 615.0}}
+                                      Other, {{0.0, 166.0}, {390.0, 559.0}}
+                                        Other, {{0.0, 182.0}, {390.0, 526.3}}
+                                          StaticText, {{16.0, 182.0}, {93.7, 14.7}}, label: 'ROUTINE NAME'
+                                          TextField, {{16.0, 202.7}, {358.0, 48.0}}, label: 'Routine name', value: States Routine
+                                            Other, {{16.0, 223.7}, {358.0, 24.0}}, label: 'Horizontal scroll bar, 1 page', value: 0%
+                                              Other, {{19.0, 244.7}, {352.0, 3.0}}
+                                          StaticText, {{16.0, 256.7}, {226.3, 14.7}}, label: '2 SESSIONS · ROTATES IN ORDER'
+                                          StaticText, {{16.0, 302.3}, {64.3, 18.0}}, label: 'Sessions'
+                                          Button, {{260.3, 289.3}, {125.7, 44.0}}, label: '+ ADD SESSION'
+                                          Button, {{0.0, 335.3}, {390.0, 64.7}}, label: 'Session 1: Upper A'
+                                            StaticText, {{16.0, 354.3}, {17.7, 26.7}}, label: '01'
+                                            StaticText, {{60.0, 347.3}, {68.7, 23.0}}, label: 'Upper A'
+                                            StaticText, {{60.0, 373.3}, {220.7, 14.7}}, label: '1 exercise · 3 sets · ~11 min'
+                                            StaticText, {{365.3, 356.2}, {8.7, 23.0}}, label: '›'
+                                          Button, {{0.0, 401.0}, {390.0, 64.7}}, label: 'Session 2: Upper B'
+                                            StaticText, {{16.0, 420.0}, {17.7, 26.7}}, label: '02'
+                                            StaticText, {{60.0, 413.0}, {69.3, 23.0}}, label: 'Upper B'
+                                            StaticText, {{60.0, 439.0}, {220.7, 14.7}}, label: '1 exercise · 3 sets · ~11 min'
+                                            StaticText, {{365.3, 421.8}, {8.7, 23.0}}, label: '›'
+                                          StaticText, {{0.0, 467.7}, {390.0, 46.0}}, label: 'Used in'
+                                          StaticText, {{16.0, 526.7}, {101.0, 18.7}}, label: 'Spring Block'
+                                          StaticText, {{314.2, 524.9}, {60.5, 22.2}}, label: 'ACTIVE'
+                                          StaticText, {{16.0, 572.3}, {101.0, 18.7}}, label: 'Summer Block'
+                                          StaticText, {{321.9, 570.6}, {52.8, 22.2}}, label: 'READY'
+                                          Button, {{16.0, 622.0}, {358.0, 44.0}}, label: 'Archive routine'
+                                          StaticText, {{16.0, 674.0}, {358.0, 34.3}}, label: 'An archived routine keeps its logged history. Restore it from Archived routines on Program.'
+                                      Other, {{357.0, 166.0}, {30.0, 615.0}}, label: 'Vertical scroll bar, 1 page', value: 0%
+                                        Other, {{384.0, 225.0}, {3.0, 553.0}}
+                                      Other, {{357.0, 166.0}, {30.0, 615.0}}, label: 'Vertical scroll bar, 1 page', value: 0%
+                                        Other, {{384.0, 225.0}, {3.0, 553.0}}
+                            Other, {{0.0, 0.0}, {390.0, 781.0}}
+                              Other, {{0.0, 0.0}, {390.0, 781.0}}
+                Other, {{0.0, 698.0}, {390.0, 83.0}}
+                  Other, {{0.0, 0.0}, {390.0, 781.0}}
+                  Other, {{0.0, 698.0}, {390.0, 83.0}}
+              Button, {{0.0, 783.0}, {97.7, 61.0}}, identifier: 'Today', label: 'Today'
+              Button, {{97.7, 783.0}, {97.3, 61.0}}, identifier: 'Program', label: 'Program', Selected
+              Button, {{195.0, 783.0}, {97.7, 61.0}}, identifier: 'Progress', label: 'Progress'
+              Button, {{292.7, 783.0}, {97.3, 61.0}}, identifier: 'Library', label: 'Library'
+      Other, {{0.0, 0.0}, {390.0, 844.0}}
+        Other, {{0.0, 0.0}, {390.0, 844.0}}
+        Other, {{0.0, 0.0}, {390.0, 844.0}}
+        Alert, {{35.0, 332.3}, {320.0, 192.3}}, label: 'Cannot Archive Routine'
+          Other, {{35.0, 332.3}, {320.0, 192.3}}
+            Other, {{35.0, 332.3}, {320.0, 192.3}}
+              Other, {{35.0, 332.3}, {320.0, 192.3}}
+              Other, {{35.0, 332.3}, {320.0, 192.3}}
+                ScrollView, {{35.0, 332.3}, {320.0, 112.3}}
+                  Other, {{35.0, 332.3}, {320.0, 112.3}}
+                    StaticText, {{65.0, 354.3}, {260.0, 20.3}}, label: 'Cannot Archive Routine'
+                    StaticText, {{65.0, 382.3}, {260.0, 58.0}}, label: 'This routine is linked to an active or upcoming block. End or complete that block first.'
+                  Other, {{322.0, 332.3}, {30.0, 112.3}}, label: 'Vertical scroll bar, 1 page', value: 0%
+                    Other, {{349.0, 293.3}, {3.0, 36.0}}
+                  Other, {{35.0, 411.7}, {320.0, 30.0}}, label: 'Horizontal scroll bar, 1 page', value: 0%
+                    Other, {{-4.0, 438.7}, {36.0, 3.0}}
+                  Other, {{322.0, 332.3}, {30.0, 112.3}}, label: 'Vertical scroll bar, 1 page', value: 0%
+                    Other, {{349.0, 293.3}, {3.0, 36.0}}
+                  Other, {{35.0, 411.7}, {320.0, 30.0}}, label: 'Horizontal scroll bar, 1 page', value: 0%
+                    Other, {{-4.0, 438.7}, {36.0, 3.0}}
+                ScrollView, {{35.0, 444.7}, {320.0, 80.0}}
+                  Other, {{35.0, 444.7}, {320.0, 80.0}}
+                    Other, {{51.0, 460.7}, {288.0, 48.0}}
+                      Button, {{51.0, 460.7}, {288.0, 48.0}}, label: 'OK'
+                  Other, {{322.0, 444.7}, {30.0, 80.0}}, label: 'Vertical scroll bar, 1 page', value: 0%
+                    Other, {{349.0, 534.7}, {3.0, 7.0}}
+                  Other, {{35.0, 491.7}, {320.0, 30.0}}, label: 'Horizontal scroll bar, 1 page', value: 0%
+                    Other, {{125.0, 518.7}, {7.0, 3.0}}
+                  Other, {{322.0, 444.7}, {30.0, 80.0}}, label: 'Vertical scroll bar, 1 page', value: 0%
+                    Other, {{349.0, 534.7}, {3.0, 7.0}}
+                  Other, {{35.0, 491.7}, {320.0, 30.0}}, label: 'Horizontal scroll bar, 1 page', value: 0%
+                    Other, {{125.0, 518.7}, {7.0, 3.0}}
+          Other, {{35.0, 332.3}, {320.0, 192.3}}
+            Other, {{35.0, 332.3}, {320.0, 192.3}}
+              Other, {{35.0, 332.3}, {320.0, 192.3}}
+                Other, {{35.0, 332.3}, {320.0, 192.3}}
+                  Other, {{35.0, 332.3}, {320.0, 192.3}}
+                    Other, {{35.0, 332.3}, {390.0, 844.0}}
+                Other, {{35.0, 332.3}, {320.0, 192.3}}
+                  Other, {{35.0, 332.3}, {390.0, 844.0}}

@@ -1,0 +1,238 @@
+Element subtree:
+ →Application, pid: 65123, label: 'fitbod'
+    Window (Main), {{0.0, 0.0}, {390.0, 844.0}}
+      Other, {{0.0, 0.0}, {1.0, 1.0}}, identifier: 'debug.resetSignal', label: 'Reset signal', value: fresh
+      Other, {{0.0, 0.0}, {390.0, 844.0}}
+        Other, {{0.0, 0.0}, {390.0, 844.0}}
+          Other, {{-390.0, -844.0}, {1170.0, 2532.0}}
+          Other, {{0.0, 0.0}, {390.0, 844.0}}
+            Other, {{0.0, 0.0}, {390.0, 844.0}}
+              Other, {{0.0, 0.0}, {390.0, 781.0}}
+                Other, {{0.0, 0.0}, {390.0, 781.0}}
+                  Other, {{0.0, 0.0}, {390.0, 781.0}}
+                    Other, {{0.0, 0.0}, {390.0, 781.0}}
+                      Other, {{0.0, 0.0}, {390.0, 781.0}}
+                        Other, {{0.0, 0.0}, {390.0, 781.0}}
+                          Other, {{0.0, 0.0}, {390.0, 781.0}}
+                            Other, {{0.0, 0.0}, {390.0, 781.0}}
+                              Other, {{0.0, 0.0}, {390.0, 781.0}}
+                                Other, {{0.0, 0.0}, {390.0, 781.0}}
+                                  Other, {{0.0, 0.0}, {390.0, 781.0}}
+                                    ScrollView, {{0.0, 0.0}, {390.0, 781.0}}
+                                      Other, {{0.0, 101.0}, {390.0, 2696.3}}
+                                        Other, {{16.0, 115.0}, {78.3, 41.7}}, label: 'Day streak', value: 0 days
+                                          StaticText, {{16.0, 115.0}, {78.3, 14.7}}, label: 'Day streak'
+                                          StaticText, {{16.0, 133.7}, {11.7, 23.0}}, label: '0'
+                                        Button, {{130.3, 101.0}, {129.3, 69.7}}, identifier: 'today.sessions', label: 'Sessions', value: 0
+                                          Button, {{130.3, 101.0}, {129.3, 69.7}}, label: 'Sessions, ›', value: 0
+                                            Other, {{146.3, 115.0}, {62.7, 41.7}}, label: 'Sessions', value: 0
+                                              StaticText, {{146.3, 115.0}, {62.7, 14.7}}, label: 'Sessions'
+                                              StaticText, {{146.3, 133.7}, {11.7, 23.0}}, label: '0'
+                                            StaticText, {{237.0, 115.0}, {6.7, 14.7}}, label: '›'
+                                        Other, {{276.7, 115.0}, {70.3, 41.7}}, label: 'Sessions this week', value: 0
+                                          StaticText, {{276.7, 115.0}, {70.3, 14.7}}, label: 'This week'
+                                          StaticText, {{276.7, 133.7}, {11.7, 23.0}}, label: '0'
+                                        StaticText, {{0.0, 172.7}, {390.0, 46.0}}, label: 'Start a workout'
+                                        StaticText, {{16.0, 234.7}, {225.0, 33.7}}, label: 'Build your first routine'
+                                        StaticText, {{16.0, 280.3}, {358.0, 51.7}}, label: 'A routine is your split, like Push / Pull / Legs. Each session in it lists exercises with target sets and reps.'
+                                        Button, {{16.0, 344.0}, {358.0, 52.0}}, label: '+ New routine'
+                                        StaticText, {{32.0, 438.0}, {247.3, 41.0}}, label: 'No active block.'
+                                        StaticText, {{32.0, 487.0}, {281.0, 34.3}}, label: 'Define a training block to see your phase, week, and deloads here.'
+                                        Button, {{20.0, 517.3}, {125.7, 44.0}}, label: 'START A BLOCK'
+                                        StaticText, {{16.0, 587.3}, {194.7, 14.7}}, label: 'WORKING SETS · THIS WEEK'
+                                        StaticText, {{293.0, 595.7}, {81.0, 14.7}}, label: 'VS LAST WK'
+                                        StaticText, {{16.0, 604.0}, {36.0, 71.7}}, label: '0'
+                                        StaticText, {{334.0, 612.3}, {40.0, 41.0}}, label: '±0'
+                                        StaticText, {{265.0, 655.3}, {109.0, 12.0}}, label: 'STIMULUS-WEIGHTED'
+                                        StaticText, {{32.0, 697.7}, {59.7, 12.0}}, label: 'UNDER MEV'
+                                        StaticText, {{123.7, 697.7}, {59.7, 12.0}}, label: 'MEV → MAV'
+                                        StaticText, {{215.3, 697.7}, {20.0, 12.0}}, label: 'MRV'
+                                        StaticText, {{0.0, 717.7}, {390.0, 46.0}}, label: 'Volume This Week'
+                                        Other, {{0.0, 763.7}, {390.0, 723.3}}
+                                          Button, {{0.0, 763.7}, {390.0, 103.3}}, label: 'Abdominals: 0 sets this week, Below MEV — add volume. no change vs last week.'
+                                            StaticText, {{16.0, 787.0}, {78.3, 14.7}}, label: 'ABDOMINALS'
+                                            StaticText, {{326.7, 774.7}, {15.7, 30.7}}, label: '0'
+                                            StaticText, {{348.3, 789.0}, {25.7, 12.0}}, label: 'SETS'
+                                            StaticText, {{94.5, 798.3}, {16.0, 10.7}}, label: 'MEV'
+                                            StaticText, {{237.5, 798.3}, {16.0, 10.7}}, label: 'MAV'
+                                            StaticText, {{358.0, 798.3}, {16.0, 10.7}}, label: 'MRV'
+                                            StaticText, {{15.2, 834.6}, {99.5, 22.2}}, label: 'NOT TRAINED'
+                                            StaticText, {{238.0, 839.7}, {136.0, 12.0}}, label: 'MEV 6 · MAV 16 · MRV 25'
+                                          Button, {{0.0, 867.0}, {390.0, 103.3}}, label: 'Abductors: 0 sets this week, Below MEV — add volume. no change vs last week.'
+                                            StaticText, {{16.0, 890.3}, {70.3, 14.7}}, label: 'ABDUCTORS'
+                                            StaticText, {{326.7, 878.0}, {15.7, 30.7}}, label: '0'
+                                            StaticText, {{348.3, 892.3}, {25.7, 12.0}}, label: 'SETS'
+                                            StaticText, {{65.8, 901.7}, {16.0, 10.7}}, label: 'MEV'
+                                            StaticText, {{151.8, 901.7}, {16.0, 10.7}}, label: 'MAV'
+                                            StaticText, {{208.8, 901.7}, {16.0, 10.7}}, label: 'MRV'
+                                            StaticText, {{15.2, 937.9}, {99.5, 22.2}}, label: 'NOT TRAINED'
+                                            StaticText, {{238.0, 943.0}, {136.0, 12.0}}, label: 'MEV 4 · MAV 10 · MRV 14'
+                                          Button, {{0.0, 970.3}, {390.0, 103.3}}, label: 'Adductors: 0 sets this week, Below MEV — add volume. no change vs last week.'
+                                            StaticText, {{16.0, 993.7}, {70.3, 14.7}}, label: 'ADDUCTORS'
+                                            StaticText, {{326.7, 981.3}, {15.7, 30.7}}, label: '0'
+                                            StaticText, {{348.3, 995.7}, {25.7, 12.0}}, label: 'SETS'
+                                            StaticText, {{65.8, 1005.0}, {16.0, 10.7}}, label: 'MEV'
+                                            StaticText, {{151.8, 1005.0}, {16.0, 10.7}}, label: 'MAV'
+                                            StaticText, {{208.8, 1005.0}, {16.0, 10.7}}, label: 'MRV'
+                                            StaticText, {{15.2, 1041.2}, {99.5, 22.2}}, label: 'NOT TRAINED'
+                                            StaticText, {{238.0, 1046.3}, {136.0, 12.0}}, label: 'MEV 4 · MAV 10 · MRV 14'
+                                          Button, {{0.0, 1073.7}, {390.0, 103.3}}, label: 'Biceps: 0 sets this week, Below MEV — add volume. no change vs last week.'
+                                            StaticText, {{16.0, 1097.0}, {47.0, 14.7}}, label: 'BICEPS'
+                                            StaticText, {{326.7, 1084.7}, {15.7, 30.7}}, label: '0'
+                                            StaticText, {{348.3, 1099.0}, {25.7, 12.0}}, label: 'SETS'
+                                            StaticText, {{94.5, 1108.3}, {16.0, 10.7}}, label: 'MEV'
+                                            StaticText, {{208.8, 1108.3}, {16.0, 10.7}}, label: 'MAV'
+                                            StaticText, {{294.8, 1108.3}, {16.0, 10.7}}, label: 'MRV'
+                                            StaticText, {{15.2, 1144.6}, {99.5, 22.2}}, label: 'NOT TRAINED'
+                                            StaticText, {{238.0, 1149.7}, {136.0, 12.0}}, label: 'MEV 6 · MAV 14 · MRV 20'
+                                          Button, {{0.0, 1177.0}, {390.0, 103.3}}, label: 'Calves: 0 sets this week, Below MEV — add volume. no change vs last week.'
+                                            StaticText, {{16.0, 1200.3}, {47.0, 14.7}}, label: 'CALVES'
+                                            StaticText, {{326.7, 1188.0}, {15.7, 30.7}}, label: '0'
+                                            StaticText, {{348.3, 1202.3}, {25.7, 12.0}}, label: 'SETS'
+                                            StaticText, {{94.5, 1211.7}, {16.0, 10.7}}, label: 'MEV'
+                                            StaticText, {{208.8, 1211.7}, {16.0, 10.7}}, label: 'MAV'
+                                            StaticText, {{294.8, 1211.7}, {16.0, 10.7}}, label: 'MRV'
+                                            StaticText, {{15.2, 1247.9}, {99.5, 22.2}}, label: 'NOT TRAINED'
+                                            StaticText, {{238.0, 1253.0}, {136.0, 12.0}}, label: 'MEV 6 · MAV 14 · MRV 20'
+                                          Button, {{0.0, 1280.3}, {390.0, 103.3}}, label: 'Chest: 0 sets this week, Below MEV — add volume. no change vs last week.'
+                                            StaticText, {{16.0, 1303.7}, {39.3, 14.7}}, label: 'CHEST'
+                                            StaticText, {{326.7, 1291.3}, {15.7, 30.7}}, label: '0'
+                                            StaticText, {{348.3, 1305.7}, {25.7, 12.0}}, label: 'SETS'
+                                            StaticText, {{123.2, 1315.0}, {16.0, 10.7}}, label: 'MEV'
+                                            StaticText, {{237.5, 1315.0}, {16.0, 10.7}}, label: 'MAV'
+                                            StaticText, {{323.5, 1315.0}, {16.0, 10.7}}, label: 'MRV'
+                                            StaticText, {{15.2, 1351.2}, {99.5, 22.2}}, label: 'NOT TRAINED'
+                                            StaticText, {{238.0, 1356.3}, {136.0, 12.0}}, label: 'MEV 8 · MAV 16 · MRV 22'
+                                          Button, {{0.0, 1383.7}, {390.0, 103.3}}, label: 'Forearms: 0 sets this week, Below MEV — add volume. no change vs last week.'
+                                            StaticText, {{16.0, 1407.0}, {62.7, 14.7}}, label: 'FOREARMS'
+                                            StaticText, {{326.7, 1394.7}, {15.7, 30.7}}, label: '0'
+                                            StaticText, {{348.3, 1409.0}, {25.7, 12.0}}, label: 'SETS'
+                                            StaticText, {{65.8, 1418.3}, {16.0, 10.7}}, label: 'MEV'
+                                            StaticText, {{151.8, 1418.3}, {16.0, 10.7}}, label: 'MAV'
+                                            StaticText, {{237.5, 1418.3}, {16.0, 10.7}}, label: 'MRV'
+                                            StaticText, {{15.2, 1454.6}, {99.5, 22.2}}, label: 'NOT TRAINED'
+                                            StaticText, {{238.0, 1459.7}, {136.0, 12.0}}, label: 'MEV 4 · MAV 10 · MRV 16'
+                                        StaticText, {{16.0, 2534.7}, {121.0, 18.0}}, label: 'Muscle Heatmap'
+                                        StaticText, {{311.3, 2536.3}, {62.7, 14.7}}, label: 'W44 / 53'
+                                        Other, {{59.0, 2623.3}, {55.0, 139.0}}, label: 'Front'
+                                          Button, {{59.0, 2623.3}, {27.0, 13.0}}, label: 'Shoulders', value: Below MEV — add vo...
+                                            StaticText, {{59.0, 2623.3}, {27.0, 13.0}}, label: 'DELT'
+                                          Button, {{87.0, 2623.3}, {27.0, 27.0}}, label: 'Chest', value: Below MEV — add vo...
+                                            StaticText, {{87.0, 2623.3}, {27.0, 27.0}}, label: 'CHEST L'
+                                          Button, {{59.0, 2637.3}, {27.0, 27.0}}, label: 'Biceps', value: Below MEV — add vo...
+                                            StaticText, {{59.0, 2637.3}, {27.0, 27.0}}, label: 'BICEP'
+                                          Button, {{87.0, 2651.3}, {27.0, 41.0}}, label: 'Abdominals', value: Below MEV — add vo...
+                                            StaticText, {{87.0, 2651.3}, {27.0, 41.0}}, label: 'ABS L'
+                                          Button, {{59.0, 2665.3}, {27.0, 27.0}}, label: 'Forearms', value: Below MEV — add vo...
+                                            StaticText, {{59.0, 2665.3}, {27.0, 27.0}}, label: 'FORE'
+                                          Button, {{87.0, 2693.3}, {27.0, 41.0}}, label: 'Quadriceps', value: Below MEV — add vo...
+                                            StaticText, {{87.0, 2693.3}, {27.0, 41.0}}, label: 'QUAD'
+                                          Button, {{87.0, 2735.3}, {27.0, 27.0}}, label: 'Calves', value: Below MEV — add vo...
+                                            StaticText, {{87.0, 2735.3}, {27.0, 27.0}}, label: 'CALF'
+                                        Other, {{205.0, 2623.3}, {97.0, 125.0}}, label: 'Back'
+                                          Button, {{247.0, 2623.3}, {55.0, 13.0}}, label: 'Traps', value: Below MEV — add vo...
+                                            StaticText, {{247.0, 2623.3}, {55.0, 13.0}}, label: 'TRAPS'
+                                          Button, {{247.0, 2637.3}, {55.0, 13.0}}, label: 'Middle Back', value: Below MEV — add vo...
+                                            StaticText, {{247.0, 2637.3}, {55.0, 13.0}}, label: 'UPPER BACK'
+                                          Button, {{219.0, 2637.3}, {27.0, 41.0}}, label: 'Lats', value: Below MEV — add vo...
+                                            StaticText, {{219.0, 2637.3}, {27.0, 41.0}}, label: 'LAT'
+                                          Button, {{205.0, 2637.3}, {13.0, 27.0}}, label: 'Triceps', value: Below MEV — add vo...
+                                            StaticText, {{205.0, 2637.3}, {13.0, 27.0}}, label: 'TRI'
+                                          Button, {{247.0, 2679.3}, {55.0, 13.0}}, label: 'Lower Back', value: Below MEV — add vo...
+                                            StaticText, {{247.0, 2679.3}, {55.0, 13.0}}, label: 'LOWER BACK'
+                                          Button, {{247.0, 2693.3}, {27.0, 27.0}}, label: 'Glutes', value: Below MEV — add vo...
+                                            StaticText, {{247.0, 2693.3}, {27.0, 27.0}}, label: 'GLUTE'
+                                          Button, {{247.0, 2721.3}, {27.0, 27.0}}, label: 'Hamstrings', value: Below MEV — add vo...
+                                            StaticText, {{247.0, 2721.3}, {27.0, 27.0}}, label: 'HAM'
+                                      Other, {{357.0, 101.0}, {30.0, 680.0}}, label: 'Vertical scroll bar, 4 pages', value: 0%
+                                        Other, {{384.0, 104.0}, {3.0, 660.0}}
+                                      Other, {{357.0, 101.0}, {30.0, 680.0}}, label: 'Vertical scroll bar, 4 pages', value: 0%
+                                        Other, {{384.0, 104.0}, {3.0, 660.0}}
+                                    Button, {{4.0, 47.0}, {89.0, 44.0}}, label: 'Settings'
+                                    StaticText, {{138.2, 61.7}, {113.7, 14.7}}, label: 'Fitbod / Today'
+                                    StaticText, {{276.7, 61.7}, {97.3, 14.7}}, label: 'Sat · Oct 31'
+                            Other, {{0.0, 0.0}, {390.0, 781.0}}
+                              Other, {{0.0, 0.0}, {390.0, 781.0}}
+                Other, {{0.0, 698.0}, {390.0, 83.0}}
+                  Other, {{0.0, 0.0}, {390.0, 781.0}}
+                  Other, {{0.0, 698.0}, {390.0, 83.0}}
+              Button, {{0.0, 783.0}, {97.7, 61.0}}, identifier: 'Today', label: 'Today', Selected
+              Button, {{97.7, 783.0}, {97.3, 61.0}}, identifier: 'Program', label: 'Program'
+              Button, {{195.0, 783.0}, {97.7, 61.0}}, identifier: 'Progress', label: 'Progress'
+              Button, {{292.7, 783.0}, {97.3, 61.0}}, identifier: 'Library', label: 'Library'
+      Other, {{0.0, 0.0}, {390.0, 844.0}}
+        Other, {{-390.0, -844.0}, {1170.0, 2532.0}}
+        Other, {{0.0, 47.0}, {390.0, 797.0}}
+          Other, {{0.0, 47.0}, {390.0, 797.0}}
+            Other, {{0.0, 47.0}, {390.0, 797.0}}
+              Other, {{0.0, 47.0}, {390.0, 797.0}}
+                Other, {{0.0, 47.0}, {390.0, 797.0}}
+                  Other, {{0.0, 47.0}, {390.0, 797.0}}
+                    Other, {{0.0, 47.0}, {390.0, 797.0}}
+                      Other, {{0.0, 47.0}, {390.0, 797.0}}
+                        Other, {{0.0, 47.0}, {390.0, 797.0}}
+                          Other, {{0.0, 47.0}, {390.0, 797.0}}
+                            Button, {{4.0, 47.0}, {44.0, 44.0}}, label: 'Back'
+                            StaticText, {{138.2, 61.7}, {113.7, 14.7}}, label: 'Volume Targets'
+                            ScrollView, {{0.0, 93.0}, {390.0, 751.0}}
+                              Other, {{0.0, 93.0}, {390.0, 807.0}}
+                                Other, {{0.0, 93.0}, {390.0, 774.3}}
+                                  Button, {{0.0, 93.0}, {390.0, 38.7}}, label: 'ABDOMINALS, 6 / 16 / 25'
+                                    StaticText, {{16.0, 105.0}, {78.3, 14.7}}, label: 'ABDOMINALS'
+                                    StaticText, {{303.3, 106.3}, {70.7, 12.0}}, label: '6 / 16 / 25'
+                                  Button, {{0.0, 132.7}, {390.0, 38.7}}, label: 'ABDUCTORS, 4 / 10 / 14'
+                                    StaticText, {{16.0, 144.7}, {70.3, 14.7}}, label: 'ABDUCTORS'
+                                    StaticText, {{303.3, 146.0}, {70.7, 12.0}}, label: '4 / 10 / 14'
+                                  Button, {{0.0, 172.3}, {390.0, 38.7}}, label: 'ADDUCTORS, 4 / 10 / 14'
+                                    StaticText, {{16.0, 184.3}, {70.3, 14.7}}, label: 'ADDUCTORS'
+                                    StaticText, {{303.3, 185.7}, {70.7, 12.0}}, label: '4 / 10 / 14'
+                                  Button, {{0.0, 212.0}, {390.0, 38.7}}, label: 'BICEPS, 6 / 14 / 20'
+                                    StaticText, {{16.0, 224.0}, {47.0, 14.7}}, label: 'BICEPS'
+                                    StaticText, {{303.3, 225.3}, {70.7, 12.0}}, label: '6 / 14 / 20'
+                                  Button, {{0.0, 251.7}, {390.0, 38.7}}, label: 'CALVES, 6 / 14 / 20'
+                                    StaticText, {{16.0, 263.7}, {47.0, 14.7}}, label: 'CALVES'
+                                    StaticText, {{303.3, 265.0}, {70.7, 12.0}}, label: '6 / 14 / 20'
+                                  Button, {{0.0, 291.3}, {390.0, 38.7}}, label: 'CHEST, 8 / 16 / 22'
+                                    StaticText, {{16.0, 303.3}, {39.3, 14.7}}, label: 'CHEST'
+                                    StaticText, {{303.3, 304.7}, {70.7, 12.0}}, label: '8 / 16 / 22'
+                                  Button, {{0.0, 331.0}, {390.0, 38.7}}, label: 'FOREARMS, 4 / 10 / 16'
+                                    StaticText, {{16.0, 343.0}, {62.7, 14.7}}, label: 'FOREARMS'
+                                    StaticText, {{303.3, 344.3}, {70.7, 12.0}}, label: '4 / 10 / 16'
+                                  Button, {{0.0, 370.7}, {390.0, 38.7}}, label: 'GLUTES, 4 / 14 / 20'
+                                    StaticText, {{16.0, 382.7}, {47.0, 14.7}}, label: 'GLUTES'
+                                    StaticText, {{303.3, 384.0}, {70.7, 12.0}}, label: '4 / 14 / 20'
+                                  Button, {{0.0, 410.3}, {390.0, 38.7}}, label: 'HAMSTRINGS, 4 / 12 / 16'
+                                    StaticText, {{16.0, 422.3}, {78.3, 14.7}}, label: 'HAMSTRINGS'
+                                    StaticText, {{303.3, 423.7}, {70.7, 12.0}}, label: '4 / 12 / 16'
+                                  Button, {{0.0, 450.0}, {390.0, 38.7}}, label: 'LATS, 8 / 18 / 25'
+                                    StaticText, {{16.0, 462.0}, {31.3, 14.7}}, label: 'LATS'
+                                    StaticText, {{303.3, 463.3}, {70.7, 12.0}}, label: '8 / 18 / 25'
+                                  Button, {{0.0, 489.7}, {390.0, 38.7}}, label: 'LOWER BACK, 6 / 10 / 14'
+                                    StaticText, {{16.0, 501.7}, {78.3, 14.7}}, label: 'LOWER BACK'
+                                    StaticText, {{303.3, 503.0}, {70.7, 12.0}}, label: '6 / 10 / 14'
+                                  Button, {{0.0, 529.3}, {390.0, 38.7}}, label: 'MIDDLE BACK, 10 / 16 / 20'
+                                    StaticText, {{16.0, 541.3}, {86.0, 14.7}}, label: 'MIDDLE BACK'
+                                    StaticText, {{297.0, 542.7}, {77.0, 12.0}}, label: '10 / 16 / 20'
+                                  Button, {{0.0, 569.0}, {390.0, 38.7}}, label: 'NECK, 4 / 8 / 12'
+                                    StaticText, {{16.0, 581.0}, {31.3, 14.7}}, label: 'NECK'
+                                    StaticText, {{310.0, 582.3}, {64.0, 12.0}}, label: '4 / 8 / 12'
+                                  Button, {{0.0, 608.7}, {390.0, 38.7}}, label: 'QUADRICEPS, 6 / 16 / 20'
+                                    StaticText, {{16.0, 620.7}, {78.3, 14.7}}, label: 'QUADRICEPS'
+                                    StaticText, {{303.3, 622.0}, {70.7, 12.0}}, label: '6 / 16 / 20'
+                                  Button, {{0.0, 648.3}, {390.0, 38.7}}, label: 'SHOULDERS, 8 / 18 / 25'
+                                    StaticText, {{16.0, 660.3}, {70.3, 14.7}}, label: 'SHOULDERS'
+                                    StaticText, {{303.3, 661.7}, {70.7, 12.0}}, label: '8 / 18 / 25'
+                                  Button, {{0.0, 688.0}, {390.0, 38.7}}, label: 'TRAPS, 6 / 12 / 16'
+                                    StaticText, {{16.0, 700.0}, {39.3, 14.7}}, label: 'TRAPS'
+                                    StaticText, {{303.3, 701.3}, {70.7, 12.0}}, label: '6 / 12 / 16'
+                                  Button, {{0.0, 727.7}, {390.0, 38.7}}, label: 'TRICEPS, 4 / 12 / 18'
+                                    StaticText, {{16.0, 739.7}, {54.7, 14.7}}, label: 'TRICEPS'
+                                    StaticText, {{303.3, 741.0}, {70.7, 12.0}}, label: '4 / 12 / 18'
+                                  Button, {{16.0, 783.3}, {358.0, 44.0}}, label: 'Reset All to RP Defaults'
+                                  StaticText, {{16.0, 843.3}, {345.7, 24.0}}, label: 'MEV / MAV / MRV — weekly working sets. Seeded from RP volume landmarks.'
+                              Other, {{357.0, 114.0}, {30.0, 682.7}}, label: 'Vertical scroll bar, 2 pages', value: 0%
+                                Other, {{384.0, 117.0}, {3.0, 609.0}}
+                              Other, {{357.0, 114.0}, {30.0, 682.7}}, label: 'Vertical scroll bar, 2 pages', value: 0%
+                                Other, {{384.0, 117.0}, {3.0, 609.0}}
+                    Other, {{0.0, 47.0}, {390.0, 797.0}}
+                      Other, {{0.0, 47.0}, {390.0, 797.0}}

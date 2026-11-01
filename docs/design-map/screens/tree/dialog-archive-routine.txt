@@ -1,0 +1,103 @@
+Element subtree:
+ →Application, pid: 76872, label: 'fitbod'
+    Window (Main), {{0.0, 0.0}, {390.0, 844.0}}
+      Other, {{0.0, 0.0}, {1.0, 1.0}}, identifier: 'debug.resetSignal', label: 'Reset signal', value: fresh
+      Other, {{0.0, 0.0}, {390.0, 844.0}}
+      Other, {{0.0, 0.0}, {390.0, 844.0}}
+        Other, {{0.0, 0.0}, {390.0, 844.0}}
+          Other, {{0.0, 0.0}, {390.0, 844.0}}
+            Other, {{0.0, 0.0}, {390.0, 844.0}}
+              Other, {{0.0, 0.0}, {390.0, 781.0}}
+                Other, {{0.0, 0.0}, {390.0, 781.0}}
+                  Other, {{0.0, 0.0}, {390.0, 781.0}}
+                    Other, {{0.0, 0.0}, {390.0, 781.0}}
+                      Other, {{0.0, 0.0}, {390.0, 781.0}}
+                        Other, {{0.0, 0.0}, {390.0, 781.0}}
+                          Other, {{0.0, 0.0}, {390.0, 781.0}}
+                            Other, {{0.0, 0.0}, {390.0, 781.0}}
+                              Other, {{0.0, 0.0}, {390.0, 781.0}}
+                                Other, {{0.0, 0.0}, {390.0, 781.0}}
+                                  Other, {{0.0, 0.0}, {390.0, 781.0}}
+                                    Button, {{4.0, 47.0}, {72.7, 44.0}}, label: 'BACK'
+                                    StaticText, {{166.5, 61.7}, {57.0, 14.7}}, label: 'Routine'
+                                    Button, {{329.3, 47.0}, {56.7, 44.0}}, label: 'Edit'
+                                    ScrollView, {{0.0, 93.0}, {390.0, 688.0}}
+                                      Other, {{0.0, 93.0}, {390.0, 444.0}}
+                                        Other, {{0.0, 109.0}, {390.0, 411.7}}
+                                          StaticText, {{16.0, 109.0}, {93.7, 14.7}}, label: 'ROUTINE NAME'
+                                          TextField, {{16.0, 129.7}, {358.0, 48.0}}, label: 'Routine name', value: Upper Lower
+                                            Other, {{16.0, 150.7}, {358.0, 24.0}}, label: 'Horizontal scroll bar, 1 page', value: 0%
+                                              Other, {{19.0, 171.7}, {352.0, 3.0}}
+                                          StaticText, {{16.0, 183.7}, {218.7, 14.7}}, label: '1 SESSION · ROTATES IN ORDER'
+                                          StaticText, {{16.0, 229.3}, {64.3, 18.0}}, label: 'Sessions'
+                                          Button, {{260.3, 216.3}, {125.7, 44.0}}, label: '+ ADD SESSION'
+                                          Button, {{0.0, 262.3}, {390.0, 64.7}}, label: 'Session 1: Bench & Squat'
+                                            StaticText, {{16.0, 281.3}, {17.7, 26.7}}, label: '01'
+                                            StaticText, {{60.0, 274.3}, {126.3, 23.0}}, label: 'Bench & Squat'
+                                            StaticText, {{60.0, 300.3}, {228.0, 14.7}}, label: '2 exercises · 6 sets · ~22 min'
+                                            StaticText, {{365.3, 283.2}, {8.7, 23.0}}, label: '›'
+                                          StaticText, {{0.0, 329.0}, {390.0, 46.0}}, label: 'Used in'
+                                          StaticText, {{16.0, 387.0}, {242.0, 17.3}}, label: 'Not linked to any active block.'
+                                          Button, {{16.0, 434.3}, {358.0, 44.0}}, label: 'Archive routine'
+                                          StaticText, {{16.0, 486.3}, {358.0, 34.3}}, label: 'An archived routine keeps its logged history. Restore it from Archived routines on Program.'
+                                      Other, {{357.0, 93.0}, {30.0, 688.0}}, label: 'Vertical scroll bar, 1 page', value: 0%
+                                        Other, {{384.0, 340.0}, {3.0, 438.0}}
+                                      Other, {{357.0, 93.0}, {30.0, 688.0}}, label: 'Vertical scroll bar, 1 page', value: 0%
+                                        Other, {{384.0, 340.0}, {3.0, 438.0}}
+                            Other, {{0.0, 0.0}, {390.0, 781.0}}
+                              Other, {{0.0, 0.0}, {390.0, 781.0}}
+                Other, {{0.0, 698.0}, {390.0, 83.0}}
+                  Other, {{0.0, 0.0}, {390.0, 781.0}}
+                  Other, {{0.0, 698.0}, {390.0, 83.0}}
+              Button, {{0.0, 783.0}, {97.7, 61.0}}, identifier: 'Today', label: 'Today'
+              Button, {{97.7, 783.0}, {97.3, 61.0}}, identifier: 'Program', label: 'Program', Selected
+              Button, {{195.0, 783.0}, {97.7, 61.0}}, identifier: 'Progress', label: 'Progress'
+              Button, {{292.7, 783.0}, {97.3, 61.0}}, identifier: 'Library', label: 'Library'
+      Other, {{0.0, 0.0}, {390.0, 844.0}}
+        Other, {{0.0, 0.0}, {390.0, 844.0}}, identifier: 'PopoverDismissRegion', label: 'dismiss popup'
+        Popover, {{75.0, 539.0}, {240.0, 261.3}}
+          Image, {{-75.0, 402.0}, {540.0, 548.3}}
+          Other, {{75.0, 539.0}, {240.0, 261.3}}
+            Other, {{75.0, 539.0}, {240.0, 261.3}}
+              Other, {{75.0, 539.0}, {240.0, 261.3}}
+                Other, {{75.0, 539.0}, {240.0, 261.3}}
+                  Other, {{75.0, 539.0}, {240.0, 261.3}}
+                    Other, {{75.0, 539.0}, {0.0, 0.0}}
+                      Other, {{75.0, 539.0}, {240.0, 261.3}}
+                        Other, {{75.0, 539.0}, {240.0, 261.3}}
+                          Other, {{75.0, 539.0}, {240.0, 261.3}}
+                            Other, {{75.0, 539.0}, {240.0, 261.3}}
+          Other, {{75.0, 552.0}, {240.0, 248.3}}
+            Sheet, {{75.0, 552.0}, {240.0, 248.3}}, label: 'Archive routine?'
+              Other, {{75.0, 552.0}, {240.0, 248.3}}
+                Other, {{75.0, 552.0}, {240.0, 248.3}}
+                  Other, {{75.0, 552.0}, {240.0, 248.3}}
+                  Other, {{75.0, 552.0}, {240.0, 248.3}}
+                    ScrollView, {{75.0, 552.0}, {240.0, 112.3}}
+                      Other, {{75.0, 552.0}, {240.0, 112.3}}
+                        StaticText, {{105.0, 574.0}, {180.0, 20.3}}, label: 'Archive routine?'
+                        StaticText, {{105.0, 602.0}, {180.0, 58.0}}, label: 'You can restore it from Archived routines on Program.'
+                      Other, {{282.0, 573.0}, {30.0, 91.3}}, label: 'Vertical scroll bar, 1 page', value: 0%
+                        Other, {{309.0, 513.0}, {3.0, 36.0}}
+                      Other, {{75.0, 631.3}, {240.0, 30.0}}, label: 'Horizontal scroll bar, 1 page', value: 0%
+                        Other, {{36.0, 658.3}, {36.0, 3.0}}
+                      Other, {{282.0, 573.0}, {30.0, 91.3}}, label: 'Vertical scroll bar, 1 page', value: 0%
+                        Other, {{309.0, 513.0}, {3.0, 36.0}}
+                      Other, {{75.0, 631.3}, {240.0, 30.0}}, label: 'Horizontal scroll bar, 1 page', value: 0%
+                        Other, {{36.0, 658.3}, {36.0, 3.0}}
+                    ScrollView, {{75.0, 664.3}, {240.0, 136.0}}
+                      Other, {{75.0, 664.3}, {240.0, 136.0}}
+                        Other, {{91.0, 680.3}, {208.0, 104.0}}
+                          Button, {{91.0, 680.3}, {208.0, 48.0}}, label: 'Archive'
+                          Button, {{91.0, 736.3}, {208.0, 48.0}}, label: 'Keep routine'
+                      Other, {{282.0, 664.3}, {30.0, 102.0}}, label: 'Vertical scroll bar, 1 page', value: 0%
+                        Other, {{309.0, 754.3}, {3.0, 7.0}}
+                      Other, {{109.0, 767.3}, {172.0, 30.0}}, label: 'Horizontal scroll bar, 1 page', value: 0%
+                        Other, {{165.0, 794.3}, {7.0, 3.0}}
+                      Other, {{282.0, 664.3}, {30.0, 102.0}}, label: 'Vertical scroll bar, 1 page', value: 0%
+                        Other, {{309.0, 754.3}, {3.0, 7.0}}
+                      Other, {{109.0, 767.3}, {172.0, 30.0}}, label: 'Horizontal scroll bar, 1 page', value: 0%
+                        Other, {{165.0, 794.3}, {7.0, 3.0}}
+    Window, {{0.0, 0.0}, {390.0, 844.0}}
+      Other, {{0.0, 0.0}, {390.0, 844.0}}
+        Other, {{0.0, 0.0}, {390.0, 844.0}}

@@ -1,0 +1,81 @@
+Element subtree:
+ →Application, pid: 63603, label: 'fitbod'
+    Window (Main), {{0.0, 0.0}, {390.0, 844.0}}
+      Other, {{0.0, 0.0}, {1.0, 1.0}}, identifier: 'debug.resetSignal', label: 'Reset signal', value: fresh
+      Other, {{0.0, 0.0}, {390.0, 844.0}}
+        Other, {{0.0, 0.0}, {390.0, 844.0}}
+          Other, {{0.0, 0.0}, {390.0, 844.0}}
+            Other, {{0.0, 0.0}, {390.0, 844.0}}
+              Other, {{0.0, 0.0}, {390.0, 781.0}}
+                Other, {{0.0, 0.0}, {390.0, 781.0}}
+                  Other, {{0.0, 0.0}, {390.0, 781.0}}
+                    Other, {{0.0, 0.0}, {390.0, 781.0}}
+                      Other, {{0.0, 0.0}, {390.0, 781.0}}
+                        Other, {{0.0, 0.0}, {390.0, 781.0}}
+                          Other, {{0.0, 0.0}, {390.0, 781.0}}
+                            Other, {{0.0, 0.0}, {390.0, 781.0}}
+                              Other, {{0.0, 0.0}, {390.0, 781.0}}
+                                Other, {{0.0, 0.0}, {390.0, 781.0}}
+                                  Other, {{0.0, 0.0}, {390.0, 781.0}}
+                                    Button, {{4.0, 47.0}, {72.7, 44.0}}, label: 'Back'
+                                    StaticText, {{138.2, 61.7}, {113.7, 14.7}}, label: 'Weekly Tonnage'
+                                    ScrollView, {{0.0, 93.0}, {390.0, 688.0}}
+                                      Other, {{0.0, 93.0}, {390.0, 643.7}}
+                                        ScrollView, {{0.0, 105.0}, {390.0, 44.0}}
+                                          Other, {{0.0, 105.0}, {307.3, 44.0}}
+                                            Button, {{16.0, 113.7}, {86.3, 26.7}}, label: 'Last 8 weeks', value: HIDDEN
+                                            Button, {{110.3, 113.7}, {94.3, 26.7}}, label: 'Last 26 weeks', value: SELECTED
+                                            Button, {{212.7, 113.7}, {78.7, 26.7}}, label: 'All time', value: HIDDEN
+                                        ScrollView, {{0.0, 157.0}, {390.0, 44.0}}, Disabled
+                                          Other, {{0.0, 157.0}, {464.0, 44.0}}
+                                            Button, {{16.0, 165.7}, {109.7, 26.7}}, label: 'Accumulation', value: HIDDEN, Disabled
+                                            Button, {{133.7, 165.7}, {133.3, 26.7}}, label: 'Intensification', value: HIDDEN, Disabled
+                                            Button, {{275.0, 165.7}, {102.0, 26.7}}, label: 'Realization', value: HIDDEN, Disabled
+                                            Button, {{385.0, 165.7}, {63.0, 26.7}}, label: 'Deload', value: HIDDEN, Disabled
+                                        StaticText, {{16.0, 205.0}, {342.0, 14.7}}, label: 'No block data yet. Define a block in Program.', Disabled
+                                        ScrollView, {{0.0, 227.7}, {390.0, 44.0}}
+                                          Other, {{0.0, 227.7}, {1442.0, 44.0}}
+                                            Button, {{16.0, 236.3}, {94.3, 26.7}}, label: 'Abdominals', value: HIDDEN
+                                            Button, {{118.3, 236.3}, {86.3, 26.7}}, label: 'Abductors', value: HIDDEN
+                                            Button, {{212.7, 236.3}, {86.3, 26.7}}, label: 'Adductors', value: HIDDEN
+                                            Button, {{307.0, 236.3}, {63.0, 26.7}}, label: 'Biceps', value: HIDDEN
+                                            Button, {{378.0, 236.3}, {63.0, 26.7}}, label: 'Calves', value: HIDDEN
+                                            Button, {{449.0, 236.3}, {55.3, 26.7}}, label: 'Chest', value: HIDDEN
+                                            Button, {{512.3, 236.3}, {78.7, 26.7}}, label: 'Forearms', value: HIDDEN
+                                            Button, {{599.0, 236.3}, {63.0, 26.7}}, label: 'Glutes', value: HIDDEN
+                                            Button, {{670.0, 236.3}, {94.3, 26.7}}, label: 'Hamstrings', value: HIDDEN
+                                            Button, {{772.3, 236.3}, {47.3, 26.7}}, label: 'Lats', value: HIDDEN
+                                            Button, {{827.7, 236.3}, {94.3, 26.7}}, label: 'Lower Back', value: HIDDEN
+                                            Button, {{930.0, 236.3}, {102.0, 26.7}}, label: 'Middle Back', value: HIDDEN
+                                            Button, {{1040.0, 236.3}, {47.3, 26.7}}, label: 'Neck', value: HIDDEN
+                                            Button, {{1095.3, 236.3}, {94.3, 26.7}}, label: 'Quadriceps', value: HIDDEN
+                                            Button, {{1197.7, 236.3}, {86.3, 26.7}}, label: 'Shoulders', value: HIDDEN
+                                            Button, {{1292.0, 236.3}, {55.3, 26.7}}, label: 'Traps', value: HIDDEN
+                                            Button, {{1355.3, 236.3}, {70.7, 26.7}}, label: 'Triceps', value: HIDDEN
+                                        StaticText, {{16.0, 275.7}, {319.3, 14.7}}, label: 'Tap a muscle to break the bar by stimulus.'
+                                        StaticText, {{16.0, 314.3}, {121.7, 14.7}}, label: 'TOTAL · 8 WEEKS'
+                                        StaticText, {{16.0, 333.0}, {102.3, 41.0}}, label: '10,950'
+                                        StaticText, {{122.3, 351.0}, {16.7, 17.3}}, label: 'LB'
+                                        StaticText, {{16.0, 398.0}, {93.7, 14.7}}, label: 'TONNAGE (LB)'
+                                        Other, {{12.0, 424.7}, {366.0, 280.0}}, identifier: 'weeklyTonnage.chart'
+                                          Button, {{227.0, 424.7}, {12.7, 261.0}}, label: 'Week of Aug 31, 2026', value: 1,238 lb
+                                          Button, {{239.7, 424.7}, {12.7, 261.0}}, label: 'Week of Sep 7, 2026', value: 1,275 lb
+                                          Button, {{252.3, 424.7}, {12.7, 261.0}}, label: 'Week of Sep 14, 2026', value: 1,313 lb
+                                          Button, {{265.0, 424.7}, {12.7, 261.0}}, label: 'Week of Sep 21, 2026', value: 1,350 lb
+                                          Button, {{277.7, 424.7}, {12.7, 261.0}}, label: 'Week of Sep 28, 2026', value: 1,388 lb
+                                          Button, {{290.3, 424.7}, {12.7, 261.0}}, label: 'Week of Oct 5, 2026', value: 1,425 lb
+                                          Button, {{303.0, 424.7}, {12.7, 261.0}}, label: 'Week of Oct 12, 2026', value: 1,463 lb
+                                          Button, {{315.7, 424.7}, {12.7, 261.0}}, label: 'Week of Oct 19, 2026', value: 1,500 lb
+                                      Other, {{357.0, 93.0}, {30.0, 688.0}}, label: 'Vertical scroll bar, 1 page', value: 0%
+                                        Other, {{384.0, 818.0}, {3.0, 7.0}}
+                                      Other, {{357.0, 93.0}, {30.0, 688.0}}, label: 'Vertical scroll bar, 1 page', value: 0%
+                                        Other, {{384.0, 818.0}, {3.0, 7.0}}
+                            Other, {{0.0, 0.0}, {390.0, 781.0}}
+                              Other, {{0.0, 0.0}, {390.0, 781.0}}
+                Other, {{0.0, 698.0}, {390.0, 83.0}}
+                  Other, {{0.0, 0.0}, {390.0, 781.0}}
+                  Other, {{0.0, 698.0}, {390.0, 83.0}}
+              Button, {{0.0, 783.0}, {97.7, 61.0}}, identifier: 'Today', label: 'Today'
+              Button, {{97.7, 783.0}, {97.3, 61.0}}, identifier: 'Program', label: 'Program'
+              Button, {{195.0, 783.0}, {97.7, 61.0}}, identifier: 'Progress', label: 'Progress', Selected
+              Button, {{292.7, 783.0}, {97.3, 61.0}}, identifier: 'Library', label: 'Library'

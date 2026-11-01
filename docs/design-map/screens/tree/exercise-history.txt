@@ -1,0 +1,107 @@
+Element subtree:
+ →Application, pid: 59643, label: 'fitbod'
+    Window (Main), {{0.0, 0.0}, {390.0, 844.0}}
+      Other, {{0.0, 0.0}, {1.0, 1.0}}, identifier: 'debug.resetSignal', label: 'Reset signal', value: fresh
+      Other, {{0.0, 0.0}, {390.0, 844.0}}
+        Other, {{0.0, 0.0}, {390.0, 844.0}}
+          Other, {{0.0, 0.0}, {390.0, 844.0}}
+            Other, {{0.0, 0.0}, {390.0, 844.0}}
+              Other, {{0.0, 0.0}, {390.0, 781.0}}
+                Other, {{0.0, 0.0}, {390.0, 781.0}}
+                  Other, {{0.0, 0.0}, {390.0, 781.0}}
+                    Other, {{0.0, 0.0}, {390.0, 781.0}}
+                      Other, {{0.0, 0.0}, {390.0, 781.0}}
+                        Other, {{0.0, 0.0}, {390.0, 781.0}}
+                          Other, {{0.0, 0.0}, {390.0, 781.0}}
+                            Other, {{0.0, 0.0}, {390.0, 781.0}}
+                              Other, {{0.0, 0.0}, {390.0, 781.0}}
+                                Other, {{0.0, 0.0}, {390.0, 781.0}}
+                                  Other, {{0.0, 0.0}, {390.0, 781.0}}
+                                    ScrollView, {{0.0, 0.0}, {390.0, 781.0}}
+                                      Other, {{0.0, 101.0}, {390.0, 732.0}}
+                                        Other, {{0.0, 117.0}, {390.0, 703.3}}
+                                          StaticText, {{16.0, 117.0}, {334.3, 81.7}}, label: 'Barbell Bench Press - Medium Grip'
+                                          Other, {{16.0, 218.7}, {109.3, 41.7}}, label: 'Sessions · 30d', value: 4
+                                            StaticText, {{16.0, 218.7}, {109.3, 14.7}}, label: 'Sessions · 30d'
+                                            StaticText, {{16.0, 237.3}, {11.7, 23.0}}, label: '4'
+                                          Other, {{158.3, 218.7}, {54.7, 41.7}}, label: 'Tonnage', value: 7.0k
+                                            StaticText, {{158.3, 218.7}, {54.7, 14.7}}, label: 'Tonnage'
+                                            StaticText, {{158.3, 237.3}, {36.0, 23.0}}, label: '7.0k'
+                                          Other, {{282.7, 218.7}, {70.3, 41.7}}, label: 'PRs · 30d', value: 10
+                                            StaticText, {{282.7, 218.7}, {70.3, 14.7}}, label: 'PRs · 30d'
+                                            StaticText, {{282.7, 237.3}, {20.0, 23.0}}, label: '10'
+                                          ScrollView, {{0.0, 276.3}, {390.0, 44.0}}
+                                            Other, {{0.0, 276.3}, {531.0, 44.0}}
+                                              Button, {{0.0, 276.3}, {78.7, 44.0}}, label: 'ALL · 13', Selected
+                                              Button, {{79.7, 276.3}, {109.7, 44.0}}, label: 'STRENGTH · 6'
+                                              Button, {{190.3, 276.3}, {86.3, 44.0}}, label: 'HYPER · 7'
+                                              Button, {{277.7, 276.3}, {86.3, 44.0}}, label: 'POWER · 0'
+                                              Button, {{365.0, 276.3}, {86.3, 44.0}}, label: 'ENDUR · 0'
+                                              Button, {{452.3, 276.3}, {78.7, 44.0}}, label: 'TECH · 0'
+                                          StaticText, {{16.0, 332.3}, {195.0, 14.7}}, label: '13 SETS ACROSS 4 SESSIONS'
+                                          StaticText, {{16.0, 370.0}, {99.3, 23.0}}, label: 'SAT, OCT 24'
+                                          StaticText, {{122.6, 370.6}, {37.2, 22.2}}, label: 'STR'
+                                          StaticText, {{166.2, 370.6}, {44.8, 22.2}}, label: '★ PR'
+                                          StaticText, {{270.3, 370.0}, {103.7, 23.0}}, label: 'e1RM 120.3'
+                                          StaticText, {{16.0, 399.0}, {31.3, 17.3}}, label: 'TOP '
+                                          StaticText, {{47.3, 399.0}, {54.7, 17.3}}, label: '95×6 @8'
+                                          StaticText, {{102.0, 399.0}, {70.3, 17.3}}, label: ' · 3 sets'
+                                          StaticText, {{22.0, 425.3}, {97.3, 17.3}}, label: '107.5×2 @9.5'
+                                          StaticText, {{135.3, 425.3}, {57.0, 17.3}}, label: '95×6 @8'
+                                          StaticText, {{208.3, 425.3}, {57.0, 17.3}}, label: '90×5 @7'
+                                          StaticText, {{16.0, 470.7}, {95.7, 23.0}}, label: 'SAT, OCT 17'
+                                          StaticText, {{118.9, 471.2}, {37.2, 22.2}}, label: 'HYP'
+                                          StaticText, {{162.6, 471.2}, {44.8, 22.2}}, label: '★ PR'
+                                          StaticText, {{270.3, 470.7}, {103.7, 23.0}}, label: 'e1RM 113.3'
+                                          StaticText, {{16.0, 499.7}, {31.3, 17.3}}, label: 'TOP '
+                                          StaticText, {{47.3, 499.7}, {62.7, 17.3}}, label: '75×12 @9'
+                                          StaticText, {{110.0, 499.7}, {70.3, 17.3}}, label: ' · 3 sets'
+                                          StaticText, {{22.0, 526.0}, {57.0, 17.3}}, label: '85×8 @8'
+                                          StaticText, {{95.0, 526.0}, {65.0, 17.3}}, label: '80×10 @9'
+                                          StaticText, {{176.0, 526.0}, {65.0, 17.3}}, label: '75×12 @9'
+                                          StaticText, {{16.0, 571.3}, {97.3, 23.0}}, label: 'SAT, OCT 10'
+                                          StaticText, {{120.6, 571.9}, {37.2, 22.2}}, label: 'STR'
+                                          StaticText, {{164.2, 571.9}, {44.8, 22.2}}, label: '★ PR'
+                                          StaticText, {{270.3, 571.3}, {103.7, 23.0}}, label: 'e1RM 123.3'
+                                          StaticText, {{16.0, 600.3}, {31.3, 17.3}}, label: 'TOP '
+                                          StaticText, {{47.3, 600.3}, {39.0, 17.3}}, label: '100×5'
+                                          StaticText, {{86.3, 600.3}, {70.3, 17.3}}, label: ' · 3 sets'
+                                          StaticText, {{22.0, 626.7}, {65.0, 17.3}}, label: '105×3 @9'
+                                          StaticText, {{103.0, 626.7}, {81.0, 17.3}}, label: '102.5×4 @8'
+                                          StaticText, {{200.0, 626.7}, {40.7, 17.3}}, label: '100×5'
+                                          StaticText, {{16.0, 672.0}, {88.7, 23.0}}, label: 'SAT, OCT 3'
+                                          StaticText, {{111.9, 672.2}, {37.2, 22.2}}, label: 'HYP'
+                                          StaticText, {{155.6, 672.2}, {44.8, 22.2}}, label: '★ PR'
+                                          StaticText, {{270.3, 672.0}, {103.7, 23.0}}, label: 'e1RM 123.3'
+                                          StaticText, {{16.0, 701.0}, {31.3, 17.3}}, label: 'TOP '
+                                          StaticText, {{47.3, 701.0}, {70.3, 17.3}}, label: '80×8 @6.5'
+                                          StaticText, {{117.7, 701.0}, {70.3, 17.3}}, label: ' · 4 sets'
+                                          StaticText, {{22.0, 727.3}, {65.0, 17.3}}, label: '100×5 @8'
+                                          StaticText, {{103.0, 727.3}, {65.0, 17.3}}, label: '100×5 @8'
+                                          StaticText, {{184.0, 727.3}, {65.0, 17.3}}, label: '100×5 @8'
+                                          StaticText, {{265.0, 727.3}, {73.0, 17.3}}, label: '80×8 @6.5'
+                                          StaticText, {{16.0, 778.7}, {78.3, 14.7}}, label: 'TOP WEIGHT'
+                                          StaticText, {{16.0, 797.3}, {44.7, 23.0}}, label: '107.5'
+                                          StaticText, {{146.3, 778.7}, {62.7, 14.7}}, label: 'TOP REPS'
+                                          StaticText, {{146.3, 797.3}, {19.0, 23.0}}, label: '12'
+                                          StaticText, {{276.7, 778.7}, {47.0, 14.7}}, label: 'VOL PR'
+                                          StaticText, {{276.7, 797.3}, {37.7, 23.0}}, label: '2.4k'
+                                      Other, {{357.0, 101.0}, {30.0, 680.0}}, label: 'Vertical scroll bar, 2 pages', value: 0%
+                                        Other, {{384.0, 104.0}, {3.0, 632.0}}
+                                      Other, {{357.0, 101.0}, {30.0, 680.0}}, label: 'Vertical scroll bar, 2 pages', value: 0%
+                                        Other, {{384.0, 104.0}, {3.0, 632.0}}
+                                    Button, {{4.0, 47.0}, {44.0, 44.0}}, label: 'Back'
+                                    StaticText, {{166.5, 61.7}, {57.0, 14.7}}, label: 'History'
+                                    Button, {{297.0, 47.0}, {89.0, 44.0}}, label: 'PROGRESS'
+                            Other, {{0.0, 0.0}, {390.0, 781.0}}
+                              Other, {{0.0, 0.0}, {390.0, 781.0}}
+                Other, {{0.0, 698.0}, {390.0, 83.0}}
+                  Other, {{0.0, 0.0}, {390.0, 781.0}}
+                  Other, {{0.0, 698.0}, {390.0, 83.0}}
+              Button, {{0.0, 783.0}, {97.7, 61.0}}, identifier: 'Today', label: 'Today'
+              Button, {{97.7, 783.0}, {97.3, 61.0}}, identifier: 'Program', label: 'Program'
+              Button, {{195.0, 783.0}, {97.7, 61.0}}, identifier: 'Progress', label: 'Progress'
+              Button, {{292.7, 783.0}, {97.3, 61.0}}, identifier: 'Library', label: 'Library', Selected
+    Window, {{0.0, 0.0}, {390.0, 844.0}}
+      Other, {{0.0, 0.0}, {390.0, 844.0}}
+        Other, {{0.0, 0.0}, {390.0, 844.0}}

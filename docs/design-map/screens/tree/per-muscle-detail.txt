@@ -1,0 +1,57 @@
+Element subtree:
+ →Application, pid: 9898, label: 'fitbod'
+    Window (Main), {{0.0, 0.0}, {390.0, 844.0}}
+      Other, {{0.0, 0.0}, {1.0, 1.0}}, identifier: 'debug.resetSignal', label: 'Reset signal', value: fresh
+      Other, {{0.0, 0.0}, {390.0, 844.0}}
+        Other, {{0.0, 0.0}, {390.0, 844.0}}
+          Other, {{0.0, 0.0}, {390.0, 844.0}}
+            Other, {{0.0, 0.0}, {390.0, 844.0}}
+              Other, {{0.0, 0.0}, {390.0, 781.0}}
+                Other, {{0.0, 0.0}, {390.0, 781.0}}
+                  Other, {{0.0, 0.0}, {390.0, 781.0}}
+                    Other, {{0.0, 0.0}, {390.0, 781.0}}
+                      Other, {{0.0, 0.0}, {390.0, 781.0}}
+                        Other, {{0.0, 0.0}, {390.0, 781.0}}
+                          Other, {{0.0, 0.0}, {390.0, 781.0}}
+                            Other, {{0.0, 0.0}, {390.0, 781.0}}
+                              Other, {{0.0, 0.0}, {390.0, 781.0}}
+                                Other, {{0.0, 0.0}, {390.0, 781.0}}
+                                  Other, {{0.0, 0.0}, {390.0, 781.0}}
+                                    Button, {{4.0, 47.0}, {44.0, 44.0}}, label: 'Back'
+                                    StaticText, {{174.7, 61.7}, {40.7, 14.7}}, label: 'Chest'
+                                    ScrollView, {{0.0, 93.0}, {390.0, 688.0}}
+                                      Other, {{0.0, 93.0}, {390.0, 480.0}}
+                                        Other, {{0.0, 93.0}, {390.0, 479.3}}
+                                          StaticText, {{0.0, 93.0}, {390.0, 46.0}}, label: 'This Week'
+                                          StaticText, {{16.0, 151.0}, {53.0, 23.0}}, label: '9 sets'
+                                          StaticText, {{290.9, 151.6}, {83.8, 22.2}}, label: 'ADD A SET'
+                                          StaticText, {{16.0, 186.0}, {96.3, 12.0}}, label: '+9 vs last week'
+                                          StaticText, {{0.0, 212.0}, {390.0, 46.0}}, label: 'Contributing Exercises'
+                                          StaticText, {{16.0, 269.0}, {277.3, 18.7}}, label: 'Barbell Bench Press - Medium Grip'
+                                          StaticText, {{335.3, 272.3}, {38.7, 12.0}}, label: '4 sets'
+                                          StaticText, {{16.0, 310.7}, {185.0, 18.7}}, label: 'Incline Dumbbell Press'
+                                          StaticText, {{335.3, 314.0}, {38.7, 12.0}}, label: '3 sets'
+                                          StaticText, {{16.0, 352.3}, {185.0, 18.7}}, label: 'Barbell Shoulder Press'
+                                          StaticText, {{265.0, 355.7}, {109.0, 12.0}}, label: '2 sets (0 direct)'
+                                          StaticText, {{0.0, 385.0}, {390.0, 46.0}}, label: 'Frequency This Week'
+                                          StaticText, {{16.0, 447.0}, {171.7, 17.3}}, label: '1 session with ≥2 sets'
+                                          StaticText, {{0.0, 482.3}, {390.0, 46.0}}, label: 'Adjust Targets'
+                                          Button, {{0.0, 528.3}, {390.0, 44.0}}, label: 'Edit volume targets', value: Collapsed
+                                            StaticText, {{0.0, 528.3}, {390.0, 44.0}}, label: 'Edit volume targets'
+                                            StaticText, {{367.3, 543.0}, {6.7, 14.7}}, label: '▾'
+                                      Other, {{357.0, 93.0}, {30.0, 688.0}}, label: 'Vertical scroll bar, 1 page', value: 0%
+                                        Other, {{384.0, 818.0}, {3.0, 7.0}}
+                                      Other, {{357.0, 93.0}, {30.0, 688.0}}, label: 'Vertical scroll bar, 1 page', value: 0%
+                                        Other, {{384.0, 818.0}, {3.0, 7.0}}
+                            Other, {{0.0, 0.0}, {390.0, 781.0}}
+                              Other, {{0.0, 0.0}, {390.0, 781.0}}
+                Other, {{0.0, 698.0}, {390.0, 83.0}}
+                  Other, {{0.0, 0.0}, {390.0, 781.0}}
+                  Other, {{0.0, 698.0}, {390.0, 83.0}}
+              Button, {{0.0, 783.0}, {97.7, 61.0}}, identifier: 'Today', label: 'Today', Selected
+              Button, {{97.7, 783.0}, {97.3, 61.0}}, identifier: 'Program', label: 'Program'
+              Button, {{195.0, 783.0}, {97.7, 61.0}}, identifier: 'Progress', label: 'Progress'
+              Button, {{292.7, 783.0}, {97.3, 61.0}}, identifier: 'Library', label: 'Library'
+    Window, {{0.0, 0.0}, {390.0, 844.0}}
+      Other, {{0.0, 0.0}, {390.0, 844.0}}
+        Other, {{0.0, 0.0}, {390.0, 844.0}}

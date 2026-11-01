@@ -1,0 +1,116 @@
+Element subtree:
+ →Application, pid: 59643, label: 'fitbod'
+    Window (Main), {{0.0, 0.0}, {390.0, 844.0}}
+      Other, {{0.0, 0.0}, {1.0, 1.0}}, identifier: 'debug.resetSignal', label: 'Reset signal', value: fresh
+      Other, {{0.0, 0.0}, {390.0, 844.0}}
+        Other, {{0.0, 0.0}, {390.0, 844.0}}
+          Other, {{0.0, 0.0}, {390.0, 844.0}}
+            Other, {{0.0, 0.0}, {390.0, 844.0}}
+              Other, {{0.0, 0.0}, {390.0, 781.0}}
+                Other, {{0.0, 0.0}, {390.0, 781.0}}
+                  Other, {{0.0, 0.0}, {390.0, 781.0}}
+                    Other, {{0.0, 0.0}, {390.0, 781.0}}
+                      Other, {{0.0, 0.0}, {390.0, 781.0}}
+                        Other, {{0.0, 0.0}, {390.0, 781.0}}
+                          Other, {{0.0, 0.0}, {390.0, 781.0}}
+                            Other, {{0.0, 0.0}, {390.0, 781.0}}
+                              Other, {{0.0, 0.0}, {390.0, 781.0}}
+                                Other, {{0.0, 0.0}, {390.0, 781.0}}
+                                  Other, {{0.0, 0.0}, {390.0, 781.0}}
+                                    Button, {{4.0, 47.0}, {72.7, 44.0}}, label: 'BACK'
+                                    StaticText, {{162.5, 61.7}, {65.0, 14.7}}, label: 'Exercise'
+                                    Button, {{329.3, 47.0}, {56.7, 44.0}}, label: 'Copy'
+                                    ScrollView, {{0.0, 93.0}, {390.0, 688.0}}
+                                      Other, {{0.0, 93.0}, {390.0, 1958.0}}
+                                        StaticText, {{16.0, 109.0}, {299.0, 96.0}}, label: 'Barbell Bench Press - Medium Grip'
+                                        StaticText, {{15.2, 214.2}, {52.8, 22.2}}, label: 'Chest'
+                                        StaticText, {{72.6, 214.2}, {68.2, 22.2}}, label: 'Barbell'
+                                        StaticText, {{145.2, 214.2}, {76.2, 22.2}}, label: 'Compound'
+                                        StaticText, {{16.0, 267.7}, {152.3, 18.0}}, label: 'Recent performance'
+                                        StaticText, {{311.3, 269.3}, {62.7, 14.7}}, label: 'Best set'
+                                        StaticText, {{16.0, 309.7}, {358.0, 40.7}}, label: 'Sat, Oct 24, 3 working sets, 107.5 lb × 2'
+                                          StaticText, {{16.0, 315.0}, {92.7, 18.7}}, label: 'Sat, Oct 24'
+                                          StaticText, {{16.0, 335.7}, {106.7, 14.7}}, label: '3 WORKING SETS'
+                                          StaticText, {{290.0, 309.7}, {84.0, 26.7}}, label: '107.5 lb × 2'
+                                        StaticText, {{16.0, 371.3}, {358.0, 40.7}}, label: 'Sat, Oct 17, 3 working sets, 85 lb × 8'
+                                          StaticText, {{16.0, 376.7}, {92.7, 18.7}}, label: 'Sat, Oct 17'
+                                          StaticText, {{16.0, 397.3}, {106.7, 14.7}}, label: '3 WORKING SETS'
+                                          StaticText, {{311.7, 371.3}, {62.3, 26.7}}, label: '85 lb × 8'
+                                        StaticText, {{16.0, 433.0}, {358.0, 40.7}}, label: 'Sat, Oct 10, 3 working sets, 105 lb × 3'
+                                          StaticText, {{16.0, 438.3}, {92.7, 18.7}}, label: 'Sat, Oct 10'
+                                          StaticText, {{16.0, 459.0}, {106.7, 14.7}}, label: '3 WORKING SETS'
+                                          StaticText, {{302.7, 433.0}, {71.3, 26.7}}, label: '105 lb × 3'
+                                        StaticText, {{16.0, 494.7}, {358.0, 40.7}}, label: 'Sat, Oct 3, 4 working sets, 100 lb × 5'
+                                          StaticText, {{16.0, 500.0}, {84.3, 18.7}}, label: 'Sat, Oct 3'
+                                          StaticText, {{16.0, 520.7}, {106.7, 14.7}}, label: '4 WORKING SETS'
+                                          StaticText, {{302.7, 494.7}, {71.3, 26.7}}, label: '100 lb × 5'
+                                        Button, {{0.0, 546.3}, {390.0, 52.0}}, label: 'View all history, ›'
+                                          StaticText, {{16.0, 563.0}, {134.7, 18.7}}, label: 'View all history'
+                                          StaticText, {{365.3, 560.8}, {8.7, 23.0}}, label: '›'
+                                        Button, {{0.0, 598.3}, {390.0, 52.0}}, label: 'View progress chart, ›'
+                                          StaticText, {{16.0, 615.0}, {159.7, 18.7}}, label: 'View progress chart'
+                                          StaticText, {{365.3, 612.8}, {8.7, 23.0}}, label: '›'
+                                        StaticText, {{16.0, 666.3}, {63.3, 18.0}}, label: 'Muscles'
+                                        StaticText, {{311.3, 668.0}, {62.7, 14.7}}, label: 'Stimulus'
+                                        Other, {{16.0, 714.3}, {358.0, 28.7}}, label: 'Chest, primary, 100 percent'
+                                          StaticText, {{16.0, 714.3}, {42.0, 18.7}}, label: 'Chest'
+                                          StaticText, {{66.0, 717.7}, {45.0, 12.0}}, label: 'PRIMARY'
+                                          StaticText, {{340.3, 714.3}, {33.7, 18.7}}, label: '100%'
+                                        Other, {{16.0, 753.0}, {358.0, 28.7}}, label: 'Shoulders, secondary, 50 percent'
+                                          StaticText, {{16.0, 753.0}, {75.7, 18.7}}, label: 'Shoulders'
+                                          StaticText, {{348.7, 753.0}, {25.3, 18.7}}, label: '50%'
+                                        Other, {{16.0, 791.7}, {358.0, 28.7}}, label: 'Triceps, secondary, 50 percent'
+                                          StaticText, {{16.0, 791.7}, {59.0, 18.7}}, label: 'Triceps'
+                                          StaticText, {{348.7, 791.7}, {25.3, 18.7}}, label: '50%'
+                                        StaticText, {{0.0, 838.3}, {390.0, 46.0}}, label: 'How to'
+                                        StaticText, {{16.0, 900.3}, {358.0, 136.7}}, label: '01, Lie back on a flat bench. Using a medium width grip (a grip that creates a 90-degree angle in the middle of the movement between the forearms and the upper arms), lift the bar from the rack and hold it straight over you with your arms locked. This will be your starting position.'
+                                          StaticText, {{16.0, 902.0}, {15.7, 17.3}}, label: '01'
+                                          StaticText, {{52.0, 900.3}, {322.0, 136.7}}, label: 'Lie back on a flat bench. Using a medium width grip (a grip that creates a 90-degree angle in the middle of the movement between the forearms and the upper arms), lift the bar from the rack and hold it straight over you with your arms locked. This will be your starting position.'
+                                        StaticText, {{16.0, 1049.0}, {321.0, 58.7}}, label: '02, From the starting position, breathe in and begin coming down slowly until the bar touches your middle chest.'
+                                          StaticText, {{16.0, 1050.7}, {15.7, 17.3}}, label: '02'
+                                          StaticText, {{52.0, 1049.0}, {285.0, 58.7}}, label: 'From the starting position, breathe in and begin coming down slowly until the bar touches your middle chest.'
+                                        StaticText, {{16.0, 1119.7}, {354.7, 156.0}}, label: '03, After a brief pause, push the bar back to the starting position as you breathe out. Focus on pushing the bar using your chest muscles. Lock your arms and squeeze your chest in the contracted position at the top of the motion, hold for a second and then start coming down slowly again. Tip: Ideally, lowering the weight should take about twice as long as raising it.'
+                                          StaticText, {{16.0, 1121.3}, {15.7, 17.3}}, label: '03'
+                                          StaticText, {{52.0, 1119.7}, {318.7, 156.0}}, label: 'After a brief pause, push the bar back to the starting position as you breathe out. Focus on pushing the bar using your chest muscles. Lock your arms and squeeze your chest in the contracted position at the top of the motion, hold for a second and then start coming down slowly again. Tip: Ideally, lowering the weight should take about twice as long as raising it.'
+                                        StaticText, {{16.0, 1287.7}, {316.7, 39.0}}, label: '04, Repeat the movement for the prescribed amount of repetitions.'
+                                          StaticText, {{16.0, 1289.3}, {15.7, 17.3}}, label: '04'
+                                          StaticText, {{52.0, 1287.7}, {280.7, 39.0}}, label: 'Repeat the movement for the prescribed amount of repetitions.'
+                                        StaticText, {{16.0, 1338.7}, {322.3, 39.0}}, label: '05, When you are done, place the bar back in the rack.'
+                                          StaticText, {{16.0, 1340.3}, {15.7, 17.3}}, label: '05'
+                                          StaticText, {{52.0, 1338.7}, {286.3, 39.0}}, label: 'When you are done, place the bar back in the rack.'
+                                        StaticText, {{0.0, 1395.7}, {390.0, 46.0}}, label: 'PRESCRIPTION SETTINGS'
+                                        StaticText, {{16.0, 1472.3}, {140.7, 14.7}}, label: 'SMALLEST INCREMENT'
+                                        TextField, {{214.3, 1457.7}, {136.0, 44.0}}, label: 'Smallest Increment', placeholderValue: 'e.g. 2.5'
+                                        StaticText, {{358.3, 1471.0}, {15.7, 17.3}}, label: 'lb'
+                                        StaticText, {{16.0, 1507.7}, {281.0, 34.3}}, label: 'Weight advances by this amount each progression step.'
+                                        StaticText, {{16.0, 1574.7}, {148.3, 14.7}}, label: 'BAR WEIGHT OVERRIDE'
+                                        TextField, {{214.3, 1560.0}, {136.0, 44.0}}, label: 'Bar Weight Override', placeholderValue: 'Default'
+                                        StaticText, {{358.3, 1573.3}, {15.7, 17.3}}, label: 'lb'
+                                        StaticText, {{16.0, 1610.0}, {343.3, 34.3}}, label: 'Use for specialty bars (safety squat, Swiss bar, women's bar).'
+                                        StaticText, {{16.0, 1662.3}, {86.0, 14.7}}, label: 'WEIGHT UNIT'
+                                        Button, {{16.0, 1685.0}, {121.3, 44.0}}, label: 'WEIGHT UNIT: SYSTEM DEFAULT', Selected
+                                        Button, {{143.3, 1685.0}, {27.7, 44.0}}, label: 'WEIGHT UNIT: KG'
+                                        Button, {{177.0, 1685.0}, {27.7, 44.0}}, label: 'WEIGHT UNIT: LB'
+                                        StaticText, {{16.0, 1737.0}, {343.3, 34.3}}, label: 'Overrides the global unit for this exercise only. History stored in canonical unit.'
+                                        StaticText, {{16.0, 1803.3}, {134.7, 18.0}}, label: 'Plateau Detection'
+                                        StaticText, {{264.7, 1805.0}, {109.3, 14.7}}, label: 'Using defaults'
+                                        Switch, {{16.0, 1847.3}, {358.0, 44.0}}, label: 'Override global settings', value: 0
+                                        StaticText, {{16.0, 1903.3}, {327.7, 17.3}}, label: 'Global defaults: 4 sessions, 2% tolerance.'
+                                        Button, {{16.0, 1948.7}, {358.0, 44.0}}, label: 'Copy as Custom Exercise'
+                                        StaticText, {{16.0, 2000.7}, {343.3, 34.3}}, label: 'Built-in exercises are read-only. A copy is yours to rename and re-target.'
+                                      Other, {{357.0, 93.0}, {30.0, 688.0}}, label: 'Vertical scroll bar, 3 pages', value: 0%
+                                        Other, {{384.0, 818.0}, {3.0, 7.0}}
+                                      Other, {{357.0, 93.0}, {30.0, 688.0}}, label: 'Vertical scroll bar, 3 pages', value: 0%
+                                        Other, {{384.0, 818.0}, {3.0, 7.0}}
+                            Other, {{0.0, 0.0}, {390.0, 781.0}}
+                              Other, {{0.0, 0.0}, {390.0, 781.0}}
+                Other, {{0.0, 698.0}, {390.0, 83.0}}
+                  Other, {{0.0, 0.0}, {390.0, 781.0}}
+                  Other, {{0.0, 698.0}, {390.0, 83.0}}
+              Button, {{0.0, 783.0}, {97.7, 61.0}}, identifier: 'Today', label: 'Today'
+              Button, {{97.7, 783.0}, {97.3, 61.0}}, identifier: 'Program', label: 'Program'
+              Button, {{195.0, 783.0}, {97.7, 61.0}}, identifier: 'Progress', label: 'Progress'
+              Button, {{292.7, 783.0}, {97.3, 61.0}}, identifier: 'Library', label: 'Library', Selected
+    Window, {{0.0, 0.0}, {390.0, 844.0}}
+      Other, {{0.0, 0.0}, {390.0, 844.0}}
+        Other, {{0.0, 0.0}, {390.0, 844.0}}

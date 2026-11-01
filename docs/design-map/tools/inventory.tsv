@@ -1,5 +1,5 @@
 id	kind	tab	view	presents_from
-preparing-library	screen	none	fitbod/App/RootView.swift:151	x_launch
+preparing-library	screen	none	fitbod/App/RootView.swift:151	x-launch
 today	screen	today	fitbod/Views/TodayView.swift:38
 settings	sheet	today	fitbod/Settings/SettingsView.swift:43	today
 weekly-recap	sheet	today	fitbod/Fatigue/WeeklyRecapSheet.swift:59	today
@@ -13,6 +13,7 @@ dialog-workout-in-progress	alert	[today, program]	fitbod/Views/TodayView.swift:3
 dialog-couldnt-start-workout	alert	[today, program]	fitbod/Views/TodayView.swift:356	today, session-template-detail
 dialog-discard-workout-slab	alert	today	fitbod/Views/ResumeWorkoutSlab.swift:153	today
 logger	screen	[today, program]	fitbod/Sessions/SessionLoggerView.swift:53	today, program, session-template-detail
+notification-permission	system	[today, program]	fitbod/Sessions/RestTimer/RestTimerNotificationScheduler.swift:87	logger
 dialog-workout-menu	dialog	[today, program]	fitbod/Sessions/SessionLoggerView.swift:254	logger
 dialog-finish-workout	dialog	[today, program]	fitbod/Sessions/SessionLoggerView.swift:155	logger, dialog-workout-menu
 dialog-discard-workout	dialog	[today, program]	fitbod/Sessions/SessionLoggerView.swift:173	dialog-workout-menu

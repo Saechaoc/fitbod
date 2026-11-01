@@ -62,19 +62,23 @@ The walks W01 to W16 follow the state matrix in [plan.md](plan.md#state-matrix-s
 | W16 blocks | none | the blocks the walk builds |
 
 Each seed's own header in `fitbod/App/` describes it in full.
+W03 runs as three tests.
+The third, `testW03cWorkoutInProgress`, uses the W09 launch for the Workout in progress alert and the resume after a relaunch, because the demo's Push A belongs to no routine and no screen offers to start it a second time.
 
 ## States not captured
 
 These states need data that no seed creates and that no short walk through the app reaches.
-The list is confirmed after the capture runs.
+The iPhone 17e runs in light mode confirmed this list on 2026-10-31.
 
+- The "Preparing library…" splash, which never reaches the screen.
+  A screen recording of a launch on a reset store shows the white launch screen and then Today, with no splash frame between them.
 - The deload advisory banner on Today and the Fatigue Signals sheet, which need three finished workouts with a fatigue signal.
 - The stalled chips DROP INTENSITY, TRY VARIATION and CONSIDER DELOAD, because the stalled seed always suggests ADD VOLUME.
 - The ALL HISTORY expansion on Program, which needs four finished blocks.
 - A block review with e1RM changes.
 - A finished block whose archive cannot be read.
 - The state shown when a seed fails.
-- The restore success and error alerts, unless a backup saved through Save to Files can be picked again.
+- The restore errors other than "Finish your session first", such as an unreadable file, because every backup the tour can make is a good one.
 - A session with no exercises, because a session cannot be saved without one.
 - The rest timer's Live Activity.
 

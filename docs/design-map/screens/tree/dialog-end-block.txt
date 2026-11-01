@@ -1,0 +1,125 @@
+Element subtree:
+ →Application, pid: 59154, label: 'fitbod'
+    Window (Main), {{0.0, 0.0}, {390.0, 844.0}}
+      Other, {{0.0, 0.0}, {1.0, 1.0}}, identifier: 'debug.resetSignal', label: 'Reset signal', value: fresh
+      Other, {{0.0, 0.0}, {390.0, 844.0}}
+        Other, {{0.0, 0.0}, {390.0, 844.0}}
+          Other, {{0.0, 0.0}, {390.0, 844.0}}
+            Other, {{0.0, 0.0}, {390.0, 844.0}}
+              Other, {{0.0, 0.0}, {390.0, 781.0}}
+                Other, {{0.0, 0.0}, {390.0, 781.0}}
+                  Other, {{0.0, 0.0}, {390.0, 781.0}}
+                    Other, {{0.0, 0.0}, {390.0, 781.0}}
+                      Other, {{0.0, 0.0}, {390.0, 781.0}}
+                        Other, {{0.0, 0.0}, {390.0, 781.0}}
+                          Other, {{0.0, 0.0}, {390.0, 781.0}}
+                            Other, {{0.0, 0.0}, {390.0, 781.0}}
+                              Other, {{0.0, 0.0}, {390.0, 781.0}}
+                                Other, {{0.0, 0.0}, {390.0, 781.0}}
+                                  Other, {{0.0, 0.0}, {390.0, 781.0}}
+                                    Button, {{4.0, 47.0}, {72.7, 44.0}}, label: 'BACK'
+                                    StaticText, {{155.2, 54.3}, {79.7, 29.3}}, label: 'Block · Live Block'
+                                    Button, {{329.3, 47.0}, {56.7, 44.0}}, label: 'EDIT'
+                                    ScrollView, {{0.0, 93.0}, {390.0, 576.0}}
+                                      Other, {{0.0, 93.0}, {390.0, 548.7}}
+                                        StaticText, {{0.0, 93.0}, {390.0, 208.7}}, label: 'Active block #1: Live Block, Accumulation week, week 1 of 4, volume hold, intensity 100%, 28 days remaining.'
+                                          StaticText, {{16.0, 107.0}, {154.0, 14.7}}, label: '● ACTIVE BLOCK · #1'
+                                          StaticText, {{236.0, 107.0}, {138.0, 14.7}}, label: '28 DAYS REMAINING'
+                                          StaticText, {{16.0, 127.7}, {358.0, 135.3}}, label: 'Accumulation week'
+                                          StaticText, {{16.0, 273.0}, {47.0, 14.7}}, label: 'W1 / 4'
+                                          StaticText, {{75.0, 273.0}, {6.7, 14.7}}, label: '·'
+                                          StaticText, {{93.7, 273.0}, {62.7, 14.7}}, label: 'VOL HOLD'
+                                          StaticText, {{168.3, 273.0}, {6.7, 14.7}}, label: '·'
+                                          StaticText, {{187.0, 273.0}, {62.7, 14.7}}, label: 'INT 100%'
+                                        StaticText, {{134.0, 313.7}, {89.3, 14.7}}, label: 'WEEK 1 OF 4'
+                                        StaticText, {{341.3, 313.7}, {32.7, 14.7}}, label: 'W2 ›'
+                                        Other, {{15.2, 337.6}, {359.5, 42.2}}
+                                          Other, {{15.2, 337.6}, {49.2, 42.2}}, label: 'Monday, rest day, rest'
+                                            StaticText, {{35.9, 344.3}, {8.0, 14.7}}, label: 'M'
+                                            StaticText, {{28.0, 361.0}, {23.7, 12.0}}, label: 'REST'
+                                          Other, {{66.9, 337.6}, {49.2, 42.2}}, label: 'Tuesday, rest day, rest'
+                                            StaticText, {{87.6, 344.3}, {8.0, 14.7}}, label: 'T'
+                                            StaticText, {{79.7, 361.0}, {23.7, 12.0}}, label: 'REST'
+                                          Other, {{118.6, 337.6}, {49.2, 42.2}}, label: 'Wednesday, rest day, rest'
+                                            StaticText, {{139.3, 344.3}, {8.0, 14.7}}, label: 'W'
+                                            StaticText, {{131.5, 361.0}, {23.7, 12.0}}, label: 'REST'
+                                          Other, {{170.2, 337.6}, {49.5, 42.2}}, label: 'Thursday, rest day, rest'
+                                            StaticText, {{191.0, 344.3}, {8.0, 14.7}}, label: 'T'
+                                            StaticText, {{183.2, 361.0}, {23.7, 12.0}}, label: 'REST'
+                                          Other, {{222.2, 337.6}, {49.2, 42.2}}, label: 'Friday, rest day, rest'
+                                            StaticText, {{242.7, 344.3}, {8.0, 14.7}}, label: 'F'
+                                            StaticText, {{234.9, 361.0}, {23.7, 12.0}}, label: 'REST'
+                                          Other, {{273.9, 337.6}, {49.2, 42.2}}, label: 'Saturday, Accumulation, today'
+                                            StaticText, {{294.4, 344.3}, {8.0, 14.7}}, label: 'S'
+                                            StaticText, {{283.6, 361.0}, {29.7, 12.0}}, label: 'TODAY'
+                                          Other, {{325.6, 337.6}, {49.2, 42.2}}, label: 'Sunday, Accumulation, next'
+                                            StaticText, {{346.1, 344.3}, {8.0, 14.7}}, label: 'S'
+                                            StaticText, {{338.3, 361.0}, {23.7, 12.0}}, label: 'NEXT'
+                                        StaticText, {{16.0, 389.3}, {125.7, 12.0}}, label: '0 / 1 SESSIONS DONE'
+                                        StaticText, {{334.3, 389.3}, {39.7, 12.0}}, label: '1 LEFT'
+                                        StaticText, {{0.0, 413.3}, {390.0, 46.0}}, label: 'Scheduling'
+                                        Button, {{15.2, 470.6}, {176.5, 28.2}}, label: 'ROTATION SCHEDULING', Selected
+                                        Button, {{198.5, 470.8}, {176.0, 27.7}}, label: 'FIXED WEEKLY SCHEDULING'
+                                        StaticText, {{16.0, 526.0}, {138.7, 18.0}}, label: 'Phase progression'
+                                        StaticText, {{288.0, 527.7}, {86.0, 14.7}}, label: 'WHAT'S NEXT'
+                                        StaticText, {{16.0, 569.0}, {38.0, 14.7}}, label: 'W1–W4'
+                                        StaticText, {{64.0, 570.0}, {101.0, 18.7}}, label: 'Accumulation'
+                                        StaticText, {{170.2, 568.2}, {37.2, 22.2}}, label: 'NOW'
+                                        StaticText, {{64.0, 593.7}, {85.3, 14.7}}, label: 'BUILD VOLUME'
+                                        StaticText, {{64.0, 612.3}, {187.3, 17.3}}, label: 'In progress · 0 sessions'
+                                      Other, {{357.0, 93.0}, {30.0, 576.0}}, label: 'Vertical scroll bar, 1 page', value: 0%
+                                        Other, {{384.0, 706.0}, {3.0, 7.0}}
+                                      Other, {{357.0, 93.0}, {30.0, 576.0}}, label: 'Vertical scroll bar, 1 page', value: 0%
+                                        Other, {{384.0, 706.0}, {3.0, 7.0}}
+                                    Button, {{0.0, 669.0}, {390.0, 44.0}}, label: 'EDIT BLOCK ▸'
+                                    Button, {{0.0, 713.0}, {390.0, 44.0}}, label: 'END BLOCK'
+                            Other, {{0.0, 0.0}, {390.0, 781.0}}
+                              Other, {{0.0, 0.0}, {390.0, 781.0}}
+                Other, {{0.0, 698.0}, {390.0, 83.0}}
+                  Other, {{0.0, 0.0}, {390.0, 781.0}}
+                  Other, {{0.0, 698.0}, {390.0, 83.0}}
+              Button, {{0.0, 783.0}, {97.7, 61.0}}, identifier: 'Today', label: 'Today'
+              Button, {{97.7, 783.0}, {97.3, 61.0}}, identifier: 'Program', label: 'Program', Selected
+              Button, {{195.0, 783.0}, {97.7, 61.0}}, identifier: 'Progress', label: 'Progress'
+              Button, {{292.7, 783.0}, {97.3, 61.0}}, identifier: 'Library', label: 'Library'
+      Other, {{0.0, 0.0}, {390.0, 844.0}}
+        Other, {{0.0, 0.0}, {390.0, 844.0}}
+        Other, {{0.0, 0.0}, {390.0, 844.0}}
+        Alert, {{35.0, 342.3}, {320.0, 172.3}}, label: 'End block?'
+          Other, {{35.0, 342.3}, {320.0, 172.3}}
+            Other, {{35.0, 342.3}, {320.0, 172.3}}
+              Other, {{35.0, 342.3}, {320.0, 172.3}}
+              Other, {{35.0, 342.3}, {320.0, 172.3}}
+                ScrollView, {{35.0, 342.3}, {320.0, 92.3}}
+                  Other, {{35.0, 342.3}, {320.0, 92.3}}
+                    StaticText, {{65.0, 364.3}, {260.0, 20.3}}, label: 'End block?'
+                    StaticText, {{65.0, 392.3}, {260.0, 38.0}}, label: 'End this block now? You can review it from the Routines tab.'
+                  Other, {{322.0, 342.3}, {30.0, 92.3}}, label: 'Vertical scroll bar, 1 page', value: 0%
+                    Other, {{349.0, 303.3}, {3.0, 36.0}}
+                  Other, {{35.0, 401.7}, {320.0, 30.0}}, label: 'Horizontal scroll bar, 1 page', value: 0%
+                    Other, {{-4.0, 428.7}, {36.0, 3.0}}
+                  Other, {{322.0, 342.3}, {30.0, 92.3}}, label: 'Vertical scroll bar, 1 page', value: 0%
+                    Other, {{349.0, 303.3}, {3.0, 36.0}}
+                  Other, {{35.0, 401.7}, {320.0, 30.0}}, label: 'Horizontal scroll bar, 1 page', value: 0%
+                    Other, {{-4.0, 428.7}, {36.0, 3.0}}
+                ScrollView, {{35.0, 434.7}, {320.0, 80.0}}
+                  Other, {{35.0, 434.7}, {320.0, 80.0}}
+                    Other, {{51.0, 450.7}, {288.0, 48.0}}
+                      Button, {{51.0, 450.7}, {140.0, 48.0}}, label: 'Cancel'
+                      Button, {{199.0, 450.7}, {140.0, 48.0}}, label: 'End Block'
+                  Other, {{322.0, 434.7}, {30.0, 80.0}}, label: 'Vertical scroll bar, 1 page', value: 0%
+                    Other, {{349.0, 524.7}, {3.0, 7.0}}
+                  Other, {{35.0, 481.7}, {320.0, 30.0}}, label: 'Horizontal scroll bar, 1 page', value: 0%
+                    Other, {{125.0, 508.7}, {7.0, 3.0}}
+                  Other, {{322.0, 434.7}, {30.0, 80.0}}, label: 'Vertical scroll bar, 1 page', value: 0%
+                    Other, {{349.0, 524.7}, {3.0, 7.0}}
+                  Other, {{35.0, 481.7}, {320.0, 30.0}}, label: 'Horizontal scroll bar, 1 page', value: 0%
+                    Other, {{125.0, 508.7}, {7.0, 3.0}}
+          Other, {{35.0, 342.3}, {320.0, 172.3}}
+            Other, {{35.0, 342.3}, {320.0, 172.3}}
+              Other, {{35.0, 342.3}, {320.0, 172.3}}
+                Other, {{35.0, 342.3}, {320.0, 172.3}}
+                  Other, {{35.0, 342.3}, {320.0, 172.3}}
+                    Other, {{35.0, 342.3}, {390.0, 844.0}}
+                Other, {{35.0, 342.3}, {320.0, 172.3}}
+                  Other, {{35.0, 342.3}, {390.0, 844.0}}

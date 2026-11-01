@@ -1,0 +1,89 @@
+Element subtree:
+ →Application, pid: 59408, label: 'fitbod'
+    Window (Main), {{0.0, 0.0}, {390.0, 844.0}}
+      Other, {{0.0, 0.0}, {1.0, 1.0}}, identifier: 'debug.resetSignal', label: 'Reset signal', value: fresh
+      Other, {{0.0, 0.0}, {390.0, 844.0}}
+        Other, {{0.0, 0.0}, {390.0, 844.0}}
+          Other, {{-390.0, -844.0}, {1170.0, 2532.0}}, identifier: 'PopoverDismissRegion', label: 'dismiss popup'
+          Other, {{0.0, 0.0}, {390.0, 844.0}}
+            Other, {{0.0, 0.0}, {390.0, 844.0}}
+              Other, {{0.0, 0.0}, {390.0, 781.0}}
+                Other, {{0.0, 0.0}, {390.0, 781.0}}
+                  Other, {{0.0, 0.0}, {390.0, 781.0}}
+                    Other, {{0.0, 0.0}, {390.0, 781.0}}
+                      Other, {{0.0, 0.0}, {390.0, 781.0}}
+                        Other, {{0.0, 0.0}, {390.0, 781.0}}
+                          Other, {{0.0, 0.0}, {390.0, 781.0}}
+                            Other, {{0.0, 0.0}, {390.0, 781.0}}
+                              Other, {{0.0, 0.0}, {390.0, 781.0}}
+                                Other, {{0.0, 0.0}, {390.0, 781.0}}
+                                  Other, {{0.0, 0.0}, {390.0, 781.0}}
+                                    Button, {{4.0, 47.0}, {72.7, 44.0}}, label: 'BACK'
+                                    StaticText, {{147.0, 54.3}, {96.0, 29.3}}, label: 'Block · Summer Block'
+                                    Button, {{329.3, 47.0}, {56.7, 44.0}}, label: 'EDIT'
+                                    ScrollView, {{0.0, 93.0}, {390.0, 620.0}}
+                                      Other, {{0.0, 93.0}, {390.0, 713.0}}
+                                        StaticText, {{0.0, 93.0}, {390.0, 216.3}}, label: 'Ready block #2: Summer Block, starts Nov 1, 2026, 4 weeks: Accumulation 3 weeks, Deload 1 week.'
+                                          StaticText, {{16.0, 107.0}, {146.0, 14.7}}, label: '● READY BLOCK · #2'
+                                          StaticText, {{228.0, 107.0}, {146.0, 14.7}}, label: 'STARTS Nov 1, 2026'
+                                          StaticText, {{16.0, 127.7}, {233.0, 143.0}}, label: 'Summer Block'
+                                          StaticText, {{16.0, 280.7}, {218.7, 14.7}}, label: '4 WEEKS · ACCUM 3 · DELOAD 1'
+                                        StaticText, {{0.0, 309.3}, {390.0, 46.0}}, label: 'Routine'
+                                        StaticText, {{16.0, 367.3}, {117.7, 18.7}}, label: 'States Routine'
+                                        Button, {{327.0, 369.3}, {47.0, 14.7}}, label: 'SWAP ▸'
+                                        StaticText, {{0.0, 400.0}, {390.0, 46.0}}, label: 'Scheduling'
+                                        Button, {{15.5, 457.5}, {176.0, 27.7}}, label: 'ROTATION SCHEDULING'
+                                        Button, {{198.2, 457.2}, {176.5, 28.2}}, label: 'FIXED WEEKLY SCHEDULING', Selected
+                                        StaticText, {{0.0, 498.7}, {390.0, 46.0}}, label: 'Training days'
+                                        Other, {{15.2, 551.9}, {359.2, 29.5}}
+                                          Switch, {{15.2, 551.9}, {49.2, 29.5}}, label: 'Monday', value: ON
+                                          Switch, {{67.2, 552.2}, {48.7, 29.0}}, label: 'Tuesday', value: OFF
+                                          Switch, {{118.8, 552.2}, {48.7, 29.0}}, label: 'Wednesday', value: OFF
+                                          Switch, {{170.2, 551.9}, {49.5, 29.5}}, label: 'Thursday', value: ON
+                                          Switch, {{222.5, 552.2}, {48.7, 29.0}}, label: 'Friday', value: OFF
+                                          Switch, {{274.2, 552.2}, {48.7, 29.0}}, label: 'Saturday', value: OFF
+                                          Switch, {{325.8, 552.2}, {48.7, 29.0}}, label: 'Sunday', value: OFF
+                                        StaticText, {{16.0, 608.7}, {138.7, 18.0}}, label: 'Phase progression'
+                                        StaticText, {{288.0, 610.3}, {86.0, 14.7}}, label: 'WHAT'S NEXT'
+                                        StaticText, {{16.0, 651.7}, {38.0, 14.7}}, label: 'W1–W3'
+                                        StaticText, {{64.0, 651.7}, {101.0, 18.7}}, label: 'Accumulation'
+                                        StaticText, {{64.0, 674.3}, {85.3, 14.7}}, label: 'BUILD VOLUME'
+                                        StaticText, {{64.0, 693.0}, {54.7, 17.3}}, label: '3 weeks'
+                                        StaticText, {{16.0, 733.3}, {15.7, 14.7}}, label: 'W4'
+                                        StaticText, {{64.0, 734.3}, {50.7, 18.7}}, label: 'Deload'
+                                        StaticText, {{119.9, 732.6}, {60.5, 22.2}}, label: 'DELOAD'
+                                        StaticText, {{64.0, 758.0}, {128.0, 14.7}}, label: 'RECOVER · −50% VOL'
+                                        StaticText, {{64.0, 776.7}, {47.0, 17.3}}, label: '1 week'
+                                      Other, {{357.0, 93.0}, {30.0, 620.0}}, label: 'Vertical scroll bar, 2 pages', value: 0%
+                                        Other, {{384.0, 96.0}, {3.0, 534.0}}
+                                      Other, {{357.0, 93.0}, {30.0, 620.0}}, label: 'Vertical scroll bar, 2 pages', value: 0%
+                                        Other, {{384.0, 96.0}, {3.0, 534.0}}
+                                    Button, {{0.0, 713.0}, {390.0, 44.0}}, label: 'START BLOCK ▸'
+                            Other, {{0.0, 0.0}, {390.0, 781.0}}
+                              Other, {{0.0, 0.0}, {390.0, 781.0}}
+                Other, {{0.0, 698.0}, {390.0, 83.0}}
+                  Other, {{0.0, 0.0}, {390.0, 781.0}}
+                  Other, {{0.0, 698.0}, {390.0, 83.0}}
+              Button, {{0.0, 783.0}, {97.7, 61.0}}, identifier: 'Today', label: 'Today'
+              Button, {{97.7, 783.0}, {97.3, 61.0}}, identifier: 'Program', label: 'Program', Selected
+              Button, {{195.0, 783.0}, {97.7, 61.0}}, identifier: 'Progress', label: 'Progress'
+              Button, {{292.7, 783.0}, {97.3, 61.0}}, identifier: 'Library', label: 'Library'
+      Other, {{0.0, 0.0}, {390.0, 844.0}}
+        Other, {{-390.0, -844.0}, {1170.0, 2532.0}}, identifier: 'PopoverDismissRegion', label: 'dismiss popup'
+        Other, {{8.0, 510.6}, {374.0, 325.4}}
+          Other, {{8.0, 510.6}, {374.0, 325.4}}
+            Other, {{8.0, 510.6}, {374.0, 325.4}}
+              Other, {{8.0, 510.6}, {374.0, 325.4}}
+                Other, {{8.0, 510.6}, {374.0, 325.4}}
+                  StaticText, {{31.0, 558.5}, {103.9, 22.1}}, label: 'Start Block?'
+                  StaticText, {{31.0, 599.8}, {291.8, 32.9}}, label: 'Ends Spring Block — its config freezes to history.'
+                  Button, {{31.0, 651.9}, {328.0, 42.2}}, label: 'Confirm'
+                  Button, {{31.0, 713.3}, {328.0, 42.2}}, label: 'Cancel'
+          Other, {{8.0, 510.6}, {374.0, 325.4}}
+            Other, {{8.0, 510.6}, {374.0, 325.4}}
+              Other, {{8.0, 510.6}, {374.0, 325.4}}
+                Other, {{8.0, 510.6}, {374.0, 325.4}}
+                  Other, {{8.0, 510.6}, {374.0, 325.4}}
+                    Other, {{8.0, 510.6}, {374.0, 325.4}}
+                Other, {{8.0, 510.6}, {374.0, 325.4}}
+                  Other, {{8.0, 510.6}, {374.0, 325.4}}

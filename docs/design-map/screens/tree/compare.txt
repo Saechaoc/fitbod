@@ -1,0 +1,52 @@
+Element subtree:
+ →Application, pid: 62469, label: 'fitbod'
+    Window (Main), {{0.0, 0.0}, {390.0, 844.0}}
+      Other, {{0.0, 0.0}, {1.0, 1.0}}, identifier: 'debug.resetSignal', label: 'Reset signal', value: fresh
+      Other, {{0.0, 0.0}, {390.0, 844.0}}
+        Other, {{0.0, 0.0}, {390.0, 844.0}}
+          Other, {{0.0, 0.0}, {390.0, 844.0}}
+            Other, {{0.0, 0.0}, {390.0, 844.0}}
+              Other, {{0.0, 0.0}, {390.0, 781.0}}
+                Other, {{0.0, 0.0}, {390.0, 781.0}}
+                  Other, {{0.0, 0.0}, {390.0, 781.0}}
+                    Other, {{0.0, 0.0}, {390.0, 781.0}}
+                      Other, {{0.0, 0.0}, {390.0, 781.0}}
+                        Other, {{0.0, 0.0}, {390.0, 781.0}}
+                          Other, {{0.0, 0.0}, {390.0, 781.0}}
+                            Other, {{0.0, 0.0}, {390.0, 781.0}}
+                              Other, {{0.0, 0.0}, {390.0, 781.0}}
+                                Other, {{0.0, 0.0}, {390.0, 781.0}}
+                                  Other, {{0.0, 0.0}, {390.0, 781.0}}
+                                    Button, {{4.0, 47.0}, {72.7, 44.0}}, label: 'Back'
+                                    StaticText, {{142.3, 54.3}, {105.3, 29.3}}, label: 'This week vs last week'
+                                    StaticText, {{16.0, 105.0}, {39.7, 12.0}}, label: 'OCT 24'
+                                    StaticText, {{191.7, 105.0}, {6.7, 12.0}}, label: 'Δ'
+                                    StaticText, {{254.7, 105.0}, {39.7, 12.0}}, label: 'OCT 10'
+                                    ScrollView, {{0.0, 131.0}, {390.0, 650.0}}
+                                      Other, {{0.0, 131.0}, {390.0, 220.0}}
+                                        Other, {{16.0, 143.0}, {298.7, 196.0}}
+                                          StaticText, {{16.0, 143.0}, {114.0, 55.7}}, label: 'Barbell Bench Press - Medium Grip'
+                                          StaticText, {{16.0, 200.7}, {70.3, 17.3}}, label: '107.5 × 2'
+                                          StaticText, {{166.5, 144.0}, {57.0, 23.0}}, label: '+7.5 lb'
+                                          StaticText, {{162.5, 169.0}, {65.0, 23.0}}, label: '−3 reps'
+                                          StaticText, {{141.5, 194.0}, {107.0, 23.0}}, label: '−1.9 e1RM lb'
+                                          StaticText, {{260.0, 171.8}, {54.7, 17.3}}, label: '100 × 5'
+                                          StaticText, {{16.0, 272.0}, {109.3, 18.7}}, label: 'Barbell Squat'
+                                          StaticText, {{16.0, 292.7}, {54.7, 17.3}}, label: '160 × 3'
+                                          StaticText, {{169.0, 243.0}, {52.0, 23.0}}, label: '+10 lb'
+                                          StaticText, {{187.0, 268.0}, {16.0, 23.0}}, label: 'No change in reps'
+                                          StaticText, {{161.7, 293.0}, {66.7, 46.0}}, label: '+10.6 e1RM lb'
+                                          StaticText, {{260.0, 282.3}, {54.7, 17.3}}, label: '150 × 3'
+                                      Other, {{357.0, 131.0}, {30.0, 650.0}}, label: 'Vertical scroll bar, 1 page', value: 0%
+                                        Other, {{384.0, 771.0}, {3.0, 7.0}}
+                                      Other, {{357.0, 131.0}, {30.0, 650.0}}, label: 'Vertical scroll bar, 1 page', value: 0%
+                                        Other, {{384.0, 771.0}, {3.0, 7.0}}
+                            Other, {{0.0, 0.0}, {390.0, 781.0}}
+                              Other, {{0.0, 0.0}, {390.0, 781.0}}
+                Other, {{0.0, 698.0}, {390.0, 83.0}}
+                  Other, {{0.0, 0.0}, {390.0, 781.0}}
+                  Other, {{0.0, 698.0}, {390.0, 83.0}}
+              Button, {{0.0, 783.0}, {97.7, 61.0}}, identifier: 'Today', label: 'Today'
+              Button, {{97.7, 783.0}, {97.3, 61.0}}, identifier: 'Program', label: 'Program'
+              Button, {{195.0, 783.0}, {97.7, 61.0}}, identifier: 'Progress', label: 'Progress', Selected
+              Button, {{292.7, 783.0}, {97.3, 61.0}}, identifier: 'Library', label: 'Library'

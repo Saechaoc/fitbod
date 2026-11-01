@@ -1,0 +1,45 @@
+Element subtree:
+ →Application, pid: 10316, label: 'fitbod'
+    Window (Main), {{0.0, 0.0}, {390.0, 844.0}}
+      Other, {{0.0, 0.0}, {1.0, 1.0}}, identifier: 'debug.resetSignal', label: 'Reset signal', value: fresh
+      Other, {{0.0, 0.0}, {390.0, 844.0}}
+        Other, {{0.0, 0.0}, {390.0, 844.0}}
+          Other, {{0.0, 0.0}, {390.0, 844.0}}
+            Other, {{0.0, 0.0}, {390.0, 844.0}}
+              Other, {{0.0, 0.0}, {390.0, 781.0}}
+                Other, {{0.0, 0.0}, {390.0, 781.0}}
+                  Other, {{0.0, 0.0}, {390.0, 781.0}}
+                    Other, {{0.0, 0.0}, {390.0, 781.0}}
+                      Other, {{0.0, 0.0}, {390.0, 781.0}}
+                        Other, {{0.0, 0.0}, {390.0, 781.0}}
+                          Other, {{0.0, 0.0}, {390.0, 781.0}}
+                            Other, {{0.0, 0.0}, {390.0, 781.0}}
+                              Other, {{0.0, 0.0}, {390.0, 781.0}}
+                                Other, {{0.0, 0.0}, {390.0, 781.0}}
+                                  Other, {{0.0, 0.0}, {390.0, 781.0}}
+                                    Button, {{4.0, 47.0}, {72.7, 44.0}}, label: 'BACK'
+                                    StaticText, {{166.5, 61.7}, {57.0, 14.7}}, label: 'Session'
+                                    Button, {{329.3, 47.0}, {56.7, 44.0}}, label: 'Edit'
+                                    ScrollView, {{0.0, 93.0}, {390.0, 688.0}}
+                                      Other, {{0.0, 93.0}, {390.0, 209.0}}
+                                        StaticText, {{16.0, 113.0}, {121.0, 48.0}}, label: 'Live Push'
+                                        StaticText, {{16.0, 169.0}, {226.3, 14.7}}, label: '1 exercise · 3 sets · ~11 min'
+                                        StaticText, {{16.0, 191.7}, {234.0, 14.7}}, label: 'Last done · Oct 22 · last week'
+                                        StaticText, {{16.0, 242.3}, {337.0, 43.7}}, label: '01, Barbell Bench Press - Medium Grip, 3 × 5–8 · 3:00 rest'
+                                          StaticText, {{16.0, 242.3}, {17.7, 26.7}}, label: '01'
+                                          StaticText, {{56.0, 244.3}, {297.0, 23.0}}, label: 'Barbell Bench Press - Medium Grip'
+                                          StaticText, {{56.0, 271.3}, {144.7, 14.7}}, label: '3 × 5–8 · 3:00 rest'
+                                      Other, {{357.0, 93.0}, {30.0, 610.0}}, label: 'Vertical scroll bar, 1 page', value: 0%
+                                        Other, {{384.0, 544.0}, {3.0, 203.0}}
+                                      Other, {{357.0, 93.0}, {30.0, 610.0}}, label: 'Vertical scroll bar, 1 page', value: 0%
+                                        Other, {{384.0, 544.0}, {3.0, 203.0}}
+                                    Button, {{16.0, 717.0}, {358.0, 52.0}}, label: 'Start workout ▸'
+                            Other, {{0.0, 0.0}, {390.0, 781.0}}
+                              Other, {{0.0, 0.0}, {390.0, 781.0}}
+                Other, {{0.0, 698.0}, {390.0, 83.0}}
+                  Other, {{0.0, 0.0}, {390.0, 781.0}}
+                  Other, {{0.0, 698.0}, {390.0, 83.0}}
+              Button, {{0.0, 783.0}, {97.7, 61.0}}, identifier: 'Today', label: 'Today', Selected
+              Button, {{97.7, 783.0}, {97.3, 61.0}}, identifier: 'Program', label: 'Program'
+              Button, {{195.0, 783.0}, {97.7, 61.0}}, identifier: 'Progress', label: 'Progress'
+              Button, {{292.7, 783.0}, {97.3, 61.0}}, identifier: 'Library', label: 'Library'

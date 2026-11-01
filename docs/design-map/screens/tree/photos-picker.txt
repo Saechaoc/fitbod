@@ -1,0 +1,229 @@
+Element subtree:
+ →Application, pid: 10625, label: 'fitbod'
+    Window (Main), {{0.0, 0.0}, {390.0, 844.0}}
+      Other, {{0.0, 0.0}, {1.0, 1.0}}, identifier: 'debug.resetSignal', label: 'Reset signal', value: fresh
+      Other, {{0.0, 0.0}, {390.0, 844.0}}
+        Other, {{0.0, 0.0}, {390.0, 844.0}}
+          Other, {{-390.0, -844.0}, {1170.0, 2532.0}}
+          Other, {{0.0, 0.0}, {390.0, 844.0}}
+            Other, {{0.0, 0.0}, {390.0, 844.0}}
+              Other, {{0.0, 0.0}, {390.0, 781.0}}
+                Other, {{0.0, 0.0}, {390.0, 781.0}}
+                  Other, {{0.0, 0.0}, {390.0, 781.0}}
+                    Other, {{0.0, 0.0}, {390.0, 781.0}}
+                      Other, {{0.0, 0.0}, {390.0, 781.0}}
+                        Other, {{0.0, 0.0}, {390.0, 781.0}}
+                          Other, {{0.0, 0.0}, {390.0, 781.0}}
+                            Other, {{0.0, 0.0}, {390.0, 781.0}}
+                              Other, {{0.0, 0.0}, {390.0, 781.0}}
+                                Other, {{0.0, 0.0}, {390.0, 781.0}}
+                                  Other, {{0.0, 0.0}, {390.0, 781.0}}
+                                    Button, {{4.0, 47.0}, {72.7, 44.0}}, label: 'BACK'
+                                    StaticText, {{162.5, 61.7}, {65.0, 14.7}}, label: 'Exercise'
+                                    Button, {{329.3, 47.0}, {56.7, 44.0}}, label: 'Edit'
+                                    ScrollView, {{0.0, 93.0}, {390.0, 688.0}}
+                                      Other, {{0.0, 93.0}, {390.0, 924.7}}
+                                        StaticText, {{16.0, 109.0}, {192.7, 48.0}}, label: 'Zercher Probe'
+                                        StaticText, {{15.2, 166.2}, {52.8, 22.2}}, label: 'Chest'
+                                        StaticText, {{72.6, 166.2}, {68.2, 22.2}}, label: 'Barbell'
+                                        StaticText, {{145.2, 166.2}, {76.2, 22.2}}, label: 'Compound'
+                                        StaticText, {{225.9, 166.2}, {60.5, 22.2}}, label: 'Custom'
+                                        StaticText, {{0.0, 205.7}, {390.0, 46.0}}, label: 'Recent performance'
+                                        StaticText, {{16.0, 267.7}, {312.0, 34.3}}, label: 'Not logged yet. Your best set from each workout will show here.'
+                                        Button, {{0.0, 318.0}, {390.0, 52.0}}, label: 'View all history, ›'
+                                          StaticText, {{16.0, 334.7}, {134.7, 18.7}}, label: 'View all history'
+                                          StaticText, {{365.3, 332.5}, {8.7, 23.0}}, label: '›'
+                                        StaticText, {{16.0, 386.0}, {63.3, 18.0}}, label: 'Muscles'
+                                        StaticText, {{311.3, 387.7}, {62.7, 14.7}}, label: 'Stimulus'
+                                        Other, {{16.0, 434.0}, {358.0, 28.7}}, label: 'Chest, primary, 100 percent'
+                                          StaticText, {{16.0, 434.0}, {42.0, 18.7}}, label: 'Chest'
+                                          StaticText, {{66.0, 437.3}, {45.0, 12.0}}, label: 'PRIMARY'
+                                          StaticText, {{340.3, 434.0}, {33.7, 18.7}}, label: '100%'
+                                        StaticText, {{0.0, 480.7}, {390.0, 46.0}}, label: 'PRESCRIPTION SETTINGS'
+                                        StaticText, {{16.0, 557.3}, {140.7, 14.7}}, label: 'SMALLEST INCREMENT'
+                                        TextField, {{214.3, 542.7}, {136.0, 44.0}}, label: 'Smallest Increment', placeholderValue: 'e.g. 2.5'
+                                        StaticText, {{358.3, 556.0}, {15.7, 17.3}}, label: 'lb'
+                                        StaticText, {{16.0, 592.7}, {281.0, 34.3}}, label: 'Weight advances by this amount each progression step.'
+                                        StaticText, {{16.0, 659.7}, {148.3, 14.7}}, label: 'BAR WEIGHT OVERRIDE'
+                                        TextField, {{214.3, 645.0}, {136.0, 44.0}}, label: 'Bar Weight Override', placeholderValue: 'Default'
+                                        StaticText, {{358.3, 658.3}, {15.7, 17.3}}, label: 'lb'
+                                        StaticText, {{16.0, 695.0}, {343.3, 34.3}}, label: 'Use for specialty bars (safety squat, Swiss bar, women's bar).'
+                                        StaticText, {{16.0, 747.3}, {86.0, 14.7}}, label: 'WEIGHT UNIT'
+                                        Button, {{16.0, 770.0}, {121.3, 44.0}}, label: 'WEIGHT UNIT: SYSTEM DEFAULT', Selected
+                                        Button, {{143.3, 770.0}, {27.7, 44.0}}, label: 'WEIGHT UNIT: KG'
+                                        Button, {{177.0, 770.0}, {27.7, 44.0}}, label: 'WEIGHT UNIT: LB'
+                                        StaticText, {{16.0, 822.0}, {343.3, 34.3}}, label: 'Overrides the global unit for this exercise only. History stored in canonical unit.'
+                                        StaticText, {{16.0, 888.3}, {134.7, 18.0}}, label: 'Plateau Detection'
+                                        StaticText, {{264.7, 890.0}, {109.3, 14.7}}, label: 'Using defaults'
+                                        Switch, {{16.0, 932.3}, {358.0, 44.0}}, label: 'Override global settings', value: 0
+                                        StaticText, {{16.0, 988.3}, {327.7, 17.3}}, label: 'Global defaults: 4 sessions, 2% tolerance.'
+                                      Other, {{357.0, 93.0}, {30.0, 688.0}}, label: 'Vertical scroll bar, 2 pages', value: 0%
+                                        Other, {{384.0, 818.0}, {3.0, 7.0}}
+                                      Other, {{357.0, 93.0}, {30.0, 688.0}}, label: 'Vertical scroll bar, 2 pages', value: 0%
+                                        Other, {{384.0, 818.0}, {3.0, 7.0}}
+                            Other, {{0.0, 0.0}, {390.0, 781.0}}
+                              Other, {{0.0, 0.0}, {390.0, 781.0}}
+                Other, {{0.0, 698.0}, {390.0, 83.0}}
+                  Other, {{0.0, 0.0}, {390.0, 781.0}}
+                  Other, {{0.0, 698.0}, {390.0, 83.0}}
+              Button, {{0.0, 783.0}, {97.7, 61.0}}, identifier: 'Today', label: 'Today'
+              Button, {{97.7, 783.0}, {97.3, 61.0}}, identifier: 'Program', label: 'Program'
+              Button, {{195.0, 783.0}, {97.7, 61.0}}, identifier: 'Progress', label: 'Progress'
+              Button, {{292.7, 783.0}, {97.3, 61.0}}, identifier: 'Library', label: 'Library', Selected
+      Other, {{0.0, 0.0}, {390.0, 844.0}}
+        Other, {{-390.0, -844.0}, {1170.0, 2532.0}}
+        Other, {{16.0, 47.0}, {358.0, 731.6}}
+          Other, {{16.0, 47.0}, {358.0, 731.6}}
+            Other, {{16.0, 47.0}, {358.0, 731.6}}
+              Other, {{-342.0, -684.6}, {1074.0, 2194.8}}
+              Other, {{16.0, 47.0}, {358.0, 731.6}}
+                Other, {{16.0, 47.0}, {358.0, 731.6}}
+                  Other, {{16.0, 47.0}, {358.0, 731.6}}
+                    Other, {{16.0, 47.0}, {358.0, 731.6}}
+                      Other, {{16.0, 47.0}, {358.0, 731.6}}
+                        Other, {{16.0, 47.0}, {358.0, 731.6}}
+                          Other, {{16.0, 47.0}, {358.0, 731.6}}
+                            ScrollView, {{16.0, 47.0}, {358.0, 731.6}}
+                              Other, {{16.0, 89.2}, {358.0, 673.8}}
+                                TextField, {{30.7, 125.0}, {328.6, 32.4}}, identifier: 'customExercise.name', placeholderValue: 'e.g. Cambered Bar Bench Press', value: Zercher Probe
+                                StaticText, {{16.0, 174.3}, {358.0, 42.2}}, label: 'Classification'
+                                Button, {{16.0, 216.5}, {358.0, 50.8}}, identifier: 'customExercise.equipment', label: 'Equipment', value: Barbell
+                                  StaticText, {{30.7, 225.7}, {64.6, 13.5}}, label: 'Equipment'
+                                  StaticText, {{30.7, 241.0}, {54.2, 17.1}}, label: 'Barbell'
+                                  StaticText, {{351.4, 233.3}, {8.0, 17.1}}, label: '›'
+                                Other, {{180.3, 273.7}, {182.7, 40.4}}, label: 'Mechanic'
+                                  Button, {{180.3, 273.7}, {90.6, 40.4}}, label: 'Compound', Selected
+                                  Button, {{265.4, 273.7}, {97.6, 40.4}}, label: 'Isolation'
+                                StaticText, {{30.7, 332.5}, {172.9, 16.5}}, label: 'Primary muscle stimulus'
+                                StaticText, {{301.8, 334.0}, {57.5, 13.5}}, label: 'Required'
+                                Other, {{30.7, 372.9}, {328.6, 88.1}}, identifier: 'customExercise.muscle.chest'
+                                  Button, {{30.7, 372.9}, {61.2, 40.4}}, identifier: 'customExercise.role.chest', label: 'PRIMARY'
+                                  StaticText, {{101.1, 384.5}, {38.6, 17.1}}, label: 'Chest'
+                                  Button, {{316.2, 372.9}, {43.1, 40.4}}, identifier: 'customExercise.remove.chest', label: 'REMOVE CHEST'
+                                  Other, {{30.7, 420.6}, {172.6, 40.4}}, label: 'Stimulus weight for Chest'
+                                    Button, {{30.7, 420.6}, {40.4, 40.4}}, identifier: 'customExercise.weight.chest.25', label: '25 percent'
+                                    Button, {{74.7, 420.6}, {40.4, 40.4}}, identifier: 'customExercise.weight.chest.50', label: '50 percent'
+                                    Button, {{118.8, 420.6}, {40.4, 40.4}}, identifier: 'customExercise.weight.chest.75', label: '75 percent'
+                                    Button, {{162.9, 420.6}, {40.4, 40.4}}, identifier: 'customExercise.weight.chest.100', label: '100 percent', Selected
+                                  StaticText, {{328.4, 432.2}, {30.9, 17.1}}, identifier: 'customExercise.percent.chest', label: '100%'
+                                StaticText, {{16.0, 472.0}, {358.0, 42.2}}, label: 'Secondary stimulus'
+                                Button, {{30.7, 528.9}, {328.6, 46.8}}, label: 'Add Another Muscle'
+                                  StaticText, {{45.4, 541.8}, {10.4, 21.1}}, label: '+'
+                                  StaticText, {{65.0, 545.6}, {71.9, 13.5}}, label: 'Add muscle'
+                                StaticText, {{30.7, 599.6}, {38.6, 16.5}}, label: 'Image'
+                                StaticText, {{301.8, 601.1}, {57.5, 13.5}}, label: 'Optional'
+                                Button, {{30.7, 640.0}, {78.9, 40.4}}, label: 'ADD PHOTO'
+                                Button, {{30.7, 707.9}, {328.6, 40.4}}, label: 'Delete exercise'
+                              Other, {{343.7, 89.2}, {27.5, 624.5}}, label: 'Vertical scroll bar, 2 pages', value: 0%
+                                Other, {{368.5, 92.0}, {2.8, 579.8}}
+                              Other, {{343.7, 89.2}, {27.5, 624.5}}, label: 'Vertical scroll bar, 2 pages', value: 0%
+                                Other, {{368.5, 92.0}, {2.8, 579.8}}
+                            Button, {{19.7, 47.0}, {66.7, 40.4}}, label: 'Cancel'
+                            StaticText, {{146.7, 60.5}, {96.7, 13.5}}, label: 'Edit exercise'
+                            Button, {{318.3, 47.0}, {52.0, 40.4}}, label: 'Save'
+                            Other, {{16.0, 713.7}, {358.0, 64.9}}, identifier: 'customExercise.status', label: 'Valid, 1 primary mapped. Ready to save.'
+                              StaticText, {{30.7, 724.8}, {172.0, 13.5}}, label: 'Valid · 1 primary mapped'
+                              StaticText, {{266.0, 724.8}, {93.3, 13.5}}, label: 'Ready to save'
+                    Other, {{16.0, 47.0}, {358.0, 731.6}}
+                      Other, {{16.0, 47.0}, {358.0, 731.6}}
+      Other, {{0.0, 0.0}, {390.0, 844.0}}
+        Other, {{-390.0, -844.0}, {1170.0, 2532.0}}
+        Other, {{0.0, 0.0}, {390.0, 844.0}}
+          Other, {{0.0, 0.0}, {390.0, 844.0}}
+            Other, {{0.0, 0.0}, {390.0, 844.0}}
+              Other, {{0.0, 0.0}, {390.0, 844.0}}
+                Other, {{0.0, 0.0}, {390.0, 844.0}}
+                  Other, {{0.0, 0.0}, {390.0, 844.0}}
+                    Other, {{0.0, 0.0}, {390.0, 844.0}}
+                      Other, {{0.0, 0.0}, {390.0, 844.0}}
+                        Other, {{0.0, 0.0}, {390.0, 844.0}}
+                          Other, {{0.0, 0.0}, {390.0, 844.0}}
+                            Other, {{0.0, 0.0}, {390.0, 844.0}}
+                              Other, {{0.0, 57.0}, {390.0, 787.0}}
+                                Image, {{-150.0, -93.0}, {690.0, 1087.0}}
+                                Other, {{0.0, 57.0}, {390.0, 787.0}}
+                                  Other, {{0.0, 57.0}, {390.0, 787.0}}
+                                    Other, {{0.0, 57.0}, {390.0, 787.0}}
+                                      Other, {{0.0, 57.0}, {390.0, 787.0}}
+                                        Other, {{0.0, 57.0}, {390.0, 787.0}}
+                                          Other, {{0.0, 57.0}, {390.0, 787.0}}
+                                            Other, {{0.0, 57.0}, {390.0, 787.0}}
+                                              Other, {{0.0, 57.0}, {390.0, 787.0}}
+                                                Other, {{0.0, 57.0}, {390.0, 787.0}}
+                                                  NavigationBar, {{0.0, 73.0}, {390.0, 62.0}}, identifier: 'Photos'
+                                                    Button, {{20.0, 77.0}, {36.0, 36.0}}, identifier: 'Cancel', label: 'Cancel'
+                                                    SegmentedControl, {{100.0, 71.0}, {190.0, 48.0}}, label: 'Photos'
+                                                      Button, {{100.0, 71.0}, {95.0, 48.0}}, label: 'Photos', Selected
+                                                      Button, {{195.0, 71.0}, {95.0, 48.0}}, label: 'Collections'
+                                                  Other, {{0.0, 57.0}, {390.0, 787.0}}
+                                                    Other, {{0.0, 57.0}, {390.0, 787.0}}
+                                                      Other, {{0.0, 57.0}, {390.0, 787.0}}
+                                                        Other, {{0.0, 57.0}, {390.0, 787.0}}, label: 'Photos'
+                                                          Other, {{0.0, 57.0}, {390.0, 787.0}}
+                                                            ScrollView, {{0.0, 57.0}, {390.0, 787.0}}, identifier: 'photosView_content_scroll_view'
+                                                              Other, {{0.0, 135.0}, {390.0, 421.7}}, identifier: 'photos_layout'
+                                                                Other, {{0.0, 57.0}, {390.0, 787.0}}
+                                                                Other, {{0.0, 57.0}, {390.0, 787.0}}
+                                                                Other, {{0.0, 57.0}, {390.0, 787.0}}
+                                                                Other, {{0.0, 135.0}, {390.0, 162.0}}, identifier: 'PXGSingleViewLayout-Group'
+                                                                  Other, {{0.0, 135.0}, {390.0, 162.0}}, identifier: 'PXGSingleViewContainerView_AX', label: 'Private Access to Photos, Your photo library is shown here, but “fitbod” can only access the items you select.'
+                                                                    Image, {{32.0, 145.0}, {38.0, 38.0}}, identifier: 'PickerOnboardingHeaderViewIcon'
+                                                                    Button, {{338.0, 143.0}, {30.0, 22.0}}, label: 'Close'
+                                                                    Button, {{82.0, 252.7}, {99.7, 20.3}}, label: 'Learn More…'
+                                                                      StaticText, {{82.0, 252.7}, {99.7, 20.3}}, label: 'Learn More…'
+                                                                Other, {{0.0, 135.0}, {390.0, 162.0}}, label: 'Private Access to Photos, Your photo library is shown here, but “fitbod” can only access the items you select.'
+                                                                  Image, {{32.0, 145.0}, {38.0, 38.0}}, identifier: 'PickerOnboardingHeaderViewIcon'
+                                                                  Button, {{338.0, 143.0}, {30.0, 22.0}}, label: 'Close'
+                                                                  Button, {{82.0, 252.7}, {99.7, 20.3}}, label: 'Learn More…'
+                                                                    StaticText, {{82.0, 252.7}, {99.7, 20.3}}, label: 'Learn More…'
+                                                                Other, {{0.0, 297.0}, {390.0, 259.7}}, identifier: 'photos_sectioned_layout'
+                                                                  Other, {{0.0, 297.0}, {390.0, 259.7}}, identifier: 'PXAssetsSectionLayout-Group'
+                                                                    Other, {{0.0, 297.0}, {390.0, 259.7}}, identifier: 'PXZoomablePhotosLayout-Group'
+                                                                      Other, {{0.0, 297.0}, {390.0, 259.7}}, identifier: 'PXGZoomLayout-Group'
+                                                                        Other, {{0.0, 297.0}, {390.0, 259.7}}, identifier: 'PXGDecoratingLayout-Group'
+                                                                          Other, {{0.0, 297.0}, {390.0, 259.7}}, identifier: 'PXGGridLayout-Group', label: 'Photo, March 30, 2018, 12:14 PM, Photo, August 08, 2012, 2:55 PM, Photo, August 08, 2012, 2:29 PM, Photo, August 08, 2012, 11:52 AM, Photo, March 12, 2011, 4:17 PM, Photo, October 09, 2009, 2:09 PM'
+                                                                            Image, {{0.0, 297.0}, {128.9, 129.0}}, identifier: 'PXGGridLayout-Info', label: 'Photo, March 30, 2018, 12:14 PM'
+                                                                            Image, {{130.6, 297.0}, {128.9, 129.0}}, identifier: 'PXGGridLayout-Info', label: 'Photo, August 08, 2012, 2:55 PM'
+                                                                            Image, {{261.1, 297.0}, {128.9, 129.0}}, identifier: 'PXGGridLayout-Info', label: 'Photo, August 08, 2012, 2:29 PM'
+                                                                            Image, {{0.0, 427.7}, {128.9, 129.0}}, identifier: 'PXGGridLayout-Info', label: 'Photo, August 08, 2012, 11:52 AM'
+                                                                            Image, {{130.6, 427.7}, {128.9, 129.0}}, identifier: 'PXGGridLayout-Info', label: 'Photo, March 12, 2011, 4:17 PM'
+                                                                            Image, {{261.1, 427.7}, {128.9, 129.0}}, identifier: 'PXGGridLayout-Info', label: 'Photo, October 09, 2009, 2:09 PM'
+                                                                      Other, {{0.0, 297.0}, {390.0, 0.0}}, identifier: 'PXZoomableInlineHeadersLayout-Group'
+                                                                Other, {{357.0, 135.0}, {30.0, 623.0}}, label: 'Vertical scroll bar, 1 page', value: 0%
+                                                                  Other, {{384.0, 339.3}, {3.0, 415.7}}
+                                                                Other, {{41.3, 725.0}, {307.0, 30.0}}, label: 'Horizontal scroll bar, 1 page', value: 0%
+                                                                  Other, {{44.3, 752.0}, {301.0, 3.0}}
+                                                              Other, {{357.0, 135.0}, {30.0, 623.0}}, label: 'Vertical scroll bar, 1 page', value: 0%
+                                                                Other, {{384.0, 339.3}, {3.0, 415.7}}
+                                                              Other, {{41.3, 725.0}, {307.0, 30.0}}, label: 'Horizontal scroll bar, 1 page', value: 0%
+                                                                Other, {{44.3, 752.0}, {301.0, 3.0}}
+                                                  Other, {{0.0, 57.0}, {390.0, 787.0}}
+                                                    Other, {{0.0, 57.0}, {390.0, 787.0}}
+                                                      Toolbar, {{0.0, 758.0}, {390.0, 86.0}}, identifier: 'Toolbar', label: 'Toolbar'
+                                                        Other, {{28.0, 768.0}, {334.0, 48.0}}
+                                                          Other, {{28.0, 768.0}, {334.0, 48.0}}
+                                                            Other, {{28.0, 768.0}, {0.0, 0.0}}
+                                                              Other, {{28.0, 768.0}, {48.0, 48.0}}
+                                                                Other, {{28.0, 768.0}, {48.0, 48.0}}
+                                                                  Other, {{33.0, 773.0}, {38.0, 38.0}}
+                                                                    Other, {{33.0, 773.0}, {38.0, 38.0}}
+                                                                      Button, {{33.0, 773.0}, {38.0, 38.0}}, identifier: 'Sort and Filter', label: 'Sort and Filter'
+                                                              Other, {{314.0, 768.0}, {48.0, 48.0}}
+                                                                Other, {{314.0, 768.0}, {48.0, 48.0}}
+                                                                  Other, {{319.0, 773.0}, {38.0, 38.0}}
+                                                                    Other, {{319.0, 773.0}, {38.0, 38.0}}
+                                                                      Button, {{319.0, 773.0}, {38.0, 38.0}}, label: 'Search'
+                                                          Other, {{28.0, 768.0}, {334.0, 48.0}}
+                                                            Other, {{28.0, 768.0}, {0.0, 0.0}}
+                                                              Other, {{109.7, 768.0}, {171.0, 48.0}}
+                                                                Other, {{109.7, 768.0}, {171.0, 48.0}}
+                                                                  Other, {{114.7, 783.0}, {161.0, 18.0}}
+                                                                    Other, {{114.7, 783.0}, {161.0, 18.0}}
+                                                                      Other, {{114.7, 783.0}, {161.0, 18.0}}
+                                                                        Other, {{114.7, 783.0}, {161.0, 18.0}}
+                                                                          StaticText, {{114.7, 783.0}, {161.0, 18.0}}, label: ' Location Is Included'
+                                            Other, {{0.0, 57.0}, {390.0, 787.0}}
+                                              Other, {{0.0, 57.0}, {390.0, 787.0}}
+    Window, {{0.0, 0.0}, {390.0, 844.0}}
+      Other, {{0.0, 0.0}, {390.0, 844.0}}
+        Other, {{0.0, 0.0}, {390.0, 844.0}}

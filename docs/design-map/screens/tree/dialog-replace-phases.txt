@@ -1,0 +1,219 @@
+Element subtree:
+ →Application, pid: 74205, label: 'fitbod'
+    Window (Main), {{0.0, 0.0}, {390.0, 844.0}}
+      Other, {{0.0, 0.0}, {1.0, 1.0}}, identifier: 'debug.resetSignal', label: 'Reset signal', value: fresh
+      Other, {{0.0, 0.0}, {390.0, 844.0}}
+      Other, {{0.0, 0.0}, {390.0, 844.0}}
+        Other, {{0.0, 0.0}, {390.0, 844.0}}
+          Other, {{0.0, 0.0}, {390.0, 844.0}}
+            Other, {{0.0, 0.0}, {390.0, 844.0}}
+              Other, {{0.0, 0.0}, {390.0, 781.0}}
+                Other, {{0.0, 0.0}, {390.0, 781.0}}
+                  Other, {{0.0, 0.0}, {390.0, 781.0}}
+                    Other, {{0.0, 0.0}, {390.0, 781.0}}
+                      Other, {{0.0, 0.0}, {390.0, 781.0}}
+                        Other, {{0.0, 0.0}, {390.0, 781.0}}
+                          Other, {{0.0, 0.0}, {390.0, 781.0}}
+                            Other, {{0.0, 0.0}, {390.0, 781.0}}
+                              Other, {{0.0, 0.0}, {390.0, 781.0}}
+                                Other, {{0.0, 0.0}, {390.0, 781.0}}
+                                  Other, {{0.0, 0.0}, {390.0, 781.0}}
+                                    ScrollView, {{0.0, 81.0}, {390.0, 700.0}}
+                                      Other, {{0.0, 81.0}, {390.0, 295.0}}
+                                        Other, {{0.0, 81.0}, {390.0, 292.7}}
+                                          StaticText, {{0.0, 81.0}, {390.0, 46.0}}, label: 'Blocks'
+                                          Button, {{0.0, 127.0}, {390.0, 88.7}}, label: 'ACTIVE block: Live Block. Week 1 of 4, Accumulation.'
+                                            StaticText, {{15.2, 138.2}, {60.5, 22.2}}, label: 'ACTIVE'
+                                            StaticText, {{16.0, 163.7}, {84.3, 18.7}}, label: 'Live Block'
+                                            StaticText, {{16.0, 186.3}, {203.0, 17.3}}, label: 'Week 1 of 4 · Accumulation'
+                                          StaticText, {{0.0, 218.7}, {390.0, 46.0}}, label: 'Routines'
+                                          Button, {{0.0, 264.7}, {390.0, 64.0}}, label: 'Live Routine, 1 sessions, Live Block, ›'
+                                            StaticText, {{16.0, 276.7}, {101.0, 18.7}}, label: 'Live Routine'
+                                            StaticText, {{16.0, 299.3}, {78.0, 17.3}}, label: '1 sessions'
+                                            StaticText, {{148.2, 285.6}, {91.8, 22.2}}, label: 'Live Block'
+                                            StaticText, {{365.3, 287.3}, {8.7, 18.7}}, label: '›'
+                                          Button, {{0.0, 329.7}, {390.0, 44.0}}, label: '+ NEW ROUTINE'
+                                    StaticText, {{16.0, 56.8}, {60.7, 14.3}}, label: 'PROGRAM'
+                                    Button, {{330.0, 47.0}, {44.0, 44.0}}, label: '+ NEW'
+                            Other, {{0.0, 0.0}, {390.0, 781.0}}
+                              Other, {{0.0, 0.0}, {390.0, 781.0}}
+                Other, {{0.0, 698.0}, {390.0, 83.0}}
+                  Other, {{0.0, 0.0}, {390.0, 781.0}}
+                  Other, {{0.0, 698.0}, {390.0, 83.0}}
+              Button, {{0.0, 783.0}, {97.7, 61.0}}, identifier: 'Today', label: 'Today'
+              Button, {{97.7, 783.0}, {97.3, 61.0}}, identifier: 'Program', label: 'Program', Selected
+              Button, {{195.0, 783.0}, {97.7, 61.0}}, identifier: 'Progress', label: 'Progress'
+              Button, {{292.7, 783.0}, {97.3, 61.0}}, identifier: 'Library', label: 'Library'
+      Other, {{0.0, 0.0}, {390.0, 844.0}}
+        Other, {{0.0, 0.0}, {390.0, 844.0}}
+          Other, {{0.0, 0.0}, {390.0, 844.0}}
+            Other, {{0.0, 0.0}, {390.0, 844.0}}
+              Other, {{0.0, 0.0}, {390.0, 844.0}}
+                Other, {{0.0, 0.0}, {390.0, 844.0}}
+                  Other, {{0.0, 0.0}, {390.0, 844.0}}
+                    Other, {{0.0, 0.0}, {390.0, 844.0}}
+                      Button, {{16.0, 47.0}, {80.7, 50.0}}, label: '< PROGRAM'
+                        Other, {{0.0, 0.0}, {0.0, 0.0}}
+                        StaticText, {{16.0, 47.0}, {80.7, 50.0}}, label: '< PROGRAM'
+                      StaticText, {{153.7, 64.8}, {79.7, 14.3}}, label: 'NEW BLOCK'
+                      Button, {{290.3, 47.0}, {83.7, 50.0}}, label: 'SAVE DRAFT', Disabled
+                      ScrollView, {{0.0, 97.0}, {390.0, 747.0}}
+                        Other, {{0.0, 97.0}, {390.0, 1072.0}}
+                          Other, {{19.6, 135.0}, {350.8, 962.8}}
+                            StaticText, {{20.0, 135.0}, {83.3, 13.0}}, label: 'BLOCK NAME'
+                            StaticText, {{20.0, 150.0}, {256.3, 55.3}}, label: 'NAME YOUR BLOCK'
+                            TextField, {{20.0, 149.7}, {320.0, 56.0}}
+                            Image, {{351.0, 148.3}, {19.0, 19.0}}, identifier: 'square.and.pencil', label: 'Compose'
+                            Button, {{20.0, 223.3}, {174.7, 98.0}}, label: 'Total weeks, 6, edit phase durations'
+                              StaticText, {{36.0, 239.3}, {88.0, 13.0}}, label: 'TOTAL WEEKS'
+                              StaticText, {{36.0, 258.3}, {15.7, 47.0}}, label: '6'
+                            Other, {{205.7, 239.3}, {132.0, 66.0}}, value: 4 days per week
+                              StaticText, {{211.5, 239.3}, {102.3, 13.0}}, label: 'DAYS PER WEEK'
+                              Button, {{205.7, 259.8}, {44.0, 44.0}}, label: 'Decrease days per week'
+                              StaticText, {{263.7, 258.3}, {15.7, 47.0}}, label: '4'
+                              Button, {{293.7, 259.8}, {44.0, 44.0}}, label: 'Increase days per week'
+                            Other, {{19.6, 335.0}, {350.8, 267.1}}, label: 'Progression overview', value: 6 weeks, 4 phases....
+                              StaticText, {{36.0, 351.3}, {160.3, 13.0}}, label: 'PROGRESSION OVERVIEW'
+                              StaticText, {{64.0, 377.3}, {38.7, 10.3}}, label: 'VOLUME'
+                              StaticText, {{154.7, 377.3}, {49.7, 10.3}}, label: 'INTENSITY'
+                              Other, {{36.0, 406.7}, {12.3, 10.3}}
+                              Other, {{36.0, 406.7}, {318.0, 156.0}}
+                                Other, {{36.0, 406.7}, {106.0, 156.0}}, label: '0.5 to 2.5, 39.5 to 130.5'
+                                Other, {{36.0, 406.7}, {106.0, 2.3}}, label: '0.5 to 2.5, 129.1 to 130.5'
+                                Other, {{142.0, 406.7}, {106.0, 156.0}}, label: '2.5 to 4.5, 39.5 to 130.5'
+                                Other, {{142.0, 406.7}, {106.0, 2.3}}, label: '2.5 to 4.5, 129.1 to 130.5'
+                                Other, {{248.0, 406.7}, {53.0, 156.0}}, label: '4.5 to 5.5, 39.5 to 130.5'
+                                Other, {{248.0, 406.7}, {53.0, 2.3}}, label: '4.5 to 5.5, 129.1 to 130.5'
+                                Other, {{301.0, 406.7}, {53.0, 156.0}}, label: '5.5 to 6.5, 39.5 to 130.5'
+                                Other, {{301.0, 406.7}, {53.0, 2.3}}, label: '5.5 to 6.5, 129.1 to 130.5'
+                                Other, {{62.5, 406.7}, {26.5, 156.0}}, label: '1 to 1.5', value: varies between 120...
+                                Other, {{115.5, 406.7}, {26.5, 156.0}}, label: '2 to 2.5', value: varies between 120...
+                                Other, {{168.5, 406.7}, {26.5, 156.0}}, label: '3 to 3.5', value: varies between 100...
+                                Other, {{221.5, 406.7}, {26.5, 156.0}}, label: '4 to 4.5', value: varies between 100...
+                                Other, {{274.5, 406.7}, {26.5, 156.0}}, label: '5 to 5.5', value: varies between 50 ...
+                                Other, {{327.5, 406.7}, {26.5, 156.0}}, label: '6 to 6.5', value: varies between 80 ...
+                              Other, {{36.0, 406.7}, {318.0, 156.0}}
+                              Other, {{36.0, 406.7}, {318.0, 156.0}}, identifier: 'newBlock.progression.plot'
+                              StaticText, {{71.5, 413.5}, {35.0, 10.3}}, label: 'ACCUM.'
+                              StaticText, {{177.5, 413.5}, {35.0, 10.3}}, label: 'INTENS.'
+                              StaticText, {{257.2, 413.5}, {34.7, 10.3}}, label: 'DELOAD'
+                              StaticText, {{316.2, 413.5}, {22.7, 10.3}}, label: 'PEAK'
+                              StaticText, {{43.8, 429.6}, {20.3, 10.3}}, label: 'HIGH'
+                              StaticText, {{42.7, 529.4}, {18.7, 10.3}}, label: 'LOW'
+                            StaticText, {{20.0, 630.5}, {76.3, 14.3}}, label: 'PHASES · 4'
+                            Button, {{158.3, 615.7}, {89.0, 44.0}}, label: 'Preset'
+                            Button, {{255.0, 623.3}, {115.4, 29.1}}, label: '+ ADD PHASE'
+                            Button, {{278.0, 669.7}, {92.0, 68.0}}, label: 'Delete'
+                            Button, {{20.0, 669.7}, {350.0, 68.0}}, label: 'Phase 1: Accumulation', value: 2 weeks, volume +2...
+                              StaticText, {{43.7, 686.8}, {22.7, 33.7}}, label: '01'
+                              StaticText, {{81.0, 686.8}, {89.3, 17.7}}, label: 'Accumulation'
+                              StaticText, {{81.0, 707.5}, {78.3, 13.0}}, label: 'BUILD VOLUME'
+                              StaticText, {{193.7, 686.0}, {30.0, 10.3}}, label: 'WEEKS'
+                              StaticText, {{204.8, 698.3}, {7.7, 23.0}}, label: '2'
+                              StaticText, {{243.2, 686.0}, {17.0, 10.3}}, label: 'VOL'
+                              StaticText, {{235.7, 698.3}, {32.0, 21.3}}, label: '+20%'
+                              StaticText, {{287.3, 686.0}, {14.7, 10.3}}, label: 'INT'
+                              StaticText, {{281.3, 698.3}, {26.7, 23.0}}, label: '70%'
+                              Image, {{321.0, 698.3}, {6.3, 10.7}}, identifier: 'chevron.right', label: 'Forward'
+                              StaticText, {{336.0, 681.7}, {18.0, 44.0}}, label: '⋮⋮'
+                            Button, {{278.0, 747.7}, {92.0, 68.0}}, label: 'Delete'
+                            Button, {{20.0, 747.7}, {350.0, 68.0}}, label: 'Phase 2: Intensification', value: 2 weeks, volume Ho...
+                              StaticText, {{43.7, 764.8}, {22.7, 33.7}}, label: '02'
+                              StaticText, {{81.0, 764.8}, {92.7, 17.7}}, label: 'Intensification'
+                              StaticText, {{81.0, 785.5}, {89.7, 13.0}}, label: 'BUILD STRENGTH'
+                              StaticText, {{193.7, 764.0}, {30.0, 10.3}}, label: 'WEEKS'
+                              StaticText, {{204.8, 776.3}, {7.7, 23.0}}, label: '2'
+                              StaticText, {{243.2, 764.0}, {17.0, 10.3}}, label: 'VOL'
+                              StaticText, {{236.7, 776.3}, {30.0, 23.0}}, label: 'Hold'
+                              StaticText, {{287.3, 764.0}, {14.7, 10.3}}, label: 'INT'
+                              StaticText, {{281.3, 776.3}, {26.7, 23.0}}, label: '85%'
+                              Image, {{321.0, 776.3}, {6.3, 10.7}}, identifier: 'chevron.right', label: 'Forward'
+                              StaticText, {{336.0, 759.7}, {18.0, 44.0}}, label: '⋮⋮'
+                            Button, {{278.0, 825.7}, {92.0, 68.0}}, label: 'Delete'
+                            Button, {{20.0, 825.7}, {350.0, 68.0}}, label: 'Phase 3: Deload', value: 1 week, volume -50...
+                              StaticText, {{43.7, 842.8}, {22.7, 33.7}}, label: '03'
+                              StaticText, {{81.0, 839.8}, {61.0, 23.7}}, label: 'Deload'
+                              StaticText, {{81.0, 866.5}, {48.0, 13.0}}, label: 'RECOVER'
+                              StaticText, {{193.7, 842.0}, {30.0, 10.3}}, label: 'WEEKS'
+                              StaticText, {{204.8, 854.3}, {7.7, 23.0}}, label: '1'
+                              StaticText, {{243.2, 842.0}, {17.0, 10.3}}, label: 'VOL'
+                              StaticText, {{235.8, 854.3}, {31.7, 23.0}}, label: '-50%'
+                              StaticText, {{287.3, 842.0}, {14.7, 10.3}}, label: 'INT'
+                              StaticText, {{281.3, 854.3}, {26.7, 23.0}}, label: '60%'
+                              Image, {{321.0, 854.3}, {6.3, 10.7}}, identifier: 'chevron.right', label: 'Forward'
+                              StaticText, {{336.0, 837.7}, {18.0, 44.0}}, label: '⋮⋮'
+                            Button, {{278.0, 903.7}, {92.0, 68.0}}, label: 'Delete'
+                              StaticText, {{278.0, 903.7}, {92.0, 68.0}}, label: 'Delete'
+                            Button, {{20.0, 903.7}, {350.0, 68.0}}, label: 'Phase 4: Peak', value: 1 week, volume -20...
+                              StaticText, {{43.7, 920.8}, {22.7, 33.7}}, label: '04'
+                              StaticText, {{81.0, 917.8}, {43.7, 23.7}}, label: 'Peak'
+                              StaticText, {{81.0, 944.5}, {94.0, 13.0}}, label: 'SHARPEN OUTPUT'
+                              StaticText, {{193.7, 920.0}, {30.0, 10.3}}, label: 'WEEKS'
+                              StaticText, {{204.8, 932.3}, {7.7, 23.0}}, label: '1'
+                              StaticText, {{243.2, 920.0}, {17.0, 10.3}}, label: 'VOL'
+                              StaticText, {{235.8, 932.3}, {31.7, 23.0}}, label: '-20%'
+                              StaticText, {{287.3, 920.0}, {14.7, 10.3}}, label: 'INT'
+                              StaticText, {{281.3, 932.3}, {26.7, 23.0}}, label: '95%'
+                              Image, {{321.0, 932.3}, {6.3, 10.7}}, identifier: 'chevron.right', label: 'Forward'
+                              StaticText, {{336.0, 915.7}, {18.0, 44.0}}, label: '⋮⋮'
+                            StaticText, {{36.0, 993.7}, {56.3, 14.3}}, label: 'Routine'
+                            StaticText, {{36.0, 1032.7}, {49.3, 16.7}}, label: 'Routine'
+                            StaticText, {{118.7, 1034.5}, {152.0, 13.0}}, label: 'None — saves as draft'
+                            Button, {{278.7, 1019.0}, {75.3, 44.0}}, label: '+ ATTACH ▸'
+                            StaticText, {{36.0, 1077.7}, {70.7, 16.7}}, label: 'Scheduling'
+                            Button, {{129.9, 1074.6}, {110.2, 23.2}}, label: 'ROTATION scheduling', Selected
+                            Button, {{244.8, 1074.8}, {109.7, 22.7}}, label: 'FIXED WEEKLY scheduling'
+                      Button, {{20.0, 772.0}, {107.0, 52.0}}, label: 'CANCEL'
+                      Button, {{139.0, 772.0}, {231.0, 72.0}}, label: 'NAME FIRST', Disabled
+                        Image, {{197.3, 791.3}, {8.7, 13.3}}, identifier: 'bookmark.fill', label: 'Bookmark', Disabled
+                        StaticText, {{216.2, 789.7}, {98.0, 16.7}}, label: 'NAME FIRST', Disabled
+              Other, {{0.0, 0.0}, {390.0, 844.0}}
+                Other, {{0.0, 0.0}, {390.0, 844.0}}
+      Other, {{0.0, 0.0}, {390.0, 844.0}}
+        Other, {{0.0, 0.0}, {390.0, 844.0}}, identifier: 'PopoverDismissRegion', label: 'dismiss popup'
+        Popover, {{75.0, 304.0}, {240.0, 248.3}}
+          Image, {{-75.0, 154.0}, {540.0, 548.3}}
+          Other, {{75.0, 304.0}, {240.0, 248.3}}
+            Other, {{75.0, 304.0}, {240.0, 248.3}}
+              Other, {{75.0, 304.0}, {240.0, 248.3}}
+                Other, {{75.0, 304.0}, {240.0, 248.3}}
+                  Other, {{75.0, 304.0}, {240.0, 248.3}}
+                    Other, {{75.0, 304.0}, {0.0, 0.0}}
+                      Other, {{75.0, 304.0}, {240.0, 248.3}}
+                        Other, {{75.0, 304.0}, {240.0, 248.3}}
+                          Other, {{75.0, 304.0}, {240.0, 248.3}}
+                            Other, {{75.0, 304.0}, {240.0, 248.3}}
+          Other, {{75.0, 304.0}, {240.0, 248.3}}
+            Sheet, {{75.0, 304.0}, {240.0, 248.3}}, label: 'Replace your phases?'
+              Other, {{75.0, 304.0}, {240.0, 248.3}}
+                Other, {{75.0, 304.0}, {240.0, 248.3}}
+                  Other, {{75.0, 304.0}, {240.0, 248.3}}
+                  Other, {{75.0, 304.0}, {240.0, 248.3}}
+                    ScrollView, {{75.0, 304.0}, {240.0, 112.3}}
+                      Other, {{75.0, 304.0}, {240.0, 112.3}}
+                        StaticText, {{105.0, 326.0}, {180.0, 20.3}}, label: 'Replace your phases?'
+                        StaticText, {{105.0, 354.0}, {180.0, 58.0}}, label: 'Powerlifting Peak replaces the phases you edited.'
+                      Other, {{282.0, 338.0}, {30.0, 78.3}}, label: 'Vertical scroll bar, 1 page', value: 0%
+                        Other, {{309.0, 265.0}, {3.0, 36.0}}
+                      Other, {{75.0, 383.3}, {240.0, 30.0}}, label: 'Horizontal scroll bar, 1 page', value: 0%
+                        Other, {{36.0, 410.3}, {36.0, 3.0}}
+                      Other, {{282.0, 338.0}, {30.0, 78.3}}, label: 'Vertical scroll bar, 1 page', value: 0%
+                        Other, {{309.0, 265.0}, {3.0, 36.0}}
+                      Other, {{75.0, 383.3}, {240.0, 30.0}}, label: 'Horizontal scroll bar, 1 page', value: 0%
+                        Other, {{36.0, 410.3}, {36.0, 3.0}}
+                    ScrollView, {{75.0, 416.3}, {240.0, 136.0}}
+                      Other, {{75.0, 416.3}, {240.0, 136.0}}
+                        Other, {{91.0, 432.3}, {208.0, 104.0}}
+                          Button, {{91.0, 432.3}, {208.0, 48.0}}, label: 'Replace phases'
+                          Button, {{91.0, 488.3}, {208.0, 48.0}}, label: 'Keep my phases'
+                      Other, {{282.0, 416.3}, {30.0, 102.0}}, label: 'Vertical scroll bar, 1 page', value: 0%
+                        Other, {{309.0, 506.3}, {3.0, 7.0}}
+                      Other, {{109.0, 519.3}, {172.0, 30.0}}, label: 'Horizontal scroll bar, 1 page', value: 0%
+                        Other, {{165.0, 546.3}, {7.0, 3.0}}
+                      Other, {{282.0, 416.3}, {30.0, 102.0}}, label: 'Vertical scroll bar, 1 page', value: 0%
+                        Other, {{309.0, 506.3}, {3.0, 7.0}}
+                      Other, {{109.0, 519.3}, {172.0, 30.0}}, label: 'Horizontal scroll bar, 1 page', value: 0%
+                        Other, {{165.0, 546.3}, {7.0, 3.0}}
+    Window, {{0.0, 0.0}, {390.0, 844.0}}
+      Other, {{0.0, 0.0}, {390.0, 844.0}}
+        Other, {{0.0, 0.0}, {390.0, 844.0}}

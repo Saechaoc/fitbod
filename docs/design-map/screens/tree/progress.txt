@@ -1,0 +1,64 @@
+Element subtree:
+ →Application, pid: 62469, label: 'fitbod'
+    Window (Main), {{0.0, 0.0}, {390.0, 844.0}}
+      Other, {{0.0, 0.0}, {1.0, 1.0}}, identifier: 'debug.resetSignal', label: 'Reset signal', value: fresh
+      Other, {{0.0, 0.0}, {390.0, 844.0}}
+        Other, {{0.0, 0.0}, {390.0, 844.0}}
+          Other, {{0.0, 0.0}, {390.0, 844.0}}
+            Other, {{0.0, 0.0}, {390.0, 844.0}}
+              Other, {{0.0, 0.0}, {390.0, 781.0}}
+                Other, {{0.0, 0.0}, {390.0, 781.0}}
+                  Other, {{0.0, 0.0}, {390.0, 781.0}}
+                    Other, {{0.0, 0.0}, {390.0, 781.0}}
+                      Other, {{0.0, 0.0}, {390.0, 781.0}}
+                        Other, {{0.0, 0.0}, {390.0, 781.0}}
+                          Other, {{0.0, 0.0}, {390.0, 781.0}}
+                            Other, {{0.0, 0.0}, {390.0, 781.0}}
+                              Other, {{0.0, 0.0}, {390.0, 781.0}}
+                                Other, {{0.0, 0.0}, {390.0, 781.0}}
+                                  Other, {{0.0, 0.0}, {390.0, 781.0}}
+                                    StaticText, {{162.5, 61.7}, {65.0, 14.7}}, label: 'Progress'
+                                    ScrollView, {{0.0, 93.0}, {390.0, 688.0}}
+                                      Other, {{0.0, 93.0}, {390.0, 550.0}}
+                                        Other, {{0.0, 93.0}, {390.0, 548.0}}
+                                          StaticText, {{0.0, 93.0}, {390.0, 46.0}}, label: 'History'
+                                          Button, {{0.0, 139.0}, {390.0, 59.3}}, identifier: 'progress.history', label: 'Workouts, 4 finished · last last week'
+                                            StaticText, {{16.0, 151.0}, {67.3, 18.7}}, label: 'Workouts'
+                                            StaticText, {{16.0, 171.7}, {178.3, 14.7}}, label: '4 finished · last last week'
+                                            StaticText, {{365.3, 159.3}, {8.7, 18.7}}, label: '›'
+                                          StaticText, {{0.0, 200.3}, {390.0, 46.0}}, label: 'Recent'
+                                          Button, {{0.0, 246.3}, {390.0, 59.3}}, label: 'Barbell Bench Press - Medium Grip, 4 sessions · last logged last week'
+                                            StaticText, {{16.0, 258.3}, {277.3, 18.7}}, label: 'Barbell Bench Press - Medium Grip'
+                                            StaticText, {{16.0, 279.0}, {224.7, 14.7}}, label: '4 sessions · last logged last week'
+                                            StaticText, {{365.3, 266.7}, {8.7, 18.7}}, label: '›'
+                                          Button, {{0.0, 306.7}, {390.0, 59.3}}, label: 'Barbell Squat, 4 sessions · last logged last week'
+                                            StaticText, {{16.0, 318.7}, {109.3, 18.7}}, label: 'Barbell Squat'
+                                            StaticText, {{16.0, 339.3}, {224.7, 14.7}}, label: '4 sessions · last logged last week'
+                                            StaticText, {{365.3, 327.0}, {8.7, 18.7}}, label: '›'
+                                          StaticText, {{0.0, 368.0}, {390.0, 46.0}}, label: 'Trends'
+                                          Button, {{0.0, 414.0}, {390.0, 59.3}}, label: 'Weekly Tonnage, Log a workout to see this week's tonnage.'
+                                            StaticText, {{16.0, 426.0}, {117.7, 18.7}}, label: 'Weekly Tonnage'
+                                            StaticText, {{16.0, 446.7}, {270.7, 14.7}}, label: 'Log a workout to see this week's tonnage.'
+                                            StaticText, {{365.3, 434.3}, {8.7, 18.7}}, label: '›'
+                                          Button, {{0.0, 474.3}, {390.0, 59.3}}, label: 'Personal Records, Records for 2 exercises'
+                                            StaticText, {{16.0, 486.3}, {134.7, 18.7}}, label: 'Personal Records'
+                                            StaticText, {{16.0, 507.0}, {152.0, 14.7}}, label: 'Records for 2 exercises'
+                                            StaticText, {{365.3, 494.7}, {8.7, 18.7}}, label: '›'
+                                          StaticText, {{0.0, 535.7}, {390.0, 46.0}}, label: 'Compare'
+                                          Button, {{0.0, 581.7}, {390.0, 59.3}}, label: 'This week vs last week, Compare to a routine you've logged twice.'
+                                            StaticText, {{16.0, 593.7}, {185.0, 18.7}}, label: 'This week vs last week'
+                                            StaticText, {{16.0, 614.3}, {270.7, 14.7}}, label: 'Compare to a routine you've logged twice.'
+                                            StaticText, {{365.3, 602.0}, {8.7, 18.7}}, label: '›'
+                                      Other, {{357.0, 93.0}, {30.0, 688.0}}, label: 'Vertical scroll bar, 1 page', value: 0%
+                                        Other, {{384.0, 717.0}, {3.0, 7.0}}
+                                      Other, {{357.0, 93.0}, {30.0, 688.0}}, label: 'Vertical scroll bar, 1 page', value: 0%
+                                        Other, {{384.0, 717.0}, {3.0, 7.0}}
+                            Other, {{0.0, 0.0}, {390.0, 781.0}}
+                              Other, {{0.0, 0.0}, {390.0, 781.0}}
+                Other, {{0.0, 698.0}, {390.0, 83.0}}
+                  Other, {{0.0, 0.0}, {390.0, 781.0}}
+                  Other, {{0.0, 698.0}, {390.0, 83.0}}
+              Button, {{0.0, 783.0}, {97.7, 61.0}}, identifier: 'Today', label: 'Today'
+              Button, {{97.7, 783.0}, {97.3, 61.0}}, identifier: 'Program', label: 'Program'
+              Button, {{195.0, 783.0}, {97.7, 61.0}}, identifier: 'Progress', label: 'Progress', Selected
+              Button, {{292.7, 783.0}, {97.3, 61.0}}, identifier: 'Library', label: 'Library'

@@ -1,0 +1,110 @@
+Element subtree:
+ →Application, pid: 14255, label: 'fitbod'
+    Window (Main), {{0.0, 0.0}, {390.0, 844.0}}
+      Other, {{0.0, 0.0}, {1.0, 1.0}}, identifier: 'debug.resetSignal', label: 'Reset signal', value: fresh
+      Other, {{0.0, 0.0}, {390.0, 844.0}}
+        Other, {{0.0, 0.0}, {390.0, 844.0}}
+          Other, {{0.0, 0.0}, {390.0, 844.0}}
+            Other, {{0.0, 0.0}, {390.0, 844.0}}
+              Other, {{0.0, 0.0}, {390.0, 781.0}}
+                Other, {{0.0, 0.0}, {390.0, 781.0}}
+                  Other, {{0.0, 0.0}, {390.0, 781.0}}
+                    Other, {{0.0, 0.0}, {390.0, 781.0}}
+                      Other, {{0.0, 0.0}, {390.0, 781.0}}
+                        Other, {{0.0, 0.0}, {390.0, 781.0}}
+                          Other, {{0.0, 0.0}, {390.0, 781.0}}
+                            Other, {{0.0, 0.0}, {390.0, 781.0}}
+                              Other, {{0.0, 0.0}, {390.0, 781.0}}
+                                Other, {{0.0, 0.0}, {390.0, 781.0}}
+                                  Other, {{0.0, 0.0}, {390.0, 781.0}}
+                                    ScrollView, {{0.0, 81.0}, {390.0, 700.0}}
+                                      Other, {{0.0, 81.0}, {390.0, 805.0}}
+                                        Other, {{0.0, 101.0}, {390.0, 783.0}}
+                                          StaticText, {{32.0, 101.0}, {47.0, 14.7}}, label: 'RESUME'
+                                          StaticText, {{32.0, 119.7}, {50.7, 18.7}}, label: 'Push A'
+                                          StaticText, {{32.0, 142.3}, {99.7, 14.7}}, label: '12:17 · 0 sets'
+                                          Button, {{163.7, 103.0}, {194.3, 52.0}}, label: 'Resume ▸'
+                                          StaticText, {{16.0, 197.5}, {128.3, 13.0}}, label: 'ACTIVE BLOCK · NONE'
+                                          StaticText, {{16.0, 205.2}, {271.0, 81.7}}, label: 'NO PROGRAM'
+                                          StaticText, {{16.0, 289.0}, {355.3, 73.7}}, label: 'A block schedules routines across weeks and phases — accumulation, intensification, peak, deload. You can also lift without a block, but Fitbod really earns its keep when you’re running one.'
+                                          Button, {{16.0, 403.0}, {358.0, 71.0}}, label: '+ DEFINE BLOCK ▶︎'
+                                          StaticText, {{20.0, 487.5}, {79.0, 13.0}}, label: 'WEEKS · 4-12'
+                                          StaticText, {{113.0, 487.5}, {77.3, 13.0}}, label: 'PHASES · 1-4'
+                                          StaticText, {{204.3, 487.5}, {108.7, 13.0}}, label: 'DELOAD OPTIONAL'
+                                          StaticText, {{20.0, 512.5}, {49.3, 13.0}}, label: 'CUSTOM'
+                                          StaticText, {{16.0, 552.3}, {176.7, 14.3}}, label: 'Or start from a template'
+                                          StaticText, {{307.7, 552.3}, {66.3, 14.3}}, label: '4 presets'
+                                          Button, {{0.0, 573.0}, {390.0, 77.0}}, label: '8W, Hypertrophy Meso, ACCUM 5 · INTNS 2 · DELOAD 1, ›'
+                                            StaticText, {{16.0, 592.2}, {30.7, 38.7}}, label: '8W'
+                                            StaticText, {{88.0, 594.2}, {132.3, 19.7}}, label: 'Hypertrophy Meso'
+                                            StaticText, {{88.0, 615.8}, {172.0, 13.0}}, label: 'ACCUM 5 · INTNS 2 · DELOAD 1'
+                                            StaticText, {{367.0, 601.8}, {7.0, 19.3}}, label: '›'
+                                          Button, {{0.0, 651.0}, {390.0, 77.0}}, label: '8W, Generic Strength Meso, ACCUM 4 · INTNS 2 · REAL 1 · DELOAD 1, ›'
+                                            StaticText, {{16.0, 670.2}, {30.7, 38.7}}, label: '8W'
+                                            StaticText, {{88.0, 672.2}, {165.7, 19.7}}, label: 'Generic Strength Meso'
+                                            StaticText, {{88.0, 693.8}, {221.0, 13.0}}, label: 'ACCUM 4 · INTNS 2 · REAL 1 · DELOAD 1'
+                                            StaticText, {{367.0, 679.8}, {7.0, 19.3}}, label: '›'
+                                          Button, {{0.0, 729.0}, {390.0, 77.0}}, label: '8W, Powerlifting Peak, ACCUM 3 · INTNS 3 · REAL 1 · DELOAD 1, ›'
+                                            StaticText, {{16.0, 748.2}, {30.7, 38.7}}, label: '8W'
+                                            StaticText, {{88.0, 750.2}, {127.0, 19.7}}, label: 'Powerlifting Peak'
+                                            StaticText, {{88.0, 771.8}, {220.7, 13.0}}, label: 'ACCUM 3 · INTNS 3 · REAL 1 · DELOAD 1'
+                                            StaticText, {{367.0, 757.8}, {7.0, 19.3}}, label: '›'
+                                          Button, {{0.0, 807.0}, {390.0, 77.0}}, label: '4W, 5/3/1 Cycle, ACCUM 1 · INTNS 1 · REAL 1 · DELOAD 1, ›'
+                                            StaticText, {{16.0, 826.2}, {30.7, 38.7}}, label: '4W'
+                                            StaticText, {{88.0, 828.2}, {83.7, 19.7}}, label: '5/3/1 Cycle'
+                                            StaticText, {{88.0, 849.8}, {217.7, 13.0}}, label: 'ACCUM 1 · INTNS 1 · REAL 1 · DELOAD 1'
+                                            StaticText, {{367.0, 835.8}, {7.0, 19.3}}, label: '›'
+                                    StaticText, {{16.0, 56.8}, {60.7, 14.3}}, label: 'PROGRAM'
+                                    Button, {{330.0, 47.0}, {44.0, 44.0}}, label: '+ NEW'
+                            Other, {{0.0, 0.0}, {390.0, 781.0}}
+                              Other, {{0.0, 0.0}, {390.0, 781.0}}
+                Other, {{0.0, 698.0}, {390.0, 83.0}}
+                  Other, {{0.0, 0.0}, {390.0, 781.0}}
+                  Other, {{0.0, 698.0}, {390.0, 83.0}}
+              Button, {{0.0, 783.0}, {97.7, 61.0}}, identifier: 'Today', label: 'Today'
+              Button, {{97.7, 783.0}, {97.3, 61.0}}, identifier: 'Program', label: 'Program', Selected
+              Button, {{195.0, 783.0}, {97.7, 61.0}}, identifier: 'Progress', label: 'Progress'
+              Button, {{292.7, 783.0}, {97.3, 61.0}}, identifier: 'Library', label: 'Library'
+      Other, {{0.0, 0.0}, {390.0, 844.0}}
+        Other, {{0.0, 0.0}, {390.0, 844.0}}
+        Other, {{0.0, 0.0}, {390.0, 844.0}}
+        Alert, {{35.0, 365.3}, {320.0, 126.3}}, label: 'Discard active workout?'
+          Other, {{35.0, 365.3}, {320.0, 126.3}}
+            Other, {{35.0, 365.3}, {320.0, 126.3}}
+              Other, {{35.0, 365.3}, {320.0, 126.3}}
+              Other, {{35.0, 365.3}, {320.0, 126.3}}
+                ScrollView, {{35.0, 365.3}, {320.0, 46.3}}
+                  Other, {{35.0, 365.3}, {320.0, 46.3}}
+                    StaticText, {{65.0, 387.3}, {260.0, 20.3}}, label: 'Discard active workout?'
+                  Other, {{322.0, 365.3}, {30.0, 46.3}}, label: 'Vertical scroll bar, 1 page', value: 0%
+                    Other, {{349.0, 326.3}, {3.0, 36.0}}
+                  Other, {{35.0, 385.5}, {320.0, 23.2}}, label: 'Horizontal scroll bar, 1 page', value: 0%
+                    Other, {{-4.0, 405.7}, {36.0, 3.0}}
+                  Other, {{322.0, 365.3}, {30.0, 46.3}}, label: 'Vertical scroll bar, 1 page', value: 0%
+                    Other, {{349.0, 326.3}, {3.0, 36.0}}
+                  Other, {{35.0, 385.5}, {320.0, 23.2}}, label: 'Horizontal scroll bar, 1 page', value: 0%
+                    Other, {{-4.0, 405.7}, {36.0, 3.0}}
+                ScrollView, {{35.0, 411.7}, {320.0, 80.0}}
+                  Other, {{35.0, 411.7}, {320.0, 80.0}}
+                    Other, {{51.0, 427.7}, {288.0, 48.0}}
+                      Button, {{51.0, 427.7}, {140.0, 48.0}}, label: 'Cancel'
+                      Button, {{199.0, 427.7}, {140.0, 48.0}}, label: 'Discard'
+                  Other, {{322.0, 411.7}, {30.0, 80.0}}, label: 'Vertical scroll bar, 1 page', value: 0%
+                    Other, {{349.0, 501.7}, {3.0, 7.0}}
+                  Other, {{35.0, 458.7}, {320.0, 30.0}}, label: 'Horizontal scroll bar, 1 page', value: 0%
+                    Other, {{125.0, 485.7}, {7.0, 3.0}}
+                  Other, {{322.0, 411.7}, {30.0, 80.0}}, label: 'Vertical scroll bar, 1 page', value: 0%
+                    Other, {{349.0, 501.7}, {3.0, 7.0}}
+                  Other, {{35.0, 458.7}, {320.0, 30.0}}, label: 'Horizontal scroll bar, 1 page', value: 0%
+                    Other, {{125.0, 485.7}, {7.0, 3.0}}
+          Other, {{35.0, 365.3}, {320.0, 126.3}}
+            Other, {{35.0, 365.3}, {320.0, 126.3}}
+              Other, {{35.0, 365.3}, {320.0, 126.3}}
+                Other, {{35.0, 365.3}, {320.0, 126.3}}
+                  Other, {{35.0, 365.3}, {320.0, 126.3}}
+                    Other, {{35.0, 365.3}, {390.0, 844.0}}
+                Other, {{35.0, 365.3}, {320.0, 126.3}}
+                  Other, {{35.0, 365.3}, {390.0, 844.0}}
+    Window, {{0.0, 0.0}, {390.0, 844.0}}
+      Other, {{0.0, 0.0}, {390.0, 844.0}}
+        Other, {{0.0, 0.0}, {390.0, 844.0}}

@@ -1,0 +1,62 @@
+Element subtree:
+ →Application, pid: 62469, label: 'fitbod'
+    Window (Main), {{0.0, 0.0}, {390.0, 844.0}}
+      Other, {{0.0, 0.0}, {1.0, 1.0}}, identifier: 'debug.resetSignal', label: 'Reset signal', value: fresh
+      Other, {{0.0, 0.0}, {390.0, 844.0}}
+        Other, {{0.0, 0.0}, {390.0, 844.0}}
+          Other, {{0.0, 0.0}, {390.0, 844.0}}
+            Other, {{0.0, 0.0}, {390.0, 844.0}}
+              Other, {{0.0, 0.0}, {390.0, 781.0}}
+                Other, {{0.0, 0.0}, {390.0, 781.0}}
+                  Other, {{0.0, 0.0}, {390.0, 781.0}}
+                    Other, {{0.0, 0.0}, {390.0, 781.0}}
+                      Other, {{0.0, 0.0}, {390.0, 781.0}}
+                        Other, {{0.0, 0.0}, {390.0, 781.0}}
+                          Other, {{0.0, 0.0}, {390.0, 781.0}}
+                            Other, {{0.0, 0.0}, {390.0, 781.0}}
+                              Other, {{0.0, 0.0}, {390.0, 781.0}}
+                                Other, {{0.0, 0.0}, {390.0, 781.0}}
+                                  Other, {{0.0, 0.0}, {390.0, 781.0}}
+                                    Button, {{4.0, 47.0}, {44.0, 44.0}}, label: 'Back'
+                                    StaticText, {{162.5, 61.7}, {65.0, 14.7}}, label: 'Progress'
+                                    StaticText, {{61.3, 101.0}, {267.3, 14.7}}, label: 'Barbell Bench Press - Medium Grip'
+                                    ScrollView, {{0.0, 124.7}, {390.0, 648.3}}
+                                      Other, {{0.0, 124.7}, {390.0, 478.3}}
+                                        StaticText, {{16.0, 138.7}, {194.7, 14.7}}, label: 'EST. 1 REP MAX · 3 WEEKS'
+                                        StaticText, {{16.0, 157.3}, {155.0, 71.7}}, label: '111 LB'
+                                        StaticText, {{314.2, 175.6}, {60.5, 22.2}}, label: '- 2 LB'
+                                        StaticText, {{301.3, 203.0}, {72.7, 12.0}}, label: 'FROM 113 LB'
+                                        Button, {{0.0, 245.0}, {97.7, 44.0}}, label: 'e1RM', Selected
+                                        Button, {{97.7, 245.0}, {97.3, 44.0}}, label: 'TOP SET'
+                                        Button, {{195.0, 245.0}, {97.7, 44.0}}, label: 'VOLUME'
+                                        Button, {{292.7, 245.0}, {97.3, 44.0}}, label: 'AVG RPE'
+                                        StaticText, {{307.3, 330.4}, {38.7, 12.0}}, label: 'PR 113'
+                                        Other, {{16.0, 303.0}, {358.0, 240.0}}, identifier: 'progress.chart', label: 'e1RM chart'
+                                          Other, {{16.0, 303.0}, {89.7, 240.0}}
+                                            Other, {{16.0, 303.0}, {89.7, 120.0}}, label: 'Top set, Oct 3, 2026', value: 113 lb
+                                            Other, {{16.0, 423.0}, {89.7, 120.0}}, label: 'All-set avg, Oct 3, 2026', value: 110 lb
+                                          Other, {{105.7, 303.0}, {89.3, 240.0}}
+                                            Other, {{105.7, 303.0}, {89.3, 120.0}}, label: 'Top set, Oct 10, 2026', value: 113 lb
+                                            Other, {{105.7, 423.0}, {89.3, 120.0}}, label: 'All-set avg, Oct 10, 2026', value: 112 lb
+                                          Other, {{195.0, 303.0}, {89.7, 240.0}}
+                                            Other, {{195.0, 303.0}, {89.7, 120.0}}, label: 'Top set, Oct 17, 2026', value: 108 lb
+                                            Other, {{195.0, 423.0}, {89.7, 120.0}}, label: 'All-set avg, Oct 17, 2026', value: 107 lb
+                                          Other, {{284.7, 303.0}, {89.3, 240.0}}
+                                            Other, {{284.7, 303.0}, {89.3, 120.0}}, label: 'Top set, Oct 24, 2026', value: 111 lb
+                                            Other, {{284.7, 423.0}, {89.3, 120.0}}, label: 'All-set avg, Oct 24, 2026', value: 107 lb
+                                        StaticText, {{36.0, 555.0}, {46.3, 12.0}}, label: 'Top set'
+                                        StaticText, {{118.3, 555.0}, {72.7, 12.0}}, label: 'All-set avg'
+                                        StaticText, {{16.0, 575.0}, {256.3, 12.0}}, label: 'SETS ABOVE 10 REPS AREN'T SHOWN IN E1RM.'
+                                      Other, {{357.0, 124.7}, {30.0, 648.3}}, label: 'Vertical scroll bar, 1 page', value: 0%
+                                        Other, {{384.0, 810.0}, {3.0, 7.0}}
+                                      Other, {{357.0, 124.7}, {30.0, 648.3}}, label: 'Vertical scroll bar, 1 page', value: 0%
+                                        Other, {{384.0, 810.0}, {3.0, 7.0}}
+                            Other, {{0.0, 0.0}, {390.0, 781.0}}
+                              Other, {{0.0, 0.0}, {390.0, 781.0}}
+                Other, {{0.0, 698.0}, {390.0, 83.0}}
+                  Other, {{0.0, 0.0}, {390.0, 781.0}}
+                  Other, {{0.0, 698.0}, {390.0, 83.0}}
+              Button, {{0.0, 783.0}, {97.7, 61.0}}, identifier: 'Today', label: 'Today'
+              Button, {{97.7, 783.0}, {97.3, 61.0}}, identifier: 'Program', label: 'Program'
+              Button, {{195.0, 783.0}, {97.7, 61.0}}, identifier: 'Progress', label: 'Progress', Selected
+              Button, {{292.7, 783.0}, {97.3, 61.0}}, identifier: 'Library', label: 'Library'

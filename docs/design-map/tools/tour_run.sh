@@ -5,7 +5,8 @@
 #   tools/tour_run.sh <17e|17promax> <default|ax3> <light|dark> <test> [trees]
 #
 #   <test>   a class or class/method in fitbodUITests, such as
-#            DesignTourMainUITests or DesignTourStatesUITests/testW15Routines
+#            DesignTourMainUITests or DesignTourStatesUITests/testW15Routines,
+#            or several joined by commas
 #   trees    pass "trees" to attach accessibility trees (17e light default)
 #
 # The tour runs from a private worktree copy of the project, so nothing in
@@ -25,7 +26,7 @@
 
 set -euo pipefail
 
-usage() { sed -n 3,12p "$0" >&2; exit 2; }
+usage() { sed -n 3,10p "$0" >&2; exit 2; }
 [[ $# -ge 4 ]] || usage
 
 PHONE="$1" SIZE="$2" APPEARANCE="$3" TEST="$4" TREES="${5:-}"
@@ -144,7 +145,11 @@ sleep 12
 xcrun simctl terminate "$UDID" bodybuilding.fitbod >/dev/null 2>&1 || true
 
 # 5. The tests.
-LABEL="$(echo "$TEST" | tr '/' '_')"
+ONLY=()
+IFS=',' read -r -a TESTS <<< "$TEST"
+for t in "${TESTS[@]}"; do ONLY+=("-only-testing:fitbodUITests/$t"); done
+# A long list would make a file name past the 255-byte limit.
+LABEL="$(echo "$TEST" | tr '/,' '_+' | cut -c1-100)"
 BUNDLE="$RESULTS/$PHONE-$SIZE-$APPEARANCE-$LABEL-$(date +%Y%m%d-%H%M%S).xcresult"
 log "test-without-building $TEST on $PHONE $SIZE $APPEARANCE"
 set +e
@@ -158,7 +163,7 @@ xcodebuild test-without-building \
   -resultBundlePath "$BUNDLE" \
   -parallel-testing-enabled NO \
   -test-timeouts-enabled YES -default-test-execution-time-allowance 600 \
-  -only-testing:"fitbodUITests/$TEST" \
+  "${ONLY[@]}" \
   CODE_SIGNING_ALLOWED=NO > "$LOGS/$PHONE-$SIZE-$APPEARANCE-$LABEL.log" 2>&1
 STATUS=$?
 set -e

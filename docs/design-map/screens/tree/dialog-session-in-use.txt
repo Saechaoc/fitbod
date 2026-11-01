@@ -1,0 +1,136 @@
+Element subtree:
+ →Application, pid: 36047, label: 'fitbod'
+    Window (Main), {{0.0, 0.0}, {390.0, 844.0}}
+      Other, {{0.0, 0.0}, {1.0, 1.0}}, identifier: 'debug.resetSignal', label: 'Reset signal', value: fresh
+      Other, {{0.0, 0.0}, {390.0, 844.0}}
+        Other, {{0.0, 0.0}, {390.0, 844.0}}
+          Other, {{-390.0, -844.0}, {1170.0, 2532.0}}
+          Other, {{0.0, 0.0}, {390.0, 844.0}}
+            Other, {{0.0, 0.0}, {390.0, 844.0}}
+              Other, {{0.0, 0.0}, {390.0, 781.0}}
+                Other, {{0.0, 0.0}, {390.0, 781.0}}
+                  Other, {{0.0, 0.0}, {390.0, 781.0}}
+                    Other, {{0.0, 0.0}, {390.0, 781.0}}
+                      Other, {{0.0, 0.0}, {390.0, 781.0}}
+                        Other, {{0.0, 0.0}, {390.0, 781.0}}
+                          Other, {{0.0, 0.0}, {390.0, 781.0}}
+                            Other, {{0.0, 0.0}, {390.0, 781.0}}
+                              Other, {{0.0, 0.0}, {390.0, 781.0}}
+                                Other, {{0.0, 0.0}, {390.0, 781.0}}
+                                  Other, {{0.0, 0.0}, {390.0, 781.0}}
+                                    Button, {{4.0, 47.0}, {72.7, 44.0}}, label: 'BACK'
+                                    StaticText, {{166.5, 61.7}, {57.0, 14.7}}, label: 'Session'
+                                    Button, {{329.3, 47.0}, {56.7, 44.0}}, label: 'Edit'
+                                    ScrollView, {{0.0, 93.0}, {390.0, 688.0}}
+                                      Other, {{0.0, 93.0}, {390.0, 209.0}}
+                                        StaticText, {{16.0, 113.0}, {85.7, 48.0}}, label: 'Push A'
+                                        StaticText, {{16.0, 169.0}, {226.3, 14.7}}, label: '1 exercise · 3 sets · ~11 min'
+                                        StaticText, {{16.0, 191.7}, {93.7, 14.7}}, label: 'Not done yet'
+                                        StaticText, {{16.0, 242.3}, {337.0, 43.7}}, label: '01, Barbell Bench Press - Medium Grip, 3 × 4–6 · @8 · 3:00 rest'
+                                          StaticText, {{16.0, 242.3}, {17.7, 26.7}}, label: '01'
+                                          StaticText, {{56.0, 244.3}, {297.0, 23.0}}, label: 'Barbell Bench Press - Medium Grip'
+                                          StaticText, {{56.0, 271.3}, {182.7, 14.7}}, label: '3 × 4–6 · @8 · 3:00 rest'
+                                      Other, {{357.0, 93.0}, {30.0, 610.0}}, label: 'Vertical scroll bar, 1 page', value: 0%
+                                        Other, {{384.0, 544.0}, {3.0, 203.0}}
+                                      Other, {{357.0, 93.0}, {30.0, 610.0}}, label: 'Vertical scroll bar, 1 page', value: 0%
+                                        Other, {{384.0, 544.0}, {3.0, 203.0}}
+                                    Button, {{16.0, 717.0}, {358.0, 52.0}}, label: 'Start workout ▸'
+                            Other, {{0.0, 0.0}, {390.0, 781.0}}
+                              Other, {{0.0, 0.0}, {390.0, 781.0}}
+                Other, {{0.0, 698.0}, {390.0, 83.0}}
+                  Other, {{0.0, 0.0}, {390.0, 781.0}}
+                  Other, {{0.0, 698.0}, {390.0, 83.0}}
+              Button, {{0.0, 783.0}, {97.7, 61.0}}, identifier: 'Today', label: 'Today'
+              Button, {{97.7, 783.0}, {97.3, 61.0}}, identifier: 'Program', label: 'Program', Selected
+              Button, {{195.0, 783.0}, {97.7, 61.0}}, identifier: 'Progress', label: 'Progress'
+              Button, {{292.7, 783.0}, {97.3, 61.0}}, identifier: 'Library', label: 'Library'
+      Other, {{0.0, 0.0}, {390.0, 844.0}}
+        Other, {{-390.0, -844.0}, {1170.0, 2532.0}}
+        Other, {{0.0, 47.0}, {390.0, 797.0}}
+          Other, {{0.0, 47.0}, {390.0, 797.0}}
+            Other, {{0.0, 47.0}, {390.0, 797.0}}
+              Other, {{0.0, 47.0}, {390.0, 797.0}}
+                Other, {{0.0, 47.0}, {390.0, 797.0}}
+                  Other, {{0.0, 47.0}, {390.0, 797.0}}
+                    Other, {{0.0, 47.0}, {390.0, 797.0}}
+                      Other, {{0.0, 47.0}, {390.0, 797.0}}
+                        Other, {{0.0, 47.0}, {390.0, 797.0}}
+                          Other, {{0.0, 47.0}, {390.0, 797.0}}
+                            StaticText, {{16.0, 115.0}, {93.7, 14.7}}, label: 'SESSION NAME'
+                            TextField, {{16.0, 139.7}, {358.0, 48.0}}, label: 'Session name', value: Push A
+                              Other, {{16.0, 160.7}, {358.0, 24.0}}, label: 'Horizontal scroll bar, 1 page', value: 0%
+                                Other, {{19.0, 181.7}, {352.0, 3.0}}
+                            Button, {{16.0, 197.7}, {74.7, 44.0}}, label: 'Strength'
+                              Button, {{16.0, 197.7}, {74.7, 44.0}}
+                                StaticText, {{16.0, 197.7}, {74.7, 44.0}}, label: 'Strength'
+                            StaticText, {{95.9, 208.6}, {68.2, 22.2}}, label: '~11 min'
+                            Button, {{169.3, 197.7}, {152.7, 44.0}}, label: 'Double Progression'
+                              Button, {{169.3, 197.7}, {152.7, 44.0}}
+                                StaticText, {{169.3, 197.7}, {152.7, 44.0}}, label: 'Double Progression'
+                            ScrollView, {{0.0, 253.7}, {390.0, 590.3}}
+                              Other, {{0.0, 253.7}, {390.0, 222.0}}
+                                Other, {{12.0, 265.7}, {366.0, 129.7}}
+                                  StaticText, {{16.0, 275.8}, {32.3, 33.3}}, identifier: 'routine.exercise.number.1', label: '01'
+                                  StaticText, {{58.3, 265.7}, {185.0, 37.0}}, identifier: 'routine.exercise.name.1', label: 'Barbell Bench Press - Medium Grip'
+                                  StaticText, {{58.3, 304.7}, {156.3, 14.7}}, identifier: 'routine.exercise.summary.1', label: 'barbell · 3×4–6 · 3:00'
+                                  Button, {{330.0, 270.7}, {44.0, 44.0}}, identifier: 'routine.exercise.reorder.1', label: 'Move exercise 1'
+                                    Button, {{330.0, 270.7}, {44.0, 44.0}}
+                                      StaticText, {{330.0, 270.7}, {44.0, 44.0}}, label: 'Move'
+                                  Button, {{12.0, 344.3}, {366.0, 51.0}}, label: 'Add exercise'
+                                    StaticText, {{28.0, 358.3}, {11.3, 23.0}}, label: '+'
+                                    StaticText, {{49.3, 362.5}, {93.7, 14.7}}, label: 'Add exercise'
+                                    StaticText, {{252.7, 362.5}, {109.3, 14.7}}, label: '↘ FROM LIBRARY'
+                              Other, {{357.0, 274.7}, {30.0, 489.3}}, label: 'Vertical scroll bar, 1 page', value: 0%
+                                Other, {{384.0, 496.0}, {3.0, 195.0}}
+                              Other, {{357.0, 274.7}, {30.0, 489.3}}, label: 'Vertical scroll bar, 1 page', value: 0%
+                                Other, {{384.0, 496.0}, {3.0, 195.0}}
+                            Button, {{0.0, 766.0}, {194.0, 44.0}}, label: 'Discard'
+                            Button, {{196.0, 766.0}, {194.0, 44.0}}, label: 'Save session ▸'
+                            Button, {{4.0, 47.0}, {72.7, 44.0}}, label: 'Back'
+                            StaticText, {{146.3, 61.7}, {97.3, 14.7}}, label: 'Edit session'
+                            Button, {{337.7, 47.0}, {48.3, 44.0}}, label: 'More'
+                    Other, {{0.0, 47.0}, {390.0, 797.0}}
+                      Other, {{0.0, 47.0}, {390.0, 797.0}}
+      Other, {{0.0, 0.0}, {390.0, 844.0}}
+        Other, {{0.0, 0.0}, {390.0, 844.0}}
+        Other, {{0.0, 0.0}, {390.0, 844.0}}
+        Alert, {{35.0, 342.3}, {320.0, 172.3}}, label: 'Session is in use'
+          Other, {{35.0, 342.3}, {320.0, 172.3}}
+            Other, {{35.0, 342.3}, {320.0, 172.3}}
+              Other, {{35.0, 342.3}, {320.0, 172.3}}
+              Other, {{35.0, 342.3}, {320.0, 172.3}}
+                ScrollView, {{35.0, 342.3}, {320.0, 92.3}}
+                  Other, {{35.0, 342.3}, {320.0, 92.3}}
+                    StaticText, {{65.0, 364.3}, {260.0, 20.3}}, label: 'Session is in use'
+                    StaticText, {{65.0, 392.3}, {260.0, 38.0}}, label: 'Remove it from Push Pull Legs before archiving.'
+                  Other, {{322.0, 342.3}, {30.0, 92.3}}, label: 'Vertical scroll bar, 1 page', value: 0%
+                    Other, {{349.0, 303.3}, {3.0, 36.0}}
+                  Other, {{35.0, 401.7}, {320.0, 30.0}}, label: 'Horizontal scroll bar, 1 page', value: 0%
+                    Other, {{-4.0, 428.7}, {36.0, 3.0}}
+                  Other, {{322.0, 342.3}, {30.0, 92.3}}, label: 'Vertical scroll bar, 1 page', value: 0%
+                    Other, {{349.0, 303.3}, {3.0, 36.0}}
+                  Other, {{35.0, 401.7}, {320.0, 30.0}}, label: 'Horizontal scroll bar, 1 page', value: 0%
+                    Other, {{-4.0, 428.7}, {36.0, 3.0}}
+                ScrollView, {{35.0, 434.7}, {320.0, 80.0}}
+                  Other, {{35.0, 434.7}, {320.0, 80.0}}
+                    Other, {{51.0, 450.7}, {288.0, 48.0}}
+                      Button, {{51.0, 450.7}, {288.0, 48.0}}, label: 'OK'
+                  Other, {{322.0, 434.7}, {30.0, 80.0}}, label: 'Vertical scroll bar, 1 page', value: 0%
+                    Other, {{349.0, 524.7}, {3.0, 7.0}}
+                  Other, {{35.0, 481.7}, {320.0, 30.0}}, label: 'Horizontal scroll bar, 1 page', value: 0%
+                    Other, {{125.0, 508.7}, {7.0, 3.0}}
+                  Other, {{322.0, 434.7}, {30.0, 80.0}}, label: 'Vertical scroll bar, 1 page', value: 0%
+                    Other, {{349.0, 524.7}, {3.0, 7.0}}
+                  Other, {{35.0, 481.7}, {320.0, 30.0}}, label: 'Horizontal scroll bar, 1 page', value: 0%
+                    Other, {{125.0, 508.7}, {7.0, 3.0}}
+          Other, {{35.0, 342.3}, {320.0, 172.3}}
+            Other, {{35.0, 342.3}, {320.0, 172.3}}
+              Other, {{35.0, 342.3}, {320.0, 172.3}}
+                Other, {{35.0, 342.3}, {320.0, 172.3}}
+                  Other, {{35.0, 342.3}, {320.0, 172.3}}
+                    Other, {{35.0, 342.3}, {390.0, 844.0}}
+                Other, {{35.0, 342.3}, {320.0, 172.3}}
+                  Other, {{35.0, 342.3}, {390.0, 844.0}}
+    Window, {{0.0, 0.0}, {390.0, 844.0}}
+      Other, {{0.0, 0.0}, {390.0, 844.0}}
+        Other, {{0.0, 0.0}, {390.0, 844.0}}
