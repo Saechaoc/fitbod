@@ -108,6 +108,12 @@ Product decisions are in [decisions.md](decisions.md), and they win over this fi
   Like every calibrating range, it shows until the lifter picks a weight (see "Calibrating weight cell").
 - Rejected: treating a 0-to-0 range as no range, which would make that calibrating cell an open field before the lifter picks a weight, unlike every other calibrating range.
 
+### Emptied weight field
+
+- Coordinator call, 2026-11-01 (T125 finding F354, decided under autopilot; the user can revisit it): a weight field that loses focus with no number in it shows the set's weight again, so the field always shows the weight the set will log (T39).
+- Rejected: leaving it as it is, because the field shows "—" while the set keeps, and logs, its old weight.
+- Rejected: writing 0 for an empty field, because the logger treats 0 as "no weight yet": a prescribed set takes its prescription back when its row reappears.
+
 ### Calibrating weight cell
 
 - Coordinator call, 2026-10-30 (T61 finding F78, decided under autopilot from decision 8; the user can revisit it): an open calibrating set shows its range until the lifter picks a weight.

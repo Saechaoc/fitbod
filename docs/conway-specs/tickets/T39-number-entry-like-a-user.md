@@ -41,6 +41,8 @@ In the logger, a tap on an empty set's reps field while rest is running ends the
 6. `UITestNavigation.hittable` polls in 50 to 100 ms steps, with the same overall ceiling, and `waitUntilStill` checks the frame in steps that small while still requiring it to hold for its interval (findings F247 and F262).
    `type` and `hittable` read `exists` before they call `waitForExistence`, which costs about 1 s even when the element is already there (finding F274).
 7. In the logger, one tap on an empty set's reps field while rest is running both ends the rest and gives the field keyboard focus, so the first digit typed lands.
+8. A logger weight field that loses focus with no number in it shows the set's weight again, so the field always shows the weight the set will log (finding F354, from T125's worker; `tradeoffs.md` "Emptied weight field").
+   Today a cleared field shows "—" while the set keeps, and logs, its old weight.
 
 ## Constraints
 
@@ -61,6 +63,7 @@ With the new helper, on both phones, write `NumberEntryUITests`:
 - In the session editor, give a tempo field 2, then tap that field, type 3, and assert that it reads 3.
 - In the logger, tap a work set's weight field that shows a value, type a new weight, and assert that the field shows only the new weight.
 - In Plate Inventory, tap the bar weight, type 20, and assert that it reads 20.
+- In the logger, tap a work set's weight field that shows a value, delete every digit, tap DONE, and assert that the field shows the set's weight again (change 8).
 - For each of these fields, assert that the field's frame lies above the keyboard and above any bottom bar.
 
 Expect these to fail today, because the typed digits join the old value.
@@ -84,4 +87,7 @@ If one of them passes today, say so in `notes.md`.
 - SwiftUI's `TextField` accepts a text selection binding on iOS 18 and later.
 - `MilestoneOneJourneyUITests.swift` has a private `replace(_:with:)` helper near line 379.
 - `UITestNavigation.textLines` (and so `readText`) uses Vision's `.accurate` level, which on the simulator dropped whole words from a 390 x 60pt crop in T35's runs; say in its comment that callers read narrow, single-line crops (finding F282).
+- Change 8: `PrescriptionWeightCell`'s `onChange(of: weightText)` ignores text that `Double` cannot read, and nothing writes the field again when it loses focus.
+  Its `onAppear` seeds the prescription into a set whose weight is 0, so writing 0 for an empty field is not the fix.
+  T125 made the cell report the weight in the field, so the set's plates (`set.plates.<suffix>`) follow it; keep that.
 - The Library search field's XCUI frame spans its whole row, so `UITestNavigation.type(replacing: true)` taps its × instead of focusing it; the new typing helper should tap the field's text area (finding F293, from T37's worker).
