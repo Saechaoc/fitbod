@@ -381,6 +381,9 @@ Product decisions are in [decisions.md](decisions.md), and they win over this fi
   A seeded exercise that the bundled dataset no longer lists stays as it is.
 - Rejected: deleting and inserting the catalog again, as the importer does today, which drops custom exercises, edited weights and targets, and history's exercise links.
 - Rejected: deleting dropped exercises that nothing references, which saves a few rows and risks deleting one the lifter archived on purpose.
+- Open question for the user (T128 finding F351): a store the old re-seed already damaged keeps crashing at launch in Progress and the fatigue view, because some logged exercises link to deleted catalog rows, and nothing repairs them.
+  Only a store that held workouts across the seed bump from 1 to 2 (2026-05-11), or a simulator store after a unit run before T128, can be affected.
+  A one-time repair at launch would be a new data ticket if your phone shows the crash.
 
 ## Design references
 

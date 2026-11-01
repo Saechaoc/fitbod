@@ -51,7 +51,6 @@ Every Phase 2 ticket is done and archived.
 | [T125](tickets/T125-logger-plates-during-entry.md) | The logger shows a set's plates while its weight is being entered |
 | [T126](tickets/T126-section-head-action-hit-area.md) | Section head actions keep their touch area off the title at accessibility sizes |
 | [T127](tickets/T127-pr-volume-grouping.md) | The PR list writes volume with thousands separators, as the chart does |
-| [T128](tickets/T128-reseed-keeps-lifter-data.md) | Re-seeding the exercise library keeps the lifter's exercises, history and targets |
 | [T129](tickets/T129-progress-chart-names-every-line.md) | The progress chart names every line it draws |
 | [T132](tickets/T132-planned-hero-and-session-summary-at-ax3.md) | The planned block hero and session summaries keep their parts whole at AX3 |
 | [T136](tickets/T136-pr-row-opens-its-workout.md) | A PR row opens the workout it was set in |
