@@ -13,7 +13,6 @@
 //    6. The reorder control is a labeled MOVE chip, not the "⋮⋮" glyph or
 //       an SF Symbol (source-anchor; T29).
 //    7. Discard confirmation copy is verbatim (source-anchor).
-//    8. TOP set row uses bruSignal tint (source-anchor via PerSetOverrideRow).
 //
 //  Tests use the source-anchor pattern from ExerciseHistoryViewCopyTests +
 //  RoutineBuilderCopyTests: read source files from disk via #filePath ascent
@@ -135,18 +134,5 @@ struct RoutineBuilderBRUCopyTests {
         #expect(builder.contains("\"Discard changes?\""))
         #expect(builder.contains("\"Your edits will not be saved.\""))
         #expect(builder.contains("\"Keep editing\""))
-    }
-
-    // MARK: - 8. TOP set row uses bruSignal tint (source-anchor)
-
-    @Test("topSetRowUsesBruSignal — PerSetOverrideRow applies .bruSignal.opacity(0.06) for TOP")
-    func topSetRowUsesBruSignal() throws {
-        let row = try source("PerSetOverrideRow.swift")
-        // Must contain bruSignal opacity tint for the TOP background
-        #expect(row.contains("bruSignal") && row.contains("opacity"))
-        // TOP label must be present
-        #expect(row.contains("\"TOP\""))
-        // isTop parameter must be present (structural)
-        #expect(row.contains("isTop"))
     }
 }

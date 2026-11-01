@@ -25,7 +25,7 @@ final class PerSetOverridesRemovedUITests: XCTestCase {
     @MainActor
     func testSessionEditorOffersNoPerSetOverrides() throws {
         let app = openEditor()
-        let title = app.staticTexts.matching(NSPredicate(format: "label == %@", Self.bench)).firstMatch
+        let title = app.buttons.matching(NSPredicate(format: "label == %@", Self.bench)).firstMatch
         XCTAssertTrue(title.waitForExistence(timeout: 10), "Missing \(Self.bench)")
         title.tap()
         let details = app.buttons["prescription.details"]

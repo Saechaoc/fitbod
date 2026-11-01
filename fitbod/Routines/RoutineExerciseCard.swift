@@ -18,10 +18,12 @@
 //
 //  The row does not merge its children for accessibility: the number, the
 //  name, the sub-line and MOVE each keep their own unique identifier. The
-//  name stays a static text, and its hint says a double tap, which reaches
-//  the row's tap gesture, opens or closes the editor.
+//  name reads as a button whose value says whether the editor is open, and
+//  activating it opens or closes the editor, as a tap on the row does.
 //
-//  When expanded: PrescriptionEditorRow mounted inline.
+//  When expanded: PrescriptionEditorRow mounted inline, then REMOVE, which
+//  asks before it removes the exercise. The rows sit in a stack, where
+//  swipe actions never fire, so REMOVE is the visible way to remove one.
 //  When supersetGroupID != nil: wrapped in BRUSupersetBracket.
 //  Leading index shows "SS" in bruSignal when in a superset.
 //
@@ -49,6 +51,8 @@ public struct RoutineExerciseCard: View {
     public let onEditWarmup: (RoutineExerciseDraft) -> Void
     public let onMoveUp: (() -> Void)?
     public let onMoveDown: (() -> Void)?
+
+    @State private var confirmingRemove = false
 
     public init(
         draft: RoutineExerciseDraft,
@@ -95,11 +99,14 @@ public struct RoutineExerciseCard: View {
             // ── Header row: index + name + drag handle ──
             headerRow
 
-            // ── Expanded prescription editor ──
+            // ── Expanded prescription editor, then REMOVE ──
             if isExpanded {
-                PrescriptionEditorRow(draft: draft, hasBlock: hasBlock)
-                    .padding(.top, 8)
-                    .transition(.opacity.combined(with: .move(edge: .top)))
+                VStack(alignment: .leading, spacing: 0) {
+                    PrescriptionEditorRow(draft: draft, hasBlock: hasBlock)
+                    removeControl
+                }
+                .padding(.top, 8)
+                .transition(.opacity.combined(with: .move(edge: .top)))
             }
         }
         .padding(.horizontal, 16)
@@ -162,16 +169,24 @@ public struct RoutineExerciseCard: View {
             .accessibilityIdentifier("routine.exercise.number.\(index + 1)")
     }
 
+    private var exerciseName: String {
+        draft.exercise?.name ?? "Exercise"
+    }
+
     /// Name + sub-line. A tap on the row, the name included, opens and
-    /// closes the prescription editor.
+    /// closes the prescription editor. VoiceOver reads the name as the
+    /// button that does it.
     private var titleBlock: some View {
         VStack(alignment: .leading, spacing: 2) {
-            Text(draft.exercise?.name ?? "Exercise")
+            Text(exerciseName)
                 .font(BRUFont.bodyEmphasis)
                 .foregroundStyle(Color.bruInk)
                 .multilineTextAlignment(.leading)
+                .accessibilityAddTraits(.isButton)
+                .accessibilityValue(isExpanded ? "Editor open" : "Editor closed")
+                .accessibilityHint(isExpanded ? "Closes the prescription editor" : "Opens the prescription editor")
+                .accessibilityAction { toggleExpanded() }
                 .accessibilityIdentifier("routine.exercise.name.\(index + 1)")
-                .accessibilityHint(isExpanded ? "Collapses prescription editor" : "Expands prescription editor")
 
             Text(subLine)
                 .font(BRUFont.labelSmall)
@@ -196,6 +211,30 @@ public struct RoutineExerciseCard: View {
         }
         .accessibilityLabel("Move exercise \(index + 1)")
         .accessibilityIdentifier("routine.exercise.reorder.\(index + 1)")
+    }
+
+    /// REMOVE, at the end of the open editor. It asks first; the long-press
+    /// menu's Remove still removes at once.
+    private var removeControl: some View {
+        Button { confirmingRemove = true } label: {
+            // Capitals in the copy, not textCase, which would capitalize the
+            // VoiceOver label too.
+            Text("REMOVE")
+                .font(BRUFont.labelSmall)
+                .tracking(1.2)
+                .foregroundStyle(Color.bruSignalText)
+                .frame(minWidth: BRUMetrics.touchTarget, minHeight: BRUMetrics.touchTarget)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Remove \(exerciseName)")
+        .accessibilityIdentifier("routine.exercise.remove.\(index + 1)")
+        .confirmationDialog("Remove \(exerciseName)?", isPresented: $confirmingRemove, titleVisibility: .visible) {
+            Button("Remove", role: .destructive) { onRemove(draft) }
+            // iOS 26 hides a cancel-role button, so the way back is a plain one.
+            Button("Keep exercise") {}
+        }
+        .frame(maxWidth: .infinity, alignment: .trailing)
     }
 
     private func toggleExpanded() {

@@ -27,9 +27,13 @@
 //
 //  Rest reads as minutes and seconds, such as "3:00", in the chip and the
 //  stepper, as on the rest timer. The three switches use the BRU toggle
-//  style, and at accessibility sizes their labels wrap, the tempo fields
-//  and the tempo fields drop their fixed widths, so nothing is clipped
-//  (Milestone 1 review items 12 and 13).
+//  style, and at accessibility sizes their labels wrap and the tempo
+//  fields drop their fixed widths, so nothing is clipped (Milestone 1
+//  review items 12 and 13).
+//
+//  Each tempo field keeps its drawn size, and its touch target reaches 2pt
+//  into each gap beside it and up and down to 44pt, where a tap focuses
+//  the field (T111).
 //
 //  BRU contract: NO accentColor / NO Image(systemName:) / NO Capsule /
 //  NO RoundedRectangle / NO Apple HIG semantic fonts
@@ -43,6 +47,14 @@ public struct PrescriptionEditorRow: View {
     public let hasBlock: Bool
 
     @State private var showingAdvanced: Bool = false
+    @FocusState private var focusedTempoField: Int?
+    /// One tempo field's drawn height, which sets how far its touch target
+    /// reaches up and down.
+    @State private var tempoFieldHeight: CGFloat = BRUMetrics.touchTarget
+
+    /// How far a tempo field's touch target reaches into the 6pt gap on each
+    /// side, so a 40pt field gets a 44pt target.
+    private static let tempoTargetReach: CGFloat = 2
 
     public init(draft: RoutineExerciseDraft, hasBlock: Bool = false) {
         self.draft = draft
@@ -242,11 +254,25 @@ public struct PrescriptionEditorRow: View {
                 draft.tempo = joined.isEmpty ? nil : joined
             }
         )
+        let verticalReach = max(0, (BRUMetrics.touchTarget - tempoFieldHeight) / 2)
         return TextField(placeholder, text: binding)
             .frame(width: width)
             .keyboardType(.numberPad)
             .multilineTextAlignment(.center)
             .font(BRUFont.bodyDefault)
+            .focused($focusedTempoField, equals: index)
+            .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { tempoFieldHeight = $0 }
+            // The touch target: the padding reaches past the field, a tap
+            // there focuses it, and the negative padding gives the layout
+            // back, so nothing drawn moves.
+            .padding(.horizontal, Self.tempoTargetReach)
+            .padding(.vertical, verticalReach)
+            .contentShape(Rectangle())
+            .onTapGesture { focusedTempoField = index }
+            .accessibilityElement(children: .contain)
+            .accessibilityIdentifier("prescription.tempo.\(index + 1)")
+            .padding(.horizontal, -Self.tempoTargetReach)
+            .padding(.vertical, -verticalReach)
     }
 
     // MARK: - Partial reps

@@ -31,7 +31,7 @@
 //  ProgressionKind cases (block-aware filtering). Both write to draft directly.
 //
 //  ## Threat mitigations (T-02.1-05-01/02/03)
-//  .swipeActions on each RoutineExerciseCard (delete affordance).
+//  REMOVE in each open RoutineExerciseCard asks first (delete affordance).
 //  .onMove on ForEach inside LazyVStack (drag-reorder without .editMode).
 //  Intent/Progression chips wire to existing RoutineDraft bindings.
 //
@@ -474,14 +474,6 @@ public struct RoutineBuilderView: View {
                         onMoveDown: i + 1 < draft.exercises.count
                             ? { moveExercise(from: i, to: i + 2) } : nil
                     )
-                    // Swipe-to-delete (T-02.1-05-01 mitigation)
-                    .swipeActions(edge: .trailing, allowsFullSwipe: true) {
-                        Button(role: .destructive) {
-                            removeExercise(exDraft)
-                        } label: {
-                            Text("Remove")
-                        }
-                    }
 
                     BRUDivider(.hair)
                 }

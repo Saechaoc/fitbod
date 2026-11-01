@@ -404,7 +404,7 @@ final class SessionEditorPolishUITests: XCTestCase {
     /// Opens an exercise's row with a tap on its name.
     @MainActor
     private func expand(_ name: String, in app: XCUIApplication) {
-        let title = editor(in: app).staticTexts.matching(NSPredicate(format: "label == %@", name)).firstMatch
+        let title = editor(in: app).buttons.matching(NSPredicate(format: "label == %@", name)).firstMatch
         XCTAssertTrue(title.waitForExistence(timeout: 10), "Missing \(name)")
         showInEditor(title, in: app)
         title.tap()
@@ -484,7 +484,7 @@ final class SessionEditorPolishUITests: XCTestCase {
     @MainActor
     private func assertOrder(_ names: [String], in app: XCUIApplication, file: StaticString = #filePath, line: UInt = #line) {
         for (index, name) in names.enumerated() {
-            let title = app.staticTexts["routine.exercise.name.\(index + 1)"]
+            let title = app.buttons["routine.exercise.name.\(index + 1)"]
             XCTAssertTrue(title.waitForExistence(timeout: 5), "Row \(index + 1) must show its name", file: file, line: line)
             for _ in 0..<10 where title.label != name {
                 Thread.sleep(forTimeInterval: 0.25)

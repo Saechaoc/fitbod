@@ -109,7 +109,7 @@ final class MilestoneOneJourneyUITests: XCTestCase {
         reveal(reorderSecond)
         reorderSecond.tap()
         tap("Move up")
-        XCTAssertTrue(app.staticTexts.matching(NSPredicate(format:
+        XCTAssertTrue(app.buttons.matching(NSPredicate(format:
             "identifier == %@ AND label BEGINSWITH %@",
             "routine.exercise.name.1", "Incline Dumbbell Press"
         )).firstMatch.waitForExistence(timeout: 5))
@@ -119,7 +119,7 @@ final class MilestoneOneJourneyUITests: XCTestCase {
         reveal(reorderFirst)
         reorderFirst.tap()
         tap("Move down")
-        XCTAssertTrue(app.staticTexts.matching(NSPredicate(format:
+        XCTAssertTrue(app.buttons.matching(NSPredicate(format:
             "identifier == %@ AND label == %@",
             "routine.exercise.name.1", exerciseName
         )).firstMatch.waitForExistence(timeout: 5))
@@ -129,7 +129,7 @@ final class MilestoneOneJourneyUITests: XCTestCase {
         XCTAssertTrue(session.waitForExistence(timeout: 15))
         session.tap()
         tap("Edit")
-        let editableName = app.staticTexts.matching(NSPredicate(format: "label == %@", exerciseName))
+        let editableName = app.buttons.matching(NSPredicate(format: "label == %@", exerciseName))
             .allElementsBoundByIndex.first(where: { $0.isHittable })
         XCTAssertNotNil(editableName)
         editableName?.tap()
