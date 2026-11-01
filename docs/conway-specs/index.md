@@ -65,7 +65,6 @@ Every Phase 2 ticket is done and archived.
 | [T121](tickets/T121-new-block-ui-tests-budgets.md) | New Block UI tests fit the test budgets |
 | [T131](tickets/T131-editor-ui-tests-budgets.md) | The session editor's UI tests fit the test budgets |
 | [T135](tickets/T135-shared-ui-test-helpers.md) | UI suites share one copy of their helpers, and the swipe-back suite finds rows by name and fits its budgets |
-| [T146](tickets/T146-add-session-rows-tap-only.md) | A sideways drag on the Add session sheet adds nothing to the routine |
 
 ### Phase 5: design refresh
 

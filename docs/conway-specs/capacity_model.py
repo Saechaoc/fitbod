@@ -160,6 +160,7 @@ ARCHIVED = {
     "T143": (3, [], []),
     "T144": (4, [], []),
     "T145": (4, [], ["fitbod/Sessions/TempoParts.swift", "fitbodTests/TempoPartsTests.swift"]),
+    "T146": (4, [], []),
 }
 
 BUNDLE = pathlib.Path(__file__).resolve().parent
