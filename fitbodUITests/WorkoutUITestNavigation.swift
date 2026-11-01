@@ -4,9 +4,9 @@ extension UITestNavigation {
     static func openSeededWorkout() -> XCUIApplication {
         let app = launch(seededWorkout)
         let resume = app.buttons["resumeSlab.resume"]
-        XCTAssertTrue(resume.waitForExistence(timeout: 10))
+        XCTAssertTrue(appears(resume))
         resume.tap()
-        XCTAssertTrue(app.textFields["set.reps.1.S1"].waitForExistence(timeout: 10))
+        XCTAssertTrue(appears(app.textFields["set.reps.1.S1"]))
         return app
     }
 
@@ -29,8 +29,7 @@ extension UITestNavigation {
             .allElementsBoundByIndex.max(by: { $0.frame.minY < $1.frame.minY })
         XCTAssertNotNil(button, "Missing picker button: \(label)")
         button?.tap()
-        let closed = XCTNSPredicateExpectation(predicate: NSPredicate(format: "exists == false"), object: wheel)
-        XCTAssertEqual(XCTWaiter().wait(for: [closed], timeout: 5), .completed, "\(label) must close the picker")
+        XCTAssertTrue(disappears(wheel, within: 5), "\(label) must close the picker")
     }
 
     static func openEmptySessionBuilder() -> XCUIApplication {
@@ -42,12 +41,12 @@ extension UITestNavigation {
         type("Push Pull Legs", into: app.textFields["newRoutine.name"])
         hittable(app.buttons, "Save", exactLabel: true).tap()
         let addSession = app.buttons["+ Add session"]
-        XCTAssertTrue(addSession.waitForExistence(timeout: 10))
+        XCTAssertTrue(appears(addSession))
         addSession.tap()
         let newSession = app.buttons["+ New session"]
-        XCTAssertTrue(newSession.waitForExistence(timeout: 10))
+        XCTAssertTrue(appears(newSession))
         newSession.tap()
-        XCTAssertTrue(app.textFields["Session name"].waitForExistence(timeout: 10))
+        XCTAssertTrue(appears(app.textFields["Session name"]))
         return app
     }
 }

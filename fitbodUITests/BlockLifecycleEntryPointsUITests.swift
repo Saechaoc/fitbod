@@ -30,33 +30,32 @@ final class BlockLifecycleEntryPointsUITests: XCTestCase {
         openActiveBlockOverview(in: app)
         UITestNavigation.hittable(app.buttons, "END BLOCK").tap()
         let alert = app.alerts["End block?"]
-        XCTAssertTrue(alert.waitForExistence(timeout: 5), "END BLOCK must ask before it ends the block")
+        XCTAssertTrue(UITestNavigation.appears(alert, within: 5), "END BLOCK must ask before it ends the block")
         alert.buttons["End Block"].tap()
-        XCTAssertTrue(app.buttons.labeled("END BLOCK").waitForNonExistence(timeout: 5),
+        XCTAssertTrue(UITestNavigation.disappears(app.buttons.labeled("END BLOCK"), within: 5),
                       "An ended block offers no END BLOCK")
         UITestNavigation.hittable(app.buttons, "Back").tap()
         // T70: Today opens the ended block's review; Plan custom puts it off.
         let review = app.staticTexts.labeled("Block review")
         UITestNavigation.hittable(app.buttons, "Plan custom").tap()
-        XCTAssertTrue(review.waitForNonExistence(timeout: 5), "Plan custom must close the review")
+        XCTAssertTrue(UITestNavigation.disappears(review, within: 5), "Plan custom must close the review")
         assertNoActiveBlockOnToday(in: app)
 
         UITestNavigation.selectTab("Program", in: app)
-        XCTAssertTrue(app.buttons.labeled("DONE block: Live Block").waitForExistence(timeout: 10),
+        XCTAssertTrue(UITestNavigation.appears(app.buttons.labeled("DONE block: Live Block")),
                       "Program must list the ended block as completed")
         XCTAssertFalse(app.buttons.labeled("READY block: Live Block").exists,
                        "An ended block must not drop back to ready")
         XCTAssertFalse(activeBlockCards(in: app).firstMatch.exists, "Program must list no active block")
-        UITestNavigation.saveScreenshot("T67", "program-ended-block")
 
         // Reopened, the app reads the block back as ended, and the review
         // the lifter put off opens again.
         UITestNavigation.relaunch(app)
         UITestNavigation.hittable(app.buttons, "Plan custom").tap()
-        XCTAssertTrue(review.waitForNonExistence(timeout: 5), "Plan custom must close the review")
+        XCTAssertTrue(UITestNavigation.disappears(review, within: 5), "Plan custom must close the review")
         assertNoActiveBlockOnToday(in: app)
         UITestNavigation.selectTab("Program", in: app)
-        XCTAssertTrue(app.buttons.labeled("DONE block: Live Block").waitForExistence(timeout: 10),
+        XCTAssertTrue(UITestNavigation.appears(app.buttons.labeled("DONE block: Live Block")),
                       "The ended block must stay completed after a relaunch")
     }
 
@@ -72,25 +71,24 @@ final class BlockLifecycleEntryPointsUITests: XCTestCase {
         UITestNavigation.hittable(app.buttons, "+ New block").tap()
         UITestNavigation.hittable(app.buttons, "Blank Block").tap()
         let newBlock = app.staticTexts.labeled("NEW BLOCK")
-        XCTAssertTrue(newBlock.waitForExistence(timeout: 10), "New Block never opened")
+        XCTAssertTrue(UITestNavigation.appears(newBlock), "New Block never opened")
         UITestNavigation.type("Next Block", into: app.textFields.firstMatch)
         UITestNavigation.hittable(app.buttons, "SAVE DRAFT").tap()
-        XCTAssertTrue(newBlock.waitForNonExistence(timeout: 5), "SAVE DRAFT must close New Block")
+        XCTAssertTrue(UITestNavigation.disappears(newBlock, within: 5), "SAVE DRAFT must close New Block")
 
         let draft = app.buttons.labeled("DRAFT block: Next Block")
-        XCTAssertTrue(draft.waitForExistence(timeout: 10), "Program must list the new block as a draft")
+        XCTAssertTrue(UITestNavigation.appears(draft), "Program must list the new block as a draft")
         UITestNavigation.reveal(draft, in: app)
         draft.tap()
         UITestNavigation.hittable(app.buttons, "EDIT").tap()
-        XCTAssertTrue(editBlockTitle(in: app).waitForExistence(timeout: 10), "EDIT must open EDIT BLOCK")
+        XCTAssertTrue(UITestNavigation.appears(editBlockTitle(in: app)), "EDIT must open EDIT BLOCK")
         pickRoutine("Live Routine", from: "+ ATTACH ▸", in: app)
         UITestNavigation.revealAboveBottomBar(app.buttons, "SWAP ▸", in: app)
-        UITestNavigation.saveScreenshot("T67", "edit-draft-block-routine")
         UITestNavigation.hittable(app.buttons, "SAVE CHANGES").tap()
-        XCTAssertTrue(editBlockTitle(in: app).waitForNonExistence(timeout: 5), "SAVE CHANGES must close EDIT BLOCK")
+        XCTAssertTrue(UITestNavigation.disappears(editBlockTitle(in: app), within: 5), "SAVE CHANGES must close EDIT BLOCK")
 
         UITestNavigation.hittable(app.buttons, "Back").tap()
-        XCTAssertTrue(app.buttons.labeled("READY block: Next Block").waitForExistence(timeout: 10),
+        XCTAssertTrue(UITestNavigation.appears(app.buttons.labeled("READY block: Next Block")),
                       "With a routine, Program must list the block as ready")
     }
 
@@ -101,9 +99,9 @@ final class BlockLifecycleEntryPointsUITests: XCTestCase {
     private func openActiveBlockOverview(in app: XCUIApplication, file: StaticString = #filePath, line: UInt = #line) {
         UITestNavigation.selectTab("Today", in: app)
         let band = app.staticTexts.labeled("LIVE BLOCK")
-        XCTAssertTrue(band.waitForExistence(timeout: 10), "Today must show the active block's band", file: file, line: line)
+        XCTAssertTrue(UITestNavigation.appears(band), "Today must show the active block's band", file: file, line: line)
         band.tap()
-        XCTAssertTrue(app.buttons.labeled("END BLOCK").waitForExistence(timeout: 10),
+        XCTAssertTrue(UITestNavigation.appears(app.buttons.labeled("END BLOCK")),
                       "The band must open the active block's overview", file: file, line: line)
     }
 
@@ -111,7 +109,7 @@ final class BlockLifecycleEntryPointsUITests: XCTestCase {
     @MainActor
     private func assertNoActiveBlockOnToday(in app: XCUIApplication, file: StaticString = #filePath, line: UInt = #line) {
         UITestNavigation.selectTab("Today", in: app)
-        XCTAssertTrue(app.staticTexts.labeled("No active block.").waitForExistence(timeout: 10),
+        XCTAssertTrue(UITestNavigation.appears(app.staticTexts.labeled("No active block.")),
                       "Today must say it has no active block", file: file, line: line)
         XCTAssertFalse(app.staticTexts.labeled("LIVE BLOCK").exists,
                        "Today must drop the ended block's band", file: file, line: line)
@@ -136,9 +134,9 @@ final class BlockLifecycleEntryPointsUITests: XCTestCase {
     ) {
         UITestNavigation.revealAboveBottomBar(app.buttons, control, in: app, file: file, line: line).tap()
         let picker = app.staticTexts.labeled("Choose Routine")
-        XCTAssertTrue(picker.waitForExistence(timeout: 5), "\(control) must open the routine picker", file: file, line: line)
+        XCTAssertTrue(UITestNavigation.appears(picker, within: 5), "\(control) must open the routine picker", file: file, line: line)
         UITestNavigation.hittable(app.buttons, routine, file: file, line: line).tap()
-        XCTAssertTrue(picker.waitForNonExistence(timeout: 5), "Picking \(routine) must close the routine picker",
+        XCTAssertTrue(UITestNavigation.disappears(picker, within: 5), "Picking \(routine) must close the routine picker",
                       file: file, line: line)
     }
 }

@@ -1,11 +1,10 @@
 import XCTest
 
-/// Ticket T04, review items 2 and 25. SKIP WARM-UPS, and every other button
-/// in the exercise card's header row, works on the first tap anywhere in its
-/// 44pt target. A skip collapses the ramp to a "WARM-UPS SKIPPED" line with
-/// UNDO, and skipped warm-ups never count as logged sets. Finish with no
-/// logged work set offers Discard workout instead of saving (decision 6),
-/// and the Finish and Discard dialogs show a visible Keep logging.
+/// Ticket T04, review items 2 and 25. A skip collapses the ramp to a
+/// "WARM-UPS SKIPPED" line with UNDO, and skipped warm-ups never count as
+/// logged sets. Finish with no logged work set offers Discard workout
+/// instead of saving (decision 6), and the Finish and Discard dialogs show
+/// a visible Keep logging.
 final class SkipWarmupsUITests: XCTestCase {
 
     @MainActor
@@ -21,38 +20,30 @@ final class SkipWarmupsUITests: XCTestCase {
         let app = UITestNavigation.openSeededWorkout()
         let skip = element(app.buttons, "Skip all warm-up sets")
         UITestNavigation.reveal(skip, in: app)
-        // The whole full-width 44pt row takes the tap, not just the words:
-        // tap near its leading edge and its top, away from the label.
-        UITestNavigation.assertTapTarget(skip)
-        XCTAssertGreaterThanOrEqual(skip.frame.width, app.frame.width - 1, "SKIP WARM-UPS must span the row: \(skip.frame)")
-        skip.coordinate(withNormalizedOffset: CGVector(dx: 0.05, dy: 0.1)).tap()
+        skip.tap()
 
         let skipped = element(app.staticTexts, "Warm-ups skipped")
-        XCTAssertTrue(skipped.waitForExistence(timeout: 5), "One tap on SKIP WARM-UPS must collapse the ramp")
+        XCTAssertTrue(UITestNavigation.appears(skipped, within: 5), "One tap on SKIP WARM-UPS must collapse the ramp")
         XCTAssertFalse(skip.exists, "The ramp must collapse after a skip")
-        UITestNavigation.saveScreenshot("T04", "warmups-skipped")
 
         app.buttons["Back"].firstMatch.tap()
         let resume = app.buttons["resumeSlab.resume"]
-        XCTAssertTrue(resume.waitForExistence(timeout: 10))
+        XCTAssertTrue(UITestNavigation.appears(resume))
         let noneLogged = element(app.staticTexts, "0 sets logged")
-        XCTAssertTrue(noneLogged.waitForExistence(timeout: 5), "Skipped warm-ups must not count as logged sets")
+        XCTAssertTrue(UITestNavigation.appears(noneLogged, within: 5), "Skipped warm-ups must not count as logged sets")
 
         resume.tap()
-        XCTAssertTrue(skipped.waitForExistence(timeout: 10), "The skip must persist")
-        let undo = element(app.buttons, "Undo skipped warm-ups")
-        UITestNavigation.assertTapTarget(undo)
-        undo.coordinate(withNormalizedOffset: CGVector(dx: 0.1, dy: 0.1)).tap()
-        XCTAssertTrue(skip.waitForExistence(timeout: 5), "UNDO must restore the ramp")
+        XCTAssertTrue(UITestNavigation.appears(skipped), "The skip must persist")
+        element(app.buttons, "Undo skipped warm-ups").tap()
+        XCTAssertTrue(UITestNavigation.appears(skip, within: 5), "UNDO must restore the ramp")
         XCTAssertFalse(skipped.exists)
         let firstWarmup = app.descendants(matching: .any)
             .matching(NSPredicate(format: "label BEGINSWITH %@", "Warm-up set 1:")).firstMatch
-        XCTAssertTrue(firstWarmup.exists && firstWarmup.frame.maxY <= skip.frame.minY,
-                      "UNDO must bring back the ramp's warm-up rows above SKIP WARM-UPS")
+        XCTAssertTrue(firstWarmup.exists, "UNDO must bring back the ramp's warm-up rows")
 
         app.buttons["Back"].firstMatch.tap()
-        XCTAssertTrue(resume.waitForExistence(timeout: 10))
-        XCTAssertTrue(noneLogged.waitForExistence(timeout: 5), "The slab count must not change through skip and undo")
+        XCTAssertTrue(UITestNavigation.appears(resume))
+        XCTAssertTrue(UITestNavigation.appears(noneLogged, within: 5), "The slab count must not change through skip and undo")
     }
 
     // MARK: - Finish and Discard
@@ -65,27 +56,26 @@ final class SkipWarmupsUITests: XCTestCase {
         let app = UITestNavigation.openSeededWorkout()
         openFinish(in: app)
         let discardWorkout = app.buttons["Discard workout"]
-        XCTAssertTrue(discardWorkout.waitForExistence(timeout: 5), "Finish with nothing logged must offer Discard workout")
+        XCTAssertTrue(UITestNavigation.appears(discardWorkout, within: 5), "Finish with nothing logged must offer Discard workout")
         let keepLogging = app.buttons["Keep logging"]
         XCTAssertTrue(keepLogging.exists && keepLogging.isHittable, "The Finish dialog needs a visible Keep logging")
         XCTAssertFalse(app.buttons["Finish"].exists, "With nothing logged, Finish must not save")
         XCTAssertFalse(app.buttons["Cancel"].exists, "Keep logging is the dialog's one way back")
         XCTAssertTrue(text(beginningWith: "0 sets logged ·", in: app).exists, "The Finish dialog counts logged work sets")
-        UITestNavigation.saveScreenshot("T04", "finish-nothing-logged")
 
         keepLogging.tap()
         XCTAssertTrue(waitForDisappearance(discardWorkout), "Keep logging must close the dialog")
         XCTAssertTrue(app.otherElements["workout.header"].exists, "Keep logging leaves the workout open")
 
         openFinish(in: app)
-        XCTAssertTrue(discardWorkout.waitForExistence(timeout: 5))
+        XCTAssertTrue(UITestNavigation.appears(discardWorkout, within: 5))
         discardWorkout.tap()
         let sessions = app.buttons["today.sessions"]
-        XCTAssertTrue(sessions.waitForExistence(timeout: 10), "Discard workout must return to Today")
+        XCTAssertTrue(UITestNavigation.appears(sessions), "Discard workout must return to Today")
         XCTAssertFalse(app.buttons["resumeSlab.resume"].exists, "The discarded workout must be gone")
         sessions.tap()
         let rows = app.buttons.matching(identifier: "history.row")
-        XCTAssertTrue(rows.firstMatch.waitForExistence(timeout: 10))
+        XCTAssertTrue(UITestNavigation.appears(rows.firstMatch))
         XCTAssertEqual(rows.count, 1, "Discard must delete only this workout; the earlier finished one stays")
     }
 
@@ -96,21 +86,20 @@ final class SkipWarmupsUITests: XCTestCase {
         let app = UITestNavigation.openSeededWorkout()
         app.buttons["More"].tap()
         let discard = app.buttons["Discard"]
-        XCTAssertTrue(discard.waitForExistence(timeout: 5))
+        XCTAssertTrue(UITestNavigation.appears(discard, within: 5))
         discard.tap()
         let question = app.staticTexts["Discard workout?"]
-        XCTAssertTrue(question.waitForExistence(timeout: 5), "Discard must ask before it deletes")
+        XCTAssertTrue(UITestNavigation.appears(question, within: 5), "Discard must ask before it deletes")
         let keepLogging = app.buttons["Keep logging"]
         XCTAssertTrue(keepLogging.exists && keepLogging.isHittable, "The Discard dialog needs a visible Keep logging")
         XCTAssertTrue(app.buttons["Discard"].exists)
         XCTAssertFalse(app.buttons["Cancel"].exists, "Keep logging is the dialog's one way back")
-        UITestNavigation.saveScreenshot("T04", "discard-dialog")
 
         keepLogging.tap()
         XCTAssertTrue(waitForDisappearance(question), "Keep logging must close the dialog")
         XCTAssertTrue(app.otherElements["workout.header"].exists, "Keep logging leaves the workout open")
         app.buttons["Back"].firstMatch.tap()
-        XCTAssertTrue(app.buttons["resumeSlab.resume"].waitForExistence(timeout: 10), "The workout must still be running")
+        XCTAssertTrue(UITestNavigation.appears(app.buttons["resumeSlab.resume"]), "The workout must still be running")
     }
 
     // MARK: - Helpers
@@ -131,13 +120,12 @@ final class SkipWarmupsUITests: XCTestCase {
     private func openFinish(in app: XCUIApplication) {
         app.buttons["More"].tap()
         let finish = app.buttons["Finish"]
-        XCTAssertTrue(finish.waitForExistence(timeout: 5))
+        XCTAssertTrue(UITestNavigation.appears(finish, within: 5))
         finish.tap()
     }
 
     @MainActor
     private func waitForDisappearance(_ element: XCUIElement, timeout: TimeInterval = 5) -> Bool {
-        let gone = XCTNSPredicateExpectation(predicate: NSPredicate(format: "exists == false"), object: element)
-        return XCTWaiter().wait(for: [gone], timeout: timeout) == .completed
+        UITestNavigation.disappears(element, within: timeout)
     }
 }

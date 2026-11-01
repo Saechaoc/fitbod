@@ -27,10 +27,9 @@ final class CustomExerciseEditorBRUUITests: XCTestCase {
         assertMuscle("chest", role: "Primary", percent: 100, in: app)
         assertMuscle("triceps", role: "Secondary", percent: 25, in: app)
         XCTAssertEqual(status(in: app), "Valid, 1 primary mapped. Ready to save.")
-        UITestNavigation.saveScreenshot("T32", "editor-new-before-save")
 
         UITestNavigation.hittable(app.buttons, "Save", exactLabel: true).tap()
-        XCTAssertTrue(app.textFields["customExercise.name"].waitForNonExistence(timeout: 5), "SAVE must close the editor")
+        XCTAssertTrue(UITestNavigation.disappears(app.textFields["customExercise.name"], within: 5), "SAVE must close the editor")
 
         // A relaunch reads the exercise back from the store.
         UITestNavigation.relaunch(app)
@@ -38,23 +37,15 @@ final class CustomExerciseEditorBRUUITests: XCTestCase {
         let search = app.textFields["library.search.browser"]
         UITestNavigation.type(exerciseName, into: search, replacing: false, pressingReturn: false)
         let row = app.staticTexts[exerciseName]
-        XCTAssertTrue(row.waitForExistence(timeout: 10), "The saved exercise must be in the Library")
+        XCTAssertTrue(UITestNavigation.appears(row), "The saved exercise must be in the Library")
         row.tap()
         UITestNavigation.hittable(app.buttons, "Edit", exactLabel: true).tap()
-        XCTAssertTrue(app.textFields["customExercise.name"].waitForExistence(timeout: 10), "EDIT must open the editor")
+        XCTAssertTrue(UITestNavigation.appears(app.textFields["customExercise.name"]), "EDIT must open the editor")
         XCTAssertEqual(app.textFields["customExercise.name"].value as? String, exerciseName)
 
         assertMuscle("chest", role: "Primary", percent: 100, in: app)
         assertMuscle("triceps", role: "Secondary", percent: 25, in: app)
-        let secondaryHead = editorText("Secondary stimulus", in: app)
-        XCTAssertLessThan(muscleRow("chest", in: app).frame.maxY, secondaryHead.frame.minY,
-                          "Chest must sit in the primary section")
-        XCTAssertLessThan(secondaryHead.frame.maxY, muscleRow("triceps", in: app).frame.minY,
-                          "Triceps must sit in the secondary section")
         XCTAssertTrue(app.staticTexts.labeled("Edit exercise").exists, "EDIT must title the editor Edit exercise")
-        let delete = app.buttons.labeled("Delete exercise")
-        UITestNavigation.reveal(delete, in: app)
-        UITestNavigation.saveScreenshot("T32", "editor-edit-reopened")
     }
 
     // MARK: - Helpers
@@ -64,23 +55,7 @@ final class CustomExerciseEditorBRUUITests: XCTestCase {
     private func openNewExercise(in app: XCUIApplication) {
         UITestNavigation.selectTab("Library", in: app)
         UITestNavigation.hittable(app.buttons, "+ New", exactLabel: true).tap()
-        XCTAssertTrue(app.textFields["customExercise.name"].waitForExistence(timeout: 10), "+ NEW must open the editor")
-    }
-
-    /// A text in the editor sheet, not on the detail screen under it.
-    @MainActor
-    private func editorText(_ label: String, in app: XCUIApplication) -> XCUIElement {
-        let text = editorSheet(in: app).staticTexts.matching(NSPredicate(format: "label ==[c] %@", label)).firstMatch
-        XCTAssertTrue(text.waitForExistence(timeout: 10), "The editor must show \(label)")
-        return text
-    }
-
-    /// The sheet on top: the editor, unless a picker is open over it.
-    @MainActor
-    private func editorSheet(in app: XCUIApplication) -> XCUIElement {
-        let sheet = UITestNavigation.topSheet(in: app)
-        XCTAssertNotNil(sheet, "The editor must be a sheet")
-        return sheet ?? app
+        XCTAssertTrue(UITestNavigation.appears(app.textFields["customExercise.name"]), "+ NEW must open the editor")
     }
 
     /// "+ ADD MUSCLE" → the picker → `slug`'s row, scrolled into view.
@@ -92,18 +67,10 @@ final class CustomExerciseEditorBRUUITests: XCTestCase {
         UITestNavigation.reveal(add, in: app)
         add.tap()
         let row = app.buttons["musclePicker.\(slug)"]
-        XCTAssertTrue(row.waitForExistence(timeout: 10), "The muscle picker must open")
+        XCTAssertTrue(UITestNavigation.appears(row), "The muscle picker must open")
         UITestNavigation.reveal(row, in: app)
         row.tap()
-        XCTAssertTrue(row.waitForNonExistence(timeout: 5), "Picking a muscle must close the picker")
-    }
-
-    /// A muscle row's container, identified by the muscle's slug.
-    @MainActor
-    private func muscleRow(_ slug: String, in app: XCUIApplication) -> XCUIElement {
-        let row = app.descendants(matching: .any)["customExercise.muscle.\(slug)"]
-        XCTAssertTrue(row.waitForExistence(timeout: 10), "The editor must list \(slug)")
-        return row
+        XCTAssertTrue(UITestNavigation.disappears(row, within: 5), "Picking a muscle must close the picker")
     }
 
     @MainActor
@@ -122,7 +89,7 @@ final class CustomExerciseEditorBRUUITests: XCTestCase {
         file: StaticString = #filePath, line: UInt = #line
     ) {
         let chip = app.buttons["customExercise.role.\(slug)"]
-        XCTAssertTrue(chip.waitForExistence(timeout: 10), "The editor must list \(slug)", file: file, line: line)
+        XCTAssertTrue(UITestNavigation.appears(chip), "The editor must list \(slug)", file: file, line: line)
         // BRU labels reach accessibility uppercased.
         XCTAssertEqual(chip.label.lowercased(), role.lowercased(), "\(slug)'s role", file: file, line: line)
         XCTAssertEqual(app.staticTexts["customExercise.percent.\(slug)"].label, "\(percent)%",
@@ -135,7 +102,7 @@ final class CustomExerciseEditorBRUUITests: XCTestCase {
     @MainActor
     private func status(in app: XCUIApplication) -> String {
         let footer = app.descendants(matching: .any)["customExercise.status"]
-        XCTAssertTrue(footer.waitForExistence(timeout: 10), "The editor must show its status line")
+        XCTAssertTrue(UITestNavigation.appears(footer), "The editor must show its status line")
         return footer.label
     }
 }

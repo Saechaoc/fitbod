@@ -35,14 +35,14 @@ final class ReseedRelaunchUITests: XCTestCase {
         app.terminate()
         app.launchArguments = ["-exercise_seed_version", "0", UITestNavigation.resetSignalFlag]
         app.launch()
-        XCTAssertTrue(UITestNavigation.tab("Today", in: app).waitForExistence(timeout: 90), "The re-seed launch never showed the tab bar")
+        XCTAssertTrue(UITestNavigation.appears(UITestNavigation.tab("Today", in: app), within: 90),
+                      "The re-seed launch never showed the tab bar")
         openWorkout(in: app)
 
         // The next launch, without flags, the way the lifter opens the app.
         UITestNavigation.relaunch(app)
         openWorkout(in: app)
         XCTAssertTrue(app.staticTexts[bench].exists, "The workout must still list its bench press")
-        UITestNavigation.saveScreenshot("T128", "history-workout")
 
         // The same row, still linked: the Library holds one bench press, and
         // it counts and shows the finished workout.
@@ -50,7 +50,7 @@ final class ReseedRelaunchUITests: XCTestCase {
         app.buttons["Back"].firstMatch.tap()
         UITestNavigation.selectTab("Library", in: app)
         UITestNavigation.type(bench, into: app.textFields["library.search.browser"], replacing: false)
-        XCTAssertTrue(app.staticTexts.labeled("1 match").waitForExistence(timeout: 10), "Exactly one exercise must match the bench press")
+        XCTAssertTrue(UITestNavigation.appears(app.staticTexts.labeled("1 match")), "Exactly one exercise must match the bench press")
         let row = app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH %@", bench)).firstMatch
         XCTAssertTrue(row.exists, "The bench press must be listed")
         // The search leaves one row, so the one logged count is the bench press's.
@@ -59,21 +59,19 @@ final class ReseedRelaunchUITests: XCTestCase {
         XCTAssertTrue(logged.label.contains("Logged once"), "The bench press must count the finished workout; it reads \"\(logged.label)\"")
         row.tap()
         let recent = app.descendants(matching: .any).matching(NSPredicate(format: "label CONTAINS %@", "100 lb × 5")).firstMatch
-        XCTAssertTrue(recent.waitForExistence(timeout: 10), "Recent performance must show the finished workout's best set")
-        UITestNavigation.reveal(recent, in: app)
-        UITestNavigation.saveScreenshot("T128", "library-bench-recent")
+        XCTAssertTrue(UITestNavigation.appears(recent), "Recent performance must show the finished workout's best set")
     }
 
     /// Today > Sessions > the one finished workout's summary.
     @MainActor
     private func openWorkout(in app: XCUIApplication) {
         let sessions = app.buttons["today.sessions"]
-        XCTAssertTrue(sessions.waitForExistence(timeout: 30), "Today must show its Sessions count")
+        XCTAssertTrue(UITestNavigation.appears(sessions, within: 30), "Today must show its Sessions count")
         sessions.tap()
         let rows = app.buttons.matching(identifier: "history.row")
-        XCTAssertTrue(rows.firstMatch.waitForExistence(timeout: 10), "History must list the finished workout")
+        XCTAssertTrue(UITestNavigation.appears(rows.firstMatch), "History must list the finished workout")
         XCTAssertEqual(rows.count, 1)
         rows.firstMatch.tap()
-        XCTAssertTrue(app.staticTexts["WORKOUT COMPLETE"].waitForExistence(timeout: 10))
+        XCTAssertTrue(UITestNavigation.appears(app.staticTexts["WORKOUT COMPLETE"]))
     }
 }

@@ -7,14 +7,14 @@
 // from three days ago (bench 100 x 5) and an in-progress Push A today.
 // Exercise 1 is the barbell bench press: three working sets, 180 s rest.
 //
-// Relaunches clear the launch arguments, so the second launch opens the
-// same store the way a user reopening the app would.
+// Each test launches through UITestNavigation.launch, which fails unless
+// the reset really happened, so a run of this suite alone never opens the
+// previous run's store (F11). Relaunches drop the launch arguments, so the
+// second launch opens the same store the way a user reopening the app would.
 
 import XCTest
 
 final class WorkoutLoggerJourneyUITests: XCTestCase {
-
-    private let seededLaunch = ["-fitbod-reset-store", "-fitbod-seed-demo-workout"]
 
     override func setUpWithError() throws {
         continueAfterFailure = false
@@ -26,40 +26,37 @@ final class WorkoutLoggerJourneyUITests: XCTestCase {
     /// killed and reopened.
     @MainActor
     func testLoggedSetSurvivesRelaunch() throws {
-        let app = launch(seededLaunch)
+        let app = UITestNavigation.launch(UITestNavigation.seededWorkout)
         openWorkout(app)
 
         logSet(app, "1.S1", reps: "7")
         XCTAssertEqual(app.buttons["set.complete.1.S1"].label, "Set 1 complete")
-        attach(app, "logger-01-set-logged")
 
-        relaunch(app)
+        UITestNavigation.relaunch(app)
         openWorkout(app)
         let reps = app.textFields["set.reps.1.S1"]
         XCTAssertEqual(reps.value as? String, "7")
         XCTAssertEqual(app.buttons["set.complete.1.S1"].label, "Set 1 complete")
-        attach(app, "logger-02-after-relaunch")
     }
 
     /// Adding a set appends S4, swipe-to-delete removes it, and tapping a
     /// completed checkmark marks the set as not done.
     @MainActor
     func testAddDeleteAndUncompleteSets() throws {
-        let app = launch(seededLaunch)
+        let app = UITestNavigation.launch(UITestNavigation.seededWorkout)
         openWorkout(app)
 
         let addSet = app.buttons["card.addSet.1"]
         scrollUntilHittable(addSet, in: app)
         addSet.tap()
         let fourth = app.textFields["set.reps.1.S4"]
-        XCTAssertTrue(fourth.waitForExistence(timeout: 5), "Add set should append S4")
-        attach(app, "logger-03-set-added")
+        XCTAssertTrue(UITestNavigation.appears(fourth, within: 5), "Add set should append S4")
 
         let row = app.cells.containing(.textField, identifier: "set.reps.1.S4").firstMatch
         scrollUntilHittable(row, in: app)
         row.swipeLeft()
         let delete = app.buttons["Delete"]
-        if delete.waitForExistence(timeout: 2) { delete.tap() }
+        if UITestNavigation.appears(delete, within: 2) { delete.tap() }
         XCTAssertTrue(waitForDisappearance(fourth), "Swipe delete should remove S4")
 
         scrollUntilHittable(app.textFields["set.reps.1.S1"], in: app, upward: false)
@@ -79,31 +76,29 @@ final class WorkoutLoggerJourneyUITests: XCTestCase {
     /// the workout, Discard removes it for good.
     @MainActor
     func testDiscardWithLoggedSetsAsksFirst() throws {
-        let app = launch(seededLaunch)
+        let app = UITestNavigation.launch(UITestNavigation.seededWorkout)
         openWorkout(app)
         logSet(app, "1.S1", reps: "6")
         app.buttons["Back"].firstMatch.tap()
 
         let resume = app.buttons["resumeSlab.resume"]
-        XCTAssertTrue(resume.waitForExistence(timeout: 10))
-        attach(app, "today-01-resume-slab")
+        XCTAssertTrue(UITestNavigation.appears(resume))
 
         let discard = app.buttons["resumeSlab.discard"]
         discard.tap()
         let alert = app.alerts["Discard workout?"]
-        XCTAssertTrue(alert.waitForExistence(timeout: 5), "Discarding a logged set should ask first")
+        XCTAssertTrue(UITestNavigation.appears(alert, within: 5), "Discarding a logged set should ask first")
         XCTAssertTrue(alert.staticTexts["1 logged set will be deleted."].exists)
-        attach(app, "today-02-discard-alert")
         alert.buttons["Cancel"].tap()
-        XCTAssertTrue(resume.waitForExistence(timeout: 5), "Cancel should keep the workout")
+        XCTAssertTrue(UITestNavigation.appears(resume, within: 5), "Cancel should keep the workout")
 
         discard.tap()
-        XCTAssertTrue(alert.waitForExistence(timeout: 5))
+        XCTAssertTrue(UITestNavigation.appears(alert, within: 5))
         alert.buttons["Discard"].tap()
         XCTAssertTrue(waitForDisappearance(resume), "Discard should remove the workout")
 
-        relaunch(app)
-        XCTAssertTrue(app.buttons["today.sessions"].waitForExistence(timeout: 30))
+        UITestNavigation.relaunch(app)
+        XCTAssertTrue(UITestNavigation.appears(app.buttons["today.sessions"], within: 30))
         XCTAssertFalse(app.buttons["resumeSlab.resume"].exists, "A discarded workout must stay gone")
     }
 
@@ -111,9 +106,9 @@ final class WorkoutLoggerJourneyUITests: XCTestCase {
     /// removes the workout without a question.
     @MainActor
     func testDiscardWithNothingLoggedSkipsTheQuestion() throws {
-        let app = launch(seededLaunch)
+        let app = UITestNavigation.launch(UITestNavigation.seededWorkout)
         let resume = app.buttons["resumeSlab.resume"]
-        XCTAssertTrue(resume.waitForExistence(timeout: 90))
+        XCTAssertTrue(UITestNavigation.appears(resume, within: 90))
 
         app.buttons["resumeSlab.discard"].tap()
         XCTAssertTrue(waitForDisappearance(resume), "Discard should remove the empty workout")
@@ -126,7 +121,7 @@ final class WorkoutLoggerJourneyUITests: XCTestCase {
     /// the workout then appears in History with its summary.
     @MainActor
     func testFinishShowsSummaryThenHistory() throws {
-        let app = launch(seededLaunch)
+        let app = UITestNavigation.launch(UITestNavigation.seededWorkout)
         openWorkout(app)
 
         // The seeded history tops out at 5 reps, so 9 reps at the
@@ -135,67 +130,47 @@ final class WorkoutLoggerJourneyUITests: XCTestCase {
         let banner = app.descendants(matching: .any)
             .matching(NSPredicate(format: "label CONTAINS[c] %@ AND label CONTAINS %@", "personal record", "pounds, 9 reps"))
             .firstMatch
-        XCTAssertTrue(banner.waitForExistence(timeout: 3), "PR banner should name the lift in pounds")
-        attach(app, "logger-06-pr-banner")
+        XCTAssertTrue(UITestNavigation.appears(banner, within: 3), "PR banner should name the lift in pounds")
 
         app.buttons["More"].tap()
         let finish = app.buttons["Finish"]
-        XCTAssertTrue(finish.waitForExistence(timeout: 5))
+        XCTAssertTrue(UITestNavigation.appears(finish, within: 5))
         finish.tap()
         let confirm = app.buttons["Finish"]
-        XCTAssertTrue(confirm.waitForExistence(timeout: 5))
+        XCTAssertTrue(UITestNavigation.appears(confirm, within: 5))
         confirm.tap()
 
         let done = app.buttons["summary.done"]
-        XCTAssertTrue(done.waitForExistence(timeout: 10), "Finish should open the summary")
+        XCTAssertTrue(UITestNavigation.appears(done), "Finish should open the summary")
         XCTAssertTrue(app.staticTexts["WORKOUT COMPLETE"].exists)
-        attach(app, "summary-01-after-finish")
         done.tap()
 
         let sessions = app.buttons["today.sessions"]
-        XCTAssertTrue(sessions.waitForExistence(timeout: 10))
+        XCTAssertTrue(UITestNavigation.appears(sessions))
         XCTAssertFalse(app.buttons["resumeSlab.resume"].exists, "A finished workout is not resumable")
         sessions.tap()
 
         let rows = app.buttons.matching(identifier: "history.row")
-        XCTAssertTrue(rows.firstMatch.waitForExistence(timeout: 10))
+        XCTAssertTrue(UITestNavigation.appears(rows.firstMatch))
         XCTAssertEqual(rows.count, 2, "History should list the seeded workout and today's")
         // 100×9 opens the 7-10 rep range, so today's one set tops all four
         // kinds, as the banner said. The row counts them, not just the first.
         XCTAssertTrue(rows.firstMatch.label.contains("4 personal records"), rows.firstMatch.label)
-        attach(app, "history-01-list")
 
         rows.firstMatch.tap()
-        XCTAssertTrue(app.staticTexts["Push A"].waitForExistence(timeout: 5))
-        attach(app, "history-02-summary")
+        XCTAssertTrue(UITestNavigation.appears(app.staticTexts["Push A"], within: 5))
         app.buttons["Back"].firstMatch.tap()
-        XCTAssertTrue(rows.firstMatch.waitForExistence(timeout: 5))
+        XCTAssertTrue(UITestNavigation.appears(rows.firstMatch, within: 5))
     }
 
     // MARK: - Helpers
 
     @MainActor
-    private func launch(_ arguments: [String]) -> XCUIApplication {
-        let app = XCUIApplication()
-        app.launchArguments = arguments
-        app.launch()
-        return app
-    }
-
-    /// Kill and reopen without launch arguments, like a user would.
-    @MainActor
-    private func relaunch(_ app: XCUIApplication) {
-        app.terminate()
-        app.launchArguments = []
-        app.launch()
-    }
-
-    @MainActor
     private func openWorkout(_ app: XCUIApplication) {
         let resume = app.buttons["resumeSlab.resume"]
-        XCTAssertTrue(resume.waitForExistence(timeout: 90), "Today should offer the workout")
+        XCTAssertTrue(UITestNavigation.appears(resume, within: 90), "Today should offer the workout")
         resume.tap()
-        XCTAssertTrue(app.textFields["set.reps.1.S1"].waitForExistence(timeout: 10))
+        XCTAssertTrue(UITestNavigation.appears(app.textFields["set.reps.1.S1"]))
     }
 
     /// Types reps into a set and checks it off. The prescribed weight is
@@ -233,21 +208,13 @@ final class WorkoutLoggerJourneyUITests: XCTestCase {
         }
     }
 
+    @MainActor
     private func waitForDisappearance(_ element: XCUIElement, timeout: TimeInterval = 5) -> Bool {
-        let gone = XCTNSPredicateExpectation(predicate: NSPredicate(format: "exists == false"), object: element)
-        return XCTWaiter().wait(for: [gone], timeout: timeout) == .completed
-    }
-
-    private func waitForLabel(_ element: XCUIElement, _ label: String, timeout: TimeInterval = 5) -> Bool {
-        let match = XCTNSPredicateExpectation(predicate: NSPredicate(format: "label == %@", label), object: element)
-        return XCTWaiter().wait(for: [match], timeout: timeout) == .completed
+        UITestNavigation.disappears(element, within: timeout)
     }
 
     @MainActor
-    private func attach(_ app: XCUIApplication, _ name: String) {
-        let shot = XCTAttachment(screenshot: app.screenshot())
-        shot.name = name
-        shot.lifetime = .keepAlways
-        add(shot)
+    private func waitForLabel(_ element: XCUIElement, _ label: String, timeout: TimeInterval = 5) -> Bool {
+        UITestNavigation.waitUntil(timeout: timeout) { element.exists && element.label == label }
     }
 }

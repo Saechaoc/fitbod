@@ -23,7 +23,7 @@ final class EditorSwipeDismissUITests: XCTestCase {
 
         UITestNavigation.hittable(app.buttons, "+ New session", exactLabel: true).tap()
         let name = app.textFields["Session name"]
-        XCTAssertTrue(name.waitForExistence(timeout: 10))
+        XCTAssertTrue(UITestNavigation.appears(name))
         name.tap()
         name.typeText("Push C\n")
         UITestNavigation.dragSheetDown(from: title, in: app)
@@ -31,12 +31,12 @@ final class EditorSwipeDismissUITests: XCTestCase {
         XCTAssertEqual(name.value as? String, "Push C", "The edit must survive the swipe")
 
         UITestNavigation.hittable(app.buttons, "Cancel", exactLabel: true).tap()
-        keepEditing(in: app, dialog: "Discard changes?", screenshot: "session-editor-discard-dialog")
+        keepEditing(in: app, dialog: "Discard changes?")
         assertStaysOpen(title, "Keep editing must leave the session editor open")
         XCTAssertEqual(name.value as? String, "Push C", "Keep editing must keep the edit")
 
         UITestNavigation.hittable(app.buttons, "Cancel", exactLabel: true).tap()
-        XCTAssertTrue(app.staticTexts.labeled("Discard changes?").waitForExistence(timeout: 5),
+        XCTAssertTrue(UITestNavigation.appears(app.staticTexts.labeled("Discard changes?"), within: 5),
                       "CANCEL must still ask before discarding")
         UITestNavigation.hittable(app.buttons, "Discard", exactLabel: true).tap()
         assertCloses(title, "Discard must close the session editor")
@@ -48,12 +48,12 @@ final class EditorSwipeDismissUITests: XCTestCase {
         UITestNavigation.selectTab("Library", in: app)
         let title = app.staticTexts.labeled("New Exercise")
         UITestNavigation.hittable(app.buttons, "+ New", exactLabel: true).tap()
-        XCTAssertTrue(title.waitForExistence(timeout: 10))
+        XCTAssertTrue(UITestNavigation.appears(title))
         UITestNavigation.dragSheetDown(from: title, in: app)
         assertCloses(title, "An untouched custom exercise editor must close on swipe-down")
 
         UITestNavigation.hittable(app.buttons, "+ New", exactLabel: true).tap()
-        XCTAssertTrue(title.waitForExistence(timeout: 10))
+        XCTAssertTrue(UITestNavigation.appears(title))
         let isolation = UITestNavigation.hittable(app.buttons, "Isolation", exactLabel: true)
         isolation.tap()
         UITestNavigation.dragSheetDown(from: title, in: app)
@@ -61,12 +61,12 @@ final class EditorSwipeDismissUITests: XCTestCase {
         XCTAssertTrue(isolation.isSelected, "The edit must survive the swipe")
 
         UITestNavigation.hittable(app.buttons, "Cancel", exactLabel: true).tap()
-        keepEditing(in: app, dialog: "Discard Changes?", screenshot: "exercise-editor-discard-dialog")
+        keepEditing(in: app, dialog: "Discard Changes?")
         assertStaysOpen(title, "Keep editing must leave the custom exercise editor open")
         XCTAssertTrue(isolation.isSelected, "Keep editing must keep the edit")
 
         UITestNavigation.hittable(app.buttons, "Cancel", exactLabel: true).tap()
-        XCTAssertTrue(app.staticTexts.labeled("Discard Changes?").waitForExistence(timeout: 5),
+        XCTAssertTrue(UITestNavigation.appears(app.staticTexts.labeled("Discard Changes?"), within: 5),
                       "Cancel must still ask before discarding")
         UITestNavigation.hittable(app.buttons, "Discard", exactLabel: true).tap()
         assertCloses(title, "Discard must close the custom exercise editor")
@@ -98,7 +98,7 @@ final class EditorSwipeDismissUITests: XCTestCase {
         assertStaysOpen(title, "Closing the picker must leave the builder open")
 
         UITestNavigation.hittable(app.buttons, "Cancel", exactLabel: true).tap()
-        XCTAssertTrue(app.staticTexts.labeled("Discard this block?").waitForExistence(timeout: 5),
+        XCTAssertTrue(UITestNavigation.appears(app.staticTexts.labeled("Discard this block?"), within: 5),
                       "CANCEL must ask before it discards an edited block")
         UITestNavigation.hittable(app.buttons, "Discard", exactLabel: true).tap()
         assertCloses(title, "Discard must close the New Block builder")
@@ -120,12 +120,12 @@ final class EditorSwipeDismissUITests: XCTestCase {
         let name = blockNameField(in: app)
         UITestNavigation.type("Summer Base", into: name)
         UITestNavigation.hittable(app.buttons, "Cancel", exactLabel: true).tap()
-        keepEditing(in: app, dialog: "Discard this block?", screenshot: "new-block-discard-dialog")
+        keepEditing(in: app, dialog: "Discard this block?")
         assertStaysOpen(title, "Keep editing must leave the New Block builder open")
         XCTAssertEqual(name.value as? String, "Summer Base", "Keep editing must keep the name")
 
         UITestNavigation.hittable(app.buttons, "< TODAY", exactLabel: true).tap()
-        XCTAssertTrue(dialog.waitForExistence(timeout: 5), "< TODAY must also ask before it discards an edited block")
+        XCTAssertTrue(UITestNavigation.appears(dialog, within: 5), "< TODAY must also ask before it discards an edited block")
         UITestNavigation.hittable(app.buttons, "Discard", exactLabel: true).tap()
         assertCloses(title, "Discard must close the New Block builder")
     }
@@ -135,7 +135,7 @@ final class EditorSwipeDismissUITests: XCTestCase {
         let start = app.buttons.labeled("Start a block")
         UITestNavigation.reveal(start, in: app)
         start.tap()
-        XCTAssertTrue(app.staticTexts.labeled("NEW BLOCK").waitForExistence(timeout: 10))
+        XCTAssertTrue(UITestNavigation.appears(app.staticTexts.labeled("NEW BLOCK")))
     }
 
     /// The builder's only text field. It has no label; its placeholder
@@ -145,19 +145,17 @@ final class EditorSwipeDismissUITests: XCTestCase {
         app.textFields.firstMatch
     }
 
-    /// Waits for the discard dialog, saves a screenshot of it and taps its
-    /// "Keep editing", which must be visible: iOS 26 hides a cancel-role button.
+    /// Waits for the discard dialog and taps its "Keep editing", which must
+    /// be visible: iOS 26 hides a cancel-role button.
     @MainActor
     private func keepEditing(
-        in app: XCUIApplication, dialog title: String, screenshot: String,
+        in app: XCUIApplication, dialog title: String,
         file: StaticString = #filePath, line: UInt = #line
     ) {
         let dialog = app.staticTexts.labeled(title)
-        let asked = dialog.waitForExistence(timeout: 5)
-        UITestNavigation.saveScreenshot("T05", screenshot)
-        XCTAssertTrue(asked, "Missing the \"\(title)\" dialog", file: file, line: line)
+        XCTAssertTrue(UITestNavigation.appears(dialog, within: 5), "Missing the \"\(title)\" dialog", file: file, line: line)
         UITestNavigation.hittable(app.buttons, "Keep editing", exactLabel: true, file: file, line: line).tap()
-        XCTAssertTrue(dialog.waitForNonExistence(timeout: 5), "Keep editing must close the dialog", file: file, line: line)
+        XCTAssertTrue(UITestNavigation.disappears(dialog, within: 5), "Keep editing must close the dialog", file: file, line: line)
     }
 
     @MainActor
@@ -165,6 +163,8 @@ final class EditorSwipeDismissUITests: XCTestCase {
         _ header: XCUIElement, _ message: String,
         file: StaticString = #filePath, line: UInt = #line
     ) {
+        // Waits the whole 3 s: an editor a swipe or a dialog wrongly let go
+        // leaves within it.
         XCTAssertFalse(header.waitForNonExistence(timeout: 3), message, file: file, line: line)
         XCTAssertTrue(header.isHittable, message, file: file, line: line)
     }
@@ -174,6 +174,6 @@ final class EditorSwipeDismissUITests: XCTestCase {
         _ header: XCUIElement, _ message: String,
         file: StaticString = #filePath, line: UInt = #line
     ) {
-        XCTAssertTrue(header.waitForNonExistence(timeout: 5), message, file: file, line: line)
+        XCTAssertTrue(UITestNavigation.disappears(header, within: 5), message, file: file, line: line)
     }
 }

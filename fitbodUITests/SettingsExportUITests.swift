@@ -39,13 +39,14 @@ final class SettingsExportUITests: XCTestCase {
         let app = UITestNavigation.launch(UITestNavigation.seededWorkout)
         UITestNavigation.openSettings(in: app)
         let control = app.buttons.matching(predicate).firstMatch
-        XCTAssertTrue(control.waitForExistence(timeout: 10), "Missing \(name)", file: file, line: line)
+        XCTAssertTrue(UITestNavigation.appears(control), "Missing \(name)", file: file, line: line)
         UITestNavigation.reveal(control, in: app)
         let tapped = Date.now
         control.tap()
 
         let saveToFiles = app.cells.labeled("Save to Files")
-        XCTAssertTrue(saveToFiles.waitForExistence(timeout: 5), "One tap on \(name) must open the share sheet", file: file, line: line)
+        XCTAssertTrue(UITestNavigation.appears(saveToFiles, within: 5), "One tap on \(name) must open the share sheet",
+                      file: file, line: line)
         let elapsed = Date.now.timeIntervalSince(tapped)
         XCTContext.runActivity(named: String(format: "%@ share sheet up %.1f s after the tap", name, elapsed)) { _ in }
         XCTAssertLessThanOrEqual(
@@ -53,19 +54,14 @@ final class SettingsExportUITests: XCTestCase {
             String(format: "One tap on %@ must open the share sheet within 5 s, not %.1f s", name, elapsed),
             file: file, line: line
         )
-        let shot = XCTAttachment(screenshot: app.screenshot())
-        shot.name = "\(name) share sheet"
-        shot.lifetime = .keepAlways
-        add(shot)
 
         // Close it without sharing anything, as a user taps outside it.
         let sheet = shareSheet(in: app)
         let outside = app.otherElements["PopoverDismissRegion"]
         XCTAssertTrue(outside.exists, "The share sheet must close on a tap outside it", file: file, line: line)
         outside.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.25)).tap()
-        let gone = XCTNSPredicateExpectation(predicate: NSPredicate(format: "exists == false"), object: sheet)
-        XCTAssertEqual(XCTWaiter().wait(for: [gone], timeout: 10), .completed, "The share sheet must close", file: file, line: line)
-        XCTAssertTrue(control.waitForExistence(timeout: 5), "Settings must still show \(name)", file: file, line: line)
+        XCTAssertTrue(UITestNavigation.disappears(sheet), "The share sheet must close", file: file, line: line)
+        XCTAssertTrue(UITestNavigation.appears(control, within: 5), "Settings must still show \(name)", file: file, line: line)
     }
 
     /// The system share sheet's activity list.
@@ -90,7 +86,7 @@ final class SettingsExportUITests: XCTestCase {
         app.buttons["Close"].tap()
         UITestNavigation.openSettings(in: app)
         let kg = app.buttons.labeled("kg")
-        XCTAssertTrue(kg.waitForExistence(timeout: 5), "Missing the kg unit")
+        XCTAssertTrue(UITestNavigation.appears(kg, within: 5), "Missing the kg unit")
         kg.tap()
         XCTAssertTrue(kg.isSelected, "Units must switch to kg")
 
@@ -100,16 +96,16 @@ final class SettingsExportUITests: XCTestCase {
         pickFile(backup, in: app)
 
         let confirm = app.alerts["Restore from backup?"]
-        XCTAssertTrue(confirm.waitForExistence(timeout: 10), "Picking a backup must ask before restoring it")
+        XCTAssertTrue(UITestNavigation.appears(confirm), "Picking a backup must ask before restoring it")
         XCTAssertTrue(
             confirm.staticTexts["This will replace all current data with the backup. This cannot be undone."].exists,
             "The confirmation must say that restore replaces all data"
         )
         XCTAssertTrue(kg.isSelected, "Nothing may be replaced before the restore is confirmed")
-        UITestNavigation.saveScreenshot("T08", "restore-confirmation")
 
         // An alert keeps its Cancel button, unlike a confirmation dialog.
         confirm.buttons["Cancel"].tap()
+        // Waits the whole 3 s: a restore that went ahead says so within it.
         XCTAssertFalse(app.alerts["Restore complete"].waitForExistence(timeout: 3), "Backing out must not restore")
         XCTAssertTrue(kg.isSelected, "Backing out must keep the current data")
     }
@@ -121,17 +117,17 @@ final class SettingsExportUITests: XCTestCase {
     @MainActor
     private func saveBackupToFiles(in app: XCUIApplication) -> String {
         let create = app.buttons.labeled("Create")
-        XCTAssertTrue(create.waitForExistence(timeout: 10), "Missing backup CREATE")
+        XCTAssertTrue(UITestNavigation.appears(create), "Missing backup CREATE")
         UITestNavigation.reveal(create, in: app)
         create.tap()
-        XCTAssertTrue(shareSheet(in: app).waitForExistence(timeout: 5), "CREATE must open the share sheet")
+        XCTAssertTrue(UITestNavigation.appears(shareSheet(in: app), within: 5), "CREATE must open the share sheet")
         let saveToFiles = app.cells.labeled("Save to Files")
-        XCTAssertTrue(saveToFiles.waitForExistence(timeout: 5), "The share sheet must offer Save to Files")
+        XCTAssertTrue(UITestNavigation.appears(saveToFiles, within: 5), "The share sheet must offer Save to Files")
         saveToFiles.tap()
 
         let save = app.buttons.labeled("Save")
         let nameField = app.textFields["DOCPicker.filenameTextField"]
-        XCTAssertTrue(save.waitForExistence(timeout: 15), "Files must offer Save")
+        XCTAssertTrue(UITestNavigation.appears(save, within: 15), "Files must offer Save")
         XCTAssertTrue(nameField.exists, "Files must show the backup's name")
         let suggested = nameField.value as? String ?? ""
         XCTAssertTrue(
@@ -140,8 +136,8 @@ final class SettingsExportUITests: XCTestCase {
         )
         let name = "fitbod-backup-\(UUID().uuidString.prefix(8))"
         nameField.tap()
-        let focused = XCTNSPredicateExpectation(predicate: NSPredicate(format: "hasKeyboardFocus == true"), object: nameField)
-        XCTAssertEqual(XCTWaiter().wait(for: [focused], timeout: 5), .completed, "The name must take the keyboard")
+        let focused = NSPredicate(format: "hasKeyboardFocus == true")
+        XCTAssertTrue(UITestNavigation.waitUntil { focused.evaluate(with: nameField) }, "The name must take the keyboard")
         // Focus selects the whole name, so typing replaces it.
         nameField.typeText(name)
         XCTAssertEqual(nameField.value as? String, name, "Files must save the backup as \(name)")
@@ -152,8 +148,7 @@ final class SettingsExportUITests: XCTestCase {
 
     @MainActor
     private func vanishes(_ element: XCUIElement, within timeout: TimeInterval) -> Bool {
-        let gone = XCTNSPredicateExpectation(predicate: NSPredicate(format: "exists == false"), object: element)
-        return XCTWaiter().wait(for: [gone], timeout: timeout) == .completed
+        UITestNavigation.disappears(element, within: timeout)
     }
 
     /// Picks the file named `name` in the Files picker that RESTORE opens:
@@ -161,15 +156,15 @@ final class SettingsExportUITests: XCTestCase {
     @MainActor
     private func pickFile(_ name: String, in app: XCUIApplication) {
         let file = app.descendants(matching: .any).matching(NSPredicate(format: "label BEGINSWITH %@", name)).firstMatch
-        if !file.waitForExistence(timeout: 10) {
+        if !UITestNavigation.appears(file) {
             let browse = app.buttons.labeled("Browse")
-            XCTAssertTrue(browse.waitForExistence(timeout: 5), "The Files picker must offer Browse")
+            XCTAssertTrue(UITestNavigation.appears(browse, within: 5), "The Files picker must offer Browse")
             browse.tap()
             let onMyPhone = app.descendants(matching: .any).matching(NSPredicate(format: "label ==[c] %@", "On My iPhone")).firstMatch
-            XCTAssertTrue(onMyPhone.waitForExistence(timeout: 10), "Browse must list On My iPhone")
+            XCTAssertTrue(UITestNavigation.appears(onMyPhone), "Browse must list On My iPhone")
             onMyPhone.tap()
         }
-        XCTAssertTrue(file.waitForExistence(timeout: 10), "The Files picker must list \(name)")
+        XCTAssertTrue(UITestNavigation.appears(file), "The Files picker must list \(name)")
         file.tap()
     }
 }

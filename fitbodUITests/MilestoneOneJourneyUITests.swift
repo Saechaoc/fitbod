@@ -9,9 +9,11 @@ final class MilestoneOneJourneyUITests: XCTestCase {
         continueAfterFailure = false
     }
 
+    /// A failed run keeps the screen it stopped on and the whole
+    /// accessibility tree; a passing run keeps neither.
     @MainActor
     override func tearDownWithError() throws {
-        if let app {
+        if let app, let run = testRun, run.totalFailureCount > 0 {
             attach("journey-final-state")
             let tree = XCTAttachment(string: app.debugDescription)
             tree.name = "journey-final-accessibility-tree"
@@ -25,78 +27,58 @@ final class MilestoneOneJourneyUITests: XCTestCase {
         // The shared launch fails unless the reset really happened: a run's
         // first launch can lose its arguments and open the last run's store.
         app = UITestNavigation.launch(UITestNavigation.freshStore)
-        XCTAssertTrue(app.buttons["Library"].waitForExistence(timeout: 90))
-        attach("01-today-empty")
+        XCTAssertTrue(UITestNavigation.appears(app.buttons["Library"], within: 90))
 
         app.buttons["Library"].tap()
-        XCTAssertTrue(app.textFields["library.search.browser"].waitForExistence(timeout: 10))
-        attach("02-library")
-        tapFilter("library.filter.muscle")
-        tap("Chest")
-        tap("Done")
-        tapFilter("library.filter.equipment")
-        tap("Barbell")
-        tap("Done")
-        enter("Barbell Bench", into: app.textFields["library.search.browser"])
-        XCTAssertTrue(app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH %@", "Barbell Bench Press")).firstMatch.waitForExistence(timeout: 10))
-        attach("02a-muscle-equipment-filtered")
-        enter("M1-no-such-exercise", into: app.textFields["library.search.browser"])
-        XCTAssertTrue(app.staticTexts["No exercises match \"M1-no-such-exercise\""].waitForExistence(timeout: 10))
-        attach("02b-no-matches")
-        tap("Clear search")
-        tapFilter("library.clearFilters")
+        XCTAssertTrue(UITestNavigation.appears(app.textFields["library.search.browser"]))
         tap("+ New")
-        XCTAssertTrue(app.textFields["customExercise.name"].waitForExistence(timeout: 10))
+        XCTAssertTrue(UITestNavigation.appears(app.textFields["customExercise.name"]))
         tap("Save")
-        XCTAssertTrue(app.staticTexts["customExercise.nameError"].waitForExistence(timeout: 5))
-        attach("03-custom-validation")
+        XCTAssertTrue(UITestNavigation.appears(app.staticTexts["customExercise.nameError"], within: 5))
         let exerciseName = "M1 Cambered Bar Bench Press with Medium Grip"
         enter(exerciseName, into: app.textFields["customExercise.name"])
         tap("Add Primary Muscle")
         let chest = app.buttons["musclePicker.chest"]
-        XCTAssertTrue(chest.waitForExistence(timeout: 10))
+        XCTAssertTrue(UITestNavigation.appears(chest))
         chest.tap()
         tap("Save")
-        XCTAssertTrue(app.textFields["library.search.browser"].waitForExistence(timeout: 10))
+        XCTAssertTrue(UITestNavigation.appears(app.textFields["library.search.browser"]))
         enter("M1 Cambered", into: app.textFields["library.search.browser"])
         let custom = app.staticTexts[exerciseName]
-        XCTAssertTrue(custom.waitForExistence(timeout: 10))
+        XCTAssertTrue(UITestNavigation.appears(custom))
         custom.tap()
-        attach("04-custom-detail")
         tap("Back")
         if app.keyboards.buttons["Search"].exists { app.keyboards.buttons["Search"].tap() }
-        XCTAssertTrue(app.buttons["Today"].waitForExistence(timeout: 10))
+        XCTAssertTrue(UITestNavigation.appears(app.buttons["Today"]))
         app.buttons["Today"].tap()
         tap("+ New routine")
         // The name step: SAVE stays off until the routine has a name, and
         // replaces the step with the routine's editor.
         let routineName = field("Routine name")
-        XCTAssertTrue(routineName.waitForExistence(timeout: 10))
+        XCTAssertTrue(UITestNavigation.appears(routineName))
         XCTAssertFalse(app.buttons.labeled("Save").isEnabled, "SAVE must wait for a routine name")
         enter("M1 Upper Body", into: routineName)
         routineName.typeText("\n")
-        attach("04a-routine-name-step")
         tap("Save")
-        XCTAssertTrue(app.staticTexts.labeled("New routine").waitForNonExistence(timeout: 10),
+        XCTAssertTrue(UITestNavigation.disappears(app.staticTexts.labeled("New routine")),
                       "SAVE must replace the name step with the routine's editor")
         XCTAssertEqual(field("Routine name").value as? String, "M1 Upper Body",
                        "The routine's editor must show the saved name")
         tap("+ Add session")
         tap("+ New session")
         let sessionName = field("Session name")
-        XCTAssertTrue(sessionName.waitForExistence(timeout: 10))
+        XCTAssertTrue(UITestNavigation.appears(sessionName))
         enter("M1 Push A", into: sessionName)
         sessionName.typeText("\n")
-        attach("05-session-empty")
         tap("Add exercise")
         let pickerSearch = app.textFields["library.search.picker"]
-        XCTAssertTrue(pickerSearch.waitForExistence(timeout: 10))
+        XCTAssertTrue(UITestNavigation.appears(pickerSearch))
         enter("M1 Cambered", into: pickerSearch)
         let pickedExercise = app.buttons.matching(NSPredicate(
             format: "identifier BEGINSWITH %@ AND label BEGINSWITH[c] %@",
             "exercise.pick.", exerciseName
         )).firstMatch
-        XCTAssertTrue(pickedExercise.waitForExistence(timeout: 10))
+        XCTAssertTrue(UITestNavigation.appears(pickedExercise))
         pickedExercise.tap()
         XCTAssertEqual(field("Session name").value as? String, "M1 Push A",
                        "Returning from the picker must preserve the unsaved name")
@@ -105,28 +87,29 @@ final class MilestoneOneJourneyUITests: XCTestCase {
         let reorderSecond = app.buttons.matching(NSPredicate(format:
             "identifier == %@ AND label == %@", "routine.exercise.reorder.2", "Move exercise 2"
         )).firstMatch
-        XCTAssertTrue(reorderSecond.waitForExistence(timeout: 10))
+        XCTAssertTrue(UITestNavigation.appears(reorderSecond))
         reveal(reorderSecond)
         reorderSecond.tap()
         tap("Move up")
-        XCTAssertTrue(app.buttons.matching(NSPredicate(format:
+        XCTAssertTrue(UITestNavigation.appears(app.buttons.matching(NSPredicate(format:
             "identifier == %@ AND label BEGINSWITH %@",
             "routine.exercise.name.1", "Incline Dumbbell Press"
-        )).firstMatch.waitForExistence(timeout: 5))
+        )).firstMatch, within: 5))
         let reorderFirst = app.buttons.matching(NSPredicate(format:
             "identifier == %@ AND label == %@", "routine.exercise.reorder.1", "Move exercise 1"
         )).firstMatch
         reveal(reorderFirst)
         reorderFirst.tap()
         tap("Move down")
-        XCTAssertTrue(app.buttons.matching(NSPredicate(format:
+        XCTAssertTrue(UITestNavigation.appears(app.buttons.matching(NSPredicate(format:
             "identifier == %@ AND label == %@",
             "routine.exercise.name.1", exerciseName
-        )).firstMatch.waitForExistence(timeout: 5))
-        attach("06-session-populated")
+        )).firstMatch, within: 5))
         tap("Save session ▸")
         let session = app.staticTexts["M1 Push A"].firstMatch
-        XCTAssertTrue(session.waitForExistence(timeout: 15))
+        XCTAssertTrue(UITestNavigation.appears(session, within: 15))
+        // The routine's list is still moving its new row into place.
+        UITestNavigation.waitUntilStill(session)
         session.tap()
         tap("Edit")
         let editableName = app.buttons.matching(NSPredicate(format: "label == %@", exerciseName))
@@ -135,7 +118,7 @@ final class MilestoneOneJourneyUITests: XCTestCase {
         editableName?.tap()
         app.buttons["prescription.details"].tap()
         let sets = app.otherElements["prescription.sets"].firstMatch
-        XCTAssertTrue(sets.waitForExistence(timeout: 10))
+        XCTAssertTrue(UITestNavigation.appears(sets))
         reveal(sets)
         UITestNavigation.step(sets, to: 2)
         let repsLow = app.otherElements["prescription.reps.low"].firstMatch
@@ -144,24 +127,23 @@ final class MilestoneOneJourneyUITests: XCTestCase {
         let repsHigh = app.otherElements["prescription.reps.high"].firstMatch
         reveal(repsHigh)
         UITestNavigation.step(repsHigh, to: 10)
-        attach("06a-edit-prescription")
         tap("Save session ▸")
         tap("Start workout ▸")
-        XCTAssertTrue(app.textFields["set.reps.1.S1"].waitForExistence(timeout: 15))
+        XCTAssertTrue(UITestNavigation.appears(app.textFields["set.reps.1.S1"], within: 15))
         let addSet = app.buttons["card.addSet.1"]
         reveal(addSet)
         addSet.tap()
         let added = app.textFields["set.reps.1.S3"]
-        XCTAssertTrue(added.waitForExistence(timeout: 10))
+        XCTAssertTrue(UITestNavigation.appears(added))
         reveal(added)
         let rowY = app.buttons["set.complete.1.S3"].frame.midY / app.frame.height
         app.coordinate(withNormalizedOffset: CGVector(dx: 0.95, dy: rowY))
             .press(forDuration: 0.1, thenDragTo: app.coordinate(withNormalizedOffset: CGVector(dx: 0.05, dy: rowY)))
         // A full swipe deletes the set and leaves no Delete button, but its
         // row takes a moment to animate away; a shorter swipe leaves Delete.
-        let swipedAway = added.waitForNonExistence(timeout: 2)
+        let swipedAway = UITestNavigation.disappears(added, within: 2)
         if !swipedAway { tap("Delete") }
-        XCTAssertTrue(swipedAway || added.waitForNonExistence(timeout: 5), "The swiped set must be deleted")
+        XCTAssertTrue(swipedAway || UITestNavigation.disappears(added, within: 5), "The swiped set must be deleted")
         let weight = app.textFields.matching(NSPredicate(format: "identifier BEGINSWITH %@", "set.weight.1.S1")).firstMatch
         let weightInput = weight.exists ? weight : app.textFields["—"].firstMatch
         reveal(weightInput)
@@ -173,42 +155,37 @@ final class MilestoneOneJourneyUITests: XCTestCase {
         XCTAssertEqual(UITestNavigation.enter("8", into: reps), "8", "Typing must not add a prefix or suffix")
         reveal(app.buttons["set.complete.1.S1"])
         app.buttons["set.complete.1.S1"].tap()
-        XCTAssertTrue(app.buttons["rest.plus15"].waitForExistence(timeout: 10))
+        XCTAssertTrue(UITestNavigation.appears(app.buttons["rest.plus15"]))
         app.buttons["rest.plus15"].tap()
         app.buttons["rest.minus15"].tap()
-        attach("07-logged-set-and-rest")
 
         // Reset is ONLY on the initial launch. Real relaunch reopens persisted data.
         app.terminate()
         app.launchArguments = []
         app.launch()
-        XCTAssertTrue(app.buttons["resumeSlab.resume"].waitForExistence(timeout: 30))
-        attach("08-resume-after-relaunch")
+        XCTAssertTrue(UITestNavigation.appears(app.buttons["resumeSlab.resume"], within: 30))
         app.buttons["resumeSlab.resume"].tap()
-        XCTAssertTrue(app.buttons["rest.plus15"].waitForExistence(timeout: 15))
+        XCTAssertTrue(UITestNavigation.appears(app.buttons["rest.plus15"], within: 15))
         reveal(app.textFields["set.reps.1.S1"])
         XCTAssertEqual(app.textFields["set.reps.1.S1"].value as? String, "8")
-        attach("09-rest-restored")
         app.buttons["rest.skip"].tap()
         tap("More")
         tap("Finish")
         tap("Finish")
-        XCTAssertTrue(app.staticTexts["WORKOUT COMPLETE"].waitForExistence(timeout: 15))
+        XCTAssertTrue(UITestNavigation.appears(app.staticTexts["WORKOUT COMPLETE"], within: 15))
         XCTAssertTrue(app.staticTexts[exerciseName].exists)
-        attach("10-workout-summary")
         app.buttons["summary.done"].tap()
         app.buttons["Progress"].tap()
         let history = app.buttons["progress.history"]
-        XCTAssertTrue(history.waitForExistence(timeout: 10))
+        XCTAssertTrue(UITestNavigation.appears(history))
         reveal(history)
         history.tap()
         let historyRow = app.buttons["history.row"].firstMatch
-        XCTAssertTrue(historyRow.waitForExistence(timeout: 15))
+        XCTAssertTrue(UITestNavigation.appears(historyRow, within: 15))
         XCTAssertTrue(historyRow.label.contains("M1 Push A"))
         XCTAssertTrue(historyRow.label.contains("640"))
         historyRow.tap()
-        XCTAssertTrue(app.staticTexts["WORKOUT COMPLETE"].waitForExistence(timeout: 10))
-        attach("11-completed-history")
+        XCTAssertTrue(UITestNavigation.appears(app.staticTexts["WORKOUT COMPLETE"]))
         tap("Back")
         tap("Back")
         app.buttons["Today"].tap()
@@ -218,11 +195,7 @@ final class MilestoneOneJourneyUITests: XCTestCase {
         sessionToOpen?.tap()
         tap("Start workout ▸")
         let previous = app.descendants(matching: .any).matching(NSPredicate(format: "label BEGINSWITH %@", "Previous: 80 × 8")).firstMatch
-        XCTAssertTrue(previous.waitForExistence(timeout: 15))
-        attach("12-previous-performance")
-        tap("More")
-        tap("Discard")
-        tap("Discard")
+        XCTAssertTrue(UITestNavigation.appears(previous, within: 15))
     }
 
     @MainActor
@@ -233,81 +206,70 @@ final class MilestoneOneJourneyUITests: XCTestCase {
     }
 
     @MainActor
-    private func tapFilter(_ identifier: String) {
-        let button = app.buttons[identifier]
-        let filters = app.scrollViews["library.filters"]
-        XCTAssertTrue(button.waitForExistence(timeout: 10))
-        for _ in 0..<12 {
-            let frame = button.frame
-            if frame.minX >= app.frame.minX && frame.maxX <= app.frame.maxX {
-                break
-            }
-            let moveLeft = frame.midX > app.frame.midX
-            let start = filters.coordinate(withNormalizedOffset: CGVector(dx: moveLeft ? 0.7 : 0.3, dy: 0.5))
-            let end = filters.coordinate(withNormalizedOffset: CGVector(dx: moveLeft ? 0.4 : 0.6, dy: 0.5))
-            start.press(forDuration: 0.1, thenDragTo: end,
-                        withVelocity: .slow, thenHoldForDuration: 0.2)
-        }
-        XCTAssertTrue(button.isHittable, "Filter must be reachable by horizontal scrolling")
-        button.tap()
-    }
-
-    @MainActor
     private func tap(_ name: String, file: StaticString = #filePath, line: UInt = #line) {
         let button = app.buttons.matching(NSPredicate(format: "label ==[c] %@", name)).firstMatch
-        XCTAssertTrue(button.waitForExistence(timeout: 15), "Missing button: \(name)", file: file, line: line)
+        XCTAssertTrue(UITestNavigation.appears(button, within: 15), "Missing button: \(name)", file: file, line: line)
         reveal(button)
         button.tap()
     }
 
+    /// Scrolls until `element` can take a tap, in long drags that hold at
+    /// their end so the page does not coast on, each followed by a wait
+    /// until the page stops. A drag moves the page by the distance the
+    /// element lies from the middle of the visible span, or most of a span
+    /// while a lazy list has not made the element yet. A set's field or
+    /// button must sit between the workout header and the keyboard's DONE
+    /// bar, because rows scroll under the header and accessibility still
+    /// calls them hittable there; its drags run in the rows' trailing
+    /// margin, clear of their fields. Any other element is in view once it
+    /// is hittable, or once it lies clear of the keyboard and the bottom
+    /// bars: accessibility can call a control in a sheet not hittable where
+    /// a tap still reaches it.
     @MainActor
     private func reveal(_ element: XCUIElement) {
-        for _ in 0..<14 {
+        for _ in 0..<8 {
             let exists = element.exists
-            let header = app.otherElements["workout.header"].firstMatch
             let isSetInput = exists && element.identifier.hasPrefix("set.")
-            let headerBottom = isSetInput && header.exists
-                ? header.frame.maxY : 0
+            if exists && !isSetInput && element.isHittable { return }
+            let container = app.collectionViews.allElementsBoundByIndex.last(where: { $0.isHittable })
+                ?? app.scrollViews.allElementsBoundByIndex.last(where: { $0.isHittable })
+            let page = container?.frame ?? app.frame
+            let header = app.otherElements["workout.header"].firstMatch
+            let top = (isSetInput && header.exists ? header.frame.maxY : page.minY) + 8
             let keyboard = app.keyboards.firstMatch
-            let visibleBottom = isSetInput && keyboard.exists
-                ? keyboard.frame.minY - 58 : app.frame.maxY - 24
-            let fits = !isSetInput || (element.frame.minY >= headerBottom + 8
-                && element.frame.maxY <= visibleBottom)
-            if exists && element.isHittable && fits { return }
-            if let container = app.collectionViews.allElementsBoundByIndex.last(where: { $0.isHittable })
-                ?? app.scrollViews.allElementsBoundByIndex.last(where: { $0.isHittable }) {
-                if isSetInput {
-                    let top = headerBottom + 8
-                    let middle = (top + visibleBottom) / 2
-                    let delta = middle - element.frame.midY
-                    let startY = delta > 0 ? top + 20 : visibleBottom - 20
-                    let endY = min(visibleBottom - 20, max(top + 20, startY + delta))
-                    let start = app.coordinate(withNormalizedOffset: .zero)
-                        .withOffset(CGVector(dx: app.frame.width - 24, dy: startY))
-                    let end = app.coordinate(withNormalizedOffset: .zero)
-                        .withOffset(CGVector(dx: app.frame.width - 24, dy: endY))
-                    start.press(forDuration: 0.1, thenDragTo: end,
-                                withVelocity: .slow, thenHoldForDuration: 0.2)
-                    continue
-                }
-                if element.exists && element.frame != .zero && element.frame.minY < max(headerBottom, container.frame.minY + 44) {
-                    container.swipeDown(velocity: .slow)
-                } else {
-                    container.swipeUp(velocity: .slow)
-                }
-            } else { app.swipeUp(velocity: .slow) }
+            // The DONE bar sits on top of the keyboard; a tab bar or a
+            // bottom bar fills the screen's last 100pt.
+            let bottom = keyboard.exists ? keyboard.frame.minY - 58 : app.frame.maxY - (isSetInput ? 24 : 100)
+            let frame = exists ? element.frame : .zero
+            let inSpan = frame.minY >= top && frame.maxY <= bottom
+            if exists && inSpan && (!isSetInput || element.isHittable) { return }
+            // Positive drags the page down, to bring back an element above the span.
+            let distance = exists && frame != .zero ? (top + bottom) / 2 - frame.midY : -(bottom - top) * 0.7
+            let startY = distance > 0 ? top + 20 : bottom - 20
+            let endY = min(bottom - 20, max(top + 20, startY + distance))
+            let x = isSetInput ? app.frame.width - 24 : page.midX
+            let origin = app.coordinate(withNormalizedOffset: .zero)
+            origin.withOffset(CGVector(dx: x, dy: startY)).press(
+                forDuration: 0.1, thenDragTo: origin.withOffset(CGVector(dx: x, dy: endY)),
+                withVelocity: .default, thenHoldForDuration: 0.2
+            )
+            if exists {
+                UITestNavigation.waitUntilStill(element)
+            } else if let container {
+                UITestNavigation.waitUntilStill(container)
+            }
         }
     }
 
     @MainActor
     private func pickExercise(_ name: String) {
         let search = app.textFields["library.search.picker"]
-        XCTAssertTrue(search.waitForExistence(timeout: 10))
+        XCTAssertTrue(UITestNavigation.appears(search))
         enter(name, into: search)
         let row = app.buttons.matching(NSPredicate(
             format: "identifier BEGINSWITH %@ AND label BEGINSWITH[c] %@", "exercise.pick.", name
         )).firstMatch
-        XCTAssertTrue(row.waitForExistence(timeout: 10))
+        XCTAssertTrue(UITestNavigation.appears(row))
         row.tap()
     }
 

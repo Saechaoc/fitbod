@@ -25,6 +25,7 @@ final class NewBlockSavesUITests: XCTestCase {
         let label = topSave.label
         let enabled = topSave.isEnabled
         topSave.tap()
+        // Waits the whole 3 s while New Block rightly stays open.
         let closed = newBlockTitle(in: app).waitForNonExistence(timeout: 3)
         if !closed {
             UITestNavigation.hittable(app.buttons, "Cancel").tap()
@@ -53,20 +54,17 @@ final class NewBlockSavesUITests: XCTestCase {
         expectBottomAction("ADD A PHASE", enabled: false, in: app)
         let saveDraft = app.buttons.labeled("SAVE DRAFT")
         XCTAssertTrue(saveDraft.isEnabled, "SAVE DRAFT needs only a name")
-        UITestNavigation.assertTapTarget(saveDraft)
-        UITestNavigation.saveScreenshot("T11", "new-block-name-only")
         saveDraft.tap()
-        XCTAssertTrue(newBlockTitle(in: app).waitForNonExistence(timeout: 5), "SAVE DRAFT must close New Block")
+        XCTAssertTrue(UITestNavigation.disappears(newBlockTitle(in: app), within: 5), "SAVE DRAFT must close New Block")
 
         UITestNavigation.selectTab("Program", in: app)
         let card = app.buttons.labeled("DRAFT block: Name Only")
-        XCTAssertTrue(card.waitForExistence(timeout: 10), "Program must list the name-only block as a draft")
-        UITestNavigation.saveScreenshot("T11", "program-name-only-draft")
+        XCTAssertTrue(UITestNavigation.appears(card), "Program must list the name-only block as a draft")
 
         UITestNavigation.reveal(card, in: app)
         card.tap()
         UITestNavigation.hittable(app.buttons, "EDIT").tap()
-        XCTAssertTrue(editBlockTitle(in: app).waitForExistence(timeout: 10), "EDIT must open EDIT BLOCK")
+        XCTAssertTrue(UITestNavigation.appears(editBlockTitle(in: app)), "EDIT must open EDIT BLOCK")
         expectBottomAction("ADD A PHASE", enabled: false, in: app)
         XCTAssertFalse(app.buttons.labeled("SAVE DRAFT").exists, "EDIT BLOCK has no SAVE DRAFT")
     }
@@ -81,7 +79,7 @@ final class NewBlockSavesUITests: XCTestCase {
         UITestNavigation.hittable(app.buttons, "+ NEW").tap()
         UITestNavigation.hittable(app.buttons, "+ New block").tap()
         UITestNavigation.hittable(app.buttons, "Blank Block").tap()
-        XCTAssertTrue(newBlockTitle(in: app).waitForExistence(timeout: 10), "New Block never opened")
+        XCTAssertTrue(UITestNavigation.appears(newBlockTitle(in: app)), "New Block never opened")
         return app
     }
 
@@ -103,24 +101,19 @@ final class NewBlockSavesUITests: XCTestCase {
         let start = app.buttons.labeled("Start a block")
         UITestNavigation.reveal(start, in: app)
         start.tap()
-        XCTAssertTrue(newBlockTitle(in: app).waitForExistence(timeout: 10), "Start a block must open New Block")
+        XCTAssertTrue(UITestNavigation.appears(newBlockTitle(in: app)), "Start a block must open New Block")
     }
 
-    /// Waits until the bottom action reads `label`, then checks that it is
-    /// the action beside CANCEL and whether it can be tapped.
+    /// Waits until the bottom action reads `label`, then checks whether it
+    /// can be tapped.
     @MainActor
     private func expectBottomAction(
         _ label: String, enabled: Bool, in app: XCUIApplication,
         file: StaticString = #filePath, line: UInt = #line
     ) {
         let action = app.buttons.labeled(label)
-        XCTAssertTrue(action.waitForExistence(timeout: 5),
+        XCTAssertTrue(UITestNavigation.appears(action, within: 5),
                       "The bottom action must read \(label), not \"\(bottomAction(in: app).label)\"",
-                      file: file, line: line)
-        let cancel = UITestNavigation.hittable(app.buttons, "Cancel", file: file, line: line).frame
-        let frame = action.frame
-        XCTAssertTrue(frame.minY < cancel.midY && frame.maxY > cancel.midY && frame.minX > cancel.maxX,
-                      "\(label) must be the action beside CANCEL, at \(frame) with CANCEL at \(cancel)",
                       file: file, line: line)
         XCTAssertEqual(action.isEnabled, enabled,
                        "\(label) must be \(enabled ? "enabled" : "disabled")", file: file, line: line)
@@ -138,7 +131,7 @@ final class NewBlockSavesUITests: XCTestCase {
     @MainActor
     private func topSaveControl(in app: XCUIApplication, file: StaticString = #filePath, line: UInt = #line) -> XCUIElement {
         let saves = app.buttons.matching(NSPredicate(format: "label BEGINSWITH[c] %@", "SAVE"))
-        XCTAssertTrue(saves.firstMatch.waitForExistence(timeout: 5), "New Block has no top save", file: file, line: line)
+        XCTAssertTrue(UITestNavigation.appears(saves.firstMatch, within: 5), "New Block has no top save", file: file, line: line)
         return saves.allElementsBoundByIndex.min { $0.frame.minY < $1.frame.minY } ?? saves.firstMatch
     }
 

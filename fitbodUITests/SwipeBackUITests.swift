@@ -72,7 +72,7 @@ final class SwipeBackUITests: XCTestCase {
         let inventory = app.buttons.labeled("Plate Inventory")
         open(inventory, in: app)
         UITestNavigation.hittable(app.buttons, "Done ▸").tap()
-        XCTAssertTrue(app.otherElements["plateInventory.tabStrip"].waitForNonExistence(timeout: 10),
+        XCTAssertTrue(UITestNavigation.disappears(app.otherElements["plateInventory.tabStrip"]),
                       "Done must close Plate Inventory after a swipe on Settings")
         XCTAssertTrue(waitUntilHittable(inventory), "Settings must show again after Plate Inventory closes")
     }
@@ -111,7 +111,7 @@ final class SwipeBackUITests: XCTestCase {
     /// Scrolls `control` into view and taps it once it can be tapped.
     @MainActor
     private func open(_ control: XCUIElement, in app: XCUIApplication, file: StaticString = #filePath, line: UInt = #line) {
-        XCTAssertTrue(control.waitForExistence(timeout: 15), "Missing \(control)", file: file, line: line)
+        XCTAssertTrue(UITestNavigation.appears(control, within: 15), "Missing \(control)", file: file, line: line)
         UITestNavigation.reveal(control, in: app)
         XCTAssertTrue(waitUntilHittable(control), "\(control) cannot be tapped", file: file, line: line)
         lastOpened = (control, control.frame)
@@ -144,15 +144,15 @@ final class SwipeBackUITests: XCTestCase {
         let deadline = Date.now.addingTimeInterval(timeout)
         repeat {
             if !element.exists || !element.isHittable { return true }
-            Thread.sleep(forTimeInterval: 0.25)
+            // The poll step the test guide asks for (2.6).
+            Thread.sleep(forTimeInterval: 0.1)
         } while Date.now < deadline
         return false
     }
 
     @MainActor
     private func waitUntilHittable(_ element: XCUIElement, timeout: TimeInterval = 10) -> Bool {
-        let hittable = XCTNSPredicateExpectation(predicate: NSPredicate(format: "exists == true AND hittable == true"), object: element)
-        return XCTWaiter().wait(for: [hittable], timeout: timeout) == .completed
+        UITestNavigation.waitUntil(timeout: timeout) { element.exists && element.isHittable }
     }
 
     // MARK: - Checks
@@ -167,11 +167,11 @@ final class SwipeBackUITests: XCTestCase {
         from screen: XCUIElement, _ name: String, to opener: XCUIElement, in app: XCUIApplication,
         alongRowOf row: XCUIElement? = nil, file: StaticString = #filePath, line: UInt = #line
     ) {
-        XCTAssertTrue(screen.waitForExistence(timeout: 15), "\(name) never opened", file: file, line: line)
+        XCTAssertTrue(UITestNavigation.appears(screen, within: 15), "\(name) never opened", file: file, line: line)
         // A swipe during a push does nothing, and XCUI reports where views
         // end up, not where they are mid-push. The screen under leaves the
         // accessibility tree once the push is over.
-        _ = opener.waitForNonExistence(timeout: 5)
+        UITestNavigation.disappears(opener, within: 5)
         UITestNavigation.waitUntilStill(screen, interval: 0.3)
         swipeBack(alongRowOf: row, in: app)
         XCTAssertTrue(waitUntilGone(screen),
@@ -230,9 +230,9 @@ final class SwipeBackUITests: XCTestCase {
         from screen: XCUIElement, to previous: XCUIElement, in app: XCUIApplication,
         file: StaticString = #filePath, line: UInt = #line
     ) {
-        XCTAssertTrue(screen.waitForExistence(timeout: 10), "The next screen must open after a swipe on the root", file: file, line: line)
+        XCTAssertTrue(UITestNavigation.appears(screen), "The next screen must open after a swipe on the root", file: file, line: line)
         UITestNavigation.hittable(app.buttons, "Back", file: file, line: line).tap()
-        XCTAssertTrue(screen.waitForNonExistence(timeout: 10), "‹ BACK must close the next screen", file: file, line: line)
+        XCTAssertTrue(UITestNavigation.disappears(screen), "‹ BACK must close the next screen", file: file, line: line)
         XCTAssertTrue(waitUntilHittable(previous), "‹ BACK must return to the root", file: file, line: line)
     }
 

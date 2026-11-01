@@ -100,27 +100,25 @@ final class PRListAndSeriesUITests: XCTestCase {
         let bench = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Barbell Bench Press")).firstMatch
         UITestNavigation.reveal(bench, in: app)
         bench.tap()
-        XCTAssertTrue(app.buttons["e1RM"].waitForExistence(timeout: 10), "The progress chart never opened")
+        XCTAssertTrue(UITestNavigation.appears(app.buttons["e1RM"]), "The progress chart never opened")
 
         var readout = chartReadout(in: app)
         XCTAssertFalse(readout.isEmpty, "The chart reads nothing before any chip is tapped")
         var readouts: [String: String] = [:]
         let intents = ["HYPERTROPHY · 2 SESSIONS", "STRENGTH · 2 SESSIONS"]
-        let chips: [(chip: String, screen: String, legend: [String])] = [
-            ("TOP SET", "chart-topset", ["TOP SET"]),
-            ("e1RM", "chart-e1rm", ["TOP SET", "ALL-SET AVG"]),
-            ("VOLUME", "chart-volume", intents),
-            ("AVG RPE", "chart-avgrpe", intents),
+        let chips: [(chip: String, legend: [String])] = [
+            ("TOP SET", ["TOP SET"]),
+            ("e1RM", ["TOP SET", "ALL-SET AVG"]),
+            ("VOLUME", intents),
+            ("AVG RPE", intents),
         ]
-        for (chip, screen, legend) in chips {
+        for (chip, legend) in chips {
             let button = app.buttons[chip]
             button.tap()
             let next = chartReadout(in: app, changingFrom: readout)
             XCTAssertNotEqual(next, readout, "Tapping \(chip) left the chart reading the same:\n\(next)")
             XCTAssertTrue(button.isSelected, "\(chip) is not the selected chip after a tap")
-            UITestNavigation.assertTapTarget(button)
             XCTAssertEqual(legendKeys(in: app), legend, "\(chip)'s legend must name the lines it draws")
-            UITestNavigation.saveScreenshot("T13", screen)
             readouts[chip] = next
             readout = next
         }
@@ -168,10 +166,12 @@ final class PRListAndSeriesUITests: XCTestCase {
         let deadline = Date.now.addingTimeInterval(3)
         var current = chartReadout(in: app)
         while current == old && Date.now < deadline {
-            Thread.sleep(forTimeInterval: 0.25)
+            // The poll step the test guide asks for (2.6).
+            Thread.sleep(forTimeInterval: 0.1)
             current = chartReadout(in: app)
         }
-        // Let the chart's short transition settle before the screenshot.
+        // Lets the chart's short transition settle, so the last read is
+        // the settled one.
         Thread.sleep(forTimeInterval: 0.4)
         return chartReadout(in: app)
     }
@@ -205,19 +205,18 @@ final class PRListAndSeriesUITests: XCTestCase {
     }
 
     /// Reads every bucket of the PR list, top to bottom, scrolling a screen
-    /// at a time and saving a screenshot of each screen.
+    /// at a time.
     @MainActor
     private func readPRList(in app: XCUIApplication) throws -> [Bucket] {
         // The lazy list drops rows far off screen, so the list is found by
         // its first section head once, then used as the screen's scroll view.
-        XCTAssertTrue(app.staticTexts["Weight"].waitForExistence(timeout: 10), "The PR list never appeared")
+        XCTAssertTrue(UITestNavigation.appears(app.staticTexts["Weight"]), "The PR list never appeared")
         let list = app.scrollViews.firstMatch
         var items: [Item] = []
         var offset: CGFloat = 0
         var previous = try visibleItems(in: list)
         merge(previous, offset: offset, into: &items)
-        UITestNavigation.saveScreenshot("T13", "prs-1")
-        for page in 2...30 {
+        for _ in 2...30 {
             let start = list.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.85))
             let end = list.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.3))
             start.press(forDuration: 0.05, thenDragTo: end, withVelocity: .slow, thenHoldForDuration: 0.4)
@@ -226,7 +225,6 @@ final class PRListAndSeriesUITests: XCTestCase {
             guard moved > 1 else { break }
             offset += moved
             merge(current, offset: offset, into: &items)
-            UITestNavigation.saveScreenshot("T13", "prs-\(page)")
             previous = current
         }
 

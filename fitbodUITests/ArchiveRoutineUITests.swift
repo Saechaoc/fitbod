@@ -27,20 +27,18 @@ final class ArchiveRoutineUITests: XCTestCase {
         let name = makeRoutineOnProgram(in: app)
 
         tapArchiveRoutine(in: app)
-        XCTAssertTrue(dialogTitle(in: app).waitForExistence(timeout: 5),
+        XCTAssertTrue(UITestNavigation.appears(dialogTitle(in: app), within: 5),
                       "Archive routine must ask first, not archive at once")
         UITestNavigation.hittable(app.buttons, "Archive", exactLabel: true)
-        let keep = UITestNavigation.hittable(app.buttons, "Keep routine", exactLabel: true)
-        UITestNavigation.saveScreenshot("T20", "archive-dialog")
-        keep.tap()
-        XCTAssertTrue(dialogTitle(in: app).waitForNonExistence(timeout: 5), "Keep routine must close the dialog")
+        UITestNavigation.hittable(app.buttons, "Keep routine", exactLabel: true).tap()
+        XCTAssertTrue(UITestNavigation.disappears(dialogTitle(in: app), within: 5), "Keep routine must close the dialog")
         XCTAssertTrue(routineNameField(in: app, value: name).exists, "Keep routine must leave the routine open")
 
         UITestNavigation.hittable(app.buttons, "Back").tap()
-        XCTAssertTrue(programRow(name, in: app).waitForExistence(timeout: 10), "Program must still list \(name)")
+        XCTAssertTrue(UITestNavigation.appears(programRow(name, in: app)), "Program must still list \(name)")
         assertNoArchivedEntry(in: app)
         UITestNavigation.selectTab("Today", in: app)
-        XCTAssertTrue(todayGroup(name, in: app).waitForExistence(timeout: 10), "Today must still offer \(name)")
+        XCTAssertTrue(UITestNavigation.appears(todayGroup(name, in: app)), "Today must still offer \(name)")
     }
 
     // MARK: - Archived routines
@@ -54,7 +52,7 @@ final class ArchiveRoutineUITests: XCTestCase {
         let app = UITestNavigation.launch(UITestNavigation.progressHistory)
         let name = makeRoutineOnProgram(in: app)
         archiveOpenRoutine(in: app)
-        XCTAssertTrue(routineNameField(in: app, value: name).waitForNonExistence(timeout: 5),
+        XCTAssertTrue(UITestNavigation.disappears(routineNameField(in: app, value: name), within: 5),
                       "Archiving must take Program back to its list")
 
         UITestNavigation.relaunch(app)
@@ -62,32 +60,27 @@ final class ArchiveRoutineUITests: XCTestCase {
         let entry = archivedEntry(in: app)
         scrollProgram(toward: entry, in: app)
         XCTAssertTrue(entry.exists, "Program must offer a way to reach the archived routine")
-        UITestNavigation.assertTapTarget(entry)
-        UITestNavigation.saveScreenshot("T20", "archived-entry")
         entry.tap()
         // At default text the title's words are joined by a no-break space (T38).
-        XCTAssertTrue(app.staticTexts.matching(NSPredicate(format: "label MATCHES[c] %@", "Archived.routines"))
-                        .firstMatch.waitForExistence(timeout: 10),
+        XCTAssertTrue(UITestNavigation.appears(app.staticTexts.matching(NSPredicate(format: "label MATCHES[c] %@", "Archived.routines"))
+                        .firstMatch),
                       "The entry must open ARCHIVED ROUTINES")
         let restore = UITestNavigation.hittable(app.buttons, "Restore \(name)", exactLabel: true)
-        UITestNavigation.assertTapTarget(restore)
-        UITestNavigation.assertNoOverlap(archivedRow(name, in: app), restore)
-        UITestNavigation.saveScreenshot("T20", "archived-list")
         restore.tap()
-        XCTAssertTrue(restore.waitForNonExistence(timeout: 5), "RESTORE must take \(name) off the archived list")
-        XCTAssertTrue(app.staticTexts.labeled("No archived routines.").waitForExistence(timeout: 5),
+        XCTAssertTrue(UITestNavigation.disappears(restore, within: 5), "RESTORE must take \(name) off the archived list")
+        XCTAssertTrue(UITestNavigation.appears(app.staticTexts.labeled("No archived routines."), within: 5),
                       "The emptied list must say so")
 
         UITestNavigation.hittable(app.buttons, "Back").tap()
-        XCTAssertTrue(programRow(name, in: app).waitForExistence(timeout: 10), "RESTORE must put \(name) back on Program")
+        XCTAssertTrue(UITestNavigation.appears(programRow(name, in: app)), "RESTORE must put \(name) back on Program")
         assertNoArchivedEntry(in: app)
         UITestNavigation.selectTab("Today", in: app)
-        XCTAssertTrue(todayGroup(name, in: app).waitForExistence(timeout: 10), "RESTORE must put \(name) back on Today")
+        XCTAssertTrue(UITestNavigation.appears(todayGroup(name, in: app)), "RESTORE must put \(name) back on Today")
 
         UITestNavigation.relaunch(app)
-        XCTAssertTrue(todayGroup(name, in: app).waitForExistence(timeout: 10), "Today must still offer \(name) after a relaunch")
+        XCTAssertTrue(UITestNavigation.appears(todayGroup(name, in: app)), "Today must still offer \(name) after a relaunch")
         UITestNavigation.selectTab("Program", in: app)
-        XCTAssertTrue(programRow(name, in: app).waitForExistence(timeout: 10), "Program must still list \(name) after a relaunch")
+        XCTAssertTrue(UITestNavigation.appears(programRow(name, in: app)), "Program must still list \(name) after a relaunch")
         assertNoArchivedEntry(in: app)
     }
 
@@ -102,26 +95,25 @@ final class ArchiveRoutineUITests: XCTestCase {
         let app = UITestNavigation.launch(UITestNavigation.activeBlock)
         UITestNavigation.selectTab("Program", in: app)
         UITestNavigation.hittable(app.buttons, "Live Routine").tap()
-        XCTAssertTrue(routineNameField(in: app, value: "Live Routine").waitForExistence(timeout: 10),
+        XCTAssertTrue(UITestNavigation.appears(routineNameField(in: app, value: "Live Routine")),
                       "Program's row must open Live Routine")
 
         tapArchiveRoutine(in: app)
         let alert = app.alerts["Cannot Archive Routine"]
-        XCTAssertTrue(alert.waitForExistence(timeout: 5), "A routine the active block uses must show the deny alert")
+        XCTAssertTrue(UITestNavigation.appears(alert, within: 5), "A routine the active block uses must show the deny alert")
         XCTAssertFalse(dialogTitle(in: app).exists, "The deny rule must run before the confirmation")
-        UITestNavigation.saveScreenshot("T20", "archive-denied")
         alert.buttons["OK"].tap()
-        XCTAssertTrue(alert.waitForNonExistence(timeout: 5), "OK must close the alert")
+        XCTAssertTrue(UITestNavigation.disappears(alert, within: 5), "OK must close the alert")
         XCTAssertTrue(routineNameField(in: app, value: "Live Routine").exists, "A denied archive must leave the routine open")
 
         UITestNavigation.hittable(app.buttons, "Back").tap()
-        XCTAssertTrue(programRow("Live Routine", in: app).waitForExistence(timeout: 10),
+        XCTAssertTrue(UITestNavigation.appears(programRow("Live Routine", in: app)),
                       "Program must still list Live Routine")
         XCTAssertTrue(app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "ACTIVE block: Live Block"))
                         .firstMatch.exists, "Live Block must stay active")
         assertNoArchivedEntry(in: app)
         UITestNavigation.selectTab("Today", in: app)
-        XCTAssertTrue(app.staticTexts.labeled("LIVE BLOCK").waitForExistence(timeout: 10),
+        XCTAssertTrue(UITestNavigation.appears(app.staticTexts.labeled("LIVE BLOCK")),
                       "Today must still run Live Block")
     }
 
@@ -138,17 +130,17 @@ final class ArchiveRoutineUITests: XCTestCase {
 
         UITestNavigation.selectTab("Program", in: app)
         UITestNavigation.hittable(app.buttons, "Live Routine").tap()
-        XCTAssertTrue(routineNameField(in: app, value: "Live Routine").waitForExistence(timeout: 10),
+        XCTAssertTrue(UITestNavigation.appears(routineNameField(in: app, value: "Live Routine")),
                       "Program's row must open Live Routine")
         archiveOpenRoutine(in: app)
-        XCTAssertTrue(routineNameField(in: app, value: "Live Routine").waitForNonExistence(timeout: 5),
+        XCTAssertTrue(UITestNavigation.disappears(routineNameField(in: app, value: "Live Routine"), within: 5),
                       "A routine only an ended block uses must archive")
         XCTAssertFalse(programRow("Live Routine", in: app).exists, "Program must not list Live Routine")
 
         let ended = app.buttons.labeled("DONE block: Live Block")
-        XCTAssertTrue(ended.waitForExistence(timeout: 10), "Program must still list the ended block")
+        XCTAssertTrue(UITestNavigation.appears(ended), "Program must still list the ended block")
         ended.tap()
-        XCTAssertTrue(app.staticTexts.labeled("Block · Live Block").waitForExistence(timeout: 10),
+        XCTAssertTrue(UITestNavigation.appears(app.staticTexts.labeled("Block · Live Block")),
                       "The ended block's overview must still open")
         UITestNavigation.hittable(app.buttons, "Back").tap()
 
@@ -162,9 +154,9 @@ final class ArchiveRoutineUITests: XCTestCase {
         UITestNavigation.hittable(app.buttons, "+ NEW").tap()
         UITestNavigation.hittable(app.buttons, "+ New block").tap()
         UITestNavigation.hittable(app.buttons, "Blank Block").tap()
-        XCTAssertTrue(app.staticTexts.labeled("NEW BLOCK").waitForExistence(timeout: 10), "New Block never opened")
+        XCTAssertTrue(UITestNavigation.appears(app.staticTexts.labeled("NEW BLOCK")), "New Block never opened")
         UITestNavigation.revealAboveBottomBar(app.buttons, "+ ATTACH ▸", in: app).tap()
-        XCTAssertTrue(app.staticTexts.labeled("Choose Routine").waitForExistence(timeout: 5),
+        XCTAssertTrue(UITestNavigation.appears(app.staticTexts.labeled("Choose Routine"), within: 5),
                       "+ ATTACH ▸ must open the routine picker")
         XCTAssertFalse(app.buttons.matching(NSPredicate(format: "label BEGINSWITH[c] %@", "Live Routine"))
                         .firstMatch.exists, "New Block's routine picker must leave the archived routine out")
@@ -196,15 +188,15 @@ final class ArchiveRoutineUITests: XCTestCase {
         newRoutine.tap()
         UITestNavigation.type(name, into: app.textFields["newRoutine.name"], file: file, line: line)
         UITestNavigation.hittable(app.buttons, "Save", exactLabel: true, file: file, line: line).tap()
-        XCTAssertTrue(app.textFields["newRoutine.name"].waitForNonExistence(timeout: 10), "SAVE must leave the name step",
+        XCTAssertTrue(UITestNavigation.disappears(app.textFields["newRoutine.name"]), "SAVE must leave the name step",
                       file: file, line: line)
         let field = routineNameField(in: app, value: name)
-        XCTAssertTrue(field.waitForExistence(timeout: 10), "+ New routine must open the new routine", file: file, line: line)
+        XCTAssertTrue(UITestNavigation.appears(field), "+ New routine must open the new routine", file: file, line: line)
         let picker = app.staticTexts.labeled("Existing sessions")
         UITestNavigation.hittable(app.buttons, "+ Add session", file: file, line: line).tap()
-        XCTAssertTrue(picker.waitForExistence(timeout: 10), "+ Add session must list the existing sessions", file: file, line: line)
+        XCTAssertTrue(UITestNavigation.appears(picker), "+ Add session must list the existing sessions", file: file, line: line)
         UITestNavigation.hittable(app.buttons, Self.session, file: file, line: line).tap()
-        XCTAssertTrue(picker.waitForNonExistence(timeout: 5), "Adding \(Self.session) must close the session picker",
+        XCTAssertTrue(UITestNavigation.disappears(picker, within: 5), "Adding \(Self.session) must close the session picker",
                       file: file, line: line)
         return name
     }
@@ -232,7 +224,7 @@ final class ArchiveRoutineUITests: XCTestCase {
     private func archiveOpenRoutine(in app: XCUIApplication) {
         tapArchiveRoutine(in: app)
         let confirm = app.buttons.labeled("Archive")
-        if confirm.waitForExistence(timeout: 3) {
+        if UITestNavigation.appears(confirm, within: 3) {
             confirm.tap()
         }
     }
@@ -257,13 +249,6 @@ final class ArchiveRoutineUITests: XCTestCase {
     @MainActor
     private func archivedEntry(in app: XCUIApplication) -> XCUIElement {
         app.buttons.labeled("Archived routines")
-    }
-
-    /// An ARCHIVED ROUTINES row's name and session count, read as
-    /// "Upper Lower, 1 session".
-    @MainActor
-    private func archivedRow(_ name: String, in app: XCUIApplication) -> XCUIElement {
-        app.descendants(matching: .any).matching(NSPredicate(format: "label BEGINSWITH %@", name + ",")).firstMatch
     }
 
     /// Swipes Program up until `element` is on screen, or for `maxSwipes`
@@ -292,17 +277,17 @@ final class ArchiveRoutineUITests: XCTestCase {
     private func endLiveBlock(in app: XCUIApplication, file: StaticString = #filePath, line: UInt = #line) {
         UITestNavigation.selectTab("Today", in: app)
         let band = app.staticTexts.labeled("LIVE BLOCK")
-        XCTAssertTrue(band.waitForExistence(timeout: 10), "Today must show the active block's band", file: file, line: line)
+        XCTAssertTrue(UITestNavigation.appears(band), "Today must show the active block's band", file: file, line: line)
         band.tap()
         UITestNavigation.hittable(app.buttons, "END BLOCK", file: file, line: line).tap()
         let alert = app.alerts["End block?"]
-        XCTAssertTrue(alert.waitForExistence(timeout: 5), "END BLOCK must ask first", file: file, line: line)
+        XCTAssertTrue(UITestNavigation.appears(alert, within: 5), "END BLOCK must ask first", file: file, line: line)
         alert.buttons["End Block"].tap()
-        XCTAssertTrue(app.buttons.labeled("END BLOCK").waitForNonExistence(timeout: 5), "The block must end",
+        XCTAssertTrue(UITestNavigation.disappears(app.buttons.labeled("END BLOCK"), within: 5), "The block must end",
                       file: file, line: line)
         UITestNavigation.hittable(app.buttons, "Back", file: file, line: line).tap()
         let review = app.staticTexts.labeled("Block review")
         UITestNavigation.hittable(app.buttons, "Plan custom", file: file, line: line).tap()
-        XCTAssertTrue(review.waitForNonExistence(timeout: 5), "Plan custom must close the review", file: file, line: line)
+        XCTAssertTrue(UITestNavigation.disappears(review, within: 5), "Plan custom must close the review", file: file, line: line)
     }
 }

@@ -7,43 +7,42 @@ final class WorkoutSwapJourneyUITests: XCTestCase {
 
     @MainActor
     func testSwapHasOneHeaderAndPersistsOnlyInTheWorkout() throws {
-        let app = XCUIApplication()
-        app.launchArguments = ["-fitbod-reset-store", "-fitbod-seed-demo-workout"]
-        app.launch()
+        // The shared launch fails unless the reset really happened, so a run
+        // of this suite alone never opens the previous run's store (F11).
+        let app = UITestNavigation.launch(UITestNavigation.seededWorkout)
         let resume = app.buttons["resumeSlab.resume"]
-        XCTAssertTrue(resume.waitForExistence(timeout: 90))
+        XCTAssertTrue(UITestNavigation.appears(resume, within: 90))
         resume.tap()
         let benchName = "Barbell Bench Press - Medium Grip"
         let bench = app.staticTexts[benchName].firstMatch
-        XCTAssertTrue(bench.waitForExistence(timeout: 10))
+        XCTAssertTrue(UITestNavigation.appears(bench))
+        // The long press that opens the exercise's menu.
         bench.press(forDuration: 1)
         let swap = app.buttons["Swap Exercise…"]
-        XCTAssertTrue(swap.waitForExistence(timeout: 5))
+        XCTAssertTrue(UITestNavigation.appears(swap, within: 5))
         swap.tap()
         let search = app.textFields["library.search.picker"]
-        XCTAssertTrue(search.waitForExistence(timeout: 10))
+        XCTAssertTrue(UITestNavigation.appears(search))
         XCTAssertEqual(app.buttons.matching(NSPredicate(format: "label ==[c] %@", "Cancel")).count, 1)
         search.tap()
         search.typeText("Incline Push-Up Wide")
         let replacement = app.buttons.matching(NSPredicate(
             format: "identifier BEGINSWITH %@ AND label BEGINSWITH %@", "exercise.pick.", "Incline Push-Up Wide,"
         )).firstMatch
-        XCTAssertTrue(replacement.waitForExistence(timeout: 10))
+        XCTAssertTrue(UITestNavigation.appears(replacement))
         replacement.tap()
-        XCTAssertTrue(app.staticTexts["Incline Push-Up Wide"].firstMatch.waitForExistence(timeout: 10))
+        XCTAssertTrue(UITestNavigation.appears(app.staticTexts["Incline Push-Up Wide"].firstMatch))
 
-        app.terminate()
-        app.launchArguments = []
-        app.launch()
-        XCTAssertTrue(resume.waitForExistence(timeout: 30))
+        UITestNavigation.relaunch(app)
+        XCTAssertTrue(UITestNavigation.appears(resume, within: 30))
         resume.tap()
-        XCTAssertTrue(app.staticTexts["Incline Push-Up Wide"].firstMatch.waitForExistence(timeout: 10))
+        XCTAssertTrue(UITestNavigation.appears(app.staticTexts["Incline Push-Up Wide"].firstMatch))
         app.buttons["Back"].firstMatch.tap()
         app.buttons["today.sessions"].tap()
         let history = app.buttons["history.row"].firstMatch
-        XCTAssertTrue(history.waitForExistence(timeout: 10))
+        XCTAssertTrue(UITestNavigation.appears(history))
         history.tap()
-        XCTAssertTrue(app.staticTexts[benchName].firstMatch.waitForExistence(timeout: 10),
+        XCTAssertTrue(UITestNavigation.appears(app.staticTexts[benchName].firstMatch),
                       "Swapping the active exercise must not rewrite finished history")
     }
 }

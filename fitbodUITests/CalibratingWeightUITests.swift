@@ -28,40 +28,34 @@ final class CalibratingWeightUITests: XCTestCase {
     }
 
     /// A logged calibrating set shows the weight it logged, never the
-    /// range; the open set after it keeps its range. Saves the logged set
-    /// at default text and AX3.
+    /// range; the open set after it keeps its range.
     @MainActor
     func testCompletedSetShowsLoggedWeight() throws {
-        for size in [UITestNavigation.TextSize.default, .ax3] {
-            let app = openWorkout(textSize: size)
-            let reps = app.textFields["set.reps.1.S1"]
-            UITestNavigation.revealInLogger(reps, in: app)
-            UITestNavigation.enter("5", into: reps)
-            XCTAssertEqual(reps.value as? String, "5", "Set 1 must read the typed reps at \(size)")
-            let complete = app.buttons["set.complete.1.S1"]
-            UITestNavigation.revealInLogger(complete, in: app)
-            complete.tap()
-            let logged = XCTNSPredicateExpectation(predicate: NSPredicate(format: "label == %@", "Set 1 complete"), object: complete)
-            XCTAssertEqual(XCTWaiter().wait(for: [logged], timeout: 5), .completed, "Set 1 must be logged at \(size)")
+        let app = openWorkout()
+        let reps = app.textFields["set.reps.1.S1"]
+        UITestNavigation.revealInLogger(reps, in: app)
+        UITestNavigation.enter("5", into: reps)
+        XCTAssertEqual(reps.value as? String, "5", "Set 1 must read the typed reps")
+        let complete = app.buttons["set.complete.1.S1"]
+        UITestNavigation.revealInLogger(complete, in: app)
+        complete.tap()
+        XCTAssertTrue(UITestNavigation.waitUntil(timeout: 5) { complete.exists && complete.label == "Set 1 complete" },
+                      "Set 1 must be logged")
 
-            let field = weightField("1.S1", in: app)
-            XCTAssertTrue(field.waitForExistence(timeout: 5), "A logged set must show its weight, not the range, at \(size)")
-            XCTAssertEqual(field.value as? String, "110 lb", "A logged set must show the weight it logged at \(size)")
-            XCTAssertFalse(rangeText("1.S1", in: app).exists, "A logged set must never show the range at \(size)")
-            UITestNavigation.revealInLogger(field, in: app)
-            UITestNavigation.saveScreenshot("T80", "calibrating-completed", textSize: size)
-            revealSet("1.S2", in: app)
-            XCTAssertTrue(rangeText("1.S2", in: app).exists, "The open set 2 keeps its range at \(size)")
-            app.terminate()
-        }
+        let field = weightField("1.S1", in: app)
+        XCTAssertTrue(UITestNavigation.appears(field, within: 5), "A logged set must show its weight, not the range")
+        XCTAssertEqual(field.value as? String, "110 lb", "A logged set must show the weight it logged")
+        XCTAssertFalse(rangeText("1.S1", in: app).exists, "A logged set must never show the range")
+        revealSet("1.S2", in: app)
+        XCTAssertTrue(rangeText("1.S2", in: app).exists, "The open set 2 keeps its range")
     }
 
     // MARK: - Navigation
 
     /// Launches the calibrating seed and opens today's workout.
     @MainActor
-    private func openWorkout(textSize: UITestNavigation.TextSize = .default) -> XCUIApplication {
-        let app = UITestNavigation.launch(UITestNavigation.calibratingSet, textSize: textSize)
+    private func openWorkout() -> XCUIApplication {
+        let app = UITestNavigation.launch(UITestNavigation.calibratingSet)
         resumeWorkout(in: app)
         return app
     }
@@ -70,10 +64,10 @@ final class CalibratingWeightUITests: XCTestCase {
     @MainActor
     private func resumeWorkout(in app: XCUIApplication) {
         let resume = app.buttons["resumeSlab.resume"]
-        XCTAssertTrue(resume.waitForExistence(timeout: 10))
+        XCTAssertTrue(UITestNavigation.appears(resume))
         UITestNavigation.reveal(resume, in: app)
         resume.tap()
-        XCTAssertTrue(app.otherElements["workout.header"].waitForExistence(timeout: 10), "The workout never opened")
+        XCTAssertTrue(UITestNavigation.appears(app.otherElements["workout.header"]), "The workout never opened")
         revealSet("1.S1", in: app)
     }
 

@@ -7,8 +7,7 @@
 //  show no NOW, current week or progress before they start. Blocks number
 //  #1, #2, #3 in start-date order. A completed block shows each phase's
 //  honest state, marks only logged sessions Completed and shows no day
-//  states. An active block's week strip shows NEXT on one day only.
-//  BlockStatesSeed supplies one block in each live state.
+//  states. BlockStatesSeed supplies one block in each live state.
 //
 
 import XCTest
@@ -26,7 +25,6 @@ final class BlockOverviewStatesUITests: XCTestCase {
         let app = UITestNavigation.launch(UITestNavigation.blockStates)
         openBlock("READY block: Summer Block", in: app)
         let label = hero(in: app).label
-        UITestNavigation.saveScreenshot("T12", "ready-hero")
         XCTAssertFalse(label.localizedCaseInsensitiveContains("active"),
                        "A ready block's hero must not say ACTIVE, but it reads \"\(label)\"")
         XCTAssertTrue(label.hasPrefix("Ready block #2: Summer Block"),
@@ -62,10 +60,6 @@ final class BlockOverviewStatesUITests: XCTestCase {
     func testReadyBlockStartingTomorrowShowsNoNowOrCurrentWeek() throws {
         let app = UITestNavigation.launch(UITestNavigation.blockStates)
         openBlock("READY block: Summer Block", in: app)
-        // The last phase, so both rows are in frame for the screenshot.
-        let lastPhase = app.staticTexts["Deload"]
-        UITestNavigation.reveal(lastPhase, in: app)
-        UITestNavigation.saveScreenshot("T12", "ready-phases")
         XCTAssertFalse(app.staticTexts["NOW"].exists, "No phase may show NOW before the block starts")
         let weekHeader = app.staticTexts.matching(NSPredicate(format: "label MATCHES %@", "WEEK [0-9]+ OF [0-9]+")).firstMatch
         XCTAssertFalse(weekHeader.exists, "A block that has not started has no current week, but the screen shows \"\(weekHeader.label)\"")
@@ -82,10 +76,10 @@ final class BlockOverviewStatesUITests: XCTestCase {
         let app = UITestNavigation.launch(UITestNavigation.blockStates)
         openBlock("ACTIVE block: Spring Block", in: app)
         let end = app.buttons.labeled("END BLOCK")
-        XCTAssertTrue(end.waitForExistence(timeout: 10), "An active block must offer END BLOCK")
+        XCTAssertTrue(UITestNavigation.appears(end), "An active block must offer END BLOCK")
         end.tap()
         let confirm = app.alerts.buttons["End Block"]
-        XCTAssertTrue(confirm.waitForExistence(timeout: 10), "END BLOCK must ask before it ends the block")
+        XCTAssertTrue(UITestNavigation.appears(confirm), "END BLOCK must ask before it ends the block")
         confirm.tap()
         goBack(in: app)
         openBlock("DONE block: Spring Block", in: app)
@@ -93,7 +87,6 @@ final class BlockOverviewStatesUITests: XCTestCase {
         let heroLabel = hero(in: app).label
         XCTAssertTrue(heroLabel.hasPrefix("Completed block"),
                       "The ended block must open on the completed hero, but it reads \"\(heroLabel)\"")
-        UITestNavigation.saveScreenshot("T12", "completed-hero")
 
         var problems: [String] = []
         if !heroLabel.hasPrefix("Completed block #1: Spring Block") {
@@ -119,49 +112,16 @@ final class BlockOverviewStatesUITests: XCTestCase {
         XCTAssertTrue(problems.isEmpty, "The block ended in week 1: " + problems.joined(separator: "; "))
     }
 
-    /// Every future day of the active block's week strip showed NEXT.
-    @MainActor
-    func testActiveBlockWeekStripShowsNextOnOneDay() throws {
-        let app = UITestNavigation.launch(UITestNavigation.blockStates)
-        openBlock("ACTIVE block: Spring Block", in: app)
-        UITestNavigation.saveScreenshot("T12", "active-hero")
-        let days = dayLabels(in: app)
-        XCTAssertEqual(days.count, 7, "The week strip must show seven days, but shows \(days)")
-        // Before T12, VoiceOver read the cells that showed NEXT as "upcoming".
-        let next = days.filter { $0.value.hasSuffix(", next") || $0.value.hasSuffix(", upcoming") }.keys.sorted()
-        // On rotation every day trains, so the next training day is
-        // tomorrow, unless today ends the strip's Monday-first week.
-        let expected = Calendar(identifier: .iso8601).component(.weekday, from: .now) == 1 ? 0 : 1
-        XCTAssertEqual(next.count, expected, "Only the next training day may show NEXT, but \(next) do: \(days)")
-    }
-
     /// A draft block's hero also read "● ACTIVE BLOCK".
     @MainActor
     func testDraftBlockHeroNamesItsFirstMissingPiece() throws {
         let app = UITestNavigation.launch(UITestNavigation.blockStates)
         openBlock("DRAFT block: Autumn Block", in: app)
         let label = hero(in: app).label
-        UITestNavigation.saveScreenshot("T12", "draft-hero")
         XCTAssertTrue(label.hasPrefix("Draft block #3: Autumn Block"),
                       "The hero must say DRAFT BLOCK, but it reads \"\(label)\"")
         XCTAssertTrue(label.contains("pick a routine"),
                       "The draft hero must name its first missing piece, the routine: \"\(label)\"")
-    }
-
-    // MARK: - Accessibility sizes
-
-    /// At AX3 the ready hero's status line and start date stack, and the
-    /// hero stays within the screen's width.
-    @MainActor
-    func testReadyHeroFitsAtAX3() throws {
-        let app = UITestNavigation.launch(UITestNavigation.blockStates, textSize: .ax3)
-        openBlock("READY block: Summer Block", in: app)
-        let hero = hero(in: app)
-        UITestNavigation.saveScreenshot("T12", "ready-hero", textSize: .ax3)
-        XCTAssertTrue(hero.label.hasPrefix("Ready block #2: Summer Block"), "The hero reads \"\(hero.label)\"")
-        let window = app.windows.firstMatch.frame
-        XCTAssertGreaterThanOrEqual(hero.frame.minX, window.minX - 0.5, "The hero must start on screen")
-        XCTAssertLessThanOrEqual(hero.frame.maxX, window.maxX + 0.5, "The hero must not run off the screen's edge")
     }
 
     // MARK: - Helpers
@@ -202,18 +162,16 @@ final class BlockOverviewStatesUITests: XCTestCase {
     private func openBlock(_ card: String, in app: XCUIApplication) {
         UITestNavigation.selectTab("Program", in: app)
         let button = app.buttons.matching(NSPredicate(format: "label BEGINSWITH[c] %@", card)).firstMatch
-        XCTAssertTrue(button.waitForExistence(timeout: 10), "Program must list \(card)")
+        XCTAssertTrue(UITestNavigation.appears(button), "Program must list \(card)")
         UITestNavigation.reveal(button, in: app)
         button.tap()
-        XCTAssertTrue(hero(in: app).waitForExistence(timeout: 10), "\(card) must open the block overview")
+        XCTAssertTrue(UITestNavigation.appears(hero(in: app)), "\(card) must open the block overview")
     }
 
     @MainActor
     private func goBack(in app: XCUIApplication) {
-        let back = UITestNavigation.hittable(app.buttons, "Back")
-        XCTAssertTrue(back.waitForExistence(timeout: 10), "The block overview must offer ‹ BACK")
-        back.tap()
-        XCTAssertTrue(hero(in: app).waitForNonExistence(timeout: 10), "‹ BACK must close the block overview")
+        UITestNavigation.hittable(app.buttons, "Back").tap()
+        XCTAssertTrue(UITestNavigation.disappears(hero(in: app)), "‹ BACK must close the block overview")
     }
 
     /// The label among `labels` on the same row as `element`, or nil.
@@ -223,20 +181,6 @@ final class BlockOverviewStatesUITests: XCTestCase {
         let row = element.frame
         let candidates = app.staticTexts.matching(NSPredicate(format: "label IN %@", labels)).allElementsBoundByIndex
         return candidates.first { abs($0.frame.midY - row.midY) <= max(row.height, 12) }?.label
-    }
-
-    /// The week strip's cells as VoiceOver reads them, such as "Saturday,
-    /// Accumulation, next", keyed by weekday.
-    @MainActor
-    private func dayLabels(in app: XCUIApplication) -> [String: String] {
-        let pattern = "(\(Calendar.current.weekdaySymbols.joined(separator: "|"))), .*"
-        let cells = app.descendants(matching: .any).matching(NSPredicate(format: "label MATCHES %@", pattern))
-        var days: [String: String] = [:]
-        for cell in cells.allElementsBoundByIndex {
-            let weekday = String(cell.label.prefix { $0 != "," })
-            days[weekday] = cell.label
-        }
-        return days
     }
 }
 

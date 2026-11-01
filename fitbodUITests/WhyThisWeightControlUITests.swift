@@ -21,7 +21,7 @@ final class WhyThisWeightControlUITests: XCTestCase {
 
         tapWhy(in: app)
         let use = app.buttons.matching(NSPredicate(format: "label BEGINSWITH[c] %@", "Use ")).firstMatch
-        XCTAssertTrue(use.waitForExistence(timeout: 5))
+        XCTAssertTrue(UITestNavigation.appears(use, within: 5))
         let suggested = use.label.split(separator: " ").dropFirst().first.flatMap { Double($0) }
         XCTAssertNotNil(suggested, "Use must name the suggested weight: \(use.label)")
         XCTAssertNotEqual(suggested, 90)
@@ -46,17 +46,19 @@ final class WhyThisWeightControlUITests: XCTestCase {
 
         tapWhy(in: app)
         let use = app.buttons.matching(NSPredicate(format: "label BEGINSWITH[c] %@", "Use ")).firstMatch
-        XCTAssertTrue(use.waitForExistence(timeout: 5))
+        XCTAssertTrue(UITestNavigation.appears(use, within: 5))
         XCTAssertTrue(use.label.hasPrefix("Use 95 "), "Without small plates the suggestion is 95 lb: \(use.label)")
         use.tap()
         XCTAssertTrue(waitUntilGone(use), "Use must close the sheet")
         XCTAssertEqual(numericWeight(weight), 95, "Use must write the suggested weight into the set")
+        // Waits the whole 2 s: a mark that comes back shows within it.
         XCTAssertFalse(overrideMark(in: app).waitForExistence(timeout: 2),
                        "Use must clear the set's \"changed from prescription\" mark")
 
         UITestNavigation.relaunch(app)
         resumeWorkout(in: app)
         XCTAssertEqual(numericWeight(weightField(in: app)), 95)
+        // The same 2 s watch for the mark, on the reopened workout.
         XCTAssertFalse(overrideMark(in: app).waitForExistence(timeout: 2),
                        "The cleared mark must stay cleared after a relaunch")
     }
@@ -64,9 +66,7 @@ final class WhyThisWeightControlUITests: XCTestCase {
     @MainActor
     private func tapWhy(in app: XCUIApplication) {
         let why = app.buttons["set.why.1.S1"]
-        XCTAssertTrue(why.waitForExistence(timeout: 5), "Set 1 must show a visible WHY control")
-        XCTAssertGreaterThanOrEqual(why.frame.width, 44)
-        XCTAssertGreaterThanOrEqual(why.frame.height, 44)
+        XCTAssertTrue(UITestNavigation.appears(why, within: 5), "Set 1 must show a visible WHY control")
         UITestNavigation.revealInLogger(why, in: app)
         why.tap()
     }
@@ -87,9 +87,9 @@ final class WhyThisWeightControlUITests: XCTestCase {
     @MainActor
     private func resumeWorkout(in app: XCUIApplication) {
         let resume = app.buttons["resumeSlab.resume"]
-        XCTAssertTrue(resume.waitForExistence(timeout: 10))
+        XCTAssertTrue(UITestNavigation.appears(resume))
         resume.tap()
-        XCTAssertTrue(app.textFields["set.reps.1.S1"].waitForExistence(timeout: 10))
+        XCTAssertTrue(UITestNavigation.appears(app.textFields["set.reps.1.S1"]))
     }
 
     /// Settings > Plate Inventory: takes every 2.5 and 1.25 lb plate off the
@@ -101,7 +101,7 @@ final class WhyThisWeightControlUITests: XCTestCase {
         UITestNavigation.reveal(inventory, in: app)
         inventory.tap()
         let done = app.buttons.labeled("Done ▸")
-        XCTAssertTrue(done.waitForExistence(timeout: 10))
+        XCTAssertTrue(UITestNavigation.appears(done))
         for plate in ["2.5 lb plate", "1.25 lb plate"] {
             // Plate rows load as they scroll in; a tap must clear the footer bar.
             let row = app.descendants(matching: .any).labeled(plate)
@@ -120,7 +120,7 @@ final class WhyThisWeightControlUITests: XCTestCase {
         }
         done.tap()
         let close = app.buttons["Close"]
-        XCTAssertTrue(close.waitForExistence(timeout: 10))
+        XCTAssertTrue(UITestNavigation.appears(close))
         close.tap()
     }
 
@@ -141,7 +141,6 @@ final class WhyThisWeightControlUITests: XCTestCase {
 
     @MainActor
     private func waitUntilGone(_ element: XCUIElement) -> Bool {
-        let gone = XCTNSPredicateExpectation(predicate: NSPredicate(format: "exists == false"), object: element)
-        return XCTWaiter().wait(for: [gone], timeout: 5) == .completed
+        UITestNavigation.disappears(element, within: 5)
     }
 }

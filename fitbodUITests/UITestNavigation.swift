@@ -71,7 +71,7 @@ enum UITestNavigation {
         hasLaunched = true
         app.launchArguments = (textSize?.launchArguments ?? []) + arguments + [resetSignalFlag]
         app.launch()
-        XCTAssertTrue(tab("Today", in: app).waitForExistence(timeout: 90), "The tab bar never appeared", file: file, line: line)
+        XCTAssertTrue(appears(tab("Today", in: app), within: 90), "The tab bar never appeared", file: file, line: line)
         if resets {
             assertFreshStore(in: app, file: file, line: line)
         }
@@ -89,14 +89,14 @@ enum UITestNavigation {
         app.terminate()
         app.launchArguments = (textSize?.launchArguments ?? []) + [resetSignalFlag]
         app.launch()
-        XCTAssertTrue(tab("Today", in: app).waitForExistence(timeout: 90), "The tab bar never appeared", file: file, line: line)
+        XCTAssertTrue(appears(tab("Today", in: app), within: 90), "The tab bar never appeared", file: file, line: line)
     }
 
     /// What the DEBUG app reports about its store on this launch: "fresh",
     /// or "not fresh: " and the reason.
     static func storeFreshness(in app: XCUIApplication) -> String {
         let signal = app.otherElements["debug.resetSignal"]
-        guard signal.waitForExistence(timeout: 10) else {
+        guard appears(signal, within: 10) else {
             return "not fresh: the app shows no reset signal, so the launch lost its arguments or is not a DEBUG build"
         }
         return signal.value as? String ?? "not fresh: the reset signal has no value"
@@ -121,18 +121,17 @@ enum UITestNavigation {
     /// Taps a tab in the BRU tab bar and waits until it is the selected one.
     static func selectTab(_ name: String, in app: XCUIApplication) {
         let cell = tab(name, in: app)
-        XCTAssertTrue(cell.waitForExistence(timeout: 90), "Missing tab: \(name)")
+        XCTAssertTrue(appears(cell, within: 90), "Missing tab: \(name)")
         cell.tap()
-        let selected = XCTNSPredicateExpectation(predicate: NSPredicate(format: "isSelected == true"), object: cell)
-        XCTAssertEqual(XCTWaiter().wait(for: [selected], timeout: 5), .completed, "Tab not selected: \(name)")
+        XCTAssertTrue(waitUntil(timeout: 5) { cell.isSelected }, "Tab not selected: \(name)")
     }
 
     static func openSettings(in app: XCUIApplication) {
         selectTab("Today", in: app)
         let settings = app.buttons["Settings"]
-        XCTAssertTrue(settings.waitForExistence(timeout: 10))
+        XCTAssertTrue(appears(settings))
         settings.tap()
-        XCTAssertTrue(app.buttons["Close"].waitForExistence(timeout: 10))
+        XCTAssertTrue(appears(app.buttons["Close"]))
         XCTAssertTrue(app.staticTexts.matching(NSPredicate(
             format: "label ==[c] %@", "Settings"
         )).firstMatch.exists)
@@ -582,6 +581,22 @@ extension UITestNavigation {
             Thread.sleep(forTimeInterval: 0.1)
         }
         return true
+    }
+
+    /// True when `element` is there now or appears within `timeout`, a
+    /// ceiling. It reads `exists` at once, then every 100 ms: a satisfied
+    /// `waitForExistence` still costs about a second before its first
+    /// check (guide 2.6 and 3.1).
+    @discardableResult
+    static func appears(_ element: XCUIElement, within timeout: TimeInterval = 10) -> Bool {
+        waitUntil(timeout: timeout) { element.exists }
+    }
+
+    /// True when `element` is gone now or leaves within `timeout`, a
+    /// ceiling, read the same way.
+    @discardableResult
+    static func disappears(_ element: XCUIElement, within timeout: TimeInterval = 10) -> Bool {
+        waitUntil(timeout: timeout) { !element.exists }
     }
 
     /// Types `text` once the field has keyboard focus, because `typeText`

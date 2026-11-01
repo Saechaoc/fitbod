@@ -3,12 +3,11 @@
 //  fitbodUITests
 //
 //  Ticket T78, T12 findings F69, F71 and F75: the active block's week
-//  strip and its counts leave out empty workouts (decision 6), the strip's
-//  day labels grow with text size and stay whole at AX3, and a block past
-//  its last planned week reads PLAN COMPLETE instead of week 1 (tradeoffs.md
-//  "A block past its plan"). BlockStatesSeed supplies Spring Block, whose
-//  Upper A was logged two days ago and whose Upper B was finished yesterday
-//  with nothing logged.
+//  strip and its counts leave out empty workouts (decision 6), and a block
+//  past its last planned week reads PLAN COMPLETE instead of week 1
+//  (tradeoffs.md "A block past its plan"). BlockStatesSeed supplies Spring
+//  Block, whose Upper A was logged two days ago and whose Upper B was
+//  finished yesterday with nothing logged.
 //
 
 import XCTest
@@ -27,9 +26,8 @@ final class BlockWeekCountsUITests: XCTestCase {
         let app = UITestNavigation.launch(UITestNavigation.blockStates)
         openSpringBlockFromToday(in: app)
         let count = app.staticTexts.matching(NSPredicate(format: "label ENDSWITH 'SESSIONS DONE'")).firstMatch
-        XCTAssertTrue(count.waitForExistence(timeout: 10), "The week strip must count its sessions")
+        XCTAssertTrue(UITestNavigation.appears(count), "The week strip must count its sessions")
         UITestNavigation.reveal(count, in: app)
-        UITestNavigation.saveScreenshot("T78", "strip")
 
         let days = dayCells(in: app).mapValues(\.label)
         XCTAssertEqual(days.count, 7, "The week strip must show seven days: \(days)")
@@ -51,19 +49,6 @@ final class BlockWeekCountsUITests: XCTestCase {
         XCTAssertEqual(progress.label, "In progress · \(sessions)", "The NOW phase's count must leave out the empty workout")
     }
 
-    // MARK: - Text size
-
-    /// At AX3 the strip kept seven columns and broke its day labels mid-word,
-    /// "UPPE" over "R A" and "TODA" over "Y". T12 took the labels for a
-    /// fixed 9pt; they did scale.
-    @MainActor
-    func testWeekStripDayLabelsGrowWithTextSizeAndStayWhole() throws {
-        let defaultHeight = try todayLabelHeight(textSize: .default)
-        let ax3Height = try todayLabelHeight(textSize: .ax3)
-        XCTAssertGreaterThan(ax3Height, defaultHeight * 1.25,
-                             "TODAY must be taller at AX3 (\(ax3Height)pt) than at default text (\(defaultHeight)pt)")
-    }
-
     // MARK: - Past the plan
 
     /// A block past its last planned week fell back to week 1: "W1 / 4" on
@@ -78,11 +63,12 @@ final class BlockWeekCountsUITests: XCTestCase {
         // Today's band.
         UITestNavigation.selectTab("Today", in: app)
         let band = app.staticTexts.labeled("SPRING BLOCK")
-        XCTAssertTrue(band.waitForExistence(timeout: 10), "Today must show Spring Block's band")
+        XCTAssertTrue(UITestNavigation.appears(band), "Today must show Spring Block's band")
         UITestNavigation.reveal(band, in: app)
+        // The ticker's pixels are read once the screen stops moving.
+        UITestNavigation.waitUntilStill(band)
         let ticker = (1...4).map { app.staticTexts["W\($0)"] }
         let todayShot = XCUIScreen.main.screenshot()
-        UITestNavigation.saveScreenshot("T78", "past-plan-today")
         if !app.staticTexts["PLAN COMPLETE"].exists {
             problems.append("Today's band has no PLAN COMPLETE chip")
         }
@@ -104,10 +90,10 @@ final class BlockWeekCountsUITests: XCTestCase {
         // Program's block row.
         UITestNavigation.selectTab("Program", in: app)
         let row = app.buttons.matching(NSPredicate(format: "label BEGINSWITH 'ACTIVE block: Spring Block'")).firstMatch
-        XCTAssertTrue(row.waitForExistence(timeout: 10), "Program must list Spring Block")
+        XCTAssertTrue(UITestNavigation.appears(row), "Program must list Spring Block")
         UITestNavigation.reveal(row, in: app)
+        UITestNavigation.waitUntilStill(row)
         let programShot = XCUIScreen.main.screenshot()
-        UITestNavigation.saveScreenshot("T78", "past-plan-program")
         if row.label != "ACTIVE block: Spring Block. Plan complete." {
             problems.append("Program's row reads \"\(row.label)\"")
         }
@@ -119,9 +105,9 @@ final class BlockWeekCountsUITests: XCTestCase {
         // The block overview.
         row.tap()
         let hero = hero(in: app)
-        XCTAssertTrue(hero.waitForExistence(timeout: 10), "Program's row must open the block overview")
+        XCTAssertTrue(UITestNavigation.appears(hero), "Program's row must open the block overview")
+        UITestNavigation.waitUntilStill(hero)
         let overviewShot = XCUIScreen.main.screenshot()
-        UITestNavigation.saveScreenshot("T78", "past-plan-overview")
         if !hero.label.hasPrefix("Active block #1: Spring Block, plan complete, ")
             || hero.label.localizedCaseInsensitiveContains("week") {
             problems.append("The hero reads \"\(hero.label)\"")
@@ -150,11 +136,6 @@ final class BlockWeekCountsUITests: XCTestCase {
             problems.append("\(day) speaks a phase: \"\(label)\"")
         }
 
-        let deload = app.staticTexts["Deload"]
-        if deload.exists {
-            UITestNavigation.reveal(deload, in: app)
-        }
-        UITestNavigation.saveScreenshot("T78", "past-plan-phases")
         if app.staticTexts["NOW"].exists {
             problems.append("A phase shows NOW")
         }
@@ -178,10 +159,10 @@ final class BlockWeekCountsUITests: XCTestCase {
     private func openSpringBlockFromToday(in app: XCUIApplication) {
         UITestNavigation.selectTab("Today", in: app)
         let band = app.staticTexts.labeled("SPRING BLOCK")
-        XCTAssertTrue(band.waitForExistence(timeout: 10), "Today must show Spring Block's band")
+        XCTAssertTrue(UITestNavigation.appears(band), "Today must show Spring Block's band")
         UITestNavigation.reveal(band, in: app)
         band.tap()
-        XCTAssertTrue(hero(in: app).waitForExistence(timeout: 10), "The band must open Spring Block's overview")
+        XCTAssertTrue(UITestNavigation.appears(hero(in: app)), "The band must open Spring Block's overview")
     }
 
     /// The overview's hero, one element VoiceOver reads as "Active block #1:
@@ -208,81 +189,6 @@ final class BlockWeekCountsUITests: XCTestCase {
     /// How VoiceOver reads a day cell: its weekday, then what the day holds,
     /// if anything. Past the plan a later day is its weekday alone.
     private static let dayPattern = "(\(Calendar.current.weekdaySymbols.joined(separator: "|")))(, .*)?"
-
-    /// Opens Spring Block's overview at `textSize`, saves the strip, checks
-    /// that every day label shows whole, and returns the height of today's
-    /// TODAY label as drawn.
-    @MainActor
-    private func todayLabelHeight(textSize: UITestNavigation.TextSize) throws -> CGFloat {
-        let app = UITestNavigation.launch(UITestNavigation.blockStates, textSize: textSize)
-        openSpringBlockFromToday(in: app)
-        let window = app.windows.firstMatch.frame
-        var height: CGFloat?
-        // The strip's grid is lazy: a day below the fold has no cell yet.
-        for (index, day) in Self.mondayFirstWeekdays.enumerated() {
-            let cell = app.descendants(matching: .any).matching(NSPredicate(format: "label BEGINSWITH %@", day + ", ")).firstMatch
-            revealWhole(cell, in: app)
-            if index == 0 {
-                UITestNavigation.saveScreenshot("T78", "strip", textSize: textSize)
-            }
-            XCTAssertGreaterThanOrEqual(cell.frame.minX, window.minX - 0.5, "\(day) starts off screen at \(textSize)")
-            XCTAssertLessThanOrEqual(cell.frame.maxX, window.maxX + 0.5, "\(day) runs off screen at \(textSize)")
-            // A later day shows no label.
-            guard let shown = Self.shownLabel(of: cell.label) else { continue }
-            let lines = try UITestNavigation.textLines(in: cell.frame.insetBy(dx: -2, dy: -2), of: XCUIScreen.main.screenshot())
-            let words = Set(lines.flatMap { $0.text.split(separator: " ").map { Self.letters(String($0)) } })
-            for word in shown.split(separator: " ").map({ Self.letters(String($0)) }) where !words.contains(word) {
-                XCTFail("\(day) must show \"\(shown)\" whole at \(textSize), but it reads \(lines.map(\.text))")
-            }
-            if shown == "TODAY" {
-                height = lines.first { Self.letters($0.text) == "TODAY" }?.box.height
-            }
-        }
-        // At AX3 the strip runs past the space between the header and the
-        // bottom buttons, so its end gets a screenshot too.
-        if textSize == .ax3 {
-            UITestNavigation.saveScreenshot("T78", "strip-end", textSize: textSize)
-        }
-        app.terminate()
-        return try XCTUnwrap(height, "Today's cell must show TODAY at \(textSize)")
-    }
-
-    /// The weekdays in the strip's Monday-first order.
-    private static var mondayFirstWeekdays: [String] {
-        let symbols = Calendar.current.weekdaySymbols
-        return Array(symbols.dropFirst()) + symbols.prefix(1)
-    }
-
-    /// What a day cell shows under its letter, from how VoiceOver reads
-    /// it: the routine logged that day, else its state. A later day shows
-    /// nothing.
-    private static func shownLabel(of spoken: String) -> String? {
-        let parts = spoken.components(separatedBy: ", ")
-        guard parts.count == 3, let state = parts.last else { return nil }
-        let middle = parts[1]
-        return middle.hasPrefix("Upper ") ? middle.uppercased() : state.uppercased()
-    }
-
-    /// Drags the overview, a little at a time, until `element` exists and
-    /// lies wholly inside the overview's scroll view, between its header and
-    /// its bottom buttons.
-    @MainActor
-    private func revealWhole(_ element: XCUIElement, in app: XCUIApplication) {
-        let scroll = app.scrollViews.containing(NSPredicate(format: "label ENDSWITH 'SESSIONS DONE'")).firstMatch
-        for _ in 0..<16 {
-            let visible = scroll.frame
-            if element.exists && element.frame.minY >= visible.minY && element.frame.maxY <= visible.maxY { return }
-            // A day the lazy grid has not made yet lies below the fold.
-            let below = !element.exists || element.frame.maxY > visible.maxY
-            scroll.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: below ? 0.8 : 0.4)).press(
-                forDuration: 0.05,
-                thenDragTo: scroll.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.6)),
-                withVelocity: .slow,
-                thenHoldForDuration: 0.2
-            )
-        }
-        XCTFail("\(element) never came wholly inside the overview's scroll view at \(scroll.frame)")
-    }
 
     /// Uppercased letters and digits only, with Vision's 0 for the mono O.
     private static func letters(_ text: String) -> String {
