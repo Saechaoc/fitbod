@@ -187,6 +187,14 @@ Product decisions are in [decisions.md](decisions.md), and they win over this fi
 - Rejected: deleting an untouched "Untitled routine" when the user leaves, because the heuristic is fragile and the empty routine still flashes in lists.
 - Rejected: building the full inline creator now, because it is a large new design surface.
 
+### Live-edit banner at accessibility sizes
+
+- Coordinator answer, 2026-11-01 (T108 question `msg_0b3965eb83cb`, decided under autopilot; the user can revisit it): at accessibility sizes, the routine screen's "ACTIVE BLOCK" live-edit banner scrolls with the page after the session list, so the first session row shows when the screen opens.
+  At default text it stays fixed above the scroll view, as before.
+- Why: at AX3 on the small phone the banner is about 179pt and a session row about 194pt, and any place above the first row pushes that row under the tab bar (T108's measurement).
+  Each session's editor still shows its own banner under its header, so editing a session shows the warning first.
+- Rejected: shortening the banner at accessibility sizes, because T108 keeps its text and colors.
+
 ## Gestures and sheets
 
 ### Dirty editors and swipe-down
