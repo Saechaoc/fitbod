@@ -83,3 +83,4 @@ If one of them passes today, say so in `notes.md`.
 - The session editor is `RoutineBuilderView`, which holds `PrescriptionEditorRow`; T110 removed its per-set overrides.
 - SwiftUI's `TextField` accepts a text selection binding on iOS 18 and later.
 - `MilestoneOneJourneyUITests.swift` has a private `replace(_:with:)` helper near line 379.
+- `UITestNavigation.textLines` (and so `readText`) uses Vision's `.accurate` level, which on the simulator dropped whole words from a 390 x 60pt crop in T35's runs; say in its comment that callers read narrow, single-line crops (finding F282).
