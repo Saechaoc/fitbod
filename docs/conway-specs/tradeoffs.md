@@ -309,6 +309,14 @@ Product decisions are in [decisions.md](decisions.md), and they win over this fi
 - Coordinator call, 2026-11-01 (T106 finding F319, decided under autopilot; the user can revisit it): a PR row opens the summary of the workout it was set in, the screen a History row opens, instead of the v1 "Session of <date>" stub with no ‹ BACK (T136).
 - Open for the user: nothing opens an exercise's own PR list, `ExercisePRsView(.forExercise)` through `ExerciseProgressRoute.prs` (finding F318); it stays in the code until the user says whether the exercise screen should link to it or the scope should go.
 
+### Exercise history's TOP set
+
+- Coordinator answer, 2026-11-01 (T116 question `msg_be7854b10128`, option A): a history row's TOP line names the set with the highest e1RM by the row's own formula, the set its e1RM label comes from, and an earlier set wins a tie.
+  When no set has an e1RM above zero, TOP keeps the most-volume rule.
+  The count line and "Workouts · 30d" count exactly the workouts the list shows.
+- Open for the user (finding F332): the history row computes e1RM as weight × (1 + (reps + 10 − RPE) / 30), RPE 8 when blank, while the progress chart, the plateau check and PR detection use `OneRepMaxEstimator`.
+  So one set can show two different e1RMs on two screens; nothing changes until the user picks one formula.
+
 ### Progress chart lines
 
 - Coordinator call, 2026-11-01 (T98 finding F297, decided under autopilot; the user can revisit it): on VOLUME and AVG RPE, every intent the chart draws gets its own line style and a legend key, as "POWER · 1 SESSION".
