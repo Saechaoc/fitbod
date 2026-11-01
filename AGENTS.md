@@ -1,3 +1,8 @@
+# Fitbod agent notes
+
+Fitbod is a prototype: learn fast, scale effort to the change, never skip data integrity, correctness, privacy or security.
+Read `docs/DEVELOPMENT.md` for what can wait and when it comes back, and `CLAUDE.md` for the stack and conventions.
+
 <!-- gitnexus:start -->
 # GitNexus — Code Intelligence
 

@@ -7,8 +7,9 @@ for decisions and open flags.
 ## Finish the current milestone first
 
 The latest complete suite has four UI failures. Prepared interaction fixes need
-a rerun, followed by the full authored journey on both required phones at AX3,
-the final full suite, staged GitNexus checks, grouped commits and main push.
+a rerun, the full suite on one phone, staged GitNexus checks, grouped commits
+and main push. The full authored journey on both phones at AX3 moved to
+[release readiness](DEVELOPMENT.md#release-readiness) on 2026-11-01.
 The current sandbox blocks the required simulator and repository operations;
 see [verification](VERIFICATION.md). Items below remain future work, not reasons
 to mark those acceptance checks complete.
@@ -25,9 +26,11 @@ to mark those acceptance checks complete.
 | P3 | Portable backup and restore confidence | CSV/JSON export and local backup UI exist. | Restore a real populated backup on a second installation, compare entities and history, recover interrupted operations and expose last-backup metadata. |
 | P3 | Optional sync | No backend, accounts or cloud storage in milestone 1. | Define ownership/conflict rules, schema evolution and snapshot immutability; prove edits and deletions converge after offline changes on two devices without losing sets. Keep local use independent of connectivity. |
 
-Accessibility remains part of each feature's acceptance: small and large phone,
-larger text, light/dark contrast, VoiceOver and Reduce Motion. Preserve the small
-design system; add a component only when multiple real screens need it.
+Each feature keeps the accessibility foundations in
+[the development guide](DEVELOPMENT.md#never-deferred). The large phone, AX3,
+dark mode, VoiceOver and Reduce Motion join a workflow's acceptance once it is
+stable, and every workflow's at release readiness. Preserve the small design
+system; add a component only when multiple real screens need it.
 
 ## Decisions awaiting product direction
 

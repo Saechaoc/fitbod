@@ -2,6 +2,9 @@
 
 BRU is dense on purpose, so accessibility is built into the components rather than added per screen.
 
+While the app is a prototype, every change keeps the foundations: BRU components and type roles, token colors, word labels and 44pt targets in shared components.
+The per-screen rules below marked as the release bar (AX3 on every screen, VoiceOver traversal, physical-device checks) apply to a workflow once it is stable and to the whole app at release readiness; see [the development guide](../DEVELOPMENT.md).
+
 ## Dynamic Type
 
 - Every type role scales with Dynamic Type (see [typography.md](typography.md)).
@@ -13,7 +16,7 @@ BRU is dense on purpose, so accessibility is built into the components rather th
   Headers put their title above the action row; tabs use two columns and
   Today statistics stack vertically at accessibility sizes.
 - Hero numbers scale down inside fixed widths with `.minimumScaleFactor`, never below half size.
-- Every screen must work from the default size up to `accessibility3` at 390pt width, with no clipped or overlapping text.
+- Release bar: every screen works from the default size up to `accessibility3` at 390pt width, with no clipped or overlapping text.
 
 ## VoiceOver
 

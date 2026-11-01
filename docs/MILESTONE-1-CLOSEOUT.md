@@ -10,6 +10,9 @@ counts, screenshots, reproduction commands and environment failures.
 
 ## Work still required to close this milestone
 
+Since 2026-11-01, item 2 belongs to release readiness, not to this milestone;
+see [the development guide](DEVELOPMENT.md#release-readiness).
+
 1. Rerun the numeric replacement, workout menu and weight explanation fixes,
    then the complete unit/UI suite.
 2. Pass the full authored journey on both 17e and 17 Pro Max at AX3; the 17e

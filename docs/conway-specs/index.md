@@ -4,6 +4,9 @@ Milestone 1 of Fitbod still has 47 open review defects and one new finding, and 
 This bundle turns the approved plan (`.planning/noble-wishing-conway.md`) into 48 code-free tickets.
 A coordinator runs them on up to three Orca workers at once, each ticket in its own git worktree, and merges each ticket into `main` after review.
 
+Stage note, 2026-11-01: the app is a prototype, so [the development guide](../DEVELOPMENT.md#deferred-work) defers the accessibility, polish and verification tickets until their workflow is stable or the app reaches release readiness.
+Dispatch the data, correctness and test-speed tickets it lists first.
+
 Status: ready to dispatch once every precondition in [dispatch.md](dispatch.md) holds.
 Nothing from this bundle has been dispatched.
 The quick-task run of the same plan must finish its last two tasks first, so read "Another session runs the same plan" in [risks.md](risks.md) first.

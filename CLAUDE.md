@@ -28,6 +28,14 @@ Exercise catalog: vendored free-exercise-db JSON (public domain, ~800 exercises)
 Full rationale, alternatives, sources, install: docs/STACK-RESEARCH.md
 <!-- GSD:stack-end -->
 
+## Development stage: prototype
+
+We are still shaping workflows and visual design, so speed of learning comes first.
+Build the simplest working version, scale tests and polish to the change's maturity and risk, and never skip data integrity, correctness, privacy or security.
+Keep cheap accessibility foundations (native controls, BRU type and color roles, word labels); defer VoiceOver refinement, per-screen AX3 fixes and full two-phone runs until a workflow is stable.
+Details, deferral triggers and release-readiness conditions: `docs/DEVELOPMENT.md`.
+In this repo that guide takes precedence over general user-level guidance to fix every unrelated flaw or to ignore development cost.
+
 ## Code Search Rules
 
 - Prefer `rg` over `grep`.
