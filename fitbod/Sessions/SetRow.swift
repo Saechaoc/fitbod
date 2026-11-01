@@ -40,8 +40,6 @@ public struct SetRow: View {
     /// Phase 3 (plan 03-08): the full PrescriptionExplanation recomputed by
     /// SessionExerciseCard.currentExplanation().
     public let explanation: PrescriptionExplanation?
-    /// Phase 3 (plan 03-08): single-disclosure-at-a-time coordination.
-    @Binding public var expandedPlateSetID: UUID?
     public let onCommit: () -> Void
     public let onTapEmptyCell: () -> Void
     /// Tap on a completed checkmark: un-complete the set.
@@ -53,6 +51,9 @@ public struct SetRow: View {
     @State private var presentingSetNote: Bool = false
     /// The WHY control opens Why-this-weight; the weight cell presents it.
     @State private var explainingWeight: Bool = false
+    /// While the weight field has focus, the weight it holds; the set's
+    /// plates show under the row for it.
+    @State private var enteredWeight: Double?
     @FocusState private var repsFocused: Bool
 
     @Query private var inventories: [PlateInventory]
@@ -69,7 +70,6 @@ public struct SetRow: View {
         sessionExercise: SessionExercise,
         prescribed: Double? = nil,
         explanation: PrescriptionExplanation? = nil,
-        expandedPlateSetID: Binding<UUID?> = .constant(nil),
         onCommit: @escaping () -> Void,
         onTapEmptyCell: @escaping () -> Void,
         onUncomplete: @escaping () -> Void = {},
@@ -79,7 +79,6 @@ public struct SetRow: View {
         self.sessionExercise = sessionExercise
         self.prescribed = prescribed
         self.explanation = explanation
-        self._expandedPlateSetID = expandedPlateSetID
         self.onCommit = onCommit
         self.onTapEmptyCell = onTapEmptyCell
         self.onUncomplete = onUncomplete
@@ -132,7 +131,7 @@ public struct SetRow: View {
                     }
 
                     // Weight cell — PrescriptionWeightCell handles prescribed/range/override display.
-                    // Tap on cell area (not info icon) toggles plate stack disclosure.
+                    // While its field has focus, the set's plates show under the row.
                     PrescriptionWeightCell(
                         weight: $entry.weight,
                         prescribed: prescribed,
@@ -149,14 +148,10 @@ public struct SetRow: View {
                         isComplete: entry.isComplete,
                         onTapEmptyCell: onTapEmptyCell,
                         onEditCommitted: onEditCommitted,
-                        isExplaining: $explainingWeight
+                        isExplaining: $explainingWeight,
+                        enteredWeight: $enteredWeight
                     )
                     .frame(width: dynamicTypeSize.isAccessibilitySize ? nil : 60)
-                    .contentShape(Rectangle())
-                    .onTapGesture {
-                        togglePlateDisclosure()
-                        if !entry.isComplete { onTapEmptyCell() }
-                    }
                     .accessibilityIdentifier("set.weight.\(identifierSuffix)")
                     // Completed set: weight/reps numerics turn bruSignal per UI-SPEC line 241
                     .foregroundStyle(entry.isComplete ? Color.bruSignalText : Color.bruInk)
@@ -275,23 +270,25 @@ public struct SetRow: View {
             .padding(.vertical, 12)                                              // UI-SPEC md
 
             // MARK: PlateStackDisclosure (Phase 3 plan 03-08)
-            if expandedPlateSetID == entry.id {
-                let ekind = SessionFactory.equipmentKind(
-                    for: sessionExercise.exercise?.equipment ?? .other
+            // While the weight field has focus, the set's plates for the
+            // weight in it (ticket T125). VoiceOver reads them as one
+            // element, the way it reads a warm-up row's plates.
+            if let enteredWeight, let inventory = plateInventory {
+                PlateStackDisclosure(
+                    targetWeight: enteredWeight,
+                    barWeight: sessionExercise.exercise?.barWeightOverride ?? inventory.barWeight,
+                    plates: inventory.availablePlates,
+                    unitLabel: unit.rawValue
                 )
-                if let inv = inventories.first(where: { $0.equipmentKind == ekind }) {
-                    let targetWeight = entry.weight > 0
-                        ? entry.weight
-                        : (prescribed ?? 0)
-                    let barW = sessionExercise.exercise?.barWeightOverride ?? inv.barWeight
-                    PlateStackDisclosure(
-                        targetWeight: targetWeight,
-                        barWeight: barW,
-                        plates: inv.availablePlates,
-                        unitLabel: unit.rawValue
-                    )
-                    .padding(.vertical, 8)
-                }
+                .padding(.vertical, 8)
+                .accessibilityElement(children: .combine)
+                .accessibilityIdentifier("set.plates.\(identifierSuffix)")
+            }
+        }
+        // While the plates show, the row scrolls clear of the keyboard.
+        .background {
+            if enteredWeight != nil, plateInventory != nil {
+                RevealAboveKeyboard()
             }
         }
         .onAppear {
@@ -358,12 +355,61 @@ public struct SetRow: View {
         )
     }
 
-    /// Toggles the plate-stack disclosure for this row.
-    private func togglePlateDisclosure() {
-        if expandedPlateSetID == entry.id {
-            expandedPlateSetID = nil
-        } else {
-            expandedPlateSetID = entry.id
+    /// The plate inventory the set loads, or nil for an exercise that loads
+    /// no plates. Only barbell and dumbbell exercises have one of their
+    /// own: SessionFactory.equipmentKind gives every other kind, such as a
+    /// cable or a machine, the barbell's.
+    private var plateInventory: PlateInventory? {
+        guard let equipment = sessionExercise.exercise?.equipment,
+              equipment == .barbell || equipment == .dumbbell else { return nil }
+        let kind = SessionFactory.equipmentKind(for: equipment)
+        return inventories.first { $0.equipmentKind == kind }
+    }
+}
+
+// MARK: - Plates above the keyboard
+
+/// Scrolls the logger so the set row it backs, with its plates, shows above
+/// the keyboard. The list scrolls a focused field only just clear of the
+/// keyboard, which leaves the plates under the field behind it.
+private struct RevealAboveKeyboard: UIViewRepresentable {
+    func makeUIView(context: Context) -> Reveal {
+        let view = Reveal()
+        view.isUserInteractionEnabled = false
+        return view
+    }
+
+    func updateUIView(_ uiView: Reveal, context: Context) {}
+
+    final class Reveal: UIView {
+        /// Room under the row for the keyboard's DONE bar, which floats over
+        /// the list above the keyboard's own inset.
+        private static let doneBarClearance: CGFloat = 56
+
+        override func didMoveToWindow() {
+            super.didMoveToWindow()
+            NotificationCenter.default.removeObserver(self)
+            guard window != nil else { return }
+            // The keyboard's inset is in place once it has shown.
+            NotificationCenter.default.addObserver(
+                self, selector: #selector(reveal),
+                name: UIResponder.keyboardDidShowNotification, object: nil
+            )
+            // A keyboard already up, as when focus moves from another field.
+            perform(#selector(reveal), with: nil, afterDelay: 0)
+        }
+
+        @objc private func reveal() {
+            let scrollView = sequence(first: self as UIView, next: \.superview)
+                .lazy.compactMap { $0 as? UIScrollView }.first
+            guard let scrollView, window != nil, !bounds.isEmpty else { return }
+            var rect = convert(bounds, to: scrollView)
+            rect.size.height += Self.doneBarClearance
+            // A row taller than the space above the keyboard, at accessibility
+            // text sizes, keeps its top, where its fields are, in view.
+            let visible = scrollView.bounds.inset(by: scrollView.adjustedContentInset)
+            rect.size.height = min(rect.height, visible.height)
+            scrollView.scrollRectToVisible(rect, animated: true)
         }
     }
 }

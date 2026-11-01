@@ -34,6 +34,8 @@
 //    ends editing, so the keyboard never covers the sheet. Use writes the
 //    suggested weight into the set and clears the badge; Override closes the
 //    sheet and focuses the weight field.
+//    While the field has focus, the cell reports the weight it holds, and
+//    SetRow shows the set's plates for it (ticket T125).
 //
 //  The 44pt touch target is preserved via the cell's vertical padding (12pt) +
 //  TextField height.
@@ -67,6 +69,9 @@ public struct PrescriptionWeightCell: View {
     /// SetRow's WHY control opens Why-this-weight through this binding.
     /// Without one (previews), the cell keeps the state itself.
     private let isExplaining: Binding<Bool>?
+    /// SetRow shows the set's plates from this: while the weight field has
+    /// focus, the weight it holds (0 when it holds none); nil without focus.
+    private let enteredWeight: Binding<Double?>?
 
     @State private var weightText: String
     @State private var showWhySheet: Bool = false
@@ -90,7 +95,8 @@ public struct PrescriptionWeightCell: View {
         isComplete: Bool = false,
         onTapEmptyCell: @escaping () -> Void = {},
         onEditCommitted: @escaping () -> Void = {},
-        isExplaining: Binding<Bool>? = nil
+        isExplaining: Binding<Bool>? = nil,
+        enteredWeight: Binding<Double?>? = nil
     ) {
         self._weight = weight
         self.prescribed = prescribed
@@ -105,6 +111,7 @@ public struct PrescriptionWeightCell: View {
         self.onTapEmptyCell = onTapEmptyCell
         self.onEditCommitted = onEditCommitted
         self.isExplaining = isExplaining
+        self.enteredWeight = enteredWeight
         // The field's text starts as the set's weight; onAppear seeds a
         // prescription into an empty set.
         self._weightText = State(initialValue: Self.text(for: weight.wrappedValue))
@@ -215,6 +222,10 @@ public struct PrescriptionWeightCell: View {
                 weightText = Self.text(for: new)
             }
         }
+        // The set's plates follow the field while it has focus.
+        .onChange(of: weightInField) { _, entered in
+            enteredWeight?.wrappedValue = entered
+        }
         .onAppear {
             // Seed the text field from the prescribed weight or current weight.
             // With no prescription, a weight of 0 keeps the "—" placeholder.
@@ -243,6 +254,12 @@ public struct PrescriptionWeightCell: View {
     private var prescription: Double? {
         guard let prescribed, prescribed > 0 else { return nil }
         return prescribed
+    }
+
+    /// The weight in the field while it has focus: 0 when it holds no
+    /// number, such as when it is empty. Nil while it has no focus.
+    private var weightInField: Double? {
+        weightFocused ? Double(weightText) ?? 0 : nil
     }
 
     /// What the field shows, for VoiceOver: "100 lb", or "none" over the

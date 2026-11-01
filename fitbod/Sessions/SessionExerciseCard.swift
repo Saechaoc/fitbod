@@ -50,7 +50,6 @@ public struct SessionExerciseCard: View {
     // MARK: - Phase 3 state
 
     @State private var bannerDismissed: Bool = false
-    @State private var expandedPlateSetID: UUID? = nil
     @Query private var settingsList: [UserSettings]
     @Query private var inventories: [PlateInventory]
     @Environment(\.weightUnit) private var defaultUnit
@@ -270,7 +269,6 @@ public struct SessionExerciseCard: View {
                             sessionExercise: sessionExercise,
                             prescribed: sessionExercise.prescribedWeight,
                             explanation: explanation,
-                            expandedPlateSetID: $expandedPlateSetID,
                             onCommit: { onCommitSet(set) },
                             onTapEmptyCell: onTapEmptyCell,
                             onUncomplete: { onUncompleteSet(set) },
