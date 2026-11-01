@@ -67,7 +67,6 @@ Every Phase 2 ticket is done and archived.
 | [T121](tickets/T121-new-block-ui-tests-budgets.md) | New Block UI tests fit the test budgets |
 | [T123](tickets/T123-ui-runs-clear-rest-notifications.md) | A reset launch clears leftover rest notifications |
 | [T131](tickets/T131-editor-ui-tests-budgets.md) | The session editor's UI tests fit the test budgets |
-| [T133](tickets/T133-volume-target-tests-adjust-and-relaunch.md) | A volume target edit and a started block survive a relaunch |
 | [T134](tickets/T134-hosted-accessibility-tests-any-order.md) | Hosted accessibility tests pass in any order and on any phone |
 | [T135](tickets/T135-shared-ui-test-helpers.md) | UI suites share one copy of their helpers, and the swipe-back suite finds rows by name and fits its budgets |
 
