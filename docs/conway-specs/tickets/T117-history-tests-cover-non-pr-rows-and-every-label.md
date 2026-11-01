@@ -6,7 +6,7 @@ items: []
 depends_on: [T112]
 size: S
 sim: both
-owns: [fitbodUITests/ExerciseHistoryRowsUITests.swift, fitbod/App/ProgressHistorySeed.swift]
+owns: [fitbodUITests/ExerciseHistoryRowsUITests.swift, fitbod/App/ProgressHistorySeed.swift, fitbodTests/WorkoutSetsInOrderTests.swift]
 ---
 
 # T117: Exercise history's tests cover a row without a PR and every label
@@ -22,6 +22,7 @@ These are findings F-ext-5 and F-ext-6, which T112-ext's worker and the coordina
 - The word check covers only the STRENGTH chip and the "Sessions · 30d" label.
   The other intent chips, "Tonnage" and "PRs · 30d" are not checked.
 - The word check passes when any one of three OCR crops reads the word whole, which is lenient.
+- Since T116, `WorkoutSetsInOrderTests.historyTopSetTieGoesToEarlierLog`'s two sets, 100×5 @8 and 100×5 @9, no longer tie on the row's e1RM, so the test's name claims a tie it does not hold; `HistoryTopSetTests` now covers a true tie (finding F335, from T116's review).
 
 ## Target
 
@@ -35,6 +36,7 @@ These are findings F-ext-5 and F-ext-6, which T112-ext's worker and the coordina
 3. The word check covers every intent chip and every stat label, on both phones, at default text and at AX3.
 4. The word check fails when any crop shows a word broken over two lines, rather than passing when one crop reads it whole.
 5. The suite's wait for a hittable control polls in 50 to 100 ms steps, not 0.25 s, as `docs/test-performance-guide.md` section 2.6 says (finding F257).
+6. `historyTopSetTieGoesToEarlierLog` gets a fixture whose two sets tie on the row's e1RM, or a name that says what it checks.
 
 ## Constraints
 
