@@ -60,3 +60,4 @@ Ask before you edit anything else.
 
 - T105's per-case durations are under "Test performance" in the main checkout's `docs/conway-specs/evidence/T105/notes.md`, and its review's nice-to-have 2 describes the two scroll helpers.
 - `UITestNavigation.launch` waits for the tab bar, so a test that launches through it needs no splash wait.
+- The comment above `NewBlockLayoutUITests.presentedSheet` says `UITestNavigation.topSheet(in:)` misses half-height sheets; since T101 it finds them, so the helper can replace it (finding F268).

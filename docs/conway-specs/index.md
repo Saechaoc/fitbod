@@ -37,7 +37,6 @@ Every Phase 1 ticket is done and archived.
 
 | Ticket | Title |
 |---|---|
-| [T101](tickets/T101-ui-tests-idle-after-typing.md) | UI tests stop waiting a minute per step after typing |
 | [T110](tickets/T110-per-set-overrides-removed.md) | The session editor stops offering per-set overrides that the logger ignores |
 | [T115](tickets/T115-session-editor-ax3-scroll-hang.md) | The session editor scrolls at AX3 without hanging |
 
@@ -75,6 +74,7 @@ Every Phase 1 ticket is done and archived.
 | [T117](tickets/T117-history-tests-cover-non-pr-rows-and-every-label.md) | Exercise history's tests cover a row without a PR and every label |
 | [T119](tickets/T119-progress-ui-tests-budgets.md) | Progress UI tests fit the test budgets |
 | [T121](tickets/T121-new-block-ui-tests-budgets.md) | New Block UI tests fit the test budgets |
+| [T123](tickets/T123-ui-runs-clear-rest-notifications.md) | UI test runs stay free of leftover rest notifications, and the journey suite reads cheaply |
 
 ### Phase 5: design refresh
 

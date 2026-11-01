@@ -20,6 +20,7 @@ T06 replaced the reps fields with steppers, but every other number field still w
 The UI tests did not catch item 5, because they clear a field before they type, which no user does.
 Some screens with number pads also have no DONE key, and a focused field can sit under the keyboard or a bottom bar.
 The shared `UITestNavigation.hittable` helper polls in 0.5 s steps, which `docs/test-performance-guide.md` section 2.6 says not to do (finding F247, from T104's worker).
+In the logger, a tap on an empty set's reps field while rest is running ends the rest but leaves the field without keyboard focus, so typing fails until a second tap (finding F264, from T101's worker).
 
 ## Target
 
@@ -38,6 +39,7 @@ The shared `UITestNavigation.hittable` helper polls in 0.5 s steps, which `docs/
 5. Move every UI test that enters a number onto the new helper.
    Remove a private typing helper once nothing uses it.
 6. `UITestNavigation.hittable` polls in 50 to 100 ms steps, with the same overall ceiling, and `waitUntilStill` checks the frame in steps that small while still requiring it to hold for its interval (findings F247 and F262).
+7. In the logger, one tap on an empty set's reps field while rest is running both ends the rest and gives the field keyboard focus, so the first digit typed lands.
 
 ## Constraints
 
