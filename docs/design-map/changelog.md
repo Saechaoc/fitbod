@@ -2,6 +2,11 @@
 
 Newest first: one entry for each stage of [plan.md](plan.md) up to S2, then one for each commit.
 
+## 2026-11-01: S4, Progress and Library screens
+
+- Wrote the 14 screen files of the Progress and Library tabs: Progress with its week, tonnage, record and comparison screens, the exercise progress chart, and the Library with the exercise detail, the exercise history and the New exercise sheets.
+  Each file covers every capture of its screen on both phones.
+
 ## 2026-11-01: S3, Program screens
 
 - Wrote the 20 screen files of the Program tab: Program and the archived routines, the routine and session editors with their sheets, New Block with its sheets, and the block overview.
