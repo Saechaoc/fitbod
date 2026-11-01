@@ -75,6 +75,13 @@ Product decisions are in [decisions.md](decisions.md), and they win over this fi
 - Rejected: real drag-to-reorder, because it is a new interaction and outside this milestone.
 - Why: "⋮⋮" looks like a drag handle, but it opens a menu.
 
+### Removing an exercise
+
+- Coordinator answer, 2026-11-01 (T111 question `msg_e7403f7b7da8`, decided under autopilot; the user can revisit it): an exercise's open editor shows a REMOVE control, which asks "Remove <name>?" with a destructive Remove and a plain "Keep exercise" before it removes.
+  The long-press menu's Remove keeps removing at once, as it does today; the ticket's claim that it asks was wrong.
+- Why: REMOVE is one visible tap near other controls, while the long-press menu already takes a hold and a second tap.
+- Rejected: REMOVE removing at once, which one stray tap would trigger.
+
 ## Workout logger
 
 ### Skip warm-ups done state
