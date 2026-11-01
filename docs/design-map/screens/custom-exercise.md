@@ -88,4 +88,5 @@ The weight boxes are 44 by 44 pt and read as percentages.
 
 ## Findings
 
-<!-- findings are linked after the audit -->
+- Minor: [D-50](../audit.md#d-50), [D-51](../audit.md#d-51), [D-52](../audit.md#d-52), [D-53](../audit.md#d-53).
+- Polish: [D-209](../audit.md#d-209), [D-210](../audit.md#d-210), [D-215](../audit.md#d-215).

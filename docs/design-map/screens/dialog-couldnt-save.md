@@ -60,4 +60,6 @@ Walk-only dialog, so no dark or AX3 capture exists.
 
 ## Findings
 
-<!-- findings are linked after the audit -->
+- Blocker: [D-01](../audit.md#d-01).
+- Major: [D-08](../audit.md#d-08).
+- Polish: [D-214](../audit.md#d-214), [D-216](../audit.md#d-216), [D-221](../audit.md#d-221).

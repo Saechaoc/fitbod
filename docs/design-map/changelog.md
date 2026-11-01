@@ -2,6 +2,21 @@
 
 Newest first: one entry for each stage of [plan.md](plan.md) up to S2, then one for each commit.
 
+## 2026-11-01: S7, audit
+
+- Wrote [audit.md](audit.md): 365 rows, of which 4 are `blocker`, 26 `major`, 158 `minor` and 177 `polish`.
+  They merge 419 findings from the screen writers, the workflow writers, the Pro Max reviewers and the tour.
+- Four agents merged the findings of one group of screens each, and a fifth read all of them, merged the problems that two groups shared, and wrote the 12 patterns.
+  A script then sorted and numbered the rows, so the order and the numbering stay consistent, as the plan asks.
+- As the conventions ask, a problem that an open ticket covers has no row of its own: 55 findings became 24 rows, one for each ticket.
+  The T40 row adds the one fact its ticket lacks: removing a session from a routine is not saved.
+  The failed saves that follow stay a row of their own, because T40 does not describe them.
+- SWAP ▸ on a ready block went from `major` to `minor`, in line with every other target under 44 pt.
+- Every screen and workflow file's Findings section now links its rows by severity.
+  A workflow links the rows its writer found and the rows its dead ends describe.
+- The rows cite 2x screenshots, tree lines and code lines.
+  No row cites a full-size crop, so `audit/evidence/` was not made.
+
 ## 2026-11-01: S6, missing screens and mock-ups
 
 - Wrote [missing-screens.md](missing-screens.md): 41 screens and states that the workflows need and the app lacks, of which 4 are `must`, 23 `should` and 14 `nice`.

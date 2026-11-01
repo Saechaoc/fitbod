@@ -65,4 +65,4 @@ Gaps:
 
 ## Findings
 
-<!-- findings are linked after the audit -->
+- Minor: [D-112](../audit.md#d-112).

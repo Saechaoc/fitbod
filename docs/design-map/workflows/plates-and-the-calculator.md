@@ -110,4 +110,6 @@ The calculator's target cannot be typed, so every path pays one tap per 5 lb bet
 
 ## Findings
 
-<!-- findings are linked after the audit -->
+- Major: [D-11](../audit.md#d-11), [D-12](../audit.md#d-12).
+- Minor: [D-114](../audit.md#d-114), [D-115](../audit.md#d-115), [D-121](../audit.md#d-121).
+- Polish: [D-189](../audit.md#d-189).

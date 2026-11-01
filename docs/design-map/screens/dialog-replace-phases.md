@@ -66,4 +66,4 @@ The buttons are 208 by 48 pt, and nothing is unlabelled.
 
 ## Findings
 
-<!-- findings are linked after the audit -->
+The audit has no row for this file.

@@ -54,4 +54,4 @@ From the code, the order is the title "Fatigue Signals", the DONE button, one ro
 
 ## Findings
 
-<!-- findings are linked after the audit -->
+- Polish: [D-251](../audit.md#d-251), [D-252](../audit.md#d-252).

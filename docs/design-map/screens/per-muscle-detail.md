@@ -66,4 +66,5 @@ Each exercise row is read as two loose texts.
 
 ## Findings
 
-<!-- findings are linked after the audit -->
+- Minor: [D-108](../audit.md#d-108), [D-109](../audit.md#d-109).
+- Polish: [D-289](../audit.md#d-289), [D-290](../audit.md#d-290), [D-291](../audit.md#d-291).

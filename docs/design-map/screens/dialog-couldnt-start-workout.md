@@ -64,4 +64,6 @@ VoiceOver reads the code type name aloud.
 
 ## Findings
 
-<!-- findings are linked after the audit -->
+- Blocker: [D-02](../audit.md#d-02).
+- Major: [D-08](../audit.md#d-08).
+- Polish: [D-217](../audit.md#d-217), [D-218](../audit.md#d-218).

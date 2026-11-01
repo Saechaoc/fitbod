@@ -78,4 +78,6 @@ The section heads are read as plain text, not headings.
 
 ## Findings
 
-<!-- findings are linked after the audit -->
+- Blocker: [D-03](../audit.md#d-03).
+- Minor: [D-144](../audit.md#d-144), [D-145](../audit.md#d-145), [D-146](../audit.md#d-146).
+- Polish: [D-326](../audit.md#d-326), [D-327](../audit.md#d-327), [D-328](../audit.md#d-328), [D-329](../audit.md#d-329).

@@ -49,4 +49,4 @@ From the code, VoiceOver would read one element, "Preparing library…", as a pr
 
 ## Findings
 
-<!-- findings are linked after the audit -->
+- Minor: [D-122](../audit.md#d-122).

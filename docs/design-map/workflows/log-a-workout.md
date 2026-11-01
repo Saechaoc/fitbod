@@ -139,4 +139,6 @@ At AX3 on the 17e not one whole set row fits between the header and the rest doc
 
 ## Findings
 
-<!-- findings are linked after the audit -->
+- Major: [D-11](../audit.md#d-11), [D-26](../audit.md#d-26).
+- Minor: [D-86](../audit.md#d-86), [D-91](../audit.md#d-91), [D-92](../audit.md#d-92), [D-93](../audit.md#d-93).
+- Polish: [D-223](../audit.md#d-223), [D-274](../audit.md#d-274).

@@ -76,4 +76,5 @@ Every target in the tree is at least 44 pt tall; the filter chips are 44 pt.
 
 ## Findings
 
-<!-- findings are linked after the audit -->
+- Minor: [D-65](../audit.md#d-65), [D-81](../audit.md#d-81), [D-82](../audit.md#d-82), [D-83](../audit.md#d-83).
+- Polish: [D-261](../audit.md#d-261), [D-262](../audit.md#d-262), [D-263](../audit.md#d-263), [D-264](../audit.md#d-264).

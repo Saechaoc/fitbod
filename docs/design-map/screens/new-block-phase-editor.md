@@ -71,4 +71,6 @@ The steppers are 32 by 30 pt at default text (T38), and Done answers taps only o
 
 ## Findings
 
-<!-- findings are linked after the audit -->
+- Major: [D-05](../audit.md#d-05).
+- Minor: [D-102](../audit.md#d-102), [D-103](../audit.md#d-103), [D-105](../audit.md#d-105).
+- Polish: [D-284](../audit.md#d-284).

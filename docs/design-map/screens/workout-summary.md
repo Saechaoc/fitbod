@@ -67,4 +67,6 @@ The "PR" badge before the records line is read as its own text.
 
 ## Findings
 
-<!-- findings are linked after the audit -->
+- Blocker: [D-04](../audit.md#d-04).
+- Minor: [D-188](../audit.md#d-188).
+- Polish: [D-363](../audit.md#d-363), [D-364](../audit.md#d-364), [D-365](../audit.md#d-365).

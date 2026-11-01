@@ -83,4 +83,5 @@ The two copy controls, "Copy" and "Copy as Custom Exercise", do the same thing.
 
 ## Findings
 
-<!-- findings are linked after the audit -->
+- Minor: [D-65](../audit.md#d-65), [D-66](../audit.md#d-66), [D-67](../audit.md#d-67), [D-68](../audit.md#d-68), [D-69](../audit.md#d-69), [D-70](../audit.md#d-70), [D-71](../audit.md#d-71).
+- Polish: [D-238](../audit.md#d-238), [D-239](../audit.md#d-239), [D-240](../audit.md#d-240), [D-241](../audit.md#d-241), [D-242](../audit.md#d-242), [D-243](../audit.md#d-243).

@@ -71,4 +71,6 @@ The tonnage chart has no summary label.
 
 ## Findings
 
-<!-- findings are linked after the audit -->
+- Blocker: [D-04](../audit.md#d-04).
+- Minor: [D-34](../audit.md#d-34), [D-81](../audit.md#d-81).
+- Polish: [D-256](../audit.md#d-256), [D-257](../audit.md#d-257), [D-258](../audit.md#d-258), [D-259](../audit.md#d-259), [D-260](../audit.md#d-260).

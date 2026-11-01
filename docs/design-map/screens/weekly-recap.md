@@ -75,4 +75,6 @@ The section heads are read as plain text, not headings.
 
 ## Findings
 
-<!-- findings are linked after the audit -->
+- Major: [D-27](../audit.md#d-27).
+- Minor: [D-34](../audit.md#d-34), [D-176](../audit.md#d-176), [D-177](../audit.md#d-177), [D-178](../audit.md#d-178), [D-179](../audit.md#d-179).
+- Polish: [D-354](../audit.md#d-354), [D-355](../audit.md#d-355), [D-356](../audit.md#d-356), [D-357](../audit.md#d-357), [D-358](../audit.md#d-358).

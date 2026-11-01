@@ -179,4 +179,5 @@ flowchart TD
 
 ## Findings
 
-<!-- findings are linked after the audit -->
+- Major: [D-05](../audit.md#d-05), [D-06](../audit.md#d-06), [D-19](../audit.md#d-19), [D-23](../audit.md#d-23), [D-25](../audit.md#d-25).
+- Minor: [D-34](../audit.md#d-34), [D-45](../audit.md#d-45), [D-47](../audit.md#d-47), [D-97](../audit.md#d-97), [D-162](../audit.md#d-162), [D-166](../audit.md#d-166).

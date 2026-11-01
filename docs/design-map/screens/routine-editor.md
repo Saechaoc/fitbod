@@ -84,4 +84,7 @@ Gaps:
 
 ## Findings
 
-<!-- findings are linked after the audit -->
+- Blocker: [D-01](../audit.md#d-01).
+- Major: [D-20](../audit.md#d-20).
+- Minor: [D-36](../audit.md#d-36), [D-136](../audit.md#d-136), [D-137](../audit.md#d-137), [D-138](../audit.md#d-138), [D-139](../audit.md#d-139).
+- Polish: [D-216](../audit.md#d-216), [D-315](../audit.md#d-315), [D-316](../audit.md#d-316), [D-317](../audit.md#d-317), [D-318](../audit.md#d-318).

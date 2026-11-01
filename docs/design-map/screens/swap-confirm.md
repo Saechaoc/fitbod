@@ -63,4 +63,6 @@ Unlike the End block alert, this is a custom sheet with two full-width buttons r
 
 ## Findings
 
-<!-- findings are linked after the audit -->
+- Major: [D-23](../audit.md#d-23).
+- Minor: [D-154](../audit.md#d-154), [D-155](../audit.md#d-155).
+- Polish: [D-336](../audit.md#d-336), [D-337](../audit.md#d-337), [D-338](../audit.md#d-338).

@@ -87,4 +87,6 @@ flowchart TD
 
 ## Findings
 
-<!-- findings are linked after the audit -->
+- Blocker: [D-04](../audit.md#d-04).
+- Minor: [D-188](../audit.md#d-188).
+- Polish: [D-247](../audit.md#d-247), [D-365](../audit.md#d-365).

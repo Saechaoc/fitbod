@@ -48,4 +48,4 @@ Walk-only dialog, so no dark or AX3 capture exists.
 
 ## Findings
 
-<!-- findings are linked after the audit -->
+- Minor: [D-60](../audit.md#d-60).

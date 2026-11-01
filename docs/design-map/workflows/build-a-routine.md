@@ -118,4 +118,6 @@ flowchart TD
 
 ## Findings
 
-<!-- findings are linked after the audit -->
+- Blocker: [D-01](../audit.md#d-01), [D-02](../audit.md#d-02).
+- Major: [D-20](../audit.md#d-20).
+- Minor: [D-54](../audit.md#d-54).

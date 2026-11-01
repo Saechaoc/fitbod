@@ -62,4 +62,5 @@ Gaps: the row is three loose texts and not a button, and the "›" glyph is read
 
 ## Findings
 
-<!-- findings are linked after the audit -->
+- Minor: [D-175](../audit.md#d-175).
+- Polish: [D-352](../audit.md#d-352), [D-353](../audit.md#d-353).

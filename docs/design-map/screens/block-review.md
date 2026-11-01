@@ -76,4 +76,6 @@ The back button is labelled "BACK" in capitals, unlike "Back" on every other scr
 
 ## Findings
 
-<!-- findings are linked after the audit -->
+- Major: [D-06](../audit.md#d-06).
+- Minor: [D-45](../audit.md#d-45), [D-46](../audit.md#d-46), [D-47](../audit.md#d-47).
+- Polish: [D-197](../audit.md#d-197), [D-198](../audit.md#d-198), [D-199](../audit.md#d-199), [D-200](../audit.md#d-200), [D-201](../audit.md#d-201), [D-202](../audit.md#d-202), [D-203](../audit.md#d-203).

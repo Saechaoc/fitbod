@@ -60,4 +60,5 @@ The session count is built as "\(count) sessions", so a routine with one session
 
 ## Findings
 
-<!-- findings are linked after the audit -->
+- Minor: [D-34](../audit.md#d-34), [D-149](../audit.md#d-149), [D-155](../audit.md#d-155).
+- Polish: [D-331](../audit.md#d-331), [D-332](../audit.md#d-332).

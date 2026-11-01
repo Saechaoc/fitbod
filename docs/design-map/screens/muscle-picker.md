@@ -61,4 +61,4 @@ Rows are 52 pt tall and full width; CANCEL is 44 pt tall.
 
 ## Findings
 
-<!-- findings are linked after the audit -->
+- Minor: [D-94](../audit.md#d-94).

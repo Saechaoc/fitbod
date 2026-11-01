@@ -62,4 +62,5 @@ The colour swatches are not read, which is right, since each row names its type.
 
 ## Findings
 
-<!-- findings are linked after the audit -->
+- Minor: [D-102](../audit.md#d-102).
+- Polish: [D-282](../audit.md#d-282), [D-283](../audit.md#d-283), [D-287](../audit.md#d-287).

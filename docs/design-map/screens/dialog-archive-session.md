@@ -53,4 +53,4 @@ Walk-only dialog, so no dark or AX3 capture exists.
 
 ## Findings
 
-<!-- findings are linked after the audit -->
+- Polish: [D-213](../audit.md#d-213), [D-227](../audit.md#d-227).

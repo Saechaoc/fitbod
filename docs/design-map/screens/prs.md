@@ -69,4 +69,5 @@ Gaps: "ALL TIME" is read like a header action but does nothing; the dates are 9 
 
 ## Findings
 
-<!-- findings are linked after the audit -->
+- Minor: [D-34](../audit.md#d-34), [D-133](../audit.md#d-133), [D-134](../audit.md#d-134), [D-135](../audit.md#d-135).
+- Polish: [D-312](../audit.md#d-312), [D-313](../audit.md#d-313), [D-314](../audit.md#d-314).

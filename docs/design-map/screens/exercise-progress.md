@@ -75,4 +75,5 @@ Gaps: "- 2 LB" is read as "minus 2 LB" with no word for what changed; the points
 
 ## Findings
 
-<!-- findings are linked after the audit -->
+- Minor: [D-34](../audit.md#d-34), [D-68](../audit.md#d-68), [D-74](../audit.md#d-74), [D-75](../audit.md#d-75), [D-76](../audit.md#d-76), [D-77](../audit.md#d-77), [D-78](../audit.md#d-78), [D-79](../audit.md#d-79), [D-80](../audit.md#d-80).
+- Polish: [D-249](../audit.md#d-249), [D-250](../audit.md#d-250).

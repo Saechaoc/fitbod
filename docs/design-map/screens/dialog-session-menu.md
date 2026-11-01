@@ -56,4 +56,6 @@ Dark mode and the Pro Max at default text change only colour and size: [dark](im
 
 ## Findings
 
-<!-- findings are linked after the audit -->
+- Major: [D-09](../audit.md#d-09).
+- Minor: [D-63](../audit.md#d-63).
+- Polish: [D-234](../audit.md#d-234).

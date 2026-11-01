@@ -78,4 +78,5 @@ All controls are at least 44 pt; the back button is exactly 44 by 44 pt.
 
 ## Findings
 
-<!-- findings are linked after the audit -->
+- Minor: [D-34](../audit.md#d-34), [D-68](../audit.md#d-68), [D-72](../audit.md#d-72), [D-73](../audit.md#d-73).
+- Polish: [D-244](../audit.md#d-244), [D-245](../audit.md#d-245), [D-246](../audit.md#d-246), [D-247](../audit.md#d-247), [D-248](../audit.md#d-248).

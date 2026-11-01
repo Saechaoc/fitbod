@@ -50,4 +50,4 @@ Walk-only dialog, so no dark or AX3 capture exists.
 
 ## Findings
 
-<!-- findings are linked after the audit -->
+The audit has no row for this file.

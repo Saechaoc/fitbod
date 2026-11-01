@@ -126,4 +126,5 @@ Going ‹ BACK to Today and tapping START ▸ on the picker row costs the same t
 
 ## Findings
 
-<!-- findings are linked after the audit -->
+- Major: [D-05](../audit.md#d-05), [D-24](../audit.md#d-24).
+- Minor: [D-92](../audit.md#d-92), [D-162](../audit.md#d-162).

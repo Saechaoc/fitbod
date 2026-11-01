@@ -64,4 +64,4 @@ Both buttons are 48 pt tall and 288 pt wide, and nothing is unlabelled.
 
 ## Findings
 
-<!-- findings are linked after the audit -->
+- Polish: [D-235](../audit.md#d-235), [D-236](../audit.md#d-236).

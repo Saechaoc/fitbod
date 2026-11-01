@@ -54,4 +54,5 @@ The words call a logged workout a session.
 
 ## Findings
 
-<!-- findings are linked after the audit -->
+- Major: [D-15](../audit.md#d-15).
+- Polish: [D-296](../audit.md#d-296).

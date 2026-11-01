@@ -66,4 +66,5 @@ The title is the only place that says "template"; the chip that opens the sheet 
 
 ## Findings
 
-<!-- findings are linked after the audit -->
+- Minor: [D-102](../audit.md#d-102), [D-150](../audit.md#d-150).
+- Polish: [D-286](../audit.md#d-286), [D-287](../audit.md#d-287).

@@ -66,4 +66,6 @@ Gaps: chips read "hidden" when not selected; the chips are 26.7 pt tall, under 4
 
 ## Findings
 
-<!-- findings are linked after the audit -->
+- Major: [D-28](../audit.md#d-28).
+- Minor: [D-175](../audit.md#d-175), [D-180](../audit.md#d-180), [D-181](../audit.md#d-181), [D-182](../audit.md#d-182), [D-183](../audit.md#d-183), [D-184](../audit.md#d-184), [D-185](../audit.md#d-185), [D-186](../audit.md#d-186).
+- Polish: [D-359](../audit.md#d-359).

@@ -140,4 +140,7 @@ A six-exercise session fully prescribed takes about 17 + 5 × 7 = 52 taps, becau
 
 ## Findings
 
-<!-- findings are linked after the audit -->
+- Blocker: [D-02](../audit.md#d-02).
+- Major: [D-17](../audit.md#d-17), [D-18](../audit.md#d-18).
+- Minor: [D-85](../audit.md#d-85), [D-140](../audit.md#d-140), [D-142](../audit.md#d-142).
+- Polish: [D-323](../audit.md#d-323).

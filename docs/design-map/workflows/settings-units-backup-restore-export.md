@@ -136,4 +136,5 @@ Saving to Files may add taps to pick a folder; the counts above save in the fold
 
 ## Findings
 
-<!-- findings are linked after the audit -->
+- Blocker: [D-03](../audit.md#d-03).
+- Minor: [D-60](../audit.md#d-60), [D-121](../audit.md#d-121), [D-145](../audit.md#d-145), [D-146](../audit.md#d-146).

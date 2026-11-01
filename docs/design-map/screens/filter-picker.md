@@ -68,4 +68,4 @@ Rows are 50 pt tall and full width; CLEAR and DONE are 44 pt tall.
 
 ## Findings
 
-<!-- findings are linked after the audit -->
+- Polish: [D-253](../audit.md#d-253), [D-254](../audit.md#d-254), [D-255](../audit.md#d-255).

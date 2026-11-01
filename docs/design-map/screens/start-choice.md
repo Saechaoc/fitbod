@@ -70,4 +70,6 @@ Gaps:
 
 ## Findings
 
-<!-- findings are linked after the audit -->
+- Major: [D-22](../audit.md#d-22).
+- Minor: [D-150](../audit.md#d-150), [D-151](../audit.md#d-151).
+- Polish: [D-333](../audit.md#d-333), [D-334](../audit.md#d-334).

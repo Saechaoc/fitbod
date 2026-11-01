@@ -76,4 +76,5 @@ The items are 200 by 44 pt.
 
 ## Findings
 
-<!-- findings are linked after the audit -->
+- Minor: [D-58](../audit.md#d-58).
+- Polish: [D-225](../audit.md#d-225), [D-226](../audit.md#d-226).

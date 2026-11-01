@@ -63,4 +63,6 @@ Gaps: each row is read as loose fragments with no word for which column a number
 
 ## Findings
 
-<!-- findings are linked after the audit -->
+- Major: [D-07](../audit.md#d-07).
+- Minor: [D-48](../audit.md#d-48), [D-49](../audit.md#d-49).
+- Polish: [D-204](../audit.md#d-204), [D-205](../audit.md#d-205), [D-206](../audit.md#d-206).

@@ -121,4 +121,6 @@ flowchart TD
 
 ## Findings
 
-<!-- findings are linked after the audit -->
+- Major: [D-06](../audit.md#d-06), [D-19](../audit.md#d-19), [D-24](../audit.md#d-24).
+- Minor: [D-86](../audit.md#d-86), [D-162](../audit.md#d-162), [D-163](../audit.md#d-163), [D-164](../audit.md#d-164), [D-165](../audit.md#d-165).
+- Polish: [D-236](../audit.md#d-236).

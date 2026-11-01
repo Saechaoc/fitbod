@@ -63,4 +63,6 @@ With no routines, VoiceOver finds nothing after the title.
 
 ## Findings
 
-<!-- findings are linked after the audit -->
+- Major: [D-05](../audit.md#d-05).
+- Minor: [D-102](../audit.md#d-102).
+- Polish: [D-285](../audit.md#d-285).

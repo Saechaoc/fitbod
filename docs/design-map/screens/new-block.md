@@ -117,4 +117,6 @@ Gaps:
 
 ## Findings
 
-<!-- findings are linked after the audit -->
+- Major: [D-05](../audit.md#d-05), [D-13](../audit.md#d-13), [D-22](../audit.md#d-22).
+- Minor: [D-47](../audit.md#d-47), [D-95](../audit.md#d-95), [D-96](../audit.md#d-96), [D-97](../audit.md#d-97), [D-98](../audit.md#d-98), [D-99](../audit.md#d-99), [D-100](../audit.md#d-100), [D-101](../audit.md#d-101).
+- Polish: [D-275](../audit.md#d-275), [D-276](../audit.md#d-276), [D-277](../audit.md#d-277), [D-278](../audit.md#d-278), [D-279](../audit.md#d-279), [D-280](../audit.md#d-280), [D-281](../audit.md#d-281), [D-302](../audit.md#d-302).

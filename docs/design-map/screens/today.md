@@ -103,4 +103,6 @@ The heatmap button for the "UPPER BACK" region is labelled "Middle Back".
 
 ## Findings
 
-<!-- findings are linked after the audit -->
+- Major: [D-24](../audit.md#d-24), [D-25](../audit.md#d-25).
+- Minor: [D-158](../audit.md#d-158), [D-159](../audit.md#d-159), [D-160](../audit.md#d-160), [D-161](../audit.md#d-161), [D-162](../audit.md#d-162), [D-163](../audit.md#d-163), [D-164](../audit.md#d-164), [D-165](../audit.md#d-165), [D-166](../audit.md#d-166).
+- Polish: [D-340](../audit.md#d-340), [D-341](../audit.md#d-341), [D-342](../audit.md#d-342), [D-343](../audit.md#d-343), [D-344](../audit.md#d-344), [D-345](../audit.md#d-345).

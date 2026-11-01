@@ -68,4 +68,4 @@ The menu has no title for VoiceOver, so it does not say which menu opened.
 
 ## Findings
 
-<!-- findings are linked after the audit -->
+- Minor: [D-64](../audit.md#d-64).

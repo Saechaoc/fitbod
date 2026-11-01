@@ -94,4 +94,5 @@ At AX3 the "W1–W4" week label is squeezed to 38 pt wide and breaks over three 
 
 ## Findings
 
-<!-- findings are linked after the audit -->
+- Minor: [D-34](../audit.md#d-34), [D-35](../audit.md#d-35), [D-36](../audit.md#d-36), [D-37](../audit.md#d-37), [D-38](../audit.md#d-38), [D-39](../audit.md#d-39), [D-40](../audit.md#d-40), [D-41](../audit.md#d-41), [D-42](../audit.md#d-42), [D-43](../audit.md#d-43), [D-44](../audit.md#d-44), [D-166](../audit.md#d-166).
+- Polish: [D-192](../audit.md#d-192), [D-193](../audit.md#d-193), [D-194](../audit.md#d-194), [D-195](../audit.md#d-195), [D-196](../audit.md#d-196), [D-283](../audit.md#d-283).

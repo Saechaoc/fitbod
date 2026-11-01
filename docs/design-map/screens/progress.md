@@ -68,4 +68,5 @@ The labels repeat the copy problems "last last week" and "sessions" for workouts
 
 ## Findings
 
-<!-- findings are linked after the audit -->
+- Minor: [D-130](../audit.md#d-130), [D-131](../audit.md#d-131), [D-132](../audit.md#d-132).
+- Polish: [D-305](../audit.md#d-305), [D-306](../audit.md#d-306), [D-307](../audit.md#d-307), [D-308](../audit.md#d-308), [D-309](../audit.md#d-309), [D-310](../audit.md#d-310), [D-311](../audit.md#d-311).

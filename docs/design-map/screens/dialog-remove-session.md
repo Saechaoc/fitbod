@@ -58,4 +58,5 @@ Dark mode and the Pro Max at default text change only colour and size: [dark](im
 
 ## Findings
 
-<!-- findings are linked after the audit -->
+- Blocker: [D-01](../audit.md#d-01).
+- Polish: [D-214](../audit.md#d-214), [D-228](../audit.md#d-228), [D-229](../audit.md#d-229).

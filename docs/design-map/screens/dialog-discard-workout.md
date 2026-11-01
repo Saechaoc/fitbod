@@ -63,4 +63,5 @@ The buttons are 208 by 48 pt, and nothing is unlabelled.
 
 ## Findings
 
-<!-- findings are linked after the audit -->
+- Minor: [D-56](../audit.md#d-56).
+- Polish: [D-227](../audit.md#d-227).

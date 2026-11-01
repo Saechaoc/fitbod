@@ -62,4 +62,4 @@ Gaps:
 
 ## Findings
 
-<!-- findings are linked after the audit -->
+- Polish: [D-211](../audit.md#d-211).
