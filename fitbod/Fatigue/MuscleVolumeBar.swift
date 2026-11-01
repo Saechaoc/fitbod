@@ -7,18 +7,23 @@
 //  Layout per bru-screens/volume.jsx lines 63–122 + 05-UI-SPEC §MuscleVolumeBar:
 //    (1) Header HStack: uppercase muscle name (labelSmall, left)
 //        + tabular set-count displayMedium + "SETS" labelMicro (right)
-//    (2) 16pt bar track: bruBg2 background + 1.5pt bruInk outline
+//    (2) Tick label row: 8pt mono MEV, MAV and MRV labels (MRV in
+//        bruSignalText) over their ticks, in a row of their own between
+//        the header and the track, so they keep clear of the muscle name
+//        and the set count (review item 22). A label centers on its tick
+//        unless that would cross an end of the track, and it is left out
+//        where it would collide with its neighbor. At accessibility text
+//        sizes every label, and so the row, is left out; the footer
+//        legend has the values.
+//    (3) 16pt bar track: bruBg2 background + 1.5pt bruInk outline
 //        + zone-color fill for totalSets; 2pt bruInk right-edge separator
 //        on the fill; 1pt bruInk MEV + MAV ticks and a 1pt bruSignal MRV
-//        tick, each running 3pt past the track; 8pt mono tick labels just
-//        above their ticks (MRV in bruSignalText). A label is left out
-//        where it would collide with its neighbor, and all of them at
-//        accessibility text sizes; the footer legend has the values.
-//        The track spans one axis shared by every row, as in the
-//        reference: 25 sets, the largest RP default MRV, or the largest MRV
-//        on screen if a user target runs past that. MRV sits inside the
-//        track, so volume past MRV shows as fill beyond the MRV tick.
-//    (3) Footer HStack: BRUChip verb + 9pt mono bruMuted legend
+//        tick, each running 3pt past the track. The track spans one axis
+//        shared by every row, as in the reference: 25 sets, the largest RP
+//        default MRV, or the largest MRV on screen if a user target runs
+//        past that. MRV sits inside the track, so volume past MRV shows as
+//        fill beyond the MRV tick.
+//    (4) Footer HStack: BRUChip verb + 9pt mono bruMuted legend
 //
 //  Zone → bar fill color:
 //    .belowMEV   → bruFaint
@@ -210,12 +215,18 @@ public struct MuscleVolumeBar: View {
                 }
             }
 
-            // (2) Bar track
+            // (2) Tick labels, in their own row
+            if showsTickLabels {
+                tickLabelRow
+                    .padding(.top, Self.tickLabelRowGap)
+            }
+
+            // (3) Bar track, its ticks clear of the tick labels
             barTrack
                 .frame(height: 16)
-                .padding(.top, 6)
+                .padding(.top, showsTickLabels ? Self.tickOverhang + Self.tickLabelRowClearance : 6)
 
-            // (3) Footer row
+            // (4) Footer row
             HStack(alignment: .center) {
                 BRUChip(chipLabel, color: chipColor, fill: chipShouldFill)
                 Spacer()
@@ -276,16 +287,13 @@ public struct MuscleVolumeBar: View {
                 Rectangle()
                     .stroke(Color.bruInk, lineWidth: 1.5)
 
-                // `.position` keeps the ticks and labels out of the layout: a
-                // tick taller than the track would otherwise stretch it.
+                // `.position` keeps the ticks out of the layout: a tick
+                // taller than the track would otherwise stretch it.
                 ForEach(ticks(trackWidth: width), id: \.label) { tick in
                     Rectangle()
                         .fill(tick.color)
                         .frame(width: 1, height: height + Self.tickOverhang * 2)
                         .position(x: tick.x + 0.5, y: height / 2)
-                    if tick.showsLabel {
-                        tickLabel(tick)
-                    }
                 }
 
                 // Advisory amber ring (Rectangle, NOT RoundedRectangle — sharp corner BRU rule)
@@ -310,6 +318,16 @@ public struct MuscleVolumeBar: View {
     private static let tickOverhang: CGFloat = 3
     /// The least space between two tick labels.
     private static let tickLabelGap: CGFloat = 4
+    /// The space between the header and the tick labels' row.
+    private static let tickLabelRowGap: CGFloat = 4
+    /// The space between the tick labels' row and the tops of the ticks.
+    private static let tickLabelRowClearance: CGFloat = 2
+    private static let tickLabelFont: Font = .bru(.mono, size: 8)
+
+    /// The labels show except at accessibility text sizes; see `ticks`.
+    private var showsTickLabels: Bool {
+        !dynamicTypeSize.isAccessibilitySize
+    }
 
     /// One threshold line on the bar, and where its label goes.
     private struct Tick {
@@ -366,21 +384,37 @@ public struct MuscleVolumeBar: View {
         return ticks
     }
 
-    /// A tick's label, its baseline 2pt above the top of the tick.
+    /// The tick labels' row: one line of their font, as wide as the track
+    /// under it, with each shown label over its tick.
+    private var tickLabelRow: some View {
+        Text("MRV")
+            .font(Self.tickLabelFont)
+            .hidden()
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .overlay {
+                GeometryReader { geo in
+                    ForEach(ticks(trackWidth: geo.size.width).filter(\.showsLabel), id: \.label) { tick in
+                        tickLabel(tick, centerY: geo.size.height / 2)
+                    }
+                }
+            }
+    }
+
+    /// A tick's label, centered in the labels' row at `centerY`.
     ///
     /// It hangs off a zero-size anchor so the text keeps its natural width;
     /// overlaid on the 1pt tick itself, it would be squeezed to that width.
-    private func tickLabel(_ tick: Tick) -> some View {
+    private func tickLabel(_ tick: Tick, centerY: CGFloat) -> some View {
         Color.clear
             .frame(width: 0, height: 0)
-            .overlay(alignment: Alignment(horizontal: tick.labelAlignment, vertical: .lastTextBaseline)) {
+            .overlay(alignment: Alignment(horizontal: tick.labelAlignment, vertical: .center)) {
                 Text(tick.label)
-                    .font(.bru(.mono, size: 8))
+                    .font(Self.tickLabelFont)
                     .kerning(0.5)
                     .foregroundStyle(tick.labelColor)
                     .fixedSize()
             }
-            .position(x: tick.labelAnchorX, y: -(Self.tickOverhang + 2))
+            .position(x: tick.labelAnchorX, y: centerY)
     }
 
     /// `value` rounded to the nearest device pixel, so 1pt lines stay sharp.

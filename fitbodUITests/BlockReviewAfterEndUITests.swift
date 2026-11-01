@@ -494,8 +494,12 @@ final class BlockReviewAfterEndUITests: XCTestCase {
         return problems
     }
 
-    /// Swipes the review until `element` lies whole in its scroll view,
+    /// Drags the review until `element` lies whole in its scroll view,
     /// above the action bar, the way a lifter scrolls to it, or gives up.
+    /// Each drag moves the page by the distance the element lies outside
+    /// that span, at most 300pt, in the scroll view's trailing margin, and
+    /// holds at its end so the page does not coast on: a slow swipe moved
+    /// about 510pt, past a span that can be narrower than that.
     @MainActor
     private func scrollIntoView(_ element: XCUIElement, in app: XCUIApplication) {
         let scroll = reviewScrollView(in: app)
@@ -503,11 +507,18 @@ final class BlockReviewAfterEndUITests: XCTestCase {
             let visible = scroll.frame.insetBy(dx: -0.5, dy: -0.5)
             let frame = element.frame
             if visible.contains(frame) && frame.maxY <= actionBar(in: app).frame.minY + 0.5 { return }
-            if frame.minY < visible.minY {
-                scroll.swipeDown(velocity: .slow)
-            } else {
-                scroll.swipeUp(velocity: .slow)
-            }
+            let bottom = min(visible.maxY, actionBar(in: app).frame.minY)
+            // Positive drags the page down, to bring back an element above it.
+            let distance = frame.minY < visible.minY ? visible.minY + 8 - frame.minY : bottom - 8 - frame.maxY
+            let startY = distance > 0 ? visible.minY + 20 : bottom - 20
+            let x = scroll.frame.maxX - 8
+            let origin = app.coordinate(withNormalizedOffset: .zero)
+            origin.withOffset(CGVector(dx: x, dy: startY)).press(
+                forDuration: 0.1,
+                thenDragTo: origin.withOffset(CGVector(dx: x, dy: startY + max(-300, min(300, distance)))),
+                withVelocity: .slow,
+                thenHoldForDuration: 0.2
+            )
             UITestNavigation.waitUntilStill(element)
         }
     }

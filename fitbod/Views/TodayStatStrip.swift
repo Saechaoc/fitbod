@@ -4,8 +4,8 @@
 // 3-cell BRU stat strip for the Today tab.
 // Reference: bru-screens/today.jsx lines 10-20
 //
-// Layout: HStack of 3 BRUReadout cells with 1pt bruInk vertical dividers
-// between each cell, and a 2pt bruInk bottom rule via BRUDivider(.ink).
+// Layout: 3 BRUReadout cells in equal thirds with 1pt bruInk vertical
+// dividers between them, and a 2pt bruInk bottom rule via BRUDivider(.ink).
 //
 // BRU contract: NO Capsule() / NO RoundedRectangle / NO accentColor / NO Image(systemName:)
 // NO .font(.body/.headline/.title*/.caption)
@@ -20,7 +20,8 @@ public enum TrendDirection {
     case up
     /// Downward trend — renders "↓" in bruInk.
     case down
-    /// No clear trend — renders "—" in bruInk.
+    /// No clear trend — renders the current phase's short label in bruInk,
+    /// or "—" when the block has no current phase.
     case flat
 }
 
@@ -40,9 +41,16 @@ public enum TrendDirection {
 /// Slot 2 opens workout history when `onOpenHistory` is set; the "›" marks
 /// it as tappable. Slot 3 shows the block week and the week-over-week trend
 /// while a block is active, and "This week" (finished sessions this week)
-/// otherwise, since a "W1 / 1" placeholder would mean nothing.
+/// otherwise, since a "W1 / 1" placeholder would mean nothing. A flat trend
+/// shows the current phase's short label, such as "ACCUM", instead of a
+/// dash (tradeoffs.md "Today's third stat"). Past the block's last planned
+/// week, "PLAN COMPLETE" takes the week's place and no phase shows
+/// (tradeoffs.md "A block past its plan").
 ///
 /// Vertical 1pt bruInk dividers between cells; 2pt bruInk bottom rule.
+/// The cells stack, with horizontal dividers, at accessibility sizes and
+/// whenever a cell does not fit its third on one line, as "SESSIONS" does
+/// at xxLarge on the 390pt phone, so no label breaks inside a word.
 /// Reference: bru-screens/today.jsx lines 10-20.
 public struct TodayStatStrip: View {
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
@@ -54,6 +62,11 @@ public struct TodayStatStrip: View {
     let weekIndex: Int     // 1-based current week, e.g. 3
     let totalWeeks: Int    // total block weeks, e.g. 5
     let trend: TrendDirection
+    /// The active block's current phase, shown when the trend is flat. Nil
+    /// without one, as past the block's plan.
+    let phase: BlockPhaseKind?
+    /// True once the active block is past its last planned week.
+    let isPlanComplete: Bool
     /// False when no block is active: slot 3 shows `sessionsThisWeek`.
     let hasActiveBlock: Bool
     /// Finished sessions in the current week.
@@ -67,6 +80,8 @@ public struct TodayStatStrip: View {
         weekIndex: Int,
         totalWeeks: Int,
         trend: TrendDirection,
+        phase: BlockPhaseKind? = nil,
+        isPlanComplete: Bool = false,
         hasActiveBlock: Bool = true,
         sessionsThisWeek: Int = 0,
         onOpenHistory: (() -> Void)? = nil
@@ -76,6 +91,8 @@ public struct TodayStatStrip: View {
         self.weekIndex = weekIndex
         self.totalWeeks = totalWeeks
         self.trend = trend
+        self.phase = phase
+        self.isPlanComplete = isPlanComplete
         self.hasActiveBlock = hasActiveBlock
         self.sessionsThisWeek = sessionsThisWeek
         self.onOpenHistory = onOpenHistory
@@ -89,7 +106,7 @@ public struct TodayStatStrip: View {
         switch trend {
         case .up:   return "↑"
         case .down: return "↓"
-        case .flat: return "—"
+        case .flat: return phase?.shortLabel ?? "—"
         }
     }
 
@@ -97,7 +114,7 @@ public struct TodayStatStrip: View {
         switch trend {
         case .up:   return "More sessions than last week"
         case .down: return "Fewer sessions than last week"
-        case .flat: return "Same as last week"
+        case .flat: return phase?.rawValue.capitalized ?? "Same as last week"
         }
     }
 
@@ -112,7 +129,7 @@ public struct TodayStatStrip: View {
 
     public var body: some View {
         VStack(spacing: 0) {
-            statLayout {
+            StatStripLayout(stacks: dynamicTypeSize.isAccessibilitySize) {
                 // Slot 1 — Day streak
                 cell {
                     BRUReadout(
@@ -156,14 +173,16 @@ public struct TodayStatStrip: View {
 
                 divider
 
-                // Slot 3 — W{N} / {M} + trend arrow, or this week's count
+                // Slot 3 — W{N} / {M} + trend, or this week's count
                 cell {
                     if hasActiveBlock {
                         BRUReadout(
-                            label: weekLabel,
+                            label: isPlanComplete ? PlanWeek.completeLabel : weekLabel,
                             value: trendValue,
                             valueColor: trendColor,
-                            accessibilityLabel: "Block week \(weekIndex) of \(totalWeeks)",
+                            accessibilityLabel: isPlanComplete
+                                ? "Block plan complete"
+                                : "Block week \(weekIndex) of \(totalWeeks)",
                             accessibilityValue: trendSpoken
                         )
                     } else {
@@ -174,6 +193,8 @@ public struct TodayStatStrip: View {
                         )
                     }
                 }
+                // PLAN COMPLETE may wrap between its two words in its third.
+                .layoutValue(key: WrapsInItsThird.self, value: hasActiveBlock && isPlanComplete)
             }
             .fixedSize(horizontal: false, vertical: true)
 
@@ -190,17 +211,90 @@ public struct TodayStatStrip: View {
             .padding(.vertical, 14)
     }
 
+    /// A 1pt rule between two cells; the layout makes it vertical between
+    /// thirds and horizontal between stacked cells.
     private var divider: some View {
         Rectangle()
             .fill(Color.bruInk)
-            .frame(width: dynamicTypeSize.isAccessibilitySize ? nil : 1,
-                   height: dynamicTypeSize.isAccessibilitySize ? 1 : nil)
+            .layoutValue(key: IsStatDivider.self, value: true)
+    }
+}
+
+// MARK: - StatStripLayout
+
+/// Marks a 1pt rule between two cells.
+private struct IsStatDivider: LayoutValueKey {
+    static let defaultValue = false
+}
+
+/// Marks a cell whose label may wrap between its words inside its third.
+private struct WrapsInItsThird: LayoutValueKey {
+    static let defaultValue = false
+}
+
+/// The strip's cells side by side in equal thirds, with a 1pt rule between
+/// each, while every cell fits its third: its content on one line, unless
+/// it is marked `WrapsInItsThird`. Otherwise, and always when `stacks` is
+/// set, the cells stack full width with a 1pt rule between each.
+private struct StatStripLayout: Layout {
+    let stacks: Bool
+
+    private static let rule: CGFloat = 1
+
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+        let width = proposal.width ?? idealRowWidth(subviews)
+        let frames = frames(in: width, subviews: subviews)
+        return CGSize(width: width, height: frames.map(\.maxY).max() ?? 0)
     }
 
-    private var statLayout: AnyLayout {
-        dynamicTypeSize.isAccessibilitySize
-            ? AnyLayout(VStackLayout(alignment: .leading, spacing: 0))
-            : AnyLayout(HStackLayout(spacing: 0))
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+        for (subview, frame) in zip(subviews, frames(in: bounds.width, subviews: subviews)) {
+            subview.place(
+                at: CGPoint(x: bounds.minX + frame.minX, y: bounds.minY + frame.minY),
+                proposal: ProposedViewSize(frame.size)
+            )
+        }
+    }
+
+    /// Equal thirds, each as wide as the widest cell's one-line content.
+    private func idealRowWidth(_ subviews: Subviews) -> CGFloat {
+        let cells = subviews.filter { !$0[IsStatDivider.self] }
+        let widest = cells.map { $0.sizeThatFits(.unspecified).width }.max() ?? 0
+        return widest * CGFloat(cells.count) + Self.rule * CGFloat(subviews.count - cells.count)
+    }
+
+    /// Each subview's frame, from the strip's top left.
+    private func frames(in width: CGFloat, subviews: Subviews) -> [CGRect] {
+        let rules = subviews.count { $0[IsStatDivider.self] }
+        let cells = max(subviews.count - rules, 1)
+        let third = max(0, (width - Self.rule * CGFloat(rules)) / CGFloat(cells))
+        let fitsInThirds = !stacks && subviews.allSatisfy { subview in
+            subview[IsStatDivider.self] || subview[WrapsInItsThird.self]
+                || subview.sizeThatFits(.unspecified).width <= third
+        }
+
+        var frames: [CGRect] = []
+        if fitsInThirds {
+            let height = subviews.filter { !$0[IsStatDivider.self] }
+                .map { $0.sizeThatFits(ProposedViewSize(width: third, height: nil)).height }
+                .max() ?? 0
+            var x: CGFloat = 0
+            for subview in subviews {
+                let cellWidth = subview[IsStatDivider.self] ? Self.rule : third
+                frames.append(CGRect(x: x, y: 0, width: cellWidth, height: height))
+                x += cellWidth
+            }
+        } else {
+            var y: CGFloat = 0
+            for subview in subviews {
+                let height = subview[IsStatDivider.self]
+                    ? Self.rule
+                    : subview.sizeThatFits(ProposedViewSize(width: width, height: nil)).height
+                frames.append(CGRect(x: 0, y: y, width: width, height: height))
+                y += height
+            }
+        }
+        return frames
     }
 }
 
@@ -213,6 +307,10 @@ public struct TodayStatStrip: View {
         TodayStatStrip(streak: 0, totalSessions: 7, weekIndex: 1, totalWeeks: 4, trend: .flat,
                        hasActiveBlock: false, sessionsThisWeek: 2, onOpenHistory: {})
         TodayStatStrip(streak: 3, totalSessions: 21, weekIndex: 5, totalWeeks: 5, trend: .down)
+        TodayStatStrip(streak: 1, totalSessions: 9, weekIndex: 1, totalWeeks: 4, trend: .flat,
+                       phase: .accumulation)
+        TodayStatStrip(streak: 1, totalSessions: 9, weekIndex: 1, totalWeeks: 4, trend: .flat,
+                       isPlanComplete: true, onOpenHistory: {})
     }
     .background(Color.bruPaper)
 }

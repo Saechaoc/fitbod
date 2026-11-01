@@ -9,7 +9,8 @@
 //
 //  Layout top-to-bottom per bru-screens/volume.jsx + bru-screens/heatmap.jsx:
 //    (1) Summary ink slab   — full-bleed bruInk, WORKING SETS / VS LAST WK
-//    (2) Legend strip       — UNDER MEV / MEV→MAV / MRV swatches + labels
+//    (2) Legend strip       — UNDER MEV / MEV→MAV / MRV swatches + labels,
+//                             stacked at accessibility sizes
 //    (3) Volume This Week   — BRUSectionHead + LazyVStack of MuscleVolumeBar rows
 //    (4) Muscle Heatmap     — BRUSectionHead + side-by-side FRONT + BACK grids
 //
@@ -40,6 +41,7 @@ public enum MuscleSlugRoute: Hashable, Sendable {
 
 public struct FatigueSurfaceView: View {
     @Environment(\.modelContext) private var ctx
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     @Query private var allMuscles: [MuscleGroup]
     @Query private var allTargets: [MuscleVolumeTarget]
@@ -220,7 +222,7 @@ public struct FatigueSurfaceView: View {
 
     /// Three-swatch legend per bru-screens/volume.jsx lines 38–52.
     private var legendStrip: some View {
-        HStack(spacing: 16) {
+        legendLayout {
             legendCell(
                 fill: Color.bruBg2,
                 strokeColor: Color.bruInk,
@@ -245,6 +247,14 @@ public struct FatigueSurfaceView: View {
         // Left-aligned like the reference. Its 2pt rule comes from the
         // section head right below, so the legend draws none of its own.
         .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    /// The legend's items in a row, or stacked at accessibility sizes, where
+    /// a row of them wraps "UNDER MEV" and "MEV → MAV" over two lines.
+    private var legendLayout: AnyLayout {
+        dynamicTypeSize.isAccessibilitySize
+            ? AnyLayout(VStackLayout(alignment: .leading, spacing: 4))
+            : AnyLayout(HStackLayout(spacing: 16))
     }
 
     private func legendCell(
