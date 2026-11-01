@@ -61,6 +61,7 @@ Ask before you edit anything else.
 
 ## Hints
 
+- T122 measured that an XCUITest drag at the default velocity scrolled the routine screen about 2.25 times the finger's travel, while `.slow` moved it 1:1 (finding F346); plan margin scrolls with that in mind.
 - T105's per-case durations are under "Test performance" in `docs/conway-specs/evidence/T105/notes.md`, and its review's nice-to-have 2 describes the two scroll helpers.
 - `UITestNavigation.launch` waits for the tab bar, so a test that launches through it needs no splash wait.
 - The comment above `NewBlockLayoutUITests.presentedSheet` says `UITestNavigation.topSheet(in:)` misses half-height sheets; since T101 it finds them, so the helper can replace it (finding F268).
