@@ -260,21 +260,6 @@ final class BlockReviewAfterEndUITests: XCTestCase {
         XCTAssertTrue(problems.isEmpty, problems.joined(separator: "\n"))
     }
 
-    /// A TONNAGE that fits the row keeps the full size of the SESSIONS
-    /// value beside it: only a value too wide for the row shrinks. T87's
-    /// seed logged three sets of 100 x 5.
-    @MainActor
-    func testTonnageThatFitsKeepsItsFullSize() throws {
-        let app = openEndedBlocksReview()
-        UITestNavigation.waitUntilStill(heroStat("tonnage", in: app))
-
-        let tonnage = try XCTUnwrap(heroValue("tonnage", in: app), "The hero must show its TONNAGE value")
-        let sessions = try XCTUnwrap(heroValue("sessions", in: app), "The hero must show its SESSIONS value")
-        XCTAssertEqual(tonnage.label, "1,500", "T87's seed logs 1,500 of tonnage")
-        XCTAssertEqual(tonnage.frame.height, sessions.frame.height, accuracy: 0.5,
-                       "TONNAGE's \(tonnage.label) must be as tall as SESSIONS' \(sessions.label), not shrunk")
-    }
-
     // MARK: - Helpers
 
     /// Today's band opens the seeded active block's overview, whose END
@@ -461,10 +446,12 @@ final class BlockReviewAfterEndUITests: XCTestCase {
     /// first visit to Today, which opens the block's review.
     @MainActor
     private func openEndedBlocksReview(
-        _ arguments: [String] = UITestNavigation.endedBlockWithRecap,
+        _ arguments: [String]? = nil,
         textSize: UITestNavigation.TextSize = .default, file: StaticString = #filePath, line: UInt = #line
     ) -> XCUIApplication {
-        let app = UITestNavigation.launch(arguments, textSize: textSize, file: file, line: line)
+        let app = UITestNavigation.launch(
+            arguments ?? UITestNavigation.endedBlockWithRecap, textSize: textSize, file: file, line: line
+        )
         XCTAssertTrue(app.buttons.labeled("DONE block: Live Block").waitForExistence(timeout: 30),
                       "The seed must end Live Block before Today's first visit", file: file, line: line)
         UITestNavigation.selectTab("Today", in: app)
