@@ -60,6 +60,7 @@ Every Phase 2 ticket is done and archived.
 | [T140](tickets/T140-long-press-remove-and-remove-labels.md) | Removing an exercise by long press forgets its open editor |
 | [T141](tickets/T141-non-barbell-prescriptions-skip-plate-math.md) | Cable, machine, band, bodyweight and kettlebell prescriptions skip barbell plate math |
 | [T142](tickets/T142-block-weeks-start-at-midnight.md) | A block week starts at local midnight on its first day |
+| [T143](tickets/T143-ui-suite-keeps-data-guards.md) | The UI suite keeps only the tests that guard the lifter's data |
 
 ### Phase 4: test health
 
