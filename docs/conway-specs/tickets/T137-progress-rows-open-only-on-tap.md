@@ -52,7 +52,8 @@ On the small phone, with `ProgressHistorySeed`'s seed:
 ## Observable acceptance
 
 - The repro tests pass on the small phone.
-- `SwipeBackUITests` and the Progress suites that open these rows pass on the small phone.
+- `SwipeBackUITests`' cases that open a Progress row, and the Progress suites that open these rows, pass on the small phone.
+  T143 is cutting the UI suite, so do not run the whole of `SwipeBackUITests`.
 - `fitbodTests` passes, and the app and the widget build.
 
 ## Hints
