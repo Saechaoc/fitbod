@@ -43,7 +43,6 @@ Every Phase 2 ticket is done and archived.
 |---|---|
 | [T34](tickets/T34-copy-sweep.md) | Copy sweep |
 | [T35](tickets/T35-today-polish.md) | Today polish |
-| [T36](tickets/T36-rest-sheet-and-rpe-chips.md) | Rest sheet and RPE chips |
 | [T37](tickets/T37-library-and-detail-polish.md) | Library and exercise detail polish |
 | [T38](tickets/T38-program-new-block-settings-small-fixes.md) | Small fixes on Program, New Block and Settings |
 | [T85](tickets/T85-pr-row-phrases.md) | PR rows keep "@ RPE" and the kind label whole |
@@ -59,6 +58,7 @@ Every Phase 2 ticket is done and archived.
 | [T118](tickets/T118-weekly-tonnage-label-and-rows.md) | Weekly Tonnage keeps its previous-best label whole, and its week rows open their workouts |
 | [T120](tickets/T120-new-block-toast-and-duration-steppers.md) | New Block's undo toast stays small, and its duration steppers say what they change |
 | [T122](tickets/T122-routine-session-drag-slots.md) | A session dragged on the routine screen lands on the slot under the finger |
+| [T124](tickets/T124-rest-sheet-fits-at-ax3.md) | The rest sheet's countdown and ±15s buttons fit at AX3 |
 
 ### Phase 4: test health
 

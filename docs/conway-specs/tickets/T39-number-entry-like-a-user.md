@@ -39,6 +39,7 @@ In the logger, a tap on an empty set's reps field while rest is running ends the
 5. Move every UI test that enters a number onto the new helper.
    Remove a private typing helper once nothing uses it.
 6. `UITestNavigation.hittable` polls in 50 to 100 ms steps, with the same overall ceiling, and `waitUntilStill` checks the frame in steps that small while still requiring it to hold for its interval (findings F247 and F262).
+   `type` and `hittable` read `exists` before they call `waitForExistence`, which costs about 1 s even when the element is already there (finding F274).
 7. In the logger, one tap on an empty set's reps field while rest is running both ends the rest and gives the field keyboard focus, so the first digit typed lands.
 
 ## Constraints
