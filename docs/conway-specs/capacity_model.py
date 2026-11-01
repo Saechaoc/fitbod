@@ -71,6 +71,8 @@ ARCHIVED = {
     "T36": (3, ["23", "24"], ["fitbodUITests/RestSheetAndRPEChipsUITests.swift"]),
     "T37": (3, ["24", "25"], ["fitbodUITests/LibraryPolishUITests.swift"]),
     "T38": (3, ["25"], ["fitbodUITests/SmallFixesUITests.swift"]),
+    "T40": (4, [], ["fitbodUITests/SlottedSessionDeleteUITests.swift"]),
+    "T41": (4, ["N1"], ["fitbodTests/BackupRoutinesRoundTripTests.swift", "fitbodUITests/BackupRestoreRoutinesUITests.swift"]),
     "T49": (1, [], ["fitbodUITests/RPEDecimalHoldUITests.swift"]),
     "T50": (1, [], ["fitbodTests/WhyUsesFinishedWorkoutsTests.swift"]),
     "T51": (1, [], ["fitbodTests/PlateauUsesFinishedWorkoutsTests.swift"]),
@@ -147,6 +149,7 @@ ARCHIVED = {
     "T130": (3, [], ["fitbodUITests/BlockDraftKeepsUITests.swift"]),
     "T136": (3, [], ["fitbodUITests/PRRowOpensWorkoutUITests.swift"]),
     "T139": (3, [], ["fitbodTests/WeekWindowCalendarTests.swift"]),
+    "T141": (3, [], ["fitbodTests/NonBarbellPrescriptionTests.swift"]),
 }
 
 BUNDLE = pathlib.Path(__file__).resolve().parent

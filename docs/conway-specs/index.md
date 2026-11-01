@@ -55,7 +55,6 @@ Every Phase 2 ticket is done and archived.
 | [T137](tickets/T137-progress-rows-open-only-on-tap.md) | Progress's rows open only on a tap |
 | [T138](tickets/T138-block-review-pr-chips-and-stats-once.md) | The block review's PR chips read to VoiceOver, and its stats load once |
 | [T140](tickets/T140-long-press-remove-and-remove-labels.md) | Removing an exercise by long press forgets its open editor |
-| [T141](tickets/T141-non-barbell-prescriptions-skip-plate-math.md) | Cable, machine, band, bodyweight and kettlebell prescriptions skip barbell plate math |
 | [T142](tickets/T142-block-weeks-start-at-midnight.md) | A block week starts at local midnight on its first day |
 | [T143](tickets/T143-ui-suite-keeps-data-guards.md) | The UI suite keeps only the tests that guard the lifter's data |
 
@@ -64,8 +63,6 @@ Every Phase 2 ticket is done and archived.
 | Ticket | Title |
 |---|---|
 | [T39](tickets/T39-number-entry-like-a-user.md) | Number entry like a user |
-| [T40](tickets/T40-slotted-session-delete-guard.md) | Slotted session delete guard |
-| [T41](tickets/T41-backup-keeps-routines.md) | Backup keeps routines |
 | [T42](tickets/T42-zero-build-warnings.md) | Zero build warnings |
 | [T117](tickets/T117-history-tests-cover-non-pr-rows-and-every-label.md) | Exercise history's tests cover a row without a PR and every label |
 | [T119](tickets/T119-progress-ui-tests-budgets.md) | Progress UI tests fit the test budgets |
