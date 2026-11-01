@@ -38,19 +38,21 @@
 //  the x axis, values read the same way on the y axis, and a series per
 //  line drawn, named as the legend names it. The PR rule and the
 //  above-10-reps caption are e1RM only. The legend names the lines
-//  drawn: TOP SET and ALL-SET AVG on e1RM, TOP SET alone on TOP SET,
-//  HYPERTROPHY · N SESSIONS and STRENGTH · N SESSIONS on VOLUME and
-//  AVG RPE.
+//  drawn, each beside a stretch of its line: TOP SET and ALL-SET AVG on
+//  e1RM, TOP SET alone on TOP SET; on VOLUME and AVG RPE,
+//  HYPERTROPHY · N SESSIONS and STRENGTH · N SESSIONS, then POWER,
+//  ENDURANCE and TECHNIQUE · N SESSIONS for each of those drawn. Keys
+//  that run out of width wrap onto the next row.
 //
 //  ## Chart styling (BRU contract)
 //
-//    LineMark / PointMark per plotted point, one line per series:
-//      primary     → foregroundStyle(Color.bruInk)
-//      (top set,     lineStyle(StrokeStyle(lineWidth: 2))
-//       hypertrophy) symbol(.square) symbolSize(50)
-//      secondary   → foregroundStyle(Color.bruSignal)
-//      (all-set avg, lineStyle(StrokeStyle(lineWidth: 2, dash: [6, 3]))
-//       strength)    symbol(.circle) symbolSize(40)
+//    LineMark / PointMark per plotted point, one line per series, 2pt
+//    wide, in the series' ChartLineStyle:
+//      ink     top set, hypertrophy   bruInk     solid          square   50
+//      signal  all-set avg, strength  bruSignal  dash [6, 3]    circle   40
+//      blue    power                  bruBlue    dots [2, 3]    triangle 50
+//      green   endurance              bruGreen   [8, 3, 2, 3]   diamond  50
+//      muted   technique              bruMuted   dash [12, 4]   cross    50
 //    PR RuleMark → foregroundStyle(Color.bruSignal) lineStyle(dash [4, 2])
 //    PR label → chart overlay, just above the rule at the plot's
 //               trailing edge, kept inside the plot
@@ -131,9 +133,93 @@ struct ChartPoint: Identifiable {
     let value: Double
     /// The line the point belongs to, and its name for VoiceOver.
     let series: String
-    /// Ink, solid and square when true; signal, dashed and round when false.
-    let isPrimary: Bool
+    /// How its line is drawn, and the legend's swatch for it.
+    let style: ChartLineStyle
     let intent: Intent
+}
+
+/// How a line on the chart and its points are drawn, and the swatch that
+/// keys the line in the legend. On the e1RM chips the top set and the
+/// all-set average have one each; on VOLUME and AVG RPE each intent
+/// does. The cases are in the legend's order. Blue, green and muted each
+/// reach 3:1 against `bruBg` in light and dark (WCAG 1.4.11).
+enum ChartLineStyle: Int, Comparable {
+    /// The top set and hypertrophy: solid ink, squares.
+    case ink
+    /// The all-set average and strength: dashed signal, circles.
+    case signal
+    /// Power: dotted blue, triangles.
+    case blue
+    /// Endurance: dash-dot green, diamonds.
+    case green
+    /// Technique: long-dashed muted, crosses.
+    case muted
+
+    init(intent: Intent) {
+        switch intent {
+        case .hypertrophy: self = .ink
+        case .strength:    self = .signal
+        case .power:       self = .blue
+        case .endurance:   self = .green
+        case .technique:   self = .muted
+        }
+    }
+
+    var color: Color {
+        switch self {
+        case .ink:    return .bruInk
+        case .signal: return .bruSignal
+        case .blue:   return .bruBlue
+        case .green:  return .bruGreen
+        case .muted:  return .bruMuted
+        }
+    }
+
+    /// The line's dash pattern; empty for a solid line.
+    var dash: [CGFloat] {
+        switch self {
+        case .ink:    return []
+        case .signal: return [6, 3]
+        case .blue:   return [2, 3]
+        case .green:  return [8, 3, 2, 3]
+        case .muted:  return [12, 4]
+        }
+    }
+
+    /// The dash pattern at the legend swatch's 16pt.
+    var swatchDash: [CGFloat] {
+        switch self {
+        case .ink:    return []
+        case .signal: return [3, 2]
+        case .blue:   return [2, 2]
+        case .green:  return [5, 2, 2, 2]
+        case .muted:  return [6, 2]
+        }
+    }
+
+    var symbol: BasicChartSymbolShape {
+        switch self {
+        case .ink:    return .square
+        case .signal: return .circle
+        case .blue:   return .triangle
+        case .green:  return .diamond
+        case .muted:  return .cross
+        }
+    }
+
+    var symbolSize: CGFloat { self == .signal ? 40 : 50 }
+
+    static func < (lhs: ChartLineStyle, rhs: ChartLineStyle) -> Bool {
+        lhs.rawValue < rhs.rawValue
+    }
+}
+
+private extension Intent {
+    /// This intent's line on VOLUME and AVG RPE, named in the legend and
+    /// the audio graph by the workouts it plots: HYPERTROPHY · 2 SESSIONS.
+    func lineName(sessions: Int) -> String {
+        "\(rawValue.uppercased()) · \(BRUCountLabel.text(sessions, "SESSION"))"
+    }
 }
 
 private extension ProgressChartMetric {
@@ -268,7 +354,7 @@ private struct ProgressChartHost: View {
                         date: point.date,
                         value: point.e1RM,
                         series: point.kind.displayLabel,
-                        isPrimary: point.kind == .topSet,
+                        style: point.kind == .topSet ? .ink : .signal,
                         intent: point.intent
                     )
                 }
@@ -279,7 +365,7 @@ private struct ProgressChartHost: View {
         }
     }
 
-    /// One line per intent, styled like the legend below the chart.
+    /// One line per intent, each in its intent's style, as the legend keys it.
     private func workoutChartPoints(_ points: [WorkoutSeriesPoint]) -> [ChartPoint] {
         points.map { point in
             ChartPoint(
@@ -287,7 +373,7 @@ private struct ProgressChartHost: View {
                 date: point.date,
                 value: point.value,
                 series: point.intent.rawValue.capitalized,
-                isPrimary: point.intent == .hypertrophy,
+                style: ChartLineStyle(intent: point.intent),
                 intent: point.intent
             )
         }
@@ -390,12 +476,6 @@ private struct ProgressChartHost: View {
         highRepSuppressed: Bool
     ) -> some View {
         let prValue = metric.plotsE1RM ? (points.map(\.value).max() ?? 0) : 0
-        let hypCount = Set(
-            points.filter { $0.intent == .hypertrophy }.map(\.date)
-        ).count
-        let strCount = Set(
-            points.filter { $0.intent == .strength }.map(\.date)
-        ).count
 
         VStack(alignment: .leading, spacing: 8) {
             Chart {
@@ -415,11 +495,8 @@ private struct ProgressChartHost: View {
                         y: .value(metric.axisName, point.value),
                         series: .value("Series", point.series)
                     )
-                    .foregroundStyle(point.isPrimary ? Color.bruInk : Color.bruSignal)
-                    .lineStyle(StrokeStyle(
-                        lineWidth: 2,
-                        dash: point.isPrimary ? [] : [6, 3]
-                    ))
+                    .foregroundStyle(point.style.color)
+                    .lineStyle(StrokeStyle(lineWidth: 2, dash: point.style.dash))
                     .interpolationMethod(.linear)
                     .accessibilityHidden(true)
 
@@ -427,9 +504,9 @@ private struct ProgressChartHost: View {
                         x: .value("Date", point.date),
                         y: .value(metric.axisName, point.value)
                     )
-                    .foregroundStyle(point.isPrimary ? Color.bruInk : Color.bruSignal)
-                    .symbol(point.isPrimary ? .square : .circle)
-                    .symbolSize(point.isPrimary ? 50 : 40)
+                    .foregroundStyle(point.style.color)
+                    .symbol(point.style.symbol)
+                    .symbolSize(point.style.symbolSize)
                 }
             }
             .chartXScale(domain: .automatic(includesZero: false))
@@ -484,7 +561,7 @@ private struct ProgressChartHost: View {
             .padding(.top, 12)
 
             // Legend row below chart
-            legendRow(hypCount: hypCount, strCount: strCount)
+            legendRow(points: points)
                 .padding(.horizontal, 16)
 
             if highRepSuppressed {
@@ -535,7 +612,7 @@ private struct ProgressChartHost: View {
         HStack(spacing: 0) {
             ForEach(byDate.keys.sorted(), id: \.self) { date in
                 VStack(spacing: 0) {
-                    ForEach(byDate[date, default: []].sorted { $0.isPrimary && !$1.isPrimary }) { point in
+                    ForEach(byDate[date, default: []].sorted { $0.style < $1.style }) { point in
                         Rectangle()
                             .accessibilityLabel("\(point.series), \(date.formatted(date: .abbreviated, time: .omitted))")
                             .accessibilityValue(metric.spokenValue(point.value, unit: unit))
@@ -551,35 +628,42 @@ private struct ProgressChartHost: View {
     /// One key per line on the chart, in its line style.
     private struct LegendKey: Identifiable {
         let label: String
-        let isPrimary: Bool
+        let style: ChartLineStyle
         var id: String { label }
     }
 
-    /// The e1RM chips draw the top set and the all-set average; VOLUME and
-    /// AVG RPE draw one line per intent.
-    private func legendKeys(hypCount: Int, strCount: Int) -> [LegendKey] {
+    /// The e1RM chips draw the top set and the all-set average. VOLUME and
+    /// AVG RPE draw one line per intent: HYPERTROPHY and STRENGTH always
+    /// have a key, and the other intents have one when their line is drawn.
+    private func legendKeys(points: [ChartPoint]) -> [LegendKey] {
         switch metric {
         case .e1RM:
             return [
-                LegendKey(label: SeriesKind.topSet.displayLabel, isPrimary: true),
-                LegendKey(label: SeriesKind.allSetAvg.displayLabel, isPrimary: false),
+                LegendKey(label: SeriesKind.topSet.displayLabel, style: .ink),
+                LegendKey(label: SeriesKind.allSetAvg.displayLabel, style: .signal),
             ]
         case .topSet:
-            return [LegendKey(label: SeriesKind.topSet.displayLabel, isPrimary: true)]
+            return [LegendKey(label: SeriesKind.topSet.displayLabel, style: .ink)]
         case .volume, .averageRPE:
-            return [
-                LegendKey(label: "HYPERTROPHY · \(BRUCountLabel.text(hypCount, "SESSION"))", isPrimary: true),
-                LegendKey(label: "STRENGTH · \(BRUCountLabel.text(strCount, "SESSION"))", isPrimary: false),
-            ]
+            let drawn = Set(points.map(\.intent))
+            return Intent.allCases
+                .filter { $0 == .hypertrophy || $0 == .strength || drawn.contains($0) }
+                .map { intent in
+                    let sessions = Set(points.filter { $0.intent == intent }.map(\.date)).count
+                    return LegendKey(label: intent.lineName(sessions: sessions), style: ChartLineStyle(intent: intent))
+                }
+                .sorted { $0.style < $1.style }
         }
     }
 
+    /// The keys in a row, wrapping onto the next row when they run out of
+    /// width.
     @ViewBuilder
-    private func legendRow(hypCount: Int, strCount: Int) -> some View {
-        HStack(spacing: 16) {
-            ForEach(legendKeys(hypCount: hypCount, strCount: strCount)) { key in
+    private func legendRow(points: [ChartPoint]) -> some View {
+        BRUFlowLayout(spacing: 16, lineSpacing: 6) {
+            ForEach(legendKeys(points: points)) { key in
                 HStack(spacing: 4) {
-                    legendSwatch(isPrimary: key.isPrimary)
+                    legendSwatch(key.style)
                     Text(key.label)
                         .font(BRUFont.labelMicro)
                         .tracking(1.2)
@@ -591,13 +675,13 @@ private struct ProgressChartHost: View {
         .padding(.top, 4)
     }
 
-    /// Solid bruInk for the primary line, dashed bruSignal (via Canvas)
-    /// for the other.
+    /// A stretch of the line in `style`: a bar for a solid line, a Canvas
+    /// stroke for a dashed one.
     @ViewBuilder
-    private func legendSwatch(isPrimary: Bool) -> some View {
-        if isPrimary {
+    private func legendSwatch(_ style: ChartLineStyle) -> some View {
+        if style.swatchDash.isEmpty {
             Rectangle()
-                .fill(Color.bruInk)
+                .fill(style.color)
                 .frame(width: 16, height: 2)
         } else {
             Canvas { context, size in
@@ -606,8 +690,8 @@ private struct ProgressChartHost: View {
                 path.addLine(to: CGPoint(x: size.width, y: size.height / 2))
                 context.stroke(
                     path,
-                    with: .color(Color.bruSignal),
-                    style: StrokeStyle(lineWidth: 2, dash: [3, 2])
+                    with: .color(style.color),
+                    style: StrokeStyle(lineWidth: 2, dash: style.swatchDash)
                 )
             }
             .frame(width: 16, height: 2)
@@ -661,13 +745,13 @@ struct ProgressChartDescriptor: AXChartDescriptorRepresentable {
         descriptor.series = current.series
     }
 
-    /// A series per line drawn, its points in date order, the legend's
-    /// solid line first.
+    /// A series per line drawn, its points in date order, in the legend's
+    /// order.
     private var series: [AXDataSeriesDescriptor] {
         Dictionary(grouping: points, by: \.series).values
             .map { line in line.sorted { $0.date < $1.date } }
             .sorted { lhs, rhs in
-                lhs[0].isPrimary != rhs[0].isPrimary ? lhs[0].isPrimary : lhs[0].series < rhs[0].series
+                lhs[0].style != rhs[0].style ? lhs[0].style < rhs[0].style : lhs[0].series < rhs[0].series
             }
             .map { line in
                 AXDataSeriesDescriptor(
@@ -682,8 +766,7 @@ struct ProgressChartDescriptor: AXChartDescriptorRepresentable {
     /// chips; on VOLUME and AVG RPE, its intent and how many workouts it
     /// plots, as in HYPERTROPHY · 2 SESSIONS.
     private func legendName(of line: [ChartPoint]) -> String {
-        let name = line[0].series.uppercased()
-        guard !metric.plotsE1RM else { return name }
-        return "\(name) · \(BRUCountLabel.text(Set(line.map(\.date)).count, "SESSION"))"
+        guard !metric.plotsE1RM else { return line[0].series.uppercased() }
+        return line[0].intent.lineName(sessions: Set(line.map(\.date)).count)
     }
 }

@@ -12,6 +12,11 @@
 //    - the x axis reads dates; and
 //    - each drawn line is a series, named as the legend names it.
 //
+//  Ticket T129, finding F297. VOLUME and AVG RPE draw a line per intent,
+//  but the legend named only HYPERTROPHY and STRENGTH, and a power line
+//  was drawn like strength's. The legend now names every intent drawn,
+//  as in POWER · 1 SESSION, in the order the audio graph reads them.
+//
 
 import Accessibility
 import Foundation
@@ -102,6 +107,43 @@ struct ProgressChartDescriptorTests {
         #expect(yAxisReading(of: 112.5, under: window) == "113 kg")
     }
 
+    // MARK: - The legend
+
+    @Test("Each intent draws its line, and its legend swatch, in a style of its own")
+    func eachIntentHasAStyleOfItsOwn() {
+        let styles = Set(Intent.allCases.map(ChartLineStyle.init(intent:)))
+        #expect(styles.count == Intent.allCases.count)
+    }
+
+    /// Two workouts in each of three intents, so each line is drawn. Main
+    /// actor, as it hosts the screen in a UIKit window.
+    @MainActor
+    @Test("VOLUME's legend names every intent it draws, as its audio graph does")
+    func volumeLegendNamesEveryIntentItDraws() throws {
+        let container = try FitbodModelContainer.make(inMemory: true)
+        let bench = try logBenchPress(in: container.mainContext, workouts: [
+            (.hypertrophy, [80]), (.strength, [100]), (.power, [60]),
+            (.hypertrophy, [90]), (.strength, [105]), (.power, [65]),
+        ])
+        let window = try showProgress(of: bench, in: container)
+        defer { window.isHidden = true }
+        waitUntil { button(labeled: "VOLUME", under: window) != nil }
+        let volume = try #require(button(labeled: "VOLUME", under: window), "The VOLUME chip is not on screen")
+
+        volume.accessibilityActivate()
+        waitUntil { chartDescriptor(under: window)?.title == "Volume chart" && !intentKeys(under: window).isEmpty }
+        // Lets the chip's 0.18 s chart transition finish before the screenshot.
+        RunLoop.main.run(until: Date.now.addingTimeInterval(0.3))
+        attachScreen(of: window, named: "T129-chart-volume")
+
+        let legend = intentKeys(under: window)
+        #expect(legend == ["HYPERTROPHY · 2 SESSIONS", "STRENGTH · 2 SESSIONS", "POWER · 2 SESSIONS"])
+        #expect(
+            chartDescriptor(under: window)?.series.compactMap(\.name) == legend,
+            "The audio graph must name each line as the legend does, in its order"
+        )
+    }
+
     // MARK: - Helpers
 
     /// `bench`'s progress screen in a window the small phone's width.
@@ -126,7 +168,7 @@ struct ProgressChartDescriptorTests {
             date: firstDay.addingTimeInterval(Double(week) * 7 * 24 * 3600),
             value: value,
             series: kind.displayLabel,
-            isPrimary: kind == .topSet,
+            style: kind == .topSet ? .ink : .signal,
             intent: .strength
         )
     }
@@ -138,7 +180,7 @@ struct ProgressChartDescriptorTests {
             date: firstDay.addingTimeInterval(Double(week) * 7 * 24 * 3600),
             value: value,
             series: intent.rawValue.capitalized,
-            isPrimary: intent == .hypertrophy,
+            style: ChartLineStyle(intent: intent),
             intent: intent
         )
     }
@@ -151,22 +193,28 @@ struct ProgressChartDescriptorTests {
             .valueDescriptionProvider(value)
     }
 
-    /// Two finished workouts of the bench press, a week apart: 100 x 5 and
-    /// 95 x 5, a top set of 112.5 e1RM, then 105 x 5.
+    /// Finished workouts of the bench press, a week apart, each in its
+    /// intent with a set of 5 at each of its weights. By default two
+    /// strength workouts: 100 x 5 and 95 x 5, a top set of 112.5 e1RM,
+    /// then 105 x 5.
     @MainActor
-    private func logBenchPress(in context: ModelContext) throws -> Exercise {
+    private func logBenchPress(
+        in context: ModelContext,
+        workouts: [(intent: Intent, weights: [Double])] = [(.strength, [100, 95]), (.strength, [105])]
+    ) throws -> Exercise {
         let bench = Exercise(
             name: "Bench Press", canonicalName: "bench press",
             equipmentRaw: "barbell", mechanicRaw: "compound"
         )
         context.insert(bench)
-        for (week, weights) in [[100.0, 95.0], [105.0]].enumerated() {
+        for (week, logged) in workouts.enumerated() {
+            let (intent, weights) = logged
             let start = firstDay.addingTimeInterval(Double(week) * 7 * 24 * 3600)
             let workout = Session()
             context.insert(workout)
             workout.startedAt = start
             workout.completedAt = start.addingTimeInterval(3600)
-            workout.intentRaw = Intent.strength.rawValue
+            workout.intentRaw = intent.rawValue
             let entry = SessionExercise()
             context.insert(entry)
             entry.session = workout
@@ -190,16 +238,48 @@ struct ProgressChartDescriptorTests {
     /// found depth first among the accessibility elements under `root`.
     @MainActor
     private func chartDescriptor(under root: NSObject) -> AXChartDescriptor? {
-        if property("accessibilityIdentifier", of: root) as? String == "progress.chart" {
-            return property("accessibilityChartDescriptor", of: root) as? AXChartDescriptor
+        elements(under: root)
+            .first { property("accessibilityIdentifier", of: $0) as? String == "progress.chart" }
+            .flatMap { property("accessibilityChartDescriptor", of: $0) as? AXChartDescriptor }
+    }
+
+    /// The button labeled `label` among the accessibility elements under `root`.
+    @MainActor
+    private func button(labeled label: String, under root: NSObject) -> NSObject? {
+        elements(under: root).first { $0.accessibilityLabel == label && $0.accessibilityTraits.contains(.button) }
+    }
+
+    /// The legend's keys for intents under `root`, in the order VoiceOver
+    /// reads them, such as HYPERTROPHY · 2 SESSIONS.
+    @MainActor
+    private func intentKeys(under root: NSObject) -> [String] {
+        let names = Intent.allCases.map { "\($0.rawValue.uppercased()) · " }
+        return elements(under: root)
+            .compactMap { $0.accessibilityLabel?.uppercased() }
+            .filter { label in names.contains { label.hasPrefix($0) } }
+    }
+
+    /// `root` and the accessibility elements and views under it, depth
+    /// first, each once: SwiftUI's elements are reached both from the
+    /// hosting view and from the scroll view inside it.
+    @MainActor
+    private func elements(under root: NSObject) -> [NSObject] {
+        var seen: Set<ObjectIdentifier> = []
+        func walk(_ element: NSObject) -> [NSObject] {
+            guard seen.insert(ObjectIdentifier(element)).inserted else { return [] }
+            let children = (element.accessibilityElements ?? []) + ((element as? UIView)?.subviews ?? [])
+            return [element] + children.compactMap { $0 as? NSObject }.flatMap(walk)
         }
-        let children = (root.accessibilityElements ?? []) + ((root as? UIView)?.subviews ?? [])
-        for case let child as NSObject in children {
-            if let descriptor = chartDescriptor(under: child) {
-                return descriptor
-            }
+        return walk(root)
+    }
+
+    /// Attaches what `window` shows, as a PNG, for a person to look at.
+    @MainActor
+    private func attachScreen(of window: UIWindow, named name: String) {
+        let png = UIGraphicsImageRenderer(bounds: window.bounds).pngData { _ in
+            _ = window.drawHierarchy(in: window.bounds, afterScreenUpdates: true)
         }
-        return nil
+        Attachment.record(png, named: "\(name).png")
     }
 
     /// An accessibility property of `element` by name. SwiftUI's elements
