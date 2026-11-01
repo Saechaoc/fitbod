@@ -6,10 +6,13 @@
 //  view's accessibility tree only while the test host has accessibility
 //  on, which libAccessibility reads from the simulator's
 //  com.apple.Accessibility ApplicationAccessibilityEnabled and
-//  AccessibilityEnabled: either one at 1 turns it on. A UI test session
-//  sets both to 0 when it ends, so a hosted test read no tree unless
-//  someone had set them by hand or an earlier test in the run had turned
-//  them on.
+//  AccessibilityEnabled: either one at 1 turns it on. Elements inside
+//  UIKit containers, such as a list, a scroll view or a chart, also need
+//  UIKit's accessibility bundle, which UIKit loads at launch when the
+//  switch is on, or on the first accessibility action in the process. A
+//  UI test session sets both settings to 0 when it ends, so a hosted test
+//  read no tree unless someone had set them by hand or an earlier test in
+//  the run had activated an element.
 //
 //  A test that reads a hosted view's accessibility tree is marked
 //  .hostedAccessibility. While it runs, the test host has accessibility
@@ -89,12 +92,17 @@ enum HostedAccessibility {
     private static var turnedOn = false
 
     /// Turns accessibility on for a hosted test if it is off. SwiftUI sees
-    /// it at once. It sets both settings on the simulator, so the last
-    /// hosted test to end sets them back.
+    /// the switch at once. UIKit loads its accessibility bundle on the
+    /// first accessibility action in the process, so a throwaway object is
+    /// activated: about 0.5 s, once per process, in the first hosted test.
+    /// The switch sets both settings on the simulator, so the last hosted
+    /// test to end sets them back. UIKit's bundle stays loaded, as it does
+    /// after any test activates an element.
     fileprivate static func beginTest() {
         if tests == 0, !isOn {
             setApplicationAccessibility(1)
             turnedOn = true
+            _ = NSObject().accessibilityActivate()
         }
         tests += 1
     }
