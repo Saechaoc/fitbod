@@ -56,12 +56,12 @@ struct TempoPartsTests {
         #expect(TempoParts.join(parts) == "-1-2-5")
     }
 
-    /// Only a dash pasted into a field makes more than four parts. The rest
-    /// stays in Top, so editing another part never drops it.
-    @Test("Parts past the fourth stay in Top")
-    func extraPartsStayInTop() {
-        let parts = TempoParts.split("3-1-2-0-5")
-        #expect(parts == ["3", "1", "2", "0-5"])
-        #expect(TempoParts.join(parts) == "3-1-2-0-5")
+    /// Only a paste puts a dash inside a part. A whole tempo pasted into Ecc
+    /// reads back as its four parts, as both rows read it before, and the
+    /// parts past the fourth are left out.
+    @Test("A whole tempo pasted into Ecc reads back as its four parts")
+    func pastedTempoReadsAsFourParts() {
+        let stored = TempoParts.join(["3-1-2-0", "", "", ""])
+        #expect(TempoParts.split(stored) == ["3", "1", "2", "0"])
     }
 }

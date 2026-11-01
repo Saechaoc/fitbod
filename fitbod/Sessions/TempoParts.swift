@@ -20,13 +20,13 @@ public enum TempoParts {
 
     /// The four parts of `tempo`, Ecc to Top, with "" for each blank part.
     /// A tempo with fewer parts, such as "-1" for a Bot pause, leaves the
-    /// rest blank, and one with more keeps the rest in Top, so nothing
-    /// stored is lost.
+    /// rest blank. Parts past the fourth, which only a pasted dash makes,
+    /// are left out, as the logger always read them.
     public static func split(_ tempo: String?) -> [String] {
         let parts = (tempo ?? "")
-            .split(separator: "-", maxSplits: count - 1, omittingEmptySubsequences: false)
+            .split(separator: "-", omittingEmptySubsequences: false)
             .map(String.init)
-        return parts + Array(repeating: "", count: count - parts.count)
+        return (0..<count).map { $0 < parts.count ? parts[$0] : "" }
     }
 
     /// The four parts joined with dashes, or nil when every part is blank,
