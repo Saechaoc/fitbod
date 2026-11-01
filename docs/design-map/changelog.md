@@ -2,6 +2,16 @@
 
 Newest first: one entry for each stage of [plan.md](plan.md) up to S2, then one for each commit.
 
+## 2026-11-01: S8, summary and final check
+
+- Wrote the summary in [README.md](README.md): the four blockers, the worst workflow dead ends, the four must-have missing screens and the largest patterns.
+- The README and [plan.md](plan.md) now say the map is complete.
+- [assumptions.md](assumptions.md#open-tickets-that-will-change-screens) now sends the reader to the audit's ticket rows, because since S7 the Findings sections link audit rows, not tickets.
+- `tools/check.sh` passes on the final tree with no errors or warnings, and all 18 Mermaid blocks render.
+- Removed the private copy of the app that the tour ran in.
+  Its tour file was the same as `tools/DesignTourUITests.swift.txt`, so nothing was lost.
+- Both simulators are back in light mode at the default text size, with no status bar override, and shut down.
+
 ## 2026-11-01: S7, audit
 
 - Wrote [audit.md](audit.md): 365 rows, of which 4 are `blocker`, 26 `major`, 158 `minor` and 177 `polish`.

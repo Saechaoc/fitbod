@@ -100,7 +100,8 @@ The iPhone 17e runs in light mode confirmed this list on 2026-10-31.
 ## Open tickets that will change screens
 
 The tickets in `docs/conway-specs/tickets/` were open at the base commit.
-When one merges, the screens it names change; each screen file's Findings section links the tickets that touch it.
+When one merges, the screens it names change.
+[audit.md](audit.md) has one row for each ticket that covers a problem the map found, and that row names the screens where the map found it.
 
 - Copy and polish: [T34](../conway-specs/tickets/T34-copy-sweep.md), [T35](../conway-specs/tickets/T35-today-polish.md), [T36](../conway-specs/tickets/T36-rest-sheet-and-rpe-chips.md), [T37](../conway-specs/tickets/T37-library-and-detail-polish.md), [T38](../conway-specs/tickets/T38-program-new-block-settings-small-fixes.md), [T85](../conway-specs/tickets/T85-pr-row-phrases.md) and [T98](../conway-specs/tickets/T98-chart-audio-graph-rounding.md).
 - The session editor: [T110](../conway-specs/tickets/T110-per-set-overrides-removed.md), [T111](../conway-specs/tickets/T111-session-editor-rows-announced-removable.md) and [T115](../conway-specs/tickets/T115-session-editor-ax3-scroll-hang.md).

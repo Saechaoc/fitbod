@@ -1,6 +1,6 @@
 # Plan: Fitbod design map (`docs/design-map/`)
 
-Status: planned, not started.
+Status: done on 2026-11-01; [changelog.md](changelog.md) records each stage.
 Base commit: `61353088` (`origin/main` on 2026-10-31).
 Branch: `design/workflow-map`.
 
