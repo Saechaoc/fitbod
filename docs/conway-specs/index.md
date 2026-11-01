@@ -39,7 +39,6 @@ Every Phase 1 ticket is done and archived.
 |---|---|
 | [T101](tickets/T101-ui-tests-idle-after-typing.md) | UI tests stop waiting a minute per step after typing |
 | [T110](tickets/T110-per-set-overrides-removed.md) | The session editor stops offering per-set overrides that the logger ignores |
-| [T112](tickets/T112-exercise-history-rows.md) | Exercise history shows its workouts again |
 | [T115](tickets/T115-session-editor-ax3-scroll-hang.md) | The session editor scrolls at AX3 without hanging |
 
 ### Phase 3: P3 polish and copy
