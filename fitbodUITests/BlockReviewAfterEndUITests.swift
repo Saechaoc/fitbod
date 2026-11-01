@@ -12,6 +12,9 @@ import XCTest
 /// Ticket T99, findings F141 and F142. The hero's PRS stat counts the sets
 /// that set a PR during the block, and at accessibility sizes the hero's
 /// three stats stack, so no label breaks mid-word.
+///
+/// Ticket T113, finding F237. A TONNAGE of 1,000,000 or more stays whole on
+/// one line on the small phone, at default text and at AX3.
 final class BlockReviewAfterEndUITests: XCTestCase {
 
     @MainActor
@@ -224,6 +227,54 @@ final class BlockReviewAfterEndUITests: XCTestCase {
         XCTAssertTrue(problems.isEmpty, problems.joined(separator: "\n"))
     }
 
+    // MARK: - T113
+
+    /// F237: at AX3 on the small phone a TONNAGE of 1,000,000 or more
+    /// wrapped inside the number. The heavy seed's workout logged three
+    /// sets of 80,000 x 5, so TONNAGE reads 1,200,000, whole on one line,
+    /// and the stats still stack.
+    @MainActor
+    func testSevenDigitTonnageStaysWholeAtAX3() throws {
+        let app = openEndedBlocksReview(UITestNavigation.endedHeavyBlock, textSize: .ax3)
+        UITestNavigation.waitUntilStill(heroStat("tonnage", in: app))
+
+        var problems = try tonnageProblems(in: app)
+        UITestNavigation.saveScreenshot("T113", "review-tonnage", textSize: .ax3)
+        problems += heroStatLayoutProblems(in: app, stacked: true)
+        XCTAssertTrue(problems.isEmpty, problems.joined(separator: "\n"))
+    }
+
+    /// At default text a seven-digit TONNAGE also wrapped inside the
+    /// number. It stays whole on one line, and the three stats keep their
+    /// row with each label whole and level.
+    @MainActor
+    func testSevenDigitTonnageStaysWholeAtDefaultText() throws {
+        let app = openEndedBlocksReview(UITestNavigation.endedHeavyBlock)
+        UITestNavigation.waitUntilStill(heroStat("tonnage", in: app))
+
+        var problems = try tonnageProblems(in: app)
+        UITestNavigation.saveScreenshot("T113", "review-tonnage")
+        problems += heroStatLayoutProblems(in: app, stacked: false)
+        problems += heroStatLevelProblems(in: app)
+        problems += try heroStatLabelProblems(in: app)
+        XCTAssertTrue(problems.isEmpty, problems.joined(separator: "\n"))
+    }
+
+    /// A TONNAGE that fits the row keeps the full size of the SESSIONS
+    /// value beside it: only a value too wide for the row shrinks. T87's
+    /// seed logged three sets of 100 x 5.
+    @MainActor
+    func testTonnageThatFitsKeepsItsFullSize() throws {
+        let app = openEndedBlocksReview()
+        UITestNavigation.waitUntilStill(heroStat("tonnage", in: app))
+
+        let tonnage = try XCTUnwrap(heroValue("tonnage", in: app), "The hero must show its TONNAGE value")
+        let sessions = try XCTUnwrap(heroValue("sessions", in: app), "The hero must show its SESSIONS value")
+        XCTAssertEqual(tonnage.label, "1,500", "T87's seed logs 1,500 of tonnage")
+        XCTAssertEqual(tonnage.frame.height, sessions.frame.height, accuracy: 0.5,
+                       "TONNAGE's \(tonnage.label) must be as tall as SESSIONS' \(sessions.label), not shrunk")
+    }
+
     // MARK: - Helpers
 
     /// Today's band opens the seeded active block's overview, whose END
@@ -405,14 +456,15 @@ final class BlockReviewAfterEndUITests: XCTestCase {
     // MARK: - T99 helpers
 
     /// Launches on Program with Live Block ended after one finished Live
-    /// Push workout last week (T87's seed), waits until the seed has ended
-    /// the block, then makes the first visit to Today, which opens the
-    /// block's review.
+    /// Push workout last week (T87's seed, or the variant `arguments`
+    /// names), waits until the seed has ended the block, then makes the
+    /// first visit to Today, which opens the block's review.
     @MainActor
     private func openEndedBlocksReview(
+        _ arguments: [String] = UITestNavigation.endedBlockWithRecap,
         textSize: UITestNavigation.TextSize = .default, file: StaticString = #filePath, line: UInt = #line
     ) -> XCUIApplication {
-        let app = UITestNavigation.launch(UITestNavigation.endedBlockWithRecap, textSize: textSize, file: file, line: line)
+        let app = UITestNavigation.launch(arguments, textSize: textSize, file: file, line: line)
         XCTAssertTrue(app.buttons.labeled("DONE block: Live Block").waitForExistence(timeout: 30),
                       "The seed must end Live Block before Today's first visit", file: file, line: line)
         UITestNavigation.selectTab("Today", in: app)
@@ -522,4 +574,73 @@ final class BlockReviewAfterEndUITests: XCTestCase {
             UITestNavigation.waitUntilStill(element)
         }
     }
+
+    // MARK: - T113 helpers
+
+    /// A hero stat's value: its text without letters.
+    @MainActor
+    private func heroValue(_ name: String, in app: XCUIApplication) -> XCUIElement? {
+        heroStat(name, in: app).staticTexts.allElementsBoundByIndex.first { !$0.label.contains(where: \.isLetter) }
+    }
+
+    /// TONNAGE's value unless it shows whole on one line, read from the
+    /// screen once it is in view. XCUI reads the whole label however the
+    /// text wraps, so a value taller than SESSIONS' one-line value wraps,
+    /// and the screen must read every digit with no break between lines,
+    /// which readText reads as a space. Vision can read a comma as a period
+    /// or drop it, and a 0 as the letter O, so the screen's digits are
+    /// compared.
+    @MainActor
+    private func tonnageProblems(in app: XCUIApplication) throws -> [String] {
+        let tonnage = heroStat("tonnage", in: app)
+        guard let value = heroValue("tonnage", in: app), let sessions = heroValue("sessions", in: app) else {
+            return ["The hero must show its TONNAGE and SESSIONS values"]
+        }
+        var problems: [String] = []
+        if value.label != "1,200,000" {
+            problems.append("TONNAGE reads \(value.label), not the seeded 1,200,000")
+        }
+        scrollIntoView(tonnage, in: app)
+        let (frame, oneLine) = (value.frame, sessions.frame.height)
+        if frame.height > oneLine * 1.25 {
+            problems.append("TONNAGE's \(value.label) is \(frame.height)pt tall, more than SESSIONS' one \(oneLine)pt line")
+        }
+        let shown = try UITestNavigation.readText(in: frame.insetBy(dx: -4, dy: -4), of: XCUIScreen.main.screenshot())
+        let digits = String(shown.compactMap { character -> Character? in
+            switch character {
+            case ",", ".": nil
+            case "O", "o": "0"
+            default: character
+            }
+        })
+        if digits != value.label.filter(\.isNumber) {
+            problems.append("TONNAGE's \(value.label) reads \"\(shown)\" on the screen")
+        }
+        return problems
+    }
+
+    /// Each stat whose label or sub-label is not level with SESSIONS' in
+    /// the row: every stat is as tall as the tallest, so a value that
+    /// shrinks to fit leaves the labels level.
+    @MainActor
+    private func heroStatLevelProblems(in app: XCUIApplication) -> [String] {
+        let tops = Self.heroStatNames.map { name in
+            heroStat(name, in: app).staticTexts.allElementsBoundByIndex
+                .filter { $0.label.contains(where: \.isLetter) }
+                .map(\.frame.minY)
+        }
+        guard let sessions = tops.first, sessions.count == 2 else {
+            return ["The SESSIONS stat must show a label and a sub-label"]
+        }
+        return zip(Self.heroStatNames, tops).dropFirst().compactMap { name, labelTops in
+            guard labelTops.count != 2 || zip(labelTops, sessions).contains(where: { abs($0 - $1) > 1 }) else { return nil }
+            return "The \(name) stat's labels start at y \(labelTops), not level with SESSIONS' at y \(sessions)"
+        }
+    }
+}
+
+extension UITestNavigation {
+    /// T87's ended Live Block with its review due, but its workout's work
+    /// sets are 80,000 x 5, so TONNAGE is 1,200,000 (ActiveBlockSeed).
+    static let endedHeavyBlock = [resetFlag, "-fitbod-seed-ended-heavy-block", "-fitbod-start-program"]
 }

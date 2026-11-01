@@ -25,6 +25,9 @@ public struct BlockReviewView: View {
 
     @State private var pendingNextBlockBuilder: BlockTemplate? = nil
     @State private var acknowledgeError: String? = nil
+    /// The block's PRs, counted once when the review opens: the count
+    /// replays the lifter's whole history of the block's lifts.
+    @State private var prs: BlockReviewPRs? = nil
 
     public init(block: Block) {
         self.block = block
@@ -65,6 +68,11 @@ public struct BlockReviewView: View {
                 safeAreaFiller
             }
         }
+        .onAppear {
+            if prs == nil {
+                prs = BlockReviewStatistics.prs(context: ctx, start: blockStart, end: blockEnd)
+            }
+        }
         .sheet(item: $pendingNextBlockBuilder) { template in
             NavigationStack {
                 // Only Today presents the review.
@@ -82,11 +90,6 @@ public struct BlockReviewView: View {
             end: blockEnd
         )
         let sessionsCount = BlockReviewStatistics.sessionCount(
-            context: ctx,
-            start: blockStart,
-            end: blockEnd
-        )
-        let prsCount = BlockReviewStatistics.prCount(
             context: ctx,
             start: blockStart,
             end: blockEnd
@@ -126,11 +129,14 @@ public struct BlockReviewView: View {
                 statSeparator
                 statCell(
                     label: "PRS",
-                    value: "\(prsCount)",
+                    // Counted on appear, before the first frame shows.
+                    value: prs.map { "\($0.count)" } ?? "-",
                     subLabel: "THIS BLOCK",
                     valueColor: Color.bruPaper
                 )
             }
+            // As tall as the tallest stat, which every stat fills.
+            .fixedSize(horizontal: false, vertical: true)
             // The rule above the stats spans the row, so the row spans the
             // band in both layouts.
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -160,9 +166,15 @@ public struct BlockReviewView: View {
                 .textCase(.uppercase)
                 .tracking(1.2)
                 .foregroundStyle(Color.bruPaper.opacity(0.6))
+            // A value too wide for its stat shrinks to fit on one line: an
+            // eight-digit TONNAGE needs 0.44 at XXXL on the 390pt phone. It
+            // keeps its stat's full height, so the labels stay level.
             Text(value)
                 .font(BRUFont.displayHero)
                 .foregroundStyle(valueColor)
+                .lineLimit(1)
+                .minimumScaleFactor(0.4)
+                .frame(maxHeight: .infinity, alignment: .bottomLeading)
             if let subLabel {
                 Text(subLabel)
                     .font(BRUFont.labelMicro)
@@ -171,16 +183,18 @@ public struct BlockReviewView: View {
                     .foregroundStyle(Color.bruPaper.opacity(0.6))
             }
         }
+        .frame(maxHeight: .infinity, alignment: .top)
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier("blockReview.stat.\(label.lowercased())")
     }
 
     /// At accessibility sizes the three stats stack, so none squeezes its
-    /// label into a word broken across lines.
+    /// label into a word broken across lines. In the row each stat is as
+    /// tall as the tallest, so a value that shrinks keeps the labels level.
     private var statRowLayout: AnyLayout {
         dynamicTypeSize.isAccessibilitySize
             ? AnyLayout(VStackLayout(alignment: .leading, spacing: 14))
-            : AnyLayout(HStackLayout(spacing: 0))
+            : AnyLayout(HStackLayout(alignment: .top, spacing: 0))
     }
 
     /// Between two stats: the row's free width at default text, and a rule
@@ -233,7 +247,9 @@ public struct BlockReviewView: View {
         // delta.delta = end - start, so we derive a "start" visual from the delta magnitude
         // For display, we show the delta as the progression value
         let pct = min(1.0, abs(delta.delta) / 50.0)
-        let isPR = delta.delta > 0  // treat positive delta as PR eligible (Phase 6 will refine)
+        // A lift is marked when it set a PR during the block by the rule
+        // PRS counts, so the chips and the count agree.
+        let isPR = prs?.exerciseIDs.contains(delta.exerciseID) ?? false
 
         return VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 0) {
@@ -408,6 +424,19 @@ public struct BlockReviewE1RMDelta: Sendable, Equatable {
     }
 }
 
+/// The PRs set during a block, as `BlockReviewStatistics.prs` replays them.
+public struct BlockReviewPRs: Sendable, Equatable {
+    /// The working sets that set a PR.
+    public let count: Int
+    /// The lifts those sets belong to.
+    public let exerciseIDs: Set<UUID>
+
+    public init(count: Int, exerciseIDs: Set<UUID>) {
+        self.count = count
+        self.exerciseIDs = exerciseIDs
+    }
+}
+
 public enum BlockReviewStatistics {
     @MainActor
     public static func totalVolume(context: ModelContext, start: Date, end: Date) -> Double {
@@ -428,17 +457,25 @@ public enum BlockReviewStatistics {
         ).count
     }
 
+    /// The number of working sets that set a PR during the block, as
+    /// `prs(context:start:end:)` counts them.
+    @MainActor
+    public static func prCount(context: ModelContext, start: Date, end: Date) -> Int {
+        prs(context: context, start: start, end: end).count
+    }
+
     /// The working sets logged during the block that set a PR, by the
-    /// in-workout banner's check. The lifter's finished history replays
-    /// oldest first through `PRDetector.check(set:against:)` from an empty
-    /// table, so a set counts only when it beats every set logged before
-    /// it, in the block or before it.
+    /// in-workout banner's check, and the lifts they belong to. The
+    /// lifter's finished history replays oldest first through
+    /// `PRDetector.check(set:against:)` from an empty table, so a set counts
+    /// only when it beats every set logged before it, in the block or
+    /// before it.
     ///
     /// Oldest first is by workout start, then the time each set was logged,
     /// then log order and set order, as exercise history replays it, so sets
     /// logged at the same moment always replay in one order.
     @MainActor
-    public static func prCount(context: ModelContext, start: Date, end: Date) -> Int {
+    public static func prs(context: ModelContext, start: Date, end: Date) -> BlockReviewPRs {
         // Records are kept per exercise, so only the history of the lifts
         // logged during the block can set its PRs. One fetch per lift on the
         // single-level `se.exercise?.id` gate, as `SessionFactory` seeds the
@@ -449,7 +486,7 @@ public enum BlockReviewStatistics {
         )
         // Each set's place in the replay is read once: SwiftData reads inside
         // the sort's comparator took 0.4 s on 6,000 sets.
-        var history: [(order: (Date, Date, Int, Int), setEntry: SetEntry)] = []
+        var history: [(order: (Date, Date, Int, Int), exerciseID: UUID, setEntry: SetEntry)] = []
         for exerciseID in exerciseIDs {
             let targetID = exerciseID
             var descriptor = FetchDescriptor<SessionExercise>(
@@ -462,7 +499,7 @@ public enum BlockReviewStatistics {
             for row in rows {
                 guard let session = row.session, session.completedAt != nil else { continue }
                 for entry in row.sets ?? [] where entry.isComplete && !entry.isWarmup {
-                    history.append(((session.startedAt, entry.completedAt, row.orderIndex, entry.orderIndex), entry))
+                    history.append(((session.startedAt, entry.completedAt, row.orderIndex, entry.orderIndex), exerciseID, entry))
                 }
             }
         }
@@ -470,14 +507,16 @@ public enum BlockReviewStatistics {
 
         var table = PRTable()
         var count = 0
-        for (order, entry) in history {
+        var liftsWithPRs: Set<UUID> = []
+        for (order, exerciseID, entry) in history {
             let records = PRDetector.check(set: entry, against: &table)
             let completedAt = order.1
             if !records.isEmpty && completedAt >= start && completedAt <= end {
                 count += 1
+                liftsWithPRs.insert(exerciseID)
             }
         }
-        return count
+        return BlockReviewPRs(count: count, exerciseIDs: liftsWithPRs)
     }
 
     @MainActor

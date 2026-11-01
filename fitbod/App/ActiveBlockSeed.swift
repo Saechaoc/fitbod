@@ -27,6 +27,10 @@
 //  `-fitbod-seed-active-block`, and with `-fitbod-start-program`: on a
 //  fresh store Today can first show before the seed runs.
 //
+//  `-fitbod-seed-ended-heavy-block` seeds the same ended block, but its
+//  workout's work sets are 80,000 x 5, so the block's TONNAGE is 1,200,000
+//  (T113). Launch it the same way, without the other seed flags.
+//
 
 import Foundation
 import SwiftData
@@ -41,13 +45,16 @@ enum ActiveBlockSeed {
         if arguments.contains(launchArgument) {
             seed(in: context)
         } else if arguments.contains(endedBlockRecapLaunchArgument) {
-            seedEndedBlockWithRecap(in: context)
+            seedEndedBlockWithRecap(workSetWeight: 100, in: context)
+        } else if arguments.contains(endedHeavyBlockLaunchArgument) {
+            seedEndedBlockWithRecap(workSetWeight: 80_000, in: context)
         }
         #endif
     }
 
     #if DEBUG
     static let endedBlockRecapLaunchArgument = "-fitbod-seed-ended-block-recap"
+    static let endedHeavyBlockLaunchArgument = "-fitbod-seed-ended-heavy-block"
     static let routineName = "Live Routine"
     static let sessionName = "Live Push"
     static let blockName = "Live Block"
@@ -62,8 +69,10 @@ enum ActiveBlockSeed {
         try? BlockLifecycleService.start(block: live.block, context: context)
     }
 
+    /// Live Block ended after one Live Push workout last week, whose work
+    /// sets are each `workSetWeight` x 5.
     @MainActor
-    private static func seedEndedBlockWithRecap(in context: ModelContext) {
+    private static func seedEndedBlockWithRecap(workSetWeight: Double, in context: ModelContext) {
         guard let live = makeLiveBlock(in: context), let template = live.slot.sessionTemplate else { return }
         let now = Date.now
         let weekStartsMonday = (try? context.fetch(FetchDescriptor<UserSettings>()))?.first?.weekStartsMonday ?? true
@@ -79,7 +88,7 @@ enum ActiveBlockSeed {
                 for set in se.sets ?? [] {
                     set.isComplete = true
                     guard !set.isWarmup else { continue }
-                    set.weight = 100
+                    set.weight = workSetWeight
                     set.reps = 5
                     set.rpe = 8
                     set.completedAt = workout.startedAt.addingTimeInterval(Double(set.orderIndex) * 180)
