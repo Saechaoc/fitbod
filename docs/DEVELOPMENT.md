@@ -60,10 +60,10 @@ The same holds for visual flaws on screens you are not working on.
 
 | Deferred | Why it can wait | Comes back when |
 |---|---|---|
-| VoiceOver refinement: combined row labels, announcements, missing-value labels, audio graphs, rotor order (T98, T111's announcement part, T117) | The labels are rewritten each time a screen's layout changes. | The workflow is stable |
-| AX3 layout fixes on individual screens (T108, T115, the design map's patterns P-4 and P-5) | Each fix and its UI test is redone when the layout changes. | The workflow is stable |
+| VoiceOver refinement: combined row labels, announcements, missing-value labels, audio graphs, rotor order (T117) | The labels are rewritten each time a screen's layout changes. | The workflow is stable |
+| AX3 layout fixes on individual screens (the design map's patterns P-4 and P-5) | Each fix and its UI test is redone when the layout changes. | The workflow is stable |
 | Dark mode and Pro Max checks per screen | Tokens already cover dark mode; layouts still move. | The workflow is stable |
-| Pixel polish: the design map's 177 `polish` rows, T35 to T38, T85, T107, T120 | The screens are being redesigned. | The screen's design is approved |
+| Pixel polish: the design map's 177 `polish` rows, T120 | The screens are being redesigned. | The screen's design is approved |
 | New copy-pinning tests that read Swift source (45 files, about 8,200 lines today) | They fail on every intended copy change. Add none; delete one when it blocks a change. | Release readiness, as a copy check over the running UI |
 | UI tests that assert layout sizes (23 of 58 UI test files) and the OCR fidelity test | They are slow (16 to 28 s per UI test) and break on layout changes. | The workflow is stable |
 | Full UI suite on both phones and at AX3 (T44, T45) | It takes about 2 to 3 hours serially. | Release readiness |
@@ -71,7 +71,7 @@ The same holds for visual flaws on screens you are not working on.
 | Physical-device checks: VoiceOver traversal, haptics, notification denial, Live Activities | Simulators cannot prove them, and the flows are still changing. | Release readiness |
 | Performance work | Only one user, and no slowness felt in use. | A real workout feels slow |
 
-Never deferred, whatever the ticket says: T40 and T41 (data loss), T110, T113, T114 and T116 (wrong results), and test-speed work that makes iteration faster (T101, T119, T121).
+Never deferred, whatever the ticket says: T40 and T41 (data loss), and test-speed work that makes iteration faster (T119, T121).
 
 ## Process
 

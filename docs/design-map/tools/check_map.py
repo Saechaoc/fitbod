@@ -471,7 +471,8 @@ def check_audit(report: Report, screens: dict[str, dict], missing: dict[str, lis
             dest = (path.parent / target).resolve()
             if TICKET.fullmatch(text) and (dest.parent != TICKETS.resolve() or not dest.name.startswith(text + "-")):
                 report.error("audit.md", f"{want} links {text} to {target}, not to its ticket file")
-        for bare in TICKET.findall(LINK.sub("", cells[5])):
+        # An archived ticket has no file to link, so the row names it as "Tnn (done)".
+        for bare in TICKET.findall(re.sub(r"T\d+ \(done\)", "", LINK.sub("", cells[5]))):
             report.error("audit.md", f"{want} names {bare} without linking its ticket file")
     for (key, row), (next_key, _) in zip(keys, keys[1:]):
         if key > next_key:
