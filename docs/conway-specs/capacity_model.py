@@ -71,6 +71,7 @@ ARCHIVED = {
     "T36": (3, ["23", "24"], ["fitbodUITests/RestSheetAndRPEChipsUITests.swift"]),
     "T37": (3, ["24", "25"], ["fitbodUITests/LibraryPolishUITests.swift"]),
     "T38": (3, ["25"], ["fitbodUITests/SmallFixesUITests.swift"]),
+    "T39": (4, ["5"], ["fitbod/Design/SelectAllOnFocus.swift", "fitbodUITests/NumberEntryUITests.swift"]),
     "T40": (4, [], ["fitbodUITests/SlottedSessionDeleteUITests.swift"]),
     "T41": (4, ["N1"], ["fitbodTests/BackupRoutinesRoundTripTests.swift", "fitbodUITests/BackupRestoreRoutinesUITests.swift"]),
     "T49": (1, [], ["fitbodUITests/RPEDecimalHoldUITests.swift"]),
