@@ -143,18 +143,20 @@ public enum DeloadAdvisor {
     /// Returns the per-signal numeric values + fired signals array.
     /// Always returns a report (no nil short-circuit) so the detail
     /// sheet can render the "no signals fired" empty state if the
-    /// caller calls this directly.
+    /// caller calls this directly. The 3- and 6-week windows start at
+    /// local midnight 21 and 42 calendar days before `weekStart`.
     @MainActor
     public static func signalReport(
         weekStart: Date,
         in context: ModelContext,
         settings: UserSettings,
-        now: Date = .now
+        now: Date = .now,
+        calendar: Calendar = .current
     ) -> DeloadSignalReport {
         // Fetch all completed sessions in the last 6 weeks for Sig-1.
         // Pitfall #1: simple #Predicate gates, multi-hop traversals in Swift.
-        let cutoff = weekStart.addingTimeInterval(-21 * 86_400)   // 3 weeks of prior + 3 weeks of recent
-        let sixWeekCutoff = weekStart.addingTimeInterval(-42 * 86_400)
+        let cutoff = FatigueModel.date(byAddingWeeks: -3, to: weekStart, calendar: calendar)   // 3 weeks of prior + 3 weeks of recent
+        let sixWeekCutoff = FatigueModel.date(byAddingWeeks: -6, to: weekStart, calendar: calendar)
         let sessionDescriptor = FetchDescriptor<Session>(
             predicate: #Predicate<Session> { session in
                 session.startedAt >= sixWeekCutoff

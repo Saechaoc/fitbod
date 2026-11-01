@@ -19,14 +19,24 @@ struct FatigueModelWeeklyVolumeTests {
     // MARK: - Helpers
 
     /// Returns the Monday-anchored midnight of the current week per
-    /// Pitfall #4. Synthetic date for hermetic tests — wraps
-    /// `Calendar.current` with `firstWeekday = 2`.
-    private func mondayOfThisWeek() -> Date {
-        var cal = Calendar.current
+    /// Pitfall #4. Synthetic date for hermetic tests — wraps `calendar`
+    /// (`Calendar.current` by default) with `firstWeekday = 2`.
+    private func mondayOfThisWeek(in calendar: Calendar = .current) -> Date {
+        var cal = calendar
         cal.firstWeekday = 2
         let comps = cal.dateComponents([.yearForWeekOfYear, .weekOfYear], from: .now)
         return cal.date(from: comps) ?? .now
     }
+
+    /// Pinned to GMT, for the tests that build a week's edges with
+    /// calendar math and hand FatigueModel the same calendar, so they
+    /// read the same weeks in any time zone (T139).
+    private let gmt: Calendar = {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = .gmt
+        calendar.firstWeekday = 2
+        return calendar
+    }()
 
     /// Insert the three MuscleGroup rows the bench-press fixture needs
     /// (chest / shoulders / triceps). In-memory containers don't get
@@ -327,9 +337,9 @@ struct FatigueModelWeeklyVolumeTests {
     func weekWindowIncludesCurrentSundayExcludesNextMonday() throws {
         let ctx = try FatigueTestFixtures.makeContext()
         let ex = try makeBenchPressExercise(in: ctx)
-        let monday = mondayOfThisWeek()
+        let monday = mondayOfThisWeek(in: gmt)
         // Include: late Sunday of this week (Mon + 6 days + 23h59m)
-        let sundayLate = monday.addingTimeInterval(6 * 86_400 + 23 * 3600 + 59 * 60)
+        let sundayLate = try #require(gmt.date(byAdding: DateComponents(day: 6, hour: 23, minute: 59), to: monday))
         try makeSession(
             in: ctx,
             startedAt: sundayLate,
@@ -337,7 +347,7 @@ struct FatigueModelWeeklyVolumeTests {
             sets: [(100, 5, false, true, "working")]
         )
         // Exclude: next Monday (weekStart + 7 days)
-        let nextMonday = monday.addingTimeInterval(7 * 86_400)
+        let nextMonday = try #require(gmt.date(byAdding: .day, value: 7, to: monday))
         try makeSession(
             in: ctx,
             startedAt: nextMonday,
@@ -345,7 +355,7 @@ struct FatigueModelWeeklyVolumeTests {
             sets: [(100, 5, false, true, "working")]
         )
 
-        let chest = FatigueModel.weeklyVolume(muscleSlug: "chest", weekStart: monday, in: ctx)
+        let chest = FatigueModel.weeklyVolume(muscleSlug: "chest", weekStart: monday, in: ctx, calendar: gmt)
         #expect(abs(chest.directSets - 1.0) < 0.001)
     }
 
@@ -393,8 +403,8 @@ struct FatigueModelWeeklyVolumeTests {
     func weekOverWeekDeltaPositive() throws {
         let ctx = try FatigueTestFixtures.makeContext()
         let ex = try makeBenchPressExercise(in: ctx)
-        let monday = mondayOfThisWeek()
-        let priorMonday = monday.addingTimeInterval(-7 * 86_400)
+        let monday = mondayOfThisWeek(in: gmt)
+        let priorMonday = try #require(gmt.date(byAdding: .day, value: -7, to: monday))
         try makeSession(in: ctx, startedAt: monday, exercise: ex, sets: [
             (100, 5, false, true, "working"),
             (100, 5, false, true, "working"),
@@ -404,7 +414,7 @@ struct FatigueModelWeeklyVolumeTests {
             (100, 5, false, true, "working"),
         ])
 
-        let delta = FatigueModel.weekOverWeekDelta(muscleSlug: "chest", weekStart: monday, in: ctx)
+        let delta = FatigueModel.weekOverWeekDelta(muscleSlug: "chest", weekStart: monday, in: ctx, calendar: gmt)
         #expect(delta.deltaCopy == "+2 vs last week")
     }
 
@@ -412,8 +422,8 @@ struct FatigueModelWeeklyVolumeTests {
     func weekOverWeekDeltaNegative() throws {
         let ctx = try FatigueTestFixtures.makeContext()
         let ex = try makeBenchPressExercise(in: ctx)
-        let monday = mondayOfThisWeek()
-        let priorMonday = monday.addingTimeInterval(-7 * 86_400)
+        let monday = mondayOfThisWeek(in: gmt)
+        let priorMonday = try #require(gmt.date(byAdding: .day, value: -7, to: monday))
         try makeSession(in: ctx, startedAt: monday, exercise: ex, sets: [
             (100, 5, false, true, "working"),
         ])
@@ -423,7 +433,7 @@ struct FatigueModelWeeklyVolumeTests {
             (100, 5, false, true, "working"),
         ])
 
-        let delta = FatigueModel.weekOverWeekDelta(muscleSlug: "chest", weekStart: monday, in: ctx)
+        let delta = FatigueModel.weekOverWeekDelta(muscleSlug: "chest", weekStart: monday, in: ctx, calendar: gmt)
         #expect(delta.deltaCopy == "-2 vs last week")
     }
 
@@ -431,8 +441,8 @@ struct FatigueModelWeeklyVolumeTests {
     func weekOverWeekDeltaZero() throws {
         let ctx = try FatigueTestFixtures.makeContext()
         let ex = try makeBenchPressExercise(in: ctx)
-        let monday = mondayOfThisWeek()
-        let priorMonday = monday.addingTimeInterval(-7 * 86_400)
+        let monday = mondayOfThisWeek(in: gmt)
+        let priorMonday = try #require(gmt.date(byAdding: .day, value: -7, to: monday))
         try makeSession(in: ctx, startedAt: monday, exercise: ex, sets: [
             (100, 5, false, true, "working"),
             (100, 5, false, true, "working"),
@@ -442,7 +452,7 @@ struct FatigueModelWeeklyVolumeTests {
             (100, 5, false, true, "working"),
         ])
 
-        let delta = FatigueModel.weekOverWeekDelta(muscleSlug: "chest", weekStart: monday, in: ctx)
+        let delta = FatigueModel.weekOverWeekDelta(muscleSlug: "chest", weekStart: monday, in: ctx, calendar: gmt)
         #expect(delta.deltaCopy == "no change vs last week")
     }
 

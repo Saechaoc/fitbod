@@ -116,8 +116,15 @@ public struct WeeklyRecapSheet: View {
 
     // MARK: - Computed helpers
 
+    /// The start of last week, the week the recap covers.
     private var priorWeekStart: Date {
-        weekStart.addingTimeInterval(-7 * 86_400)
+        Self.priorWeekStart(before: weekStart)
+    }
+
+    /// The start of the week before last, which the prior-week
+    /// comparisons read.
+    private var weekBeforeLastStart: Date {
+        Self.priorWeekStart(before: priorWeekStart)
     }
 
     private var settings: UserSettings? { settingsList.first }
@@ -213,13 +220,7 @@ public struct WeeklyRecapSheet: View {
     // MARK: - Cover computed properties
 
     private var coverDateRangeCaption: String {
-        let df = DateFormatter()
-        df.dateFormat = "MMM d"
-        df.timeZone = TimeZone.current
-        let endDate = weekStart.addingTimeInterval(-1)  // day before the new Monday
-        let start = df.string(from: priorWeekStart).uppercased()
-        let end   = df.string(from: endDate).uppercased()
-        return "\(start) → \(end)"
+        Self.dateRangeCaption(weekStart: weekStart)
     }
 
     private var coverHeadline: String {
@@ -245,6 +246,28 @@ public struct WeeklyRecapSheet: View {
     private var sessionsTarget: Int? { Self.sessionsTarget(weekStart: weekStart, in: ctx) }
 
     // MARK: - Cover rules
+
+    /// The start of the week before the one that starts at `weekStart`:
+    /// local midnight 7 calendar days earlier, a daylight-saving change
+    /// included (F333). The recap's reads of last week, and of the week
+    /// before it, take their bounds from here.
+    static func priorWeekStart(before weekStart: Date, calendar: Calendar = .current) -> Date {
+        FatigueModel.date(byAddingWeeks: -1, to: weekStart, calendar: calendar)
+    }
+
+    /// The cover's date range, "MAR 2 → MAR 8": the first and last days of
+    /// the week before the one that starts at `weekStart`, in the
+    /// calendar's time zone and locale.
+    static func dateRangeCaption(weekStart: Date, calendar: Calendar = .current) -> String {
+        let df = DateFormatter()
+        df.dateFormat = "MMM d"
+        df.locale = calendar.locale
+        df.timeZone = calendar.timeZone
+        let endDate = weekStart.addingTimeInterval(-1)  // day before the new Monday
+        let start = df.string(from: priorWeekStart(before: weekStart, calendar: calendar)).uppercased()
+        let end   = df.string(from: endDate).uppercased()
+        return "\(start) → \(end)"
+    }
 
     /// The sessions last week's plan called for: the days of the week
     /// before `weekStart` that a block running that day trains on under
@@ -646,16 +669,43 @@ public struct WeeklyRecapSheet: View {
 
     @MainActor
     private func musclesHitLastWeek(minSets: Int) -> [MuscleRow] {
+        Self.musclesHit(weekStart: weekStart, muscles: allMuscles, minSets: minSets, in: ctx)
+    }
+
+    /// Last week's Muscles Hit rows: each of `muscles` that a session
+    /// last week gave `minSets` or more weighted sets, most sessions
+    /// first. `muscles` comes from a query in no set order, so muscles
+    /// with the same count go by name, then by slug, and keep one order
+    /// between launches (F334).
+    @MainActor
+    static func musclesHit(
+        weekStart: Date,
+        muscles: [MuscleGroup],
+        minSets: Int,
+        in context: ModelContext,
+        calendar: Calendar = .current
+    ) -> [MuscleRow] {
         // One read of the week for every muscle; each count equals
         // `FatigueModel.frequencyHits` for that muscle.
-        let contributions = FatigueModel.contributionsPerSession(weekStart: priorWeekStart, in: ctx)
+        let contributions = FatigueModel.contributionsPerSession(
+            weekStart: priorWeekStart(before: weekStart, calendar: calendar),
+            in: context,
+            calendar: calendar
+        )
         let minContribution = Double(minSets)
-        return allMuscles.compactMap { muscle in
+        return muscles.compactMap { muscle in
             let count = (contributions[muscle.slug] ?? [:]).values.filter { $0 >= minContribution }.count
             guard count > 0 else { return nil }
             return MuscleRow(slug: muscle.slug, displayName: muscle.displayName, count: count)
         }
-        .sorted { $0.count > $1.count }
+        .sorted { lhs, rhs in
+            if lhs.count != rhs.count { return lhs.count > rhs.count }
+            switch lhs.displayName.localizedStandardCompare(rhs.displayName) {
+            case .orderedAscending: return true
+            case .orderedDescending: return false
+            case .orderedSame: return lhs.slug < rhs.slug
+            }
+        }
     }
 
     @MainActor
@@ -691,7 +741,7 @@ public struct WeeklyRecapSheet: View {
     @MainActor
     private func totalTonnagePriorWeek() -> Double {
         let end   = priorWeekStart
-        let start = end.addingTimeInterval(-7 * 86_400)
+        let start = weekBeforeLastStart
         return tonnageInRange(from: start, to: end)
     }
 
@@ -709,7 +759,7 @@ public struct WeeklyRecapSheet: View {
     @MainActor
     private func weeklySetsDelta() -> Int {
         let thisWeekSets = weeklyTotalSetsCount()
-        let prior = priorWeekStart.addingTimeInterval(-7 * 86_400)
+        let prior = weekBeforeLastStart
         let priorSets = FatigueModel.completedWorkingSets(startedFrom: prior, before: priorWeekStart, in: ctx).count
         return thisWeekSets - priorSets
     }
@@ -730,7 +780,7 @@ public struct WeeklyRecapSheet: View {
     private func topExercisesProgress() -> [ProgressRow] {
         let start     = priorWeekStart
         let end       = weekStart
-        let priorStart = priorWeekStart.addingTimeInterval(-7 * 86_400)
+        let priorStart = weekBeforeLastStart
 
         let lastWeekEntries = FatigueModel.completedWorkingSets(startedFrom: start, before: end, in: ctx)
         let priorWeekEntries = FatigueModel.completedWorkingSets(startedFrom: priorStart, before: start, in: ctx)
@@ -816,7 +866,9 @@ public struct WeeklyRecapSheet: View {
 
     // MARK: - Row types
 
-    private struct MuscleRow {
+    /// One Muscles Hit row. Internal so WeekWindowCalendarTests can read
+    /// the rows `musclesHit` orders.
+    struct MuscleRow {
         let slug: String
         let displayName: String
         let count: Int

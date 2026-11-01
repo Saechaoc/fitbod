@@ -297,7 +297,7 @@ public struct PerMuscleDetailView: View {
 
     @MainActor
     private func computeContributingExercises() -> [ContributingExercise] {
-        let weekEnd = weekStart.addingTimeInterval(7 * 86_400)
+        let weekEnd = FatigueModel.date(byAddingWeeks: 1, to: weekStart)
         let targetSlug = muscleSlug
 
         let filtered = FatigueModel.completedWorkingSets(startedFrom: weekStart, before: weekEnd, in: ctx)

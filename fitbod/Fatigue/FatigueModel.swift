@@ -88,17 +88,19 @@ public enum FatigueModel {
     // MARK: - weeklyVolume
 
     /// Stimulus-weighted weekly volume for one muscle, for the week
-    /// starting at `weekStart` (inclusive) and ending at `weekStart +
-    /// 7d` (exclusive). Returns the direct/indirect split per D-07; a
-    /// muscle nothing hit this week reads zero. Read from
-    /// `weeklyVolumes`, so one muscle and every muscle always agree.
+    /// starting at `weekStart` (inclusive) and ending where the next week
+    /// starts, 7 calendar days later (exclusive). Returns the
+    /// direct/indirect split per D-07; a muscle nothing hit this week
+    /// reads zero. Read from `weeklyVolumes`, so one muscle and every
+    /// muscle always agree.
     @MainActor
     public static func weeklyVolume(
         muscleSlug: String,
         weekStart: Date,
-        in context: ModelContext
+        in context: ModelContext,
+        calendar: Calendar = .current
     ) -> WeightedSetTotal {
-        weeklyVolumes(weekStart: weekStart, in: context)[muscleSlug]
+        weeklyVolumes(weekStart: weekStart, in: context, calendar: calendar)[muscleSlug]
             ?? WeightedSetTotal(directSets: 0, indirectSets: 0)
     }
 
@@ -120,9 +122,10 @@ public enum FatigueModel {
     @MainActor
     public static func weeklyVolumes(
         weekStart: Date,
-        in context: ModelContext
+        in context: ModelContext,
+        calendar: Calendar = .current
     ) -> [String: WeightedSetTotal] {
-        let entries = fetchWorkingSets(weekStart: weekStart, in: context)
+        let entries = fetchWorkingSets(weekStart: weekStart, in: context, calendar: calendar)
 
         var direct: [String: Double] = [:]
         var indirect: [String: Double] = [:]
@@ -164,9 +167,10 @@ public enum FatigueModel {
     public static func contributionPerSession(
         muscleSlug: String,
         weekStart: Date,
-        in context: ModelContext
+        in context: ModelContext,
+        calendar: Calendar = .current
     ) -> [UUID: Double] {
-        contributionsPerSession(weekStart: weekStart, in: context)[muscleSlug] ?? [:]
+        contributionsPerSession(weekStart: weekStart, in: context, calendar: calendar)[muscleSlug] ?? [:]
     }
 
     /// `contributionPerSession` for every muscle at once, keyed by muscle
@@ -175,9 +179,10 @@ public enum FatigueModel {
     @MainActor
     public static func contributionsPerSession(
         weekStart: Date,
-        in context: ModelContext
+        in context: ModelContext,
+        calendar: Calendar = .current
     ) -> [String: [UUID: Double]] {
-        let entries = fetchWorkingSets(weekStart: weekStart, in: context)
+        let entries = fetchWorkingSets(weekStart: weekStart, in: context, calendar: calendar)
 
         var perMuscle: [String: [UUID: Double]] = [:]
         for entry in entries {
@@ -204,12 +209,14 @@ public enum FatigueModel {
         muscleSlug: String,
         weekStart: Date,
         minContribution: Double = 2.0,
-        in context: ModelContext
+        in context: ModelContext,
+        calendar: Calendar = .current
     ) -> Int {
         let perSession = contributionPerSession(
             muscleSlug: muscleSlug,
             weekStart: weekStart,
-            in: context
+            in: context,
+            calendar: calendar
         )
         return perSession.values.filter { $0 >= minContribution }.count
     }
@@ -223,11 +230,12 @@ public enum FatigueModel {
     public static func weekOverWeekDelta(
         muscleSlug: String,
         weekStart: Date,
-        in context: ModelContext
+        in context: ModelContext,
+        calendar: Calendar = .current
     ) -> WeekOverWeekDelta {
-        let previousWeekStart = weekStart.addingTimeInterval(-7 * 86_400)
-        let current = weeklyVolume(muscleSlug: muscleSlug, weekStart: weekStart, in: context)
-        let prior = weeklyVolume(muscleSlug: muscleSlug, weekStart: previousWeekStart, in: context)
+        let previousWeekStart = date(byAddingWeeks: -1, to: weekStart, calendar: calendar)
+        let current = weeklyVolume(muscleSlug: muscleSlug, weekStart: weekStart, in: context, calendar: calendar)
+        let prior = weeklyVolume(muscleSlug: muscleSlug, weekStart: previousWeekStart, in: context, calendar: calendar)
         return WeekOverWeekDelta(
             currentWeekTotal: current.totalSets,
             previousWeekTotal: prior.totalSets
@@ -248,6 +256,18 @@ public enum FatigueModel {
         return free(currentSets, mev, mav, mrv)
     }
 
+    // MARK: - Week boundaries
+
+    /// `date` moved by `weeks` whole weeks, back when `weeks` is negative:
+    /// the same local time `7 × weeks` calendar days away, so the week
+    /// before or after one that starts at local midnight starts at local
+    /// midnight too. A week that holds a daylight-saving change is an hour
+    /// shorter or longer than 7 × 86,400 seconds, so a fixed span would
+    /// land an hour off midnight (F333).
+    static func date(byAddingWeeks weeks: Int, to date: Date, calendar: Calendar = .current) -> Date {
+        calendar.date(byAdding: .day, value: 7 * weeks, to: date) ?? date
+    }
+
     // MARK: - Internal helpers
 
     /// The working sets `weeklyVolume` sums for the week starting at
@@ -255,11 +275,12 @@ public enum FatigueModel {
     @MainActor
     private static func fetchWorkingSets(
         weekStart: Date,
-        in context: ModelContext
+        in context: ModelContext,
+        calendar: Calendar
     ) -> [SetEntry] {
         completedWorkingSets(
             startedFrom: weekStart,
-            before: weekStart.addingTimeInterval(7 * 86_400),
+            before: date(byAddingWeeks: 1, to: weekStart, calendar: calendar),
             in: context
         )
     }

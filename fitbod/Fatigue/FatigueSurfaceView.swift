@@ -97,7 +97,7 @@ public struct FatigueSurfaceView: View {
         let start = weekStart
         return WeekVolumes(
             thisWeek: FatigueModel.weeklyVolumes(weekStart: start, in: ctx),
-            lastWeek: FatigueModel.weeklyVolumes(weekStart: start.addingTimeInterval(-7 * 86_400), in: ctx)
+            lastWeek: FatigueModel.weeklyVolumes(weekStart: FatigueModel.date(byAddingWeeks: -1, to: start), in: ctx)
         )
     }
 
