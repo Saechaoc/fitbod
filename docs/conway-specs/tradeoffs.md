@@ -275,6 +275,14 @@ Product decisions are in [decisions.md](decisions.md), and they win over this fi
 - Call: PER WEEK shows up to two decimals with trailing zeros trimmed, such as 0.25, 0.5 or 2.
 - Rejected: "1 every 4 weeks", which is longer and harder to fit at AX3.
 
+### Weekly recap target
+
+- Coordinator answer, 2026-11-01 (T114 question `msg_60dca411b68c`, decided under autopilot; the user can revisit it): the recap's sessions target is the number of last week's days that a started fixed-weekly block covered and listed as a training day.
+  A block that started or ended mid-week counts only the days it covered, and a day counts once across a mid-week swap.
+- A rotation block plans no weekdays, so with a rotation block, no block or no planned days the chip reads "N sessions" with no target.
+  The headline then follows sessions and PRs alone: "A strong week." at 3 or more PRs, "Solid week." at 2 or more sessions, otherwise "Light week.".
+- Rejected: reading a rotation block's stored training days, which the scheduler ignores and which survive a switch from fixed weekly.
+
 ### Today's third stat
 
 - Call: when the week trend is flat, the value under "W1 / 5" shows the current phase's short label, such as "ACCUM", instead of a dash.
