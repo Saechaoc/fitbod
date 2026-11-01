@@ -42,7 +42,6 @@ Every Phase 2 ticket is done and archived.
 | Ticket | Title |
 |---|---|
 | [T38](tickets/T38-program-new-block-settings-small-fixes.md) | Small fixes on Program, New Block and Settings |
-| [T85](tickets/T85-pr-row-phrases.md) | PR rows keep "@ RPE" and the kind label whole |
 | [T98](tickets/T98-chart-audio-graph-rounding.md) | The progress chart's audio graph reads rounded values |
 | [T106](tickets/T106-sideways-drag-does-not-open-rows.md) | A sideways drag on a row does not open it |
 | [T108](tickets/T108-block-overview-and-routine-at-ax3.md) | The block overview and the routine screen read cleanly at AX3 |
@@ -57,6 +56,7 @@ Every Phase 2 ticket is done and archived.
 | [T124](tickets/T124-rest-sheet-fits-at-ax3.md) | The rest sheet's countdown and ±15s buttons fit at AX3 |
 | [T125](tickets/T125-logger-plates-during-entry.md) | The logger shows a set's plates while its weight is being entered |
 | [T126](tickets/T126-section-head-action-hit-area.md) | Section head actions keep their touch area off the title at accessibility sizes |
+| [T127](tickets/T127-pr-volume-grouping.md) | The PR list writes volume with thousands separators, as the chart does |
 
 ### Phase 4: test health
 

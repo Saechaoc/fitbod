@@ -106,6 +106,7 @@ ARCHIVED = {
     "T82": (1, [], []),
     "T83": (1, [], ["fitbodUITests/ActionPopoverFitUITests.swift"]),
     "T84": (1, [], ["fitbodTests/PreviousTopSetAcrossLogsTests.swift"]),
+    "T85": (3, [], ["fitbodTests/PRRowTextTests.swift"]),
     "T86": (1, [], []),
     "T87": (2, [], ["fitbodUITests/TodaySheetOrderUITests.swift"]),
     "T88": (1, [], ["fitbodTests/SkipNextSessionWarmupTests.swift"]),
