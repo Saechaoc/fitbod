@@ -15,6 +15,10 @@
 //    BRUDivider(.hair).
 //  - Each row: routineName in BRUFont.bodyEmphasis bruInk + day and
 //    tonnage in BRUFont.labelSmall bruMuted + "›" disclosure glyph.
+//  - A tap on a row opens its workout's summary, as a History row does,
+//    with the same SessionSummaryDestination, pushed from here (T118).
+//    The row of sets that belong to no workout draws no "›" and opens
+//    nothing.
 //  - Empty state: BRUFont.bodyEmphasis bruInk.
 //  - Background: Color.bruPaper.ignoresSafeArea().
 //
@@ -45,6 +49,8 @@ public struct WeekDetailView: View {
     public let weekStart: Date
     private let weekStartsMonday: Bool
     @Query private var sets: [SetEntry]
+    /// The workout a row tap opened, whose summary is pushed.
+    @State private var openedWorkoutID: UUID?
 
     public init(weekStart: Date, weekStartsMonday: Bool) {
         let calendar = WeeklyTonnageAggregator.weekCalendar(weekStartsMonday: weekStartsMonday)
@@ -95,6 +101,9 @@ public struct WeekDetailView: View {
         }
         .background(Color.bruPaper.ignoresSafeArea())
         .navigationBarHidden(true)
+        .navigationDestination(item: $openedWorkoutID) { sessionID in
+            SessionSummaryDestination(sessionID: sessionID)
+        }
     }
 
     // MARK: - Total band
@@ -123,8 +132,29 @@ public struct WeekDetailView: View {
 
     // MARK: - Workout row
 
+    /// A workout's row, which opens its summary as a History row does:
+    /// only on a tap, read by VoiceOver as one button. This screen is
+    /// itself pushed by Weekly Tonnage's `navigationDestination(item:)`, so
+    /// it pushes the summary the same way; a `SessionHistoryRoute` link
+    /// here opened nothing. The row of sets that belong to no workout has
+    /// nothing to open, so it is plain text.
     @ViewBuilder
     private func workoutRow(_ workout: WeekDetailWorkout) -> some View {
+        if let id = workout.id {
+            Button { openedWorkoutID = id } label: {
+                rowContent(workout, opens: true)
+            }
+            .buttonStyle(.bruRow)
+            .accessibilityIdentifier("weekDetail.row")
+            .accessibilityHint("Opens the workout summary")
+        } else {
+            rowContent(workout, opens: false)
+                .accessibilityElement(children: .combine)
+        }
+    }
+
+    /// The row's name, day and tonnage, with the "›" of a row that opens.
+    private func rowContent(_ workout: WeekDetailWorkout, opens: Bool) -> some View {
         HStack(spacing: 12) {
             VStack(alignment: .leading, spacing: 2) {
                 Text(workout.name.isEmpty ? "Unnamed workout" : workout.name)
@@ -136,9 +166,12 @@ public struct WeekDetailView: View {
                     .foregroundStyle(Color.bruMuted)
             }
             Spacer()
-            Text("›")
-                .font(BRUFont.bodyEmphasis)
-                .foregroundStyle(Color.bruMuted)
+            if opens {
+                Text("›")
+                    .font(BRUFont.bodyEmphasis)
+                    .foregroundStyle(Color.bruMuted)
+                    .accessibilityHidden(true)
+            }
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 12)

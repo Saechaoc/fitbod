@@ -36,8 +36,9 @@ extension View {
 
 /// Looks the session up by id when the summary is pushed. If it was
 /// deleted while the route sat on the stack, says so instead of showing
-/// an empty screen.
-private struct SessionSummaryDestination: View {
+/// an empty screen. History pushes it through `SessionHistoryRoute.summary`;
+/// Weekly Tonnage's week detail presents it from its workout rows.
+struct SessionSummaryDestination: View {
     @Environment(\.dismiss) private var dismiss
     @Query private var matches: [Session]
 

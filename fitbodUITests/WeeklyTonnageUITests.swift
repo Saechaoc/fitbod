@@ -34,6 +34,13 @@
 //      nine weeks of data never read more than eight weeks.
 //    - The chart and its week detail go back with ‹ BACK.
 //
+//  Ticket T118, findings F249 and F245:
+//
+//    - The previous-best rule's label reads whole, PREVIOUS BEST, inside
+//      the chart, read off a screenshot.
+//    - A tap on a week's workout row opens that workout's summary, and
+//      ‹ BACK returns to the week. VoiceOver reads the row as a button.
+//
 
 import XCTest
 
@@ -187,10 +194,12 @@ final class WeeklyTonnageUITests: XCTestCase {
         let week = try XCTUnwrap(Self.date(title.label, format: "'Week of 'MMM d, yyyy"), "Cannot read \(title.label)")
         XCTAssertEqual(calendar.component(.weekday, from: week), firstWeekday, "\(title.label) must start on \(setting)")
 
-        let workout = app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH %@", "Sun, ")).firstMatch
+        let workout = app.buttons.matching(identifier: "weekDetail.row").firstMatch
         XCTAssertTrue(workout.exists || workout.waitForExistence(timeout: 5), "\(title.label) must list the Sunday workout")
-        // The row reads its day, then its tonnage: "Sun, Oct 25 · 1,500 lb".
-        let day = workout.label.components(separatedBy: " · ").first ?? workout.label
+        // The row reads its workout, its day, then its tonnage: "Tonnage
+        // Weeks, Sun, Oct 25 · 1,500 lb".
+        let day = workout.label.range(of: "Sun, [A-Z][a-z]{2} [0-9]{1,2}", options: .regularExpression)
+            .map { String(workout.label[$0]) } ?? workout.label
         let sunday = try XCTUnwrap(Self.date(day, format: "EEE, MMM d", near: week), "Cannot read \(workout.label)")
         let weekEnd = try XCTUnwrap(calendar.date(byAdding: .day, value: 7, to: week))
         XCTAssertTrue(
@@ -349,6 +358,60 @@ final class WeeklyTonnageUITests: XCTestCase {
         XCTAssertTrue(app.buttons["Last 8 weeks"].waitForNonExistence(timeout: 5), "‹ BACK must close the chart")
     }
 
+    // MARK: - T118: the previous-best label
+
+    /// Swift Charts drew the previous-best rule's label past the rule's
+    /// trailing end and cut it at the chart's edge, so the small phone read
+    /// "PREVIOU". The label must read whole inside the chart. XCUI reads a
+    /// label whole however the screen cuts it, so the text comes off a
+    /// screenshot.
+    @MainActor
+    func testPreviousBestLabelReadsWhole() throws {
+        let app = launch(weeks: 2)
+        openWeeklyTonnage(in: app)
+        let chart = app.otherElements["weeklyTonnage.chart"]
+        XCTAssertTrue(chart.exists || chart.waitForExistence(timeout: 5), "Missing the chart")
+        // The push must stop moving the chart before its pixels are read.
+        UITestNavigation.waitUntilStill(chart, interval: 0.1)
+        let read = try UITestNavigation.textLines(in: chart.frame, of: XCUIScreen.main.screenshot()).map(\.text)
+        XCTAssertTrue(
+            read.contains { Self.squeezed($0).contains("PREVIOUSBEST") },
+            "The chart must label its previous best PREVIOUS BEST, whole, but reads \(read)"
+        )
+        UITestNavigation.saveScreenshot("T118", "tonnage-previous-best")
+    }
+
+    // MARK: - T118: a week's rows open their workouts
+
+    /// Each row in a week's detail showed a "›", but a tap on it opened
+    /// nothing. A tap on the row must open its workout's summary, as a
+    /// History row does, and the summary's ‹ BACK must return to the week.
+    /// VoiceOver must read the row as a button.
+    @MainActor
+    func testWeekRowOpensItsWorkout() throws {
+        let app = launch(weeks: 2)
+        openWeeklyTonnage(in: app)
+        let week = try openNewestWeek(in: app)
+        let row = app.descendants(matching: .any)
+            .matching(NSPredicate(format: "label BEGINSWITH %@", "Tonnage Weeks"))
+            .firstMatch
+        XCTAssertTrue(row.exists || row.waitForExistence(timeout: 5), "\(week) must list its workout")
+        XCTAssertEqual(row.elementType, .button, "VoiceOver must read the workout's row as a button")
+        UITestNavigation.assertTapTarget(row)
+
+        row.tap()
+        let summary = app.staticTexts["WORKOUT COMPLETE"]
+        guard summary.waitForExistence(timeout: 5) else {
+            XCTFail("A tap on the workout's row in \(week) must open its summary, but nothing opened")
+            return
+        }
+        UITestNavigation.saveScreenshot("T118", "week-row-summary")
+        try back(on: "The workout's summary", in: app).tap()
+        XCTAssertTrue(summary.waitForNonExistence(timeout: 5), "‹ BACK must close the summary")
+        let title = app.staticTexts[week]
+        XCTAssertTrue(title.exists || title.waitForExistence(timeout: 5), "‹ BACK must return to \(week)")
+    }
+
     // MARK: - Navigation
 
     /// Launches on a fresh store with `weeks` finished Sunday workouts.
@@ -368,6 +431,25 @@ final class WeeklyTonnageUITests: XCTestCase {
         XCTAssertTrue(row.exists || row.waitForExistence(timeout: 10), "Progress must offer Weekly Tonnage")
         row.tap()
         XCTAssertTrue(app.buttons["Last 8 weeks"].waitForExistence(timeout: 5), "Weekly Tonnage did not open")
+    }
+
+    /// Taps the middle of the newest bar as drawn, since Swift Charts
+    /// reports bars at frames other than the drawn ones, and returns the
+    /// title of the week it opens, such as "Week of Oct 19, 2026".
+    @MainActor
+    private func openNewestWeek(in app: XCUIApplication) throws -> String {
+        let chart = app.otherElements["weeklyTonnage.chart"]
+        XCTAssertTrue(chart.exists || chart.waitForExistence(timeout: 5), "Missing the chart")
+        // The push must stop moving the chart before its pixels are read.
+        UITestNavigation.waitUntilStill(chart, interval: 0.1)
+        let drawn = drawnBars(in: chart.frame, of: XCUIScreen.main.screenshot())
+        let newest = try XCTUnwrap(drawn.bars.last, "The chart draws no bars")
+        app.coordinate(withNormalizedOffset: .zero)
+            .withOffset(CGVector(dx: (newest.lowerBound + newest.upperBound) / 2, dy: drawn.row))
+            .tap()
+        let title = app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH %@", "Week of ")).firstMatch
+        XCTAssertTrue(title.waitForExistence(timeout: 5), "Tapping a bar must open its week")
+        return title.label
     }
 
     /// Sets Units in Settings, which opens from Today, and closes it.
@@ -398,6 +480,17 @@ final class WeeklyTonnageUITests: XCTestCase {
     private func heroTotal(in app: XCUIApplication) -> String? {
         let total = app.staticTexts.matching(NSPredicate(format: "label MATCHES %@", "^[0-9][0-9,]*$")).firstMatch
         return total.waitForExistence(timeout: 5) ? total.label : nil
+    }
+
+    /// `text` as Vision reads it, in Latin capitals without spaces, with
+    /// each zero or Q read as the O it stands for: Vision can read the mono
+    /// font's O as either.
+    @MainActor
+    private static func squeezed(_ text: String) -> String {
+        UITestNavigation.latin(text)
+            .filter { !$0.isWhitespace }
+            .replacingOccurrences(of: "0", with: "O")
+            .replacingOccurrences(of: "Q", with: "O")
     }
 
     /// How many bars the chart draws, counted on a screenshot.

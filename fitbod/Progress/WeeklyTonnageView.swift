@@ -19,7 +19,8 @@
 //    stacked muscle mode"). BRU intent palette (bruInk/bruInk@0.4/bruMuted) is
 //    applied to the BASELINE (non-stacked) bar only.
 //  - Chart grid: bruHair dashed gridlines, bruMuted BRUFont.labelSmall axis labels.
-//  - RuleMark: bruMuted, StrokeStyle(lineWidth:1, dash:[2,4]), BRUFont.labelMicro.
+//  - RuleMark: bruMuted, StrokeStyle(lineWidth:1, dash:[2,4]), BRUFont.labelMicro
+//    annotation above the rule's trailing end, inside the plot.
 //  - Background: Color.bruPaper.
 //
 //  ## Outer/inner @Query split (PATTERNS §Pattern D)
@@ -328,11 +329,14 @@ private struct WeeklyTonnageChartHost: View {
                 }
 
                 // RuleMark "previous best" — bruMuted dashed, BRUFont.labelMicro annotation
+                // above the rule's trailing end, inside the plot. At .topTrailing,
+                // past the rule's end, Swift Charts cut it at the chart's edge, so
+                // the small phone read "PREVIOU".
                 if bars.count >= 2 {
                     RuleMark(y: .value("Previous best", previousBest))
                         .foregroundStyle(Color.bruMuted)
                         .lineStyle(StrokeStyle(lineWidth: 1, dash: [2, 4]))
-                        .annotation(position: .topTrailing, alignment: .trailing) {
+                        .annotation(position: .top, alignment: .trailing) {
                             Text("PREVIOUS BEST")
                                 .font(BRUFont.labelMicro)
                                 .tracking(1.0)
