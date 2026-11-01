@@ -9,9 +9,11 @@
 //  Composition (top to bottom):
 //    BRUHeaderBar (left: .back, center: "Routine", right: Edit / Done)
 //    [conditional] LiveEditBanner - when any block referencing this split is active
+//      (at accessibility sizes it scrolls with the page instead, after the sessions)
 //    ScrollView { LazyVStack:
 //      Name section (editable "Routine name" field)
 //      Sessions section (BRUSectionHead + SplitSlotRow rows; Edit mode moves / removes)
+//      [conditional, accessibility sizes] LiveEditBanner
 //      Used-in section (BRUSectionHead + block usage rows)
 //      Archive section ("Archive routine")
 //    }
@@ -122,6 +124,14 @@ public struct SplitDetailView: View {
     /// Row pitch for drag-reorder gap calculation (row min-height + 0pt inter-row gap).
     private var slotPitch: CGFloat { 64 }
 
+    /// At accessibility sizes the live-edit banner takes about a third of
+    /// the space between the header and the tab bar, so it scrolls with the
+    /// page, after the sessions, and the first session shows when the
+    /// screen opens. Otherwise it stays under the header.
+    private var bannerScrollsWithPage: Bool {
+        dynamicTypeSize.isAccessibilitySize
+    }
+
     // MARK: - Body
 
     public var body: some View {
@@ -134,7 +144,7 @@ public struct SplitDetailView: View {
             )
 
             // Live-edit banner - shown when split is on an active block
-            if liveActiveBlock != nil {
+            if liveActiveBlock != nil && !bannerScrollsWithPage {
                 LiveEditBanner()
             }
 
@@ -142,6 +152,9 @@ public struct SplitDetailView: View {
                 LazyVStack(spacing: 0) {
                     nameSection
                     sessionsSection
+                    if liveActiveBlock != nil && bannerScrollsWithPage {
+                        LiveEditBanner()
+                    }
                     usedInSection
                     archiveSection
                 }

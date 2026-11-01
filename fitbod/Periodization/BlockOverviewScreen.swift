@@ -546,6 +546,15 @@ public struct BlockOverviewScreen: View {
         }
     }
 
+    /// The active hero's stats, "W1 / 5 · VOL HOLD · INT 100%", on one line.
+    /// At accessibility sizes, where each part would wrap in its share of
+    /// the line, each takes a line of its own, without the dots.
+    private var heroStatsLayout: AnyLayout {
+        dynamicTypeSize.isAccessibilitySize
+            ? AnyLayout(VStackLayout(alignment: .leading, spacing: 4))
+            : AnyLayout(HStackLayout(spacing: 12))
+    }
+
     private func activeHeroBand(_ planWeek: PlanWeek) -> some View {
         VStack(alignment: .leading, spacing: 0) {
             // Top row: ACTIVE BLOCK label + DAYS REMAINING
@@ -561,25 +570,29 @@ public struct BlockOverviewScreen: View {
             // Bottom row: week position + vol + intensity. After the plan
             // there is no week, and SessionFactory applies no phase.
             if case .week(let weekIndex) = planWeek {
-                HStack(spacing: 12) {
+                heroStatsLayout {
                     Text("W\(weekIndex + 1) / \(totalWeeks)")
                         .font(BRUFont.labelSmall)
                         .textCase(.uppercase)
                         .tracking(1.2)
                         .foregroundStyle(Color.bruPaper)
-                    Text("·")
-                        .font(BRUFont.labelSmall)
-                        .foregroundStyle(Color.bruPaper.opacity(0.4))
-                        .accessibilityHidden(true)
+                    if !dynamicTypeSize.isAccessibilitySize {
+                        Text("·")
+                            .font(BRUFont.labelSmall)
+                            .foregroundStyle(Color.bruPaper.opacity(0.4))
+                            .accessibilityHidden(true)
+                    }
                     Text(volMultiplierLabel)
                         .font(BRUFont.labelSmall)
                         .textCase(.uppercase)
                         .tracking(1.2)
                         .foregroundStyle(Color.bruSignal)
-                    Text("·")
-                        .font(BRUFont.labelSmall)
-                        .foregroundStyle(Color.bruPaper.opacity(0.4))
-                        .accessibilityHidden(true)
+                    if !dynamicTypeSize.isAccessibilitySize {
+                        Text("·")
+                            .font(BRUFont.labelSmall)
+                            .foregroundStyle(Color.bruPaper.opacity(0.4))
+                            .accessibilityHidden(true)
+                    }
                     Text(intMultiplierLabel)
                         .font(BRUFont.labelSmall)
                         .textCase(.uppercase)
@@ -907,7 +920,9 @@ public struct BlockOverviewScreen: View {
             BRUSectionHead("Routine", right: nil)
             HStack(spacing: 12) {
                 if block.split == nil {
-                    BRUButton("+ ATTACH ROUTINE ▸", kind: .ghost) {
+                    // A no-break space keeps "▸" on ROUTINE's line when the
+                    // label wraps.
+                    BRUButton("+ ATTACH ROUTINE\u{00A0}▸", kind: .ghost) {
                         presentingSplitPicker = true
                     }
                     .padding(.horizontal, 16)
