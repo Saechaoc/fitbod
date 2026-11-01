@@ -6,7 +6,10 @@
 //  fresh install: the store files are deleted and the app's UserDefaults
 //  domain (seed stamps, rest timer deadline) is cleared before the
 //  container is built, so the exercise library re-seeds into an empty
-//  store. UI tests pass it on the first launch and drop it to relaunch:
+//  store. The app's pending and delivered notifications are removed too,
+//  so a rest timer an earlier test started never shows "Rest complete"
+//  during the run. UI tests pass it on the first launch and drop it to
+//  relaunch:
 //
 //    app.launchArguments = [DebugLaunchReset.launchArgument]
 //    app.launch()
@@ -27,6 +30,7 @@
 import Foundation
 #if DEBUG
 import UIKit
+import UserNotifications
 #endif
 
 enum DebugLaunchReset {
@@ -47,6 +51,7 @@ enum DebugLaunchReset {
         let storeURL = FitbodModelContainer.defaultStoreURL
         if resets {
             reset(storeURL: storeURL, defaults: .standard, domain: domain)
+            clearNotifications()
         }
         if signals {
             publishSignal(freshness(afterReset: resets, storeURL: storeURL, defaults: .standard, domain: domain))
@@ -62,6 +67,15 @@ enum DebugLaunchReset {
             try? FileManager.default.removeItem(at: file)
         }
         defaults.removePersistentDomain(forName: domain)
+    }
+
+    /// Removes the app's pending and delivered notifications, so a rest
+    /// timer that an earlier test or launch started cannot come due, or
+    /// still sit in Notification Center, during this run.
+    private static func clearNotifications() {
+        let center = UNUserNotificationCenter.current()
+        center.removeAllPendingNotificationRequests()
+        center.removeAllDeliveredNotifications()
     }
 
     /// What the reset signal reports: "fresh" only when this launch ran the
