@@ -54,7 +54,6 @@ Every Phase 2 ticket is done and archived.
 | [T127](tickets/T127-pr-volume-grouping.md) | The PR list writes volume with thousands separators, as the chart does |
 | [T132](tickets/T132-planned-hero-and-session-summary-at-ax3.md) | The planned block hero and session summaries keep their parts whole at AX3 |
 | [T138](tickets/T138-block-review-pr-chips-and-stats-once.md) | The block review's PR chips read to VoiceOver, and its stats load once |
-| [T140](tickets/T140-long-press-remove-and-remove-labels.md) | Removing an exercise by long press forgets its open editor |
 | [T144](tickets/T144-rows-open-only-on-a-tap.md) | Every full-width row that opens a screen opens only on a tap |
 
 ### Phase 4: test health

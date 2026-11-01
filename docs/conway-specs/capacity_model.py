@@ -150,6 +150,7 @@ ARCHIVED = {
     "T136": (3, [], ["fitbodUITests/PRRowOpensWorkoutUITests.swift"]),
     "T137": (3, [], ["fitbodUITests/ProgressRowsTapOnlyUITests.swift"]),
     "T139": (3, [], ["fitbodTests/WeekWindowCalendarTests.swift"]),
+    "T140": (3, [], []),
     "T141": (3, [], ["fitbodTests/NonBarbellPrescriptionTests.swift"]),
     "T142": (3, [], []),
     "T143": (3, [], []),
