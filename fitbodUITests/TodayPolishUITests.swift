@@ -401,13 +401,15 @@ final class TodayPolishUITests: XCTestCase {
     }
 
     /// The volume rows whole on screen, top to bottom. Each reads "Chest: 4
-    /// sets this week, …".
+    /// sets this week, …", or "1 set" for one.
     @MainActor
     private func volumeRowsOnScreen(in app: XCUIApplication) -> [VolumeRow] {
         let top = headerBottom(in: app)
         let bottom = tabBarTop(in: app)
         var rows: [VolumeRow] = []
-        let query = app.descendants(matching: .any).matching(NSPredicate(format: "label CONTAINS %@", " sets this week, "))
+        let query = app.descendants(matching: .any).matching(NSPredicate(
+            format: "label MATCHES %@", ".+: [0-9]+ sets? this week, .*"
+        ))
         for element in query.allElementsBoundByIndex {
             let frame = element.frame
             guard frame.minY >= top, frame.maxY <= bottom, !rows.contains(where: { $0.frame == frame }) else { continue }
