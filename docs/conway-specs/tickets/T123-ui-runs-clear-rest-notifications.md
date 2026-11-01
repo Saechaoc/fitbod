@@ -6,7 +6,7 @@ items: []
 depends_on: [T101]
 size: M
 sim: both
-owns: [fitbod/App/DebugLaunchReset.swift, fitbodUITests/MilestoneOneJourneyUITests.swift, fitbodUITests/UITestHelpersSelfTests.swift, fitbodUITests/EditorSwipeDismissUITests.swift, fitbodUITests/CopySweepUITests.swift, fitbodUITests/WeeklyRecapUITests.swift, fitbodUITests/SwipeBackUITests.swift, fitbodUITests/TodayPolishUITests.swift, fitbodUITests/NewRoutineFlowUITests.swift, fitbodUITests/PlateScreensFitUITests.swift, fitbodUITests/PlateCalculatorSheetBRUUITests.swift, fitbodUITests/LibraryPolishUITests.swift, fitbodUITests/ProgramDarkModeUITests.swift, fitbodUITests/ExerciseHistoryRowsUITests.swift, new:fitbodUITests/SharedScreenHelpers.swift]
+owns: [fitbod/App/DebugLaunchReset.swift, fitbodUITests/MilestoneOneJourneyUITests.swift, fitbodUITests/UITestHelpersSelfTests.swift, fitbodUITests/EditorSwipeDismissUITests.swift, fitbodUITests/CopySweepUITests.swift, fitbodUITests/WeeklyRecapUITests.swift, fitbodUITests/SwipeBackUITests.swift, fitbodUITests/TodayPolishUITests.swift, fitbodUITests/NewRoutineFlowUITests.swift, fitbodUITests/PlateScreensFitUITests.swift, fitbodUITests/PlateCalculatorSheetBRUUITests.swift, fitbodUITests/LibraryPolishUITests.swift, fitbodUITests/ProgramDarkModeUITests.swift, fitbodUITests/ExerciseHistoryRowsUITests.swift, new:fitbodUITests/SharedScreenHelpers.swift, fitbodUITests/SmallFixesUITests.swift]
 ---
 
 # T123: UI test runs stay free of leftover rest notifications, and the journey suite reads cheaply
@@ -25,6 +25,7 @@ These are findings F266, F267 and F270, which T101's worker found.
 - The suite's private `reveal` scrolls a page at a time, up to 14 swipes.
 - Most `@MainActor` marks in `MilestoneOneJourneyUITests` and `UITestHelpersSelfTests` have no reason beside them, which guide section 2.10 asks for.
 - `CopySweepUITests` carries its own copies of private helpers from `WeeklyRecapUITests` and `SwipeBackUITests` (`openToday(afterSeeding:)`, `open(_:in:)`, `waitUntilHittable`, `button(beginningWith:)`), so a change to one must be made twice (finding F280, from T34's review).
+- `SwipeBackUITests.testVolumeTargetsSwipeBackToSettings` looks for `button(beginningWith: "Chest")`, which also matches Today's volume row and heatmap block under the Settings sheet, and its `waitUntilGone` comment blames Volume Targets' rows for lingering; T38 found that Volume Targets' own row leaves within 1.5 s (finding F301).
 
 ## Target
 
@@ -39,7 +40,8 @@ These are findings F266, F267 and F270, which T101's worker found.
 4. `reveal` scrolls in long drags and waits with `UITestNavigation.waitUntilStill`, instead of a page at a time.
 5. Each `@MainActor` in the two suites has its reason beside it, or goes where it is not needed.
 6. The helpers `CopySweepUITests` copies move into `fitbodUITests/SharedScreenHelpers.swift`, and all three suites use that one copy.
-   So does `pixelCount`, which `TodayPolishUITests` and `NewRoutineFlowUITests` each keep a private copy of (finding F283, from T35's review), and the ink-column reader that `PlateCalculatorSheetBRUUITests.drawnHeight(of:)` and `PlateScreensFitUITests.column(atX:from:to:in:)` with `isInk` each implement (finding F288, from T107's review), and the `TextContrast`, `tapWhenReady` and `tabBarTop` that `LibraryPolishUITests` copies from `ProgramDarkModeUITests` and `ExerciseHistoryRowsUITests` (finding F291, from T37's review).
+   So does `pixelCount`, which `TodayPolishUITests` and `NewRoutineFlowUITests` each keep a private copy of (finding F283, from T35's review), and the ink-column reader that `PlateCalculatorSheetBRUUITests.drawnHeight(of:)` and `PlateScreensFitUITests.column(atX:from:to:in:)` with `isInk` each implement (finding F288, from T107's review), and the `TextContrast`, `tapWhenReady` and `tabBarTop` that `LibraryPolishUITests` copies from `ProgramDarkModeUITests` and `ExerciseHistoryRowsUITests` (finding F291, from T37's review), and the third `TextContrast` copy in `SmallFixesUITests` (finding F303, from T38's review).
+7. `SwipeBackUITests.testVolumeTargetsSwipeBackToSettings` finds Volume Targets' own first row by its identifier or its whole label, and the comment above `waitUntilGone` says why the old lookup was slow (finding F301, from T38's run).
 
 ## Constraints
 
@@ -61,6 +63,7 @@ Ask before you edit anything else, such as the rest timer's scheduler.
 
 - The repro test passes on the small phone.
 - `MilestoneOneJourneyUITests`, `UITestHelpersSelfTests` and `EditorSwipeDismissUITests` pass three runs on each phone, with durations before and after in `notes.md`.
+- Every suite that item 6 or 7 changes, `SwipeBackUITests` and `SmallFixesUITests` among them, passes on the small phone.
 - `fitbodTests` passes, and the app and the widget build.
 
 ## Hints

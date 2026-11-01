@@ -6,7 +6,7 @@ items: []
 depends_on: [T30]
 size: S
 sim: small
-owns: [fitbod/Fatigue/MuscleVolumeTargetStepper.swift, fitbod/Fatigue/PerMuscleDetailView.swift, fitbodUITests/PerMuscleDetailUITests.swift, fitbodUITests/Phase5BRUSmokeUITests.swift]
+owns: [fitbod/Fatigue/MuscleVolumeTargetStepper.swift, fitbod/Fatigue/PerMuscleDetailView.swift, fitbodUITests/PerMuscleDetailUITests.swift, fitbodUITests/Phase5BRUSmokeUITests.swift, fitbodUITests/MuscleVolumeTargetEditorUITests.swift]
 ---
 
 # T109: The muscle screen uses BRU steppers, keeps a stable order and is always tested
@@ -24,12 +24,13 @@ These are findings F209 to F211, from T30's run and screenshots.
 - `PerMuscleDetailUITests` and `Phase5BRUSmokeUITests` launch with a plain `app.launch()`, so they run on whatever store the phone holds.
   On an empty store they skip their volume bar tap, so they can pass without opening a muscle's screen.
 - `PerMuscleDetailUITests` and `Phase5BRUSmokeUITests` find a volume bar by "sets this week,", but since T34 a muscle with one set reads "1 set this week,", so a seed of one-set muscles would skip their tap path (finding F279).
+- `MuscleVolumeTargetEditorUITests` launches with a bare `XCUIApplication()`, with no reset and no launch helper, as guide section 2.7 warns against (finding F304, from T38's run).
 
 ## Target
 
 - The four steppers in `fitbod/Fatigue/MuscleVolumeTargetStepper.swift`.
 - The CONTRIBUTING EXERCISES order in `fitbod/Fatigue/PerMuscleDetailView.swift`.
-- The launches in `fitbodUITests/PerMuscleDetailUITests.swift` and the muscle tests in `fitbodUITests/Phase5BRUSmokeUITests.swift`.
+- The launches in `fitbodUITests/PerMuscleDetailUITests.swift`, the muscle tests in `fitbodUITests/Phase5BRUSmokeUITests.swift` and `fitbodUITests/MuscleVolumeTargetEditorUITests.swift`.
 
 ## Change
 
@@ -38,6 +39,7 @@ These are findings F209 to F211, from T30's run and screenshots.
 3. Rows in CONTRIBUTING EXERCISES with the same count sort by exercise name, so the order never changes between renders.
 4. `PerMuscleDetailUITests` and the muscle tests in `Phase5BRUSmokeUITests` launch through `UITestNavigation.launch` with the demo seed, and always tap a volume bar and reach the muscle's screen.
 5. Both suites find a volume bar by an identifier, or by a label that matches "1 set this week," too.
+6. `MuscleVolumeTargetEditorUITests` launches through `UITestNavigation.launch` too.
 
 ## Constraints
 

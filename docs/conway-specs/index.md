@@ -41,7 +41,6 @@ Every Phase 2 ticket is done and archived.
 
 | Ticket | Title |
 |---|---|
-| [T38](tickets/T38-program-new-block-settings-small-fixes.md) | Small fixes on Program, New Block and Settings |
 | [T106](tickets/T106-sideways-drag-does-not-open-rows.md) | A sideways drag on a row does not open it |
 | [T108](tickets/T108-block-overview-and-routine-at-ax3.md) | The block overview and the routine screen read cleanly at AX3 |
 | [T109](tickets/T109-muscle-screen-steppers-order-tests.md) | The muscle screen uses BRU steppers, keeps a stable order and is always tested |
@@ -58,6 +57,7 @@ Every Phase 2 ticket is done and archived.
 | [T127](tickets/T127-pr-volume-grouping.md) | The PR list writes volume with thousands separators, as the chart does |
 | [T128](tickets/T128-reseed-keeps-lifter-data.md) | Re-seeding the exercise library keeps the lifter's exercises, history and targets |
 | [T129](tickets/T129-progress-chart-names-every-line.md) | The progress chart names every line it draws, and labels its first and last dates |
+| [T130](tickets/T130-new-block-keeps-its-draft.md) | New Block keeps the lifter's draft when the screen behind it redraws |
 
 ### Phase 4: test health
 
@@ -71,6 +71,7 @@ Every Phase 2 ticket is done and archived.
 | [T119](tickets/T119-progress-ui-tests-budgets.md) | Progress UI tests fit the test budgets |
 | [T121](tickets/T121-new-block-ui-tests-budgets.md) | New Block UI tests fit the test budgets |
 | [T123](tickets/T123-ui-runs-clear-rest-notifications.md) | UI test runs stay free of leftover rest notifications, and the journey suite reads cheaply |
+| [T131](tickets/T131-editor-ui-tests-budgets.md) | The editor swipe and session editor UI tests fit the test budgets |
 
 ### Phase 5: design refresh
 
