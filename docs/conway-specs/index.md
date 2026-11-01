@@ -38,7 +38,6 @@ Every Phase 1 ticket is done and archived.
 | Ticket | Title |
 |---|---|
 | [T101](tickets/T101-ui-tests-idle-after-typing.md) | UI tests stop waiting a minute per step after typing |
-| [T105](tickets/T105-new-block-delete-and-voiceover-names.md) | New Block's revealed Delete deletes, and VoiceOver reads its controls by name |
 | [T110](tickets/T110-per-set-overrides-removed.md) | The session editor stops offering per-set overrides that the logger ignores |
 | [T112](tickets/T112-exercise-history-rows.md) | Exercise history shows its workouts again |
 | [T115](tickets/T115-session-editor-ax3-scroll-hang.md) | The session editor scrolls at AX3 without hanging |
@@ -63,6 +62,8 @@ Every Phase 1 ticket is done and archived.
 | [T114](tickets/T114-recap-target-from-plan.md) | The weekly recap measures last week against its plan |
 | [T116](tickets/T116-history-top-set-is-its-e1rm-set.md) | Exercise history's TOP line names the set its e1RM comes from |
 | [T118](tickets/T118-weekly-tonnage-label-and-rows.md) | Weekly Tonnage keeps its previous-best label whole, and its week rows open their workouts |
+| [T120](tickets/T120-new-block-toast-and-duration-steppers.md) | New Block's undo toast stays small, and its duration steppers say what they change |
+| [T122](tickets/T122-routine-session-drag-slots.md) | A session dragged on the routine screen lands on the slot under the finger |
 
 ### Phase 4: test health
 
@@ -74,6 +75,7 @@ Every Phase 1 ticket is done and archived.
 | [T42](tickets/T42-zero-build-warnings.md) | Zero build warnings |
 | [T117](tickets/T117-history-tests-cover-non-pr-rows-and-every-label.md) | Exercise history's tests cover a row without a PR and every label |
 | [T119](tickets/T119-progress-ui-tests-budgets.md) | Progress UI tests fit the test budgets |
+| [T121](tickets/T121-new-block-ui-tests-budgets.md) | New Block UI tests fit the test budgets |
 
 ### Phase 5: design refresh
 

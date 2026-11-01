@@ -37,7 +37,7 @@ The shared `UITestNavigation.hittable` helper polls in 0.5 s steps, which `docs/
    It taps a field, waits for keyboard focus, types without clearing the field first, and returns the field's value.
 5. Move every UI test that enters a number onto the new helper.
    Remove a private typing helper once nothing uses it.
-6. `UITestNavigation.hittable` polls in 50 to 100 ms steps, with the same overall ceiling.
+6. `UITestNavigation.hittable` polls in 50 to 100 ms steps, with the same overall ceiling, and `waitUntilStill` checks the frame in steps that small while still requiring it to hold for its interval (findings F247 and F262).
 
 ## Constraints
 
