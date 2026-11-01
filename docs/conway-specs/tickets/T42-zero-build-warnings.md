@@ -66,3 +66,4 @@ Count the warnings with a search for "warning:" in the saved build logs.
 - Build the test targets with `build-for-testing`.
 - At Phase 0 the build had one warning: a deprecated text concatenation in `BlockBuilderView.swift` near line 736 (see [../assumptions.md](../assumptions.md)).
   A fix there needs all six New Block guardrail suites.
+- T106 saw the "Invalid frame dimension" warning in every run of `SwipeBackUITests.testWorkoutSwipesBackToToday`, `testResumedWorkoutSwipesBackToProgram` and `testStartedWorkoutSwipesBackToSession`, which open the workout logger (finding F321).

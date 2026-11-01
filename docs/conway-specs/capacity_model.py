@@ -128,6 +128,7 @@ ARCHIVED = {
     "T103": (2, [], []),
     "T104": (2, [], []),
     "T105": (2, [], []),
+    "T106": (3, [], ["fitbod/Design/BRURowButtonStyle.swift"]),
     "T107": (3, [], ["fitbodUITests/PlateScreensFitUITests.swift"]),
     "T108": (3, [], ["fitbodUITests/BlockOverviewAndRoutineAX3UITests.swift"]),
     "T109": (3, [], []),

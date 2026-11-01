@@ -298,6 +298,8 @@ Product decisions are in [decisions.md](decisions.md), and they win over this fi
 
 - Coordinator answer, 2026-10-30 (T13 question `msg_ba0f59859f56`): each bucket is one list ranked across exercises by the bucket's measure, with at most three rows per exercise, and each row names its exercise (T13 changes 1 and 2).
   The same exercise, weight and reps count as one set, dated when it was first logged, as `PRDetector` breaks ties.
+- Coordinator call, 2026-11-01 (T106 finding F319, decided under autopilot; the user can revisit it): a PR row opens the summary of the workout it was set in, the screen a History row opens, instead of the v1 "Session of <date>" stub with no ‹ BACK (T136).
+- Open for the user: nothing opens an exercise's own PR list, `ExercisePRsView(.forExercise)` through `ExerciseProgressRoute.prs` (finding F318); it stays in the code until the user says whether the exercise screen should link to it or the scope should go.
 
 ### Progress chart lines
 

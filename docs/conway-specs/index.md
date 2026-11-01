@@ -41,7 +41,6 @@ Every Phase 2 ticket is done and archived.
 
 | Ticket | Title |
 |---|---|
-| [T106](tickets/T106-sideways-drag-does-not-open-rows.md) | A sideways drag on a row does not open it |
 | [T111](tickets/T111-session-editor-rows-announced-removable.md) | Session editor rows are announced, removable and easy to hit |
 | [T113](tickets/T113-block-review-pr-marks.md) | The block review's PR marks agree, and its stats read cheaply and whole |
 | [T114](tickets/T114-recap-target-from-plan.md) | The weekly recap measures last week against its plan |
@@ -57,6 +56,8 @@ Every Phase 2 ticket is done and archived.
 | [T129](tickets/T129-progress-chart-names-every-line.md) | The progress chart names every line it draws, and labels its first and last dates |
 | [T130](tickets/T130-new-block-keeps-its-draft.md) | New Block keeps the lifter's draft when the screen behind it redraws |
 | [T132](tickets/T132-planned-hero-and-session-summary-at-ax3.md) | The planned block hero and session summaries keep their parts whole at AX3 |
+| [T136](tickets/T136-pr-row-opens-its-workout.md) | A PR row opens the workout it was set in |
+| [T137](tickets/T137-progress-rows-open-only-on-tap.md) | Progress's rows open only on a tap |
 
 ### Phase 4: test health
 
@@ -72,6 +73,8 @@ Every Phase 2 ticket is done and archived.
 | [T123](tickets/T123-ui-runs-clear-rest-notifications.md) | UI test runs stay free of leftover rest notifications, and the journey suite reads cheaply |
 | [T131](tickets/T131-editor-ui-tests-budgets.md) | The editor swipe and session editor UI tests fit the test budgets |
 | [T133](tickets/T133-volume-target-tests-adjust-and-relaunch.md) | Volume target tests cover VoiceOver's adjust and a relaunch, and the fatigue smoke test launches cleanly |
+| [T134](tickets/T134-hosted-accessibility-tests-any-order.md) | Hosted accessibility tests pass in any order, and the row style's VoiceOver activate is tested |
+| [T135](tickets/T135-shared-ui-test-helpers.md) | UI suites share one copy of their helpers, and the swipe-back suite finds rows by name and fits its budgets |
 
 ### Phase 5: design refresh
 
