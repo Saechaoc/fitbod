@@ -109,14 +109,17 @@ struct ProgressChartDescriptorTests {
 
     // MARK: - The legend
 
-    @Test("Each intent draws its line, and its legend swatch, in a style of its own")
+    @Test("Each intent draws its line, and its legend swatch, in a color and dash of its own")
     func eachIntentHasAStyleOfItsOwn() {
-        let styles = Set(Intent.allCases.map(ChartLineStyle.init(intent:)))
-        #expect(styles.count == Intent.allCases.count)
+        let styles = Intent.allCases.map(ChartLineStyle.init(intent:))
+        #expect(Set(styles.map(\.color)).count == styles.count)
+        #expect(Set(styles.map(\.dash)).count == styles.count)
+        #expect(Set(styles.map(\.swatchDash)).count == styles.count)
     }
 
-    /// Two workouts in each of three intents, so each line is drawn. Main
-    /// actor, as it hosts the screen in a UIKit window.
+    /// Two, three and four workouts in three intents, so each line is
+    /// drawn and each key's count is its own. Main actor, as it hosts the
+    /// screen in a UIKit window.
     @MainActor
     @Test("VOLUME's legend names every intent it draws, as its audio graph does")
     func volumeLegendNamesEveryIntentItDraws() throws {
@@ -124,6 +127,7 @@ struct ProgressChartDescriptorTests {
         let bench = try logBenchPress(in: container.mainContext, workouts: [
             (.hypertrophy, [80]), (.strength, [100]), (.power, [60]),
             (.hypertrophy, [90]), (.strength, [105]), (.power, [65]),
+            (.strength, [110]), (.power, [70]), (.power, [75]),
         ])
         let window = try showProgress(of: bench, in: container)
         defer { window.isHidden = true }
@@ -137,7 +141,7 @@ struct ProgressChartDescriptorTests {
         attachScreen(of: window, named: "T129-chart-volume")
 
         let legend = intentKeys(under: window)
-        #expect(legend == ["HYPERTROPHY · 2 SESSIONS", "STRENGTH · 2 SESSIONS", "POWER · 2 SESSIONS"])
+        #expect(legend == ["HYPERTROPHY · 2 SESSIONS", "STRENGTH · 3 SESSIONS", "POWER · 4 SESSIONS"])
         #expect(
             chartDescriptor(under: window)?.series.compactMap(\.name) == legend,
             "The audio graph must name each line as the legend does, in its order"
