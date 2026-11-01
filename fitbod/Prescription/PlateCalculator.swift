@@ -96,13 +96,31 @@ public enum PlateCalculator {
     /// - Parameter target: Ceiling weight (the function returns ≤ this value).
     /// - Parameter barWeight: Weight of the unloaded bar.
     /// - Parameter plates: Available plates as (weight, countPerSide) tuples.
+    /// - Parameter increment: Explicit increment rounding from the bar override,
+    ///   or zero when there is no bar. Nil keeps inventory-based plate loading.
     /// - Returns: `barWeight` when `target < barWeight` (cannot load below bar).
     ///   Otherwise returns `barWeight + 2 × (plates loaded per side)`.
     public static func roundDown(
         target: Double,
         barWeight: Double,
-        plates: [(weight: Double, countPerSide: Int)]
+        plates: [(weight: Double, countPerSide: Int)],
+        increment: Double? = nil
     ) -> Double {
+        if let increment {
+            let bar = barWeight.isFinite ? max(0, barWeight) : 0
+            guard target.isFinite, target >= bar else { return bar }
+            let step = increment.isFinite && increment > 0 ? increment : 2.5
+            let locale = Locale(identifier: "en_US_POSIX")
+            // Decimal strings preserve 0.3 / 0.1 without rounding a near-step target up.
+            guard let top = Decimal(string: String(target), locale: locale),
+                  let base = Decimal(string: String(bar), locale: locale),
+                  let stride = Decimal(string: String(step), locale: locale), stride > 0 else { return bar }
+            var steps = (top - base) / stride
+            var wholeSteps = Decimal()
+            NSDecimalRound(&wholeSteps, &steps, 0, .down)
+            let rounded = NSDecimalNumber(decimal: base + wholeSteps * stride).doubleValue
+            return rounded.isFinite ? rounded : bar
+        }
         guard target >= barWeight else { return barWeight }
 
         var remaining = ((target - barWeight) / 2.0).rounded(toPlaces: 3)

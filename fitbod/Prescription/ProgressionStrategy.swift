@@ -116,7 +116,7 @@ public struct PrescriptionExplanation: Sendable {
 // MARK: - ProgressionStrategy
 
 /// Protocol for all progression strategies. Conforming types are pure-function
-/// value types with no stored mutable state (FOUND-07). They accept pre-fetched
+/// value types with per-prescription rounding configuration. They accept pre-fetched
 /// history arrays and last-session scalars from the caller (plan 03-08
 /// SessionFactory).
 ///
@@ -132,6 +132,9 @@ public struct PrescriptionExplanation: Sendable {
 /// Weights are plain numbers in whatever unit the lifter logs in. `unit` only
 /// labels the explanation text ("100 lb × 8"); the math never converts.
 public protocol ProgressionStrategy: Sendable {
+    /// Nil uses the plate inventory; a value rounds from zero or the explicit bar override.
+    var roundingIncrement: Double? { get set }
+
     func prescribe(
         history: [HistoryPoint],
         targetRepsLow: Int,

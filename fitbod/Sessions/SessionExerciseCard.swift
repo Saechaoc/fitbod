@@ -449,12 +449,13 @@ public struct SessionExerciseCard: View {
         .effective(for: sessionExercise.exercise, default: defaultUnit)
     }
 
-    /// Bar and plates for this exercise: the stored inventory for its
-    /// equipment, else the defaults for the unit. SessionFactory generates
-    /// the warm-up ramp from the same inventory, so the plates add up.
+    /// Bar and plates for this exercise, with no inventory for nonplate equipment.
+    /// SessionFactory uses the same equipment mapping for its prescription and ramp.
     private var plateSetup: (barWeight: Double, plates: [(weight: Double, countPerSide: Int)]) {
         let exercise = sessionExercise.exercise
-        let ekind = SessionFactory.equipmentKind(for: exercise?.equipment ?? .other)
+        guard let ekind = SessionFactory.plateEquipmentKind(for: exercise?.equipment ?? .other) else {
+            return (exercise?.barWeightOverride ?? 0, [])
+        }
         if let inv = inventories.first(where: { $0.equipmentKind == ekind }) {
             return (
                 exercise?.barWeightOverride ?? inv.barWeight,
@@ -480,9 +481,7 @@ public struct SessionExerciseCard: View {
 
         let (barWeight, plates) = plateSetup
 
-        let smallestIncrement = se.exercise?.smallestIncrement
-            ?? userSettings?.defaultIncrementKg
-            ?? 2.5
+        let smallestIncrement = SessionFactory.prescriptionIncrement(for: se.exercise, settings: userSettings)
         let minCalibrationSets = userSettings?.minCalibrationSets ?? 10
 
         let historyPoints = SessionFactory.fetchHistoryPoints(
@@ -502,7 +501,9 @@ public struct SessionExerciseCard: View {
             excludingSessionID: se.session?.id
         )
 
-        let strategy = ProgressionStrategyFactory.make(for: se.session?.progressionKind ?? .double)
+        var strategy = ProgressionStrategyFactory.make(for: se.session?.progressionKind ?? .double)
+        strategy.roundingIncrement = SessionFactory.plateEquipmentKind(for: se.exercise?.equipment ?? .other) == nil
+            ? smallestIncrement : nil
         let (_, explanation) = strategy.prescribe(
             history: historyPoints,
             targetRepsLow: se.targetRepsLow,

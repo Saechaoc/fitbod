@@ -9,7 +9,11 @@
 import Foundation
 
 public struct HybridStrategy: ProgressionStrategy {
-    public init() {}
+    public var roundingIncrement: Double?
+
+    public init(roundingIncrement: Double? = nil) {
+        self.roundingIncrement = roundingIncrement
+    }
 
     public func prescribe(
         history: [HistoryPoint],
@@ -30,7 +34,7 @@ public struct HybridStrategy: ProgressionStrategy {
         today: Date = Date.now
     ) -> (weight: Double, explanation: PrescriptionExplanation) {
 
-        let blockResult = BlockPeriodizedStrategy().prescribe(
+        let blockResult = BlockPeriodizedStrategy(roundingIncrement: roundingIncrement).prescribe(
             history: history,
             targetRepsLow: targetRepsLow,
             targetRepsHigh: targetRepsHigh,
@@ -49,7 +53,7 @@ public struct HybridStrategy: ProgressionStrategy {
             today: today
         )
 
-        let rpeResult = RPEAutoregStrategy().prescribe(
+        let rpeResult = RPEAutoregStrategy(roundingIncrement: roundingIncrement).prescribe(
             history: history,
             targetRepsLow: targetRepsLow,
             targetRepsHigh: targetRepsHigh,
