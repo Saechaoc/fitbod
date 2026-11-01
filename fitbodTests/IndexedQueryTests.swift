@@ -26,18 +26,16 @@
 //
 //  ## Test setup
 //
-//  Each test resets the UserDefaults seed stamp and builds a fresh
-//  in-memory container, then runs `seedIfNeeded()` to populate the full
-//  ~702-exercise corpus. The seed itself is exercised by `SeedTests`;
-//  these tests assume it works and only measure post-seed query time.
+//  Each test builds a fresh in-memory container and runs `seedIfNeeded()`
+//  to populate the full ~702-exercise corpus, with the seed-version stamp
+//  in the test's own `UserDefaults` suite (`defaults`), never in
+//  `UserDefaults.standard`, which the hosted tests share with the app on
+//  the phone (F296). The seed itself is exercised by `SeedTests`; these
+//  tests assume it works and only measure post-seed query time.
 //
-//  ## Why `.serialized`
-//
-//  Same reason as `SeedTests`: `UserDefaults.standard` is process-wide,
-//  and parallel `@Test` execution can race the importer's seed-version
-//  stamp, causing one test's `seedIfNeeded()` to short-circuit on the
-//  stamp another test just wrote. `.serialized` forces sequential
-//  execution within this suite (review WR-02).
+//  Swift Testing creates a new instance per test, with a new stamp suite
+//  that `deinit` removes, so tests share nothing mutable and the suite
+//  needs no `.serialized`.
 //
 
 import Foundation
@@ -45,26 +43,32 @@ import SwiftData
 import Testing
 @testable import fitbod
 
-@Suite("Indexed queries on Exercise", .serialized)
-struct IndexedQueryTests {
+@Suite("Indexed queries on Exercise")
+final class IndexedQueryTests {
 
     // MARK: - Helpers
 
-    /// Removes the seed-version stamp from `UserDefaults` so a fresh
-    /// `seedIfNeeded()` call actually performs work rather than
-    /// short-circuiting.
-    private static func resetStamp() {
-        UserDefaults.standard.removeObject(forKey: ExerciseLibraryImporter.seedVersionKey)
+    private let defaultsSuiteName = "IndexedQueryTests.\(UUID().uuidString)"
+
+    /// Where this test's seed-version stamp lives. A fresh suite starts with
+    /// no stamp, so `seedIfNeeded` performs work.
+    private let defaults: UserDefaults
+
+    init() throws {
+        defaults = try #require(UserDefaults(suiteName: defaultsSuiteName))
+    }
+
+    deinit {
+        defaults.removePersistentDomain(forName: defaultsSuiteName)
     }
 
     /// Builds a fully-seeded in-memory container ready for query
     /// profiling. Returns the container so callers can derive their
     /// own `ModelContext` for fetching.
-    private static func makeSeededContainer() async throws -> ModelContainer {
-        Self.resetStamp()
+    private func makeSeededContainer() async throws -> ModelContainer {
         let container = try InMemoryContainer.makeEmpty()
         let importer = ExerciseLibraryImporter(modelContainer: container)
-        try await importer.seedIfNeeded()
+        try await importer.seedIfNeeded(defaults: defaults)
         return container
     }
 
@@ -75,7 +79,7 @@ struct IndexedQueryTests {
         .timeLimit(.minutes(1))
     )
     func canonicalNameContainsFast() async throws {
-        let container = try await Self.makeSeededContainer()
+        let container = try await makeSeededContainer()
         let ctx = ModelContext(container)
 
         // Capture-by-value: needle must be a local let so the
@@ -105,7 +109,7 @@ struct IndexedQueryTests {
         .timeLimit(.minutes(1))
     )
     func muscleJoinedFast() async throws {
-        let container = try await Self.makeSeededContainer()
+        let container = try await makeSeededContainer()
         let ctx = ModelContext(container)
 
         // Same capture-by-value pattern as Test 1.

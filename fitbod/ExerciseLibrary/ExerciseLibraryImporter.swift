@@ -13,9 +13,23 @@
 //
 //  `UserDefaults["exercise_seed_version"]` stores the integer stamp from
 //  the most-recently-applied seed. The bundled `SEED_VERSION.txt` is the
-//  source of truth (currently `1`); `seedIfNeeded()` short-circuits when
-//  stored ≥ bundled. Future dataset bumps increment `SEED_VERSION.txt`
-//  and the next launch performs a fresh seed.
+//  source of truth; `seedIfNeeded()` short-circuits when stored ≥ bundled.
+//  Future dataset bumps increment `SEED_VERSION.txt` and the next launch
+//  re-seeds in place (see below).
+//
+//  ## Re-seeding in place (T128, F296)
+//
+//  A seed into a store that already holds the library finds each seeded
+//  exercise by `externalID` and each muscle by `slug`, updates the fields
+//  the dataset supplies, and inserts only what is missing. It deletes
+//  nothing: custom exercises, the exercise links of logged workouts and
+//  sessions, edited stimulus weights and volume targets, an exercise's own
+//  settings, and seeded exercises a newer dataset dropped all stay. The
+//  app runs the seed while Today and Progress already show these models,
+//  so a delete would invalidate instances the views hold and crash them.
+//  After an exercise's first seed its stimulus rows belong to
+//  `StimulusWeightSeeder` and the lifter, so a re-seed adds rows only for
+//  muscles the exercise has none for.
 //
 //  ## Performance bar
 //
@@ -95,57 +109,40 @@ public actor ExerciseLibraryImporter {
 
     /// Idempotent seed entry point.
     ///
-    /// 1. Reads `UserDefaults[seedVersionKey]` and bundled `SEED_VERSION.txt`.
+    /// 1. Reads `defaults[seedVersionKey]` and bundled `SEED_VERSION.txt`.
     /// 2. If stored ≥ bundled, returns immediately (no work).
-    /// 3. Otherwise wipes any partial seed-owned rows from a previously
-    ///    failed seed (`Exercise` + `MuscleGroup`; cascade clears the
-    ///    `ExerciseMuscleStimulus` join rows), then loads
-    ///    `exercises.json`, filters to strength categories, upserts 17
-    ///    `MuscleGroup` rows, inserts the filtered exercises + stimulus
+    /// 3. Otherwise loads `exercises.json`, filters to strength
+    ///    categories, upserts the 17 `MuscleGroup` rows by `slug`, upserts
+    ///    the filtered exercises by `externalID` with any missing stimulus
     ///    join rows in 100-row batches, and seeds the `UserSettings`
-    ///    singleton if absent.
-    /// 4. On success stamps `UserDefaults[seedVersionKey] = bundled`.
-    /// 5. On mid-import failure rolls back unsaved inserts and
-    ///    rethrows; the next call's step 3 cleanup makes retry safe
-    ///    even if some batches did reach disk before the failure
-    ///    (review WR-01).
+    ///    singleton if absent. Nothing is deleted (see "Re-seeding in
+    ///    place" above).
+    /// 4. On success stamps `defaults[seedVersionKey] = bundled`.
+    /// 5. On mid-import failure rolls back unsaved changes and rethrows.
+    ///    The next call finds the batches that did reach disk by
+    ///    `externalID` and `slug` and inserts only the rest, so a retry
+    ///    never collides with the `#Unique` rules (review WR-01).
     ///
-    /// - Parameter bundle: Override for the resource bundle. Production
-    ///   callers always pass `.main`; tests use a parameterised bundle
-    ///   for hermetic resource resolution if desired (currently all tests
-    ///   read from `Bundle.main` since the test target runs in the host
-    ///   app bundle).
+    /// - Parameters:
+    ///   - bundle: Override for the resource bundle. Production callers
+    ///     always pass `.main`; tests use a parameterised bundle for
+    ///     hermetic resource resolution if desired (currently all tests
+    ///     read from `Bundle.main` since the test target runs in the host
+    ///     app bundle).
+    ///   - defaults: Where the seed-version stamp lives. Production callers
+    ///     use `.standard`; tests pass their own suite, because the hosted
+    ///     tests share `.standard` with the app on the phone (F296).
     /// - Throws: `SeedError` on missing bundled resources, decode failure,
     ///   or unrecoverable persistence errors.
-    public func seedIfNeeded(bundle: Bundle = .main) async throws {
+    public func seedIfNeeded(bundle: Bundle = .main, defaults: UserDefaults = .standard) async throws {
         let bundled = try Self.bundledSeedVersion(bundle: bundle)
-        let stored = UserDefaults.standard.integer(forKey: Self.seedVersionKey)
+        let stored = defaults.integer(forKey: Self.seedVersionKey)
         guard stored < bundled else {
             Self.log.debug("Seed up to date (stored=\(stored), bundled=\(bundled)) — skipping")
             return
         }
         Self.log.info("Seeding library from version \(stored) → \(bundled)")
         let start = Date()
-
-        // MARK: 0. Clear any partial state from a prior failed seed
-        //
-        // The per-batch saves below are NOT a single transaction. If a
-        // prior `seedIfNeeded()` call crashed mid-import (disk full,
-        // OOM during decode, etc.), partial Exercise + MuscleGroup +
-        // ExerciseMuscleStimulus rows persist, the seed-version stamp
-        // is NOT bumped, and the next run would collide on the
-        // `#Unique<Exercise>([\.externalID])` and
-        // `#Unique<MuscleGroup>([\.slug])` constraints — bricking
-        // retry permanently (review WR-01).
-        //
-        // Wipe the seed-owned rows up front. UserSettings is left alone
-        // (it's the singleton row the user may have already toggled in
-        // Settings). Cascade `Exercise → ExerciseMuscleStimulus: cascade`
-        // and `MuscleGroup → ExerciseMuscleStimulus: cascade` clean up
-        // the join rows automatically when their parents are deleted.
-        try modelContext.delete(model: Exercise.self)
-        try modelContext.delete(model: MuscleGroup.self)
-        try modelContext.save()
 
         // MARK: 1. Load + decode + filter
         guard let url = bundle.url(forResource: "exercises", withExtension: "json") else {
@@ -162,34 +159,65 @@ public actor ExerciseLibraryImporter {
         Self.log.info("Filtered \(allDTOs.count) → \(dtos.count) strength exercises")
 
         // Wrap the remaining steps so a mid-batch failure rolls back
-        // unsaved inserts (review WR-01). The MARK: 0 cleanup above
-        // covers the on-disk partial-state case across launches; this
-        // catches the in-flight context-state case within a single run.
+        // unsaved changes (review WR-01). Batches that already reached
+        // disk are matched by externalID and slug on the next run, so the
+        // retry never inserts them twice.
         do {
-            // MARK: 2. Upsert canonical MuscleGroup rows
+            // MARK: 2. Upsert canonical MuscleGroup rows by slug
             //
             // Single source of truth: `MuscleRegionMap.allSlugs` — the 17
             // canonical slugs. Iterating `allSlugs` (not `dtos`) means every
             // canonical slug gets a row even if no dataset entry references
             // it yet, which keeps the muscle-volume-target wiring in Phase 5
-            // stable across future dataset refreshes.
+            // stable across future dataset refreshes. An existing row keeps
+            // its identity, so its volume targets and stimulus rows stay.
             var musclesBySlug: [String: MuscleGroup] = [:]
+            for muscle in try modelContext.fetch(FetchDescriptor<MuscleGroup>()) where musclesBySlug[muscle.slug] == nil {
+                musclesBySlug[muscle.slug] = muscle
+            }
             for slug in MuscleRegionMap.allSlugs {
-                let mg = MuscleGroup(
-                    slug: slug,
-                    displayName: MuscleRegionMap.displayName(for: slug),
-                    region: MuscleRegionMap.region(for: slug)
-                )
-                modelContext.insert(mg)
-                musclesBySlug[slug] = mg
+                let displayName = MuscleRegionMap.displayName(for: slug)
+                let region = MuscleRegionMap.region(for: slug)
+                if let muscle = musclesBySlug[slug] {
+                    // Write only what differs: an equal assignment still
+                    // marks the row changed and re-renders its views.
+                    if muscle.displayName != displayName { muscle.displayName = displayName }
+                    if muscle.regionRaw != region.rawValue { muscle.regionRaw = region.rawValue }
+                } else {
+                    let mg = MuscleGroup(slug: slug, displayName: displayName, region: region)
+                    modelContext.insert(mg)
+                    musclesBySlug[slug] = mg
+                }
             }
             // No save here — the muscle rows ride along with the first
             // exercise batch's save. Inserting them up-front (before any
             // exercise) is enough for the stimulus join rows below to bind
             // to a real parent reference per Pitfall #7.
 
-            // MARK: 3. Insert Exercise rows + stimulus rows in 100-row batches
+            // MARK: 3. Find the exercises an earlier seed inserted
+            //
+            // By externalID. Custom exercises have none, so the seed never
+            // matches or touches them.
+            var exercisesByExternalID: [String: Exercise] = [:]
+            let seeded = FetchDescriptor<Exercise>(predicate: #Predicate { $0.externalID != nil })
+            for exercise in try modelContext.fetch(seeded) {
+                guard let externalID = exercise.externalID, exercisesByExternalID[externalID] == nil else { continue }
+                exercisesByExternalID[externalID] = exercise
+            }
+            // The muscles each of them already has a stimulus row for, from
+            // one fetch rather than one relationship fault per exercise.
+            var stimulatedSlugs: [PersistentIdentifier: Set<String>] = [:]
+            if !exercisesByExternalID.isEmpty {
+                for stimulus in try modelContext.fetch(FetchDescriptor<ExerciseMuscleStimulus>()) {
+                    guard let exercise = stimulus.exercise, let slug = stimulus.muscle?.slug else { continue }
+                    stimulatedSlugs[exercise.persistentModelID, default: []].insert(slug)
+                }
+            }
+
+            // MARK: 4. Upsert Exercise rows + missing stimulus rows in 100-row batches
             var batchCount = 0
+            var insertedCount = 0
+            var updatedCount = 0
             for dto in dtos {
                 let canonicalName = dto.name
                     .lowercased()
@@ -202,31 +230,53 @@ public actor ExerciseLibraryImporter {
                 let joined = dto.primaryMuscles.isEmpty
                     ? ""
                     : "|" + dto.primaryMuscles.joined(separator: "|") + "|"
+                let equipmentRaw = EquipmentMapper.map(dto.equipment).rawValue
+                let mechanicRaw = dto.mechanic ?? Mechanic.compound.rawValue
 
-                let exercise = Exercise(
-                    externalID: dto.id,
-                    name: dto.name,
-                    canonicalName: canonicalName,
-                    equipmentRaw: EquipmentMapper.map(dto.equipment).rawValue,
-                    mechanicRaw: dto.mechanic ?? Mechanic.compound.rawValue,
-                    forceRaw: dto.force,
-                    levelRaw: dto.level,
-                    category: dto.category,
-                    instructions: dto.instructions,
-                    imagePaths: dto.images,
-                    isCustom: false,
-                    primaryMuscleSlugsJoined: joined
-                )
-                // Pitfall #7 — insert FIRST, then the join rows reference it.
-                // SwiftData drops relationship links silently if the parent
-                // isn't yet inserted into the context.
-                modelContext.insert(exercise)
+                let exercise: Exercise
+                // Muscles this exercise had a stimulus row for before this seed.
+                let stimulated: Set<String>
+                if let existing = exercisesByExternalID[dto.id] {
+                    exercise = existing
+                    stimulated = stimulatedSlugs[existing.persistentModelID] ?? []
+                    if refresh(
+                        existing, from: dto, canonicalName: canonicalName,
+                        equipmentRaw: equipmentRaw, mechanicRaw: mechanicRaw, primaryMuscleSlugsJoined: joined
+                    ) {
+                        updatedCount += 1
+                    }
+                } else {
+                    exercise = Exercise(
+                        externalID: dto.id,
+                        name: dto.name,
+                        canonicalName: canonicalName,
+                        equipmentRaw: equipmentRaw,
+                        mechanicRaw: mechanicRaw,
+                        forceRaw: dto.force,
+                        levelRaw: dto.level,
+                        category: dto.category,
+                        instructions: dto.instructions,
+                        imagePaths: dto.images,
+                        isCustom: false,
+                        primaryMuscleSlugsJoined: joined
+                    )
+                    // Pitfall #7 — insert FIRST, then the join rows reference it.
+                    // SwiftData drops relationship links silently if the parent
+                    // isn't yet inserted into the context.
+                    modelContext.insert(exercise)
+                    exercisesByExternalID[dto.id] = exercise
+                    stimulated = []
+                    insertedCount += 1
+                }
 
-                // Stimulus rows: 1.0 primary / 0.5 secondary (CONTEXT.md Area 1).
+                // Stimulus rows: 1.0 primary / 0.5 secondary (CONTEXT.md Area 1),
+                // only for muscles the exercise had no row for before this
+                // seed: an existing row's role and weight belong to
+                // `StimulusWeightSeeder` and the lifter.
                 // Unknown slugs (i.e., slugs not in `MuscleRegionMap.allSlugs`)
                 // are skipped with a debug log — a future dataset bump that
                 // adds a new slug would surface here.
-                for slug in dto.primaryMuscles {
+                for slug in dto.primaryMuscles where !stimulated.contains(slug) {
                     guard let mg = musclesBySlug[slug] else {
                         Self.log.debug("Unknown primary muscle slug '\(slug)' on \(dto.id) — skipping stimulus row")
                         continue
@@ -239,7 +289,7 @@ public actor ExerciseLibraryImporter {
                     )
                     modelContext.insert(stim)
                 }
-                for slug in dto.secondaryMuscles {
+                for slug in dto.secondaryMuscles where !stimulated.contains(slug) {
                     guard let mg = musclesBySlug[slug] else {
                         Self.log.debug("Unknown secondary muscle slug '\(slug)' on \(dto.id) — skipping stimulus row")
                         continue
@@ -264,7 +314,7 @@ public actor ExerciseLibraryImporter {
                 try modelContext.save()
             }
 
-            // MARK: 4. Seed UserSettings singleton if absent
+            // MARK: 5. Seed UserSettings singleton if absent
             //
             // The Settings tab in Wave 3 queries `[UserSettings]` and reads
             // `.first`. Inserting the default row here means the Settings
@@ -275,20 +325,53 @@ public actor ExerciseLibraryImporter {
                 try modelContext.save()
             }
 
-            // MARK: 5. Stamp the version stamp
-            UserDefaults.standard.set(bundled, forKey: Self.seedVersionKey)
+            // MARK: 6. Stamp the version stamp
+            defaults.set(bundled, forKey: Self.seedVersionKey)
             let elapsed = Date().timeIntervalSince(start)
-            Self.log.info("Seed complete in \(elapsed, format: .fixed(precision: 3))s — \(BRUCountLabel.text(dtos.count, "exercise"), privacy: .public), \(musclesBySlug.count) muscles")
+            Self.log.info("Seed complete in \(elapsed, format: .fixed(precision: 3))s — \(BRUCountLabel.text(dtos.count, "exercise"), privacy: .public) (\(insertedCount) new, \(updatedCount) updated), \(musclesBySlug.count) muscles")
         } catch {
             // Mid-import failure (e.g. disk full mid-batch). Roll back
-            // unsaved inserts so the context state matches disk before
+            // unsaved changes so the context state matches disk before
             // rethrowing. The next `seedIfNeeded()` call (after the
-            // user retries / app relaunches) re-enters MARK: 0 and
-            // wipes any rows that DID make it to disk before the
-            // failure, so retry succeeds cleanly (review WR-01).
+            // user retries / app relaunches) finds the rows that DID make
+            // it to disk by externalID and slug and inserts only the rest,
+            // so retry succeeds cleanly (review WR-01).
             modelContext.rollback()
             Self.log.error("Seed failed mid-import — rolling back: \(error.localizedDescription)")
             throw error
         }
+    }
+
+    /// Writes the fields the dataset supplies onto an exercise an earlier
+    /// seed inserted, and reports whether any changed. Only what differs is
+    /// written, because an equal assignment still marks the row changed and
+    /// re-renders every view that reads it. The exercise's identity and the
+    /// lifter's settings (unit override, increment, bar weight, plateau
+    /// overrides) are not dataset fields, so they stay as they are.
+    private func refresh(
+        _ exercise: Exercise,
+        from dto: ExerciseDTO,
+        canonicalName: String,
+        equipmentRaw: String,
+        mechanicRaw: String,
+        primaryMuscleSlugsJoined joined: String
+    ) -> Bool {
+        var changed = false
+        func write<Value: Equatable>(_ keyPath: ReferenceWritableKeyPath<Exercise, Value>, _ value: Value) {
+            guard exercise[keyPath: keyPath] != value else { return }
+            exercise[keyPath: keyPath] = value
+            changed = true
+        }
+        write(\.name, dto.name)
+        write(\.canonicalName, canonicalName)
+        write(\.equipmentRaw, equipmentRaw)
+        write(\.mechanicRaw, mechanicRaw)
+        write(\.forceRaw, dto.force)
+        write(\.levelRaw, dto.level)
+        write(\.category, dto.category)
+        write(\.instructions, dto.instructions)
+        write(\.imagePaths, dto.images)
+        write(\.primaryMuscleSlugsJoined, joined)
+        return changed
     }
 }

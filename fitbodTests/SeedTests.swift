@@ -5,7 +5,7 @@
 //  Plan 01-PLAN-02-02 anchor suite — proves the load-bearing
 //  `ExerciseLibraryImporter` (`@ModelActor`) seed pipeline.
 //
-//  Seven Swift Testing functions cover:
+//  Nine Swift Testing functions cover:
 //   1. `strengthOnlyCount` — at least 600 strength exercises after seed
 //      (typical: ~702 per the vendored snapshot).
 //   2. `muscleGroupCount` — exactly 17 canonical MuscleGroup rows.
@@ -16,32 +16,28 @@
 //      with `|slug|` format for ≥95% of seeded exercises.
 //   7. `coldLaunchUnder2s` — performance budget; soft cap at 5s for CI
 //      headroom, production target <2s (FOUND-05).
+//   8. `reseedKeepsLifterData` — a re-seed updates the catalog in place
+//      and keeps everything the lifter made or logged (T128, F296).
+//   9. `partialSeedResumes` — a seed that stopped partway resumes without
+//      duplicating what reached disk (review WR-01).
 //
 //  ## Test isolation
 //
 //  Each test:
-//    - resets `UserDefaults[seedVersionKey]` so the importer doesn't
-//      short-circuit on a stamp left over from a previous test run.
+//    - keeps the seed-version stamp in its own `UserDefaults` suite
+//      (`defaults`), never in `UserDefaults.standard`: the hosted tests
+//      share that with the app on the phone, and clearing the phone's stamp
+//      made the app's next launch re-seed over the store UI tests left
+//      (F296).
 //    - builds a fresh in-memory `ModelContainer` via
 //      `InMemoryContainer.makeEmpty()` so seed counts are exact.
 //    - reads the bundled `exercises.json` from `Bundle.main` (the test
 //      target runs inside the `fitbod` host app bundle, so
 //      auto-discovered resources resolve cleanly).
 //
-//  Swift Testing's `struct` suite is re-instantiated per `@Test`, so
-//  there is no shared state between tests; UserDefaults is the only
-//  process-wide channel and we reset it explicitly per test.
-//
-//  ## Why `.serialized`
-//
-//  `UserDefaults.standard` is process-wide. Without `.serialized`,
-//  Swift Testing parallelizes `@Test` functions within this suite by
-//  default, and parallel tests can race on the seed-version stamp:
-//  Test A resets the stamp + starts seeding, Test B reads the stamp
-//  AFTER Test A's seed finishes and short-circuits the importer. The
-//  `.serialized` trait forces sequential execution within the suite —
-//  cross-suite parallelism with other unrelated tests is unaffected
-//  (review WR-02).
+//  Swift Testing creates a new `SeedTests` instance per `@Test`, with a
+//  new stamp suite that `deinit` removes, so tests share nothing mutable
+//  and the suite needs no `.serialized`.
 //
 
 import Foundation
@@ -49,26 +45,40 @@ import SwiftData
 import Testing
 @testable import fitbod
 
-@Suite("ExerciseLibraryImporter", .serialized)
-struct SeedTests {
+@Suite("ExerciseLibraryImporter")
+final class SeedTests {
 
     // MARK: - Helpers
 
-    /// Removes the seed-version stamp from `UserDefaults` so a fresh
-    /// `seedIfNeeded()` call performs work rather than short-circuiting.
-    /// Called at the start of every test; UserDefaults is process-wide.
-    private static func resetStamp() {
-        UserDefaults.standard.removeObject(forKey: ExerciseLibraryImporter.seedVersionKey)
+    private let defaultsSuiteName = "SeedTests.\(UUID().uuidString)"
+
+    /// Where this test's seed-version stamp lives. A fresh suite starts with
+    /// no stamp, so the first `seedIfNeeded` performs work.
+    private let defaults: UserDefaults
+
+    init() throws {
+        defaults = try #require(UserDefaults(suiteName: defaultsSuiteName))
+    }
+
+    deinit {
+        defaults.removePersistentDomain(forName: defaultsSuiteName)
+    }
+
+    /// The externalIDs a complete seed holds: every strength-category entry
+    /// in the bundled dataset.
+    private static func bundledStrengthIDs() throws -> Set<String> {
+        let url = try #require(Bundle.main.url(forResource: "exercises", withExtension: "json"))
+        let dtos = try JSONDecoder().decode([ExerciseDTO].self, from: Data(contentsOf: url))
+        return Set(dtos.filter { EquipmentMapper.shouldImport(category: $0.category) }.map(\.id))
     }
 
     // MARK: - Test 1: strength-only count
 
     @Test("Seed inserts at least 600 strength exercises (LIB-01 / FOUND-05)")
     func strengthOnlyCount() async throws {
-        Self.resetStamp()
         let container = try InMemoryContainer.makeEmpty()
         let importer = ExerciseLibraryImporter(modelContainer: container)
-        try await importer.seedIfNeeded()
+        try await importer.seedIfNeeded(defaults: defaults)
 
         let ctx = ModelContext(container)
         let count = try ctx.fetchCount(FetchDescriptor<Exercise>())
@@ -82,10 +92,9 @@ struct SeedTests {
 
     @Test("Seed creates exactly 17 canonical MuscleGroup rows")
     func muscleGroupCount() async throws {
-        Self.resetStamp()
         let container = try InMemoryContainer.makeEmpty()
         let importer = ExerciseLibraryImporter(modelContainer: container)
-        try await importer.seedIfNeeded()
+        try await importer.seedIfNeeded(defaults: defaults)
 
         let ctx = ModelContext(container)
         let muscles = try ctx.fetch(FetchDescriptor<MuscleGroup>())
@@ -105,11 +114,10 @@ struct SeedTests {
 
     @Test("Seed is idempotent — second call does not duplicate rows")
     func idempotent() async throws {
-        Self.resetStamp()
         let container = try InMemoryContainer.makeEmpty()
         let importer = ExerciseLibraryImporter(modelContainer: container)
 
-        try await importer.seedIfNeeded()
+        try await importer.seedIfNeeded(defaults: defaults)
         let ctx1 = ModelContext(container)
         let firstExerciseCount = try ctx1.fetchCount(FetchDescriptor<Exercise>())
         let firstMuscleCount = try ctx1.fetchCount(FetchDescriptor<MuscleGroup>())
@@ -117,7 +125,7 @@ struct SeedTests {
 
         // Second call: should short-circuit because UserDefaults stamp
         // now matches bundled SEED_VERSION.
-        try await importer.seedIfNeeded()
+        try await importer.seedIfNeeded(defaults: defaults)
         let ctx2 = ModelContext(container)
         let secondExerciseCount = try ctx2.fetchCount(FetchDescriptor<Exercise>())
         let secondMuscleCount = try ctx2.fetchCount(FetchDescriptor<MuscleGroup>())
@@ -141,10 +149,9 @@ struct SeedTests {
 
     @Test("Seed populates the UserSettings singleton with weightUnit == .lb")
     func userSettingsSeeded() async throws {
-        Self.resetStamp()
         let container = try InMemoryContainer.makeEmpty()
         let importer = ExerciseLibraryImporter(modelContainer: container)
-        try await importer.seedIfNeeded()
+        try await importer.seedIfNeeded(defaults: defaults)
 
         let ctx = ModelContext(container)
         let settings = try ctx.fetch(FetchDescriptor<UserSettings>())
@@ -156,10 +163,9 @@ struct SeedTests {
 
     @Test("Stimulus rows: primary=1.0, secondary=0.5, at least 1 per exercise")
     func stimulusWeightingDefaults() async throws {
-        Self.resetStamp()
         let container = try InMemoryContainer.makeEmpty()
         let importer = ExerciseLibraryImporter(modelContainer: container)
-        try await importer.seedIfNeeded()
+        try await importer.seedIfNeeded(defaults: defaults)
 
         let ctx = ModelContext(container)
         let stimuli = try ctx.fetch(FetchDescriptor<ExerciseMuscleStimulus>())
@@ -196,10 +202,9 @@ struct SeedTests {
 
     @Test("primaryMuscleSlugsJoined populated as |slug| for the muscle-filter predicate")
     func denormalizedMuscleField() async throws {
-        Self.resetStamp()
         let container = try InMemoryContainer.makeEmpty()
         let importer = ExerciseLibraryImporter(modelContainer: container)
-        try await importer.seedIfNeeded()
+        try await importer.seedIfNeeded(defaults: defaults)
 
         let ctx = ModelContext(container)
         let exercises = try ctx.fetch(FetchDescriptor<Exercise>())
@@ -237,12 +242,11 @@ struct SeedTests {
         .timeLimit(.minutes(1))
     )
     func coldLaunchUnder2s() async throws {
-        Self.resetStamp()
         let container = try InMemoryContainer.makeEmpty()
         let importer = ExerciseLibraryImporter(modelContainer: container)
 
         let start = Date()
-        try await importer.seedIfNeeded()
+        try await importer.seedIfNeeded(defaults: defaults)
         let elapsed = Date().timeIntervalSince(start)
 
         // Production target is <2.0s (FOUND-05) — measured against the
@@ -253,6 +257,212 @@ struct SeedTests {
         #expect(
             elapsed < 5.0,
             "Seed elapsed \(elapsed)s — production target <2s, soft cap 5s for CI headroom"
+        )
+    }
+
+    // MARK: - Test 8: a re-seed keeps the lifter's data (T128, F296)
+
+    /// Seeds, adds what the lifter makes and logs, clears the stamp and seeds
+    /// again. Reads everything back by id or by link query, never through a
+    /// relationship: reading a link to a row the seed deleted crashes the
+    /// host app instead of failing the test.
+    @Test("A re-seed keeps custom exercises, logged and planned links, edited weights and targets, and exercise settings")
+    @MainActor // LoggerFixtures, which builds the session and the workout, is main-actor isolated.
+    func reseedKeepsLifterData() async throws {
+        let container = try InMemoryContainer.makeEmpty()
+        let importer = ExerciseLibraryImporter(modelContainer: container)
+        try await importer.seedIfNeeded(defaults: defaults)
+
+        let ctx = ModelContext(container)
+        let benchExternalID = "Barbell_Bench_Press_-_Medium_Grip"
+        let bench = try #require(try ctx.fetch(FetchDescriptor<Exercise>(
+            predicate: #Predicate { $0.externalID == benchExternalID }
+        )).first)
+        let benchChest = try #require(bench.muscleStimuli?.first { $0.muscle?.slug == "chest" })
+        let chest = try #require(benchChest.muscle)
+
+        // The bench press's own settings and a stimulus weight the lifter edited.
+        bench.unitOverride = .kg
+        bench.smallestIncrement = 1.25
+        bench.barWeightOverride = 15
+        bench.plateauWindowOverride = 4
+        bench.plateauToleranceOverride = 0.02
+        benchChest.weight = 0.8
+        benchChest.userEditedWeight = true
+        // A field the dataset supplies, as an older dataset wrote it.
+        let datasetInstructions = bench.instructions
+        bench.instructions = ["An older dataset's step"]
+
+        // A volume target the lifter edited.
+        let target = MuscleVolumeTarget()
+        ctx.insert(target)
+        target.muscle = chest
+        target.mv = 5
+        target.mev = 9
+        target.mav = 15
+        target.mrv = 21
+        target.userEdited = true
+
+        // A custom exercise with its own stimulus row.
+        let custom = LoggerFixtures.exercise("Cambered Bar Bench", in: ctx)
+        custom.isCustom = true
+        let customChest = ExerciseMuscleStimulus()
+        ctx.insert(customChest)
+        customChest.exercise = custom
+        customChest.muscle = chest
+        customChest.weight = 0.9
+
+        // A seeded exercise the bundled dataset no longer lists.
+        let retired = Exercise(
+            externalID: "T128_Retired_Lift",
+            name: "Retired Lift",
+            canonicalName: "retired lift",
+            equipmentRaw: Equipment.barbell.rawValue,
+            mechanicRaw: Mechanic.compound.rawValue
+        )
+        ctx.insert(retired)
+
+        // A session that plans both exercises, and a finished workout that
+        // logged the bench press.
+        _ = try LoggerFixtures.template("Push A", exercises: [bench, custom], in: ctx)
+        let startedAt = Date(timeIntervalSince1970: 1_790_000_000)
+        let workout = try LoggerFixtures.session(
+            exercise: bench, startedAt: startedAt, completedAt: startedAt.addingTimeInterval(3_600),
+            sets: [(100, 5, true)], in: ctx
+        )
+        try ctx.save()
+
+        let benchID = bench.id, chestID = chest.id, benchChestID = benchChest.id, targetID = target.id
+        let customID = custom.id, customChestID = customChest.id, retiredID = retired.id, workoutID = workout.id
+        let seededCount = try ctx.fetchCount(FetchDescriptor<Exercise>(predicate: #Predicate { !$0.isCustom }))
+        let stimulusCount = try ctx.fetchCount(FetchDescriptor<ExerciseMuscleStimulus>())
+
+        defaults.removeObject(forKey: ExerciseLibraryImporter.seedVersionKey)
+        try await importer.seedIfNeeded(defaults: defaults)
+
+        let after = ModelContext(container)
+        #expect(
+            try after.fetchCount(FetchDescriptor<Exercise>(predicate: #Predicate { !$0.isCustom })) == seededCount,
+            "The re-seed must neither add nor remove seeded exercises"
+        )
+        #expect(
+            try after.fetchCount(FetchDescriptor<ExerciseMuscleStimulus>()) == stimulusCount,
+            "The re-seed must neither add nor remove stimulus rows"
+        )
+        #expect(try after.fetchCount(FetchDescriptor<MuscleGroup>()) == 17)
+
+        // The bench press is the same row: its settings kept, its dataset fields refreshed.
+        let benchAfter = try after.fetch(FetchDescriptor<Exercise>(predicate: #Predicate { $0.id == benchID })).first
+        #expect(benchAfter != nil, "The re-seed must update the bench press in place, not replace it")
+        #expect(benchAfter?.unitOverride == .kg)
+        #expect(benchAfter?.smallestIncrement == 1.25)
+        #expect(benchAfter?.barWeightOverride == 15)
+        #expect(benchAfter?.plateauWindowOverride == 4)
+        #expect(benchAfter?.plateauToleranceOverride == 0.02)
+        #expect(benchAfter?.instructions == datasetInstructions, "The re-seed must refresh what the dataset supplies")
+
+        // The edited stimulus weight is still the bench press's chest row.
+        let benchChestAfter = try after.fetch(FetchDescriptor<ExerciseMuscleStimulus>(
+            predicate: #Predicate { $0.exercise?.id == benchID && $0.muscle?.id == chestID }
+        ))
+        #expect(benchChestAfter.map(\.id) == [benchChestID])
+        #expect(benchChestAfter.first?.weight == 0.8)
+        #expect(benchChestAfter.first?.userEditedWeight == true)
+
+        // The edited volume target is still the chest's.
+        let chestTargets = try after.fetch(FetchDescriptor<MuscleVolumeTarget>(
+            predicate: #Predicate { $0.muscle?.id == chestID }
+        ))
+        #expect(chestTargets.map(\.id) == [targetID])
+        #expect(chestTargets.first.map { [$0.mv, $0.mev, $0.mav, $0.mrv] } == [5, 9, 15, 21])
+        #expect(chestTargets.first?.userEdited == true)
+
+        // The custom exercise and its own stimulus row.
+        let customAfter = try after.fetch(FetchDescriptor<Exercise>(predicate: #Predicate { $0.id == customID })).first
+        #expect(customAfter?.name == "Cambered Bar Bench")
+        #expect(customAfter?.isCustom == true)
+        let customChestAfter = try after.fetch(FetchDescriptor<ExerciseMuscleStimulus>(
+            predicate: #Predicate { $0.exercise?.id == customID && $0.muscle?.id == chestID }
+        ))
+        #expect(customChestAfter.map(\.id) == [customChestID])
+        #expect(customChestAfter.first?.weight == 0.9)
+
+        // The seeded exercise the dataset no longer lists stays as it was.
+        let retiredAfter = try after.fetch(FetchDescriptor<Exercise>(predicate: #Predicate { $0.id == retiredID })).first
+        #expect(retiredAfter?.name == "Retired Lift")
+        #expect(retiredAfter?.externalID == "T128_Retired_Lift")
+
+        // The finished workout and the session still point at the same rows.
+        let logged = try after.fetch(FetchDescriptor<SessionExercise>(
+            predicate: #Predicate { $0.exercise?.id == benchID }
+        ))
+        #expect(logged.map { $0.session?.id } == [workoutID], "The finished workout must still log the bench press")
+        #expect(
+            try after.fetchCount(FetchDescriptor<SessionExerciseTemplate>(
+                predicate: #Predicate { $0.exercise?.id == benchID }
+            )) == 1,
+            "The session must still plan the bench press"
+        )
+        #expect(
+            try after.fetchCount(FetchDescriptor<SessionExerciseTemplate>(
+                predicate: #Predicate { $0.exercise?.id == customID }
+            )) == 1,
+            "The session must still plan the custom exercise"
+        )
+    }
+
+    // MARK: - Test 9: a seed that stopped partway resumes (review WR-01)
+
+    @Test("A seed that stopped partway resumes: what reached disk stays, the rest is inserted once")
+    func partialSeedResumes() async throws {
+        let container = try InMemoryContainer.makeEmpty()
+
+        // What a seed that failed after its first save leaves: one muscle,
+        // one exercise with one of its stimulus rows, and no stamp.
+        let ctx = ModelContext(container)
+        let chest = MuscleGroup(slug: "chest", displayName: "Chest", region: .upper)
+        ctx.insert(chest)
+        let bench = Exercise(
+            externalID: "Barbell_Bench_Press_-_Medium_Grip",
+            name: "Barbell Bench Press - Medium Grip",
+            canonicalName: "barbell bench press - medium grip",
+            equipmentRaw: Equipment.barbell.rawValue,
+            mechanicRaw: Mechanic.compound.rawValue,
+            primaryMuscleSlugsJoined: "|chest|"
+        )
+        ctx.insert(bench)
+        let benchChest = ExerciseMuscleStimulus()
+        ctx.insert(benchChest)
+        benchChest.exercise = bench
+        benchChest.muscle = chest
+        try ctx.save()
+        let benchID = bench.id, chestID = chest.id, benchChestID = benchChest.id
+        let datasetIDs = try Self.bundledStrengthIDs()
+
+        try await ExerciseLibraryImporter(modelContainer: container).seedIfNeeded(defaults: defaults)
+
+        let after = ModelContext(container)
+        let externalIDs = try after.fetch(FetchDescriptor<Exercise>()).compactMap(\.externalID)
+        #expect(externalIDs.count == Set(externalIDs).count, "No exercise may be inserted twice")
+        #expect(Set(externalIDs) == datasetIDs, "The resumed seed must hold the whole dataset")
+        let muscles = try after.fetch(FetchDescriptor<MuscleGroup>())
+        #expect(muscles.map(\.slug).sorted() == MuscleRegionMap.allSlugs.sorted(), "Every muscle exactly once")
+        #expect(muscles.first { $0.slug == "chest" }?.id == chestID, "The muscle that reached disk stays")
+        #expect(
+            try after.fetchCount(FetchDescriptor<Exercise>(predicate: #Predicate { $0.id == benchID })) == 1,
+            "The exercise that reached disk stays"
+        )
+
+        // The bench press keeps its chest row and gains the rows the failed
+        // seed never wrote.
+        let benchStimuli = try after.fetch(FetchDescriptor<ExerciseMuscleStimulus>(
+            predicate: #Predicate { $0.exercise?.id == benchID }
+        ))
+        #expect(benchStimuli.filter { $0.muscle?.slug == "chest" }.map(\.id) == [benchChestID])
+        #expect(benchStimuli.count > 1, "The rows the failed seed never wrote must be inserted")
+        #expect(
+            defaults.integer(forKey: ExerciseLibraryImporter.seedVersionKey)
+                == (try ExerciseLibraryImporter.bundledSeedVersion())
         )
     }
 }
