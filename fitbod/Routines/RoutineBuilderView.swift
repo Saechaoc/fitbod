@@ -648,6 +648,9 @@ public struct RoutineBuilderView: View {
     }
 
     private func removeExercise(_ exDraft: RoutineExerciseDraft) {
+        // An unsaved row's open state is keyed by its address, which a later
+        // exercise can reuse, so every way of removing a row drops its key.
+        expandedExerciseIDs.remove(stableKey(for: exDraft))
         draft.exercises.removeAll { $0 === exDraft }
         for (i, ex) in draft.exercises.enumerated() { ex.orderIndex = i }
     }
