@@ -15,6 +15,7 @@
 // Persistence semantics:
 //   Empty → tempoActual = nil (no "0-0-0-0" ghosts in history).
 //   Non-empty → joined with "-" (e.g. "3-1-1-0"). Round-trip symmetric.
+//   Both go through TempoParts, which the session editor shares (T145).
 //
 // BRU contract:
 //   NO Capsule() / NO RoundedRectangle / NO accentColor
@@ -86,21 +87,14 @@ public struct TempoEntryRow: View {
         .revealsAboveKeyboard(focusedField != nil)
         .onAppear {
             // Re-hydrate the four fields from the persisted tempoActual
-            let parts = (entry.tempoActual ?? "").split(
-                separator: "-",
-                omittingEmptySubsequences: false
-            ).map(String.init)
-            for i in 0..<4 {
-                components[i] = i < parts.count ? parts[i] : ""
-            }
+            components = TempoParts.split(entry.tempoActual)
         }
     }
 
     /// Persists the dash-joined tempo to SetEntry.tempoActual.
     /// Empty across the board → nil so history doesn't accumulate ghost rows.
     private func persistTempo() {
-        let allEmpty = components.allSatisfy { $0.isEmpty }
-        entry.tempoActual = allEmpty ? nil : components.joined(separator: "-")
+        entry.tempoActual = TempoParts.join(components)
     }
 
     /// The set's identifier suffix, such as "1.S1", as SetRow gives it.

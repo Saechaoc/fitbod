@@ -34,7 +34,9 @@
 //  Each tempo field keeps its drawn size, and its touch target reaches 2pt
 //  into each gap beside it and up and down to 44pt, where a tap focuses
 //  the field (T111). A field selects its digit as it takes focus, so a
-//  digit typed into it replaces the one it shows (T39).
+//  digit typed into it replaces the one it shows (T39). The fields read
+//  and write the tempo through TempoParts, so a blank part keeps its
+//  place and editing one part leaves the others where they were (T145).
 //
 //  BRU contract: NO accentColor / NO Image(systemName:) / NO Capsule /
 //  NO RoundedRectangle / NO Apple HIG semantic fonts
@@ -243,16 +245,13 @@ public struct PrescriptionEditorRow: View {
     }
 
     private func tempoField(index: Int, placeholder: String, width: CGFloat?) -> some View {
-        let parts = (draft.tempo ?? "").split(separator: "-").map(String.init)
-        let current = index < parts.count ? parts[index] : ""
+        let parts = TempoParts.split(draft.tempo)
         let binding = Binding<String>(
-            get: { current },
+            get: { parts[index] },
             set: { newValue in
-                var p = parts
-                while p.count <= index { p.append("") }
-                p[index] = newValue
-                let joined = p.joined(separator: "-")
-                draft.tempo = joined.isEmpty ? nil : joined
+                var edited = TempoParts.split(draft.tempo)
+                edited[index] = newValue
+                draft.tempo = TempoParts.join(edited)
             }
         )
         let verticalReach = max(0, (BRUMetrics.touchTarget - tempoFieldHeight) / 2)
