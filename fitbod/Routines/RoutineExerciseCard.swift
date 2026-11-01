@@ -230,7 +230,12 @@ public struct RoutineExerciseCard: View {
         .accessibilityLabel("Remove \(exerciseName)")
         .accessibilityIdentifier("routine.exercise.remove.\(index + 1)")
         .confirmationDialog("Remove \(exerciseName)?", isPresented: $confirmingRemove, titleVisibility: .visible) {
-            Button("Remove", role: .destructive) { onRemove(draft) }
+            Button("Remove", role: .destructive) {
+                // Close the row first: an unsaved row's open state is keyed
+                // by its address, which a later exercise can reuse.
+                isExpanded = false
+                onRemove(draft)
+            }
             // iOS 26 hides a cancel-role button, so the way back is a plain one.
             Button("Keep exercise") {}
         }
