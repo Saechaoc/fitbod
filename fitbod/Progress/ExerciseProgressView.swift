@@ -748,18 +748,18 @@ struct ProgressChartDescriptor: AXChartDescriptorRepresentable {
     /// A series per line drawn, its points in date order, in the legend's
     /// order.
     private var series: [AXDataSeriesDescriptor] {
-        Dictionary(grouping: points, by: \.series).values
+        let grouped: [[ChartPoint]] = Dictionary(grouping: points, by: \.series).values
             .map { line in line.sorted { $0.date < $1.date } }
-            .sorted { lhs, rhs in
-                lhs[0].style != rhs[0].style ? lhs[0].style < rhs[0].style : lhs[0].series < rhs[0].series
-            }
-            .map { line in
-                AXDataSeriesDescriptor(
-                    name: legendName(of: line),
-                    isContinuous: true,
-                    dataPoints: line.map { AXDataPoint(x: $0.date.timeIntervalSinceReferenceDate, y: $0.value) }
-                )
-            }
+        let ordered: [[ChartPoint]] = grouped.sorted { lhs, rhs in
+            lhs[0].style != rhs[0].style ? lhs[0].style < rhs[0].style : lhs[0].series < rhs[0].series
+        }
+        return ordered.map { line in
+            AXDataSeriesDescriptor(
+                name: legendName(of: line),
+                isContinuous: true,
+                dataPoints: line.map { AXDataPoint(x: $0.date.timeIntervalSinceReferenceDate, y: $0.value) }
+            )
+        }
     }
 
     /// The legend's name for a line: TOP SET or ALL-SET AVG on the e1RM
