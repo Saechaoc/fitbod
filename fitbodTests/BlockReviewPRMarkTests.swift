@@ -23,7 +23,7 @@ import Vision
 
 /// Main actor, as it shows the review in a UIKit window.
 @MainActor
-@Suite("BlockReviewPRMark")
+@Suite("BlockReviewPRMark", .hostedAccessibility)
 struct BlockReviewPRMarkTests {
     private let day: TimeInterval = 86_400
     private let started = Date(timeIntervalSince1970: 1_780_000_000)
@@ -121,32 +121,26 @@ struct BlockReviewPRMarkTests {
     /// The review of `block` in a window the small phone's width, once it
     /// shows its PRS value and its e1RM rows.
     private func showReview(of block: Block, in container: ModelContainer) throws -> UIWindow {
-        let scene = try #require(
-            UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.first
-        )
-        let window = UIWindow(windowScene: scene)
-        window.frame = CGRect(x: 0, y: 0, width: 390, height: 844)
-        window.rootViewController = UIHostingController(
-            rootView: BlockReviewView(block: block).modelContainer(container)
-        )
-        window.isHidden = false
-        waitUntil { prsValue(in: window) != nil }
+        let window = try HostedAccessibility.show(BlockReviewView(block: block).modelContainer(container))
+        HostedAccessibility.waitUntil { prsValue(in: window) != nil }
         return window
     }
 
     /// The PRS stat's value, as VoiceOver reads it: the stat's text
     /// without letters.
     private func prsValue(in window: UIWindow) -> String? {
-        guard let stat = elements(under: window).first(where: {
-            property("accessibilityIdentifier", of: $0) as? String == "blockReview.stat.prs"
+        guard let stat = HostedAccessibility.elements(under: window).first(where: {
+            HostedAccessibility.property("accessibilityIdentifier", of: $0) as? String == "blockReview.stat.prs"
         }) else { return nil }
-        return elements(under: stat).compactMap(\.accessibilityLabel).first { !$0.contains(where: \.isLetter) }
+        return HostedAccessibility.elements(under: stat)
+            .compactMap(\.accessibilityLabel)
+            .first { !$0.contains(where: \.isLetter) }
     }
 
     /// Whether `lift`'s e1RM row shows the ★ PR chip, read from the screen
     /// across the row's width at the height of the lift's name.
     private func rowShowsPRChip(_ lift: String, in window: UIWindow) throws -> Bool {
-        let name = try #require(elements(under: window).first { $0.accessibilityLabel == lift },
+        let name = try #require(HostedAccessibility.elements(under: window).first { $0.accessibilityLabel == lift },
                                 "The review shows no e1RM row for \(lift)")
         let screen = try #require(window.windowScene?.screen)
         let frame = window.convert(name.accessibilityFrame, from: screen.coordinateSpace)
@@ -165,27 +159,5 @@ struct BlockReviewPRMarkTests {
             .flatMap { $0.split { !$0.isLetter && !$0.isNumber } }
         // Vision can read the star into the word, as "*PR" or "XPR".
         return words.contains { $0.hasSuffix("PR") }
-    }
-
-    /// Every accessibility element and view under `root`, depth first.
-    private func elements(under root: NSObject) -> [NSObject] {
-        let children = (root.accessibilityElements ?? []) + ((root as? UIView)?.subviews ?? [])
-        return children.compactMap { $0 as? NSObject }.flatMap { [$0] + elements(under: $0) }
-    }
-
-    /// An accessibility property of `element` by name. SwiftUI's elements
-    /// have the properties without declaring the protocols that name them.
-    private func property(_ name: String, of element: NSObject) -> Any? {
-        element.responds(to: NSSelectorFromString(name)) ? element.value(forKey: name) : nil
-    }
-
-    /// Runs the main run loop in 50 ms steps while SwiftUI renders the
-    /// review, until `done` holds or ten seconds pass. A ceiling, not a
-    /// wait.
-    private func waitUntil(_ done: () -> Bool) {
-        let deadline = Date.now.addingTimeInterval(10)
-        while !done(), Date.now < deadline {
-            RunLoop.main.run(until: Date.now.addingTimeInterval(0.05))
-        }
     }
 }

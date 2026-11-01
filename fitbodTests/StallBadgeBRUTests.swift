@@ -15,26 +15,23 @@ import Testing
 import UIKit
 @testable import fitbod
 
+/// Main actor, as it shows the badge in a UIKit window.
 @MainActor
-@Suite("StallBadgeBRUTests")
+@Suite("StallBadgeBRUTests", .hostedAccessibility)
 struct StallBadgeBRUTests {
 
     // MARK: - Helpers
 
-    /// Render a SwiftUI view into a UIHostingController and pump the run loop
-    /// long enough for the view to appear so the accessibility tree is populated.
-    private func render<V: View>(_ view: V) -> UIView {
-        let hosting = UIHostingController(rootView: view)
-        hosting.view.frame = CGRect(x: 0, y: 0, width: 320, height: 100)
-        hosting.view.layoutIfNeeded()
-        RunLoop.main.run(until: Date(timeIntervalSinceNow: 0.05))
-        return hosting.view
+    /// `view` in a window on the test host's scene, with accessibility on,
+    /// so SwiftUI builds its accessibility tree (T134).
+    private func render<V: View>(_ view: V) throws -> UIWindow {
+        try HostedAccessibility.show(view, width: 320, height: 100)
     }
 
     // MARK: - Test 1: Uppercased visible label
 
     @Test("StallBadge renders label text STALLED (uppercased)")
-    func stallBadgeLabelIsUppercasedSTALLED() {
+    func stallBadgeLabelIsUppercasedSTALLED() throws {
         // The BRU contract requires .textCase(.uppercase) or explicit uppercasing.
         // We verify that the source label passed to the Text view is "Stalled"
         // (which the BRU font renders uppercase via .textCase(.uppercase)) OR
@@ -57,7 +54,10 @@ struct StallBadgeBRUTests {
         // Text("Stalled".uppercased()) — we verify this via the source GREP
         // guardrail in the plan's <done> criteria. Here we verify the
         // rendered view produces a non-empty accessibility element.
-        let view = render(badge)
+        let window = try render(badge)
+        defer { window.isHidden = true }
+        let view = try #require(window.rootViewController?.view)
+        HostedAccessibility.waitUntil { !(view.accessibilityElements ?? []).isEmpty }
         let elements = view.accessibilityElements ?? []
         #expect(!elements.isEmpty || view.accessibilityLabel != nil,
                 "StallBadge must expose an accessibility element")
@@ -66,21 +66,22 @@ struct StallBadgeBRUTests {
     // MARK: - Test 2: Verbatim accessibility label
 
     @Test("StallBadge accessibility label is verbatim per UI-SPEC §Accessibility Contract")
-    func stallBadgeAccessibilityLabelVerbatim() {
+    func stallBadgeAccessibilityLabelVerbatim() throws {
         let exerciseName = "Bench Press"
         let sessionCount = 4
         let badge = StallBadge(exerciseName: exerciseName, sessionCount: sessionCount)
         let expected = "Stalled: \(exerciseName) has been flat for \(sessionCount) sessions."
-        let view = render(badge)
+        let window = try render(badge)
+        defer { window.isHidden = true }
         // Walk accessibility elements depth-first to find a matching label.
-        let found = findAccessibilityLabel(expected, in: view)
-        #expect(found, "Expected accessibility label: '\(expected)'")
+        HostedAccessibility.waitUntil { hasAccessibilityLabel(expected, under: window) }
+        #expect(hasAccessibilityLabel(expected, under: window), "Expected accessibility label: '\(expected)'")
     }
 
     // MARK: - Test 3: BRU palette — bruSignal background, bruPaper text
 
     @Test("StallBadge uses bruSignal background and bruPaper foreground")
-    func stallBadgeUsesBRUPalette() {
+    func stallBadgeUsesBRUPalette() throws {
         // We verify by inspecting the Color token names embedded in the view
         // construction — since StallBadge is a value type we can inspect
         // via a simple string reflection of the Color asset names.
@@ -104,28 +105,17 @@ struct StallBadgeBRUTests {
         // Additionally verify the badge renders without crashing — palette wiring
         // is correct if the view renders.
         let badge = StallBadge(exerciseName: "Squat", sessionCount: 3)
-        let view = render(badge)
+        let window = try render(badge)
+        defer { window.isHidden = true }
+        let view = try #require(window.rootViewController?.view)
         #expect(view.frame.height > 0, "StallBadge must render with non-zero height")
     }
 
     // MARK: - Helpers
 
-    /// Recursively walks the UIAccessibility element tree looking for a
-    /// label matching `target`. Returns true on first match.
-    private func findAccessibilityLabel(_ target: String, in view: UIView) -> Bool {
-        if view.accessibilityLabel == target { return true }
-        for element in (view.accessibilityElements ?? []) {
-            if let subView = element as? UIView {
-                if findAccessibilityLabel(target, in: subView) { return true }
-            } else if let element = element as? NSObject {
-                if element.accessibilityLabel == target { return true }
-            }
-        }
-        // Also check direct label on the view itself
-        if let label = view.accessibilityLabel, label == target { return true }
-        for subview in view.subviews {
-            if findAccessibilityLabel(target, in: subview) { return true }
-        }
-        return false
+    /// Whether an accessibility element under `root`, or `root` itself, is
+    /// labeled `target`.
+    private func hasAccessibilityLabel(_ target: String, under root: NSObject) -> Bool {
+        HostedAccessibility.elements(under: root).contains { $0.accessibilityLabel == target }
     }
 }

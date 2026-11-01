@@ -76,14 +76,14 @@ struct ProgressChartDescriptorTests {
 
     /// Main actor, as it hosts the screen in a UIKit window.
     @MainActor
-    @Test("The chart on screen hands VoiceOver its own descriptor")
+    @Test("The chart on screen hands VoiceOver its own descriptor", .hostedAccessibility)
     func chartOnScreenUsesItsOwnDescriptor() throws {
         let container = try FitbodModelContainer.make(inMemory: true)
         let bench = try logBenchPress(in: container.mainContext)
         let window = try showProgress(of: bench, in: container)
         defer { window.isHidden = true }
 
-        waitUntil { chartDescriptor(under: window) != nil }
+        HostedAccessibility.waitUntil { chartDescriptor(under: window) != nil }
         let descriptor = try #require(chartDescriptor(under: window), "The chart hands VoiceOver no audio graph")
         #expect(descriptor.yAxis?.valueDescriptionProvider(112.5) == "113 lb")
         #expect(descriptor.series.map(\.name) == ["TOP SET", "ALL-SET AVG"])
@@ -93,17 +93,17 @@ struct ProgressChartDescriptorTests {
     /// that ignored updates kept reading lb. Main actor, as it hosts the
     /// screen in a UIKit window.
     @MainActor
-    @Test("The chart on screen reads a new unit once the exercise is labeled kg")
+    @Test("The chart on screen reads a new unit once the exercise is labeled kg", .hostedAccessibility)
     func chartOnScreenReadsANewUnit() throws {
         let container = try FitbodModelContainer.make(inMemory: true)
         let bench = try logBenchPress(in: container.mainContext)
         let window = try showProgress(of: bench, in: container)
         defer { window.isHidden = true }
-        waitUntil { yAxisReading(of: 112.5, under: window) != nil }
+        HostedAccessibility.waitUntil { yAxisReading(of: 112.5, under: window) != nil }
         try #require(yAxisReading(of: 112.5, under: window) == "113 lb")
 
         bench.unitOverride = .kg
-        waitUntil { yAxisReading(of: 112.5, under: window) == "113 kg" }
+        HostedAccessibility.waitUntil { yAxisReading(of: 112.5, under: window) == "113 kg" }
         #expect(yAxisReading(of: 112.5, under: window) == "113 kg")
     }
 
@@ -121,7 +121,7 @@ struct ProgressChartDescriptorTests {
     /// drawn and each key's count is its own. Main actor, as it hosts the
     /// screen in a UIKit window.
     @MainActor
-    @Test("VOLUME's legend names every intent it draws, as its audio graph does")
+    @Test("VOLUME's legend names every intent it draws, as its audio graph does", .hostedAccessibility)
     func volumeLegendNamesEveryIntentItDraws() throws {
         let container = try FitbodModelContainer.make(inMemory: true)
         let bench = try logBenchPress(in: container.mainContext, workouts: [
@@ -131,11 +131,13 @@ struct ProgressChartDescriptorTests {
         ])
         let window = try showProgress(of: bench, in: container)
         defer { window.isHidden = true }
-        waitUntil { button(labeled: "VOLUME", under: window) != nil }
+        HostedAccessibility.waitUntil { button(labeled: "VOLUME", under: window) != nil }
         let volume = try #require(button(labeled: "VOLUME", under: window), "The VOLUME chip is not on screen")
 
         volume.accessibilityActivate()
-        waitUntil { chartDescriptor(under: window)?.title == "Volume chart" && !intentKeys(under: window).isEmpty }
+        HostedAccessibility.waitUntil {
+            chartDescriptor(under: window)?.title == "Volume chart" && !intentKeys(under: window).isEmpty
+        }
         // Lets the chip's 0.18 s chart transition finish before the screenshot.
         RunLoop.main.run(until: Date.now.addingTimeInterval(0.3))
         attachScreen(of: window, named: "T129-chart-volume")
@@ -153,16 +155,7 @@ struct ProgressChartDescriptorTests {
     /// `bench`'s progress screen in a window the small phone's width.
     @MainActor
     private func showProgress(of bench: Exercise, in container: ModelContainer) throws -> UIWindow {
-        let scene = try #require(
-            UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.first
-        )
-        let window = UIWindow(windowScene: scene)
-        window.frame = CGRect(x: 0, y: 0, width: 390, height: 844)
-        window.rootViewController = UIHostingController(
-            rootView: ExerciseProgressView(exercise: bench).modelContainer(container)
-        )
-        window.isHidden = false
-        return window
+        try HostedAccessibility.show(ExerciseProgressView(exercise: bench).modelContainer(container))
     }
 
     /// A point on an e1RM chip, as the chart draws an `E1RMSeriesPoint`.
@@ -242,15 +235,17 @@ struct ProgressChartDescriptorTests {
     /// found depth first among the accessibility elements under `root`.
     @MainActor
     private func chartDescriptor(under root: NSObject) -> AXChartDescriptor? {
-        elements(under: root)
-            .first { property("accessibilityIdentifier", of: $0) as? String == "progress.chart" }
-            .flatMap { property("accessibilityChartDescriptor", of: $0) as? AXChartDescriptor }
+        HostedAccessibility.elements(under: root)
+            .first { HostedAccessibility.property("accessibilityIdentifier", of: $0) as? String == "progress.chart" }
+            .flatMap { HostedAccessibility.property("accessibilityChartDescriptor", of: $0) as? AXChartDescriptor }
     }
 
     /// The button labeled `label` among the accessibility elements under `root`.
     @MainActor
     private func button(labeled label: String, under root: NSObject) -> NSObject? {
-        elements(under: root).first { $0.accessibilityLabel == label && $0.accessibilityTraits.contains(.button) }
+        HostedAccessibility.elements(under: root).first {
+            $0.accessibilityLabel == label && $0.accessibilityTraits.contains(.button)
+        }
     }
 
     /// The legend's keys for intents under `root`, in the order VoiceOver
@@ -258,23 +253,9 @@ struct ProgressChartDescriptorTests {
     @MainActor
     private func intentKeys(under root: NSObject) -> [String] {
         let names = Intent.allCases.map { "\($0.rawValue.uppercased()) · " }
-        return elements(under: root)
+        return HostedAccessibility.elements(under: root)
             .compactMap { $0.accessibilityLabel?.uppercased() }
             .filter { label in names.contains { label.hasPrefix($0) } }
-    }
-
-    /// `root` and the accessibility elements and views under it, depth
-    /// first, each once: SwiftUI's elements are reached both from the
-    /// hosting view and from the scroll view inside it.
-    @MainActor
-    private func elements(under root: NSObject) -> [NSObject] {
-        var seen: Set<ObjectIdentifier> = []
-        func walk(_ element: NSObject) -> [NSObject] {
-            guard seen.insert(ObjectIdentifier(element)).inserted else { return [] }
-            let children = (element.accessibilityElements ?? []) + ((element as? UIView)?.subviews ?? [])
-            return [element] + children.compactMap { $0 as? NSObject }.flatMap(walk)
-        }
-        return walk(root)
     }
 
     /// Attaches what `window` shows, as a PNG, for a person to look at.
@@ -286,28 +267,9 @@ struct ProgressChartDescriptorTests {
         Attachment.record(png, named: "\(name).png")
     }
 
-    /// An accessibility property of `element` by name. SwiftUI's elements
-    /// have the properties without declaring the protocols that name them.
-    @MainActor
-    private func property(_ name: String, of element: NSObject) -> Any? {
-        element.responds(to: NSSelectorFromString(name)) ? element.value(forKey: name) : nil
-    }
-
     /// How the y axis of the chart under `root` reads `value`.
     @MainActor
     private func yAxisReading(of value: Double, under root: NSObject) -> String? {
         chartDescriptor(under: root)?.yAxis?.valueDescriptionProvider(value)
-    }
-
-    /// Runs the main run loop in 50 ms steps while SwiftUI renders the
-    /// screen, until `done` holds or ten seconds pass. A ceiling, not a
-    /// wait: other suites' main-actor work, such as a Vision read, can
-    /// run inside the run loop and hold it for a second or more.
-    @MainActor
-    private func waitUntil(_ done: () -> Bool) {
-        let deadline = Date.now.addingTimeInterval(10)
-        while !done(), Date.now < deadline {
-            RunLoop.main.run(until: Date.now.addingTimeInterval(0.05))
-        }
     }
 }

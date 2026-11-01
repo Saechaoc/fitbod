@@ -16,18 +16,17 @@ import Testing
 import UIKit
 @testable import fitbod
 
+/// Main actor, as it shows the chip in a UIKit window.
 @MainActor
-@Suite("SuggestedActionChipBRUTests")
+@Suite("SuggestedActionChipBRUTests", .hostedAccessibility)
 struct SuggestedActionChipBRUTests {
 
     // MARK: - Helpers
 
-    private func render<V: View>(_ view: V) -> UIView {
-        let hosting = UIHostingController(rootView: view)
-        hosting.view.frame = CGRect(x: 0, y: 0, width: 320, height: 100)
-        hosting.view.layoutIfNeeded()
-        RunLoop.main.run(until: Date(timeIntervalSinceNow: 0.05))
-        return hosting.view
+    /// `view` in a window on the test host's scene, with accessibility on,
+    /// so SwiftUI builds its accessibility tree (T134).
+    private func render<V: View>(_ view: V) throws -> UIWindow {
+        try HostedAccessibility.show(view, width: 320, height: 100)
     }
 
     // MARK: - Test 1: BRU short-form label mapping
@@ -58,7 +57,7 @@ struct SuggestedActionChipBRUTests {
     // MARK: - Test 2: Accessibility label verbatim
 
     @Test("SuggestedActionChip accessibility label for .addVolume is verbatim per UI-SPEC")
-    func addVolumeAccessibilityLabelVerbatim() {
+    func addVolumeAccessibilityLabelVerbatim() throws {
         // UI-SPEC §Copywriting Contract line ~357:
         // "Suggested: {action.label}." where action.label = "Add volume"
         let chip = SuggestedActionChip(action: .addVolume, onTap: {})
@@ -68,19 +67,23 @@ struct SuggestedActionChipBRUTests {
         // Verify via the computed property and that the rendered view exposes it.
         #expect(chip.accessibilityChipLabel == expectedLabel,
                 "accessibilityChipLabel for .addVolume must be 'Suggested: Add volume.'")
-        let view = render(chip)
-        let found = findAccessibilityLabel(expectedLabel, in: view)
-        #expect(found, "Rendered view must expose accessibility label: '\(expectedLabel)'")
+        let window = try render(chip)
+        defer { window.isHidden = true }
+        HostedAccessibility.waitUntil { hasAccessibilityLabel(expectedLabel, under: window) }
+        #expect(hasAccessibilityLabel(expectedLabel, under: window),
+                "Rendered view must expose accessibility label: '\(expectedLabel)'")
     }
 
     // MARK: - Test 3: Outline chip (fill = false, bruInk color)
 
     @Test("SuggestedActionChip renders as BRUChip outline — fill=false, bruInk")
-    func chipIsOutlineInkVariant() {
+    func chipIsOutlineInkVariant() throws {
         // We verify that Color.bruInk resolves to a non-clear color (asset is wired)
         // and that the chip renders without crashing (outline variant).
         let chip = SuggestedActionChip(action: .tryVariation, onTap: {})
-        let view = render(chip)
+        let window = try render(chip)
+        defer { window.isHidden = true }
+        let view = try #require(window.rootViewController?.view)
         #expect(view.frame.height > 0, "SuggestedActionChip must render with non-zero height")
 
         // Verify bruInk is a valid non-transparent color (asset wired)
@@ -93,56 +96,35 @@ struct SuggestedActionChipBRUTests {
     // MARK: - Test 4: onTap closure is invoked
 
     @Test("SuggestedActionChip invokes onTap closure when tapped")
-    func onTapClosureInvoked() {
+    func onTapClosureInvoked() throws {
         var tapped = false
         let chip = SuggestedActionChip(action: .dropIntensity, onTap: { tapped = true })
         // Simulate tap via accessibility activation
-        let view = render(chip)
+        let window = try render(chip)
+        defer { window.isHidden = true }
         // Find the button element and activate it
-        let activated = activateFirstButton(in: view)
-        if activated {
+        HostedAccessibility.waitUntil { firstButton(under: window) != nil }
+        if let button = firstButton(under: window) {
+            button.accessibilityActivate()
             #expect(tapped, "onTap closure must be invoked when the chip button is activated")
         } else {
             // Fallback: verify the chip at least renders and the closure variable compiles
             // The onTap wiring is structural — if the Button wraps BRUChip, tap routes correctly
-            _ = view // renders without crash — wiring is verified by build
+            _ = window // renders without crash — wiring is verified by build
         }
     }
 
     // MARK: - Helpers
 
-    private func findAccessibilityLabel(_ target: String, in view: UIView) -> Bool {
-        if view.accessibilityLabel == target { return true }
-        for element in (view.accessibilityElements ?? []) {
-            if let subView = element as? UIView {
-                if findAccessibilityLabel(target, in: subView) { return true }
-            } else if let element = element as? NSObject {
-                if element.accessibilityLabel == target { return true }
-            }
-        }
-        for subview in view.subviews {
-            if findAccessibilityLabel(target, in: subview) { return true }
-        }
-        return false
+    /// Whether an accessibility element under `root`, or `root` itself, is
+    /// labeled `target`.
+    private func hasAccessibilityLabel(_ target: String, under root: NSObject) -> Bool {
+        HostedAccessibility.elements(under: root).contains { $0.accessibilityLabel == target }
     }
 
-    /// Walks the accessibility tree looking for any button element and
-    /// activates it. Returns true if a button was found and activated.
-    private func activateFirstButton(in view: UIView) -> Bool {
-        if view.accessibilityTraits.contains(.button) {
-            view.accessibilityActivate()
-            return true
-        }
-        for element in (view.accessibilityElements ?? []) {
-            if let el = element as? NSObject,
-               el.accessibilityTraits.contains(.button) {
-                el.accessibilityActivate()
-                return true
-            }
-        }
-        for subview in view.subviews {
-            if activateFirstButton(in: subview) { return true }
-        }
-        return false
+    /// The first accessibility element under `root` that VoiceOver reads
+    /// as a button.
+    private func firstButton(under root: NSObject) -> NSObject? {
+        HostedAccessibility.elements(under: root).first { $0.accessibilityTraits.contains(.button) }
     }
 }

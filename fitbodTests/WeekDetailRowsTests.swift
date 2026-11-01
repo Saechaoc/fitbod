@@ -24,7 +24,7 @@ import UIKit
 
 /// Main actor, as it shows the week in a UIKit window.
 @MainActor
-@Suite("WeekDetailRows")
+@Suite("WeekDetailRows", .hostedAccessibility)
 struct WeekDetailRowsTests {
     private let hour: TimeInterval = 3_600
     private let day: TimeInterval = 86_400
@@ -109,19 +109,13 @@ struct WeekDetailRowsTests {
     /// The week from `weekStart` in a window the small phone's width, in a
     /// navigation stack as on the Progress tab, once it shows both rows.
     private func showWeek(from weekStart: Date, in container: ModelContainer) throws -> UIWindow {
-        let scene = try #require(
-            UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.first
-        )
-        let window = UIWindow(windowScene: scene)
-        window.frame = CGRect(x: 0, y: 0, width: 390, height: 844)
-        window.rootViewController = UIHostingController(
-            rootView: NavigationStack {
+        let window = try HostedAccessibility.show(
+            NavigationStack {
                 WeekDetailView(weekStart: weekStart, weekStartsMonday: true)
             }
             .modelContainer(container)
         )
-        window.isHidden = false
-        waitUntil {
+        HostedAccessibility.waitUntil {
             row(named: "Push A", in: window) != nil && row(named: "Unnamed workout", in: window) != nil
         }
         return window
@@ -131,7 +125,7 @@ struct WeekDetailRowsTests {
     /// tonnage, such as "Push A, Tue, May 26 · 1,000 lb". Its frame is the
     /// whole row.
     private func row(named name: String, in window: UIWindow) -> NSObject? {
-        elements(under: window).first { element in
+        HostedAccessibility.elements(under: window).first { element in
             guard let label = element.accessibilityLabel else { return false }
             return label.hasPrefix("\(name), ") && label.contains(" · ")
         }
@@ -172,20 +166,5 @@ struct WeekDetailRowsTests {
         }
         try #require(drawn, "Cannot read the screen's pixels")
         return stride(from: 0, to: bytes.count, by: 4).map { Array(bytes[$0..<$0 + 3]) }
-    }
-
-    /// Every accessibility element and view under `root`, depth first.
-    private func elements(under root: NSObject) -> [NSObject] {
-        let children = (root.accessibilityElements ?? []) + ((root as? UIView)?.subviews ?? [])
-        return children.compactMap { $0 as? NSObject }.flatMap { [$0] + elements(under: $0) }
-    }
-
-    /// Runs the main run loop in 50 ms steps while SwiftUI renders the
-    /// week, until `done` holds or ten seconds pass. A ceiling, not a wait.
-    private func waitUntil(_ done: () -> Bool) {
-        let deadline = Date.now.addingTimeInterval(10)
-        while !done(), Date.now < deadline {
-            RunLoop.main.run(until: Date.now.addingTimeInterval(0.05))
-        }
     }
 }
