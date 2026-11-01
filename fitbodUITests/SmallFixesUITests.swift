@@ -49,7 +49,7 @@ final class SmallFixesUITests: XCTestCase {
         XCTAssertTrue(title.waitForExistence(timeout: 10), "+ ATTACH must open CHOOSE ROUTINE")
         let routine = UITestNavigation.hittable(app.buttons, "Live Routine")
         UITestNavigation.waitUntilStill(routine)
-        UITestNavigation.saveScreenshot("T38", "choose-routine")
+        UITestNavigation.saveScreenshot("T38", "choose-routine", appearance: appearance)
 
         // New Block's own CANCEL waits under the sheet, at the bottom of the
         // screen; the sheet's sits in its header, above the routines.
@@ -173,7 +173,7 @@ final class SmallFixesUITests: XCTestCase {
         XCTAssertTrue(row.waitForExistence(timeout: 10), "Volume Targets must list the muscles")
         let back = UITestNavigation.hittable(app.buttons, "Back", exactLabel: true)
         UITestNavigation.waitUntilStill(back)
-        UITestNavigation.saveScreenshot("T38", "volume-targets")
+        UITestNavigation.saveScreenshot("T38", "volume-targets", appearance: appearance)
         let shown = UITestNavigation.latin(try UITestNavigation.readText(in: back.frame, of: XCUIScreen.main.screenshot()))
         var problems: [String] = []
         if !shown.contains("BACK") {
@@ -187,7 +187,7 @@ final class SmallFixesUITests: XCTestCase {
         if XCTWaiter().wait(for: [expanded], timeout: 3) != .completed {
             problems.append("An open row's value must be \"Expanded\", but is \"\(row.value ?? "nil")\"")
         }
-        UITestNavigation.saveScreenshot("T38", "volume-targets-open")
+        UITestNavigation.saveScreenshot("T38", "volume-targets-open", appearance: appearance)
 
         let muscle = row.label
         back.tap()
@@ -212,7 +212,7 @@ final class SmallFixesUITests: XCTestCase {
         let title = app.staticTexts.labeled("Edit session")
         XCTAssertTrue(title.waitForExistence(timeout: 10), "Edit must open the session editor")
         UITestNavigation.waitUntilStill(title)
-        UITestNavigation.saveScreenshot("T38", "session-editor")
+        UITestNavigation.saveScreenshot("T38", "session-editor", appearance: appearance)
 
         // The header's left action: the control left of the title, in its row.
         let left = app.buttons.allElementsBoundByIndex.filter {
@@ -256,7 +256,7 @@ final class SmallFixesUITests: XCTestCase {
         XCTAssertTrue(title.waitForExistence(timeout: 10), "The entry must open ARCHIVED ROUTINES")
         UITestNavigation.hittable(app.buttons, "Restore Live Routine", exactLabel: true)
         UITestNavigation.waitUntilStill(title)
-        UITestNavigation.saveScreenshot("T38", "archived-routines")
+        UITestNavigation.saveScreenshot("T38", "archived-routines", appearance: appearance)
         let screenshot = XCUIScreen.main.screenshot()
 
         let lines = try UITestNavigation.textLines(in: title.frame.insetBy(dx: -4, dy: -4), of: screenshot)
@@ -305,7 +305,7 @@ final class SmallFixesUITests: XCTestCase {
         let days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
             .map { app.descendants(matching: .any).labeled($0) }
         UITestNavigation.revealAboveBottomBar(days[6], in: app, scroll: .dragInMargin)
-        UITestNavigation.saveScreenshot("T38", "new-block-chips")
+        UITestNavigation.saveScreenshot("T38", "new-block-chips", appearance: appearance)
 
         problems += ([rotation, fixedWeekly] + days).map { UITestNavigation.tapTargetProblem($0) }
         problems.append(UITestNavigation.overlapProblem(rotation, fixedWeekly))
@@ -338,7 +338,7 @@ final class SmallFixesUITests: XCTestCase {
         let field = app.descendants(matching: .any).matching(NSPredicate(format: "value == %@", name)).firstMatch
         XCTAssertTrue(field.waitForExistence(timeout: 10), "The preset must name the block \(name)")
         UITestNavigation.waitUntilStill(field)
-        UITestNavigation.saveScreenshot("T38", "block-name", textSize: .ax3)
+        UITestNavigation.saveScreenshot("T38", "block-name", textSize: .ax3, appearance: appearance)
 
         // XCUI reads the whole value however the field cuts it off, so the
         // screen is read instead.
@@ -363,7 +363,7 @@ final class SmallFixesUITests: XCTestCase {
         let anchors = ["HIGH", "LOW"].map { app.staticTexts.labeled($0) }
         UITestNavigation.revealAboveBottomBar(plot, in: app, scroll: .dragInMargin)
         UITestNavigation.waitUntilStill(plot)
-        UITestNavigation.saveScreenshot("T38", "new-block-chart", textSize: .ax3)
+        UITestNavigation.saveScreenshot("T38", "new-block-chart", textSize: .ax3, appearance: appearance)
         let screenshot = XCUIScreen.main.screenshot()
 
         var problems: [String] = []
@@ -425,7 +425,7 @@ final class SmallFixesUITests: XCTestCase {
     private func sheetStepperProblems(_ sheet: String, screenshot: String, in app: XCUIApplication) -> [String?] {
         let done = UITestNavigation.hittable(app.buttons, "Done", exactLabel: true)
         UITestNavigation.waitUntilStill(done)
-        UITestNavigation.saveScreenshot("T38", screenshot)
+        UITestNavigation.saveScreenshot("T38", screenshot, appearance: appearance)
         // A half-height sheet lays out at the window's width and draws inset,
         // so its width over the window's is the scale it draws at: 374 over
         // 390 on the small phone (T74).
