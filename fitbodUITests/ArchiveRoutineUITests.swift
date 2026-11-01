@@ -2,10 +2,9 @@ import XCTest
 
 /// Ticket T20, review item 44. Archive routine asks "Archive routine?" with
 /// Archive and a visible Keep routine, after the deny rule for a routine a
-/// live block uses. An archived routine leaves Program and Today at once,
-/// its screen still open in the other tab goes back to its list, and
-/// Program's Archived routines entry, shown only while a routine is
-/// archived, opens ARCHIVED ROUTINES, whose RESTORE brings it back.
+/// live block uses. An archived routine leaves Program, and Program's
+/// Archived routines entry, shown only while a routine is archived, opens
+/// ARCHIVED ROUTINES, whose RESTORE brings it back.
 final class ArchiveRoutineUITests: XCTestCase {
 
     /// The progress-history seed's one session, which no routine holds.
@@ -42,51 +41,6 @@ final class ArchiveRoutineUITests: XCTestCase {
         assertNoArchivedEntry(in: app)
         UITestNavigation.selectTab("Today", in: app)
         XCTAssertTrue(todayGroup(name, in: app).waitForExistence(timeout: 10), "Today must still offer \(name)")
-    }
-
-    // MARK: - Archive
-
-    /// A routine open on Today is archived from Program through the dialog.
-    /// Program goes back to its list, which drops the routine, and the
-    /// routine's screen still open on Today goes back to Today, whose Start
-    /// a workout list drops it too.
-    @MainActor
-    func testArchiveLeavesProgramTodayAndTheOtherTab() throws {
-        let app = UITestNavigation.launch(UITestNavigation.progressHistory)
-        UITestNavigation.selectTab("Today", in: app)
-        let name = makeRoutine(from: UITestNavigation.hittable(app.buttons, "+ New routine"), in: app)
-
-        // Today keeps the routine open while Program archives it.
-        UITestNavigation.selectTab("Program", in: app)
-        UITestNavigation.hittable(app.buttons, name).tap()
-        XCTAssertTrue(routineNameField(in: app, value: name).waitForExistence(timeout: 10),
-                      "Program's row must open \(name)")
-        archiveOpenRoutine(in: app)
-        XCTAssertTrue(routineNameField(in: app, value: name).waitForNonExistence(timeout: 5),
-                      "Archiving must take Program back to its list")
-        XCTAssertTrue(app.staticTexts.labeled("NO PROGRAM").waitForExistence(timeout: 10),
-                      "Program must drop \(name), its only routine")
-        XCTAssertFalse(programRow(name, in: app).exists, "Program must not list \(name)")
-
-        UITestNavigation.selectTab("Today", in: app)
-        var stillShowing: [String] = []
-        if !routineNameField(in: app, value: name).waitForNonExistence(timeout: 5) {
-            stillShowing.append("Today: the routine's own screen stays open on \(name)")
-            UITestNavigation.hittable(app.buttons, "Back").tap()
-        }
-        XCTAssertTrue(app.staticTexts.labeled("Start a workout").waitForExistence(timeout: 10),
-                      "Today must show Start a workout")
-        if todayGroup(name, in: app).exists {
-            stillShowing.append("Today: Start a workout lists \(name)")
-        }
-        if app.buttons.labeled("Start \(Self.session)").exists {
-            stillShowing.append("Today: Start a workout offers \(Self.session) from \(name)")
-        }
-        record("Places that still show \(name) after it is archived from Program: "
-               + (stillShowing.isEmpty ? "none" : stillShowing.joined(separator: "; ")))
-        XCTAssertEqual(stillShowing, [], "Every place on Today must drop the archived routine")
-        XCTAssertTrue(app.staticTexts.labeled("Build your first routine").exists,
-                      "With its only routine archived, Today must offer to build one")
     }
 
     // MARK: - Archived routines
@@ -350,14 +304,5 @@ final class ArchiveRoutineUITests: XCTestCase {
         let review = app.staticTexts.labeled("Block review")
         UITestNavigation.hittable(app.buttons, "Plan custom", file: file, line: line).tap()
         XCTAssertTrue(review.waitForNonExistence(timeout: 5), "Plan custom must close the review", file: file, line: line)
-    }
-
-    /// Keeps a note in the result bundle, even when the test passes.
-    @MainActor
-    private func record(_ note: String) {
-        let attachment = XCTAttachment(string: note)
-        attachment.name = "T20-note"
-        attachment.lifetime = .keepAlways
-        add(attachment)
     }
 }

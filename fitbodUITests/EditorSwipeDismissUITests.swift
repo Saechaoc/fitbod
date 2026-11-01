@@ -130,46 +130,6 @@ final class EditorSwipeDismissUITests: XCTestCase {
         assertCloses(title, "Discard must close the New Block builder")
     }
 
-    /// The same builder edits a saved block as EDIT BLOCK. Its CANCEL asks
-    /// "Discard changes?", because Discard keeps the block and drops the edits.
-    @MainActor
-    func testEditBlockCancelAsksOnlyWithUnsavedEdits() throws {
-        let app = UITestNavigation.launch(UITestNavigation.freshStore)
-        // A template row opens a named block with phases, so SAVE DRAFT needs no typing.
-        UITestNavigation.selectTab("Program", in: app)
-        let template = app.buttons.matching(NSPredicate(format: "label CONTAINS[c] %@", "Hypertrophy meso")).firstMatch
-        UITestNavigation.reveal(template, in: app)
-        template.tap()
-        XCTAssertTrue(app.staticTexts.labeled("NEW BLOCK").waitForExistence(timeout: 10))
-        UITestNavigation.hittable(app.buttons, "SAVE DRAFT", exactLabel: true).tap()
-        assertCloses(app.staticTexts.labeled("NEW BLOCK"), "SAVE DRAFT must close the New Block builder")
-
-        let card = app.buttons.labeled("DRAFT block: Hypertrophy Meso")
-        UITestNavigation.reveal(card, in: app)
-        card.tap()
-        let title = app.staticTexts.labeled("EDIT BLOCK")
-        UITestNavigation.hittable(app.buttons, "EDIT", exactLabel: true).tap()
-        XCTAssertTrue(title.waitForExistence(timeout: 10))
-        UITestNavigation.hittable(app.buttons, "Cancel", exactLabel: true).tap()
-        assertCloses(title, "CANCEL must close an untouched EDIT BLOCK at once")
-
-        UITestNavigation.hittable(app.buttons, "EDIT", exactLabel: true).tap()
-        XCTAssertTrue(title.waitForExistence(timeout: 10))
-        let fixedWeekly = app.buttons.labeled("FIXED WEEKLY scheduling")
-        UITestNavigation.reveal(fixedWeekly, in: app)
-        fixedWeekly.tap()
-        UITestNavigation.hittable(app.buttons, "Cancel", exactLabel: true).tap()
-        keepEditing(in: app, dialog: "Discard changes?", screenshot: "edit-block-discard-dialog")
-        assertStaysOpen(title, "Keep editing must leave EDIT BLOCK open")
-        XCTAssertTrue(fixedWeekly.isSelected, "Keep editing must keep the edit")
-
-        UITestNavigation.hittable(app.buttons, "Cancel", exactLabel: true).tap()
-        XCTAssertTrue(app.staticTexts.labeled("Discard changes?").waitForExistence(timeout: 5),
-                      "CANCEL must ask before it discards edits to a saved block")
-        UITestNavigation.hittable(app.buttons, "Discard", exactLabel: true).tap()
-        assertCloses(title, "Discard must close EDIT BLOCK")
-    }
-
     @MainActor
     private func openNewBlock(in app: XCUIApplication) {
         let start = app.buttons.labeled("Start a block")

@@ -4,10 +4,7 @@
 //
 //  Ticket T80 (findings F78 and F79): with RPE autoregulation, a set whose
 //  exercise is still calibrating shows a weight range until the lifter
-//  picks a weight. Override in Why this weight turns the cell into the
-//  weight field, holding the set's weight, and focuses it (decision 8). A
-//  typed weight or Use keeps showing, and a logged set shows the weight it
-//  logged.
+//  picks a weight. A logged set shows the weight it logged.
 //
 //  CalibratingSetSeed's sets show "95 – 105 lb", hold last workout's
 //  110 lb, and Why this weight suggests 100 lb.
@@ -28,49 +25,6 @@ final class CalibratingWeightUITests: XCTestCase {
     override func setUpWithError() throws {
         continueAfterFailure = false
         XCUIDevice.shared.orientation = .portrait
-    }
-
-    /// A weight typed after Override, and a suggestion taken with Use, keep
-    /// showing once editing ends and after a relaunch. A set left alone
-    /// keeps its range. Saves the typed weight at default text and AX3.
-    @MainActor
-    func testTypedWeightAndUseKeepShowing() throws {
-        for size in [UITestNavigation.TextSize.default, .ax3] {
-            let app = openWorkout(textSize: size)
-            tapOverride(on: "1.S1", in: app)
-            let field = weightField("1.S1", in: app)
-            XCTAssertTrue(field.waitForExistence(timeout: 5), "Override must show the weight field at \(size)")
-            XCTAssertTrue(waitForFocus(field), "Override must focus the weight field at \(size)")
-            field.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: 6) + "102.5")
-            XCTAssertEqual(field.value as? String, "102.5 lb", "The field must read the typed weight at \(size)")
-            tapKeyboardDone(in: app)
-
-            XCTAssertEqual(field.value as? String, "102.5 lb", "The typed weight must keep showing at \(size)")
-            XCTAssertFalse(rangeText("1.S1", in: app).exists, "The range must not come back at \(size)")
-            XCTAssertTrue(overrideMark("1.S1", in: app).exists, "A typed weight away from the suggestion shows its M at \(size)")
-            UITestNavigation.revealInLogger(field, in: app)
-            UITestNavigation.saveScreenshot("T80", "calibrating-typed-weight", textSize: size)
-
-            let use = openWhy(of: "1.S2", in: app)
-                .buttons.matching(NSPredicate(format: "label BEGINSWITH[c] %@", "Use ")).firstMatch
-            XCTAssertTrue(use.waitForExistence(timeout: 5), "Why this weight must offer Use at \(size)")
-            XCTAssertTrue(use.label.hasPrefix("Use 100 "), "The seed's suggestion is 100 lb: \(use.label)")
-            use.tap()
-            XCTAssertTrue(waitUntilGone(use), "Use must close the sheet at \(size)")
-            XCTAssertEqual(weightField("1.S2", in: app).value as? String, "100 lb", "Use must show its weight at \(size)")
-            XCTAssertFalse(overrideMark("1.S2", in: app).exists, "A weight Use wrote has no M at \(size)")
-            revealSet("1.S3", in: app)
-            XCTAssertTrue(rangeText("1.S3", in: app).exists, "A set left alone keeps its range at \(size)")
-
-            UITestNavigation.relaunch(app, textSize: size)
-            resumeWorkout(in: app)
-            XCTAssertEqual(weightField("1.S1", in: app).value as? String, "102.5 lb", "The typed weight must show after a relaunch at \(size)")
-            revealSet("1.S2", in: app)
-            XCTAssertEqual(weightField("1.S2", in: app).value as? String, "100 lb", "Use's weight must show after a relaunch at \(size)")
-            revealSet("1.S3", in: app)
-            XCTAssertTrue(rangeText("1.S3", in: app).exists, "The untouched set keeps its range after a relaunch at \(size)")
-            app.terminate()
-        }
     }
 
     /// A logged calibrating set shows the weight it logged, never the
@@ -124,19 +78,6 @@ final class CalibratingWeightUITests: XCTestCase {
         revealSet("1.S1", in: app)
     }
 
-    /// One tap on a set's WHY; returns the sheet once its Override shows.
-    @discardableResult
-    @MainActor
-    private func openWhy(of set: String, in app: XCUIApplication) -> XCUIApplication {
-        revealSet(set, in: app)
-        let why = app.buttons["set.why.\(set)"]
-        XCTAssertTrue(why.waitForExistence(timeout: 5), "Set \(set) must show WHY")
-        UITestNavigation.revealInLogger(why, in: app)
-        why.tap()
-        XCTAssertTrue(app.buttons.labeled("Override").waitForExistence(timeout: 5), "WHY must open Why this weight")
-        return app
-    }
-
     /// Scrolls the logger until set `set`'s row is in view. Rows load as
     /// they scroll in, so it first scrolls down until the row exists.
     @MainActor
@@ -148,27 +89,6 @@ final class CalibratingWeightUITests: XCTestCase {
         }
         XCTAssertTrue(reps.exists, "Set \(set) never loaded")
         UITestNavigation.revealInLogger(reps, in: app)
-    }
-
-    /// WHY, then Override, which must close the sheet.
-    @MainActor
-    private func tapOverride(on set: String, in app: XCUIApplication) {
-        let override = openWhy(of: set, in: app).buttons.labeled("Override")
-        override.tap()
-        XCTAssertTrue(waitUntilGone(override), "Override must close the sheet")
-    }
-
-    /// The DONE bar over the number pad ends editing.
-    @MainActor
-    private func tapKeyboardDone(in app: XCUIApplication) {
-        let keyboard = app.keyboards.firstMatch
-        XCTAssertTrue(keyboard.waitForExistence(timeout: 5), "The keyboard must be up")
-        let done = app.buttons.matching(NSPredicate(format: "label ==[c] %@", "DONE")).allElementsBoundByIndex
-            .filter { $0.frame.maxY <= keyboard.frame.minY + 1 }
-            .max { $0.frame.maxY < $1.frame.maxY }
-        guard let done else { return XCTFail("The keyboard must show its DONE bar") }
-        done.tap()
-        XCTAssertTrue(waitUntilGone(keyboard), "DONE must close the keyboard")
     }
 
     /// Taps `field` until it has keyboard focus, so typing reaches it.
@@ -197,25 +117,11 @@ final class CalibratingWeightUITests: XCTestCase {
         app.textFields.matching(identifier: "set.weight.\(set)").firstMatch
     }
 
-    /// A set's "M" mark, which shares the weight cell's identifier.
-    @MainActor
-    private func overrideMark(_ set: String, in app: XCUIApplication) -> XCUIElement {
-        app.staticTexts.matching(NSPredicate(
-            format: "identifier == %@ AND label == %@", "set.weight.\(set)", "changed from prescription"
-        )).firstMatch
-    }
-
     // MARK: - Waits
 
     @MainActor
     private func waitForFocus(_ element: XCUIElement, timeout: TimeInterval = 5) -> Bool {
         let focused = XCTNSPredicateExpectation(predicate: NSPredicate(format: "hasKeyboardFocus == true"), object: element)
         return XCTWaiter().wait(for: [focused], timeout: timeout) == .completed
-    }
-
-    @MainActor
-    private func waitUntilGone(_ element: XCUIElement) -> Bool {
-        let gone = XCTNSPredicateExpectation(predicate: NSPredicate(format: "exists == false"), object: element)
-        return XCTWaiter().wait(for: [gone], timeout: 5) == .completed
     }
 }

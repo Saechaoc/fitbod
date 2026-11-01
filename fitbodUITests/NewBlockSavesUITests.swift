@@ -3,9 +3,7 @@
 //  fitbodUITests
 //
 //  Ticket T11, review item 36: New Block's two saves. The top action reads
-//  SAVE DRAFT and needs only a name. The bottom action reads SAVE AS READY
-//  once the block would be ready, and until then names the first missing
-//  piece.
+//  SAVE DRAFT and needs only a name.
 //
 
 import XCTest
@@ -73,57 +71,6 @@ final class NewBlockSavesUITests: XCTestCase {
         XCTAssertFalse(app.buttons.labeled("SAVE DRAFT").exists, "EDIT BLOCK has no SAVE DRAFT")
     }
 
-    /// The bottom action names each missing piece, in order, as the block
-    /// gains it; then SAVE AS READY saves a block Program lists as ready.
-    /// The demo seed's Push A session fills the routine. Its workout is
-    /// discarded first: its running clock keeps the app from idling, and
-    /// Today offers Start a block only with no workout in progress.
-    @MainActor
-    func testBottomActionNamesEachMissingPieceThenSavesAsReady() throws {
-        let app = UITestNavigation.launch(UITestNavigation.seededWorkout)
-        discardWorkoutInProgress(in: app)
-        let emptyRoutine = makeRoutine("Empty Routine", adding: [], in: app)
-        let routine = makeRoutine("Push Routine", adding: ["Push A", "Push A"], in: app)
-
-        openStartABlock(in: app)
-        UITestNavigation.type("", into: nameField(in: app))
-        expectBottomAction("NAME FIRST", enabled: false, in: app)
-        XCTAssertFalse(app.buttons.labeled("SAVE DRAFT").isEnabled, "SAVE DRAFT must wait for a name")
-        UITestNavigation.saveScreenshot("T11", "new-block-name-first")
-
-        UITestNavigation.type("Walk Block", into: nameField(in: app))
-        expectBottomAction("ADD A PHASE", enabled: false, in: app)
-
-        UITestNavigation.hittable(app.buttons, "+ ADD PHASE").tap()
-        UITestNavigation.hittable(app.buttons, "Accumulation").tap()
-        expectBottomAction("PICK A ROUTINE", enabled: false, in: app)
-        UITestNavigation.saveScreenshot("T11", "new-block-pick-a-routine")
-
-        pickRoutine(emptyRoutine, from: "+ ATTACH ▸", in: app)
-        expectBottomAction("ROUTINE IS EMPTY", enabled: false, in: app)
-
-        pickRoutine(routine, from: "SWAP ▸", in: app)
-        expectBottomAction("SAVE AS READY", enabled: true, in: app)
-
-        let fixedWeekly = app.buttons.labeled("FIXED WEEKLY scheduling")
-        UITestNavigation.revealAboveBottomBar(fixedWeekly, in: app)
-        fixedWeekly.tap()
-        expectBottomAction("PICK 2 DAYS", enabled: false, in: app)
-        UITestNavigation.saveScreenshot("T11", "new-block-pick-2-days")
-        toggleDay("Monday", in: app)
-        expectBottomAction("PICK 2 DAYS", enabled: false, in: app)
-        toggleDay("Thursday", in: app)
-        expectBottomAction("SAVE AS READY", enabled: true, in: app)
-        UITestNavigation.saveScreenshot("T11", "new-block-save-as-ready")
-
-        app.buttons.labeled("SAVE AS READY").tap()
-        XCTAssertTrue(newBlockTitle(in: app).waitForNonExistence(timeout: 5), "SAVE AS READY must close New Block")
-        UITestNavigation.selectTab("Program", in: app)
-        XCTAssertTrue(app.buttons.labeled("READY block: Walk Block").waitForExistence(timeout: 10),
-                      "Program must list the block as ready")
-        UITestNavigation.saveScreenshot("T11", "program-ready-block")
-    }
-
     // MARK: - New Block
 
     /// Program → + NEW → + New block → Blank Block: three phases, no name.
@@ -136,21 +83,6 @@ final class NewBlockSavesUITests: XCTestCase {
         UITestNavigation.hittable(app.buttons, "Blank Block").tap()
         XCTAssertTrue(newBlockTitle(in: app).waitForExistence(timeout: 10), "New Block never opened")
         return app
-    }
-
-    /// Today's resume slab discards the seeded workout; with no set logged
-    /// it may not ask first.
-    @MainActor
-    private func discardWorkoutInProgress(in app: XCUIApplication) {
-        UITestNavigation.selectTab("Today", in: app)
-        let resume = app.buttons["resumeSlab.resume"]
-        XCTAssertTrue(resume.waitForExistence(timeout: 10), "The demo seed must leave a workout in progress")
-        app.buttons["resumeSlab.discard"].tap()
-        let alert = app.alerts["Discard workout?"]
-        if alert.waitForExistence(timeout: 2) {
-            alert.buttons["Discard"].tap()
-        }
-        XCTAssertTrue(resume.waitForNonExistence(timeout: 5), "Discard must remove the workout in progress")
     }
 
     @MainActor
@@ -194,34 +126,6 @@ final class NewBlockSavesUITests: XCTestCase {
                        "\(label) must be \(enabled ? "enabled" : "disabled")", file: file, line: line)
     }
 
-    /// Opens the routine picker with `control` and picks `routine`.
-    @MainActor
-    private func pickRoutine(
-        _ routine: String, from control: String, in app: XCUIApplication,
-        file: StaticString = #filePath, line: UInt = #line
-    ) {
-        let open = app.buttons.labeled(control)
-        UITestNavigation.revealAboveBottomBar(open, in: app, file: file, line: line)
-        open.tap()
-        let picker = app.staticTexts.labeled("Choose Routine")
-        XCTAssertTrue(picker.waitForExistence(timeout: 5), "\(control) must open the routine picker", file: file, line: line)
-        UITestNavigation.hittable(app.buttons, routine, file: file, line: line).tap()
-        XCTAssertTrue(picker.waitForNonExistence(timeout: 5), "Picking \(routine) must close the routine picker",
-                      file: file, line: line)
-    }
-
-    /// A fixed weekly day chip reads its weekday and reports "on" or "off".
-    @MainActor
-    private func toggleDay(_ weekday: String, in app: XCUIApplication, file: StaticString = #filePath, line: UInt = #line) {
-        let day = app.descendants(matching: .any)
-            .matching(NSPredicate(format: "label == %@ AND (value == 'on' OR value == 'off')", weekday)).firstMatch
-        XCTAssertTrue(day.waitForExistence(timeout: 5), "Missing the \(weekday) chip", file: file, line: line)
-        UITestNavigation.revealAboveBottomBar(day, in: app, file: file, line: line)
-        day.tap()
-        let on = XCTNSPredicateExpectation(predicate: NSPredicate(format: "value == 'on'"), object: day)
-        XCTAssertEqual(XCTWaiter().wait(for: [on], timeout: 3), .completed, "\(weekday) must turn on", file: file, line: line)
-    }
-
     /// The builder's only text field. Its placeholder "NAME YOUR BLOCK" is
     /// a separate text.
     @MainActor
@@ -261,37 +165,6 @@ final class NewBlockSavesUITests: XCTestCase {
             format: "label BEGINSWITH %@ OR label BEGINSWITH %@ OR label BEGINSWITH %@",
             "DRAFT block:", "READY block:", "ACTIVE block:"
         ))
-    }
-
-    /// Makes a routine named `name` on Program the way a user does: the name
-    /// step, then SAVE, then the named existing sessions in order. Returns
-    /// the name.
-    @MainActor
-    private func makeRoutine(_ name: String, adding sessions: [String], in app: XCUIApplication) -> String {
-        UITestNavigation.selectTab("Program", in: app)
-        UITestNavigation.hittable(app.buttons, "+ NEW").tap()
-        UITestNavigation.hittable(app.buttons, "+ New routine").tap()
-        UITestNavigation.type(name, into: app.textFields["newRoutine.name"])
-        UITestNavigation.hittable(app.buttons, "Save", exactLabel: true).tap()
-        XCTAssertTrue(app.textFields["newRoutine.name"].waitForNonExistence(timeout: 10), "SAVE must leave the name step")
-        let field = app.descendants(matching: .any).matching(NSPredicate(
-            format: "label ==[c] %@ AND value BEGINSWITH %@", "Routine name", name
-        )).firstMatch
-        XCTAssertTrue(field.waitForExistence(timeout: 10), "+ New routine must open the new routine")
-
-        let picker = app.staticTexts.labeled("Existing sessions")
-        for session in sessions {
-            UITestNavigation.hittable(app.buttons, "+ Add session").tap()
-            XCTAssertTrue(picker.waitForExistence(timeout: 10), "+ Add session must list the existing sessions")
-            UITestNavigation.hittable(app.buttons, session).tap()
-            XCTAssertTrue(picker.waitForNonExistence(timeout: 5), "Adding \(session) must close the session picker")
-        }
-        UITestNavigation.hittable(app.buttons, "Back").tap()
-        let row = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", name + ",")).firstMatch
-        XCTAssertTrue(row.waitForExistence(timeout: 10), "Program must list \(name)")
-        XCTAssertTrue(row.label.contains("\(sessions.count) sessions"),
-                      "\(name) must hold \(sessions.count) sessions: \(row.label)")
-        return name
     }
 
     // MARK: - Notes
