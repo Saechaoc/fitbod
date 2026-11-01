@@ -317,7 +317,8 @@ final class SmallFixesUITests: XCTestCase {
 
     /// At AX3 Generic Strength Meso's name field cut the name off at
     /// "GENERIC STREN…" (F192). It shows each word of the name whole,
-    /// wrapping between words.
+    /// wrapping between words, and Return still ends editing without a line
+    /// break in the name.
     @MainActor
     func testNamedBlockShowsItsWholeNameAtAX3() throws {
         let app = UITestNavigation.launch(UITestNavigation.freshStore, textSize: .ax3)
@@ -347,6 +348,23 @@ final class SmallFixesUITests: XCTestCase {
         // A word cut off or broken across lines shows whole on no line.
         let cut = name.uppercased().split(separator: " ").map(String.init).filter { word in !shown.contains { $0.contains(word) } }
         XCTAssertEqual(cut, [], "The name field must show each word of \(name) whole, and the screen reads \(lines.map(\.text))")
+
+        // The wrapping field types a line break on Return, which must not
+        // reach the name: Return ends editing and leaves the name as typed.
+        // Focusing the field resets the preset's draft today (a separate
+        // finding), so the name is typed again, from the end of its last
+        // line. The field is New Block's only text field.
+        let editor = app.textFields.firstMatch
+        editor.coordinate(withNormalizedOffset: CGVector(dx: 0.95, dy: 0.95)).tap()
+        let editing = XCTNSPredicateExpectation(predicate: NSPredicate(format: "hasKeyboardFocus == true"), object: editor)
+        XCTAssertEqual(XCTWaiter().wait(for: [editing], timeout: 5), .completed, "A tap must start editing the name")
+        if let current = editor.value as? String, !current.isEmpty, current != editor.placeholderValue {
+            editor.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: current.count))
+        }
+        editor.typeText(name + "\n")
+        let ended = XCTNSPredicateExpectation(predicate: NSPredicate(format: "hasKeyboardFocus == false"), object: editor)
+        XCTAssertEqual(XCTWaiter().wait(for: [ended], timeout: 5), .completed, "Return must end editing the name")
+        XCTAssertEqual(editor.value as? String, name, "Return must not put a line break in the name")
     }
 
     /// At AX3 the chart's LOW anchor sat under the intensity line's first
