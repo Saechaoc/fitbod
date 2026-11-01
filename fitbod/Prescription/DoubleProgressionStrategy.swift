@@ -13,7 +13,7 @@
 //  working-set rep array from the most recent session via PreviousMatchingIntent.
 //
 //  No SwiftData coupling. No @MainActor. Implicitly Sendable (value type,
-//  no stored mutable state — FOUND-07).
+//  per-prescription value configuration — FOUND-07).
 //
 
 import Foundation
@@ -22,7 +22,11 @@ import Foundation
 /// working set in the prior session hit `targetRepsHigh`; hold otherwise.
 public struct DoubleProgressionStrategy: ProgressionStrategy {
 
-    public init() {}
+    public var roundingIncrement: Double?
+
+    public init(roundingIncrement: Double? = nil) {
+        self.roundingIncrement = roundingIncrement
+    }
 
     public func prescribe(
         history: [HistoryPoint],
@@ -42,6 +46,7 @@ public struct DoubleProgressionStrategy: ProgressionStrategy {
         block: Block? = nil,
         today: Date = Date.now
     ) -> (weight: Double, explanation: PrescriptionExplanation) {
+        let increment = roundingIncrement.map { $0.isFinite && $0 > 0 ? $0 : 2.5 }
 
         // Phase 4 protocol extension: double progression ignores block context.
         // No prior data — first session.
@@ -82,10 +87,11 @@ public struct DoubleProgressionStrategy: ProgressionStrategy {
         let rounded = PlateCalculator.roundDown(
             target: rawTarget,
             barWeight: barWeight,
-            plates: plates
+            plates: plates,
+            increment: increment
         )
 
-        let roundedLine = "→ \(Self.formatWeight(rounded)) \(unit.rawValue) (rounded down to \(Self.formatWeight(smallestIncrement)) \(unit.rawValue) plates)"
+        let roundedLine = "→ \(Self.formatWeight(rounded)) \(unit.rawValue) (rounded down to \(Self.formatWeight(increment ?? smallestIncrement)) \(unit.rawValue) \(increment == nil ? "plates" : "increments"))"
 
         let explanation = PrescriptionExplanation(
             lastSessionLine: lastLine,

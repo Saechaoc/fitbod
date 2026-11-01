@@ -31,7 +31,7 @@
 //  not change this file's public surface.
 //
 //  No SwiftData coupling. No @MainActor. Implicitly Sendable (value type,
-//  no stored mutable state — FOUND-07).
+//  per-prescription value configuration — FOUND-07).
 //
 
 import Foundation
@@ -40,7 +40,11 @@ import Foundation
 /// Calibration.predict LOWESS once enough history is accumulated.
 public struct RPEAutoregStrategy: ProgressionStrategy {
 
-    public init() {}
+    public var roundingIncrement: Double?
+
+    public init(roundingIncrement: Double? = nil) {
+        self.roundingIncrement = roundingIncrement
+    }
 
     public func prescribe(
         history: [HistoryPoint],
@@ -60,6 +64,7 @@ public struct RPEAutoregStrategy: ProgressionStrategy {
         block: Block? = nil,
         today: Date = Date.now
     ) -> (weight: Double, explanation: PrescriptionExplanation) {
+        let increment = roundingIncrement.map { $0.isFinite && $0 > 0 ? $0 : 2.5 }
 
         // Phase 4 protocol extension: RPE autoregulation ignores block context.
         let effectiveRPE = targetRPE ?? 8.0
@@ -85,12 +90,13 @@ public struct RPEAutoregStrategy: ProgressionStrategy {
                 let rounded = PlateCalculator.roundDown(
                     target: rawTarget,
                     barWeight: barWeight,
-                    plates: plates
+                    plates: plates,
+                    increment: increment
                 )
 
                 let pctDisplay = Int((pct * 100).rounded())
                 let computedLine = "Target e1RM \(Self.fmt1(calibratedE1RM)) \(unit.rawValue) → \(pctDisplay)% × \(targetRepsHigh) → \(Self.fmt1(rawTarget)) \(unit.rawValue)"
-                let roundedLine = "→ \(Self.fmtG(rounded)) \(unit.rawValue) (rounded down to \(Self.fmtG(smallestIncrement)) \(unit.rawValue) plates)"
+                let roundedLine = "→ \(Self.fmtG(rounded)) \(unit.rawValue) (rounded down to \(Self.fmtG(increment ?? smallestIncrement)) \(unit.rawValue) \(increment == nil ? "plates" : "increments"))"
 
                 let exp = PrescriptionExplanation(
                     lastSessionLine: lastLine,
@@ -123,27 +129,30 @@ public struct RPEAutoregStrategy: ProgressionStrategy {
             let rounded = PlateCalculator.roundDown(
                 target: rawTarget,
                 barWeight: barWeight,
-                plates: plates
+                plates: plates,
+                increment: increment
             )
 
-            // ±5% range, both endpoints rounded DOWN to plates.
+            // ±5% range, both endpoints rounded DOWN with the prescription's rounding mode.
             let lowRaw = rawTarget * 0.95
             let highRaw = rawTarget * 1.05
             let lowRounded = PlateCalculator.roundDown(
                 target: lowRaw,
                 barWeight: barWeight,
-                plates: plates
+                plates: plates,
+                increment: increment
             )
             let highRounded = PlateCalculator.roundDown(
                 target: highRaw,
                 barWeight: barWeight,
-                plates: plates
+                plates: plates,
+                increment: increment
             )
             let range: ClosedRange<Double> = lowRounded...max(lowRounded, highRounded)
 
             let pctDisplay = Int((targetPct * 100).rounded())
             let computedLine = "Last session e1RM \(Self.fmt1(e1RM)) \(unit.rawValue) → \(pctDisplay)% × \(targetRepsHigh) → \(Self.fmt1(rawTarget)) \(unit.rawValue)"
-            let roundedLine = "→ \(Self.fmtG(rounded)) \(unit.rawValue) (rounded down to \(Self.fmtG(smallestIncrement)) \(unit.rawValue) plates)"
+            let roundedLine = "→ \(Self.fmtG(rounded)) \(unit.rawValue) (rounded down to \(Self.fmtG(increment ?? smallestIncrement)) \(unit.rawValue) \(increment == nil ? "plates" : "increments"))"
 
             let exp = PrescriptionExplanation(
                 lastSessionLine: lastLine,

@@ -373,13 +373,11 @@ public enum SessionFactory {
             excludingSessionID: session.id
         )
 
-        let ekind = equipmentKind(for: exercise?.equipment ?? .other)
-        let inventory = plateInventory(for: ekind, context: context)
-        let barWeight = exercise?.barWeightOverride ?? inventory.barWeight
-        let plates = inventory.availablePlates.map { (weight: $0.weight, countPerSide: $0.countPerSide) }
-        let smallestIncrement = exercise?.smallestIncrement
-            ?? userSettings?.defaultIncrementKg
-            ?? 2.5
+        let inventory = plateEquipmentKind(for: exercise?.equipment ?? .other)
+            .map { plateInventory(for: $0, context: context) }
+        let barWeight = exercise?.barWeightOverride ?? inventory?.barWeight ?? 0
+        let plates = inventory?.availablePlates.map { (weight: $0.weight, countPerSide: $0.countPerSide) } ?? []
+        let smallestIncrement = prescriptionIncrement(for: exercise, settings: userSettings)
         let minCalibrationSets = userSettings?.minCalibrationSets ?? 10
         // Labels the explanation text only; weights are stored as entered.
         let unit = WeightUnit.effective(
@@ -404,9 +402,10 @@ public enum SessionFactory {
             context: context
         )
 
-        // The strategy instance is stateless, so one per session is safe
-        // (D-14); the per-exercise variation lives in these inputs.
-        let (weight, _) = strategy.prescribe(
+        // Configure a value copy so rounding cannot leak between exercises in a session.
+        var configuredStrategy = strategy
+        configuredStrategy.roundingIncrement = inventory == nil ? smallestIncrement : nil
+        let (weight, _) = configuredStrategy.prescribe(
             history: historyPoints,
             targetRepsLow: targetRepsLow,
             targetRepsHigh: targetRepsHigh,
@@ -604,15 +603,28 @@ public enum SessionFactory {
         return transient
     }
 
-    /// Maps an Exercise `Equipment` value to a `PlateEquipmentKind` for
-    /// inventory lookup. Non-barbell/dumbbell equipment falls back to
-    /// `.barbell` (the safest default for plate math).
-    internal static func equipmentKind(for equipment: Equipment) -> PlateEquipmentKind {
+    /// Resolve the shared increment for session snapshots and the logger's explanation.
+    internal static func prescriptionIncrement(for exercise: Exercise?, settings: UserSettings?) -> Double {
+        let requested = exercise?.smallestIncrement ?? settings?.defaultIncrementKg ?? 2.5
+        if plateEquipmentKind(for: exercise?.equipment ?? .other) == nil,
+           !requested.isFinite || requested <= 0 {
+            return 2.5
+        }
+        return requested
+    }
+
+    /// Only barbell and dumbbell exercises load a plate inventory.
+    internal static func plateEquipmentKind(for equipment: Equipment) -> PlateEquipmentKind? {
         switch equipment {
         case .barbell:  return .barbell
         case .dumbbell: return .dumbbell
-        default:        return .barbell
+        default:        return nil
         }
+    }
+
+    /// Compatibility mapping for plate UI; prescription uses the optional mapping above.
+    internal static func equipmentKind(for equipment: Equipment) -> PlateEquipmentKind {
+        plateEquipmentKind(for: equipment) ?? .barbell
     }
 }
 
