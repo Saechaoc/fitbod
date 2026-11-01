@@ -519,7 +519,7 @@ public struct ProgramView: View {
                 .frame(minHeight: 44)
                 .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.bruRow)
 
         BRUDivider(.ink)
     }
@@ -557,7 +557,7 @@ public struct ProgramView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .contentShape(Rectangle())
             }
-            .buttonStyle(.plain)
+            .buttonStyle(.bruRow)
             .accessibilityLabel("Archived routines")
             .accessibilityValue(BRUCountLabel.text(count, "routine"))
 
@@ -610,7 +610,7 @@ fileprivate struct BlockStatusCard: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.bruRow)
         .accessibilityElement(children: .combine)
         .accessibilityLabel(accessibilityLabelText)
     }
@@ -699,7 +699,7 @@ fileprivate struct RoutineSplitRow: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.bruRow)
     }
 
     /// The name beside its block tags, or above them at accessibility
@@ -811,7 +811,7 @@ fileprivate struct NewBlockStartChoiceSheet: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .contentShape(Rectangle())
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(.bruRow)
                 .background(ProgramScreenTokens.screenBackground)
 
                 // Divider
@@ -840,7 +840,7 @@ fileprivate struct NewBlockStartChoiceSheet: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .contentShape(Rectangle())
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(.bruRow)
                 .background(ProgramScreenTokens.screenBackground)
 
                 // Divider
@@ -905,7 +905,7 @@ fileprivate struct NewBlockPresetPickerSheet: View {
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .contentShape(Rectangle())
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(.bruRow)
                     .background(ProgramScreenTokens.screenBackground)
 
                     if index < NewBlockPreset.all.count - 1 {

@@ -90,7 +90,7 @@ public struct TodaySessionPicker: View {
                 .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
                 .contentShape(Rectangle())
             }
-            .buttonStyle(.plain)
+            .buttonStyle(.bruRow)
             .accessibilityHint("Shows the exercises in this session")
 
             BRUButton("Start ▸", kind: .signal, size: .md) { onStart(session) }

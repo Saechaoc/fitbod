@@ -196,7 +196,7 @@ struct ExerciseDetailView: View {
             } label: {
                 linkRow("View all history")
             }
-            .buttonStyle(.plain)
+            .buttonStyle(.bruRow)
             // Phase 6 plan 06-05 — progress chart deep link, hidden while
             // nothing is logged (avoids an empty chart).
             ProgressEntryRow(exercise: exercise)
@@ -573,7 +573,7 @@ private struct ProgressEntryRow: View {
                 .contentShape(Rectangle())
                 .overlay(alignment: .top) { BRUDivider(.hair) }
             }
-            .buttonStyle(.plain)
+            .buttonStyle(.bruRow)
         }
     }
 }

@@ -217,7 +217,7 @@ struct CustomExerciseEditor: View {
                 .frame(maxWidth: .infinity, minHeight: BRUMetrics.touchTarget, alignment: .leading)
                 .contentShape(Rectangle())
             }
-            .buttonStyle(.plain)
+            .buttonStyle(.bruRow)
             .accessibilityLabel("Equipment")
             .accessibilityValue(Self.equipmentDisplay(draft.equipment))
             .accessibilityHint("Opens the equipment list")

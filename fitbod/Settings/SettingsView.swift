@@ -94,7 +94,7 @@ public struct SettingsView: View {
                             } label: {
                                 BRURowLabel(label: "Component gallery", value: "Live examples")
                             }
-                            .buttonStyle(.plain)
+                            .buttonStyle(.bruRow)
                             .accessibilityIdentifier("settings.componentGallery")
                             #endif
                         }
@@ -212,7 +212,7 @@ public struct SettingsView: View {
         } label: {
             BRURowLabel(label: "Plate Inventory", value: nil)
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.bruRow)
         BRUDivider(.hair)
 
         // Weights are stored as entered and never converted, so the
@@ -265,7 +265,7 @@ public struct SettingsView: View {
         } label: {
             BRURowLabel(label: "Volume Targets", value: "17 MUSCLES")
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.bruRow)
         BRUDivider(.hair)
 
         BRUStepper(

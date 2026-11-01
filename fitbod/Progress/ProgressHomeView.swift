@@ -416,7 +416,8 @@ public struct ProgressHomeView: View {
         }
         let count = completedSessions.count
         let finished = count == 1 ? "1 finished" : "\(count) finished"
-        return "\(finished) · last \(last.startedAt.formatted(.relative(presentation: .named)))"
+        // The relative date already reads "last week", "yesterday" or "2 days ago".
+        return "\(finished) · \(last.startedAt.formatted(.relative(presentation: .named)))"
     }
 
     /// Counts exercises with finished work, not the whole catalog: one per

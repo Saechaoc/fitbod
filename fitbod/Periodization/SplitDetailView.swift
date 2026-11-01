@@ -805,7 +805,7 @@ fileprivate struct SlotPickerSheet: View {
                             .frame(minHeight: 56)
                             .contentShape(Rectangle())
                         }
-                        .buttonStyle(.plain)
+                        .buttonStyle(.bruRow)
 
                         BRUDivider(.ink)
 
