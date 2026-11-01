@@ -29,7 +29,10 @@
 //  so a delete would invalidate instances the views hold and crash them.
 //  After an exercise's first seed its stimulus rows belong to
 //  `StimulusWeightSeeder` and the lifter, so a re-seed adds rows only for
-//  muscles the exercise has none for.
+//  muscles the exercise has none for. A dataset that moves a muscle between
+//  primary and secondary, or drops it, therefore leaves the existing row as
+//  it is while `primaryMuscleSlugsJoined` follows the dataset; the bump that
+//  makes such a change must handle it.
 //
 //  ## Performance bar
 //

@@ -28,7 +28,10 @@
 3. Update the **Commit SHA** + **Upstream commit date** + **Vendored on** lines in this file.
 4. Bump `SEED_VERSION.txt` from N to N+1.
 5. Run `xcodebuild test -only-testing:fitbodTests/DTODecodingTests` to confirm the schema still parses.
-6. Future phases may add a delta-migration; Phase 1 only handles empty-to-full.
+6. A bump re-seeds in place: the importer finds each seeded exercise by `externalID` and each
+   muscle by `slug`, updates the fields the dataset supplies, inserts what is missing and deletes
+   nothing. It never changes or removes an existing stimulus row, so a dataset that moves a muscle
+   between primary and secondary, or drops it, needs handling in that bump.
 
 ## Schema notes (as of 2026-05-10 vendoring)
 
