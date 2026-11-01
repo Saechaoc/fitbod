@@ -351,9 +351,11 @@ final class SmallFixesUITests: XCTestCase {
 
         // The wrapping field types a line break on Return, which must not
         // reach the name: Return ends editing and leaves the name as typed.
-        // Focusing the field resets the preset's draft today (a separate
-        // finding), so the name is typed again, from the end of its last
-        // line. The field is New Block's only text field.
+        // Focusing the field keeps the preset's name since T130 (F300), so
+        // the retype is no longer needed to put the name back; the test
+        // still deletes the name and types it again, from the end of its
+        // last line, so Return ends a freshly typed name. The field is New
+        // Block's only text field.
         let editor = app.textFields.firstMatch
         editor.coordinate(withNormalizedOffset: CGVector(dx: 0.95, dy: 0.95)).tap()
         let editing = XCTNSPredicateExpectation(predicate: NSPredicate(format: "hasKeyboardFocus == true"), object: editor)

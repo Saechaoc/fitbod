@@ -27,7 +27,11 @@ public struct BlockBuilderView: View {
     @Environment(\.modelContext) private var ctx
     @Environment(\.dismiss) private var dismiss
     @Environment(\.colorScheme) private var colorScheme
-    @Bindable public var draft: BlockDraft
+    // Each presenter builds a fresh draft in its sheet or cover closure, and
+    // runs that closure again whenever it redraws, as Program does when the
+    // keyboard comes up. Keep the draft the builder opened with, so a redraw
+    // never replaces a preset or unsaved edits (F300).
+    @State public var draft: BlockDraft
 
     public let editing: Block?
 
@@ -54,7 +58,7 @@ public struct BlockBuilderView: View {
     @State private var presentingDiscardConfirm = false
 
     init(draft: BlockDraft, editing: Block? = nil, initialPreset: NewBlockPreset? = nil, origin: Origin = .program) {
-        self.draft = draft
+        self._draft = State(initialValue: draft)
         self.editing = editing
         self.initialPreset = initialPreset
         self.origin = origin
