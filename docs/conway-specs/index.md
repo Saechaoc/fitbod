@@ -55,7 +55,6 @@ Every Phase 2 ticket is done and archived.
 | [T132](tickets/T132-planned-hero-and-session-summary-at-ax3.md) | The planned block hero and session summaries keep their parts whole at AX3 |
 | [T138](tickets/T138-block-review-pr-chips-and-stats-once.md) | The block review's PR chips read to VoiceOver, and its stats load once |
 | [T144](tickets/T144-rows-open-only-on-a-tap.md) | Every full-width row that opens a screen opens only on a tap |
-| [T145](tickets/T145-tempo-keeps-each-part.md) | A tempo keeps each part in its place |
 
 ### Phase 4: test health
 
