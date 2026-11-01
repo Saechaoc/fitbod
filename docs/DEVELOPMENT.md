@@ -65,7 +65,7 @@ The same holds for visual flaws on screens you are not working on.
 | Dark mode and Pro Max checks per screen | Tokens already cover dark mode; layouts still move. | The workflow is stable |
 | Pixel polish: the design map's 177 `polish` rows, T120 | The screens are being redesigned. | The screen's design is approved |
 | New copy-pinning tests that read Swift source (45 files, about 8,200 lines today) | They fail on every intended copy change. Add none; delete one when it blocks a change. | Release readiness, as a copy check over the running UI |
-| UI tests that assert layout sizes (23 of 58 UI test files) and the OCR fidelity test | They are slow (16 to 28 s per UI test) and break on layout changes. | The workflow is stable |
+| UI tests that do not guard data: layout sizes and text fit, AX3, dark mode, VoiceOver, BRU look, copy, tap targets, swipe-back sweeps and the OCR fidelity test | T143 deleted them on 2026-11-01, 351 of 424 cases, so the whole UI suite runs in about 40 minutes instead of 3 hours. Git history before `e697189` keeps them. | The workflow is stable |
 | Full UI suite on both phones and at AX3 (T44, T45) | It takes about 2 to 3 hours serially. | Release readiness |
 | Screenshot tours, verification reports and doc refreshes (T46, T47, T48) | They describe screens that will change. | A milestone closes, or release readiness |
 | Physical-device checks: VoiceOver traversal, haptics, notification denial, Live Activities | Simulators cannot prove them, and the flows are still changing. | Release readiness |

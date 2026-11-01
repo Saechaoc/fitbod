@@ -9,6 +9,7 @@ Dispatch the data, correctness and test-speed tickets it lists first.
 Coordinator, 2026-11-01: under that guide these are deferred, and marked skipped in the run so phases can close: T124, T126, T127, T132 and T138 (Phase 3), T42 and T117 (Phase 4), T43 (Phase 5), T44 to T46 (Phase 6) and T47 and T48 (Phase 7); live T120 stopped with its work kept on its branch.
 T129, T133 and T140 keep only their correctness changes.
 T134 came back trimmed to hosted-test reliability, because UI runs reset the simulator setting those tests need (F358).
+At the user's request T143 cut the UI suite to the tests that guard data (about 3 hours to 40 minutes), so T121, T131 and T135 are skipped as superseded, T119 became the kept tests' budget ticket, T123 keeps only the reset launch's notification cleanup, and T133 became two persistence unit tests.
 
 Status: ready to dispatch once every precondition in [dispatch.md](dispatch.md) holds.
 Nothing from this bundle has been dispatched.
@@ -54,7 +55,6 @@ Every Phase 2 ticket is done and archived.
 | [T132](tickets/T132-planned-hero-and-session-summary-at-ax3.md) | The planned block hero and session summaries keep their parts whole at AX3 |
 | [T138](tickets/T138-block-review-pr-chips-and-stats-once.md) | The block review's PR chips read to VoiceOver, and its stats load once |
 | [T140](tickets/T140-long-press-remove-and-remove-labels.md) | Removing an exercise by long press forgets its open editor |
-| [T143](tickets/T143-ui-suite-keeps-data-guards.md) | The UI suite keeps only the tests that guard the lifter's data |
 | [T144](tickets/T144-rows-open-only-on-a-tap.md) | Every full-width row that opens a screen opens only on a tap |
 
 ### Phase 4: test health
@@ -64,11 +64,11 @@ Every Phase 2 ticket is done and archived.
 | [T39](tickets/T39-number-entry-like-a-user.md) | Number entry like a user |
 | [T42](tickets/T42-zero-build-warnings.md) | Zero build warnings |
 | [T117](tickets/T117-history-tests-cover-non-pr-rows-and-every-label.md) | Exercise history's tests cover a row without a PR and every label |
-| [T119](tickets/T119-progress-ui-tests-budgets.md) | Progress UI tests fit the test budgets |
+| [T119](tickets/T119-progress-ui-tests-budgets.md) | The kept UI tests fit the test budgets |
 | [T121](tickets/T121-new-block-ui-tests-budgets.md) | New Block UI tests fit the test budgets |
-| [T123](tickets/T123-ui-runs-clear-rest-notifications.md) | UI test runs stay free of leftover rest notifications, and the journey suite reads cheaply |
+| [T123](tickets/T123-ui-runs-clear-rest-notifications.md) | A reset launch clears leftover rest notifications |
 | [T131](tickets/T131-editor-ui-tests-budgets.md) | The session editor's UI tests fit the test budgets |
-| [T133](tickets/T133-volume-target-tests-adjust-and-relaunch.md) | A volume target edit survives a relaunch, and the fatigue smoke test launches cleanly |
+| [T133](tickets/T133-volume-target-tests-adjust-and-relaunch.md) | A volume target edit and a started block survive a relaunch |
 | [T134](tickets/T134-hosted-accessibility-tests-any-order.md) | Hosted accessibility tests pass in any order and on any phone |
 | [T135](tickets/T135-shared-ui-test-helpers.md) | UI suites share one copy of their helpers, and the swipe-back suite finds rows by name and fits its budgets |
 

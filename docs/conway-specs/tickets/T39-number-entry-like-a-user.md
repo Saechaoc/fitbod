@@ -58,7 +58,7 @@ Ask before you edit anything else.
 
 ## Repro first
 
-With the new helper, on both phones, write `NumberEntryUITests`:
+With the new helper, on the small phone, write `NumberEntryUITests`, one case per screen with one launch each, because a typed digit that joins the old value logs a wrong number:
 
 - In the session editor, give a tempo field 2, then tap that field, type 3, and assert that it reads 3.
 - In the logger, tap a work set's weight field that shows a value, type a new weight, and assert that the field shows only the new weight.
@@ -72,9 +72,9 @@ If one of them passes today, say so in `notes.md`.
 
 ## Observable acceptance
 
-- Every repro test passes on both phones.
+- Every repro test passes on the small phone (both phones are release readiness, `docs/DEVELOPMENT.md`).
 - Every numeric field in Hints selects its value on focus; `notes.md` lists each field with the test that covers it.
-- `MilestoneOneJourneyUITests`, `WorkoutLoggerJourneyUITests`, `PlateauOverrideUITests`, `WorkoutSwapJourneyUITests` and `PrescriptionEditorUITests` pass on both phones.
+- `MilestoneOneJourneyUITests`, `WorkoutLoggerJourneyUITests`, `WorkoutSwapJourneyUITests` and every other kept suite that types a number pass on the small phone (T143 deleted `PlateauOverrideUITests` and `PrescriptionEditorUITests`).
 - No UI test clears a numeric field before it types, and `notes.md` names the search that shows it.
 
 ## Hints

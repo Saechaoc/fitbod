@@ -1,61 +1,59 @@
 ---
 id: T133
-title: A volume target edit survives a relaunch, and the fatigue smoke test launches cleanly
+title: A volume target edit and a started block survive a relaunch
 phase: 4
 items: []
-depends_on: [T109]
+depends_on: [T109, T143]
 size: S
-sim: small
-owns: [fitbodUITests/Phase5BRUSmokeUITests.swift, fitbodUITests/MuscleVolumeTargetEditorUITests.swift, fitbodUITests/PerMuscleDetailUITests.swift]
+sim: large
+owns: [new:fitbodTests/RelaunchPersistenceTests.swift, fitbod/Fatigue/MuscleVolumeTargetSeeder.swift]
 ---
 
-# T133: A volume target edit survives a relaunch, and the fatigue smoke test launches cleanly
+# T133: A volume target edit and a started block survive a relaunch
 
 Read [../worker-rules.md](../worker-rules.md) first; it is part of this ticket.
-Read [../../test-performance-guide.md](../../test-performance-guide.md) too; this ticket applies it.
+Read [../../test-performance-guide.md](../../test-performance-guide.md) too.
 
 ## Problem
 
-These are findings F311 to F313, which T109's worker found.
-Finding F310, a test of each target's VoiceOver adjust action, is deferred under `docs/DEVELOPMENT.md` as VoiceOver refinement.
+These are findings F311 and F370, which T109's and T143's workers found.
+T133's other items went with the suites T143 deleted; F310, a VoiceOver test, stays deferred.
 
-- No test edits a target, relaunches the app and checks that the edit stayed.
+- No test edits a volume target, relaunches and checks that the edit stayed.
   `MuscleVolumeTargetSeeder` runs at every launch and must skip a target the lifter edited.
-- `Phase5BRUSmokeUITests.testFatigueSurfaceViewRenders` launches with a bare `app.launch()` on whatever store the phone holds, as guide section 2.7 warns against.
-- `MuscleVolumeTargetEditorUITests` keeps an `.any` query from before T109's change, and `PerMuscleDetailUITests`' bar-tap test repeats `openMuscle` instead of calling it.
+- No test now checks that a started block is still the active block after a relaunch.
+  T143 deleted `BlockReviewAfterEndUITests.testStartingABlockStopsAReviewPutOff`, the only such check, and `BlockLifecycleServiceTests` reads the block back from the same in-memory context, so it passes even if start's save never reaches disk.
 
 ## Target
 
-- The tests named in Problem.
+- `MuscleVolumeTargetSeeder` and `BlockLifecycleService.start`, through a new unit test file.
 
 ## Change
 
-1. A UI test edits a target, relaunches the app without the reset flag, and finds the edited value still shown.
-2. `testFatigueSurfaceViewRenders` launches through `UITestNavigation.launch`.
-3. `MuscleVolumeTargetEditorUITests` drops the old `.any` query, and the bar-tap test calls `openMuscle`.
+1. `RelaunchPersistenceTests` builds an on-disk store, edits a volume target, then opens a second container on the same file and runs the seeder as a launch does, and expects the edit to stay.
+2. It also starts a block through `BlockLifecycleService` in an on-disk store, opens a second container on the same file, and expects exactly one active block, the one started.
+3. If either test fails, fix the cause in the files in `owns`, and say what it was in `notes.md`.
 
 ## Constraints
 
-- Change tests only; the app behaves exactly as it does today.
-- Every test keeps its assertions.
-- The relaunch case fits the 90 s journey budget.
+- Unit tests only; commit no UI test (the user asked for fewer UI tests, T143).
+- Each case runs in well under a second, and its store lives in a temporary directory that the test removes.
 
 ## Ownership
 
 You may edit the files in `owns`.
-Ask before you edit anything else.
+Ask before you edit anything else, such as `BlockLifecycleService.swift`.
 
 ## Repro first
 
-- Run `Phase5BRUSmokeUITests` on a store you just reset, and record its durations as the "before" numbers.
+- Write both tests first and record in `notes.md` whether each passes today.
 
 ## Observable acceptance
 
-- The relaunch test passes on the small phone.
-- `Phase5BRUSmokeUITests`, `MuscleVolumeTargetEditorUITests` and `PerMuscleDetailUITests` pass on the small phone, with durations before and after in `notes.md`.
+- Both tests pass with `fitbodTests` on the large phone, three runs in a row.
 - `fitbodTests` passes, and the app and the widget build.
 
 ## Hints
 
-- T109's notes in `docs/conway-specs/evidence/T109/notes.md`, under Findings, describe each gap.
-- `-fitbod-reset-store` works on the initial launch only, so the relaunch must launch without it.
+- T143's notes, `docs/conway-specs/evidence/T143/notes.md`, under its ponytail review's should-fix 1, sketch the block test.
+- T128's `SeedTests` and `IndexedQueryTests` keep their state in per-test containers and suites; follow that pattern.
