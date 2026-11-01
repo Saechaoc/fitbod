@@ -6,7 +6,7 @@ items: []
 depends_on: [T111]
 size: S
 sim: small
-owns: [fitbod/Routines/RoutineBuilderView.swift, fitbodUITests/SessionEditorRowsUITests.swift]
+owns: [fitbod/Routines/RoutineBuilderView.swift]
 ---
 
 # T140: Removing an exercise by long press forgets its open editor
@@ -37,19 +37,20 @@ Finding F337, how two REMOVE labels reach VoiceOver, is dropped: `docs/DEVELOPME
 ## Ownership
 
 You may edit the files in `owns`, plus session editor tests your change breaks.
+Commit no new UI test: the user asked for fewer UI tests (T143), and this bug costs no data.
 Ask before you edit anything else.
 
 ## Repro first
 
-On the small phone, in `SessionEditorRowsUITests`:
+On the small phone, with a throwaway UI test that you do not commit:
 
 - Add two exercises to a new session, open the second one's editor, remove it from its long-press menu, add another exercise, and assert that the new exercise's editor is closed.
   Record in `notes.md` whether it opens by itself today.
 
 ## Observable acceptance
 
-- The repro tests pass on the small phone.
-- `SessionEditorRowsUITests` and `SessionEditorPolishUITests` pass on the small phone.
+- The throwaway repro passes on the small phone after the change; `notes.md` records both runs.
+- `SessionEditorRowsUITests` passes on the small phone (T143 deleted `SessionEditorPolishUITests`).
 - `fitbodTests` passes, and the app and the widget build.
 
 ## Hints
