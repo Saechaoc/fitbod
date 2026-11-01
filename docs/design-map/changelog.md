@@ -2,6 +2,11 @@
 
 Newest first: one entry for each stage of [plan.md](plan.md) up to S2, then one for each commit.
 
+## 2026-11-01: S5, workflows
+
+- Wrote the 11 workflow files in `workflows/`, one for each job a lifter does in the app, from the first launch to a backup and restore.
+  Each file lists the steps with the screen of each step, draws the flow, counts the taps, and lists the dead ends, the detours and the screens with no clear way back.
+
 ## 2026-11-01: S4, Settings, system UI and dialogs
 
 - Wrote the 39 remaining screen files: Settings with its plate, volume target and component gallery screens, the four sheets that iOS draws, and the 29 dialogs and alerts.
