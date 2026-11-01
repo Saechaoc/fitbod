@@ -8,8 +8,8 @@ import XCTest
 /// On a stack's root screen the swipe does nothing. The block overview showed
 /// the system back button above its BRU ‹ BACK.
 ///
-/// Each swipe test opens one screen the way a user does, swipes back with
-/// `UITestNavigation.swipeBack(in:)`, and checks that the screen closes and
+/// Each swipe test opens one screen the way a user does, swipes back from
+/// the left edge across the screen, and checks that the screen closes and
 /// the control that opened it shows again where it was. No pushed screen
 /// asks before it leaves: the editors that ask (the routine builder, the
 /// block builder and the custom exercise editor) open as sheets. An
@@ -22,7 +22,8 @@ import XCTest
 /// rows, the PR rows and Library's rows now open only on a tap: a touch
 /// that moves more than 10pt before it lifts opens nothing, and a drag up
 /// that starts on a row still scrolls. At AX3 a History row keeps its
-/// weekday whole (finding F187).
+/// weekday whole (finding F187). Each swipe back ends near the right edge,
+/// so an edge swipe that UIKit starts late still passes halfway (F243).
 final class SwipeBackUITests: XCTestCase {
     /// The control `open` tapped last, and where it sat.
     private var lastOpened: (control: XCUIElement, frame: CGRect)?
@@ -705,14 +706,20 @@ final class SwipeBackUITests: XCTestCase {
         control.tap()
     }
 
-    /// `UITestNavigation.swipeBack(in:)` along the row of `row` instead of
-    /// across the middle of the screen.
+    /// Swipes right from 1pt inside the left edge of the screen, along the
+    /// row of `row` or across the middle of the screen, to 2% short of the
+    /// right edge. Under load UIKit can start the edge swipe late, about
+    /// 100pt into the drag, and move the screen only from there: a drag that
+    /// ended at 80% of the width, as `UITestNavigation.swipeBack(in:)`'s
+    /// does, then moved the screen just past halfway, and UIKit sprang it
+    /// back (F243; T106's recordings of two such failures). Ending near the
+    /// right edge keeps a late start well past halfway.
     @MainActor
-    private func swipeBack(alongRowOf row: XCUIElement, in app: XCUIApplication) {
-        let y = row.frame.midY
+    private func swipeBack(alongRowOf row: XCUIElement? = nil, in app: XCUIApplication) {
+        let y = row?.frame.midY ?? app.frame.midY
         let screen = app.coordinate(withNormalizedOffset: .zero)
         screen.withOffset(CGVector(dx: 1, dy: y)).press(
-            forDuration: 0.05, thenDragTo: screen.withOffset(CGVector(dx: app.frame.width * 0.8, dy: y)),
+            forDuration: 0.05, thenDragTo: screen.withOffset(CGVector(dx: app.frame.width * 0.98, dy: y)),
             withVelocity: .default, thenHoldForDuration: 0
         )
     }
@@ -754,11 +761,7 @@ final class SwipeBackUITests: XCTestCase {
         // accessibility tree once the push is over.
         _ = opener.waitForNonExistence(timeout: 5)
         UITestNavigation.waitUntilStill(screen, interval: 0.3)
-        if let row {
-            swipeBack(alongRowOf: row, in: app)
-        } else {
-            UITestNavigation.swipeBack(in: app)
-        }
+        swipeBack(alongRowOf: row, in: app)
         XCTAssertTrue(waitUntilGone(screen),
                       "An edge swipe on \(name) must go back, but \(name) is still on screen", file: file, line: line)
         XCTAssertTrue(waitUntilHittable(opener, timeout: 5),
