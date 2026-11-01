@@ -24,6 +24,7 @@ These are findings F250, which the coordinator found in T104's test timings, and
 - `WeeklyTonnageUITests.testAxisTitleNamesTheUnitSetting` takes 35 to 42 s, over the 30 s case budget, and `heroTotal(in:)` waits without reading `exists` first.
 - `ProgressHomeBRUUITests` launches three times only to check that headings exist, which guide section 2.1 says not to do.
   It finds the tab and the headings with `label CONTAINS[c]` scans, and keeps its own 60 s "Preparing library…" wait, although `UITestNavigation.launch` already waits for the tab bar.
+- `WeeklyTonnageUITests.testEightWeeksReadEightWeeks` takes about 36 s, and the suite taps the newest bar in three copies of the same code: `openNewestWeek(in:)`, `testChartAndWeekDetailGoBackWithBack` and `checkSundayWorkoutsWeek` (finding F343, from T118's run).
 
 ## Target
 
@@ -39,6 +40,7 @@ These are findings F250, which the coordinator found in T104's test timings, and
 4. `ProgressHomeBRUUITests` becomes one journey with one launch that keeps every assertion it makes today.
    It finds the Progress tab, the header and the section heads by identifier, and has no splash wait of its own.
 5. If a section head on Progress home has no accessibility identifier, add one in `fitbod/Progress/ProgressHomeView.swift`, and change nothing else there.
+6. `testEightWeeksReadEightWeeks` takes at most 30 s with its assertions, and the two older tests open the newest week through `openNewestWeek(in:)`.
 
 ## Constraints
 

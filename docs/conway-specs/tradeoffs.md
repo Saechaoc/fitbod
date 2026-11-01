@@ -269,6 +269,8 @@ Product decisions are in [decisions.md](decisions.md), and they win over this fi
 - Call: the chart bins weeks with the aggregator's rule, which is the user's week-start setting (`weekStartsMonday`, Monday by default).
   The chart uses a fixed week domain that covers the selected range, so one week of data does not fill the whole chart.
 - Why: the aggregator and Today already follow that setting, while the chart's bins follow the device calendar, which starts weeks on Sunday in the US.
+- Open for the user (finding F342, from T118's review): with muscle chips on, a set's tonnage counts for every primary muscle of its exercise, so a custom exercise with two primaries makes each stack about twice its week's total and pushes stacks past the PREVIOUS BEST line.
+  Splitting tonnage across muscles, drawing the line at the tallest stack, or hiding it while a muscle filter is on are the options; nothing changes until the user picks one.
 
 ### Per-week rate
 

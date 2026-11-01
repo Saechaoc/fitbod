@@ -6,6 +6,8 @@ A coordinator runs them on up to three Orca workers at once, each ticket in its 
 
 Stage note, 2026-11-01: the app is a prototype, so [the development guide](../DEVELOPMENT.md#deferred-work) defers the accessibility, polish and verification tickets until their workflow is stable or the app reaches release readiness.
 Dispatch the data, correctness and test-speed tickets it lists first.
+Coordinator, 2026-11-01: under that guide these are deferred, and marked skipped in the run so phases can close: T124, T126, T127, T132 and T138 (Phase 3), T42, T117 and T134 (Phase 4), T43 (Phase 5), T44 to T46 (Phase 6) and T47 and T48 (Phase 7); live T120 stopped with its work kept on its branch.
+T129, T133 and T140 keep only their correctness changes.
 
 Status: ready to dispatch once every precondition in [dispatch.md](dispatch.md) holds.
 Nothing from this bundle has been dispatched.
@@ -44,7 +46,6 @@ Every Phase 2 ticket is done and archived.
 
 | Ticket | Title |
 |---|---|
-| [T118](tickets/T118-weekly-tonnage-label-and-rows.md) | Weekly Tonnage keeps its previous-best label whole, and its week rows open their workouts |
 | [T120](tickets/T120-new-block-toast-and-duration-steppers.md) | New Block's undo toast stays small, and its duration steppers say what they change |
 | [T122](tickets/T122-routine-session-drag-slots.md) | A session dragged on the routine screen lands on the slot under the finger |
 | [T124](tickets/T124-rest-sheet-fits-at-ax3.md) | The rest sheet's countdown and ±15s buttons fit at AX3 |
@@ -52,14 +53,14 @@ Every Phase 2 ticket is done and archived.
 | [T126](tickets/T126-section-head-action-hit-area.md) | Section head actions keep their touch area off the title at accessibility sizes |
 | [T127](tickets/T127-pr-volume-grouping.md) | The PR list writes volume with thousands separators, as the chart does |
 | [T128](tickets/T128-reseed-keeps-lifter-data.md) | Re-seeding the exercise library keeps the lifter's exercises, history and targets |
-| [T129](tickets/T129-progress-chart-names-every-line.md) | The progress chart names every line it draws, and labels its first and last dates |
+| [T129](tickets/T129-progress-chart-names-every-line.md) | The progress chart names every line it draws |
 | [T130](tickets/T130-new-block-keeps-its-draft.md) | New Block keeps the lifter's draft when the screen behind it redraws |
 | [T132](tickets/T132-planned-hero-and-session-summary-at-ax3.md) | The planned block hero and session summaries keep their parts whole at AX3 |
 | [T136](tickets/T136-pr-row-opens-its-workout.md) | A PR row opens the workout it was set in |
 | [T137](tickets/T137-progress-rows-open-only-on-tap.md) | Progress's rows open only on a tap |
 | [T138](tickets/T138-block-review-pr-chips-and-stats-once.md) | The block review's PR chips read to VoiceOver, and its stats load once |
 | [T139](tickets/T139-week-windows-follow-the-calendar.md) | Week windows follow the calendar across daylight saving, and Muscles Hit keeps a stable order |
-| [T140](tickets/T140-long-press-remove-and-remove-labels.md) | Removing an exercise by long press forgets its open editor, and REMOVE controls read normally to VoiceOver |
+| [T140](tickets/T140-long-press-remove-and-remove-labels.md) | Removing an exercise by long press forgets its open editor |
 
 ### Phase 4: test health
 
@@ -74,7 +75,7 @@ Every Phase 2 ticket is done and archived.
 | [T121](tickets/T121-new-block-ui-tests-budgets.md) | New Block UI tests fit the test budgets |
 | [T123](tickets/T123-ui-runs-clear-rest-notifications.md) | UI test runs stay free of leftover rest notifications, and the journey suite reads cheaply |
 | [T131](tickets/T131-editor-ui-tests-budgets.md) | The session editor's UI tests fit the test budgets |
-| [T133](tickets/T133-volume-target-tests-adjust-and-relaunch.md) | Volume target tests cover VoiceOver's adjust and a relaunch, and the fatigue smoke test launches cleanly |
+| [T133](tickets/T133-volume-target-tests-adjust-and-relaunch.md) | A volume target edit survives a relaunch, and the fatigue smoke test launches cleanly |
 | [T134](tickets/T134-hosted-accessibility-tests-any-order.md) | Hosted accessibility tests pass in any order, and the row style's VoiceOver activate is tested |
 | [T135](tickets/T135-shared-ui-test-helpers.md) | UI suites share one copy of their helpers, and the swipe-back suite finds rows by name and fits its budgets |
 
