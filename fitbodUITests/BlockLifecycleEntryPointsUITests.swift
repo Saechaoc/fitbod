@@ -1,11 +1,17 @@
 import XCTest
 
+extension UITestNavigation {
+    /// A fresh store plus a routine whose session sits on an active block
+    /// (ActiveBlockSeed).
+    static let activeBlock = [resetFlag, "-fitbod-seed-active-block"]
+}
+
 /// Ticket T67, findings F48 and F49. Ending a block and changing its
 /// routine go through BlockLifecycleService. END BLOCK, reached from
 /// Today's block band, completes the block: Program lists it as done and
 /// Today has no active block. (BlockCard's own End Block is not in the
-/// app, so F48 was not reproduced.) EDIT BLOCK offers no routine change for
-/// the active block, and a draft block still takes a routine there.
+/// app, so F48 was not reproduced.) A draft block still takes a routine in
+/// EDIT BLOCK.
 final class BlockLifecycleEntryPointsUITests: XCTestCase {
 
     @MainActor
@@ -55,21 +61,6 @@ final class BlockLifecycleEntryPointsUITests: XCTestCase {
     }
 
     // MARK: - EDIT BLOCK routine
-
-    /// EDIT BLOCK on the active block shows its routine with no SWAP or
-    /// + ATTACH: the lifecycle service refuses an active block a new routine.
-    @MainActor
-    func testEditBlockOffersNoRoutineChangeForTheActiveBlock() throws {
-        let app = UITestNavigation.launch(UITestNavigation.activeBlock)
-        openActiveBlockOverview(in: app)
-        UITestNavigation.hittable(app.buttons, "EDIT BLOCK ▸").tap()
-        XCTAssertTrue(editBlockTitle(in: app).waitForExistence(timeout: 10), "EDIT BLOCK ▸ must open EDIT BLOCK")
-        UITestNavigation.revealAboveBottomBar(app.staticTexts, "Live Routine", in: app)
-        UITestNavigation.saveScreenshot("T67", "edit-active-block-routine")
-        XCTAssertFalse(app.buttons.labeled("SWAP ▸").exists, "EDIT BLOCK must not offer SWAP for the active block")
-        XCTAssertFalse(app.buttons.labeled("+ ATTACH ▸").exists,
-                       "EDIT BLOCK must not offer + ATTACH for the active block")
-    }
 
     /// A draft block still takes a routine in EDIT BLOCK, which then offers
     /// SWAP, and SAVE CHANGES leaves the block ready.

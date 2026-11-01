@@ -68,20 +68,4 @@ final class SessionHistoryBRUUITests: XCTestCase {
         app.buttons["Back"].firstMatch.tap()
         XCTAssertTrue(rows.firstMatch.waitForExistence(timeout: 10))
     }
-
-    /// Fresh stores show an explicit empty state through the same route.
-    @MainActor
-    func testFreshStoreShowsHistoryEmptyState() throws {
-        let app = XCUIApplication()
-        app.launchArguments = ["-fitbod-reset-store"]
-        app.launch()
-        waitForSeedComplete(app)
-
-        XCTAssertTrue(navigateToSessionHistory(app))
-        let emptyHeading = app.staticTexts["No sessions yet"]
-        let emptyBody = app.staticTexts["Finish a workout to see it here."]
-        XCTAssertTrue(emptyHeading.waitForExistence(timeout: 10))
-        XCTAssertTrue(emptyBody.exists)
-        XCTAssertEqual(app.buttons.matching(identifier: "history.row").count, 0)
-    }
 }

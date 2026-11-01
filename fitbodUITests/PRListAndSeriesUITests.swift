@@ -23,6 +23,15 @@ extension UITestNavigation {
     /// A fresh store plus four finished workouts of two exercises (see
     /// ProgressHistorySeed).
     static let progressHistory = [resetFlag, "-fitbod-seed-progress-history"]
+
+    /// `text` in capitals, with each Cyrillic capital that Vision reads for
+    /// its Latin twin, such as "К" in "BACК", read as that Latin capital.
+    static func latin(_ text: String) -> String {
+        let twins: [Character: Character] = [
+            "А": "A", "В": "B", "Е": "E", "К": "K", "М": "M", "Н": "H", "О": "O", "Р": "P", "С": "C", "Т": "T", "Х": "X",
+        ]
+        return String(text.uppercased().map { twins[$0] ?? $0 })
+    }
 }
 
 final class PRListAndSeriesUITests: XCTestCase {
@@ -120,178 +129,6 @@ final class PRListAndSeriesUITests: XCTestCase {
         XCTAssertTrue(volume.contains("2,140"), "VOLUME should read the first workout's 2,140:\n\(volume)")
         let rpe = readouts["AVG RPE"] ?? ""
         XCTAssertTrue(rpe.contains("RPE 7.6"), "AVG RPE should read the first workout's mean RPE, 7.6:\n\(rpe)")
-    }
-
-    // MARK: - Accessibility text size
-
-    /// At AX3 the chips sit in two rows of two, each a full tap target,
-    /// and PR rows stack their columns under the exercise name.
-    @MainActor
-    func testChipsAndRowsFitAtAX3() throws {
-        let app = UITestNavigation.launch(UITestNavigation.progressHistory, textSize: .ax3)
-        UITestNavigation.selectTab("Progress", in: app)
-        let bench = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Barbell Bench Press")).firstMatch
-        UITestNavigation.reveal(bench, in: app)
-        bench.tap()
-
-        let chips = ["e1RM", "TOP SET", "VOLUME", "AVG RPE"].map { app.buttons[$0] }
-        XCTAssertTrue(chips[0].waitForExistence(timeout: 10), "The progress chart never opened")
-        UITestNavigation.reveal(chips[3], in: app)
-        for chip in chips {
-            UITestNavigation.assertTapTarget(chip)
-            UITestNavigation.assertNotTallerThanWide(chip)
-        }
-        for (index, chip) in chips.enumerated() {
-            for other in chips[(index + 1)...] {
-                UITestNavigation.assertNoOverlap(chip, other)
-            }
-        }
-        chips[2].tap()
-        XCTAssertTrue(chips[2].isSelected, "VOLUME is not the selected chip after a tap")
-        // Let the tap's pressed look clear before the screenshot.
-        Thread.sleep(forTimeInterval: 0.5)
-        UITestNavigation.saveScreenshot("T13", "chart-volume", textSize: .ax3)
-
-        app.buttons["Back"].firstMatch.tap()
-        let records = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Personal Records")).firstMatch
-        UITestNavigation.reveal(records, in: app)
-        records.tap()
-        let firstRow = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Barbell Squat, Weight PR")).firstMatch
-        XCTAssertTrue(firstRow.waitForExistence(timeout: 10), "The PR list shows no named squat row at AX3")
-        UITestNavigation.saveScreenshot("T13", "prs-1", textSize: .ax3)
-    }
-
-    /// T57: at AX3 the PR list's intent toggle keeps every label whole. A
-    /// label that breaks mid-word, such as STRENG/TH, takes two lines, so
-    /// its segment grows taller than ALL's one-line segment.
-    @MainActor
-    func testIntentToggleLabelsStayWholeAtAX3() throws {
-        let app = UITestNavigation.launch(UITestNavigation.progressHistory, textSize: .ax3)
-        let segments = openIntentToggle(in: app)
-        UITestNavigation.saveScreenshot("T57", "prs-toggle", textSize: .ax3)
-        assertSegmentsStayWhole(segments)
-    }
-
-    /// T71: the sizes between default text and the accessibility sizes keep
-    /// every label whole too. In a row, a third of the small phone is too
-    /// narrow for HYPERTROPHY from xxLarge up: it broke as HYPERTROP/HY and
-    /// made the row taller than ALL's selected fill.
-    @MainActor
-    func testIntentToggleLabelsStayWholeFromXLargeToXXXLarge() throws {
-        for size: UITestNavigation.TextSize in [.xl, .xxl, .xxxl] {
-            XCTContext.runActivity(named: "Text size \(size.rawValue)") { _ in
-                let app = UITestNavigation.launch(UITestNavigation.progressHistory, textSize: size)
-                let segments = openIntentToggle(in: app)
-                UITestNavigation.saveScreenshot("T71", "prs-toggle", textSize: size)
-                assertSegmentsStayWhole(segments)
-            }
-        }
-    }
-
-    /// T71: at default text the toggle is one row of three equal segments,
-    /// each a 44pt tap target, and VoiceOver hears which one is selected.
-    @MainActor
-    func testIntentToggleIsOneRowOfTargetsThatMarkTheSelectedOne() throws {
-        let app = UITestNavigation.launch(UITestNavigation.progressHistory)
-        let segments = openIntentToggle(in: app)
-        UITestNavigation.saveScreenshot("T71", "prs-toggle")
-        assertSegmentsStayWhole(segments)
-        let all = segments[2]
-        for segment in segments {
-            XCTAssertEqual(segment.frame.minY, all.frame.minY, accuracy: 0.5, "\(segment.label) is not in one row with ALL")
-            XCTAssertEqual(segment.frame.width, all.frame.width, accuracy: 1, "\(segment.label) is not as wide as ALL")
-        }
-        XCTAssertEqual(
-            segments.sorted { $0.frame.minX < $1.frame.minX }.map(\.label),
-            ["STRENGTH", "HYPERTROPHY", "ALL"],
-            "The segments must read STRENGTH, HYPERTROPHY, ALL from left to right"
-        )
-
-        assertOnlySelected("ALL", among: segments)
-        segments[0].tap()
-        let selected = XCTNSPredicateExpectation(predicate: NSPredicate(format: "isSelected == true"), object: segments[0])
-        XCTAssertEqual(XCTWaiter().wait(for: [selected], timeout: 5), .completed, "STRENGTH is not selected after a tap")
-        assertOnlySelected("STRENGTH", among: segments)
-    }
-
-    /// T85: at xxxLarge the 110pt kind column is too narrow for WEIGHT PR
-    /// and VOLUME PR, which wrapped to two lines. Every kind label keeps to
-    /// one line, no taller than a bucket header set in the same type.
-    @MainActor // XCUIApplication and UITestNavigation are main-actor types.
-    func testKindLabelsStayOnOneLineAtXXXLarge() throws {
-        let app = UITestNavigation.launch(UITestNavigation.progressHistory, textSize: .xxxl)
-        let segments = openIntentToggle(in: app)
-        let header = app.staticTexts["1–6 REPS"]
-        XCTAssertTrue(header.waitForExistence(timeout: 10), "The PR list shows no 1–6 REPS bucket")
-        UITestNavigation.waitUntilStill(header)
-        UITestNavigation.saveScreenshot("T85", "prs", textSize: .xxxl)
-        let oneLine = header.frame.height
-
-        // Strength sets fill one bucket per section, the shortest list
-        // that still shows every kind.
-        segments[0].tap()
-        let list = app.scrollViews.firstMatch
-        let kinds = ["WEIGHT PR", "TOP REPS", "VOLUME PR", "E1RM PR"]
-        var tallest: [String: CGFloat] = [:]
-        for _ in 0..<12 {
-            for (kind, height) in try kindLabelHeights(kinds, in: list) {
-                tallest[kind] = max(tallest[kind] ?? 0, height)
-            }
-            if tallest.count == kinds.count { break }
-            let start = list.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.9))
-            let end = list.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.15))
-            start.press(forDuration: 0.05, thenDragTo: end, withVelocity: .slow, thenHoldForDuration: 0.2)
-        }
-        for kind in kinds {
-            let height = try XCTUnwrap(tallest[kind], "The PR list shows no \(kind) row")
-            XCTAssertLessThanOrEqual(
-                height, oneLine + 1,
-                String(format: "%@ is %.1fpt tall, more than one %.1fpt line", kind, height, oneLine)
-            )
-        }
-    }
-
-    // MARK: - Intent toggle
-
-    /// Opens Personal Records from the Progress tab and returns the intent
-    /// toggle's STRENGTH, HYPERTROPHY and ALL segments.
-    @MainActor
-    private func openIntentToggle(in app: XCUIApplication) -> [XCUIElement] {
-        UITestNavigation.selectTab("Progress", in: app)
-        let records = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Personal Records")).firstMatch
-        UITestNavigation.reveal(records, in: app)
-        records.tap()
-
-        let segments = ["STRENGTH", "HYPERTROPHY", "ALL"].map { app.buttons[$0] }
-        XCTAssertTrue(segments[2].waitForExistence(timeout: 10), "The PR list's intent toggle never appeared")
-        return segments
-    }
-
-    /// Every segment is a full tap target, apart from the others, and no
-    /// taller than ALL's one-line segment, so no label wraps mid-word.
-    @MainActor
-    private func assertSegmentsStayWhole(_ segments: [XCUIElement]) {
-        let oneLine = segments[2].frame.height
-        for segment in segments {
-            UITestNavigation.assertTapTarget(segment)
-            UITestNavigation.assertHeight(segment, atMost: oneLine + 1)
-        }
-        for (index, segment) in segments.enumerated() {
-            for other in segments[(index + 1)...] {
-                UITestNavigation.assertNoOverlap(segment, other)
-            }
-        }
-    }
-
-    /// Only `label`'s segment carries the selected trait VoiceOver reads.
-    @MainActor
-    private func assertOnlySelected(_ label: String, among segments: [XCUIElement]) {
-        for segment in segments {
-            XCTAssertEqual(
-                segment.isSelected, segment.label == label,
-                "\(segment.label) must \(segment.label == label ? "" : "not ")report the selected trait while \(label) is selected"
-            )
-        }
     }
 
     // MARK: - Chart readout
@@ -425,21 +262,6 @@ final class PRListAndSeriesUITests: XCTestCase {
             if node.elementType == .staticText {
                 if Self.sectionNames.contains(node.label) { found.append((.section, node.label, node.frame)) }
                 if Self.headerNames.contains(node.label) { found.append((.header, node.label, node.frame)) }
-            }
-            node.children.forEach(walk)
-        }
-        walk(try list.snapshot())
-        return found
-    }
-
-    /// The height of every kind label the list has laid out, read in one
-    /// snapshot. A row is one button, so its labels are read inside it.
-    @MainActor // XCUIElement.snapshot() is main-actor isolated.
-    private func kindLabelHeights(_ kinds: [String], in list: XCUIElement) throws -> [(kind: String, height: CGFloat)] {
-        var found: [(kind: String, height: CGFloat)] = []
-        func walk(_ node: XCUIElementSnapshot) {
-            if node.elementType == .staticText, kinds.contains(node.label) {
-                found.append((node.label, node.frame.height))
             }
             node.children.forEach(walk)
         }

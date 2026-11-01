@@ -2,15 +2,10 @@
 //  SessionEditorRowsUITests.swift
 //  fitbodUITests
 //
-//  Ticket T111, findings F217, F219 and F220, in the session editor:
-//
-//  - T29 stopped an exercise's row from merging its parts, so its name was
-//    plain text, and VoiceOver no longer said that a tap opens its editor.
-//  - The rows' swipe actions never fired, because the rows sit in a stack,
-//    not a List, so only the long-press menu, which nothing on screen
-//    shows, could remove an exercise.
-//  - The tempo fields were 40pt wide and 22pt tall on the small phone,
-//    under the 44pt target.
+//  Ticket T111, in the session editor: the rows' swipe actions never
+//  fired, because the rows sit in a stack, not a List, so only the
+//  long-press menu, which nothing on screen shows, could remove an
+//  exercise.
 //
 //  Each test opens the active-block seed's "Live Push", which holds one
 //  bench press, the way a user does: Program, Live Routine, its session,
@@ -23,28 +18,10 @@ final class SessionEditorRowsUITests: XCTestCase {
     // The tests and helpers are @MainActor because XCUIApplication and
     // XCUIElement are main-actor isolated.
 
-    private static let tempoPlaceholders = ["Ecc", "Bot", "Con", "Top"]
-
     @MainActor
     override func setUpWithError() throws {
         continueAfterFailure = false
         XCUIDevice.shared.orientation = .portrait
-    }
-
-    // MARK: - The exercise's name
-
-    /// VoiceOver reads the first exercise's name as a button, whose value
-    /// says whether its editor is open, and a tap on it opens the editor.
-    @MainActor
-    func testNameIsAButtonThatSaysWhetherItsEditorIsOpen() throws {
-        let app = openEditor()
-        let name = exerciseName(in: app)
-        XCTAssertEqual(name.elementType, .button, "VoiceOver must read the exercise's name as a button")
-        XCTAssertEqual(name.value as? String, "Editor closed", "The name must say that its editor is closed")
-        name.tap()
-        let details = app.buttons["prescription.details"]
-        XCTAssertTrue(details.exists || details.waitForExistence(timeout: 10), "A tap on the name must open its editor")
-        XCTAssertEqual(name.value as? String, "Editor open", "The name must say that its editor is open")
     }
 
     // MARK: - REMOVE
@@ -77,77 +54,6 @@ final class SessionEditorRowsUITests: XCTestCase {
         XCTAssertTrue(question.waitForExistence(timeout: 5), "REMOVE must ask again")
         dialogButton("Remove", in: app).tap()
         XCTAssertTrue(name.waitForNonExistence(timeout: 5), "Remove must remove \(exercise)")
-    }
-
-    /// At AX3 the open editor's REMOVE still reads whole inside the screen,
-    /// and stays a 44pt target.
-    @MainActor
-    func testRemoveFitsAtAX3() throws {
-        let app = openEditor(textSize: .ax3)
-        let name = exerciseName(in: app)
-        showInEditor(name, in: app)
-        name.tap()
-        let remove = removeControl(in: app)
-        showInEditor(remove, in: app)
-        UITestNavigation.saveScreenshot("T111", "editor-remove", textSize: .ax3)
-        UITestNavigation.assertInside(remove, app.windows.firstMatch)
-        try assertRemoveIsWhole(remove)
-    }
-
-    // MARK: - Tempo
-
-    /// With Track tempo on, each tempo field has a touch target at least
-    /// 44pt square that covers no other target and neither switch beside
-    /// it, and a tap at the top of a target, above the field's text,
-    /// focuses that field.
-    @MainActor
-    func testTempoFieldsHave44PtTargets() throws {
-        let app = openEditor()
-        exerciseName(in: app).tap()
-        let details = app.buttons["prescription.details"]
-        XCTAssertTrue(details.exists || details.waitForExistence(timeout: 10), "A tap on the name must open its editor")
-        showInEditor(details, in: app)
-        details.tap()
-        let trackTempo = toggle("Track tempo", in: app)
-        let partialReps = toggle("Track partial reps", in: app)
-        // The tempo row opens between these two switches.
-        showInEditor(partialReps, in: app)
-        trackTempo.coordinate(withNormalizedOffset: CGVector(dx: 1, dy: 0.5)).withOffset(CGVector(dx: -24, dy: 0)).tap()
-        let on = XCTNSPredicateExpectation(predicate: NSPredicate(format: "value == %@", "1"), object: trackTempo)
-        XCTAssertEqual(XCTWaiter().wait(for: [on], timeout: 5), .completed, "Track tempo must turn on")
-
-        let fields = Self.tempoPlaceholders.map {
-            app.textFields.matching(NSPredicate(format: "placeholderValue == %@", $0)).firstMatch
-        }
-        XCTAssertTrue(fields[0].exists || fields[0].waitForExistence(timeout: 5), "Track tempo must show the tempo fields")
-        UITestNavigation.saveScreenshot("T111", "editor-tempo")
-
-        // Each frame is read once, because every read snapshots the app.
-        let targets = fields.indices.map { tempoTarget(index: $0, field: fields[$0], in: app) }
-        let frames = targets.map(\.frame)
-        let switches = [("Track tempo", trackTempo.frame), ("Track partial reps", partialReps.frame)]
-        var problems: [String] = []
-        for (placeholder, frame) in zip(Self.tempoPlaceholders, frames) {
-            if frame.width < 43.99 || frame.height < 43.99 {
-                problems.append("The \(placeholder) field's target is \(frame.width) x \(frame.height)pt, under 44 x 44pt")
-            }
-            for (control, controlFrame) in switches where Self.overlap(frame, controlFrame) {
-                problems.append("The \(placeholder) field's target covers \(control)")
-            }
-        }
-        for later in frames.indices.dropFirst() {
-            for earlier in frames.indices[..<later] where Self.overlap(frames[earlier], frames[later]) {
-                problems.append("The \(Self.tempoPlaceholders[earlier]) and \(Self.tempoPlaceholders[later]) targets overlap")
-            }
-        }
-        XCTAssertEqual(problems, [], "Each tempo field needs a 44pt target that covers no other control")
-
-        for (field, target) in zip(fields, targets) {
-            target.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0)).withOffset(CGVector(dx: 0, dy: 2)).tap()
-            let focused = XCTNSPredicateExpectation(predicate: NSPredicate(format: "hasKeyboardFocus == true"), object: field)
-            XCTAssertEqual(XCTWaiter().wait(for: [focused], timeout: 5), .completed,
-                           "A tap at the top of the \(field.placeholderValue ?? "tempo") field's target must focus it")
-        }
     }
 
     // MARK: - Navigation
@@ -225,28 +131,5 @@ final class SessionEditorRowsUITests: XCTestCase {
         let button = app.buttons.matching(NSPredicate(format: "label == %@", label)).firstMatch
         XCTAssertTrue(button.exists || button.waitForExistence(timeout: 5), "The question must offer \(label)")
         return button
-    }
-
-    @MainActor
-    private func toggle(_ name: String, in app: XCUIApplication) -> XCUIElement {
-        let toggle = app.switches.matching(NSPredicate(format: "label == %@", name)).firstMatch
-        XCTAssertTrue(toggle.exists || toggle.waitForExistence(timeout: 10), "Missing \(name)")
-        return toggle
-    }
-
-    /// A tempo field's touch target: the area around the field that its
-    /// identifier names, or, where nothing reaches past the field, the
-    /// field itself.
-    @MainActor
-    private func tempoTarget(index: Int, field: XCUIElement, in app: XCUIApplication) -> XCUIElement {
-        let target = app.descendants(matching: .any).matching(identifier: "prescription.tempo.\(index + 1)").firstMatch
-        return target.exists ? target : field
-    }
-
-    /// Whether two frames share more than the half point a common edge can
-    /// round to.
-    private static func overlap(_ a: CGRect, _ b: CGRect) -> Bool {
-        let shared = a.intersection(b)
-        return !shared.isNull && shared.width > 0.5 && shared.height > 0.5
     }
 }

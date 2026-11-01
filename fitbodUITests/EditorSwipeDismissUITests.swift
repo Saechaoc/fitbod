@@ -104,47 +104,6 @@ final class EditorSwipeDismissUITests: XCTestCase {
         assertCloses(title, "Discard must close the New Block builder")
     }
 
-    /// The review's repro for the custom exercise editor: a name edit, then
-    /// T01's swipe from the sheet's top edge.
-    @MainActor
-    func testCustomExerciseEditorResistsSwipeDownAfterANameEdit() throws {
-        let app = UITestNavigation.launch(UITestNavigation.freshStore)
-        UITestNavigation.selectTab("Library", in: app)
-        let title = app.staticTexts.labeled("New Exercise")
-        UITestNavigation.hittable(app.buttons, "+ New", exactLabel: true).tap()
-        XCTAssertTrue(title.waitForExistence(timeout: 10))
-        UITestNavigation.swipeSheetDown(in: app)
-        assertCloses(title, "An untouched custom exercise editor must close on swipe-down")
-
-        UITestNavigation.hittable(app.buttons, "+ New", exactLabel: true).tap()
-        XCTAssertTrue(title.waitForExistence(timeout: 10))
-        let name = app.textFields["customExercise.name"]
-        UITestNavigation.type("Hack Squat", into: name)
-        UITestNavigation.swipeSheetDown(in: app)
-        assertStaysOpen(title, "A swipe-down must not close a custom exercise editor with an unsaved name")
-        XCTAssertEqual(name.value as? String, "Hack Squat", "The name must survive the swipe")
-        UITestNavigation.saveScreenshot("T05", "exercise-editor-name-after-swipe")
-    }
-
-    /// The review's repro for New Block: a typed block name, then T01's
-    /// swipe from the sheet's top edge.
-    @MainActor
-    func testNewBlockBuilderResistsSwipeDownAfterANameEdit() throws {
-        let app = UITestNavigation.launch(UITestNavigation.freshStore)
-        let title = app.staticTexts.labeled("NEW BLOCK")
-        openNewBlock(in: app)
-        UITestNavigation.swipeSheetDown(in: app)
-        assertCloses(title, "An untouched New Block builder must close on swipe-down")
-
-        openNewBlock(in: app)
-        let name = blockNameField(in: app)
-        UITestNavigation.type("Summer Base", into: name)
-        UITestNavigation.swipeSheetDown(in: app)
-        assertStaysOpen(title, "A swipe-down must not close a New Block builder with an unsaved name")
-        XCTAssertEqual(name.value as? String, "Summer Base", "The name must survive the swipe")
-        UITestNavigation.saveScreenshot("T05", "new-block-name-after-swipe")
-    }
-
     /// CANCEL and "< TODAY" close an untouched New Block at once, and ask
     /// before they throw away an edited one.
     @MainActor

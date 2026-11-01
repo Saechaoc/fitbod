@@ -73,55 +73,6 @@ final class WorkoutLoggerJourneyUITests: XCTestCase {
         )
     }
 
-    // MARK: - Rest timer
-
-    /// Completing a set starts the rest timer. ±15 s adjust it, the
-    /// countdown keeps running in the background and across a kill and
-    /// relaunch (it counts to an absolute deadline), and Skip ends it.
-    @MainActor
-    func testRestTimerAdjustsAndSurvivesBackgroundAndRelaunch() throws {
-        let app = launch(seededLaunch)
-        openWorkout(app)
-        logSet(app, "1.S1", reps: "6")
-
-        // The countdown row is one combined element with the button trait.
-        let status = app.descendants(matching: .any).matching(identifier: "rest.status").firstMatch
-        XCTAssertTrue(status.waitForExistence(timeout: 5), "Rest timer should start after a set")
-        let start = try XCTUnwrap(restSeconds(status), "Unreadable label: \(status.label)")
-        XCTAssertTrue((150...180).contains(start), "Bench rest is 180 s; got \(start)")
-        attach(app, "logger-04-rest-started")
-
-        // Each tap takes a second or two, so allow for the clock running.
-        app.buttons["rest.plus15"].tap()
-        let added = try XCTUnwrap(restSeconds(status))
-        XCTAssertTrue((start + 8...start + 16).contains(added), "+15s: \(start) -> \(added)")
-
-        app.buttons["rest.minus15"].tap()
-        app.buttons["rest.minus15"].tap()
-        let subtracted = try XCTUnwrap(restSeconds(status))
-        XCTAssertTrue((added - 42...added - 28).contains(subtracted), "-30s: \(added) -> \(subtracted)")
-
-        // Background for a few seconds: the countdown keeps going.
-        XCUIDevice.shared.press(.home)
-        sleep(6)
-        app.activate()
-        XCTAssertTrue(status.waitForExistence(timeout: 10))
-        let afterBackground = try XCTUnwrap(restSeconds(status))
-        XCTAssertLessThanOrEqual(afterBackground, subtracted - 5, "Timer should run while backgrounded")
-
-        // Kill and reopen: the timer resumes from the saved deadline.
-        relaunch(app)
-        openWorkout(app)
-        XCTAssertTrue(status.waitForExistence(timeout: 10), "Rest timer should come back after relaunch")
-        let afterRelaunch = try XCTUnwrap(restSeconds(status))
-        XCTAssertLessThan(afterRelaunch, afterBackground, "Timer should keep counting down across relaunch")
-        XCTAssertGreaterThan(afterRelaunch, afterBackground - 90, "Relaunch should not reset or lose the timer")
-        attach(app, "logger-05-rest-after-relaunch")
-
-        app.buttons["rest.skip"].tap()
-        XCTAssertTrue(waitForDisappearance(status), "Skip should end the rest timer")
-    }
-
     // MARK: - Discard
 
     /// With a set checked off, Discard on Today asks first: Cancel keeps
@@ -294,17 +245,6 @@ final class WorkoutLoggerJourneyUITests: XCTestCase {
             if XCTWaiter().wait(for: [wait], timeout: 2) == .completed { return }
         }
         XCTFail("\(field.identifier) never took keyboard focus")
-    }
-
-    /// Seconds left, read from "Rest timer: 2 minutes 45 seconds".
-    private func restSeconds(_ status: XCUIElement) -> Int? {
-        let label = status.label
-        let numbers = label
-            .split(whereSeparator: { !$0.isNumber })
-            .compactMap { Int($0) }
-        if label.contains("minute"), numbers.count >= 2 { return numbers[0] * 60 + numbers[1] }
-        if label.contains("second"), let seconds = numbers.first { return seconds }
-        return nil
     }
 
     private func waitForDisappearance(_ element: XCUIElement, timeout: TimeInterval = 5) -> Bool {

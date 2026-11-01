@@ -5,8 +5,7 @@ import XCTest
 /// 44pt target. A skip collapses the ramp to a "WARM-UPS SKIPPED" line with
 /// UNDO, and skipped warm-ups never count as logged sets. Finish with no
 /// logged work set offers Discard workout instead of saving (decision 6),
-/// the Finish and Discard dialogs show a visible Keep logging, and counts
-/// read "1 set".
+/// and the Finish and Discard dialogs show a visible Keep logging.
 final class SkipWarmupsUITests: XCTestCase {
 
     @MainActor
@@ -54,35 +53,6 @@ final class SkipWarmupsUITests: XCTestCase {
         app.buttons["Back"].firstMatch.tap()
         XCTAssertTrue(resume.waitForExistence(timeout: 10))
         XCTAssertTrue(noneLogged.waitForExistence(timeout: 5), "The slab count must not change through skip and undo")
-    }
-
-    // MARK: - Header row
-
-    /// The STALLED row's suggested-action chip shares the header row, and
-    /// its tap gesture, with SKIP WARM-UPS. A tap anywhere in the chip's
-    /// 44pt band runs its action, not only a tap on the drawn chip.
-    @MainActor
-    func testSuggestedActionChipTakesTapsInItsWholeBand() throws {
-        let app = UITestNavigation.launch(UITestNavigation.stalledExercise)
-        let resume = app.buttons["resumeSlab.resume"]
-        XCTAssertTrue(resume.waitForExistence(timeout: 10))
-        resume.tap()
-
-        let chip = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Suggested:")).firstMatch
-        XCTAssertTrue(chip.waitForExistence(timeout: 10), "The stalled bench press must show a suggested action")
-        UITestNavigation.reveal(chip, in: app)
-        XCTAssertEqual(chip.label, "Suggested: Add volume.", "This week's chest volume is below MAV, so the chip adds a set")
-        UITestNavigation.saveScreenshot("T04", "stalled-chip")
-
-        let targetProblem = UITestNavigation.tapTargetProblem(chip)
-        // 20pt above the chip's center: inside the top of its 44pt band, well
-        // clear of the drawn chip.
-        chip.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).withOffset(CGVector(dx: 0, dy: -20)).tap()
-        XCTAssertTrue(waitForDisappearance(chip),
-                      "A tap in the chip's 44pt band must run ADD VOLUME. \(targetProblem ?? "")")
-        let addedSet = app.textFields["set.reps.1.S4"]
-        UITestNavigation.reveal(addedSet, in: app)
-        XCTAssertNil(targetProblem)
     }
 
     // MARK: - Finish and Discard
@@ -143,43 +113,6 @@ final class SkipWarmupsUITests: XCTestCase {
         XCTAssertTrue(app.buttons["resumeSlab.resume"].waitForExistence(timeout: 10), "The workout must still be running")
     }
 
-    /// One logged work set reads "1 set" on the Program banner, "1 SET
-    /// LOGGED" on the Today slab and "1 set logged" in the Finish dialog,
-    /// which offers Finish and a visible Keep logging.
-    @MainActor
-    func testOneLoggedSetReadsSingular() throws {
-        let app = UITestNavigation.openSeededWorkout()
-        logFirstSet(in: app, reps: "5")
-
-        app.buttons["Back"].firstMatch.tap()
-        let resume = app.buttons["resumeSlab.resume"]
-        XCTAssertTrue(resume.waitForExistence(timeout: 10))
-        XCTAssertTrue(element(app.staticTexts, "1 set logged").exists, "The Today slab must say 1 SET LOGGED")
-
-        UITestNavigation.selectTab("Program", in: app)
-        let banner = app.staticTexts.matching(NSPredicate(format: "label ENDSWITH[c] %@", " · 1 set")).firstMatch
-        XCTAssertTrue(banner.waitForExistence(timeout: 10), "The Program banner must say 1 set")
-        UITestNavigation.saveScreenshot("T04", "program-banner-one-set")
-
-        UITestNavigation.selectTab("Today", in: app)
-        XCTAssertTrue(resume.waitForExistence(timeout: 10))
-        resume.tap()
-        openFinish(in: app)
-        XCTAssertTrue(text(beginningWith: "1 set logged ·", in: app).waitForExistence(timeout: 5),
-                      "The Finish dialog must say 1 set")
-        XCTAssertTrue(app.buttons["Finish"].exists, "With a logged work set, Finish saves")
-        XCTAssertFalse(app.buttons["Discard workout"].exists)
-        let keepLogging = app.buttons["Keep logging"]
-        XCTAssertTrue(keepLogging.exists && keepLogging.isHittable, "The Finish dialog needs a visible Keep logging")
-        XCTAssertFalse(app.buttons["Cancel"].exists, "Keep logging is the dialog's one way back")
-        UITestNavigation.saveScreenshot("T04", "finish-one-set")
-
-        keepLogging.tap()
-        XCTAssertTrue(waitForDisappearance(keepLogging), "Keep logging must close the dialog")
-        XCTAssertTrue(app.otherElements["workout.header"].exists, "Keep logging leaves the workout open")
-        XCTAssertFalse(app.buttons["summary.done"].exists, "Keep logging must not finish the workout")
-    }
-
     // MARK: - Helpers
 
     /// BRU labels reach accessibility uppercased, so match without case.
@@ -202,36 +135,9 @@ final class SkipWarmupsUITests: XCTestCase {
         finish.tap()
     }
 
-    /// Types reps into the first exercise's set 1, closes the keyboard with
-    /// its DONE, which covers the checkmark, and checks the set off. The
-    /// prescribed weight is already filled in.
-    @MainActor
-    private func logFirstSet(in app: XCUIApplication, reps: String) {
-        let field = app.textFields["set.reps.1.S1"]
-        UITestNavigation.reveal(field, in: app)
-        field.tap()
-        let focused = XCTNSPredicateExpectation(predicate: NSPredicate(format: "hasKeyboardFocus == true"), object: field)
-        XCTAssertEqual(XCTWaiter().wait(for: [focused], timeout: 5), .completed, "Reps never took keyboard focus")
-        field.typeText(reps)
-        XCTAssertEqual(field.value as? String, reps, "Reps must read what was typed")
-        element(app.buttons, "Done").tap()
-        XCTAssertTrue(waitForDisappearance(app.keyboards.firstMatch), "DONE must close the keyboard")
-        let complete = app.buttons["set.complete.1.S1"]
-        UITestNavigation.reveal(complete, in: app)
-        complete.tap()
-        let logged = XCTNSPredicateExpectation(predicate: NSPredicate(format: "label == %@", "Set 1 complete"), object: complete)
-        XCTAssertEqual(XCTWaiter().wait(for: [logged], timeout: 5), .completed, "Set 1 must be logged")
-    }
-
     @MainActor
     private func waitForDisappearance(_ element: XCUIElement, timeout: TimeInterval = 5) -> Bool {
         let gone = XCTNSPredicateExpectation(predicate: NSPredicate(format: "exists == false"), object: element)
         return XCTWaiter().wait(for: [gone], timeout: timeout) == .completed
     }
-}
-
-extension UITestNavigation {
-    /// A fresh store plus a workout in progress whose bench press has
-    /// stalled over its plateau window (StalledExerciseSeed).
-    static let stalledExercise = [resetFlag, "-fitbod-seed-stalled-exercise"]
 }

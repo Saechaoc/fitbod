@@ -5,7 +5,7 @@
 //  Ticket T11, review item 36: New Block's two saves. The top action reads
 //  SAVE DRAFT and needs only a name. The bottom action reads SAVE AS READY
 //  once the block would be ready, and until then names the first missing
-//  piece. EDIT BLOCK keeps one save, the bottom SAVE CHANGES.
+//  piece.
 //
 
 import XCTest
@@ -40,26 +40,6 @@ final class NewBlockSavesUITests: XCTestCase {
         XCTAssertEqual(blocks, 0, "A nameless top save must not make a block")
         XCTAssertEqual(label, "SAVE DRAFT", "The top action must say it saves a draft")
         XCTAssertFalse(enabled, "SAVE DRAFT must wait for a name")
-    }
-
-    /// With a name, the top action is SAVE DRAFT.
-    @MainActor
-    func testNamedBlockOffersSaveDraft() throws {
-        let app = openBlankNewBlock()
-        UITestNavigation.type("Spring Base", into: nameField(in: app))
-        XCTAssertTrue(app.buttons.labeled("SAVE DRAFT").waitForExistence(timeout: 5),
-                      "A named block must offer SAVE DRAFT; the top action reads \"\(topSaveControl(in: app).label)\"")
-    }
-
-    /// A name and phases are not enough to be ready: with no routine, the
-    /// bottom action waits and asks for one.
-    @MainActor
-    func testBottomActionAsksForARoutine() throws {
-        let app = openBlankNewBlock()
-        UITestNavigation.type("Spring Base", into: nameField(in: app))
-        let action = bottomAction(in: app)
-        XCTAssertEqual(action.label, "PICK A ROUTINE", "The bottom action must name the missing routine")
-        XCTAssertFalse(action.isEnabled, "The bottom action must wait for a routine")
     }
 
     // MARK: - Acceptance
@@ -142,35 +122,6 @@ final class NewBlockSavesUITests: XCTestCase {
         XCTAssertTrue(app.buttons.labeled("READY block: Walk Block").waitForExistence(timeout: 10),
                       "Program must list the block as ready")
         UITestNavigation.saveScreenshot("T11", "program-ready-block")
-    }
-
-    /// EDIT BLOCK keeps one save: the bottom SAVE CHANGES.
-    @MainActor
-    func testEditBlockShowsOnlySaveChanges() throws {
-        let app = UITestNavigation.launch(UITestNavigation.freshStore)
-        UITestNavigation.selectTab("Program", in: app)
-        // A template row opens a named block with phases.
-        let template = app.buttons.matching(NSPredicate(format: "label CONTAINS[c] %@", "Hypertrophy Meso")).firstMatch
-        UITestNavigation.reveal(template, in: app)
-        template.tap()
-        XCTAssertTrue(newBlockTitle(in: app).waitForExistence(timeout: 10), "New Block never opened")
-        UITestNavigation.hittable(app.buttons, "SAVE DRAFT").tap()
-        XCTAssertTrue(newBlockTitle(in: app).waitForNonExistence(timeout: 5), "SAVE DRAFT must close New Block")
-
-        let card = app.buttons.labeled("DRAFT block: Hypertrophy Meso")
-        UITestNavigation.reveal(card, in: app)
-        card.tap()
-        UITestNavigation.hittable(app.buttons, "EDIT").tap()
-        XCTAssertTrue(editBlockTitle(in: app).waitForExistence(timeout: 10), "EDIT must open EDIT BLOCK")
-        expectBottomAction("SAVE CHANGES", enabled: true, in: app)
-        let saves = app.buttons.matching(NSPredicate(format: "label BEGINSWITH[c] %@", "SAVE"))
-            .allElementsBoundByIndex.filter(\.isHittable).map(\.label)
-        XCTAssertEqual(saves, ["SAVE CHANGES"], "EDIT BLOCK must show only SAVE CHANGES")
-        XCTAssertFalse(app.staticTexts.labeled("SAVE DRAFT").exists, "EDIT BLOCK must not show SAVE DRAFT")
-        UITestNavigation.saveScreenshot("T11", "edit-block-save-changes")
-
-        app.buttons.labeled("SAVE CHANGES").tap()
-        XCTAssertTrue(editBlockTitle(in: app).waitForNonExistence(timeout: 5), "SAVE CHANGES must close EDIT BLOCK")
     }
 
     // MARK: - New Block

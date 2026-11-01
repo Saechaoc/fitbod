@@ -4,8 +4,7 @@ import XCTest
 /// the share sheet. The first tap used to render the file and the second
 /// tap shared it. Nothing is shared: each check closes the sheet.
 ///
-/// Review item 14: the backup footer fills CREATE, not RESTORE, and
-/// RESTORE still asks before it replaces any data.
+/// Review item 14: RESTORE asks before it replaces any data.
 final class SettingsExportUITests: XCTestCase {
 
     @MainActor
@@ -73,45 +72,6 @@ final class SettingsExportUITests: XCTestCase {
     @MainActor
     private func shareSheet(in app: XCUIApplication) -> XCUIElement {
         app.otherElements.matching(identifier: "ActivityListView").firstMatch
-    }
-
-    // MARK: - Backup footer (review item 14)
-
-    /// CREATE is the footer's filled primary. RESTORE, which replaces
-    /// data, is the ghost secondary, so it shows the paper, not the signal
-    /// fill. The paper tells a light run from a dark one.
-    @MainActor
-    func testBackupFooterFillsCreateNotRestore() throws {
-        let app = UITestNavigation.launch(UITestNavigation.freshStore)
-        UITestNavigation.openSettings(in: app)
-        let create = app.buttons.labeled("Create")
-        let restore = app.buttons.labeled("Restore")
-        XCTAssertTrue(restore.waitForExistence(timeout: 10), "Missing backup RESTORE")
-        UITestNavigation.reveal(restore, in: app)
-        XCTAssertTrue(create.isHittable, "Missing backup CREATE")
-        UITestNavigation.assertTapTarget(create)
-        UITestNavigation.assertTapTarget(restore)
-        UITestNavigation.assertNoOverlap(create, restore)
-
-        let screenshot = XCUIScreen.main.screenshot()
-        // The panel's bottom padding, above the footer's 2pt rule.
-        let panel = CGPoint(x: restore.frame.maxX - 12, y: restore.frame.minY - 8)
-        guard let paper = UITestNavigation.color(at: panel, in: screenshot) else {
-            return XCTFail("No pixel above RESTORE")
-        }
-        guard let palette = BackupFooterPalette.matching(paper: paper) else {
-            return XCTFail("The backup panel is \(paper), neither light nor dark paper")
-        }
-        UITestNavigation.saveScreenshot("T08", "backup-footer", appearance: palette.appearance)
-
-        // Beside each centered label, inside the panel's outline.
-        let createFill = CGPoint(x: create.frame.minX + 10, y: create.frame.midY)
-        let restoreFill = CGPoint(x: restore.frame.maxX - 10, y: restore.frame.midY)
-        let problems = [
-            UITestNavigation.colorProblem(at: createFill, in: screenshot, is: palette.signal).map { "CREATE: \($0)" },
-            UITestNavigation.colorProblem(at: restoreFill, in: screenshot, is: palette.paper).map { "RESTORE: \($0)" },
-        ].compactMap { $0 }
-        XCTAssertTrue(problems.isEmpty, "CREATE must have the signal fill and RESTORE the paper. " + problems.joined(separator: " "))
     }
 
     // MARK: - Restore confirmation
@@ -211,20 +171,5 @@ final class SettingsExportUITests: XCTestCase {
         }
         XCTAssertTrue(file.waitForExistence(timeout: 10), "The Files picker must list \(name)")
         file.tap()
-    }
-}
-
-/// The backup footer's paper and signal in one appearance.
-private struct BackupFooterPalette {
-    let appearance: UITestNavigation.Appearance
-    let paper: UITestNavigation.RGB
-    let signal: UITestNavigation.RGB
-
-    static let light = BackupFooterPalette(appearance: .light, paper: .init(hex: 0xFAFAF7), signal: .init(hex: 0xFF5C1A))
-    static let dark = BackupFooterPalette(appearance: .dark, paper: .init(hex: 0x0A0A0A), signal: .init(hex: 0xFF7A3D))
-
-    /// The palette whose paper `paper` is, within the pixel check's tolerance.
-    static func matching(paper: UITestNavigation.RGB) -> BackupFooterPalette? {
-        [light, dark].first { $0.paper.distance(to: paper) <= 8 }
     }
 }

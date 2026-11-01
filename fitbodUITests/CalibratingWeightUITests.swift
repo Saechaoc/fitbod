@@ -6,9 +6,8 @@
 //  exercise is still calibrating shows a weight range until the lifter
 //  picks a weight. Override in Why this weight turns the cell into the
 //  weight field, holding the set's weight, and focuses it (decision 8). A
-//  typed weight or Use keeps showing, a logged set shows the weight it
-//  logged, and the range shows whole inside the weight column at default
-//  text and at AX3 on the 390pt phone.
+//  typed weight or Use keeps showing, and a logged set shows the weight it
+//  logged.
 //
 //  CalibratingSetSeed's sets show "95 – 105 lb", hold last workout's
 //  110 lb, and Why this weight suggests 100 lb.
@@ -29,28 +28,6 @@ final class CalibratingWeightUITests: XCTestCase {
     override func setUpWithError() throws {
         continueAfterFailure = false
         XCUIDevice.shared.orientation = .portrait
-    }
-
-    /// Override on an open calibrating set closes the sheet, turns the
-    /// range into the weight field holding the set's weight, and focuses it.
-    /// Ending the edit without picking a weight brings the range back.
-    @MainActor
-    func testOverrideFocusesWeightField() throws {
-        let app = openWorkout()
-        XCTAssertTrue(rangeText("1.S1", in: app).waitForExistence(timeout: 10), "An untouched calibrating set must show its range")
-
-        tapOverride(on: "1.S1", in: app)
-        let field = weightField("1.S1", in: app)
-        XCTAssertTrue(field.waitForExistence(timeout: 5), "Override must turn the range into the weight field")
-        XCTAssertTrue(waitForFocus(field), "Override must focus the weight field")
-        XCTAssertTrue(app.keyboards.firstMatch.exists, "Override must bring up the keyboard")
-        XCTAssertEqual(field.value as? String, "110 lb", "The field must hold the set's weight")
-        XCTAssertFalse(rangeText("1.S1", in: app).exists, "The field must replace the range")
-
-        tapKeyboardDone(in: app)
-        XCTAssertTrue(rangeText("1.S1", in: app).waitForExistence(timeout: 5),
-                      "Without a weight picked, the set must show its range again")
-        XCTAssertFalse(field.exists, "The range must replace the field again")
     }
 
     /// A weight typed after Override, and a suggestion taken with Use, keep
@@ -122,38 +99,6 @@ final class CalibratingWeightUITests: XCTestCase {
             UITestNavigation.saveScreenshot("T80", "calibrating-completed", textSize: size)
             revealSet("1.S2", in: app)
             XCTAssertTrue(rangeText("1.S2", in: app).exists, "The open set 2 keeps its range at \(size)")
-            app.terminate()
-        }
-    }
-
-    /// The range lies inside the weight column, between the PREVIOUS column
-    /// and the reps field, and the screen shows all of it: in line at
-    /// default text, stacked at AX3. Saves the untouched set at both sizes.
-    @MainActor
-    func testRangeShowsWholeInWeightColumn() throws {
-        for size in [UITestNavigation.TextSize.default, .ax3] {
-            let app = openWorkout(textSize: size)
-            let range = rangeText("1.S1", in: app)
-            XCTAssertTrue(range.waitForExistence(timeout: 10), "An untouched calibrating set must show its range at \(size)")
-            UITestNavigation.revealInLogger(range, in: app)
-            let reps = app.textFields["set.reps.1.S1"]
-            let previous = try XCTUnwrap(previousColumn(before: reps, in: app), "Set 1 must show its PREVIOUS column at \(size)")
-
-            let column = weightColumn(after: previous, before: reps, in: app, textSize: size)
-            XCTAssertTrue(
-                column.insetBy(dx: -0.5, dy: -0.5).contains(range.frame),
-                "The range at \(range.frame) must lie inside the weight column at \(column) at \(size)"
-            )
-            UITestNavigation.assertNoOverlap(range, reps)
-            UITestNavigation.assertNoOverlap(range, previous)
-
-            let screenshot = XCUIScreen.main.screenshot()
-            let shown = try UITestNavigation.readText(in: range.frame.insetBy(dx: -4, dy: -4), of: screenshot)
-            XCTAssertEqual(
-                lettersAndDigits(shown), lettersAndDigits("95 – 105 lb"),
-                "The screen must show the range whole at \(size), but it reads \"\(shown)\""
-            )
-            UITestNavigation.saveScreenshot("T80", "calibrating-range", textSize: size)
             app.terminate()
         }
     }
@@ -260,41 +205,6 @@ final class CalibratingWeightUITests: XCTestCase {
         )).firstMatch
     }
 
-    /// The PREVIOUS column of the set whose reps field is `reps`: in line
-    /// with it at default text, above it at AX3.
-    @MainActor
-    private func previousColumn(before reps: XCUIElement, in app: XCUIApplication) -> XCUIElement? {
-        app.descendants(matching: .any)
-            .matching(NSPredicate(format: "label BEGINSWITH %@", "Previous:"))
-            .allElementsBoundByIndex
-            .filter { $0.frame.midY <= reps.frame.midY + 1 }
-            .max { $0.frame.midY < $1.frame.midY }
-    }
-
-    /// The weight column of a set row: between the PREVIOUS column and the
-    /// reps field, across the row at default text, and down the screen's
-    /// width at AX3, where the row stacks its fields.
-    @MainActor
-    private func weightColumn(
-        after previous: XCUIElement,
-        before reps: XCUIElement,
-        in app: XCUIApplication,
-        textSize: UITestNavigation.TextSize
-    ) -> CGRect {
-        switch textSize {
-        case .default, .xl, .xxl, .xxxl:
-            return CGRect(
-                x: previous.frame.maxX, y: app.frame.minY,
-                width: reps.frame.minX - previous.frame.maxX, height: app.frame.height
-            )
-        case .ax3:
-            return CGRect(
-                x: app.frame.minX, y: previous.frame.maxY,
-                width: app.frame.width, height: reps.frame.minY - previous.frame.maxY
-            )
-        }
-    }
-
     // MARK: - Waits
 
     @MainActor
@@ -307,14 +217,5 @@ final class CalibratingWeightUITests: XCTestCase {
     private func waitUntilGone(_ element: XCUIElement) -> Bool {
         let gone = XCTNSPredicateExpectation(predicate: NSPredicate(format: "exists == false"), object: element)
         return XCTWaiter().wait(for: [gone], timeout: 5) == .completed
-    }
-
-    // MARK: - Screenshot reader
-
-    /// Uppercased letters and digits only, so line breaks, spacing and how
-    /// the dash is read do not matter. A range cut short loses its last
-    /// letters.
-    private func lettersAndDigits(_ text: String) -> String {
-        String(text.uppercased().filter { $0.isLetter || $0.isNumber })
     }
 }

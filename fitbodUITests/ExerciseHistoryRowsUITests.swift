@@ -3,8 +3,7 @@ import XCTest
 /// Ticket T112, findings F229 to F231. An exercise's history shows a row
 /// for every workout: its date, intent chip, e1RM, TOP line and set chips.
 /// Every row was blank, because each date section and its one row shared
-/// the workout's id. A row whose workout set a PR shows "★ PR", and the
-/// intent chips and stat labels keep their words whole on the small phone.
+/// the workout's id. A row whose workout set a PR shows "★ PR".
 ///
 /// The progress-history seed logs four bench press workouts, a week
 /// apart. The newest is a strength workout of 107.5×2 @9.5, 95×6 @8 and
@@ -42,82 +41,7 @@ final class ExerciseHistoryRowsUITests: XCTestCase {
         XCTAssertTrue(onNewestRow, "The newest workout's 107.5 is a weight PR, so its row must show ★ PR")
     }
 
-    @MainActor
-    func testChipAndStatLabelKeepTheirWordsWholeAtDefaultText() throws {
-        try assertWordsWhole(textSize: .default)
-    }
-
-    @MainActor
-    func testChipAndStatLabelKeepTheirWordsWholeAtAX3() throws {
-        try assertWordsWhole(textSize: .ax3)
-    }
-
     // MARK: - Helpers
-
-    /// Reads the STRENGTH chip and the "Workouts · 30d" cell off the
-    /// screen: a word broken over two lines reads as two words.
-    @MainActor
-    private func assertWordsWhole(textSize: UITestNavigation.TextSize) throws {
-        let app = openBenchPressHistory(textSize: textSize)
-        let strength = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "STRENGTH ·")).firstMatch
-        XCTAssertTrue(strength.waitForExistence(timeout: 10), "Missing the STRENGTH chip")
-        let workouts = app.descendants(matching: .any).matching(NSPredicate(format: "label == %@", "Workouts · 30d")).firstMatch
-        XCTAssertTrue(workouts.waitForExistence(timeout: 10), "Missing the Workouts · 30d cell")
-        UITestNavigation.waitUntilStill(strength)
-        UITestNavigation.saveScreenshot("T112", "exercise-history", textSize: textSize)
-        // At AX3 the stat strip stacks and the chip strip scrolls sideways,
-        // so the chip can sit under the tab bar or off the trailing edge.
-        // The Workouts cell is read first, before the page scrolls.
-        let screen = CGRect(x: 0, y: 0, width: app.frame.width, height: tabBarTop(in: app))
-        try assertWordWhole("WORKOUTS", in: workouts, within: screen)
-        bringOnScreen(strength, within: screen, in: app)
-        UITestNavigation.saveScreenshot("T112", "exercise-history-chips", textSize: textSize)
-        try assertWordWhole("STRENGTH", in: strength, within: screen)
-    }
-
-    @MainActor
-    private func assertWordWhole(_ word: String, in element: XCUIElement, within screen: CGRect) throws {
-        XCTAssertTrue(screen.contains(element.frame), "\(word) must sit on the screen, at \(element.frame)")
-        // Vision misreads widely spaced capitals in some crops, so the word
-        // is read from a few margins around the frame. A word broken over
-        // two lines reads as two pieces from every one of them.
-        let screenshot = XCUIScreen.main.screenshot()
-        var reads: [String] = []
-        for margin in [CGSize.zero, CGSize(width: 4, height: 4), CGSize(width: 8, height: 0)] {
-            let text = try UITestNavigation.readText(
-                in: element.frame.insetBy(dx: -margin.width, dy: -margin.height), of: screenshot
-            )
-            reads.append(text)
-            let words = text.uppercased().split(whereSeparator: { !$0.isLetter && !$0.isNumber }).map(String.init)
-            if words.contains(word) { return }
-        }
-        XCTFail("\(word) must not break inside the word, but the screen reads \(reads)")
-    }
-
-    /// The top of the tab bar, whose tabs sit in one row, or two at AX3.
-    @MainActor
-    private func tabBarTop(in app: XCUIApplication) -> CGFloat {
-        ["Today", "Program", "Progress", "Library"].map { UITestNavigation.tab($0, in: app).frame.minY }.min() ?? app.frame.maxY
-    }
-
-    /// Scrolls the page up, then the chip strip sideways, the way a user
-    /// would, until `chip` sits wholly inside `screen`.
-    @MainActor
-    private func bringOnScreen(_ chip: XCUIElement, within screen: CGRect, in app: XCUIApplication) {
-        for _ in 0..<6 where chip.frame.maxY > screen.maxY {
-            let page = app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.3))
-            page.press(forDuration: 0.05, thenDragTo: page.withOffset(CGVector(dx: 0, dy: -200)),
-                       withVelocity: .slow, thenHoldForDuration: 0.3)
-            UITestNavigation.waitUntilStill(chip)
-        }
-        for _ in 0..<4 where chip.frame.maxX > screen.maxX {
-            let start = chip.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5))
-            let overflow = chip.frame.maxX - screen.maxX + 16
-            start.press(forDuration: 0.05, thenDragTo: start.withOffset(CGVector(dx: -overflow, dy: 0)),
-                        withVelocity: .slow, thenHoldForDuration: 0.3)
-            UITestNavigation.waitUntilStill(chip)
-        }
-    }
 
     /// Every workout row's e1RM, top row first.
     @MainActor

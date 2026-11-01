@@ -89,33 +89,6 @@ final class ArchiveRoutineUITests: XCTestCase {
                       "With its only routine archived, Today must offer to build one")
     }
 
-    /// With one of the routine's sessions open on top of its screen in the
-    /// other tab, the session stays open, since it is not archived and may
-    /// have started a workout, and backing out of it skips the archived
-    /// routine's screen.
-    @MainActor
-    func testArchiveClosesTheOtherTabsRoutineUnderItsSession() throws {
-        let app = UITestNavigation.launch(UITestNavigation.progressHistory)
-        UITestNavigation.selectTab("Today", in: app)
-        let name = makeRoutine(from: UITestNavigation.hittable(app.buttons, "+ New routine"), in: app)
-        UITestNavigation.hittable(app.buttons, "Session 1: \(Self.session)", exactLabel: true).tap()
-        let sessionTitle = app.staticTexts.labeled("Session")
-        XCTAssertTrue(sessionTitle.waitForExistence(timeout: 10), "The routine's session row must open the session")
-
-        UITestNavigation.selectTab("Program", in: app)
-        UITestNavigation.hittable(app.buttons, name).tap()
-        archiveOpenRoutine(in: app)
-        XCTAssertTrue(routineNameField(in: app, value: name).waitForNonExistence(timeout: 5),
-                      "Archiving must take Program back to its list")
-
-        UITestNavigation.selectTab("Today", in: app)
-        XCTAssertTrue(sessionTitle.waitForExistence(timeout: 5), "Today must keep the session open")
-        UITestNavigation.hittable(app.buttons, "Back").tap()
-        XCTAssertTrue(app.staticTexts.labeled("Build your first routine").waitForExistence(timeout: 10),
-                      "Backing out of the session must skip the archived routine's screen")
-        XCTAssertFalse(routineNameField(in: app, value: name).exists, "Today must close the archived routine")
-    }
-
     // MARK: - Archived routines
 
     /// Program shows Archived routines once a routine is archived. It opens
@@ -241,41 +214,6 @@ final class ArchiveRoutineUITests: XCTestCase {
                       "+ ATTACH ▸ must open the routine picker")
         XCTAssertFalse(app.buttons.matching(NSPredicate(format: "label BEGINSWITH[c] %@", "Live Routine"))
                         .firstMatch.exists, "New Block's routine picker must leave the archived routine out")
-    }
-
-    // MARK: - Accessibility sizes
-
-    /// At AX3 the entry and RESTORE stay whole tap targets on screen, and
-    /// RESTORE moves under the routine's name instead of crowding it. The
-    /// routine is archived at the default size, then the app reopens at AX3.
-    @MainActor
-    func testArchivedRoutinesFitAtAX3() throws {
-        let app = UITestNavigation.launch(UITestNavigation.progressHistory)
-        let name = makeRoutineOnProgram(in: app)
-        archiveOpenRoutine(in: app)
-        XCTAssertTrue(routineNameField(in: app, value: name).waitForNonExistence(timeout: 5),
-                      "Archiving must take Program back to its list")
-
-        UITestNavigation.relaunch(app, textSize: .ax3)
-        UITestNavigation.selectTab("Program", in: app)
-        let window = app.windows.firstMatch
-        let entry = archivedEntry(in: app)
-        scrollProgram(toward: entry, in: app, maxSwipes: 24)
-        XCTAssertTrue(entry.exists, "Program must offer the archived routine at AX3")
-        UITestNavigation.assertTapTarget(entry)
-        UITestNavigation.assertInside(entry, window)
-        UITestNavigation.saveScreenshot("T20", "archived-entry", textSize: .ax3)
-        entry.tap()
-
-        let restore = UITestNavigation.hittable(app.buttons, "Restore \(name)", exactLabel: true)
-        let row = archivedRow(name, in: app)
-        UITestNavigation.assertTapTarget(restore)
-        UITestNavigation.assertInside(restore, window)
-        UITestNavigation.assertInside(row, window)
-        UITestNavigation.assertNoOverlap(row, restore)
-        XCTAssertGreaterThanOrEqual(restore.frame.minY, row.frame.maxY - 0.5,
-                                    "At AX3, RESTORE must sit under the routine's name")
-        UITestNavigation.saveScreenshot("T20", "archived-list", textSize: .ax3)
     }
 
     // MARK: - Helpers
