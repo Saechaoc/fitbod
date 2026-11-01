@@ -10,12 +10,17 @@
 //  BRU changes:
 //    - Validation error: Color(.systemRed) → .bruSignal, font → BRUFont.labelMicro
 //    - Reset button: Button+accentColor → BRUButton("Reset to RP defaults", kind: .primary)
-//    - Stepper row labels: BRUFont.labelSmall uppercase + BRUFont.labelMicro bruMuted suffix
+//    - Suffix line: BRUFont.labelMicro bruMuted set count + suffix
 //    - Row label Text uses .foregroundStyle(.bruInk) / .bruMuted (no system colors)
+//    - T109: each target is a BRUStepper titled MV, MEV, MAV or MRV, with
+//      44pt − and + cells, over its suffix line, replacing the stock iOS
+//      Stepper and the labelSmall uppercase title
 //
 //  Preserved verbatim:
 //    - 4-stepper MV/MEV/MAV/MRV with range 1...30, step 1
-//    - Per-stepper accessibilityLabel + accessibilityValue
+//    - Per-stepper accessibilityLabel + accessibilityValue, now on one
+//      adjustable element per target (the stock rows repeated them on
+//      both lines of text and on the stepper)
 //    - Monotonic invariant check: mv ≤ mev < mav < mrv
 //    - resetToRPDefaults() calls RPVolumeLandmarks.landmark(for:)
 //    - userEdited = true on any Stepper edit
@@ -124,6 +129,12 @@ public struct MuscleVolumeTargetStepper: View {
 
     // MARK: - Stepper row
 
+    /// Every target runs from 1 to 30 sets, a set at a time.
+    private static let range = 1...30
+
+    /// One target: a BRUStepper titled MV, MEV, MAV or MRV, with its set
+    /// count and suffix under it. VoiceOver reads the two as one adjustable
+    /// element, by the target's full name and its set count.
     @ViewBuilder
     private func stepperRow(
         label: String,
@@ -132,29 +143,31 @@ public struct MuscleVolumeTargetStepper: View {
         onChange: @escaping (Int) -> Void,
         a11yLabel: String
     ) -> some View {
-        HStack {
-            VStack(alignment: .leading, spacing: 2) {
-                Text(label)
-                    .font(BRUFont.labelSmall)
-                    .tracking(1.2)
-                    .textCase(.uppercase)
-                    .foregroundStyle(Color.bruInk)
-                Text("\(BRUCountLabel.text(value, "set")) \(suffix)")
-                    .font(BRUFont.labelMicro)
-                    .tracking(1.0)
-                    .foregroundStyle(Color.bruMuted)
-            }
-            Spacer()
-            Stepper(
+        VStack(alignment: .leading, spacing: 4) {
+            BRUStepper(
+                label,
                 value: Binding(get: { value }, set: { onChange($0) }),
-                in: 1...30,
-                step: 1,
-                label: { EmptyView() }
-            )
-            .labelsHidden()
+                in: Self.range,
+                step: 1
+            ) { "\($0)" }
+            Text("\(BRUCountLabel.text(value, "set")) \(suffix)")
+                .font(BRUFont.labelMicro)
+                .tracking(1.0)
+                .foregroundStyle(Color.bruMuted)
+                .frame(maxWidth: .infinity, alignment: .leading)
         }
+        // The stepper's own element would read "MV" and a bare number, so
+        // the row takes its place and steps the same way.
+        .accessibilityElement(children: .ignore)
         .accessibilityLabel(a11yLabel)
         .accessibilityValue(BRUCountLabel.text(value, "set"))
+        .accessibilityAdjustableAction { direction in
+            switch direction {
+            case .increment where value < Self.range.upperBound: onChange(value + 1)
+            case .decrement where value > Self.range.lowerBound: onChange(value - 1)
+            default: break
+            }
+        }
     }
 
     // MARK: - Monotonic check

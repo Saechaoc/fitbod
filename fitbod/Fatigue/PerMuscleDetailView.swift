@@ -9,7 +9,7 @@
 //
 //  Four sections (UI-SPEC §PerMuscleDetailView):
 //    1. This Week — total sets + BRUChip zone badge + delta line
-//    2. Contributing Exercises — DESC by weighted-set count
+//    2. Contributing Exercises — DESC by weighted-set count, ties by name
 //    3. Frequency This Week — sessions ≥ frequencyHitMinSets
 //    4. Adjust Targets — "Edit volume targets" row (▾/▴) → MuscleVolumeTargetStepper inline
 //
@@ -319,29 +319,48 @@ public struct PerMuscleDetailView: View {
         }
 
         return contribByExercise.map { id, value in
-            let totalSets = Int((value.direct + value.indirect).rounded())
-            let directSets = Int(value.direct.rounded())
-            let trailing: String
-            if value.indirect > 0 {
-                trailing = "\(BRUCountLabel.text(totalSets, "set")) (\(directSets) direct)"
-            } else {
-                trailing = BRUCountLabel.text(totalSets, "set")
-            }
-            return ContributingExercise(
-                exerciseID: id,
-                exerciseName: value.name,
-                totalWeightedSets: value.direct + value.indirect,
-                trailingCopy: trailing
-            )
+            ContributingExercise(exerciseID: id, exerciseName: value.name, direct: value.direct, indirect: value.indirect)
         }
-        .sorted { $0.totalWeightedSets > $1.totalWeightedSets }
+        .sorted(by: ContributingExercise.precedes)
     }
 }
 
-/// One row in the "Contributing Exercises" section.
-private struct ContributingExercise: Hashable {
+/// One row in the "Contributing Exercises" section. Internal so
+/// ContributingExercisesOrderTests can build rows and order them.
+struct ContributingExercise: Hashable {
     let exerciseID: UUID
     let exerciseName: String
     let totalWeightedSets: Double
     let trailingCopy: String
+
+    /// A row from an exercise's direct and indirect weighted sets this
+    /// week: "3 sets", or "3 sets (2 direct)" when some are indirect.
+    init(exerciseID: UUID, exerciseName: String, direct: Double, indirect: Double) {
+        let totalSets = Int((direct + indirect).rounded())
+        let directSets = Int(direct.rounded())
+        self.exerciseID = exerciseID
+        self.exerciseName = exerciseName
+        totalWeightedSets = direct + indirect
+        if indirect > 0 {
+            trailingCopy = "\(BRUCountLabel.text(totalSets, "set")) (\(directSets) direct)"
+        } else {
+            trailingCopy = BRUCountLabel.text(totalSets, "set")
+        }
+    }
+
+    /// Most weighted sets first. The rows come from a dictionary, whose
+    /// order can change from one render to the next, so rows with exactly
+    /// the same weighted sets go by name, then by id (T109). Rows that only
+    /// read the same count, such as 3 and 2.5 weighted sets, keep their
+    /// weighted order (tradeoffs.md "Contributing exercises order").
+    static func precedes(_ lhs: Self, _ rhs: Self) -> Bool {
+        if lhs.totalWeightedSets != rhs.totalWeightedSets {
+            return lhs.totalWeightedSets > rhs.totalWeightedSets
+        }
+        switch lhs.exerciseName.localizedStandardCompare(rhs.exerciseName) {
+        case .orderedAscending: return true
+        case .orderedDescending: return false
+        case .orderedSame: return lhs.exerciseID.uuidString < rhs.exerciseID.uuidString
+        }
+    }
 }
