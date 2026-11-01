@@ -35,9 +35,7 @@ Every Phase 1 ticket is done and archived.
 
 ### Phase 2: P2 defects
 
-| Ticket | Title |
-|---|---|
-| [T115](tickets/T115-session-editor-ax3-scroll-hang.md) | The session editor scrolls at AX3 without hanging |
+Every Phase 2 ticket is done and archived.
 
 ### Phase 3: P3 polish and copy
 

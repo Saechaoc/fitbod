@@ -123,6 +123,7 @@ ARCHIVED = {
     "T105": (2, [], []),
     "T110": (2, [], ["fitbodTests/SetRowsIgnoreOverridesTests.swift", "fitbodUITests/PerSetOverridesRemovedUITests.swift"]),
     "T112": (2, [], ["fitbodUITests/ExerciseHistoryRowsUITests.swift"]),
+    "T115": (2, [], []),
 }
 
 BUNDLE = pathlib.Path(__file__).resolve().parent
