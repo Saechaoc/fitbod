@@ -201,10 +201,32 @@ enum DesignTour {
         Thread.sleep(forTimeInterval: 0.6)
     }
 
-    /// Swipes the top sheet away and waits for it to settle.
-    static func closeSheet(_ app: XCUIApplication) {
-        UITestNavigation.swipeSheetDown(in: app)
+    /// Swipes the top sheet down from its top edge, the way a user drags
+    /// its grabber, and waits for it to settle.
+    static func closeSheet(_ app: XCUIApplication, file: StaticString = #filePath, line: UInt = #line) {
+        let deadline = Date.now.addingTimeInterval(5)
+        var sheet = topSheet(in: app)
+        while sheet == nil && Date.now < deadline {
+            Thread.sleep(forTimeInterval: 0.25)
+            sheet = topSheet(in: app)
+        }
+        guard let sheet else { return XCTFail("No sheet is on screen to swipe down", file: file, line: line) }
+        let topEdge = sheet.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0)).withOffset(CGVector(dx: 0, dy: 6))
+        let bottom = app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.98))
+        topEdge.press(forDuration: 0.05, thenDragTo: bottom, withVelocity: .fast, thenHoldForDuration: 0)
         Thread.sleep(forTimeInterval: 0.8)
+    }
+
+    /// The sheet on top, or nil. This is UITestNavigation.topSheet's rule
+    /// with room for an iOS 26 half-height sheet, which floats 8 pt above
+    /// the bottom of the screen, so that helper finds no sheet.
+    static func topSheet(in app: XCUIApplication) -> XCUIElement? {
+        let window = app.windows.firstMatch
+        guard let layer = window.children(matching: .other).allElementsBoundByIndex.last else { return nil }
+        let bottom = window.frame.maxY
+        return layer.children(matching: .other).allElementsBoundByIndex.first {
+            $0.frame.minY > 0.5 && abs($0.frame.maxY - bottom) < 12
+        }
     }
 
     /// Scrolls until `element` is visible and tappable.
@@ -232,6 +254,515 @@ enum DesignTour {
     }
 }
 
+// MARK: - Area helpers
+
+@MainActor
+enum TourTodaySettings {
+    static func recapTitle(in app: XCUIApplication) -> XCUIElement {
+        app.staticTexts.matching(NSPredicate(format: "label ENDSWITH[c] %@", " · recap")).firstMatch
+    }
+
+    static func reviewTitle(in app: XCUIApplication) -> XCUIElement {
+        app.staticTexts.labeled("Block review")
+    }
+
+    /// Waits on Progress until the seed has finished `count` workouts, then
+    /// opens Today, as WeeklyRecapUITests does: Today's first visit decides
+    /// whether the recap shows.
+    static func openToday(afterSeeding count: Int, in app: XCUIApplication) {
+        UITestNavigation.selectTab("Progress", in: app)
+        let seeded = XCTNSPredicateExpectation(
+            predicate: NSPredicate(format: "label CONTAINS %@", "\(count) finished"),
+            object: app.buttons["progress.history"]
+        )
+        XCTAssertEqual(XCTWaiter().wait(for: [seeded], timeout: 30), .completed,
+                       "The seed must finish \(count) workouts before Today's first visit")
+        UITestNavigation.selectTab("Today", in: app)
+    }
+
+    /// Closes the recap with its footer's Start button, such as "Start W44 ▸".
+    static func closeRecap(in app: XCUIApplication) {
+        let start = app.buttons.matching(NSPredicate(format: "label BEGINSWITH[c] %@", "Start W")).firstMatch
+        XCTAssertTrue(start.waitForExistence(timeout: 5), "The recap must offer its Start button")
+        start.tap()
+        _ = recapTitle(in: app).waitForNonExistence(timeout: 5)
+    }
+
+    /// Opens the demo workout and checks off set 1 of the first exercise,
+    /// as SkipWarmupsUITests does. Leaves the logger open.
+    static func logFirstSet(in app: XCUIApplication) {
+        app.buttons["resumeSlab.resume"].tap()
+        let field = app.textFields["set.reps.1.S1"]
+        XCTAssertTrue(field.waitForExistence(timeout: 10), "The logger never opened")
+        UITestNavigation.revealInLogger(field, in: app)
+        UITestNavigation.type("6", into: field, replacing: false, pressingReturn: false)
+        UITestNavigation.hittable(app.buttons, "Done", exactLabel: true).tap()
+        _ = app.keyboards.firstMatch.waitForNonExistence(timeout: 5)
+        let complete = app.buttons["set.complete.1.S1"]
+        UITestNavigation.revealInLogger(complete, in: app)
+        complete.tap()
+        let logged = XCTNSPredicateExpectation(predicate: NSPredicate(format: "label == %@", "Set 1 complete"), object: complete)
+        XCTAssertEqual(XCTWaiter().wait(for: [logged], timeout: 5), .completed, "Set 1 must be logged")
+    }
+
+    /// Scrolls Today until both heatmap figures sit above the tab bar, as
+    /// HeatmapHitAreaUITests does.
+    static func revealHeatmap(in app: XCUIApplication) {
+        let back = app.otherElements.matching(NSPredicate(format: "label == %@", "Back")).firstMatch
+        UITestNavigation.reveal(back, in: app)
+        let tabBarTop = UITestNavigation.tab("Today", in: app).frame.minY
+        for _ in 0..<4 where back.frame.maxY + 14 > tabBarTop {
+            app.swipeUp(velocity: .slow)
+        }
+    }
+
+    /// Scrolls Plate Inventory until `element` sits wholly above its
+    /// Done ▸ footer, as PlateInventorySwipeUITests does.
+    static func revealAboveFooter(_ element: XCUIElement, in app: XCUIApplication) {
+        let footerTop = app.buttons.labeled("Done ▸").frame.minY - 2
+        for _ in 0..<6 {
+            if element.exists && element.isHittable && element.frame.maxY <= footerTop { return }
+            app.swipeUp(velocity: .slow)
+        }
+        XCTAssertTrue(element.exists && element.isHittable, "\(element) must sit above the footer bar")
+    }
+
+    static func shareSheet(in app: XCUIApplication) -> XCUIElement {
+        app.otherElements.matching(identifier: "ActivityListView").firstMatch
+    }
+
+    static func file(_ name: String, in app: XCUIApplication) -> XCUIElement {
+        app.descendants(matching: .any).matching(NSPredicate(format: "label BEGINSWITH %@", name)).firstMatch
+    }
+
+    static func waitForAny(_ elements: [XCUIElement], timeout: TimeInterval) -> Bool {
+        let deadline = Date.now.addingTimeInterval(timeout)
+        while Date.now < deadline {
+            if elements.contains(where: \.exists) { return true }
+            Thread.sleep(forTimeInterval: 0.25)
+        }
+        return false
+    }
+
+    /// Backup CREATE, then Save to Files under a unique name, as
+    /// SettingsExportUITests does. Returns the name.
+    static func saveBackupToFiles(in app: XCUIApplication) -> String {
+        let create = app.buttons.labeled("Create")
+        XCTAssertTrue(create.waitForExistence(timeout: 10), "Missing backup CREATE")
+        UITestNavigation.reveal(create, in: app)
+        create.tap()
+        XCTAssertTrue(shareSheet(in: app).waitForExistence(timeout: 5), "CREATE must open the share sheet")
+        let saveToFiles = app.cells.labeled("Save to Files")
+        XCTAssertTrue(saveToFiles.waitForExistence(timeout: 5), "The share sheet must offer Save to Files")
+        saveToFiles.tap()
+
+        let save = app.buttons.labeled("Save")
+        let nameField = app.textFields["DOCPicker.filenameTextField"]
+        XCTAssertTrue(save.waitForExistence(timeout: 15), "Files must offer Save")
+        let name = "fitbod-backup-\(UUID().uuidString.prefix(8))"
+        nameField.tap()
+        let focused = XCTNSPredicateExpectation(predicate: NSPredicate(format: "hasKeyboardFocus == true"), object: nameField)
+        XCTAssertEqual(XCTWaiter().wait(for: [focused], timeout: 5), .completed, "The name must take the keyboard")
+        // Focus selects the whole name, so typing replaces it.
+        nameField.typeText(name)
+        save.tap()
+        XCTAssertTrue(nameField.waitForNonExistence(timeout: 10), "Files must close after saving")
+        return name
+    }
+
+    /// Picks `name` in the open Files picker, through Browse > On My iPhone
+    /// when Recents does not list it.
+    static func pickFile(_ name: String, in app: XCUIApplication) {
+        let file = file(name, in: app)
+        if !file.waitForExistence(timeout: 10) {
+            let browse = app.buttons.labeled("Browse")
+            XCTAssertTrue(browse.waitForExistence(timeout: 5), "The Files picker must offer Browse")
+            browse.tap()
+            let onMyPhone = app.descendants(matching: .any).matching(NSPredicate(format: "label ==[c] %@", "On My iPhone")).firstMatch
+            XCTAssertTrue(onMyPhone.waitForExistence(timeout: 10), "Browse must list On My iPhone")
+            onMyPhone.tap()
+        }
+        XCTAssertTrue(file.waitForExistence(timeout: 10), "The Files picker must list \(name)")
+        file.tap()
+    }
+}
+
+@MainActor
+enum TourLogger {
+    /// The demo, stalled and calibrating seeds' first exercise.
+    static let bench = "Barbell Bench Press - Medium Grip"
+
+    /// Opens today's workout from Today's resume slab.
+    static func openWorkout(in app: XCUIApplication) {
+        let resume = app.buttons["resumeSlab.resume"]
+        XCTAssertTrue(resume.waitForExistence(timeout: 10), "Today must offer the workout")
+        UITestNavigation.reveal(resume, in: app)
+        resume.tap()
+        XCTAssertTrue(app.otherElements["workout.header"].waitForExistence(timeout: 10), "The logger never opened")
+    }
+
+    static func element(_ app: XCUIApplication, beginning prefix: String) -> XCUIElement {
+        app.descendants(matching: .any).matching(NSPredicate(format: "label BEGINSWITH %@", prefix)).firstMatch
+    }
+
+    static func restStatus(in app: XCUIApplication) -> XCUIElement {
+        app.descendants(matching: .any).matching(identifier: "rest.status").firstMatch
+    }
+
+    /// Scrolls the logger down (or up) until `element` loads, since rows
+    /// load as they scroll in, then into the span a tap reaches.
+    static func revealLoaded(_ element: XCUIElement, in app: XCUIApplication, up: Bool = false) {
+        for _ in 0..<12 where !element.exists {
+            let (top, bottom) = UITestNavigation.loggerSpan(in: app)
+            UITestNavigation.dragLogger(from: up ? top + 20 : bottom - 20, to: up ? bottom - 20 : top + 20, in: app)
+        }
+        UITestNavigation.revealInLogger(element, in: app)
+    }
+
+    /// Types reps into set `id`, such as "1.S1", closes the keyboard with
+    /// its DONE, which covers the checkmark, and checks the set off.
+    static func logSet(_ id: String, reps: String, in app: XCUIApplication) {
+        let field = app.textFields["set.reps.\(id)"]
+        revealLoaded(field, in: app)
+        UITestNavigation.type(reps, into: field, replacing: false, pressingReturn: false)
+        UITestNavigation.hittable(app.buttons, "Done", exactLabel: true).tap()
+        _ = app.keyboards.firstMatch.waitForNonExistence(timeout: 5)
+        let complete = app.buttons["set.complete.\(id)"]
+        UITestNavigation.revealInLogger(complete, in: app)
+        complete.tap()
+        let number = id.split(separator: "S").last.map(String.init) ?? ""
+        let logged = XCTNSPredicateExpectation(predicate: NSPredicate(format: "label == %@", "Set \(number) complete"), object: complete)
+        XCTAssertEqual(XCTWaiter().wait(for: [logged], timeout: 5), .completed, "Set \(id) must be logged")
+    }
+
+    /// Long-presses the first exercise's name and picks `item` from its
+    /// context menu: Swap Exercise…, Edit Pinned Note or Remove from Session.
+    static func exerciseMenu(_ item: String, in app: XCUIApplication) {
+        let name = app.staticTexts[bench].firstMatch
+        revealLoaded(name, in: app, up: true)
+        name.press(forDuration: 1.2)
+        let button = app.buttons[item]
+        XCTAssertTrue(button.waitForExistence(timeout: 5), "The exercise menu must offer \(item)")
+        button.tap()
+    }
+}
+
+@MainActor
+enum TourBlocks {
+    /// A Program block card, read as "READY block: Summer Block" and, for
+    /// an active block, its week after a period.
+    static func card(_ prefix: String, in app: XCUIApplication) -> XCUIElement {
+        app.buttons.matching(NSPredicate(format: "label BEGINSWITH[c] %@", prefix)).firstMatch
+    }
+
+    /// The block overview's hero, one element read as "Ready block #2: …".
+    static func hero(in app: XCUIApplication) -> XCUIElement {
+        app.staticTexts.matching(NSPredicate(
+            format: "label MATCHES[c] %@", "(active|ready|draft|completed) block .*"
+        )).firstMatch
+    }
+
+    /// Opens a block's overview from its Program card, as
+    /// BlockOverviewStatesUITests does.
+    static func openBlock(_ prefix: String, in app: XCUIApplication) {
+        UITestNavigation.selectTab("Program", in: app)
+        let button = card(prefix, in: app)
+        XCTAssertTrue(button.waitForExistence(timeout: 10), "Program must list \(prefix)")
+        UITestNavigation.reveal(button, in: app)
+        button.tap()
+        XCTAssertTrue(hero(in: app).waitForExistence(timeout: 10), "\(prefix) must open the block overview")
+    }
+
+    /// Taps the dimmed screen beside + NEW's popover, which closes it, as
+    /// ProgramHeaderAndSheetsAX3UITests does.
+    static func closePopover(in app: XCUIApplication) {
+        app.coordinate(withNormalizedOffset: CGVector(dx: 0.25, dy: 0.75)).tap()
+        XCTAssertTrue(app.buttons["+ New block"].waitForNonExistence(timeout: 5), "A tap beside the popover must close it")
+    }
+
+    /// Program's + NEW, then + New block: the CREATE BLOCK sheet.
+    static func openStartChoice(in app: XCUIApplication) {
+        let new = app.buttons["+ NEW"]
+        XCTAssertTrue(new.waitForExistence(timeout: 10), "Program has no + NEW")
+        new.tap()
+        UITestNavigation.hittable(app.buttons, "+ New block").tap()
+        XCTAssertTrue(app.staticTexts["CREATE BLOCK"].waitForExistence(timeout: 5), "+ New block must open CREATE BLOCK")
+    }
+
+    /// Waits for New Block, until its CANCEL can be tapped, so the cover or
+    /// sheet has finished sliding up.
+    static func expectBuilder(in app: XCUIApplication, file: StaticString = #filePath, line: UInt = #line) {
+        XCTAssertTrue(app.staticTexts.labeled("NEW BLOCK").waitForExistence(timeout: 10), "New Block never opened",
+                      file: file, line: line)
+        UITestNavigation.hittable(app.buttons, "Cancel", file: file, line: line)
+    }
+
+    /// CANCEL closes an untouched builder at once and asks first after an
+    /// edit; this takes Discard when it asks.
+    static func closeBuilder(in app: XCUIApplication, title: String = "NEW BLOCK") {
+        UITestNavigation.hittable(app.buttons, "Cancel", exactLabel: true).tap()
+        let discard = app.buttons.matching(NSPredicate(format: "label ==[c] %@", "Discard")).firstMatch
+        if discard.waitForExistence(timeout: 2) {
+            UITestNavigation.hittable(app.buttons, "Discard", exactLabel: true).tap()
+        }
+        XCTAssertTrue(app.staticTexts.labeled(title).waitForNonExistence(timeout: 5), "CANCEL must close \(title)")
+    }
+
+    /// Taps + ADD PHASE and returns the sheet's hint line.
+    @discardableResult
+    static func openAddPhase(in app: XCUIApplication) -> XCUIElement {
+        UITestNavigation.revealAboveBottomBar(app.buttons, "+ ADD PHASE", in: app).tap()
+        let prompt = app.staticTexts.labeled("Choose a phase type to add.")
+        XCTAssertTrue(prompt.waitForExistence(timeout: 10), "+ ADD PHASE must open its sheet")
+        return prompt
+    }
+
+    /// The phase card labeled `label`, such as "Phase 1: Accumulation".
+    static func phaseCard(_ label: String, in app: XCUIApplication) -> XCUIElement {
+        let card = app.descendants(matching: .any).matching(NSPredicate(format: "label == %@", label)).firstMatch
+        XCTAssertTrue(card.waitForExistence(timeout: 10), "Missing \(label)")
+        return card
+    }
+
+    /// Taps a phase card and returns its editor's Done.
+    static func openPhaseEditor(_ label: String, in app: XCUIApplication) -> XCUIElement {
+        let card = phaseCard(label, in: app)
+        UITestNavigation.revealAboveBottomBar(card, in: app, scroll: .dragInMargin)
+        card.tap()
+        let done = app.buttons.labeled("Done")
+        XCTAssertTrue(done.waitForExistence(timeout: 5), "\(label) must open the phase editor")
+        return done
+    }
+
+    /// A slow, short drag reveals the card's Delete, as
+    /// PhaseRowsVoiceOverUITests does; a fast full swipe deletes at once.
+    static func revealDelete(on card: XCUIElement, in app: XCUIApplication) -> XCUIElement {
+        let start = card.coordinate(withNormalizedOffset: CGVector(dx: 0.7, dy: 0.5))
+        let end = card.coordinate(withNormalizedOffset: CGVector(dx: 0.4, dy: 0.5))
+        start.press(forDuration: 0.05, thenDragTo: end, withVelocity: .slow, thenHoldForDuration: 0.1)
+        let delete = UITestNavigation.hittable(app.buttons, "Delete", exactLabel: true)
+        UITestNavigation.waitUntilStill(delete)
+        return delete
+    }
+
+    /// Opens New Block's routine picker with `control` and returns its title.
+    static func openRoutinePicker(from control: String, in app: XCUIApplication) -> XCUIElement {
+        let open = app.buttons.labeled(control)
+        XCTAssertTrue(open.waitForExistence(timeout: 10), "New Block must offer \(control)")
+        UITestNavigation.revealAboveBottomBar(open, in: app, scroll: .dragInMargin)
+        open.tap()
+        let picker = app.staticTexts.labeled("Choose Routine")
+        XCTAssertTrue(picker.waitForExistence(timeout: 5), "\(control) must open the routine picker")
+        return picker
+    }
+
+    /// Opens the routine picker with `control` and picks `routine`.
+    static func pickRoutine(_ routine: String, from control: String, in app: XCUIApplication) {
+        let picker = openRoutinePicker(from: control, in: app)
+        UITestNavigation.hittable(app.buttons, routine).tap()
+        XCTAssertTrue(picker.waitForNonExistence(timeout: 5), "Picking \(routine) must close the routine picker")
+    }
+
+    /// Today's resume slab discards the demo workout; with no set logged
+    /// it may not ask first.
+    static func discardWorkoutInProgress(in app: XCUIApplication) {
+        UITestNavigation.selectTab("Today", in: app)
+        let resume = app.buttons["resumeSlab.resume"]
+        XCTAssertTrue(resume.waitForExistence(timeout: 10), "The demo seed must leave a workout in progress")
+        app.buttons["resumeSlab.discard"].tap()
+        let alert = app.alerts["Discard workout?"]
+        if alert.waitForExistence(timeout: 2) {
+            alert.buttons["Discard"].tap()
+        }
+        XCTAssertTrue(resume.waitForNonExistence(timeout: 5), "Discard must remove the workout in progress")
+    }
+
+    /// Makes a routine on Program the way NewBlockSavesUITests does: the
+    /// name step, SAVE, then the named existing sessions, then Back.
+    static func makeRoutine(_ name: String, adding sessions: [String], in app: XCUIApplication) {
+        UITestNavigation.selectTab("Program", in: app)
+        UITestNavigation.hittable(app.buttons, "+ NEW").tap()
+        UITestNavigation.hittable(app.buttons, "+ New routine").tap()
+        UITestNavigation.type(name, into: app.textFields["newRoutine.name"])
+        UITestNavigation.hittable(app.buttons, "Save", exactLabel: true).tap()
+        XCTAssertTrue(app.textFields["newRoutine.name"].waitForNonExistence(timeout: 10), "SAVE must leave the name step")
+        let picker = app.staticTexts.labeled("Existing sessions")
+        for session in sessions {
+            UITestNavigation.hittable(app.buttons, "+ Add session").tap()
+            XCTAssertTrue(picker.waitForExistence(timeout: 10), "+ Add session must list the existing sessions")
+            UITestNavigation.hittable(app.buttons, session).tap()
+            XCTAssertTrue(picker.waitForNonExistence(timeout: 5), "Adding \(session) must close the session picker")
+        }
+        UITestNavigation.hittable(app.buttons, "Back").tap()
+        let row = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", name + ",")).firstMatch
+        XCTAssertTrue(row.waitForExistence(timeout: 10), "Program must list \(name)")
+    }
+}
+
+@MainActor
+enum TourRoutines {
+    /// Program → + NEW → + New routine, the name step.
+    static func openNameStep(in app: XCUIApplication) {
+        UITestNavigation.selectTab("Program", in: app)
+        DesignTour.tap(app.buttons, "+ NEW", exact: true)
+        DesignTour.tap(app.buttons, "+ New routine", exact: true)
+        DesignTour.expect(app.textFields["newRoutine.name"], "The name step")
+    }
+
+    /// Types `name` and taps SAVE, which opens the routine in the step's place.
+    static func saveName(_ name: String, in app: XCUIApplication) {
+        UITestNavigation.type(name, into: app.textFields["newRoutine.name"])
+        DesignTour.tap(app.buttons, "Save", exact: true)
+        DesignTour.expect(routineName(name, in: app), "The routine \(name)")
+    }
+
+    /// The routine screen's name field, whose value begins with `value`.
+    static func routineName(_ value: String, in app: XCUIApplication) -> XCUIElement {
+        app.descendants(matching: .any).matching(NSPredicate(
+            format: "label ==[c] %@ AND value BEGINSWITH %@", "Routine name", value
+        )).firstMatch
+    }
+
+    /// A library picker row for `name`.
+    static func pickRow(_ name: String, in app: XCUIApplication) -> XCUIElement {
+        app.buttons.matching(NSPredicate(
+            format: "identifier BEGINSWITH %@ AND label BEGINSWITH[c] %@", "exercise.pick.", name
+        )).firstMatch
+    }
+
+    /// Holds the first exercise card's title row and taps the menu item
+    /// whose label begins with `item`. Returns false, without scrolling the
+    /// editor (T115), when the title is not on screen.
+    static func openCardMenuItem(_ item: String, in app: XCUIApplication) -> Bool {
+        let title = app.staticTexts["routine.exercise.name.1"]
+        guard title.waitForExistence(timeout: 10), title.isHittable else {
+            XCTContext.runActivity(named: "Skipped: the first card's title is off screen") { _ in }
+            return false
+        }
+        title.press(forDuration: 1.0)
+        let button = app.buttons.matching(NSPredicate(format: "label BEGINSWITH[c] %@", item)).firstMatch
+        guard DesignTour.expect(button, "The card menu's \(item)", timeout: 5) else { return false }
+        button.tap()
+        return true
+    }
+
+    /// Scrolls to Archive routine at the bottom of the open routine and taps it.
+    static func tapArchiveRoutine(in app: XCUIApplication) {
+        let archive = app.buttons.labeled("Archive routine")
+        DesignTour.expect(archive, "Archive routine")
+        DesignTour.reveal(archive, in: app)
+        archive.tap()
+    }
+
+    /// Archive routine, then the dialog's Archive.
+    static func archiveOpenRoutine(in app: XCUIApplication) {
+        tapArchiveRoutine(in: app)
+        DesignTour.waitForDialog(app, title: "Archive routine?")
+        DesignTour.tapDialogButton(app, "Archive")
+        _ = DesignTour.text(app, "Archive routine?").waitForNonExistence(timeout: 5)
+    }
+
+    /// Program's Archived routines entry, below the first-run templates.
+    static func openArchivedRoutines(in app: XCUIApplication) {
+        let entry = app.buttons.labeled("Archived routines")
+        DesignTour.expect(entry, "Program's Archived routines entry")
+        UITestNavigation.reveal(entry, in: app, maxSwipes: 24)
+        entry.tap()
+        DesignTour.expect(DesignTour.text(app, "Archived routines"), "Archived routines")
+    }
+}
+
+@MainActor
+enum TourProgressLibrary {
+    /// The first button whose label begins with `prefix`, such as a row
+    /// that reads its title and sub-line as one label.
+    static func row(_ prefix: String, in app: XCUIApplication) -> XCUIElement {
+        app.buttons.matching(NSPredicate(format: "label BEGINSWITH[c] %@", prefix)).firstMatch
+    }
+
+    /// Any element whose label is exactly `label`.
+    static func label(_ label: String, in app: XCUIApplication) -> XCUIElement {
+        app.descendants(matching: .any).matching(NSPredicate(format: "label == %@", label)).firstMatch
+    }
+
+    static func openRow(_ prefix: String, in app: XCUIApplication) {
+        tapRevealed(row(prefix, in: app), in: app)
+    }
+
+    static func tapRevealed(_ element: XCUIElement, in app: XCUIApplication) {
+        XCTAssertTrue(element.waitForExistence(timeout: 10), "Missing \(element)")
+        UITestNavigation.reveal(element, in: app)
+        element.tap()
+    }
+
+    /// Taps a chip and waits until it reports the selected trait.
+    static func select(_ chip: XCUIElement, in app: XCUIApplication) {
+        XCTAssertTrue(chip.waitForExistence(timeout: 10), "Missing \(chip)")
+        chip.tap()
+        let selected = XCTNSPredicateExpectation(
+            predicate: NSPredicate(format: "isSelected == true OR value == %@", "selected"), object: chip
+        )
+        XCTAssertEqual(XCTWaiter().wait(for: [selected], timeout: 5), .completed, "\(chip) is not selected after a tap")
+    }
+
+    /// Drags a sideways chip row at `element`'s height until the element
+    /// sits wholly on screen, as MilestoneOneJourneyUITests does.
+    static func revealSideways(_ element: XCUIElement, in app: XCUIApplication) {
+        XCTAssertTrue(element.waitForExistence(timeout: 10), "Missing \(element)")
+        let width = app.frame.width
+        for _ in 0..<12 {
+            let frame = element.frame
+            if element.isHittable && frame.minX >= 0 && frame.maxX <= width { return }
+            let moveLeft = frame.midX > width / 2
+            let origin = app.coordinate(withNormalizedOffset: .zero)
+            let start = origin.withOffset(CGVector(dx: width * (moveLeft ? 0.75 : 0.25), dy: frame.midY))
+            let end = origin.withOffset(CGVector(dx: width * (moveLeft ? 0.4 : 0.6), dy: frame.midY))
+            start.press(forDuration: 0.1, thenDragTo: end, withVelocity: .slow, thenHoldForDuration: 0.2)
+        }
+        XCTAssertTrue(element.isHittable, "\(element) must be reachable by scrolling sideways")
+    }
+
+    /// A Library filter-bar chip, scrolled into view sideways.
+    static func tapFilter(_ identifier: String, in app: XCUIApplication) {
+        let chip = app.buttons[identifier]
+        revealSideways(chip, in: app)
+        chip.tap()
+    }
+
+    /// Opens a Library row by its name, then waits for the detail.
+    static func openExercise(beginningWith name: String, in app: XCUIApplication) {
+        let row = app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH %@", name)).firstMatch
+        tapRevealed(row, in: app)
+        XCTAssertTrue(app.staticTexts.labeled("Exercise").waitForExistence(timeout: 10), "\(name)'s detail never opened")
+    }
+
+    /// Exercise detail > VIEW ALL HISTORY.
+    static func openExerciseHistory(in app: XCUIApplication) {
+        tapRevealed(row("View all history", in: app), in: app)
+        XCTAssertTrue(app.staticTexts.labeled("History").waitForExistence(timeout: 10), "VIEW ALL HISTORY never opened")
+    }
+
+    /// Progress > Weekly Tonnage, as WeeklyTonnageUITests does.
+    static func openWeeklyTonnage(in app: XCUIApplication) {
+        openRow("Weekly Tonnage", in: app)
+        XCTAssertTrue(app.buttons["Last 8 weeks"].waitForExistence(timeout: 10), "Weekly Tonnage did not open")
+        XCTAssertTrue(app.otherElements["weeklyTonnage.chart"].waitForExistence(timeout: 10), "The chart never appeared")
+    }
+
+    /// Activates the chart's newest week element, as VoiceOver's double tap
+    /// does in WeeklyTonnageUITests, and waits for its detail.
+    static func openNewestWeek(in app: XCUIApplication) {
+        let chart = app.otherElements["weeklyTonnage.chart"]
+        let weeks = chart.descendants(matching: .any).matching(NSPredicate(format: "label BEGINSWITH %@", "Week of "))
+        XCTAssertTrue(weeks.firstMatch.waitForExistence(timeout: 10), "The chart reads no week")
+        guard let newest = weeks.allElementsBoundByIndex.max(by: { $0.frame.midX < $1.frame.midX }) else { return }
+        UITestNavigation.reveal(newest, in: app)
+        newest.tap()
+        let title = app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH %@", "Week of ")).firstMatch
+        XCTAssertTrue(title.waitForExistence(timeout: 10), "The newest week never opened")
+    }
+}
+
 // MARK: - Main screens (every configuration)
 
 /// The main state of every screen, one test per area. Runs in every
@@ -241,7 +772,748 @@ final class DesignTourMainUITests: XCTestCase {
         continueAfterFailure = true
     }
 
-    // MAIN-TESTS
+    // MARK: Today
+
+    @MainActor
+    func testMainToday() throws {
+        // 1. A fresh store: no routine, no block.
+        var app = DesignTour.launch()
+        DesignTour.step("today--empty") {
+            DesignTour.expect(DesignTour.text(app, "Build your first routine"), "Today's empty state")
+            DesignTour.shot(app, "today--empty")
+        }
+
+        // 2. An active block.
+        app = DesignTour.launch(["-fitbod-seed-active-block"], ready: { $0.staticTexts.labeled("LIVE BLOCK") })
+        DesignTour.step("today") {
+            DesignTour.expect(app.buttons["today.sessions"], "Today")
+            DesignTour.shot(app, "today")
+        }
+
+        // 3. The demo workout: one finished Push A and one in progress.
+        app = DesignTour.launch(["-fitbod-seed-demo-workout"], ready: { $0.buttons["resumeSlab.resume"] })
+        DesignTour.step("history") {
+            app.buttons["today.sessions"].tap()
+            DesignTour.expect(app.buttons.matching(identifier: "history.row").firstMatch, "History")
+            DesignTour.shot(app, "history")
+        }
+        DesignTour.step("workout-summary") {
+            let row = app.buttons.matching(identifier: "history.row").firstMatch
+            DesignTour.reveal(row, in: app)
+            row.tap()
+            DesignTour.expect(app.staticTexts["WORKOUT COMPLETE"], "Workout summary")
+            DesignTour.shot(app, "workout-summary")
+            app.buttons["Back"].firstMatch.tap()
+            app.buttons["Back"].firstMatch.tap()
+            DesignTour.expect(app.buttons["resumeSlab.resume"], "Today after History")
+        }
+        DesignTour.step("dialog-discard-workout-slab") {
+            // With nothing logged, Discard deletes at once with no question,
+            // so log one set first.
+            TourTodaySettings.logFirstSet(in: app)
+            app.buttons["Back"].firstMatch.tap()
+            let discard = app.buttons["resumeSlab.discard"]
+            DesignTour.expect(discard, "The resume slab's discard")
+            DesignTour.reveal(discard, in: app)
+            discard.tap()
+            DesignTour.waitForDialog(app, title: "Discard workout?")
+            DesignTour.shot(app, "dialog-discard-workout-slab")
+            DesignTour.tapDialogButton(app, "Cancel")
+            DesignTour.expect(app.buttons["resumeSlab.resume"], "Today after keeping the workout")
+        }
+        DesignTour.step("today--volume") {
+            TourTodaySettings.revealHeatmap(in: app)
+            DesignTour.shot(app, "today--volume")
+        }
+        DesignTour.step("per-muscle-detail") {
+            let chest = app.otherElements["Front"].buttons["Chest"]
+            DesignTour.expect(chest, "The heatmap's Chest")
+            chest.tap()
+            DesignTour.expect(DesignTour.text(app, "This Week"), "Per-muscle detail")
+            DesignTour.shot(app, "per-muscle-detail")
+            app.buttons["Back"].firstMatch.tap()
+        }
+
+        // 4. An ended block: its review, then the recap, then the
+        // Start-a-workout picker, since no block is active.
+        app = DesignTour.launch(["-fitbod-seed-ended-block-recap", "-fitbod-start-program"],
+                                ready: { $0.buttons.labeled("DONE block: Live Block") })
+        UITestNavigation.selectTab("Today", in: app)
+        DesignTour.step("block-review") {
+            DesignTour.expect(TourTodaySettings.reviewTitle(in: app), "Block review")
+            DesignTour.shot(app, "block-review", still: TourTodaySettings.reviewTitle(in: app))
+            DesignTour.tap(app.buttons, "Plan custom")
+        }
+        DesignTour.step("weekly-recap") {
+            DesignTour.expect(TourTodaySettings.recapTitle(in: app), "Weekly recap")
+            DesignTour.shot(app, "weekly-recap", still: TourTodaySettings.recapTitle(in: app))
+            TourTodaySettings.closeRecap(in: app)
+        }
+        DesignTour.step("session-template-detail") {
+            let session = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Live Push,")).firstMatch
+            DesignTour.expect(session, "The Start-a-workout picker's Live Push")
+            DesignTour.reveal(session, in: app)
+            session.tap()
+            DesignTour.expect(app.buttons.labeled("Edit"), "Session detail")
+            DesignTour.shot(app, "session-template-detail")
+        }
+    }
+
+    // MARK: Settings
+
+    @MainActor
+    func testMainSettings() throws {
+        let app = DesignTour.launch()
+        DesignTour.step("settings") {
+            UITestNavigation.openSettings(in: app)
+            DesignTour.shot(app, "settings")
+        }
+        DesignTour.step("plate-inventory") {
+            let row = app.buttons.labeled("Plate Inventory")
+            DesignTour.expect(row, "Plate Inventory row")
+            DesignTour.reveal(row, in: app)
+            row.tap()
+            let strip = app.otherElements["plateInventory.tabStrip"]
+            DesignTour.expect(strip, "Plate Inventory")
+            DesignTour.shot(app, "plate-inventory", still: strip)
+        }
+        DesignTour.step("add-plate") {
+            let add = app.buttons.labeled("+ ADD PLATE")
+            TourTodaySettings.revealAboveFooter(add, in: app)
+            add.tap()
+            let weight = app.textFields.matching(NSPredicate(format: "placeholderValue == %@", "e.g. 25")).firstMatch
+            DesignTour.expect(weight, "Add plate")
+            DesignTour.shot(app, "add-plate")
+            DesignTour.tap(app.buttons, "Cancel", exact: true)
+            _ = weight.waitForNonExistence(timeout: 5)
+        }
+        DesignTour.step("dialog-reset-plate-inventory") {
+            let reset = app.buttons.labeled("RESET TO DEFAULTS")
+            TourTodaySettings.revealAboveFooter(reset, in: app)
+            reset.tap()
+            DesignTour.waitForDialog(app, title: "Reset plate inventory?")
+            DesignTour.shot(app, "dialog-reset-plate-inventory")
+            DesignTour.tapDialogButton(app, "Cancel")
+        }
+        DesignTour.step("plate-calculator") {
+            DesignTour.tap(app.buttons, "More", exact: true)
+            DesignTour.expect(DesignTour.text(app, containing: "target"), "Plate calculator")
+            DesignTour.shot(app, "plate-calculator")
+            DesignTour.tap(app.buttons, "Done", exact: true)
+            Thread.sleep(forTimeInterval: 0.6)
+            DesignTour.tap(app.buttons, "Back", exact: true)
+            DesignTour.expect(app.buttons["Close"], "Settings after Plate Inventory")
+        }
+        DesignTour.step("volume-targets") {
+            let row = app.buttons.matching(NSPredicate(
+                format: "label CONTAINS[c] 'Volume Targets' AND label CONTAINS[c] '17 muscles'"
+            )).firstMatch
+            DesignTour.expect(row, "Volume Targets row")
+            DesignTour.reveal(row, in: app)
+            row.tap()
+            DesignTour.expect(DesignTour.text(app, "Volume Targets"), "Volume Targets")
+            DesignTour.shot(app, "volume-targets")
+        }
+        DesignTour.step("dialog-reset-volume-targets") {
+            let reset = app.buttons.labeled("Reset All to RP Defaults")
+            DesignTour.expect(reset, "Reset All to RP Defaults")
+            DesignTour.reveal(reset, in: app)
+            reset.tap()
+            DesignTour.waitForDialog(app, title: "Reset all volume targets?")
+            DesignTour.shot(app, "dialog-reset-volume-targets")
+            DesignTour.tapDialogButton(app, "Cancel")
+            DesignTour.tap(app.buttons, "Back", exact: true)
+            DesignTour.expect(app.buttons["Close"], "Settings after Volume Targets")
+        }
+        DesignTour.step("component-gallery") {
+            let gallery = app.buttons["settings.componentGallery"]
+            DesignTour.expect(gallery, "Component gallery row")
+            DesignTour.reveal(gallery, in: app)
+            gallery.tap()
+            DesignTour.expect(app.staticTexts["gallery.lastAction"], "Component gallery")
+            DesignTour.shot(app, "component-gallery")
+            DesignTour.tap(app.buttons, "Back", exact: true)
+            DesignTour.expect(gallery, "Settings after the gallery")
+        }
+        DesignTour.step("share-sheet") {
+            let create = app.buttons.labeled("Create")
+            DesignTour.expect(create, "Backup CREATE")
+            DesignTour.reveal(create, in: app)
+            create.tap()
+            let sheet = TourTodaySettings.shareSheet(in: app)
+            DesignTour.expect(sheet, "Share sheet")
+            DesignTour.shot(app, "share-sheet")
+            // Close it without sharing, as SettingsExportUITests does.
+            let outside = app.otherElements["PopoverDismissRegion"]
+            if outside.waitForExistence(timeout: 3) {
+                outside.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.25)).tap()
+            }
+            _ = sheet.waitForNonExistence(timeout: 10)
+        }
+    }
+
+    // MARK: Logger
+
+    /// The demo workout's logger and the sheets that open from its set
+    /// rows, then one logged set with its rest dock and Finish dialog.
+    @MainActor
+    func testMainLogger() throws {
+        let app = DesignTour.launch(["-fitbod-seed-demo-workout"], ready: { $0.buttons["resumeSlab.resume"] })
+        DesignTour.step("logger") {
+            TourLogger.openWorkout(in: app)
+            DesignTour.expect(app.textFields["set.reps.1.S1"], "Set 1")
+            DesignTour.shot(app, "logger", still: app.otherElements["workout.header"])
+        }
+        DesignTour.step("logger--warmup-ramp") {
+            let first = TourLogger.element(app, beginning: "Warm-up set 1:")
+            DesignTour.expect(first, "The warm-up ramp")
+            UITestNavigation.revealInLogger(first, in: app)
+            DesignTour.shot(app, "logger--warmup-ramp")
+        }
+        DesignTour.step("why-this-weight") {
+            let why = app.buttons["set.why.1.S1"]
+            TourLogger.revealLoaded(why, in: app)
+            why.tap()
+            let recommended = DesignTour.text(app, containing: "RECOMMENDED")
+            DesignTour.expect(recommended, "Why this weight")
+            DesignTour.shot(app, "why-this-weight", still: recommended)
+            DesignTour.closeSheet(app)
+            _ = recommended.waitForNonExistence(timeout: 5)
+        }
+        DesignTour.step("decimal-rpe-picker") {
+            // Set 1's controls come first in the logger, as RPEDecimalHoldUITests relies on.
+            let eight = app.buttons.labeled("RPE 8")
+            TourLogger.revealLoaded(eight, in: app)
+            eight.press(forDuration: 1.0)
+            let wheel = app.pickerWheels.firstMatch
+            DesignTour.expect(wheel, "The decimal RPE picker")
+            DesignTour.shot(app, "decimal-rpe-picker", still: wheel)
+            UITestNavigation.tapPickerButton("Cancel", in: app)
+        }
+        DesignTour.step("per-set-note") {
+            let note = app.buttons["Note for set 1"].firstMatch
+            TourLogger.revealLoaded(note, in: app)
+            note.tap()
+            let title = DesignTour.text(app, "Set 1 note")
+            DesignTour.expect(title, "Set 1 note")
+            DesignTour.shot(app, "per-set-note", still: title)
+            DesignTour.tap(app.buttons, "Cancel", exact: true)
+            _ = title.waitForNonExistence(timeout: 5)
+        }
+        DesignTour.step("logger--set-logged") {
+            // 5 reps ties the seeded 100 x 5, so no PR banner covers the top.
+            TourLogger.logSet("1.S1", reps: "5", in: app)
+            DesignTour.expect(TourLogger.restStatus(in: app), "The rest dock")
+            DesignTour.shot(app, "logger--set-logged")
+        }
+        DesignTour.step("rest-timer") {
+            TourLogger.restStatus(in: app).tap()
+            let title = app.staticTexts["REST TIMER"]
+            DesignTour.expect(title, "The expanded rest timer")
+            DesignTour.shot(app, "rest-timer", still: title)
+            DesignTour.tap(app.buttons, "Done", exact: true)
+            _ = title.waitForNonExistence(timeout: 5)
+        }
+        DesignTour.step("dialog-finish-workout") {
+            DesignTour.tap(app.buttons, "More", exact: true)
+            DesignTour.tap(app.buttons, "Finish", exact: true)
+            DesignTour.waitForDialog(app, title: "Finish workout?")
+            DesignTour.shot(app, "dialog-finish-workout")
+            DesignTour.tapDialogButton(app, "Keep logging")
+            DesignTour.expect(app.otherElements["workout.header"], "The logger after Keep logging")
+        }
+    }
+
+    /// The header menu, the exercise menu's sheets and dialog, and the
+    /// add-exercise picker. Nothing is logged, swapped or removed.
+    @MainActor
+    func testMainLoggerSheets() throws {
+        let app = DesignTour.launch(["-fitbod-seed-demo-workout"], ready: { $0.buttons["resumeSlab.resume"] })
+        TourLogger.openWorkout(in: app)
+        DesignTour.step("dialog-workout-menu") {
+            DesignTour.tap(app.buttons, "More", exact: true)
+            // The menu hides its title, so wait on its first item.
+            DesignTour.expect(app.buttons["Workout notes"], "The workout menu")
+            DesignTour.shot(app, "dialog-workout-menu")
+        }
+        DesignTour.step("workout-notes") {
+            DesignTour.tap(app.buttons, "Workout notes", exact: true)
+            let title = DesignTour.text(app, "Workout notes")
+            DesignTour.expect(title, "Workout notes")
+            DesignTour.shot(app, "workout-notes", still: title)
+            DesignTour.tap(app.buttons, "Cancel", exact: true)
+            _ = title.waitForNonExistence(timeout: 5)
+        }
+        DesignTour.step("pinned-note") {
+            // Pin a note first, as PinnedNoteCapsuleTapTargetUITests does,
+            // so the capsule shows; then open the sheet from the capsule.
+            let note = "Pause on the chest"
+            TourLogger.exerciseMenu("Edit Pinned Note", in: app)
+            let header = DesignTour.text(app, "Pinned note")
+            DesignTour.expect(header, "The Pinned Note sheet")
+            UITestNavigation.type(note, into: app.textViews.firstMatch, replacing: false, pressingReturn: false)
+            DesignTour.tap(app.buttons, "Save", exact: true)
+            _ = header.waitForNonExistence(timeout: 5)
+            let capsule = app.buttons["Pinned note: \(note)"]
+            DesignTour.expect(capsule, "The pinned note capsule")
+            UITestNavigation.revealInLogger(capsule, in: app)
+            capsule.tap()
+            DesignTour.expect(header, "The Pinned Note sheet from the capsule")
+            DesignTour.shot(app, "pinned-note", still: header)
+            DesignTour.tap(app.buttons, "Cancel", exact: true)
+            _ = header.waitForNonExistence(timeout: 5)
+        }
+        DesignTour.step("swap-exercise") {
+            TourLogger.exerciseMenu("Swap Exercise…", in: app)
+            let search = app.textFields["library.search.picker"]
+            DesignTour.expect(search, "Swap exercise")
+            DesignTour.shot(app, "swap-exercise", still: search)
+            DesignTour.tap(app.buttons, "Cancel", exact: true)
+            _ = search.waitForNonExistence(timeout: 5)
+        }
+        DesignTour.step("dialog-remove-exercise") {
+            TourLogger.exerciseMenu("Remove from Session", in: app)
+            DesignTour.waitForDialog(app, title: "Remove \"\(TourLogger.bench)\"?")
+            DesignTour.shot(app, "dialog-remove-exercise")
+            DesignTour.tapDialogButton(app, "Cancel")
+            _ = app.alerts.firstMatch.waitForNonExistence(timeout: 5)
+        }
+        // Last: + ADD EXERCISE sits under every exercise card.
+        DesignTour.step("library-picker") {
+            let add = app.buttons.labeled("+ ADD EXERCISE")
+            TourLogger.revealLoaded(add, in: app)
+            add.tap()
+            let search = app.textFields["library.search.picker"]
+            DesignTour.expect(search, "The add-exercise picker")
+            DesignTour.shot(app, "library-picker", still: search)
+            DesignTour.tap(app.buttons, "Cancel", exact: true)
+            _ = search.waitForNonExistence(timeout: 5)
+        }
+    }
+
+    // MARK: Program and New Block
+
+    @MainActor
+    func testMainProgramBlocks() throws {
+        // 1. A fresh store: Program's empty state and template rows.
+        var app = DesignTour.launch()
+        DesignTour.step("program--empty") {
+            UITestNavigation.selectTab("Program", in: app)
+            DesignTour.expect(app.staticTexts["NO PROGRAM"], "Program's empty state")
+            DesignTour.shot(app, "program--empty")
+        }
+
+        // 2. An active block on Live Routine.
+        app = DesignTour.launch(["-fitbod-seed-active-block"], ready: { $0.staticTexts.labeled("LIVE BLOCK") })
+        DesignTour.step("program") {
+            UITestNavigation.selectTab("Program", in: app)
+            DesignTour.expect(TourBlocks.card("ACTIVE block: Live Block", in: app), "Program's active block card")
+            DesignTour.shot(app, "program")
+        }
+        DesignTour.step("dialog-program-new") {
+            app.buttons["+ NEW"].tap()
+            DesignTour.expect(app.buttons["+ New block"], "+ NEW's popover")
+            DesignTour.shot(app, "dialog-program-new")
+            TourBlocks.closePopover(in: app)
+        }
+        DesignTour.step("start-choice") {
+            TourBlocks.openStartChoice(in: app)
+            DesignTour.shot(app, "start-choice", still: app.staticTexts["CREATE BLOCK"])
+        }
+        DesignTour.step("preset-picker") {
+            DesignTour.tap(app.buttons, "Use Preset")
+            DesignTour.expect(app.staticTexts["CHOOSE PRESET"], "CHOOSE PRESET")
+            DesignTour.shot(app, "preset-picker", still: app.staticTexts["CHOOSE PRESET"])
+            // A swipe closes the preset picker and leaves CREATE BLOCK up.
+            DesignTour.closeSheet(app)
+        }
+        DesignTour.step("new-block") {
+            DesignTour.tap(app.buttons, "Blank Block")
+            TourBlocks.expectBuilder(in: app)
+            DesignTour.shot(app, "new-block")
+        }
+        DesignTour.step("new-block-template") {
+            let preset = app.buttons.labeled("Preset")
+            DesignTour.expect(preset, "New Block's Preset control")
+            UITestNavigation.revealAboveBottomBar(preset, in: app, scroll: .dragInMargin)
+            preset.tap()
+            let title = DesignTour.text(app, "Start From Template")
+            DesignTour.expect(title, "Start From Template")
+            DesignTour.shot(app, "new-block-template", still: title)
+            let sheet = DesignTour.topSheet(in: app) ?? app
+            DesignTour.tap(sheet.buttons, "Cancel")
+            _ = title.waitForNonExistence(timeout: 5)
+        }
+        DesignTour.step("new-block-duration") {
+            let weeks = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Total weeks, ")).firstMatch
+            DesignTour.expect(weeks, "TOTAL WEEKS")
+            UITestNavigation.revealAboveBottomBar(weeks, in: app, scroll: .dragInMargin)
+            weeks.tap()
+            let title = DesignTour.text(app, "Edit Block Duration")
+            DesignTour.expect(title, "Edit Block Duration")
+            DesignTour.shot(app, "new-block-duration", still: title)
+            DesignTour.tap(app.buttons, "Done", exact: true)
+            _ = title.waitForNonExistence(timeout: 5)
+        }
+        DesignTour.step("new-block-add-phase-type") {
+            let prompt = TourBlocks.openAddPhase(in: app)
+            DesignTour.shot(app, "new-block-add-phase-type", still: prompt)
+            // Peak adds a fourth phase, the edit the Replace dialog asks about.
+            DesignTour.tap(app.buttons, "Peak")
+            _ = prompt.waitForNonExistence(timeout: 5)
+            DesignTour.expect(app.staticTexts.labeled("PHASES · 4"), "Four phases")
+        }
+        DesignTour.step("dialog-replace-phases") {
+            let preset = app.buttons.labeled("Preset")
+            UITestNavigation.revealAboveBottomBar(preset, in: app, scroll: .dragInMargin)
+            preset.tap()
+            DesignTour.tap(app.buttons, "POWERLIFTING PEAK")
+            DesignTour.waitForDialog(app, title: "Replace your phases?")
+            DesignTour.shot(app, "dialog-replace-phases")
+            DesignTour.tapDialogButton(app, "Keep my phases")
+            _ = DesignTour.text(app, "Replace your phases?").waitForNonExistence(timeout: 5)
+        }
+        DesignTour.step("new-block-phase-editor") {
+            let done = TourBlocks.openPhaseEditor("Phase 1: Accumulation", in: app)
+            DesignTour.shot(app, "new-block-phase-editor", still: done)
+            done.tap()
+            _ = done.waitForNonExistence(timeout: 5)
+        }
+        DesignTour.step("new-block-split-picker") {
+            let picker = TourBlocks.openRoutinePicker(from: "+ ATTACH ▸", in: app)
+            UITestNavigation.hittable(app.buttons, "Live Routine")
+            DesignTour.shot(app, "new-block-split-picker", still: picker)
+            // The picker has no close button; a swipe is its way out.
+            UITestNavigation.dragSheetDown(from: picker, in: app)
+            _ = picker.waitForNonExistence(timeout: 5)
+        }
+        DesignTour.step("dialog-discard-block") {
+            DesignTour.tap(app.buttons, "Cancel", exact: true)
+            DesignTour.waitForDialog(app, title: "Discard this block?")
+            DesignTour.shot(app, "dialog-discard-block")
+            DesignTour.tapDialogButton(app, "Keep editing")
+            _ = DesignTour.text(app, "Discard this block?").waitForNonExistence(timeout: 5)
+            TourBlocks.closeBuilder(in: app)
+        }
+    }
+
+    // MARK: Block Overview
+
+    @MainActor
+    func testMainBlockOverview() throws {
+        // 1. The active block.
+        var app = DesignTour.launch(["-fitbod-seed-active-block"], ready: { $0.staticTexts.labeled("LIVE BLOCK") })
+        DesignTour.step("block-overview") {
+            TourBlocks.openBlock("ACTIVE block: Live Block", in: app)
+            DesignTour.expect(app.buttons.labeled("END BLOCK"), "The active block's END BLOCK")
+            DesignTour.shot(app, "block-overview", still: TourBlocks.hero(in: app))
+        }
+        DesignTour.step("dialog-end-block") {
+            DesignTour.tap(app.buttons, "END BLOCK")
+            DesignTour.waitForDialog(app, title: "End block?")
+            DesignTour.shot(app, "dialog-end-block")
+            DesignTour.tapDialogButton(app, "Cancel")
+            _ = app.alerts["End block?"].waitForNonExistence(timeout: 5)
+        }
+
+        // 2. One block in each state: only a ready or draft block takes a
+        // routine, and only a ready one beside an active one asks to swap.
+        app = DesignTour.launch(["-fitbod-seed-block-states"], ready: { $0.staticTexts.labeled("SPRING BLOCK") })
+        DesignTour.step("split-picker") {
+            TourBlocks.openBlock("READY block: Summer Block", in: app)
+            let swap = app.buttons.labeled("SWAP ▸")
+            DesignTour.expect(swap, "The ready block's SWAP")
+            DesignTour.reveal(swap, in: app)
+            swap.tap()
+            let picker = DesignTour.text(app, "Choose Routine")
+            DesignTour.expect(picker, "Choose Routine")
+            DesignTour.shot(app, "split-picker", still: picker)
+            UITestNavigation.dragSheetDown(from: picker, in: app)
+            _ = picker.waitForNonExistence(timeout: 5)
+        }
+        DesignTour.step("swap-confirm") {
+            DesignTour.tap(app.buttons, "START BLOCK ▸")
+            let title = DesignTour.text(app, "Start Block?")
+            DesignTour.expect(title, "Start Block?")
+            DesignTour.shot(app, "swap-confirm", still: title)
+            // A sheet with its own CANCEL, not a confirmation dialog.
+            DesignTour.tap(app.buttons, "Cancel", exact: true)
+            _ = title.waitForNonExistence(timeout: 5)
+        }
+    }
+
+    // MARK: Routines
+
+    @MainActor
+    func testMainRoutines() throws {
+        // T115: the session editor hangs when scrolled at AX3 on the 390pt
+        // phone, so this walk never scrolls it.
+        if DesignTour.isAX3 { executionTimeAllowance = 300 }
+        // "Bench & Squat", two exercises with prescriptions, in no routine.
+        let app = DesignTour.launch(["-fitbod-seed-progress-history"])
+        let session = "Bench & Squat"
+
+        DesignTour.step("new-routine") {
+            TourRoutines.openNameStep(in: app)
+            DesignTour.shot(app, "new-routine", still: app.textFields["newRoutine.name"])
+        }
+        DesignTour.step("slot-picker") {
+            TourRoutines.saveName("Upper Lower", in: app)
+            let add = app.buttons.labeled("+ Add session")
+            DesignTour.reveal(add, in: app)
+            add.tap()
+            DesignTour.expect(DesignTour.text(app, "Existing sessions"), "The slot picker")
+            DesignTour.shot(app, "slot-picker")
+        }
+        DesignTour.step("routine-editor") {
+            DesignTour.tap(app.buttons, session)
+            _ = DesignTour.text(app, "Existing sessions").waitForNonExistence(timeout: 5)
+            let row = app.buttons["Session 1: \(session)"]
+            DesignTour.expect(row, "The routine's session row")
+            DesignTour.shot(app, "routine-editor", still: row)
+        }
+        DesignTour.step("routine-editor--editing") {
+            DesignTour.tap(app.buttons, "Edit", exact: true)
+            let remove = app.buttons.labeled("Remove \(session)")
+            DesignTour.expect(remove, "REMOVE on the session row")
+            DesignTour.shot(app, "routine-editor--editing", still: remove)
+        }
+        DesignTour.step("dialog-remove-session") {
+            let remove = app.buttons.labeled("Remove \(session)")
+            DesignTour.expect(remove, "REMOVE on the session row")
+            DesignTour.reveal(remove, in: app)
+            remove.tap()
+            DesignTour.waitForDialog(app, title: "Remove Session?")
+            DesignTour.shot(app, "dialog-remove-session")
+            DesignTour.tapDialogButton(app, "Keep session")
+            DesignTour.tap(app.buttons, "Done", exact: true)
+        }
+        DesignTour.step("session-editor") {
+            let row = app.buttons["Session 1: \(session)"]
+            DesignTour.reveal(row, in: app)
+            row.tap()
+            DesignTour.expect(DesignTour.text(app, "Session"), "Session detail")
+            DesignTour.tap(app.buttons, "Edit", exact: true)
+            DesignTour.expect(app.textFields["Session name"], "The session editor")
+            // Open the first row's prescription chips when it is on screen
+            // without a scroll (at AX3 the name block sits above it).
+            let title = app.staticTexts["routine.exercise.name.1"]
+            if title.waitForExistence(timeout: 10), title.isHittable {
+                title.tap()
+                _ = app.buttons["prescription.details"].waitForExistence(timeout: 5)
+            }
+            DesignTour.shot(app, "session-editor")
+        }
+        DesignTour.step("warmup-config") {
+            guard TourRoutines.openCardMenuItem("Edit warm-up", in: app) else { return }
+            DesignTour.expect(DesignTour.text(app, "Warm-up settings"), "Warm-up settings")
+            DesignTour.shot(app, "warmup-config")
+            DesignTour.tap(app.buttons, "Cancel", exact: true)
+            _ = DesignTour.text(app, "Warm-up settings").waitForNonExistence(timeout: 5)
+        }
+        DesignTour.step("superset-assignment") {
+            guard TourRoutines.openCardMenuItem("Make superset", in: app) else { return }
+            DesignTour.expect(DesignTour.text(app, "Add to superset"), "Add to superset")
+            DesignTour.shot(app, "superset-assignment")
+            DesignTour.tap(app.buttons, "Cancel", exact: true)
+            _ = DesignTour.text(app, "Add to superset").waitForNonExistence(timeout: 5)
+        }
+        DesignTour.step("dialog-session-menu") {
+            DesignTour.tap(app.buttons, "More", exact: true)
+            DesignTour.expect(app.buttons.labeled("Duplicate session"), "The session menu")
+            DesignTour.shot(app, "dialog-session-menu")
+            DesignTour.dismissDialog(app)
+            _ = app.buttons.labeled("Duplicate session").waitForNonExistence(timeout: 5)
+        }
+        DesignTour.step("dialog-discard-changes-session") {
+            // A renamed session is an unsaved edit; the name sits at the top
+            // at every text size.
+            UITestNavigation.type("\(session) B", into: app.textFields["Session name"])
+            DesignTour.tap(app.buttons, "Back", exact: true)
+            DesignTour.waitForDialog(app, title: "Discard changes?")
+            DesignTour.shot(app, "dialog-discard-changes-session")
+            DesignTour.tapDialogButton(app, "Keep editing")
+            _ = DesignTour.text(app, "Discard changes?").waitForNonExistence(timeout: 5)
+            // Leave without saving the rename.
+            DesignTour.tap(app.buttons, "Back", exact: true)
+            DesignTour.waitForDialog(app, title: "Discard changes?")
+            DesignTour.tapDialogButton(app, "Discard")
+            _ = app.textFields["Session name"].waitForNonExistence(timeout: 5)
+            DesignTour.tap(app.buttons, "Back", exact: true)
+            DesignTour.expect(TourRoutines.routineName("Upper Lower", in: app), "The routine after the session")
+        }
+        DesignTour.step("dialog-archive-routine") {
+            TourRoutines.tapArchiveRoutine(in: app)
+            DesignTour.waitForDialog(app, title: "Archive routine?")
+            DesignTour.shot(app, "dialog-archive-routine")
+            DesignTour.tapDialogButton(app, "Keep routine")
+            _ = DesignTour.text(app, "Archive routine?").waitForNonExistence(timeout: 5)
+        }
+        // Last: archiving is what makes Program offer Archived routines.
+        DesignTour.step("archived-routines") {
+            TourRoutines.archiveOpenRoutine(in: app)
+            TourRoutines.openArchivedRoutines(in: app)
+            DesignTour.expect(app.buttons.labeled("Restore Upper Lower"), "The archived routine's RESTORE")
+            DesignTour.shot(app, "archived-routines")
+        }
+    }
+
+    // MARK: Progress
+
+    @MainActor
+    func testMainProgress() throws {
+        // 1. Four finished Bench & Squat workouts, one a week.
+        var app = DesignTour.launch(["-fitbod-seed-progress-history"])
+        UITestNavigation.selectTab("Progress", in: app)
+        DesignTour.step("progress") {
+            DesignTour.expect(TourProgressLibrary.row("Barbell Bench Press", in: app), "Progress's Recent bench press")
+            DesignTour.shot(app, "progress")
+        }
+        DesignTour.step("history--from-progress") {
+            let workouts = app.buttons["progress.history"]
+            DesignTour.expect(workouts, "Progress's Workouts row")
+            DesignTour.reveal(workouts, in: app)
+            workouts.tap()
+            DesignTour.expect(app.buttons.matching(identifier: "history.row").firstMatch, "History from Progress")
+            DesignTour.shot(app, "history--from-progress")
+            DesignTour.tap(app.buttons, "Back", exact: true)
+            DesignTour.expect(workouts, "Progress after History")
+        }
+        DesignTour.step("exercise-progress") {
+            TourProgressLibrary.openRow("Barbell Bench Press", in: app)
+            let e1RM = app.buttons["e1RM"]
+            DesignTour.expect(e1RM, "The bench press's progress chart")
+            DesignTour.shot(app, "exercise-progress", still: app.otherElements["progress.chart"])
+            DesignTour.tap(app.buttons, "Back", exact: true)
+            _ = e1RM.waitForNonExistence(timeout: 5)
+        }
+        DesignTour.step("prs") {
+            TourProgressLibrary.openRow("Personal Records", in: app)
+            DesignTour.expect(app.buttons["ALL"], "Personal Records")
+            DesignTour.shot(app, "prs")
+        }
+        DesignTour.step("pr-session") {
+            let row = TourProgressLibrary.row("Barbell Squat, Weight PR", in: app)
+            DesignTour.expect(row, "A squat weight PR row")
+            DesignTour.reveal(row, in: app)
+            row.tap()
+            DesignTour.expect(DesignTour.text(app, containing: "Session of"), "The PR row's placeholder")
+            DesignTour.shot(app, "pr-session")
+            // The placeholder draws no back control: only the edge swipe leaves it.
+            DesignTour.back(app)
+            DesignTour.expect(app.buttons["ALL"], "Personal Records after the placeholder")
+            DesignTour.tap(app.buttons, "Back", exact: true)
+            _ = app.buttons["ALL"].waitForNonExistence(timeout: 5)
+        }
+        DesignTour.step("compare") {
+            // Compare unlocks once two workouts count; the seed has four.
+            TourProgressLibrary.openRow("This week vs last week", in: app)
+            DesignTour.expect(app.staticTexts["Δ"], "Compare")
+            DesignTour.shot(app, "compare")
+            DesignTour.tap(app.buttons, "Back", exact: true)
+        }
+
+        // 2. Eight weeks of Sunday bench press workouts.
+        app = DesignTour.launch(["-fitbod-seed-weekly-tonnage", "8"])
+        UITestNavigation.selectTab("Progress", in: app)
+        DesignTour.step("weekly-tonnage") {
+            TourProgressLibrary.openWeeklyTonnage(in: app)
+            DesignTour.shot(app, "weekly-tonnage", still: app.otherElements["weeklyTonnage.chart"])
+        }
+        DesignTour.step("week-detail") {
+            TourProgressLibrary.openNewestWeek(in: app)
+            DesignTour.shot(app, "week-detail")
+        }
+    }
+
+    // MARK: Library
+
+    @MainActor
+    func testMainLibrary() throws {
+        // Logged bench presses, so the detail and its history show data.
+        let app = DesignTour.launch(["-fitbod-seed-progress-history"])
+        UITestNavigation.selectTab("Library", in: app)
+        let search = app.textFields["library.search.browser"]
+        DesignTour.step("library") {
+            DesignTour.expect(search, "Library")
+            DesignTour.shot(app, "library")
+        }
+        DesignTour.step("filter-picker") {
+            TourProgressLibrary.tapFilter("library.filter.muscle", in: app)
+            let done = app.buttons.labeled("Done")
+            DesignTour.expect(done, "The Muscle filter picker")
+            DesignTour.shot(app, "filter-picker", still: done)
+            DesignTour.tap(app.buttons, "Done", exact: true)
+            _ = done.waitForNonExistence(timeout: 5)
+        }
+        DesignTour.step("exercise-detail") {
+            UITestNavigation.type("Barbell Bench Press", into: search, replacing: false)
+            TourProgressLibrary.openExercise(beginningWith: "Barbell Bench Press - Medium Grip", in: app)
+            DesignTour.shot(app, "exercise-detail")
+        }
+        DesignTour.step("exercise-history") {
+            TourProgressLibrary.openExerciseHistory(in: app)
+            DesignTour.expect(TourProgressLibrary.label("PRs · 30d", in: app), "The bench press's history")
+            DesignTour.shot(app, "exercise-history")
+            DesignTour.tap(app.buttons, "Back", exact: true)
+            DesignTour.expect(app.staticTexts.labeled("Exercise"), "Exercise detail after its history")
+            DesignTour.tap(app.buttons, "Back", exact: true)
+            DesignTour.expect(search, "Library after the detail")
+            DesignTour.tap(app.buttons, "Clear search", exact: true)
+        }
+        let name = app.textFields["customExercise.name"]
+        DesignTour.step("custom-exercise") {
+            DesignTour.tap(app.buttons, "+ New", exact: true)
+            DesignTour.expect(name, "New exercise")
+            DesignTour.shot(app, "custom-exercise")
+        }
+        DesignTour.step("muscle-picker") {
+            TourProgressLibrary.tapRevealed(app.buttons.labeled("Add Primary Muscle"), in: app)
+            let chest = app.buttons["musclePicker.chest"]
+            DesignTour.expect(chest, "The muscle picker")
+            DesignTour.shot(app, "muscle-picker")
+            chest.tap()
+            _ = chest.waitForNonExistence(timeout: 5)
+        }
+        DesignTour.step("equipment-picker") {
+            TourProgressLibrary.tapRevealed(app.buttons["customExercise.equipment"], in: app)
+            let barbell = app.buttons["customExercise.equipment.barbell"]
+            DesignTour.expect(barbell, "The equipment list")
+            DesignTour.shot(app, "equipment-picker")
+            // Picking the current kind closes the list and changes nothing.
+            barbell.tap()
+            _ = barbell.waitForNonExistence(timeout: 5)
+        }
+        DesignTour.step("dialog-custom-exercise-discard") {
+            // The added chest makes the draft dirty, so CANCEL asks first.
+            DesignTour.tap(app.buttons, "Cancel", exact: true)
+            DesignTour.waitForDialog(app, title: "Discard Changes?")
+            DesignTour.shot(app, "dialog-custom-exercise-discard")
+            DesignTour.tapDialogButton(app, "Keep editing")
+            DesignTour.expect(name, "The editor after Keep editing")
+        }
+        let custom = "Tour Custom Press"
+        DesignTour.step("save custom exercise") {
+            UITestNavigation.type(custom, into: name)
+            DesignTour.tap(app.buttons, "Save", exact: true)
+            XCTAssertTrue(name.waitForNonExistence(timeout: 5), "SAVE must close the editor")
+        }
+        DesignTour.step("dialog-delete-exercise") {
+            UITestNavigation.type("Tour Custom", into: search, replacing: false)
+            let row = app.staticTexts[custom]
+            DesignTour.expect(row, "The saved custom exercise")
+            row.tap()
+            DesignTour.tap(app.buttons, "Edit", exact: true)
+            DesignTour.expect(app.staticTexts.labeled("Edit exercise"), "Edit exercise")
+            TourProgressLibrary.tapRevealed(app.buttons.labeled("Delete exercise"), in: app)
+            DesignTour.waitForDialog(app, title: "Delete \"\(custom)\"?")
+            DesignTour.shot(app, "dialog-delete-exercise")
+            DesignTour.tapDialogButton(app, "Cancel")
+            // Untouched, so CANCEL closes the editor without asking.
+            DesignTour.tap(app.buttons, "Cancel", exact: true)
+            _ = name.waitForNonExistence(timeout: 5)
+        }
+    }
 }
 
 // MARK: - States (light, default text)
@@ -253,5 +1525,1168 @@ final class DesignTourStatesUITests: XCTestCase {
         continueAfterFailure = true
     }
 
-    // STATE-TESTS
+    // MARK: W02 settings
+
+    @MainActor
+    func testW02Settings() throws {
+        let app = DesignTour.launch()
+        UITestNavigation.openSettings(in: app)
+        DesignTour.step("settings--kg") {
+            let kg = app.buttons.labeled("kg")
+            DesignTour.expect(kg, "The kg unit")
+            kg.tap()
+            DesignTour.shot(app, "settings--kg")
+        }
+        DesignTour.step("settings--backup") {
+            let restore = app.buttons.labeled("Restore")
+            DesignTour.expect(restore, "Backup RESTORE")
+            DesignTour.reveal(restore, in: app)
+            DesignTour.scrollDown(app)
+            DesignTour.shot(app, "settings--backup")
+        }
+        var backup = ""
+        DesignTour.step("save backup to Files") {
+            backup = TourTodaySettings.saveBackupToFiles(in: app)
+        }
+        DesignTour.step("file-importer") {
+            let restore = app.buttons.labeled("Restore")
+            DesignTour.reveal(restore, in: app)
+            restore.tap()
+            let file = TourTodaySettings.file(backup, in: app)
+            XCTAssertTrue(TourTodaySettings.waitForAny([file, app.buttons.labeled("Browse")], timeout: 15),
+                          "RESTORE never opened the Files picker")
+            DesignTour.shot(app, "file-importer")
+        }
+        DesignTour.step("dialog-restore-confirm") {
+            TourTodaySettings.pickFile(backup, in: app)
+            let confirm = app.alerts["Restore from backup?"]
+            DesignTour.expect(confirm, "Restore confirmation")
+            DesignTour.shot(app, "dialog-restore-confirm")
+            confirm.buttons["Cancel"].tap()
+            _ = confirm.waitForNonExistence(timeout: 5)
+        }
+        // Last: restoring this run's own backup replaces the store with the
+        // same data, and the next test launches on a reset store anyway.
+        DesignTour.step("dialog-restore-complete") {
+            let restore = app.buttons.labeled("Restore")
+            DesignTour.reveal(restore, in: app)
+            restore.tap()
+            TourTodaySettings.pickFile(backup, in: app)
+            let confirm = app.alerts["Restore from backup?"]
+            DesignTour.expect(confirm, "Restore confirmation")
+            confirm.buttons["Restore"].tap()
+            DesignTour.expect(app.alerts["Restore complete"], "Restore complete", timeout: 30)
+            DesignTour.shot(app, "dialog-restore-complete")
+        }
+        app.terminate()
+    }
+
+    // MARK: W06 counts
+
+    @MainActor
+    func testW06Counts() throws {
+        // Logged Push As six days and one day ago, an empty one between.
+        let app = DesignTour.launch(["-fitbod-seed-empty-between"], ready: { $0.buttons["today.sessions"] })
+        DesignTour.step("today--streak") {
+            let streak = app.descendants(matching: .any).matching(NSPredicate(format: "label == %@", "Day streak")).firstMatch
+            DesignTour.expect(streak, "Day streak")
+            DesignTour.shot(app, "today--streak")
+        }
+        let rows = app.buttons.matching(identifier: "history.row")
+        DesignTour.step("history--with-empty") {
+            app.buttons["today.sessions"].tap()
+            DesignTour.expect(rows.element(boundBy: 2), "History's three workouts")
+            DesignTour.shot(app, "history--with-empty")
+        }
+        DesignTour.step("workout-summary--empty") {
+            // Newest first: yesterday, the empty one three days ago, six days ago.
+            let empty = rows.element(boundBy: 1)
+            DesignTour.reveal(empty, in: app)
+            empty.tap()
+            DesignTour.expect(app.staticTexts["WORKOUT COMPLETE"], "The empty workout's summary")
+            DesignTour.shot(app, "workout-summary--empty")
+            app.buttons["Back"].firstMatch.tap()
+            app.buttons["Back"].firstMatch.tap()
+        }
+        // Main shoots Compare on the progress history; this is Compare
+        // with an empty workout between two logged ones.
+        DesignTour.step("compare--with-empty") {
+            UITestNavigation.selectTab("Progress", in: app)
+            DesignTour.reveal(app.staticTexts["Compare"], in: app)
+            DesignTour.scrollDown(app)
+            let row = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "This week vs last week")).firstMatch
+            DesignTour.expect(row, "Compare row")
+            DesignTour.reveal(row, in: app)
+            row.tap()
+            DesignTour.expect(app.buttons.labeled("Back"), "Compare")
+            DesignTour.shot(app, "compare--with-empty")
+        }
+    }
+
+    // MARK: W07 recap
+
+    @MainActor
+    func testW07Recap() throws {
+        let app = DesignTour.launch(["-fitbod-seed-recap-with-empty", "-fitbod-start-program"])
+        TourTodaySettings.openToday(afterSeeding: 2, in: app)
+        // Main shoots the recap after a block review; this one holds a
+        // logged workout and an empty one.
+        DesignTour.step("weekly-recap--with-empty") {
+            DesignTour.expect(TourTodaySettings.recapTitle(in: app), "Weekly recap")
+            DesignTour.shot(app, "weekly-recap--with-empty", still: TourTodaySettings.recapTitle(in: app))
+        }
+        DesignTour.step("weekly-recap--lower") {
+            DesignTour.scrollDown(app, times: 2)
+            DesignTour.shot(app, "weekly-recap--lower")
+        }
+        DesignTour.step("today--recap-seen") {
+            TourTodaySettings.closeRecap(in: app)
+            DesignTour.expect(app.buttons["today.sessions"], "Today after the recap")
+            DesignTour.shot(app, "today--recap-seen")
+        }
+    }
+
+    // MARK: W09 ended block
+
+    @MainActor
+    func testW09EndedBlock() throws {
+        let app = DesignTour.launch(["-fitbod-seed-ended-block-recap", "-fitbod-start-program"],
+                                    ready: { $0.buttons.labeled("DONE block: Live Block") })
+        UITestNavigation.selectTab("Today", in: app)
+        // Main shoots the review's top and the recap that follows it.
+        DesignTour.step("block-review--lower") {
+            DesignTour.expect(TourTodaySettings.reviewTitle(in: app), "Block review")
+            DesignTour.scrollDown(app, times: 2)
+            DesignTour.shot(app, "block-review--lower")
+        }
+        DesignTour.step("close the review and the recap") {
+            // PLAN CUSTOM puts the review off; the recap due behind it follows.
+            DesignTour.tap(app.buttons, "Plan custom")
+            _ = TourTodaySettings.reviewTitle(in: app).waitForNonExistence(timeout: 5)
+            DesignTour.expect(TourTodaySettings.recapTitle(in: app), "Weekly recap after the review")
+            TourTodaySettings.closeRecap(in: app)
+        }
+        DesignTour.step("program--block-done") {
+            UITestNavigation.selectTab("Program", in: app)
+            let done = app.buttons.labeled("DONE block: Live Block")
+            DesignTour.expect(done, "Program's DONE card")
+            DesignTour.reveal(done, in: app)
+            DesignTour.shot(app, "program--block-done")
+        }
+    }
+
+    // MARK: W03 demo
+
+    /// The demo workout from the resume slab through Finish, then the
+    /// finished session's detail, a second start, and a relaunch.
+    @MainActor
+    func testW03aDemoLogger() throws {
+        let app = DesignTour.launch(["-fitbod-seed-demo-workout"], ready: { $0.buttons["resumeSlab.resume"] })
+        DesignTour.step("today--resume") {
+            DesignTour.shot(app, "today--resume", still: app.buttons["resumeSlab.resume"])
+        }
+        DesignTour.step("logger--previous") {
+            TourLogger.openWorkout(in: app)
+            let previous = TourLogger.element(app, beginning: "Previous:")
+            TourLogger.revealLoaded(previous, in: app)
+            DesignTour.shot(app, "logger--previous")
+        }
+        let skip = app.buttons.labeled("Skip all warm-up sets")
+        DesignTour.step("logger--warmups-skipped") {
+            TourLogger.revealLoaded(skip, in: app, up: true)
+            skip.tap()
+            let skipped = DesignTour.text(app, "Warm-ups skipped")
+            DesignTour.expect(skipped, "Warm-ups skipped")
+            DesignTour.shot(app, "logger--warmups-skipped")
+        }
+        DesignTour.step("logger--warmups-undo") {
+            let undo = app.buttons.labeled("Undo skipped warm-ups")
+            DesignTour.expect(undo, "UNDO")
+            UITestNavigation.revealInLogger(undo, in: app)
+            undo.tap()
+            DesignTour.expect(skip, "The ramp after UNDO")
+            DesignTour.shot(app, "logger--warmups-undo")
+        }
+        DesignTour.step("logger--set-type-menu") {
+            let label = app.buttons["set.type.1.S1"]
+            TourLogger.revealLoaded(label, in: app)
+            label.tap()
+            // "Rest-Pause" exists only while the menu is open.
+            let marker = app.buttons["Rest-Pause"]
+            DesignTour.expect(marker, "The set-type menu")
+            DesignTour.shot(app, "logger--set-type-menu")
+            DesignTour.dismissDialog(app)
+            _ = marker.waitForNonExistence(timeout: 5)
+        }
+        DesignTour.step("logger--plate-stack") {
+            // Each warm-up row already draws a plate stack read as "Bar: …",
+            // so wait for one more.
+            let stacks = app.descendants(matching: .any).matching(NSPredicate(format: "label BEGINSWITH %@", "Bar:"))
+            let weight = app.textFields.matching(identifier: "set.weight.1.S1").firstMatch
+            TourLogger.revealLoaded(weight, in: app)
+            let before = stacks.count
+            // SetRow toggles the disclosure on a tap in the weight cell; aim
+            // at its padding above the text field.
+            weight.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0)).withOffset(CGVector(dx: 0, dy: -6)).tap()
+            if app.keyboards.firstMatch.waitForExistence(timeout: 1) {
+                UITestNavigation.hittable(app.buttons, "Done", exactLabel: true).tap()
+                _ = app.keyboards.firstMatch.waitForNonExistence(timeout: 5)
+            }
+            let deadline = Date.now.addingTimeInterval(3)
+            while stacks.count <= before && Date.now < deadline { Thread.sleep(forTimeInterval: 0.25) }
+            XCTAssertGreaterThan(stacks.count, before, "A tap on set 1's weight cell must open its plate stack")
+            DesignTour.shot(app, "logger--plate-stack")
+        }
+        DesignTour.step("logger--pr-banner") {
+            // The seeded history tops out at 5 reps, so 9 is a record
+            // (WorkoutLoggerJourneyUITests).
+            TourLogger.logSet("1.S1", reps: "9", in: app)
+            let banner = DesignTour.any(app, containing: "personal record")
+            DesignTour.expect(banner, "The PR banner", timeout: 2)
+            DesignTour.shot(app, "logger--pr-banner")
+        }
+        let status = TourLogger.restStatus(in: app)
+        DesignTour.step("logger--rest-resting") {
+            DesignTour.expect(status, "The rest dock")
+            DesignTour.expect(DesignTour.text(app, containing: "RESTING"), "RESTING")
+            DesignTour.shot(app, "logger--rest-resting", still: status)
+        }
+        DesignTour.step("logger--rest-complete") {
+            // The bench press rests 180 s: twelve taps of -15 s end it.
+            let minus = app.buttons["rest.minus15"]
+            for _ in 0..<16 where status.exists && !status.label.hasSuffix("rest complete") {
+                minus.tap()
+            }
+            XCTAssertTrue(status.label.hasSuffix("rest complete"), "The dock must read REST COMPLETE: \(status.label)")
+            DesignTour.shot(app, "logger--rest-complete", still: status)
+        }
+        DesignTour.step("workout-summary--after-finish") {
+            DesignTour.tap(app.buttons, "More", exact: true)
+            DesignTour.tap(app.buttons, "Finish", exact: true)
+            DesignTour.waitForDialog(app, title: "Finish workout?")
+            DesignTour.tapDialogButton(app, "Finish")
+            let done = app.buttons["summary.done"]
+            DesignTour.expect(done, "The summary after Finish")
+            DesignTour.expect(app.staticTexts["WORKOUT COMPLETE"], "WORKOUT COMPLETE")
+            DesignTour.shot(app, "workout-summary--after-finish", still: app.staticTexts["WORKOUT COMPLETE"])
+            done.tap()
+            DesignTour.expect(app.buttons["today.sessions"], "Today after the summary")
+        }
+        DesignTour.step("session-template-detail--last-done") {
+            // Nothing is in progress now, so Today's Start-a-workout picker lists Push A.
+            let pushA = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Push A,")).firstMatch
+            DesignTour.expect(pushA, "The picker's Push A")
+            DesignTour.reveal(pushA, in: app)
+            pushA.tap()
+            let lastDone = DesignTour.text(app, containing: "Last done")
+            DesignTour.expect(lastDone, "Push A's detail with Last done")
+            DesignTour.shot(app, "session-template-detail--last-done", still: lastDone)
+        }
+        DesignTour.step("dialog-workout-in-progress") {
+            // Start a workout, leave it running, and start Push A again.
+            DesignTour.tap(app.buttons, "Start workout ▸", exact: true)
+            DesignTour.expect(app.otherElements["workout.header"], "The new workout")
+            DesignTour.tap(app.buttons, "Back", exact: true)
+            DesignTour.tap(app.buttons, "Start workout ▸", exact: true)
+            DesignTour.waitForDialog(app, title: "Workout in progress")
+            DesignTour.shot(app, "dialog-workout-in-progress")
+            DesignTour.tapDialogButton(app, "Cancel")
+        }
+        DesignTour.step("today--resume-after-relaunch") {
+            DesignTour.relaunch(app)
+            let resume = app.buttons["resumeSlab.resume"]
+            DesignTour.expect(resume, "The resume slab after a relaunch")
+            DesignTour.shot(app, "today--resume-after-relaunch", still: resume)
+        }
+    }
+
+    /// With the demo workout in progress and one finished Push A: the
+    /// Program banner, then the screens one finished workout fills.
+    @MainActor
+    func testW03bDemoAfter() throws {
+        let app = DesignTour.launch(["-fitbod-seed-demo-workout"], ready: { $0.buttons["resumeSlab.resume"] })
+        DesignTour.step("program--resume-banner") {
+            UITestNavigation.selectTab("Program", in: app)
+            DesignTour.expect(app.staticTexts["NO PROGRAM"], "Program's empty state")
+            let pill = app.buttons.labeled("Resume ▸")
+            DesignTour.expect(pill, "The resume banner")
+            DesignTour.shot(app, "program--resume-banner", still: pill)
+        }
+        DesignTour.step("dialog-discard-active") {
+            // The banner's "12:00 · 0 sets" line; Discard is in its context menu.
+            let meta = app.staticTexts.matching(NSPredicate(format: "label MATCHES %@", ".* · [0-9]+ sets?")).firstMatch
+            DesignTour.expect(meta, "The banner's meta line")
+            meta.press(forDuration: 1.2)
+            DesignTour.tap(app.buttons, "Discard", exact: true)
+            let alert = app.alerts["Discard active workout?"]
+            DesignTour.expect(alert, "Discard active workout?")
+            DesignTour.shot(app, "dialog-discard-active")
+            alert.buttons["Cancel"].tap()
+            _ = alert.waitForNonExistence(timeout: 5)
+        }
+        let recent = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", TourLogger.bench + ",")).firstMatch
+        DesignTour.step("progress--recent") {
+            UITestNavigation.selectTab("Progress", in: app)
+            DesignTour.expect(recent, "Progress's Recent bench press")
+            DesignTour.reveal(recent, in: app)
+            DesignTour.shot(app, "progress--recent", still: recent)
+        }
+        DesignTour.step("exercise-progress--one-workout") {
+            recent.tap()
+            let chart = app.descendants(matching: .any).matching(identifier: "progress.chart").firstMatch
+            DesignTour.expect(chart, "Exercise progress")
+            DesignTour.shot(app, "exercise-progress--one-workout")
+            DesignTour.back(app)
+        }
+        DesignTour.step("weekly-tonnage--one-week") {
+            let row = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Weekly Tonnage,")).firstMatch
+            DesignTour.expect(row, "The Weekly Tonnage row")
+            DesignTour.reveal(row, in: app)
+            row.tap()
+            let chart = app.descendants(matching: .any).matching(identifier: "weeklyTonnage.chart").firstMatch
+            DesignTour.expect(chart, "Weekly tonnage")
+            DesignTour.shot(app, "weekly-tonnage--one-week")
+            DesignTour.back(app)
+        }
+        DesignTour.step("exercise-detail--recent") {
+            UITestNavigation.selectTab("Library", in: app)
+            UITestNavigation.type("Barbell Bench Press", into: app.textFields["library.search.browser"], replacing: false)
+            let bench = app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH %@", TourLogger.bench)).firstMatch
+            DesignTour.expect(bench, "The bench press in Library")
+            DesignTour.reveal(bench, in: app)
+            bench.tap()
+            let section = app.staticTexts.labeled("Recent performance")
+            DesignTour.expect(section, "Recent performance")
+            DesignTour.reveal(section, in: app)
+            DesignTour.shot(app, "exercise-detail--recent")
+        }
+        DesignTour.step("exercise-history--one-workout") {
+            let all = app.buttons.matching(NSPredicate(format: "label BEGINSWITH[c] %@", "View all history")).firstMatch
+            DesignTour.expect(all, "VIEW ALL HISTORY")
+            DesignTour.reveal(all, in: app)
+            all.tap()
+            let prs = app.descendants(matching: .any).matching(NSPredicate(format: "label == %@", "PRs · 30d")).firstMatch
+            DesignTour.expect(prs, "The bench press's history")
+            DesignTour.shot(app, "exercise-history--one-workout", still: prs)
+        }
+    }
+
+    // MARK: W04 stalled
+
+    @MainActor
+    func testW04Stalled() throws {
+        let app = DesignTour.launch(["-fitbod-seed-stalled-exercise"], ready: { $0.buttons["resumeSlab.resume"] })
+        TourLogger.openWorkout(in: app)
+        DesignTour.step("logger--stalled") {
+            let badge = app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH %@", "Stalled:")).firstMatch
+            DesignTour.expect(badge, "The STALLED badge")
+            UITestNavigation.revealInLogger(badge, in: app)
+            DesignTour.shot(app, "logger--stalled")
+        }
+        DesignTour.step("logger--add-volume") {
+            // The seed keeps chest volume below MAV, so the chip is ADD VOLUME.
+            let chip = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Suggested:")).firstMatch
+            DesignTour.expect(chip, "The suggested-action chip")
+            XCTAssertEqual(chip.label, "Suggested: Add volume.", "The stalled seed must suggest ADD VOLUME")
+            UITestNavigation.revealInLogger(chip, in: app)
+            chip.tap()
+            _ = chip.waitForNonExistence(timeout: 5)
+            let added = app.textFields["set.reps.1.S4"]
+            TourLogger.revealLoaded(added, in: app)
+            DesignTour.shot(app, "logger--add-volume")
+        }
+    }
+
+    // MARK: W05 calibrating
+
+    @MainActor
+    func testW05Calibrating() throws {
+        let app = DesignTour.launch(["-fitbod-seed-calibrating-set"], ready: { $0.buttons["resumeSlab.resume"] })
+        TourLogger.openWorkout(in: app)
+        DesignTour.step("logger--calibrating") {
+            let range = app.staticTexts.matching(NSPredicate(
+                format: "identifier == %@ AND label BEGINSWITH %@", "set.weight.1.S1", "Prescribed weight range"
+            )).firstMatch
+            TourLogger.revealLoaded(range, in: app)
+            DesignTour.expect(range, "Set 1's calibrating range")
+            DesignTour.shot(app, "logger--calibrating")
+        }
+        DesignTour.step("why-this-weight--calibrating") {
+            let why = app.buttons["set.why.1.S1"]
+            TourLogger.revealLoaded(why, in: app)
+            why.tap()
+            let override = app.buttons.labeled("Override")
+            DesignTour.expect(override, "Why this weight")
+            DesignTour.shot(app, "why-this-weight--calibrating", still: override)
+        }
+    }
+
+    // MARK: W08 active block
+
+    @MainActor
+    func testW08ActiveBlock() throws {
+        let app = DesignTour.launch(["-fitbod-seed-active-block"], ready: { $0.staticTexts.labeled("LIVE BLOCK") })
+        DesignTour.step("today--active-block") {
+            DesignTour.expect(app.buttons["today.sessions"], "Today")
+            DesignTour.shot(app, "today--active-block")
+        }
+        DesignTour.step("today--active-block-lower") {
+            DesignTour.scrollDown(app, times: 2)
+            DesignTour.shot(app, "today--active-block-lower")
+        }
+        DesignTour.step("block-overview--active") {
+            let band = app.staticTexts.labeled("LIVE BLOCK")
+            DesignTour.reveal(band, in: app)
+            band.tap()
+            DesignTour.expect(app.buttons.labeled("END BLOCK"), "The band's block overview")
+            DesignTour.shot(app, "block-overview--active", still: TourBlocks.hero(in: app))
+        }
+        DesignTour.step("new-block--edit-from-today") {
+            DesignTour.tap(app.buttons, "EDIT BLOCK ▸")
+            DesignTour.expect(app.staticTexts.labeled("EDIT BLOCK"), "EDIT BLOCK from Today")
+            UITestNavigation.hittable(app.buttons, "Cancel")
+            DesignTour.shot(app, "new-block--edit-from-today")
+        }
+        DesignTour.step("new-block-phase-editor--edit") {
+            let done = TourBlocks.openPhaseEditor("Phase 1: Accumulation", in: app)
+            DesignTour.shot(app, "new-block-phase-editor--edit", still: done)
+            done.tap()
+            _ = done.waitForNonExistence(timeout: 5)
+            TourBlocks.closeBuilder(in: app, title: "EDIT BLOCK")
+            // Back to Today's root, so Today can show the review later.
+            DesignTour.tap(app.buttons, "Back")
+            DesignTour.expect(app.buttons["today.sessions"], "Today after the overview")
+        }
+        DesignTour.step("program--active") {
+            UITestNavigation.selectTab("Program", in: app)
+            DesignTour.expect(TourBlocks.card("ACTIVE block: Live Block", in: app), "Program's active block card")
+            DesignTour.shot(app, "program--active")
+        }
+        DesignTour.step("new-block--edit") {
+            TourBlocks.openBlock("ACTIVE block: Live Block", in: app)
+            DesignTour.tap(app.buttons, "EDIT BLOCK ▸")
+            DesignTour.expect(app.staticTexts.labeled("EDIT BLOCK"), "EDIT BLOCK from Program")
+            UITestNavigation.hittable(app.buttons, "Cancel")
+            DesignTour.shot(app, "new-block--edit")
+            TourBlocks.closeBuilder(in: app, title: "EDIT BLOCK")
+        }
+        // Last: END BLOCK for real. Its dialog is the Main shot dialog-end-block.
+        DesignTour.step("block-overview--completed") {
+            DesignTour.tap(app.buttons, "END BLOCK")
+            let alert = app.alerts["End block?"]
+            DesignTour.expect(alert, "End block?")
+            alert.buttons["End Block"].tap()
+            _ = app.buttons.labeled("END BLOCK").waitForNonExistence(timeout: 5)
+            let hero = app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH[c] %@", "Completed block")).firstMatch
+            DesignTour.expect(hero, "The completed hero")
+            DesignTour.shot(app, "block-overview--completed", still: hero)
+            DesignTour.tap(app.buttons, "Back")
+        }
+        DesignTour.step("block-review--not-enough-sessions") {
+            UITestNavigation.selectTab("Today", in: app)
+            DesignTour.expect(app.staticTexts.labeled("Block review"), "Block review after END BLOCK")
+            // Nothing was logged, so the review has no deltas.
+            let note = DesignTour.text(app, "Not enough sessions logged to compute deltas.")
+            if note.waitForExistence(timeout: 5) {
+                DesignTour.reveal(note, in: app)
+            }
+            DesignTour.shot(app, "block-review--not-enough-sessions")
+        }
+        DesignTour.step("today--block-ended") {
+            // Plan custom only closes the review; it plans nothing.
+            DesignTour.tap(app.buttons, "Plan custom")
+            _ = app.staticTexts.labeled("Block review").waitForNonExistence(timeout: 5)
+            DesignTour.expect(DesignTour.text(app, "No active block."), "Today with no active block")
+            DesignTour.shot(app, "today--block-ended")
+        }
+        DesignTour.step("new-block--from-review") {
+            // A put-off review opens again on the next visit to Today.
+            UITestNavigation.selectTab("Program", in: app)
+            UITestNavigation.selectTab("Today", in: app)
+            DesignTour.expect(app.staticTexts.labeled("Block review"), "Block review again")
+            DesignTour.tap(app.buttons, "Start next ▸")
+            TourBlocks.expectBuilder(in: app)
+            DesignTour.shot(app, "new-block--from-review")
+            TourBlocks.closeBuilder(in: app)
+        }
+    }
+
+    // MARK: W10 block states
+
+    @MainActor
+    func testW10BlockStates() throws {
+        // split-picker and swap-confirm come from this seed in testMainBlockOverview.
+        let app = DesignTour.launch(["-fitbod-seed-block-states"], ready: { $0.staticTexts.labeled("SPRING BLOCK") })
+        DesignTour.step("today--scheduled") {
+            DesignTour.expect(app.buttons["today.sessions"], "Today on Spring Block")
+            DesignTour.shot(app, "today--scheduled")
+        }
+        DesignTour.step("program--states") {
+            UITestNavigation.selectTab("Program", in: app)
+            DesignTour.expect(TourBlocks.card("DRAFT block: Autumn Block", in: app), "Program's three blocks")
+            DesignTour.shot(app, "program--states")
+        }
+        DesignTour.step("block-overview--ready") {
+            TourBlocks.openBlock("READY block: Summer Block", in: app)
+            DesignTour.expect(app.buttons.labeled("START BLOCK ▸"), "The ready block's START BLOCK")
+            DesignTour.shot(app, "block-overview--ready", still: TourBlocks.hero(in: app))
+        }
+        DesignTour.step("new-block--fixed-weekly") {
+            // The header's EDIT; a ready block has no EDIT BLOCK ▸.
+            DesignTour.tap(app.buttons, "EDIT", exact: true)
+            DesignTour.expect(app.staticTexts.labeled("EDIT BLOCK"), "EDIT BLOCK on Summer Block")
+            let fixedWeekly = UITestNavigation.revealAboveBottomBar(app.buttons, "FIXED WEEKLY scheduling", in: app)
+            XCTAssertTrue(fixedWeekly.isSelected, "Summer Block runs fixed weekly")
+            DesignTour.scrollDown(app)
+            DesignTour.shot(app, "new-block--fixed-weekly")
+            TourBlocks.closeBuilder(in: app, title: "EDIT BLOCK")
+            DesignTour.tap(app.buttons, "Back")
+        }
+        DesignTour.step("block-overview--draft") {
+            TourBlocks.openBlock("DRAFT block: Autumn Block", in: app)
+            DesignTour.expect(app.buttons.labeled("+ ATTACH ROUTINE ▸"), "The draft block's + ATTACH ROUTINE")
+            DesignTour.shot(app, "block-overview--draft", still: TourBlocks.hero(in: app))
+            DesignTour.tap(app.buttons, "Back")
+        }
+        DesignTour.step("dialog-cannot-archive-routine") {
+            DesignTour.tap(app.buttons, "States Routine")
+            let archive = app.buttons.labeled("Archive routine")
+            DesignTour.expect(archive, "Archive routine")
+            DesignTour.reveal(archive, in: app)
+            archive.tap()
+            DesignTour.waitForDialog(app, title: "Cannot Archive Routine")
+            DesignTour.shot(app, "dialog-cannot-archive-routine")
+            DesignTour.tapDialogButton(app, "OK")
+        }
+    }
+
+    // MARK: W11 past plan
+
+    @MainActor
+    func testW11PastPlan() throws {
+        let app = DesignTour.launch(["-fitbod-seed-block-states-past-plan"],
+                                    ready: { $0.staticTexts.labeled("SPRING BLOCK") })
+        DesignTour.step("today--plan-complete") {
+            DesignTour.expect(app.staticTexts["PLAN COMPLETE"], "Today's PLAN COMPLETE chip")
+            DesignTour.shot(app, "today--plan-complete")
+        }
+        DesignTour.step("program--plan-complete") {
+            UITestNavigation.selectTab("Program", in: app)
+            let card = TourBlocks.card("ACTIVE block: Spring Block", in: app)
+            DesignTour.expect(card, "Program's Spring Block")
+            DesignTour.reveal(card, in: app)
+            DesignTour.shot(app, "program--plan-complete")
+        }
+        DesignTour.step("block-overview--plan-complete") {
+            TourBlocks.openBlock("ACTIVE block: Spring Block", in: app)
+            DesignTour.shot(app, "block-overview--plan-complete", still: TourBlocks.hero(in: app))
+        }
+    }
+
+    // MARK: W16 blocks
+
+    @MainActor
+    func testW16Blocks() throws {
+        // A fresh store. Shots whose screen matches a Main shot are left out:
+        // see blocks.notes.md.
+        let app = DesignTour.launch()
+        DesignTour.step("new-block--from-today") {
+            let start = app.buttons.labeled("Start a block")
+            DesignTour.expect(start, "Today's Start a block")
+            DesignTour.reveal(start, in: app)
+            start.tap()
+            TourBlocks.expectBuilder(in: app)
+            DesignTour.expect(app.buttons.labeled("< TODAY"), "The builder's < TODAY")
+            DesignTour.shot(app, "new-block--from-today")
+            TourBlocks.closeBuilder(in: app)
+        }
+        DesignTour.step("start-choice--fresh") {
+            UITestNavigation.selectTab("Program", in: app)
+            DesignTour.expect(app.staticTexts["NO PROGRAM"], "Program's empty state")
+            TourBlocks.openStartChoice(in: app)
+            DesignTour.shot(app, "start-choice--fresh", still: app.staticTexts["CREATE BLOCK"])
+        }
+        DesignTour.step("preset-picker--fresh") {
+            DesignTour.tap(app.buttons, "Use Preset")
+            DesignTour.expect(app.staticTexts["CHOOSE PRESET"], "CHOOSE PRESET")
+            DesignTour.shot(app, "preset-picker--fresh", still: app.staticTexts["CHOOSE PRESET"])
+            DesignTour.closeSheet(app)
+            DesignTour.tap(app.buttons, "Blank Block")
+            TourBlocks.expectBuilder(in: app)
+        }
+        DesignTour.step("new-block-split-picker--fresh") {
+            let picker = TourBlocks.openRoutinePicker(from: "+ ATTACH ▸", in: app)
+            DesignTour.shot(app, "new-block-split-picker--fresh", still: picker)
+            UITestNavigation.dragSheetDown(from: picker, in: app)
+            _ = picker.waitForNonExistence(timeout: 5)
+        }
+        DesignTour.step("new-block--phase-deleted") {
+            let card = TourBlocks.phaseCard("Phase 2: Intensification", in: app)
+            UITestNavigation.revealAboveBottomBar(card, in: app, scroll: .dragInMargin)
+            TourBlocks.revealDelete(on: card, in: app).tap()
+            let toast = DesignTour.text(app, "Phase deleted")
+            DesignTour.expect(toast, "The undo toast", timeout: 2)
+            DesignTour.shot(app, "new-block--phase-deleted")
+            DesignTour.tap(app.buttons, "UNDO", exact: true)
+            DesignTour.expect(app.staticTexts.labeled("PHASES · 3"), "UNDO puts the phase back")
+        }
+        DesignTour.step("program--draft") {
+            UITestNavigation.type("Draft Block", into: app.textFields.firstMatch)
+            DesignTour.tap(app.buttons, "SAVE DRAFT", exact: true)
+            _ = app.staticTexts.labeled("NEW BLOCK").waitForNonExistence(timeout: 5)
+            let card = TourBlocks.card("DRAFT block: Draft Block", in: app)
+            DesignTour.expect(card, "Program's draft")
+            DesignTour.reveal(card, in: app)
+            DesignTour.shot(app, "program--draft")
+        }
+    }
+
+    @MainActor
+    func testW16BlocksGates() throws {
+        // SAVE AS READY needs a routine with a session, and a fresh store has
+        // no session, so this walk takes the demo Push A and drops its
+        // workout in progress, as NewBlockSavesUITests does.
+        let app = DesignTour.launch(["-fitbod-seed-demo-workout"], ready: { $0.buttons["resumeSlab.resume"] })
+        DesignTour.step("make two routines") {
+            TourBlocks.discardWorkoutInProgress(in: app)
+            TourBlocks.makeRoutine("Empty Routine", adding: [], in: app)
+            TourBlocks.makeRoutine("Push Routine", adding: ["Push A", "Push A"], in: app)
+        }
+        DesignTour.step("new-block--name-gate") {
+            UITestNavigation.selectTab("Today", in: app)
+            let start = app.buttons.labeled("Start a block")
+            DesignTour.expect(start, "Today's Start a block")
+            DesignTour.reveal(start, in: app)
+            start.tap()
+            TourBlocks.expectBuilder(in: app)
+            UITestNavigation.type("", into: app.textFields.firstMatch)
+            DesignTour.expect(app.buttons.labeled("NAME FIRST"), "NAME FIRST")
+            DesignTour.shot(app, "new-block--name-gate")
+        }
+        DesignTour.step("new-block--phase-gate") {
+            UITestNavigation.type("Deload Block", into: app.textFields.firstMatch)
+            DesignTour.expect(app.buttons.labeled("ADD A PHASE"), "ADD A PHASE")
+            DesignTour.shot(app, "new-block--phase-gate")
+        }
+        DesignTour.step("new-block--routine-gate") {
+            // Deload as the only phase, so the started block is in its deload week.
+            _ = TourBlocks.openAddPhase(in: app)
+            DesignTour.tap(app.buttons, "Deload")
+            DesignTour.expect(app.buttons.labeled("PICK A ROUTINE"), "PICK A ROUTINE")
+            DesignTour.shot(app, "new-block--routine-gate")
+        }
+        DesignTour.step("new-block--empty-routine-gate") {
+            TourBlocks.pickRoutine("Empty Routine", from: "+ ATTACH ▸", in: app)
+            DesignTour.expect(app.buttons.labeled("ROUTINE IS EMPTY"), "ROUTINE IS EMPTY")
+            DesignTour.shot(app, "new-block--empty-routine-gate")
+        }
+        DesignTour.step("new-block--ready-gate") {
+            TourBlocks.pickRoutine("Push Routine", from: "SWAP ▸", in: app)
+            DesignTour.expect(app.buttons.labeled("SAVE AS READY"), "SAVE AS READY")
+            DesignTour.shot(app, "new-block--ready-gate")
+        }
+        DesignTour.step("new-block--days-gate") {
+            UITestNavigation.revealAboveBottomBar(app.buttons, "FIXED WEEKLY scheduling", in: app).tap()
+            DesignTour.expect(app.buttons.labeled("PICK 2 DAYS"), "PICK 2 DAYS")
+            DesignTour.shot(app, "new-block--days-gate")
+            // Back to rotation, so every day trains.
+            UITestNavigation.revealAboveBottomBar(app.buttons, "ROTATION scheduling", in: app).tap()
+            DesignTour.expect(app.buttons.labeled("SAVE AS READY"), "SAVE AS READY on rotation")
+        }
+        DesignTour.step("program--ready") {
+            DesignTour.tap(app.buttons, "SAVE AS READY")
+            _ = app.staticTexts.labeled("NEW BLOCK").waitForNonExistence(timeout: 5)
+            UITestNavigation.selectTab("Program", in: app)
+            let card = TourBlocks.card("READY block: Deload Block", in: app)
+            DesignTour.expect(card, "Program's ready block")
+            DesignTour.reveal(card, in: app)
+            DesignTour.shot(app, "program--ready")
+        }
+        DesignTour.step("today--deload-week") {
+            TourBlocks.openBlock("READY block: Deload Block", in: app)
+            DesignTour.tap(app.buttons, "START BLOCK ▸")
+            DesignTour.expect(app.buttons.labeled("END BLOCK"), "The started block")
+            DesignTour.tap(app.buttons, "Back")
+            UITestNavigation.selectTab("Today", in: app)
+            let banner = DesignTour.any(app, containing: "Deload week active")
+            DesignTour.expect(banner, "Today's deload week banner")
+            DesignTour.shot(app, "today--deload-week")
+        }
+    }
+
+    // MARK: W12 powerbuilding
+
+    @MainActor
+    func testW12Powerbuilding() throws {
+        // A one-word block name, "Powerbuilding", wider than the small
+        // phone's hero, on "Upper Lower" with Upper A, Lower A and Upper B.
+        let app = DesignTour.launch(["-fitbod-seed-powerbuilding"])
+        UITestNavigation.selectTab("Program", in: app)
+        let block = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "ACTIVE block: Powerbuilding")).firstMatch
+        DesignTour.step("program--long-name") {
+            DesignTour.expect(block, "Program's active Powerbuilding", timeout: 30)
+            DesignTour.shot(app, "program--long-name")
+        }
+        DesignTour.step("block-overview--long-name") {
+            DesignTour.reveal(block, in: app)
+            block.tap()
+            let hero = app.staticTexts.matching(NSPredicate(
+                format: "label MATCHES[c] %@", "(active|ready|draft|completed) block .*"
+            )).firstMatch
+            DesignTour.expect(hero, "The block overview's hero")
+            DesignTour.shot(app, "block-overview--long-name", still: hero)
+            DesignTour.tap(app.buttons, "Back")
+        }
+        DesignTour.step("routine-editor--long-name") {
+            let row = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Upper Lower,")).firstMatch
+            DesignTour.expect(row, "Program's Upper Lower")
+            DesignTour.reveal(row, in: app)
+            row.tap()
+            let name = TourRoutines.routineName("Upper Lower", in: app)
+            DesignTour.expect(name, "The routine screen")
+            DesignTour.shot(app, "routine-editor--long-name", still: name)
+        }
+        DesignTour.step("dialog-remove-session--long-name") {
+            DesignTour.tap(app.buttons, "Edit", exact: true)
+            DesignTour.tap(app.buttons, "Remove Upper A", exact: true)
+            DesignTour.waitForDialog(app, title: "Remove Session?")
+            DesignTour.shot(app, "dialog-remove-session--long-name")
+            DesignTour.tapDialogButton(app, "Keep session")
+            _ = DesignTour.text(app, "Remove Session?").waitForNonExistence(timeout: 5)
+            DesignTour.tap(app.buttons, "Done", exact: true)
+        }
+        DesignTour.step("session-editor--long-name") {
+            DesignTour.tap(app.buttons, "Session 1: Upper A", exact: true)
+            DesignTour.expect(DesignTour.text(app, "Session"), "Upper A's detail")
+            DesignTour.tap(app.buttons, "Edit", exact: true)
+            DesignTour.expect(app.textFields["Session name"], "The session editor")
+            DesignTour.shot(app, "session-editor--long-name")
+        }
+        app.terminate()
+    }
+
+    // MARK: W15 routines
+
+    @MainActor
+    func testW15Routines() throws {
+        if DesignTour.isAX3 { executionTimeAllowance = 300 }
+        let app = DesignTour.launch()
+        let bench = "Barbell Bench Press - Medium Grip"
+
+        DesignTour.step("new-routine--fresh") {
+            TourRoutines.openNameStep(in: app)
+            DesignTour.shot(app, "new-routine--fresh", still: app.textFields["newRoutine.name"])
+        }
+        DesignTour.step("routine-editor--new") {
+            TourRoutines.saveName("Push Pull Legs", in: app)
+            DesignTour.expect(DesignTour.text(app, "No sessions yet"), "The empty routine")
+            DesignTour.shot(app, "routine-editor--new")
+        }
+        DesignTour.step("slot-picker--new") {
+            DesignTour.tap(app.buttons, "+ Add session")
+            DesignTour.expect(app.buttons.labeled("+ New session"), "The slot picker")
+            DesignTour.shot(app, "slot-picker--new")
+        }
+        DesignTour.step("session-editor--new") {
+            DesignTour.tap(app.buttons, "+ New session", exact: true)
+            DesignTour.expect(app.textFields["Session name"], "The new session editor")
+            DesignTour.shot(app, "session-editor--new", still: app.textFields["Session name"])
+        }
+        DesignTour.step("session-editor--validation") {
+            DesignTour.tap(app.buttons, "Save session ▸", exact: true)
+            DesignTour.expect(DesignTour.text(app, containing: "Add at least one exercise"), "The validation errors")
+            DesignTour.shot(app, "session-editor--validation")
+        }
+        DesignTour.step("library-picker--from-editor") {
+            UITestNavigation.type("Push A", into: app.textFields["Session name"])
+            DesignTour.tap(app.buttons, "Add exercise", exact: true)
+            let search = app.textFields["library.search.picker"]
+            DesignTour.expect(search, "The library picker")
+            DesignTour.shot(app, "library-picker--from-editor", still: search)
+        }
+        DesignTour.step("library-picker--search") {
+            UITestNavigation.type(bench, into: app.textFields["library.search.picker"], pressingReturn: false)
+            let row = TourRoutines.pickRow(bench, in: app)
+            DesignTour.expect(row, "The bench press search result")
+            DesignTour.shot(app, "library-picker--search")
+            row.tap()
+            DesignTour.expect(app.staticTexts["routine.exercise.name.1"], "The bench press in the editor")
+        }
+        DesignTour.step("dialog-save-routine-first") {
+            // Grouping a superset needs a saved session.
+            guard TourRoutines.openCardMenuItem("Make superset", in: app) else { return }
+            DesignTour.expect(app.alerts["Save Routine First"], "Save Routine First")
+            DesignTour.shot(app, "dialog-save-routine-first")
+            DesignTour.tapDialogButton(app, "OK")
+            _ = app.alerts["Save Routine First"].waitForNonExistence(timeout: 5)
+        }
+        DesignTour.step("session-editor--prescription") {
+            app.staticTexts["routine.exercise.name.1"].tap()
+            let details = app.buttons["prescription.details"]
+            DesignTour.expect(details, "EDIT PRESCRIPTION")
+            details.tap()
+            DesignTour.expect(app.otherElements["prescription.sets"], "The prescription details")
+            DesignTour.shot(app, "session-editor--prescription")
+        }
+        DesignTour.step("session-template-detail--populated") {
+            DesignTour.tap(app.buttons, "Save session ▸", exact: true)
+            let row = app.buttons["Session 1: Push A"]
+            DesignTour.expect(row, "The routine's new session", timeout: 15)
+            row.tap()
+            DesignTour.expect(app.buttons.labeled("Start workout ▸"), "Push A's detail")
+            DesignTour.shot(app, "session-template-detail--populated")
+        }
+        DesignTour.step("dialog-session-in-use") {
+            DesignTour.tap(app.buttons, "Edit", exact: true)
+            DesignTour.expect(app.textFields["Session name"], "Edit session")
+            DesignTour.tap(app.buttons, "More", exact: true)
+            DesignTour.tap(app.buttons, "Archive session", exact: true)
+            DesignTour.expect(app.alerts["Session is in use"], "Session is in use")
+            DesignTour.shot(app, "dialog-session-in-use")
+            DesignTour.tapDialogButton(app, "OK")
+            _ = app.alerts["Session is in use"].waitForNonExistence(timeout: 5)
+            // Nothing changed, so Back closes the editor at once.
+            DesignTour.tap(app.buttons, "Back", exact: true)
+            _ = app.textFields["Session name"].waitForNonExistence(timeout: 5)
+            DesignTour.tap(app.buttons, "Back", exact: true)
+            DesignTour.expect(app.buttons["Session 1: Push A"], "The routine after Push A")
+        }
+        DesignTour.step("dialog-archive-session") {
+            // Today keeps Push A's detail open while Program takes it out of
+            // the routine, as SessionEditorPolishUITests does, so nothing
+            // holds it and Archive session asks first.
+            UITestNavigation.selectTab("Today", in: app)
+            let todayRow = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Push A,")).firstMatch
+            DesignTour.expect(todayRow, "Today's Push A")
+            DesignTour.reveal(todayRow, in: app)
+            todayRow.tap()
+            DesignTour.expect(app.buttons.labeled("Start workout ▸"), "Push A's detail on Today")
+
+            UITestNavigation.selectTab("Program", in: app)
+            DesignTour.tap(app.buttons, "Edit", exact: true)
+            DesignTour.tap(app.buttons, "Remove Push A", exact: true)
+            DesignTour.waitForDialog(app, title: "Remove Session?")
+            DesignTour.tapDialogButton(app, "Remove Session")
+            _ = app.buttons.labeled("Remove Push A").waitForNonExistence(timeout: 5)
+            DesignTour.tap(app.buttons, "Done", exact: true)
+
+            UITestNavigation.selectTab("Today", in: app)
+            DesignTour.tap(app.buttons, "Edit", exact: true)
+            DesignTour.expect(app.textFields["Session name"], "Edit session on Today")
+            DesignTour.tap(app.buttons, "More", exact: true)
+            DesignTour.tap(app.buttons, "Archive session", exact: true)
+            DesignTour.waitForDialog(app, title: "Archive this session?")
+            DesignTour.shot(app, "dialog-archive-session")
+            DesignTour.tapDialogButton(app, "Keep session")
+            _ = DesignTour.text(app, "Archive this session?").waitForNonExistence(timeout: 5)
+            DesignTour.tap(app.buttons, "Back", exact: true)
+            _ = app.textFields["Session name"].waitForNonExistence(timeout: 5)
+        }
+        DesignTour.step("logger--no-previous") {
+            DesignTour.tap(app.buttons, "Start workout ▸", exact: true)
+            let header = app.otherElements["workout.header"]
+            DesignTour.expect(header, "The logger")
+            DesignTour.shot(app, "logger--no-previous", still: header)
+        }
+        DesignTour.step("dialog-finish-workout--zero-sets") {
+            DesignTour.tap(app.buttons, "More", exact: true)
+            DesignTour.tap(app.buttons, "Finish", exact: true)
+            DesignTour.waitForDialog(app, title: "Finish workout?")
+            DesignTour.expect(app.buttons.labeled("Discard workout"), "Finish with nothing logged")
+            DesignTour.shot(app, "dialog-finish-workout--zero-sets")
+            DesignTour.tapDialogButton(app, "Keep logging")
+            _ = DesignTour.text(app, "Finish workout?").waitForNonExistence(timeout: 5)
+        }
+        DesignTour.step("dialog-discard-workout") {
+            DesignTour.tap(app.buttons, "More", exact: true)
+            DesignTour.tap(app.buttons, "Discard", exact: true)
+            DesignTour.waitForDialog(app, title: "Discard workout?")
+            DesignTour.shot(app, "dialog-discard-workout")
+            DesignTour.tapDialogButton(app, "Keep logging")
+            _ = DesignTour.text(app, "Discard workout?").waitForNonExistence(timeout: 5)
+        }
+        app.terminate()
+    }
+
+    @MainActor
+    func testW15RoutinesArchive() throws {
+        let app = DesignTour.launch()
+        TourRoutines.openNameStep(in: app)
+        TourRoutines.saveName("Push Pull Legs", in: app)
+
+        DesignTour.step("dialog-archive-routine--confirmed") {
+            TourRoutines.tapArchiveRoutine(in: app)
+            DesignTour.waitForDialog(app, title: "Archive routine?")
+            DesignTour.shot(app, "dialog-archive-routine--confirmed")
+            DesignTour.tapDialogButton(app, "Archive")
+            DesignTour.expect(DesignTour.text(app, "NO PROGRAM"), "Program without its only routine")
+        }
+        DesignTour.step("program--archived-entry") {
+            let entry = app.buttons.labeled("Archived routines")
+            UITestNavigation.reveal(entry, in: app, maxSwipes: 24)
+            DesignTour.shot(app, "program--archived-entry", still: entry)
+        }
+        DesignTour.step("archived-routines--with-routine") {
+            app.buttons.labeled("Archived routines").tap()
+            let restore = app.buttons.labeled("Restore Push Pull Legs")
+            DesignTour.expect(restore, "The archived routine's RESTORE")
+            DesignTour.shot(app, "archived-routines--with-routine", still: restore)
+        }
+        DesignTour.step("archived-routines--restored") {
+            DesignTour.tap(app.buttons, "Restore Push Pull Legs", exact: true)
+            DesignTour.expect(DesignTour.text(app, "No archived routines."), "The emptied list")
+            DesignTour.shot(app, "archived-routines--restored")
+        }
+        app.terminate()
+    }
+
+    // MARK: W01 fresh
+
+    @MainActor
+    func testW01Fresh() throws {
+        // DesignTour.launch settles the install; the second, hand-made reset
+        // launch is shot before the tab bar appears.
+        let app = DesignTour.launch()
+        app.terminate()
+        app.launchArguments = [UITestNavigation.resetFlag, UITestNavigation.resetSignalFlag]
+        app.launch()
+        DesignTour.step("preparing-library") {
+            let splash = DesignTour.any(app, containing: "Preparing library")
+            if splash.waitForExistence(timeout: 10) {
+                DesignTour.shot(app, "preparing-library", still: splash)
+            } else {
+                XCTFail("The Preparing library splash was gone before the shot (best effort)")
+            }
+        }
+        XCTAssertTrue(UITestNavigation.tab("Today", in: app).waitForExistence(timeout: 90), "The tab bar never appeared")
+        UITestNavigation.assertFreshStore(in: app)
+
+        UITestNavigation.selectTab("Progress", in: app)
+        DesignTour.step("progress--empty") {
+            DesignTour.expect(DesignTour.text(app, "No history yet"), "Progress's empty Recent")
+            DesignTour.shot(app, "progress--empty")
+        }
+        DesignTour.step("history--empty") {
+            app.buttons["progress.history"].tap()
+            DesignTour.expect(DesignTour.text(app, "No sessions yet"), "History's empty state")
+            DesignTour.shot(app, "history--empty")
+            DesignTour.tap(app.buttons, "Back", exact: true)
+        }
+
+        UITestNavigation.selectTab("Library", in: app)
+        let search = app.textFields["library.search.browser"]
+        DesignTour.expect(search, "Library")
+        let facets: [(id: String, shot: String, pick: String?)] = [
+            ("library.filter.muscle", "filter-picker--muscle", "Chest"),
+            ("library.filter.equipment", "filter-picker--equipment", "Barbell"),
+            // Mechanic stays unpicked, so the list keeps every match.
+            ("library.filter.mechanic", "filter-picker--mechanic", nil),
+        ]
+        for facet in facets {
+            DesignTour.step(facet.shot) {
+                TourProgressLibrary.tapFilter(facet.id, in: app)
+                let done = app.buttons.labeled("Done")
+                DesignTour.expect(done, "The \(facet.shot) sheet")
+                if let pick = facet.pick {
+                    DesignTour.tap(app.buttons, pick, exact: true)
+                }
+                DesignTour.shot(app, facet.shot, still: done)
+                DesignTour.tap(app.buttons, "Done", exact: true)
+                _ = done.waitForNonExistence(timeout: 5)
+            }
+        }
+        DesignTour.step("library--filtered") {
+            let bench = app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH %@", "Barbell Bench Press - Medium Grip")).firstMatch
+            DesignTour.expect(bench, "Chest and barbell matches")
+            DesignTour.shot(app, "library--filtered")
+        }
+        DesignTour.step("exercise-detail--not-logged") {
+            TourProgressLibrary.openExercise(beginningWith: "Barbell Bench Press - Medium Grip", in: app)
+            DesignTour.expect(DesignTour.text(app, containing: "Not logged yet"), "Recent performance's empty line")
+            DesignTour.shot(app, "exercise-detail--not-logged")
+        }
+        DesignTour.step("exercise-history--empty") {
+            TourProgressLibrary.openExerciseHistory(in: app)
+            DesignTour.expect(DesignTour.text(app, "No logged sets yet"), "The empty exercise history")
+            DesignTour.shot(app, "exercise-history--empty")
+            DesignTour.tap(app.buttons, "Back", exact: true)
+            DesignTour.expect(app.staticTexts.labeled("Exercise"), "Exercise detail after its history")
+            DesignTour.tap(app.buttons, "Back", exact: true)
+            DesignTour.expect(search, "Library after the detail")
+        }
+        let probe = "Zercher Probe"
+        DesignTour.step("library--no-matches") {
+            TourProgressLibrary.tapFilter("library.clearFilters", in: app)
+            UITestNavigation.type(probe, into: search, replacing: false)
+            DesignTour.expect(DesignTour.text(app, "No exercises match \"\(probe)\""), "The no-match state")
+            DesignTour.shot(app, "library--no-matches")
+        }
+        let name = app.textFields["customExercise.name"]
+        DesignTour.step("custom-exercise--new") {
+            DesignTour.tap(app.buttons, "Create Custom Exercise", exact: true)
+            DesignTour.expect(name, "The editor from the no-match state")
+            XCTAssertEqual(name.value as? String, probe, "The name must start as the search text")
+            DesignTour.shot(app, "custom-exercise--new")
+        }
+        DesignTour.step("custom-exercise--validation") {
+            // No name and no primary muscle: SAVE shows both errors.
+            UITestNavigation.type("", into: name)
+            DesignTour.tap(app.buttons, "Save", exact: true)
+            DesignTour.expect(app.staticTexts["customExercise.nameError"], "The name error")
+            DesignTour.shot(app, "custom-exercise--validation")
+        }
+        DesignTour.step("exercise-detail--custom") {
+            UITestNavigation.type(probe, into: name)
+            TourProgressLibrary.tapRevealed(app.buttons.labeled("Add Primary Muscle"), in: app)
+            let chest = app.buttons["musclePicker.chest"]
+            DesignTour.expect(chest, "The muscle picker")
+            chest.tap()
+            DesignTour.tap(app.buttons, "Save", exact: true)
+            XCTAssertTrue(name.waitForNonExistence(timeout: 5), "SAVE must close the editor")
+            // The search still reads the new name.
+            let row = app.staticTexts[probe]
+            DesignTour.expect(row, "The saved custom exercise")
+            row.tap()
+            DesignTour.expect(app.buttons.labeled("Edit"), "The custom exercise's detail")
+            DesignTour.shot(app, "exercise-detail--custom")
+        }
+        DesignTour.step("custom-exercise--edit") {
+            DesignTour.tap(app.buttons, "Edit", exact: true)
+            DesignTour.expect(app.staticTexts.labeled("Edit exercise"), "Edit exercise")
+            DesignTour.shot(app, "custom-exercise--edit")
+        }
+        // Last: the system photo picker; the walk ends with terminate.
+        DesignTour.step("photos-picker") {
+            let add = app.buttons.labeled("Add photo")
+            TourProgressLibrary.tapRevealed(add, in: app)
+            let covered = XCTNSPredicateExpectation(predicate: NSPredicate(format: "hittable == false"), object: add)
+            _ = XCTWaiter().wait(for: [covered], timeout: 5)
+            DesignTour.shot(app, "photos-picker")
+        }
+        app.terminate()
+    }
+
+    // MARK: W13 progress
+
+    @MainActor
+    func testW13Progress() throws {
+        let app = DesignTour.launch(["-fitbod-seed-progress-history"])
+        UITestNavigation.selectTab("Progress", in: app)
+        DesignTour.expect(TourProgressLibrary.row("Barbell Bench Press", in: app), "Progress's Recent bench press")
+        TourProgressLibrary.openRow("Barbell Bench Press", in: app)
+        DesignTour.expect(app.buttons["e1RM"], "The bench press's progress chart")
+        let chart = app.otherElements["progress.chart"]
+        for (chip, metric) in [("TOP SET", "top-set"), ("VOLUME", "volume"), ("AVG RPE", "avg-rpe")] {
+            DesignTour.step("exercise-progress--\(metric)") {
+                TourProgressLibrary.select(app.buttons[chip], in: app)
+                DesignTour.shot(app, "exercise-progress--\(metric)", still: chart)
+            }
+        }
+        DesignTour.step("exercise-progress--e1rm-caption") {
+            TourProgressLibrary.select(app.buttons["e1RM"], in: app)
+            // The bench press's 75 x 12 is left out of e1RM, so the caption shows.
+            let caption = DesignTour.text(app, containing: "above 10 reps")
+            DesignTour.expect(caption, "The e1RM caption")
+            DesignTour.reveal(caption, in: app)
+            DesignTour.shot(app, "exercise-progress--e1rm-caption", still: chart)
+            DesignTour.tap(app.buttons, "Back", exact: true)
+        }
+        DesignTour.step("prs--intent") {
+            TourProgressLibrary.openRow("Personal Records", in: app)
+            let strength = app.buttons["STRENGTH"]
+            DesignTour.expect(strength, "The PR list's intent toggle")
+            TourProgressLibrary.select(strength, in: app)
+            DesignTour.shot(app, "prs--intent")
+            DesignTour.tap(app.buttons, "Back", exact: true)
+            _ = strength.waitForNonExistence(timeout: 5)
+        }
+        DesignTour.step("progress--lower") {
+            DesignTour.reveal(app.staticTexts["Compare"], in: app)
+            DesignTour.scrollDown(app)
+            DesignTour.shot(app, "progress--lower")
+        }
+
+        UITestNavigation.selectTab("Library", in: app)
+        let search = app.textFields["library.search.browser"]
+        DesignTour.step("exercise-detail--with-history") {
+            DesignTour.expect(search, "Library")
+            UITestNavigation.type("Barbell Bench Press", into: search, replacing: false)
+            TourProgressLibrary.openExercise(beginningWith: "Barbell Bench Press - Medium Grip", in: app)
+            DesignTour.expect(app.buttons.matching(NSPredicate(format: "label BEGINSWITH[c] %@", "View progress chart")).firstMatch,
+                              "The detail's progress chart link")
+            DesignTour.shot(app, "exercise-detail--with-history")
+        }
+        DesignTour.step("exercise-detail--lower") {
+            DesignTour.scrollDown(app, times: 2)
+            DesignTour.shot(app, "exercise-detail--lower")
+        }
+        DesignTour.step("exercise-history--intent") {
+            TourProgressLibrary.openExerciseHistory(in: app)
+            let strength = TourProgressLibrary.row("STRENGTH ·", in: app)
+            DesignTour.expect(strength, "The history's STRENGTH chip")
+            TourProgressLibrary.revealSideways(strength, in: app)
+            strength.tap()
+            DesignTour.shot(app, "exercise-history--intent")
+        }
+        DesignTour.step("exercise-history--intent-empty") {
+            // The seed logs no power work, so its chip reads 0.
+            let power = TourProgressLibrary.row("POWER ·", in: app)
+            DesignTour.expect(power, "The history's POWER chip")
+            TourProgressLibrary.revealSideways(power, in: app)
+            power.tap()
+            DesignTour.expect(DesignTour.text(app, "No Power sets"), "The intent filter's empty state")
+            DesignTour.shot(app, "exercise-history--intent-empty")
+        }
+    }
+
+    // MARK: W14 tonnage
+
+    @MainActor
+    func testW14Tonnage() throws {
+        let app = DesignTour.launch(["-fitbod-seed-weekly-tonnage", "8"])
+        UITestNavigation.selectTab("Progress", in: app)
+        TourProgressLibrary.openWeeklyTonnage(in: app)
+        let chart = app.otherElements["weeklyTonnage.chart"]
+        for (chip, slice) in [("Last 8 weeks", "last-8-wk"), ("All time", "all-time")] {
+            DesignTour.step("weekly-tonnage--\(slice)") {
+                TourProgressLibrary.select(app.buttons[chip], in: app)
+                DesignTour.shot(app, "weekly-tonnage--\(slice)", still: chart)
+            }
+        }
+        DesignTour.step("weekly-tonnage--block-phase-empty") {
+            TourProgressLibrary.select(app.buttons["Last 26 weeks"], in: app)
+            // With no block the phase row is disabled: the tap does nothing
+            // and the caption sends the lifter to Program.
+            app.buttons["Accumulation"].tap()
+            DesignTour.expect(DesignTour.text(app, "No block data yet. Define a block in Program."), "The phase row's caption")
+            DesignTour.shot(app, "weekly-tonnage--block-phase-empty", still: chart)
+        }
+        DesignTour.step("weekly-tonnage--muscle") {
+            let chest = app.buttons["Chest"]
+            DesignTour.expect(chest, "The Chest muscle chip")
+            TourProgressLibrary.revealSideways(chest, in: app)
+            TourProgressLibrary.select(chest, in: app)
+            DesignTour.shot(app, "weekly-tonnage--muscle", still: chart)
+            chest.tap()
+        }
+        DesignTour.step("week-detail--row-tapped") {
+            TourProgressLibrary.openNewestWeek(in: app)
+            let row = app.staticTexts["Tonnage Weeks"]
+            DesignTour.expect(row, "The week's workout row")
+            // The row draws › but has no action; the screen stays put.
+            row.tap()
+            DesignTour.shot(app, "week-detail--row-tapped")
+            DesignTour.tap(app.buttons, "Back", exact: true)
+            DesignTour.expect(chart, "Weekly Tonnage after the week")
+            DesignTour.tap(app.buttons, "Back", exact: true)
+        }
+        DesignTour.step("history--spark") {
+            let workouts = app.buttons["progress.history"]
+            DesignTour.expect(workouts, "Progress's Workouts row")
+            DesignTour.reveal(workouts, in: app)
+            workouts.tap()
+            DesignTour.expect(DesignTour.text(app, "WEEKLY TONNAGE · 8 WK"), "History's spark card")
+            DesignTour.shot(app, "history--spark")
+        }
+    }
 }

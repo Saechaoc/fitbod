@@ -53,19 +53,50 @@ log() { printf '\n==> %s\n' "$*"; }
 # Kills a command after $1 seconds (macOS ships no `timeout`).
 with_timeout() { local s="$1"; shift; perl -e 'alarm shift; exec @ARGV' "$s" "$@"; }
 
-# 1. The private copy.
+# One run at a time: two runs would share the copy, DerivedData and the
+# phones. A lock left by a killed run is taken over once its PID is gone.
+LOCK="$WORK/run.lock"
+if ! mkdir "$LOCK" 2>/dev/null; then
+  holder="$(cat "$LOCK/pid" 2>/dev/null || true)"
+  if [[ -n "$holder" ]] && kill -0 "$holder" 2>/dev/null; then
+    echo "Tour run $holder is still active (lock $LOCK)" >&2
+    exit 1
+  fi
+  echo "Taking over the lock left by run ${holder:-unknown}" >&2
+fi
+echo $$ > "$LOCK/pid"
+
+UDID=""
+# shellcheck disable=SC2329  # called by the EXIT trap below
+cleanup() {
+  if [[ -n "$UDID" ]]; then
+    xcrun simctl ui "$UDID" appearance light >/dev/null 2>&1 || true
+    xcrun simctl status_bar "$UDID" clear >/dev/null 2>&1 || true
+  fi
+  rm -rf "$LOCK"
+}
+trap cleanup EXIT
+
+# 1. The private copy, which must be at the base commit.
+BASE_SHA="$(git -C "$ROOT" rev-parse --verify "$BASE^{commit}")"
 if [[ ! -d "$COPY/fitbod.xcodeproj" ]]; then
   log "Creating the private copy at $COPY from $BASE"
   git -C "$ROOT" worktree prune
-  git -C "$ROOT" worktree add --detach "$COPY" "$BASE"
+  git -C "$ROOT" worktree add --detach "$COPY" "$BASE_SHA"
+fi
+copy_sha="$(git -C "$COPY" rev-parse HEAD)"
+if [[ "$copy_sha" != "$BASE_SHA" ]]; then
+  echo "The copy at $COPY is at $copy_sha, not $BASE ($BASE_SHA)." >&2
+  echo "Remove it with: git -C \"$ROOT\" worktree remove --force \"$COPY\"" >&2
+  exit 1
 fi
 TOUR_SRC="$TOOLS/DesignTourUITests.swift.txt"
 TOUR_DST="$COPY/fitbodUITests/DesignTourUITests.swift"
 STAMP="$WORK/tour.built.sha"
 cp "$TOUR_SRC" "$TOUR_DST"
 
-# 2. Build when the tour changed since the last good build.
-want="$(shasum "$TOUR_DST" | cut -d' ' -f1)"
+# 2. Build when the base or the tour changed since the last good build.
+want="$BASE_SHA $(shasum "$TOUR_DST" | cut -d' ' -f1)"
 have="$(cat "$STAMP" 2>/dev/null || true)"
 if [[ "$want" != "$have" || ! -d "$DERIVED/Build/Products/Debug-iphonesimulator/fitbod.app" ]]; then
   log "build-for-testing"
@@ -74,7 +105,7 @@ if [[ "$want" != "$have" || ! -d "$DERIVED/Build/Products/Debug-iphonesimulator/
       -derivedDataPath "$DERIVED" -destination "generic/platform=iOS Simulator" \
       ARCHS=arm64 ONLY_ACTIVE_ARCH=NO CODE_SIGNING_ALLOWED=NO COMPILER_INDEX_STORE_ENABLE=NO \
       > "$LOGS/build.log" 2>&1; then
-    grep -E "error:" "$LOGS/build.log" | head -40 >&2
+    grep -E "error:" "$LOGS/build.log" | head -40 >&2 || true
     echo "Build failed; see $LOGS/build.log" >&2
     exit 1
   fi
@@ -96,12 +127,6 @@ for devices in json.load(sys.stdin)["devices"].values():
 for other in "design-iPhone 17e" "design-iPhone 17 Pro Max"; do
   [[ "$other" == "$SIM_NAME" ]] || xcrun simctl shutdown "$other" >/dev/null 2>&1 || true
 done
-
-restore_phone() {
-  xcrun simctl ui "$UDID" appearance light >/dev/null 2>&1 || true
-  xcrun simctl status_bar "$UDID" clear >/dev/null 2>&1 || true
-}
-trap restore_phone EXIT
 
 log "Booting $SIM_NAME ($UDID)"
 xcrun simctl boot "$UDID" >/dev/null 2>&1 || true

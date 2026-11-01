@@ -17,6 +17,7 @@ Use the words the app shows, never code names.
 - Code names appear only in `view` paths and in backticked file references.
 - Write plain English in full sentences, with one sentence per line.
 - Never use the em dash; use a plain dash. (checked)
+  Quoted app copy keeps its words, but an em dash in it is written as a plain dash.
 
 ## Names
 
@@ -45,18 +46,19 @@ The front matter is plain `key: value` lines and `[a, b]` lists, read without a 
 |---|---|
 | `id` | the file name without `.md` |
 | `kind` | `screen` (a tab root or a pushed screen), `sheet`, `cover`, `dialog`, `alert` or `system` (drawn by iOS) |
-| `title` | the title as the lifter sees it |
+| `title` | the title as the lifter reads it, in sentence case even where the app draws capitals, with no double quotes |
 | `view` | the SwiftUI view that draws it, as `path:line` |
 | `tab` | `today`, `program`, `progress`, `library`, `settings` (inside the Settings sheet), `none`, or a list of them |
 | `presents_from` | the ids of the screens that open it; `x-launch` stands for the app's launch |
 | `closes_with` | `back`, `cancel`, `done`, `close`, `verb` (a named action such as SAVE) or `none` |
 | `mock` | the `bru-screens/` mock-up it was designed from, or `none` |
 | `seed` | the launch arguments of the main screenshot, or `none` |
-| `captured` | the capture date and the commit, such as `2026-11-01 61353088` |
-| `img` | the screenshots, main state first |
+| `captured` | the capture date of the main screenshot and the commit, such as `2026-11-01 61353088`, or `none` when no screenshot exists |
+| `img` | every screenshot of this screen: the 17e light default main state, then its other states by name, then the main state in each other configuration |
 | `tree` | the accessibility tree, or `none` |
 
 The body starts with one sentence on what the lifter does here.
+The main screenshot follows as `<img src="img/17e-default-light-<id>.png" width="300" alt="...">`, so the page shows it at a readable size.
 These sections follow, in this order: (checked)
 
 1. `## Entry points`: a table of From, Tap and Kind (push, sheet, cover or dialog).
@@ -65,9 +67,10 @@ These sections follow, in this order: (checked)
 4. `## Compared with the mock-up`: a table of In the mock-up, In the app and Difference.
 5. `## VoiceOver order`: three to eight lines from the tree, then any gaps.
 6. `## Findings`: links to audit rows, such as `[D-03](../audit.md#d-03)`.
+   Until the audit is written, the section holds only `<!-- findings are linked after the audit -->`.
 
-AX3 and dark screenshots are listed where the layout changes.
-Where only colour and size change, one line under States says so.
+The States table has a row for each configuration whose layout differs from the 17e at default text, such as a header that stacks at AX3.
+Where the other configurations change only colour and size, one line under the table says so.
 A file that is not written yet holds the line `<!-- skeleton -->`.
 
 ## Dialog files

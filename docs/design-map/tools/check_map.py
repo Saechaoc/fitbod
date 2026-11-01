@@ -62,6 +62,7 @@ KEYWORD = re.compile(r"%%|(?:flowchart|graph|subgraph|end|classDef|class|style|l
 SHAPES = (("[[", "subroutine"), ("([", "stadium"), ("{{", "hexagon"), ("((", "circle"),
           ("[", "rect"), ("{", "rhombus"), ("(", "round"))
 LINK = re.compile(r"!?\[([^\]\n]*)\]\(([^)\s]+)\)")
+HTML_IMG = re.compile(r"<img\b[^>]*?\bsrc=\"([^\"]+)\"")
 SCHEME = re.compile(r"[a-z][a-z0-9+.-]*:")
 CODE_REF = re.compile(r"`((?:fitbod|fitbodTests|fitbodUITests|FitbodWidgets|bru-screens|docs|scripts)/[\w./+-]*"
                       r"(?::\d+(?:-\d+)?)?)`")
@@ -158,8 +159,10 @@ def parse_mermaid(block: str) -> tuple[dict[str, str | None], list[tuple[str, st
 
 
 def links(text: str) -> list[tuple[str, str]]:
-    """(text, target) of every Markdown link and image outside code."""
-    return LINK.findall(INLINE_CODE.sub("", FENCE.sub("", text)))
+    """(text, target) of every Markdown link and image, and every HTML
+    <img src>, outside code."""
+    prose = INLINE_CODE.sub("", FENCE.sub("", text))
+    return LINK.findall(prose) + [("", src) for src in HTML_IMG.findall(prose)]
 
 
 def split_row(line: str) -> list[str]:
@@ -262,8 +265,12 @@ def check_screens(report: Report, referenced: set[pathlib.Path]) -> dict[str, di
             report.error(where, f"closes_with {meta.get('closes_with')!r} is not one of {', '.join(sorted(CLOSES))}")
         if meta.get("mock") and meta["mock"] != "none":
             check_ref(report, where, str(meta["mock"]))
-        if not CAPTURED.fullmatch(str(meta.get("captured", ""))):
-            report.error(where, "captured must be a date and a commit, such as 2026-11-01 61353088")
+        captured = str(meta.get("captured", ""))
+        if captured == "none":
+            if as_list(meta.get("img")):
+                report.error(where, "captured is none, but img lists screenshots")
+        elif not CAPTURED.fullmatch(captured):
+            report.error(where, "captured must be a date and a commit, such as 2026-11-01 61353088, or none")
         images = as_list(meta.get("img")) + [t for t in as_list(meta.get("tree")) if t != "none"]
         for image in images:
             target = (path.parent / image).resolve()
@@ -565,6 +572,7 @@ def self_test() -> int:
     assert parse_mermaid("endless --> b")[1] == [("endless", "-->", "b")]
     assert links("![x](img/a.png) `[y](no.md)` [T110](../t/T110-x.md)") == [("x", "img/a.png"),
                                                                             ("T110", "../t/T110-x.md")]
+    assert links('<img src="img/a.png" width="300" alt="A"> `<img src="no.png">`') == [("", "img/a.png")]
     assert split_row("| D-01 | today | a \\| b | x | major | - |") == ["D-01", "today", "a \\| b", "x", "major", "-"]
     assert cell_ids("[today](screens/today.md), `history`") == ["today", "history"]
     assert CODE_REF.findall("see `fitbod/Views/TodayView.swift:38` and `fitbod/App/*Seed.swift`") == [
