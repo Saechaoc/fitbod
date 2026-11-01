@@ -166,7 +166,7 @@ final class UITestHelpersSelfTests: XCTestCase {
 
         UITestNavigation.swipeSheetDown(in: app)
 
-        XCTAssertTrue(title.waitForNonExistence(timeout: 10), "A swipe down from the top edge must close the duration sheet")
+        XCTAssertTrue(title.waitForNonExistence(timeout: 10), "A swipe down from the sheet's header must close the duration sheet")
         XCTAssertTrue(newBlock.exists, "Closing the duration sheet must leave New Block open")
     }
 
