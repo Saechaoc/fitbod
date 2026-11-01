@@ -348,9 +348,8 @@ Stop and ask on any missing required file, mismatched provenance or failed/rejec
 - `typeText` can drop the first character in some fields.
   Tap the field, wait until it has keyboard focus, type, and then check the field's value.
   T39 adds a shared helper that does this; use it once it exists.
-- Hosted accessibility unit tests need the simulator's `com.apple.Accessibility` `ApplicationAccessibilityEnabled` and `AccessibilityEnabled` at 1, and every UI test session sets both back to 0 (F358).
-  Before a `fitbodTests` run on a phone that has run a UI test, run `xcrun simctl spawn <udid> defaults write com.apple.Accessibility <key> -bool true` for both keys.
-  T134 removes the need.
+- A unit test that reads a hosted SwiftUI view's accessibility tree must be marked `.hostedAccessibility` and show the view with `HostedAccessibility.show` (`fitbodTests/HostedAccessibility.swift`, T134).
+  The trait turns the test host's accessibility on itself, so the simulator's accessibility settings, which every UI run resets to 0 (F358), no longer matter.
 - `-fitbod-reset-store` works on the initial launch only.
   Persistence tests must relaunch without it.
 - Screenshot attachments need the keepAlways lifetime, or a passing test drops them.
