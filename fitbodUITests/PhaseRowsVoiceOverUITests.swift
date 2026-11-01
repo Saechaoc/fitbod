@@ -123,10 +123,11 @@ final class PhaseRowsVoiceOverUITests: XCTestCase {
     // MARK: - Revealed Delete
 
     /// A tap on the rest of a revealed card closes it, deleting nothing and
-    /// opening no phase editor. A tap on a revealed Delete deletes its phase
-    /// through the undo toast, as a full swipe does, and UNDO puts the phase
-    /// back. The card's tap area stayed where the card rests, over the
-    /// Delete, so a tap on the Delete closed the card and the phase stayed.
+    /// opening no phase editor, and so does a drag right that starts on the
+    /// revealed Delete. A tap on a revealed Delete deletes its phase through
+    /// the undo toast, as a full swipe does, and UNDO puts the phase back.
+    /// The card's tap area stayed where the card rests, over the Delete, so
+    /// a tap on the Delete closed the card and the phase stayed.
     @MainActor
     func testTapOnRevealedDeleteDeletesThePhase() throws {
         let app = openNewBlockWithTwoPhases()
@@ -136,10 +137,18 @@ final class PhaseRowsVoiceOverUITests: XCTestCase {
         var delete = revealDelete(on: card, in: app)
         // Left of the revealed Delete, where the card still shows.
         card.coordinate(withNormalizedOffset: CGVector(dx: 0.2, dy: 0.5)).tap()
-        let closed = XCTNSPredicateExpectation(predicate: NSPredicate(format: "isHittable == false"), object: delete)
-        XCTAssertEqual(XCTWaiter().wait(for: [closed], timeout: 5), .completed, "A tap on the card must close it over its Delete")
+        XCTAssertEqual(XCTWaiter().wait(for: [closing(delete)], timeout: 5), .completed, "A tap on the card must close it over its Delete")
         XCTAssertTrue(app.staticTexts.labeled("PHASES · 2").exists, "A tap on the card must delete nothing")
         XCTAssertFalse(app.buttons.labeled("Done").exists, "A tap on a revealed card must close it, not open its phase editor")
+
+        delete = revealDelete(on: card, in: app)
+        // A short drag right that starts and ends on the Delete.
+        let start = delete.coordinate(withNormalizedOffset: CGVector(dx: 0.3, dy: 0.5))
+        start.press(forDuration: 0.05, thenDragTo: start.withOffset(CGVector(dx: 40, dy: 0)),
+                    withVelocity: .slow, thenHoldForDuration: 0.1)
+        XCTAssertEqual(XCTWaiter().wait(for: [closing(delete)], timeout: 5), .completed,
+                       "A drag right from the revealed Delete must close the card")
+        XCTAssertTrue(app.staticTexts.labeled("PHASES · 2").exists, "A drag from the revealed Delete must delete nothing")
 
         delete = revealDelete(on: card, in: app)
         UITestNavigation.saveScreenshot("T105", "delete-revealed")
@@ -350,6 +359,12 @@ final class PhaseRowsVoiceOverUITests: XCTestCase {
         let delete = UITestNavigation.hittable(app.buttons, "Delete", exactLabel: true)
         UITestNavigation.waitUntilStill(delete)
         return delete
+    }
+
+    /// Met once `delete` stops being hittable, as its card closes over it.
+    @MainActor
+    private func closing(_ delete: XCUIElement) -> XCTNSPredicateExpectation {
+        XCTNSPredicateExpectation(predicate: NSPredicate(format: "isHittable == false"), object: delete)
     }
 
     /// New Block's phase count head, such as "PHASES · 2".

@@ -1931,10 +1931,12 @@ fileprivate struct NewBlockPhaseEditorRow: View {
         ZStack(alignment: .trailing) {
             deleteBackground
             cardSurface
-                // T105: the tap area moves with the card, so a revealed Delete
-                // takes its own tap, and a tap on the rest of the card closes it.
+                // T105: the tap and swipe areas move with the card, so a
+                // revealed Delete takes its own tap, and a tap on the rest of
+                // the card closes it.
                 .contentShape(Rectangle())
                 .onTapGesture { tapCard() }
+                .simultaneousGesture(swipeGesture)
                 .offset(x: visibleOffset)
                 // T24: one element per card, so VoiceOver reads its label once
                 // rather than once per text. Its value reads the stat columns,
@@ -1957,9 +1959,6 @@ fileprivate struct NewBlockPhaseEditorRow: View {
                     Button("Delete Phase") { onDelete() }
                 }
         }
-        // The swipe still starts anywhere on the row, the revealed Delete
-        // included, and measures in the row's resting frame.
-        .simultaneousGesture(swipeGesture)
         // Finger tracking 1:1. Gesture transactions carry no animation, and the
         // parent's reorder springs run in their own withAnimation transactions,
         // so nothing ever rubber-bands this offset mid-drag.
@@ -2119,12 +2118,17 @@ fileprivate struct NewBlockPhaseEditorRow: View {
                     .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
+            // T105: a drag that starts on the revealed Delete moves the card,
+            // as it does from the card, instead of ending in the button's tap.
+            .highPriorityGesture(swipeGesture)
         }
         .opacity(visibleOffset < 0 ? 1 : 0)
     }
 
+    // T105: measured in the global space, which the card's own offset does
+    // not move.
     private var swipeGesture: some Gesture {
-        DragGesture(minimumDistance: Swipe.activate)
+        DragGesture(minimumDistance: Swipe.activate, coordinateSpace: .global)
             .updating($swipeDrag) { value, state, _ in
                 // Horizontal-dominant only — vertical-leaning drags fall through to scroll.
                 guard abs(value.translation.width) > abs(value.translation.height) * Swipe.dominance
