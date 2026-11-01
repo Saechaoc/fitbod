@@ -514,14 +514,15 @@ public struct SplitDetailView: View {
     // MARK: - Slot Remove
 
     private func removeSlot(_ slot: SplitSessionSlot) {
-        // Remove the SplitSessionSlot only - NEVER the SessionTemplate (.deny rule)
-        ctx.delete(slot)
-        // Reindex remaining slots
-        let remaining = (split.slots ?? [])
-            .filter { $0.id != slot.id }
-            .sorted { $0.position < $1.position }
-        reindexSlots(remaining)
         do {
+            // Persist the unlink before deletion so the deny rule sees it.
+            slot.sessionTemplate = nil
+            try ctx.save()
+            ctx.delete(slot)
+            let remaining = (split.slots ?? [])
+                .filter { $0.id != slot.id }
+                .sorted { $0.position < $1.position }
+            reindexSlots(remaining)
             try ctx.save()
         } catch {
             showSaveError = true
