@@ -97,8 +97,10 @@ struct BlockReviewHeroLayoutTests {
             UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.first
         )
         let window = UIWindow(windowScene: scene)
-        // Tall enough for TONNAGE's stat at AX5.
+        // Tall enough for TONNAGE's stat at AX5, and light whatever the
+        // phone's appearance: in dark mode paper and ink swap.
         window.frame = CGRect(x: 0, y: 0, width: 390, height: 1_200)
+        window.overrideUserInterfaceStyle = .light
         window.rootViewController = UIHostingController(
             rootView: BlockReviewView(block: block)
                 .modelContainer(container)
