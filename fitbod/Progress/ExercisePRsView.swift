@@ -313,7 +313,7 @@ private struct PRsHost: View {
                     prRow(kind: kind, entry: entry)
                 }
                 .buttonStyle(.plain)
-                .accessibilityLabel("\(PRBucketRanking.exerciseName(entry)), \(prKindLabel(kind: kind)), \(rowText(kind: kind, set: entry))")
+                .accessibilityLabel("\(PRBucketRanking.exerciseName(entry)), \(prKindLabel(kind: kind)), \(PRRowText.spoken(rowText(kind: kind, set: entry)))")
                 .accessibilityValue(entry.completedAt.formatted(date: .abbreviated, time: .omitted))
 
                 if entry.id != rows.last?.id {
@@ -331,9 +331,11 @@ private struct PRsHost: View {
         let kindLabel = prKindLabel(kind: kind)
         let valueText = rowText(kind: kind, set: entry)
         let dateText = entry.completedAt.formatted(.dateTime.month().day().year()).uppercased()
-        let isAccessibilitySize = dynamicTypeSize.isAccessibilitySize
-        // At accessibility sizes the three columns stack, as in TodayStatStrip.
-        let columns = isAccessibilitySize
+        // The three columns stack at accessibility sizes, as in
+        // TodayStatStrip, and from xxxLarge, where WEIGHT PR and VOLUME PR
+        // outgrow the 110pt kind column and wrapped to two lines.
+        let isStacked = dynamicTypeSize >= .xxxLarge
+        let columns = isStacked
             ? AnyLayout(VStackLayout(alignment: .leading, spacing: 4))
             : AnyLayout(HStackLayout(spacing: 10))
 
@@ -349,11 +351,11 @@ private struct PRsHost: View {
                     .font(BRUFont.labelSmall)
                     .tracking(1.2)
                     .foregroundStyle(rowKindColor)
-                    .frame(width: isAccessibilitySize ? nil : 110, alignment: .leading)
+                    .frame(width: isStacked ? nil : 110, alignment: .leading)
 
                 // (b) Center — PR value display
                 BRUDisplay(valueText, size: .medium)
-                    .frame(maxWidth: .infinity, alignment: isAccessibilitySize ? .leading : .center)
+                    .frame(maxWidth: .infinity, alignment: isStacked ? .leading : .center)
 
                 // (c) Trailing — mono date
                 Text(dateText)
@@ -392,27 +394,55 @@ private struct PRsHost: View {
 
     // MARK: - Row Text
 
-    /// The PR's value in the exercise's own unit. A set logged without an
-    /// RPE leaves the RPE out rather than showing a dash.
+    /// The PR's value in the exercise's own unit (`PRRowText`).
     private func rowText(kind: PRKind, set: SetEntry) -> String {
-        let unit = WeightUnit.effective(for: set.sessionExercise?.exercise, default: defaultUnit).rawValue
-        let weightStr = formatWeight(set.weight)
-        let rpeStr = set.rpe.map { String(format: "%g", $0) }
+        PRRowText.value(
+            kind: kind,
+            weight: set.weight,
+            reps: set.reps,
+            rpe: set.rpe,
+            unit: WeightUnit.effective(for: set.sessionExercise?.exercise, default: defaultUnit)
+        )
+    }
+}
+
+// MARK: - Row text
+
+/// A PR row's value, such as "160 lb × 3 @ RPE 9". A set logged without an
+/// RPE leaves the RPE out rather than showing a dash.
+///
+/// No-break spaces hold together the phrases a lifter reads as one, so a
+/// narrow column wraps the value between them: "@" never ends a line, and
+/// "@ RPE 9", a rep PR's "@ 100 lb" and its "RPE 9" each move to the next
+/// line whole. VoiceOver reads the copy with plain spaces (`spoken`).
+enum PRRowText {
+    static func value(kind: PRKind, weight: Double, reps: Int, rpe: Double?, unit: WeightUnit) -> String {
+        let unit = unit.rawValue
+        let weightStr = formatWeight(weight)
+        let rpePhrase = rpe.map { "RPE\(noBreak)" + String(format: "%g", $0) }
         switch kind {
         case .weight:
-            return "\(weightStr) \(unit) × \(set.reps)" + (rpeStr.map { " @ RPE \($0)" } ?? "")
+            return "\(weightStr) \(unit) × \(reps)" + (rpePhrase.map { " @\(noBreak)\($0)" } ?? "")
         case .reps:
-            return "\(BRUCountLabel.text(set.reps, "rep")) @ \(weightStr) \(unit)" + (rpeStr.map { ", RPE \($0)" } ?? "")
+            return "\(BRUCountLabel.text(reps, "rep")) @\(noBreak)\(weightStr)\(noBreak)\(unit)" + (rpePhrase.map { ", \($0)" } ?? "")
         case .volume:
-            let tonnage = Int((set.weight * Double(set.reps)).rounded())
-            return "\(tonnage) \(unit) single-set (\(weightStr) × \(set.reps))"
+            let tonnage = Int((weight * Double(reps)).rounded())
+            return "\(tonnage) \(unit) single-set (\(weightStr) × \(reps))"
         case .e1RM:
-            let e1rm = OneRepMax.estimate(weight: set.weight, reps: set.reps).map { Int($0.rounded()) } ?? 0
-            return "\(e1rm) \(unit) e1RM (\(weightStr) × \(set.reps))"
+            let e1rm = OneRepMax.estimate(weight: weight, reps: reps).map { Int($0.rounded()) } ?? 0
+            return "\(e1rm) \(unit) e1RM (\(weightStr) × \(reps))"
         }
     }
 
-    private func formatWeight(_ value: Double) -> String {
+    /// `value` as VoiceOver reads it in the row's label: the same copy, with
+    /// plain spaces.
+    static func spoken(_ value: String) -> String {
+        value.replacing(noBreak, with: " ")
+    }
+
+    private static let noBreak = "\u{00A0}"
+
+    private static func formatWeight(_ value: Double) -> String {
         if value.truncatingRemainder(dividingBy: 1) == 0 {
             return String(Int(value))
         }
