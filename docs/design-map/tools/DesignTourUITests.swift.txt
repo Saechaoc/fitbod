@@ -231,7 +231,8 @@ enum DesignTour {
 
     /// Scrolls until `element` is visible and tappable. UITestNavigation's
     /// reveal only scrolls down the page; this one also scrolls back up to
-    /// an element above the screen or under a pinned header.
+    /// an element above the screen. A row under a header bar drawn as a top
+    /// safe-area inset still counts as hittable; use tapBelow for those.
     static func reveal(_ element: XCUIElement, in app: XCUIApplication, maxSwipes: Int = 12,
                        file: StaticString = #filePath, line: UInt = #line) {
         for _ in 0..<maxSwipes {
@@ -304,18 +305,9 @@ enum TourTodaySettings {
     /// Opens the demo workout and checks off set 1 of the first exercise,
     /// as SkipWarmupsUITests does. Leaves the logger open.
     static func logFirstSet(in app: XCUIApplication) {
-        app.buttons["resumeSlab.resume"].tap()
-        let field = app.textFields["set.reps.1.S1"]
-        XCTAssertTrue(field.waitForExistence(timeout: 10), "The logger never opened")
-        UITestNavigation.revealInLogger(field, in: app)
-        UITestNavigation.type("6", into: field, replacing: false, pressingReturn: false)
-        UITestNavigation.hittable(app.buttons, "Done", exactLabel: true).tap()
-        _ = app.keyboards.firstMatch.waitForNonExistence(timeout: 5)
-        let complete = app.buttons["set.complete.1.S1"]
-        UITestNavigation.revealInLogger(complete, in: app)
-        complete.tap()
-        let logged = XCTNSPredicateExpectation(predicate: NSPredicate(format: "label == %@", "Set 1 complete"), object: complete)
-        XCTAssertEqual(XCTWaiter().wait(for: [logged], timeout: 5), .completed, "Set 1 must be logged")
+        TourLogger.openWorkout(in: app)
+        // At AX3 the set rows load only as they scroll in.
+        TourLogger.logSet("1.S1", reps: "6", in: app)
         // The first rest asks to send notifications, once per install. Shoot
         // it here, before XCUITest's interruption handler answers it unseen.
         let prompt = XCUIApplication(bundleIdentifier: "com.apple.springboard").alerts.firstMatch
@@ -433,7 +425,8 @@ enum TourLogger {
     /// Scrolls the logger down (or up) until `element` loads, since rows
     /// load as they scroll in, then into the span a tap reaches.
     static func revealLoaded(_ element: XCUIElement, in app: XCUIApplication, up: Bool = false) {
-        for _ in 0..<12 where !element.exists {
+        // The demo workout runs about 11,000 pt at AX3, some 22 drags.
+        for _ in 0..<30 where !element.exists {
             let (top, bottom) = UITestNavigation.loggerSpan(in: app)
             UITestNavigation.dragLogger(from: up ? top + 20 : bottom - 20, to: up ? bottom - 20 : top + 20, in: app)
         }
@@ -556,9 +549,12 @@ enum TourBlocks {
     }
 
     /// Scrolls a block builder until `element` sits between its title and
-    /// its bottom bar, by UITestNavigation.revealAboveBottomBar's
-    /// .dragInMargin rule. That helper measures from the NEW BLOCK title
-    /// only, so it fails in EDIT BLOCK.
+    /// its bottom bar, with drags in the leading margin like
+    /// UITestNavigation.revealAboveBottomBar's .dragInMargin. That helper
+    /// measures from the NEW BLOCK title only, so it fails in EDIT BLOCK.
+    /// A drag that starts beside a phase card does not scroll the page
+    /// (T120), so each drag starts at a height no card covers. When cards
+    /// cover every height, the caller's tap scrolls the element into view.
     static func revealInBuilder(_ element: XCUIElement, in app: XCUIApplication,
                                 file: StaticString = #filePath, line: UInt = #line) {
         guard let title = ["NEW BLOCK", "EDIT BLOCK"].map({ app.staticTexts.labeled($0) }).first(where: { $0.exists }) else {
@@ -567,13 +563,22 @@ enum TourBlocks {
         let pageTop = title.frame.maxY + 20
         // The bar's 52 pt buttons sit 24 pt below its top edge.
         let barTop = UITestNavigation.hittable(app.buttons, "Cancel", file: file, line: line).frame.midY - 50
+        let cards = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Phase "))
         let origin = app.windows.firstMatch.coordinate(withNormalizedOffset: .zero)
         for _ in 0..<8 {
             let frame = element.frame
             if frame.minY >= pageTop && frame.maxY <= barTop { return }
-            let distance = frame.maxY > barTop ? -(frame.maxY - barTop + 80) : pageTop - frame.minY + 80
-            let start = origin.withOffset(CGVector(dx: 8, dy: (pageTop + barTop) / 2))
-            let end = start.withOffset(CGVector(dx: 0, dy: max(-300, min(300, distance))))
+            let up = frame.maxY > barTop
+            let covered = cards.allElementsBoundByIndex.map { ($0.frame.minY - 8)...($0.frame.maxY + 8) }
+            // Lowest free height for a drag up, highest for a drag down.
+            let heights = Array(stride(from: barTop - 10, through: pageTop + 10, by: -10))
+            guard let y = (up ? heights : heights.reversed()).first(where: { y in !covered.contains { $0.contains(y) } }) else {
+                XCTContext.runActivity(named: "Phase cards cover the page; the tap scrolls \(element)") { _ in }
+                return
+            }
+            let distance = up ? -(frame.maxY - barTop + 80) : pageTop - frame.minY + 80
+            let start = origin.withOffset(CGVector(dx: 8, dy: y))
+            let end = origin.withOffset(CGVector(dx: 8, dy: min(app.frame.maxY - 40, max(60, y + distance))))
             start.press(forDuration: 0.05, thenDragTo: end, withVelocity: .slow, thenHoldForDuration: 0.3)
             UITestNavigation.waitUntilStill(element)
         }
@@ -716,7 +721,7 @@ enum TourRoutines {
     /// Program's Archived routines entry, below the first-run templates.
     static func openArchivedRoutines(in app: XCUIApplication) {
         let entry = app.buttons.labeled("Archived routines")
-        DesignTour.expect(entry, "Program's Archived routines entry")
+        // Rows below the screen are not loaded yet, so reveal rather than wait.
         UITestNavigation.reveal(entry, in: app, maxSwipes: 24)
         entry.tap()
         DesignTour.expect(DesignTour.text(app, "Archived routines"), "Archived routines")
@@ -743,6 +748,23 @@ enum TourProgressLibrary {
     static func tapRevealed(_ element: XCUIElement, in app: XCUIApplication) {
         XCTAssertTrue(element.waitForExistence(timeout: 10), "Missing \(element)")
         DesignTour.reveal(element, in: app)
+        element.tap()
+    }
+
+    /// Taps a form row once it sits below `edge`, the lowest control of a
+    /// header bar drawn as a top safe-area inset. Rows scroll under such a
+    /// bar and XCUITest still calls them hittable, so a plain tap can hit
+    /// the bar (Pro Max AX3, New exercise: the equipment list never opened).
+    static func tapBelow(_ edge: XCUIElement, _ element: XCUIElement, in app: XCUIApplication) {
+        XCTAssertTrue(element.waitForExistence(timeout: 10), "Missing \(element)")
+        DesignTour.reveal(element, in: app)
+        var swipes = 0
+        while element.frame.minY < edge.frame.maxY, swipes < 6 {
+            let scroll = app.scrollViews.allElementsBoundByIndex.last(where: { $0.isHittable }) ?? app
+            scroll.swipeDown(velocity: .slow)
+            swipes += 1
+        }
+        XCTAssertGreaterThanOrEqual(element.frame.minY, edge.frame.maxY, "\(element) is under the header bar")
         element.tap()
     }
 
@@ -967,7 +989,7 @@ final class DesignTourMainUITests: XCTestCase {
             let row = app.buttons.matching(NSPredicate(
                 format: "label CONTAINS[c] 'Volume Targets' AND label CONTAINS[c] '17 muscles'"
             )).firstMatch
-            DesignTour.expect(row, "Volume Targets row")
+            // Rows below the screen are not loaded yet, so reveal rather than wait.
             DesignTour.reveal(row, in: app)
             row.tap()
             DesignTour.expect(DesignTour.text(app, "Volume Targets"), "Volume Targets")
@@ -986,7 +1008,6 @@ final class DesignTourMainUITests: XCTestCase {
         }
         DesignTour.step("component-gallery") {
             let gallery = app.buttons["settings.componentGallery"]
-            DesignTour.expect(gallery, "Component gallery row")
             DesignTour.reveal(gallery, in: app)
             gallery.tap()
             DesignTour.expect(app.staticTexts["gallery.lastAction"], "Component gallery")
@@ -1020,7 +1041,8 @@ final class DesignTourMainUITests: XCTestCase {
         let app = DesignTour.launch(["-fitbod-seed-demo-workout"], ready: { $0.buttons["resumeSlab.resume"] })
         DesignTour.step("logger") {
             TourLogger.openWorkout(in: app)
-            DesignTour.expect(app.textFields["set.reps.1.S1"], "Set 1")
+            // At AX3 the first set row is not loaded until it scrolls in.
+            DesignTour.expect(DesignTour.text(app, TourLogger.bench), "The first exercise")
             DesignTour.shot(app, "logger", still: app.otherElements["workout.header"])
         }
         DesignTour.step("logger--warmup-ramp") {
@@ -1535,7 +1557,8 @@ final class DesignTourMainUITests: XCTestCase {
             _ = chest.waitForNonExistence(timeout: 5)
         }
         DesignTour.step("equipment-picker") {
-            TourProgressLibrary.tapRevealed(app.buttons["customExercise.equipment"], in: app)
+            // The muscle pick leaves the form scrolled with the row under the bar.
+            TourProgressLibrary.tapBelow(app.buttons["Save"], app.buttons["customExercise.equipment"], in: app)
             let barbell = app.buttons["customExercise.equipment.barbell"]
             DesignTour.expect(barbell, "The equipment list")
             DesignTour.shot(app, "equipment-picker")

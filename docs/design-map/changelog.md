@@ -1,6 +1,23 @@
 # Changelog
 
-Newest first, one entry for each stage of [plan.md](plan.md).
+Newest first: one entry for each stage of [plan.md](plan.md) up to S2, then one for each commit.
+
+## 2026-11-01: S3, iPhone 17e in dark mode and at AX3
+
+- Captured the iPhone 17e in dark mode and at AX3: 79 screenshots in each, for the main state of 72 screens and 7 other states.
+  The other 16 screens, 13 dialogs and 3 system sheets, appear only in the walks, which run in light mode at default text.
+- At AX3 the logger loads each set row only as it scrolls in.
+  So `TourLogger.openWorkout` and `logSet` wait for the row, and `revealInLogger` drags up to 30 times, because the demo workout is about 11,000 pt long at that size.
+- `revealInBuilder` starts each drag at a height that no phase card covers, because a drag beside a card does not scroll the page ([T120](../conway-specs/tickets/T120-new-block-toast-and-duration-steppers.md)).
+  Where the cards cover every height, it leaves the scroll to the tap.
+- The tour reveals rows below the screen instead of waiting for them, because such rows do not exist until they scroll in.
+  This covers Program's Archived routines entry and the Volume Targets and Component gallery rows in Settings.
+  The logger check waits for the first exercise's name instead of the set 1 field.
+- `TourProgressLibrary.tapBelow` taps a form row only once the row sits below the header bar.
+  New exercise draws its header bar as a top safe-area inset, so rows scroll under it and XCUITest still calls them hittable.
+  On the Pro Max at AX3, the tap hit the bar and the equipment list never opened.
+- After these fixes, `testMainToday` and `testMainLoggerSheets` ran again at AX3 on 2026-11-01 and filled 7 states that the first run missed.
+  Their 16 images show Sunday, November 1, as [assumptions.md](assumptions.md#phones-and-captures) lists.
 
 ## 2026-10-31: S2, iPhone 17e in light mode
 

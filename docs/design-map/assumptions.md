@@ -34,6 +34,9 @@ The map uses the app's words, as listed in [conventions.md](conventions.md#words
 - Each screen file's `captured` field holds its capture date.
   The seeds count days back from the launch, so a weekday or date shown in a screenshot depends on the day it was taken.
   US daylight saving time ends on 2026-11-01, during the capture runs.
+- Every capture took place on 2026-10-31, apart from the reruns below, which took place on 2026-11-01.
+  So a screen that shows the date reads Saturday, October 31, except in these reruns, where it reads Sunday, November 1.
+  - iPhone 17e at AX3, `testMainToday` and `testMainLoggerSheets`: block-review, dialog-discard-workout-slab, dialog-remove-exercise, dialog-workout-menu, history, library-picker, per-muscle-detail, pinned-note, session-template-detail, swap-exercise, today, today--empty, today--volume, weekly-recap, workout-notes and workout-summary.
 
 ## How each state is reached
 
