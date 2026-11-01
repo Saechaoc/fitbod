@@ -50,7 +50,7 @@ struct ExportShareItemsTests {
         let item = JSONExportItem(container: container) { reports.outcomes.append($0) }
         let data = try await item.exported(as: .json)
         let object = try JSONSerialization.jsonObject(with: data) as? [String: Any]
-        #expect(object?["formatVersion"] as? Int == 1)
+        #expect(object?["formatVersion"] as? Int == 2)
         #expect(reports.outcomes == [true])
     }
 

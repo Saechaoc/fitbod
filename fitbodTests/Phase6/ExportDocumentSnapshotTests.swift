@@ -32,6 +32,8 @@
 //    MuscleVolumeTarget 00000000-0000-0000-0000-00000000000f
 //    PlateInventory     00000000-0000-0000-0000-000000000010
 //    UserSettings       00000000-0000-0000-0000-000000000011
+//    Split              00000000-0000-0000-0000-000000000012
+//    SplitSessionSlot   00000000-0000-0000-0000-000000000013
 //
 
 import Foundation
@@ -68,6 +70,8 @@ struct ExportDocumentSnapshotTests {
         let volumeTargetID = uuid("0f")
         let plateInventoryID = uuid("10")
         let userSettingsID = uuid("11")
+        let splitID = uuid("12")
+        let slotID = uuid("13")
 
         let exercise = ExportExerciseDTO(
             id: exerciseID, externalID: "bench-press-1",
@@ -118,6 +122,11 @@ struct ExportDocumentSnapshotTests {
             exercises: [routineExercise]
         )
 
+        let split = ExportSplitDTO(
+            id: splitID, name: "Spring Block split", createdAt: fixedDate, isArchived: false,
+            slots: [ExportSplitSessionSlotDTO(id: slotID, position: 0, sessionTemplateID: routineID)]
+        )
+
         let folder = ExportRoutineFolderDTO(
             id: folderID, name: "Hypertrophy block",
             sortOrder: 0, createdAt: fixedDate
@@ -156,6 +165,7 @@ struct ExportDocumentSnapshotTests {
             prescribedRestSeconds: 180, tempo: nil,
             tracksTempo: false, tracksPartialReps: false,
             prescribedWeight: 100.0, pinnedNote: nil,
+            exerciseNameSnapshot: "Bench Press",
             sets: [warmupSet, workingSet]
         )
 
@@ -169,6 +179,7 @@ struct ExportDocumentSnapshotTests {
             templateName: "Upper A",          // WR-05 (V7)
             slotPosition: 0,                  // WR-05 (V7)
             slotSplitName: "Spring Block split", // WR-05 (V7)
+            slotID: slotID,
             exercises: [sessionExercise]
         )
 
@@ -187,6 +198,7 @@ struct ExportDocumentSnapshotTests {
             trainingDaysJoined: "2,4,6",         // WR-05 (V7)
             archivedConfigJSON: nil,             // WR-05 (V7) — active block, no archive yet
             splitName: "Spring Block split",     // WR-05 (V7)
+            splitID: splitID,
             phases: [blockPhase]
         )
 
@@ -216,12 +228,13 @@ struct ExportDocumentSnapshotTests {
         )
 
         return ExportDocument(
-            formatVersion: 1,
+            formatVersion: 2,
             schemaVersion: ExportDocument.canonicalSchemaVersion,
             exportedAt: fixedDate,
             unitSystem: "kg",
             exercises: [exercise],
             routines: [routine],
+            splits: [split],
             routineFolders: [folder],
             supersetGroups: [superset],
             sessions: [session],
@@ -241,8 +254,12 @@ struct ExportDocumentSnapshotTests {
         let doc = Self.makeFixture()
         let data = try JSONEncoder.exportConfigured().encode(doc)
         let json = try #require(try JSONSerialization.jsonObject(with: data) as? [String: Any])
-        #expect(json["formatVersion"] as? Int == 1)
+        #expect(json["formatVersion"] as? Int == 2)
         #expect(json["schemaVersion"] as? String == "v7")
+        let splits = try #require(json["splits"] as? [[String: Any]])
+        #expect(splits.count == 1)
+        let slots = try #require(splits.first?["slots"] as? [[String: Any]])
+        #expect(slots.first?["sessionTemplateID"] as? String == Self.uuid("04").uuidString)
         let exportedAt = try #require(json["exportedAt"] as? String)
         #expect(exportedAt.hasSuffix("Z"), "exportedAt should be UTC ISO-8601 with Z suffix")
 

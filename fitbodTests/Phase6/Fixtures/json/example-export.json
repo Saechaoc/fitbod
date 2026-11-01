@@ -15,6 +15,7 @@
         }
       ],
       "schedulingModeRaw" : "rotation",
+      "splitID" : "00000000-0000-0000-0000-000000000012",
       "splitName" : "Spring Block split",
       "startDate" : "2023-11-14T22:13:20Z",
       "trainingDaysJoined" : "2,4,6"
@@ -56,7 +57,7 @@
     }
   ],
   "exportedAt" : "2023-11-14T22:13:20Z",
-  "formatVersion" : 1,
+  "formatVersion" : 2,
   "muscleGroups" : [
     {
       "displayName" : "Chest",
@@ -140,6 +141,7 @@
         {
           "exerciseID" : "00000000-0000-0000-0000-000000000001",
           "exerciseName" : "Bench Press",
+          "exerciseNameSnapshot" : "Bench Press",
           "id" : "00000000-0000-0000-0000-00000000000A",
           "orderIndex" : 0,
           "prescribedRestSeconds" : 180,
@@ -184,12 +186,28 @@
       "intentRaw" : "strength",
       "progressionKindRaw" : "rpe",
       "routineSnapshotName" : "Upper A",
+      "slotID" : "00000000-0000-0000-0000-000000000013",
       "slotPosition" : 0,
       "slotSplitName" : "Spring Block split",
       "sourceRoutineID" : "00000000-0000-0000-0000-000000000004",
       "startedAt" : "2023-11-14T22:13:20Z",
       "templateName" : "Upper A",
       "totalDurationSeconds" : 3600
+    }
+  ],
+  "splits" : [
+    {
+      "createdAt" : "2023-11-14T22:13:20Z",
+      "id" : "00000000-0000-0000-0000-000000000012",
+      "isArchived" : false,
+      "name" : "Spring Block split",
+      "slots" : [
+        {
+          "id" : "00000000-0000-0000-0000-000000000013",
+          "position" : 0,
+          "sessionTemplateID" : "00000000-0000-0000-0000-000000000004"
+        }
+      ]
     }
   ],
   "supersetGroups" : [

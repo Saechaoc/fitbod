@@ -40,7 +40,7 @@ struct BackupArchiverTests {
         #expect(byPath["store.json"] != nil)
 
         let manifest = try BackupManifest.decode(byPath["manifest.json"]!)
-        #expect(manifest.formatVersion == 1)
+        #expect(manifest.formatVersion == 2)
         #expect(manifest.schemaVersion == ExportDocument.canonicalSchemaVersion)
 
         // checksum recompute on the actual store.json bytes from the

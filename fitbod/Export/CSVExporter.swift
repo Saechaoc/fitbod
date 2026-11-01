@@ -29,7 +29,7 @@
 //  | routine_id         | sessionExercise.session?.sourceRoutineID?.uuidString ("" if nil) |
 //  | routine_name       | sessionExercise.session?.routineSnapshotName |
 //  | exercise_id        | sessionExercise.exercise?.id?.uuidString ("" if nil) |
-//  | exercise_name      | sessionExercise.exercise?.name ("" if nil — Open Q2 deferred) |
+//  | exercise_name      | sessionExercise.displayName (snapshot before live name) |
 //  | set_index          | setEntry.orderIndex |
 //  | set_kind           | setEntry.setTypeRaw |
 //  | target_weight      | sessionExercise.prescribedWeight ("" if nil) |
@@ -105,7 +105,7 @@ public enum CSVExporter {
         let routineID = session?.sourceRoutineID?.uuidString ?? ""
         let routineName = session?.routineSnapshotName ?? ""
         let exerciseID = se?.exercise?.id.uuidString ?? ""
-        let exerciseName = se?.exercise?.name ?? ""
+        let exerciseName = se?.displayName ?? ""
 
         let setIndex = String(entry.orderIndex)
         let setKind = entry.setTypeRaw

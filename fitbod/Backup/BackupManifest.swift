@@ -37,9 +37,9 @@
 import Foundation
 
 public struct BackupManifest: Codable, Equatable, Sendable {
-    /// Bumped only if the manifest envelope itself changes shape.
-    /// Independent of `schemaVersion` (which tracks the SwiftData
-    /// model schema). v1 ships formatVersion = 1.
+    /// Archive format, independent of the SwiftData schema version.
+    /// Format 2 adds the routine/slot graph and logged exercise names;
+    /// restore still accepts format 1.
     public let formatVersion: Int
 
     /// Mirror of `ExportDocument.canonicalSchemaVersion` at archive
