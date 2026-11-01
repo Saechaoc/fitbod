@@ -116,8 +116,9 @@ final class NumberEntryUITests: XCTestCase {
 
     // MARK: - Plate Inventory
 
-    /// 20 typed over the bar's 45 reads 20, and a plate weight typed over
-    /// another in Add Plate replaces it.
+    /// 20 typed over the bar's 45 reads 20, while Done ▸ steps aside for the
+    /// keyboard, and a plate weight typed over another in Add Plate replaces
+    /// it.
     @MainActor
     func testPlateInventoryWeightsTypeOver() throws {
         let app = UITestNavigation.launch(UITestNavigation.freshStore)
@@ -126,10 +127,13 @@ final class NumberEntryUITests: XCTestCase {
         UITestNavigation.reveal(inventory, in: app)
         inventory.tap()
         let bar = app.textFields["plateInventory.barWeight"]
+        let footer = app.buttons.labeled("Done ▸")
         XCTAssertEqual(UITestNavigation.enter("20", into: bar), "20", "20 typed over 45 must replace it")
-        UITestNavigation.assertAboveKeyboard(bar, and: [app.buttons.labeled("Done ▸")], in: app)
+        UITestNavigation.assertAboveKeyboard(bar, in: app)
+        XCTAssertFalse(footer.exists, "Done ▸ must step aside while the keyboard is up")
         UITestNavigation.saveScreenshot("T39", "plate-inventory-bar")
         closeKeyboard(in: app)
+        XCTAssertTrue(footer.waitForExistence(timeout: 5), "Done ▸ must come back with the keyboard gone")
 
         let add = app.buttons.labeled("+ Add plate")
         UITestNavigation.reveal(add, in: app)

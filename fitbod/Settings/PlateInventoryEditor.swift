@@ -17,7 +17,8 @@
 //  24pt bruBg filler under Done ▸ is gone: inside the Settings sheet it showed as a
 //  gray band above the home indicator, whose safe area already shows the paper.
 //  T39: the bar weight and Add Plate's weight select their number as they take focus,
-//  so a typed weight replaces it, and both number pads get a DONE.
+//  so a typed weight replaces it, both number pads get a DONE, and Done ▸ steps aside
+//  while the keyboard is up.
 //
 //  UI-SPEC §PlateInventoryEditor (verbatim copy in all labels / alerts / empty states).
 //  Pattern: PATTERNS.md @Query + @Bindable write-through (SettingsView analog).
@@ -34,6 +35,7 @@ public struct PlateInventoryEditor: View {
     @Environment(\.modelContext) private var ctx
     @Query private var settingsList: [UserSettings]
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.isKeyboardVisible) private var isKeyboardVisible
 
     // MARK: - State
 
@@ -98,8 +100,12 @@ public struct PlateInventoryEditor: View {
             // Rows keep their own heights instead of the 44pt list minimum.
             .environment(\.defaultMinListRowHeight, 0)
 
-            // Footer — 2pt bruInk top rule + primary "Done ▸"
-            footerBar
+            // Footer — 2pt bruInk top rule + primary "Done ▸". It steps aside
+            // while the keyboard is up, where the keyboard's DONE would sit
+            // on it (T39).
+            if !isKeyboardVisible {
+                footerBar
+            }
         }
         .background(Color.bruPaper)
         // No .navigationTitle — BRUHeaderBar owns that chrome
