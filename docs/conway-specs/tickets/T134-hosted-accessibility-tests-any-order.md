@@ -64,5 +64,6 @@ Ask before you move any other hosted accessibility test to the shared way.
 
 ## Hints
 
+- T129 found the likely root cause (finding F348): a hosted SwiftUI view builds its accessibility tree only when the simulator's `com.apple.Accessibility` `ApplicationAccessibilityEnabled` and `AccessibilityEnabled` defaults are 1; with both at 0 the hosted cases fail alone. The coordinator set both to 1 on every lane and gate phone on 2026-11-01. A shared way that does not depend on the phone's settings is still this ticket's job.
 - T106's notes in `docs/conway-specs/evidence/T106/notes.md`, under "VoiceOver's activate" and Findings, record what it tried.
 - `fitbodTests/ProgressChartDescriptorTests.swift` holds T98's hosting and polling.
