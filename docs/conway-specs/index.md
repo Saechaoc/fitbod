@@ -54,7 +54,6 @@ Every Phase 2 ticket is done and archived.
 | [T132](tickets/T132-planned-hero-and-session-summary-at-ax3.md) | The planned block hero and session summaries keep their parts whole at AX3 |
 | [T137](tickets/T137-progress-rows-open-only-on-tap.md) | Progress's rows open only on a tap |
 | [T138](tickets/T138-block-review-pr-chips-and-stats-once.md) | The block review's PR chips read to VoiceOver, and its stats load once |
-| [T139](tickets/T139-week-windows-follow-the-calendar.md) | Week windows follow the calendar across daylight saving, and Muscles Hit keeps a stable order |
 | [T140](tickets/T140-long-press-remove-and-remove-labels.md) | Removing an exercise by long press forgets its open editor |
 | [T141](tickets/T141-non-barbell-prescriptions-skip-plate-math.md) | Cable, machine, band, bodyweight and kettlebell prescriptions skip barbell plate math |
 | [T142](tickets/T142-block-weeks-start-at-midnight.md) | A block week starts at local midnight on its first day |

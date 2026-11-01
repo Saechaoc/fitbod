@@ -146,6 +146,7 @@ ARCHIVED = {
     "T129": (3, [], []),
     "T130": (3, [], ["fitbodUITests/BlockDraftKeepsUITests.swift"]),
     "T136": (3, [], ["fitbodUITests/PRRowOpensWorkoutUITests.swift"]),
+    "T139": (3, [], ["fitbodTests/WeekWindowCalendarTests.swift"]),
 }
 
 BUNDLE = pathlib.Path(__file__).resolve().parent
