@@ -20,6 +20,7 @@ These are findings F272 and F273, which T36's worker found; both show in the mil
 - At AX3 the expanded rest sheet's countdown, such as "2:54", runs into its 200pt ring on both phones.
   `docs/design-system/accessibility.md` says numeric countdowns fit within the progress arc.
 - At AX3 the sheet's -15s and +15s labels come within about 3pt of their 80pt-wide outlines.
+- VoiceOver reads the remaining rest time as "1 minutes 30 seconds" and "1 seconds" (`RestTimerOverlay.remainingAccessibility`; finding F276, from T34's worker).
 
 ## Target
 
@@ -29,6 +30,7 @@ These are findings F272 and F273, which T36's worker found; both show in the mil
 
 1. At every text size the countdown sits inside the ring, clear of its stroke: the ring grows with the text, or the countdown scales down to fit, whichever keeps it easier to read.
 2. At accessibility sizes the -15s and +15s labels keep at least 8pt from their borders, as the RPE chips do since T36, and the buttons keep their 52pt height.
+3. VoiceOver reads the remaining time through `BRUCountLabel`, such as "1 minute 30 seconds" and "1 second", with a unit test of `remainingAccessibility`.
 
 ## Constraints
 

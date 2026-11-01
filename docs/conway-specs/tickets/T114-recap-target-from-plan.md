@@ -18,6 +18,7 @@ Read [../worker-rules.md](../worker-rules.md) first; it is part of this ticket.
 This is finding F242, which T103's worker found.
 The weekly recap's sessions chip reads "N / N sessions", because its target is the number of sessions logged.
 So the logged count always meets the target, and the headline always reads "A strong week.", however little was trained.
+At AX3 on the small phone the cover chips break words inside a word, such as "sessi" over "on" (finding F277, from T34's worker).
 
 ## Target
 
@@ -29,6 +30,7 @@ So the logged count always meets the target, and the headline always reads "A st
 2. With a target, the chip reads "N / M sessions", and the headline compares N with M, as it does today.
 3. With no block active last week, the chip reads "N sessions" with no target, and the headline never claims a target was met: it follows the sessions and PRs alone.
 4. Put the target and the headline choice in functions a unit test can call.
+5. At AX3 on the small phone each cover chip wraps between words, never inside one.
 
 ## Constraints
 

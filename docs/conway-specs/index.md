@@ -41,7 +41,6 @@ Every Phase 2 ticket is done and archived.
 
 | Ticket | Title |
 |---|---|
-| [T34](tickets/T34-copy-sweep.md) | Copy sweep |
 | [T35](tickets/T35-today-polish.md) | Today polish |
 | [T37](tickets/T37-library-and-detail-polish.md) | Library and exercise detail polish |
 | [T38](tickets/T38-program-new-block-settings-small-fixes.md) | Small fixes on Program, New Block and Settings |

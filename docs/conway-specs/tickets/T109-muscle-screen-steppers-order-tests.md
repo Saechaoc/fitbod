@@ -23,6 +23,7 @@ These are findings F209 to F211, from T30's run and screenshots.
   Two exercises with the same set count swap places between renders, as Barbell Bench Press and Incline Dumbbell Press did in T30's screenshots.
 - `PerMuscleDetailUITests` and `Phase5BRUSmokeUITests` launch with a plain `app.launch()`, so they run on whatever store the phone holds.
   On an empty store they skip their volume bar tap, so they can pass without opening a muscle's screen.
+- `PerMuscleDetailUITests` and `Phase5BRUSmokeUITests` find a volume bar by "sets this week,", but since T34 a muscle with one set reads "1 set this week,", so a seed of one-set muscles would skip their tap path (finding F279).
 
 ## Target
 
@@ -36,6 +37,7 @@ These are findings F209 to F211, from T30's run and screenshots.
 2. They keep their range of 1 to 30 sets, their step of one, their VoiceOver labels and values, the order check and the "user edited" flag.
 3. Rows in CONTRIBUTING EXERCISES with the same count sort by exercise name, so the order never changes between renders.
 4. `PerMuscleDetailUITests` and the muscle tests in `Phase5BRUSmokeUITests` launch through `UITestNavigation.launch` with the demo seed, and always tap a volume bar and reach the muscle's screen.
+5. Both suites find a volume bar by an identifier, or by a label that matches "1 set this week," too.
 
 ## Constraints
 

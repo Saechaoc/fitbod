@@ -23,6 +23,7 @@ This is finding F-ext-3, which T112-ext's worker found, with two clean-ups from 
 - Elsewhere in the app, the top set is the set with the highest e1RM: the progress chart's top-set line and the plateau check both use that rule.
 - `prs30d` runs the PR replay a second time in each render, although T112 already runs it for the rows.
 - `DateGroup` now holds exactly one entry, so the list builds groups only to flatten them again.
+- The count line, such as "6 sets across 4 workouts", and "Workouts · 30d" count every workout that holds the exercise, an in-progress or empty one included, and ignore the intent filter (finding F278, from T34's worker).
 
 ## Target
 
@@ -35,6 +36,7 @@ This is finding F-ext-3, which T112-ext's worker found, with two clean-ups from 
 2. When no set has an e1RM, the TOP line keeps today's fallback.
 3. Each render runs the PR replay once, and both the row chips and "PRs · 30d" use that one result.
 4. The list is built straight from one entry per workout, without one-entry date groups.
+5. The count line and "Workouts · 30d" count the workouts the list shows: those with a completed set of this exercise under the intent filter, so an in-progress or empty workout never counts.
 
 ## Constraints
 

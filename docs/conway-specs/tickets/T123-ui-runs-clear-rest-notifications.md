@@ -6,7 +6,7 @@ items: []
 depends_on: [T101]
 size: M
 sim: both
-owns: [fitbod/App/DebugLaunchReset.swift, fitbodUITests/MilestoneOneJourneyUITests.swift, fitbodUITests/UITestHelpersSelfTests.swift, fitbodUITests/EditorSwipeDismissUITests.swift]
+owns: [fitbod/App/DebugLaunchReset.swift, fitbodUITests/MilestoneOneJourneyUITests.swift, fitbodUITests/UITestHelpersSelfTests.swift, fitbodUITests/EditorSwipeDismissUITests.swift, fitbodUITests/CopySweepUITests.swift, fitbodUITests/WeeklyRecapUITests.swift, fitbodUITests/SwipeBackUITests.swift, new:fitbodUITests/SharedScreenHelpers.swift]
 ---
 
 # T123: UI test runs stay free of leftover rest notifications, and the journey suite reads cheaply
@@ -24,6 +24,7 @@ These are findings F266, F267 and F270, which T101's worker found.
 - `MilestoneOneJourneyUITests.tearDownWithError` attaches a `keepAlways` screenshot and the whole accessibility tree after every test, which a reader needs only after a failure.
 - The suite's private `reveal` scrolls a page at a time, up to 14 swipes.
 - Most `@MainActor` marks in `MilestoneOneJourneyUITests` and `UITestHelpersSelfTests` have no reason beside them, which guide section 2.10 asks for.
+- `CopySweepUITests` carries its own copies of private helpers from `WeeklyRecapUITests` and `SwipeBackUITests` (`openToday(afterSeeding:)`, `open(_:in:)`, `waitUntilHittable`, `button(beginningWith:)`), so a change to one must be made twice (finding F280, from T34's review).
 
 ## Target
 
@@ -37,6 +38,7 @@ These are findings F266, F267 and F270, which T101's worker found.
 3. `tearDownWithError` attaches its screenshot and accessibility tree only when the test failed.
 4. `reveal` scrolls in long drags and waits with `UITestNavigation.waitUntilStill`, instead of a page at a time.
 5. Each `@MainActor` in the two suites has its reason beside it, or goes where it is not needed.
+6. The helpers `CopySweepUITests` copies move into `fitbodUITests/SharedScreenHelpers.swift`, and all three suites use that one copy.
 
 ## Constraints
 
