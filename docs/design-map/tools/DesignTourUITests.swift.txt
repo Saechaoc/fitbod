@@ -1,0 +1,257 @@
+//
+//  DesignTourUITests.swift
+//  Design-map screenshot tour for docs/design-map/.
+//
+//  This file is not part of the app's test suite. tools/tour_run.sh copies
+//  it into fitbodUITests/ of a private worktree copy of the project on
+//  every run, so the shared helpers there (UITestNavigation and friends)
+//  compile with it and nothing in the repository's targets changes.
+//
+//  The tour only navigates and captures. It asserts only that each screen
+//  appeared, and it changes no app behavior.
+//
+//  Environment (passed by xcodebuild through the TEST_RUNNER_ prefix):
+//    DESIGN_TEXTSIZE   default | ax3
+//    DESIGN_APPEARANCE light | dark   (names files; the run sets the phone)
+//    DESIGN_TREES      1 attaches app.debugDescription beside each shot
+//
+//  Screenshot names: <phone>-<size>-<appearance>-<screen>[--<state>],
+//  where phone is 17e (390pt) or 17promax (440pt) and screen is the
+//  screens/ file stem.
+//
+
+import XCTest
+
+// MARK: - Helpers
+
+@MainActor
+enum DesignTour {
+    private static var env: [String: String] { ProcessInfo.processInfo.environment }
+
+    static var textSize: UITestNavigation.TextSize { env["DESIGN_TEXTSIZE"] == "ax3" ? .ax3 : .default }
+    static var isAX3: Bool { textSize == .ax3 }
+    static var appearance: String { env["DESIGN_APPEARANCE"] == "dark" ? "dark" : "light" }
+    static var trees: Bool { env["DESIGN_TREES"] == "1" }
+
+    private static var cachedPhone: String?
+
+    /// "17e" on the 390pt iPhone 17e, "17promax" on the 440pt iPhone 17 Pro
+    /// Max, else the width in points.
+    static var phone: String {
+        if let cachedPhone { return cachedPhone }
+        let width = Int(XCUIScreen.main.screenshot().image.size.width.rounded())
+        let name = switch width {
+        case 390: "17e"
+        case 440: "17promax"
+        default: "\(width)pt"
+        }
+        cachedPhone = name
+        return name
+    }
+
+    /// Launches on a fresh store with `arguments` (seed flags) at the run's
+    /// text size, then waits up to 30 s for `ready`, an element the seed
+    /// creates, because seeds can finish after the tab bar appears.
+    @discardableResult
+    static func launch(
+        _ arguments: [String] = [],
+        ready: ((XCUIApplication) -> XCUIElement)? = nil,
+        file: StaticString = #filePath, line: UInt = #line
+    ) -> XCUIApplication {
+        let app = UITestNavigation.launch([UITestNavigation.resetFlag] + arguments, textSize: textSize, file: file, line: line)
+        if let ready {
+            let element = ready(app)
+            XCTAssertTrue(element.waitForExistence(timeout: 30), "The seed never showed \(element)", file: file, line: line)
+        }
+        assertAppearance(file: file, line: line)
+        return app
+    }
+
+    /// Relaunches without the reset flag, the way a user reopens the app.
+    static func relaunch(_ app: XCUIApplication, file: StaticString = #filePath, line: UInt = #line) {
+        UITestNavigation.relaunch(app, textSize: textSize, file: file, line: line)
+    }
+
+    private static var checkedAppearance = false
+
+    /// Fails once per run when the phone's appearance is not the one the
+    /// run names, so a light run never files dark screenshots.
+    private static func assertAppearance(file: StaticString, line: UInt) {
+        guard !checkedAppearance else { return }
+        checkedAppearance = true
+        let screenshot = XCUIScreen.main.screenshot()
+        guard let pixel = UITestNavigation.color(at: CGPoint(x: 6, y: 6), in: screenshot) else { return }
+        let isDark = (pixel.red + pixel.green + pixel.blue) / 3 < 128
+        XCTAssertEqual(isDark ? "dark" : "light", appearance,
+                       "The phone shows \(pixel) at the top, which does not match DESIGN_APPEARANCE", file: file, line: line)
+    }
+
+    /// Attaches a full-screen screenshot named
+    /// `<phone>-<size>-<appearance>-<screen>` and, with DESIGN_TREES=1, the
+    /// accessibility tree as `<same>.tree`. It waits until `still` stops
+    /// moving, or a short settle when there is none.
+    static func shot(_ app: XCUIApplication, _ screen: String, still: XCUIElement? = nil) {
+        if let still, still.exists {
+            UITestNavigation.waitUntilStill(still)
+        } else {
+            Thread.sleep(forTimeInterval: 0.8)
+        }
+        let name = [phone, textSize.rawValue, appearance, screen].joined(separator: "-")
+        XCTContext.runActivity(named: "Shot \(name)") { activity in
+            let image = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
+            image.name = name
+            image.lifetime = .keepAlways
+            activity.add(image)
+            if trees {
+                let tree = XCTAttachment(string: app.debugDescription)
+                tree.name = name + ".tree"
+                tree.lifetime = .keepAlways
+                activity.add(tree)
+            }
+        }
+    }
+
+    /// Runs one capture step as a named activity. A thrown error is
+    /// recorded and the walk goes on, as failed assertions do.
+    static func step(_ name: String, _ body: () throws -> Void) {
+        XCTContext.runActivity(named: name) { _ in
+            do {
+                try body()
+            } catch {
+                XCTFail("\(name) threw \(error)")
+            }
+        }
+    }
+
+    /// The first tappable element in `query` whose label is `label` (any
+    /// case, or followed by a comma), after up to 10 s.
+    @discardableResult
+    static func tap(_ query: XCUIElementQuery, _ label: String, exact: Bool = false,
+                    file: StaticString = #filePath, line: UInt = #line) -> XCUIElement {
+        let element = UITestNavigation.hittable(query, label, exactLabel: exact, file: file, line: line)
+        element.tap()
+        return element
+    }
+
+    /// True once `element` exists, within `timeout` seconds; records a
+    /// failure that names `what` otherwise.
+    @discardableResult
+    static func expect(_ element: XCUIElement, _ what: String, timeout: TimeInterval = 10,
+                       file: StaticString = #filePath, line: UInt = #line) -> Bool {
+        let found = element.waitForExistence(timeout: timeout)
+        XCTAssertTrue(found, "\(what) never appeared", file: file, line: line)
+        return found
+    }
+
+    /// A static text whose label is `label` in any case.
+    static func text(_ app: XCUIApplication, _ label: String) -> XCUIElement {
+        app.staticTexts.labeled(label)
+    }
+
+    /// A static text whose label contains `fragment`.
+    static func text(_ app: XCUIApplication, containing fragment: String) -> XCUIElement {
+        app.staticTexts.matching(NSPredicate(format: "label CONTAINS[c] %@", fragment)).firstMatch
+    }
+
+    /// Any element whose label contains `fragment`.
+    static func any(_ app: XCUIApplication, containing fragment: String) -> XCUIElement {
+        app.descendants(matching: .any).matching(NSPredicate(format: "label CONTAINS[c] %@", fragment)).firstMatch
+    }
+
+    /// Waits for an alert, or a confirmation dialog showing `title`, and
+    /// returns whether one came up. iOS 26 draws a confirmation dialog as a
+    /// popover over a PopoverDismissRegion.
+    @discardableResult
+    static func waitForDialog(_ app: XCUIApplication, title: String? = nil, timeout: TimeInterval = 10,
+                              file: StaticString = #filePath, line: UInt = #line) -> Bool {
+        let deadline = Date.now.addingTimeInterval(timeout)
+        while Date.now < deadline {
+            if app.alerts.firstMatch.exists { return true }
+            if let title, app.staticTexts.labeled(title).exists { return true }
+            if title == nil, app.otherElements["PopoverDismissRegion"].exists { return true }
+            Thread.sleep(forTimeInterval: 0.25)
+        }
+        XCTFail("No dialog\(title.map { " titled \($0)" } ?? "") came up", file: file, line: line)
+        return false
+    }
+
+    /// Taps the visible alert or dialog button labeled `label`.
+    static func tapDialogButton(_ app: XCUIApplication, _ label: String,
+                                file: StaticString = #filePath, line: UInt = #line) {
+        let alert = app.alerts.firstMatch
+        if alert.exists {
+            let button = alert.buttons.labeled(label)
+            if button.waitForExistence(timeout: 5) {
+                button.tap()
+                return
+            }
+        }
+        UITestNavigation.hittable(app.buttons, label, exactLabel: true, file: file, line: line).tap()
+    }
+
+    /// Closes a confirmation dialog or popover without choosing, the way a
+    /// user taps outside it. iOS 26 hides a cancel-role button.
+    static func dismissDialog(_ app: XCUIApplication) {
+        let outside = app.otherElements["PopoverDismissRegion"]
+        if outside.waitForExistence(timeout: 3) {
+            outside.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.1)).tap()
+        } else {
+            app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.08)).tap()
+        }
+        Thread.sleep(forTimeInterval: 0.6)
+    }
+
+    /// Swipes the top sheet away and waits for it to settle.
+    static func closeSheet(_ app: XCUIApplication) {
+        UITestNavigation.swipeSheetDown(in: app)
+        Thread.sleep(forTimeInterval: 0.8)
+    }
+
+    /// Scrolls until `element` is visible and tappable.
+    static func reveal(_ element: XCUIElement, in app: XCUIApplication) {
+        UITestNavigation.reveal(element, in: app)
+    }
+
+    /// Swipes the screen's main scroll view up `times` times, slowly, for
+    /// screenshots of a long screen's lower part.
+    static func scrollDown(_ app: XCUIApplication, times: Int = 1) {
+        for _ in 0..<times {
+            if let scroll = app.scrollViews.allElementsBoundByIndex.last(where: { $0.isHittable }) {
+                scroll.swipeUp(velocity: .slow)
+            } else {
+                app.swipeUp(velocity: .slow)
+            }
+        }
+        Thread.sleep(forTimeInterval: 0.6)
+    }
+
+    /// The system back gesture on a pushed screen.
+    static func back(_ app: XCUIApplication) {
+        UITestNavigation.swipeBack(in: app)
+        Thread.sleep(forTimeInterval: 0.8)
+    }
+}
+
+// MARK: - Main screens (every configuration)
+
+/// The main state of every screen, one test per area. Runs in every
+/// configuration: both phones at default text and AX3, and dark mode.
+final class DesignTourMainUITests: XCTestCase {
+    override func setUpWithError() throws {
+        continueAfterFailure = true
+    }
+
+    // MAIN-TESTS
+}
+
+// MARK: - States (light, default text)
+
+/// One test per seed walk, W01 to W16 in docs/design-map/plan.md. Runs in
+/// light mode at default text only.
+final class DesignTourStatesUITests: XCTestCase {
+    override func setUpWithError() throws {
+        continueAfterFailure = true
+    }
+
+    // STATE-TESTS
+}

@@ -1,0 +1,91 @@
+id	kind	tab	view	presents_from
+preparing-library	screen	none	fitbod/App/RootView.swift:151	x_launch
+today	screen	today	fitbod/Views/TodayView.swift:38
+settings	sheet	today	fitbod/Settings/SettingsView.swift:43	today
+weekly-recap	sheet	today	fitbod/Fatigue/WeeklyRecapSheet.swift:59	today
+block-review	sheet	today	fitbod/Periodization/BlockReviewView.swift:15	today
+fatigue-signals	sheet	today	fitbod/Fatigue/DeloadSignalDetailSheet.swift:39	today, logger
+history	screen	[today, progress]	fitbod/Sessions/SessionHistoryView.swift:35	today, progress
+workout-summary	screen	[today, progress]	fitbod/Sessions/SessionDetailView.swift:24	history, logger
+per-muscle-detail	screen	today	fitbod/Fatigue/PerMuscleDetailView.swift:30	today
+session-template-detail	screen	[today, program]	fitbod/Routines/SessionTemplateDetailView.swift:21	today, routine-editor
+dialog-workout-in-progress	alert	[today, program]	fitbod/Views/TodayView.swift:340	today, session-template-detail
+dialog-couldnt-start-workout	alert	[today, program]	fitbod/Views/TodayView.swift:356	today, session-template-detail
+dialog-discard-workout-slab	alert	today	fitbod/Views/ResumeWorkoutSlab.swift:153	today
+logger	screen	[today, program]	fitbod/Sessions/SessionLoggerView.swift:53	today, program, session-template-detail
+dialog-workout-menu	dialog	[today, program]	fitbod/Sessions/SessionLoggerView.swift:254	logger
+dialog-finish-workout	dialog	[today, program]	fitbod/Sessions/SessionLoggerView.swift:155	logger, dialog-workout-menu
+dialog-discard-workout	dialog	[today, program]	fitbod/Sessions/SessionLoggerView.swift:173	dialog-workout-menu
+dialog-remove-exercise	alert	[today, program]	fitbod/Sessions/SessionLoggerView.swift:198	logger
+swap-exercise	sheet	[today, program]	fitbod/Sessions/SwapExerciseSheet.swift:27	logger
+workout-notes	sheet	[today, program]	fitbod/Sessions/WorkoutNotesSheet.swift:23	dialog-workout-menu
+pinned-note	sheet	[today, program]	fitbod/Sessions/PinnedNoteSheet.swift:24	logger
+per-set-note	sheet	[today, program]	fitbod/Sessions/PerSetNoteSheet.swift:30	logger
+why-this-weight	sheet	[today, program]	fitbod/Sessions/WhyThisWeightSheet.swift:47	logger
+decimal-rpe-picker	sheet	[today, program]	fitbod/Sessions/DecimalRPEPickerSheet.swift:22	logger
+rest-timer	sheet	[today, program]	fitbod/Sessions/RestTimer/RestTimerOverlay.swift:60	logger
+library-picker	sheet	[today, program]	fitbod/ExerciseLibrary/ExerciseLibraryView.swift:32	logger, session-editor
+try-variation	sheet	[today, program]	fitbod/Fatigue/TryVariationSheet.swift:29	logger
+program	screen	program	fitbod/Periodization/ProgramView.swift:86
+dialog-program-new	dialog	program	fitbod/Periodization/ProgramView.swift:284	program
+dialog-discard-active	alert	program	fitbod/Sessions/ResumeWorkoutBanner.swift:112	program
+start-choice	sheet	program	fitbod/Periodization/ProgramView.swift:750	dialog-program-new, program
+preset-picker	sheet	program	fitbod/Periodization/ProgramView.swift:866	start-choice
+new-block	cover	program	fitbod/Periodization/BlockBuilderView.swift:12	start-choice, preset-picker, program, today, block-review
+new-block-template	sheet	program	fitbod/Periodization/BlockBuilderView.swift:730	new-block
+new-block-duration	sheet	program	fitbod/Periodization/BlockBuilderView.swift:2986	new-block
+new-block-add-phase-type	sheet	program	fitbod/Periodization/BlockBuilderView.swift:2413	new-block
+new-block-split-picker	sheet	program	fitbod/Periodization/BlockBuilderView.swift:2777	new-block
+new-block-phase-editor	sheet	program	fitbod/Periodization/BlockBuilderView.swift:2296	new-block
+dialog-replace-phases	dialog	program	fitbod/Periodization/BlockBuilderView.swift:180	new-block-template
+dialog-discard-block	dialog	program	fitbod/Periodization/BlockBuilderView.swift:198	new-block
+block-overview	screen	[program, today]	fitbod/Periodization/BlockOverviewScreen.swift:181	program, today
+split-picker	sheet	program	fitbod/Periodization/BlockOverviewScreen.swift:1554	block-overview
+swap-confirm	sheet	program	fitbod/Periodization/BlockOverviewScreen.swift:319	block-overview
+dialog-end-block	alert	program	fitbod/Periodization/BlockOverviewScreen.swift:322	block-overview
+routine-editor	screen	program	fitbod/Periodization/SplitDetailView.swift:58	program, new-routine, today
+slot-picker	sheet	program	fitbod/Periodization/SplitDetailView.swift:758	routine-editor
+dialog-archive-routine	dialog	program	fitbod/Periodization/SplitDetailView.swift:162	routine-editor
+dialog-cannot-archive-routine	alert	program	fitbod/Periodization/SplitDetailView.swift:155	routine-editor
+dialog-remove-session	dialog	program	fitbod/Periodization/SplitDetailView.swift:185	routine-editor
+new-routine	screen	program	fitbod/Routines/NewRoutineNameScreen.swift:49	dialog-program-new, program
+archived-routines	screen	program	fitbod/Periodization/ArchivedRoutinesView.swift:32	program
+session-editor	sheet	program	fitbod/Routines/RoutineBuilderView.swift:80	routine-editor, slot-picker, session-template-detail
+warmup-config	sheet	program	fitbod/Routines/WarmupConfigSheet.swift:44	session-editor
+superset-assignment	sheet	program	fitbod/Routines/SupersetAssignmentSheet.swift:20	session-editor
+dialog-discard-changes-session	dialog	program	fitbod/Routines/RoutineBuilderView.swift:177	session-editor
+dialog-save-routine-first	alert	program	fitbod/Routines/RoutineBuilderView.swift:226	session-editor
+dialog-session-menu	dialog	program	fitbod/Routines/RoutineBuilderView.swift:237	session-editor
+dialog-archive-session	dialog	program	fitbod/Routines/RoutineBuilderView.swift:246	dialog-session-menu
+dialog-session-in-use	alert	program	fitbod/Routines/RoutineBuilderView.swift:257	dialog-session-menu
+dialog-couldnt-save	alert	program	fitbod/Routines/RoutineBuilderView.swift:268	session-editor, routine-editor, new-routine, archived-routines, block-overview
+progress	screen	progress	fitbod/Progress/ProgressHomeView.swift:64
+exercise-progress	screen	[progress, library]	fitbod/Progress/ExerciseProgressView.swift:71	progress, exercise-detail, exercise-history
+weekly-tonnage	screen	progress	fitbod/Progress/WeeklyTonnageView.swift:80	progress
+week-detail	screen	progress	fitbod/Progress/WeekDetailView.swift:42	weekly-tonnage
+prs	screen	progress	fitbod/Progress/ExercisePRsView.swift:95	progress
+pr-session	screen	progress	fitbod/Progress/ExercisePRsView.swift:539	prs
+compare	screen	progress	fitbod/Progress/SessionComparisonView.swift:47	progress
+library	screen	library	fitbod/ExerciseLibrary/ExerciseLibraryView.swift:32
+filter-picker	sheet	library	fitbod/ExerciseLibrary/FilterPickerSheet.swift:48	library, library-picker
+exercise-detail	screen	library	fitbod/ExerciseLibrary/ExerciseDetailView.swift:80	library
+exercise-history	screen	library	fitbod/ExerciseLibrary/ExerciseHistoryView.swift:43	exercise-detail
+custom-exercise	sheet	library	fitbod/ExerciseLibrary/CustomExerciseEditor.swift:83	library, exercise-detail
+muscle-picker	sheet	library	fitbod/ExerciseLibrary/MusclePickerSheet.swift:35	custom-exercise
+equipment-picker	sheet	library	fitbod/ExerciseLibrary/CustomExerciseEditor.swift:545	custom-exercise
+photos-picker	system	library	fitbod/ExerciseLibrary/CustomExerciseImagePicker.swift:57	custom-exercise
+dialog-custom-exercise-discard	dialog	library	fitbod/ExerciseLibrary/CustomExerciseEditor.swift:139	custom-exercise
+dialog-delete-exercise	alert	library	fitbod/ExerciseLibrary/CustomExerciseEditor.swift:148	custom-exercise
+dialog-changes-not-saved	alert	library	fitbod/ExerciseLibrary/CustomExerciseEditor.swift:126	custom-exercise
+plate-inventory	screen	settings	fitbod/Settings/PlateInventoryEditor.swift:23	settings
+add-plate	sheet	settings	fitbod/Settings/PlateInventoryEditor.swift:424	plate-inventory
+plate-calculator	sheet	settings	fitbod/Settings/PlateCalculatorSheet.swift:43	plate-inventory
+dialog-reset-plate-inventory	alert	settings	fitbod/Settings/PlateInventoryEditor.swift:117	plate-inventory
+volume-targets	screen	settings	fitbod/Settings/MuscleVolumeTargetEditor.swift:34	settings
+dialog-reset-volume-targets	alert	settings	fitbod/Settings/MuscleVolumeTargetEditor.swift:81	volume-targets
+component-gallery	screen	settings	fitbod/Design/BRUComponentGallery.swift:7	settings
+share-sheet	system	settings	fitbod/Settings/SettingsView.swift:300	settings
+file-importer	system	settings	fitbod/Settings/SettingsView.swift:114	settings
+dialog-restore-confirm	alert	settings	fitbod/Settings/SettingsView.swift:120	file-importer
+dialog-restore-complete	alert	settings	fitbod/Settings/SettingsView.swift:132	dialog-restore-confirm
+dialog-restore-error	alert	settings	fitbod/Settings/SettingsView.swift:140	file-importer
