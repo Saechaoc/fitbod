@@ -312,7 +312,7 @@ private struct PRsHost: View {
                 ) {
                     prRow(kind: kind, entry: entry)
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(.bruRow)
                 .accessibilityLabel("\(PRBucketRanking.exerciseName(entry)), \(prKindLabel(kind: kind)), \(PRRowText.spoken(rowText(kind: kind, set: entry)))")
                 .accessibilityValue(entry.completedAt.formatted(date: .abbreviated, time: .omitted))
 

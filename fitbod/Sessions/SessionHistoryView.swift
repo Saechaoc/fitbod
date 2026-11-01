@@ -84,7 +84,7 @@ public struct SessionHistoryView: View {
                                 unit: weightUnit
                             )
                         }
-                        .buttonStyle(.plain)
+                        .buttonStyle(.bruRow)
                         .accessibilityIdentifier("history.row")
                         BRUDivider(.hair)
                     }

@@ -321,14 +321,14 @@ private struct FilteredExerciseList: View {
             } label: {
                 ExerciseRow(exercise: ex, accessory: .add)
             }
-            .buttonStyle(.plain)
+            .buttonStyle(.bruRow)
             .accessibilityHint("Adds this exercise")
             .accessibilityIdentifier("exercise.pick.\(ex.id.uuidString)")
         } else {
             NavigationLink(value: ex) {
                 ExerciseRow(exercise: ex, accessory: .loggedCount(loggedCount))
             }
-            .buttonStyle(.plain)
+            .buttonStyle(.bruRow)
         }
     }
 

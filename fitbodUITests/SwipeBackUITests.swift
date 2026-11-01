@@ -15,6 +15,14 @@ import XCTest
 /// block builder and the custom exercise editor) open as sheets. An
 /// exercise's history and its chart open on Library's stack (T96); before,
 /// VIEW ALL HISTORY returned to the Library list (see the T18 notes).
+///
+/// Ticket T106, finding F183. A sideways drag that started and ended on a
+/// full-width row pressed it, so an edge swipe on a root screen that
+/// started on a row opened the row. Program's template rows, History's
+/// rows, the PR rows and Library's rows now open only on a tap: a touch
+/// that moves more than 10pt before it lifts opens nothing, and a drag up
+/// that starts on a row still scrolls. At AX3 a History row keeps its
+/// weekday whole (finding F187).
 final class SwipeBackUITests: XCTestCase {
     /// The control `open` tapped last, and where it sat.
     private var lastOpened: (control: XCUIElement, frame: CGRect)?
@@ -451,6 +459,89 @@ final class SwipeBackUITests: XCTestCase {
         XCTAssertTrue(waitUntilHittable(inventory), "Settings must show again after Plate Inventory closes")
     }
 
+    // MARK: - Rows open only on a tap
+
+    /// Program is a root screen, so the drag starts 1pt in, where an edge
+    /// swipe starts.
+    @MainActor
+    func testSidewaysDragOnATemplateRowOpensNothing() throws {
+        let app = UITestNavigation.launch(UITestNavigation.freshStore)
+        UITestNavigation.selectTab("Program", in: app)
+        let row = app.buttons.matching(NSPredicate(format: "label MATCHES %@", "^[0-9]+W, .*")).firstMatch
+        XCTAssertTrue(row.waitForExistence(timeout: 10), "Program must list its templates")
+        UITestNavigation.reveal(row, in: app)
+        let newBlock = app.staticTexts.labeled("NEW BLOCK")
+        assertSidewaysDragOpensNothing(row, from: 1, "a template row", opening: newBlock, in: app)
+        assertTapOpens(row, newBlock, "a template row")
+    }
+
+    /// History is a pushed screen, so the drag starts 40pt in, clear of
+    /// the edge swipe back.
+    @MainActor
+    func testSidewaysDragOnAHistoryRowOpensNothing() throws {
+        let app = openProgress()
+        open(app.buttons["progress.history"], in: app)
+        let row = historyRow(in: app)
+        XCTAssertTrue(row.waitForExistence(timeout: 10), "History must list the seeded workouts")
+        assertSidewaysDragOpensNothing(row, from: 40, "a History row", opening: summary(in: app), in: app)
+        assertTapOpens(row, summary(in: app), "a History row")
+    }
+
+    /// Personal Records is a pushed screen, so the drag starts 40pt in.
+    @MainActor
+    func testSidewaysDragOnARecordRowOpensNothing() throws {
+        let app = openProgress()
+        open(button(beginningWith: "Personal Records", in: app), in: app)
+        let records = app.buttons.matching(NSPredicate(format: "label CONTAINS %@", ", Weight PR, "))
+        // The third row, low enough to stay on screen once a drag up has
+        // scrolled the list.
+        let row = records.element(boundBy: 2)
+        XCTAssertTrue(row.waitForExistence(timeout: 10), "Personal Records must list the seeded records")
+        let session = app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH %@", "Session of ")).firstMatch
+        assertSidewaysDragOpensNothing(row, from: 40, "a record row", opening: session, in: app)
+        assertDragUpScrolls(from: row, "a record row", opening: session, in: app)
+        assertTapOpens(row, session, "a record row")
+    }
+
+    /// Library is a root screen, so the drag starts 1pt in.
+    @MainActor
+    func testSidewaysDragOnALibraryRowOpensNothing() throws {
+        let app = UITestNavigation.launch(UITestNavigation.freshStore)
+        UITestNavigation.selectTab("Library", in: app)
+        // The fourth row, low enough to stay on screen once a drag up has
+        // scrolled the list.
+        let row = app.buttons.matching(NSPredicate(format: "label CONTAINS %@", ", Logged ")).element(boundBy: 3)
+        XCTAssertTrue(row.waitForExistence(timeout: 10), "Library must list the catalog")
+        let exercise = viewAllHistory(in: app)
+        assertSidewaysDragOpensNothing(row, from: 1, "a Library row", opening: exercise, in: app)
+        assertDragUpScrolls(from: row, "a Library row", opening: exercise, in: app)
+        assertTapOpens(row, exercise, "a Library row")
+    }
+
+    /// Finding F187: at AX3 a History row broke its weekday in its 64pt
+    /// date column, "WED" as "WE" over "D". At accessibility sizes the row
+    /// stacks its date over its name and total, so the weekday reads whole
+    /// on one line.
+    @MainActor
+    func testHistoryRowKeepsItsWeekdayWholeAtAX3() throws {
+        let app = UITestNavigation.launch(UITestNavigation.progressHistory, textSize: .ax3)
+        UITestNavigation.selectTab("Progress", in: app)
+        open(app.buttons["progress.history"], in: app)
+        let row = historyRow(in: app)
+        XCTAssertTrue(row.waitForExistence(timeout: 10), "History must list the seeded workouts")
+        revealWhole(row, in: app)
+        UITestNavigation.saveScreenshot("T106", "history-row", textSize: .ax3)
+
+        // The row reads its date as "Sunday, October 25"; it draws "SUN 25".
+        let weekday = try shortWeekday(in: row.label)
+        let date = row.staticTexts.matching(NSPredicate(format: "label BEGINSWITH %@", weekday + " ")).firstMatch
+        XCTAssertTrue(date.exists, "The row must draw its date, \(weekday) and the day, in \(row.label)")
+        UITestNavigation.assertNotTallerThanWide(date)
+        let text = try UITestNavigation.readText(in: row.frame, of: XCUIScreen.main.screenshot())
+        XCTAssertTrue(text.split(separator: " ").contains { $0 == weekday },
+                      "The row must draw \(weekday) whole on one line, but reads \"\(text)\"")
+    }
+
     // MARK: - Block overview header
 
     /// Review item 43: the block overview showed the system back button
@@ -762,5 +853,87 @@ final class SwipeBackUITests: XCTestCase {
         XCTAssertLessThan(back.frame.minY, todayHeaderBottom,
                           "‹ BACK must sit in the top row, level with Today's header, but starts at \(back.frame.minY)",
                           file: file, line: line)
+    }
+
+    // MARK: - Row checks
+
+    /// Drags from `inset` points inside the left edge of `row`, along its
+    /// middle, 200pt to the right, and checks that the drag opens nothing:
+    /// `destination` never shows, and the row stays where it was.
+    @MainActor
+    private func assertSidewaysDragOpensNothing(
+        _ row: XCUIElement, from inset: CGFloat, _ name: String, opening destination: XCUIElement,
+        in app: XCUIApplication, file: StaticString = #filePath, line: UInt = #line
+    ) {
+        XCTAssertTrue(waitUntilHittable(row), "\(name) cannot be dragged", file: file, line: line)
+        UITestNavigation.waitUntilStill(row, interval: 0.3)
+        let before = row.frame
+        let start = app.coordinate(withNormalizedOffset: .zero)
+            .withOffset(CGVector(dx: before.minX + inset, dy: before.midY))
+        start.press(forDuration: 0.05, thenDragTo: start.withOffset(CGVector(dx: 200, dy: 0)),
+                    withVelocity: .default, thenHoldForDuration: 0)
+        // A row opens its screen as the finger lifts, so a screen the drag
+        // opened shows well within this wait; nothing showing takes all of it.
+        XCTAssertFalse(destination.waitForExistence(timeout: 2),
+                       "A sideways drag on \(name) must not open it", file: file, line: line)
+        XCTAssertTrue(row.isHittable, "A sideways drag on \(name) must leave it on screen", file: file, line: line)
+        XCTAssertEqual(row.frame, before, "A sideways drag on \(name) must leave it where it was", file: file, line: line)
+    }
+
+    /// Drags up 200pt from the middle of `row`, and checks that the list
+    /// scrolls with the finger and the drag opens nothing.
+    @MainActor
+    private func assertDragUpScrolls(
+        from row: XCUIElement, _ name: String, opening destination: XCUIElement,
+        in app: XCUIApplication, file: StaticString = #filePath, line: UInt = #line
+    ) {
+        let before = row.frame
+        let start = app.coordinate(withNormalizedOffset: .zero).withOffset(CGVector(dx: before.midX, dy: before.midY))
+        // Held before it lifts, so the list stops under the finger.
+        start.press(forDuration: 0.05, thenDragTo: start.withOffset(CGVector(dx: 0, dy: -200)),
+                    withVelocity: .slow, thenHoldForDuration: 0.3)
+        UITestNavigation.waitUntilStill(row, interval: 0.3)
+        XCTAssertFalse(destination.exists, "A drag up that starts on \(name) must not open it", file: file, line: line)
+        XCTAssertLessThan(row.frame.minY, before.minY - 100,
+                          "A drag up that starts on \(name) must scroll the list, but it moved from \(before) to \(row.frame)",
+                          file: file, line: line)
+    }
+
+    /// Taps `row` and checks that it opens `destination`.
+    @MainActor
+    private func assertTapOpens(
+        _ row: XCUIElement, _ destination: XCUIElement, _ name: String,
+        file: StaticString = #filePath, line: UInt = #line
+    ) {
+        XCTAssertTrue(waitUntilHittable(row), "\(name) cannot be tapped", file: file, line: line)
+        row.tap()
+        XCTAssertTrue(destination.waitForExistence(timeout: 10), "A tap on \(name) must open it", file: file, line: line)
+    }
+
+    /// Drags a pushed screen until `element` shows whole between its
+    /// header and the tab bar.
+    @MainActor
+    private func revealWhole(_ element: XCUIElement, in app: XCUIApplication, file: StaticString = #filePath, line: UInt = #line) {
+        let top = app.buttons["Back"].firstMatch.frame.maxY + 4
+        let bottom = UITestNavigation.tab("Today", in: app).frame.minY - 4
+        for _ in 0..<6 {
+            let frame = element.frame
+            if frame.minY >= top && frame.maxY <= bottom { return }
+            let drag = max(-300, min(300, (top + bottom) / 2 - frame.midY))
+            let startY = drag > 0 ? top + 20 : bottom - 20
+            UITestNavigation.dragLogger(from: startY, to: startY + drag, in: app)
+            UITestNavigation.waitUntilStill(element)
+        }
+        XCTFail("\(element) must show whole between the header at \(top) and the tab bar at \(bottom)", file: file, line: line)
+    }
+
+    /// The weekday a History row draws, such as "SUN", from its label,
+    /// which reads the weekday in full, such as "Sunday".
+    private func shortWeekday(in label: String) throws -> String {
+        let calendar = Calendar.current
+        let parts = label.components(separatedBy: ", ")
+        let index = try XCTUnwrap(parts.lazy.compactMap { calendar.weekdaySymbols.firstIndex(of: $0) }.first,
+                                  "The row must read its weekday: \(label)")
+        return calendar.shortWeekdaySymbols[index].uppercased()
     }
 }
