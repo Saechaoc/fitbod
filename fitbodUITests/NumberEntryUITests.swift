@@ -52,10 +52,12 @@ final class NumberEntryUITests: XCTestCase {
         tapAboveText(of: reps)
         reps.typeText("5")
         XCTAssertEqual(reps.value as? String, "5", "The first digit after one tap must land")
-        XCTAssertFalse(rest.exists, "The tap must end the rest")
         closeKeyboard(in: app)
+        // The rest dock steps aside for the keyboard, so only with the
+        // keyboard gone does it show whether the rest ended.
+        XCTAssertFalse(rest.exists, "The tap must end the rest")
         XCTAssertEqual(UITestNavigation.enter("6", into: reps), "6", "6 typed over 5 must replace it")
-        UITestNavigation.assertAboveKeyboard(reps, and: [rest], in: app)
+        UITestNavigation.assertAboveKeyboard(reps, in: app)
         closeKeyboard(in: app)
 
         let next = app.textFields["set.weight.1.S2"]
