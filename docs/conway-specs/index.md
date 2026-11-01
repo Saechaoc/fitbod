@@ -46,7 +46,6 @@ Every Phase 2 ticket is done and archived.
 | [T85](tickets/T85-pr-row-phrases.md) | PR rows keep "@ RPE" and the kind label whole |
 | [T98](tickets/T98-chart-audio-graph-rounding.md) | The progress chart's audio graph reads rounded values |
 | [T106](tickets/T106-sideways-drag-does-not-open-rows.md) | A sideways drag on a row does not open it |
-| [T107](tickets/T107-plate-screens-tabs-targets-stack.md) | The plate screens keep their tabs whole and their controls easy to hit |
 | [T108](tickets/T108-block-overview-and-routine-at-ax3.md) | The block overview and the routine screen read cleanly at AX3 |
 | [T109](tickets/T109-muscle-screen-steppers-order-tests.md) | The muscle screen uses BRU steppers, keeps a stable order and is always tested |
 | [T111](tickets/T111-session-editor-rows-announced-removable.md) | Session editor rows are announced, removable and easy to hit |
@@ -57,6 +56,7 @@ Every Phase 2 ticket is done and archived.
 | [T120](tickets/T120-new-block-toast-and-duration-steppers.md) | New Block's undo toast stays small, and its duration steppers say what they change |
 | [T122](tickets/T122-routine-session-drag-slots.md) | A session dragged on the routine screen lands on the slot under the finger |
 | [T124](tickets/T124-rest-sheet-fits-at-ax3.md) | The rest sheet's countdown and ±15s buttons fit at AX3 |
+| [T125](tickets/T125-logger-plates-during-entry.md) | The logger shows a set's plates while its weight is being entered |
 
 ### Phase 4: test health
 

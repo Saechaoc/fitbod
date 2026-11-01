@@ -111,6 +111,12 @@ Product decisions are in [decisions.md](decisions.md), and they win over this fi
 - Rejected: keeping every calibrating cell read-only, because the set then logs last session's weight, which the lifter can neither see nor change, and Override has no field to focus.
 - Rejected: replacing the range with a plain field, because the range is the calibrating prescription.
 
+### Plates in the logger
+
+- Coordinator call, 2026-11-01 (T107 finding F286, decided under autopilot; the user can revisit it): a set's plate stack shows under the set while its weight field has focus, for the weight in the field, and hides when the field loses focus.
+- Rejected: a tap toggle on the weight cell, because the editable field takes the tap; a separate PLATES control, because it adds a control to a tight row; a long press, because nothing on screen shows it.
+- Why: the lifter sees the plate math while setting the weight, which is when it matters, and the field keeps working as a number field.
+
 ## Program and blocks
 
 ### One template catalog
