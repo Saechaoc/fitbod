@@ -216,10 +216,12 @@ struct ProgressChartDescriptorTests {
     }
 
     /// Runs the main run loop in 50 ms steps while SwiftUI renders the
-    /// screen, until `done` holds or two seconds pass.
+    /// screen, until `done` holds or ten seconds pass. A ceiling, not a
+    /// wait: other suites' main-actor work, such as a Vision read, can
+    /// run inside the run loop and hold it for a second or more.
     @MainActor
     private func waitUntil(_ done: () -> Bool) {
-        let deadline = Date.now.addingTimeInterval(2)
+        let deadline = Date.now.addingTimeInterval(10)
         while !done(), Date.now < deadline {
             RunLoop.main.run(until: Date.now.addingTimeInterval(0.05))
         }
