@@ -37,7 +37,7 @@ These are findings F366 and F367, which T137's worker found.
 
 - Each row looks as it does today, pressed state included.
 - Keep every row's accessibility identifier.
-- Commit no new UI test: `.bruRow`'s tap-only behavior is covered by `ProgressRowsTapOnlyUITests`.
+- Commit no new UI test; the user asked for fewer UI tests (T143), and the throwaway checks below are the proof.
 
 ## Ownership
 
