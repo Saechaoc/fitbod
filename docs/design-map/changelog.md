@@ -2,6 +2,12 @@
 
 Newest first: one entry for each stage of [plan.md](plan.md) up to S2, then one for each commit.
 
+## 2026-11-01: review decisions
+
+- Added [decisions.md](decisions.md), which records the user's review of the map.
+  All four mock-ups are approved, every audit row has a stage from the development guide, nine patterns are adopted as fixes, and 40 of the 41 missing screens are in scope for the redesign.
+- D-01 to D-04 stay Fix now: the review's draft deferred them, but the development guide never defers data loss or failed saves.
+
 ## 2026-11-01: S8, summary and final check
 
 - Wrote the summary in [README.md](README.md): the four blockers, the worst workflow dead ends, the four must-have missing screens and the largest patterns.

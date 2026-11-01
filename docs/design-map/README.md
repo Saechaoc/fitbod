@@ -16,6 +16,7 @@ Status: complete; [changelog.md](changelog.md) records each stage.
 | [missing-screens.md](missing-screens.md) | the screens and states the workflows need that the app does not have |
 | [mockups/](mockups/) | BRU mock-ups of the must-have missing screens |
 | [audit.md](audit.md) | every design problem found, sorted by severity, and the patterns behind them |
+| [decisions.md](decisions.md) | the review decisions: each audit row's stage, the approved mock-ups, the adopted patterns and the missing screens to build |
 | [tools/](tools/) | the screenshot tour, its exporter and the checks |
 | [plan.md](plan.md) | how the map was planned and made |
 | [changelog.md](changelog.md) | what changed and why |
