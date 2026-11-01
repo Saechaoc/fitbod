@@ -115,8 +115,10 @@ public final class BlockDraft {
         phases.reduce(0) { $0 + $1.weeks }
     }
 
+    /// The midnight after the plan's last day, counted the way
+    /// `PeriodizationEngine` counts block days.
     public var computedEndDate: Date {
-        startDate.addingTimeInterval(Double(totalWeeks * 7) * 86_400)
+        PeriodizationEngine.startOfDay(totalWeeks * 7, from: startDate)
     }
 
     public func save(into context: ModelContext) throws {

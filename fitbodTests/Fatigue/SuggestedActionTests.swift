@@ -202,12 +202,14 @@ struct SuggestedActionTests {
         try insertStalledSessionsThisWeek(ctx, ex: ex, rpes: [8.0, 8.0, 8.0, 8.0])
         try insertChestTarget(ctx, muscle: muscles.chest, mav: 2)
 
-        // Block: accumulation phase started 14 days ago (now is in week 3,
-        // weekIndex=2); deload phase begins on day 28 (i.e., 14 days from now).
+        // Block: accumulation phase started 14 calendar days ago (now is in
+        // week 3, weekIndex=2); deload phase begins on day 28 (i.e., 14 days
+        // from now). Calendar days, as the engine counts them: near midnight
+        // in a daylight-saving week, 14 × 86,400 s back lands on another day.
         let now = Date.now
         let block = Block()
         block.name = "Test Block"
-        block.startDate = now.addingTimeInterval(-14 * 86_400)
+        block.startDate = try #require(Calendar.current.date(byAdding: .day, value: -14, to: now))
         block.isActive = true
         ctx.insert(block)
 

@@ -337,9 +337,11 @@ public enum PlateauDetector {
     /// cannot fire and we return false (falls through to Branch 4).
     ///
     /// Per the Phase 1 schema, BlockPhase carries `weeks: Int` + `nameRaw:
-    /// String` and does NOT carry its own startDate — phase start dates
-    /// are computed as Block.startDate + cumulative weeks of preceding
-    /// phases (ordered by `orderIndex`).
+    /// String` and does NOT carry its own startDate — a phase starts on the
+    /// block day after the cumulative weeks of preceding phases (ordered by
+    /// `orderIndex`). Block days are calendar days from the day the block
+    /// started, as `PeriodizationEngine` counts them, so a phase starts at
+    /// local midnight.
     @MainActor
     private static func isInBlockWeekThreeWithDeloadComing(now: Date, in context: ModelContext) -> Bool {
         let descriptor = FetchDescriptor<Block>(
@@ -349,19 +351,18 @@ public enum PlateauDetector {
         let phases = (block.phases ?? []).sorted { $0.orderIndex < $1.orderIndex }
         guard !phases.isEmpty else { return false }
 
-        // Compute the start date of each phase by accumulating weeks.
-        var phaseStart = block.startDate
+        // Compute the first day of each phase by accumulating weeks.
+        let today = PeriodizationEngine.days(from: block.startDate, to: now)
+        var phaseStart = 0
         var currentIdx: Int? = nil
         var weekIndex: Int = 0
-        var deloadStart: Date? = nil
+        var deloadStart: Int? = nil
         var sawCurrent = false
         for (i, phase) in phases.enumerated() {
-            let span = TimeInterval(phase.weeks) * 7 * 86_400
-            let phaseEnd = phaseStart.addingTimeInterval(span)
-            if !sawCurrent, now >= phaseStart, now < phaseEnd {
+            let phaseEnd = phaseStart + phase.weeks * 7
+            if !sawCurrent, today >= phaseStart, today < phaseEnd {
                 currentIdx = i
-                let elapsed = now.timeIntervalSince(phaseStart)
-                weekIndex = Int(elapsed / (7 * 86_400))
+                weekIndex = (today - phaseStart) / 7
                 sawCurrent = true
             }
             // Track the first deload AFTER the current phase.
@@ -376,8 +377,8 @@ public enum PlateauDetector {
         guard weekIndex >= 2 else { return false }
 
         guard let deload = deloadStart else { return false }
-        let delta = deload.timeIntervalSince(now)
-        return delta >= 0 && delta <= 14 * 86_400
+        let daysToDeload = deload - today
+        return daysToDeload >= 0 && daysToDeload <= 14
     }
 
     /// Monday-anchored midnight per Pitfall #4.

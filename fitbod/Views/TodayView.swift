@@ -540,11 +540,14 @@ public struct TodayView: View {
         let cal = Calendar.current
         let today = cal.startOfDay(for: .now)
         let thisMonday = today.mondayAtMidnightForToday(weekStartsMonday: settings.weekStartsMonday)
-        let lastMonday = thisMonday.addingTimeInterval(-7 * 86_400)
+        // Calendar weeks, as the recap counts them: a week with a
+        // daylight-saving change is an hour off 7 × 86,400 s.
+        let lastMonday = FatigueModel.date(byAddingWeeks: -1, to: thisMonday, calendar: cal)
+        let nextMonday = FatigueModel.date(byAddingWeeks: 1, to: thisMonday, calendar: cal)
 
         let thisWeekCount = SessionSetActions.countedWorkouts(allSessions.filter { s in
             s.startedAt >= thisMonday &&
-            s.startedAt < thisMonday.addingTimeInterval(7 * 86_400)
+            s.startedAt < nextMonday
         }).count
 
         let lastWeekCount = SessionSetActions.countedWorkouts(allSessions.filter { s in
@@ -580,12 +583,13 @@ public struct TodayView: View {
     }
 
     /// 1-based day in the active block's plan (for "DAY 01 / 28" in
-    /// BlackSlabCTA). Nil past the plan, so the slab shows no day rather
-    /// than counting from day 1 again.
+    /// BlackSlabCTA), in the calendar days `PeriodizationEngine` counts, so
+    /// the day and the week agree. Nil past the plan, so the slab shows no
+    /// day rather than counting from day 1 again.
     private var dayIndexInBlock: Int? {
         guard let block = activeBlocks.first else { return 1 }
         guard !isPastPlan else { return nil }
-        let daysSince = Calendar.current.dateComponents([.day], from: block.startDate, to: .now).day ?? 0
+        let daysSince = PeriodizationEngine.days(from: block.startDate, to: .now)
         return min(max(daysSince, 0), totalDaysInBlock - 1) + 1
     }
 
@@ -625,7 +629,7 @@ public struct TodayView: View {
     private func checkWeeklyRecap() {
         guard let settings = settingsList.first else { return }
         let thisMonday = Date.now.mondayAtMidnightForToday(weekStartsMonday: settings.weekStartsMonday)
-        let priorWeekStart = thisMonday.addingTimeInterval(-7 * 86_400)
+        let priorWeekStart = FatigueModel.date(byAddingWeeks: -1, to: thisMonday)
         let hasSessions = lastWeekSessionsCount(start: priorWeekStart, end: thisMonday) > 0
 
         let decision = WeeklyRecapTrigger.evaluate(

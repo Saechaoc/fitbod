@@ -38,9 +38,12 @@ struct BlockOverviewStatesTests {
         PhaseEnding(day: 40, states: [.done, .done, .done]),
     ])
     func completedPhaseStates(_ ending: PhaseEnding) {
-        // Midday, so the end falls inside its day.
+        // Midday, so the end falls inside its day. Days count in UTC, where
+        // the fixture's Monday starts.
         let endedAt = Self.monday.addingTimeInterval((Double(ending.day) + 0.5) * 86_400)
-        let states = CompletedPhaseState.states(phaseWeeks: [2, 1, 1], startedAt: Self.monday, endedAt: endedAt)
+        let states = CompletedPhaseState.states(
+            phaseWeeks: [2, 1, 1], startedAt: Self.monday, endedAt: endedAt, calendar: Self.utc
+        )
         #expect(states == ending.states)
     }
 

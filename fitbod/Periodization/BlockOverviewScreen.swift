@@ -101,10 +101,15 @@ enum CompletedPhaseState: Equatable, Sendable {
     }
 
     /// One state per phase, in order. Days count from the block's start in
-    /// whole 24-hour days, as `PeriodizationEngine` counts them, so the
-    /// phase that showed NOW when the block ended is the one it cut short.
-    static func states(phaseWeeks: [Int], startedAt: Date, endedAt: Date) -> [CompletedPhaseState] {
-        let endDay = Int(floor(endedAt.timeIntervalSince(startedAt) / 86_400))
+    /// calendar days, as `PeriodizationEngine` counts them, so the phase
+    /// that showed NOW when the block ended is the one it cut short.
+    static func states(
+        phaseWeeks: [Int],
+        startedAt: Date,
+        endedAt: Date,
+        calendar: Calendar = .current
+    ) -> [CompletedPhaseState] {
+        let endDay = PeriodizationEngine.days(from: startedAt, to: endedAt, calendar: calendar)
         var firstDay = 0
         var states: [CompletedPhaseState] = []
         for weeks in phaseWeeks {
@@ -138,9 +143,11 @@ enum PlanWeek: Equatable, Sendable {
     static let completeLabel = "PLAN COMPLETE"
 
     /// Where `block` is on `date`, or nil when it is not active or has not
-    /// started.
+    /// started: before the day it started, as `PeriodizationEngine` counts
+    /// block days.
     static func of(_ block: Block, on date: Date) -> PlanWeek? {
-        guard block.derivedStatus == .active, date >= block.startDate else { return nil }
+        guard block.derivedStatus == .active,
+              PeriodizationEngine.days(from: block.startDate, to: date) >= 0 else { return nil }
         return PeriodizationEngine.weekIndex(for: block, on: date).map(PlanWeek.week) ?? .complete
     }
 }
@@ -346,14 +353,16 @@ public struct BlockOverviewScreen: View {
         BlockNumbering.number(of: block, among: allBlocks)
     }
 
+    /// Days left in the plan, today included, in the calendar days
+    /// `PeriodizationEngine` counts.
     private var computedDaysRemaining: Int {
         guard let endDate = block.endDate else {
             // Fallback: project from phases if endDate is nil
             let totalDays = MesocycleWeekPage.totalWeeks(of: block) * 7
-            let daysSince = Int(floor(Date.now.timeIntervalSince(block.startDate) / 86_400))
+            let daysSince = PeriodizationEngine.days(from: block.startDate, to: .now)
             return max(0, totalDays - daysSince)
         }
-        return max(0, Int(ceil(endDate.timeIntervalSince(Date.now) / 86_400)))
+        return max(0, PeriodizationEngine.days(from: .now, to: endDate))
     }
 
     private var totalWeeks: Int {

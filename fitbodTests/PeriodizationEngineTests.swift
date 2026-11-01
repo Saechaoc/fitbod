@@ -180,4 +180,80 @@ struct PeriodizationEngineTests {
         #expect(context.isCurrentWeek == false)
         #expect(context.daysRemaining == 0)
     }
+
+    // MARK: - Block weeks start at local midnight (T142, F359)
+
+    /// Los Angeles, where the clocks went back an hour at 2 am on Sunday,
+    /// Nov 1, 2026.
+    private func losAngeles() throws -> Calendar {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = try #require(TimeZone(identifier: "America/Los_Angeles"))
+        return calendar
+    }
+
+    private func date(
+        _ year: Int, _ month: Int, _ day: Int, _ hour: Int = 0, _ minute: Int = 0,
+        in calendar: Calendar
+    ) throws -> Date {
+        try #require(calendar.date(from: DateComponents(year: year, month: month, day: day, hour: hour, minute: minute)))
+    }
+
+    /// Three weeks, one phase a week.
+    private func makeThreeWeekBlock(startDate: Date) -> Block {
+        makeBlock(startDate: startDate, phases: [
+            (.accumulation, 1, 1.0, 0.75),
+            (.intensification, 1, 0.85, 0.88),
+            (.deload, 1, 0.5, 0.75),
+        ])
+    }
+
+    @Test("a block week starts at local midnight, whatever time the block started")
+    func blockWeekStartsAtLocalMidnight() throws {
+        let losAngeles = try losAngeles()
+        // Started on Monday, Oct 5, 2026 at 6:05 am.
+        let block = makeThreeWeekBlock(startDate: try date(2026, 10, 5, 6, 5, in: losAngeles))
+        let nextMondayMorning = try date(2026, 10, 12, 6, 0, in: losAngeles)
+
+        #expect(PeriodizationEngine.weekIndex(for: block, on: nextMondayMorning, calendar: losAngeles) == 1)
+        #expect(PeriodizationEngine.phase(for: block, on: nextMondayMorning, calendar: losAngeles)?.kind == .intensification)
+    }
+
+    @Test("a daylight-saving change does not move a block week")
+    func daylightSavingChangeKeepsTheWeek() throws {
+        let losAngeles = try losAngeles()
+        // Started at local midnight on Monday, Oct 26, 2026, a week that
+        // is an hour longer than 7 × 86,400 s.
+        let block = makeThreeWeekBlock(startDate: try date(2026, 10, 26, in: losAngeles))
+        let sundayNight = try date(2026, 11, 1, 23, 30, in: losAngeles)
+
+        #expect(PeriodizationEngine.weekIndex(for: block, on: sundayNight, calendar: losAngeles) == 0)
+        #expect(PeriodizationEngine.phase(for: block, on: sundayNight, calendar: losAngeles)?.kind == .accumulation)
+    }
+
+    @Test("a week context runs from local midnight to local midnight")
+    func weekContextRunsMidnightToMidnight() throws {
+        let losAngeles = try losAngeles()
+        let block = makeThreeWeekBlock(startDate: try date(2026, 10, 26, 18, 30, in: losAngeles))
+        let mondayMorning = try date(2026, 11, 2, 7, 0, in: losAngeles)
+
+        let context = try #require(
+            PeriodizationEngine.weekContext(for: block, weekIndex: 1, on: mondayMorning, calendar: losAngeles)
+        )
+
+        #expect(context.weekStartDate == (try date(2026, 11, 2, in: losAngeles)))
+        #expect(context.weekEndDate == (try date(2026, 11, 9, in: losAngeles)).addingTimeInterval(-1))
+        #expect(context.isCurrentWeek)
+        #expect(context.daysRemaining == 7)
+    }
+
+    @Test("a day that starts at 1 am is still one block day")
+    func dayWithoutMidnightIsOneDay() throws {
+        var saoPaulo = Calendar(identifier: .gregorian)
+        saoPaulo.timeZone = try #require(TimeZone(identifier: "America/Sao_Paulo"))
+        // The clocks went from midnight to 1 am on Sunday, Nov 4, 2018.
+        let block = makeThreeWeekBlock(startDate: try date(2018, 11, 4, 10, 0, in: saoPaulo))
+        let nextSunday = try date(2018, 11, 11, 10, 30, in: saoPaulo)
+
+        #expect(PeriodizationEngine.weekIndex(for: block, on: nextSunday, calendar: saoPaulo) == 1)
+    }
 }
