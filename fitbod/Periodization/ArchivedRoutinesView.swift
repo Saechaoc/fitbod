@@ -49,9 +49,9 @@ public struct ArchivedRoutinesView: View {
     /// row, shrinking it if it must, and wraps one with a space. At default
     /// text and smaller a no-break space keeps "Archived routines" on one
     /// line, at about 0.85 of its size on the small phone (T38, finding
-    /// F149), as the weekly recap's title does. Larger text wraps between
-    /// the words, where one line would have to shrink past the header's
-    /// limit. VoiceOver reads the title the same either way.
+    /// F149), as the weekly recap's title does. Larger text keeps the space
+    /// and wraps between the words, as before. VoiceOver reads the title the
+    /// same either way.
     private var title: String {
         dynamicTypeSize <= .large ? "Archived\u{00A0}routines" : "Archived routines"
     }
