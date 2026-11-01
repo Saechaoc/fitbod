@@ -22,7 +22,7 @@ Record these when you set up the run, as [dispatch.md](dispatch.md) says.
 
 | Lane | Small phone | Large phone | DerivedData folder | Live ticket |
 |---|---|---|---|---|
-| gate | "sw6 iPhone 17e" `FF89B400-1160-4818-8436-314B014D2614` | "sw6 iPhone 17 Pro Max" `69E32D56-148D-40A7-9D1B-543F6878B1D1` | `fitbod-conway-gate` | Gate 2 |
+| gate | "sw6 iPhone 17e" `FF89B400-1160-4818-8436-314B014D2614` | "sw6 iPhone 17 Pro Max" `69E32D56-148D-40A7-9D1B-543F6878B1D1` | `fitbod-conway-gate` |  |
 | L1 | "sw6-L1 iPhone 17e" `D0B5079C-B4ED-463B-AE2C-01D0FF469435` | "sw6-L1 iPhone 17 Pro Max" `A74927B1-3476-4659-9AAD-E6CABA6A9902` | `fitbod-conway-L1` |  |
 | L2 | "sw6-L2 iPhone 17e" `5615455C-A8B6-4129-9E3B-53A7F161D758` | "sw6-L2 iPhone 17 Pro Max" `D305B715-794C-4BEB-B49E-89368B415E7E` | `fitbod-conway-L2` |  |
 | L3 | "sw6-L3 iPhone 17e" `C4F388E4-0731-49C1-9AEB-30FF32EBE64E` | "sw6-L3 iPhone 17 Pro Max" `1505840C-CEEF-428C-B65D-C0B988A88465` | `fitbod-conway-L3` |  |
@@ -105,6 +105,8 @@ The DerivedData folders live in `~/Library/Developer/Xcode/DerivedData/`.
 - 2026-10-31 20:11 T110-ext final retest PASSED at bc66f87 (on T101's 3feb055): fitbodTests 1155 + 1 known; small-phone UI 25 of 25 with zero stall lines, including PrescriptionEditorUITests/testHoldingAnRPEChipSetsADecimalTarget at 64.7 s (over 420 s before T101) and UITestHelpersSelfTests (T101's repro, acceptance check 5); widget. Rebased onto 7c0bdb5 as 38d6a5d, built, merged fast-forward, pushed; settled done; evidence in evidence/T110/. T115 coordinator check started on L3's small phone at 38d6a5d.
 - 2026-10-31 20:17 T115 coordinator check at 38d6a5d (T101 and T110 in): testEditorAtAX3 passed 3 of 3 on L3's small phone (78.9, 72.0, 71.9 s) and once on its large phone (76.0 s), with no stall or main-thread-busy lines, so per T115's Change 1 it is not reproduced and changes no code; settled done (T31 precedent); evidence in evidence/T115/. Open question for the final report: the external run saw the hang on the iOS 26.5 runtime, which this machine does not have, and the app targets iOS 26.4+. Phase 2 is complete; Gate 2 next.
 - 2026-10-31 20:18 Gate 2 started on main dc9f92d (gate.sh gate2: full suite on the large gate phone, default text, light, worker-rules flags; widget build; timing.txt). Phase 3 stays closed until it passes.
+- 2026-10-31 23:20 Gate 2 PASSED on dc9f92d: 1515 tests, 1514 passed plus the one allowed known issue, 0 failed, no stall line; test wall 180.7 min (182 min with builds; Gate 1 took 201 min, 107 of them in four F144 stalls, on a smaller bundle); widget built. Slowest cases: WeeklyTonnage 20-open 241.5 s (T119 makes it opt-in), HeatmapHitArea 164.7 s, the M1 journey 164.0 s (was 2792.6 s), BlockTemplateCatalog presets 142.9 s, CustomExerciseEditor fit 129.4 s, NewBlockSaves 126.2 s (was 1733.9 s), CalibratingWeight 122.7 s; slowest suite SwipeBackUITests 889 s. Phase 3 opens.
+- 2026-10-31 23:20 Gate 2 slowest 20 cases (guide 5.3): 241.5 s WeeklyTonnageUITests/testOpensTwentyTimesWithoutCrashing; 164.7 s HeatmapHitAreaUITests/testEachBlockOpensItsOwnMuscle; 164.0 s MilestoneOneJourneyUITests/testAuthorRoutineLogRelaunchFinishAndHistory; 142.9 s BlockTemplateCatalogUITests/testEveryPresetSetsItsPhases; 129.4 s CustomExerciseEditorBRUUITests/testEditorAndPickerFitTheScreen; 126.2 s NewBlockSavesUITests/testBottomActionNamesEachMissingPieceThenSavesAsReady; 122.7 s CalibratingWeightUITests/testTypedWeightAndUseKeepShowing; 103.0 s BlockTemplateCatalogUITests/testEveryProgramRowOpensItsPhases; 98.3 s CustomExerciseEditorBRUUITests/testCopyListsThePrimaryMuscleFirst; 88.2 s BlockReviewAfterEndUITests/testReviewKeepsOpeningUntilStartNextAcknowledgesIt; 86.0 s NewBlockLayoutUITests/testEveryWordStaysWholeAtAX3; 84.3 s BlockTemplateCatalogUITests/testKeepMyPhasesKeepsTheEdit; 83.3 s SwipeBackUITests/testSwipeOnARootScreenDoesNothing; 82.7 s PlateCalculatorSheetBRUUITests/testRaisedTargetStaysWhole; 82.3 s PhaseRowsVoiceOverUITests/testVoiceOverReadsNewBlockControlsByName; 74.0 s BlockReviewAfterEndUITests/testStartingABlockStopsAReviewPutOff; 71.0 s ArchiveRoutineUITests/testArchivedRoutinesRestoresTheRoutine; 69.5 s SessionEditorPolishUITests/testEditorAtAX3; 64.7 s SessionEditorPolishUITests/testKeepSessionClosesTheArchiveDialog; 63.8 s PrescriptionEditorUITests/testHoldingAnRPEChipSetsADecimalTarget. Slowest suites: 889.0 s SwipeBackUITests; 498.3 s BlockTemplateCatalogUITests; 435.3 s WeeklyTonnageUITests; 432.4 s SessionEditorPolishUITests; 432.1 s CustomExerciseEditorBRUUITests; 395.2 s NewBlockLayoutUITests; 329.2 s ArchiveRoutineUITests; 301.2 s HeatmapHitAreaUITests; 300.9 s MilestoneOneJourneyUITests; 292.2 s BlockReviewAfterEndUITests.
 
 ## Ledger
 
@@ -265,7 +267,7 @@ Keep the accepted full-tour evidence, including implementation retries, and prio
 | Gate | Date | Tests | Passed | Failed | Expected failures | Duration | Widget build |
 |---|---|---|---|---|---|---|---|
 | 1 | 2026-10-30 | 1320 | 1319 | 0 | 1 | 201 min (run 2; run 1 failed, 99 min) | succeeded |
-| 2 |  |  |  |  |  |  |  |
+| 2 | 2026-10-31 | 1515 | 1514 | 0 | 1 | 182 min (tests 180.7 min; no F144 stall) | succeeded |
 | 3 |  |  |  |  |  |  |  |
 | 4 |  |  |  |  |  |  |  |
 | 5 |  |  |  |  |  |  |  |
