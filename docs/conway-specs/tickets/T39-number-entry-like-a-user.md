@@ -84,3 +84,4 @@ If one of them passes today, say so in `notes.md`.
 - SwiftUI's `TextField` accepts a text selection binding on iOS 18 and later.
 - `MilestoneOneJourneyUITests.swift` has a private `replace(_:with:)` helper near line 379.
 - `UITestNavigation.textLines` (and so `readText`) uses Vision's `.accurate` level, which on the simulator dropped whole words from a 390 x 60pt crop in T35's runs; say in its comment that callers read narrow, single-line crops (finding F282).
+- The Library search field's XCUI frame spans its whole row, so `UITestNavigation.type(replacing: true)` taps its × instead of focusing it; the new typing helper should tap the field's text area (finding F293, from T37's worker).

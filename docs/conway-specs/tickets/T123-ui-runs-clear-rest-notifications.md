@@ -6,7 +6,7 @@ items: []
 depends_on: [T101]
 size: M
 sim: both
-owns: [fitbod/App/DebugLaunchReset.swift, fitbodUITests/MilestoneOneJourneyUITests.swift, fitbodUITests/UITestHelpersSelfTests.swift, fitbodUITests/EditorSwipeDismissUITests.swift, fitbodUITests/CopySweepUITests.swift, fitbodUITests/WeeklyRecapUITests.swift, fitbodUITests/SwipeBackUITests.swift, fitbodUITests/TodayPolishUITests.swift, fitbodUITests/NewRoutineFlowUITests.swift, fitbodUITests/PlateScreensFitUITests.swift, fitbodUITests/PlateCalculatorSheetBRUUITests.swift, new:fitbodUITests/SharedScreenHelpers.swift]
+owns: [fitbod/App/DebugLaunchReset.swift, fitbodUITests/MilestoneOneJourneyUITests.swift, fitbodUITests/UITestHelpersSelfTests.swift, fitbodUITests/EditorSwipeDismissUITests.swift, fitbodUITests/CopySweepUITests.swift, fitbodUITests/WeeklyRecapUITests.swift, fitbodUITests/SwipeBackUITests.swift, fitbodUITests/TodayPolishUITests.swift, fitbodUITests/NewRoutineFlowUITests.swift, fitbodUITests/PlateScreensFitUITests.swift, fitbodUITests/PlateCalculatorSheetBRUUITests.swift, fitbodUITests/LibraryPolishUITests.swift, fitbodUITests/ProgramDarkModeUITests.swift, fitbodUITests/ExerciseHistoryRowsUITests.swift, new:fitbodUITests/SharedScreenHelpers.swift]
 ---
 
 # T123: UI test runs stay free of leftover rest notifications, and the journey suite reads cheaply
@@ -39,7 +39,7 @@ These are findings F266, F267 and F270, which T101's worker found.
 4. `reveal` scrolls in long drags and waits with `UITestNavigation.waitUntilStill`, instead of a page at a time.
 5. Each `@MainActor` in the two suites has its reason beside it, or goes where it is not needed.
 6. The helpers `CopySweepUITests` copies move into `fitbodUITests/SharedScreenHelpers.swift`, and all three suites use that one copy.
-   So does `pixelCount`, which `TodayPolishUITests` and `NewRoutineFlowUITests` each keep a private copy of (finding F283, from T35's review), and the ink-column reader that `PlateCalculatorSheetBRUUITests.drawnHeight(of:)` and `PlateScreensFitUITests.column(atX:from:to:in:)` with `isInk` each implement (finding F288, from T107's review).
+   So does `pixelCount`, which `TodayPolishUITests` and `NewRoutineFlowUITests` each keep a private copy of (finding F283, from T35's review), and the ink-column reader that `PlateCalculatorSheetBRUUITests.drawnHeight(of:)` and `PlateScreensFitUITests.column(atX:from:to:in:)` with `isInk` each implement (finding F288, from T107's review), and the `TextContrast`, `tapWhenReady` and `tabBarTop` that `LibraryPolishUITests` copies from `ProgramDarkModeUITests` and `ExerciseHistoryRowsUITests` (finding F291, from T37's review).
 
 ## Constraints
 

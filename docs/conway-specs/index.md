@@ -41,7 +41,6 @@ Every Phase 2 ticket is done and archived.
 
 | Ticket | Title |
 |---|---|
-| [T37](tickets/T37-library-and-detail-polish.md) | Library and exercise detail polish |
 | [T38](tickets/T38-program-new-block-settings-small-fixes.md) | Small fixes on Program, New Block and Settings |
 | [T85](tickets/T85-pr-row-phrases.md) | PR rows keep "@ RPE" and the kind label whole |
 | [T98](tickets/T98-chart-audio-graph-rounding.md) | The progress chart's audio graph reads rounded values |
@@ -57,6 +56,7 @@ Every Phase 2 ticket is done and archived.
 | [T122](tickets/T122-routine-session-drag-slots.md) | A session dragged on the routine screen lands on the slot under the finger |
 | [T124](tickets/T124-rest-sheet-fits-at-ax3.md) | The rest sheet's countdown and ±15s buttons fit at AX3 |
 | [T125](tickets/T125-logger-plates-during-entry.md) | The logger shows a set's plates while its weight is being entered |
+| [T126](tickets/T126-section-head-action-hit-area.md) | Section head actions keep their touch area off the title at accessibility sizes |
 
 ### Phase 4: test health
 

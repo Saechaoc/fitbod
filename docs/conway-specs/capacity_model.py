@@ -69,6 +69,7 @@ ARCHIVED = {
     "T34": (3, ["25"], ["fitbodTests/UICopyRulesTests.swift", "fitbodUITests/CopySweepUITests.swift"]),
     "T35": (3, ["22", "24", "25"], ["fitbodUITests/TodayPolishUITests.swift"]),
     "T36": (3, ["23", "24"], ["fitbodUITests/RestSheetAndRPEChipsUITests.swift"]),
+    "T37": (3, ["24", "25"], ["fitbodUITests/LibraryPolishUITests.swift"]),
     "T49": (1, [], ["fitbodUITests/RPEDecimalHoldUITests.swift"]),
     "T50": (1, [], ["fitbodTests/WhyUsesFinishedWorkoutsTests.swift"]),
     "T51": (1, [], ["fitbodTests/PlateauUsesFinishedWorkoutsTests.swift"]),
