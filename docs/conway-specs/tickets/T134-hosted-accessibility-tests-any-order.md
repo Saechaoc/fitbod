@@ -1,69 +1,71 @@
 ---
 id: T134
-title: Hosted accessibility tests pass in any order, and the row style's VoiceOver activate is tested
+title: Hosted accessibility tests pass in any order and on any phone
 phase: 4
 items: []
 depends_on: [T106]
 size: M
 sim: large
-owns: [fitbodTests/StallBadgeBRUTests.swift, new:fitbodTests/BRURowButtonStyleTests.swift, new:fitbodTests/HostedAccessibility.swift, fitbod/Design/BRURowButtonStyle.swift, fitbodTests/BlockReviewPRMarkTests.swift, fitbodTests/BlockReviewHeroLayoutTests.swift]
+owns: [new:fitbodTests/HostedAccessibility.swift, fitbodTests/StallBadgeBRUTests.swift, fitbodTests/WeekDetailRowsTests.swift, fitbodTests/ProgressChartDescriptorTests.swift]
 ---
 
-# T134: Hosted accessibility tests pass in any order, and the row style's VoiceOver activate is tested
+# T134: Hosted accessibility tests pass in any order and on any phone
 
 Read [../worker-rules.md](../worker-rules.md) first; it is part of this ticket.
 Read [../../test-performance-guide.md](../../test-performance-guide.md) too; this ticket applies it.
 
 ## Problem
 
-These are findings F315 and F317, which T106's worker found.
+These are findings F315, F348 and F358, from T106's and T129's workers.
 
-- `StallBadgeBRUTests` "StallBadge renders label text STALLED (uppercased)" and "StallBadge accessibility label is verbatim per UI-SPEC" fail when run without the rest of `fitbodTests`.
-  The hosted SwiftUI view has no accessibility tree unless something earlier in the run built one, so the two tests pass or fail by test order.
-- For the same reason T106 could not ship a hosted test that VoiceOver's activate opens a `.bruRow` row: its hosted view reported no accessibility elements.
-  So nothing fails if the style's accessibility action is removed, and XCUITest cannot activate through VoiceOver.
-- T98's `ProgressChartDescriptorTests` does find SwiftUI's accessibility elements when run alone: it hosts the screen in a window attached to the app's scene and polls the run loop with a ceiling.
-- `RowTapRecognizer.touchesEnded` in `fitbod/Design/BRURowButtonStyle.swift` has a branch that can never run: `start` is always set by then.
-- `BlockReviewPRMarkTests` and `BlockReviewHeroLayoutTests` each repeat about 35 lines of hosting code (finding F328, from T113's review).
+- Unit tests that host a SwiftUI view and read its accessibility tree get no tree unless the simulator's `com.apple.Accessibility` `ApplicationAccessibilityEnabled` and `AccessibilityEnabled` defaults are 1.
+- A UI test session sets both back to 0 (F358), so these tests fail in any `fitbodTests` run on a phone that has run a UI test since the flags were last set.
+  Today every worker and every gate sets the flags by hand before a unit run.
+- `StallBadgeBRUTests`' two accessibility tests, `WeekDetailRowsTests`, the hosted cases in `ProgressChartDescriptorTests` and T129's legend test are known to need the tree.
 
 ## Target
 
-- How hosted views get an accessibility tree in `fitbodTests`, `StallBadgeBRUTests`, and a new `BRURowButtonStyleTests`.
-- `RowTapRecognizer.touchesEnded`.
+- How hosted views get an accessibility tree in `fitbodTests`.
 
 ## Change
 
-1. Find what makes a hosted SwiftUI view build its accessibility tree in the unit-test host, and give hosted accessibility tests one shared way to get it, in `fitbodTests/HostedAccessibility.swift`.
-2. `StallBadgeBRUTests`' two accessibility tests use it, and pass when run alone.
-3. `BRURowButtonStyleTests` proves that VoiceOver's activate on a `.bruRow` button runs its action.
-   It fails when the style's accessibility action is removed; prove that once and record it in `notes.md`.
-4. `RowTapRecognizer.touchesEnded` recognizes the tap without the unreachable branch.
-5. `BlockReviewPRMarkTests` and `BlockReviewHeroLayoutTests` host their views through the same shared code.
+1. Find what makes a hosted SwiftUI view build its accessibility tree in the unit-test host whatever the simulator's accessibility defaults, and give hosted accessibility tests one shared way to get it, in `fitbodTests/HostedAccessibility.swift`.
+2. Every unit test that reads a hosted view's accessibility tree uses it.
 
 ## Constraints
 
-- The app behaves exactly as it does today.
+- The app behaves exactly as it does today, and the app target does not change.
 - No fixed sleeps: poll the run loop at 50 ms with a ceiling, as T98's tests do.
 - Each case typically runs in under 1 s.
 
 ## Ownership
 
-You may edit the files in `owns`.
-Ask before you move any other hosted accessibility test to the shared way.
+You may edit the files in `owns`, plus any other unit test that fails with both flags at 0, to move it to the shared way.
+Ask before you edit anything else.
 
 ## Repro first
 
-- Run `StallBadgeBRUTests` alone with `-only-testing`, and record its two failures.
-- Run `ProgressChartDescriptorTests` alone, record that it passes, and note in `notes.md` how its hosting differs.
+- On the large phone, set both flags to 0 with `xcrun simctl spawn <udid> defaults write com.apple.Accessibility <key> -bool false`, run `fitbodTests`, and record every test that fails.
+- Set both back to 1 and record that the same tests pass.
 
 ## Observable acceptance
 
-- `StallBadgeBRUTests` and `BRURowButtonStyleTests` each pass alone three runs in a row, and inside the full `fitbodTests` run.
-- `BlockReviewPRMarkTests` and `BlockReviewHeroLayoutTests` pass alone and inside the full run.
-- `fitbodTests` passes, and the app and the widget build.
+- With both flags at 0, every test the repro recorded passes alone and inside the full `fitbodTests` run, three runs in a row.
+- `fitbodTests` passes with both flags at 1, and the app and the widget build.
+- Both flags are back at 1 on the phone when you finish.
+
+## Deferred
+
+Prototype stage (`docs/DEVELOPMENT.md`): these parts of the first version of this ticket come back when the workflow is stable.
+
+- A hosted test that VoiceOver's activate on a `.bruRow` row runs its action (F317).
+- The unreachable branch in `RowTapRecognizer.touchesEnded` (`fitbod/Design/BRURowButtonStyle.swift`).
+- `BlockReviewPRMarkTests` and `BlockReviewHeroLayoutTests` sharing their hosting code (F328).
 
 ## Hints
 
-- T129 found the likely root cause (finding F348): a hosted SwiftUI view builds its accessibility tree only when the simulator's `com.apple.Accessibility` `ApplicationAccessibilityEnabled` and `AccessibilityEnabled` defaults are 1; with both at 0 the hosted cases fail alone. The coordinator set both to 1 on every lane and gate phone on 2026-11-01. A shared way that does not depend on the phone's settings is still this ticket's job.
-- T106's notes in `docs/conway-specs/evidence/T106/notes.md`, under "VoiceOver's activate" and Findings, record what it tried.
+- T129's notes in `docs/conway-specs/evidence/T129/notes.md` record the flags' effect and the reset after a UI run.
+- T106's notes in `docs/conway-specs/evidence/T106/notes.md`, under "VoiceOver's activate", record what it tried.
 - `fitbodTests/ProgressChartDescriptorTests.swift` holds T98's hosting and polling.
+- Open-source snapshot libraries, such as cashapp's AccessibilitySnapshot, enable application accessibility inside the test process through `libAccessibility`; this is not verified here.
+  Anything private stays in the test target.

@@ -6,8 +6,9 @@ A coordinator runs them on up to three Orca workers at once, each ticket in its 
 
 Stage note, 2026-11-01: the app is a prototype, so [the development guide](../DEVELOPMENT.md#deferred-work) defers the accessibility, polish and verification tickets until their workflow is stable or the app reaches release readiness.
 Dispatch the data, correctness and test-speed tickets it lists first.
-Coordinator, 2026-11-01: under that guide these are deferred, and marked skipped in the run so phases can close: T124, T126, T127, T132 and T138 (Phase 3), T42, T117 and T134 (Phase 4), T43 (Phase 5), T44 to T46 (Phase 6) and T47 and T48 (Phase 7); live T120 stopped with its work kept on its branch.
+Coordinator, 2026-11-01: under that guide these are deferred, and marked skipped in the run so phases can close: T124, T126, T127, T132 and T138 (Phase 3), T42 and T117 (Phase 4), T43 (Phase 5), T44 to T46 (Phase 6) and T47 and T48 (Phase 7); live T120 stopped with its work kept on its branch.
 T129, T133 and T140 keep only their correctness changes.
+T134 came back trimmed to hosted-test reliability, because UI runs reset the simulator setting those tests need (F358).
 
 Status: ready to dispatch once every precondition in [dispatch.md](dispatch.md) holds.
 Nothing from this bundle has been dispatched.
@@ -58,6 +59,7 @@ Every Phase 2 ticket is done and archived.
 | [T139](tickets/T139-week-windows-follow-the-calendar.md) | Week windows follow the calendar across daylight saving, and Muscles Hit keeps a stable order |
 | [T140](tickets/T140-long-press-remove-and-remove-labels.md) | Removing an exercise by long press forgets its open editor |
 | [T141](tickets/T141-non-barbell-prescriptions-skip-plate-math.md) | Cable, machine, band, bodyweight and kettlebell prescriptions skip barbell plate math |
+| [T142](tickets/T142-block-weeks-start-at-midnight.md) | A block week starts at local midnight on its first day |
 
 ### Phase 4: test health
 
@@ -73,7 +75,7 @@ Every Phase 2 ticket is done and archived.
 | [T123](tickets/T123-ui-runs-clear-rest-notifications.md) | UI test runs stay free of leftover rest notifications, and the journey suite reads cheaply |
 | [T131](tickets/T131-editor-ui-tests-budgets.md) | The session editor's UI tests fit the test budgets |
 | [T133](tickets/T133-volume-target-tests-adjust-and-relaunch.md) | A volume target edit survives a relaunch, and the fatigue smoke test launches cleanly |
-| [T134](tickets/T134-hosted-accessibility-tests-any-order.md) | Hosted accessibility tests pass in any order, and the row style's VoiceOver activate is tested |
+| [T134](tickets/T134-hosted-accessibility-tests-any-order.md) | Hosted accessibility tests pass in any order and on any phone |
 | [T135](tickets/T135-shared-ui-test-helpers.md) | UI suites share one copy of their helpers, and the swipe-back suite finds rows by name and fits its budgets |
 
 ### Phase 5: design refresh

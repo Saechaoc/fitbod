@@ -179,6 +179,12 @@ Product decisions are in [decisions.md](decisions.md), and they win over this fi
   Every phase shows DONE and none shows NOW; no phase name, phase volume or phase intensity shows; and VoiceOver says "plan complete" in place of the week, until the lifter ends the block.
 - Rejected: falling back to week 1, which reads as a fresh block; showing a week past the plan, such as "W6 / 4", which reads as an error; and ending the block by itself, because only the lifter ends a block.
 
+### Block weeks
+
+- Coordinator call, 2026-11-01 (T139 finding F359, decided under autopilot; the user can revisit it): a block week starts at local midnight, counted in calendar days from the day the block started, so a workout on that weekday gets the new week whatever the time (T142).
+- Rejected: weeks from the instant the block was started, as today, which keeps a workout earlier in the day than that time in the previous week, with its prescription.
+- Rejected: stamping the start at midnight, which leaves every block already started on the old rule.
+
 ### The block review
 
 - Coordinator call, 2026-10-30 (T70 findings F94 and F96, decided under autopilot; the user can revisit it): while no block is active, Today opens the review of the block that ended last until the lifter acknowledges it with Start next; Plan custom puts it off, and starting any block stops it.
