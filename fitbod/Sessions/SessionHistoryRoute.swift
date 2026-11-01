@@ -38,6 +38,7 @@ extension View {
 /// deleted while the route sat on the stack, says so instead of showing
 /// an empty screen. History pushes it through `SessionHistoryRoute.summary`;
 /// Weekly Tonnage's week detail presents it from its workout rows.
+/// A Personal Records row pushes it for the workout its set was logged in.
 struct SessionSummaryDestination: View {
     @Environment(\.dismiss) private var dismiss
     @Query private var matches: [Session]

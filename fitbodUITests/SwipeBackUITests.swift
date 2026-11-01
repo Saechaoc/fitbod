@@ -266,8 +266,8 @@ final class SwipeBackUITests: XCTestCase {
         open(button(beginningWith: "Personal Records", in: app), in: app)
         let record = recordRow(in: app)
         open(record, in: app)
-        let session = app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH %@", "Session of ")).firstMatch
-        assertSwipeBack(from: session, "the record's session", to: record, in: app)
+        let session = summary(in: app)
+        assertSwipeBack(from: session, "the record's workout", to: record, in: app)
     }
 
     @MainActor
@@ -498,7 +498,7 @@ final class SwipeBackUITests: XCTestCase {
         // scrolled the list.
         let row = records.element(boundBy: 2)
         XCTAssertTrue(row.waitForExistence(timeout: 10), "Personal Records must list the seeded records")
-        let session = app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH %@", "Session of ")).firstMatch
+        let session = summary(in: app)
         assertSidewaysDragOpensNothing(row, from: 40, "a record row", opening: session, in: app)
         assertDragUpScrolls(from: row, "a record row", opening: session, in: app)
         assertTapOpens(row, session, "a record row")

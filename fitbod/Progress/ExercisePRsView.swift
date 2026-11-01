@@ -48,11 +48,11 @@
 //  scope (UUID local-let capture per Pitfall 3) and computes the
 //  display rows inline.
 //
-//  ## Row tap → session destination
+//  ## Row tap → the workout's summary
 //
-//  No `CompletedSessionView` exists in v1. PR row taps push a
-//  placeholder `Text("Session of {date}")` per the plan; documented
-//  as a v2 follow-up entry point.
+//  A PR row pushes `SessionHistoryRoute.summary(sessionID:)` for the
+//  workout its set was logged in: the summary a History row opens, with
+//  its ‹ BACK. ProgressHomeView's stack registers that route.
 //
 //  [CITED: CONTEXT D-10..D-13 + UI-SPEC § ExercisePRsView + PROG-05]
 //
@@ -307,9 +307,7 @@ private struct PRsHost: View {
             let bucketID = PRBucketID(kind: kind, bucket: bucket)
             ForEach(rows.map { PRRowItem(id: bucketID.rowID($0), entry: $0) }) { item in
                 let entry = item.entry
-                NavigationLink(
-                    value: PRsRouteDestination.session(date: entry.completedAt, setEntryID: entry.id)
-                ) {
+                NavigationLink(value: summaryRoute(of: entry)) {
                     prRow(kind: kind, entry: entry)
                 }
                 .buttonStyle(.bruRow)
@@ -321,6 +319,13 @@ private struct PRsHost: View {
                 }
             }
         }
+    }
+
+    /// The summary of the workout the set was logged in, the screen a
+    /// History row opens. `body` lists only sets that have a workout; a set
+    /// without one would leave its row's link disabled.
+    private func summaryRoute(of entry: SetEntry) -> SessionHistoryRoute? {
+        entry.sessionExercise?.session.map { .summary(sessionID: $0.id) }
     }
 
     // MARK: - PR Row (exercise name over the 3-column BRU layout per bru-screens/progress-chart.jsx)
@@ -547,38 +552,5 @@ enum PRBucketRanking {
         let exercise: String
         let weight: Double
         let reps: Int
-    }
-}
-
-// MARK: - Placeholder destination for PR row tap
-
-/// Placeholder destination type used by `ExercisePRsView` row taps.
-/// v1 has no `CompletedSessionView` — the row pushes a stub `Text`
-/// destination. Documented as a v2 follow-up entry point.
-public enum PRsRouteDestination: Hashable, Sendable {
-    case session(date: Date, setEntryID: UUID)
-}
-
-public extension View {
-    /// Wires the v1 placeholder destination for ExercisePRsView row taps.
-    /// Consumer views (ExercisePRsView, ProgressHomeView) attach this so
-    /// the NavigationLink(value: PRsRouteDestination.session(...)) inside
-    /// PR rows lands on a readable stub instead of failing silently.
-    @ViewBuilder
-    func placeholderPRsDestination() -> some View {
-        self.navigationDestination(for: PRsRouteDestination.self) { dest in
-            switch dest {
-            case .session(let date, _):
-                VStack(spacing: 0) {
-                    BRUHeaderBar(center: "Session")
-                    Text("Session of \(date.formatted(.dateTime.month().day().year()))")
-                        .font(BRUFont.bodyDefault)
-                        .foregroundStyle(Color.bruMuted)
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                }
-                .background(Color.bruPaper.ignoresSafeArea())
-                .navigationBarHidden(true)
-            }
-        }
     }
 }

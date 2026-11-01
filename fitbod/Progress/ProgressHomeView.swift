@@ -26,6 +26,10 @@
 //                   .allPRs              → ExercisePRsView(.allExercises)
 //                   .sessionComparison(Session) → SessionComparisonView
 //
+//  `.sessionHistoryDestinations()` registers SessionHistoryRoute: the
+//  Workouts row's history, and the workout summary a History row or a
+//  Personal Records row opens.
+//
 //  ## NavigationStack ownership
 //
 //  RESEARCH § State of the Art — each tab owns its own NavigationStack.
@@ -121,7 +125,6 @@ public struct ProgressHomeView: View {
             .navigationDestination(for: ProgressHomeRoute.self) { route in
                 routeDestination(route)
             }
-            .placeholderPRsDestination()
             .sessionHistoryDestinations()
         }
         .task(id: finishedIDs) {
