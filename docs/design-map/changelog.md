@@ -2,6 +2,13 @@
 
 Newest first: one entry for each stage of [plan.md](plan.md) up to S2, then one for each commit.
 
+## 2026-11-01: S4, Settings, system UI and dialogs
+
+- Wrote the 39 remaining screen files: Settings with its plate, volume target and component gallery screens, the four sheets that iOS draws, and the 29 dialogs and alerts.
+  Each file covers every capture of its screen on both phones.
+- Added [navigation.md](navigation.md), which draws in seven Mermaid diagrams how the lifter reaches all 91 screens, sheets, dialogs and system sheets.
+  `check_map.py` checks that its 146 arrows and the `presents_from` lists of the screen files name the same links.
+
 ## 2026-11-01: S4, Progress and Library screens
 
 - Wrote the 14 screen files of the Progress and Library tabs: Progress with its week, tonnage, record and comparison screens, the exercise progress chart, and the Library with the exercise detail, the exercise history and the New exercise sheets.
