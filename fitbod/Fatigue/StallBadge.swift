@@ -37,7 +37,7 @@ public struct StallBadge: View {
             .padding(.vertical, 2)
             .background(Color.bruSignal)
             .accessibilityElement(children: .ignore)
-            .accessibilityLabel("Stalled: \(exerciseName) has been flat for \(sessionCount) sessions.")
+            .accessibilityLabel("Stalled: \(exerciseName) has been flat for \(BRUCountLabel.text(sessionCount, "session")).")
             .accessibilityAddTraits(.isStaticText)
     }
 }

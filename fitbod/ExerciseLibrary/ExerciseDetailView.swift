@@ -491,7 +491,7 @@ struct ExerciseDetailView: View {
                         ),
                         in: 1...12,
                         step: 1
-                    ) { "\($0) sessions" }
+                    ) { BRUCountLabel.text($0, "session") }
 
                     BRUStepper(
                         "Tolerance",
@@ -509,7 +509,7 @@ struct ExerciseDetailView: View {
                     }
                 }
 
-                Text("Global defaults: \(settings.plateauWindowSessions) sessions, \(Int((settings.plateauTolerance * 100).rounded()))% tolerance.")
+                Text("Global defaults: \(BRUCountLabel.text(settings.plateauWindowSessions, "session")), \(Int((settings.plateauTolerance * 100).rounded()))% tolerance.")
                     .font(BRUFont.bodyDefault)
                     .foregroundStyle(Color.bruMuted)
             }

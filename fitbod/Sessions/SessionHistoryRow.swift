@@ -132,7 +132,7 @@ public struct SessionHistoryRow: View {
 
     /// "21 SETS · 52M", "1 SET · 1H 05M".
     private var setDurationLabel: String {
-        let sets = workingSetCount == 1 ? "1 SET" : "\(workingSetCount) SETS"
+        let sets = BRUCountLabel.text(workingSetCount, "SET")
         guard let minutes = durationMinutes else { return sets }
         let duration = minutes >= 60
             ? "\(minutes / 60)H \(String(format: "%02d", minutes % 60))M"
@@ -144,7 +144,7 @@ public struct SessionHistoryRow: View {
         var parts = [
             session.displayName,
             session.startedAt.formatted(.dateTime.weekday(.wide).month(.wide).day()),
-            workingSetCount == 1 ? "1 set" : "\(workingSetCount) sets",
+            BRUCountLabel.text(workingSetCount, "set"),
         ]
         if let minutes = durationMinutes {
             parts.append(minutes == 1 ? "1 minute" : "\(minutes) minutes")

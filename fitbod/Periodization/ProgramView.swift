@@ -675,7 +675,7 @@ fileprivate struct RoutineSplitRow: View {
                             .font(BRUFont.bodyEmphasis)
                             .foregroundStyle(Color.bruInk)
 
-                        Text("\(sessionCount) sessions")
+                        Text(BRUCountLabel.text(sessionCount, "session"))
                             .font(BRUFont.bodyDefault)
                             .foregroundStyle(Color.bruMuted)
                     }

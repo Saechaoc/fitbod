@@ -329,7 +329,7 @@ public struct BlockOverviewScreen: View {
             }
             Button("Cancel", role: .cancel) {}
         } message: {
-            Text("End this block now? You can review it from the Routines tab.")
+            Text("End this block now? You can review it from the Program tab.")
         }
         .alert("Couldn't Save", isPresented: $showSaveError) {
             Button("OK", role: .cancel) {}
@@ -784,7 +784,7 @@ public struct BlockOverviewScreen: View {
             let scheduledCount = block.split?.slots?.count ?? 0
 
             HStack {
-                Text("\(doneCount) / \(max(doneCount, scheduledCount)) SESSIONS DONE")
+                Text("\(doneCount) / \(BRUCountLabel.text(max(doneCount, scheduledCount), "SESSION")) DONE")
                     .font(BRUFont.labelMicro)
                     .textCase(.uppercase)
                     .tracking(1.2)
@@ -1014,7 +1014,7 @@ public struct BlockOverviewScreen: View {
             // Hidden when no split attached (nothing to mismatch against), matching
             // NewBlockSplitBand semantics. (fix-5)
             if block.split != nil && block.trainingDays.count != slotCount {
-                Text("\(block.trainingDays.count) days / \(slotCount) sessions")
+                Text("\(BRUCountLabel.text(block.trainingDays.count, "day")) / \(BRUCountLabel.text(slotCount, "session"))")
                     .font(BRUFont.bodyDefault)
                     .foregroundStyle(Color.bruAmber)
                     .padding(.horizontal, 16)
@@ -1581,7 +1581,7 @@ fileprivate struct SplitPickerSheet: View {
                                     Text(split.name)
                                         .font(BRUFont.bodyEmphasis)
                                         .foregroundStyle(Color.bruInk)
-                                    Text("\(split.slots?.count ?? 0) sessions")
+                                    Text(BRUCountLabel.text(split.slots?.count ?? 0, "session"))
                                         .font(BRUFont.bodyDefault)
                                         .foregroundStyle(Color.bruMuted)
                                 }

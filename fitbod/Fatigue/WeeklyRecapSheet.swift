@@ -140,10 +140,13 @@ public struct WeeklyRecapSheet: View {
 
     public var body: some View {
         VStack(spacing: 0) {
+            // Non-breaking spaces keep the title on one line: the header
+            // fits a title with no breaking space to its third of the row,
+            // where "Week 44 · recap" wrapped before its dot on the small
+            // phone.
             BRUHeaderBar(
-                left: HeaderAction("‹") { dismiss() },
-                center: "Week \(isoWeekNumber) · recap",
-                right: nil
+                center: "Week\u{00A0}\(isoWeekNumber)\u{00A0}·\u{00A0}recap",
+                right: HeaderAction("Done") { dismiss() }
             )
             ScrollView {
                 LazyVStack(alignment: .leading, spacing: 0) {
@@ -182,7 +185,7 @@ public struct WeeklyRecapSheet: View {
             HStack(spacing: 6) {
                 // A signal fill, as on every PR chip, so the label reads on it.
                 BRUChip(prChipLabel, color: .bruSignal, fill: true, textCase: nil)
-                BRUChip("\(sessionsLogged) / \(sessionsTarget) sessions",
+                BRUChip("\(sessionsLogged) / \(BRUCountLabel.text(sessionsTarget, "session"))",
                         color: .bruPaper, fill: false, textCase: nil)
                 BRUChip("\(tonnageFormatted) \(unitLabel)",
                         color: .bruPaper, fill: false, textCase: nil)
@@ -468,7 +471,7 @@ public struct WeeklyRecapSheet: View {
                             .font(BRUFont.bodyEmphasis)
                             .foregroundStyle(Color.bruInk)
                         Spacer()
-                        Text("below MEV — \(row.totalSets) / \(row.mev) sets")
+                        Text("below MEV — \(row.totalSets) / \(BRUCountLabel.text(row.mev, "set"))")
                             .font(BRUFont.labelMicro)
                             .tracking(1.0)
                             .foregroundStyle(Color.bruMuted)

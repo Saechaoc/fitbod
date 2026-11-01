@@ -419,8 +419,7 @@ public struct ProgressHomeView: View {
     private func allPRsSubLabel(trained: Int) -> String {
         switch trained {
         case 0:  return "Finish a workout to set your first records."
-        case 1:  return "Records for 1 exercise"
-        default: return "Records for \(trained) exercises"
+        default: return "Records for \(BRUCountLabel.text(trained, "exercise"))"
         }
     }
 

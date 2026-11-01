@@ -7,7 +7,7 @@
 //      `onDone` closure. The header shows "DONE" and a full-width DONE
 //      button sits at the bottom; tapping either returns to Today.
 //   2. History: push `SessionDetailView(session:)` onto a NavigationStack.
-//      With no `onDone`, the header shows the "‹" back glyph instead.
+//      With no `onDone`, the header goes back with "‹ BACK" instead.
 //
 // Content (all read from logged rows via SessionSummary, never from the
 // template): name + date, a DURATION / SETS / VOLUME stat strip, a PR band
@@ -71,9 +71,9 @@ public struct SessionDetailView: View {
         .navigationBarHidden(true)
         .safeAreaInset(edge: .top, spacing: 0) {
             // After Finish the summary closes from its bottom Done button
-            // (one Done, not two); opened from history it goes back with ‹.
+            // (one Done, not two); opened from history it goes back with ‹ BACK.
             BRUHeaderBar(
-                left: onDone == nil ? HeaderAction("‹") { dismiss() } : nil,
+                left: onDone == nil ? HeaderAction("‹ Back") { dismiss() } : nil,
                 center: "Summary"
             )
         }
@@ -163,7 +163,7 @@ public struct SessionDetailView: View {
                 .padding(.horizontal, 6)
                 .padding(.vertical, 2)
                 .background(Color.bruSignal)
-            Text(count == 1 ? "New record on 1 exercise" : "New records on \(count) exercises")
+            Text("\(count == 1 ? "New record" : "New records") on \(BRUCountLabel.text(count, "exercise"))")
                 .font(BRUFont.bodyEmphasis)
                 .foregroundStyle(Color.bruPaper)
             Spacer(minLength: 0)
@@ -245,7 +245,7 @@ public struct SessionDetailView: View {
     }
 
     private func setsLine(_ line: SessionSummary.ExerciseLine) -> String {
-        let sets = line.workingSets == 1 ? "1 set" : "\(line.workingSets) sets"
+        let sets = BRUCountLabel.text(line.workingSets, "set")
         guard line.volume > 0 else { return sets }
         return "\(sets) · \(volumeLabel(line.volume)) \(unitLabel)"
     }

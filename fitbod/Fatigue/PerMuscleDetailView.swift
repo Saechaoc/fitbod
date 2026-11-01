@@ -100,7 +100,7 @@ public struct PerMuscleDetailView: View {
     public var body: some View {
         VStack(spacing: 0) {
             BRUHeaderBar(
-                left: HeaderAction("‹") { dismiss() },
+                left: HeaderAction("‹ Back") { dismiss() },
                 center: muscle?.displayName ?? muscleSlug.capitalized,
                 right: nil
             )
@@ -148,7 +148,7 @@ public struct PerMuscleDetailView: View {
         VStack(alignment: .leading, spacing: 0) {
             BRUSectionHead("This Week")
             HStack {
-                Text("\(total.totalSetsRounded) sets")
+                Text(BRUCountLabel.text(total.totalSetsRounded, "set"))
                     .font(BRUFont.displayMedium)
                     .foregroundStyle(Color.bruInk)
                 Spacer()
@@ -210,8 +210,7 @@ public struct PerMuscleDetailView: View {
             minContribution: Double(minSets),
             in: ctx
         )
-        let sessionsWord = hits == 1 ? "session" : "sessions"
-        let frequencyCopy = "\(hits) \(sessionsWord) with ≥\(minSets) sets"
+        let frequencyCopy = "\(BRUCountLabel.text(hits, "session")) with ≥\(BRUCountLabel.text(minSets, "set"))"
 
         VStack(alignment: .leading, spacing: 0) {
             BRUSectionHead("Frequency This Week")
@@ -324,9 +323,9 @@ public struct PerMuscleDetailView: View {
             let directSets = Int(value.direct.rounded())
             let trailing: String
             if value.indirect > 0 {
-                trailing = "\(totalSets) sets (\(directSets) direct)"
+                trailing = "\(BRUCountLabel.text(totalSets, "set")) (\(directSets) direct)"
             } else {
-                trailing = "\(totalSets) sets"
+                trailing = BRUCountLabel.text(totalSets, "set")
             }
             return ContributingExercise(
                 exerciseID: id,

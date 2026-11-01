@@ -113,13 +113,13 @@ public struct MesocycleWeekPage: View {
 
     public static func daysRemainingText(for weekContext: MesocycleWeekContext, now: Date = .now) -> String {
         if weekContext.isCurrentWeek {
-            return "\(weekContext.daysRemaining) days remaining"
+            return "\(BRUCountLabel.text(weekContext.daysRemaining, "day")) remaining"
         }
         if weekContext.weekEndDate < now {
             return "Completed"
         }
         let daysUntilStart = max(0, Int(floor(weekContext.weekStartDate.timeIntervalSince(now) / 86_400)))
-        return "Starts in \(daysUntilStart) days"
+        return "Starts in \(BRUCountLabel.text(daysUntilStart, "day"))"
     }
 
     public static func multiplierPreviewText(for weekContext: MesocycleWeekContext) -> String {

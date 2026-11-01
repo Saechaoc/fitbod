@@ -156,7 +156,7 @@ public struct InSessionPRBanner: View {
             : "\(content.kinds.count) personal records: \(kinds)."
         let unit = content.unitOverride ?? defaultUnit
         let unitName = unit == .kg ? "kilograms" : "pounds"
-        let set = "\(formatWeight(content.weight)) \(unitName), \(content.reps) reps."
+        let set = "\(formatWeight(content.weight)) \(unitName), \(BRUCountLabel.text(content.reps, "rep"))."
         return content.exerciseName.isEmpty
             ? "\(lead) \(set)"
             : "\(lead) \(content.exerciseName), \(set)"

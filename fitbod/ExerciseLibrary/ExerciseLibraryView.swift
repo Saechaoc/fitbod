@@ -327,8 +327,8 @@ private struct FilteredExerciseList: View {
     private func resultCount(_ count: Int) -> some View {
         let filtered = !activeQuery.isEmpty || hasActiveFilters
         return Text(filtered
-                    ? (count == 1 ? "1 match" : "\(count) matches")
-                    : "\(count) exercises")
+                    ? BRUCountLabel.text(count, "match", plural: "matches")
+                    : BRUCountLabel.text(count, "exercise"))
             .font(BRUFont.labelSmall)
             .tracking(1.2)
             .textCase(.uppercase)

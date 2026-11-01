@@ -105,7 +105,7 @@ public struct ExercisePRsView: View {
     public var body: some View {
         VStack(spacing: 0) {
             BRUHeaderBar(
-                left: HeaderAction("‹") { dismiss() },
+                left: HeaderAction("‹ Back") { dismiss() },
                 center: navTitle,
                 // The range this screen covers, not a control.
                 right: .text("ALL TIME")
@@ -402,7 +402,7 @@ private struct PRsHost: View {
         case .weight:
             return "\(weightStr) \(unit) × \(set.reps)" + (rpeStr.map { " @ RPE \($0)" } ?? "")
         case .reps:
-            return "\(set.reps) reps @ \(weightStr) \(unit)" + (rpeStr.map { ", RPE \($0)" } ?? "")
+            return "\(BRUCountLabel.text(set.reps, "rep")) @ \(weightStr) \(unit)" + (rpeStr.map { ", RPE \($0)" } ?? "")
         case .volume:
             let tonnage = Int((set.weight * Double(set.reps)).rounded())
             return "\(tonnage) \(unit) single-set (\(weightStr) × \(set.reps))"

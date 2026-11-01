@@ -25,11 +25,12 @@
 //    No Color.accentColor, Color(.system*), .font(.body|.caption|.footnote|
 //    .headline|.subheadline)
 //
-//  Verbatim copy (locked, tested in MuscleVolumeTargetStepperBRUTests):
-//    mvSuffix:           "sets — maintenance"
-//    mevSuffix:          "sets — min for growth"
-//    mavSuffix:          "sets — peak adaptive"
-//    mrvSuffix:          "sets — max recoverable"
+//  Verbatim copy (locked, tested in MuscleVolumeTargetStepperBRUTests),
+//  after the set count, which BRUCountLabel writes ("1 set", "6 sets"):
+//    mvSuffix:           "— maintenance"
+//    mevSuffix:          "— min for growth"
+//    mavSuffix:          "— peak adaptive"
+//    mrvSuffix:          "— max recoverable"
 //    monotonicErrorCopy: "Targets must be in order: MV ≤ MEV < MAV < MRV."
 //
 
@@ -42,11 +43,12 @@ public struct MuscleVolumeTargetStepper: View {
 
     // MARK: - Verbatim copy constants (internal for testability)
 
-    /// Verbatim stepper suffix — UI-SPEC §MuscleVolumeTargetStepper table.
-    static let mvSuffix: String  = "sets — maintenance"
-    static let mevSuffix: String = "sets — min for growth"
-    static let mavSuffix: String = "sets — peak adaptive"
-    static let mrvSuffix: String = "sets — max recoverable"
+    /// Verbatim stepper suffix, per the UI-SPEC §MuscleVolumeTargetStepper
+    /// table, after the set count.
+    static let mvSuffix: String  = "— maintenance"
+    static let mevSuffix: String = "— min for growth"
+    static let mavSuffix: String = "— peak adaptive"
+    static let mrvSuffix: String = "— max recoverable"
 
     /// Verbatim monotonic validation error — UI-SPEC §Copywriting Contract.
     static let monotonicErrorCopy: String = "Targets must be in order: MV ≤ MEV < MAV < MRV."
@@ -137,7 +139,7 @@ public struct MuscleVolumeTargetStepper: View {
                     .tracking(1.2)
                     .textCase(.uppercase)
                     .foregroundStyle(Color.bruInk)
-                Text("\(value) \(suffix)")
+                Text("\(BRUCountLabel.text(value, "set")) \(suffix)")
                     .font(BRUFont.labelMicro)
                     .tracking(1.0)
                     .foregroundStyle(Color.bruMuted)
@@ -152,7 +154,7 @@ public struct MuscleVolumeTargetStepper: View {
             .labelsHidden()
         }
         .accessibilityLabel(a11yLabel)
-        .accessibilityValue("\(value) sets")
+        .accessibilityValue(BRUCountLabel.text(value, "set"))
     }
 
     // MARK: - Monotonic check

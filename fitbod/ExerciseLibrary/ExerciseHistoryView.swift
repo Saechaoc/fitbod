@@ -8,7 +8,7 @@
 //
 //   BRUHeaderBar (safeAreaInset .top, navigationBarHidden)
 //   exercise.name in BRUFont.displayLarge 32pt
-//   3-cell stat strip: 'Sessions · 30d' / 'Tonnage' bruSignal / 'PRs · 30d'
+//   3-cell stat strip: 'Workouts · 30d' / 'Tonnage' bruSignal / 'PRs · 30d'
 //   BRUDivider(.ink)
 //   IntentFilterChipRow full-bleed strip (2pt rules drawn internally)
 //   set-count summary row
@@ -93,7 +93,7 @@ public struct ExerciseHistoryView: View {
         }
         .safeAreaInset(edge: .top) {
             BRUHeaderBar(
-                left: HeaderAction("‹", action: { dismiss() }),
+                left: HeaderAction("‹ Back", action: { dismiss() }),
                 center: "History",
                 right: hasHistory
                     ? HeaderAction("PROGRESS", isSignal: false, action: { presentingProgress = true })
@@ -160,7 +160,7 @@ private struct FilteredHistoryContent: View {
 
         // Set-count summary row
         HStack {
-            Text("\(totalCount) sets across \(sessionCount) sessions")
+            Text("\(BRUCountLabel.text(totalCount, "set")) across \(BRUCountLabel.text(sessionCount, "workout"))")
                 .font(BRUFont.labelSmall)
                 .tracking(1.2)
                 .textCase(.uppercase)
@@ -198,7 +198,7 @@ private struct FilteredHistoryContent: View {
     /// width and the cells share what is left; stacked, rules divide them.
     @ViewBuilder
     private func statCells(sideBySide: Bool, tonnage: String, prs: Int) -> some View {
-        statCell(BRUReadout(label: "Sessions · 30d", value: "\(sessions30d)"), sideBySide: sideBySide)
+        statCell(BRUReadout(label: "Workouts · 30d", value: "\(sessions30d)"), sideBySide: sideBySide)
         statRule(sideBySide: sideBySide)
         statCell(BRUReadout(label: "Tonnage", value: tonnage, valueColor: .bruSignal), sideBySide: sideBySide)
         statRule(sideBySide: sideBySide)

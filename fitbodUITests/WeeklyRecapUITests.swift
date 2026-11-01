@@ -62,9 +62,9 @@ final class WeeklyRecapUITests: XCTestCase {
         let screenshot = XCUIScreen.main.screenshot()
         UITestNavigation.saveScreenshot("T103", "recap")
 
-        let sessions = app.staticTexts.matching(NSPredicate(format: "label MATCHES %@", #"\d+ / \d+ sessions"#)).firstMatch
+        let sessions = app.staticTexts.matching(NSPredicate(format: "label MATCHES %@", #"\d+ / \d+ sessions?"#)).firstMatch
         XCTAssertTrue(sessions.exists, "The recap's cover shows no sessions chip")
-        XCTAssertEqual(sessions.label, "1 / 1 sessions", "The empty workout must not count as a session")
+        XCTAssertEqual(sessions.label, "1 / 1 session", "The empty workout must not count as a session")
         XCTAssertTrue(
             app.staticTexts["Last week you logged 1 session."].exists,
             "The recap's Sessions section must count the one logged workout"
@@ -113,9 +113,10 @@ final class WeeklyRecapUITests: XCTestCase {
         UITestNavigation.selectTab("Today", in: app)
     }
 
-    /// The recap's header title, such as "Week 44 · recap".
+    /// The recap's header title, such as "Week 44 · recap", whose spaces do
+    /// not break.
     @MainActor
     private func recapTitle(in app: XCUIApplication) -> XCUIElement {
-        app.staticTexts.matching(NSPredicate(format: "label ENDSWITH[c] %@", " · recap")).firstMatch
+        app.staticTexts.matching(NSPredicate(format: "label MATCHES[c] %@", #"Week\s\d+\s·\srecap"#)).firstMatch
     }
 }

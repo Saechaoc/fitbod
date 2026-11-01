@@ -81,7 +81,7 @@ public struct ExerciseProgressView: View {
     public var body: some View {
         VStack(spacing: 0) {
             BRUHeaderBar(
-                left: HeaderAction("‹") { dismiss() },
+                left: HeaderAction("‹ Back") { dismiss() },
                 center: "Progress"
             )
             nameRow
@@ -557,8 +557,8 @@ private struct ProgressChartHost: View {
             return [LegendKey(label: SeriesKind.topSet.displayLabel, isPrimary: true)]
         case .volume, .averageRPE:
             return [
-                LegendKey(label: "HYPERTROPHY · \(hypCount) SESSIONS", isPrimary: true),
-                LegendKey(label: "STRENGTH · \(strCount) SESSIONS", isPrimary: false),
+                LegendKey(label: "HYPERTROPHY · \(BRUCountLabel.text(hypCount, "SESSION"))", isPrimary: true),
+                LegendKey(label: "STRENGTH · \(BRUCountLabel.text(strCount, "SESSION"))", isPrimary: false),
             ]
         }
     }

@@ -87,9 +87,9 @@ public struct PrescriptionEditorRow: View {
 
     private var repsChipLabel: String {
         if draft.targetRepsLow == draft.targetRepsHigh {
-            return "\(draft.targetRepsLow) reps"
+            return BRUCountLabel.text(draft.targetRepsLow, "rep")
         }
-        return "\(draft.targetRepsLow)–\(draft.targetRepsHigh) reps"
+        return "\(draft.targetRepsLow)–\(BRUCountLabel.text(draft.targetRepsHigh, "rep"))"
     }
 
     private var rpeChipLabel: String {

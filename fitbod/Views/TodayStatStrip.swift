@@ -118,7 +118,7 @@ public struct TodayStatStrip: View {
                     BRUReadout(
                         label: "Day streak",
                         value: "\(streak)",
-                        accessibilityValue: streak == 1 ? "1 day" : "\(streak) days"
+                        accessibilityValue: BRUCountLabel.text(streak, "day")
                     )
                 }
 

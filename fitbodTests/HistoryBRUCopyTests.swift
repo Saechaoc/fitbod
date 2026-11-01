@@ -50,7 +50,8 @@ struct HistoryBRUCopyTests {
         // Phase 06.1-06 BRU reskin moved intent filtering to inline IntentFilterChipRow strip;
         // the BRUHeaderBar right slot changed from "FILTER" to "PROGRESS" (deep link to chart).
         #expect(src.contains("\"PROGRESS\""))
-        #expect(src.contains("\"‹\""))
+        // T34: a pushed screen goes back with ‹ BACK.
+        #expect(src.contains("\"‹ Back\""))
     }
 
     // MARK: - (2) ExerciseHistoryView empty state copy

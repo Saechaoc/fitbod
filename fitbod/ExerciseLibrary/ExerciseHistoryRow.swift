@@ -60,7 +60,7 @@ public struct ExerciseHistoryRow: View {
                 Text(entry.topSetLabel)
                     .font(BRUFont.bodyDefault)
                     .foregroundStyle(Color.bruInk)
-                Text(" · \(entry.setCount) sets")
+                Text(" · \(BRUCountLabel.text(entry.setCount, "set"))")
                     .font(BRUFont.bodyDefault)
                     .foregroundStyle(Color.bruMuted)
             }

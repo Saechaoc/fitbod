@@ -611,9 +611,9 @@ public struct WhyThisWeightSheet: View {
     /// Phase 3.1 calibrating status copy with optional session-intent prefix.
     private func calibratingStatusText(current n: Int, threshold: Int) -> String {
         if let sessionIntent = explanation.sessionIntent {
-            return "\(sessionIntent.rawValue.capitalized) session — calibrating (\(n) / \(threshold) sets)"
+            return "\(sessionIntent.rawValue.capitalized) session — calibrating (\(n) / \(BRUCountLabel.text(threshold, "set")))"
         }
-        return "Tuchscherer prior · calibrating (\(n) sets logged of \(threshold))"
+        return "Tuchscherer prior · calibrating (\(BRUCountLabel.text(n, "set")) logged of \(threshold))"
     }
 
     /// Phase 3.1 calibrated status copy with optional session-intent prefix.

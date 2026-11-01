@@ -858,7 +858,7 @@ fileprivate struct NewBlockMetricsBand: View {
             .padding(.horizontal, NewBlockScreenTokens.cardPadding)
             .padding(.vertical, NewBlockScreenTokens.cardPadding)
             .accessibilityElement(children: .contain)
-            .accessibilityValue("\(draft.daysPerWeek) days per week")
+            .accessibilityValue("\(BRUCountLabel.text(draft.daysPerWeek, "day")) per week")
         }
         .frame(minHeight: NewBlockScreenTokens.metricsHeight)
         .bruCard()
@@ -2598,7 +2598,7 @@ fileprivate struct NewBlockSplitBand: View {
                 // is attached (nothing to mismatch against). (WR-04)
                 let slotCount = draft.split?.slots?.count ?? 0
                 if draft.split != nil && draft.trainingDays.count != slotCount {
-                    Text("\(draft.trainingDays.count) days / \(slotCount) sessions")
+                    Text("\(BRUCountLabel.text(draft.trainingDays.count, "day")) / \(BRUCountLabel.text(slotCount, "session"))")
                         .font(NewBlockType.label)
                         .tracking(NewBlockScreenTokens.labelTracking)
                         .foregroundStyle(Color.bruAmber) // BRU token, dark-mode-aware (WR-03)

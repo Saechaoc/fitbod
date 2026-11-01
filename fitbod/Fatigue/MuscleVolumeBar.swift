@@ -185,7 +185,7 @@ public struct MuscleVolumeBar: View {
     /// The chip label ("UNDER MEV", "ADD A SET", etc.) is NOT used here per
     /// UI-SPEC §Copy overlay: accessibility reads the full D-06 sentence.
     var accessibilityDescription: String {
-        "\(muscle.displayName): \(total.totalSetsRounded) sets this week, \(zone.verb). \(delta.deltaCopy)."
+        "\(muscle.displayName): \(BRUCountLabel.text(total.totalSetsRounded, "set")) this week, \(zone.verb). \(delta.deltaCopy)."
     }
 
     // MARK: - Body
