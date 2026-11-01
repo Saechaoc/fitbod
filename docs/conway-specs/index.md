@@ -55,7 +55,6 @@ Every Phase 2 ticket is done and archived.
 | [T137](tickets/T137-progress-rows-open-only-on-tap.md) | Progress's rows open only on a tap |
 | [T138](tickets/T138-block-review-pr-chips-and-stats-once.md) | The block review's PR chips read to VoiceOver, and its stats load once |
 | [T140](tickets/T140-long-press-remove-and-remove-labels.md) | Removing an exercise by long press forgets its open editor |
-| [T142](tickets/T142-block-weeks-start-at-midnight.md) | A block week starts at local midnight on its first day |
 | [T143](tickets/T143-ui-suite-keeps-data-guards.md) | The UI suite keeps only the tests that guard the lifter's data |
 
 ### Phase 4: test health
