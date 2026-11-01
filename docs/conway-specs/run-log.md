@@ -200,6 +200,7 @@ The DerivedData folders live in `~/Library/Developer/Xcode/DerivedData/`.
 - 2026-11-01 11:11 T143 accepted and merged at e697189 (rebased onto 6f4e513, docs-only move; 133e535, 3136ede, e697189), pushed. Result: the whole fitbodUITests target passed 78/78 on the small phone at 7d0a61f in 39.6 min of XCTest time (40.2 wall with the build): T143's 73 kept cases 36.5 min, ProgressRowsTapOnly 0.3 (deleted after on the grant), the four merged data guards 2.8; Gate 2's UI run was 179.8 min. 351 of 424 cases and 59 files deleted, 21 suites trimmed, only fitbodUITests touched (16,983 lines removed); every kept case byte-identical; fitbodTests 1221 + 1 known at a6286a5. Review: the kept list and its reasons name data (logged RPE 8.5, skipped warm-ups log no set, weeks windows, the right workout summary, a removal that asks first keeps the session, relaunch and restore paths). All LOW. L2 and L3 idle until Gate 3; T140 on L1 is Phase 3's last ticket.
 - 2026-11-01 11:23 T140 question (msg_ea35a7f1177a): the symptom did not reproduce in 20 rounds (110.6 s and 216.7 s throwaway runs) because it needs the allocator to reuse a removed draft's address, but removeExercise demonstrably leaves the stale key in expandedExerciseIDs. Answered (b): make the one-line fix the ticket's Change 1 names (removeExercise also removes stableKey(for:)), rerun the throwaway, then fitbodTests on the large phone, SessionEditorRowsUITests on the small phone and both builds. Unlike T115 (a hang seen only on a runtime this machine lacks, no defect found in code), the defect here is visible in code, so the change is not speculative.
 - 2026-11-01 11:31 T140 accepted and merged (one line plus its comment: removeExercise drops the row's stableKey from expandedExerciseIDs, so long-press Remove and REMOVE both clear it), pushed. The symptom did not reproduce in 20 throwaway rounds; the change follows Change 1 per the coordinator's answer (b). fitbodTests 1221 + 1 known, SessionEditorRowsUITests 1/1, builds; no UI test committed. LOW. Finding F373 note. Phase 3 is complete (every ticket done or skipped, externals merged); Gate 3 next on the large gate phone.
+- 2026-11-01 12:12 GATE 3 PASSED at 7f29326 on the large gate phone: 1299 tests, 1298 passed + 1 expected failure, 0 failed; widget built; 40.3 min of tests, 40 min with builds (Gate 2 took 182 min before T143's cut). Slowest: MilestoneOne journey 162.3 s, SwipeBack root walk 84.2 s, ArchiveRoutine restore 72.5 s (T119's budget targets). Phase 4 opens: T39, T119, T123, T133, T134 and T144 kept.
 
 ## Ledger
 
@@ -382,7 +383,7 @@ Keep the accepted full-tour evidence, including implementation retries, and prio
 |---|---|---|---|---|---|---|---|
 | 1 | 2026-10-30 | 1320 | 1319 | 0 | 1 | 201 min (run 2; run 1 failed, 99 min) | succeeded |
 | 2 | 2026-10-31 | 1515 | 1514 | 0 | 1 | 182 min (tests 180.7 min; no F144 stall) | succeeded |
-| 3 |  |  |  |  |  |  |  |
+| 3 | 2026-11-01 | 1299 | 1298 | 0 | 1 | 40 min with builds (tests 40.3 min wall) | succeeded |
 | 4 |  |  |  |  |  |  |  |
 | 5 |  |  |  |  |  |  |  |
 
