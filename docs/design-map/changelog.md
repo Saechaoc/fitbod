@@ -2,6 +2,11 @@
 
 Newest first: one entry for each stage of [plan.md](plan.md) up to S2, then one for each commit.
 
+## 2026-11-01: S3, Program screens
+
+- Wrote the 20 screen files of the Program tab: Program and the archived routines, the routine and session editors with their sheets, New Block with its sheets, and the block overview.
+  Each file covers every capture of its screen on both phones.
+
 ## 2026-11-01: S3, Today screens
 
 - Wrote the 18 screen files of the Today tab: Today and its launch splash, the logger and its sheets, History, the workout summary, the weekly recap, the block review and the muscle detail.
