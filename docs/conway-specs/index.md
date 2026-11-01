@@ -42,7 +42,6 @@ Every Phase 2 ticket is done and archived.
 | Ticket | Title |
 |---|---|
 | [T111](tickets/T111-session-editor-rows-announced-removable.md) | Session editor rows are announced, removable and easy to hit |
-| [T113](tickets/T113-block-review-pr-marks.md) | The block review's PR marks agree, and its stats read cheaply and whole |
 | [T114](tickets/T114-recap-target-from-plan.md) | The weekly recap measures last week against its plan |
 | [T116](tickets/T116-history-top-set-is-its-e1rm-set.md) | Exercise history's TOP line names the set its e1RM comes from |
 | [T118](tickets/T118-weekly-tonnage-label-and-rows.md) | Weekly Tonnage keeps its previous-best label whole, and its week rows open their workouts |
@@ -58,6 +57,7 @@ Every Phase 2 ticket is done and archived.
 | [T132](tickets/T132-planned-hero-and-session-summary-at-ax3.md) | The planned block hero and session summaries keep their parts whole at AX3 |
 | [T136](tickets/T136-pr-row-opens-its-workout.md) | A PR row opens the workout it was set in |
 | [T137](tickets/T137-progress-rows-open-only-on-tap.md) | Progress's rows open only on a tap |
+| [T138](tickets/T138-block-review-pr-chips-and-stats-once.md) | The block review's PR chips read to VoiceOver, and its stats load once |
 
 ### Phase 4: test health
 

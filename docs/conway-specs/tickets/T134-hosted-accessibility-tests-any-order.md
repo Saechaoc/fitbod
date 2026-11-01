@@ -6,7 +6,7 @@ items: []
 depends_on: [T106]
 size: M
 sim: large
-owns: [fitbodTests/StallBadgeBRUTests.swift, new:fitbodTests/BRURowButtonStyleTests.swift, new:fitbodTests/HostedAccessibility.swift, fitbod/Design/BRURowButtonStyle.swift]
+owns: [fitbodTests/StallBadgeBRUTests.swift, new:fitbodTests/BRURowButtonStyleTests.swift, new:fitbodTests/HostedAccessibility.swift, fitbod/Design/BRURowButtonStyle.swift, fitbodTests/BlockReviewPRMarkTests.swift, fitbodTests/BlockReviewHeroLayoutTests.swift]
 ---
 
 # T134: Hosted accessibility tests pass in any order, and the row style's VoiceOver activate is tested
@@ -24,6 +24,7 @@ These are findings F315 and F317, which T106's worker found.
   So nothing fails if the style's accessibility action is removed, and XCUITest cannot activate through VoiceOver.
 - T98's `ProgressChartDescriptorTests` does find SwiftUI's accessibility elements when run alone: it hosts the screen in a window attached to the app's scene and polls the run loop with a ceiling.
 - `RowTapRecognizer.touchesEnded` in `fitbod/Design/BRURowButtonStyle.swift` has a branch that can never run: `start` is always set by then.
+- `BlockReviewPRMarkTests` and `BlockReviewHeroLayoutTests` each repeat about 35 lines of hosting code (finding F328, from T113's review).
 
 ## Target
 
@@ -37,6 +38,7 @@ These are findings F315 and F317, which T106's worker found.
 3. `BRURowButtonStyleTests` proves that VoiceOver's activate on a `.bruRow` button runs its action.
    It fails when the style's accessibility action is removed; prove that once and record it in `notes.md`.
 4. `RowTapRecognizer.touchesEnded` recognizes the tap without the unreachable branch.
+5. `BlockReviewPRMarkTests` and `BlockReviewHeroLayoutTests` host their views through the same shared code.
 
 ## Constraints
 
@@ -57,6 +59,7 @@ Ask before you move any other hosted accessibility test to the shared way.
 ## Observable acceptance
 
 - `StallBadgeBRUTests` and `BRURowButtonStyleTests` each pass alone three runs in a row, and inside the full `fitbodTests` run.
+- `BlockReviewPRMarkTests` and `BlockReviewHeroLayoutTests` pass alone and inside the full run.
 - `fitbodTests` passes, and the app and the widget build.
 
 ## Hints

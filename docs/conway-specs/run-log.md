@@ -24,7 +24,7 @@ Record these when you set up the run, as [dispatch.md](dispatch.md) says.
 |---|---|---|---|---|
 | gate | "sw6 iPhone 17e" `FF89B400-1160-4818-8436-314B014D2614` | "sw6 iPhone 17 Pro Max" `69E32D56-148D-40A7-9D1B-543F6878B1D1` | `fitbod-conway-gate` |  |
 | L1 | "sw6-L1 iPhone 17e" `D0B5079C-B4ED-463B-AE2C-01D0FF469435` | "sw6-L1 iPhone 17 Pro Max" `A74927B1-3476-4659-9AAD-E6CABA6A9902` | `fitbod-conway-L1` | T111 |
-| L2 | "sw6-L2 iPhone 17e" `5615455C-A8B6-4129-9E3B-53A7F161D758` | "sw6-L2 iPhone 17 Pro Max" `D305B715-794C-4BEB-B49E-89368B415E7E` | `fitbod-conway-L2` | T113 |
+| L2 | "sw6-L2 iPhone 17e" `5615455C-A8B6-4129-9E3B-53A7F161D758` | "sw6-L2 iPhone 17 Pro Max" `D305B715-794C-4BEB-B49E-89368B415E7E` | `fitbod-conway-L2` | T116 |
 | L3 | "sw6-L3 iPhone 17e" `C4F388E4-0731-49C1-9AEB-30FF32EBE64E` | "sw6-L3 iPhone 17 Pro Max" `1505840C-CEEF-428C-B65D-C0B988A88465` | `fitbod-conway-L3` | T114 |
 
 The DerivedData folders live in `~/Library/Developer/Xcode/DerivedData/`.
@@ -141,6 +141,8 @@ The DerivedData folders live in `~/Library/Developer/Xcode/DerivedData/`.
 - 2026-11-01 05:44 Coordinator check for T106 done: SwipeBackUITests 40/40 on merged main 5f224ff on L3's small phone (1017 s), including testMuscleDetailSwipesBackToToday (20.2 s) and testVolumeTargetsSwipeBackToSettings (23.2 s) on T109's screens; recorded in evidence/T106/coordinator-check.md; five over-budget cases -> F323 -> T135 change 4. Settling T106.
 - 2026-11-01 05:46 T114 dispatched on L3 (task_f44e9b66d556, ctx_54401b5b83a1) with the F296 heads-up. evidence/T106/coordinator-check.md written after archive (the first write ran before archive.py created the folder; evidence/ is gitignored, so it lives in the main checkout).
 - 2026-11-01 05:55 T114 question msg_60dca411b68c: approve all. (1) Target = last week's days covered by a started fixed-weekly block that lists the weekday (mid-week start/end counts covered days only; once across a swap); rotation, no block or zero planned days -> no target, chip 'N sessions', headline from sessions and PRs (>=3 PRs strong, >=2 sessions solid, else light); recorded in tradeoffs.md 'Weekly recap target'. (2) fitbodUITests/WeeklyRecapUITests.swift granted and held (T103's '1 / 1 session' pin becomes '1 session'; add a with-target default-text test and an AX3 cover-chip test for F277). (3) fitbod/App/DemoWorkoutSeed.swift granted and held: DEBUG flag -fitbod-seed-recap-with-plan next to T103's recap flags (fixed weekly Mon/Tue/Thu/Fri, 4-slot routine reusing Push A, started via BlockLifecycleService the week before last, one logged Push A last week, recap due). Neither file is reserved.
+- 2026-11-01 06:03 T113 question msg_f5c6590989f7: leave. Branch stays on 84e1e73 (tested cc5ebfc); main moved by docs only (1533c8f); the coordinator's merge rebases and builds.
+- 2026-11-01 06:20 T113 accepted and merged at d991da8 (rebased onto 1533c8f, build ok; c732895, 3f4b3b5, d991da8), pushed. Review: PRs replay once on appear into @State (BlockReviewPRs count + exerciseIDs), so the PRS stat and the e1RM rows' PR chips agree; TONNAGE one line via lineLimit(1) + minimumScaleFactor(0.4) with stats as tall as the tallest so labels stay level; granted -fitbod-seed-ended-heavy-block shares T87's seed through a weight parameter; hosted BlockReviewHeroLayoutTests replaced the 17 s UI case; screens viewed (1,200,000 on one line). BlockReviewView MEDIUM. Findings F324 to F330: new Phase 3 T138 (F324-F327), T134 change 5 (F328), F329 recorded, F330 helpers list. T116 dispatched on L2 (task_f8fdf5c10c57, ctx_0c0bdc34645b) with the F296 heads-up. Next new ticket id: T139.
 
 ## Ledger
 
@@ -284,10 +286,10 @@ Keep the accepted full-tour evidence, including implementation retries, and prio
 | T110 | 2 | done |  |  |  |  | `38d6a5d` | Built outside the run per the user (2026-10-31 15:06): branch conway-t110 will be pushed; the coordinator rebases it onto main, reruns the ticket's required runs on a free lane and merges it ff-only. \| external run 496906a; retest 1 at 1540806 15/16 (F144 timeout), retest 2 at bc66f87 on T101 PASSED; merged 38d6a5d |
 | T111 | 3 | dispatched | L1 | `conway-t111` | `task_5822969c2fc1` | `ctx_a30e9bb3febc` |  | T111: original, lane L1, base `e859eaa`, worktree `/Users/csaechao4/orca/workspaces/fitbod/conway-t111`; task `task_5822969c2fc1` dispatch `ctx_a30e9bb3febc`; reported -; settlement pending |
 | T112 | 2 | done |  |  |  |  | `24b9594` | Built outside the run per the user (2026-10-31 15:06): branch conway-t112 will be pushed; the coordinator rebases it onto main, reruns the ticket's required runs on a free lane and merges it ff-only. \| external run 84fc149, coordinator retest PASSED at b0d40a2 (unit, UI 39/39 both phones, widget), rebased to 24b9594, built, merged |
-| T113 | 3 | dispatched | L2 | `conway-t113` | `task_c5ce792d3e3c` | `ctx_f3e65f129d90` |  | T113: original, lane L2, base `ce5fed4`, worktree `/Users/csaechao4/orca/workspaces/fitbod/conway-t113`; task `task_c5ce792d3e3c` dispatch `ctx_f3e65f129d90`; reported -; settlement pending |
+| T113 | 3 | done | L2 | `conway-t113` | `task_c5ce792d3e3c` | `ctx_f3e65f129d90` | `d991da8`, `3f4b3b5`, `c732895` | T113: original, lane L2, base `ce5fed4`, worktree `/Users/csaechao4/orca/workspaces/fitbod/conway-t113`; task `task_c5ce792d3e3c` dispatch `ctx_f3e65f129d90`; reported succeeded; settlement settled; stop proof: accepted worker_done + worker-release retained/none + worker-show settled + agent done + terminal close term_310237b0-3aa8-44eb-ba8f-eb353c717a20 ptyKilled (2026-11-01 06:18); brief archived at `docs/conway-specs/evidence/T113/attempt-brief.md`; coordinator rebased onto 1533c8f and built (2026-11-01 06:19) |
 | T114 | 3 | dispatched | L3 | `conway-t114` | `task_f44e9b66d556` | `ctx_54401b5b83a1` |  | T114: original, lane L3, base `84e1e73`, worktree `/Users/csaechao4/orca/workspaces/fitbod/conway-t114`; task `task_f44e9b66d556` dispatch `ctx_54401b5b83a1`; reported -; settlement pending |
 | T115 | 2 | done |  |  |  |  |  | from external run (e711f12, merged as 48d18c6) \| coordinator check planned after T101+T110 (run note 17:35) \| coordinator check at 38d6a5d: 3/3 small (78.9, 72.0, 71.9 s) + large 76.0 s, no stall/busy lines; not reproduced on iOS 27.x; 26.5 runtime not installed |
-| T116 | 3 | todo |  |  |  |  |  | from external run (e711f12, merged as 48d18c6) |
+| T116 | 3 | dispatched | L2 | `conway-t116` | `task_f8fdf5c10c57` | `ctx_0c0bdc34645b` |  | from external run (e711f12, merged as 48d18c6) / T116: original, lane L2, base `d991da8`, worktree `/Users/csaechao4/orca/workspaces/fitbod/conway-t116`; task `task_f8fdf5c10c57` dispatch `ctx_0c0bdc34645b`; reported -; settlement pending |
 | T117 | 4 | todo |  |  |  |  |  | from external run (e711f12, merged as 48d18c6) |
 | T118 | 3 | todo |  |  |  |  |  |  |
 | T119 | 4 | todo |  |  |  |  |  |  |
@@ -309,6 +311,7 @@ Keep the accepted full-tour evidence, including implementation retries, and prio
 | T135 | 4 | todo |  |  |  |  |  |  |
 | T136 | 3 | todo |  |  |  |  |  |  |
 | T137 | 3 | todo |  |  |  |  |  |  |
+| T138 | 3 | todo |  |  |  |  |  |  |
 
 ## Phase gates
 
@@ -335,6 +338,8 @@ Workers list new helpers in their notes, and the coordinator copies them here fo
 - T12 (`aa456b5`): DEBUG launch flag `-fitbod-seed-block-states` (`BlockStatesSeed` in `fitbod/App/BlockStatesSeed.swift`): "States Routine" (Upper A bench, Upper B row) with three blocks numbered 1-3 by start date: "Spring Block" active (rotation, started three days ago through BlockLifecycleService.start; Upper A fully logged, Upper B an empty finished workout), "Summer Block" ready (fixed weekly Mon/Thu, starts tomorrow) and "Autumn Block" draft (no routine, starts in a week); nothing in progress and this week's recap marked seen; UI tests launch it with `UITestNavigation.blockStates`; do not combine with `-fitbod-seed-active-block` (it would end Spring Block); idempotent; `BlockNumbering.number(of:among:)` in `BlockOverviewScreen.swift` numbers blocks by start date then name
 - T87 (`4f26d4b`): DEBUG launch flag `-fitbod-seed-ended-block-recap` in `fitbod/App/ActiveBlockSeed.swift` (dispatched from its runIfRequested): Live Routine/Live Push with Live Block started the week before last, one finished Live Push last week (100 x 5 @ RPE 8), the block ended through BlockLifecycleService.end, so its review and this week's recap are both due; launch alone plus `-fitbod-start-program` via `UITestNavigation.endedBlockWithRecap` (extension in `fitbodUITests/TodaySheetOrderUITests.swift`); idempotent
 - T103 (`2443fb3`): three DEBUG seed flags in `fitbod/App/DemoWorkoutSeed.swift` next to T22's empty-workout flags, for real and empty workouts yesterday/today and last week with this week's recap left unseen; WeeklyRecapUITests launches through `UITestNavigation.launch` with them and finds the recap by its header title
+- T113 (`c732895`): DEBUG launch flag `-fitbod-seed-ended-heavy-block` in `fitbod/App/ActiveBlockSeed.swift`, T87's ended Live Block seed with work sets of 80,000 x 5, so the block's TONNAGE is 1,200,000; launch it alone, the way `-fitbod-seed-ended-block-recap` is launched
+- T98 (`f27a159`): hosted-view pattern in `fitbodTests/ProgressChartDescriptorTests.swift` that finds SwiftUI accessibility elements: a UIWindow on the app's connected UIWindowScene, `isHidden = false`, a depth-first walk of `accessibilityElements` and subviews, polling `RunLoop.main` at 50 ms with a 10 s ceiling (hosted accessibility trees are otherwise order-dependent, F315)
 
 ## Held files
 
@@ -440,8 +445,8 @@ Later eligible asks keep waiting, and no path is handed off while any live attem
 - grant `fitbodTests/Phase3BRUGrepAuditTests.swift`: ticket T111, attempt T111, dispatch `ctx_a30e9bb3febc`, message `msg_e7403f7b7da8`, order 91, 2026-11-01 04:17
 - grant `fitbodUITests/SessionEditorPolishUITests.swift`: ticket T111, attempt T111, dispatch `ctx_a30e9bb3febc`, message `msg_e7403f7b7da8`, order 92, 2026-11-01 04:17
 - grant `fitbodUITests/PerSetOverridesRemovedUITests.swift`: ticket T111, attempt T111, dispatch `ctx_a30e9bb3febc`, message `msg_e7403f7b7da8`, order 93, 2026-11-01 04:17
-- grant `fitbod/App/ActiveBlockSeed.swift`: ticket T113, attempt T113, dispatch `ctx_f3e65f129d90`, message `msg_29aff21712e3`, order 94, 2026-11-01 04:43
-- grant `fitbodTests/BlockReviewHeroLayoutTests.swift`: ticket T113, attempt T113, dispatch `ctx_f3e65f129d90`, message `msg_4276114a8dc1`, order 95, 2026-11-01 05:34
+- ~~grant `fitbod/App/ActiveBlockSeed.swift`: ticket T113, attempt T113, dispatch `ctx_f3e65f129d90`, message `msg_29aff21712e3`, order 94, 2026-11-01 04:43~~ (settled T113 2026-11-01 06:19)
+- ~~grant `fitbodTests/BlockReviewHeroLayoutTests.swift`: ticket T113, attempt T113, dispatch `ctx_f3e65f129d90`, message `msg_4276114a8dc1`, order 95, 2026-11-01 05:34~~ (settled T113 2026-11-01 06:19)
 - grant `fitbodUITests/WeeklyRecapUITests.swift`: ticket T114, attempt T114, dispatch `ctx_54401b5b83a1`, message `msg_60dca411b68c`, order 96, 2026-11-01 05:55
 - grant `fitbod/App/DemoWorkoutSeed.swift`: ticket T114, attempt T114, dispatch `ctx_54401b5b83a1`, message `msg_60dca411b68c`, order 97, 2026-11-01 05:55
 
@@ -791,3 +796,10 @@ Each one becomes a ticket from T49 on.
 - F321 (T106 observation): SwipeBackUITests' three workout-logger cases log 'Invalid frame dimension (negative or non-finite)' -> T42 change 5 already covers it; hint added.
 - F322 (T106 split): T123 had grown to seven items over about 20 files; its shared-helper item (F280, F283, F288, F291, F303, F309) and SwipeBack Chest lookup (F301) moved to new Phase 4 T135 with F316, so T123 keeps its notification and journey-suite items.
 - F323 (coordinator check of T106 on 5f224ff): five SwipeBackUITests cases over the 30 s budget (testSwipeOnARootScreenDoesNothing 83.7 s, testArchivedRoutinesSwipeBackToProgram 43.3 s, testExerciseHistoryAndItsChartOpenOnLibrarysStack 37.9 s, testSessionFromTodaySwipesBackToToday 35.1 s, testHistoryChartSwipesBackToHistory 31.4 s) -> T135 change 4.
+- F324 (T113 out-of-scope): an e1RM row's PR chip in the block review is hidden from VoiceOver -> new Phase 3 T138 change 1.
+- F325 (T113 out-of-scope): the block review's other stats refetch the block's sets on every render -> T138 change 2.
+- F326 (T113 out-of-scope): BlockReviewView's 'DO NOT MODIFY' mark is stale -> T138 change 3.
+- F327 (T113 own review): BlockReviewStatistics.prCount only wraps prs(context:start:end:) for BlockReviewPRCountTests (outside T113's owns) -> T138 change 4.
+- F328 (T113 own review): BlockReviewPRMarkTests and BlockReviewHeroLayoutTests repeat about 35 lines of hosting -> T134 change 5.
+- F329 (T113 own review): the PR replay runs on the main actor once per review open, about 0.39 s on 6,000 sets -> recorded for the final report, no ticket (one user; opening an ended block's review only).
+- F330 (T113): the new -fitbod-seed-ended-heavy-block flag added to the briefs' shared-helper list (state helpers), with T98's hosted-view pattern.
