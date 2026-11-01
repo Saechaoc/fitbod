@@ -42,7 +42,6 @@ Every Phase 2 ticket is done and archived.
 | Ticket | Title |
 |---|---|
 | [T106](tickets/T106-sideways-drag-does-not-open-rows.md) | A sideways drag on a row does not open it |
-| [T109](tickets/T109-muscle-screen-steppers-order-tests.md) | The muscle screen uses BRU steppers, keeps a stable order and is always tested |
 | [T111](tickets/T111-session-editor-rows-announced-removable.md) | Session editor rows are announced, removable and easy to hit |
 | [T113](tickets/T113-block-review-pr-marks.md) | The block review's PR marks agree, and its stats read cheaply and whole |
 | [T114](tickets/T114-recap-target-from-plan.md) | The weekly recap measures last week against its plan |
@@ -72,6 +71,7 @@ Every Phase 2 ticket is done and archived.
 | [T121](tickets/T121-new-block-ui-tests-budgets.md) | New Block UI tests fit the test budgets |
 | [T123](tickets/T123-ui-runs-clear-rest-notifications.md) | UI test runs stay free of leftover rest notifications, and the journey suite reads cheaply |
 | [T131](tickets/T131-editor-ui-tests-budgets.md) | The editor swipe and session editor UI tests fit the test budgets |
+| [T133](tickets/T133-volume-target-tests-adjust-and-relaunch.md) | Volume target tests cover VoiceOver's adjust and a relaunch, and the fatigue smoke test launches cleanly |
 
 ### Phase 5: design refresh
 
