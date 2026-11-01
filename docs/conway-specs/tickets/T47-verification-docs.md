@@ -76,3 +76,4 @@ Before you edit, list in `notes.md` each claim in the four docs that the new evi
 - `rg -n "png" docs/VERIFICATION.md docs/MILESTONE-1-CLOSEOUT.md` finds every image link.
 - Review items and their severities are in Appendix A of the plan, `.planning/noble-wishing-conway.md`.
 - T119 makes Weekly Tonnage's 20-open crash check opt-in; `docs/VERIFICATION.md` says how to run it, with `TEST_RUNNER_FITBOD_SOAK=1`.
+- Since T101, the tab bar and rest dock also hide while a field is being edited, so `docs/MILESTONE-1-CLOSEOUT.md:69` says so (finding F269); `docs/VERIFICATION.md` records why, from T101's notes: a view removed while the keyboard animates can leave XCTest's animation count stuck, so nothing should hide on `keyboardWillShow` alone (finding F265).

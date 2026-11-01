@@ -84,7 +84,7 @@ public struct SessionHistoryView: View {
                                 unit: weightUnit
                             )
                         }
-                        .buttonStyle(.plain)
+                        .buttonStyle(.bruRow)
                         .accessibilityIdentifier("history.row")
                         BRUDivider(.hair)
                     }
@@ -94,7 +94,7 @@ public struct SessionHistoryView: View {
         .background(Color.bruPaper.ignoresSafeArea())
         .navigationBarHidden(true)
         .safeAreaInset(edge: .top, spacing: 0) {
-            BRUHeaderBar(left: HeaderAction("‹") { dismiss() }, center: "History")
+            BRUHeaderBar(left: HeaderAction("‹ Back") { dismiss() }, center: "History")
         }
         .task(id: sessions.map(\.id)) {
             prs = SessionSummary.prsBySession(sessions)
@@ -112,11 +112,11 @@ public struct SessionHistoryView: View {
         return Array(SessionSetActions.countedWorkouts(sessions.filter { $0.startedAt >= cutoff }))
     }
 
-    /// Average sessions per week over the last 4 weeks, e.g. "2.5".
+    /// Average sessions per week over the last 4 weeks, e.g. "0.25" or "2".
     private var perWeekLabel: String {
         let cutoff = Calendar.current.date(byAdding: .day, value: -28, to: .now) ?? .now
         let count = SessionSetActions.countedWorkouts(sessions.filter { $0.startedAt >= cutoff }).count
-        return (Double(count) / 4).formatted(.number.precision(.fractionLength(0...1)))
+        return SessionHistoryFormat.perWeek(workoutsInFourWeeks: count)
     }
 
     private func tonnage(of sessions: [Session]) -> Double {
@@ -177,6 +177,13 @@ enum SessionHistoryFormat {
             .flatMap { $0.sets ?? [] }
             .filter { $0.isComplete && !$0.isWarmup }
             .reduce(0) { $0 + $1.weight * Double($1.reps) }
+    }
+
+    /// Workouts a week over four weeks, to two decimals at most with
+    /// trailing zeros trimmed: one workout reads "0.25", two "0.5" and
+    /// eight "2".
+    static func perWeek(workoutsInFourWeeks count: Int, locale: Locale = .autoupdatingCurrent) -> String {
+        (Double(count) / 4).formatted(.number.precision(.fractionLength(0...2)).locale(locale))
     }
 
     /// "4,610" below ten thousand, "71.2k" above.

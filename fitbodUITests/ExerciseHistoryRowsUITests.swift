@@ -54,22 +54,22 @@ final class ExerciseHistoryRowsUITests: XCTestCase {
 
     // MARK: - Helpers
 
-    /// Reads the STRENGTH chip and the "Sessions · 30d" cell off the
+    /// Reads the STRENGTH chip and the "Workouts · 30d" cell off the
     /// screen: a word broken over two lines reads as two words.
     @MainActor
     private func assertWordsWhole(textSize: UITestNavigation.TextSize) throws {
         let app = openBenchPressHistory(textSize: textSize)
         let strength = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "STRENGTH ·")).firstMatch
         XCTAssertTrue(strength.waitForExistence(timeout: 10), "Missing the STRENGTH chip")
-        let sessions = app.descendants(matching: .any).matching(NSPredicate(format: "label == %@", "Sessions · 30d")).firstMatch
-        XCTAssertTrue(sessions.waitForExistence(timeout: 10), "Missing the Sessions · 30d cell")
+        let workouts = app.descendants(matching: .any).matching(NSPredicate(format: "label == %@", "Workouts · 30d")).firstMatch
+        XCTAssertTrue(workouts.waitForExistence(timeout: 10), "Missing the Workouts · 30d cell")
         UITestNavigation.waitUntilStill(strength)
         UITestNavigation.saveScreenshot("T112", "exercise-history", textSize: textSize)
         // At AX3 the stat strip stacks and the chip strip scrolls sideways,
         // so the chip can sit under the tab bar or off the trailing edge.
-        // The Sessions cell is read first, before the page scrolls.
+        // The Workouts cell is read first, before the page scrolls.
         let screen = CGRect(x: 0, y: 0, width: app.frame.width, height: tabBarTop(in: app))
-        try assertWordWhole("SESSIONS", in: sessions, within: screen)
+        try assertWordWhole("WORKOUTS", in: workouts, within: screen)
         bringOnScreen(strength, within: screen, in: app)
         UITestNavigation.saveScreenshot("T112", "exercise-history-chips", textSize: textSize)
         try assertWordWhole("STRENGTH", in: strength, within: screen)

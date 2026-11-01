@@ -182,6 +182,8 @@ private enum BRUHeaderMetrics {
     static let ruleHeight: CGFloat = 2
     static let horizontalPadding: CGFloat = 16
     static let tracking: CGFloat = 1.5
+    /// How far an action's touch area reaches past its label (`bruHitArea`).
+    static let actionHitReach: CGFloat = 12
 }
 
 // MARK: - BRUHeaderChrome (shared by both APIs)
@@ -202,6 +204,9 @@ private struct BRUHeaderChrome<Left: View, Right: View>: View {
                         centerView
                             .frame(maxWidth: .infinity)
                             .padding(.top, 8)
+                            // The actions' touch areas reach up past their
+                            // labels; this keeps them off the title.
+                            .padding(.bottom, center == nil ? 0 : BRUHeaderMetrics.actionHitReach)
                         HStack {
                             left
                             Spacer(minLength: 12)
@@ -299,7 +304,7 @@ private struct HeaderLabelButton: View {
             action()
         } label: {
             HeaderLabelText(label: label, isSignal: isSignal, isMuted: !isEnabled)
-                .bruHitArea()
+                .bruHitArea(BRUHeaderMetrics.actionHitReach)
         }
         .accessibilityLabel(Self.spokenLabel(for: label))
     }
@@ -316,7 +321,12 @@ private struct HeaderLabelButton: View {
     }
 }
 
+/// A side label on one line. Above default text it may shrink further
+/// before it would end in "…", so a date such as "SAT · OCT 31" shows
+/// whole in its third at xxxLarge, and beside SETTINGS at AX3, on the 390pt
+/// phone.
 private struct HeaderLabelText: View {
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     let label: String
     let isSignal: Bool
@@ -329,7 +339,7 @@ private struct HeaderLabelText: View {
             .textCase(.uppercase)
             .foregroundStyle(isMuted ? Color.bruMuted : isSignal ? Color.bruSignalText : Color.bruInk)
             .lineLimit(1)
-            .minimumScaleFactor(0.85)
+            .minimumScaleFactor(dynamicTypeSize > .large ? 0.75 : 0.85)
     }
 }
 

@@ -12,16 +12,18 @@
 //      .safeAreaInset(edge: .bottom), so it sits above the home indicator
 //      and within thumb reach for one-handed use.
 //      Background: Color.bruBg2. Top border: 2pt Color.bruInk.
-//      Row 1: 40pt RestTimerProgressArc + "REST" + exercise name +
+//      Row 1: 40pt RestTimerProgressArc with "REST" inside it (dropped at
+//             accessibility sizes) + status + exercise name +
 //             countdown displayMedium + "▸" (tap row to expand).
 //      Row 2: −15s / +15s / SKIP, each a 44pt-tall outlined rectangle.
 //      When the countdown reaches zero the dock flips to "REST COMPLETE"
 //      with the overrun in bruSignal and SKIP becomes DONE.
 //      NO Capsule, NO RoundedRectangle, NO .regularMaterial.
 //
-//   2. EXPANDED sheet (.medium detent) — BRUHeaderBar "REST TIMER" top,
-//      exercise name displayLarge, 200×200 RestTimerProgressArc + displayHero
-//      countdown, ±15s ink-outlined rectangle buttons, BRUButton(.ghost) SKIP,
+//   2. EXPANDED sheet (opens at its content's height, drags to full
+//      height) — BRUHeaderBar "REST TIMER" top, exercise name displayLarge,
+//      200×200 RestTimerProgressArc + displayHero countdown, ±15s
+//      ink-outlined rectangle buttons, BRUButton(.ghost) SKIP,
 //      "PRESCRIBED · {N}S" labelSmall muted footer.
 //
 // Behavior layer (RestTimerEngine + RestTimerActivityController +
@@ -42,12 +44,16 @@ import SwiftUI
 ///
 /// Bottom dock: a full-bleed `bruBg2` panel with a 2pt `bruInk` top
 /// border carrying the countdown and the −15s / +15s / SKIP controls.
-/// Tap the countdown row to expand to a `.medium`-detent sheet. Reads
-/// from a `RestTimerEngine` `@Bindable` injection; the engine is the
-/// single source of truth.
+/// Tap the countdown row to expand to a sheet that opens at its content's
+/// height. Reads from a `RestTimerEngine` `@Bindable` injection; the
+/// engine is the single source of truth.
 public struct RestTimerOverlay: View {
     @Bindable public var engine: RestTimerEngine
     @State private var presentingExpanded = false
+    /// The expanded sheet's header and scroll content heights, measured as
+    /// the sheet lays out. The content's is nil until it has been measured.
+    @State private var sheetHeaderHeight: CGFloat = 0
+    @State private var sheetContentHeight: CGFloat?
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     public init(engine: RestTimerEngine) {
@@ -59,12 +65,23 @@ public struct RestTimerOverlay: View {
             bottomDock
                 .sheet(isPresented: $presentingExpanded) {
                     expandedSheet
-                        .presentationDetents(dynamicTypeSize.isAccessibilitySize ? [.large] : [.medium, .large])
+                        .presentationDetents(expandedDetents)
                 }
                 .transition(.move(edge: .bottom))
         } else {
             EmptyView()
         }
+    }
+
+    /// The sheet first opens at the height of its content, so every
+    /// control, SKIP included, shows without a drag, and still drags up to
+    /// full height. Until the content is measured it opens at half height.
+    /// At accessibility sizes the content outgrows the screen, so the sheet
+    /// opens at full height.
+    private var expandedDetents: Set<PresentationDetent> {
+        guard !dynamicTypeSize.isAccessibilitySize else { return [.large] }
+        guard let sheetContentHeight else { return [.medium, .large] }
+        return [.height((sheetHeaderHeight + sheetContentHeight).rounded(.up)), .large]
     }
 
     // MARK: - Bottom dock
@@ -84,11 +101,18 @@ public struct RestTimerOverlay: View {
                         )
                         .frame(width: 40, height: 40)
 
-                        Text("REST")
-                            .font(BRUFont.labelMicro)
-                            .tracking(1.5)
-                            .textCase(.uppercase)
-                            .foregroundStyle(Color.bruInk)
+                        // At accessibility sizes REST outgrows the ring, and
+                        // RESTING beside it says the same, so the ring drops it.
+                        if !dynamicTypeSize.isAccessibilitySize {
+                            Text("REST")
+                                .font(BRUFont.labelMicro)
+                                .tracking(1.5)
+                                .textCase(.uppercase)
+                                .foregroundStyle(Color.bruInk)
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.5)
+                                .frame(maxWidth: Self.ringLabelWidth)
+                        }
                     }
 
                     VStack(alignment: .leading, spacing: 2) {
@@ -166,6 +190,11 @@ public struct RestTimerOverlay: View {
         )
     }
 
+    /// The widest the dock's REST label gets: the 40pt ring's inside, less
+    /// its 3pt stroke and a 2pt margin on each side. Larger text shrinks to
+    /// fit.
+    private static let ringLabelWidth: CGFloat = 30
+
     /// Equal-width outlined rectangle control for the dock.
     private func dockButton(
         _ title: String,
@@ -195,13 +224,13 @@ public struct RestTimerOverlay: View {
 
     // MARK: - Expanded sheet
 
-    /// iOS 26 draws a half-height sheet scaled down to its inset width
-    /// (386 of 402pt on an iPhone 17 Pro), so a 44pt control renders at
-    /// about 42pt. The controls a lifter hits mid-rest get 52pt, which
+    /// iOS 26 draws a sheet below full height scaled down to its inset
+    /// width (386 of 402pt on an iPhone 17 Pro), so a 44pt control renders
+    /// at about 42pt. The controls a lifter hits mid-rest get 52pt, which
     /// stays above 44pt at either detent.
     private static let sheetControlHeight: CGFloat = 52
 
-    /// `.medium`-detent sheet with BRU header, exercise name, 200pt arc,
+    /// Content-height sheet with BRU header, exercise name, 200pt arc,
     /// ±15s outlined-rectangle buttons, ghost SKIP, and muted footer.
     /// UI-SPEC v2 lines 402-408.
     private var expandedSheet: some View {
@@ -213,6 +242,7 @@ public struct RestTimerOverlay: View {
                     presentingExpanded = false
                 }
             )
+            .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { sheetHeaderHeight = $0 }
 
             ScrollView {
                 VStack(spacing: 24) {
@@ -298,6 +328,7 @@ public struct RestTimerOverlay: View {
                 }
                 .padding(.horizontal, 16)
                 .padding(.vertical, 24)
+                .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { sheetContentHeight = $0 }
             }
         }
         .background(Color.bruPaper.ignoresSafeArea())

@@ -14,12 +14,12 @@
 //
 //  All Phase 3 functional behavior is preserved via a collapsible
 //  "Advanced" section for sets/reps/RPE/rest/tempo/partial reps/warm-up.
-//  Per-set overrides remain fully editable inside SetRowsContainer.
+//  It offers no per-set overrides: the logger never applies them, so the
+//  section is gone and stored overrides stay untouched (T110).
 //
 //  Verbatim copy preserved for RoutineBuilderCopyTests:
 //    "Sets" / "Min reps" / "Max reps" / "Target RPE" / "Rest" /
-//    "Track tempo" / "Track partial reps" / "Auto warm-up" /
-//    "Per-set overrides" / "Add Override" / "Remove"
+//    "Track tempo" / "Track partial reps" / "Auto warm-up"
 //
 //  Target reps are two steppers and target RPE is one chip row with an
 //  explicit no-target chip, so no number is ever typed over (Milestone 1
@@ -27,9 +27,13 @@
 //
 //  Rest reads as minutes and seconds, such as "3:00", in the chip and the
 //  stepper, as on the rest timer. The three switches use the BRU toggle
-//  style, and at accessibility sizes their labels wrap, the tempo fields
-//  drop their fixed widths and the overrides count moves under its label,
-//  so nothing is clipped (Milestone 1 review items 12 and 13).
+//  style, and at accessibility sizes their labels wrap and the tempo
+//  fields drop their fixed widths, so nothing is clipped (Milestone 1
+//  review items 12 and 13).
+//
+//  Each tempo field keeps its drawn size, and its touch target reaches 2pt
+//  into each gap beside it and up and down to 44pt, where a tap focuses
+//  the field (T111).
 //
 //  BRU contract: NO accentColor / NO Image(systemName:) / NO Capsule /
 //  NO RoundedRectangle / NO Apple HIG semantic fonts
@@ -42,8 +46,15 @@ public struct PrescriptionEditorRow: View {
     @Bindable public var draft: RoutineExerciseDraft
     public let hasBlock: Bool
 
-    @State private var showingPerSetOverrides: Bool = false
     @State private var showingAdvanced: Bool = false
+    @FocusState private var focusedTempoField: Int?
+    /// One tempo field's drawn height, which sets how far its touch target
+    /// reaches up and down.
+    @State private var tempoFieldHeight: CGFloat = BRUMetrics.touchTarget
+
+    /// How far a tempo field's touch target reaches into the 6pt gap on each
+    /// side, so a 40pt field gets a 44pt target.
+    private static let tempoTargetReach: CGFloat = 2
 
     public init(draft: RoutineExerciseDraft, hasBlock: Bool = false) {
         self.draft = draft
@@ -88,9 +99,9 @@ public struct PrescriptionEditorRow: View {
 
     private var repsChipLabel: String {
         if draft.targetRepsLow == draft.targetRepsHigh {
-            return "\(draft.targetRepsLow) reps"
+            return BRUCountLabel.text(draft.targetRepsLow, "rep")
         }
-        return "\(draft.targetRepsLow)–\(draft.targetRepsHigh) reps"
+        return "\(draft.targetRepsLow)–\(BRUCountLabel.text(draft.targetRepsHigh, "rep"))"
     }
 
     private var rpeChipLabel: String {
@@ -139,7 +150,6 @@ public struct PrescriptionEditorRow: View {
                 tempoSection
                 partialRepsToggle
                 autoWarmupToggle
-                perSetOverridesDisclosure
             }
             .transition(.opacity.combined(with: .move(edge: .top)))
         }
@@ -244,11 +254,25 @@ public struct PrescriptionEditorRow: View {
                 draft.tempo = joined.isEmpty ? nil : joined
             }
         )
+        let verticalReach = max(0, (BRUMetrics.touchTarget - tempoFieldHeight) / 2)
         return TextField(placeholder, text: binding)
             .frame(width: width)
             .keyboardType(.numberPad)
             .multilineTextAlignment(.center)
             .font(BRUFont.bodyDefault)
+            .focused($focusedTempoField, equals: index)
+            .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { tempoFieldHeight = $0 }
+            // The touch target: the padding reaches past the field, a tap
+            // there focuses it, and the negative padding gives the layout
+            // back, so nothing drawn moves.
+            .padding(.horizontal, Self.tempoTargetReach)
+            .padding(.vertical, verticalReach)
+            .contentShape(Rectangle())
+            .onTapGesture { focusedTempoField = index }
+            .accessibilityElement(children: .contain)
+            .accessibilityIdentifier("prescription.tempo.\(index + 1)")
+            .padding(.horizontal, -Self.tempoTargetReach)
+            .padding(.vertical, -verticalReach)
     }
 
     // MARK: - Partial reps
@@ -290,110 +314,6 @@ public struct PrescriptionEditorRow: View {
             .font(BRUFont.bodyDefault)
             .foregroundStyle(Color.bruMuted)
         }
-    }
-
-    // MARK: - Per-set overrides
-
-    private var perSetOverridesDisclosure: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Button {
-                withAnimation(.easeInOut(duration: 0.18)) {
-                    showingPerSetOverrides.toggle()
-                }
-            } label: {
-                Group {
-                    if dynamicTypeSize.isAccessibilitySize {
-                        // Beside the label, the count would be pushed off
-                        // the right edge.
-                        VStack(alignment: .leading, spacing: 4) {
-                            overridesTitle
-                            HStack(alignment: .firstTextBaseline, spacing: 8) {
-                                overridesCount
-                                Spacer(minLength: 0)
-                                overridesGlyph
-                            }
-                        }
-                    } else {
-                        HStack(spacing: 8) {
-                            overridesTitle
-                                .lineLimit(1)
-                                .fixedSize(horizontal: true, vertical: false)
-                            Spacer(minLength: 8)
-                            // Wraps rather than clips when the label leaves it little room.
-                            overridesCount
-                                .multilineTextAlignment(.trailing)
-                            overridesGlyph
-                        }
-                    }
-                }
-                .frame(minHeight: 44)
-                .contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
-
-            if showingPerSetOverrides {
-                VStack(spacing: 8) {
-                    ForEach(draft.setOverrides) { override in
-                        PerSetOverrideRow(draft: override)
-                            .swipeActions(edge: .trailing, allowsFullSwipe: false) {
-                                Button(role: .destructive) {
-                                    removeOverride(override)
-                                } label: {
-                                    Text("Remove")
-                                }
-                            }
-                    }
-                    // "+ ADD OVERRIDE" signal text button per verbatim copy
-                    Button {
-                        addOverride()
-                    } label: {
-                        Text("+ ADD OVERRIDE")
-                            .font(BRUFont.labelSmall)
-                            .tracking(1.2)
-                            .textCase(.uppercase)
-                            .foregroundStyle(Color.bruSignalText)
-                    }
-                    .buttonStyle(.plain)
-                }
-                .transition(.opacity)
-            }
-        }
-    }
-
-    private var overridesTitle: some View {
-        Text("Per-set overrides")
-            .font(BRUFont.bodyEmphasis)
-            .foregroundStyle(Color.bruInk)
-    }
-
-    private var overridesCount: some View {
-        Text(overrideSummary)
-            .font(BRUFont.bodyDefault)
-            .foregroundStyle(Color.bruMuted)
-    }
-
-    private var overridesGlyph: some View {
-        Text(showingPerSetOverrides ? "▴" : "▾")
-            .font(BRUFont.labelSmall)
-            .foregroundStyle(Color.bruMuted)
-    }
-
-    private var overrideSummary: String {
-        if draft.setOverrides.isEmpty {
-            return "\(BRUCountLabel.text(draft.targetSets, "set")) default"
-        }
-        return BRUCountLabel.text(draft.setOverrides.count, "override")
-    }
-
-    private func addOverride() {
-        let used = Set(draft.setOverrides.map { $0.setIndex })
-        let next = (0..<draft.targetSets).first { !used.contains($0) }
-            ?? max(0, draft.targetSets - 1)
-        draft.appendOverride(setIndex: next)
-    }
-
-    private func removeOverride(_ override: PerSetOverrideDraft) {
-        draft.setOverrides.removeAll { $0 === override }
     }
 }
 

@@ -27,7 +27,7 @@
 //    -fitbod-seed-empty-today     a logged Push A a day ago, then an empty
 //                                 one two minutes ago
 //
-//  Two flags seed last week, the week the weekly recap covers, in the
+//  Three flags seed last week, the week the weekly recap covers, in the
 //  lifter's week (Monday by default), and leave this week's recap due, so
 //  Today's next visit decides whether it shows. Launch them with
 //  `-fitbod-start-program`: on a fresh store Today can first show before
@@ -39,6 +39,12 @@
 //                                     last week, then an empty Pull B, a
 //                                     second routine's workout, on the
 //                                     fourth
+//    -fitbod-seed-recap-with-plan     a logged Push A on the second day of
+//                                     last week, and "Plan Block" running
+//                                     since the start of last week: fixed
+//                                     weekly on Monday, Tuesday, Thursday
+//                                     and Friday, so it planned four
+//                                     training days that week (T114)
 //
 
 import Foundation
@@ -51,6 +57,7 @@ enum DemoWorkoutSeed {
     static let emptyTodayArgument = "-fitbod-seed-empty-today"
     static let emptyLastWeekArgument = "-fitbod-seed-empty-last-week"
     static let recapWithEmptyArgument = "-fitbod-seed-recap-with-empty"
+    static let recapWithPlanArgument = "-fitbod-seed-recap-with-plan"
 
     @MainActor
     static func runIfRequested(in context: ModelContext) {
@@ -70,6 +77,9 @@ enum DemoWorkoutSeed {
         } else if arguments.contains(recapWithEmptyArgument) {
             seedFinished([(lastWeekAgo(1.5 * day, in: context), 55, true)], leavingRecapDue: true, in: context)
             seedEmptyPullB(startedAgo: lastWeekAgo(3.5 * day, in: context), in: context)
+        } else if arguments.contains(recapWithPlanArgument) {
+            seedFinished([(lastWeekAgo(1.5 * day, in: context), 55, true)], leavingRecapDue: true, in: context)
+            seedPlanBlock(startedAgo: lastWeekAgo(0, in: context), in: context)
         }
         #endif
     }
@@ -182,6 +192,46 @@ enum DemoWorkoutSeed {
         item.targetRepsHigh = 12
         try? context.save()
         finishPushA(pullB, startedAt: Date.now.addingTimeInterval(-startedAgo), minutes: 5, weights: nil, in: context)
+    }
+
+    /// "Plan Routine", four sessions of Push A, and "Plan Block" on it:
+    /// fixed weekly on Monday, Tuesday, Thursday and Friday, one training
+    /// day per session, with one accumulation phase, started `startedAgo`
+    /// through BlockLifecycleService.start, as the Start button does.
+    /// Nothing when Plan Routine already exists or Push A does not.
+    @MainActor
+    private static func seedPlanBlock(startedAgo: TimeInterval, in context: ModelContext) {
+        let routines = (try? context.fetch(FetchDescriptor<Split>())) ?? []
+        let templates = (try? context.fetch(FetchDescriptor<SessionTemplate>())) ?? []
+        guard !routines.contains(where: { $0.name == "Plan Routine" }),
+              let pushA = templates.first(where: { $0.name == "Push A" }) else { return }
+
+        let routine = Split()
+        context.insert(routine)
+        routine.name = "Plan Routine"
+        for position in 0..<4 {
+            let slot = SplitSessionSlot()
+            context.insert(slot)
+            slot.split = routine
+            slot.position = position
+            slot.sessionTemplate = pushA
+        }
+
+        let block = Block()
+        context.insert(block)
+        block.name = "Plan Block"
+        block.split = routine
+        block.schedulingMode = .fixedWeekly
+        block.trainingDays = TrainingDaysWriter.sort(weekdays: [2, 3, 5, 6])
+
+        let phase = BlockPhase()
+        context.insert(phase)
+        phase.block = block
+        phase.orderIndex = 0
+        phase.nameRaw = BlockPhaseKind.accumulation.rawValue
+        phase.weeks = 4
+        try? context.save()
+        try? BlockLifecycleService.start(block: block, context: context, now: Date.now.addingTimeInterval(-startedAgo))
     }
 
     /// The "Push A" template from real catalog exercises, and the weight

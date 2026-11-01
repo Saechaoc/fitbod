@@ -75,6 +75,13 @@ Product decisions are in [decisions.md](decisions.md), and they win over this fi
 - Rejected: real drag-to-reorder, because it is a new interaction and outside this milestone.
 - Why: "⋮⋮" looks like a drag handle, but it opens a menu.
 
+### Removing an exercise
+
+- Coordinator answer, 2026-11-01 (T111 question `msg_e7403f7b7da8`, decided under autopilot; the user can revisit it): an exercise's open editor shows a REMOVE control, which asks "Remove <name>?" with a destructive Remove and a plain "Keep exercise" before it removes.
+  The long-press menu's Remove keeps removing at once, as it does today; the ticket's claim that it asks was wrong.
+- Why: REMOVE is one visible tap near other controls, while the long-press menu already takes a hold and a second tap.
+- Rejected: REMOVE removing at once, which one stray tap would trigger.
+
 ## Workout logger
 
 ### Skip warm-ups done state
@@ -110,6 +117,12 @@ Product decisions are in [decisions.md](decisions.md), and they win over this fi
   The cell cannot tell it from Use without stored state, which the SchemaV7 baseline does not have.
 - Rejected: keeping every calibrating cell read-only, because the set then logs last session's weight, which the lifter can neither see nor change, and Override has no field to focus.
 - Rejected: replacing the range with a plain field, because the range is the calibrating prescription.
+
+### Plates in the logger
+
+- Coordinator call, 2026-11-01 (T107 finding F286, decided under autopilot; the user can revisit it): a set's plate stack shows under the set while its weight field has focus, for the weight in the field, and hides when the field loses focus.
+- Rejected: a tap toggle on the weight cell, because the editable field takes the tap; a separate PLATES control, because it adds a control to a tight row; a long press, because nothing on screen shows it.
+- Why: the lifter sees the plate math while setting the weight, which is when it matters, and the field keeps working as a number field.
 
 ## Program and blocks
 
@@ -181,6 +194,14 @@ Product decisions are in [decisions.md](decisions.md), and they win over this fi
 - Rejected: deleting an untouched "Untitled routine" when the user leaves, because the heuristic is fragile and the empty routine still flashes in lists.
 - Rejected: building the full inline creator now, because it is a large new design surface.
 
+### Live-edit banner at accessibility sizes
+
+- Coordinator answer, 2026-11-01 (T108 question `msg_0b3965eb83cb`, decided under autopilot; the user can revisit it): at accessibility sizes, the routine screen's "ACTIVE BLOCK" live-edit banner scrolls with the page after the session list, so the first session row shows when the screen opens.
+  At default text it stays fixed above the scroll view, as before.
+- Why: at AX3 on the small phone the banner is about 179pt and a session row about 194pt, and any place above the first row pushes that row under the tab bar (T108's measurement).
+  Each session's editor still shows its own banner under its header, so editing a session shows the warning first.
+- Rejected: shortening the banner at accessibility sizes, because T108 keeps its text and colors.
+
 ## Gestures and sheets
 
 ### Dirty editors and swipe-down
@@ -221,6 +242,12 @@ Product decisions are in [decisions.md](decisions.md), and they win over this fi
 - Coordinator answer, 2026-10-30 (T14 question `msg_b4478642c64e`): a muscle drawn on both figures, Shoulders and Calves, has its element on FRONT only; its BACK copies stay tappable but are hidden from VoiceOver.
   The element's label is the muscle's name, such as "Chest", and its value is the zone text, so VoiceOver speaks the same words as before.
 
+### Contributing exercises order
+
+- Coordinator answer, 2026-11-01 (T109 question `msg_b6fee190e95c`, decided under autopilot; the user can revisit it): a muscle's CONTRIBUTING EXERCISES rows stay ranked by weighted sets, and only rows with exactly the same weighted sets sort by exercise name, with a final id tiebreak so the order never changes between renders.
+  So 3.0 weighted sets still rank above 2.5, though both rows read "3 sets".
+- Rejected: ranking by the rounded count shown, then by name, which drops the weighted ranking to sort rows alphabetically that contribute different amounts.
+
 ## Progress and history
 
 ### Shared counts
@@ -248,6 +275,14 @@ Product decisions are in [decisions.md](decisions.md), and they win over this fi
 - Call: PER WEEK shows up to two decimals with trailing zeros trimmed, such as 0.25, 0.5 or 2.
 - Rejected: "1 every 4 weeks", which is longer and harder to fit at AX3.
 
+### Weekly recap target
+
+- Coordinator answer, 2026-11-01 (T114 question `msg_60dca411b68c`, decided under autopilot; the user can revisit it): the recap's sessions target is the number of last week's days that a started fixed-weekly block covered and listed as a training day.
+  A block that started or ended mid-week counts only the days it covered, and a day counts once across a mid-week swap.
+- A rotation block plans no weekdays, so with a rotation block, no block or no planned days the chip reads "N sessions" with no target.
+  The headline then follows sessions and PRs alone: "A strong week." at 3 or more PRs, "Solid week." at 2 or more sessions, otherwise "Light week.".
+- Rejected: reading a rotation block's stored training days, which the scheduler ignores and which survive a switch from fixed weekly.
+
 ### Today's third stat
 
 - Call: when the week trend is flat, the value under "W1 / 5" shows the current phase's short label, such as "ACCUM", instead of a dash.
@@ -271,6 +306,23 @@ Product decisions are in [decisions.md](decisions.md), and they win over this fi
 
 - Coordinator answer, 2026-10-30 (T13 question `msg_ba0f59859f56`): each bucket is one list ranked across exercises by the bucket's measure, with at most three rows per exercise, and each row names its exercise (T13 changes 1 and 2).
   The same exercise, weight and reps count as one set, dated when it was first logged, as `PRDetector` breaks ties.
+- Coordinator call, 2026-11-01 (T106 finding F319, decided under autopilot; the user can revisit it): a PR row opens the summary of the workout it was set in, the screen a History row opens, instead of the v1 "Session of <date>" stub with no ‹ BACK (T136).
+- Open for the user: nothing opens an exercise's own PR list, `ExercisePRsView(.forExercise)` through `ExerciseProgressRoute.prs` (finding F318); it stays in the code until the user says whether the exercise screen should link to it or the scope should go.
+
+### Exercise history's TOP set
+
+- Coordinator answer, 2026-11-01 (T116 question `msg_be7854b10128`, option A): a history row's TOP line names the set with the highest e1RM by the row's own formula, the set its e1RM label comes from, and an earlier set wins a tie.
+  When no set has an e1RM above zero, TOP keeps the most-volume rule.
+  The count line and "Workouts · 30d" count exactly the workouts the list shows.
+- Open for the user (finding F332): the history row computes e1RM as weight × (1 + (reps + 10 − RPE) / 30), RPE 8 when blank, while the progress chart, the plateau check and PR detection use `OneRepMaxEstimator`.
+  So one set can show two different e1RMs on two screens; nothing changes until the user picks one formula.
+
+### Progress chart lines
+
+- Coordinator call, 2026-11-01 (T98 finding F297, decided under autopilot; the user can revisit it): on VOLUME and AVG RPE, every intent the chart draws gets its own line style and a legend key, as "POWER · 1 SESSION".
+  POWER, ENDURANCE and TECHNIQUE keys appear only when the chart draws those lines, and HYPERTROPHY and STRENGTH keep their keys and look (T129).
+- Rejected: folding the other intents into STRENGTH's line, which mixes workouts trained for different goals.
+- Rejected: always showing all five keys, which crowds the small phone with keys for lines that are not there.
 
 ## Export and backup
 
@@ -318,6 +370,13 @@ Product decisions are in [decisions.md](decisions.md), and they win over this fi
   A stored weight that is not on a tick stays as it is until the user taps a tick.
 - Rejected: keeping the stock slider, because BRU has no slider and the design shows ticks.
 - Why: the editor's defaults are 100% for a primary muscle and 50% for a secondary one, and both are ticks.
+
+### Re-seeding the catalog
+
+- Coordinator call, 2026-11-01 (T98 finding F296, decided under autopilot; the user can revisit it): a re-seed updates the seeded catalog in place, by `externalID` and muscle `slug`, and deletes nothing (T128).
+  A seeded exercise that the bundled dataset no longer lists stays as it is.
+- Rejected: deleting and inserting the catalog again, as the importer does today, which drops custom exercises, edited weights and targets, and history's exercise links.
+- Rejected: deleting dropped exercises that nothing references, which saves a few rows and risks deleting one the lifter archived on purpose.
 
 ## Design references
 

@@ -9,7 +9,7 @@
 //  at once. Archive stays a soft delete: nothing here deletes a routine.
 //
 //  Composition (top to bottom):
-//    BRUHeaderBar (left: .back, center: "Archived routines")
+//    BRUHeaderBar (left: .back, center: "Archived routines", one line at default text)
 //    ScrollView { LazyVStack: one ArchivedRoutineRow per archived routine,
 //      by name, or "No archived routines." once the last one is restored }
 //
@@ -32,6 +32,7 @@ public enum ArchivedRoutinesRoute: Hashable, Sendable {
 public struct ArchivedRoutinesView: View {
 
     @Environment(\.modelContext) private var ctx
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     // Archived splits only - isArchived is a stored Bool, so predicate-safe.
     @Query(
@@ -44,9 +45,20 @@ public struct ArchivedRoutinesView: View {
 
     public init() {}
 
+    /// The header fits a title with no breaking space to its third of the
+    /// row, shrinking it if it must, and wraps one with a space. At default
+    /// text and smaller a no-break space keeps "Archived routines" on one
+    /// line, at about 0.85 of its size on the small phone (T38, finding
+    /// F149), as the weekly recap's title does. Larger text keeps the space
+    /// and wraps between the words, as before. VoiceOver reads the title the
+    /// same either way.
+    private var title: String {
+        dynamicTypeSize <= .large ? "Archived\u{00A0}routines" : "Archived routines"
+    }
+
     public var body: some View {
         VStack(spacing: 0) {
-            BRUHeaderBar.slots(left: .back, center: "Archived routines")
+            BRUHeaderBar.slots(left: .back, center: title)
 
             ScrollView {
                 LazyVStack(spacing: 0) {

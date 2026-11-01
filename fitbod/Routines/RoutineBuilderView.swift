@@ -31,7 +31,7 @@
 //  ProgressionKind cases (block-aware filtering). Both write to draft directly.
 //
 //  ## Threat mitigations (T-02.1-05-01/02/03)
-//  .swipeActions on each RoutineExerciseCard (delete affordance).
+//  REMOVE in each open RoutineExerciseCard asks first (delete affordance).
 //  .onMove on ForEach inside LazyVStack (drag-reorder without .editMode).
 //  Intent/Progression chips wire to existing RoutineDraft bindings.
 //
@@ -156,7 +156,10 @@ public struct RoutineBuilderView: View {
             .safeAreaInset(edge: .top) {
                 VStack(spacing: 0) {
                     BRUHeaderBar(
-                        left: HeaderAction("‹ Back") {
+                        // T38: a sheet that edits data closes with CANCEL
+                        // (tradeoffs, "Sheet close labels"), which still asks
+                        // before it discards unsaved changes.
+                        left: HeaderAction("Cancel") {
                             handleDiscard()
                         },
                         center: editing == nil ? "New session" : "Edit session",
@@ -283,7 +286,7 @@ public struct RoutineBuilderView: View {
             draft.enforceBlockProgressionEligibility()
             initialSnapshot = draft.snapshotHash()
         }
-        // A swipe would skip the discard dialog that Back and Discard show.
+        // A swipe would skip the discard dialog that CANCEL and Discard show.
         .interactiveDismissDisabled(hasUnsavedChanges)
     }
 
@@ -471,14 +474,6 @@ public struct RoutineBuilderView: View {
                         onMoveDown: i + 1 < draft.exercises.count
                             ? { moveExercise(from: i, to: i + 2) } : nil
                     )
-                    // Swipe-to-delete (T-02.1-05-01 mitigation)
-                    .swipeActions(edge: .trailing, allowsFullSwipe: true) {
-                        Button(role: .destructive) {
-                            removeExercise(exDraft)
-                        } label: {
-                            Text("Remove")
-                        }
-                    }
 
                     BRUDivider(.hair)
                 }

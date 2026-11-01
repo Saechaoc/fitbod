@@ -13,12 +13,18 @@
 //              number, whose 68pt share grows with its type (T19)
 //   Column 2 — flexible:  4 equal-width tally boxes, 20pt tall
 //   Column 3 — 80pt wide: "×{count}" or "NONE" right-aligned
+// At accessibility sizes (T107) the boxes move to a line of their own under
+// the weight and the count, where each is far wider than 44pt: beside them at
+// AX3 each box was about 20pt wide on the small phone.
 //
 // TALLY INTERACTION (03-UI-SPEC line 442):
 //   Tapping box at index i:
 //     if count == i + 1  → clear back to i  (count.wrappedValue = i)
 //     else               → fill up to i + 1 (count.wrappedValue = i + 1)
 //   This implements the "cycles 0→1→2→3→4→0" spec with more precision.
+//   Each box takes taps in a 44pt band, 12pt above and below the drawn box
+//   (T107). Beside the weight the band reaches into the row's padding without
+//   moving anything; on its own line it is the line's height.
 //
 // ZERO RoundedRectangle — every shape is a plain Rectangle (BRU design language).
 // ZERO Capsule — BRU has no rounded shapes.
@@ -52,6 +58,8 @@ public struct PlateTallyRow: View {
     /// accessibility sizes.
     @ScaledMetric(relativeTo: .title3) private var weightWidth: CGFloat = 68
 
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+
     // MARK: Init
 
     public init(weight: Double, count: Binding<Int>, unitLabel: String) {
@@ -63,45 +71,65 @@ public struct PlateTallyRow: View {
     // MARK: Body
 
     public var body: some View {
-        HStack(spacing: 10) {
-            // Column 1 — 90pt at default text: plate icon + weight number
-            plateIconColumn
-
-            // Column 2 — flexible: 4-box tally marks
-            tallyColumn
-                .frame(maxWidth: .infinity)
-
-            // Column 3 — 80pt: "×{count}" or "NONE"
-            countColumn
-                .frame(width: 80, alignment: .trailing)
-        }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 10)
-        .frame(minHeight: 44) // 44pt touch target per 03-UI-SPEC line 73 + line 442
-        .opacity(count == 0 ? 0.4 : 1.0) // muted when zero per plate-calc.jsx line 107
-        .overlay(alignment: .bottom) {
-            // 1pt bruHair bottom divider per plate-calc.jsx line 106
-            Rectangle()
-                .fill(Color.bruHair)
-                .frame(height: 1)
-        }
-        // MARK: Accessibility (03-UI-SPEC line 503)
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel("\(formatted(weight)) \(unitLabel) plate")
-        .accessibilityValue("\(count) per side")
-        .accessibilityAdjustableAction { direction in
-            switch direction {
-            case .increment:
-                count = min(count + 1, 4)
-            case .decrement:
-                count = max(count - 1, 0)
-            default:
-                break
+        columns
+            .padding(.horizontal, 16)
+            .padding(.vertical, 10)
+            .frame(minHeight: 44) // 44pt touch target per 03-UI-SPEC line 73 + line 442
+            .opacity(count == 0 ? 0.4 : 1.0) // muted when zero per plate-calc.jsx line 107
+            .overlay(alignment: .bottom) {
+                // 1pt bruHair bottom divider per plate-calc.jsx line 106
+                Rectangle()
+                    .fill(Color.bruHair)
+                    .frame(height: 1)
             }
-        }
+            // MARK: Accessibility (03-UI-SPEC line 503)
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("\(formatted(weight)) \(unitLabel) plate")
+            .accessibilityValue("\(count) per side")
+            .accessibilityAdjustableAction { direction in
+                switch direction {
+                case .increment:
+                    count = min(count + 1, 4)
+                case .decrement:
+                    count = max(count - 1, 0)
+                default:
+                    break
+                }
+            }
     }
 
     // MARK: Subviews
+
+    /// The three columns side by side, or at accessibility sizes the weight
+    /// and the count over the tally boxes, which take the row's whole width.
+    @ViewBuilder
+    private var columns: some View {
+        if dynamicTypeSize.isAccessibilitySize {
+            VStack(alignment: .leading, spacing: 8) {
+                HStack(spacing: 10) {
+                    plateIconColumn
+                    Spacer(minLength: 0)
+                    countColumn
+                        .fixedSize()
+                }
+
+                tallyColumn
+            }
+        } else {
+            HStack(spacing: 10) {
+                // Column 1 — 90pt at default text: plate icon + weight number
+                plateIconColumn
+
+                // Column 2 — flexible: 4-box tally marks
+                tallyColumn
+                    .frame(maxWidth: .infinity)
+
+                // Column 3 — 80pt: "×{count}" or "NONE"
+                countColumn
+                    .frame(width: 80, alignment: .trailing)
+            }
+        }
+    }
 
     /// Column 1: 16×28pt bruInk plate icon + BRUDisplay-style weight number.
     private var plateIconColumn: some View {
@@ -128,6 +156,7 @@ public struct PlateTallyRow: View {
                 TallyBox(
                     index: index,
                     count: count,
+                    bandInLayout: dynamicTypeSize.isAccessibilitySize,
                     onTap: {
                         // Spec: tapping filled box (index == count-1) clears back to index;
                         // tapping unfilled box fills up to index+1.
@@ -165,9 +194,14 @@ public struct PlateTallyRow: View {
 ///
 /// Filled (index < count) → bruInk fill.
 /// Unfilled (index >= count) → transparent fill + 1.5pt bruInk border overlay.
+/// It takes taps in a 44pt band around the 20pt box (T107).
 private struct TallyBox: View {
     let index: Int
     let count: Int
+    /// True when the band is the box's height in the layout, on the boxes'
+    /// own line at accessibility sizes. Otherwise it reaches into the row's
+    /// padding and the box keeps its 20pt height.
+    let bandInLayout: Bool
     let onTap: () -> Void
 
     var isFilled: Bool { index < count }
@@ -185,7 +219,9 @@ private struct TallyBox: View {
                         .stroke(Color.bruInk, lineWidth: 1.5)
                 }
             }
-            .contentShape(Rectangle()) // make the whole area tappable
+            .padding(.vertical, 12)
+            .contentShape(Rectangle()) // make the whole 44pt band tappable
+            .padding(.vertical, bandInLayout ? 0 : -12)
             .onTapGesture {
                 onTap()
             }

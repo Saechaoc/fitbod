@@ -13,6 +13,11 @@
 //  that reads on its fill, and START W{N} ▸ is the footer's only button:
 //  ALL RECAPS did nothing, because no screen lists past recaps.
 //
+//  T114, findings F242 and F277. The sessions chip measures last week
+//  against the training days its block planned, "1 / 4 sessions", and
+//  without a plan names no target, "1 session". At AX3 on the small phone
+//  each cover chip wraps between words, never inside one.
+//
 
 import XCTest
 
@@ -25,6 +30,11 @@ extension UITestNavigation {
     /// routine's workout, last week, with this week's recap left due (see
     /// DemoWorkoutSeed). Program opens first, as with `emptyLastWeek`.
     static let recapWithEmpty = [resetFlag, "-fitbod-seed-recap-with-empty", "-fitbod-start-program"]
+    /// A fresh store plus a logged Push A last week on Plan Block, which
+    /// planned four training days that week, with this week's recap left
+    /// due (see DemoWorkoutSeed). Program opens first, as with
+    /// `emptyLastWeek`.
+    static let recapWithPlan = [resetFlag, "-fitbod-seed-recap-with-plan", "-fitbod-start-program"]
 }
 
 final class WeeklyRecapUITests: XCTestCase {
@@ -62,9 +72,12 @@ final class WeeklyRecapUITests: XCTestCase {
         let screenshot = XCUIScreen.main.screenshot()
         UITestNavigation.saveScreenshot("T103", "recap")
 
-        let sessions = app.staticTexts.matching(NSPredicate(format: "label MATCHES %@", #"\d+ / \d+ sessions"#)).firstMatch
+        let sessions = app.staticTexts["recap.sessions"]
         XCTAssertTrue(sessions.exists, "The recap's cover shows no sessions chip")
-        XCTAssertEqual(sessions.label, "1 / 1 sessions", "The empty workout must not count as a session")
+        XCTAssertEqual(
+            sessions.label, "1 session",
+            "The empty workout must not count as a session, and with no block last week the chip names no target"
+        )
         XCTAssertTrue(
             app.staticTexts["Last week you logged 1 session."].exists,
             "The recap's Sessions section must count the one logged workout"
@@ -93,6 +106,75 @@ final class WeeklyRecapUITests: XCTestCase {
         )
     }
 
+    /// T114: one session on a block that planned four training days last
+    /// week reads against that plan, and is no strong week.
+    @MainActor
+    func testRecapMeasuresLastWeekAgainstItsPlan() throws {
+        let app = UITestNavigation.launch(UITestNavigation.recapWithPlan)
+        openToday(afterSeeding: 1, in: app)
+        let title = recapTitle(in: app)
+        guard title.waitForExistence(timeout: 10) else {
+            return XCTFail("A logged workout last week must make the weekly recap due")
+        }
+        UITestNavigation.waitUntilStill(title)
+        UITestNavigation.saveScreenshot("T114", "recap-target")
+
+        let sessions = app.staticTexts["recap.sessions"]
+        XCTAssertTrue(sessions.exists, "The recap's cover shows no sessions chip")
+        XCTAssertEqual(
+            sessions.label, "1 / 4 sessions",
+            "Last week's block planned four training days, so the chip must measure the one session against 4"
+        )
+        let headline = app.staticTexts["recap.headline"]
+        XCTAssertTrue(headline.exists, "The recap's cover shows no headline")
+        XCTAssertEqual(
+            headline.label.replacingOccurrences(of: "\n", with: " "), "Light week.",
+            "One session of four planned is no strong week"
+        )
+    }
+
+    /// T114: at AX3 each cover chip keeps every word whole on one line,
+    /// inside the screen and clear of the other chips. XCUI reads a label
+    /// whole even where the screen breaks a word, so each chip's lines are
+    /// read from a screenshot.
+    @MainActor
+    func testCoverChipsWrapBetweenWordsAtAX3() throws {
+        let app = UITestNavigation.launch(UITestNavigation.recapWithPlan, textSize: .ax3)
+        openToday(afterSeeding: 1, in: app)
+        let title = recapTitle(in: app)
+        guard title.waitForExistence(timeout: 10) else {
+            return XCTFail("A logged workout last week must make the weekly recap due")
+        }
+        UITestNavigation.waitUntilStill(title)
+        UITestNavigation.saveScreenshot("T114", "recap-chips", textSize: .ax3)
+
+        let screenshot = XCUIScreen.main.screenshot()
+        let window = app.windows.firstMatch
+        let ids = ["recap.prs", "recap.sessions", "recap.tonnage"]
+        let chips = ids.map { app.staticTexts[$0] }
+        for (id, chip) in zip(ids, chips) {
+            guard chip.exists else {
+                XCTFail("The recap's cover shows no \(id) chip")
+                continue
+            }
+            UITestNavigation.assertInside(chip, window)
+            // Inside the chip's 1.5pt outline.
+            let lines = try UITestNavigation.textLines(in: chip.frame.insetBy(dx: 3, dy: 2), of: screenshot)
+            let read = lines.map { Self.readable($0.text) }
+            for word in chip.label.split(separator: " ").map(Self.readable) where !word.isEmpty {
+                XCTAssertTrue(
+                    read.contains { $0.contains(word) },
+                    "\"\(chip.label)\" must keep each word whole on one line, but the chip reads \(lines.map(\.text))"
+                )
+            }
+        }
+        for (index, chip) in chips.enumerated() {
+            for other in chips.dropFirst(index + 1) {
+                UITestNavigation.assertNoOverlap(chip, other)
+            }
+        }
+    }
+
     // MARK: - Helpers
 
     /// Waits on Progress until the seed has finished `count` workouts,
@@ -113,9 +195,23 @@ final class WeeklyRecapUITests: XCTestCase {
         UITestNavigation.selectTab("Today", in: app)
     }
 
-    /// The recap's header title, such as "Week 44 · recap".
+    /// The recap's header title, such as "Week 44 · recap", whose spaces do
+    /// not break.
     @MainActor
     private func recapTitle(in app: XCUIApplication) -> XCUIElement {
-        app.staticTexts.matching(NSPredicate(format: "label ENDSWITH[c] %@", " · recap")).firstMatch
+        app.staticTexts.matching(NSPredicate(format: "label MATCHES[c] %@", #"Week\s\d+\s·\srecap"#)).firstMatch
+    }
+
+    /// `text`'s letters and digits in capitals, with the ones Vision mixes
+    /// up in a chip's font read alike: I and 1 as L, 0 as O and 5 as S.
+    private static func readable<S: StringProtocol>(_ text: S) -> String {
+        String(text.uppercased().compactMap { character -> Character? in
+            switch character {
+            case "I", "1": "L"
+            case "0": "O"
+            case "5": "S"
+            default: character.isLetter || character.isNumber ? character : nil
+            }
+        })
     }
 }

@@ -124,6 +124,8 @@ public struct TodayView: View {
                         weekIndex: currentWeekIndex,
                         totalWeeks: currentTotalWeeks,
                         trend: currentTrend,
+                        phase: currentPhase,
+                        isPlanComplete: isPastPlan,
                         hasActiveBlock: !activeBlocks.isEmpty,
                         sessionsThisWeek: sessionsThisWeek,
                         onOpenHistory: { navigationPath.append(SessionHistoryRoute.list) }
@@ -510,6 +512,18 @@ public struct TodayView: View {
         return max(1, total)
     }
 
+    /// The active block's current phase, for the third stat's short label.
+    /// Nil without a block, and past its plan, which has no current phase.
+    private var currentPhase: BlockPhaseKind? {
+        activeBlocks.first.flatMap { PeriodizationEngine.phase(for: $0, on: .now)?.kind }
+    }
+
+    /// True once the active block is past its last planned week, until the
+    /// lifter ends it (tradeoffs.md "A block past its plan").
+    private var isPastPlan: Bool {
+        activeBlocks.first.map { PlanWeek.of($0, on: .now) == .complete } ?? false
+    }
+
     /// Sessions since the start of this week (the lifter's week-start
     /// setting; Monday by default): this week's workouts that count.
     private var sessionsThisWeek: Int {
@@ -565,13 +579,14 @@ public struct TodayView: View {
         return nil
     }
 
-    /// 1-based day index in the current block (for "DAY 01 / 04" in BlackSlabCTA).
-    private var dayIndexInBlock: Int {
+    /// 1-based day in the active block's plan (for "DAY 01 / 28" in
+    /// BlackSlabCTA). Nil past the plan, so the slab shows no day rather
+    /// than counting from day 1 again.
+    private var dayIndexInBlock: Int? {
         guard let block = activeBlocks.first else { return 1 }
+        guard !isPastPlan else { return nil }
         let daysSince = Calendar.current.dateComponents([.day], from: block.startDate, to: .now).day ?? 0
-        let totalDays = currentTotalWeeks * 7
-        guard totalDays > 0 else { return 1 }
-        return (daysSince % totalDays) + 1
+        return min(max(daysSince, 0), totalDaysInBlock - 1) + 1
     }
 
     /// Total days in the current block (for "DAY 01 / 04" in BlackSlabCTA).

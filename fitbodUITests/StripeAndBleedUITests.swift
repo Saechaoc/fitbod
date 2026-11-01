@@ -47,20 +47,38 @@ final class StripeAndBleedUITests: XCTestCase {
         assertSignalStripe(on: banner)
     }
 
-    /// At AX3 the banner grows with its wrapped text, stays on screen and
-    /// leaves the routine's name field below it.
+    /// At AX3 the banner grows with its wrapped text and stays clear of the
+    /// routine's name field. Under the header it took about a third of the
+    /// space above the tab bar and pushed the first session under the tab
+    /// bar, so at accessibility sizes it scrolls with the page, after the
+    /// sessions (T108), and drags bring it whole onto the screen.
     @MainActor
     func testLiveEditBannerFitsItsTextAtAX3() throws {
         let app = UITestNavigation.launch(UITestNavigation.activeBlock, textSize: .ax3)
         openSeededRoutine(in: app)
+        let name = app.textFields["Routine name"]
+        XCTAssertTrue(name.exists || name.waitForExistence(timeout: 10))
+        XCTAssertTrue(name.isHittable, "The routine's name field must show when the screen opens")
+
+        // Slow drags in the trailing margin, clear of the session row's
+        // press, until the banner's frame sits whole above the tab bar's
+        // 2pt rule; the extra 10pt covers the drag the page takes before it
+        // starts to scroll.
         let banner = liveEditBanner(in: app)
+        let tabBarTop = UITestNavigation.tab("Today", in: app).frame.minY - 2
+        let start = app.coordinate(withNormalizedOffset: .zero).withOffset(CGVector(dx: app.frame.width - 8, dy: tabBarTop - 20))
+        for _ in 0..<4 {
+            let overflow = banner.frame.maxY - (tabBarTop - 20)
+            if overflow <= 0 { break }
+            start.press(forDuration: 0.05, thenDragTo: start.withOffset(CGVector(dx: 0, dy: -(overflow + 10))),
+                        withVelocity: .slow, thenHoldForDuration: 0.3)
+            UITestNavigation.waitUntilStill(banner, interval: 0.3)
+        }
         UITestNavigation.saveScreenshot("T17", "routine-banner", textSize: .ax3)
+        XCTAssertLessThanOrEqual(banner.frame.maxY, tabBarTop, "Drags must bring the banner at \(banner.frame) whole above the tab bar")
         UITestNavigation.assertInside(banner, app.windows.firstMatch)
         XCTAssertGreaterThan(banner.frame.height, 120, "At AX3 the banner's text needs more than its default height")
-        let name = app.textFields["Routine name"]
-        XCTAssertTrue(name.waitForExistence(timeout: 10))
         UITestNavigation.assertNoOverlap(banner, name)
-        XCTAssertTrue(name.isHittable, "The banner must leave the routine's name field on screen")
     }
 
     // MARK: - Plate Inventory tab strip

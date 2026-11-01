@@ -42,7 +42,7 @@ struct BlockOverviewScreenCopyTests {
         // Section head
         #expect(source.contains("\"Routine\""))
         // Attach button
-        #expect(source.contains("\"+ ATTACH ROUTINE ▸\""))
+        #expect(source.contains("\"+ ATTACH ROUTINE\\u{00A0}▸\""))
         // Swap label
         #expect(source.contains("\"SWAP ▸\""))
     }

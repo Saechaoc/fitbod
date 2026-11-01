@@ -163,19 +163,26 @@ public struct ExerciseLibraryView: View {
                 .font(BRUFont.condensedHeading)
                 .foregroundStyle(Color.bruMuted)
                 .accessibilityHidden(true)
-            TextField("Search exercises", text: $searchText)
-                .font(.bru(.mono, size: 17))
-                .foregroundStyle(Color.bruInk)
-                .textInputAutocapitalization(.never)
-                .autocorrectionDisabled()
-                .submitLabel(.search)
-                .focused($searchFocused)
-                .onSubmit {
-                    debouncedSearch = searchText
-                    searchFocused = false
-                }
-                .accessibilityLabel("Search exercises")
-                .accessibilityIdentifier(isPicker ? "library.search.picker" : "library.search.browser")
+            TextField(
+                text: $searchText,
+                // The system placeholder gray reads at 1.7:1 on paper;
+                // bruMuted reads at 4.5:1 or more in light and dark mode.
+                prompt: Text("Search exercises").foregroundStyle(Color.bruMuted)
+            ) {
+                Text("Search exercises")
+            }
+            .font(.bru(.mono, size: 17))
+            .foregroundStyle(Color.bruInk)
+            .textInputAutocapitalization(.never)
+            .autocorrectionDisabled()
+            .submitLabel(.search)
+            .focused($searchFocused)
+            .onSubmit {
+                debouncedSearch = searchText
+                searchFocused = false
+            }
+            .accessibilityLabel("Search exercises")
+            .accessibilityIdentifier(isPicker ? "library.search.picker" : "library.search.browser")
             if !searchText.isEmpty {
                 Button {
                     searchText = ""
@@ -207,7 +214,8 @@ public struct ExerciseLibraryView: View {
 /// stays subscribed while filters and search change.
 ///
 /// Sectioning happens in Swift over the already-fetched rows (sorted by
-/// `canonicalName`), grouping by first letter. At ~700 rows this is
+/// `canonicalName`), grouping by first letter, with names that start with
+/// a digit or a symbol under "#" after Z. At ~700 rows this is
 /// sub-millisecond.
 private struct FilteredExerciseList: View {
     @Query private var exercises: [Exercise]
@@ -313,22 +321,22 @@ private struct FilteredExerciseList: View {
             } label: {
                 ExerciseRow(exercise: ex, accessory: .add)
             }
-            .buttonStyle(.plain)
+            .buttonStyle(.bruRow)
             .accessibilityHint("Adds this exercise")
             .accessibilityIdentifier("exercise.pick.\(ex.id.uuidString)")
         } else {
             NavigationLink(value: ex) {
                 ExerciseRow(exercise: ex, accessory: .loggedCount(loggedCount))
             }
-            .buttonStyle(.plain)
+            .buttonStyle(.bruRow)
         }
     }
 
     private func resultCount(_ count: Int) -> some View {
         let filtered = !activeQuery.isEmpty || hasActiveFilters
         return Text(filtered
-                    ? (count == 1 ? "1 match" : "\(count) matches")
-                    : "\(count) exercises")
+                    ? BRUCountLabel.text(count, "match", plural: "matches")
+                    : BRUCountLabel.text(count, "exercise"))
             .font(BRUFont.labelSmall)
             .tracking(1.2)
             .textCase(.uppercase)
@@ -350,15 +358,30 @@ private struct FilteredExerciseList: View {
             .accessibilityAddTraits(.isHeader)
     }
 
-    /// Groups rows by the first letter of their name, in alphabetical
-    /// order. Rows inside each section keep the @Query sort order.
+    /// Groups rows by the first letter of their name, A to Z, then one "#"
+    /// section, after Z, for names that start with a digit or a symbol,
+    /// such as "3/4 Sit-Up". Rows inside each section keep the @Query sort
+    /// order.
     private func sectioned(_ rows: [Exercise]) -> [(letter: String, exercises: [Exercise])] {
         let groups = Dictionary(grouping: rows) { ex in
-            String(ex.name.prefix(1).uppercased())
+            Self.sectionLetter(for: ex.name)
         }
-        return groups.keys.sorted().map { letter in
+        let letters = groups.keys.sorted { a, b in
+            if a == Self.otherSection { return false }
+            if b == Self.otherSection { return true }
+            return a < b
+        }
+        return letters.map { letter in
             (letter, groups[letter] ?? [])
         }
+    }
+
+    /// The section for names that do not start with a letter.
+    private static let otherSection = "#"
+
+    private static func sectionLetter(for name: String) -> String {
+        guard let first = name.first, first.isLetter else { return otherSection }
+        return String(first).uppercased()
     }
 }
 

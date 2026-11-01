@@ -137,8 +137,8 @@ final class SessionEditorPolishUITests: XCTestCase {
         XCTAssertEqual(problems, [], "Every label in the editor must be whole at the default text size")
     }
 
-    /// At AX3 the number, set labels, WORK, Track partial reps, the
-    /// overrides count and + ADD EXERCISE are drawn whole, inside the
+    /// At AX3 the number, set labels, WORK, Track partial reps and
+    /// + ADD EXERCISE are drawn whole, inside the
     /// screen, and the set labels grow with the text. The routine is made
     /// at the default size, then the app reopens at AX3.
     @MainActor
@@ -190,8 +190,8 @@ final class SessionEditorPolishUITests: XCTestCase {
         XCTAssertEqual(app.textFields["Session name"].value as? String, Self.session,
                        "Keep session must leave the session open in the editor")
 
-        UITestNavigation.hittable(app.buttons, "Back").tap()
-        XCTAssertTrue(app.textFields["Session name"].waitForNonExistence(timeout: 5), "Back must close the unchanged editor")
+        UITestNavigation.hittable(app.buttons, "Cancel").tap()
+        XCTAssertTrue(app.textFields["Session name"].waitForNonExistence(timeout: 5), "CANCEL must close the unchanged editor")
         UITestNavigation.selectTab("Program", in: app)
         let picker = app.staticTexts.labeled("Existing sessions")
         UITestNavigation.hittable(app.buttons, "+ Add session").tap()
@@ -320,37 +320,6 @@ final class SessionEditorPolishUITests: XCTestCase {
         shot("editor-toggles")
         check(UITestNavigation.insideProblem(warmup, window))
 
-        // Per-set overrides: the count, then one override row.
-        let count = sheet.staticTexts.labeled("3 sets default")
-        showInEditor(count, in: app)
-        shot("editor-overrides")
-        check(UITestNavigation.insideProblem(count, window))
-        expectDrawn("3 SETS DEFAULT", in: count)
-        let disclosure = sheet.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Per-set overrides")).firstMatch
-        showInEditor(disclosure, in: app)
-        check(UITestNavigation.tapTargetProblem(disclosure))
-        disclosure.tap()
-        let add = sheet.buttons.labeled("+ ADD OVERRIDE")
-        XCTAssertTrue(add.waitForExistence(timeout: 5), "Per-set overrides must open")
-        showInEditor(add, in: app)
-        add.tap()
-        let fields = sheet.textFields.matching(NSPredicate(format: "label == %@", "RPE override, set 1"))
-        XCTAssertTrue(fields.firstMatch.waitForExistence(timeout: 5), "+ ADD OVERRIDE must add an override row")
-        let overrideRPE = fields.allElementsBoundByIndex.max { $0.frame.minY < $1.frame.minY } ?? fields.firstMatch
-        showInEditor(overrideRPE, in: app)
-        shot("editor-override-row")
-        check(UITestNavigation.insideProblem(overrideRPE, window))
-        let lowest = { (label: String) in
-            sheet.staticTexts.matching(NSPredicate(format: "label == %@", label))
-                .allElementsBoundByIndex.max { $0.frame.minY < $1.frame.minY }
-        }
-        if let overrideLabel = lowest("S1"), let overrideKind = lowest("WORK") {
-            checkSetRow(overrideLabel, overrideKind, in: window, into: &problems)
-        }
-        let oneOverride = sheet.staticTexts.labeled("1 override")
-        showInEditor(oneOverride, in: app)
-        check(UITestNavigation.insideProblem(oneOverride, window))
-
         // + ADD EXERCISE.
         let addExercise = sheet.buttons.labeled("Add exercise")
         showInEditor(addExercise, in: app)
@@ -435,7 +404,7 @@ final class SessionEditorPolishUITests: XCTestCase {
     /// Opens an exercise's row with a tap on its name.
     @MainActor
     private func expand(_ name: String, in app: XCUIApplication) {
-        let title = editor(in: app).staticTexts.matching(NSPredicate(format: "label == %@", name)).firstMatch
+        let title = editor(in: app).buttons.matching(NSPredicate(format: "label == %@", name)).firstMatch
         XCTAssertTrue(title.waitForExistence(timeout: 10), "Missing \(name)")
         showInEditor(title, in: app)
         title.tap()
@@ -515,7 +484,7 @@ final class SessionEditorPolishUITests: XCTestCase {
     @MainActor
     private func assertOrder(_ names: [String], in app: XCUIApplication, file: StaticString = #filePath, line: UInt = #line) {
         for (index, name) in names.enumerated() {
-            let title = app.staticTexts["routine.exercise.name.\(index + 1)"]
+            let title = app.buttons["routine.exercise.name.\(index + 1)"]
             XCTAssertTrue(title.waitForExistence(timeout: 5), "Row \(index + 1) must show its name", file: file, line: line)
             for _ in 0..<10 where title.label != name {
                 Thread.sleep(forTimeInterval: 0.25)

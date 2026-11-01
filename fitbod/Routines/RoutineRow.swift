@@ -179,7 +179,7 @@ public struct RoutineRow: View {
     /// Sub-line: "{N} EXERCISES · {intentLabel}" per UI-SPEC line 310.
     private var subLine: String {
         let count = (routine.exercises ?? []).count
-        return "\(count) exercises"
+        return BRUCountLabel.text(count, "exercise")
     }
 
     /// Last-session tonnage display string, or nil when not yet available.

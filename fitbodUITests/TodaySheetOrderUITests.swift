@@ -97,10 +97,11 @@ final class TodaySheetOrderUITests: XCTestCase {
         app.staticTexts.labeled("Block review")
     }
 
-    /// The recap's header title, such as "Week 44 · recap".
+    /// The recap's header title, such as "Week 44 · recap", whose spaces do
+    /// not break.
     @MainActor
     private func recapTitle(in app: XCUIApplication) -> XCUIElement {
-        app.staticTexts.matching(NSPredicate(format: "label ENDSWITH[c] %@", " · recap")).firstMatch
+        app.staticTexts.matching(NSPredicate(format: "label MATCHES[c] %@", #"Week\s\d+\s·\srecap"#)).firstMatch
     }
 
     /// The review of Live Block is up and its actions can be tapped.

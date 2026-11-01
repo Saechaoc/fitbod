@@ -32,7 +32,7 @@ struct ExerciseRowsPerWorkoutTests {
         let rows = try historyRows(bench, in: ctx)
         #expect(rows.count == 2)
         #expect(Set(rows.map(\.id)).count == 2, "Both workouts got the history row id \(rows.map(\.id))")
-        #expect(rows.map { $0.entries.first?.id } == [evening.id, morning.id])
+        #expect(rows.map(\.id) == [evening.id, morning.id])
     }
 
     // MARK: - Recent performance
@@ -88,8 +88,8 @@ struct ExerciseRowsPerWorkoutTests {
 
     /// The exercise's history rows, built the way `ExerciseHistoryView`
     /// builds them: its fetch, its completed working sets with no intent
-    /// filter, then its grouping.
-    private func historyRows(_ exercise: Exercise, in ctx: ModelContext) throws -> [ExerciseHistoryView.DateGroup] {
+    /// filter, then its rows.
+    private func historyRows(_ exercise: Exercise, in ctx: ModelContext) throws -> [HistoryEntry] {
         let targetID = exercise.id
         let logs = try ctx.fetch(FetchDescriptor<SessionExercise>(
             predicate: #Predicate { se in se.exercise?.id == targetID },
@@ -100,7 +100,7 @@ struct ExerciseRowsPerWorkoutTests {
                 .filter { $0.isComplete && !$0.isWarmup }
                 .map { (setEntry: $0, sessionExercise: se) }
         }
-        return ExerciseHistoryView.groupedByDate(from: sets)
+        return ExerciseHistoryView.rows(from: sets, prSetIDs: ExerciseHistoryView.prSets(from: sets))
     }
 
     /// The exercise's "Recent performance" entries, built the way

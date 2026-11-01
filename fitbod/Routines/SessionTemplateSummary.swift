@@ -54,8 +54,8 @@ public struct SessionTemplateSummary: Equatable, Sendable {
     /// "5 exercises · 15 sets · ~52 min". Empty templates read "No exercises yet".
     public var line: String {
         guard exerciseCount > 0 else { return "No exercises yet" }
-        let ex = exerciseCount == 1 ? "1 exercise" : "\(exerciseCount) exercises"
-        let sets = workingSets == 1 ? "1 set" : "\(workingSets) sets"
+        let ex = BRUCountLabel.text(exerciseCount, "exercise")
+        let sets = BRUCountLabel.text(workingSets, "set")
         return "\(ex) · \(sets) · ~\(estimatedMinutes) min"
     }
 }

@@ -165,7 +165,7 @@ final class PrescriptionEditorUITests: XCTestCase {
     /// The exercise card's title, scrolled back into view.
     @MainActor
     private func cardTitle(in app: XCUIApplication) -> XCUIElement {
-        let title = app.staticTexts.matching(NSPredicate(format: "label == %@", exerciseName)).firstMatch
+        let title = app.buttons.matching(NSPredicate(format: "label == %@", exerciseName)).firstMatch
         XCTAssertTrue(title.waitForExistence(timeout: 10), "The exercise's card must exist")
         for _ in 0..<6 where !title.isHittable {
             app.scrollViews.allElementsBoundByIndex.last(where: { $0.isHittable })?.swipeDown(velocity: .slow)
@@ -200,7 +200,7 @@ final class PrescriptionEditorUITests: XCTestCase {
     /// Expands the exercise's card and opens EDIT PRESCRIPTION.
     @MainActor
     private func openDetails(in app: XCUIApplication) {
-        let card = app.staticTexts.matching(NSPredicate(format: "label == %@", exerciseName))
+        let card = app.buttons.matching(NSPredicate(format: "label == %@", exerciseName))
         XCTAssertTrue(card.firstMatch.waitForExistence(timeout: 10))
         let visible = card.allElementsBoundByIndex.first(where: { $0.isHittable })
         XCTAssertNotNil(visible, "The exercise's card must be visible")

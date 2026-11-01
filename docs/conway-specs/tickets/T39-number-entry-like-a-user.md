@@ -20,6 +20,7 @@ T06 replaced the reps fields with steppers, but every other number field still w
 The UI tests did not catch item 5, because they clear a field before they type, which no user does.
 Some screens with number pads also have no DONE key, and a focused field can sit under the keyboard or a bottom bar.
 The shared `UITestNavigation.hittable` helper polls in 0.5 s steps, which `docs/test-performance-guide.md` section 2.6 says not to do (finding F247, from T104's worker).
+In the logger, a tap on an empty set's reps field while rest is running ends the rest but leaves the field without keyboard focus, so typing fails until a second tap (finding F264, from T101's worker).
 
 ## Target
 
@@ -38,6 +39,8 @@ The shared `UITestNavigation.hittable` helper polls in 0.5 s steps, which `docs/
 5. Move every UI test that enters a number onto the new helper.
    Remove a private typing helper once nothing uses it.
 6. `UITestNavigation.hittable` polls in 50 to 100 ms steps, with the same overall ceiling, and `waitUntilStill` checks the frame in steps that small while still requiring it to hold for its interval (findings F247 and F262).
+   `type` and `hittable` read `exists` before they call `waitForExistence`, which costs about 1 s even when the element is already there (finding F274).
+7. In the logger, one tap on an empty set's reps field while rest is running both ends the rest and gives the field keyboard focus, so the first digit typed lands.
 
 ## Constraints
 
@@ -80,3 +83,5 @@ If one of them passes today, say so in `notes.md`.
 - The session editor is `RoutineBuilderView`, which holds `PrescriptionEditorRow`; T110 removed its per-set overrides.
 - SwiftUI's `TextField` accepts a text selection binding on iOS 18 and later.
 - `MilestoneOneJourneyUITests.swift` has a private `replace(_:with:)` helper near line 379.
+- `UITestNavigation.textLines` (and so `readText`) uses Vision's `.accurate` level, which on the simulator dropped whole words from a 390 x 60pt crop in T35's runs; say in its comment that callers read narrow, single-line crops (finding F282).
+- The Library search field's XCUI frame spans its whole row, so `UITestNavigation.type(replacing: true)` taps its × instead of focusing it; the new typing helper should tap the field's text area (finding F293, from T37's worker).

@@ -233,7 +233,7 @@ public struct SettingsView: View {
             value: $s.minCalibrationSets,
             in: 5...30,
             step: 1
-        ) { "\($0) sets" }
+        ) { BRUCountLabel.text($0, "set") }
         .padding(.horizontal, 16)
         .padding(.vertical, 8)
         .background(Color.bruPaper)
@@ -273,7 +273,7 @@ public struct SettingsView: View {
             value: $s.frequencyHitMinSets,
             in: 1...5,
             step: 1
-        ) { $0 == 1 ? "1 set" : "\($0) sets" }
+        ) { BRUCountLabel.text($0, "set") }
         .padding(.horizontal, 16)
         .padding(.vertical, 8)
         .background(Color.bruPaper)

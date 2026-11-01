@@ -221,10 +221,10 @@ public struct SessionComparisonView: View {
     private func deltaViewReps(value: Int?) -> some View {
         if let v = value {
             if v > 0 {
-                BRUDisplay("+\(v) reps", size: .medium, color: .bruSignal)
+                BRUDisplay("+\(BRUCountLabel.text(v, "rep"))", size: .medium, color: .bruSignal)
             } else if v < 0 {
                 // U+2212 minus sign (NOT hyphen)
-                BRUDisplay("\u{2212}\(abs(v)) reps", size: .medium, color: .bruMuted)
+                BRUDisplay("\u{2212}\(BRUCountLabel.text(abs(v), "rep"))", size: .medium, color: .bruMuted)
             } else {
                 BRUDisplay("\u{2014}", size: .medium, color: .bruMuted)
                     .accessibilityLabel("No change in reps")

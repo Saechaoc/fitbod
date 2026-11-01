@@ -57,7 +57,6 @@ struct Phase3BRUGrepAuditTests {
         "fitbod/Routines/InlineExerciseSearchRow.swift",
         "fitbod/Routines/MoveRoutineSheet.swift",
         "fitbod/Routines/NewFolderSheet.swift",
-        "fitbod/Routines/PerSetOverrideRow.swift",
         "fitbod/Routines/PrescriptionEditorRow.swift",
         "fitbod/Routines/RoutineBuilderDayTabs.swift",
         "fitbod/Routines/SetRowsContainer.swift",

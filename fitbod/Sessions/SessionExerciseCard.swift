@@ -144,7 +144,7 @@ public struct SessionExerciseCard: View {
                     Button(role: .destructive) {
                         onRemove(sessionExercise)
                     } label: {
-                        Text("Remove from Session")                              // UI-SPEC verbatim
+                        Text("Remove from workout")
                     }
                 }
 
@@ -422,7 +422,7 @@ public struct SessionExerciseCard: View {
         // Build a minimal snapshot prescription summary (working sets only;
         // warm-ups have their own ramp block above).
         let setsCount = (sessionExercise.sets ?? []).filter { !$0.isWarmup }.count
-        let parts = [equip, "\(setsCount) SETS"]
+        let parts = [equip, BRUCountLabel.text(setsCount, "SET")]
         return parts.joined(separator: " · ")
     }
 

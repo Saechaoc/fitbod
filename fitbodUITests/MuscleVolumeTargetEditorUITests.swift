@@ -13,6 +13,10 @@
 //  algorithmic round-trip is pinned at the data layer via
 //  MuscleVolumeTargetSeederTests (5 GREEN tests).
 //
+//  T109: each test launches on a reset store through
+//  UITestNavigation.launch (finding F304), and Chest's targets open on
+//  BRU steppers.
+//
 
 import XCTest
 
@@ -23,26 +27,9 @@ final class MuscleVolumeTargetEditorUITests: XCTestCase {
     }
 
     @MainActor
-    private func waitForSeedComplete(_ app: XCUIApplication, timeout: TimeInterval = 60) {
-        let splash = app.staticTexts["Preparing library…"]
-        if splash.exists {
-            let pred = NSPredicate(format: "exists == false")
-            let exp = XCTNSPredicateExpectation(predicate: pred, object: splash)
-            _ = XCTWaiter().wait(for: [exp], timeout: timeout)
-        }
-    }
-
-    @MainActor
-    private func selectSettingsTab(_ app: XCUIApplication) {
-        UITestNavigation.openSettings(in: app)
-    }
-
-    @MainActor
     func testVolumeTargetsSectionReachable() throws {
-        let app = XCUIApplication()
-        app.launch()
-        waitForSeedComplete(app)
-        selectSettingsTab(app)
+        let app = UITestNavigation.launch(UITestNavigation.freshStore)
+        UITestNavigation.openSettings(in: app)
 
         // Two static texts read "Volume Targets" (the Section header AND
         // the NavigationLink label). Use the predicate to pick the first
@@ -55,10 +42,8 @@ final class MuscleVolumeTargetEditorUITests: XCTestCase {
 
     @MainActor
     func testNavigateToEditorAndExpandChest() throws {
-        let app = XCUIApplication()
-        app.launch()
-        waitForSeedComplete(app)
-        selectSettingsTab(app)
+        let app = UITestNavigation.launch(UITestNavigation.freshStore)
+        UITestNavigation.openSettings(in: app)
 
         // Tap the row labeled "Volume Targets" to navigate.
         let row = app.buttons.matching(
@@ -75,6 +60,25 @@ final class MuscleVolumeTargetEditorUITests: XCTestCase {
         ).firstMatch
         XCTAssertTrue(headerText.waitForExistence(timeout: 5),
                       "BRUHeaderBar center 'Volume Targets' must be visible")
+
+        // T109: Chest opens its four targets on BRU steppers, with no
+        // stock iOS stepper. Its MRV stepper is the last of them; before
+        // T109 the stock stepper and its two lines of text all carried
+        // its VoiceOver label. The row reads whether it is open, unlike
+        // Chest's volume bar under the sheet.
+        let chest = app.buttons.matching(NSPredicate(
+            format: "label BEGINSWITH[c] %@ AND value == %@", "Chest", "Collapsed"
+        )).firstMatch
+        UITestNavigation.reveal(chest, in: app)
+        chest.tap()
+        let mrv = app.descendants(matching: .any).matching(NSPredicate(
+            format: "label == %@", "Maximum recoverable volume for Chest"
+        )).firstMatch
+        XCTAssertTrue(mrv.waitForExistence(timeout: 5), "Chest must open its targets")
+        UITestNavigation.reveal(mrv, in: app)
+        UITestNavigation.saveScreenshot("T109", "volume-targets-chest")
+        XCTAssertEqual(app.steppers.count, 0, "Chest's targets must use BRU steppers, not the stock iOS stepper")
+        XCTAssertTrue(app.otherElements["Maintenance volume for Chest"].exists, "Missing Chest's BRU MV stepper")
 
         // Reset All destructive button should be present at the bottom.
         let resetAll = app.buttons["Reset All to RP Defaults"]

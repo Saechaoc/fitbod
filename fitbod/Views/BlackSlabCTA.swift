@@ -27,17 +27,19 @@ import SwiftData
 /// └──────────────────────────────────────────────┘
 /// ```
 ///
-/// At accessibility sizes the meta line stacks its parts, one per line,
-/// since one line would break "EXERCISES" mid-word.
+/// When the meta line does not fit on one line, as at accessibility sizes
+/// and at xxLarge and up on the 390pt phone, its parts stack, one per line,
+/// since a squeezed line would break "1" from "EXERCISE" or "EXERCISES"
+/// mid-word. With no day, past the block's plan, the top row shows NEXT
+/// alone (tradeoffs.md "A block past its plan").
 ///
 /// Reference: bru-screens/today.jsx lines 59-80.
 public struct BlackSlabCTA: View {
-    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     // MARK: - Properties
 
     let routine: SessionTemplate
-    let dayIndex: Int       // 1-based, e.g. 1 of 4
+    let dayIndex: Int?      // 1-based, e.g. 1 of 4; nil shows no day
     let totalDays: Int
     let onStart: @MainActor () -> Void
 
@@ -70,11 +72,13 @@ public struct BlackSlabCTA: View {
 
                 Spacer()
 
-                Text(String(format: "DAY %02d / %02d", dayIndex, totalDays))
-                    .font(BRUFont.labelSmall)
-                    .tracking(1.5)
-                    .textCase(.uppercase)
-                    .foregroundStyle(Color.bruPaper.opacity(0.6))
+                if let dayIndex {
+                    Text(String(format: "DAY %02d / %02d", dayIndex, totalDays))
+                        .font(BRUFont.labelSmall)
+                        .tracking(1.5)
+                        .textCase(.uppercase)
+                        .foregroundStyle(Color.bruPaper.opacity(0.6))
+                }
             }
 
             // 6pt gap then hero routine name
@@ -85,28 +89,20 @@ public struct BlackSlabCTA: View {
             // 12pt gap then meta strip
             Spacer().frame(height: 12)
 
-            metaLayout {
-                Text(BRUCountLabel.text(exerciseCount, "exercise"))
-                    .font(BRUFont.labelSmall)
-                    .tracking(1.2)
-                    .textCase(.uppercase)
-                    .foregroundStyle(Color.bruPaper)
-
-                metaSeparator
-
-                Text(BRUCountLabel.text(setCount, "set"))
-                    .font(BRUFont.labelSmall)
-                    .tracking(1.2)
-                    .textCase(.uppercase)
-                    .foregroundStyle(Color.bruPaper)
-
-                metaSeparator
-
-                Text("~\(estimatedMinutes) min")
-                    .font(BRUFont.labelSmall)
-                    .tracking(1.2)
-                    .textCase(.uppercase)
-                    .foregroundStyle(Color.bruPaper)
+            // One line while it fits; otherwise the parts stack, each whole.
+            ViewThatFits(in: .horizontal) {
+                HStack(spacing: 0) {
+                    metaPart(BRUCountLabel.text(exerciseCount, "exercise"))
+                    metaSeparator
+                    metaPart(BRUCountLabel.text(setCount, "set"))
+                    metaSeparator
+                    metaPart("~\(estimatedMinutes) min")
+                }
+                VStack(alignment: .leading, spacing: 4) {
+                    metaPart(BRUCountLabel.text(exerciseCount, "exercise"))
+                    metaPart(BRUCountLabel.text(setCount, "set"))
+                    metaPart("~\(estimatedMinutes) min")
+                }
             }
 
             // 16pt gap then CTA
@@ -120,21 +116,20 @@ public struct BlackSlabCTA: View {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    /// The meta line's parts on one line, or stacked at accessibility sizes.
-    private var metaLayout: AnyLayout {
-        dynamicTypeSize.isAccessibilitySize
-            ? AnyLayout(VStackLayout(alignment: .leading, spacing: 4))
-            : AnyLayout(HStackLayout(spacing: 0))
+    /// One part of the meta line, such as "1 EXERCISE".
+    private func metaPart(_ text: String) -> some View {
+        Text(text)
+            .font(BRUFont.labelSmall)
+            .tracking(1.2)
+            .textCase(.uppercase)
+            .foregroundStyle(Color.bruPaper)
     }
 
     /// The dot between two meta parts on one line; stacked parts need none.
-    @ViewBuilder
     private var metaSeparator: some View {
-        if !dynamicTypeSize.isAccessibilitySize {
-            Text("  ·  ")
-                .font(BRUFont.labelSmall)
-                .foregroundStyle(Color.bruPaper.opacity(0.5))
-        }
+        Text("  ·  ")
+            .font(BRUFont.labelSmall)
+            .foregroundStyle(Color.bruPaper.opacity(0.5))
     }
 }
 

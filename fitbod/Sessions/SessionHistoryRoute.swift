@@ -61,7 +61,7 @@ private struct SessionSummaryDestination: View {
             .background(Color.bruPaper.ignoresSafeArea())
             .navigationBarHidden(true)
             .safeAreaInset(edge: .top, spacing: 0) {
-                BRUHeaderBar(left: HeaderAction("‹") { dismiss() }, center: "Summary")
+                BRUHeaderBar(left: HeaderAction("‹ Back") { dismiss() }, center: "Summary")
             }
         }
     }

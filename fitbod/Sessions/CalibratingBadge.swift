@@ -47,7 +47,7 @@ public struct CalibratingBadge: View {
         .padding(.vertical, 3)
         .background(Color.bruMuted)
         .accessibilityLabel(
-            "Calibrating: \(current) of \(threshold) sets logged. Weight shown as a range."
+            "Calibrating: \(current) of \(BRUCountLabel.text(threshold, "set")) logged. Weight shown as a range."
         )
         .accessibilityAddTraits(.isStaticText)
     }

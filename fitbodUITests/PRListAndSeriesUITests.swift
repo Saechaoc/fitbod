@@ -214,6 +214,43 @@ final class PRListAndSeriesUITests: XCTestCase {
         assertOnlySelected("STRENGTH", among: segments)
     }
 
+    /// T85: at xxxLarge the 110pt kind column is too narrow for WEIGHT PR
+    /// and VOLUME PR, which wrapped to two lines. Every kind label keeps to
+    /// one line, no taller than a bucket header set in the same type.
+    @MainActor // XCUIApplication and UITestNavigation are main-actor types.
+    func testKindLabelsStayOnOneLineAtXXXLarge() throws {
+        let app = UITestNavigation.launch(UITestNavigation.progressHistory, textSize: .xxxl)
+        let segments = openIntentToggle(in: app)
+        let header = app.staticTexts["1–6 REPS"]
+        XCTAssertTrue(header.waitForExistence(timeout: 10), "The PR list shows no 1–6 REPS bucket")
+        UITestNavigation.waitUntilStill(header)
+        UITestNavigation.saveScreenshot("T85", "prs", textSize: .xxxl)
+        let oneLine = header.frame.height
+
+        // Strength sets fill one bucket per section, the shortest list
+        // that still shows every kind.
+        segments[0].tap()
+        let list = app.scrollViews.firstMatch
+        let kinds = ["WEIGHT PR", "TOP REPS", "VOLUME PR", "E1RM PR"]
+        var tallest: [String: CGFloat] = [:]
+        for _ in 0..<12 {
+            for (kind, height) in try kindLabelHeights(kinds, in: list) {
+                tallest[kind] = max(tallest[kind] ?? 0, height)
+            }
+            if tallest.count == kinds.count { break }
+            let start = list.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.9))
+            let end = list.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.15))
+            start.press(forDuration: 0.05, thenDragTo: end, withVelocity: .slow, thenHoldForDuration: 0.2)
+        }
+        for kind in kinds {
+            let height = try XCTUnwrap(tallest[kind], "The PR list shows no \(kind) row")
+            XCTAssertLessThanOrEqual(
+                height, oneLine + 1,
+                String(format: "%@ is %.1fpt tall, more than one %.1fpt line", kind, height, oneLine)
+            )
+        }
+    }
+
     // MARK: - Intent toggle
 
     /// Opens Personal Records from the Progress tab and returns the intent
@@ -388,6 +425,21 @@ final class PRListAndSeriesUITests: XCTestCase {
             if node.elementType == .staticText {
                 if Self.sectionNames.contains(node.label) { found.append((.section, node.label, node.frame)) }
                 if Self.headerNames.contains(node.label) { found.append((.header, node.label, node.frame)) }
+            }
+            node.children.forEach(walk)
+        }
+        walk(try list.snapshot())
+        return found
+    }
+
+    /// The height of every kind label the list has laid out, read in one
+    /// snapshot. A row is one button, so its labels are read inside it.
+    @MainActor // XCUIElement.snapshot() is main-actor isolated.
+    private func kindLabelHeights(_ kinds: [String], in list: XCUIElement) throws -> [(kind: String, height: CGFloat)] {
+        var found: [(kind: String, height: CGFloat)] = []
+        func walk(_ node: XCUIElementSnapshot) {
+            if node.elementType == .staticText, kinds.contains(node.label) {
+                found.append((node.label, node.frame.height))
             }
             node.children.forEach(walk)
         }

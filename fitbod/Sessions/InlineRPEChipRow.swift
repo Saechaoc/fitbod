@@ -5,6 +5,8 @@
 // UI-SPEC v2 § Session logger line 374-376: 5 BRUChip-style outlined rectangles.
 // Each chip: displayMedium 18pt centered numeric; selected = bruInk fill +
 // bruPaper text; unselected = bruPaper fill + bruInk text + bruInk 1.5pt outline.
+// The digits keep 8pt from the border at every text size, and the chips
+// wrap to another line when they outgrow theirs.
 //
 // Tap a chip → sets `rpe` to its value.
 // Long-press any chip (0.5s threshold per UI-SPEC accessibility) →
@@ -59,6 +61,7 @@ public struct InlineRPEChipRow: View {
                         .font(BRUFont.displayMedium)
                         .monospacedDigit()
                         .foregroundStyle(selected ? Color.bruPaper : Color.bruInk)
+                        .padding(.horizontal, Self.digitPadding)
                         .frame(minWidth: 44, minHeight: 44)
                         .background(selected ? Color.bruInk : Color.bruPaper)
                         .overlay(
@@ -109,6 +112,11 @@ public struct InlineRPEChipRow: View {
     private static func label(for value: Double) -> String {
         value == value.rounded() ? "\(Int(value))" : String(format: "%.1f", value)
     }
+
+    /// Space between a chip's digits and its border. At default text every
+    /// number, "8.5" included, still fits the 44pt minimum width; at larger
+    /// text the chip grows by it, so no digit touches the border.
+    private static let digitPadding: CGFloat = 8
 }
 
 // MARK: - Previews

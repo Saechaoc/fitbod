@@ -39,9 +39,10 @@
 //  ## When the tab bar hides
 //
 //  The bar hides while the software keyboard is up (it would otherwise
-//  ride up on the keyboard and cover the field being edited) and while
-//  the selected tab's visible screen applies `.bruTabBarHidden()`, as the
-//  workout logger does.
+//  ride up on the keyboard and cover the field being edited), while a
+//  field is being edited, from the moment editing begins, just before the
+//  keyboard animates in, and while the selected tab's visible screen
+//  applies `.bruTabBarHidden()`, as the workout logger does.
 //
 
 import SwiftUI
@@ -69,8 +70,19 @@ public struct RootView: View {
     /// Library tab NavigationPath, cleared on Library-tab re-tap.
     @State private var libraryPath = NavigationPath()
 
-    /// True while the software keyboard is on screen.
-    @State private var keyboardVisible = false
+    /// True between the software keyboard's will-show and will-hide.
+    @State private var keyboardOnScreen = false
+
+    /// True while a text field or view is being edited: from the moment
+    /// editing begins, which comes before the keyboard animates in, until it
+    /// ends. A sheet over a field hides the keyboard but not the editing.
+    @State private var editingText = false
+
+    /// The bar and the rest dock stay away while the software keyboard is on
+    /// screen or a field is being edited.
+    private var keyboardVisible: Bool {
+        keyboardOnScreen || editingText
+    }
 
     /// Tabs whose visible screen asked to hide the tab bar.
     @State private var tabsHidingBar: Set<Tab> = []
@@ -220,10 +232,32 @@ public struct RootView: View {
             }
         }
         .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillShowNotification)) { _ in
-            keyboardVisible = true
+            keyboardOnScreen = true
         }
         .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillHideNotification)) { _ in
-            keyboardVisible = false
+            keyboardOnScreen = false
+        }
+        // The keyboard's show animation moves every layer on screen, and the
+        // bar removed while it moves could leave UIKit's animation count one
+        // over, which kept UI tests waiting a minute per step (T101). Editing
+        // begins before the keyboard animates in, so the bar leaves first,
+        // and it stays away while the editing lasts, so a keyboard that comes
+        // back for the same field, as one does when a sheet over it closes,
+        // finds it gone.
+        .onReceive(NotificationCenter.default.publisher(for: UITextField.textDidBeginEditingNotification)) { _ in
+            editingText = true
+        }
+        .onReceive(NotificationCenter.default.publisher(for: UITextView.textDidBeginEditingNotification)) { _ in
+            editingText = true
+        }
+        // Focus moving straight to another field keeps the keyboard on
+        // screen, and the bar away. With no software keyboard, as with a
+        // hardware keyboard, no will-hide follows, so the bar comes back here.
+        .onReceive(NotificationCenter.default.publisher(for: UITextField.textDidEndEditingNotification)) { _ in
+            editingText = false
+        }
+        .onReceive(NotificationCenter.default.publisher(for: UITextView.textDidEndEditingNotification)) { _ in
+            editingText = false
         }
     }
 

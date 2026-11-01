@@ -67,7 +67,7 @@ public struct CalibratingProgressMeter: View {
         VStack(alignment: .leading, spacing: 6) {
             // Labels row
             HStack {
-                Text("CALIBRATING · \(current) / \(threshold) SETS")
+                Text("CALIBRATING · \(current) / \(BRUCountLabel.text(threshold, "SET"))")
                     .font(BRUFont.labelSmall)
                     .foregroundStyle(Color.bruInk)
                     .textCase(.uppercase)
@@ -106,7 +106,7 @@ public struct CalibratingProgressMeter: View {
         }
         // MARK: Accessibility (03-UI-SPEC line 496)
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("Calibrating: \(current) of \(threshold) sets logged.")
+        .accessibilityLabel("Calibrating: \(current) of \(BRUCountLabel.text(threshold, "set")) logged.")
         .accessibilityValue("\(current) out of \(threshold).")
     }
 }

@@ -17,8 +17,9 @@
 //  XCTest (not Swift Testing) — UI tests must use XCUIApplication.
 //  Per CLAUDE.md: Swift Testing does not support XCUIApplication.
 //
-//  No fixture seeding required — tests branch on data availability:
-//    empty-state paths skip interactive assertions (logged gracefully).
+//  T109: the muscle tests (2 and 3) launch on a reset store with the
+//  demo Push A through UITestNavigation.launch, so test 2 always taps
+//  Chest's volume bar. Test 1 still launches on the phone's own store.
 //
 
 import XCTest
@@ -139,31 +140,25 @@ final class Phase5BRUSmokeUITests: XCTestCase {
     /// where all 4 BRU section heads ("This Week", "Contributing Exercises",
     /// "Frequency This Week", "Adjust Targets") are reachable.
     ///
-    /// If no volume bars are present (no sessions logged), the test skips the
-    /// tap assertion gracefully — data-layer routing is pinned in unit tests.
+    /// The demo Push A trains Chest this week, so its bar is always there
+    /// to tap.
     @MainActor
     func testPerMuscleDetailViewRenders() throws {
-        app.launch()
-        waitForSeedComplete()
-        selectTodayTab()
+        app = UITestNavigation.launch(UITestNavigation.seededWorkout)
 
         // Wait for the Volume This Week section to render.
         _ = app.staticTexts["Volume This Week"].waitForExistence(timeout: 30)
         _ = scrollUntilVisible(text: "Volume This Week")
 
-        // Find any volume bar by its combined accessibility label pattern
-        // "MuscleGroup: N sets this week, ..." set in MuscleVolumeBar.
-        let bar = app.descendants(matching: .any).matching(
-            NSPredicate(format: "label CONTAINS 'sets this week,'")
-        ).firstMatch
-
-        guard bar.waitForExistence(timeout: 10) else {
-            // No sessions logged — bar tap path not exercisable.
-            // This is expected on a freshly-reset simulator.
-            XCTAssertTrue(true, "No volume bars present — skipping bar-tap navigation assertion (no sessions logged).")
-            return
-        }
-
+        // Find Chest's volume bar by its combined accessibility label
+        // "Chest: N sets this week, ...", or "1 set" for one, set in
+        // MuscleVolumeBar.
+        let bar = UITestNavigation.volumeBar("Chest", in: app)
+        XCTAssertTrue(
+            bar.exists || bar.waitForExistence(timeout: 10),
+            "Expected Chest's volume bar on Today — the demo Push A trains Chest this week."
+        )
+        UITestNavigation.reveal(bar, in: app)
         bar.tap()
 
         // PerMuscleDetailView renders its 4 BRUSectionHead labels.
@@ -206,8 +201,7 @@ final class Phase5BRUSmokeUITests: XCTestCase {
     /// "Reset All to RP Defaults" BRUButton is reachable.
     @MainActor
     func testMuscleVolumeTargetEditorRenders() throws {
-        app.launch()
-        waitForSeedComplete()
+        app = UITestNavigation.launch(UITestNavigation.seededWorkout)
         selectSettingsTab()
 
         // The Volume Targets row renders as a Button with label containing

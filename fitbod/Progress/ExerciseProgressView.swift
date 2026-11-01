@@ -33,7 +33,10 @@
 //    AVG RPE  SeriesBuilder.averageRPEPoints, one line per intent
 //
 //  VoiceOver reads each point by itself, by its series and date, then
-//  its value ("112 lb", "2,140 lb", "RPE 7.6"). The PR rule and the
+//  its value ("112 lb", "2,140 lb", "RPE 7.6"). The chart's audio graph
+//  is ProgressChartDescriptor, not the one Swift Charts makes: dates on
+//  the x axis, values read the same way on the y axis, and a series per
+//  line drawn, named as the legend names it. The PR rule and the
 //  above-10-reps caption are e1RM only. The legend names the lines
 //  drawn: TOP SET and ALL-SET AVG on e1RM, TOP SET alone on TOP SET,
 //  HYPERTROPHY · N SESSIONS and STRENGTH · N SESSIONS on VOLUME and
@@ -64,6 +67,7 @@
 //  invalidation surface to the chart host.
 //
 
+import Accessibility
 import Charts
 import SwiftData
 import SwiftUI
@@ -81,7 +85,7 @@ public struct ExerciseProgressView: View {
     public var body: some View {
         VStack(spacing: 0) {
             BRUHeaderBar(
-                left: HeaderAction("‹") { dismiss() },
+                left: HeaderAction("‹ Back") { dismiss() },
                 center: "Progress"
             )
             nameRow
@@ -119,8 +123,9 @@ public struct ExerciseProgressView: View {
 
 // MARK: - Plotted point
 
-/// One point the chart draws for the selected chip.
-private struct ChartPoint: Identifiable {
+/// One point the chart draws for the selected chip. Internal, so the
+/// audio graph's tests can make one.
+struct ChartPoint: Identifiable {
     let id: String
     let date: Date
     let value: Double
@@ -154,6 +159,26 @@ private extension ProgressChartMetric {
         case .averageRPE:    return "RPE"
         }
     }
+
+    /// How VoiceOver reads a value on this chip's chart, by each point and
+    /// on the audio graph's y axis.
+    func spokenValue(_ value: Double, unit: WeightUnit) -> String {
+        switch self {
+        case .e1RM, .topSet:
+            return "\(wholeWeight(value)) \(unit.rawValue)"
+        case .volume:
+            return "\(wholeWeight(value).formatted()) \(unit.rawValue)"
+        case .averageRPE:
+            return "RPE \(value.formatted(.number.precision(.fractionLength(0...1))))"
+        }
+    }
+}
+
+/// A weight in whole units, halves up, so the hero, the PR label and
+/// VoiceOver all read 112.5 as 113. `%.0f` rounds a half to the even
+/// number instead.
+private func wholeWeight(_ value: Double) -> Int {
+    Int(value.rounded())
 }
 
 // MARK: - Inner chart host (owns @Query + metric binding passthrough)
@@ -266,25 +291,6 @@ private struct ProgressChartHost: View {
                 intent: point.intent
             )
         }
-    }
-
-    /// How VoiceOver reads a point's value.
-    private func spokenValue(_ value: Double) -> String {
-        switch metric {
-        case .e1RM, .topSet:
-            return "\(wholeWeight(value)) \(unit.rawValue)"
-        case .volume:
-            return "\(wholeWeight(value).formatted()) \(unit.rawValue)"
-        case .averageRPE:
-            return "RPE \(value.formatted(.number.precision(.fractionLength(0...1))))"
-        }
-    }
-
-    /// A weight in whole units, halves up, so the hero, the PR label and
-    /// VoiceOver all read 112.5 as 113. `%.0f` rounds a half to the even
-    /// number instead.
-    private func wholeWeight(_ value: Double) -> Int {
-        Int(value.rounded())
     }
 
     /// The unit this exercise's weights are labeled in: its own override,
@@ -459,6 +465,11 @@ private struct ProgressChartHost: View {
             .accessibilityChildren {
                 pointElements(points)
             }
+            // Its own audio graph: the one Swift Charts makes reads the
+            // y axis unrounded and without a unit, and names no line.
+            .accessibilityChartDescriptor(
+                ProgressChartDescriptor(metric: metric, points: points, unit: unit)
+            )
             // After the chart's label and identifier, so the PR label
             // keeps its own text for VoiceOver.
             .chartOverlay { proxy in
@@ -527,7 +538,7 @@ private struct ProgressChartHost: View {
                     ForEach(byDate[date, default: []].sorted { $0.isPrimary && !$1.isPrimary }) { point in
                         Rectangle()
                             .accessibilityLabel("\(point.series), \(date.formatted(date: .abbreviated, time: .omitted))")
-                            .accessibilityValue(spokenValue(point.value))
+                            .accessibilityValue(metric.spokenValue(point.value, unit: unit))
                     }
                 }
                 .accessibilityElement(children: .contain)
@@ -557,8 +568,8 @@ private struct ProgressChartHost: View {
             return [LegendKey(label: SeriesKind.topSet.displayLabel, isPrimary: true)]
         case .volume, .averageRPE:
             return [
-                LegendKey(label: "HYPERTROPHY · \(hypCount) SESSIONS", isPrimary: true),
-                LegendKey(label: "STRENGTH · \(strCount) SESSIONS", isPrimary: false),
+                LegendKey(label: "HYPERTROPHY · \(BRUCountLabel.text(hypCount, "SESSION"))", isPrimary: true),
+                LegendKey(label: "STRENGTH · \(BRUCountLabel.text(strCount, "SESSION"))", isPrimary: false),
             ]
         }
     }
@@ -601,5 +612,78 @@ private struct ProgressChartHost: View {
             }
             .frame(width: 16, height: 2)
         }
+    }
+}
+
+// MARK: - Audio graph
+
+/// The chart's audio graph. The one Swift Charts makes from the marks
+/// reads the y axis unrounded and without a unit ("112.5") and names no
+/// line. This one reads dates on the x axis and values on the y axis the
+/// way each point reads its own ("113 lb", "2,140 lb", "RPE 7.6"), with a
+/// series per line drawn, named as the legend names it.
+struct ProgressChartDescriptor: AXChartDescriptorRepresentable {
+    let metric: ProgressChartMetric
+    let points: [ChartPoint]
+    /// The unit the exercise's weights are labeled in.
+    let unit: WeightUnit
+
+    func makeChartDescriptor() -> AXChartDescriptor {
+        let dates = points.map(\.date.timeIntervalSinceReferenceDate)
+        let values = points.map(\.value)
+        let xAxis = AXNumericDataAxisDescriptor(
+            title: "Date",
+            range: (dates.min() ?? 0)...(dates.max() ?? 0),
+            gridlinePositions: []
+        ) { Date(timeIntervalSinceReferenceDate: $0).formatted(date: .abbreviated, time: .omitted) }
+        let yAxis = AXNumericDataAxisDescriptor(
+            title: metric.axisName,
+            range: (values.min() ?? 0)...(values.max() ?? 0),
+            gridlinePositions: []
+        ) { metric.spokenValue($0, unit: unit) }
+        return AXChartDescriptor(
+            title: metric.chartName,
+            summary: nil,
+            xAxis: xAxis,
+            yAxis: yAxis,
+            additionalAxes: [],
+            series: series
+        )
+    }
+
+    /// SwiftUI updates the descriptor it made, rather than asking for a
+    /// new one, when the chart's points or unit change.
+    func updateChartDescriptor(_ descriptor: AXChartDescriptor) {
+        let current = makeChartDescriptor()
+        descriptor.title = current.title
+        descriptor.xAxis = current.xAxis
+        descriptor.yAxis = current.yAxis
+        descriptor.series = current.series
+    }
+
+    /// A series per line drawn, its points in date order, the legend's
+    /// solid line first.
+    private var series: [AXDataSeriesDescriptor] {
+        Dictionary(grouping: points, by: \.series).values
+            .map { line in line.sorted { $0.date < $1.date } }
+            .sorted { lhs, rhs in
+                lhs[0].isPrimary != rhs[0].isPrimary ? lhs[0].isPrimary : lhs[0].series < rhs[0].series
+            }
+            .map { line in
+                AXDataSeriesDescriptor(
+                    name: legendName(of: line),
+                    isContinuous: true,
+                    dataPoints: line.map { AXDataPoint(x: $0.date.timeIntervalSinceReferenceDate, y: $0.value) }
+                )
+            }
+    }
+
+    /// The legend's name for a line: TOP SET or ALL-SET AVG on the e1RM
+    /// chips; on VOLUME and AVG RPE, its intent and how many workouts it
+    /// plots, as in HYPERTROPHY · 2 SESSIONS.
+    private func legendName(of line: [ChartPoint]) -> String {
+        let name = line[0].series.uppercased()
+        guard !metric.plotsE1RM else { return name }
+        return "\(name) · \(BRUCountLabel.text(Set(line.map(\.date)).count, "SESSION"))"
     }
 }

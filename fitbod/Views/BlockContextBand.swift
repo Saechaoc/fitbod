@@ -81,25 +81,57 @@ public struct BlockContextBand: View {
         return result
     }
 
+    // MARK: - Top row
+
+    private var blockChip: some View {
+        BRUChip("Block")
+            .fixedSize()
+    }
+
+    private var nameText: some View {
+        Text(block.name.uppercased())
+            .font(.bru(.grotesk, size: 11))
+            .tracking(1.2)
+            .foregroundStyle(Color.bruInk)
+    }
+
+    /// The phase or PLAN COMPLETE chip, on one line: on its own row, when
+    /// even that is narrower than the chip, it shrinks rather than breaking a
+    /// word.
+    private var phaseChip: some View {
+        BRUChip(Self.chipLabel(for: block, on: .now), color: .bruSignal, fill: true)
+            .lineLimit(1)
+            .minimumScaleFactor(0.5)
+    }
+
     // MARK: - Body
 
     public var body: some View {
         VStack(spacing: 0) {
             VStack(alignment: .leading, spacing: 12) {
-                // Top row: Block chip + name + phase chip
-                HStack(spacing: 8) {
-                    BRUChip("Block")
+                // Top row: Block chip + name + phase chip, on one line while
+                // they fit. Otherwise, as at xxLarge and up on the 390pt
+                // phone, the phase chip moves under the name, so neither the
+                // phase ("ACCUMULA" over "TION") nor the name breaks a word.
+                ViewThatFits(in: .horizontal) {
+                    HStack(spacing: 8) {
+                        blockChip
 
-                    Spacer()
+                        Spacer()
 
-                    Text(block.name.uppercased())
-                        .font(.bru(.grotesk, size: 11))
-                        .tracking(1.2)
-                        .foregroundStyle(Color.bruInk)
+                        nameText
 
-                    Spacer()
+                        Spacer()
 
-                    BRUChip(Self.chipLabel(for: block, on: .now), color: .bruSignal, fill: true)
+                        phaseChip
+                    }
+                    VStack(alignment: .leading, spacing: 8) {
+                        HStack(spacing: 8) {
+                            blockChip
+                            nameText
+                        }
+                        phaseChip
+                    }
                 }
 
                 // Week ticker cells row

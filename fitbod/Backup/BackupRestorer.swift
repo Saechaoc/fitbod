@@ -266,7 +266,7 @@ public final class BackupRestorer {
         try insertDecodedDocument(doc, into: ctx, imageBytesByID: imageBytesByID)
         try ctx.save()
 
-        Self.log.info("BackupRestorer.performRestore complete — \(doc.exercises.count) exercises, \(doc.sessions.count) sessions, \(imageBytesByID.count) images")
+        Self.log.info("BackupRestorer.performRestore complete — \(BRUCountLabel.text(doc.exercises.count, "exercise"), privacy: .public), \(BRUCountLabel.text(doc.sessions.count, "session"), privacy: .public), \(imageBytesByID.count) images")
     }
 
     // MARK: - Process exit is the locked restart mechanism

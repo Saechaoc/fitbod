@@ -43,14 +43,16 @@ struct MuscleVolumeTargetStepperBRUTests {
     func stepperSuffixStringsVerbatim() {
         // The four suffix strings used in stepperRow calls must be
         // character-for-character per 05-UI-SPEC §MuscleVolumeTargetStepper table.
-        #expect(MuscleVolumeTargetStepper.mvSuffix == "sets — maintenance",
-                "MV suffix must be \"sets — maintenance\" verbatim")
-        #expect(MuscleVolumeTargetStepper.mevSuffix == "sets — min for growth",
-                "MEV suffix must be \"sets — min for growth\" verbatim")
-        #expect(MuscleVolumeTargetStepper.mavSuffix == "sets — peak adaptive",
-                "MAV suffix must be \"sets — peak adaptive\" verbatim")
-        #expect(MuscleVolumeTargetStepper.mrvSuffix == "sets — max recoverable",
-                "MRV suffix must be \"sets — max recoverable\" verbatim")
+        // T34: they follow the set count, which BRUCountLabel writes, so a
+        // target of 1 reads "1 set — maintenance".
+        #expect(MuscleVolumeTargetStepper.mvSuffix == "— maintenance",
+                "MV suffix must be \"— maintenance\" verbatim")
+        #expect(MuscleVolumeTargetStepper.mevSuffix == "— min for growth",
+                "MEV suffix must be \"— min for growth\" verbatim")
+        #expect(MuscleVolumeTargetStepper.mavSuffix == "— peak adaptive",
+                "MAV suffix must be \"— peak adaptive\" verbatim")
+        #expect(MuscleVolumeTargetStepper.mrvSuffix == "— max recoverable",
+                "MRV suffix must be \"— max recoverable\" verbatim")
     }
 
     // MARK: - Test 2: verbatim monotonic error copy

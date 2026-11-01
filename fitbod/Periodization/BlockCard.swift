@@ -58,7 +58,7 @@ public struct BlockCard: View {
                     pendingEndConfirm = nil
                 }
             } message: {
-                Text("End this block now? You can review it from the Routines tab.")
+                Text("End this block now? You can review it from the Program tab.")
             }
     }
 

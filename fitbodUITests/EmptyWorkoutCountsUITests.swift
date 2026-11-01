@@ -132,7 +132,7 @@ final class EmptyWorkoutCountsUITests: XCTestCase {
         let perWeek = element(labeled: "Sessions per week, last 4 weeks", in: app)
         XCTAssertEqual(
             perWeek.value as? String,
-            (1.0 / 4).formatted(.number.precision(.fractionLength(0...1))),
+            (1.0 / 4).formatted(.number.precision(.fractionLength(0...2))),
             "History's Per week must average 1 session over 4 weeks"
         )
         let header = app.staticTexts.matching(NSPredicate(format: "label ==[c] %@", "1 session")).firstMatch

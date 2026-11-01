@@ -675,7 +675,7 @@ fileprivate struct RoutineSplitRow: View {
                             .font(BRUFont.bodyEmphasis)
                             .foregroundStyle(Color.bruInk)
 
-                        Text("\(sessionCount) sessions")
+                        Text(BRUCountLabel.text(sessionCount, "session"))
                             .font(BRUFont.bodyDefault)
                             .foregroundStyle(Color.bruMuted)
                     }
@@ -1454,7 +1454,7 @@ fileprivate struct ProgramTemplateRow: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.bruRow)
         .background(ProgramScreenTokens.screenBackground)
     }
 

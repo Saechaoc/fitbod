@@ -2,7 +2,8 @@
 // fitbod
 //
 // One finished workout in SessionHistoryView. SessionHistoryView wraps it
-// in a NavigationLink to the workout's summary.
+// in a NavigationLink to the workout's summary, styled `.bruRow`, so only a
+// tap opens it.
 //
 // Layout (3 columns):
 //   ┌──────────┬─────────────────────────┬────────────┐
@@ -13,6 +14,8 @@
 //   "MON 20" alone; today shows "TODAY" over the date. One record names
 //   its kind ("PR · E1RM"); several show the count ("PR × 4"), and the
 //   summary lists them. Rows without a PR show "›" instead of the badge.
+//   At accessibility sizes the columns stack, date over workout over
+//   total, so the date reads whole.
 //
 // BRU contract: NO Capsule() / NO RoundedRectangle / NO accentColor /
 //               NO Image(systemName:) / NO Color(.system*) /
@@ -29,6 +32,8 @@ public struct SessionHistoryRow: View {
     public let prs: SessionPRs?
     public let unit: WeightUnit
 
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+
     public init(session: Session, prs: SessionPRs? = nil, unit: WeightUnit = .default) {
         self.session = session
         self.prs = prs
@@ -36,7 +41,7 @@ public struct SessionHistoryRow: View {
     }
 
     public var body: some View {
-        HStack(alignment: .center, spacing: 12) {
+        partsLayout {
             VStack(alignment: .leading, spacing: 2) {
                 Text(dateLabel)
                     .font(BRUFont.displayMedium)
@@ -49,12 +54,14 @@ public struct SessionHistoryRow: View {
                         .foregroundStyle(Color.bruMuted)
                 }
             }
-            .frame(width: 64, alignment: .leading)
-            .frame(maxHeight: .infinity)
+            .frame(width: stacks ? nil : 64, alignment: .leading)
+            .frame(maxHeight: stacks ? nil : .infinity)
             .overlay(alignment: .trailing) {
-                Rectangle()
-                    .fill(Color.bruHair)
-                    .frame(width: 1)
+                if !stacks {
+                    Rectangle()
+                        .fill(Color.bruHair)
+                        .frame(width: 1)
+                }
             }
 
             VStack(alignment: .leading, spacing: 4) {
@@ -68,9 +75,11 @@ public struct SessionHistoryRow: View {
                     .foregroundStyle(Color.bruMuted)
             }
 
-            Spacer(minLength: 8)
+            if !stacks {
+                Spacer(minLength: 8)
+            }
 
-            VStack(alignment: .trailing, spacing: 4) {
+            VStack(alignment: stacks ? .leading : .trailing, spacing: 4) {
                 Text("\(SessionHistoryFormat.compactTonnage(tonnage)) \(unit.rawValue.uppercased())")
                     .font(BRUFont.displayMedium)
                     .monospacedDigit()
@@ -89,6 +98,7 @@ public struct SessionHistoryRow: View {
             }
         }
         .fixedSize(horizontal: false, vertical: true)
+        .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
         .contentShape(Rectangle())
@@ -96,6 +106,17 @@ public struct SessionHistoryRow: View {
         .accessibilityLabel(accessibilityText)
         .accessibilityHint("Opens the workout summary")
     }
+
+    /// The date, workout and total side by side, or stacked at
+    /// accessibility sizes, where the 64pt date column broke the weekday,
+    /// "WED" as "WE" over "D".
+    private var partsLayout: AnyLayout {
+        stacks
+            ? AnyLayout(VStackLayout(alignment: .leading, spacing: 8))
+            : AnyLayout(HStackLayout(alignment: .center, spacing: 12))
+    }
+
+    private var stacks: Bool { dynamicTypeSize.isAccessibilitySize }
 
     // MARK: - Derived values
 
@@ -132,7 +153,7 @@ public struct SessionHistoryRow: View {
 
     /// "21 SETS · 52M", "1 SET · 1H 05M".
     private var setDurationLabel: String {
-        let sets = workingSetCount == 1 ? "1 SET" : "\(workingSetCount) SETS"
+        let sets = BRUCountLabel.text(workingSetCount, "SET")
         guard let minutes = durationMinutes else { return sets }
         let duration = minutes >= 60
             ? "\(minutes / 60)H \(String(format: "%02d", minutes % 60))M"
@@ -144,7 +165,7 @@ public struct SessionHistoryRow: View {
         var parts = [
             session.displayName,
             session.startedAt.formatted(.dateTime.weekday(.wide).month(.wide).day()),
-            workingSetCount == 1 ? "1 set" : "\(workingSetCount) sets",
+            BRUCountLabel.text(workingSetCount, "set"),
         ]
         if let minutes = durationMinutes {
             parts.append(minutes == 1 ? "1 minute" : "\(minutes) minutes")

@@ -278,7 +278,7 @@ public actor ExerciseLibraryImporter {
             // MARK: 5. Stamp the version stamp
             UserDefaults.standard.set(bundled, forKey: Self.seedVersionKey)
             let elapsed = Date().timeIntervalSince(start)
-            Self.log.info("Seed complete in \(elapsed, format: .fixed(precision: 3))s — \(dtos.count) exercises, \(musclesBySlug.count) muscles")
+            Self.log.info("Seed complete in \(elapsed, format: .fixed(precision: 3))s — \(BRUCountLabel.text(dtos.count, "exercise"), privacy: .public), \(musclesBySlug.count) muscles")
         } catch {
             // Mid-import failure (e.g. disk full mid-batch). Roll back
             // unsaved inserts so the context state matches disk before

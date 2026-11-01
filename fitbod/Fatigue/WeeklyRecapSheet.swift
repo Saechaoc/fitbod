@@ -105,6 +105,7 @@ public struct WeeklyRecapSheet: View {
 
     @Environment(\.modelContext) private var ctx
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @Query private var settingsList: [UserSettings]
     @Query private var allMuscles: [MuscleGroup]
     @Query private var allTargets: [MuscleVolumeTarget]
@@ -140,10 +141,13 @@ public struct WeeklyRecapSheet: View {
 
     public var body: some View {
         VStack(spacing: 0) {
+            // Non-breaking spaces keep the title on one line: the header
+            // fits a title with no breaking space to its third of the row,
+            // where "Week 44 · recap" wrapped before its dot on the small
+            // phone.
             BRUHeaderBar(
-                left: HeaderAction("‹") { dismiss() },
-                center: "Week \(isoWeekNumber) · recap",
-                right: nil
+                center: "Week\u{00A0}\(isoWeekNumber)\u{00A0}·\u{00A0}recap",
+                right: HeaderAction("Done") { dismiss() }
             )
             ScrollView {
                 LazyVStack(alignment: .leading, spacing: 0) {
@@ -178,20 +182,32 @@ public struct WeeklyRecapSheet: View {
                 .foregroundStyle(Color.bruPaper)
                 .lineSpacing(-4)
                 .fixedSize(horizontal: false, vertical: true)
+                .accessibilityIdentifier("recap.headline")
 
-            HStack(spacing: 6) {
+            chipLayout {
                 // A signal fill, as on every PR chip, so the label reads on it.
                 BRUChip(prChipLabel, color: .bruSignal, fill: true, textCase: nil)
-                BRUChip("\(sessionsLogged) / \(sessionsTarget) sessions",
+                    .accessibilityIdentifier("recap.prs")
+                BRUChip(Self.sessionsChipLabel(sessions: sessionsLogged, target: sessionsTarget),
                         color: .bruPaper, fill: false, textCase: nil)
+                    .accessibilityIdentifier("recap.sessions")
                 BRUChip("\(tonnageFormatted) \(unitLabel)",
                         color: .bruPaper, fill: false, textCase: nil)
+                    .accessibilityIdentifier("recap.tonnage")
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.horizontal, 16)
         .padding(.vertical, 20)
         .background(Color.bruInk)
+    }
+
+    /// The cover's chips in a row, or stacked at accessibility sizes, where
+    /// a row of three on the small phone broke "session" inside the word.
+    private var chipLayout: AnyLayout {
+        dynamicTypeSize.isAccessibilitySize
+            ? AnyLayout(VStackLayout(alignment: .leading, spacing: 6))
+            : AnyLayout(HStackLayout(spacing: 6))
     }
 
     // MARK: - Cover computed properties
@@ -207,12 +223,7 @@ public struct WeeklyRecapSheet: View {
     }
 
     private var coverHeadline: String {
-        let count = sessionsLogged
-        let prs = weeklyPRs.count
-        if prs >= 3 || count >= sessionsTarget { return "A strong\nweek." }
-        if count >= max(sessionsTarget - 1, 2)  { return "Solid\nweek." }
-        if count < 2                             { return "Light\nweek." }
-        return "New week\nahead."
+        Self.coverHeadline(sessions: sessionsLogged, target: sessionsTarget, prs: weeklyPRs.count)
     }
 
     private var prChipLabel: String {
@@ -231,10 +242,52 @@ public struct WeeklyRecapSheet: View {
 
     private var sessionsLogged: Int { lastWeekSessionsCount() }
 
-    private var sessionsTarget: Int {
-        // Derive from last week's unique session count capped to common targets.
-        // If no target is stored, show the actual count as "target" (N/N).
-        sessionsLogged
+    private var sessionsTarget: Int? { Self.sessionsTarget(weekStart: weekStart, in: ctx) }
+
+    // MARK: - Cover rules
+
+    /// The sessions last week's plan called for: the days of the week
+    /// before `weekStart` that a block running that day trains on under
+    /// fixed weekly scheduling. A block runs from its start until it ends,
+    /// so one that starts or ends during the week plans only its own days,
+    /// and a day two blocks share counts once. Rotation plans no weekdays,
+    /// so a week without a block, on rotation alone, or with no planned
+    /// day has no target.
+    @MainActor
+    static func sessionsTarget(weekStart: Date, in context: ModelContext, calendar: Calendar = .current) -> Int? {
+        let fixedWeekly = ((try? context.fetch(FetchDescriptor<Block>())) ?? []).filter {
+            $0.schedulingMode == .fixedWeekly && ($0.isActive || $0.endDate != nil)
+        }
+        let plannedDays = (1...7).compactMap { calendar.date(byAdding: .day, value: -$0, to: weekStart) }
+            .filter { day in
+                guard let nextDay = calendar.date(byAdding: .day, value: 1, to: day) else { return false }
+                let weekday = calendar.component(.weekday, from: day)
+                return fixedWeekly.contains { block in
+                    block.startDate < nextDay
+                        && (block.endDate.map { $0 > day } ?? true)
+                        && block.trainingDays.contains(weekday)
+                }
+            }
+        return plannedDays.isEmpty ? nil : plannedDays.count
+    }
+
+    /// The sessions chip: "N / M sessions" against a target, or
+    /// "N sessions" with none.
+    static func sessionsChipLabel(sessions: Int, target: Int?) -> String {
+        guard let target else { return BRUCountLabel.text(sessions, "session") }
+        return "\(sessions) / \(BRUCountLabel.text(target, "session"))"
+    }
+
+    /// The cover's headline. Against a target it weighs the sessions with
+    /// it; with none it never claims a target was met, and follows the
+    /// sessions and PRs alone.
+    static func coverHeadline(sessions: Int, target: Int?, prs: Int) -> String {
+        if prs >= 3 { return "A strong\nweek." }
+        guard let target else { return sessions < 2 ? "Light\nweek." : "Solid\nweek." }
+        if sessions >= target             { return "A strong\nweek." }
+        if sessions >= max(target - 1, 2) { return "Solid\nweek." }
+        if sessions < 2                   { return "Light\nweek." }
+        return "New week\nahead."
     }
 
     // MARK: - 2×2 Metric grid
@@ -468,7 +521,7 @@ public struct WeeklyRecapSheet: View {
                             .font(BRUFont.bodyEmphasis)
                             .foregroundStyle(Color.bruInk)
                         Spacer()
-                        Text("below MEV — \(row.totalSets) / \(row.mev) sets")
+                        Text("below MEV — \(row.totalSets) / \(BRUCountLabel.text(row.mev, "set"))")
                             .font(BRUFont.labelMicro)
                             .tracking(1.0)
                             .foregroundStyle(Color.bruMuted)

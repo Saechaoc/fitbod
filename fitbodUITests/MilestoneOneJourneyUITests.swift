@@ -109,7 +109,7 @@ final class MilestoneOneJourneyUITests: XCTestCase {
         reveal(reorderSecond)
         reorderSecond.tap()
         tap("Move up")
-        XCTAssertTrue(app.staticTexts.matching(NSPredicate(format:
+        XCTAssertTrue(app.buttons.matching(NSPredicate(format:
             "identifier == %@ AND label BEGINSWITH %@",
             "routine.exercise.name.1", "Incline Dumbbell Press"
         )).firstMatch.waitForExistence(timeout: 5))
@@ -119,7 +119,7 @@ final class MilestoneOneJourneyUITests: XCTestCase {
         reveal(reorderFirst)
         reorderFirst.tap()
         tap("Move down")
-        XCTAssertTrue(app.staticTexts.matching(NSPredicate(format:
+        XCTAssertTrue(app.buttons.matching(NSPredicate(format:
             "identifier == %@ AND label == %@",
             "routine.exercise.name.1", exerciseName
         )).firstMatch.waitForExistence(timeout: 5))
@@ -129,7 +129,7 @@ final class MilestoneOneJourneyUITests: XCTestCase {
         XCTAssertTrue(session.waitForExistence(timeout: 15))
         session.tap()
         tap("Edit")
-        let editableName = app.staticTexts.matching(NSPredicate(format: "label == %@", exerciseName))
+        let editableName = app.buttons.matching(NSPredicate(format: "label == %@", exerciseName))
             .allElementsBoundByIndex.first(where: { $0.isHittable })
         XCTAssertNotNil(editableName)
         editableName?.tap()
@@ -157,8 +157,11 @@ final class MilestoneOneJourneyUITests: XCTestCase {
         let rowY = app.buttons["set.complete.1.S3"].frame.midY / app.frame.height
         app.coordinate(withNormalizedOffset: CGVector(dx: 0.95, dy: rowY))
             .press(forDuration: 0.1, thenDragTo: app.coordinate(withNormalizedOffset: CGVector(dx: 0.05, dy: rowY)))
-        if added.exists { tap("Delete") }
-        XCTAssertFalse(added.exists)
+        // A full swipe deletes the set and leaves no Delete button, but its
+        // row takes a moment to animate away; a shorter swipe leaves Delete.
+        let swipedAway = added.waitForNonExistence(timeout: 2)
+        if !swipedAway { tap("Delete") }
+        XCTAssertTrue(swipedAway || added.waitForNonExistence(timeout: 5), "The swiped set must be deleted")
         let weight = app.textFields.matching(NSPredicate(format: "identifier BEGINSWITH %@", "set.weight.1.S1")).firstMatch
         let weightInput = weight.exists ? weight : app.textFields["—"].firstMatch
         reveal(weightInput)
@@ -294,6 +297,117 @@ final class MilestoneOneJourneyUITests: XCTestCase {
         attach("layout-completed-summary")
     }
 
+    /// Focus moving from one field straight to another keeps the keyboard
+    /// up, so the tab bar and the rest dock, which leave as a field begins
+    /// editing, stay away in between (T101). Exercise detail's two fields
+    /// sit on Library's stack above its tab bar; the logger's reps fields
+    /// sit above the rest dock.
+    @MainActor // XCUIApplication and XCUIElement are main-actor types.
+    func testFocusMovingStraightBetweenFieldsKeepsTabBarAndRestDockAway() throws {
+        app = UITestNavigation.launch(UITestNavigation.seededWorkout)
+        UITestNavigation.selectTab("Library", in: app)
+        let search = app.textFields["library.search.browser"]
+        XCTAssertTrue(search.exists || search.waitForExistence(timeout: 10))
+        enter("Barbell Bench Press", into: search)
+        search.typeText("\n")
+        let bench = app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH %@", "Barbell Bench Press - Medium Grip"))
+            .firstMatch
+        XCTAssertTrue(bench.waitForExistence(timeout: 10))
+        bench.tap()
+        let libraryTab = UITestNavigation.tab("Library", in: app)
+        let increment = app.textFields.matching(NSPredicate(format: "label ==[c] %@", "Smallest Increment")).firstMatch
+        let barWeight = app.textFields.matching(NSPredicate(format: "label ==[c] %@", "Bar Weight Override")).firstMatch
+        XCTAssertTrue(increment.waitForExistence(timeout: 10), "Exercise detail must offer its increment field")
+        reveal(barWeight)
+        XCTAssertTrue(libraryTab.exists, "Exercise detail shows the tab bar while no field is edited")
+
+        barWeight.tap()
+        XCTAssertTrue(libraryTab.waitForNonExistence(timeout: 5), "The tab bar must leave while a field is edited")
+        let keyboard = app.keyboards.firstMatch
+        XCTAssertTrue(keyboard.exists || keyboard.waitForExistence(timeout: 5))
+        XCTAssertTrue(increment.isHittable, "The field above must show above the keyboard")
+        increment.tap()
+        expectStaysAway(libraryTab, "Focus moving straight to the next field must not bring the tab bar back")
+        XCTAssertEqual(increment.value(forKey: "hasKeyboardFocus") as? Bool, true, "The next field must take the focus")
+        attach("focus-moved-tab-bar-away")
+        tap("Back")
+        XCTAssertTrue(libraryTab.waitForExistence(timeout: 10), "The tab bar comes back once the keyboard leaves")
+
+        UITestNavigation.selectTab("Today", in: app)
+        let resume = app.buttons["resumeSlab.resume"]
+        XCTAssertTrue(resume.exists || resume.waitForExistence(timeout: 10))
+        reveal(resume)
+        resume.tap()
+        // A tap on an empty set's cell ends the rest, and one on a done
+        // set's does not, so both sets' reps go in before either is done,
+        // and the focus then moves between the two done sets.
+        for set in ["S1", "S2"] {
+            let reps = app.textFields["set.reps.1.\(set)"]
+            XCTAssertTrue(reps.exists || reps.waitForExistence(timeout: 15))
+            enter("8", into: reps)
+        }
+        let keyboardDone = app.toolbars.buttons["DONE"].firstMatch
+        if keyboardDone.exists { keyboardDone.tap() }
+        for set in ["S1", "S2"] {
+            let complete = app.buttons["set.complete.1.\(set)"]
+            reveal(complete)
+            complete.tap()
+        }
+        let dock = app.descendants(matching: .any).matching(identifier: "rest.status").firstMatch
+        XCTAssertTrue(dock.waitForExistence(timeout: 10), "Completing a set must show the rest dock")
+
+        let first = app.textFields["set.reps.1.S1"]
+        reveal(first)
+        first.tap()
+        XCTAssertTrue(dock.waitForNonExistence(timeout: 5), "The rest dock must leave while a field is edited")
+        let second = app.textFields["set.reps.1.S2"]
+        reveal(second)
+        second.tap()
+        expectStaysAway(dock, "Focus moving straight to the next set must not bring the rest dock back")
+        XCTAssertEqual(second.value(forKey: "hasKeyboardFocus") as? Bool, true, "The next set's reps must take the focus")
+        attach("focus-moved-rest-dock-away")
+        app.toolbars.buttons["DONE"].firstMatch.tap()
+        XCTAssertTrue(dock.waitForExistence(timeout: 10), "The rest dock comes back once the keyboard leaves")
+    }
+
+    /// A sheet over a field being edited hides the keyboard but not the
+    /// editing, so the tab bar stays away under it. However the custom
+    /// exercise sheet closes over Library's focused search, by Cancel, a
+    /// swipe down or Save, a keyboard or the tab bar is back on screen, never
+    /// neither (T101).
+    @MainActor // XCUIApplication and XCUIElement are main-actor types.
+    func testClosingTheCustomExerciseSheetOverAFocusedSearchBringsBackAKeyboardOrTheTabBar() throws {
+        app = UITestNavigation.launch(UITestNavigation.freshStore)
+        UITestNavigation.selectTab("Library", in: app)
+        let search = app.textFields["library.search.browser"]
+        XCTAssertTrue(search.exists || search.waitForExistence(timeout: 10))
+        search.tap()
+        search.typeText("Zercher Probe")
+        let name = app.textFields["customExercise.name"]
+        let libraryTab = UITestNavigation.tab("Library", in: app)
+        // Save comes last: once the exercise exists, the search has a match
+        // and offers no Create Custom Exercise.
+        for close in ["Cancel", "a swipe down", "Save"] {
+            UITestNavigation.hittable(app.buttons, "Create Custom Exercise", exactLabel: true).tap()
+            XCTAssertTrue(name.waitForExistence(timeout: 5), "Create Custom Exercise must open the sheet")
+            if close == "a swipe down" {
+                UITestNavigation.swipeSheetDown(in: app)
+            } else {
+                if close == "Save" {
+                    UITestNavigation.hittable(app.buttons, "Add Primary Muscle", exactLabel: true).tap()
+                    let chest = app.buttons["musclePicker.chest"]
+                    XCTAssertTrue(chest.waitForExistence(timeout: 10))
+                    chest.tap()
+                }
+                UITestNavigation.hittable(app.buttons, close, exactLabel: true).tap()
+            }
+            XCTAssertTrue(name.waitForNonExistence(timeout: 5), "\(close) must close the sheet")
+            let keyboard = app.keyboards.firstMatch
+            XCTAssertTrue(eitherAppears(keyboard, libraryTab), "After \(close), a keyboard or the tab bar must be on screen")
+            XCTContext.runActivity(named: "After \(close): keyboard \(keyboard.exists), tab bar \(libraryTab.exists)") { _ in }
+        }
+    }
+
     @MainActor
     private func field(_ name: String) -> XCUIElement {
         let query = NSPredicate(format: "label ==[c] %@ OR placeholderValue ==[c] %@", name, name)
@@ -408,6 +522,31 @@ final class MilestoneOneJourneyUITests: XCTestCase {
             XCTAssertEqual(Double(numericValue), Double(text), "Weight entry must keep the entered load")
         } else {
             XCTAssertEqual(actual, text, "Typing must not add a prefix or suffix")
+        }
+    }
+
+    /// True once `first` or `second` exists, checked every 100 ms for up to
+    /// five seconds, the ceiling; false if neither shows by then.
+    @MainActor // XCUIElement is a main-actor type.
+    private func eitherAppears(_ first: XCUIElement, _ second: XCUIElement) -> Bool {
+        let deadline = Date.now.addingTimeInterval(5)
+        repeat {
+            if first.exists || second.exists { return true }
+            // Polls the condition above in 100 ms steps; XCTWaiter takes no
+            // "either" predicate over two queries.
+            Thread.sleep(forTimeInterval: 0.1)
+        } while Date.now < deadline
+        return false
+    }
+
+    /// Fails if `element` shows at any of eight checks over about a second
+    /// after a step. Staying away is the claim, so there is no condition to
+    /// wait on: the 100 ms pause only spaces the checks.
+    @MainActor // XCUIElement is a main-actor type.
+    private func expectStaysAway(_ element: XCUIElement, _ message: String, file: StaticString = #filePath, line: UInt = #line) {
+        for _ in 0..<8 {
+            XCTAssertFalse(element.exists, message, file: file, line: line)
+            Thread.sleep(forTimeInterval: 0.1)
         }
     }
 

@@ -47,6 +47,9 @@ system; add a component only when multiple real screens need it.
   Decide whether to label that total “muscle sets” or show physical set count.
 - **History range:** “Per week” is observed frequency, not adherence against a
   training schedule. Real adherence needs a defined denominator.
+- **Per-set targets:** giving one set its own reps and RPE needs target fields
+  on logged sets, which is a schema change past SchemaV7. Stored per-set
+  overrides are kept, but nothing applies them yet.
 
 ## Release checks and remaining surfaces
 
@@ -86,3 +89,6 @@ system; add a component only when multiple real screens need it.
   the sheet.
 - The weekly recap's ALL RECAPS, because it did nothing: no screen lists past
   recaps. START W{N} ▸ now fills the recap's footer.
+- The session editor's Per-set overrides, with its count, rows and + ADD
+  OVERRIDE, because the logger never applied them: every working set is
+  logged at the exercise's own prescription. Stored overrides are kept.

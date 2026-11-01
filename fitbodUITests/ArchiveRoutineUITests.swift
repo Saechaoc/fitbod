@@ -138,7 +138,9 @@ final class ArchiveRoutineUITests: XCTestCase {
         UITestNavigation.assertTapTarget(entry)
         UITestNavigation.saveScreenshot("T20", "archived-entry")
         entry.tap()
-        XCTAssertTrue(app.staticTexts.labeled("Archived routines").waitForExistence(timeout: 10),
+        // At default text the title's words are joined by a no-break space (T38).
+        XCTAssertTrue(app.staticTexts.matching(NSPredicate(format: "label MATCHES[c] %@", "Archived.routines"))
+                        .firstMatch.waitForExistence(timeout: 10),
                       "The entry must open ARCHIVED ROUTINES")
         let restore = UITestNavigation.hittable(app.buttons, "Restore \(name)", exactLabel: true)
         UITestNavigation.assertTapTarget(restore)

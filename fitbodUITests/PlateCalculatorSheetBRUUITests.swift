@@ -341,8 +341,14 @@ final class PlateCalculatorSheetBRUUITests: XCTestCase {
                 if index == 3 {
                     UITestNavigation.saveScreenshot("T19", "calculator-chips", textSize: textSize)
                 }
-                if let tall = UITestNavigation.heightProblem(value, atMost: target.frame.height * 1.5 + 6) {
-                    problems.append(tall + ", more than one line")
+                // The chip's frame is its 44pt tap band (T107), so the chip
+                // drawn inside it is measured.
+                if let drawn = drawnHeight(of: value) {
+                    if drawn > target.frame.height * 1.5 + 6 {
+                        problems.append("\(value) is drawn \(drawn)pt tall, more than one line")
+                    }
+                } else {
+                    problems.append("\(value) shows no drawn chip")
                 }
                 problems += try UITestNavigation.numberProblems(in: value)
             case .numbers:
@@ -395,5 +401,27 @@ final class PlateCalculatorSheetBRUUITests: XCTestCase {
         let start = app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0)).withOffset(CGVector(dx: 0, dy: y))
         start.press(forDuration: 0.05, thenDragTo: start.withOffset(CGVector(dx: 0, dy: distance)),
                     withVelocity: .slow, thenHoldForDuration: 0.3)
+    }
+
+    /// The height of the chip drawn in `chip`'s tap band: its 1.5pt ink
+    /// outline's top to its bottom, down a column inside its 6pt left
+    /// padding, clear of its text. Nil when no outline shows there.
+    @MainActor
+    private func drawnHeight(of chip: XCUIElement) -> CGFloat? {
+        let screenshot = XCUIScreen.main.screenshot()
+        let scale = screenshot.image.scale
+        let frame = chip.frame
+        guard let column = UITestNavigation.pixels(
+            in: CGRect(x: frame.minX + 3, y: frame.minY, width: 1 / scale, height: frame.height), of: screenshot
+        ) else { return nil }
+        let width = Int(column.frame.width)
+        let ink = UITestNavigation.RGB(hex: 0x0A0A0A)
+        let rows = (0..<Int(column.frame.height)).filter { row in
+            let i = row * width * 4
+            let color = UITestNavigation.RGB(red: Int(column.bytes[i]), green: Int(column.bytes[i + 1]), blue: Int(column.bytes[i + 2]))
+            return color.distance(to: ink) <= 60
+        }
+        guard let first = rows.first, let last = rows.last else { return nil }
+        return CGFloat(last - first + 1) / scale
     }
 }
