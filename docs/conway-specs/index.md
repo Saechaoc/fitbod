@@ -42,7 +42,6 @@ Every Phase 2 ticket is done and archived.
 | Ticket | Title |
 |---|---|
 | [T106](tickets/T106-sideways-drag-does-not-open-rows.md) | A sideways drag on a row does not open it |
-| [T108](tickets/T108-block-overview-and-routine-at-ax3.md) | The block overview and the routine screen read cleanly at AX3 |
 | [T109](tickets/T109-muscle-screen-steppers-order-tests.md) | The muscle screen uses BRU steppers, keeps a stable order and is always tested |
 | [T111](tickets/T111-session-editor-rows-announced-removable.md) | Session editor rows are announced, removable and easy to hit |
 | [T113](tickets/T113-block-review-pr-marks.md) | The block review's PR marks agree, and its stats read cheaply and whole |
@@ -58,6 +57,7 @@ Every Phase 2 ticket is done and archived.
 | [T128](tickets/T128-reseed-keeps-lifter-data.md) | Re-seeding the exercise library keeps the lifter's exercises, history and targets |
 | [T129](tickets/T129-progress-chart-names-every-line.md) | The progress chart names every line it draws, and labels its first and last dates |
 | [T130](tickets/T130-new-block-keeps-its-draft.md) | New Block keeps the lifter's draft when the screen behind it redraws |
+| [T132](tickets/T132-planned-hero-and-session-summary-at-ax3.md) | The planned block hero and session summaries keep their parts whole at AX3 |
 
 ### Phase 4: test health
 

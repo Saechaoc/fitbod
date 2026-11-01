@@ -23,7 +23,7 @@ Record these when you set up the run, as [dispatch.md](dispatch.md) says.
 | Lane | Small phone | Large phone | DerivedData folder | Live ticket |
 |---|---|---|---|---|
 | gate | "sw6 iPhone 17e" `FF89B400-1160-4818-8436-314B014D2614` | "sw6 iPhone 17 Pro Max" `69E32D56-148D-40A7-9D1B-543F6878B1D1` | `fitbod-conway-gate` |  |
-| L1 | "sw6-L1 iPhone 17e" `D0B5079C-B4ED-463B-AE2C-01D0FF469435` | "sw6-L1 iPhone 17 Pro Max" `A74927B1-3476-4659-9AAD-E6CABA6A9902` | `fitbod-conway-L1` | T108 |
+| L1 | "sw6-L1 iPhone 17e" `D0B5079C-B4ED-463B-AE2C-01D0FF469435` | "sw6-L1 iPhone 17 Pro Max" `A74927B1-3476-4659-9AAD-E6CABA6A9902` | `fitbod-conway-L1` | T111 |
 | L2 | "sw6-L2 iPhone 17e" `5615455C-A8B6-4129-9E3B-53A7F161D758` | "sw6-L2 iPhone 17 Pro Max" `D305B715-794C-4BEB-B49E-89368B415E7E` | `fitbod-conway-L2` | T109 |
 | L3 | "sw6-L3 iPhone 17e" `C4F388E4-0731-49C1-9AEB-30FF32EBE64E` | "sw6-L3 iPhone 17 Pro Max" `1505840C-CEEF-428C-B65D-C0B988A88465` | `fitbod-conway-L3` | T106 |
 
@@ -129,6 +129,9 @@ The DerivedData folders live in `~/Library/Developer/Xcode/DerivedData/`.
 - 2026-11-01 03:39 T109 dispatched on L2 (task_c75e2020be15, ctx_0072f7c768f1) with T109 item 6 in its brief; sent it the F296 launch-crash heads-up, as every worker launched before T128 merges gets.
 - 2026-11-01 03:59 T109 question msg_b6fee190e95c: A. CONTRIBUTING EXERCISES stays ranked by weighted sets; only exact weighted-set ties sort by exercise name, then a final id tiebreak, so the order is total and stable (fixes F210's swap). 3.0 stays above 2.5 though both read '3 sets'. Recorded in tradeoffs.md 'Contributing exercises order'.
 - 2026-11-01 03:59 Correction sent to T109: my reply said the Library sorts with localizedStandardCompare; it sorts by canonicalName in its query. Pointed it at MusclePickerSheet.swift:60 and DeloadAdvisor.swift:268, which use localizedStandardCompare for names.
+- 2026-11-01 04:03 T108 question msg_3cf96d356c40: c. Leave conway-t108 on 3b5d3ae (tested e3b6de0); main moved only by docs (a051765), and the coordinator's merge rebases and builds, as for T35. Report done with the tested hashes.
+- 2026-11-01 04:05 T109 question msg_9696e273efad (seed flag in DemoWorkoutSeed.swift vs logging sets in the UI test for the near tie): neither. Per guide 2.1 the order is pure logic: make the comparator an internal static function in PerMuscleDetailView.swift (owned) and test the exact tie and the near tie (3.0 above 2.5, the 2.5 row's name sorting first) in a new fitbodTests/ContributingExercisesOrderTests.swift, granted and held for T109; the UI repro keeps the ticket's exact-tie check on the demo seed. No seed change, no grant for DemoWorkoutSeed.swift.
+- 2026-11-01 04:10 T108 accepted and merged at e859eaa (rebased onto a051765, build ok; d8ab8ca, e859eaa), pushed. Review: AnyLayout stacks the active hero's W1 / 5, VOL HOLD and INT 100% at accessibility sizes, dots dropped there; the routine screen's live-edit banner moves into the scroll after the sessions at accessibility sizes (tradeoffs call); '+ ATTACH ROUTINE\u{00A0}▸'; StripeAndBleed AX3 banner test scrolls the banner into view (grant); screens viewed (routine AX3, hero AX3); default text pixel-identical per notes. Findings F306 to F309: F306, F307, F308 -> new Phase 3 T132; F309 -> T123 item 6. T111 dispatched on L1 (task_5822969c2fc1, ctx_a30e9bb3febc) with the F296 heads-up. Next new ticket id: T133.
 
 ## Ledger
 
@@ -267,10 +270,10 @@ Keep the accepted full-tour evidence, including implementation retries, and prio
 | T105 | 2 | done | L3 | `conway-t105` | `task_72bb33464f77` | `ctx_e21c70755acb` | `3027134`, `e574950` | Q msg_435103b21bb9 item 8: yes, 1:1 drag tracking + measured-height slots (run note 15:35) / T105: original, lane L3, base `2443fb3`, worktree `/Users/csaechao4/orca/workspaces/fitbod/conway-t105`; task `task_72bb33464f77` dispatch `ctx_e21c70755acb`; reported succeeded; settlement settled; stop proof: accepted worker_done + worker-release released (processAction closed_agent_terminal) 2026-10-31 17:22; brief archived at `docs/conway-specs/evidence/T105/attempt-brief.md` |
 | T106 | 3 | dispatched | L3 | `conway-t106` | `task_820b7435da6d` | `ctx_1ae3773228e7` |  | T106: original, lane L3, base `f81c0a8`, worktree `/Users/csaechao4/orca/workspaces/fitbod/conway-t106`; task `task_820b7435da6d` dispatch `ctx_1ae3773228e7`; reported -; settlement pending |
 | T107 | 3 | done | L3 | `conway-t107` | `task_90d6304f3b4f` | `ctx_f7fab998eb05` | `94d972f` | T107: original, lane L3, base `9b942de`, worktree `/Users/csaechao4/orca/workspaces/fitbod/conway-t107`; task `task_90d6304f3b4f` dispatch `ctx_f7fab998eb05`; reported succeeded; settlement settled; stop proof: accepted worker_done + worker-release released (processAction closed_agent_terminal) 2026-11-01 01:02; brief archived at `docs/conway-specs/evidence/T107/attempt-brief.md`; coordinator rebased onto da1143d and built (2026-11-01 01:02) |
-| T108 | 3 | dispatched | L1 | `conway-t108` | `task_019fab2f1be6` | `ctx_d2e75eaac555` |  | T108: original, lane L1, base `f27a159`, worktree `/Users/csaechao4/orca/workspaces/fitbod/conway-t108`; task `task_019fab2f1be6` dispatch `ctx_d2e75eaac555`; reported -; settlement pending |
+| T108 | 3 | done | L1 | `conway-t108` | `task_019fab2f1be6` | `ctx_d2e75eaac555` | `e859eaa`, `d8ab8ca` | T108: original, lane L1, base `f27a159`, worktree `/Users/csaechao4/orca/workspaces/fitbod/conway-t108`; task `task_019fab2f1be6` dispatch `ctx_d2e75eaac555`; reported succeeded; settlement settled; stop proof: accepted worker_done + worker-release released (processAction closed_agent_terminal) 2026-11-01 04:07; brief archived at `docs/conway-specs/evidence/T108/attempt-brief.md`; coordinator rebased onto a051765 and built (2026-11-01 04:07) |
 | T109 | 3 | dispatched | L2 | `conway-t109` | `task_c75e2020be15` | `ctx_0072f7c768f1` |  | T109: original, lane L2, base `3b5d3ae`, worktree `/Users/csaechao4/orca/workspaces/fitbod/conway-t109`; task `task_c75e2020be15` dispatch `ctx_0072f7c768f1`; reported -; settlement pending |
 | T110 | 2 | done |  |  |  |  | `38d6a5d` | Built outside the run per the user (2026-10-31 15:06): branch conway-t110 will be pushed; the coordinator rebases it onto main, reruns the ticket's required runs on a free lane and merges it ff-only. \| external run 496906a; retest 1 at 1540806 15/16 (F144 timeout), retest 2 at bc66f87 on T101 PASSED; merged 38d6a5d |
-| T111 | 3 | todo |  |  |  |  |  |  |
+| T111 | 3 | dispatched | L1 | `conway-t111` | `task_5822969c2fc1` | `ctx_a30e9bb3febc` |  | T111: original, lane L1, base `e859eaa`, worktree `/Users/csaechao4/orca/workspaces/fitbod/conway-t111`; task `task_5822969c2fc1` dispatch `ctx_a30e9bb3febc`; reported -; settlement pending |
 | T112 | 2 | done |  |  |  |  | `24b9594` | Built outside the run per the user (2026-10-31 15:06): branch conway-t112 will be pushed; the coordinator rebases it onto main, reruns the ticket's required runs on a free lane and merges it ff-only. \| external run 84fc149, coordinator retest PASSED at b0d40a2 (unit, UI 39/39 both phones, widget), rebased to 24b9594, built, merged |
 | T113 | 3 | todo |  |  |  |  |  |  |
 | T114 | 3 | todo |  |  |  |  |  |  |
@@ -291,6 +294,7 @@ Keep the accepted full-tour evidence, including implementation retries, and prio
 | T129 | 3 | todo |  |  |  |  |  |  |
 | T130 | 3 | todo |  |  |  |  |  |  |
 | T131 | 4 | todo |  |  |  |  |  |  |
+| T132 | 3 | todo |  |  |  |  |  |  |
 
 ## Phase gates
 
@@ -414,8 +418,9 @@ Later eligible asks keep waiting, and no path is handed off while any live attem
 - grant `fitbod/Sessions/SessionHistoryView.swift`: ticket T106, attempt T106, dispatch `ctx_1ae3773228e7`, message `msg_96c5f0d56e4c`, order 83, 2026-11-01 02:15
 - grant `fitbod/ExerciseLibrary/ExerciseLibraryView.swift`: ticket T106, attempt T106, dispatch `ctx_1ae3773228e7`, message `msg_96c5f0d56e4c`, order 84, 2026-11-01 02:15
 - grant `fitbodTests/BRURowButtonStyleTests.swift`: ticket T106, attempt T106, dispatch `ctx_1ae3773228e7`, message `msg_96c5f0d56e4c`, order 85, 2026-11-01 02:15
-- grant `fitbodTests/BlockOverviewScreenCopyTests.swift`: ticket T108, attempt T108, dispatch `ctx_d2e75eaac555`, message `msg_1b686008950f`, order 86, 2026-11-01 02:43
-- grant `fitbodUITests/StripeAndBleedUITests.swift`: ticket T108, attempt T108, dispatch `ctx_d2e75eaac555`, message `msg_0b3965eb83cb`, order 87, 2026-11-01 03:23
+- ~~grant `fitbodTests/BlockOverviewScreenCopyTests.swift`: ticket T108, attempt T108, dispatch `ctx_d2e75eaac555`, message `msg_1b686008950f`, order 86, 2026-11-01 02:43~~ (settled T108 2026-11-01 04:07)
+- ~~grant `fitbodUITests/StripeAndBleedUITests.swift`: ticket T108, attempt T108, dispatch `ctx_d2e75eaac555`, message `msg_0b3965eb83cb`, order 87, 2026-11-01 03:23~~ (settled T108 2026-11-01 04:07)
+- grant `fitbodTests/ContributingExercisesOrderTests.swift`: ticket T109, attempt T109, dispatch `ctx_0072f7c768f1`, message `msg_9696e273efad`, order 88, 2026-11-01 04:05
 
 ## HIGH and CRITICAL impact ratings
 
@@ -744,3 +749,7 @@ Each one becomes a ticket from T49 on.
 - F303 (T38 own review): the WCAG TextContrast helper now has a third copy in SmallFixesUITests (with ProgramDarkModeUITests and LibraryPolishUITests) -> T123 item 6.
 - F304 (T38 out-of-scope): MuscleVolumeTargetEditorUITests launches with a bare XCUIApplication(), no reset or launch helper (guide 2.7) -> T109 item 6.
 - F305 (T38 recorded): F182 did not reproduce (change 7; the lingering Chest matches are Today's elements under Settings, see F301); New Block's CANCEL text already read 5.55:1, only its hairline outline (1.47:1) failed and now uses muted; the undo toast's full-height divider is T120's -> no new routing.
+- F306 (T108 out-of-scope): at AX3 on the small phone a draft or ready block's hero wraps its plan line '5 WEEKS · ACCUM 3 · INTNS 1 · DELOAD 1', line 2 starting with '·' and '1' alone under DELOAD (plannedHeroBand phasePlan, BlockOverviewScreen.swift:689) -> new Phase 3 T132 change 1.
+- F307 (T108 out-of-scope, low): at AX3 on the small phone a session row's summary splits '~11' from 'MIN' (SessionTemplateSummary.line, shown on the routine screen, session detail and Today's session picker) -> T132 change 2.
+- F308 (T108 own review, should fix): comments at BlockOverviewAndRoutineAX3UITests.swift:267 and StripeAndBleedUITests.swift:63 say the trailing-margin drags avoid the session rows' reorder press; they work only because their 0.05 s press is shorter than the reorder's 0.25 s -> T132 change 3.
+- F309 (T108 own review, nice to have): openRoutine, openBlock, routinePageTop, blockPageTop and dragPage are copied in BlockOverviewAndRoutineAX3UITests, BlockAndRoutineTextFitUITests and BlockOverviewStatesUITests -> T123 item 6.
