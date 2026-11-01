@@ -170,6 +170,9 @@ The DerivedData folders live in `~/Library/Developer/Xcode/DerivedData/`.
 - 2026-11-01 07:48 T128 question msg_41d3c8ac6b5c: yes. New fitbodUITests/ReseedRelaunchUITests.swift granted and held for T128: one relaunch journey (seeded workout, relaunch with the argument-domain stamp '-exercise_seed_version 0' so the app re-seeds while Today shows, relaunch without flags, History shows the finished Push A with its bench press, keepAlways screenshot), red on the old importer first; docs/DEVELOPMENT.md requires a relaunch check for stored-data changes. FYI noted: simctl defaults cannot see the app's containerized prefs; T128 reads and writes the container plist.
 - 2026-11-01 07:54 T125 question msg_24880f5f34b9: b. The logger shows a set's plate stack only for barbell and dumbbell exercises (a gate in SetRow.swift; no mapping change), because SessionFactory.equipmentKind sends cable, machine, bands, bodyweight, weighted bodyweight, kettlebell and other to the barbell inventory, which would show a 45 lb bar for a cable set. The mapping itself feeds prescriptions too (SessionFactory.swift:376-381 uses that inventory's bar weight and plates), so it becomes its own correctness ticket (F347).
 - 2026-11-01 07:55 New Phase 3 T141 (F347, prescription math) and tradeoffs entries for T125's answer and T141's rule. Next new ticket id: T142.
+- 2026-11-01 07:56 T125 question msg_c72e5303a19e: yes. fitbod/Sessions/SessionExerciseCard.swift granted and held for T125: delete the now-writerless @State expandedPlateSetID and its argument, so SetRow drops the parameter (dead code after change 4); nothing else in that file.
+- 2026-11-01 08:01 T130 question msg_0e30ce0e2af5: yes. fitbodUITests/SmallFixesUITests.swift granted and held for T130: reword only the comment in testNamedBlockShowsItsWholeNameAtAX3 that says focusing resets the preset's draft (no longer true after T130), no logic change.
+- 2026-11-01 08:13 USER: Codex takes T141, T40 and T41 as external work (the T110/T112 pattern): attempts T141-ext, T40-ext and T41-ext on branches conway-t141-ext, conway-t40-ext and conway-t41-ext, each pushed to origin when it passes; Codex never pushes to main. Recorded as status 'external', so no lane starts them and their owned files stay reserved as '<id>-ext' (SessionFactory.swift and NonBarbellPrescriptionTests for T141; SplitDetailView.swift and SlottedSessionDeleteUITests for T40; the Backup and Export files and their two tests for T41). No clash with live T125, T128 or T130. Phase 3 cannot close for Gate 3 until T141-ext merges, nor Phase 4 for Gate 4 until T40-ext and T41-ext merge.
 
 ## Ledger
 
@@ -240,8 +243,8 @@ Keep the accepted full-tour evidence, including implementation retries, and prio
 | T37 | 3 | done | L1 | `conway-t37` | `task_c6fe444110c3` | `ctx_905dd1a193f3` | `be49a24`, `7a3e314` | T37: original, lane L1, base `c1af210`, worktree `/Users/csaechao4/orca/workspaces/fitbod/conway-t37`; task `task_c6fe444110c3` dispatch `ctx_905dd1a193f3`; reported succeeded; settlement settled; stop proof: accepted worker_done + worker-release released (processAction closed_agent_terminal) 2026-11-01 01:28; brief archived at `docs/conway-specs/evidence/T37/attempt-brief.md` |
 | T38 | 3 | done | L2 | `conway-t38` | `task_8ce3cc958976` | `ctx_65acd648dc97` | `e337b54`, `92413c8`, `58a62fb`, `ac13622` | T38: original, lane L2, base `1f4579a`, worktree `/Users/csaechao4/orca/workspaces/fitbod/conway-t38`; task `task_8ce3cc958976` dispatch `ctx_65acd648dc97`; reported succeeded; settlement settled; stop proof: accepted worker_done + worker-release released (processAction closed_agent_terminal) 2026-11-01 03:33; brief archived at `docs/conway-specs/evidence/T38/attempt-brief.md`; coordinator rebased onto b202b62 and built (2026-11-01 03:36) |
 | T39 | 4 | todo |  |  |  |  |  | todo, trimmed: fixed outside this run: The session editor's exercise-level min and max reps no longer take typed digits (`4dc68fb`), and `MilestoneOneJourneyUITests` enters numbers like a user; still open: 5 for every other numeric field, including `PerSetOverrideRow.swift` reps and RPE (still `TextField(value:format:)`) (from the quick-task coordinator's list `7fa37195.../files/conway-fixed-items.md`, 2026-10-29) |
-| T40 | 4 | todo |  |  |  |  |  |  |
-| T41 | 4 | todo |  |  |  |  |  |  |
+| T40 | 4 | external |  |  |  |  |  | Built outside the run by Codex per the user (2026-11-01 08:13): attempt T40-ext on branch conway-t40-ext, pushed to origin when it passes; Codex never pushes to main. The coordinator rebases it onto main, reruns the ticket's required runs on a free lane and merges it ff-only, as for T110 and T112. |
+| T41 | 4 | external |  |  |  |  |  | Built outside the run by Codex per the user (2026-11-01 08:13): attempt T41-ext on branch conway-t41-ext, pushed to origin when it passes; Codex never pushes to main. The coordinator rebases it onto main, reruns the ticket's required runs on a free lane and merges it ff-only, as for T110 and T112. |
 | T42 | 4 | skipped |  |  |  |  |  | deferred 2026-11-01 under docs/DEVELOPMENT.md (prototype stage): build-warning hygiene (fix lint when it blocks a change); comes back when its workflow is stable or at release readiness |
 | T43 | 5 | skipped |  |  |  |  |  | deferred 2026-11-01 under docs/DEVELOPMENT.md (prototype stage): design refresh while screens are redesigned; comes back when its workflow is stable or at release readiness |
 | T44 | 6 | skipped |  |  |  |  |  | deferred 2026-11-01 under docs/DEVELOPMENT.md (prototype stage): full UI suite on both phones and AX3 (release readiness); comes back when its workflow is stable or at release readiness |
@@ -341,7 +344,7 @@ Keep the accepted full-tour evidence, including implementation retries, and prio
 | T138 | 3 | skipped |  |  |  |  |  | deferred 2026-11-01 under docs/DEVELOPMENT.md (prototype stage): VoiceOver refinement and performance work; comes back when its workflow is stable or at release readiness |
 | T139 | 3 | todo |  |  |  |  |  |  |
 | T140 | 3 | todo |  |  |  |  |  |  |
-| T141 | 3 | todo |  |  |  |  |  |  |
+| T141 | 3 | external |  |  |  |  |  | Built outside the run by Codex per the user (2026-11-01 08:13): attempt T141-ext on branch conway-t141-ext, pushed to origin when it passes; Codex never pushes to main. The coordinator rebases it onto main, reruns the ticket's required runs on a free lane and merges it ff-only, as for T110 and T112. |
 
 ## Phase gates
 
@@ -487,6 +490,8 @@ Later eligible asks keep waiting, and no path is handed off while any live attem
 - ~~grant `fitbod/Sessions/SessionHistoryRoute.swift`: ticket T118, attempt T118, dispatch `ctx_8b2e3e4c8478`, message `msg_c1e838651e51`, order 102, 2026-11-01 07:02~~ (settled T118 2026-11-01 07:35)
 - ~~grant `fitbodUITests/NewBlockLayoutUITests.swift`: ticket T120, attempt T120, dispatch `ctx_babd4b763767`, message `msg_50d0143b082d`, order 103, 2026-11-01 07:14~~ (settled T120 2026-11-01 07:45)
 - grant `fitbodUITests/ReseedRelaunchUITests.swift`: ticket T128, attempt T128, dispatch `ctx_084d0caed3f0`, message `msg_41d3c8ac6b5c`, order 104, 2026-11-01 07:48
+- grant `fitbod/Sessions/SessionExerciseCard.swift`: ticket T125, attempt T125, dispatch `ctx_00197acb689c`, message `msg_c72e5303a19e`, order 105, 2026-11-01 07:56
+- grant `fitbodUITests/SmallFixesUITests.swift`: ticket T130, attempt T130, dispatch `ctx_161d461d7c38`, message `msg_0e30ce0e2af5`, order 106, 2026-11-01 08:01
 
 ## HIGH and CRITICAL impact ratings
 
