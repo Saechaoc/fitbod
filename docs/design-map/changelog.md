@@ -2,6 +2,13 @@
 
 Newest first: one entry for each stage of [plan.md](plan.md) up to S2, then one for each commit.
 
+## 2026-11-01: S3, iPhone 17 Pro Max
+
+- Captured the iPhone 17 Pro Max in light mode: 208 screenshots at default text from the Main tests and all 20 walks, and 79 at AX3 from the Main tests.
+- Two 17e states have no Pro Max screenshot: the open plate stack, which no tap opens, and the notification prompt, which an earlier test answered.
+  [assumptions.md](assumptions.md#phones-and-captures) explains both.
+- After the `tapBelow` fix, `testMainLibrary` ran again at AX3 on 2026-11-01 and took the equipment list that the first run missed.
+
 ## 2026-11-01: S3, iPhone 17e in dark mode and at AX3
 
 - Captured the iPhone 17e in dark mode and at AX3: 79 screenshots in each, for the main state of 72 screens and 7 other states.

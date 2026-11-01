@@ -22,7 +22,7 @@ The map uses the app's words, as listed in [conventions.md](conventions.md#words
 | Simulator | `design-iPhone 17e` | `design-iPhone 17 Pro Max` |
 | Width | 390 pt | 440 pt |
 | Runtime | iOS 26.5 | iOS 26.5 |
-| Light, default text | every screen and state | every screen and state |
+| Light, default text | every screen and state | every screen and state but two |
 | AX3 text | main states | main states |
 | Dark | main states | not captured |
 
@@ -37,6 +37,12 @@ The map uses the app's words, as listed in [conventions.md](conventions.md#words
 - Every capture took place on 2026-10-31, apart from the reruns below, which took place on 2026-11-01.
   So a screen that shows the date reads Saturday, October 31, except in these reruns, where it reads Sunday, November 1.
   - iPhone 17e at AX3, `testMainToday` and `testMainLoggerSheets`: block-review, dialog-discard-workout-slab, dialog-remove-exercise, dialog-workout-menu, history, library-picker, per-muscle-detail, pinned-note, session-template-detail, swap-exercise, today, today--empty, today--volume, weekly-recap, workout-notes and workout-summary.
+  - iPhone 17 Pro Max at AX3, `testMainLibrary`: custom-exercise, dialog-custom-exercise-discard, dialog-delete-exercise, equipment-picker, exercise-detail, exercise-history, filter-picker, library and muscle-picker.
+- Two states have no Pro Max screenshot.
+  - The open plate stack, `logger--plate-stack`: no tap opens it, and the tour shoots it only when it opens.
+    The 17e image of that name comes from the first run, before the tour checked, and shows the logger after the taps.
+  - The notification prompt, `notification-permission`: it first came up in `testMainLogger`, which does not expect it.
+    That test's set-logged screenshot shows it; XCUITest's interruption handler then answered it, so `testMainToday`, which shoots it, found none.
 
 ## How each state is reached
 
@@ -70,7 +76,7 @@ The third, `testW03cWorkoutInProgress`, uses the W09 launch for the Workout in p
 
 ## States not captured
 
-These states need data that no seed creates and that no short walk through the app reaches.
+Most of these states need data that no seed creates and that no short walk through the app reaches.
 The iPhone 17e runs in light mode confirmed this list on 2026-10-31.
 
 - The "Preparing library…" splash, which never reaches the screen.
@@ -84,6 +90,7 @@ The iPhone 17e runs in light mode confirmed this list on 2026-10-31.
 - The restore errors other than "Finish your session first", such as an unreadable file, because every backup the tour can make is a good one.
 - A session with no exercises, because a session cannot be saved without one.
 - The rest timer's Live Activity.
+- The open plate stack under a set, because no tap opens it, an app problem that the audit records.
 
 ## Built but unreachable
 
