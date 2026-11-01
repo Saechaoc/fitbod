@@ -1,0 +1,16 @@
+---
+id: new-block-template
+kind: sheet
+title: TODO
+view: fitbod/Periodization/BlockBuilderView.swift:730
+tab: program
+presents_from: [new-block]
+closes_with: TODO
+mock: TODO
+seed: TODO
+captured: not yet
+img: []
+tree: none
+---
+
+<!-- skeleton -->
