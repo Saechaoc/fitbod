@@ -133,6 +133,7 @@ ARCHIVED = {
     "T108": (3, [], ["fitbodUITests/BlockOverviewAndRoutineAX3UITests.swift"]),
     "T109": (3, [], []),
     "T110": (2, [], ["fitbodTests/SetRowsIgnoreOverridesTests.swift", "fitbodUITests/PerSetOverridesRemovedUITests.swift"]),
+    "T111": (3, [], ["fitbodUITests/SessionEditorRowsUITests.swift"]),
     "T112": (2, [], ["fitbodUITests/ExerciseHistoryRowsUITests.swift"]),
     "T113": (3, [], ["fitbodTests/BlockReviewPRMarkTests.swift"]),
     "T114": (3, [], ["fitbodTests/WeeklyRecapTargetTests.swift"]),

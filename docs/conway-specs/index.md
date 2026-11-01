@@ -41,7 +41,6 @@ Every Phase 2 ticket is done and archived.
 
 | Ticket | Title |
 |---|---|
-| [T111](tickets/T111-session-editor-rows-announced-removable.md) | Session editor rows are announced, removable and easy to hit |
 | [T118](tickets/T118-weekly-tonnage-label-and-rows.md) | Weekly Tonnage keeps its previous-best label whole, and its week rows open their workouts |
 | [T120](tickets/T120-new-block-toast-and-duration-steppers.md) | New Block's undo toast stays small, and its duration steppers say what they change |
 | [T122](tickets/T122-routine-session-drag-slots.md) | A session dragged on the routine screen lands on the slot under the finger |
@@ -57,6 +56,7 @@ Every Phase 2 ticket is done and archived.
 | [T137](tickets/T137-progress-rows-open-only-on-tap.md) | Progress's rows open only on a tap |
 | [T138](tickets/T138-block-review-pr-chips-and-stats-once.md) | The block review's PR chips read to VoiceOver, and its stats load once |
 | [T139](tickets/T139-week-windows-follow-the-calendar.md) | Week windows follow the calendar across daylight saving, and Muscles Hit keeps a stable order |
+| [T140](tickets/T140-long-press-remove-and-remove-labels.md) | Removing an exercise by long press forgets its open editor, and REMOVE controls read normally to VoiceOver |
 
 ### Phase 4: test health
 
@@ -70,7 +70,7 @@ Every Phase 2 ticket is done and archived.
 | [T119](tickets/T119-progress-ui-tests-budgets.md) | Progress UI tests fit the test budgets |
 | [T121](tickets/T121-new-block-ui-tests-budgets.md) | New Block UI tests fit the test budgets |
 | [T123](tickets/T123-ui-runs-clear-rest-notifications.md) | UI test runs stay free of leftover rest notifications, and the journey suite reads cheaply |
-| [T131](tickets/T131-editor-ui-tests-budgets.md) | The editor swipe and session editor UI tests fit the test budgets |
+| [T131](tickets/T131-editor-ui-tests-budgets.md) | The session editor's UI tests fit the test budgets |
 | [T133](tickets/T133-volume-target-tests-adjust-and-relaunch.md) | Volume target tests cover VoiceOver's adjust and a relaunch, and the fatigue smoke test launches cleanly |
 | [T134](tickets/T134-hosted-accessibility-tests-any-order.md) | Hosted accessibility tests pass in any order, and the row style's VoiceOver activate is tested |
 | [T135](tickets/T135-shared-ui-test-helpers.md) | UI suites share one copy of their helpers, and the swipe-back suite finds rows by name and fits its budgets |
