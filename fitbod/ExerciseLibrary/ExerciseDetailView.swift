@@ -90,6 +90,9 @@ struct ExerciseDetailView: View {
     /// Bool flag let the first presentation render before the draft).
     @State private var editorDraft: CustomExerciseDraft? = nil
 
+    /// The prescription setting being typed into, by its label.
+    @FocusState private var focusedSetting: String?
+
     /// Unit label for the Prescription Settings fields. Per-exercise
     /// unitOverride takes precedence; falls back to global UserSettings;
     /// defaults to "lb" if no settings row exists yet.
@@ -136,6 +139,8 @@ struct ExerciseDetailView: View {
         }
         .background(Color.bruPaper.ignoresSafeArea())
         .navigationBarHidden(true)
+        // Number pads have no return key (T39).
+        .keyboardDone()
         .sheet(item: $editorDraft) { draft in
             // Wrap the editor in its own NavigationStack so it owns its
             // toolbar (Save / Cancel). The editor dismisses itself on
@@ -368,6 +373,10 @@ struct ExerciseDetailView: View {
                     .font(BRUFont.bodyEmphasis)
                     .multilineTextAlignment(.trailing)
                     .keyboardType(.decimalPad)
+                    .focused($focusedSetting, equals: label)
+                    // A number typed into the field replaces the one it
+                    // shows (T39).
+                    .selectsAllOnFocus(focusedSetting == label)
                     .frame(maxWidth: 120, minHeight: 44)
                     .padding(.horizontal, 8)
                     .overlay(Rectangle().strokeBorder(Color.bruInk, lineWidth: 1.5))
@@ -376,6 +385,9 @@ struct ExerciseDetailView: View {
                     .font(BRUFont.bodyDefault)
                     .foregroundStyle(Color.bruMuted)
             }
+            // The scroll view leaves a focused field behind the keyboard,
+            // so the row scrolls clear of it and its DONE (T39).
+            .revealsAboveKeyboard(focusedSetting == label)
             Text(footer)
                 .font(BRUFont.bodyDefault)
                 .foregroundStyle(Color.bruMuted)

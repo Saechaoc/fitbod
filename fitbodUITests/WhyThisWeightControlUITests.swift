@@ -16,9 +16,7 @@ final class WhyThisWeightControlUITests: XCTestCase {
         let app = UITestNavigation.openSeededWorkout()
         let weight = weightField(in: app)
         UITestNavigation.revealInLogger(weight, in: app)
-        // Put the caret after the prescribed weight, then type a different one.
-        weight.coordinate(withNormalizedOffset: CGVector(dx: 0.9, dy: 0.5)).tap()
-        weight.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: 6) + "90")
+        UITestNavigation.enter("90", into: weight)
         XCTAssertEqual(numericWeight(weight), 90)
 
         tapWhy(in: app)

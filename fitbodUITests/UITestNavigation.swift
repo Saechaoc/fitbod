@@ -393,7 +393,9 @@ extension UITestNavigation {
     }
 
     /// The lines of text drawn inside `rect`, in screen points, read from
-    /// the top, each with the box around it in screen points.
+    /// the top, each with the box around it in screen points. Read narrow,
+    /// single-line crops: on the simulator, Vision's accurate level dropped
+    /// whole words from a 390 x 60pt crop (F282).
     static func textLines(in rect: CGRect, of screenshot: XCUIScreenshot) throws -> [(text: String, box: CGRect)] {
         let cut = try XCTUnwrap(crop(devicePixels(of: rect, in: screenshot), of: screenshot),
                                 "Cannot crop \(rect) from the screenshot")
@@ -537,11 +539,14 @@ extension UITestNavigation {
             ? NSPredicate(format: "label ==[c] %@", label)
             : NSPredicate(format: "label ==[c] %@ OR label BEGINSWITH[c] %@", label, label + ",")
         let matches = query.matching(predicate)
-        XCTAssertTrue(matches.firstMatch.waitForExistence(timeout: 10), "Missing \(label)", file: file, line: line)
-        for _ in 0..<10 {
-            if let match = matches.allElementsBoundByIndex.first(where: { $0.isHittable }) { return match }
-            Thread.sleep(forTimeInterval: 0.5)
+        XCTAssertTrue(matches.firstMatch.exists || matches.firstMatch.waitForExistence(timeout: 10),
+                      "Missing \(label)", file: file, line: line)
+        var match: XCUIElement?
+        waitUntil(timeout: 5) {
+            match = matches.allElementsBoundByIndex.first { $0.isHittable }
+            return match != nil
         }
+        if let match { return match }
         XCTFail("No tappable \(label)", file: file, line: line)
         return matches.firstMatch
     }
@@ -550,13 +555,33 @@ extension UITestNavigation {
     /// frame holds for one `interval`. It gives up after `timeout` seconds.
     static func waitUntilStill(_ element: XCUIElement, interval: TimeInterval = 0.25, timeout: TimeInterval = 5) {
         var last = element.frame
+        var stillSince = Date.now
         let deadline = Date.now.addingTimeInterval(timeout)
         while Date.now < deadline {
-            Thread.sleep(forTimeInterval: interval)
+            // The poll step the test guide asks for (2.6); the frame must
+            // still hold for the whole interval.
+            Thread.sleep(forTimeInterval: 0.05)
             let frame = element.frame
-            if frame == last { return }
-            last = frame
+            if frame != last {
+                last = frame
+                stillSince = Date.now
+            } else if Date.now.timeIntervalSince(stillSince) >= interval {
+                return
+            }
         }
+    }
+
+    /// Polls `condition` every 100 ms until it holds or `timeout`, a
+    /// ceiling, runs out, and returns whether it held.
+    @discardableResult
+    static func waitUntil(timeout: TimeInterval = 5, _ condition: () -> Bool) -> Bool {
+        let deadline = Date.now.addingTimeInterval(timeout)
+        while !condition() {
+            guard Date.now < deadline else { return false }
+            // The poll step the test guide asks for (2.6).
+            Thread.sleep(forTimeInterval: 0.1)
+        }
+        return true
     }
 
     /// Types `text` once the field has keyboard focus, because `typeText`
@@ -564,21 +589,19 @@ extension UITestNavigation {
     /// By default it replaces the field's text, with a tap near the trailing
     /// edge so the cursor lands after any text already there, then presses
     /// return to put the keyboard away. With `replacing` false it taps the
-    /// field and types after its text; a decimal pad has no return key, so
-    /// it takes `pressingReturn` false.
+    /// field and types after its text. A number goes through
+    /// `enter(_:into:)` instead, which types over it the way a user does.
     static func type(
         _ text: String, into field: XCUIElement, replacing: Bool = true, pressingReturn: Bool = true,
         file: StaticString = #filePath, line: UInt = #line
     ) {
-        XCTAssertTrue(field.waitForExistence(timeout: 10), "Missing \(field)", file: file, line: line)
+        XCTAssertTrue(field.exists || field.waitForExistence(timeout: 10), "Missing \(field)", file: file, line: line)
         if replacing {
             field.coordinate(withNormalizedOffset: CGVector(dx: 0.95, dy: 0.5)).tap()
         } else {
             field.tap()
         }
-        let focused = XCTNSPredicateExpectation(predicate: NSPredicate(format: "hasKeyboardFocus == true"), object: field)
-        XCTAssertEqual(XCTWaiter().wait(for: [focused], timeout: 5), .completed,
-                       "The field never took keyboard focus", file: file, line: line)
+        assertKeyboardFocus(field, file: file, line: line)
         // An empty field reports its placeholder as its value.
         if replacing, let current = field.value as? String, !current.isEmpty, current != field.placeholderValue {
             field.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: current.count))
@@ -587,6 +610,70 @@ extension UITestNavigation {
         let value = field.value as? String ?? ""
         XCTAssertEqual(value == field.placeholderValue ? "" : value, text,
                        "The field must hold the typed text", file: file, line: line)
+    }
+}
+
+// MARK: - Number entry
+
+extension UITestNavigation {
+    /// Types `text` the way a user does (T39): one tap on the field once it
+    /// stops moving, a wait until it has keyboard focus, then the keys, with
+    /// nothing deleted first. A number field selects its whole value as it
+    /// takes focus, so the first digit replaces the value rather than
+    /// joining it (review item 5). Returns the field's value for the caller
+    /// to check; a set's weight reads with its unit, such as "90 lb".
+    @discardableResult
+    static func enter(_ text: String, into field: XCUIElement, file: StaticString = #filePath, line: UInt = #line) -> String {
+        XCTAssertTrue(field.exists || field.waitForExistence(timeout: 10), "Missing \(field)", file: file, line: line)
+        // A tap on a field that is still scrolling only stops the scroll.
+        waitUntilStill(field)
+        // The center is the text area: a search field's frame spans its
+        // row, and its trailing end is the clear button (F293).
+        field.tap()
+        assertKeyboardFocus(field, file: file, line: line)
+        field.typeText(text)
+        return field.value as? String ?? ""
+    }
+
+    /// Fails unless `field` takes keyboard focus within five seconds.
+    static func assertKeyboardFocus(_ field: XCUIElement, file: StaticString = #filePath, line: UInt = #line) {
+        // XCUI reads keyboard focus only through a predicate.
+        let focused = NSPredicate(format: "hasKeyboardFocus == true")
+        XCTAssertTrue(waitUntil { focused.evaluate(with: field) }, "\(field) never took keyboard focus", file: file, line: line)
+    }
+
+    /// The DONE that every screen with a number field shows on the
+    /// keyboard, since a number pad has no return key.
+    static func keyboardDone(in app: XCUIApplication, file: StaticString = #filePath, line: UInt = #line) -> XCUIElement {
+        let done = app.buttons.matching(NSPredicate(format: "label == %@", "DONE")).firstMatch
+        XCTAssertTrue(done.exists || done.waitForExistence(timeout: 5), "The keyboard must show DONE", file: file, line: line)
+        return done
+    }
+
+    /// Fails unless `field` lies above the keyboard and above each of `bars`
+    /// on screen, such as a save bar, and clear of the keyboard's DONE, so
+    /// the lifter can see what they type. DONE floats on a clear bar above
+    /// the keyboard, so a field beside it stays in sight.
+    static func assertAboveKeyboard(
+        _ field: XCUIElement, and bars: [XCUIElement] = [], in app: XCUIApplication,
+        file: StaticString = #filePath, line: UInt = #line
+    ) {
+        let keyboard = app.keyboards.firstMatch
+        XCTAssertTrue(field.exists, "Missing \(field)", file: file, line: line)
+        XCTAssertTrue(keyboard.exists || keyboard.waitForExistence(timeout: 5), "The keyboard must be up", file: file, line: line)
+        // The field scrolls into place once the keyboard has shown.
+        waitUntilStill(keyboard)
+        waitUntilStill(field)
+        // The keyboard's panel starts above its keys.
+        let panel = app.otherElements["inputView"]
+        for cover in [panel.exists ? panel : keyboard] + bars.filter(\.exists) {
+            XCTAssertLessThanOrEqual(field.frame.maxY, cover.frame.minY + 0.5,
+                                     "\(describe(field)) must sit above \(describe(cover))", file: file, line: line)
+        }
+        // DONE's glass reaches about 6pt past its frame.
+        let done = keyboardDone(in: app, file: file, line: line)
+        XCTAssertFalse(field.frame.intersects(done.frame.insetBy(dx: -6, dy: -6)),
+                       "\(describe(done)) must not cover \(describe(field))", file: file, line: line)
     }
 }
 

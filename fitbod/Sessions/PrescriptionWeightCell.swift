@@ -36,9 +36,12 @@
 //    sheet and focuses the weight field.
 //    While the field has focus, the cell reports the weight it holds, and
 //    SetRow shows the set's plates for it (ticket T125).
+//    The field selects its weight as it takes focus, so a typed weight
+//    replaces it, and a field left with no number in it shows the set's
+//    weight again, the weight the set logs (ticket T39).
 //
 //  The 44pt touch target is preserved via the cell's vertical padding (12pt) +
-//  TextField height.
+//  TextField height, and a tap anywhere on it focuses the field (T39).
 //
 
 import SwiftUI
@@ -140,6 +143,9 @@ public struct PrescriptionWeightCell: View {
                 TextField("—", text: $weightText)
                     .keyboardType(.decimalPad)
                     .focused($weightFocused)
+                    // A weight typed into the field replaces the one it
+                    // shows (T39).
+                    .selectsAllOnFocus(weightFocused)
                     .frame(minWidth: 60, minHeight: 44)
                     .font(BRUFont.bodyEmphasis)
                     .foregroundStyle(isComplete ? Color.bruSignalText : Color.bruInk)
@@ -153,6 +159,12 @@ public struct PrescriptionWeightCell: View {
                     }
                     .onChange(of: weightFocused) { _, focused in
                         if !focused {
+                            // A field left with no number in it keeps the
+                            // set's weight, so it shows that weight again
+                            // (T39, tradeoffs "Emptied weight field").
+                            if Double(weightText) == nil {
+                                weightText = Self.text(for: weight)
+                            }
                             // A calibrating set keeps the field only for a
                             // weight the lifter picked.
                             isOverridingRange = false
@@ -172,7 +184,11 @@ public struct PrescriptionWeightCell: View {
         .padding(.vertical, 12)
         .contentShape(Rectangle())
         .onTapGesture {
-            if !showsRange && weightText.isEmpty { onTapEmptyCell() }
+            guard !showsRange else { return }
+            if weightText.isEmpty { onTapEmptyCell() }
+            // The target is taller than the text field inside it, so a tap
+            // above or below the text gives the field focus too (T39).
+            weightFocused = true
         }
         // Accessibility per 03-UI-SPEC line 494
         .accessibilityLabel(accessibilityLabelText)

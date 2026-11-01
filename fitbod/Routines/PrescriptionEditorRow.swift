@@ -33,7 +33,8 @@
 //
 //  Each tempo field keeps its drawn size, and its touch target reaches 2pt
 //  into each gap beside it and up and down to 44pt, where a tap focuses
-//  the field (T111).
+//  the field (T111). A field selects its digit as it takes focus, so a
+//  digit typed into it replaces the one it shows (T39).
 //
 //  BRU contract: NO accentColor / NO Image(systemName:) / NO Capsule /
 //  NO RoundedRectangle / NO Apple HIG semantic fonts
@@ -261,6 +262,8 @@ public struct PrescriptionEditorRow: View {
             .multilineTextAlignment(.center)
             .font(BRUFont.bodyDefault)
             .focused($focusedTempoField, equals: index)
+            // A digit typed into the field replaces the one it shows (T39).
+            .selectsAllOnFocus(focusedTempoField == index)
             .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { tempoFieldHeight = $0 }
             // The touch target: the padding reaches past the field, a tap
             // there focuses it, and the negative padding gives the layout
@@ -269,6 +272,9 @@ public struct PrescriptionEditorRow: View {
             .padding(.vertical, verticalReach)
             .contentShape(Rectangle())
             .onTapGesture { focusedTempoField = index }
+            // The whole target scrolls clear of the keyboard and its DONE
+            // while the field has focus (T39).
+            .revealsAboveKeyboard(focusedTempoField == index)
             .accessibilityElement(children: .contain)
             .accessibilityIdentifier("prescription.tempo.\(index + 1)")
             .padding(.horizontal, -Self.tempoTargetReach)

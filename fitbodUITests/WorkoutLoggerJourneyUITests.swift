@@ -204,8 +204,7 @@ final class WorkoutLoggerJourneyUITests: XCTestCase {
     private func logSet(_ app: XCUIApplication, _ id: String, reps: String) {
         let field = app.textFields["set.reps.\(id)"]
         scrollUntilHittable(field, in: app)
-        focus(field)
-        field.typeText(reps)
+        UITestNavigation.enter(reps, into: field)
         let complete = app.buttons["set.complete.\(id)"]
         scrollUntilHittable(complete, in: app)
         complete.tap()
@@ -232,19 +231,6 @@ final class WorkoutLoggerJourneyUITests: XCTestCase {
             if down { list.swipeDown(velocity: .slow) } else { list.swipeUp(velocity: .slow) }
             tries += 1
         }
-    }
-
-    /// Taps a text field until it has keyboard focus. A tap that lands
-    /// while the list is still settling after a scroll only stops it.
-    @MainActor
-    private func focus(_ field: XCUIElement) {
-        let focused = NSPredicate(format: "hasKeyboardFocus == true")
-        for _ in 0..<3 {
-            field.tap()
-            let wait = XCTNSPredicateExpectation(predicate: focused, object: field)
-            if XCTWaiter().wait(for: [wait], timeout: 2) == .completed { return }
-        }
-        XCTFail("\(field.identifier) never took keyboard focus")
     }
 
     private func waitForDisappearance(_ element: XCUIElement, timeout: TimeInterval = 5) -> Bool {

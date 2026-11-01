@@ -170,12 +170,20 @@ public struct SetRow: View {
                         .foregroundStyle(entry.isComplete ? Color.bruSignalText : Color.bruInk)
                         .keyboardType(.numberPad)
                         .focused($repsFocused)
+                        // Reps typed into the field replace the ones it
+                        // shows (T39).
+                        .selectsAllOnFocus(repsFocused)
                         .frame(width: dynamicTypeSize.isAccessibilitySize ? nil : 44)
                         .frame(minHeight: 44)
                         .padding(.vertical, 4)
                         .contentShape(Rectangle())
+                        // The target is taller than the text field inside
+                        // it, so a tap that ends the rest above or below the
+                        // text gives the field focus too, and the first digit
+                        // typed lands (T39, F264).
                         .onTapGesture {
                             if !entry.isComplete { onTapEmptyCell() }
+                            repsFocused = true
                         }
                         .onChange(of: repsText) { _, newValue in
                             if let i = Int(newValue) {
@@ -285,12 +293,9 @@ public struct SetRow: View {
                 .accessibilityIdentifier("set.plates.\(identifierSuffix)")
             }
         }
-        // While the plates show, the row scrolls clear of the keyboard.
-        .background {
-            if enteredWeight != nil, plateInventory != nil {
-                RevealAboveKeyboard()
-            }
-        }
+        // While its weight or reps field has focus, the row, with any
+        // plates, scrolls clear of the keyboard and its DONE (T125, T39).
+        .revealsAboveKeyboard(enteredWeight != nil || repsFocused)
         .onAppear {
             repsText = entry.reps == 0 ? "" : String(entry.reps)
         }
@@ -334,7 +339,11 @@ public struct SetRow: View {
     /// start at S1 even after a warm-up ramp and stay gap-free after a
     /// set is deleted.
     private var setLabel: String {
-        let n = displayNumber
+        Self.setLabel(for: entry)
+    }
+
+    private static func setLabel(for entry: SetEntry) -> String {
+        let n = SessionSetActions.displayNumber(of: entry)
         return entry.isWarmup ? "W\(n)" : "S\(n)"
     }
 
@@ -344,7 +353,14 @@ public struct SetRow: View {
 
     /// "{exercise position}.{set label}", e.g. "1.S2", for UI test queries.
     private var identifierSuffix: String {
-        "\(sessionExercise.orderIndex + 1).\(setLabel)"
+        Self.identifierSuffix(for: entry, in: sessionExercise)
+    }
+
+    /// The end of a set's identifiers, such as "1.S2" for the first
+    /// exercise's second working set. The set's tempo and partial-reps rows
+    /// use it too.
+    static func identifierSuffix(for entry: SetEntry, in sessionExercise: SessionExercise?) -> String {
+        "\((sessionExercise?.orderIndex ?? 0) + 1).\(setLabel(for: entry))"
     }
 
     /// Shared by the set label's menu and the set-type chip.
@@ -364,53 +380,6 @@ public struct SetRow: View {
               equipment == .barbell || equipment == .dumbbell else { return nil }
         let kind = SessionFactory.equipmentKind(for: equipment)
         return inventories.first { $0.equipmentKind == kind }
-    }
-}
-
-// MARK: - Plates above the keyboard
-
-/// Scrolls the logger so the set row it backs, with its plates, shows above
-/// the keyboard. The list scrolls a focused field only just clear of the
-/// keyboard, which leaves the plates under the field behind it.
-private struct RevealAboveKeyboard: UIViewRepresentable {
-    func makeUIView(context: Context) -> Reveal {
-        let view = Reveal()
-        view.isUserInteractionEnabled = false
-        return view
-    }
-
-    func updateUIView(_ uiView: Reveal, context: Context) {}
-
-    final class Reveal: UIView {
-        /// Room under the row for the keyboard's DONE bar, which floats over
-        /// the list above the keyboard's own inset.
-        private static let doneBarClearance: CGFloat = 56
-
-        override func didMoveToWindow() {
-            super.didMoveToWindow()
-            NotificationCenter.default.removeObserver(self)
-            guard window != nil else { return }
-            // The keyboard's inset is in place once it has shown.
-            NotificationCenter.default.addObserver(
-                self, selector: #selector(reveal),
-                name: UIResponder.keyboardDidShowNotification, object: nil
-            )
-            // A keyboard already up, as when focus moves from another field.
-            perform(#selector(reveal), with: nil, afterDelay: 0)
-        }
-
-        @objc private func reveal() {
-            let scrollView = sequence(first: self as UIView, next: \.superview)
-                .lazy.compactMap { $0 as? UIScrollView }.first
-            guard let scrollView, window != nil, !bounds.isEmpty else { return }
-            var rect = convert(bounds, to: scrollView)
-            rect.size.height += Self.doneBarClearance
-            // A row taller than the space above the keyboard, at accessibility
-            // text sizes, keeps its top, where its fields are, in view.
-            let visible = scrollView.bounds.inset(by: scrollView.adjustedContentInset)
-            rect.size.height = min(rect.height, visible.height)
-            scrollView.scrollRectToVisible(rect, animated: true)
-        }
     }
 }
 

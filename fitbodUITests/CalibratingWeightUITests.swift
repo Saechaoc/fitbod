@@ -36,8 +36,7 @@ final class CalibratingWeightUITests: XCTestCase {
             let app = openWorkout(textSize: size)
             let reps = app.textFields["set.reps.1.S1"]
             UITestNavigation.revealInLogger(reps, in: app)
-            focus(reps)
-            reps.typeText("5")
+            UITestNavigation.enter("5", into: reps)
             XCTAssertEqual(reps.value as? String, "5", "Set 1 must read the typed reps at \(size)")
             let complete = app.buttons["set.complete.1.S1"]
             UITestNavigation.revealInLogger(complete, in: app)
@@ -91,16 +90,6 @@ final class CalibratingWeightUITests: XCTestCase {
         UITestNavigation.revealInLogger(reps, in: app)
     }
 
-    /// Taps `field` until it has keyboard focus, so typing reaches it.
-    @MainActor
-    private func focus(_ field: XCUIElement) {
-        for _ in 0..<3 {
-            field.tap()
-            if waitForFocus(field, timeout: 2) { return }
-        }
-        XCTFail("\(field.identifier) never took keyboard focus")
-    }
-
     // MARK: - Elements
 
     /// A set's read-only calibrating range. It carries the weight cell's
@@ -115,13 +104,5 @@ final class CalibratingWeightUITests: XCTestCase {
     @MainActor
     private func weightField(_ set: String, in app: XCUIApplication) -> XCUIElement {
         app.textFields.matching(identifier: "set.weight.\(set)").firstMatch
-    }
-
-    // MARK: - Waits
-
-    @MainActor
-    private func waitForFocus(_ element: XCUIElement, timeout: TimeInterval = 5) -> Bool {
-        let focused = XCTNSPredicateExpectation(predicate: NSPredicate(format: "hasKeyboardFocus == true"), object: element)
-        return XCTWaiter().wait(for: [focused], timeout: timeout) == .completed
     }
 }

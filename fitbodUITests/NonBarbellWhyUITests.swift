@@ -19,10 +19,7 @@ final class NonBarbellWhyUITests: XCTestCase {
         XCTAssertTrue(weight.exists)
         UITestNavigation.revealInLogger(weight, in: app)
         XCTAssertEqual(number(in: weight), 25)
-        weight.coordinate(withNormalizedOffset: CGVector(dx: 0.9, dy: 0.5)).tap()
-        let focused = XCTNSPredicateExpectation(predicate: NSPredicate(format: "hasKeyboardFocus == true"), object: weight)
-        XCTAssertEqual(XCTWaiter().wait(for: [focused], timeout: 5), .completed)
-        weight.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: 6) + "90")
+        UITestNavigation.enter("90", into: weight)
         let entered = XCTNSPredicateExpectation(predicate: NSPredicate(format: "value == '90 lb'"), object: weight)
         XCTAssertEqual(XCTWaiter().wait(for: [entered], timeout: 5), .completed)
 

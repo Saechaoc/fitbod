@@ -26,6 +26,7 @@ import SwiftData
 public struct PartialRepsRow: View {
     @Bindable public var entry: SetEntry
     @State private var partialsText: String = ""
+    @FocusState private var focused: Bool
 
     public init(entry: SetEntry) {
         self.entry = entry
@@ -46,6 +47,9 @@ public struct PartialRepsRow: View {
                 .monospacedDigit()
                 .multilineTextAlignment(.trailing)
                 .keyboardType(.numberPad)
+                .focused($focused)
+                // Reps typed into the field replace the ones it shows (T39).
+                .selectsAllOnFocus(focused)
                 .frame(minWidth: 40, minHeight: 32)
                 .overlay(
                     Rectangle()
@@ -54,10 +58,16 @@ public struct PartialRepsRow: View {
                 .onChange(of: partialsText) { _, newValue in
                     entry.partialReps = newValue.isEmpty ? nil : Int(newValue)
                 }
+                .accessibilityIdentifier(
+                    "set.partials.\(SetRow.identifierSuffix(for: entry, in: entry.sessionExercise))"
+                )
 
             Spacer()
         }
         .padding(.vertical, 4)
+        // The digits sit at the trailing end, where the keyboard's DONE
+        // floats, so the focused row scrolls clear of it (T39).
+        .revealsAboveKeyboard(focused)
         .onAppear {
             partialsText = entry.partialReps.map(String.init) ?? ""
         }

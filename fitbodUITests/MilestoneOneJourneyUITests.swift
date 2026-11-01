@@ -165,9 +165,12 @@ final class MilestoneOneJourneyUITests: XCTestCase {
         let weight = app.textFields.matching(NSPredicate(format: "identifier BEGINSWITH %@", "set.weight.1.S1")).firstMatch
         let weightInput = weight.exists ? weight : app.textFields["—"].firstMatch
         reveal(weightInput)
-        enter("80", into: weightInput)
+        // The accessible weight includes its unit, unlike reps.
+        let loggedWeight = UITestNavigation.enter("80", into: weightInput).split(separator: " ").first.map(String.init) ?? ""
+        XCTAssertEqual(Double(loggedWeight), 80, "Weight entry must keep the entered load")
         let reps = app.textFields["set.reps.1.S1"]
-        enter("8", into: reps)
+        reveal(reps)
+        XCTAssertEqual(UITestNavigation.enter("8", into: reps), "8", "Typing must not add a prefix or suffix")
         reveal(app.buttons["set.complete.1.S1"])
         app.buttons["set.complete.1.S1"].tap()
         XCTAssertTrue(app.buttons["rest.plus15"].waitForExistence(timeout: 10))
@@ -308,11 +311,12 @@ final class MilestoneOneJourneyUITests: XCTestCase {
         row.tap()
     }
 
-    /// Types the way a user does: tap the field, then type. A prefilled name
-    /// is selected with a triple tap and typed over, as a user would, so
-    /// nothing depends on where a tap leaves the caret. A number is never
-    /// deleted first, so leftover digits fail the check below; a
-    /// delete-first helper once hid reps entry that turned 10 into 106.
+    /// Types a name or a search the way a user does: tap the field, then
+    /// type. A prefilled name is selected with a triple tap and typed over,
+    /// as a user would, so nothing depends on where a tap leaves the caret.
+    /// Numbers go through UITestNavigation.enter, which never deletes one
+    /// first: a delete-first helper once hid reps entry that turned 10 into
+    /// 106.
     @MainActor
     private func enter(_ text: String, into element: XCUIElement) {
         reveal(element)
@@ -325,18 +329,11 @@ final class MilestoneOneJourneyUITests: XCTestCase {
         }
         element.tap()
         let existing = (element.value as? String) ?? ""
-        if !element.identifier.hasPrefix("set."), !existing.isEmpty, existing != element.placeholderValue {
+        if !existing.isEmpty, existing != element.placeholderValue {
             element.tap(withNumberOfTaps: 3, numberOfTouches: 1)
         }
         element.typeText(text)
-        let actual = (element.value as? String) ?? ""
-        if element.identifier.hasPrefix("set.weight.") {
-            // The accessible weight includes its unit, unlike reps and names.
-            let numericValue = actual.split(separator: " ").first.map(String.init) ?? ""
-            XCTAssertEqual(Double(numericValue), Double(text), "Weight entry must keep the entered load")
-        } else {
-            XCTAssertEqual(actual, text, "Typing must not add a prefix or suffix")
-        }
+        XCTAssertEqual((element.value as? String) ?? "", text, "Typing must not add a prefix or suffix")
     }
 
     @MainActor

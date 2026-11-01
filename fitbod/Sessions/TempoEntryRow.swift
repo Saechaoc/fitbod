@@ -27,6 +27,7 @@ import SwiftData
 public struct TempoEntryRow: View {
     @Bindable public var entry: SetEntry
     @State private var components: [String] = ["", "", "", ""]
+    @FocusState private var focusedField: Int?
 
     private let fieldLabels = ["ECC", "BOT", "CON", "TOP"]                        // UI-SPEC verbatim labels
 
@@ -65,17 +66,24 @@ public struct TempoEntryRow: View {
                         .monospacedDigit()
                         .multilineTextAlignment(.center)
                         .keyboardType(.numberPad)
+                        .focused($focusedField, equals: idx)
+                        // A digit typed into the field replaces the one it
+                        // shows (T39).
+                        .selectsAllOnFocus(focusedField == idx)
                         .frame(minWidth: 40, minHeight: 32)
                         .overlay(
                             Rectangle()
                                 .stroke(Color.bruInk, lineWidth: 1)
                         )
+                        .accessibilityIdentifier("set.tempo.\(label.lowercased()).\(identifierSuffix)")
                     }
                 }
                 Spacer()
             }
         }
         .padding(.vertical, 4)
+        // The focused row scrolls clear of the keyboard and its DONE (T39).
+        .revealsAboveKeyboard(focusedField != nil)
         .onAppear {
             // Re-hydrate the four fields from the persisted tempoActual
             let parts = (entry.tempoActual ?? "").split(
@@ -93,6 +101,11 @@ public struct TempoEntryRow: View {
     private func persistTempo() {
         let allEmpty = components.allSatisfy { $0.isEmpty }
         entry.tempoActual = allEmpty ? nil : components.joined(separator: "-")
+    }
+
+    /// The set's identifier suffix, such as "1.S1", as SetRow gives it.
+    private var identifierSuffix: String {
+        SetRow.identifierSuffix(for: entry, in: entry.sessionExercise)
     }
 }
 

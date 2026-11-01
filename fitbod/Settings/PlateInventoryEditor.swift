@@ -16,6 +16,8 @@
 //  on one line, so no tab breaks inside a word ("DUMBBELL" over "S" from XXXL). The
 //  24pt bruBg filler under Done ▸ is gone: inside the Settings sheet it showed as a
 //  gray band above the home indicator, whose safe area already shows the paper.
+//  T39: the bar weight and Add Plate's weight select their number as they take focus,
+//  so a typed weight replaces it, and both number pads get a DONE.
 //
 //  UI-SPEC §PlateInventoryEditor (verbatim copy in all labels / alerts / empty states).
 //  Pattern: PATTERNS.md @Query + @Bindable write-through (SettingsView analog).
@@ -39,6 +41,7 @@ public struct PlateInventoryEditor: View {
     @State private var showResetConfirm: Bool = false
     @State private var showAddPlateSheet: Bool = false
     @State private var showCalculatorSheet: Bool = false
+    @FocusState private var barWeightFocused: Bool
 
     // MARK: - Init
 
@@ -101,6 +104,8 @@ public struct PlateInventoryEditor: View {
         .background(Color.bruPaper)
         // No .navigationTitle — BRUHeaderBar owns that chrome
         .navigationBarHidden(true)
+        // Number pads have no return key (T39).
+        .keyboardDone()
         .sheet(isPresented: $showCalculatorSheet) {
             if let inv = activeInventory {
                 PlateCalculatorSheet(equipment: activeTab, inventory: inv)
@@ -225,9 +230,15 @@ public struct PlateInventoryEditor: View {
 
             TextField("45", value: $b.barWeight, format: .number)
                 .keyboardType(.decimalPad)
+                .focused($barWeightFocused)
+                // A weight typed into the field replaces the one it shows
+                // (T39).
+                .selectsAllOnFocus(barWeightFocused)
                 .font(BRUFont.bodyDefault)
                 .multilineTextAlignment(.trailing)
                 .frame(width: 80)
+                .accessibilityLabel("Bar weight")
+                .accessibilityIdentifier("plateInventory.barWeight")
 
             Text(unitLabel)
                 .font(BRUFont.bodyDefault)
@@ -421,6 +432,7 @@ private struct AddPlateSheet: View {
     let ctx: ModelContext
 
     @State private var newPlateWeightText: String = ""
+    @FocusState private var weightFocused: Bool
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
@@ -436,7 +448,13 @@ private struct AddPlateSheet: View {
 
                 TextField("e.g. 25", text: $newPlateWeightText)                // UI-SPEC line 274 verbatim
                     .keyboardType(.decimalPad)
+                    .focused($weightFocused)
+                    // A weight typed into the field replaces the one it
+                    // shows (T39).
+                    .selectsAllOnFocus(weightFocused)
                     .font(BRUFont.bodyDefault)
+                    .accessibilityLabel("Plate weight")
+                    .accessibilityIdentifier("addPlate.weight")
 
                 // Inline validation error per 03-UI-SPEC destructive pattern
                 // (bruSignal replaces systemRed per must_have: "Color(.system*) zero")
@@ -468,6 +486,8 @@ private struct AddPlateSheet: View {
             Spacer()
         }
         .background(Color.bruPaper)
+        // Number pads have no return key (T39).
+        .keyboardDone()
     }
 
     private func addPlate() {

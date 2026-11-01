@@ -81,6 +81,7 @@ public struct RoutineBuilderView: View {
     @Environment(\.modelContext) private var ctx
     @Environment(\.dismiss) private var dismiss
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    @Environment(\.isKeyboardVisible) private var isKeyboardVisible
     // The host may construct a fresh draft in its sheet closure on every redraw.
     // Retain the initial reference so nested pickers never replace unsaved edits.
     @State public var draft: RoutineDraft
@@ -144,14 +145,20 @@ public struct RoutineBuilderView: View {
             }
             .background(Color.bruPaper.ignoresSafeArea())
             .navigationBarHidden(true)
-            // Bottom action bar pinned above the home indicator
+            // Number pads have no return key (T39).
+            .keyboardDone()
+            // Bottom action bar pinned above the home indicator. It steps
+            // aside while the keyboard is up, so it never covers the field
+            // being typed into and the keyboard's DONE never covers it (T39).
             .safeAreaInset(edge: .bottom, spacing: 0) {
-                BottomActionBar(
-                    onDiscard: handleDiscard,
-                    onSave: handleSave,
-                    isValid: draft.isValid,
-                    saveLabel: "Save session ▸"
-                )
+                if !isKeyboardVisible {
+                    BottomActionBar(
+                        onDiscard: handleDiscard,
+                        onSave: handleSave,
+                        isValid: draft.isValid,
+                        saveLabel: "Save session ▸"
+                    )
+                }
             }
             .safeAreaInset(edge: .top) {
                 VStack(spacing: 0) {
