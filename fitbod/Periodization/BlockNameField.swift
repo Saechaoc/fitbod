@@ -37,6 +37,7 @@ public struct BlockNameField: View {
     @Binding public var text: String
 
     @FocusState private var isFocused: Bool
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     public init(title: String, placeholder: String, text: Binding<String>) {
         self.title = title
@@ -64,17 +65,37 @@ public struct BlockNameField: View {
                         .allowsHitTesting(false)
                 }
 
-                TextField("", text: $text)
-                    .font(BlockNameFieldType.displayLarge)
-                    .textInputAutocapitalization(.words)
-                    .foregroundStyle(BlockNameFieldTokens.ink)
-                    .tint(BlockNameFieldTokens.ink)
-                    .focused($isFocused)
-                    .frame(height: 46)
+                if dynamicTypeSize.isAccessibilitySize {
+                    // T38: at accessibility sizes one line holds only part of
+                    // a name, so the field wraps it between words onto as many
+                    // lines as it needs, rather than cut it off.
+                    styled(TextField("", text: $text, axis: .vertical))
+                        .submitLabel(.done)
+                        .onChange(of: text) { _, newValue in
+                            // A vertical field turns Return into a new line;
+                            // treat it as done.
+                            if newValue.contains("\n") {
+                                text = newValue.replacingOccurrences(of: "\n", with: "")
+                                isFocused = false
+                            }
+                        }
+                } else {
+                    styled(TextField("", text: $text))
+                        .frame(height: 46)
+                }
             }
             .padding(.top, 2)
             .contentShape(Rectangle())
             .onTapGesture { isFocused = true }
         }
+    }
+
+    private func styled(_ field: TextField<Text>) -> some View {
+        field
+            .font(BlockNameFieldType.displayLarge)
+            .textInputAutocapitalization(.words)
+            .foregroundStyle(BlockNameFieldTokens.ink)
+            .tint(BlockNameFieldTokens.ink)
+            .focused($isFocused)
     }
 }

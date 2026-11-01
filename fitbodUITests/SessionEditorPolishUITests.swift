@@ -190,8 +190,8 @@ final class SessionEditorPolishUITests: XCTestCase {
         XCTAssertEqual(app.textFields["Session name"].value as? String, Self.session,
                        "Keep session must leave the session open in the editor")
 
-        UITestNavigation.hittable(app.buttons, "Back").tap()
-        XCTAssertTrue(app.textFields["Session name"].waitForNonExistence(timeout: 5), "Back must close the unchanged editor")
+        UITestNavigation.hittable(app.buttons, "Cancel").tap()
+        XCTAssertTrue(app.textFields["Session name"].waitForNonExistence(timeout: 5), "CANCEL must close the unchanged editor")
         UITestNavigation.selectTab("Program", in: app)
         let picker = app.staticTexts.labeled("Existing sessions")
         UITestNavigation.hittable(app.buttons, "+ Add session").tap()

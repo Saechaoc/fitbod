@@ -30,14 +30,14 @@ final class EditorSwipeDismissUITests: XCTestCase {
         assertStaysOpen(title, "A swipe-down must not close a session editor with unsaved edits")
         XCTAssertEqual(name.value as? String, "Push C", "The edit must survive the swipe")
 
-        UITestNavigation.hittable(app.buttons, "Back", exactLabel: true).tap()
+        UITestNavigation.hittable(app.buttons, "Cancel", exactLabel: true).tap()
         keepEditing(in: app, dialog: "Discard changes?", screenshot: "session-editor-discard-dialog")
         assertStaysOpen(title, "Keep editing must leave the session editor open")
         XCTAssertEqual(name.value as? String, "Push C", "Keep editing must keep the edit")
 
-        UITestNavigation.hittable(app.buttons, "Back", exactLabel: true).tap()
+        UITestNavigation.hittable(app.buttons, "Cancel", exactLabel: true).tap()
         XCTAssertTrue(app.staticTexts.labeled("Discard changes?").waitForExistence(timeout: 5),
-                      "Back must still ask before discarding")
+                      "CANCEL must still ask before discarding")
         UITestNavigation.hittable(app.buttons, "Discard", exactLabel: true).tap()
         assertCloses(title, "Discard must close the session editor")
     }
@@ -90,7 +90,7 @@ final class EditorSwipeDismissUITests: XCTestCase {
         assertStaysOpen(title, "A swipe-down must not close a New Block builder with unsaved edits")
         XCTAssertTrue(fixedWeekly.isSelected, "The edit must survive the swipe")
 
-        // The routine picker has no close button, so a swipe is its only way out.
+        // The routine picker closes with its CANCEL, and a swipe still closes it.
         UITestNavigation.hittable(app.buttons, "+ ATTACH ▸", exactLabel: true).tap()
         let picker = app.staticTexts.labeled("Choose Routine")
         UITestNavigation.dragSheetDown(from: picker, in: app)

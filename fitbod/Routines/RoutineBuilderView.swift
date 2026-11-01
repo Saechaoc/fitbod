@@ -156,7 +156,10 @@ public struct RoutineBuilderView: View {
             .safeAreaInset(edge: .top) {
                 VStack(spacing: 0) {
                     BRUHeaderBar(
-                        left: HeaderAction("‹ Back") {
+                        // T38: a sheet that edits data closes with CANCEL
+                        // (tradeoffs, "Sheet close labels"), which still asks
+                        // before it discards unsaved changes.
+                        left: HeaderAction("Cancel") {
                             handleDiscard()
                         },
                         center: editing == nil ? "New session" : "Edit session",
@@ -283,7 +286,7 @@ public struct RoutineBuilderView: View {
             draft.enforceBlockProgressionEligibility()
             initialSnapshot = draft.snapshotHash()
         }
-        // A swipe would skip the discard dialog that Back and Discard show.
+        // A swipe would skip the discard dialog that CANCEL and Discard show.
         .interactiveDismissDisabled(hasUnsavedChanges)
     }
 

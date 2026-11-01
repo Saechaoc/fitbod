@@ -46,7 +46,7 @@ public struct MuscleVolumeTargetEditor: View {
     public var body: some View {
         VStack(spacing: 0) {
             BRUHeaderBar(
-                left: HeaderAction("‹") { dismiss() },
+                left: HeaderAction("‹ Back") { dismiss() },
                 center: "Volume Targets",
                 right: nil
             )
@@ -110,6 +110,8 @@ public struct MuscleVolumeTargetEditor: View {
         let isExpanded = expandedSlug == muscle.slug
 
         VStack(spacing: 0) {
+            // T38: the row opens in place, so it carries the expand marker
+            // other BRU rows use, and VoiceOver reads whether it is open.
             Button {
                 expandedSlug = isExpanded ? nil : muscle.slug
             } label: {
@@ -125,12 +127,18 @@ public struct MuscleVolumeTargetEditor: View {
                             .tracking(1.0)
                             .foregroundStyle(Color.bruMuted)
                     }
+                    Text(isExpanded ? "▴" : "▾")
+                        .font(BRUFont.labelSmall)
+                        .foregroundStyle(Color.bruMuted)
+                        .accessibilityHidden(true)
                 }
                 .padding(.horizontal, 16)
                 .padding(.vertical, 12)
+                .frame(minHeight: 44)
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
+            .accessibilityValue(isExpanded ? "Expanded" : "Collapsed")
 
             if isExpanded {
                 if let t = target {

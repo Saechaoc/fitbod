@@ -26,6 +26,7 @@ public struct BlockBuilderView: View {
 
     @Environment(\.modelContext) private var ctx
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.colorScheme) private var colorScheme
     @Bindable public var draft: BlockDraft
 
     public let editing: Block?
@@ -380,7 +381,7 @@ public struct BlockBuilderView: View {
             .padding(NewBlockScreenTokens.cardPadding)
             .background(
                 RoundedRectangle(cornerRadius: NewBlockScreenTokens.phaseCardRadius, style: .continuous)
-                    .fill(NewBlockScreenTokens.faint)
+                    .fill(NewBlockScreenTokens.noteFill(colorScheme))
             )
     }
 }
@@ -397,6 +398,13 @@ fileprivate enum NewBlockScreenTokens {
     static let signal = Color.bruSignal
     // Signal-colored text on paper-role surfaces; `signal` stays the fill.
     static let signalText = Color.bruSignalText
+
+    /// The undo toast's and the save error band's fill. In light mode signal
+    /// text read at 4.40:1 on faint and reads at 4.6:1 on bg2; dark mode
+    /// keeps faint (T38, finding F100).
+    static func noteFill(_ scheme: ColorScheme) -> Color {
+        scheme == .dark ? faint : Color.bruBg2
+    }
 
     // Card surface system (rounded-card restyle 260528-vi2)
     static let card        = Color.bruPaper
@@ -466,6 +474,35 @@ private extension View {
                             lineWidth: NewBlockScreenTokens.cardStrokeWidth)
             )
             .shadow(color: NewBlockScreenTokens.cardShadow, radius: 10, x: 0, y: 3)
+    }
+
+    /// Reaches the touch target `horizontal` and `vertical` points past each
+    /// edge without moving anything in the layout, as `bruHitArea()` does,
+    /// but with a reach per axis, so a small control grows to 44pt without
+    /// crossing the few points between it and its neighbors (T38).
+    func newBlockTapTarget(horizontal: CGFloat, vertical: CGFloat) -> some View {
+        self
+            .padding(.horizontal, horizontal)
+            .padding(.vertical, vertical)
+            .contentShape(Rectangle())
+            .padding(.horizontal, -horizontal)
+            .padding(.vertical, -vertical)
+    }
+
+    /// The view with `column` beside its leading edge, their tops aligned,
+    /// when `isShown`; otherwise the view as it is.
+    @ViewBuilder
+    func leadingColumn<Column: View>(
+        _ isShown: Bool, spacing: CGFloat, @ViewBuilder _ column: () -> Column
+    ) -> some View {
+        if isShown {
+            HStack(alignment: .top, spacing: spacing) {
+                column()
+                self
+            }
+        } else {
+            self
+        }
     }
 }
 
@@ -905,6 +942,12 @@ fileprivate struct NewBlockStepperButton: View {
                 )
                 .contentShape(Rectangle())
                 .overlay(Rectangle().stroke(NewBlockScreenTokens.ink, lineWidth: 1.5))
+                // T38: at standard sizes the 32 by 30pt square takes taps
+                // 44pt across, reaching into the row's gaps around it.
+                .newBlockTapTarget(
+                    horizontal: dynamicTypeSize.isAccessibilitySize ? 0 : 6,
+                    vertical: dynamicTypeSize.isAccessibilitySize ? 0 : 7
+                )
         }
         .buttonStyle(.plain)
     }
@@ -1021,10 +1064,7 @@ fileprivate struct NewBlockPhasesHeader: View {
             // White card capsule "+ ADD PHASE" — two-tone coral/ink label (260610-dbz)
             Button(action: onAddPhase) {
                 capsule(
-                    Text("+ ")
-                        .foregroundStyle(NewBlockScreenTokens.signalText)
-                    + Text("ADD PHASE")
-                        .foregroundStyle(NewBlockScreenTokens.ink)
+                    Text("\(Text("+ ").foregroundStyle(NewBlockScreenTokens.signalText))\(Text("ADD PHASE").foregroundStyle(NewBlockScreenTokens.ink))")
                 )
             }
             .buttonStyle(.plain)
@@ -1270,10 +1310,13 @@ fileprivate struct NewBlockProgressionChart: View {
         static let weekLabelLead: CGFloat = 4
         /// Where a phase label's middle sits below the top of the plot.
         static let phaseLabelY: CGFloat = 12
-        /// The HIGH and LOW anchors' leading edge at accessibility sizes.
-        static let anchorInset: CGFloat = 8
-        /// The space between HIGH or LOW and its gridline at accessibility sizes.
-        static let anchorGap: CGFloat = 2
+        /// The HIGH and LOW gridlines, as fractions of the y range above its
+        /// low end.
+        static let highLine: Double = 0.82
+        static let lowLine: Double = 0.18
+        /// The space between the HIGH and LOW column and the plot at
+        /// accessibility sizes.
+        static let anchorGap: CGFloat = 4
     }
 
     /// Each contiguous span's start and end, as fractions of the plot's width.
@@ -1308,30 +1351,37 @@ fileprivate struct NewBlockProgressionChart: View {
         }
     }
 
-    /// HIGH or LOW. As the mock draws it, the anchor sits on its gridline
-    /// near the plot's leading edge. At accessibility sizes it would cover
-    /// the phase labels and run past that edge, so it starts 8pt inside the
-    /// plot and stands between the two gridlines, under HIGH's and over LOW's.
-    @ViewBuilder
-    private func anchorLabel(_ text: String, centerX: CGFloat, lineY: CGFloat, below: Bool, in size: CGSize) -> some View {
-        let label = Text(text)
+    /// HIGH or LOW, in muted micro type.
+    private func anchorText(_ text: String) -> some View {
+        Text(text)
             .font(NewBlockType.micro)
             .tracking(0.6)
             .foregroundStyle(NewBlockScreenTokens.muted)
-        if dynamicTypeSize.isAccessibilitySize {
-            label
+    }
+
+    /// HIGH or LOW on its gridline near the plot's leading edge, as the mock
+    /// draws it. At accessibility sizes `anchorColumn` holds them instead.
+    private func anchorLabel(_ text: String, centerX: CGFloat, lineY: CGFloat) -> some View {
+        anchorText(text)
+            .position(x: centerX, y: lineY)
+    }
+
+    /// HIGH over LOW, each level with its gridline, in a column beside the
+    /// plot at accessibility sizes. Inside the plot their larger text sat on
+    /// the plotted lines, LOW under the intensity line's first point (T38,
+    /// finding F190). The plot starts at the chart's top, so a gridline
+    /// lies its fraction of the plot's height down the column.
+    private var anchorColumn: some View {
+        let height = ChartLayout.plotAreaHeight
+        return ZStack(alignment: .topTrailing) {
+            Color.clear
+                .frame(width: 0, height: height)
+            anchorText("HIGH")
                 .fixedSize()
-                .padding(.leading, ChartLayout.anchorInset)
-                .padding(below ? .top : .bottom, ChartLayout.anchorGap)
-                .frame(
-                    width: size.width,
-                    height: max(0, below ? size.height - lineY : lineY),
-                    alignment: below ? .topLeading : .bottomLeading
-                )
-                .position(x: size.width / 2, y: below ? (lineY + size.height) / 2 : lineY / 2)
-        } else {
-            label
-                .position(x: centerX, y: lineY)
+                .alignmentGuide(.top) { $0[VerticalAlignment.center] - height * (1 - ChartLayout.highLine) }
+            anchorText("LOW")
+                .fixedSize()
+                .alignmentGuide(.top) { $0[VerticalAlignment.center] - height * (1 - ChartLayout.lowLine) }
         }
     }
 
@@ -1562,7 +1612,7 @@ fileprivate struct NewBlockProgressionChart: View {
                     let range = hi - lo
                     AxisMarks(
                         position: .leading,
-                        values: [lo + range * 0.18, lo + range * 0.82]
+                        values: [lo + range * ChartLayout.lowLine, lo + range * ChartLayout.highLine]
                     ) { _ in
                         AxisGridLine()
                             .foregroundStyle(NewBlockScreenTokens.hair)
@@ -1615,15 +1665,17 @@ fileprivate struct NewBlockProgressionChart: View {
                                 .frame(width: max(0, plotEnd - plotStart))
                                 .position(x: (plotStart + plotEnd) / 2, y: ChartLayout.phaseLabelY)
 
-                            // HIGH / LOW y-anchor labels on the leading edge
-                            let lo = yDomain.lowerBound
-                            let hi = yDomain.upperBound
-                            let range = hi - lo
-                            let highY = proxy.position(forY: lo + range * 0.82) ?? 0
-                            let lowY  = proxy.position(forY: lo + range * 0.18) ?? geo.size.height
+                            // HIGH / LOW y-anchor labels on the leading edge; at
+                            // accessibility sizes they stand beside the plot (T38).
+                            if !dynamicTypeSize.isAccessibilitySize {
+                                let lo = yDomain.lowerBound
+                                let range = yDomain.upperBound - lo
+                                let highY = proxy.position(forY: lo + range * ChartLayout.highLine) ?? 0
+                                let lowY  = proxy.position(forY: lo + range * ChartLayout.lowLine) ?? geo.size.height
 
-                            anchorLabel("HIGH", centerX: 18, lineY: highY, below: true, in: geo.size)
-                            anchorLabel("LOW", centerX: 16, lineY: lowY, below: false, in: geo.size)
+                                anchorLabel("HIGH", centerX: 18, lineY: highY)
+                                anchorLabel("LOW", centerX: 16, lineY: lowY)
+                            }
 
                             // Value callout pill above the selected week
                             if let sel = selectedWeek,
@@ -1665,6 +1717,9 @@ fileprivate struct NewBlockProgressionChart: View {
                             }
                         }
                     }
+                }
+                .leadingColumn(dynamicTypeSize.isAccessibilitySize, spacing: ChartLayout.anchorGap) {
+                    anchorColumn
                 }
             }
         }
@@ -2484,6 +2539,7 @@ fileprivate struct NewBlockAddPhaseTypeSheet: View {
 // there; do NOT import or reference them — separate token worlds per 09-RESEARCH Pattern 3).
 fileprivate struct NewBlockSplitBand: View {
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    @Environment(\.colorScheme) private var colorScheme
 
     @Bindable var draft: BlockDraft
     /// False while the edited block is active, so it offers no SWAP or + ATTACH.
@@ -2601,7 +2657,18 @@ fileprivate struct NewBlockSplitBand: View {
                     Text("\(BRUCountLabel.text(draft.trainingDays.count, "day")) / \(BRUCountLabel.text(slotCount, "session"))")
                         .font(NewBlockType.label)
                         .tracking(NewBlockScreenTokens.labelTracking)
-                        .foregroundStyle(Color.bruAmber) // BRU token, dark-mode-aware (WR-03)
+                        // T38 (F102): amber text read at 2.14:1 on light paper,
+                        // so in light mode the hint is a dark label on an amber
+                        // fill, drawn past the text without moving it; dark mode
+                        // keeps its amber text (WR-03).
+                        .foregroundStyle(colorScheme == .dark ? Color.bruAmber : Color.bruOnSignal)
+                        .background {
+                            if colorScheme != .dark {
+                                Color.bruAmber
+                                    .padding(.horizontal, -4)
+                                    .padding(.vertical, -2)
+                            }
+                        }
                         .padding(.horizontal, NewBlockScreenTokens.sidePadding)
                         .padding(.bottom, NewBlockScreenTokens.rowGap)
                 }
@@ -2660,6 +2727,8 @@ fileprivate struct NewBlockSplitBand: View {
 // Mode chip for the split band — copy-adapted from BlockOverviewScreen.ModeChip
 // using NewBlockScreenTokens.
 // T25: at accessibility sizes it is a 44pt tap target.
+// T38: at standard sizes the chip draws as before inside a 44pt-tall tap
+// target, as tall as the Scheduling row it sits in.
 fileprivate struct NewBlockModeChip: View {
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
@@ -2690,6 +2759,8 @@ fileprivate struct NewBlockModeChip: View {
                         .stroke(NewBlockScreenTokens.ink,
                                 lineWidth: selected ? 1.5 : 1.0)
                 )
+                .frame(minHeight: 44)
+                .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .accessibilityLabel("\(label) scheduling")
@@ -2699,6 +2770,9 @@ fileprivate struct NewBlockModeChip: View {
 
 // Day toggle chip for the split band — copy-adapted from BlockOverviewScreen.DayToggleChip.
 // T25: at accessibility sizes it grows to its letter and to a 44pt tap target.
+// T38: at standard sizes the 28pt chip takes taps 44pt tall, and 1pt past
+// each side, which makes the 42pt chips of the 390pt phone 44pt wide and
+// leaves 2pt of the 4pt gap between neighbors.
 fileprivate struct NewBlockDayToggleChip: View {
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
@@ -2722,6 +2796,10 @@ fileprivate struct NewBlockDayToggleChip: View {
                     Rectangle()
                         .stroke(NewBlockScreenTokens.ink,
                                 lineWidth: selected ? 1.5 : 1.0)
+                )
+                .newBlockTapTarget(
+                    horizontal: dynamicTypeSize.isAccessibilitySize ? 0 : 1,
+                    vertical: dynamicTypeSize.isAccessibilitySize ? 0 : 8
                 )
         }
         .buttonStyle(.plain)
@@ -2771,9 +2849,10 @@ private struct NewBlockDayGridLayout: Layout {
 }
 
 // Split picker sheet — lists non-archived Splits, tap selects and dismisses.
-// BRU chrome: ScrollView + BRUSectionHead + row + BRUDivider(.hair) matching
-// BlockOverviewScreen.SplitPickerSheet. NO List / NO .navigationTitle — system
-// list chrome and nav-bar titles violate the BRU contract.
+// BRU chrome: BRUHeaderBar + row + BRUDivider(.hair). NO List / NO
+// .navigationTitle — system list chrome and nav-bar titles violate the BRU
+// contract.
+// T38: the header's CANCEL closes the sheet without choosing a routine.
 fileprivate struct NewBlockSplitPickerSheet: View {
     @Query(filter: #Predicate<Split> { !$0.isArchived }, sort: \Split.name)
     private var splits: [Split]
@@ -2784,7 +2863,7 @@ fileprivate struct NewBlockSplitPickerSheet: View {
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
-                BRUSectionHead("Choose Routine")
+                BRUHeaderBar.slots(left: .cancel, center: "Choose Routine")
 
                 ScrollView {
                     LazyVStack(spacing: 0) {
@@ -2823,6 +2902,8 @@ fileprivate struct NewBlockSplitPickerSheet: View {
 
 // Transient undo toast shown above the bottom action bar after context-menu delete.
 fileprivate struct NewBlockUndoToast: View {
+    @Environment(\.colorScheme) private var colorScheme
+
     let onUndo: () -> Void
 
     var body: some View {
@@ -2847,7 +2928,7 @@ fileprivate struct NewBlockUndoToast: View {
         }
         .padding(.horizontal, NewBlockScreenTokens.sidePadding)
         .padding(.vertical, NewBlockScreenTokens.tightGap)
-        .background(NewBlockScreenTokens.faint)
+        .background(NewBlockScreenTokens.noteFill(colorScheme))
         .overlay(
             Rectangle()
                 .stroke(NewBlockScreenTokens.hair, lineWidth: NewBlockScreenTokens.rule)
@@ -2880,7 +2961,10 @@ fileprivate struct NewBlockBottomActionBar: View {
 
     var body: some View {
         buttonLayout {
-            // Ghost-outlined CANCEL button — faint border, muted text, no fill
+            // Ghost-outlined CANCEL button: muted outline and text, no fill.
+            // T38: the outline was the hairline token, at 1.47:1; muted reads
+            // at 3:1 or more against the bar in both modes, as the text does
+            // at 4.5:1.
             Button(action: onCancel) {
                 Text("CANCEL")
                     .font(NewBlockType.cta)
@@ -2893,7 +2977,7 @@ fileprivate struct NewBlockBottomActionBar: View {
             .buttonStyle(.plain)
             .overlay(
                 RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .stroke(NewBlockScreenTokens.cardStroke, lineWidth: 1)
+                    .stroke(NewBlockScreenTokens.muted, lineWidth: 1)
             )
 
             // Filled primary button — fills remaining width
