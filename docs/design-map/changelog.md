@@ -2,6 +2,20 @@
 
 Newest first: one entry for each stage of [plan.md](plan.md) up to S2, then one for each commit.
 
+## 2026-11-01: S3, Today screens
+
+- Wrote the 18 screen files of the Today tab: Today and its launch splash, the logger and its sheets, History, the workout summary, the weekly recap, the block review and the muscle detail.
+  Each file covers every capture of its screen on both phones, after a second review of the Pro Max captures.
+- `conventions.md` gained five rules that the writers needed.
+  - A screen whose header shows sample data, such as a muscle, takes a name for its title, such as `Muscle detail`.
+  - The first `tab` is the screen's home, where the navigation map draws it in full.
+  - The `img` list orders the other configurations: 17e dark, 17e AX3, Pro Max light, then Pro Max AX3.
+  - A tab root's entry point is the tab bar, which is not an edge, and Today's launch is `x-launch`.
+  - A dialog's node in the map takes the dialog's own title, question mark included.
+- `navigation.md` moves from this commit to the Settings and dialogs commit, because `check_map.py` compares its edges with the `presents_from` of all 91 screen files.
+- `check_map.py` now checks that every table row has as many cells as its header.
+  The Pro Max review found rows with an extra cell that the check had missed.
+
 ## 2026-11-01: S3, iPhone 17 Pro Max
 
 - Captured the iPhone 17 Pro Max in light mode: 208 screenshots at default text from the Main tests and all 20 walks, and 79 at AX3 from the Main tests.

@@ -188,6 +188,26 @@ def table(text: str, first: str) -> tuple[list[str], list[list[str]]]:
     return [], []
 
 
+TABLE_RULE = re.compile(r"\|(\s*:?-+:?\s*\|)+")
+
+
+def check_tables(report: Report, where: str, text: str) -> None:
+    """Every table row has as many cells as its header; otherwise a cell
+    renders empty or spills into the next column."""
+    # Blank out code blocks but keep their lines, so line numbers stay right.
+    lines = FENCE.sub(lambda match: "\n" * match.group(0).count("\n"), text).splitlines()
+    width = 0
+    for number, line in enumerate(lines, 1):
+        cells = split_row(line)
+        if not cells:
+            width = 0
+        elif not width:
+            if number < len(lines) and TABLE_RULE.fullmatch(lines[number].strip()):
+                width = len(cells)
+        elif not TABLE_RULE.fullmatch(line.strip()) and len(cells) != width:
+            report.error(f"{where}:{number}", f"the table row has {len(cells)} cells, but its header has {width}")
+
+
 def cell_ids(cell: str) -> list[str]:
     plain = LINK.sub(lambda match: match.group(1), cell).replace("`", "")
     return [part.strip() for part in plain.split(",") if part.strip()]
@@ -492,6 +512,7 @@ def check_text_files(report: Report, audit_ids: set[str], referenced: set[pathli
                 report.error(f"{where}:{number}", "uses the em dash; use - instead")
         if path.suffix != ".md":
             continue
+        check_tables(report, where, text)
         stem = where.removesuffix(".md").replace("/", "__")
         blocks += [(f"{stem}-{index}", block) for index, block in enumerate(BLOCK.findall(text), 1)]
         for _, target in links(text):
@@ -574,6 +595,11 @@ def self_test() -> int:
                                                                             ("T110", "../t/T110-x.md")]
     assert links('<img src="img/a.png" width="300" alt="A"> `<img src="no.png">`') == [("", "img/a.png")]
     assert split_row("| D-01 | today | a \\| b | x | major | - |") == ["D-01", "today", "a \\| b", "x", "major", "-"]
+    tables = Report(partial=False)
+    check_tables(tables, "t.md", "| A | B |\n|---|---|\n| 1 | 2 |\n| 1 | 2 | 3 |\n| a \\| b | 2 |\n\n"
+                                 "```\n| x |\n|---|\n| 1 | 2 |\n```\n| C |\n| --- |\n| 1 | 2 |\n")
+    assert tables.errors == ["t.md:4: the table row has 3 cells, but its header has 2",
+                             "t.md:14: the table row has 2 cells, but its header has 1"], tables.errors
     assert cell_ids("[today](screens/today.md), `history`") == ["today", "history"]
     assert CODE_REF.findall("see `fitbod/Views/TodayView.swift:38` and `fitbod/App/*Seed.swift`") == [
         "fitbod/Views/TodayView.swift:38"]

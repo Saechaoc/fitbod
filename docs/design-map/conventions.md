@@ -46,22 +46,24 @@ The front matter is plain `key: value` lines and `[a, b]` lists, read without a 
 |---|---|
 | `id` | the file name without `.md` |
 | `kind` | `screen` (a tab root or a pushed screen), `sheet`, `cover`, `dialog`, `alert` or `system` (drawn by iOS) |
-| `title` | the title as the lifter reads it, in sentence case even where the app draws capitals, with no double quotes |
+| `title` | the title as the lifter reads it, in sentence case even where the app draws capitals, with no double quotes; where the header shows sample data, such as a muscle or a week, or shares its word with a different screen, a name for the screen instead, such as `Muscle detail` or `Exercise history`, and the body says what the header reads; a dialog or alert keeps its title as shown |
 | `view` | the SwiftUI view that draws it, as `path:line` |
-| `tab` | `today`, `program`, `progress`, `library`, `settings` (inside the Settings sheet), `none`, or a list of them |
+| `tab` | `today`, `program`, `progress`, `library`, `settings` (inside the Settings sheet), `none`, or a list of them; the first is the screen's home, where `navigation.md` draws it in full |
 | `presents_from` | the ids of the screens that open it; `x-launch` stands for the app's launch |
 | `closes_with` | `back`, `cancel`, `done`, `close`, `verb` (a named action such as SAVE) or `none` |
 | `mock` | the `bru-screens/` mock-up it was designed from, or `none` |
 | `seed` | the launch arguments of the main screenshot, or `none` |
 | `captured` | the capture date of the main screenshot and the commit, such as `2026-11-01 61353088`, or `none` when no screenshot exists |
-| `img` | every screenshot of this screen: the 17e light default main state, then its other states by name, then the main state in each other configuration |
+| `img` | every screenshot of this screen: the 17e light default main state, then its other states by name, then each other configuration in the order 17e dark, 17e AX3, Pro Max light, Pro Max AX3, with its main state before its other states |
 | `tree` | the accessibility tree, or `none` |
 
 The body starts with one sentence on what the lifter does here.
 The main screenshot follows as `<img src="img/17e-default-light-<id>.png" width="300" alt="...">`, so the page shows it at a readable size.
 These sections follow, in this order: (checked)
 
-1. `## Entry points`: a table of From, Tap and Kind (push, sheet, cover or dialog).
+1. `## Entry points`: a table of From, Tap and Kind (push, sheet, cover, dialog or system).
+   A tab root's From is `Tab bar` with the Kind `tab switch`, which is not an edge, because the tab bar is not a screen.
+   Today also has `App launch`, which is `x-launch` in `presents_from`.
 2. `## Exits`: a table of Control, Goes to, Kind and Closes with.
 3. `## States`: a table of State, How to reach it and Screenshot.
 4. `## Compared with the mock-up`: a table of In the mock-up, In the app and Difference.
@@ -110,7 +112,8 @@ Each pattern is a `### P-<n> <rule broken>` heading with the design-system rule,
 ## Mermaid
 
 - A node id is the screen id with each `-` turned into `_`. (checked)
-- A screen is drawn as `id["Title"]`, a sheet or cover as `id(["Title"])`, a dialog or alert as `id{{"Title?"}}`, and system UI as `id[["Title"]]`. (checked in `navigation.md`)
+- A screen is drawn as `id["Title"]`, a sheet or cover as `id(["Title"])`, a dialog or alert as `id{{"Title"}}`, and system UI as `id[["Title"]]`. (checked in `navigation.md`)
+  The title is the one in the screen's file, so a dialog's question mark comes from its title, as in `End block?`.
 - An edge `-->` is a push, and an edge `-.->` is a sheet, cover, dialog or system presentation.
   A label goes inside the arrow, as in `-->|Sessions|`.
 - Each line holds one node or one chain of edges.
