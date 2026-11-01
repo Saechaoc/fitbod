@@ -29,8 +29,11 @@ import SwiftUI
 /// - Right metadata: `BRUFont.labelSmall`, tracking 1.2, uppercase transform.
 ///   - When `rightAction` is `nil`: renders in `bruMuted` (display only).
 ///   - When `rightAction` is non-nil: renders in `bruSignal` and is tappable.
+/// - Accessibility sizes: the right metadata sits under the title, so the
+///   title has the full width and breaks only between its words.
 /// - Accessibility: adds `.isHeader` trait so VoiceOver announces the section.
 public struct BRUSectionHead: View {
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     // MARK: - Properties
 
@@ -61,14 +64,16 @@ public struct BRUSectionHead: View {
         VStack(spacing: 0) {
             BRUDivider(.ink)
 
-            HStack {
+            rowLayout {
                 Text(title)
                     .font(.bru(.grotesk, size: 14))
                     .tracking(0)
                     .textCase(.uppercase)
                     .foregroundStyle(Color.bruInk)
 
-                Spacer()
+                if !dynamicTypeSize.isAccessibilitySize {
+                    Spacer()
+                }
 
                 if let right {
                     if let action = rightAction {
@@ -92,6 +97,7 @@ public struct BRUSectionHead: View {
                     }
                 }
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.horizontal, 16)
             .padding(.vertical, 12)
             .background(Color.bruPaper)
@@ -100,6 +106,16 @@ public struct BRUSectionHead: View {
         }
         // VoiceOver announces the section head as a header landmark (UI-SPEC line 688).
         .accessibilityAddTraits(.isHeader)
+    }
+
+    /// One row at standard sizes. At accessibility sizes the right label
+    /// goes under the title: beside it, the title's longest word could
+    /// outgrow the width left over and break mid-word ("PERFORMANC" over
+    /// "E").
+    private var rowLayout: AnyLayout {
+        dynamicTypeSize.isAccessibilitySize
+            ? AnyLayout(VStackLayout(alignment: .leading, spacing: BRUMetrics.Spacing.tight))
+            : AnyLayout(HStackLayout())
     }
 }
 
