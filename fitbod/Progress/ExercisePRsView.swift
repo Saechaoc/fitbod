@@ -333,7 +333,7 @@ private struct PRsHost: View {
         let dateText = entry.completedAt.formatted(.dateTime.month().day().year()).uppercased()
         // The three columns stack at accessibility sizes, as in
         // TodayStatStrip, and from xxxLarge, where WEIGHT PR and VOLUME PR
-        // outgrow the 110pt kind column and wrapped to two lines.
+        // are wider than the 110pt kind column and would wrap to two lines.
         let isStacked = dynamicTypeSize >= .xxxLarge
         let columns = isStacked
             ? AnyLayout(VStackLayout(alignment: .leading, spacing: 4))

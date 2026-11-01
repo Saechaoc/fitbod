@@ -217,7 +217,7 @@ final class PRListAndSeriesUITests: XCTestCase {
     /// T85: at xxxLarge the 110pt kind column is too narrow for WEIGHT PR
     /// and VOLUME PR, which wrapped to two lines. Every kind label keeps to
     /// one line, no taller than a bucket header set in the same type.
-    @MainActor
+    @MainActor // XCUIApplication and UITestNavigation are main-actor types.
     func testKindLabelsStayOnOneLineAtXXXLarge() throws {
         let app = UITestNavigation.launch(UITestNavigation.progressHistory, textSize: .xxxl)
         let segments = openIntentToggle(in: app)
@@ -434,7 +434,7 @@ final class PRListAndSeriesUITests: XCTestCase {
 
     /// The height of every kind label the list has laid out, read in one
     /// snapshot. A row is one button, so its labels are read inside it.
-    @MainActor
+    @MainActor // XCUIElement.snapshot() is main-actor isolated.
     private func kindLabelHeights(_ kinds: [String], in list: XCUIElement) throws -> [(kind: String, height: CGFloat)] {
         var found: [(kind: String, height: CGFloat)] = []
         func walk(_ node: XCUIElementSnapshot) {
