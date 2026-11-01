@@ -18,6 +18,11 @@
 //  Its "‹", "•••" and footer "Save inventory" / "Done ▸" (and the 24pt bruBg filler
 //  under that footer) are gone. Its values never wrap inside a number.
 //
+//  T107: the EQUIPMENT heading drops "TAP TO CHANGE": the calculator only shows the
+//  equipment and the inventory picked in Plate Inventory, and BAR and INVENTORY do
+//  nothing when tapped. Each quick-adjust chip takes taps in a 44pt band; its drawn
+//  chip keeps its size.
+//
 //  Input init unchanged: `public init(equipment: PlateEquipmentKind, inventory: PlateInventory)`
 //  Computed math (parsedTarget, parsedBar, barWeightExceedsTarget, solvedStack) preserved verbatim.
 //
@@ -296,6 +301,7 @@ public struct PlateCalculatorSheet: View {
     }
 
     /// Quick-adjust chip: tapping mutates `targetWeightText` by `delta`.
+    /// The chip draws at its own size inside a 44pt band that takes the tap.
     private func quickAdjustChip(label: String, delta: Double) -> some View {
         Button {
             // T-03.2-13 mitigation: Double can safely represent any plausible plate
@@ -304,7 +310,11 @@ public struct PlateCalculatorSheet: View {
             let newValue = max(0, current + delta)
             targetWeightText = formatted(newValue)
         } label: {
+            // Frame and hit shape sit inside the label: a frame outside the
+            // Button does not grow what it takes taps on.
             BRUChip(label)
+                .frame(minHeight: BRUMetrics.touchTarget)
+                .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         // Accessibility: announce the intended action including unit per 03-UI-SPEC line 502
@@ -383,9 +393,11 @@ public struct PlateCalculatorSheet: View {
 
     /// Equipment 2-column grid: bar + inventory display.
     /// Per 03-UI-SPEC lines 247-251 / plate-calc.jsx lines 85-97.
+    /// Both cells only show what Plate Inventory picked, so the heading
+    /// offers no "TAP TO CHANGE" (T107).
     private var equipmentGrid: some View {
         VStack(spacing: 0) {
-            BRUSectionHead("Equipment", right: "Tap to change")
+            BRUSectionHead("Equipment")
 
             HStack(spacing: 0) {
                 // Left column: BAR

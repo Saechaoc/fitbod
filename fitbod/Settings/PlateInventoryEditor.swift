@@ -12,6 +12,10 @@
 //  works on iOS 26 and closes like other rows.
 //  T19: the header gains ‹ BACK, since the system bar stays hidden, and the footer
 //  drops "Save inventory": every edit already saves as it is made.
+//  T107: the equipment tabs sit in equal cells, as many to a row as keep every label
+//  on one line, so no tab breaks inside a word ("DUMBBELL" over "S" from XXXL). The
+//  24pt bruBg filler under Done ▸ is gone: inside the Settings sheet it showed as a
+//  gray band above the home indicator, whose safe area already shows the paper.
 //
 //  UI-SPEC §PlateInventoryEditor (verbatim copy in all labels / alerts / empty states).
 //  Pattern: PATTERNS.md @Query + @Bindable write-through (SettingsView analog).
@@ -93,11 +97,6 @@ public struct PlateInventoryEditor: View {
 
             // Footer — 2pt bruInk top rule + primary "Done ▸"
             footerBar
-
-            // 24pt bruBg safe-area filler
-            Rectangle()
-                .fill(Color.bruBg)
-                .frame(height: 24)
         }
         .background(Color.bruPaper)
         // No .navigationTitle — BRUHeaderBar owns that chrome
@@ -141,26 +140,17 @@ public struct PlateInventoryEditor: View {
     /// Custom 4-segment bruInk tab strip — replaces Picker(.segmented).
     /// Selected segment: bruInk fill + bruPaper text.
     /// Unselected: bruPaper fill + bruInk text.
-    /// 1pt bruInk vertical separators between segments.
+    /// 1pt bruInk separators between segments: the strip's ink shows in the
+    /// 1pt gaps `EquipmentTabLayout` leaves between them.
     /// 2pt bruInk bottom rule beneath the strip.
     private var equipmentTabStrip: some View {
         VStack(spacing: 0) {
-            HStack(spacing: 0) {
+            EquipmentTabLayout(spacing: 1) {
                 ForEach(PlateEquipmentKind.allCases, id: \.self) { kind in
                     tabButton(for: kind)
-
-                    // 1pt vertical separator between buttons (not after last)
-                    if kind != PlateEquipmentKind.allCases.last {
-                        Rectangle()
-                            .fill(Color.bruInk)
-                            .frame(width: 1)
-                    }
                 }
             }
-            // The separators have no height of their own. Without this the
-            // strip takes a share of the free height beside the plates.
-            .fixedSize(horizontal: false, vertical: true)
-            .background(Color.bruPaper)
+            .background(Color.bruInk)
             // Outer 1.5pt bruInk border around the full strip (per UI-SPEC line 441)
             .overlay {
                 Rectangle()
@@ -189,8 +179,12 @@ public struct PlateInventoryEditor: View {
                 .font(BRUFont.labelSmall)
                 .tracking(1.2)
                 .textCase(.uppercase)
+                .multilineTextAlignment(.center)
                 .foregroundStyle(isActive ? Color.bruPaper : Color.bruInk)
-                .frame(maxWidth: .infinity)
+                // Keeps the label clear of the separators.
+                .padding(.horizontal, 2)
+                // Fills its cell, which a taller tab in its row can stretch.
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .padding(.vertical, 10)
                 .background(isActive ? Color.bruInk : Color.bruPaper)
         }
@@ -486,6 +480,64 @@ private struct AddPlateSheet: View {
         try? ctx.save()
         newPlateWeightText = ""
         dismiss()
+    }
+}
+
+// MARK: - EquipmentTabLayout
+
+/// Lays the equipment tabs out in equal cells, `spacing` apart, as many to a
+/// row as keep the widest tab's label on one line: all four across, else two
+/// by two, else one per row (T107). Each row is as tall as its tallest tab.
+private struct EquipmentTabLayout: Layout {
+    let spacing: CGFloat
+
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+        let columns = columns(in: proposal.width, subviews: subviews)
+        let width = proposal.width ?? CGFloat(columns) * widest(subviews) + CGFloat(columns - 1) * spacing
+        let rows = rowHeights(of: subviews, columns: columns, cell: cellWidth(in: width, columns: columns))
+        return CGSize(width: width, height: rows.reduce(0, +) + CGFloat(max(0, rows.count - 1)) * spacing)
+    }
+
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+        let columns = columns(in: bounds.width, subviews: subviews)
+        let cell = cellWidth(in: bounds.width, columns: columns)
+        var y = bounds.minY
+        for (row, height) in rowHeights(of: subviews, columns: columns, cell: cell).enumerated() {
+            for column in 0..<columns where row * columns + column < subviews.count {
+                subviews[row * columns + column].place(
+                    at: CGPoint(x: bounds.minX + CGFloat(column) * (cell + spacing), y: y),
+                    proposal: ProposedViewSize(width: cell, height: height)
+                )
+            }
+            y += height + spacing
+        }
+    }
+
+    /// The most columns, of all the tabs, two or one, whose equal cells
+    /// each fit the widest one-line label.
+    private func columns(in width: CGFloat?, subviews: Subviews) -> Int {
+        guard let width else { return subviews.count }
+        let widest = widest(subviews)
+        return [subviews.count, 2].first { columns in
+            CGFloat(columns) * widest + CGFloat(columns - 1) * spacing <= width
+        } ?? 1
+    }
+
+    /// The widest tab's one-line width.
+    private func widest(_ subviews: Subviews) -> CGFloat {
+        subviews.map { $0.sizeThatFits(.unspecified).width }.max() ?? 0
+    }
+
+    private func cellWidth(in width: CGFloat, columns: Int) -> CGFloat {
+        max(0, (width - CGFloat(columns - 1) * spacing) / CGFloat(columns))
+    }
+
+    private func rowHeights(of subviews: Subviews, columns: Int, cell: CGFloat) -> [CGFloat] {
+        stride(from: 0, to: subviews.count, by: columns).map { start in
+            subviews[start..<min(start + columns, subviews.count)]
+                .map { $0.sizeThatFits(ProposedViewSize(width: cell, height: nil)).height }
+                .max() ?? 0
+        }
     }
 }
 
