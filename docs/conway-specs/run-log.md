@@ -167,6 +167,9 @@ The DerivedData folders live in `~/Library/Developer/Xcode/DerivedData/`.
 - 2026-11-01 07:46 T130 (data loss) dispatched on L2 (task_cd70becf8833, ctx_161d461d7c38) with T38's evidence bound, the F296 heads-up and the standing answer plus a pointer to docs/DEVELOPMENT.md.
 - 2026-11-01 07:47 T122 settled done as not reproduced at default text (no code, no commit; evidence archived): the fixed 64pt step fits 64.67pt rows at default text; the AX3 miss is F344, deferred. F346 -> hint on T121.
 - 2026-11-01 07:47 T125 dispatched on L1 (task_c524f10a7aef, ctx_00197acb689c) with T107's evidence bound, the F296 heads-up and the standing answer plus the guide's scaled-checks pointer.
+- 2026-11-01 07:48 T128 question msg_41d3c8ac6b5c: yes. New fitbodUITests/ReseedRelaunchUITests.swift granted and held for T128: one relaunch journey (seeded workout, relaunch with the argument-domain stamp '-exercise_seed_version 0' so the app re-seeds while Today shows, relaunch without flags, History shows the finished Push A with its bench press, keepAlways screenshot), red on the old importer first; docs/DEVELOPMENT.md requires a relaunch check for stored-data changes. FYI noted: simctl defaults cannot see the app's containerized prefs; T128 reads and writes the container plist.
+- 2026-11-01 07:54 T125 question msg_24880f5f34b9: b. The logger shows a set's plate stack only for barbell and dumbbell exercises (a gate in SetRow.swift; no mapping change), because SessionFactory.equipmentKind sends cable, machine, bands, bodyweight, weighted bodyweight, kettlebell and other to the barbell inventory, which would show a 45 lb bar for a cable set. The mapping itself feeds prescriptions too (SessionFactory.swift:376-381 uses that inventory's bar weight and plates), so it becomes its own correctness ticket (F347).
+- 2026-11-01 07:55 New Phase 3 T141 (F347, prescription math) and tradeoffs entries for T125's answer and T141's rule. Next new ticket id: T142.
 
 ## Ledger
 
@@ -338,6 +341,7 @@ Keep the accepted full-tour evidence, including implementation retries, and prio
 | T138 | 3 | skipped |  |  |  |  |  | deferred 2026-11-01 under docs/DEVELOPMENT.md (prototype stage): VoiceOver refinement and performance work; comes back when its workflow is stable or at release readiness |
 | T139 | 3 | todo |  |  |  |  |  |  |
 | T140 | 3 | todo |  |  |  |  |  |  |
+| T141 | 3 | todo |  |  |  |  |  |  |
 
 ## Phase gates
 
@@ -482,6 +486,7 @@ Later eligible asks keep waiting, and no path is handed off while any live attem
 - ~~grant `fitbodTests/WeekDetailRowsTests.swift`: ticket T118, attempt T118, dispatch `ctx_8b2e3e4c8478`, message `msg_a095a711976b`, order 101, 2026-11-01 06:49~~ (settled T118 2026-11-01 07:35)
 - ~~grant `fitbod/Sessions/SessionHistoryRoute.swift`: ticket T118, attempt T118, dispatch `ctx_8b2e3e4c8478`, message `msg_c1e838651e51`, order 102, 2026-11-01 07:02~~ (settled T118 2026-11-01 07:35)
 - ~~grant `fitbodUITests/NewBlockLayoutUITests.swift`: ticket T120, attempt T120, dispatch `ctx_babd4b763767`, message `msg_50d0143b082d`, order 103, 2026-11-01 07:14~~ (settled T120 2026-11-01 07:45)
+- grant `fitbodUITests/ReseedRelaunchUITests.swift`: ticket T128, attempt T128, dispatch `ctx_084d0caed3f0`, message `msg_41d3c8ac6b5c`, order 104, 2026-11-01 07:48
 
 ## HIGH and CRITICAL impact ratings
 
@@ -852,3 +857,4 @@ Each one becomes a ticket from T49 on.
 - F344 (T122 repro): the routine screen's session drag uses a fixed 64pt step; at default text rows are 64.67pt (65.67pt pitch), so drags land right, but at AX3 rows are 194pt (195pt pitch) and a one-row drag lands two rows down -> deferred under docs/DEVELOPMENT.md (AX3 behavior on one screen), no ticket; comes back when the workflow is stable.
 - F345 (T120 probes, deferred with T120): in New Block a short slow drag on a phase card opens its editor and never scrolls; taps or short slow drags in either margin or between cards open the editor (F261, 12 of 12 at AX3 and default text); a short slow drag on the AX3 chart does not scroll; 151pt default-speed margin drags beside a card do not scroll; two phases of the same kind would give steppers duplicate names -> recorded with T120's deferral (New Block is being redesigned).
 - F346 (T122 probe): an XCUITest drag at the default velocity scrolled the routine screen about 2.25x the finger's travel, while .slow moved it 1:1; this also applies to NewBlockLayoutUITests.scroll -> hint on T121 (test speed).
+- F347 (T125 question): SessionFactory.equipmentKind maps every equipment except dumbbell to the barbell plate inventory, and SessionFactory prescribes and builds warm-ups with that inventory's bar weight and plates (SessionFactory.swift:376-381), so cable, machine, band, bodyweight, kettlebell and other exercises get barbell plate math -> new Phase 3 T141 (prescription math, never deferred); T125 shows plates only for barbell and dumbbell sets.

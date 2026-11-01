@@ -123,6 +123,8 @@ Product decisions are in [decisions.md](decisions.md), and they win over this fi
 - Coordinator call, 2026-11-01 (T107 finding F286, decided under autopilot; the user can revisit it): a set's plate stack shows under the set while its weight field has focus, for the weight in the field, and hides when the field loses focus.
 - Rejected: a tap toggle on the weight cell, because the editable field takes the tap; a separate PLATES control, because it adds a control to a tight row; a long press, because nothing on screen shows it.
 - Why: the lifter sees the plate math while setting the weight, which is when it matters, and the field keeps working as a number field.
+- Coordinator answer, 2026-11-01 (T125 question `msg_24880f5f34b9`): the plate stack shows only for barbell and dumbbell exercises, the two kinds the plate inventories model; a cable or machine set shows none.
+- Coordinator call, 2026-11-01 (finding F347, T141): only barbell and dumbbell exercises prescribe with a bar weight and plates; machine, cable, band, bodyweight, weighted bodyweight, kettlebell and other exercises round to their smallest increment from zero.
 
 ## Program and blocks
 
