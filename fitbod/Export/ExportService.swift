@@ -70,6 +70,7 @@ public actor ExportService {
         let routineFolders = try fetchRoutineFolders().map { mapRoutineFolder($0) }
         let supersetGroups = try fetchSupersetGroups().map { mapSupersetGroup($0) }
         let routines = try fetchRoutines().map { mapRoutine($0) }
+        let splits = try fetchSplits().map { mapSplit($0) }
         let sessions = try fetchSessions().map { mapSession($0) }
         let blocks = try fetchBlocks().map { mapBlock($0) }
         let muscleVolumeTargets = try fetchMuscleVolumeTargets().map { mapMuscleVolumeTarget($0) }
@@ -78,12 +79,13 @@ public actor ExportService {
         let unitSystem = userSettings?.unitsRaw ?? WeightUnit.default.rawValue
 
         return ExportDocument(
-            formatVersion: 1,
+            formatVersion: 2,
             schemaVersion: ExportDocument.canonicalSchemaVersion,
             exportedAt: Date.now,
             unitSystem: unitSystem,
             exercises: exercises,
             routines: routines,
+            splits: splits,
             routineFolders: routineFolders,
             supersetGroups: supersetGroups,
             sessions: sessions,
@@ -140,6 +142,10 @@ public actor ExportService {
         try modelContext.fetch(FetchDescriptor<SessionTemplate>(sortBy: [SortDescriptor(\SessionTemplate.id)]))
     }
 
+    private func fetchSplits() throws -> [Split] {
+        try modelContext.fetch(FetchDescriptor<Split>(sortBy: [SortDescriptor(\Split.id)]))
+    }
+
     private func fetchSessions() throws -> [Session] {
         try modelContext.fetch(FetchDescriptor<Session>(sortBy: [SortDescriptor(\Session.startedAt)]))
     }
@@ -161,6 +167,16 @@ public actor ExportService {
     }
 
     // MARK: - Mappers (model → DTO)
+
+    private func mapSplit(_ split: Split) -> ExportSplitDTO {
+        let slots = (split.slots ?? []).sorted { $0.position < $1.position }.map {
+            ExportSplitSessionSlotDTO(id: $0.id, position: $0.position, sessionTemplateID: $0.sessionTemplate?.id)
+        }
+        return ExportSplitDTO(
+            id: split.id, name: split.name, createdAt: split.createdAt,
+            isArchived: split.isArchived, slots: slots
+        )
+    }
 
     private func mapExercise(_ ex: Exercise) -> ExportExerciseDTO {
         ExportExerciseDTO(
@@ -286,6 +302,7 @@ public actor ExportService {
             templateName: s.templateName,
             slotPosition: s.slot?.position,
             slotSplitName: s.slot?.split?.name,
+            slotID: s.slot?.id,
             exercises: exercises
         )
     }
@@ -297,7 +314,7 @@ public actor ExportService {
         return ExportSessionExerciseDTO(
             id: se.id,
             exerciseID: se.exercise?.id,
-            exerciseName: se.exercise?.name ?? "",   // Open Q2 deferred
+            exerciseName: se.displayName,
             orderIndex: se.orderIndex,
             targetSets: se.targetSets,
             targetRepsLow: se.targetRepsLow,
@@ -310,6 +327,7 @@ public actor ExportService {
             tracksPartialReps: se.tracksPartialReps,
             prescribedWeight: se.prescribedWeight,
             pinnedNote: se.pinnedNote,
+            exerciseNameSnapshot: se.exerciseNameSnapshot,
             sets: sets
         )
     }
@@ -344,6 +362,7 @@ public actor ExportService {
             trainingDaysJoined: b.trainingDaysJoined,
             archivedConfigJSON: b.archivedConfigJSON,
             splitName: b.split?.name,
+            splitID: b.split?.id,
             phases: phases
         )
     }

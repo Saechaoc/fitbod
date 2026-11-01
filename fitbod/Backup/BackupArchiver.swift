@@ -116,7 +116,7 @@ public actor BackupArchiver {
 
         // 5. Build manifest record.
         let manifest = BackupManifest(
-            formatVersion: 1,
+            formatVersion: 2,
             schemaVersion: ExportDocument.canonicalSchemaVersion,
             createdAt: now,
             checksum: checksum,
@@ -165,6 +165,7 @@ public actor BackupArchiver {
         let routineFolders = try fetchRoutineFolders().map(mapRoutineFolder)
         let supersetGroups = try fetchSupersetGroups().map(mapSupersetGroup)
         let routines = try fetchRoutines().map(mapRoutine)
+        let splits = try fetchSplits().map(mapSplit)
         let sessions = try fetchSessions().map(mapSession)
         let blocks = try fetchBlocks().map(mapBlock)
         let muscleVolumeTargets = try fetchMuscleVolumeTargets().map(mapMuscleVolumeTarget)
@@ -173,12 +174,13 @@ public actor BackupArchiver {
         let unitSystem = userSettings?.unitsRaw ?? WeightUnit.default.rawValue
 
         return ExportDocument(
-            formatVersion: 1,
+            formatVersion: 2,
             schemaVersion: ExportDocument.canonicalSchemaVersion,
             exportedAt: now,
             unitSystem: unitSystem,
             exercises: exercises,
             routines: routines,
+            splits: splits,
             routineFolders: routineFolders,
             supersetGroups: supersetGroups,
             sessions: sessions,
@@ -224,6 +226,10 @@ public actor BackupArchiver {
         try modelContext.fetch(FetchDescriptor<SessionTemplate>(sortBy: [SortDescriptor(\SessionTemplate.id)]))
     }
 
+    private func fetchSplits() throws -> [Split] {
+        try modelContext.fetch(FetchDescriptor<Split>(sortBy: [SortDescriptor(\Split.id)]))
+    }
+
     private func fetchSessions() throws -> [Session] {
         try modelContext.fetch(FetchDescriptor<Session>(sortBy: [SortDescriptor(\Session.startedAt)]))
     }
@@ -245,6 +251,16 @@ public actor BackupArchiver {
     }
 
     // MARK: - Mappers (mirror ExportService — single contract)
+
+    private func mapSplit(_ split: Split) -> ExportSplitDTO {
+        let slots = (split.slots ?? []).sorted { $0.position < $1.position }.map {
+            ExportSplitSessionSlotDTO(id: $0.id, position: $0.position, sessionTemplateID: $0.sessionTemplate?.id)
+        }
+        return ExportSplitDTO(
+            id: split.id, name: split.name, createdAt: split.createdAt,
+            isArchived: split.isArchived, slots: slots
+        )
+    }
 
     private func mapExercise(_ ex: Exercise) -> ExportExerciseDTO {
         ExportExerciseDTO(
@@ -356,6 +372,7 @@ public actor BackupArchiver {
             templateName: s.templateName,
             slotPosition: s.slot?.position,
             slotSplitName: s.slot?.split?.name,
+            slotID: s.slot?.id,
             exercises: exercises
         )
     }
@@ -366,7 +383,7 @@ public actor BackupArchiver {
             .map(mapSetEntry)
         return ExportSessionExerciseDTO(
             id: se.id, exerciseID: se.exercise?.id,
-            exerciseName: se.exercise?.name ?? "",   // Open Q2 deferred
+            exerciseName: se.displayName,
             orderIndex: se.orderIndex,
             targetSets: se.targetSets,
             targetRepsLow: se.targetRepsLow,
@@ -376,7 +393,9 @@ public actor BackupArchiver {
             tempo: se.tempo, tracksTempo: se.tracksTempo,
             tracksPartialReps: se.tracksPartialReps,
             prescribedWeight: se.prescribedWeight,
-            pinnedNote: se.pinnedNote, sets: sets
+            pinnedNote: se.pinnedNote,
+            exerciseNameSnapshot: se.exerciseNameSnapshot,
+            sets: sets
         )
     }
 
@@ -409,6 +428,7 @@ public actor BackupArchiver {
             trainingDaysJoined: b.trainingDaysJoined,
             archivedConfigJSON: b.archivedConfigJSON,
             splitName: b.split?.name,
+            splitID: b.split?.id,
             phases: phases
         )
     }

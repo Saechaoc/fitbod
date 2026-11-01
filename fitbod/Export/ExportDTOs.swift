@@ -6,7 +6,7 @@
 //  for the EXP-02 JSON export (06-09b) AND the EXP-03 backup
 //  archive (06-10). Single source of truth for:
 //
-//    1. The full SchemaV6 entity coverage as plain Codable value
+//    1. The SchemaV7 export graph as plain Codable value
 //       types (no SwiftData coupling — RESEARCH "Decoding backup
 //       directly into @Model" anti-pattern).
 //    2. `ExportDocument.canonicalSchemaVersion` constant — the
@@ -23,14 +23,9 @@
 //  avoid the collision: `ExportExerciseDTO`, `ExportRoutineDTO`,
 //  etc.
 //
-//  ## Empty-string-for-nil-exercise convention (Open Question 2)
-//
-//  When `SessionExercise.exercise == nil` (post-delete cascade-
-//  nullify per RESEARCH Pitfall 11), the JSON emits
-//  `exerciseID: nil` and `exerciseName: ""`. v1 pragmatic — a
-//  future restore-side cleanup pass can re-link or prune these
-//  orphans. Documented here so 06-07 + 06-10 downstream consumers
-//  understand the contract.
+//  Logged exercise names use the log-time snapshot through `displayName`,
+//  preserving history after a library rename or deletion. The raw snapshot
+//  is also carried so restore can retain pre-snapshot rows faithfully.
 //
 //  ## Schema version
 //
@@ -43,7 +38,7 @@
 //  is preserved verbatim.
 //
 //  [CITED: REQUIREMENTS EXP-02 + CONTEXT D-28 + RESEARCH §DTO name
-//   collision + Open Question 2]
+//   collision]
 //
 
 import Foundation
@@ -72,6 +67,8 @@ public struct ExportDocument: Codable, Equatable, Sendable {
     public let unitSystem: String
     public let exercises: [ExportExerciseDTO]
     public let routines: [ExportRoutineDTO]
+    /// Optional only for decoding format-1 archives, which had no routines graph.
+    public let splits: [ExportSplitDTO]?
     public let routineFolders: [ExportRoutineFolderDTO]
     public let supersetGroups: [ExportSupersetGroupDTO]
     public let sessions: [ExportSessionDTO]
@@ -93,6 +90,7 @@ public struct ExportDocument: Codable, Equatable, Sendable {
         unitSystem: String,
         exercises: [ExportExerciseDTO],
         routines: [ExportRoutineDTO],
+        splits: [ExportSplitDTO]? = [],
         routineFolders: [ExportRoutineFolderDTO],
         supersetGroups: [ExportSupersetGroupDTO],
         sessions: [ExportSessionDTO],
@@ -109,6 +107,7 @@ public struct ExportDocument: Codable, Equatable, Sendable {
         self.unitSystem = unitSystem
         self.exercises = exercises
         self.routines = routines
+        self.splits = splits
         self.routineFolders = routineFolders
         self.supersetGroups = supersetGroups
         self.sessions = sessions
@@ -118,6 +117,31 @@ public struct ExportDocument: Codable, Equatable, Sendable {
         self.muscleVolumeTargets = muscleVolumeTargets
         self.plateInventories = plateInventories
         self.userSettings = userSettings
+    }
+}
+
+// MARK: - Split + ordered slots (UI: routine)
+
+public struct ExportSplitDTO: Codable, Equatable, Sendable {
+    public let id: UUID
+    public let name: String
+    public let createdAt: Date
+    public let isArchived: Bool
+    public let slots: [ExportSplitSessionSlotDTO]
+
+    public init(id: UUID, name: String, createdAt: Date, isArchived: Bool, slots: [ExportSplitSessionSlotDTO]) {
+        self.id = id; self.name = name; self.createdAt = createdAt
+        self.isArchived = isArchived; self.slots = slots
+    }
+}
+
+public struct ExportSplitSessionSlotDTO: Codable, Equatable, Sendable {
+    public let id: UUID
+    public let position: Int
+    public let sessionTemplateID: UUID?
+
+    public init(id: UUID, position: Int, sessionTemplateID: UUID?) {
+        self.id = id; self.position = position; self.sessionTemplateID = sessionTemplateID
     }
 }
 
@@ -326,6 +350,7 @@ public struct ExportSessionDTO: Codable, Equatable, Sendable {
     public let templateName: String?
     public let slotPosition: Int?
     public let slotSplitName: String?
+    public let slotID: UUID?
     public let exercises: [ExportSessionExerciseDTO]
 
     public init(
@@ -336,6 +361,7 @@ public struct ExportSessionDTO: Codable, Equatable, Sendable {
         templateName: String? = nil,
         slotPosition: Int? = nil,
         slotSplitName: String? = nil,
+        slotID: UUID? = nil,
         exercises: [ExportSessionExerciseDTO]
     ) {
         self.id = id; self.startedAt = startedAt
@@ -348,6 +374,7 @@ public struct ExportSessionDTO: Codable, Equatable, Sendable {
         self.templateName = templateName
         self.slotPosition = slotPosition
         self.slotSplitName = slotSplitName
+        self.slotID = slotID
         self.exercises = exercises
     }
 }
@@ -355,9 +382,9 @@ public struct ExportSessionDTO: Codable, Equatable, Sendable {
 public struct ExportSessionExerciseDTO: Codable, Equatable, Sendable {
     public let id: UUID
     public let exerciseID: UUID?
-    /// Empty string when exerciseID is nil (Open Question 2 deferred —
-    /// see file-header).
+    /// The logged display name, even when the library entry has been deleted.
     public let exerciseName: String
+    public let exerciseNameSnapshot: String?
     public let orderIndex: Int
     public let targetSets: Int
     public let targetRepsLow: Int
@@ -378,10 +405,12 @@ public struct ExportSessionExerciseDTO: Codable, Equatable, Sendable {
         targetRPE: Double?, targetRIR: Int?, prescribedRestSeconds: Int,
         tempo: String?, tracksTempo: Bool, tracksPartialReps: Bool,
         prescribedWeight: Double?, pinnedNote: String?,
+        exerciseNameSnapshot: String? = nil,
         sets: [ExportSetEntryDTO]
     ) {
         self.id = id; self.exerciseID = exerciseID
         self.exerciseName = exerciseName; self.orderIndex = orderIndex
+        self.exerciseNameSnapshot = exerciseNameSnapshot
         self.targetSets = targetSets
         self.targetRepsLow = targetRepsLow
         self.targetRepsHigh = targetRepsHigh
@@ -453,6 +482,7 @@ public struct ExportBlockDTO: Codable, Equatable, Sendable {
     public let trainingDaysJoined: String
     public let archivedConfigJSON: String?
     public let splitName: String?
+    public let splitID: UUID?
     public let phases: [ExportBlockPhaseDTO]
 
     public init(
@@ -462,6 +492,7 @@ public struct ExportBlockDTO: Codable, Equatable, Sendable {
         trainingDaysJoined: String = "",
         archivedConfigJSON: String? = nil,
         splitName: String? = nil,
+        splitID: UUID? = nil,
         phases: [ExportBlockPhaseDTO]
     ) {
         self.id = id; self.name = name
@@ -472,6 +503,7 @@ public struct ExportBlockDTO: Codable, Equatable, Sendable {
         self.trainingDaysJoined = trainingDaysJoined
         self.archivedConfigJSON = archivedConfigJSON
         self.splitName = splitName
+        self.splitID = splitID
         self.phases = phases
     }
 }

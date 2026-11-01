@@ -189,6 +189,7 @@ public final class BackupRestorer {
         } catch {
             throw RestoreError.decodeFailed(underlying: String(describing: error))
         }
+        try validateProgramGraph(doc)
 
         // Step 1 — Side-file insurance: snapshot current store to
         // documentDirectory/store-pre-restore-{ISO8601}.json.
@@ -223,6 +224,16 @@ public final class BackupRestorer {
         // app restarts via process exit, the cleared rows will persist.
         let ctx = currentContainer.mainContext
 
+        // The deny rule observes the stored link, so persist unlinking before deleting slots.
+        let oldSlots = try ctx.fetch(FetchDescriptor<SplitSessionSlot>())
+        for slot in oldSlots {
+            slot.sessionTemplate = nil
+        }
+        try ctx.save()
+        // Batch deletion rejects deny relationships even when the slot table is empty.
+        for slot in oldSlots { ctx.delete(slot) }
+        for split in try ctx.fetch(FetchDescriptor<Split>()) { ctx.delete(split) }
+        try ctx.save()
         try ctx.delete(model: SetEntry.self)
         try ctx.delete(model: SessionExercise.self)
         try ctx.delete(model: Session.self)
@@ -285,6 +296,36 @@ public final class BackupRestorer {
     }
 
     // MARK: - Entity insertion (two-pass)
+
+    /// Reject corrupt routine links before the destination store is touched.
+    private func validateProgramGraph(_ doc: ExportDocument) throws {
+        guard doc.formatVersion < 2 || doc.splits != nil else {
+            throw RestoreError.decodeFailed(underlying: "Missing routine graph.")
+        }
+        let splits = doc.splits ?? []
+        let splitIDs = Set(splits.map(\.id))
+        let slots = splits.flatMap(\.slots)
+        let slotIDs = Set(slots.map(\.id))
+        let templateIDs = Set(doc.routines.map(\.id))
+        guard splitIDs.count == splits.count, slotIDs.count == slots.count else {
+            throw RestoreError.decodeFailed(underlying: "Duplicate routine or slot id.")
+        }
+        for slot in slots {
+            if let id = slot.sessionTemplateID, !templateIDs.contains(id) {
+                throw RestoreError.decodeFailed(underlying: "Routine slot refers to a missing session.")
+            }
+        }
+        for block in doc.blocks {
+            if let id = block.splitID, !splitIDs.contains(id) {
+                throw RestoreError.decodeFailed(underlying: "Block refers to a missing routine.")
+            }
+        }
+        for session in doc.sessions {
+            if let id = session.slotID, !slotIDs.contains(id) {
+                throw RestoreError.decodeFailed(underlying: "Workout refers to a missing routine slot.")
+            }
+        }
+    }
 
     /// Insert every entity in the decoded `ExportDocument` into
     /// `ctx`, restoring relationships via DTO UUID references. Image
@@ -375,6 +416,17 @@ public final class BackupRestorer {
             ctx.insert(g)
         }
 
+        var splitsByID: [UUID: Split] = [:]
+        for dto in doc.splits ?? [] {
+            let split = Split()
+            ctx.insert(split)
+            split.id = dto.id
+            split.name = dto.name
+            split.createdAt = dto.createdAt
+            split.isArchived = dto.isArchived
+            splitsByID[dto.id] = split
+        }
+
         // Blocks (parents) before BlockPhases.
         var blocksByID: [UUID: Block] = [:]
         for dto in doc.blocks {
@@ -390,13 +442,15 @@ public final class BackupRestorer {
             // is the freeze-#2 archive (spec §6 — sole source of truth for
             // completed-block views); without it, restored completed blocks would
             // be permanently unreadable. schedulingModeRaw / trainingDaysJoined
-            // carry the live scheduling config. (Block.split live-graph reattach is
-            // deferred to Phase 8 split wiring; splitName travels in the export for
-            // that future use.)
+            // carry the live scheduling config. The routine is restored by id;
+            // format-1 backups have only splitName and restore without routines.
             b.schedulingModeRaw = dto.schedulingModeRaw
             b.trainingDaysJoined = dto.trainingDaysJoined
             b.archivedConfigJSON = dto.archivedConfigJSON
             ctx.insert(b)
+            if let splitID = dto.splitID {
+                b.split = splitsByID[splitID]
+            }
             blocksByID[dto.id] = b
             for phaseDTO in dto.phases {
                 let p = BlockPhase()
@@ -467,6 +521,21 @@ public final class BackupRestorer {
             }
         }
 
+        var slotsByID: [UUID: SplitSessionSlot] = [:]
+        for dto in doc.splits ?? [] {
+            for slotDTO in dto.slots.sorted(by: { $0.position < $1.position }) {
+                let slot = SplitSessionSlot()
+                ctx.insert(slot)
+                slot.id = slotDTO.id
+                slot.position = slotDTO.position
+                slot.split = splitsByID[dto.id]
+                if let templateID = slotDTO.sessionTemplateID {
+                    slot.sessionTemplate = routinesByID[templateID]
+                }
+                slotsByID[slotDTO.id] = slot
+            }
+        }
+
         // Sessions + SessionExercises + SetEntries.
         for dto in doc.sessions {
             let s = Session()
@@ -480,14 +549,16 @@ public final class BackupRestorer {
             s.intentRaw = dto.intentRaw
             s.progressionKindRaw = dto.progressionKindRaw
             // WR-05 (V7): restore the log-time template-name snapshot (freeze #1
-            // insurance — survives a nullified template ref). slotPosition /
-            // slotSplitName travel in the export for forward use; live slot-graph
-            // reattach is deferred to Phase 8.
+            // insurance — survives a nullified template ref). Slot ids preserve
+            // rotation; the older soft name/position fields remain in the format.
             s.templateName = dto.templateName
             if let blockID = dto.blockID, let block = blocksByID[blockID] {
                 s.block = block
             }
             ctx.insert(s)
+            if let slotID = dto.slotID {
+                s.slot = slotsByID[slotID]
+            }
 
             for seDTO in dto.exercises {
                 let se = SessionExercise()
@@ -504,6 +575,7 @@ public final class BackupRestorer {
                 se.tracksPartialReps = seDTO.tracksPartialReps
                 se.prescribedWeight = seDTO.prescribedWeight
                 se.pinnedNote = seDTO.pinnedNote
+                se.exerciseNameSnapshot = seDTO.exerciseNameSnapshot ?? seDTO.exerciseName
                 se.session = s
                 if let exID = seDTO.exerciseID, let ex = exercisesByID[exID] {
                     se.exercise = ex
