@@ -157,8 +157,9 @@ Nothing has run on `main`, where all work since then has landed.
   The two unit runs showed the same 22 s of execution either way, so the answer changes nothing today.
 - The per-test cost on the CI runner for the suites written in October.
   No CI run exists since 2026-10-04 because the workflow does not trigger on `main`.
-- Whether clone-parallel UI runs are stable for the whole bundle on the M4.
-  The 24-test sample (section 1.6) ran 2.25 times faster on four clones, with one failure in a file-picker test that passed serially; the full bundle is untested.
+- Resolved 2026-10-31: clone-parallel UI runs are not stable on the M4.
+  Cached clones kept an old text size (AX-XL while the phone was set to default), and a 16-test clone run hung for 11 minutes.
+  `scripts/test.sh full` shards the bundle over owned simulators instead (section 3.8).
 
 ### 1.6 Profiling runs made for this audit
 
@@ -415,12 +416,14 @@ Suites that touch process-wide state that cannot be injected stay serialized: `U
 
 **Do.**
 Keep the unit target serial at the xcodebuild level; the measured parallel run was 15 s slower because of clone creation.
-Run the UI target on simulator clones locally, on the M4 only, once the sample in section 1.6 proves it stable: `-parallel-testing-enabled YES -parallel-testing-worker-count 3` on the dedicated phone.
+Run the UI target in two shards locally, on the M4 only, with `scripts/test.sh full` (section 3.8): each shard is a serial run on its own simulator, which the script pins to default text and light mode, checks, and clears.
 On CI, split by job, not by clone: one build job, then a matrix of unit, UI large and UI small, each on its own runner.
 Shard the UI bundle further with explicit `-only-testing:` lists when one job is still the long pole.
 
 **Don't.**
 Don't run clones on the 7 GB CI runner; each clone is a booted simulator with its own app.
+Don't use `-parallel-testing-enabled YES` for the UI target: cached clones can keep settings the phone no longer has.
+Don't raise the local shard count above two while T101's typing stall is open: four shards failed one or two typing or sheet tests per run.
 Don't enable parallel testing in the scheme for both targets; the scheme pins `parallelizable = "NO"` on purpose and Xcode has dropped that setting before (see `CLAUDE.md`).
 
 **Why.**
@@ -431,7 +434,7 @@ Clones are isolated simulators, so UI tests that reset the app do not collide.
 The raw `XCUIApplication()` tests that depend on the simulator's own content size (`simctl ui ... content_size`) may not see that setting on a clone; move them to the launch helper, which pins the size per launch, before running clones.
 
 **Verify.**
-Three full runs with clones, no new failures, and the elapsed time divided by about the worker count.
+Three full runs with no new failures, every enumerated test run exactly once (the script checks it), and the elapsed time divided by about the shard count.
 
 ### 2.12 Build caching and build reuse
 
@@ -813,27 +816,31 @@ Coverage: the same three commands run on the same phones; nothing is skipped.
 Also add `push: branches: [main]` to the triggers.
 Nothing has run in CI since 2026-10-04 because the work moved to `main`.
 
-### 3.8 Local clone-parallel UI run on the M4
-
-Command (verified flags, Xcode 26.5):
+### 3.8 Local sharded UI run on the M4
 
 ```bash
-xcodebuild test-without-building \
-  -project fitbod.xcodeproj -scheme fitbod -configuration Debug \
-  -derivedDataPath build/DerivedData \
-  -destination 'platform=iOS Simulator,id=79CAC9F7-95DE-4AEB-84F6-660A8F2E36EE' \
-  -only-testing:fitbodUITests \
-  -parallel-testing-enabled YES \
-  -parallel-testing-worker-count 3 \
-  -collect-test-diagnostics never \
-  -resultBundlePath build/results/ui-large-clones.xcresult \
-  CODE_SIGNING_ALLOWED=NO COMPILER_INDEX_STORE_ENABLE=NO
+FITBOD_TEST_DEVICE=<dedicated phone UDID> scripts/test.sh fast   # unit tests, about 30 s
+FITBOD_TEST_DEVICE=<dedicated phone UDID> scripts/test.sh full   # everything, 2 shards
 ```
 
-`-parallel-testing-enabled YES` on the command line overrides the scheme's `parallelizable = "NO"` without editing the scheme, so the serial default stays for everyone else.
-The unit target stays out of this command; section 1.3 measured it slower under clones.
-Section 1.6 records the 24-test sample.
-Run the full bundle three times before trusting it.
+`full` builds once and runs the unit target serially.
+It then splits the UI classes longest-first by `scripts/ui-test-timings.json` and runs one serial `xcodebuild test-without-building -xctestrun` per shard, each on its own simulator.
+Then it builds the widget, merges the bundles and fails unless the merge holds exactly the enumerated tests.
+The scheme stays serial; `docs/SETUP.md` lists the guarantees.
+
+Measured 2026-10-31 on the M4, against a 98-minute serial gate run (1,320 tests) and a 201-minute one with 102 stalls:
+
+| Shards | Runs | Wall time | UI failures not seen serially | Coverage |
+| --- | --- | --- | --- | --- |
+| 4 | 3 | 85, 75, 75 min | 2, 2 and 1, a different typing or sheet test each run | exact in all 3 |
+| 2 | 4 | 88, 55, 89, 59 min | 0 | exact in all 4 |
+
+Stall-free shards finished within 10 percent of the timing file's estimate (24.3 min for four, 48.7 min for two).
+The 60-second idle-wait stalls after typing (T101) set the long shard: one test ran 37 to 56 minutes in four of the six runs.
+
+The unit run uninstalls the app first.
+Its host app opens the store at launch, and a store left by a UI run crashed it at launch (`ProgressHomeView.recentStats`, a deleted `Exercise`) or failed `phaseCardTextRendersInFullOnNarrowPhones`, which passes from a clean install.
+A test command after which no test started (the runner hung or never bootstrapped) is retried once on the rebooted phone; a run in which any test started is never retried.
 
 ## 4. Prioritized plan
 
@@ -867,7 +874,7 @@ Every impact is a hypothesis until the measurement plan in section 5 confirms it
 
 | Finding | Repository evidence | Proposed change | Expected impact | Effort | Reliability risk | Validation |
 | --- | --- | --- | --- | --- | --- | --- |
-| The UI bundle runs serially on one phone | Scheme `parallelizable = "NO"`; the sample in section 1.6 ran 2.25 times faster on four clones | Clone-parallel local runs with 3 or 4 workers (section 3.8), M4 only | Measured on the sample: elapsed divided by 2.25 with four workers; compute unchanged; not for CI | Medium, plus stabilization | Medium; one file-picker test (`SettingsExportUITests.testRestoreAsksBeforeReplacingData`) failed on a clone and passed serially; clone creation, memory, raw-launch tests that read the simulator's content size | Three full runs; zero new failures; wall time |
+| The UI bundle runs serially on one phone | Scheme `parallelizable = "NO"`; clones kept a stale text size and hung (section 1.5) | Done: `scripts/test.sh full`, two owned shards (section 3.8), M4 only | Measured: 55 to 59 min against 98 serially without stalls; compute unchanged; not for CI | Done | Four shards failed typing and sheet tests; two passed four runs | Three full runs; zero new failures; the script's coverage check |
 | The UI bundle is one CI shard | `-only-testing:fitbodUITests` once per phone | Shard the bundle into 2 or 3 `-only-testing` lists per phone as matrix entries | Elapsed divided by the shard count; compute rises 4 to 5 min per shard | Medium | Low to medium; shard lists must cover every suite | A script lists every suite and fails when one is in no shard |
 | Copy and structure checks live in UI tests | 11 BRU, Copy and Smoke-named UI files; `WhyThisWeightSheetBRUUITests`; 45 unit files already introspect source | Per smoke test, keep the journey or move the check to a hosted-view unit test; keep one reachability journey per screen | Each moved test goes from 10 to 40 s to under 1 s | Large | Medium; a hosted view does not prove navigation, so the kept journey must | A table per screen: journey test, unit tests, what each proves |
 | Text-size reruns repeat whole journeys | 39 sized launches in 11 AX3 files | Launch straight to the screen at the size under test; one AX3 journey per flow | Hypothesis: half of the sized-launch time | Large | Medium; the direct route must exist as a DEBUG launch argument | The AX3 assertions stay; durations per file |
@@ -884,7 +891,7 @@ Every impact is a hypothesis until the measurement plan in section 5 confirms it
 Elapsed time and compute are different numbers.
 Actions 2, 3 and 4 cut both, because they remove work.
 Action 5 and the sharding rows cut elapsed time and add compute.
-Clone-parallel local runs cut elapsed time and leave compute alone, but they need a Mac with the memory for three booted simulators.
+Sharded local runs cut elapsed time and leave compute alone, but they need a Mac with the memory for two more booted simulators.
 
 ## 5. Measurement and regression prevention
 
@@ -970,7 +977,7 @@ Update it on purpose, in the same PR as the change that moved it.
 | Unit target, local, wall | 36 s | 30 s | A new unit case over 1 s needs a comment that names why |
 | UI case, local, median | about 16 to 28 s (projected from the baseline and the Oct 29 bundle) | 10 s | A new UI case adds at most 30 s; a journey at most 90 s |
 | UI bundle, one phone, serial, local | 54 to 93 min (projected) | 35 min | The median full run may grow at most 10 percent between baseline updates |
-| UI bundle, one phone, 4 clones, local | 2.25 times faster than serial on the 24-test sample | 15 min (hypothesis) | Same |
+| UI bundle, one phone, 2 shards, local | 55 to 59 min wall without stalls (`scripts/test.sh full`) | 35 min | Same |
 | CI, PR run | no current run | 25 min elapsed | A PR run over 30 min blocks the merge until explained |
 | CI, `main` run | no current run | 45 min elapsed, matrix | Same |
 | CI, nightly | no current run | no elapsed target; 120 min per job, timeouts per test | Any test over its allowance is a failure to fix, not a reason to raise the allowance |
@@ -1026,7 +1033,7 @@ The biggest opportunities, in order:
    Keeping the catalog across launches, checking `exists` before waiting and turning animations off for most launches should remove a third to a half of every UI test, by hypothesis.
 2. CI runs everything in one sequential job on both phones and has not run at all since 2026-10-04.
    A build job plus a matrix, `main` in the triggers, test timeouts and `-collect-test-diagnostics never` turn it into a bounded run whose elapsed time is its longest job.
-3. On the M4, simulator clones for the UI target alone cut the sample's elapsed time by 2.25 times with four workers, with one failure to understand; the full bundle still needs three clean runs.
+3. On the M4, `scripts/test.sh full` runs the UI target in two owned shards: 55 to 59 min against 98 serially, with exact coverage. Clones and four shards were rejected for stale settings and new failures.
 4. The unit target is not the problem: 1,118 tests execute in 22 s, and the fixes there (the seeders' `UserDefaults`, the fidelity sleep, the host's launch) are about determinism and growth, not minutes.
 5. Template tests and width-insensitive reruns are pure cost that nobody will miss.
 
@@ -1035,5 +1042,4 @@ The missing evidence:
 - No record of the 200-minute run exists in the repository, the result bundles or CI; the figure is consistent with the full bundle run serially on both phones, and section 5.2 produces the real number in one run.
 - No CI run has executed the October suites, so the runner's cost per test is unknown.
 - The cost of a launch without the reset flag is unmeasured; the relaunch activity in any journey's bundle gives it.
-- Whether clone runs stay stable across the full bundle is unmeasured beyond the 24-test sample, where one file-picker test failed.
 - Whether `-parallel-testing-enabled NO` also disables Swift Testing's in-process parallelism is undocumented; it changes nothing at today's 22 s.
