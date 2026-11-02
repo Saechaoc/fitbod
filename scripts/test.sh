@@ -88,6 +88,13 @@ summary() { python3 "$ROOT/scripts/test_results.py" summary "$1"; }
 APP_ID=bodybuilding.fitbod
 UI_RUNNER_ID=bodybuilding.fitbodUITests.xctrunner
 
+# Shuts phone $1 down, boots it again and waits until it has booted.
+reboot_phone() {
+  xcrun simctl shutdown "$1" >/dev/null 2>&1 || true
+  xcrun simctl boot "$1" >/dev/null 2>&1 || true
+  xcrun simctl bootstatus "$1" -b >/dev/null
+}
+
 # Boots a phone, pins default text and light mode, and checks that both took.
 prepare() {
   local udid="$1"
@@ -121,13 +128,8 @@ xctest() {
     [[ $attempt -eq 1 && "$started" -eq 0 ]] || return "$code"
     echo "   no test started on $udid; rebooting it and retrying once" >&2
     mv "$log" "$log.attempt1"
-    xcrun simctl shutdown "$udid" >/dev/null 2>&1 || true
-    if [[ "$TIER" == full ]]; then
-      prepare "$udid" || return 1
-    else
-      xcrun simctl boot "$udid" >/dev/null 2>&1 || true
-      xcrun simctl bootstatus "$udid" -b >/dev/null
-    fi
+    reboot_phone "$udid"
+    if [[ "$TIER" == full ]]; then prepare "$udid" || return 1; fi
   done
 }
 
@@ -143,9 +145,7 @@ xcrun simctl bootstatus "$DEVICE" -b >/dev/null
 reboot_after_ui_tests() {
   xcrun simctl get_app_container "$DEVICE" "$UI_RUNNER_ID" >/dev/null 2>&1 || return 0
   step "reboot after UI tests"
-  xcrun simctl shutdown "$DEVICE" >/dev/null 2>&1 || true
-  xcrun simctl boot "$DEVICE" >/dev/null 2>&1 || true
-  xcrun simctl bootstatus "$DEVICE" -b >/dev/null
+  reboot_phone "$DEVICE"
   xcrun simctl uninstall "$DEVICE" "$UI_RUNNER_ID" >/dev/null 2>&1 || true
 }
 
@@ -211,9 +211,7 @@ for attempt in 1 2 3; do
   mv "$RUN/enumerate.log" "$RUN/enumerate.log.attempt$attempt"
   [[ $attempt -lt 3 ]] || { echo "test enumeration failed 3 times; see $RUN/enumerate.log.attempt*" >&2; exit 1; }
   echo "   enumeration attempt $attempt failed; rebooting $DEVICE and retrying"
-  xcrun simctl shutdown "$DEVICE" >/dev/null 2>&1 || true
-  xcrun simctl boot "$DEVICE" >/dev/null 2>&1 || true
-  xcrun simctl bootstatus "$DEVICE" -b >/dev/null
+  reboot_phone "$DEVICE"
 done
 python3 "$ROOT/scripts/test_results.py" shard "$RUN/enumerated.json" \
   "$ROOT/scripts/ui-test-timings.json" "$WORKERS" > "$RUN/shards.txt"
