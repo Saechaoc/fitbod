@@ -217,6 +217,8 @@ The DerivedData folders live in `~/Library/Developer/Xcode/DerivedData/`.
 - 2026-11-01 15:51 T31 check repeated before Phase 5 per dispatch.md: no newer export (git status and git log since 2026-10-30 23:10 empty for bru-screens/; find in ~/Desktop, ~/Downloads, ~/Documents three levels deep for 'Fitbod Session', 'fitbod' or a zip changed since then found nothing). T43 stays skipped (deferred by the guide, and no newer export).
 - 2026-11-01 16:15 T119 question (msg_8f76ca5a9300): its required runs on bc07798 (rebased on 61abfd4) passed 75/75 on the small phone in 23.9 min (acceptance) and 74/75 on the large phone; the failure is T39's NumberEntryUITests tempo case on the 440 pt layout (F387), a test bug that would fail Gate 4. Granted NumberEntryUITests.swift to T119 to fix it (wait for the details to stop moving, bring Track tempo above the save bar before the tap) and run that suite on both phones.
 - 2026-11-01 16:34 T119 accepted and merged (bc07798, 70b4b75; rebased past T146's one-line row style, build ok), pushed. Review: UI test files only (25 files, -1013/+441): six non-data cases deleted from the five suites T143 kept whole, presentation-only steps dropped from kept data cases with every data assertion kept, waits read exists first and poll at 100 ms through UITestNavigation.appears/disappears with the same ceilings, the journey attaches only on failure and reveals with held drags, WorkoutLogger and WorkoutSwap launch through UITestNavigation.launch; F387 fixed (Track tempo brought above the save bar), NumberEntryUITests 3x large and 1x small. Whole UI target 75/75 in 23.9 min on the small phone (39.5 before, 179.8 at Gate 2). MEDIUM at most. Finding F388 notes. Phase 4 complete; Gate 4 next.
+- 2026-11-01 16:35 Phase 8 prep: removed the coordinator's merged ext-batch worktree and branch, and the clean conway-t120 worktree; branch conway-t120 (2ef8ea3, T120's stopped work) is retained for the user, as recorded when T120 was deferred. Worktree test-speed on branch test/fast-reliable-suite (the user's own 2026-10-31 commits: a 30 s unit tier and a sharded full verification tier, unmerged) is not part of this run and is left as it is.
+- 2026-11-01 17:13 GATE 4 PASSED at 0ef702e on the large gate phone: build ok, widget ok, UI 75/75 in 28.9 min wall, unit target 1229 + 1 known after a simulator reboot (the first unit run, and one rerun, hung before connecting because the in-simulator test daemon never reported ready; a normal app launch was healthy). Gate 5 rests on Gate 4 (Phase 5 has only skipped T43; no code change since). Phases 6 and 7 hold only skipped T44 to T48. Phase 8 next.
 
 ## Ledger
 
@@ -402,8 +404,8 @@ Keep the accepted full-tour evidence, including implementation retries, and prio
 | 1 | 2026-10-30 | 1320 | 1319 | 0 | 1 | 201 min (run 2; run 1 failed, 99 min) | succeeded |
 | 2 | 2026-10-31 | 1515 | 1514 | 0 | 1 | 182 min (tests 180.7 min; no F144 stall) | succeeded |
 | 3 | 2026-11-01 | 1299 | 1298 | 0 | 1 | 40 min with builds (tests 40.3 min wall) | succeeded |
-| 4 |  |  |  |  |  |  |  |
-| 5 |  |  |  |  |  |  |  |
+| 4 | 2026-11-01 | 1305 | 1304 | 0 | 1 | UI 75/75 in 28.9 min wall (23.2 min of cases); unit target 1230 (1229 + 1 known) in about 1 min after a simulator reboot | succeeded |
+| 5 | 2026-11-01 |  |  |  |  |  |  |
 
 ## Shared test helpers
 
