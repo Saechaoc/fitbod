@@ -16,7 +16,7 @@ progress:
 
 **Last updated:** 2026-10-29 (Milestone 1 finish, phase 0 done: Codex's seven groups committed, baseline 1,023 of 1,026 passed with 2 known app-bug failures and 1 expected failure)
 
-Last activity: 2026-11-02 - Completed quick task 261101-ujp: Land the Today and Program redesign bundle in docs/design-map/redesign
+Last activity: 2026-11-02 - Completed quick task 261102-ayp: Land draft v4 of the Today and Program redesign bundle after the Codex reviews
 
 ---
 
@@ -365,6 +365,7 @@ None.
 | 261031-072 | Audit the iOS test suite for performance and write docs/test-performance-guide.md: the unit target executes 1,118 tests in 22 s; a 24-test UI sample averages 25.6 s per test serially and runs 2.25 times faster on four clones; no recorded run reaches 200 minutes, which is consistent with the 202-test UI bundle (55 on Oct 28) run serially on both phones. The guide holds the diagnosis, do-and-don't rules, examples on real files, a prioritized plan, a measurement plan and a per-test checklist, all as proposals | 2026-10-31 | 68a1df54 | [261031-072-audit-the-ios-test-suite-for-performance](./quick/261031-072-audit-the-ios-test-suite-for-performance/) |
 | 261101-tmc | Training-model coherence investigation (gsd-fast): reconstructed the prescription, scheduling, logging, correction, progression and block-review flows; three throwaway experiments on the fitbod-logger simulator reproduced the frozen-prescription versus live WHY defect, the startedAt/completedAt split after a date edit, and the stale empty-workout cache; wrote .planning/HANDOFF-training-model-coherence.md and two proposed decisions in docs/ROADMAP.md; no code changed | 2026-11-01 | (not committed) | - (fast task, no dir) |
 | 261101-ujp | Land the Today and Program redesign bundle in docs/design-map/redesign | 2026-11-02 | 12ea884a | [261101-ujp-land-the-today-and-program-redesign-bund](./quick/261101-ujp-land-the-today-and-program-redesign-bund/) |
+| 261102-ayp | Land draft v4 of the Today and Program redesign bundle after the Codex reviews | 2026-11-02 | e403d287 | [261102-ayp-land-draft-v4-of-the-today-and-program-r](./quick/261102-ayp-land-draft-v4-of-the-today-and-program-r/) |
 
 ---
 
