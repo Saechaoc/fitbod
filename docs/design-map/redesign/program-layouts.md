@@ -146,7 +146,7 @@ The newest created draft leads as a paper slab, so the page still has a primary 
 │ ...                                          │
 ```
 
-Newest first here, the reverse of the ready rule, because the draft the lifter touched last is the one they are building.
+Newest created first here (`startDate`, then name, then id), the reverse of the ready rule, because drafts have no "next to start" order and the draft made last is the one the lifter moved on to; `startDate` is the creation date and survives edits (`BlockDraft.swift:19`, `:80`), so "touched last" would need an edit timestamp the schema does not have (round 3, V4-F5).
 Today shows T-PICK, T-FIX or T-FIRST meanwhile: a draft is not Today's business.
 
 ## P-ROUTINE, routines and no block
@@ -251,7 +251,7 @@ Both tabs lead here, so a few lines change with them.
 | The week strip header uses `BlockPosition.label`, the same "Week 2 of 6 · Accumulation" as Today and Program | One form of the fact everywhere (R-6). |
 | "n / m SESSIONS DONE" becomes "n / m WORKOUTS DONE" | The shared vocabulary; `BlockWeekCountsUITests` changes with it. |
 | The End block dialog reads "Ends Spring Block and saves its plan to history. New workouts will not count toward it." | The confirmation rule (P-9) wants the consequence; "from the Program tab" goes. |
-| "Review ›" on a completed block opens BlockReviewView as a sheet with the origin passed in | Reopens a review after the notice is gone (D-40). |
+| "Review ›" on a completed block opens BlockReviewView as a sheet with the origin passed in, through the presenter Today uses, so a failed acknowledgement shows "Couldn't save the review. Open it again to retry." under the row (round 3, F-F1) | Reopens a review after the notice is gone (D-40). |
 | Block overview takes an `origin` from the stack that pushed it: `.today` from Today's plan line and T-READY's Open ›, `.program` from Program | The review sheet's "Start next ▸" builder names the right tab on its back control from either stack; plan.md's step 2.1 no longer hard-codes `.program` (round 3). |
 
 ## Accessibility sizes

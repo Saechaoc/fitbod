@@ -2,6 +2,15 @@
 
 Newest first: one entry for each stage of [plan.md](plan.md) up to S2, then one for each commit.
 
+## 2026-11-02: redesign draft v5
+
+- [redesign/](redesign/) is revised to draft v5 after the Codex coverage reviewer's complete pass on draft v4 (1 blocker and 6 fix-soon findings, all closed) and the Codex feasibility reviewer's partial pass on draft v4 (2 blockers and 1 fix-soon finding, all closed).
+  The feasibility reviewer stopped at the account's usage limit with five of its eleven checks done and resumes on draft v5.
+- `TodayState` takes every live routine and the standalone sessions, no-block NEXT skips sessions with no exercises under one rule shared by the hero, the session sheet and Program, and a failed review acknowledgement keeps the notice and says so under the row.
+- The two Codex reports under [redesign/reviews/](redesign/reviews/) now carry the reviewers' draft v4 passes: round3-codex-coverage.md gains its "Draft v4 pass" section and round3-codex-feasibility.md is new.
+- `docs/design-map/redesign/screen_budget.py` still reports 222 -> 109 elements across 17 states.
+- What changed in each leaf: [redesign/changelog.md](redesign/changelog.md); each finding and its resolution: [redesign/review-log.md](redesign/review-log.md), round 3.
+
 ## 2026-11-02: redesign draft v4
 
 - [redesign/](redesign/) is revised to draft v4 after round 3's Codex experience review of draft v3 (4 blockers and 10 fix-soon findings, all closed or accepted) and the partial Codex coverage review (2 blockers and 7 fix-soon findings, folded in as far as the report goes).

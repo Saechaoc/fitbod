@@ -1,13 +1,17 @@
 # Round 3 coverage and factual accuracy review
 
-Not final: 2 blockers.
+Draft v4 verdict: not final, 1 blocker and 6 fix-soon findings.
+The remaining coverage checks are complete, but the new no-block states require inputs absent from the specified TodayState contract; the remaining findings concern test inventory, fixture chronology and contradictory or missing decision records.
+The saved draft v3 review below is historical; the current findings and evidence are under Draft v4 pass.
+
+Draft v3 saved verdict: not final, 2 blockers.
 Draft v3 still omits an existing alternate-workout path in two repair states and leaves the new Program start controls without a complete state contract.
-The capability inventory and audit fact checks are saved; remaining checks are listed under Not reached and will be removed as they are completed.
+The capability inventory and audit fact checks below are the saved v3 checks; the remaining spec items were completed against v4 below.
 
 Repository paths are relative to `/Users/chrissaechao/Desktop/fitbod`.
 Proposal paths are relative to `docs/design-map/redesign/`.
 This review concerns coverage and factual accuracy, not visual preference.
-The current HEAD is `64f7d7a0`; comparison with `0ef702ea` found no changes under fitbod, fitbodTests or fitbodUITests, or in CLAUDE.md or docs/DEVELOPMENT.md.
+The saved v3 review used HEAD `64f7d7a0`; comparison with `0ef702ea` found no changes under fitbod, fitbodTests or fitbodUITests, or in CLAUDE.md or docs/DEVELOPMENT.md.
 No builds, tests, simulator runs, or source edits were performed.
 
 ## Blockers
@@ -158,11 +162,8 @@ Unverified: A-01's five-second-test conclusion, A-10's four-screen length, A-13'
 
 ## Not reached
 
-- Exhaustive per-step test dependency inventory, including the unnamed factory and Progress suites and navigation assumptions after completed cards move to Past.
-- Every statement in both source re-check lists, including glyph spelling, backup acknowledgement writes, logger dismissal and legacy caller claims.
-- Full new-seed uniqueness audit across every DEBUG seed body and all acceptance claims for the three reused fixtures.
-- Exhaustive comparison of every layout default with open-decisions.md.
-- Runtime compilation, simulator execution and rendered truncation or layout acceptance, which this read-only review does not run.
+No requested static-review item remains unchecked.
+Runtime compilation, simulator execution and rendered truncation or layout acceptance remain unverified because this review prohibits builds and tests; these are implementation acceptance tasks, not unfinished static-review items.
 
 ## Checked and correct
 
@@ -176,3 +177,222 @@ Unverified: A-01's five-second-test conclusion, A-10's four-screen length, A-13'
 - Seven today.sessions UI-suite references
 - Working-set-only display helper
 - Guarded review acknowledgement proposal
+
+## Draft v4 pass
+
+Verdict: not final, 1 blocker and 6 fix-soon findings.
+Status: test dependencies, both source re-check lists, seed uniqueness and reuse, and the layout-default comparison are complete.
+The two saved v3 blockers are closed at proposal level by `hierarchy.md:47`, `hierarchy.md:48`, `plan.md:35` and `program-layouts.md:77`.
+The v3 section above is retained as requested; its proposal citations refer to draft v3 at commit `12ea884a`, while citations in this section refer to draft v4 at `e403d287`.
+No app or test source differs from the spec's `0ef702ea` baseline.
+Correction to the saved v3 report: its `BlockDraftKeepsOnCancelUITests` and `BlockLifecycleJourneyUITests` citations should read `BlockDraftKeepsUITests` and `BlockLifecycleEntryPointsUITests`; the former names do not exist (`review-log.md:77`, `fitbodUITests/BlockDraftKeepsUITests.swift:54`, `fitbodUITests/BlockLifecycleEntryPointsUITests.swift:45`).
+
+### Blockers
+
+#### V4-B1. **The new no-block states cannot be distinguished by the specified TodayState inputs**
+
+Trigger: Compare three stores with no block, workout history or pending review: a fresh store, one live routine with no sessions, and one usable standalone session with no routine.
+Mechanism: Step 1.1 passes only routines with non-empty sessions and lists no standalone-template query or input, so those three stores produce the same specified inputs while hierarchy requires T-FIRST, T-FIX and T-PICK respectively.
+Blast radius: Today cannot choose the required onboarding, repair or workout action from the advertised pure-function contract, and Program's instruction to reuse that contract carries the omission forward.
+Smallest fix: Pass all live routine summaries, including empty routines, plus eligible standalone templates from a flat SessionTemplate query with membership filtered in Swift; update the explicit input list and the three no-history fixtures in TodayStateTests, then reuse those inputs in Program.
+Evidence: `plan.md:17`, `plan.md:19`, `plan.md:35`, `hierarchy.md:47`, `hierarchy.md:51`, `hierarchy.md:52`, `hierarchy.md:62`, `fitbod/Views/TodayView.swift:46`, `fitbod/Views/TodayView.swift:56`, `fitbod/Views/TodaySessionPicker.swift:37`, `fitbod/Views/TodaySessionPicker.swift:43`, `fitbod/Models/SessionTemplate.swift:48`, `fitbod/Models/SessionTemplate.swift:57`.
+Severity: blocks finalization.
+
+### Fix soon
+
+#### V4-F6. **Summary rows still contradict the repaired no-block behavior**
+
+Trigger: An implementer uses the hierarchy's zone table or the review-notice leaf to build a no-block advisory or no-block T-FIX screen.
+Mechanism: The zone table still restricts the advisory to an active block, the review-notice leaf omits T-FIX from its state list, and T-FIX's state-table row includes volume although its no-block layout explicitly excludes it.
+Blast radius: Following different canonical leaves can suppress an eligible advisory or pending review, or add a volume row that the no-block repair layout excludes.
+Smallest fix: Align the zone summary with the advisory eligibility table, add no-block T-FIX to the review-notice list, and qualify the T-FIX volume entry by block presence.
+Evidence: `hierarchy.md:19`, `hierarchy.md:47`, `hierarchy.md:68`, `today-layouts.md:220`, `today-layouts.md:321`, `plan.md:33`, `fitbod/Views/TodayView.swift:684`.
+Severity: fix soon.
+
+#### V4-F4. **The decision register omits behavioral defaults and still includes an excluded destination**
+
+Trigger: Product or implementation work treats open-decisions.md as the register of the defaults the layouts assume.
+Mechanism: No O-row records the suggestion and repair-selection policies, the drafts-only selection, the differing session-sheet tap behavior, the shared discard confirmation rule, or the review-versus-advice priority; O-4 additionally includes Progress Recaps although the plan and evaluation explicitly exclude it.
+Blast radius: Several behavior choices have rationale only in leaves or tradeoffs, while the register implies a navigable Recaps destination that this bundle does not deliver.
+Smallest fix: Add O-rows or explicit links to accepted decisions for the missing defaults in the inventory below, extend O-3/O-5/O-14 with their precedence and acknowledgement qualifications, and mark Progress Recaps deferred in O-4.
+Evidence: `open-decisions.md:4`, `open-decisions.md:10`, `open-decisions.md:12`, `open-decisions.md:13`, `open-decisions.md:14`, `open-decisions.md:22`, `today-layouts.md:248`, `today-layouts.md:320`, `today-layouts.md:353`, `today-layouts.md:354`, `program-layouts.md:130`, `program-layouts.md:206`, `hierarchy.md:71`, `plan.md:54`, `evaluation.md:58`.
+Severity: fix soon.
+
+#### V4-F1. **The remaining test inventory mixes unnamed dependencies with irrelevant matches**
+
+Trigger: An implementer follows the per-step test lists when extracting the set-count rule, moving volume, or guarding acknowledgement.
+Mechanism: Step 2.1 omits BlockReviewMathTests, which calls acknowledge and reads its source file, while steps 1.2 and 1.4 use generic factory and Progress-suite descriptions instead of names; other entries are comment or wrong-screen matches.
+Blast radius: The persistence assertion protecting reviewedAt and the existing count/warm-up tests can be missed, while unrelated suites appear to be affected by the redesign.
+Smallest fix: Name BlockReviewMathTests in 2.1, expand the factory and Progress shorthands with the concrete suites below, and label or remove irrelevant matches without adding new copy-pinning tests.
+Evidence: `plan.md:18`, `plan.md:19`, `plan.md:20`, `plan.md:21`, `plan.md:33`, `fitbodTests/BlockReviewMathTests.swift:226`, `fitbodTests/BlockReviewMathTests.swift:240`, `fitbodTests/Phase6/BRU/BRUGrepAuditPhase6Tests.swift:52`, `docs/DEVELOPMENT.md:63`.
+Severity: fix soon.
+
+#### V4-F3. **The midnight seed correction leaves future completion timestamps**
+
+Trigger: The reused empty-workout fixture launches at 00:05 after applying v4's proposed start clamp.
+Mechanism: The nonempty workout starts at midnight but finishPushA still sets completedAt to start plus ten minutes and derives completed-set times from start, so a workout described as already finished can finish in the future.
+Blast radius: The acceptance fixture reaches DONE through impossible chronology and cannot validate the same day-boundary behavior as a real finished workout.
+Smallest fix: Bound the workout end and completed-set timestamps by the injected now, derive duration from those bounds, and clamp only this fixture rather than changing the older-workout fixtures that share seedFinished.
+Evidence: `plan.md:19`, `risks.md:27`, `fitbod/App/DemoWorkoutSeed.swift:70`, `fitbod/App/DemoWorkoutSeed.swift:141`, `fitbod/App/DemoWorkoutSeed.swift:290`, `fitbod/App/DemoWorkoutSeed.swift:297`.
+Severity: fix soon.
+
+#### V4-F5. **The drafts-only rationale mistakes creation order for edit recency**
+
+Trigger: A lifter creates drafts A then B, then returns to edit A while both remain drafts.
+Mechanism: The leaf selects the newest-created draft but justifies it as the draft touched last; BlockDraft preserves startDate during editing, so B still leads although A was touched last.
+Blast radius: The promised reason for Program's leading draft is false, and an implementer trying to honor both statements would need an edit-recency input the proposed stored-field contract does not provide.
+Smallest fix: Keep the explicit newest-created rule and rewrite its rationale as creation order, with deterministic ties; defer any last-edited behavior as a separate decision rather than implying startDate provides it.
+Evidence: `program-layouts.md:130`, `program-layouts.md:149`, `tradeoffs.md:46`, `tradeoffs.md:63`, `fitbod/Periodization/BlockDraft.swift:19`, `fitbod/Periodization/BlockDraft.swift:80`, `fitbod/Periodization/BlockDraft.swift:151`.
+Severity: fix soon.
+
+#### V4-F2. **The source re-check still reports comments and source strings as executable callers**
+
+Trigger: A maintainer uses the verified-caller claims to scope cleanup or constructor compatibility.
+Mechanism: SessionTemplate mentions RoutineDuplicator only in comments, RoutinesListView has two preview constructions despite the plan's only-comments wording, and only two suites construct BlockReviewView while the third checks an initializer-shaped source string.
+Blast radius: The stated dependency inventory is inaccurate even though keeping RoutineDuplicator is still correct because RoutineBuilderView calls it.
+Smallest fix: Say production caller when excluding previews, remove SessionTemplate from the executable caller list, and describe BlockReviewTriggerTests as a source-wiring assertion rather than a constructor consumer.
+Evidence: `review-log.md:251`, `plan.md:45`, `plan.md:33`, `fitbod/Models/SessionTemplate.swift:19`, `fitbod/Models/SessionTemplate.swift:51`, `fitbod/Routines/RoutineBuilderView.swift:588`, `fitbod/Routines/RoutinesListView.swift:495`, `fitbod/Routines/RoutinesListView.swift:512`, `fitbodTests/BlockReviewTriggerTests.swift:199`, `fitbodTests/BlockReviewPRMarkTests.swift:124`, `fitbodTests/BlockReviewHeroLayoutTests.swift:105`.
+Severity: fix soon.
+
+### Completed item: test dependencies
+
+The requested strings and removed symbols were searched in both test targets, and source-reader hits were distinguished from comments, exclusions and similarly named controls on other screens.
+
+| Step | Dependency result and smallest inventory correction | Evidence |
+|---|---|---|
+| 1.1 | All seven today.sessions suites and both LIVE BLOCK suites are named; the block name remains a separate label or gains a replacement identifier. | `plan.md:17`; `fitbodUITests/EmptyWorkoutCountsUITests.swift:93`; `fitbodUITests/ReseedRelaunchUITests.swift:68`; `fitbodUITests/SkipWarmupsUITests.swift:73`; `fitbodUITests/SwipeBackUITests.swift:44`; `fitbodUITests/WeeklyRecapUITests.swift:51`; `fitbodUITests/WorkoutLoggerJourneyUITests.swift:101`; `fitbodUITests/WorkoutSwapJourneyUITests.swift:41`; `fitbodUITests/ArchiveRoutineUITests.swift:116`; `fitbodUITests/BlockLifecycleEntryPointsUITests.swift:101` |
+| 1.2 | Name SessionFactoryTests, SessionFactoryPhase3Tests, DeloadVolumeApplicationTests and WarmupDeloadIntegrationTests under the factory shorthand because they already assert the set-count and ramp behavior being separated. | `plan.md:18`; `fitbodTests/SessionFactoryTests.swift:220`; `fitbodTests/SessionFactoryPhase3Tests.swift:116`; `fitbodTests/DeloadVolumeApplicationTests.swift:90`; `fitbodTests/DeloadVolumeApplicationTests.swift:110`; `fitbodTests/WarmupDeloadIntegrationTests.swift:126` |
+| 1.3 | The removed StartBlockCTA readers and both UI entry consumers are named; SuggestedActionTests' No active block match concerns PlateauDetector, not Today copy, and no test directly constructs SessionTemplateDetailView(template:) in either target. | `plan.md:19`; `fitbodTests/TodayViewBlockStackingTests.swift:67`; `fitbodUITests/NewBlockSavesUITests.swift:101`; `fitbodUITests/EditorSwipeDismissUITests.swift:135`; `fitbodTests/Fatigue/SuggestedActionTests.swift:246`; `fitbodTests/Fatigue/SuggestedActionTests.swift:249` |
+| 1.4 | Expand the Progress-home shorthand to BRUGrepAuditPhase6Tests, which actually reads ProgressHomeView.swift; the other named volume and Today-source suites are accounted for. | `plan.md:20`; `fitbodTests/Phase6/BRU/BRUGrepAuditPhase6Tests.swift:52`; `fitbodTests/Fatigue/FatigueSurfaceViewBRUTests.swift:79`; `fitbodTests/TodayViewBRUCopyTests.swift:193` |
+| 1.5 | All seven card-label suites and all five root-level DONE lookups are now identified; they need the Past-list navigation change as v4 says. | `plan.md:21`; `fitbodUITests/BlockOverviewStatesUITests.swift:85`; `fitbodUITests/BlockLifecycleEntryPointsUITests.swift:45`; `fitbodUITests/BlockLifecycleEntryPointsUITests.swift:58`; `fitbodUITests/ArchiveRoutineUITests.swift:140`; `fitbodUITests/BlockReviewAfterEndUITests.swift:60`; `fitbodUITests/BlockDraftKeepsUITests.swift:54`; `fitbodUITests/NewBlockSavesUITests.swift:159`; `fitbodUITests/BlockWeekCountsUITests.swift:92` |
+| 1.5 | BRUPeriodizationRegressionTests reads RoutinesListView for No blocks yet, and ExerciseHistoryRowsUITests taps Library's View all history, not Program's ALL HISTORY or + NEW; these do not establish Program dependencies. | `plan.md:21`; `fitbodTests/BRUPeriodizationRegressionTests.swift:269`; `fitbodTests/BRUPeriodizationRegressionTests.swift:277`; `fitbodUITests/ExerciseHistoryRowsUITests.swift:64`; `fitbodUITests/ExerciseHistoryRowsUITests.swift:68` |
+| 1.6 | RoutinesListCopyTests is the actual reader pinning Discard active workout; the rg found no UI assertion for that title, and BlockLifecycleEntryPointsUITests does not exercise banner long-press discard. | `plan.md:22`; `fitbodTests/RoutinesListCopyTests.swift:99`; `fitbodUITests/BlockLifecycleEntryPointsUITests.swift:26`; `fitbodUITests/BlockLifecycleEntryPointsUITests.swift:65` |
+| 2.1 | Add BlockReviewMathTests, and optionally list the existing BlockReviewView source scans beside the named constructor tests rather than claiming constructors cover those readers. | `plan.md:33`; `fitbodTests/BlockReviewMathTests.swift:226`; `fitbodTests/BRUPeriodizationAuditTests.swift:229`; `fitbodTests/BRUPeriodizationRegressionTests.swift:324`; `fitbodTests/BlockReviewPRMarkTests.swift:124`; `fitbodTests/BlockReviewHeroLayoutTests.swift:105` |
+| 2.2 | The nextTrainingDay caller suite is BlockOverviewStatesTests, already named; expand the resolver shorthand to TodayResolverTests rather than leaving a future search. | `plan.md:34`; `fitbodTests/BlockOverviewStatesTests.swift:65`; `fitbodTests/BlockOverviewStatesTests.swift:75`; `fitbodTests/TodayResolverTests.swift:99` |
+| 2.3 and 2.4 | No existing ThisWeekSection exists; the new state cases and the relevant overview tests are named, and Program edits inherit the three source readers from the plan's global rule. | `plan.md:9`; `plan.md:35`; `plan.md:36` |
+| 2.5 and 2.6 | The volume source reader is named, and four actual BlockBuilderView readers replace the incorrect six-suite claim; the retired BRU audit entries are comments. | `plan.md:37`; `plan.md:38`; `fitbodTests/NewBlockBuilderFidelityTests.swift:74`; `fitbodTests/BlockBuilderViewCopyTests.swift:22`; `fitbodTests/NewBlockProgressionChartTests.swift:66`; `fitbodTests/AdaptiveColorSourceTests.swift:29`; `fitbodTests/BRUPeriodizationAuditTests.swift:224`; `fitbodTests/BRUPeriodizationRegressionTests.swift:322` |
+| 3.2 and 3.3 | Named legacy-view and folder readers cover the symbol/file references found by the search; views used only in previews are not production callers. | `plan.md:45`; `plan.md:46`; `fitbodTests/BlocksSectionTests.swift:50`; `fitbodTests/BRUPeriodizationRegressionTests.swift:325`; `fitbodTests/BRUPeriodizationRegressionTests.swift:328` |
+
+The shared UI label helper is case-insensitive, so changing visible + NEW to + New is not itself a selector break (`fitbodUITests/UITestNavigation.swift:537`).
+The extra + New matches in MilestoneOneJourneyUITests and CustomExerciseEditorBRUUITests are Library actions, not omitted Program header consumers (`fitbodUITests/MilestoneOneJourneyUITests.swift:32`, `fitbodUITests/CustomExerciseEditorBRUUITests.swift:53`).
+No build or test was run; this is a dependency inventory, not evidence that the proposed implementation passes.
+
+### Completed item: source re-check lists
+
+Both original lists and the new round-3 list were checked against source, with seed-specific claims assigned to the next checkpoint rather than inferred from one fixture.
+
+| Review-log entry | Result and source evidence |
+|---|---|
+| Round 2, line 145: attach visibility | Correct: draft/ready only, `fitbod/Periodization/BlockOverviewScreen.swift:301`. |
+| Round 2, line 146: unguarded acknowledgement and restore | Correct: `fitbod/Periodization/BlockReviewView.swift:654`; `fitbod/Backup/BackupRestorer.swift:440`. |
+| Round 2, line 147: draft date, save and start overwrite | Correct for an unstarted block: `fitbod/Periodization/BlockDraft.swift:19`; `fitbod/Periodization/BlockDraft.swift:80`; `fitbod/Periodization/BlockDraft.swift:151`; `fitbod/Periodization/BlockLifecycleService.swift:101`; no date binding occurs in BlockBuilderView. |
+| Round 2, line 148: Today builder setters | Correct: `fitbod/Views/TodayView.swift:206`; `fitbod/Views/TodayView.swift:267`. |
+| Round 2, line 149: warm-up subline and unused template flag | Correct: `fitbod/Views/LiftListRow.swift:50`; `fitbod/Views/LiftListRow.swift:55`; `fitbod/Sessions/SessionFactory.swift:256`; the factory has no generateWarmups read. |
+| Round 2, line 150: estimate | Correct: `fitbod/Views/BlackSlabCTA.swift:58`. |
+| Round 2, line 151: duplicate slots and groups | Correct: `fitbod/Periodization/SplitDetailView.swift:780`; `fitbod/Periodization/SplitDetailView.swift:869`; `fitbod/Views/TodaySessionPicker.swift:37`. |
+| Round 2, line 152: glyphs | Correct: `docs/design-system/iconography.md:15`; `fitbod/Fatigue/DeloadAdvisoryBanner.swift:80`. |
+| Round 2, line 153: card labels | Correct with the v4 seven-suite correction, as the test inventory above shows; `fitbod/Periodization/ProgramView.swift:631`. |
+| Round 2, line 154: reused fixtures | Static fixture and rendering limitations are recorded in the seed checkpoint. |
+| Round 1, line 233: reviewedAt writers and dead helper | Correct: `fitbod/Periodization/BlockReviewView.swift:349`; `fitbod/Periodization/BlockReviewView.swift:355`; `fitbod/Periodization/BlockReviewView.swift:407`; `fitbod/Backup/BackupRestorer.swift:440`. |
+| Round 1, line 234: pending review | Correct, with the precise rule that the newest ended block must itself be unreviewed; older unreviewed blocks do not become pending after it is acknowledged: `fitbod/Periodization/BlockReviewView.swift:638`; `fitbodTests/BlockReviewTriggerTests.swift:128`. |
+| Round 1, line 235: review stack and origin | Correct: `fitbod/Periodization/BlockReviewView.swift:44`; `fitbod/Periodization/BlockReviewView.swift:79`; `fitbod/Periodization/BlockBuilderView.swift:15`. |
+| Round 1, line 236: resolver matching | Correct: `fitbod/Periodization/TodayResolver.swift:124`; `fitbod/Periodization/TodayResolver.swift:170`; `fitbod/Periodization/TodayResolver.swift:178`. |
+| Round 1, line 237: current slot forwarding | Correct for production WorkoutStarter calls: `fitbod/Views/TodayView.swift:167`; `fitbod/Views/TodayView.swift:604`; `fitbod/Routines/SessionTemplateDetailView.swift:211`. |
+| Round 1, line 238: calendar, recap and advisory | Correct: `fitbod/Views/TodayView.swift:531`; `fitbod/Views/TodayView.swift:644`; `fitbod/Views/TodayView.swift:684`; `fitbod/Fatigue/DeloadAdvisor.swift:130`. |
+| Round 1, line 239: set counts and deload | Correct, with fixed warm-ups conditional on the flag: `fitbod/Views/BlackSlabCTA.swift:53`; `fitbod/Views/LiftListRow.swift:50`; `fitbod/Sessions/SessionFactory.swift:290`; `fitbod/Prescription/WarmupRamp.swift:57`. |
+| Round 1, line 240: fatigue aggregation/access | Correct: `fitbod/Fatigue/FatigueModel.swift:128`; `fitbod/Fatigue/FatigueModel.swift:134`; `fitbod/Fatigue/FatigueModel.swift:276`; `fitbod/Fatigue/FatigueSurfaceView.swift:118`. |
+| Round 1, line 241: stored dates | Correct: `fitbod/Models/Block.swift:58`; `fitbod/Models/Split.swift:25`; `fitbod/Models/SessionTemplate.swift:47`. |
+| Round 1, line 242: lifecycle gates, calls and alert | Correct: `fitbod/Periodization/BlockLifecycleService.swift:149`; `fitbod/Periodization/BlockOverviewScreen.swift:301`; `fitbod/Periodization/BlockOverviewScreen.swift:339`; `fitbod/Periodization/BlockOverviewScreen.swift:1367`; `fitbod/Periodization/BlockOverviewScreen.swift:1401`; `fitbod/Models/SplitDeletionGuard.swift:42`. |
+| Round 1, line 243: header signal defaults | Correct: `fitbod/Design/BRUHeaderBar.swift:56`; `fitbod/Design/BRUHeaderBar.swift:370`. |
+| Round 1, line 244: seed uniqueness | A global absence cannot be inferred from BlockStatesSeed alone; all launchable fixtures are checked in the seed checkpoint. |
+| Round 1, line 245: singular counts, plan end, date, volume and capture | Correct with positive MEV qualification: `fitbod/Design/BRUCountLabel.swift:18`; `fitbod/Views/TodayView.swift:591`; `fitbod/Views/TodayView.swift:456`; `fitbod/Fatigue/FatigueSurfaceView.swift:109`; the previously inspected default Today capture. |
+| Round 1, line 246: logger exit/discard | Correct: `fitbod/Sessions/SessionLoggerView.swift:250`; `fitbod/Sessions/SessionLoggerView.swift:262`; `fitbod/Sessions/SessionLoggerView.swift:174`. |
+| Round 1, line 247: route registration | Correct: `fitbod/Views/TodayView.swift:248`; `fitbod/Progress/ProgressHomeView.swift:125`. |
+| Round 1, line 248: next-day helper | Correct: `fitbod/Periodization/BlockOverviewScreen.swift:463`; its existing tests are `fitbodTests/BlockOverviewStatesTests.swift:65`. |
+| Round 1, line 249: legacy block callers | Correct for production code: `fitbod/Routines/RoutinesListView.swift:315`; `fitbod/Periodization/BlockPickerMenu.swift:64`; no production BlockCard construction was found. |
+| Round 1, line 250: source-reader counts and CREATE BLOCK | Correct with the inline four-reader correction: `fitbodTests/NewBlockBuilderFidelityTests.swift:62`; `fitbodTests/NewBlockBuilderFidelityTests.swift:68`; `fitbodTests/ProgramViewFidelityTests.swift:233`; `fitbodTests/AdaptiveColorSourceTests.swift:29`. |
+| Round 1, line 251: legacy list and duplicator | Incorrect as written for SessionTemplate and the unqualified no-caller assertion; see V4-F2. |
+| Round 1, line 252: test-inventory claim | Incomplete and overinclusive; see V4-F1, including the resolved ExerciseHistoryRows question. |
+
+The new round-3 list at `review-log.md:87` through `review-log.md:100` agrees with the same source checks, except that Plan custom is at `fitbod/Periodization/BlockReviewView.swift:349`, not the cited line 393, and only production callers should be inferred from the WeekTickerCells statement.
+The round-3 date and seed claims are covered by the next checkpoint, and its five-versus-seven visible accent counts agree with the already inspected default and scheduled captures (`review-log.md:99`, `review-log.md:100`).
+The historical review-log wording two live blocks cannot exist should mean two active blocks: draft and ready blocks are also called live by the actual deletion guard (`review-log.md:81`, `fitbod/Models/SplitDeletionGuard.swift:38`).
+
+### Completed item: seed uniqueness and reuse
+
+Scope assumption: each documented seed flag runs alone on a fresh store after successful catalog seeding, as the existing fixture comments require (`fitbod/App/RootView.swift:294`, `fitbod/App/RootView.swift:316`, `fitbod/App/PowerbuildingSeed.swift:24`, `fitbod/App/ActiveBlockSeed.swift:26`).
+All eight launch-hook seed files in App and their branches were checked; the three requested states are not already deterministic standalone fixtures.
+
+| Seed family | Relevant coverage and exclusion | Evidence |
+|---|---|---|
+| DemoWorkoutSeed | Normal mode leaves an open workout; empty-workout mode logs without a block; recap-with-plan creates its block after the old workout; the templates are populated when the catalog is available. | `fitbod/App/DemoWorkoutSeed.swift:70`; `fitbod/App/DemoWorkoutSeed.swift:80`; `fitbod/App/DemoWorkoutSeed.swift:119`; `fitbod/App/DemoWorkoutSeed.swift:234`; `fitbod/App/DemoWorkoutSeed.swift:251` |
+| StalledExerciseSeed | Populated template, past completed workouts and an open workout, without a block. | `fitbod/App/StalledExerciseSeed.swift:57`; `fitbod/App/StalledExerciseSeed.swift:74`; `fitbod/App/StalledExerciseSeed.swift:103` |
+| ProgressHistorySeed | Populated template and weekly history ending a week ago, without a block. | `fitbod/App/ProgressHistorySeed.swift:81`; `fitbod/App/ProgressHistorySeed.swift:96` |
+| ActiveBlockSeed | Active mode starts immediately; the ended modes leave completed blocks and old workouts, with no waiting ready block. | `fitbod/App/ActiveBlockSeed.swift:45`; `fitbod/App/ActiveBlockSeed.swift:69`; `fitbod/App/ActiveBlockSeed.swift:85`; `fitbod/App/ActiveBlockSeed.swift:103` |
+| BlockStatesSeed | Includes a ready block, but also an active block; its nonempty workout is two days old, and Upper B is an empty workout of a populated template, not a session template without exercises. | `fitbod/App/BlockStatesSeed.swift:93`; `fitbod/App/BlockStatesSeed.swift:122`; `fitbod/App/BlockStatesSeed.swift:129`; `fitbod/App/BlockStatesSeed.swift:148`; `fitbod/App/BlockStatesSeed.swift:155` |
+| CalibratingSetSeed | Populated template, a week-old workout and an open workout, without a block. | `fitbod/App/CalibratingSetSeed.swift:60`; `fitbod/App/CalibratingSetSeed.swift:76`; `fitbod/App/CalibratingSetSeed.swift:105` |
+| WeeklyTonnageSeed | Directly creates finished history, possibly today on Sunday, but creates neither a block nor an empty session template. | `fitbod/App/WeeklyTonnageSeed.swift:68`; `fitbod/App/WeeklyTonnageSeed.swift:90`; `fitbod/App/WeeklyTonnageSeed.swift:104` |
+| PowerbuildingSeed | Active plus draft, populated routine, no workout, and recap suppressed. | `fitbod/App/PowerbuildingSeed.swift:81`; `fitbod/App/PowerbuildingSeed.swift:104`; `fitbod/App/PowerbuildingSeed.swift:106`; `fitbod/App/PowerbuildingSeed.swift:109` |
+
+The new ready-with-none-active, empty-template and finished-today-under-a-block seeds are therefore justified (`plan.md:19`).
+An exercise-import failure can incidentally leave DemoWorkoutSeed's template empty because missing catalog entries are skipped, but that is not a deterministic replacement for the proposed empty-template fixture (`fitbod/App/DemoWorkoutSeed.swift:245`, `fitbod/App/DemoWorkoutSeed.swift:252`).
+
+| Reused fixture | Verdict |
+|---|---|
+| powerbuilding | Correct data for a long-name scenario in the existing large hero, with the literal name Powerbuilding; unverified as a truncation fixture for the new compact plan line, whose rendered fit was not measured (`fitbod/App/PowerbuildingSeed.swift:5`, `fitbod/App/PowerbuildingSeed.swift:46`, `plan.md:17`). |
+| empty-workout | Correct nonempty finished workout without a block plus a later empty workout; the midnight-start problem is addressed in v4, but V4-F3 covers the remaining timestamp problem (`fitbod/App/DemoWorkoutSeed.swift:70`, `fitbod/App/DemoWorkoutSeed.swift:282`, `plan.md:19`). |
+| ended-block-recap | Correct live routine without an active block, with a review and recap intentionally due; for a reproducible capture use its documented start-Program argument, then dismiss the recap before evaluating the underlying T-PICK and notice (`fitbod/App/ActiveBlockSeed.swift:21`, `fitbod/App/ActiveBlockSeed.swift:27`, `fitbod/App/ActiveBlockSeed.swift:103`, `plan.md:33`). |
+
+Two source-list qualifications follow from the audit: the long-name claim establishes a fixture string rather than new-layout overflow, and DemoWorkoutSeed line 113 belongs to normal demo mode rather than one of the recap-with-* branches (`review-log.md:154`, `review-log.md:99`, `fitbod/App/DemoWorkoutSeed.swift:67`, `fitbod/App/DemoWorkoutSeed.swift:77`, `fitbod/App/DemoWorkoutSeed.swift:113`).
+The normal demo clamp also has an explicit previous-week fallback when there is not enough elapsed time, so copying only its max expression is not a complete same-day fixture policy (`fitbod/App/DemoWorkoutSeed.swift:112`).
+
+### Completed item: layout defaults and decision coverage
+
+Scope assumption: product defaults include state selection, action availability, navigation, confirmation and capability scope; type size, tokens and rendered row geometry are implementation acceptance requirements rather than new approval questions.
+Both layout leaves and all fourteen O-rows were compared, without reopening the experience review's accepted choices.
+Missing entries below need an index or cross-reference, not renewed user permission.
+
+| Decision | Coverage result | Evidence |
+|---|---|---|
+| O-1 | The removal and History replacement are recorded; the claim about what most splits display is not established by a source audit. | `open-decisions.md:9`; `hierarchy.md:26`; `fitbod/Views/TodayView.swift:472` |
+| O-2 | The slot, NEXT, wrapping and skipped-session rules are recorded; routine selection and the sheet's differing tap behaviors remain separate choices below. | `open-decisions.md:10`; `today-layouts.md:364`; `today-layouts.md:365`; `today-layouts.md:367` |
+| O-3 | DONE eligibility and multiple workouts are recorded; add its priority over READY as an explicit cross-reference. | `open-decisions.md:11`; `today-layouts.md:165`; `hierarchy.md:60` |
+| O-4 | Recap presentation is recorded, but its Progress destination conflicts with the explicit exclusion, covered by V4-F4. | `open-decisions.md:12`; `plan.md:54`; `evaluation.md:58` |
+| O-5 | Active-block suppression and loss of the notice on start are recorded; acknowledgement on any dismissal and review priority over advice are separate defaults below. | `open-decisions.md:13`; `today-layouts.md:212`; `today-layouts.md:224`; `hierarchy.md:71` |
+| O-6 | Oldest-created ready ordering, ties and visible creation caption match the leaves; it does not record the drafts-only rule. | `open-decisions.md:14`; `today-layouts.md:209`; `program-layouts.md:121`; `program-layouts.md:130` |
+| O-7 | Folder scope is recorded; executable-caller wording needs V4-F2's qualification. | `open-decisions.md:15`; `plan.md:45` |
+| O-8 | Presets inside the creation flow match the empty-Program leaf. | `open-decisions.md:16`; `program-layouts.md:188` |
+| O-9 | Logged-workout navigation and both start controls' shared state gate match the leaves. | `open-decisions.md:17`; `program-layouts.md:58`; `program-layouts.md:93`; `program-layouts.md:95` |
+| O-10 | Explicit ending through overview matches the plan-complete layout. | `open-decisions.md:18`; `today-layouts.md:103`; `today-layouts.md:104` |
+| O-11 | Noninteractive exercise rows and the hero's detail entry match. | `open-decisions.md:19`; `today-layouts.md:45`; `today-layouts.md:46` |
+| O-12 | Today creation scope, including the review's exception, matches. | `open-decisions.md:20`; `today-layouts.md:226`; `today-layouts.md:254` |
+| O-13 | Omitting Now-slab week cells matches the leaf. | `open-decisions.md:21`; `program-layouts.md:57` |
+| O-14 | Creation-date semantics match source; qualify its every-ready-block wording with the DONE and open-workout precedence already specified elsewhere. | `open-decisions.md:22`; `hierarchy.md:44`; `hierarchy.md:60`; `program-layouts.md:125`; `fitbod/Periodization/BlockDraft.swift:80` |
+
+| Default without a complete O-row | Existing leaf or accepted decision to index |
+|---|---|
+| No-block hero selection, standalone-session fallback, fresh-store versus repair distinction, and the routine selected for repair | `today-layouts.md:248`; `today-layouts.md:249`; `today-layouts.md:250`; `today-layouts.md:272`; `today-layouts.md:320`; `tradeoffs.md:31` |
+| Newest-created draft leads with Continue, and drafts do not affect Today | `program-layouts.md:129`; `program-layouts.md:130`; `program-layouts.md:150`; `tradeoffs.md:46`; V4-F5 |
+| Routine-sheet rows start immediately, Other sessions rows preview, and empty routine sessions are repaired through Program | `today-layouts.md:353`; `today-layouts.md:354`; `today-layouts.md:369`; `today-layouts.md:372` |
+| Review becomes an opt-in notice, every dismissal acknowledges it, and review outranks fatigue advice | `today-layouts.md:221`; `today-layouts.md:224`; `hierarchy.md:71`; `plan.md:33` |
+| Advice remains available without a block but is suppressed during an open workout or a deload phase | `hierarchy.md:68`; `today-layouts.md:72`; `today-layouts.md:127`; `plan.md:17` |
+| Empty-workout discard is immediate on both tabs, replacing Program's always-confirm flow | `today-layouts.md:125`; `program-layouts.md:206`; `tradeoffs.md:53` |
+| Volume moves behind navigation from both tabs, untrained muscles collapse, and no-block T-FIX has no volume row | `today-layouts.md:321`; `today-layouts.md:378`; `today-layouts.md:381`; `today-layouts.md:382`; `plan.md:37` |
+| Completed blocks move behind Past, the review reopens from overview, and its original acknowledgement date is kept | `program-layouts.md:62`; `program-layouts.md:227`; `program-layouts.md:229`; `tradeoffs.md:43` |
+| Empty Program leads with routine creation while block creation remains enabled and supplies a routine-creation escape | `program-layouts.md:189`; `tradeoffs.md:49`; `plan.md:38` |
+
+Existing tradeoffs document several of these choices, so V4-F4 concerns register coverage and consistency rather than a claim that the choices lack rationale.
+The v4 fixes did not add the empty-routine and standalone-session data to the explicit TodayState contract, yielding V4-B1, and the remaining summary discrepancies are isolated in V4-F6.
+
+### Checked and correct in this pass
+
+- Seven today.sessions consumers
+- Two LIVE BLOCK consumers
+- Seven Program card-label consumers
+- Four BlockBuilderView source readers
+- Three distinct new fixture states
+- Ready-block creation-date semantics
+- O-2 slot forwarding
+- O-9 shared start-control gate
+- O-10 explicit block ending
+- O-12 review-builder exception

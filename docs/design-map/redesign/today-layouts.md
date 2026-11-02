@@ -217,11 +217,13 @@ Tapping START BLOCK ▸ under a pending review starts the block and the notice g
 │ SUMMER BLOCK FINISHED                REVIEW ›│  notice row above the hero on every state without an active block except T-RESUME
 ```
 
-It shows on T-READY, T-DONE (no block), T-PICK and T-FIRST, and never while a workout is open.
+It shows on T-READY, T-DONE (no block), T-PICK, T-FIX without a block and T-FIRST, and never while a workout is open (round 3, V4-F6).
 This replaces the review sheet that opens by itself on Today's first appear.
 The row is two Texts: "Summer Block finished" with `lineLimit(1)` and tail truncation, and "REVIEW ›", which never truncates, so a long name loses its tail and not the action.
 REVIEW › opens BlockReviewView as a sheet.
 Closing the sheet by any route (Back, swipe, "Plan custom" or "Start next ▸") writes `reviewedAt`, so the row clears and the hero below it stays what it was.
+The write runs in the presenter's `onDismiss` against the block it kept aside when the sheet opened, because the sheet item is nil by then.
+When the write throws, the row stays, because `reviewedAt` is still nil, and a second line under it reads "Couldn't save the review. Open it again to retry." until a later close saves; the sheet's own error line (`acknowledgeError`, `BlockReviewView.swift:27`, `:57`) has closed by then and cannot carry it (round 3, F-F1).
 That is a change to BlockReviewView: today only "Start next ▸" acknowledges, which the design map records as D-06.
 "Start next ▸" still acknowledges and opens the block builder from the review's own sheet (`pendingNextBlockBuilder` in BlockReviewView), the one block creation reachable from Today (O-12).
 The review stays reachable afterwards from Program › Past blocks (see [program-layouts.md](program-layouts.md)).
@@ -245,8 +247,9 @@ The review stays reachable afterwards from Program › Past blocks (see [program
 │ VOLUME THIS WEEK     1 workout · 15 sets    ›│
 ```
 
-The suggested session is the routine anchor of the routine that holds the newest finished slotted workout among live routines: the slot after that workout, wrapping, skipping sessions with no exercises.
-With no such workout it is the first session with exercises in the routine that holds the most recently updated session (`SessionTemplate.updatedAt`).
+The suggested session is its routine's NEXT, the value the session sheet's table below defines: the first slot at or after the routine anchor, wrapping, whose session has exercises.
+The routine is the live routine with a NEXT that holds the newest finished slotted workout; a routine whose remaining sessions are all empty has no NEXT and is passed over, so the hero, the sheet's NEXT mark and Program's NEXT ▸ never disagree (round 3, B-F2).
+With no finished slotted workout in a routine with a NEXT, the routine is the one that holds the most recently updated session (`SessionTemplate.updatedAt`) among those with a NEXT.
 When no live routine holds a session with exercises but a session outside every live routine does, the hero is that session, the most recently updated one, with the label "NEXT UP" alone; it starts unslotted and "View ›" opens its detail (round 3).
 START WORKOUT ▸ passes the suggested slot to `WorkoutStarter`, so the next workout moves the suggestion on.
 Such a workout has a slot and no block, and `TodayResolver` ignores it for any later block because its anchor filter is by block.
@@ -359,10 +362,10 @@ NEXT, marked on one row, is the value [hierarchy.md](hierarchy.md) defines, and 
 | --- | --- |
 | Rotation block | The resolver's next slot. |
 | Weekday block | Today's slot while today is a training day and no counted workout started today; otherwise the slot the resolver returns for the next training day, resolved with that date as today (`TodayResolver.resolve(block:context:today:calendar:)` takes the date). On a rest day and after a finished workout this is the slot T-REST and T-DONE name. |
-| No block | The routine anchor of the suggestion's routine: the slot after the newest finished workout slotted in that routine, wrapping; the routine's first slot when it has none. |
+| No block | The suggestion's routine's NEXT: the first slot at or after its routine anchor (the slot after the newest finished workout slotted in that routine, wrapping; its first slot when it has none) whose session has exercises; a routine with no such session has no NEXT (round 3, B-F2). |
 
 A row of the active block's routine passes a slot: NEXT when it holds this session, else the first slot after NEXT that holds this session, wrapping round, so a session slotted twice (PPL ×2) never moves the rotation backwards (O-2, round 2).
-With no block, a row passes a slot under the same rule anchored at its own routine's anchor (the slot after the newest finished workout slotted in that routine, else its first slot), so the suggestion moves after a sheet start too, and a different routine resumes where it was left.
+With no block, a row passes a slot under the same rule anchored at its own routine's NEXT (its anchor moved past sessions with no exercises, so an empty row is never NEXT), so the suggestion moves after a sheet start too, and a different routine resumes where it was left (round 3, B-F2).
 A session in no live routine, or in a routine other than the active block's while a block is active, starts unslotted.
 In a rotation block, and with no block, a row that is not NEXT ends its subline with "skips Pull A, Legs A": the sessions in the slots from NEXT (included) to the slot it passes (excluded), which the anchor moves past for this cycle (O-2, round 3).
 Weekday blocks never say "skips": the resolver maps weekdays to slots and the anchor moves nothing.
@@ -371,7 +374,7 @@ Rows are sized by their text with a 44pt minimum, and the "skips …" subline wr
 A mis-tap costs two taps: the logger's ‹ leaves the empty workout open, Today shows RESUME, and its DISCARD asks nothing when no sets are logged.
 Session detail for routine sessions other than the hero (preview, edit, last workout) moves to Program › routine › session, three taps from Today; accepted, because previewing a session that is not today's is not an everyday job and the sheet's job is starting (round 3).
 The hero's detail stays behind the Exercises head's "View ›".
-One helper, `StartSlot` (step 1.3), holds NEXT, the routine anchor and the two-slot rule; the sheet, the hero, the session detail's START WORKOUT ▸ (from Today's "View ›", from ADD EXERCISES ▸ and from Program › routine › session) and Program's TODAY ▸ and NEXT ▸ all call it, so starting the same session by any route moves the rotation the same way (D-19, round 3).
+One helper, `StartSlot` (step 1.3), holds NEXT, the routine anchor with its skip of empty sessions, the suggestion's routine and the two-slot rule; the sheet, the hero, the session detail's START WORKOUT ▸ (from Today's "View ›", from ADD EXERCISES ▸ and from Program › routine › session) and Program's TODAY ▸ and NEXT ▸ all call it, so starting the same session by any route moves the rotation the same way (D-19, round 3).
 
 ## Progress › Volume
 

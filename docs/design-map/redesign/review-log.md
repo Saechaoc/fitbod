@@ -4,25 +4,26 @@ Adversarial reviews of this bundle, newest first.
 Each round lists the reviewers, their lenses, the findings ranked by blast radius, and what changed in the bundle because of each.
 A finding is a blocker when the design cannot be called final until it is closed or accepted with a reason.
 
-## Round 3 (Codex): settled in draft v4; coverage report partial, feasibility pending
+## Round 3 (Codex): experience and coverage settled in draft v5; feasibility part-settled in draft v5, resuming on it
 
 The three Codex reviewers (GPT-6-Astra, max reasoning, Orca run `run_855deefac019`) were resumed on draft v3 with the specs in `reviews/specs/round3-codex-coverage.md`, `round3-codex-experience.md` and `round3-codex-feasibility.md`.
 Each spec asks the reviewer to re-check the seven blockers and three fix-soon closures of rounds 1 and 2 against the leaves, then to attack v3 with its lens.
 21:39 PST, 2026-11-01: the first resend landed a minute before the account's five-hour window reset and was refused.
 21:41 PST: the second resend started all three; by 21:52 the three sessions had used 91% of the fresh window, and all three were refused with "try again at 2:41 AM on 2 Nov".
 2 Nov, 05:44 PST: the experience reviewer alone was resumed, so one window carried one whole review; it saved `reviews/round3-codex-experience.md` at 06:59 PST (4 blockers, 10 fix-soon findings, 17 contradictions, every requested check reached).
-07:00 PST: the coverage reviewer was resumed with an instruction to save its report after each item; it wrote `reviews/round3-codex-coverage.md` (2 blockers, 7 fix-soon findings, a capability inventory, ten closure checks, six audit spot checks) and stopped at the usage limit at 07:27 PST with its "Not reached" list open; the window reopens at 10:47 AM PST.
-The feasibility reviewer has not run on v3; its terminal and dispatch stay open.
-Draft v4 folds in the experience report in full and the coverage report as far as it goes.
+07:00 PST: the coverage reviewer was resumed with an instruction to save its report after each item; it wrote `reviews/round3-codex-coverage.md` (2 blockers, 7 fix-soon findings, a capability inventory, ten closure checks, six audit spot checks) and stopped at the usage limit at 07:27 PST with its "Not reached" list open; the window reopened at 10:47 AM PST.
+11:04 PST: the coverage reviewer was resumed on draft v4 (`e403d287`) with its "Not reached" list; it reached every item and reported worker_done at 11:20 PST under "## Draft v4 pass" (1 blocker, 6 fix-soon findings, and the test, source, seed and decision inventories).
+11:22 PST: the feasibility reviewer was resumed on draft v4 with its spec and the write-early instruction, told not to re-report the coverage pass's test, seed and caller findings.
+11:26 PST: it stopped at the usage limit ("try again at 4:04 PM") with two blockers, one fix-soon finding and five of the eleven feasibility items written; the resumed pass runs on draft v5 and folds into draft v6.
+Draft v4 folded in the experience report in full and the coverage report as far as it went; draft v5 folds in the coverage pass on v4 and the feasibility report as far as it went (both below).
 
 | Lens (round 3) | Dispatch | Terminal | Report |
 | --- | --- | --- | --- |
-| Coverage | `ctx_c5c90e2545ca` | `term_119ecd08-743e-4edb-ba53-c8c8a5d6f71c` | `reviews/round3-codex-coverage.md`, partial |
+| Coverage | `ctx_c5c90e2545ca` | `term_119ecd08-743e-4edb-ba53-c8c8a5d6f71c` | `reviews/round3-codex-coverage.md` (the v3 section, then "Draft v4 pass") |
 | Experience | `ctx_7ba11a62bc0e` | `term_7e1e8606-69e4-42d5-948a-cdc9ba6cecd9` | `reviews/round3-codex-experience.md` |
-| Feasibility | `ctx_ef85d3b1fc2a` | `term_c44291f1-e180-4915-ab17-7f74247af6b3` | not written |
+| Feasibility | `ctx_ef85d3b1fc2a` | `term_c44291f1-e180-4915-ab17-7f74247af6b3` | `reviews/round3-codex-feasibility.md`, partial (stalled at 11:26 PST, resumes on draft v5 at 4:04 PM PST) |
 
-To finish the round, resend the coverage reviewer after 10:47 AM ("continue from the spec, updating the report after each item"), then the feasibility reviewer, one at a time: `orca terminal send --terminal <terminal> --text "..." --enter`, then `orca orchestration check --run run_855deefac019 --wait --types worker_done --json` for its report.
-Fold the findings into this log the way the two reports below were.
+To finish the round, resume the feasibility reviewer on draft v5 when the window reopens (`orca terminal send --terminal term_c44291f1-e180-4915-ab17-7f74247af6b3 --text … --enter`, naming its "Not reached" list and the landed commit), wait for its worker_done (`orca orchestration check --run run_855deefac019 --wait --types worker_done --json`) and fold the rest of its report into this log the way the sections below were.
 
 ### Experience (Codex), settled in draft v4
 
@@ -62,11 +63,11 @@ The seventeen contradictions in the report's cross-check are fixed in place: onl
 - T-READY outranks T-PICK while a ready block waits; the Planned list is the way to choose another and O-14 the real fix (F3-2; re-accepted by the reviewer).
 - The nine items accepted in rounds 1 and 2 were re-checked by the reviewer and stand, with the four-tap return path to a finished block's review disclosed in evaluation.md.
 
-### Coverage (Codex), partial, folded into draft v4 as far as it goes
+### Coverage (Codex): the v3 report settled in draft v4, the v4 pass in draft v5
 
-Verdict so far: not final, two blockers.
+Verdict on v3: not final, two blockers; on v4: not final, one blocker and six fix-soon findings, every item of the spec reached.
 Closure checks: B-1, B-3, B2-1, B2-2 and F2-9 closed; B-2, B-4 and F2-1 partial through C3-2 and C3-5; B-5 and F2-11 partial through C3-5 and C3-7.
-Its "Not reached" list (the per-step test inventory, both re-check lists, seed uniqueness, every layout default against open-decisions.md) stays open until the reviewer resumes.
+Its v3 "Not reached" list (the per-step test inventory, both re-check lists, seed uniqueness, every layout default against open-decisions.md) was completed in the v4 pass below.
 
 | # | Finding | Resolution in v4 |
 | --- | --- | --- |
@@ -76,11 +77,28 @@ Its "Not reached" list (the per-step test inventory, both re-check lists, seed u
 | C3-4 | The map recorded navigation into the child screens but not their capabilities: routine mutations, archived-routine restore, the builder's editing, Block overview's EDIT, SWAP, scheduling, carousel, fatigue strip and archive states, the review's statistics and inert EXPORT, muscle-target editing, the recap grid and the signals sheet. | A grouped "unchanged" row per child screen, naming its mutations and failure states. functionality-map.md. |
 | C3-5 | Seven UI suites match the card labels, not five; four suites read BlockBuilderView.swift, not six, because the two BRU audit suites retired that read; root-level "DONE block: …" lookups break when done cards move to Past. The report's file names `BlockDraftKeepsOnCancelUITests` and `BlockLifecycleJourneyUITests` do not exist; the two extra suites are `ArchiveRoutineUITests` and `BlockDraftKeepsUITests`. | Counts and names corrected; the five root-level DONE lookups are named in step 1.5 with the rule that they open Past blocks first. plan.md 1.5 and 2.6; the round 1 and 2 lists below carry inline corrections. |
 | C3-6 | The audit and map called the automatic review once-only, but `pendingReviewBlocks` runs on every appearance (`TodayView.swift:374`) and only "Start next ▸" acknowledges, so it repeats until then. | Corrected in audit.md A-16 and functionality-map.md; acknowledging on close stays the behaviour change. |
-| C3-7 | `-fitbod-seed-empty-workout` starts its finished workout 30 minutes before launch (`DemoWorkoutSeed.swift:69`, `:141`), so before 00:30 it is yesterday's and the no-block T-DONE fixture fails. | Step 1.3 clamps that start to today's midnight, as the recap seed clamps to the week start (`:113`). plan.md 1.3, functionality-map.md, risks.md R-19. |
+| C3-7 | `-fitbod-seed-empty-workout` starts its finished workout 30 minutes before launch (`DemoWorkoutSeed.swift:69`, `:141`), so before 00:30 it is yesterday's and the no-block T-DONE fixture fails. | Step 1.3 anchors the fixture to the later of that start and today's midnight; the v4 pass found that a clamped start alone could finish the workout after launch (V4-F3), so every timestamp is bounded by launch and the two workouts keep their fractions of the span. plan.md 1.3, functionality-map.md, risks.md R-19. |
 | C3-8 | The plan kept `WeekTickerCells` for Block overview, whose only production caller is the band (`BlockContextBand.swift:139`); the overview draws its own carousel (`BlockOverviewScreen.swift:583`). | `WeekTickerCells` is deleted with the band. plan.md 1.1, functionality-map.md. |
-| C3-9 | A-03 said the streak resets on every rest day (it accepts yesterday); A-04 counted four accent uses and missed the MRV legend cell; A-21 put the advisory above the deload banner (it is below, `TodayView.swift:102-108`); A-22 described main's PLAN COMPLETE labels as the capture, which still shows "W1 / 4" and "DAY 08 / 28"; A-29 needed "same status and displayed week"; A-23's "two live blocks" cannot exist. | All six rows corrected against the captures and the source. audit.md. |
+| C3-9 | A-03 said the streak resets on every rest day (it accepts yesterday); A-04 counted four accent uses and missed the MRV legend cell; A-21 put the advisory above the deload banner (it is below, `TodayView.swift:102-108`); A-22 described main's PLAN COMPLETE labels as the capture, which still shows "W1 / 4" and "DAY 08 / 28"; A-29 needed "same status and displayed week"; A-23's "two live blocks" cannot exist (round 3 v4 pass: two active blocks; the deletion guard calls draft and ready blocks live too, `SplitDeletionGuard.swift:38`). | All six rows corrected against the captures and the source. audit.md. |
 
 Smaller items, fixed in place: the banner's dismiss glyph is ✕ (functionality-map.md); the volume empty state needs no muscle with a rounded set this week as well as none with a MEV target (`FatigueSurfaceView.swift:106`).
+
+#### Draft v4 pass, settled in draft v5
+
+Verdict: not final, one blocker and six fix-soon findings; the reviewer confirmed the two v3 blockers closed at the proposal level and found no app or test source changed since the spec's baseline.
+
+| # | Finding | Resolution in v5 |
+| --- | --- | --- |
+| V4-B1 (blocker) | Step 1.1 fed `TodayState` only the routines with a non-empty session, so a fresh store, a live routine with no sessions and a standalone session with exercises gave the same inputs while hierarchy.md needs T-FIRST, T-FIX and T-PICK for them, and Program would inherit the gap. | The inputs are every live routine, empty ones included, with its sessions read from the slots in Swift, and the sessions with exercises that no live routine's slot holds, from a flat `@Query<SessionTemplate>` filtered in Swift because `SessionTemplate` has no inverse to `SplitSessionSlot`; `TodayStateTests` gains the three no-history stores; step 2.3 names the inputs Program reuses. plan.md 1.1 and 2.3. |
+| V4-F1 | The per-step test lists said "the factory's existing suites", "the Progress home suites" and "the resolver suites" instead of names, omitted `BlockReviewMathTests` (calls `acknowledge` at `:226` and reads the view's source at `:240`), and carried wrong-screen matches: `SuggestedActionTests`' "No active block" is a comment about `PlateauDetector`, `BRUPeriodizationRegressionTests` reads "No blocks yet" from RoutinesListView, and `ExerciseHistoryRowsUITests` taps Library's "View all history". | Named: `SessionFactoryTests`, `SessionFactoryPhase3Tests`, `DeloadVolumeApplicationTests` and `WarmupDeloadIntegrationTests` (1.2); `BRUGrepAuditPhase6Tests` (1.4); `BlockReviewMathTests` and the two BRU scanners of BlockReviewView (2.1); `TodayResolverTests` and `SessionFactoryTests`, with `BlockOverviewStatesTests` as the only `nextTrainingDay` caller (2.2). The three wrong-screen matches are dropped or labelled; no test constructs `SessionTemplateDetailView(template:)`; no UI suite confirms "Discard active workout?"; the `labeled` helper matches without case (`UITestNavigation.swift:537`). plan.md 1.2 to 1.6, 2.1 and 2.2. |
+| V4-F2 | Caller claims counted comments and source strings: `SessionTemplate` names `RoutineDuplicator` only in comments (`:19`, `:51`), `RoutinesListView` has two preview constructions (`:495`, `:512`), and `BlockReviewTriggerTests` pins `BlockReviewView(block: block)` in Today's source (`:199`) rather than constructing the view. | "Production caller" wording; `RoutineBuilderView.swift:588` and the list's own `:452` as the duplicator's callers; two constructing suites plus the source pin. plan.md 2.1 and 3.2; the round 1 list below. |
+| V4-F3 | Clamping the empty-workout fixture's start to midnight left `finishPushA` dating the end and every set from that start (`DemoWorkoutSeed.swift:290`, `:297`), so at 00:05 a "finished" workout ended at 00:10, after launch. | The fixture is anchored to the later of 30 minutes before launch and today's midnight, its two workouts keep their fractions of that span, and every timestamp is bounded by launch; the other `seedFinished` fixtures are untouched. The week-start clamp the v4 text borrowed belongs to the normal demo mode, not a recap branch, and has a previous-week fallback (`:112-115`). plan.md 1.3, functionality-map.md, risks.md R-19, C3-7 above. |
+| V4-F4 | open-decisions.md had no row for the no-block hero and repair selection, the drafts-only rule, the session sheet's two tap behaviours, the shared discard rule or the review-over-advice priority, and O-4 promised "Recaps ›" on Progress although plan.md and evaluation.md leave that screen out (D-27). | A "Defaults decided in the leaves" table indexes the nine defaults with their leaves; O-3 states T-DONE over T-READY, O-5 the acknowledge-on-close and review-first rules, O-6 the drafts-only rule, O-14 the T-RESUME and T-DONE precedence; O-4 marks the Progress recaps screen deferred; O-1's "most splits" claim is reworded as a consequence. open-decisions.md. |
+| V4-F5 | The drafts-only leaf chose the newest created draft but justified it as "the draft the lifter touched last"; `BlockDraft` keeps `startDate` through edits (`:19`, `:80`, `:151`), so the two disagree once an older draft is edited. | The rule stays newest created (then name, then id) and its rationale is creation order; "touched last" would need an edit timestamp the schema does not have. program-layouts.md, tradeoffs.md, O-6. |
+| V4-F6 | hierarchy.md's zone table still tied the advisory to an active block, the review-notice leaf listed no T-FIX, and T-FIX's state row carried the volume row that its no-block layout excludes. | The zone table matches the notice table (review first, advisory with or without a block); the review notice lists T-FIX without a block; the T-FIX row keeps the plan line and volume row only with a block. hierarchy.md, today-layouts.md. |
+
+Also corrected from the v4 pass: "Plan custom" is at `BlockReviewView.swift:349` (the comment at `:393` describes it); `WeekTickerCells` has one production caller and its own previews; `pendingReviewBlocks` returns the latest-ended block only while it is unreviewed, so an older unreviewed block never becomes pending; "two live blocks" in C3-9 means two active blocks, since the deletion guard calls draft and ready blocks live (`SplitDeletionGuard.swift:38`); the powerbuilding seed's name overflows the current hero, and its fit in the plan line is unmeasured; the reviewer reads its v3 names `BlockDraftKeepsOnCancelUITests` and `BlockLifecycleJourneyUITests` as `BlockDraftKeepsUITests` and `BlockLifecycleEntryPointsUITests`, which leaves the seven real suites as step 1.5 lists them.
+Every other claim of the v3 report and of the round 1 and 2 re-check lists held in the reviewer's source tables, the three new seeds are justified against all eight seed files, and the fourteen O-rows match the leaves.
 
 #### Reviewer claims re-checked against the source before the revision
 
@@ -92,12 +110,64 @@ Smaller items, fixed in place: the banner's dismiss glyph is ✕ (functionality-
 - `TodayView.dayStreak` walks finished workouts from today back and accepts yesterday as the first day (`:472-499`).
 - `BlockDraft.startDate` is `.now` at creation (`:19`), copied on edit (`:80`) and written back on save (`:151`), so it is a creation date.
 - `refreshAdvisory` guards only on `settingsList.first` and `deloadAlertEnabled` (`TodayView.swift:683-689`), with no active-block check.
-- `pendingReviewBlocks` runs in Today's `.task` on every appearance (`:374`); `BlockReviewView`'s "Plan custom" calls `dismiss()` only (`:393`).
-- `WeekTickerCells` is constructed only by `BlockContextBand.swift:139`; `BlockPastPlanTests` names it in a comment only.
+- `pendingReviewBlocks` runs in Today's `.task` on every appearance (`:374`); `BlockReviewView`'s "Plan custom" calls `dismiss()` only (`:349`; the comment at `:393` says so).
+- `WeekTickerCells` has one production caller, `BlockContextBand.swift:139`; its own previews construct it and `BlockPastPlanTests` names it in a comment only.
 - Seven UI suites match the card labels; the root-level "DONE block: …" lookups are at `BlockLifecycleEntryPointsUITests.swift:45` and `:58`, `BlockOverviewStatesUITests.swift:85`, `ArchiveRoutineUITests.swift:140` and `BlockReviewAfterEndUITests.swift:60`; four unit suites read `BlockBuilderView.swift` by path.
 - `FatigueSurfaceView.visibleMuscles` keeps a muscle with a rounded set or a positive MEV (`:106`); the legend's MRV cell fills with `bruSignal` (`:238`); the banner draws "✕" (`DeloadAdvisoryBanner.swift:80`).
-- `DemoWorkoutSeed` seeds the empty-workout fixture with starts 30 and 15 minutes before now (`:69`, `:141`); the recap fixture clamps its first start to the week start (`:113`).
+- `DemoWorkoutSeed` seeds the empty-workout fixture with starts 30 and 15 minutes before now (`:69`, `:141`); the normal demo fixture, not a recap one, clamps its earlier workout to the week start with a previous-week fallback (`:112-113`); `finishPushA` dates the end and every set from the start (`:290`, `:297`).
 - The plan-complete capture shows PLAN COMPLETE only on the band chip; its strip reads "W1 / 4" with a trend arrow and its slab "DAY 08 / 28"; `today.png` has five orange elements and `today--scheduled.png` seven.
+- `SessionTemplate` has no inverse relationship to `SplitSessionSlot` (`SplitSessionSlot.swift:42-43` holds the only edge), so the sessions in no live routine come from a flat template query minus the live routines' slot templates (v4 pass).
+- `finishPushA` dates each set's `completedAt` from the start (`DemoWorkoutSeed.swift:290`) and the workout's end as start plus its minutes (`:297`); the normal demo mode clamps its earlier workout with `min(max(now - 3 days, weekStart), now - 70 min)` (`:112-115`) (v4 pass).
+- `RoutinesListView` is constructed by its two previews (`:495`, `:512`) and calls `RoutineDuplicator` at `:452`; `RoutineBuilderView.swift:588` is the duplicator's production caller (v4 pass).
+- `BlockReviewTriggerTests.swift:199` asserts the string `BlockReviewView(block: block)` in `TodayView.swift`; `BlockReviewPRMarkTests.swift:124` and `BlockReviewHeroLayoutTests.swift:105` construct the view; `BlockReviewMathTests.swift:226` calls `BlockReviewStatistics.acknowledge` and `:240` reads `BlockReviewView.swift` for its transaction wrapper (v4 pass).
+- `pendingReviewBlocks` takes the latest-ended block and returns it only while `reviewedAt` is nil (`BlockReviewView.swift:638-642`); `BlockReviewTriggerTests.swift:128-132` pins that an earlier-ended block never opens a review (v4 pass).
+- `UITestNavigation.labeled` matches labels without case (`UITestNavigation.swift:537`); seven UI suites match the card labels, and `BlockLifecycleEntryPointsUITests.swift:112` asserts "No active block." (v4 pass).
+
+### Feasibility (Codex): the partial pass on draft v4, settled in draft v5
+
+Verdict as written at the stall: not final, two blockers and one fix-soon finding, with five of the eleven feasibility items checked (2b, 2c, 2d, 2e, 2f) and the closure checks, the other six items and the final ranking not reached.
+The reviewer wrote the report after each item, so the stall lost nothing; the items below carry its citations, each re-checked against the source before the revision.
+
+#### Blockers
+
+| # | Finding | Resolution in v5 |
+| --- | --- | --- |
+| B-F1 | `TodayState`'s inputs could not tell T-FIRST, the no-block T-FIX and standalone T-PICK apart: step 1.1 fed only routines with a usable session, and nothing listed the never-logged standalone templates. The same gap as V4-B1, found independently. | Closed by V4-B1's resolution above. The feasibility table also asked for the pending review by `pendingReviewBlocks`' rule rather than by status, and for the no-block anchor from the full finished-workout list, so step 1.1's tuple names both. |
+| B-F2 | No-block NEXT and T-PICK disagreed when the anchor routine's next session was empty: the hero skipped sessions with no exercises, the sheet's NEXT table and its row rule did not, and the hero had no fallback when the newest workout's routine held no usable session, so T-PICK could be selected (a usable session exists somewhere) with no hero to show. | One rule in `StartSlot`: a routine's no-block NEXT is the first slot at or after its anchor whose session has exercises, none when it has no such session; the suggestion's routine is the live routine with a NEXT that holds the newest finished slotted workout, else the one holding the most recently updated session, else the standalone fallback. `StartSlotTests` and `TodaySessionSheetTests` gain the empty-session cases. today-layouts.md (T-PICK, the NEXT table, the row rule), hierarchy.md, plan.md 1.3, open-decisions.md. |
+
+#### Fix soon
+
+| # | Finding | Resolution in v5 |
+| --- | --- | --- |
+| F-F1 | The acknowledgement moved to the presenter's `onDismiss`, after the sheet with the only error line (`acknowledgeError`, `BlockReviewView.swift:27`, `:57`) has closed, so a failed write was silent, against the development guide's rule (`docs/DEVELOPMENT.md:23-25`); the sheet item is nil by `onDismiss`, and no test covered the write at the persistence boundary. | One presenter shared by Today and Block overview keeps the opened block aside, writes in `onDismiss`, and on failure shows "Couldn't save the review. Open it again to retry." under the row that opened the sheet while the notice stays, because `reviewedAt` is still nil; "Start next ▸" keeps the in-sheet write and its error line. New `ReviewAcknowledgementTests` (first write, a repeat keeps the date, a throwing store via `ModelConfiguration(allowsSave: false)`) and a `RelaunchPersistenceTests` case. plan.md 2.1 and 2.4, today-layouts.md, hierarchy.md, program-layouts.md, functionality-map.md, risks.md R-26. |
+
+#### Notes from the five checked items, folded into plan.md
+
+- 2c, `TodayState` inputs: the broad Block query and the flat Split query with Swift post-filters fit the conventions; the pending review needs `pendingReviewBlocks`' rule (future end dates and older unreviewed blocks are excluded, `BlockReviewView.swift:630-642`); the no-block anchor needs the full finished history, not today's workouts; date and calendar stay explicit inputs and the phase derives from the active block. Step 1.1.
+- 2f, the review sheet: the nested builder hard-codes `origin: .today` (`:79`), so the origin is stored and forwarded; `BlockReviewView.init(block:)` is public (`:32`) while `BlockBuilderView.Origin` is internal (`BlockBuilderView.swift:14`), so the new initializer is internal and the public one stays; `acknowledgeAndDismiss` has no caller; `BlockLifecycleEntryPointsUITests` keeps its relaunch check with the notice in place of the reopening sheet (`:51-60`); `BlockReviewAfterEndUITests`' seed also makes the weekly recap due (`:75-78`), which now shows first (O-4), so the journey closes it before tapping the notice. Step 2.1.
+- 2e, `StartSlot` and the session sheet: the resolver's slot plus the routine's slots in position order are enough for the two-slot rule and the skipped range; `TodaySessionPicker` holds none of the block, mode, date, calendar or history inputs and its `groups` drops slot identity (`:18`, `:21`, `:37`), so the sheet takes the inputs, keeps candidate slots per row and passes the chosen slot in `onStart`; `TodayResolution` exposes neither the latest finished workout nor a future weekday slot (`TodayResolver.swift:33`, `:67`, `:172`), which the leaves already handle by resolving the next training day with that date; `StartSlot` takes the resolver's results as arguments to stay pure (`:69`, `:108`); the session detail reads the active block, the resolution and the finished workouts through its context at tap time (`SessionTemplateDetailView.swift:23`, `:31`, `:210`); the future-day rule in Phase 1 closes v3's dependency on Phase 2. Step 1.3.
+- 2b, the working-set helper: the extraction keeps the factory's generation exactly by taking `BlockPhase?` and the deload branch verbatim (`SessionFactory.swift:188`, `:256`, `:289`); calendar parity was conditional, because the factory resolved the phase with `Calendar.current` and Today with the environment calendar (a UTC and a Los Angeles calendar sit on different block days at 00:30 UTC), so the calendar now passes through `WorkoutStarter.start` and `SessionFactory.start` to `PeriodizationEngine.phase(for:on:calendar:)`. Step 1.2.
+- 2d, the volume row: `FatigueModel.completedWorkingSets(startedFrom:before:in:)` is internal and MainActor-isolated (`:305`) and its predicate reads `startedAt` only (`:311-314`), so the row filters the returned sets by the counted workouts' identities and uses a calendar-derived exclusive week end; the finished IDs plus the week start are a sufficient key while finished workouts stay immutable, provided the activation and time-change refresh recompute it and `weekStartsMonday` passes through (`MondayAtMidnight.swift:23`); `fetchWorkingSets` stays private (`:276`). Step 1.4.
+
+#### Not reached at the stall, for the resumed pass
+
+- Spec item 1: the seven blocker closures and three fix-soon closures of rounds 1 and 2.
+- Spec item 2a: the remaining Phase 1 steps and the conventions audit.
+- Spec item 2g: Today's builder `.template` case removal.
+- Spec item 2h: Volume routing on both stacks.
+- Spec item 2i: Program's header and popover geometry.
+- Spec item 2j: test spot-checks outside the coverage reviewer's inventory.
+- Spec item 2k: the remaining Phase 1 dependencies on Phase 2.
+- Spec item 3: the final ranking and verdict.
+
+#### Reviewer claims re-checked against the source before the revision
+
+- `TodaySessionPicker.groups` maps each routine's slots to templates and drops the slot (`TodaySessionPicker.swift:37-43`); `onStart` carries a `SessionTemplate` only (`:22`, `:25`); the disabled START ▸ at `:96-98` is the only empty-session handling.
+- `BlockReviewView` keeps `acknowledgeError` as `@State` (`:27`) and draws it inside its own ScrollView (`:57-60`); `acknowledge()` catches the throw into that string (`:395-404`); "Plan custom" calls `dismiss()` (`:349`) and "Start next ▸" calls `acknowledge()` then sets `pendingNextBlockBuilder` (`:355-357`); the nested builder is constructed with `origin: .today` (`:79`); `init(block:)` is public (`:32`); `BlockBuilderView.Origin` is an internal enum (`BlockBuilderView.swift:14`) with `.program` the initializer's default (`:60`).
+- `SessionFactory.start(template:slot:activeBlock:on:context:)` (`:123-128`) resolves the phase with `PeriodizationEngine.phase(for:on:)` and the default calendar (`:188-190`), which `phase(for:on:calendar:)` takes (`PeriodizationEngine.swift:21`); the deload branch floors `targetSets × volumeMultiplier` with a minimum of one (`:289-296`).
+- `FatigueModel.completedWorkingSets` fetches workouts by `startedAt` in `[start, end)` and walks their sets (`:305-323`); `fetchWorkingSets` is private and adds one week with the calendar (`:276-285`); `mondayAtMidnightForToday(weekStartsMonday:calendar:)` sets `firstWeekday` on a copy of the calendar (`MondayAtMidnight.swift:23-33`).
+- `BlockLifecycleEntryPointsUITests` taps "Plan custom" after the relaunch and expects the review to reopen (`:51-57`); `BlockReviewAfterEndUITests` launches `-fitbod-seed-ended-block-recap` with `-fitbod-start-program` and the seed's comment says the recap is due too (`:58-60`, `:75-78`); `TodayView.checkWeeklyRecap` defers the recap behind a pending review (`:640-647`).
+- `docs/DEVELOPMENT.md:23-25`: "A failed save must say so and must not poison later saves."
 
 ## Round 2: settled in draft v3
 
@@ -151,7 +221,7 @@ Smaller items, fixed in place: step 1.1 names its new queries and their Swift po
 - `SplitDetailView`'s slot picker lists every unarchived session with no duplicate guard (`:780`, `:869-890`); `TodaySessionPicker.groups` lists a routine's sessions in slot order without deduplication.
 - The glyph table lists "×" as times and has no close mark; the banner draws "✕".
 - The card labels "ACTIVE block: …", "READY block: …", "DRAFT block: …", "DONE block: …" are at `ProgramView.swift:635-641`; five UI suites match them (round 3 correction: seven).
-- `PowerbuildingSeed` has the long block name; `DemoWorkoutSeed` (`-fitbod-seed-empty-workout`) logs a finished Push A with no block.
+- `PowerbuildingSeed` has the long block name (wider than the current hero, `PowerbuildingSeed.swift:5`; its fit in the plan line is unmeasured, round 3 v4 pass); `DemoWorkoutSeed` (`-fitbod-seed-empty-workout`) logs a finished Push A with no block.
 
 ## Round 1
 
@@ -231,7 +301,7 @@ Every code claim the revision relies on was re-checked against the source; the l
 #### Reviewer claims re-checked against the source before the revision
 
 - `reviewedAt` is written by `BlockReviewStatistics.acknowledge`, called only from "Start next ▸", and by `BackupRestorer.swift:440` on restore (round 2 correction); "Plan custom" calls `dismiss()`; `acknowledgeAndDismiss` has no caller.
-- `pendingReviewBlocks` returns nothing while any block is active, else only the latest-ended unreviewed block; `BlockReviewTriggerTests` pins both.
+- `pendingReviewBlocks` returns nothing while any block is active, else the latest-ended block and only while it is unreviewed, so an older unreviewed block never becomes pending (`BlockReviewView.swift:638-642`, `BlockReviewTriggerTests.swift:128-132`; round 3 v4 pass); `BlockReviewTriggerTests` pins both.
 - BlockReviewView wraps its own NavigationStack and opens the builder with origin `.today`; `BlockBuilderView.Origin` has `.program` and `.today`.
 - `TodayResolver`'s rotation anchor requires the workout's block, slot and split to match; fixed-weekly maps the weekday through `trainingDays.firstIndex`.
 - Only Today's hero passes a slot to `WorkoutStarter`; the picker and every other caller pass nil.
@@ -248,7 +318,7 @@ Every code claim the revision relies on was re-checked against the source; the l
 - `BlockOverviewScreen.nextTrainingDay` exists as a static helper.
 - `BlockCard` has no app caller; `BlockRow` is called from RoutinesListView, and `BlockRow.sortedForDisplay` from BlockPickerMenu.
 - The suites that read `ProgramView.swift` by path are `NewBlockBuilderFidelityTests`, `ProgramViewFidelityTests` and `AdaptiveColorSourceTests`; six suites read `BlockBuilderView.swift` by path (round 3 correction: four, the two BRU audit suites having retired that read); "CREATE BLOCK" is pinned by `NewBlockBuilderFidelityTests` and `ProgramViewFidelityTests`.
-- `RoutinesListView` has no caller, and its file declares `SessionRoute`, which Today and Program push; `MoveRoutineSheet` and `RoutineRow` are used only by it; `RoutineDuplicator` is used by `RoutineBuilderView` and `SessionTemplate`.
-- The test inventory from `rg` matched the reviewers' lists and added `BlockReviewPRMarkTests`, `BRUPhase5GrepAuditTests`, `Phase3BRUGrepAuditTests`, `RoutinesListCopyTests`, `Fatigue/SuggestedActionTests` and `ExerciseHistoryRowsUITests` as suites to verify.
+- `RoutinesListView` has no production caller (its two previews construct it, `RoutinesListView.swift:495`, `:512`; round 3 v4 pass), and its file declares `SessionRoute`, which Today and Program push; `MoveRoutineSheet` and `RoutineRow` are used only by it; `RoutineDuplicator` is called by `RoutineBuilderView.swift:588` and by the list (`:452`), while `SessionTemplate` names it in comments only (`:19`, `:51`).
+- The test inventory from `rg` matched the reviewers' lists and added `BlockReviewPRMarkTests`, `BRUPhase5GrepAuditTests`, `Phase3BRUGrepAuditTests`, `RoutinesListCopyTests`, `Fatigue/SuggestedActionTests` and `ExerciseHistoryRowsUITests` as suites to verify. Round 3's v4 pass settled them: `SuggestedActionTests` and `ExerciseHistoryRowsUITests` match the wrong screen and are dropped; the factory, Progress and resolver suites are named in steps 1.2, 1.4 and 2.2.
 
 Not verified: whether adding an attribute to a SchemaV7 model would trip the incompatible-store reset (moot, since no attribute is added), and which "ALL HISTORY" `ExerciseHistoryRowsUITests` taps.

@@ -3,6 +3,20 @@
 Newest first.
 One entry per iteration: what changed and why.
 
+## 2026-11-02, draft v5
+
+Revised after the Codex coverage reviewer finished its pass on draft v4 (1 blocker and 6 fix-soon findings, all closed) and the Codex feasibility reviewer's partial pass on it (2 blockers and 1 fix-soon finding, all closed; it stopped at the usage limit with five of eleven checks done and resumes on this draft; review-log.md, round 3).
+No-block NEXT skips sessions with no exercises under one rule shared by the hero, the session sheet and Program, and a routine with no usable session passes the suggestion on.
+A failed review acknowledgement keeps the notice and says so under the row that opened the sheet, with tests at the persistence boundary.
+The start pipeline takes the environment calendar, the volume row filters the fatigue helper's sets by the counted workouts, and the session sheet keeps slot identity per row.
+`TodayState` takes every live routine, empty ones included, and the sessions with exercises that no live routine holds, so a fresh store, an empty routine and a standalone session give T-FIRST, T-FIX and T-PICK; `TodayStateTests` covers the three stores and Program reuses the inputs.
+The per-step test lists name the factory, Progress and resolver suites and `BlockReviewMathTests`, drop three wrong-screen matches, and say "production caller" where previews exist.
+The empty-workout fixture is anchored to the later of 30 minutes before launch and today's midnight with every timestamp bounded by launch, in place of a start clamp that could finish the workout after launch.
+open-decisions.md gains a table of nine defaults decided in the leaves; O-3, O-5, O-6 and O-14 state their precedence rules, and O-4 marks the Progress recaps screen deferred.
+The drafts-only rule keeps newest created and says so; the zone table, the review-notice list and the T-FIX row agree with the notice table and the no-block layout.
+Review-log corrections: "Plan custom" at `BlockReviewView.swift:349`, `WeekTickerCells`' previews, the precise `pendingReviewBlocks` rule, "two active blocks", and the long-name fixture's unmeasured fit in the plan line.
+`screen_budget.py` is unchanged: no state was added or removed.
+
 ## 2026-11-02, draft v4
 
 Revised after round 3's Codex experience review (4 blockers and 10 fix-soon findings, all closed or accepted) and the partial Codex coverage review (2 blockers and 7 fix-soon findings, folded in as far as the report goes); the feasibility review has not run (review-log.md, round 3).
