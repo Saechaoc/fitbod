@@ -2,8 +2,8 @@
 #
 # test.sh — the two local test tiers.
 #
-#   scripts/test.sh fast [xcodebuild test args]   # developer feedback, ~30 s
-#   scripts/test.sh full                          # full verification, ~60 min
+#   scripts/test.sh fast [xcodebuild test args]   # developer feedback, ~35 s
+#   scripts/test.sh full                          # full verification, ~14 min
 #
 # fast: an incremental build-for-testing, then every unit test (fitbodTests)
 #       in one serial process. Extra args replace the selection, for example
@@ -22,8 +22,9 @@
 #                        siblings the script creates once, "<name> shard K",
 #                        of the same model and runtime.
 #   FITBOD_TEST_WORKERS  UI shards for `full` (default 2; 1 = serial). Four
-#                        shards on the 12-core M4 failed 1-2 typing and
-#                        sheet tests per run that pass serially; two did not.
+#                        shards on the 12-core M4 Pro failed 1-2 typing and
+#                        sheet tests per run that pass serially; two did not
+#                        (2026-10-31, before T101's keyboard fix and T143).
 #   FITBOD_TEST_DD       DerivedData (default /tmp/fitbod-test-dd-<hash of
 #                        this worktree>, so two worktrees never share one).
 #   FITBOD_TEST_OUT      result bundles and logs (default /tmp/fitbod-test-out).
@@ -58,8 +59,16 @@ flags=(
   CODE_SIGNING_ALLOWED=NO
   COMPILER_INDEX_STORE_ENABLE=NO
 )
-# Without this, a run with any failure waits minutes in `simctl diagnose`.
-test_flags=(-collect-test-diagnostics never)
+# Without `-collect-test-diagnostics never`, a run with any failure waits
+# minutes in `simctl diagnose`. The allowances fail a hung test after 7 min
+# (15 at most) instead of stalling its shard, as the test performance guide
+# (section 2.13) and the Conway worker rules ask.
+test_flags=(
+  -collect-test-diagnostics never
+  -test-timeouts-enabled YES
+  -default-test-execution-time-allowance 420
+  -maximum-test-execution-time-allowance 900
+)
 
 T0=$(date +%s)
 elapsed() { echo $(( $(date +%s) - T0 )); }
@@ -77,6 +86,7 @@ xb() {
 summary() { python3 "$ROOT/scripts/test_results.py" summary "$1"; }
 
 APP_ID=bodybuilding.fitbod
+UI_RUNNER_ID=bodybuilding.fitbodUITests.xctrunner
 
 # Boots a phone, pins default text and light mode, and checks that both took.
 prepare() {
@@ -124,6 +134,21 @@ xctest() {
 xcrun simctl boot "$DEVICE" >/dev/null 2>&1 || true
 xcrun simctl bootstatus "$DEVICE" -b >/dev/null
 
+# The unit tests' host app can hang before it connects ("test daemon not
+# ready"; xcodebuild gives up after about 5.5 min) when it is the first test
+# launch after UI tests on the same phone: 4 of 6 such launches hung on
+# 2026-11-01, and none after a fresh boot. An installed UI test runner means
+# UI tests ran here, so reboot first and remove the runner. A phone that has
+# run only unit tests since skips the reboot, which costs about 20 s.
+reboot_after_ui_tests() {
+  xcrun simctl get_app_container "$DEVICE" "$UI_RUNNER_ID" >/dev/null 2>&1 || return 0
+  step "reboot after UI tests"
+  xcrun simctl shutdown "$DEVICE" >/dev/null 2>&1 || true
+  xcrun simctl boot "$DEVICE" >/dev/null 2>&1 || true
+  xcrun simctl bootstatus "$DEVICE" -b >/dev/null
+  xcrun simctl uninstall "$DEVICE" "$UI_RUNNER_ID" >/dev/null 2>&1 || true
+}
+
 [[ "$TIER" == fast || $# -eq 0 ]] || { echo "full takes no test args; it runs everything" >&2; exit 2; }
 
 if [[ "$TIER" == full ]]; then
@@ -140,6 +165,7 @@ status=0
 if [[ "$TIER" == fast ]]; then
   selection=("$@")
   [[ ${#selection[@]} -gt 0 ]] || selection=(-only-testing:fitbodTests)
+  if [[ "${selection[*]}" == *fitbodTests* ]]; then reboot_after_ui_tests; fi
   step "tests (serial)"
   # The unit tests' host app opens its store at launch; start it empty, so no
   # store left by an earlier UI run decides whether the host even starts.
@@ -169,17 +195,25 @@ for runtime, devices in json.load(sys.stdin)["devices"].items():
 sys.exit(f"device {device} not found")' "$DEVICE" "$index"
 }
 
+reboot_after_ui_tests
 step "enumerate tests"
-# Listing tests launches the test runner, which can hang before it connects.
-# A retry here cannot hide a test result: no test has run yet.
+# Listing tests launches the test runner, which can hang before it connects
+# ("test daemon not ready"; xcodebuild gives up after about 5.5 min). A
+# rerun can hang the same way, and a reboot clears it, so each retry starts
+# on the rebooted phone. A retry here cannot hide a test result: no test has
+# run yet.
 for attempt in 1 2 3; do
   rm -f "$RUN/enumerated.json"
   xcodebuild "${flags[@]}" test-without-building -enumerate-tests -test-enumeration-format json \
     -test-enumeration-output-path "$RUN/enumerated.json" > "$RUN/enumerate.log" 2>&1 || true
   python3 -c 'import json, sys; sys.exit(1 if json.load(open(sys.argv[1])).get("errors") else 0)' \
     "$RUN/enumerated.json" 2>/dev/null && break
-  [[ $attempt -lt 3 ]] || { echo "test enumeration failed 3 times; see $RUN/enumerate.log" >&2; exit 1; }
-  echo "   enumeration attempt $attempt failed; retrying"
+  mv "$RUN/enumerate.log" "$RUN/enumerate.log.attempt$attempt"
+  [[ $attempt -lt 3 ]] || { echo "test enumeration failed 3 times; see $RUN/enumerate.log.attempt*" >&2; exit 1; }
+  echo "   enumeration attempt $attempt failed; rebooting $DEVICE and retrying"
+  xcrun simctl shutdown "$DEVICE" >/dev/null 2>&1 || true
+  xcrun simctl boot "$DEVICE" >/dev/null 2>&1 || true
+  xcrun simctl bootstatus "$DEVICE" -b >/dev/null
 done
 python3 "$ROOT/scripts/test_results.py" shard "$RUN/enumerated.json" \
   "$ROOT/scripts/ui-test-timings.json" "$WORKERS" > "$RUN/shards.txt"

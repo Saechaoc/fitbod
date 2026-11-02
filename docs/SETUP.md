@@ -38,8 +38,8 @@ a dedicated simulator's UUID first.
 
 | Tier | Command | Runs | Typical time |
 |---|---|---|---|
-| Developer feedback | `scripts/test.sh fast` | Incremental build, then every unit test in one serial process. Pass `-only-testing:` flags to run something else, such as one UI class. | About 30 s |
-| Full verification | `scripts/test.sh full` | Build, unit tests serially, every UI class sharded over `FITBOD_TEST_WORKERS` simulators (default 2), widget build | About 55 to 60 min with 2 shards, against 98 min serially, when no UI test stalls |
+| Developer feedback | `scripts/test.sh fast` | Incremental build, then every unit test in one serial process. Pass `-only-testing:` flags to run something else, such as one UI class. | About 35 s; 70 to 90 s right after UI tests or a cold build |
+| Full verification | `scripts/test.sh full` | Build, unit tests serially, every UI class sharded over `FITBOD_TEST_WORKERS` simulators (default 2), widget build | About 14 min with 2 shards; the UI target alone takes 29 min serially |
 
 The full tier keeps each guarantee of the serial run:
 
@@ -51,8 +51,9 @@ The full tier keeps each guarantee of the serial run:
   from an earlier run.
 - Shards are split from `scripts/ui-test-timings.json`, longest first, so the
   same classes land on the same shard each time. A class missing from the
-  file counts as the median. Refresh it from a full run without idle-wait
-  stalls, because one stalled test would skew the balance:
+  file counts as the median. The file comes from Gate 4's serial run on
+  2026-11-01. Refresh it from a full run without idle-wait stalls, because
+  one stalled test would skew the balance:
   `python3 scripts/test_results.py timings <bundle> > scripts/ui-test-timings.json`.
 - The run merges every bundle and fails unless the merged result ran exactly
   the tests the build enumerates: none missing, none extra, none run twice.
@@ -62,18 +63,26 @@ The full tier keeps each guarantee of the serial run:
 - Unit tests never run in parallel processes, and their host app starts
   from an uninstalled app in both tiers, so a store left by a UI run cannot
   change their result.
+- The unit tests' host app can hang for about 5.5 min before it connects
+  ("test daemon not ready") when it is the first test launch after UI tests
+  on the same phone. So when the UI test runner is installed, a run that
+  launches the host reboots the phone first, which costs about 20 s.
 - A test command after which no test started (the runner hung or never
-  bootstrapped) is retried once on the rebooted phone. A run in which any
+  bootstrapped, as Gate 4's unit run did on 2026-11-01) is retried once on
+  the rebooted phone, and test enumeration up to twice. A run in which any
   test started is never retried, so a flaky test stays red.
+- Every UI test gets a 7-minute allowance, 15 at most, so a hung test fails
+  instead of stalling its shard.
 
 `-parallel-testing-enabled YES` is not used. xcodebuild reuses cached clones
 whose text size can differ from the device's, and a trial run hung.
 
-Keep two shards on the 12-core M4. With four, each full run failed one or two
-tests that type text or close a sheet, a different test each time, all of
-which pass serially. With two, the UI tests passed in all four runs. A test that
-waits 60 seconds per step after typing (T101) still sets a shard's length, and
-each shard's summary line counts those idle-wait stalls.
+Keep two shards on the 12-core M4 Pro. On 2026-10-31, before T101's keyboard
+fix and T143's cut, four shards failed one or two tests that type text or
+close a sheet in each full run, a different test each time, all of which pass
+serially; two shards passed all four runs. Try more shards only with three
+clean full runs. Each shard's summary line counts idle-wait stalls, the
+60-second waits after typing that T101 removed, so a returning stall shows.
 
 ## First launch and offline use
 

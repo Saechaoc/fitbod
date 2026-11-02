@@ -423,7 +423,7 @@ Shard the UI bundle further with explicit `-only-testing:` lists when one job is
 **Don't.**
 Don't run clones on the 7 GB CI runner; each clone is a booted simulator with its own app.
 Don't use `-parallel-testing-enabled YES` for the UI target: cached clones can keep settings the phone no longer has.
-Don't raise the local shard count above two while T101's typing stall is open: four shards failed one or two typing or sheet tests per run.
+Don't raise the local shard count above two without three clean full runs: on 2026-10-31, before T101's fix, four shards failed one or two typing or sheet tests per run.
 Don't enable parallel testing in the scheme for both targets; the scheme pins `parallelizable = "NO"` on purpose and Xcode has dropped that setting before (see `CLAUDE.md`).
 
 **Why.**
@@ -819,7 +819,7 @@ Nothing has run in CI since 2026-10-04 because the work moved to `main`.
 ### 3.8 Local sharded UI run on the M4
 
 ```bash
-FITBOD_TEST_DEVICE=<dedicated phone UDID> scripts/test.sh fast   # unit tests, about 30 s
+FITBOD_TEST_DEVICE=<dedicated phone UDID> scripts/test.sh fast   # unit tests, about 35 s
 FITBOD_TEST_DEVICE=<dedicated phone UDID> scripts/test.sh full   # everything, 2 shards
 ```
 
@@ -837,6 +837,18 @@ Measured 2026-10-31 on the M4, against a 98-minute serial gate run (1,320 tests)
 
 Stall-free shards finished within 10 percent of the timing file's estimate (24.3 min for four, 48.7 min for two).
 The 60-second idle-wait stalls after typing (T101) set the long shard: one test ran 37 to 56 minutes in four of the six runs.
+T101 removed those stalls later that day.
+
+Measured again 2026-11-01 on the 12-core M4 Pro with Xcode 27.1 and the iOS 27.0 runtime, after T143 and T119 cut the UI target to 75 tests in 34 classes, which Gate 4 ran serially in 28.9 min:
+
+| Shards | Runs | Wall time | UI failures | Coverage |
+| --- | --- | --- | --- | --- |
+| 2 | 5 | 13.8, 13.3, 18.7, 19.3 and 13.5 min | 0 | exact in all 5 (1,305 tests) |
+
+Each shard's UI run took 12 min against the timing file's 11.6-min estimate, with no idle-wait stall.
+The third and fourth runs each lost 5.4 min when test enumeration hung before the unit tests' host app connected ("test daemon not ready"), the failure Gate 4's unit run hit.
+Both times it was the host's first launch after the previous run's UI tests on the same phone, and both retries passed.
+The script now reboots the phone before such a launch, which costs about 20 s, and before each retry; the fifth run and two `fast` runs after UI tests then started without a hang.
 
 The unit run uninstalls the app first.
 Its host app opens the store at launch, and a store left by a UI run crashed it at launch (`ProgressHomeView.recentStats`, a deleted `Exercise`) or failed `phaseCardTextRendersInFullOnNarrowPhones`, which passes from a clean install.
@@ -874,7 +886,7 @@ Every impact is a hypothesis until the measurement plan in section 5 confirms it
 
 | Finding | Repository evidence | Proposed change | Expected impact | Effort | Reliability risk | Validation |
 | --- | --- | --- | --- | --- | --- | --- |
-| The UI bundle runs serially on one phone | Scheme `parallelizable = "NO"`; clones kept a stale text size and hung (section 1.5) | Done: `scripts/test.sh full`, two owned shards (section 3.8), M4 only | Measured: 55 to 59 min against 98 serially without stalls; compute unchanged; not for CI | Done | Four shards failed typing and sheet tests; two passed four runs | Three full runs; zero new failures; the script's coverage check |
+| The UI bundle runs serially on one phone | Scheme `parallelizable = "NO"`; clones kept a stale text size and hung (section 1.5) | Done: `scripts/test.sh full`, two owned shards (section 3.8), M4 only | Measured: 13 to 14 min for the whole tier against 28.9 min for the UI target alone serially, after T143 (55 to 59 min against 98 before); compute unchanged; not for CI | Done | Four shards failed typing and sheet tests; two passed every run | Three full runs; zero new failures; the script's coverage check |
 | The UI bundle is one CI shard | `-only-testing:fitbodUITests` once per phone | Shard the bundle into 2 or 3 `-only-testing` lists per phone as matrix entries | Elapsed divided by the shard count; compute rises 4 to 5 min per shard | Medium | Low to medium; shard lists must cover every suite | A script lists every suite and fails when one is in no shard |
 | Copy and structure checks live in UI tests | 11 BRU, Copy and Smoke-named UI files; `WhyThisWeightSheetBRUUITests`; 45 unit files already introspect source | Per smoke test, keep the journey or move the check to a hosted-view unit test; keep one reachability journey per screen | Each moved test goes from 10 to 40 s to under 1 s | Large | Medium; a hosted view does not prove navigation, so the kept journey must | A table per screen: journey test, unit tests, what each proves |
 | Text-size reruns repeat whole journeys | 39 sized launches in 11 AX3 files | Launch straight to the screen at the size under test; one AX3 journey per flow | Hypothesis: half of the sized-launch time | Large | Medium; the direct route must exist as a DEBUG launch argument | The AX3 assertions stay; durations per file |
@@ -976,8 +988,8 @@ Update it on purpose, in the same PR as the change that moved it.
 | --- | --- | --- | --- |
 | Unit target, local, wall | 36 s | 30 s | A new unit case over 1 s needs a comment that names why |
 | UI case, local, median | about 16 to 28 s (projected from the baseline and the Oct 29 bundle) | 10 s | A new UI case adds at most 30 s; a journey at most 90 s |
-| UI bundle, one phone, serial, local | 54 to 93 min (projected) | 35 min | The median full run may grow at most 10 percent between baseline updates |
-| UI bundle, one phone, 2 shards, local | 55 to 59 min wall without stalls (`scripts/test.sh full`) | 35 min | Same |
+| UI bundle, one phone, serial, local | 28.9 min at Gate 4 (2026-11-01, 75 tests after T143 and T119); 54 to 93 min projected before | 35 min | The median full run may grow at most 10 percent between baseline updates |
+| UI bundle, one phone, 2 shards, local | 12 min per shard; 13 to 14 min for the whole `scripts/test.sh full` run (2026-11-01) | 35 min | Same |
 | CI, PR run | no current run | 25 min elapsed | A PR run over 30 min blocks the merge until explained |
 | CI, `main` run | no current run | 45 min elapsed, matrix | Same |
 | CI, nightly | no current run | no elapsed target; 120 min per job, timeouts per test | Any test over its allowance is a failure to fix, not a reason to raise the allowance |
@@ -1033,7 +1045,7 @@ The biggest opportunities, in order:
    Keeping the catalog across launches, checking `exists` before waiting and turning animations off for most launches should remove a third to a half of every UI test, by hypothesis.
 2. CI runs everything in one sequential job on both phones and has not run at all since 2026-10-04.
    A build job plus a matrix, `main` in the triggers, test timeouts and `-collect-test-diagnostics never` turn it into a bounded run whose elapsed time is its longest job.
-3. On the M4, `scripts/test.sh full` runs the UI target in two owned shards: 55 to 59 min against 98 serially, with exact coverage. Clones and four shards were rejected for stale settings and new failures.
+3. On the M4, `scripts/test.sh full` runs the UI target in two owned shards with exact coverage: since T143 and T119 the whole tier takes 13 to 14 min, against 28.9 min for the UI target alone serially (55 to 59 min against 98 before). Clones and four shards were rejected for stale settings and new failures.
 4. The unit target is not the problem: 1,118 tests execute in 22 s, and the fixes there (the seeders' `UserDefaults`, the fidelity sleep, the host's launch) are about determinism and growth, not minutes.
 5. Template tests and width-insensitive reruns are pure cost that nobody will miss.
 

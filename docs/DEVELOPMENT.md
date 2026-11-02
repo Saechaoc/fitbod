@@ -49,7 +49,9 @@ These are cheap or protect the lifter's data, so they apply to every change at e
 | Bug fix | Reproduce it the way the lifter meets it. Add a regression test when the bug cost data or is likely to return. | Where it showed | Commit message |
 
 Run the unit target on every change, and only the UI tests for the workflow you touched.
+`scripts/test.sh fast` runs the unit target in about 35 seconds; add `-only-testing:fitbodTests -only-testing:fitbodUITests/<Suite>` to include one UI suite.
 Run the full UI suite on one phone before merging a large change to `main`.
+`scripts/test.sh full` runs everything, the UI suite in two shards, in about 14 minutes; see `docs/SETUP.md` (Test tiers).
 Both phones and AX3 belong to [release readiness](#release-readiness).
 
 Fix lint or a flaky test when it blocks your change or sits in code you are already changing.
