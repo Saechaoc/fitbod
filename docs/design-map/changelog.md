@@ -2,6 +2,14 @@
 
 Newest first: one entry for each stage of [plan.md](plan.md) up to S2, then one for each commit.
 
+## 2026-11-02: redesign draft v4
+
+- [redesign/](redesign/) is revised to draft v4 after round 3's Codex experience review of draft v3 (4 blockers and 10 fix-soon findings, all closed or accepted) and the partial Codex coverage review (2 blockers and 7 fix-soon findings, folded in as far as the report goes).
+  The Codex feasibility review has not run, and the coverage reviewer stopped at the account's usage limit with its "Not reached" list open.
+- The two Codex reports land under [redesign/reviews/](redesign/reviews/) as round3-codex-experience.md and round3-codex-coverage.md.
+- `docs/design-map/redesign/screen_budget.py` now reports 222 -> 109 elements across 17 states; the two accepted over-budget states are unchanged.
+- What changed in each leaf: [redesign/changelog.md](redesign/changelog.md); each finding and its resolution: [redesign/review-log.md](redesign/review-log.md), round 3.
+
 ## 2026-11-01: Today and Program redesign
 
 - Added [redesign/](redesign/), the Today and Program redesign: a screenshot audit, a hierarchy for both screens, layouts for every state, a map of every capability to its new place, a three-phase plan, and a runnable screen budget.

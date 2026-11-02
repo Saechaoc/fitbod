@@ -26,11 +26,15 @@ STATES = {
     "Today T-DONE (no block, review)":  (13, 3, 4,  5, 0, 0),
     "Today T-REST":                     (11, 1, 7,  5, 0, 0),
     "Today T-FIX (empty session)":      (15, 2, 7,  6, 0, 0),
+    # current: the T-PICK screenshot, which is what a no-block store shows today
+    "Today T-FIX (no block, routine has no exercises)": (13, 3, 4, 3, 0, 0),
     "Today T-READY (review pending)":   (13, 3, 4,  7, 1, 1),
     "Today T-PICK (no block)":          (13, 3, 4,  7, 1, 0),
     "Today T-FIRST (fresh store)":      (13, 2, 4,  4, 1, 2),
     "Program P-ACTIVE":                 (12, 2, 0,  8, 0, 0),
     "Program P-PLANNED":                (10, 2, 0,  8, 1, 0),
+    # current: the same card list; proposed: header, draft slab, Planned head, cards, Routines head, rows
+    "Program P-PLANNED (drafts only)":  (10, 2, 0,  6, 0, 0),
     "Program P-EMPTY":                  (11, 1, 4,  4, 1, 2),
     "Program P-RESUME":                 (13, 3, 0, 10, 1, 0),
 }
@@ -38,7 +42,7 @@ STATES = {
 # States allowed over ELEMENT_BUDGET, each with the reason evaluation.md records.
 ACCEPTED_OVER_BUDGET = {
     "Program P-RESUME": "transient; the resume banner adds its three elements to P-ACTIVE",
-    "Today T-TODAY (advisory notice)": "transient; the advisory adds one row to T-TODAY until it is acted on or dismissed",
+    "Today T-TODAY (advisory notice)": "transient; the advisory adds one row to T-TODAY (or to any state without an open workout) until it is acted on or dismissed",
 }
 
 # job: (current taps, proposed taps, estimate?, everyday?)
@@ -48,9 +52,10 @@ TAPS = {
     "Start today's workout":                    (1, 1, False, True),
     "Resume a workout":                         (1, 1, False, True),
     "Start another session while a block runs": (4, 2, False, True),
-    "Start a workout on a rest day":            (4, 2, False, True),
+    "Start a workout on a rest day":            (1, 2, False, True),   # current: the picker's START ▸ (workflows/today.md)
+    "Preview a non-hero session before starting it": (1, 3, False, False),  # proposed: Program, routine, session
     "See this week's muscle volume from Today": (0, 1, False, True),   # current: a scroll, no tap
-    "Start the ready block after one ends":     (4, 1, False, False),
+    "Start the ready block after one ends":     (4, 2, False, False),  # proposed: 1 with no workout today, 2 after one (T-DONE wins)
     "Open the review right after a block ends": (0, 1, False, False),  # current: opens by itself
     "Reopen a finished block's review":         (None, 4, False, False),  # from Today: tab, list, block, Review
     "End a block whose plan is over":           (3, 3, False, False),
@@ -61,11 +66,11 @@ TAP_BUDGET = 2  # for everyday workout tasks
 
 # --- derived ---------------------------------------------------------------
 
-print(f"{'state':34} {'elements':>12} {'signal':>10} {'before cta':>12}")
+print(f"{'state':48} {'elements':>12} {'signal':>10} {'before cta':>12}")
 over_signal, over_before, over_elements, accepted = [], [], [], []
 worst_state, worst_elements = None, -1
 for name, (ce, cs, cb, pe, ps, pb) in STATES.items():
-    print(f"{name:34} {ce:>5} -> {pe:<4} {cs:>4} -> {ps:<3} {cb:>5} -> {pb:<4}")
+    print(f"{name:48} {ce:>5} -> {pe:<4} {cs:>4} -> {ps:<3} {cb:>5} -> {pb:<4}")
     if ps > SIGNAL_BUDGET:
         over_signal.append(name)
     if pb > BEFORE_CTA_BUDGET:
@@ -87,12 +92,12 @@ print(f"states over {BEFORE_CTA_BUDGET} elements before the action: {', '.join(o
 print(f"states over {ELEMENT_BUDGET} elements above the fold: {', '.join(over_elements) or 'none'}")
 print(f"accepted over budget: {', '.join(accepted) or 'none'}")
 
-print(f"\n{'job':44} {'taps':>12}")
+print(f"\n{'job':48} {'taps':>12}")
 worst_job, worst_taps = None, -1
 for name, (ct, pt, est, everyday) in TAPS.items():
     flag = "  (estimate, verify in Phase 1)" if est else ""
     cur = "n/a" if ct is None else ct
-    print(f"{name:44} {cur:>4} -> {pt:<4}{flag}")
+    print(f"{name:48} {cur:>4} -> {pt:<4}{flag}")
     if pt > worst_taps:
         worst_job, worst_taps = name, pt
 

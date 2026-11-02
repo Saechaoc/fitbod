@@ -4,22 +4,100 @@ Adversarial reviews of this bundle, newest first.
 Each round lists the reviewers, their lenses, the findings ranked by blast radius, and what changed in the bundle because of each.
 A finding is a blocker when the design cannot be called final until it is closed or accepted with a reason.
 
-## Round 3 (Codex): attempted on draft v3, blocked by the usage limit
+## Round 3 (Codex): settled in draft v4; coverage report partial, feasibility pending
 
 The three Codex reviewers (GPT-6-Astra, max reasoning, Orca run `run_855deefac019`) were resumed on draft v3 with the specs in `reviews/specs/round3-codex-coverage.md`, `round3-codex-experience.md` and `round3-codex-feasibility.md`.
 Each spec asks the reviewer to re-check the seven blockers and three fix-soon closures of rounds 1 and 2 against the leaves, then to attack v3 with its lens.
 21:39 PST, 2026-11-01: the first resend landed a minute before the account's five-hour window reset and was refused.
-21:41 PST: the second resend started all three; by 21:52 the three sessions had used 91% of the fresh window, and when each was asked to write up what it had, all three were refused with "try again at 2:41 AM on 2 Nov".
-No Codex report exists, so nothing in v3 comes from a Codex finding, and no reviewer has checked v3 itself.
+21:41 PST: the second resend started all three; by 21:52 the three sessions had used 91% of the fresh window, and all three were refused with "try again at 2:41 AM on 2 Nov".
+2 Nov, 05:44 PST: the experience reviewer alone was resumed, so one window carried one whole review; it saved `reviews/round3-codex-experience.md` at 06:59 PST (4 blockers, 10 fix-soon findings, 17 contradictions, every requested check reached).
+07:00 PST: the coverage reviewer was resumed with an instruction to save its report after each item; it wrote `reviews/round3-codex-coverage.md` (2 blockers, 7 fix-soon findings, a capability inventory, ten closure checks, six audit spot checks) and stopped at the usage limit at 07:27 PST with its "Not reached" list open; the window reopens at 10:47 AM PST.
+The feasibility reviewer has not run on v3; its terminal and dispatch stay open.
+Draft v4 folds in the experience report in full and the coverage report as far as it goes.
 
-| Lens (round 3) | Dispatch | Terminal |
+| Lens (round 3) | Dispatch | Terminal | Report |
+| --- | --- | --- | --- |
+| Coverage | `ctx_c5c90e2545ca` | `term_119ecd08-743e-4edb-ba53-c8c8a5d6f71c` | `reviews/round3-codex-coverage.md`, partial |
+| Experience | `ctx_7ba11a62bc0e` | `term_7e1e8606-69e4-42d5-948a-cdc9ba6cecd9` | `reviews/round3-codex-experience.md` |
+| Feasibility | `ctx_ef85d3b1fc2a` | `term_c44291f1-e180-4915-ab17-7f74247af6b3` | not written |
+
+To finish the round, resend the coverage reviewer after 10:47 AM ("continue from the spec, updating the report after each item"), then the feasibility reviewer, one at a time: `orca terminal send --terminal <terminal> --text "..." --enter`, then `orca orchestration check --run run_855deefac019 --wait --types worker_done --json` for its report.
+Fold the findings into this log the way the two reports below were.
+
+### Experience (Codex), settled in draft v4
+
+Verdict: not final, four blockers.
+Closure checks: B-1, F2-8 and F2-12 closed; B-4 and B-5 closed at the proposal level; B-2, B-3, B2-1, B2-2 and F-5 partly closed, each gap restated as a finding below (B-2 and B2-1 as B3-1 and B3-4, Program's guards and F-5 as B3-2 and B3-3, B-3 and B2-2 as F3-2, the preview route as F3-1 and F3-3).
+
+#### Blockers
+
+| # | Finding | Resolution in v4 |
 | --- | --- | --- |
-| Coverage | `ctx_c5c90e2545ca` | `term_119ecd08-743e-4edb-ba53-c8c8a5d6f71c` |
-| Experience | `ctx_7ba11a62bc0e` | `term_7e1e8606-69e4-42d5-948a-cdc9ba6cecd9` |
-| Feasibility | `ctx_ef85d3b1fc2a` | `term_c44291f1-e180-4915-ab17-7f74247af6b3` |
+| B3-1 | The sheet's NEXT was the resolver's slot, which is `.restDay` on a weekday block's rest day and today's slot again after today's workout, while T-DONE and T-REST named the next training day; the sheet had no anchor exactly when the lifter opened it. | NEXT is one value per mode, held by a new pure helper, `StartSlot`: the resolver's next slot in rotation; in weekday mode today's slot while today is a training day with no counted workout, else the resolver's slot for the next training day, resolved with that date as `today` (`TodayResolver.resolve(block:context:today:calendar:)`); with no block the suggestion's routine anchor. The two-slot rule anchors at NEXT; weekday rows show no skips. hierarchy.md, today-layouts.md (Session sheet), open-decisions.md O-2, functionality-map.md, plan.md 1.3 and 2.2, risks.md R-5. |
+| B3-2 | Program's TODAY ▸ and NEXT ▸ had no open-workout, empty-session or done-today rule; P-RESUME hid only TODAY ▸ and demoted only START BLOCK ▸; the weekday row marked the planned session IN PROGRESS without checking which workout was open. | Both controls show exactly while Today's state is T-TODAY, computed by the same `TodayState` function from the same inputs (R-24; `ThisWeekSectionTests` reuses the `TodayStateTests` fixtures). The open workout lists as IN PROGRESS under its own name on its day with no action, and the planned row is left out when the open workout holds today's slot. An empty scheduled session reads "Push A · NO EXERCISES ›" and opens the detail. P-RESUME overlays every state, including P-EMPTY, and every other signal control draws in ink. program-layouts.md, hierarchy.md, functionality-map.md, risks.md R-24, plan.md 1.6 and 2.3, evaluation.md, screen_budget.py. |
+| B3-3 | Program promised to list logged workouts on the day they happened but gave each day one row, and T-DONE did not say which workout it opened after a second finish. | Days are groups with one row per counted workout, then the open workout, then the planned session while its slot is not done; every counted workout appears once, in a weekday group or under "Also this week". T-DONE lists one name row per finished workout, newest first, each opening its own workout. program-layouts.md, today-layouts.md, hierarchy.md, open-decisions.md O-3, risks.md R-22, plan.md 1.3 and 2.3, tradeoffs.md. |
+| B3-4 | The new "View ›" opened `SessionTemplateDetailView`, whose Start passes no slot (`:210-211`), so a previewed start never moved a rotation block, and three start routes had two scheduling outcomes. | The detail gains a `routine: Split?` parameter and computes the slot with `StartSlot` when Start is tapped, against the routine's live slots, so a slot deleted meanwhile starts unslotted rather than wrong (R-25). Today's "View ›" and ADD EXERCISES ▸ and SplitDetailView pass the routine; "Other sessions" rows pass nil. today-layouts.md, functionality-map.md, plan.md 1.3, risks.md R-25, tradeoffs.md. |
 
-To finish the round after the reset, send one reviewer at a time its spec, so one window carries one whole review: `orca terminal send --terminal <terminal> --text "Read <spec path> and do what it says." --enter`, then `orca orchestration check --run run_855deefac019 --wait --types worker_done --json` for its report.
-Each spec names its report path under `reviews/`; fold the findings into this log the way rounds 1 and 2 were.
+#### Fix soon
+
+| # | Finding | Resolution in v4 |
+| --- | --- | --- |
+| F3-1 | T-FIRST covered a routine with only empty sessions and a lifter whose usable sessions sit outside routines, so "Build your first routine" led when repair or a start was the next action. | T-FIRST is only a fresh store: no block, no live routine, no session with exercises. A session with exercises anywhere gives T-PICK, with a standalone session as the hero ("NEXT UP · ARMS", unslotted) when no live routine holds one; a live routine with none gives the no-block T-FIX variant, "Push Pull Legs has no exercises yet" or "has no sessions", with GO TO ROUTINE ▸. The T-FIRST ghost goes. hierarchy.md, today-layouts.md, functionality-map.md, plan.md 1.3 and 2.1, screen_budget.py, evaluation.md, tradeoffs.md. |
+| F3-2 | "Oldest saved" is reproducible but not intent; "Saved" implied a recent save when the stored date is the creation date; same-day same-name blocks and the dateless selected slab could not be told apart; year-free Past ranges repeat for annual blocks. | Copy reads "Created Oct 3" everywhere; both slabs carry "CREATED OCT 3 · 1 OF 2 READY"; the order is oldest created, then name, then id; Program's Planned list is the change-selection route, two taps from Today; Past blocks show the year when the block ended in an earlier year. A real planned start stays O-14. today-layouts.md, program-layouts.md, hierarchy.md, open-decisions.md O-6 and O-14, risks.md R-23, tradeoffs.md. |
+| F3-3 | "Other sessions" rows started on tap, empty ones did nothing, and the replacement preview route did not exist for a session in no routine. | "Other sessions" rows open the session's detail (preview, edit, START WORKOUT ▸ unslotted), so an empty one can be repaired there. A routine session's preview is Program › routine › session, three taps, accepted below. today-layouts.md, functionality-map.md, tradeoffs.md, evaluation.md, screen_budget.py. |
+| F3-4 | The evaluation claimed rest-day starts fell from four taps to two when the picker already gives one; the ready-block start needs the tab switch when T-DONE wins; preview-before-start was missing from the job table; recaps were called retained on Progress while the all-recaps screen is unbuilt. | Rest day 1 to 2; ready block 1 or 2; a new "Preview a non-hero session before starting it" job, 1 to 3; the recap screen is named as D-27, still open and not built here. evaluation.md, screen_budget.py. |
+| F3-5 | Two ready fixtures (Spring, Summer) for one shared choice; T-PICK's "3 work" subline; an always-confirm discard in the map beside a conditional one in the layout; T-FIRST's "nothing else" beside the review notice; a › chevron on an in-place expansion. | One fixture: Spring Block (Push Pull Legs, created Oct 3) leads and Summer Block is the other ready block; T-PICK reads "3 × 8-12"; the discard rule is shared and recorded in `docs/design-system/interaction.md` by step 1.6; T-FIRST names the notice as its exception; the muscle row uses ▾ and ▴. today-layouts.md, program-layouts.md, functionality-map.md, hierarchy.md, plan.md 1.6 and 2.5. |
+| F3-6 | P-PLANNED with drafts only had no ready slab to supply its signal and no next action. | A drafts-only variant: the newest draft as a paper slab, "DRAFT · UNTITLED BLOCK · NO ROUTINE YET", with CONTINUE BLOCK ▸ in ink opening Block overview; no signal on the page. program-layouts.md, hierarchy.md, evaluation.md, screen_budget.py, plan.md 1.5, tradeoffs.md. |
+| F3-7 | With no block, a repeat of Push A moved the suggestion past Pull A and Legs A without the skips subline, which was limited to rotation blocks. | The subline shows on rotation blocks and with no block, never in weekday mode; its range is NEXT inclusive to the passed slot exclusive. today-layouts.md, open-decisions.md O-2. |
+| F3-8 | The skips subline used about 342pt of 358pt at labelSmall with no wrapping rule, and the fixed 56pt plan line could not hold a wrapped name at large text. | Sheet rows are content-sized with a 44pt minimum and the subline wraps in full; the plan line is at least 56pt at default size and grows with its text, never clipped. today-layouts.md, risks.md R-8. |
+| F3-9 | The row "THIS WEEK · 2 workouts · 20 sets ›" did not say that it leads to muscle volume. | "VOLUME THIS WEEK". today-layouts.md, hierarchy.md, functionality-map.md, tradeoffs.md, evaluation.md. |
+| F3-10 | The streak was deleted on the claim that it resets on every rest day, when it accepts yesterday and keeps a run of consecutive days; the all-time count's numeric home was unnamed. | The streak is described as it is (consecutive days ending today or yesterday); the all-time count stays as the "Past sessions · n sessions" head on Progress › History, which already uses `countedWorkouts` (`SessionHistoryView.swift:73`, `:103`). functionality-map.md, open-decisions.md O-1, tradeoffs.md, evaluation.md, audit.md A-03. |
+
+The seventeen contradictions in the report's cross-check are fixed in place: only the selected ready slab gains START BLOCK ▸; the empty Blocks and Routines sections keep their own "+ NEW" text line while the header is the one creation entry elsewhere; the review is two taps inside Past blocks; "Today never creates a block" carries the O-12 exception; the all-recaps screen is an unbuilt dependency; "no unaccepted state is over budget"; step 2.1's acceptance is qualified by the absence of a counted workout; Block overview takes an `origin` from the pushing tab, so a review reached from Today sends its builder back to "< TODAY" (plan.md 1.5 and 2.4, program-layouts.md, functionality-map.md).
+
+#### Accepted as is, with the reason
+
+- Previewing a routine session that is not the hero costs three taps (Program, the routine, the session), because the sheet's routine rows must start on tap for the two-tap alternate start, and a preview is not an everyday job (F3-3, F3-4).
+- Starting a workout on a rest day costs two taps instead of the picker's one, the price of one signal element per screen (F3-4).
+- T-READY outranks T-PICK while a ready block waits; the Planned list is the way to choose another and O-14 the real fix (F3-2; re-accepted by the reviewer).
+- The nine items accepted in rounds 1 and 2 were re-checked by the reviewer and stand, with the four-tap return path to a finished block's review disclosed in evaluation.md.
+
+### Coverage (Codex), partial, folded into draft v4 as far as it goes
+
+Verdict so far: not final, two blockers.
+Closure checks: B-1, B-3, B2-1, B2-2 and F2-9 closed; B-2, B-4 and F2-1 partial through C3-2 and C3-5; B-5 and F2-11 partial through C3-5 and C3-7.
+Its "Not reached" list (the per-step test inventory, both re-check lists, seed uniqueness, every layout default against open-decisions.md) stays open until the reviewer resumes.
+
+| # | Finding | Resolution in v4 |
+| --- | --- | --- |
+| C3-1 (blocker) | Draft v3 gave the empty-routine T-FIX slab and T-ATTACH only their repair action, while main's picker offers every session in those states (`TodayView.swift:194`), so the alternate start D-163 asks for was lost without a decision. | Both block repair slabs keep the "Choose another session ›" ghost when a session with exercises exists anywhere; the no-block variant has nothing to choose. hierarchy.md, today-layouts.md, functionality-map.md, evaluation.md, tradeoffs.md, plan.md 1.3. |
+| C3-2 (blocker) | Program's TODAY ▸ and NEXT ▸ lacked the empty-session, open-workout and done-today cases and their tests. | As B3-2: both show exactly in T-TODAY from the shared `TodayState`, with the three cases in `ThisWeekSectionTests` (R-24). |
+| C3-3 | hierarchy.md gated the advisory on an active block, which main does not (`refreshAdvisory` checks only the setting, `TodayView.swift:683-689`), so no-block lifters lost it without a recorded decision. | The gate goes: the advisory shows with or without a block and yields to a pending review notice, so a state never shows two. hierarchy.md, functionality-map.md, plan.md 1.1 and 2.1, tradeoffs.md, screen_budget.py. |
+| C3-4 | The map recorded navigation into the child screens but not their capabilities: routine mutations, archived-routine restore, the builder's editing, Block overview's EDIT, SWAP, scheduling, carousel, fatigue strip and archive states, the review's statistics and inert EXPORT, muscle-target editing, the recap grid and the signals sheet. | A grouped "unchanged" row per child screen, naming its mutations and failure states. functionality-map.md. |
+| C3-5 | Seven UI suites match the card labels, not five; four suites read BlockBuilderView.swift, not six, because the two BRU audit suites retired that read; root-level "DONE block: …" lookups break when done cards move to Past. The report's file names `BlockDraftKeepsOnCancelUITests` and `BlockLifecycleJourneyUITests` do not exist; the two extra suites are `ArchiveRoutineUITests` and `BlockDraftKeepsUITests`. | Counts and names corrected; the five root-level DONE lookups are named in step 1.5 with the rule that they open Past blocks first. plan.md 1.5 and 2.6; the round 1 and 2 lists below carry inline corrections. |
+| C3-6 | The audit and map called the automatic review once-only, but `pendingReviewBlocks` runs on every appearance (`TodayView.swift:374`) and only "Start next ▸" acknowledges, so it repeats until then. | Corrected in audit.md A-16 and functionality-map.md; acknowledging on close stays the behaviour change. |
+| C3-7 | `-fitbod-seed-empty-workout` starts its finished workout 30 minutes before launch (`DemoWorkoutSeed.swift:69`, `:141`), so before 00:30 it is yesterday's and the no-block T-DONE fixture fails. | Step 1.3 clamps that start to today's midnight, as the recap seed clamps to the week start (`:113`). plan.md 1.3, functionality-map.md, risks.md R-19. |
+| C3-8 | The plan kept `WeekTickerCells` for Block overview, whose only production caller is the band (`BlockContextBand.swift:139`); the overview draws its own carousel (`BlockOverviewScreen.swift:583`). | `WeekTickerCells` is deleted with the band. plan.md 1.1, functionality-map.md. |
+| C3-9 | A-03 said the streak resets on every rest day (it accepts yesterday); A-04 counted four accent uses and missed the MRV legend cell; A-21 put the advisory above the deload banner (it is below, `TodayView.swift:102-108`); A-22 described main's PLAN COMPLETE labels as the capture, which still shows "W1 / 4" and "DAY 08 / 28"; A-29 needed "same status and displayed week"; A-23's "two live blocks" cannot exist. | All six rows corrected against the captures and the source. audit.md. |
+
+Smaller items, fixed in place: the banner's dismiss glyph is ✕ (functionality-map.md); the volume empty state needs no muscle with a rounded set this week as well as none with a MEV target (`FatigueSurfaceView.swift:106`).
+
+#### Reviewer claims re-checked against the source before the revision
+
+- `TodayResolver.resolve(block:context:today:calendar:)` takes the date, so weekday NEXT resolves for the next training day without a resolver change; `resolveFixedWeekly` returns `.restDay` when today's weekday is not in `trainingDays` (`TodayResolver.swift:156-178`).
+- `BlockOverviewScreen.nextTrainingDay(after:in:mode:trainingDays:calendar:)` is a static helper at `:463`; step 2.2 replaces it with `StartSlot`'s NEXT.
+- `SessionTemplateDetailView.init(template:)` has one form; its callers are `TodayView.swift:340`, `SplitDetailView.swift:225` (the file is in `fitbod/Periodization/`) and a preview; its Start calls `WorkoutStarter.start(template, context:)` with no slot (`:210-211`).
+- `ResumeWorkoutBanner` discards through `.contextMenu` with an always-confirm alert "Discard active workout?" (`:106-121`); Today's slab asks only when sets are logged.
+- `SessionHistoryView` heads "Past sessions" with `countedWorkouts(sessions).count` (`:73`, `:103`), the number Today's SESSIONS cell showed.
+- `TodayView.dayStreak` walks finished workouts from today back and accepts yesterday as the first day (`:472-499`).
+- `BlockDraft.startDate` is `.now` at creation (`:19`), copied on edit (`:80`) and written back on save (`:151`), so it is a creation date.
+- `refreshAdvisory` guards only on `settingsList.first` and `deloadAlertEnabled` (`TodayView.swift:683-689`), with no active-block check.
+- `pendingReviewBlocks` runs in Today's `.task` on every appearance (`:374`); `BlockReviewView`'s "Plan custom" calls `dismiss()` only (`:393`).
+- `WeekTickerCells` is constructed only by `BlockContextBand.swift:139`; `BlockPastPlanTests` names it in a comment only.
+- Seven UI suites match the card labels; the root-level "DONE block: …" lookups are at `BlockLifecycleEntryPointsUITests.swift:45` and `:58`, `BlockOverviewStatesUITests.swift:85`, `ArchiveRoutineUITests.swift:140` and `BlockReviewAfterEndUITests.swift:60`; four unit suites read `BlockBuilderView.swift` by path.
+- `FatigueSurfaceView.visibleMuscles` keeps a muscle with a rounded set or a positive MEV (`:106`); the legend's MRV cell fills with `bruSignal` (`:238`); the banner draws "✕" (`DeloadAdvisoryBanner.swift:80`).
+- `DemoWorkoutSeed` seeds the empty-workout fixture with starts 30 and 15 minutes before now (`:69`, `:141`); the recap fixture clamps its first start to the week start (`:113`).
+- The plan-complete capture shows PLAN COMPLETE only on the band chip; its strip reads "W1 / 4" with a trend arrow and its slab "DAY 08 / 28"; `today.png` has five orange elements and `today--scheduled.png` seven.
 
 ## Round 2: settled in draft v3
 
@@ -28,7 +106,7 @@ Reports: `reviews/round2-claude-coverage.md` (9 findings), `reviews/round2-claud
 Verdicts: coverage and feasibility final as written with no blockers; experience not final, with two blockers.
 All three confirmed every round-1 closure in the leaves; the claims they found overstated are B2-2, F2-2 and F2-4 below.
 The 25 findings deduplicate into 2 blockers and 12 fix-soon items.
-The Codex round was then attempted on v3 and blocked by the usage limit; see round 3 above.
+The Codex round then ran on v3; see round 3 above.
 
 #### Blockers
 
@@ -72,7 +150,7 @@ Smaller items, fixed in place: step 1.1 names its new queries and their Swift po
 - `BlackSlabCTA.estimatedMinutes` is `max(1, setCount * 3 + 2)`.
 - `SplitDetailView`'s slot picker lists every unarchived session with no duplicate guard (`:780`, `:869-890`); `TodaySessionPicker.groups` lists a routine's sessions in slot order without deduplication.
 - The glyph table lists "×" as times and has no close mark; the banner draws "✕".
-- The card labels "ACTIVE block: …", "READY block: …", "DRAFT block: …", "DONE block: …" are at `ProgramView.swift:635-641`; five UI suites match them.
+- The card labels "ACTIVE block: …", "READY block: …", "DRAFT block: …", "DONE block: …" are at `ProgramView.swift:635-641`; five UI suites match them (round 3 correction: seven).
 - `PowerbuildingSeed` has the long block name; `DemoWorkoutSeed` (`-fitbod-seed-empty-workout`) logs a finished Push A with no block.
 
 ## Round 1
@@ -89,7 +167,7 @@ Three lenses, dispatched through Orca run `run_855deefac019` on 2026-11-01, each
 
 18:40 PST: all three Codex reviewers (GPT-6-Astra, max effort) stopped after about three minutes because the ChatGPT account reached its five-hour usage limit (reset 21:39 PST).
 No Codex report was written.
-Their terminals and dispatches stayed open on the run; the round resumed on draft v3 as round 3 above and stalled again.
+Their terminals and dispatches stayed open on the run; the round resumed on draft v3 as round 3 above.
 
 ### Interim Claude round: settled in draft v2
 
@@ -169,7 +247,7 @@ Every code claim the revision relies on was re-checked against the source; the l
 - `MuscleSlugRoute` is registered only on Today's stack and `ProgressHomeRoute` only on Progress's.
 - `BlockOverviewScreen.nextTrainingDay` exists as a static helper.
 - `BlockCard` has no app caller; `BlockRow` is called from RoutinesListView, and `BlockRow.sortedForDisplay` from BlockPickerMenu.
-- The suites that read `ProgramView.swift` by path are `NewBlockBuilderFidelityTests`, `ProgramViewFidelityTests` and `AdaptiveColorSourceTests`; six suites read `BlockBuilderView.swift` by path; "CREATE BLOCK" is pinned by `NewBlockBuilderFidelityTests` and `ProgramViewFidelityTests`.
+- The suites that read `ProgramView.swift` by path are `NewBlockBuilderFidelityTests`, `ProgramViewFidelityTests` and `AdaptiveColorSourceTests`; six suites read `BlockBuilderView.swift` by path (round 3 correction: four, the two BRU audit suites having retired that read); "CREATE BLOCK" is pinned by `NewBlockBuilderFidelityTests` and `ProgramViewFidelityTests`.
 - `RoutinesListView` has no caller, and its file declares `SessionRoute`, which Today and Program push; `MoveRoutineSheet` and `RoutineRow` are used only by it; `RoutineDuplicator` is used by `RoutineBuilderView` and `SessionTemplate`.
 - The test inventory from `rg` matched the reviewers' lists and added `BlockReviewPRMarkTests`, `BRUPhase5GrepAuditTests`, `Phase3BRUGrepAuditTests`, `RoutinesListCopyTests`, `Fatigue/SuggestedActionTests` and `ExerciseHistoryRowsUITests` as suites to verify.
 

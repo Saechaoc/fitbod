@@ -13,8 +13,8 @@ Items are grouped by screenshot and numbered A-01 to A-32 so the other leaves ca
 | --- | --- | --- | --- |
 | A-01 | Three status bands come before the action: the stat strip (DAY STREAK 0, SESSIONS 0 ›, W1 / 4 with a dash where the phase label goes in the capture; main now shows the phase's short label, "ACCUM"), the block band (BLOCK chip, the block's name in caps, "LIVE BLOCK" in the capture, an orange ACCUMULATION chip, W1 to W4 cells), then the NEXT slab. | The first things read are a row of zeros and the block's bookkeeping. START WORKOUT ▸ is the fourth element on the page, so the five-second test fails for "what do I do now". | D-159, D-341 |
 | A-02 | One fact, three forms: "W1 / 4" in the strip, the ACCUMULATION chip and the lit W1 cell in the band, "DAY 01 / 28" on the slab. | The lifter reconciles week, phase and day counters instead of reading one line. Past the plan the three no longer disagree, because 91b6b6ed made them all read PLAN COMPLETE or go blank; the three forms remain. | D-161 (fixed), D-166 |
-| A-03 | The strip mixes scopes and only one cell is a control: DAY STREAK (all-time habit), SESSIONS › (all-time, opens history), W1 / 4 (this block). | Nothing marks which cell taps. "SESSIONS" names logged workouts, which the app calls workouts everywhere else. A day streak resets on every rest day, so for a lifter who trains three to five days a week it mostly reads 0 or 1. | D-341, P-11 |
-| A-04 | The signal colour is used four times on one screen: the ACCUMULATION chip in the band, START WORKOUT ▸, the COMPOUND chip's border and text in the lift list, and the "±0" delta on the volume slab. | The one accent no longer marks the one action. | P-7 |
+| A-03 | The strip mixes scopes and only one cell is a control: DAY STREAK (all-time habit), SESSIONS › (all-time, opens history), W1 / 4 (this block). | Nothing marks which cell taps. "SESSIONS" names logged workouts, which the app calls workouts everywhere else. The streak counts consecutive calendar days with a workout, ending today or yesterday (`TodayView.swift:472-499`), so one rest day between workouts starts it over; a lifter who rests between training days reads 1 on most days and 0 after two rest days. | D-341, P-11 |
+| A-04 | The signal colour is used five times on `today.png`: the ACCUMULATION chip in the band, START WORKOUT ▸, the COMPOUND chip's border and text in the lift list, the "±0" delta on the volume slab, and the MRV cell of the legend (`FatigueSurfaceView.swift:238`); `today--scheduled.png` adds the strip's trend arrow and the DL badge, seven. | The one accent no longer marks the one action. | P-7 |
 | A-05 | The block band is tappable but gives no cue: no chevron, not a button. | The only route from Today to the block's actions (edit, end, start) is invisible, and VoiceOver finds loose text. | D-159 |
 | A-06 | The slab says "NEXT" and "DAY 01 / 28". | "NEXT" reads like a queue when the lifter wants today. The day counter is a number nobody trains by; past the plan it disappears (91b6b6ed), so the slab's label changes form again. | D-161 (fixed) |
 | A-07 | LIFT LIST repeats the slab's "1 EXERCISE · 3 SETS" as "1 LIFT" and decorates every row with a bordered COMPOUND or WORK chip. | Bordered chips look like controls and do nothing. The count is said twice. | P-11 |
@@ -40,7 +40,7 @@ Items are grouped by screenshot and numbered A-01 to A-32 so the other leaves ca
 | --- | --- | --- | --- |
 | A-14 | Fresh store: three zeros (DAY STREAK, SESSIONS, THIS WEEK), a START A WORKOUT head, the BUILD YOUR FIRST ROUTINE hero with its orange + NEW ROUTINE, then "NO ACTIVE BLOCK." with a second orange START A BLOCK, then a WORKING SETS slab reading 0 and ±0, the legend, and a VOLUME THIS WEEK list in which every muscle with a seeded MEV target is a zero row. | Two orange calls on one screen. The second opens New block, whose routine picker is blank until a routine exists. A screen of zeros surrounds the one useful action. "No sets logged this week" shows only when no muscle has a MEV target, which the seeded targets rule out. | D-24, D-162, P-7, P-12 |
 | A-15 | After a block ends, Today returns to the picker plus "No active block. START A BLOCK", which opens a new blank block even when a READY block is waiting. | The planned next block cannot be started from Today. A lifter who taps the link creates a second, empty block. | D-25 |
-| A-16 | Nothing on Today marks a finished block or reopens its review. | The review shows once, by itself, on the next visit. After that the block's result is unreachable from Today and from its overview. | D-27, D-40 |
+| A-16 | Nothing on Today marks a finished block or reopens its review. | The review slides up by itself on every visit until the lifter taps "Start next ▸", because closing it any other way saves nothing (`TodayView.swift:374`, `BlockReviewView.swift:393`). Once acknowledged, the block's result is unreachable from Today and from its overview. | D-27, D-40 |
 | A-17 | The picker puts an orange START ▸ on every session row. | With a four-session routine there are four signal buttons and none of them is "today's". | P-7 |
 | A-18 | A rest day on a weekday block reads "No workout scheduled. Build a routine or pick one from your library." with + NEW ROUTINE. | A rest day tells the lifter to build a routine. The next training day is not named. | D-165 |
 
@@ -59,7 +59,7 @@ Items are grouped by screenshot and numbered A-01 to A-32 so the other leaves ca
 | # | Problem | Effect on the lifter | Refs |
 | --- | --- | --- | --- |
 | A-20 | Deload is said three times: a full-width "▲ DELOAD WEEK" banner whose tagline "recover, don't load." hangs off an em dash, the DELOAD chip, and a DL badge that hangs into the gutter. | Three alarms for a planned, calm week. The em dash breaks the house style. | D-343 |
-| A-21 | The CONSIDER DELOAD advisory can stack above the deload week banner. | Two banners above the strip, styled alike, though only the advisory is dismissible and opens the signals sheet. | - |
+| A-21 | The CONSIDER DELOAD advisory can stack under the deload week banner (`TodayView.swift:102-108`). | Two banners above the strip, styled alike, though only the advisory is dismissible and opens the signals sheet. | - |
 
 ## Today, plan complete
 
@@ -67,7 +67,7 @@ Items are grouped by screenshot and numbered A-01 to A-32 so the other leaves ca
 
 | # | Problem | Effect on the lifter | Refs |
 | --- | --- | --- | --- |
-| A-22 | "PLAN COMPLETE" in the stat cell and the band chip, no week lit, and no action. | The block stays active for ever and the review never comes unless the lifter finds END BLOCK in the overview. | D-161, D-166 |
+| A-22 | The capture shows PLAN COMPLETE on the band chip beside "W1 / 4" with a trend arrow in the strip and "DAY 08 / 28" on the slab; main (91b6b6ed) reads PLAN COMPLETE in the strip cell and the chip and drops the day counter. Either way no week is lit and nothing on the screen ends the block. | The block stays active for ever and the review never comes unless the lifter finds END BLOCK in the overview. | D-161, D-166 |
 
 ## Program
 
@@ -75,13 +75,13 @@ Items are grouped by screenshot and numbered A-01 to A-32 so the other leaves ca
 
 | # | Problem | Effect on the lifter | Refs |
 | --- | --- | --- | --- |
-| A-23 | The page answers "what exists", not "what am I running". The active card shows a chip, a name and "Week 1 of 4 · Accumulation"; it does not name its routine or today's session. | The block to routine relationship shows only as a chip on the routine row, and with two live blocks the routine row stacks chips. | brief principle 7 |
+| A-23 | The page answers "what exists", not "what am I running". The active card shows a chip, a name and "Week 1 of 4 · Accumulation"; it does not name its routine or today's session. | The block to routine relationship shows only as a chip on the routine row, and with an active block and a planned one on the same routine the routine row stacks chips (`UsageTagFlow` lists every block that is not completed, `ProgramView.swift:663-667`). | brief principle 7 |
 | A-24 | Status chips come in three styles: ACTIVE filled orange, READY outlined orange, DRAFT and DONE outlined ink. Done blocks share the list with current work, and ALL HISTORY ▸ appears only from the fourth done block. | READY competes with ACTIVE for the accent. Drafts and finished blocks are not separated from the one that matters. | P-7 |
 | A-25 | Block creation moves: a + DEFINE BLOCK ▶ row under BLOCKS until the first block exists, then only the header's + NEW popover. | The path to a new block changes after the first one. | D-125 |
 | A-26 | Routine rows end with "›" while block cards have no chevron; the header rule and the BLOCKS rule stack. ("1 sessions" was fixed by d227a1cb; `BRUCountLabel` is singular now.) | Two tappable lists that look different, plus small noise. | D-298 (fixed), D-299 |
 | A-27 | An empty ROUTINES section is a lone "+ NEW ROUTINE" with no line saying there are none. | The section looks broken rather than empty. | D-300, P-12 |
 | A-28 | The header is a one-off chrome (left title, + NEW, top rule) unlike the BRUHeaderBar on Today, Progress and Library. | Program looks like a different app from the other tabs. | brief principle 5 |
-| A-29 | Two blocks with the same name show identical cards. | Nothing tells them apart. | D-127 |
+| A-29 | Two blocks with the same name, status and displayed week and phase show identical cards. | Nothing tells them apart. | D-127 |
 
 ## Program, empty and resume
 

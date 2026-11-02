@@ -3,6 +3,18 @@
 Newest first.
 One entry per iteration: what changed and why.
 
+## 2026-11-02, draft v4
+
+Revised after round 3's Codex experience review (4 blockers and 10 fix-soon findings, all closed or accepted) and the partial Codex coverage review (2 blockers and 7 fix-soon findings, folded in as far as the report goes); the feasibility review has not run (review-log.md, round 3).
+NEXT is one value per scheduling mode, held by a new pure helper `StartSlot`, and every start route passes the slot it computes: the hero, the session sheet, Program's TODAY ▸ and NEXT ▸, and the session detail, which gains a `routine: Split?` parameter and computes its slot when Start is tapped.
+Program's start controls show exactly while Today's state is T-TODAY, from the same `TodayState` function; the open workout lists as IN PROGRESS on its day; This week is seven day groups with one row per counted workout.
+T-DONE lists every finished workout; T-FIRST is only a fresh store, with the no-block T-FIX variant and a standalone T-PICK hero taking the cases it covered; the block repair slabs and T-ATTACH keep "Choose another session ›".
+"Created Oct 3" replaces "Saved"; both ready slabs read "CREATED OCT 3 · 1 OF 2 READY"; Past blocks carry the year across years; P-PLANNED has a drafts-only variant with CONTINUE BLOCK ▸.
+"VOLUME THIS WEEK" names the volume row's destination; the deload advisory shows with or without a block and yields to a pending review notice; the discard rule is shared with Program's banner; P-RESUME overlays every state and demotes every other signal control.
+Plan corrections: seven card-label UI suites and the five root-level DONE lookups in step 1.5, four BlockBuilderView readers in step 2.6, `WeekTickerCells` deleted with the band, the empty-workout seed clamped to today's midnight, Block overview's `origin` passed from the pushing tab; risks R-24 and R-25 added.
+Audit rows A-03, A-04, A-16, A-21, A-22, A-23 and A-29 corrected against the captures and the source; the functionality map gains a grouped row for every unchanged child screen.
+`screen_budget.py` gained the no-block T-FIX and drafts-only P-PLANNED states and the preview job; it reports `222 -> 109 (50% fewer)` across 17 states, with the same two accepted over-budget states.
+
 ## 2026-11-01, draft v3
 
 Revised after round 2, a verification pass of v2 by the same three Claude lenses; the Codex reviewers were then resumed on v3 and stopped again at the account's usage limit before writing a report (review-log.md, round 3).

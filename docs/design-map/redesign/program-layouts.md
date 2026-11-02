@@ -20,10 +20,10 @@ Legend: `════` 2pt ink rule, `────` 1pt hair rule, `█` ink sla
 │ ████████████████████████████████████████████ │
 │                                              │
 │ THIS WEEK                       MAY 19 - 25  │  BRUSectionHead
-│ MON  Legs A                     52 MIN  ✓   ›│  logged; the row opens the workout
+│ MON  Legs A                     52 MIN  ✓   ›│  a day group: one row per counted workout; the row opens the workout
 │ TUE  Arms                       35 MIN  ✓   ›│  logged off-plan; listed on the day it happened
 │ WED  Rest                                    │  muted
-│ THU  Push A                         TODAY ▸  │  ink text action; starts the scheduled session with its slot
+│ THU  Push A                         TODAY ▸  │  ink text action; shows exactly while Today's state is T-TODAY
 │ FRI  Rest                                    │
 │ SAT  Pull A                                  │  planned
 │ SUN  Rest                                    │
@@ -32,7 +32,7 @@ Legend: `════` 2pt ink rule, `────` 1pt hair rule, `█` ink sla
 │ ┌──────────────────────────────────────────┐ │
 │ │ READY  SUMMER BLOCK                     ›│ │  BRUChip outlined ink
 │ │ 8 weeks · 4 phases · Upper Lower         │ │
-│ │ Saved Oct 3                              │ │  muted; `startDate` is the save date, not a plan (O-14)
+│ │ Created Oct 3                            │ │  muted; `startDate` is the creation date until the block starts (O-14)
 │ └──────────────────────────────────────────┘ │
 │ ┌──────────────────────────────────────────┐ │
 │ │ DRAFT  UNTITLED BLOCK                   ›│ │
@@ -55,14 +55,27 @@ Legend: `════` 2pt ink rule, `────` 1pt hair rule, `█` ink sla
 | Header | BRUHeaderBar(left: nil, center: "Fitbod / Program", right: HeaderAction("+ New")) | Replaces ProgramChromeHeader. The `HeaderAction` form draws in ink; the `HeaderSlot.action` form would draw it orange. The header keeps the `onGeometryChange` height measurement the popover is positioned by, and the 44pt target of the old chrome. |
 | + New popover | BRUActionPopover | Items unchanged: + New block → NewBlockStartChoiceSheet, + New routine → NewRoutineRoute.name. The only creation entry in non-empty states. |
 | Now slab | New ActiveBlockSlab, ink | Four lines: label row with OPEN ›, name, position, routine. No week cells, no days left, no training days: the week is said once, the cells are on Block overview one tap away, and the days are the rows below. |
-| This week | New ThisWeekSection, Phase 2 | Seven rows. A day with a logged workout shows its session name, duration and ✓, and opens the workout; off-plan workouts list on the day they happened. A day without a workout shows the planned session from `trainingDays` and the slot order, or "Rest". The current day shows "TODAY ▸" in ink text when a session is scheduled and not yet done; it starts that session with its slot, exactly as Today's hero does. |
-| Planned cards | BlockStatusCard | Chip in outlined ink for READY and DRAFT. Sublines: weeks · phases · routine, then "Saved Oct 3" (muted) for ready blocks or the missing piece for drafts. No copy says "starts" or "planned": `startDate` is stamped at save and overwritten at start (O-14). Tap → Block overview. |
+| This week | New ThisWeekSection, Phase 2 | Seven day groups. A group holds one row per counted workout logged that day (session name, duration, ✓; the row opens the workout), off-plan workouts included, then the open workout as "IN PROGRESS" on the day it started, then the planned session from `trainingDays` and the slot order while no counted workout today holds its slot, or "Rest" when the group is otherwise empty. Today's planned row carries "TODAY ▸" in ink text exactly while Today's state is T-TODAY; it starts that session with the same slot Today's hero would, through `StartSlot` (round 3). A planned session with no exercises reads "Push A · NO EXERCISES ›" and opens its detail (Today is T-FIX then). |
+| Planned cards | BlockStatusCard | Chip in outlined ink for READY and DRAFT. Sublines: weeks · phases · routine, then "Created Oct 3" (muted) for ready blocks or the missing piece for drafts. No copy says "saved", "starts" or "planned": `startDate` is stamped when the draft is created, kept when the block is edited, and overwritten at start (O-14, round 3). Tap → Block overview. |
 | Routine rows | RoutineSplitRow | Subline "3 sessions · used by Spring Block". With two users: "used by Spring Block, Summer Block". "1 session" singular. |
 | Archived routines | Existing row, muted | Unchanged target. Shown whenever any archived routine exists, in every state. |
 | Past blocks | Button(.bruRow) | Count of completed blocks. Pushes the list below. Replaces the inline DONE cards and ALL HISTORY ▸. |
 
 Above the fold: header, Now slab, the This week head and four rows.
 Eight elements, none of them orange: the only forward action is the ink "TODAY ▸".
+
+A day with two workouts, and a day with an open workout, read like this (round 3):
+
+```
+│ MON  Legs A                     52 MIN  ✓   ›│  the day's first counted workout
+│      Arms                       20 MIN  ✓   ›│  its second, in the same group, oldest first
+│ THU  Push A                    IN PROGRESS   │  the open workout, by its `templateName`; no chevron, the banner resumes it
+```
+
+Every counted workout of the week appears exactly once, in its day group.
+The open workout row has no action: Program's banner is the one route to it, so there is one signal.
+When the open workout holds today's slot, the planned row is left out; otherwise the planned session stays as a plain row under it, with no "TODAY ▸", because Today is T-RESUME.
+After a counted workout today Today is T-DONE, so "TODAY ▸" is hidden then too, and the planned session shows as a plain row only while its slot is not the one done.
 
 ## P-ACTIVE, rotation block
 
@@ -72,13 +85,14 @@ The This week section becomes a rotation strip, because a rotation has no weekda
 │ ROTATION                                     │  the Now slab already names the routine
 │ 01  Push A                   LOGGED MAY 19  ›│
 │ 02  Pull A                   LOGGED MAY 21  ›│
-│ 03  Legs A                          NEXT ▸   │  ink text action; starts this slot
-│ ALSO THIS WEEK   Arms · May 20              ›│  workouts outside the routine, muted
+│ 03  Legs A                          NEXT ▸   │  ink text action; shows exactly while Today's state is T-TODAY
+│ ALSO THIS WEEK   Arms · May 20              ›│  every other counted workout this week, muted
 ```
 
-Each row shows the date of that slot's latest logged workout in this block, or nothing.
-"NEXT ▸" marks the slot the resolver returns and starts it with its slot.
-Workouts from sessions outside the routine cannot sit in the strip, so they list under it with their dates.
+Each row shows the date of that slot's latest counted workout in this block, or nothing, and opens that workout.
+"NEXT ▸" marks NEXT, the resolver's next slot, the value [hierarchy.md](hierarchy.md) defines, and starts it with its slot through `StartSlot`; it is hidden while a workout is open (the row reads "IN PROGRESS" under the open workout's own name when that name is a slot's session, else the open workout lists under "Also this week" as "In progress") and after a counted workout today (round 3).
+"Also this week" lists every counted workout of this week that is not a slot row's latest workout, with its date, so each workout appears exactly once: off-routine workouts, and a slot's earlier workout when it was logged twice this week.
+A NEXT session with no exercises reads "Push A · NO EXERCISES ›" and opens its detail.
 
 ## P-PLANNED, ready block and nothing active
 
@@ -87,13 +101,15 @@ Workouts from sessions outside the routine cannot sit in the strip, so they list
 ╞══════════════════════════════════════════════╡
 │ ████████████████████████████████████████████ │
 │ █ READY                                    █ │
-│ █ SUMMER BLOCK                             █ │
-│ █ 8 WEEKS · 4 PHASES · UPPER LOWER         █ │
+│ █ SPRING BLOCK                             █ │
+│ █ 6 WEEKS · 3 PHASES · PUSH PULL LEGS      █ │
+│ █ CREATED OCT 3 · 1 OF 2 READY             █ │  muted; "· 1 OF 2 READY" only with more than one ready block
 │ █ [ START BLOCK ▸                        ] █ │  BRUButton .signal .lg
 │ █                                   OPEN › █ │
 │ ████████████████████████████████████████████ │
 │                                              │
 │ PLANNED                                      │  the other ready and draft blocks
+│ ┌ READY  SUMMER BLOCK · Created Oct 10    › ┐│  starts from its overview
 │ ┌ DRAFT  UNTITLED BLOCK · No routine yet  › ┐│
 │                                              │
 │ ROUTINES                                     │
@@ -101,11 +117,37 @@ Workouts from sessions outside the routine cannot sit in the strip, so they list
 │ PAST BLOCKS · 3                             ›│
 ```
 
-The oldest saved ready block takes the slab and the one signal; ties go by name (O-6).
+The fixture is the block Today's T-READY shows, so both tabs name the same block.
+The oldest created ready block takes the slab and the one signal (`startDate`, then name, then id; O-6, round 3).
 Other ready blocks list as cards and start from their overview.
-START BLOCK ▸ starts the block today, as the overview's Start does; `BlockLifecycleService.start` stamps `startDate` then, which until that moment is only the save date (O-14).
+START BLOCK ▸ starts the block today, as the overview's Start does; `BlockLifecycleService.start` stamps `startDate` then, which until that moment is the creation date (O-14).
 It shows a "Couldn't start block" alert if the call throws, with "Try again" and "Open block".
-Today shows the same block as T-READY, so both tabs lead with START BLOCK ▸; on a day with a finished workout Today shows T-DONE instead and this slab keeps the one-tap start.
+Today shows the same block as T-READY, so both tabs lead with START BLOCK ▸; on a day with a finished workout Today shows T-DONE instead and this slab keeps the one-tap start, two taps from Today.
+
+## P-PLANNED, drafts only
+
+With draft blocks and no ready one, nothing can be started, so the page has no signal element (round 3).
+The newest created draft leads as a paper slab, so the page still has a primary task: finish the block.
+
+```
+│                 FITBOD / PROGRAM       + NEW │
+╞══════════════════════════════════════════════╡
+│ ┌──────────────────────────────────────────┐ │
+│ │ DRAFT                                    │ │  paper slab, 2pt ink border
+│ │ UNTITLED BLOCK                           │ │
+│ │ NO ROUTINE YET                           │ │  the missing piece, from `derivedStatus`
+│ │ [ CONTINUE BLOCK ▸                     ] │ │  ink primary → Block overview, whose Edit opens the builder
+│ └──────────────────────────────────────────┘ │
+│                                              │
+│ PLANNED                                      │  the other drafts, as cards; absent with one draft
+│ ┌ DRAFT  BLOCK 2 · No phases yet          › ┐│
+│                                              │
+│ ROUTINES                                     │
+│ ...                                          │
+```
+
+Newest first here, the reverse of the ready rule, because the draft the lifter touched last is the one they are building.
+Today shows T-PICK, T-FIX or T-FIRST meanwhile: a draft is not Today's business.
 
 ## P-ROUTINE, routines and no block
 
@@ -161,10 +203,10 @@ The popover's + New block stays enabled; the block builder's routine picker gain
 │ █ ...                                      █ │
 ```
 
-Discard becomes a visible ghost button with the same confirmation as Today's slab, replacing the long-press menu (D-56, D-57).
-The banner is the only element the open workout adds; the rest of the page is P-ACTIVE or P-PLANNED as it was.
-In This week, the current day's "TODAY ▸" is hidden while a workout is open and the row reads "IN PROGRESS".
-A START BLOCK ▸ on the page becomes an ink primary button while the banner shows.
+Discard becomes a visible ghost button with the same rule as Today's slab, replacing the long-press menu (D-56, D-57): it asks "Discard workout?" only when sets are logged and discards at once when none are, which step 1.6 records as the exception to the confirmation rule in `docs/design-system/interaction.md` (round 3).
+The banner is the only element the open workout adds; the rest of the page is whichever state lies under it, P-ACTIVE, P-PLANNED, P-ROUTINE, P-PAST or P-EMPTY (an open workout from a since-archived routine).
+The banner holds the page's one signal, so every other signal control draws in ink while it shows: START BLOCK ▸ on the ready slab, + NEW ROUTINE on the empty page, and the + NEW BLOCK text links (round 3).
+In This week, "TODAY ▸" and "NEXT ▸" are hidden, and the open workout shows as "IN PROGRESS" under its own `templateName` in the group of the day it started, whichever session it is; a planned session is never marked in progress on the strength of a different workout being open (round 3).
 
 ## Past blocks list
 
@@ -178,12 +220,12 @@ Pushed from PAST BLOCKS ›.
 │ Winter Block                                ›│
 │ 8 weeks · Jan 6 - Mar 1 · 22 workouts        │
 │ Winter Block                                ›│
-│ 4 weeks · Nov 4 - Dec 1 · 10 workouts        │
+│ 4 weeks · Nov 4 - Dec 1, 2025 · 10 workouts  │  the year shows when the block ended in an earlier year than today
 ```
 
-Date ranges tell same-name blocks apart (D-127).
-Rows open Block overview, which gains a "Review ›" entry for completed blocks (D-40).
-The review opens as a sheet, because BlockReviewView wraps its own NavigationStack, and it takes the presenting tab as its origin so its "Start next ▸" builder names Program on its back control.
+Date ranges tell same-name blocks apart (D-127); a block that ended in an earlier year than today carries its year, so two Winter Blocks a year apart read differently (round 3).
+Rows open Block overview, which gains a "Review ›" entry for completed blocks (D-40), two taps from this list.
+The review opens as a sheet, because BlockReviewView wraps its own NavigationStack, and it takes Block overview's `origin` so its "Start next ▸" builder names the tab the lifter came from on its back control.
 Reopening a review that was already acknowledged leaves `reviewedAt` alone: `acknowledge` guards on nil (step 2.1).
 
 ## + New popover
@@ -210,12 +252,14 @@ Both tabs lead here, so a few lines change with them.
 | "n / m SESSIONS DONE" becomes "n / m WORKOUTS DONE" | The shared vocabulary; `BlockWeekCountsUITests` changes with it. |
 | The End block dialog reads "Ends Spring Block and saves its plan to history. New workouts will not count toward it." | The confirmation rule (P-9) wants the consequence; "from the Program tab" goes. |
 | "Review ›" on a completed block opens BlockReviewView as a sheet with the origin passed in | Reopens a review after the notice is gone (D-40). |
+| Block overview takes an `origin` from the stack that pushed it: `.today` from Today's plan line and T-READY's Open ›, `.program` from Program | The review sheet's "Start next ▸" builder names the right tab on its back control from either stack; plan.md's step 2.1 no longer hard-codes `.program` (round 3). |
 
 ## Accessibility sizes
 
 The Now slab's label row stacks "ACTIVE BLOCK" over "OPEN ›".
-This week rows put the status under the name.
+This week rows put the status under the name; a day group keeps its weekday on its first row only.
 Planned cards and routine rows keep their chevrons on the first line.
+Every row is sized by its text with a 44pt minimum; nothing truncates.
 
 ## Dark mode
 
