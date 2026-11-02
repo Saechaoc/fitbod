@@ -98,9 +98,11 @@ reboot_phone() {
 # Deletes the backups UI tests saved to phone $1's On My iPhone folder, which
 # an app uninstall leaves behind. The Files picker shows only the first dozen
 # by name, so with more a test cannot see the backup it just saved:
-# BackupRestoreRoutinesUITests failed 6 of 6 runs with 25 left over.
+# BackupRestoreRoutinesUITests failed 6 of 6 runs with 25 left over. Only the
+# tests' names match, "fitbod-t41-" or "fitbod-backup-" and 8 characters, so a
+# backup saved by hand under the app's dated name stays.
 clear_saved_backups() {
-  rm -f "$HOME/Library/Developer/CoreSimulator/Devices/$1/data/Containers/Shared/AppGroup/"*/"File Provider Storage/"fitbod-*.fitbodbackup
+  rm -f "$HOME/Library/Developer/CoreSimulator/Devices/$1/data/Containers/Shared/AppGroup/"*/"File Provider Storage/"{fitbod-t41,fitbod-backup}-????????.fitbodbackup
 }
 
 # Boots a phone, pins default text and light mode, and checks that both took.
