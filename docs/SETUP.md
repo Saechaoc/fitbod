@@ -49,6 +49,9 @@ The full tier keeps each guarantee of the serial run:
 - Before each run, every shard is booted, pinned to default text and light
   mode, and checked. Its app is then uninstalled, so no store is left over
   from an earlier run.
+- Both tiers also delete the `fitbod-*.fitbodbackup` files UI tests saved to
+  On My iPhone, which an uninstall keeps. The Files picker shows only the
+  first dozen, so leftovers hid the backup a test had just saved.
 - Shards are split from `scripts/ui-test-timings.json`, longest first, so the
   same classes land on the same shard each time. A class missing from the
   file counts as the median. The file comes from Gate 4's serial run on

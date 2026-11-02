@@ -95,6 +95,14 @@ reboot_phone() {
   xcrun simctl bootstatus "$1" -b >/dev/null
 }
 
+# Deletes the backups UI tests saved to phone $1's On My iPhone folder, which
+# an app uninstall leaves behind. The Files picker shows only the first dozen
+# by name, so with more a test cannot see the backup it just saved:
+# BackupRestoreRoutinesUITests failed 6 of 6 runs with 25 left over.
+clear_saved_backups() {
+  rm -f "$HOME/Library/Developer/CoreSimulator/Devices/$1/data/Containers/Shared/AppGroup/"*/"File Provider Storage/"fitbod-*.fitbodbackup
+}
+
 # Boots a phone, pins default text and light mode, and checks that both took.
 prepare() {
   local udid="$1"
@@ -170,6 +178,7 @@ if [[ "$TIER" == fast ]]; then
   # The unit tests' host app opens its store at launch; start it empty, so no
   # store left by an earlier UI run decides whether the host even starts.
   xcrun simctl uninstall "$DEVICE" "$APP_ID" >/dev/null 2>&1 || true
+  clear_saved_backups "$DEVICE"
   xctest "$DEVICE" "$RUN/test.log" "$RUN/fast.xcresult" -xctestrun "$xctestrun" "${selection[@]}" || status=$?
   summary "$RUN/fast.xcresult"
   step "done: exit $status, bundle $RUN/fast.xcresult"
@@ -229,9 +238,13 @@ xctest "$DEVICE" "$RUN/unit.log" "$RUN/unit.xcresult" -xctestrun "$xctestrun" \
   -only-testing:fitbodTests || status=$?
 summary "$RUN/unit.xcresult"
 
-# Every shard starts from an uninstalled app, so no store survives from an
-# earlier run or the unit tests' host app, whatever class runs first.
-for udid in "${shards[@]}"; do xcrun simctl uninstall "$udid" "$APP_ID" >/dev/null 2>&1 || true; done
+# Every shard starts from an uninstalled app and no saved backups, so no store
+# or backup survives from an earlier run or the unit tests' host app, whatever
+# class runs first.
+for udid in "${shards[@]}"; do
+  xcrun simctl uninstall "$udid" "$APP_ID" >/dev/null 2>&1 || true
+  clear_saved_backups "$udid"
+done
 
 step "UI tests (${#shards[@]} shards)"
 i=0
