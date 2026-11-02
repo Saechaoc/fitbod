@@ -16,7 +16,7 @@ progress:
 
 **Last updated:** 2026-10-29 (Milestone 1 finish, phase 0 done: Codex's seven groups committed, baseline 1,023 of 1,026 passed with 2 known app-bug failures and 1 expected failure)
 
-Last activity: 2026-10-31 - Completed quick task 261031-072: Audit the iOS test suite for performance and write docs/test-performance-guide.md
+Last activity: 2026-11-02 - Completed quick task 261101-ujp: Land the Today and Program redesign bundle in docs/design-map/redesign
 
 ---
 
@@ -364,6 +364,7 @@ None.
 | 261029-a9s | Milestone 1 Phase 1B: target reps are steppers where low never passes high (5), target RPE is one chip control with NO TARGET (6), a visible WHY at the start of each set's chip line opens Why-this-weight with the keyboard dismissed, Use writes the suggestion and Override focuses the weight (4), and Export CSV, Export JSON and backup CREATE share on one tap (34). Both baseline UI failures pass. Open: Why sheet hero shows x-/@-, focused set rows scroll under the workout header, openSeededWorkout fails at AX3 | 2026-10-29 | 004bbc8 | [261029-a9s-m1-phase-1b-target-reps-entry-that-corru](./quick/261029-a9s-m1-phase-1b-target-reps-entry-that-corru/) |
 | 261031-072 | Audit the iOS test suite for performance and write docs/test-performance-guide.md: the unit target executes 1,118 tests in 22 s; a 24-test UI sample averages 25.6 s per test serially and runs 2.25 times faster on four clones; no recorded run reaches 200 minutes, which is consistent with the 202-test UI bundle (55 on Oct 28) run serially on both phones. The guide holds the diagnosis, do-and-don't rules, examples on real files, a prioritized plan, a measurement plan and a per-test checklist, all as proposals | 2026-10-31 | 68a1df54 | [261031-072-audit-the-ios-test-suite-for-performance](./quick/261031-072-audit-the-ios-test-suite-for-performance/) |
 | 261101-tmc | Training-model coherence investigation (gsd-fast): reconstructed the prescription, scheduling, logging, correction, progression and block-review flows; three throwaway experiments on the fitbod-logger simulator reproduced the frozen-prescription versus live WHY defect, the startedAt/completedAt split after a date edit, and the stale empty-workout cache; wrote .planning/HANDOFF-training-model-coherence.md and two proposed decisions in docs/ROADMAP.md; no code changed | 2026-11-01 | (not committed) | - (fast task, no dir) |
+| 261101-ujp | Land the Today and Program redesign bundle in docs/design-map/redesign | 2026-11-02 | 12ea884a | [261101-ujp-land-the-today-and-program-redesign-bund](./quick/261101-ujp-land-the-today-and-program-redesign-bund/) |
 
 ---
 
