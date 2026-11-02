@@ -195,8 +195,40 @@ final class NumberEntryUITests: XCTestCase {
         UITestNavigation.reveal(details, in: app)
         details.tap()
         let trackTempo = app.switches["Track tempo"]
-        UITestNavigation.reveal(trackTempo, in: app)
+        XCTAssertTrue(trackTempo.exists || trackTempo.waitForExistence(timeout: 10), "The details must offer Track tempo")
+        // The details are still opening, and on the 440pt phone XCUI calls
+        // the switch hittable behind the save bar, where a tap misses (F387).
+        UITestNavigation.waitUntilStill(trackTempo)
+        revealAboveSaveBar(trackTempo, in: app)
         trackTempo.tap()
+    }
+
+    /// Drags the session editor in its leading margin, holding at the end of
+    /// each drag so the page does not coast on, until `element` sits whole
+    /// between the pinned header and the save bar, which covers the end of
+    /// the page.
+    @MainActor
+    private func revealAboveSaveBar(_ element: XCUIElement, in app: XCUIApplication,
+                                    file: StaticString = #filePath, line: UInt = #line) {
+        let bar = app.buttons["Save session ▸"]
+        for _ in 0..<6 {
+            let page = app.scrollViews.allElementsBoundByIndex.last(where: \.isHittable)?.frame ?? app.frame
+            let (top, bottom) = (page.minY + 8, bar.frame.minY - 8)
+            let frame = element.frame
+            if frame.minY >= top && frame.maxY <= bottom && element.isHittable { return }
+            // Positive drags the page down, to bring back an element above the span.
+            let distance = (top + bottom) / 2 - frame.midY
+            let startY = distance > 0 ? top + 20 : bottom - 20
+            let origin = app.coordinate(withNormalizedOffset: .zero)
+            origin.withOffset(CGVector(dx: 8, dy: startY)).press(
+                forDuration: 0.05,
+                thenDragTo: origin.withOffset(CGVector(dx: 8, dy: min(bottom - 20, max(top + 20, startY + distance)))),
+                withVelocity: .slow,
+                thenHoldForDuration: 0.3
+            )
+            UITestNavigation.waitUntilStill(element)
+        }
+        XCTFail("\(element) must scroll above the save bar", file: file, line: line)
     }
 
     // MARK: - Helpers
