@@ -2,6 +2,15 @@
 
 Newest first: one entry for each stage of [plan.md](plan.md) up to S2, then one for each commit.
 
+## 2026-11-01: Today and Program redesign
+
+- Added [redesign/](redesign/), the Today and Program redesign: a screenshot audit, a hierarchy for both screens, layouts for every state, a map of every capability to its new place, a three-phase plan, and a runnable screen budget.
+  It builds on this map's audit rows, its patterns and the stages in [decisions.md](decisions.md).
+- Two Claude review rounds (coverage, experience and feasibility lenses) closed seven blockers; the reports and the briefs are under [redesign/reviews/](redesign/reviews/).
+  The Codex round was attempted three times and stopped at the account's usage limit each time, so no reviewer has checked draft v3 itself.
+- The plan's Phase 1 replaces the elements behind D-159 (When stable) and D-341 (Polish later), so the stage of those two rows is a question for the user; the stage lists are unchanged.
+- The map's text checks now skip [redesign/reviews/](redesign/reviews/), which holds the reviewers' reports and briefs verbatim.
+
 ## 2026-11-01: review decisions
 
 - Added [decisions.md](decisions.md), which records the user's review of the map.

@@ -1,0 +1,20 @@
+Target: the Fitbod Today and Program redesign proposal at /Users/chrissaechao/Desktop/fitbod/docs/design-map/redesign (fourteen files; start with index.md, then hierarchy.md, today-layouts.md, program-layouts.md, evaluation.md, tradeoffs.md, open-decisions.md). The repository is /Users/chrissaechao/Desktop/fitbod, read-only for you.
+
+Role: you are an adversarial reviewer and a senior iOS product designer and UX architect. Your lens is information architecture, visual hierarchy and the brief's criteria. Your job is to break the proposal on paper: find where a serious lifter using it during a workout would be slowed, confused, or shown the wrong thing.
+
+Change: write your report to /Users/chrissaechao/Desktop/fitbod/docs/design-map/redesign/reviews/round1-claude-experience.md (create the reviews folder). Nothing else changes.
+
+Inputs the proposal must respect; read them before attacking: docs/design-map/decisions.md (adopted patterns, stage lists, approved mock-ups), the pattern list at the top of docs/design-map/audit.md (P-1 to P-12), docs/design-system/*.md (BRU rules: one signal CTA per screen, 44pt targets, confirmation rule, empty states), docs/DEVELOPMENT.md (prototype stage: what is deferred and what is never deferred), the four approved mock-ups in docs/design-map/mockups/, the user's own BRU mock-ups bru-screens/Fitbod-Session/screens/phase-2--today.png, phase-2--program.png and phase-2--program-context.png, the current screenshots in docs/design-map/screens/img/ (the 17e-default-light set), and the UI glossary in CLAUDE.md (Session, Routine, Block, workout; never Split or SessionTemplate in copy).
+
+The brief's criteria: (1) a five-second test for purpose and next action on every screen; (2) common workout tasks immediately accessible; (3) detailed training analysis easy to find; (4) empty, active and data-rich states all intentional; (5) every visible element earns its prominence. Also: progressive disclosure for advanced metrics and infrequent actions; no repeated labels, redundant status or competing emphasis; one coherent design system with a restrained athletic character; a clear relationship between programs, blocks and routines with current work prominent; readability, 44pt targets and interaction cues preserved.
+
+What to attack:
+1. Each proposed state on Today and Program against each criterion. Name the state and the criterion it fails.
+2. Precedence and states a real lifter hits: finished the planned workout and wants a second session the same day; a deload week on a rotation block; a block past its plan while a ready block waits; a pending review while a new block is active; a rest day on which they want to train; a fresh store; a routine with one empty session; two blocks with the same name.
+3. Daily jobs that gain a tap or lose an affordance, and weekly things a serious lifter uses that the proposal removes without an adequate replacement: the day streak, the all-time workout count, volume bars on Today, the week cells, the DAY counter, the inline session picker, the automatic block review.
+4. Contradictions with decisions.md, with an approved mock-up, with the user's own phase-2 mock-ups, with the glossary, or with the BRU rules. Note that the user's phase-2--today.png mock-up is what is built today; say whether moving away from it is justified.
+5. Copy that is unclear or wrong; wireframe lines that cannot fit 390pt at default size or wrap badly at accessibility sizes; rows that cannot be 44pt as drawn.
+6. Screens where "one signal element per screen" leaves no clear action, or where the chosen signal is not the action most lifters want.
+7. The Program "Now" slab, "This week" rows and "Past blocks" list: do they clarify the block, routine and session relationship better than the current cards, and do they earn their elements (screen_budget.py says P-ACTIVE still shows eleven elements above the fold).
+
+Note: GitNexus's index for this repository is 15 commits behind HEAD. Do not run npx gitnexus analyze or any other command that writes to the repository; verify every claim against the current source files instead.

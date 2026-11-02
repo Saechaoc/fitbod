@@ -506,6 +506,8 @@ def check_text_files(report: Report, audit_ids: set[str], referenced: set[pathli
             continue
         if path.is_relative_to(MAP / "screens" / "tree"):
             continue  # the app's own text, copied as the app shows it
+        if path.is_relative_to(MAP / "redesign" / "reviews"):
+            continue  # the reviewers' reports and briefs, kept verbatim
         where = rel(path)
         text = path.read_text(errors="replace")
         for number, line in enumerate(text.splitlines(), 1):

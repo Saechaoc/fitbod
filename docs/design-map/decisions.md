@@ -40,6 +40,10 @@ The user then kept all four as Fix now, because the development guide never defe
 - **When stable (67):** D-07, D-10, D-17, D-23, D-30, D-36, D-41 to D-42, D-44, D-46, D-49 to D-50, D-58, D-65, D-73, D-77 to D-78, D-82, D-87 to D-88, D-92, D-95, D-98, D-101, D-113 to D-114, D-128 to D-129, D-133, D-137, D-143, D-157, D-159, D-167, D-171, D-173, D-178, D-180, D-182, D-186, D-194, D-198 to D-199, D-206, D-209, D-211 to D-212, D-225 to D-226, D-238, D-243, D-256, D-266, D-268 to D-269, D-285, D-287, D-295, D-311, D-317 to D-318, D-322, D-329, D-340, D-342, D-345, D-351.
 - **Polish later (144):** D-190 to D-193, D-195 to D-197, D-200 to D-202, D-204 to D-205, D-207 to D-208, D-210, D-213 to D-215, D-217 to D-224, D-227 to D-230, D-232 to D-237, D-239 to D-242, D-244 to D-255, D-257 to D-265, D-267, D-270 to D-284, D-286, D-288 to D-291, D-293 to D-294, D-296 to D-310, D-312 to D-316, D-319 to D-321, D-323 to D-328, D-330 to D-339, D-341, D-343 to D-344, D-346 to D-350, D-352 to D-357, D-359 to D-365.
 
+The Today and Program redesign in [redesign/](redesign/) plans the first rebuild.
+Its Phase 1 covers the Today and Program rows staged "With the redesign", and it also replaces the elements behind D-159 (When stable) and D-341 (Polish later): Today's block band and stat strip.
+Those two rows change stage only when the user confirms, because this file records the user's review; the lists above are unchanged.
+
 ## Pattern fixes
 
 Each adopted pattern is fixed once, in shared code or as a rule, rather than row by row.

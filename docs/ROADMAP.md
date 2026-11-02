@@ -65,6 +65,9 @@ system; add a component only when multiple real screens need it.
   (reproduced 2026-11-01). Proposed: show the frozen weight with a one-line
   note when they differ and keep SchemaV7. The alternative, freezing the
   explanation text on `SessionExercise`, is a schema change.
+- **Today and Program redesign:** `docs/design-map/redesign/open-decisions.md`
+  lists 14 product calls, each with the default the layouts assume. The plan
+  there starts once they are confirmed or changed.
 
 ## Release checks and remaining surfaces
 

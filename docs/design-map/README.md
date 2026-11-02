@@ -17,6 +17,7 @@ Status: complete; [changelog.md](changelog.md) records each stage.
 | [mockups/](mockups/) | BRU mock-ups of the must-have missing screens |
 | [audit.md](audit.md) | every design problem found, sorted by severity, and the patterns behind them |
 | [decisions.md](decisions.md) | the review decisions: each audit row's stage, the approved mock-ups, the adopted patterns and the missing screens to build |
+| [redesign/](redesign/) | the Today and Program redesign: audit, hierarchy, layouts for every state, a map of every capability to its new place, a phased plan, and its adversarial reviews |
 | [tools/](tools/) | the screenshot tour, its exporter and the checks |
 | [plan.md](plan.md) | how the map was planned and made |
 | [changelog.md](changelog.md) | what changed and why |
