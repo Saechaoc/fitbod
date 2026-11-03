@@ -61,6 +61,11 @@ public struct SessionExerciseCard: View {
     @State private var suggestedAction: SuggestedAction? = nil
     @State private var presentingTryVariation: Bool = false
     @State private var presentingDeloadSignalSheet: Bool = false
+    /// The exercise a picked variation replaced, for UNDO.
+    @State private var swappedFrom: Exercise?
+    /// "View all similar exercises" asks for the full swap list, which
+    /// opens once the variation sheet has gone.
+    @State private var swapListAfterVariation = false
 
     @Environment(\.modelContext) private var phase5ModelContext
 
@@ -129,6 +134,7 @@ public struct SessionExerciseCard: View {
                 .padding(.vertical, 12)
                 .contextMenu {
                     Button {
+                        swappedFrom = nil
                         onSwap(sessionExercise)
                     } label: {
                         // System contextMenu chrome is HIG-acceptable per UI-SPEC line 261.
@@ -148,6 +154,37 @@ public struct SessionExerciseCard: View {
                 }
 
                 BRUDivider(.hair)
+
+                // A picked variation can be undone until a set of it is
+                // logged; after that the logged sets belong to it.
+                if let original = swappedFrom, !hasLoggedWorkingSet {
+                    HStack(spacing: 8) {
+                        Text("Swapped from \(original.name)")
+                            .font(BRUFont.labelSmall)
+                            .tracking(1.2)
+                            .textCase(.uppercase)
+                            .foregroundStyle(Color.bruMuted)
+                            .fixedSize(horizontal: false, vertical: true)
+                        Spacer(minLength: 8)
+                        Button {
+                            SwapExerciseSheet.swap(sessionExercise, to: original, context: ctx)
+                            swappedFrom = nil
+                        } label: {
+                            Text("Undo")
+                                .font(BRUFont.labelSmall)
+                                .tracking(1.2)
+                                .textCase(.uppercase)
+                                .foregroundStyle(Color.bruSignalText)
+                                .frame(minWidth: 44, minHeight: 44)
+                                .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel("Undo, back to \(original.name)")
+                        .accessibilityIdentifier("card.undoVariation")
+                    }
+                    .padding(.horizontal, 16)
+                    BRUDivider(.hair)
+                }
 
                 // Row 2: Optional PinnedNoteCapsule mount point (rewritten in Plan 02.1-08)
                 if let note = sessionExercise.pinnedNote, !note.isEmpty {
@@ -326,14 +363,27 @@ public struct SessionExerciseCard: View {
             EmptyView()
         }
         .listSectionSeparator(.hidden)
-        // Phase 5 PROG-06 — evaluate plateau signal on first appear + exercise change
-        .task(id: sessionExercise.id) {
+        // Phase 5 PROG-06 — evaluate plateau signal on first appear and
+        // whenever a swap changes the exercise.
+        .task(id: sessionExercise.exercise?.id) {
             evaluatePlateau()
         }
-        // Phase 5 PROG-06 Branch 4 — TryVariationSheet
-        .sheet(isPresented: $presentingTryVariation) {
+        // Phase 5 PROG-06 Branch 4 — TryVariationSheet. A picked variation
+        // takes the stalled exercise's place in this workout, as a swap
+        // does; "View all similar" opens the full swap list.
+        .sheet(isPresented: $presentingTryVariation, onDismiss: {
+            guard swapListAfterVariation else { return }
+            swapListAfterVariation = false
+            onSwap(sessionExercise)
+        }) {
             if let source = sessionExercise.exercise {
-                TryVariationSheet(sourceExercise: source) { _ in
+                TryVariationSheet(sourceExercise: source) { picked in
+                    if let picked {
+                        SwapExerciseSheet.swap(sessionExercise, to: picked, context: ctx)
+                        swappedFrom = source
+                    } else {
+                        swapListAfterVariation = true
+                    }
                     presentingTryVariation = false
                 }
             }
@@ -428,6 +478,11 @@ public struct SessionExerciseCard: View {
     private var exerciseName: String {
         let name = sessionExercise.displayName
         return name.isEmpty ? "Exercise" : name
+    }
+
+    /// A working set of this exercise is logged.
+    private var hasLoggedWorkingSet: Bool {
+        (sessionExercise.sets ?? []).contains { $0.isComplete && !$0.isWarmup }
     }
 
     private var sortedSets: [SetEntry] {
