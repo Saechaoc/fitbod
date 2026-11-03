@@ -68,6 +68,7 @@ public enum ProgressHomeRoute: Hashable, Sendable {
 public struct ProgressHomeView: View {
     @Binding public var path: NavigationPath
     @Environment(\.modelContext) private var ctx
+    @Environment(HistoryEdits.self) private var historyEdits: HistoryEdits?
     @Environment(\.weightUnit) private var weightUnit
     @Query private var recentSessionExercises: [SessionExercise]
     @Query private var completedSessions: [Session]
@@ -134,6 +135,12 @@ public struct ProgressHomeView: View {
                 known: emptyWorkoutsKey.map { (finished: $0, empty: emptyWorkoutIDs) },
                 in: ctx
             )
+            emptyWorkoutsKey = finishedIDs
+        }
+        // A History correction can empty a finished workout or fill an empty
+        // one without changing which workouts are finished.
+        .onChange(of: historyEdits?.version) {
+            emptyWorkoutIDs = SessionSetActions.emptyWorkoutIDs(among: completedSessions, known: nil, in: ctx)
             emptyWorkoutsKey = finishedIDs
         }
     }

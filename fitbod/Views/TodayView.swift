@@ -40,6 +40,7 @@ public struct TodayView: View {
     // MARK: - Environment
 
     @Environment(\.modelContext) private var ctx
+    @Environment(HistoryEdits.self) private var historyEdits: HistoryEdits?
 
     // MARK: - Queries (preserved verbatim from RootView.TodayView Phase 4/5)
 
@@ -406,6 +407,12 @@ public struct TodayView: View {
                     known: emptyWorkoutsKey.map { (finished: $0, empty: emptyWorkoutIDs) },
                     in: ctx
                 )
+                emptyWorkoutsKey = finishedIDs
+            }
+            // A History correction can empty a finished workout or fill an
+            // empty one without changing which workouts are finished.
+            .onChange(of: historyEdits?.version) {
+                emptyWorkoutIDs = SessionSetActions.emptyWorkoutIDs(among: finished, known: nil, in: ctx)
                 emptyWorkoutsKey = finishedIDs
             }
         }

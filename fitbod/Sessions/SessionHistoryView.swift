@@ -35,6 +35,12 @@ import SwiftData
 public struct SessionHistoryView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.weightUnit) private var weightUnit
+    @Environment(HistoryEdits.self) private var historyEdits: HistoryEdits?
+
+    private struct RecordsKey: Equatable {
+        let sessionIDs: [UUID]
+        let edits: Int
+    }
 
     @Query(
         filter: #Predicate<Session> { $0.completedAt != nil },
@@ -96,7 +102,9 @@ public struct SessionHistoryView: View {
         .safeAreaInset(edge: .top, spacing: 0) {
             BRUHeaderBar(left: HeaderAction("‹ Back") { dismiss() }, center: "History")
         }
-        .task(id: sessions.map(\.id)) {
+        // A History correction changes sets, not which workouts are listed,
+        // so the edit count joins the key.
+        .task(id: RecordsKey(sessionIDs: sessions.map(\.id), edits: historyEdits?.version ?? 0)) {
             prs = SessionSummary.prsBySession(sessions)
             // The records pass has just read every finished workout's sets,
             // so the shared rule reads nothing more from the store here.

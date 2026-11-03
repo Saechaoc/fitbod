@@ -56,6 +56,7 @@ public struct RootView: View {
     @Query(RootView.anyExercise) private var exercises: [Exercise]
     @Query private var settingsList: [UserSettings]
     @State private var seedState = SeedState()
+    @State private var historyEdits = HistoryEdits()
 
     /// Currently-selected tab. Bound to the tab-bar binding via a
     /// custom `Binding<Tab>` that detects re-tap of the same tab and
@@ -133,6 +134,7 @@ public struct RootView: View {
             }
         }
         .environment(\.weightUnit, settingsList.first?.weightUnit ?? .default)
+        .environment(historyEdits)
         .task {
             await runSeed()
         }
