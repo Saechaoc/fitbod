@@ -32,6 +32,31 @@ dark mode, VoiceOver and Reduce Motion join a workflow's acceptance once it is
 stable, and every workflow's at release readiness. Preserve the small design
 system; add a component only when multiple real screens need it.
 
+## Decided
+
+Decided 2026-11-03 on the review page `.lavish/next-workflow.html`.
+
+- **Next workflow:** finish one gym day end to end before other work: start
+  the right workout on Today, log it, finish, find it in History and correct
+  it (design-map workflows `today`, `log-a-workout` and
+  `review-a-workout-and-edit-history`). Running a block comes next.
+- **History corrections:** the approved history-editing screen
+  (`docs/design-map/mockups/history-editing.html`) changes a finished
+  workout's date and start time and each set's weight, reps and RPE, adds and
+  deletes sets, and deletes the workout after a confirmation. A date change
+  moves the whole workout (start, finish and every set by one delta, never
+  into the future); the workout then belongs to the block whose dates contain
+  its start. Records, progression, volume and reviews recompute from the
+  corrected sets on save, with no "records moved" summary in v1. Duration
+  stays as logged; exercises are not added, removed or reordered in v1.
+  Engineering contract: `.planning/HANDOFF-training-model-coherence.md`.
+- **Frozen prescription versus live WHY:** the WHY sheet shows the weight
+  frozen when the workout started, with a one-line note when the live
+  computation differs. SchemaV7 stays.
+- **Skipping a session:** not now. Today offers the block's other sessions
+  instead, and starting one moves the rotation on. A skip needs a stored
+  marker, which is a schema change past SchemaV7.
+
 ## Decisions awaiting product direction
 
 - **First logs and records:** the first logged set in each intent/rep-range/kind
@@ -50,21 +75,6 @@ system; add a component only when multiple real screens need it.
 - **Per-set targets:** giving one set its own reps and RPE needs target fields
   on logged sets, which is a schema change past SchemaV7. Stored per-set
   overrides are kept, but nothing applies them yet.
-- **History corrections:** the approved history-editing screen
-  (`docs/design-map/mockups/history-editing.html`) leaves its recompute rules
-  open. Proposed: a date change moves the whole workout (start, finish and
-  every set by one delta, never into the future); the workout then belongs to
-  the block whose dates contain its start; records, progression, volume and
-  reviews recompute from the corrected sets on save, with no "records moved"
-  summary in v1; duration stays as logged; exercises are not added, removed or
-  reordered in v1. Engineering handoff:
-  `.planning/HANDOFF-training-model-coherence.md`.
-- **Frozen prescription versus live WHY:** the WHY sheet recomputes from live
-  history and the live block while the pending sets hold the weight frozen at
-  start, so editing the active block mid-workout shows two different numbers
-  (reproduced 2026-11-01). Proposed: show the frozen weight with a one-line
-  note when they differ and keep SchemaV7. The alternative, freezing the
-  explanation text on `SessionExercise`, is a schema change.
 
 ## Release checks and remaining surfaces
 

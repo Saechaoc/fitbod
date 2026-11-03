@@ -2,7 +2,7 @@
 
 Written 2026-11-01 after an investigation of how live-editable plans, frozen snapshots, historical corrections and adaptive prescriptions compose.
 Read this with `CLAUDE.md`, `docs/DEVELOPMENT.md`, the product decisions in `docs/ROADMAP.md` and the approved `docs/design-map/mockups/history-editing.html`.
-The product decisions this work needs are proposed in `docs/ROADMAP.md` under "Decisions awaiting product direction" and are not repeated here.
+The product decisions this work needs were made on 2026-11-03 and are recorded in `docs/ROADMAP.md` under "Decided"; they are not repeated here.
 
 ## Conclusion
 
