@@ -574,7 +574,10 @@ public struct RoutineBuilderView: View {
         do {
             try ctx.save()
         } catch {
-            saveErrorMessage = error.localizedDescription
+            // Roll back so the refused change can't fail every later save;
+            // the draft keeps the edits for another try.
+            ctx.rollback()
+            saveErrorMessage = "The session wasn't saved. Try again."
             return
         }
         onSaved?(routine)
@@ -590,7 +593,8 @@ public struct RoutineBuilderView: View {
             try ctx.save()
             dismiss()
         } catch {
-            saveErrorMessage = error.localizedDescription
+            ctx.rollback()
+            saveErrorMessage = "The copy wasn't saved. Try again."
         }
     }
 
@@ -623,7 +627,8 @@ public struct RoutineBuilderView: View {
             try ctx.save()
             dismiss()
         } catch {
-            saveErrorMessage = error.localizedDescription
+            ctx.rollback()
+            saveErrorMessage = "The session wasn't archived. Try again."
         }
     }
 

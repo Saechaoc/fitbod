@@ -52,7 +52,7 @@ public enum WorkoutStarter {
             }
             return .failed("Another workout is already in progress.")
         } catch {
-            return .failed(error.localizedDescription)
+            return .failed("The new workout couldn't be saved. Try again.")
         }
     }
 

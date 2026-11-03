@@ -12,6 +12,8 @@
 //    - delete      remove one set and renumber the rest so orderIndex
 //                  stays contiguous (warm-ups first, then working sets)
 //    - addSet      append a planned working set at the end
+//    - finish / deleteWorkout / remove   the workout-level writes; each
+//                  throws on a failed save so the logger can say so
 //
 //  Every mutation saves immediately. A logged workout must survive the
 //  app being killed between sets, so nothing here waits for autosave.
@@ -96,6 +98,49 @@ public enum SessionSetActions {
         entry.weight = seedWeight
         try? context.save()
         return entry
+    }
+
+    /// Finish a workout: stamp its end and duration in one save. When the
+    /// save fails the workout stays in progress with every set kept, and the
+    /// error is thrown for the logger to show.
+    @MainActor
+    public static func finish(_ session: Session, at date: Date = .now, context: ModelContext) throws {
+        let duration = session.totalDurationSeconds
+        session.completedAt = date
+        session.totalDurationSeconds = Int(date.timeIntervalSince(session.startedAt))
+        do {
+            try context.save()
+        } catch {
+            session.completedAt = nil
+            session.totalDurationSeconds = duration
+            throw error
+        }
+    }
+
+    /// Delete a workout with its exercises and sets: a discarded one in
+    /// progress or a finished one. A failed save rolls the delete back, so it
+    /// cannot stay pending and fail every later save.
+    @MainActor
+    public static func deleteWorkout(_ session: Session, context: ModelContext) throws {
+        context.delete(session)
+        try saveOrRollBack(context)
+    }
+
+    /// Remove one exercise and its sets from a workout in progress.
+    @MainActor
+    public static func remove(_ sessionExercise: SessionExercise, context: ModelContext) throws {
+        context.delete(sessionExercise)
+        try saveOrRollBack(context)
+    }
+
+    @MainActor
+    static func saveOrRollBack(_ context: ModelContext) throws {
+        do {
+            try context.save()
+        } catch {
+            context.rollback()
+            throw error
+        }
     }
 
     /// Lower the weight of every not-yet-completed working set by

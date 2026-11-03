@@ -67,6 +67,7 @@ public struct SessionLoggerView: View {
     @State private var presentingWorkoutNotes = false
     @State private var pendingPinnedNote: SessionExercise?
     @State private var presentingSummary = false
+    @State private var saveFailure: String?
 
     /// Phase 6 plan 06-07 — in-session PR banner state.
     @State private var prState = InSessionPRState()
@@ -210,6 +211,18 @@ public struct SessionLoggerView: View {
         } message: { _ in
             Text("Any logged sets for this exercise will be discarded.")         // UI-SPEC verbatim
         }
+        // A finish, discard or remove whose save failed: nothing changed.
+        .alert(
+            "Couldn't save",
+            isPresented: Binding(
+                get: { saveFailure != nil },
+                set: { if !$0 { saveFailure = nil } }
+            )
+        ) {
+            Button("OK", role: .cancel) { saveFailure = nil }
+        } message: {
+            Text(saveFailure ?? "")
+        }
         // Workout summary after Finish. DONE closes the summary and the logger.
         .fullScreenCover(isPresented: $presentingSummary, onDismiss: { dismiss() }) {
             SessionDetailView(session: session, onDone: { presentingSummary = false })
@@ -339,24 +352,34 @@ public struct SessionLoggerView: View {
     }
 
     private func finish() {
-        session.completedAt = .now
-        session.totalDurationSeconds = Int(Date.now.timeIntervalSince(session.startedAt))
+        do {
+            try SessionSetActions.finish(session, context: ctx)
+        } catch {
+            saveFailure = "The workout wasn't finished. Your sets are still here, so try Finish again."
+            return
+        }
         engine.stop()
-        try? ctx.save()
         presentingSummary = true
     }
 
     private func discard() {
+        do {
+            try SessionSetActions.deleteWorkout(session, context: ctx)
+        } catch {
+            saveFailure = "The workout wasn't discarded. Try again."
+            return
+        }
         engine.stop()
-        ctx.delete(session)
-        try? ctx.save()
         dismiss()
     }
 
     private func handleRemove(_ se: SessionExercise) {
-        ctx.delete(se)
-        try? ctx.save()
         pendingRemove = nil
+        do {
+            try SessionSetActions.remove(se, context: ctx)
+        } catch {
+            saveFailure = "The exercise wasn't removed. Try again."
+        }
     }
 }
 

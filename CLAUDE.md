@@ -133,6 +133,8 @@ Never leak code names (`Split`, `SessionTemplate`) into UI copy. Authoritative d
 **Template vs instance:** `SessionExerciseTemplate` is the prescription; `SessionExercise` is what was logged. Copy fields at log time — never project from template at read time. Two freeze points only: log time (prescription snapshot) and block end (`ArchivedBlockConfig`); everything else is live graph edges — the only exclusivity rule is one active block.
 
 **Engine services (Phase 8):** `TodayResolver` (rotation/fixedWeekly resolution → `TodayResolution` enum), `BlockLifecycleService` (one-save start/end/swap, split attach/swap gated to draft/ready, `assertSplitDeletable` conditional deny, `decodeArchive` w/ typed error, NO live-template fallback), `TrainingDaysWriter` (sort-once-at-write, injected Calendar). NO multi-level optional chains inside `#Predicate` — broad predicate + Swift post-filter.
+
+**History corrections:** a workout's place in time is `Session.startedAt` (rotation anchor, previous session, PRs and volume all order by it); it belongs to the block running at its start. Correct a finished workout only through `SessionEditService.save` (one `WorkoutEdit` = one transaction, rolled back on failure; never rewrites the frozen prescription or slot). Workout-level writes in the logger throw: `SessionSetActions.finish` / `deleteWorkout` / `remove`.
 <!-- GSD:architecture-end -->
 
 <!-- GSD:skills-start source:skills/ -->

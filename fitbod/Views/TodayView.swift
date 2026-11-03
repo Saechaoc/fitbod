@@ -83,6 +83,7 @@ public struct TodayView: View {
     /// A workout already in progress when the user tried to start another.
     @State private var startConflict: Session? = nil
     @State private var startError: String? = nil
+    @State private var discardError: String? = nil
     @State private var presentingSettings = false
 
     // MARK: - Body
@@ -149,8 +150,11 @@ public struct TodayView: View {
                             session: active,
                             onResume: { navigationPath.append(SessionRoute.logger(active)) },
                             onDiscard: {
-                                ctx.delete(active)
-                                try? ctx.save()
+                                do {
+                                    try SessionSetActions.deleteWorkout(active, context: ctx)
+                                } catch {
+                                    discardError = "The workout wasn't discarded. Try again."
+                                }
                             }
                         )
                     } else {
@@ -365,6 +369,17 @@ public struct TodayView: View {
                 Button("OK", role: .cancel) { startError = nil }
             } message: {
                 Text(startError ?? "")
+            }
+            .alert(
+                "Couldn't discard workout",
+                isPresented: Binding(
+                    get: { discardError != nil },
+                    set: { if !$0 { discardError = nil } }
+                )
+            ) {
+                Button("OK", role: .cancel) { discardError = nil }
+            } message: {
+                Text(discardError ?? "")
             }
             // ─── Lifecycle (preserved verbatim from Phase 4/5) ───────────────
             // Both run on every appearance. The advisory check lives only in
