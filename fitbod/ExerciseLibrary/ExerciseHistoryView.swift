@@ -14,6 +14,7 @@
 //   set-count summary row
 //   BRUDivider(.hair)
 //   one ExerciseHistoryRow per workout, newest first; the row carries the date
+//   and opens that workout's summary, where it can be corrected
 //   PRStripFooter at bottom
 //
 // ## Empty states (UI-SPEC verbatim)
@@ -180,9 +181,18 @@ private struct FilteredHistoryContent: View {
         if completed.isEmpty {
             emptyState
         } else {
-            // One row per workout, which shows its date.
+            // One row per workout, which shows its date and opens the
+            // workout's summary (a row's id is its workout's).
             ForEach(rows) { entry in
-                ExerciseHistoryRow(entry: entry)
+                NavigationLink {
+                    SessionSummaryDestination(sessionID: entry.id)
+                } label: {
+                    ExerciseHistoryRow(entry: entry)
+                }
+                .buttonStyle(.bruRow)
+                // The row's date, e1RM and set chips stay readable one by one.
+                .accessibilityElement(children: .contain)
+                .accessibilityIdentifier("exerciseHistory.row")
                 BRUDivider(.hair)
             }
 
