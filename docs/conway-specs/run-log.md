@@ -220,6 +220,7 @@ The DerivedData folders live in `~/Library/Developer/Xcode/DerivedData/`.
 - 2026-11-01 16:35 Phase 8 prep: removed the coordinator's merged ext-batch worktree and branch, and the clean conway-t120 worktree; branch conway-t120 (2ef8ea3, T120's stopped work) is retained for the user, as recorded when T120 was deferred. Worktree test-speed on branch test/fast-reliable-suite (the user's own 2026-10-31 commits: a 30 s unit tier and a sharded full verification tier, unmerged) is not part of this run and is left as it is.
 - 2026-11-01 17:13 GATE 4 PASSED at 0ef702e on the large gate phone: build ok, widget ok, UI 75/75 in 28.9 min wall, unit target 1229 + 1 known after a simulator reboot (the first unit run, and one rerun, hung before connecting because the in-simulator test daemon never reported ready; a normal app launch was healthy). Gate 5 rests on Gate 4 (Phase 5 has only skipped T43; no code change since). Phases 6 and 7 hold only skipped T44 to T48. Phase 8 next.
 - 2026-11-01 17:14 PHASE 8 DONE: no live attempt; worktrees: main and the user's own test-speed (test/fast-reliable-suite) only; branch conway-t120 retained (T120's stopped work); git status clean; origin/main equaled the last push (0ef702e) before the final fast-forward push of 1bb8600; no Co-Authored-By in dd098af..main (382+ commits); manual-mode diff check: code changes only in fitbod, fitbodTests and fitbodUITests within tickets' owns and grants, and CLAUDE.md, AGENTS.md and .planning only in the user's own commits. Lane and gate phones shut down (sw6-L1..L3 pairs and the gate pair; L4 never booted); deleting them is left to the user. Tickets: {'done': 127, 'skipped': 19}. Findings F1-F388.
+- 2026-11-03 13:17 After the run (2026-11-03): docs/conway-specs/LEARNINGS.md extracts the run's decisions, lessons, patterns and surprises from this log, tradeoffs.md, the plan and docs/DEVELOPMENT.md, each with its source; index.md's status now says the run finished, and the Phase gates table's Gate 5 row says it rests on Gate 4 instead of showing blanks.
 
 ## Ledger
 
@@ -406,7 +407,7 @@ Keep the accepted full-tour evidence, including implementation retries, and prio
 | 2 | 2026-10-31 | 1515 | 1514 | 0 | 1 | 182 min (tests 180.7 min; no F144 stall) | succeeded |
 | 3 | 2026-11-01 | 1299 | 1298 | 0 | 1 | 40 min with builds (tests 40.3 min wall) | succeeded |
 | 4 | 2026-11-01 | 1305 | 1304 | 0 | 1 | UI 75/75 in 28.9 min wall (23.2 min of cases); unit target 1230 (1229 + 1 known) in about 1 min after a simulator reboot | succeeded |
-| 5 | 2026-11-01 |  |  |  |  |  |  |
+| 5 | 2026-11-01 | — | — | — | — | rests on Gate 4: no code change since, and Phase 5 holds only skipped T43 | — |
 
 ## Shared test helpers
 

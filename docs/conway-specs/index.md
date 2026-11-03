@@ -11,9 +11,8 @@ T129, T133 and T140 keep only their correctness changes.
 T134 came back trimmed to hosted-test reliability, because UI runs reset the simulator setting those tests need (F358).
 At the user's request T143 cut the UI suite to the tests that guard data (about 3 hours to 40 minutes), so T121, T131 and T135 are skipped as superseded, T119 became the kept tests' budget ticket, T123 keeps only the reset launch's notification cleanup, and T133 became two persistence unit tests.
 
-Status: ready to dispatch once every precondition in [dispatch.md](dispatch.md) holds.
-Nothing from this bundle has been dispatched.
-The quick-task run of the same plan must finish its last two tasks first, so read "Another session runs the same plan" in [risks.md](risks.md) first.
+Status: the run finished on 2026-11-01 with 127 tickets done and 19 skipped; Gates 1 to 4 passed, and Gate 5 rests on Gate 4.
+[run-log.md](run-log.md) is the record, and [LEARNINGS.md](LEARNINGS.md) is what the run taught.
 
 | Read this file | When you need |
 |---|---|
@@ -25,6 +24,7 @@ The quick-task run of the same plan must finish its last two tasks first, so rea
 | [worker-rules.md](worker-rules.md) | the rules every worker follows; part of every ticket |
 | [dispatch.md](dispatch.md) | the coordinator playbook: lanes, worktrees, merging, gates and Phase 8 |
 | [run-log.md](run-log.md) | approvals, lanes, the ticket ledger, gates and findings |
+| [LEARNINGS.md](LEARNINGS.md) | what the run taught: decisions, lessons, patterns and surprises, each with its source |
 | [capacity_model.py](capacity_model.py) | run it with `python3 -I` to validate the tickets and estimate time for one to four lanes |
 | [changelog.md](changelog.md) | what changed in this bundle and why |
 | `tickets/` | one open ticket per file, listed below |
