@@ -24,6 +24,7 @@ import SwiftData
 /// │  5 EXERCISES  ·  21 SETS  ·  ~52 MIN          │  10pt caps 0.5 opacity
 /// │                                               │  16pt gap
 /// │  [       START WORKOUT ▸        ]             │  BRUPillButton signal
+/// │        CHOOSE ANOTHER SESSION ›               │  when onChooseAnother is set
 /// └──────────────────────────────────────────────┘
 /// ```
 ///
@@ -42,6 +43,8 @@ public struct BlackSlabCTA: View {
     let dayIndex: Int?      // 1-based, e.g. 1 of 4; nil shows no day
     let totalDays: Int
     let onStart: @MainActor () -> Void
+    /// Opens the block's other sessions; nil hides the link.
+    var onChooseAnother: (@MainActor () -> Void)? = nil
 
     // MARK: - Computed
 
@@ -109,6 +112,21 @@ public struct BlackSlabCTA: View {
             Spacer().frame(height: 16)
 
             BRUPillButton("Start workout ▸", action: onStart)
+
+            if let onChooseAnother {
+                Button(action: onChooseAnother) {
+                    Text("Choose another session ›")
+                        .font(BRUFont.labelSmall)
+                        .tracking(1.2)
+                        .textCase(.uppercase)
+                        .foregroundStyle(Color.bruPaper.opacity(0.8))
+                        .frame(maxWidth: .infinity, minHeight: 44)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .padding(.top, 4)
+                .accessibilityIdentifier("todaySlab.chooseAnother")
+            }
         }
         .padding(.vertical, 18)
         .padding(.horizontal, 16)

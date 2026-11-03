@@ -155,10 +155,7 @@ public struct SessionHistoryRow: View {
     private var setDurationLabel: String {
         let sets = BRUCountLabel.text(workingSetCount, "SET")
         guard let minutes = durationMinutes else { return sets }
-        let duration = minutes >= 60
-            ? "\(minutes / 60)H \(String(format: "%02d", minutes % 60))M"
-            : "\(minutes)M"
-        return "\(sets) · \(duration)"
+        return "\(sets) · \(SessionHistoryFormat.duration(minutes: minutes))"
     }
 
     private var accessibilityText: String {

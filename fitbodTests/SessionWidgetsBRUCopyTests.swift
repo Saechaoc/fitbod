@@ -112,7 +112,7 @@ struct SessionWidgetsBRUCopyTests {
 
         // BRUDashedSlot integration per UI-SPEC line 582
         #expect(source.contains("BRUDashedSlot"))
-        #expect(source.contains("+ ADD EXERCISE"))                                 // UI-SPEC verbatim label
+        #expect(source.contains("label: \"Add exercise\""))                       // the slot adds the "+"
         #expect(source.contains("↘ FROM LIBRARY"))                                 // UI-SPEC verbatim hint
     }
 

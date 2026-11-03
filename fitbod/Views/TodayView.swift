@@ -16,6 +16,7 @@
 //     TodayStatStrip  (Day streak / Sessions → history / W{N}/{M} trend or This week)
 //     BlockContextBand  (Block chip + name + phase + WeekTickerCells)  — when block active
 //     ResumeWorkoutSlab  — when active session (completedAt == nil)
+//       OR DoneTodaySlab — when today's workout is finished
 //       OR BlackSlabCTA  — when no active session but routine scheduled
 //       OR Start-Block-CTA — when no block at all
 //       OR empty-state   — block active but no today routine
@@ -40,6 +41,7 @@ public struct TodayView: View {
     // MARK: - Environment
 
     @Environment(\.modelContext) private var ctx
+    @Environment(\.weightUnit) private var weightUnit
     @Environment(HistoryEdits.self) private var historyEdits: HistoryEdits?
 
     // MARK: - Queries (preserved verbatim from RootView.TodayView Phase 4/5)
@@ -86,6 +88,10 @@ public struct TodayView: View {
     @State private var startError: String? = nil
     @State private var discardError: String? = nil
     @State private var presentingSettings = false
+    /// The block's sessions, to start one other than today's.
+    @State private var choosingSession = false
+    /// What the session list picked; it starts once the list has gone.
+    @State private var pendingChoice: PendingChoice? = nil
 
     // MARK: - Body
 
@@ -96,6 +102,8 @@ public struct TodayView: View {
         let todaysRoutine = Self.scheduledRoutine(in: resolution)
         let finished = allSessions.filter { $0.completedAt != nil }
         let finishedIDs = finished.map(\.persistentModelID)
+        // Today's finished workout, while none is in progress.
+        let doneToday = activeSessions.isEmpty ? Self.finishedToday(in: finished) : nil
         NavigationStack(path: $navigationPath) {
             ScrollView {
                 VStack(spacing: 0) {
@@ -158,6 +166,16 @@ public struct TodayView: View {
                                 }
                             }
                         )
+                    } else if let done = doneToday {
+                        // Today's workout is done: it, with a way to its
+                        // summary, and the next session as upcoming.
+                        DoneTodaySlab(
+                            session: done,
+                            upNext: upNextLabel(resolution),
+                            unit: weightUnit,
+                            onView: { navigationPath.append(SessionHistoryRoute.summary(sessionID: done.id)) },
+                            onChooseSession: canChooseSession ? { @MainActor in choosingSession = true } : nil
+                        )
                     } else {
                         switch resolution {
                         case .session(let slot):
@@ -169,7 +187,8 @@ public struct TodayView: View {
                                     routine: routine,
                                     dayIndex: dayIndexInBlock,
                                     totalDays: totalDaysInBlock,
-                                    onStart: { startWorkout(routine, slot: slot) }
+                                    onStart: { startWorkout(routine, slot: slot) },
+                                    onChooseAnother: canChooseSession ? { @MainActor in choosingSession = true } : nil
                                 )
                             } else {
                                 noWorkoutScheduledEmptyState
@@ -200,7 +219,8 @@ public struct TodayView: View {
                         TodaySessionPicker(
                             onOpen: { openedTemplate = $0 },
                             onStart: { startWorkout($0) },
-                            onNewRoutine: startNewRoutine
+                            onNewRoutine: startNewRoutine,
+                            onStartEmpty: startEmptyWorkout
                         )
                     }
 
@@ -212,8 +232,8 @@ public struct TodayView: View {
                         })
                     }
 
-                    // Lift list — only for a scheduled session
-                    if todaysRoutine != nil {
+                    // Lift list — only for a scheduled session not yet done
+                    if todaysRoutine != nil && doneToday == nil {
                         LiftListSection(routine: todaysRoutine)
                     }
 
@@ -341,6 +361,24 @@ public struct TodayView: View {
             .sheet(isPresented: $presentingSettings) {
                 SettingsView(onClose: { presentingSettings = false })
             }
+            .sheet(isPresented: $choosingSession, onDismiss: startChosenSession) {
+                if let block = activeBlocks.first {
+                    BlockSessionChoiceSheet(
+                        block: block,
+                        markedSlotID: markedSlotID,
+                        onStart: { slot in
+                            pendingChoice = .session(slot)
+                            choosingSession = false
+                        },
+                        onStartEmpty: {
+                            pendingChoice = .empty
+                            choosingSession = false
+                        }
+                    )
+                    .presentationDetents([.medium, .large])
+                    .presentationDragIndicator(.hidden)
+                }
+            }
             .navigationDestination(item: $openedTemplate) { template in
                 SessionTemplateDetailView(template: template)
             }
@@ -352,7 +390,7 @@ public struct TodayView: View {
                 ),
                 presenting: startConflict
             ) { active in
-                Button("Resume \(active.routineSnapshotName)") {
+                Button("Resume \(active.displayName)") {
                     navigationPath.append(SessionRoute.logger(active))
                     startConflict = nil
                 }
@@ -620,6 +658,59 @@ public struct TodayView: View {
         max(1, currentTotalWeeks * 7)
     }
 
+    // MARK: - Done today
+
+    /// Today's latest finished workout that counts (decision 6), or nil.
+    /// `workouts` are finished and newest first, so only today's are read.
+    static func finishedToday(
+        in workouts: [Session],
+        now: Date = .now,
+        calendar: Calendar = .current
+    ) -> Session? {
+        let startOfToday = calendar.startOfDay(for: now)
+        return workouts.lazy
+            .prefix { $0.startedAt >= startOfToday }
+            .first { !SessionSetActions.isEmptyWorkout($0) }
+    }
+
+    /// The next session once today's is done: the rotation's next, or a
+    /// weekly block's next training day, such as "Pull A · Wed".
+    private func upNextLabel(_ resolution: TodayResolution) -> String? {
+        guard let block = activeBlocks.first else { return nil }
+        if block.schedulingMode == .fixedWeekly {
+            guard let next = TodayResolver.nextTrainingDay(block: block, after: .now),
+                  let name = next.slot.sessionTemplate?.name
+            else { return nil }
+            let day = Calendar.current.isDateInTomorrow(next.day)
+                ? "Tomorrow"
+                : next.day.formatted(.dateTime.weekday(.abbreviated))
+            return "\(name) · \(day)"
+        }
+        if case .session(let slot) = resolution {
+            return slot.sessionTemplate?.name
+        }
+        return nil
+    }
+
+    /// The block has sessions to choose from.
+    private var canChooseSession: Bool {
+        !(activeBlocks.first?.split?.slots ?? []).isEmpty
+    }
+
+    /// The session the list marks NEXT: today's, or once today's is done in
+    /// a weekly block, the next training day's.
+    private var markedSlotID: UUID? {
+        let finished = allSessions.filter { $0.completedAt != nil }
+        if let block = activeBlocks.first, block.schedulingMode == .fixedWeekly,
+           Self.finishedToday(in: finished) != nil {
+            return TodayResolver.nextTrainingDay(block: block, after: .now)?.slot.id
+        }
+        if case .session(let slot) = todaysResolution {
+            return slot.id
+        }
+        return nil
+    }
+
     // MARK: - Workout Start
 
     @MainActor
@@ -635,6 +726,35 @@ public struct TodayView: View {
             startError = "Add at least one exercise to \(routine.name) first."
         case .failed(let message):
             startError = message
+        }
+    }
+
+    @MainActor
+    private func startEmptyWorkout() {
+        switch WorkoutStarter.startEmpty(context: ctx) {
+        case .started(let session):
+            navigationPath.append(SessionRoute.logger(session))
+        case .alreadyInProgress(let active):
+            startConflict = active
+        case .emptyTemplate:
+            break
+        case .failed(let message):
+            startError = message
+        }
+    }
+
+    /// Starts what the session list picked, once the list has gone.
+    @MainActor
+    private func startChosenSession() {
+        guard let choice = pendingChoice else { return }
+        pendingChoice = nil
+        switch choice {
+        case .session(let slot):
+            if let template = slot.sessionTemplate {
+                startWorkout(template, slot: slot)
+            }
+        case .empty:
+            startEmptyWorkout()
         }
     }
 
@@ -721,6 +841,11 @@ public struct TodayView: View {
         settings.deloadAdvisoryDismissedWeekStart = advisory.weekStart
         try? ctx.save()
         currentAdvisory = nil
+    }
+
+    private enum PendingChoice {
+        case session(SplitSessionSlot)
+        case empty
     }
 
     // MARK: - PendingBlockBuilder (preserved verbatim from Phase 4/5; .edit case added for D-11)

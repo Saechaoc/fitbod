@@ -202,6 +202,13 @@ enum SessionHistoryFormat {
         (Double(count) / 4).formatted(.number.precision(.fractionLength(0...2)).locale(locale))
     }
 
+    /// A workout's length as History and Today show it: "52M", "1H 05M".
+    static func duration(minutes: Int) -> String {
+        minutes >= 60
+            ? "\(minutes / 60)H \(String(format: "%02d", minutes % 60))M"
+            : "\(minutes)M"
+    }
+
     /// "4,610" below ten thousand, "71.2k" above.
     static func compactTonnage(_ total: Double) -> String {
         if total >= 10_000 {

@@ -182,6 +182,28 @@ public enum TodayResolver {
             .map(TodayResolution.session) ?? .emptySplit
     }
 
+    // MARK: Next training day (fixed weekly)
+
+    /// The first training day after `date` in a fixed-weekly block and the
+    /// session it schedules, for Today's "up next" once today's workout is
+    /// done. Nil for a rotation block, where the resolver's own answer is
+    /// already the next session, or when no day in the coming week trains.
+    public static func nextTrainingDay(
+        block: Block,
+        after date: Date,
+        calendar: Calendar = .current
+    ) -> (day: Date, slot: SplitSessionSlot)? {
+        guard block.split != nil, block.schedulingMode == .fixedWeekly else { return nil }
+        let start = calendar.startOfDay(for: date)
+        for offset in 1...7 {
+            guard let day = calendar.date(byAdding: .day, value: offset, to: start) else { continue }
+            if case .session(let slot) = resolveFixedWeekly(block: block, today: day, calendar: calendar) {
+                return (day, slot)
+            }
+        }
+        return nil
+    }
+
     // MARK: Shared utilities
 
     /// Returns `block.split.slots` sorted ascending by `position`.

@@ -73,7 +73,7 @@ public struct ResumeWorkoutBanner: View {
                     .textCase(.uppercase)
                     .foregroundStyle(Color.bruMuted)
 
-                Text(active.routineSnapshotName)
+                Text(active.displayName)
                     .font(BRUFont.bodyEmphasis)
                     .foregroundStyle(Color.bruInk)
 
