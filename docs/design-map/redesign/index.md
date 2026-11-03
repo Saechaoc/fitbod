@@ -5,9 +5,9 @@ Program lists blocks and routines without saying what the lifter is running or w
 This bundle is the design review the brief asked for: a screenshot audit, a hierarchy for both screens, layouts for every state, a map of every existing capability to its new place, and a phased plan.
 It builds on the design map in `docs/design-map/` and cites its findings by ID (`D-nn`), its patterns (`P-n`) and the staged decisions in `docs/design-map/decisions.md`.
 
-Status: draft v5, 2026-11-02, revised after the Codex coverage reviewer's complete pass on draft v4 and the Codex feasibility reviewer's partial pass on it (round 3).
-The feasibility reviewer stopped at the usage limit with five of eleven checks done and resumes on this draft; see review-log.md.
-The design is not final until each blocker there is closed or accepted with a reason.
+Status: draft v6, 2026-11-02, revised after the Codex feasibility reviewer's complete pass on draft v5, which closed round 3 with no open blocker (review-log.md).
+Every blocker from rounds 1 to 3 is closed or accepted with a reason there, so the proposal is final as reviewed; the product calls it leaves to the user are in open-decisions.md.
+A further adversarial pass needs the Codex account's weekly limit to reset (8 Nov).
 
 | Read this file | when you need |
 | --- | --- |

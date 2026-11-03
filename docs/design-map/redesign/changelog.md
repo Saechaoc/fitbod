@@ -3,6 +3,15 @@
 Newest first.
 One entry per iteration: what changed and why.
 
+## 2026-11-02, draft v6
+
+Revised after the Codex feasibility reviewer finished its pass on draft v5 (0 blockers and 3 fix-soon findings, all closed; review-log.md, round 3), which closes round 3 with no open blocker.
+The deload-alert setting gate moves into `DeloadAdvisor.evaluate`, so Volume's advisory ring and Today's notice honour it once.
+`BlockOverviewScreen.nextTrainingDay` moves into `StartSlot` as `nextTrainingDate` with its contract and tests unchanged, distinct from NEXT, so Block overview keeps its NEXT cell.
+`BlockLifecycleEntryPointsUITests` expects no review notice after its journey closes the review and relaunches; `BlockReviewAfterEndUITests` relaunches before tapping the notice.
+Step 1.4 forwards the stack's navigation path into FatigueSurfaceView, step 1.5 keeps the header's geometry and z-order modifiers, step 2.1 names `BlockReviewedAtTests`, and step 1.2's placeholder deletion lands with step 1.3.
+`screen_budget.py` is unchanged: no state was added or removed.
+
 ## 2026-11-02, draft v5
 
 Revised after the Codex coverage reviewer finished its pass on draft v4 (1 blocker and 6 fix-soon findings, all closed) and the Codex feasibility reviewer's partial pass on it (2 blockers and 1 fix-soon finding, all closed; it stopped at the usage limit with five of eleven checks done and resumes on this draft; review-log.md, round 3).

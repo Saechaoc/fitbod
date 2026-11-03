@@ -53,7 +53,7 @@ Every everyday task fits the two-tap budget; the rest-day start and the non-hero
 
 Muscle volume and the heatmap move to Progress › Volume, reachable in one tap from Today's volume row and in one tap from Progress.
 Before, it was only a long scroll on Today and absent from Progress (D-131).
-The Volume screen keeps the deload advisory ring by evaluating the advisor on appear.
+The Volume screen keeps the deload advisory ring by evaluating the advisor on appear, behind the deload-alert setting.
 History, PRs, tonnage and comparison stay on Progress; the all-time workout count Today's cell showed is History's "Past sessions · n sessions" head.
 Recaps stay on Progress only once the all-recaps screen from the design map's mock-ups is built, which this bundle does not plan (D-27 stays open).
 The block's week strip, scheduling and archive stay on Block overview, one tap from either tab's block row.

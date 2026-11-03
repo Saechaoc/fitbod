@@ -2,6 +2,15 @@
 
 Newest first: one entry for each stage of [plan.md](plan.md) up to S2, then one for each commit.
 
+## 2026-11-02: redesign draft v6
+
+- [redesign/](redesign/) is revised to draft v6 after the Codex feasibility reviewer finished its pass on draft v5 (0 blockers and 3 fix-soon findings, all closed), which closes round 3 with no open blocker.
+  A further adversarial pass waits for the Codex account's weekly limit to reset on 8 Nov.
+- The deload-alert setting gate moves into `DeloadAdvisor.evaluate`, `BlockOverviewScreen.nextTrainingDay` moves into `StartSlot` as `nextTrainingDate` with its contract and tests unchanged, and `BlockLifecycleEntryPointsUITests` expects no review notice after its journey closes the review and relaunches.
+- The Codex feasibility report under [redesign/reviews/](redesign/reviews/) now carries the reviewer's "Draft v5 continuation" section, as the reviewer wrote it.
+- `docs/design-map/redesign/screen_budget.py` still reports 222 -> 109 elements across 17 states.
+- What changed in each leaf: [redesign/changelog.md](redesign/changelog.md); each finding and its resolution: [redesign/review-log.md](redesign/review-log.md), round 3.
+
 ## 2026-11-02: redesign draft v5
 
 - [redesign/](redesign/) is revised to draft v5 after the Codex coverage reviewer's complete pass on draft v4 (1 blocker and 6 fix-soon findings, all closed) and the Codex feasibility reviewer's partial pass on draft v4 (2 blockers and 1 fix-soon finding, all closed).

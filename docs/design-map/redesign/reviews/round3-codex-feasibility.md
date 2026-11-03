@@ -2,6 +2,8 @@
 
 ## Verdict
 
+Sections written before the stall cite draft v4 (e403d287); sections written after it cite draft v5 (8fd223ed).
+
 Not final as written: two verified blockers remain in TodayState's input contract and the no-block NEXT selection rule.
 This is an incremental report against the working tree observed at commit `5c186ecd592bca8b14373274c781bc08e10d987b`, following the user's instruction to review v4 rather than the spec's older v3 baseline.
 Proposal citations below are relative to `docs/design-map/redesign/`; other citations are relative to the repository root.
@@ -158,14 +160,189 @@ Evidence: `fitbod/Fatigue/FatigueModel.swift:276`; `fitbod/Fatigue/FatigueModel.
 - Broad Block query with derived-status filtering in Swift.
 - Flat Split predicate with relationship filtering in Swift.
 
+## Draft v5 continuation
+
+This continuation reviews the working tree observed at `13a70a34e3ab24bf95e9bbfc49ada253b24e266c`, containing draft v5 from `8fd223ed`.
+The earlier v4 verdict and findings above are preserved as historical results, and the final verdict below supersedes them.
+The application source and test files checked here are unchanged from the original source baseline.
+
+### Verification of the three v4 findings
+
+| Finding | V5 result | Evidence |
+| --- | --- | --- |
+| B-F1 | Closed at proposal level: the tuple now includes every live routine, standalone usable templates from a flat query, all finished workouts, and pending review eligibility by the existing helper's rule. | `plan.md:17`; `plan.md:35`; `fitbod/Models/SessionTemplate.swift:42`; `fitbod/Periodization/BlockReviewView.swift:630`. |
+| B-F2 | Closed at proposal level: no-block NEXT now skips empty sessions, can be nil for a routine, and selection searches only routines with a NEXT before falling back to a standalone session. | `plan.md:19`; `today-layouts.md:250`; `today-layouts.md:251`; `today-layouts.md:252`; `today-layouts.md:365`; `today-layouts.md:368`; `hierarchy.md:58`. |
+| F-F1 | Closed at proposal level: a shared presenter retains the reviewed block, owns the dismissal write and retry message, and is used by both entry points, with first-write, repeat-write, failure and relaunch checks specified. | `plan.md:33`; `plan.md:36`; `today-layouts.md:225`; `today-layouts.md:226`; `risks.md:34`. |
+
+Runtime execution remains unverified because no build or tests were run.
+
+### Ten closure checks, spec item 1
+
+These checks assess the current leaves, rather than treating the older resolution text in the log as the current specification.
+
+| Claim | Closure in draft v5 | Leaf and source evidence |
+| --- | --- | --- |
+| B-1 | Closed for hero precedence, pending-review eligibility, acknowledgement and recap ordering: review is a notice, T-DONE precedes T-READY, and the shared presenter now owns failure feedback. | `review-log.md:255`; `hierarchy.md:44`; `hierarchy.md:45`; `hierarchy.md:46`; `hierarchy.md:69`; `plan.md:33`; `fitbod/Periodization/BlockReviewView.swift:630`. |
+| B-2 | Closed at the proposal boundary: StartSlot supplies slots to hero, sheet and detail starts, including no-block starts, and counted workouts are assigned by startedAt. | `review-log.md:256`; `plan.md:19`; `hierarchy.md:54`; `today-layouts.md:254`; `today-layouts.md:377`; `fitbod/Sessions/SessionFactory.swift:153`; `fitbod/Periodization/TodayResolver.swift:124`. |
+| B-3 | Closed: the selection fields exist, and neither an edited-at field nor a planned-start attribute is required. | `review-log.md:257`; `open-decisions.md:14`; `today-layouts.md:252`; `fitbod/Models/Block.swift:58`; `fitbod/Models/SessionTemplate.swift:47`. |
+| B-4 | Closed: the empty scheduled session has a repair state before T-TODAY, no-block selection skips empty slots, and routine rows with no exercises cannot start. | `review-log.md:258`; `hierarchy.md:47`; `hierarchy.md:50`; `today-layouts.md:250`; `today-layouts.md:372`; `plan.md:19`. |
+| B-5 | Structural closure confirmed: CREATE BLOCK and Program's staged sheets stay in place, and today.root replaces the removed loaded signal; the exhaustive test inventory remains the coverage pass's assigned item and is not re-reported here. | `review-log.md:259`; `plan.md:17`; `plan.md:21`; `program-layouts.md:242`; `fitbod/Periodization/ProgramView.swift:233`; `fitbod/Periodization/ProgramView.swift:243`. |
+| B2-1 | Closed for repeated templates in one routine: choose NEXT if it matches, otherwise scan forward with wrapping, while retaining candidate slots under one displayed session row. | `review-log.md:185`; `plan.md:19`; `today-layouts.md:367`; `fitbod/Models/SplitSessionSlot.swift:39`; `fitbod/Periodization/TodayResolver.swift:135`. |
+| B2-2 | Closed: Created replaces Saved and planned-start language, the ready order has an id tie-break, and the date describes draft creation until lifecycle start overwrites it. | `review-log.md:186`; `open-decisions.md:14`; `program-layouts.md:59`; `program-layouts.md:121`; `fitbod/Periodization/BlockDraft.swift:19`; `fitbod/Periodization/BlockDraft.swift:80`; `fitbod/Periodization/BlockDraft.swift:151`; `fitbod/Periodization/BlockLifecycleService.swift:101`. |
+| F2-2 | Closed for working-set counts: the helper preserves the existing branch, warm-up counts are removed, and v5 additionally threads the calendar into the start pipeline. | `review-log.md:193`; `plan.md:18`; `fitbod/Sessions/SessionFactory.swift:188`; `fitbod/Sessions/SessionFactory.swift:256`; `fitbod/Sessions/SessionFactory.swift:290`. |
+| F2-9 | Closed: the row filters by counted-workout identities, uses a calendar-derived week window, and invalidates on finished IDs plus week start. | `review-log.md:200`; `plan.md:20`; `fitbod/Fatigue/FatigueModel.swift:306`; `fitbod/Fatigue/FatigueModel.swift:311`; `fitbod/Sessions/SessionSetActions.swift:145`; `fitbod/Fatigue/MondayAtMidnight.swift:23`. |
+| F2-10 | Origin compatibility and idempotent acknowledgement are closed; the revised relaunch expectation still needs the correction recorded under the v5 test check below. | `review-log.md:201`; `plan.md:33`; `fitbod/Periodization/BlockReviewView.swift:32`; `fitbod/Periodization/BlockBuilderView.swift:14`; `fitbodUITests/BlockLifecycleEntryPointsUITests.swift:40`; `fitbodUITests/BlockLifecycleEntryPointsUITests.swift:53`. |
+
+### Builder case removal, spec item 2g
+
+Confirmed: TodayView's line 206 is its only template-case setter, while line 267 still sets edit for the Block overview reached on Today's stack.
+Evidence: `fitbod/Views/TodayView.swift:206`; `fitbod/Views/TodayView.swift:267`; `plan.md:19`.
+
+Removing the case also removes two readers, the builder sheet's template switch arm and the enum's template id arm, while retaining the sheet and edit arm.
+Evidence: `fitbod/Views/TodayView.swift:298`; `fitbod/Views/TodayView.swift:301`; `fitbod/Views/TodayView.swift:707`; `fitbod/Views/TodayView.swift:712`.
+
+The review's Start next builder is independent state, so the removal does not delete that entry point.
+Evidence: `fitbod/Periodization/BlockReviewView.swift:26`; `fitbod/Periodization/BlockReviewView.swift:76`; `fitbod/Periodization/BlockReviewView.swift:357`.
+
+No additional finding.
+
+### Volume routing, spec item 2h
+
+The new route registrations do not conflict with ProgressHomeView's existing ExerciseProgressRoute, ProgressHomeRoute or session-history destinations, and RootView already forwards its Progress path binding without adding another stack.
+Evidence: `plan.md:20`; `fitbod/Progress/ProgressHomeView.swift:55`; `fitbod/Progress/ProgressHomeView.swift:104`; `fitbod/Progress/ProgressHomeView.swift:122`; `fitbod/Progress/ProgressHomeView.swift:128`; `fitbod/App/RootView.swift:374`.
+
+VolumeScreen must forward the presenting stack's NavigationPath binding to FatigueSurfaceView, whose default constant binding is only a convenience and whose muscle taps append to that binding.
+Retain Today's existing MuscleSlugRoute destination, add the Progress registration at its stack root, and keep VolumeScreen as a pushed child without another NavigationStack.
+Evidence: `fitbod/Fatigue/FatigueSurfaceView.swift:54`; `fitbod/Fatigue/FatigueSurfaceView.swift:59`; `fitbod/Fatigue/FatigueSurfaceView.swift:304`; `fitbod/Views/TodayView.swift:248`; `CLAUDE.md:79`.
+
+Progress-tab retap will continue to clear the same path, including the added Volume and muscle-detail entries.
+Evidence: `fitbod/App/RootView.swift:179`; `fitbod/App/RootView.swift:184`.
+
+**V5-F1: The moved advisory-ring calculation omits the caller's enabled-setting gate.**
+
+Trigger: Deload alerts are disabled, the underlying signals would fire, and Volume is opened from either tab.
+Mechanism: The new host is instructed to call DeloadAdvisor.evaluate on appear, but that function checks weekly dismissal and signals rather than deloadAlertEnabled, which Today currently checks before calling it.
+Blast radius: Volume can show advisory rings despite the lifter disabling alerts, while the notice row still honors the setting.
+Smallest fix: Specify that VolumeScreen reuses the settings guard from refreshAdvisory and passes false when alerts are disabled.
+Evidence: `plan.md:20`; `today-layouts.md:382`; `risks.md:29`; `functionality-map.md:17`; `functionality-map.md:47`; `fitbod/Views/TodayView.swift:684`; `fitbod/Fatigue/DeloadAdvisor.swift:124`; `fitbod/Fatigue/DeloadAdvisor.swift:131`; `fitbod/Fatigue/DeloadAdvisor.swift:136`.
+Severity: fix soon.
+
+### Program header and popover, spec item 2i
+
+Confirmed: BRUHeaderBar accepts the proposed HeaderAction initializer, whose default isSignal is false, and the caller supplies the existing showingNewPopover action.
+Evidence: `program-layouts.md:55`; `plan.md:21`; `fitbod/Design/BRUHeaderBar.swift:54`; `fitbod/Design/BRUHeaderBar.swift:130`; `fitbod/Periodization/ProgramView.swift:133`.
+
+Its action uses bruHitArea with the 44-point minimum, and the header grows into stacked title and actions at accessibility sizes.
+Evidence: `fitbod/Design/BRUHeaderBar.swift:202`; `fitbod/Design/BRUHeaderBar.swift:307`; `fitbod/Design/BRUHitArea.swift:19`; `fitbod/Design/BRUMetrics.swift:21`.
+
+Moving the existing onGeometryChange and zIndex modifiers to the entire replacement header preserves the popover's measured top offset and the header action's touch overhang.
+Evidence: `fitbod/Periodization/ProgramView.swift:134`; `fitbod/Periodization/ProgramView.swift:137`; `fitbod/Periodization/ProgramView.swift:305`.
+
+Unverified: the advertised fold count and long-name fit require the planned captures, and no runtime measurement was performed.
+Evidence: `program-layouts.md:64`; `plan.md:21`.
+
+No additional finding.
+
+### Phase 1 feasibility and conventions, spec item 2a
+
+No Phase 1 step requires a schema change, ObservableObject, a Query-backed view model, or a relationship chain inside Predicate.
+This is a source-level feasibility conclusion, not a compilation result.
+Evidence: `plan.md:4`; `plan.md:17`; `plan.md:18`; `plan.md:19`; `plan.md:20`; `plan.md:21`; `plan.md:22`; `CLAUDE.md:74`; `CLAUDE.md:75`; `CLAUDE.md:135`.
+
+| Step | Source-level feasibility and required implementation boundary |
+| --- | --- |
+| 1.1 | The broad Block query supports derivedStatus and the pending-review rule in Swift; flat non-archived Split and SessionTemplate queries use stored Boolean fields, and live-routine membership comes from slot relationships after the fetch; `plan.md:17`, `fitbod/Models/Block.swift:122`, `fitbod/Periodization/ProgramView.swift:97`, `fitbod/Views/TodaySessionPicker.swift:18`, `fitbod/Models/SessionTemplate.swift:48`, `fitbod/Models/SplitSessionSlot.swift:42`. |
+| 1.2 | An optional phase input can preserve the factory's set-count branch, and defaulted calendar arguments keep existing callers valid while Today forwards its environment calendar; `plan.md:18`, `fitbod/Sessions/SessionFactory.swift:188`, `fitbod/Sessions/SessionFactory.swift:289`, `fitbod/Routines/WorkoutStarter.swift:29`, `fitbod/Views/TodayView.swift:607`. |
+| 1.3 | StartSlot stays pure by accepting resolver results, and the view or tap-time caller performs context reads before selection; storing the routine rather than a slot leaves the existing nullification behavior intact; `plan.md:19`, `fitbod/Periodization/TodayResolver.swift:67`, `fitbod/Models/SplitSessionSlot.swift:45`. |
+| 1.4 | The existing main-actor volume helper and route binding suffice without persistent state, subject to V5-F1's setting guard; `plan.md:20`, `fitbod/Fatigue/FatigueModel.swift:305`, `fitbod/Fatigue/FatigueSurfaceView.swift:57`. |
+| 1.5 | Program already owns the required blocks, active workouts, live routines, archived routines and navigation path, while ready-block starts can reuse the throwing lifecycle service; origin is transient navigation context rather than a stored field; `plan.md:21`, `fitbod/Periodization/ProgramView.swift:92`, `fitbod/Periodization/ProgramView.swift:97`, `fitbod/Periodization/ProgramView.swift:101`, `fitbod/Periodization/ProgramView.swift:108`, `fitbod/Periodization/ProgramView.swift:111`, `program-layouts.md:123`, `fitbod/Periodization/BlockLifecycleService.swift:75`. |
+| 1.6 | The banner already has the active session and callbacks, so a visible discard control can adopt Today's loggedSetCount decision without new persistent state; both immediate and confirmed discard must retain the existing timer cleanup; `plan.md:22`, `fitbod/Sessions/ResumeWorkoutBanner.swift:41`, `fitbod/Sessions/ResumeWorkoutBanner.swift:44`, `fitbod/Sessions/ResumeWorkoutBanner.swift:117`, `fitbod/Views/ResumeWorkoutSlab.swift:126`. |
+
+Keep the current date as an explicit evaluation input alongside the calendar, as identified in the pre-stall item 2c, so TodayState and the resolver evaluate the same day.
+Evidence: `plan.md:17`; `fitbod/Periodization/TodayResolver.swift:70`; `hierarchy.md:45`.
+
+The derived UI state can use value enums and view-owned State without introducing a view model, and the proposal's native buttons, BRU fonts and 44-point controls fit the foundations that the development guide does not defer.
+Evidence: `.claude/rules/swift/patterns.md:25`; `CLAUDE.md:74`; `docs/DEVELOPMENT.md:31`; `today-layouts.md:395`; `program-layouts.md:55`.
+
+No additional Phase 1 blocker was found beyond the previously closed v4 input and selection findings.
+
+### Test spot-checks, spec item 2j
+
+This check covers the changed behavioral expectations and representative retained assertions, excluding the coverage pass's per-step suite inventory and wrong-screen matches.
+No suites were executed.
+
+| Spot-check | Result |
+| --- | --- |
+| Review eligibility and first acknowledgement | The unchanged pending-review helper still matches the active-block and latest-ended-block tests, and adding the nil guard preserves the existing first-write and transaction assertions; `plan.md:33`, `fitbodTests/BlockReviewTriggerTests.swift:105`, `fitbodTests/BlockReviewTriggerTests.swift:128`, `fitbodTests/BlockReviewMathTests.swift:216`, `fitbodTests/BlockReviewMathTests.swift:244`. |
+| Stored review marker | BlockReviewedAtTests confirms a direct write can be fetched again, but does not drive sheet dismissal or relaunch, so it does not replace v5's new persistence-boundary checks; `fitbodTests/BlockReviewedAtTests.swift:33`, `fitbodTests/BlockReviewedAtTests.swift:43`, `fitbodTests/BlockReviewedAtTests.swift:50`, `plan.md:33`. |
+| Volume routes and retained copy | The existing MuscleSlugRoute value tests and retained Volume headings remain compatible with the move, but do not prove that a new host forwards its navigation binding; `fitbodTests/Fatigue/FatigueSurfaceViewBRUTests.swift:85`, `fitbodTests/Fatigue/FatigueSurfaceViewBRUTests.swift:137`, `fitbodTests/Fatigue/FatigueSurfaceViewBRUTests.swift:216`, `fitbod/Fatigue/FatigueSurfaceView.swift:304`, `plan.md:20`. |
+| Block overview's next-day tests | The suite is correctly named, but its future-date assertions express a different contract from StartSlot's current startable slot, as recorded in V5-F3 below; `fitbodTests/BlockOverviewStatesTests.swift:63`, `fitbodTests/BlockOverviewStatesTests.swift:72`, `plan.md:34`. |
+
+**V5-F2: The revised relaunch assertion expects a review that the same journey has already acknowledged.**
+
+Trigger: The lifecycle UI test ends the block, opens the review, closes it with Plan custom, and then relaunches.
+Mechanism: Step 2.1 tells the test to expect the notice after relaunch because the review was put off, but under the same step that first close writes reviewedAt and pendingReviewBlocks excludes the block thereafter.
+Blast radius: The prescribed lifecycle regression test fails against the intended implementation or encourages an implementation that violates acknowledgement-on-close.
+Smallest fix: Keep this journey's ended-block persistence assertion and expect no review notice after the successful close and relaunch, with a separate never-opened-review journey if persistence of an unacknowledged notice also needs coverage.
+Evidence: `plan.md:33`; `hierarchy.md:69`; `fitbodUITests/BlockLifecycleEntryPointsUITests.swift:40`; `fitbodUITests/BlockLifecycleEntryPointsUITests.swift:53`; `fitbodUITests/BlockLifecycleEntryPointsUITests.swift:58`; `fitbod/Periodization/BlockReviewView.swift:642`; `fitbod/Periodization/BlockReviewView.swift:655`.
+Severity: fix soon.
+
+Unverified: the new throwing-store and relaunch tests are specified but unwritten, so this review does not claim their runtime success.
+Evidence: `plan.md:33`.
+
+### Phase dependencies, spec item 2k
+
+No remaining Phase 1 step requires a Phase 2 feature to be implemented first.
+StartSlot's weekday look-ahead now belongs to step 1.3, Volume's routes and advisory input belong to step 1.4, and step 1.5 supplies the origin that the later review entry consumes.
+Evidence: `plan.md:19`; `plan.md:20`; `plan.md:21`; `plan.md:34`; `plan.md:36`.
+
+The review notice and independent recap trigger remain one Phase 2 behavior change, while Phase 1 explicitly leaves T-DONE's next line absent and the existing block-creation sheets intact.
+Evidence: `plan.md:19`; `plan.md:21`; `plan.md:33`.
+
+The removal of the exercise placeholder depends on step 1.3 within Phase 1, not on Phase 2, so it should land with the state-slab gate that makes the placeholder unreachable.
+Evidence: `plan.md:18`; `plan.md:19`; `plan.md:24`.
+
+**V5-F3: The next-day extraction must preserve Block overview's distinct future-date contract.**
+
+Trigger: It is Wednesday in a Monday-Wednesday-Friday block, no workout has been counted today, and Block overview displays the current week's cells.
+Mechanism: StartSlot's specified weekday NEXT is today's slot, whereas Block overview's nextTrainingDay excludes today and returns Friday, so directly replacing the latter with NEXT leaves no future cell marked NEXT because the today cell has already returned its own state.
+Blast radius: Block overview's NEXT marker can disappear or move incorrectly, and the rotation branch still needs a future calendar date even though rotation NEXT identifies a session slot.
+Smallest fix: Retain or move the existing strictly-future date calculation into a separately named StartSlot operation, including its displayed-days boundary, and preserve the current assertions instead of treating them as assertions about today's startable slot.
+Evidence: `plan.md:19`; `plan.md:34`; `today-layouts.md:364`; `fitbod/Periodization/BlockOverviewScreen.swift:429`; `fitbod/Periodization/BlockOverviewScreen.swift:442`; `fitbod/Periodization/BlockOverviewScreen.swift:451`; `fitbod/Periodization/BlockOverviewScreen.swift:463`; `fitbodTests/BlockOverviewStatesTests.swift:63`; `fitbodTests/BlockOverviewStatesTests.swift:72`.
+Severity: fix soon.
+
+Unverified: StartSlot has not been implemented, so this is an omitted extraction contract rather than an observed regression, and preserving a distinct future-date operation makes the proposed reuse feasible.
+Evidence: `plan.md:19`; `plan.md:34`.
+
+### Final ranking and verdict, spec item 3
+
+**Final as written for implementation planning: 0 open blockers and 3 fix-soon findings.**
+
+B-F1, B-F2 and F-F1 are closed at the proposal boundary, and the remaining findings are local guard, extraction-contract and test-expectation corrections rather than missing data or an impossible phase order.
+Evidence: `plan.md:17`; `plan.md:19`; `plan.md:20`; `plan.md:33`; `plan.md:34`; `plan.md:36`.
+
+| Rank | Current finding | Severity |
+| --- | --- | --- |
+| 1 | V5-F1: Preserve deloadAlertEnabled when moving the advisory ring to Volume on either stack. | fix soon |
+| 2 | V5-F3: Keep Block overview's strictly future date distinct from the currently startable NEXT slot. | fix soon |
+| 3 | V5-F2: Expect no notice after the lifecycle journey acknowledges the review and relaunches. | fix soon |
+
+The historical v4 findings are retained above for provenance and are not included in the current counts.
+All requested static-review items are complete, including the ten closure checks and the three v5 closure verifications.
+Compilation, test execution and visual measurements remain unverified under the instruction to run no build or tests.
+
+### Checked and correct in v5
+
+- TodayState query ownership and Swift relationship filters.
+- B-F1 input coverage.
+- B-F2 usable no-block NEXT.
+- F-F1 presenter-owned acknowledgement feedback.
+- Builder template-case removal.
+- Volume route registration.
+- Program header and popover measurement.
+- Phase 1 dependency order.
+
 ## Not reached
 
-- Spec item 1: seven blocker closures and three fix-soon closures.
-- Spec item 2a: remaining Phase 1 steps and conventions audit.
-- Spec item 2g: Today builder template-case removal.
-- Spec item 2h: Volume routing on both stacks.
-- Spec item 2i: Program header and popover geometry.
-- Spec item 2j: limited test spot-checks outside the coverage reviewer's excluded inventory.
-- Spec item 2k: remaining Phase 1 dependencies on Phase 2.
-- Spec item 3: final ranking and verdict.
+None within the requested static review.
 

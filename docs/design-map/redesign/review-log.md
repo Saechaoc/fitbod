@@ -4,7 +4,7 @@ Adversarial reviews of this bundle, newest first.
 Each round lists the reviewers, their lenses, the findings ranked by blast radius, and what changed in the bundle because of each.
 A finding is a blocker when the design cannot be called final until it is closed or accepted with a reason.
 
-## Round 3 (Codex): experience and coverage settled in draft v5; feasibility part-settled in draft v5, resuming on it
+## Round 3 (Codex): settled in draft v6
 
 The three Codex reviewers (GPT-6-Astra, max reasoning, Orca run `run_855deefac019`) were resumed on draft v3 with the specs in `reviews/specs/round3-codex-coverage.md`, `round3-codex-experience.md` and `round3-codex-feasibility.md`.
 Each spec asks the reviewer to re-check the seven blockers and three fix-soon closures of rounds 1 and 2 against the leaves, then to attack v3 with its lens.
@@ -14,16 +14,19 @@ Each spec asks the reviewer to re-check the seven blockers and three fix-soon cl
 07:00 PST: the coverage reviewer was resumed with an instruction to save its report after each item; it wrote `reviews/round3-codex-coverage.md` (2 blockers, 7 fix-soon findings, a capability inventory, ten closure checks, six audit spot checks) and stopped at the usage limit at 07:27 PST with its "Not reached" list open; the window reopened at 10:47 AM PST.
 11:04 PST: the coverage reviewer was resumed on draft v4 (`e403d287`) with its "Not reached" list; it reached every item and reported worker_done at 11:20 PST under "## Draft v4 pass" (1 blocker, 6 fix-soon findings, and the test, source, seed and decision inventories).
 11:22 PST: the feasibility reviewer was resumed on draft v4 with its spec and the write-early instruction, told not to re-report the coverage pass's test, seed and caller findings.
-11:26 PST: it stopped at the usage limit ("try again at 4:04 PM") with two blockers, one fix-soon finding and five of the eleven feasibility items written; the resumed pass runs on draft v5 and folds into draft v6.
-Draft v4 folded in the experience report in full and the coverage report as far as it went; draft v5 folds in the coverage pass on v4 and the feasibility report as far as it went (both below).
+11:26 PST: it stopped at the usage limit ("try again at 4:04 PM") with two blockers, one fix-soon finding and five of the eleven feasibility items written.
+16:05 PST: it was resumed on draft v5 (`8fd223ed`, working tree at `13a70a34`) with its "Not reached" list; it reached every item and reported worker_done at 16:18 PST ("V5 feasibility final: 0 blockers"): B-F1, B-F2 and F-F1 confirmed closed, the ten closure checks and the six remaining items done, three fix-soon findings, nothing unreached, no build or tests run.
+The account's weekly Codex limit then stood at 8%, resetting at 8:56 AM PST on 8 Nov, so a further Codex pass waits for that.
+Draft v4 folded in the experience report in full and the coverage report as far as it went; draft v5 folded in the coverage pass on v4 and the feasibility report as far as it went; draft v6 folds in the rest of the feasibility report (all below).
 
 | Lens (round 3) | Dispatch | Terminal | Report |
 | --- | --- | --- | --- |
 | Coverage | `ctx_c5c90e2545ca` | `term_119ecd08-743e-4edb-ba53-c8c8a5d6f71c` | `reviews/round3-codex-coverage.md` (the v3 section, then "Draft v4 pass") |
 | Experience | `ctx_7ba11a62bc0e` | `term_7e1e8606-69e4-42d5-948a-cdc9ba6cecd9` | `reviews/round3-codex-experience.md` |
-| Feasibility | `ctx_ef85d3b1fc2a` | `term_c44291f1-e180-4915-ab17-7f74247af6b3` | `reviews/round3-codex-feasibility.md`, partial (stalled at 11:26 PST, resumes on draft v5 at 4:04 PM PST) |
+| Feasibility | `ctx_ef85d3b1fc2a` | `term_c44291f1-e180-4915-ab17-7f74247af6b3` | `reviews/round3-codex-feasibility.md` (the v4 section, then "Draft v5 continuation") |
 
-To finish the round, resume the feasibility reviewer on draft v5 when the window reopens (`orca terminal send --terminal term_c44291f1-e180-4915-ab17-7f74247af6b3 --text … --enter`, naming its "Not reached" list and the landed commit), wait for its worker_done (`orca orchestration check --run run_855deefac019 --wait --types worker_done --json`) and fold the rest of its report into this log the way the sections below were.
+The round is complete: each reviewer reached every item of its spec, and no blocker is open.
+The three findings of the feasibility reviewer's draft v5 pass are local corrections, each checked against the source and closed below.
 
 ### Experience (Codex), settled in draft v4
 
@@ -123,9 +126,10 @@ Every other claim of the v3 report and of the round 1 and 2 re-check lists held 
 - `pendingReviewBlocks` takes the latest-ended block and returns it only while `reviewedAt` is nil (`BlockReviewView.swift:638-642`); `BlockReviewTriggerTests.swift:128-132` pins that an earlier-ended block never opens a review (v4 pass).
 - `UITestNavigation.labeled` matches labels without case (`UITestNavigation.swift:537`); seven UI suites match the card labels, and `BlockLifecycleEntryPointsUITests.swift:112` asserts "No active block." (v4 pass).
 
-### Feasibility (Codex): the partial pass on draft v4, settled in draft v5
+### Feasibility (Codex): the partial pass on draft v4 settled in draft v5, the draft v5 pass settled in draft v6
 
 Verdict as written at the stall: not final, two blockers and one fix-soon finding, with five of the eleven feasibility items checked (2b, 2c, 2d, 2e, 2f) and the closure checks, the other six items and the final ranking not reached.
+Final verdict, 16:18 PST: final as written for implementation planning, 0 open blockers and 3 fix-soon findings (the draft v5 pass below).
 The reviewer wrote the report after each item, so the stall lost nothing; the items below carry its citations, each re-checked against the source before the revision.
 
 #### Blockers
@@ -149,7 +153,7 @@ The reviewer wrote the report after each item, so the stall lost nothing; the it
 - 2b, the working-set helper: the extraction keeps the factory's generation exactly by taking `BlockPhase?` and the deload branch verbatim (`SessionFactory.swift:188`, `:256`, `:289`); calendar parity was conditional, because the factory resolved the phase with `Calendar.current` and Today with the environment calendar (a UTC and a Los Angeles calendar sit on different block days at 00:30 UTC), so the calendar now passes through `WorkoutStarter.start` and `SessionFactory.start` to `PeriodizationEngine.phase(for:on:calendar:)`. Step 1.2.
 - 2d, the volume row: `FatigueModel.completedWorkingSets(startedFrom:before:in:)` is internal and MainActor-isolated (`:305`) and its predicate reads `startedAt` only (`:311-314`), so the row filters the returned sets by the counted workouts' identities and uses a calendar-derived exclusive week end; the finished IDs plus the week start are a sufficient key while finished workouts stay immutable, provided the activation and time-change refresh recompute it and `weekStartsMonday` passes through (`MondayAtMidnight.swift:23`); `fetchWorkingSets` stays private (`:276`). Step 1.4.
 
-#### Not reached at the stall, for the resumed pass
+#### Not reached at the stall, all reached in the draft v5 pass
 
 - Spec item 1: the seven blocker closures and three fix-soon closures of rounds 1 and 2.
 - Spec item 2a: the remaining Phase 1 steps and the conventions audit.
@@ -168,6 +172,34 @@ The reviewer wrote the report after each item, so the stall lost nothing; the it
 - `FatigueModel.completedWorkingSets` fetches workouts by `startedAt` in `[start, end)` and walks their sets (`:305-323`); `fetchWorkingSets` is private and adds one week with the calendar (`:276-285`); `mondayAtMidnightForToday(weekStartsMonday:calendar:)` sets `firstWeekday` on a copy of the calendar (`MondayAtMidnight.swift:23-33`).
 - `BlockLifecycleEntryPointsUITests` taps "Plan custom" after the relaunch and expects the review to reopen (`:51-57`); `BlockReviewAfterEndUITests` launches `-fitbod-seed-ended-block-recap` with `-fitbod-start-program` and the seed's comment says the recap is due too (`:58-60`, `:75-78`); `TodayView.checkWeeklyRecap` defers the recap behind a pending review (`:640-647`).
 - `docs/DEVELOPMENT.md:23-25`: "A failed save must say so and must not poison later saves."
+
+#### Draft v5 pass, settled in draft v6
+
+Verdict: final as written for implementation planning, 0 open blockers and 3 fix-soon findings.
+The reviewer confirmed B-F1, B-F2 and F-F1 closed at the proposal level, found the ten round 1 and 2 closures it was asked to check (B-1 to B-5, B2-1, B2-2, F2-2, F2-9, F2-10) closed in the leaves, and reached every remaining item (2a, 2g, 2h, 2i, 2j, 2k, 3).
+
+| # | Finding | Resolution in v6 |
+| --- | --- | --- |
+| V5-F1 | Step 1.4 had `VolumeScreen` call `DeloadAdvisor.evaluate` on appear, but that function checks only the weekly dismissal and the signals (`DeloadAdvisor.swift:131-137`); the `deloadAlertEnabled` gate lives in Today's `refreshAdvisory` (`TodayView.swift:684`), so Volume would draw advisory rings with alerts off while the notice row honoured the setting. | The gate moves into `evaluate`, which already takes the settings (`:127`), so Today and Volume honour it once; `refreshAdvisory` keeps its nil-settings guard; `DeloadAdvisorTests`' eight calls build settings with the default `true` (`UserSettings.swift:34`) and the suite gains "alerts off → nil". plan.md 1.4, today-layouts.md, functionality-map.md, evaluation.md, risks.md R-21. |
+| V5-F2 | Step 2.1 told `BlockLifecycleEntryPointsUITests` to expect the review notice after its relaunch "because the put-off review persists", but the same journey closes the review with "Plan custom" first (`:40-41`), which under 2.1 acknowledges it, so `pendingReviewBlocks` returns nothing after the relaunch (`BlockReviewView.swift:642`). | The journey asserts no notice after the relaunch and the DONE block still listed; `BlockReviewAfterEndUITests` relaunches once before tapping the notice and finds it still there, which covers an unacknowledged notice surviving a relaunch. plan.md 2.1. |
+| V5-F3 | Step 2.2 replaced `BlockOverviewScreen.nextTrainingDay` with `StartSlot`'s NEXT, but the overview marks today's cell `.today` and a later cell `.next` from a strictly-future date (`BlockOverviewScreen.swift:429-446`, `:451-470`), while weekday NEXT is today's slot on a training day with nothing counted and rotation NEXT is a slot, not a date; the swap would leave the week with no NEXT cell on such a day, and the suite's cases (`BlockOverviewStatesTests.swift:63-82`) describe the future-date contract. | `nextTrainingDay` moves into `StartSlot` as `nextTrainingDate` with its contract and tests unchanged; NEXT derives the weekday next training day from it, and Block overview keeps calling it. plan.md 1.3 and 2.2, today-layouts.md, hierarchy.md, functionality-map.md, tradeoffs.md, risks.md R-27. |
+
+#### Notes from the six remaining items, folded into plan.md
+
+- 2g, the builder's `.template` case: `TodayView.swift:206` is its only setter, `:267` still sets `.edit` for Block overview on Today's stack, and the removal takes the sheet's `.template` arm and the id arm (`:298-301`, `:707-712`) while the review's "Start next ▸" builder is separate state (`BlockReviewView.swift:26`, `:76`, `:357`). No change.
+- 2h, Volume routing: the new routes do not collide with Progress's existing destinations, and `RootView` forwards the Progress path without another stack; `VolumeScreen` forwards the presenting stack's `NavigationPath` binding to `FatigueSurfaceView`, whose default `.constant` binding is a convenience and whose muscle taps append to it (`FatigueSurfaceView.swift:57-61`, `:304`); the Progress re-tap clears the added entries (`RootView.swift:179-184`). Step 1.4.
+- 2i, Program's header: `BRUHeaderBar` takes the proposed `HeaderAction` (`BRUHeaderBar.swift:54-58`, `:130-134`) with the 44pt hit area; the `onGeometryChange` and `zIndex(1)` modifiers move to the whole replacement header to keep the popover's measured offset and the overhang (`ProgramView.swift:134-137`, `:305`); the fold count and long-name fit stay unmeasured until the captures. Step 1.5.
+- 2a, Phase 1 conventions: no step needs a schema change, an `ObservableObject`, a query-backed view model or a relationship chain in a predicate; the current date stays an explicit input beside the calendar so `TodayState` and the resolver evaluate the same day. No change.
+- 2j, test spot-checks: `BlockReviewedAtTests` fetches a direct `reviewedAt` write again (`:31-51`) and drives neither a dismissal nor a relaunch, so the two new suites stay; the Volume value tests and retained headings stay compatible with the move. Step 2.1.
+- 2k, phase dependencies: no Phase 1 step needs Phase 2 first; the "Add an exercise to begin." placeholder's deletion depends on 1.3's state slabs, so it lands with them. Step 1.2.
+
+#### Reviewer claims re-checked against the source before the draft v6 revision
+
+- `DeloadAdvisor.evaluate(weekStart:in:settings:now:)` short-circuits on the weekly dismissal and on no fired signal only (`DeloadAdvisor.swift:124-139`); `refreshAdvisory` guards on `settingsList.first` and `deloadAlertEnabled` before calling it (`TodayView.swift:683-687`); that is the function's only production caller, its eight test calls are in `DeloadAdvisorTests`, and `deloadAlertEnabled` defaults to `true` (`UserSettings.swift:34`).
+- `BlockOverviewScreen` returns `.today` for today's cell, `.done` for a counted day and `.next` for the first later cell equal to `nextTrainingDay` (`:429-446`); the private `nextTrainingDay` passes the week strip to the static function (`:451-458`), whose only callers are that property and `BlockOverviewStatesTests.swift:65`, `:75` and `:79`, which expect Thursday on rotation and Friday or nil on fixed weekly from a Wednesday.
+- `BlockLifecycleEntryPointsUITests` taps "Plan custom" and waits for the review to disappear (`:40-41`), relaunches (`:53`), taps "Plan custom" again (`:54-55`) and checks the DONE block (`:58-59`); `pendingReviewBlocks` returns the last-ended block only while `reviewedAt` is nil (`BlockReviewView.swift:638-643`) and `acknowledge` writes it in a transaction (`:649-657`).
+- `BlockReviewedAtTests` has two cases, the container smoke check and "Block reviewedAt defaults nil and persists" (`:24`, `:31-51`).
+- `TodayView.swift:206` sets `.template`, `:267` sets `.edit`, and `:298-301` and `:712` read the `.template` arm; `FatigueSurfaceView` takes a `navigationPath` binding defaulting to `.constant(NavigationPath())` (`:57-61`) and appends `MuscleSlugRoute.detail` on a bar tap (`:304`); `ProgramChromeHeader` carries `onGeometryChange` and `zIndex(1)` (`ProgramView.swift:133-137`) and the popover pads by the measured height (`:305`); `HeaderAction.init(_:isSignal:isEnabled:action:)` defaults `isSignal` to false (`BRUHeaderBar.swift:54-58`); the Progress re-tap resets `progressPath` (`RootView.swift:179-184`).
 
 ## Round 2: settled in draft v3
 

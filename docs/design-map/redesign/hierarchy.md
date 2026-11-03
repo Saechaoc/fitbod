@@ -54,7 +54,7 @@ The notice row is independent of the hero, except that T-RESUME shows none.
 "Today" for T-DONE is the day of `startedAt` in the calendar from the environment, so a workout that ran past midnight stays with the day it began.
 T-DONE's next line, T-REST's next line, the session sheet's NEXT mark and Program's start controls all name one value, NEXT (round 3).
 In a rotation block NEXT is the resolver's next slot.
-In a weekday block NEXT is today's slot while today is a training day and no counted workout started today, else the slot the resolver returns for the next training day, the first day after today whose weekday is in `trainingDays`.
+In a weekday block NEXT is today's slot while today is a training day and no counted workout started today, else the slot the resolver returns for the next training day, the first day after today whose weekday is in `trainingDays` (`StartSlot.nextTrainingDate`, which Block overview keeps for its NEXT cell; round 3, V5-F3).
 With no block NEXT is the suggestion's routine's NEXT from today-layouts.md: its routine anchor moved past sessions with no exercises, so the hero, the sheet's mark and Program's NEXT ▸ never name an empty session (round 3, B-F2).
 The line is left out when nothing can be named.
 T-DONE outranks T-READY: on a day with a finished workout the day is done, and the ready block keeps START BLOCK ▸ on Program's slab and takes Today's hero again the next day (round 2).

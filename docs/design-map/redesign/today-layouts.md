@@ -361,7 +361,7 @@ NEXT, marked on one row, is the value [hierarchy.md](hierarchy.md) defines, and 
 | Mode | NEXT |
 | --- | --- |
 | Rotation block | The resolver's next slot. |
-| Weekday block | Today's slot while today is a training day and no counted workout started today; otherwise the slot the resolver returns for the next training day, resolved with that date as today (`TodayResolver.resolve(block:context:today:calendar:)` takes the date). On a rest day and after a finished workout this is the slot T-REST and T-DONE name. |
+| Weekday block | Today's slot while today is a training day and no counted workout started today; otherwise the slot the resolver returns for the next training day, `StartSlot.nextTrainingDate`, the strictly-future function Block overview keeps for its NEXT cell (round 3, V5-F3), resolved with that date as today (`TodayResolver.resolve(block:context:today:calendar:)` takes the date). On a rest day and after a finished workout this is the slot T-REST and T-DONE name. |
 | No block | The suggestion's routine's NEXT: the first slot at or after its routine anchor (the slot after the newest finished workout slotted in that routine, wrapping; its first slot when it has none) whose session has exercises; a routine with no such session has no NEXT (round 3, B-F2). |
 
 A row of the active block's routine passes a slot: NEXT when it holds this session, else the first slot after NEXT that holds this session, wrapping round, so a session slotted twice (PPL ×2) never moves the rotation backwards (O-2, round 2).
@@ -379,7 +379,7 @@ One helper, `StartSlot` (step 1.3), holds NEXT, the routine anchor with its skip
 ## Progress › Volume
 
 The whole of FatigueSurfaceView moves here inside a new VolumeScreen: BRUHeaderBar with Back, a ScrollView, the WORKING SETS slab, the legend, the muscle bars that open MuscleSlugRoute.detail, and the FRONT/BACK heatmap.
-The screen evaluates `DeloadAdvisor` on appear, so the advisory ring on the bars survives the move.
+The screen evaluates `DeloadAdvisor` on appear behind the same deload-alert setting as Today's notice, so the advisory ring on the bars survives the move and never shows while alerts are off (round 3, V5-F1).
 A `VolumeRoute` is registered on Today's and Progress's stacks, with `MuscleSlugRoute` registered on Progress too.
 Today's volume row and a new "Volume" entry on Progress both push it.
 Phase 2 collapses muscles with no sets this week into one row, "9 muscles not trained yet ▾", which expands in place and reads "▴" while open, the glyph table's expand and collapse marks (round 3).
