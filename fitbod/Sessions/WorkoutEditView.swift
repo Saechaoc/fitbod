@@ -289,10 +289,8 @@ struct WorkoutEditView: View {
     // MARK: - Formatting
 
     private func setsLine(_ rows: [WorkoutEditDraft.Row]) -> String {
-        let sets = BRUCountLabel.text(rows.count, "set")
         let volume = rows.reduce(0) { $0 + $1.values.weight * Double($1.values.reps) }
-        guard volume > 0 else { return sets }
-        return "\(sets) · \(Int(volume.rounded()).formatted(.number.grouping(.automatic))) \(weightUnit.rawValue)"
+        return SessionHistoryFormat.setsLine(count: rows.count, volume: volume, unit: weightUnit)
     }
 
     enum StartPart: String, Identifiable {

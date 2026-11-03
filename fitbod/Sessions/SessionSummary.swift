@@ -20,12 +20,6 @@ import SwiftData
 
 public struct SessionSummary: Sendable, Equatable {
 
-    public struct BestSet: Sendable, Equatable {
-        public let weight: Double
-        public let reps: Int
-        public let rpe: Double?
-    }
-
     /// One counted working set, as the summary lists it.
     public struct LoggedSet: Sendable, Equatable {
         public let weight: Double
@@ -39,7 +33,6 @@ public struct SessionSummary: Sendable, Equatable {
         public let name: String
         public let workingSets: Int
         public let volume: Double
-        public let best: BestSet?
         /// PR kinds this exercise set today, canonical order.
         public let prKinds: [PRKind]
         /// Every counted working set, in logged order.
@@ -91,7 +84,6 @@ public struct SessionSummary: Sendable, Equatable {
                 name: name.isEmpty ? "Exercise" : name,
                 workingSets: working.count,
                 volume: volume,
-                best: bestEntry.map { BestSet(weight: $0.weight, reps: $0.reps, rpe: $0.rpe) },
                 prKinds: PRKind.allCases.filter { kinds.contains($0) },
                 sets: working.map {
                     LoggedSet(weight: $0.weight, reps: $0.reps, rpe: $0.rpe, isBest: $0.id == bestEntry?.id)

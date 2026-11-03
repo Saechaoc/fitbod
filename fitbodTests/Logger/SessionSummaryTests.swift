@@ -44,7 +44,7 @@ struct SessionSummaryTests {
         #expect(summary.totalVolume == 100 * 5 + 110 * 5)
         let line = try #require(summary.exercises.first)
         #expect(line.name == "Bench")
-        #expect(line.best?.weight == 110)
+        #expect(line.sets.first(where: \.isBest)?.weight == 110)
         #expect(line.prKinds.contains(.weight))
         #expect(summary.prExerciseCount == 1)
     }

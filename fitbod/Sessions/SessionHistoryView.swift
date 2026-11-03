@@ -179,6 +179,14 @@ public struct SessionHistoryView: View {
 // MARK: - Formatting shared by the history list
 
 enum SessionHistoryFormat {
+    /// An exercise's line on the workout summary and in Edit workout, such
+    /// as "3 sets · 1,500 lb". A zero volume is left out.
+    static func setsLine(count: Int, volume: Double, unit: WeightUnit) -> String {
+        let sets = BRUCountLabel.text(count, "set")
+        guard volume > 0 else { return sets }
+        return "\(sets) · \(Int(volume.rounded()).formatted(.number.grouping(.automatic))) \(unit.rawValue)"
+    }
+
     /// Weight × reps over completed, non-warm-up sets.
     static func tonnage(of session: Session) -> Double {
         (session.exercises ?? [])

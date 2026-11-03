@@ -203,7 +203,7 @@ public struct SessionDetailView: View {
                     .font(BRUFont.bodyEmphasis)
                     .foregroundStyle(Color.bruInk)
                     .fixedSize(horizontal: false, vertical: true)
-                Text(setsLine(line))
+                Text(SessionHistoryFormat.setsLine(count: line.workingSets, volume: line.volume, unit: weightUnit))
                     .font(BRUFont.labelSmall)
                     .tracking(1.2)
                     .textCase(.uppercase)
@@ -289,12 +289,6 @@ public struct SessionDetailView: View {
 
     private func volumeLabel(_ volume: Double) -> String {
         Int(volume.rounded()).formatted(.number.grouping(.automatic))
-    }
-
-    private func setsLine(_ line: SessionSummary.ExerciseLine) -> String {
-        let sets = BRUCountLabel.text(line.workingSets, "set")
-        guard line.volume > 0 else { return sets }
-        return "\(sets) · \(volumeLabel(line.volume)) \(unitLabel)"
     }
 
     private func weightText(_ value: Double) -> String {
