@@ -314,6 +314,9 @@ public enum SessionFactory {
         do {
             try context.save()
         } catch {
+            // Drop the unsaved workout: left pending, it would read as a
+            // workout in progress and fail every later save.
+            context.rollback()
             throw SessionFactoryError.persistenceFailed(underlying: error)
         }
         return session
