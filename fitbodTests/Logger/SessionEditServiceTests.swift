@@ -43,6 +43,10 @@ struct SessionEditServiceTests {
         let base = Date(timeIntervalSinceReferenceDate: 0)
         let ended = block(from: base, to: base.addingTimeInterval(10 * day), in: ctx)
         let running = block(from: base.addingTimeInterval(10 * day), to: nil, in: ctx)
+        // Saved as ready and never started: every block has a start date,
+        // but one that never ran holds no workouts.
+        let ready = block(from: base.addingTimeInterval(3 * day), to: nil, in: ctx)
+        ready.isActive = false
         let workout = try finishedWorkout(on: base.addingTimeInterval(12 * day), in: ctx)
         workout.block = running
         let exercise = try #require(workout.exercises?.first)
@@ -82,6 +86,8 @@ struct SessionEditServiceTests {
 
         var edit = WorkoutEdit(startedAt: start)
         edit.changed[sets[0].id] = .init(weight: 102.5, reps: 5, rpe: 8)
+        // A deleted set's leftover change is not checked: it is going away.
+        edit.changed[sets[1].id] = .init(weight: 100, reps: 0, rpe: nil)
         edit.deleted = [sets[1].id]
         edit.added[exercise.id] = [.init(weight: 100, reps: 4, rpe: 9)]
         try SessionEditService.save(edit, to: workout, now: now, context: ctx)

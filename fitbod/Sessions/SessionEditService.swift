@@ -71,8 +71,10 @@ public enum SessionEditService {
         let exercises = session.exercises ?? []
         for exercise in exercises {
             let equipment = exercise.exercise?.equipment
-            let values = (exercise.sets ?? []).compactMap { edit.changed[$0.id] } + (edit.added[exercise.id] ?? [])
-            guard values.allSatisfy({ isValid($0, equipment: equipment) }) else {
+            let changed = (exercise.sets ?? [])
+                .filter { !edit.deleted.contains($0.id) }
+                .compactMap { edit.changed[$0.id] }
+            guard (changed + (edit.added[exercise.id] ?? [])).allSatisfy({ isValid($0, equipment: equipment) }) else {
                 throw SessionEditError.invalidSet
             }
         }
