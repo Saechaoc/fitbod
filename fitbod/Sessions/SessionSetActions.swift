@@ -31,9 +31,13 @@ public enum SessionSetActions {
     /// All sets need positive reps and a finite, non-negative weight.
     @MainActor
     public static func canComplete(_ entry: SetEntry) -> Bool {
-        guard entry.reps > 0, entry.weight.isFinite, entry.weight >= 0 else { return false }
-        let equipment = entry.sessionExercise?.exercise?.equipment
-        return entry.weight > 0 || equipment == .bodyweight || equipment == .weightedBodyweight
+        isValidSet(weight: entry.weight, reps: entry.reps, equipment: entry.sessionExercise?.exercise?.equipment)
+    }
+
+    /// `canComplete`'s rule on raw values, to check an edit before it is written.
+    public static func isValidSet(weight: Double, reps: Int, equipment: Equipment?) -> Bool {
+        guard reps > 0, weight.isFinite, weight >= 0 else { return false }
+        return weight > 0 || equipment == .bodyweight || equipment == .weightedBodyweight
     }
 
     /// Mark a set complete. Returns false (and changes nothing) when the
@@ -160,13 +164,12 @@ public enum SessionSetActions {
         known: (finished: [PersistentIdentifier], empty: Set<PersistentIdentifier>)?,
         in context: ModelContext
     ) -> Set<PersistentIdentifier> {
-        // shortcut: a finished workout's sets never change in the app, so a
-        // covered workout keeps its answer. Only SessionLoggerView, with the
-        // cards and sheets it hosts, edits sets, and every way into it
-        // (Today's resume slab, ResumeWorkoutBanner, starting a workout)
-        // opens a workout in progress. Finish shows the read-only
-        // SessionDetailView in a full-screen cover whose dismissal closes the
-        // logger, and History opens the same SessionDetailView.
+        // shortcut: a covered workout keeps its answer, because the app
+        // changes a finished workout's sets in one place only,
+        // SessionEditService.save, and whoever calls it must reset this
+        // cache. SessionLoggerView edits sets only of a workout in progress:
+        // every way into it (Today's resume slab, ResumeWorkoutBanner,
+        // starting a workout) opens one, and Finish closes it.
         // BackupRestorer.performRestore replaces every workout with new rows,
         // so all of their ids go missing.
         let covered = Set(known?.finished ?? [])
