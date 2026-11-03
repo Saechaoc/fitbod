@@ -120,6 +120,28 @@ struct SessionEditServiceTests {
         #expect(sets[0].weight == 100)
     }
 
+    @Test("an edit draft starts unchanged and saves its edits as one")
+    func draftSavesItsEdits() throws {
+        let ctx = try LoggerFixtures.makeContext()
+        let start = now.addingTimeInterval(-day)
+        let workout = try finishedWorkout(on: start, in: ctx)
+        var draft = WorkoutEditDraft(session: workout)
+        #expect(!draft.hasChanges)
+        let exerciseID = try #require(draft.exercises.first?.id)
+        let rows = try #require(draft.exercises.first?.rows)
+
+        draft.exercises[0].rows[0].values.weight = 105
+        draft.deleteRow(rows[1].id, from: exerciseID)
+        draft.addSet(to: exerciseID)
+        draft.startedAt = start.addingTimeInterval(-day)
+        #expect(draft.hasChanges)
+        try SessionEditService.save(draft.edit, to: workout, now: now, context: ctx)
+
+        let saved = SessionSetActions.ordered(try #require(workout.exercises?.first))
+        #expect(saved.map(\.weight) == [105, 100, 100])
+        #expect(workout.startedAt == start.addingTimeInterval(-day))
+    }
+
     @Test("a correction survives closing and reopening the store")
     func correctionSurvivesReopen() throws {
         let directory = FileManager.default.temporaryDirectory

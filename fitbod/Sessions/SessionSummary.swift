@@ -26,6 +26,14 @@ public struct SessionSummary: Sendable, Equatable {
         public let rpe: Double?
     }
 
+    /// One counted working set, as the summary lists it.
+    public struct LoggedSet: Sendable, Equatable {
+        public let weight: Double
+        public let reps: Int
+        public let rpe: Double?
+        public let isBest: Bool
+    }
+
     public struct ExerciseLine: Sendable, Equatable, Identifiable {
         public let id: UUID
         public let name: String
@@ -34,6 +42,8 @@ public struct SessionSummary: Sendable, Equatable {
         public let best: BestSet?
         /// PR kinds this exercise set today, canonical order.
         public let prKinds: [PRKind]
+        /// Every counted working set, in logged order.
+        public let sets: [LoggedSet]
     }
 
     public let durationSeconds: Int
@@ -68,7 +78,7 @@ public struct SessionSummary: Sendable, Equatable {
 
         var lines: [ExerciseLine] = []
         for se in ordered {
-            let working = (se.sets ?? []).filter(isCountedWorkingSet)
+            let working = SessionSetActions.ordered(se).filter(isCountedWorkingSet)
             let volume = working.reduce(0) { $0 + $1.weight * Double($1.reps) }
             let bestEntry = working.max { lhs, rhs in
                 if lhs.weight != rhs.weight { return lhs.weight < rhs.weight }
@@ -82,7 +92,10 @@ public struct SessionSummary: Sendable, Equatable {
                 workingSets: working.count,
                 volume: volume,
                 best: bestEntry.map { BestSet(weight: $0.weight, reps: $0.reps, rpe: $0.rpe) },
-                prKinds: PRKind.allCases.filter { kinds.contains($0) }
+                prKinds: PRKind.allCases.filter { kinds.contains($0) },
+                sets: working.map {
+                    LoggedSet(weight: $0.weight, reps: $0.reps, rpe: $0.rpe, isBest: $0.id == bestEntry?.id)
+                }
             ))
         }
 
