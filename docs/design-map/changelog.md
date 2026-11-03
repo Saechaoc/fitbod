@@ -2,6 +2,11 @@
 
 Newest first: one entry for each stage of [plan.md](plan.md) up to S2, then one for each commit.
 
+## 2026-11-03: the gym day
+
+- The [today](workflows/today.md), [log-a-workout](workflows/log-a-workout.md) and [review-a-workout-and-edit-history](workflows/review-a-workout-and-edit-history.md) workflows mark the dead ends the gym-day work fixed.
+- [missing-screens.md](missing-screens.md) names the seven screens and states built since the map.
+
 ## 2026-11-01: review decisions
 
 - Added [decisions.md](decisions.md), which records the user's review of the map.

@@ -118,7 +118,7 @@ At AX3 on the 17e not one whole set row fits between the header and the rest doc
 
 ## Dead ends
 
-- TRY VARIATION opens [Try variation](../screens/try-variation.md), where a picked variation and "View all similar exercises in library" only close the sheet (`fitbod/Sessions/SessionExerciseCard.swift:338`).
+- Fixed 2026-11-03: a variation picked in [Try variation](../screens/try-variation.md) takes the exercise's place in this workout, with UNDO until a working set is logged, and "View all similar exercises in library" opens the swap list.
 - The plate stack under a working set never opens, because the weight cell's own tap wins (see [Workout](../screens/logger.md)).
 - With nothing logged, [Finish workout?](../screens/dialog-finish-workout.md) offers only Discard workout, so a workout with no logged set cannot be finished.
 - Warm-up ramp rows cannot be marked done, so warm-ups leave no record and start no rest.

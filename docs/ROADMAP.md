@@ -56,6 +56,12 @@ Decided 2026-11-03 on the review page `.lavish/next-workflow.html`.
 - **Skipping a session:** not now. Today offers the block's other sessions
   instead, and starting one moves the rotation on. A skip needs a stored
   marker, which is a schema change past SchemaV7.
+- **Status (2026-11-03):** the gym day is built end to end, with every
+  screen it needs. It is stable, in the sense of `docs/DEVELOPMENT.md`, after
+  two weeks of real gym use without a change to its structure. Left out on
+  purpose: the plate calculator from a set, marking warm-ups done, and a
+  Plan custom block review that stays closed (that one belongs to running a
+  block).
 
 ## Decisions awaiting product direction
 

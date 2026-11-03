@@ -103,10 +103,10 @@ flowchart TD
 
 ## Dead ends
 
-- On a running block, Today offers only the scheduled session; the picker is hidden (`fitbod/Views/TodayView.swift:192`), so choosing another session or skipping today's needs the Program detour.
+- Fixed 2026-11-03: CHOOSE ANOTHER SESSION › under START WORKOUT ▸ opens the block's sessions, with the next one marked, and an empty workout; starting one moves the rotation on. Skipping stays out (`docs/ROADMAP.md` "Decided").
 - Today's own Workout in progress alert can never show, because Today hides its start controls while a workout runs (`fitbod/Views/TodayView.swift:340`); the reachable copy is on [Session](../screens/session-template-detail.md).
 - A [Block review](../screens/block-review.md) closed with Plan custom saves nothing, so it slides up again on the next visit to Today and stands between the lifter and START WORKOUT ▸ each time.
-- Tapping the rest timer's Live Activity sends the app a link it does not handle (`FitbodWidgets/RestTimerLiveActivity.swift:119`), so the lifter lands on whatever screen was last open, not on the workout.
+- Fixed 2026-11-03: tapping the rest timer's Live Activity opens the workout in progress on Today. It does not scroll to the set being rested on.
 
 ## Detours
 
