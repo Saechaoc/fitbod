@@ -16,7 +16,7 @@ progress:
 
 **Last updated:** 2026-10-29 (Milestone 1 finish, phase 0 done: Codex's seven groups committed, baseline 1,023 of 1,026 passed with 2 known app-bug failures and 1 expected failure)
 
-Last activity: 2026-11-02 - Completed quick task 261102-g8s: Land draft v5 of the Today and Program redesign bundle after the Codex coverage and feasibility reviews
+Last activity: 2026-11-02 - Completed quick task 261102-nuz: Land draft v6 of the Today and Program redesign bundle after the Codex feasibility review
 
 ---
 
@@ -367,6 +367,7 @@ None.
 | 261101-ujp | Land the Today and Program redesign bundle in docs/design-map/redesign | 2026-11-02 | 12ea884a | [261101-ujp-land-the-today-and-program-redesign-bund](./quick/261101-ujp-land-the-today-and-program-redesign-bund/) |
 | 261102-ayp | Land draft v4 of the Today and Program redesign bundle after the Codex reviews | 2026-11-02 | e403d287 | [261102-ayp-land-draft-v4-of-the-today-and-program-r](./quick/261102-ayp-land-draft-v4-of-the-today-and-program-r/) |
 | 261102-g8s | Land draft v5 of the Today and Program redesign bundle after the Codex coverage and feasibility reviews | 2026-11-02 | 8fd223ed | [261102-g8s-land-draft-v5-of-the-today-and-program-r](./quick/261102-g8s-land-draft-v5-of-the-today-and-program-r/) |
+| 261102-nuz | Land draft v6 of the Today and Program redesign bundle after the Codex feasibility review | 2026-11-02 | 084edd78 | [261102-nuz-land-draft-v6-of-the-today-and-program-r](./quick/261102-nuz-land-draft-v6-of-the-today-and-program-r/) |
 
 ---
 
