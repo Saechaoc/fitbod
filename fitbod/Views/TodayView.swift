@@ -43,6 +43,7 @@ public struct TodayView: View {
     @Environment(\.modelContext) private var ctx
     @Environment(\.weightUnit) private var weightUnit
     @Environment(HistoryEdits.self) private var historyEdits: HistoryEdits?
+    @Environment(ResumeWorkoutRequest.self) private var resumeRequest: ResumeWorkoutRequest?
 
     // MARK: - Queries (preserved verbatim from RootView.TodayView Phase 4/5)
 
@@ -434,6 +435,10 @@ public struct TodayView: View {
             }
             .onAppear {
                 refreshAdvisory()
+                openRequestedWorkout()
+            }
+            .onChange(of: resumeRequest?.isPending) {
+                openRequestedWorkout()
             }
             // The empty workouts behind the all-time Sessions total and the
             // Day streak, read when the finished workouts change, never per
@@ -756,6 +761,16 @@ public struct TodayView: View {
         case .empty:
             startEmptyWorkout()
         }
+    }
+
+    /// The Live Activity asked for the workout in progress: show its logger
+    /// on Today's stack, in place of whatever was open there.
+    @MainActor
+    private func openRequestedWorkout() {
+        guard let resumeRequest, resumeRequest.isPending else { return }
+        resumeRequest.isPending = false
+        guard let active = activeSessions.first else { return }
+        navigationPath = NavigationPath([SessionRoute.logger(active)])
     }
 
     /// Opens the name step on Today's own stack. The routine exists only once

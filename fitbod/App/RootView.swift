@@ -57,6 +57,7 @@ public struct RootView: View {
     @Query private var settingsList: [UserSettings]
     @State private var seedState = SeedState()
     @State private var historyEdits = HistoryEdits()
+    @State private var resumeRequest = ResumeWorkoutRequest()
 
     /// Currently-selected tab. Bound to the tab-bar binding via a
     /// custom `Binding<Tab>` that detects re-tap of the same tab and
@@ -135,6 +136,13 @@ public struct RootView: View {
         }
         .environment(\.weightUnit, settingsList.first?.weightUnit ?? .default)
         .environment(historyEdits)
+        .environment(resumeRequest)
+        // The rest timer's Live Activity opens the workout in progress.
+        .onOpenURL { url in
+            guard ResumeWorkoutRequest.isResumeLink(url) else { return }
+            selectedTab = .today
+            resumeRequest.isPending = true
+        }
         .task {
             await runSeed()
         }

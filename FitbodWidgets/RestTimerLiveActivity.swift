@@ -49,6 +49,8 @@ public struct RestTimerLiveActivity: Widget {
             .padding(16)
             .activityBackgroundTint(Color.bruInk)  // paper-on-ink (UI-SPEC line 730)
             .activitySystemActionForegroundColor(Color.bruSignal)
+            // A tap on the lock screen opens the workout, as the island does.
+            .widgetURL(URL(string: "fitbod://session/active"))
 
         } dynamicIsland: { context in
             DynamicIsland {
