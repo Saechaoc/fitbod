@@ -30,34 +30,39 @@ final class WhyThisWeightControlUITests: XCTestCase {
         XCTAssertEqual(numericWeight(weight), suggested, "Use must write the suggested weight into the set")
     }
 
-    /// Ticket T09: Use clears "changed from prescription" even when the
-    /// suggestion differs from the prescription stored when the workout
-    /// started. Without the barbell's 2.5 and 1.25 lb plates the bench's
-    /// 100 lb rounds down to 95 lb, so Use writes 95 against a stored 100.
-    /// The mark stays clear after a relaunch.
+    /// Ticket T09, under the frozen-WHY decision (ROADMAP "Decided"):
+    /// without the barbell's 2.5 and 1.25 lb plates the live steps round the
+    /// bench's 100 lb down to 95 lb, but WHY keeps the 100 lb frozen when the
+    /// workout started and names the 95 in a note. Use writes the frozen 100
+    /// over a typed weight and clears the "changed from prescription" mark,
+    /// which stays clear after a relaunch.
     @MainActor
-    func testUseClearsOverrideMarkWhenSuggestionDiffersFromPrescription() throws {
+    func testUseRestoresFrozenWeightWhenLiveSuggestionDiffers() throws {
         let app = UITestNavigation.launch(UITestNavigation.seededWorkout)
         removeSmallBarbellPlates(in: app)
         resumeWorkout(in: app)
         let weight = weightField(in: app)
         XCTAssertEqual(numericWeight(weight), 100, "The set starts at the prescription stored at the start")
-        XCTAssertFalse(overrideMark(in: app).exists)
+        UITestNavigation.revealInLogger(weight, in: app)
+        UITestNavigation.enter("90", into: weight)
+        XCTAssertTrue(UITestNavigation.appears(overrideMark(in: app), within: 5), "A typed weight is marked")
 
         tapWhy(in: app)
         let use = app.buttons.matching(NSPredicate(format: "label BEGINSWITH[c] %@", "Use ")).firstMatch
         XCTAssertTrue(UITestNavigation.appears(use, within: 5))
-        XCTAssertTrue(use.label.hasPrefix("Use 95 "), "Without small plates the suggestion is 95 lb: \(use.label)")
+        XCTAssertTrue(use.label.hasPrefix("Use 100 "), "WHY offers the weight frozen at the start: \(use.label)")
+        let note = app.staticTexts["why.changedSinceStart"]
+        XCTAssertTrue(note.exists && note.label.contains("95 lb"), "The note names the live 95 lb")
         use.tap()
         XCTAssertTrue(waitUntilGone(use), "Use must close the sheet")
-        XCTAssertEqual(numericWeight(weight), 95, "Use must write the suggested weight into the set")
+        XCTAssertEqual(numericWeight(weight), 100, "Use must write the frozen weight into the set")
         // Waits the whole 2 s: a mark that comes back shows within it.
         XCTAssertFalse(overrideMark(in: app).waitForExistence(timeout: 2),
                        "Use must clear the set's \"changed from prescription\" mark")
 
         UITestNavigation.relaunch(app)
         resumeWorkout(in: app)
-        XCTAssertEqual(numericWeight(weightField(in: app)), 95)
+        XCTAssertEqual(numericWeight(weightField(in: app)), 100)
         // The same 2 s watch for the mark, on the reopened workout.
         XCTAssertFalse(overrideMark(in: app).waitForExistence(timeout: 2),
                        "The cleared mark must stay cleared after a relaunch")

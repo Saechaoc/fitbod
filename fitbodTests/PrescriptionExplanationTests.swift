@@ -92,6 +92,25 @@ struct PrescriptionExplanationTests {
         #expect(exp.range == nil)
     }
 
+    @Test("WHY shows the weight frozen at start, and says when today's steps differ")
+    func frozenWeightIsShownWithItsChange() throws {
+        let live = PrescriptionExplanation(
+            formulaName: "x",
+            roundedWeight: 100,
+            roundedLine: "→ 100 lb",
+            status: .notApplicable,
+            bumpOccurred: true
+        )
+
+        let shown = live.frozen(at: 90, unitLabel: "lb")
+        #expect(shown.roundedWeight == 90)
+        #expect(shown.changedSinceStartLine?.contains("100 lb") == true)
+        #expect(!shown.bumpOccurred)
+
+        #expect(live.frozen(at: 100, unitLabel: "lb").changedSinceStartLine == nil)
+        #expect(live.frozen(at: nil, unitLabel: "lb").roundedWeight == 100)
+    }
+
     // MARK: - Phase 3.1 (PIVOT-04 / D-12)
 
     @Test("sessionIntent default is nil; setting it round-trips")

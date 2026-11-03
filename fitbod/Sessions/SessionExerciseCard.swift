@@ -579,7 +579,8 @@ public struct SessionExerciseCard: View {
         )
         var enriched = explanation
         enriched.sessionIntent = se.session?.intent
-        return enriched
+        // The sets hold the weight frozen at start; WHY shows that one.
+        return enriched.frozen(at: se.prescribedWeight, unitLabel: unit.rawValue)
     }
 
     // MARK: - handleSkipWarmups

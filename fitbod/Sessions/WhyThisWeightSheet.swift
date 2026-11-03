@@ -16,7 +16,10 @@
 //         to the empty weight field's "—" in bruPaper 60% opacity
 //       - 2pt bruPaper top rule → 2-column REPS | RPE sub-band: the set's
 //         rep range, "×8–12", and target RPE, which the logger passes in
-//    2. BRUSectionHead("Why this weight", right: "−")
+//    1b. When the plan or history changed after the weight froze at the
+//        workout's start, one line says so and names today's number
+//    2. BRUSectionHead("Why this weight", right: "Close"): the way out
+//       that leaves the set's weight alone
 //    3. Numbered step blocks (01 / 02 / 03) in VStack(spacing: 8), filling
 //       the sheet's width, so the numerals line up with the section head
 //       and the 2pt bruInk rule below them spans the sheet
@@ -117,7 +120,19 @@ public struct WhyThisWeightSheet: View {
                 ScrollView {
                     VStack(spacing: 0) {
                         heroSlab
-                        BRUSectionHead("Why this weight", right: "−")
+                        if let line = explanation.changedSinceStartLine {
+                            Text(line)
+                                .font(BRUFont.bodyDefault)
+                                .foregroundStyle(Color.bruInk)
+                                .fixedSize(horizontal: false, vertical: true)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .padding(16)
+                                .background(Color.bruBg2)
+                                .accessibilityIdentifier("why.changedSinceStart")
+                            BRUDivider(.ink)
+                        }
+                        // The sheet's way out that leaves the weight alone.
+                        BRUSectionHead("Why this weight", right: "Close", rightAction: { dismiss() })
                         stepsBlock
                         // Bottom padding inside scroll area
                         Color.clear.frame(height: 16)
