@@ -166,6 +166,24 @@ struct BlockDraftSaveTests {
         #expect(draft.trainingDays == [2, 4, 6])
     }
 
+    @Test("saving a block that has run keeps its real start date")
+    func savingStartedBlockKeepsStartDate() throws {
+        let context = try makeContext()
+        let realStart = Date(timeIntervalSince1970: 1_700_000_000)
+        let block = Block()
+        context.insert(block)
+        block.name = "Running"
+        block.isActive = true
+        block.startDate = realStart
+        try context.save()
+
+        let draft = BlockDraft(block: block)
+        draft.startDate = realStart.addingTimeInterval(86_400)
+        try draft.save(into: context)
+
+        #expect(block.startDate == realStart)
+    }
+
     @Test("draft init from block sorts phases by order index")
     func draftInitFromBlockSortsPhasesByOrderIndex() throws {
         let block = Block()

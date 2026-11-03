@@ -148,7 +148,13 @@ public final class BlockDraft {
             }
 
             block.name = name.trimmingCharacters(in: .whitespacesAndNewlines)
-            block.startDate = startDate
+            // Once a block has run, its start is the start of its real window,
+            // which decides the block a workout belongs to. Only a new or
+            // never-started block takes the draft's date; BlockLifecycleService
+            // stamps the real start.
+            if !block.isActive && block.endDate == nil {
+                block.startDate = startDate
+            }
             // endDate is the completion freeze marker (spec §3/§4) — written ONLY by
             // BlockLifecycleService.end when the block is ended. The builder is pre-
             // activation (draft/ready context) so block.endDate MUST stay nil here.
