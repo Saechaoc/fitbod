@@ -237,7 +237,7 @@ public struct SessionDetailView: View {
                 .monospacedDigit()
                 .foregroundStyle(Color.bruMuted)
                 .frame(minWidth: 20, alignment: .leading)
-            Text("\(weightText(set.weight)) \(unit.rawValue) × \(set.reps)")
+            Text("\(NumberText.weight(set.weight)) \(unit.rawValue) × \(set.reps)")
                 .font(BRUFont.bodyEmphasis)
                 .monospacedDigit()
                 .foregroundStyle(Color.bruInk)
@@ -250,7 +250,7 @@ public struct SessionDetailView: View {
             }
             Spacer(minLength: 8)
             if let rpe = set.rpe {
-                Text("@ \(weightText(rpe))")
+                Text("@ \(NumberText.weight(rpe))")
                     .font(BRUFont.bodyDefault)
                     .monospacedDigit()
                     .foregroundStyle(Color.bruMuted)
@@ -293,13 +293,9 @@ public struct SessionDetailView: View {
         SessionHistoryFormat.roundedVolume(volume)
     }
 
-    private func weightText(_ value: Double) -> String {
-        String(format: "%g", value)
-    }
-
     private func setLabel(number: Int, set: SessionSummary.LoggedSet, unit: WeightUnit) -> String {
-        var label = "Set \(number), \(weightText(set.weight)) \(unit.rawValue) by \(set.reps)"
-        if let rpe = set.rpe { label += ", RPE \(weightText(rpe))" }
+        var label = "Set \(number), \(NumberText.weight(set.weight)) \(unit.rawValue) by \(set.reps)"
+        if let rpe = set.rpe { label += ", RPE \(NumberText.weight(rpe))" }
         if set.isBest { label += ", best set" }
         return label
     }

@@ -430,10 +430,10 @@ private struct WorkoutEditSetRow: View {
         return Menu {
             Button("No RPE") { setRPE(nil) }
             ForEach(Self.rpeOptions, id: \.self) { value in
-                Button(Self.text(value)) { setRPE(value) }
+                Button(NumberText.weight(value)) { setRPE(value) }
             }
         } label: {
-            Text(row.values.rpe.map(Self.text) ?? "—")
+            Text(row.values.rpe.map(NumberText.weight) ?? "—")
                 .font(BRUFont.bodyEmphasis)
                 .monospacedDigit()
                 .foregroundStyle(Color.bruInk)
@@ -442,7 +442,7 @@ private struct WorkoutEditSetRow: View {
                 .overlay(Rectangle().strokeBorder(changed ? Color.bruInk : Color.bruHair, lineWidth: changed ? 2 : 1))
         }
         .accessibilityLabel("RPE, set \(number)")
-        .accessibilityValue(row.values.rpe.map(Self.text) ?? "none")
+        .accessibilityValue(row.values.rpe.map(NumberText.weight) ?? "none")
     }
 
     private func setRPE(_ rpe: Double?) {
@@ -459,12 +459,8 @@ private struct WorkoutEditSetRow: View {
         onChange(values, weight != nil && reps != nil)
     }
 
-    private static func text(_ value: Double) -> String {
-        String(format: "%g", value)
-    }
-
     private static func label(_ values: WorkoutEdit.Values) -> String {
-        let base = "\(text(values.weight)) × \(values.reps)"
-        return values.rpe.map { "\(base) @ \(text($0))" } ?? base
+        let base = "\(NumberText.weight(values.weight)) × \(values.reps)"
+        return values.rpe.map { "\(base) @ \(NumberText.weight($0))" } ?? base
     }
 }
