@@ -555,60 +555,23 @@ public struct SessionExerciseCard: View {
 
     // MARK: - currentExplanation (Phase 3 plan 03-08)
 
+    /// What WHY explains: `SessionFactory`'s prescription for this
+    /// exercise, frozen at the weight the sets were started with.
     private func currentExplanation() -> PrescriptionExplanation? {
         let se = sessionExercise
-        let userSettings = settingsList.first
-
-        let exerciseID = se.exercise?.id
-        let intentRaw = se.session?.intentRaw ?? Intent.strength.rawValue
-
-        let (barWeight, plates) = plateSetup
-
-        let smallestIncrement = SessionFactory.prescriptionIncrement(for: se.exercise, settings: userSettings)
-        let minCalibrationSets = userSettings?.minCalibrationSets ?? 10
-
-        let historyPoints = SessionFactory.fetchHistoryPoints(
-            exerciseID: exerciseID,
-            intentRaw: intentRaw,
-            context: ctx
-        )
-        let lastRepsArray = SessionFactory.lastSessionWorkingReps(
-            exerciseID: exerciseID,
-            intentRaw: intentRaw,
-            context: ctx
-        )
-        let lastHint = PreviousMatchingIntent.fetchTopWorkingSet(
-            exerciseID: exerciseID,
-            intentRaw: intentRaw,
-            context: ctx,
-            excludingSessionID: se.session?.id
-        )
-
-        var strategy = ProgressionStrategyFactory.make(for: se.session?.progressionKind ?? .double)
-        strategy.roundingIncrement = SessionFactory.plateEquipmentKind(for: se.exercise?.equipment ?? .other) == nil
-            ? smallestIncrement : nil
-        let (_, explanation) = strategy.prescribe(
-            history: historyPoints,
+        guard let session = se.session else { return nil }
+        var explanation = SessionFactory.prescription(
+            for: se.exercise,
             targetRepsLow: se.targetRepsLow,
             targetRepsHigh: se.targetRepsHigh,
             targetRPE: se.targetRPE,
-            lastSessionRepsArray: lastRepsArray.isEmpty ? nil : lastRepsArray,
-            smallestIncrement: smallestIncrement,
-            plates: plates,
-            barWeight: barWeight,
-            unit: unit,
-            minCalibrationSets: minCalibrationSets,
-            lastSessionWeight: lastHint?.weight,
-            lastSessionReps: lastHint?.reps,
-            lastSessionRPE: lastHint?.rpe,
-            lastSessionDate: lastHint?.sessionStartedAt,
-            block: se.session?.block,
-            today: se.session?.startedAt ?? Date.now
-        )
-        var enriched = explanation
-        enriched.sessionIntent = se.session?.intent
-        // The sets hold the weight frozen at start; WHY shows that one.
-        return enriched.frozen(at: se.prescribedWeight, unitLabel: unit.rawValue)
+            in: session,
+            strategy: ProgressionStrategyFactory.make(for: session.progressionKind),
+            userSettings: settingsList.first,
+            context: ctx
+        ).explanation
+        explanation.sessionIntent = session.intent
+        return explanation.frozen(at: se.prescribedWeight, unitLabel: unit.rawValue)
     }
 
     // MARK: - handleSkipWarmups

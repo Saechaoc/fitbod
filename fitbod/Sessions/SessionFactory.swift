@@ -49,8 +49,8 @@
 //      reuses to rebuild a pending or skipped ramp for the new exercise.
 //    - Internal-static helpers: fetchHistoryPoints, lastSessionWorkingReps,
 //      plateInventory(for:context:), equipmentKind(for:) — declared
-//      `internal static` so SessionExerciseCard.currentExplanation() can
-//      reuse them without duplicating the SwiftData query logic.
+//      `internal static` so tests and the exercise card can reuse them
+//      without duplicating the SwiftData query logic.
 //
 //  Phase 3.1 (PIVOT-02 / PIVOT-05 / D-14) reshape: intent + progressionKind
 //  are session-level fields now, NOT per-exercise. `start(...)` snapshots
@@ -226,9 +226,9 @@ public enum SessionFactory {
             //
             // Block A — Prescription: `prescription(for:...)` computes the
             // prescribed weight for this exercise+intent, then it is stored
-            // on the snapshotted SessionExercise row. The caller
-            // (SessionExerciseCard.currentExplanation) recomputes the full
-            // PrescriptionExplanation at render time — SessionFactory only
+            // on the snapshotted SessionExercise row. The exercise card's WHY
+            // (SessionExerciseCard.currentExplanation) runs the same step at
+            // render time for its PrescriptionExplanation — SessionFactory only
             // needs to persist the scalar `prescribedWeight`. A mid-workout
             // swap or added exercise runs the same step for that exercise.
             //
@@ -340,11 +340,13 @@ public enum SessionFactory {
 
     // MARK: - Prescription step (Block A)
 
-    /// One exercise's prescription: the prescribed weight, plus the bar,
-    /// plates and previous matching-intent set it was computed from, which
-    /// `start` reuses for the warm-up ramp and the planned sets.
+    /// One exercise's prescription: the prescribed weight and how it was
+    /// reached, plus the bar, plates and previous matching-intent set it was
+    /// computed from, which `start` reuses for the warm-up ramp and the
+    /// planned sets. The exercise card's WHY reads the explanation.
     struct ExercisePrescription {
         let weight: Double
+        let explanation: PrescriptionExplanation
         let barWeight: Double
         let plates: [(weight: Double, countPerSide: Int)]
         let previousSet: PreviousMatchingIntentHit?
@@ -408,7 +410,7 @@ public enum SessionFactory {
         // Configure a value copy so rounding cannot leak between exercises in a session.
         var configuredStrategy = strategy
         configuredStrategy.roundingIncrement = inventory == nil ? smallestIncrement : nil
-        let (weight, _) = configuredStrategy.prescribe(
+        let (weight, explanation) = configuredStrategy.prescribe(
             history: historyPoints,
             targetRepsLow: targetRepsLow,
             targetRepsHigh: targetRepsHigh,
@@ -428,6 +430,7 @@ public enum SessionFactory {
         )
         return ExercisePrescription(
             weight: weight,
+            explanation: explanation,
             barWeight: barWeight,
             plates: plates,
             previousSet: previousSet
@@ -466,10 +469,9 @@ public enum SessionFactory {
 
     // MARK: - Internal-static helpers (plan 03-08)
     //
-    // Declared `internal static` (not private) so SessionExerciseCard's
-    // `currentExplanation()` helper can reuse these query primitives
-    // without duplicating the SwiftData #Predicate local-capture pattern
-    // (RESEARCH §6 Pitfall 1).
+    // Declared `internal static` (not private) so tests and the exercise
+    // card can reuse these query primitives without duplicating the
+    // SwiftData #Predicate local-capture pattern (RESEARCH §6 Pitfall 1).
 
     /// Fetches up to 50 most recent working, completed, RPE-logged SetEntry
     /// rows for the given (exerciseID, intentRaw) pair, maps each to a
