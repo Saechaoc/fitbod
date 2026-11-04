@@ -174,7 +174,7 @@ public struct BlockBuilderView: View {
             }
         }
         .sheet(isPresented: $presentingSplitPicker) {
-            NewBlockSplitPickerSheet(
+            RoutinePickerSheet(
                 selectedSplit: draft.split,
                 onSelect: { chosen in
                     draft.split = chosen
@@ -433,7 +433,6 @@ fileprivate enum NewBlockScreenTokens {
 fileprivate enum NewBlockType {
     static let chrome = Font.bru(.grotesk, size: 11)
     static let cta    = Font.bru(.grotesk, size: 13)
-    static let chip   = Font.bru(.grotesk, size: 9)
     static let label  = Font.bru(.grotesk, size: 10)
     static let micro  = Font.bru(.grotesk, size: 8)
     static let display      = Font.bru(.condensed, size: 39)
@@ -457,19 +456,6 @@ private extension View {
                             lineWidth: NewBlockScreenTokens.cardStrokeWidth)
             )
             .shadow(color: NewBlockScreenTokens.cardShadow, radius: 10, x: 0, y: 3)
-    }
-
-    /// Reaches the touch target `horizontal` and `vertical` points past each
-    /// edge without moving anything in the layout, as `bruHitArea()` does,
-    /// but with a reach per axis, so a small control grows to 44pt without
-    /// crossing the few points between it and its neighbors (T38).
-    func newBlockTapTarget(horizontal: CGFloat, vertical: CGFloat) -> some View {
-        self
-            .padding(.horizontal, horizontal)
-            .padding(.vertical, vertical)
-            .contentShape(Rectangle())
-            .padding(.horizontal, -horizontal)
-            .padding(.vertical, -vertical)
     }
 
     /// The view with `column` beside its leading edge, their tops aligned,
@@ -897,7 +883,7 @@ fileprivate struct NewBlockStepperButton: View {
                 .overlay(Rectangle().stroke(Color.bruInk, lineWidth: 1.5))
                 // T38: at standard sizes the 32 by 30pt square takes taps
                 // 44pt across, reaching into the row's gaps around it.
-                .newBlockTapTarget(
+                .bruHitArea(
                     horizontal: dynamicTypeSize.isAccessibilitySize ? 0 : 6,
                     vertical: dynamicTypeSize.isAccessibilitySize ? 0 : 7
                 )
@@ -2487,11 +2473,10 @@ fileprivate struct NewBlockAddPhaseTypeSheet: View {
 
 // Phase 9 split band — replaces the old NewBlockLinkedRoutinesBand.
 // Always visible (optionality expressed via "None — saves as draft" copy).
-// ModeChip / DayToggleChip are copy-adapted from BlockOverviewScreen (fileprivate
-// there; do NOT import or reference them — separate token worlds per 09-RESEARCH Pattern 3).
+// Its chips, day grid, mismatch hint and routine picker are the
+// BlockScheduleControls BlockOverviewScreen uses too.
 fileprivate struct NewBlockSplitBand: View {
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
-    @Environment(\.colorScheme) private var colorScheme
 
     @Bindable var draft: BlockDraft
     /// False while the edited block is active, so it offers no SWAP or + ATTACH.
@@ -2581,13 +2566,9 @@ fileprivate struct NewBlockSplitBand: View {
                     .frame(height: NewBlockScreenTokens.rule)
 
                 dayChipLayout {
-                    let weekdays: [(Int, String, String)] = [
-                        (2, "M", "Monday"), (3, "T", "Tuesday"), (4, "W", "Wednesday"),
-                        (5, "T", "Thursday"), (6, "F", "Friday"), (7, "S", "Saturday"), (1, "S", "Sunday")
-                    ]
-                    ForEach(weekdays, id: \.0) { weekday, letter, name in
+                    ForEach(trainingWeekdays, id: \.weekday) { weekday, letter, name in
                         let isSelected = draft.trainingDays.contains(weekday)
-                        NewBlockDayToggleChip(letter: letter, weekdayName: name, selected: isSelected) {
+                        TrainingDayChip(letter: letter, weekdayName: name, selected: isSelected) {
                             if isSelected {
                                 draft.trainingDays.removeAll { $0 == weekday }
                             } else {
@@ -2606,21 +2587,7 @@ fileprivate struct NewBlockSplitBand: View {
                 // is attached (nothing to mismatch against). (WR-04)
                 let slotCount = draft.split?.slots?.count ?? 0
                 if draft.split != nil && draft.trainingDays.count != slotCount {
-                    Text("\(BRUCountLabel.text(draft.trainingDays.count, "day")) / \(BRUCountLabel.text(slotCount, "session"))")
-                        .font(NewBlockType.label)
-                        .tracking(NewBlockScreenTokens.labelTracking)
-                        // T38 (F102): amber text read at 2.14:1 on light paper,
-                        // so in light mode the hint is a dark label on an amber
-                        // fill, drawn past the text without moving it; dark mode
-                        // keeps its amber text (WR-03).
-                        .foregroundStyle(colorScheme == .dark ? Color.bruAmber : Color.bruOnSignal)
-                        .background {
-                            if colorScheme != .dark {
-                                Color.bruAmber
-                                    .padding(.horizontal, -4)
-                                    .padding(.vertical, -2)
-                            }
-                        }
+                    ScheduleMismatchHint(days: draft.trainingDays.count, sessions: slotCount)
                         .padding(.horizontal, NewBlockScreenTokens.sidePadding)
                         .padding(.bottom, NewBlockScreenTokens.rowGap)
                 }
@@ -2641,12 +2608,8 @@ fileprivate struct NewBlockSplitBand: View {
             : AnyLayout(HStackLayout(spacing: NewBlockScreenTokens.rowGap))
     }
 
-    /// The seven days in a row, or, at accessibility sizes, four to a row,
-    /// so each day stays a 44pt tap target (T25).
     private var dayChipLayout: AnyLayout {
-        dynamicTypeSize.isAccessibilitySize
-            ? AnyLayout(NewBlockDayGridLayout(columns: 4, spacing: 4))
-            : AnyLayout(HStackLayout(spacing: 4))
+        DayGridLayout.days(accessibilitySize: dynamicTypeSize.isAccessibilitySize)
     }
 
     /// SWAP ▸ or + ATTACH ▸, which opens the routine picker. The whole 44pt
@@ -2667,188 +2630,12 @@ fileprivate struct NewBlockSplitBand: View {
 
     @ViewBuilder
     private var modeChips: some View {
-        NewBlockModeChip("ROTATION", selected: draft.schedulingMode == .rotation) {
+        SchedulingModeChip("ROTATION", selected: draft.schedulingMode == .rotation) {
             draft.schedulingMode = .rotation
         }
-        NewBlockModeChip("FIXED WEEKLY", selected: draft.schedulingMode == .fixedWeekly) {
+        SchedulingModeChip("FIXED WEEKLY", selected: draft.schedulingMode == .fixedWeekly) {
             draft.schedulingMode = .fixedWeekly
         }
-    }
-}
-
-// Mode chip for the split band — copy-adapted from BlockOverviewScreen.ModeChip
-// using NewBlockScreenTokens.
-// T25: at accessibility sizes it is a 44pt tap target.
-// T38: at standard sizes the chip draws as before inside a 44pt-tall tap
-// target, as tall as the Scheduling row it sits in.
-fileprivate struct NewBlockModeChip: View {
-    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
-
-    let label: String
-    let selected: Bool
-    let action: () -> Void
-
-    init(_ label: String, selected: Bool, action: @escaping () -> Void) {
-        self.label = label
-        self.selected = selected
-        self.action = action
-    }
-
-    var body: some View {
-        Button {
-            action()
-        } label: {
-            Text(label)
-                .font(NewBlockType.chip)
-                .tracking(NewBlockScreenTokens.chipTracking)
-                .foregroundStyle(selected ? Color.bruPaper : Color.bruInk)
-                .padding(.horizontal, 8)
-                .padding(.vertical, 5)
-                .frame(maxWidth: .infinity, minHeight: dynamicTypeSize.isAccessibilitySize ? 44 : nil)
-                .background(selected ? Color.bruInk : Color.clear)
-                .overlay(
-                    Rectangle()
-                        .stroke(Color.bruInk,
-                                lineWidth: selected ? 1.5 : 1.0)
-                )
-                .frame(minHeight: 44)
-                .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel("\(label) scheduling")
-        .accessibilityAddTraits(selected ? .isSelected : [])
-    }
-}
-
-// Day toggle chip for the split band — copy-adapted from BlockOverviewScreen.DayToggleChip.
-// T25: at accessibility sizes it grows to its letter and to a 44pt tap target.
-// T38: at standard sizes the 28pt chip takes taps 44pt tall, and 1pt past
-// each side, which makes the 42pt chips of the 390pt phone 44pt wide and
-// leaves 2pt of the 4pt gap between neighbors.
-fileprivate struct NewBlockDayToggleChip: View {
-    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
-
-    let letter: String
-    let weekdayName: String   // full name e.g. "Monday" — used for accessibilityLabel
-    let selected: Bool
-    let action: () -> Void
-
-    var body: some View {
-        Button {
-            action()
-        } label: {
-            Text(letter)
-                .font(NewBlockType.chip)
-                .tracking(NewBlockScreenTokens.chipTracking)
-                .foregroundStyle(selected ? Color.bruPaper : Color.bruMuted)
-                .frame(maxWidth: .infinity)
-                .frame(minHeight: dynamicTypeSize.isAccessibilitySize ? 44 : 28)
-                .background(selected ? Color.bruInk : Color.bruFaint)
-                .overlay(
-                    Rectangle()
-                        .stroke(Color.bruInk,
-                                lineWidth: selected ? 1.5 : 1.0)
-                )
-                .newBlockTapTarget(
-                    horizontal: dynamicTypeSize.isAccessibilitySize ? 0 : 1,
-                    vertical: dynamicTypeSize.isAccessibilitySize ? 0 : 8
-                )
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel(weekdayName)
-        .accessibilityAddTraits(.isToggle)
-        .accessibilityValue(selected ? "on" : "off")
-    }
-}
-
-/// Lays its subviews out left to right in rows of `columns` equal cells,
-/// each row as tall as its tallest subview (T25).
-private struct NewBlockDayGridLayout: Layout {
-    let columns: Int
-    let spacing: CGFloat
-
-    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
-        let width = proposal.width ?? CGFloat(columns) * 44 + CGFloat(columns - 1) * spacing
-        let rows = rowHeights(of: subviews, cell: cellWidth(in: width))
-        return CGSize(width: width, height: rows.reduce(0, +) + CGFloat(max(0, rows.count - 1)) * spacing)
-    }
-
-    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
-        let cell = cellWidth(in: bounds.width)
-        var y = bounds.minY
-        for (row, height) in rowHeights(of: subviews, cell: cell).enumerated() {
-            for column in 0..<columns where row * columns + column < subviews.count {
-                subviews[row * columns + column].place(
-                    at: CGPoint(x: bounds.minX + CGFloat(column) * (cell + spacing), y: y),
-                    proposal: ProposedViewSize(width: cell, height: height)
-                )
-            }
-            y += height + spacing
-        }
-    }
-
-    private func cellWidth(in width: CGFloat) -> CGFloat {
-        max(0, (width - CGFloat(columns - 1) * spacing) / CGFloat(columns))
-    }
-
-    private func rowHeights(of subviews: Subviews, cell: CGFloat) -> [CGFloat] {
-        stride(from: 0, to: subviews.count, by: columns).map { start in
-            subviews[start..<min(start + columns, subviews.count)]
-                .map { $0.sizeThatFits(ProposedViewSize(width: cell, height: nil)).height }
-                .max() ?? 0
-        }
-    }
-}
-
-// Split picker sheet — lists non-archived Splits, tap selects and dismisses.
-// BRU chrome: BRUHeaderBar + row + BRUDivider(.hair). NO List / NO
-// .navigationTitle — system list chrome and nav-bar titles violate the BRU
-// contract.
-// T38: the header's CANCEL closes the sheet without choosing a routine.
-fileprivate struct NewBlockSplitPickerSheet: View {
-    @Query(filter: #Predicate<Split> { !$0.isArchived }, sort: \Split.name)
-    private var splits: [Split]
-
-    let selectedSplit: Split?
-    let onSelect: (Split) -> Void
-
-    var body: some View {
-        NavigationStack {
-            VStack(spacing: 0) {
-                BRUHeaderBar.slots(left: .cancel, center: "Choose Routine")
-
-                ScrollView {
-                    LazyVStack(spacing: 0) {
-                        ForEach(splits) { split in
-                            Button {
-                                onSelect(split)
-                            } label: {
-                                HStack {
-                                    Text(split.name)
-                                        .font(NewBlockType.cta)
-                                        .foregroundStyle(Color.bruInk)
-                                    Spacer()
-                                    if split.id == selectedSplit?.id {
-                                        Text("✓")
-                                            .font(NewBlockType.cta)
-                                            .foregroundStyle(Color.bruSignalText)
-                                    }
-                                }
-                                .frame(minHeight: 44)
-                                .padding(.horizontal, NewBlockScreenTokens.sidePadding)
-                                .contentShape(Rectangle())
-                            }
-                            .buttonStyle(.plain)
-
-                            BRUDivider(.hair)
-                        }
-                    }
-                }
-            }
-            .background(Color.bruPaper.ignoresSafeArea())
-            .navigationBarHidden(true)
-        }
-        .presentationDetents([.medium, .large])
     }
 }
 

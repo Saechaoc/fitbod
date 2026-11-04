@@ -319,7 +319,10 @@ public struct BlockOverviewScreen: View {
         // The BRU header's ‹ BACK is the only back control, at the top.
         .navigationBarHidden(true)
         .sheet(isPresented: $presentingSplitPicker) {
-            SplitPickerSheet(block: block)
+            RoutinePickerSheet(selectedSplit: block.split) { split in
+                attachOrSwap(split)
+                presentingSplitPicker = false
+            }
         }
         .sheet(isPresented: $presentingSwapConfirm) {
             swapConfirmSheet
@@ -954,6 +957,17 @@ public struct BlockOverviewScreen: View {
         }
     }
 
+    // MARK: - Routine attach / swap
+
+    /// Attaches the chosen routine to a block without one, or swaps it in.
+    private func attachOrSwap(_ split: Split) {
+        if block.split == nil {
+            try? BlockLifecycleService.attachSplit(split, to: block, context: ctx)
+        } else {
+            try? BlockLifecycleService.swapSplit(split, on: block, context: ctx)
+        }
+    }
+
     // MARK: - Persistence helper
 
     /// Persist pending edits; surface a lightweight save-error alert on failure
@@ -973,12 +987,12 @@ public struct BlockOverviewScreen: View {
         VStack(spacing: 0) {
             BRUSectionHead("Scheduling", right: nil)
             HStack(spacing: 8) {
-                ModeChip("ROTATION", selected: block.schedulingMode == .rotation) {
+                SchedulingModeChip("ROTATION", selected: block.schedulingMode == .rotation) {
                     block.schedulingMode = .rotation
                     block.trainingDays = TrainingDaysWriter.sort(weekdays: block.trainingDays)
                     saveOrAlert()
                 }
-                ModeChip("FIXED WEEKLY", selected: block.schedulingMode == .fixedWeekly) {
+                SchedulingModeChip("FIXED WEEKLY", selected: block.schedulingMode == .fixedWeekly) {
                     block.schedulingMode = .fixedWeekly
                     block.trainingDays = TrainingDaysWriter.sort(weekdays: block.trainingDays)
                     saveOrAlert()
@@ -994,25 +1008,15 @@ public struct BlockOverviewScreen: View {
 
     @ViewBuilder
     private var dayChipSection: some View {
-        // Weekday int mapping — Monday-first: Mon=2, Tue=3, Wed=4, Thu=5, Fri=6, Sat=7, Sun=1
-        // UI grid index 0=Mon...6=Sun; Calendar weekday: Sun=1, Mon=2, ...Sat=7
-        let weekdayForGridIndex: [Int] = [2, 3, 4, 5, 6, 7, 1] // Mon..Sun in Calendar weekday ints
-        let weekdayLetters = ["M", "T", "W", "T", "F", "S", "S"]
-        let weekdayNames = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
         let slotCount = block.split?.slots?.count ?? 0
+        let dayLayout = DayGridLayout.days(accessibilitySize: dynamicTypeSize.isAccessibilitySize)
 
         VStack(spacing: 0) {
             BRUSectionHead("Training days", right: nil)
-            LazyVGrid(
-                columns: Array(repeating: GridItem(.flexible(), spacing: 4), count: 7),
-                spacing: 4
-            ) {
-                ForEach(0..<7, id: \.self) { index in
-                    let weekday = weekdayForGridIndex[index]
-                    let letter = index < weekdayLetters.count ? weekdayLetters[index] : "?"
-                    let name = index < weekdayNames.count ? weekdayNames[index] : "Day \(index + 1)"
+            dayLayout {
+                ForEach(trainingWeekdays, id: \.weekday) { weekday, letter, name in
                     let isSelected = block.trainingDays.contains(weekday)
-                    DayToggleChip(letter: letter, weekdayName: name, selected: isSelected) {
+                    TrainingDayChip(letter: letter, weekdayName: name, selected: isSelected) {
                         var days = block.trainingDays
                         if isSelected {
                             days.removeAll { $0 == weekday }
@@ -1028,13 +1032,10 @@ public struct BlockOverviewScreen: View {
             .padding(.top, 8)
             .padding(.bottom, 4)
 
-            // Soft amber mismatch hint — only when a split is attached and counts differ.
-            // Hidden when no split attached (nothing to mismatch against), matching
-            // NewBlockSplitBand semantics. (fix-5)
+            // Shown only when a split is attached and the counts differ, as on
+            // NewBlockSplitBand (fix-5).
             if block.split != nil && block.trainingDays.count != slotCount {
-                Text("\(BRUCountLabel.text(block.trainingDays.count, "day")) / \(BRUCountLabel.text(slotCount, "session"))")
-                    .font(BRUFont.bodyDefault)
-                    .foregroundStyle(Color.bruAmber)
+                ScheduleMismatchHint(days: block.trainingDays.count, sessions: slotCount)
                     .padding(.horizontal, 16)
                     .padding(.top, 4)
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -1455,75 +1456,6 @@ fileprivate struct HeroHeadline: View {
     }
 }
 
-// MARK: - ModeChip (fileprivate)
-
-fileprivate struct ModeChip: View {
-    let label: String
-    let selected: Bool
-    let action: () -> Void
-
-    init(_ label: String, selected: Bool, action: @escaping () -> Void) {
-        self.label = label
-        self.selected = selected
-        self.action = action
-    }
-
-    var body: some View {
-        Button {
-            action()
-        } label: {
-            Text(label)
-                .font(BRUFont.labelSmall)
-                .textCase(.uppercase)
-                .tracking(1.2)
-                .foregroundStyle(selected ? Color.bruPaper : Color.bruInk)
-                .padding(.horizontal, 10)
-                .padding(.vertical, 6)
-                .frame(maxWidth: .infinity)
-                .background(selected ? Color.bruInk : Color.clear)
-                .overlay(
-                    Rectangle()
-                        .stroke(Color.bruInk, lineWidth: selected ? 1.5 : 1.0)
-                )
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel("\(label) scheduling")
-        .accessibilityAddTraits(selected ? .isSelected : [])
-    }
-}
-
-// MARK: - DayToggleChip (fileprivate)
-
-fileprivate struct DayToggleChip: View {
-    let letter: String
-    let weekdayName: String   // full name e.g. "Monday" — used for accessibilityLabel
-    let selected: Bool
-    let action: () -> Void
-
-    var body: some View {
-        Button {
-            action()
-        } label: {
-            Text(letter)
-                .font(BRUFont.labelSmall)
-                .textCase(.uppercase)
-                .tracking(1.2)
-                .foregroundStyle(selected ? Color.bruPaper : Color.bruMuted)
-                .frame(maxWidth: .infinity)
-                .frame(height: 28)
-                .background(selected ? Color.bruInk : Color.bruFaint)
-                .overlay(
-                    Rectangle()
-                        .stroke(Color.bruInk, lineWidth: selected ? 1.5 : 1.0)
-                )
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel(weekdayName)
-        .accessibilityAddTraits(.isToggle)
-        .accessibilityValue(selected ? "on" : "off")
-    }
-}
-
 // MARK: - SwapConfirmSheet (fileprivate)
 
 fileprivate struct SwapConfirmSheet: View {
@@ -1555,69 +1487,6 @@ fileprivate struct SwapConfirmSheet: View {
         .frame(maxWidth: .infinity)
         .background(Color.bruPaper)
         .presentationDetents([.fraction(0.4)])
-    }
-}
-
-// MARK: - SplitPickerSheet (fileprivate)
-
-fileprivate struct SplitPickerSheet: View {
-    let block: Block
-
-    @Environment(\.modelContext) private var ctx
-    @Environment(\.dismiss) private var dismiss
-
-    @Query(
-        filter: #Predicate<Split> { !$0.isArchived },
-        sort: [SortDescriptor(\Split.name)]
-    ) private var splits: [Split]
-
-    var body: some View {
-        // BRU chrome (WR-05): ScrollView + BRUSectionHead + row pattern, matching
-        // SlotPickerSheet / NewBlockSplitPickerSheet. No List / .navigationTitle —
-        // system list chrome and nav-bar titles violate the BRU contract.
-        NavigationStack {
-            VStack(spacing: 0) {
-                BRUSectionHead("Choose Routine")
-
-                ScrollView {
-                    LazyVStack(spacing: 0) {
-                        ForEach(splits) { split in
-                            Button {
-                                attachOrSwap(split: split)
-                                dismiss()
-                            } label: {
-                                VStack(alignment: .leading, spacing: 4) {
-                                    Text(split.name)
-                                        .font(BRUFont.bodyEmphasis)
-                                        .foregroundStyle(Color.bruInk)
-                                    Text(BRUCountLabel.text(split.slots?.count ?? 0, "session"))
-                                        .font(BRUFont.bodyDefault)
-                                        .foregroundStyle(Color.bruMuted)
-                                }
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .padding(.horizontal, 16)
-                                .frame(minHeight: 44)
-                                .contentShape(Rectangle())
-                            }
-                            .buttonStyle(.plain)
-
-                            BRUDivider(.hair)
-                        }
-                    }
-                }
-            }
-            .background(Color.bruPaper.ignoresSafeArea())
-            .navigationBarHidden(true)
-        }
-    }
-
-    private func attachOrSwap(split: Split) {
-        // Explicit nil-conditional branch per plan: attach vs swap
-        if block.split == nil {
-            try? BlockLifecycleService.attachSplit(split, to: block, context: ctx)
-        } else {
-            try? BlockLifecycleService.swapSplit(split, on: block, context: ctx)
-        }
     }
 }
 
