@@ -71,7 +71,7 @@ public struct TodayView: View {
     // MARK: - Navigation / Sheet State (preserved verbatim from Phase 4/5)
 
     @State private var navigationPath = NavigationPath()
-    @State private var pendingBlockBuilder: PendingBlockBuilder? = nil
+    @State private var pendingBlockBuilder: BlockBuilderRoute? = nil
     @State private var pendingBlockReview: Block? = nil
 
     // Phase 5 plan 04 — deload advisory state.
@@ -273,58 +273,17 @@ public struct TodayView: View {
                     PerMuscleDetailView(muscleSlug: slug)
                 }
             }
-            // Phase 04.1 Plan 07 — BlockOverviewRoute (CONTEXT D-11)
-            // Resolves the block by UUID via FetchDescriptor and presents the
-            // read-only BlockOverviewScreen. The onEdit closure pushes to
-            // BlockBuilderView via pendingBlockBuilder (.edit case).
-            .navigationDestination(for: BlockOverviewRoute.self) { route in
-                switch route {
-                case .summary(let blockID):
-                    let blockIDCapture = blockID
-                    let fetchedBlock = (try? ctx.fetch(
-                        FetchDescriptor<Block>(predicate: #Predicate<Block> { $0.id == blockIDCapture })
-                    ))?.first
-                    if let resolvedBlock = fetchedBlock {
-                        BlockOverviewScreen(block: resolvedBlock, onEdit: {
-                            pendingBlockBuilder = .edit(resolvedBlock)
-                        })
-                    } else {
-                        Text("Block not found")
-                            .font(BRUFont.bodyDefault)
-                            .foregroundStyle(Color.bruMuted)
-                    }
-                }
-            }
-            // Phase 09 Plan 03 — SplitDetailRoute: fix-it CTA from .emptySplit
-            // navigates to SplitDetailView on Today's OWN stack (no cross-tab nav).
-            .navigationDestination(for: SplitDetailRoute.self) { route in
-                switch route {
-                case .detail(let splitID):
-                    let splitIDCapture = splitID
-                    let fetchedSplit = (try? ctx.fetch(
-                        FetchDescriptor<Split>(predicate: #Predicate<Split> { $0.id == splitIDCapture })
-                    ))?.first
-                    if let resolvedSplit = fetchedSplit {
-                        SplitDetailView(split: resolvedSplit)
-                    } else {
-                        Text("Routine not found")
-                            .font(BRUFont.bodyDefault)
-                            .foregroundStyle(Color.bruMuted)
-                    }
-                }
-            }
+            // The block overview (CONTEXT D-11), whose EDIT opens the builder,
+            // and the routine the .emptySplit fix-it opens on Today's own
+            // stack (Phase 09 Plan 03).
+            .blockDestinations { pendingBlockBuilder = .edit($0) }
             // The name step "+ New routine" opens; its SAVE swaps it for the
             // routine's SplitDetailView.
             .newRoutineDestination(path: $navigationPath)
             // ─── Sheets (preserved verbatim from Phase 4/5) ──────────────────
-            .sheet(item: $pendingBlockBuilder) { pending in
+            .sheet(item: $pendingBlockBuilder) { route in
                 NavigationStack {
-                    switch pending {
-                    case .template(let template):
-                        BlockBuilderView(draft: BlockDraft(template: template), origin: .today)
-                    case .edit(let block):
-                        BlockBuilderView(draft: BlockDraft(block: block), editing: block, origin: .today)
-                    }
+                    route.builder(origin: .today)
                 }
             }
             // A recap due on the same visit waits for the review to close.
@@ -850,22 +809,6 @@ public struct TodayView: View {
     private enum PendingChoice {
         case session(SplitSessionSlot)
         case empty
-    }
-
-    // MARK: - PendingBlockBuilder (preserved verbatim from Phase 4/5; .edit case added for D-11)
-
-    private enum PendingBlockBuilder: Identifiable {
-        case template(BlockTemplate)
-        case edit(Block)
-
-        var id: String {
-            switch self {
-            case .template(let template):
-                return "template-\(template.name)"
-            case .edit(let block):
-                return "edit-\(block.id.uuidString)"
-            }
-        }
     }
 }
 

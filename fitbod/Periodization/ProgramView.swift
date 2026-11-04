@@ -109,11 +109,11 @@ public struct ProgramView: View {
     private var archivedSplits: [Split]
 
     @State private var navigationPath = NavigationPath()
-    @State private var pendingBlockBuilder: PendingBlockBuilder? = nil
+    @State private var pendingBlockBuilder: BlockBuilderRoute? = nil
     @State private var showingNewPopover = false
     @State private var presentingStartChoice = false
     @State private var presentingPresetPicker = false
-    @State private var stagedBuilder: PendingBlockBuilder? = nil
+    @State private var stagedBuilder: BlockBuilderRoute? = nil
     @State private var showAllDone = false
     @State private var headerHeight = ProgramChromeHeader.totalHeight
 
@@ -186,59 +186,13 @@ public struct ProgramView: View {
                 }
             }
             // T-09-04 mitigation: register BlockOverviewRoute BEFORE any BLOCKS taps.
-            // Resolves Block by UUID via FetchDescriptor — mirrors TodayView pattern.
-            .navigationDestination(for: BlockOverviewRoute.self) { route in
-                switch route {
-                case .summary(let blockID):
-                    let blockIDCapture = blockID
-                    let fetchedBlock = (try? ctx.fetch(
-                        FetchDescriptor<Block>(
-                            predicate: #Predicate<Block> { $0.id == blockIDCapture }
-                        )
-                    ))?.first
-                    if let resolvedBlock = fetchedBlock {
-                        BlockOverviewScreen(block: resolvedBlock, onEdit: {
-                            pendingBlockBuilder = .edit(resolvedBlock)
-                        })
-                    } else {
-                        Text("Block not found")
-                            .font(BRUFont.bodyDefault)
-                            .foregroundStyle(Color.bruMuted)
-                    }
-                }
-            }
-            // SplitDetailRoute destination — resolves Split by UUID.
-            .navigationDestination(for: SplitDetailRoute.self) { route in
-                switch route {
-                case .detail(let splitID):
-                    let splitIDCapture = splitID
-                    let fetchedSplit = (try? ctx.fetch(
-                        FetchDescriptor<Split>(
-                            predicate: #Predicate<Split> { $0.id == splitIDCapture }
-                        )
-                    ))?.first
-                    if let resolvedSplit = fetchedSplit {
-                        SplitDetailView(split: resolvedSplit)
-                    } else {
-                        Text("Routine not found")
-                            .font(BRUFont.bodyDefault)
-                            .foregroundStyle(Color.bruMuted)
-                    }
-                }
-            }
+            .blockDestinations { pendingBlockBuilder = .edit($0) }
             .navigationDestination(for: ArchivedRoutinesRoute.self) { _ in
                 ArchivedRoutinesView()
             }
             .newRoutineDestination(path: $navigationPath)
-            .fullScreenCover(item: $pendingBlockBuilder) { pending in
-                switch pending {
-                case .newBlock(let chosenPreset):
-                    BlockBuilderView(draft: BlockDraft.newBlock(), initialPreset: chosenPreset)
-                case .template(let template):
-                    BlockBuilderView(draft: BlockDraft(template: template))
-                case .edit(let block):
-                    BlockBuilderView(draft: BlockDraft(block: block), editing: block)
-                }
+            .fullScreenCover(item: $pendingBlockBuilder) { route in
+                route.builder(origin: .program)
             }
             .sheet(isPresented: $presentingStartChoice, onDismiss: {
                 if let staged = stagedBuilder {
@@ -346,27 +300,6 @@ public struct ProgramView: View {
             "Week \(weekIndex + 1) of \(totalWeeks) · \(phase)",
             "Week \(weekIndex + 1) of \(totalWeeks), \(phase)"
         )
-    }
-
-    private enum PendingBlockBuilder: Identifiable {
-        case newBlock(NewBlockPreset?)
-        case template(BlockTemplate)
-        case edit(Block)
-
-        var id: String {
-            switch self {
-            case .newBlock(let preset):
-                if let preset = preset {
-                    return "new-block-preset-\(preset.id)"
-                } else {
-                    return "new-block-scratch"
-                }
-            case .template(let template):
-                return "template-\(template.name)"
-            case .edit(let block):
-                return "edit-\(block.id)"
-            }
-        }
     }
 
     // MARK: - Ordered blocks (Swift post-filter — derivedStatus is computed, not stored)

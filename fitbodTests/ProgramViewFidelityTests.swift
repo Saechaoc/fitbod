@@ -177,10 +177,8 @@ struct ProgramViewFidelityTests {
                 "DONE status badge must use verbatim label 'DONE'.")
 
         // Navigation destinations registered (T-09-04 mitigation)
-        #expect(source.contains("navigationDestination(for: BlockOverviewRoute.self)"),
-                "BlockOverviewRoute destination must be registered on ProgramView's NavigationStack.")
-        #expect(source.contains("navigationDestination(for: SplitDetailRoute.self)"),
-                "SplitDetailRoute destination must be registered on ProgramView's NavigationStack.")
+        #expect(source.contains(".blockDestinations"),
+                "BlockOverviewRoute and SplitDetailRoute destinations must be registered on ProgramView's NavigationStack.")
     }
 
     @Test("ProgramView + NEW opens reusable BRU action popover with block and routine routes")

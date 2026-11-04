@@ -226,16 +226,16 @@ struct BRUPeriodizationAuditTests {
 
     // MARK: - 3. testBlockOverviewRouteWiring
 
-    @Test("testBlockOverviewRouteWiring — BlockOverviewRoute navigation destination in TodayView")
+    @Test("testBlockOverviewRouteWiring — TodayView registers the shared BlockOverviewRoute destination")
     func testBlockOverviewRouteWiring() throws {
-        // TodayView.swift: must declare BlockOverviewRoute + navigationDestination for it
-        // (The navigationDestination is in TodayView per Plan 07 implementation)
-        let todayViewURL = viewsPath("TodayView.swift")
-        let todayViewSource = try String(contentsOf: todayViewURL, encoding: .utf8)
+        let todayViewSource = try String(contentsOf: viewsPath("TodayView.swift"), encoding: .utf8)
         #expect(todayViewSource.contains("BlockOverviewRoute"),
                 "TodayView.swift must reference BlockOverviewRoute for tap-routing wiring (CONTEXT D-11)")
-        #expect(todayViewSource.contains(".navigationDestination(for: BlockOverviewRoute.self)"),
-                "TodayView.swift must declare .navigationDestination(for: BlockOverviewRoute.self) handler (CONTEXT D-11)")
+        #expect(todayViewSource.contains(".blockDestinations"),
+                "TodayView.swift must register the block destinations (CONTEXT D-11)")
+        let navigationSource = try String(contentsOf: sourcePath("BlockNavigation.swift"), encoding: .utf8)
+        #expect(navigationSource.contains("navigationDestination(for: BlockOverviewRoute.self)"),
+                "BlockNavigation.swift must declare the BlockOverviewRoute destination (CONTEXT D-11)")
     }
 
     // MARK: - 4. testAccessibilityLabelsPopulated
