@@ -243,10 +243,6 @@ public struct TodayView: View {
                         isAdvisoryActive: currentAdvisory != nil,
                         navigationPath: $navigationPath
                     )
-
-                    // Phase 4 preserved: BlockCard for active block context
-                    // (rendered inside BlockContextBand in BRU layer above)
-                    // Phase 4 preserved: Start-Block-CTA (in the else if branch above)
                 }
             }
             .background(Color.bruPaper.ignoresSafeArea())

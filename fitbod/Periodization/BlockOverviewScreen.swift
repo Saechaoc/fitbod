@@ -15,7 +15,6 @@
 //      [live] modePickerSection (all live statuses)
 //      [live/fixedWeekly] dayChipSection
 //      phaseProgressionList
-//      fatigueAdvisoryStrip
 //      [completed] archiveContentSection
 //    }
 //    [ready]  startBlockButton + safeAreaFiller
@@ -306,7 +305,6 @@ public struct BlockOverviewScreen: View {
                             dayChipSection
                         }
                         phaseProgressionList
-                        fatigueAdvisoryStrip
                     } else {
                         // Archived mode: render from decoded archive only
                         archiveContentSection
@@ -404,10 +402,6 @@ public struct BlockOverviewScreen: View {
 
     private var intMultiplierLabel: String {
         "INT \(intensityPercent)%"
-    }
-
-    private var shouldShowFatigueAdvisory: Bool {
-        StubFatigueAdvisory().shouldSuggest(context: SessionContext())
     }
 
     // MARK: - Day state helpers (accessible for testing via internal shim)
@@ -1151,15 +1145,6 @@ public struct BlockOverviewScreen: View {
                     .fill(Color.bruSignal)
                     .frame(width: 4)
             }
-        }
-    }
-
-    // MARK: - Fatigue Advisory Strip
-
-    @ViewBuilder
-    private var fatigueAdvisoryStrip: some View {
-        if shouldShowFatigueAdvisory {
-            ConsiderDeloadBanner()
         }
     }
 

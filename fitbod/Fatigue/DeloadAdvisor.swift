@@ -27,13 +27,6 @@
 //  only writer of block deload state remains
 //  `PeriodizationEngine.advance(...)` per Phase 4 D-25.
 //
-//  Phase 4 FatigueAdvisory protocol bridge: `DeloadAdvisorAdapter`
-//  conforms to the existing protocol (`Bool` + `FatigueSuggestion`
-//  surface — see fitbod/Prescription/FatigueAdvisory.swift). This lets
-//  the Phase 4 `ConsiderDeloadBanner` stub be superseded by Phase 5's
-//  richer surface (`DeloadAdvisoryBanner`) without breaking any Phase 4
-//  consumer that still binds to the protocol.
-//
 //  @MainActor because ModelContext is @MainActor-bound under Swift 6.
 //  No SwiftData mutations — every read is a FetchDescriptor over
 //  Session / SessionExercise / SetEntry rows.
@@ -338,30 +331,5 @@ public enum DeloadAdvisor {
             }
         }
         return best
-    }
-}
-
-// MARK: - Phase 4 FatigueAdvisory adapter
-
-/// Bridges DeloadAdvisor's richer surface (DeloadAdvisory?) into
-/// Phase 4's `FatigueAdvisory` protocol (`Bool` + `FatigueSuggestion`).
-/// Replaces `StubFatigueAdvisory` as the production binding.
-public struct DeloadAdvisorAdapter: FatigueAdvisory {
-
-    public init() {}
-
-    public func shouldSuggest(context: SessionContext) -> Bool {
-        // The legacy SessionContext from Phase 4 doesn't carry a
-        // ModelContext or UserSettings, so we cannot evaluate signals
-        // here. Returning false matches the pre-existing
-        // StubFatigueAdvisory behavior at the protocol surface; Phase
-        // 5's DeloadAdvisoryBanner reads `DeloadAdvisor.evaluate`
-        // directly via RootView's @State + .task / .onAppear flow
-        // (no protocol indirection needed for the richer UI).
-        false
-    }
-
-    public func suggestion(context: SessionContext) -> FatigueSuggestion {
-        FatigueSuggestion(reason: "")
     }
 }

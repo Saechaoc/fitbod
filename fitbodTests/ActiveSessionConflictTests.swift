@@ -3,12 +3,8 @@
 //  fitbodTests
 //
 //  Pins the RESEARCH §6 Pitfall 7 "one active session at a time"
-//  invariant from the perspective of `RoutinesListView.handleStartTap`.
-//  The view itself is a SwiftUI body and exercising its tap handler
-//  inside a hermetic test harness is brittle; instead these tests pin
-//  the `SessionFactory.start(...)` contract that `handleStartTap`
-//  delegates to. The view code path that surfaces the UI-SPEC alert is
-//  source-pinned via `RoutinesListCopyTests`.
+//  invariant at the `SessionFactory.start(...)` contract that
+//  `WorkoutStarter.start` delegates to.
 //
 //  Four test functions:
 //
@@ -16,13 +12,12 @@
 //       and returns a Session with `completedAt == nil`.
 //    2. secondStartThrowsActiveSessionAlreadyExists — calling start
 //       twice without finishing the first throws the typed error that
-//       `RoutinesListView` translates into the "Workout in Progress"
-//       alert.
+//       `WorkoutStarter.start` turns into `.alreadyInProgress`.
 //    3. startAfterFinishingPriorSessionSucceeds — finishing the prior
 //       session (setting `completedAt`) un-blocks the next start.
 //    4. startAfterDiscardingPriorSessionSucceeds — discarding the prior
-//       session (deleting it) un-blocks the next start. This is the
-//       "Discard" button code path in the conflict alert.
+//       session (deleting it) un-blocks the next start, as discarding
+//       an in-progress workout does.
 //
 //  Mirrors the test fixture shape used by `SessionFactoryTests`:
 //  per-test in-memory `ModelContainer` built against FitbodModelContainer.make(inMemory: true)
@@ -101,9 +96,8 @@ struct ActiveSessionConflictTests {
             _ = try SessionFactory.start(template: routine, on: .now, context: ctx)
             Issue.record("Expected activeSessionAlreadyExists, but start returned a Session")
         } catch SessionFactoryError.activeSessionAlreadyExists {
-            // expected — this is the error code that RoutinesListView's
-            // `handleStartTap` catches and translates into the
-            // "Workout in Progress" alert.
+            // expected — `WorkoutStarter.start` turns this into
+            // `.alreadyInProgress`.
         } catch {
             Issue.record("Expected activeSessionAlreadyExists; got \(error)")
         }
@@ -132,9 +126,7 @@ struct ActiveSessionConflictTests {
         let routine = try makeRoutine(ctx: ctx)
         let first = try SessionFactory.start(template: routine, on: .now, context: ctx)
 
-        // Simulate the "Discard" button in the "Workout in Progress"
-        // alert — `RoutinesListView` invokes `ctx.delete(active)` +
-        // `ctx.save()` and then re-tap on Start Workout should succeed.
+        // Discard the in-progress workout; the next start succeeds.
         ctx.delete(first)
         try ctx.save()
         #expect(SessionFactory.active(in: ctx) == nil)

@@ -55,14 +55,5 @@ struct BlockBuilderViewCopyTests {
         #expect(!builder.contains("SAVE TEMPLATE"))
         #expect(builder.contains("\"Couldn't save block. Try again.\""))
         #expect(builder.contains("\"CANCEL\""))
-
-        let row = try String(
-            contentsOf: base.appendingPathComponent("BlockPhaseEditorRow.swift"),
-            encoding: .utf8
-        )
-        #expect(row.contains("\"WEEKS\""))
-        #expect(row.contains("\"VOL\""))
-        #expect(row.contains("\"INT\""))
-        #expect(row.contains("\"Reorder phase \\(displayIndex): \\(BlockPhaseColors.phaseLabel(draft.kind))\""))
     }
 }

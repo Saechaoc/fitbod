@@ -11,9 +11,8 @@
 //    ZStack(alignment: .bottom) {
 //      VStack(spacing: 0) {
 //        // 1. Routine name + header chip row + BRUDivider(.ink)
-//        // 2. RoutineBuilderDayTabs + BRUDivider(.ink)
-//        // 3. ScrollView with exercise cards + BRUDashedSlot
-//        // 4. 24pt bruBg safe-area filler
+//        // 2. ScrollView with exercise cards + BRUDashedSlot
+//        // 3. 24pt bruBg safe-area filler
 //      }
 //      BottomActionBar (floats at bottom)
 //    }

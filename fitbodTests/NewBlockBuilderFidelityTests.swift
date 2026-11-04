@@ -85,7 +85,6 @@ struct NewBlockBuilderFidelityTests {
             "NewBlockScreenTokens",
             "NewBlockTopBar",
             "NewBlockNameBand",
-            "NewBlockPresetChip",
             "NewBlockMetricsBand",
             "NewBlockProgressionChart",
             "NewBlockPhaseEditorRow",

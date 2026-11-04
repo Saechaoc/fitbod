@@ -1,8 +1,8 @@
 //
-//  BlockCardWeekNavigationTests.swift
+//  BlockWeekNavigationTests.swift
 //  fitbodTests
 //
-//  Phase 4 coverage for BlockCard and MesocycleWeekPage helper paths.
+//  Phase 4 coverage for the PeriodizationEngine and MesocycleWeekPage week helpers.
 //
 
 import Foundation
@@ -10,8 +10,8 @@ import Testing
 @testable import fitbod
 
 @MainActor
-@Suite("BlockCardWeekNavigation", .serialized)
-struct BlockCardWeekNavigationTests {
+@Suite("BlockWeekNavigation", .serialized)
+struct BlockWeekNavigationTests {
     private let day: TimeInterval = 86_400
 
     private func makeBlock(
@@ -46,7 +46,6 @@ struct BlockCardWeekNavigationTests {
         let block = makeBlock(startDate: now.addingTimeInterval(-14 * day))
 
         #expect(PeriodizationEngine.weekIndex(for: block, on: now) == 2)
-        #expect(BlockCard.initialSelectedWeekIndex(for: block, on: now) == 2)
     }
 
     @Test("days remaining for current week")

@@ -7,16 +7,6 @@
 // (+ 1 net-new BlockOverviewScreen.swift) and assert ZERO occurrences of the
 // 25 forbidden Apple-HIG patterns enumerated in 04.1-PATTERNS.md lines 56-84.
 //
-// EXEMPTION (revision iter 1 W4 proximity rule):
-//   Image(systemName: "trash") in BlockRow.swift ONLY is exempt when the nearest
-//   preceding non-blank line within 20 lines contains `.swipeActions(edge:`.
-//   This keeps the system swipe-chrome trash icon (CONTEXT D-07) from triggering
-//   the audit. The prior brace-balance counter approach is REPLACED by this proximity
-//   rule per W4 user decision.
-//
-//   Implementation: isBlockRowTrashWithinSwipeActions(lineIndex:lines:)
-//   Docstring for the rule is included inline in the exemption helper below.
-//
 // ROADMAP AUDIT (revision iter 1 W5):
 //   testROADMAPDependsOnUpdated is extended to additionally assert:
 //   (a) "Phase 2.1 (specifically 02.1-01-PLAN.md foundation)" dependency citation
@@ -108,42 +98,6 @@ struct BRUPeriodizationAuditTests {
         return results
     }
 
-    // MARK: - BlockRow Trash Exemption Helper (W4 proximity rule)
-
-    /// Returns true when the match at `lineIndex` is `Image(systemName: "trash")`
-    /// AND the nearest preceding non-blank line within 20 lines contains `.swipeActions(edge:`.
-    ///
-    /// Exemption rule (revision iter 1 W4 user decision):
-    ///   In BlockRow.swift ONLY, `Image(systemName: "trash")` is exempt when the nearest
-    ///   preceding non-blank line within 20 lines contains `.swipeActions(edge:`.
-    ///   This keeps the system swipe-chrome trash icon (CONTEXT D-07) from triggering
-    ///   the audit guardrail. The proximity rule is O(N) with a 20-line window, not a
-    ///   fragile brace-balance counter (replaced per W4).
-    ///
-    ///   Note: BlockRow.swift currently uses `Label("Delete", systemImage: "trash")` not
-    ///   `Image(systemName: "trash")`, so this proximity check is a belt-and-suspenders
-    ///   safeguard for any future refactor that re-introduces `Image(systemName: "trash")`.
-    private func isBlockRowTrashWithinSwipeActions(
-        lineIndex: Int,
-        allLines: [String]
-    ) -> Bool {
-        // Walk backwards from lineIndex (exclusive) up to 20 non-blank preceding lines
-        var nonBlankCount = 0
-        var checkIndex = lineIndex - 1
-        while checkIndex >= 0 && nonBlankCount < 20 {
-            let line = allLines[checkIndex]
-            let trimmed = line.trimmingCharacters(in: .whitespaces)
-            if !trimmed.isEmpty {
-                if trimmed.contains(".swipeActions(edge:") {
-                    return true
-                }
-                nonBlankCount += 1
-            }
-            checkIndex -= 1
-        }
-        return false
-    }
-
     // MARK: - Forbidden Patterns Table
 
     /// The 25 forbidden Apple-HIG patterns from 04.1-PATTERNS.md lines 56-84.
@@ -186,16 +140,12 @@ struct BRUPeriodizationAuditTests {
         (".font(.subheadline)", #"\.font\(\.subheadline\)"#, []),
 
         // 11. Image(systemName:) forbidden SF Symbols (per Pillar 6 table)
-        //     NOTE: Image(systemName: "trash") has the BlockRow.swift proximity exemption.
-        //     BlockRow.swift currently uses Label("Delete", systemImage: "trash") — not Image(systemName:)
-        //     so this check handles any future refactor that re-introduces Image(systemName: "trash").
         ("Image(systemName: \"line.3.horizontal\")", #"Image\(systemName:\s*"line\.3\.horizontal"\)"#, []),
         ("Image(systemName: \"ellipsis.circle\")", #"Image\(systemName:\s*"ellipsis\.circle"\)"#, []),
         ("Image(systemName: \"exclamationmark.triangle\")", #"Image\(systemName:\s*"exclamationmark\.triangle"\)"#, []),
         ("Image(systemName: \"xmark\")", #"Image\(systemName:\s*"xmark"\)"#, []),
         ("Image(systemName: \"chevron.right\")", #"Image\(systemName:\s*"chevron\.right"\)"#, []),
-        // "trash" is proximity-exempt in BlockRow.swift (handled separately in the test body)
-        ("Image(systemName: \"trash\")", #"Image\(systemName:\s*"trash"\)"#, ["BlockRow.swift"]),
+        ("Image(systemName: \"trash\")", #"Image\(systemName:\s*"trash"\)"#, []),
 
         // 12. .buttonStyle(.borderedProminent) / .tint(.accentColor)
         (".buttonStyle(.borderedProminent)", #"\.buttonStyle\(\.borderedProminent\)|\.tint\(\.accentColor\)"#, []),
@@ -212,15 +162,9 @@ struct BRUPeriodizationAuditTests {
     @Test("testForbiddenPatternsAcrossAllPhase4Surfaces — 0 matches for all 25 forbidden patterns across 12 + 1 files")
     func testForbiddenPatternsAcrossAllPhase4Surfaces() throws {
         let surfaces: [(filename: String, directory: String)] = [
-            ("BlockRow.swift", "Periodization"),
-            ("BlockPickerMenu.swift", "Periodization"),
             ("StartBlockCTA.swift", "Periodization"),
             ("DeloadWeekBanner.swift", "Periodization"),
-            ("ConsiderDeloadBanner.swift", "Periodization"),
-            ("BlockCard.swift", "Periodization"),
             ("MesocycleWeekPage.swift", "Periodization"),
-            ("BlockPhaseEditorRow.swift", "Periodization"),
-            ("RoutinesListView.swift", "Routines"),
             // BlockBuilderView.swift retired from this audit in quick task 260528-vi2:
             // the New Block screen was redesigned to the rounded-card final-design.png
             // contract (warm cards, RoundedRectangle, chevron) which intentionally
@@ -235,13 +179,11 @@ struct BRUPeriodizationAuditTests {
         for (filename, directory) in surfaces {
             let fileURL = sourcePath(filename, in: directory)
             let source = try String(contentsOf: fileURL, encoding: .utf8)
-            let allLines = source.components(separatedBy: "\n")
             let filtered = nonCommentLines(of: source)
 
             for patternEntry in Self.forbiddenPatterns {
                 let (name, regexPattern, exemptSuffixes) = patternEntry
 
-                // Check file-level exemption (e.g. Image(systemName: "trash") exempt in BlockRow.swift)
                 let isFileExempt = exemptSuffixes.contains { filename.hasSuffix($0) }
 
                 let regex = try NSRegularExpression(pattern: regexPattern)
@@ -250,15 +192,6 @@ struct BRUPeriodizationAuditTests {
                     let nsRange = NSRange(lineText.startIndex..., in: lineText)
                     guard regex.firstMatch(in: lineText, range: nsRange) != nil else { continue }
 
-                    // For Image(systemName: "trash") in BlockRow.swift — apply proximity rule (W4)
-                    if filename == "BlockRow.swift" && name.contains("trash") {
-                        if isBlockRowTrashWithinSwipeActions(lineIndex: lineIdx, allLines: allLines) {
-                            // Exempt — nearest preceding non-blank line within 20 lines has .swipeActions(edge:
-                            continue
-                        }
-                    }
-
-                    // File-level exemption for other patterns
                     if isFileExempt {
                         continue
                     }
@@ -291,18 +224,10 @@ struct BRUPeriodizationAuditTests {
                 "BlockOverviewScreen.swift must compose ≥4 BRU primitives (BRUHeaderBar + BRUSectionHead + BRUButton + BRUChip); found \(primitiveCount) of \(bruPrimitives)")
     }
 
-    // MARK: - 3. testBlockCardTapRoutingWiring
+    // MARK: - 3. testBlockOverviewRouteWiring
 
-    @Test("testBlockCardTapRoutingWiring — onTapBlock in BlockCard + BlockOverviewRoute navigation destination in TodayView")
-    func testBlockCardTapRoutingWiring() throws {
-        // BlockCard.swift: must expose onTapBlock + .onTapGesture (CONTEXT D-11 rewire)
-        let blockCardURL = sourcePath("BlockCard.swift")
-        let blockCardSource = try String(contentsOf: blockCardURL, encoding: .utf8)
-        #expect(blockCardSource.contains("onTapBlock"),
-                "BlockCard.swift must expose onTapBlock closure for BlockOverviewScreen tap-routing (CONTEXT D-11)")
-        #expect(blockCardSource.contains(".onTapGesture") || blockCardSource.contains("onTapBlock?("),
-                "BlockCard.swift must invoke onTapBlock on tap (CONTEXT D-11)")
-
+    @Test("testBlockOverviewRouteWiring — BlockOverviewRoute navigation destination in TodayView")
+    func testBlockOverviewRouteWiring() throws {
         // TodayView.swift: must declare BlockOverviewRoute + navigationDestination for it
         // (The navigationDestination is in TodayView per Plan 07 implementation)
         let todayViewURL = viewsPath("TodayView.swift")
@@ -315,20 +240,8 @@ struct BRUPeriodizationAuditTests {
 
     // MARK: - 4. testAccessibilityLabelsPopulated
 
-    @Test("testAccessibilityLabelsPopulated — BlockCard + BlockPhaseEditorRow + BlockOverviewScreen carry accessibilityLabel")
+    @Test("testAccessibilityLabelsPopulated — BlockOverviewScreen carries accessibilityLabel")
     func testAccessibilityLabelsPopulated() throws {
-        // BlockCard.swift: .accessibilityLabel("Active block...") (CONTEXT D-15)
-        let blockCardURL = sourcePath("BlockCard.swift")
-        let blockCardSource = try String(contentsOf: blockCardURL, encoding: .utf8)
-        #expect(blockCardSource.contains(".accessibilityLabel(\"Active block"),
-                "BlockCard.swift must carry .accessibilityLabel(\"Active block...\") per CONTEXT D-15")
-
-        // BlockPhaseEditorRow.swift: .accessibilityLabel("Phase...") (CONTEXT D-15)
-        let editorRowURL = sourcePath("BlockPhaseEditorRow.swift")
-        let editorRowSource = try String(contentsOf: editorRowURL, encoding: .utf8)
-        #expect(editorRowSource.contains(".accessibilityLabel(\"Phase") || editorRowSource.contains("accessibilityLabel(\"Phase"),
-                "BlockPhaseEditorRow.swift must carry .accessibilityLabel(\"Phase...\") per CONTEXT D-15")
-
         // BlockOverviewScreen.swift: any .accessibilityLabel( call (CONTEXT D-15)
         let overviewURL = sourcePath("BlockOverviewScreen.swift")
         let overviewSource = try String(contentsOf: overviewURL, encoding: .utf8)
@@ -336,25 +249,7 @@ struct BRUPeriodizationAuditTests {
                 "BlockOverviewScreen.swift must carry .accessibilityLabel( per CONTEXT D-15")
     }
 
-    // MARK: - 5. testReducedMotionGate
-
-    @Test("testReducedMotionGate — BlockCard uses accessibilityReduceMotion + conditional animation")
-    func testReducedMotionGate() throws {
-        let blockCardURL = sourcePath("BlockCard.swift")
-        let source = try String(contentsOf: blockCardURL, encoding: .utf8)
-
-        #expect(source.contains("accessibilityReduceMotion"),
-                "BlockCard.swift must read @Environment(\\.accessibilityReduceMotion) per CONTEXT D-14")
-        // The animation gate pattern: reduceMotion ? nil : .default
-        // Accept either the exact pattern or a conditional expression referencing reduceMotion
-        let hasAnimationGate = source.contains("reduceMotion ? nil : .default")
-            || source.contains("reduceMotion ? nil :")
-            || (source.contains("reduceMotion") && source.contains(".animation("))
-        #expect(hasAnimationGate,
-                "BlockCard.swift must gate TabView animation on reduceMotion (e.g. .animation(reduceMotion ? nil : .default, ...)) per CONTEXT D-14")
-    }
-
-    // MARK: - 6. testROADMAPDependsOnUpdated (EXTENDED per revision iter 1 W5)
+    // MARK: - 5. testROADMAPDependsOnUpdated (EXTENDED per revision iter 1 W5)
 
     /// Extended ROADMAP audit per revision iter 1 W5:
     /// Asserts ROADMAP.md Phase 04.1 entry contains:

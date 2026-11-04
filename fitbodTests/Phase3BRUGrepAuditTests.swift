@@ -50,22 +50,15 @@ struct Phase3BRUGrepAuditTests {
     private static let excludedFileSuffixes: Set<String> = [
         // --- Phase 02.1 Routines surfaces (audited by BRUGrepAuditTests) ---
         "fitbod/Routines/RoutineBuilderView.swift",
-        "fitbod/Routines/RoutinesListView.swift",
-        "fitbod/Routines/RoutineRow.swift",
         "fitbod/Routines/RoutineExerciseCard.swift",
         "fitbod/Routines/BottomActionBar.swift",
-        "fitbod/Routines/InlineExerciseSearchRow.swift",
-        "fitbod/Routines/MoveRoutineSheet.swift",
-        "fitbod/Routines/NewFolderSheet.swift",
         "fitbod/Routines/PrescriptionEditorRow.swift",
-        "fitbod/Routines/RoutineBuilderDayTabs.swift",
         "fitbod/Routines/SetRowsContainer.swift",
         "fitbod/Routines/SupersetAssignmentSheet.swift",
         // Non-view behavior files in Routines
         "fitbod/Routines/PrescriptionDefaults.swift",
         "fitbod/Routines/RoutineDraft.swift",
         "fitbod/Routines/RoutineDuplicator.swift",
-        "fitbod/Routines/RoutineFolderDraft.swift",
 
         // --- Phase 02.1 Sessions surfaces (audited by BRUGrepAuditTests) ---
         "fitbod/Sessions/SessionLoggerView.swift",
@@ -153,7 +146,6 @@ struct Phase3BRUGrepAuditTests {
         "fitbod/Design/BRUDivider.swift",
         "fitbod/Design/BRUFont.swift",
         "fitbod/Design/BRUHeaderBar.swift",
-        "fitbod/Design/BRUPhoneFrame.swift",
         "fitbod/Design/BRUPillButton.swift",
         "fitbod/Design/BRUReadout.swift",
         "fitbod/Design/BRUSectionHead.swift",

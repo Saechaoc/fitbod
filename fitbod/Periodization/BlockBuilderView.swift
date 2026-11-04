@@ -734,36 +734,6 @@ fileprivate struct NewBlockNameBand: View {
     }
 }
 
-// MARK: - Preset Chip (kept for fidelity test — may be visually unused)
-
-fileprivate struct NewBlockPresetChip: View {
-    let title: String
-    let isSelected: Bool
-    let action: () -> Void
-
-    init(_ title: String, isSelected: Bool = false, action: @escaping () -> Void) {
-        self.title = title
-        self.isSelected = isSelected
-        self.action = action
-    }
-
-    var body: some View {
-        Button(action: action) {
-            Text(title)
-                .font(NewBlockType.chip)
-                .tracking(1.8)
-                .foregroundStyle(isSelected ? NewBlockScreenTokens.paper : NewBlockScreenTokens.ink)
-                .lineLimit(1)
-                .minimumScaleFactor(0.75)
-                .frame(height: 26)
-                .padding(.horizontal, 9)
-                .background(isSelected ? NewBlockScreenTokens.ink : Color.clear)
-                .overlay(Rectangle().stroke(NewBlockScreenTokens.ink, lineWidth: 1.5))
-        }
-        .buttonStyle(.plain)
-    }
-}
-
 // MARK: - Template Sheet
 
 /// New Block's preset picker: BLANK, then the catalog. A pick reports the

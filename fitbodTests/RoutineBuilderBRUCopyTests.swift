@@ -74,18 +74,9 @@ struct RoutineBuilderBRUCopyTests {
 
     @Test("dashedSlotCopyVerbatim — 'Add exercise' and '↘ FROM LIBRARY' present")
     func dashedSlotCopyVerbatim() throws {
-        // Check in RoutineBuilderView (primary usage) and InlineExerciseSearchRow (secondary)
         let builder = try source("RoutineBuilderView.swift")
-        let inline = try source("InlineExerciseSearchRow.swift")
-
-        // Either source should contain the verbatim copy
-        let builderHasAddExercise = builder.contains("\"Add exercise\"")
-        let inlineHasAddExercise = inline.contains("\"Add exercise\"")
-        #expect(builderHasAddExercise || inlineHasAddExercise)
-
-        let builderHasHint = builder.contains("\"↘ FROM LIBRARY\"")
-        let inlineHasHint = inline.contains("\"↘ FROM LIBRARY\"")
-        #expect(builderHasHint || inlineHasHint)
+        #expect(builder.contains("\"Add exercise\""))
+        #expect(builder.contains("\"↘ FROM LIBRARY\""))
     }
 
     // MARK: - 5. Prescription chips in spec order (source-anchor)

@@ -25,10 +25,9 @@
 //  notification scheduling side effects.
 //
 //  Notification scheduling is delegated to `RestTimerNotificationScheduling`
-//  (injected via the initializer) so:
-//    1. Unit tests can pass a recording stub and avoid the permission prompt.
-//    2. Plan 02-02 can swap in a Live-Activity-aware decorator without
-//       touching the engine's call sites.
+//  (injected via the initializer) so unit tests can pass a recording stub
+//  and avoid the permission prompt. The Live Activity is a second injected
+//  collaborator, `RestTimerActivityControlling`.
 //
 //  The clock is also injected (`now: () -> Date`) so tests can advance a
 //  synthetic clock without sleeping — the `dateMathSurvivesSimulatedBackground`
@@ -45,10 +44,6 @@
 //  Every mutation (start / adjust / stop) writes the store, reschedules or
 //  cancels the notification, and updates or ends the Live Activity in the
 //  same call, so the three never disagree about when rest ends.
-//
-//  Out of scope for this plan: ActivityKit / Live Activity wiring (plan 02-02),
-//  Dynamic Island view declarations (plan 02-03), SwiftUI overlay views
-//  (plan 04-01). The engine exposes the surface those plans consume.
 //
 
 import Foundation

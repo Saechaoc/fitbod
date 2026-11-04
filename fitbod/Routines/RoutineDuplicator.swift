@@ -3,7 +3,7 @@
 //  fitbod
 //
 //  Wave-3 plan 03-03 — deep-copy entry point for the "Duplicate" action
-//  on a routine row in `RoutinesListView` (ROUTINE-06). The duplicator
+//  in `RoutineBuilderView` (ROUTINE-06). The duplicator
 //  copies the source `Routine` + every owned `RoutineExercise` + the
 //  cascade-owned `RoutineExerciseSetOverride` rows + the soft-ref
 //  `SupersetGroup` rows that belong to the source routine. Every UUID

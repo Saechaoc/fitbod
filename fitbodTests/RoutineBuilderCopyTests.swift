@@ -16,13 +16,12 @@
 //    - "Notes (optional)" removed (no notes field in BRU layout)
 //    - "Exercises" removed (no Section header in BRU layout)
 //    - "Add an exercise to begin." removed (replaced by BRUDashedSlot)
-//    - "Add an exercise" in InlineExerciseSearchRow → "Add exercise" (BRUDashedSlot label)
+//    - "Add an exercise" → "Add exercise" (BRUDashedSlot label)
 //    - "Add Override" → "+ ADD OVERRIDE" (signal text per UI-SPEC verbatim copy)
 //
 //  Strings anchored:
 //    - RoutineBuilderView: "New routine" / "Routine name" /
 //      "Discard changes?" / "Discard" / "Keep editing" / "Cancel"
-//    - InlineExerciseSearchRow: "Add exercise"
 //    - PrescriptionEditorRow: "Sets" / "Min reps" / "Max reps" /
 //      "Target RPE" / "Rest" / "Track tempo" / "Track partial reps" /
 //      "Auto warm-up" (T110 removed "Per-set overrides" and its
@@ -60,14 +59,6 @@ struct RoutineBuilderCopyTests {
         #expect(builder.contains("\"Keep editing\""))
         // "Cancel" button still present in more-menu confirmation dialog
         #expect(builder.contains("\"Cancel\""))
-
-        // MARK: InlineExerciseSearchRow — BRU dashed slot label
-        let inline = try String(
-            contentsOf: base.appendingPathComponent("InlineExerciseSearchRow.swift"),
-            encoding: .utf8
-        )
-        // BRU slot label: "Add exercise" (singular, no trailing space)
-        #expect(inline.contains("\"Add exercise\""))
 
         // MARK: PrescriptionEditorRow — Phase 3 field labels preserved
         let editor = try String(

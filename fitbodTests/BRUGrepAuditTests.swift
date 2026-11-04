@@ -49,7 +49,6 @@ struct BRUGrepAuditTests {
         "fitbod/Routines/PrescriptionDefaults.swift",
         "fitbod/Routines/RoutineDraft.swift",
         "fitbod/Routines/RoutineDuplicator.swift",
-        "fitbod/Routines/RoutineFolderDraft.swift",
     ]
 
     /// Audit directory names relative to the project root.

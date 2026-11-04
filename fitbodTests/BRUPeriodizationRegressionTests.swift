@@ -14,7 +14,6 @@
 //   3. Matches the precedent set by Phase 6 SessionLoggerCopyTests.
 //
 // Revision iter 1 hooks per PLAN-INDEX.md:
-//   - BlockCard: assert TabView pager preserved (B4 user decision)
 //   - BlockOverviewScreen: assert @Query<Session> data wiring, no hardcoded mocks (B5)
 //
 // Run via:
@@ -106,94 +105,19 @@ struct BRUPeriodizationRegressionTests {
                 "BlockReviewView.swift must NOT use Form { in code (replaced by ScrollView+VStack)")
     }
 
-    // MARK: - 3. BlockCard
-
-    @Test("BlockCard — pager preserved + reduced-motion + accessibility + tap-routing")
-    func blockCardBRUPrimitives() throws {
-        let source = try loadSource("BlockCard.swift")
-        #expect(source.contains("BRUChip"),
-                "BlockCard.swift must use BRUChip for block/phase chips")
-        #expect(source.contains("TabView"),
-                "BlockCard.swift must PRESERVE TabView pager (revision iter 1 B4 user decision)")
-        #expect(source.contains("accessibilityReduceMotion"),
-                "BlockCard.swift must gate TabView animation on accessibilityReduceMotion (CONTEXT D-14)")
-        #expect(source.contains("accessibilityLabel(\"Active block"),
-                "BlockCard.swift must carry .accessibilityLabel(\"Active block...\") per CONTEXT D-15")
-        #expect(source.contains("onTapBlock"),
-                "BlockCard.swift must expose onTapBlock for BlockOverviewScreen tap-routing (CONTEXT D-11)")
-        #expect(source.contains("Color.bruInk") || source.contains(".bruInk"),
-                "BlockCard.swift must reference bruInk")
-        #expect(source.contains("BRUFont."),
-                "BlockCard.swift must use BRUFont type roles")
-    }
-
-    // MARK: - 4. BlockPhaseEditorRow
-
-    @Test("BlockPhaseEditorRow — typographic drag glyph + rowTint + accessibility")
-    func blockPhaseEditorRowBRUPrimitives() throws {
-        let source = try loadSource("BlockPhaseEditorRow.swift")
-        let codeOnly = try loadCodeOnly("BlockPhaseEditorRow.swift")
-        #expect(source.contains("accessibilityLabel(\"Phase"),
-                "BlockPhaseEditorRow.swift must carry .accessibilityLabel(\"Phase...\") per CONTEXT D-15")
-        #expect(source.contains("BlockPhaseColors.rowTint"),
-                "BlockPhaseEditorRow.swift must use BlockPhaseColors.rowTint for NOW-row tint")
-        #expect(source.contains("\"⋮⋮\""),
-                "BlockPhaseEditorRow.swift must use typographic drag glyph \"⋮⋮\" (CONTEXT D-07 + UI-REVIEW Pillar 6)")
-        #expect(!codeOnly.contains("line.3.horizontal"),
-                "BlockPhaseEditorRow.swift must NOT reference line.3.horizontal SF Symbol in code (replaced by ⋮⋮)")
-        #expect(source.contains("BRUFont."),
-                "BlockPhaseEditorRow.swift must use BRUFont type roles")
-    }
-
     // MARK: - 5. BlockPhaseColors
 
-    @Test("BlockPhaseColors — BRU palette tokens + drawDeloadStripes + rowTint")
+    @Test("BlockPhaseColors — BRU palette tokens + rowTint")
     func blockPhaseColorsBRUPrimitives() throws {
         let source = try loadSource("BlockPhaseColors.swift")
         #expect(source.contains("Color.bruInk") || source.contains(".bruInk"),
                 "BlockPhaseColors.swift must return bruInk for accumulation phase")
         #expect(source.contains("Color.bruSignal") || source.contains(".bruSignal"),
                 "BlockPhaseColors.swift must return bruSignal for intensification phase")
-        #expect(source.contains("drawDeloadStripes"),
-                "BlockPhaseColors.swift must include drawDeloadStripes Canvas helper")
         #expect(source.contains("rowTint"),
                 "BlockPhaseColors.swift must include rowTint(for:) helper")
         #expect(source.contains("phaseLabel"),
                 "BlockPhaseColors.swift must include phaseLabel(_:) helper")
-    }
-
-    // MARK: - 6. BlockRow
-
-    @Test("BlockRow — BRU primitives + swipeActions trash kept + no Capsule")
-    func blockRowBRUPrimitives() throws {
-        let source = try loadSource("BlockRow.swift")
-        let codeOnly = try loadCodeOnly("BlockRow.swift")
-        #expect(source.contains("BRUChip"),
-                "BlockRow.swift must use BRUChip for week badge (replaces Capsule)")
-        #expect(source.contains("Color.bruSignal") || source.contains(".bruSignal"),
-                "BlockRow.swift must use bruSignal for active indicator (replaces Color.accentColor)")
-        #expect(source.contains("BRUFont."),
-                "BlockRow.swift must use BRUFont type roles")
-        #expect(source.contains("swipeActions"),
-                "BlockRow.swift must preserve swipeActions for delete (system chrome, CONTEXT D-07)")
-        #expect(!codeOnly.contains("Color.accentColor"),
-                "BlockRow.swift must NOT use Color.accentColor in code")
-    }
-
-    // MARK: - 7. BlockPickerMenu
-
-    @Test("BlockPickerMenu — BRUChip + bruSignal + no accentColor")
-    func blockPickerMenuBRUPrimitives() throws {
-        let source = try loadSource("BlockPickerMenu.swift")
-        let codeOnly = try loadCodeOnly("BlockPickerMenu.swift")
-        #expect(source.contains("BRUChip"),
-                "BlockPickerMenu.swift must use BRUChip for the block link chip")
-        #expect(source.contains("Color.bruSignal") || source.contains(".bruSignal"),
-                "BlockPickerMenu.swift must use bruSignal for linked-block accent")
-        #expect(source.contains("BRUFont.") || source.contains("BRUFont"),
-                "BlockPickerMenu.swift must reference BRU fonts")
-        #expect(!codeOnly.contains("Color.accentColor"),
-                "BlockPickerMenu.swift must NOT use Color.accentColor in code")
     }
 
     // MARK: - 8. MesocycleWeekPage
@@ -228,24 +152,6 @@ struct BRUPeriodizationRegressionTests {
                 "DeloadWeekBanner.swift must NOT use RoundedRectangle in code (sharp corners per 04-UI-SPEC line 36)")
     }
 
-    // MARK: - 10. ConsiderDeloadBanner
-
-    @Test("ConsiderDeloadBanner — FATIGUE ADVISORY + BRUChip DISMISS + no Adjust block + no exclamationmark.triangle")
-    func considerDeloadBannerBRUPrimitives() throws {
-        let source = try loadSource("ConsiderDeloadBanner.swift")
-        let codeOnly = try loadCodeOnly("ConsiderDeloadBanner.swift")
-        #expect(source.contains("FATIGUE ADVISORY"),
-                "ConsiderDeloadBanner.swift must display 'FATIGUE ADVISORY' header (CONTEXT D-09)")
-        #expect(source.contains("BRUChip(\"DISMISS\")"),
-                "ConsiderDeloadBanner.swift must use BRUChip(\"DISMISS\") for dismiss (CONTEXT D-17)")
-        #expect(!codeOnly.contains("Adjust block"),
-                "ConsiderDeloadBanner.swift must NOT contain 'Adjust block' button in code (CONTEXT D-16)")
-        #expect(!codeOnly.contains("exclamationmark.triangle"),
-                "ConsiderDeloadBanner.swift must NOT contain exclamationmark.triangle SF Symbol in code (CONTEXT D-07)")
-        #expect(source.contains("BRUFont."),
-                "ConsiderDeloadBanner.swift must use BRUFont type roles")
-    }
-
     // MARK: - 11. StartBlockCTA
 
     @Test("StartBlockCTA — BRUFont + bruSignal CTA + no RoundedRectangle")
@@ -260,24 +166,6 @@ struct BRUPeriodizationRegressionTests {
                 "StartBlockCTA.swift must NOT use RoundedRectangle in code (sharp corners per 04-UI-SPEC line 36)")
         #expect(!codeOnly.contains("Color.accentColor"),
                 "StartBlockCTA.swift must NOT use Color.accentColor in code")
-    }
-
-    // MARK: - 12. RoutinesListView (blocksSection copy fix)
-
-    @Test("RoutinesListView.blocksSection — D-09 copy fix: 'No blocks defined.' + '+ NEW BLOCK'")
-    func routinesListViewBlocksSectionBRUPrimitives() throws {
-        let source = try loadSource("RoutinesListView.swift", in: "Routines")
-        let codeOnly = try loadCodeOnly("RoutinesListView.swift", in: "Routines")
-        #expect(source.contains("No blocks defined."),
-                "RoutinesListView.swift must contain 'No blocks defined.' (D-09 copy fix)")
-        #expect(source.contains("Create a training block to track mesocycles, phases, and scheduled deloads."),
-                "RoutinesListView.swift must contain updated body copy (D-09 copy fix)")
-        #expect(source.contains("+ NEW BLOCK"),
-                "RoutinesListView.swift must contain '+ NEW BLOCK' signal-text CTA (D-09)")
-        #expect(!codeOnly.contains("No blocks yet."),
-                "RoutinesListView.swift must NOT contain old 'No blocks yet.' copy in code (D-09)")
-        #expect(!codeOnly.contains("Define a training block to organize routines into a mesocycle."),
-                "RoutinesListView.swift must NOT contain old body copy in code (D-09)")
     }
 
     // MARK: - 13. BlockOverviewScreen
@@ -322,16 +210,10 @@ struct BRUPeriodizationRegressionTests {
             // BlockBuilderView.swift retired here in 260528-vi2: the rounded-card redesign
             // uses local NewBlockScreenTokens, not the shared BRU primitive identifiers.
             ("BlockReviewView.swift", "Periodization"),
-            ("BlockCard.swift", "Periodization"),
-            ("BlockPhaseEditorRow.swift", "Periodization"),
             ("BlockPhaseColors.swift", "Periodization"),
-            ("BlockRow.swift", "Periodization"),
-            ("BlockPickerMenu.swift", "Periodization"),
             ("MesocycleWeekPage.swift", "Periodization"),
             ("DeloadWeekBanner.swift", "Periodization"),
-            ("ConsiderDeloadBanner.swift", "Periodization"),
             ("StartBlockCTA.swift", "Periodization"),
-            ("RoutinesListView.swift", "Routines"),
             ("BlockOverviewScreen.swift", "Periodization"),
         ]
 
