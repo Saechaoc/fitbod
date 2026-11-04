@@ -61,8 +61,9 @@ public struct SessionExerciseCard: View {
     @State private var suggestedAction: SuggestedAction? = nil
     @State private var presentingTryVariation: Bool = false
     @State private var presentingDeloadSignalSheet: Bool = false
-    /// The exercise a picked variation replaced, for UNDO.
-    @State private var swappedFrom: Exercise?
+    /// Captured inputs and prescription, retained until Undo succeeds.
+    @State private var variationUndo: VariationUndoSnapshot?
+    @State private var undoFailed = false
     /// "View all similar exercises" asks for the full swap list, which
     /// opens once the variation sheet has gone.
     @State private var swapListAfterVariation = false
@@ -134,7 +135,7 @@ public struct SessionExerciseCard: View {
                 .padding(.vertical, 12)
                 .contextMenu {
                     Button {
-                        swappedFrom = nil
+                        variationUndo = nil
                         onSwap(sessionExercise)
                     } label: {
                         // System contextMenu chrome is HIG-acceptable per UI-SPEC line 261.
@@ -157,9 +158,9 @@ public struct SessionExerciseCard: View {
 
                 // A picked variation can be undone until a set of it is
                 // logged; after that the logged sets belong to it.
-                if let original = swappedFrom, !hasLoggedWorkingSet {
+                if let original = variationUndo, !hasLoggedWorkingSet {
                     HStack(spacing: 8) {
-                        Text("Swapped from \(original.name)")
+                        Text("Swapped from \(original.displayName)")
                             .font(BRUFont.labelSmall)
                             .tracking(1.2)
                             .textCase(.uppercase)
@@ -167,8 +168,7 @@ public struct SessionExerciseCard: View {
                             .fixedSize(horizontal: false, vertical: true)
                         Spacer(minLength: 8)
                         Button {
-                            SwapExerciseSheet.swap(sessionExercise, to: original, context: ctx)
-                            swappedFrom = nil
+                            undoVariation()
                         } label: {
                             Text("Undo")
                                 .font(BRUFont.labelSmall)
@@ -179,7 +179,7 @@ public struct SessionExerciseCard: View {
                                 .contentShape(Rectangle())
                         }
                         .buttonStyle(.plain)
-                        .accessibilityLabel("Undo, back to \(original.name)")
+                        .accessibilityLabel("Undo, back to \(original.displayName)")
                         .accessibilityIdentifier("card.undoVariation")
                     }
                     .padding(.horizontal, 16)
@@ -300,6 +300,31 @@ public struct SessionExerciseCard: View {
                     bannerDismissed = true
                 }
             }
+            // Present from one concrete row, not the multi-row Section.
+            .sheet(isPresented: $presentingTryVariation, onDismiss: {
+                guard swapListAfterVariation else { return }
+                swapListAfterVariation = false
+                variationUndo = nil
+                onSwap(sessionExercise)
+            }) {
+                if let source = sessionExercise.exercise {
+                    TryVariationSheet(sourceExercise: source) { picked in
+                        if let picked {
+                            let original = VariationUndoSnapshot(sessionExercise)
+                            SwapExerciseSheet.swap(sessionExercise, to: picked, context: ctx)
+                            variationUndo = original
+                        } else {
+                            swapListAfterVariation = true
+                        }
+                        presentingTryVariation = false
+                    }
+                }
+            }
+            .alert("Couldn't undo variation", isPresented: $undoFailed) {
+                Button("OK", role: .cancel) {}
+            } message: {
+                Text("The workout wasn't restored. Your undo is still available; try again.")
+            }
 
             // SetRows — one List row each so swipe-to-delete works.
             ForEach(sortedSets) { set in
@@ -310,11 +335,17 @@ public struct SessionExerciseCard: View {
                             sessionExercise: sessionExercise,
                             prescribed: sessionExercise.prescribedWeight,
                             explanation: explanation,
-                            onCommit: { onCommitSet(set) },
+                            onCommit: {
+                                onCommitSet(set)
+                                if set.isComplete { variationUndo = nil }
+                            },
                             onTapEmptyCell: onTapEmptyCell,
                             onUncomplete: { onUncompleteSet(set) },
                             onEditCommitted: onEditCommitted
                         )
+                        // A swap/Undo changes the inputs behind these local
+                        // text fields, not the persisted set's identity.
+                        .id(sessionExercise.exercise?.id)
                         if sessionExercise.tracksTempo {
                             TempoEntryRow(entry: set)
                         }
@@ -372,25 +403,8 @@ public struct SessionExerciseCard: View {
         .task(id: sessionExercise.exercise?.id) {
             evaluatePlateau()
         }
-        // Phase 5 PROG-06 Branch 4 — TryVariationSheet. A picked variation
-        // takes the stalled exercise's place in this workout, as a swap
-        // does; "View all similar" opens the full swap list.
-        .sheet(isPresented: $presentingTryVariation, onDismiss: {
-            guard swapListAfterVariation else { return }
-            swapListAfterVariation = false
-            onSwap(sessionExercise)
-        }) {
-            if let source = sessionExercise.exercise {
-                TryVariationSheet(sourceExercise: source) { picked in
-                    if let picked {
-                        SwapExerciseSheet.swap(sessionExercise, to: picked, context: ctx)
-                        swappedFrom = source
-                    } else {
-                        swapListAfterVariation = true
-                    }
-                    presentingTryVariation = false
-                }
-            }
+        .onChange(of: hasLoggedWorkingSet) { _, logged in
+            if logged { variationUndo = nil }
         }
         // Phase 5 PROG-06 Branch 3 — DeloadSignalDetailSheet
         .sheet(isPresented: $presentingDeloadSignalSheet) {
@@ -409,6 +423,16 @@ public struct SessionExerciseCard: View {
     }
 
     // MARK: - Phase 5 PROG-06 helpers
+
+    private func undoVariation() {
+        guard let original = variationUndo else { return }
+        do {
+            try original.restore(to: sessionExercise, context: ctx)
+            variationUndo = nil
+        } catch {
+            undoFailed = true
+        }
+    }
 
     @MainActor
     private func evaluatePlateau() {
