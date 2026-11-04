@@ -280,6 +280,19 @@ struct SessionEditServiceTests {
         #expect(workout.startedAt == start.addingTimeInterval(-day))
     }
 
+    @Test("a set typed Warm-up stays out of the edit draft, as it does the summary")
+    func draftLeavesOutTypedWarmups() throws {
+        let ctx = try LoggerFixtures.makeContext()
+        let workout = try finishedWorkout(on: now.addingTimeInterval(-day), in: ctx)
+        let exercise = try #require(workout.exercises?.first)
+        let sets = SessionSetActions.ordered(exercise)
+        sets[0].setTypeRaw = SetType.warmup.rawValue
+
+        let rows = try #require(WorkoutEditDraft(session: workout).exercises.first?.rows)
+        #expect(rows.map(\.id) == sets.dropFirst().map(\.id))
+        #expect(SessionSummary.make(session: workout, priorSets: []).exercises.first?.workingSets == rows.count)
+    }
+
     @Test("a correction survives closing and reopening the store")
     func correctionSurvivesReopen() throws {
         let directory = FileManager.default.temporaryDirectory

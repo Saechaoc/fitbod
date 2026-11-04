@@ -63,8 +63,13 @@ extension SetEntry {
     /// Weight × reps for a set that counts as work, or 0: an assisted
     /// (negative) or bodyweight load adds no tonnage.
     public var tonnage: Double {
-        guard countsAsWork, weight > 0, reps > 0 else { return 0 }
-        return weight * Double(reps)
+        countsAsWork ? Self.tonnage(weight: weight, reps: reps) : 0
+    }
+
+    /// Weight × reps, or 0 for an assisted (negative) or bodyweight load.
+    /// Edit workout sums its unsaved rows with it.
+    public static func tonnage(weight: Double, reps: Int) -> Double {
+        weight > 0 && reps > 0 ? weight * Double(reps) : 0
     }
 
     public var clusterSubReps: [Int] {

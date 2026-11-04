@@ -301,7 +301,7 @@ struct WorkoutEditView: View {
     // MARK: - Formatting
 
     private func setsLine(_ rows: [WorkoutEditDraft.Row], unit: WeightUnit) -> String {
-        let volume = rows.reduce(0) { $0 + $1.values.weight * Double($1.values.reps) }
+        let volume = rows.reduce(0) { $0 + SetEntry.tonnage(weight: $1.values.weight, reps: $1.values.reps) }
         return SessionHistoryFormat.setsLine(count: rows.count, volume: volume, unit: unit)
     }
 

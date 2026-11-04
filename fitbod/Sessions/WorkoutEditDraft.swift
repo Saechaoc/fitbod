@@ -50,7 +50,7 @@ struct WorkoutEditDraft: Equatable {
                     name: exercise.displayName,
                     unitOverride: exercise.exercise?.unitOverride,
                     rows: SessionSetActions.ordered(exercise)
-                        .filter { $0.isComplete && !$0.isWarmup }
+                        .filter(\.countsAsWork)
                         .map { set in
                             let values = WorkoutEdit.Values(weight: set.weight, reps: set.reps, rpe: set.rpe)
                             return Row(id: set.id, values: values, logged: values)
