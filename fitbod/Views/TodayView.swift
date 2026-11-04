@@ -366,7 +366,7 @@ public struct TodayView: View {
                 if let block = activeBlocks.first {
                     BlockSessionChoiceSheet(
                         block: block,
-                        markedSlotID: markedSlotID,
+                        markedSlotID: upNext(done: doneToday != nil, resolution)?.slot.id,
                         onStart: { slot in
                             pendingChoice = .session(slot)
                             choosingSession = false
@@ -678,42 +678,33 @@ public struct TodayView: View {
             .first { !SessionSetActions.isEmptyWorkout($0) }
     }
 
-    /// The next session once today's is done: the rotation's next, or a
-    /// weekly block's next training day, such as "Pull A · Wed".
-    private func upNextLabel(_ resolution: TodayResolution) -> String? {
-        guard let block = activeBlocks.first else { return nil }
-        if block.schedulingMode == .fixedWeekly {
-            guard let next = TodayResolver.nextTrainingDay(block: block, after: .now),
-                  let name = next.slot.sessionTemplate?.name
-            else { return nil }
-            let day = Calendar.current.isDateInTomorrow(next.day)
-                ? "Tomorrow"
-                : next.day.formatted(.dateTime.weekday(.abbreviated))
-            return "\(name) · \(day)"
+    /// What comes next: the resolver's session (today's, or a rotation's
+    /// next once today's is done), or once today's is done in a weekly
+    /// block, the next training day's, with its day. The done card's up next
+    /// and the session list's NEXT both read it, so they agree.
+    private func upNext(done: Bool, _ resolution: TodayResolution) -> (slot: SplitSessionSlot, day: Date?)? {
+        if done, let block = activeBlocks.first, block.schedulingMode == .fixedWeekly {
+            return TodayResolver.nextTrainingDay(block: block, after: .now).map { ($0.slot, $0.day) }
         }
-        if case .session(let slot) = resolution {
-            return slot.sessionTemplate?.name
-        }
+        if case .session(let slot) = resolution { return (slot, nil) }
         return nil
+    }
+
+    /// The done card's up next, such as "Pull A · Wed".
+    private func upNextLabel(_ resolution: TodayResolution) -> String? {
+        guard let next = upNext(done: true, resolution),
+              let name = next.slot.sessionTemplate?.name
+        else { return nil }
+        guard let day = next.day else { return name }
+        let label = Calendar.current.isDateInTomorrow(day)
+            ? "Tomorrow"
+            : day.formatted(.dateTime.weekday(.abbreviated))
+        return "\(name) · \(label)"
     }
 
     /// The block has sessions to choose from.
     private var canChooseSession: Bool {
         !(activeBlocks.first?.split?.slots ?? []).isEmpty
-    }
-
-    /// The session the list marks NEXT: today's, or once today's is done in
-    /// a weekly block, the next training day's.
-    private var markedSlotID: UUID? {
-        let finished = allSessions.filter { $0.completedAt != nil }
-        if let block = activeBlocks.first, block.schedulingMode == .fixedWeekly,
-           Self.finishedToday(in: finished) != nil {
-            return TodayResolver.nextTrainingDay(block: block, after: .now)?.slot.id
-        }
-        if case .session(let slot) = todaysResolution {
-            return slot.id
-        }
-        return nil
     }
 
     // MARK: - Workout Start

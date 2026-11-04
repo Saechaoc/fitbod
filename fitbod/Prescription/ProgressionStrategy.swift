@@ -46,7 +46,7 @@ public struct PrescriptionExplanation: Sendable {
     public var computedLine: String?
 
     /// The plate-rounded prescribed weight, in the exercise's unit.
-    public let roundedWeight: Double
+    public var roundedWeight: Double
 
     /// Human-readable rounding explanation, e.g.
     /// "→ 107.5 kg (rounded down to 1.25 kg plates)".
@@ -127,19 +127,9 @@ extension PrescriptionExplanation {
     /// the two agree.
     public func frozen(at startWeight: Double?, unitLabel: String) -> PrescriptionExplanation {
         guard let startWeight, startWeight > 0, abs(startWeight - roundedWeight) > 0.001 else { return self }
-        var shown = PrescriptionExplanation(
-            lastSessionLine: lastSessionLine,
-            formulaName: formulaName,
-            computedLine: computedLine,
-            roundedWeight: startWeight,
-            roundedLine: roundedLine,
-            status: status,
-            bumpOccurred: false,
-            range: range,
-            phaseContextLine: phaseContextLine,
-            deloadNoteLine: deloadNoteLine,
-            sessionIntent: sessionIntent
-        )
+        var shown = self
+        shown.roundedWeight = startWeight
+        shown.bumpOccurred = false
         let now = roundedWeight > 0
             ? "the steps below now give \(String(format: "%g", roundedWeight)) \(unitLabel)"
             : "the steps below no longer suggest a weight"
