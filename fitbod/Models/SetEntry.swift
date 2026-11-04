@@ -53,6 +53,20 @@ public final class SetEntry {
 extension SetEntry {
     public var setType: SetType { SetType(rawValue: setTypeRaw) ?? .working }
 
+    /// A finished set that counts as work: not a warm-up by flag or by
+    /// type. Drop, failure and rest-pause sets count. Set counts, volume
+    /// and tonnage read this one rule.
+    public var countsAsWork: Bool {
+        isComplete && !isWarmup && setType != .warmup
+    }
+
+    /// Weight × reps for a set that counts as work, or 0: an assisted
+    /// (negative) or bodyweight load adds no tonnage.
+    public var tonnage: Double {
+        guard countsAsWork, weight > 0, reps > 0 else { return 0 }
+        return weight * Double(reps)
+    }
+
     public var clusterSubReps: [Int] {
         get {
             guard let joined = clusterSubRepsJoined, !joined.isEmpty else { return [] }

@@ -104,8 +104,6 @@ public struct DeloadSignalReport: Sendable, Equatable {
 
 public enum DeloadAdvisor {
 
-    /// Working SetEntry kinds — mirrors FatigueModel.workingKinds.
-    private static let workingKinds: Set<String> = ["working", "drop", "failure", "rest_pause"]
 
     // MARK: - evaluate
 
@@ -207,8 +205,7 @@ public enum DeloadAdvisor {
                 var bestWeight = 0.0
                 var bestRPE: Double? = nil
                 for set in logs.flatMap({ ($0.sets ?? []).sorted(by: { $0.orderIndex < $1.orderIndex }) }) {
-                    guard set.isComplete, !set.isWarmup, set.reps > 0 else { continue }
-                    guard workingKinds.contains(set.setTypeRaw) else { continue }
+                    guard set.countsAsWork, set.reps > 0 else { continue }
                     guard let e = OneRepMaxEstimator.estimate(weight: set.weight, reps: set.reps) else { continue }
                     if bestE == nil || e > bestE! {
                         bestE = e
@@ -282,8 +279,7 @@ public enum DeloadAdvisor {
                     let target = se.targetRepsHigh
                     guard target > 0 else { continue }
                     for set in (se.sets ?? []) {
-                        guard set.isComplete, !set.isWarmup, set.reps > 0 else { continue }
-                        guard workingKinds.contains(set.setTypeRaw) else { continue }
+                        guard set.countsAsWork, set.reps > 0 else { continue }
                         total += 1
                         if set.reps < target { missed += 1 }
                     }
@@ -323,8 +319,7 @@ public enum DeloadAdvisor {
         var best: Double? = nil
         for se in (session.exercises ?? []) {
             for set in (se.sets ?? []) {
-                guard set.isComplete, !set.isWarmup, set.reps > 0 else { continue }
-                guard workingKinds.contains(set.setTypeRaw) else { continue }
+                guard set.countsAsWork, set.reps > 0 else { continue }
                 if let e = OneRepMaxEstimator.estimate(weight: set.weight, reps: set.reps) {
                     if best == nil || e > best! { best = e }
                 }

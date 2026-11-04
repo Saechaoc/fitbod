@@ -240,7 +240,7 @@ private struct FilteredHistoryContent: View {
 
     /// Tonnage display label (e.g. "71.2k").
     private func tonnageLabel(from sets: [(setEntry: SetEntry, sessionExercise: SessionExercise)]) -> String {
-        let total = sets.reduce(0.0) { $0 + $1.setEntry.weight * Double($1.setEntry.reps) }
+        let total = sets.reduce(0.0) { $0 + $1.setEntry.tonnage }
         if total >= 1000 {
             return String(format: "%.1fk", total / 1000)
         }
@@ -281,7 +281,7 @@ private struct FilteredHistoryContent: View {
         // Volume PR = session with highest total volume
         let bySession = Dictionary(grouping: sets) { $0.sessionExercise.session?.id }
         let sessionVols = bySession.values.map { pairs in
-            pairs.reduce(0.0) { $0 + $1.setEntry.weight * Double($1.setEntry.reps) }
+            pairs.reduce(0.0) { $0 + $1.setEntry.tonnage }
         }
         let maxVol = sessionVols.max() ?? 0
         let volLabel: String

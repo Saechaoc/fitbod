@@ -435,7 +435,7 @@ public enum BlockReviewStatistics {
     @MainActor
     public static func totalVolume(context: ModelContext, start: Date, end: Date) -> Double {
         completedWorkingSets(context: context, start: start, end: end)
-            .reduce(0) { $0 + ($1.weight * Double($1.reps)) }
+            .reduce(0) { $0 + $1.tonnage }
     }
 
     @MainActor

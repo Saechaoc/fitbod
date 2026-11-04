@@ -301,12 +301,7 @@ private struct ProgressChartHost: View {
         let distinctSessionCount = Set(allPoints.map(\.date)).count
         let plottedSessionCount = Set(plotted.map(\.date)).count
         let anyHighRepSuppressed = sessionExercises.contains { se in
-            (se.sets ?? []).contains { entry in
-                entry.setType == .working
-                    && !entry.isWarmup
-                    && entry.isComplete
-                    && entry.reps > 10
-            }
+            (se.sets ?? []).contains { PRDetector.isWorkingSet($0) && $0.reps > 10 }
         }
 
         ScrollView {

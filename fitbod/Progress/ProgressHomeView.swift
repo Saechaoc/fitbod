@@ -73,6 +73,10 @@ public struct ProgressHomeView: View {
     @Query private var recentSessionExercises: [SessionExercise]
     @Query private var completedSessions: [Session]
     @Query private var allExercises: [Exercise]
+    @Query private var userSettingsList: [UserSettings]
+    /// The last seven days of logged sets, which hold this week's, for the
+    /// Weekly Tonnage row.
+    @Query private var recentSets: [SetEntry]
     /// The finished workouts that are empty (decision 6), and the finished
     /// workouts they were worked out for. Reading them means reading every
     /// set, so they are filled when the finished workouts change, never per
@@ -93,6 +97,8 @@ public struct ProgressHomeView: View {
             order: .reverse
         )
         _allExercises = Query()
+        let weekAgo = Date.now.addingTimeInterval(-7 * 86_400)
+        _recentSets = Query(filter: #Predicate<SetEntry> { $0.isComplete && $0.completedAt >= weekAgo })
     }
 
     public var body: some View {
@@ -396,21 +402,18 @@ public struct ProgressHomeView: View {
         return "\(sessions) · last logged \(rel)"
     }
 
+    /// This week's bar of the Weekly Tonnage chart the row opens: the same
+    /// week setting, aggregator and counted sets, so the two always agree.
     private var weeklyTonnageSubLabel: String {
-        // Compute this-week tonnage from completedSessions via SetEntries
-        // inline — heavy precision is not required for a sub-label.
-        let now = Date.now
-        guard let weekStart = Calendar.current.dateInterval(of: .weekOfYear, for: now)?.start else {
-            return "View your weekly volume."
-        }
-        var total: Double = 0
-        for session in completedSessions where session.startedAt >= weekStart {
-            for se in (session.exercises ?? []) {
-                for set in (se.sets ?? []) where set.isComplete && !set.isWarmup {
-                    total += set.weight * Double(set.reps)
-                }
-            }
-        }
+        let weekStartsMonday = userSettingsList.first?.weekStartsMonday ?? true
+        let calendar = WeeklyTonnageAggregator.weekCalendar(weekStartsMonday: weekStartsMonday)
+        let thisWeek = calendar.dateInterval(of: .weekOfYear, for: .now)?.start
+        let total = WeeklyTonnageAggregator.aggregate(
+            sets: recentSets,
+            weekStartsMonday: weekStartsMonday,
+            selectedMuscleIDs: []
+        )
+        .first { $0.weekStart == thisWeek }?.totalTonnage ?? 0
         if total <= 0 {
             return "Log a workout to see this week's tonnage."
         }

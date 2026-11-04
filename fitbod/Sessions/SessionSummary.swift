@@ -70,7 +70,7 @@ public struct SessionSummary: Sendable, Equatable {
         var lines: [ExerciseLine] = []
         for se in ordered {
             let working = SessionSetActions.ordered(se).filter(isCountedWorkingSet)
-            let volume = working.reduce(0) { $0 + $1.weight * Double($1.reps) }
+            let volume = working.reduce(0) { $0 + $1.tonnage }
             let bestEntry = working.max { lhs, rhs in
                 if lhs.weight != rhs.weight { return lhs.weight < rhs.weight }
                 return lhs.reps < rhs.reps
@@ -160,7 +160,7 @@ public struct SessionSummary: Sendable, Equatable {
     }
 
     private static func isCountedWorkingSet(_ set: SetEntry) -> Bool {
-        set.isComplete && !set.isWarmup && set.reps > 0
+        set.countsAsWork && set.reps > 0
     }
 }
 

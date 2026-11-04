@@ -83,13 +83,7 @@ public enum SeriesBuilder {
         var workoutIndex: [UUID: Int] = [:]
         for se in sessionExercises {
             guard let session = se.session else { continue }
-            let workingSets = (se.sets ?? []).filter { entry in
-                entry.setType == .working
-                    && !entry.isWarmup
-                    && entry.isComplete
-                    && entry.weight > 0
-                    && entry.reps > 0
-            }
+            let workingSets = (se.sets ?? []).filter(PRDetector.isWorkingSet)
             if let index = workoutIndex[session.id] {
                 workouts[index].sets.append(contentsOf: workingSets)
             } else {
@@ -152,7 +146,7 @@ public enum SeriesBuilder {
     /// work sets. A workout with no logged work set emits no point.
     public static func volumePoints(from sessionExercises: [SessionExercise]) -> [WorkoutSeriesPoint] {
         workoutPoints(from: sessionExercises, series: "volume") { sets in
-            sets.isEmpty ? nil : sets.reduce(0) { $0 + $1.weight * Double($1.reps) }
+            sets.isEmpty ? nil : sets.reduce(0) { $0 + $1.tonnage }
         }
     }
 

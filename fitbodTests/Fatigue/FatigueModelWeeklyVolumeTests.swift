@@ -188,7 +188,7 @@ struct FatigueModelWeeklyVolumeTests {
             sets: [
                 // Mis-categorized row: isWarmup=false (so plain isWarmup guard
                 // would let it through) but setTypeRaw="warmup" (so the
-                // workingKinds.contains guard excludes it). Both guards in
+                // countsAsWork excludes it by type). Both guards in
                 // effect per Pitfall #3.
                 (50, 8, false, true, "warmup"),
                 (100, 5, false, true, "working"),
@@ -229,8 +229,8 @@ struct FatigueModelWeeklyVolumeTests {
 
     // MARK: - 5. Working-kinds enumeration
 
-    @Test("workingKinds includes drop / failure / rest_pause as 1-set each")
-    func workingKindsIncludesDropFailureRestPause() throws {
+    @Test("drop / failure / rest_pause sets count as work, 1 set each")
+    func dropFailureRestPauseCountAsWork() throws {
         let ctx = try FatigueTestFixtures.makeContext()
         let ex = try makeBenchPressExercise(in: ctx)
         let monday = mondayOfThisWeek()

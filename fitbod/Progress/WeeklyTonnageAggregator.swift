@@ -19,12 +19,10 @@
 //                        == nil (single-color bar mode).
 //
 //  Algorithm:
-//    1. Filter input to working-only sets (`counts(_:)`):
-//          set.setType == .working
-//       && !set.isWarmup
-//       && set.isComplete
-//       && set.weight > 0
-//       && set.reps > 0
+//    1. Keep the sets that add tonnage (`SetEntry.tonnage`): finished,
+//       not a warm-up by flag or type (drop, failure and rest-pause sets
+//       count), with load and reps — the rule History, the summary, the
+//       weekly recap and Block Review read.
 //    2. Bucket each surviving set by its ISO week start computed
 //       through `weekCalendar(weekStartsMonday:)`: ISO 8601 with
 //       `firstWeekday = weekStartsMonday ? 2 : 1`. The chart and the
@@ -95,16 +93,6 @@ public enum WeeklyTonnageAggregator {
         return calendar
     }
 
-    /// Whether the totals count `entry`: a completed working set, not a
-    /// warm-up, with weight and reps.
-    public static func counts(_ entry: SetEntry) -> Bool {
-        entry.setType == .working
-            && !entry.isWarmup
-            && entry.isComplete
-            && entry.weight > 0
-            && entry.reps > 0
-    }
-
     /// Aggregate working-set tonnage into per-week bars.
     ///
     /// See file header for the algorithm and filtering contract.
@@ -114,8 +102,8 @@ public enum WeeklyTonnageAggregator {
         selectedMuscleIDs: Set<UUID>
     ) -> [WeeklyTonnageBar] {
 
-        // 1. Working-set filter (defense in depth — every property checked).
-        let working = sets.filter(counts)
+        // 1. Sets that add tonnage (`SetEntry.tonnage`).
+        let working = sets.filter { $0.tonnage > 0 }
         guard !working.isEmpty else { return [] }
 
         // 2. Bucket by ISO week start in the shared week calendar, so the
@@ -143,7 +131,7 @@ public enum WeeklyTonnageAggregator {
             var sliceByID: [UUID: (name: String, tonnage: Double)] = [:]
 
             for entry in entries {
-                total += entry.weight * Double(entry.reps)
+                total += entry.tonnage
                 guard muscleFilterActive, let exercise = entry.sessionExercise?.exercise else { continue }
                 for contribution in muscleContributions(for: entry, exercise: exercise) {
                     guard selectedMuscleIDs.contains(contribution.muscleID) else { continue }

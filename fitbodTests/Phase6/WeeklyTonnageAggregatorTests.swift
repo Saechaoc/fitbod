@@ -6,8 +6,8 @@
 //  (CONTEXT D-18..D-21, REQUIREMENTS PROG-04).
 //
 //  Six @Test functions:
-//    1. workingSetTonnageOnly — warmup + drop + incomplete + zero-weight
-//       sets are filtered out of the tonnage sum
+//    1. countedSetTonnageOnly — drop sets count; warm-up (by flag or
+//       type), incomplete, zero-weight and assisted sets add nothing
 //    2. mondayWeekStart — Sunday + Monday in the same ISO week
 //       (firstWeekday = 2) bucket together; with firstWeekday = 1 the
 //       split is allowed
@@ -105,8 +105,8 @@ struct WeeklyTonnageAggregatorTests {
 
     // MARK: - 1. workingSetTonnageOnly
 
-    @Test("workingSetTonnageOnly — warmup/drop/incomplete/zero-weight sets excluded")
-    func workingSetTonnageOnly() throws {
+    @Test("countedSetTonnageOnly — drop sets count; warm-up, incomplete, zero and assisted loads add nothing")
+    func countedSetTonnageOnly() throws {
         let ctx = try makeContext()
         let (_, _, se) = seedExerciseAndSession(in: ctx, sessionStart: Self.mondayMay4)
 
@@ -115,14 +115,19 @@ struct WeeklyTonnageAggregatorTests {
         // Warmup: should be excluded
         _ = appendSet(in: ctx, on: se, weight: 60, reps: 5, completedAt: Self.mondayMay4,
                       setTypeRaw: "warmup", isWarmup: true)
-        // Drop set: setType != .working — excluded
+        // Drop set: counts as work, as in History and the weekly recap: 80 × 8 = 640
         _ = appendSet(in: ctx, on: se, weight: 80, reps: 8, completedAt: Self.mondayMay4,
                       setTypeRaw: "drop")
+        // Warm-up by type only — excluded
+        _ = appendSet(in: ctx, on: se, weight: 60, reps: 5, completedAt: Self.mondayMay4,
+                      setTypeRaw: "warmup")
         // Working but incomplete — excluded
         _ = appendSet(in: ctx, on: se, weight: 100, reps: 5, completedAt: Self.mondayMay4,
                       isComplete: false)
         // Working but zero weight — excluded
         _ = appendSet(in: ctx, on: se, weight: 0, reps: 5, completedAt: Self.mondayMay4)
+        // Assisted, a negative load — adds nothing, never subtracts
+        _ = appendSet(in: ctx, on: se, weight: -20, reps: 8, completedAt: Self.mondayMay4)
 
         let bars = WeeklyTonnageAggregator.aggregate(
             sets: se.sets ?? [workingSet],
@@ -132,7 +137,7 @@ struct WeeklyTonnageAggregatorTests {
 
         #expect(bars.count == 1)
         let bar = try #require(bars.first)
-        #expect(bar.totalTonnage == 500.0)
+        #expect(bar.totalTonnage == 1140.0)
         #expect(bar.muscleBreakdown == nil)
     }
 

@@ -748,7 +748,7 @@ public struct WeeklyRecapSheet: View {
     @MainActor
     private func tonnageInRange(from start: Date, to end: Date) -> Double {
         FatigueModel.completedWorkingSets(startedFrom: start, before: end, in: ctx)
-            .reduce(0.0) { $0 + ($1.weight * Double($1.reps)) }
+            .reduce(0.0) { $0 + $1.tonnage }
     }
 
     @MainActor

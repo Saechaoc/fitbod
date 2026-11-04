@@ -258,13 +258,7 @@ public enum SessionComparator {
             .sorted { $0.orderIndex < $1.orderIndex }
             .flatMap { se in
                 (se.sets ?? [])
-                    .filter { entry in
-                        entry.setType == .working
-                            && !entry.isWarmup
-                            && entry.isComplete
-                            && entry.weight > 0
-                            && entry.reps > 0
-                    }
+                    .filter(PRDetector.isWorkingSet)
                     .sorted { $0.orderIndex < $1.orderIndex }
             }
 

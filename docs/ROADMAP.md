@@ -61,6 +61,14 @@ Decided 2026-11-03 on the review page `.lavish/next-workflow.html`.
   for 7 to 10, no estimate above 10. Exercise history rows and Block Review
   had formulas of their own, so one set could show three e1RMs (finding
   F332).
+- **One volume rule (2026-11-03):** a set counts toward set counts, volume
+  and tonnage when it is finished and is not a warm-up by flag or by type,
+  so drop, to-failure and rest-pause sets count everywhere, the Weekly
+  Tonnage chart included; an assisted or bodyweight load adds no tonnage
+  (`SetEntry.countsAsWork`, `SetEntry.tonnage`). The Progress tab's Weekly
+  Tonnage row shows the chart's current bar, in the week the lifter set.
+  The chart and its week detail keep counting a set in the week it was
+  done.
 - **Status (2026-11-03):** the gym day is built end to end, with every
   screen it needs. It is stable, in the sense of `docs/DEVELOPMENT.md`, after
   two weeks of real gym use without a change to its structure. Left out on

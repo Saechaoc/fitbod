@@ -64,9 +64,6 @@ public enum SuggestedAction: String, Sendable, Equatable {
 
 public enum PlateauDetector {
 
-    /// Working SetEntry kinds that count toward top-set e1RM selection.
-    /// Mirrors FatigueModel.workingKinds.
-    private static let workingKinds: Set<String> = ["working", "drop", "failure", "rest_pause"]
 
     // MARK: - evaluate
 
@@ -259,8 +256,7 @@ public enum PlateauDetector {
         var best: TopSet? = nil
         for se in logs.sorted(by: { $0.orderIndex < $1.orderIndex }) {
             for set in (se.sets ?? []).sorted(by: { $0.orderIndex < $1.orderIndex }) {
-                guard set.isComplete, !set.isWarmup, set.reps > 0 else { continue }
-                guard workingKinds.contains(set.setTypeRaw) else { continue }
+                guard set.countsAsWork, set.reps > 0 else { continue }
                 guard let e = OneRepMaxEstimator.estimate(weight: set.weight, reps: set.reps) else { continue }
                 if best == nil || e > best!.e1RM {
                     best = (e1RM: e, weight: set.weight, rpe: set.rpe)
