@@ -181,7 +181,7 @@ struct WorkoutEditView: View {
                     .font(BRUFont.bodyEmphasis)
                     .foregroundStyle(Color.bruInk)
                     .fixedSize(horizontal: false, vertical: true)
-                Text(setsLine(exercise.rows))
+                Text(setsLine(exercise.rows, unit: exercise.unitOverride ?? weightUnit))
                     .font(BRUFont.labelSmall)
                     .tracking(1.2)
                     .textCase(.uppercase)
@@ -300,9 +300,9 @@ struct WorkoutEditView: View {
 
     // MARK: - Formatting
 
-    private func setsLine(_ rows: [WorkoutEditDraft.Row]) -> String {
+    private func setsLine(_ rows: [WorkoutEditDraft.Row], unit: WeightUnit) -> String {
         let volume = rows.reduce(0) { $0 + $1.values.weight * Double($1.values.reps) }
-        return SessionHistoryFormat.setsLine(count: rows.count, volume: volume, unit: weightUnit)
+        return SessionHistoryFormat.setsLine(count: rows.count, volume: volume, unit: unit)
     }
 
     enum StartPart: String, Identifiable {

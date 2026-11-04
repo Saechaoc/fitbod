@@ -22,6 +22,8 @@ struct WorkoutEditDraft: Equatable {
     struct Exercise: Equatable, Identifiable {
         let id: UUID
         let name: String
+        /// Display metadata only: stored weights are never converted.
+        let unitOverride: WeightUnit?
         var rows: [Row]
         var deleted: Set<UUID> = []
     }
@@ -46,6 +48,7 @@ struct WorkoutEditDraft: Equatable {
                 Exercise(
                     id: exercise.id,
                     name: exercise.displayName,
+                    unitOverride: exercise.exercise?.unitOverride,
                     rows: SessionSetActions.ordered(exercise)
                         .filter { $0.isComplete && !$0.isWarmup }
                         .map { set in

@@ -210,6 +210,82 @@ final class SessionHistoryBRUUITests: XCTestCase {
     }
 
     @MainActor
+    func testKilogramExerciseOverrideSurvivesHistoryCorrectionAndRelaunch() throws {
+        try exerciseOverrideJourney(global: "lb", override: "kg")
+    }
+
+    @MainActor
+    func testPoundExerciseOverrideSurvivesHistoryCorrectionAndRelaunch() throws {
+        try exerciseOverrideJourney(global: "kg", override: "lb")
+    }
+
+    @MainActor
+    private func exerciseOverrideJourney(global: String, override: String) throws {
+        let app = UITestNavigation.launch(UITestNavigation.seededWorkout)
+        if global == "kg" {
+            UITestNavigation.openSettings(in: app)
+            let kg = button("kg", in: app)
+            XCTAssertTrue(UITestNavigation.appears(kg))
+            kg.tap()
+            XCTAssertTrue(kg.isSelected)
+            tap("Close", in: app)
+        }
+        UITestNavigation.selectTab("Library", in: app)
+        let search = app.textFields["library.search.browser"]
+        XCTAssertTrue(UITestNavigation.appears(search))
+        let name = "Barbell Bench Press - Medium Grip"
+        UITestNavigation.type(name, into: search)
+        let row = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", name)).firstMatch
+        XCTAssertTrue(UITestNavigation.appears(row))
+        row.tap()
+        let unit = button("Weight unit: \(override)", in: app)
+        UITestNavigation.reveal(unit, in: app)
+        unit.tap()
+        XCTAssertTrue(UITestNavigation.waitUntil { unit.isSelected })
+        UITestNavigation.selectTab("Today", in: app)
+
+        openHistorySummary(in: app)
+        XCTAssertTrue(setLabel(containing: "100 \(override) by 5", in: app).exists)
+        XCTAssertTrue(exerciseVolume(containing: "1,500 \(override)", in: app).exists)
+        XCTAssertTrue(app.staticTexts.matching(NSPredicate(
+            format: "label ==[c] %@", "Volume · \(global)"
+        )).firstMatch.exists, "The whole-workout aggregate keeps the global unit policy")
+        tap("Edit", in: app)
+        let weight = app.textFields["Weight, set 1"].firstMatch
+        XCTAssertTrue(UITestNavigation.appears(weight))
+        XCTAssertEqual(weight.value as? String, "100")
+        XCTAssertTrue(exerciseVolume(containing: "1,500 \(override)", in: app).exists)
+        let reps = app.textFields["Reps, set 1"].firstMatch
+        UITestNavigation.enter("6", into: reps)
+        UITestNavigation.keyboardDone(in: app).tap()
+        XCTAssertTrue(exerciseVolume(containing: "1,600 \(override)", in: app).exists)
+        UITestNavigation.saveScreenshot("REG-04", "editor-\(override)-override")
+        tap("Save", in: app)
+        XCTAssertTrue(UITestNavigation.disappears(app.buttons["edit.date"]))
+        XCTAssertTrue(setLabel(containing: "100 \(override) by 6", in: app).exists)
+
+        UITestNavigation.relaunch(app)
+        openHistorySummary(in: app)
+        XCTAssertTrue(setLabel(containing: "100 \(override) by 6", in: app).exists)
+        XCTAssertTrue(exerciseVolume(containing: "1,600 \(override)", in: app).exists)
+        XCTAssertTrue(app.staticTexts.matching(NSPredicate(
+            format: "label ==[c] %@", "Volume · \(global)"
+        )).firstMatch.exists)
+        tap("Edit", in: app)
+        XCTAssertTrue(UITestNavigation.appears(weight))
+        XCTAssertEqual(weight.value as? String, "100", "An override relabels, never converts")
+        XCTAssertEqual(reps.value as? String, "6")
+        XCTAssertTrue(exerciseVolume(containing: "1,600 \(override)", in: app).exists)
+    }
+
+    @MainActor
+    private func exerciseVolume(containing value: String, in app: XCUIApplication) -> XCUIElement {
+        app.descendants(matching: .any).matching(NSPredicate(
+            format: "label CONTAINS[c] %@ AND label CONTAINS[c] %@", "3 sets", value
+        )).firstMatch
+    }
+
+    @MainActor
     private func openHistorySummary(in app: XCUIApplication) {
         let history = app.buttons["today.sessions"]
         XCTAssertTrue(UITestNavigation.appears(history))

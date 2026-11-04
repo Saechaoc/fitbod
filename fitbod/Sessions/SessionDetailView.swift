@@ -74,7 +74,9 @@ public struct SessionDetailView: View {
                     }
                     BRUSectionHead("Exercises", right: "\(summary.exercises.count)")
                     ForEach(summary.exercises) { line in
-                        exerciseRow(line)
+                        let unit = (session.exercises ?? []).first(where: { $0.id == line.id })?
+                            .exercise?.unitOverride ?? weightUnit
+                        exerciseRow(line, unit: unit)
                         BRUDivider(.hair)
                     }
                     if let notes = session.notes, !notes.isEmpty {
@@ -196,14 +198,14 @@ public struct SessionDetailView: View {
         .background(Color.bruInk)
     }
 
-    private func exerciseRow(_ line: SessionSummary.ExerciseLine) -> some View {
+    private func exerciseRow(_ line: SessionSummary.ExerciseLine, unit: WeightUnit) -> some View {
         VStack(alignment: .leading, spacing: 4) {
             VStack(alignment: .leading, spacing: 4) {
                 Text(line.name)
                     .font(BRUFont.bodyEmphasis)
                     .foregroundStyle(Color.bruInk)
                     .fixedSize(horizontal: false, vertical: true)
-                Text(SessionHistoryFormat.setsLine(count: line.workingSets, volume: line.volume, unit: weightUnit))
+                Text(SessionHistoryFormat.setsLine(count: line.workingSets, volume: line.volume, unit: unit))
                     .font(BRUFont.labelSmall)
                     .tracking(1.2)
                     .textCase(.uppercase)
@@ -218,7 +220,7 @@ public struct SessionDetailView: View {
             }
             .accessibilityElement(children: .combine)
             ForEach(Array(line.sets.enumerated()), id: \.offset) { index, set in
-                setRow(number: index + 1, set: set, isRecord: !line.prKinds.isEmpty)
+                setRow(number: index + 1, set: set, isRecord: !line.prKinds.isEmpty, unit: unit)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -228,14 +230,14 @@ public struct SessionDetailView: View {
 
     /// One logged set: its number, weight × reps, the best set's tag and
     /// the RPE. The tag turns signal when the exercise set a record.
-    private func setRow(number: Int, set: SessionSummary.LoggedSet, isRecord: Bool) -> some View {
+    private func setRow(number: Int, set: SessionSummary.LoggedSet, isRecord: Bool, unit: WeightUnit) -> some View {
         HStack(spacing: 12) {
             Text("\(number)")
                 .font(BRUFont.labelSmall)
                 .monospacedDigit()
                 .foregroundStyle(Color.bruMuted)
                 .frame(minWidth: 20, alignment: .leading)
-            Text("\(weightText(set.weight)) \(unitLabel) × \(set.reps)")
+            Text("\(weightText(set.weight)) \(unit.rawValue) × \(set.reps)")
                 .font(BRUFont.bodyEmphasis)
                 .monospacedDigit()
                 .foregroundStyle(Color.bruInk)
@@ -256,7 +258,7 @@ public struct SessionDetailView: View {
         }
         .frame(minHeight: 28)
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel(setLabel(number: number, set: set))
+        .accessibilityLabel(setLabel(number: number, set: set, unit: unit))
     }
 
     private func notesBlock(_ notes: String) -> some View {
@@ -288,15 +290,15 @@ public struct SessionDetailView: View {
     }
 
     private func volumeLabel(_ volume: Double) -> String {
-        Int(volume.rounded()).formatted(.number.grouping(.automatic))
+        SessionHistoryFormat.roundedVolume(volume)
     }
 
     private func weightText(_ value: Double) -> String {
         String(format: "%g", value)
     }
 
-    private func setLabel(number: Int, set: SessionSummary.LoggedSet) -> String {
-        var label = "Set \(number), \(weightText(set.weight)) \(unitLabel) by \(set.reps)"
+    private func setLabel(number: Int, set: SessionSummary.LoggedSet, unit: WeightUnit) -> String {
+        var label = "Set \(number), \(weightText(set.weight)) \(unit.rawValue) by \(set.reps)"
         if let rpe = set.rpe { label += ", RPE \(weightText(rpe))" }
         if set.isBest { label += ", best set" }
         return label
