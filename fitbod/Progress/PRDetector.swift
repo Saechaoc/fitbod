@@ -148,16 +148,42 @@ public enum PRDetector {
 
     // MARK: - Public API
 
-    /// Build the full PR table from a flat `[SetEntry]` history.
-    /// Filters to working+committed+non-warmup+positive sets and
-    /// partitions by `(exerciseID, intent, PRKind, RepBucket)`.
+    /// Build the full PR table from a flat `[SetEntry]` history, replayed
+    /// oldest first. Filters to working+committed+non-warmup+positive sets
+    /// and partitions by `(exerciseID, intent, PRKind, RepBucket)`.
     public static func buildTable(from sets: [SetEntry]) -> PRTable {
         var table = PRTable()
-        for entry in sets {
-            // Mutating call must use the existing var.
-            _ = check(set: entry, against: &table)
-        }
+        replay(sets, into: &table)
         return table
+    }
+
+    /// Replays `sets` oldest first through `check(set:against:)` into
+    /// `table` and returns each set that set a record, with the kinds it
+    /// set. Oldest first is by workout start (a workout's place in time),
+    /// then the time each set was logged, then log order and set order,
+    /// so sets logged at the same moment always replay in one order.
+    @discardableResult
+    public static func replay(
+        _ sets: [SetEntry],
+        into table: inout PRTable
+    ) -> [(set: SetEntry, kinds: Set<PRKind>)] {
+        // Each set's place is read once: SwiftData reads inside the sort's
+        // comparator took 0.4 s on 6,000 sets.
+        let ordered = sets
+            .map { set in
+                (key: (set.sessionExercise?.session?.startedAt ?? .distantPast,
+                       set.completedAt,
+                       set.sessionExercise?.orderIndex ?? 0,
+                       set.orderIndex),
+                 set: set)
+            }
+            .sorted { $0.key < $1.key }
+        var records: [(set: SetEntry, kinds: Set<PRKind>)] = []
+        for (_, set) in ordered {
+            let kinds = check(set: set, against: &table)
+            if !kinds.isEmpty { records.append((set: set, kinds: kinds)) }
+        }
+        return records
     }
 
     /// Evaluate a single set against the live table. Returns the set

@@ -655,8 +655,8 @@ extension SessionFactory {
     /// the exercises in `session` (including sets already logged in this
     /// session, so a resumed workout keeps its in-session PRs).
     ///
-    /// Sets are fed to the table oldest first by `completedAt`, so on
-    /// equal values the earlier set keeps the record.
+    /// `PRDetector.buildTable` replays the sets oldest first, so on equal
+    /// values the earlier set keeps the record.
     ///
     /// Returns an empty `PRTable` when the session has no exercises or
     /// a fetch fails; the in-session banner then simply emits no PRs
@@ -687,7 +687,6 @@ extension SessionFactory {
                 }
             }
         }
-        candidates.sort { $0.completedAt < $1.completedAt }
         return PRDetector.buildTable(from: candidates)
     }
 }

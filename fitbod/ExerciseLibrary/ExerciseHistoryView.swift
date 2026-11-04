@@ -420,18 +420,8 @@ extension ExerciseHistoryView {
     static func prSets(
         from sets: [(setEntry: SetEntry, sessionExercise: SessionExercise)]
     ) -> Set<ObjectIdentifier> {
-        let oldestFirst = sets.sorted { a, b in
-            let aStart = a.sessionExercise.session?.startedAt ?? .distantPast
-            let bStart = b.sessionExercise.session?.startedAt ?? .distantPast
-            return (aStart, a.setEntry.completedAt, a.sessionExercise.orderIndex, a.setEntry.orderIndex)
-                < (bStart, b.setEntry.completedAt, b.sessionExercise.orderIndex, b.setEntry.orderIndex)
-        }
         var table = PRTable()
-        var prSetIDs: Set<ObjectIdentifier> = []
-        for pair in oldestFirst where !PRDetector.check(set: pair.setEntry, against: &table).isEmpty {
-            prSetIDs.insert(ObjectIdentifier(pair.setEntry))
-        }
-        return prSetIDs
+        return Set(PRDetector.replay(sets.map(\.setEntry), into: &table).map { ObjectIdentifier($0.set) })
     }
 }
 

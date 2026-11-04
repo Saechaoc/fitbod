@@ -56,17 +56,15 @@ public struct SessionSummary: Sendable, Equatable {
 
         let ordered = (session.exercises ?? []).sorted { $0.orderIndex < $1.orderIndex }
 
-        // PR check walks today's sets in the order they were logged, so a
+        // The replay walks today's sets in the order they were logged, so a
         // second heavier set beats the first, not the other way round.
         let todaysSets = ordered
             .flatMap { $0.sets ?? [] }
             .filter { $0.isComplete && !$0.isWarmup }
-            .sorted { $0.completedAt < $1.completedAt }
         var prsByExercise: [UUID: Set<PRKind>] = [:]
-        for set in todaysSets {
-            let hits = PRDetector.check(set: set, against: &table)
-            guard !hits.isEmpty, let seID = set.sessionExercise?.id else { continue }
-            prsByExercise[seID, default: []].formUnion(hits)
+        for record in PRDetector.replay(todaysSets, into: &table) {
+            guard let seID = record.set.sessionExercise?.id else { continue }
+            prsByExercise[seID, default: []].formUnion(record.kinds)
         }
 
         var lines: [ExerciseLine] = []
@@ -139,32 +137,26 @@ public struct SessionSummary: Sendable, Equatable {
     /// same rule `make` applies to one session. Sessions without a PR are
     /// left out.
     public static func prsBySession(_ sessions: [Session]) -> [UUID: SessionPRs] {
-        var table = PRTable()
-        var result: [UUID: SessionPRs] = [:]
-        let finished = sessions
+        let sets = sessions
             .filter { $0.completedAt != nil }
-            .sorted { $0.startedAt < $1.startedAt }
-        for session in finished {
-            let sets = (session.exercises ?? [])
-                .flatMap { $0.sets ?? [] }
-                .filter { $0.isComplete && !$0.isWarmup }
-                .sorted { $0.completedAt < $1.completedAt }
-            // Grouped by logged exercise, as in `make`, so the count is the
-            // number of PR kinds the summary lists across its exercises.
-            var kindsByExercise: [UUID: Set<PRKind>] = [:]
-            for set in sets {
-                let hits = PRDetector.check(set: set, against: &table)
-                guard !hits.isEmpty, let seID = set.sessionExercise?.id else { continue }
-                kindsByExercise[seID, default: []].formUnion(hits)
-            }
-            guard !kindsByExercise.isEmpty else { continue }
+            .flatMap { ($0.exercises ?? []).flatMap { $0.sets ?? [] } }
+            .filter { $0.isComplete && !$0.isWarmup }
+        // Grouped by session, then by logged exercise, as in `make`, so the
+        // count is the number of PR kinds the summary lists across its
+        // exercises.
+        var kindsBySession: [UUID: [UUID: Set<PRKind>]] = [:]
+        var table = PRTable()
+        for record in PRDetector.replay(sets, into: &table) {
+            guard let se = record.set.sessionExercise, let sessionID = se.session?.id else { continue }
+            kindsBySession[sessionID, default: [:]][se.id, default: []].formUnion(record.kinds)
+        }
+        return kindsBySession.mapValues { kindsByExercise in
             let kinds = kindsByExercise.values.reduce(into: Set<PRKind>()) { $0.formUnion($1) }
-            result[session.id] = SessionPRs(
+            return SessionPRs(
                 kinds: PRKind.allCases.filter { kinds.contains($0) },
                 count: kindsByExercise.values.reduce(0) { $0 + $1.count }
             )
         }
-        return result
     }
 
     private static func isCountedWorkingSet(_ set: SetEntry) -> Bool {

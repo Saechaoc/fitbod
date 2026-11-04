@@ -465,9 +465,7 @@ public enum BlockReviewStatistics {
     /// only when it beats every set logged before it, in the block or
     /// before it.
     ///
-    /// Oldest first is by workout start, then the time each set was logged,
-    /// then log order and set order, as exercise history replays it, so sets
-    /// logged at the same moment always replay in one order.
+    /// The replay is `PRDetector.replay`, the one exercise history runs.
     @MainActor
     public static func prs(context: ModelContext, start: Date, end: Date) -> BlockReviewPRs {
         // Records are kept per exercise, so only the history of the lifts
@@ -478,9 +476,7 @@ public enum BlockReviewStatistics {
             completedWorkingSets(context: context, start: start, end: end)
                 .compactMap { $0.sessionExercise?.exercise?.id }
         )
-        // Each set's place in the replay is read once: SwiftData reads inside
-        // the sort's comparator took 0.4 s on 6,000 sets.
-        var history: [(order: (Date, Date, Int, Int), exerciseID: UUID, setEntry: SetEntry)] = []
+        var history: [SetEntry] = []
         for exerciseID in exerciseIDs {
             let targetID = exerciseID
             var descriptor = FetchDescriptor<SessionExercise>(
@@ -491,26 +487,19 @@ public enum BlockReviewStatistics {
             descriptor.relationshipKeyPathsForPrefetching = [\.sets, \.session]
             let rows = (try? context.fetch(descriptor)) ?? []
             for row in rows {
-                guard let session = row.session, session.completedAt != nil else { continue }
-                for entry in row.sets ?? [] where entry.isComplete && !entry.isWarmup {
-                    history.append(((session.startedAt, entry.completedAt, row.orderIndex, entry.orderIndex), exerciseID, entry))
-                }
+                guard row.session?.completedAt != nil else { continue }
+                history += (row.sets ?? []).filter { $0.isComplete && !$0.isWarmup }
             }
         }
-        history.sort { $0.order < $1.order }
 
         var table = PRTable()
-        var count = 0
-        var liftsWithPRs: Set<UUID> = []
-        for (order, exerciseID, entry) in history {
-            let records = PRDetector.check(set: entry, against: &table)
-            let completedAt = order.1
-            if !records.isEmpty && completedAt >= start && completedAt <= end {
-                count += 1
-                liftsWithPRs.insert(exerciseID)
-            }
-        }
-        return BlockReviewPRs(count: count, exerciseIDs: liftsWithPRs)
+        let inBlock = PRDetector.replay(history, into: &table)
+            .map(\.set)
+            .filter { $0.completedAt >= start && $0.completedAt <= end }
+        return BlockReviewPRs(
+            count: inBlock.count,
+            exerciseIDs: Set(inBlock.compactMap { $0.sessionExercise?.exercise?.id })
+        )
     }
 
     @MainActor
