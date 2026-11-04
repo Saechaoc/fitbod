@@ -192,12 +192,11 @@ enum SessionHistoryFormat {
         return rounded.formatted(.number.grouping(.automatic).locale(locale))
     }
 
-    /// Weight × reps over completed, non-warm-up sets.
+    /// A workout's tonnage: the sum of `SetEntry.tonnage`.
     static func tonnage(of session: Session) -> Double {
         (session.exercises ?? [])
             .flatMap { $0.sets ?? [] }
-            .filter { $0.isComplete && !$0.isWarmup }
-            .reduce(0) { $0 + $1.weight * Double($1.reps) }
+            .reduce(0) { $0 + $1.tonnage }
     }
 
     /// Workouts a week over four weeks, to two decimals at most with
