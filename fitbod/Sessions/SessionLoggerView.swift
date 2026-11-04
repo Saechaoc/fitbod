@@ -55,6 +55,7 @@ public struct SessionLoggerView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.scenePhase) private var scenePhase
     @Environment(\.isKeyboardVisible) private var isKeyboardVisible
+    @Environment(ResumeWorkoutRequest.self) private var resumeRequest: ResumeWorkoutRequest?
 
     @Bindable public var session: Session
     @State private var engine = RestTimerEngine.makeProduction()
@@ -233,6 +234,10 @@ public struct SessionLoggerView: View {
             engine.bind(sessionID: session.id)
             prState.prTable = await SessionFactory.seedPRTable(for: session, context: ctx)
         }
+        // While this logger is open, the Live Activity's link only brings
+        // the app back to it.
+        .onAppear { resumeRequest?.loggerIsOpen = true }
+        .onDisappear { resumeRequest?.loggerIsOpen = false }
         .onChange(of: scenePhase) { _, phase in
             switch phase {
             case .active:

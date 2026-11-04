@@ -763,14 +763,16 @@ public struct TodayView: View {
         }
     }
 
-    /// The Live Activity asked for the workout in progress: show its logger
-    /// on Today's stack, in place of whatever was open there.
+    /// The Live Activity asked for the workout in progress: push its logger
+    /// on Today's stack. No logger is open then (RootView ignores the link
+    /// while one is), and pushing keeps whatever is open, such as an unsaved
+    /// Edit workout.
     @MainActor
     private func openRequestedWorkout() {
         guard let resumeRequest, resumeRequest.isPending else { return }
         resumeRequest.isPending = false
         guard let active = activeSessions.first else { return }
-        navigationPath = NavigationPath([SessionRoute.logger(active)])
+        navigationPath.append(SessionRoute.logger(active))
     }
 
     /// Opens the name step on Today's own stack. The routine exists only once

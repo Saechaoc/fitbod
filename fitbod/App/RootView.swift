@@ -137,9 +137,10 @@ public struct RootView: View {
         .environment(\.weightUnit, settingsList.first?.weightUnit ?? .default)
         .environment(historyEdits)
         .environment(resumeRequest)
-        // The rest timer's Live Activity opens the workout in progress.
+        // The rest timer's Live Activity opens the workout in progress. An
+        // open logger already shows it, and the app reopens on it.
         .onOpenURL { url in
-            guard ResumeWorkoutRequest.isResumeLink(url) else { return }
+            guard ResumeWorkoutRequest.isResumeLink(url), !resumeRequest.loggerIsOpen else { return }
             selectedTab = .today
             resumeRequest.isPending = true
         }
