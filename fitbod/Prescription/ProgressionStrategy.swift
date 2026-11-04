@@ -131,7 +131,7 @@ extension PrescriptionExplanation {
         shown.roundedWeight = startWeight
         shown.bumpOccurred = false
         let now = roundedWeight > 0
-            ? "the steps below now give \(String(format: "%g", roundedWeight)) \(unitLabel)"
+            ? "the steps below now give \(NumberText.weight(roundedWeight)) \(unitLabel)"
             : "the steps below no longer suggest a weight"
         shown.changedSinceStartLine = "Set when this workout started. Your plan, settings or history have changed since, and \(now)."
         return shown

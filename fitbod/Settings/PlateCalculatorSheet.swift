@@ -102,13 +102,13 @@ public struct PlateCalculatorSheet: View {
     private var barName: String {
         switch equipment {
         case .barbell:
-            return "Olympic · \(formatted(parsedBar)) \(unitLabel)"
+            return "Olympic · \(NumberText.weight(parsedBar)) \(unitLabel)"
         case .dumbbell:
-            return "Dumbbell · \(formatted(parsedBar)) \(unitLabel)"
+            return "Dumbbell · \(NumberText.weight(parsedBar)) \(unitLabel)"
         case .ezBar:
-            return "EZ-Bar · \(formatted(parsedBar)) \(unitLabel)"
+            return "EZ-Bar · \(NumberText.weight(parsedBar)) \(unitLabel)"
         case .trapBar:
-            return "Trap Bar · \(formatted(parsedBar)) \(unitLabel)"
+            return "Trap Bar · \(NumberText.weight(parsedBar)) \(unitLabel)"
         }
     }
 
@@ -120,11 +120,6 @@ public struct PlateCalculatorSheet: View {
         case .ezBar:    return "EZ-Bar set"
         case .trapBar:  return "Trap Bar set"
         }
-    }
-
-    /// Format a Double, stripping unnecessary trailing zeros.
-    private func formatted(_ d: Double) -> String {
-        String(format: "%g", d)
     }
 
     // MARK: - Body
@@ -151,7 +146,7 @@ public struct PlateCalculatorSheet: View {
         }
         .onAppear {
             if barWeightText.isEmpty {
-                barWeightText = formatted(inventory.barWeight)
+                barWeightText = NumberText.weight(inventory.barWeight)
             }
         }
     }
@@ -191,7 +186,7 @@ public struct PlateCalculatorSheet: View {
                 }
 
                 // Takes its room before the spacer, and wraps only between words.
-                Text("Bar \(formatted(parsedBar)) + Plates \(formatted(totalPlateWeight))")
+                Text("Bar \(NumberText.weight(parsedBar)) + Plates \(NumberText.weight(totalPlateWeight))")
                     .font(BRUFont.labelSmall)
                     .foregroundStyle(Color.bruMuted)
                     .textCase(.uppercase)
@@ -259,7 +254,7 @@ public struct PlateCalculatorSheet: View {
     /// requiring Font.custom directly (BRUFont.displayHero is 56pt).
     /// It shrinks rather than wrap inside the number.
     private var heroWeight: some View {
-        Text(formatted(parsedTarget))
+        Text(NumberText.weight(parsedTarget))
             .font(.bru(.grotesk, size: 96, relativeTo: .largeTitle))
             .foregroundStyle(Color.bruInk)
             // Negative letterspacing per displayHero spec (-0.5)
@@ -308,7 +303,7 @@ public struct PlateCalculatorSheet: View {
             // weight — overflow not a realistic concern up to ~10^15.
             let current = parsedTarget
             let newValue = max(0, current + delta)
-            targetWeightText = formatted(newValue)
+            targetWeightText = NumberText.weight(newValue)
         } label: {
             // Frame and hit shape sit inside the label: a frame outside the
             // Button does not grow what it takes taps on.
@@ -318,7 +313,7 @@ public struct PlateCalculatorSheet: View {
         }
         .buttonStyle(.plain)
         // Accessibility: announce the intended action including unit per 03-UI-SPEC line 502
-        .accessibilityLabel(delta > 0 ? "Add \(formatted(delta)) \(unitLabel)" : "Subtract \(formatted(abs(delta))) \(unitLabel)")
+        .accessibilityLabel(delta > 0 ? "Add \(NumberText.weight(delta)) \(unitLabel)" : "Subtract \(NumberText.weight(abs(delta))) \(unitLabel)")
     }
 
     // MARK: - Bar Exceeds Target Error
@@ -354,7 +349,7 @@ public struct PlateCalculatorSheet: View {
                 // heightScale: 1.0 per plan spec. showLegend: true per plan spec.
                 PlateStackViz(
                     platesPerSide: stack.platesPerSide.map { ($0.weight, $0.count) },
-                    barLabel: "\(formatted(parsedBar)) \(unitLabel)",
+                    barLabel: "\(NumberText.weight(parsedBar)) \(unitLabel)",
                     heightScale: 1.0,
                     showLegend: true
                 )

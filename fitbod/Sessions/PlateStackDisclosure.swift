@@ -58,7 +58,7 @@ public struct PlateStackDisclosure: View {
             if targetWeight < barWeight {
                 // Below-bar state: informational copy per 03-UI-SPEC line 418
                 Text(
-                    "Target is below bar weight (\(String(format: "%g", barWeight)) \(unitLabel)). Log as bodyweight or adjust the bar."
+                    "Target is below bar weight (\(NumberText.weight(barWeight)) \(unitLabel)). Log as bodyweight or adjust the bar."
                 )
                 .font(BRUFont.bodyDefault)
                 .foregroundStyle(Color.bruMuted)
@@ -69,7 +69,7 @@ public struct PlateStackDisclosure: View {
                 // Solved: delegate to PlateStackViz — no local plate rect helpers
                 PlateStackViz(
                     platesPerSide: stack.platesPerSide.map { ($0.weight, $0.count) },
-                    barLabel: "\(String(format: "%g", barWeight)) \(unitLabel)",
+                    barLabel: "\(NumberText.weight(barWeight)) \(unitLabel)",
                     heightScale: 0.6,
                     showLegend: true
                 )

@@ -274,14 +274,7 @@ private struct FilteredHistoryContent: View {
         let topWeight = allSets.max(by: { $0.weight < $1.weight })
         let topReps = allSets.max(by: { $0.reps < $1.reps })
 
-        let topWeightLabel: String
-        if let tw = topWeight {
-            topWeightLabel = tw.weight.truncatingRemainder(dividingBy: 1) == 0
-                ? "\(Int(tw.weight))"
-                : String(format: "%.1f", tw.weight)
-        } else {
-            topWeightLabel = "—"
-        }
+        let topWeightLabel = topWeight.map { NumberText.weight($0.weight) } ?? "—"
 
         let topRepsLabel = topReps.map { "\($0.reps)" } ?? "—"
 
@@ -503,9 +496,7 @@ extension ExerciseHistoryView {
 
     /// A set as its chip and the TOP line read, such as "107.5×2 @9.5".
     private static func setLabel(_ set: SetEntry) -> String {
-        let w = set.weight.truncatingRemainder(dividingBy: 1) == 0
-            ? "\(Int(set.weight))"
-            : String(format: "%.1f", set.weight)
+        let w = NumberText.weight(set.weight)
         if let rpe = set.rpe {
             let rpeStr = rpe.truncatingRemainder(dividingBy: 1) == 0
                 ? "\(Int(rpe))" : String(format: "%.1f", rpe)

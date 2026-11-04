@@ -128,7 +128,7 @@ public struct InSessionPRBanner: View {
     /// "BENCH PRESS · 102.5 KG × 5"
     private func setDetailMono(content: InSessionPRBannerContent) -> String {
         let unit = content.unitOverride ?? defaultUnit
-        let set = "\(formatWeight(content.weight)) \(unit.rawValue) × \(content.reps)"
+        let set = "\(NumberText.weight(content.weight)) \(unit.rawValue) × \(content.reps)"
         return content.exerciseName.isEmpty ? set : "\(content.exerciseName) · \(set)"
     }
 
@@ -141,13 +141,6 @@ public struct InSessionPRBanner: View {
         }
     }
 
-    private func formatWeight(_ value: Double) -> String {
-        if value.truncatingRemainder(dividingBy: 1) == 0 {
-            return String(Int(value))
-        }
-        return String(format: "%g", value)
-    }
-
     /// "Personal record, weight. Bench Press, 225 pounds, 5 reps."
     private func accessibilityLabel(content: InSessionPRBannerContent) -> String {
         let kinds = content.kinds.map(\.spokenName).joined(separator: ", ")
@@ -156,7 +149,7 @@ public struct InSessionPRBanner: View {
             : "\(content.kinds.count) personal records: \(kinds)."
         let unit = content.unitOverride ?? defaultUnit
         let unitName = unit == .kg ? "kilograms" : "pounds"
-        let set = "\(formatWeight(content.weight)) \(unitName), \(BRUCountLabel.text(content.reps, "rep"))."
+        let set = "\(NumberText.weight(content.weight)) \(unitName), \(BRUCountLabel.text(content.reps, "rep"))."
         return content.exerciseName.isEmpty
             ? "\(lead) \(set)"
             : "\(lead) \(content.exerciseName), \(set)"

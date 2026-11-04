@@ -154,7 +154,7 @@ public struct SessionComparisonView: View {
                         .font(BRUFont.bodyEmphasis)
                         .foregroundStyle(Color.bruInk)
                     if let top = row.thisWeekTopSet {
-                        Text("\(Self.formatWeight(top.weight)) × \(top.reps)")
+                        Text("\(NumberText.weight(top.weight)) × \(top.reps)")
                             .font(BRUFont.bodyDefault)
                             .foregroundStyle(Color.bruInk)
                     }
@@ -164,7 +164,7 @@ public struct SessionComparisonView: View {
                 // Center (~30%) — Δ values
                 VStack(spacing: 2) {
                     let unitLabel = unit(for: row.exerciseID).rawValue
-                    deltaView(value: row.deltaWeight, unit: unitLabel, format: Self.formatWeight)
+                    deltaView(value: row.deltaWeight, unit: unitLabel, format: NumberText.weight)
                     deltaViewReps(value: row.deltaReps)
                     deltaView(value: row.deltaE1RM, unit: "e1RM \(unitLabel)", format: Self.formatE1RMChange)
                 }
@@ -173,7 +173,7 @@ public struct SessionComparisonView: View {
                 // Trailing (~35%) — last-week value
                 VStack(alignment: .leading, spacing: 2) {
                     if let top = row.lastWeekTopSet {
-                        Text("\(Self.formatWeight(top.weight)) × \(top.reps)")
+                        Text("\(NumberText.weight(top.weight)) × \(top.reps)")
                             .font(BRUFont.bodyDefault)
                             .foregroundStyle(Color.bruInk)
                     }
@@ -255,18 +255,10 @@ public struct SessionComparisonView: View {
 
     // MARK: - Formatting
 
-    /// A set weight or a weight change as logged, such as "102.25".
-    static func formatWeight(_ value: Double) -> String {
-        if value.truncatingRemainder(dividingBy: 1) == 0 {
-            return String(Int(value))
-        }
-        return String(format: "%g", value)
-    }
-
     /// An e1RM change to one decimal, halves away from zero, such as "3.2"
     /// for 3.16667, and a whole one without, such as "5". The estimate
     /// keeps every digit of its formula, which "%g" would print.
     static func formatE1RMChange(_ value: Double) -> String {
-        formatWeight((value * 10).rounded() / 10)
+        NumberText.weight((value * 10).rounded() / 10)
     }
 }

@@ -193,7 +193,7 @@ public struct PlateStackViz: View {
     ///         public type system but raw 12pt sizing is load-bearing for plate
     ///         width × −90deg rotation legibility.
     private func rotatedLabel(weight: Double) -> some View {
-        Text(formatted(weight))
+        Text(NumberText.weight(weight))
             .font(.bru(.grotesk, size: Geometry.labelSize, relativeTo: .caption))
             .foregroundStyle(Color.bruPaper)
             .rotationEffect(.degrees(-90))
@@ -210,7 +210,7 @@ public struct PlateStackViz: View {
                         .fill(Color.bruInk)
                         .frame(width: 8, height: 8)
 
-                    Text(formatted(denomination.weight))
+                    Text(NumberText.weight(denomination.weight))
                         .font(BRUFont.bodyDefault)
                         .foregroundStyle(Color.bruInk)
                 }
@@ -220,11 +220,6 @@ public struct PlateStackViz: View {
 
     // MARK: Helpers
 
-    /// Format a plate weight number, stripping unnecessary trailing zeros.
-    private func formatted(_ d: Double) -> String {
-        String(format: "%g", d)
-    }
-
     /// Combined accessibility label for the entire stack.
     private var accessibilityLabelText: String {
         guard !platesPerSide.isEmpty else {
@@ -232,11 +227,11 @@ public struct PlateStackViz: View {
         }
         let plateList = platesPerSide.map { denomination in
             let countWord = denomination.count == 1 ? "one" : "\(denomination.count)"
-            return "\(countWord) \(formatted(denomination.weight))"
+            return "\(countWord) \(NumberText.weight(denomination.weight))"
         }.joined(separator: ", ")
 
         let totalPlates = platesPerSide.reduce(0.0) { $0 + $1.weight * Double($1.count) }
-        let totalFormatted = formatted(totalPlates * 2) // both sides
+        let totalFormatted = NumberText.weight(totalPlates * 2) // both sides
 
         return "Bar: \(barLabel). Plates each side: \(plateList). Total: \(totalFormatted)."
     }
@@ -280,7 +275,7 @@ extension PlateStackViz {
                 let size = Self.plateSize(weight: weight, heightScale: heightScale)
                 let frame = CGRect(x: x, y: -size.height / 2, width: size.width, height: size.height)
                 let label = labelPointSize
-                    .flatMap { Self.rotatedInk(of: String(format: "%g", weight), pointSize: $0) }?
+                    .flatMap { Self.rotatedInk(of: NumberText.weight(weight), pointSize: $0) }?
                     .offsetBy(dx: frame.midX, dy: frame.midY)
                 // A label that would spill past its plate's separators draws
                 // over its neighbors, or a later plate draws over it, so it

@@ -257,7 +257,7 @@ public struct WhyThisWeightSheet: View {
     /// The hero's weight, or the empty weight field's "—", with no unit,
     /// for a suggestion of 0.
     var heroWeightText: String {
-        hasSuggestion ? formatted(explanation.roundedWeight) : "—"
+        hasSuggestion ? NumberText.weight(explanation.roundedWeight) : "—"
     }
 
     /// The hero's reps: the set's rep range, "×8–12", or "×8" for a range
@@ -269,7 +269,7 @@ public struct WhyThisWeightSheet: View {
     /// VoiceOver reads a suggestion of 0 like the empty weight field: "none".
     var heroAccessibilityLabel: String {
         let weightStr = hasSuggestion
-            ? "Recommended weight \(formatted(explanation.roundedWeight)) \(unitLabel)"
+            ? "Recommended weight \(NumberText.weight(explanation.roundedWeight)) \(unitLabel)"
             : "Recommended weight: none"
         let repsStr = reps.map { repsText($0, joinedBy: " to ") } ?? "unknown"
         let rpeStr = rpe.map { formattedRPE($0) } ?? "not applicable"
@@ -505,8 +505,8 @@ public struct WhyThisWeightSheet: View {
         let raw = rawWeightFromLine ?? explanation.roundedWeight
         let showArrow = abs(raw - explanation.roundedWeight) > 0.01
         return (
-            raw: showArrow ? "\(formatted(raw)) → " : "",
-            rounded: formatted(explanation.roundedWeight),
+            raw: showArrow ? "\(NumberText.weight(raw)) → " : "",
+            rounded: NumberText.weight(explanation.roundedWeight),
             plates: plateListSuffix
         )
     }
@@ -616,7 +616,7 @@ public struct WhyThisWeightSheet: View {
     /// explanation and Override and drops Use.
     var useTitle: String? {
         guard hasSuggestion else { return nil }
-        return "Use \(formatted(explanation.roundedWeight)) ▸"
+        return "Use \(NumberText.weight(explanation.roundedWeight)) ▸"
     }
 
     // MARK: - Phase 3.1 Status Text Helpers
@@ -646,11 +646,6 @@ public struct WhyThisWeightSheet: View {
     // MARK: - Formatting Helpers
     // incrementText() comes from v1 lines 222-235, relocated; it now returns
     // nil, not "?", when roundedLine names no plate size.
-
-    private func formatted(_ weight: Double) -> String {
-        let isWhole = weight.truncatingRemainder(dividingBy: 1) == 0
-        return isWhole ? String(Int(weight)) : String(format: "%g", weight)
-    }
 
     private func formattedRPE(_ rpeValue: Double) -> String {
         let isWhole = rpeValue.truncatingRemainder(dividingBy: 1) == 0

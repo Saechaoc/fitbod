@@ -221,7 +221,7 @@ public struct SettingsView: View {
             value: $s.defaultIncrementKg,
             in: 0.25...10.0,
             step: 0.25
-        ) { String(format: "%g", $0) + " " + settings.weightUnit.rawValue }
+        ) { NumberText.weight($0) + " " + settings.weightUnit.rawValue }
         .padding(.horizontal, 16)
         .padding(.vertical, 8)
         .background(Color.bruPaper)

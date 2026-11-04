@@ -94,6 +94,6 @@ struct PRsAndComparisonCopyTests {
         #expect(SessionComparisonView.formatE1RMChange(2.8125) == "2.8")
         #expect(SessionComparisonView.formatE1RMChange(5) == "5")
         #expect(SessionComparisonView.formatE1RMChange(0.04) == "0")
-        #expect(SessionComparisonView.formatWeight(102.25) == "102.25")
+        #expect(NumberText.weight(102.25) == "102.25")
     }
 }

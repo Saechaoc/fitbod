@@ -306,8 +306,7 @@ public struct SessionLoggerView: View {
 
     /// "M:SS" elapsed label — computed off Date.now (matches PITFALLS-doc #4).
     private var elapsedLabel: String {
-        let s = max(0, Int(Date.now.timeIntervalSince(elapsedStart)))
-        return String(format: "%d:%02d", s / 60, s % 60)
+        NumberText.minutesSeconds(max(0, Int(Date.now.timeIntervalSince(elapsedStart))))
     }
 
     // MARK: - Mutating commands

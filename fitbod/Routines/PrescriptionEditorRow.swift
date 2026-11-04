@@ -114,7 +114,7 @@ public struct PrescriptionEditorRow: View {
     }
 
     private var restChipLabel: String {
-        "\(restClock(draft.prescribedRestSeconds)) rest"
+        "\(NumberText.minutesSeconds(draft.prescribedRestSeconds)) rest"
     }
 
     // MARK: - Advanced Section
@@ -195,7 +195,7 @@ public struct PrescriptionEditorRow: View {
     // MARK: - Rest
 
     private var restStepper: some View {
-        BRUStepper("Rest", value: $draft.prescribedRestSeconds, in: 0...600, step: 15) { restClock($0) }
+        BRUStepper("Rest", value: $draft.prescribedRestSeconds, in: 0...600, step: 15) { NumberText.minutesSeconds($0) }
             .accessibilityIdentifier("prescription.rest")
     }
 
@@ -320,14 +320,6 @@ public struct PrescriptionEditorRow: View {
             .foregroundStyle(Color.bruMuted)
         }
     }
-}
-
-// MARK: - Rest time
-
-/// Rest as minutes and seconds, such as "3:00" for 180 seconds, the way the
-/// rest timer counts it down.
-func restClock(_ seconds: Int) -> String {
-    String(format: "%d:%02d", seconds / 60, seconds % 60)
 }
 
 // MARK: - Preview

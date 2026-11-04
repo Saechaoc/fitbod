@@ -131,17 +131,10 @@ public struct ResumeWorkoutBanner: View {
             : AnyLayout(HStackLayout(spacing: 12))
     }
 
-    /// Formats elapsed time since session start as "HH:MM" or "MM:SS".
+    /// Elapsed time since session start: "m:ss" below an hour, "h:mm" from
+    /// an hour on.
     private func elapsedLabel(for session: Session) -> String {
-        let elapsed = Int(Date().timeIntervalSince(session.startedAt))
-        let minutes = elapsed / 60
-        let seconds = elapsed % 60
-        if minutes >= 60 {
-            let hours = minutes / 60
-            let mins = minutes % 60
-            return String(format: "%d:%02d", hours, mins)
-        }
-        return String(format: "%d:%02d", minutes, seconds)
+        NumberText.elapsed(max(0, Int(Date().timeIntervalSince(session.startedAt))))
     }
 }
 

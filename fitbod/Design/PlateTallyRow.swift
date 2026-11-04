@@ -84,7 +84,7 @@ public struct PlateTallyRow: View {
             }
             // MARK: Accessibility (03-UI-SPEC line 503)
             .accessibilityElement(children: .ignore)
-            .accessibilityLabel("\(formatted(weight)) \(unitLabel) plate")
+            .accessibilityLabel("\(NumberText.weight(weight)) \(unitLabel) plate")
             .accessibilityValue("\(count) per side")
             .accessibilityAdjustableAction { direction in
                 switch direction {
@@ -141,7 +141,7 @@ public struct PlateTallyRow: View {
 
             // Weight number in displayMedium 20pt per 03-UI-SPEC line 49
             // (BRUDisplay size=20 per the spec table)
-            Text(formatted(weight))
+            Text(NumberText.weight(weight))
                 .font(.bru(.grotesk, size: 20))
                 .foregroundStyle(Color.bruInk)
                 .fixedSize()
@@ -182,10 +182,6 @@ public struct PlateTallyRow: View {
 
     // MARK: Helpers
 
-    /// Format a plate weight, stripping unnecessary trailing zeros.
-    private func formatted(_ d: Double) -> String {
-        String(format: "%g", d)
-    }
 }
 
 // MARK: - TallyBox

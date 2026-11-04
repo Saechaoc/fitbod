@@ -423,7 +423,7 @@ private struct PRsHost: View {
 enum PRRowText {
     static func value(kind: PRKind, weight: Double, reps: Int, rpe: Double?, unit: WeightUnit) -> String {
         let unit = unit.rawValue
-        let weightStr = formatWeight(weight)
+        let weightStr = NumberText.weight(weight)
         let rpePhrase = rpe.map { "RPE\(noBreak)" + String(format: "%g", $0) }
         switch kind {
         case .weight:
@@ -447,12 +447,6 @@ enum PRRowText {
 
     private static let noBreak = "\u{00A0}"
 
-    private static func formatWeight(_ value: Double) -> String {
-        if value.truncatingRemainder(dividingBy: 1) == 0 {
-            return String(Int(value))
-        }
-        return String(format: "%g", value)
-    }
 }
 
 // MARK: - Row ids
