@@ -233,7 +233,11 @@ public struct SessionExerciseCard: View {
                             exerciseName: exerciseName,
                             sessionCount: e1RMs.count
                         )
-                        if let action = suggestedAction {
+                        // A variation takes over the whole card, its logged
+                        // sets too, so like UNDO it is offered only before a
+                        // working set is logged.
+                        if let action = suggestedAction,
+                           action != .tryVariation || !hasLoggedWorkingSet {
                             SuggestedActionChip(action: action) {
                                 handleSuggestedAction(action)
                             }
