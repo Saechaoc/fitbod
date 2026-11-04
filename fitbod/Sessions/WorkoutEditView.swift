@@ -25,6 +25,7 @@ struct WorkoutEditView: View {
     @Environment(\.modelContext) private var ctx
     @Environment(\.dismiss) private var dismiss
     @Environment(\.weightUnit) private var weightUnit
+    @Environment(\.locale) private var locale
     @Environment(HistoryEdits.self) private var historyEdits: HistoryEdits?
 
     private let session: Session
@@ -35,6 +36,7 @@ struct WorkoutEditView: View {
     @State private var confirmingCancel = false
     @State private var confirmingDelete = false
     @State private var failure: String?
+    @State private var invalidRows: Set<UUID> = []
 
     init(session: Session, onDeleted: @escaping () -> Void) {
         self.session = session
@@ -67,7 +69,7 @@ struct WorkoutEditView: View {
             BRUHeaderBar(
                 left: HeaderAction("Cancel") { cancel() },
                 center: "Edit workout",
-                right: HeaderAction("Save", isSignal: true, isEnabled: draft.hasChanges) { save() }
+                right: HeaderAction("Save", isSignal: true, isEnabled: draft.hasChanges && invalidRows.isEmpty) { save() }
             )
         }
         // Number pads have no return key (T39).
@@ -193,8 +195,12 @@ struct WorkoutEditView: View {
                 WorkoutEditSetRow(
                     number: index + 1,
                     row: row,
-                    onChange: { values in update(row.id, in: exercise.id, to: values) },
-                    onDelete: { draft.deleteRow(row.id, from: exercise.id) }
+                    locale: locale,
+                    onChange: { values, valid in update(row.id, in: exercise.id, to: values, isValid: valid) },
+                    onDelete: {
+                        invalidRows.remove(row.id)
+                        draft.deleteRow(row.id, from: exercise.id)
+                    }
                 )
             }
             Button {
@@ -243,15 +249,20 @@ struct WorkoutEditView: View {
 
     // MARK: - Actions
 
-    private func update(_ rowID: UUID, in exerciseID: UUID, to values: WorkoutEdit.Values) {
+    private func update(_ rowID: UUID, in exerciseID: UUID, to values: WorkoutEdit.Values, isValid: Bool) {
         guard let e = draft.exercises.firstIndex(where: { $0.id == exerciseID }),
               let r = draft.exercises[e].rows.firstIndex(where: { $0.id == rowID })
         else { return }
         draft.exercises[e].rows[r].values = values
+        if isValid {
+            invalidRows.remove(rowID)
+        } else {
+            invalidRows.insert(rowID)
+        }
     }
 
     private func cancel() {
-        if draft.hasChanges {
+        if draft.hasChanges || !invalidRows.isEmpty {
             confirmingCancel = true
         } else {
             dismiss()
@@ -259,6 +270,7 @@ struct WorkoutEditView: View {
     }
 
     private func save() {
+        guard draft.hasChanges, invalidRows.isEmpty else { return }
         do {
             try SessionEditService.save(draft.edit, to: session, context: ctx)
         } catch SessionEditError.invalidSet {
@@ -329,7 +341,8 @@ private enum WorkoutEditGrid {
 private struct WorkoutEditSetRow: View {
     let number: Int
     let row: WorkoutEditDraft.Row
-    let onChange: (WorkoutEdit.Values) -> Void
+    let locale: Locale
+    let onChange: (WorkoutEdit.Values, Bool) -> Void
     let onDelete: () -> Void
 
     @State private var weightText: String
@@ -343,14 +356,16 @@ private struct WorkoutEditSetRow: View {
     init(
         number: Int,
         row: WorkoutEditDraft.Row,
-        onChange: @escaping (WorkoutEdit.Values) -> Void,
+        locale: Locale,
+        onChange: @escaping (WorkoutEdit.Values, Bool) -> Void,
         onDelete: @escaping () -> Void
     ) {
         self.number = number
         self.row = row
+        self.locale = locale
         self.onChange = onChange
         self.onDelete = onDelete
-        _weightText = State(initialValue: Self.text(row.values.weight))
+        _weightText = State(initialValue: WorkoutCorrectionInput.weightText(row.values.weight, locale: locale))
         _repsText = State(initialValue: row.values.reps > 0 ? "\(row.values.reps)" : "")
     }
 
@@ -365,19 +380,11 @@ private struct WorkoutEditSetRow: View {
                 field($weightText, .weight, keyboard: .decimalPad, changed: row.logged.map { $0.weight != row.values.weight } ?? false)
                     .frame(maxWidth: .infinity)
                     .accessibilityLabel("Weight, set \(number)")
-                    .onChange(of: weightText) { _, text in
-                        var values = row.values
-                        values.weight = Double(text) ?? 0
-                        onChange(values)
-                    }
+                    .onChange(of: weightText) { _, _ in updateValues(rpe: row.values.rpe) }
                 field($repsText, .reps, keyboard: .numberPad, changed: row.logged.map { $0.reps != row.values.reps } ?? false)
                     .frame(width: WorkoutEditGrid.small)
                     .accessibilityLabel("Reps, set \(number)")
-                    .onChange(of: repsText) { _, text in
-                        var values = row.values
-                        values.reps = Int(text) ?? 0
-                        onChange(values)
-                    }
+                    .onChange(of: repsText) { _, _ in updateValues(rpe: row.values.rpe) }
                 rpeMenu
                 Button(action: onDelete) {
                     Text("−")
@@ -398,6 +405,7 @@ private struct WorkoutEditSetRow: View {
                     .padding(.leading, WorkoutEditGrid.number + 8)
             }
         }
+        .onAppear { updateValues(rpe: row.values.rpe) }
     }
 
     private func field(_ text: Binding<String>, _ field: Field, keyboard: UIKeyboardType, changed: Bool) -> some View {
@@ -438,9 +446,17 @@ private struct WorkoutEditSetRow: View {
     }
 
     private func setRPE(_ rpe: Double?) {
+        updateValues(rpe: rpe)
+    }
+
+    private func updateValues(rpe: Double?) {
+        let weight = WorkoutCorrectionInput.weight(weightText, locale: locale)
+        let reps = WorkoutCorrectionInput.reps(repsText)
         var values = row.values
+        if let weight { values.weight = weight }
+        if let reps { values.reps = reps }
         values.rpe = rpe
-        onChange(values)
+        onChange(values, weight != nil && reps != nil)
     }
 
     private static func text(_ value: Double) -> String {

@@ -183,8 +183,13 @@ enum SessionHistoryFormat {
     /// as "3 sets · 1,500 lb". A zero volume is left out.
     static func setsLine(count: Int, volume: Double, unit: WeightUnit) -> String {
         let sets = BRUCountLabel.text(count, "set")
-        guard volume > 0 else { return sets }
-        return "\(sets) · \(Int(volume.rounded()).formatted(.number.grouping(.automatic))) \(unit.rawValue)"
+        guard volume != 0 else { return sets }
+        return "\(sets) · \(roundedVolume(volume)) \(unit.rawValue)"
+    }
+
+    static func roundedVolume(_ volume: Double, locale: Locale = .autoupdatingCurrent) -> String {
+        guard volume.isFinite, volume >= 0, let rounded = Int(exactly: volume.rounded()) else { return "—" }
+        return rounded.formatted(.number.grouping(.automatic).locale(locale))
     }
 
     /// Weight × reps over completed, non-warm-up sets.
@@ -211,10 +216,11 @@ enum SessionHistoryFormat {
 
     /// "4,610" below ten thousand, "71.2k" above.
     static func compactTonnage(_ total: Double) -> String {
+        guard WorkoutCorrectionInput.isSupported(total) else { return "—" }
         if total >= 10_000 {
             return (total / 1000).formatted(.number.precision(.fractionLength(1))) + "k"
         }
-        return Int(total.rounded()).formatted(.number.grouping(.automatic))
+        return roundedVolume(total)
     }
 }
 

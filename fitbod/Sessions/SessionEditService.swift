@@ -55,6 +55,48 @@ public enum SessionEditError: Error, Equatable {
     case invalidSet
 }
 
+/// Correction fields accept a whole, ungrouped number, never a parsed prefix.
+enum WorkoutCorrectionInput {
+    static func weight(_ text: String, locale: Locale) -> Double? {
+        let parts = text.components(separatedBy: locale.decimalSeparator ?? ".")
+        guard parts.count <= 2 else { return nil }
+        let digits = parts.compactMap(decimalDigits)
+        guard digits.count == parts.count,
+              let value = Double(digits.joined(separator: ".")),
+              isSupported(value)
+        else { return nil }
+        return value
+    }
+
+    static func reps(_ text: String) -> Int? {
+        guard let digits = decimalDigits(text), let value = Int(digits),
+              value > 0, Int(exactly: Double(value)) != nil
+        else { return nil }
+        return value
+    }
+
+    static func weightText(_ value: Double, locale: Locale) -> String {
+        value.formatted(.number.grouping(.never).precision(.significantDigits(1...17)).locale(locale))
+    }
+
+    /// Rendering and volume math require a nonnegative, representable rounded Int.
+    static func isSupported(_ value: Double) -> Bool {
+        value.isFinite && value >= 0 && Int(exactly: value.rounded()) != nil
+    }
+
+    private static func decimalDigits(_ text: String) -> String? {
+        guard !text.isEmpty else { return nil }
+        var result = ""
+        for character in text {
+            guard character.unicodeScalars.allSatisfy(CharacterSet.decimalDigits.contains),
+                  let digit = character.wholeNumberValue
+            else { return nil }
+            result.append(String(digit))
+        }
+        return result
+    }
+}
+
 @MainActor
 public enum SessionEditService {
 
@@ -69,14 +111,27 @@ public enum SessionEditService {
         guard finishedAt.addingTimeInterval(delta) <= now else { throw SessionEditError.endsInFuture }
 
         let exercises = session.exercises ?? []
+        var workoutVolume = 0.0
         for exercise in exercises {
             let equipment = exercise.exercise?.equipment
-            let changed = (exercise.sets ?? [])
-                .filter { !edit.deleted.contains($0.id) }
-                .compactMap { edit.changed[$0.id] }
-            guard (changed + (edit.added[exercise.id] ?? [])).allSatisfy({ isValid($0, equipment: equipment) }) else {
+            let kept = (exercise.sets ?? []).filter { !edit.deleted.contains($0.id) }
+            let added = edit.added[exercise.id] ?? []
+            guard (kept.compactMap { edit.changed[$0.id] } + added)
+                .allSatisfy({ isValid($0, equipment: equipment) })
+            else {
                 throw SessionEditError.invalidSet
             }
+            let proposed = kept.filter { $0.isComplete && !$0.isWarmup }.map {
+                edit.changed[$0.id] ?? WorkoutEdit.Values(weight: $0.weight, reps: $0.reps, rpe: $0.rpe)
+            } + added
+            var exerciseVolume = 0.0
+            for values in proposed {
+                guard isValid(values, equipment: equipment) else { throw SessionEditError.invalidSet }
+                exerciseVolume += values.weight * Double(values.reps)
+                guard WorkoutCorrectionInput.isSupported(exerciseVolume) else { throw SessionEditError.invalidSet }
+            }
+            workoutVolume += exerciseVolume
+            guard WorkoutCorrectionInput.isSupported(workoutVolume) else { throw SessionEditError.invalidSet }
         }
         let blocks = delta == 0 ? [] : try context.fetch(FetchDescriptor<Block>())
 
@@ -145,6 +200,10 @@ public enum SessionEditService {
 
     private static func isValid(_ values: WorkoutEdit.Values, equipment: Equipment?) -> Bool {
         let rpeIsValid = values.rpe.map { $0.isFinite && (0...10).contains($0) } ?? true
-        return rpeIsValid && SessionSetActions.isValidSet(weight: values.weight, reps: values.reps, equipment: equipment)
+        return rpeIsValid
+            && SessionSetActions.isValidSet(weight: values.weight, reps: values.reps, equipment: equipment)
+            && WorkoutCorrectionInput.isSupported(values.weight)
+            && Int(exactly: Double(values.reps)) != nil
+            && WorkoutCorrectionInput.isSupported(values.weight * Double(values.reps))
     }
 }

@@ -120,6 +120,144 @@ struct SessionEditServiceTests {
         #expect(sets[0].weight == 100)
     }
 
+    @Test("unsupported weights are rejected before any correction is written", arguments: [
+        10_000_000_000_000_000_000.0, Double(Int.max), Double.greatestFiniteMagnitude,
+        Double.infinity, Double.nan
+    ])
+    func unsupportedWeightChangesNothing(weight: Double) throws {
+        let ctx = try LoggerFixtures.makeContext()
+        let start = now.addingTimeInterval(-day)
+        let workout = try finishedWorkout(on: start, in: ctx)
+        let sets = SessionSetActions.ordered(try #require(workout.exercises?.first))
+        var edit = WorkoutEdit(startedAt: start.addingTimeInterval(-day))
+        edit.changed[sets[0].id] = .init(weight: 110, reps: 5, rpe: 8)
+        edit.changed[sets[1].id] = .init(weight: weight, reps: 5, rpe: nil)
+
+        #expect(throws: SessionEditError.invalidSet) {
+            try SessionEditService.save(edit, to: workout, now: now, context: ctx)
+        }
+        #expect(workout.startedAt == start)
+        #expect(sets.map(\.weight) == [100, 100, 100])
+        #expect(sets[0].rpe == nil)
+    }
+
+    @Test("unsupported reps and set volume are rejected atomically", arguments: [
+        WorkoutEdit.Values(weight: 1, reps: Int.max, rpe: nil),
+        WorkoutEdit.Values(weight: 1_000_000_000_000_000_000, reps: 10, rpe: nil)
+    ])
+    func unsupportedSetVolumeChangesNothing(values: WorkoutEdit.Values) throws {
+        let ctx = try LoggerFixtures.makeContext()
+        let start = now.addingTimeInterval(-day)
+        let workout = try finishedWorkout(on: start, in: ctx)
+        let set = try #require(workout.exercises?.first?.sets?.first)
+        var edit = WorkoutEdit(startedAt: start)
+        edit.changed[set.id] = values
+
+        #expect(throws: SessionEditError.invalidSet) {
+            try SessionEditService.save(edit, to: workout, now: now, context: ctx)
+        }
+        #expect(set.weight == 100 && set.reps == 5)
+    }
+
+    @Test("proposed exercise and workout totals must remain representable", arguments: [false, true])
+    func unsupportedTotalsChangeNothing(acrossExercises: Bool) throws {
+        let ctx = try LoggerFixtures.makeContext()
+        let start = now.addingTimeInterval(-day)
+        let workout = try finishedWorkout(on: start, in: ctx)
+        let exercise = try #require(workout.exercises?.first)
+        let sets = SessionSetActions.ordered(exercise)
+        var edit = WorkoutEdit(startedAt: start)
+        edit.changed[sets[0].id] = .init(weight: 6_000_000_000_000_000_000, reps: 1, rpe: nil)
+        if acrossExercises {
+            let second = SessionExercise()
+            ctx.insert(second)
+            second.session = workout
+            second.exercise = LoggerFixtures.exercise("Press", in: ctx)
+            try ctx.save()
+            edit.added[second.id] = [.init(weight: 6_000_000_000_000_000_000, reps: 1, rpe: nil)]
+        } else {
+            edit.changed[sets[1].id] = .init(weight: 6_000_000_000_000_000_000, reps: 1, rpe: nil)
+        }
+
+        #expect(throws: SessionEditError.invalidSet) {
+            try SessionEditService.save(edit, to: workout, now: now, context: ctx)
+        }
+        #expect(sets.map(\.weight) == [100, 100, 100])
+        #expect((workout.exercises ?? []).flatMap { $0.sets ?? [] }.count == 3)
+    }
+
+    @Test("correction weight text round-trips in its visible locale", arguments: ["en_US", "de_DE", "ar_SA"])
+    func localizedWeightRoundTrips(identifier: String) {
+        let locale = Locale(identifier: identifier)
+        for weight in [0.0, 7.5, 112.5, 1_234.75] {
+            let text = WorkoutCorrectionInput.weightText(weight, locale: locale)
+            #expect(WorkoutCorrectionInput.weight(text, locale: locale) == weight)
+        }
+        #expect(WorkoutCorrectionInput.weight("7,5", locale: Locale(identifier: "de_DE")) == 7.5)
+        #expect(WorkoutCorrectionInput.weightText(7.5, locale: Locale(identifier: "de_DE")) == "7,5")
+    }
+
+    @Test("correction parsing rejects the entire malformed number, not just its suffix")
+    func malformedWeightIsInvalid() {
+        for identifier in ["en_US", "de_DE"] {
+            let locale = Locale(identifier: identifier)
+            for text in ["", " ", "7.5x", "7,5x", "1,2.3", "1.2,3", "nan", "NaN", "inf", "1e3", "-1", " 7", "7 ", "10000000000000000000"] {
+                #expect(WorkoutCorrectionInput.weight(text, locale: locale) == nil)
+            }
+        }
+        #expect(WorkoutCorrectionInput.weight("7,5", locale: Locale(identifier: "en_US")) == nil)
+        #expect(WorkoutCorrectionInput.weight("7.5", locale: Locale(identifier: "de_DE")) == nil)
+    }
+
+    @Test("reps require a whole supported positive integer")
+    func correctionRepsAreValidated() {
+        #expect(WorkoutCorrectionInput.reps("7") == 7)
+        for text in ["", "0", "-1", "7.5", "7,5", "7x", " 7", String(Int.max), "10000000000000000000"] {
+            #expect(WorkoutCorrectionInput.reps(text) == nil)
+        }
+    }
+
+    @Test("a localized correction and explicit bodyweight zero keep their numeric value")
+    func localizedAndZeroWeightsSave() throws {
+        let ctx = try LoggerFixtures.makeContext()
+        let start = now.addingTimeInterval(-day)
+        let workout = try finishedWorkout(on: start, in: ctx)
+        let exercise = try #require(workout.exercises?.first)
+        exercise.exercise?.equipmentRaw = Equipment.bodyweight.rawValue
+        let sets = SessionSetActions.ordered(exercise)
+        var edit = WorkoutEdit(startedAt: start)
+        let weight = try #require(WorkoutCorrectionInput.weight("7,5", locale: Locale(identifier: "de_DE")))
+        edit.changed[sets[0].id] = .init(weight: weight, reps: 5, rpe: 8)
+        edit.changed[sets[1].id] = .init(weight: 0, reps: 7, rpe: nil)
+
+        try SessionEditService.save(edit, to: workout, now: now, context: ctx)
+
+        #expect(sets[0].weight == 7.5)
+        #expect(sets[1].weight == 0 && sets[1].reps == 7)
+    }
+
+    @Test("unsupported volumes render without trapping")
+    func unsupportedVolumeLabels() {
+        for volume in [Double.nan, .infinity, -.infinity, -1, 1e19, Double(Int.max), .greatestFiniteMagnitude] {
+            #expect(SessionHistoryFormat.roundedVolume(volume) == "—")
+            #expect(SessionHistoryFormat.setsLine(count: 3, volume: volume, unit: .lb) == "3 sets · — lb")
+            #expect(SessionHistoryFormat.compactTonnage(volume) == "—")
+        }
+        let belowBoundary = Double(Int.max).nextDown
+        #expect(SessionHistoryFormat.roundedVolume(belowBoundary) != "—")
+        #expect(WorkoutCorrectionInput.isSupported(belowBoundary))
+    }
+
+    @Test("ordinary volume rounding, grouping, zero omission and compact labels stay unchanged")
+    func ordinaryVolumeLabels() {
+        let locale = Locale(identifier: "en_US")
+        #expect(SessionHistoryFormat.roundedVolume(1_500.4, locale: locale) == "1,500")
+        #expect(SessionHistoryFormat.roundedVolume(1_500.5, locale: locale) == "1,501")
+        #expect(SessionHistoryFormat.setsLine(count: 1, volume: 0, unit: .kg) == "1 set")
+        #expect(SessionHistoryFormat.compactTonnage(4_610.4) == 4_610.formatted(.number.grouping(.automatic)))
+        #expect(SessionHistoryFormat.compactTonnage(71_200) == 71.2.formatted(.number.precision(.fractionLength(1))) + "k")
+    }
+
     @Test("an edit draft starts unchanged and saves its edits as one")
     func draftSavesItsEdits() throws {
         let ctx = try LoggerFixtures.makeContext()
