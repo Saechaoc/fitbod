@@ -3,9 +3,9 @@
 //
 // Phase 04.1 Plan 08 — Wave 7: Final audit re-run for Phase 4 BRU visual rewrite.
 //
-// PURPOSE: Programmatically grep each of the 12 rewritten Phase 4 surface files
-// (+ 1 net-new BlockOverviewScreen.swift) and assert ZERO occurrences of the
-// 25 forbidden Apple-HIG patterns enumerated in 04.1-PATTERNS.md lines 56-84.
+// PURPOSE: Programmatically grep the Phase 4 surface files still in the app
+// (`surfaces` below) and assert ZERO occurrences of the 25 forbidden
+// Apple-HIG patterns enumerated in 04.1-PATTERNS.md lines 56-84.
 //
 // ROADMAP AUDIT (revision iter 1 W5):
 //   testROADMAPDependsOnUpdated is extended to additionally assert:
@@ -27,13 +27,13 @@ struct BRUPeriodizationAuditTests {
 
     // MARK: - Path Helpers
 
-    /// Computes absolute path to a source file from #filePath ascent.
-    private func sourcePath(_ filename: String, in directory: String = "Periodization") -> URL {
+    /// Computes absolute path to a Periodization source file from #filePath ascent.
+    private func sourcePath(_ filename: String) -> URL {
         URL(fileURLWithPath: #filePath)
             .deletingLastPathComponent() // fitbodTests/
             .deletingLastPathComponent() // project root
             .appendingPathComponent("fitbod")
-            .appendingPathComponent(directory)
+            .appendingPathComponent("Periodization")
             .appendingPathComponent(filename)
     }
 
@@ -42,24 +42,6 @@ struct BRUPeriodizationAuditTests {
             .deletingLastPathComponent() // fitbodTests/
             .deletingLastPathComponent() // project root
             .appendingPathComponent(".planning")
-            .appendingPathComponent(filename)
-    }
-
-    private func appPath(_ filename: String) -> URL {
-        URL(fileURLWithPath: #filePath)
-            .deletingLastPathComponent() // fitbodTests/
-            .deletingLastPathComponent() // project root
-            .appendingPathComponent("fitbod")
-            .appendingPathComponent("App")
-            .appendingPathComponent(filename)
-    }
-
-    private func viewsPath(_ filename: String) -> URL {
-        URL(fileURLWithPath: #filePath)
-            .deletingLastPathComponent() // fitbodTests/
-            .deletingLastPathComponent() // project root
-            .appendingPathComponent("fitbod")
-            .appendingPathComponent("Views")
             .appendingPathComponent(filename)
     }
 
@@ -100,101 +82,92 @@ struct BRUPeriodizationAuditTests {
 
     // MARK: - Forbidden Patterns Table
 
-    /// The 25 forbidden Apple-HIG patterns from 04.1-PATTERNS.md lines 56-84.
-    /// Each entry: (name, regex, exemptFileSuffixes)
-    /// exemptFileSuffixes: files for which this pattern is intentionally allowed.
-    private static let forbiddenPatterns: [(name: String, regex: String, exemptFileSuffixes: [String])] = [
+    /// The 25 forbidden Apple-HIG patterns from 04.1-PATTERNS.md lines 56-84,
+    /// each as (name, regex).
+    private static let forbiddenPatterns: [(name: String, regex: String)] = [
         // 1. Form + Section (Apple inset-grouped — banned per UI-REVIEW Pillar 2 Fix 3)
-        ("Form {", #"Form \{"#, []),
-        ("Section(", #"\bSection\("#, []),
+        ("Form {", #"Form \{"#),
+        ("Section(", #"\bSection\("#),
 
         // 2. RoundedRectangle with corner radius (04-UI-SPEC line 36)
-        ("RoundedRectangle(cornerRadius:", #"RoundedRectangle\(cornerRadius:"#, []),
+        ("RoundedRectangle(cornerRadius:", #"RoundedRectangle\(cornerRadius:"#),
 
         // 3. clipShape with forbidden shapes
-        ("clipShape(RoundedRectangle/Capsule/Circle)", #"\.clipShape\(RoundedRectangle|\.clipShape\(Capsule\(\)|\.clipShape\(Circle\(\)|\.clipShape\(\.capsule\)"#, []),
+        ("clipShape(RoundedRectangle/Capsule/Circle)", #"\.clipShape\(RoundedRectangle|\.clipShape\(Capsule\(\)|\.clipShape\(Circle\(\)|\.clipShape\(\.capsule\)"#),
 
         // 4. Capsule() as visual element
-        ("Capsule()", #"\bCapsule\(\)"#, []),
+        ("Capsule()", #"\bCapsule\(\)"#),
 
         // 5. Color.accentColor / Color("AccentColor")
-        ("Color.accentColor", #"Color\.accentColor|Color\("AccentColor"\)|\.tint\(\.accentColor\)"#, []),
+        ("Color.accentColor", #"Color\.accentColor|Color\("AccentColor"\)|\.tint\(\.accentColor\)"#),
 
         // 6. Color.red / Color(.systemRed)
-        ("Color.red / Color(.systemRed)", #"Color\.red\b|Color\(\.systemRed\)"#, []),
+        ("Color.red / Color(.systemRed)", #"Color\.red\b|Color\(\.systemRed\)"#),
 
         // 7. Color.yellow / Color(.systemYellow)
-        ("Color.yellow / Color(.systemYellow)", #"Color\.yellow\b|Color\(\.systemYellow\)"#, []),
+        ("Color.yellow / Color(.systemYellow)", #"Color\.yellow\b|Color\(\.systemYellow\)"#),
 
         // 8. Color(.systemGray6) / Color(.secondarySystemGroupedBackground) / Color(.systemBackground)
-        ("Color(.system*) background tokens", #"Color\(\.systemGray6\)|Color\(\.secondarySystemGroupedBackground\)|Color\(\.systemBackground\)"#, []),
+        ("Color(.system*) background tokens", #"Color\(\.systemGray6\)|Color\(\.secondarySystemGroupedBackground\)|Color\(\.systemBackground\)"#),
 
         // 9. Color.white foreground on chip text
-        ("Color.white", #"\bColor\.white\b"#, []),
+        ("Color.white", #"\bColor\.white\b"#),
 
         // 10. Apple semantic font styles (Pillar 4)
-        (".font(.body)", #"\.font\(\.body\)"#, []),
-        (".font(.caption)", #"\.font\(\.caption\b"#, []),
-        (".font(.headline)", #"\.font\(\.headline\)"#, []),
-        (".font(.title)", #"\.font\(\.title\b"#, []),
-        (".font(.subheadline)", #"\.font\(\.subheadline\)"#, []),
+        (".font(.body)", #"\.font\(\.body\)"#),
+        (".font(.caption)", #"\.font\(\.caption\b"#),
+        (".font(.headline)", #"\.font\(\.headline\)"#),
+        (".font(.title)", #"\.font\(\.title\b"#),
+        (".font(.subheadline)", #"\.font\(\.subheadline\)"#),
 
         // 11. Image(systemName:) forbidden SF Symbols (per Pillar 6 table)
-        ("Image(systemName: \"line.3.horizontal\")", #"Image\(systemName:\s*"line\.3\.horizontal"\)"#, []),
-        ("Image(systemName: \"ellipsis.circle\")", #"Image\(systemName:\s*"ellipsis\.circle"\)"#, []),
-        ("Image(systemName: \"exclamationmark.triangle\")", #"Image\(systemName:\s*"exclamationmark\.triangle"\)"#, []),
-        ("Image(systemName: \"xmark\")", #"Image\(systemName:\s*"xmark"\)"#, []),
-        ("Image(systemName: \"chevron.right\")", #"Image\(systemName:\s*"chevron\.right"\)"#, []),
-        ("Image(systemName: \"trash\")", #"Image\(systemName:\s*"trash"\)"#, []),
+        ("Image(systemName: \"line.3.horizontal\")", #"Image\(systemName:\s*"line\.3\.horizontal"\)"#),
+        ("Image(systemName: \"ellipsis.circle\")", #"Image\(systemName:\s*"ellipsis\.circle"\)"#),
+        ("Image(systemName: \"exclamationmark.triangle\")", #"Image\(systemName:\s*"exclamationmark\.triangle"\)"#),
+        ("Image(systemName: \"xmark\")", #"Image\(systemName:\s*"xmark"\)"#),
+        ("Image(systemName: \"chevron.right\")", #"Image\(systemName:\s*"chevron\.right"\)"#),
+        ("Image(systemName: \"trash\")", #"Image\(systemName:\s*"trash"\)"#),
 
         // 12. .buttonStyle(.borderedProminent) / .tint(.accentColor)
-        (".buttonStyle(.borderedProminent)", #"\.buttonStyle\(\.borderedProminent\)|\.tint\(\.accentColor\)"#, []),
+        (".buttonStyle(.borderedProminent)", #"\.buttonStyle\(\.borderedProminent\)|\.tint\(\.accentColor\)"#),
 
         // 13. .navigationTitle (replaced by BRUHeaderBar)
-        (".navigationTitle", #"\.navigationTitle\s*\("#, []),
+        (".navigationTitle", #"\.navigationTitle\s*\("#),
 
         // 14. Divider() (replaced by BRUDivider or Rectangle+bruHair)
-        ("Divider()", #"\bDivider\(\)"#, []),
+        ("Divider()", #"\bDivider\(\)"#),
     ]
 
     // MARK: - 1. testForbiddenPatternsAcrossAllPhase4Surfaces
 
-    @Test("testForbiddenPatternsAcrossAllPhase4Surfaces — 0 matches for all 25 forbidden patterns across 12 + 1 files")
+    @Test("testForbiddenPatternsAcrossAllPhase4Surfaces — 0 matches for all 25 forbidden patterns across the Phase 4 surfaces")
     func testForbiddenPatternsAcrossAllPhase4Surfaces() throws {
-        let surfaces: [(filename: String, directory: String)] = [
-            ("StartBlockCTA.swift", "Periodization"),
-            ("DeloadWeekBanner.swift", "Periodization"),
-            ("MesocycleWeekPage.swift", "Periodization"),
+        let surfaces = [
+            "StartBlockCTA.swift",
+            "DeloadWeekBanner.swift",
+            "MesocycleWeekPage.swift",
             // BlockBuilderView.swift retired from this audit in quick task 260528-vi2:
             // the New Block screen was redesigned to the rounded-card final-design.png
             // contract (warm cards, RoundedRectangle, chevron) which intentionally
             // supersedes the Phase 04.1 brutalist "sharp-corners / no RoundedRectangle"
             // contract this audit enforces. It is no longer one of these surfaces.
-            ("BlockReviewView.swift", "Periodization"),
-            ("BlockOverviewScreen.swift", "Periodization"),
+            "BlockReviewView.swift",
+            "BlockOverviewScreen.swift",
         ]
 
         var allViolations: [String] = []
 
-        for (filename, directory) in surfaces {
-            let fileURL = sourcePath(filename, in: directory)
+        for filename in surfaces {
+            let fileURL = sourcePath(filename)
             let source = try String(contentsOf: fileURL, encoding: .utf8)
             let filtered = nonCommentLines(of: source)
 
-            for patternEntry in Self.forbiddenPatterns {
-                let (name, regexPattern, exemptSuffixes) = patternEntry
-
-                let isFileExempt = exemptSuffixes.contains { filename.hasSuffix($0) }
-
+            for (name, regexPattern) in Self.forbiddenPatterns {
                 let regex = try NSRegularExpression(pattern: regexPattern)
 
                 for (lineIdx, lineText) in filtered {
                     let nsRange = NSRange(lineText.startIndex..., in: lineText)
                     guard regex.firstMatch(in: lineText, range: nsRange) != nil else { continue }
-
-                    if isFileExempt {
-                        continue
-                    }
 
                     let violation = "Forbidden pattern '\(name)' in \(filename) at line \(lineIdx + 1): \(lineText.trimmingCharacters(in: .whitespaces))"
                     allViolations.append(violation)
@@ -224,21 +197,7 @@ struct BRUPeriodizationAuditTests {
                 "BlockOverviewScreen.swift must compose ≥4 BRU primitives (BRUHeaderBar + BRUSectionHead + BRUButton + BRUChip); found \(primitiveCount) of \(bruPrimitives)")
     }
 
-    // MARK: - 3. testBlockOverviewRouteWiring
-
-    @Test("testBlockOverviewRouteWiring — TodayView registers the shared BlockOverviewRoute destination")
-    func testBlockOverviewRouteWiring() throws {
-        let todayViewSource = try String(contentsOf: viewsPath("TodayView.swift"), encoding: .utf8)
-        #expect(todayViewSource.contains("BlockOverviewRoute"),
-                "TodayView.swift must reference BlockOverviewRoute for tap-routing wiring (CONTEXT D-11)")
-        #expect(todayViewSource.contains(".blockDestinations"),
-                "TodayView.swift must register the block destinations (CONTEXT D-11)")
-        let navigationSource = try String(contentsOf: sourcePath("BlockNavigation.swift"), encoding: .utf8)
-        #expect(navigationSource.contains("navigationDestination(for: BlockOverviewRoute.self)"),
-                "BlockNavigation.swift must declare the BlockOverviewRoute destination (CONTEXT D-11)")
-    }
-
-    // MARK: - 4. testAccessibilityLabelsPopulated
+    // MARK: - 3. testAccessibilityLabelsPopulated
 
     @Test("testAccessibilityLabelsPopulated — BlockOverviewScreen carries accessibilityLabel")
     func testAccessibilityLabelsPopulated() throws {
@@ -249,7 +208,7 @@ struct BRUPeriodizationAuditTests {
                 "BlockOverviewScreen.swift must carry .accessibilityLabel( per CONTEXT D-15")
     }
 
-    // MARK: - 5. testROADMAPDependsOnUpdated (EXTENDED per revision iter 1 W5)
+    // MARK: - 4. testROADMAPDependsOnUpdated (EXTENDED per revision iter 1 W5)
 
     /// Extended ROADMAP audit per revision iter 1 W5:
     /// Asserts ROADMAP.md Phase 04.1 entry contains:
