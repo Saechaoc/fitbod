@@ -31,7 +31,7 @@
 //   - RestTimerOverlay is mounted with .safeAreaInset(edge: .bottom) (the
 //     header note above claimed this mount, but the body never had it).
 //   - The rest timer is bound to the session id and persisted as a
-//     deadline (RestTimerStore). It is restored on appear and every time
+//     deadline (UserDefaultsRestTimerStore). It is restored on appear and every time
 //     the scene becomes active, so it survives background and relaunch.
 //   - Sets can be un-completed (tap the checkmark) and deleted (swipe);
 //     both persist immediately via SessionSetActions. Weight/reps edits

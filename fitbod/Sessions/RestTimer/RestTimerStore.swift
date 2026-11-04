@@ -33,20 +33,11 @@ public struct RestTimerSnapshot: Codable, Equatable, Sendable {
     }
 }
 
-/// Storage seam for `RestTimerEngine`. Production uses
-/// `UserDefaultsRestTimerStore`; tests and previews use
-/// `InMemoryRestTimerStore`, and can share one instance between two
+/// UserDefaults-backed store. One JSON blob per session id. Tests pass
+/// their own suite's defaults, and can share one store between two
 /// engines to simulate an app relaunch.
 @MainActor
-public protocol RestTimerStore: AnyObject {
-    func load(sessionID: UUID) -> RestTimerSnapshot?
-    func save(_ snapshot: RestTimerSnapshot, sessionID: UUID)
-    func clear(sessionID: UUID)
-}
-
-/// UserDefaults-backed store. One JSON blob per session id.
-@MainActor
-public final class UserDefaultsRestTimerStore: RestTimerStore {
+public final class UserDefaultsRestTimerStore {
     private let defaults: UserDefaults
     private static let keyPrefix = "restTimer.deadline."
 
@@ -71,16 +62,4 @@ public final class UserDefaultsRestTimerStore: RestTimerStore {
     private static func key(_ sessionID: UUID) -> String {
         keyPrefix + sessionID.uuidString
     }
-}
-
-/// In-memory store for unit tests and previews.
-@MainActor
-public final class InMemoryRestTimerStore: RestTimerStore {
-    public private(set) var snapshots: [UUID: RestTimerSnapshot] = [:]
-
-    public init() {}
-
-    public func load(sessionID: UUID) -> RestTimerSnapshot? { snapshots[sessionID] }
-    public func save(_ snapshot: RestTimerSnapshot, sessionID: UUID) { snapshots[sessionID] = snapshot }
-    public func clear(sessionID: UUID) { snapshots[sessionID] = nil }
 }

@@ -35,8 +35,8 @@
 //  mutating the clock closure's captured `Date`, proving the Date-math is
 //  correct without any actual elapsed wall time.
 //
-//  Persistence (M1 logger): the running rest period is mirrored into an
-//  injected `RestTimerStore` as an absolute deadline keyed by session id.
+//  Persistence (M1 logger): the running rest period is mirrored into a
+//  `UserDefaultsRestTimerStore` as an absolute deadline keyed by session id.
 //  `bind(sessionID:)` / `restore()` rebuild the countdown from that
 //  deadline after the logger re-opens, the app returns from background,
 //  or the app is relaunched after being killed. A deadline in the future
@@ -117,14 +117,15 @@ public final class RestTimerEngine {
     /// scenario in microseconds.
     private let now: () -> Date
 
-    /// Deadline persistence. In-memory by default so existing unit tests
-    /// stay hermetic; production wires `UserDefaultsRestTimerStore`.
-    private let store: RestTimerStore
+    /// Deadline persistence. The engine reads and writes it only once bound
+    /// to a session (`bind(sessionID:)`), so an unbound engine never
+    /// touches it; tests that bind pass their own suite's store.
+    private let store: UserDefaultsRestTimerStore
 
     public init(
         scheduler: RestTimerNotificationScheduling = LiveNotificationScheduler(),
         activityController: RestTimerActivityControlling = NoopActivityController(),
-        store: RestTimerStore = InMemoryRestTimerStore(),
+        store: UserDefaultsRestTimerStore = UserDefaultsRestTimerStore(),
         now: @escaping () -> Date = { Date.now }
     ) {
         self.scheduler = scheduler
@@ -133,9 +134,9 @@ public final class RestTimerEngine {
         self.now = now
     }
 
-    /// Production factory: wires the live `LiveNotificationScheduler`
-    /// (plan 02-01) and the live `RestTimerActivityController` (plan 02-02)
-    /// in a single call. Used by `SessionLoggerView` in plan 04-01.
+    /// Production factory: wires the live `LiveNotificationScheduler` and
+    /// the live `RestTimerActivityController` in a single call. Used by
+    /// `SessionLoggerView`.
     ///
     /// Kept separate from the default initializer so the default init stays
     /// hermetic — passing a `StubScheduler` is the canonical unit-test
@@ -144,8 +145,7 @@ public final class RestTimerEngine {
     public static func makeProduction() -> RestTimerEngine {
         RestTimerEngine(
             scheduler: LiveNotificationScheduler(),
-            activityController: RestTimerActivityController(),
-            store: UserDefaultsRestTimerStore()
+            activityController: RestTimerActivityController()
         )
     }
 
@@ -155,7 +155,7 @@ public final class RestTimerEngine {
     /// surfaces) so a discarded workout never leaves a rest alert behind.
     public static func clearPersisted(
         sessionID: UUID,
-        store: RestTimerStore = UserDefaultsRestTimerStore(),
+        store: UserDefaultsRestTimerStore = UserDefaultsRestTimerStore(),
         scheduler: RestTimerNotificationScheduling = LiveNotificationScheduler(),
         activityController: RestTimerActivityControlling = RestTimerActivityController()
     ) {

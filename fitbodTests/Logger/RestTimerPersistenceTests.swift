@@ -45,8 +45,17 @@ struct RestTimerPersistenceTests {
     private let sessionID = UUID()
     private let t0 = Date(timeIntervalSince1970: 1_000_000)
 
+    /// A store on this suite's own UserDefaults domain, emptied first.
+    /// The suite is serialized, so one domain serves every test.
+    private func freshStore() -> UserDefaultsRestTimerStore {
+        let suite = "RestTimerPersistenceTests"
+        let defaults = UserDefaults(suiteName: suite)!
+        defaults.removePersistentDomain(forName: suite)
+        return UserDefaultsRestTimerStore(defaults: defaults)
+    }
+
     private func engine(
-        store: RestTimerStore,
+        store: UserDefaultsRestTimerStore,
         clock: Clock,
         scheduler: RecordingScheduler? = nil,
         activity: RecordingActivity? = nil
@@ -61,7 +70,7 @@ struct RestTimerPersistenceTests {
 
     @Test("start persists the absolute deadline for the session")
     func startPersistsDeadline() {
-        let store = InMemoryRestTimerStore()
+        let store = freshStore()
         let clock = Clock(t0)
         let e = engine(store: store, clock: clock)
         e.bind(sessionID: sessionID)
@@ -75,7 +84,7 @@ struct RestTimerPersistenceTests {
 
     @Test("relaunch mid-rest resumes from the remaining time and re-arms side effects")
     func relaunchMidRestResumes() {
-        let store = InMemoryRestTimerStore()
+        let store = freshStore()
         let clock = Clock(t0)
         let first = engine(store: store, clock: clock)
         first.bind(sessionID: sessionID)
@@ -100,7 +109,7 @@ struct RestTimerPersistenceTests {
 
     @Test("relaunch after the deadline shows finished and clears everything")
     func relaunchAfterDeadlineFinishesAndClears() {
-        let store = InMemoryRestTimerStore()
+        let store = freshStore()
         let clock = Clock(t0)
         let first = engine(store: store, clock: clock)
         first.bind(sessionID: sessionID)
@@ -126,7 +135,7 @@ struct RestTimerPersistenceTests {
 
     @Test("adjust moves the stored deadline; a fresh engine sees the new one")
     func adjustMovesStoredDeadline() {
-        let store = InMemoryRestTimerStore()
+        let store = freshStore()
         let clock = Clock(t0)
         let e = engine(store: store, clock: clock)
         e.bind(sessionID: sessionID)
@@ -147,7 +156,7 @@ struct RestTimerPersistenceTests {
 
     @Test("adjust below elapsed time cancels the alert instead of firing in 1s")
     func adjustIntoThePastCancels() {
-        let store = InMemoryRestTimerStore()
+        let store = freshStore()
         let clock = Clock(t0)
         let scheduler = RecordingScheduler()
         let e = engine(store: store, clock: clock, scheduler: scheduler)
@@ -163,7 +172,7 @@ struct RestTimerPersistenceTests {
 
     @Test("skip clears the stored deadline so a relaunch shows nothing")
     func skipClears() {
-        let store = InMemoryRestTimerStore()
+        let store = freshStore()
         let clock = Clock(t0)
         let e = engine(store: store, clock: clock)
         e.bind(sessionID: sessionID)
@@ -178,7 +187,7 @@ struct RestTimerPersistenceTests {
 
     @Test("restore while already in sync does not reschedule")
     func restoreIsIdempotent() {
-        let store = InMemoryRestTimerStore()
+        let store = freshStore()
         let clock = Clock(t0)
         let scheduler = RecordingScheduler()
         let activity = RecordingActivity()
@@ -196,7 +205,7 @@ struct RestTimerPersistenceTests {
 
     @Test("timers are keyed by session id")
     func keyedBySession() {
-        let store = InMemoryRestTimerStore()
+        let store = freshStore()
         let clock = Clock(t0)
         let e = engine(store: store, clock: clock)
         e.bind(sessionID: sessionID)
@@ -209,7 +218,7 @@ struct RestTimerPersistenceTests {
 
     @Test("clearPersisted removes the deadline and tears down side effects")
     func clearPersistedFromOutsideLogger() {
-        let store = InMemoryRestTimerStore()
+        let store = freshStore()
         let clock = Clock(t0)
         let e = engine(store: store, clock: clock)
         e.bind(sessionID: sessionID)

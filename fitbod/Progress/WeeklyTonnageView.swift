@@ -25,7 +25,7 @@
 //
 //  ## Outer/inner @Query split (PATTERNS §Pattern D)
 //
-//  WeeklyTonnageView (outer) owns @State ChartFilterState + DI provider.
+//  WeeklyTonnageView (outer) owns @State ChartFilterState.
 //  WeeklyTonnageChartHost (inner) reads @Query<SetEntry> filtered by time range.
 //
 //  ## Weeks
@@ -83,11 +83,8 @@ public struct WeeklyTonnageView: View {
     @Query private var userSettingsList: [UserSettings]
     @State private var filterState = ChartFilterState()
     @State private var navigationDestination: Date?
-    private let provider: MuscleVolumeProvider
 
-    public init(provider: MuscleVolumeProvider = UnweightedMuscleVolumeProvider()) {
-        self.provider = provider
-    }
+    public init() {}
 
     public var body: some View {
         let weekStartsMonday = userSettingsList.first?.weekStartsMonday ?? true
@@ -115,7 +112,6 @@ public struct WeeklyTonnageView: View {
                     WeeklyTonnageChartHost(
                         filterState: filterState,
                         weekStartsMonday: weekStartsMonday,
-                        provider: provider,
                         onBarTap: { date in
                             navigationDestination = date
                         }
@@ -142,7 +138,6 @@ private struct WeeklyTonnageChartHost: View {
     @State private var weekSlots: [Date: CGRect] = [:]
     let filterState: ChartFilterState
     let weekStartsMonday: Bool
-    let provider: MuscleVolumeProvider
     let onBarTap: (Date) -> Void
     /// The moment the query and the axis both read the range from, so they
     /// never disagree on its weeks, even past midnight at a week's end.
@@ -151,7 +146,6 @@ private struct WeeklyTonnageChartHost: View {
     init(
         filterState: ChartFilterState,
         weekStartsMonday: Bool,
-        provider: MuscleVolumeProvider,
         onBarTap: @escaping (Date) -> Void
     ) {
         let now = Date.now
@@ -177,7 +171,6 @@ private struct WeeklyTonnageChartHost: View {
         }
         self.filterState = filterState
         self.weekStartsMonday = weekStartsMonday
-        self.provider = provider
         self.onBarTap = onBarTap
         self.now = now
     }
@@ -186,8 +179,7 @@ private struct WeeklyTonnageChartHost: View {
         let bars = WeeklyTonnageAggregator.aggregate(
             sets: sets,
             weekStartsMonday: weekStartsMonday,
-            selectedMuscleIDs: filterState.selectedMuscles,
-            provider: provider
+            selectedMuscleIDs: filterState.selectedMuscles
         )
 
         VStack(alignment: .leading, spacing: 0) {

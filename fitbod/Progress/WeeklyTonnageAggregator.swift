@@ -17,7 +17,6 @@
 //                        ticked in the muscle filter chip row. When
 //                        empty, every bar emits with muscleBreakdown
 //                        == nil (single-color bar mode).
-//    provider:           injected `MuscleVolumeProvider` (D-20 seam).
 //
 //  Algorithm:
 //    1. Filter input to working-only sets (`counts(_:)`):
@@ -33,7 +32,7 @@
 //    3. Per bucket: totalTonnage = Σ (weight × reps).
 //    4. If selectedMuscleIDs is empty → muscleBreakdown = nil.
 //       Else: for every working set in the bucket call
-//       `provider.contributions(for:exercise:)`, filter to
+//       `muscleContributions(for:exercise:)`, filter to
 //       selectedMuscleIDs, sum by muscleID, emit [MuscleSlice]
 //       sorted by tonnage desc.
 //    5. Return [WeeklyTonnageBar] sorted by weekStart asc.
@@ -112,8 +111,7 @@ public enum WeeklyTonnageAggregator {
     public static func aggregate(
         sets: [SetEntry],
         weekStartsMonday: Bool,
-        selectedMuscleIDs: Set<UUID>,
-        provider: MuscleVolumeProvider
+        selectedMuscleIDs: Set<UUID>
     ) -> [WeeklyTonnageBar] {
 
         // 1. Working-set filter (defense in depth — every property checked).
@@ -147,7 +145,7 @@ public enum WeeklyTonnageAggregator {
             for entry in entries {
                 total += entry.weight * Double(entry.reps)
                 guard muscleFilterActive, let exercise = entry.sessionExercise?.exercise else { continue }
-                for contribution in provider.contributions(for: entry, exercise: exercise) {
+                for contribution in muscleContributions(for: entry, exercise: exercise) {
                     guard selectedMuscleIDs.contains(contribution.muscleID) else { continue }
                     var current = sliceByID[contribution.muscleID]
                         ?? (name: contribution.muscleName, tonnage: 0)
@@ -174,5 +172,19 @@ public enum WeeklyTonnageAggregator {
 
         // 5. Sorted by weekStart asc for deterministic chart rendering.
         return bars.sorted { $0.weekStart < $1.weekStart }
+    }
+
+    /// A set's tonnage, credited in full to each primary muscle of its
+    /// exercise; secondary muscles get nothing (CONTEXT D-20). An exercise
+    /// without stimuli credits no muscle.
+    static func muscleContributions(
+        for set: SetEntry,
+        exercise: Exercise
+    ) -> [(muscleID: UUID, muscleName: String, tonnage: Double)] {
+        let tonnage = set.weight * Double(set.reps)
+        return (exercise.muscleStimuli ?? []).compactMap { stimulus in
+            guard stimulus.role == "primary", let muscle = stimulus.muscle else { return nil }
+            return (muscleID: muscle.id, muscleName: muscle.displayName, tonnage: tonnage)
+        }
     }
 }

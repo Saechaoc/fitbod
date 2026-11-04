@@ -75,8 +75,7 @@ struct WeeklyTonnageChartWeeksTests {
         return WeeklyTonnageAggregator.aggregate(
             sets: sets,
             weekStartsMonday: weekStartsMonday,
-            selectedMuscleIDs: [],
-            provider: UnweightedMuscleVolumeProvider()
+            selectedMuscleIDs: []
         )
     }
 
@@ -257,8 +256,7 @@ struct WeeklyTonnageChartWeeksTests {
         let bars = WeeklyTonnageAggregator.aggregate(
             sets: sets,
             weekStartsMonday: weekStartsMonday,
-            selectedMuscleIDs: [],
-            provider: UnweightedMuscleVolumeProvider()
+            selectedMuscleIDs: []
         )
         let bar = try #require(bars.first)
         #expect(bars.count == 1)
@@ -282,8 +280,7 @@ struct WeeklyTonnageChartWeeksTests {
         let bars = WeeklyTonnageAggregator.aggregate(
             sets: sets,
             weekStartsMonday: weekStartsMonday,
-            selectedMuscleIDs: [],
-            provider: UnweightedMuscleVolumeProvider()
+            selectedMuscleIDs: []
         )
         #expect(bars.map(\.totalTonnage) == [500, 1000])
         for bar in bars {
@@ -310,8 +307,7 @@ struct WeeklyTonnageChartWeeksTests {
         let bar = try #require(WeeklyTonnageAggregator.aggregate(
             sets: sets,
             weekStartsMonday: true,
-            selectedMuscleIDs: [],
-            provider: UnweightedMuscleVolumeProvider()
+            selectedMuscleIDs: []
         ).first)
         let detail = WeekDetailGrouping.detail(counting: sets, inWeekStarting: bar.weekStart, weekStartsMonday: true)
         #expect(detail.workouts.map(\.name) == ["Lower", "Upper"])
