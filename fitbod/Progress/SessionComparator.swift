@@ -35,7 +35,7 @@
 //
 //  Among the working sets of one workout's logs of the exercise (filtered
 //  to setType==.working && !isWarmup && isComplete && reps > 0 && weight > 0),
-//  pick the entry with the highest `OneRepMax.estimate(weight:reps:)`.
+//  pick the entry with the highest `OneRepMaxEstimator.estimate(weight:reps:)`.
 //  Tiebreaker 1: highest weight. Tiebreaker 2: latest completedAt.
 //  The sets are read in log order, then set order (`orderIndex` both
 //  times), so on a full tie the earlier set wins.
@@ -248,7 +248,7 @@ public enum SessionComparator {
     // MARK: - Top set selection (D-05)
 
     /// Pick the top working set across one workout's `logs` of an
-    /// exercise per CONTEXT D-05: highest `OneRepMax.estimate` → highest
+    /// exercise per CONTEXT D-05: highest `OneRepMaxEstimator.estimate` → highest
     /// weight → latest completedAt. The logs are read in workout order and
     /// each log's sets in set order (`orderIndex` both times), whatever
     /// order SwiftData returns them in, so on a full tie the earlier set
@@ -271,8 +271,8 @@ public enum SessionComparator {
         // Rank by e1RM, then weight, then completedAt. `max(by:)` keeps
         // the first of equal elements, so a full tie goes to the earlier set.
         let top = workingSets.max { (lhs, rhs) in
-            let lhsE = OneRepMax.estimate(weight: lhs.weight, reps: lhs.reps) ?? 0
-            let rhsE = OneRepMax.estimate(weight: rhs.weight, reps: rhs.reps) ?? 0
+            let lhsE = OneRepMaxEstimator.estimate(weight: lhs.weight, reps: lhs.reps) ?? 0
+            let rhsE = OneRepMaxEstimator.estimate(weight: rhs.weight, reps: rhs.reps) ?? 0
             if lhsE != rhsE { return lhsE < rhsE }
             if lhs.weight != rhs.weight { return lhs.weight < rhs.weight }
             return lhs.completedAt < rhs.completedAt
@@ -282,7 +282,7 @@ public enum SessionComparator {
             weight: top.weight,
             reps: top.reps,
             rpe: top.rpe,
-            e1RM: OneRepMax.estimate(weight: top.weight, reps: top.reps),
+            e1RM: OneRepMaxEstimator.estimate(weight: top.weight, reps: top.reps),
             setEntryID: top.id,
             sessionStartedAt: logs.first?.session?.startedAt ?? top.completedAt
         )

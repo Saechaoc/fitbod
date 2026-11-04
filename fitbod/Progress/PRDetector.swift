@@ -49,7 +49,7 @@
 //      && set.weight > 0
 //      && set.reps > 0
 //
-//  e1RM suppression (PROG-02 + D-04): OneRepMax.estimate returns nil
+//  e1RM suppression (PROG-02 + D-04): OneRepMaxEstimator.estimate returns nil
 //  for reps > 10. PRDetector treats this as "no e1RM PR slot in the
 //  highRep bucket" — check(set:) never returns .e1RM for an 11+ rep
 //  set, even when it newly tops the other PR kinds.
@@ -245,14 +245,14 @@ public enum PRDetector {
         }
 
         // e1RM PR — only meaningful for non-highRep buckets per D-04 suppression.
-        if bucket != .highRep, let newE1RM = OneRepMax.estimate(weight: set.weight, reps: set.reps) {
+        if bucket != .highRep, let newE1RM = OneRepMaxEstimator.estimate(weight: set.weight, reps: set.reps) {
             let e1RMKey = PRTable.Key(
                 exerciseID: exerciseID, intent: intent, kind: .e1RM, bucket: bucket
             )
             if table.upsertIfTops(candidate: candidate, forKey: e1RMKey, comparator: { new, old in
                 // Compute both sides on demand — the candidate's e1RM is newE1RM,
                 // the incumbent's e1RM is recomputed from its stored weight/reps.
-                let oldE1RM = OneRepMax.estimate(weight: old.weight, reps: old.reps) ?? 0
+                let oldE1RM = OneRepMaxEstimator.estimate(weight: old.weight, reps: old.reps) ?? 0
                 return newE1RM > oldE1RM
             }) {
                 topped.insert(.e1RM)

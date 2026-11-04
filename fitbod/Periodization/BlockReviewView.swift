@@ -538,7 +538,7 @@ public enum BlockReviewStatistics {
                 let exercise = sessionExercise.exercise
             else { continue }
 
-            let e1RM = E1RMHelper.epley(weight: set.weight, reps: set.reps)
+            guard let e1RM = OneRepMaxEstimator.estimate(weight: set.weight, reps: set.reps) else { continue }
             let key = ExerciseSessionKey(exerciseID: exercise.id, sessionID: session.id)
             let candidate = SessionTopSet(
                 exerciseID: exercise.id,

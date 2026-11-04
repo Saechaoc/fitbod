@@ -67,7 +67,7 @@ struct PRDetectorTests {
                 let actualVol = record.weight * Double(record.reps)
                 #expect(abs(actualVol - expectedValue) < 0.0001)
             case .e1RM:
-                let actualE1RM = OneRepMax.estimate(weight: record.weight, reps: record.reps) ?? 0
+                let actualE1RM = OneRepMaxEstimator.estimate(weight: record.weight, reps: record.reps) ?? 0
                 #expect(abs(actualE1RM - expectedValue) < 0.01)
             }
         }

@@ -486,12 +486,10 @@ extension ExerciseHistoryView {
         )
     }
 
-    /// A set's e1RM as a row shows it: Epley on the reps done plus the
-    /// reps left, 10 - RPE, with RPE 8 when none was logged.
+    /// A set's e1RM, as Progress and the PR list estimate it; 0 when the
+    /// estimate leaves the set out (more than 10 reps, or no load).
     private static func e1RM(of set: SetEntry) -> Double {
-        let rpe = set.rpe ?? 8.0
-        let rir = 10.0 - rpe
-        return set.weight * (1 + (Double(set.reps) + rir) / 30.0)
+        OneRepMaxEstimator.estimate(weight: set.weight, reps: set.reps) ?? 0
     }
 
     /// A set as its chip and the TOP line read, such as "107.5×2 @9.5".

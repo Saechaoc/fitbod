@@ -19,7 +19,7 @@
 //  time the exercise was logged in the workout:
 //
 //    - Top set (D-05): among working+committed+non-warmup sets,
-//      pick the SetEntry with the highest OneRepMax.estimate;
+//      pick the SetEntry with the highest OneRepMaxEstimator.estimate;
 //      tiebreaker 1 highest weight, tiebreaker 2 latest completedAt.
 //      Sets with reps > 10 contribute nil e1RM and are therefore
 //      excluded from the top-set pick (PROG-02 suppression).
@@ -105,7 +105,7 @@ public enum SeriesBuilder {
 
             // Each set's e1RM — nil for reps > 10 per PROG-02 suppression.
             let scored: [(set: SetEntry, e1RM: Double?)] = workout.sets.map { entry in
-                (entry, OneRepMax.estimate(weight: entry.weight, reps: entry.reps))
+                (entry, OneRepMaxEstimator.estimate(weight: entry.weight, reps: entry.reps))
             }
             let nonNil = scored.compactMap { pair -> (set: SetEntry, e1RM: Double)? in
                 guard let v = pair.e1RM else { return nil }

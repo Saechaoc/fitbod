@@ -2,7 +2,7 @@
 //  OneRepMaxTests.swift
 //  fitbodTests
 //
-//  Wave-1 plan 06-01 — boundary coverage for `OneRepMax.estimate(weight:reps:)`.
+//  Wave-1 plan 06-01 — boundary coverage for `OneRepMaxEstimator.estimate(weight:reps:)`.
 //  Six `@Test` functions:
 //
 //    1. identityAtOneRep — reps == 1 returns weight verbatim (Pitfall 4)
@@ -23,9 +23,9 @@ struct OneRepMaxTests {
 
     @Test("identityAtOneRep — reps == 1 returns weight verbatim")
     func identityAtOneRep() throws {
-        let actual = try #require(OneRepMax.estimate(weight: 100, reps: 1))
+        let actual = try #require(OneRepMaxEstimator.estimate(weight: 100, reps: 1))
         #expect(abs(actual - 100.0) < 0.0001)
-        let actual200 = try #require(OneRepMax.estimate(weight: 200.0, reps: 1))
+        let actual200 = try #require(OneRepMaxEstimator.estimate(weight: 200.0, reps: 1))
         #expect(abs(actual200 - 200.0) < 0.0001)
     }
 
@@ -42,7 +42,7 @@ struct OneRepMaxTests {
         ] as [(Double, Int, Double)]
     )
     func brzyckiRange(weight: Double, reps: Int, expected: Double) throws {
-        let actual = try #require(OneRepMax.estimate(weight: weight, reps: reps))
+        let actual = try #require(OneRepMaxEstimator.estimate(weight: weight, reps: reps))
         #expect(abs(actual - expected) < 0.1)
     }
 
@@ -58,7 +58,7 @@ struct OneRepMaxTests {
         ] as [(Double, Int, Double)]
     )
     func epleyRange(weight: Double, reps: Int, expected: Double) throws {
-        let actual = try #require(OneRepMax.estimate(weight: weight, reps: reps))
+        let actual = try #require(OneRepMaxEstimator.estimate(weight: weight, reps: reps))
         #expect(abs(actual - expected) < 0.1)
     }
 
@@ -67,21 +67,21 @@ struct OneRepMaxTests {
         arguments: [11, 12, 15, 20, 50] as [Int]
     )
     func suppressesHighRep(reps: Int) {
-        #expect(OneRepMax.estimate(weight: 100.0, reps: reps) == nil)
+        #expect(OneRepMaxEstimator.estimate(weight: 100.0, reps: reps) == nil)
     }
 
     @Test("nilOnNonPositiveInputs — zero or negative reps returns nil")
     func nilOnNonPositiveInputs() {
-        #expect(OneRepMax.estimate(weight: 100.0, reps: 0) == nil)
-        #expect(OneRepMax.estimate(weight: 100.0, reps: -3) == nil)
-        #expect(OneRepMax.estimate(weight: 0.0, reps: 5) == nil)
+        #expect(OneRepMaxEstimator.estimate(weight: 100.0, reps: 0) == nil)
+        #expect(OneRepMaxEstimator.estimate(weight: 100.0, reps: -3) == nil)
+        #expect(OneRepMaxEstimator.estimate(weight: 0.0, reps: 5) == nil)
     }
 
     @Test("handlesNegativeWeight — Pitfall 5 bodyweight-assist returns nil")
     func handlesNegativeWeight() {
         // Assisted pull-up encoded as negative effective load (-20 kg of
         // assistance) would otherwise emit a nonsense negative e1RM.
-        #expect(OneRepMax.estimate(weight: -20.0, reps: 5) == nil)
-        #expect(OneRepMax.estimate(weight: -100.0, reps: 1) == nil)
+        #expect(OneRepMaxEstimator.estimate(weight: -20.0, reps: 5) == nil)
+        #expect(OneRepMaxEstimator.estimate(weight: -100.0, reps: 1) == nil)
     }
 }

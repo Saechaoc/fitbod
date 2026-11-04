@@ -30,7 +30,7 @@ struct WorkoutSetsInOrderTests {
         #expect(rows.count == 1)
         let row = try #require(rows.first)
         #expect(row.topSetLabel == "110×5")
-        #expect(row.e1RMLabel == "135.7")
+        #expect(row.e1RMLabel == "123.8")
         #expect(row.setCount == 2)
         #expect(row.setChips == ["100×5", "110×5"])
     }

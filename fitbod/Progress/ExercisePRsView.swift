@@ -434,7 +434,7 @@ enum PRRowText {
             let tonnage = Int((weight * Double(reps)).rounded())
             return "\(tonnage) \(unit) single-set (\(weightStr) × \(reps))"
         case .e1RM:
-            let e1rm = OneRepMax.estimate(weight: weight, reps: reps).map { Int($0.rounded()) } ?? 0
+            let e1rm = OneRepMaxEstimator.estimate(weight: weight, reps: reps).map { Int($0.rounded()) } ?? 0
             return "\(e1rm) \(unit) e1RM (\(weightStr) × \(reps))"
         }
     }
@@ -520,7 +520,7 @@ enum PRBucketRanking {
         case .weight: return entry.weight
         case .reps:   return Double(entry.reps)
         case .volume: return entry.weight * Double(entry.reps)
-        case .e1RM:   return OneRepMax.estimate(weight: entry.weight, reps: entry.reps)
+        case .e1RM:   return OneRepMaxEstimator.estimate(weight: entry.weight, reps: entry.reps)
         }
     }
 

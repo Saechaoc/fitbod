@@ -42,7 +42,7 @@
 //  | partial_reps       | setEntry.partialReps ("" if nil) |
 //  | tempo              | setEntry.tempoActual ("" if nil) |
 //  | rest_taken_sec     | setEntry.restAfterSeconds ("" if nil) |
-//  | e1rm               | OneRepMax.estimate(weight:reps:) ("" if nil per PROG-02) |
+//  | e1rm               | OneRepMaxEstimator.estimate(weight:reps:) ("" if nil per PROG-02) |
 //  | set_note           | setEntry.notes ("" if nil) |
 //  | unit               | UserSettings.unitsRaw ("kg" / "lb") |
 //
@@ -129,7 +129,7 @@ public enum CSVExporter {
         let restTaken = entry.restAfterSeconds.map(String.init) ?? ""
 
         let e1rm: String
-        if let estimate = OneRepMax.estimate(weight: entry.weight, reps: entry.reps) {
+        if let estimate = OneRepMaxEstimator.estimate(weight: entry.weight, reps: entry.reps) {
             e1rm = formatDouble(estimate)
         } else {
             e1rm = ""

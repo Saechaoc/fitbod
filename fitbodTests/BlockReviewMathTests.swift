@@ -75,11 +75,24 @@ struct BlockReviewMathTests {
         return set
     }
 
-    @Test("E1RMHelper Epley uses weight times reps factor")
-    func e1RMHelperEpleyFormula() {
-        #expect(abs(E1RMHelper.epley(weight: 100, reps: 5) - 116.666) < 0.01)
-        #expect(E1RMHelper.epley(weight: 100, reps: 0) == 100)
-        #expect(E1RMHelper.epley(weight: 100, reps: 11) == 100)
+    /// A 12-rep session has no e1RM (D-04), so moving from 100 × 6 to
+    /// 80 × 12 leaves one session with an estimate and no delta, not a
+    /// drop of 40 from counting the 12-rep set's raw weight.
+    @Test("a top set over 10 reps gives no e1RM to compare")
+    func highRepTopSetGivesNoE1RMDelta() throws {
+        let context = try makeContext()
+        let start = Date(timeIntervalSince1970: 1_700_000_000)
+        let end = start.addingTimeInterval(14 * day)
+        let block = makeBlock(start: start, end: end)
+        let exercise = makeExercise()
+        context.insert(block)
+        context.insert(exercise)
+
+        insertSet(in: context, block: block, exercise: exercise, date: start.addingTimeInterval(day), weight: 100, reps: 6)
+        insertSet(in: context, block: block, exercise: exercise, date: start.addingTimeInterval(10 * day), weight: 80, reps: 12)
+        try context.save()
+
+        #expect(BlockReviewStatistics.e1RMDeltas(context: context, start: start, end: end).isEmpty)
     }
 
     @Test("total volume sums completed working sets over block range")
@@ -136,7 +149,8 @@ struct BlockReviewMathTests {
 
         let delta = try #require(BlockReviewStatistics.e1RMDeltas(context: context, start: start, end: end).first)
         #expect(delta.exerciseName == "Bench Press")
-        #expect(abs(delta.delta - 5.83) < 0.1)
+        // Brzycki at 5 reps, as Progress estimates it: 105 × 36/32 − 100 × 36/32.
+        #expect(abs(delta.delta - 5.625) < 0.001)
     }
 
     @Test("e1RM delta negative for regressed top set")

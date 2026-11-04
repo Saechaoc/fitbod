@@ -327,11 +327,10 @@ Product decisions are in [decisions.md](decisions.md), and they win over this fi
 
 ### Exercise history's TOP set
 
-- Coordinator answer, 2026-11-01 (T116 question `msg_be7854b10128`, option A): a history row's TOP line names the set with the highest e1RM by the row's own formula, the set its e1RM label comes from, and an earlier set wins a tie.
+- Coordinator answer, 2026-11-01 (T116 question `msg_be7854b10128`, option A): a history row's TOP line names the set with the highest e1RM, the set its e1RM label comes from, and an earlier set wins a tie.
   When no set has an e1RM above zero, TOP keeps the most-volume rule.
   The count line and "Workouts · 30d" count exactly the workouts the list shows.
-- Open for the user (finding F332): the history row computes e1RM as weight × (1 + (reps + 10 − RPE) / 30), RPE 8 when blank, while the progress chart, the plateau check and PR detection use `OneRepMaxEstimator`.
-  So one set can show two different e1RMs on two screens; nothing changes until the user picks one formula.
+- Decided 2026-11-03 (finding F332, `docs/ROADMAP.md`): the history row computed e1RM as weight × (1 + (reps + 10 − RPE) / 30), RPE 8 when blank, and Block Review used plain Epley. Both now use `OneRepMaxEstimator`, as the progress chart, the plateau check and PR detection do, so a set shows one e1RM everywhere.
 
 ### Progress chart lines
 

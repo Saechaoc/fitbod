@@ -56,6 +56,11 @@ Decided 2026-11-03 on the review page `.lavish/next-workflow.html`.
 - **Skipping a session:** not now. Today offers the block's other sessions
   instead, and starting one moves the rotation on. A skip needs a stored
   marker, which is a schema change past SchemaV7.
+- **One e1RM formula (2026-11-03):** every screen estimates e1RM with
+  `OneRepMaxEstimator`, the locked D-04 rule: Brzycki up to 6 reps, Epley
+  for 7 to 10, no estimate above 10. Exercise history rows and Block Review
+  had formulas of their own, so one set could show three e1RMs (finding
+  F332).
 - **Status (2026-11-03):** the gym day is built end to end, with every
   screen it needs. It is stable, in the sense of `docs/DEVELOPMENT.md`, after
   two weeks of real gym use without a change to its structure. Left out on
