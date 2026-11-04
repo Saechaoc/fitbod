@@ -79,8 +79,6 @@ struct ProgramViewFidelityTests {
                 "Hero caption should start on the normalized mockup Y grid while preserving the headline/body grid.")
         #expect(source.contains("static let captionToHeadlineSpacing: CGFloat = 0"),
                 "ACTIVE BLOCK and NO PROGRAM should have the measured visual gap; a negative spacing collapses the caption into the headline.")
-        #expect(source.contains("static let bodyLineHeight: CGFloat = 20"),
-                "The body paragraph should pin line height instead of using default SwiftUI text metrics.")
         #expect(source.contains("static let ctaHeight: CGFloat = 71"),
                 "The CTA should use the measured 71pt button height from the PNG.")
         #expect(source.contains("static let templateRowHeight: CGFloat = 77"),

@@ -121,23 +121,6 @@ public struct PRTable: Sendable {
     /// Total number of recorded slots — useful for tests + analytics.
     public var recordedSlotCount: Int { storage.count }
 
-    /// All records keyed by `(exerciseID, intent)` for ExercisePRsView
-    /// grouped-list rendering. Sorted for stable iteration.
-    public func allRecords(
-        forExerciseID exerciseID: UUID,
-        intent: Intent
-    ) -> [(kind: PRKind, bucket: RepBucket, record: PRRecord)] {
-        var rows: [(kind: PRKind, bucket: RepBucket, record: PRRecord)] = []
-        for kind in PRKind.allCases {
-            for bucket in RepBucket.allCases {
-                if let rec = record(exerciseID: exerciseID, intent: intent, kind: kind, bucket: bucket) {
-                    rows.append((kind: kind, bucket: bucket, record: rec))
-                }
-            }
-        }
-        return rows
-    }
-
     // MARK: - Mutating helpers (internal to PRDetector)
 
     fileprivate mutating func upsertIfTops(

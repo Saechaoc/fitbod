@@ -387,9 +387,8 @@ public struct BlockReviewView: View {
 
     // MARK: - Acknowledge Logic
     //
-    // Split into acknowledge() (no dismiss) and acknowledgeAndDismiss() (with dismiss)
-    // so "Start next ▸" can acknowledge THEN show the next-block sheet without
-    // an immediate dismiss interfering with the sheet presentation.
+    // acknowledge() does not dismiss, so "Start next ▸" can acknowledge THEN
+    // show the next-block sheet without a dismiss interfering with it.
     // "Plan custom" calls dismiss() only (no acknowledge — user is deferring review).
 
     private func acknowledge() {
@@ -402,11 +401,6 @@ public struct BlockReviewView: View {
         } catch {
             acknowledgeError = "Couldn't save review. Try again."
         }
-    }
-
-    private func acknowledgeAndDismiss() {
-        acknowledge()
-        dismiss()
     }
 }
 

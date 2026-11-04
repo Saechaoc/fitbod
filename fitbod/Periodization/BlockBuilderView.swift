@@ -128,7 +128,7 @@ public struct BlockBuilderView: View {
                         .padding(.top, NewBlockScreenTokens.cardGap)
                     }
                     .scrollIndicators(.hidden)
-                    .background(NewBlockScreenTokens.paper)
+                    .background(Color.bruPaper)
                 }
 
                 // Transient undo toast — visible above the action bar while
@@ -154,7 +154,7 @@ public struct BlockBuilderView: View {
                     onPrimary: saveIfValid
                 )
             }
-            .background(NewBlockScreenTokens.paper.ignoresSafeArea())
+            .background(Color.bruPaper.ignoresSafeArea())
             .navigationBarHidden(true)
             .animation(.easeInOut(duration: 0.2), value: pendingDelete != nil)
         }
@@ -345,11 +345,6 @@ public struct BlockBuilderView: View {
         )
     }
 
-    // Legacy convenience: still used by any remaining call site.
-    private func addDefaultPhase() {
-        addPhase(of: .accumulation)
-    }
-
     // Swipe-delete undo affordance.
     // beginPendingDelete captures {phase, index}, removes from draft.phases, cancels any
     // prior undoTask, and starts a 4s @MainActor Task that clears pendingDelete on timeout.
@@ -380,7 +375,7 @@ public struct BlockBuilderView: View {
         Text(message)
             .font(NewBlockType.label)
             .tracking(NewBlockScreenTokens.labelTracking)
-            .foregroundStyle(NewBlockScreenTokens.signalText)
+            .foregroundStyle(Color.bruSignalText)
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(NewBlockScreenTokens.cardPadding)
             .background(
@@ -393,21 +388,11 @@ public struct BlockBuilderView: View {
 // MARK: - Tokens
 
 fileprivate enum NewBlockScreenTokens {
-    // Adaptive BRU tokens, so New Block and its sheets turn dark with the app.
-    static let paper  = Color.bruPaper
-    static let ink    = Color.bruInk
-    static let muted  = Color.bruMuted
-    static let hair   = Color.bruHair
-    static let faint  = Color.bruFaint
-    static let signal = Color.bruSignal
-    // Signal-colored text on paper-role surfaces; `signal` stays the fill.
-    static let signalText = Color.bruSignalText
-
     /// The undo toast's and the save error band's fill. In light mode signal
     /// text read at 4.40:1 on faint and reads at 4.6:1 on bg2; dark mode
     /// keeps faint (T38, finding F100).
     static func noteFill(_ scheme: ColorScheme) -> Color {
-        scheme == .dark ? faint : Color.bruBg2
+        scheme == .dark ? Color.bruFaint : Color.bruBg2
     }
 
     // Card surface system (rounded-card restyle 260528-vi2)
@@ -437,16 +422,10 @@ fileprivate enum NewBlockScreenTokens {
     static let ctaTracking: CGFloat = 2.8
 
     static let topBarRowHeight: CGFloat   = 50
-    static let nameBandHeight: CGFloat    = 80
     static let metricsHeight: CGFloat     = 92
     static let phasesHeaderHeight: CGFloat = 36
-    static let timelineBarHeight: CGFloat = 30
     static let phaseRowHeight: CGFloat    = 100
 
-    static let metricCellHeight: CGFloat   = 36
-    static let addPhaseSlotHeight: CGFloat = 70
-    // 260610-h3v: bumped 72 → 86 to clear the now-taller bottom bar (52pt button + ~32pt padding)
-    static let bottomActionHeight: CGFloat  = 86
     static let bottomButtonHeight: CGFloat  = 54
     static let scrollBottomClearance: CGFloat = 44
 }
@@ -601,7 +580,7 @@ fileprivate struct NewBlockTopBar: View {
                 }
                 .font(NewBlockType.chrome)
                 .tracking(NewBlockScreenTokens.chipTracking)
-                .foregroundStyle(NewBlockScreenTokens.ink)
+                .foregroundStyle(Color.bruInk)
                 .frame(minWidth: 44, maxHeight: .infinity)
                 .contentShape(Rectangle())
             }
@@ -625,7 +604,7 @@ fileprivate struct NewBlockTopBar: View {
         }
         .padding(.horizontal, NewBlockScreenTokens.sidePadding)
         .frame(height: NewBlockScreenTokens.topBarRowHeight)
-        .background(NewBlockScreenTokens.paper)
+        .background(Color.bruPaper)
     }
 
     /// The back and save actions share a row, or take a line each when the
@@ -654,7 +633,7 @@ fileprivate struct NewBlockTopBar: View {
                 .padding(.bottom, NewBlockScreenTokens.rowGap)
         }
         .padding(.horizontal, NewBlockScreenTokens.sidePadding)
-        .background(NewBlockScreenTokens.paper)
+        .background(Color.bruPaper)
     }
 
     /// The back control without the placeholder that holds the one-row
@@ -664,7 +643,7 @@ fileprivate struct NewBlockTopBar: View {
             Text(origin.backLabel)
                 .font(NewBlockType.chrome)
                 .tracking(NewBlockScreenTokens.chipTracking)
-                .foregroundStyle(NewBlockScreenTokens.ink)
+                .foregroundStyle(Color.bruInk)
                 .frame(minWidth: 44, minHeight: 44, alignment: .leading)
                 .contentShape(Rectangle())
         }
@@ -675,7 +654,7 @@ fileprivate struct NewBlockTopBar: View {
         Text(title)
             .font(NewBlockType.chrome)
             .tracking(NewBlockScreenTokens.chipTracking)
-            .foregroundStyle(NewBlockScreenTokens.ink)
+            .foregroundStyle(Color.bruInk)
     }
 
     private var saveButton: some View {
@@ -683,7 +662,7 @@ fileprivate struct NewBlockTopBar: View {
             onSave?()
         } label: {
             saveDraftLabel
-                .foregroundStyle(canSave ? NewBlockScreenTokens.signalText : NewBlockScreenTokens.muted)
+                .foregroundStyle(canSave ? Color.bruSignalText : Color.bruMuted)
         }
         .buttonStyle(.plain)
         .disabled(!canSave)
@@ -722,7 +701,7 @@ fileprivate struct NewBlockNameBand: View {
             // Trailing pencil affordance (visual; field is tappable via BlockNameField)
             Image(systemName: "square.and.pencil")
                 .font(.system(size: 18))
-                .foregroundStyle(NewBlockScreenTokens.muted)
+                .foregroundStyle(Color.bruMuted)
                 .padding(.top, 28)
                 // Decorative: VoiceOver would read "Compose" after the name field.
                 .accessibilityHidden(true)
@@ -730,7 +709,7 @@ fileprivate struct NewBlockNameBand: View {
         .padding(.top, 8)
         .padding(.bottom, 4)
         .frame(maxWidth: .infinity, alignment: .topLeading)
-        .background(NewBlockScreenTokens.paper)
+        .background(Color.bruPaper)
     }
 }
 
@@ -815,11 +794,11 @@ fileprivate struct NewBlockMetricsBand: View {
                     Text("TOTAL WEEKS")
                         .font(NewBlockType.label)
                         .tracking(NewBlockScreenTokens.labelTracking)
-                        .foregroundStyle(NewBlockScreenTokens.muted)
+                        .foregroundStyle(Color.bruMuted)
 
                     Text("\(draft.totalWeeks)")
                         .font(NewBlockType.display)
-                        .foregroundStyle(NewBlockScreenTokens.ink)
+                        .foregroundStyle(Color.bruInk)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
                 .padding(.horizontal, NewBlockScreenTokens.cardPadding)
@@ -832,7 +811,7 @@ fileprivate struct NewBlockMetricsBand: View {
 
             // Inset hairline divider between the two cells
             Rectangle()
-                .fill(NewBlockScreenTokens.hair)
+                .fill(Color.bruHair)
                 .frame(width: NewBlockScreenTokens.rule)
                 .padding(.vertical, 10)
 
@@ -841,7 +820,7 @@ fileprivate struct NewBlockMetricsBand: View {
                 Text("DAYS PER WEEK")
                     .font(NewBlockType.label)
                     .tracking(NewBlockScreenTokens.labelTracking)
-                    .foregroundStyle(NewBlockScreenTokens.muted)
+                    .foregroundStyle(Color.bruMuted)
 
                 HStack(spacing: NewBlockScreenTokens.sectionGap) {
                     NewBlockRoundStepper(label: "−") {
@@ -851,7 +830,7 @@ fileprivate struct NewBlockMetricsBand: View {
 
                     Text("\(draft.daysPerWeek)")
                         .font(NewBlockType.display)
-                        .foregroundStyle(NewBlockScreenTokens.ink)
+                        .foregroundStyle(Color.bruInk)
                         .frame(minWidth: 24)
                         .multilineTextAlignment(.center)
                         .accessibilityHidden(true)
@@ -887,9 +866,9 @@ fileprivate struct NewBlockRoundStepper: View {
         Button(action: action) {
             Text(label)
                 .font(.system(size: 18, weight: .regular))
-                .foregroundStyle(NewBlockScreenTokens.ink)
+                .foregroundStyle(Color.bruInk)
                 .frame(width: 32, height: 32)
-                .background(NewBlockScreenTokens.hair, in: Circle())
+                .background(Color.bruHair, in: Circle())
         }
         .buttonStyle(.plain)
         .frame(width: 44, height: 44)   // centered tap target — glyph stays visually centered
@@ -908,14 +887,14 @@ fileprivate struct NewBlockStepperButton: View {
             Text(label)
                 .font(NewBlockType.chrome)
                 .tracking(0)
-                .foregroundStyle(NewBlockScreenTokens.ink)
+                .foregroundStyle(Color.bruInk)
                 // T25: a 48pt tap target at accessibility sizes.
                 .frame(
                     width: dynamicTypeSize.isAccessibilitySize ? 48 : 32,
                     height: dynamicTypeSize.isAccessibilitySize ? 48 : 30
                 )
                 .contentShape(Rectangle())
-                .overlay(Rectangle().stroke(NewBlockScreenTokens.ink, lineWidth: 1.5))
+                .overlay(Rectangle().stroke(Color.bruInk, lineWidth: 1.5))
                 // T38: at standard sizes the 32 by 30pt square takes taps
                 // 44pt across, reaching into the row's gaps around it.
                 .newBlockTapTarget(
@@ -967,10 +946,10 @@ fileprivate struct NewBlockSheetStepperRow<Label: View>: View {
         }
         .padding(.horizontal, NewBlockScreenTokens.sidePadding)
         .frame(minHeight: 56, maxHeight: dynamicTypeSize.isAccessibilitySize ? nil : 56)
-        .background(NewBlockScreenTokens.paper)
+        .background(Color.bruPaper)
         .overlay(alignment: .bottom) {
             Rectangle()
-                .fill(NewBlockScreenTokens.hair)
+                .fill(Color.bruHair)
                 .frame(height: NewBlockScreenTokens.rule)
         }
     }
@@ -980,7 +959,7 @@ fileprivate struct NewBlockSheetStepperRow<Label: View>: View {
         stepperButton("−", direction: "Decrease", action: onDecrement)
         Text(value)
             .font(NewBlockType.number)
-            .foregroundStyle(NewBlockScreenTokens.ink)
+            .foregroundStyle(Color.bruInk)
             .lineLimit(dynamicTypeSize.isAccessibilitySize ? 1 : nil)
             .frame(width: dynamicTypeSize.isAccessibilitySize ? nil : valueWidth, alignment: .center)
             .frame(minWidth: dynamicTypeSize.isAccessibilitySize ? valueWidth : nil)
@@ -1017,7 +996,7 @@ fileprivate struct NewBlockPhasesHeader: View {
             Text("PHASES · \(phaseCount)")
                 .font(NewBlockType.chrome)
                 .tracking(NewBlockScreenTokens.chipTracking)
-                .foregroundStyle(NewBlockScreenTokens.ink)
+                .foregroundStyle(Color.bruInk)
 
             if !dynamicTypeSize.isAccessibilitySize {
                 Spacer()
@@ -1027,7 +1006,7 @@ fileprivate struct NewBlockPhasesHeader: View {
                 Button(action: onPreset) {
                     capsule(
                         Text("PRESET ▾")
-                            .foregroundStyle(NewBlockScreenTokens.ink)
+                            .foregroundStyle(Color.bruInk)
                     )
                     .contentShape(Rectangle())
                 }
@@ -1038,14 +1017,14 @@ fileprivate struct NewBlockPhasesHeader: View {
             // White card capsule "+ ADD PHASE" — two-tone coral/ink label (260610-dbz)
             Button(action: onAddPhase) {
                 capsule(
-                    Text("\(Text("+ ").foregroundStyle(NewBlockScreenTokens.signalText))\(Text("ADD PHASE").foregroundStyle(NewBlockScreenTokens.ink))")
+                    Text("\(Text("+ ").foregroundStyle(Color.bruSignalText))\(Text("ADD PHASE").foregroundStyle(Color.bruInk))")
                 )
             }
             .buttonStyle(.plain)
             .accessibilityLabel("+ ADD PHASE")
         }
         .frame(minHeight: NewBlockScreenTokens.phasesHeaderHeight)
-        .background(NewBlockScreenTokens.paper)
+        .background(Color.bruPaper)
     }
 
     /// At accessibility sizes the title and each control get a line of their own.
@@ -1330,7 +1309,7 @@ fileprivate struct NewBlockProgressionChart: View {
         Text(text)
             .font(NewBlockType.micro)
             .tracking(0.6)
-            .foregroundStyle(NewBlockScreenTokens.muted)
+            .foregroundStyle(Color.bruMuted)
     }
 
     /// HIGH or LOW on its gridline near the plot's leading edge, as the mock
@@ -1363,7 +1342,7 @@ fileprivate struct NewBlockProgressionChart: View {
         Text("PROGRESSION OVERVIEW")
             .font(NewBlockType.label)
             .tracking(NewBlockScreenTokens.labelTracking)
-            .foregroundStyle(NewBlockScreenTokens.muted)
+            .foregroundStyle(Color.bruMuted)
     }
 
     // Legend pill chips — VOLUME: dashed line glyph; INTENSITY: line-dot-line glyph.
@@ -1375,19 +1354,19 @@ fileprivate struct NewBlockProgressionChart: View {
             HStack(spacing: 2) {
                 ForEach(0..<3, id: \.self) { _ in
                     Rectangle()
-                        .fill(NewBlockScreenTokens.muted)
+                        .fill(Color.bruMuted)
                         .frame(width: 4, height: 1)
                 }
             }
             Text("VOLUME")
                 .font(NewBlockType.micro)
                 .tracking(1.2)
-                .foregroundStyle(NewBlockScreenTokens.muted)
+                .foregroundStyle(Color.bruMuted)
         }
         .padding(.horizontal, 8)
         .padding(.vertical, 5)
         .background(NewBlockScreenTokens.card, in: Capsule())
-        .overlay(Capsule().stroke(NewBlockScreenTokens.hair, lineWidth: 0.75))
+        .overlay(Capsule().stroke(Color.bruHair, lineWidth: 0.75))
     }
 
     /// INTENSITY chip — line-dot-line.
@@ -1395,24 +1374,24 @@ fileprivate struct NewBlockProgressionChart: View {
         HStack(spacing: 4) {
             HStack(spacing: 2) {
                 Rectangle()
-                    .fill(NewBlockScreenTokens.ink)
+                    .fill(Color.bruInk)
                     .frame(width: 8, height: 1.5)
                 Circle()
-                    .fill(NewBlockScreenTokens.ink)
+                    .fill(Color.bruInk)
                     .frame(width: 4, height: 4)
                 Rectangle()
-                    .fill(NewBlockScreenTokens.ink)
+                    .fill(Color.bruInk)
                     .frame(width: 8, height: 1.5)
             }
             Text("INTENSITY")
                 .font(NewBlockType.micro)
                 .tracking(1.2)
-                .foregroundStyle(NewBlockScreenTokens.ink)
+                .foregroundStyle(Color.bruInk)
         }
         .padding(.horizontal, 8)
         .padding(.vertical, 5)
         .background(NewBlockScreenTokens.card, in: Capsule())
-        .overlay(Capsule().stroke(NewBlockScreenTokens.hair, lineWidth: 0.75))
+        .overlay(Capsule().stroke(Color.bruHair, lineWidth: 0.75))
     }
 
     var body: some View {
@@ -1452,7 +1431,7 @@ fileprivate struct NewBlockProgressionChart: View {
                 Text("Add phases to preview progression")
                     .font(NewBlockType.label)
                     .tracking(0.6)
-                    .foregroundStyle(NewBlockScreenTokens.muted)
+                    .foregroundStyle(Color.bruMuted)
                     .frame(maxWidth: .infinity, alignment: .center)
                     .frame(height: ChartLayout.emptyStateHeight)
             } else {
@@ -1492,7 +1471,7 @@ fileprivate struct NewBlockProgressionChart: View {
                             yEnd:   .value("Value", pt.value),
                             series: .value("Series", "Volume")
                         )
-                        .foregroundStyle(NewBlockScreenTokens.muted.opacity(0.18))
+                        .foregroundStyle(Color.bruMuted.opacity(0.18))
                         .interpolationMethod(.linear)
 
                         // Thin dashed top edge following the volume line
@@ -1501,7 +1480,7 @@ fileprivate struct NewBlockProgressionChart: View {
                             y: .value("Value", pt.value),
                             series: .value("Series", "Volume")
                         )
-                        .foregroundStyle(NewBlockScreenTokens.muted.opacity(0.7))
+                        .foregroundStyle(Color.bruMuted.opacity(0.7))
                         .lineStyle(StrokeStyle(lineWidth: 1, dash: [3, 3]))
                     }
 
@@ -1512,7 +1491,7 @@ fileprivate struct NewBlockProgressionChart: View {
                             y: .value("Value", pt.value),
                             series: .value("Series", "Intensity")
                         )
-                        .foregroundStyle(NewBlockScreenTokens.ink)
+                        .foregroundStyle(Color.bruInk)
                         .lineStyle(StrokeStyle(lineWidth: 2))
 
                         // Solid filled dot at each week
@@ -1520,7 +1499,7 @@ fileprivate struct NewBlockProgressionChart: View {
                             x: .value("Week", pt.week),
                             y: .value("Value", pt.value)
                         )
-                        .foregroundStyle(NewBlockScreenTokens.ink)
+                        .foregroundStyle(Color.bruInk)
                         .symbolSize(44)
 
                         // Hollow ring around the selected week's point
@@ -1531,10 +1510,10 @@ fileprivate struct NewBlockProgressionChart: View {
                             )
                             .symbol {
                                 Circle()
-                                    .stroke(NewBlockScreenTokens.ink, lineWidth: 1.5)
+                                    .stroke(Color.bruInk, lineWidth: 1.5)
                                     .frame(width: 18, height: 18)
                             }
-                            .foregroundStyle(NewBlockScreenTokens.ink)
+                            .foregroundStyle(Color.bruInk)
                         }
                     }
 
@@ -1542,7 +1521,7 @@ fileprivate struct NewBlockProgressionChart: View {
                     if let sel = selectedWeek {
                         RuleMark(x: .value("sel", sel))
                             .lineStyle(StrokeStyle(lineWidth: 1, dash: [2, 3]))
-                            .foregroundStyle(NewBlockScreenTokens.ink.opacity(0.55))
+                            .foregroundStyle(Color.bruInk.opacity(0.55))
                     }
                 }
                 .chartXScale(domain: 0.5 ... Double(totalWeeks) + 0.5)
@@ -1558,8 +1537,8 @@ fileprivate struct NewBlockProgressionChart: View {
                                     .font(NewBlockType.micro)
                                     .foregroundStyle(
                                         week == (selectedWeek ?? -1)
-                                            ? NewBlockScreenTokens.ink
-                                            : NewBlockScreenTokens.muted
+                                            ? Color.bruInk
+                                            : Color.bruMuted
                                     )
                                     .fontWeight(week == (selectedWeek ?? -1) ? .semibold : .regular)
                                     .padding(.top, ChartLayout.weekLabelSpacing)
@@ -1589,7 +1568,7 @@ fileprivate struct NewBlockProgressionChart: View {
                         values: [lo + range * ChartLayout.lowLine, lo + range * ChartLayout.highLine]
                     ) { _ in
                         AxisGridLine()
-                            .foregroundStyle(NewBlockScreenTokens.hair)
+                            .foregroundStyle(Color.bruHair)
                     }
                 }
                 .chartYScale(domain: yDomain)
@@ -1669,15 +1648,15 @@ fileprivate struct NewBlockProgressionChart: View {
                                 Text(calloutText(for: sel))
                                     .font(NewBlockType.micro)
                                     .tracking(1.0)
-                                    .foregroundStyle(NewBlockScreenTokens.ink)
+                                    .foregroundStyle(Color.bruInk)
                                     .padding(.horizontal, 10)
                                     .padding(.vertical, 5)
                                     .background(
                                         Capsule()
-                                            .fill(NewBlockScreenTokens.paper)
+                                            .fill(Color.bruPaper)
                                             .overlay(
                                                 Capsule()
-                                                    .stroke(NewBlockScreenTokens.hair, lineWidth: 0.75)
+                                                    .stroke(Color.bruHair, lineWidth: 0.75)
                                             )
                                     )
                                     .shadow(color: Color.black.opacity(0.06), radius: 3, y: 1)
@@ -1952,7 +1931,7 @@ fileprivate struct NewBlockPhaseEditorRow: View {
     /// At accessibility sizes it runs the stat grid's full height (T25).
     private var phaseRowDivider: some View {
         Rectangle()
-            .fill(NewBlockScreenTokens.hair)
+            .fill(Color.bruHair)
             .frame(width: 1, height: dynamicTypeSize.isAccessibilitySize ? nil : 30)
     }
 
@@ -2067,7 +2046,7 @@ fileprivate struct NewBlockPhaseEditorRow: View {
             Text(NewBlockPhaseText.title(for: draft.kind))
                 .font(NewBlockType.phaseTitle)
                 .fontWeight(.semibold)
-                .foregroundStyle(NewBlockScreenTokens.ink)
+                .foregroundStyle(Color.bruInk)
                 .lineLimit(1)
                 .minimumScaleFactor(dynamicTypeSize.isAccessibilitySize ? 0.5 : 0.75)
 
@@ -2075,7 +2054,7 @@ fileprivate struct NewBlockPhaseEditorRow: View {
             Text(NewBlockPhaseText.subtitle(for: draft.kind))
                 .font(NewBlockType.label)
                 .tracking(0.7)
-                .foregroundStyle(NewBlockScreenTokens.muted)
+                .foregroundStyle(Color.bruMuted)
                 .lineLimit(dynamicTypeSize.isAccessibilitySize ? nil : 1)
                 .minimumScaleFactor(0.8)
         }
@@ -2111,7 +2090,7 @@ fileprivate struct NewBlockPhaseEditorRow: View {
     private var chevron: some View {
         Image(systemName: "chevron.right")
             .font(.system(size: 12, weight: .semibold))
-            .foregroundStyle(NewBlockScreenTokens.muted)
+            .foregroundStyle(Color.bruMuted)
     }
 
     // Drag handle — typographic ⋮⋮ (matches RoutineExerciseCard); long-press
@@ -2120,7 +2099,7 @@ fileprivate struct NewBlockPhaseEditorRow: View {
     private var dragHandle: some View {
         Text("⋮⋮")
             .font(.system(size: 16, weight: .bold))
-            .foregroundStyle(NewBlockScreenTokens.muted)
+            .foregroundStyle(Color.bruMuted)
             .frame(width: 18, height: 44)
             .contentShape(Rectangle())
             .highPriorityGesture(reorderGesture)
@@ -2131,14 +2110,14 @@ fileprivate struct NewBlockPhaseEditorRow: View {
     private var deleteBackground: some View {
         ZStack(alignment: .trailing) {
             RoundedRectangle(cornerRadius: NewBlockScreenTokens.phaseCardRadius, style: .continuous)
-                .fill(NewBlockScreenTokens.signal)
+                .fill(Color.bruSignal)
             Button(role: .destructive) {
                 commitDelete()
             } label: {
                 Text("Delete")
                     .font(NewBlockType.chrome)
                     .tracking(NewBlockScreenTokens.chipTracking)
-                    .foregroundStyle(NewBlockScreenTokens.signal.bruLabelOnFill)
+                    .foregroundStyle(Color.bruSignal.bruLabelOnFill)
                     // T25: shrinks to the revealed width rather than break.
                     .lineLimit(1)
                     .minimumScaleFactor(0.5)
@@ -2260,13 +2239,13 @@ fileprivate struct NewBlockReadOnlyStatColumn: View {
             Text(label)
                 .font(NewBlockType.micro)
                 .tracking(0.8)
-                .foregroundStyle(NewBlockScreenTokens.muted)
+                .foregroundStyle(Color.bruMuted)
                 .multilineTextAlignment(.center)
                 .lineLimit(dynamicTypeSize.isAccessibilitySize ? 1 : nil)
                 .minimumScaleFactor(dynamicTypeSize.isAccessibilitySize ? 0.5 : 1)
             Text(value)
                 .font(.bru(.condensed, size: 19))
-                .foregroundStyle(NewBlockScreenTokens.ink)
+                .foregroundStyle(Color.bruInk)
                 .lineLimit(1)
                 .minimumScaleFactor(0.8)
                 .multilineTextAlignment(.center)
@@ -2333,7 +2312,7 @@ fileprivate struct NewBlockPhaseEditorSheet: View {
                 Text(NewBlockPhaseText.title(for: draft.kind))
                     .font(NewBlockType.phaseTitle)
                     .fontWeight(.semibold)
-                    .foregroundStyle(NewBlockScreenTokens.ink)
+                    .foregroundStyle(Color.bruInk)
                     .padding(.horizontal, NewBlockScreenTokens.sidePadding)
                     .padding(.top, NewBlockScreenTokens.sectionGap)
                     .padding(.bottom, NewBlockScreenTokens.rowGap)
@@ -2353,7 +2332,7 @@ fileprivate struct NewBlockPhaseEditorSheet: View {
                             Text("WEEKS")
                                 .font(NewBlockType.label)
                                 .tracking(NewBlockScreenTokens.labelTracking)
-                                .foregroundStyle(NewBlockScreenTokens.muted)
+                                .foregroundStyle(Color.bruMuted)
                                 .frame(maxWidth: .infinity, alignment: .leading)
                         }
 
@@ -2375,10 +2354,10 @@ fileprivate struct NewBlockPhaseEditorSheet: View {
                                 Text("VOLUME")
                                     .font(NewBlockType.label)
                                     .tracking(NewBlockScreenTokens.labelTracking)
-                                    .foregroundStyle(NewBlockScreenTokens.muted)
+                                    .foregroundStyle(Color.bruMuted)
                                 Text("vs base")
                                     .font(NewBlockType.micro)
-                                    .foregroundStyle(NewBlockScreenTokens.muted)
+                                    .foregroundStyle(Color.bruMuted)
                             }
                             .frame(maxWidth: .infinity, alignment: .leading)
                         }
@@ -2401,10 +2380,10 @@ fileprivate struct NewBlockPhaseEditorSheet: View {
                                 Text("INTENSITY")
                                     .font(NewBlockType.label)
                                     .tracking(NewBlockScreenTokens.labelTracking)
-                                    .foregroundStyle(NewBlockScreenTokens.muted)
+                                    .foregroundStyle(Color.bruMuted)
                                 Text("% of training max")
                                     .font(NewBlockType.micro)
-                                    .foregroundStyle(NewBlockScreenTokens.muted)
+                                    .foregroundStyle(Color.bruMuted)
                             }
                             .frame(maxWidth: .infinity, alignment: .leading)
                         }
@@ -2419,14 +2398,14 @@ fileprivate struct NewBlockPhaseEditorSheet: View {
                     Text("Done")
                         .font(NewBlockType.chrome)
                         .tracking(NewBlockScreenTokens.ctaTracking)
-                        .foregroundStyle(NewBlockScreenTokens.ink)
+                        .foregroundStyle(Color.bruInk)
                         .frame(maxWidth: .infinity)
                         .frame(height: NewBlockScreenTokens.bottomButtonHeight)
                 }
                 .buttonStyle(.plain)
-                .background(NewBlockScreenTokens.paper)
+                .background(Color.bruPaper)
             }
-            .background(NewBlockScreenTokens.paper.ignoresSafeArea())
+            .background(Color.bruPaper.ignoresSafeArea())
             .navigationBarHidden(true)
         }
         // T25: at accessibility sizes the sheet opens at full height, where its
@@ -2452,13 +2431,13 @@ fileprivate struct NewBlockAddPhaseTypeSheet: View {
                     Text("Choose a phase type to add.")
                         .font(NewBlockType.label)
                         .tracking(0.4)
-                        .foregroundStyle(NewBlockScreenTokens.muted)
+                        .foregroundStyle(Color.bruMuted)
                         .padding(.horizontal, NewBlockScreenTokens.sidePadding)
                         .padding(.top, NewBlockScreenTokens.rowGap)
                         .padding(.bottom, NewBlockScreenTokens.sectionGap)
 
                     Rectangle()
-                        .fill(NewBlockScreenTokens.ink)
+                        .fill(Color.bruInk)
                         .frame(height: NewBlockScreenTokens.rule)
 
                     ForEach(BlockPhaseKind.allCases, id: \.self) { kind in
@@ -2477,11 +2456,11 @@ fileprivate struct NewBlockAddPhaseTypeSheet: View {
                                     Text(NewBlockPhaseText.title(for: kind))
                                         .font(NewBlockType.phaseTitle)
                                         .fontWeight(.semibold)
-                                        .foregroundStyle(NewBlockScreenTokens.ink)
+                                        .foregroundStyle(Color.bruInk)
                                     Text(NewBlockPhaseText.subtitle(for: kind))
                                         .font(NewBlockType.label)
                                         .tracking(1.2)
-                                        .foregroundStyle(NewBlockScreenTokens.muted)
+                                        .foregroundStyle(Color.bruMuted)
                                 }
 
                                 Spacer()
@@ -2490,25 +2469,24 @@ fileprivate struct NewBlockAddPhaseTypeSheet: View {
                             .frame(maxWidth: .infinity)
                             .frame(minHeight: 44)
                             .padding(.vertical, NewBlockScreenTokens.tightGap)
-                            .background(NewBlockScreenTokens.paper)
+                            .background(Color.bruPaper)
                         }
                         .buttonStyle(.plain)
 
                         Rectangle()
-                            .fill(NewBlockScreenTokens.hair)
+                            .fill(Color.bruHair)
                             .frame(height: NewBlockScreenTokens.rule)
                     }
                 }
             }
         }
-        .background(NewBlockScreenTokens.paper.ignoresSafeArea())
+        .background(Color.bruPaper.ignoresSafeArea())
         .presentationDetents([.medium])
     }
 }
 
 // Phase 9 split band — replaces the old NewBlockLinkedRoutinesBand.
 // Always visible (optionality expressed via "None — saves as draft" copy).
-// Uses NewBlockScreenTokens, New Block's names for the adaptive Color.bru* tokens.
 // ModeChip / DayToggleChip are copy-adapted from BlockOverviewScreen (fileprivate
 // there; do NOT import or reference them — separate token worlds per 09-RESEARCH Pattern 3).
 fileprivate struct NewBlockSplitBand: View {
@@ -2527,20 +2505,20 @@ fileprivate struct NewBlockSplitBand: View {
             Text("Routine")
                 .font(NewBlockType.chrome)
                 .tracking(NewBlockScreenTokens.chipTracking)
-                .foregroundStyle(NewBlockScreenTokens.muted)
+                .foregroundStyle(Color.bruMuted)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.horizontal, NewBlockScreenTokens.sidePadding)
                 .padding(.vertical, NewBlockScreenTokens.rowGap)
 
             Rectangle()
-                .fill(NewBlockScreenTokens.ink)
+                .fill(Color.bruInk)
                 .frame(height: NewBlockScreenTokens.heavyRule)
 
             // Split picker row
             rowLayout {
                 Text("Routine")
                     .font(NewBlockType.cta)
-                    .foregroundStyle(NewBlockScreenTokens.ink)
+                    .foregroundStyle(Color.bruInk)
                 if !dynamicTypeSize.isAccessibilitySize {
                     Spacer()
                 }
@@ -2548,7 +2526,7 @@ fileprivate struct NewBlockSplitBand: View {
                     Text(split.name)
                         .font(NewBlockType.label)
                         .tracking(NewBlockScreenTokens.labelTracking)
-                        .foregroundStyle(NewBlockScreenTokens.muted)
+                        .foregroundStyle(Color.bruMuted)
                     if canChangeRoutine {
                         routineButton("SWAP ▸")
                     }
@@ -2556,7 +2534,7 @@ fileprivate struct NewBlockSplitBand: View {
                     Text("None — saves as draft")
                         .font(NewBlockType.label)
                         .tracking(NewBlockScreenTokens.labelTracking)
-                        .foregroundStyle(NewBlockScreenTokens.muted)
+                        .foregroundStyle(Color.bruMuted)
                     if canChangeRoutine {
                         routineButton("+ ATTACH ▸")
                     }
@@ -2567,14 +2545,14 @@ fileprivate struct NewBlockSplitBand: View {
             .frame(minHeight: 44)
 
             Rectangle()
-                .fill(NewBlockScreenTokens.hair)
+                .fill(Color.bruHair)
                 .frame(height: NewBlockScreenTokens.rule)
 
             // Scheduling mode picker row
             rowLayout {
                 Text("Scheduling")
                     .font(NewBlockType.cta)
-                    .foregroundStyle(NewBlockScreenTokens.ink)
+                    .foregroundStyle(Color.bruInk)
                 if dynamicTypeSize.isAccessibilitySize {
                     // The chips share a line when they fit, or take one each.
                     ViewThatFits(in: .horizontal) {
@@ -2599,7 +2577,7 @@ fileprivate struct NewBlockSplitBand: View {
             // Day-chip row (shown only when fixedWeekly)
             if draft.schedulingMode == .fixedWeekly {
                 Rectangle()
-                    .fill(NewBlockScreenTokens.hair)
+                    .fill(Color.bruHair)
                     .frame(height: NewBlockScreenTokens.rule)
 
                 dayChipLayout {
@@ -2649,10 +2627,10 @@ fileprivate struct NewBlockSplitBand: View {
             }
 
             Rectangle()
-                .fill(NewBlockScreenTokens.ink)
+                .fill(Color.bruInk)
                 .frame(height: NewBlockScreenTokens.heavyRule)
         }
-        .background(NewBlockScreenTokens.paper)
+        .background(Color.bruPaper)
     }
 
     /// A row's label beside its value and controls, or, at accessibility
@@ -2680,7 +2658,7 @@ fileprivate struct NewBlockSplitBand: View {
             Text(title)
                 .font(NewBlockType.label)
                 .tracking(NewBlockScreenTokens.labelTracking)
-                .foregroundStyle(NewBlockScreenTokens.signalText)
+                .foregroundStyle(Color.bruSignalText)
                 .frame(minWidth: 44, minHeight: 44)
                 .contentShape(Rectangle())
         }
@@ -2723,14 +2701,14 @@ fileprivate struct NewBlockModeChip: View {
             Text(label)
                 .font(NewBlockType.chip)
                 .tracking(NewBlockScreenTokens.chipTracking)
-                .foregroundStyle(selected ? NewBlockScreenTokens.paper : NewBlockScreenTokens.ink)
+                .foregroundStyle(selected ? Color.bruPaper : Color.bruInk)
                 .padding(.horizontal, 8)
                 .padding(.vertical, 5)
                 .frame(maxWidth: .infinity, minHeight: dynamicTypeSize.isAccessibilitySize ? 44 : nil)
-                .background(selected ? NewBlockScreenTokens.ink : Color.clear)
+                .background(selected ? Color.bruInk : Color.clear)
                 .overlay(
                     Rectangle()
-                        .stroke(NewBlockScreenTokens.ink,
+                        .stroke(Color.bruInk,
                                 lineWidth: selected ? 1.5 : 1.0)
                 )
                 .frame(minHeight: 44)
@@ -2762,13 +2740,13 @@ fileprivate struct NewBlockDayToggleChip: View {
             Text(letter)
                 .font(NewBlockType.chip)
                 .tracking(NewBlockScreenTokens.chipTracking)
-                .foregroundStyle(selected ? NewBlockScreenTokens.paper : NewBlockScreenTokens.muted)
+                .foregroundStyle(selected ? Color.bruPaper : Color.bruMuted)
                 .frame(maxWidth: .infinity)
                 .frame(minHeight: dynamicTypeSize.isAccessibilitySize ? 44 : 28)
-                .background(selected ? NewBlockScreenTokens.ink : NewBlockScreenTokens.faint)
+                .background(selected ? Color.bruInk : Color.bruFaint)
                 .overlay(
                     Rectangle()
-                        .stroke(NewBlockScreenTokens.ink,
+                        .stroke(Color.bruInk,
                                 lineWidth: selected ? 1.5 : 1.0)
                 )
                 .newBlockTapTarget(
@@ -2848,12 +2826,12 @@ fileprivate struct NewBlockSplitPickerSheet: View {
                                 HStack {
                                     Text(split.name)
                                         .font(NewBlockType.cta)
-                                        .foregroundStyle(NewBlockScreenTokens.ink)
+                                        .foregroundStyle(Color.bruInk)
                                     Spacer()
                                     if split.id == selectedSplit?.id {
                                         Text("✓")
                                             .font(NewBlockType.cta)
-                                            .foregroundStyle(NewBlockScreenTokens.signalText)
+                                            .foregroundStyle(Color.bruSignalText)
                                     }
                                 }
                                 .frame(minHeight: 44)
@@ -2885,17 +2863,17 @@ fileprivate struct NewBlockUndoToast: View {
             Text("Phase deleted")
                 .font(NewBlockType.chrome)
                 .tracking(NewBlockScreenTokens.chipTracking)
-                .foregroundStyle(NewBlockScreenTokens.ink)
+                .foregroundStyle(Color.bruInk)
 
             Rectangle()
-                .fill(NewBlockScreenTokens.hair)
+                .fill(Color.bruHair)
                 .frame(width: NewBlockScreenTokens.rule)
 
             Button(action: onUndo) {
                 Text("UNDO")
                     .font(NewBlockType.chrome)
                     .tracking(NewBlockScreenTokens.chipTracking)
-                    .foregroundStyle(NewBlockScreenTokens.signalText)
+                    .foregroundStyle(Color.bruSignalText)
                     .frame(minWidth: 44, minHeight: 44)
             }
             .buttonStyle(.plain)
@@ -2905,7 +2883,7 @@ fileprivate struct NewBlockUndoToast: View {
         .background(NewBlockScreenTokens.noteFill(colorScheme))
         .overlay(
             Rectangle()
-                .stroke(NewBlockScreenTokens.hair, lineWidth: NewBlockScreenTokens.rule)
+                .stroke(Color.bruHair, lineWidth: NewBlockScreenTokens.rule)
         )
         .padding(.horizontal, NewBlockScreenTokens.sidePadding)
     }
@@ -2943,7 +2921,7 @@ fileprivate struct NewBlockBottomActionBar: View {
                 Text("CANCEL")
                     .font(NewBlockType.cta)
                     .tracking(2.5)
-                    .foregroundStyle(NewBlockScreenTokens.muted)
+                    .foregroundStyle(Color.bruMuted)
                     .frame(maxWidth: dynamicTypeSize.isAccessibilitySize ? .infinity : nil, minHeight: 52)
                     .padding(.horizontal, 22)
                     .contentShape(Rectangle())
@@ -2951,7 +2929,7 @@ fileprivate struct NewBlockBottomActionBar: View {
             .buttonStyle(.plain)
             .overlay(
                 RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .stroke(NewBlockScreenTokens.muted, lineWidth: 1)
+                    .stroke(Color.bruMuted, lineWidth: 1)
             )
 
             // Filled primary button — fills remaining width
@@ -2959,14 +2937,14 @@ fileprivate struct NewBlockBottomActionBar: View {
                 HStack(spacing: 8) {
                     Image(systemName: "bookmark.fill")
                         .font(.system(size: 12, weight: .semibold))
-                        .foregroundStyle(canCreate ? NewBlockScreenTokens.paper : NewBlockScreenTokens.muted)
+                        .foregroundStyle(canCreate ? Color.bruPaper : Color.bruMuted)
                         // Decorative: VoiceOver would read "Bookmark" before the title.
                         .accessibilityHidden(true)
 
                     Text(displayPrimaryTitle)
                         .font(NewBlockType.cta)
                         .tracking(2.5)
-                        .foregroundStyle(canCreate ? NewBlockScreenTokens.paper : NewBlockScreenTokens.muted)
+                        .foregroundStyle(canCreate ? Color.bruPaper : Color.bruMuted)
                         // Centering would also shift one line by its trailing tracking.
                         .multilineTextAlignment(dynamicTypeSize.isAccessibilitySize ? .center : .leading)
                 }
@@ -2974,7 +2952,7 @@ fileprivate struct NewBlockBottomActionBar: View {
                 .padding(.vertical, NewBlockScreenTokens.rowGap)
                 .frame(maxWidth: .infinity)
                 .frame(minHeight: 52)
-                .background(canCreate ? NewBlockScreenTokens.ink : NewBlockScreenTokens.faint)
+                .background(canCreate ? Color.bruInk : Color.bruFaint)
                 .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
             }
             .buttonStyle(.plain)
@@ -2990,7 +2968,7 @@ fileprivate struct NewBlockBottomActionBar: View {
         // scrolls under the home-indicator zone, and a background that stops at
         // the safe-area edge leaves a see-through strip below the bar. Sized
         // intrinsically (~70pt) — safeAreaInset placement needs no rigid frame.
-        .background(NewBlockScreenTokens.paper.ignoresSafeArea(edges: .bottom))
+        .background(Color.bruPaper.ignoresSafeArea(edges: .bottom))
     }
 
     /// Side by side, or stacked at accessibility sizes.
@@ -3034,7 +3012,7 @@ extension BlockMissingPiece {
 fileprivate struct NewBlockInkRule: View {
     var body: some View {
         Rectangle()
-            .fill(NewBlockScreenTokens.ink)
+            .fill(Color.bruInk)
             .frame(height: NewBlockScreenTokens.rule)
     }
 }
@@ -3053,20 +3031,20 @@ fileprivate struct NewBlockDurationSheet: View {
                     Text("Edit Block Duration")
                         .font(NewBlockType.phaseTitle)
                         .fontWeight(.semibold)
-                        .foregroundStyle(NewBlockScreenTokens.ink)
+                        .foregroundStyle(Color.bruInk)
 
                     HStack(spacing: NewBlockScreenTokens.microGap) {
                         Text("TOTAL")
                             .font(NewBlockType.label)
                             .tracking(NewBlockScreenTokens.labelTracking)
-                            .foregroundStyle(NewBlockScreenTokens.muted)
+                            .foregroundStyle(Color.bruMuted)
                         Text("\(draft.totalWeeks)")
                             .font(NewBlockType.number)
-                            .foregroundStyle(NewBlockScreenTokens.ink)
+                            .foregroundStyle(Color.bruInk)
                         Text("WKS")
                             .font(NewBlockType.label)
                             .tracking(NewBlockScreenTokens.labelTracking)
-                            .foregroundStyle(NewBlockScreenTokens.muted)
+                            .foregroundStyle(Color.bruMuted)
                     }
                 }
                 .padding(.horizontal, NewBlockScreenTokens.sidePadding)
@@ -3087,14 +3065,14 @@ fileprivate struct NewBlockDurationSheet: View {
                             ) {
                                 Text(String(format: "%02d", index + 1))
                                     .font(NewBlockType.phaseIndex)
-                                    .foregroundStyle(NewBlockScreenTokens.ink)
+                                    .foregroundStyle(Color.bruInk)
                                     .frame(width: dynamicTypeSize.isAccessibilitySize ? nil : 32, alignment: .leading)
 
                                 // At accessibility sizes the title has the line to itself,
                                 // beside its index, and shrinks to fit rather than end in "…".
                                 Text(NewBlockPhaseText.title(for: phase.kind))
                                     .font(NewBlockType.phaseTitle)
-                                    .foregroundStyle(NewBlockScreenTokens.ink)
+                                    .foregroundStyle(Color.bruInk)
                                     .lineLimit(dynamicTypeSize.isAccessibilitySize ? 1 : nil)
                                     .minimumScaleFactor(dynamicTypeSize.isAccessibilitySize ? 0.5 : 1)
                                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -3111,14 +3089,14 @@ fileprivate struct NewBlockDurationSheet: View {
                     Text("Done")
                         .font(NewBlockType.chrome)
                         .tracking(NewBlockScreenTokens.ctaTracking)
-                        .foregroundStyle(NewBlockScreenTokens.ink)
+                        .foregroundStyle(Color.bruInk)
                         .frame(maxWidth: .infinity)
                         .frame(height: NewBlockScreenTokens.bottomButtonHeight)
                 }
                 .buttonStyle(.plain)
-                .background(NewBlockScreenTokens.paper)
+                .background(Color.bruPaper)
             }
-            .background(NewBlockScreenTokens.paper.ignoresSafeArea())
+            .background(Color.bruPaper.ignoresSafeArea())
             .navigationBarHidden(true)
         }
         // T25: at accessibility sizes the sheet opens at full height, where its
@@ -3165,6 +3143,6 @@ private func sevenWeekPhases() -> [BlockPhaseDraft] {
 #Preview("Progression chart — 7-week") {
     NewBlockProgressionChart(phases: sevenWeekPhases())
         .padding(20)
-        .background(NewBlockScreenTokens.paper)
+        .background(Color.bruPaper)
 }
 #endif

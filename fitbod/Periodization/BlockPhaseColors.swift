@@ -43,22 +43,6 @@ public enum BlockPhaseColors {
         }
     }
 
-    public static func drawDeloadStripes(ctx: GraphicsContext, rect: CGRect) {
-        let stripeWidth: CGFloat = 12
-        var x = rect.minX - rect.height
-        while x < rect.maxX + rect.height {
-            let path = Path { p in
-                p.move(to: CGPoint(x: x, y: rect.minY))
-                p.addLine(to: CGPoint(x: x + 6, y: rect.minY))
-                p.addLine(to: CGPoint(x: x + 6 + rect.height, y: rect.maxY))
-                p.addLine(to: CGPoint(x: x + rect.height, y: rect.maxY))
-                p.closeSubpath()
-            }
-            ctx.fill(path, with: .color(Color.bruInk.opacity(0.18)))
-            x += stripeWidth
-        }
-    }
-
     public static func phaseLabel(_ kind: BlockPhaseKind) -> String {
         kind.rawValue.capitalized
     }

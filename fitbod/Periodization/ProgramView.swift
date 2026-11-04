@@ -177,7 +177,7 @@ public struct ProgramView: View {
                     newPopoverLayer
                 }
             }
-            .background(ProgramScreenTokens.screenBackground.ignoresSafeArea())
+            .background(Color.bruPaper.ignoresSafeArea())
             .navigationBarHidden(true)
             .navigationDestination(for: SessionRoute.self) { route in
                 switch route {
@@ -755,7 +755,7 @@ fileprivate struct NewBlockStartChoiceSheet: View {
 
     var body: some View {
         ZStack {
-            ProgramScreenTokens.screenBackground.ignoresSafeArea()
+            Color.bruPaper.ignoresSafeArea()
 
             VStack(spacing: 0) {
                 // Title (left-aligned, editorial — high contrast on paper)
@@ -763,11 +763,11 @@ fileprivate struct NewBlockStartChoiceSheet: View {
                     Text("CREATE BLOCK")
                         .font(.bru(.condensed, size: 30))
                         .tracking(1.5)
-                        .foregroundStyle(ProgramScreenTokens.ink)
+                        .foregroundStyle(Color.bruInk)
                         .frame(maxWidth: .infinity, alignment: .leading)
                     Text("Choose a starting point for your reusable training block.")
                         .font(.bru(.text, size: 13))
-                        .foregroundStyle(ProgramScreenTokens.muted)
+                        .foregroundStyle(Color.bruMuted)
                         .fixedSize(horizontal: false, vertical: true)
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }
@@ -780,14 +780,14 @@ fileprivate struct NewBlockStartChoiceSheet: View {
                     .font(.bru(.grotesk, size: 11))
                     .tracking(1.2)
                     .textCase(.uppercase)
-                    .foregroundStyle(ProgramScreenTokens.muted)
+                    .foregroundStyle(Color.bruMuted)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.horizontal, ProgramScreenTokens.horizontalPagePadding)
                     .padding(.bottom, 10)
 
                 // Divider
                 Rectangle()
-                    .fill(ProgramScreenTokens.ink)
+                    .fill(Color.bruInk)
                     .frame(height: 2)
 
                 // Choice: Blank Block
@@ -796,11 +796,11 @@ fileprivate struct NewBlockStartChoiceSheet: View {
                         VStack(alignment: .leading, spacing: 4) {
                             Text("Blank Block")
                                 .font(.bru(.grotesk, size: 15))
-                                .foregroundStyle(ProgramScreenTokens.ink)
+                                .foregroundStyle(Color.bruInk)
                             Text("Build your own phases manually.")
                                 .font(.bru(.grotesk, size: 11))
                                 .tracking(ProgramScreenTokens.headerLetterSpacing)
-                                .foregroundStyle(ProgramScreenTokens.muted)
+                                .foregroundStyle(Color.bruMuted)
                         }
                         Spacer()
                         ProgramRowChevron()
@@ -812,11 +812,11 @@ fileprivate struct NewBlockStartChoiceSheet: View {
                     .contentShape(Rectangle())
                 }
                 .buttonStyle(.bruRow)
-                .background(ProgramScreenTokens.screenBackground)
+                .background(Color.bruPaper)
 
                 // Divider
                 Rectangle()
-                    .fill(ProgramScreenTokens.lightRowDividerColor)
+                    .fill(Color.bruHair)
                     .frame(height: 1)
 
                 // Choice: Use Preset
@@ -825,11 +825,11 @@ fileprivate struct NewBlockStartChoiceSheet: View {
                         VStack(alignment: .leading, spacing: 4) {
                             Text("Use Preset")
                                 .font(.bru(.grotesk, size: 15))
-                                .foregroundStyle(ProgramScreenTokens.ink)
+                                .foregroundStyle(Color.bruInk)
                             Text("Start from \(BlockTemplates.catalog.map(\.name).formatted(.list(type: .or))).")
                                 .font(.bru(.grotesk, size: 11))
                                 .tracking(ProgramScreenTokens.headerLetterSpacing)
-                                .foregroundStyle(ProgramScreenTokens.muted)
+                                .foregroundStyle(Color.bruMuted)
                         }
                         Spacer()
                         ProgramRowChevron()
@@ -841,11 +841,11 @@ fileprivate struct NewBlockStartChoiceSheet: View {
                     .contentShape(Rectangle())
                 }
                 .buttonStyle(.bruRow)
-                .background(ProgramScreenTokens.screenBackground)
+                .background(Color.bruPaper)
 
                 // Divider
                 Rectangle()
-                    .fill(ProgramScreenTokens.ink)
+                    .fill(Color.bruInk)
                     .frame(height: 2)
 
                 Spacer()
@@ -868,14 +868,14 @@ fileprivate struct NewBlockPresetPickerSheet: View {
 
     var body: some View {
         ZStack {
-            ProgramScreenTokens.screenBackground.ignoresSafeArea()
+            Color.bruPaper.ignoresSafeArea()
 
             VStack(spacing: 0) {
                 // Title (left-aligned, editorial — high contrast on paper)
                 Text("CHOOSE PRESET")
                     .font(.bru(.condensed, size: 30))
                     .tracking(1.5)
-                    .foregroundStyle(ProgramScreenTokens.ink)
+                    .foregroundStyle(Color.bruInk)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.horizontal, ProgramScreenTokens.horizontalPagePadding)
                     .padding(.top, 24)
@@ -883,7 +883,7 @@ fileprivate struct NewBlockPresetPickerSheet: View {
 
                 // Top rule
                 Rectangle()
-                    .fill(ProgramScreenTokens.ink)
+                    .fill(Color.bruInk)
                     .frame(height: 2)
 
                 ForEach(Array(NewBlockPreset.all.enumerated()), id: \.element) { index, preset in
@@ -894,7 +894,7 @@ fileprivate struct NewBlockPresetPickerSheet: View {
                             Text(preset == .blank ? "FROM SCRATCH" : preset.label)
                                 .font(.bru(.grotesk, size: 13))
                                 .tracking(1.5)
-                                .foregroundStyle(ProgramScreenTokens.ink)
+                                .foregroundStyle(Color.bruInk)
                                 .lineLimit(1)
                                 .minimumScaleFactor(0.85)
                             Spacer()
@@ -906,18 +906,18 @@ fileprivate struct NewBlockPresetPickerSheet: View {
                         .contentShape(Rectangle())
                     }
                     .buttonStyle(.bruRow)
-                    .background(ProgramScreenTokens.screenBackground)
+                    .background(Color.bruPaper)
 
                     if index < NewBlockPreset.all.count - 1 {
                         Rectangle()
-                            .fill(ProgramScreenTokens.lightRowDividerColor)
+                            .fill(Color.bruHair)
                             .frame(height: 1)
                     }
                 }
 
                 // Bottom rule
                 Rectangle()
-                    .fill(ProgramScreenTokens.ink)
+                    .fill(Color.bruInk)
                     .frame(height: 2)
 
                 Spacer()
@@ -948,12 +948,7 @@ fileprivate struct ProgramSheetScroll: ViewModifier {
 // MARK: - ProgramScreenTokens
 
 fileprivate enum ProgramScreenTokens {
-    // Adaptive BRU tokens, so Program turns dark with the other tabs.
-    static let screenBackground = Color.bruPaper
-    static let ink = Color.bruInk
-    static let muted = Color.bruMuted
     static let blackDividerThickness: CGFloat = 2
-    static let lightRowDividerColor = Color.bruHair
     static let lightRowDividerThickness: CGFloat = 1
     static let horizontalPagePadding: CGFloat = 16
 
@@ -975,12 +970,10 @@ fileprivate enum ProgramScreenTokens {
     static let noProgramLetterSpacing: CGFloat = 0.5
     static let headlineToBodySpacing: CGFloat = 8
     static let bodyFontSize: CGFloat = 13.4
-    static let bodyLineHeight: CGFloat = 20
     static let bodyLineSpacing: CGFloat = 2
 
     static let ctaTopSpacing: CGFloat = 16
     static let ctaHeight: CGFloat = 71
-    static let ctaColor = Color.bruSignal
     static let ctaBottomSpacing: CGFloat = 10
     static let ctaFontSize: CGFloat = 28
 
@@ -1003,10 +996,6 @@ fileprivate enum ProgramScreenTokens {
     static let templateWeeksFontSize: CGFloat = 32
     static let templateWeeksWidth: CGFloat = 56
 
-    static let bottomTabBarHeight: CGFloat = 63
-    static let selectedTabWidth: CGFloat = 99
-    static let selectedTabHeight: CGFloat = 29
-    static let bottomSafeAreaSpacing: CGFloat = 34
 }
 
 // MARK: - ProgramTypography
@@ -1035,7 +1024,7 @@ fileprivate struct ProgramChromeHeader: View {
                 Text("PROGRAM")
                     .font(ProgramTypography.chromeLabel)
                     .tracking(ProgramScreenTokens.headerLetterSpacing)
-                    .foregroundStyle(ProgramScreenTokens.ink)
+                    .foregroundStyle(Color.bruInk)
 
                 Spacer()
 
@@ -1045,7 +1034,7 @@ fileprivate struct ProgramChromeHeader: View {
                     Text("+ NEW")
                         .font(ProgramTypography.chromeLabel)
                         .tracking(ProgramScreenTokens.headerLetterSpacing)
-                        .foregroundStyle(ProgramScreenTokens.ink)
+                        .foregroundStyle(Color.bruInk)
                         // Lifts the text inside its 44pt target, so the target
                         // starts at the header's top edge and hangs below the
                         // header, never into the status bar, which takes no taps.
@@ -1064,18 +1053,18 @@ fileprivate struct ProgramChromeHeader: View {
             .padding(.vertical, 4)
             .frame(minHeight: ProgramScreenTokens.topHeaderRowHeight)
             .frame(maxWidth: .infinity)
-            .background(ProgramScreenTokens.screenBackground)
+            .background(Color.bruPaper)
 
             rule
         }
-        .background(ProgramScreenTokens.screenBackground)
+        .background(Color.bruPaper)
     }
 
     /// A 2pt rule. It takes no taps, so + NEW's target takes them where it
     /// hangs over the bottom rule.
     private var rule: some View {
         Rectangle()
-            .fill(ProgramScreenTokens.ink)
+            .fill(Color.bruInk)
             .frame(height: ProgramScreenTokens.blackDividerThickness)
             .allowsHitTesting(false)
     }
@@ -1086,7 +1075,7 @@ fileprivate struct ProgramChromeHeader: View {
 fileprivate struct ProgramInkDivider: View {
     var body: some View {
         Rectangle()
-            .fill(ProgramScreenTokens.ink)
+            .fill(Color.bruInk)
             .frame(height: ProgramScreenTokens.blackDividerThickness)
     }
 }
@@ -1094,7 +1083,7 @@ fileprivate struct ProgramInkDivider: View {
 fileprivate struct ProgramHairDivider: View {
     var body: some View {
         Rectangle()
-            .fill(ProgramScreenTokens.lightRowDividerColor)
+            .fill(Color.bruHair)
             .frame(height: ProgramScreenTokens.lightRowDividerThickness)
     }
 }
@@ -1102,7 +1091,7 @@ fileprivate struct ProgramHairDivider: View {
 fileprivate struct ProgramTemplateHeaderDivider: View {
     var body: some View {
         Rectangle()
-            .fill(ProgramScreenTokens.ink)
+            .fill(Color.bruInk)
             .frame(height: ProgramScreenTokens.templateHeaderDividerThickness)
     }
 }
@@ -1140,7 +1129,7 @@ fileprivate struct NoProgramHero: View {
                     .font(.bru(.grotesk, size: ProgramScreenTokens.heroCaptionFontSize))
                     .tracking(ProgramScreenTokens.heroCaptionLetterSpacing)
                     .textCase(.uppercase)
-                    .foregroundStyle(ProgramScreenTokens.muted)
+                    .foregroundStyle(Color.bruMuted)
                     .frame(minHeight: ProgramScreenTokens.heroCaptionLineHeight, alignment: .center)
 
                 heroHeadline
@@ -1175,7 +1164,7 @@ fileprivate struct NoProgramHero: View {
     private var heroHeadline: some View {
         Text("NO PROGRAM")
             .font(.bru(.condensed, size: ProgramScreenTokens.noProgramFontSize))
-            .foregroundStyle(ProgramScreenTokens.ink)
+            .foregroundStyle(Color.bruInk)
             .tracking(ProgramScreenTokens.noProgramLetterSpacing)
             .fixedSize(horizontal: false, vertical: dynamicTypeSize.isAccessibilitySize)
             .frame(height: dynamicTypeSize.isAccessibilitySize ? nil : headlineLineHeight, alignment: .center)
@@ -1189,7 +1178,7 @@ fileprivate struct NoProgramHero: View {
     private var bodyParagraph: some View {
         Text(.init("A block schedules routines across weeks and phases — **accumulation, intensification, peak, deload.** You can also lift without a block, but Fitbod really earns its keep when you’re running one."))
             .font(.bru(.text, size: ProgramScreenTokens.bodyFontSize))
-            .foregroundStyle(ProgramScreenTokens.ink)
+            .foregroundStyle(Color.bruInk)
             .lineSpacing(ProgramScreenTokens.bodyLineSpacing)
             .fixedSize(horizontal: false, vertical: true)
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -1200,10 +1189,10 @@ fileprivate struct NoProgramHero: View {
             Text("+ DEFINE BLOCK ▶︎")
                 .font(.bru(.condensed, size: ProgramScreenTokens.ctaFontSize))
                 .tracking(ProgramScreenTokens.noProgramLetterSpacing)
-                .foregroundStyle(ProgramScreenTokens.ctaColor.bruLabelOnFill)
+                .foregroundStyle(Color.bruSignal.bruLabelOnFill)
             .frame(maxWidth: .infinity)
             .frame(minHeight: ProgramScreenTokens.ctaHeight)
-            .background(ProgramScreenTokens.ctaColor)
+            .background(Color.bruSignal)
         }
         .buttonStyle(.plain)
     }
@@ -1237,12 +1226,12 @@ fileprivate struct ProgramFeatureChip: View {
         Text(label)
             .font(.bru(.grotesk, size: ProgramScreenTokens.chipFontSize))
             .tracking(ProgramScreenTokens.chipLetterSpacing)
-            .foregroundStyle(ProgramScreenTokens.ink)
+            .foregroundStyle(Color.bruInk)
             .padding(.horizontal, ProgramScreenTokens.chipHorizontalPadding)
             .frame(minHeight: minHeight)
             .overlay(
                 Rectangle()
-                    .stroke(ProgramScreenTokens.ink, lineWidth: ProgramScreenTokens.chipBorderWidth)
+                    .stroke(Color.bruInk, lineWidth: ProgramScreenTokens.chipBorderWidth)
             )
     }
 }
@@ -1374,14 +1363,14 @@ fileprivate struct ProgramTemplateHeader: View {
         VStack(spacing: 0) {
             headerLayout {
                 Text(title)
-                    .foregroundStyle(ProgramScreenTokens.ink)
+                    .foregroundStyle(Color.bruInk)
 
                 if !dynamicTypeSize.isAccessibilitySize {
                     Spacer()
                 }
 
                 Text(right)
-                    .foregroundStyle(ProgramScreenTokens.muted)
+                    .foregroundStyle(Color.bruMuted)
             }
             .font(ProgramTypography.chromeLabel)
             .tracking(ProgramScreenTokens.headerLetterSpacing)
@@ -1390,7 +1379,7 @@ fileprivate struct ProgramTemplateHeader: View {
             .padding(.vertical, 4)
             .frame(minHeight: ProgramScreenTokens.templateHeaderHeight - ProgramScreenTokens.templateHeaderDividerThickness)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(ProgramScreenTokens.screenBackground)
+            .background(Color.bruPaper)
 
             ProgramTemplateHeaderDivider()
         }
@@ -1425,21 +1414,21 @@ fileprivate struct ProgramTemplateRow: View {
                 partsLayout {
                     Text(content.weeks)
                         .font(.bru(.condensed, size: ProgramScreenTokens.templateWeeksFontSize))
-                        .foregroundStyle(ProgramScreenTokens.ink)
+                        .foregroundStyle(Color.bruInk)
                         .frame(width: weeksWidth, alignment: .leading)
 
                     VStack(alignment: .leading, spacing: ProgramScreenTokens.templateTextSpacing) {
                         Text(content.title)
                             .font(.bru(.text, size: ProgramScreenTokens.templateTitleFontSize))
                             .fontWeight(.semibold)
-                            .foregroundStyle(ProgramScreenTokens.ink)
+                            .foregroundStyle(Color.bruInk)
                             .modifier(ProgramRowTextFit(minimumScaleFactor: 0.9))
 
                         Text(content.phases)
                             .font(ProgramTypography.templateMeta)
                             .tracking(ProgramScreenTokens.headerLetterSpacing)
                             .textCase(.uppercase)
-                            .foregroundStyle(ProgramScreenTokens.muted)
+                            .foregroundStyle(Color.bruMuted)
                             .frame(minHeight: ProgramScreenTokens.templateMetaLineHeight, alignment: .leading)
                             .modifier(ProgramRowTextFit(minimumScaleFactor: 0.85))
                     }
@@ -1455,7 +1444,7 @@ fileprivate struct ProgramTemplateRow: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.bruRow)
-        .background(ProgramScreenTokens.screenBackground)
+        .background(Color.bruPaper)
     }
 
     /// Weeks beside the name and phases, or above them at accessibility sizes.
@@ -1476,7 +1465,7 @@ fileprivate struct ProgramRowChevron: View {
     var body: some View {
         Text("›")
             .font(.system(size: size, weight: .regular))
-            .foregroundStyle(ProgramScreenTokens.muted)
+            .foregroundStyle(Color.bruMuted)
     }
 }
 

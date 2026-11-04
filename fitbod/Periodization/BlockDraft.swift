@@ -115,12 +115,6 @@ public final class BlockDraft {
         phases.reduce(0) { $0 + $1.weeks }
     }
 
-    /// The midnight after the plan's last day, counted the way
-    /// `PeriodizationEngine` counts block days.
-    public var computedEndDate: Date {
-        PeriodizationEngine.startOfDay(totalWeeks * 7, from: startDate)
-    }
-
     public func save(into context: ModelContext) throws {
         let existing = try savedBlock(in: context)
         // A saved block takes a new routine only through the lifecycle service,
@@ -159,8 +153,7 @@ public final class BlockDraft {
             // BlockLifecycleService.end when the block is ended. The builder is pre-
             // activation (draft/ready context) so block.endDate MUST stay nil here.
             // Preserving any pre-existing endDate (e.g. re-editing a completed block)
-            // is intentional — we do not clear it. computedEndDate stays available for
-            // display purposes (projected total weeks) but is never persisted by the builder.
+            // is intentional — we do not clear it.
             // isActive is never written here either: an edited block keeps its stored
             // state (SAVE CHANGES on the active block keeps it active), a new block stays
             // inactive, and no other block is touched. Only BlockLifecycleService starts

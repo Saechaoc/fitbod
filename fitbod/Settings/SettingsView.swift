@@ -60,7 +60,6 @@ public struct SettingsView: View {
     private let restorer = BackupRestorer()
 
     // Sheet state for Picker overlays
-    @State private var showingUnitPicker = false
 
     /// Set when Settings is presented as a sheet (from Today's header);
     /// renders a Close action. Nil when hosted without a presenter.

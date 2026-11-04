@@ -17,8 +17,6 @@ import SwiftUI
 // namespace once a second consumer (a second BRU primitive) lands.
 
 fileprivate enum BlockNameFieldTokens {
-    static let ink   = Color.bruInk
-    static let muted = Color.bruMuted
     static let labelTracking: CGFloat = 2.2
 }
 
@@ -50,7 +48,7 @@ public struct BlockNameField: View {
             Text(title)
                 .font(BlockNameFieldType.label)
                 .tracking(BlockNameFieldTokens.labelTracking)
-                .foregroundStyle(BlockNameFieldTokens.muted)
+                .foregroundStyle(Color.bruMuted)
                 .padding(.top, 16)
 
             ZStack(alignment: .leading) {
@@ -59,7 +57,7 @@ public struct BlockNameField: View {
                     // its one line rather than end in "…".
                     Text(placeholder)
                         .font(BlockNameFieldType.displayLarge)
-                        .foregroundStyle(BlockNameFieldTokens.muted)
+                        .foregroundStyle(Color.bruMuted)
                         .lineLimit(1)
                         .minimumScaleFactor(0.5)
                         .allowsHitTesting(false)
@@ -94,8 +92,8 @@ public struct BlockNameField: View {
         field
             .font(BlockNameFieldType.displayLarge)
             .textInputAutocapitalization(.words)
-            .foregroundStyle(BlockNameFieldTokens.ink)
-            .tint(BlockNameFieldTokens.ink)
+            .foregroundStyle(Color.bruInk)
+            .tint(Color.bruInk)
             .focused($isFocused)
     }
 }
