@@ -21,7 +21,7 @@
 //   - Shared commit validation; zero added weight is valid for bodyweight.
 //   - Haptic on commit (T-02.1-07-03)
 //   - PrescriptionWeightCell wiring + PlateStackDisclosure
-//   - Per-set notes sheet (PerSetNoteSheet)
+//   - Per-set notes sheet (NoteSheet)
 //   - Numeric weight keyboard; milestone entries use non-negative added load.
 //   - accessibilityLabel on note button + completion button
 //
@@ -217,7 +217,11 @@ public struct SetRow: View {
                     .contentShape(Rectangle())
                     .accessibilityLabel("Note for set \(displayNumber)")         // UI-SPEC verbatim a11y
                     .sheet(isPresented: $presentingSetNote) {
-                        PerSetNoteSheet(entry: entry)
+                        NoteSheet(
+                            title: "SET \(displayNumber) NOTE",
+                            hint: "e.g. right knee caved on rep 7",
+                            text: entry.notes
+                        ) { entry.notes = $0 }
                     }
 
                     // Completion button — SetCompletionGlyph replaces SF Symbol checkmark

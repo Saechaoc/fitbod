@@ -33,18 +33,18 @@ struct SessionWidgetsBRUCopyTests {
         try String(contentsOf: sessions().appendingPathComponent(file), encoding: .utf8)
     }
 
-    // MARK: - Test 1: PerSetNoteSheet verbatim copy
+    // MARK: - Test 1: set note sheet verbatim copy
 
-    @Test("perSetNoteSheetIncludesVerbatimCopy")
-    func perSetNoteSheetIncludesVerbatimCopy() throws {
-        let source = try src("PerSetNoteSheet.swift")
+    @Test("setNoteSheetIncludesVerbatimCopy")
+    func setNoteSheetIncludesVerbatimCopy() throws {
+        let sheet = try src("NoteSheet.swift")
+        let row = try src("SetRow.swift")
 
         // UI-SPEC line 380 verbatim labels
-        #expect(source.contains("SET"))                                            // "SET {N} NOTE"
-        #expect(source.contains("NOTE"))                                           // "SET {N} NOTE"
-        #expect(source.contains("\"CANCEL\""))                                     // left action
-        #expect(source.contains("\"SAVE\""))                                       // right action (signal)
-        #expect(source.contains("BRUHeaderBar"))                                   // BRU chrome
+        #expect(row.contains("\"SET \\(displayNumber) NOTE\""))                  // "SET {N} NOTE"
+        #expect(sheet.contains("\"CANCEL\""))                                      // left action
+        #expect(sheet.contains("\"SAVE\""))                                        // right action (signal)
+        #expect(sheet.contains("BRUHeaderBar"))                                    // BRU chrome
     }
 
     // MARK: - Test 2: TempoEntryRow verbatim labels
@@ -154,13 +154,12 @@ struct SessionWidgetsBRUCopyTests {
         #expect(source.contains("\"RESUME\""))                                     // UI-SPEC verbatim label
     }
 
-    // MARK: - Test 9: No banned tokens across all 10 rewritten session widget files
+    // MARK: - Test 9: No banned tokens across the rewritten session widget files
 
     @Test("noBannedTokensInSessionWidgetSurfaces")
     func noBannedTokensInSessionWidgetSurfaces() throws {
         let filesToCheck = [
-            "PerSetNoteSheet.swift",
-            "WorkoutNotesSheet.swift",
+            "NoteSheet.swift",
             "TempoEntryRow.swift",
             "PartialRepsRow.swift",
             "ClusterSubRepChipRow.swift",

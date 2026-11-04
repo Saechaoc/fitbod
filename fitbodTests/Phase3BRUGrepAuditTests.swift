@@ -67,7 +67,7 @@ struct Phase3BRUGrepAuditTests {
         "fitbod/Sessions/SetTypeChip.swift",
         "fitbod/Sessions/WorkoutHeaderToolbar.swift",
         "fitbod/Sessions/ResumeWorkoutBanner.swift",
-        "fitbod/Sessions/WorkoutNotesSheet.swift",
+        "fitbod/Sessions/NoteSheet.swift",
         "fitbod/Sessions/SwapExerciseSheet.swift",
         "fitbod/Sessions/SessionHistoryView.swift",
         "fitbod/Sessions/SessionHistoryRow.swift",
@@ -78,9 +78,7 @@ struct Phase3BRUGrepAuditTests {
         "fitbod/Sessions/DecimalRPEPickerSheet.swift",
         "fitbod/Sessions/InlineRPEChipRow.swift",
         "fitbod/Sessions/PartialRepsRow.swift",
-        "fitbod/Sessions/PerSetNoteSheet.swift",
         "fitbod/Sessions/PinnedNoteCapsule.swift",
-        // PinnedNoteSheet is BRU since review item 42, so this audit covers it too.
         "fitbod/Sessions/TempoEntryRow.swift",
         "fitbod/Sessions/PreviousColumn.swift",
         // Phase 6 Sessions surfaces

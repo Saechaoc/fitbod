@@ -6,7 +6,7 @@
 //
 // The inline pinned-note indicator that displays a SessionExercise.pinnedNote
 // value above the column-header row in SessionExerciseCard. Tapping opens
-// PinnedNoteSheet for editing.
+// the pinned-note NoteSheet for editing.
 //
 // CRITICAL: UI-SPEC line 221 EXPLICITLY BANS the system yellow color token.
 // This rewrite removes ALL references to the yellow token, the pin glyph, and Capsule.

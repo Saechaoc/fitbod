@@ -190,11 +190,15 @@ public struct SessionLoggerView: View {
         }
         // Workout-level notes sheet
         .sheet(isPresented: $presentingWorkoutNotes) {
-            WorkoutNotesSheet(session: session)
+            NoteSheet(title: "WORKOUT NOTES", hint: "Notes for this session", text: session.notes) {
+                session.notes = $0
+            }
         }
         // Pinned per-exercise note sheet
         .sheet(item: $pendingPinnedNote) { se in
-            PinnedNoteSheet(sessionExercise: se)
+            NoteSheet(title: "PINNED NOTE", hint: "Note for this exercise", text: se.pinnedNote) {
+                se.pinnedNote = $0
+            }
         }
         // Remove-exercise destructive confirmation
         .alert(
