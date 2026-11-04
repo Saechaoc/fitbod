@@ -436,7 +436,6 @@ fileprivate enum NewBlockType {
     static let label  = Font.bru(.grotesk, size: 10)
     static let micro  = Font.bru(.grotesk, size: 8)
     static let display      = Font.bru(.condensed, size: 39)
-    static let displayLarge = Font.bru(.condensed, size: 44)
     static let number       = Font.bru(.condensed, size: 29)
     static let phaseIndex   = Font.bru(.condensed, size: 28)
     static let phaseTitle   = Font.bru(.text, size: 18)
