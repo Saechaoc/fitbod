@@ -6,12 +6,11 @@ for decisions and open flags.
 
 ## Finish the current milestone first
 
-The latest complete suite has four UI failures. Prepared interaction fixes need
-a rerun, the full suite on one phone, staged GitNexus checks, grouped commits
-and main push. The full authored journey on both phones at AX3 moved to
-[release readiness](DEVELOPMENT.md#release-readiness) on 2026-11-01.
-The current sandbox blocks the required simulator and repository operations;
-see [verification](VERIFICATION.md). Items below remain future work, not reasons
+The full suite passed on 2026-11-03: 1,319 tests, with one known expected
+failure. Pushing `main` to origin is left to the developer. The full authored
+journey on both phones at AX3 moved to
+[release readiness](DEVELOPMENT.md#release-readiness) on 2026-11-01; see
+[verification](VERIFICATION.md). Items below remain future work, not reasons
 to mark those acceptance checks complete.
 
 | Priority | Work | Starting point | Acceptance evidence |
@@ -76,6 +75,40 @@ Decided 2026-11-03 on the review page `.lavish/next-workflow.html`.
   Plan custom block review that stays closed (that one belongs to running a
   block).
 
+Decided 2026-11-05 on the review page `.lavish/run-a-block.html`: every
+recommended answer, for running a block from plan to review (gaps B1 to B13).
+
+- **A finished plan:** past its last planned week, Today shows a note with
+  END BLOCK & REVIEW ▸ until the lifter ends the block, and workouts carry on
+  as normal. The app never ends a block by itself. The note has no "not now",
+  which would need a stored field past SchemaV7.
+- **The review:** ending a block from its overview opens its review at once,
+  on Today or Program. Plan custom opens New block with the ended block's
+  routine, scheduling and training days, the default phases and no name;
+  Start next opens the recommended preset with the same routine, scheduling
+  and days. Either carries the routine only while it exists and is not
+  archived. A finished block's overview has REVIEW ▸. Build call: a review
+  counts as seen once it opens (`Block.reviewedAt`), so closing it any way
+  never brings it back on Today.
+- **Ready blocks on Today:** with no block running, Today shows the newest
+  ready block with START BLOCK ▸, which starts it in one tap. A block saved
+  from the review waits as ready for that tap. With none ready, "Start a
+  block" opens Create block, as on Program.
+- **EXPORT on the review:** shares the block's sets as a CSV file, with the
+  Settings Export CSV columns and only the block's dates, in one tap.
+- **The deload week:** each lift holds its last top set's weight, and WHY
+  says so; the working sets stay cut by the phase's volume. SchemaV7 stays.
+- **Deleting a block:** draft and ready blocks only, from their overview,
+  after a confirmation. An active block is ended; finished blocks stay as
+  history.
+- **DAYS PER WEEK:** removed from New block, because nothing stored or read
+  it. Training days come from the routine's sessions and the FIXED WEEKLY
+  chips.
+- **Left out on purpose:** phases changing weights and sets beyond the
+  deload's cut, which waits until the gym day is stable; undoing END BLOCK;
+  choosing a start date; skipping a session; and large text, dark mode,
+  VoiceOver and polish for these screens until the workflow is stable.
+
 ## Decisions awaiting product direction
 
 - **First logs and records:** the first logged set in each intent/rep-range/kind
@@ -104,14 +137,12 @@ Decided 2026-11-03 on the review page `.lavish/next-workflow.html`.
   preserves incompatible stores separately; it does not migrate them.
 - Resolve the SwiftData `.deny` runtime issue before promising hard-delete
   enforcement. Its known-issue test deliberately avoids the aborting operation.
-- Finish the Block Review export and PR sections: the current `EXPORT` header
-  text has no action, and the PR summary is a placeholder. Complete their
-  interaction tests with the block-program journey.
+- Finish the Block Review export: the `EXPORT` header text has no action.
+  Block Review already counts its PRs (`BlockReviewStatistics.prs`).
 - Audit secondary analytics accessibility: combined exercise-history/PR
   readouts, missing-value announcements in recap/block review, and clearer
   distinction between absent and below-MEV heatmap colors.
-- Curate pattern metadata before restoring the hidden Pattern filter. Review
-  the currently unwired `RoutinesListView` before reusing or removing it.
+- Curate pattern metadata before restoring the hidden Pattern filter.
 - Extend CI coverage deliberately: the existing workflow runs on `claude/**`,
   PRs and manual dispatch; a direct push to `main` does not trigger it.
 
