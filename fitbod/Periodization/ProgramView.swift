@@ -112,8 +112,6 @@ public struct ProgramView: View {
     @State private var pendingBlockBuilder: BlockBuilderRoute? = nil
     @State private var showingNewPopover = false
     @State private var presentingStartChoice = false
-    @State private var presentingPresetPicker = false
-    @State private var stagedBuilder: BlockBuilderRoute? = nil
     @State private var showAllDone = false
     @State private var headerHeight = ProgramChromeHeader.totalHeight
 
@@ -194,43 +192,8 @@ public struct ProgramView: View {
             .fullScreenCover(item: $pendingBlockBuilder) { route in
                 route.builder(origin: .program)
             }
-            .sheet(isPresented: $presentingStartChoice, onDismiss: {
-                if let staged = stagedBuilder {
-                    pendingBlockBuilder = staged
-                    stagedBuilder = nil
-                }
-            }) {
-                NewBlockStartChoiceSheet(
-                    onScratch: {
-                        stagedBuilder = .newBlock(nil)
-                        presentingStartChoice = false
-                    },
-                    onPreset: {
-                        presentingPresetPicker = true
-                    }
-                )
-                .sheet(isPresented: $presentingPresetPicker, onDismiss: {
-                    if stagedBuilder != nil {
-                        presentingStartChoice = false
-                    }
-                }) {
-                    NewBlockPresetPickerSheet { chosenPreset in
-                        stagedBuilder = .newBlock(chosenPreset)
-                        presentingPresetPicker = false
-                    }
-                    .presentationDetents(blockSheetDetents)
-                    .presentationDragIndicator(.visible)
-                }
-                .presentationDetents(blockSheetDetents)
-                .presentationDragIndicator(.visible)
-            }
+            .blockCreateFlow(isPresented: $presentingStartChoice) { pendingBlockBuilder = $0 }
         }
-    }
-
-    /// CREATE BLOCK and CHOOSE PRESET open at half height, or at full height
-    /// at accessibility sizes, where their rows outgrow half the screen.
-    private var blockSheetDetents: Set<PresentationDetent> {
-        dynamicTypeSize.isAccessibilitySize ? [.large] : [.medium]
     }
 
     // MARK: Popover
@@ -679,6 +642,66 @@ fileprivate struct UsageTagFlow: View {
 }
 
 // MARK: - NewBlockStartChoiceSheet
+
+/// Create block: Blank Block or Use Preset, then the preset list. The pick
+/// opens once both sheets have gone, through `onChoose`. Program's + NEW
+/// and + DEFINE BLOCK and Today's "Start a block" open it, so a block
+/// starts the same way from either tab.
+struct BlockCreateFlow: ViewModifier {
+    @Binding var isPresented: Bool
+    let onChoose: (BlockBuilderRoute) -> Void
+
+    @State private var presentingPresetPicker = false
+    @State private var staged: BlockBuilderRoute? = nil
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+
+    func body(content: Content) -> some View {
+        content.sheet(isPresented: $isPresented, onDismiss: {
+            if let staged {
+                onChoose(staged)
+                self.staged = nil
+            }
+        }) {
+            NewBlockStartChoiceSheet(
+                onScratch: {
+                    staged = .newBlock(nil)
+                    isPresented = false
+                },
+                onPreset: {
+                    presentingPresetPicker = true
+                }
+            )
+            .sheet(isPresented: $presentingPresetPicker, onDismiss: {
+                if staged != nil {
+                    isPresented = false
+                }
+            }) {
+                NewBlockPresetPickerSheet { chosenPreset in
+                    staged = .newBlock(chosenPreset)
+                    presentingPresetPicker = false
+                }
+                .presentationDetents(detents)
+                .presentationDragIndicator(.visible)
+            }
+            .presentationDetents(detents)
+            .presentationDragIndicator(.visible)
+        }
+    }
+
+    /// CREATE BLOCK and CHOOSE PRESET open at half height, or at full height
+    /// at accessibility sizes, where their rows outgrow half the screen.
+    private var detents: Set<PresentationDetent> {
+        dynamicTypeSize.isAccessibilitySize ? [.large] : [.medium]
+    }
+}
+
+extension View {
+    /// Presents Create block while `isPresented`; `onChoose` gets the
+    /// builder route the lifter picked.
+    func blockCreateFlow(isPresented: Binding<Bool>, onChoose: @escaping (BlockBuilderRoute) -> Void) -> some View {
+        modifier(BlockCreateFlow(isPresented: isPresented, onChoose: onChoose))
+    }
+}
 
 fileprivate struct NewBlockStartChoiceSheet: View {
     let onScratch: () -> Void

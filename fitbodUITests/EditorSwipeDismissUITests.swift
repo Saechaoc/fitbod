@@ -138,6 +138,8 @@ final class EditorSwipeDismissUITests: XCTestCase {
         let start = app.buttons.labeled("Start a block")
         UITestNavigation.reveal(start, in: app)
         start.tap()
+        // Create block, as on Program.
+        UITestNavigation.hittable(app.buttons, "Blank Block").tap()
         XCTAssertTrue(UITestNavigation.appears(app.staticTexts.labeled("NEW BLOCK")))
     }
 

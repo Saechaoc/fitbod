@@ -709,8 +709,9 @@ public struct BlockOverviewScreen: View {
         block.name.isEmpty ? "Untitled Block" : block.name
     }
 
-    /// A draft names its first missing piece in New Block's words (T11);
-    /// any other block that has not started gives its start date.
+    /// A draft names its first missing piece in New Block's words (T11). A
+    /// ready block starts the moment START BLOCK is tapped, which stamps its
+    /// start date, so it shows no date until then (gap B4).
     private var plannedHeroDetail: (text: String, spoken: String) {
         if block.derivedStatus == .draft, let missing = block.missingPiece {
             let title = missing.actionTitle
@@ -718,8 +719,7 @@ public struct BlockOverviewScreen: View {
                 .replacingOccurrences(of: " ▸", with: "")
             return (title, title.lowercased())
         }
-        let date = Self.heroDate(block.startDate)
-        return ("STARTS \(date)", "starts \(date)")
+        return ("STARTS WHEN YOU START IT", "starts when you start it")
     }
 
     /// The weeks and the phases as Program's template rows write them,

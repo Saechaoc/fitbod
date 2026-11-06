@@ -57,6 +57,14 @@ public struct TodayView: View {
     @Query(filter: #Predicate<Split> { !$0.isArchived })
     private var routines: [Split]
 
+    /// Blocks that have not started, newest first; the first ready one is
+    /// the block Today offers to start.
+    @Query(
+        filter: #Predicate<Block> { $0.isActive == false && $0.endDate == nil },
+        sort: \Block.startDate, order: .reverse
+    )
+    private var waitingBlocks: [Block]
+
     // NEW for BRU — active session detection (completedAt == nil)
     @Query(filter: #Predicate<Session> { $0.completedAt == nil })
     private var activeSessions: [Session]
@@ -78,6 +86,12 @@ public struct TodayView: View {
     @State private var navigationPath = NavigationPath()
     @State private var pendingBlockBuilder: BlockBuilderRoute? = nil
     @State private var pendingBlockReview: Block? = nil
+    /// Create block, the same choice Program's + NEW opens.
+    @State private var presentingCreateBlock = false
+    /// The block END BLOCK & REVIEW asks about.
+    @State private var endingBlock: Block? = nil
+    /// A failed block start or end, in plain words.
+    @State private var blockError: String? = nil
 
     // Phase 5 plan 04 — deload advisory state.
     @State private var currentAdvisory: DeloadAdvisory? = nil
@@ -153,6 +167,16 @@ public struct TodayView: View {
                         BlockContextBand(block: block, onTap: {
                             navigationPath.append(BlockOverviewRoute.summary(blockID: block.id))
                         })
+                        // Past the plan: ask to end it, until the lifter does.
+                        if isPastPlan {
+                            PlanCompleteNote(plannedWeeks: currentTotalWeeks, onEnd: { endingBlock = block })
+                        }
+                    } else if activeSessions.isEmpty, let ready = readyBlock {
+                        ReadyBlockCard(
+                            block: ready,
+                            onStart: { startBlock(ready) },
+                            onOpen: { navigationPath.append(BlockOverviewRoute.summary(blockID: ready.id)) }
+                        )
                     }
 
                     // CTA slab — resume-in-progress wins (spec §5); otherwise
@@ -232,10 +256,10 @@ public struct TodayView: View {
 
                     // No block at all → Start Block CTA (Phase 4 preserved),
                     // after the picker so starting a workout stays primary.
-                    if activeSessions.isEmpty && activeBlocks.isEmpty {
+                    if activeSessions.isEmpty && activeBlocks.isEmpty && readyBlock == nil {
                         StartBlockCTA(
                             hasRoutine: !routines.isEmpty,
-                            onStart: { pendingBlockBuilder = .template(BlockTemplates.blank) },
+                            onStart: { presentingCreateBlock = true },
                             onNewRoutine: startNewRoutine
                         )
                     }
@@ -293,6 +317,8 @@ public struct TodayView: View {
                     route.builder(origin: .today)
                 }
             }
+            .blockCreateFlow(isPresented: $presentingCreateBlock) { pendingBlockBuilder = $0 }
+            .modifier(TodayBlockAlerts(endingBlock: $endingBlock, blockError: $blockError, onEnd: endBlock))
             // A recap due on the same visit waits for the review to close.
             .sheet(item: $pendingBlockReview, onDismiss: showRecapAfterReview) { block in
                 BlockReviewView(block: block)
@@ -543,6 +569,35 @@ public struct TodayView: View {
     /// Nil without a block, and past its plan, which has no current phase.
     private var currentPhase: BlockPhaseKind? {
         activeBlocks.first.flatMap { PeriodizationEngine.phase(for: $0, on: .now)?.kind }
+    }
+
+    /// The newest ready block, which Today offers to start while no block
+    /// is active (decided 2026-11-05).
+    private var readyBlock: Block? {
+        waitingBlocks.first { $0.derivedStatus == .ready }
+    }
+
+    /// START BLOCK ▸ on the ready block's card. No block is active, so
+    /// there is nothing to confirm.
+    private func startBlock(_ block: Block) {
+        do {
+            try BlockLifecycleService.start(block: block, context: ctx)
+        } catch {
+            blockError = "The block didn't start. Try again."
+        }
+    }
+
+    /// END BLOCK & REVIEW ▸, once confirmed: ends the block, then opens
+    /// its review.
+    private func endBlock(_ block: Block) {
+        endingBlock = nil
+        do {
+            try BlockLifecycleService.end(block: block, context: ctx)
+        } catch {
+            blockError = "The block didn't end. Try again."
+            return
+        }
+        pendingBlockReview = block
     }
 
     /// True once the active block is past its last planned week, until the
@@ -866,3 +921,32 @@ fileprivate struct EmptySplitFixIt: View {
         .modelContainer(PreviewModelContainer.make())
 }
 #endif
+
+/// END BLOCK & REVIEW's confirmation and a failed block start or end, kept
+/// out of TodayView's body so the compiler can type-check it.
+private struct TodayBlockAlerts: ViewModifier {
+    @Binding var endingBlock: Block?
+    @Binding var blockError: String?
+    let onEnd: (Block) -> Void
+
+    func body(content: Content) -> some View {
+        content
+            .alert("End block?", isPresented: Binding(
+                get: { endingBlock != nil },
+                set: { if !$0 { endingBlock = nil } }
+            ), presenting: endingBlock) { block in
+                Button("End Block", role: .destructive) { onEnd(block) }
+                Button("Cancel", role: .cancel) { endingBlock = nil }
+            } message: { _ in
+                Text("Its plan is frozen and its review opens.")
+            }
+            .alert("Couldn't Save", isPresented: Binding(
+                get: { blockError != nil },
+                set: { if !$0 { blockError = nil } }
+            )) {
+                Button("OK", role: .cancel) { blockError = nil }
+            } message: {
+                Text(blockError ?? "")
+            }
+    }
+}

@@ -29,8 +29,9 @@ final class BlockOverviewStatesUITests: XCTestCase {
                        "A ready block's hero must not say ACTIVE, but it reads \"\(label)\"")
         XCTAssertTrue(label.hasPrefix("Ready block #2: Summer Block"),
                       "The hero must say READY BLOCK, but it reads \"\(label)\"")
-        let starts = "starts \(Self.mediumDate(Self.tomorrow))"
-        XCTAssertTrue(label.contains(starts), "The ready hero must give its start date, \(starts): \"\(label)\"")
+        // START BLOCK stamps the start, so a ready block shows no date (B4).
+        let starts = "starts when you start it"
+        XCTAssertTrue(label.contains(starts), "The ready hero must say when it starts, \(starts): \"\(label)\"")
         XCTAssertTrue(label.contains("4 weeks: Accumulation 3 weeks, Deload 1 week"),
                       "The ready hero must give its weeks and phases: \"\(label)\"")
     }
