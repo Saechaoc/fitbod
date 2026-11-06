@@ -108,6 +108,13 @@ recommended answer, for running a block from plan to review (gaps B1 to B13).
   deload's cut, which waits until the gym day is stable; undoing END BLOCK;
   choosing a start date; skipping a session; and large text, dark mode,
   VoiceOver and polish for these screens until the workflow is stable.
+- **Status (2026-11-05):** running a block is built end to end, from
+  Program's New block to the review and the next block, with every screen
+  it needs (gaps B1 to B13). The P1 acceptance, a block authored,
+  reordered, rescheduled, trained into its deload and ended across
+  relaunches, is one test: `RelaunchPersistenceTests.blockRunSurvivesRelaunches`.
+  It is stable, in the sense of `docs/DEVELOPMENT.md`, once one whole block
+  has run in the gym without a change to its structure.
 
 ## Decisions awaiting product direction
 
@@ -137,8 +144,6 @@ recommended answer, for running a block from plan to review (gaps B1 to B13).
   preserves incompatible stores separately; it does not migrate them.
 - Resolve the SwiftData `.deny` runtime issue before promising hard-delete
   enforcement. Its known-issue test deliberately avoids the aborting operation.
-- Finish the Block Review export: the `EXPORT` header text has no action.
-  Block Review already counts its PRs (`BlockReviewStatistics.prs`).
 - Audit secondary analytics accessibility: combined exercise-history/PR
   readouts, missing-value announcements in recap/block review, and clearer
   distinction between absent and below-MEV heatmap colors.

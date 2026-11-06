@@ -7,6 +7,7 @@ Each `must` row has a BRU mock-up in [mockups/](mockups/).
 The Milestone 1 removals and the four open product decisions in `docs/ROADMAP.md` have rows too, so the next design can settle each one in one place.
 
 Built since the map (2026-11-03, the gym day in `docs/ROADMAP.md` "Decided"): `history-editing`, `today-empty-workout`, `today-workout-done`, `workout-summary-all-sets`, `try-variation-result`, `today-session-choice` without the skip, and `live-activity-resume-target`, which opens the logger without scrolling to the set.
+Built since the map (2026-11-05, running a block in `docs/ROADMAP.md` "Decided"): `today-ready-block`, `block-plan-complete-prompt` on Today, `plan-custom-acknowledgment` (Plan custom keeps the routine and opens New block with the default phases), `block-review-reopen` and `block-review-export`, which shares the block's sets as CSV.
 
 | id | Screen or state | Workflow that needs it | Must show | Entered from | Importance | Source |
 |---|---|---|---|---|---|---|
