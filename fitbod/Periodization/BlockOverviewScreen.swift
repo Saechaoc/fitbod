@@ -204,7 +204,12 @@ public struct BlockOverviewScreen: View {
     @State private var presentingSplitPicker = false
     @State private var presentingSwapConfirm = false
     @State private var presentingEndConfirm = false
-    @State private var showSaveError = false
+    /// What a failed save says, in plain words; nil hides the alert.
+    @State private var saveError: String? = nil
+    /// A failed routine change, shown once the routine picker has gone.
+    @State private var routineError: String? = nil
+    /// A failed start from "Start Block?", shown in that sheet.
+    @State private var swapError: String? = nil
 
     // MARK: - @Query — real session data, no mocks (revision iter 1 B5)
 
@@ -318,13 +323,17 @@ public struct BlockOverviewScreen: View {
         .background(Color.bruBg.ignoresSafeArea())
         // The BRU header's ‹ BACK is the only back control, at the top.
         .navigationBarHidden(true)
-        .sheet(isPresented: $presentingSplitPicker) {
+        .sheet(isPresented: $presentingSplitPicker, onDismiss: {
+            // An alert can't show while the picker is still leaving.
+            saveError = routineError
+            routineError = nil
+        }) {
             RoutinePickerSheet(selectedSplit: block.split) { split in
                 attachOrSwap(split)
                 presentingSplitPicker = false
             }
         }
-        .sheet(isPresented: $presentingSwapConfirm) {
+        .sheet(isPresented: $presentingSwapConfirm, onDismiss: { swapError = nil }) {
             swapConfirmSheet
         }
         .alert("End block?", isPresented: $presentingEndConfirm) {
@@ -332,17 +341,23 @@ public struct BlockOverviewScreen: View {
                 do {
                     try BlockLifecycleService.end(block: block, context: ctx)
                 } catch {
-                    showSaveError = true
+                    saveError = "The block didn't end. Try again."
                 }
             }
             Button("Cancel", role: .cancel) {}
         } message: {
             Text("End this block now? You can review it from the Program tab.")
         }
-        .alert("Couldn't Save", isPresented: $showSaveError) {
-            Button("OK", role: .cancel) {}
+        .alert(
+            "Couldn't Save",
+            isPresented: Binding(
+                get: { saveError != nil },
+                set: { if !$0 { saveError = nil } }
+            )
+        ) {
+            Button("OK", role: .cancel) { saveError = nil }
         } message: {
-            Text("Couldn't save. Try again.")
+            Text(saveError ?? "")
         }
     }
 
@@ -961,22 +976,25 @@ public struct BlockOverviewScreen: View {
 
     /// Attaches the chosen routine to a block without one, or swaps it in.
     private func attachOrSwap(_ split: Split) {
-        if block.split == nil {
-            try? BlockLifecycleService.attachSplit(split, to: block, context: ctx)
-        } else {
-            try? BlockLifecycleService.swapSplit(split, on: block, context: ctx)
+        do {
+            if block.split == nil {
+                try BlockLifecycleService.attachSplit(split, to: block, context: ctx)
+            } else {
+                try BlockLifecycleService.swapSplit(split, on: block, context: ctx)
+            }
+        } catch {
+            routineError = "The routine didn't change. Try again."
         }
     }
 
     // MARK: - Persistence helper
 
-    /// Persist pending edits; surface a lightweight save-error alert on failure
-    /// instead of silently swallowing the error (WR-02).
+    /// Persist pending edits; a failed save is undone and says so (WR-02).
     private func saveOrAlert() {
         do {
-            try ctx.save()
+            try SessionSetActions.saveOrRollBack(ctx)
         } catch {
-            showSaveError = true
+            saveError = "The schedule didn't save. Try again."
         }
     }
 
@@ -1350,7 +1368,11 @@ public struct BlockOverviewScreen: View {
         if otherActive != nil {
             presentingSwapConfirm = true
         } else {
-            try? BlockLifecycleService.start(block: block, context: ctx)
+            do {
+                try BlockLifecycleService.start(block: block, context: ctx)
+            } catch {
+                saveError = "The block didn't start. Try again."
+            }
         }
     }
 
@@ -1386,9 +1408,14 @@ public struct BlockOverviewScreen: View {
 
         SwapConfirmSheet(
             currentActiveBlockName: currentActiveBlock?.name ?? "current block",
+            errorText: swapError,
             onConfirm: {
-                try? BlockLifecycleService.start(block: block, context: ctx)
-                presentingSwapConfirm = false
+                do {
+                    try BlockLifecycleService.start(block: block, context: ctx)
+                    presentingSwapConfirm = false
+                } catch {
+                    swapError = "The block didn't start. Try again."
+                }
             },
             onCancel: {
                 presentingSwapConfirm = false
@@ -1460,6 +1487,8 @@ fileprivate struct HeroHeadline: View {
 
 fileprivate struct SwapConfirmSheet: View {
     let currentActiveBlockName: String
+    /// A failed start, in plain words, under the message.
+    let errorText: String?
     let onConfirm: () -> Void
     let onCancel: () -> Void
 
@@ -1474,6 +1503,13 @@ fileprivate struct SwapConfirmSheet: View {
                 .font(BRUFont.bodyDefault)
                 .foregroundStyle(Color.bruInk)
                 .frame(maxWidth: .infinity, alignment: .leading)
+
+            if let errorText {
+                Text(errorText)
+                    .font(BRUFont.labelSmall)
+                    .foregroundStyle(Color.bruSignalText)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
 
             BRUButton("Confirm", kind: .signal) {
                 onConfirm()

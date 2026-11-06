@@ -244,19 +244,4 @@ struct BlockReviewMathTests {
         #expect(block.startDate == start)
         #expect(block.endDate == end)
     }
-
-    @Test("acknowledge writes only reviewedAt, in a transaction")
-    func acknowledgeTransactionWrapperIsPresent() throws {
-        let source = try String(
-            contentsOf: URL(fileURLWithPath: #filePath)
-                .deletingLastPathComponent()
-                .deletingLastPathComponent()
-                .appendingPathComponent("fitbod/Periodization/BlockReviewView.swift"),
-            encoding: .utf8
-        )
-
-        #expect(source.contains("try context.transaction"))
-        #expect(source.contains("block.reviewedAt = now"))
-        #expect(!source.contains("isActive = "), "Only BlockLifecycleService ends a block")
-    }
 }

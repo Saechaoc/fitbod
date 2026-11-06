@@ -634,10 +634,8 @@ public enum BlockReviewStatistics {
         context: ModelContext,
         now: Date = Date.now
     ) throws {
-        try context.transaction {
-            block.reviewedAt = now
-            try context.save()
-        }
+        block.reviewedAt = now
+        try SessionSetActions.saveOrRollBack(context)
     }
 
     public static func formattedKg(_ value: Double) -> String {

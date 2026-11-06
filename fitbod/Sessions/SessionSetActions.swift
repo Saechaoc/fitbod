@@ -133,7 +133,9 @@ public enum SessionSetActions {
         try saveOrRollBack(context)
     }
 
-    @MainActor
+    /// Saves, or undoes every unsaved change and rethrows, so a failed
+    /// save never lingers to be written by a later one. Not tied to the
+    /// main actor, so `BlockLifecycleService` saves through it too.
     static func saveOrRollBack(_ context: ModelContext) throws {
         do {
             try context.save()

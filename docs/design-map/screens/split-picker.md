@@ -33,7 +33,7 @@ The lifter attaches a routine to a draft block, or swaps the routine of a ready 
 | Swipe down | [block-overview](block-overview.md) | sheet | none |
 
 CANCEL in the header closes the sheet without a pick (T38). It is the same sheet as New Block's routine picker, [new-block-split-picker](new-block-split-picker.md), since the two were merged into `RoutinePickerSheet`.
-A pick saves at once; if the save fails, nothing tells the lifter (`fitbod/Periodization/BlockOverviewScreen.swift:963-969`).
+A pick saves at once; if the save fails, it is undone and an alert says so once the sheet has gone.
 
 ## States
 
