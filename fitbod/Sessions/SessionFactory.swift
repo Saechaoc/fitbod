@@ -442,8 +442,9 @@ public enum SessionFactory {
 
     /// In a deload week each lift holds its last top set's weight
     /// (docs/ROADMAP.md, "Decided" 2026-11-05): the phase already cuts the
-    /// sets, and no progression adds load. Outside a deload, or with no
-    /// earlier loaded set to hold, the strategy's weight stands.
+    /// sets, and no progression adds load. A bodyweight lift holds its 0
+    /// added. Outside a deload, or with no earlier set, the strategy's
+    /// weight stands.
     static func holdingDeloadWeight(
         _ weight: Double,
         _ explanation: PrescriptionExplanation,
@@ -451,15 +452,17 @@ public enum SessionFactory {
         in session: Session,
         unit: WeightUnit
     ) -> (weight: Double, explanation: PrescriptionExplanation) {
-        guard let held = previousSet?.weight, held > 0,
+        guard let held = previousSet?.weight,
               let block = session.block,
               PeriodizationEngine.phase(for: block, on: session.startedAt)?.kind == .deload
         else { return (weight, explanation) }
-        let heldText = "\(NumberText.weight(held)) \(unit.rawValue)"
+        let heldText = held > 0 ? "\(NumberText.weight(held)) \(unit.rawValue)" : "no added load"
         return (held, PrescriptionExplanation(
             lastSessionLine: explanation.lastSessionLine,
             formulaName: explanation.formulaName,
-            computedLine: "Deload week: weight held at \(heldText), your last top set.",
+            computedLine: held > 0
+                ? "Deload week: weight held at \(heldText), your last top set."
+                : "Deload week: held at no added load, as in your last top set.",
             roundedWeight: held,
             roundedLine: "→ \(heldText) (held for the deload)",
             status: explanation.status,

@@ -66,9 +66,9 @@ struct DeloadHoldsWeightTests {
         return (template, exercise)
     }
 
-    /// A finished workout the day before `date`: three sets of 100 × 8,
+    /// A finished workout the day before `date`: three sets of `weight` × 8,
     /// the top of the range, which earns double progression's increment.
-    private func logTopOfRange(_ exercise: Exercise, before date: Date, in context: ModelContext) throws {
+    private func logTopOfRange(_ exercise: Exercise, weight: Double = 100, before date: Date, in context: ModelContext) throws {
         let session = Session()
         session.startedAt = date.addingTimeInterval(-day)
         session.completedAt = session.startedAt.addingTimeInterval(3_600)
@@ -82,7 +82,7 @@ struct DeloadHoldsWeightTests {
             let set = SetEntry()
             set.sessionExercise = sessionExercise
             set.orderIndex = index
-            set.weight = 100
+            set.weight = weight
             set.reps = 8
             set.rpe = 8
             set.isWarmup = false
@@ -130,6 +130,27 @@ struct DeloadHoldsWeightTests {
         let session = try SessionFactory.start(template: template, activeBlock: block, on: accumulationDay, context: context)
 
         #expect(prescribedWeight(of: session) == 102.5)
+    }
+
+    @Test("A bodyweight lift adds no load in the deload week")
+    func deloadHoldsABodyweightLift() throws {
+        let context = try makeContext()
+        let block = makeBlock(in: context)
+        let (template, exercise) = makeTemplate(in: context)
+        exercise.equipmentRaw = Equipment.bodyweight.rawValue
+        let deloadDay = start.addingTimeInterval(8 * day)
+        // Pull-ups at bodyweight, 0 added, at the top of the range: double
+        // progression would add an increment.
+        try logTopOfRange(exercise, weight: 0, before: deloadDay, in: context)
+
+        let session = try SessionFactory.start(template: template, activeBlock: block, on: deloadDay, context: context)
+
+        #expect(prescribedWeight(of: session) == 0, "The deload holds bodyweight, not +2.5")
+        let why = SessionFactory.prescription(
+            for: exercise, targetRepsLow: 5, targetRepsHigh: 8, targetRPE: nil,
+            in: session, strategy: DoubleProgressionStrategy(), userSettings: nil, context: context
+        )
+        #expect(why.explanation.bumpOccurred == false)
     }
 
     @Test("A deload with no earlier set prescribes nothing to hold")
