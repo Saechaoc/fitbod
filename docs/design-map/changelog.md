@@ -2,6 +2,10 @@
 
 Newest first: one entry for each stage of [plan.md](plan.md) up to S2, then one for each commit.
 
+## 2026-11-05: redesign product calls
+
+- The fourteen open product calls in [redesign/open-decisions.md](redesign/open-decisions.md) are made: each takes the default the layouts assume, with a one-line reason, so draft v6 stands unchanged and the build can start on it.
+
 ## 2026-11-02: redesign draft v6
 
 - [redesign/](redesign/) is revised to draft v6 after the Codex feasibility reviewer finished its pass on draft v5 (0 blockers and 3 fix-soon findings, all closed), which closes round 3 with no open blocker.

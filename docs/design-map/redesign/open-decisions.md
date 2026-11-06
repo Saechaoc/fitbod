@@ -1,8 +1,30 @@
 # Open decisions
 
-Product calls the proposal does not make for the user.
+Product calls the proposal did not make for the user.
 Each names the default the layouts assume, so the build can start without the answer and change later.
 Defaults marked "round 1" were set or changed by the adversarial review; [review-log.md](review-log.md) has the reasons.
+On 2026-11-05 the user asked for the calls to be made; the decisions are in the first table, and the register of questions, defaults and alternatives follows it unchanged.
+
+## Decisions, 2026-11-05
+
+Every call takes the default the layouts assume, so no leaf changes and the build can start on draft v6.
+
+| # | Call | Why |
+| --- | --- | --- |
+| O-1 | Drop the day streak and Today's all-time count. | A day streak misreads planned rest days as breaks, and the all-time count already lives on History. |
+| O-2 | Yes: a workout started from the session sheet moves a rotation block forward. | One `StartSlot` rule anchored at NEXT, checked in all three rounds; unslotted starts would offer the skipped session again (D-19). |
+| O-3 | Any finished workout with logged sets started today counts as done. | Done means trained, not trained as planned, and T-DONE outranking T-READY keeps the rest of the day calm. |
+| O-4 | Keep the automatic weekly recap sheet. | It is the only recap surface, opens once a week on first appear and never during a workout; a notice row would add a third notice kind to rank against the review and the advisory. |
+| O-5 | No: a finished block's review stays hidden while a newer block is active. | The pinned `pendingReviewBlocks` contract already hides it, and Past blocks keeps the review reachable. |
+| O-6 | The oldest created ready block leads, then by name, then by id. | Deterministic, visible through "Created Oct 3", and needs no new attribute. |
+| O-7 | Routine folders do not ship. | Nothing in the brief needs grouping, and one flat routine list reads faster. |
+| O-8 | Block presets live only inside + New block. | Keeps the empty Program screen to one action. |
+| O-9 | Program's "This week" rows act as the leaves describe. | Opening a logged day is what a lifter expects, and the TODAY row is the same start as Today's hero. |
+| O-10 | A "Plan complete" line opens Block overview; no automatic end. | Ending a block is consequential and keeps its dialog; nothing ends by itself. |
+| O-11 | Today's exercise rows open nothing. | "View ›" is the one way into the session, and exercise progress stays on Progress. |
+| O-12 | A block cannot be planned from Today. | Program › + New is the one entry; Today only starts. |
+| O-13 | No week cells on Program's Now slab. | The caption names the week and phase; the cells belong to Block overview. |
+| O-14 | No planned start date. | The creation date tells blocks apart without a Schema V8 attribute. |
 
 | # | Question | Default in the layouts | The other way |
 | --- | --- | --- | --- |

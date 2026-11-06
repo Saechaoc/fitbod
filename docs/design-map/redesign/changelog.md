@@ -3,6 +3,12 @@
 Newest first.
 One entry per iteration: what changed and why.
 
+## 2026-11-05, product calls
+
+The user asked for the fourteen open product calls to be made.
+Each takes the default the layouts assume, with a one-line reason in open-decisions.md's new Decisions table, so no leaf changes and draft v6 stands.
+index.md says the calls are made.
+
 ## 2026-11-02, draft v6
 
 Revised after the Codex feasibility reviewer finished its pass on draft v5 (0 blockers and 3 fix-soon findings, all closed; review-log.md, round 3), which closes round 3 with no open blocker.
