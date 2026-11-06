@@ -82,6 +82,11 @@ final class BlockOverviewStatesUITests: XCTestCase {
         let confirm = app.alerts.buttons["End Block"]
         XCTAssertTrue(UITestNavigation.appears(confirm), "END BLOCK must ask before it ends the block")
         confirm.tap()
+        // Ending opens the review on the overview (B9); its ‹ BACK closes it.
+        let review = app.staticTexts.labeled("Block review")
+        XCTAssertTrue(UITestNavigation.appears(review, within: 5), "Ending a block must open its review")
+        UITestNavigation.hittable(app.buttons, "Back").tap()
+        XCTAssertTrue(UITestNavigation.disappears(review, within: 5), "‹ BACK must close the review")
         goBack(in: app)
         openBlock("DONE block: Spring Block", in: app)
 
