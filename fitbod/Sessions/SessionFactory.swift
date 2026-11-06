@@ -410,7 +410,7 @@ public enum SessionFactory {
         // Configure a value copy so rounding cannot leak between exercises in a session.
         var configuredStrategy = strategy
         configuredStrategy.roundingIncrement = inventory == nil ? smallestIncrement : nil
-        let (weight, explanation) = configuredStrategy.prescribe(
+        let (progressedWeight, progressedExplanation) = configuredStrategy.prescribe(
             history: historyPoints,
             targetRepsLow: targetRepsLow,
             targetRepsHigh: targetRepsHigh,
@@ -428,6 +428,9 @@ public enum SessionFactory {
             block: session.block,
             today: session.startedAt
         )
+        let (weight, explanation) = holdingDeloadWeight(
+            progressedWeight, progressedExplanation, previousSet: previousSet, in: session, unit: unit
+        )
         return ExercisePrescription(
             weight: weight,
             explanation: explanation,
@@ -435,6 +438,37 @@ public enum SessionFactory {
             plates: plates,
             previousSet: previousSet
         )
+    }
+
+    /// In a deload week each lift holds its last top set's weight
+    /// (docs/ROADMAP.md, "Decided" 2026-11-05): the phase already cuts the
+    /// sets, and no progression adds load. Outside a deload, or with no
+    /// earlier loaded set to hold, the strategy's weight stands.
+    static func holdingDeloadWeight(
+        _ weight: Double,
+        _ explanation: PrescriptionExplanation,
+        previousSet: PreviousMatchingIntentHit?,
+        in session: Session,
+        unit: WeightUnit
+    ) -> (weight: Double, explanation: PrescriptionExplanation) {
+        guard let held = previousSet?.weight, held > 0,
+              let block = session.block,
+              PeriodizationEngine.phase(for: block, on: session.startedAt)?.kind == .deload
+        else { return (weight, explanation) }
+        let heldText = "\(NumberText.weight(held)) \(unit.rawValue)"
+        return (held, PrescriptionExplanation(
+            lastSessionLine: explanation.lastSessionLine,
+            formulaName: explanation.formulaName,
+            computedLine: "Deload week: weight held at \(heldText), your last top set.",
+            roundedWeight: held,
+            roundedLine: "→ \(heldText) (held for the deload)",
+            status: explanation.status,
+            bumpOccurred: false,
+            range: explanation.range,
+            phaseContextLine: explanation.phaseContextLine,
+            deloadNoteLine: explanation.deloadNoteLine,
+            sessionIntent: explanation.sessionIntent
+        ))
     }
 
     // MARK: - Warm-up step (Block B)
