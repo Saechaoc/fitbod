@@ -64,22 +64,27 @@ extension View {
 
 /// Looks the block up by id when the overview is pushed. Once DELETE BLOCK
 /// has deleted it, leaves for the screen it came from without reading it.
+/// The query also drops a block deleted on the other tab, so that tab's
+/// overview never draws it either.
 private struct BlockOverviewDestination: View {
-    @Environment(\.modelContext) private var ctx
     @Environment(\.dismiss) private var dismiss
-    let blockID: UUID
+    @Query private var matches: [Block]
     let onEdit: (Block) -> Void
     /// Set by DELETE BLOCK, before anything reads the deleted block.
     @State private var deleted = false
 
+    init(blockID: UUID, onEdit: @escaping (Block) -> Void) {
+        _matches = Query(filter: #Predicate<Block> { $0.id == blockID })
+        self.onEdit = onEdit
+    }
+
     var body: some View {
-        let id = blockID
         if deleted {
             Color.bruPaper
                 .ignoresSafeArea()
                 .navigationBarHidden(true)
                 .onAppear { dismiss() }
-        } else if let block = (try? ctx.fetch(FetchDescriptor<Block>(predicate: #Predicate { $0.id == id })))?.first {
+        } else if let block = matches.first {
             BlockOverviewScreen(block: block, onEdit: { onEdit(block) }, onDeleted: { deleted = true })
         } else {
             Text("Block not found")
