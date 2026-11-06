@@ -42,6 +42,10 @@ public enum BlockLifecycleError: Error, Equatable, Sendable {
 
     /// Split swap/attach is refused on an active block — changing the split IS ending the block.
     case splitChangeOnActiveBlock
+
+    /// Only a draft or ready block can be deleted: an active block is ended,
+    /// and a finished one stays as history.
+    case notDeletable
 }
 
 /// Thrown by `decodeArchive(_:)` when the archive JSON cannot be decoded.
@@ -169,6 +173,22 @@ public enum BlockLifecycleService {
     /// - Throws: `BlockLifecycleError.splitChangeOnActiveBlock` when refused.
     public static func swapSplit(_ split: Split, on block: Block, context: ModelContext) throws {
         try attachSplit(split, to: block, context: context)
+    }
+
+    // MARK: - delete
+
+    /// Deletes a draft or ready block, with its phases, in one save. A
+    /// never-started block has no workouts, so nothing else goes with it,
+    /// and the routine it held can be archived again.
+    ///
+    /// - Throws: `BlockLifecycleError.notDeletable` for an active or a
+    ///   finished block, before anything changes.
+    public static func delete(_ block: Block, context: ModelContext) throws {
+        guard block.derivedStatus == .draft || block.derivedStatus == .ready else {
+            throw BlockLifecycleError.notDeletable
+        }
+        context.delete(block)
+        try SessionSetActions.saveOrRollBack(context)
     }
 
     // MARK: - assertSplitDeletable

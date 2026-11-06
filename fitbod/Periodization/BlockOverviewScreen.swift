@@ -190,6 +190,9 @@ public struct BlockOverviewScreen: View {
 
     private let block: Block
     private let onEdit: @MainActor () -> Void
+    /// Runs once DELETE BLOCK has deleted the block, so the screen leaves
+    /// before anything reads it again.
+    private let onDeleted: @MainActor () -> Void
     private let weekStart: Date
     private let weekEnd: Date
     private let todayDate: Date
@@ -204,6 +207,7 @@ public struct BlockOverviewScreen: View {
     @State private var presentingSplitPicker = false
     @State private var presentingSwapConfirm = false
     @State private var presentingEndConfirm = false
+    @State private var presentingDeleteConfirm = false
     /// What a failed save says, in plain words; nil hides the alert.
     @State private var saveError: String? = nil
     /// A failed routine change, shown once the routine picker has gone.
@@ -220,9 +224,14 @@ public struct BlockOverviewScreen: View {
 
     // MARK: - Init
 
-    public init(block: Block, onEdit: @escaping @MainActor () -> Void = {}) {
+    public init(
+        block: Block,
+        onEdit: @escaping @MainActor () -> Void = {},
+        onDeleted: @escaping @MainActor () -> Void = {}
+    ) {
         self.block = block
         self.onEdit = onEdit
+        self.onDeleted = onDeleted
 
         let now = Date.now
         // CR-01 fix: pin to a Monday-first ISO-8601 calendar so the grid's
@@ -347,6 +356,14 @@ public struct BlockOverviewScreen: View {
             Button("Cancel", role: .cancel) {}
         } message: {
             Text("End this block now? You can review it from the Program tab.")
+        }
+        // The message names no block: it can redraw while the deleted
+        // block's alert goes away.
+        .alert("Delete block?", isPresented: $presentingDeleteConfirm) {
+            Button("Delete Block", role: .destructive) { deleteBlock() }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("This block and its phases are deleted. It hasn't started, so no workouts change.")
         }
         .alert(
             "Couldn't Save",
@@ -1335,15 +1352,40 @@ public struct BlockOverviewScreen: View {
     private var bottomBar: some View {
         switch block.derivedStatus {
         case .ready:
-            startBlockButton
+            VStack(spacing: 0) {
+                startBlockButton
+                deleteBlockButton
+            }
+        case .draft:
+            deleteBlockButton
         case .active:
             VStack(spacing: 0) {
                 editBlockButton
                 endBlockButton
             }
-        case .draft, .completed:
+        case .completed:
             EmptyView()
         }
+    }
+
+    // MARK: - Delete Block Button
+
+    /// Draft and ready blocks only: a started block is ended, and a
+    /// finished one stays as history (decided 2026-11-05).
+    private var deleteBlockButton: some View {
+        BRUButton("DELETE BLOCK", kind: .ghost) {
+            presentingDeleteConfirm = true
+        }
+    }
+
+    private func deleteBlock() {
+        do {
+            try BlockLifecycleService.delete(block, context: ctx)
+        } catch {
+            saveError = "The block wasn't deleted. Try again."
+            return
+        }
+        onDeleted()
     }
 
     // MARK: - Start Block Button

@@ -62,16 +62,25 @@ extension View {
     }
 }
 
-/// Looks the block up by id when the overview is pushed.
+/// Looks the block up by id when the overview is pushed. Once DELETE BLOCK
+/// has deleted it, leaves for the screen it came from without reading it.
 private struct BlockOverviewDestination: View {
     @Environment(\.modelContext) private var ctx
+    @Environment(\.dismiss) private var dismiss
     let blockID: UUID
     let onEdit: (Block) -> Void
+    /// Set by DELETE BLOCK, before anything reads the deleted block.
+    @State private var deleted = false
 
     var body: some View {
         let id = blockID
-        if let block = (try? ctx.fetch(FetchDescriptor<Block>(predicate: #Predicate { $0.id == id })))?.first {
-            BlockOverviewScreen(block: block, onEdit: { onEdit(block) })
+        if deleted {
+            Color.bruPaper
+                .ignoresSafeArea()
+                .navigationBarHidden(true)
+                .onAppear { dismiss() }
+        } else if let block = (try? ctx.fetch(FetchDescriptor<Block>(predicate: #Predicate { $0.id == id })))?.first {
+            BlockOverviewScreen(block: block, onEdit: { onEdit(block) }, onDeleted: { deleted = true })
         } else {
             Text("Block not found")
                 .font(BRUFont.bodyDefault)
