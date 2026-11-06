@@ -20,7 +20,6 @@ public final class BlockDraft {
     /// The edited block's active state when the draft opened. `save(into:)`
     /// never writes it back.
     public var isActive: Bool = false
-    public var daysPerWeek: Int = 4
     public var phases: [BlockPhaseDraft] = []
 
     // V7 program-graph fields — wired by the Phase 9 split band.
@@ -36,7 +35,6 @@ public final class BlockDraft {
 
     public static func newBlock() -> BlockDraft {
         let draft = BlockDraft()
-        draft.daysPerWeek = 4
         draft.phases = [
             BlockPhaseDraft(
                 kind: .accumulation,
@@ -209,7 +207,6 @@ extension BlockDraft {
     public func snapshot() -> Snapshot {
         Snapshot(
             name: name,
-            daysPerWeek: daysPerWeek,
             phases: phases.map {
                 Snapshot.Phase(
                     kind: $0.kind,
@@ -234,7 +231,6 @@ extension BlockDraft {
         }
 
         public let name: String
-        public let daysPerWeek: Int
         public let phases: [Phase]
         public let splitID: UUID?
         public let schedulingMode: SchedulingMode

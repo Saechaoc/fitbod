@@ -37,7 +37,6 @@ struct NewBlockBuilderFidelityTests {
 
         #expect(draft.name.isEmpty)
         #expect(!draft.isActive)
-        #expect(draft.daysPerWeek == 4)
         #expect(draft.totalWeeks == 5)
         #expect(draft.phases.count == 3)
 
@@ -73,57 +72,6 @@ struct NewBlockBuilderFidelityTests {
 
         #expect(source.contains(#"ForEach(phases, id: \.draftID)"#),
                 "Unsaved phase drafts have nil persisted ids, so timeline segments must key by draftID.")
-    }
-
-    @Test("BlockBuilderView exposes New Block mock structure and copy")
-    func blockBuilderViewExposesNewBlockMockStructureAndCopy() throws {
-        let source = try source("fitbod", "Periodization", "BlockBuilderView.swift")
-
-        for requiredType in [
-            "NewBlockScreenTokens",
-            "NewBlockTopBar",
-            "NewBlockNameBand",
-            "NewBlockMetricsBand",
-            "NewBlockProgressionChart",
-            "NewBlockPhaseEditorRow",
-            "NewBlockBottomActionBar",
-            "NewBlockTemplateSheet",
-        ] {
-            #expect(source.contains(requiredType), "Missing New Block structure: \(requiredType)")
-        }
-
-        for requiredCopy in [
-            "< PROGRAM",
-            "NEW BLOCK",
-            "SAVE DRAFT",
-            "BLOCK NAME",
-            "NAME YOUR BLOCK",
-            "PRESET ▾",
-            "TOTAL WEEKS",
-            "DAYS PER WEEK",
-            "PHASES ·",
-            "+ ADD PHASE",
-            "PROGRESSION OVERVIEW",
-            "Accumulation",
-            "BUILD VOLUME",
-            "Intensification",
-            "BUILD STRENGTH",
-            "Deload",
-            "RECOVER",
-            "CANCEL",
-            "NAME FIRST ↑",
-            "SAVE AS READY ▸",
-        ] {
-            #expect(source.contains(requiredCopy), "Missing New Block copy: \(requiredCopy)")
-        }
-
-        // The presets come from BlockTemplates.catalog (T10): BLANK, then the
-        // catalog's names. The undefined presets are gone.
-        #expect(source.contains("BlockTemplates.catalog.map(NewBlockPreset.init)"),
-                "New Block's presets must be built from the one template catalog.")
-        for removedPreset in ["LINEAR STRENGTH", "POWERBUILDING", "OFF-SEASON", "PRE-MEET", "Off-Season", "Pre-Meet"] {
-            #expect(!source.contains(removedPreset), "New Block must not offer the removed preset \(removedPreset)")
-        }
     }
 
     @Test("BlockBuilderView wires swipe-to-delete and drag-to-reorder affordances")

@@ -33,14 +33,16 @@ public struct BlockNameField: View {
     public let title: String
     public let placeholder: String
     @Binding public var text: String
-
-    @FocusState private var isFocused: Bool
+    /// The field's focus, owned by the screen, so it can put the cursor
+    /// here when the name is what a save still needs.
+    private var isFocused: FocusState<Bool>.Binding
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
-    public init(title: String, placeholder: String, text: Binding<String>) {
+    public init(title: String, placeholder: String, text: Binding<String>, isFocused: FocusState<Bool>.Binding) {
         self.title = title
         self.placeholder = placeholder
         self._text = text
+        self.isFocused = isFocused
     }
 
     public var body: some View {
@@ -74,7 +76,7 @@ public struct BlockNameField: View {
                             // treat it as done.
                             if newValue.contains("\n") {
                                 text = newValue.replacingOccurrences(of: "\n", with: "")
-                                isFocused = false
+                                isFocused.wrappedValue = false
                             }
                         }
                 } else {
@@ -84,7 +86,7 @@ public struct BlockNameField: View {
             }
             .padding(.top, 2)
             .contentShape(Rectangle())
-            .onTapGesture { isFocused = true }
+            .onTapGesture { isFocused.wrappedValue = true }
         }
     }
 
@@ -94,6 +96,6 @@ public struct BlockNameField: View {
             .textInputAutocapitalization(.words)
             .foregroundStyle(Color.bruInk)
             .tint(Color.bruInk)
-            .focused($isFocused)
+            .focused(isFocused)
     }
 }

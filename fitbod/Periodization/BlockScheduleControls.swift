@@ -186,6 +186,9 @@ struct RoutinePickerSheet: View {
                 BRUHeaderBar.slots(left: .cancel, center: "Choose Routine")
 
                 ScrollView {
+                    if splits.isEmpty {
+                        noRoutines
+                    }
                     LazyVStack(spacing: 0) {
                         ForEach(splits) { split in
                             Button {
@@ -217,5 +220,22 @@ struct RoutinePickerSheet: View {
             .navigationBarHidden(true)
         }
         .presentationDetents([.medium, .large])
+    }
+
+    /// With no routine to pick, says why the list is empty and where a
+    /// routine is made (D-162).
+    private var noRoutines: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("No routines yet")
+                .font(BRUFont.condensedHeading)
+                .textCase(.uppercase)
+                .foregroundStyle(Color.bruInk)
+            Text("A block runs on a routine. Make one on Program with + NEW, then + New routine, and attach it here.")
+                .font(BRUFont.bodyDefault)
+                .foregroundStyle(Color.bruMuted)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(16)
     }
 }

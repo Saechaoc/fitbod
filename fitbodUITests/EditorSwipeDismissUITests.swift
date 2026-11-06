@@ -132,6 +132,9 @@ final class EditorSwipeDismissUITests: XCTestCase {
 
     @MainActor
     private func openNewBlock(in app: XCUIApplication) {
+        // Today offers a block only once a routine exists.
+        UITestNavigation.makeRoutine("Starter", in: app)
+        UITestNavigation.selectTab("Today", in: app)
         let start = app.buttons.labeled("Start a block")
         UITestNavigation.reveal(start, in: app)
         start.tap()

@@ -52,6 +52,11 @@ public struct TodayView: View {
 
     @Query private var settingsList: [UserSettings]
 
+    /// The routines a block could run on; with none, Today's block card
+    /// asks for a routine first.
+    @Query(filter: #Predicate<Split> { !$0.isArchived })
+    private var routines: [Split]
+
     // NEW for BRU — active session detection (completedAt == nil)
     @Query(filter: #Predicate<Session> { $0.completedAt == nil })
     private var activeSessions: [Session]
@@ -228,9 +233,11 @@ public struct TodayView: View {
                     // No block at all → Start Block CTA (Phase 4 preserved),
                     // after the picker so starting a workout stays primary.
                     if activeSessions.isEmpty && activeBlocks.isEmpty {
-                        StartBlockCTA(onStart: {
-                            pendingBlockBuilder = .template(BlockTemplates.blank)
-                        })
+                        StartBlockCTA(
+                            hasRoutine: !routines.isEmpty,
+                            onStart: { pendingBlockBuilder = .template(BlockTemplates.blank) },
+                            onNewRoutine: startNewRoutine
+                        )
                     }
 
                     // Lift list — only for a scheduled session not yet done

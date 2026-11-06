@@ -56,6 +56,10 @@ public struct BlockBuilderView: View {
     @State private var presentingSplitPicker = false
     @State private var initialSnapshot: BlockDraft.Snapshot? = nil
     @State private var presentingDiscardConfirm = false
+    @FocusState private var nameFocused: Bool
+    /// The part of the page the bottom action points at while it waits for
+    /// a missing piece; a tap there scrolls to it.
+    @State private var revealTarget: NewBlockSection? = nil
 
     init(draft: BlockDraft, editing: Block? = nil, initialPreset: NewBlockPreset? = nil, origin: Origin = .program) {
         self._draft = State(initialValue: draft)
@@ -81,10 +85,12 @@ public struct BlockBuilderView: View {
                     // List(.plain) table. The LazyVStack owns the screenMargin horizontal
                     // padding — child bands must NOT re-apply their own horizontal padding
                     // to avoid the double-margin (~36pt) trap.
+                    ScrollViewReader { proxy in
                     ScrollView {
                         LazyVStack(alignment: .leading, spacing: NewBlockScreenTokens.cardGap) {
                             // Large name header (not a card — floats on paper)
-                            NewBlockNameBand(draft: draft)
+                            NewBlockNameBand(draft: draft, isFocused: $nameFocused)
+                                .id(NewBlockSection.name)
 
                             // Stats card
                             NewBlockMetricsBand(
@@ -104,6 +110,7 @@ public struct BlockBuilderView: View {
                                 onDelete: { beginPendingDelete($0) },
                                 onAddPhase: { presentingAddPhaseTypePicker = true }
                             )
+                            .id(NewBlockSection.phases)
 
                             // Split band — always shown; optionality expressed via
                             // "None — saves as draft" copy (Phase 9 replacement for the old
@@ -113,6 +120,7 @@ public struct BlockBuilderView: View {
                                 canChangeRoutine: canChangeRoutine,
                                 presentSplitPicker: { presentingSplitPicker = true }
                             )
+                            .id(NewBlockSection.routine)
 
                             // Error band
                             if let saveError {
@@ -129,6 +137,13 @@ public struct BlockBuilderView: View {
                     }
                     .scrollIndicators(.hidden)
                     .background(Color.bruPaper)
+                    .onChange(of: revealTarget) { _, target in
+                        guard let target else { return }
+                        withAnimation { proxy.scrollTo(target, anchor: .top) }
+                        if target == .name { nameFocused = true }
+                        revealTarget = nil
+                    }
+                    }
                 }
 
                 // Transient undo toast — visible above the action bar while
@@ -264,10 +279,20 @@ public struct BlockBuilderView: View {
         return draft.hasName ? .phase : .name
     }
 
-    /// SAVE AS READY, or SAVE CHANGES in EDIT BLOCK.
+    /// SAVE AS READY, or SAVE CHANGES in EDIT BLOCK. While a piece is
+    /// missing, the button names it and a tap goes to it (D-97): the name
+    /// field opens for typing, or the page scrolls to the phases or to the
+    /// routine, scheduling and day chips.
     private func saveIfValid() {
-        guard primaryMissingPiece == nil else { return }
-        save()
+        guard let missing = primaryMissingPiece else {
+            save()
+            return
+        }
+        switch missing {
+        case .name: revealTarget = .name
+        case .phase: revealTarget = .phases
+        case .routine, .session, .trainingDays: revealTarget = .routine
+        }
     }
 
     /// SAVE DRAFT saves the block as it is, once it has a name.
@@ -313,7 +338,6 @@ public struct BlockBuilderView: View {
     }
 
     /// Sets the preset's phases, and its name by the preset name rule.
-    /// Days per week stay as they are.
     private func applyPreset(_ preset: NewBlockPreset) {
         draft.name = preset.name(replacing: draft.name, previous: selectedPreset)
         draft.phases = preset.template.phases.map { phase in
@@ -383,6 +407,13 @@ public struct BlockBuilderView: View {
                     .fill(NewBlockScreenTokens.noteFill(colorScheme))
             )
     }
+}
+
+/// The parts of New block the bottom action can scroll to.
+fileprivate enum NewBlockSection: Hashable {
+    case name
+    case phases
+    case routine
 }
 
 // MARK: - Tokens
@@ -674,13 +705,15 @@ fileprivate struct NewBlockTopBar: View {
 // The LazyVStack owns screenMargin — this band does NOT add its own horizontal padding.
 fileprivate struct NewBlockNameBand: View {
     @Bindable var draft: BlockDraft
+    var isFocused: FocusState<Bool>.Binding
 
     var body: some View {
         HStack(alignment: .top, spacing: 8) {
             BlockNameField(
                 title: "BLOCK NAME",
                 placeholder: "NAME YOUR BLOCK",
-                text: $draft.name
+                text: $draft.name,
+                isFocused: isFocused
             )
 
             // Trailing pencil affordance (visual; field is tappable via BlockNameField)
@@ -765,7 +798,9 @@ fileprivate struct NewBlockTemplateSheet: View {
 
 // MARK: - Metrics Band
 
-// 260528-vi2: two-cell metrics rendered as a floating white bruCard.
+// 260528-vi2: the metrics card, a floating white bruCard. DAYS PER WEEK left
+// it on 2026-11-05: nothing stored or read it, and a block's days come from
+// its routine's sessions and the FIXED WEEKLY chips.
 // The LazyVStack owns screenMargin — no horizontal padding here.
 fileprivate struct NewBlockMetricsBand: View {
     @Bindable var draft: BlockDraft
@@ -793,71 +828,9 @@ fileprivate struct NewBlockMetricsBand: View {
             .buttonStyle(.plain)
             .accessibilityAddTraits(.isButton)
             .accessibilityLabel("Total weeks, \(draft.totalWeeks), edit phase durations")
-
-            // Inset hairline divider between the two cells
-            Rectangle()
-                .fill(Color.bruHair)
-                .frame(width: NewBlockScreenTokens.rule)
-                .padding(.vertical, 10)
-
-            // DAYS PER WEEK — inline − / + steppers (clamp 1...7)
-            VStack(alignment: .leading, spacing: NewBlockScreenTokens.tightGap) {
-                Text("DAYS PER WEEK")
-                    .font(NewBlockType.label)
-                    .tracking(NewBlockScreenTokens.labelTracking)
-                    .foregroundStyle(Color.bruMuted)
-
-                HStack(spacing: NewBlockScreenTokens.sectionGap) {
-                    NewBlockRoundStepper(label: "−") {
-                        draft.daysPerWeek = max(1, draft.daysPerWeek - 1)
-                    }
-                    .accessibilityLabel("Decrease days per week")
-
-                    Text("\(draft.daysPerWeek)")
-                        .font(NewBlockType.display)
-                        .foregroundStyle(Color.bruInk)
-                        .frame(minWidth: 24)
-                        .multilineTextAlignment(.center)
-                        .accessibilityHidden(true)
-
-                    NewBlockRoundStepper(label: "+") {
-                        draft.daysPerWeek = min(7, draft.daysPerWeek + 1)
-                    }
-                    .accessibilityLabel("Increase days per week")
-                }
-                // Pull the centered first button flush-left so the − aligns under
-                // the label, matching the TOTAL WEEKS number's left edge.
-                .padding(.leading, -6)
-            }
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
-            .padding(.horizontal, NewBlockScreenTokens.cardPadding)
-            .padding(.vertical, NewBlockScreenTokens.cardPadding)
-            .accessibilityElement(children: .contain)
-            .accessibilityValue("\(BRUCountLabel.text(draft.daysPerWeek, "day")) per week")
         }
         .frame(minHeight: NewBlockScreenTokens.metricsHeight)
         .bruCard()
-    }
-}
-
-// Rounded, borderless ± control for the metrics DAYS PER WEEK cell (final-design-2):
-// a soft filled circle (no outline) with the glyph centered in a 44pt tap target.
-// Distinct from NewBlockStepperButton (the sharp outlined stepper the editor sheets use).
-fileprivate struct NewBlockRoundStepper: View {
-    let label: String
-    let action: () -> Void
-
-    var body: some View {
-        Button(action: action) {
-            Text(label)
-                .font(.system(size: 18, weight: .regular))
-                .foregroundStyle(Color.bruInk)
-                .frame(width: 32, height: 32)
-                .background(Color.bruHair, in: Circle())
-        }
-        .buttonStyle(.plain)
-        .frame(width: 44, height: 44)   // centered tap target — glyph stays visually centered
-        .contentShape(Circle())
     }
 }
 
@@ -2742,7 +2715,8 @@ fileprivate struct NewBlockBottomActionBar: View {
                 .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
             }
             .buttonStyle(.plain)
-            .disabled(!canCreate)
+            // Enabled while a piece is missing: the tap goes to that piece.
+            .accessibilityHint(canCreate ? "" : "Shows what the block still needs")
         }
         .padding(.horizontal, NewBlockScreenTokens.screenMargin)
         .padding(.top, 24)

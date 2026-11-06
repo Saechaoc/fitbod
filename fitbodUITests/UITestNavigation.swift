@@ -173,6 +173,24 @@ enum UITestNavigation {
     }
 }
 
+// MARK: - Routines
+
+extension UITestNavigation {
+    /// Makes an empty routine the way a lifter does: Program, + NEW,
+    /// + New routine, its name and Save, then Back to Program. A block runs
+    /// on a routine, so Today offers "Start a block" only once one exists.
+    static func makeRoutine(_ name: String, in app: XCUIApplication, file: StaticString = #filePath, line: UInt = #line) {
+        selectTab("Program", in: app)
+        hittable(app.buttons, "+ NEW", exactLabel: true, file: file, line: line).tap()
+        hittable(app.buttons, "+ New routine", exactLabel: true, file: file, line: line).tap()
+        let field = app.textFields["newRoutine.name"]
+        XCTAssertTrue(field.waitForExistence(timeout: 10), "+ New routine must open the name step", file: file, line: line)
+        type(name, into: field, file: file, line: line)
+        app.buttons.labeled("Save").tap()
+        hittable(app.buttons, "Back", exactLabel: true, file: file, line: line).tap()
+    }
+}
+
 // MARK: - Screenshots
 
 extension UITestNavigation {
