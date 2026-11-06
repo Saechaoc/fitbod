@@ -36,6 +36,14 @@ final class BlockLifecycleEntryPointsUITests: XCTestCase {
         // and counts as seen once it has opened.
         let review = app.staticTexts.labeled("Block review")
         XCTAssertTrue(UITestNavigation.appears(review, within: 5), "Ending a block must open its review")
+        // Start next opens New block on the first tap, with the ended
+        // block's routine; CANCEL comes back to the review.
+        UITestNavigation.hittable(app.buttons, "Start next ▸").tap()
+        XCTAssertTrue(UITestNavigation.appears(app.staticTexts.labeled("NEW BLOCK"), within: 5),
+                      "Start next must open New block on the first tap, not an empty sheet")
+        XCTAssertTrue(app.staticTexts.labeled("Live Routine").exists, "Start next must keep the ended block's routine")
+        UITestNavigation.hittable(app.buttons, "CANCEL", exactLabel: true).tap()
+        XCTAssertTrue(UITestNavigation.appears(review, within: 5), "CANCEL must return to the review")
         UITestNavigation.hittable(app.buttons, "Back").tap()
         XCTAssertTrue(UITestNavigation.disappears(review, within: 5), "‹ BACK must close the review")
         XCTAssertFalse(app.buttons.labeled("END BLOCK").exists, "An ended block offers no END BLOCK")

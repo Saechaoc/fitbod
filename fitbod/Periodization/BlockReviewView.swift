@@ -23,10 +23,10 @@ public struct BlockReviewView: View {
     /// Every block, for the block number.
     @Query private var allBlocks: [Block]
 
-    /// The New block Plan custom or Start next opened over the review. Its
-    /// id is set once it saved.
-    @State private var nextDraft: BlockDraft? = nil
-    @State private var presentingNext = false
+    /// The New block Plan custom or Start next opens over the review.
+    @State private var nextBlock: NextBlock? = nil
+    /// The draft last opened there; its id is set once it saved.
+    @State private var openedDraft: BlockDraft? = nil
     @State private var acknowledgeError: String? = nil
     @State private var exportError: String? = nil
     /// The block's PRs, counted once when the review opens: the count
@@ -87,14 +87,14 @@ public struct BlockReviewView: View {
             // on Today; the block's overview reopens it (decided 2026-11-05).
             acknowledgeIfNeeded()
         }
-        .sheet(isPresented: $presentingNext, onDismiss: {
+        // The draft rides in the item: a sheet built from separate state
+        // opened empty on the first tap, before that state reached it.
+        .sheet(item: $nextBlock, onDismiss: {
             // A next block saved from here: the review is done too.
-            if nextDraft?.id != nil { dismiss() }
-        }) {
-            if let nextDraft {
-                NavigationStack {
-                    BlockBuilderView(draft: nextDraft, origin: .review)
-                }
+            if openedDraft?.id != nil { dismiss() }
+        }) { next in
+            NavigationStack {
+                BlockBuilderView(draft: next.draft, origin: .review)
             }
         }
     }
@@ -409,8 +409,9 @@ public struct BlockReviewView: View {
     /// ended block's routine, scheduling and days (decided 2026-11-05).
     private func openNextBlock(template: BlockTemplate?) {
         acknowledgeIfNeeded()
-        nextDraft = BlockDraft.next(after: block, template: template)
-        presentingNext = true
+        let draft = BlockDraft.next(after: block, template: template)
+        openedDraft = draft
+        nextBlock = NextBlock(draft: draft)
     }
 
     // MARK: - Acknowledge Logic
@@ -434,6 +435,12 @@ public struct BlockReviewView: View {
 }
 
 // MARK: - Supporting Types (Preserved verbatim — DO NOT MODIFY)
+
+/// The New block opened over a review, as a sheet item.
+private struct NextBlock: Identifiable {
+    let id = UUID()
+    let draft: BlockDraft
+}
 
 public struct BlockReviewE1RMDelta: Sendable, Equatable {
     public let exerciseID: UUID
