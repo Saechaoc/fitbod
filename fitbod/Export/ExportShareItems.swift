@@ -45,6 +45,31 @@ public struct CSVExportItem: Transferable, Sendable {
     }
 }
 
+/// One block's sets, from its start to its end, for the block review's
+/// EXPORT: the CSV above, rendered when shared.
+public struct BlockCSVExportItem: Transferable, Sendable {
+    public let container: ModelContainer
+    public let start: Date
+    public let end: Date
+    public let report: ExportRenderReport
+
+    public init(container: ModelContainer, start: Date, end: Date, report: @escaping ExportRenderReport) {
+        self.container = container
+        self.start = start
+        self.end = end
+        self.report = report
+    }
+
+    public static var transferRepresentation: some TransferRepresentation {
+        DataRepresentation(exportedContentType: .commaSeparatedText) { item in
+            try await ShareItemRendering.run(report: item.report) {
+                try await ExportService(modelContainer: item.container).renderCSV(from: item.start, to: item.end).data
+            }
+        }
+        .suggestedFileName { _ in ExportService.dailyFilename(prefix: "fitbod-block", ext: "csv") }
+    }
+}
+
 /// The full version-stamped JSON snapshot (EXP-02), rendered when shared.
 public struct JSONExportItem: Transferable, Sendable {
     public let container: ModelContainer

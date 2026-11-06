@@ -86,6 +86,20 @@ public final class BlockDraft {
         self.trainingDays = block.trainingDays
     }
 
+    /// New block after `block` ends: Start next passes the recommended
+    /// `template`, whose name and phases it takes; Plan custom passes nil,
+    /// for the default phases and no name. Either keeps the ended block's
+    /// routine, scheduling and training days while that routine still
+    /// exists and is not archived (decided 2026-11-05).
+    public static func next(after block: Block, template: BlockTemplate?) -> BlockDraft {
+        let draft = template.map { BlockDraft(template: $0) } ?? BlockDraft.newBlock()
+        guard let routine = block.split, !routine.isArchived else { return draft }
+        draft.split = routine
+        draft.schedulingMode = block.schedulingMode
+        draft.trainingDays = block.trainingDays
+        return draft
+    }
+
     /// SAVE DRAFT needs only a name (decision 3).
     public var hasName: Bool {
         !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty

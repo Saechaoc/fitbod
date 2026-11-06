@@ -47,6 +47,17 @@ public actor ExportService {
         return CSVFile(data: data, filename: filename)
     }
 
+    /// The sets finished from `start` to `end`, the block review's EXPORT,
+    /// in the same CSV as `renderCSV()`, named for a block.
+    public func renderCSV(from start: Date, to end: Date) async throws -> CSVFile {
+        let sets = try modelContext.fetch(FetchDescriptor<SetEntry>(
+            predicate: #Predicate { $0.isComplete && $0.completedAt >= start && $0.completedAt <= end },
+            sortBy: [SortDescriptor(\SetEntry.completedAt)]
+        ))
+        let data = CSVExporter.render(setEntries: sets, userSettings: try fetchUserSettings())
+        return CSVFile(data: data, filename: Self.dailyFilename(prefix: "fitbod-block", ext: "csv"))
+    }
+
     /// Render the full schema snapshot into a JSON `Transferable`
     /// wrapping pre-rendered bytes via 06-09's `JSONEncoder.exportConfigured()`.
     public func renderJSON() async throws -> JSONFile {

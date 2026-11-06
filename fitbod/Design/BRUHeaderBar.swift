@@ -155,6 +155,27 @@ public struct BRUHeaderBar: View {
         BRUHeaderBar(slotLeft: left, center: center, slotRight: right)
     }
 
+    /// `slots(left:center:right:)` with a view of the caller's in the right
+    /// slot, for a control the header can't build itself, such as a
+    /// `ShareLink` labelled with `actionLabel(_:)`.
+    static func slots<Right: View>(
+        left: HeaderSlot? = nil,
+        center: String? = nil,
+        @ViewBuilder rightView: () -> Right
+    ) -> some View {
+        BRUHeaderChrome(center: center) {
+            SlotView(slot: left)
+        } right: {
+            rightView()
+        }
+    }
+
+    /// A header action's signal label with the header's touch area.
+    static func actionLabel(_ label: String) -> some View {
+        HeaderLabelText(label: label, isSignal: true)
+            .bruHitArea(BRUHeaderMetrics.actionHitReach)
+    }
+
     // MARK: Body
 
     public var body: some View {

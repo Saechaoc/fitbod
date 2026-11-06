@@ -14,12 +14,15 @@ public struct BlockBuilderView: View {
     enum Origin {
         case program
         case today
+        /// Opened over a block review by Plan custom or Start next.
+        case review
 
-        /// "< PROGRAM", as the mock shows, or "< TODAY".
+        /// "< PROGRAM", as the mock shows, "< TODAY", or "< REVIEW".
         var backLabel: String {
             switch self {
             case .program: return "< PROGRAM"
             case .today:   return "< TODAY"
+            case .review:  return "< REVIEW"
             }
         }
     }

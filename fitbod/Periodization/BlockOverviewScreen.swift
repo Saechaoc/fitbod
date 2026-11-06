@@ -19,8 +19,8 @@
 //    }
 //    [ready]  startBlockButton + safeAreaFiller
 //    [active] editBlockButton + endBlockButton + safeAreaFiller
-//    [draft]  safeAreaFiller
-//    [completed] safeAreaFiller
+//    [draft]  deleteBlockButton + safeAreaFiller
+//    [completed] reviewButton + safeAreaFiller
 //
 //  Before its start date a block shows no NOW, current week or progress
 //  (T12); only a started active block has a current week. Past its last
@@ -208,6 +208,8 @@ public struct BlockOverviewScreen: View {
     @State private var presentingSwapConfirm = false
     @State private var presentingEndConfirm = false
     @State private var presentingDeleteConfirm = false
+    /// The block's review: right after END BLOCK, or from REVIEW ▸.
+    @State private var presentingReview = false
     /// What a failed save says, in plain words; nil hides the alert.
     @State private var saveError: String? = nil
     /// A failed routine change, shown once the routine picker has gone.
@@ -351,11 +353,18 @@ public struct BlockOverviewScreen: View {
                     try BlockLifecycleService.end(block: block, context: ctx)
                 } catch {
                     saveError = "The block didn't end. Try again."
+                    return
                 }
+                // The review opens wherever the block ended (B9).
+                presentingReview = true
             }
             Button("Cancel", role: .cancel) {}
         } message: {
-            Text("End this block now? You can review it from the Program tab.")
+            Text("Its plan is frozen and its review opens.")
+        }
+        .sheet(isPresented: $presentingReview) {
+            BlockReviewView(block: block)
+                .presentationDetents([.large])
         }
         // The message names no block: it can redraw while the deleted
         // block's alert goes away.
@@ -1364,7 +1373,22 @@ public struct BlockOverviewScreen: View {
                 endBlockButton
             }
         case .completed:
-            EmptyView()
+            reviewButton
+        }
+    }
+
+    // MARK: - Review Button
+
+    /// A finished block's review, which closes for good once seen, opens
+    /// again from here (B12).
+    private var reviewButton: some View {
+        BRUButton("REVIEW ▸", kind: .primary) {
+            presentingReview = true
+        }
+        .overlay(alignment: .top) {
+            Rectangle()
+                .fill(Color.bruInk)
+                .frame(height: 2)
         }
     }
 

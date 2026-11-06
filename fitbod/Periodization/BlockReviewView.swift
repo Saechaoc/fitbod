@@ -23,8 +23,12 @@ public struct BlockReviewView: View {
     /// Every block, for the block number.
     @Query private var allBlocks: [Block]
 
-    @State private var pendingNextBlockBuilder: BlockTemplate? = nil
+    /// The New block Plan custom or Start next opened over the review. Its
+    /// id is set once it saved.
+    @State private var nextDraft: BlockDraft? = nil
+    @State private var presentingNext = false
     @State private var acknowledgeError: String? = nil
+    @State private var exportError: String? = nil
     /// The block's PRs, counted once when the review opens: the count
     /// replays the lifter's whole history of the block's lifts.
     @State private var prs: BlockReviewPRs? = nil
@@ -43,19 +47,26 @@ public struct BlockReviewView: View {
 
         NavigationStack {
             VStack(spacing: 0) {
-                BRUHeaderBar.slots(
-                    left: .back,
-                    center: "Block review",
-                    right: .text("EXPORT")
-                )
+                BRUHeaderBar.slots(left: .back, center: "Block review") {
+                    // The block's sets as CSV, rendered when the share sheet asks.
+                    ShareLink(
+                        item: BlockCSVExportItem(container: ctx.container, start: blockStart, end: blockEnd) { succeeded in
+                            exportError = succeeded ? nil : "Couldn't export the block. Try again."
+                        },
+                        preview: SharePreview(ExportService.dailyFilename(prefix: "fitbod-block", ext: "csv"))
+                    ) {
+                        BRUHeaderBar.actionLabel("EXPORT")
+                    }
+                    .accessibilityLabel("Export the block's sets")
+                }
 
                 ScrollView {
                     VStack(spacing: 0) {
                         heroBand(blockStart: blockStart, blockEnd: blockEnd)
                         e1RMSection(blockStart: blockStart, blockEnd: blockEnd)
                         recommendedNextBand(nextTemplate: nextTemplate)
-                        if let acknowledgeError {
-                            Text(acknowledgeError)
+                        if let message = acknowledgeError ?? exportError {
+                            Text(message)
                                 .font(BRUFont.labelSmall)
                                 .foregroundStyle(Color.bruSignal)
                                 .padding(.horizontal, 16)
@@ -72,11 +83,18 @@ public struct BlockReviewView: View {
             if prs == nil {
                 prs = BlockReviewStatistics.prs(context: ctx, start: blockStart, end: blockEnd)
             }
+            // Seen once it opens, so closing it any way never brings it back
+            // on Today; the block's overview reopens it (decided 2026-11-05).
+            acknowledgeIfNeeded()
         }
-        .sheet(item: $pendingNextBlockBuilder) { template in
-            NavigationStack {
-                // Only Today presents the review.
-                BlockBuilderView(draft: BlockDraft(template: template), origin: .today)
+        .sheet(isPresented: $presentingNext, onDismiss: {
+            // A next block saved from here: the review is done too.
+            if nextDraft?.id != nil { dismiss() }
+        }) {
+            if let nextDraft {
+                NavigationStack {
+                    BlockBuilderView(draft: nextDraft, origin: .review)
+                }
             }
         }
     }
@@ -347,14 +365,13 @@ public struct BlockReviewView: View {
     private func bottomActionBar(nextTemplate: BlockTemplate) -> some View {
         HStack(spacing: 0) {
             BRUButton("Plan custom", kind: .ghost) {
-                dismiss()
+                openNextBlock(template: nil)
             }
             Rectangle()
                 .fill(Color.bruInk)
                 .frame(width: 2)
             BRUButton("Start next ▸", kind: .signal) {
-                acknowledge()
-                pendingNextBlockBuilder = nextTemplate
+                openNextBlock(template: nextTemplate)
             }
         }
         // The divider has no height of its own. Without this the bar takes
@@ -385,13 +402,25 @@ public struct BlockReviewView: View {
         return "\(formatter.string(from: start)) – \(formatter.string(from: end))"
     }
 
+    // MARK: - Next block
+
+    /// New block over the review: Start next with the recommended preset,
+    /// Plan custom with the default phases and no name. Both keep the
+    /// ended block's routine, scheduling and days (decided 2026-11-05).
+    private func openNextBlock(template: BlockTemplate?) {
+        acknowledgeIfNeeded()
+        nextDraft = BlockDraft.next(after: block, template: template)
+        presentingNext = true
+    }
+
     // MARK: - Acknowledge Logic
     //
-    // acknowledge() does not dismiss, so "Start next ▸" can acknowledge THEN
-    // show the next-block sheet without a dismiss interfering with it.
-    // "Plan custom" calls dismiss() only (no acknowledge — user is deferring review).
+    // The review counts as seen once it opens: Today never brings it back,
+    // and the block's overview reopens it with REVIEW ▸. The first open
+    // keeps its date; reopening doesn't move it.
 
-    private func acknowledge() {
+    private func acknowledgeIfNeeded() {
+        guard block.reviewedAt == nil else { return }
         do {
             try BlockReviewStatistics.acknowledge(
                 block: block,
