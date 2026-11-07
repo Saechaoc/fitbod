@@ -1,7 +1,7 @@
 // LiftListSection.swift
 // fitbod — Phase 2.1 Plan 04
 //
-// BRUSectionHead("Lift list", right: sortedExercises.count == 1 ? "1 lift" : "\(sortedExercises.count) lifts") + LazyVStack of LiftListRow.
+// BRUSectionHead("Exercises · N", right: "View ›") + LazyVStack of LiftListRow.
 // Reference: bru-screens/today.jsx lines 83-110
 //
 // BRU contract: NO Capsule() / NO RoundedRectangle / NO accentColor / NO Image(systemName:)
@@ -12,34 +12,31 @@ import SwiftData
 
 // MARK: - LiftListSection
 
-/// Section head + list of LiftListRow for the today-tab's "Up next" exercise list.
-///
-/// When routine is nil or has no exercises, renders a minimal "Add an exercise
-/// to begin." placeholder (NOT the full empty-state surface — that lives at TodayView).
+/// The Exercises head and the rows of today's session. The head counts the
+/// exercises and its View › opens the session. With no exercises it renders
+/// a minimal "Add an exercise to begin." placeholder (NOT the full
+/// empty-state surface, which lives at TodayView).
 public struct LiftListSection: View {
 
     // MARK: - Properties
 
-    let routine: SessionTemplate?
+    let routine: SessionTemplate
+    /// The block's current phase; a deload cuts each row's working sets.
+    let phase: BlockPhase?
+    /// Opens the session, from the head's View ›.
+    let onView: () -> Void
 
     // MARK: - Computed
 
     private var sortedExercises: [SessionExerciseTemplate] {
-        (routine?.exercises ?? []).sorted { $0.orderIndex < $1.orderIndex }
-    }
-
-    /// Index of the first compound exercise (for COMPOUND chip rendering)
-    private var firstCompoundIndex: Int? {
-        sortedExercises.firstIndex { re in
-            re.exercise?.mechanic == .compound
-        }
+        (routine.exercises ?? []).sorted { $0.orderIndex < $1.orderIndex }
     }
 
     // MARK: - Body
 
     public var body: some View {
         VStack(spacing: 0) {
-            BRUSectionHead("Lift list", right: sortedExercises.count == 1 ? "1 lift" : "\(sortedExercises.count) lifts")
+            BRUSectionHead("Exercises · \(sortedExercises.count)", right: "View ›", rightAction: onView)
 
             if sortedExercises.isEmpty {
                 // Minimal placeholder — not the full empty-state (that's TodayView's job)
@@ -54,11 +51,7 @@ public struct LiftListSection: View {
             } else {
                 LazyVStack(spacing: 0) {
                     ForEach(Array(sortedExercises.enumerated()), id: \.element.id) { offset, re in
-                        LiftListRow(
-                            index: offset + 1,
-                            routineExercise: re,
-                            isFirstCompound: offset == firstCompoundIndex
-                        )
+                        LiftListRow(index: offset + 1, routineExercise: re, phase: phase)
                     }
                 }
             }
@@ -75,7 +68,7 @@ private struct LiftListSectionPreviewContainer: View {
     let routine: SessionTemplate
 
     var body: some View {
-        LiftListSection(routine: routine)
+        LiftListSection(routine: routine, phase: nil, onView: {})
             .modelContainer(container)
             .background(Color.bruPaper)
     }
@@ -117,10 +110,5 @@ private struct LiftListSectionPreviewContainer: View {
 
 #Preview("LiftListSection — 5 exercises (today.jsx fixture)") {
     LiftListSectionPreviewContainer.make()
-}
-
-#Preview("LiftListSection — empty (nil routine)") {
-    LiftListSection(routine: nil)
-        .background(Color.bruPaper)
 }
 #endif

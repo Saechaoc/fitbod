@@ -1,8 +1,8 @@
 // LiftListRow.swift
 // fitbod — Phase 2.1 Plan 04
 //
-// A single row in the Lift list — 3-column layout with zero-padded index,
-// exercise name + sub-line, and a COMPOUND/WORK chip.
+// A single row in the Exercises list: zero-padded index, exercise name and
+// the working sets × reps the phase yields.
 // Reference: bru-screens/today.jsx lines 92-108
 //
 // BRU contract: NO Capsule() / NO RoundedRectangle / NO accentColor / NO Image(systemName:)
@@ -13,24 +13,24 @@ import SwiftData
 
 // MARK: - LiftListRow
 
-/// A single lift-list row — zero-padded index, name + sub-line, trailing chip.
+/// A single exercises row: zero-padded index, name and the sets sub-line.
 ///
-/// Layout (grid: 32pt | flex | auto):
+/// Layout (grid: 32pt | flex):
 /// ```
-/// ┌──────┬────────────────────────────┬────────────┐
-/// │  01  │  Bench Press               │  COMPOUND  │
-/// │      │  2 WARM-UP · 3 WORK · ...  │            │
-/// └──────┴────────────────────────────┴────────────┘
-/// ──────────────────────────────────────────────────  1pt bruHair
+/// ┌──────┬────────────────────────────┐
+/// │  01  │  Bench Press               │
+/// │      │  3 × 5-5                   │
+/// └──────┴────────────────────────────┘
+/// ──────────────────────────────────────  1pt bruHair
 /// ```
 ///
-/// The number column scales with its type, so "01" stays on one line. At
-/// accessibility sizes the chip moves under the name and sub-line, since
-/// beside them it broke "COMPOUND" over two lines.
+/// The sub-line counts the working sets the phase yields
+/// (`PeriodizationEngine.workingSetCount`), the sets the hero sums and the
+/// factory plans. The number column scales with its type, so "01" stays on
+/// one line.
 ///
 /// Reference: bru-screens/today.jsx lines 92-108.
 public struct LiftListRow: View {
-    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     /// The 32pt number column, scaled like its 22pt type.
     @ScaledMetric(relativeTo: .title2) private var numberWidth: CGFloat = 32
 
@@ -38,7 +38,8 @@ public struct LiftListRow: View {
 
     let index: Int                  // 1-based display index
     let routineExercise: SessionExerciseTemplate
-    let isFirstCompound: Bool       // true → COMPOUND chip (signal); false → WORK chip (ink)
+    /// The block's current phase; a deload cuts the working sets.
+    let phase: BlockPhase?
 
     // MARK: - Computed
 
@@ -47,16 +48,8 @@ public struct LiftListRow: View {
     }
 
     private var setSubLine: String {
-        let warmups = routineExercise.generateWarmups ? 2 : 0  // approximate warm-up count
-        let sets = routineExercise.targetSets
-        let lo = routineExercise.targetRepsLow
-        let hi = routineExercise.targetRepsHigh
-
-        if warmups > 0 {
-            return "\(warmups) warm-up · \(sets) work"
-        } else {
-            return "\(sets) × \(lo)-\(hi)"
-        }
+        let sets = PeriodizationEngine.workingSetCount(targetSets: routineExercise.targetSets, phase: phase)
+        return "\(sets) × \(routineExercise.targetRepsLow)-\(routineExercise.targetRepsHigh)"
     }
 
     // MARK: - Body
@@ -71,7 +64,7 @@ public struct LiftListRow: View {
                     .fixedSize()
                     .frame(width: numberWidth, alignment: .leading)
 
-                // Middle — name + sub-line, then the chip at accessibility sizes
+                // Middle: name + sub-line
                 VStack(alignment: .leading, spacing: 2) {
                     Text(exerciseName)
                         .font(BRUFont.bodyEmphasis)
@@ -83,18 +76,8 @@ public struct LiftListRow: View {
                         .tracking(0.5)
                         .textCase(.uppercase)
                         .foregroundStyle(Color.bruMuted)
-
-                    if dynamicTypeSize.isAccessibilitySize {
-                        chip
-                            .padding(.top, 4)
-                    }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
-
-                // Trailing — the chip beside the name at standard sizes
-                if !dynamicTypeSize.isAccessibilitySize {
-                    chip
-                }
             }
             .padding(.vertical, 11)
             .padding(.horizontal, 16)
@@ -103,15 +86,6 @@ public struct LiftListRow: View {
             BRUDivider(.hair)
         }
         .background(Color.bruPaper)
-    }
-
-    /// COMPOUND (signal) or WORK (ink), never broken over two lines.
-    private var chip: some View {
-        BRUChip(
-            isFirstCompound ? "Compound" : "Work",
-            color: isFirstCompound ? .bruSignal : .bruInk
-        )
-        .fixedSize()
     }
 }
 
@@ -125,8 +99,8 @@ private struct LiftListRowPreviewContainer: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            LiftListRow(index: 1, routineExercise: benchRE, isFirstCompound: true)
-            LiftListRow(index: 2, routineExercise: flyRE, isFirstCompound: false)
+            LiftListRow(index: 1, routineExercise: benchRE, phase: nil)
+            LiftListRow(index: 2, routineExercise: flyRE, phase: nil)
         }
         .modelContainer(container)
         .background(Color.bruPaper)
@@ -146,7 +120,6 @@ private struct LiftListRowPreviewContainer: View {
         benchRE.targetSets = 3
         benchRE.targetRepsLow = 5
         benchRE.targetRepsHigh = 5
-        benchRE.generateWarmups = true
         benchRE.orderIndex = 0
         container.mainContext.insert(bench)
         container.mainContext.insert(benchRE)

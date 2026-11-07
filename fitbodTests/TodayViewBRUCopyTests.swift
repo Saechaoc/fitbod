@@ -14,7 +14,7 @@
 //    1. Header copy — "Fitbod / Today"
 //    2. Stat strip labels — "Day streak" / "Sessions" / week pattern
 //    3. Black slab copy - "TODAY" / "NEXT UP · " / "Deload week · lighter sets" / "Start workout ▸"
-//    4. Lift list section head — "Lift list" / "Tap to reorder"
+//    4. Exercises head - "Exercises · " / "View ›", never "Tap to reorder"
 //    5. Empty state — "No workout scheduled" / "Build a routine..." / "+ NEW ROUTINE"
 //    6. Resume slab copy — "RESUME" / "Resume ▸" / "Discard"
 //    7. BRU primitives presence — BRUHeaderBar / TodayStatStrip / BlockContextBand /
@@ -61,10 +61,11 @@ struct TodayViewBRUCopyTests {
 
     // MARK: - 4. Lift list section head
 
-    @Test("Lift list section head copy is verbatim")
-    func liftListSectionHeadCopyVerbatim() throws {
+    @Test("Exercises head copy is verbatim")
+    func exercisesHeadCopyVerbatim() throws {
         let sectionSource = try sourceFile("fitbod/Views/LiftListSection.swift")
-        #expect(sectionSource.contains("\"Lift list\""))
+        #expect(sectionSource.contains("\"Exercises · "))
+        #expect(sectionSource.contains("\"View ›\""))
         // "Tap to reorder" was a false affordance (nothing reorders); the head shows a count.
         #expect(!sectionSource.contains("\"Tap to reorder\""))
     }

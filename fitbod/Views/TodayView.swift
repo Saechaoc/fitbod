@@ -241,8 +241,8 @@ public struct TodayView: View {
                     }
 
                     // Lift list — only for a scheduled session not yet done
-                    if todaysRoutine != nil && doneToday == nil {
-                        LiftListSection(routine: todaysRoutine)
+                    if let routine = todaysRoutine, doneToday == nil {
+                        LiftListSection(routine: routine, phase: currentBlockPhase, onView: { openedTemplate = routine })
                     }
 
                     // ─── DEFENSIVE BOTTOM — Phase 5 FatigueSurfaceView ──
@@ -484,13 +484,6 @@ public struct TodayView: View {
 
     // MARK: - BRU Helper Properties (NEW — stat strip / block context inputs)
 
-    /// Total weeks in the active block across all phases (defaults to 1).
-    private var currentTotalWeeks: Int {
-        guard let block = activeBlocks.first else { return 1 }
-        let total = (block.phases ?? []).reduce(0) { $0 + $1.weeks }
-        return max(1, total)
-    }
-
     /// The active block's current phase, read with Today's date and calendar
     /// so the hero, the rows and the start agree. Nil without a block, and
     /// past its plan, which has no current phase.
@@ -498,10 +491,9 @@ public struct TodayView: View {
         activeBlocks.first.flatMap { PeriodizationEngine.phase(for: $0, on: now, calendar: calendar) }
     }
 
-    /// The active block's current phase, for the third stat's short label.
-    /// Nil without a block, and past its plan, which has no current phase.
+    /// The current phase's kind, for the deload advisory.
     private var currentPhase: BlockPhaseKind? {
-        activeBlocks.first.flatMap { PeriodizationEngine.phase(for: $0, on: now)?.kind }
+        currentBlockPhase?.kind
     }
 
     /// START BLOCK ▸ on the ready block's card. No block is active, so
@@ -512,12 +504,6 @@ public struct TodayView: View {
         } catch {
             blockError = "The block didn't start. Try again."
         }
-    }
-
-    /// True once the active block is past its last planned week, until the
-    /// lifter ends it (tradeoffs.md "A block past its plan").
-    private var isPastPlan: Bool {
-        activeBlocks.first.map { PlanWeek.of($0, on: now) == .complete } ?? false
     }
 
     /// The full resolver output for today in the active block.
@@ -540,22 +526,6 @@ public struct TodayView: View {
             return slot.sessionTemplate
         }
         return nil
-    }
-
-    /// 1-based day in the active block's plan (for "DAY 01 / 28" in
-    /// BlackSlabCTA), in the calendar days `PeriodizationEngine` counts, so
-    /// the day and the week agree. Nil past the plan, so the slab shows no
-    /// day rather than counting from day 1 again.
-    private var dayIndexInBlock: Int? {
-        guard let block = activeBlocks.first else { return 1 }
-        guard !isPastPlan else { return nil }
-        let daysSince = PeriodizationEngine.days(from: block.startDate, to: now)
-        return min(max(daysSince, 0), totalDaysInBlock - 1) + 1
-    }
-
-    /// Total days in the current block (for "DAY 01 / 04" in BlackSlabCTA).
-    private var totalDaysInBlock: Int {
-        max(1, currentTotalWeeks * 7)
     }
 
     /// What comes next: the resolver's session (today's, or a rotation's
@@ -593,7 +563,7 @@ public struct TodayView: View {
     private func startWorkout(_ routine: SessionTemplate, slot: SplitSessionSlot? = nil) {
         // CR-01: thread the resolved slot through so session.slot is the
         // rotation anchor; TodayResolver advances rotation off it.
-        switch WorkoutStarter.start(routine, slot: slot, context: ctx) {
+        switch WorkoutStarter.start(routine, slot: slot, context: ctx, calendar: calendar) {
         case .started(let session):
             navigationPath.append(SessionRoute.logger(session))
         case .alreadyInProgress(let active):
