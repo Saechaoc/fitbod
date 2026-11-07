@@ -246,25 +246,6 @@ public struct ProgramView: View {
     static let templateRows: [ProgramTemplateRowContent] =
         BlockTemplates.catalog.map(ProgramTemplateRowContent.init)
 
-    /// What an active block's row says about its week: a line under its
-    /// name, "Week 2 of 4 · Intensification", the only place the row names
-    /// its phase, and what VoiceOver reads, "Week 2 of 4, Intensification".
-    /// Past its last planned week the line reads PLAN COMPLETE (tradeoffs.md
-    /// "A block past its plan").
-    static func activeBlockWeek(of block: Block, on date: Date) -> (line: String, spoken: String) {
-        // An active block before its start date reads as week 1.
-        guard case .week(let weekIndex) = PlanWeek.of(block, on: date) ?? .week(0) else {
-            return (PlanWeek.completeLabel, "Plan complete")
-        }
-        let totalWeeks = MesocycleWeekPage.totalWeeks(of: block)
-        let kind = PeriodizationEngine.weekContext(for: block, weekIndex: weekIndex, on: date)?.phaseKind.rawValue
-        let phase = (kind ?? "Accumulation").capitalized
-        return (
-            "Week \(weekIndex + 1) of \(totalWeeks) · \(phase)",
-            "Week \(weekIndex + 1) of \(totalWeeks), \(phase)"
-        )
-    }
-
     // MARK: - Ordered blocks (Swift post-filter — derivedStatus is computed, not stored)
 
     /// Blocks sorted by status precedence ACTIVE → READY → DRAFT → DONE,
@@ -477,7 +458,7 @@ fileprivate struct BlockStatusCard: View {
     private var derivedStatus: BlockStatus { block.derivedStatus }
 
     private var activeWeek: (line: String, spoken: String) {
-        ProgramView.activeBlockWeek(of: block, on: today)
+        BlockPosition.label(block, on: today)
     }
 
     var body: some View {

@@ -802,7 +802,7 @@ public struct BlockOverviewScreen: View {
                     .tracking(1.5)
                     .foregroundStyle(Color.bruInk)
                 Spacer()
-                Text(Self.stripHeader(planWeek, of: block))
+                Text(Self.stripHeader(of: block, on: todayDate))
                     .font(BRUFont.labelSmall)
                     .textCase(.uppercase)
                     .tracking(1.5)
@@ -844,7 +844,7 @@ public struct BlockOverviewScreen: View {
             let scheduledCount = block.split?.slots?.count ?? 0
 
             HStack {
-                Text("\(doneCount) / \(BRUCountLabel.text(max(doneCount, scheduledCount), "SESSION")) DONE")
+                Text("\(doneCount) / \(BRUCountLabel.text(max(doneCount, scheduledCount), "WORKOUT")) DONE")
                     .font(BRUFont.labelMicro)
                     .textCase(.uppercase)
                     .tracking(1.2)
@@ -868,10 +868,9 @@ public struct BlockOverviewScreen: View {
         }
     }
 
-    /// The week strip's header: "WEEK 2 OF 4", or PLAN COMPLETE past the plan.
-    static func stripHeader(_ planWeek: PlanWeek, of block: Block) -> String {
-        guard case .week(let weekIndex) = planWeek else { return PlanWeek.completeLabel }
-        return "WEEK \(weekIndex + 1) OF \(MesocycleWeekPage.totalWeeks(of: block))"
+    /// The week strip's header: "WEEK 2 OF 4 · ACCUMULATION", or PLAN COMPLETE past the plan.
+    static func stripHeader(of block: Block, on date: Date) -> String {
+        BlockPosition.label(block, on: date).line.uppercased()
     }
 
     @ViewBuilder

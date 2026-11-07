@@ -20,12 +20,12 @@ final class BlockWeekCountsUITests: XCTestCase {
     // MARK: - Empty workouts
 
     /// The empty Upper B showed as a done day, and the strip read "2 / 2
-    /// SESSIONS DONE · 0 LEFT".
+    /// WORKOUTS DONE · 0 LEFT".
     @MainActor
     func testWeekStripLeavesOutTheEmptyWorkout() throws {
         let app = UITestNavigation.launch(UITestNavigation.blockStates)
         openSpringBlockFromToday(in: app)
-        let count = app.staticTexts.matching(NSPredicate(format: "label ENDSWITH 'SESSIONS DONE'")).firstMatch
+        let count = app.staticTexts.matching(NSPredicate(format: "label ENDSWITH 'WORKOUTS DONE'")).firstMatch
         XCTAssertTrue(UITestNavigation.appears(count), "The week strip must count its sessions")
         UITestNavigation.reveal(count, in: app)
 
@@ -39,7 +39,7 @@ final class BlockWeekCountsUITests: XCTestCase {
         XCTAssertFalse(days.values.contains { $0.contains("Upper B") },
                        "The strip must not name the empty Upper B: \(days)")
 
-        XCTAssertEqual(count.label, "\(logged.count) / 2 SESSIONS DONE", "The count must leave out the empty workout")
+        XCTAssertEqual(count.label, "\(logged.count) / 2 WORKOUTS DONE", "The count must leave out the empty workout")
         XCTAssertTrue(app.staticTexts["\(2 - logged.count) LEFT"].exists,
                       "The strip must leave \(2 - logged.count) of its two sessions")
 

@@ -57,9 +57,9 @@ struct BlockPastPlanTests {
         let planWeek = try #require(PlanWeek.of(block, on: now))
         #expect(planWeek == .complete)
         #expect(BlockOverviewScreen.heroHeadline(planWeek, of: block) == "PLAN COMPLETE")
-        #expect(BlockOverviewScreen.stripHeader(planWeek, of: block) == "PLAN COMPLETE")
+        #expect(BlockOverviewScreen.stripHeader(of: block, on: now) == "PLAN COMPLETE")
 
-        let row = ProgramView.activeBlockWeek(of: block, on: now)
+        let row = BlockPosition.label(block, on: now)
         #expect(row.line == "PLAN COMPLETE", "Program's row shows PLAN COMPLETE in place of its week and phase")
         #expect(row.spoken == "Plan complete")
 
@@ -92,9 +92,9 @@ struct BlockPastPlanTests {
         let planWeek = try #require(PlanWeek.of(block, on: now))
         #expect(planWeek == .week(day.week - 1))
         #expect(BlockOverviewScreen.heroHeadline(planWeek, of: block) == "\(day.phase) week")
-        #expect(BlockOverviewScreen.stripHeader(planWeek, of: block) == "WEEK \(day.week) OF 4")
+        #expect(BlockOverviewScreen.stripHeader(of: block, on: now) == "WEEK \(day.week) OF 4 · \(day.phase.uppercased())")
 
-        let row = ProgramView.activeBlockWeek(of: block, on: now)
+        let row = BlockPosition.label(block, on: now)
         #expect(row.line == "Week \(day.week) of 4 · \(day.phase)")
         #expect(row.spoken == "Week \(day.week) of 4, \(day.phase)")
 
