@@ -98,7 +98,7 @@ final class WorkoutLoggerJourneyUITests: XCTestCase {
         XCTAssertTrue(waitForDisappearance(resume), "Discard should remove the workout")
 
         UITestNavigation.relaunch(app)
-        XCTAssertTrue(UITestNavigation.appears(app.buttons["today.sessions"], within: 30))
+        XCTAssertTrue(UITestNavigation.appears(app.otherElements["today.root"], within: 30))
         XCTAssertFalse(app.buttons["resumeSlab.resume"].exists, "A discarded workout must stay gone")
     }
 
@@ -145,10 +145,10 @@ final class WorkoutLoggerJourneyUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["WORKOUT COMPLETE"].exists)
         done.tap()
 
-        let sessions = app.buttons["today.sessions"]
-        XCTAssertTrue(UITestNavigation.appears(sessions))
+        XCTAssertTrue(UITestNavigation.appears(app.otherElements["today.root"]))
         XCTAssertFalse(app.buttons["resumeSlab.resume"].exists, "A finished workout is not resumable")
-        sessions.tap()
+        UITestNavigation.selectTab("Progress", in: app)
+        app.buttons["progress.history"].tap()
 
         let rows = app.buttons.matching(identifier: "history.row")
         XCTAssertTrue(UITestNavigation.appears(rows.firstMatch))

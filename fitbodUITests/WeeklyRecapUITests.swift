@@ -48,7 +48,7 @@ final class WeeklyRecapUITests: XCTestCase {
     func testRecapDoesNotShowForAnEmptyWorkoutAlone() throws {
         let app = UITestNavigation.launch(UITestNavigation.emptyLastWeek)
         openToday(afterSeeding: 1, in: app)
-        XCTAssertTrue(UITestNavigation.appears(app.buttons["today.sessions"]), "Today never showed")
+        XCTAssertTrue(UITestNavigation.appears(app.otherElements["today.root"]), "Today never showed")
         // Waits the whole 5 s: a recap that is due shows within it.
         XCTAssertFalse(
             recapTitle(in: app).waitForExistence(timeout: 5),

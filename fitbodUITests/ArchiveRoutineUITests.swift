@@ -113,8 +113,9 @@ final class ArchiveRoutineUITests: XCTestCase {
                         .firstMatch.exists, "Live Block must stay active")
         assertNoArchivedEntry(in: app)
         UITestNavigation.selectTab("Today", in: app)
-        XCTAssertTrue(UITestNavigation.appears(app.staticTexts.labeled("LIVE BLOCK")),
+        XCTAssertTrue(UITestNavigation.appears(app.buttons["today.planLine"]),
                       "Today must still run Live Block")
+        XCTAssertTrue(app.buttons["today.planLine"].label.hasPrefix("Live Block"))
     }
 
     // MARK: - A block that uses an archived routine
@@ -276,8 +277,8 @@ final class ArchiveRoutineUITests: XCTestCase {
     @MainActor
     private func endLiveBlock(in app: XCUIApplication, file: StaticString = #filePath, line: UInt = #line) {
         UITestNavigation.selectTab("Today", in: app)
-        let band = app.staticTexts.labeled("LIVE BLOCK")
-        XCTAssertTrue(UITestNavigation.appears(band), "Today must show the active block's band", file: file, line: line)
+        let band = app.buttons["today.planLine"]
+        XCTAssertTrue(UITestNavigation.appears(band), "Today must show the active block's plan line", file: file, line: line)
         band.tap()
         UITestNavigation.hittable(app.buttons, "END BLOCK", file: file, line: line).tap()
         let alert = app.alerts["End block?"]

@@ -50,7 +50,8 @@ final class WorkoutSwapJourneyUITests: XCTestCase {
         resume.tap()
         XCTAssertTrue(UITestNavigation.appears(app.staticTexts["Incline Push-Up Wide"].firstMatch))
         app.buttons["Back"].firstMatch.tap()
-        app.buttons["today.sessions"].tap()
+        UITestNavigation.selectTab("Progress", in: app)
+        app.buttons["progress.history"].tap()
         let history = app.buttons["history.row"].firstMatch
         XCTAssertTrue(UITestNavigation.appears(history))
         history.tap()

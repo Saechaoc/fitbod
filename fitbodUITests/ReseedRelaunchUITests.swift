@@ -62,12 +62,12 @@ final class ReseedRelaunchUITests: XCTestCase {
         XCTAssertTrue(UITestNavigation.appears(recent), "Recent performance must show the finished workout's best set")
     }
 
-    /// Today > Sessions > the one finished workout's summary.
+    /// Progress > Workouts > the one finished workout's summary.
     @MainActor
     private func openWorkout(in app: XCUIApplication) {
-        let sessions = app.buttons["today.sessions"]
-        XCTAssertTrue(UITestNavigation.appears(sessions, within: 30), "Today must show its Sessions count")
-        sessions.tap()
+        XCTAssertTrue(UITestNavigation.appears(app.otherElements["today.root"], within: 30), "Today must show")
+        UITestNavigation.selectTab("Progress", in: app)
+        app.buttons["progress.history"].tap()
         let rows = app.buttons.matching(identifier: "history.row")
         XCTAssertTrue(UITestNavigation.appears(rows.firstMatch), "History must list the finished workout")
         XCTAssertEqual(rows.count, 1)

@@ -70,10 +70,10 @@ final class SkipWarmupsUITests: XCTestCase {
         openFinish(in: app)
         XCTAssertTrue(UITestNavigation.appears(discardWorkout, within: 5))
         discardWorkout.tap()
-        let sessions = app.buttons["today.sessions"]
-        XCTAssertTrue(UITestNavigation.appears(sessions), "Discard workout must return to Today")
+        XCTAssertTrue(UITestNavigation.appears(app.otherElements["today.root"]), "Discard workout must return to Today")
         XCTAssertFalse(app.buttons["resumeSlab.resume"].exists, "The discarded workout must be gone")
-        sessions.tap()
+        UITestNavigation.selectTab("Progress", in: app)
+        app.buttons["progress.history"].tap()
         let rows = app.buttons.matching(identifier: "history.row")
         XCTAssertTrue(UITestNavigation.appears(rows.firstMatch))
         XCTAssertEqual(rows.count, 1, "Discard must delete only this workout; the earlier finished one stays")

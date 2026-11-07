@@ -96,8 +96,8 @@ final class SessionHistoryBRUUITests: XCTestCase {
         let dialog = app.sheets["Delete this workout?"]
         XCTAssertTrue(UITestNavigation.appears(dialog))
         dialog.buttons["Delete workout"].tap()
-        XCTAssertTrue(UITestNavigation.appears(app.buttons["today.sessions"])
-            || UITestNavigation.appears(app.staticTexts["No sessions yet"]))
+        XCTAssertTrue(UITestNavigation.appears(app.staticTexts["No sessions yet"])
+            || UITestNavigation.appears(app.buttons["progress.history"]))
         XCTAssertFalse(app.buttons["history.row"].exists)
     }
 
@@ -287,9 +287,9 @@ final class SessionHistoryBRUUITests: XCTestCase {
 
     @MainActor
     private func openHistorySummary(in app: XCUIApplication) {
-        let history = app.buttons["today.sessions"]
-        XCTAssertTrue(UITestNavigation.appears(history))
-        history.tap()
+        XCTAssertTrue(UITestNavigation.appears(app.otherElements["today.root"]))
+        UITestNavigation.selectTab("Progress", in: app)
+        app.buttons["progress.history"].tap()
         let row = app.buttons["history.row"].firstMatch
         XCTAssertTrue(UITestNavigation.appears(row))
         row.tap()

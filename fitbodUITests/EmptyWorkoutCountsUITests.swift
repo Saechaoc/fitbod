@@ -17,9 +17,6 @@
 //  With logged Push As six days and one day ago and an empty one between
 //  them, Compare sets the two logged workouts side by side.
 //
-//  T103, finding F151. With a logged Push A yesterday and an empty one
-//  today, Today's Day streak counts only yesterday.
-//
 
 import XCTest
 
@@ -88,34 +85,11 @@ final class EmptyWorkoutCountsUITests: XCTestCase {
     }
 
     @MainActor
-    func testTodayCountsOnlyTheLoggedWorkout() throws {
-        let app = UITestNavigation.launch(UITestNavigation.emptyWorkout)
-        let sessions = app.buttons["today.sessions"]
-        XCTAssertTrue(UITestNavigation.appears(sessions))
-        XCTAssertTrue(
-            settle(sessions, NSPredicate(format: "value == %@", "1")),
-            "Today's session total must leave the empty workout out, but it reads \(sessions.value as? String ?? "nothing")"
-        )
-
-        // Both workouts started within the last 30 minutes, so they are in
-        // this week unless the week (Monday, the fresh store's setting)
-        // began even more recently.
-        var calendar = Calendar.current
-        calendar.firstWeekday = 2
-        if let weekStart = calendar.dateInterval(of: .weekOfYear, for: Date())?.start,
-           Date().timeIntervalSince(weekStart) > 45 * 60 {
-            let thisWeek = element(labeled: "Sessions this week", in: app)
-            XCTAssertTrue(thisWeek.exists, "Today shows no This week count")
-            XCTAssertEqual(thisWeek.value as? String, "1", "This week's count must leave the empty workout out")
-        }
-    }
-
-    @MainActor
     func testHistoryCountsOnlyTheLoggedWorkout() throws {
         let app = UITestNavigation.launch(UITestNavigation.emptyWorkout)
-        let sessions = app.buttons["today.sessions"]
-        XCTAssertTrue(UITestNavigation.appears(sessions))
-        sessions.tap()
+        XCTAssertTrue(UITestNavigation.appears(app.otherElements["today.root"]))
+        UITestNavigation.selectTab("Progress", in: app)
+        app.buttons["progress.history"].tap()
 
         let rows = app.buttons.matching(identifier: "history.row")
         XCTAssertTrue(UITestNavigation.appears(rows.firstMatch))
@@ -156,22 +130,6 @@ final class EmptyWorkoutCountsUITests: XCTestCase {
 
         let names = app.staticTexts.matching(NSPredicate(format: "label IN %@", pushANames))
         XCTAssertGreaterThanOrEqual(names.count, 2, "Compare shows fewer than two exercises side by side")
-    }
-
-    // MARK: - A logged workout yesterday, an empty one today
-
-    @MainActor
-    func testDayStreakCountsOnlyTheLoggedWorkout() throws {
-        let app = UITestNavigation.launch(UITestNavigation.emptyToday)
-        let streak = element(labeled: "Day streak", in: app)
-        XCTAssertTrue(UITestNavigation.appears(streak), "Today shows no Day streak")
-        // The empty workout started two minutes before launch: in the first
-        // two minutes after midnight it fell yesterday, beside the logged
-        // one, and the streak reads 1 under any rule.
-        XCTAssertTrue(
-            settle(streak, NSPredicate(format: "value == %@", "1 day")),
-            "The empty workout today must not add a day to the streak, but it reads \(streak.value as? String ?? "nothing")"
-        )
     }
 
     // MARK: - Helpers

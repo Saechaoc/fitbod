@@ -60,31 +60,19 @@ final class BlockWeekCountsUITests: XCTestCase {
         let app = UITestNavigation.launch(UITestNavigation.blockStatesPastPlan)
         var problems: [String] = []
 
-        // Today's band.
+        // Today's plan line.
         UITestNavigation.selectTab("Today", in: app)
-        let band = app.staticTexts.labeled("SPRING BLOCK")
-        XCTAssertTrue(UITestNavigation.appears(band), "Today must show Spring Block's band")
-        UITestNavigation.reveal(band, in: app)
-        // The ticker's pixels are read once the screen stops moving.
-        UITestNavigation.waitUntilStill(band)
-        let ticker = (1...4).map { app.staticTexts["W\($0)"] }
-        let todayShot = XCUIScreen.main.screenshot()
-        if !app.staticTexts["PLAN COMPLETE"].exists {
-            problems.append("Today's band has no PLAN COMPLETE chip")
+        let line = app.buttons["today.planLine"]
+        XCTAssertTrue(UITestNavigation.appears(line), "Today must show Spring Block's plan line")
+        UITestNavigation.reveal(line, in: app)
+        if line.label != "Spring Block, Plan complete" {
+            problems.append("Today's plan line reads \"\(line.label)\"")
+        }
+        if !(1...4).allSatisfy({ !app.staticTexts["W\($0)"].exists }) {
+            problems.append("Today still shows a week ticker")
         }
         for phase in Self.phaseNames where app.staticTexts[phase].exists {
-            problems.append("Today's band shows the \(phase) chip")
-        }
-        // A past week is faint, the current week ink and a later week paper.
-        for (index, cell) in ticker.enumerated() {
-            guard cell.exists else {
-                problems.append("Today's ticker has no W\(index + 1)")
-                continue
-            }
-            let fill = CGPoint(x: cell.frame.minX + 4, y: cell.frame.midY)
-            if let problem = UITestNavigation.colorProblem(at: fill, in: todayShot, is: Self.faint, tolerance: 12) {
-                problems.append("W\(index + 1) on Today's ticker is not past: \(problem)")
-            }
+            problems.append("Today shows the \(phase) chip")
         }
 
         // Program's block row.
@@ -151,17 +139,14 @@ final class BlockWeekCountsUITests: XCTestCase {
     /// Spring Block's three phases.
     private static let phaseNames = ["Accumulation", "Intensification", "Deload"]
 
-    /// bruFaint in light mode, a past week's fill.
-    private static let faint = UITestNavigation.RGB(hex: 0xE8E5DD)
-
     /// Opens Spring Block's overview from Today's block band.
     @MainActor
     private func openSpringBlockFromToday(in app: XCUIApplication) {
         UITestNavigation.selectTab("Today", in: app)
-        let band = app.staticTexts.labeled("SPRING BLOCK")
-        XCTAssertTrue(UITestNavigation.appears(band), "Today must show Spring Block's band")
-        UITestNavigation.reveal(band, in: app)
-        band.tap()
+        let line = app.buttons["today.planLine"]
+        XCTAssertTrue(UITestNavigation.appears(line), "Today must show Spring Block's plan line")
+        UITestNavigation.reveal(line, in: app)
+        line.tap()
         XCTAssertTrue(UITestNavigation.appears(hero(in: app)), "The band must open Spring Block's overview")
     }
 

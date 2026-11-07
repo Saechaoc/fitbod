@@ -109,8 +109,8 @@ final class BlockLifecycleEntryPointsUITests: XCTestCase {
     @MainActor
     private func openActiveBlockOverview(in app: XCUIApplication, file: StaticString = #filePath, line: UInt = #line) {
         UITestNavigation.selectTab("Today", in: app)
-        let band = app.staticTexts.labeled("LIVE BLOCK")
-        XCTAssertTrue(UITestNavigation.appears(band), "Today must show the active block's band", file: file, line: line)
+        let band = app.buttons["today.planLine"]
+        XCTAssertTrue(UITestNavigation.appears(band), "Today must show the active block's plan line", file: file, line: line)
         band.tap()
         XCTAssertTrue(UITestNavigation.appears(app.buttons.labeled("END BLOCK")),
                       "The band must open the active block's overview", file: file, line: line)
@@ -122,7 +122,7 @@ final class BlockLifecycleEntryPointsUITests: XCTestCase {
         UITestNavigation.selectTab("Today", in: app)
         XCTAssertTrue(UITestNavigation.appears(app.staticTexts.labeled("No active block.")),
                       "Today must say it has no active block", file: file, line: line)
-        XCTAssertFalse(app.staticTexts.labeled("LIVE BLOCK").exists,
+        XCTAssertFalse(app.buttons["today.planLine"].exists,
                        "Today must drop the ended block's band", file: file, line: line)
     }
 

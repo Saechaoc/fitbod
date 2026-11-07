@@ -22,11 +22,12 @@ final class SwipeBackUITests: XCTestCase {
     // MARK: - Today
 
     @MainActor
-    func testHistorySwipesBackToToday() throws {
+    func testHistorySwipesBackToProgress() throws {
         let app = UITestNavigation.launch(UITestNavigation.seededWorkout)
-        let sessions = app.buttons["today.sessions"]
-        open(sessions, in: app)
-        assertSwipeBack(from: historyRow(in: app), "History", to: sessions, in: app)
+        UITestNavigation.selectTab("Progress", in: app)
+        let workouts = app.buttons["progress.history"]
+        open(workouts, in: app)
+        assertSwipeBack(from: historyRow(in: app), "History", to: workouts, in: app)
     }
 
     // MARK: - Root screens
@@ -41,10 +42,10 @@ final class SwipeBackUITests: XCTestCase {
     func testSwipeOnARootScreenDoesNothing() throws {
         let app = UITestNavigation.launch(UITestNavigation.freshStore)
 
-        let sessions = app.buttons["today.sessions"]
-        assertRootIgnoresSwipe(sessions, alongRowOf: app.staticTexts["Fitbod / Today"], "Today", in: app)
+        let newRoutine = UITestNavigation.hittable(app.buttons, "+ NEW ROUTINE")
+        assertRootIgnoresSwipe(newRoutine, alongRowOf: app.staticTexts["Fitbod / Today"], "Today", in: app)
         UITestNavigation.saveScreenshot("T18", "today-after-root-swipe")
-        assertStillNavigates(from: sessions, to: app.staticTexts["No sessions yet"], in: app)
+        assertStillNavigates(from: newRoutine, to: nameStep(in: app), in: app)
 
         UITestNavigation.selectTab("Program", in: app)
         let program = app.staticTexts["PROGRAM"]
