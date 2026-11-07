@@ -201,6 +201,8 @@ enum BlockStatesSeed {
             phase.orderIndex = index
             phase.nameRaw = row.kind.rawValue
             phase.weeks = row.weeks
+            // The catalog's deload volume (BlockDraft.swift), so the deload seed cuts sets as a real block does.
+            if row.kind == .deload { phase.volumeMultiplier = 0.5 }
         }
         return block
     }
