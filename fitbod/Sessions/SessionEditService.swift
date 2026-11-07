@@ -151,7 +151,7 @@ public enum SessionEditService {
                 try context.save()
             }
         } catch {
-            context.rollback()
+            SessionSetActions.rollBack(context)
             throw error
         }
     }

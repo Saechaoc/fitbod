@@ -520,7 +520,7 @@ struct CustomExerciseEditor: View {
             try modelContext.save()
             dismiss()
         } catch {
-            modelContext.rollback()
+            SessionSetActions.rollBack(modelContext)
             persistenceError = "Your changes could not be stored. They are still in this form; try saving again."
         }
     }
@@ -531,7 +531,7 @@ struct CustomExerciseEditor: View {
             try ExerciseDeletion.delete(target, context: modelContext)
             dismiss()
         } catch {
-            modelContext.rollback()
+            SessionSetActions.rollBack(modelContext)
             persistenceError = "The exercise could not be deleted. Try again."
         }
     }

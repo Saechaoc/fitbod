@@ -140,9 +140,24 @@ public enum SessionSetActions {
         do {
             try context.save()
         } catch {
-            context.rollback()
+            rollBack(context)
             throw error
         }
+    }
+
+    /// Undoes every unsaved change, and shows it: SwiftData (Xcode 26.5)
+    /// leaves loaded models reading the discarded values after
+    /// `rollback()` until they are fetched again, so the changed and
+    /// deleted ones are fetched again here. Inserted ones are simply gone.
+    static func rollBack(_ context: ModelContext) {
+        let touched = context.changedModelsArray + context.deletedModelsArray
+        context.rollback()
+        for model in touched { refetch(model, in: context) }
+    }
+
+    private static func refetch<T: PersistentModel>(_ model: T, in context: ModelContext) {
+        let id = model.persistentModelID
+        _ = try? context.fetch(FetchDescriptor<T>(predicate: #Predicate { $0.persistentModelID == id }))
     }
 
     /// Lower the weight of every not-yet-completed working set by

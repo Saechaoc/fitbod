@@ -575,7 +575,7 @@ public struct RoutineBuilderView: View {
         } catch {
             // Roll back so the refused change can't fail every later save;
             // the draft keeps the edits for another try.
-            ctx.rollback()
+            SessionSetActions.rollBack(ctx)
             saveErrorMessage = "The session wasn't saved. Try again."
             return
         }
@@ -592,7 +592,7 @@ public struct RoutineBuilderView: View {
             try ctx.save()
             dismiss()
         } catch {
-            ctx.rollback()
+            SessionSetActions.rollBack(ctx)
             saveErrorMessage = "The copy wasn't saved. Try again."
         }
     }
@@ -626,7 +626,7 @@ public struct RoutineBuilderView: View {
             try ctx.save()
             dismiss()
         } catch {
-            ctx.rollback()
+            SessionSetActions.rollBack(ctx)
             saveErrorMessage = "The session wasn't archived. Try again."
         }
     }

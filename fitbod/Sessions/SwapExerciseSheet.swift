@@ -89,13 +89,7 @@ struct VariationUndoSnapshot {
                 try save(context)
             }
         } catch {
-            context.rollback()
-            // SwiftData (Xcode 26.5) leaves loaded models showing the discarded
-            // values after a rollback until they are fetched again.
-            let exerciseID = sessionExercise.id
-            let setIDs = current.map(\.id)
-            _ = try? context.fetch(FetchDescriptor<SessionExercise>(predicate: #Predicate { $0.id == exerciseID }))
-            _ = try? context.fetch(FetchDescriptor<SetEntry>(predicate: #Predicate { setIDs.contains($0.id) }))
+            SessionSetActions.rollBack(context)
             throw error
         }
     }

@@ -339,7 +339,7 @@ public actor ExerciseLibraryImporter {
             // user retries / app relaunches) finds the rows that DID make
             // it to disk by externalID and slug and inserts only the rest,
             // so retry succeeds cleanly (review WR-01).
-            modelContext.rollback()
+            SessionSetActions.rollBack(modelContext)
             Self.log.error("Seed failed mid-import — rolling back: \(error.localizedDescription)")
             throw error
         }
