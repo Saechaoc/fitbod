@@ -94,6 +94,11 @@ public struct ExerciseLibraryView: View {
             NavigationStack(path: effectivePath) {
                 content
             }
+            // Search keeps focus under a pushed exercise otherwise, and comes
+            // back editing with no keyboard, which keeps the tab bar hidden.
+            .onChange(of: effectivePath.wrappedValue.count) { _, depth in
+                if depth > 0 { searchFocused = false }
+            }
         }
     }
 
