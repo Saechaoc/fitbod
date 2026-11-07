@@ -3,6 +3,16 @@
 Newest first.
 One entry per iteration: what changed and why.
 
+## 2026-11-07, step 1.2 landed
+
+The hero reads TODAY on a fixed-weekly block and NEXT UP · n OF m on a rotation, in place of NEXT and the DAY counter.
+Its set count and each exercise row count the working sets the phase yields, through `PeriodizationEngine.workingSetCount`, the one rule the session factory now plans from.
+The deload caption "Deload week · lighter sets" lands in the hero here, since 1.1 removed the banner.
+The list head reads EXERCISES · n with VIEW ›, which opens the session, and the rows drop the COMPOUND and WORK chips and the warm-up count.
+The hero keeps its 3 min per set estimate while the session detail's differs, as before this step.
+The hand-made block seeds (`BlockStatesSeed`) give deload phases the catalog's 0.5 volume, so the deload capture and UI test cut sets as a real block does.
+`SessionFactory.start` and `WorkoutStarter.start` take a calendar, `.current` by default, so Today's hero, rows and start read the same block day.
+
 ## 2026-11-06, step 1.1 landed
 
 `TodayState` resolves the Today state table and the plan line (block name over `WEEK N OF M · PHASE`, or `PLAN COMPLETE`) replaces the stat strip, block band and week cells.
