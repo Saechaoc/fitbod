@@ -32,6 +32,8 @@
 //  `-fitbod-seed-block-states-past-plan` seeds the same blocks and
 //  workouts with Spring Block started five weeks ago, so its four-week
 //  plan is over and it shows PLAN COMPLETE (T78).
+//  `-fitbod-seed-block-states-deload` starts Spring Block 22 days ago, so
+//  Today is in its deload week (WEEK 4 OF 4 · DELOAD).
 //
 
 import Foundation
@@ -41,12 +43,16 @@ enum BlockStatesSeed {
     static let launchArgument = "-fitbod-seed-block-states"
     static let pastPlanLaunchArgument = "-fitbod-seed-block-states-past-plan"
 
+    static let deloadLaunchArgument = "-fitbod-seed-block-states-deload"
+
     @MainActor
     static func runIfRequested(in context: ModelContext) {
         #if DEBUG
         let arguments = ProcessInfo.processInfo.arguments
         if arguments.contains(pastPlanLaunchArgument) {
             seed(activeStartedDaysAgo: 35, in: context)
+        } else if arguments.contains(deloadLaunchArgument) {
+            seed(activeStartedDaysAgo: 22, in: context)
         } else if arguments.contains(launchArgument) {
             seed(activeStartedDaysAgo: 3, in: context)
         }

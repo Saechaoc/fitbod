@@ -3,6 +3,17 @@
 Newest first.
 One entry per iteration: what changed and why.
 
+## 2026-11-06, step 1.1 landed
+
+`TodayState` resolves the Today state table and the plan line (block name over `WEEK N OF M · PHASE`, or `PLAN COMPLETE`) replaces the stat strip, block band and week cells.
+`PlanCompleteNote` and Today's end alert are deleted: the plan line opens Block overview, where END BLOCK lives.
+The ready block Today shows is now the oldest created (O-6).
+`DeloadAdvisory.bannerCopy` is deleted, and the deload week shows no banner, only the advisory row.
+`BlockOverviewScreen.stripHeader` takes a date.
+`TodayState.pick` carries no payload until step 1.3.
+`-fitbod-seed-block-states-deload` seeds Spring Block 22 days in, for the deload capture.
+The long-name capture renames the Powerbuilding block to "Powerbuilding Winter Strength and Size Block Two Revised" (through the simulator store, since "Powerbuilding" alone fits), and the name line ends in an ellipsis while the position line stays whole.
+
 ## 2026-11-05, product calls
 
 The user asked for the fourteen open product calls to be made.
