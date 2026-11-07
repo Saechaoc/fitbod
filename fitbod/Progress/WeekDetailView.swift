@@ -245,10 +245,10 @@ enum WeekDetailGrouping {
         let calendar = WeeklyTonnageAggregator.weekCalendar(weekStartsMonday: weekStartsMonday)
         var byWorkout: [UUID?: [SetEntry]] = [:]
         var total = 0.0
-        for set in sets where WeeklyTonnageAggregator.counts(set)
+        for set in sets where set.tonnage > 0
             && calendar.dateInterval(of: .weekOfYear, for: set.completedAt)?.start == weekStart {
             byWorkout[set.sessionExercise?.session?.id, default: []].append(set)
-            total += set.weight * Double(set.reps)
+            total += set.tonnage
         }
         let workouts = byWorkout
             .map { id, sets in
@@ -256,7 +256,7 @@ enum WeekDetailGrouping {
                     id: id,
                     name: sets.first?.sessionExercise?.session?.routineSnapshotName ?? "",
                     day: sets.map(\.completedAt).min() ?? weekStart,
-                    tonnage: sets.reduce(0.0) { $0 + $1.weight * Double($1.reps) }
+                    tonnage: sets.reduce(0.0) { $0 + $1.tonnage }
                 )
             }
             .sorted { $0.day > $1.day }

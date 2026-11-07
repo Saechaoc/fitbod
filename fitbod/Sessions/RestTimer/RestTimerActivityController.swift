@@ -19,19 +19,17 @@
 //      and cancels any pending debounce task.
 //
 //  Test seam: `RestTimerActivityControlling` protocol + `NoopActivityController`
-//  let `RestTimerEngine` (plan 02-03) be unit-tested without touching the
-//  real ActivityKit framework. The bridge (`RestTimerLiveActivityBridge`)
-//  is the concrete delegate that owns a `RestTimerActivityController` and
-//  wires it into `RestTimerEngine`.
+//  let `RestTimerEngine` be unit-tested without touching the real
+//  ActivityKit framework. `RestTimerEngine.makeProduction()` wires this
+//  controller into the engine directly.
 //
 
 import Foundation
 @preconcurrency import ActivityKit
 
 /// Abstraction over ActivityKit for unit-testability and for the silent-
-/// fallback contract (RESEARCH §6 Pitfall 3). `RestTimerEngine` in plan
-/// 02-03 will hold a delegate of this shape and call through it on every
-/// start / adjust / stop transition.
+/// fallback contract (RESEARCH §6 Pitfall 3). `RestTimerEngine` holds one
+/// and calls through it on every start / adjust / stop transition.
 @MainActor
 public protocol RestTimerActivityControlling {
     /// Start a new Live Activity. Idempotent — if one is already running,
@@ -182,9 +180,8 @@ public final class RestTimerActivityController: RestTimerActivityControlling {
     }
 }
 
-/// No-op controller for unit tests + previews + simulator fallback.
-/// `RestTimerEngine` in plan 02-03 will accept this in its initializer
-/// so tests can run without touching ActivityKit.
+/// No-op controller for unit tests + previews: `RestTimerEngine`'s default,
+/// so tests run without touching ActivityKit.
 @MainActor
 public final class NoopActivityController: RestTimerActivityControlling {
     public init() {}

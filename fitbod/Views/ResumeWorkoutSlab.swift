@@ -53,19 +53,9 @@ public struct ResumeWorkoutSlab: View {
         return session.routineSnapshotName
     }
 
-    /// Elapsed time string: "mm:ss" for < 60 min, "h:mm" for >= 60 min
+    /// Elapsed time: "m:ss" below an hour, "h:mm" from an hour on.
     private func elapsedString(at now: Date) -> String {
-        let elapsed = now.timeIntervalSince(session.startedAt)
-        let totalSeconds = max(0, Int(elapsed))
-        if totalSeconds < 3600 {
-            let m = totalSeconds / 60
-            let s = totalSeconds % 60
-            return String(format: "%d:%02d", m, s)
-        } else {
-            let h = totalSeconds / 3600
-            let m = (totalSeconds % 3600) / 60
-            return String(format: "%d:%02d", h, m)
-        }
+        NumberText.elapsed(max(0, Int(now.timeIntervalSince(session.startedAt))))
     }
 
     // MARK: - Body

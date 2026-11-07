@@ -14,6 +14,7 @@
 //   set-count summary row
 //   BRUDivider(.hair)
 //   one ExerciseHistoryRow per workout, newest first; the row carries the date
+//   and opens that workout's summary, where it can be corrected
 //   PRStripFooter at bottom
 //
 // ## Empty states (UI-SPEC verbatim)
@@ -180,9 +181,18 @@ private struct FilteredHistoryContent: View {
         if completed.isEmpty {
             emptyState
         } else {
-            // One row per workout, which shows its date.
+            // One row per workout, which shows its date and opens the
+            // workout's summary (a row's id is its workout's).
             ForEach(rows) { entry in
-                ExerciseHistoryRow(entry: entry)
+                NavigationLink {
+                    SessionSummaryDestination(sessionID: entry.id)
+                } label: {
+                    ExerciseHistoryRow(entry: entry)
+                }
+                .buttonStyle(.bruRow)
+                // The row's date, e1RM and set chips stay readable one by one.
+                .accessibilityElement(children: .contain)
+                .accessibilityIdentifier("exerciseHistory.row")
                 BRUDivider(.hair)
             }
 
@@ -230,7 +240,7 @@ private struct FilteredHistoryContent: View {
 
     /// Tonnage display label (e.g. "71.2k").
     private func tonnageLabel(from sets: [(setEntry: SetEntry, sessionExercise: SessionExercise)]) -> String {
-        let total = sets.reduce(0.0) { $0 + $1.setEntry.weight * Double($1.setEntry.reps) }
+        let total = sets.reduce(0.0) { $0 + $1.setEntry.tonnage }
         if total >= 1000 {
             return String(format: "%.1fk", total / 1000)
         }
@@ -264,21 +274,14 @@ private struct FilteredHistoryContent: View {
         let topWeight = allSets.max(by: { $0.weight < $1.weight })
         let topReps = allSets.max(by: { $0.reps < $1.reps })
 
-        let topWeightLabel: String
-        if let tw = topWeight {
-            topWeightLabel = tw.weight.truncatingRemainder(dividingBy: 1) == 0
-                ? "\(Int(tw.weight))"
-                : String(format: "%.1f", tw.weight)
-        } else {
-            topWeightLabel = "—"
-        }
+        let topWeightLabel = topWeight.map { NumberText.weight($0.weight) } ?? "—"
 
         let topRepsLabel = topReps.map { "\($0.reps)" } ?? "—"
 
         // Volume PR = session with highest total volume
         let bySession = Dictionary(grouping: sets) { $0.sessionExercise.session?.id }
         let sessionVols = bySession.values.map { pairs in
-            pairs.reduce(0.0) { $0 + $1.setEntry.weight * Double($1.setEntry.reps) }
+            pairs.reduce(0.0) { $0 + $1.setEntry.tonnage }
         }
         let maxVol = sessionVols.max() ?? 0
         let volLabel: String
@@ -410,18 +413,8 @@ extension ExerciseHistoryView {
     static func prSets(
         from sets: [(setEntry: SetEntry, sessionExercise: SessionExercise)]
     ) -> Set<ObjectIdentifier> {
-        let oldestFirst = sets.sorted { a, b in
-            let aStart = a.sessionExercise.session?.startedAt ?? .distantPast
-            let bStart = b.sessionExercise.session?.startedAt ?? .distantPast
-            return (aStart, a.setEntry.completedAt, a.sessionExercise.orderIndex, a.setEntry.orderIndex)
-                < (bStart, b.setEntry.completedAt, b.sessionExercise.orderIndex, b.setEntry.orderIndex)
-        }
         var table = PRTable()
-        var prSetIDs: Set<ObjectIdentifier> = []
-        for pair in oldestFirst where !PRDetector.check(set: pair.setEntry, against: &table).isEmpty {
-            prSetIDs.insert(ObjectIdentifier(pair.setEntry))
-        }
-        return prSetIDs
+        return Set(PRDetector.replay(sets.map(\.setEntry), into: &table).map { ObjectIdentifier($0.set) })
     }
 }
 
@@ -493,19 +486,15 @@ extension ExerciseHistoryView {
         )
     }
 
-    /// A set's e1RM as a row shows it: Epley on the reps done plus the
-    /// reps left, 10 - RPE, with RPE 8 when none was logged.
+    /// A set's e1RM, as Progress and the PR list estimate it; 0 when the
+    /// estimate leaves the set out (more than 10 reps, or no load).
     private static func e1RM(of set: SetEntry) -> Double {
-        let rpe = set.rpe ?? 8.0
-        let rir = 10.0 - rpe
-        return set.weight * (1 + (Double(set.reps) + rir) / 30.0)
+        OneRepMaxEstimator.estimate(weight: set.weight, reps: set.reps) ?? 0
     }
 
     /// A set as its chip and the TOP line read, such as "107.5×2 @9.5".
     private static func setLabel(_ set: SetEntry) -> String {
-        let w = set.weight.truncatingRemainder(dividingBy: 1) == 0
-            ? "\(Int(set.weight))"
-            : String(format: "%.1f", set.weight)
+        let w = NumberText.weight(set.weight)
         if let rpe = set.rpe {
             let rpeStr = rpe.truncatingRemainder(dividingBy: 1) == 0
                 ? "\(Int(rpe))" : String(format: "%.1f", rpe)

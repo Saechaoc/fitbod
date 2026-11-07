@@ -61,6 +61,12 @@ public struct SessionExerciseCard: View {
     @State private var suggestedAction: SuggestedAction? = nil
     @State private var presentingTryVariation: Bool = false
     @State private var presentingDeloadSignalSheet: Bool = false
+    /// Captured inputs and prescription, retained until Undo succeeds.
+    @State private var variationUndo: VariationUndoSnapshot?
+    @State private var undoFailed = false
+    /// "View all similar exercises" asks for the full swap list, which
+    /// opens once the variation sheet has gone.
+    @State private var swapListAfterVariation = false
 
     @Environment(\.modelContext) private var phase5ModelContext
 
@@ -129,6 +135,7 @@ public struct SessionExerciseCard: View {
                 .padding(.vertical, 12)
                 .contextMenu {
                     Button {
+                        variationUndo = nil
                         onSwap(sessionExercise)
                     } label: {
                         // System contextMenu chrome is HIG-acceptable per UI-SPEC line 261.
@@ -148,6 +155,36 @@ public struct SessionExerciseCard: View {
                 }
 
                 BRUDivider(.hair)
+
+                // A picked variation can be undone until a set of it is
+                // logged; after that the logged sets belong to it.
+                if let original = variationUndo, !hasLoggedWorkingSet {
+                    HStack(spacing: 8) {
+                        Text("Swapped from \(original.displayName)")
+                            .font(BRUFont.labelSmall)
+                            .tracking(1.2)
+                            .textCase(.uppercase)
+                            .foregroundStyle(Color.bruMuted)
+                            .fixedSize(horizontal: false, vertical: true)
+                        Spacer(minLength: 8)
+                        Button {
+                            undoVariation()
+                        } label: {
+                            Text("Undo")
+                                .font(BRUFont.labelSmall)
+                                .tracking(1.2)
+                                .textCase(.uppercase)
+                                .foregroundStyle(Color.bruSignalText)
+                                .frame(minWidth: 44, minHeight: 44)
+                                .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel("Undo, back to \(original.displayName)")
+                        .accessibilityIdentifier("card.undoVariation")
+                    }
+                    .padding(.horizontal, 16)
+                    BRUDivider(.hair)
+                }
 
                 // Row 2: Optional PinnedNoteCapsule mount point (rewritten in Plan 02.1-08)
                 if let note = sessionExercise.pinnedNote, !note.isEmpty {
@@ -196,7 +233,11 @@ public struct SessionExerciseCard: View {
                             exerciseName: exerciseName,
                             sessionCount: e1RMs.count
                         )
-                        if let action = suggestedAction {
+                        // A variation takes over the whole card, its logged
+                        // sets too, so like UNDO it is offered only before a
+                        // working set is logged.
+                        if let action = suggestedAction,
+                           action != .tryVariation || !hasLoggedWorkingSet {
                             SuggestedActionChip(action: action) {
                                 handleSuggestedAction(action)
                             }
@@ -259,6 +300,31 @@ public struct SessionExerciseCard: View {
                     bannerDismissed = true
                 }
             }
+            // Present from one concrete row, not the multi-row Section.
+            .sheet(isPresented: $presentingTryVariation, onDismiss: {
+                guard swapListAfterVariation else { return }
+                swapListAfterVariation = false
+                variationUndo = nil
+                onSwap(sessionExercise)
+            }) {
+                if let source = sessionExercise.exercise {
+                    TryVariationSheet(sourceExercise: source) { picked in
+                        if let picked {
+                            let original = VariationUndoSnapshot(sessionExercise)
+                            SwapExerciseSheet.swap(sessionExercise, to: picked, context: ctx)
+                            variationUndo = original
+                        } else {
+                            swapListAfterVariation = true
+                        }
+                        presentingTryVariation = false
+                    }
+                }
+            }
+            .alert("Couldn't undo variation", isPresented: $undoFailed) {
+                Button("OK", role: .cancel) {}
+            } message: {
+                Text("The workout wasn't restored. Your undo is still available; try again.")
+            }
 
             // SetRows — one List row each so swipe-to-delete works.
             ForEach(sortedSets) { set in
@@ -269,11 +335,17 @@ public struct SessionExerciseCard: View {
                             sessionExercise: sessionExercise,
                             prescribed: sessionExercise.prescribedWeight,
                             explanation: explanation,
-                            onCommit: { onCommitSet(set) },
+                            onCommit: {
+                                onCommitSet(set)
+                                if set.isComplete { variationUndo = nil }
+                            },
                             onTapEmptyCell: onTapEmptyCell,
                             onUncomplete: { onUncompleteSet(set) },
                             onEditCommitted: onEditCommitted
                         )
+                        // A swap/Undo changes the inputs behind these local
+                        // text fields, not the persisted set's identity.
+                        .id(sessionExercise.exercise?.id)
                         if sessionExercise.tracksTempo {
                             TempoEntryRow(entry: set)
                         }
@@ -326,17 +398,13 @@ public struct SessionExerciseCard: View {
             EmptyView()
         }
         .listSectionSeparator(.hidden)
-        // Phase 5 PROG-06 — evaluate plateau signal on first appear + exercise change
-        .task(id: sessionExercise.id) {
+        // Phase 5 PROG-06 — evaluate plateau signal on first appear and
+        // whenever a swap changes the exercise.
+        .task(id: sessionExercise.exercise?.id) {
             evaluatePlateau()
         }
-        // Phase 5 PROG-06 Branch 4 — TryVariationSheet
-        .sheet(isPresented: $presentingTryVariation) {
-            if let source = sessionExercise.exercise {
-                TryVariationSheet(sourceExercise: source) { _ in
-                    presentingTryVariation = false
-                }
-            }
+        .onChange(of: hasLoggedWorkingSet) { _, logged in
+            if logged { variationUndo = nil }
         }
         // Phase 5 PROG-06 Branch 3 — DeloadSignalDetailSheet
         .sheet(isPresented: $presentingDeloadSignalSheet) {
@@ -355,6 +423,16 @@ public struct SessionExerciseCard: View {
     }
 
     // MARK: - Phase 5 PROG-06 helpers
+
+    private func undoVariation() {
+        guard let original = variationUndo else { return }
+        do {
+            try original.restore(to: sessionExercise, context: ctx)
+            variationUndo = nil
+        } catch {
+            undoFailed = true
+        }
+    }
 
     @MainActor
     private func evaluatePlateau() {
@@ -430,6 +508,11 @@ public struct SessionExerciseCard: View {
         return name.isEmpty ? "Exercise" : name
     }
 
+    /// A working set of this exercise is logged.
+    private var hasLoggedWorkingSet: Bool {
+        (sessionExercise.sets ?? []).contains { $0.isComplete && !$0.isWarmup }
+    }
+
     private var sortedSets: [SetEntry] {
         (sessionExercise.sets ?? [])
             .filter { !$0.isWarmup }
@@ -472,59 +555,23 @@ public struct SessionExerciseCard: View {
 
     // MARK: - currentExplanation (Phase 3 plan 03-08)
 
+    /// What WHY explains: `SessionFactory`'s prescription for this
+    /// exercise, frozen at the weight the sets were started with.
     private func currentExplanation() -> PrescriptionExplanation? {
         let se = sessionExercise
-        let userSettings = settingsList.first
-
-        let exerciseID = se.exercise?.id
-        let intentRaw = se.session?.intentRaw ?? Intent.strength.rawValue
-
-        let (barWeight, plates) = plateSetup
-
-        let smallestIncrement = SessionFactory.prescriptionIncrement(for: se.exercise, settings: userSettings)
-        let minCalibrationSets = userSettings?.minCalibrationSets ?? 10
-
-        let historyPoints = SessionFactory.fetchHistoryPoints(
-            exerciseID: exerciseID,
-            intentRaw: intentRaw,
-            context: ctx
-        )
-        let lastRepsArray = SessionFactory.lastSessionWorkingReps(
-            exerciseID: exerciseID,
-            intentRaw: intentRaw,
-            context: ctx
-        )
-        let lastHint = PreviousMatchingIntent.fetchTopWorkingSet(
-            exerciseID: exerciseID,
-            intentRaw: intentRaw,
-            context: ctx,
-            excludingSessionID: se.session?.id
-        )
-
-        var strategy = ProgressionStrategyFactory.make(for: se.session?.progressionKind ?? .double)
-        strategy.roundingIncrement = SessionFactory.plateEquipmentKind(for: se.exercise?.equipment ?? .other) == nil
-            ? smallestIncrement : nil
-        let (_, explanation) = strategy.prescribe(
-            history: historyPoints,
+        guard let session = se.session else { return nil }
+        var explanation = SessionFactory.prescription(
+            for: se.exercise,
             targetRepsLow: se.targetRepsLow,
             targetRepsHigh: se.targetRepsHigh,
             targetRPE: se.targetRPE,
-            lastSessionRepsArray: lastRepsArray.isEmpty ? nil : lastRepsArray,
-            smallestIncrement: smallestIncrement,
-            plates: plates,
-            barWeight: barWeight,
-            unit: unit,
-            minCalibrationSets: minCalibrationSets,
-            lastSessionWeight: lastHint?.weight,
-            lastSessionReps: lastHint?.reps,
-            lastSessionRPE: lastHint?.rpe,
-            lastSessionDate: lastHint?.sessionStartedAt,
-            block: se.session?.block,
-            today: se.session?.startedAt ?? Date.now
-        )
-        var enriched = explanation
-        enriched.sessionIntent = se.session?.intent
-        return enriched
+            in: session,
+            strategy: ProgressionStrategyFactory.make(for: session.progressionKind),
+            userSettings: settingsList.first,
+            context: ctx
+        ).explanation
+        explanation.sessionIntent = session.intent
+        return explanation.frozen(at: se.prescribedWeight, unitLabel: unit.rawValue)
     }
 
     // MARK: - handleSkipWarmups

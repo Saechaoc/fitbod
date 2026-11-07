@@ -3,7 +3,8 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-last_updated: "2026-10-30T00:18:55.000Z"
+last_updated: "2026-11-04T02:35:51Z"
+last_activity: 2026-11-04
 progress:
   total_phases: 15
   completed_phases: 15
@@ -368,6 +369,7 @@ None.
 | 261102-ayp | Land draft v4 of the Today and Program redesign bundle after the Codex reviews | 2026-11-02 | e403d287 | [261102-ayp-land-draft-v4-of-the-today-and-program-r](./quick/261102-ayp-land-draft-v4-of-the-today-and-program-r/) |
 | 261102-g8s | Land draft v5 of the Today and Program redesign bundle after the Codex coverage and feasibility reviews | 2026-11-02 | 8fd223ed | [261102-g8s-land-draft-v5-of-the-today-and-program-r](./quick/261102-g8s-land-draft-v5-of-the-today-and-program-r/) |
 | 261102-nuz | Land draft v6 of the Today and Program redesign bundle after the Codex feasibility review | 2026-11-02 | 084edd78 | [261102-nuz-land-draft-v6-of-the-today-and-program-r](./quick/261102-nuz-land-draft-v6-of-the-today-and-program-r/) |
+| 261103-o9o | Fix four reviewed workout regressions: full-string localized correction parsing and checked totals, lossless variation Undo, and effective exercise-unit labels. 1,233 unit passes plus one existing expected failure; 11 serial UI/relaunch cases pass. | 2026-11-04 | b8910f1, b55a763, a3c4e52 | [261103-o9o-fix-four-verified-workout-workflow-regre](./quick/261103-o9o-fix-four-verified-workout-workflow-regre/) |
 | 261105-pdc | Make the fourteen open product calls for the Today and Program redesign (gsd-fast): each takes the default the layouts assume, recorded with a reason in docs/design-map/redesign/open-decisions.md; draft v6 stands unchanged | 2026-11-05 | 2d6801ee | - (fast task, no dir) |
 
 ---

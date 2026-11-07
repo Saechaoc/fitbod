@@ -5,11 +5,10 @@
 // UI-SPEC v2 § Session logger line 583.
 //
 // Slim resume banner that appears whenever an active (completedAt == nil)
-// Session exists. Mounted at the top of the Routines tab (RoutinesListView).
+// Session exists. Mounted at the top of the Program tab (ProgramView).
 //
 // NOTE: This is DISTINCT from Plan 02.1-04's ResumeWorkoutSlab which lives in
-// fitbod/Views/. This banner (Sessions/) is the slim variant used in the
-// session logger context.
+// fitbod/Views/ and shows on Today.
 //
 // UI-SPEC verbatim copy:
 //   Leading label:  "RESUME"              (labelSmall bruMuted)
@@ -73,7 +72,7 @@ public struct ResumeWorkoutBanner: View {
                     .textCase(.uppercase)
                     .foregroundStyle(Color.bruMuted)
 
-                Text(active.routineSnapshotName)
+                Text(active.displayName)
                     .font(BRUFont.bodyEmphasis)
                     .foregroundStyle(Color.bruInk)
 
@@ -132,17 +131,10 @@ public struct ResumeWorkoutBanner: View {
             : AnyLayout(HStackLayout(spacing: 12))
     }
 
-    /// Formats elapsed time since session start as "HH:MM" or "MM:SS".
+    /// Elapsed time since session start: "m:ss" below an hour, "h:mm" from
+    /// an hour on.
     private func elapsedLabel(for session: Session) -> String {
-        let elapsed = Int(Date().timeIntervalSince(session.startedAt))
-        let minutes = elapsed / 60
-        let seconds = elapsed % 60
-        if minutes >= 60 {
-            let hours = minutes / 60
-            let mins = minutes % 60
-            return String(format: "%d:%02d", hours, mins)
-        }
-        return String(format: "%d:%02d", minutes, seconds)
+        NumberText.elapsed(max(0, Int(Date().timeIntervalSince(session.startedAt))))
     }
 }
 

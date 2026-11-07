@@ -2,10 +2,10 @@
 id: new-block-split-picker
 kind: sheet
 title: Choose routine
-view: fitbod/Periodization/BlockBuilderView.swift:2777
+view: fitbod/Periodization/BlockScheduleControls.swift:176
 tab: program
 presents_from: [new-block]
-closes_with: none
+closes_with: cancel
 mock: none
 seed: -fitbod-seed-active-block
 captured: 2026-10-31 61353088
@@ -29,11 +29,11 @@ The lifter picks the routine the new block will run.
 | Control | Goes to | Kind | Closes with |
 |---|---|---|---|
 | A routine row, such as Live Routine | [new-block](new-block.md), with that routine in the Routine row | sheet | verb |
+| CANCEL | [new-block](new-block.md) | sheet | cancel |
 | Swipe down | [new-block](new-block.md) | sheet | none |
 
-The sheet has no CANCEL, close or Done; a swipe down is the only way out without a pick.
-The other New Block sheets close with CANCEL ([new-block-template](new-block-template.md), [new-block-add-phase-type](new-block-add-phase-type.md)) or Done ([new-block-duration](new-block-duration.md), [new-block-phase-editor](new-block-phase-editor.md)).
-The overview's routine picker, [split-picker](split-picker.md), has the same gap.
+CANCEL in the header closes the sheet without a pick (T38), as on the other New Block sheets.
+It is the same sheet as the overview's routine picker, [split-picker](split-picker.md), since the two were merged into `RoutinePickerSheet`.
 
 ## States
 
@@ -57,8 +57,8 @@ No mock-up was drawn for this sheet.
 2. "Choose Routine"
 3. "Live Routine"
 
-Rows give only the routine's name, without the session count the overview's picker shows.
-The ✓ on a picked routine is a plain "✓" text with no selected trait (from code, `fitbod/Periodization/BlockBuilderView.swift:2800`).
+Rows give only the routine's name, as on the overview's picker.
+The ✓ on a picked routine is a plain "✓" text with no selected trait (from code, `fitbod/Periodization/BlockScheduleControls.swift:200`).
 With no routines, VoiceOver finds nothing after the title.
 
 ## Findings

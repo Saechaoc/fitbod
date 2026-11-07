@@ -266,7 +266,7 @@ public struct RoutineExerciseCard: View {
         let reps = draft.targetRepsLow == draft.targetRepsHigh
             ? "\(draft.targetRepsLow)"
             : "\(draft.targetRepsLow)–\(draft.targetRepsHigh)"
-        return "\(draft.targetSets)×\(reps) · \(restClock(draft.prescribedRestSeconds))"
+        return "\(draft.targetSets)×\(reps) · \(NumberText.minutesSeconds(draft.prescribedRestSeconds))"
     }
 }
 

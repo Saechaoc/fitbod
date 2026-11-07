@@ -16,10 +16,16 @@
 import SwiftUI
 
 public struct StartBlockCTA: View {
+    /// False until a routine exists: a block runs on one, so the card
+    /// sends the lifter to make a routine first (D-162).
+    public let hasRoutine: Bool
     public let onStart: () -> Void
+    public let onNewRoutine: () -> Void
 
-    public init(onStart: @escaping () -> Void) {
+    public init(hasRoutine: Bool = true, onStart: @escaping () -> Void, onNewRoutine: @escaping () -> Void = {}) {
+        self.hasRoutine = hasRoutine
         self.onStart = onStart
+        self.onNewRoutine = onNewRoutine
     }
 
     public var body: some View {
@@ -30,14 +36,16 @@ public struct StartBlockCTA: View {
                 .textCase(.uppercase)
                 .foregroundStyle(Color.bruInk)
 
-            Text("Define a training block to see your phase, week, and deloads here.")
+            Text(hasRoutine
+                 ? "Define a training block to see your phase, week, and deloads here."
+                 : "A block runs on a routine. Build one first, then define a block around it.")
                 .font(BRUFont.bodyDefault)
                 .foregroundStyle(Color.bruMuted)
 
-            Button(action: onStart) {
+            Button(action: hasRoutine ? onStart : onNewRoutine) {
                 // Mixed-case source string, uppercased for display, so
                 // VoiceOver reads words instead of spelling letters.
-                Text("Start a block")
+                Text(hasRoutine ? "Start a block" : "+ New routine")
                     .font(BRUFont.labelSmall)
                     .textCase(.uppercase)
                     .tracking(1.2)

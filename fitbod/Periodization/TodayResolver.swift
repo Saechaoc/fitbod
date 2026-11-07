@@ -102,12 +102,12 @@ public enum TodayResolver {
         let targetSplitID = block.split?.id
 
         // Broad predicate: only the flat `completedAt != nil` gate.
-        // Sort by completedAt desc (spec §5: latest *completed* session is the
-        // anchor — not insertion order, not start order). The predicate already
-        // filters completedAt != nil, so the SortDescriptor's nil handling is moot.
+        // Sort by startedAt desc: a workout's place in time is its start
+        // (handoff contract 1), the key every other history reader uses, so
+        // a corrected date moves the anchor too. completedAt only gates.
         let descriptor = FetchDescriptor<Session>(
             predicate: #Predicate { $0.completedAt != nil },
-            sortBy: [SortDescriptor(\Session.completedAt, order: .reverse)]
+            sortBy: [SortDescriptor(\Session.startedAt, order: .reverse)]
         )
         guard let all = try? context.fetch(descriptor) else {
             // Fetch failure treated as no history → start from slot 0.
@@ -180,6 +180,28 @@ public enum TodayResolver {
         let slots = sortedSlots(block)
         return slots.first(where: { $0.position == position })
             .map(TodayResolution.session) ?? .emptySplit
+    }
+
+    // MARK: Next training day (fixed weekly)
+
+    /// The first training day after `date` in a fixed-weekly block and the
+    /// session it schedules, for Today's "up next" once today's workout is
+    /// done. Nil for a rotation block, where the resolver's own answer is
+    /// already the next session, or when no day in the coming week trains.
+    public static func nextTrainingDay(
+        block: Block,
+        after date: Date,
+        calendar: Calendar = .current
+    ) -> (day: Date, slot: SplitSessionSlot)? {
+        guard block.split != nil, block.schedulingMode == .fixedWeekly else { return nil }
+        let start = calendar.startOfDay(for: date)
+        for offset in 1...7 {
+            guard let day = calendar.date(byAdding: .day, value: offset, to: start) else { continue }
+            if case .session(let slot) = resolveFixedWeekly(block: block, today: day, calendar: calendar) {
+                return (day, slot)
+            }
+        }
+        return nil
     }
 
     // MARK: Shared utilities

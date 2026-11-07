@@ -19,7 +19,7 @@
 //  time the exercise was logged in the workout:
 //
 //    - Top set (D-05): among working+committed+non-warmup sets,
-//      pick the SetEntry with the highest OneRepMax.estimate;
+//      pick the SetEntry with the highest OneRepMaxEstimator.estimate;
 //      tiebreaker 1 highest weight, tiebreaker 2 latest completedAt.
 //      Sets with reps > 10 contribute nil e1RM and are therefore
 //      excluded from the top-set pick (PROG-02 suppression).
@@ -83,13 +83,7 @@ public enum SeriesBuilder {
         var workoutIndex: [UUID: Int] = [:]
         for se in sessionExercises {
             guard let session = se.session else { continue }
-            let workingSets = (se.sets ?? []).filter { entry in
-                entry.setType == .working
-                    && !entry.isWarmup
-                    && entry.isComplete
-                    && entry.weight > 0
-                    && entry.reps > 0
-            }
+            let workingSets = (se.sets ?? []).filter(PRDetector.isWorkingSet)
             if let index = workoutIndex[session.id] {
                 workouts[index].sets.append(contentsOf: workingSets)
             } else {
@@ -105,7 +99,7 @@ public enum SeriesBuilder {
 
             // Each set's e1RM — nil for reps > 10 per PROG-02 suppression.
             let scored: [(set: SetEntry, e1RM: Double?)] = workout.sets.map { entry in
-                (entry, OneRepMax.estimate(weight: entry.weight, reps: entry.reps))
+                (entry, OneRepMaxEstimator.estimate(weight: entry.weight, reps: entry.reps))
             }
             let nonNil = scored.compactMap { pair -> (set: SetEntry, e1RM: Double)? in
                 guard let v = pair.e1RM else { return nil }
@@ -152,7 +146,7 @@ public enum SeriesBuilder {
     /// work sets. A workout with no logged work set emits no point.
     public static func volumePoints(from sessionExercises: [SessionExercise]) -> [WorkoutSeriesPoint] {
         workoutPoints(from: sessionExercises, series: "volume") { sets in
-            sets.isEmpty ? nil : sets.reduce(0) { $0 + $1.weight * Double($1.reps) }
+            sets.isEmpty ? nil : sets.reduce(0) { $0 + $1.tonnage }
         }
     }
 

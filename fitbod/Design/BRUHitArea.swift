@@ -22,6 +22,18 @@ public extension View {
             .contentShape(Rectangle())
             .padding(-amount)
     }
+
+    /// Extends the hit-test area `horizontal` points past the leading and
+    /// trailing edges and `vertical` points past the top and bottom,
+    /// without moving anything in the layout, so a small control in a tight
+    /// row reaches 44pt without crossing into its neighbors (T38).
+    func bruHitArea(horizontal: CGFloat, vertical: CGFloat) -> some View {
+        padding(.horizontal, horizontal)
+            .padding(.vertical, vertical)
+            .contentShape(Rectangle())
+            .padding(.horizontal, -horizontal)
+            .padding(.vertical, -vertical)
+    }
 }
 
 #if DEBUG

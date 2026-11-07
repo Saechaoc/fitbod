@@ -144,7 +144,7 @@ struct SeriesBuilderTests {
         #expect(points.count == 2)
         let topSet = try #require(points.first(where: { $0.kind == .topSet }))
         let avg = try #require(points.first(where: { $0.kind == .allSetAvg }))
-        let expectedE1RM = try #require(OneRepMax.estimate(weight: 100, reps: 5))
+        let expectedE1RM = try #require(OneRepMaxEstimator.estimate(weight: 100, reps: 5))
         #expect(abs(topSet.e1RM - expectedE1RM) < 0.001)
         #expect(abs(avg.e1RM - expectedE1RM) < 0.001)
     }
@@ -188,7 +188,7 @@ struct SeriesBuilderTests {
         )
         let points = SeriesBuilder.buildPoints(from: [se])
         let topSet = try #require(points.first(where: { $0.kind == .topSet }))
-        let expectedE1RM = try #require(OneRepMax.estimate(weight: 100, reps: 5))
+        let expectedE1RM = try #require(OneRepMaxEstimator.estimate(weight: 100, reps: 5))
         #expect(abs(topSet.e1RM - expectedE1RM) < 0.001)
     }
 
@@ -211,9 +211,9 @@ struct SeriesBuilderTests {
         )
         let points = SeriesBuilder.buildPoints(from: [se])
         let avg = try #require(points.first(where: { $0.kind == .allSetAvg }))
-        let e1 = try #require(OneRepMax.estimate(weight: 100, reps: 5))
-        let e2 = try #require(OneRepMax.estimate(weight: 100, reps: 4))
-        let e3 = try #require(OneRepMax.estimate(weight: 100, reps: 3))
+        let e1 = try #require(OneRepMaxEstimator.estimate(weight: 100, reps: 5))
+        let e2 = try #require(OneRepMaxEstimator.estimate(weight: 100, reps: 4))
+        let e3 = try #require(OneRepMaxEstimator.estimate(weight: 100, reps: 3))
         let expected = (e1 + e2 + e3) / 3.0
         #expect(abs(avg.e1RM - expected) < 0.001)
     }
@@ -256,7 +256,7 @@ struct SeriesBuilderTests {
             ],
             rpes: [5, 8, nil]
         )
-        let e1RM = try #require(OneRepMax.estimate(weight: 100, reps: 5))
+        let e1RM = try #require(OneRepMaxEstimator.estimate(weight: 100, reps: 5))
         #expect(SeriesBuilder.buildPoints(from: [se]).map(\.e1RM) == [e1RM, e1RM])
         #expect(SeriesBuilder.volumePoints(from: [se]).map(\.value) == [1000])
         #expect(SeriesBuilder.averageRPEPoints(from: [se]).map(\.value) == [8])
@@ -351,9 +351,9 @@ struct SeriesBuilderTests {
 
         let topSet = try #require(workout.first { $0.kind == .topSet })
         let average = try #require(workout.first { $0.kind == .allSetAvg })
-        let e1 = try #require(OneRepMax.estimate(weight: 100, reps: 5))
-        let e2 = try #require(OneRepMax.estimate(weight: 100, reps: 3))
-        let e3 = try #require(OneRepMax.estimate(weight: 105, reps: 5))
+        let e1 = try #require(OneRepMaxEstimator.estimate(weight: 100, reps: 5))
+        let e2 = try #require(OneRepMaxEstimator.estimate(weight: 100, reps: 3))
+        let e3 = try #require(OneRepMaxEstimator.estimate(weight: 105, reps: 5))
         #expect(abs(topSet.e1RM - e3) < 0.001)
         #expect(abs(average.e1RM - (e1 + e2 + e3) / 3) < 0.001)
 

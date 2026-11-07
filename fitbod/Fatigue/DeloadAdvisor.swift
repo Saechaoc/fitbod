@@ -27,13 +27,6 @@
 //  only writer of block deload state remains
 //  `PeriodizationEngine.advance(...)` per Phase 4 D-25.
 //
-//  Phase 4 FatigueAdvisory protocol bridge: `DeloadAdvisorAdapter`
-//  conforms to the existing protocol (`Bool` + `FatigueSuggestion`
-//  surface — see fitbod/Prescription/FatigueAdvisory.swift). This lets
-//  the Phase 4 `ConsiderDeloadBanner` stub be superseded by Phase 5's
-//  richer surface (`DeloadAdvisoryBanner`) without breaking any Phase 4
-//  consumer that still binds to the protocol.
-//
 //  @MainActor because ModelContext is @MainActor-bound under Swift 6.
 //  No SwiftData mutations — every read is a FetchDescriptor over
 //  Session / SessionExercise / SetEntry rows.
@@ -111,8 +104,6 @@ public struct DeloadSignalReport: Sendable, Equatable {
 
 public enum DeloadAdvisor {
 
-    /// Working SetEntry kinds — mirrors FatigueModel.workingKinds.
-    private static let workingKinds: Set<String> = ["working", "drop", "failure", "rest_pause"]
 
     // MARK: - evaluate
 
@@ -214,8 +205,7 @@ public enum DeloadAdvisor {
                 var bestWeight = 0.0
                 var bestRPE: Double? = nil
                 for set in logs.flatMap({ ($0.sets ?? []).sorted(by: { $0.orderIndex < $1.orderIndex }) }) {
-                    guard set.isComplete, !set.isWarmup, set.reps > 0 else { continue }
-                    guard workingKinds.contains(set.setTypeRaw) else { continue }
+                    guard set.countsAsWork, set.reps > 0 else { continue }
                     guard let e = OneRepMaxEstimator.estimate(weight: set.weight, reps: set.reps) else { continue }
                     if bestE == nil || e > bestE! {
                         bestE = e
@@ -289,8 +279,7 @@ public enum DeloadAdvisor {
                     let target = se.targetRepsHigh
                     guard target > 0 else { continue }
                     for set in (se.sets ?? []) {
-                        guard set.isComplete, !set.isWarmup, set.reps > 0 else { continue }
-                        guard workingKinds.contains(set.setTypeRaw) else { continue }
+                        guard set.countsAsWork, set.reps > 0 else { continue }
                         total += 1
                         if set.reps < target { missed += 1 }
                     }
@@ -330,38 +319,12 @@ public enum DeloadAdvisor {
         var best: Double? = nil
         for se in (session.exercises ?? []) {
             for set in (se.sets ?? []) {
-                guard set.isComplete, !set.isWarmup, set.reps > 0 else { continue }
-                guard workingKinds.contains(set.setTypeRaw) else { continue }
+                guard set.countsAsWork, set.reps > 0 else { continue }
                 if let e = OneRepMaxEstimator.estimate(weight: set.weight, reps: set.reps) {
                     if best == nil || e > best! { best = e }
                 }
             }
         }
         return best
-    }
-}
-
-// MARK: - Phase 4 FatigueAdvisory adapter
-
-/// Bridges DeloadAdvisor's richer surface (DeloadAdvisory?) into
-/// Phase 4's `FatigueAdvisory` protocol (`Bool` + `FatigueSuggestion`).
-/// Replaces `StubFatigueAdvisory` as the production binding.
-public struct DeloadAdvisorAdapter: FatigueAdvisory {
-
-    public init() {}
-
-    public func shouldSuggest(context: SessionContext) -> Bool {
-        // The legacy SessionContext from Phase 4 doesn't carry a
-        // ModelContext or UserSettings, so we cannot evaluate signals
-        // here. Returning false matches the pre-existing
-        // StubFatigueAdvisory behavior at the protocol surface; Phase
-        // 5's DeloadAdvisoryBanner reads `DeloadAdvisor.evaluate`
-        // directly via RootView's @State + .task / .onAppear flow
-        // (no protocol indirection needed for the richer UI).
-        false
-    }
-
-    public func suggestion(context: SessionContext) -> FatigueSuggestion {
-        FatigueSuggestion(reason: "")
     }
 }

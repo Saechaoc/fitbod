@@ -4,7 +4,7 @@
 //
 //  Behavioral coverage for the `SupersetGroup` entity + the
 //  `RoutineExercise.supersetGroupID` soft-ref assignment flow that the
-//  `SupersetAssignmentSheet` mutates (plan 03-03). Four `@Test`
+//  `SupersetAssignmentSheet` mutates (plan 03-03). Three `@Test`
 //  functions:
 //
 //    1. createAndAssign — insert SupersetGroup + assign via
@@ -12,9 +12,6 @@
 //    2. unassignSetsNil — setting supersetGroupID = nil clears the
 //       assignment
 //    3. kindAccessor — kindRaw "giant" → kind .giant; "paired" → .paired
-//    4. orphanedSupersetGroupAfterRoutineDelete — handled by
-//       RoutinesListView.handleDelete (the explicit sweep). The test
-//       simulates the sweep logic.
 //
 
 import Foundation
@@ -88,33 +85,5 @@ struct SupersetGroupTests {
         #expect(group.kind == .giant)
         let group2 = SupersetGroup(routineID: UUID(), kindRaw: "paired")
         #expect(group2.kind == .paired)
-    }
-
-    // MARK: - 4
-
-    @Test("orphanedSupersetGroupAfterRoutineDelete — handled by RoutinesListView.handleDelete")
-    func orphanedSupersetGroupAfterRoutineDelete() throws {
-        // The SessionTemplate entity has no SwiftData relationship to
-        // SupersetGroup (soft ref). RoutinesListView.handleDelete is
-        // responsible for sweeping the orphans. This test verifies the
-        // sweep logic by simulating the routine-delete path.
-        let ctx = try makeContext()
-        let routine = SessionTemplate()
-        ctx.insert(routine)
-        let group = SupersetGroup(routineID: routine.id)
-        ctx.insert(group)
-        try ctx.save()
-
-        let id = routine.id
-        let supersets = try ctx.fetch(FetchDescriptor<SupersetGroup>(
-            predicate: #Predicate { $0.routineID == id }
-        ))
-        for sg in supersets {
-            ctx.delete(sg)
-        }
-        ctx.delete(routine)
-        try ctx.save()
-
-        #expect(try ctx.fetch(FetchDescriptor<SupersetGroup>()).isEmpty)
     }
 }

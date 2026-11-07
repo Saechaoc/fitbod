@@ -43,7 +43,7 @@ public struct BumpBanner: View {
             .frame(height: 52)
             .background(Color.bruInk)
             .accessibilityLabel(
-                "Weight bump: bumping to \(formatted(bumpedToWeight)) \(unitLabel). Tap to dismiss."
+                "Weight bump: bumping to \(NumberText.weight(bumpedToWeight)) \(unitLabel). Tap to dismiss."
             )
             .accessibilityAddTraits(.isButton)
         }
@@ -52,12 +52,9 @@ public struct BumpBanner: View {
     // MARK: - Private
 
     private var bannerText: String {
-        "BUMPING TO \(formatted(bumpedToWeight)) \(unitLabel.uppercased()) \u{2014} YOU CLEARED THE TOP OF THE RANGE LAST TIME."
+        "BUMPING TO \(NumberText.weight(bumpedToWeight)) \(unitLabel.uppercased()) \u{2014} YOU CLEARED THE TOP OF THE RANGE LAST TIME."
     }
 
-    private func formatted(_ d: Double) -> String {
-        String(format: "%g", d)
-    }
 }
 
 // MARK: - Previews

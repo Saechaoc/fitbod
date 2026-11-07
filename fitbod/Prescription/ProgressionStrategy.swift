@@ -46,7 +46,7 @@ public struct PrescriptionExplanation: Sendable {
     public var computedLine: String?
 
     /// The plate-rounded prescribed weight, in the exercise's unit.
-    public let roundedWeight: Double
+    public var roundedWeight: Double
 
     /// Human-readable rounding explanation, e.g.
     /// "→ 107.5 kg (rounded down to 1.25 kg plates)".
@@ -86,6 +86,11 @@ public struct PrescriptionExplanation: Sendable {
     /// strategy returns. Strategies stay pure and decoupled from SwiftData.
     public var sessionIntent: Intent? = nil
 
+    /// Set when the weight frozen at the workout's start differs from the
+    /// one the steps compute now, because the plan or history changed since
+    /// (docs/ROADMAP.md "Decided"). Says so and names today's number.
+    public var changedSinceStartLine: String? = nil
+
     public init(
         lastSessionLine: String? = nil,
         formulaName: String,
@@ -110,6 +115,26 @@ public struct PrescriptionExplanation: Sendable {
         self.phaseContextLine = phaseContextLine
         self.deloadNoteLine = deloadNoteLine
         self.sessionIntent = sessionIntent
+    }
+}
+
+extension PrescriptionExplanation {
+    /// This explanation as the workout holds it: the weight frozen when the
+    /// workout started (or the exercise was swapped in or added) is the one
+    /// shown and the one USE writes. When the steps now give another weight,
+    /// `changedSinceStartLine` says so, and the bump banner is dropped, since
+    /// its bump is to the new weight. Unchanged when nothing was frozen or
+    /// the two agree.
+    public func frozen(at startWeight: Double?, unitLabel: String) -> PrescriptionExplanation {
+        guard let startWeight, startWeight > 0, abs(startWeight - roundedWeight) > 0.001 else { return self }
+        var shown = self
+        shown.roundedWeight = startWeight
+        shown.bumpOccurred = false
+        let now = roundedWeight > 0
+            ? "the steps below now give \(NumberText.weight(roundedWeight)) \(unitLabel)"
+            : "the steps below no longer suggest a weight"
+        shown.changedSinceStartLine = "Set when this workout started. Your plan, settings or history have changed since, and \(now)."
+        return shown
     }
 }
 

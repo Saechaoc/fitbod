@@ -138,7 +138,9 @@ public struct BlockContextBand: View {
                 if totalWeeks > 0 {
                     WeekTickerCells(
                         currentWeek: Self.tickerWeek(for: block, on: .now),
-                        totalWeeks: min(totalWeeks, 5),  // display up to 5 cells per today.jsx
+                        // Every week, not today.jsx's five: the 8-week
+                        // presets put their deload in week 8 (B6).
+                        totalWeeks: totalWeeks,
                         deloadWeeks: deloadWeeks
                     )
                 }

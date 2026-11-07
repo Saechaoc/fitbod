@@ -8,7 +8,7 @@
 // Rewritten as a BRUDashedSlot per UI-SPEC line 582.
 //
 // UI-SPEC verbatim:
-//   label:  "+ ADD EXERCISE"
+//   label:  "+ ADD EXERCISE" (the slot's "+" glyph, then "Add exercise")
 //   hint:   "↘ FROM LIBRARY"
 //
 // Tapping opens ExerciseLibraryView in a sheet; choosing an exercise appends
@@ -36,9 +36,9 @@ public struct AddUnplannedExerciseButton: View {
     public var body: some View {
         // BRUDashedSlot replaces the old Button + systemName plus.circle icon
         BRUDashedSlot(
-            label: "+ ADD EXERCISE",                                                // UI-SPEC verbatim
+            // The slot draws the "+" itself; it was doubled as "+ + ADD EXERCISE".
+            label: "Add exercise",
             hint: "↘ FROM LIBRARY",                                                // UI-SPEC verbatim
-            leadingGlyph: "+",
             action: { presentingPicker = true }
         )
         .sheet(isPresented: $presentingPicker) {

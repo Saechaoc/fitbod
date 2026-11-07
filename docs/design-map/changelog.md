@@ -6,6 +6,11 @@ Newest first: one entry for each stage of [plan.md](plan.md) up to S2, then one 
 
 - The fourteen open product calls in [redesign/open-decisions.md](redesign/open-decisions.md) are made: each takes the default the layouts assume, with a one-line reason, so draft v6 stands unchanged and the build can start on it.
 
+## 2026-11-03: the gym day
+
+- The [today](workflows/today.md), [log-a-workout](workflows/log-a-workout.md) and [review-a-workout-and-edit-history](workflows/review-a-workout-and-edit-history.md) workflows mark the dead ends the gym-day work fixed.
+- [missing-screens.md](missing-screens.md) names the seven screens and states built since the map.
+
 ## 2026-11-02: redesign draft v6
 
 - [redesign/](redesign/) is revised to draft v6 after the Codex feasibility reviewer finished its pass on draft v5 (0 blockers and 3 fix-soon findings, all closed), which closes round 3 with no open blocker.

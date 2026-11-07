@@ -6,18 +6,18 @@
 //  (CONTEXT D-18..D-21, REQUIREMENTS PROG-04).
 //
 //  Six @Test functions:
-//    1. workingSetTonnageOnly — warmup + drop + incomplete + zero-weight
-//       sets are filtered out of the tonnage sum
+//    1. countedSetTonnageOnly — drop sets count; warm-up (by flag or
+//       type), incomplete, zero-weight and assisted sets add nothing
 //    2. mondayWeekStart — Sunday + Monday in the same ISO week
 //       (firstWeekday = 2) bucket together; with firstWeekday = 1 the
 //       split is allowed
 //    3. emptySelectedMuscles — every bar emits muscleBreakdown == nil
-//    4. selectedMusclesFiltered — stub provider drives MuscleSlice
-//       outputs deterministically, filtered to selected IDs only
+//    4. selectedMusclesFiltered — MuscleSlice outputs are filtered to
+//       the selected muscle IDs only
 //    5. sortedByWeekStartAscending — output order is asc regardless
 //       of input order
-//    6. unweightedProviderUsesPrimaryMusclesOnly — UnweightedMuscleVolumeProvider
-//       attributes full tonnage to primary-role stimuli only
+//    6. muscleContributionsUsePrimaryMusclesOnly — full tonnage goes to
+//       primary-role stimuli only
 //
 //  Hermetic: each test gets a fresh in-memory ModelContainer via
 //  InMemoryContainer.makeCurrent() (baseline schema). `@MainActor` because we
@@ -105,8 +105,8 @@ struct WeeklyTonnageAggregatorTests {
 
     // MARK: - 1. workingSetTonnageOnly
 
-    @Test("workingSetTonnageOnly — warmup/drop/incomplete/zero-weight sets excluded")
-    func workingSetTonnageOnly() throws {
+    @Test("countedSetTonnageOnly — drop sets count; warm-up, incomplete, zero and assisted loads add nothing")
+    func countedSetTonnageOnly() throws {
         let ctx = try makeContext()
         let (_, _, se) = seedExerciseAndSession(in: ctx, sessionStart: Self.mondayMay4)
 
@@ -115,25 +115,29 @@ struct WeeklyTonnageAggregatorTests {
         // Warmup: should be excluded
         _ = appendSet(in: ctx, on: se, weight: 60, reps: 5, completedAt: Self.mondayMay4,
                       setTypeRaw: "warmup", isWarmup: true)
-        // Drop set: setType != .working — excluded
+        // Drop set: counts as work, as in History and the weekly recap: 80 × 8 = 640
         _ = appendSet(in: ctx, on: se, weight: 80, reps: 8, completedAt: Self.mondayMay4,
                       setTypeRaw: "drop")
+        // Warm-up by type only — excluded
+        _ = appendSet(in: ctx, on: se, weight: 60, reps: 5, completedAt: Self.mondayMay4,
+                      setTypeRaw: "warmup")
         // Working but incomplete — excluded
         _ = appendSet(in: ctx, on: se, weight: 100, reps: 5, completedAt: Self.mondayMay4,
                       isComplete: false)
         // Working but zero weight — excluded
         _ = appendSet(in: ctx, on: se, weight: 0, reps: 5, completedAt: Self.mondayMay4)
+        // Assisted, a negative load — adds nothing, never subtracts
+        _ = appendSet(in: ctx, on: se, weight: -20, reps: 8, completedAt: Self.mondayMay4)
 
         let bars = WeeklyTonnageAggregator.aggregate(
             sets: se.sets ?? [workingSet],
             weekStartsMonday: true,
-            selectedMuscleIDs: [],
-            provider: UnweightedMuscleVolumeProvider()
+            selectedMuscleIDs: []
         )
 
         #expect(bars.count == 1)
         let bar = try #require(bars.first)
-        #expect(bar.totalTonnage == 500.0)
+        #expect(bar.totalTonnage == 1140.0)
         #expect(bar.muscleBreakdown == nil)
     }
 
@@ -160,8 +164,7 @@ struct WeeklyTonnageAggregatorTests {
         let bars = WeeklyTonnageAggregator.aggregate(
             sets: [sundaySet, mondaySet],
             weekStartsMonday: true,
-            selectedMuscleIDs: [],
-            provider: UnweightedMuscleVolumeProvider()
+            selectedMuscleIDs: []
         )
 
         // ISO Monday-start: Sunday May 3 is in the PRIOR week, so two bars expected.
@@ -183,8 +186,7 @@ struct WeeklyTonnageAggregatorTests {
         let bars = WeeklyTonnageAggregator.aggregate(
             sets: [s1],
             weekStartsMonday: true,
-            selectedMuscleIDs: [],
-            provider: UnweightedMuscleVolumeProvider()
+            selectedMuscleIDs: []
         )
 
         #expect(bars.count == 1)
@@ -193,48 +195,40 @@ struct WeeklyTonnageAggregatorTests {
 
     // MARK: - 4. selectedMusclesFiltered
 
-    /// Stub provider returning canned contributions per set — isolates
-    /// aggregator math from the Unweighted default's stimulus-walking.
-    private struct StubProvider: MuscleVolumeProvider {
-        let muscleA: UUID
-        let muscleB: UUID
-        func contributions(
-            for set: SetEntry,
-            exercise: Exercise
-        ) -> [(muscleID: UUID, muscleName: String, tonnage: Double)] {
-            // Each set contributes 10 to muscleA and 5 to muscleB.
-            [
-                (muscleID: muscleA, muscleName: "A", tonnage: 10),
-                (muscleID: muscleB, muscleName: "B", tonnage: 5),
-            ]
-        }
-    }
-
     @Test("selectedMusclesFiltered — only ticked muscles appear in slices")
     func selectedMusclesFiltered() throws {
         let ctx = try makeContext()
-        let (_, _, se) = seedExerciseAndSession(in: ctx, sessionStart: Self.mondayMay4)
+        let (exercise, _, se) = seedExerciseAndSession(in: ctx, sessionStart: Self.mondayMay4)
+        // Two primary muscles, so each set credits both.
+        let muscleA = MuscleGroup()
+        muscleA.slug = "a"
+        muscleA.displayName = "A"
+        let muscleB = MuscleGroup()
+        muscleB.slug = "b"
+        muscleB.displayName = "B"
+        ctx.insert(muscleA)
+        ctx.insert(muscleB)
+        let stimA = ExerciseMuscleStimulus(exercise: exercise, muscle: muscleA, role: "primary", weight: 1.0)
+        let stimB = ExerciseMuscleStimulus(exercise: exercise, muscle: muscleB, role: "primary", weight: 1.0)
+        ctx.insert(stimA)
+        ctx.insert(stimB)
+        exercise.muscleStimuli = [stimA, stimB]
         let s1 = appendSet(in: ctx, on: se, weight: 100, reps: 5, completedAt: Self.mondayMay4)
         let s2 = appendSet(in: ctx, on: se, weight: 100, reps: 5, completedAt: Self.mondayMay4)
-
-        let muscleA = UUID()
-        let muscleB = UUID()
-        let stub = StubProvider(muscleA: muscleA, muscleB: muscleB)
 
         // Tick only muscleA — slices should contain only A.
         let bars = WeeklyTonnageAggregator.aggregate(
             sets: [s1, s2],
             weekStartsMonday: true,
-            selectedMuscleIDs: [muscleA],
-            provider: stub
+            selectedMuscleIDs: [muscleA.id]
         )
 
         #expect(bars.count == 1)
         let breakdown = try #require(bars[0].muscleBreakdown)
         #expect(breakdown.count == 1)
-        #expect(breakdown[0].muscleID == muscleA)
-        // 2 sets × 10 contribution each = 20
-        #expect(breakdown[0].tonnage == 20.0)
+        #expect(breakdown[0].muscleID == muscleA.id)
+        // 2 sets × 500 each = 1000
+        #expect(breakdown[0].tonnage == 1000.0)
     }
 
     // MARK: - 5. sortedByWeekStartAscending
@@ -258,8 +252,7 @@ struct WeeklyTonnageAggregatorTests {
         let bars = WeeklyTonnageAggregator.aggregate(
             sets: [sB, sA, sC],
             weekStartsMonday: true,
-            selectedMuscleIDs: [],
-            provider: UnweightedMuscleVolumeProvider()
+            selectedMuscleIDs: []
         )
 
         #expect(bars.count == 3)
@@ -269,10 +262,10 @@ struct WeeklyTonnageAggregatorTests {
         }
     }
 
-    // MARK: - 6. unweightedProviderUsesPrimaryMusclesOnly
+    // MARK: - 6. muscleContributionsUsePrimaryMusclesOnly
 
-    @Test("unweightedProviderUsesPrimaryMusclesOnly — only role==primary contributes")
-    func unweightedProviderUsesPrimaryMusclesOnly() throws {
+    @Test("muscleContributionsUsePrimaryMusclesOnly — only role==primary contributes")
+    func muscleContributionsUsePrimaryMusclesOnly() throws {
         let ctx = try makeContext()
         // Build a fixture exercise with one primary + one secondary stimulus.
         let chest = MuscleGroup()
@@ -316,8 +309,7 @@ struct WeeklyTonnageAggregatorTests {
             in: ctx, on: se, weight: 100, reps: 5, completedAt: Self.mondayMay4
         )
 
-        let provider = UnweightedMuscleVolumeProvider()
-        let contributions = provider.contributions(for: workingSet, exercise: bench)
+        let contributions = WeeklyTonnageAggregator.muscleContributions(for: workingSet, exercise: bench)
 
         // Only the primary-role (chest) stimulus should contribute.
         #expect(contributions.count == 1)

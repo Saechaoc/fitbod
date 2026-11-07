@@ -96,7 +96,7 @@ public struct RPEAutoregStrategy: ProgressionStrategy {
 
                 let pctDisplay = Int((pct * 100).rounded())
                 let computedLine = "Target e1RM \(Self.fmt1(calibratedE1RM)) \(unit.rawValue) → \(pctDisplay)% × \(targetRepsHigh) → \(Self.fmt1(rawTarget)) \(unit.rawValue)"
-                let roundedLine = "→ \(Self.fmtG(rounded)) \(unit.rawValue) (rounded down to \(Self.fmtG(increment ?? smallestIncrement)) \(unit.rawValue) \(increment == nil ? "plates" : "increments"))"
+                let roundedLine = "→ \(NumberText.weight(rounded)) \(unit.rawValue) (rounded down to \(NumberText.weight(increment ?? smallestIncrement)) \(unit.rawValue) \(increment == nil ? "plates" : "increments"))"
 
                 let exp = PrescriptionExplanation(
                     lastSessionLine: lastLine,
@@ -152,7 +152,7 @@ public struct RPEAutoregStrategy: ProgressionStrategy {
 
             let pctDisplay = Int((targetPct * 100).rounded())
             let computedLine = "Last session e1RM \(Self.fmt1(e1RM)) \(unit.rawValue) → \(pctDisplay)% × \(targetRepsHigh) → \(Self.fmt1(rawTarget)) \(unit.rawValue)"
-            let roundedLine = "→ \(Self.fmtG(rounded)) \(unit.rawValue) (rounded down to \(Self.fmtG(increment ?? smallestIncrement)) \(unit.rawValue) \(increment == nil ? "plates" : "increments"))"
+            let roundedLine = "→ \(NumberText.weight(rounded)) \(unit.rawValue) (rounded down to \(NumberText.weight(increment ?? smallestIncrement)) \(unit.rawValue) \(increment == nil ? "plates" : "increments"))"
 
             let exp = PrescriptionExplanation(
                 lastSessionLine: lastLine,
@@ -195,11 +195,6 @@ private extension RPEAutoregStrategy {
         String(format: "%.1f", value)
     }
 
-    /// Format a weight with %g (strips trailing zeros, e.g. "100" not "100.0").
-    static func fmtG(_ value: Double) -> String {
-        String(format: "%g", value)
-    }
-
     /// Builds the "last session" line shown in the WhyThisWeightSheet.
     /// Format: "{weight} {unit} × {reps} @ RPE {rpe} (May 15)". A top set
     /// logged without an RPE is still the last session: "{weight} {unit} ×
@@ -214,6 +209,6 @@ private extension RPEAutoregStrategy {
         guard let weight, let reps, let date else { return nil }
         let dateStr = date.formatted(.dateTime.month(.abbreviated).day())
         let rpeStr = rpe.map { " @ RPE \(String(format: "%.1f", $0))" } ?? ""
-        return "\(fmtG(weight)) \(unit.rawValue) × \(reps)\(rpeStr) (\(dateStr))"
+        return "\(NumberText.weight(weight)) \(unit.rawValue) × \(reps)\(rpeStr) (\(dateStr))"
     }
 }

@@ -16,7 +16,6 @@
 //   fitbod/Progress/ProgressHomeView.swift
 //   fitbod/Progress/ExerciseProgressView.swift
 //   fitbod/Progress/SeriesToggleChipRow.swift
-//   fitbod/Progress/ProgressColors.swift
 //   fitbod/Progress/ProgressFilterChip.swift
 //   fitbod/Progress/ExercisePRsView.swift
 //   fitbod/Progress/SessionComparisonView.swift
@@ -52,7 +51,6 @@ struct BRUGrepAuditPhase6Tests {
         "fitbod/Progress/ProgressHomeView.swift",
         "fitbod/Progress/ExerciseProgressView.swift",
         "fitbod/Progress/SeriesToggleChipRow.swift",
-        "fitbod/Progress/ProgressColors.swift",
         "fitbod/Progress/ProgressFilterChip.swift",
         "fitbod/Progress/ExercisePRsView.swift",
         "fitbod/Progress/SessionComparisonView.swift",

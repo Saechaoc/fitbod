@@ -31,6 +31,63 @@ Serial test execution is deliberate: UI tests manipulate an installed app and
 some legacy suites exercise shared defaults. Run UI scenarios on a dedicated
 test simulator so normal personal workout data is not affected.
 
+### Test tiers
+
+`scripts/test.sh` runs the same tests in two tiers. Set `FITBOD_TEST_DEVICE` to
+a dedicated simulator's UUID first.
+
+| Tier | Command | Runs | Typical time |
+|---|---|---|---|
+| Developer feedback | `scripts/test.sh fast` | Incremental build, then every unit test in one serial process. Pass `-only-testing:` flags to run something else, such as one UI class. | About 35 s; 70 to 90 s right after UI tests or a cold build |
+| Full verification | `scripts/test.sh full` | Build, unit tests serially, every UI class sharded over `FITBOD_TEST_WORKERS` simulators (default 2), widget build | About 14 min with 2 shards; the UI target alone takes 23 min serially |
+
+The full tier keeps each guarantee of the serial run:
+
+- Each shard is a serial run on its own simulator, so the tests in a class
+  stay together and in order. The script creates the simulators for shards
+  2 to N once, named `<device name> shard K`, using the same model and runtime.
+- Before each run, every shard is booted, pinned to default text and light
+  mode, and checked. Its app is then uninstalled, so no store is left over
+  from an earlier run.
+- Both tiers also delete the backups UI tests saved to On My iPhone, named
+  `fitbod-t41-` or `fitbod-backup-` and 8 characters, which an uninstall
+  keeps. The Files picker shows only the first dozen, so leftovers hid the
+  backup a test had just saved. A backup with the app's dated name stays.
+- Shards are split from `scripts/ui-test-timings.json`, longest first, so the
+  same classes land on the same shard each time. A class missing from the
+  file counts as the median. The file comes from Gate 4's serial run on
+  2026-11-01. Refresh it from a full run without idle-wait stalls, because
+  one stalled test would skew the balance:
+  `python3 scripts/test_results.py timings <bundle> > scripts/ui-test-timings.json`.
+- The run merges every bundle and fails unless the merged result ran exactly
+  the tests the build enumerates: none missing, none extra, none run twice.
+  `python3 scripts/test_results_test.py` checks that guard in under a second.
+- Each worktree builds into its own DerivedData folder by default, so two
+  worktrees running tests at once never test each other's build.
+- Unit tests never run in parallel processes, and their host app starts
+  from an uninstalled app in both tiers, so a store left by a UI run cannot
+  change their result.
+- The unit tests' host app can hang for about 5.5 min before it connects
+  ("test daemon not ready") when it is the first test launch after UI tests
+  on the same phone. So when the UI test runner is installed, a run that
+  launches the host reboots the phone first, which costs about 20 s.
+- A test command after which no test started (the runner hung or never
+  bootstrapped, as Gate 4's unit run did on 2026-11-01) is retried once on
+  the rebooted phone, and test enumeration up to twice. A run in which any
+  test started is never retried, so a flaky test stays red.
+- Every UI test gets a 7-minute allowance, 15 at most, so a hung test fails
+  instead of stalling its shard.
+
+`-parallel-testing-enabled YES` is not used. xcodebuild reuses cached clones
+whose text size can differ from the device's, and a trial run hung.
+
+Keep two shards on the 12-core M4 Pro. On 2026-10-31, before T101's keyboard
+fix and T143's cut, four shards failed one or two tests that type text or
+close a sheet in each full run, a different test each time, all of which pass
+serially; two shards passed all four runs. Try more shards only with three
+clean full runs. Each shard's summary line counts idle-wait stalls, the
+60-second waits after typing that T101 removed, so a returning stall shows.
+
 ## First launch and offline use
 
 The bundled catalog has **900 source records**, of which **702** are imported:

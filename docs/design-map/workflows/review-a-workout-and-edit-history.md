@@ -71,11 +71,11 @@ flowchart TD
 
 ## Dead ends
 
-- The [Summary](../screens/workout-summary.md) has no way to change a logged set, add a missed set, delete a set, change the date or delete the workout; it offers only ‹ (`fitbod/Sessions/SessionDetailView.swift:75`).
+- Fixed 2026-11-03: EDIT on the [Summary](../screens/workout-summary.md) opens Edit workout, which changes the date and start time and each set's weight, reps and RPE, adds and deletes sets, and deletes the workout.
 - [History](../screens/history.md) rows only open the Summary; they have no swipe or menu actions (`fitbod/Sessions/SessionHistoryView.swift:35`).
-- A workout's date is the moment the lifter tapped Start, and no screen can change it (`fitbod/Sessions/SessionFactory.swift:149`).
-- The Summary shows only each exercise's best set, so the lifter cannot even find which set holds the wrong weight from the workout itself (`fitbod/Sessions/SessionDetailView.swift:176`).
-- The Summary's exercise rows and [Exercise history](../screens/exercise-history.md)'s rows cannot be tapped, so neither leads anywhere.
+- Fixed 2026-11-03: Edit workout moves the date, and the workout then belongs to the block whose dates contain its start.
+- Fixed 2026-11-03: the Summary lists every set, with the best one marked.
+- The Summary's exercise rows cannot be tapped. Fixed 2026-11-03: [Exercise history](../screens/exercise-history.md)'s rows open their workout's Summary.
 
 ## Detours
 

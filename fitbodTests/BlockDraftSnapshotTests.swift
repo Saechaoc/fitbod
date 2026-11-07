@@ -22,7 +22,6 @@ struct BlockDraftSnapshotTests {
         context.insert(split)
         let edits: [(String, (BlockDraft) -> Void)] = [
             ("name", { $0.name = "Peak Q4" }),
-            ("days per week", { $0.daysPerWeek += 1 }),
             ("phase weeks", { $0.phases[0].weeks += 1 }),
             ("phase kind", { $0.phases[0].kind = .peak }),
             ("phase volume", { $0.phases[0].volumeMultiplier += 0.05 }),

@@ -49,6 +49,8 @@ public struct RestTimerLiveActivity: Widget {
             .padding(16)
             .activityBackgroundTint(Color.bruInk)  // paper-on-ink (UI-SPEC line 730)
             .activitySystemActionForegroundColor(Color.bruSignal)
+            // A tap on the lock screen opens the workout, as the island does.
+            .widgetURL(URL(string: "fitbod://session/active"))
 
         } dynamicIsland: { context in
             DynamicIsland {
@@ -130,8 +132,7 @@ public struct RestTimerLiveActivity: Widget {
     /// Formatted "M:SS" countdown clamped at "0:00" on overrun.
     private func remainingText(state: RestTimerAttributes.ContentState) -> String {
         let remaining = max(0, Double(state.targetSeconds) - elapsed(state: state))
-        let s = Int(remaining)
-        return String(format: "%d:%02d", s / 60, s % 60)
+        return NumberText.minutesSeconds(Int(remaining))
     }
 
     /// Progress fraction: 1.0 at start, 0.0 at complete.

@@ -283,11 +283,12 @@ final class ArchiveRoutineUITests: XCTestCase {
         let alert = app.alerts["End block?"]
         XCTAssertTrue(UITestNavigation.appears(alert, within: 5), "END BLOCK must ask first", file: file, line: line)
         alert.buttons["End Block"].tap()
-        XCTAssertTrue(UITestNavigation.disappears(app.buttons.labeled("END BLOCK"), within: 5), "The block must end",
-                      file: file, line: line)
-        UITestNavigation.hittable(app.buttons, "Back", file: file, line: line).tap()
+        // Ending opens the review on the overview (B9), seen once it opens.
         let review = app.staticTexts.labeled("Block review")
-        UITestNavigation.hittable(app.buttons, "Plan custom", file: file, line: line).tap()
-        XCTAssertTrue(UITestNavigation.disappears(review, within: 5), "Plan custom must close the review", file: file, line: line)
+        XCTAssertTrue(UITestNavigation.appears(review, within: 5), "Ending must open the review", file: file, line: line)
+        UITestNavigation.hittable(app.buttons, "Back", file: file, line: line).tap()
+        XCTAssertTrue(UITestNavigation.disappears(review, within: 5), "‹ BACK must close the review", file: file, line: line)
+        XCTAssertFalse(app.buttons.labeled("END BLOCK").exists, "The block must end", file: file, line: line)
+        UITestNavigation.hittable(app.buttons, "Back", file: file, line: line).tap()
     }
 }

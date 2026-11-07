@@ -42,14 +42,22 @@ extension View {
 struct SessionSummaryDestination: View {
     @Environment(\.dismiss) private var dismiss
     @Query private var matches: [Session]
+    /// Set by Edit workout's delete, before the query drops the workout.
+    @State private var deleted = false
 
     init(sessionID: UUID) {
         _matches = Query(filter: #Predicate<Session> { $0.id == sessionID })
     }
 
     var body: some View {
-        if let session = matches.first {
-            SessionDetailView(session: session)
+        if deleted {
+            // Deleted here: leave for the list it came from.
+            Color.bruPaper
+                .ignoresSafeArea()
+                .navigationBarHidden(true)
+                .onAppear { dismiss() }
+        } else if let session = matches.first {
+            SessionDetailView(session: session, onDeleted: { deleted = true })
         } else {
             VStack(spacing: 8) {
                 Text("Workout not found")

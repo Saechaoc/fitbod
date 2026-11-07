@@ -29,8 +29,8 @@ struct RestTimerActivityControllerTests {
 
     @Test("noopControllerSwallowsAllCalls")
     func noopControllerSwallowsAllCalls() {
-        // The Noop variant exists so `RestTimerEngine` in plan 02-03 can
-        // run under unit tests without touching ActivityKit. This test
+        // The Noop variant lets `RestTimerEngine` run under unit tests
+        // without touching ActivityKit. This test
         // pins the protocol surface — if a future refactor adds a new
         // method to `RestTimerActivityControlling` without also adding
         // a Noop implementation, the test file fails to compile.

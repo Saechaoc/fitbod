@@ -7,7 +7,8 @@ import XCTest
 ///
 /// The progress-history seed logs four bench press workouts, a week
 /// apart. The newest is a strength workout of 107.5×2 @9.5, 95×6 @8 and
-/// 90×5 @7, so its e1RM is 120.3, and its 107.5 is the heaviest bench yet.
+/// 90×5 @7, so its e1RM is 110.6, from 107.5×2, which its TOP line
+/// repeats, and its 107.5 is the heaviest bench yet.
 final class ExerciseHistoryRowsUITests: XCTestCase {
     override func setUpWithError() throws {
         continueAfterFailure = false
@@ -18,12 +19,14 @@ final class ExerciseHistoryRowsUITests: XCTestCase {
         let app = openBenchPressHistory()
         let e1RM = e1RMs(in: app).firstMatch
         XCTAssertTrue(e1RM.waitForExistence(timeout: 10), "The history must show its workout rows")
-        XCTAssertEqual(e1RM.label, "e1RM 120.3", "The first row must be the newest workout")
+        XCTAssertEqual(e1RM.label, "e1RM 110.6", "The first row must be the newest workout")
         for chip in ["107.5×2 @9.5", "95×6 @8", "90×5 @7"] {
             XCTAssertTrue(app.staticTexts[chip].exists, "The newest workout's row must show its set chip \(chip)")
         }
-        XCTAssertTrue(app.staticTexts["107.5×2 @9.5"].frame.minY > e1RM.frame.maxY,
-                      "The set chips must sit under the row's top line")
+        let topSet = app.staticTexts.matching(NSPredicate(format: "label == %@", "107.5×2 @9.5")).allElementsBoundByIndex
+        XCTAssertEqual(topSet.count, 2, "107.5×2 @9.5 must show as the TOP set and as a chip")
+        XCTAssertTrue(topSet.allSatisfy { $0.frame.minY > e1RM.frame.maxY },
+                      "The TOP line and set chips must sit under the row's top line")
         // The row's date line shows the date, and no section header repeats it.
         XCTAssertEqual(e1RMs(in: app).count, 4, "Each of the four bench workouts must have its row")
         let date = try XCTUnwrap(dateLine(of: e1RM, in: app), "The newest row must show its date")

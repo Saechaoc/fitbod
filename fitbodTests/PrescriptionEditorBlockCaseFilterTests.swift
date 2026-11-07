@@ -78,14 +78,4 @@ struct PrescriptionEditorBlockCaseFilterTests {
         #expect(builder.contains("draft.blockID != nil"))
         #expect(builder.contains("hasBlock:"))
     }
-
-    @Test("BlockPickerMenu labels are verbatim")
-    func blockPickerMenuLabelsVerbatim() throws {
-        let menu = try source("fitbod/Periodization/BlockPickerMenu.swift")
-
-        #expect(menu.contains("\"No Block\""))
-        #expect(menu.contains("\"+ Create New Block\""))
-        // The chip label interpolates the block name: "Block: \(name)".
-        #expect(menu.contains("\"Block: \\("))
-    }
 }

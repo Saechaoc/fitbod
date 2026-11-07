@@ -23,8 +23,12 @@ public struct BlockReviewView: View {
     /// Every block, for the block number.
     @Query private var allBlocks: [Block]
 
-    @State private var pendingNextBlockBuilder: BlockTemplate? = nil
+    /// The New block Plan custom or Start next opens over the review.
+    @State private var nextBlock: NextBlock? = nil
+    /// The draft last opened there; its id is set once it saved.
+    @State private var openedDraft: BlockDraft? = nil
     @State private var acknowledgeError: String? = nil
+    @State private var exportError: String? = nil
     /// The block's PRs, counted once when the review opens: the count
     /// replays the lifter's whole history of the block's lifts.
     @State private var prs: BlockReviewPRs? = nil
@@ -43,19 +47,26 @@ public struct BlockReviewView: View {
 
         NavigationStack {
             VStack(spacing: 0) {
-                BRUHeaderBar.slots(
-                    left: .back,
-                    center: "Block review",
-                    right: .text("EXPORT")
-                )
+                BRUHeaderBar.slots(left: .back, center: "Block review") {
+                    // The block's sets as CSV, rendered when the share sheet asks.
+                    ShareLink(
+                        item: BlockCSVExportItem(container: ctx.container, start: blockStart, end: blockEnd) { succeeded in
+                            exportError = succeeded ? nil : "Couldn't export the block. Try again."
+                        },
+                        preview: SharePreview(ExportService.dailyFilename(prefix: "fitbod-block", ext: "csv"))
+                    ) {
+                        BRUHeaderBar.actionLabel("EXPORT")
+                    }
+                    .accessibilityLabel("Export the block's sets")
+                }
 
                 ScrollView {
                     VStack(spacing: 0) {
                         heroBand(blockStart: blockStart, blockEnd: blockEnd)
                         e1RMSection(blockStart: blockStart, blockEnd: blockEnd)
                         recommendedNextBand(nextTemplate: nextTemplate)
-                        if let acknowledgeError {
-                            Text(acknowledgeError)
+                        if let message = acknowledgeError ?? exportError {
+                            Text(message)
                                 .font(BRUFont.labelSmall)
                                 .foregroundStyle(Color.bruSignal)
                                 .padding(.horizontal, 16)
@@ -72,11 +83,18 @@ public struct BlockReviewView: View {
             if prs == nil {
                 prs = BlockReviewStatistics.prs(context: ctx, start: blockStart, end: blockEnd)
             }
+            // Seen once it opens, so closing it any way never brings it back
+            // on Today; the block's overview reopens it (decided 2026-11-05).
+            acknowledgeIfNeeded()
         }
-        .sheet(item: $pendingNextBlockBuilder) { template in
+        // The draft rides in the item: a sheet built from separate state
+        // opened empty on the first tap, before that state reached it.
+        .sheet(item: $nextBlock, onDismiss: {
+            // A next block saved from here: the review is done too.
+            if openedDraft?.id != nil { dismiss() }
+        }) { next in
             NavigationStack {
-                // Only Today presents the review.
-                BlockBuilderView(draft: BlockDraft(template: template), origin: .today)
+                BlockBuilderView(draft: next.draft, origin: .review)
             }
         }
     }
@@ -347,14 +365,13 @@ public struct BlockReviewView: View {
     private func bottomActionBar(nextTemplate: BlockTemplate) -> some View {
         HStack(spacing: 0) {
             BRUButton("Plan custom", kind: .ghost) {
-                dismiss()
+                openNextBlock(template: nil)
             }
             Rectangle()
                 .fill(Color.bruInk)
                 .frame(width: 2)
             BRUButton("Start next ▸", kind: .signal) {
-                acknowledge()
-                pendingNextBlockBuilder = nextTemplate
+                openNextBlock(template: nextTemplate)
             }
         }
         // The divider has no height of its own. Without this the bar takes
@@ -385,14 +402,26 @@ public struct BlockReviewView: View {
         return "\(formatter.string(from: start)) – \(formatter.string(from: end))"
     }
 
+    // MARK: - Next block
+
+    /// New block over the review: Start next with the recommended preset,
+    /// Plan custom with the default phases and no name. Both keep the
+    /// ended block's routine, scheduling and days (decided 2026-11-05).
+    private func openNextBlock(template: BlockTemplate?) {
+        acknowledgeIfNeeded()
+        let draft = BlockDraft.next(after: block, template: template)
+        openedDraft = draft
+        nextBlock = NextBlock(draft: draft)
+    }
+
     // MARK: - Acknowledge Logic
     //
-    // Split into acknowledge() (no dismiss) and acknowledgeAndDismiss() (with dismiss)
-    // so "Start next ▸" can acknowledge THEN show the next-block sheet without
-    // an immediate dismiss interfering with the sheet presentation.
-    // "Plan custom" calls dismiss() only (no acknowledge — user is deferring review).
+    // The review counts as seen once it opens: Today never brings it back,
+    // and the block's overview reopens it with REVIEW ▸. The first open
+    // keeps its date; reopening doesn't move it.
 
-    private func acknowledge() {
+    private func acknowledgeIfNeeded() {
+        guard block.reviewedAt == nil else { return }
         do {
             try BlockReviewStatistics.acknowledge(
                 block: block,
@@ -403,14 +432,15 @@ public struct BlockReviewView: View {
             acknowledgeError = "Couldn't save review. Try again."
         }
     }
-
-    private func acknowledgeAndDismiss() {
-        acknowledge()
-        dismiss()
-    }
 }
 
 // MARK: - Supporting Types (Preserved verbatim — DO NOT MODIFY)
+
+/// The New block opened over a review, as a sheet item.
+private struct NextBlock: Identifiable {
+    let id = UUID()
+    let draft: BlockDraft
+}
 
 public struct BlockReviewE1RMDelta: Sendable, Equatable {
     public let exerciseID: UUID
@@ -441,7 +471,7 @@ public enum BlockReviewStatistics {
     @MainActor
     public static func totalVolume(context: ModelContext, start: Date, end: Date) -> Double {
         completedWorkingSets(context: context, start: start, end: end)
-            .reduce(0) { $0 + ($1.weight * Double($1.reps)) }
+            .reduce(0) { $0 + $1.tonnage }
     }
 
     @MainActor
@@ -471,9 +501,7 @@ public enum BlockReviewStatistics {
     /// only when it beats every set logged before it, in the block or
     /// before it.
     ///
-    /// Oldest first is by workout start, then the time each set was logged,
-    /// then log order and set order, as exercise history replays it, so sets
-    /// logged at the same moment always replay in one order.
+    /// The replay is `PRDetector.replay`, the one exercise history runs.
     @MainActor
     public static func prs(context: ModelContext, start: Date, end: Date) -> BlockReviewPRs {
         // Records are kept per exercise, so only the history of the lifts
@@ -484,9 +512,7 @@ public enum BlockReviewStatistics {
             completedWorkingSets(context: context, start: start, end: end)
                 .compactMap { $0.sessionExercise?.exercise?.id }
         )
-        // Each set's place in the replay is read once: SwiftData reads inside
-        // the sort's comparator took 0.4 s on 6,000 sets.
-        var history: [(order: (Date, Date, Int, Int), exerciseID: UUID, setEntry: SetEntry)] = []
+        var history: [SetEntry] = []
         for exerciseID in exerciseIDs {
             let targetID = exerciseID
             var descriptor = FetchDescriptor<SessionExercise>(
@@ -497,26 +523,19 @@ public enum BlockReviewStatistics {
             descriptor.relationshipKeyPathsForPrefetching = [\.sets, \.session]
             let rows = (try? context.fetch(descriptor)) ?? []
             for row in rows {
-                guard let session = row.session, session.completedAt != nil else { continue }
-                for entry in row.sets ?? [] where entry.isComplete && !entry.isWarmup {
-                    history.append(((session.startedAt, entry.completedAt, row.orderIndex, entry.orderIndex), exerciseID, entry))
-                }
+                guard row.session?.completedAt != nil else { continue }
+                history += (row.sets ?? []).filter { $0.isComplete && !$0.isWarmup }
             }
         }
-        history.sort { $0.order < $1.order }
 
         var table = PRTable()
-        var count = 0
-        var liftsWithPRs: Set<UUID> = []
-        for (order, exerciseID, entry) in history {
-            let records = PRDetector.check(set: entry, against: &table)
-            let completedAt = order.1
-            if !records.isEmpty && completedAt >= start && completedAt <= end {
-                count += 1
-                liftsWithPRs.insert(exerciseID)
-            }
-        }
-        return BlockReviewPRs(count: count, exerciseIDs: liftsWithPRs)
+        let inBlock = PRDetector.replay(history, into: &table)
+            .map(\.set)
+            .filter { $0.completedAt >= start && $0.completedAt <= end }
+        return BlockReviewPRs(
+            count: inBlock.count,
+            exerciseIDs: Set(inBlock.compactMap { $0.sessionExercise?.exercise?.id })
+        )
     }
 
     @MainActor
@@ -555,7 +574,7 @@ public enum BlockReviewStatistics {
                 let exercise = sessionExercise.exercise
             else { continue }
 
-            let e1RM = E1RMHelper.epley(weight: set.weight, reps: set.reps)
+            guard let e1RM = OneRepMaxEstimator.estimate(weight: set.weight, reps: set.reps) else { continue }
             let key = ExerciseSessionKey(exerciseID: exercise.id, sessionID: session.id)
             let candidate = SessionTopSet(
                 exerciseID: exercise.id,
@@ -651,10 +670,8 @@ public enum BlockReviewStatistics {
         context: ModelContext,
         now: Date = Date.now
     ) throws {
-        try context.transaction {
-            block.reviewedAt = now
-            try context.save()
-        }
+        block.reviewedAt = now
+        try SessionSetActions.saveOrRollBack(context)
     }
 
     public static func formattedKg(_ value: Double) -> String {

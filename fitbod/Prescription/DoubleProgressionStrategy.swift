@@ -91,7 +91,7 @@ public struct DoubleProgressionStrategy: ProgressionStrategy {
             increment: increment
         )
 
-        let roundedLine = "→ \(Self.formatWeight(rounded)) \(unit.rawValue) (rounded down to \(Self.formatWeight(increment ?? smallestIncrement)) \(unit.rawValue) \(increment == nil ? "plates" : "increments"))"
+        let roundedLine = "→ \(NumberText.weight(rounded)) \(unit.rawValue) (rounded down to \(NumberText.weight(increment ?? smallestIncrement)) \(unit.rawValue) \(increment == nil ? "plates" : "increments"))"
 
         let explanation = PrescriptionExplanation(
             lastSessionLine: lastLine,
@@ -111,11 +111,6 @@ public struct DoubleProgressionStrategy: ProgressionStrategy {
 
 private extension DoubleProgressionStrategy {
 
-    /// Formats a weight value for display using %g to omit trailing zeros.
-    static func formatWeight(_ weight: Double) -> String {
-        String(format: "%g", weight)
-    }
-
     /// Builds the "last session" line shown in the WhyThisWeightSheet.
     /// Format: "{weight} {unit} × {reps} @ RPE {rpe} (May 15)". A top set
     /// logged without an RPE is still the last session: "{weight} {unit} ×
@@ -131,6 +126,6 @@ private extension DoubleProgressionStrategy {
         guard let reps, let date else { return nil }
         let dateStr = date.formatted(.dateTime.month(.abbreviated).day())
         let rpeStr = rpe.map { " @ RPE \(String(format: "%.1f", $0))" } ?? ""
-        return "\(formatWeight(weight)) \(unit.rawValue) × \(reps)\(rpeStr) (\(dateStr))"
+        return "\(NumberText.weight(weight)) \(unit.rawValue) × \(reps)\(rpeStr) (\(dateStr))"
     }
 }

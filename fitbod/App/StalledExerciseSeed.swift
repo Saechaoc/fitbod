@@ -31,8 +31,9 @@ enum StalledExerciseSeed {
     @MainActor
     static func runIfRequested(in context: ModelContext) {
         #if DEBUG
-        guard ProcessInfo.processInfo.arguments.contains(launchArgument) else { return }
-        seed(in: context)
+        let variationUndo = ProcessInfo.processInfo.arguments.contains("-fitbod-seed-variation-undo")
+        guard ProcessInfo.processInfo.arguments.contains(launchArgument) || variationUndo else { return }
+        seed(in: context, variationUndo: variationUndo)
         #endif
     }
 
@@ -41,7 +42,7 @@ enum StalledExerciseSeed {
     private static let exerciseNames = ["Barbell Bench Press - Medium Grip", "Bench Press - Powerlifting"]
 
     @MainActor
-    private static func seed(in context: ModelContext) {
+    private static func seed(in context: ModelContext, variationUndo: Bool) {
         let existing = (try? context.fetch(FetchDescriptor<SessionTemplate>())) ?? []
         guard !existing.contains(where: { $0.name == templateName }) else { return }
         let exercises = (try? context.fetch(FetchDescriptor<Exercise>())) ?? []
@@ -90,6 +91,10 @@ enum StalledExerciseSeed {
             try? context.save()
         }
 
+        if variationUndo {
+            seedVariationHistory(for: bench, exercises: exercises, settings: settings, now: now, in: context)
+        }
+
         // Last week has a finished workout, so Today would open on the
         // weekly recap. Mark it seen, so Today opens on the Resume slab.
         if let settings {
@@ -105,6 +110,73 @@ enum StalledExerciseSeed {
             on: now.addingTimeInterval(-12 * 60),
             context: context
         )
+    }
+
+    /// Meets MAV without RPE creep or an active block, and logs a matching
+    /// candidate so the real TryVariationSheet can offer a selectable row.
+    @MainActor
+    private static func seedVariationHistory(
+        for bench: Exercise,
+        exercises: [Exercise],
+        settings: UserSettings?,
+        now: Date,
+        in context: ModelContext
+    ) {
+        guard let primary = (bench.muscleStimuli ?? [])
+            .filter({ $0.role == "primary" }).max(by: { $0.weight < $1.weight }),
+              let slug = primary.muscle?.slug, primary.weight > 0,
+              let target = (try? context.fetch(FetchDescriptor<MuscleVolumeTarget>()))?
+                .first(where: { $0.muscle?.slug == slug }),
+              let count = Int(exactly: (Double(target.mav) / primary.weight).rounded(.up)), count > 0,
+              let candidate = exercises.first(where: {
+                  $0.name == "Dumbbell Bench Press" && $0.mechanicRaw == bench.mechanicRaw
+                      && $0.primaryMuscleSlugsJoined.contains("|\(slug)|")
+              })
+        else { return }
+
+        let weekStart = now.mondayAtMidnightForToday(weekStartsMonday: settings?.weekStartsMonday ?? true)
+        let volumeWorkout = Session()
+        context.insert(volumeWorkout)
+        volumeWorkout.startedAt = weekStart
+        volumeWorkout.completedAt = min(now, weekStart.addingTimeInterval(3_600))
+        volumeWorkout.intentRaw = Intent.hypertrophy.rawValue
+        volumeWorkout.routineSnapshotName = "Bench volume"
+        let benchLog = SessionExercise()
+        context.insert(benchLog)
+        benchLog.session = volumeWorkout
+        benchLog.exercise = bench
+        benchLog.exerciseNameSnapshot = bench.name
+        for index in 0..<count {
+            let set = SetEntry()
+            context.insert(set)
+            set.sessionExercise = benchLog
+            set.orderIndex = index
+            set.weight = 100
+            set.reps = 5
+            set.rpe = 8
+            set.isComplete = true
+            set.completedAt = volumeWorkout.completedAt ?? now
+        }
+
+        let history = Session()
+        context.insert(history)
+        history.startedAt = now.addingTimeInterval(-8 * 86_400)
+        history.completedAt = history.startedAt.addingTimeInterval(3_600)
+        history.intentRaw = Intent.hypertrophy.rawValue
+        let candidateLog = SessionExercise()
+        context.insert(candidateLog)
+        candidateLog.session = history
+        candidateLog.exercise = candidate
+        candidateLog.exerciseNameSnapshot = candidate.name
+        let set = SetEntry()
+        context.insert(set)
+        set.sessionExercise = candidateLog
+        set.weight = 60
+        set.reps = 8
+        set.rpe = 8
+        set.isComplete = true
+        set.completedAt = history.completedAt ?? now
+        try? context.save()
     }
     #endif
 }

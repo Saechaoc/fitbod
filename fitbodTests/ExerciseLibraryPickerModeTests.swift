@@ -49,8 +49,7 @@ struct ExerciseLibraryPickerModeTests {
 
         // 3. Sanity — the closure fires when invoked. This proves the
         //    `(Exercise) -> Void` plumbing actually executes the user's
-        //    code path (which the routine builder's
-        //    `InlineExerciseSearchRow` relies on).
+        //    code path (which the routine builder relies on).
         let sample = Exercise(
             name: "Sample",
             canonicalName: "sample",

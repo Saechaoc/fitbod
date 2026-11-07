@@ -147,6 +147,26 @@ struct TodayResolverTests {
         }
     }
 
+    @Test("rotation: anchors on the latest start, even when an earlier workout finished later")
+    func rotationAnchorsOnLatestStart() throws {
+        let ctx = try makeContext()
+        let (block, _, slots) = try makeBlock(slotCount: 4, context: ctx)
+        let base = Date(timeIntervalSinceReferenceDate: 0)
+        let earlier = try completeSession(slot: slots[0], block: block, startedAt: base, context: ctx)
+        try completeSession(slot: slots[2], block: block, startedAt: base.addingTimeInterval(86400), context: ctx)
+        // The earlier workout finished last, as a long or corrected one can.
+        earlier.completedAt = base.addingTimeInterval(2 * 86400)
+        try ctx.save()
+
+        let resolution = TodayResolver.resolve(block: block, context: ctx)
+
+        guard case .session(let slot) = resolution else {
+            Issue.record("Expected a session, got \(resolution)")
+            return
+        }
+        #expect(slot.position == 3)
+    }
+
     @Test("rotation: ad-hoc latest session (slot=nil) is skipped; prior live-slot session anchors")
     func rotationSkipsAdHocSession() throws {
         let ctx = try makeContext()
@@ -362,6 +382,26 @@ struct TodayResolverTests {
         } else {
             Issue.record("Expected .session(position 1), got \(resolution)")
         }
+    }
+
+    @Test("fixedWeekly: the next training day after today, wrapping past the week's end")
+    func fixedWeeklyNextTrainingDay() throws {
+        let ctx = try makeContext()
+        let (block, _, _) = try makeBlock(slotCount: 3, mode: .fixedWeekly, context: ctx)
+        block.trainingDays = [2, 4, 6]   // Mon, Wed, Fri
+        try ctx.save()
+        var cal = Calendar(identifier: .gregorian)
+        cal.firstWeekday = 1
+        let monday = try #require(cal.date(from: DateComponents(year: 2026, month: 1, day: 5)))
+        let friday = try #require(cal.date(from: DateComponents(year: 2026, month: 1, day: 9)))
+
+        let afterMonday = try #require(TodayResolver.nextTrainingDay(block: block, after: monday, calendar: cal))
+        #expect(cal.component(.weekday, from: afterMonday.day) == 4)
+        #expect(afterMonday.slot.position == 1)
+
+        let afterFriday = try #require(TodayResolver.nextTrainingDay(block: block, after: friday, calendar: cal))
+        #expect(cal.component(.weekday, from: afterFriday.day) == 2)
+        #expect(afterFriday.slot.position == 0)
     }
 
     @Test("fixedWeekly: weekday absent → .restDay")

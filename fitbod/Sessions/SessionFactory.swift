@@ -49,8 +49,8 @@
 //      reuses to rebuild a pending or skipped ramp for the new exercise.
 //    - Internal-static helpers: fetchHistoryPoints, lastSessionWorkingReps,
 //      plateInventory(for:context:), equipmentKind(for:) — declared
-//      `internal static` so SessionExerciseCard.currentExplanation() can
-//      reuse them without duplicating the SwiftData query logic.
+//      `internal static` so tests and the exercise card can reuse them
+//      without duplicating the SwiftData query logic.
 //
 //  Phase 3.1 (PIVOT-02 / PIVOT-05 / D-14) reshape: intent + progressionKind
 //  are session-level fields now, NOT per-exercise. `start(...)` snapshots
@@ -226,9 +226,9 @@ public enum SessionFactory {
             //
             // Block A — Prescription: `prescription(for:...)` computes the
             // prescribed weight for this exercise+intent, then it is stored
-            // on the snapshotted SessionExercise row. The caller
-            // (SessionExerciseCard.currentExplanation) recomputes the full
-            // PrescriptionExplanation at render time — SessionFactory only
+            // on the snapshotted SessionExercise row. The exercise card's WHY
+            // (SessionExerciseCard.currentExplanation) runs the same step at
+            // render time for its PrescriptionExplanation — SessionFactory only
             // needs to persist the scalar `prescribedWeight`. A mid-workout
             // swap or added exercise runs the same step for that exercise.
             //
@@ -314,6 +314,9 @@ public enum SessionFactory {
         do {
             try context.save()
         } catch {
+            // Drop the unsaved workout: left pending, it would read as a
+            // workout in progress and fail every later save.
+            context.rollback()
             throw SessionFactoryError.persistenceFailed(underlying: error)
         }
         return session
@@ -337,11 +340,13 @@ public enum SessionFactory {
 
     // MARK: - Prescription step (Block A)
 
-    /// One exercise's prescription: the prescribed weight, plus the bar,
-    /// plates and previous matching-intent set it was computed from, which
-    /// `start` reuses for the warm-up ramp and the planned sets.
+    /// One exercise's prescription: the prescribed weight and how it was
+    /// reached, plus the bar, plates and previous matching-intent set it was
+    /// computed from, which `start` reuses for the warm-up ramp and the
+    /// planned sets. The exercise card's WHY reads the explanation.
     struct ExercisePrescription {
         let weight: Double
+        let explanation: PrescriptionExplanation
         let barWeight: Double
         let plates: [(weight: Double, countPerSide: Int)]
         let previousSet: PreviousMatchingIntentHit?
@@ -405,7 +410,7 @@ public enum SessionFactory {
         // Configure a value copy so rounding cannot leak between exercises in a session.
         var configuredStrategy = strategy
         configuredStrategy.roundingIncrement = inventory == nil ? smallestIncrement : nil
-        let (weight, _) = configuredStrategy.prescribe(
+        let (progressedWeight, progressedExplanation) = configuredStrategy.prescribe(
             history: historyPoints,
             targetRepsLow: targetRepsLow,
             targetRepsHigh: targetRepsHigh,
@@ -423,12 +428,50 @@ public enum SessionFactory {
             block: session.block,
             today: session.startedAt
         )
+        let (weight, explanation) = holdingDeloadWeight(
+            progressedWeight, progressedExplanation, previousSet: previousSet, in: session, unit: unit
+        )
         return ExercisePrescription(
             weight: weight,
+            explanation: explanation,
             barWeight: barWeight,
             plates: plates,
             previousSet: previousSet
         )
+    }
+
+    /// In a deload week each lift holds its last top set's weight
+    /// (docs/ROADMAP.md, "Decided" 2026-11-05): the phase already cuts the
+    /// sets, and no progression adds load. A bodyweight lift holds its 0
+    /// added. Outside a deload, or with no earlier set, the strategy's
+    /// weight stands.
+    static func holdingDeloadWeight(
+        _ weight: Double,
+        _ explanation: PrescriptionExplanation,
+        previousSet: PreviousMatchingIntentHit?,
+        in session: Session,
+        unit: WeightUnit
+    ) -> (weight: Double, explanation: PrescriptionExplanation) {
+        guard let held = previousSet?.weight,
+              let block = session.block,
+              PeriodizationEngine.phase(for: block, on: session.startedAt)?.kind == .deload
+        else { return (weight, explanation) }
+        let heldText = held > 0 ? "\(NumberText.weight(held)) \(unit.rawValue)" : "no added load"
+        return (held, PrescriptionExplanation(
+            lastSessionLine: explanation.lastSessionLine,
+            formulaName: explanation.formulaName,
+            computedLine: held > 0
+                ? "Deload week: weight held at \(heldText), your last top set."
+                : "Deload week: held at no added load, as in your last top set.",
+            roundedWeight: held,
+            roundedLine: "→ \(heldText) (held for the deload)",
+            status: explanation.status,
+            bumpOccurred: false,
+            range: explanation.range,
+            phaseContextLine: explanation.phaseContextLine,
+            deloadNoteLine: explanation.deloadNoteLine,
+            sessionIntent: explanation.sessionIntent
+        ))
     }
 
     // MARK: - Warm-up step (Block B)
@@ -463,10 +506,9 @@ public enum SessionFactory {
 
     // MARK: - Internal-static helpers (plan 03-08)
     //
-    // Declared `internal static` (not private) so SessionExerciseCard's
-    // `currentExplanation()` helper can reuse these query primitives
-    // without duplicating the SwiftData #Predicate local-capture pattern
-    // (RESEARCH §6 Pitfall 1).
+    // Declared `internal static` (not private) so tests and the exercise
+    // card can reuse these query primitives without duplicating the
+    // SwiftData #Predicate local-capture pattern (RESEARCH §6 Pitfall 1).
 
     /// Fetches up to 50 most recent working, completed, RPE-logged SetEntry
     /// rows for the given (exerciseID, intentRaw) pair, maps each to a
@@ -650,8 +692,8 @@ extension SessionFactory {
     /// the exercises in `session` (including sets already logged in this
     /// session, so a resumed workout keeps its in-session PRs).
     ///
-    /// Sets are fed to the table oldest first by `completedAt`, so on
-    /// equal values the earlier set keeps the record.
+    /// `PRDetector.buildTable` replays the sets oldest first, so on equal
+    /// values the earlier set keeps the record.
     ///
     /// Returns an empty `PRTable` when the session has no exercises or
     /// a fetch fails; the in-session banner then simply emits no PRs
@@ -682,7 +724,6 @@ extension SessionFactory {
                 }
             }
         }
-        candidates.sort { $0.completedAt < $1.completedAt }
         return PRDetector.buildTable(from: candidates)
     }
 }

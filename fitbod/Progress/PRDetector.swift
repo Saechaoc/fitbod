@@ -49,7 +49,7 @@
 //      && set.weight > 0
 //      && set.reps > 0
 //
-//  e1RM suppression (PROG-02 + D-04): OneRepMax.estimate returns nil
+//  e1RM suppression (PROG-02 + D-04): OneRepMaxEstimator.estimate returns nil
 //  for reps > 10. PRDetector treats this as "no e1RM PR slot in the
 //  highRep bucket" — check(set:) never returns .e1RM for an 11+ rep
 //  set, even when it newly tops the other PR kinds.
@@ -121,23 +121,6 @@ public struct PRTable: Sendable {
     /// Total number of recorded slots — useful for tests + analytics.
     public var recordedSlotCount: Int { storage.count }
 
-    /// All records keyed by `(exerciseID, intent)` for ExercisePRsView
-    /// grouped-list rendering. Sorted for stable iteration.
-    public func allRecords(
-        forExerciseID exerciseID: UUID,
-        intent: Intent
-    ) -> [(kind: PRKind, bucket: RepBucket, record: PRRecord)] {
-        var rows: [(kind: PRKind, bucket: RepBucket, record: PRRecord)] = []
-        for kind in PRKind.allCases {
-            for bucket in RepBucket.allCases {
-                if let rec = record(exerciseID: exerciseID, intent: intent, kind: kind, bucket: bucket) {
-                    rows.append((kind: kind, bucket: bucket, record: rec))
-                }
-            }
-        }
-        return rows
-    }
-
     // MARK: - Mutating helpers (internal to PRDetector)
 
     fileprivate mutating func upsertIfTops(
@@ -165,16 +148,42 @@ public enum PRDetector {
 
     // MARK: - Public API
 
-    /// Build the full PR table from a flat `[SetEntry]` history.
-    /// Filters to working+committed+non-warmup+positive sets and
-    /// partitions by `(exerciseID, intent, PRKind, RepBucket)`.
+    /// Build the full PR table from a flat `[SetEntry]` history, replayed
+    /// oldest first. Filters to working+committed+non-warmup+positive sets
+    /// and partitions by `(exerciseID, intent, PRKind, RepBucket)`.
     public static func buildTable(from sets: [SetEntry]) -> PRTable {
         var table = PRTable()
-        for entry in sets {
-            // Mutating call must use the existing var.
-            _ = check(set: entry, against: &table)
-        }
+        replay(sets, into: &table)
         return table
+    }
+
+    /// Replays `sets` oldest first through `check(set:against:)` into
+    /// `table` and returns each set that set a record, with the kinds it
+    /// set. Oldest first is by workout start (a workout's place in time),
+    /// then the time each set was logged, then log order and set order,
+    /// so sets logged at the same moment always replay in one order.
+    @discardableResult
+    public static func replay(
+        _ sets: [SetEntry],
+        into table: inout PRTable
+    ) -> [(set: SetEntry, kinds: Set<PRKind>)] {
+        // Each set's place is read once: SwiftData reads inside the sort's
+        // comparator took 0.4 s on 6,000 sets.
+        let ordered = sets
+            .map { set in
+                (key: (set.sessionExercise?.session?.startedAt ?? .distantPast,
+                       set.completedAt,
+                       set.sessionExercise?.orderIndex ?? 0,
+                       set.orderIndex),
+                 set: set)
+            }
+            .sorted { $0.key < $1.key }
+        var records: [(set: SetEntry, kinds: Set<PRKind>)] = []
+        for (_, set) in ordered {
+            let kinds = check(set: set, against: &table)
+            if !kinds.isEmpty { records.append((set: set, kinds: kinds)) }
+        }
+        return records
     }
 
     /// Evaluate a single set against the live table. Returns the set
@@ -236,14 +245,14 @@ public enum PRDetector {
         }
 
         // e1RM PR — only meaningful for non-highRep buckets per D-04 suppression.
-        if bucket != .highRep, let newE1RM = OneRepMax.estimate(weight: set.weight, reps: set.reps) {
+        if bucket != .highRep, let newE1RM = OneRepMaxEstimator.estimate(weight: set.weight, reps: set.reps) {
             let e1RMKey = PRTable.Key(
                 exerciseID: exerciseID, intent: intent, kind: .e1RM, bucket: bucket
             )
             if table.upsertIfTops(candidate: candidate, forKey: e1RMKey, comparator: { new, old in
                 // Compute both sides on demand — the candidate's e1RM is newE1RM,
                 // the incumbent's e1RM is recomputed from its stored weight/reps.
-                let oldE1RM = OneRepMax.estimate(weight: old.weight, reps: old.reps) ?? 0
+                let oldE1RM = OneRepMaxEstimator.estimate(weight: old.weight, reps: old.reps) ?? 0
                 return newE1RM > oldE1RM
             }) {
                 topped.insert(.e1RM)

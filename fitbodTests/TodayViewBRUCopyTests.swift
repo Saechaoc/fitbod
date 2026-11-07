@@ -221,7 +221,7 @@ struct TodayViewBRUCopyTests {
     func emptySplitFixItNavigationPattern() throws {
         let source = try todayViewSource()
         #expect(source.contains("navigationPath.append(SplitDetailRoute.detail(splitID:"))
-        #expect(source.contains("navigationDestination(for: SplitDetailRoute.self)"))
+        #expect(source.contains(".blockDestinations"))
     }
 
     @Test("TodayView rest-day empty-state copy is still present and unchanged")

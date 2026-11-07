@@ -4,15 +4,15 @@
 //
 //  Wave-4 plan 04-03 — verifies the three notes-binding round-trips:
 //
-//    1. session.notes (workout-level) — written by WorkoutNotesSheet's
+//    1. session.notes (workout-level) — written by the workout NoteSheet's
 //       SAVE and persisted via SwiftData's relationship-managed save
 //       lifecycle.
-//    2. sessionExercise.pinnedNote (per-exercise) — written by
-//       PinnedNoteSheet's SAVE.
-//    3. setEntry.notes (per-set form notes) — written by PerSetNoteSheet's
+//    2. sessionExercise.pinnedNote (per-exercise) — written by the
+//       pinned NoteSheet's SAVE.
+//    3. setEntry.notes (per-set form notes) — written by the set NoteSheet's
 //       SAVE.
 //
-//  All three sheets edit a local copy and write it back on SAVE only:
+//  NoteSheet edits a local copy and writes it back on SAVE only:
 //    model.field = text.isEmpty ? nil : text
 //
 //  This test exercises the SwiftData round-trip directly (in-memory
@@ -102,8 +102,7 @@ struct NotesPersistenceTests {
         try ctx.save()
 
         // Simulate the sheets' SAVE: empty string maps to nil.
-        // This is the defensive normalization shared by all three sheets
-        // (WorkoutNotesSheet / PinnedNoteSheet / PerSetNoteSheet). Keeping
+        // This is NoteSheet's defensive normalization. Keeping
         // the column nil-on-empty means "has notes?" predicates stay
         // simple (`session.notes != nil`) instead of needing to special-
         // case the empty-string boundary.

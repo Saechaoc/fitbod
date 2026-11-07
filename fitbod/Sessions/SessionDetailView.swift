@@ -7,12 +7,13 @@
 //      `onDone` closure. The header shows "DONE" and a full-width DONE
 //      button sits at the bottom; tapping either returns to Today.
 //   2. History: push `SessionDetailView(session:)` onto a NavigationStack.
-//      With no `onDone`, the header goes back with "‹ BACK" instead.
+//      With no `onDone`, the header goes back with "‹ BACK" instead, and a
+//      finished workout offers EDIT, which opens WorkoutEditView.
 //
 // Content (all read from logged rows via SessionSummary, never from the
 // template): name + date, a DURATION / SETS / VOLUME stat strip, a PR band
-// when any PR landed, then one row per exercise with its working-set
-// count, volume, best set and PR kinds.
+// when any PR landed, then each exercise with its working-set count,
+// volume and PR kinds over every set it logged, the best one marked.
 //
 // BRU contract: NO Capsule() / NO RoundedRectangle / NO accentColor
 //               NO Image(systemName:) / NO .font(.body/.headline/.title/.caption)
@@ -26,22 +27,38 @@ public struct SessionDetailView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.weightUnit) private var weightUnit
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    @Environment(HistoryEdits.self) private var historyEdits: HistoryEdits?
 
     public let session: Session
     private let onDone: (() -> Void)?
+    private let onDeleted: () -> Void
 
     @State private var summary: SessionSummary?
+    @State private var editing = false
 
-    /// History entry point: push onto a NavigationStack.
-    public init(session: Session) {
+    private struct SummaryKey: Equatable {
+        let sessionID: UUID
+        let edits: Int
+    }
+
+    /// History entry point: push onto a NavigationStack. `onDeleted` runs
+    /// after Edit workout deletes the workout, for the caller to leave.
+    public init(session: Session, onDeleted: @escaping () -> Void = {}) {
         self.session = session
         self.onDone = nil
+        self.onDeleted = onDeleted
     }
 
     /// Post-Finish entry point: `onDone` runs for the DONE actions.
     public init(session: Session, onDone: @escaping () -> Void) {
         self.session = session
         self.onDone = onDone
+        self.onDeleted = {}
+    }
+
+    /// A finished workout opened from History can be corrected.
+    private var canEdit: Bool {
+        onDone == nil && session.completedAt != nil
     }
 
     public var body: some View {
@@ -57,7 +74,9 @@ public struct SessionDetailView: View {
                     }
                     BRUSectionHead("Exercises", right: "\(summary.exercises.count)")
                     ForEach(summary.exercises) { line in
-                        exerciseRow(line)
+                        let unit = (session.exercises ?? []).first(where: { $0.id == line.id })?
+                            .exercise?.unitOverride ?? weightUnit
+                        exerciseRow(line, unit: unit)
                         BRUDivider(.hair)
                     }
                     if let notes = session.notes, !notes.isEmpty {
@@ -74,8 +93,14 @@ public struct SessionDetailView: View {
             // (one Done, not two); opened from history it goes back with ‹ BACK.
             BRUHeaderBar(
                 left: onDone == nil ? HeaderAction("‹ Back") { dismiss() } : nil,
-                center: "Summary"
+                center: "Summary",
+                right: canEdit ? HeaderAction("Edit") { editing = true } : nil
             )
+        }
+        .fullScreenCover(isPresented: $editing) {
+            NavigationStack {
+                WorkoutEditView(session: session, onDeleted: onDeleted)
+            }
         }
         .safeAreaInset(edge: .bottom, spacing: 0) {
             if let onDone {
@@ -87,7 +112,7 @@ public struct SessionDetailView: View {
                     .overlay(Rectangle().fill(Color.bruInk).frame(height: 2), alignment: .top)
             }
         }
-        .task(id: session.id) {
+        .task(id: SummaryKey(sessionID: session.id, edits: historyEdits?.version ?? 0)) {
             summary = SessionSummary.make(session: session, context: ctx)
         }
     }
@@ -173,14 +198,14 @@ public struct SessionDetailView: View {
         .background(Color.bruInk)
     }
 
-    private func exerciseRow(_ line: SessionSummary.ExerciseLine) -> some View {
-        HStack(alignment: .top, spacing: 12) {
+    private func exerciseRow(_ line: SessionSummary.ExerciseLine, unit: WeightUnit) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
             VStack(alignment: .leading, spacing: 4) {
                 Text(line.name)
                     .font(BRUFont.bodyEmphasis)
                     .foregroundStyle(Color.bruInk)
                     .fixedSize(horizontal: false, vertical: true)
-                Text(setsLine(line))
+                Text(SessionHistoryFormat.setsLine(count: line.workingSets, volume: line.volume, unit: unit))
                     .font(BRUFont.labelSmall)
                     .tracking(1.2)
                     .textCase(.uppercase)
@@ -193,23 +218,47 @@ public struct SessionDetailView: View {
                         .foregroundStyle(Color.bruSignalText)
                 }
             }
-            Spacer(minLength: 8)
-            VStack(alignment: .trailing, spacing: 4) {
-                Text("BEST")
-                    .font(BRUFont.labelMicro)
-                    .tracking(1.5)
-                    .foregroundStyle(Color.bruMuted)
-                Text(line.best.map(bestLabel) ?? "—")
-                    .font(BRUFont.bodyEmphasis)
-                    .monospacedDigit()
-                    .foregroundStyle(line.prKinds.isEmpty ? Color.bruInk : Color.bruSignalText)
-                    // VoiceOver reads a bare dash as "em dash".
-                    .accessibilityLabel(line.best.map(bestLabel) ?? "none")
+            .accessibilityElement(children: .combine)
+            ForEach(Array(line.sets.enumerated()), id: \.offset) { index, set in
+                setRow(number: index + 1, set: set, isRecord: !line.prKinds.isEmpty, unit: unit)
             }
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.horizontal, 16)
         .padding(.vertical, 14)
-        .accessibilityElement(children: .combine)
+    }
+
+    /// One logged set: its number, weight × reps, the best set's tag and
+    /// the RPE. The tag turns signal when the exercise set a record.
+    private func setRow(number: Int, set: SessionSummary.LoggedSet, isRecord: Bool, unit: WeightUnit) -> some View {
+        HStack(spacing: 12) {
+            Text("\(number)")
+                .font(BRUFont.labelSmall)
+                .monospacedDigit()
+                .foregroundStyle(Color.bruMuted)
+                .frame(minWidth: 20, alignment: .leading)
+            Text("\(NumberText.weight(set.weight)) \(unit.rawValue) × \(set.reps)")
+                .font(BRUFont.bodyEmphasis)
+                .monospacedDigit()
+                .foregroundStyle(Color.bruInk)
+            if set.isBest {
+                Text("Best")
+                    .font(BRUFont.labelMicro)
+                    .tracking(1.5)
+                    .textCase(.uppercase)
+                    .foregroundStyle(isRecord ? Color.bruSignalText : Color.bruMuted)
+            }
+            Spacer(minLength: 8)
+            if let rpe = set.rpe {
+                Text("@ \(NumberText.weight(rpe))")
+                    .font(BRUFont.bodyDefault)
+                    .monospacedDigit()
+                    .foregroundStyle(Color.bruMuted)
+            }
+        }
+        .frame(minHeight: 28)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(setLabel(number: number, set: set, unit: unit))
     }
 
     private func notesBlock(_ notes: String) -> some View {
@@ -241,21 +290,14 @@ public struct SessionDetailView: View {
     }
 
     private func volumeLabel(_ volume: Double) -> String {
-        Int(volume.rounded()).formatted(.number.grouping(.automatic))
+        SessionHistoryFormat.roundedVolume(volume)
     }
 
-    private func setsLine(_ line: SessionSummary.ExerciseLine) -> String {
-        let sets = BRUCountLabel.text(line.workingSets, "set")
-        guard line.volume > 0 else { return sets }
-        return "\(sets) · \(volumeLabel(line.volume)) \(unitLabel)"
-    }
-
-    private func bestLabel(_ best: SessionSummary.BestSet) -> String {
-        let w = String(format: "%g", best.weight)
-        if let rpe = best.rpe {
-            return "\(w) × \(best.reps) @ \(String(format: "%g", rpe))"
-        }
-        return "\(w) × \(best.reps)"
+    private func setLabel(number: Int, set: SessionSummary.LoggedSet, unit: WeightUnit) -> String {
+        var label = "Set \(number), \(NumberText.weight(set.weight)) \(unit.rawValue) by \(set.reps)"
+        if let rpe = set.rpe { label += ", RPE \(NumberText.weight(rpe))" }
+        if set.isBest { label += ", best set" }
+        return label
     }
 
     private func prLabel(_ kind: PRKind) -> String {

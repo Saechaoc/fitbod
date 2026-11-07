@@ -78,13 +78,6 @@ public struct WeekOverWeekDelta: Sendable, Equatable {
 /// Pure-function namespace for stimulus-weighted weekly volume math.
 public enum FatigueModel {
 
-    /// SetEntry kinds that count as a "working set" per D-01.
-    /// `warmup` is NEVER in this list — warmups are excluded twice (via
-    /// `isWarmup == false` AND via this list) to defend against any
-    /// future fixture row that mis-categorizes a non-warmup as
-    /// `setTypeRaw == "warmup"`.
-    static let workingKinds: [String] = ["working", "drop", "failure", "rest_pause"]
-
     // MARK: - weeklyVolume
 
     /// Stimulus-weighted weekly volume for one muscle, for the week
@@ -287,8 +280,8 @@ public enum FatigueModel {
 
     /// Completed working sets of the workouts started in `[start, end)`,
     /// in the order a fetch of every completed non-warm-up set returns
-    /// them. Pitfall #3: a set counts only when `isWarmup == false` AND
-    /// `setTypeRaw` is one of `workingKinds`, to defend against
+    /// them. Pitfall #3: a set counts by `SetEntry.countsAsWork`, which
+    /// excludes a warm-up by flag and by type, to defend against
     /// mis-categorized rows.
     ///
     /// Only the window's workouts are read: an indexed `startedAt` fetch,
@@ -320,7 +313,7 @@ public enum FatigueModel {
         for session in sessions {
             for sessionExercise in session.exercises ?? [] {
                 for entry in sessionExercise.sets ?? []
-                where entry.isComplete && !entry.isWarmup && workingKinds.contains(entry.setTypeRaw) {
+                where entry.countsAsWork {
                     if inWindow.updateValue(entry, forKey: entry.persistentModelID) == nil {
                         traversalOrder.append(entry)
                     }

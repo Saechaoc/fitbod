@@ -1,7 +1,8 @@
 // WeekTickerCells.swift
 // fitbod — Phase 2.1 Plan 04
 //
-// 5-cell W1-W5 week ticker strip used inside BlockContextBand.
+// Week ticker strip used inside BlockContextBand: every week up to eight,
+// then eight that keep this week in view.
 // Reference: bru-screens/today.jsx lines 32-56
 //
 // BRU contract: NO Capsule() / NO RoundedRectangle / NO accentColor / NO Image(systemName:)
@@ -25,17 +26,28 @@ public struct WeekTickerCells: View {
     // MARK: - Properties
 
     let currentWeek: Int          // 1-based, e.g. 3
-    let totalWeeks: Int           // total count, e.g. 5
+    let totalWeeks: Int           // the block's total weeks, e.g. 8
     let deloadWeeks: Set<Int>     // which week indices (1-based) are deload weeks
 
     // MARK: - Body
 
     public var body: some View {
         HStack(spacing: 4) {
-            ForEach(1...max(totalWeeks, 1), id: \.self) { n in
+            ForEach(Array(Self.visibleWeeks(current: currentWeek, total: totalWeeks)), id: \.self) { n in
                 cell(for: n)
             }
         }
+    }
+
+    /// The weeks the strip draws: every week of a block of up to
+    /// `maxCells` weeks, and past that a run of `maxCells` that keeps this
+    /// week in view with up to three weeks before it. Past the plan, the
+    /// last run. Eight cells fit the 390pt phone with "W12" whole.
+    static func visibleWeeks(current: Int, total: Int, maxCells: Int = 8) -> ClosedRange<Int> {
+        let total = max(total, 1)
+        guard total > maxCells else { return 1...total }
+        let first = min(max(1, current - 3), total - maxCells + 1)
+        return first...(first + maxCells - 1)
     }
 
     // MARK: - Cell

@@ -16,7 +16,10 @@
 //         to the empty weight field's "—" in bruPaper 60% opacity
 //       - 2pt bruPaper top rule → 2-column REPS | RPE sub-band: the set's
 //         rep range, "×8–12", and target RPE, which the logger passes in
-//    2. BRUSectionHead("Why this weight", right: "−")
+//    1b. When the plan or history changed after the weight froze at the
+//        workout's start, one line says so and names today's number
+//    2. BRUSectionHead("Why this weight", right: "Close"): the way out
+//       that leaves the set's weight alone
 //    3. Numbered step blocks (01 / 02 / 03) in VStack(spacing: 8), filling
 //       the sheet's width, so the numerals line up with the section head
 //       and the 2pt bruInk rule below them spans the sheet
@@ -117,7 +120,19 @@ public struct WhyThisWeightSheet: View {
                 ScrollView {
                     VStack(spacing: 0) {
                         heroSlab
-                        BRUSectionHead("Why this weight", right: "−")
+                        if let line = explanation.changedSinceStartLine {
+                            Text(line)
+                                .font(BRUFont.bodyDefault)
+                                .foregroundStyle(Color.bruInk)
+                                .fixedSize(horizontal: false, vertical: true)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .padding(16)
+                                .background(Color.bruBg2)
+                                .accessibilityIdentifier("why.changedSinceStart")
+                            BRUDivider(.ink)
+                        }
+                        // The sheet's way out that leaves the weight alone.
+                        BRUSectionHead("Why this weight", right: "Close", rightAction: { dismiss() })
                         stepsBlock
                         // Bottom padding inside scroll area
                         Color.clear.frame(height: 16)
@@ -242,7 +257,7 @@ public struct WhyThisWeightSheet: View {
     /// The hero's weight, or the empty weight field's "—", with no unit,
     /// for a suggestion of 0.
     var heroWeightText: String {
-        hasSuggestion ? formatted(explanation.roundedWeight) : "—"
+        hasSuggestion ? NumberText.weight(explanation.roundedWeight) : "—"
     }
 
     /// The hero's reps: the set's rep range, "×8–12", or "×8" for a range
@@ -254,7 +269,7 @@ public struct WhyThisWeightSheet: View {
     /// VoiceOver reads a suggestion of 0 like the empty weight field: "none".
     var heroAccessibilityLabel: String {
         let weightStr = hasSuggestion
-            ? "Recommended weight \(formatted(explanation.roundedWeight)) \(unitLabel)"
+            ? "Recommended weight \(NumberText.weight(explanation.roundedWeight)) \(unitLabel)"
             : "Recommended weight: none"
         let repsStr = reps.map { repsText($0, joinedBy: " to ") } ?? "unknown"
         let rpeStr = rpe.map { formattedRPE($0) } ?? "not applicable"
@@ -490,8 +505,8 @@ public struct WhyThisWeightSheet: View {
         let raw = rawWeightFromLine ?? explanation.roundedWeight
         let showArrow = abs(raw - explanation.roundedWeight) > 0.01
         return (
-            raw: showArrow ? "\(formatted(raw)) → " : "",
-            rounded: formatted(explanation.roundedWeight),
+            raw: showArrow ? "\(NumberText.weight(raw)) → " : "",
+            rounded: NumberText.weight(explanation.roundedWeight),
             plates: plateListSuffix
         )
     }
@@ -601,7 +616,7 @@ public struct WhyThisWeightSheet: View {
     /// explanation and Override and drops Use.
     var useTitle: String? {
         guard hasSuggestion else { return nil }
-        return "Use \(formatted(explanation.roundedWeight)) ▸"
+        return "Use \(NumberText.weight(explanation.roundedWeight)) ▸"
     }
 
     // MARK: - Phase 3.1 Status Text Helpers
@@ -631,11 +646,6 @@ public struct WhyThisWeightSheet: View {
     // MARK: - Formatting Helpers
     // incrementText() comes from v1 lines 222-235, relocated; it now returns
     // nil, not "?", when roundedLine names no plate size.
-
-    private func formatted(_ weight: Double) -> String {
-        let isWhole = weight.truncatingRemainder(dividingBy: 1) == 0
-        return isWhole ? String(Int(weight)) : String(format: "%g", weight)
-    }
 
     private func formattedRPE(_ rpeValue: Double) -> String {
         let isWhole = rpeValue.truncatingRemainder(dividingBy: 1) == 0

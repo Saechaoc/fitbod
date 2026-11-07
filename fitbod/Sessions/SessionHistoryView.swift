@@ -35,6 +35,12 @@ import SwiftData
 public struct SessionHistoryView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.weightUnit) private var weightUnit
+    @Environment(HistoryEdits.self) private var historyEdits: HistoryEdits?
+
+    private struct RecordsKey: Equatable {
+        let sessionIDs: [UUID]
+        let edits: Int
+    }
 
     @Query(
         filter: #Predicate<Session> { $0.completedAt != nil },
@@ -96,7 +102,9 @@ public struct SessionHistoryView: View {
         .safeAreaInset(edge: .top, spacing: 0) {
             BRUHeaderBar(left: HeaderAction("‹ Back") { dismiss() }, center: "History")
         }
-        .task(id: sessions.map(\.id)) {
+        // A History correction changes sets, not which workouts are listed,
+        // so the edit count joins the key.
+        .task(id: RecordsKey(sessionIDs: sessions.map(\.id), edits: historyEdits?.version ?? 0)) {
             prs = SessionSummary.prsBySession(sessions)
             // The records pass has just read every finished workout's sets,
             // so the shared rule reads nothing more from the store here.
@@ -171,12 +179,24 @@ public struct SessionHistoryView: View {
 // MARK: - Formatting shared by the history list
 
 enum SessionHistoryFormat {
-    /// Weight × reps over completed, non-warm-up sets.
+    /// An exercise's line on the workout summary and in Edit workout, such
+    /// as "3 sets · 1,500 lb". A zero volume is left out.
+    static func setsLine(count: Int, volume: Double, unit: WeightUnit) -> String {
+        let sets = BRUCountLabel.text(count, "set")
+        guard volume != 0 else { return sets }
+        return "\(sets) · \(roundedVolume(volume)) \(unit.rawValue)"
+    }
+
+    static func roundedVolume(_ volume: Double, locale: Locale = .autoupdatingCurrent) -> String {
+        guard volume.isFinite, volume >= 0, let rounded = Int(exactly: volume.rounded()) else { return "—" }
+        return rounded.formatted(.number.grouping(.automatic).locale(locale))
+    }
+
+    /// A workout's tonnage: the sum of `SetEntry.tonnage`.
     static func tonnage(of session: Session) -> Double {
         (session.exercises ?? [])
             .flatMap { $0.sets ?? [] }
-            .filter { $0.isComplete && !$0.isWarmup }
-            .reduce(0) { $0 + $1.weight * Double($1.reps) }
+            .reduce(0) { $0 + $1.tonnage }
     }
 
     /// Workouts a week over four weeks, to two decimals at most with
@@ -186,12 +206,20 @@ enum SessionHistoryFormat {
         (Double(count) / 4).formatted(.number.precision(.fractionLength(0...2)).locale(locale))
     }
 
+    /// A workout's length as History and Today show it: "52M", "1H 05M".
+    static func duration(minutes: Int) -> String {
+        minutes >= 60
+            ? "\(minutes / 60)H \(String(format: "%02d", minutes % 60))M"
+            : "\(minutes)M"
+    }
+
     /// "4,610" below ten thousand, "71.2k" above.
     static func compactTonnage(_ total: Double) -> String {
+        guard WorkoutCorrectionInput.isSupported(total) else { return "—" }
         if total >= 10_000 {
             return (total / 1000).formatted(.number.precision(.fractionLength(1))) + "k"
         }
-        return Int(total.rounded()).formatted(.number.grouping(.automatic))
+        return roundedVolume(total)
     }
 }
 

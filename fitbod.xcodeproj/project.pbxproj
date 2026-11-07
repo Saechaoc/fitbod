@@ -95,6 +95,7 @@
 				Design/BRUReadout.swift,
 				Design/BRUSectionHead.swift,
 				"Design/Color+BRU.swift",
+				Design/NumberText.swift,
 				Sessions/RestTimer/RestTimerAttributes.swift,
 			);
 			target = 624AD49A2FB375A200D9EF2E /* FitbodWidgetsExtension */;

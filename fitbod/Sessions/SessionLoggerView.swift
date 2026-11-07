@@ -31,7 +31,7 @@
 //   - RestTimerOverlay is mounted with .safeAreaInset(edge: .bottom) (the
 //     header note above claimed this mount, but the body never had it).
 //   - The rest timer is bound to the session id and persisted as a
-//     deadline (RestTimerStore). It is restored on appear and every time
+//     deadline (UserDefaultsRestTimerStore). It is restored on appear and every time
 //     the scene becomes active, so it survives background and relaunch.
 //   - Sets can be un-completed (tap the checkmark) and deleted (swipe);
 //     both persist immediately via SessionSetActions. Weight/reps edits
@@ -55,6 +55,7 @@ public struct SessionLoggerView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.scenePhase) private var scenePhase
     @Environment(\.isKeyboardVisible) private var isKeyboardVisible
+    @Environment(ResumeWorkoutRequest.self) private var resumeRequest: ResumeWorkoutRequest?
 
     @Bindable public var session: Session
     @State private var engine = RestTimerEngine.makeProduction()
@@ -67,6 +68,7 @@ public struct SessionLoggerView: View {
     @State private var presentingWorkoutNotes = false
     @State private var pendingPinnedNote: SessionExercise?
     @State private var presentingSummary = false
+    @State private var saveFailure: String?
 
     /// Phase 6 plan 06-07 — in-session PR banner state.
     @State private var prState = InSessionPRState()
@@ -188,11 +190,15 @@ public struct SessionLoggerView: View {
         }
         // Workout-level notes sheet
         .sheet(isPresented: $presentingWorkoutNotes) {
-            WorkoutNotesSheet(session: session)
+            NoteSheet(title: "WORKOUT NOTES", hint: "Notes for this session", text: session.notes) {
+                session.notes = $0
+            }
         }
         // Pinned per-exercise note sheet
         .sheet(item: $pendingPinnedNote) { se in
-            PinnedNoteSheet(sessionExercise: se)
+            NoteSheet(title: "PINNED NOTE", hint: "Note for this exercise", text: se.pinnedNote) {
+                se.pinnedNote = $0
+            }
         }
         // Remove-exercise destructive confirmation
         .alert(
@@ -210,6 +216,18 @@ public struct SessionLoggerView: View {
         } message: { _ in
             Text("Any logged sets for this exercise will be discarded.")         // UI-SPEC verbatim
         }
+        // A finish, discard or remove whose save failed: nothing changed.
+        .alert(
+            "Couldn't save",
+            isPresented: Binding(
+                get: { saveFailure != nil },
+                set: { if !$0 { saveFailure = nil } }
+            )
+        ) {
+            Button("OK", role: .cancel) { saveFailure = nil }
+        } message: {
+            Text(saveFailure ?? "")
+        }
         // Workout summary after Finish. DONE closes the summary and the logger.
         .fullScreenCover(isPresented: $presentingSummary, onDismiss: { dismiss() }) {
             SessionDetailView(session: session, onDone: { presentingSummary = false })
@@ -220,6 +238,10 @@ public struct SessionLoggerView: View {
             engine.bind(sessionID: session.id)
             prState.prTable = await SessionFactory.seedPRTable(for: session, context: ctx)
         }
+        // While this logger is open, the Live Activity's link only brings
+        // the app back to it.
+        .onAppear { resumeRequest?.loggerIsOpen = true }
+        .onDisappear { resumeRequest?.loggerIsOpen = false }
         .onChange(of: scenePhase) { _, phase in
             switch phase {
             case .active:
@@ -284,8 +306,7 @@ public struct SessionLoggerView: View {
 
     /// "M:SS" elapsed label — computed off Date.now (matches PITFALLS-doc #4).
     private var elapsedLabel: String {
-        let s = max(0, Int(Date.now.timeIntervalSince(elapsedStart)))
-        return String(format: "%d:%02d", s / 60, s % 60)
+        NumberText.minutesSeconds(max(0, Int(Date.now.timeIntervalSince(elapsedStart))))
     }
 
     // MARK: - Mutating commands
@@ -339,24 +360,34 @@ public struct SessionLoggerView: View {
     }
 
     private func finish() {
-        session.completedAt = .now
-        session.totalDurationSeconds = Int(Date.now.timeIntervalSince(session.startedAt))
+        do {
+            try SessionSetActions.finish(session, context: ctx)
+        } catch {
+            saveFailure = "The workout wasn't finished. Your sets are still here, so try Finish again."
+            return
+        }
         engine.stop()
-        try? ctx.save()
         presentingSummary = true
     }
 
     private func discard() {
+        do {
+            try SessionSetActions.deleteWorkout(session, context: ctx)
+        } catch {
+            saveFailure = "The workout wasn't discarded. Try again."
+            return
+        }
         engine.stop()
-        ctx.delete(session)
-        try? ctx.save()
         dismiss()
     }
 
     private func handleRemove(_ se: SessionExercise) {
-        ctx.delete(se)
-        try? ctx.save()
         pendingRemove = nil
+        do {
+            try SessionSetActions.remove(se, context: ctx)
+        } catch {
+            saveFailure = "The exercise wasn't removed. Try again."
+        }
     }
 }
 

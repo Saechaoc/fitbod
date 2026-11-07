@@ -7,8 +7,10 @@
 //
 // Lists every session of every non-archived routine, grouped by routine in
 // slot order. Each row opens the session detail; its START ▸ control starts
-// the workout directly (one tap from Today). With no sessions anywhere it
-// becomes the first-run empty state that creates a routine.
+// the workout directly (one tap from Today). An empty workout, with
+// exercises added in the logger, is always offered last. With no sessions
+// anywhere it becomes the first-run empty state that creates a routine or
+// starts an empty workout.
 
 import SwiftUI
 import SwiftData
@@ -21,15 +23,18 @@ public struct TodaySessionPicker: View {
     let onOpen: (SessionTemplate) -> Void
     let onStart: (SessionTemplate) -> Void
     let onNewRoutine: () -> Void
+    let onStartEmpty: () -> Void
 
     public init(
         onOpen: @escaping (SessionTemplate) -> Void,
         onStart: @escaping (SessionTemplate) -> Void,
-        onNewRoutine: @escaping () -> Void
+        onNewRoutine: @escaping () -> Void,
+        onStartEmpty: @escaping () -> Void
     ) {
         self.onOpen = onOpen
         self.onStart = onStart
         self.onNewRoutine = onNewRoutine
+        self.onStartEmpty = onStartEmpty
     }
 
     /// (routine, its live sessions in slot order); routines with no
@@ -67,6 +72,7 @@ public struct TodaySessionPicker: View {
                         BRUDivider(.hair)
                     }
                 }
+                emptyWorkoutRow
             }
             BRUDivider(.ink)
         }
@@ -102,6 +108,32 @@ public struct TodaySessionPicker: View {
         .padding(.vertical, 10)
     }
 
+    /// An empty workout: exercises are added in the logger.
+    private var emptyWorkoutRow: some View {
+        HStack(spacing: 12) {
+            VStack(alignment: .leading, spacing: 3) {
+                Text("Empty workout")
+                    .font(BRUFont.displayMedium)
+                    .foregroundStyle(Color.bruInk)
+                Text("Add exercises as you go")
+                    .font(BRUFont.labelSmall)
+                    .tracking(1.0)
+                    .textCase(.uppercase)
+                    .foregroundStyle(Color.bruMuted)
+            }
+            .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
+            .accessibilityElement(children: .combine)
+
+            BRUButton("Start ▸", kind: .ghost, size: .md, action: onStartEmpty)
+                .frame(width: 104)
+                .accessibilityLabel("Start an empty workout")
+                .accessibilityIdentifier("today.startEmpty")
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 10)
+        .padding(.top, 4)
+    }
+
     private var emptyState: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Build your first routine")
@@ -112,6 +144,8 @@ public struct TodaySessionPicker: View {
                 .foregroundStyle(Color.bruMuted)
                 .fixedSize(horizontal: false, vertical: true)
             BRUButton("+ New routine", kind: .signal, size: .lg, action: onNewRoutine)
+            BRUButton("Start an empty workout", kind: .ghost, size: .lg, action: onStartEmpty)
+                .accessibilityIdentifier("today.startEmpty")
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(16)

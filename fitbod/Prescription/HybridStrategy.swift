@@ -93,9 +93,9 @@ public struct HybridStrategy: ProgressionStrategy {
             explanation: PrescriptionExplanation(
                 lastSessionLine: rpeResult.explanation.lastSessionLine,
                 formulaName: "Hybrid (block + RPE)",
-                computedLine: "Block ceiling: \(Self.formattedKg(blockResult.weight)) \(unit.rawValue) | RPE target: \(Self.formattedKg(rpeResult.weight)) \(unit.rawValue) | Using: \(source) -> \(Self.formattedKg(chosen)) \(unit.rawValue)",
+                computedLine: "Block ceiling: \(NumberText.weight(blockResult.weight)) \(unit.rawValue) | RPE target: \(NumberText.weight(rpeResult.weight)) \(unit.rawValue) | Using: \(source) -> \(NumberText.weight(chosen)) \(unit.rawValue)",
                 roundedWeight: chosen,
-                roundedLine: "-> \(Self.formattedKg(chosen)) \(unit.rawValue) (chose lower of block / RPE)",
+                roundedLine: "-> \(NumberText.weight(chosen)) \(unit.rawValue) (chose lower of block / RPE)",
                 status: rpeResult.explanation.status,
                 bumpOccurred: false,
                 range: nil,
@@ -103,11 +103,5 @@ public struct HybridStrategy: ProgressionStrategy {
                 deloadNoteLine: blockResult.explanation.deloadNoteLine
             )
         )
-    }
-}
-
-private extension HybridStrategy {
-    static func formattedKg(_ value: Double) -> String {
-        String(format: "%g", value)
     }
 }

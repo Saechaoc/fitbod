@@ -24,6 +24,176 @@
 import SwiftUI
 import SwiftData
 
+/// An in-memory Undo, not a second prescription evaluation. Deleted warm-ups
+/// are kept as values so their identity, metadata and skipped state survive.
+@MainActor
+struct VariationUndoSnapshot {
+    enum RestoreError: Error {
+        case noLongerApplicable
+    }
+
+    let displayName: String
+    private let sessionExerciseID: UUID
+    private let exercise: Exercise?
+    private let exerciseNameSnapshot: String
+    private let prescription: Prescription
+    private let rows: [SetValues]
+    private let completedWorkingIDs: Set<UUID>
+
+    init(_ sessionExercise: SessionExercise) {
+        displayName = sessionExercise.displayName
+        sessionExerciseID = sessionExercise.id
+        exercise = sessionExercise.exercise
+        exerciseNameSnapshot = sessionExercise.exerciseNameSnapshot
+        prescription = Prescription(sessionExercise)
+        let sets = SessionSetActions.ordered(sessionExercise)
+        rows = sets.filter { $0.isWarmup || !$0.isComplete }.map(SetValues.init)
+        completedWorkingIDs = Set(sets.filter { !$0.isWarmup && $0.isComplete }.map(\.id))
+    }
+
+    func restore(
+        to sessionExercise: SessionExercise,
+        context: ModelContext,
+        save: (ModelContext) throws -> Void = { try $0.save() }
+    ) throws {
+        let current = SessionSetActions.ordered(sessionExercise)
+        let loggedIDs = Set(current.filter { !$0.isWarmup && $0.isComplete }.map(\.id))
+        guard sessionExercise.id == sessionExerciseID,
+              let session = sessionExercise.session, session.completedAt == nil,
+              exercise?.isDeleted != true, loggedIDs == completedWorkingIDs
+        else { throw RestoreError.noLongerApplicable }
+
+        do {
+            try context.transaction {
+                sessionExercise.exercise = exercise
+                sessionExercise.exerciseNameSnapshot = exerciseNameSnapshot
+                prescription.apply(to: sessionExercise)
+                let capturedIDs = Set(rows.map(\.id))
+                let editable = current.filter { $0.isWarmup || !$0.isComplete }
+                for set in editable where !capturedIDs.contains(set.id) {
+                    context.delete(set)
+                }
+                let byID = Dictionary(uniqueKeysWithValues: editable.map { ($0.id, $0) })
+                for values in rows {
+                    let set: SetEntry
+                    if let existing = byID[values.id] {
+                        set = existing
+                    } else {
+                        set = SetEntry()
+                        context.insert(set)
+                        set.sessionExercise = sessionExercise
+                    }
+                    values.apply(to: set)
+                }
+                // Completed working rows are deliberately never assigned to.
+                try save(context)
+            }
+        } catch {
+            context.rollback()
+            throw error
+        }
+    }
+
+    private struct Prescription {
+        let targetSets: Int
+        let targetRepsLow: Int
+        let targetRepsHigh: Int
+        let targetRPE: Double?
+        let targetRIR: Int?
+        let prescribedRestSeconds: Int
+        let tempo: String?
+        let tracksTempo: Bool
+        let tracksPartialReps: Bool
+        let prescribedWeight: Double?
+        let pinnedNote: String?
+
+        init(_ exercise: SessionExercise) {
+            targetSets = exercise.targetSets
+            targetRepsLow = exercise.targetRepsLow
+            targetRepsHigh = exercise.targetRepsHigh
+            targetRPE = exercise.targetRPE
+            targetRIR = exercise.targetRIR
+            prescribedRestSeconds = exercise.prescribedRestSeconds
+            tempo = exercise.tempo
+            tracksTempo = exercise.tracksTempo
+            tracksPartialReps = exercise.tracksPartialReps
+            prescribedWeight = exercise.prescribedWeight
+            pinnedNote = exercise.pinnedNote
+        }
+
+        func apply(to exercise: SessionExercise) {
+            exercise.targetSets = targetSets
+            exercise.targetRepsLow = targetRepsLow
+            exercise.targetRepsHigh = targetRepsHigh
+            exercise.targetRPE = targetRPE
+            exercise.targetRIR = targetRIR
+            exercise.prescribedRestSeconds = prescribedRestSeconds
+            exercise.tempo = tempo
+            exercise.tracksTempo = tracksTempo
+            exercise.tracksPartialReps = tracksPartialReps
+            exercise.prescribedWeight = prescribedWeight
+            exercise.pinnedNote = pinnedNote
+        }
+    }
+
+    private struct SetValues {
+        let id: UUID
+        let orderIndex: Int
+        let weight: Double
+        let reps: Int
+        let rpe: Double?
+        let rir: Int?
+        let restAfterSeconds: Int?
+        let tempoActual: String?
+        let notes: String?
+        let isWarmup: Bool
+        let setTypeRaw: String
+        let completedAt: Date
+        let partialReps: Int?
+        let clusterSubRepsJoined: String?
+        let isComplete: Bool
+        let wasManualOverride: Bool
+
+        init(_ set: SetEntry) {
+            id = set.id
+            orderIndex = set.orderIndex
+            weight = set.weight
+            reps = set.reps
+            rpe = set.rpe
+            rir = set.rir
+            restAfterSeconds = set.restAfterSeconds
+            tempoActual = set.tempoActual
+            notes = set.notes
+            isWarmup = set.isWarmup
+            setTypeRaw = set.setTypeRaw
+            completedAt = set.completedAt
+            partialReps = set.partialReps
+            clusterSubRepsJoined = set.clusterSubRepsJoined
+            isComplete = set.isComplete
+            wasManualOverride = set.wasManualOverride
+        }
+
+        func apply(to set: SetEntry) {
+            set.id = id
+            set.orderIndex = orderIndex
+            set.weight = weight
+            set.reps = reps
+            set.rpe = rpe
+            set.rir = rir
+            set.restAfterSeconds = restAfterSeconds
+            set.tempoActual = tempoActual
+            set.notes = notes
+            set.isWarmup = isWarmup
+            set.setTypeRaw = setTypeRaw
+            set.completedAt = completedAt
+            set.partialReps = partialReps
+            set.clusterSubRepsJoined = clusterSubRepsJoined
+            set.isComplete = isComplete
+            set.wasManualOverride = wasManualOverride
+        }
+    }
+}
+
 public struct SwapExerciseSheet: View {
     @Environment(\.modelContext) private var ctx
     @Environment(\.dismiss) private var dismiss

@@ -42,29 +42,4 @@ struct BlockBuilderViewActivationTests {
         let block = try #require(blocks.first)
         #expect(block.isActive == false)
     }
-
-    @Test("Days Per Week stepper clamps to the inclusive 1...7 range")
-    func daysPerWeekClampsToOneThroughSeven() {
-        let draft = BlockDraft.newBlock()
-        // Mirrors the clamp in BlockBuilderView's DAYS PER WEEK − / + steppers.
-        func adjust(by delta: Int) {
-            draft.daysPerWeek = min(7, max(1, draft.daysPerWeek + delta))
-        }
-
-        draft.daysPerWeek = 7
-        adjust(by: 1)
-        #expect(draft.daysPerWeek == 7)   // upper clamp holds
-
-        draft.daysPerWeek = 1
-        adjust(by: -1)
-        #expect(draft.daysPerWeek == 1)   // lower clamp holds
-
-        draft.daysPerWeek = 4
-        adjust(by: 1)
-        #expect(draft.daysPerWeek == 5)   // increments
-
-        draft.daysPerWeek = 4
-        adjust(by: -1)
-        #expect(draft.daysPerWeek == 3)   // decrements
-    }
 }

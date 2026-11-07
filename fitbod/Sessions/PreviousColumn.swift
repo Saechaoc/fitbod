@@ -90,24 +90,17 @@ public struct PreviousColumn: View {
 
     /// "175×8 @8", or "175×8" without the RPE (also when none was logged).
     private func compactHint(_ hit: PreviousMatchingIntentHit, includeRPE: Bool) -> String {
-        let set = "\(formatNumber(hit.weight))×\(hit.reps)"
+        let set = "\(NumberText.weight(hit.weight))×\(hit.reps)"
         guard includeRPE, let rpe = hit.rpe else { return set }
-        return "\(set) @\(formatNumber(rpe))"
-    }
-
-    /// Whole numbers drop the decimal: 100 → "100", 102.5 → "102.5".
-    private func formatNumber(_ value: Double) -> String {
-        value.truncatingRemainder(dividingBy: 1) == 0
-            ? "\(Int(value))"
-            : String(format: "%.1f", value)
+        return "\(set) @\(NumberText.weight(rpe))"
     }
 
     /// UI-SPEC long form for VoiceOver: "175 × 8 @ 8 (Mon)". The RPE clause
     /// is left out when the prior set didn't record one.
     private func formatHint(_ hit: PreviousMatchingIntentHit) -> String {
         let day = hit.sessionStartedAt.formatted(.dateTime.weekday(.abbreviated))
-        let rpeText = hit.rpe.map { " @ \(formatNumber($0))" } ?? ""
-        return "\(formatNumber(hit.weight)) × \(hit.reps)\(rpeText) (\(day))"
+        let rpeText = hit.rpe.map { " @ \(NumberText.weight($0))" } ?? ""
+        return "\(NumberText.weight(hit.weight)) × \(hit.reps)\(rpeText) (\(day))"
     }
 }
 

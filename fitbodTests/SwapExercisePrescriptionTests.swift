@@ -60,7 +60,203 @@ struct SwapExercisePrescriptionTests {
         #expect(logged.completedAt == workout.loggedAt)
     }
 
+    @Test("variation Undo restores the pending inputs it replaced")
+    func variationUndoRestoresPendingInputs() throws {
+        let ctx = try LoggerFixtures.makeContext()
+        let fx = try makeFixture(in: ctx)
+        let session = try SessionFactory.start(template: fx.benchTemplate, on: today, context: ctx)
+        let exercise = try #require(session.exercises?.first)
+        let set = try #require(SessionSetActions.ordered(exercise).first(where: { !$0.isWarmup }))
+        set.weight = 112.5
+        set.reps = 7
+        set.rpe = 8.5
+        set.wasManualOverride = true
+        try ctx.save()
+
+        let original = VariationUndoSnapshot(exercise)
+        SwapExerciseSheet.swap(exercise, to: fx.press, context: ctx)
+        try original.restore(to: exercise, context: ctx)
+
+        #expect(exercise.exercise?.id == fx.bench.id)
+        #expect(set.weight == 112.5)
+        #expect(set.reps == 7)
+        #expect(set.rpe == 8.5)
+        #expect(set.wasManualOverride)
+    }
+
+    @Test("Undo restores full pending metadata, frozen prescription and exact warm-up topology",
+          arguments: ["pending", "skipped", "absent", "removed"])
+    func variationUndoRestoresCapturedState(warmupMode: String) throws {
+        let ctx = try LoggerFixtures.makeContext()
+        let fx = try makeFixture(in: ctx)
+        let session = try SessionFactory.start(template: fx.benchTemplate, on: today, context: ctx)
+        let exercise = try #require(session.exercises?.first)
+        for warmup in (exercise.sets ?? []) where warmup.isWarmup { ctx.delete(warmup) }
+        try ctx.save()
+        let working = SessionSetActions.ordered(exercise)
+        if warmupMode != "absent" {
+            for index in 0..<2 {
+                let warmup = SetEntry()
+                ctx.insert(warmup)
+                warmup.sessionExercise = exercise
+                warmup.orderIndex = index
+                warmup.isWarmup = true
+                warmup.setTypeRaw = "warmup"
+                warmup.isComplete = warmupMode == "skipped"
+            }
+        }
+        for (index, set) in working.enumerated() {
+            set.orderIndex = index + (warmupMode == "absent" ? 0 : 2)
+        }
+        for (index, set) in SessionSetActions.ordered(exercise).enumerated() {
+            set.weight = 112.5
+            set.reps = 7
+            set.rpe = 8.5
+            set.rir = 1
+            set.restAfterSeconds = 91 + index
+            set.tempoActual = "3-1-1-0"
+            set.notes = "Captured row \(index)"
+            set.completedAt = today.addingTimeInterval(Double(index) * 30)
+            set.partialReps = 2
+            set.clusterSubRepsJoined = "3,2,2"
+            set.wasManualOverride = true
+            if !set.isWarmup { set.setTypeRaw = "rest_pause" }
+        }
+        exercise.exerciseNameSnapshot = "Frozen bench name"
+        exercise.targetSets = 4
+        exercise.targetRepsLow = 5
+        exercise.targetRepsHigh = 9
+        exercise.targetRPE = 9
+        exercise.targetRIR = 2
+        exercise.prescribedRestSeconds = 149
+        exercise.tempo = "4-0-1-0"
+        exercise.tracksTempo = true
+        exercise.tracksPartialReps = true
+        exercise.prescribedWeight = 107.5
+        exercise.pinnedNote = "Frozen cue"
+        try ctx.save()
+        let expectedRows = SessionSetActions.ordered(exercise).map(setValues)
+        let expectedPrescription = prescriptionValues(exercise)
+        let original = VariationUndoSnapshot(exercise)
+        let replacement: Exercise
+        if warmupMode == "removed" {
+            replacement = Exercise.previewSample(name: "Pushups", equipment: .bodyweight, mechanic: .compound)
+            ctx.insert(replacement)
+        } else {
+            replacement = fx.press
+        }
+        SwapExerciseSheet.swap(exercise, to: replacement, context: ctx)
+        // A second swap would now read different history and settings.
+        fx.bench.name = "Renamed catalog bench"
+        fx.bench.smallestIncrement = 25
+        try LoggerFixtures.session(
+            exercise: fx.bench,
+            startedAt: today.addingTimeInterval(-86_400),
+            completedAt: today.addingTimeInterval(-80_000),
+            sets: [(200, 8, true)], in: ctx
+        )
+        exercise.targetSets = 8
+        exercise.targetRPE = 6
+        exercise.pinnedNote = "Changed after capture"
+        try ctx.save()
+
+        try original.restore(to: exercise, context: ctx)
+
+        #expect(exercise.exercise?.id == fx.bench.id)
+        #expect(original.displayName == "Frozen bench name")
+        #expect(prescriptionValues(exercise) == expectedPrescription)
+        #expect(SessionSetActions.ordered(exercise).map(setValues) == expectedRows)
+        #expect(working[0].weight == 112.5 && working[0].reps == 7 && working[0].rpe == 8.5)
+        #expect(working[0].wasManualOverride)
+        #expect((exercise.sets ?? []).filter(\.isWarmup).allSatisfy { $0.isComplete == (warmupMode == "skipped") })
+    }
+
+    @Test("Undo never assigns captured values to an already completed working row")
+    func variationUndoLeavesCompletedRowsUntouched() throws {
+        let ctx = try LoggerFixtures.makeContext()
+        let fx = try makeFixture(in: ctx)
+        let workout = try startBenchWorkout(fx, in: ctx)
+        let original = VariationUndoSnapshot(workout.sessionExercise)
+        SwapExerciseSheet.swap(workout.sessionExercise, to: fx.press, context: ctx)
+        workout.logged.notes = "Keep this later note"
+        workout.logged.completedAt = workout.loggedAt.addingTimeInterval(30)
+        try ctx.save()
+        let loggedValues = setValues(workout.logged)
+
+        try original.restore(to: workout.sessionExercise, context: ctx)
+
+        #expect(setValues(workout.logged) == loggedValues)
+        #expect(workout.typed.weight == 110 && workout.typed.wasManualOverride)
+    }
+
+    @Test("Undo refuses to replace an exercise once a new working set is logged")
+    func variationUndoRefusesNewCompletedWorkingRows() throws {
+        let ctx = try LoggerFixtures.makeContext()
+        let fx = try makeFixture(in: ctx)
+        let session = try SessionFactory.start(template: fx.benchTemplate, on: today, context: ctx)
+        let exercise = try #require(session.exercises?.first)
+        let original = VariationUndoSnapshot(exercise)
+        SwapExerciseSheet.swap(exercise, to: fx.press, context: ctx)
+        let set = try #require((exercise.sets ?? []).first(where: { !$0.isWarmup }))
+        set.reps = 7
+        try #require(SessionSetActions.complete(set, at: today, context: ctx))
+        let loggedValues = setValues(set)
+
+        #expect(throws: VariationUndoSnapshot.RestoreError.noLongerApplicable) {
+            try original.restore(to: exercise, context: ctx)
+        }
+        #expect(exercise.exercise?.id == fx.press.id)
+        #expect(setValues(set) == loggedValues)
+    }
+
+    @Test("a failed restoration rolls back the swap state and the same Undo can be retried")
+    func variationUndoFailureRollsBackAndCanRetry() throws {
+        enum SaveFailure: Error, Equatable { case expected }
+        let ctx = try LoggerFixtures.makeContext()
+        let fx = try makeFixture(in: ctx)
+        let session = try SessionFactory.start(template: fx.benchTemplate, on: today, context: ctx)
+        let exercise = try #require(session.exercises?.first)
+        let expected = SessionSetActions.ordered(exercise).map(setValues)
+        let original = VariationUndoSnapshot(exercise)
+        SwapExerciseSheet.swap(exercise, to: fx.press, context: ctx)
+        let swapped = SessionSetActions.ordered(exercise).map(setValues)
+        let swappedPrescription = prescriptionValues(exercise)
+
+        #expect(throws: SaveFailure.expected) {
+            try original.restore(to: exercise, context: ctx, save: { _ in throw SaveFailure.expected })
+        }
+        #expect(exercise.exercise?.id == fx.press.id)
+        #expect(SessionSetActions.ordered(exercise).map(setValues) == swapped)
+        #expect(prescriptionValues(exercise) == swappedPrescription)
+        #expect(!ctx.hasChanges)
+
+        try original.restore(to: exercise, context: ctx)
+        #expect(exercise.exercise?.id == fx.bench.id)
+        #expect(SessionSetActions.ordered(exercise).map(setValues) == expected)
+    }
+
     // MARK: - Helpers
+
+    private func setValues(_ set: SetEntry) -> [AnyHashable] {
+        [
+            AnyHashable(set.id), AnyHashable(set.orderIndex), AnyHashable(set.weight),
+            AnyHashable(set.reps), AnyHashable(set.rpe), AnyHashable(set.rir),
+            AnyHashable(set.restAfterSeconds), AnyHashable(set.tempoActual), AnyHashable(set.notes),
+            AnyHashable(set.isWarmup), AnyHashable(set.setTypeRaw), AnyHashable(set.completedAt),
+            AnyHashable(set.partialReps), AnyHashable(set.clusterSubRepsJoined),
+            AnyHashable(set.isComplete), AnyHashable(set.wasManualOverride)
+        ]
+    }
+
+    private func prescriptionValues(_ exercise: SessionExercise) -> [AnyHashable] {
+        [
+            AnyHashable(exercise.id), AnyHashable(exercise.orderIndex), AnyHashable(exercise.exerciseNameSnapshot),
+            AnyHashable(exercise.targetSets), AnyHashable(exercise.targetRepsLow), AnyHashable(exercise.targetRepsHigh),
+            AnyHashable(exercise.targetRPE), AnyHashable(exercise.targetRIR), AnyHashable(exercise.prescribedRestSeconds),
+            AnyHashable(exercise.tempo), AnyHashable(exercise.tracksTempo), AnyHashable(exercise.tracksPartialReps),
+            AnyHashable(exercise.prescribedWeight), AnyHashable(exercise.pinnedNote)
+        ]
+    }
 
     private struct Fixture {
         let bench: Exercise

@@ -79,8 +79,6 @@ struct ProgramViewFidelityTests {
                 "Hero caption should start on the normalized mockup Y grid while preserving the headline/body grid.")
         #expect(source.contains("static let captionToHeadlineSpacing: CGFloat = 0"),
                 "ACTIVE BLOCK and NO PROGRAM should have the measured visual gap; a negative spacing collapses the caption into the headline.")
-        #expect(source.contains("static let bodyLineHeight: CGFloat = 20"),
-                "The body paragraph should pin line height instead of using default SwiftUI text metrics.")
         #expect(source.contains("static let ctaHeight: CGFloat = 71"),
                 "The CTA should use the measured 71pt button height from the PNG.")
         #expect(source.contains("static let templateRowHeight: CGFloat = 77"),
@@ -179,10 +177,8 @@ struct ProgramViewFidelityTests {
                 "DONE status badge must use verbatim label 'DONE'.")
 
         // Navigation destinations registered (T-09-04 mitigation)
-        #expect(source.contains("navigationDestination(for: BlockOverviewRoute.self)"),
-                "BlockOverviewRoute destination must be registered on ProgramView's NavigationStack.")
-        #expect(source.contains("navigationDestination(for: SplitDetailRoute.self)"),
-                "SplitDetailRoute destination must be registered on ProgramView's NavigationStack.")
+        #expect(source.contains(".blockDestinations"),
+                "BlockOverviewRoute and SplitDetailRoute destinations must be registered on ProgramView's NavigationStack.")
     }
 
     @Test("ProgramView + NEW opens reusable BRU action popover with block and routine routes")

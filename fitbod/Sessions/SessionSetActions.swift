@@ -12,6 +12,8 @@
 //    - delete      remove one set and renumber the rest so orderIndex
 //                  stays contiguous (warm-ups first, then working sets)
 //    - addSet      append a planned working set at the end
+//    - finish / deleteWorkout / remove   the workout-level writes; each
+//                  throws on a failed save so the logger can say so
 //
 //  Every mutation saves immediately. A logged workout must survive the
 //  app being killed between sets, so nothing here waits for autosave.
@@ -31,9 +33,13 @@ public enum SessionSetActions {
     /// All sets need positive reps and a finite, non-negative weight.
     @MainActor
     public static func canComplete(_ entry: SetEntry) -> Bool {
-        guard entry.reps > 0, entry.weight.isFinite, entry.weight >= 0 else { return false }
-        let equipment = entry.sessionExercise?.exercise?.equipment
-        return entry.weight > 0 || equipment == .bodyweight || equipment == .weightedBodyweight
+        isValidSet(weight: entry.weight, reps: entry.reps, equipment: entry.sessionExercise?.exercise?.equipment)
+    }
+
+    /// `canComplete`'s rule on raw values, to check an edit before it is written.
+    public static func isValidSet(weight: Double, reps: Int, equipment: Equipment?) -> Bool {
+        guard reps > 0, weight.isFinite, weight >= 0 else { return false }
+        return weight > 0 || equipment == .bodyweight || equipment == .weightedBodyweight
     }
 
     /// Mark a set complete. Returns false (and changes nothing) when the
@@ -92,6 +98,51 @@ public enum SessionSetActions {
         entry.weight = seedWeight
         try? context.save()
         return entry
+    }
+
+    /// Finish a workout: stamp its end and duration in one save. When the
+    /// save fails the workout stays in progress with every set kept, and the
+    /// error is thrown for the logger to show.
+    @MainActor
+    public static func finish(_ session: Session, at date: Date = .now, context: ModelContext) throws {
+        let duration = session.totalDurationSeconds
+        session.completedAt = date
+        session.totalDurationSeconds = Int(date.timeIntervalSince(session.startedAt))
+        do {
+            try context.save()
+        } catch {
+            session.completedAt = nil
+            session.totalDurationSeconds = duration
+            throw error
+        }
+    }
+
+    /// Delete a workout with its exercises and sets: a discarded one in
+    /// progress or a finished one. A failed save rolls the delete back, so it
+    /// cannot stay pending and fail every later save.
+    @MainActor
+    public static func deleteWorkout(_ session: Session, context: ModelContext) throws {
+        context.delete(session)
+        try saveOrRollBack(context)
+    }
+
+    /// Remove one exercise and its sets from a workout in progress.
+    @MainActor
+    public static func remove(_ sessionExercise: SessionExercise, context: ModelContext) throws {
+        context.delete(sessionExercise)
+        try saveOrRollBack(context)
+    }
+
+    /// Saves, or undoes every unsaved change and rethrows, so a failed
+    /// save never lingers to be written by a later one. Not tied to the
+    /// main actor, so `BlockLifecycleService` saves through it too.
+    static func saveOrRollBack(_ context: ModelContext) throws {
+        do {
+            try context.save()
+        } catch {
+            context.rollback()
+            throw error
+        }
     }
 
     /// Lower the weight of every not-yet-completed working set by
@@ -160,13 +211,12 @@ public enum SessionSetActions {
         known: (finished: [PersistentIdentifier], empty: Set<PersistentIdentifier>)?,
         in context: ModelContext
     ) -> Set<PersistentIdentifier> {
-        // shortcut: a finished workout's sets never change in the app, so a
-        // covered workout keeps its answer. Only SessionLoggerView, with the
-        // cards and sheets it hosts, edits sets, and every way into it
-        // (Today's resume slab, ResumeWorkoutBanner, starting a workout)
-        // opens a workout in progress. Finish shows the read-only
-        // SessionDetailView in a full-screen cover whose dismissal closes the
-        // logger, and History opens the same SessionDetailView.
+        // shortcut: a covered workout keeps its answer, because the app
+        // changes a finished workout's sets in one place only,
+        // SessionEditService.save, and whoever calls it must reset this
+        // cache. SessionLoggerView edits sets only of a workout in progress:
+        // every way into it (Today's resume slab, ResumeWorkoutBanner,
+        // starting a workout) opens one, and Finish closes it.
         // BackupRestorer.performRestore replaces every workout with new rows,
         // so all of their ids go missing.
         let covered = Set(known?.finished ?? [])

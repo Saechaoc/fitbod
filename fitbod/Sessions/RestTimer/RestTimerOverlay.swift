@@ -337,8 +337,7 @@ public struct RestTimerOverlay: View {
     // MARK: - Helpers
 
     private func formatRemaining(_ seconds: TimeInterval) -> String {
-        let s = max(0, Int(seconds))
-        return String(format: "%d:%02d", s / 60, s % 60)
+        NumberText.minutesSeconds(max(0, Int(seconds)))
     }
 
     /// Overrun after the countdown hits zero: "+0:12". Past an hour (a
@@ -347,7 +346,7 @@ public struct RestTimerOverlay: View {
     private func formatOverrun(_ remaining: TimeInterval) -> String {
         let over = Int(-remaining)
         guard over > 0, over < 3600 else { return "0:00" }
-        return String(format: "+%d:%02d", over / 60, over % 60)
+        return "+" + NumberText.minutesSeconds(over)
     }
 
     private var remainingAccessibility: String {

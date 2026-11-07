@@ -15,13 +15,12 @@
 //      [live] modePickerSection (all live statuses)
 //      [live/fixedWeekly] dayChipSection
 //      phaseProgressionList
-//      fatigueAdvisoryStrip
 //      [completed] archiveContentSection
 //    }
 //    [ready]  startBlockButton + safeAreaFiller
 //    [active] editBlockButton + endBlockButton + safeAreaFiller
-//    [draft]  safeAreaFiller
-//    [completed] safeAreaFiller
+//    [draft]  deleteBlockButton + safeAreaFiller
+//    [completed] reviewButton + safeAreaFiller
 //
 //  Before its start date a block shows no NOW, current week or progress
 //  (T12); only a started active block has a current week. Past its last
@@ -191,6 +190,9 @@ public struct BlockOverviewScreen: View {
 
     private let block: Block
     private let onEdit: @MainActor () -> Void
+    /// Runs once DELETE BLOCK has deleted the block, so the screen leaves
+    /// before anything reads it again.
+    private let onDeleted: @MainActor () -> Void
     private let weekStart: Date
     private let weekEnd: Date
     private let todayDate: Date
@@ -205,7 +207,15 @@ public struct BlockOverviewScreen: View {
     @State private var presentingSplitPicker = false
     @State private var presentingSwapConfirm = false
     @State private var presentingEndConfirm = false
-    @State private var showSaveError = false
+    @State private var presentingDeleteConfirm = false
+    /// The block's review: right after END BLOCK, or from REVIEW ▸.
+    @State private var presentingReview = false
+    /// What a failed save says, in plain words; nil hides the alert.
+    @State private var saveError: String? = nil
+    /// A failed routine change, shown once the routine picker has gone.
+    @State private var routineError: String? = nil
+    /// A failed start from "Start Block?", shown in that sheet.
+    @State private var swapError: String? = nil
 
     // MARK: - @Query — real session data, no mocks (revision iter 1 B5)
 
@@ -216,9 +226,14 @@ public struct BlockOverviewScreen: View {
 
     // MARK: - Init
 
-    public init(block: Block, onEdit: @escaping @MainActor () -> Void = {}) {
+    public init(
+        block: Block,
+        onEdit: @escaping @MainActor () -> Void = {},
+        onDeleted: @escaping @MainActor () -> Void = {}
+    ) {
         self.block = block
         self.onEdit = onEdit
+        self.onDeleted = onDeleted
 
         let now = Date.now
         // CR-01 fix: pin to a Monday-first ISO-8601 calendar so the grid's
@@ -306,7 +321,6 @@ public struct BlockOverviewScreen: View {
                             dayChipSection
                         }
                         phaseProgressionList
-                        fatigueAdvisoryStrip
                     } else {
                         // Archived mode: render from decoded archive only
                         archiveContentSection
@@ -320,10 +334,17 @@ public struct BlockOverviewScreen: View {
         .background(Color.bruBg.ignoresSafeArea())
         // The BRU header's ‹ BACK is the only back control, at the top.
         .navigationBarHidden(true)
-        .sheet(isPresented: $presentingSplitPicker) {
-            SplitPickerSheet(block: block)
+        .sheet(isPresented: $presentingSplitPicker, onDismiss: {
+            // An alert can't show while the picker is still leaving.
+            saveError = routineError
+            routineError = nil
+        }) {
+            RoutinePickerSheet(selectedSplit: block.split) { split in
+                attachOrSwap(split)
+                presentingSplitPicker = false
+            }
         }
-        .sheet(isPresented: $presentingSwapConfirm) {
+        .sheet(isPresented: $presentingSwapConfirm, onDismiss: { swapError = nil }) {
             swapConfirmSheet
         }
         .alert("End block?", isPresented: $presentingEndConfirm) {
@@ -331,17 +352,38 @@ public struct BlockOverviewScreen: View {
                 do {
                     try BlockLifecycleService.end(block: block, context: ctx)
                 } catch {
-                    showSaveError = true
+                    saveError = "The block didn't end. Try again."
+                    return
                 }
+                // The review opens wherever the block ended (B9).
+                presentingReview = true
             }
             Button("Cancel", role: .cancel) {}
         } message: {
-            Text("End this block now? You can review it from the Program tab.")
+            Text("Its plan is frozen and its review opens.")
         }
-        .alert("Couldn't Save", isPresented: $showSaveError) {
-            Button("OK", role: .cancel) {}
+        .sheet(isPresented: $presentingReview) {
+            BlockReviewView(block: block)
+                .presentationDetents([.large])
+        }
+        // The message names no block: it can redraw while the deleted
+        // block's alert goes away.
+        .alert("Delete block?", isPresented: $presentingDeleteConfirm) {
+            Button("Delete Block", role: .destructive) { deleteBlock() }
+            Button("Cancel", role: .cancel) {}
         } message: {
-            Text("Couldn't save. Try again.")
+            Text("This block and its phases are deleted. It hasn't started, so no workouts change.")
+        }
+        .alert(
+            "Couldn't Save",
+            isPresented: Binding(
+                get: { saveError != nil },
+                set: { if !$0 { saveError = nil } }
+            )
+        ) {
+            Button("OK", role: .cancel) { saveError = nil }
+        } message: {
+            Text(saveError ?? "")
         }
     }
 
@@ -404,10 +446,6 @@ public struct BlockOverviewScreen: View {
 
     private var intMultiplierLabel: String {
         "INT \(intensityPercent)%"
-    }
-
-    private var shouldShowFatigueAdvisory: Bool {
-        StubFatigueAdvisory().shouldSuggest(context: SessionContext())
     }
 
     // MARK: - Day state helpers (accessible for testing via internal shim)
@@ -680,8 +718,9 @@ public struct BlockOverviewScreen: View {
         block.name.isEmpty ? "Untitled Block" : block.name
     }
 
-    /// A draft names its first missing piece in New Block's words (T11);
-    /// any other block that has not started gives its start date.
+    /// A draft names its first missing piece in New Block's words (T11). A
+    /// ready block starts the moment START BLOCK is tapped, which stamps its
+    /// start date, so it shows no date until then (gap B4).
     private var plannedHeroDetail: (text: String, spoken: String) {
         if block.derivedStatus == .draft, let missing = block.missingPiece {
             let title = missing.actionTitle
@@ -689,8 +728,7 @@ public struct BlockOverviewScreen: View {
                 .replacingOccurrences(of: " ▸", with: "")
             return (title, title.lowercased())
         }
-        let date = Self.heroDate(block.startDate)
-        return ("STARTS \(date)", "starts \(date)")
+        return ("STARTS WHEN YOU START IT", "starts when you start it")
     }
 
     /// The weeks and the phases as Program's template rows write them,
@@ -960,15 +998,29 @@ public struct BlockOverviewScreen: View {
         }
     }
 
+    // MARK: - Routine attach / swap
+
+    /// Attaches the chosen routine to a block without one, or swaps it in.
+    private func attachOrSwap(_ split: Split) {
+        do {
+            if block.split == nil {
+                try BlockLifecycleService.attachSplit(split, to: block, context: ctx)
+            } else {
+                try BlockLifecycleService.swapSplit(split, on: block, context: ctx)
+            }
+        } catch {
+            routineError = "The routine didn't change. Try again."
+        }
+    }
+
     // MARK: - Persistence helper
 
-    /// Persist pending edits; surface a lightweight save-error alert on failure
-    /// instead of silently swallowing the error (WR-02).
+    /// Persist pending edits; a failed save is undone and says so (WR-02).
     private func saveOrAlert() {
         do {
-            try ctx.save()
+            try SessionSetActions.saveOrRollBack(ctx)
         } catch {
-            showSaveError = true
+            saveError = "The schedule didn't save. Try again."
         }
     }
 
@@ -979,12 +1031,12 @@ public struct BlockOverviewScreen: View {
         VStack(spacing: 0) {
             BRUSectionHead("Scheduling", right: nil)
             HStack(spacing: 8) {
-                ModeChip("ROTATION", selected: block.schedulingMode == .rotation) {
+                SchedulingModeChip("ROTATION", selected: block.schedulingMode == .rotation) {
                     block.schedulingMode = .rotation
                     block.trainingDays = TrainingDaysWriter.sort(weekdays: block.trainingDays)
                     saveOrAlert()
                 }
-                ModeChip("FIXED WEEKLY", selected: block.schedulingMode == .fixedWeekly) {
+                SchedulingModeChip("FIXED WEEKLY", selected: block.schedulingMode == .fixedWeekly) {
                     block.schedulingMode = .fixedWeekly
                     block.trainingDays = TrainingDaysWriter.sort(weekdays: block.trainingDays)
                     saveOrAlert()
@@ -1000,25 +1052,15 @@ public struct BlockOverviewScreen: View {
 
     @ViewBuilder
     private var dayChipSection: some View {
-        // Weekday int mapping — Monday-first: Mon=2, Tue=3, Wed=4, Thu=5, Fri=6, Sat=7, Sun=1
-        // UI grid index 0=Mon...6=Sun; Calendar weekday: Sun=1, Mon=2, ...Sat=7
-        let weekdayForGridIndex: [Int] = [2, 3, 4, 5, 6, 7, 1] // Mon..Sun in Calendar weekday ints
-        let weekdayLetters = ["M", "T", "W", "T", "F", "S", "S"]
-        let weekdayNames = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
         let slotCount = block.split?.slots?.count ?? 0
+        let dayLayout = DayGridLayout.days(accessibilitySize: dynamicTypeSize.isAccessibilitySize)
 
         VStack(spacing: 0) {
             BRUSectionHead("Training days", right: nil)
-            LazyVGrid(
-                columns: Array(repeating: GridItem(.flexible(), spacing: 4), count: 7),
-                spacing: 4
-            ) {
-                ForEach(0..<7, id: \.self) { index in
-                    let weekday = weekdayForGridIndex[index]
-                    let letter = index < weekdayLetters.count ? weekdayLetters[index] : "?"
-                    let name = index < weekdayNames.count ? weekdayNames[index] : "Day \(index + 1)"
+            dayLayout {
+                ForEach(trainingWeekdays, id: \.weekday) { weekday, letter, name in
                     let isSelected = block.trainingDays.contains(weekday)
-                    DayToggleChip(letter: letter, weekdayName: name, selected: isSelected) {
+                    TrainingDayChip(letter: letter, weekdayName: name, selected: isSelected) {
                         var days = block.trainingDays
                         if isSelected {
                             days.removeAll { $0 == weekday }
@@ -1034,13 +1076,10 @@ public struct BlockOverviewScreen: View {
             .padding(.top, 8)
             .padding(.bottom, 4)
 
-            // Soft amber mismatch hint — only when a split is attached and counts differ.
-            // Hidden when no split attached (nothing to mismatch against), matching
-            // NewBlockSplitBand semantics. (fix-5)
+            // Shown only when a split is attached and the counts differ, as on
+            // NewBlockSplitBand (fix-5).
             if block.split != nil && block.trainingDays.count != slotCount {
-                Text("\(BRUCountLabel.text(block.trainingDays.count, "day")) / \(BRUCountLabel.text(slotCount, "session"))")
-                    .font(BRUFont.bodyDefault)
-                    .foregroundStyle(Color.bruAmber)
+                ScheduleMismatchHint(days: block.trainingDays.count, sessions: slotCount)
                     .padding(.horizontal, 16)
                     .padding(.top, 4)
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -1151,15 +1190,6 @@ public struct BlockOverviewScreen: View {
                     .fill(Color.bruSignal)
                     .frame(width: 4)
             }
-        }
-    }
-
-    // MARK: - Fatigue Advisory Strip
-
-    @ViewBuilder
-    private var fatigueAdvisoryStrip: some View {
-        if shouldShowFatigueAdvisory {
-            ConsiderDeloadBanner()
         }
     }
 
@@ -1331,15 +1361,55 @@ public struct BlockOverviewScreen: View {
     private var bottomBar: some View {
         switch block.derivedStatus {
         case .ready:
-            startBlockButton
+            VStack(spacing: 0) {
+                startBlockButton
+                deleteBlockButton
+            }
+        case .draft:
+            deleteBlockButton
         case .active:
             VStack(spacing: 0) {
                 editBlockButton
                 endBlockButton
             }
-        case .draft, .completed:
-            EmptyView()
+        case .completed:
+            reviewButton
         }
+    }
+
+    // MARK: - Review Button
+
+    /// A finished block's review, which closes for good once seen, opens
+    /// again from here (B12).
+    private var reviewButton: some View {
+        BRUButton("REVIEW ▸", kind: .primary) {
+            presentingReview = true
+        }
+        .overlay(alignment: .top) {
+            Rectangle()
+                .fill(Color.bruInk)
+                .frame(height: 2)
+        }
+    }
+
+    // MARK: - Delete Block Button
+
+    /// Draft and ready blocks only: a started block is ended, and a
+    /// finished one stays as history (decided 2026-11-05).
+    private var deleteBlockButton: some View {
+        BRUButton("DELETE BLOCK", kind: .ghost) {
+            presentingDeleteConfirm = true
+        }
+    }
+
+    private func deleteBlock() {
+        do {
+            try BlockLifecycleService.delete(block, context: ctx)
+        } catch {
+            saveError = "The block wasn't deleted. Try again."
+            return
+        }
+        onDeleted()
     }
 
     // MARK: - Start Block Button
@@ -1364,7 +1434,11 @@ public struct BlockOverviewScreen: View {
         if otherActive != nil {
             presentingSwapConfirm = true
         } else {
-            try? BlockLifecycleService.start(block: block, context: ctx)
+            do {
+                try BlockLifecycleService.start(block: block, context: ctx)
+            } catch {
+                saveError = "The block didn't start. Try again."
+            }
         }
     }
 
@@ -1400,9 +1474,14 @@ public struct BlockOverviewScreen: View {
 
         SwapConfirmSheet(
             currentActiveBlockName: currentActiveBlock?.name ?? "current block",
+            errorText: swapError,
             onConfirm: {
-                try? BlockLifecycleService.start(block: block, context: ctx)
-                presentingSwapConfirm = false
+                do {
+                    try BlockLifecycleService.start(block: block, context: ctx)
+                    presentingSwapConfirm = false
+                } catch {
+                    swapError = "The block didn't start. Try again."
+                }
             },
             onCancel: {
                 presentingSwapConfirm = false
@@ -1470,79 +1549,12 @@ fileprivate struct HeroHeadline: View {
     }
 }
 
-// MARK: - ModeChip (fileprivate)
-
-fileprivate struct ModeChip: View {
-    let label: String
-    let selected: Bool
-    let action: () -> Void
-
-    init(_ label: String, selected: Bool, action: @escaping () -> Void) {
-        self.label = label
-        self.selected = selected
-        self.action = action
-    }
-
-    var body: some View {
-        Button {
-            action()
-        } label: {
-            Text(label)
-                .font(BRUFont.labelSmall)
-                .textCase(.uppercase)
-                .tracking(1.2)
-                .foregroundStyle(selected ? Color.bruPaper : Color.bruInk)
-                .padding(.horizontal, 10)
-                .padding(.vertical, 6)
-                .frame(maxWidth: .infinity)
-                .background(selected ? Color.bruInk : Color.clear)
-                .overlay(
-                    Rectangle()
-                        .stroke(Color.bruInk, lineWidth: selected ? 1.5 : 1.0)
-                )
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel("\(label) scheduling")
-        .accessibilityAddTraits(selected ? .isSelected : [])
-    }
-}
-
-// MARK: - DayToggleChip (fileprivate)
-
-fileprivate struct DayToggleChip: View {
-    let letter: String
-    let weekdayName: String   // full name e.g. "Monday" — used for accessibilityLabel
-    let selected: Bool
-    let action: () -> Void
-
-    var body: some View {
-        Button {
-            action()
-        } label: {
-            Text(letter)
-                .font(BRUFont.labelSmall)
-                .textCase(.uppercase)
-                .tracking(1.2)
-                .foregroundStyle(selected ? Color.bruPaper : Color.bruMuted)
-                .frame(maxWidth: .infinity)
-                .frame(height: 28)
-                .background(selected ? Color.bruInk : Color.bruFaint)
-                .overlay(
-                    Rectangle()
-                        .stroke(Color.bruInk, lineWidth: selected ? 1.5 : 1.0)
-                )
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel(weekdayName)
-        .accessibilityAddTraits(.isToggle)
-        .accessibilityValue(selected ? "on" : "off")
-    }
-}
-
 // MARK: - SwapConfirmSheet (fileprivate)
 
 fileprivate struct SwapConfirmSheet: View {
     let currentActiveBlockName: String
+    /// A failed start, in plain words, under the message.
+    let errorText: String?
     let onConfirm: () -> Void
     let onCancel: () -> Void
 
@@ -1558,6 +1570,13 @@ fileprivate struct SwapConfirmSheet: View {
                 .foregroundStyle(Color.bruInk)
                 .frame(maxWidth: .infinity, alignment: .leading)
 
+            if let errorText {
+                Text(errorText)
+                    .font(BRUFont.labelSmall)
+                    .foregroundStyle(Color.bruSignalText)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+
             BRUButton("Confirm", kind: .signal) {
                 onConfirm()
             }
@@ -1570,69 +1589,6 @@ fileprivate struct SwapConfirmSheet: View {
         .frame(maxWidth: .infinity)
         .background(Color.bruPaper)
         .presentationDetents([.fraction(0.4)])
-    }
-}
-
-// MARK: - SplitPickerSheet (fileprivate)
-
-fileprivate struct SplitPickerSheet: View {
-    let block: Block
-
-    @Environment(\.modelContext) private var ctx
-    @Environment(\.dismiss) private var dismiss
-
-    @Query(
-        filter: #Predicate<Split> { !$0.isArchived },
-        sort: [SortDescriptor(\Split.name)]
-    ) private var splits: [Split]
-
-    var body: some View {
-        // BRU chrome (WR-05): ScrollView + BRUSectionHead + row pattern, matching
-        // SlotPickerSheet / NewBlockSplitPickerSheet. No List / .navigationTitle —
-        // system list chrome and nav-bar titles violate the BRU contract.
-        NavigationStack {
-            VStack(spacing: 0) {
-                BRUSectionHead("Choose Routine")
-
-                ScrollView {
-                    LazyVStack(spacing: 0) {
-                        ForEach(splits) { split in
-                            Button {
-                                attachOrSwap(split: split)
-                                dismiss()
-                            } label: {
-                                VStack(alignment: .leading, spacing: 4) {
-                                    Text(split.name)
-                                        .font(BRUFont.bodyEmphasis)
-                                        .foregroundStyle(Color.bruInk)
-                                    Text(BRUCountLabel.text(split.slots?.count ?? 0, "session"))
-                                        .font(BRUFont.bodyDefault)
-                                        .foregroundStyle(Color.bruMuted)
-                                }
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .padding(.horizontal, 16)
-                                .frame(minHeight: 44)
-                                .contentShape(Rectangle())
-                            }
-                            .buttonStyle(.plain)
-
-                            BRUDivider(.hair)
-                        }
-                    }
-                }
-            }
-            .background(Color.bruPaper.ignoresSafeArea())
-            .navigationBarHidden(true)
-        }
-    }
-
-    private func attachOrSwap(split: Split) {
-        // Explicit nil-conditional branch per plan: attach vs swap
-        if block.split == nil {
-            try? BlockLifecycleService.attachSplit(split, to: block, context: ctx)
-        } else {
-            try? BlockLifecycleService.swapSplit(split, on: block, context: ctx)
-        }
     }
 }
 

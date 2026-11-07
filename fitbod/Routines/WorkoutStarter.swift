@@ -23,9 +23,11 @@ public enum WorkoutStartOutcome {
 @MainActor
 public enum WorkoutStarter {
 
-    /// Starts `template` as an ad-hoc workout (no rotation slot). When a
-    /// block is active the session is still attributed to it so block
-    /// volume and history stay complete.
+    /// Starts `template`. Given no slot, a session in the active block's
+    /// routine takes its slot there, so a session started from anywhere
+    /// counts as that day of the block and the rotation moves on from it
+    /// (D-19). The session is still attributed to the active block, so
+    /// block volume and history stay complete.
     public static func start(
         _ template: SessionTemplate,
         slot: SplitSessionSlot? = nil,
@@ -35,11 +37,12 @@ public enum WorkoutStarter {
         if let active = inProgressSession(in: context) {
             return .alreadyInProgress(active)
         }
+        let block = activeBlock(in: context)
         do {
             let session = try SessionFactory.start(
                 template: template,
-                slot: slot,
-                activeBlock: activeBlock(in: context),
+                slot: slot ?? Self.slot(for: template, in: block, context: context),
+                activeBlock: block,
                 on: now,
                 context: context
             )
@@ -52,8 +55,43 @@ public enum WorkoutStarter {
             }
             return .failed("Another workout is already in progress.")
         } catch {
-            return .failed(error.localizedDescription)
+            return .failed("The new workout couldn't be saved. Try again.")
         }
+    }
+
+    /// Starts an empty workout: no session behind it, exercises added in
+    /// the logger. It belongs to the active block, for its volume, and
+    /// takes no slot, so the rotation stays where it is.
+    public static func startEmpty(context: ModelContext, now: Date = .now) -> WorkoutStartOutcome {
+        if let active = inProgressSession(in: context) {
+            return .alreadyInProgress(active)
+        }
+        let session = Session()
+        context.insert(session)
+        session.startedAt = now
+        session.block = activeBlock(in: context)
+        do {
+            try SessionSetActions.saveOrRollBack(context)
+        } catch {
+            return .failed("The new workout couldn't be saved. Try again.")
+        }
+        return .started(session)
+    }
+
+    /// The slot `template` fills in `block`'s routine: today's scheduled
+    /// slot when it holds this session, else the session's first slot.
+    /// Nil when the session is not in the routine.
+    static func slot(for template: SessionTemplate, in block: Block?, context: ModelContext) -> SplitSessionSlot? {
+        guard let block else { return nil }
+        let slots = (block.split?.slots ?? [])
+            .filter { $0.sessionTemplate?.id == template.id }
+            .sorted { $0.position < $1.position }
+        guard !slots.isEmpty else { return nil }
+        if case .session(let scheduled) = TodayResolver.resolve(block: block, context: context),
+           slots.contains(where: { $0.id == scheduled.id }) {
+            return scheduled
+        }
+        return slots.first
     }
 
     public static func inProgressSession(in context: ModelContext) -> Session? {

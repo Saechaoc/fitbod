@@ -6,6 +6,9 @@ Importance is `must` when a job cannot be finished well without the screen, `sho
 Each `must` row has a BRU mock-up in [mockups/](mockups/).
 The Milestone 1 removals and the four open product decisions in `docs/ROADMAP.md` have rows too, so the next design can settle each one in one place.
 
+Built since the map (2026-11-03, the gym day in `docs/ROADMAP.md` "Decided"): `history-editing`, `today-empty-workout`, `today-workout-done`, `workout-summary-all-sets`, `try-variation-result`, `today-session-choice` without the skip, and `live-activity-resume-target`, which opens the logger without scrolling to the set.
+Built since the map (2026-11-05, running a block in `docs/ROADMAP.md` "Decided"): `today-ready-block`, `block-plan-complete-prompt` on Today, `plan-custom-acknowledgment` (Plan custom keeps the routine and opens New block with the default phases), `block-review-reopen` and `block-review-export`, which shares the block's sets as CSV.
+
 | id | Screen or state | Workflow that needs it | Must show | Entered from | Importance | Source |
 |---|---|---|---|---|---|---|
 | history-editing | Edit a finished workout | [review-a-workout-and-edit-history](workflows/review-a-workout-and-edit-history.md) | Every set by exercise with editable weight, reps and RPE; add a set; delete a set; the workout's date and time; delete the workout with a confirmation; SAVE and CANCEL | An EDIT action on [workout-summary](screens/workout-summary.md) when it is opened from [history](screens/history.md) | must | Dead end in the workflow: no screen can change a finished workout (`fitbod/Sessions/SessionDetailView.swift:75`) |

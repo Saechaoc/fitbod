@@ -20,7 +20,6 @@ public final class BlockDraft {
     /// The edited block's active state when the draft opened. `save(into:)`
     /// never writes it back.
     public var isActive: Bool = false
-    public var daysPerWeek: Int = 4
     public var phases: [BlockPhaseDraft] = []
 
     // V7 program-graph fields — wired by the Phase 9 split band.
@@ -36,7 +35,6 @@ public final class BlockDraft {
 
     public static func newBlock() -> BlockDraft {
         let draft = BlockDraft()
-        draft.daysPerWeek = 4
         draft.phases = [
             BlockPhaseDraft(
                 kind: .accumulation,
@@ -88,6 +86,20 @@ public final class BlockDraft {
         self.trainingDays = block.trainingDays
     }
 
+    /// New block after `block` ends: Start next passes the recommended
+    /// `template`, whose name and phases it takes; Plan custom passes nil,
+    /// for the default phases and no name. Either keeps the ended block's
+    /// routine, scheduling and training days while that routine still
+    /// exists and is not archived (decided 2026-11-05).
+    public static func next(after block: Block, template: BlockTemplate?) -> BlockDraft {
+        let draft = template.map { BlockDraft(template: $0) } ?? BlockDraft.newBlock()
+        guard let routine = block.split, !routine.isArchived else { return draft }
+        draft.split = routine
+        draft.schedulingMode = block.schedulingMode
+        draft.trainingDays = block.trainingDays
+        return draft
+    }
+
     /// SAVE DRAFT needs only a name (decision 3).
     public var hasName: Bool {
         !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
@@ -115,80 +127,78 @@ public final class BlockDraft {
         phases.reduce(0) { $0 + $1.weeks }
     }
 
-    /// The midnight after the plan's last day, counted the way
-    /// `PeriodizationEngine` counts block days.
-    public var computedEndDate: Date {
-        PeriodizationEngine.startOfDay(totalWeeks * 7, from: startDate)
-    }
-
     public func save(into context: ModelContext) throws {
         let existing = try savedBlock(in: context)
         // A saved block takes a new routine only through the lifecycle service,
-        // which refuses an active block. It runs before any other write, so a
+        // which refuses an active block. It runs before any other change, so a
         // refused save leaves the block as it was (T67).
         if let existing, let split, existing.split?.id != split.id {
-            if existing.split == nil {
-                try BlockLifecycleService.attachSplit(split, to: existing, context: context)
-            } else {
-                try BlockLifecycleService.swapSplit(split, on: existing, context: context)
-            }
+            try BlockLifecycleService.assignSplit(split, to: existing)
         }
 
-        try context.transaction {
-            let block: Block
-            if let existing {
-                block = existing
-            } else {
-                let inserted = Block()
-                context.insert(inserted)
-                block = inserted
-                if id == nil {
-                    id = inserted.id
-                }
-            }
+        let block: Block
+        if let existing {
+            block = existing
+        } else {
+            block = Block()
+            context.insert(block)
+        }
 
-            block.name = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        block.name = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        // Once a block has run, its start is the start of its real window,
+        // which decides the block a workout belongs to. Only a new or
+        // never-started block takes the draft's date; BlockLifecycleService
+        // stamps the real start.
+        if !block.isActive && block.endDate == nil {
             block.startDate = startDate
-            // endDate is the completion freeze marker (spec §3/§4) — written ONLY by
-            // BlockLifecycleService.end when the block is ended. The builder is pre-
-            // activation (draft/ready context) so block.endDate MUST stay nil here.
-            // Preserving any pre-existing endDate (e.g. re-editing a completed block)
-            // is intentional — we do not clear it. computedEndDate stays available for
-            // display purposes (projected total weeks) but is never persisted by the builder.
-            // isActive is never written here either: an edited block keeps its stored
-            // state (SAVE CHANGES on the active block keeps it active), a new block stays
-            // inactive, and no other block is touched. Only BlockLifecycleService starts
-            // or ends a block (T65).
+        }
+        // endDate is the completion freeze marker (spec §3/§4) — written ONLY by
+        // BlockLifecycleService.end when the block is ended. The builder is pre-
+        // activation (draft/ready context) so block.endDate MUST stay nil here.
+        // Preserving any pre-existing endDate (e.g. re-editing a completed block)
+        // is intentional — we do not clear it.
+        // isActive is never written here either: an edited block keeps its stored
+        // state (SAVE CHANGES on the active block keeps it active), a new block stays
+        // inactive, and no other block is touched. Only BlockLifecycleService starts
+        // or ends a block (T65).
 
-            // V7 program-graph fields. Only a new block, never active, takes the
-            // draft's routine directly; a saved block's routine changed above,
-            // through BlockLifecycleService.
-            if existing == nil {
-                block.split = split
-            }
-            block.schedulingMode = schedulingMode
-            // trainingDays written ONLY via TrainingDaysWriter.sort to ensure sort-at-write
-            // invariant (T-09-14 / SPEC-8-TRAININGDAYS).
-            block.trainingDays = TrainingDaysWriter.sort(weekdays: trainingDays)
+        // V7 program-graph fields. Only a new block, never active, takes the
+        // draft's routine directly; a saved block's routine changed above,
+        // through BlockLifecycleService.
+        if existing == nil {
+            block.split = split
+        }
+        block.schedulingMode = schedulingMode
+        // trainingDays written ONLY via TrainingDaysWriter.sort to ensure sort-at-write
+        // invariant (T-09-14 / SPEC-8-TRAININGDAYS).
+        block.trainingDays = TrainingDaysWriter.sort(weekdays: trainingDays)
 
-            for oldPhase in block.phases ?? [] {
-                context.delete(oldPhase)
-            }
+        for oldPhase in block.phases ?? [] {
+            context.delete(oldPhase)
+        }
 
-            block.phases = phases.enumerated().map { index, draft in
-                let phase = BlockPhase()
-                phase.block = block
-                phase.orderIndex = index
-                phase.nameRaw = draft.kind.rawValue
-                phase.weeks = draft.weeks
-                phase.volumeMultiplier = draft.volumeMultiplier
-                phase.intensityMultiplier = draft.intensityMultiplier
-                context.insert(phase)
-                draft.id = phase.id
-                return phase
-            }
+        let saved = phases.enumerated().map { index, draft in
+            let phase = BlockPhase()
+            phase.block = block
+            phase.orderIndex = index
+            phase.nameRaw = draft.kind.rawValue
+            phase.weeks = draft.weeks
+            phase.volumeMultiplier = draft.volumeMultiplier
+            phase.intensityMultiplier = draft.intensityMultiplier
+            context.insert(phase)
+            return (draft, phase)
+        }
+        block.phases = saved.map { $0.1 }
 
-            try context.save()
+        // One save for the whole block. A failed one undoes every change, and
+        // the draft learns its ids only after it worked, so a retry saves the
+        // same block again rather than a second one.
+        try SessionSetActions.saveOrRollBack(context)
+        if id == nil {
+            id = block.id
+        }
+        for (draft, phase) in saved {
+            draft.id = phase.id
         }
     }
 
@@ -211,7 +221,6 @@ extension BlockDraft {
     public func snapshot() -> Snapshot {
         Snapshot(
             name: name,
-            daysPerWeek: daysPerWeek,
             phases: phases.map {
                 Snapshot.Phase(
                     kind: $0.kind,
@@ -236,7 +245,6 @@ extension BlockDraft {
         }
 
         public let name: String
-        public let daysPerWeek: Int
         public let phases: [Phase]
         public let splitID: UUID?
         public let schedulingMode: SchedulingMode

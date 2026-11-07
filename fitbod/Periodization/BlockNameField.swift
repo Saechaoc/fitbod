@@ -17,8 +17,6 @@ import SwiftUI
 // namespace once a second consumer (a second BRU primitive) lands.
 
 fileprivate enum BlockNameFieldTokens {
-    static let ink   = Color.bruInk
-    static let muted = Color.bruMuted
     static let labelTracking: CGFloat = 2.2
 }
 
@@ -35,14 +33,16 @@ public struct BlockNameField: View {
     public let title: String
     public let placeholder: String
     @Binding public var text: String
-
-    @FocusState private var isFocused: Bool
+    /// The field's focus, owned by the screen, so it can put the cursor
+    /// here when the name is what a save still needs.
+    private var isFocused: FocusState<Bool>.Binding
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
-    public init(title: String, placeholder: String, text: Binding<String>) {
+    public init(title: String, placeholder: String, text: Binding<String>, isFocused: FocusState<Bool>.Binding) {
         self.title = title
         self.placeholder = placeholder
         self._text = text
+        self.isFocused = isFocused
     }
 
     public var body: some View {
@@ -50,7 +50,7 @@ public struct BlockNameField: View {
             Text(title)
                 .font(BlockNameFieldType.label)
                 .tracking(BlockNameFieldTokens.labelTracking)
-                .foregroundStyle(BlockNameFieldTokens.muted)
+                .foregroundStyle(Color.bruMuted)
                 .padding(.top, 16)
 
             ZStack(alignment: .leading) {
@@ -59,7 +59,7 @@ public struct BlockNameField: View {
                     // its one line rather than end in "…".
                     Text(placeholder)
                         .font(BlockNameFieldType.displayLarge)
-                        .foregroundStyle(BlockNameFieldTokens.muted)
+                        .foregroundStyle(Color.bruMuted)
                         .lineLimit(1)
                         .minimumScaleFactor(0.5)
                         .allowsHitTesting(false)
@@ -76,7 +76,7 @@ public struct BlockNameField: View {
                             // treat it as done.
                             if newValue.contains("\n") {
                                 text = newValue.replacingOccurrences(of: "\n", with: "")
-                                isFocused = false
+                                isFocused.wrappedValue = false
                             }
                         }
                 } else {
@@ -86,7 +86,7 @@ public struct BlockNameField: View {
             }
             .padding(.top, 2)
             .contentShape(Rectangle())
-            .onTapGesture { isFocused = true }
+            .onTapGesture { isFocused.wrappedValue = true }
         }
     }
 
@@ -94,8 +94,8 @@ public struct BlockNameField: View {
         field
             .font(BlockNameFieldType.displayLarge)
             .textInputAutocapitalization(.words)
-            .foregroundStyle(BlockNameFieldTokens.ink)
-            .tint(BlockNameFieldTokens.ink)
-            .focused($isFocused)
+            .foregroundStyle(Color.bruInk)
+            .tint(Color.bruInk)
+            .focused(isFocused)
     }
 }

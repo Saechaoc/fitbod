@@ -75,7 +75,7 @@ public struct SessionTemplateDetailView: View {
             ),
             presenting: inProgressConflict
         ) { active in
-            Button("Resume \(active.routineSnapshotName)") {
+            Button("Resume \(active.displayName)") {
                 startedSession = active
                 inProgressConflict = nil
             }

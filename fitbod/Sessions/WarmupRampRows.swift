@@ -99,7 +99,7 @@ public struct WarmupRampRows: View {
     /// "Plate 2.5 lb · ×2 sides": the smallest plate in the inventory.
     private var plateNote: String? {
         guard let smallest = plates.map(\.weight).filter({ $0 > 0 }).min() else { return nil }
-        return "Plate \(formatted(smallest)) \(unitLabel) · ×2 sides"
+        return "Plate \(NumberText.weight(smallest)) \(unitLabel) · ×2 sides"
     }
 
     // MARK: - Sorted warmups
@@ -246,7 +246,7 @@ public struct WarmupRampRows: View {
         HStack(alignment: .firstTextBaseline, spacing: 4) {
             // displayMedium at 22pt requires .custom because BRUFont.displayMedium is 18pt
             // The spec calls for 22pt for the weight numeral (03-UI-SPEC line 88 / why-weight.jsx line 111)
-            Text(formatted(warmup.weight))
+            Text(NumberText.weight(warmup.weight))
                 .font(.bru(.grotesk, size: 22))
                 .foregroundStyle(Color.bruInk)
             Text("\(pctForSet(warmup))%")
@@ -267,7 +267,7 @@ public struct WarmupRampRows: View {
     private func plateViz(_ stack: PlateStack?) -> some View {
         PlateStackViz(
             platesPerSide: stack?.platesPerSide ?? [],
-            barLabel: "\(formatted(barWeight)) \(unitLabel)",
+            barLabel: "\(NumberText.weight(barWeight)) \(unitLabel)",
             heightScale: 0.3,
             showLegend: false
         )
@@ -286,7 +286,7 @@ public struct WarmupRampRows: View {
     /// per side: 10, 10, 2.5." The bar-only row ends "Bar only."
     private func accessibilityLabel(for warmup: SetEntry, stack: PlateStack?) -> String {
         let reps = BRUCountLabel.text(repsForSet(warmup), "rep")
-        let set = "Warm-up set \(warmup.orderIndex + 1): \(formatted(warmup.weight)) \(unitLabel) for \(reps) at \(pctForSet(warmup))% of working weight."
+        let set = "Warm-up set \(warmup.orderIndex + 1): \(NumberText.weight(warmup.weight)) \(unitLabel) for \(reps) at \(pctForSet(warmup))% of working weight."
         guard let stack else { return set }
         if stack.platesPerSide.isEmpty {
             return barWeight > 0 ? set + " Bar only." : set
@@ -304,7 +304,7 @@ public struct WarmupRampRows: View {
                 .textCase(.uppercase)
                 .tracking(1.2)
             Spacer()
-            Text("\(formatted(topWorkingWeight)) \(unitLabel.uppercased())")
+            Text("\(NumberText.weight(topWorkingWeight)) \(unitLabel.uppercased())")
                 .font(BRUFont.displayMedium)
                 .foregroundStyle(Color.bruInk)
         }
@@ -431,16 +431,11 @@ public struct WarmupRampRows: View {
     /// One formatted weight per plate on a side, heaviest first: ["10", "10", "2.5"].
     private func plateWeights(_ plates: [PlateStackViz.PlateDenomination]) -> [String] {
         plates.flatMap { denomination in
-            Array(repeating: formatted(denomination.weight), count: denomination.count)
+            Array(repeating: NumberText.weight(denomination.weight), count: denomination.count)
         }
     }
 
     // MARK: - Formatting helpers
-
-    /// Formats a Double weight stripping trailing zeros ("%g").
-    private func formatted(_ d: Double) -> String {
-        String(format: "%g", d)
-    }
 
     /// Formats RPE value: whole numbers as integers, fractions with one decimal.
     private func rpeFormatted(_ rpe: Double) -> String {

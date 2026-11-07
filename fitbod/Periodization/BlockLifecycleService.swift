@@ -4,15 +4,16 @@
 //
 //  Phase 08 Plan 03 — SPEC-8-LIFECYCLE + SPEC-8-ARCHIVE + SPEC-8-GUARDS.
 //
-//  One-save start / end / swapSplit / attachSplit transactions.
-//  Archive string computed BEFORE the transaction so an encoder throw
-//  aborts before any SwiftData state is committed (Pitfall 4).
+//  One-save start / end / swapSplit / attachSplit. Each save goes through
+//  SessionSetActions.saveOrRollBack, so a failed save leaves nothing changed.
+//  Archive string computed BEFORE any change so an encoder throw
+//  aborts before any SwiftData state is touched (Pitfall 4).
 //
 //  Atomicity invariants guaranteed by the implementation:
 //    - No zero-or-two-actives window during start-swap (T-08-04):
-//      All deactivation + activation happens in a single context.transaction.
+//      All deactivation + activation happens in a single save.
 //    - No completed-without-archive window during end (T-08-05):
-//      archive encoded pre-transaction; endDate + archivedConfigJSON
+//      archive encoded before any change; endDate + archivedConfigJSON
 //      assigned together in the same context.save().
 //
 //  SplitDeletionGuard is THE enforcement seam for split delete/archive (T-08-07).
@@ -41,6 +42,10 @@ public enum BlockLifecycleError: Error, Equatable, Sendable {
 
     /// Split swap/attach is refused on an active block — changing the split IS ending the block.
     case splitChangeOnActiveBlock
+
+    /// Only a draft or ready block can be deleted: an active block is ended,
+    /// and a finished one stays as history.
+    case notDeletable
 }
 
 /// Thrown by `decodeArchive(_:)` when the archive JSON cannot be decoded.
@@ -66,7 +71,7 @@ public enum BlockLifecycleService {
     /// Starts `block` by activating it.
     ///
     /// If another block is currently active, that block is ended and archived atomically
-    /// in the same transaction (the "swap" path). This guarantees no zero-or-two-actives
+    /// in the same save (the "swap" path). This guarantees no zero-or-two-actives
     /// window exists between the two operations (spec §4, T-08-04).
     ///
     /// - Precondition: `block.derivedStatus == .ready`
@@ -77,11 +82,12 @@ public enum BlockLifecycleService {
             throw BlockLifecycleError.notReady
         }
 
-        // Encode archives for currently active blocks BEFORE the transaction.
+        // Encode archives for currently active blocks BEFORE any change.
         // An encoder error here aborts before any state mutation (Pitfall 4).
+        // A failed fetch throws too: guessing "none active" could leave two.
         let myID = block.id
         let descriptor = FetchDescriptor<Block>(predicate: #Predicate<Block> { $0.isActive == true })
-        let activeBlocks = (try? context.fetch(descriptor)) ?? []
+        let activeBlocks = try context.fetch(descriptor)
         let othersWithArchive: [(Block, String)] = try activeBlocks
             .filter { $0.id != myID }
             .map { other in
@@ -89,18 +95,16 @@ public enum BlockLifecycleService {
                 return (other, json)
             }
 
-        // Single transaction: deactivate others, activate new block.
-        // No context.save() outside this transaction for lifecycle operations.
-        try context.transaction {
-            for (other, json) in othersWithArchive {
-                other.endDate = now
-                other.archivedConfigJSON = json
-                other.isActive = false
-            }
-            block.isActive = true
-            block.startDate = now
-            try context.save()
+        // One save: deactivate others, activate the new block. A failed
+        // save rolls every change back, so nothing half-started lingers.
+        for (other, json) in othersWithArchive {
+            other.endDate = now
+            other.archivedConfigJSON = json
+            other.isActive = false
         }
+        block.isActive = true
+        block.startDate = now
+        try SessionSetActions.saveOrRollBack(context)
         // Transition assertion (comment — checked by test 11):
         // After start: block.isActive ⇒ block.split != nil && block.endDate == nil
     }
@@ -109,7 +113,7 @@ public enum BlockLifecycleService {
 
     /// Ends `block` by setting `endDate` and writing the freeze-#2 archive JSON.
     ///
-    /// The archive string is encoded BEFORE the transaction so an encoder throw
+    /// The archive string is encoded BEFORE any change so an encoder throw
     /// aborts before `endDate` is set. `endDate` and `archivedConfigJSON` are
     /// always set in the same `context.save()` — a block can never have `endDate`
     /// without a corresponding archive (spec §6, T-08-05, Pitfall 4).
@@ -121,20 +125,18 @@ public enum BlockLifecycleService {
     /// - Throws: Any encoder error from `ArchivedBlockConfig.write`.
     public static func end(block: Block, context: ModelContext, now: Date = .now) throws {
         // WR-04: symmetric guard to start's .ready check — only active blocks
-        // can be ended. Checked BEFORE the encode/transaction (abort-before-mutation).
+        // can be ended. Checked BEFORE the encode and the save (abort-before-mutation).
         guard block.derivedStatus == .active else {
             throw BlockLifecycleError.notActive
         }
 
-        // Encode BEFORE entering the transaction — abort-before-mutation guarantee.
+        // Encode BEFORE any change — abort-before-mutation guarantee.
         let json = try ArchivedBlockConfig.write(from: block, endedAt: now)
 
-        try context.transaction {
-            block.isActive = false
-            block.endDate = now
-            block.archivedConfigJSON = json
-            try context.save()
-        }
+        block.isActive = false
+        block.endDate = now
+        block.archivedConfigJSON = json
+        try SessionSetActions.saveOrRollBack(context)
     }
 
     // MARK: - attachSplit / swapSplit
@@ -146,24 +148,47 @@ public enum BlockLifecycleService {
     ///
     /// - Throws: `BlockLifecycleError.splitChangeOnActiveBlock` when refused.
     public static func attachSplit(_ split: Split, to block: Block, context: ModelContext) throws {
+        try assignSplit(split, to: block)
+        try SessionSetActions.saveOrRollBack(context)
+    }
+
+    /// Gives `block` the routine `split` without saving, so a caller can
+    /// save it with other edits in one go. Refused on an active block,
+    /// before anything changes.
+    ///
+    /// - Throws: `BlockLifecycleError.splitChangeOnActiveBlock` when refused.
+    public static func assignSplit(_ split: Split, to block: Block) throws {
         guard block.derivedStatus != .active else {
             throw BlockLifecycleError.splitChangeOnActiveBlock
         }
-        try context.transaction {
-            block.split = split
-            try context.save()
-        }
+        block.split = split
     }
 
     /// Swaps the split on `block` to `split`.
     ///
     /// Semantically identical to `attachSplit(_:to:context:)` — both write
-    /// `block.split = split` inside a transaction. Swap is just attach over
+    /// `block.split = split` in one save. Swap is just attach over
     /// an existing split. Refused on active blocks for the same reason.
     ///
     /// - Throws: `BlockLifecycleError.splitChangeOnActiveBlock` when refused.
     public static func swapSplit(_ split: Split, on block: Block, context: ModelContext) throws {
         try attachSplit(split, to: block, context: context)
+    }
+
+    // MARK: - delete
+
+    /// Deletes a draft or ready block, with its phases, in one save. A
+    /// never-started block has no workouts, so nothing else goes with it,
+    /// and the routine it held can be archived again.
+    ///
+    /// - Throws: `BlockLifecycleError.notDeletable` for an active or a
+    ///   finished block, before anything changes.
+    public static func delete(_ block: Block, context: ModelContext) throws {
+        guard block.derivedStatus == .draft || block.derivedStatus == .ready else {
+            throw BlockLifecycleError.notDeletable
+        }
+        context.delete(block)
+        try SessionSetActions.saveOrRollBack(context)
     }
 
     // MARK: - assertSplitDeletable

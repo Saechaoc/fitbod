@@ -3,7 +3,7 @@
 //  fitbodTests
 //
 //  Wave-2 plan 06-02 — PRDetector kernel coverage (PROG-05 + PROG-08 +
-//  CONTEXT D-10..D-17). Six @Test functions:
+//  CONTEXT D-10..D-17). Seven @Test functions:
 //
 //    1. buildTableMatchesExpectedPRs — runs PRFixtures.seedKnownPRHistory
 //       and asserts every expected (exerciseID, intent, kind, bucket)
@@ -17,6 +17,8 @@
 //    5. tiesAreNotPRs — a tie returns empty (CONTEXT D-16 strict-> rule)
 //    6. highRepSuppressesE1RM — a 12-rep set never returns .e1RM even
 //       when it tops the other PR kinds
+//    7. replayBreaksTimeTiesBySetOrder — two equal sets logged at the
+//       same moment replay in set order, whatever order they arrive in
 //
 //  Each test acquires a fresh in-memory baseline ModelContainer via
 //  the existing fitbodTests/TestSupport/InMemoryContainer.makeCurrent()
@@ -65,7 +67,7 @@ struct PRDetectorTests {
                 let actualVol = record.weight * Double(record.reps)
                 #expect(abs(actualVol - expectedValue) < 0.0001)
             case .e1RM:
-                let actualE1RM = OneRepMax.estimate(weight: record.weight, reps: record.reps) ?? 0
+                let actualE1RM = OneRepMaxEstimator.estimate(weight: record.weight, reps: record.reps) ?? 0
                 #expect(abs(actualE1RM - expectedValue) < 0.01)
             }
         }
@@ -235,5 +237,34 @@ struct PRDetectorTests {
         #expect(topped.contains(.reps))
         #expect(topped.contains(.volume))
         #expect(topped.contains(.e1RM) == false)
+    }
+
+    // MARK: - 7. replay order
+
+    @Test("replayBreaksTimeTiesBySetOrder — the first of two equal sets logged at once holds the record")
+    func replayBreaksTimeTiesBySetOrder() throws {
+        let ctx = try makeContext()
+        let bench = Exercise(
+            name: "Bench", canonicalName: "bench",
+            equipmentRaw: "barbell", mechanicRaw: "compound"
+        )
+        ctx.insert(bench)
+        // The fixture logs both sets at the session's start, a time tie.
+        let session = try SessionFixtures.makeCompletedSession(
+            ctx: ctx,
+            startedAt: Date(timeIntervalSince1970: 1_700_000_000),
+            exercise: bench,
+            intentRaw: Intent.strength.rawValue,
+            sets: [
+                (weight: 100, reps: 5, rpe: 8.0, isWarmup: false, isComplete: true),
+                (weight: 100, reps: 5, rpe: 8.0, isWarmup: false, isComplete: true),
+            ]
+        )
+        let sets = (session.exercises?.first?.sets ?? []).sorted { $0.orderIndex < $1.orderIndex }
+
+        var table = PRTable()
+        let records = PRDetector.replay(sets.reversed(), into: &table)
+
+        #expect(records.map(\.set.orderIndex) == [0])
     }
 }

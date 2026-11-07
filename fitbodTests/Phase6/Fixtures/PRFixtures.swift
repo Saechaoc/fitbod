@@ -32,7 +32,7 @@ enum PRFixtures {
         let squatID: UUID
         /// (exerciseID, intent, kind, bucket, expectedValue) — value is
         /// weight for .weight, reps for .reps, weight*reps for .volume,
-        /// and OneRepMax.estimate(weight, reps) for .e1RM.
+        /// and OneRepMaxEstimator.estimate(weight, reps) for .e1RM.
         let expected: [(UUID, Intent, PRKind, RepBucket, Double)]
     }
 
@@ -96,9 +96,9 @@ enum PRFixtures {
             ]
         )
 
-        let benchE1RM5 = OneRepMax.estimate(weight: 105, reps: 5) ?? 0
-        let benchE1RM10 = OneRepMax.estimate(weight: 80, reps: 10) ?? 0
-        let squatE1RM3 = OneRepMax.estimate(weight: 140, reps: 3) ?? 0
+        let benchE1RM5 = OneRepMaxEstimator.estimate(weight: 105, reps: 5) ?? 0
+        let benchE1RM10 = OneRepMaxEstimator.estimate(weight: 80, reps: 10) ?? 0
+        let squatE1RM3 = OneRepMaxEstimator.estimate(weight: 140, reps: 3) ?? 0
 
         let expected: [(UUID, Intent, PRKind, RepBucket, Double)] = [
             // Bench × strength × strength bucket (reps 1..6) — Wave 1 wins.

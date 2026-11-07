@@ -8,7 +8,7 @@
 // Used by SessionLoggerView's .safeAreaInset(edge: .top) BELOW the BRUHeaderBar.
 //
 // Layout:
-//   Line 1 (HStack): routineSnapshotName (displayMedium bruInk) | elapsedLabel (bodyEmphasis muted right)
+//   Line 1 (HStack): displayName (displayMedium bruInk) | elapsedLabel (bodyEmphasis muted right)
 //   Line 2:          IntentChip(intent: session.intent)
 //
 // NOTE: SessionLoggerView wraps this in a TimelineView(.periodic(from:by:1)) for
@@ -54,7 +54,7 @@ public struct WorkoutHeaderToolbar: View {
         VStack(alignment: .leading, spacing: 6) {
             // Line 1: routine name + elapsed timer
             HStack {
-                Text(session.routineSnapshotName)                                  // UI-SPEC line 362
+                Text(session.displayName)                                  // UI-SPEC line 362
                     .font(BRUFont.displayMedium)
                     .foregroundStyle(Color.bruInk)
 

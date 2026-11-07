@@ -201,8 +201,8 @@ struct RoutineDraftValidationTests {
 
     @Test("routineDraftDefaultIntentIsStrength — RoutineDraft.intent + .progressionKind defaults")
     func routineDraftDefaultIntentIsStrength() {
-        // A freshly-constructed RoutineDraft (used by the "+ New Routine"
-        // path in RoutinesListView → RoutineBuilderView) carries the
+        // A freshly-constructed RoutineDraft (used by the new-routine
+        // path into RoutineBuilderView) carries the
         // documented Phase 3.1 defaults: intent = .strength, progressionKind
         // = .double. The header pickers in RoutineBuilderView render
         // these as the closed-state values until the user picks a

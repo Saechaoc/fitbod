@@ -339,4 +339,55 @@ struct BlockLifecycleServiceTests {
         #expect(zeroSlotBlock.derivedStatus != .ready, "Block with zero slots must not be .ready")
         #expect(zeroSlotBlock.derivedStatus == .draft)
     }
+
+    // MARK: - delete (decided 2026-11-05: draft and ready blocks only)
+
+    @Test("Deleting a ready block removes it and its phases, and frees its routine")
+    func deleteReadyBlock() throws {
+        let ctx = try makeContext()
+        let block = try makeReadyBlock(name: "Unwanted", context: ctx)
+        let routine = try #require(block.split)
+        #expect(!SplitDeletionGuard.canDelete(routine), "A ready block holds its routine")
+
+        try BlockLifecycleService.delete(block, context: ctx)
+
+        #expect(try ctx.fetch(FetchDescriptor<Block>()).isEmpty)
+        #expect(try ctx.fetch(FetchDescriptor<BlockPhase>()).isEmpty, "Its phases go with it")
+        #expect(SplitDeletionGuard.canDelete(routine), "The routine can be archived again")
+    }
+
+    @Test("Deleting a draft block removes it")
+    func deleteDraftBlock() throws {
+        let ctx = try makeContext()
+        let draft = Block()
+        ctx.insert(draft)
+        draft.name = "Sketch"
+        try ctx.save()
+        #expect(draft.derivedStatus == .draft)
+
+        try BlockLifecycleService.delete(draft, context: ctx)
+
+        #expect(try ctx.fetch(FetchDescriptor<Block>()).isEmpty)
+    }
+
+    @Test("A running or finished block can't be deleted")
+    func deleteRefusesStartedBlocks() throws {
+        let ctx = try makeContext()
+        let running = try makeReadyBlock(name: "Running", context: ctx)
+        try BlockLifecycleService.start(block: running, context: ctx, now: Date(timeIntervalSince1970: 1_000))
+        let finished = try makeReadyBlock(name: "Finished", context: ctx)
+        try BlockLifecycleService.start(block: finished, context: ctx, now: Date(timeIntervalSince1970: 2_000))
+        try BlockLifecycleService.end(block: finished, context: ctx, now: Date(timeIntervalSince1970: 3_000))
+        #expect(running.derivedStatus == .completed, "Starting Finished ended Running")
+        let active = try makeReadyBlock(name: "Active", context: ctx)
+        try BlockLifecycleService.start(block: active, context: ctx, now: Date(timeIntervalSince1970: 4_000))
+
+        #expect(throws: BlockLifecycleError.notDeletable) {
+            try BlockLifecycleService.delete(active, context: ctx)
+        }
+        #expect(throws: BlockLifecycleError.notDeletable) {
+            try BlockLifecycleService.delete(finished, context: ctx)
+        }
+        #expect(try ctx.fetch(FetchDescriptor<Block>()).count == 3, "Nothing was deleted")
+    }
 }

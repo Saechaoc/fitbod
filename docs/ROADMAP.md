@@ -6,12 +6,11 @@ for decisions and open flags.
 
 ## Finish the current milestone first
 
-The latest complete suite has four UI failures. Prepared interaction fixes need
-a rerun, the full suite on one phone, staged GitNexus checks, grouped commits
-and main push. The full authored journey on both phones at AX3 moved to
-[release readiness](DEVELOPMENT.md#release-readiness) on 2026-11-01.
-The current sandbox blocks the required simulator and repository operations;
-see [verification](VERIFICATION.md). Items below remain future work, not reasons
+The full suite passed on 2026-11-03: 1,319 tests, with one known expected
+failure. Pushing `main` to origin is left to the developer. The full authored
+journey on both phones at AX3 moved to
+[release readiness](DEVELOPMENT.md#release-readiness) on 2026-11-01; see
+[verification](VERIFICATION.md). Items below remain future work, not reasons
 to mark those acceptance checks complete.
 
 | Priority | Work | Starting point | Acceptance evidence |
@@ -32,6 +31,91 @@ dark mode, VoiceOver and Reduce Motion join a workflow's acceptance once it is
 stable, and every workflow's at release readiness. Preserve the small design
 system; add a component only when multiple real screens need it.
 
+## Decided
+
+Decided 2026-11-03 on the review page `.lavish/next-workflow.html`.
+
+- **Next workflow:** finish one gym day end to end before other work: start
+  the right workout on Today, log it, finish, find it in History and correct
+  it (design-map workflows `today`, `log-a-workout` and
+  `review-a-workout-and-edit-history`). Running a block comes next.
+- **History corrections:** the approved history-editing screen
+  (`docs/design-map/mockups/history-editing.html`) changes a finished
+  workout's date and start time and each set's weight, reps and RPE, adds and
+  deletes sets, and deletes the workout after a confirmation. A date change
+  moves the whole workout (start, finish and every set by one delta, never
+  into the future); the workout then belongs to the block whose dates contain
+  its start. Records, progression, volume and reviews recompute from the
+  corrected sets on save, with no "records moved" summary in v1. Duration
+  stays as logged; exercises are not added, removed or reordered in v1.
+  Engineering contract: `.planning/HANDOFF-training-model-coherence.md`.
+- **Frozen prescription versus live WHY:** the WHY sheet shows the weight
+  frozen when the workout started, with a one-line note when the live
+  computation differs. SchemaV7 stays.
+- **Skipping a session:** not now. Today offers the block's other sessions
+  instead, and starting one moves the rotation on. A skip needs a stored
+  marker, which is a schema change past SchemaV7.
+- **One e1RM formula (2026-11-03):** every screen estimates e1RM with
+  `OneRepMaxEstimator`, the locked D-04 rule: Brzycki up to 6 reps, Epley
+  for 7 to 10, no estimate above 10. Exercise history rows and Block Review
+  had formulas of their own, so one set could show three e1RMs (finding
+  F332).
+- **One volume rule (2026-11-03):** a set counts toward set counts, volume
+  and tonnage when it is finished and is not a warm-up by flag or by type,
+  so drop, to-failure and rest-pause sets count everywhere, the Weekly
+  Tonnage chart included; an assisted or bodyweight load adds no tonnage
+  (`SetEntry.countsAsWork`, `SetEntry.tonnage`). The Progress tab's Weekly
+  Tonnage row shows the chart's current bar, in the week the lifter set.
+  The chart and its week detail keep counting a set in the week it was
+  done.
+- **Status (2026-11-03):** the gym day is built end to end, with every
+  screen it needs. It is stable, in the sense of `docs/DEVELOPMENT.md`, after
+  two weeks of real gym use without a change to its structure. Left out on
+  purpose: the plate calculator from a set, marking warm-ups done, and a
+  Plan custom block review that stays closed (that one belongs to running a
+  block).
+
+Decided 2026-11-05 on the review page `.lavish/run-a-block.html`: every
+recommended answer, for running a block from plan to review (gaps B1 to B13).
+
+- **A finished plan:** past its last planned week, Today shows a note with
+  END BLOCK & REVIEW ▸ until the lifter ends the block, and workouts carry on
+  as normal. The app never ends a block by itself. The note has no "not now",
+  which would need a stored field past SchemaV7.
+- **The review:** ending a block from its overview opens its review at once,
+  on Today or Program. Plan custom opens New block with the ended block's
+  routine, scheduling and training days, the default phases and no name;
+  Start next opens the recommended preset with the same routine, scheduling
+  and days. Either carries the routine only while it exists and is not
+  archived. A finished block's overview has REVIEW ▸. Build call: a review
+  counts as seen once it opens (`Block.reviewedAt`), so closing it any way
+  never brings it back on Today.
+- **Ready blocks on Today:** with no block running, Today shows the newest
+  ready block with START BLOCK ▸, which starts it in one tap. A block saved
+  from the review waits as ready for that tap. With none ready, "Start a
+  block" opens Create block, as on Program.
+- **EXPORT on the review:** shares the block's sets as a CSV file, with the
+  Settings Export CSV columns and only the block's dates, in one tap.
+- **The deload week:** each lift holds its last top set's weight, and WHY
+  says so; the working sets stay cut by the phase's volume. SchemaV7 stays.
+- **Deleting a block:** draft and ready blocks only, from their overview,
+  after a confirmation. An active block is ended; finished blocks stay as
+  history.
+- **DAYS PER WEEK:** removed from New block, because nothing stored or read
+  it. Training days come from the routine's sessions and the FIXED WEEKLY
+  chips.
+- **Left out on purpose:** phases changing weights and sets beyond the
+  deload's cut, which waits until the gym day is stable; undoing END BLOCK;
+  choosing a start date; skipping a session; and large text, dark mode,
+  VoiceOver and polish for these screens until the workflow is stable.
+- **Status (2026-11-05):** running a block is built end to end, from
+  Program's New block to the review and the next block, with every screen
+  it needs (gaps B1 to B13). The P1 acceptance, a block authored,
+  reordered, rescheduled, trained into its deload and ended across
+  relaunches, is one test: `RelaunchPersistenceTests.blockRunSurvivesRelaunches`.
+  It is stable, in the sense of `docs/DEVELOPMENT.md`, once one whole block
+  has run in the gym without a change to its structure.
+
 ## Decisions awaiting product direction
 
 - **First logs and records:** the first logged set in each intent/rep-range/kind
@@ -50,24 +134,10 @@ system; add a component only when multiple real screens need it.
 - **Per-set targets:** giving one set its own reps and RPE needs target fields
   on logged sets, which is a schema change past SchemaV7. Stored per-set
   overrides are kept, but nothing applies them yet.
-- **History corrections:** the approved history-editing screen
-  (`docs/design-map/mockups/history-editing.html`) leaves its recompute rules
-  open. Proposed: a date change moves the whole workout (start, finish and
-  every set by one delta, never into the future); the workout then belongs to
-  the block whose dates contain its start; records, progression, volume and
-  reviews recompute from the corrected sets on save, with no "records moved"
-  summary in v1; duration stays as logged; exercises are not added, removed or
-  reordered in v1. Engineering handoff:
-  `.planning/HANDOFF-training-model-coherence.md`.
-- **Frozen prescription versus live WHY:** the WHY sheet recomputes from live
-  history and the live block while the pending sets hold the weight frozen at
-  start, so editing the active block mid-workout shows two different numbers
-  (reproduced 2026-11-01). Proposed: show the frozen weight with a one-line
-  note when they differ and keep SchemaV7. The alternative, freezing the
-  explanation text on `SessionExercise`, is a schema change.
-- **Today and Program redesign:** `docs/design-map/redesign/open-decisions.md`
-  lists 14 product calls, each with the default the layouts assume. The plan
-  there starts once they are confirmed or changed.
+- **Today and Program redesign:** `docs/design-map/redesign/` holds the reviewed
+  proposal (draft v6, three adversarial rounds, no open blocker). The 14 product
+  calls in `open-decisions.md` were made on 2026-11-05, each taking the default
+  the layouts assume, so `plan.md` Phase 1 can start.
 
 ## Release checks and remaining surfaces
 
@@ -78,14 +148,10 @@ system; add a component only when multiple real screens need it.
   preserves incompatible stores separately; it does not migrate them.
 - Resolve the SwiftData `.deny` runtime issue before promising hard-delete
   enforcement. Its known-issue test deliberately avoids the aborting operation.
-- Finish the Block Review export and PR sections: the current `EXPORT` header
-  text has no action, and the PR summary is a placeholder. Complete their
-  interaction tests with the block-program journey.
 - Audit secondary analytics accessibility: combined exercise-history/PR
   readouts, missing-value announcements in recap/block review, and clearer
   distinction between absent and below-MEV heatmap colors.
-- Curate pattern metadata before restoring the hidden Pattern filter. Review
-  the currently unwired `RoutinesListView` before reusing or removing it.
+- Curate pattern metadata before restoring the hidden Pattern filter.
 - Extend CI coverage deliberately: the existing workflow runs on `claude/**`,
   PRs and manual dispatch; a direct push to `main` does not trigger it.
 

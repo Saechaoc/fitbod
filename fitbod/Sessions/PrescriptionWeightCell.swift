@@ -129,7 +129,7 @@ public struct PrescriptionWeightCell: View {
                     Text(text)
                         .font(BRUFont.bodyDefault)
                         .foregroundStyle(Color.bruMuted)
-                        .accessibilityValue("\(formatted(r.lowerBound)) to \(formatted(r.upperBound)) \(unitLabel), calibrating")
+                        .accessibilityValue("\(NumberText.weight(r.lowerBound)) to \(NumberText.weight(r.upperBound)) \(unitLabel), calibrating")
                 } else {
                     // A range of 0 to 0 is no suggestion: the field's empty
                     // "—", in its font and place, read as "none".
@@ -249,11 +249,11 @@ public struct PrescriptionWeightCell: View {
             // weight its workout seeded until the lifter picks one.
             if range == nil, let p = prescription, weight == 0 {
                 // The prescription itself is never a manual override.
-                weightText = formatted(p)
+                weightText = NumberText.weight(p)
                 weight = p
                 wasManualOverride = false
             } else if weight > 0 {
-                weightText = formatted(weight)
+                weightText = NumberText.weight(weight)
             }
         }
     }
@@ -281,7 +281,7 @@ public struct PrescriptionWeightCell: View {
     /// What the field shows, for VoiceOver: "100 lb", or "none" over the
     /// placeholder.
     private var weightDescription: String {
-        weightText.isEmpty ? "none" : "\(formatted(weight)) \(unitLabel)"
+        weightText.isEmpty ? "none" : "\(NumberText.weight(weight)) \(unitLabel)"
     }
 
     /// Whether the cell shows its calibrating range, or the dash for a
@@ -309,7 +309,7 @@ public struct PrescriptionWeightCell: View {
     /// no added load, is no suggestion, so the cell shows the field's "—".
     var rangeText: String? {
         guard let range, range.upperBound > 0 else { return nil }
-        return "\(formatted(range.lowerBound)) \u{2013} \(formatted(range.upperBound)) \(unitLabel)"
+        return "\(NumberText.weight(range.lowerBound)) \u{2013} \(NumberText.weight(range.upperBound)) \(unitLabel)"
     }
 
     /// VoiceOver's label: the calibrating range, or what the field shows.
@@ -317,7 +317,7 @@ public struct PrescriptionWeightCell: View {
     var accessibilityLabelText: String {
         guard showsRange, let range else { return "Prescribed weight: \(weightDescription)" }
         guard rangeText != nil else { return "Prescribed weight: none" }
-        return "Prescribed weight range: \(formatted(range.lowerBound)) to \(formatted(range.upperBound)) \(unitLabel)"
+        return "Prescribed weight range: \(NumberText.weight(range.lowerBound)) to \(NumberText.weight(range.upperBound)) \(unitLabel)"
     }
 
     /// VoiceOver's value: the field's reading, or "none" for a range of 0
@@ -382,15 +382,10 @@ public struct PrescriptionWeightCell: View {
         }
     }
 
-    /// Formats a Double without trailing zeros: "100" not "100.0", "102.5" not "102.500".
-    private func formatted(_ d: Double) -> String {
-        String(format: "%g", d)
-    }
-
     /// The field's text for a weight: "102.5", or empty for 0 so the field
     /// shows its "—" placeholder.
     private static func text(for weight: Double) -> String {
-        weight > 0 ? String(format: "%g", weight) : ""
+        weight > 0 ? NumberText.weight(weight) : ""
     }
 }
 

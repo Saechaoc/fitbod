@@ -43,15 +43,17 @@ final class NewBlockSavesUITests: XCTestCase {
 
     // MARK: - Acceptance
 
-    /// SAVE DRAFT saves a block with only a name, and Program lists it as a
-    /// draft. Today's Start a block opens one with no phases, so the bottom
-    /// action asks for a phase, and EDIT BLOCK's SAVE CHANGES still does.
+    /// SAVE DRAFT saves a block with a name and no routine, and Program
+    /// lists it as a draft. While the routine is missing, the bottom action
+    /// names it, and a tap goes to it rather than saving. EDIT BLOCK's
+    /// SAVE CHANGES needs only a name and a phase.
     @MainActor
     func testSaveDraftSavesANameOnlyBlockAsADraft() throws {
         let app = UITestNavigation.launch(UITestNavigation.freshStore)
+        UITestNavigation.makeRoutine("Starter", in: app)
         openStartABlock(in: app)
         UITestNavigation.type("Name Only", into: nameField(in: app))
-        expectBottomAction("ADD A PHASE", enabled: false, in: app)
+        expectBottomAction("PICK A ROUTINE", in: app)
         let saveDraft = app.buttons.labeled("SAVE DRAFT")
         XCTAssertTrue(saveDraft.isEnabled, "SAVE DRAFT needs only a name")
         saveDraft.tap()
@@ -65,7 +67,7 @@ final class NewBlockSavesUITests: XCTestCase {
         card.tap()
         UITestNavigation.hittable(app.buttons, "EDIT").tap()
         XCTAssertTrue(UITestNavigation.appears(editBlockTitle(in: app)), "EDIT must open EDIT BLOCK")
-        expectBottomAction("ADD A PHASE", enabled: false, in: app)
+        expectBottomAction("SAVE CHANGES", in: app)
         XCTAssertFalse(app.buttons.labeled("SAVE DRAFT").exists, "EDIT BLOCK has no SAVE DRAFT")
     }
 
@@ -93,30 +95,30 @@ final class NewBlockSavesUITests: XCTestCase {
         app.staticTexts.labeled("EDIT BLOCK")
     }
 
-    /// Today's Start a block: New Block on the blank template, named
-    /// "Blank Block" with no phases.
+    /// Today's Start a block, then Blank Block in Create block, as on
+    /// Program: New Block with three phases and no name.
     @MainActor
     private func openStartABlock(in app: XCUIApplication) {
         UITestNavigation.selectTab("Today", in: app)
         let start = app.buttons.labeled("Start a block")
         UITestNavigation.reveal(start, in: app)
         start.tap()
+        UITestNavigation.hittable(app.buttons, "Blank Block").tap()
         XCTAssertTrue(UITestNavigation.appears(newBlockTitle(in: app)), "Start a block must open New Block")
     }
 
-    /// Waits until the bottom action reads `label`, then checks whether it
-    /// can be tapped.
+    /// Waits until the bottom action reads `label`. It stays tappable while
+    /// it names a missing piece, because a tap goes to that piece (D-97).
     @MainActor
     private func expectBottomAction(
-        _ label: String, enabled: Bool, in app: XCUIApplication,
+        _ label: String, in app: XCUIApplication,
         file: StaticString = #filePath, line: UInt = #line
     ) {
         let action = app.buttons.labeled(label)
         XCTAssertTrue(UITestNavigation.appears(action, within: 5),
                       "The bottom action must read \(label), not \"\(bottomAction(in: app).label)\"",
                       file: file, line: line)
-        XCTAssertEqual(action.isEnabled, enabled,
-                       "\(label) must be \(enabled ? "enabled" : "disabled")", file: file, line: line)
+        XCTAssertTrue(action.isEnabled, "\(label) must stay tappable", file: file, line: line)
     }
 
     /// The builder's only text field. Its placeholder "NAME YOUR BLOCK" is

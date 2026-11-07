@@ -26,8 +26,8 @@ struct HistoryTopSetTests {
 
     // MARK: - TOP line
 
-    /// 85×8 @8 has the highest e1RM, 113.3, and 75×12 @9 the most
-    /// volume, 900.
+    /// 85×8 @8 has the highest e1RM, 107.7, and 75×12 @9 the most
+    /// volume, 900; at 12 reps it has no e1RM.
     @Test("the TOP line names the set the row's e1RM comes from")
     func topLineNamesTheE1RMSet() throws {
         let ctx = try LoggerFixtures.makeContext()
@@ -36,20 +36,20 @@ struct HistoryTopSetTests {
 
         let row = try #require(try historyRows(bench, in: ctx).first)
         #expect(row.topSetLabel == "85×8 @8")
-        #expect(row.e1RMLabel == "113.3")
+        #expect(row.e1RMLabel == "107.7")
     }
 
-    /// 100×5 @8 and 100×6 @9 share an e1RM of 123.3; the second has more
+    /// 112.5×1 @8 and 100×5 @9 share an e1RM of 112.5; the second has more
     /// volume.
     @Test("on a tie in e1RM, the TOP line names the earlier set", arguments: [false, true])
     func e1RMTieGoesToEarlierSet(readInReverse: Bool) throws {
         let ctx = try LoggerFixtures.makeContext()
         let bench = LoggerFixtures.exercise("Bench", in: ctx)
-        try workout(bench, startedAt: twoDaysAgo, sets: [(100, 5, 8), (100, 6, 9)], in: ctx)
+        try workout(bench, startedAt: twoDaysAgo, sets: [(112.5, 1, 8), (100, 5, 9)], in: ctx)
 
         let row = try #require(try historyRows(bench, readInReverse: readInReverse, in: ctx).first)
-        #expect(row.topSetLabel == "100×5 @8")
-        #expect(row.e1RMLabel == "123.3")
+        #expect(row.topSetLabel == "112.5×1 @8")
+        #expect(row.e1RMLabel == "112.5")
     }
 
     /// Bodyweight sets with no added load: every e1RM and every volume is

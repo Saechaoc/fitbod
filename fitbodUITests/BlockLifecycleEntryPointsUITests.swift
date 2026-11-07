@@ -8,8 +8,8 @@ extension UITestNavigation {
 
 /// Ticket T67, findings F48 and F49. Ending a block and changing its
 /// routine go through BlockLifecycleService. END BLOCK, reached from
-/// Today's block band, completes the block: Program lists it as done and
-/// Today has no active block. (BlockCard's own End Block is not in the
+/// Today's block band, completes the block and opens its review: Program
+/// lists it as done and Today has no active block. (BlockCard's own End Block is not in the
 /// app, so F48 was not reproduced.) A draft block still takes a routine in
 /// EDIT BLOCK.
 final class BlockLifecycleEntryPointsUITests: XCTestCase {
@@ -32,13 +32,25 @@ final class BlockLifecycleEntryPointsUITests: XCTestCase {
         let alert = app.alerts["End block?"]
         XCTAssertTrue(UITestNavigation.appears(alert, within: 5), "END BLOCK must ask before it ends the block")
         alert.buttons["End Block"].tap()
-        XCTAssertTrue(UITestNavigation.disappears(app.buttons.labeled("END BLOCK"), within: 5),
-                      "An ended block offers no END BLOCK")
-        UITestNavigation.hittable(app.buttons, "Back").tap()
-        // T70: Today opens the ended block's review; Plan custom puts it off.
+        // The review opens on the overview as soon as the block ends (B9),
+        // and counts as seen once it has opened.
         let review = app.staticTexts.labeled("Block review")
-        UITestNavigation.hittable(app.buttons, "Plan custom").tap()
-        XCTAssertTrue(UITestNavigation.disappears(review, within: 5), "Plan custom must close the review")
+        XCTAssertTrue(UITestNavigation.appears(review, within: 5), "Ending a block must open its review")
+        // Start next opens New block on the first tap, with the ended
+        // block's routine; CANCEL comes back to the review.
+        UITestNavigation.hittable(app.buttons, "Start next ▸").tap()
+        XCTAssertTrue(UITestNavigation.appears(app.staticTexts.labeled("NEW BLOCK"), within: 5),
+                      "Start next must open New block on the first tap, not an empty sheet")
+        XCTAssertTrue(app.staticTexts.labeled("Live Routine").exists, "Start next must keep the ended block's routine")
+        UITestNavigation.hittable(app.buttons, "CANCEL", exactLabel: true).tap()
+        XCTAssertTrue(UITestNavigation.appears(review, within: 5), "CANCEL must return to the review")
+        UITestNavigation.hittable(app.buttons, "Back").tap()
+        XCTAssertTrue(UITestNavigation.disappears(review, within: 5), "‹ BACK must close the review")
+        XCTAssertFalse(app.buttons.labeled("END BLOCK").exists, "An ended block offers no END BLOCK")
+        XCTAssertTrue(UITestNavigation.appears(app.buttons.labeled("REVIEW ▸")),
+                      "A finished block's overview must reopen its review (B12)")
+        UITestNavigation.hittable(app.buttons, "Back").tap()
+        XCTAssertFalse(UITestNavigation.appears(review, within: 3), "A review already seen must not reopen on Today")
         assertNoActiveBlockOnToday(in: app)
 
         UITestNavigation.selectTab("Program", in: app)
@@ -48,11 +60,10 @@ final class BlockLifecycleEntryPointsUITests: XCTestCase {
                        "An ended block must not drop back to ready")
         XCTAssertFalse(activeBlockCards(in: app).firstMatch.exists, "Program must list no active block")
 
-        // Reopened, the app reads the block back as ended, and the review
-        // the lifter put off opens again.
+        // Reopened, the app reads the block back as ended, and the review,
+        // already seen, stays closed.
         UITestNavigation.relaunch(app)
-        UITestNavigation.hittable(app.buttons, "Plan custom").tap()
-        XCTAssertTrue(UITestNavigation.disappears(review, within: 5), "Plan custom must close the review")
+        XCTAssertFalse(UITestNavigation.appears(review, within: 3), "A seen review must not reopen after a relaunch")
         assertNoActiveBlockOnToday(in: app)
         UITestNavigation.selectTab("Program", in: app)
         XCTAssertTrue(UITestNavigation.appears(app.buttons.labeled("DONE block: Live Block")),
