@@ -286,15 +286,9 @@ public enum SessionFactory {
             // set (the first logged session of this exercise and intent),
             // set rows default to weight 0.
             let seedWeight = prescription.previousSet?.weight ?? 0
-            let plannedWorkingSetCount: Int
-            if scheduledDeloadActive, let scheduledBlockPhase {
-                plannedWorkingSetCount = max(
-                    1,
-                    Int(floor(Double(re.targetSets) * scheduledBlockPhase.volumeMultiplier))
-                )
-            } else {
-                plannedWorkingSetCount = re.targetSets
-            }
+            let plannedWorkingSetCount = PeriodizationEngine.workingSetCount(
+                targetSets: re.targetSets, phase: scheduledBlockPhase
+            )
 
             for setIndex in 0..<plannedWorkingSetCount {
                 let entry = SetEntry()
