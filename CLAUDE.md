@@ -52,7 +52,7 @@ In this repo that guide takes precedence over general user-level guidance to fix
 
 - Tabs: Today, Program, Progress, Library. Native tab containment preserves
   each navigation stack; BRU supplies the visible tab controls. Settings is a
-  sheet from Today. History opens from Today → Sessions or Progress → Workouts.
+  sheet from Today. History opens from Progress → Workouts.
 - The tab bar hides in the logger and while the keyboard is visible.
 - At accessibility text sizes, headers separate titles/actions, tabs use two
   columns, Today statistics stack, and logger inputs stack with 44pt targets.

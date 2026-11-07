@@ -40,23 +40,6 @@ struct TodayViewBRUCopyTests {
 
     // MARK: - 2. Stat strip labels
 
-    @Test("Stat strip labels are verbatim per UI-SPEC")
-    func statStripLabelsVerbatim() throws {
-        let stripSource = try sourceFile("fitbod/Views/TodayStatStrip.swift")
-        #expect(stripSource.contains("\"Day streak\""))
-        #expect(stripSource.contains("\"Sessions\""))
-        // W{N} / {M} label computed from weekIndex + totalWeeks — verify format string
-        #expect(stripSource.contains("W\\(weekIndex) / \\(totalWeeks)"))
-    }
-
-    @Test("Stat strip trend arrows are verbatim")
-    func statStripTrendArrows() throws {
-        let stripSource = try sourceFile("fitbod/Views/TodayStatStrip.swift")
-        #expect(stripSource.contains("\"↑\""))
-        #expect(stripSource.contains("\"↓\""))
-        #expect(stripSource.contains("\"—\""))
-    }
-
     // MARK: - 3. Black slab copy
 
     @Test("Black slab NEXT label is verbatim")
@@ -124,18 +107,6 @@ struct TodayViewBRUCopyTests {
     func todayViewMountsBRUHeaderBar() throws {
         let source = try todayViewSource()
         #expect(source.contains("BRUHeaderBar"))
-    }
-
-    @Test("TodayView mounts TodayStatStrip")
-    func todayViewMountsTodayStatStrip() throws {
-        let source = try todayViewSource()
-        #expect(source.contains("TodayStatStrip"))
-    }
-
-    @Test("TodayView mounts BlockContextBand")
-    func todayViewMountsBlockContextBand() throws {
-        let source = try todayViewSource()
-        #expect(source.contains("BlockContextBand(block:"))
     }
 
     @Test("TodayView mounts BlackSlabCTA")

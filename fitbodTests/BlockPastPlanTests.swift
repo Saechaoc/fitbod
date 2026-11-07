@@ -63,12 +63,6 @@ struct BlockPastPlanTests {
         #expect(row.line == "PLAN COMPLETE", "Program's row shows PLAN COMPLETE in place of its week and phase")
         #expect(row.spoken == "Plan complete")
 
-        #expect(BlockContextBand.chipLabel(for: block, on: now) == "PLAN COMPLETE")
-        // WeekTickerCells marks week n current when n is the ticker's week,
-        // and past when n is below it.
-        let tickerWeek = BlockContextBand.tickerWeek(for: block, on: now)
-        #expect((1...4).allSatisfy { $0 < tickerWeek }, "Every week must be past and none current, not W\(tickerWeek)")
-
         #expect(phaseProgress(of: block) == [.done, .done, .done])
     }
 
@@ -98,8 +92,6 @@ struct BlockPastPlanTests {
         #expect(row.line == "Week \(day.week) of 4 · \(day.phase)")
         #expect(row.spoken == "Week \(day.week) of 4, \(day.phase)")
 
-        #expect(BlockContextBand.chipLabel(for: block, on: now) == day.phase)
-        #expect(BlockContextBand.tickerWeek(for: block, on: now) == day.week)
         #expect(phaseProgress(of: block) == day.progress)
     }
 }

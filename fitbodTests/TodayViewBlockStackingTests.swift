@@ -16,20 +16,6 @@ import Testing
 
 @Suite("TodayViewBlockStacking")
 struct TodayViewBlockStackingTests {
-    @Test("TodayView source contains banner stacking order")
-    func todayViewSourceContainsBannerStackingOrder() throws {
-        let source = try todayViewSource()
-
-        let deload = try position(of: "DeloadWeekBanner", in: source)
-        let advisory = try position(of: "DeloadAdvisoryBanner", in: source)
-        let statStrip = try position(of: "TodayStatStrip", in: source)
-        let resume = try position(of: "ResumeWorkoutSlab", in: source)
-
-        #expect(deload < advisory)
-        #expect(advisory < statStrip)
-        #expect(statStrip < resume)
-    }
-
     @Test("TodayView has active block query")
     func todayViewHasActiveBlockQuery() throws {
         let source = try todayViewSource()
@@ -87,13 +73,6 @@ struct TodayViewBlockStackingTests {
         #expect(source.contains("\"No workout scheduled\""))
         #expect(source.contains("\"Build a routine or pick one from your library.\""))
         #expect(source.contains("\"+ NEW ROUTINE\""))
-    }
-
-    @Test("BlockContextBand receives block value")
-    func blockContextBandReceivesBlockValue() throws {
-        let source = try todayViewSource()
-
-        #expect(source.contains("BlockContextBand(block:"))
     }
 
     @Test("TodayView is standalone in fitbod/Views/TodayView.swift")

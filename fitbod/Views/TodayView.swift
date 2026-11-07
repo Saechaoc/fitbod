@@ -10,11 +10,9 @@
 //   safeAreaInset(top): BRUHeaderBar("Fitbod / Today", right: formatted date as plain text)
 //   ─── inside ScrollView VStack(spacing: 0) ───────────────────────────────
 //   [Defensive-top Phase 5 banners]
-//     DeloadWeekBanner  (phase.kind == .deload)
 //     DeloadAdvisoryBanner  (currentAdvisory != nil)
 //   [BRU Layer]
-//     TodayStatStrip  (Day streak / Sessions → history / W{N}/{M} trend or This week)
-//     BlockContextBand  (Block chip + name + phase + WeekTickerCells)  — when block active
+//     TodayPlanLine  (block name over week and phase → Block overview)  — when block active
 //     ResumeWorkoutSlab  — when active session (completedAt == nil)
 //       OR DoneTodaySlab — when today's workout is finished
 //       OR BlackSlabCTA  — when no active session but routine scheduled
@@ -32,6 +30,7 @@
 
 import SwiftUI
 import SwiftData
+import UIKit
 
 // MARK: - TodayView
 
@@ -42,6 +41,8 @@ public struct TodayView: View {
 
     @Environment(\.modelContext) private var ctx
     @Environment(\.weightUnit) private var weightUnit
+    @Environment(\.scenePhase) private var scenePhase
+    @Environment(\.calendar) private var calendar
     @Environment(HistoryEdits.self) private var historyEdits: HistoryEdits?
     @Environment(ResumeWorkoutRequest.self) private var resumeRequest: ResumeWorkoutRequest?
 
@@ -73,13 +74,11 @@ public struct TodayView: View {
     @Query(sort: \Session.startedAt, order: .reverse)
     private var allSessions: [Session]
 
-    /// The finished workouts that are empty (decision 6), and the finished
-    /// workouts they were worked out for. Reading them means reading every
-    /// set, so they are filled when the finished workouts change, never per
-    /// render. Until then the total and the Day streak count every finished
-    /// workout.
-    @State private var emptyWorkoutIDs: Set<PersistentIdentifier> = []
-    @State private var emptyWorkoutsKey: [PersistentIdentifier]?
+    @Query(filter: #Predicate<SessionTemplate> { !$0.isArchived })
+    private var sessionTemplates: [SessionTemplate]
+
+    /// What "today" is; refreshed on appear, on return to the foreground and at a system day change.
+    @State private var now = Date.now
 
     // MARK: - Navigation / Sheet State (preserved verbatim from Phase 4/5)
 
@@ -88,8 +87,6 @@ public struct TodayView: View {
     @State private var pendingBlockReview: Block? = nil
     /// Create block, the same choice Program's + NEW opens.
     @State private var presentingCreateBlock = false
-    /// The block END BLOCK & REVIEW asks about.
-    @State private var endingBlock: Block? = nil
     /// A failed block start or end, in plain words.
     @State private var blockError: String? = nil
 
@@ -121,16 +118,24 @@ public struct TodayView: View {
         let resolution = todaysResolution
         let todaysRoutine = Self.scheduledRoutine(in: resolution)
         let finished = allSessions.filter { $0.completedAt != nil }
-        let finishedIDs = finished.map(\.persistentModelID)
-        // Today's finished workout, while none is in progress.
-        let doneToday = activeSessions.isEmpty ? Self.finishedToday(in: finished) : nil
+        let state = TodayState.resolve(
+            openWorkouts: activeSessions, activeBlock: activeBlocks.first, resolution: resolution,
+            finishedWorkouts: finished, readyBlocks: waitingBlocks.filter { $0.derivedStatus == .ready },
+            liveRoutines: routines, sessions: sessionTemplates, now: now, calendar: calendar)
+        let doneToday: Session? = if case .done(let workouts) = state { workouts.first } else { nil }
+        let readyBlock: Block? = if case .ready(let block) = state { block } else { nil }
         NavigationStack(path: $navigationPath) {
             ScrollView {
                 VStack(spacing: 0) {
 
-                    // ─── DEFENSIVE TOP — Phase 5 banners (preserved) ─────
+                    if let block = activeBlocks.first {
+                        TodayPlanLine(block: block, now: now) {
+                            navigationPath.append(BlockOverviewRoute.summary(blockID: block.id))
+                        }
+                    }
+
                     if let active = activeBlocks.first,
-                       let phase = PeriodizationEngine.phase(for: active, on: .now),
+                       let phase = PeriodizationEngine.phase(for: active, on: now),
                        phase.kind == .deload {
                         DeloadWeekBanner(currentPhaseKind: phase.kind)
                     }
@@ -143,35 +148,7 @@ public struct TodayView: View {
                         )
                     }
 
-                    // ─── BRU LAYER ───────────────────────────────────────
-
-                    // Stat strip — always visible
-                    TodayStatStrip(
-                        streak: Self.dayStreak(of: finished, excluding: emptyWorkoutIDs),
-                        totalSessions: emptyWorkoutIDs.isEmpty
-                            ? finished.count
-                            : finished.count(where: { !emptyWorkoutIDs.contains($0.persistentModelID) }),
-                        weekIndex: currentWeekIndex,
-                        totalWeeks: currentTotalWeeks,
-                        trend: currentTrend,
-                        phase: currentPhase,
-                        isPlanComplete: isPastPlan,
-                        hasActiveBlock: !activeBlocks.isEmpty,
-                        sessionsThisWeek: sessionsThisWeek,
-                        onOpenHistory: { navigationPath.append(SessionHistoryRoute.list) }
-                    )
-
-                    // Block context band — only when a block is active
-                    // onTap pushes BlockOverviewRoute.summary per CONTEXT D-11
-                    if let block = activeBlocks.first {
-                        BlockContextBand(block: block, onTap: {
-                            navigationPath.append(BlockOverviewRoute.summary(blockID: block.id))
-                        })
-                        // Past the plan: ask to end it, until the lifter does.
-                        if isPastPlan {
-                            PlanCompleteNote(plannedWeeks: currentTotalWeeks, onEnd: { endingBlock = block })
-                        }
-                    } else if activeSessions.isEmpty, let ready = readyBlock {
+                    if activeBlocks.isEmpty, activeSessions.isEmpty, let ready = readyBlock {
                         ReadyBlockCard(
                             block: ready,
                             onStart: { startBlock(ready) },
@@ -287,6 +264,8 @@ public struct TodayView: View {
                     center: "Fitbod / Today",
                     right: .text(formattedDate)
                 )
+                .accessibilityElement(children: .contain)
+                .accessibilityIdentifier("today.root")
             }
             // ─── Navigation Destinations (preserved verbatim from Phase 4/5) ──
             .navigationDestination(for: SessionRoute.self) { route in
@@ -318,7 +297,7 @@ public struct TodayView: View {
                 }
             }
             .blockCreateFlow(isPresented: $presentingCreateBlock) { pendingBlockBuilder = $0 }
-            .modifier(TodayBlockAlerts(endingBlock: $endingBlock, blockError: $blockError, onEnd: endBlock))
+            .modifier(TodayBlockAlerts(blockError: $blockError))
             // A recap due on the same visit waits for the review to close.
             .sheet(item: $pendingBlockReview, onDismiss: showRecapAfterReview) { block in
                 BlockReviewView(block: block)
@@ -422,29 +401,19 @@ public struct TodayView: View {
                 checkWeeklyRecap()
             }
             .onAppear {
+                now = .now
                 refreshAdvisory()
                 openRequestedWorkout()
             }
             .onChange(of: resumeRequest?.isPending) {
                 openRequestedWorkout()
             }
-            // The empty workouts behind the all-time Sessions total and the
-            // Day streak, read when the finished workouts change, never per
-            // render.
-            .task(id: finishedIDs) {
-                guard emptyWorkoutsKey != finishedIDs else { return }
-                emptyWorkoutIDs = SessionSetActions.emptyWorkoutIDs(
-                    among: finished,
-                    known: emptyWorkoutsKey.map { (finished: $0, empty: emptyWorkoutIDs) },
-                    in: ctx
-                )
-                emptyWorkoutsKey = finishedIDs
-            }
             // A History correction can empty a finished workout or fill an
-            // empty one without changing which workouts are finished.
-            .onChange(of: historyEdits?.version) {
-                emptyWorkoutIDs = SessionSetActions.emptyWorkoutIDs(among: finished, known: nil, in: ctx)
-                emptyWorkoutsKey = finishedIDs
+            // empty one, so Today resolves again.
+            .onChange(of: historyEdits?.version) { now = .now }
+            .onChange(of: scenePhase) { _, phase in if phase == .active { now = .now } }
+            .onReceive(NotificationCenter.default.publisher(for: UIApplication.significantTimeChangeNotification)) { _ in
+                now = .now
             }
         }
     }
@@ -503,7 +472,7 @@ public struct TodayView: View {
 
     /// "Wed · May 22" — en_US weekday abbreviated + month abbreviated + day.
     private var formattedDate: String {
-        let f = Date.now.formatted(
+        let f = now.formatted(
             .dateTime
                 .locale(Locale(identifier: "en_US"))
                 .weekday(.abbreviated)
@@ -516,48 +485,6 @@ public struct TodayView: View {
 
     // MARK: - BRU Helper Properties (NEW — stat strip / block context inputs)
 
-    /// The Day streak: consecutive days, back from `now`, with a finished
-    /// workout that counts as a session. A streak that reached yesterday
-    /// still stands today. `workouts` is newest first. `emptyWorkoutIDs`
-    /// are the empty workouts among them (decision 6), which Today caches,
-    /// so the streak reads no sets, and it reads workouts only as far back
-    /// as the streak goes.
-    static func dayStreak(
-        of workouts: [Session],
-        excluding emptyWorkoutIDs: Set<PersistentIdentifier>,
-        now: Date = .now,
-        calendar: Calendar = .current
-    ) -> Int {
-        let completed = workouts.lazy.filter {
-            $0.completedAt != nil && !emptyWorkoutIDs.contains($0.persistentModelID)
-        }
-
-        var streak = 0
-        var checkDate = calendar.startOfDay(for: now)
-
-        for session in completed {
-            let sessionDay = calendar.startOfDay(for: session.startedAt)
-            if sessionDay == checkDate {
-                if streak == 0 { streak = 1 }
-                // already counted this day
-            } else if let expectedPrior = calendar.date(byAdding: .day, value: -1, to: checkDate),
-                      sessionDay == expectedPrior {
-                streak += 1
-                checkDate = expectedPrior
-            } else {
-                break
-            }
-        }
-        return streak
-    }
-
-    /// 1-based current week index within the active block (1 when no block).
-    private var currentWeekIndex: Int {
-        guard let block = activeBlocks.first,
-              let idx = PeriodizationEngine.weekIndex(for: block, on: .now) else { return 1 }
-        return idx + 1  // weekIndex is 0-based
-    }
-
     /// Total weeks in the active block across all phases (defaults to 1).
     private var currentTotalWeeks: Int {
         guard let block = activeBlocks.first else { return 1 }
@@ -568,13 +495,7 @@ public struct TodayView: View {
     /// The active block's current phase, for the third stat's short label.
     /// Nil without a block, and past its plan, which has no current phase.
     private var currentPhase: BlockPhaseKind? {
-        activeBlocks.first.flatMap { PeriodizationEngine.phase(for: $0, on: .now)?.kind }
-    }
-
-    /// The newest ready block, which Today offers to start while no block
-    /// is active (decided 2026-11-05).
-    private var readyBlock: Block? {
-        waitingBlocks.first { $0.derivedStatus == .ready }
+        activeBlocks.first.flatMap { PeriodizationEngine.phase(for: $0, on: now)?.kind }
     }
 
     /// START BLOCK ▸ on the ready block's card. No block is active, so
@@ -587,59 +508,10 @@ public struct TodayView: View {
         }
     }
 
-    /// END BLOCK & REVIEW ▸, once confirmed: ends the block, then opens
-    /// its review.
-    private func endBlock(_ block: Block) {
-        endingBlock = nil
-        do {
-            try BlockLifecycleService.end(block: block, context: ctx)
-        } catch {
-            blockError = "The block didn't end. Try again."
-            return
-        }
-        pendingBlockReview = block
-    }
-
     /// True once the active block is past its last planned week, until the
     /// lifter ends it (tradeoffs.md "A block past its plan").
     private var isPastPlan: Bool {
-        activeBlocks.first.map { PlanWeek.of($0, on: .now) == .complete } ?? false
-    }
-
-    /// Sessions since the start of this week (the lifter's week-start
-    /// setting; Monday by default): this week's workouts that count.
-    private var sessionsThisWeek: Int {
-        let weekStartsMonday = settingsList.first?.weekStartsMonday ?? true
-        let weekStart = Calendar.current.startOfDay(for: .now)
-            .mondayAtMidnightForToday(weekStartsMonday: weekStartsMonday)
-        return SessionSetActions.countedWorkouts(allSessions.filter { $0.startedAt >= weekStart }).count
-    }
-
-    /// Volume trend compared to prior week — .up when this week > last week.
-    private var currentTrend: TrendDirection {
-        // Simple heuristic: compare session counts this week vs last week.
-        guard let settings = settingsList.first else { return .flat }
-        let cal = Calendar.current
-        let today = cal.startOfDay(for: .now)
-        let thisMonday = today.mondayAtMidnightForToday(weekStartsMonday: settings.weekStartsMonday)
-        // Calendar weeks, as the recap counts them: a week with a
-        // daylight-saving change is an hour off 7 × 86,400 s.
-        let lastMonday = FatigueModel.date(byAddingWeeks: -1, to: thisMonday, calendar: cal)
-        let nextMonday = FatigueModel.date(byAddingWeeks: 1, to: thisMonday, calendar: cal)
-
-        let thisWeekCount = SessionSetActions.countedWorkouts(allSessions.filter { s in
-            s.startedAt >= thisMonday &&
-            s.startedAt < nextMonday
-        }).count
-
-        let lastWeekCount = SessionSetActions.countedWorkouts(allSessions.filter { s in
-            s.startedAt >= lastMonday &&
-            s.startedAt < thisMonday
-        }).count
-
-        if thisWeekCount > lastWeekCount { return .up }
-        if thisWeekCount < lastWeekCount { return .down }
-        return .flat
+        activeBlocks.first.map { PlanWeek.of($0, on: now) == .complete } ?? false
     }
 
     /// The full resolver output for today in the active block.
@@ -651,7 +523,7 @@ public struct TodayView: View {
     /// `slot` survives to `startWorkout` as the rotation anchor.
     private var todaysResolution: TodayResolution {
         guard let block = activeBlocks.first else { return .noBlock }
-        return TodayResolver.resolve(block: block, context: ctx)
+        return TodayResolver.resolve(block: block, context: ctx, today: now, calendar: calendar)
     }
 
     /// The session template scheduled for today (nil unless the resolver
@@ -671,7 +543,7 @@ public struct TodayView: View {
     private var dayIndexInBlock: Int? {
         guard let block = activeBlocks.first else { return 1 }
         guard !isPastPlan else { return nil }
-        let daysSince = PeriodizationEngine.days(from: block.startDate, to: .now)
+        let daysSince = PeriodizationEngine.days(from: block.startDate, to: now)
         return min(max(daysSince, 0), totalDaysInBlock - 1) + 1
     }
 
@@ -680,28 +552,13 @@ public struct TodayView: View {
         max(1, currentTotalWeeks * 7)
     }
 
-    // MARK: - Done today
-
-    /// Today's latest finished workout that counts (decision 6), or nil.
-    /// `workouts` are finished and newest first, so only today's are read.
-    static func finishedToday(
-        in workouts: [Session],
-        now: Date = .now,
-        calendar: Calendar = .current
-    ) -> Session? {
-        let startOfToday = calendar.startOfDay(for: now)
-        return workouts.lazy
-            .prefix { $0.startedAt >= startOfToday }
-            .first { !SessionSetActions.isEmptyWorkout($0) }
-    }
-
     /// What comes next: the resolver's session (today's, or a rotation's
     /// next once today's is done), or once today's is done in a weekly
     /// block, the next training day's, with its day. The done card's up next
     /// and the session list's NEXT both read it, so they agree.
     private func upNext(done: Bool, _ resolution: TodayResolution) -> (slot: SplitSessionSlot, day: Date?)? {
         if done, let block = activeBlocks.first, block.schedulingMode == .fixedWeekly {
-            return TodayResolver.nextTrainingDay(block: block, after: .now).map { ($0.slot, $0.day) }
+            return TodayResolver.nextTrainingDay(block: block, after: now).map { ($0.slot, $0.day) }
         }
         if case .session(let slot) = resolution { return (slot, nil) }
         return nil
@@ -852,7 +709,7 @@ public struct TodayView: View {
             currentAdvisory = nil
             return
         }
-        let thisMonday = Date.now.mondayAtMidnightForToday(weekStartsMonday: settings.weekStartsMonday)
+        let thisMonday = now.mondayAtMidnightForToday(weekStartsMonday: settings.weekStartsMonday)
         currentAdvisory = DeloadAdvisor.evaluate(
             weekStart: thisMonday,
             in: ctx,
@@ -922,24 +779,12 @@ fileprivate struct EmptySplitFixIt: View {
 }
 #endif
 
-/// END BLOCK & REVIEW's confirmation and a failed block start or end, kept
-/// out of TodayView's body so the compiler can type-check it.
+/// A failed block start, kept out of TodayView's body so the compiler can type-check it.
 private struct TodayBlockAlerts: ViewModifier {
-    @Binding var endingBlock: Block?
     @Binding var blockError: String?
-    let onEnd: (Block) -> Void
 
     func body(content: Content) -> some View {
         content
-            .alert("End block?", isPresented: Binding(
-                get: { endingBlock != nil },
-                set: { if !$0 { endingBlock = nil } }
-            ), presenting: endingBlock) { block in
-                Button("End Block", role: .destructive) { onEnd(block) }
-                Button("Cancel", role: .cancel) { endingBlock = nil }
-            } message: { _ in
-                Text("Its plan is frozen and its review opens.")
-            }
             .alert("Couldn't Save", isPresented: Binding(
                 get: { blockError != nil },
                 set: { if !$0 { blockError = nil } }
