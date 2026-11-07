@@ -225,4 +225,54 @@ struct DeloadVolumeApplicationTests {
 
         #expect(workingSetCounts(in: session) == [2, 2, 3])
     }
+
+    @Test("the factory follows the given calendar")
+    func theFactoryFollowsTheGivenCalendar() throws {
+        var utc = Calendar(identifier: .gregorian)
+        utc.timeZone = try #require(TimeZone(secondsFromGMT: 0))
+        var plusTwo = Calendar(identifier: .gregorian)
+        plusTwo.timeZone = try #require(TimeZone(secondsFromGMT: 7200))
+        let start = try #require(utc.date(from: DateComponents(year: 2024, month: 3, day: 4)))
+        // An hour before the UTC week turns, which is already the next day two hours east.
+        let late = start.addingTimeInterval(7 * day - 3600)
+
+        func counts(with calendar: Calendar) throws -> [Int] {
+            let context = try makeContext()
+            let block = makeBlock(
+                in: context,
+                startDate: start,
+                phases: [(.accumulation, 1, 1.0, 0.75), (.deload, 1, 0.5, 0.75)]
+            )
+            let routine = makeRoutine(in: context, block: block, targetSets: [4])
+            try context.save()
+            let session = try SessionFactory.start(
+                template: routine, activeBlock: block, on: late, calendar: calendar, context: context
+            )
+            return workingSetCounts(in: session)
+        }
+
+        #expect(try counts(with: utc) == [4])
+        #expect(try counts(with: plusTwo) == [2])
+    }
+
+    @Test("the factory counts what the helper counts")
+    func theFactoryCountsWhatTheHelperCounts() throws {
+        let context = try makeContext()
+        let start = Date(timeIntervalSince1970: 1_700_000_000)
+        let deloadDate = start.addingTimeInterval(8 * day)
+        let block = makeBlock(
+            in: context,
+            startDate: start,
+            phases: [(.accumulation, 1, 1.0, 0.75), (.deload, 1, 0.5, 0.75)]
+        )
+        let routine = makeRoutine(in: context, block: block, targetSets: [4, 3, 1])
+        try context.save()
+        let phase = try #require(PeriodizationEngine.phase(for: block, on: deloadDate))
+
+        let session = try SessionFactory.start(template: routine, activeBlock: block, on: deloadDate, context: context)
+
+        let counts = workingSetCounts(in: session)
+        #expect(counts == [4, 3, 1].map { PeriodizationEngine.workingSetCount(targetSets: $0, phase: phase) })
+        #expect(counts == [2, 1, 1])
+    }
 }

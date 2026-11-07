@@ -32,7 +32,8 @@ public enum WorkoutStarter {
         _ template: SessionTemplate,
         slot: SplitSessionSlot? = nil,
         context: ModelContext,
-        now: Date = .now
+        now: Date = .now,
+        calendar: Calendar = .current
     ) -> WorkoutStartOutcome {
         if let active = inProgressSession(in: context) {
             return .alreadyInProgress(active)
@@ -44,6 +45,7 @@ public enum WorkoutStarter {
                 slot: slot ?? Self.slot(for: template, in: block, context: context),
                 activeBlock: block,
                 on: now,
+                calendar: calendar,
                 context: context
             )
             return .started(session)

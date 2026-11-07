@@ -120,11 +120,15 @@ public enum SessionFactory {
     /// `context.save()` fails (e.g., disk full, SwiftData constraint
     /// violation). Caller surfaces UI-SPEC's "Couldn't Start Workout"
     /// alert with the underlying error's `localizedDescription`.
+    ///
+    /// `calendar` decides which block day `date` falls on, so the phase the
+    /// factory plans is the phase Today shows for the same moment.
     public static func start(
         template: SessionTemplate,
         slot: SplitSessionSlot? = nil,
         activeBlock: Block? = nil,
         on date: Date = .now,
+        calendar: Calendar = .current,
         context: ModelContext
     ) throws -> Session {
         // Empty-template guard — surface as a typed error BEFORE checking
@@ -186,7 +190,7 @@ public enum SessionFactory {
         // (PIVOT-02). The instance is stateless so reuse is safe.
         let sessionStrategy = ProgressionStrategyFactory.make(for: session.progressionKind)
         let scheduledBlockPhase = activeBlock.flatMap { block in
-            PeriodizationEngine.phase(for: block, on: date)
+            PeriodizationEngine.phase(for: block, on: date, calendar: calendar)
         }
         let scheduledDeloadActive = scheduledBlockPhase?.kind == .deload
 
