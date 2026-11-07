@@ -40,14 +40,6 @@ struct TodayViewBlockStackingTests {
         #expect(!guardText.contains("!activeBlocks.isEmpty"))
     }
 
-    @Test("TodayView conditionally renders deload banner when phase is deload")
-    func todayViewConditionallyRendersDeloadBannerWhenPhaseIsDeload() throws {
-        let source = try todayViewSource()
-
-        #expect(source.contains("DeloadWeekBanner"))
-        #expect(source.contains("phase.kind == .deload"))
-    }
-
     @Test("StartBlockCTA copy verbatim")
     func startBlockCTACopyVerbatim() throws {
         let source = try sourceFile("fitbod/Periodization/StartBlockCTA.swift")
@@ -56,14 +48,6 @@ struct TodayViewBlockStackingTests {
         #expect(source.contains("\"Define a training block to see your phase, week, and deloads here.\""))
         #expect(source.contains("\"Start a block\""))
         #expect(source.contains(".textCase(.uppercase)"))
-    }
-
-    @Test("DeloadWeekBanner copy verbatim")
-    func deloadBannerCopyVerbatim() throws {
-        let source = try sourceFile("fitbod/Periodization/DeloadWeekBanner.swift")
-
-        #expect(source.contains("\"Deload week — recover, don't load.\""))
-        #expect(source.contains("\"Working sets cut by ~50%. Weights held to phase intensity.\""))
     }
 
     @Test("no workout scheduled fallback preserved")

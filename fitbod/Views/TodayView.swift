@@ -134,13 +134,8 @@ public struct TodayView: View {
                         }
                     }
 
-                    if let active = activeBlocks.first,
-                       let phase = PeriodizationEngine.phase(for: active, on: now),
-                       phase.kind == .deload {
-                        DeloadWeekBanner(currentPhaseKind: phase.kind)
-                    }
-
-                    if let advisory = currentAdvisory {
+                    if let advisory = currentAdvisory,
+                       TodayState.showsDeloadAdvisory(state: state, phase: currentPhase) {
                         DeloadAdvisoryBanner(
                             advisory: advisory,
                             onDismiss: { dismissAdvisory() },

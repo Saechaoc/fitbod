@@ -45,8 +45,8 @@ public enum DeloadSignal: Sendable, Equatable, Hashable {
 }
 
 /// The advisory output. Carries the fired signals + the Monday this
-/// advisory applies to (used for D-17 dismissal compare). The
-/// `bannerCopy` computed property bakes D-16 verbatim templates.
+/// advisory applies to (used for D-17 dismissal compare).
+/// The advisory banner builds its own one-row copy from the signal count.
 public struct DeloadAdvisory: Sendable, Equatable {
     public let firedSignals: [DeloadSignal]
     public let weekStart: Date
@@ -54,29 +54,6 @@ public struct DeloadAdvisory: Sendable, Equatable {
     public init(firedSignals: [DeloadSignal], weekStart: Date) {
         self.firedSignals = firedSignals
         self.weekStart = weekStart
-    }
-
-    /// D-16 verbatim copy:
-    ///   Single signal → "Consider deload — {description} over last 3
-    ///                    sessions. Tap to see signals."
-    ///   Multi signal  → "Consider deload — {N} fatigue signals
-    ///                    tripped over last 3 sessions. Tap to see signals."
-    public var bannerCopy: String {
-        if firedSignals.count == 1 {
-            let desc: String
-            switch firedSignals[0] {
-            case .e1RMDrop(let p):
-                desc = "e1RM dropped \(Int((p * 100).rounded()))%"
-            case .rpeCreep(let amount, let name, let intent):
-                let rounded = String(format: "%.1f", amount)
-                desc = "RPE crept +\(rounded) at same load on \(name) (\(intent.rawValue))"
-            case .missedTopOfRange(let r):
-                desc = "\(Int((r * 100).rounded()))% of working sets missed target rep range"
-            }
-            return "Consider deload — \(desc) over last 3 sessions. Tap to see signals."
-        } else {
-            return "Consider deload — \(firedSignals.count) fatigue signals tripped over last 3 sessions. Tap to see signals."
-        }
     }
 }
 

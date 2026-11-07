@@ -136,22 +136,6 @@ struct BRUPeriodizationRegressionTests {
                 "MesocycleWeekPage.swift must NOT use Capsule() in code (replaced by BRUChip)")
     }
 
-    // MARK: - 9. DeloadWeekBanner
-
-    @Test("DeloadWeekBanner — bruBg2 background + bruInk top border + BRUFont + no RoundedRectangle")
-    func deloadWeekBannerBRUPrimitives() throws {
-        let source = try loadSource("DeloadWeekBanner.swift")
-        let codeOnly = try loadCodeOnly("DeloadWeekBanner.swift")
-        #expect(source.contains("Color.bruBg2") || source.contains(".bruBg2"),
-                "DeloadWeekBanner.swift must use bruBg2 background")
-        #expect(source.contains("Color.bruInk") || source.contains(".bruInk"),
-                "DeloadWeekBanner.swift must use bruInk for top border")
-        #expect(source.contains("BRUFont."),
-                "DeloadWeekBanner.swift must use BRUFont type roles")
-        #expect(!codeOnly.contains("RoundedRectangle(cornerRadius"),
-                "DeloadWeekBanner.swift must NOT use RoundedRectangle in code (sharp corners per 04-UI-SPEC line 36)")
-    }
-
     // MARK: - 11. StartBlockCTA
 
     @Test("StartBlockCTA — BRUFont + bruSignal CTA + no RoundedRectangle")
@@ -212,7 +196,6 @@ struct BRUPeriodizationRegressionTests {
             ("BlockReviewView.swift", "Periodization"),
             ("BlockPhaseColors.swift", "Periodization"),
             ("MesocycleWeekPage.swift", "Periodization"),
-            ("DeloadWeekBanner.swift", "Periodization"),
             ("StartBlockCTA.swift", "Periodization"),
             ("BlockOverviewScreen.swift", "Periodization"),
         ]

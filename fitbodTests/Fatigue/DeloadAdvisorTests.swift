@@ -367,31 +367,4 @@ struct DeloadAdvisorTests {
         let report = DeloadAdvisor.signalReport(weekStart: monday, in: ctx, settings: settings)
         #expect(report.firedSignals.isEmpty)
     }
-
-    // MARK: - 12. bannerCopy single-signal verbatim
-
-    @Test("bannerCopy renders D-16 verbatim for a single signal")
-    func bannerCopySingleSignalVerbatim() {
-        let monday = Date.now
-        let advisory = DeloadAdvisory(
-            firedSignals: [.e1RMDrop(percentDrop: 0.06)],
-            weekStart: monday
-        )
-        #expect(advisory.bannerCopy == "Consider deload — e1RM dropped 6% over last 3 sessions. Tap to see signals.")
-    }
-
-    // MARK: - 13. bannerCopy multi-signal verbatim
-
-    @Test("bannerCopy renders D-16 verbatim for multiple signals")
-    func bannerCopyMultiSignalVerbatim() {
-        let monday = Date.now
-        let advisory = DeloadAdvisory(
-            firedSignals: [
-                .e1RMDrop(percentDrop: 0.06),
-                .missedTopOfRange(missRatio: 0.7),
-            ],
-            weekStart: monday
-        )
-        #expect(advisory.bannerCopy == "Consider deload — 2 fatigue signals tripped over last 3 sessions. Tap to see signals.")
-    }
 }

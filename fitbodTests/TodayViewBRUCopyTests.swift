@@ -19,7 +19,7 @@
 //    6. Resume slab copy — "RESUME" / "Resume ▸" / "Discard"
 //    7. BRU primitives presence — BRUHeaderBar / TodayStatStrip / BlockContextBand /
 //       BlackSlabCTA / ResumeWorkoutSlab / LiftListSection
-//    8. Phase 4/5 wiring preserved — DeloadWeekBanner / DeloadAdvisoryBanner /
+//    8. Phase 4/5 wiring preserved — DeloadAdvisoryBanner /
 //       FatigueSurfaceView / StartBlockCTA
 //
 
@@ -128,13 +128,6 @@ struct TodayViewBRUCopyTests {
     }
 
     // MARK: - 8. Phase 4/5 wiring preserved
-
-    @Test("Phase 5 DeloadWeekBanner preserved in TodayView")
-    func phase5DeloadWeekBannerPreserved() throws {
-        let source = try todayViewSource()
-        #expect(source.contains("DeloadWeekBanner"))
-        #expect(source.contains("phase.kind == .deload"))
-    }
 
     @Test("Phase 5 DeloadAdvisoryBanner preserved in TodayView")
     func phase5DeloadAdvisoryBannerPreserved() throws {
