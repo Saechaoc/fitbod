@@ -17,7 +17,7 @@ progress:
 
 **Last updated:** 2026-10-29 (Milestone 1 finish, phase 0 done: Codex's seven groups committed, baseline 1,023 of 1,026 passed with 2 known app-bug failures and 1 expected failure)
 
-Last activity: 2026-11-06 - Completed quick task 261106-pl1: Today redesign step 1.1, TodayState and the plan line
+Last activity: 2026-11-07 - Completed quick task 261106-he2: Today redesign step 1.2, hero and exercises
 
 ---
 
@@ -372,6 +372,7 @@ None.
 | 261103-o9o | Fix four reviewed workout regressions: full-string localized correction parsing and checked totals, lossless variation Undo, and effective exercise-unit labels. 1,233 unit passes plus one existing expected failure; 11 serial UI/relaunch cases pass. | 2026-11-04 | b8910f1, b55a763, a3c4e52 | [261103-o9o-fix-four-verified-workout-workflow-regre](./quick/261103-o9o-fix-four-verified-workout-workflow-regre/) |
 | 261105-pdc | Make the fourteen open product calls for the Today and Program redesign (gsd-fast): each takes the default the layouts assume, recorded with a reason in docs/design-map/redesign/open-decisions.md; draft v6 stands unchanged | 2026-11-05 | 2d6801ee | - (fast task, no dir) |
 | 261106-pl1 | Today redesign step 1.1: TodayState (23 tests) and the plan line replace the stat strip, block band, week cells, deload-week banner and plan-complete note; one BlockPosition label; one-row deload advisory. Full run 1,326 of 1,332; 2 failures predate or sit outside this change (Swap variation Undo, MilestoneOneJourney) | 2026-11-06 | a3b3ead4, 425a1e64, 99b989b4, 50c0a6be, aefa0f5f, 56dc453c | [261106-pl1-today-state-and-the-plan-line](./quick/261106-pl1-today-state-and-the-plan-line/) |
+| 261106-he2 | Today redesign step 1.2: the hero reads TODAY or NEXT UP · n OF m, counts working sets through PeriodizationEngine.workingSetCount and carries the deload caption; EXERCISES · n with VIEW ›, rows read sets × reps for the phase; factory and starter take a calendar. Full run 1,339 of 1,342; 2 UI failures passed alone (a SQLite I/O error at relaunch killed the app once; History delete sheet contention) | 2026-11-07 | 0b2a8187, cd35a280, 538d09a1, 7fb2babf, 2ab3e6cc, 3cb65f6b | [261106-he2-hero-and-exercises](./quick/261106-he2-hero-and-exercises/) |
 
 ---
 
