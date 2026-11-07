@@ -1,7 +1,7 @@
 // BlackSlabCTA.swift
 // fitbod — Phase 2.1 Plan 04
 //
-// "NEXT · {routine} · Start workout ▸" full-bleed ink slab CTA.
+// "{TODAY or NEXT UP · n OF m} · {routine} · Start workout ▸" full-bleed ink slab CTA.
 // Reference: bru-screens/today.jsx lines 59-80
 //
 // BRU contract: NO Capsule() / NO RoundedRectangle / NO accentColor / NO Image(systemName:)
@@ -16,23 +16,29 @@ import SwiftData
 ///
 /// Layout (top to bottom, 18pt v / 16pt h padding):
 /// ```
-/// ┌──────────────────────────────────────────────┐  ← bruInk
-/// │  NEXT                          DAY 01 / 04   │  10pt caps 0.6 opacity
+/// ┌───────────────────────────────────────────────┐  ← bruInk
+/// │  NEXT UP · 1 OF 4                             │  10pt caps 0.6 opacity
 /// │                                               │  6pt gap
 /// │  Push A                                       │  56pt hero bruPaper
 /// │                                               │  12pt gap
 /// │  5 EXERCISES  ·  21 SETS  ·  ~52 MIN          │  10pt caps 0.5 opacity
+/// │  DELOAD WEEK · LIGHTER SETS                   │  in a deload week only
 /// │                                               │  16pt gap
 /// │  [       START WORKOUT ▸        ]             │  BRUPillButton signal
 /// │        CHOOSE ANOTHER SESSION ›               │  when onChooseAnother is set
-/// └──────────────────────────────────────────────┘
+/// └───────────────────────────────────────────────┘
 /// ```
+///
+/// The label is `heroLabel(mode:position:slotCount:)`: TODAY on a
+/// fixed-weekly block, the session's place in the cycle on a rotation. The
+/// set count is the working sets the phase yields, the count the factory
+/// plans (`PeriodizationEngine.workingSetCount`), and a deload week says
+/// so under the meta line.
 ///
 /// When the meta line does not fit on one line, as at accessibility sizes
 /// and at xxLarge and up on the 390pt phone, its parts stack, one per line,
 /// since a squeezed line would break "1" from "EXERCISE" or "EXERCISES"
-/// mid-word. With no day, past the block's plan, the top row shows NEXT
-/// alone (tradeoffs.md "A block past its plan").
+/// mid-word.
 ///
 /// Reference: bru-screens/today.jsx lines 59-80.
 public struct BlackSlabCTA: View {
@@ -40,11 +46,21 @@ public struct BlackSlabCTA: View {
     // MARK: - Properties
 
     let routine: SessionTemplate
-    let dayIndex: Int?      // 1-based, e.g. 1 of 4; nil shows no day
-    let totalDays: Int
+    /// The top label, from `heroLabel(mode:position:slotCount:)`.
+    let label: String
+    /// The block's current phase; a deload cuts the set count and adds the caption.
+    let phase: BlockPhase?
     let onStart: @MainActor () -> Void
     /// Opens the block's other sessions; nil hides the link.
     var onChooseAnother: (@MainActor () -> Void)? = nil
+
+    // MARK: - Label
+
+    /// TODAY on a fixed-weekly block; on a rotation the session's place in
+    /// the cycle, "NEXT UP · 2 OF 3" for `position` 1 of 3 slots.
+    static func heroLabel(mode: SchedulingMode, position: Int, slotCount: Int) -> String {
+        mode == .fixedWeekly ? "TODAY" : "NEXT UP · \(position + 1) OF \(slotCount)"
+    }
 
     // MARK: - Computed
 
@@ -52,8 +68,11 @@ public struct BlackSlabCTA: View {
         (routine.exercises ?? []).count
     }
 
+    /// The working sets the phase yields, summed: what the factory will plan.
     private var setCount: Int {
-        (routine.exercises ?? []).reduce(0) { $0 + $1.targetSets }
+        (routine.exercises ?? []).reduce(0) {
+            $0 + PeriodizationEngine.workingSetCount(targetSets: $1.targetSets, phase: phase)
+        }
     }
 
     /// Rough ~duration estimate — 3 min avg per set + 2 min overhead
@@ -65,24 +84,12 @@ public struct BlackSlabCTA: View {
 
     public var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            // Top row: NEXT (leading) + DAY NN / MM (trailing)
-            HStack {
-                Text("NEXT")
-                    .font(BRUFont.labelSmall)
-                    .tracking(1.5)
-                    .textCase(.uppercase)
-                    .foregroundStyle(Color.bruPaper.opacity(0.6))
-
-                Spacer()
-
-                if let dayIndex {
-                    Text(String(format: "DAY %02d / %02d", dayIndex, totalDays))
-                        .font(BRUFont.labelSmall)
-                        .tracking(1.5)
-                        .textCase(.uppercase)
-                        .foregroundStyle(Color.bruPaper.opacity(0.6))
-                }
-            }
+            // Top row: TODAY, or the session's place in the cycle
+            Text(label)
+                .font(BRUFont.labelSmall)
+                .tracking(1.5)
+                .textCase(.uppercase)
+                .foregroundStyle(Color.bruPaper.opacity(0.6))
 
             // 6pt gap then hero routine name
             Spacer().frame(height: 6)
@@ -106,6 +113,16 @@ public struct BlackSlabCTA: View {
                     metaPart(BRUCountLabel.text(setCount, "set"))
                     metaPart("~\(estimatedMinutes) min")
                 }
+            }
+
+            // A deload week says why the sets are fewer.
+            if phase?.kind == .deload {
+                Spacer().frame(height: 6)
+                Text("Deload week · lighter sets")
+                    .font(BRUFont.labelSmall)
+                    .tracking(1.2)
+                    .textCase(.uppercase)
+                    .foregroundStyle(Color.bruPaper.opacity(0.6))
             }
 
             // 16pt gap then CTA
@@ -159,7 +176,7 @@ private struct BlackSlabCTAPreviewContainer: View {
     let routine: SessionTemplate
 
     var body: some View {
-        BlackSlabCTA(routine: routine, dayIndex: 1, totalDays: 4, onStart: {})
+        BlackSlabCTA(routine: routine, label: "NEXT UP · 1 OF 3", phase: nil, onStart: {})
             .modelContainer(container)
     }
 

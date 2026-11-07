@@ -181,14 +181,18 @@ public struct TodayView: View {
                     } else {
                         switch resolution {
                         case .session(let slot):
-                            if let routine = slot.sessionTemplate {
+                            if let routine = slot.sessionTemplate, let block = activeBlocks.first {
                                 // Scheduled routine → Black slab CTA. CR-01: keep
                                 // the resolved slot so startWorkout writes it as
                                 // the rotation anchor.
                                 BlackSlabCTA(
                                     routine: routine,
-                                    dayIndex: dayIndexInBlock,
-                                    totalDays: totalDaysInBlock,
+                                    label: BlackSlabCTA.heroLabel(
+                                        mode: block.schedulingMode,
+                                        position: slot.position,
+                                        slotCount: block.split?.slots?.count ?? 0
+                                    ),
+                                    phase: currentBlockPhase,
                                     onStart: { startWorkout(routine, slot: slot) },
                                     onChooseAnother: canChooseSession ? { @MainActor in choosingSession = true } : nil
                                 )
@@ -485,6 +489,13 @@ public struct TodayView: View {
         guard let block = activeBlocks.first else { return 1 }
         let total = (block.phases ?? []).reduce(0) { $0 + $1.weeks }
         return max(1, total)
+    }
+
+    /// The active block's current phase, read with Today's date and calendar
+    /// so the hero, the rows and the start agree. Nil without a block, and
+    /// past its plan, which has no current phase.
+    private var currentBlockPhase: BlockPhase? {
+        activeBlocks.first.flatMap { PeriodizationEngine.phase(for: $0, on: now, calendar: calendar) }
     }
 
     /// The active block's current phase, for the third stat's short label.

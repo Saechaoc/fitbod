@@ -13,7 +13,7 @@
 //  Assertions cover:
 //    1. Header copy — "Fitbod / Today"
 //    2. Stat strip labels — "Day streak" / "Sessions" / week pattern
-//    3. Black slab copy — "NEXT" / "DAY %02d / %02d" / "Start workout ▸"
+//    3. Black slab copy - "TODAY" / "NEXT UP · " / "Deload week · lighter sets" / "Start workout ▸"
 //    4. Lift list section head — "Lift list" / "Tap to reorder"
 //    5. Empty state — "No workout scheduled" / "Build a routine..." / "+ NEW ROUTINE"
 //    6. Resume slab copy — "RESUME" / "Resume ▸" / "Discard"
@@ -42,17 +42,15 @@ struct TodayViewBRUCopyTests {
 
     // MARK: - 3. Black slab copy
 
-    @Test("Black slab NEXT label is verbatim")
-    func blackSlabNEXTVerbatim() throws {
+    @Test("Black slab labels are verbatim")
+    func blackSlabLabelsVerbatim() throws {
         let slabSource = try sourceFile("fitbod/Views/BlackSlabCTA.swift")
-        #expect(slabSource.contains("\"NEXT\""))
-    }
-
-    @Test("Black slab DAY format string is verbatim")
-    func blackSlabDAYFormatVerbatim() throws {
-        let slabSource = try sourceFile("fitbod/Views/BlackSlabCTA.swift")
-        // DAY %02d / %02d pattern per UI-SPEC line 289
-        #expect(slabSource.contains("DAY %02d / %02d"))
+        #expect(slabSource.contains("\"TODAY\""))
+        #expect(slabSource.contains("\"NEXT UP · "))
+        #expect(slabSource.contains("\"Deload week · lighter sets\""))
+        // The day counter and the bare NEXT left with redesign step 1.2.
+        #expect(!slabSource.contains("DAY %02d / %02d"))
+        #expect(!slabSource.contains("Text(\"NEXT\")"))
     }
 
     @Test("Black slab CTA label is verbatim 'Start workout ▸'")
