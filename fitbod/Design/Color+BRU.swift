@@ -69,6 +69,15 @@ public extension Color {
     /// This foreground must not invert in dark mode.
     static let bruOnSignal: Color = Color("bruOnSignal")
 
+    /// A slab that stays dark: `#0A0A0A` (light) / warm charcoal `#1F1C16`
+    /// (dark). Today's hero slabs and the volume summary sit on it, so in
+    /// dark mode they read as dark cards on the dark page instead of
+    /// inverting to near-white with `bruInk` (FT-14, FT-15).
+    static let bruSlab: Color = Color("bruSlab")
+
+    /// Constant off-white `#FAFAF7` text and outlines on `bruSlab`.
+    static let bruOnSlab: Color = Color("bruOnSlab")
+
     var bruTextOnPaper: Color {
         self == .bruSignal ? .bruSignalText : self
     }

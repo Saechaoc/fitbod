@@ -6,7 +6,7 @@
 // summary, and the session that comes next as upcoming rather than a fresh
 // START WORKOUT ▸.
 //
-// ┌──────────────────────────────────────────────┐  ← bruInk
+// ┌──────────────────────────────────────────────┐  ← bruSlab (dark in both appearances)
 // │  DONE TODAY                                  │
 // │  Push A                                      │  hero
 // │  15 SETS · 55M · 4,230 LB                    │
@@ -36,17 +36,17 @@ public struct DoneTodaySlab: View {
                 .font(BRUFont.labelSmall)
                 .tracking(1.5)
                 .textCase(.uppercase)
-                .foregroundStyle(Color.bruPaper.opacity(0.6))
+                .foregroundStyle(Color.bruOnSlab.opacity(0.6))
 
             Spacer().frame(height: 6)
-            BRUDisplay(session.displayName, size: .hero, color: .bruPaper)
+            BRUDisplay(session.displayName, size: .hero, color: .bruOnSlab)
             Spacer().frame(height: 12)
 
             Text(metaLine)
                 .font(BRUFont.labelSmall)
                 .tracking(1.2)
                 .textCase(.uppercase)
-                .foregroundStyle(Color.bruPaper)
+                .foregroundStyle(Color.bruOnSlab)
                 .fixedSize(horizontal: false, vertical: true)
 
             if let upNext {
@@ -54,7 +54,7 @@ public struct DoneTodaySlab: View {
                     .font(BRUFont.labelSmall)
                     .tracking(1.2)
                     .textCase(.uppercase)
-                    .foregroundStyle(Color.bruPaper.opacity(0.6))
+                    .foregroundStyle(Color.bruOnSlab.opacity(0.6))
                     .fixedSize(horizontal: false, vertical: true)
                     .padding(.top, 8)
                     .accessibilityIdentifier("doneToday.upNext")
@@ -62,15 +62,15 @@ public struct DoneTodaySlab: View {
 
             Spacer().frame(height: 16)
 
-            // Paper outline on the ink slab, as the resume slab's DISCARD.
+            // Light outline on the dark slab, as the resume slab's DISCARD.
             Button(action: onView) {
                 Text("View workout ›")
                     .font(BRUFont.labelSmall)
                     .tracking(1.2)
                     .textCase(.uppercase)
-                    .foregroundStyle(Color.bruPaper)
+                    .foregroundStyle(Color.bruOnSlab)
                     .frame(maxWidth: .infinity, minHeight: 44)
-                    .overlay(Rectangle().stroke(Color.bruPaper, lineWidth: 1.5))
+                    .overlay(Rectangle().stroke(Color.bruOnSlab, lineWidth: 1.5))
                     .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
@@ -82,7 +82,7 @@ public struct DoneTodaySlab: View {
                         .font(BRUFont.labelSmall)
                         .tracking(1.2)
                         .textCase(.uppercase)
-                        .foregroundStyle(Color.bruPaper.opacity(0.8))
+                        .foregroundStyle(Color.bruOnSlab.opacity(0.8))
                         .frame(maxWidth: .infinity, minHeight: 44)
                         .contentShape(Rectangle())
                 }
@@ -93,7 +93,7 @@ public struct DoneTodaySlab: View {
         }
         .padding(.vertical, 18)
         .padding(.horizontal, 16)
-        .background(Color.bruInk)
+        .background(Color.bruSlab)
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 

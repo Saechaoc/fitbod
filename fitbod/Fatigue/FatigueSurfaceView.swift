@@ -185,7 +185,7 @@ public struct FatigueSurfaceView: View {
 
     // MARK: - (1) Summary ink slab
 
-    /// Full-bleed bruInk slab per bru-screens/volume.jsx lines 22–35.
+    /// Full-bleed bruSlab slab (dark in both appearances, FT-15) per bru-screens/volume.jsx lines 22–35.
     private func summarySlab(_ muscles: [MuscleGroup], _ volumes: WeekVolumes) -> some View {
         HStack(spacing: 0) {
             VStack(alignment: .leading, spacing: 2) {
@@ -195,8 +195,8 @@ public struct FatigueSurfaceView: View {
                     .font(BRUFont.labelSmall)
                     .tracking(1.5)
                     .textCase(.uppercase)
-                    .foregroundStyle(Color.bruPaper.opacity(0.6))
-                BRUDisplay("\(weeklyTotalRounded(muscles, volumes))", size: .hero, color: .bruPaper)
+                    .foregroundStyle(Color.bruOnSlab.opacity(0.6))
+                BRUDisplay("\(weeklyTotalRounded(muscles, volumes))", size: .hero, color: .bruOnSlab)
             }
             Spacer()
             VStack(alignment: .trailing, spacing: 2) {
@@ -204,18 +204,18 @@ public struct FatigueSurfaceView: View {
                     .font(BRUFont.labelSmall)
                     .tracking(1.5)
                     .textCase(.uppercase)
-                    .foregroundStyle(Color.bruPaper.opacity(0.6))
+                    .foregroundStyle(Color.bruOnSlab.opacity(0.6))
                 BRUDisplay(deltaCopy(muscles, volumes), size: .large, color: .bruSignal)
                 Text("STIMULUS-WEIGHTED")
                     .font(BRUFont.labelMicro)
                     .tracking(1.0)
                     .textCase(.uppercase)
-                    .foregroundStyle(Color.bruPaper.opacity(0.6))
+                    .foregroundStyle(Color.bruOnSlab.opacity(0.6))
             }
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 14)
-        .background(Color.bruInk)
+        .background(Color.bruSlab)
     }
 
     // MARK: - (2) Legend strip

@@ -2,7 +2,10 @@
 //  StartBlockCTA.swift
 //  fitbod
 //
-//  Today empty-state call-to-action when no block is active.
+//  Today empty-state call-to-action when no block is active. Today shows
+//  it only once a routine exists, since a block runs on one; with no
+//  routine the Start-a-workout card's + New routine is the one routine
+//  action (FT-15).
 //  BRU reskin: paper background, muted body, signal-text inline button
 //  (NOT a filled button). No rounded corners.
 //  Phase 04.1 (BRU re-skin) — see 04.1-PATTERNS.md File #11
@@ -16,16 +19,10 @@
 import SwiftUI
 
 public struct StartBlockCTA: View {
-    /// False until a routine exists: a block runs on one, so the card
-    /// sends the lifter to make a routine first (D-162).
-    public let hasRoutine: Bool
     public let onStart: () -> Void
-    public let onNewRoutine: () -> Void
 
-    public init(hasRoutine: Bool = true, onStart: @escaping () -> Void, onNewRoutine: @escaping () -> Void = {}) {
-        self.hasRoutine = hasRoutine
+    public init(onStart: @escaping () -> Void) {
         self.onStart = onStart
-        self.onNewRoutine = onNewRoutine
     }
 
     public var body: some View {
@@ -36,16 +33,14 @@ public struct StartBlockCTA: View {
                 .textCase(.uppercase)
                 .foregroundStyle(Color.bruInk)
 
-            Text(hasRoutine
-                 ? "Define a training block to see your phase, week, and deloads here."
-                 : "A block runs on a routine. Build one first, then define a block around it.")
+            Text("Define a training block to see your phase, week, and deloads here.")
                 .font(BRUFont.bodyDefault)
                 .foregroundStyle(Color.bruMuted)
 
-            Button(action: hasRoutine ? onStart : onNewRoutine) {
+            Button(action: onStart) {
                 // Mixed-case source string, uppercased for display, so
                 // VoiceOver reads words instead of spelling letters.
-                Text(hasRoutine ? "Start a block" : "+ New routine")
+                Text("Start a block")
                     .font(BRUFont.labelSmall)
                     .textCase(.uppercase)
                     .tracking(1.2)

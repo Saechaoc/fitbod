@@ -232,12 +232,10 @@ public struct TodayView: View {
 
                     // No block at all → Start Block CTA (Phase 4 preserved),
                     // after the picker so starting a workout stays primary.
-                    if activeSessions.isEmpty && activeBlocks.isEmpty && readyBlock == nil {
-                        StartBlockCTA(
-                            hasRoutine: !routines.isEmpty,
-                            onStart: { presentingCreateBlock = true },
-                            onNewRoutine: startNewRoutine
-                        )
+                    // A block runs on a routine, so with none the picker's
+                    // + New routine is the one routine action here (FT-15).
+                    if activeSessions.isEmpty && activeBlocks.isEmpty && readyBlock == nil && !routines.isEmpty {
+                        StartBlockCTA(onStart: { presentingCreateBlock = true })
                     }
 
                     // Lift list — only for a scheduled session not yet done

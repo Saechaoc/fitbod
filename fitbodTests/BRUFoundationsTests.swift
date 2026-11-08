@@ -150,7 +150,7 @@ struct BRUFoundationsTests {
 
     // MARK: Color Asset Resolution
 
-    @Test func allEightBRUColorsResolve() throws {
+    @Test func bruColorAssetsResolve() throws {
         // Color.bru* are generated from Assets.xcassets via
         // ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES.
         // UIColor(named:in:) returns nil if the colorset is missing or malformed.
@@ -166,6 +166,8 @@ struct BRUFoundationsTests {
             ("bruMuted",  "bruMuted"),
             ("bruBg",     "bruBg"),
             ("bruBg2",    "bruBg2"),
+            ("bruSlab",   "bruSlab"),
+            ("bruOnSlab", "bruOnSlab"),
         ]
 
         for (name, assetName) in tokens {

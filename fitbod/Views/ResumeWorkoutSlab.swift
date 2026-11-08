@@ -13,14 +13,15 @@ import SwiftData
 
 // MARK: - ResumeWorkoutSlab
 
-/// Full-bleed bruInk slab shown when a session is in-progress (completedAt == nil).
+/// Full-bleed bruSlab slab shown when a session is in-progress (completedAt == nil).
+/// The slab stays dark in dark mode (FT-14); its text and outlines use bruOnSlab.
 ///
 /// Layout (top to bottom, 18pt v / 16pt h padding):
 /// ```
-/// ┌──────────────────────────────────────────────┐  ← bruInk
+/// ┌──────────────────────────────────────────────┐  ← bruSlab (dark in both appearances)
 /// │  RESUME                                       │  10pt caps 0.6 opacity
 /// │                                               │  6pt gap
-/// │  Push A                                       │  56pt hero bruPaper
+/// │  Push A                                       │  56pt hero bruOnSlab
 /// │                                               │  12pt gap
 /// │  14:32  ·  9 SETS LOGGED                      │  10pt caps 0.6 opacity (ticks every second)
 /// │                                               │  16pt gap
@@ -31,8 +32,8 @@ import SwiftData
 /// At accessibility sizes RESUME ▸ spans the slab with DISCARD under it,
 /// since half the slab is too narrow to keep "RESUME ▸" on one line.
 ///
-/// Note: The ghost variant's "Discard" button uses bruPaper text + bruPaper outline
-/// because the slab background is bruInk — this inverts BRUButton.ghost's defaults
+/// Note: The ghost variant's "Discard" button uses bruOnSlab text + bruOnSlab outline
+/// because the slab background is bruSlab — this inverts BRUButton.ghost's defaults
 /// (which assume a paper background). A comment in the code documents this inversion.
 public struct ResumeWorkoutSlab: View {
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
@@ -67,12 +68,12 @@ public struct ResumeWorkoutSlab: View {
                 .font(BRUFont.labelSmall)
                 .tracking(1.5)
                 .textCase(.uppercase)
-                .foregroundStyle(Color.bruPaper.opacity(0.6))
+                .foregroundStyle(Color.bruOnSlab.opacity(0.6))
 
             // 6pt gap then hero routine name
             Spacer().frame(height: 6)
 
-            BRUDisplay(routineDisplayName, size: .hero, color: .bruPaper)
+            BRUDisplay(routineDisplayName, size: .hero, color: .bruOnSlab)
 
             // 12pt gap then meta strip
             Spacer().frame(height: 12)
@@ -84,17 +85,17 @@ public struct ResumeWorkoutSlab: View {
                     .font(BRUFont.labelSmall)
                     .tracking(1.2)
                     .textCase(.uppercase)
-                    .foregroundStyle(Color.bruPaper.opacity(0.6))
+                    .foregroundStyle(Color.bruOnSlab.opacity(0.6))
 
                 Text("  ·  ")
                     .font(BRUFont.labelSmall)
-                    .foregroundStyle(Color.bruPaper.opacity(0.3))
+                    .foregroundStyle(Color.bruOnSlab.opacity(0.3))
 
                 Text("\(BRUCountLabel.text(session.loggedSetCount, "set")) logged")
                     .font(BRUFont.labelSmall)
                     .tracking(1.2)
                     .textCase(.uppercase)
-                    .foregroundStyle(Color.bruPaper.opacity(0.6))
+                    .foregroundStyle(Color.bruOnSlab.opacity(0.6))
             }
             }
 
@@ -107,9 +108,9 @@ public struct ResumeWorkoutSlab: View {
                     .frame(maxWidth: .infinity)
                     .accessibilityIdentifier("resumeSlab.resume")
 
-                // Secondary — ghost but on bruInk slab, so we invert:
+                // Secondary — ghost but on the dark slab, so we invert:
                 // BRUButton.ghost defaults to bruInk text + bruInk outline on a paper bg.
-                // On this bruInk slab background we need bruPaper text + bruPaper outline.
+                // On this bruSlab background we need bruOnSlab text + bruOnSlab outline.
                 // We implement this directly rather than through BRUButton to avoid coupling
                 // BRUButton to caller context. See threat model T-02.1-04-01 note.
                 Button {
@@ -123,12 +124,12 @@ public struct ResumeWorkoutSlab: View {
                         .font(BRUFont.labelSmall)
                         .tracking(1.2)
                         .textCase(.uppercase)
-                        // bruPaper text on bruInk slab — inverted ghost (slab-context inversion)
-                        .foregroundStyle(Color.bruPaper)
+                        // bruOnSlab text on bruSlab — inverted ghost (slab-context inversion)
+                        .foregroundStyle(Color.bruOnSlab)
                         .frame(maxWidth: .infinity, minHeight: 44)
                         .overlay(
                             Rectangle()
-                                .stroke(Color.bruPaper, lineWidth: 1.5)
+                                .stroke(Color.bruOnSlab, lineWidth: 1.5)
                         )
                 }
                 .buttonStyle(.plain)
@@ -138,7 +139,7 @@ public struct ResumeWorkoutSlab: View {
         }
         .padding(.vertical, 18)
         .padding(.horizontal, 16)
-        .background(Color.bruInk)
+        .background(Color.bruSlab)
         .frame(maxWidth: .infinity, alignment: .leading)
         .alert("Discard workout?", isPresented: $confirmingDiscard) {
             Button("Discard", role: .destructive) { discard() }

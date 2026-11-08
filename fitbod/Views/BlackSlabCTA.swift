@@ -12,14 +12,15 @@ import SwiftData
 
 // MARK: - BlackSlabCTA
 
-/// Full-bleed bruInk slab showing the next scheduled workout with a CTA.
+/// Full-bleed bruSlab slab showing the next scheduled workout with a CTA;
+/// dark in both appearances (FT-14), text in bruOnSlab.
 ///
 /// Layout (top to bottom, 18pt v / 16pt h padding):
 /// ```
-/// ┌───────────────────────────────────────────────┐  ← bruInk
+/// ┌───────────────────────────────────────────────┐  ← bruSlab (dark in both appearances)
 /// │  NEXT UP · 1 OF 4                             │  10pt caps 0.6 opacity
 /// │                                               │  6pt gap
-/// │  Push A                                       │  56pt hero bruPaper
+/// │  Push A                                       │  56pt hero bruOnSlab
 /// │                                               │  12pt gap
 /// │  5 EXERCISES  ·  21 SETS  ·  ~52 MIN          │  10pt caps 0.5 opacity
 /// │  DELOAD WEEK · LIGHTER SETS                   │  in a deload week only
@@ -89,12 +90,12 @@ public struct BlackSlabCTA: View {
                 .font(BRUFont.labelSmall)
                 .tracking(1.5)
                 .textCase(.uppercase)
-                .foregroundStyle(Color.bruPaper.opacity(0.6))
+                .foregroundStyle(Color.bruOnSlab.opacity(0.6))
 
             // 6pt gap then hero routine name
             Spacer().frame(height: 6)
 
-            BRUDisplay(routine.name, size: .hero, color: .bruPaper)
+            BRUDisplay(routine.name, size: .hero, color: .bruOnSlab)
 
             // 12pt gap then meta strip
             Spacer().frame(height: 12)
@@ -122,7 +123,7 @@ public struct BlackSlabCTA: View {
                     .font(BRUFont.labelSmall)
                     .tracking(1.2)
                     .textCase(.uppercase)
-                    .foregroundStyle(Color.bruPaper.opacity(0.6))
+                    .foregroundStyle(Color.bruOnSlab.opacity(0.6))
             }
 
             // 16pt gap then CTA
@@ -136,7 +137,7 @@ public struct BlackSlabCTA: View {
                         .font(BRUFont.labelSmall)
                         .tracking(1.2)
                         .textCase(.uppercase)
-                        .foregroundStyle(Color.bruPaper.opacity(0.8))
+                        .foregroundStyle(Color.bruOnSlab.opacity(0.8))
                         .frame(maxWidth: .infinity, minHeight: 44)
                         .contentShape(Rectangle())
                 }
@@ -147,7 +148,7 @@ public struct BlackSlabCTA: View {
         }
         .padding(.vertical, 18)
         .padding(.horizontal, 16)
-        .background(Color.bruInk)
+        .background(Color.bruSlab)
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
@@ -157,14 +158,14 @@ public struct BlackSlabCTA: View {
             .font(BRUFont.labelSmall)
             .tracking(1.2)
             .textCase(.uppercase)
-            .foregroundStyle(Color.bruPaper)
+            .foregroundStyle(Color.bruOnSlab)
     }
 
     /// The dot between two meta parts on one line; stacked parts need none.
     private var metaSeparator: some View {
         Text("  ·  ")
             .font(BRUFont.labelSmall)
-            .foregroundStyle(Color.bruPaper.opacity(0.5))
+            .foregroundStyle(Color.bruOnSlab.opacity(0.5))
     }
 }
 
