@@ -287,6 +287,11 @@ public struct SetRow: View {
         .onAppear {
             repsText = entry.reps == 0 ? "" : String(entry.reps)
         }
+        // Reps set outside the field, such as a logged set's carried
+        // forward (FT-06), show unless the field is being typed in.
+        .onChange(of: entry.reps) { _, reps in
+            if !repsFocused { repsText = reps == 0 ? "" : String(reps) }
+        }
     }
 
     private var inputLayout: AnyLayout {

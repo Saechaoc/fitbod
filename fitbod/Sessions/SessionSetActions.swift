@@ -5,13 +5,16 @@
 //  The set-level mutations the session logger performs, pulled out of the
 //  SwiftUI views so they are unit-testable against a real ModelContext:
 //
-//    - complete    flip isComplete on + stamp completedAt (checkmark tap)
+//    - complete    flip isComplete on + stamp completedAt (checkmark tap);
+//                  a working set's weight and reps carry to the next
+//                  untouched working set as its offer (FT-06)
 //    - uncomplete  flip isComplete off (tap a completed checkmark); the
 //                  logged weight/reps stay so the user can fix and
 //                  re-check the set. The rest timer is NOT touched.
 //    - delete      remove one set and renumber the rest so orderIndex
 //                  stays contiguous (warm-ups first, then working sets)
-//    - addSet      append a planned working set at the end
+//    - addSet      append a planned working set at the end, offering the
+//                  last set's weight, and its reps once it is logged
 //    - finish / deleteWorkout / remove   the workout-level writes; each
 //                  throws on a failed save so the logger can say so
 //
@@ -43,15 +46,31 @@ public enum SessionSetActions {
     }
 
     /// Mark a set complete. Returns false (and changes nothing) when the
-    /// set's input is invalid, matching SetRow's commit guard.
+    /// set's input is invalid, matching SetRow's commit guard. A working
+    /// set's weight and reps then carry to the next untouched working set.
     @MainActor
     @discardableResult
     public static func complete(_ entry: SetEntry, at date: Date = .now, context: ModelContext) -> Bool {
         guard canComplete(entry) else { return false }
         entry.isComplete = true
         entry.completedAt = date
+        carryForward(from: entry)
         try? context.save()
         return true
+    }
+
+    /// The next working set still to do takes `entry`'s weight and reps as
+    /// its offer, when nobody has touched it: no reps yet and no typed
+    /// weight. A set with its own numbers keeps them, and RPE never
+    /// carries, because effort is judged per set. Warm-ups carry nothing.
+    static func carryForward(from entry: SetEntry) {
+        guard !entry.isWarmup, let owner = entry.sessionExercise else { return }
+        let working = ordered(owner).filter { !$0.isWarmup }
+        guard let index = working.firstIndex(where: { $0.id == entry.id }),
+              let next = working[(index + 1)...].first(where: { !$0.isComplete }),
+              next.reps == 0, !next.wasManualOverride else { return }
+        next.weight = entry.weight
+        next.reps = entry.reps
     }
 
     /// Undo a completion. Weight, reps and RPE are kept.
@@ -75,13 +94,14 @@ public enum SessionSetActions {
 
     /// Append a planned working set. Weight is seeded from the last set
     /// in this exercise when it has one, else from the previous finished
-    /// session, else 0.
+    /// session, else 0. A logged last set offers its reps too; RPE stays
+    /// empty.
     @MainActor
     @discardableResult
     public static func addSet(to sessionExercise: SessionExercise, context: ModelContext) -> SetEntry {
         let existing = ordered(sessionExercise)
-        let lastWorkingWeight = existing.last(where: { !$0.isWarmup && $0.weight > 0 })?.weight
-        let seedWeight = lastWorkingWeight ?? PreviousMatchingIntent.fetchTopWorkingSet(
+        let lastWorking = existing.last(where: { !$0.isWarmup && $0.weight > 0 })
+        let seedWeight = lastWorking?.weight ?? PreviousMatchingIntent.fetchTopWorkingSet(
             exerciseID: sessionExercise.exercise?.id,
             intentRaw: sessionExercise.session?.intentRaw ?? Intent.strength.rawValue,
             context: context,
@@ -96,6 +116,7 @@ public enum SessionSetActions {
         entry.isWarmup = false
         entry.isComplete = false
         entry.weight = seedWeight
+        if let lastWorking, lastWorking.isComplete { entry.reps = lastWorking.reps }
         try? context.save()
         return entry
     }

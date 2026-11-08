@@ -108,6 +108,63 @@ struct SessionSetActionsTests {
         #expect(SessionSetActions.displayNumber(of: after[0]) == 1)
     }
 
+    @Test("complete carries weight and reps, not RPE, to the next set still to do")
+    func completeCarriesForward() throws {
+        let ctx = try LoggerFixtures.makeContext()
+        let session = try LoggerFixtures.session(
+            exercise: LoggerFixtures.exercise("Bench", in: ctx), startedAt: .now, completedAt: nil,
+            sets: [(100, 0, false), (100, 0, false), (100, 0, false)], in: ctx
+        )
+        let se = try #require(session.exercises?.first)
+        let sets = SessionSetActions.ordered(se)
+        sets[0].weight = 105
+        sets[0].reps = 6
+        sets[0].rpe = 8
+        #expect(SessionSetActions.complete(sets[0], context: ctx))
+
+        let reread = SessionSetActions.ordered(try #require(try freshRead(ctx, se.id)))
+        #expect(reread[1].weight == 105)
+        #expect(reread[1].reps == 6)
+        #expect(reread[1].rpe == nil)
+        #expect(reread[1].isComplete == false)
+        #expect(reread[2].reps == 0, "Only the next set takes the offer")
+    }
+
+    @Test("a next set with its own reps or typed weight keeps them")
+    func completeLeavesTouchedSetAlone() throws {
+        let ctx = try LoggerFixtures.makeContext()
+        let session = try LoggerFixtures.session(
+            exercise: LoggerFixtures.exercise("Bench", in: ctx), startedAt: .now, completedAt: nil,
+            sets: [(100, 6, false), (95, 8, false), (100, 6, false), (90, 0, false)], in: ctx
+        )
+        let se = try #require(session.exercises?.first)
+        let sets = SessionSetActions.ordered(se)
+        sets[3].wasManualOverride = true
+        #expect(SessionSetActions.complete(sets[0], context: ctx))
+        #expect(SessionSetActions.complete(sets[2], context: ctx))
+
+        let reread = SessionSetActions.ordered(try #require(try freshRead(ctx, se.id)))
+        #expect(reread[1].weight == 95)
+        #expect(reread[1].reps == 8)
+        #expect(reread[3].weight == 90, "A typed weight is the lifter's choice")
+        #expect(reread[3].reps == 0)
+    }
+
+    @Test("addSet copies a logged last set's weight and reps, not its RPE")
+    func addSetCopiesLoggedSet() throws {
+        let ctx = try LoggerFixtures.makeContext()
+        let se = try makeSession(ctx)
+        let last = SessionSetActions.ordered(se)[2]
+        last.rpe = 9
+        #expect(SessionSetActions.complete(last, context: ctx))
+        let added = SessionSetActions.addSet(to: se, context: ctx)
+
+        #expect(added.weight == 100)
+        #expect(added.reps == 5)
+        #expect(added.rpe == nil)
+        #expect(added.isComplete == false)
+    }
+
     @Test("addSet appends at the end seeded from the last working weight")
     func addSetAppends() throws {
         let ctx = try LoggerFixtures.makeContext()
@@ -117,6 +174,7 @@ struct SessionSetActionsTests {
 
         #expect(added.orderIndex == 3)
         #expect(added.weight == 102.5)
+        #expect(added.reps == 0, "An unlogged last set offers no reps")
         #expect(added.isComplete == false)
         let reread = try #require(try freshRead(ctx, se.id))
         #expect((reread.sets ?? []).count == 4)

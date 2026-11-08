@@ -61,7 +61,8 @@ final class NumberEntryUITests: XCTestCase {
         let next = app.textFields["set.weight.1.S2"]
         tapAboveText(of: next)
         next.typeText("95")
-        XCTAssertEqual(next.value as? String, "95 lb", "95 typed after a tap on the padding must replace 100")
+        // Set 2 offers set 1's logged 90 (FT-06) until it is typed over.
+        XCTAssertEqual(next.value as? String, "95 lb", "95 typed after a tap on the padding must replace the carried 90")
         UITestNavigation.assertAboveKeyboard(next, in: app)
         // The focused row's completion box stays clear of DONE too (F19).
         UITestNavigation.assertAboveKeyboard(app.buttons["set.complete.1.S2"], in: app)
