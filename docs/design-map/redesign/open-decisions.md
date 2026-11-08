@@ -5,6 +5,15 @@ Each names the default the layouts assume, so the build can start without the an
 Defaults marked "round 1" were set or changed by the adversarial review; [review-log.md](review-log.md) has the reasons.
 On 2026-11-05 the user asked for the calls to be made; the decisions are in the first table, and the register of questions, defaults and alternatives follows it unchanged.
 
+## Decisions, 2026-11-08
+
+Two calls from the gym playtest of 2026-11-08 (`docs/user-testing-notes/fitbod-playtest-roadmap-reconciliation.md`).
+
+| # | Call | Why |
+| --- | --- | --- |
+| O-15 | Dark slabs stay dark in dark mode: `bruSlab` (`#0A0A0A` light, `#1F1C16` dark) with `bruOnSlab` text, on T-RESUME, the current Done slab and the Volume summary. | `bruInk` inverts to near-white, so the Resume card and the Done panel glared in the gym (FT-14, FT-15); light mode is unchanged. |
+| O-16 | The logger lives on Today's stack only; Program's RESUME ▸, a session's START WORKOUT ▸ and the Live Activity switch to Today and open it there, so ‹ always lands on Today. | Back had no predictable destination because `dismiss()` returned to whichever stack pushed the logger (FT-02); one request (`ResumeWorkoutRequest`) and one stack give one answer. |
+
 ## Decisions, 2026-11-05
 
 Every call takes the default the layouts assume, so no leaf changes and the build can start on draft v6.

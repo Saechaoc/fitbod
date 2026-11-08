@@ -3,6 +3,15 @@
 Newest first.
 One entry per iteration: what changed and why.
 
+## 2026-11-08, playtest fixes ahead of steps 1.3, 1.4 and 2.5
+
+A gym playtest (`docs/user-testing-notes/fitbod-playtest-roadmap-reconciliation.md`) found 21 issues; the ones that touch the redesign landed ahead of their steps.
+Dark slabs draw on `bruSlab` with `bruOnSlab` text, so T-RESUME and the Done slab stay dark in dark mode (FT-14, FT-15; decision O-15).
+With no block and routines, Today shows one routine action, the picker's + New routine, in place of two (FT-15).
+The logger lives on Today's stack only: Program's banner, a session's START WORKOUT ▸ and the Live Activity open it through `ResumeWorkoutRequest`, so ‹ lands on Today (FT-02; decision O-16).
+Volume opens from Progress through `VolumeScreen`, every region and bar opens the muscle's detail, the neck is a tracked muscle, and muscles under MEV draw amber (FT-17, FT-18; parts of steps 1.4 and 2.5).
+Plan rows 1.3, 1.4 and 2.5 record what landed and the device check that remains (FT-16).
+
 ## 2026-11-07, step 1.2 landed
 
 The hero reads TODAY on a fixed-weekly block and NEXT UP · n OF m on a rotation, in place of NEXT and the DAY counter.

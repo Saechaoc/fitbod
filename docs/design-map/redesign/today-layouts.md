@@ -122,6 +122,7 @@ The dialog's body changes to "Ends Spring Block and saves its plan to history. N
 ```
 
 ResumeWorkoutSlab unchanged except the plan line above it.
+The slab draws on `bruSlab` with `bruOnSlab` text and outlines: `#0A0A0A` in light mode and warm charcoal `#1F1C16` in dark mode, so it never turns near-white as `bruInk` does (playtest FT-14, decision O-15, 2026-11-08); every dark slab on Today and Volume shares the token.
 DISCARD asks "Discard workout?" only when sets are logged and discards at once when none are; Program's banner adopts the same rule (round 3).
 No exercise list: the open workout is one tap away and lists them itself.
 No notice row: the deload advisory and a pending review wait until the workout is finished.
@@ -372,6 +373,7 @@ Weekday blocks never say "skips": the resolver maps weekdays to slots and the an
 A session with no exercises in a routine shows "No exercises yet" and does not start; its repair is Program › routine › session.
 Rows are sized by their text with a 44pt minimum, and the "skips …" subline wraps in full and is never truncated, because it is the only warning before a tap starts the workout (round 3).
 A mis-tap costs two taps: the logger's ‹ leaves the empty workout open, Today shows RESUME, and its DISCARD asks nothing when no sets are logged.
+The logger lives on Today's stack only: Program's RESUME ▸, a session's START WORKOUT ▸ from any screen and the rest timer's Live Activity all switch to Today and open the workout in progress there with nothing else on the stack, so ‹ and the swipe back always land on Today (FT-02).
 Session detail for routine sessions other than the hero (preview, edit, last workout) moves to Program › routine › session, three taps from Today; accepted, because previewing a session that is not today's is not an everyday job and the sheet's job is starting (round 3).
 The hero's detail stays behind the Exercises head's "View ›".
 One helper, `StartSlot` (step 1.3), holds NEXT, the routine anchor with its skip of empty sessions, the suggestion's routine and the two-slot rule; the sheet, the hero, the session detail's START WORKOUT ▸ (from Today's "View ›", from ADD EXERCISES ▸ and from Program › routine › session) and Program's TODAY ▸ and NEXT ▸ all call it, so starting the same session by any route moves the rotation the same way (D-19, round 3).

@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-last_updated: "2026-11-04T02:35:51Z"
-last_activity: 2026-11-04
+last_updated: "2026-11-08T23:13:48Z"
+last_activity: 2026-11-08
 progress:
   total_phases: 15
   completed_phases: 15
@@ -17,7 +17,7 @@ progress:
 
 **Last updated:** 2026-10-29 (Milestone 1 finish, phase 0 done: Codex's seven groups committed, baseline 1,023 of 1,026 passed with 2 known app-bug failures and 1 expected failure)
 
-Last activity: 2026-11-07 - Completed quick task 261106-he2: Today redesign step 1.2, hero and exercises
+Last activity: 2026-11-08 - Completed quick task 261108-ftx: the 21 playtest findings of 2026-11-08 (17 shipped, FT-13 deferred, 3 device checks)
 
 ---
 
@@ -374,6 +374,7 @@ None.
 | 261106-pl1 | Today redesign step 1.1: TodayState (23 tests) and the plan line replace the stat strip, block band, week cells, deload-week banner and plan-complete note; one BlockPosition label; one-row deload advisory. Full run 1,326 of 1,332; 2 failures predate or sit outside this change (Swap variation Undo, MilestoneOneJourney) | 2026-11-06 | a3b3ead4, 425a1e64, 99b989b4, 50c0a6be, aefa0f5f, 56dc453c | [261106-pl1-today-state-and-the-plan-line](./quick/261106-pl1-today-state-and-the-plan-line/) |
 | 261106-he2 | Today redesign step 1.2: the hero reads TODAY or NEXT UP · n OF m, counts working sets through PeriodizationEngine.workingSetCount and carries the deload caption; EXERCISES · n with VIEW ›, rows read sets × reps for the phase; factory and starter take a calendar. Full run 1,339 of 1,342; 2 UI failures passed alone (a SQLite I/O error at relaunch killed the app once; History delete sheet contention) | 2026-11-07 | 0b2a8187, cd35a280, 538d09a1, 7fb2babf, 2ab3e6cc, 3cb65f6b | [261106-he2-hero-and-exercises](./quick/261106-he2-hero-and-exercises/) |
 | 261108-a5s | Remove the invalid live-activities entitlement so device builds sign with the free Personal Team; Live Activities keep NSSupportsLiveActivities. Device build, install and launch verified on iPhone 15 Pro Max | 2026-11-08 | e72ae87e | [261108-a5s-remove-invalid-live-activities-entitleme](./quick/261108-a5s-remove-invalid-live-activities-entitleme/) |
+| 261108-ftx | Resolve the 21 playtest findings of 2026-11-08: 17 shipped in ten commits (logger menu and Discard, carry-forward, one set-type picker, RPE label, LAST TIME, collapsible exercises, Single-Leg Kneeling Leg Curl, dark slabs on bruSlab, one routine action, Volume from Progress with neck and amber, logger on Today's stack only, widget assets and fonts); FT-13 deferred; FT-16, FT-19, FT-20 Lock Screen and FT-21 need the phone | 2026-11-08 | 03199d32 | [261108-ftx-resolve-playtest-findings](./quick/261108-ftx-resolve-playtest-findings/) |
 
 ---
 
