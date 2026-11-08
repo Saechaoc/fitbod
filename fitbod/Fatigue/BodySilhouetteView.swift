@@ -12,11 +12,12 @@
 //    - 1pt bruHair grid lines drawn via Canvas overlay
 //    - Per-region Rectangle with 1pt bruInk border + zone fill color
 //    - Label: uppercase short name, 7pt bold, kerning 0.4, centered
-//    - Foreground: bruInk on light fills (bruBg2/bruFaint),
+//    - Foreground: bruInk on light fills (bruBg2), bruOnSignal on amber,
 //                  bruPaper on dark fills (bruInk/bruSignal)
 //
 //  Zone → fill mapping (UI-SPEC line 53 BRU override):
-//    .belowMEV   → bruFaint
+//    .belowMEV   → bruAmber (under target: the bar fill and the UNDER MEV
+//                  chip use it too, and it reads in dark mode, FT-18)
 //    .productive → bruInk
 //    .nearMRV    → bruSignal
 //    .overMRV    → bruSignal
@@ -29,7 +30,7 @@
 //
 //  VoiceOver: one element per muscle, on its leftmost block, and on
 //       FRONT when both sides draw it. The label is the muscle's name
-//       and the value is its zone. NECK is decorative and hidden.
+//       and the value is its zone. NECK is a muscle like the rest (FT-17).
 //       The blocks that speak form one group per figure, named "Front"
 //       or "Back" (T62): VoiceOver names the figure as it enters it and
 //       reads all of its muscles before the other figure's. The other
@@ -161,16 +162,15 @@ public struct BodySilhouetteView: View {
         }
     }
 
-    /// One block: zone fill, 1pt bruInk border and centered label. NECK is
-    /// decorative: it opens nothing. A muscle block opens the muscle's
-    /// detail screen and carries the muscle's VoiceOver label, value, hint
-    /// and button trait; `body` hides the blocks VoiceOver skips.
-    @ViewBuilder
+    /// One block: zone fill, 1pt bruInk border and centered label. A block
+    /// opens the muscle's detail screen and carries the muscle's VoiceOver
+    /// label, value, hint and button trait; `body` hides the blocks
+    /// VoiceOver skips.
     private func regionBlock(_ region: GridRegion, size: CGSize) -> some View {
         let fillColor = bruColor(for: zoneByMuscleSlug[region.slug])
         let isDarkFill = fillColor == Color.bruInk || fillColor == Color.bruSignal
-        let textColor: Color = isDarkFill ? .bruPaper : .bruInk
-        let block = ZStack {
+        let textColor: Color = fillColor == Color.bruAmber ? .bruOnSignal : (isDarkFill ? .bruPaper : .bruInk)
+        return ZStack {
             Rectangle()
                 .fill(fillColor)
             Rectangle()
@@ -184,23 +184,13 @@ public struct BodySilhouetteView: View {
                 .multilineTextAlignment(.center)
         }
         .frame(width: size.width, height: size.height)
-
-        if isDecorative(region) {
-            // NECK takes its own taps and does nothing with them, so touch
-            // fuzzing never hands them to a neighbouring block.
-            block
-                .contentShape(Rectangle())
-                .onTapGesture {}
-        } else {
-            block
-                .contentShape(Rectangle())
-                .onTapGesture { onTap(region.slug) }
-                .accessibilityElement(children: .ignore)
-                .accessibilityLabel(accessibilityLabel(for: region))
-                .accessibilityValue(accessibilityValue(for: region))
-                .accessibilityHint("Tap to see details.")
-                .accessibilityAddTraits(.isButton)
-        }
+        .contentShape(Rectangle())
+        .onTapGesture { onTap(region.slug) }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(accessibilityLabel(for: region))
+        .accessibilityValue(accessibilityValue(for: region))
+        .accessibilityHint("Tap to see details.")
+        .accessibilityAddTraits(.isButton)
     }
 
     // MARK: - Helpers (internal for test visibility)
@@ -209,7 +199,7 @@ public struct BodySilhouetteView: View {
     internal func bruColor(for zone: VolumeZone?) -> Color {
         guard let z = zone else { return .bruBg2 }
         switch z {
-        case .belowMEV:           return .bruFaint
+        case .belowMEV:           return .bruAmber
         case .productive:         return .bruInk
         case .nearMRV, .overMRV:  return .bruSignal
         }
@@ -240,18 +230,11 @@ public struct BodySilhouetteView: View {
 
     /// VoiceOver reads each muscle once, on its leftmost block, and on
     /// FRONT when both sides draw the muscle. It skips the muscle's other
-    /// blocks, which stay tappable, and the decorative NECK.
+    /// blocks, which stay tappable.
     private func speaksForMuscle(_ region: GridRegion) -> Bool {
-        if isDecorative(region) {
-            return false
-        }
         if side == .back, MuscleRegionPaths.front.contains(where: { $0.slug == region.slug }) {
             return false
         }
         return !regions.contains { $0.slug == region.slug && $0.gridX < region.gridX }
-    }
-
-    private func isDecorative(_ region: GridRegion) -> Bool {
-        region.slug.hasSuffix("-decorative")
     }
 }

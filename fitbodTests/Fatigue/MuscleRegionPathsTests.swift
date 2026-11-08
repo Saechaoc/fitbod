@@ -10,7 +10,7 @@
 //  TDD RED→GREEN: Written before the GridRegion-based implementation to
 //  drive the rewrite. Coverage note: the 10×12 heatmap grid covers 14 of
 //  the 17 free-exercise-db slugs directly. NECK is rendered as
-//  "neck-decorative" (no zone binding). abductors + adductors are not on
+//  the neck as "neck" (FT-17). abductors + adductors are not on
 //  the visible heatmap grid — they are intentionally excluded per
 //  bru-screens/heatmap.jsx verbatim contract.
 //
@@ -25,11 +25,11 @@ struct MuscleRegionPathsTests {
 
     // MARK: - 1. Slug coverage — grid-visible slugs
 
-    /// The 14 slugs that the 10×12 block-anatomy heatmap grid exposes.
-    /// Neck is decorative (rendered as "neck-decorative"). Abductors and
-    /// adductors are absent from bru-screens/heatmap.jsx — not rendered.
+    /// The 15 slugs that the 10×12 block-anatomy heatmap grid exposes.
+    /// Abductors and adductors are absent from bru-screens/heatmap.jsx —
+    /// not rendered.
     private static let gridCoverableSlugs: Set<String> = [
-        "chest", "shoulders", "biceps", "forearms", "abdominals",
+        "neck", "chest", "shoulders", "biceps", "forearms", "abdominals",
         "quadriceps", "calves",
         "traps", "lats", "middle back", "lower back",
         "triceps", "glutes", "hamstrings",
@@ -40,14 +40,13 @@ struct MuscleRegionPathsTests {
         let frontSlugs = Set(MuscleRegionPaths.front.map(\.slug))
         let backSlugs = Set(MuscleRegionPaths.back.map(\.slug))
         let combined = frontSlugs.union(backSlugs)
-        let nonDecorative = combined.filter { !$0.hasSuffix("-decorative") }
-        let missing = Self.gridCoverableSlugs.subtracting(nonDecorative)
+        let missing = Self.gridCoverableSlugs.subtracting(combined)
         #expect(missing.isEmpty, "Missing grid slugs: \(missing)")
     }
 
     @Test("No slug outside the expected set appears in the registry")
     func noUnexpectedSlugs() {
-        let allowed = Self.gridCoverableSlugs.union(["neck-decorative"])
+        let allowed = Self.gridCoverableSlugs
         for region in MuscleRegionPaths.front {
             #expect(allowed.contains(region.slug),
                 "Unexpected front slug: '\(region.slug)'")

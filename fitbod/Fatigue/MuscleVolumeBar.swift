@@ -26,7 +26,8 @@
 //    (4) Footer HStack: BRUChip verb + 9pt mono bruMuted legend
 //
 //  Zone → bar fill color:
-//    .belowMEV   → bruFaint
+//    .belowMEV   → bruAmber (the UNDER MEV chip's color; bruFaint sat too
+//                  close to the bruBg2 track in dark mode, FT-18)
 //    .productive → bruInk
 //    .nearMRV    → bruSignal
 //    .overMRV    → bruSignal (+ pulse)
@@ -157,7 +158,7 @@ public struct MuscleVolumeBar: View {
     var barFillColor: Color {
         if isNotTrained { return .bruFaint }
         switch zone {
-        case .belowMEV:   return .bruFaint
+        case .belowMEV:   return .bruAmber
         case .productive: return .bruInk
         case .nearMRV:    return .bruSignal
         case .overMRV:    return .bruSignal
@@ -212,6 +213,11 @@ public struct MuscleVolumeBar: View {
                         .font(BRUFont.labelMicro)
                         .tracking(1.0)
                         .foregroundStyle(Color.bruMuted)
+                    // The row opens the muscle's detail; say so (FT-17).
+                    Text("›")
+                        .font(BRUFont.bodyEmphasis)
+                        .foregroundStyle(Color.bruMuted)
+                        .accessibilityHidden(true)
                 }
             }
 

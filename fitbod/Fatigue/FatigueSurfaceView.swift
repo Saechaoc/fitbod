@@ -220,27 +220,14 @@ public struct FatigueSurfaceView: View {
 
     // MARK: - (2) Legend strip
 
-    /// Three-swatch legend per bru-screens/volume.jsx lines 38–52.
+    /// Four-swatch legend after bru-screens/volume.jsx lines 38–52, with
+    /// the empty state named, so zero sets, under target and in range tell
+    /// apart in dark mode too (FT-18). One row while it fits; a column at
+    /// larger text sizes, where a row would wrap the labels mid-word.
     private var legendStrip: some View {
-        legendLayout {
-            legendCell(
-                fill: Color.bruBg2,
-                strokeColor: Color.bruInk,
-                showStroke: true,
-                label: "UNDER MEV"
-            )
-            legendCell(
-                fill: Color.bruInk,
-                strokeColor: Color.clear,
-                showStroke: false,
-                label: "MEV → MAV"
-            )
-            legendCell(
-                fill: Color.bruSignal,
-                strokeColor: Color.clear,
-                showStroke: false,
-                label: "MRV"
-            )
+        ViewThatFits(in: .horizontal) {
+            HStack(spacing: 16) { legendCells }
+            VStack(alignment: .leading, spacing: 4) { legendCells }
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 8)
@@ -249,12 +236,32 @@ public struct FatigueSurfaceView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    /// The legend's items in a row, or stacked at accessibility sizes, where
-    /// a row of them wraps "UNDER MEV" and "MEV → MAV" over two lines.
-    private var legendLayout: AnyLayout {
-        dynamicTypeSize.isAccessibilitySize
-            ? AnyLayout(VStackLayout(alignment: .leading, spacing: 4))
-            : AnyLayout(HStackLayout(spacing: 16))
+    @ViewBuilder
+    private var legendCells: some View {
+        legendCell(
+            fill: Color.bruBg2,
+            strokeColor: Color.bruInk,
+            showStroke: true,
+            label: "NOT TRAINED"
+        )
+        legendCell(
+            fill: Color.bruAmber,
+            strokeColor: Color.clear,
+            showStroke: false,
+            label: "UNDER MEV"
+        )
+        legendCell(
+            fill: Color.bruInk,
+            strokeColor: Color.clear,
+            showStroke: false,
+            label: "MEV → MAV"
+        )
+        legendCell(
+            fill: Color.bruSignal,
+            strokeColor: Color.clear,
+            showStroke: false,
+            label: "MRV"
+        )
     }
 
     private func legendCell(
@@ -316,6 +323,17 @@ public struct FatigueSurfaceView: View {
         let names = nameMap
         return VStack(alignment: .leading, spacing: 0) {
             BRUSectionHead("Muscle Heatmap", right: weekLabel)
+            // Each tile opens its muscle's detail; say so once (FT-17).
+            // VoiceOver skips it: every tile carries the hint itself.
+            Text("Tap a muscle for its detail")
+                .font(BRUFont.labelSmall)
+                .tracking(1.2)
+                .textCase(.uppercase)
+                .foregroundStyle(Color.bruMuted)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, 16)
+                .padding(.top, 12)
+                .accessibilityHidden(true)
             // Each figure says its own name, "Front" or "Back", as VoiceOver
             // enters it, so VoiceOver skips the labels above them (T81).
             HStack(alignment: .top, spacing: 20) {
@@ -354,7 +372,8 @@ public struct FatigueSurfaceView: View {
             }
             .frame(maxWidth: .infinity)
             .padding(.horizontal, 16)
-            .padding(.vertical, 20)
+            .padding(.top, 12)
+            .padding(.bottom, 20)
             .overlay(alignment: .bottom) {
                 Rectangle()
                     .fill(Color.bruInk)

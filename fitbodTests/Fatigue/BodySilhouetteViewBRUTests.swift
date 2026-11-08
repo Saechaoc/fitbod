@@ -10,7 +10,7 @@
 //  2. Palette mapping — bruColor(for:) maps each VolumeZone correctly
 //  3. Accessibility — a muscle's VoiceOver label is its display name and
 //     its value is the zone's D-06 verbatim verb as a sentence
-//  4. Tap routing — onTap fires with the canonical slug; the decorative
+//  4. Tap routing — onTap fires with the canonical slug, the neck's too; the
 //     NECK swallows its own taps and never calls onTap
 //
 
@@ -38,11 +38,11 @@ struct BodySilhouetteViewBRUTests {
 
     // MARK: - 2. Palette mapping (bruColor helper)
 
-    @Test("bruColor returns bruFaint for .belowMEV")
+    @Test("bruColor returns bruAmber for .belowMEV")
     func paletteBelowMEV() {
         let view = makeView(zones: [:])
         let color = view.bruColor(for: .belowMEV)
-        #expect(color == Color.bruFaint)
+        #expect(color == Color.bruAmber)
     }
 
     @Test("bruColor returns bruInk for .productive")
@@ -103,7 +103,7 @@ struct BodySilhouetteViewBRUTests {
 
     // MARK: - 4. Tap routing
 
-    @Test("onTap fires with canonical slug when a non-decorative region is tapped")
+    @Test("onTap fires with canonical slug when a region is tapped")
     func tapRoutingCanonicalSlug() {
         var tappedSlugs: [String] = []
         let view = makeView(zones: ["chest": .productive]) { slug in
@@ -114,8 +114,6 @@ struct BodySilhouetteViewBRUTests {
         let frontRegions = MuscleRegionPaths.regions(for: .front)
         let chestRegion = frontRegions.first { $0.slug == "chest" }
         #expect(chestRegion != nil, "Expected at least one chest region in front")
-        // Confirm it's non-decorative
-        #expect(chestRegion?.slug.hasSuffix("-decorative") == false)
         // Fire tap
         if let r = chestRegion {
             view.onTap(r.slug)
@@ -123,22 +121,19 @@ struct BodySilhouetteViewBRUTests {
         #expect(tappedSlugs == ["chest"])
     }
 
-    @Test("onTap does NOT fire for neck-decorative region")
-    func tapDecorative() {
+    @Test("the NECK tile is a muscle: onTap fires with \"neck\" (FT-17)")
+    func tapNeck() {
         var tappedSlugs: [String] = []
-        _ = makeView(zones: [:]) { slug in
+        let view = makeView(zones: [:]) { slug in
             tappedSlugs.append(slug)
         }
-        // The view treats a region as decorative when its slug ends in
-        // "-decorative". NECK's block swallows its own taps with an empty
-        // tap gesture, so it never calls onTap, and VoiceOver skips it.
         let frontRegions = MuscleRegionPaths.regions(for: .front)
-        let neckRegion = frontRegions.first { $0.slug == "neck-decorative" }
-        #expect(neckRegion != nil)
-        // Verify it ends with "-decorative" so the view treats it as decorative
-        #expect(neckRegion?.slug.hasSuffix("-decorative") == true)
-        // NECK never calls onTap; tappedSlugs stays empty
-        #expect(tappedSlugs.isEmpty)
+        let neckRegion = frontRegions.first { $0.displayLabel == "NECK" }
+        #expect(neckRegion?.slug == "neck")
+        if let r = neckRegion {
+            view.onTap(r.slug)
+        }
+        #expect(tappedSlugs == ["neck"])
     }
 
     // MARK: - Helpers

@@ -18,9 +18,8 @@
 //  Symmetrical pairs (CHEST L + CHEST R, BICEP × 2, etc.) share the
 //  same canonical slug — they render the same zone fill color.
 //
-//  NECK is decorative-only (no zone lookup) per Phase 5 plan 05-05
-//  precedent — slug = "neck-decorative", excluded from zoneByMuscleSlug
-//  lookup at render time.
+//  NECK is a tracked muscle like the rest (slug "neck"): its tile takes
+//  the neck's zone fill and opens the neck's detail (FT-17).
 //
 //  No bezier/ellipse/RoundedRectangle. No SwiftData coupling.
 //  Implicitly Sendable via value types.
@@ -33,8 +32,7 @@ import SwiftUI
 /// A single rectangular muscle region on the 10×12 block-anatomy grid.
 /// Coordinates are in grid units; call `rect(cell:)` to get points.
 public struct GridRegion: Sendable, Equatable {
-    /// Canonical free-exercise-db muscle slug, or "neck-decorative" for
-    /// the decorative NECK region that has no zone-data binding.
+    /// Canonical free-exercise-db muscle slug.
     public let slug: String
     /// Uppercase display label rendered centered inside the region rect
     /// per bru-screens/heatmap.jsx (e.g. "CHEST L", "LAT", "TRAPS").
@@ -91,8 +89,8 @@ public enum MuscleRegionPaths {
     // Grid coordinates per bru-screens/heatmap.jsx lines 14–38 (locked)
 
     public static let front: [GridRegion] = [
-        // Head + neck (decorative — no zone binding)
-        GridRegion(slug: "neck-decorative", displayLabel: "NECK",
+        // Neck
+        GridRegion(slug: "neck", displayLabel: "NECK",
                    gridX: 4, gridY: 0, gridW: 2, gridH: 1),
         // Shoulders — left
         GridRegion(slug: "shoulders", displayLabel: "DELT",
@@ -142,8 +140,8 @@ public enum MuscleRegionPaths {
     // Grid coordinates per bru-screens/heatmap.jsx lines 40–66 (locked)
 
     public static let back: [GridRegion] = [
-        // Neck (decorative — no zone binding)
-        GridRegion(slug: "neck-decorative", displayLabel: "NECK",
+        // Neck
+        GridRegion(slug: "neck", displayLabel: "NECK",
                    gridX: 4, gridY: 0, gridW: 2, gridH: 1),
         // Traps — central upper back
         GridRegion(slug: "traps", displayLabel: "TRAPS",

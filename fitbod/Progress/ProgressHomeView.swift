@@ -58,9 +58,31 @@ public enum ExerciseProgressRoute: Hashable, Sendable {
 }
 
 public enum ProgressHomeRoute: Hashable, Sendable {
+    case volume
     case weeklyTonnage
     case allPRs
     case sessionComparison(UUID)
+}
+
+/// Progress → Volume: Today's volume surface on its own screen, so each
+/// muscle's detail is reachable from Progress as well as Today (FT-17).
+private struct VolumeScreen: View {
+    @Binding var path: NavigationPath
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        VStack(spacing: 0) {
+            BRUHeaderBar(
+                left: HeaderAction("‹ Back") { dismiss() },
+                center: "Volume"
+            )
+            ScrollView {
+                FatigueSurfaceView(navigationPath: $path)
+            }
+        }
+        .background(Color.bruPaper.ignoresSafeArea())
+        .navigationBarHidden(true)
+    }
 }
 
 // MARK: - ProgressHomeView
@@ -132,6 +154,13 @@ public struct ProgressHomeView: View {
             .navigationDestination(for: ProgressHomeRoute.self) { route in
                 routeDestination(route)
             }
+            // Per-muscle detail from the Volume screen's bars and heatmap.
+            .navigationDestination(for: MuscleSlugRoute.self) { route in
+                switch route {
+                case .detail(let slug):
+                    PerMuscleDetailView(muscleSlug: slug)
+                }
+            }
             .sessionHistoryDestinations()
         }
         .task(id: finishedIDs) {
@@ -153,7 +182,8 @@ public struct ProgressHomeView: View {
 
     // MARK: - Sections
 
-    /// History — every finished workout, newest first.
+    /// History — every finished workout, newest first, and this week's
+    /// volume per muscle.
     @ViewBuilder
     private var historySection: some View {
         BRUSectionHead("History")
@@ -163,6 +193,14 @@ public struct ProgressHomeView: View {
             identifier: "progress.history"
         ) {
             path.append(SessionHistoryRoute.list)
+        }
+        BRUDivider(.hair)
+        progressRow(
+            title: "Volume",
+            subtitle: "Sets per muscle this week, with the heatmap",
+            identifier: "progress.volume"
+        ) {
+            path.append(ProgressHomeRoute.volume)
         }
         BRUDivider(.ink)
     }
@@ -256,6 +294,8 @@ public struct ProgressHomeView: View {
     @ViewBuilder
     private func routeDestination(_ route: ProgressHomeRoute) -> some View {
         switch route {
+        case .volume:
+            VolumeScreen(path: $path)
         case .weeklyTonnage:
             WeeklyTonnageView()
         case .allPRs:
