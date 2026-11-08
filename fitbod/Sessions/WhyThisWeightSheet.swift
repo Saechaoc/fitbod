@@ -18,6 +18,8 @@
 //         rep range, "×8–12", and target RPE, which the logger passes in
 //    1b. When the plan or history changed after the weight froze at the
 //        workout's start, one line says so and names today's number
+//    1c. Opened from the exercise menu after logging, "YOU LOGGED {w}"
+//        under the numeral when the heaviest logged set differs (FT-09)
 //    2. BRUSectionHead("Why this weight", right: "Close"): the way out
 //       that leaves the set's weight alone
 //    3. Numbered step blocks (01 / 02 / 03) in VStack(spacing: 8), filling
@@ -30,7 +32,8 @@
 //         RPE to calibrate from in the last session
 //    4. Footer bar: 2pt bruInk top rule + BRUButton(.ghost) "Override" +
 //       BRUButton(.signal) "Use {weight} ▸". A suggestion of 0 is no
-//       suggestion, so the bar shows Override alone.
+//       suggestion, so the bar shows Override alone. With neither callback
+//       (the exercise menu's sheet) there is no bar.
 //    5. Bottom safe-area filler: 24pt bruBg rectangle
 //
 //  Presentation: .presentationDetents([.medium]) — NOT expandable per 03-UI-SPEC line 410.
@@ -77,6 +80,11 @@ public struct WhyThisWeightSheet: View {
     /// Weight unit suffix shown in hero and step 03, e.g. "kg" or "lb".
     public let unitLabel: String
 
+    /// The heaviest logged working set's weight, from the exercise menu
+    /// after logging (FT-09). When it differs from the recommendation the
+    /// hero says so under the numeral, so the recommendation stays named.
+    public let loggedWeight: Double?
+
     @Environment(\.dismiss) private var dismiss
 
     // MARK: - Init
@@ -94,6 +102,7 @@ public struct WhyThisWeightSheet: View {
     ///   - rpe: Target RPE for the hero sub-band. Nil for double-progression exercises.
     ///   - setTypeLabel: Trailing set-type label in the hero status line (e.g. "TOP SET").
     ///   - unitLabel: Weight unit string appended to numerals (e.g. "kg", "lb").
+    ///   - loggedWeight: The heaviest logged working set's weight, or nil before one is logged.
     public init(
         explanation: PrescriptionExplanation,
         onUseSuggested: (() -> Void)? = nil,
@@ -101,7 +110,8 @@ public struct WhyThisWeightSheet: View {
         reps: ClosedRange<Int>? = nil,
         rpe: Double? = nil,
         setTypeLabel: String = "TOP SET",
-        unitLabel: String
+        unitLabel: String,
+        loggedWeight: Double? = nil
     ) {
         self.explanation = explanation
         self.onUseSuggested = onUseSuggested
@@ -110,6 +120,7 @@ public struct WhyThisWeightSheet: View {
         self.rpe = rpe
         self.setTypeLabel = setTypeLabel
         self.unitLabel = unitLabel
+        self.loggedWeight = loggedWeight
     }
 
     // MARK: - Body
@@ -139,7 +150,11 @@ public struct WhyThisWeightSheet: View {
                     }
                 }
 
-                footerBar
+                // Use and Override write a set's weight; opened from the
+                // exercise menu there is no set to write, so no bar.
+                if onUseSuggested != nil || onOverride != nil {
+                    footerBar
+                }
                 // Bottom safe-area filler — xl spacing, bruBg fill
                 // 03-UI-SPEC line 67 + why-weight.jsx line 145
                 Rectangle()
@@ -193,6 +208,15 @@ public struct WhyThisWeightSheet: View {
                         .foregroundStyle(Color.bruPaper.opacity(0.6))
                         .padding(.bottom, 12)
                 }
+            }
+
+            if let loggedLine {
+                Text(loggedLine)
+                    .font(BRUFont.labelSmall)
+                    .foregroundStyle(Color.bruPaper.opacity(0.6))
+                    .textCase(.uppercase)
+                    .tracking(1.2)
+                    .padding(.top, 4)
             }
 
             // 2pt bruPaper top rule before REPS | RPE sub-band
@@ -266,6 +290,13 @@ public struct WhyThisWeightSheet: View {
         "×\(reps.map { repsText($0, joinedBy: "\u{2013}") } ?? "—")"
     }
 
+    /// "You logged 105 lb" when the heaviest logged set differs from the
+    /// recommendation; nil before logging or when they match.
+    var loggedLine: String? {
+        guard let loggedWeight, loggedWeight != explanation.roundedWeight else { return nil }
+        return "You logged \(NumberText.weight(loggedWeight)) \(unitLabel)"
+    }
+
     /// VoiceOver reads a suggestion of 0 like the empty weight field: "none".
     var heroAccessibilityLabel: String {
         let weightStr = hasSuggestion
@@ -273,7 +304,8 @@ public struct WhyThisWeightSheet: View {
             : "Recommended weight: none"
         let repsStr = reps.map { repsText($0, joinedBy: " to ") } ?? "unknown"
         let rpeStr = rpe.map { formattedRPE($0) } ?? "not applicable"
-        return "\(weightStr), reps \(repsStr), RPE \(rpeStr), \(setTypeLabel)"
+        let logged = loggedLine.map { ", \($0)" } ?? ""
+        return "\(weightStr)\(logged), reps \(repsStr), RPE \(rpeStr), \(setTypeLabel)"
     }
 
     /// "8–12" joined by `separator`, or "8" for a range of one count.

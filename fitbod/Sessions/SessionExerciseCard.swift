@@ -50,6 +50,10 @@ public struct SessionExerciseCard: View {
     // MARK: - Phase 3 state
 
     @State private var bannerDismissed: Bool = false
+    /// Folded to its header row: name, equipment and sets done (FT-12).
+    @State private var collapsed = false
+    /// Why this weight? from the exercise menu, open after logging too (FT-09).
+    @State private var explainingExercise = false
     @Query private var settingsList: [UserSettings]
     @Query private var inventories: [PlateInventory]
     @Environment(\.weightUnit) private var defaultUnit
@@ -107,191 +111,70 @@ public struct SessionExerciseCard: View {
             // BRUDivider draws the rules exactly as the single-VStack card did.
 
             VStack(spacing: 0) {
-                // Row 1: Index + Exercise name + equipment sub-line
-                // UI-SPEC line 364-366
+                // Row 1: Index + Exercise name + equipment sub-line, a
+                // button that folds the exercise to this row (FT-12), then
+                // the exercise menu (FT-03). UI-SPEC line 364-366
                 HStack(alignment: .firstTextBaseline, spacing: 12) {
-                    Text(String(format: "%02d", (sessionExercise.orderIndex) + 1))
-                        .font(BRUFont.displayMedium)
-                        .foregroundStyle(Color.bruInk)
-                        .frame(width: dynamicTypeSize.isAccessibilitySize ? nil : 32, alignment: .leading)
-                        .lineLimit(1)
+                    Button {
+                        bannerDismissed = true
+                        withAnimation(.easeInOut(duration: 0.2)) { collapsed.toggle() }
+                    } label: {
+                        HStack(alignment: .firstTextBaseline, spacing: 12) {
+                            Text(String(format: "%02d", (sessionExercise.orderIndex) + 1))
+                                .font(BRUFont.displayMedium)
+                                .foregroundStyle(Color.bruInk)
+                                .frame(width: dynamicTypeSize.isAccessibilitySize ? nil : 32, alignment: .leading)
+                                .lineLimit(1)
 
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(exerciseName)
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text(exerciseName)
+                                    .font(BRUFont.bodyEmphasis)
+                                    .foregroundStyle(Color.bruInk)
+                                    .fixedSize(horizontal: false, vertical: true)
+
+                                Text(equipmentSubline)
+                                    .font(BRUFont.labelSmall)
+                                    .tracking(1.2)
+                                    .textCase(.uppercase)
+                                    .foregroundStyle(Color.bruMuted)
+                            }
+
+                            Spacer(minLength: 0)
+
+                            Text(collapsed ? "▸" : "▾")
+                                .font(BRUFont.bodyDefault)
+                                .foregroundStyle(Color.bruMuted)
+                        }
+                        .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityValue(collapsed ? "Collapsed" : "Expanded")
+                    .accessibilityHint("Shows or hides its sets")
+                    .accessibilityIdentifier("card.toggle.\(sessionExercise.orderIndex + 1)")
+                    // The long-press menu stays beside the visible one.
+                    .contextMenu { exerciseMenuItems(explanation) }
+
+                    Menu {
+                        exerciseMenuItems(explanation)
+                    } label: {
+                        Text("•••")
                             .font(BRUFont.bodyEmphasis)
                             .foregroundStyle(Color.bruInk)
-                            .fixedSize(horizontal: false, vertical: true)
-
-                        Text(equipmentSubline)
-                            .font(BRUFont.labelSmall)
-                            .tracking(1.2)
-                            .textCase(.uppercase)
-                            .foregroundStyle(Color.bruMuted)
+                            .frame(minWidth: 44, minHeight: 44)
+                            .contentShape(Rectangle())
                     }
-
-                    Spacer(minLength: 0)
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("\(exerciseName) actions")
+                    .accessibilityIdentifier("card.menu.\(sessionExercise.orderIndex + 1)")
                 }
                 .padding(.horizontal, 16)
                 .padding(.vertical, 12)
-                .contextMenu {
-                    Button {
-                        variationUndo = nil
-                        onSwap(sessionExercise)
-                    } label: {
-                        // System contextMenu chrome is HIG-acceptable per UI-SPEC line 261.
-                        // Icon suppressed for BRU — label-only is fine in contextMenu.
-                        Text("Swap Exercise…")                                   // UI-SPEC verbatim
-                    }
-                    Button {
-                        onEditPinnedNote(sessionExercise)
-                    } label: {
-                        Text("Edit Pinned Note")                                 // UI-SPEC verbatim
-                    }
-                    Button(role: .destructive) {
-                        onRemove(sessionExercise)
-                    } label: {
-                        Text("Remove from workout")
-                    }
+
+                if collapsed {
+                    BRUDivider(.ink)
+                } else {
+                    headerDetails(explanation)
                 }
-
-                BRUDivider(.hair)
-
-                // A picked variation can be undone until a set of it is
-                // logged; after that the logged sets belong to it.
-                if let original = variationUndo, !hasLoggedWorkingSet {
-                    HStack(spacing: 8) {
-                        Text("Swapped from \(original.displayName)")
-                            .font(BRUFont.labelSmall)
-                            .tracking(1.2)
-                            .textCase(.uppercase)
-                            .foregroundStyle(Color.bruMuted)
-                            .fixedSize(horizontal: false, vertical: true)
-                        Spacer(minLength: 8)
-                        Button {
-                            undoVariation()
-                        } label: {
-                            Text("Undo")
-                                .font(BRUFont.labelSmall)
-                                .tracking(1.2)
-                                .textCase(.uppercase)
-                                .foregroundStyle(Color.bruSignalText)
-                                .frame(minWidth: 44, minHeight: 44)
-                                .contentShape(Rectangle())
-                        }
-                        .buttonStyle(.plain)
-                        .accessibilityLabel("Undo, back to \(original.displayName)")
-                        .accessibilityIdentifier("card.undoVariation")
-                    }
-                    .padding(.horizontal, 16)
-                    BRUDivider(.hair)
-                }
-
-                // Row 2: Optional PinnedNoteCapsule mount point (rewritten in Plan 02.1-08)
-                if let note = sessionExercise.pinnedNote, !note.isEmpty {
-                    PinnedNoteCapsule(note: note) {
-                        onEditPinnedNote(sessionExercise)
-                    }
-                    BRUDivider(.hair)
-                }
-
-                // Phase 3 conditional: BumpBanner
-                if let exp = explanation, exp.bumpOccurred, !bannerDismissed {
-                    BumpBanner(
-                        isVisible: Binding(
-                            get: { !bannerDismissed },
-                            set: { newValue in bannerDismissed = !newValue }
-                        ),
-                        bumpedToWeight: exp.roundedWeight,
-                        unitLabel: unit.rawValue
-                    )
-                    BRUDivider(.hair)
-                }
-
-                // Phase 3 conditional: WarmupRampRows
-                let warmupSets = warmupEntries
-                if !warmupSets.isEmpty {
-                    let setup = plateSetup
-                    WarmupRampRows(
-                        warmupSets: warmupSets,
-                        onSkip: { handleSkipWarmups() },
-                        onUndoSkip: { handleUndoSkipWarmups() },
-                        sessionExercise: sessionExercise,
-                        barWeight: setup.barWeight,
-                        plates: setup.plates,
-                        unitLabel: unit.rawValue
-                    )
-                    BRUDivider(.hair)
-                }
-
-                // Phase 5: Plateau badges (only when stalled)
-                // The detector returns one e1RM per session in the window it
-                // used, the exercise's own window or the user's setting, so
-                // the badge names that window.
-                if case .stalled(let e1RMs, _) = plateauSignal {
-                    HStack(spacing: 8) {
-                        StallBadge(
-                            exerciseName: exerciseName,
-                            sessionCount: e1RMs.count
-                        )
-                        // A variation takes over the whole card, its logged
-                        // sets too, so like UNDO it is offered only before a
-                        // working set is logged.
-                        if let action = suggestedAction,
-                           action != .tryVariation || !hasLoggedWorkingSet {
-                            SuggestedActionChip(action: action) {
-                                handleSuggestedAction(action)
-                            }
-                        }
-                    }
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 8)
-                    BRUDivider(.hair)
-                }
-
-                // Phase 3 conditional: CalibratingBadge (inline header row)
-                if let exp = explanation, case .calibrating(let n, let threshold) = exp.status {
-                    HStack {
-                        CalibratingBadge(current: n, threshold: threshold)
-                        Spacer()
-                    }
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 4)
-                    BRUDivider(.hair)
-                }
-
-                // Row 3: Column header strip per UI-SPEC line 367
-                // "S · PREVIOUS · WEIGHT · REPS · RPE" — labelSmall 9pt 1.2 bruMuted
-                // Stacked accessibility inputs carry their own labels; the
-                // fixed-width table headings would split into fragments.
-                if !dynamicTypeSize.isAccessibilitySize {
-                    HStack(spacing: 6) {
-                        Text("S")
-                            .font(BRUFont.labelSmall)
-                            .tracking(1.2)
-                            .frame(width: 32, alignment: .leading)
-                        Text("PREVIOUS")
-                            .font(BRUFont.labelSmall)
-                            .tracking(1.2)
-                            .frame(width: 80, alignment: .leading)
-                        Text("WEIGHT")
-                            .font(BRUFont.labelSmall)
-                            .tracking(1.2)
-                            .frame(width: 60, alignment: .leading)
-                        Text("REPS")
-                            .font(BRUFont.labelSmall)
-                            .tracking(1.2)
-                            .frame(width: 40, alignment: .leading)
-                        Text("RPE")
-                            .font(BRUFont.labelSmall)
-                            .tracking(1.2)
-                        Spacer()
-                    }
-                    .foregroundStyle(Color.bruMuted)
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 6)
-                }
-
-                BRUDivider(.hair)
             }
             .cardRow()
             // Tap-anywhere-on-header dismisses the bump banner
@@ -320,79 +203,95 @@ public struct SessionExerciseCard: View {
                     }
                 }
             }
+            // Why this weight? from the exercise menu: the frozen
+            // prescription against the heaviest logged working set (FT-09).
+            .sheet(isPresented: $explainingExercise) {
+                if let exp = currentExplanation() {
+                    WhyThisWeightSheet(
+                        explanation: exp,
+                        reps: SetRow.targetReps(low: sessionExercise.targetRepsLow, high: sessionExercise.targetRepsHigh),
+                        rpe: sessionExercise.targetRPE,
+                        unitLabel: unit.rawValue,
+                        loggedWeight: topLoggedWeight
+                    )
+                    .presentationDetents([.medium])
+                }
+            }
             .alert("Couldn't undo variation", isPresented: $undoFailed) {
                 Button("OK", role: .cancel) {}
             } message: {
                 Text("The workout wasn't restored. Your undo is still available; try again.")
             }
 
-            // SetRows — one List row each so swipe-to-delete works.
-            ForEach(sortedSets) { set in
-                VStack(spacing: 0) {
-                    VStack(spacing: 4) {
-                        SetRow(
-                            entry: set,
-                            sessionExercise: sessionExercise,
-                            prescribed: sessionExercise.prescribedWeight,
-                            explanation: explanation,
-                            onCommit: {
-                                onCommitSet(set)
-                                if set.isComplete { variationUndo = nil }
-                            },
-                            onTapEmptyCell: onTapEmptyCell,
-                            onUncomplete: { onUncompleteSet(set) },
-                            onEditCommitted: onEditCommitted
-                        )
-                        // A swap/Undo changes the inputs behind these local
-                        // text fields, not the persisted set's identity.
-                        .id(sessionExercise.exercise?.id)
-                        if sessionExercise.tracksTempo {
-                            TempoEntryRow(entry: set)
+            if !collapsed {
+                // SetRows — one List row each so swipe-to-delete works.
+                ForEach(sortedSets) { set in
+                    VStack(spacing: 0) {
+                        VStack(spacing: 4) {
+                            SetRow(
+                                entry: set,
+                                sessionExercise: sessionExercise,
+                                prescribed: sessionExercise.prescribedWeight,
+                                explanation: explanation,
+                                onCommit: {
+                                    onCommitSet(set)
+                                    if set.isComplete { variationUndo = nil }
+                                },
+                                onTapEmptyCell: onTapEmptyCell,
+                                onUncomplete: { onUncompleteSet(set) },
+                                onEditCommitted: onEditCommitted
+                            )
+                            // A swap/Undo changes the inputs behind these local
+                            // text fields, not the persisted set's identity.
+                            .id(sessionExercise.exercise?.id)
+                            if sessionExercise.tracksTempo {
+                                TempoEntryRow(entry: set)
+                            }
+                            if sessionExercise.tracksPartialReps {
+                                PartialRepsRow(entry: set)
+                            }
+                            if set.setType == .restPause {
+                                ClusterSubRepChipRow(entry: set)
+                            }
                         }
-                        if sessionExercise.tracksPartialReps {
-                            PartialRepsRow(entry: set)
-                        }
-                        if set.setType == .restPause {
-                            ClusterSubRepChipRow(entry: set)
+                        .padding(.horizontal, 16)
+                        BRUDivider(.hair)
+                    }
+                    .cardRow()
+                    .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                        Button(role: .destructive) {
+                            onDeleteSet(set)
+                        } label: {
+                            Text("Delete")
                         }
                     }
-                    .padding(.horizontal, 16)
-                    BRUDivider(.hair)
+                    .accessibilityAction(named: "Delete set") {
+                        onDeleteSet(set)
+                    }
+                }
+
+                // "+ ADD SET" signal text button per UI-SPEC line 387, then the
+                // 2pt ink rule that closes the exercise block.
+                VStack(spacing: 0) {
+                    Button {
+                        onAddSet(sessionExercise)
+                    } label: {
+                        Text("+ ADD SET")
+                            .font(BRUFont.labelSmall)
+                            .tracking(1.2)
+                            .textCase(.uppercase)
+                            .foregroundStyle(Color.bruSignalText)
+                            .frame(maxWidth: .infinity, minHeight: 44)
+                            .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityIdentifier("card.addSet.\(sessionExercise.orderIndex + 1)")
+                    .padding(.vertical, 4)
+
+                    BRUDivider(.ink)
                 }
                 .cardRow()
-                .swipeActions(edge: .trailing, allowsFullSwipe: true) {
-                    Button(role: .destructive) {
-                        onDeleteSet(set)
-                    } label: {
-                        Text("Delete")
-                    }
-                }
-                .accessibilityAction(named: "Delete set") {
-                    onDeleteSet(set)
-                }
             }
-
-            // "+ ADD SET" signal text button per UI-SPEC line 387, then the
-            // 2pt ink rule that closes the exercise block.
-            VStack(spacing: 0) {
-                Button {
-                    onAddSet(sessionExercise)
-                } label: {
-                    Text("+ ADD SET")
-                        .font(BRUFont.labelSmall)
-                        .tracking(1.2)
-                        .textCase(.uppercase)
-                        .foregroundStyle(Color.bruSignalText)
-                        .frame(maxWidth: .infinity, minHeight: 44)
-                        .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-                .accessibilityIdentifier("card.addSet.\(sessionExercise.orderIndex + 1)")
-                .padding(.vertical, 4)
-
-                BRUDivider(.ink)
-            }
-            .cardRow()
         } header: {
             // Empty header — card header is embedded in body VStack above.
             EmptyView()
@@ -489,17 +388,197 @@ public struct SessionExerciseCard: View {
         }
     }
 
+    /// Everything under the header row: the variation undo, pinned note,
+    /// bump banner, warm-up ramp, plateau and calibrating badges and the
+    /// column strip. Hidden while the exercise is collapsed.
+    @ViewBuilder
+    private func headerDetails(_ explanation: PrescriptionExplanation?) -> some View {
+        BRUDivider(.hair)
+
+        // A picked variation can be undone until a set of it is
+        // logged; after that the logged sets belong to it.
+        if let original = variationUndo, !hasLoggedWorkingSet {
+            HStack(spacing: 8) {
+                Text("Swapped from \(original.displayName)")
+                    .font(BRUFont.labelSmall)
+                    .tracking(1.2)
+                    .textCase(.uppercase)
+                    .foregroundStyle(Color.bruMuted)
+                    .fixedSize(horizontal: false, vertical: true)
+                Spacer(minLength: 8)
+                Button {
+                    undoVariation()
+                } label: {
+                    Text("Undo")
+                        .font(BRUFont.labelSmall)
+                        .tracking(1.2)
+                        .textCase(.uppercase)
+                        .foregroundStyle(Color.bruSignalText)
+                        .frame(minWidth: 44, minHeight: 44)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Undo, back to \(original.displayName)")
+                .accessibilityIdentifier("card.undoVariation")
+            }
+            .padding(.horizontal, 16)
+            BRUDivider(.hair)
+        }
+
+        // Row 2: Optional PinnedNoteCapsule mount point (rewritten in Plan 02.1-08)
+        if let note = sessionExercise.pinnedNote, !note.isEmpty {
+            PinnedNoteCapsule(note: note) {
+                onEditPinnedNote(sessionExercise)
+            }
+            BRUDivider(.hair)
+        }
+
+        // Phase 3 conditional: BumpBanner
+        if let exp = explanation, exp.bumpOccurred, !bannerDismissed {
+            BumpBanner(
+                isVisible: Binding(
+                    get: { !bannerDismissed },
+                    set: { newValue in bannerDismissed = !newValue }
+                ),
+                bumpedToWeight: exp.roundedWeight,
+                unitLabel: unit.rawValue
+            )
+            BRUDivider(.hair)
+        }
+
+        // Phase 3 conditional: WarmupRampRows
+        let warmupSets = warmupEntries
+        if !warmupSets.isEmpty {
+            let setup = plateSetup
+            WarmupRampRows(
+                warmupSets: warmupSets,
+                onSkip: { handleSkipWarmups() },
+                onUndoSkip: { handleUndoSkipWarmups() },
+                sessionExercise: sessionExercise,
+                barWeight: setup.barWeight,
+                plates: setup.plates,
+                unitLabel: unit.rawValue
+            )
+            BRUDivider(.hair)
+        }
+
+        // Phase 5: Plateau badges (only when stalled)
+        // The detector returns one e1RM per session in the window it
+        // used, the exercise's own window or the user's setting, so
+        // the badge names that window.
+        if case .stalled(let e1RMs, _) = plateauSignal {
+            HStack(spacing: 8) {
+                StallBadge(
+                    exerciseName: exerciseName,
+                    sessionCount: e1RMs.count
+                )
+                // A variation takes over the whole card, its logged
+                // sets too, so like UNDO it is offered only before a
+                // working set is logged.
+                if let action = suggestedAction,
+                   action != .tryVariation || !hasLoggedWorkingSet {
+                    SuggestedActionChip(action: action) {
+                        handleSuggestedAction(action)
+                    }
+                }
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 8)
+            BRUDivider(.hair)
+        }
+
+        // Phase 3 conditional: CalibratingBadge (inline header row)
+        if let exp = explanation, case .calibrating(let n, let threshold) = exp.status {
+            HStack {
+                CalibratingBadge(current: n, threshold: threshold)
+                Spacer()
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 4)
+            BRUDivider(.hair)
+        }
+
+        // Row 3: Column header strip per UI-SPEC line 367
+        // "S · PREVIOUS · WEIGHT · REPS · RPE" — labelSmall 9pt 1.2 bruMuted
+        // Stacked accessibility inputs carry their own labels; the
+        // fixed-width table headings would split into fragments.
+        if !dynamicTypeSize.isAccessibilitySize {
+            HStack(spacing: 6) {
+                Text("S")
+                    .font(BRUFont.labelSmall)
+                    .tracking(1.2)
+                    .frame(width: 32, alignment: .leading)
+                Text("PREVIOUS")
+                    .font(BRUFont.labelSmall)
+                    .tracking(1.2)
+                    .frame(width: 80, alignment: .leading)
+                Text("WEIGHT")
+                    .font(BRUFont.labelSmall)
+                    .tracking(1.2)
+                    .frame(width: 60, alignment: .leading)
+                Text("REPS")
+                    .font(BRUFont.labelSmall)
+                    .tracking(1.2)
+                    .frame(width: 40, alignment: .leading)
+                Text("RPE")
+                    .font(BRUFont.labelSmall)
+                    .tracking(1.2)
+                Spacer()
+            }
+            .foregroundStyle(Color.bruMuted)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 6)
+        }
+
+        BRUDivider(.hair)
+    }
+
+    /// The exercise's actions, in its ••• menu and its long-press menu.
+    /// System menu chrome is HIG-acceptable per UI-SPEC line 261.
+    @ViewBuilder
+    private func exerciseMenuItems(_ explanation: PrescriptionExplanation?) -> some View {
+        if explanation != nil {
+            Button {
+                explainingExercise = true
+            } label: {
+                Text("Why this weight?")
+            }
+        }
+        Button {
+            variationUndo = nil
+            onSwap(sessionExercise)
+        } label: {
+            Text("Swap Exercise…")                                               // UI-SPEC verbatim
+        }
+        Button {
+            onEditPinnedNote(sessionExercise)
+        } label: {
+            Text("Edit Pinned Note")                                             // UI-SPEC verbatim
+        }
+        Button(role: .destructive) {
+            onRemove(sessionExercise)
+        } label: {
+            Text("Remove from workout")
+        }
+    }
+
     // MARK: - Private computed properties
 
     /// Equipment sub-line for card header — UI-SPEC line 366.
-    /// "{equipment} · {prescription summary}" in labelSmall bruMuted.
+    /// "{equipment} · {done}/{working sets} done" in labelSmall bruMuted, so
+    /// a collapsed exercise still shows its progress (FT-12). Working sets
+    /// only; warm-ups have their own ramp block above.
     private var equipmentSubline: String {
         let equip = sessionExercise.exercise?.equipment.rawValue.capitalized ?? "Equipment"
-        // Build a minimal snapshot prescription summary (working sets only;
-        // warm-ups have their own ramp block above).
-        let setsCount = (sessionExercise.sets ?? []).filter { !$0.isWarmup }.count
-        let parts = [equip, BRUCountLabel.text(setsCount, "SET")]
-        return parts.joined(separator: " · ")
+        let working = (sessionExercise.sets ?? []).filter { !$0.isWarmup }
+        let done = working.filter(\.isComplete).count
+        return "\(equip) · \(done)/\(BRUCountLabel.text(working.count, "set")) done"
+    }
+
+    /// The heaviest logged working set's weight, for Why this weight? to
+    /// name against the recommendation; nil before one is logged.
+    private var topLoggedWeight: Double? {
+        (sessionExercise.sets ?? []).filter { $0.isComplete && !$0.isWarmup }.map(\.weight).max()
     }
 
     /// Log-time snapshot name, falling back to the live catalog name.

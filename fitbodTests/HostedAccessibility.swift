@@ -60,6 +60,17 @@ enum HostedAccessibility {
         return walk(root)
     }
 
+    /// Activates every element under `root` whose identifier is
+    /// `identifier`, as a VoiceOver double-tap does, and says whether there
+    /// was one. SwiftUI runs a Button's action for it.
+    static func activate(identifier: String, under root: NSObject) -> Bool {
+        let matches = elements(under: root).filter {
+            property("accessibilityIdentifier", of: $0) as? String == identifier
+        }
+        for element in matches { _ = element.accessibilityActivate() }
+        return !matches.isEmpty
+    }
+
     /// An accessibility property of `element` by name. SwiftUI's elements
     /// have the properties without declaring the protocols that name them.
     static func property(_ name: String, of element: NSObject) -> Any? {

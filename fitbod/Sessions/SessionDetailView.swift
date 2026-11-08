@@ -13,7 +13,8 @@
 // Content (all read from logged rows via SessionSummary, never from the
 // template): name + date, a DURATION / SETS / VOLUME stat strip, a PR band
 // when any PR landed, then each exercise with its working-set count,
-// volume and PR kinds over every set it logged, the best one marked.
+// volume and PR kinds. Each opens compact; a tap shows every set it
+// logged, the best one marked.
 //
 // BRU contract: NO Capsule() / NO RoundedRectangle / NO accentColor
 //               NO Image(systemName:) / NO .font(.body/.headline/.title/.caption)
@@ -35,6 +36,8 @@ public struct SessionDetailView: View {
 
     @State private var summary: SessionSummary?
     @State private var editing = false
+    /// Exercises showing their sets; the rest read as one line (FT-12).
+    @State private var expanded: Set<UUID> = []
 
     private struct SummaryKey: Equatable {
         let sessionID: UUID
@@ -198,29 +201,49 @@ public struct SessionDetailView: View {
         .background(Color.bruInk)
     }
 
+    /// One exercise: its name, sets line and PRs, which open its sets on tap.
     private func exerciseRow(_ line: SessionSummary.ExerciseLine, unit: WeightUnit) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
-            VStack(alignment: .leading, spacing: 4) {
-                Text(line.name)
-                    .font(BRUFont.bodyEmphasis)
-                    .foregroundStyle(Color.bruInk)
-                    .fixedSize(horizontal: false, vertical: true)
-                Text(SessionHistoryFormat.setsLine(count: line.workingSets, volume: line.volume, unit: unit))
-                    .font(BRUFont.labelSmall)
-                    .tracking(1.2)
-                    .textCase(.uppercase)
-                    .foregroundStyle(Color.bruMuted)
-                if !line.prKinds.isEmpty {
-                    Text("PR · " + line.prKinds.map(prLabel).joined(separator: " · "))
-                        .font(BRUFont.labelSmall)
-                        .tracking(1.2)
-                        .textCase(.uppercase)
-                        .foregroundStyle(Color.bruSignalText)
+        let open = expanded.contains(line.id)
+        return VStack(alignment: .leading, spacing: 4) {
+            Button {
+                withAnimation(.easeInOut(duration: 0.2)) {
+                    if open { expanded.remove(line.id) } else { expanded.insert(line.id) }
                 }
+            } label: {
+                HStack(alignment: .firstTextBaseline, spacing: 12) {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(line.name)
+                            .font(BRUFont.bodyEmphasis)
+                            .foregroundStyle(Color.bruInk)
+                            .fixedSize(horizontal: false, vertical: true)
+                        Text(SessionHistoryFormat.setsLine(count: line.workingSets, volume: line.volume, unit: unit))
+                            .font(BRUFont.labelSmall)
+                            .tracking(1.2)
+                            .textCase(.uppercase)
+                            .foregroundStyle(Color.bruMuted)
+                        if !line.prKinds.isEmpty {
+                            Text("PR · " + line.prKinds.map(prLabel).joined(separator: " · "))
+                                .font(BRUFont.labelSmall)
+                                .tracking(1.2)
+                                .textCase(.uppercase)
+                                .foregroundStyle(Color.bruSignalText)
+                        }
+                    }
+                    Spacer(minLength: 8)
+                    Text(open ? "▾" : "▸")
+                        .font(BRUFont.bodyDefault)
+                        .foregroundStyle(Color.bruMuted)
+                }
+                .contentShape(Rectangle())
             }
-            .accessibilityElement(children: .combine)
-            ForEach(Array(line.sets.enumerated()), id: \.offset) { index, set in
-                setRow(number: index + 1, set: set, isRecord: !line.prKinds.isEmpty, unit: unit)
+            .buttonStyle(.plain)
+            .accessibilityValue(open ? "Expanded" : "Collapsed")
+            .accessibilityHint("Shows or hides its sets")
+            .accessibilityIdentifier("summary.exercise")
+            if open {
+                ForEach(Array(line.sets.enumerated()), id: \.offset) { index, set in
+                    setRow(number: index + 1, set: set, isRecord: !line.prKinds.isEmpty, unit: unit)
+                }
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)

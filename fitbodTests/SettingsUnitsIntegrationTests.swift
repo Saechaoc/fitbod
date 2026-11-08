@@ -103,6 +103,7 @@ struct SettingsUnitsIntegrationTests {
                 HostedAccessibility.property("accessibilityLabel", of: $0) as? String
             }
         }
+        expandExercises(under: window)
         HostedAccessibility.waitUntil { labels().contains { $0.contains("Set 1,") } }
         let rendered = labels()
         try #require(rendered.contains { $0.contains("Set 1,") }, "The set row must have rendered")
@@ -138,6 +139,7 @@ struct SettingsUnitsIntegrationTests {
                 .environment(\.weightUnit, .lb)
         )
         defer { window.isHidden = true }
+        expandExercises(under: window)
         HostedAccessibility.waitUntil { labels(under: window).contains { $0.contains("75 lb by 8") } }
         let rendered = labels(under: window)
         #expect(rendered.contains { $0.contains("100 kg by 5") })
@@ -163,6 +165,7 @@ struct SettingsUnitsIntegrationTests {
                 .environment(\.weightUnit, .kg)
         )
         defer { window.isHidden = true }
+        expandExercises(under: window)
         HostedAccessibility.waitUntil { labels(under: window).contains { $0.contains("Set 1,") } }
         let rendered = labels(under: window)
         #expect(rendered.contains { $0.contains("100 kg by 5") })
@@ -227,6 +230,7 @@ struct SettingsUnitsIntegrationTests {
                 .environment(\.weightUnit, .lb)
         )
         defer { window.isHidden = true }
+        expandExercises(under: window)
         HostedAccessibility.waitUntil { labels(under: window).contains { $0.contains("Set 1,") } }
         #expect(hasExerciseVolume("— kg", in: labels(under: window)))
         #expect(set.weight == 1e19)
@@ -241,6 +245,14 @@ struct SettingsUnitsIntegrationTests {
             exercise: exercise, startedAt: yesterday, completedAt: yesterday.addingTimeInterval(3_600),
             sets: [(100, 5, true)], in: ctx
         )
+    }
+
+    /// The summary's exercises open compact (FT-12): shows every one's sets.
+    @MainActor
+    private func expandExercises(under window: NSObject) {
+        HostedAccessibility.waitUntil {
+            HostedAccessibility.activate(identifier: "summary.exercise", under: window)
+        }
     }
 
     @MainActor

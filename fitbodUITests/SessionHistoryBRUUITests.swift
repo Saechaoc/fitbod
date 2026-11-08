@@ -294,6 +294,10 @@ final class SessionHistoryBRUUITests: XCTestCase {
         XCTAssertTrue(UITestNavigation.appears(row))
         row.tap()
         XCTAssertTrue(UITestNavigation.appears(app.staticTexts["WORKOUT COMPLETE"]))
+        // Exercises open compact; the first one's sets show after a tap.
+        let exercise = app.buttons["summary.exercise"].firstMatch
+        XCTAssertTrue(UITestNavigation.appears(exercise), "The summary must list its exercise")
+        exercise.tap()
     }
 
     @MainActor

@@ -218,8 +218,12 @@ public struct SessionLoggerView: View {
             Button("Cancel", role: .cancel) {                                    // UI-SPEC verbatim
                 pendingRemove = nil
             }
-        } message: { _ in
-            Text("Any logged sets for this exercise will be discarded.")         // UI-SPEC verbatim
+        } message: { se in
+            // Names what goes with it (FT-03): its logged working sets.
+            let logged = (se.sets ?? []).filter { $0.isComplete && !$0.isWarmup }.count
+            Text(logged > 0
+                 ? "\(BRUCountLabel.text(logged, "logged set")) will be removed with it."
+                 : "Nothing is logged for it yet.")
         }
         // A finish, discard or remove whose save failed: nothing changed.
         .alert(
