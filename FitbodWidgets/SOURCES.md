@@ -23,7 +23,7 @@
 - [x] `fitbod/Sessions/RestTimer/RestTimerAttributes.swift` — `ActivityAttributes` shared between main app and widget
 - [x] `fitbod/Sessions/RestTimer/RestTimerActivityController.swift` — main-app side of ActivityKit with debounce + silent fallback
 - [x] `fitbod/Sessions/RestTimer/RestTimerLiveActivityBridge.swift` — glue layer the engine in plan 02-03 will hold
-- [x] `fitbod/fitbod.entitlements` — added with `com.apple.developer.usernotifications.live-activities = YES`
+- [x] `fitbod/fitbod.entitlements` — added (the `live-activities` entitlement key was removed on 2026-11-08: it is not a real entitlement and blocked device signing; Live Activities need only `NSSupportsLiveActivities`)
 - [x] `fitbod.xcodeproj/project.pbxproj` — `INFOPLIST_KEY_NSSupportsLiveActivities = YES` added to both Debug + Release configs of the main app target; `CODE_SIGN_ENTITLEMENTS = fitbod/fitbod.entitlements` wired
 
 ## What YOU need to do in Xcode (one-time, ~3 minutes)
