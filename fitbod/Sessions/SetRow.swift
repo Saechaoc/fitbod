@@ -20,7 +20,7 @@
 //   - @Bindable SetEntry + all closures (onCommit, onTapEmptyCell)
 //   - Shared commit validation; zero added weight is valid for bodyweight.
 //   - Haptic on commit (T-02.1-07-03)
-//   - PrescriptionWeightCell wiring + PlateStackDisclosure
+//   - PrescriptionWeightCell wiring
 //   - Per-set notes sheet (NoteSheet)
 //   - Numeric weight keyboard; milestone entries use non-negative added load.
 //   - accessibilityLabel on note button + completion button
@@ -51,12 +51,12 @@ public struct SetRow: View {
     @State private var presentingSetNote: Bool = false
     /// The WHY control opens Why-this-weight; the weight cell presents it.
     @State private var explainingWeight: Bool = false
-    /// While the weight field has focus, the weight it holds; the set's
-    /// plates show under the row for it.
+    /// While the weight field has focus, the weight it holds; the row
+    /// scrolls clear of the keyboard for it. The plates for it no longer
+    /// show under the row (FT-11): the plate calculator is the one place.
     @State private var enteredWeight: Double?
     @FocusState private var repsFocused: Bool
 
-    @Query private var inventories: [PlateInventory]
     @Environment(\.weightUnit) private var defaultUnit
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
@@ -280,25 +280,9 @@ public struct SetRow: View {
                 .padding(.leading, dynamicTypeSize.isAccessibilitySize || explanation != nil ? 0 : 40)
             }
             .padding(.vertical, 12)                                              // UI-SPEC md
-
-            // MARK: PlateStackDisclosure (Phase 3 plan 03-08)
-            // While the weight field has focus, the set's plates for the
-            // weight in it (ticket T125). VoiceOver reads them as one
-            // element, the way it reads a warm-up row's plates.
-            if let enteredWeight, let inventory = plateInventory {
-                PlateStackDisclosure(
-                    targetWeight: enteredWeight,
-                    barWeight: sessionExercise.exercise?.barWeightOverride ?? inventory.barWeight,
-                    plates: inventory.availablePlates,
-                    unitLabel: unit.rawValue
-                )
-                .padding(.vertical, 8)
-                .accessibilityElement(children: .combine)
-                .accessibilityIdentifier("set.plates.\(identifierSuffix)")
-            }
         }
-        // While its weight or reps field has focus, the row, with any
-        // plates, scrolls clear of the keyboard and its DONE (T125, T39).
+        // While its weight or reps field has focus, the row scrolls clear
+        // of the keyboard and its DONE (T125, T39).
         .revealsAboveKeyboard(enteredWeight != nil || repsFocused)
         .onAppear {
             repsText = entry.reps == 0 ? "" : String(entry.reps)
@@ -373,17 +357,6 @@ public struct SetRow: View {
             get: { entry.setTypeRaw },
             set: { entry.setTypeRaw = $0; onEditCommitted() }
         )
-    }
-
-    /// The plate inventory the set loads, or nil for an exercise that loads
-    /// no plates. Only barbell and dumbbell exercises have one of their
-    /// own: SessionFactory.equipmentKind gives every other kind, such as a
-    /// cable or a machine, the barbell's.
-    private var plateInventory: PlateInventory? {
-        guard let equipment = sessionExercise.exercise?.equipment,
-              equipment == .barbell || equipment == .dumbbell else { return nil }
-        let kind = SessionFactory.equipmentKind(for: equipment)
-        return inventories.first { $0.equipmentKind == kind }
     }
 }
 

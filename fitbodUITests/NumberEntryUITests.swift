@@ -36,8 +36,6 @@ final class NumberEntryUITests: XCTestCase {
         XCTAssertEqual(weight.value as? String, "100 lb", "Set 1 starts at its prescription")
         XCTAssertEqual(UITestNavigation.enter("90", into: weight), "90 lb", "90 typed over 100 must replace it")
         UITestNavigation.assertAboveKeyboard(weight, in: app)
-        // The set's plates show under it while the field has focus (T125).
-        UITestNavigation.assertAboveKeyboard(app.descendants(matching: .any)["set.plates.1.S1"], in: app)
         closeKeyboard(in: app)
         empty(weight)
         closeKeyboard(in: app)

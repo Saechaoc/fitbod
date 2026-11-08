@@ -48,13 +48,8 @@ public struct AddUnplannedExerciseButton: View {
                     presentingPicker = false
                 })
                 .navigationBarHidden(true)
-                .safeAreaInset(edge: .top, spacing: 0) {
-                    BRUHeaderBar(
-                        left: HeaderAction("CANCEL") { presentingPicker = false }, // UI-SPEC verbatim
-                        center: "ADD EXERCISE",                                     // UI-SPEC verbatim
-                        right: nil
-                    )
-                }
+                // The library draws the picker header (Cancel · Add exercise ·
+                // + New) itself; a second bar here stacked two headers (FT-04).
             }
         }
     }
