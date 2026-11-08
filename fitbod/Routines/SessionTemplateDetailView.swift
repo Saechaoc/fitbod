@@ -13,7 +13,9 @@
 //   Bottom bar    START WORKOUT ▸ (signal, lg) pinned above the home indicator
 //
 // Starting goes through WorkoutStarter so a workout already in progress is
-// offered for resume instead of failing silently.
+// offered for resume instead of failing silently. Either way the logger
+// opens on Today's stack through ResumeWorkoutRequest, so ‹ lands on Today
+// whether this screen was reached from Today or from Program (FT-02).
 
 import SwiftUI
 import SwiftData
@@ -21,9 +23,9 @@ import SwiftData
 public struct SessionTemplateDetailView: View {
 
     @Environment(\.modelContext) private var ctx
+    @Environment(ResumeWorkoutRequest.self) private var resumeRequest: ResumeWorkoutRequest?
     @Bindable public var template: SessionTemplate
 
-    @State private var startedSession: Session? = nil
     @State private var inProgressConflict: Session? = nil
     @State private var startError: String? = nil
     @State private var presentingEditor = false
@@ -59,9 +61,6 @@ public struct SessionTemplateDetailView: View {
         .background(Color.bruPaper.ignoresSafeArea())
         .navigationBarHidden(true)
         .safeAreaInset(edge: .bottom, spacing: 0) { startBar }
-        .navigationDestination(item: $startedSession) { session in
-            SessionLoggerView(session: session)
-        }
         .sheet(isPresented: $presentingEditor) {
             NavigationStack {
                 RoutineBuilderView(draft: RoutineDraft(routine: template), editing: template)
@@ -76,7 +75,7 @@ public struct SessionTemplateDetailView: View {
             presenting: inProgressConflict
         ) { active in
             Button("Resume \(active.displayName)") {
-                startedSession = active
+                resumeRequest?.isPending = true
                 inProgressConflict = nil
             }
             Button("Cancel", role: .cancel) { inProgressConflict = nil }
@@ -209,8 +208,8 @@ public struct SessionTemplateDetailView: View {
 
     private func start() {
         switch WorkoutStarter.start(template, context: ctx) {
-        case .started(let session):
-            startedSession = session
+        case .started:
+            resumeRequest?.isPending = true
         case .alreadyInProgress(let active):
             inProgressConflict = active
         case .emptyTemplate:

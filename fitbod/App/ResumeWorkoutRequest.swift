@@ -1,12 +1,15 @@
 // ResumeWorkoutRequest.swift
 // fitbod
 //
-// A tap on the rest timer's Live Activity opens `fitbod://session/active`
-// (FitbodWidgets/RestTimerLiveActivity.swift). RootView switches to Today
-// and marks the request pending; Today pushes the logger of the workout in
-// progress and clears it, also on a launch the tap started. While a logger
-// is open, on any tab, the link is ignored: the app reopens on that logger,
-// and a second logger would outlive the workout's finish.
+// A request to open the workout in progress. The logger lives on Today's
+// stack only, so ‹ always lands on Today (FT-02): Program's RESUME ▸, a
+// session's START WORKOUT ▸ and a tap on the rest timer's Live Activity
+// (`fitbod://session/active`, FitbodWidgets/RestTimerLiveActivity.swift)
+// all mark the request pending. RootView switches to Today; Today resets
+// its stack to the logger of the workout in progress and clears the
+// request, also on a launch the tap started. While a logger is open, on
+// any tab, the link is ignored: the app reopens on that logger, and a
+// second logger would outlive the workout's finish.
 
 import Foundation
 import Observation

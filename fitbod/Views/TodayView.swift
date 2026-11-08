@@ -602,16 +602,19 @@ public struct TodayView: View {
         }
     }
 
-    /// The Live Activity asked for the workout in progress: push its logger
-    /// on Today's stack. No logger is open then (RootView ignores the link
-    /// while one is), and pushing keeps whatever is open, such as an unsaved
-    /// Edit workout.
+    /// Program's RESUME ▸, a session's START WORKOUT ▸ or the Live Activity
+    /// asked for the workout in progress. The logger lives on Today's stack
+    /// only, and Today's stack is reset to just the logger, so ‹ always
+    /// lands on Today (FT-02). The workout is read from the store, because
+    /// one started a moment ago has not reached `activeSessions` yet. No
+    /// logger is open then (RootView ignores the link while one is).
     @MainActor
     private func openRequestedWorkout() {
         guard let resumeRequest, resumeRequest.isPending else { return }
         resumeRequest.isPending = false
-        guard let active = activeSessions.first else { return }
-        navigationPath.append(SessionRoute.logger(active))
+        guard let active = WorkoutStarter.inProgressSession(in: ctx) else { return }
+        openedTemplate = nil
+        navigationPath = NavigationPath([SessionRoute.logger(active)])
     }
 
     /// Opens the name step on Today's own stack. The routine exists only once

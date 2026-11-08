@@ -21,7 +21,8 @@
 //    title and only paints a bottom rule — the mockup needs left-aligned
 //    PROGRAM, right-aligned + NEW, and a top rule above the row.
 //  - ResumeWorkoutBanner (reactive via its own @Query) when an active
-//    Session exists.
+//    Session exists. Its RESUME ▸ opens the logger on Today's stack
+//    through ResumeWorkoutRequest, so ‹ lands on Today (FT-02).
 //  - NoProgramHero: "ACTIVE BLOCK · NONE" caption, Bebas Neue
 //    "NO PROGRAM" headline, Geist paragraph with inline bold on the
 //    accumulation/intensification/peak/deload keywords.
@@ -117,6 +118,7 @@ public struct ProgramView: View {
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    @Environment(ResumeWorkoutRequest.self) private var resumeRequest: ResumeWorkoutRequest?
 
     // MARK: Init
 
@@ -137,9 +139,7 @@ public struct ProgramView: View {
                     ScrollView {
                         LazyVStack(spacing: 0) {
                             ResumeWorkoutBanner(
-                                onResume: { session in
-                                    navigationPath.append(SessionRoute.logger(session))
-                                },
+                                onResume: { _ in resumeRequest?.isPending = true },
                                 onDiscard: { session in
                                     ctx.delete(session)
                                     try? ctx.save()
@@ -177,12 +177,6 @@ public struct ProgramView: View {
             }
             .background(Color.bruPaper.ignoresSafeArea())
             .navigationBarHidden(true)
-            .navigationDestination(for: SessionRoute.self) { route in
-                switch route {
-                case .logger(let session):
-                    SessionLoggerView(session: session)
-                }
-            }
             // T-09-04 mitigation: register BlockOverviewRoute BEFORE any BLOCKS taps.
             .blockDestinations { pendingBlockBuilder = .edit($0) }
             .navigationDestination(for: ArchivedRoutinesRoute.self) { _ in

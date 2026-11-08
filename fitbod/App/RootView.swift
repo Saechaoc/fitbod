@@ -141,8 +141,12 @@ public struct RootView: View {
         // open logger already shows it, and the app reopens on it.
         .onOpenURL { url in
             guard ResumeWorkoutRequest.isResumeLink(url), !resumeRequest.loggerIsOpen else { return }
-            selectedTab = .today
             resumeRequest.isPending = true
+        }
+        // Every way into the workout in progress goes through Today, where
+        // the logger lives (FT-02).
+        .onChange(of: resumeRequest.isPending) {
+            if resumeRequest.isPending { selectedTab = .today }
         }
         .task {
             await runSeed()

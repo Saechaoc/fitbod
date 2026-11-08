@@ -58,7 +58,7 @@ The lifter records what each set really was, so the next prescription, the recor
 
 **Leaving and coming back**
 
-1. ‹ leaves the logger with the workout still in progress; Today's RESUME ▸ slab or Program's banner brings the lifter back, as in the [Today workflow](today.md).
+1. ‹ leaves the logger with the workout still in progress and lands on Today, whichever screen opened the logger; Today's RESUME ▸ slab or Program's banner brings the lifter back, as in the [Today workflow](today.md).
 
 ## Flow
 
