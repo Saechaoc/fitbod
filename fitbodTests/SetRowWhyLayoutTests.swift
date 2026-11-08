@@ -5,7 +5,7 @@
 //  Review item 4 (decision 8): the WHY control sits at the leading end of
 //  a set row's second line. On the 390pt iPhone 17e the row gets 358pt
 //  (16pt card padding each side), and that line must still hold WHY, the
-//  five RPE chips and a set-type chip without the chips wrapping.
+//  RPE label and the five RPE chips without the chips wrapping.
 //
 
 import SwiftData

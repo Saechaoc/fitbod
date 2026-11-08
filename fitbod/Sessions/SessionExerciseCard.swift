@@ -13,7 +13,9 @@
 //   - .font(.caption) on column headers → BRUFont.labelSmall + tracking(1.2)
 //   - .foregroundStyle(.secondary) on column headers → Color.bruMuted
 //   - Column header strip layout updated to UI-SPEC line 367 format:
-//     "S · PREVIOUS · WEIGHT · REPS · RPE" all in labelSmall 9pt 1.2 bruMuted
+//     "S · LAST TIME · WEIGHT · REPS" all in labelSmall 9pt 1.2 bruMuted;
+//     LAST TIME explains itself on a tap (FT-07), RPE is labelled on the
+//     set rows' second line (FT-08)
 //   - SF Symbol context menu icons replaced with plain text label actions
 //     (system contextMenu chrome is HIG-acceptable per UI-SPEC line 261)
 //   - 3-row BRU card header per UI-SPEC line 363-368
@@ -54,6 +56,8 @@ public struct SessionExerciseCard: View {
     @State private var collapsed = false
     /// Why this weight? from the exercise menu, open after logging too (FT-09).
     @State private var explainingExercise = false
+    /// The LAST TIME column header's explanation (FT-07).
+    @State private var explainingLastTime = false
     @Query private var settingsList: [UserSettings]
     @Query private var inventories: [PlateInventory]
     @Environment(\.weightUnit) private var defaultUnit
@@ -499,7 +503,7 @@ public struct SessionExerciseCard: View {
         }
 
         // Row 3: Column header strip per UI-SPEC line 367
-        // "S · PREVIOUS · WEIGHT · REPS · RPE" — labelSmall 9pt 1.2 bruMuted
+        // "S · LAST TIME · WEIGHT · REPS" — labelSmall 9pt 1.2 bruMuted
         // Stacked accessibility inputs carry their own labels; the
         // fixed-width table headings would split into fragments.
         if !dynamicTypeSize.isAccessibilitySize {
@@ -508,10 +512,30 @@ public struct SessionExerciseCard: View {
                     .font(BRUFont.labelSmall)
                     .tracking(1.2)
                     .frame(width: 32, alignment: .leading)
-                Text("PREVIOUS")
-                    .font(BRUFont.labelSmall)
-                    .tracking(1.2)
-                    .frame(width: 80, alignment: .leading)
+                // A tap says what the column shows and why it can be
+                // empty (FT-07).
+                Button {
+                    explainingLastTime = true
+                } label: {
+                    Text("LAST TIME")
+                        .font(BRUFont.labelSmall)
+                        .tracking(1.2)
+                        .frame(width: 80, alignment: .leading)
+                        // A 44pt target in the strip; the negative padding
+                        // keeps the strip's height.
+                        .frame(minHeight: 44)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .padding(.vertical, -16)
+                .accessibilityLabel("Last time")
+                .accessibilityHint("Explains the column")
+                .accessibilityIdentifier("card.lastTime.\(sessionExercise.orderIndex + 1)")
+                .alert("Last time", isPresented: $explainingLastTime) {
+                    Button("OK") {}
+                } message: {
+                    Text("Your top working set from the last finished \(intentName) workout with this exercise. It stays empty until there is one.")
+                }
                 Text("WEIGHT")
                     .font(BRUFont.labelSmall)
                     .tracking(1.2)
@@ -520,9 +544,6 @@ public struct SessionExerciseCard: View {
                     .font(BRUFont.labelSmall)
                     .tracking(1.2)
                     .frame(width: 40, alignment: .leading)
-                Text("RPE")
-                    .font(BRUFont.labelSmall)
-                    .tracking(1.2)
                 Spacer()
             }
             .foregroundStyle(Color.bruMuted)
@@ -579,6 +600,11 @@ public struct SessionExerciseCard: View {
     /// name against the recommendation; nil before one is logged.
     private var topLoggedWeight: Double? {
         (sessionExercise.sets ?? []).filter { $0.isComplete && !$0.isWarmup }.map(\.weight).max()
+    }
+
+    /// The workout's intent as the LAST TIME explanation names it.
+    private var intentName: String {
+        sessionExercise.session?.intent.rawValue ?? "matching"
     }
 
     /// Log-time snapshot name, falling back to the live catalog name.

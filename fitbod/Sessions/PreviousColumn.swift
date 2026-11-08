@@ -4,16 +4,17 @@
 // BRU rewrite — Phase 2.1 Plan 08 (Wave 4, UI-REVIEW item 42).
 // UI-SPEC v2 § Session logger line 545 + 580.
 //
-// The inline "Previous" column rendered between the "Set N" label and the
+// The inline LAST TIME column rendered between the "Set N" label and the
 // weight cell on every SetRow. Surfaces the most recent matching-intent prior
-// set for the exercise.
+// set for the exercise; the card's column header explains that (FT-07).
 //
 // Format:
 //   Populated:   "175×8 @8", or "175×8" when the RPE does not fit the
 //                80pt column — the compact set notation the exercise
 //                history uses. BRUFont.bodyDefault mono bruMuted.
-//   Empty:       "—"   — BRUFont.bodyDefault mono bruMuted
-//   VoiceOver:   "Previous: 175 × 8 @ 8 (Mon)" — the UI-SPEC long form.
+//   Empty:       "none yet"   — BRUFont.bodyDefault mono bruMuted
+//   VoiceOver:   "Last time, same intent: 175 × 8 @ 8 (Mon)" — the
+//                UI-SPEC long form.
 //
 // The query is delegated to PreviousMatchingIntent.fetchTopWorkingSet —
 // the shared helper introduced in plan 01-01. Fires ONCE per row in .task,
@@ -56,14 +57,14 @@ public struct PreviousColumn: View {
                     hintText(compactHint(hit, includeRPE: false))
                 }
                 .accessibilityElement(children: .ignore)
-                .accessibilityLabel("Previous: \(formatHint(hit))")
+                .accessibilityLabel("Last time, same intent: \(formatHint(hit))")
             } else {
-                Text("—")                                                           // UI-SPEC verbatim placeholder
+                // Words, not a dash: a dash read as missing data (FT-07).
+                Text("none yet")
                     .font(BRUFont.bodyDefault)
                     .monospacedDigit()
                     .foregroundStyle(Color.bruMuted)
-                    // VoiceOver reads a bare dash as "em dash".
-                    .accessibilityLabel("No previous set")
+                    .accessibilityLabel("No earlier set at this intent")
             }
         }
         // Keyed on exerciseID so a mid-session swap re-queries.

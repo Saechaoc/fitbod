@@ -194,7 +194,7 @@ final class MilestoneOneJourneyUITests: XCTestCase {
         XCTAssertNotNil(sessionToOpen)
         sessionToOpen?.tap()
         tap("Start workout ▸")
-        let previous = app.descendants(matching: .any).matching(NSPredicate(format: "label BEGINSWITH %@", "Previous: 80 × 8")).firstMatch
+        let previous = app.descendants(matching: .any).matching(NSPredicate(format: "label BEGINSWITH %@", "Last time, same intent: 80 × 8")).firstMatch
         XCTAssertTrue(UITestNavigation.appears(previous, within: 15))
     }
 

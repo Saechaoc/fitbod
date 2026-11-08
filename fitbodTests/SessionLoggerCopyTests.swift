@@ -50,10 +50,9 @@ struct SessionLoggerCopyTests {
         )
         // BRU uses uppercase via .textCase(.uppercase) on labelSmall — source strings
         // are stored uppercase in labelSmall form per UI-SPEC line 367 convention.
-        #expect(cardSrc.contains("\"PREVIOUS\"") || cardSrc.contains("\"Previous\""))
+        #expect(cardSrc.contains("\"LAST TIME\""))                             // FT-07: was PREVIOUS
         #expect(cardSrc.contains("\"WEIGHT\"") || cardSrc.contains("\"Weight\""))
         #expect(cardSrc.contains("\"REPS\"") || cardSrc.contains("\"Reps\""))
-        #expect(cardSrc.contains("\"RPE\""))
         // "+ ADD SET" signal text button replaces "Add Set" per UI-SPEC line 387
         #expect(cardSrc.contains("ADD SET") || cardSrc.contains("Add Set"))
 
@@ -65,8 +64,9 @@ struct SessionLoggerCopyTests {
         #expect(rowSrc.contains("\"—\""))                                        // weight/reps placeholder
         #expect(rowSrc.contains("SetCompletionGlyph"))                           // BRU completion glyph
         #expect(rowSrc.contains("SessionSetActions.canComplete(entry)"))       // shared commit guard
+        #expect(rowSrc.contains("\"RPE\""))                                      // FT-08: the chips are labelled on the row
 
-        // SetTypeChip — UI-SPEC verbatim long-press menu labels (preserved).
+        // SetTypeChip — UI-SPEC verbatim picker labels (preserved).
         // System colors removed per BRU rewrite (02.1-07).
         let chipSrc = try String(
             contentsOf: base.appendingPathComponent("SetTypeChip.swift"),
@@ -107,7 +107,7 @@ struct SessionLoggerCopyTests {
             encoding: .utf8
         )
         #expect(prevSrc.contains("PreviousMatchingIntent.fetchTopWorkingSet"))
-        #expect(prevSrc.contains("Text(\"—\")"))
+        #expect(prevSrc.contains("Text(\"none yet\")"))                         // FT-07: words, not a dash
 
         // Phase 3.1 (PIVOT-04 / D-11): IntentChip wired in SessionLoggerView.
         #expect(loggerSrc.contains("IntentChip(intent: session.intent)"))

@@ -93,10 +93,10 @@ struct SessionLoggerBRUCopyTests {
         #expect(source.contains("\"FAIL\""))                                     // failure chip label
         #expect(source.contains("\"RP\""))                                       // rest-pause chip label
 
-        // BRUChip present (not system capsule)
-        #expect(source.contains("BRUChip"))
+        // One picker, marking the current type (FT-10), not a cycling chip
+        #expect(source.contains("Picker("))
 
-        // Long-press menu labels preserved verbatim (UI-SPEC line 379)
+        // Picker labels preserved verbatim (UI-SPEC line 379)
         #expect(source.contains("\"Working\""))
         #expect(source.contains("\"Warm-up\""))
         #expect(source.contains("\"Drop Set\""))

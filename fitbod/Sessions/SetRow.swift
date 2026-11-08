@@ -5,8 +5,8 @@
 // UI-SPEC v2 § Session logger line 367-389.
 //
 // Per-set logging row, two lines:
-//   [S{N}] [Previous] [Weight] [Reps] [✎] [SetCompletionGlyph]
-//   [WHY, open sets only] [RPE chips] [SetTypeChip]
+//   [S{N} + type tag] [Last time] [Weight] [Reps] [✎] [SetCompletionGlyph]
+//   [WHY, open sets only] [RPE label + chips]
 //
 // KEY CHANGES from v1:
 //   - SF Symbol checkmark.circle.fill → SetCompletionGlyph(isComplete:)
@@ -95,20 +95,29 @@ public struct SetRow: View {
                 // LINE 1 — numbers + action buttons
                 inputLayout {
                     // S{N} / W{N} leading label — BRUFont.bodyDefault per UI-SPEC line 369
-                    // A tap opens the set-type menu; a working set has no
-                    // set-type chip, so this is where its type changes.
+                    // The one set-type control (FT-10): a tap opens the
+                    // picker, which marks the current type, and a type
+                    // other than working shows its tag under the label.
                     Menu {
                         SetTypeMenuItems(setTypeRaw: setTypeRaw)
                     } label: {
-                        Text(setLabel)
-                            .font(BRUFont.bodyDefault)
-                            .foregroundStyle(Color.bruMuted)
-                            .frame(width: dynamicTypeSize.isAccessibilitySize ? nil : 32, alignment: .leading)
-                            // A 44pt target over the 32pt column; the
-                            // negative padding below keeps the layout.
-                            .padding(.horizontal, 6)
-                            .frame(minHeight: 44)
-                            .contentShape(Rectangle())
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(setLabel)
+                                .font(BRUFont.bodyDefault)
+                                .foregroundStyle(Color.bruMuted)
+                            if let tag = SetTypeChip.tag(for: entry.setType) {
+                                Text(tag)
+                                    .font(BRUFont.labelMicro)
+                                    .tracking(1)
+                                    .foregroundStyle(Color.bruInk)
+                            }
+                        }
+                        .frame(width: dynamicTypeSize.isAccessibilitySize ? nil : 32, alignment: .leading)
+                        // A 44pt target over the 32pt column; the
+                        // negative padding below keeps the layout.
+                        .padding(.horizontal, 6)
+                        .frame(minHeight: 44)
+                        .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
                     .padding(.horizontal, -6)
@@ -249,14 +258,13 @@ public struct SetRow: View {
                     .accessibilityIdentifier("set.complete.\(identifierSuffix)")
                 }
 
-                // LINE 2 — WHY + RPE chips + set-type chip
+                // LINE 2 — WHY + RPE label + RPE chips
                 // WHY takes the 40pt indent under the set label, so the chips
-                // move 10pt right and line 2 still fits a set-type chip at
-                // 390pt. Rows without an explanation keep the indent, which
-                // aligns the chips under the PREV column. A logged set shows
-                // no WHY but keeps its space, so its chips stay in line with
-                // the open sets'; at AX sizes WHY has a line of its own,
-                // which a logged set drops.
+                // move 10pt right. Rows without an explanation keep the
+                // indent, which aligns the chips under the LAST TIME column.
+                // A logged set shows no WHY but keeps its space, so its chips
+                // stay in line with the open sets'; at AX sizes WHY has a
+                // line of its own, which a logged set drops.
                 inputLayout {
                     if explanation != nil {
                         if !entry.isComplete {
@@ -268,12 +276,18 @@ public struct SetRow: View {
                         }
                     }
 
+                    // Names the chips where they are tapped (FT-08); each
+                    // chip reads "RPE 8" itself, so VoiceOver skips this.
+                    Text("RPE")
+                        .font(BRUFont.labelSmall)
+                        .tracking(1.2)
+                        .foregroundStyle(Color.bruMuted)
+                        .accessibilityHidden(true)
+
                     InlineRPEChipRow(rpe: Binding(
                         get: { entry.rpe },
                         set: { entry.rpe = $0; onEditCommitted() }
                     ))
-
-                    SetTypeChip(setTypeRaw: setTypeRaw)
 
                     if !dynamicTypeSize.isAccessibilitySize { Spacer(minLength: 0) }
                 }
@@ -356,7 +370,7 @@ public struct SetRow: View {
         "\((sessionExercise?.orderIndex ?? 0) + 1).\(setLabel(for: entry))"
     }
 
-    /// Shared by the set label's menu and the set-type chip.
+    /// The set label's picker writes the type and saves.
     private var setTypeRaw: Binding<String> {
         Binding(
             get: { entry.setTypeRaw },
