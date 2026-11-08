@@ -171,7 +171,8 @@ public struct SessionLoggerView: View {
             Text("\(BRUCountLabel.text(session.loggedSetCount, "set")) logged · \(elapsedLabel)") // UI-SPEC format
         }
         // Discard workout confirmation. A dialog like Finish, not an alert:
-        // an alert adds its own visible Cancel beside Keep logging.
+        // an alert adds its own visible Cancel beside Keep logging. With
+        // sets logged it says how many go; empty, that nothing is saved.
         .confirmationDialog(
             "Discard workout?",                                                  // UI-SPEC verbatim
             isPresented: $presentingDiscardConfirm,
@@ -182,7 +183,11 @@ public struct SessionLoggerView: View {
                 presentingDiscardConfirm = false
             }
         } message: {
-            Text("No data will be saved.")                                       // UI-SPEC verbatim
+            if session.loggedSetCount > 0 {
+                Text("\(BRUCountLabel.text(session.loggedSetCount, "logged set")) will be deleted.")
+            } else {
+                Text("No data will be saved.")                                   // UI-SPEC verbatim
+            }
         }
         // Swap-exercise sheet
         .sheet(item: $pendingSwap) { se in
@@ -280,10 +285,10 @@ public struct SessionLoggerView: View {
             ) {
                 Button("Workout notes") { presentingWorkoutNotes = true }        // UI-SPEC verbatim
                 Button("Finish") { presentingFinishConfirm = true }              // UI-SPEC verbatim
-                if session.loggedSetCount == 0 {
-                    Button("Discard", role: .destructive) {                      // UI-SPEC verbatim
-                        presentingDiscardConfirm = true
-                    }
+                // Discard stays once sets are logged (FT-01): the dialog
+                // below names the logged sets it would delete.
+                Button("Discard", role: .destructive) {                          // UI-SPEC verbatim
+                    presentingDiscardConfirm = true
                 }
                 Button("Cancel", role: .cancel) {}
             }
