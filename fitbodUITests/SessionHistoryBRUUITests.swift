@@ -92,7 +92,11 @@ final class SessionHistoryBRUUITests: XCTestCase {
         openHistorySummary(in: app)
         XCTAssertTrue(setLabel(containing: "110 lb by 5", in: app).exists)
         tap("Edit", in: app)
-        app.buttons["edit.delete"].tap()
+        // Revealed by slow swipes first: XCTest's own scroll-then-tap lands
+        // while the scroll view still moves, and the tap only stops it.
+        let delete = app.buttons["edit.delete"]
+        UITestNavigation.reveal(delete, in: app)
+        delete.tap()
         let dialog = app.sheets["Delete this workout?"]
         XCTAssertTrue(UITestNavigation.appears(dialog))
         dialog.buttons["Delete workout"].tap()
