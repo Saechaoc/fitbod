@@ -23,5 +23,14 @@
     </dict>
     <key>NSSupportsLiveActivities</key>
     <true/>
+    <key>UIAppFonts</key>
+    <array>
+        <string>SpaceGrotesk-Bold.ttf</string>
+        <string>SpaceGrotesk-SemiBold.ttf</string>
+        <string>JetBrainsMono-Regular.ttf</string>
+        <string>JetBrainsMono-Bold.ttf</string>
+        <string>BebasNeue-Regular.ttf</string>
+        <string>Geist-Regular.ttf</string>
+    </array>
 </dict>
 </plist>

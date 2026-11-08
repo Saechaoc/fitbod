@@ -82,6 +82,7 @@
 		624AD5142FB378BE00D9EF2E /* Exceptions for "fitbod" folder in "FitbodWidgetsExtension" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
+				Assets.xcassets,
 				Design/BRUButton.swift,
 				Design/BRUChip.swift,
 				Design/BRUCornerBadge.swift,
@@ -96,6 +97,12 @@
 				Design/BRUSectionHead.swift,
 				"Design/Color+BRU.swift",
 				Design/NumberText.swift,
+				Resources/Fonts/BebasNeue-Regular.ttf,
+				Resources/Fonts/Geist-Regular.ttf,
+				Resources/Fonts/JetBrainsMono-Bold.ttf,
+				Resources/Fonts/JetBrainsMono-Regular.ttf,
+				Resources/Fonts/SpaceGrotesk-Bold.ttf,
+				Resources/Fonts/SpaceGrotesk-SemiBold.ttf,
 				Sessions/RestTimer/RestTimerAttributes.swift,
 			);
 			target = 624AD49A2FB375A200D9EF2E /* FitbodWidgetsExtension */;
@@ -760,15 +767,14 @@
 		624AD4B42FB375A200D9EF2E /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = NO;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = FitbodWidgets/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = FitbodWidgets;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
-				INFOPLIST_KEY_UIAppFonts = "SpaceGrotesk-Bold.ttf SpaceGrotesk-SemiBold.ttf JetBrainsMono-Regular.ttf JetBrainsMono-Bold.ttf";
 				IPHONEOS_DEPLOYMENT_TARGET = 26.4;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -792,15 +798,14 @@
 		624AD4B52FB375A200D9EF2E /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = NO;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = FitbodWidgets/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = FitbodWidgets;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
-				INFOPLIST_KEY_UIAppFonts = "SpaceGrotesk-Bold.ttf SpaceGrotesk-SemiBold.ttf JetBrainsMono-Regular.ttf JetBrainsMono-Bold.ttf";
 				IPHONEOS_DEPLOYMENT_TARGET = 26.4;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
