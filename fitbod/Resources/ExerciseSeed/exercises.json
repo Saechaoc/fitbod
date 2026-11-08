@@ -18151,6 +18151,26 @@
     "id": "Single-Leg_Hop_Progression"
   },
   {
+    "name": "Single-Leg Kneeling Leg Curl",
+    "force": "pull",
+    "level": "beginner",
+    "mechanic": "isolation",
+    "equipment": "machine",
+    "primaryMuscles": [
+      "hamstrings"
+    ],
+    "secondaryMuscles": [],
+    "instructions": [
+      "Adjust the machine so the roller pad sits just above the ankle of your working leg when that leg is straight. Kneel on the knee pad with the other leg, rest your chest and hips against the support pad and hold the handles. This will be your starting position.",
+      "Keeping your hips square and your torso still, curl your heel toward your glutes as far as possible by flexing at the knee. Hold the contracted position for a second.",
+      "Lower the leg back to the starting position under control as you breathe in.",
+      "Repeat for the recommended amount of repetitions, then perform the same exercise with the other leg."
+    ],
+    "category": "strength",
+    "images": [],
+    "id": "Single-Leg_Kneeling_Leg_Curl"
+  },
+  {
     "name": "Single-Leg Lateral Hop",
     "force": "push",
     "level": "beginner",
