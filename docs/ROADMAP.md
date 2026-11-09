@@ -14,7 +14,7 @@ Keep concise commands/results/limitations with their RM owner. Logs/screenshots 
 
 The user chose on 2026-11-10 to finish [RM-006](#rm-006), then complete Lane B.
 RM-006's six-slice implementation is Done. The product successor is [RM-010](#rm-010), which requires RM-003.
-Lane B, data safety: review/rebase/merge [RM-001](#rm-001), then RM-002 to RM-005, one bounded delivery at a time in its own worktree and on its own simulator.
+Lane B, data safety: [RM-001](#rm-001) is reviewed and verified on current main. Continue RM-002 to RM-005, one bounded delivery at a time in an isolated worktree and on dedicated simulators.
 Each slice lands on `main` when its local checks pass ([RM-053](#rm-053)).
 Move the next bounded outcome here when its implementation starts; a phone-pending feature does not occupy an active slot.
 
@@ -65,6 +65,7 @@ Done covers the bounded implementation, appropriate agent-run checks and updated
 
 | ID | Priority / status | Outcome and completion evidence | Dependencies / references |
 |---|---|---|---|
+| [RM-001](#rm-001) | P1 · Done | Preserve unclassified store-open failures, retry, and rollback partial moves; disk/unit/relaunch and 390pt evidence in RM-001. | No schema change; populated recovery proof remains RM-029. |
 | [RM-006](#rm-006) | P1 · Done | StartSlot/shared starts, session sheet and all Today states; six slices, unit/full UI and 390pt evidence in RM-006; [plan/results](archive/features/today-session-sheet-and-state-slabs.md). | Retains the live Program template route until RM-011; broader AX/device checks at stability. |
 | [RM-043](#rm-043) | P3 · Done | Completion policy, bounded roadmap/dependency semantics, current setup/widget docs and selected plan archives. Verification in RM-043; [plan/results](archive/features/development-workflow.md). | Documentation only; no app-runtime claim. |
 | [RM-053](#rm-053) | P3 · Done | Local checks are the delivery policy for `main`; CI stays for pull requests and manual runs. User decision 2026-11-09. | Policy only; no workflow change. |
@@ -87,11 +88,21 @@ Each redesign step keeps affected tests serial on dedicated simulators and captu
 
 ### <a id="rm-001"></a>RM-001 — Preserve a good store when opening fails
 
-**P1 · Planned.** `FitbodModelContainer.make` catches every on-disk container error as incompatibility and moves the store aside. A transient SQLite short read reproduced this during the step-1.2 relaunch run.
+**P1 · Done (2026-11-10).** `FitbodModelContainer.make` used to treat every failed on-disk open as incompatibility, move the store aside and start an empty one.
+It now moves a store aside only when Core Data reports that it cannot infer a migration (NSCocoaErrorDomain 134140).
+Every other failed open leaves the store files in place and shows the [retry screen](../fitbod/App/StoreOpenFailedView.swift), whose Try again button opens the same store.
 **Done when:** distinguish incompatibility from transient access/I/O failures; a good store stays in place on transient failure, a recoverable error explains retry, and retry preserves workouts. Keep incompatible-store recovery, SQLite siblings, seed stamps and partial move failures covered by disk-backed tests.
 **Scope / sequence:** Classify open failures → preserve files/retry → test disk recovery, SQLite siblings and seed stamps. Catalog repair and schema evolution are excluded.
 **Requires:** None.
-**Evidence:** No passing acceptance is recorded for the remaining scope; cited commits/tests establish the shipped baseline only.
+**Evidence:** `6a1dad30` (2026-11-09), iPhone 17 simulator, iOS 26.5, Xcode 26.5.
+Before the fix, an unreadable `default.store` (`chmod 000`; Core Data NSCocoaErrorDomain 257, SwiftData `loadIssueModelContainer`, the same error an incompatible schema gives) was moved to `IncompatibleStores/`, and the app opened empty on "Build your first routine" with its 2 workouts and 36 sets in the moved copy.
+On the fixed build the same damage shows the retry screen with "NSCocoaErrorDomain 257", moves nothing and keeps the seed stamps; once the file is readable, Try again opens Today with the seeded workout.
+`IncompatibleStoreRecoveryTests`, 7 of 7 passed, 3 of which fail on the old factory: an incompatible store is moved with `-shm`, `-wal` and `_SUPPORT` and its stamps cleared; an unreadable store (257), an unreadable `-shm` or `-wal` (256, SQLite 14), an overwritten store (259, SQLite 26) and an additive migration on a read-only file (134110, SQLite 8) stay in place with their stamps and reopen with their rows; a partial move is put back whole.
+`scripts/test.sh fast` with `FITBOD_TEST_DEVICE` set to that simulator: 1,268 tests, 1,267 passed, 1 expected failure; `ReseedRelaunchUITests` and `MilestoneOneJourneyUITests` passed 2 of 2.
+Limits: SQLite 4618 was not reproduced; it is `SQLITE_IOERR_SHMOPEN` (the `-shm` file did not open), not a short read, and the unreadable `-shm` test is the nearest case.
+A corrupt store stays on the retry screen instead of being moved aside.
+So does a store whose migration Core Data can infer but SwiftData cannot apply; a probe with a new unique constraint over duplicate rows gave 134110, SQLite 8 and left the store unchanged.
+Review/rebase on 2026-11-10: no blocking findings; `f4548033` applies the implementation on `e1393913`. The unit target passed 1,301 tests with one expected failure, including all disk recovery cases; `ReseedRelaunchUITests` and `MilestoneOneJourneyUITests` passed 2/2 (`fast-20261110-075944`, iPhone 17/iOS 26.5). Reproduced a real `chmod 000` failure at 390pt/default text, inspected light/dark retry captures, restored permissions and relaunched into the same seeded workout; nothing moved aside. GitNexus change scope matches bootstrap/container/tests/docs. The retry button itself still has manual rather than committed UI-test evidence; no physical-phone failure injection was attempted.
 **References:** [container](../fitbod/Persistence/FitbodModelContainer.swift), [recovery tests](../fitbodTests/Persistence/IncompatibleStoreRecoveryTests.swift); step-1.2 run `full-20261107-074201`, SQLite error 4618, in the retired `261106-he2` summary.
 
 ### <a id="rm-002"></a>RM-002 — Failed writes preserve work and explain retry
