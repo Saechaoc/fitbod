@@ -136,7 +136,7 @@ final class WorkoutLoggerJourneyUITests: XCTestCase {
         let finish = app.buttons["Finish"]
         XCTAssertTrue(UITestNavigation.appears(finish, within: 5))
         finish.tap()
-        let confirm = app.buttons["Finish"]
+        let confirm = app.buttons["finish.confirm"]
         XCTAssertTrue(UITestNavigation.appears(confirm, within: 5))
         confirm.tap()
 

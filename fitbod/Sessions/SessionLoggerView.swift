@@ -61,6 +61,7 @@ public struct SessionLoggerView: View {
     @State private var engine = RestTimerEngine.makeProduction()
     @State private var elapsedStart: Date
     @State private var presentingFinishConfirm = false
+    @State private var finishChoice: FinishChoice?
     @State private var presentingDiscardConfirm = false
     @State private var presentingMenu = false
     @State private var pendingSwap: SessionExercise?
@@ -149,26 +150,30 @@ public struct SessionLoggerView: View {
         .safeAreaInset(edge: .top, spacing: 0) {
             InSessionPRBanner(state: prState)
         }
-        // Finish workout confirmation (system chrome acceptable per UI-SPEC line 261).
-        // With no logged work set there is nothing to save, so it offers
-        // Discard workout instead of Finish (decision 6); this dialog is the
-        // question, so Discard workout deletes at once. iOS 26 hides
-        // cancel-role buttons, so Keep logging has no role.
-        .confirmationDialog(
-            "Finish workout?",                                                   // UI-SPEC verbatim
-            isPresented: $presentingFinishConfirm,
-            titleVisibility: .visible
-        ) {
-            if session.loggedSetCount == 0 {
-                Button("Discard workout", role: .destructive) { discard() }
-            } else {
-                Button("Finish") { finish() }                                    // UI-SPEC verbatim
+        // Finish workout confirmation, a BRU sheet like the block swap's
+        // (FT-13). With no logged work set there is nothing to save, so it
+        // offers Discard workout instead of Finish (decision 6); this sheet
+        // is the question, so Discard workout deletes at once. The choice
+        // runs once the sheet is gone, so the summary cover or the save
+        // failure alert has the screen to itself.
+        .sheet(isPresented: $presentingFinishConfirm, onDismiss: {
+            let choice = finishChoice
+            finishChoice = nil
+            switch choice {
+            case .finish: finish()
+            case .discard: discard()
+            case nil: break
             }
-            Button("Keep logging") {                                             // UI-SPEC verbatim
-                presentingFinishConfirm = false
-            }
-        } message: {
-            Text("\(BRUCountLabel.text(session.loggedSetCount, "set")) logged · \(elapsedLabel)") // UI-SPEC format
+        }) {
+            FinishConfirmSheet(
+                loggedSetCount: session.loggedSetCount,
+                elapsedLabel: elapsedLabel,
+                onChoose: { choice in
+                    finishChoice = choice
+                    presentingFinishConfirm = false
+                },
+                onKeepLogging: { presentingFinishConfirm = false }
+            )
         }
         // Discard workout confirmation. A dialog like Finish, not an alert:
         // an alert adds its own visible Cancel beside Keep logging. With
@@ -397,6 +402,56 @@ public struct SessionLoggerView: View {
         } catch {
             saveFailure = "The exercise wasn't removed. Try again."
         }
+    }
+}
+
+// MARK: - Finish confirmation
+
+/// What the finish sheet was asked to do; the logger runs it after the
+/// sheet is dismissed.
+private enum FinishChoice {
+    case finish
+    case discard
+}
+
+/// The BRU finish confirmation (FT-13): the question, the logged work and
+/// time, then Finish, or Discard workout when nothing is logged, over Keep
+/// logging. The sheet is as tall as its content.
+private struct FinishConfirmSheet: View {
+    let loggedSetCount: Int
+    let elapsedLabel: String
+    let onChoose: (FinishChoice) -> Void
+    let onKeepLogging: () -> Void
+    @State private var height: CGFloat = 0
+
+    var body: some View {
+        VStack(spacing: 20) {
+            Text("Finish workout?")                                              // UI-SPEC verbatim
+                .font(BRUFont.displayMedium)
+                .foregroundStyle(Color.bruInk)
+                .frame(maxWidth: .infinity, alignment: .leading)
+
+            Text("\(BRUCountLabel.text(loggedSetCount, "set")) logged · \(elapsedLabel)") // UI-SPEC format
+                .font(BRUFont.bodyDefault)
+                .foregroundStyle(Color.bruInk)
+                .frame(maxWidth: .infinity, alignment: .leading)
+
+            if loggedSetCount == 0 {
+                BRUButton("Discard workout", kind: .primary) { onChoose(.discard) }
+                    .accessibilityIdentifier("finish.discard")
+            } else {
+                BRUButton("Finish", kind: .signal) { onChoose(.finish) }         // UI-SPEC verbatim
+                    .accessibilityIdentifier("finish.confirm")
+            }
+
+            BRUButton("Keep logging", kind: .ghost, action: onKeepLogging)       // UI-SPEC verbatim
+                .accessibilityIdentifier("finish.keepLogging")
+        }
+        .padding(24)
+        .frame(maxWidth: .infinity)
+        .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { height = $0 }
+        .presentationBackground(Color.bruPaper)
+        .presentationDetents([.height(height)])
     }
 }
 

@@ -49,22 +49,22 @@ final class SkipWarmupsUITests: XCTestCase {
     // MARK: - Finish and Discard
 
     /// Finish with no logged work set offers Discard workout, not Finish
-    /// (decision 6). Keep logging closes the dialog and leaves the workout
+    /// (decision 6). Keep logging closes the sheet and leaves the workout
     /// open, and Discard workout deletes this workout and no other.
     @MainActor
     func testFinishWithNothingLoggedOffersDiscardWorkout() throws {
         let app = UITestNavigation.openSeededWorkout()
         openFinish(in: app)
-        let discardWorkout = app.buttons["Discard workout"]
+        let discardWorkout = app.buttons["finish.discard"]
         XCTAssertTrue(UITestNavigation.appears(discardWorkout, within: 5), "Finish with nothing logged must offer Discard workout")
-        let keepLogging = app.buttons["Keep logging"]
-        XCTAssertTrue(keepLogging.exists && keepLogging.isHittable, "The Finish dialog needs a visible Keep logging")
-        XCTAssertFalse(app.buttons["Finish"].exists, "With nothing logged, Finish must not save")
-        XCTAssertFalse(app.buttons["Cancel"].exists, "Keep logging is the dialog's one way back")
-        XCTAssertTrue(text(beginningWith: "0 sets logged ·", in: app).exists, "The Finish dialog counts logged work sets")
+        let keepLogging = app.buttons["finish.keepLogging"]
+        XCTAssertTrue(keepLogging.exists && keepLogging.isHittable, "The Finish sheet needs a visible Keep logging")
+        XCTAssertFalse(app.buttons["finish.confirm"].exists, "With nothing logged, Finish must not save")
+        XCTAssertFalse(app.buttons["Cancel"].exists, "Keep logging is the sheet's one way back")
+        XCTAssertTrue(text(beginningWith: "0 sets logged ·", in: app).exists, "The Finish sheet counts logged work sets")
 
         keepLogging.tap()
-        XCTAssertTrue(waitForDisappearance(discardWorkout), "Keep logging must close the dialog")
+        XCTAssertTrue(waitForDisappearance(discardWorkout), "Keep logging must close the sheet")
         XCTAssertTrue(app.otherElements["workout.header"].exists, "Keep logging leaves the workout open")
 
         openFinish(in: app)

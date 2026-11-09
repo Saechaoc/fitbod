@@ -138,9 +138,9 @@ final class SessionHistoryBRUUITests: XCTestCase {
         XCTAssertEqual(complete.label, "Set 1 complete")
         tap("More", in: app)
         tap("Finish", in: app)
-        let finishDialog = app.sheets["Finish workout?"]
-        XCTAssertTrue(UITestNavigation.appears(finishDialog))
-        finishDialog.buttons["Finish"].tap()
+        let confirmFinish = app.buttons["finish.confirm"]
+        XCTAssertTrue(UITestNavigation.appears(confirmFinish))
+        confirmFinish.tap()
         XCTAssertTrue(UITestNavigation.appears(app.buttons["summary.done"]))
         app.buttons["summary.done"].tap()
         let view = app.buttons["doneToday.view"]

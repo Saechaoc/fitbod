@@ -171,7 +171,9 @@ final class MilestoneOneJourneyUITests: XCTestCase {
         app.buttons["rest.skip"].tap()
         tap("More")
         tap("Finish")
-        tap("Finish")
+        let confirmFinish = app.buttons["finish.confirm"]
+        XCTAssertTrue(UITestNavigation.appears(confirmFinish, within: 15))
+        confirmFinish.tap()
         XCTAssertTrue(UITestNavigation.appears(app.staticTexts["WORKOUT COMPLETE"], within: 15))
         XCTAssertTrue(app.staticTexts[exerciseName].exists)
         app.buttons["summary.done"].tap()
