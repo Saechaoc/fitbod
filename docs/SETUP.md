@@ -204,6 +204,10 @@ launches do not reset data. Do not pass this argument when verifying relaunch.
 isolated UI checks. The full authored journey uses no demo workout. Both launch
 arguments are restricted to DEBUG builds.
 
+Every Today state opens from one DEBUG launch argument on an empty store.
+`fitbod/App/TodayStatesSeed.swift` lists `-fitbod-seed-today-ready`, `-empty`, `-done`, `-rest`, `-attach` and `-pick`.
+The scheduled session is `-fitbod-seed-block-states`, the open workout is `-fitbod-seed-demo-workout`, and the first-run state needs no seed.
+
 ## Evidence
 
 Record the tested commit, configuration, commands, results and limitations in

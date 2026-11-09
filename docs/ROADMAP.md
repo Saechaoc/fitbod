@@ -147,6 +147,12 @@ Each redesign step keeps affected tests serial on dedicated simulators and captu
 **Scheduled after:** Steps 1.1–1.2 are shipped; next Today/Program implementation.
 **Verify when:** Affected logic/UI starts and 390pt light/dark states at implementation; broader AX/phone checks at stability.
 **Evidence:** No passing acceptance is recorded for the remaining scope; cited commits/tests establish the shipped baseline only.
+Slice 1 of 6, seeds (2026-11-09): `TodayStatesSeed` adds `-fitbod-seed-today-ready`, `-empty`, `-done`, `-rest`, `-attach` and `-pick`, so every Today state opens from a launch argument; T-TODAY, T-RESUME and T-FIRST had seeds already.
+`TodayStatesSeedTests` checks each seed against `TodayState.resolve`, and that done-today holds one minute after midnight.
+Unit target: 1,267 tests, 1,266 passed, 1 expected failure (iPhone 17, iOS 26.5).
+Before-captures of all nine states at 390pt, light and dark, are in the ignored `.ci/shots/`.
+Nothing visible changed.
+They show what the later slices replace: an empty scheduled session still draws a startable hero, T-DONE shows only the newest workout on a dark slab, and T-REST and T-ATTACH both read "No workout scheduled".
 **References:** D-19/D-24/D-25/D-162–D-165, redesign R-4/R-5/R-10/R-12/R-19/R-23/R-25; [TodayState](../fitbod/Views/TodayState.swift), [picker](../fitbod/Views/TodaySessionPicker.swift), [session detail](../fitbod/Routines/SessionTemplateDetailView.swift), [O-2/O-3/O-6](#rm-042).
 
 ### <a id="rm-007"></a>RM-007 — FT-19: identify the repeated permission prompt

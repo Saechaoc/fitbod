@@ -182,8 +182,9 @@ enum BlockStatesSeed {
         try? context.save()
     }
 
+    /// A rotation block with these phases; `TodayStatesSeed` builds its blocks with it too.
     @MainActor
-    private static func makeBlock(
+    static func makeBlock(
         _ name: String,
         phases: [(kind: BlockPhaseKind, weeks: Int)],
         split: Split?,
