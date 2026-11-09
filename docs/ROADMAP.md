@@ -164,12 +164,15 @@ Each redesign step keeps affected tests serial on dedicated simulators and captu
 ### <a id="rm-008"></a>RM-008 — FT-20: prove Lock Screen rendering on the phone
 
 **P1 playtest / P2 Live Activities release work · Implemented; verification pending.** Bundle correction shipped in `03199d32`: Assets.car, six fonts and UIAppFonts now reach the widget. Bundle contents were inspected; Debug `3c8478e1` was installed on iPhone 15 Pro Max on 2026-11-08. Mac launch was refused while locked; no human rendering check ran.
-**Done when:** exercise/countdown render on Lock Screen and compact/expanded Dynamic Island; background, adjustment, expiry and workout end update/clean up one activity.
+**Done when:** the live countdown and bar render on Lock Screen and compact/expanded Dynamic Island; background, adjustment, expiry and workout end update/clean up one activity.
 **Reproduction:** with music playing, log a set, lock and inspect card/Island. Adjust −15s/+15s, let a rest expire, background during rest and finish. If blank, capture model, iOS/build and foreground state. App termination, denial and duplicates also belong to RM-047.
 **Scope / sequence:** Completed implementation: widget resource membership/font registration. Remaining delivery is phone rendering/lifecycle proof; an observed defect returns to Active. Prompt identification stays RM-007.
 **Requires:** Physical iPhone/current installed build for remaining proof; RM-007 is a separate investigation.
 **Verify when:** With music/rest on the installed phone: Lock Screen/Island, adjustment, expiry and end. Bundle inspection proves resources only.
-**Evidence:** Historical build/bundle evidence below; the required phone result remains unproven.
+**Evidence:** 2026-11-09 defect fix (branch `fix/rest-timer-live-activity`): the countdown and bar were strings computed from `Date.now`, which ActivityKit never re-renders, so they froze; the exercise name truncated beside the hero digits.
+The widget now uses `Text(timerInterval:)` and `ProgressView(timerInterval:)` (minimal slot too) and shows no exercise name (user decision).
+Simulator (iPhone 17, iOS 26.5): Island read 2:57 then 2:53, Lock Screen 2:15 then 2:11 with the bar draining, no name. Unit target passed (1264 tests).
+Open: the same check on the locked phone, plus adjustment, expiry and end. In dark appearance the card renders paper with ink text, because the ink/paper tokens flip; not changed here.
 **Archive:** [completed widget implementation](archive/features/playtest-fixes.md#widget-resources-and-device-limits); archive closure does not prove rendering.
 **References:** FT-20/SESS-04; [widget](../FitbodWidgets/RestTimerLiveActivity.swift), [resource membership](../fitbod.xcodeproj/project.pbxproj).
 
