@@ -78,8 +78,7 @@ import SwiftData
 /// there are zero blocks AND zero non-archived splits. When either exists the
 /// BLOCKS and ROUTINES sections are rendered instead, and BLOCKS offers
 /// + DEFINE BLOCK ▶ until the first block exists. In both states an
-/// "Archived routines" entry follows while at least one split is archived
-/// (tradeoffs.md "Archived routines").
+/// "Archived routines" entry follows while at least one split is archived.
 ///
 /// THREADING NOTE: `derivedStatus` is a computed property on Block and is NOT
 /// addressable in #Predicate. All status-based ordering and usage-tag filtering

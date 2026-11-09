@@ -352,7 +352,7 @@ struct ContributingExercise: Hashable {
     /// order can change from one render to the next, so rows with exactly
     /// the same weighted sets go by name, then by id (T109). Rows that only
     /// read the same count, such as 3 and 2.5 weighted sets, keep their
-    /// weighted order (tradeoffs.md "Contributing exercises order").
+    /// weighted order.
     static func precedes(_ lhs: Self, _ rhs: Self) -> Bool {
         if lhs.totalWeightedSets != rhs.totalWeightedSets {
             return lhs.totalWeightedSets > rhs.totalWeightedSets

@@ -10,7 +10,7 @@
 //  the UI-SPEC § Empty states copy contract.
 //
 //  ViewInspector (which would let us assert rendered text + button
-//  labels) is locked out per `.planning/research/STACK.md` (zero
+//  labels) is locked out per `docs/STACK-RESEARCH.md` (zero
 //  third-party SPM dependencies). Phase 1's deliberate trade-off is to
 //  ship the trivial input-surface assertions now and revisit if a
 //  later phase ever adopts a SwiftUI testing library.

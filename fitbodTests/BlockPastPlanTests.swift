@@ -5,8 +5,8 @@
 //  Ticket T78, T12 finding F71: an active block past its last planned week
 //  read as week 1 on the block overview, Program's block row and Today's
 //  band, because `PeriodizationEngine` has no week after the plan. It reads
-//  PLAN COMPLETE instead, with every phase done and no current week
-//  (tradeoffs.md "A block past its plan"). Inside its plan a block reads as
+//  PLAN COMPLETE instead, with every phase done and no current week.
+//  Inside its plan a block reads as
 //  it did.
 //
 

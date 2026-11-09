@@ -4,7 +4,7 @@
 // Creates a routine (UI term; code entity `Split`). Program and Today both
 // open the same name step (`NewRoutineNameScreen`), and its SAVE is the only
 // caller, so a routine exists only once the user has named it. Leaving the
-// step creates nothing (tradeoffs.md "New routine flow").
+// step creates nothing.
 
 import Foundation
 import SwiftData

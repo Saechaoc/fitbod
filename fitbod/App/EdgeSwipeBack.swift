@@ -1,7 +1,7 @@
 // EdgeSwipeBack.swift
 // fitbod
 //
-// Swipe back on every pushed screen (tradeoffs.md "Swipe-back everywhere").
+// Swipe back on every pushed screen.
 // BRU screens hide the system navigation bar to draw BRUHeaderBar, and UIKit
 // does not start its edge swipe under a hidden bar. This lets the swipe start
 // whenever a stack holds a screen to go back to, in every navigation stack

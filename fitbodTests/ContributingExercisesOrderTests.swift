@@ -5,8 +5,8 @@
 //  T109, finding F210: a muscle's CONTRIBUTING EXERCISES rows sort by
 //  weighted sets, most first. Rows with exactly the same weighted sets go
 //  by name, then by id, so the order never changes between renders, while
-//  rows that only read the same count keep their weighted order
-//  (tradeoffs.md "Contributing exercises order"). Each case orders the
+//  rows that only read the same count keep their weighted order.
+//  Each case orders the
 //  rows from both starting orders, as a dictionary can hand them over.
 //
 

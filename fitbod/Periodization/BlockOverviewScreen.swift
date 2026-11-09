@@ -59,8 +59,8 @@ internal enum DayState: Equatable {
 // MARK: - BlockNumbering
 
 /// Block numbers, the "#1" on the block overview and the block review.
-/// Blocks count from 1 in start-date order, ties broken by name
-/// (tradeoffs.md "Block numbers"). `Block` has no creation date, so a
+/// Blocks count from 1 in start-date order, ties broken by name.
+/// `Block` has no separate creation date, so a
 /// number can shift when a start date changes.
 enum BlockNumbering {
     static func number(of block: Block, among blocks: [Block]) -> Int {
@@ -129,8 +129,8 @@ enum CompletedPhaseState: Equatable, Sendable {
 // MARK: - PlanWeek
 
 /// Where a started active block is in its plan: a planned week, or past
-/// its last planned week until the lifter ends it (tradeoffs.md "A block
-/// past its plan"). `PeriodizationEngine` has no week after the plan.
+/// its last planned week until the lifter ends it.
+/// `PeriodizationEngine` has no week after the plan.
 enum PlanWeek: Equatable, Sendable {
     /// A planned week, from 0.
     case week(Int)

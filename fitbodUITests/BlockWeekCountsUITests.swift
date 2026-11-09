@@ -4,8 +4,8 @@
 //
 //  Ticket T78, T12 findings F69, F71 and F75: the active block's week
 //  strip and its counts leave out empty workouts (decision 6), and a block
-//  past its last planned week reads PLAN COMPLETE instead of week 1
-//  (tradeoffs.md "A block past its plan"). BlockStatesSeed supplies Spring
+//  past its last planned week reads PLAN COMPLETE instead of week 1.
+//  BlockStatesSeed supplies Spring
 //  Block, whose Upper A was logged two days ago and whose Upper B was
 //  finished yesterday with nothing logged.
 //

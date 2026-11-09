@@ -8,7 +8,7 @@
 //
 //  A block counts calendar days from the day it started, so each block week
 //  starts at local midnight, whatever time the block started and across a
-//  daylight-saving change (tradeoffs.md "Block weeks"). `startDate` keeps
+//  daylight-saving change. `startDate` keeps
 //  the instant the block started. Each function takes a calendar,
 //  `.current` by default as in `TrainingDaysWriter`, so a test can pick the
 //  time zone.
