@@ -92,8 +92,7 @@ struct WorkoutWeightGuidance: View {
            range.upperBound > 0, range.lowerBound < range.upperBound {
             return "\(NumberText.weight(range.lowerBound))–\(NumberText.weight(range.upperBound)) \(unit.rawValue)"
         }
-        let weight = explanation.roundedWeight
-        guard weight.isFinite, weight > 0 else { return nil }
+        guard let weight = explanation.suggestedWeight else { return nil }
         return "\(NumberText.weight(weight)) \(unit.rawValue)"
     }
 
@@ -105,10 +104,11 @@ struct WorkoutWeightGuidance: View {
         var parts: [String] = []
         if let suggestion { parts.append("Suggested \(suggestion)") }
         if let reps = targetReps {
+            // "1 rep", "5 reps" or "8–12 reps", as the prescription editor writes them.
             let count = reps.lowerBound == reps.upperBound
-                ? String(reps.lowerBound)
-                : "\(reps.lowerBound)–\(reps.upperBound)"
-            parts.append(suggestion == nil ? "Target \(count) reps" : "\(count) reps")
+                ? BRUCountLabel.text(reps.lowerBound, "rep")
+                : "\(reps.lowerBound)–\(BRUCountLabel.text(reps.upperBound, "rep"))"
+            parts.append(suggestion == nil ? "Target \(count)" : count)
         }
         if let rpe = exercise.targetRPE, rpe.isFinite {
             parts.append("Target RPE \(NumberText.weight(rpe))")
@@ -132,7 +132,7 @@ struct WorkoutWeightGuidance: View {
         }
         if let deloadNote = explanation.deloadNoteLine { return deloadNote }
         if explanation.bumpOccurred {
-            return "You reached \(exercise.targetRepsHigh) reps on every working set last time, so the plan targets a weight increase."
+            return "You reached \(BRUCountLabel.text(exercise.targetRepsHigh, "rep")) on every working set last time, so the plan targets a weight increase."
         }
         switch exercise.session?.progressionKind ?? .default {
         case .double: return "The plan uses your last workout’s weight while you build reps."

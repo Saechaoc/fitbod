@@ -3,7 +3,7 @@
 //  fitbodTests
 //
 //  Ticket T61 (finding F33): a suggested weight of 0 is no suggestion.
-//  Why-this-weight offers no Use for it, and a calibrating range of 0 to 0
+//  The set menu offers no Use for it, and a calibrating range of 0 to 0
 //  leaves exercise guidance without a suggested weight. Suggestions and
 //  ranges above 0 keep their numbers.
 //
@@ -21,20 +21,18 @@ import Testing
 @Suite("ZeroSuggestion")
 struct ZeroSuggestionTests {
 
-    // MARK: - Why-this-weight's Use
+    // MARK: - The set menu's Use
 
-    @Test("WHY offers Use for a suggestion above 0")
-    func whyOffersUseAboveZero() {
-        let sheet = WhyThisWeightSheet(explanation: suggestion(102.5), unitLabel: "lb")
-        #expect(sheet.useTitle == "Use 102.5 ▸")
+    @Test("The set menu offers Use for a suggestion above 0")
+    func useOfferedAboveZero() {
+        #expect(suggestion(102.5).suggestedWeight == 102.5)
     }
 
-    @Test("WHY offers no Use for an exercise with no history, which suggests 0")
-    func whyOffersNoUseWithoutHistory() {
+    @Test("The set menu offers no Use for an exercise with no history, which suggests 0")
+    func noUseWithoutHistory() {
         let explanation = noHistorySuggestion()
         #expect(explanation.roundedWeight == 0)
-        let sheet = WhyThisWeightSheet(explanation: explanation, unitLabel: "lb")
-        #expect(sheet.useTitle == nil)
+        #expect(explanation.suggestedWeight == nil)
         #expect(WorkoutWeightGuidance.suggestedLoad(explanation, unit: .lb) == nil)
     }
 

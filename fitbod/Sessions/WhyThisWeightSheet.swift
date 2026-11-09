@@ -7,7 +7,6 @@
 //  Architecture: NavigationStack → ScrollView → VStack(spacing: 0)
 //    1. Hero slab (bruInk background, bruPaper text)
 //       - Status line: "● RECOMMENDED · {FORMULA}" in bruSignal labelSmall
-//       - Trailing set-type: "{SET TYPE}" in bruPaper 50% opacity labelSmall
 //       - Hero weight numeral: 128pt SpaceGrotesk-Bold in bruPaper
 //         (Font.custom override justified: BRUFont.displayHero = 56pt enum default;
 //          03-UI-SPEC line 87 / why-weight.jsx line 17 mandate 128pt for THIS hero)
@@ -18,10 +17,9 @@
 //         rep range, "×8–12", and target RPE, which the logger passes in
 //    1b. When the plan or history changed after the weight froze at the
 //        workout's start, one line says so and names today's number
-//    1c. Opened from the exercise menu after logging, "YOU LOGGED {w}"
-//        under the numeral when the heaviest logged set differs (FT-09)
+//    1c. After logging, "YOU LOGGED {w}" under the numeral when the
+//        heaviest logged set differs (FT-09)
 //    2. BRUSectionHead("Why this weight", right: "Close"): the way out
-//       that leaves the set's weight alone
 //    3. Numbered step blocks (01 / 02 / 03) in VStack(spacing: 8), filling
 //       the sheet's width, so the numerals line up with the section head
 //       and the 2pt bruInk rule below them spans the sheet
@@ -30,11 +28,8 @@
 //       - A suggestion of 0 has nothing to round, so step 03 is left out,
 //         unless it asks for a starting weight: RPE autoregulation has no
 //         RPE to calibrate from in the last session
-//    4. Footer bar: 2pt bruInk top rule + BRUButton(.ghost) "Override" +
-//       BRUButton(.signal) "Use {weight} ▸". A suggestion of 0 is no
-//       suggestion, so the bar shows Override alone. With neither callback
-//       (the exercise menu's sheet) there is no bar.
-//    5. Bottom safe-area filler: 24pt bruBg rectangle
+//    4. Bottom safe-area filler: 24pt bruBg rectangle. The set menu's Use
+//       writes the suggestion; the sheet only explains it.
 //
 //  Presentation: .presentationDetents([.medium]) — NOT expandable per 03-UI-SPEC line 410.
 //
@@ -56,15 +51,6 @@ public struct WhyThisWeightSheet: View {
 
     public let explanation: PrescriptionExplanation
 
-    /// Called (and the sheet dismissed) when the user taps "Use {weight} ▸".
-    /// PrescriptionWeightCell writes `roundedWeight` into the set's weight
-    /// and clears its manual-override flag.
-    public var onUseSuggested: (() -> Void)?
-
-    /// Called (and the sheet dismissed) when the user taps "Override".
-    /// PrescriptionWeightCell then focuses the weight field.
-    public var onOverride: (() -> Void)?
-
     /// The set's rep range for the hero slab sub-band, "×8–12", or "×8"
     /// for a range of one count. Nil renders "—".
     public let reps: ClosedRange<Int>?
@@ -73,15 +59,11 @@ public struct WhyThisWeightSheet: View {
     /// label. Nil renders "—".
     public let rpe: Double?
 
-    /// Set-type label for the hero slab trailing indicator, e.g. "TOP SET".
-    /// Defaults satisfy existing 03-08 SessionExerciseCard call sites (threat model T-03.2-10).
-    public let setTypeLabel: String
-
     /// Weight unit suffix shown in hero and step 03, e.g. "kg" or "lb".
     public let unitLabel: String
 
-    /// The heaviest logged working set's weight, from the exercise menu
-    /// after logging (FT-09). When it differs from the recommendation the
+    /// The heaviest logged working set's weight after logging (FT-09).
+    /// When it differs from the recommendation the
     /// hero says so under the numeral, so the recommendation stays named.
     public let loggedWeight: Double?
 
@@ -96,29 +78,20 @@ public struct WhyThisWeightSheet: View {
     ///
     /// - Parameters:
     ///   - explanation: The prescription data object from `ProgressionStrategy.prescribe(...)`.
-    ///   - onUseSuggested: Optional callback invoked when the user accepts the suggestion.
-    ///   - onOverride: Optional callback invoked when the user chooses Override.
     ///   - reps: The set's rep range for the hero sub-band. Nil = no prior prescription.
     ///   - rpe: Target RPE for the hero sub-band. Nil for double-progression exercises.
-    ///   - setTypeLabel: Trailing set-type label in the hero status line (e.g. "TOP SET").
     ///   - unitLabel: Weight unit string appended to numerals (e.g. "kg", "lb").
     ///   - loggedWeight: The heaviest logged working set's weight, or nil before one is logged.
     public init(
         explanation: PrescriptionExplanation,
-        onUseSuggested: (() -> Void)? = nil,
-        onOverride: (() -> Void)? = nil,
         reps: ClosedRange<Int>? = nil,
         rpe: Double? = nil,
-        setTypeLabel: String = "TOP SET",
         unitLabel: String,
         loggedWeight: Double? = nil
     ) {
         self.explanation = explanation
-        self.onUseSuggested = onUseSuggested
-        self.onOverride = onOverride
         self.reps = reps
         self.rpe = rpe
-        self.setTypeLabel = setTypeLabel
         self.unitLabel = unitLabel
         self.loggedWeight = loggedWeight
     }
@@ -150,11 +123,6 @@ public struct WhyThisWeightSheet: View {
                     }
                 }
 
-                // Use and Override write a set's weight; opened from the
-                // exercise menu there is no set to write, so no bar.
-                if onUseSuggested != nil || onOverride != nil {
-                    footerBar
-                }
                 // Bottom safe-area filler — xl spacing, bruBg fill
                 // 03-UI-SPEC line 67 + why-weight.jsx line 145
                 Rectangle()
@@ -171,26 +139,14 @@ public struct WhyThisWeightSheet: View {
     @ViewBuilder
     private var heroSlab: some View {
         VStack(alignment: .leading, spacing: 0) {
-            // Status line
-            HStack(alignment: .center, spacing: 0) {
-                // Leading: "● RECOMMENDED · {FORMULA}" in bruSignal
-                // The "●" is U+25CF Unicode character in a Text view, NOT a Circle shape (03.2-05 must_have)
-                Text("● RECOMMENDED · \(explanation.formulaName.uppercased())")
-                    .font(BRUFont.labelSmall)
-                    .foregroundStyle(Color.bruSignal)
-                    .textCase(.uppercase)
-                    .tracking(1.2)
-
-                Spacer()
-
-                // Trailing: "{SET TYPE}" in bruPaper 50% opacity
-                Text(setTypeLabel.uppercased())
-                    .font(BRUFont.labelSmall)
-                    .foregroundStyle(Color.bruPaper.opacity(0.5))
-                    .textCase(.uppercase)
-                    .tracking(1.2)
-            }
-            .padding(.bottom, 6)
+            // Status line: "● RECOMMENDED · {FORMULA}" in bruSignal
+            // The "●" is U+25CF Unicode character in a Text view, NOT a Circle shape (03.2-05 must_have)
+            Text("● RECOMMENDED · \(explanation.formulaName.uppercased())")
+                .font(BRUFont.labelSmall)
+                .foregroundStyle(Color.bruSignal)
+                .textCase(.uppercase)
+                .tracking(1.2)
+                .padding(.bottom, 6)
 
             // Hero weight numeral
             // 128pt override: BRUFont.displayHero = 56pt enum default; 03-UI-SPEC line 87
@@ -275,7 +231,7 @@ public struct WhyThisWeightSheet: View {
 
     /// A strategy with no history suggests 0, which is no suggestion.
     private var hasSuggestion: Bool {
-        explanation.roundedWeight > 0
+        explanation.suggestedWeight != nil
     }
 
     /// The hero's weight, or the empty weight field's "—", with no unit,
@@ -305,7 +261,7 @@ public struct WhyThisWeightSheet: View {
         let repsStr = reps.map { repsText($0, joinedBy: " to ") } ?? "unknown"
         let rpeStr = rpe.map { formattedRPE($0) } ?? "not applicable"
         let logged = loggedLine.map { ", \($0)" } ?? ""
-        return "\(weightStr)\(logged), reps \(repsStr), RPE \(rpeStr), \(setTypeLabel)"
+        return "\(weightStr)\(logged), reps \(repsStr), RPE \(rpeStr)"
     }
 
     /// "8–12" joined by `separator`, or "8" for a range of one count.
@@ -616,41 +572,6 @@ public struct WhyThisWeightSheet: View {
         .accessibilityElement(children: .combine)
     }
 
-    // MARK: - Footer Bar
-
-    @ViewBuilder
-    private var footerBar: some View {
-        HStack(spacing: 0) {
-            BRUButton("Override", kind: .ghost, size: .md) {
-                onOverride?()
-                dismiss()
-            }
-            .frame(maxWidth: .infinity)
-
-            if let useTitle {
-                BRUButton(useTitle, kind: .signal, size: .md) {
-                    onUseSuggested?()
-                    dismiss()
-                }
-                .frame(maxWidth: .infinity)
-            }
-        }
-        .overlay(alignment: .top) {
-            Rectangle()
-                .fill(Color.bruInk)
-                .frame(height: 2)
-        }
-    }
-
-    /// The Use button's title, or nil when the sheet offers no Use. A
-    /// strategy with no history suggests 0, which is no suggestion: Use
-    /// would only empty the weight field, so the sheet keeps its
-    /// explanation and Override and drops Use.
-    var useTitle: String? {
-        guard hasSuggestion else { return nil }
-        return "Use \(NumberText.weight(explanation.roundedWeight)) ▸"
-    }
-
     // MARK: - Phase 3.1 Status Text Helpers
     // Preserved verbatim from v1 Phase 3.1 (PIVOT-04 / D-12) — only relocated.
     // UI-SPEC Verification anchor: "\(Intent.capitalized) session — calibrating (n / threshold sets)"
@@ -724,7 +645,6 @@ public struct WhyThisWeightSheet: View {
                 explanation: explanation,
                 reps: 6...8,
                 rpe: 9.0,
-                setTypeLabel: "TOP SET",
                 unitLabel: "lb"
             )
             .presentationDetents([.medium])
@@ -752,7 +672,6 @@ public struct WhyThisWeightSheet: View {
                 explanation: explanation,
                 reps: 6...8,
                 rpe: 8.5,
-                setTypeLabel: "TOP SET",
                 unitLabel: "kg"
             )
             .presentationDetents([.medium])
@@ -777,7 +696,6 @@ public struct WhyThisWeightSheet: View {
                 explanation: explanation,
                 reps: 8...12,
                 rpe: nil,
-                setTypeLabel: "TOP SET",
                 unitLabel: "kg"
             )
             .presentationDetents([.medium])
@@ -802,36 +720,6 @@ public struct WhyThisWeightSheet: View {
                 explanation: explanation,
                 reps: 5...5,
                 rpe: nil,
-                setTypeLabel: "WORKING SET",
-                unitLabel: "kg"
-            )
-            .presentationDetents([.medium])
-        }
-}
-
-#Preview("override active — Use suggested weight button") {
-    // Phase 3.1 (PIVOT-04 / D-12): third sessionIntent-bearing preview;
-    // covers the .calibrated branch with override-active button visible.
-    let explanation = PrescriptionExplanation(
-        lastSessionLine: "100 × 8 @ RPE 8.5 (May 15)",
-        formulaName: "RPE autoregulation",
-        computedLine: "Target e1RM 122 kg → 88% × 8 → 107.5 kg",
-        roundedWeight: 107.5,
-        roundedLine: "→ 107.5 kg (rounded down to 2.5 kg plates)",
-        status: .calibrated,
-        bumpOccurred: false,
-        range: nil,
-        sessionIntent: .strength
-    )
-    return Color.bruPaper
-        .ignoresSafeArea()
-        .sheet(isPresented: .constant(true)) {
-            WhyThisWeightSheet(
-                explanation: explanation,
-                onUseSuggested: { /* write back to SetEntry.actualWeight in plan 03-08 */ },
-                reps: 6...8,
-                rpe: 8.5,
-                setTypeLabel: "TOP SET",
                 unitLabel: "kg"
             )
             .presentationDetents([.medium])

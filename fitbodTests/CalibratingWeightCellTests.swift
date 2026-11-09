@@ -29,7 +29,7 @@ struct CalibratingWeightCellTests {
     }
 
     @Test("An open set shows a suggestion above 0", arguments: [
-        // Use writes Why this weight's suggestion.
+        // Use in the set menu writes the suggestion.
         (100.0, 97.5),
         // A typed weight equal to the prescription stored at the start is
         // no change from it, and still a suggestion.

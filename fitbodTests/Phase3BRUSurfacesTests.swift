@@ -145,7 +145,7 @@ struct Phase3BRUSurfacesTests {
 
     // MARK: - WhyThisWeightSheet (Plan 03.2-05)
     // Tests cover the 4 CalibrationStatus branches and validate the BRU
-    // rewrite init signature (new params: reps, rpe, setTypeLabel, unitLabel).
+    // rewrite init signature (params: reps, rpe, unitLabel).
 
     @Test("whyThisWeightSheetInstantiates — .calibrating status branch")
     func whyThisWeightSheetInstantiates_calibrating() throws {
@@ -164,7 +164,6 @@ struct Phase3BRUSurfacesTests {
             explanation: explanation,
             reps: 8...8,
             rpe: 9.0,
-            setTypeLabel: "TOP SET",
             unitLabel: "lb"
         )
         let _: any View = sheet
@@ -188,7 +187,6 @@ struct Phase3BRUSurfacesTests {
             explanation: explanation,
             reps: 8...8,
             rpe: 8.5,
-            setTypeLabel: "TOP SET",
             unitLabel: "kg"
         )
         let _: any View = sheet
@@ -211,7 +209,6 @@ struct Phase3BRUSurfacesTests {
             explanation: explanation,
             reps: 8...8,
             rpe: nil,
-            setTypeLabel: "TOP SET",
             unitLabel: "kg"
         )
         let _: any View = sheet
@@ -234,7 +231,6 @@ struct Phase3BRUSurfacesTests {
             explanation: explanation,
             reps: 5...5,
             rpe: nil,
-            setTypeLabel: "WORKING SET",
             unitLabel: "kg"
         )
         let _: any View = sheet

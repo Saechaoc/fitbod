@@ -218,7 +218,8 @@ public struct SetRow: View {
         } label: {
             Text(dynamicTypeSize.isAccessibilitySize ? "Effort (RPE) · \(rating ?? "Add")" : rating ?? "Add")
                 .font(BRUFont.bodyEmphasis)
-                .foregroundStyle(rating == nil ? Color.bruMuted : Color.bruSignalText)
+                // Orange marks logged values, as the weight and reps beside it.
+                .foregroundStyle(rating == nil ? Color.bruMuted : entry.isComplete ? Color.bruSignalText : Color.bruInk)
                 .frame(minWidth: 44, minHeight: 44)
                 .contentShape(Rectangle())
         }
@@ -262,7 +263,7 @@ public struct SetRow: View {
             Button(entry.notes?.isEmpty == false ? "Edit set note" : "Add set note") {
                 presentingSetNote = true
             }
-            if !entry.isComplete, let suggested = explanation?.roundedWeight, suggested.isFinite, suggested > 0 {
+            if !entry.isComplete, let suggested = explanation?.suggestedWeight {
                 Button("Use \(NumberText.weight(suggested)) \(unit.rawValue)") {
                     UIApplication.shared.sendAction(
                         #selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil

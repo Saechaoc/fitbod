@@ -119,6 +119,12 @@ public struct PrescriptionExplanation: Sendable {
 }
 
 extension PrescriptionExplanation {
+    /// The weight a set can take from this suggestion, or nil when there is
+    /// none: a strategy with no history suggests 0, which is no suggestion (T61).
+    public var suggestedWeight: Double? {
+        roundedWeight.isFinite && roundedWeight > 0 ? roundedWeight : nil
+    }
+
     /// This explanation as the workout holds it: the weight frozen when the
     /// workout started (or the exercise was swapped in or added) is the one
     /// shown and the one USE writes. When the steps now give another weight,
@@ -130,9 +136,8 @@ extension PrescriptionExplanation {
         var shown = self
         shown.roundedWeight = startWeight
         shown.bumpOccurred = false
-        let now = roundedWeight > 0
-            ? "the steps below now give \(NumberText.weight(roundedWeight)) \(unitLabel)"
-            : "the steps below no longer suggest a weight"
+        let now = suggestedWeight.map { "the steps below now give \(NumberText.weight($0)) \(unitLabel)" }
+            ?? "the steps below no longer suggest a weight"
         shown.changedSinceStartLine = "Set when this workout started. Your plan, settings or history have changed since, and \(now)."
         return shown
     }
