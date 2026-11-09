@@ -15,9 +15,8 @@
 //       count.
 //    2. doesNotMutateSourceRoutine — PITFALLS-doc #1 — appending to a
 //       session never touches the source Routine.exercises.
-//    3. seedsThreeDefaultSetsWithMatchingIntentHint — three planned
-//       SetEntry rows materialize with weight = PreviousMatchingIntent
-//       hint (or 0 if no prior matching session exists).
+//    3. Three planned SetEntry rows receive matching-intent offers
+//       without writing those offers to the saved set values.
 //    4. addedExercisePrescribesLikeAFreshStart — ticket T76 (finding
 //       F65) — the added exercise gets the prescribed weight a fresh
 //       workout start gives it.
@@ -125,7 +124,7 @@ struct AddUnplannedExerciseTests {
 
     // MARK: - 3. Three planned sets with matching-intent hint
 
-    @Test("seedsThreeDefaultSetsWithMatchingIntentHint — 3 planned sets at hint weight")
+    @Test("An added exercise gets three pending sets with history-based offers")
     func seedsThreeDefaultSetsWithMatchingIntentHint() throws {
         let ctx = try makeContext()
         let fx = try makeFixture(ctx: ctx)
@@ -162,10 +161,10 @@ struct AddUnplannedExerciseTests {
         let newSE = exercises[1]
         let sets = (newSE.sets ?? []).sorted { $0.orderIndex < $1.orderIndex }
         #expect(sets.count == 3)
-        // All three planned sets carry the matching-intent hint weight.
-        #expect(sets.allSatisfy { $0.weight == 30 })
+        let offers = WorkoutSetSuggestions(exercise: newSE, prior: [priorSet]).offers()
+        #expect(sets.allSatisfy { offers[$0.id] == WorkoutSetSuggestion(weight: 30, reps: 11) })
         // All are planned-not-yet-logged sentinel state.
-        #expect(sets.allSatisfy { $0.reps == 0 })
+        #expect(sets.allSatisfy { $0.weight == 0 && $0.reps == 0 })
         #expect(sets.allSatisfy { $0.isComplete == false })
         #expect(sets.allSatisfy { $0.setTypeRaw == SetType.working.rawValue })
 

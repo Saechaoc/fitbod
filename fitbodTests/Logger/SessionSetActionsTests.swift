@@ -40,9 +40,9 @@ struct SessionSetActionsTests {
         let se = try makeSession(ctx)
         let sets = SessionSetActions.ordered(se)
 
-        #expect(SessionSetActions.complete(sets[0], context: ctx))
+        #expect(try SessionSetActions.complete(sets[0], context: ctx))
         sets[1].reps = 0
-        #expect(!SessionSetActions.complete(sets[1], context: ctx))
+        #expect(try !SessionSetActions.complete(sets[1], context: ctx))
 
         let reread = try #require(try freshRead(ctx, se.id))
         let done = (reread.sets ?? []).filter(\.isComplete)
@@ -50,12 +50,34 @@ struct SessionSetActionsTests {
         #expect(done.first?.id == sets[0].id)
     }
 
+    @Test("A failed save restores the draft and lets the same offer be retried")
+    func failedCompletionRestoresDraft() throws {
+        enum SaveFailure: Error, Equatable { case disk }
+        let ctx = try LoggerFixtures.makeContext()
+        let se = try makeSession(ctx)
+        let set = SessionSetActions.ordered(se)[0]
+        set.reps = 0
+        try ctx.save()
+        let draftDate = set.completedAt
+        let offer = WorkoutSetSuggestion(weight: 105, reps: 8)
+
+        #expect(throws: SaveFailure.disk) {
+            try SessionSetActions.complete(set, suggestion: offer, context: ctx, save: { _ in
+                throw SaveFailure.disk
+            })
+        }
+        #expect(!set.isComplete && set.completedAt == draftDate)
+        #expect(set.weight == 100 && set.reps == 0)
+        #expect(try SessionSetActions.complete(set, suggestion: offer, context: ctx))
+        #expect(set.isComplete && set.weight == 100 && set.reps == 8)
+    }
+
     @Test("uncomplete persists and keeps weight and reps")
     func uncompletePersists() throws {
         let ctx = try LoggerFixtures.makeContext()
         let se = try makeSession(ctx)
         let set = SessionSetActions.ordered(se)[0]
-        SessionSetActions.complete(set, context: ctx)
+        try SessionSetActions.complete(set, context: ctx)
         SessionSetActions.uncomplete(set, context: ctx)
 
         let reread = try #require(try freshRead(ctx, se.id))
@@ -71,7 +93,7 @@ struct SessionSetActionsTests {
         let se = try makeSession(ctx)
         let engine = RestTimerEngine(scheduler: NoopScheduler(), now: { Date(timeIntervalSince1970: 0) })
         let set = SessionSetActions.ordered(se)[0]
-        SessionSetActions.complete(set, context: ctx)
+        try SessionSetActions.complete(set, context: ctx)
         engine.start(seconds: 120, exerciseName: "Bench")
         let startedAt = engine.startedAt
 
@@ -108,26 +130,29 @@ struct SessionSetActionsTests {
         #expect(SessionSetActions.displayNumber(of: after[0]) == 1)
     }
 
-    @Test("complete carries weight and reps, not RPE, to the next set still to do")
+    @Test("completion leaves the next drafts blank while the logger offers the completed performance")
     func completeCarriesForward() throws {
         let ctx = try LoggerFixtures.makeContext()
         let session = try LoggerFixtures.session(
             exercise: LoggerFixtures.exercise("Bench", in: ctx), startedAt: .now, completedAt: nil,
-            sets: [(100, 0, false), (100, 0, false), (100, 0, false)], in: ctx
+            sets: [(0, 0, false), (0, 0, false), (0, 0, false)], in: ctx
         )
         let se = try #require(session.exercises?.first)
         let sets = SessionSetActions.ordered(se)
         sets[0].weight = 105
         sets[0].reps = 6
         sets[0].rpe = 8
-        #expect(SessionSetActions.complete(sets[0], context: ctx))
+        #expect(try SessionSetActions.complete(sets[0], context: ctx))
 
-        let reread = SessionSetActions.ordered(try #require(try freshRead(ctx, se.id)))
-        #expect(reread[1].weight == 105)
-        #expect(reread[1].reps == 6)
+        let exercise = try #require(try freshRead(ctx, se.id))
+        let reread = SessionSetActions.ordered(exercise)
+        let offers = WorkoutSetSuggestions(exercise: exercise, prior: []).offers()
+        #expect(offers[reread[1].id] == WorkoutSetSuggestion(weight: 105, reps: 6))
+        #expect(reread[1].weight == 0)
+        #expect(reread[1].reps == 0)
         #expect(reread[1].rpe == nil)
         #expect(reread[1].isComplete == false)
-        #expect(reread[2].reps == 0, "Only the next set takes the offer")
+        #expect(reread[2].reps == 0)
     }
 
     @Test("a next set with its own reps or typed weight keeps them")
@@ -140,8 +165,8 @@ struct SessionSetActionsTests {
         let se = try #require(session.exercises?.first)
         let sets = SessionSetActions.ordered(se)
         sets[3].wasManualOverride = true
-        #expect(SessionSetActions.complete(sets[0], context: ctx))
-        #expect(SessionSetActions.complete(sets[2], context: ctx))
+        #expect(try SessionSetActions.complete(sets[0], context: ctx))
+        #expect(try SessionSetActions.complete(sets[2], context: ctx))
 
         let reread = SessionSetActions.ordered(try #require(try freshRead(ctx, se.id)))
         #expect(reread[1].weight == 95)
@@ -150,22 +175,24 @@ struct SessionSetActionsTests {
         #expect(reread[3].reps == 0)
     }
 
-    @Test("addSet copies a logged last set's weight and reps, not its RPE")
+    @Test("addSet shows the latest completed performance as an offer")
     func addSetCopiesLoggedSet() throws {
         let ctx = try LoggerFixtures.makeContext()
         let se = try makeSession(ctx)
         let last = SessionSetActions.ordered(se)[2]
         last.rpe = 9
-        #expect(SessionSetActions.complete(last, context: ctx))
+        #expect(try SessionSetActions.complete(last, context: ctx))
         let added = SessionSetActions.addSet(to: se, context: ctx)
 
-        #expect(added.weight == 100)
-        #expect(added.reps == 5)
+        let offers = WorkoutSetSuggestions(exercise: se, prior: []).offers()
+        #expect(offers[added.id] == WorkoutSetSuggestion(weight: 100, reps: 5))
+        #expect(added.weight == 0)
+        #expect(added.reps == 0)
         #expect(added.rpe == nil)
         #expect(added.isComplete == false)
     }
 
-    @Test("addSet appends at the end seeded from the last working weight")
+    @Test("addSet appends a blank draft when no set has been logged")
     func addSetAppends() throws {
         let ctx = try LoggerFixtures.makeContext()
         let se = try makeSession(ctx)
@@ -173,8 +200,9 @@ struct SessionSetActionsTests {
         let added = SessionSetActions.addSet(to: se, context: ctx)
 
         #expect(added.orderIndex == 3)
-        #expect(added.weight == 102.5)
-        #expect(added.reps == 0, "An unlogged last set offers no reps")
+        #expect(added.weight == 0)
+        #expect(added.reps == 0)
+        #expect(WorkoutSetSuggestions(exercise: se, prior: []).offers()[added.id] == WorkoutSetSuggestion())
         #expect(added.isComplete == false)
         let reread = try #require(try freshRead(ctx, se.id))
         #expect((reread.sets ?? []).count == 4)
@@ -185,9 +213,11 @@ struct SessionSetActionsTests {
         let ctx = try LoggerFixtures.makeContext()
         let se = try makeSession(ctx)
         let sets = SessionSetActions.ordered(se)
-        SessionSetActions.complete(sets[0], context: ctx)
+        try SessionSetActions.complete(sets[0], context: ctx)
+        sets[1].weight = 0
         sets[2].weight = 97.5
-        SessionSetActions.dropIntensity(of: se, fraction: 0.10, increment: 2.5, context: ctx)
+        let offers = WorkoutSetSuggestions(exercise: se, prior: []).offers()
+        SessionSetActions.dropIntensity(of: se, fraction: 0.10, increment: 2.5, offers: offers, context: ctx)
 
         #expect(sets[0].weight == 100)
         // 100 × 0.9 = 90, already on a 2.5 step.

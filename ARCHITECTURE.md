@@ -100,6 +100,10 @@ Two deliberate freeze points:
    Decode failure is explicit; no live-template fallback.
    Configuration freezes; review statistics still read correctable workouts.
 
+Pending working sets show weight and rep offers from their frozen prescription and completed performance. Programmed block targets take priority. Otherwise an earlier working set on the same lift in this workout takes priority over the corresponding set from the last finished matching-intent workout.
+Entered values, including numbers stored by older versions, take priority per field. The checkmark saves the chosen weight, reps, and completion together. Unaccepted offers stay outside the store, and each set records its own effort.
+Swapping after logging keeps completed sets attached to the original lift and applies a fresh prescription to the replacement's pending sets.
+
 A workout's place in time is Session.startedAt; completedAt marks finish/duration.
 A date correction shifts start, finish and all set timestamps one delta, rejects a resulting finish after now and preserves set times inside the workout.
 Membership is the started block whose half-open interval [startDate, endDate) contains that start (active end unbounded); draft/ready blocks hold no workouts.

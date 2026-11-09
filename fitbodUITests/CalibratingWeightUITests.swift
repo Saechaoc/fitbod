@@ -31,12 +31,13 @@ final class CalibratingWeightUITests: XCTestCase {
         XCTAssertTrue(guidance.label.contains("95–105 lb"), guidance.label)
 
         let field = weightField("1.S1", in: app)
-        XCTAssertEqual(field.value as? String, "110 lb")
+        XCTAssertEqual(field.value as? String, "100 lb")
         UITestNavigation.revealInLogger(field, in: app)
         UITestNavigation.enter("97.5", into: field)
         UITestNavigation.keyboardDone(in: app).tap()
 
         let reps = app.textFields["set.reps.1.S1"]
+        XCTAssertEqual(reps.value as? String, "8")
         UITestNavigation.revealInLogger(reps, in: app)
         UITestNavigation.enter("5", into: reps)
         XCTAssertEqual(reps.value as? String, "5", "Set 1 must read the typed reps")

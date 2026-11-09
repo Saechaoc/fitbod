@@ -6,6 +6,7 @@ struct WorkoutWeightGuidance: View {
     let explanation: PrescriptionExplanation?
     let unit: WeightUnit
     let loggedWeight: Double?
+    let hasSetOffer: Bool
 
     @State private var expanded = false
     @State private var showingCalculation = false
@@ -102,8 +103,9 @@ struct WorkoutWeightGuidance: View {
 
     private func guidanceText(suggestion: String?) -> String {
         var parts: [String] = []
+        let programmed = WorkoutSetSuggestions.hasProgram(exercise.session)
         if let suggestion { parts.append("Suggested \(suggestion)") }
-        if let reps = targetReps {
+        if programmed, let reps = targetReps {
             // "1 rep", "5 reps" or "8–12 reps", as the prescription editor writes them.
             let count = reps.lowerBound == reps.upperBound
                 ? BRUCountLabel.text(reps.lowerBound, "rep")
@@ -113,9 +115,14 @@ struct WorkoutWeightGuidance: View {
         if let rpe = exercise.targetRPE, rpe.isFinite {
             parts.append("Target RPE \(NumberText.weight(rpe))")
         }
-        if suggestion == nil, loggedWeight == nil,
-           exercise.exercise?.equipment != .bodyweight, exercise.exercise?.equipment != .weightedBodyweight {
-            parts.append("Choose a starting weight")
+        if suggestion == nil, loggedWeight == nil {
+            let equipment = exercise.exercise?.equipment
+            let bodyweight = equipment == .bodyweight || equipment == .weightedBodyweight
+            if programmed && !bodyweight {
+                parts.append("Choose a starting weight")
+            } else if !programmed && !hasSetOffer {
+                parts.append(bodyweight ? "Enter your starting reps" : "Enter a starting weight and reps")
+            }
         }
         return parts.joined(separator: " · ")
     }

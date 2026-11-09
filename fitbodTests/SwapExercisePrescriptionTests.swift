@@ -45,14 +45,15 @@ struct SwapExercisePrescriptionTests {
 
         SwapExerciseSheet.swap(workout.sessionExercise, to: fx.press, context: ctx)
 
-        // Re-seeded from the overhead press's last workout, and unmarked.
-        #expect(workout.typed.weight == 60)
+        // The old draft is cleared. The replacement has its own prescription.
+        #expect(workout.typed.weight == 0)
         #expect(workout.typed.wasManualOverride == false)
         let pending = (workout.sessionExercise.sets ?? []).filter { !$0.isComplete }
         #expect(pending.allSatisfy { !$0.wasManualOverride })
 
         let logged = workout.logged
         #expect(logged.isComplete)
+        #expect(logged.sessionExercise?.exercise?.id == fx.bench.id)
         #expect(logged.weight == 105)
         #expect(logged.reps == 5)
         #expect(logged.rpe == 8)
@@ -171,7 +172,7 @@ struct SwapExercisePrescriptionTests {
         #expect((exercise.sets ?? []).filter(\.isWarmup).allSatisfy { $0.isComplete == (warmupMode == "skipped") })
     }
 
-    @Test("Undo never assigns captured values to an already completed working row")
+    @Test("Undo leaves completed rows alone after a swap splits the original lift")
     func variationUndoLeavesCompletedRowsUntouched() throws {
         let ctx = try LoggerFixtures.makeContext()
         let fx = try makeFixture(in: ctx)
@@ -183,10 +184,12 @@ struct SwapExercisePrescriptionTests {
         try ctx.save()
         let loggedValues = setValues(workout.logged)
 
-        try original.restore(to: workout.sessionExercise, context: ctx)
+        #expect(throws: VariationUndoSnapshot.RestoreError.noLongerApplicable) {
+            try original.restore(to: workout.sessionExercise, context: ctx)
+        }
 
         #expect(setValues(workout.logged) == loggedValues)
-        #expect(workout.typed.weight == 110 && workout.typed.wasManualOverride)
+        #expect(workout.logged.sessionExercise?.exercise?.id == fx.bench.id)
     }
 
     @Test("Undo refuses to replace an exercise once a new working set is logged")
@@ -199,7 +202,8 @@ struct SwapExercisePrescriptionTests {
         SwapExerciseSheet.swap(exercise, to: fx.press, context: ctx)
         let set = try #require((exercise.sets ?? []).first(where: { !$0.isWarmup }))
         set.reps = 7
-        try #require(SessionSetActions.complete(set, at: today, context: ctx))
+        let offer = try #require(WorkoutSetSuggestions(exercise: exercise, prior: []).offers()[set.id])
+        try #require(try SessionSetActions.complete(set, at: today, suggestion: offer, context: ctx))
         let loggedValues = setValues(set)
 
         #expect(throws: VariationUndoSnapshot.RestoreError.noLongerApplicable) {
@@ -317,7 +321,7 @@ struct SwapExercisePrescriptionTests {
         logged.rpe = 8
         logged.wasManualOverride = true
         let loggedAt = today.addingTimeInterval(600)
-        try #require(SessionSetActions.complete(logged, at: loggedAt, context: ctx))
+        try #require(try SessionSetActions.complete(logged, at: loggedAt, context: ctx))
 
         let typed = sets[1]
         typed.weight = 110

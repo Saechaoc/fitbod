@@ -19,7 +19,7 @@ struct MilestoneOnePersistenceTests {
             let item = try #require(workout.exercises?.first)
             let entry = try #require(item.sets?.first)
             #expect(SessionSetActions.canComplete(entry))
-            #expect(SessionSetActions.complete(entry, context: context))
+            #expect(try SessionSetActions.complete(entry, context: context))
             workout.completedAt = .now
             try context.save()
             let prior = PreviousMatchingIntent.fetchTopWorkingSet(
@@ -72,9 +72,8 @@ struct MilestoneOnePersistenceTests {
             let workout = try SessionFactory.start(template: template, context: context)
             let loggedExercise = try #require(workout.exercises?.first)
             let firstSet = try #require(SessionSetActions.ordered(loggedExercise).first(where: { !$0.isWarmup }))
-            firstSet.weight = 80
-            firstSet.reps = 8
-            #expect(SessionSetActions.complete(firstSet, context: context))
+            let offer = WorkoutSetSuggestion(weight: 80, reps: 8)
+            #expect(try SessionSetActions.complete(firstSet, suggestion: offer, context: context))
             let added = SessionSetActions.addSet(to: loggedExercise, context: context)
             added.weight = 82.5
             added.reps = 6
@@ -98,6 +97,8 @@ struct MilestoneOnePersistenceTests {
             #expect(sets.first?.isComplete == true)
             #expect(sets.first?.weight == 80)
             #expect(sets.first?.reps == 8)
+            #expect(sets[1].weight == 0 && sets[1].reps == 0)
+            #expect(WorkoutSetSuggestions(exercise: exercise, prior: []).offers()[sets[1].id] == WorkoutSetSuggestion(weight: 80, reps: 8))
             #expect(sets.last?.weight == 82.5)
             #expect(sets.last?.reps == 6)
             #expect(sets.last?.isComplete == false)

@@ -38,7 +38,7 @@ public struct SessionExerciseCard: View {
     @Environment(\.modelContext) private var ctx
     @Bindable public var sessionExercise: SessionExercise
     public let engine: RestTimerEngine
-    public let onCommitSet: (SetEntry) -> Void
+    public let onCommitSet: (SetEntry, WorkoutSetSuggestion) -> Void
     public let onTapEmptyCell: () -> Void
     public let onSwap: (SessionExercise) -> Void
     public let onRemove: (SessionExercise) -> Void
@@ -70,6 +70,7 @@ public struct SessionExerciseCard: View {
     /// Captured inputs and prescription, retained until Undo succeeds.
     @State private var variationUndo: VariationUndoSnapshot?
     @State private var undoFailed = false
+    @State private var variationSwapFailed = false
     /// "View all similar exercises" asks for the full swap list, which
     /// opens once the variation sheet has gone.
     @State private var swapListAfterVariation = false
@@ -79,7 +80,7 @@ public struct SessionExerciseCard: View {
     public init(
         sessionExercise: SessionExercise,
         engine: RestTimerEngine,
-        onCommitSet: @escaping (SetEntry) -> Void,
+        onCommitSet: @escaping (SetEntry, WorkoutSetSuggestion) -> Void,
         onTapEmptyCell: @escaping () -> Void,
         onSwap: @escaping (SessionExercise) -> Void = { _ in },
         onRemove: @escaping (SessionExercise) -> Void = { _ in },
@@ -103,7 +104,9 @@ public struct SessionExerciseCard: View {
     }
 
     public var body: some View {
-        let explanation = currentExplanation()
+        let guidance = currentExplanation()
+        let explanation = guidance?.explanation
+        let offers = WorkoutSetSuggestions(exercise: sessionExercise, prior: guidance?.prior ?? []).offers()
 
         Section {
             // MARK: Card body
@@ -176,7 +179,7 @@ public struct SessionExerciseCard: View {
                 if collapsed {
                     BRUDivider(.ink)
                 } else {
-                    headerDetails(explanation)
+                    headerDetails(explanation, offers: offers)
                 }
             }
             .cardRow()
@@ -197,8 +200,11 @@ public struct SessionExerciseCard: View {
                     TryVariationSheet(sourceExercise: source) { picked in
                         if let picked {
                             let original = VariationUndoSnapshot(sessionExercise)
-                            SwapExerciseSheet.swap(sessionExercise, to: picked, context: ctx)
-                            variationUndo = original
+                            if SwapExerciseSheet.swap(sessionExercise, to: picked, context: ctx) {
+                                variationUndo = original
+                            } else {
+                                variationSwapFailed = true
+                            }
                         } else {
                             swapListAfterVariation = true
                         }
@@ -211,20 +217,27 @@ public struct SessionExerciseCard: View {
             } message: {
                 Text("The workout wasn't restored. Your undo is still available; try again.")
             }
+            .alert("Couldn't swap exercise", isPresented: $variationSwapFailed) {
+                Button("OK", role: .cancel) {}
+            } message: {
+                Text("The workout is still saved as it was. Try the variation again.")
+            }
 
             if !collapsed {
                 // SetRows — one List row each so swipe-to-delete works.
                 ForEach(sortedSets) { set in
                     VStack(spacing: 0) {
                         VStack(spacing: 4) {
+                            let offer = offers[set.id] ?? WorkoutSetSuggestion()
                             SetRow(
                                 entry: set,
                                 sessionExercise: sessionExercise,
                                 prescribed: sessionExercise.prescribedWeight,
                                 explanation: explanation,
+                                suggestion: offer,
                                 expandedEffortSetID: $expandedEffortSetID,
                                 onCommit: {
-                                    onCommitSet(set)
+                                    onCommitSet(set, offer)
                                     if set.isComplete { variationUndo = nil }
                                 },
                                 onTapEmptyCell: onTapEmptyCell,
@@ -353,7 +366,7 @@ public struct SessionExerciseCard: View {
     }
 
     @MainActor
-    private func handleSuggestedAction(_ action: SuggestedAction) {
+    private func handleSuggestedAction(_ action: SuggestedAction, offers: [UUID: WorkoutSetSuggestion]) {
         switch action {
         case .addVolume:
             // One more working set for this exercise today.
@@ -369,6 +382,7 @@ public struct SessionExerciseCard: View {
                 of: sessionExercise,
                 fraction: 0.10,
                 increment: increment,
+                offers: offers,
                 context: ctx
             )
             suggestedAction = nil
@@ -383,7 +397,10 @@ public struct SessionExerciseCard: View {
     /// bump banner, warm-up ramp, plateau and calibrating badges and the
     /// column strip. Hidden while the exercise is collapsed.
     @ViewBuilder
-    private func headerDetails(_ explanation: PrescriptionExplanation?) -> some View {
+    private func headerDetails(
+        _ explanation: PrescriptionExplanation?,
+        offers: [UUID: WorkoutSetSuggestion]
+    ) -> some View {
         BRUDivider(.hair)
 
         // A picked variation can be undone until a set of it is
@@ -469,7 +486,7 @@ public struct SessionExerciseCard: View {
                 if let action = suggestedAction,
                    action != .tryVariation || !hasLoggedWorkingSet {
                     SuggestedActionChip(action: action) {
-                        handleSuggestedAction(action)
+                        handleSuggestedAction(action, offers: offers)
                     }
                 }
             }
@@ -493,7 +510,8 @@ public struct SessionExerciseCard: View {
             exercise: sessionExercise,
             explanation: explanation,
             unit: unit,
-            loggedWeight: topLoggedWeight
+            loggedWeight: topLoggedWeight,
+            hasSetOffer: offers.values.contains { $0.weight != nil || $0.reps != nil }
         )
         .id(sessionExercise.exercise?.id)
 
@@ -662,10 +680,10 @@ public struct SessionExerciseCard: View {
 
     /// What WHY explains: `SessionFactory`'s prescription for this
     /// exercise, frozen at the weight the sets were started with.
-    private func currentExplanation() -> PrescriptionExplanation? {
+    private func currentExplanation() -> (explanation: PrescriptionExplanation, prior: [SetEntry])? {
         let se = sessionExercise
         guard let session = se.session else { return nil }
-        var explanation = SessionFactory.prescription(
+        let prescription = SessionFactory.prescription(
             for: se.exercise,
             targetRepsLow: se.targetRepsLow,
             targetRepsHigh: se.targetRepsHigh,
@@ -674,9 +692,13 @@ public struct SessionExerciseCard: View {
             strategy: ProgressionStrategyFactory.make(for: session.progressionKind),
             userSettings: settingsList.first,
             context: ctx
-        ).explanation
+        )
+        var explanation = prescription.explanation
         explanation.sessionIntent = session.intent
-        return explanation.frozen(at: se.prescribedWeight, unitLabel: unit.rawValue)
+        return (
+            explanation.frozen(at: se.prescribedWeight, unitLabel: unit.rawValue),
+            prescription.previousWorkingSets
+        )
     }
 
     // MARK: - handleSkipWarmups
@@ -735,7 +757,7 @@ private extension View {
         SessionExerciseCard(
             sessionExercise: se,
             engine: engine,
-            onCommitSet: { _ in },
+            onCommitSet: { _, _ in },
             onTapEmptyCell: {}
         )
     }

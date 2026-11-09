@@ -94,7 +94,7 @@ struct VariationUndoSnapshot {
         }
     }
 
-    private struct Prescription {
+    fileprivate struct Prescription {
         let targetSets: Int
         let targetRepsLow: Int
         let targetRepsHigh: Int
@@ -197,6 +197,7 @@ struct VariationUndoSnapshot {
 public struct SwapExerciseSheet: View {
     @Environment(\.modelContext) private var ctx
     @Environment(\.dismiss) private var dismiss
+    @State private var saveFailed = false
 
     @Bindable public var sessionExercise: SessionExercise
 
@@ -209,8 +210,11 @@ public struct SwapExerciseSheet: View {
             VStack(spacing: 0) {
                 // Exercise library — NOT rewritten (out of Phase 2.1 scope per UI-SPEC line 724)
                 ExerciseLibraryView(onSelect: { exercise in
-                    Self.swap(sessionExercise, to: exercise, context: ctx)
-                    dismiss()
+                    if Self.swap(sessionExercise, to: exercise, context: ctx) {
+                        dismiss()
+                    } else {
+                        saveFailed = true
+                    }
                 }, showsPickerHeader: false)
 
                 // Footer note per UI-SPEC verbatim line 391
@@ -230,17 +234,23 @@ public struct SwapExerciseSheet: View {
                 )
             }
         }
+        .alert("Couldn't swap exercise", isPresented: $saveFailed) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text("The workout is still saved as it was. Try the swap again.")
+        }
     }
 
     // MARK: - Swap
 
-    /// SESS-05 — mutates SessionExercise.exercise ONLY. The source
-    /// RoutineExercise.exercise is untouched. The new exercise gets the
-    /// prescription and warm-up ramp a workout start would give it, and
-    /// the pending working sets are re-seeded for it. Saves immediately.
+    /// The replacement gets a fresh prescription. Completed work belongs
+    /// to the original lift, so it can't seed sets on a different lift.
     @MainActor
-    static func swap(_ sessionExercise: SessionExercise, to exercise: Exercise, context: ModelContext) {
-        guard let session = sessionExercise.session else { return }
+    @discardableResult
+    static func swap(_ sessionExercise: SessionExercise, to exercise: Exercise, context: ModelContext) -> Bool {
+        guard let session = sessionExercise.session else { return false }
+        if sessionExercise.exercise?.id == exercise.id { return true }
+        preserveCompletedSets(of: sessionExercise, in: session, context: context)
         sessionExercise.exercise = exercise
         sessionExercise.exerciseNameSnapshot = exercise.name
 
@@ -259,20 +269,51 @@ public struct SwapExerciseSheet: View {
         sessionExercise.prescribedWeight = prescription.weight
         rebuildPendingWarmups(of: sessionExercise, in: session, prescription: prescription, context: context)
 
-        // Re-seed pending working sets with the new exercise's
-        // matching-intent hint, as a workout start seeds them. A weight
-        // typed for the old exercise is gone, so its "M" goes too.
-        // Committed sets are immutable (PITFALLS-doc #1).
-        let hint = prescription.previousSet?.weight ?? 0
-        let pendingSets = (sessionExercise.sets ?? [])
-            .filter { !$0.isComplete && !$0.isWarmup }
-        for set in pendingSets {
-            set.weight = hint
+        // Offers now come from the replacement's history and prescription.
+        let replacementRows = SessionSetActions.ordered(sessionExercise).filter {
+            !$0.isDeleted && $0.sessionExercise?.id == sessionExercise.id
+        }
+        for (index, set) in replacementRows.enumerated() {
+            set.orderIndex = index
+            guard !set.isComplete && !set.isWarmup else { continue }
+            set.weight = 0
             set.reps = 0
             set.rpe = nil
             set.wasManualOverride = false
         }
-        try? context.save()
+        do {
+            try SessionSetActions.saveOrRollBack(context)
+            return true
+        } catch {
+            return false
+        }
+    }
+
+    @MainActor
+    private static func preserveCompletedSets(
+        of exercise: SessionExercise,
+        in session: Session,
+        context: ModelContext
+    ) {
+        let logged = SessionSetActions.ordered(exercise).filter { $0.isComplete && !$0.isWarmup }
+        guard !logged.isEmpty else { return }
+
+        let index = exercise.orderIndex
+        for other in (session.exercises ?? []) where other.orderIndex >= index {
+            other.orderIndex += 1
+        }
+        let original = SessionExercise()
+        context.insert(original)
+        original.session = session
+        original.orderIndex = index
+        original.exercise = exercise.exercise
+        original.exerciseNameSnapshot = exercise.exerciseNameSnapshot
+        VariationUndoSnapshot.Prescription(exercise).apply(to: original)
+
+        for (order, set) in logged.enumerated() {
+            set.sessionExercise = original
+            set.orderIndex = order
+        }
     }
 
     /// Replaces the warm-ups, pending or skipped, with the ramp

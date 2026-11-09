@@ -25,6 +25,7 @@ public struct SetRow: View {
     /// Phase 3 (plan 03-08): the full PrescriptionExplanation recomputed by
     /// SessionExerciseCard.currentExplanation().
     public let explanation: PrescriptionExplanation?
+    public let suggestion: WorkoutSetSuggestion
     public let onCommit: () -> Void
     public let onTapEmptyCell: () -> Void
     /// Tap on a completed checkmark: un-complete the set.
@@ -54,6 +55,7 @@ public struct SetRow: View {
         sessionExercise: SessionExercise,
         prescribed: Double? = nil,
         explanation: PrescriptionExplanation? = nil,
+        suggestion: WorkoutSetSuggestion = .init(),
         expandedEffortSetID: Binding<UUID?>,
         onCommit: @escaping () -> Void,
         onTapEmptyCell: @escaping () -> Void,
@@ -64,6 +66,7 @@ public struct SetRow: View {
         self.sessionExercise = sessionExercise
         self.prescribed = prescribed
         self.explanation = explanation
+        self.suggestion = suggestion
         self._expandedEffortSetID = expandedEffortSetID
         self.onCommit = onCommit
         self.onTapEmptyCell = onTapEmptyCell
@@ -72,6 +75,10 @@ public struct SetRow: View {
     }
 
     public var body: some View {
+        let repsOffer = entry.isComplete ? nil : suggestion.reps
+        let repsPrompt = repsOffer.map { String($0) } ?? "—"
+        let validRepsDraft = repsText.isEmpty || Int(repsText) == suggestion.reps(for: entry)
+        let canComplete = validRepsDraft && SessionSetActions.canComplete(entry, suggestion: suggestion)
         VStack(alignment: .leading, spacing: 6) {
             inputLayout {
                 setActions
@@ -94,6 +101,7 @@ public struct SetRow: View {
                     weight: $entry.weight,
                     prescribed: prescribed,
                     range: explanation?.range,
+                    offeredWeight: suggestion.weight,
                     unitLabel: unit.rawValue,
                     wasManualOverride: $entry.wasManualOverride,
                     isComplete: entry.isComplete,
@@ -114,7 +122,7 @@ public struct SetRow: View {
                 }
 
                 // Reps TextField — mono emphasis + readable signal when complete
-                TextField("—", text: $repsText)                              // UI-SPEC verbatim "—"
+                TextField("Reps", text: $repsText, prompt: Text(repsPrompt).foregroundStyle(Color.bruMuted))
                     .font(BRUFont.bodyEmphasis)
                     .monospacedDigit()
                     .foregroundStyle(entry.isComplete ? Color.bruSignalText : Color.bruInk)
@@ -148,6 +156,8 @@ public struct SetRow: View {
                     }
                     // The "—" placeholder would read as "em dash".
                     .accessibilityLabel("Reps, set \(displayNumber)")
+                    .accessibilityValue(repsText.isEmpty ? repsPrompt : repsText)
+                    .accessibilityHint(repsOffer != nil && repsText.isEmpty ? "Suggested reps. Tap to edit." : "")
                     .accessibilityIdentifier("set.reps.\(identifierSuffix)")
 
                 effortButton
@@ -159,7 +169,7 @@ public struct SetRow: View {
                 Button {
                     if entry.isComplete {
                         onUncomplete()
-                    } else if SessionSetActions.canComplete(entry) {
+                    } else if canComplete {
                         onCommit()
                     }
                 } label: {
@@ -168,7 +178,7 @@ public struct SetRow: View {
                 .buttonStyle(.plain)
                 .frame(minWidth: WorkoutSetColumns.done, minHeight: 44)
                 .contentShape(Rectangle())
-                .disabled(!entry.isComplete && !SessionSetActions.canComplete(entry))
+                .disabled(!entry.isComplete && !canComplete)
                 .accessibilityLabel(
                     entry.isComplete
                     ? "Set \(displayNumber) complete"

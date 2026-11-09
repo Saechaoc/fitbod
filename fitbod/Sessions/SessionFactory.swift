@@ -80,9 +80,7 @@ public enum SessionFactory {
     /// + progressionKind onto the Session (PIVOT-02 / PIVOT-05) before
     /// deep-copying the remaining per-exercise prescription fields from
     /// `RoutineExercise` to `SessionExercise` (PITFALLS-doc #1 /
-    /// ROUTINE-07) and pre-populates planned `SetEntry` rows with target
-    /// weight pulled from the most recent matching-intent session for
-    /// each exercise (`PreviousMatchingIntent.fetchTopWorkingSet`).
+    /// ROUTINE-07). Pending working rows start without entered values.
     ///
     /// Phase 3 (plan 03-08): also invokes ProgressionStrategyFactory ONCE
     /// per session (D-14 — one strategy per session, reused for every
@@ -279,17 +277,8 @@ public enum SessionFactory {
                 re.warmupOverride = WarmupConfig(enabled: override.enabled, skipNextSession: false)
             }
 
-            // Pre-populate planned `SetEntry` rows. Each set carries the
-            // previous-matching-intent weight as a "suggestion" but
-            // `isComplete = false` is the explicit "planned, not yet
-            // logged" sentinel (plan 00-01 D-3).
-            //
-            // Working set orderIndex is shifted up by the number of warm-up
-            // rows inserted in Block B so warm-up rows occupy indices 0..N-1
-            // and working sets start at N. With no previous matching-intent
-            // set (the first logged session of this exercise and intent),
-            // set rows default to weight 0.
-            let seedWeight = prescription.previousSet?.weight ?? 0
+            // Set rows resolve their offers from the frozen prescription and
+            // logged performance. Pending model values are the lifter's drafts.
             let plannedWorkingSetCount = PeriodizationEngine.workingSetCount(
                 targetSets: re.targetSets, phase: scheduledBlockPhase
             )
@@ -298,9 +287,6 @@ public enum SessionFactory {
                 let entry = SetEntry()
                 entry.sessionExercise = se
                 entry.orderIndex = setIndex + warmupSets.count   // shifted past warm-up slots
-                entry.weight = seedWeight
-                entry.reps = 0
-                entry.rpe = nil
                 entry.setTypeRaw = SetType.working.rawValue
                 entry.isWarmup = false
                 entry.isComplete = false                  // SENTINEL
@@ -347,7 +333,7 @@ public enum SessionFactory {
         let explanation: PrescriptionExplanation
         let barWeight: Double
         let plates: [(weight: Double, countPerSide: Int)]
-        let previousSet: PreviousMatchingIntentHit?
+        let previousWorkingSets: [SetEntry]
     }
 
     /// The prescription step (Phase 3 plan 03-08): the weight `strategy`
@@ -366,15 +352,16 @@ public enum SessionFactory {
         userSettings: UserSettings?,
         context: ModelContext
     ) -> ExercisePrescription {
-        // Resolve "previous matching-intent weight". PIVOT-02: intent is
-        // sourced from the snapshotted session-level field. Only finished
-        // sessions count, so `session` never feeds its own prescription.
-        let previousSet = PreviousMatchingIntent.fetchTopWorkingSet(
+        // Use one matching finished workout for load progression and the
+        // set-by-set offers. The active workout is separate evidence.
+        let previousWorkout = PreviousMatchingIntent.lastWorkingSets(
             exerciseID: exercise?.id,
             intentRaw: session.intentRaw,
             context: context,
             excludingSessionID: session.id
         )
+        let previousSet = previousWorkout.flatMap { PreviousMatchingIntent.topWorkingSet(in: $0) }
+        let previousWorkingSets = previousWorkout?.sets ?? []
 
         let inventory = plateEquipmentKind(for: exercise?.equipment ?? .other)
             .map { plateInventory(for: $0, context: context) }
@@ -397,13 +384,7 @@ public enum SessionFactory {
             context: context
         )
 
-        // Fetch the last session's working-set reps array for DoubleProgression
-        // bump detection. PIVOT-02: intentRaw sourced from session-level snapshot.
-        let lastRepsArray = lastSessionWorkingReps(
-            exerciseID: exercise?.id,
-            intentRaw: session.intentRaw,
-            context: context
-        )
+        let lastRepsArray = previousWorkingSets.map(\.reps)
 
         // Configure a value copy so rounding cannot leak between exercises in a session.
         var configuredStrategy = strategy
@@ -434,7 +415,7 @@ public enum SessionFactory {
             explanation: explanation,
             barWeight: barWeight,
             plates: plates,
-            previousSet: previousSet
+            previousWorkingSets: previousWorkingSets
         )
     }
 

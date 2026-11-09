@@ -144,7 +144,7 @@ struct SkippedWarmupWorkout {
         for set in sets where !set.isWarmup {
             set.weight = prescribed
             set.reps = 8
-            SessionSetActions.complete(set, at: Self.start + Double(set.orderIndex) * 180, context: ctx)
+            try SessionSetActions.complete(set, at: Self.start + Double(set.orderIndex) * 180, context: ctx)
         }
         if skipWarmups {
             for warmup in sets where warmup.isWarmup {

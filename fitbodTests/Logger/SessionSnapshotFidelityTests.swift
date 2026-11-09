@@ -44,7 +44,7 @@ struct SessionSnapshotFidelityTests {
         let working = SessionSetActions.ordered(se).filter { !$0.isWarmup }
         working[0].weight = 100
         working[0].reps = 6
-        SessionSetActions.complete(working[0], context: ctx)
+        try SessionSetActions.complete(working[0], context: ctx)
         let setIDs = Set((se.sets ?? []).map(\.id))
 
         // Edit everything upstream after the fact.

@@ -6,6 +6,7 @@ public struct PrescriptionWeightCell: View {
     public let prescribed: Double?
     /// A calibrating set keeps the weight its workout seeded until the lifter picks one.
     public let range: ClosedRange<Double>?
+    public let offeredWeight: Double?
     public let unitLabel: String
     @Binding public var wasManualOverride: Bool
     public let isComplete: Bool
@@ -20,6 +21,7 @@ public struct PrescriptionWeightCell: View {
         weight: Binding<Double>,
         prescribed: Double?,
         range: ClosedRange<Double>?,
+        offeredWeight: Double? = nil,
         unitLabel: String,
         wasManualOverride: Binding<Bool>,
         isComplete: Bool = false,
@@ -30,17 +32,21 @@ public struct PrescriptionWeightCell: View {
         self._weight = weight
         self.prescribed = prescribed
         self.range = range
+        self.offeredWeight = offeredWeight
         self.unitLabel = unitLabel
         self._wasManualOverride = wasManualOverride
         self.isComplete = isComplete
         self.onTapEmptyCell = onTapEmptyCell
         self.onEditCommitted = onEditCommitted
         self.enteredWeight = enteredWeight
-        self._weightText = State(initialValue: Self.text(for: weight.wrappedValue))
+        self._weightText = State(initialValue: Self.text(
+            for: weight.wrappedValue, enteredZero: wasManualOverride.wrappedValue
+        ))
     }
 
     public var body: some View {
-        TextField("—", text: $weightText)
+        let prompt = displayedOffer.map(NumberText.weight) ?? "—"
+        TextField("Weight", text: $weightText, prompt: Text(prompt).foregroundStyle(Color.bruMuted))
             .keyboardType(.decimalPad)
             .focused($weightFocused)
             .selectsAllOnFocus(weightFocused)
@@ -54,34 +60,36 @@ public struct PrescriptionWeightCell: View {
             }
             .accessibilityLabel("Weight")
             .accessibilityValue(accessibilityValueText)
+            .accessibilityHint(displayedOffer == nil ? "" : "Suggested weight. Tap to edit.")
             .overlay(alignment: .leading) {
-                if wasManualOverride && !weightText.isEmpty { overrideBadge }
+                if wasManualOverride && !weightText.isEmpty && (weight != 0 || isManualOverride(weight)) {
+                    overrideBadge
+                }
             }
             .onChange(of: weightText) { _, text in
                 guard weightFocused, let value = Double(text), value.isFinite else { return }
                 weight = value
-                wasManualOverride = isManualOverride(value)
+                // Zero can be an intentional unloaded set. Keep it even if
+                // a later set's offer changes to a positive load.
+                wasManualOverride = value == 0 || isManualOverride(value)
             }
             .onChange(of: weightFocused) { _, focused in
                 guard !focused else { return }
                 // Clearing the field keeps the last valid weight. Restore also
                 // reflects actions taken while the field was losing focus.
-                if Double(weightText) != weight { weightText = Self.text(for: weight) }
+                if Double(weightText) != weight { weightText = enteredWeightText }
                 onEditCommitted()
             }
             .onChange(of: weight) { _, newWeight in
                 if !weightFocused, Double(weightText) != newWeight {
-                    weightText = Self.text(for: newWeight)
+                    weightText = enteredWeightText
                 }
             }
             .onChange(of: weightInField) { _, value in
                 enteredWeight?.wrappedValue = value
             }
             .onAppear {
-                if !isComplete, !wasManualOverride, range == nil, weight == 0, let prescription {
-                    weight = prescription
-                }
-                weightText = Self.text(for: weight)
+                weightText = enteredWeightText
             }
     }
 
@@ -96,7 +104,17 @@ public struct PrescriptionWeightCell: View {
     }
 
     var accessibilityValueText: String {
-        weightText.isEmpty ? "none" : "\(NumberText.weight(weight)) \(unitLabel)"
+        if let displayedOffer { return "\(NumberText.weight(displayedOffer)) \(unitLabel)" }
+        return weightText.isEmpty ? "none" : "\(NumberText.weight(weight)) \(unitLabel)"
+    }
+
+    private var displayedOffer: Double? {
+        guard !isComplete, !wasManualOverride, weight == 0 else { return nil }
+        return offeredWeight
+    }
+
+    private var enteredWeightText: String {
+        Self.text(for: weight, enteredZero: wasManualOverride)
     }
 
     /// Keep the override mark within the weight column and out of the tap target.
@@ -120,12 +138,12 @@ public struct PrescriptionWeightCell: View {
 
     /// A positive load typed over a zero calibration range is a change too.
     func isManualOverride(_ value: Double) -> Bool {
-        guard let prescription = prescription ?? (range == nil ? nil : 0) else { return false }
+        guard let prescription = prescription ?? offeredWeight ?? (range == nil ? nil : 0) else { return false }
         return abs(value - prescription) > 0.001
     }
 
-    private static func text(for weight: Double) -> String {
-        weight > 0 ? NumberText.weight(weight) : ""
+    private static func text(for weight: Double, enteredZero: Bool) -> String {
+        weight > 0 || (weight == 0 && enteredZero) ? NumberText.weight(weight) : ""
     }
 }
 

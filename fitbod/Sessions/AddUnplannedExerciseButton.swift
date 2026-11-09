@@ -89,14 +89,10 @@ public struct AddUnplannedExerciseButton: View {
         )
         se.prescribedWeight = prescription.weight
 
-        // Seed 3 planned sets with the matching-intent weight hint
-        let hint = prescription.previousSet?.weight ?? 0
         for i in 0..<3 {
             let entry = SetEntry()
             entry.sessionExercise = se
             entry.orderIndex = i
-            entry.weight = hint
-            entry.reps = 0
             entry.setTypeRaw = SetType.working.rawValue
             entry.isComplete = false
             entry.completedAt = .now
