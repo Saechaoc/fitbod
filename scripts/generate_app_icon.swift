@@ -3,8 +3,8 @@
 //  generate_app_icon.swift
 //  fitbod — BRU app icon generator
 //
-//  Generates the original BRU identity: a paper surface, ink training slab,
-//  orange bracket and condensed wordmark. Vector drawing keeps this asset
+//  Generates the BRU identity: an edge-to-edge ink background, orange bracket
+//  and condensed wordmark. Vector drawing keeps this asset
 //  reproducible without an image-generation dependency.
 //
 //  Usage:
@@ -39,7 +39,7 @@ guard let ctx = CGContext(
     bitsPerComponent: 8,
     bytesPerRow: 0,
     space: colorSpace,
-    bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue
+    bitmapInfo: CGImageAlphaInfo.noneSkipLast.rawValue
 ) else {
     FileHandle.standardError.write(Data("failed to create CGContext\n".utf8))
     exit(2)
@@ -48,12 +48,10 @@ guard let ctx = CGContext(
 let paper = CGColor(colorSpace: colorSpace, components: [250 / 255.0, 250 / 255.0, 247 / 255.0, 1])!
 let ink = CGColor(colorSpace: colorSpace, components: [10 / 255.0, 10 / 255.0, 10 / 255.0, 1])!
 let signal = CGColor(colorSpace: colorSpace, components: [1, 92 / 255.0, 26 / 255.0, 1])!
-ctx.setFillColor(paper)
+// iOS supplies the outer icon mask; the background fills the entire canvas.
+ctx.setFillColor(ink)
 ctx.fill(CGRect(x: 0, y: 0, width: size, height: size))
 
-// Deliberate square panel; iOS supplies the outer icon mask.
-ctx.setFillColor(ink)
-ctx.fill(CGRect(x: 108, y: 108, width: 808, height: 808))
 ctx.setFillColor(signal)
 ctx.fill(CGRect(x: 158, y: 202, width: 26, height: 620))
 ctx.fill(CGRect(x: 158, y: 796, width: 120, height: 26))
