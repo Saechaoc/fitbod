@@ -154,7 +154,7 @@ Each redesign step keeps affected tests serial on dedicated simulators and captu
 1. On a disposable installation without training data, install current main, start/log a set with Focus off and capture the entire prompt, build and iOS version.
 2. Allow it, log another set and record whether it returns.
 3. Repeat first use with Focus on, then with Live Activities denied in Settings → Fitbod. In-app rest must work. Back up before replacing a populated installation.
-4. If ownership is unclear, immediately collect the phone log on the Mac: `sudo log collect --device-udid <udid> --last 1h --output ~/Desktop/fitbod-phone.logarchive` (`xcrun devicectl list devices` supplies UDID; collection needs root). Inspect Fitbod/ActivityKit events locally.
+4. If ownership is unclear, immediately collect the phone log on the Mac: `sudo log collect --device --last 1h --output ~/Desktop/fitbod-phone.logarchive` (`--device` takes the one paired phone; `--device-udid` wants the hardware UDID that `xcrun xctrace list devices` prints, not the devicectl identifier, which fails with “Device not configured (6)”; collection needs root). Inspect Fitbod/ActivityKit events locally.
 
 **Scope / sequence:** Capture exact prompt → identify owner → fix a reproduced defect → repeat allow/deny/Focus cases. Existing authorization code does not prove the reported prompt.
 **Requires:** Disposable physical iPhone installation and exact prompt observation; no other feature prerequisite.
