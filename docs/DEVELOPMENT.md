@@ -36,6 +36,7 @@ These are cheap or protect the lifter's data, so they apply to every change at e
   - the 44 pt minimum inside shared components, not patched per screen;
   - an `accessibilityIdentifier` on controls a UI test drives.
 - **The phone you lift with works.** Check each changed screen at default text, light mode, on a 390 pt phone (iPhone 17e simulator), because that is the support floor.
+  `scripts/shot.sh` captures a seeded state there in one command (`docs/SETUP.md`, Captures and phone installs).
 - **GitNexus impact check before editing a symbol, as `CLAUDE.md` requires.** It is one call and catches callers you did not know about.
 
 ## Scale effort to the change
@@ -79,6 +80,7 @@ A skipped ticket is not a completed outcome.
 - Update that RM entry when work changes scope, status, dependencies or evidence. Add a stable RM ID only for a distinct outcome; retain original finding IDs when deduplicating.
 - Use a short conversation plan for execution. Keep any necessary temporary implementation detail subordinate to the roadmap.
 - Routine testing is the agent's responsibility. The user may try builds whenever convenient; personal sign-off is not required for every feature.
+- Build in small slices. A slice lands on `main` and is pushed when its local checks pass; no pull request is required and CI gates nothing ([RM-053](ROADMAP.md#rm-053)).
 - Use **Planned → Active → Done**. Done means the agreed scope works, appropriate agent-run checks pass and affected docs are current. A relevant failing check is not a pass; record its actual disposition.
 - If implementation is finished but required proof is unavailable, use **Implemented; verification pending** and identify exactly what remains unproven. Ask for user involvement only for unavailable observations (for example, Lock Screen rendering or gym ergonomics) or a product decision. Those checks block only work that actually requires their result; continue independent planning/development.
 - Separate **Requires** (real prerequisites), **Scheduled after** (delivery order) and **Verify when** (stability/release/integration triggers). Prove populated backup/recovery before schema-changing work, and load provenance before mixed-unit analytics. Keep correctness/privacy/data-integrity safeguards local to affected paths; unrelated work need not wait.

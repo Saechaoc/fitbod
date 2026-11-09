@@ -12,7 +12,11 @@ Keep concise commands/results/limitations with their RM owner. Logs/screenshots 
 
 ## Active work
 
-No feature implementation is currently active. Documentation reconciliation is complete in [RM-043](#rm-043). Move the selected bounded outcome here when implementation starts; a phone-pending feature does not occupy the active slot.
+Two lanes run at once, as the user chose on 2026-11-09.
+Lane A, product: [RM-006](#rm-006), built in six slices (seeds, StartSlot rules, shared starts, session sheet and T-PICK hero, state slabs, removals).
+Lane B, data safety: [RM-001](#rm-001), then RM-002 to RM-005, one bounded delivery at a time in its own worktree and on its own simulator.
+Each slice lands on `main` when its local checks pass ([RM-053](#rm-053)).
+Move the next bounded outcome here when its implementation starts; a phone-pending feature does not occupy an active slot.
 
 ## Next
 
@@ -20,13 +24,12 @@ This is the ordered dependency-ready queue; feature definitions below retain the
 
 | Order | Ready outcome | Boundary |
 |---|---|---|
-| 1 | [RM-001](#rm-001) preserve good stores on transient open failure | Protects backup/recovery and affected persistence paths. |
-| 2 | [RM-002](#rm-002) remaining failed writes | Slot addition, resets and supersets are separate bounded deliveries. |
-| 3 | [RM-003](#rm-003) render missing targets without writes | Before extending affected Volume rendering. |
-| 4 | [RM-004](#rm-004) strip custom-photo location | Before extending photo/backup paths. |
-| 5 | [RM-005](#rm-005) numeric/tempo boundaries | Current relabel-only units suffice; no circular wait for provenance. |
-| 6 | [RM-006](#rm-006) session sheet, StartSlot and state slabs | Next approved Today/Program step; [reconciled notes](../.planning/quick/261106-ss3-session-sheet-startslot-and-state-slabs/261106-ss3-PLAN.md). |
-| 7 | [RM-019](#rm-019) stalled exercises outside a workout | Independent analytics stream; [RM-020](#rm-020) past recaps follows, then broader analytics. |
+| 1 | [RM-002](#rm-002) remaining failed writes | Lane B after RM-001. Slot addition, resets and supersets are separate bounded deliveries. |
+| 2 | [RM-003](#rm-003) render missing targets without writes | Lane B. Before extending affected Volume rendering. |
+| 3 | [RM-004](#rm-004) strip custom-photo location | Lane B. Before extending photo/backup paths. |
+| 4 | [RM-005](#rm-005) numeric/tempo boundaries | Lane B. Current relabel-only units suffice; no circular wait for provenance. |
+| 5 | [RM-010](#rm-010) full volume behind a summary row | Lane A after RM-006; needs RM-003. |
+| 6 | [RM-019](#rm-019) stalled exercises outside a workout | Independent analytics stream; [RM-020](#rm-020) past recaps follows, then broader analytics. |
 
 After RM-001, [RM-029](#rm-029) populated recovery proof takes priority over schema-changing work. Preserve the approved Today/Program order: **RM-006 → RM-010 → RM-011 → RM-012 → RM-013 → RM-014 → RM-015 → RM-016 → RM-017 → RM-018**. Successors enter this queue as preceding work lands; planning may proceed meanwhile. Authoring, catalog, logging and calculator deliveries use their actual conditional prerequisites below, not the whole redesign as a gate.
 
@@ -41,7 +44,7 @@ Only the named observation/decision is unavailable; this section does not pause 
 | [RM-045](#rm-045), FT-16 | Physical small/large phone heatmap reach/calf taps | Closing clipping acceptance; RM-010 development can proceed. |
 | [RM-046](#rm-046), FT-21 | Installed dark/tinted icon observation | Closing icon acceptance or deciding an observed mismatch remedy. |
 | [RM-036](#rm-036)–[RM-041](#rm-041) | First-log PRs, rep-miss threshold, aggregate labels, adherence, applied per-set targets and stack attribution | Only behavior each decision changes; existing semantics remain. |
-| [RM-021](#rm-021), [RM-053](#rm-053) | Provenance/legacy-data design; delivery/CI trigger policy | Stored unit changes; chosen CI policy, respectively. |
+| [RM-021](#rm-021) | Provenance/legacy-data design | Stored unit changes. |
 
 Gym ergonomics/stability and [RM-047](#rm-047) physical timer/VoiceOver checks return at workflow stability/release triggers. Request user involvement only for a specific unavailable observation or product choice, with build/reproduction details; routine checks stay with the agent.
 
@@ -63,6 +66,7 @@ Done covers the bounded implementation, appropriate agent-run checks and updated
 | ID | Priority / status | Outcome and completion evidence | Dependencies / references |
 |---|---|---|---|
 | [RM-043](#rm-043) | P3 · Done | Completion policy, bounded roadmap/dependency semantics, current setup/widget docs and selected plan archives. Verification in RM-043; [plan/results](archive/features/development-workflow.md). | Documentation only; no app-runtime claim. |
+| [RM-053](#rm-053) | P3 · Done | Local checks are the delivery policy for `main`; CI stays for pull requests and manual runs. User decision 2026-11-09. | Policy only; no workflow change. |
 | <a id="rm-055"></a>RM-055 | P1 · Historically shipped; acceptance unrecorded | Gym day author/start/log/relaunch/finish/history; transactional corrections/frozen WHY/cache invalidation. D-01/D-02 slotted-delete/rollback, D-03/N1 backup routines, D-04 edit screen delivered. Recorded persistence/edit/backup tests; T40 `32c8b65`, T41 `027536d`, rollback refresh `c3214985`. | [history design](design-map/mockups/history-editing.html), [service](../fitbod/Sessions/SessionEditService.swift), [contracts](../ARCHITECTURE.md#snapshots-and-corrections); remaining failed writes RM-002. |
 | <a id="rm-056"></a>RM-056 | P1 · Historically shipped; acceptance unrecorded | Block plan/reorder/reschedule/deload/end/archive/review/next delivered 2026-11-05; recorded `RelaunchPersistenceTests.blockRunSurvivesRelaunches` acceptance, `7933e4c3`/`6a67849c`. D-06/D-25/D-40/D-45/D-47/D-96/D-97/D-161/D-166 delivered; new notice/origin remains RM-006/RM-013/RM-016. | [relaunch test](../fitbodTests/RelaunchPersistenceTests.swift); real block stability still open. |
 | <a id="rm-057"></a>RM-057 | P1 · Done for step 1.1 | Redesign 1.1 TodayState/plan line/day refresh/oldest-ready/advisory. Removed stat strip/block band/week cells/deload banner/plan-complete note. 23 state tests/captures `a3b3ead4`–`56dc453c`; full run had 5 failures/1 expected, with fixes/remaining risks owned separately; [plan/results](archive/features/today-state-and-plan-line.md); D-159/D-341 elements replaced. R-2/R-4/R-6/R-8/R-13: today.root/Progress history entry, calendar refresh, shared BlockPosition and long-name layout shipped. | [state](../fitbod/Views/TodayState.swift), [position](../fitbod/Periodization/BlockPosition.swift); does not complete 1.3. |
@@ -127,7 +131,7 @@ Each redesign step keeps affected tests serial on dedicated simulators and captu
 
 ### <a id="rm-006"></a>RM-006 — Redesign 1.3: session sheet, StartSlot and state slabs
 
-**P1 · Planned.** Implement the approved [Today layouts](design-map/redesign/today-layouts.md) and [hierarchy](design-map/redesign/hierarchy.md). The [reconciled implementation notes](../.planning/quick/261106-ss3-session-sheet-startslot-and-state-slabs/261106-ss3-PLAN.md) are subordinate input; this entry owns scope and status. GSD/executor, capture-commit and full-suite mandates in the old notes are retired.
+**P1 · Active (2026-11-09).** Implement the approved [Today layouts](design-map/redesign/today-layouts.md) and [hierarchy](design-map/redesign/hierarchy.md). The [reconciled implementation notes](../.planning/quick/261106-ss3-session-sheet-startslot-and-state-slabs/261106-ss3-PLAN.md) are subordinate input; this entry owns scope and status. GSD/executor, capture-commit and full-suite mandates in the old notes are retired.
 **Done when:**
 
 - One pure `StartSlot` rule serves hero, session sheet, Program and session detail. Rotation NEXT is the resolver's next slot; weekday NEXT is today's slot before a counted workout, otherwise the next training day's slot. No-block NEXT advances from the newest finished slotted workout, skips empty sessions and wraps.
@@ -339,7 +343,8 @@ Count outside view rendering, keyed by finished-workout changes and the week sta
 **Scope / sequence:** Measure a logging/keyboard obstruction → fix shared reveal/advance → verify context/44pt reach. Finish styling shipped in RM-060. Live Activity automatic scrolling returns with its set route; AX3/VoiceOver at stability.
 **Requires:** Logging invariants and a reproduced reach/reveal issue.
 **Verify when:** 390pt default-text keyboard/rest interactions now; [RM-044](#rm-044) at stability.
-**Evidence:** Exercise-level weight guidance and the compact effort control are implemented with verification pending. The logger shows the rep target and starting-weight prompt when there is no load to suggest. The suggestion stays available after logging, weight fields accept direct edits during calibration, and effort expands within the set being rated. Updated checks cover restoring the frozen weight, editing a calibration load directly, and recording a half-step effort after logging. On 2026-11-09, f4df0713 built; its unit run failed only a plural copy rule this branch broke and the stale `.planning/ROADMAP.md` audit; the 11 affected logger UI classes passed 29 of 29 on iPhone 17; a 390pt iPhone 17e default-text light pass showed aligned columns, Use replacing a weight still being typed, and the keyboard closing before Calculation details. Review fixes then corrected that copy, kept an open set's effort rating out of the logged orange, moved the rule that a 0 suggestion offers no Use into one tested `PrescriptionExplanation.suggestedWeight`, removed the sheet's unused Use/Override path and set-type label, and added `WeightCellSeedingTests` for a logged 0 lb set; the stale audit test is deleted, as 99ef6bec removed the file it read. Open: on the review fixes, re-run the unit target and look at an open set's effort color and the calculation sheet's header on the simulator.
+**Evidence:** Exercise-level weight guidance and the compact effort control shipped in `fd5f6938` (PR #2) and are verified. The logger shows the rep target and starting-weight prompt when there is no load to suggest. The suggestion stays available after logging, weight fields accept direct edits during calibration, and effort expands within the set being rated. Updated checks cover restoring the frozen weight, editing a calibration load directly, and recording a half-step effort after logging. On 2026-11-09, f4df0713 built; its unit run failed only a plural copy rule this branch broke and the stale `.planning/ROADMAP.md` audit; the 11 affected logger UI classes passed 29 of 29 on iPhone 17; a 390pt iPhone 17e default-text light pass showed aligned columns, Use replacing a weight still being typed, and the keyboard closing before Calculation details. Review fixes then corrected that copy, kept an open set's effort rating out of the logged orange, moved the rule that a 0 suggestion offers no Use into one tested `PrescriptionExplanation.suggestedWeight`, removed the sheet's unused Use/Override path and set-type label, and added `WeightCellSeedingTests` for a logged 0 lb set; the stale audit test is deleted, as 99ef6bec removed the file it read. Closed 2026-11-09 on `fd5f6938`: the unit target passed (1,265 tests, 1,264 passed, 1 expected failure; iPhone 17, iOS 26.5).
+On a 390pt iPhone 17e at default text in light mode, an open set's effort rating drew in ink, not the logged orange, and the calculation sheet's header showed the recommendation, weight, reps and RPE with no set-type label and no Use or Override.
 **References:** FT-08/FT-09, D-10/D-88–D-93, F19/F356/F357/F382; [weight guidance](../fitbod/Sessions/WorkoutWeightGuidance.swift), [workflow](design-map/workflows/log-a-workout.md), [set actions](../fitbod/Sessions/SessionSetActions.swift).
 
 ### <a id="rm-025"></a>RM-025 — Plate calculator from a working set
@@ -673,11 +678,15 @@ All checks below, [RM-029](#rm-029) populated restore and current data risks nee
 
 ### <a id="rm-053"></a>RM-053 — Decide CI coverage for main
 
-**P3 · Planned.** CI includes claude/** pushes, PRs/manual dispatch; direct main pushes do not trigger it.
+**P3 · Done (2026-11-09): local checks are the policy.** CI includes claude/** pushes, PRs/manual dispatch; direct main pushes do not trigger it.
 **Done when:** choose/verify main/release triggers or explicitly adopt local/manual evidence as policy here.
+**Decision (user, 2026-11-09):** local evidence is the policy for `main`.
+A slice lands on `main` and is pushed when the unit target and its affected UI classes pass locally; the full tier runs once per feature, before its last slice merges ([policy](DEVELOPMENT.md#scale-effort-to-the-change)).
+No pull request is needed per slice, and CI gates nothing.
+The workflow stays as it is for pull requests and manual dispatch.
 **Scope / sequence:** Choose delivery trigger policy → implement chosen triggers → observe expected CI run. No CI performance redesign.
-**Requires:** User delivery-policy choice; no feature dependency.
-**Evidence:** No passing acceptance is recorded for remaining scope; historical references do not close it.
+**Requires:** None; the choice is made.
+**Evidence:** The user chose this on 2026-11-09. The last green CI run took 37 minutes (2026-10-04), and the PR #2 run was cancelled at the workflow's 120-minute limit. No workflow file changed; why that run hung was not investigated.
 **References:** [CI](../.github/workflows), original CI flag.
 
 ### <a id="rm-054"></a>RM-054 — Kept tests fail honestly/stay fast

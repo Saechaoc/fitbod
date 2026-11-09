@@ -120,6 +120,21 @@ serially; two shards passed all four runs. Try more shards only with three
 clean full runs. Each shard's summary line counts idle-wait stalls, the
 60-second waits after typing that T101 removed, so a returning stall shows.
 
+### Captures and phone installs
+
+`scripts/shot.sh <name> [launch args]` captures one seeded state on the dedicated 390pt simulator, in light and in dark, into the ignored `.ci/shots/`.
+Set `FITBOD_SHOT_DEVICE` to that simulator's UUID first.
+It launches on an empty store with the launch arguments you pass, for example `scripts/shot.sh today-resume -fitbod-seed-demo-workout`.
+It builds into the DerivedData folder `scripts/test.sh` uses, so a capture after a test run is an incremental build; do not run it while tests run from the same worktree.
+A state behind a tap, such as a sheet, needs the simulator driven by hand.
+
+`FITBOD_PHONE=<udid> scripts/phone.sh` builds Debug for a connected iPhone and installs it over the existing app, which keeps its data.
+The id is the hardware UDID that `xcodebuild -showdestinations` prints; keep it out of the repository.
+The script does not launch the app, because iOS refuses a launch from the Mac while the phone is locked.
+
+Give each kind of local run its own simulator, so parallel work never shares a phone: the unit target on one iPhone 17, affected UI classes on its `shard 2` sibling, captures on an iPhone 17e (390pt), and a separate iPhone 17 for a second worktree.
+Running UI classes on a different phone from the unit target also avoids the reboot the unit host needs after UI tests.
+
 ## First launch and offline use
 
 The bundled seed v3 has **901 source records**, of which **703** are eligible for import:
