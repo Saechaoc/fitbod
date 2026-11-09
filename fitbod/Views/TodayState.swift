@@ -11,7 +11,7 @@ enum TodayState: Equatable {
     case attach(Block)                   // active block whose routine is nil
     case rest(Block)
     case today(Block, SplitSessionSlot)  // the scheduled slot, whose session has exercises
-    case pick                            // NEXT lands with step 1.3's StartSlot
+    case pick(StartSlot.Suggestion)      // no block; the session to lead with and the slot its start credits
     case first
 
     enum Fix: Equatable {
@@ -35,9 +35,7 @@ enum TodayState: Equatable {
     ) -> TodayState {
         if let open = openWorkouts.max(by: { $0.startedAt < $1.startedAt }) { return .resume(open) }
 
-        let doneToday = SessionSetActions.countedWorkouts(finishedWorkouts)
-            .filter { calendar.isDate($0.startedAt, inSameDayAs: now) }
-            .sorted { $0.startedAt > $1.startedAt }
+        let doneToday = StartSlot.doneToday(finishedWorkouts, now: now, calendar: calendar)
         if !doneToday.isEmpty { return .done(doneToday) }
 
         if let block = activeBlock {
@@ -51,7 +49,7 @@ enum TodayState: Equatable {
                 return .rest(block)
             case .session(let slot):
                 guard let template = slot.sessionTemplate else { return .fix(.routineHasNoSessions(routine)) }
-                return hasExercises(template) ? .today(block, slot) : .fix(.sessionHasNoExercises(template))
+                return StartSlot.hasExercises(template) ? .today(block, slot) : .fix(.sessionHasNoExercises(template))
             }
         }
 
@@ -60,8 +58,9 @@ enum TodayState: Equatable {
         }
         if let ready { return .ready(ready) }
 
-        let routineTemplates = liveRoutines.flatMap { ($0.slots ?? []).compactMap(\.sessionTemplate) }
-        if (routineTemplates + sessions).contains(where: hasExercises) { return .pick }
+        if let suggestion = StartSlot.suggestion(liveRoutines: liveRoutines, sessions: sessions, finished: finishedWorkouts) {
+            return .pick(suggestion)
+        }
 
         if let routine = liveRoutines.max(by: { $0.createdAt < $1.createdAt }) {
             return (routine.slots ?? []).isEmpty ? .fix(.routineHasNoSessions(routine)) : .fix(.routineHasNoExercises(routine))
@@ -73,9 +72,5 @@ enum TodayState: Equatable {
     static func showsDeloadAdvisory(state: TodayState, phase: BlockPhaseKind?) -> Bool {
         if case .resume = state { return false }
         return phase != .deload
-    }
-
-    private static func hasExercises(_ template: SessionTemplate) -> Bool {
-        !(template.exercises ?? []).isEmpty
     }
 }

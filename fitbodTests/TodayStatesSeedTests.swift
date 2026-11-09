@@ -44,7 +44,11 @@ struct TodayStatesSeedTests {
             #expect(session.name == TodayStatesSeed.emptySessionName)
         case (.done, .done(let workouts)):
             #expect(workouts.map(\.displayName) == ["Pull A", "Push A"])
-        case (.rest, .rest), (.attach, .attach), (.pick, .pick):
+        case (.pick, .pick(let suggestion)):
+            // Push A was trained two days ago, so the routine's NEXT is Pull A.
+            #expect(suggestion.session.name == "Pull A")
+            #expect(suggestion.slot?.split?.name == TodayStatesSeed.routineName)
+        case (.rest, .rest), (.attach, .attach):
             break
         default:
             Issue.record("the \(seed.rawValue) seed gave \(state)")

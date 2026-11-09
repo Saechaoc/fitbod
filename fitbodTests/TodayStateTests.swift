@@ -208,20 +208,29 @@ struct TodayStateTests {
 
     @Test func pickWithASessionInALiveRoutine() {
         let routine = routine()
-        _ = session(exerciseCount: 1, in: routine)
-        #expect(resolve(routines: [routine]) == .pick)
+        let (template, slot) = session(exerciseCount: 1, in: routine)
+        #expect(resolve(routines: [routine]) == .pick(.init(session: template, slot: slot)))
+    }
+
+    @Test func pickMovesOnAfterAFinishedSlottedWorkout() {
+        let routine = routine()
+        let (_, push) = session(name: "Push A", exerciseCount: 1, in: routine)
+        let (pullA, pull) = session(name: "Pull A", exerciseCount: 1, in: routine)
+        let done = workout(startedAt: now.addingTimeInterval(-86_400))
+        done.slot = push
+        #expect(resolve(finished: [done], routines: [routine]) == .pick(.init(session: pullA, slot: pull)))
     }
 
     @Test func pickWithAStandaloneSession() {
         let (template, _) = session(exerciseCount: 1)
-        #expect(resolve(sessions: [template]) == .pick)
+        #expect(resolve(sessions: [template]) == .pick(.init(session: template, slot: nil)))
     }
 
     @Test func pickWithASessionOnlyInAnArchivedRoutine() {
         let archived = routine()
         archived.isArchived = true
         let (template, _) = session(exerciseCount: 1, in: archived)
-        #expect(resolve(sessions: [template]) == .pick)
+        #expect(resolve(sessions: [template]) == .pick(.init(session: template, slot: nil)))
     }
 
     @Test func fixWithALiveRoutineAndNoSessions() {
