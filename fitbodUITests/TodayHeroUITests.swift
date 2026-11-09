@@ -36,6 +36,43 @@ final class TodayHeroUITests: XCTestCase {
                       "View › must open the session")
     }
 
+    /// With no block Today leads with the suggested session, and the session
+    /// sheet marks it NEXT, says what another session skips and starts that
+    /// session on a tap (RM-006).
+    @MainActor
+    func testNoBlockHeroAndSessionSheet() throws {
+        let app = UITestNavigation.launch(UITestNavigation.freshStore + ["-fitbod-seed-today-pick"])
+        for label in ["NEXT UP · PUSH PULL LEGS", "PULL A"] {
+            XCTAssertTrue(UITestNavigation.appears(app.staticTexts.labeled(label), within: 10), "Missing \(label)")
+        }
+        let choose = app.buttons["today.chooseSession"]
+        XCTAssertTrue(UITestNavigation.appears(choose), "Today must offer another session")
+        choose.tap()
+        XCTAssertTrue(UITestNavigation.appears(app.staticTexts.labeled("Start a workout")), "The session sheet must open")
+
+        func row(_ name: String) -> XCUIElement {
+            app.buttons.matching(NSPredicate(format: "label BEGINSWITH[c] %@", name)).firstMatch
+        }
+        XCTAssertTrue(row("Pull A").label.localizedCaseInsensitiveContains("Next"), "The suggested session must be marked NEXT")
+        XCTAssertTrue(row("Push A").label.localizedCaseInsensitiveContains("skips Pull A, Legs A"),
+                      "A session past NEXT must say what it skips, but reads \"\(row("Push A").label)\"")
+        XCTAssertFalse(row("Legs A").isEnabled, "A session with no exercises must not start")
+        XCTAssertTrue(row("Arms").exists, "A session in no routine must be listed")
+
+        row("Arms").tap()
+        XCTAssertTrue(UITestNavigation.appears(app.staticTexts.labeled("Session"), within: 5),
+                      "An Other sessions row must open its session detail")
+        XCTAssertTrue(app.staticTexts.labeled("Arms").exists)
+        UITestNavigation.hittable(app.buttons, "Back").tap()
+        XCTAssertTrue(UITestNavigation.appears(choose))
+        choose.tap()
+        XCTAssertTrue(UITestNavigation.appears(app.staticTexts.labeled("Start a workout")))
+
+        row("Push A").tap()
+        XCTAssertTrue(UITestNavigation.appears(app.textFields["set.reps.1.S1"], within: 15),
+                      "A sheet row must start its workout")
+    }
+
     /// In the deload week the hero cuts its set count and says why, and the
     /// rows read the cut sets with no chip beside them.
     @MainActor

@@ -85,7 +85,10 @@ NEXT is the resolver's slot in a rotation block; in a fixedWeekly block it is to
 With no block, a routine's NEXT follows its newest counted slotted workout, wraps and skips sessions with no exercises.
 A start credits NEXT when NEXT holds the session, otherwise the session's first slot after NEXT, so a session slotted twice never moves the rotation backwards.
 A start from no routine, an archived routine or a routine other than the active block's is unslotted.
-The session sheet and the no-block hero that read these rules are still planned under RM-006.
+With no block, Today's hero is `StartSlot.suggestion`: the NEXT of the routine trained most recently, else of the routine edited most recently, else the most recently edited session in no live routine.
+The session sheet reads the same rules through the pure `SessionSheetContent`: one row per session of each live routine, at most one usable NEXT mark, and the sessions a start skips (never in a fixedWeekly block).
+A sheet row starts its workout on the tap; a session in no live routine opens its detail instead.
+Other Today states still use the inline picker until RM-006's state-slab slice; obsolete picker files are removed at close-out.
 
 ## Snapshots and corrections
 

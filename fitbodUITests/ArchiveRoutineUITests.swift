@@ -241,10 +241,13 @@ final class ArchiveRoutineUITests: XCTestCase {
         app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", name + ",")).firstMatch
     }
 
-    /// Today's Start a workout heading for a routine's sessions.
+    /// The routine as Today offers it: named in the hero's label when its
+    /// session is the suggested one, or heading its sessions in a list.
     @MainActor
     private func todayGroup(_ name: String, in app: XCUIApplication) -> XCUIElement {
-        app.staticTexts.labeled(name)
+        app.staticTexts.matching(
+            NSPredicate(format: "label ==[c] %@ OR label ==[c] %@", name, "NEXT UP · \(name)")
+        ).firstMatch
     }
 
     @MainActor

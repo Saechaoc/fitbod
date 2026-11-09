@@ -163,7 +163,15 @@ A session slotted twice no longer moves the rotation backwards: `WorkoutStarterT
 The same suite covers a start from another routine or none while a block runs (unslotted, still in the block), two no-block starts in a row, and a slot removed after its screen opened.
 Unit target: 1,290 tests, 1,289 passed, 1 expected failure. UI: `MilestoneOneJourneyUITests`, `BlockLifecycleEntryPointsUITests`, `TodayHeroUITests`, `SessionHistoryBRUUITests` and `WorkoutExitUITests`, 12 of 12 passed (iPhone 17, iOS 26.5).
 A no-block start from Today's list or a routine's session now takes a slot in its routine; nothing on screen changed.
-**References:** D-19/D-24/D-25/D-162–D-165, redesign R-4/R-5/R-10/R-12/R-19/R-23/R-25; [TodayState](../fitbod/Views/TodayState.swift), [picker](../fitbod/Views/TodaySessionPicker.swift), [session detail](../fitbod/Routines/SessionTemplateDetailView.swift), [O-2/O-3/O-6](#rm-042).
+Slice 4 of 6, session sheet and T-PICK hero (2026-11-09, based on `ca3ec867`): with no block, Today leads with the suggested session, its exercises and a Choose another session row.
+`SessionSheetContent` lists each routine's sessions once, marks at most one usable NEXT, explains skipped sessions, disables empty routine sessions and puts standalone sessions under Other sessions; routine rows start immediately and Other sessions rows open detail.
+Eight content tests cover no-block/rotation/weekly rules, duplicate slots, empty sessions, other routines, standalone sessions and row summaries; `ProgramFixtures` shares the existing slot-test builders.
+The review removes the dead `upNext(done:)` parameter and tests the Other sessions tap, return and subsequent routine-row start.
+Unit target after the final code edits: 1,298 tests, 1,297 passed, 1 expected failure (`scripts/test.sh fast`, iPhone 17, iOS 26.5; `fast-20261109-142347`).
+UI: `MilestoneOneJourneyUITests` and `TodayHeroUITests` passed 4 of 4 after the fixes (`scripts/test.sh fast -only-testing:fitbodUITests/MilestoneOneJourneyUITests -only-testing:fitbodUITests/TodayHeroUITests`, iPhone 17 shard 2, iOS 26.5; `fast-20261109-142452`). The other seven affected classes passed 25 of 25 in `fast-20261109-140437`, including ArchiveRoutineUITests.
+The earlier journey failure was during Library search: its scroll helper asked a zero-size hidden ScrollView for hittability, before reaching Today. The helper now rejects empty frames; the completed-workout state still has its inline picker in this slice, so that step needed no migration. Documentation checker/self-test passed, with the existing warning for five unreferenced images.
+The saved hero and sheet captures were inspected at 390pt/default text in light and dark. The sheet title wraps to two readable lines; long routine names and AX3 were not checked. Empty workout remains in the sheet for this slice. Slices 5 (state slabs) and 6 (removals/close-out) have not started.
+**References:** D-19/D-24/D-25/D-162–D-165, redesign R-4/R-5/R-10/R-12/R-19/R-23/R-25; [TodayState](../fitbod/Views/TodayState.swift), [sheet](../fitbod/Views/SessionSheet.swift), [picker](../fitbod/Views/TodaySessionPicker.swift), [session detail](../fitbod/Routines/SessionTemplateDetailView.swift), [O-2/O-3/O-6](#rm-042).
 
 ### <a id="rm-007"></a>RM-007 — FT-19: identify the repeated permission prompt
 

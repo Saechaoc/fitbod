@@ -76,19 +76,33 @@ enum StartSlot {
 
     // MARK: - The slot a start credits
 
+    /// Whether a start from `routine` takes a slot at all: a live routine,
+    /// and while a block runs only the block's own.
+    static func givesSlots(_ routine: Split, block: Block?) -> Bool {
+        !routine.isArchived && (block == nil || block?.split?.id == routine.id)
+    }
+
+    /// NEXT in `routine` as things stand: the block's NEXT when the active
+    /// block runs on it, the routine's own with no block, and none in a
+    /// routine that gives no slots.
+    static func next(
+        in routine: Split, block: Block?, resolution: TodayResolution, finished: [Session], now: Date, calendar: Calendar
+    ) -> SplitSessionSlot? {
+        guard givesSlots(routine, block: block) else { return nil }
+        guard let block else { return next(in: routine, finished: finished) }
+        return next(in: block, resolution: resolution, finished: finished, now: now, calendar: calendar)
+    }
+
     /// The slot a start of `session` credits when it starts from `routine`, the
-    /// routine it was listed in or opened from. With no block that is its slot
-    /// in the routine, counted from the routine's NEXT. While a block runs only
-    /// the block's own routine gives a slot. A session started from no routine,
-    /// an archived one, or another routine than the block's, starts unslotted.
+    /// routine it was listed in or opened from: its slot there, counted from
+    /// that routine's NEXT. A session started from no routine, an archived one,
+    /// or another routine than the active block's, starts unslotted.
     static func slot(
         for session: SessionTemplate, startedFrom routine: Split?, block: Block?, resolution: TodayResolution,
         finished: [Session], now: Date, calendar: Calendar
     ) -> SplitSessionSlot? {
-        guard let routine, !routine.isArchived else { return nil }
-        guard let block else { return slot(for: session, in: routine, next: next(in: routine, finished: finished)) }
-        guard block.split?.id == routine.id else { return nil }
-        let next = next(in: block, resolution: resolution, finished: finished, now: now, calendar: calendar)
+        guard let routine, givesSlots(routine, block: block) else { return nil }
+        let next = next(in: routine, block: block, resolution: resolution, finished: finished, now: now, calendar: calendar)
         return slot(for: session, in: routine, next: next)
     }
 
