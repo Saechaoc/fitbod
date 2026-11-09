@@ -20,11 +20,15 @@
 //      NOT Image(systemName: "timer") — banned by UI-SPEC line 43.
 //
 //   3. Dynamic Island minimal (multiple-activity competition):
-//      22pt circle with bruSignal progress sweep (Canvas-drawn arc).
+//      system circular ProgressView(timerInterval:) tinted bruSignal.
 //      NOT Image(systemName: "timer") — banned by UI-SPEC line 43.
 //
 //   4. Dynamic Island expanded (long-press):
 //      RestTimerDynamicIslandExpandedView in .center slot.
+//
+// Every countdown and bar is a system timer view (`Text(timerInterval:)`,
+// `ProgressView(timerInterval:)`). ActivityKit only re-renders on a pushed
+// update, so anything computed from `Date.now` in a view body freezes.
 //
 // activityBackgroundTint: Color.bruInk — paper-on-ink contract (UI-SPEC line 730).
 // activitySystemActionForegroundColor: Color.bruSignal.
@@ -42,11 +46,7 @@ public struct RestTimerLiveActivity: Widget {
     public var body: some WidgetConfiguration {
         ActivityConfiguration(for: RestTimerAttributes.self) { context in
             // ── Lock screen / banner ──────────────────────────────────────
-            RestTimerLockScreenView(
-                state: context.state,
-                exerciseName: context.attributes.exerciseName
-            )
-            .padding(16)
+            RestTimerLockScreenView(state: context.state)
             .activityBackgroundTint(Color.bruInk)  // paper-on-ink (UI-SPEC line 730)
             .activitySystemActionForegroundColor(Color.bruSignal)
             // A tap on the lock screen opens the workout, as the island does.
@@ -54,91 +54,27 @@ public struct RestTimerLiveActivity: Widget {
 
         } dynamicIsland: { context in
             DynamicIsland {
-                // ── Dynamic Island expanded ───────────────────────────────
-                // Leading region — unused (compact leading absorbs it)
-                DynamicIslandExpandedRegion(.leading) {
-                    EmptyView()
-                }
-                // Trailing region — unused (center takes full width)
-                DynamicIslandExpandedRegion(.trailing) {
-                    EmptyView()
-                }
-                // Center — full expanded BRU layout
+                // ── Dynamic Island expanded: live countdown + bar only ────
                 DynamicIslandExpandedRegion(.center) {
-                    RestTimerDynamicIslandExpandedView(
-                        exerciseName: context.attributes.exerciseName,
-                        countdownText: remainingText(state: context.state),
-                        progress: progressFraction(state: context.state)
-                    )
-                }
-                // Bottom — progress bar already inside the expanded view;
-                // mount nothing extra here to avoid double-rendering.
-                DynamicIslandExpandedRegion(.bottom) {
-                    EmptyView()
+                    RestTimerDynamicIslandExpandedView(state: context.state)
                 }
             } compactLeading: {
                 // ── Compact leading: ink-square glyph (NOT SF Symbol) ─────
-                RestTimerDynamicIslandCompactLeading(
-                    countdownText: remainingText(state: context.state)
-                )
+                RestTimerDynamicIslandCompactLeading()
             } compactTrailing: {
-                // ── Compact trailing: countdown digits ────────────────────
-                RestTimerDynamicIslandCompactTrailing(
-                    countdownText: remainingText(state: context.state)
-                )
+                // ── Compact trailing: live countdown digits ───────────────
+                RestTimerDynamicIslandCompactTrailing(state: context.state)
             } minimal: {
-                // ── Minimal: 22pt Canvas progress sweep in bruSignal ──────
-                Canvas { ctx, size in
-                    let center = CGPoint(x: size.width / 2, y: size.height / 2)
-                    let radius = min(size.width, size.height) / 2 - 2
-                    let progress = progressFraction(state: context.state)
-
-                    // Track (faint full circle)
-                    var track = Path()
-                    track.addArc(
-                        center: center,
-                        radius: radius,
-                        startAngle: .degrees(0),
-                        endAngle: .degrees(360),
-                        clockwise: false
-                    )
-                    ctx.stroke(track, with: .color(Color.bruFaint), lineWidth: 2)
-
-                    // Signal arc (progress, starts at top -90°)
-                    guard progress > 0 else { return }
-                    var arc = Path()
-                    arc.addArc(
-                        center: center,
-                        radius: radius,
-                        startAngle: .degrees(-90),
-                        endAngle: .degrees(-90 + 360 * progress),
-                        clockwise: false
-                    )
-                    ctx.stroke(arc, with: .color(Color.bruSignal), lineWidth: 2)
+                // ── Minimal: live bruSignal ring that drains over the rest ─
+                ProgressView(timerInterval: context.state.restInterval, countsDown: true) {
+                    EmptyView()
+                } currentValueLabel: {
+                    EmptyView()
                 }
-                .frame(width: 22, height: 22)
+                .progressViewStyle(.circular)
+                .tint(Color.bruSignal)
             }
             .widgetURL(URL(string: "fitbod://session/active"))
         }
-    }
-
-    // MARK: - Helpers
-
-    /// Elapsed seconds since the rest started.
-    private func elapsed(state: RestTimerAttributes.ContentState) -> Double {
-        max(0, Date.now.timeIntervalSince(state.startedAt))
-    }
-
-    /// Formatted "M:SS" countdown clamped at "0:00" on overrun.
-    private func remainingText(state: RestTimerAttributes.ContentState) -> String {
-        let remaining = max(0, Double(state.targetSeconds) - elapsed(state: state))
-        return NumberText.minutesSeconds(Int(remaining))
-    }
-
-    /// Progress fraction: 1.0 at start, 0.0 at complete.
-    private func progressFraction(state: RestTimerAttributes.ContentState) -> Double {
-        let total = max(1, Double(state.targetSeconds))
-        let remaining = max(0, total - elapsed(state: state))
-        return min(1, remaining / total)
     }
 }

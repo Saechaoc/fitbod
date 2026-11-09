@@ -4,29 +4,19 @@
 // BRU brutalist Dynamic Island compact presentation views.
 // Per UI-SPEC v2 lines 412 + 569.
 //
-// Two top-level views mounted at the compactLeading and compactTrailing
-// presentation slots inside DynamicIsland(_:) in RestTimerLiveActivity.
-//
 // compactLeading  — RestTimerDynamicIslandCompactLeading:
 //   Small ink-square glyph (12×12 Rectangle, Color.bruInk).
 //   NOT the "timer" SF Symbol (banned by UI-SPEC line 43).
 //
 // compactTrailing — RestTimerDynamicIslandCompactTrailing:
-//   Countdown digits in BRUFont.bodyEmphasis + monospacedDigit, Color.bruPaper.
-//   Apple's compact trailing slot is ≤ 116pt wide — the mono countdown fits.
-//
-// UI-REVIEW Wave E item 52 (compact Dynamic Island).
+//   Live countdown digits in BRUFont.bodyEmphasis + monospacedDigit, bruPaper.
 
 import SwiftUI
 
 /// Compact leading slot: small ink-square glyph (12×12 Rectangle).
 /// Replaces Image(systemName: "timer") banned by UI-SPEC line 43.
 public struct RestTimerDynamicIslandCompactLeading: View {
-    public let countdownText: String
-
-    public init(countdownText: String) {
-        self.countdownText = countdownText
-    }
+    public init() {}
 
     public var body: some View {
         Rectangle()
@@ -35,42 +25,41 @@ public struct RestTimerDynamicIslandCompactLeading: View {
     }
 }
 
-/// Compact trailing slot: countdown digits in BRUMono bodyEmphasis bruPaper.
+/// Compact trailing slot: live countdown digits in BRUMono bodyEmphasis bruPaper.
+@available(iOS 16.1, *)
 public struct RestTimerDynamicIslandCompactTrailing: View {
-    public let countdownText: String
+    public let state: RestTimerAttributes.ContentState
 
-    public init(countdownText: String) {
-        self.countdownText = countdownText
+    public init(state: RestTimerAttributes.ContentState) {
+        self.state = state
     }
 
     public var body: some View {
-        Text(countdownText)
+        RestTimerCountdownText(state: state)
             .font(BRUFont.bodyEmphasis)
-            .monospacedDigit()
-            .foregroundStyle(Color.bruPaper)
+            .multilineTextAlignment(.trailing)
+            // A timer Text reserves its widest width; cap it to "M:SS".
+            .frame(maxWidth: 44, alignment: .trailing)
     }
 }
 
 // MARK: - Preview
 
 #if DEBUG
+@available(iOS 16.1, *)
 #Preview("Compact Dynamic Island — mock") {
-    HStack(spacing: 16) {
-        // Simulated Dynamic Island compact shape (small dark pill)
-        HStack(spacing: 6) {
-            RestTimerDynamicIslandCompactLeading(countdownText: "2:30")
-            RestTimerDynamicIslandCompactTrailing(countdownText: "2:30")
-        }
-        .padding(.horizontal, 10)
-        .padding(.vertical, 6)
-        .background(Color.bruInk)
-
-        Text("← compact leading + trailing")
-            .font(BRUFont.labelSmall)
-            .tracking(1.2)
-            .textCase(.uppercase)
-            .foregroundStyle(Color.bruMuted)
+    HStack(spacing: 6) {
+        RestTimerDynamicIslandCompactLeading()
+        RestTimerDynamicIslandCompactTrailing(
+            state: RestTimerAttributes.ContentState(
+                startedAt: Date.now.addingTimeInterval(-30),
+                targetSeconds: 180
+            )
+        )
     }
+    .padding(.horizontal, 10)
+    .padding(.vertical, 6)
+    .background(Color.bruInk)
     .padding(24)
     .background(Color.bruPaper)
 }

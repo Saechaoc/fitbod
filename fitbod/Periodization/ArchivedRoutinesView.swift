@@ -4,7 +4,7 @@
 //
 //  Ticket T20 - the archived routines (code `Split` with `isArchived`),
 //  pushed from Program's "Archived routines" entry, which Program shows only
-//  while at least one routine is archived (tradeoffs.md "Archived routines").
+//  while at least one routine is archived.
 //  RESTORE clears `isArchived`, so the routine is back in every routine list
 //  at once. Archive stays a soft delete: nothing here deletes a routine.
 //

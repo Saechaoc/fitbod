@@ -2,8 +2,8 @@
 // fitbod
 //
 // The name step "+ New routine" opens on Program and on Today, modeled on
-// BruNewRoutineScreen in bru-screens/create-flows.jsx (tradeoffs.md "New
-// routine flow"). Only the name is built here; the mockup's other fields
+// BruNewRoutineScreen in bru-screens/create-flows.jsx.
+// Only the name is built here; the mockup's other fields
 // belong to the full inline creator on the roadmap.
 //
 // The header holds ‹ BACK, "New routine" and SAVE, which stays muted and

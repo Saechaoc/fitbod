@@ -3,7 +3,7 @@
 //  fitbodTests
 //
 //  Ticket T12, review item 29: blocks number from 1 in start-date order,
-//  with ties broken by name (tradeoffs.md "Block numbers"), instead of by
+//  with ties broken by name, instead of by
 //  the week of the year they start in. The block overview and the block
 //  review both show `BlockNumbering.number(of:among:)`.
 //

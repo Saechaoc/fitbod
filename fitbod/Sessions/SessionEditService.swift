@@ -6,7 +6,7 @@
 // and a failed save rolls everything back, so a workout is never left half
 // corrected. Deleting a workout is SessionSetActions.deleteWorkout.
 //
-// Rules (docs/ROADMAP.md "Decided", .planning/HANDOFF-training-model-coherence.md):
+// Rules: ARCHITECTURE.md "Snapshots and corrections"; docs/ROADMAP.md decisions.
 //   - A workout's place in time is `startedAt`. Moving it shifts the start,
 //     the finish and every set's completedAt by one delta, never into the
 //     future, and the workout then belongs to the block running at its new

@@ -5,66 +5,31 @@
 // Per UI-SPEC v2 lines 413-417 + 570.
 //
 // Layout (top to bottom):
-//   - Exercise name in labelSmall 10pt bruPaper (UPPERCASE via .textCase)
-//   - Countdown digits in displayHero 56pt bruPaper
-//   - 4pt-tall progress bar: bruFaint track + bruSignal fill scaled by `progress`
+//   - Live countdown digits in displayHero 56pt bruPaper
+//   - 4pt-tall live progress bar: bruFaint track + bruSignal fill
 //
-// Background: the Dynamic Island expanded presentation uses the system
-// background (bruInk activityBackgroundTint set on the Live Activity container).
+// Both are system timer views so they tick without app updates. The
+// exercise name is not shown; the timer is the only content.
 // Text colors are bruPaper (paper-on-ink contract, UI-SPEC line 384).
-//
-// UI-REVIEW Wave E item 53 (expanded Dynamic Island).
 
 import SwiftUI
 
-/// Dynamic Island expanded center view: exercise name + countdown + signal progress bar.
-///
-/// Mounted in `DynamicIslandExpandedRegion(.center)` inside
-/// `RestTimerLiveActivity`. The `progress` parameter is 0.0 (complete)
-/// to 1.0 (full rest remaining) — caller computes `remaining / target`.
+/// Dynamic Island expanded center view: live countdown + signal progress bar.
+@available(iOS 16.1, *)
 public struct RestTimerDynamicIslandExpandedView: View {
-    public let exerciseName: String
-    public let countdownText: String
-    /// Progress value: 0.0 (complete) → 1.0 (full rest remaining).
-    public let progress: Double
+    public let state: RestTimerAttributes.ContentState
 
-    public init(exerciseName: String, countdownText: String, progress: Double) {
-        self.exerciseName = exerciseName
-        self.countdownText = countdownText
-        self.progress = progress
+    public init(state: RestTimerAttributes.ContentState) {
+        self.state = state
     }
 
     public var body: some View {
         VStack(spacing: 12) {
-            // Exercise name — labelSmall bruPaper
-            Text(exerciseName)
-                .font(BRUFont.labelSmall)
-                .tracking(1.2)
-                .textCase(.uppercase)
-                .foregroundStyle(Color.bruPaper)
-                .lineLimit(1)
-                .truncationMode(.tail)
-
-            // Countdown hero — displayHero 56pt bruPaper
-            Text(countdownText)
+            RestTimerCountdownText(state: state)
                 .font(BRUFont.displayHero)
-                .monospacedDigit()
-                .foregroundStyle(Color.bruPaper)
+                .multilineTextAlignment(.center)
 
-            // Signal progress bar — 4pt tall
-            GeometryReader { geo in
-                ZStack(alignment: .leading) {
-                    // Track
-                    Rectangle()
-                        .fill(Color.bruFaint)
-                        .frame(height: 4)
-                    // Fill (scaled by progress)
-                    Rectangle()
-                        .fill(Color.bruSignal)
-                        .frame(width: geo.size.width * min(1, max(0, progress)), height: 4)
-                }
-            }
-            .frame(height: 4)
+            RestTimerProgressBar(state: state)
         }
     }
 }
@@ -72,23 +37,15 @@ public struct RestTimerDynamicIslandExpandedView: View {
 // MARK: - Preview
 
 #if DEBUG
-#Preview("Expanded Dynamic Island — 2:30 remaining (83%)") {
+@available(iOS 16.1, *)
+#Preview("Expanded Dynamic Island — 2:30 remaining") {
     RestTimerDynamicIslandExpandedView(
-        exerciseName: "Bench Press",
-        countdownText: "2:30",
-        progress: 0.83
+        state: RestTimerAttributes.ContentState(
+            startedAt: Date.now.addingTimeInterval(-30),
+            targetSeconds: 180
+        )
     )
     .padding(16)
     .background(Color.bruInk)  // paper-on-ink hero
-}
-
-#Preview("Expanded Dynamic Island — 0:15 remaining (8%)") {
-    RestTimerDynamicIslandExpandedView(
-        exerciseName: "Romanian Deadlift",
-        countdownText: "0:15",
-        progress: 0.08
-    )
-    .padding(16)
-    .background(Color.bruInk)
 }
 #endif
