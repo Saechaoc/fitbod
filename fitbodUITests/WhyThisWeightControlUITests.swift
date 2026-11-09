@@ -1,7 +1,6 @@
 import XCTest
 
-/// Review item 4 (decision 8): a visible WHY control opens Why-this-weight,
-/// and Use writes the suggested weight into the set.
+/// The exercise explains the frozen weight. A set can restore it through its actions.
 final class WhyThisWeightControlUITests: XCTestCase {
 
     @MainActor
@@ -18,15 +17,14 @@ final class WhyThisWeightControlUITests: XCTestCase {
         UITestNavigation.revealInLogger(weight, in: app)
         UITestNavigation.enter("90", into: weight)
         XCTAssertEqual(numericWeight(weight), 90)
+        UITestNavigation.keyboardDone(in: app).tap()
 
-        tapWhy(in: app)
-        let use = app.buttons.matching(NSPredicate(format: "label BEGINSWITH[c] %@", "Use ")).firstMatch
-        XCTAssertTrue(UITestNavigation.appears(use, within: 5))
+        let use = UITestNavigation.suggestedWeightAction(for: "1.S1", in: app)
         let suggested = use.label.split(separator: " ").dropFirst().first.flatMap { Double($0) }
         XCTAssertNotNil(suggested, "Use must name the suggested weight: \(use.label)")
         XCTAssertNotEqual(suggested, 90)
         use.tap()
-        XCTAssertTrue(waitUntilGone(use), "Use must close the sheet")
+        XCTAssertTrue(waitUntilGone(use), "Use must close the set menu")
         XCTAssertEqual(numericWeight(weight), suggested, "Use must write the suggested weight into the set")
     }
 
@@ -45,16 +43,24 @@ final class WhyThisWeightControlUITests: XCTestCase {
         XCTAssertEqual(numericWeight(weight), 100, "The set starts at the prescription stored at the start")
         UITestNavigation.revealInLogger(weight, in: app)
         UITestNavigation.enter("90", into: weight)
+        UITestNavigation.keyboardDone(in: app).tap()
         XCTAssertTrue(UITestNavigation.appears(overrideMark(in: app), within: 5), "A typed weight is marked")
 
-        tapWhy(in: app)
-        let use = app.buttons.matching(NSPredicate(format: "label BEGINSWITH[c] %@", "Use ")).firstMatch
-        XCTAssertTrue(UITestNavigation.appears(use, within: 5))
-        XCTAssertTrue(use.label.hasPrefix("Use 100 "), "WHY offers the weight frozen at the start: \(use.label)")
+        let why = app.buttons["card.why.1"]
+        XCTAssertTrue(UITestNavigation.appears(why))
+        XCTAssertTrue(why.label.contains("Suggested 100 lb"), "The exercise still shows the frozen 100 lb")
+        UITestNavigation.openWeightExplanation(in: app)
         let note = app.staticTexts["why.changedSinceStart"]
         XCTAssertTrue(note.exists && note.label.contains("95 lb"), "The note names the live 95 lb")
+        let close = app.buttons.labeled("Close")
+        UITestNavigation.reveal(close, in: app)
+        close.tap()
+        XCTAssertTrue(waitUntilGone(note), "Close must return to the logger")
+
+        let use = UITestNavigation.suggestedWeightAction(for: "1.S1", in: app)
+        XCTAssertTrue(use.label.hasPrefix("Use 100 "), "Use offers the weight frozen at the start")
         use.tap()
-        XCTAssertTrue(waitUntilGone(use), "Use must close the sheet")
+        XCTAssertTrue(waitUntilGone(use), "Use must close the set menu")
         XCTAssertEqual(numericWeight(weight), 100, "Use must write the frozen weight into the set")
         // Waits the whole 2 s: a mark that comes back shows within it.
         XCTAssertFalse(overrideMark(in: app).waitForExistence(timeout: 2),
@@ -69,23 +75,14 @@ final class WhyThisWeightControlUITests: XCTestCase {
     }
 
     @MainActor
-    private func tapWhy(in app: XCUIApplication) {
-        let why = app.buttons["set.why.1.S1"]
-        XCTAssertTrue(UITestNavigation.appears(why, within: 5), "Set 1 must show a visible WHY control")
-        UITestNavigation.revealInLogger(why, in: app)
-        why.tap()
-    }
-
-    @MainActor
     private func weightField(in app: XCUIApplication) -> XCUIElement {
         app.textFields.matching(identifier: "set.weight.1.S1").firstMatch
     }
 
-    /// Set 1's "M" mark. It shares the weight cell's identifier, and the
-    /// cell's only static text is that mark.
+    /// The typed set is the only override in the seeded workout.
     @MainActor
     private func overrideMark(in app: XCUIApplication) -> XCUIElement {
-        app.staticTexts.matching(identifier: "set.weight.1.S1").firstMatch
+        app.staticTexts.labeled("changed from prescription")
     }
 
     /// Opens today's workout from Today's resume slab.

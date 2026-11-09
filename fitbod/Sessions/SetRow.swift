@@ -1,36 +1,21 @@
 // SetRow.swift
 // fitbod
 //
-// BRU rewrite — Phase 2.1 Plan 07 (Wave 3, UI-REVIEW item 33).
-// UI-SPEC v2 § Session logger line 367-389.
-//
-// Per-set logging row, two lines:
-//   [S{N} + type tag] [Last time] [Weight] [Reps] [✎] [SetCompletionGlyph]
-//   [WHY, open sets only] [RPE label + chips]
-//
-// KEY CHANGES from v1:
-//   - SF Symbol checkmark.circle.fill → SetCompletionGlyph(isComplete:)
-//   - SF Symbol square.and.pencil     → Text("✎") typographic glyph
-//   - system accent color → removed; completed numerics override to bruSignal
-//   - .font(.body) / .font(.title2) / .font(.caption) → BRUFont.*
-//   - Both action buttons wrapped in .frame(minWidth: 44, minHeight: 44).contentShape(Rectangle())
-//     per UI-SPEC line 79 + T-02.1-03-03 touch-target mitigation
-//
-// PRESERVED VERBATIM:
-//   - @Bindable SetEntry + all closures (onCommit, onTapEmptyCell)
-//   - Shared commit validation; zero added weight is valid for bodyweight.
-//   - Haptic on commit (T-02.1-07-03)
-//   - PrescriptionWeightCell wiring
-//   - Per-set notes sheet (NoteSheet)
-//   - Numeric weight keyboard; milestone entries use non-negative added load.
-//   - accessibilityLabel on note button + completion button
-//
-// BRU contract: NO capsule shapes / NO RoundedRectangle / NO accent color
-//               NO Image(systemName:) / NO .font(.body/.headline/.title/.caption)
-//               NO bordered button style / NO Color(.system*)
+// One logging row. Effort expands in place only for the set being rated.
 
 import SwiftUI
 import SwiftData
+
+/// Shared by the set row and the exercise's column headings.
+enum WorkoutSetColumns {
+    static let number: CGFloat = 32
+    static let previous: CGFloat = 80
+    static let weight: CGFloat = 60
+    static let reps: CGFloat = 44
+    static let effort: CGFloat = 56
+    static let done: CGFloat = 44
+    static let spacing: CGFloat = 6
+}
 
 public struct SetRow: View {
     @Bindable public var entry: SetEntry
@@ -49,8 +34,7 @@ public struct SetRow: View {
 
     @State private var repsText: String = ""
     @State private var presentingSetNote: Bool = false
-    /// The WHY control opens Why-this-weight; the weight cell presents it.
-    @State private var explainingWeight: Bool = false
+    @Binding private var expandedEffortSetID: UUID?
     /// While the weight field has focus, the weight it holds; the row
     /// scrolls clear of the keyboard for it. The plates for it no longer
     /// show under the row (FT-11): the plate calculator is the one place.
@@ -70,6 +54,7 @@ public struct SetRow: View {
         sessionExercise: SessionExercise,
         prescribed: Double? = nil,
         explanation: PrescriptionExplanation? = nil,
+        expandedEffortSetID: Binding<UUID?>,
         onCommit: @escaping () -> Void,
         onTapEmptyCell: @escaping () -> Void,
         onUncomplete: @escaping () -> Void = {},
@@ -79,6 +64,7 @@ public struct SetRow: View {
         self.sessionExercise = sessionExercise
         self.prescribed = prescribed
         self.explanation = explanation
+        self._expandedEffortSetID = expandedEffortSetID
         self.onCommit = onCommit
         self.onTapEmptyCell = onTapEmptyCell
         self.onUncomplete = onUncomplete
@@ -86,214 +72,124 @@ public struct SetRow: View {
     }
 
     public var body: some View {
-        VStack(spacing: 0) {
-            // MARK: Main set row — two-line layout (approved 2026-06-10)
-            // Single-line layout overflowed all device widths (~532pt required,
-            // ~350pt available on 390pt devices). RPE chips + SetTypeChip move
-            // to line 2, indented to align under the PREV column.
-            VStack(alignment: .leading, spacing: 6) {
-                // LINE 1 — numbers + action buttons
-                inputLayout {
-                    // S{N} / W{N} leading label — BRUFont.bodyDefault per UI-SPEC line 369
-                    // The one set-type control (FT-10): a tap opens the
-                    // picker, which marks the current type, and a type
-                    // other than working shows its tag under the label.
-                    Menu {
-                        SetTypeMenuItems(setTypeRaw: setTypeRaw)
-                    } label: {
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(setLabel)
-                                .font(BRUFont.bodyDefault)
-                                .foregroundStyle(Color.bruMuted)
-                            if let tag = SetTypeChip.tag(for: entry.setType) {
-                                Text(tag)
-                                    .font(BRUFont.labelMicro)
-                                    .tracking(1)
-                                    .foregroundStyle(Color.bruInk)
-                            }
-                        }
-                        .frame(width: dynamicTypeSize.isAccessibilitySize ? nil : 32, alignment: .leading)
-                        // A 44pt target over the 32pt column; the
-                        // negative padding below keeps the layout.
-                        .padding(.horizontal, 6)
-                        .frame(minHeight: 44)
-                        .contentShape(Rectangle())
-                    }
-                    .buttonStyle(.plain)
-                    .padding(.horizontal, -6)
-                    .accessibilityLabel("Set \(displayNumber) type")
-                    .accessibilityValue(SetTypeChip.label(for: SetType(rawValue: entry.setTypeRaw) ?? .working))
-                    .accessibilityIdentifier("set.type.\(identifierSuffix)")
+        VStack(alignment: .leading, spacing: 6) {
+            inputLayout {
+                setActions
 
-                    PreviousColumn(
-                        exerciseID: sessionExercise.exercise?.id,
-                        intentRaw: sessionExercise.session?.intentRaw ?? Intent.strength.rawValue,
-                        currentSessionID: sessionExercise.session?.id
-                    )
-                    .frame(width: dynamicTypeSize.isAccessibilitySize ? nil : 80, alignment: .leading)
+                PreviousColumn(
+                    exerciseID: sessionExercise.exercise?.id,
+                    intentRaw: sessionExercise.session?.intentRaw ?? Intent.strength.rawValue,
+                    currentSessionID: sessionExercise.session?.id
+                )
+                .frame(width: dynamicTypeSize.isAccessibilitySize ? nil : WorkoutSetColumns.previous, alignment: .leading)
 
-                    if dynamicTypeSize.isAccessibilitySize {
-                        Text("Weight (\(unit.rawValue))")
-                            .font(BRUFont.labelSmall)
-                            .foregroundStyle(Color.bruMuted)
-                            .accessibilityHidden(true)
-                    }
-
-                    // Weight cell — PrescriptionWeightCell handles prescribed/range/override display.
-                    // While its field has focus, the set's plates show under the row.
-                    PrescriptionWeightCell(
-                        weight: $entry.weight,
-                        prescribed: prescribed,
-                        range: explanation?.range,
-                        explanation: explanation,
-                        targetReps: Self.targetReps(
-                            low: sessionExercise.targetRepsLow,
-                            high: sessionExercise.targetRepsHigh
-                        ),
-                        targetRPE: sessionExercise.targetRPE,
-                        setType: entry.setType,
-                        unitLabel: unit.rawValue,
-                        wasManualOverride: $entry.wasManualOverride,
-                        isComplete: entry.isComplete,
-                        onTapEmptyCell: onTapEmptyCell,
-                        onEditCommitted: onEditCommitted,
-                        isExplaining: $explainingWeight,
-                        enteredWeight: $enteredWeight
-                    )
-                    .frame(width: dynamicTypeSize.isAccessibilitySize ? nil : 60)
-                    .accessibilityIdentifier("set.weight.\(identifierSuffix)")
-                    // Completed set: weight/reps numerics turn bruSignal per UI-SPEC line 241
-                    .foregroundStyle(entry.isComplete ? Color.bruSignalText : Color.bruInk)
-
-                    if dynamicTypeSize.isAccessibilitySize {
-                        Text("Reps")
-                            .font(BRUFont.labelSmall)
-                            .foregroundStyle(Color.bruMuted)
-                            .accessibilityHidden(true)
-                    }
-
-                    // Reps TextField — mono emphasis + readable signal when complete
-                    TextField("—", text: $repsText)                              // UI-SPEC verbatim "—"
-                        .font(BRUFont.bodyEmphasis)
-                        .monospacedDigit()
-                        .foregroundStyle(entry.isComplete ? Color.bruSignalText : Color.bruInk)
-                        .keyboardType(.numberPad)
-                        .focused($repsFocused)
-                        // Reps typed into the field replace the ones it
-                        // shows (T39).
-                        .selectsAllOnFocus(repsFocused)
-                        .frame(width: dynamicTypeSize.isAccessibilitySize ? nil : 44)
-                        .frame(minHeight: 44)
-                        .padding(.vertical, 4)
-                        .contentShape(Rectangle())
-                        // The target is taller than the text field inside
-                        // it, so a tap that ends the rest above or below the
-                        // text gives the field focus too, and the first digit
-                        // typed lands (T39, F264).
-                        .onTapGesture {
-                            if !entry.isComplete { onTapEmptyCell() }
-                            repsFocused = true
-                        }
-                        .onChange(of: repsText) { _, newValue in
-                            if let i = Int(newValue) {
-                                entry.reps = i
-                            } else if newValue.isEmpty {
-                                entry.reps = 0
-                            }
-                        }
-                        // Persist as soon as the field loses focus, not
-                        // only when the set is checked off.
-                        .onChange(of: repsFocused) { _, focused in
-                            if !focused { onEditCommitted() }
-                        }
-                        // The "—" placeholder would read as "em dash".
-                        .accessibilityLabel("Reps, set \(displayNumber)")
-                        .accessibilityIdentifier("set.reps.\(identifierSuffix)")
-
-                    if !dynamicTypeSize.isAccessibilitySize { Spacer(minLength: 0) }
-
-                    // Per-set notes button — typographic "✎" glyph (NOT SF Symbol)
-                    // per UI-SPEC line 199: "square.and.pencil → '✎' glyph"
-                    Button {
-                        presentingSetNote = true
-                    } label: {
-                        Text("✎")
-                            .font(BRUFont.bodyEmphasis)
-                            .foregroundStyle(entry.notes != nil ? Color.bruInk : Color.bruMuted)
-                    }
-                    .buttonStyle(.plain)
-                    .frame(minWidth: 44, minHeight: 44)                          // UI-SPEC HIG 44pt
-                    .contentShape(Rectangle())
-                    .accessibilityLabel("Note for set \(displayNumber)")         // UI-SPEC verbatim a11y
-                    .sheet(isPresented: $presentingSetNote) {
-                        NoteSheet(
-                            title: "SET \(displayNumber) NOTE",
-                            hint: "e.g. right knee caved on rep 7",
-                            text: entry.notes
-                        ) { entry.notes = $0 }
-                    }
-
-                    // Completion button — SetCompletionGlyph replaces SF Symbol checkmark
-                    // Shared validation keeps UI and persistence behavior aligned.
-                    // Tapping a completed set's checkmark un-completes it.
-                    Button {
-                        if entry.isComplete {
-                            onUncomplete()
-                        } else if SessionSetActions.canComplete(entry) {
-                            onCommit()
-                        }
-                    } label: {
-                        SetCompletionGlyph(isComplete: entry.isComplete)
-                    }
-                    .buttonStyle(.plain)
-                    .frame(minWidth: 44, minHeight: 44)                          // UI-SPEC HIG 44pt
-                    .contentShape(Rectangle())
-                    .disabled(!entry.isComplete && !SessionSetActions.canComplete(entry))
-                    .accessibilityLabel(
-                        entry.isComplete
-                        ? "Set \(displayNumber) complete"
-                        : "Mark set \(displayNumber) complete"
-                    )
-                    .accessibilityHint(entry.isComplete ? "Double tap to mark as not done" : "Enter valid reps and weight first; bodyweight exercises may use zero added weight")
-                    .accessibilityIdentifier("set.complete.\(identifierSuffix)")
-                }
-
-                // LINE 2 — WHY + RPE label + RPE chips
-                // WHY takes the 40pt indent under the set label, so the chips
-                // move 10pt right. Rows without an explanation keep the
-                // indent, which aligns the chips under the LAST TIME column.
-                // A logged set shows no WHY but keeps its space, so its chips
-                // stay in line with the open sets'; at AX sizes WHY has a
-                // line of its own, which a logged set drops.
-                inputLayout {
-                    if explanation != nil {
-                        if !entry.isComplete {
-                            whyButton
-                        } else if !dynamicTypeSize.isAccessibilitySize {
-                            whyButton
-                                .hidden()
-                                .accessibilityHidden(true)
-                        }
-                    }
-
-                    // Names the chips where they are tapped (FT-08); each
-                    // chip reads "RPE 8" itself, so VoiceOver skips this.
-                    Text("RPE")
+                if dynamicTypeSize.isAccessibilitySize {
+                    Text("Weight (\(unit.rawValue))")
                         .font(BRUFont.labelSmall)
-                        .tracking(1.2)
                         .foregroundStyle(Color.bruMuted)
                         .accessibilityHidden(true)
-
-                    InlineRPEChipRow(rpe: Binding(
-                        get: { entry.rpe },
-                        set: { entry.rpe = $0; onEditCommitted() }
-                    ))
-
-                    if !dynamicTypeSize.isAccessibilitySize { Spacer(minLength: 0) }
                 }
-                .padding(.leading, dynamicTypeSize.isAccessibilitySize || explanation != nil ? 0 : 40)
+
+                PrescriptionWeightCell(
+                    weight: $entry.weight,
+                    prescribed: prescribed,
+                    range: explanation?.range,
+                    unitLabel: unit.rawValue,
+                    wasManualOverride: $entry.wasManualOverride,
+                    isComplete: entry.isComplete,
+                    onTapEmptyCell: onTapEmptyCell,
+                    onEditCommitted: onEditCommitted,
+                    enteredWeight: $enteredWeight
+                )
+                .frame(width: dynamicTypeSize.isAccessibilitySize ? nil : WorkoutSetColumns.weight)
+                .accessibilityIdentifier("set.weight.\(identifierSuffix)")
+                // Completed set: weight/reps numerics turn bruSignal per UI-SPEC line 241
+                .foregroundStyle(entry.isComplete ? Color.bruSignalText : Color.bruInk)
+
+                if dynamicTypeSize.isAccessibilitySize {
+                    Text("Reps")
+                        .font(BRUFont.labelSmall)
+                        .foregroundStyle(Color.bruMuted)
+                        .accessibilityHidden(true)
+                }
+
+                // Reps TextField — mono emphasis + readable signal when complete
+                TextField("—", text: $repsText)                              // UI-SPEC verbatim "—"
+                    .font(BRUFont.bodyEmphasis)
+                    .monospacedDigit()
+                    .foregroundStyle(entry.isComplete ? Color.bruSignalText : Color.bruInk)
+                    .keyboardType(.numberPad)
+                    .focused($repsFocused)
+                    // Reps typed into the field replace the ones it
+                    // shows (T39).
+                    .selectsAllOnFocus(repsFocused)
+                    .frame(width: dynamicTypeSize.isAccessibilitySize ? nil : WorkoutSetColumns.reps)
+                    .frame(minHeight: 44)
+                    .contentShape(Rectangle())
+                    // The target is taller than the text field inside
+                    // it, so a tap that ends the rest above or below the
+                    // text gives the field focus too, and the first digit
+                    // typed lands (T39, F264).
+                    .onTapGesture {
+                        if !entry.isComplete { onTapEmptyCell() }
+                        repsFocused = true
+                    }
+                    .onChange(of: repsText) { _, newValue in
+                        if let i = Int(newValue) {
+                            entry.reps = i
+                        } else if newValue.isEmpty {
+                            entry.reps = 0
+                        }
+                    }
+                    // Persist as soon as the field loses focus, not
+                    // only when the set is checked off.
+                    .onChange(of: repsFocused) { _, focused in
+                        if !focused { onEditCommitted() }
+                    }
+                    // The "—" placeholder would read as "em dash".
+                    .accessibilityLabel("Reps, set \(displayNumber)")
+                    .accessibilityIdentifier("set.reps.\(identifierSuffix)")
+
+                effortButton
+                if !dynamicTypeSize.isAccessibilitySize { Spacer(minLength: 0) }
+
+                // Completion button — SetCompletionGlyph replaces SF Symbol checkmark
+                // Shared validation keeps UI and persistence behavior aligned.
+                // Tapping a completed set's checkmark un-completes it.
+                Button {
+                    if entry.isComplete {
+                        onUncomplete()
+                    } else if SessionSetActions.canComplete(entry) {
+                        onCommit()
+                    }
+                } label: {
+                    SetCompletionGlyph(isComplete: entry.isComplete)
+                }
+                .buttonStyle(.plain)
+                .frame(minWidth: WorkoutSetColumns.done, minHeight: 44)
+                .contentShape(Rectangle())
+                .disabled(!entry.isComplete && !SessionSetActions.canComplete(entry))
+                .accessibilityLabel(
+                    entry.isComplete
+                    ? "Set \(displayNumber) complete"
+                    : "Mark set \(displayNumber) complete"
+                )
+                .accessibilityHint(entry.isComplete ? "Double tap to mark as not done" : "Enter valid reps and weight first; bodyweight exercises may use zero added weight")
+                .accessibilityIdentifier("set.complete.\(identifierSuffix)")
             }
-            .padding(.vertical, 12)                                              // UI-SPEC md
+
+            if expandedEffortSetID == entry.id { effortPicker }
+        }
+        .padding(.vertical, 4)
+        .sheet(isPresented: $presentingSetNote) {
+            NoteSheet(
+                title: "SET \(displayNumber) NOTE",
+                hint: "e.g. right knee caved on rep 7",
+                text: entry.notes
+            ) {
+                entry.notes = $0
+                onEditCommitted()
+            }
         }
         // While its weight or reps field has focus, the row scrolls clear
         // of the keyboard and its DONE (T125, T39).
@@ -311,25 +207,98 @@ public struct SetRow: View {
     private var inputLayout: AnyLayout {
         dynamicTypeSize.isAccessibilitySize
             ? AnyLayout(VStackLayout(alignment: .leading, spacing: 8))
-            : AnyLayout(HStackLayout(spacing: 6))
+            : AnyLayout(HStackLayout(spacing: WorkoutSetColumns.spacing))
     }
 
-    /// Opens Why-this-weight (Milestone 1 decision 8). The weight cell
-    /// presents the sheet and ends editing first.
-    private var whyButton: some View {
-        Button {
-            explainingWeight = true
+    private var effortButton: some View {
+        let rating = entry.rpe.map(NumberText.weight)
+        let expanded = expandedEffortSetID == entry.id
+        return Button {
+            expandedEffortSetID = expanded ? nil : entry.id
         } label: {
-            Text("WHY")
-                .font(BRUFont.labelSmall)
-                .tracking(1.2)
-                .foregroundStyle(Color.bruInk)
-                .frame(minWidth: 44, minHeight: 44, alignment: .leading)
+            Text(dynamicTypeSize.isAccessibilitySize ? "Effort (RPE) · \(rating ?? "Add")" : rating ?? "Add")
+                .font(BRUFont.bodyEmphasis)
+                // Orange marks logged values, as the weight and reps beside it.
+                .foregroundStyle(rating == nil ? Color.bruMuted : entry.isComplete ? Color.bruSignalText : Color.bruInk)
+                .frame(minWidth: 44, minHeight: 44)
                 .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .accessibilityLabel("Why this weight")
-        .accessibilityIdentifier("set.why.\(identifierSuffix)")
+        .frame(width: dynamicTypeSize.isAccessibilitySize ? nil : WorkoutSetColumns.effort)
+        .accessibilityLabel("Effort (RPE), set \(displayNumber)")
+        .accessibilityValue(rating ?? "No rating")
+        .accessibilityHint(expanded ? "Hides the ratings" : "Shows effort ratings")
+        .accessibilityIdentifier("set.effort.\(identifierSuffix)")
+    }
+
+    private var effortPicker: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text("How many more reps could you have done?")
+                .font(BRUFont.bodyDefault)
+                .foregroundStyle(Color.bruInk)
+            InlineRPEChipRow(
+                rpe: Binding(
+                    get: { entry.rpe },
+                    set: {
+                        entry.rpe = $0
+                        onEditCommitted()
+                        expandedEffortSetID = nil
+                    }
+                ),
+                noneLabel: entry.rpe == nil ? nil : "Clear",
+                showsRepsLeft: true
+            )
+            Text("Hold a rating for half steps.")
+                .font(BRUFont.labelSmall)
+                .foregroundStyle(Color.bruMuted)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(8)
+        .background(Color.bruFaint)
+    }
+
+    private var setActions: some View {
+        Menu {
+            SetTypeMenuItems(setTypeRaw: setTypeRaw)
+            Button(entry.notes?.isEmpty == false ? "Edit set note" : "Add set note") {
+                presentingSetNote = true
+            }
+            if !entry.isComplete, let suggested = explanation?.suggestedWeight {
+                Button("Use \(NumberText.weight(suggested)) \(unit.rawValue)") {
+                    UIApplication.shared.sendAction(
+                        #selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil
+                    )
+                    entry.weight = suggested
+                    entry.wasManualOverride = false
+                    onEditCommitted()
+                }
+                .accessibilityIdentifier("set.useSuggested.\(identifierSuffix)")
+            }
+        } label: {
+            VStack(alignment: .leading, spacing: 2) {
+                HStack(spacing: 2) {
+                    Text(setLabel).font(BRUFont.bodyDefault)
+                    Text(entry.notes?.isEmpty == false ? "✎" : "▾").font(BRUFont.labelMicro)
+                }
+                .foregroundStyle(Color.bruMuted)
+                .lineLimit(1)
+                .minimumScaleFactor(0.75)
+                if let tag = SetTypeChip.tag(for: entry.setType) {
+                    Text(tag)
+                        .font(BRUFont.labelMicro)
+                        .foregroundStyle(Color.bruInk)
+                }
+            }
+            .frame(width: dynamicTypeSize.isAccessibilitySize ? nil : WorkoutSetColumns.number, alignment: .leading)
+            .padding(.horizontal, 6)
+            .frame(minHeight: 44)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .padding(.horizontal, -6)
+        .accessibilityLabel("Set \(displayNumber) actions")
+        .accessibilityValue(SetTypeChip.label(for: entry.setType))
+        .accessibilityIdentifier("set.type.\(identifierSuffix)")
     }
 
     /// The exercise's rep range for Why-this-weight, such as 5...8, or nil
@@ -383,6 +352,7 @@ public struct SetRow: View {
 
 #if DEBUG
 #Preview("set row") {
+    @Previewable @State var expandedEffortSetID: UUID?
     let container = PreviewModelContainer.make()
     let ctx = ModelContext(container)
     let ex = Exercise.previewSample(name: "Bench", equipment: .barbell, mechanic: .compound)
@@ -407,6 +377,7 @@ public struct SetRow: View {
             sessionExercise: se,
             prescribed: 100.0,
             explanation: nil,
+            expandedEffortSetID: $expandedEffortSetID,
             onCommit: {},
             onTapEmptyCell: {}
         )

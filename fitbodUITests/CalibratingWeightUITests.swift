@@ -2,12 +2,7 @@
 //  CalibratingWeightUITests.swift
 //  fitbodUITests
 //
-//  Ticket T80 (findings F78 and F79): with RPE autoregulation, a set whose
-//  exercise is still calibrating shows a weight range until the lifter
-//  picks a weight. A logged set shows the weight it logged.
-//
-//  CalibratingSetSeed's sets show "95 – 105 lb", hold last workout's
-//  110 lb, and Why this weight suggests 100 lb.
+//  The exercise shows the calibration range while each set holds an editable weight.
 //
 
 import XCTest
@@ -27,27 +22,35 @@ final class CalibratingWeightUITests: XCTestCase {
         XCUIDevice.shared.orientation = .portrait
     }
 
-    /// A logged calibrating set shows the weight it logged, never the
-    /// range; the open set after it keeps its range.
+    /// A calibrating set can be edited directly and logged while the range stays visible.
     @MainActor
     func testCompletedSetShowsLoggedWeight() throws {
         let app = openWorkout()
+        let guidance = app.buttons["card.why.1"]
+        XCTAssertTrue(UITestNavigation.appears(guidance))
+        XCTAssertTrue(guidance.label.contains("95–105 lb"), guidance.label)
+
+        let field = weightField("1.S1", in: app)
+        XCTAssertEqual(field.value as? String, "110 lb")
+        UITestNavigation.revealInLogger(field, in: app)
+        UITestNavigation.enter("97.5", into: field)
+        UITestNavigation.keyboardDone(in: app).tap()
+
         let reps = app.textFields["set.reps.1.S1"]
         UITestNavigation.revealInLogger(reps, in: app)
         UITestNavigation.enter("5", into: reps)
         XCTAssertEqual(reps.value as? String, "5", "Set 1 must read the typed reps")
+        UITestNavigation.keyboardDone(in: app).tap()
         let complete = app.buttons["set.complete.1.S1"]
         UITestNavigation.revealInLogger(complete, in: app)
         complete.tap()
         XCTAssertTrue(UITestNavigation.waitUntil(timeout: 5) { complete.exists && complete.label == "Set 1 complete" },
                       "Set 1 must be logged")
 
-        let field = weightField("1.S1", in: app)
-        XCTAssertTrue(UITestNavigation.appears(field, within: 5), "A logged set must show its weight, not the range")
-        XCTAssertEqual(field.value as? String, "110 lb", "A logged set must show the weight it logged")
-        XCTAssertFalse(rangeText("1.S1", in: app).exists, "A logged set must never show the range")
+        XCTAssertEqual(field.value as? String, "97.5 lb", "The completed set must show the weight it logged")
+        XCTAssertTrue(guidance.label.contains("95–105 lb"), "The suggestion stays after logging")
         revealSet("1.S2", in: app)
-        XCTAssertTrue(rangeText("1.S2", in: app).exists, "The open set 2 keeps its range")
+        XCTAssertEqual(weightField("1.S2", in: app).value as? String, "97.5 lb")
     }
 
     // MARK: - Navigation
@@ -85,15 +88,6 @@ final class CalibratingWeightUITests: XCTestCase {
     }
 
     // MARK: - Elements
-
-    /// A set's read-only calibrating range. It carries the weight cell's
-    /// identifier, as the field does.
-    @MainActor
-    private func rangeText(_ set: String, in app: XCUIApplication) -> XCUIElement {
-        app.staticTexts.matching(NSPredicate(
-            format: "identifier == %@ AND label BEGINSWITH %@", "set.weight.\(set)", "Prescribed weight range"
-        )).firstMatch
-    }
 
     @MainActor
     private func weightField(_ set: String, in app: XCUIApplication) -> XCUIElement {

@@ -2,14 +2,8 @@
 //  CalibratingWeightCellTests.swift
 //  fitbodTests
 //
-//  Ticket T80 (findings F78 and F79): with RPE autoregulation, a set still
-//  calibrating shows a weight range until the lifter picks a weight. A
-//  weight typed away from the prescription, or one that equals a
-//  suggestion above 0, as Use writes it, shows in place of the range, and
-//  a logged set shows the weight it logged. Otherwise an open set keeps
-//  its range, and a range of 0 to 0 keeps T61's dash. A load typed over a
-//  range of 0 to 0 is a change from it, so it keeps showing too
-//  (coordinator call, 2026-10-30).
+//  The exercise shows the calibration range. Each field reports the set's
+//  weight and still tracks changes from the prescription.
 //
 
 import SwiftUI
@@ -27,18 +21,15 @@ struct CalibratingWeightCellTests {
         #expect(explanation.roundedWeight == 100)
     }
 
-    // MARK: - A weight the lifter picked shows in place of the range
-
     @Test("An open set shows a weight typed away from the prescription")
     func typedWeightShows() {
         let cell = benchCell(weight: 102.5, wasManualOverride: true)
-        #expect(!cell.showsRange)
-        #expect(cell.accessibilityLabelText == "Prescribed weight: 102.5 lb")
+        #expect(cell.isManualOverride(102.5))
         #expect(cell.accessibilityValueText == "102.5 lb")
     }
 
     @Test("An open set shows a suggestion above 0", arguments: [
-        // Use writes Why this weight's suggestion.
+        // Use in the set menu writes the suggestion.
         (100.0, 97.5),
         // A typed weight equal to the prescription stored at the start is
         // no change from it, and still a suggestion.
@@ -46,8 +37,7 @@ struct CalibratingWeightCellTests {
     ])
     func suggestionShows(weight: Double, prescribed: Double) {
         let cell = benchCell(weight: weight, prescribed: prescribed)
-        #expect(!cell.showsRange)
-        #expect(cell.accessibilityLabelText == "Prescribed weight: \(String(format: "%g", weight)) lb")
+        #expect(cell.accessibilityValueText == "\(String(format: "%g", weight)) lb")
     }
 
     // MARK: - A logged set shows the weight it logged
@@ -55,28 +45,18 @@ struct CalibratingWeightCellTests {
     @Test("A logged set shows the weight it logged, never the range", arguments: [false, true])
     func loggedSetShowsWeight(wasManualOverride: Bool) {
         let cell = benchCell(weight: 110, wasManualOverride: wasManualOverride, isComplete: true)
-        #expect(!cell.showsRange)
-        #expect(cell.accessibilityLabelText == "Prescribed weight: 110 lb")
         #expect(cell.accessibilityValueText == "110 lb")
     }
 
-    // MARK: - Otherwise the range, or T61's dash
-
-    @Test("An open set still at last workout's weight, or at none, keeps its range", arguments: [110.0, 0.0])
-    func untouchedSetShowsRange(weight: Double) {
+    @Test("An open calibrating set shows its own weight", arguments: [110.0, 0.0])
+    func untouchedSetShowsWeight(weight: Double) {
         let cell = benchCell(weight: weight)
-        #expect(cell.showsRange)
-        #expect(cell.rangeText == "95 – 105 lb")
-        #expect(cell.accessibilityLabelText == "Prescribed weight range: 95 to 105 lb")
-        #expect(cell.accessibilityValueText == "")
+        #expect(cell.accessibilityValueText == (weight == 0 ? "none" : "110 lb"))
     }
 
     @Test("An untouched range of 0 to 0 keeps T61's dash, read as none")
     func zeroRangeKeepsDash() {
         let cell = bodyweightCell(weight: 0)
-        #expect(cell.showsRange)
-        #expect(cell.rangeText == nil)
-        #expect(cell.accessibilityLabelText == "Prescribed weight: none")
         #expect(cell.accessibilityValueText == "none")
     }
 
@@ -89,8 +69,7 @@ struct CalibratingWeightCellTests {
         #expect(!untouched.isManualOverride(0))
 
         let typed = bodyweightCell(weight: 10, wasManualOverride: true)
-        #expect(!typed.showsRange)
-        #expect(typed.accessibilityLabelText == "Prescribed weight: 10 lb")
+        #expect(typed.accessibilityValueText == "10 lb")
     }
 
     @Test("Without a range, a weight with no prescription is still no change")
@@ -99,12 +78,10 @@ struct CalibratingWeightCellTests {
             weight: .constant(10),
             prescribed: 0,
             range: nil,
-            explanation: nil,
             unitLabel: "lb",
             wasManualOverride: .constant(false)
         )
         #expect(!cell.isManualOverride(10))
-        #expect(!cell.showsRange)
     }
 
     // MARK: - Helpers
@@ -123,7 +100,6 @@ struct CalibratingWeightCellTests {
             weight: .constant(weight),
             prescribed: prescribed,
             range: explanation.range,
-            explanation: explanation,
             unitLabel: "lb",
             wasManualOverride: .constant(wasManualOverride),
             isComplete: isComplete
@@ -139,7 +115,6 @@ struct CalibratingWeightCellTests {
             weight: .constant(weight),
             prescribed: 0,
             range: explanation.range,
-            explanation: explanation,
             unitLabel: "lb",
             wasManualOverride: .constant(wasManualOverride)
         )

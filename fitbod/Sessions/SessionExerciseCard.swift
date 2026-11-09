@@ -13,9 +13,8 @@
 //   - .font(.caption) on column headers → BRUFont.labelSmall + tracking(1.2)
 //   - .foregroundStyle(.secondary) on column headers → Color.bruMuted
 //   - Column header strip layout updated to UI-SPEC line 367 format:
-//     "S · LAST TIME · WEIGHT · REPS" all in labelSmall 9pt 1.2 bruMuted;
-//     LAST TIME explains itself on a tap (FT-07), RPE is labelled on the
-//     set rows' second line (FT-08)
+//     LAST TIME explains itself on a tap (FT-07). The column strip aligns
+//     with the compact effort entry in each set row (RM-024).
 //   - SF Symbol context menu icons replaced with plain text label actions
 //     (system contextMenu chrome is HIG-acceptable per UI-SPEC line 261)
 //   - 3-row BRU card header per UI-SPEC line 363-368
@@ -54,8 +53,7 @@ public struct SessionExerciseCard: View {
     @State private var bannerDismissed: Bool = false
     /// Folded to its header row: name, equipment and sets done (FT-12).
     @State private var collapsed = false
-    /// Why this weight? from the exercise menu, open after logging too (FT-09).
-    @State private var explainingExercise = false
+    @State private var expandedEffortSetID: UUID?
     /// The LAST TIME column header's explanation (FT-07).
     @State private var explainingLastTime = false
     @Query private var settingsList: [UserSettings]
@@ -121,6 +119,7 @@ public struct SessionExerciseCard: View {
                 HStack(alignment: .firstTextBaseline, spacing: 12) {
                     Button {
                         bannerDismissed = true
+                        expandedEffortSetID = nil
                         withAnimation(.easeInOut(duration: 0.2)) { collapsed.toggle() }
                     } label: {
                         HStack(alignment: .firstTextBaseline, spacing: 12) {
@@ -156,10 +155,10 @@ public struct SessionExerciseCard: View {
                     .accessibilityHint("Shows or hides its sets")
                     .accessibilityIdentifier("card.toggle.\(sessionExercise.orderIndex + 1)")
                     // The long-press menu stays beside the visible one.
-                    .contextMenu { exerciseMenuItems(explanation) }
+                    .contextMenu { exerciseMenuItems() }
 
                     Menu {
-                        exerciseMenuItems(explanation)
+                        exerciseMenuItems()
                     } label: {
                         Text("•••")
                             .font(BRUFont.bodyEmphasis)
@@ -207,20 +206,6 @@ public struct SessionExerciseCard: View {
                     }
                 }
             }
-            // Why this weight? from the exercise menu: the frozen
-            // prescription against the heaviest logged working set (FT-09).
-            .sheet(isPresented: $explainingExercise) {
-                if let exp = currentExplanation() {
-                    WhyThisWeightSheet(
-                        explanation: exp,
-                        reps: SetRow.targetReps(low: sessionExercise.targetRepsLow, high: sessionExercise.targetRepsHigh),
-                        rpe: sessionExercise.targetRPE,
-                        unitLabel: unit.rawValue,
-                        loggedWeight: topLoggedWeight
-                    )
-                    .presentationDetents([.medium])
-                }
-            }
             .alert("Couldn't undo variation", isPresented: $undoFailed) {
                 Button("OK", role: .cancel) {}
             } message: {
@@ -237,6 +222,7 @@ public struct SessionExerciseCard: View {
                                 sessionExercise: sessionExercise,
                                 prescribed: sessionExercise.prescribedWeight,
                                 explanation: explanation,
+                                expandedEffortSetID: $expandedEffortSetID,
                                 onCommit: {
                                     onCommitSet(set)
                                     if set.isComplete { variationUndo = nil }
@@ -304,6 +290,7 @@ public struct SessionExerciseCard: View {
         // Phase 5 PROG-06 — evaluate plateau signal on first appear and
         // whenever a swap changes the exercise.
         .task(id: sessionExercise.exercise?.id) {
+            expandedEffortSetID = nil
             evaluatePlateau()
         }
         .onChange(of: hasLoggedWorkingSet) { _, logged in
@@ -502,16 +489,22 @@ public struct SessionExerciseCard: View {
             BRUDivider(.hair)
         }
 
-        // Row 3: Column header strip per UI-SPEC line 367
-        // "S · LAST TIME · WEIGHT · REPS" — labelSmall 9pt 1.2 bruMuted
+        WorkoutWeightGuidance(
+            exercise: sessionExercise,
+            explanation: explanation,
+            unit: unit,
+            loggedWeight: topLoggedWeight
+        )
+        .id(sessionExercise.exercise?.id)
+
         // Stacked accessibility inputs carry their own labels; the
         // fixed-width table headings would split into fragments.
         if !dynamicTypeSize.isAccessibilitySize {
-            HStack(spacing: 6) {
+            HStack(spacing: WorkoutSetColumns.spacing) {
                 Text("S")
                     .font(BRUFont.labelSmall)
                     .tracking(1.2)
-                    .frame(width: 32, alignment: .leading)
+                    .frame(width: WorkoutSetColumns.number, alignment: .leading)
                 // A tap says what the column shows and why it can be
                 // empty (FT-07).
                 Button {
@@ -520,7 +513,7 @@ public struct SessionExerciseCard: View {
                     Text("LAST TIME")
                         .font(BRUFont.labelSmall)
                         .tracking(1.2)
-                        .frame(width: 80, alignment: .leading)
+                        .frame(width: WorkoutSetColumns.previous, alignment: .leading)
                         // A 44pt target in the strip; the negative padding
                         // keeps the strip's height.
                         .frame(minHeight: 44)
@@ -539,12 +532,26 @@ public struct SessionExerciseCard: View {
                 Text("WEIGHT")
                     .font(BRUFont.labelSmall)
                     .tracking(1.2)
-                    .frame(width: 60, alignment: .leading)
+                    .frame(width: WorkoutSetColumns.weight, alignment: .leading)
                 Text("REPS")
                     .font(BRUFont.labelSmall)
                     .tracking(1.2)
-                    .frame(width: 40, alignment: .leading)
-                Spacer()
+                    .frame(width: WorkoutSetColumns.reps, alignment: .leading)
+                VStack(spacing: 0) {
+                    Text("Effort").textCase(.uppercase)
+                    Text("(RPE)")
+                }
+                .font(BRUFont.labelSmall)
+                .lineLimit(1)
+                .minimumScaleFactor(0.75)
+                .frame(width: WorkoutSetColumns.effort)
+                Spacer(minLength: 0)
+                Text("Done")
+                    .font(BRUFont.labelSmall)
+                    .textCase(.uppercase)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.75)
+                    .frame(width: WorkoutSetColumns.done)
             }
             .foregroundStyle(Color.bruMuted)
             .padding(.horizontal, 16)
@@ -557,14 +564,7 @@ public struct SessionExerciseCard: View {
     /// The exercise's actions, in its ••• menu and its long-press menu.
     /// System menu chrome is HIG-acceptable per UI-SPEC line 261.
     @ViewBuilder
-    private func exerciseMenuItems(_ explanation: PrescriptionExplanation?) -> some View {
-        if explanation != nil {
-            Button {
-                explainingExercise = true
-            } label: {
-                Text("Why this weight?")
-            }
-        }
+    private func exerciseMenuItems() -> some View {
         Button {
             variationUndo = nil
             onSwap(sessionExercise)

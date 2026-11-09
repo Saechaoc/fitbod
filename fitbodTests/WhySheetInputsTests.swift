@@ -2,8 +2,8 @@
 //  WhySheetInputsTests.swift
 //  fitbodTests
 //
-//  Ticket T89 (findings F103 and F104): Why this weight shows the set's
-//  rep range, target RPE and set type, which the logger passes in, and a
+//  Ticket T89 (findings F103 and F104): Why this weight shows the
+//  exercise's rep range and target RPE, which the logger passes in, and a
 //  last top set logged without an RPE is still the last session: the sheet
 //  names its weight, reps and date, with no RPE, and step 02 no longer says
 //  "No prior data" for it. The strategies suggest what they did before.
@@ -83,7 +83,7 @@ struct WhySheetInputsTests {
         // T61 and T79: a suggestion of 0 still shows the dash and no Use.
         // T97: with no RPE to calibrate from, step 03 asks for a starting weight.
         #expect(sheet.heroWeightText == "\u{2014}")
-        #expect(sheet.useTitle == nil)
+        #expect(explanation.suggestedWeight == nil)
         #expect(sheet.step03Label == "Starting weight")
     }
 
@@ -124,12 +124,10 @@ struct WhySheetInputsTests {
         #expect(sheet.heroAccessibilityLabel.contains(", reps unknown,"))
     }
 
-    @Test("The hero reads the set's target RPE and type, and step 02 its target")
+    @Test("The hero reads the exercise's target RPE, and step 02 its target")
     func heroAndStepTwoShowTargetRPE() {
-        let sheet = WhyThisWeightSheet(
-            explanation: explanation(), reps: 6...8, rpe: 8, setTypeLabel: "Working", unitLabel: "lb"
-        )
-        #expect(sheet.heroAccessibilityLabel == "Recommended weight 100 lb, reps 6 to 8, RPE 8, Working")
+        let sheet = WhyThisWeightSheet(explanation: explanation(), reps: 6...8, rpe: 8, unitLabel: "lb")
+        #expect(sheet.heroAccessibilityLabel == "Recommended weight 100 lb, reps 6 to 8, RPE 8")
         #expect(sheet.step02Label == "Target @ RPE 8")
     }
 

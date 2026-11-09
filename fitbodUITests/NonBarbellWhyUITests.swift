@@ -23,11 +23,11 @@ final class NonBarbellWhyUITests: XCTestCase {
         let entered = XCTNSPredicateExpectation(predicate: NSPredicate(format: "value == '90 lb'"), object: weight)
         XCTAssertEqual(XCTWaiter().wait(for: [entered], timeout: 5), .completed)
 
-        let why = app.buttons["set.why.5.S1"]
-        UITestNavigation.revealInLogger(why, in: app)
-        why.tap()
-        let use = app.buttons.matching(NSPredicate(format: "label BEGINSWITH[c] %@", "Use ")).firstMatch
-        XCTAssertTrue(use.exists || use.waitForExistence(timeout: 5))
+        UITestNavigation.keyboardDone(in: app).tap()
+        let why = app.buttons["card.why.5"]
+        XCTAssertTrue(UITestNavigation.appears(why))
+        XCTAssertTrue(why.label.contains("Suggested 25 lb"))
+        let use = UITestNavigation.suggestedWeightAction(for: "5.S1", in: app)
         let suggested = use.label.split(separator: " ").dropFirst().first.flatMap { Double($0) }
         XCTAssertEqual(suggested, 25, "Cable WHY must match increment rounding instead of the 45 lb bar")
         use.tap()

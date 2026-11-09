@@ -2,10 +2,8 @@
 //  SetRowWhyLayoutTests.swift
 //  fitbodTests
 //
-//  Review item 4 (decision 8): the WHY control sits at the leading end of
-//  a set row's second line. On the 390pt iPhone 17e the row gets 358pt
-//  (16pt card padding each side), and that line must still hold WHY, the
-//  RPE label and the five RPE chips without the chips wrapping.
+//  At 390pt the logger gives each row 358pt. Selected effort and non-working
+//  set types must fit without the full effort picker open.
 //
 
 import SwiftData
@@ -36,12 +34,12 @@ struct SetRowWhyLayoutTests {
         range: nil
     )
 
-    /// Height of a set row with an explanation (so it shows WHY unless the
-    /// set is logged) at `width`.
+    /// Height of a set row at the proposed width.
     private func rowHeight(
         setType: SetType,
         width: CGFloat,
         isComplete: Bool = false,
+        effortExpanded: Bool = false,
         dynamicTypeSize: DynamicTypeSize = .large
     ) throws -> CGFloat {
         let ctx = container.mainContext
@@ -62,6 +60,7 @@ struct SetRowWhyLayoutTests {
         entry.setTypeRaw = setType.rawValue
         entry.weight = 102.5
         entry.reps = isComplete ? 5 : 0
+        entry.rpe = isComplete ? 8.5 : nil
         entry.isComplete = isComplete
         try ctx.save()
 
@@ -70,6 +69,7 @@ struct SetRowWhyLayoutTests {
             sessionExercise: sessionExercise,
             prescribed: 102.5,
             explanation: explanation,
+            expandedEffortSetID: .constant(effortExpanded ? entry.id : nil),
             onCommit: {},
             onTapEmptyCell: {}
         )
@@ -80,25 +80,20 @@ struct SetRowWhyLayoutTests {
             .height
     }
 
-    @Test("A set-type chip fits beside WHY and the RPE chips at 390pt",
+    @Test("A set type fits within the compact row at 390pt",
           arguments: [SetType.drop, .failure, .warmup])
     func typedSetKeepsOneChipLine(setType: SetType) throws {
         let working = try rowHeight(setType: .working, width: 358)
         let typed = try rowHeight(setType: setType, width: 358)
-        #expect(typed == working, "A \(setType.rawValue) chip must not wrap the RPE chips at 390pt")
+        #expect(typed == working, "A \(setType.rawValue) label should fit without growing the row")
     }
 
-    /// Ticket T09: a logged set shows no WHY. At default text it keeps WHY's
-    /// space, so its chip line matches an open set's; at AX3, where WHY has
-    /// a line of its own, the logged row drops that line.
-    @Test("A logged set has no WHY line at AX3 and keeps its chip line at 390pt")
-    func loggedSetHasNoWhy() throws {
+    @Test("A decimal effort rating fits the compact row until the picker expands")
+    func loggedEffortKeepsRowCompact() throws {
         let open = try rowHeight(setType: .working, width: 358)
         let logged = try rowHeight(setType: .working, width: 358, isComplete: true)
-        #expect(logged == open, "Hiding WHY must not move a logged set's chips at 390pt")
-
-        let openAX3 = try rowHeight(setType: .working, width: 358, dynamicTypeSize: .accessibility3)
-        let loggedAX3 = try rowHeight(setType: .working, width: 358, isComplete: true, dynamicTypeSize: .accessibility3)
-        #expect(loggedAX3 < openAX3, "At AX3 a logged set must not keep a line for WHY")
+        #expect(logged == open)
+        let expanded = try rowHeight(setType: .working, width: 358, isComplete: true, effortExpanded: true)
+        #expect(expanded > logged)
     }
 }
