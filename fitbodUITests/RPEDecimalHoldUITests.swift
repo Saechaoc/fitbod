@@ -8,13 +8,24 @@ final class RPEDecimalHoldUITests: XCTestCase {
         continueAfterFailure = false
     }
 
-    /// Set 1 has no RPE yet. Holding its 8 opens the picker at 8.0, and Done
-    /// saves 8.5, which shows as its own chip, never as chip 8.
+    /// Logging a set allows a blank effort. Holding 8 then saves 8.5 to that set.
     @MainActor
     func testHoldingAnRPEChipInTheLoggerSetsAHalfStep() throws {
         let app = UITestNavigation.openSeededWorkout()
+        let reps = app.textFields["set.reps.1.S1"]
+        UITestNavigation.revealInLogger(reps, in: app)
+        UITestNavigation.enter("5", into: reps)
+        UITestNavigation.keyboardDone(in: app).tap()
+        let complete = app.buttons["set.complete.1.S1"]
+        UITestNavigation.revealInLogger(complete, in: app)
+        complete.tap()
+        XCTAssertTrue(UITestNavigation.waitUntil(timeout: 5) { complete.label == "Set 1 complete" })
+
+        let effort = app.buttons["set.effort.1.S1"]
+        UITestNavigation.revealInLogger(effort, in: app)
+        effort.tap()
         let eight = chip("RPE 8", in: app)
-        UITestNavigation.reveal(eight, in: app)
+        UITestNavigation.revealInLogger(eight, in: app)
         eight.press(forDuration: 1.0)
         let wheel = app.pickerWheels.firstMatch
         XCTAssertTrue(wheel.waitForExistence(timeout: 5), "Holding an RPE chip in the logger must open the decimal picker")
@@ -23,11 +34,16 @@ final class RPEDecimalHoldUITests: XCTestCase {
 
         wheel.adjust(toPickerWheelValue: "8.5")
         UITestNavigation.tapPickerButton("Done", in: app)
+        XCTAssertEqual(effort.value as? String, "8.5")
+        XCTAssertEqual(complete.label, "Set 1 complete")
+        attachScreenshot(of: app, named: "logger-half-step")
+
+        UITestNavigation.revealInLogger(effort, in: app)
+        effort.tap()
         let half = chip("RPE 8.5", in: app)
         XCTAssertTrue(half.waitForExistence(timeout: 5), "Set 1 must show 8.5")
         XCTAssertTrue(half.isSelected, "8.5 must read as selected")
         XCTAssertFalse(chip("RPE 8", in: app).isSelected, "Chip 8 must not look selected")
-        attachScreenshot(of: app, named: "logger-half-step")
     }
 
     @MainActor

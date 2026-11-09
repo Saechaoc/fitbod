@@ -336,8 +336,8 @@ Count outside view rendering, keyed by finished-workout changes and the week sta
 **Scope / sequence:** Measure a logging/keyboard obstruction → fix shared reveal/advance → verify context/44pt reach. Finish styling shipped in RM-060. Live Activity automatic scrolling returns with its set route; AX3/VoiceOver at stability.
 **Requires:** Logging invariants and a reproduced reach/reveal issue.
 **Verify when:** 390pt default-text keyboard/rest interactions now; [RM-044](#rm-044) at stability.
-**Evidence:** No passing acceptance is recorded for the remaining scope; cited commits/tests establish the shipped baseline only.
-**References:** D-10/D-88–D-93, F19/F356/F357/F382; [workflow](design-map/workflows/log-a-workout.md), [set actions](../fitbod/Sessions/SessionSetActions.swift).
+**Evidence:** Exercise-level weight guidance and the compact effort control are implemented with verification pending. The logger shows the rep target and starting-weight prompt when there is no load to suggest. The suggestion stays available after logging, weight fields accept direct edits during calibration, and effort expands within the set being rated. Updated checks cover restoring the frozen weight, editing a calibration load directly, and recording a half-step effort after logging. Swift syntax, design-map, and token contrast checks passed. The unit suite, affected logger journeys, and a 390pt default-text light-mode inspection remain open.
+**References:** FT-08/FT-09, D-10/D-88–D-93, F19/F356/F357/F382; [weight guidance](../fitbod/Sessions/WorkoutWeightGuidance.swift), [workflow](design-map/workflows/log-a-workout.md), [set actions](../fitbod/Sessions/SessionSetActions.swift).
 
 ### <a id="rm-025"></a>RM-025 — Plate calculator from a working set
 

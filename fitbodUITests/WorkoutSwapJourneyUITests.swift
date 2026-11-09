@@ -67,6 +67,9 @@ final class WorkoutSwapJourneyUITests: XCTestCase {
         UITestNavigation.revealInLogger(skip, in: app)
         skip.tap()
         enterPending(weight: "112.5", reps: "7", in: app)
+        let effort = app.buttons["set.effort.1.S1"]
+        UITestNavigation.revealInLogger(effort, in: app)
+        effort.tap()
         let eight = app.buttons["RPE 8"].firstMatch
         UITestNavigation.revealInLogger(eight, in: app)
         eight.press(forDuration: 1)
@@ -189,9 +192,9 @@ final class WorkoutSwapJourneyUITests: XCTestCase {
         XCTAssertTrue(UITestNavigation.appears(field))
         XCTAssertEqual(field.value as? String, "112.5 lb")
         XCTAssertEqual(app.textFields["set.reps.1.S1"].value as? String, "7")
-        let rpe = app.buttons["RPE 8.5"].firstMatch
+        let rpe = app.buttons["set.effort.1.S1"]
         XCTAssertTrue(rpe.exists)
-        XCTAssertTrue(rpe.isSelected)
+        XCTAssertEqual(rpe.value as? String, "8.5")
     }
 
     @MainActor

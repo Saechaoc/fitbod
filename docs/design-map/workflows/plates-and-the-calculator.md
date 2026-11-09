@@ -90,7 +90,7 @@ The calculator's target cannot be typed, so every path pays one tap per 5 lb bet
 
 ## Dead ends
 
-- [Workout](../screens/logger.md): a tap on a set's weight, or on the row around it, never opens the plate stack, so the lifter cannot see the plates for a set inside the workout (`fitbod/Sessions/PrescriptionWeightCell.swift:167`, `fitbod/Sessions/SetRow.swift:156`).
+- [Workout](../screens/logger.md): tapping a set's weight opens its numeric input (`fitbod/Sessions/PrescriptionWeightCell.swift:43`).
   No control in the logger opens the plate calculator either; the only way in is ••• on Plate inventory (`fitbod/Settings/PlateInventoryEditor.swift:65`).
 - [Plate calculator](../screens/plate-calculator.md): the EQUIPMENT head says "TAP TO CHANGE", but the BAR and INVENTORY cells do nothing, so a lifter who opened it on the wrong tab must close it, change tab on Plate inventory and open it again (`fitbod/Settings/PlateCalculatorSheet.swift:388`, `screens/img/17e-default-light-plate-calculator.png`).
 - [Plate calculator](../screens/plate-calculator.md): the PLATES AVAILABLE rows look like Plate inventory's tally rows but ignore taps, so counts cannot be fixed from the calculator (`fitbod/Settings/PlateCalculatorSheet.swift:459`).

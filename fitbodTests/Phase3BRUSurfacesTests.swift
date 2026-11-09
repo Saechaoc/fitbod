@@ -82,16 +82,6 @@ struct Phase3BRUSurfacesTests {
 
     @Test("prescriptionWeightCellInstantiates — editable cell with range nil")
     func prescriptionWeightCellInstantiates() throws {
-        let explanation = PrescriptionExplanation(
-            lastSessionLine: "100 kg x 8 @ RPE 8.5 (May 16)",
-            formulaName: "RPE autoregulation",
-            computedLine: "Target e1RM 122 kg -> 88% x 8 -> 102.5 kg",
-            roundedWeight: 102.5,
-            roundedLine: "-> 102.5 kg (rounded down to 2.5 kg plates)",
-            status: .calibrated,
-            bumpOccurred: false,
-            range: nil
-        )
         @State var weight: Double = 102.5
         @State var wasManualOverride: Bool = false
 
@@ -99,36 +89,24 @@ struct Phase3BRUSurfacesTests {
             weight: $weight,
             prescribed: 102.5,
             range: nil,
-            explanation: explanation,
             unitLabel: "kg",
             wasManualOverride: $wasManualOverride
         )
 
-        #expect(cell.explanation?.roundedWeight == 102.5)
+        #expect(cell.prescribed == 102.5)
         #expect(cell.range == nil)
         #expect(cell.unitLabel == "kg")
     }
 
-    @Test("prescriptionWeightCellInstantiates — calibrating range (read-only)")
+    @Test("prescriptionWeightCellInstantiates during calibration")
     func prescriptionWeightCellCalibratingRange() throws {
-        let explanation = PrescriptionExplanation(
-            lastSessionLine: "100 kg x 8 @ RPE 8.5 (May 16)",
-            formulaName: "RPE autoregulation",
-            computedLine: nil,
-            roundedWeight: 100.0,
-            roundedLine: "-> 100 kg",
-            status: .calibrating(current: 4, threshold: 10),
-            bumpOccurred: false,
-            range: 95.0...105.0
-        )
-        @State var weight: Double = 100.0
+        @State var weight: Double = 110.0
         @State var wasManualOverride: Bool = false
 
         let cell = PrescriptionWeightCell(
             weight: $weight,
             prescribed: 100.0,
             range: 95.0...105.0,
-            explanation: explanation,
             unitLabel: "kg",
             wasManualOverride: $wasManualOverride
         )
@@ -136,7 +114,7 @@ struct Phase3BRUSurfacesTests {
         #expect(cell.range != nil)
         #expect(cell.range?.lowerBound == 95.0)
         #expect(cell.range?.upperBound == 105.0)
-        #expect(cell.explanation?.status == .calibrating(current: 4, threshold: 10))
+        #expect(cell.accessibilityValueText == "110 kg")
     }
 
     // MARK: - BumpBanner (Plan 03.2-02)

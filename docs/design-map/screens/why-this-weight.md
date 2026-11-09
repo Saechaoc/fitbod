@@ -13,29 +13,26 @@ img: [img/17e-default-light-why-this-weight.png, img/17e-default-light-why-this-
 tree: tree/why-this-weight.txt
 ---
 
-The lifter sees the weight the app recommends for a set and how it got there, then uses it or types their own.
+The logger shows the suggested load above the exercise's sets. The lifter can expand a short reason there and open the full calculation when needed.
 
 <img src="img/17e-default-light-why-this-weight.png" width="300" alt="Why this weight on the iPhone 17e">
+
+The captures, state table, and VoiceOver tree describe the October 31 build.
 
 ## Entry points
 
 | From | Tap | Kind |
 |---|---|---|
-| [logger](logger.md) | WHY (Why this weight) under a working set | sheet |
+| [logger](logger.md) | Why this weight above the set table, then Calculation details | sheet |
 
 ## Exits
 
 | Control | Goes to | Kind | Closes with |
 |---|---|---|---|
-| USE 100 ▸ | [logger](logger.md), with the recommended weight put in the set | sheet | verb |
-| OVERRIDE | [logger](logger.md), with the weight field focused for typing | sheet | verb |
+| Close | [logger](logger.md) | sheet | verb |
 | A swipe down | [logger](logger.md), with nothing changed | sheet | none |
 
-The sheet has no header and no close button.
-It opens at half height only and cannot be dragged taller (`fitbod/Sessions/PrescriptionWeightCell.swift:197`).
-A black hero slab shows "● RECOMMENDED · DOUBLE PROGRESSION", the set type, the weight at about 150 pt, then REPS and RPE.
-Below it, a "WHY THIS WEIGHT" head with a "−" at the right leads to three numbered steps: 01 Last session, 02 the progression rule, 03 Rounded to plate.
-At half height the steps sit under the OVERRIDE and USE footer, so the lifter sees the head and must scroll inside the sheet to read why.
+Calculation details opens at half height (`fitbod/Sessions/WorkoutWeightGuidance.swift:69`). It shows the prior session, progression rule, and rounding. The set's Weight field accepts direct edits, and the set number menu offers the suggested weight.
 
 ## States
 

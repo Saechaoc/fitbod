@@ -10,14 +10,27 @@ extension UITestNavigation {
         return app
     }
 
-    /// One tap on set 1's WHY control, as a user opens Why-this-weight.
+    /// Opens the calculation from the exercise's inline reason.
     static func openWeightExplanation(in app: XCUIApplication) {
-        let why = app.buttons["set.why.1.S1"]
-        reveal(why, in: app)
+        let why = app.buttons["card.why.1"]
+        revealInLogger(why, in: app)
         why.tap()
+        let details = app.buttons["card.weightDetails.1"]
+        XCTAssertTrue(appears(details))
+        revealInLogger(details, in: app)
+        details.tap()
         XCTAssertTrue(app.staticTexts.matching(NSPredicate(
             format: "label CONTAINS[c] %@", "RECOMMENDED"
         )).firstMatch.waitForExistence(timeout: 10))
+    }
+
+    static func suggestedWeightAction(for set: String, in app: XCUIApplication) -> XCUIElement {
+        let actions = app.buttons["set.type.\(set)"]
+        revealInLogger(actions, in: app)
+        actions.tap()
+        let use = app.buttons.matching(NSPredicate(format: "label BEGINSWITH[c] %@", "Use ")).firstMatch
+        XCTAssertTrue(appears(use, within: 5))
+        return use
     }
 
     /// Taps a button in the decimal RPE picker's header and waits for the

@@ -4,8 +4,8 @@
 //
 //  Ticket T61 (finding F33): a suggested weight of 0 is no suggestion.
 //  Why-this-weight offers no Use for it, and a calibrating range of 0 to 0
-//  shows the weight field's empty "—", which VoiceOver reads as "none".
-//  Suggestions and ranges above 0 keep their numbers.
+//  leaves exercise guidance without a suggested weight. Suggestions and
+//  ranges above 0 keep their numbers.
 //
 //  Ticket T79 (findings F76 and F77): nor does Why-this-weight show a 0.
 //  Its hero shows the empty field's "—", step 02 asks for a starting
@@ -35,6 +35,7 @@ struct ZeroSuggestionTests {
         #expect(explanation.roundedWeight == 0)
         let sheet = WhyThisWeightSheet(explanation: explanation, unitLabel: "lb")
         #expect(sheet.useTitle == nil)
+        #expect(WorkoutWeightGuidance.suggestedLoad(explanation, unit: .lb) == nil)
     }
 
     // MARK: - Why-this-weight's hero and steps
@@ -81,27 +82,26 @@ struct ZeroSuggestionTests {
                 == "Rounded to plate 2.5 lb")
     }
 
-    // MARK: - The read-only calibrating range
+    // MARK: - Exercise weight guidance
 
-    @Test("A calibrating range of 0 to 0 shows the placeholder, read as none")
-    func zeroRangeShowsPlaceholder() {
+    @Test("A calibrating range of 0 to 0 has no suggested load")
+    func zeroRangeOmitsSuggestion() {
         let explanation = bodyweightCalibration()
         #expect(explanation.range == 0.0...0.0)
-        let cell = weightCell(range: explanation.range)
-        #expect(cell.rangeText == nil)
-        #expect(cell.accessibilityLabelText == "Prescribed weight: none")
-        #expect(cell.accessibilityValueText == "none")
+        #expect(WorkoutWeightGuidance.suggestedLoad(explanation, unit: .lb) == nil)
     }
 
     @Test("A calibrating range above 0 shows its numbers", arguments: [
-        (95.0...105.0, "95 – 105", "95 to 105"),
-        (0.0...2.5, "0 – 2.5", "0 to 2.5"),
+        (95.0...105.0, "95–105"),
+        (0.0...2.5, "0–2.5"),
     ])
-    func rangeAboveZeroShowsNumbers(range: ClosedRange<Double>, shown: String, spoken: String) {
-        let cell = weightCell(range: range)
-        #expect(cell.rangeText == "\(shown) lb")
-        #expect(cell.accessibilityLabelText == "Prescribed weight range: \(spoken) lb")
-        #expect(cell.accessibilityValueText == "")
+    func rangeAboveZeroShowsNumbers(range: ClosedRange<Double>, shown: String) {
+        var explanation = suggestion(range.lowerBound)
+        explanation.range = range
+        #expect(WorkoutWeightGuidance.suggestedLoad(explanation, unit: .lb) == "\(shown) lb")
+
+        let frozen = explanation.frozen(at: 97.5, unitLabel: "lb")
+        #expect(WorkoutWeightGuidance.suggestedLoad(frozen, unit: .lb) == "97.5 lb")
     }
 
     // MARK: - Helpers
@@ -184,17 +184,5 @@ struct ZeroSuggestionTests {
             lastSessionRPE: 8,
             lastSessionDate: nil
         ).explanation
-    }
-
-    /// The weight cell as SetRow builds it for a set showing `range`.
-    private func weightCell(range: ClosedRange<Double>?) -> PrescriptionWeightCell {
-        PrescriptionWeightCell(
-            weight: .constant(0),
-            prescribed: 0,
-            range: range,
-            explanation: nil,
-            unitLabel: "lb",
-            wasManualOverride: .constant(false)
-        )
     }
 }
