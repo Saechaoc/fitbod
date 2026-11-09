@@ -127,8 +127,8 @@ recommended answer, for running a block from plan to review (gaps B1 to B13).
   its weight and reps to the next untouched working set
   (`SessionSetActions.carryForward`, its own rule with tests). One set-type
   picker shows the current choice, RPE is labelled, and PREVIOUS is LAST TIME
-  with an explanation. The finish confirmation stays a stock alert (FT-13)
-  until the gym day is stable.
+  with an explanation. The finish confirmation is a BRU sheet with the set
+  count and elapsed time (FT-13).
 
 ## Decisions awaiting product direction
 
@@ -168,12 +168,13 @@ recommended answer, for running a block from plan to review (gaps B1 to B13).
 - Curate pattern metadata before restoring the hidden Pattern filter.
 - Extend CI coverage deliberately: the existing workflow runs on `claude/**`,
   PRs and manual dispatch; a direct push to `main` does not trigger it.
-- Branding: compare the installed Home Screen icon with `AppIcon.appiconset`
-  on the phone in light, dark and tinted appearance (playtest FT-21,
-  2026-11-08). Steps: `docs/user-testing-notes/fitbod-playtest-roadmap-reconciliation.md`.
+- Branding: the light Home Screen icon the phone generated for the 2026-11-08
+  build matches `AppIcon.appiconset`; compare the dark and tinted appearance
+  on the phone (playtest FT-21). Steps: `docs/user-testing-notes/fitbod-playtest-roadmap-reconciliation.md`.
 - Heatmap reach: on a 390pt and a 440pt phone, scroll Progress › Volume to
   the bottom and tap a lower-body region on both figures (playtest FT-16);
-  the simulator shows both figures whole.
+  the 402pt and 430pt simulators show both figures whole, calves included,
+  with the map's bottom above the tab bar.
 
 ## Removed in Milestone 1 closeout
 

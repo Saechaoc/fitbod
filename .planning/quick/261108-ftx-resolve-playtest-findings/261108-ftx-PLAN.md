@@ -25,4 +25,4 @@ Device-only findings get a repro record and a roadmap home instead of code.
 11. FT-20: give the widget extension the asset catalog and fonts the Live Activity renders with.
 12. Docs: the three roadmap edits from the playtest doc, a resolution section in the playtest doc, device repro steps for FT-16, FT-19, FT-20 and FT-21, the Today exit rule in `docs/design-map/redesign/today-layouts.md`, SUMMARY and STATE row.
 
-FT-13 (custom Finish confirmation) stays stock for now; see the summary.
+FT-13 (custom Finish confirmation) shipped later the same day as a BRU sheet (af274c08); see the summary.

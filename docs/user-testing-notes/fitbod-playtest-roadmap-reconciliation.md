@@ -78,15 +78,15 @@ Device-only findings have reproduction steps below and a home in the roadmap.
 | FT-10 | Shipped | One set-type picker shows the current choice; the set label carries a small W/UP, DROP, FAIL or RP tag. |
 | FT-11 | Shipped | The inline plate graphic under the weight field is gone; plates stay in the WHY sheet and the calculator. |
 | FT-12 | Shipped | Each exercise collapses to its header with set count and completion; the finished summary opens compact and each exercise expands to its sets. |
-| FT-13 | Deferred | The finish confirmation stays a stock alert, which already carries the set count and elapsed time; a BRU sheet waits until the gym day is stable, as `docs/DEVELOPMENT.md` defers polish on moving workflows. |
+| FT-13 | Shipped | The finish confirmation is a BRU sheet on paper: Finish workout?, the set count and elapsed time, Finish as the signal action, Discard workout in its place when nothing is logged, and Keep logging as the way back; the finish UI tests find the actions by identifier. |
 | FT-14 | Shipped | Dark slabs draw on `bruSlab`, constant dark (`#0A0A0A` light, warm charcoal `#1F1C16` dark) with `bruOnSlab` text; light mode is unchanged. |
 | FT-15 | Shipped | The Done slab shares `bruSlab`; with no block, Today shows one routine action, the picker's + New routine. |
-| FT-16 | Device check | The simulator shows both figures whole, so the cut-off needs a phone capture; steps below, acceptance recorded on redesign step 1.4. |
+| FT-16 | Device check | Simulators at 402pt and at 430pt, the phone's width, show both figures whole with the calves visible and the map's bottom above the tab bar, so the cut-off needs a phone capture; steps below, acceptance recorded on redesign step 1.4. |
 | FT-17 | Shipped | Volume opens from Progress › Volume; every region, the neck included, and every bar open the muscle's detail; a caption says so and the bars carry ›. |
 | FT-18 | Shipped | Muscles under MEV draw amber on the bars, the figures and the legend's UNDER MEV cell. |
-| FT-19 | Device check | Permission and prompt behaviour needs the phone; steps below, under the roadmap's Live Activities item. |
-| FT-20 | Shipped, then device check | The widget extension had neither the app's fonts nor its asset catalog, so the card's text and colours had nothing to draw with; both are in the extension now with every font registered. The Lock Screen check remains on the phone; steps below. |
-| FT-21 | Device check | Compare the installed icon with `AppIcon.appiconset`; steps below, under the roadmap's release checks. |
+| FT-19 | Device check | The app asks one permission once, notifications with alert and sound, and starts one Live Activity per rest with no prompt of its own; neither iOS prompt offers Always Allow, so the prompt's text and owner need the phone; steps below, under the roadmap's Live Activities item. |
+| FT-20 | Shipped, then device check | The widget extension had neither the app's fonts nor its asset catalog, so the card's text and colours had nothing to draw with; both are in the extension now with every font registered. A Debug build of `main` with the fix was installed on the phone through devicectl on 2026-11-08; the Lock Screen check remains, steps below. |
+| FT-21 | Device check | The icon the phone generated for the installed build, pulled with devicectl, matches the 1024 artwork at full and at Home Screen size; dark and tinted appearance cannot be pulled and need the phone; steps below, under the roadmap's release checks. |
 
 ### Device reproductions
 
@@ -99,6 +99,7 @@ FT-19, the repeated "Always Allow" prompt.
 1. Delete the app, install `main`, start a workout and log one set with Focus off; record the exact prompt text and the choices it offers.
 2. Choose Allow, log another set, and note whether the prompt returns.
 3. Repeat from a fresh install with Focus on, then with Live Activities denied in Settings › Fitbod; the rest must still start in the app, and an answered prompt must not come back.
+4. If the prompt's owner is unclear, collect the phone's log on the Mac right after it shows and search it for Fitbod and ActivityKit: `sudo log collect --device-udid <udid> --last 1h --output ~/Desktop/fitbod-phone.logarchive`, with the udid from `xcrun devicectl list devices`; `log collect` needs root.
 
 FT-20, the Lock Screen Live Activity.
 1. With music playing, log a set, lock the phone and confirm the card shows the exercise and the countdown; check the Dynamic Island compact and expanded views.
@@ -106,8 +107,8 @@ FT-20, the Lock Screen Live Activity.
 3. If the card is blank again, capture it with the phone model and iOS version and note whether the app was in the foreground.
 
 FT-21, the app icon.
-1. Capture the Home Screen icon in light, dark and tinted appearance.
-2. Compare each with `fitbod/Assets.xcassets/AppIcon.appiconset` and note which build was installed.
+1. Capture the Home Screen icon in dark and tinted appearance; the light icon, pulled from the phone with `xcrun devicectl device info appIcon`, already matches the artwork at 1024 and at Home Screen size.
+2. Compare each with `fitbod/Assets.xcassets/AppIcon.appiconset`, one universal 1024 image with no dark or tinted variant, and note which build was installed; if iOS's glass treatment of the flat image is what looked wrong, the remedy is an Icon Composer `.icon` file, a branding item.
 
 [roadmap]: https://github.com/Saechaoc/fitbod/blob/main/docs/ROADMAP.md
 [roadmap-priorities]: https://github.com/Saechaoc/fitbod/blob/main/docs/ROADMAP.md#L16-L26
