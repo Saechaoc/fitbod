@@ -97,12 +97,12 @@
 				Design/BRUSectionHead.swift,
 				"Design/Color+BRU.swift",
 				Design/NumberText.swift,
-				Resources/Fonts/BebasNeue-Regular.ttf,
-				Resources/Fonts/Geist-Regular.ttf,
-				Resources/Fonts/JetBrainsMono-Bold.ttf,
-				Resources/Fonts/JetBrainsMono-Regular.ttf,
-				Resources/Fonts/SpaceGrotesk-Bold.ttf,
-				Resources/Fonts/SpaceGrotesk-SemiBold.ttf,
+				"Resources/Fonts/BebasNeue-Regular.ttf",
+				"Resources/Fonts/Geist-Regular.ttf",
+				"Resources/Fonts/JetBrainsMono-Bold.ttf",
+				"Resources/Fonts/JetBrainsMono-Regular.ttf",
+				"Resources/Fonts/SpaceGrotesk-Bold.ttf",
+				"Resources/Fonts/SpaceGrotesk-SemiBold.ttf",
 				Sessions/RestTimer/RestTimerAttributes.swift,
 			);
 			target = 624AD49A2FB375A200D9EF2E /* FitbodWidgetsExtension */;
