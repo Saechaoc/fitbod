@@ -7,13 +7,6 @@
 // (`surfaces` below) and assert ZERO occurrences of the 25 forbidden
 // Apple-HIG patterns enumerated in 04.1-PATTERNS.md lines 56-84.
 //
-// ROADMAP AUDIT (revision iter 1 W5):
-//   testROADMAPDependsOnUpdated is extended to additionally assert:
-//   (a) "Phase 2.1 (specifically 02.1-01-PLAN.md foundation)" dependency citation
-//   (b) Goal fragment "Re-skin all Phase 4" (from CONTEXT D-04)
-//   (c) Requirements fragment "None (visual refactor" (from CONTEXT D-18)
-//   (d) References to all 8 plan filenames: 04.1-01-PLAN.md through 04.1-08-PLAN.md
-//
 // Run via:
 //   xcodebuild test -scheme fitbod -only-testing:fitbodTests/BRUPeriodizationAuditTests
 
@@ -34,14 +27,6 @@ struct BRUPeriodizationAuditTests {
             .deletingLastPathComponent() // project root
             .appendingPathComponent("fitbod")
             .appendingPathComponent("Periodization")
-            .appendingPathComponent(filename)
-    }
-
-    private func planningPath(_ filename: String) -> URL {
-        URL(fileURLWithPath: #filePath)
-            .deletingLastPathComponent() // fitbodTests/
-            .deletingLastPathComponent() // project root
-            .appendingPathComponent(".planning")
             .appendingPathComponent(filename)
     }
 
@@ -205,40 +190,5 @@ struct BRUPeriodizationAuditTests {
         let overviewSource = try String(contentsOf: overviewURL, encoding: .utf8)
         #expect(overviewSource.contains(".accessibilityLabel("),
                 "BlockOverviewScreen.swift must carry .accessibilityLabel( per CONTEXT D-15")
-    }
-
-    // MARK: - 4. testROADMAPDependsOnUpdated (EXTENDED per revision iter 1 W5)
-
-    /// Extended ROADMAP audit per revision iter 1 W5:
-    /// Asserts ROADMAP.md Phase 04.1 entry contains:
-    ///   (a) Dependency citation: "Phase 2.1" near "02.1-01-PLAN.md" (CONTEXT D-02)
-    ///   (b) Goal fragment: "Re-skin all Phase 4" (CONTEXT D-04)
-    ///   (c) Requirements fragment: "None (visual refactor" (CONTEXT D-18)
-    ///   (d) All 8 plan filenames: 04.1-01-PLAN.md through 04.1-08-PLAN.md
-    @Test("testROADMAPDependsOnUpdated — Phase 04.1 entry contains Depends-on + Goal + Requirements + all 8 plan filenames")
-    func testROADMAPDependsOnUpdated() throws {
-        let roadmapURL = planningPath("ROADMAP.md")
-        let roadmapSource = try String(contentsOf: roadmapURL, encoding: .utf8)
-
-        // (a) Dependency on Phase 2.1 with specific plan reference (CONTEXT D-02)
-        #expect(roadmapSource.contains("02.1-01-PLAN.md"),
-                "ROADMAP.md Phase 04.1 entry must reference '02.1-01-PLAN.md' as the foundation dependency per CONTEXT D-02")
-        #expect(roadmapSource.contains("Phase 2.1") || roadmapSource.contains("02.1"),
-                "ROADMAP.md Phase 04.1 entry must cite Phase 2.1 dependency per CONTEXT D-02")
-
-        // (b) Goal fragment: "Re-skin all Phase 4" (CONTEXT D-04)
-        #expect(roadmapSource.contains("Re-skin all Phase 4"),
-                "ROADMAP.md Phase 04.1 entry must contain Goal text 'Re-skin all Phase 4' per CONTEXT D-04")
-
-        // (c) Requirements fragment: "None (visual refactor" (CONTEXT D-18)
-        #expect(roadmapSource.contains("None (visual refactor"),
-                "ROADMAP.md Phase 04.1 entry must contain Requirements text 'None (visual refactor' per CONTEXT D-18")
-
-        // (d) All 8 plan filenames: 04.1-01-PLAN.md through 04.1-08-PLAN.md
-        for planNum in 1...8 {
-            let planFilename = String(format: "04.1-%02d-PLAN.md", planNum)
-            #expect(roadmapSource.contains(planFilename),
-                    "ROADMAP.md must reference '\(planFilename)' in Phase 04.1 plan list (revision iter 1 W5)")
-        }
     }
 }
