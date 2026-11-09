@@ -80,7 +80,12 @@ fixedWeekly maps today's weekday to its index in stored days modulo current slot
 Absent weekdays rest; missed days do not shift.
 Empty shared routines show repair.
 TodayState derives precedence using the environment calendar and refreshes on foreground/significant time change.
-Shared start-slot selection across all entry points is [planned RM-006](docs/ROADMAP.md#rm-006), not shipped.
+Every start goes through `WorkoutStarter.start(_:in:)` with the routine it came from, and the pure `StartSlot` picks the slot at the tap ([RM-006](docs/ROADMAP.md#rm-006)).
+NEXT is the resolver's slot in a rotation block; in a fixedWeekly block it is today's slot until a counted workout starts today, then the next training day's.
+With no block, a routine's NEXT follows its newest counted slotted workout, wraps and skips sessions with no exercises.
+A start credits NEXT when NEXT holds the session, otherwise the session's first slot after NEXT, so a session slotted twice never moves the rotation backwards.
+A start from no routine, an archived routine or a routine other than the active block's is unslotted.
+The session sheet and the no-block hero that read these rules are still planned under RM-006.
 
 ## Snapshots and corrections
 

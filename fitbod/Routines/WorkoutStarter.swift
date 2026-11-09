@@ -1,10 +1,10 @@
 // WorkoutStarter.swift
 // fitbod
 //
-// One entry point for "start this session" outside the block resolver
-// (session detail, Today's session list). Wraps SessionFactory.start and
-// turns its errors into an outcome each caller can present, so no surface
-// swallows a failed start.
+// One entry point for "start this session" (Today's hero and session
+// lists, session detail). Wraps SessionFactory.start and turns its errors
+// into an outcome each caller can present, so no surface swallows a failed
+// start.
 
 import Foundation
 import SwiftData
@@ -23,14 +23,15 @@ public enum WorkoutStartOutcome {
 @MainActor
 public enum WorkoutStarter {
 
-    /// Starts `template`. Given no slot, a session in the active block's
-    /// routine takes its slot there, so a session started from anywhere
-    /// counts as that day of the block and the rotation moves on from it
-    /// (D-19). The session is still attributed to the active block, so
-    /// block volume and history stay complete.
+    /// Starts `template` from `routine`: the routine it was listed in or
+    /// opened from, or nil for a session shown outside any routine.
+    /// `StartSlot` works the slot out here, at the tap, so every route
+    /// credits the same one and a slot removed since the screen opened is
+    /// never credited (RM-006, O-2, D-19). The session is still attributed
+    /// to the active block, so block volume and history stay complete.
     public static func start(
         _ template: SessionTemplate,
-        slot: SplitSessionSlot? = nil,
+        in routine: Split?,
         context: ModelContext,
         now: Date = .now,
         calendar: Calendar = .current
@@ -42,7 +43,7 @@ public enum WorkoutStarter {
         do {
             let session = try SessionFactory.start(
                 template: template,
-                slot: slot ?? Self.slot(for: template, in: block, context: context),
+                slot: slot(for: template, startedFrom: routine, block: block, context: context, now: now, calendar: calendar),
                 activeBlock: block,
                 on: now,
                 calendar: calendar,
@@ -80,20 +81,18 @@ public enum WorkoutStarter {
         return .started(session)
     }
 
-    /// The slot `template` fills in `block`'s routine: today's scheduled
-    /// slot when it holds this session, else the session's first slot.
-    /// Nil when the session is not in the routine.
-    static func slot(for template: SessionTemplate, in block: Block?, context: ModelContext) -> SplitSessionSlot? {
-        guard let block else { return nil }
-        let slots = (block.split?.slots ?? [])
-            .filter { $0.sessionTemplate?.id == template.id }
-            .sorted { $0.position < $1.position }
-        guard !slots.isEmpty else { return nil }
-        if case .session(let scheduled) = TodayResolver.resolve(block: block, context: context),
-           slots.contains(where: { $0.id == scheduled.id }) {
-            return scheduled
-        }
-        return slots.first
+    /// The slot a start of `template` from `routine` credits, read from the
+    /// store as it is now and decided by `StartSlot`.
+    private static func slot(
+        for template: SessionTemplate, startedFrom routine: Split?, block: Block?,
+        context: ModelContext, now: Date, calendar: Calendar
+    ) -> SplitSessionSlot? {
+        guard let routine else { return nil }
+        let finished = (try? context.fetch(FetchDescriptor<Session>(predicate: #Predicate { $0.completedAt != nil }))) ?? []
+        return StartSlot.slot(
+            for: template, startedFrom: routine, block: block,
+            resolution: block.map { TodayResolver.resolve(block: $0, context: context, today: now, calendar: calendar) } ?? .noBlock,
+            finished: finished, now: now, calendar: calendar)
     }
 
     public static func inProgressSession(in context: ModelContext) -> Session? {

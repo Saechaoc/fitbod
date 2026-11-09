@@ -222,7 +222,7 @@ public struct SplitDetailView: View {
             .presentationDetents([.medium, .large])
         }
         .navigationDestination(item: $openedTemplate) { template in
-            SessionTemplateDetailView(template: template)
+            SessionTemplateDetailView(template: template, routine: split)
         }
         .onAppear {
             nameText = split.name

@@ -158,6 +158,11 @@ Slice 2 of 6, StartSlot rules (2026-11-09): the pure `StartSlot` holds NEXT for 
 Unit target: 1,284 tests, 1,283 passed, 1 expected failure (iPhone 17, iOS 26.5).
 Nothing visible changed: no start asks `StartSlot` yet (slice 3), and T-PICK at 390pt matches its before-capture.
 Still open for the slab slice: no-block T-FIX names the newest routine, where the layout names the routine holding the most recently updated session first.
+Slice 3 of 6, shared starts (2026-11-09): every start calls `WorkoutStarter.start(_:in:)` with the routine it came from, and `StartSlot` picks the slot at the tap; session detail takes the routine it was opened from, on Today and on the routine screen.
+A session slotted twice no longer moves the rotation backwards: `WorkoutStarterTests.startOfASessionSlottedTwice` credits slot 4, and under the old first-slot rule it failed with slot 1.
+The same suite covers a start from another routine or none while a block runs (unslotted, still in the block), two no-block starts in a row, and a slot removed after its screen opened.
+Unit target: 1,290 tests, 1,289 passed, 1 expected failure. UI: `MilestoneOneJourneyUITests`, `BlockLifecycleEntryPointsUITests`, `TodayHeroUITests`, `SessionHistoryBRUUITests` and `WorkoutExitUITests`, 12 of 12 passed (iPhone 17, iOS 26.5).
+A no-block start from Today's list or a routine's session now takes a slot in its routine; nothing on screen changed.
 **References:** D-19/D-24/D-25/D-162–D-165, redesign R-4/R-5/R-10/R-12/R-19/R-23/R-25; [TodayState](../fitbod/Views/TodayState.swift), [picker](../fitbod/Views/TodaySessionPicker.swift), [session detail](../fitbod/Routines/SessionTemplateDetailView.swift), [O-2/O-3/O-6](#rm-042).
 
 ### <a id="rm-007"></a>RM-007 — FT-19: identify the repeated permission prompt

@@ -207,6 +207,43 @@ struct StartSlotTests {
 
     // MARK: The slot a start credits
 
+    /// The slot a start of `session` from `routine` credits, asked the way the starter asks at the tap.
+    private func slot(for session: SessionTemplate, startedFrom routine: Split?, block: Block? = nil) throws -> SplitSessionSlot? {
+        let finished = try ctx.fetch(FetchDescriptor<Session>()).filter { $0.completedAt != nil }
+        return StartSlot.slot(
+            for: session, startedFrom: routine, block: block,
+            resolution: block.map { TodayResolver.resolve(block: $0, context: ctx, today: now, calendar: calendar) } ?? .noBlock,
+            finished: finished, now: now, calendar: calendar)
+    }
+
+    @Test("no block: a start takes its slot in the routine it starts from, counted from that routine's NEXT")
+    func startWithNoBlock() throws {
+        let (routine, slots) = makeRoutine(sessions: ["Push A", "Pull A", "Legs A"])
+        let pull = try #require(slots[1].sessionTemplate)
+        let other = makeRoutine("Upper Lower")
+        let otherSlots = addSlots([pull, makeSession("Lower A")], to: other)
+        makeWorkout(in: slots[0], daysAgo: 1)
+
+        #expect(try slot(for: pull, startedFrom: routine) == slots[1])
+        #expect(try slot(for: pull, startedFrom: other) == otherSlots[0])
+        #expect(try slot(for: pull, startedFrom: nil) == nil)
+        other.isArchived = true
+        #expect(try slot(for: pull, startedFrom: other) == nil)
+    }
+
+    @Test("while a block runs, only a start from the block's own routine takes a slot")
+    func startWhileABlockRuns() throws {
+        let (routine, slots) = makeRoutine(sessions: ["Push A", "Pull A", "Legs A"])
+        let pull = try #require(slots[1].sessionTemplate)
+        let other = makeRoutine("Upper Lower")
+        _ = addSlots([pull], to: other)
+        let block = makeBlock(on: routine)
+
+        #expect(try slot(for: pull, startedFrom: routine, block: block) == slots[1])
+        #expect(try slot(for: pull, startedFrom: other, block: block) == nil)
+        #expect(try slot(for: pull, startedFrom: nil, block: block) == nil)
+    }
+
     @Test("a session slotted twice takes NEXT when NEXT holds it, else its first slot after NEXT")
     func slotForASessionSlottedTwice() {
         let routine = makeRoutine()

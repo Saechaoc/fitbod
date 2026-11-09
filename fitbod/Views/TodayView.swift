@@ -98,8 +98,8 @@ public struct TodayView: View {
     /// The recap was due on a visit that showed a block review; it shows
     /// once the review closes.
     @State private var recapAfterReview: Bool = false
-    /// Session detail pushed from the Start-a-workout picker.
-    @State private var openedTemplate: SessionTemplate? = nil
+    /// Session detail pushed from the hero's View or the Start-a-workout picker.
+    @State private var openedSession: OpenedSession? = nil
     /// A workout already in progress when the user tried to start another.
     @State private var startConflict: Session? = nil
     @State private var startError: String? = nil
@@ -153,8 +153,7 @@ public struct TodayView: View {
 
                     // CTA slab — resume-in-progress wins (spec §5); otherwise
                     // branch on the full TodayResolution so .emptySplit gets a
-                    // distinct repair surface (CR-02) and the resolved slot is
-                    // threaded into startWorkout as the rotation anchor (CR-01).
+                    // distinct repair surface (CR-02).
                     if let active = activeSessions.first {
                         // Active in-progress session → Resume slab
                         ResumeWorkoutSlab(
@@ -182,9 +181,9 @@ public struct TodayView: View {
                         switch resolution {
                         case .session(let slot):
                             if let routine = slot.sessionTemplate, let block = activeBlocks.first {
-                                // Scheduled routine → Black slab CTA. CR-01: keep
-                                // the resolved slot so startWorkout writes it as
-                                // the rotation anchor.
+                                // Scheduled session → Black slab CTA. It starts
+                                // from the block's routine, so the starter credits
+                                // the scheduled slot as the rotation anchor (CR-01).
                                 BlackSlabCTA(
                                     routine: routine,
                                     label: BlackSlabCTA.heroLabel(
@@ -193,7 +192,7 @@ public struct TodayView: View {
                                         slotCount: block.split?.slots?.count ?? 0
                                     ),
                                     phase: currentBlockPhase,
-                                    onStart: { startWorkout(routine, slot: slot) },
+                                    onStart: { startWorkout(routine, in: block.split) },
                                     onChooseAnother: canChooseSession ? { @MainActor in choosingSession = true } : nil
                                 )
                             } else {
@@ -223,8 +222,8 @@ public struct TodayView: View {
                     // split), so an unscheduled workout is always one tap away.
                     if activeSessions.isEmpty && todaysRoutine == nil {
                         TodaySessionPicker(
-                            onOpen: { openedTemplate = $0 },
-                            onStart: { startWorkout($0) },
+                            onOpen: { openedSession = OpenedSession(template: $0, routine: $1) },
+                            onStart: { startWorkout($0, in: $1) },
                             onNewRoutine: startNewRoutine,
                             onStartEmpty: startEmptyWorkout
                         )
@@ -240,7 +239,9 @@ public struct TodayView: View {
 
                     // Lift list — only for a scheduled session not yet done
                     if let routine = todaysRoutine, doneToday == nil {
-                        LiftListSection(routine: routine, phase: currentBlockPhase, onView: { openedTemplate = routine })
+                        LiftListSection(routine: routine, phase: currentBlockPhase, onView: {
+                            openedSession = OpenedSession(template: routine, routine: activeBlocks.first?.split)
+                        })
                     }
 
                     // ─── DEFENSIVE BOTTOM — Phase 5 FatigueSurfaceView ──
@@ -344,8 +345,8 @@ public struct TodayView: View {
                     .presentationDragIndicator(.hidden)
                 }
             }
-            .navigationDestination(item: $openedTemplate) { template in
-                SessionTemplateDetailView(template: template)
+            .navigationDestination(item: $openedSession) { opened in
+                SessionTemplateDetailView(template: opened.template, routine: opened.routine)
             }
             .alert(
                 "Workout in progress",
@@ -557,17 +558,18 @@ public struct TodayView: View {
 
     // MARK: - Workout Start
 
+    /// Starts `template` from the routine it is shown in. The starter works
+    /// out the slot at the tap, so session.slot is the rotation anchor
+    /// TodayResolver and StartSlot move on from (CR-01, O-2).
     @MainActor
-    private func startWorkout(_ routine: SessionTemplate, slot: SplitSessionSlot? = nil) {
-        // CR-01: thread the resolved slot through so session.slot is the
-        // rotation anchor; TodayResolver advances rotation off it.
-        switch WorkoutStarter.start(routine, slot: slot, context: ctx, calendar: calendar) {
+    private func startWorkout(_ template: SessionTemplate, in routine: Split?) {
+        switch WorkoutStarter.start(template, in: routine, context: ctx, calendar: calendar) {
         case .started(let session):
             navigationPath.append(SessionRoute.logger(session))
         case .alreadyInProgress(let active):
             startConflict = active
         case .emptyTemplate:
-            startError = "Add at least one exercise to \(routine.name) first."
+            startError = "Add at least one exercise to \(template.name) first."
         case .failed(let message):
             startError = message
         }
@@ -595,7 +597,7 @@ public struct TodayView: View {
         switch choice {
         case .session(let slot):
             if let template = slot.sessionTemplate {
-                startWorkout(template, slot: slot)
+                startWorkout(template, in: slot.split)
             }
         case .empty:
             startEmptyWorkout()
@@ -613,7 +615,7 @@ public struct TodayView: View {
         guard let resumeRequest, resumeRequest.isPending else { return }
         resumeRequest.isPending = false
         guard let active = WorkoutStarter.inProgressSession(in: ctx) else { return }
-        openedTemplate = nil
+        openedSession = nil
         navigationPath = NavigationPath([SessionRoute.logger(active)])
     }
 
@@ -705,6 +707,13 @@ public struct TodayView: View {
     private enum PendingChoice {
         case session(SplitSessionSlot)
         case empty
+    }
+
+    /// A session's detail and the routine it was opened from, which decides
+    /// the slot a start from that detail credits.
+    private struct OpenedSession: Hashable {
+        let template: SessionTemplate
+        let routine: Split?
     }
 }
 

@@ -20,14 +20,15 @@ public struct TodaySessionPicker: View {
     @Query(filter: #Predicate<Split> { !$0.isArchived }, sort: \Split.name)
     private var routines: [Split]
 
-    let onOpen: (SessionTemplate) -> Void
-    let onStart: (SessionTemplate) -> Void
+    /// A session and the routine it is listed under, which decides its slot.
+    let onOpen: (SessionTemplate, Split) -> Void
+    let onStart: (SessionTemplate, Split) -> Void
     let onNewRoutine: () -> Void
     let onStartEmpty: () -> Void
 
     public init(
-        onOpen: @escaping (SessionTemplate) -> Void,
-        onStart: @escaping (SessionTemplate) -> Void,
+        onOpen: @escaping (SessionTemplate, Split) -> Void,
+        onStart: @escaping (SessionTemplate, Split) -> Void,
         onNewRoutine: @escaping () -> Void,
         onStartEmpty: @escaping () -> Void
     ) {
@@ -68,7 +69,7 @@ public struct TodaySessionPicker: View {
                         .padding(.bottom, 4)
                         .accessibilityAddTraits(.isHeader)
                     ForEach(group.sessions, id: \.id) { session in
-                        row(session)
+                        row(session, in: group.routine)
                         BRUDivider(.hair)
                     }
                 }
@@ -79,9 +80,9 @@ public struct TodaySessionPicker: View {
         .background(Color.bruPaper)
     }
 
-    private func row(_ session: SessionTemplate) -> some View {
+    private func row(_ session: SessionTemplate, in routine: Split) -> some View {
         HStack(spacing: 12) {
-            Button { onOpen(session) } label: {
+            Button { onOpen(session, routine) } label: {
                 VStack(alignment: .leading, spacing: 3) {
                     Text(session.name)
                         .font(BRUFont.displayMedium)
@@ -99,7 +100,7 @@ public struct TodaySessionPicker: View {
             .buttonStyle(.bruRow)
             .accessibilityHint("Shows the exercises in this session")
 
-            BRUButton("Start ▸", kind: .signal, size: .md) { onStart(session) }
+            BRUButton("Start ▸", kind: .signal, size: .md) { onStart(session, routine) }
                 .frame(width: 104)
                 .disabled((session.exercises ?? []).isEmpty)
                 .accessibilityLabel("Start \(session.name)")

@@ -76,6 +76,22 @@ enum StartSlot {
 
     // MARK: - The slot a start credits
 
+    /// The slot a start of `session` credits when it starts from `routine`, the
+    /// routine it was listed in or opened from. With no block that is its slot
+    /// in the routine, counted from the routine's NEXT. While a block runs only
+    /// the block's own routine gives a slot. A session started from no routine,
+    /// an archived one, or another routine than the block's, starts unslotted.
+    static func slot(
+        for session: SessionTemplate, startedFrom routine: Split?, block: Block?, resolution: TodayResolution,
+        finished: [Session], now: Date, calendar: Calendar
+    ) -> SplitSessionSlot? {
+        guard let routine, !routine.isArchived else { return nil }
+        guard let block else { return slot(for: session, in: routine, next: next(in: routine, finished: finished)) }
+        guard block.split?.id == routine.id else { return nil }
+        let next = next(in: block, resolution: resolution, finished: finished, now: now, calendar: calendar)
+        return slot(for: session, in: routine, next: next)
+    }
+
     /// The slot a start of `session` credits in `routine`: NEXT when NEXT holds
     /// the session, else its first slot after NEXT, wrapping, so a session
     /// slotted twice never moves the rotation backwards. With no NEXT, its

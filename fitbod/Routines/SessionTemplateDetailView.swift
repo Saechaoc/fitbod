@@ -13,9 +13,11 @@
 //   Bottom bar    START WORKOUT ▸ (signal, lg) pinned above the home indicator
 //
 // Starting goes through WorkoutStarter so a workout already in progress is
-// offered for resume instead of failing silently. Either way the logger
-// opens on Today's stack through ResumeWorkoutRequest, so ‹ lands on Today
-// whether this screen was reached from Today or from Program (FT-02).
+// offered for resume instead of failing silently, and so the start credits
+// the slot that the routine this screen was opened from gives it. Either
+// way the logger opens on Today's stack through ResumeWorkoutRequest, so ‹
+// lands on Today whether this screen was reached from Today or from Program
+// (FT-02).
 
 import SwiftUI
 import SwiftData
@@ -23,15 +25,20 @@ import SwiftData
 public struct SessionTemplateDetailView: View {
 
     @Environment(\.modelContext) private var ctx
+    @Environment(\.calendar) private var calendar
     @Environment(ResumeWorkoutRequest.self) private var resumeRequest: ResumeWorkoutRequest?
     @Bindable public var template: SessionTemplate
+    /// The routine this session was opened from, which decides the slot a
+    /// start credits. Nil for a session opened outside any routine.
+    private let routine: Split?
 
     @State private var inProgressConflict: Session? = nil
     @State private var startError: String? = nil
     @State private var presentingEditor = false
 
-    public init(template: SessionTemplate) {
+    public init(template: SessionTemplate, routine: Split?) {
         self.template = template
+        self.routine = routine
     }
 
     private var orderedExercises: [SessionExerciseTemplate] {
@@ -207,7 +214,7 @@ public struct SessionTemplateDetailView: View {
     }
 
     private func start() {
-        switch WorkoutStarter.start(template, context: ctx) {
+        switch WorkoutStarter.start(template, in: routine, context: ctx, calendar: calendar) {
         case .started:
             resumeRequest?.isPending = true
         case .alreadyInProgress(let active):
@@ -240,7 +247,7 @@ public struct SessionTemplateDetailView: View {
         item.targetRPE = 8
         item.prescribedRestSeconds = 180
     }
-    return NavigationStack { SessionTemplateDetailView(template: template) }
+    return NavigationStack { SessionTemplateDetailView(template: template, routine: nil) }
         .modelContainer(container)
 }
 #endif
