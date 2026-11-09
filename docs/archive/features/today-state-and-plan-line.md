@@ -1,0 +1,623 @@
+# Today redesign 1.1: state and plan line
+
+> Historical completed implementation plan, archived 2026-11-08. Current scope/status/acceptance: [RM-057](../../ROADMAP.md#rm-057). Do not execute this plan or treat its checkboxes, GSD/executor instructions, old paths or test mandates as current policy. [DEVELOPMENT.md](../../DEVELOPMENT.md) governs new work.
+
+**Scope:** TodayState precedence, shared BlockPosition, plan line/day refresh and advisory row; remove the stat strip, block band, week cells and old banners. Session sheet/slabs (RM-006), volume summary (RM-010), broad accessibility and release matrix are excluded.
+**Build/commits:** 2026-11-06, `a3b3ead4` through `56dc453c`; original plan and summary preserved in Git at `ba27f304`.
+**Recorded results:** 23 TodayState unit tests and eight reviewed 17e captures. Full run `full-20261106-175323`: 1,332 run, 1,326 passed, five failures and one expected failure. Swap Undo and authored-journey failures were reproduced; three other failures passed alone. Later fixes and remaining acceptance are owned by the roadmap, not silently counted as passes here.
+**Limits:** No physical VoiceOver, AX3/two-phone release matrix or real gym stability proof; the original executor omitted GitNexus checks because its index was stale. This archive does not retroactively supply that check. No app checks were rerun while archiving.
+
+**Provenance:** `.planning/quick/261106-pl1-today-state-and-the-plan-line/261106-pl1-PLAN.md` at `ba27f304`. The original text below is retained as design/implementation history; it is not a second actionable plan or evidence dump.
+
+## Preserved plan
+
+---
+phase: quick-261106-pl1
+plan: "01"
+type: execute
+mode: quick
+wave: 1
+depends_on: []
+autonomous: true
+requirements: [REDESIGN-1.1]
+files_modified:
+  - fitbod/Periodization/BlockPosition.swift
+  - fitbod/Periodization/ProgramView.swift
+  - fitbod/Periodization/BlockOverviewScreen.swift
+  - fitbod/Views/TodayState.swift
+  - fitbod/Views/TodayPlanLine.swift
+  - fitbod/Views/TodayView.swift
+  - fitbod/Views/TodayStatStrip.swift
+  - fitbod/Views/BlockContextBand.swift
+  - fitbod/Views/WeekTickerCells.swift
+  - fitbod/Views/PlanCompleteNote.swift
+  - fitbod/Periodization/DeloadWeekBanner.swift
+  - fitbod/Fatigue/DeloadAdvisoryBanner.swift
+  - fitbod/Fatigue/DeloadAdvisor.swift
+  - fitbod/App/BlockStatesSeed.swift
+  - CLAUDE.md
+  - docs/design-map/redesign/changelog.md
+  - docs/design-map/screens/img/
+  - fitbodTests/BlockPositionTests.swift
+  - fitbodTests/TodayStateTests.swift
+  - fitbodTests/BlockPastPlanTests.swift
+  - fitbodTests/WeekTickerWindowTests.swift
+  - fitbodTests/EmptyWorkoutCountTests.swift
+  - fitbodTests/TodayViewBRUCopyTests.swift
+  - fitbodTests/TodayViewBlockStackingTests.swift
+  - fitbodTests/DeloadAdvisoryBannerBRUTests.swift
+  - fitbodTests/Fatigue/DeloadAdvisorTests.swift
+  - fitbodTests/BRUPeriodizationAuditTests.swift
+  - fitbodTests/BRUPeriodizationRegressionTests.swift
+  - fitbodUITests/BlockWeekCountsUITests.swift
+  - fitbodUITests/BlockLifecycleEntryPointsUITests.swift
+  - fitbodUITests/ArchiveRoutineUITests.swift
+  - fitbodUITests/EmptyWorkoutCountsUITests.swift
+  - fitbodUITests/ReseedRelaunchUITests.swift
+  - fitbodUITests/SkipWarmupsUITests.swift
+  - fitbodUITests/SwipeBackUITests.swift
+  - fitbodUITests/WeeklyRecapUITests.swift
+  - fitbodUITests/WorkoutLoggerJourneyUITests.swift
+  - fitbodUITests/WorkoutSwapJourneyUITests.swift
+  - fitbodUITests/SessionHistoryBRUUITests.swift
+must_haves:
+  truths:
+    - "Every row of the Today state table in docs/design-map/redesign/hierarchy.md resolves through one pure function with a test per row and per precedence pair."
+    - "With an active block, Today's only block context is a two-line plan line that opens Block overview; the stat strip, block band, week cells, deload-week banner and plan-complete note are gone."
+    - "Today, Block overview's week strip header and Program's active row read the block's week and phase from BlockPosition.label, and Block overview counts WORKOUTS DONE."
+    - "The deload advisory is one 44pt row with DISMISS, hidden while a workout is open and in a deload phase, shown with or without a block."
+    - "Today re-reads the date when the app returns to the foreground and when the system day changes, without a relaunch."
+  artifacts:
+    - {path: fitbod/Periodization/BlockPosition.swift, provides: "BlockPosition.label(_:on:) -> (line, spoken)"}
+    - {path: fitbod/Views/TodayState.swift, provides: "TodayState.resolve(...) and TodayState.showsDeloadAdvisory(state:phase:)"}
+    - {path: fitbod/Views/TodayPlanLine.swift, provides: "The plan line row, identifier today.planLine"}
+    - {path: fitbod/Fatigue/DeloadAdvisoryBanner.swift, provides: "One-row advisory notice with DISMISS"}
+  key_links:
+    - {from: TodayView, to: TodayState.resolve, via: "queries plus @State now and @Environment(\\.calendar)"}
+    - {from: TodayPlanLine, to: BlockOverviewRoute.summary, via: "navigationPath.append in TodayView's onOpen"}
+    - {from: BlockOverviewScreen.stripHeader, to: BlockPosition.label, via: "line.uppercased()"}
+---
+
+# Today redesign step 1.1: TodayState and the plan line
+
+> **For agentic workers:** run this plan through `/gsd-quick resume today-state-and-the-plan-line`, this repo's workflow.
+> Where GSD is unavailable, `superpowers:executing-plans` is the fallback.
+> Steps use checkbox (`- [ ]`) syntax for tracking.
+
+**Goal:** land step 1.1 of the Today and Program redesign: a pure `TodayState` with a test per state, the two-line plan line in place of the stat strip, block band and week cells, one form of the block's week and phase, and the deload advisory as one notice row.
+
+**Architecture:** `TodayState.resolve` is a pure function over the models TodayView already queries, plus `now` and the environment calendar, so the state table is unit-tested without a view.
+`BlockPosition.label` is `ProgramView.activeBlockWeek` moved to its own file and shared by Today, Block overview and Program.
+TodayView keeps its hero composition for now; the hero switches onto `TodayState` in step 1.3.
+
+**Tech Stack:** Swift 6 strict concurrency, SwiftUI, SwiftData (SchemaV7, unchanged), Swift Testing for unit suites, XCTest for UI suites, BRU design system.
+
+**Spec:** `docs/design-map/redesign/plan.md` step 1.1 (the row that starts "1.1 TodayState and the plan line"), with `docs/design-map/redesign/hierarchy.md` (the Today state table, the notice table, "Plan complete needs no notice") and `docs/design-map/redesign/today-layouts.md` (the plan line row and "T-TODAY with the advisory notice").
+Program's week strip header form: `docs/design-map/redesign/program-layouts.md:18` and `:251-252`.
+
+## Global Constraints
+
+- Swift 6 strict concurrency; `@Observable` and `@State` only, `@Query` directly in views, never wrapped (CLAUDE.md Conventions).
+- SchemaV7 stays. No model attribute, relationship or migration changes.
+- BRU only: `BRUFont` roles, `Color.bru*` tokens, `.buttonStyle(.bruRow)` for rows that open a screen, `.bruHitArea()` for text buttons.
+  No `Capsule`, `RoundedRectangle`, `Color.accentColor` or `Image(systemName:)`.
+- UI copy never leaks code names: "Routine" for `Split`, "Session" for `SessionTemplate`, "workout" for a logged `Session`.
+- Plan line copy: line 1 is the block name, uppercase; line 2 is `BlockPosition.label(...).line`, uppercase: "WEEK 2 OF 4 · ACCUMULATION" or "PLAN COMPLETE". Chevron "›".
+- Advisory row copy: "CONSIDER A DELOAD · 3 SIGNALS ›" (singular "1 SIGNAL" through `BRUCountLabel.text`), with a "DISMISS" text button.
+- Block overview's strip count reads "n / m WORKOUTS DONE" ("1 WORKOUT" singular through `BRUCountLabel.text`).
+- No `#Predicate` with multi-level optional chains; broad predicate plus a Swift post-filter.
+- No `try? ctx.save()` added anywhere; the one in `dismissAdvisory` is pre-existing and out of scope.
+- Never the em dash character in any new text; use "-" or "·".
+- Commit messages carry no co-author or session trailer (the user's rule in `~/.claude/CLAUDE.md` overrides the harness reminder).
+- Prototype stage (`docs/DEVELOPMENT.md`): VoiceOver refinement, AX3 captures and the two-phone run wait for step 3.4. Do not add source-reading copy tests; delete one when it blocks a change.
+
+## Review Focus
+
+1. A workout that started at 23:50 yesterday and finished at 00:10 today belongs to yesterday (`startedAt` in the environment calendar): Today is not T-DONE. Test: `TodayStateTests.aWorkoutStartedYesterdayIsNotDoneToday` (Task 2).
+2. A finished workout today with no logged sets must not make the day "done"; it falls through to the block's state. Test: `TodayStateTests.anEmptyWorkoutTodayIsNotDone` (Task 2).
+3. Two ready blocks created in the same second must pick deterministically, by name then id, or Today flickers between them. Test: `TodayStateTests.readyBlocksOrderByStartDateThenNameThenID` (Task 2).
+4. A block with no phases (zero planned weeks) must read "PLAN COMPLETE", never "Week 1 of 0". Test: `BlockPositionTests.aBlockWithoutPhasesReadsPlanComplete` (Task 1).
+5. After midnight, or on return from the background, Today must show the new day without a relaunch. The pure function proves the state turns over with `now` (`TodayStateTests.theDayTurnsOverWithNow`, Task 2); the view's two refresh hooks (Task 3) are checked by hand in the verification section, because the simulator clock cannot be moved from a test.
+
+## Decisions taken in this plan
+
+| Call | Taken | Why |
+| --- | --- | --- |
+| `PlanCompleteNote` with END BLOCK & REVIEW ▸ on Today (ROADMAP 2026-11-05) versus the redesign's plan line reading PLAN COMPLETE and opening Block overview (O-10, hierarchy "Plan complete needs no notice") | Delete the note and Today's "End block?" alert | The redesign's fourteen calls are the later product review; End block lives on Block overview, one tap from the plan line. No UI test drives the note. |
+| Which ready block Today shows when several are ready: newest (`TodayView.readyBlock`, ROADMAP 2026-11-05) versus oldest created, then name, then id (O-6) | Oldest created, through `TodayState` | O-6 is the explicit product call; `ReadyBlockCard` reads the state's `.ready` block so Today and the tests agree now rather than in 1.3. |
+| `DeloadAdvisory.bannerCopy` (D-16 copy) | Delete with its tests | The one-row notice has its own copy; nothing else reads `bannerCopy`. |
+| T-FIX without a block, several live routines | Name the newest live routine by `createdAt` | The spec names "a live routine"; the newest is the one the lifter just built. |
+| `.session(slot)` whose template is nil | `.fix(.routineHasNoSessions(routine))` | Nothing can start; the `.deny` rule makes it unreachable from the UI. |
+| The resolver's `.noBlock` under an active block | `.attach(block)` | The resolver returns `.noBlock` only when the block has no routine (`TodayResolver.swift:74`). |
+| Deload-week capture | Add `-fitbod-seed-block-states-deload` (Spring Block started 22 days ago) | No seed puts a block in its deload week; the design tour built one by hand. Four DEBUG lines make the capture and a future UI test reproducible. |
+
+<objective>
+Implement step 1.1 of `docs/design-map/redesign/plan.md` as six tasks, each green on `scripts/test.sh fast` and committed on its own, then the touched UI suites, the captures, the changelog entry and one full run.
+</objective>
+
+<execution_context>
+@~/.claude/get-shit-done/workflows/execute-plan.md
+</execution_context>
+
+<context>
+@docs/DEVELOPMENT.md
+@docs/design-map/redesign/plan.md
+@docs/design-map/redesign/hierarchy.md
+@docs/design-map/redesign/today-layouts.md
+
+<interfaces>
+- `PlanWeek.of(_ block: Block, on date: Date) -> PlanWeek?` (`BlockOverviewScreen.swift:134-150`): `.week(Int)` from 0, `.complete` past the plan, nil when not active or not started. `PlanWeek.completeLabel == "PLAN COMPLETE"`.
+- `PeriodizationEngine.weekContext(for:weekIndex:on:)?.phaseKind.rawValue` and `MesocycleWeekPage.totalWeeks(of:)`, as `ProgramView.activeBlockWeek` (`ProgramView.swift:254-266`) uses them today.
+- `PeriodizationEngine.phase(for: block, on: date)?.kind -> BlockPhaseKind?` (`.accumulation`, `.intensification`, `.deload`, ...).
+- `TodayResolver.resolve(block:context:today:calendar:) -> TodayResolution` with `.session(SplitSessionSlot)`, `.restDay`, `.emptySplit`, `.noBlock` (`TodayResolver.swift:33-41`, `:67-72`).
+- `SessionSetActions.countedWorkouts(_ sessions: [Session]) -> LazyFilterSequence<[Session]>` and `isEmptyWorkout(_:)` (`SessionSetActions.swift:187-209`).
+- `Block.derivedStatus` (`.draft`, `.ready`, `.active`, `.completed`), `Block.name`, `Block.startDate` (the creation date until `start` stamps it, O-14), `Block.split: Split?`, `Block.phases`.
+- `Split.name`, `Split.createdAt`, `Split.isArchived`, `Split.slots: [SplitSessionSlot]?` ordered by `position`; `SplitSessionSlot.sessionTemplate: SessionTemplate?`.
+- `SessionTemplate.name`, `SessionTemplate.isArchived`, `SessionTemplate.exercises: [SessionExerciseTemplate]?`. No inverse to `SplitSessionSlot`: membership comes from the routines' slots.
+- `Session.startedAt`, `Session.completedAt`, `Session.slot`, `Session.template`.
+- `DeloadAdvisory.firedSignals: [DeloadSignal]`, `DeloadAdvisory.weekStart` (`DeloadAdvisor.swift:50-57`).
+- `BRUCountLabel.text(_ count: Int, _ singular: String, plural: String? = nil) -> String`.
+- `BRUFont.labelSmall`, `Color.bruInk`, `Color.bruMuted`, `Color.bruHair`, `Color.bruSignalText` (accessible orange on paper).
+- `BlockOverviewRoute.summary(blockID: UUID)`; TodayView pushes it with `navigationPath.append(...)` (`TodayView.swift:168`).
+- UI helpers: `UITestNavigation.launch(_:)`, `relaunch`, `selectTab(_:in:)`, `appears(_:within:)`, `disappears`, `reveal(_:in:)`, `hittable(_:_:)`, `XCUIElementQuery.labeled(_:)`. Seeds: `UITestNavigation.freshStore`, `.seededWorkout`; `BlockLifecycleEntryPointsUITests.activeBlock`; `EmptyWorkoutCountsUITests.emptyWorkout`; `BlockOverviewStatesUITests.blockStates`; `BlockWeekCountsUITests.blockStatesPastPlan`.
+- Unit fixtures: `InMemoryContainer.makeCurrent()`; a logged or empty workout as `EmptyWorkoutCountTests.workout(daysAgo:weight:logged:finished:)` builds one (`EmptyWorkoutCountTests.swift:47-80`); an active block with phases as `BlockPastPlanTests.activeBlock(startedDaysAgo:in:)` builds one (`BlockPastPlanTests.swift:27-42`).
+</interfaces>
+</context>
+
+## Execution boundaries
+
+- Branch `redesign-1-1-today-state` from `main` before the first commit. Never push.
+- Before editing any existing symbol, run `gitnexus_impact({target: "<symbol>", direction: "upstream"})` (MCP) or `gitnexus impact <symbol> --direction upstream --repo fitbod` (the global CLI) and record direct callers, affected processes and risk in the task summary. `TodayView.body` is HIGH: say so and continue, the edit is the step's purpose.
+- Before each commit, run `gitnexus_detect_changes()` and confirm only the task's files moved.
+- GSD executors: two tasks per executor (A: 1-2, B: 3-4, C: 5-6), keep CLAUDE.md out of their context, pipe xcodebuild output through `tail` or `rg "error:|failed|passed"`.
+- Test runs: `export FITBOD_TEST_DEVICE=D409C89C-DE67-4970-A801-AE3A71378E56` (the dedicated `fitbod-logger iPhone 17`), `export FITBOD_TEST_WORKERS=1`. Never a personal-data simulator.
+- Leave for later steps, do not touch: `StartBlockCTA`, `TodaySessionPicker`, `BlackSlabCTA` and its DAY counter (`isPastPlan`, `currentTotalWeeks`, `dayIndexInBlock`, `totalDaysInBlock` stay), `ReadyBlockCard`, `DoneTodaySlab`, `FatigueSurfaceView`, the review sheet and `pendingBlockReview` (step 2.1), `refreshAdvisory`'s setting gate (moves into `DeloadAdvisor.evaluate` in step 1.4), the T-PICK NEXT anchor (step 1.3's `StartSlot`).
+- Deviations from this plan are allowed when a step is wrong against the code; record them in the summary. A spec change is not.
+
+<tasks>
+
+<task type="auto" tdd="true">
+  <name>Task 1: BlockPosition, one form of the block's week and phase</name>
+  <files>fitbod/Periodization/BlockPosition.swift (new), fitbod/Periodization/ProgramView.swift:254-266 and :480, fitbod/Periodization/BlockOverviewScreen.swift:847 and :872-875, fitbodTests/BlockPositionTests.swift (new), fitbodTests/BlockPastPlanTests.swift:62-66 and :97-99, fitbodUITests/BlockWeekCountsUITests.swift:23, :28, :42</files>
+  <behavior>
+    - `BlockPosition.label(block, on:)` returns ("Week 3 of 4 · Intensification", "Week 3 of 4, Intensification") inside the plan and ("PLAN COMPLETE", "Plan complete") past it, exactly what `ProgramView.activeBlockWeek` returns today.
+    - A block with no phases reads ("PLAN COMPLETE", "Plan complete").
+    - Block overview's week strip header reads "WEEK 3 OF 4 · INTENSIFICATION" inside the plan and "PLAN COMPLETE" past it; its count reads "1 / 2 WORKOUTS DONE".
+    - Program's active row is unchanged in text.
+  </behavior>
+  <action>
+**Interfaces produced**
+
+```swift
+// fitbod/Periodization/BlockPosition.swift
+enum BlockPosition {
+    /// Where the block is in its plan: ("Week 2 of 4 · Accumulation", "Week 2 of 4, Accumulation")
+    /// or ("PLAN COMPLETE", "Plan complete"). A block that has not started reads as week 1,
+    /// as ProgramView.activeBlockWeek did.
+    static func label(_ block: Block, on date: Date) -> (line: String, spoken: String)
+}
+```
+
+- [ ] **Step 1: Write the failing tests** in `fitbodTests/BlockPositionTests.swift` (`@MainActor @Suite("BlockPosition")`), with a fixed `now` and the `activeBlock(startedDaysAgo:in:)` fixture copied from `BlockPastPlanTests.swift:27-42`:
+
+```swift
+@Test("inside its plan the label names the week and phase", arguments: [
+    (3, "Week 1 of 4 · Accumulation", "Week 1 of 4, Accumulation"),
+    (15, "Week 3 of 4 · Intensification", "Week 3 of 4, Intensification"),
+    (27, "Week 4 of 4 · Deload", "Week 4 of 4, Deload"),
+])
+func insideItsPlan(daysAgo: Int, line: String, spoken: String) throws
+    // #expect(BlockPosition.label(block, on: now) == (line, spoken)) via two #expects on .line and .spoken
+
+@Test("past its plan the label reads PLAN COMPLETE", arguments: [28, 35])
+func pastItsPlan(daysAgo: Int) throws
+    // line == "PLAN COMPLETE", spoken == "Plan complete"
+
+@Test("a block without phases reads PLAN COMPLETE")
+func aBlockWithoutPhasesReadsPlanComplete() throws
+    // an active block, started 3 days ago, no BlockPhase inserted: line == "PLAN COMPLETE"
+```
+
+- [ ] **Step 2: Run them and watch them fail to compile**
+
+Run: `scripts/test.sh fast -only-testing:fitbodTests/BlockPositionTests 2>&1 | rg "error:|passed|failed" | head`
+Expected: `error: cannot find 'BlockPosition' in scope`
+
+- [ ] **Step 3: Move `ProgramView.activeBlockWeek` (`ProgramView.swift:254-266`) into `BlockPosition.label(_:on:)` in the new file**, body unchanged, and delete it from ProgramView. Repoint `ProgramView.swift:480` to `BlockPosition.label(block, on: today)`.
+
+- [ ] **Step 4: Block overview reads the same form.** In `BlockOverviewScreen.swift:872-875` make `stripHeader(_:of:)` return `BlockPosition.label(block, on: date).line.uppercased()`; it needs the date, so change its signature to `static func stripHeader(of block: Block, on date: Date) -> String` and update its one production caller (`BlockOverviewScreen.swift:805`, which has the date the strip renders for) and `BlockPastPlanTests` (`:62`, `:99`). At `:847` change `"SESSION"` to `"WORKOUT"`.
+
+- [ ] **Step 5: Update `BlockPastPlanTests`:** `:62-66` and `:97-99` call `BlockPosition.label(block, on: now)` instead of `ProgramView.activeBlockWeek`; the strip header expectation at `:99` becomes `"WEEK \(day.week) OF 4 · \(day.phase.uppercased())"`. Leave the `BlockContextBand` lines for Task 3.
+
+- [ ] **Step 6: Update `BlockWeekCountsUITests`:** `:23`, `:28` and `:42` read `WORKOUTS DONE` (the predicate `ENDSWITH 'SESSIONS DONE'` and the two literals).
+
+- [ ] **Step 7: Run the unit suites**
+
+Run: `scripts/test.sh fast -only-testing:fitbodTests/BlockPositionTests -only-testing:fitbodTests/BlockPastPlanTests 2>&1 | rg "error:|Executed|passed|failed" | tail -5`
+Expected: every test passes, none skipped.
+
+- [ ] **Step 8: Run the UI suite**
+
+Run: `scripts/test.sh fast -only-testing:fitbodUITests/BlockWeekCountsUITests 2>&1 | rg "error:|Executed|passed|failed" | tail -5`
+Expected: both tests pass. If `testWeekStripLeavesOutTheEmptyWorkout` fails on the header, the strip header's phase suffix is the cause: fix the test's expectation, not the header.
+
+- [ ] **Step 9: Commit**
+
+```bash
+git add fitbod/Periodization/BlockPosition.swift fitbod/Periodization/ProgramView.swift fitbod/Periodization/BlockOverviewScreen.swift fitbodTests/BlockPositionTests.swift fitbodTests/BlockPastPlanTests.swift fitbodUITests/BlockWeekCountsUITests.swift
+git commit -m "refactor(program): one form of the block's week and phase"
+```
+  </action>
+  <verify>
+    <automated>scripts/test.sh fast -only-testing:fitbodTests/BlockPositionTests -only-testing:fitbodTests/BlockPastPlanTests</automated>
+  </verify>
+  <done>`BlockPosition.label` is the only producer of the week-and-phase text; Program, Block overview and the tests read it; Block overview counts WORKOUTS DONE.</done>
+</task>
+
+<task type="auto" tdd="true">
+  <name>Task 2: TodayState resolves the state table</name>
+  <files>fitbod/Views/TodayState.swift (new), fitbodTests/TodayStateTests.swift (new)</files>
+  <behavior>
+    - Precedence T-RESUME > T-DONE > T-READY > T-FIX > T-ATTACH > T-REST > T-TODAY > T-PICK > T-FIRST, as `hierarchy.md`'s state table defines each row.
+    - T-DONE takes the counted workouts (`SessionSetActions.countedWorkouts`) whose `startedAt` is today in the given calendar, newest first.
+    - T-READY picks the ready block with the earliest `startDate`, then the smallest `name`, then the smallest `id.uuidString`.
+    - The advisory notice is allowed with no open workout and outside a deload phase, with or without a block.
+  </behavior>
+  <action>
+**Interfaces produced**
+
+```swift
+// fitbod/Views/TodayState.swift
+enum TodayState: Equatable {
+    case resume(Session)                 // the open workout with the newest startedAt
+    case done([Session])                 // today's counted finished workouts, newest first
+    case ready(Block)                    // no active block; the first ready block by O-6
+    case fix(Fix)
+    case attach(Block)                   // active block whose routine is nil
+    case rest(Block)
+    case today(Block, SplitSessionSlot)  // the scheduled slot, whose session has exercises
+    case pick                            // NEXT lands with step 1.3's StartSlot
+    case first
+
+    enum Fix: Equatable {
+        case routineHasNoSessions(Split)        // "Push Pull Legs has no sessions"
+        case routineHasNoExercises(Split)       // "Push Pull Legs has no exercises yet"
+        case sessionHasNoExercises(SessionTemplate) // "Push B has no exercises"
+    }
+
+    /// `sessions` is every non-archived SessionTemplate; the function keeps the ones with
+    /// exercises that no live routine's slot holds (the standalone sessions).
+    static func resolve(
+        openWorkouts: [Session],
+        activeBlock: Block?,
+        resolution: TodayResolution,
+        finishedWorkouts: [Session],
+        readyBlocks: [Block],
+        liveRoutines: [Split],
+        sessions: [SessionTemplate],
+        now: Date,
+        calendar: Calendar
+    ) -> TodayState
+
+    /// No notice while a workout is open or in a deload phase.
+    static func showsDeloadAdvisory(state: TodayState, phase: BlockPhaseKind?) -> Bool
+}
+```
+
+Rules the signature does not fix:
+- With an active block whose routine is nil, `.attach(block)` before anything else. Otherwise, with `routine = block.split`: `.emptySplit` gives `.fix(.routineHasNoSessions(routine))`; `.session(slot)` whose template is nil gives the same; `.session(slot)` whose template has no exercises gives `.fix(.sessionHasNoExercises(template))`; `.noBlock` with a routine present cannot happen (`TodayResolver.swift:74`) and gives `.attach(block)` too; `.restDay` gives `.rest(block)`; `.session(slot)` with exercises gives `.today(block, slot)`.
+- Without a block and without a ready block: any session with exercises in a live routine's slots or among the standalone sessions gives `.pick`; else the newest live routine by `createdAt` gives `.fix(.routineHasNoSessions)` when it has no slots and `.fix(.routineHasNoExercises)` otherwise; no live routine gives `.first`.
+- "Has exercises" means `!(template.exercises ?? []).isEmpty`.
+
+- [ ] **Step 1: Write the failing tests** in `fitbodTests/TodayStateTests.swift` (`@MainActor @Suite("TodayState")`, `InMemoryContainer.makeCurrent()`, a fixed `now = Date(timeIntervalSince1970: 1_700_000_000)` and a UTC gregorian calendar). Fixtures: `block(active: Bool, routine: Split?)`, `routine(name:createdAt:)`, `session(name:exerciseCount:in routine: Split?)` that inserts the template, its `SessionExerciseTemplate`s and, with a routine, a `SplitSessionSlot` at the next position, and `workout(startedAt:finished:logged:)` as `EmptyWorkoutCountTests.swift:47-80` builds one. Each test calls `resolve` with the fixture it needs and an explicit `resolution`; it never runs `TodayResolver`.
+
+```swift
+@Test func resumeWinsOverEverything()            // open workout started 2 days ago + logged workout today + block with .session(slot with exercises) + a ready block → .resume(open)
+@Test func doneTodayOutranksTheBlock()           // logged workout today + block .session(slot) → .done([workout])
+@Test func doneListsNewestFirst()                // two logged workouts today → .done([later, earlier])
+@Test func doneOutranksReady()                   // logged workout today, no block, ready block → .done
+@Test func aWorkoutStartedYesterdayIsNotDoneToday() // startedAt = startOfToday - 600, completedAt = startOfToday + 600, block .session(slot) → .today
+@Test func anEmptyWorkoutTodayIsNotDone()        // finished workout today, logged: false, block .session(slot) → .today
+@Test func readyWhenNoBlock()                    // no block, one ready block → .ready(block)
+@Test func readyBlocksOrderByStartDateThenNameThenID() // three ready blocks: older startDate wins; same date, "A" beats "B"; same date and name, the block whose id.uuidString is smaller (computed in the test; Block.id is assigned on init)
+@Test func readyOutranksPick()                   // ready block + routine with a session with exercises → .ready
+@Test func fixWhenTheRoutineHasNoSessions()      // block with routine, .emptySplit → .fix(.routineHasNoSessions(routine))
+@Test func fixWhenTheScheduledSessionHasNoExercises() // .session(slot) with 0 exercises → .fix(.sessionHasNoExercises(template))
+@Test func attachWhenTheBlockHasNoRoutine()      // block.split nil, .noBlock → .attach(block)
+@Test func restDay()                             // .restDay → .rest(block)
+@Test func todayWithExercises()                  // .session(slot) with 2 exercises → .today(block, slot)
+@Test func pickWithASessionInALiveRoutine()      // no block, routine with a session with exercises → .pick
+@Test func pickWithAStandaloneSession()          // no block, no routine, template with exercises → .pick
+@Test func pickWithASessionOnlyInAnArchivedRoutine() // archived routine holds the only session with exercises → .pick (it is in no live routine)
+@Test func fixWithALiveRoutineAndNoSessions()    // no block, routine with no slots → .fix(.routineHasNoSessions(routine))
+@Test func fixWithALiveRoutineAndNoExercises()   // routine with one session, 0 exercises → .fix(.routineHasNoExercises(routine))
+@Test func fixNamesTheNewestLiveRoutine()        // two empty routines, createdAt now-100 and now-10 → .fix(.routineHasNoSessions(the newer))
+@Test func firstOnAFreshStore()                  // nothing → .first
+@Test func theDayTurnsOverWithNow()              // logged workout at now; resolve(now: now) → .done; resolve(now: now + 86_400) → .today
+@Test(arguments: [...]) func showsDeloadAdvisory() // (.resume(w), nil) false; (.today(b, s), .deload) false; (.today(b, s), .accumulation) true; (.first, nil) true
+```
+
+- [ ] **Step 2: Run them and watch them fail to compile**
+
+Run: `scripts/test.sh fast -only-testing:fitbodTests/TodayStateTests 2>&1 | rg "error:" | head -3`
+Expected: `error: cannot find 'TodayState' in scope`
+
+- [ ] **Step 3: Implement `TodayState` in `fitbod/Views/TodayState.swift`** per the interface and rules above. `resolve` reads only loaded relationships; no `ModelContext`, no fetch, no `Date.now`.
+
+- [ ] **Step 4: Run the suite**
+
+Run: `scripts/test.sh fast -only-testing:fitbodTests/TodayStateTests 2>&1 | rg "Executed|passed|failed" | tail -3`
+Expected: all 23 tests pass.
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add fitbod/Views/TodayState.swift fitbodTests/TodayStateTests.swift
+git commit -m "feat(today): TodayState resolves the Today state table"
+```
+  </action>
+  <verify>
+    <automated>scripts/test.sh fast -only-testing:fitbodTests/TodayStateTests</automated>
+  </verify>
+  <done>Every state-table row, every precedence pair in `hierarchy.md:60-62`, the three no-history stores and the advisory rule pass as unit tests against a pure function.</done>
+</task>
+
+<task type="auto" tdd="true">
+  <name>Task 3: The plan line replaces the stat strip, block band and week cells</name>
+  <files>fitbod/Views/TodayPlanLine.swift (new), fitbod/Views/TodayView.swift, delete fitbod/Views/TodayStatStrip.swift, fitbod/Views/BlockContextBand.swift, fitbod/Views/WeekTickerCells.swift, fitbod/Views/PlanCompleteNote.swift, delete fitbodTests/WeekTickerWindowTests.swift, fitbodTests/EmptyWorkoutCountTests.swift:169-195, fitbodTests/TodayViewBRUCopyTests.swift, fitbodTests/TodayViewBlockStackingTests.swift, fitbodTests/BlockPastPlanTests.swift, CLAUDE.md</files>
+  <behavior>
+    - With an active block, Today shows one tappable row under the header: the block name (uppercase, one line, tail-truncated) over `BlockPosition.label` (uppercase, wraps, never truncated), with "›", at least 56pt tall, identifier `today.planLine`, accessibility label "Spring Block, Week 1 of 4, Accumulation". Tapping it pushes `BlockOverviewRoute.summary(blockID:)`.
+    - Without an active block, no plan line.
+    - The stat strip, block band, week cells, plan-complete note and Today's "End block?" alert are gone.
+    - Today computes `TodayState` from its queries, `@State now` and `@Environment(\.calendar)`; `now` refreshes on appear, when `scenePhase` becomes `.active`, and on `UIApplication.significantTimeChangeNotification`.
+    - `ReadyBlockCard` shows the state's `.ready` block; `DoneTodaySlab` shows the first of the state's `.done` workouts.
+    - The header carries identifier `today.root`.
+  </behavior>
+  <action>
+**Interfaces produced**
+
+```swift
+// fitbod/Views/TodayPlanLine.swift
+struct TodayPlanLine: View {
+    let block: Block
+    let now: Date
+    let onOpen: () -> Void
+}
+```
+
+- [ ] **Step 1: Write `TodayPlanLine`.** `Button(action: onOpen)` with `.buttonStyle(.bruRow)`. Label: `HStack(spacing: 12)` of a `VStack(alignment: .leading, spacing: 4)` with `Text(block.name)` (`BRUFont.labelSmall`, `.tracking(1.5)`, `.textCase(.uppercase)`, `Color.bruInk`, `.lineLimit(1)`, `.truncationMode(.tail)`) over `Text(BlockPosition.label(block, on: now).line)` (same font and case, `Color.bruMuted`, `.fixedSize(horizontal: false, vertical: true)`, no line limit), `Spacer(minLength: 0)`, `Text("›")` (`BRUFont.labelSmall`, `Color.bruInk`). Padding 16 horizontal, 12 vertical, `.frame(maxWidth: .infinity, minHeight: 56, alignment: .leading)`, a 1pt `Color.bruHair` rule as a bottom overlay. On the button: `.accessibilityIdentifier("today.planLine")` and `.accessibilityLabel("\(block.name), \(BlockPosition.label(block, on: now).spoken)")`.
+
+- [ ] **Step 2: Rewire TodayView's top** (`TodayView.swift:131-179`). Leave the `DeloadWeekBanner` block and the advisory banner where they are; Task 4 handles both. Delete the `TodayStatStrip(...)` call, the `BlockContextBand` block and the `PlanCompleteNote` block. In their place:
+
+```swift
+if let block = activeBlocks.first {
+    TodayPlanLine(block: block, now: now) {
+        navigationPath.append(BlockOverviewRoute.summary(blockID: block.id))
+    }
+}
+```
+Keep `ReadyBlockCard`, but feed it the state (Step 4).
+
+- [ ] **Step 3: Date plumbing.** Add `@Environment(\.scenePhase) private var scenePhase`, `@Environment(\.calendar) private var calendar`, `@State private var now = Date.now`. Replace every `.now` and `Date.now` read inside TodayView's body and helpers with `now` (`todaysResolution` passes `today: now, calendar: calendar`; `PlanWeek.of(_, on: now)`; `PeriodizationEngine.phase(for:on: now)`; `PeriodizationEngine.days(from:to: now)`; `refreshAdvisory`'s week start). Add to the stack's modifiers:
+
+```swift
+.onAppear { now = .now }
+.onChange(of: scenePhase) { _, phase in if phase == .active { now = .now } }
+.onReceive(NotificationCenter.default.publisher(for: UIApplication.significantTimeChangeNotification)) { _ in now = .now }
+```
+`RootView.swift:245-270` already uses `.onReceive` with `NotificationCenter` publishers under Swift 6, follow that form; add `import UIKit` if `UIApplication` is not found.
+
+- [ ] **Step 4: Compute the state in `body`** after `resolution` (`TodayView.swift:121-126`). Add `@Query(filter: #Predicate<SessionTemplate> { !$0.isArchived }) private var sessionTemplates: [SessionTemplate]`. Then:
+
+```swift
+let state = TodayState.resolve(
+    openWorkouts: activeSessions, activeBlock: activeBlocks.first, resolution: resolution,
+    finishedWorkouts: finished, readyBlocks: waitingBlocks.filter { $0.derivedStatus == .ready },
+    liveRoutines: routines, sessions: sessionTemplates, now: now, calendar: calendar)
+let doneToday: Session? = if case .done(let workouts) = state { workouts.first } else { nil }
+let readyBlock: Block? = if case .ready(let block) = state { block } else { nil }
+```
+Delete `static func finishedToday(in:now:calendar:)` (`:687-697`) and the `readyBlock` computed property (`:576-578`); the `ReadyBlockCard` branch reads the local `readyBlock`.
+
+- [ ] **Step 5: Delete what only the strip, band and note used.** In TodayView: `dayStreak(of:excluding:now:calendar:)` (`:521-553`), `currentWeekIndex` (`:555-560`), `sessionsThisWeek` (`:611-617`), `currentTrend` (`:619-650`), `endingBlock` (`:92`), `endBlock(_:)` (`:592-603`), the empty-workout cache (`emptyWorkoutIDs`, `emptyWorkoutsKey`, `.task(id: finishedIDs)` at `:434-442`) and `finishedIDs`. Keep `.onChange(of: historyEdits?.version)` (`:445-448`) with the one-line body `now = .now`, so a History correction still makes Today resolve again (CLAUDE.md "History corrections"). Reduce `TodayBlockAlerts` (`:927-950`) to the "Couldn't Save" alert on `blockError`, dropping `endingBlock` and `onEnd`; update its use at `:321`. Keep `currentPhase`, `currentTotalWeeks`, `isPastPlan`, `dayIndexInBlock`, `totalDaysInBlock`, `startBlock`. Delete the files `TodayStatStrip.swift` (with `TrendDirection`), `BlockContextBand.swift`, `WeekTickerCells.swift`, `PlanCompleteNote.swift`. Only comments in `PlateCalculatorSheet.swift:172`, `SessionHistoryStatStrip.swift:18`, `ExercisePRsView.swift:128` and `:340`, `SessionDetailView.swift:146` name `TodayStatStrip`; leave them.
+
+- [ ] **Step 6: Identifier on the header.** On TodayView's `BRUHeaderBar(left: ... center: "Fitbod / Today" ...)` add `.accessibilityElement(children: .contain)` then `.accessibilityIdentifier("today.root")`, the form `PlateInventoryEditor.swift:170-171` uses.
+
+- [ ] **Step 7: Tests that pinned the deleted views.** Delete `fitbodTests/WeekTickerWindowTests.swift`. In `EmptyWorkoutCountTests.swift` delete the "Day streak" section (`:169-195`: the `dayStreak()` helper and both tests), and `finishedWorkouts()` only if nothing else calls it. In `TodayViewBRUCopyTests.swift` delete the tests at `:43` (stat strip labels), `:52` (trend arrows), `:129` (mounts TodayStatStrip), `:135` (mounts BlockContextBand). In `TodayViewBlockStackingTests.swift` delete `:19` (banner stacking order) and `:92` (BlockContextBand receives block). In `BlockPastPlanTests.swift` delete the `BlockContextBand.chipLabel` and `tickerWeek` expectations (`:67-71`, `:101-102`).
+
+- [ ] **Step 8: CLAUDE.md.** In "Milestone 1 baseline" change "History opens from Today → Sessions or Progress → Workouts." to "History opens from Progress → Workouts."
+
+- [ ] **Step 9: Build and run the unit tier**
+
+Run: `scripts/test.sh fast 2>&1 | rg "error:|Executed|passed|failed" | tail -8`
+Expected: builds; every unit test passes except the one known expected failure the baseline carries (`docs/ROADMAP.md:9-10`). A compile error naming `TrendDirection` means a reference outside TodayView survived: fix the reference, do not restore the file.
+
+- [ ] **Step 10: Commit**
+
+```bash
+git add -A fitbod/Views fitbodTests CLAUDE.md
+git commit -m "feat(today): the plan line replaces the stat strip, block band and week cells"
+```
+  </action>
+  <verify>
+    <automated>scripts/test.sh fast</automated>
+  </verify>
+  <done>Today's block context is one plan line that opens Block overview; the strip, band, cells and note are deleted with their tests; the state and the date come from `TodayState`, `now` and the environment calendar.</done>
+</task>
+
+<task type="auto" tdd="true">
+  <name>Task 4: The deload advisory is one notice row; the deload-week banner is gone</name>
+  <files>fitbod/Fatigue/DeloadAdvisoryBanner.swift, fitbod/Fatigue/DeloadAdvisor.swift:59-90, delete fitbod/Periodization/DeloadWeekBanner.swift, fitbod/Views/TodayView.swift, fitbodTests/DeloadAdvisoryBannerBRUTests.swift, fitbodTests/Fatigue/DeloadAdvisorTests.swift:371-396, fitbodTests/TodayViewBRUCopyTests.swift:161, fitbodTests/TodayViewBlockStackingTests.swift:57 and :75, fitbodTests/BRUPeriodizationAuditTests.swift:147, fitbodTests/BRUPeriodizationRegressionTests.swift:139-153 and :215</files>
+  <behavior>
+    - The advisory is one row, at least 44pt, between the plan line and the hero: "CONSIDER A DELOAD · 3 SIGNALS ›" (`Color.bruSignalText`, `BRUFont.labelSmall`, tracking 1.5, one line) opening the signals sheet, and a "DISMISS" text button (`Color.bruInk`, `.bruHitArea()`, accessibility label "Dismiss deload advisory") that dismisses for the week as before. Paper background, 1pt `Color.bruHair` rule under it.
+    - It shows only when `TodayState.showsDeloadAdvisory(state:phase:)` is true: no open workout and not in a deload phase; a block is not required.
+    - A deload week shows no banner, chip or badge anywhere on Today.
+  </behavior>
+  <action>
+- [ ] **Step 1: Reduce `DeloadAdvisoryBanner`** (`init(advisory:onDismiss:onTapBody:)` unchanged). Body: `HStack(spacing: 12)` of `Button(action: onTapBody) { Text("CONSIDER A DELOAD · \(BRUCountLabel.text(advisory.firedSignals.count, "SIGNAL")) ›") ... .frame(maxWidth: .infinity, alignment: .leading) }.buttonStyle(.bruRow)` and `Button("DISMISS", action: onDismiss).buttonStyle(.plain).font(BRUFont.labelSmall).tracking(1.5).foregroundStyle(Color.bruInk).bruHitArea().accessibilityLabel("Dismiss deload advisory")`; `.padding(.horizontal, 16)`, `.frame(minHeight: 44)`, the hair rule as a bottom overlay. Drop the signal background, the 2pt ink rules, the "▲ CONSIDER DELOAD" caption and the root accessibility label. Rewrite the file's header comment to the new layout in a few lines.
+
+- [ ] **Step 2: Delete `DeloadAdvisory.bannerCopy`** (`DeloadAdvisor.swift:59-90`) and its tests: `DeloadAdvisorTests.swift:371-397` (sections 12 and 13, to the end of the file) and, in `DeloadAdvisoryBannerBRUTests.swift`, the tests at `:28`, `:50`, `:69`, `:90` and `:115`. Keep `:104` (the DISMISS accessibility label stays).
+
+- [ ] **Step 3: Delete `DeloadWeekBanner.swift`** and its mount in TodayView (`:131-136`, the `phase.kind == .deload` block). Move the advisory under the plan line:
+
+```swift
+if let advisory = currentAdvisory, TodayState.showsDeloadAdvisory(state: state, phase: currentPhase) {
+    DeloadAdvisoryBanner(advisory: advisory, onDismiss: dismissAdvisory, onTapBody: { presentingSignalSheet = true })
+}
+```
+
+- [ ] **Step 4: Tests that read the deleted file.** `BRUPeriodizationAuditTests.swift:147`: remove `"DeloadWeekBanner.swift"`. `BRUPeriodizationRegressionTests.swift:139-153`: delete test 9; `:215`: remove the `("DeloadWeekBanner.swift", "Periodization")` entry. `TodayViewBRUCopyTests.swift:161`: delete "Phase 5 DeloadWeekBanner preserved". `TodayViewBlockStackingTests.swift:57` and `:75`: delete both deload-banner tests.
+
+- [ ] **Step 5: Run the unit tier**
+
+Run: `scripts/test.sh fast 2>&1 | rg "error:|Executed|passed|failed" | tail -8`
+Expected: builds; all pass bar the known expected failure. `TodayViewBRUCopyTests` "Phase 5 DeloadAdvisoryBanner preserved" (`:168`) still passes because the names `DeloadAdvisoryBanner` and `currentAdvisory` stay.
+
+- [ ] **Step 6: Commit**
+
+```bash
+git add -A fitbod/Fatigue fitbod/Periodization fitbod/Views fitbodTests
+git commit -m "feat(today): the deload advisory is one notice row"
+```
+  </action>
+  <verify>
+    <automated>scripts/test.sh fast -only-testing:fitbodTests/DeloadAdvisorTests -only-testing:fitbodTests/BRUPeriodizationAuditTests -only-testing:fitbodTests/BRUPeriodizationRegressionTests -only-testing:fitbodTests/TodayViewBRUCopyTests -only-testing:fitbodTests/TodayViewBlockStackingTests</automated>
+  </verify>
+  <done>One notice row for the advisory, gated by the pure rule; no deload-week banner, chip or badge exists in the code.</done>
+</task>
+
+<task type="auto" tdd="false">
+  <name>Task 5: UI suites reach Today by its root and History through Progress</name>
+  <files>fitbodUITests/EmptyWorkoutCountsUITests.swift, fitbodUITests/ReseedRelaunchUITests.swift, fitbodUITests/SkipWarmupsUITests.swift, fitbodUITests/SwipeBackUITests.swift, fitbodUITests/WeeklyRecapUITests.swift, fitbodUITests/WorkoutLoggerJourneyUITests.swift, fitbodUITests/WorkoutSwapJourneyUITests.swift, fitbodUITests/SessionHistoryBRUUITests.swift, fitbodUITests/BlockWeekCountsUITests.swift, fitbodUITests/BlockLifecycleEntryPointsUITests.swift, fitbodUITests/ArchiveRoutineUITests.swift</files>
+  <behavior>
+    - "Today is showing" is `app.otherElements["today.root"]`.
+    - History opens by `UITestNavigation.selectTab("Progress", in: app)` then `app.buttons["progress.history"].tap()`.
+    - The active block's overview opens by tapping `app.buttons["today.planLine"]`.
+    - Past the plan, the plan line's label is "Spring Block, Plan complete" and Today shows no "W1"..."W4" texts and no phase chip.
+  </behavior>
+  <action>
+- [ ] **Step 1: Loaded signal.** Replace `app.buttons["today.sessions"]` used only as "Today showed" with `app.otherElements["today.root"]`: `WeeklyRecapUITests:51`, `WorkoutLoggerJourneyUITests:101` and `:148-150`, `SkipWarmupsUITests:73-75`, `SessionHistoryBRUUITests:99`.
+
+- [ ] **Step 2: History through Progress.** Where the strip was tapped to open History, select the Progress tab and tap `progress.history` instead: `EmptyWorkoutCountsUITests:116-118`, `WorkoutSwapJourneyUITests:53`, `SkipWarmupsUITests:76`, `WorkoutLoggerJourneyUITests:151`, `ReseedRelaunchUITests:68-70`, `SessionHistoryBRUUITests:290` (`openHistorySummary`). Delete `EmptyWorkoutCountsUITests.testTodayCountsOnlyTheLoggedWorkout` (`:91-108`): the Sessions and This week counts it reads are gone, and the counted total returns on the Volume row in step 1.4 with its own test.
+
+- [ ] **Step 3: SwipeBackUITests.** `testHistorySwipesBackToToday` (`:24-30`) becomes `testHistorySwipesBackToProgress`: select Progress, `open(app.buttons["progress.history"])`, `assertSwipeBack(from: historyRow, "History", to: workouts)`. In `testSwipeOnARootScreenDoesNothing` (`:44-47`) use `UITestNavigation.hittable(app.buttons, "+ NEW ROUTINE")` as the root control on the fresh store (Today's empty state, `TodayView.swift:472`), keep `alongRowOf: app.staticTexts["Fitbod / Today"]`, and `assertStillNavigates(from: newRoutine, to: nameStep(in: app), in: app)`.
+
+- [ ] **Step 4: BlockWeekCountsUITests.** `openSpringBlockFromToday` (`:155-165`): `let line = app.buttons["today.planLine"]`, appears, reveal, tap, hero appears. In the past-plan test (`:60-80`): the band, ticker and chip checks become: `line` appears with `line.label == "Spring Block, Plan complete"`; `(1...4).allSatisfy { !app.staticTexts["W\($0)"].exists }`; no `Self.phaseNames` text exists on Today. Drop the ticker pixel reads and `todayShot`. Program and overview checks (`:95-130`) stay.
+
+- [ ] **Step 5: Lifecycle and archive suites.** `BlockLifecycleEntryPointsUITests.openActiveBlockOverview` (`:110-117`) and `ArchiveRoutineUITests.endLiveBlock` (`:274-280`) tap `app.buttons["today.planLine"]` instead of the "LIVE BLOCK" text. `ArchiveRoutineUITests:116` asserts `app.buttons["today.planLine"].label.hasPrefix("Live Block")`.
+
+- [ ] **Step 6: Run every touched suite, serially**
+
+Run: `scripts/test.sh fast -only-testing:fitbodUITests/EmptyWorkoutCountsUITests -only-testing:fitbodUITests/ReseedRelaunchUITests -only-testing:fitbodUITests/SkipWarmupsUITests -only-testing:fitbodUITests/SwipeBackUITests -only-testing:fitbodUITests/WeeklyRecapUITests -only-testing:fitbodUITests/WorkoutLoggerJourneyUITests -only-testing:fitbodUITests/WorkoutSwapJourneyUITests -only-testing:fitbodUITests/SessionHistoryBRUUITests -only-testing:fitbodUITests/BlockWeekCountsUITests -only-testing:fitbodUITests/BlockLifecycleEntryPointsUITests -only-testing:fitbodUITests/ArchiveRoutineUITests 2>&1 | rg "error:|Test Case.*(passed|failed)|Executed" | tail -40`
+Expected: every test passes; the count of executed tests equals the suites' tests minus the one deleted. If `today.root` is not found, the header's `.accessibilityElement(children: .contain)` is missing or sits on the wrong view (Task 3 Step 6).
+
+- [ ] **Step 7: Commit**
+
+```bash
+git add fitbodUITests
+git commit -m "test(ui): Today's root identifier and History through Progress"
+```
+  </action>
+  <verify>
+    <automated>scripts/test.sh fast -only-testing:fitbodUITests/BlockWeekCountsUITests -only-testing:fitbodUITests/BlockLifecycleEntryPointsUITests -only-testing:fitbodUITests/SwipeBackUITests</automated>
+  </verify>
+  <done>No UI test names `today.sessions`, "LIVE BLOCK" or "SESSIONS DONE"; the plan line is the way from Today to the block overview in the suites that need it.</done>
+</task>
+
+<task type="auto" tdd="false">
+  <name>Task 6: Evidence: captures, the deload seed, the changelog, one full run</name>
+  <files>fitbod/App/BlockStatesSeed.swift:41-53, docs/design-map/screens/img/ (eight PNGs), docs/design-map/redesign/changelog.md</files>
+  <behavior>
+    - `-fitbod-seed-block-states-deload` seeds Spring Block started 22 days ago, so Today is in its deload week ("WEEK 4 OF 4 · DELOAD").
+    - Light and dark 17e captures exist for T-TODAY with the plan line, the deload week, plan complete and a long block name, and show no banner, chip, badge or strip.
+    - The redesign changelog records what 1.1 changed against the draft.
+  </behavior>
+  <action>
+- [ ] **Step 1: Deload seed variant.** In `BlockStatesSeed.swift` add `static let deloadLaunchArgument = "-fitbod-seed-block-states-deload"` and, in `runIfRequested` before the `launchArgument` branch, `else if arguments.contains(deloadLaunchArgument) { seed(activeStartedDaysAgo: 22, in: context) }`. Update the file's header comment in one line.
+
+- [ ] **Step 2: Build once for the 17e simulator** (`E299C90A-F6A1-4324-A35B-FFB5541E0AB7`, `iPhone 17e`):
+
+```bash
+SIM=E299C90A-F6A1-4324-A35B-FFB5541E0AB7
+xcrun simctl boot $SIM 2>/dev/null; xcrun simctl bootstatus $SIM -b
+xcodebuild -project fitbod.xcodeproj -scheme fitbod -destination "id=$SIM" -derivedDataPath /tmp/fitbod-capture build 2>&1 | rg "error:|BUILD" | tail -3
+xcrun simctl install $SIM /tmp/fitbod-capture/Build/Products/Debug-iphonesimulator/fitbod.app
+```
+Expected: `** BUILD SUCCEEDED **`.
+
+- [ ] **Step 3: Capture each state in light and dark.** For each (name, seed) in: (`today--active-block`, `-fitbod-seed-active-block`), (`today--deload-week`, `-fitbod-seed-block-states-deload`), (`today--plan-complete`, `-fitbod-seed-block-states-past-plan`), (`today--long-block-name`, `-fitbod-seed-powerbuilding`), and each appearance in light, dark:
+
+```bash
+xcrun simctl ui $SIM appearance <light|dark>
+xcrun simctl launch --terminate-running-process $SIM bodybuilding.fitbod -fitbod-reset-store <seed>
+sleep 3
+xcrun simctl io $SIM screenshot docs/design-map/screens/img/17e-default-<light|dark>-<name>.png
+```
+The existing `17e-default-light-today--active-block.png`, `-dark-today--active-block.png`, `-light-today--deload-week.png` are overwritten; the others are new. For the long name: if "Powerbuilding" does not overflow the plan line at 17e width, rename the block through its overview's EDIT BLOCK to "Powerbuilding Winter Strength Block Two" before the capture, and say so in the changelog entry. Open each PNG (the Read tool) and check: plan line present, no stat strip, no band, no W1..W4 cells, no deload banner; the position line is whole; the name line is cut with "…".
+
+- [ ] **Step 4: Hand check of the date refresh** on the same simulator with `-fitbod-seed-active-block`: background the app (Home), wait 5 s, foreground it; the plan line re-renders without a flash of stale content. Note the result in the summary; no capture.
+
+- [ ] **Step 5: Changelog entry** at the top of `docs/design-map/redesign/changelog.md`, "## 2026-11-06, step 1.1 landed", one sentence each: what landed; `PlanCompleteNote` and Today's end alert deleted (the plan line opens Block overview, where END BLOCK lives); the ready block Today shows is now the oldest created (O-6); `DeloadAdvisory.bannerCopy` deleted; `BlockOverviewScreen.stripHeader` takes a date; `TodayState.pick` carries no payload until step 1.3; the deload seed variant; the long-name capture's block name.
+
+- [ ] **Step 6: Full run**
+
+Run: `scripts/test.sh full 2>&1 | rg "error:|Executed|passed|failed|enumerat" | tail -12`
+Expected: every unit and UI test passes bar the one known expected failure, and the merged result ran exactly the enumerated tests. Compare with the 2026-11-03 baseline (1,319 tests): the new total is that number plus Task 1's 3 and Task 2's 23, minus the deleted ones (2 streak, 4 copy, 4 stacking, 1 ticker file, 2 advisor, 5 or 6 banner, 1 regression, 1 UI).
+
+- [ ] **Step 7: Commit**
+
+```bash
+git add fitbod/App/BlockStatesSeed.swift docs/design-map/screens/img docs/design-map/redesign/changelog.md
+git commit -m "docs(redesign): step 1.1 captures and changelog"
+```
+  </action>
+  <verify>
+    <automated>scripts/test.sh full</automated>
+  </verify>
+  <done>Eight captures in the design map show the plan line and no strip, band, cells or banner; the changelog records the drift; the full suite is green.</done>
+</task>
+
+</tasks>
+
+<threat_model>
+| Threat | Boundary / category | Disposition | Mitigation |
+|---|---|---|---|
+| T-1.1-01 | Deleting the empty-workout cache changes what counts as a finished workout | mitigate | `countedWorkouts` is the one rule (ROADMAP "One volume rule"); `TodayStateTests.anEmptyWorkoutTodayIsNotDone` pins it. |
+| T-1.1-02 | A stale `now` shows yesterday's state | mitigate | Three refresh hooks; `theDayTurnsOverWithNow` proves the function side; hand check in Task 6. |
+| T-1.1-03 | Ending a block from Today disappears | accept | END BLOCK stays on Block overview, one tap from the plan line (`BlockLifecycleEntryPointsUITests`). |
+| T-1.1-SC | Dependency or extension installs | accept | None authorized. |
+</threat_model>
+
+<verification>
+Run every command serially on the dedicated simulator with `FITBOD_TEST_WORKERS=1`.
+Reset and seed only at a journey's initial launch; relaunches never reset.
+
+1. After Tasks 1 to 4: `scripts/test.sh fast` green bar the known expected failure.
+2. After Task 5: the eleven touched UI suites green, no silent skips (compare executed counts with the suites' test counts).
+3. After Task 6: `scripts/test.sh full` green; the eight captures opened and checked by eye; the foreground refresh checked by hand.
+4. Before each commit: `gitnexus_detect_changes()` names only the task's files.
+</verification>
+
+## Source coverage audit
+
+| Source | Item | Coverage |
+|---|---|---|
+| plan.md 1.1 | `TodayState` pure function, its inputs, calendar, scenePhase and significant-time refresh | Tasks 2 and 3 |
+| plan.md 1.1 | `BlockPosition.label` for Today, Block overview's strip header, Program | Task 1 |
+| plan.md 1.1 | Plan line replaces strip, band and cells; `TodayStatStrip`, `TrendDirection`, `currentTrend` deleted | Task 3 |
+| plan.md 1.1 | `DeloadWeekBanner` removed; advisory one row with DISMISS, hidden in a deload phase and while a workout is open | Task 4 |
+| plan.md 1.1 | "n / m WORKOUTS DONE"; `today.root`; CLAUDE.md line | Tasks 1 and 3 |
+| plan.md 1.1 tests | `TodayStateTests`, `BlockPositionTests`, the seven unit suites, the eight `today.sessions` suites, `BlockWeekCountsUITests`, lifecycle and archive suites | Tasks 1 to 5 |
+| plan.md 1.1 acceptance | Every row tested; plan line opens Block overview; name truncates, position never; powerbuilding capture; one form; no deload banner, chip or badge; re-render after midnight | Tasks 2, 3, 5, 6 |
+| hierarchy.md | T-READY order O-6; "Plan complete needs no notice"; the deload week needs no banner | Tasks 2, 3, 4 |
+| today-layouts.md | Plan line row spec; notice row spec | Tasks 3, 4 |
+| ROADMAP 2026-11-05 | `PlanCompleteNote`; newest ready block | Superseded, see "Decisions taken" |
+| Out of 1.1 | The review notice (2.1), NEXT and the hero slabs (1.3), the setting gate in `evaluate` (1.4), Program's header (1.5) | Not touched |
+
+<success_criteria>
+All six commits are on `redesign-1-1-today-state`; `scripts/test.sh full` is green bar the known expected failure; the eight captures show the plan line and nothing it replaced; `TodayStateTests` has one passing test per state-table row and precedence pair; no production code reads `TodayStatStrip`, `BlockContextBand`, `WeekTickerCells`, `DeloadWeekBanner`, `PlanCompleteNote` or `ProgramView.activeBlockWeek`.
+</success_criteria>
+
+<output>
+Planning deliverable: this PLAN.md only. Implementation, commits and STATE updates happen in the execution invocation.
+</output>

@@ -1,5 +1,9 @@
 # Hierarchy
 
+Dated design/review reference (2026-11-01–2026-11-08). Proposed behavior is approved design input; delivery status is maintained in the roadmap.
+Current work/status/decisions live only in [ROADMAP.md](../../ROADMAP.md); current technical contracts are in [ARCHITECTURE.md](../../../ARCHITECTURE.md).
+Do not update this snapshot as a backlog.
+
 Each screen gets one purpose, one primary question and one obvious next action.
 The rule that drives both screens: **one signal element per screen, and a workout in progress always takes it.**
 
@@ -24,7 +28,7 @@ When the day is done, there is no signal button at all.
 
 Nothing else.
 The volume bars, the heatmap, the day streak, the all-time workout count and the week cells leave Today; functionality-map.md says where each goes.
-Today never creates a block, except through the review sheet's own "Start next ▸" (O-12 in [open-decisions.md](open-decisions.md)): planning lives on Program.
+Today never creates a block, except through the review sheet's own "Start next ▸" (O-12 in [open-decisions.md](https://github.com/Saechaoc/fitbod/blob/ba27f304/docs/design-map/redesign/open-decisions.md)): planning lives on Program.
 
 ### Workout actions and weekly analytics
 

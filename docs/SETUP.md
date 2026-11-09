@@ -4,10 +4,17 @@ Open `fitbod.xcodeproj` in Xcode, select the **fitbod** scheme, select an iPhone
 Simulator, and Run. The project uses SwiftUI, SwiftData, Swift Charts and
 ActivityKit, with no package-install step or account setup. The minimum target
 is iOS 26.4. Development verification uses Xcode 26.5 and iOS 26.5 Simulator.
+Those local toolchain versions were checked on 2026-11-08; use
+`xcodebuild -version` and `xcrun simctl list runtimes` on another machine.
+Agent workflow: [AGENTS.md](../AGENTS.md), [CLAUDE.md](../CLAUDE.md),
+[development/testing policy](DEVELOPMENT.md), [conventions](../CONVENTIONS.md)
+and [technical contracts](../ARCHITECTURE.md). Current work and acceptance
+live only in [ROADMAP.md](ROADMAP.md).
 
-For a physical iPhone, select your signing team for the app and
-`FitbodWidgetsExtension` targets, then choose the connected device. Personal
-installation through Xcode is the milestone distribution path.
+For a physical iPhone, the app, `FitbodWidgetsExtension` and test targets inherit
+the development team from the project's Debug/Release build settings. On another
+developer's Mac, select their team at the project level, then choose the connected
+device. Personal installation through Xcode is the milestone distribution path.
 
 ## Command-line build
 
@@ -17,6 +24,12 @@ xcodebuild -project fitbod.xcodeproj -scheme fitbod \
   -derivedDataPath /private/tmp/fitbod-build \
   build CODE_SIGNING_ALLOWED=NO
 ```
+
+The app already embeds `FitbodWidgetsExtension`; no new target is needed.
+Its shared source/resource membership and standalone build command are in
+[`FitbodWidgets/SOURCES.md`](../FitbodWidgets/SOURCES.md). A successful build
+or resource inspection does not prove installed Lock Screen/Island rendering;
+that observation remains [RM-008](ROADMAP.md#rm-008).
 
 To run tests, first choose an available simulator with `xcrun simctl list devices
 available`. Replace `SIMULATOR_ID` with its UUID:
@@ -33,13 +46,32 @@ test simulator so normal personal workout data is not affected.
 
 ### Test tiers
 
-`scripts/test.sh` runs the same tests in two tiers. Set `FITBOD_TEST_DEVICE` to
+`scripts/test.sh` offers unit feedback and full verification. Set `FITBOD_TEST_DEVICE` to
 a dedicated simulator's UUID first.
 
 | Tier | Command | Runs | Typical time |
 |---|---|---|---|
 | Developer feedback | `scripts/test.sh fast` | Incremental build, then every unit test in one serial process. Pass `-only-testing:` flags to run something else, such as one UI class. | About 35 s; 70 to 90 s right after UI tests or a cold build |
 | Full verification | `scripts/test.sh full` | Build, unit tests serially, every UI class sharded over `FITBOD_TEST_WORKERS` simulators (default 2), widget build | About 14 min with 2 shards; the UI target alone takes 23 min serially |
+
+Routine checks belong to the agent; a feature needs no personal sign-off when
+its agreed scope, appropriate checks and docs are complete. Run the unit target
+for app changes and affected existing UI checks for changed routes/interactions
+or stored data. New prototype UI tests protect data; copy/styling uses simulator
+inspection. Documentation-only changes run their relevant checkers. Exact effort,
+stability and release triggers are in [DEVELOPMENT.md](DEVELOPMENT.md).
+
+To include both the unit target and one affected UI suite:
+
+```sh
+scripts/test.sh fast -only-testing:fitbodTests -only-testing:fitbodUITests/WorkoutExitUITests
+```
+
+Both tiers reset their dedicated installation. For a persistence journey, the
+test resets only on its initial launch and omits reset on subsequent relaunches.
+The full tier pins default text/light mode, so it does not prove dark/AX3 or
+the two-phone release matrix. Run those configurations explicitly when their
+stability/release trigger is reached.
 
 The full tier keeps each guarantee of the serial run:
 
@@ -90,9 +122,11 @@ clean full runs. Each shard's summary line counts idle-wait stalls, the
 
 ## First launch and offline use
 
-The bundled catalog has **900 source records**, of which **702** are imported:
+The bundled seed v3 has **901 source records**, of which **703** are eligible for import:
 strength, powerlifting, Olympic weightlifting and strongman. The seed includes
-27 local Panatta machine additions. Importing happens off the main thread on
+27 local Panatta machine additions and Single-Leg Kneeling Leg Curl.
+These are bundled-data counts, not a guarantee of the size of an installed
+library with custom/archived exercises. Importing happens off the main thread on
 first launch; wait for the preparation screen to disappear.
 
 Search, muscle/equipment filtering, instructions, custom exercises, routines,
@@ -115,7 +149,7 @@ Open individual `fitbod/Design/*.swift` files for SwiftUI previews. The gallery
 has normal, dark and accessibility-size previews.
 
 The four tabs are **Today, Program, Progress, Library**. Open completed workout
-history through **Today → Sessions** or **Progress → Workouts**. Settings opens
+history through **Progress → Workouts**. Settings opens
 from the Today header. A UI routine is a `Split`; its sessions are
 `SessionTemplate` records. The logger and software keyboard hide the tab bar.
 
@@ -141,6 +175,10 @@ An incompatible store is moved, with its SQLite siblings, to
 `Application Support/IncompatibleStores/<timestamp>/` before a fresh store is
 created. This preserves the old files but does not convert their contents.
 Compatible additive changes open in place. Settings offers backup and export.
+The current catch also moves stores aside after transient open errors; safe
+classification/retry remains [RM-001](ROADMAP.md#rm-001). Prove populated
+backup/recovery ([RM-029](ROADMAP.md#rm-029)) before schema-changing work;
+move-aside preservation is not a tested restore or migration promise.
 
 The DEBUG-only `-fitbod-reset-store` launch argument moves the active store
 aside, clears seed stamps, and removes the app's pending and delivered
@@ -153,7 +191,16 @@ arguments are restricted to DEBUG builds.
 
 ## Evidence
 
-See [`VERIFICATION.md`](VERIFICATION.md) for recorded commands, results and
-screenshots. Existing exploratory UI smoke tests are not sufficient evidence
-of a complete workout journey; the milestone requires explicit assertions for
-logging, relaunch and completed history.
+Record the tested commit, configuration, commands, results and limitations in
+the relevant [roadmap entry](ROADMAP.md). Download CI logs and screenshots from
+the Actions run's `fitbod-ci-<sha>` artifact, retained for 14 days; local CI runs
+write to ignored `.ci/`. Keep detailed output there rather than committing
+reports or screenshot bundles.
+Archive finished substantial implementation plans in `docs/archive/features/`
+with historical scope/build/results and an RM backlink. A required unavailable
+phone check stays explicit in the roadmap as **Implemented; verification pending**;
+the archive does not close it or block unrelated work.
+
+Exploratory UI smoke tests do not establish a complete workout journey.
+[Release checks](ROADMAP.md#rm-048) require explicit assertions for logging,
+relaunch and completed history across the required configurations.

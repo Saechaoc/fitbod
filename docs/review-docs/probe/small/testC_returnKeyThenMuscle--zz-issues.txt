@@ -1,2 +1,0 @@
-[0] C after return: name='Probe Zercher Squat' Chest=true keyboard=0
-[0] C after muscle: name='Probe Zercher Squat' Chest=true keyboard=0

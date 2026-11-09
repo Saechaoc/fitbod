@@ -1,5 +1,11 @@
 # Test performance guide
 
+> Historical audit and measurements from 2026-10-31/2026-11-01. Counts,
+> toolchains, failures and proposals describe those runs, not current status.
+> Current testing effort/completion rules: [DEVELOPMENT.md](DEVELOPMENT.md);
+> runner commands/limits: [SETUP.md](SETUP.md); remaining work: [RM-034](ROADMAP.md#rm-034),
+> [RM-052](ROADMAP.md#rm-052), [RM-053](ROADMAP.md#rm-053), [RM-054](ROADMAP.md#rm-054).
+
 This guide says where the fitbod test suite spends its time, what to do and not do when writing tests, and which changes pay off first.
 It comes from an audit on 2026-10-31 of the repository, its result bundles, its CI history and a few small profiling runs.
 It changes no code.
@@ -29,7 +35,7 @@ Four unit tests sleep: `Task.sleep` for 1 s in `fitbodTests/NewBlockBuilderFidel
 
 Measured facts about the UI target: 501 `waitForExistence` call sites, 48 `waitForNonExistence`, 135 `hittable(`, 113 `reveal(`, 445 `.tap()`, 142 calls to the shared launch helpers, 25 raw `XCUIApplication()` launches, 13 `relaunch(` calls, 17 long presses, 46 screenshots, 161 attachments (18 kept always), 11 OCR reads through Vision, 25 pixel-color assertions, 11 `Thread.sleep` sites, one `sleep(6)`, and 39 launches at a non-default text size in 11 files that cover AX3.
 23 of the 58 files assert layout or accessibility sizes.
-The target grew from 55 tests on 2026-10-28 (the Phase 0 baseline in `docs/conway-specs/assumptions.md`) to 202 today: 33 of the 58 files landed between 2026-10-28 and 2026-10-30.
+The target grew from 55 tests on 2026-10-28 (the Phase 0 baseline in [historical assumptions.md](https://github.com/Saechaoc/fitbod/blob/ba27f304/docs/conway-specs/assumptions.md)) to 202 today: 33 of the 58 files landed between 2026-10-28 and 2026-10-30.
 
 There are no SPM packages, no script build phases and no `.xctestplan` files.
 Debug builds use `-Onone`, incremental compilation and `ONLY_ACTIVE_ARCH = YES`.
@@ -42,7 +48,7 @@ The runs on record:
 
 | Run | Scope | Elapsed | Label |
 | --- | --- | --- | --- |
-| Local Phase 0 baseline, 2026-10-28, large phone | 1,026 tests, 55 of them UI | 15.8 min | Measured (`docs/conway-specs/assumptions.md`) |
+| Local Phase 0 baseline, 2026-10-28, large phone | 1,026 tests, 55 of them UI | 15.8 min | Measured ([historical assumptions.md](https://github.com/Saechaoc/fitbod/blob/ba27f304/docs/conway-specs/assumptions.md)) |
 | Local, 2026-10-29, large phone | `NoteSheetsUITests` (5 UI tests) plus 31 unit tests | 2.9 min; the 5 UI tests took 11, 18, 30, 36 and 43 s | Measured (result bundle under `DerivedData/fitbod-m1-orca/Logs/Test`) |
 | CI, 13 runs on 2026-10-04, branch `claude/nifty-hypatia-yassxj` | build, unit (275 tests then), UI bundle on two phones (4 tests per phone then) | mean 30.1 min, max 55.8 min | Measured (`gh run list`, `gh api .../jobs`) |
 | Local, this audit | unit target alone | 36 s wall, 22.0 s of test execution | Measured |
@@ -187,7 +193,7 @@ The rules use fitbod's own files as examples.
 
 **Do.**
 Prove a rule in the unit target when the rule lives in a model, a service or a pure function: progression math, `TodayResolver`, `BlockLifecycleService`, exporters, seeders.
-Prove a view's content in the unit target too, by hosting the view in a `UIHostingController` the way `NewBlockBuilderFidelityTests` does, or by rendering it with `ImageRenderer`.
+Use hosted/rendered view checks only when they prove a required behavior; do not add source-reading or copy-pinning tests. Prototype copy/layout uses simulator inspection; broader checks return when the workflow is stable.
 Keep a UI test for what only the running app shows: a route is reachable, a sheet dismisses, a tap on a real control reaches the store, the keyboard appears, the app survives a relaunch.
 
 **Don't.**
@@ -200,7 +206,7 @@ A UI case costs 11 to 43 s (measured) because it launches the app, imports the c
 That is a factor of 500 to 2,000 for the same assertion.
 
 **Exceptions.**
-Keep one journey per screen that proves the screen is reachable and wired, even if every assertion in it has a unit twin.
+Keep data-protecting journeys and affected existing route/interaction checks. Add one journey per workflow when that workflow becomes stable; a new prototype screen does not mandate a UI suite.
 Keep layout tests that need the real window size and text size, since a hosted view can fake a width but not the whole phone's safe areas and tab bar.
 
 **Verify.**

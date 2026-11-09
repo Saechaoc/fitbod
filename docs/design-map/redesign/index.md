@@ -1,31 +1,17 @@
-# Today and Program redesign
+# Today and Program design reference
 
-Today puts three bands of block bookkeeping above its one action and a page of zero-value muscle rows under it.
-Program lists blocks and routines without saying what the lifter is running or what comes next.
-This bundle is the design review the brief asked for: a screenshot audit, a hierarchy for both screens, layouts for every state, a map of every existing capability to its new place, and a phased plan.
-It builds on the design map in `docs/design-map/` and cites its findings by ID (`D-nn`), its patterns (`P-n`) and the staged decisions in `docs/design-map/decisions.md`.
+Approved draft v6 (2026-11-02), with O-1–O-14 approved on 2026-11-05 and playtest calls O-15/O-16 on 2026-11-08.
+Current scope, dependencies, decisions and acceptance are maintained only in [ROADMAP.md](../../ROADMAP.md).
+These layouts supply design detail; implementation status and acceptance live in the roadmap.
 
-Status: draft v6, 2026-11-02, revised after the Codex feasibility reviewer's complete pass on draft v5, which closed round 3 with no open blocker (review-log.md).
-Every blocker from rounds 1 to 3 is closed or accepted with a reason there, so the proposal is final as reviewed; the product calls were made on 2026-11-05 (open-decisions.md), each taking the default the layouts assume.
-A further adversarial pass needs the Codex account's weekly limit to reset (8 Nov).
+| Reference | Purpose |
+|---|---|
+| [hierarchy](hierarchy.md) | State tables, precedence, vocabulary and content zones |
+| [Today layouts](today-layouts.md) | Wireframes for every Today state and session sheet |
+| [Program layouts](program-layouts.md) | Program/Past/overview wireframes |
+| [functionality map](functionality-map.md) | Dated capability-to-surface mapping |
+| [budget](screen_budget.py) | Proposed/current element and tap counts |
 
-| Read this file | when you need |
-| --- | --- |
-| audit.md | what is wrong on each screenshot and what it costs the lifter |
-| hierarchy.md | each screen's purpose, primary question, next action, zone order, state tables and shared vocabulary |
-| today-layouts.md | the Today wireframes, one per state, at 390pt |
-| program-layouts.md | the Program wireframes, one per state, at 390pt, and what Block overview changes |
-| functionality-map.md | where every existing capability goes |
-| plan.md | the three implementation phases, files, tests and order |
-| tradeoffs.md | each design decision and the alternatives rejected |
-| risks.md | what could go wrong in the build and how to contain it |
-| open-decisions.md | the product calls only the user can make, with the defaults the layouts assume |
-| evaluation.md | the brief's five criteria checked against the proposal |
-| screen_budget.py | run it with `python3 -I` for element counts and tap counts, current vs proposed |
-| review-log.md | adversarial review findings, deduplicated, and what changed because of each |
-| reviews/ | the reviewers' full reports, one per lens and round, and under specs/ the brief each reviewer was given |
-| changelog.md | what changed in this bundle and why |
-
-Sources: the 17e default-size light screenshots in `docs/design-map/screens/img/`, the screen and workflow files under `docs/design-map/`, the BRU rules in `docs/design-system/`, the user's own BRU mock-ups in `bru-screens/Fitbod-Session/screens/`, and the Swift views named in functionality-map.md.
-Scope: the Today and Program tabs and the screens they push.
-Block overview, the workout logger, Progress and Library change only where this bundle names them.
+Implementation: [RM-006](../../ROADMAP.md#rm-006) then [RM-010–RM-018](../../ROADMAP.md#rm-010).
+Approved calls: [RM-042](../../ROADMAP.md#rm-042).
+Workflow accessibility/docs: [RM-044](../../ROADMAP.md#rm-044)/[RM-051](../../ROADMAP.md#rm-051).

@@ -16,14 +16,17 @@ from __future__ import annotations
 
 import argparse
 import collections
+import contextlib
 import functools
+import io
 import pathlib
 import re
 import sys
+import tempfile
 
 MAP = pathlib.Path(__file__).resolve().parent.parent
 ROOT = MAP.parent.parent
-TICKETS = ROOT / "docs" / "conway-specs" / "tickets"
+ROADMAP = ROOT / "docs" / "ROADMAP.md"
 
 SCREEN_KEYS = ("id", "kind", "title", "view", "tab", "presents_from", "closes_with",
                "mock", "seed", "captured", "img", "tree")
@@ -34,7 +37,7 @@ DIALOG_SECTIONS = ("Trigger", "Buttons", "Copy check", "Screenshot", "Findings")
 WORKFLOW_SECTIONS = ("Steps", "Flow", "Tap count", "Dead ends", "Detours", "No clear way back", "Findings")
 MISSING_HEADER = ["id", "Screen or state", "Workflow that needs it", "Must show", "Entered from",
                   "Importance", "Source"]
-AUDIT_HEADER = ["ID", "Screen", "Problem", "Evidence", "Severity", "Ticket"]
+AUDIT_HEADER = ["ID", "Screen", "Problem", "Evidence", "Severity", "Roadmap"]
 KIND_SHAPE = {"screen": "rect", "sheet": "stadium", "cover": "stadium",
               "dialog": "hexagon", "alert": "hexagon", "system": "subroutine"}
 TABS = {"today", "program", "progress", "library", "settings", "none"}
@@ -43,7 +46,7 @@ SEVERITY = ("blocker", "major", "minor", "polish")
 IMPORTANCE = {"must", "should", "nice"}
 MOCK_SIZES = ("390-light", "390-dark", "440-light", "440-dark")
 EXEMPT = ("q_", "x_", "tab_")
-DELIVERABLES = ("README.md", "assumptions.md", "conventions.md", "changelog.md", "navigation.md",
+DELIVERABLES = ("README.md", "assumptions.md", "conventions.md", "navigation.md",
                 "missing-screens.md", "audit.md", "workflows", "mockups")
 SKELETON = "<!-- skeleton -->"
 TEXT_SUFFIXES = {".md", ".html", ".css", ".py", ".sh", ".txt", ".tsv", ".json"}
@@ -67,7 +70,7 @@ SCHEME = re.compile(r"[a-z][a-z0-9+.-]*:")
 CODE_REF = re.compile(r"`((?:fitbod|fitbodTests|fitbodUITests|FitbodWidgets|bru-screens|docs|scripts)/[\w./+-]*"
                       r"(?::\d+(?:-\d+)?)?)`")
 REF = re.compile(r"([^:\s]+)(?::(\d+)(?:-(\d+))?)?")
-TICKET = re.compile(r"\bT\d+\b")
+ROADMAP_ID = re.compile(r"RM-\d{3}")
 AUDIT_ID = re.compile(r"\bD-(\d{2,3})\b")
 
 
@@ -442,6 +445,7 @@ def check_audit(report: Report, screens: dict[str, dict], missing: dict[str, lis
     ids: set[str] = set()
     if not path.exists():
         return ids
+    roadmap_text = ROADMAP.read_text() if ROADMAP.is_file() else ""
     header, body = table(path.read_text(), "ID")
     if header != AUDIT_HEADER:
         report.error("audit.md", f"the table header must be: {' | '.join(AUDIT_HEADER)}")
@@ -467,13 +471,14 @@ def check_audit(report: Report, screens: dict[str, dict], missing: dict[str, lis
                 report.error("audit.md", f"{want}: screen {target!r} has no screens/ file or missing-screens.md row")
         rank = SEVERITY.index(severity) if severity in SEVERITY else len(SEVERITY)
         keys.append(((rank, targets[0] if targets else ""), want))
-        for text, target in LINK.findall(cells[5]):
-            dest = (path.parent / target).resolve()
-            if TICKET.fullmatch(text) and (dest.parent != TICKETS.resolve() or not dest.name.startswith(text + "-")):
-                report.error("audit.md", f"{want} links {text} to {target}, not to its ticket file")
-        # An archived ticket has no file to link, so the row names it as "Tnn (done)".
-        for bare in TICKET.findall(re.sub(r"T\d+ \(done\)", "", LINK.sub("", cells[5]))):
-            report.error("audit.md", f"{want} names {bare} without linking its ticket file")
+        owners = [(name, target) for name, target in LINK.findall(cells[5]) if ROADMAP_ID.fullmatch(name)]
+        if len(owners) != 1:
+            report.error("audit.md", f"{want} needs exactly one canonical RM link; legacy ticket IDs may stay as text")
+        for name, target in owners:
+            file_part, _, anchor = target.partition("#")
+            if ((path.parent / file_part).resolve() != ROADMAP.resolve()
+                    or anchor != name.lower() or f'<a id="{anchor}"></a>' not in roadmap_text):
+                report.error("audit.md", f"{want} links {name} to {target}, not to its canonical roadmap entry")
     for (key, row), (next_key, _) in zip(keys, keys[1:]):
         if key > next_key:
             report.error("audit.md", f"the rows are not sorted by severity, then screen, after {row}")
@@ -506,8 +511,6 @@ def check_text_files(report: Report, audit_ids: set[str], referenced: set[pathli
             continue
         if path.is_relative_to(MAP / "screens" / "tree"):
             continue  # the app's own text, copied as the app shows it
-        if path.is_relative_to(MAP / "redesign" / "reviews"):
-            continue  # the reviewers' reports and briefs, kept verbatim
         where = rel(path)
         text = path.read_text(errors="replace")
         for number, line in enumerate(text.splitlines(), 1):
@@ -607,6 +610,30 @@ def self_test() -> int:
     assert CODE_REF.findall("see `fitbod/Views/TodayView.swift:38` and `fitbod/App/*Seed.swift`") == [
         "fitbod/Views/TodayView.swift:38"]
     assert REF.fullmatch("fitbod/Views/TodayView.swift:38-40").groups() == ("fitbod/Views/TodayView.swift", "38", "40")
+    original_map = MAP
+    with tempfile.TemporaryDirectory() as directory:
+        globals()["MAP"] = pathlib.Path(directory)
+        try:
+            header = "| " + " | ".join(AUDIT_HEADER) + " |\n|---|---|---|---|---|---|\n"
+            owner = f"[RM-001]({ROADMAP}#rm-001)"
+            for cell, severity, valid in ((f"T120; {owner}", "minor", True),
+                                          ("T120", "minor", False),
+                                          (owner + "; " + owner, "minor", False),
+                                          (owner.replace("#rm-001", "#missing"), "minor", False),
+                                          (owner.replace("RM-001", "RM-999").replace("#rm-001", "#rm-999"), "minor", False),
+                                          (owner.replace("ROADMAP.md", "retired.md"), "minor", False),
+                                          (owner, "unknown", False)):
+                (MAP / "audit.md").write_text(header + f'| <a id="d-01"></a>D-01 | app | example | - | {severity} | {cell} |\n')
+                audit_report = Report(partial=False)
+                assert check_audit(audit_report, {}, {}) == {"d-01"}
+                assert (not audit_report.errors) == valid, audit_report.errors
+            with contextlib.redirect_stdout(io.StringIO()) as output:
+                assert check(False, None) == 1
+            assert "README.md: not written yet" in output.getvalue()
+            assert "severity 'unknown'" in output.getvalue()
+            assert "changelog.md" not in output.getvalue()
+        finally:
+            globals()["MAP"] = original_map
     print("self-test passed")
     return 0
 

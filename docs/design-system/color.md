@@ -91,5 +91,5 @@ Text gets its own tokens, chosen with `tokens_check.py`:
 
 These are the role pairs checked by the script. Passing this table proves the
 token combinations; screen verification must additionally prove each caller
-uses the correct foreground for its actual surface. The caller audit remains
-part of milestone verification. The change is tracked in [changelog.md](changelog.md).
+uses the correct foreground for its actual surface. The caller audit belongs to
+[RM-044](../ROADMAP.md#rm-044).

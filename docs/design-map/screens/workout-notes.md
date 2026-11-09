@@ -2,7 +2,7 @@
 id: workout-notes
 kind: sheet
 title: Workout notes
-view: fitbod/Sessions/WorkoutNotesSheet.swift:23
+view: fitbod/Sessions/NoteSheet.swift
 tab: [today, program]
 presents_from: [dialog-workout-menu]
 closes_with: verb
@@ -12,6 +12,8 @@ captured: 2026-10-31 61353088
 img: [img/17e-default-light-workout-notes.png, img/17e-default-dark-workout-notes.png, img/17e-ax3-light-workout-notes.png, img/17promax-default-light-workout-notes.png, img/17promax-ax3-light-workout-notes.png]
 tree: tree/workout-notes.txt
 ---
+
+Captured note-sheet source was consolidated into NoteSheet after this snapshot. Current scope: [RM-055](../../ROADMAP.md#rm-055).
 
 The lifter writes a note about the whole workout.
 

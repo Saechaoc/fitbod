@@ -96,15 +96,16 @@ Every `must` row has a mock-up, `mockups/<id>.html`, with its four renders `mock
 
 ## Audit
 
-`audit.md` holds one table with the columns `ID | Screen | Problem | Evidence | Severity | Ticket`. (checked)
+`audit.md` holds one table with the columns `ID | Screen | Problem | Evidence | Severity | Roadmap`. (checked)
 
 - IDs run `D-01`, `D-02` and on without gaps, and each ID cell starts with its anchor, as in `<a id="d-01"></a>D-01`. (checked)
 - Severity is `blocker`, `major`, `minor` or `polish`, which are P0 to P3 on the ticket scale.
 - Rows are sorted by severity, then by screen. (checked)
 - Screen holds screen ids, missing-screen ids or `app`, separated by commas. (checked)
-- Evidence is a screenshot link plus a backticked `path:line` where one is known.
-- Ticket links the open ticket under `docs/conway-specs/tickets/`, or holds `-`. (checked)
-  A problem that an open ticket already covers gets one row that links the ticket and does not describe the problem again.
+- Evidence is a screenshot plus a source link at the captured commit where one is known.
+- Roadmap links exactly one canonical RM entry in `docs/ROADMAP.md`, including its existing stable anchor. (checked)
+  Original T IDs may remain as plain historical cross-references; retired ticket files are not required.
+  Priorities, completion status, dependencies and acceptance are maintained only in the roadmap.
 
 A `## Patterns` section follows the table.
 Each pattern is a `### P-<n> <rule broken>` heading with the design-system rule, the rows it groups and the one fix.
@@ -130,7 +131,7 @@ Each pattern is a `### P-<n> <rule broken>` heading with the design-system rule,
 - `navigation.md` has one node for every screen file and no other app node, each drawn in its kind's shape, and its edges are exactly the screen files' `presents_from`.
 - Every node in a workflow diagram, and every id in `screens`, `start` and `end`, names a screen file or a missing-screens row.
 - Missing-screen ids are new and unique, and every `must` row has its mock-up and four renders.
-- Audit rows run without gaps, are sorted, and link real tickets.
+- Audit rows run without gaps, are sorted, and link an existing canonical roadmap entry.
 - No file uses the em dash.
 
 Warnings do not fail the check: screenshots and trees that no file references, edges whose style does not fit the target's kind, and workflow diagrams that show a screen their `screens` list leaves out.

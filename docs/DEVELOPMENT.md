@@ -4,7 +4,7 @@ Fitbod is a prototype.
 We are still shaping its storyboards, workflows and visual design, so the goal of most work is to learn whether an idea works, quickly.
 This guide says how much engineering each change needs at this stage, what must never be skipped, what can wait, and when the waiting ends.
 
-Stage as of 2026-11-01: **prototype**.
+Stage as of 2026-11-08: **prototype**.
 The stage changes per workflow (see [Stages](#stages)), and the whole app moves to release readiness only on the conditions at the end of this guide.
 
 ## Principles
@@ -12,7 +12,7 @@ The stage changes per workflow (see [Stages](#stages)), and the whole app moves 
 - **Learn first.** Build the simplest version that works end to end and lets the lifter try the idea.
 - **Scale effort to the change.** Tests, abstractions, optimization, documentation and visual polish match how mature and how risky the change is.
 - **Keep the safeguards.** Correctness, data integrity, privacy and security are never deferred.
-- **Defer on purpose.** Deferred work is named below with the condition that brings it back.
+- **Defer on purpose.** Deferred work and its return conditions live in [the roadmap](ROADMAP.md); this guide defines the stages and effort policy.
 - **No process for its own sake.** Do not replace extra code with extra documents, checklists, tickets or approval steps.
 
 ## Never deferred
@@ -23,9 +23,9 @@ These are cheap or protect the lifter's data, so they apply to every change at e
   Model, persistence, engine and backup changes get unit tests, and a relaunch check when they change what is stored.
   Examples: `MilestoneOnePersistenceTests`, `SessionSnapshotFidelityTests`.
 - **No silent failures that lose work.** A failed save must say so and must not poison later saves.
-  The design map's blockers D-01 to D-04 are this class (`docs/design-map/audit.md`).
+  The design map's dated blockers D-01 to D-04 are this class; current follow-ups are [RM-001–RM-005](ROADMAP.md#current-focus).
 - **Prescription math is right.** Progression, e1RM, volume, PR and plate logic get unit tests; the whole unit target runs in about 36 seconds.
-- **Schema and unit rules hold.** SchemaV7 recovery moves stores aside and never migrates; units relabel and never convert (see `CLAUDE.md`).
+- **Schema and unit rules hold.** SchemaV7 has no historical migration chain; recovery preserves incompatible stores separately. Units relabel and never implicitly convert (see `ARCHITECTURE.md`).
 - **Local only.** No network sync, accounts, analytics or HealthKit.
   Backup and import code must validate a file before it writes to the store.
 - **Accessibility foundations.** Use what the platform and BRU already give for free:
@@ -45,14 +45,17 @@ These are cheap or protect the lifter's data, so they apply to every change at e
 | Trying a new screen, flow or layout | Unit tests only for logic that computes something. No UI test unless it guards data. | 17e, default text, light | Commit message |
 | Copy or styling change | None. Update or delete any copy-pinning test the change breaks, in the same commit. | 17e, default text, light | Commit message |
 | A workflow becoming stable | One journey UI test for the workflow | Add dark mode, Pro Max and AX3 for that workflow | Its design-map screen files |
-| Model, persistence, engine or backup | Unit tests, plus a relaunch test if stored data changes | As needed | `CLAUDE.md` architecture tables if a rule changes |
+| Model, persistence, engine or backup | Unit tests, plus a relaunch test if stored data changes | As needed | `ARCHITECTURE.md` if a contract changes |
 | Bug fix | Reproduce it the way the lifter meets it. Add a regression test when the bug cost data or is likely to return. | Where it showed | Commit message |
 
-Run the unit target on every change, and only the UI tests for the workflow you touched.
+Run the unit target for app changes, and only the UI tests for the workflow you touched.
+Run affected existing UI checks when routes, interactions or stored-data behavior change; new prototype UI tests are needed only when they protect data. Copy/styling changes use simulator inspection and need no new copy-pinning test.
+For documentation/tooling-only changes, run their relevant checks; app tests are needed only if app behavior changes.
 `scripts/test.sh fast` runs the unit target in about 35 seconds; add `-only-testing:fitbodTests -only-testing:fitbodUITests/<Suite>` to include one UI suite.
 Run the full UI suite on one phone before merging a large change to `main`.
 `scripts/test.sh full` runs everything, the UI suite in two shards, in about 14 minutes; see `docs/SETUP.md` (Test tiers).
-Both phones and AX3 belong to [release readiness](#release-readiness).
+Both-phone/AX3 checks return for each [stable workflow](#stages), and the full configuration matrix returns at [release readiness](#release-readiness).
+The full runner pins its simulators to default text/light mode; it does not prove AX3/dark coverage. Run and record those configurations explicitly when due.
 
 Fix lint or a flaky test when it blocks your change or sits in code you are already changing.
 Otherwise note it in one line and move on.
@@ -60,28 +63,31 @@ The same holds for visual flaws on screens you are not working on.
 
 ## Deferred work
 
-| Deferred | Why it can wait | Comes back when |
-|---|---|---|
-| VoiceOver refinement: combined row labels, announcements, missing-value labels, audio graphs, rotor order (T117) | The labels are rewritten each time a screen's layout changes. | The workflow is stable |
-| AX3 layout fixes on individual screens (the design map's patterns P-4 and P-5) | Each fix and its UI test is redone when the layout changes. | The workflow is stable |
-| Dark mode and Pro Max checks per screen | Tokens already cover dark mode; layouts still move. | The workflow is stable |
-| Pixel polish: the design map's 177 `polish` rows, T120 | The screens are being redesigned. | The screen's design is approved |
-| New copy-pinning tests that read Swift source (45 files, about 8,200 lines today) | They fail on every intended copy change. Add none; delete one when it blocks a change. | Release readiness, as a copy check over the running UI |
-| UI tests that do not guard data: layout sizes and text fit, AX3, dark mode, VoiceOver, BRU look, copy, tap targets, swipe-back sweeps and the OCR fidelity test | T143 deleted them on 2026-11-01, 351 of 424 cases, so the whole UI suite runs in about 40 minutes instead of 3 hours. Git history before `e697189` keeps them. | The workflow is stable |
-| Full UI suite on both phones and at AX3 (T44, T45) | It takes about 2 to 3 hours serially. | Release readiness |
-| Screenshot tours, verification reports and doc refreshes (T46, T47, T48) | They describe screens that will change. | A milestone closes, or release readiness |
-| Physical-device checks: VoiceOver traversal, haptics, notification denial, Live Activities | Simulators cannot prove them, and the flows are still changing. | Release readiness |
-| Performance work | Only one user, and no slowness felt in use. | A real workout feels slow |
+Current deferred outcomes and return conditions are recorded only in [ROADMAP.md](ROADMAP.md):
 
-Never deferred, whatever the ticket says: T40 and T41 (data loss), and test-speed work that makes iteration faster (T119, T121).
+- [Stable-workflow accessibility/layout](ROADMAP.md#rm-044), including VoiceOver, AX3, dark mode and large-phone checks.
+- [Approved-screen polish](ROADMAP.md#rm-035) and [measured performance/maintenance](ROADMAP.md#rm-034).
+- [Two-phone release journeys](ROADMAP.md#rm-048), [physical checks](ROADMAP.md#rm-047), and [release captures/docs/gallery](ROADMAP.md#rm-051).
+- [Kept-test follow-ups](ROADMAP.md#rm-054); presentation-only UI suites were removed by T143 and are not restored wholesale. Do not add source-reading copy-pinning tests; check running UI when stable.
+
+Data integrity, correctness, privacy/security and test-speed fixes that block iteration are never deferred.
+A skipped ticket is not a completed outcome.
 
 ## Process
 
-- Use `/gsd-quick` or `/gsd-fast` for most prototype work.
-  Use the full phase flow (research, plan check, verifier) only for multi-day work that changes models or several workflows.
-- Use a multi-agent ticket bundle (like `docs/conway-specs/`) only when several workers really run in parallel; for one person, a short list in the conversation is enough.
+- Start from the relevant `docs/ROADMAP.md` entry; no GSD command or separate planning ledger is required.
+- Update that RM entry when work changes scope, status, dependencies or evidence. Add a stable RM ID only for a distinct outcome; retain original finding IDs when deduplicating.
+- Use a short conversation plan for execution. Keep any necessary temporary implementation detail subordinate to the roadmap.
+- Routine testing is the agent's responsibility. The user may try builds whenever convenient; personal sign-off is not required for every feature.
+- Use **Planned → Active → Done**. Done means the agreed scope works, appropriate agent-run checks pass and affected docs are current. A relevant failing check is not a pass; record its actual disposition.
+- If implementation is finished but required proof is unavailable, use **Implemented; verification pending** and identify exactly what remains unproven. Ask for user involvement only for unavailable observations (for example, Lock Screen rendering or gym ergonomics) or a product decision. Those checks block only work that actually requires their result; continue independent planning/development.
+- Separate **Requires** (real prerequisites), **Scheduled after** (delivery order) and **Verify when** (stability/release/integration triggers). Prove populated backup/recovery before schema-changing work, and load provenance before mixed-unit analytics. Keep correctness/privacy/data-integrity safeguards local to affected paths; unrelated work need not wait.
 - Do not write a new report, checklist or ticket to record a small change. The commit message is the record.
-- Product decisions go in `docs/ROADMAP.md`; do not copy them into other files.
+- Product decisions and completion criteria go in `docs/ROADMAP.md`; technical contracts go in `ARCHITECTURE.md`. Dated audits, screenshots and layouts are references, not status sources.
+- Record concise test results and limitations in the relevant RM entry. Keep run logs and screenshots in CI artifacts or ignored local output; do not create report archives or evidence dumps in the repository.
+- Move finished substantial implementation plans to `docs/archive/features/` with a historical banner, included/excluded scope, build/commit, results/limitations and an RM backlink. Archive the completed implementation even if a required phone check remains open in the roadmap; do not archive it as accepted behavior. Small changes need no plan archive.
+- Preserve older completion claims without criterion-matched evidence as **historically shipped; acceptance unrecorded**. Do not impose a whole-app retest to relabel history.
+- Maintain affected architecture, setup, conventions and current design references with each feature. Dated audits/captures remain labeled historical evidence. Run `python3 -I docs/design-map/tools/check_map.py --self-test` and the checker for documentation changes; `bash docs/design-map/tools/check.sh` also renders Mermaid. Check changed links/anchors, archive references, finding ownership and prerequisite cycles.
 
 ## Stages
 
@@ -106,7 +112,7 @@ Release readiness starts before any of these happens:
 
 It requires:
 
-- every workflow stable, and every deferred item above done;
+- every workflow stable, and every applicable deferred roadmap item done;
 - the full unit and UI suite green on both phones, at default text and at AX3, and in dark mode;
 - a VoiceOver traversal of every workflow on a physical iPhone, plus haptics, notification denial and Live Activities;
 - a contrast and touch-target audit per screen, and Reduce Motion;

@@ -6,7 +6,7 @@ For every bundle in --results this script:
   * flattens the per-test results (`xcresulttool get test-results tests`),
   * exports XCTAttachment screenshots (`xcresulttool export attachments`),
     renames them to the attachment name the test chose, and downsizes them
-    with `sips` so they stay small enough to commit,
+    with `sips` for browsing in CI artifacts,
 and then writes `summary.md` + `summary.json` into --out.
 
 Only macOS tooling is used (xcrun, sips); no third-party packages.

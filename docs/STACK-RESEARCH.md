@@ -1,5 +1,11 @@
 # Stack Research (Full)
 
+> Historical research, 2026-05-10. Versions, proposed entities, migration,
+> installation and seeding advice below describe that investigation, not current
+> setup or commitments. Use [SETUP.md](SETUP.md), [CLAUDE.md](../CLAUDE.md),
+> [CONVENTIONS.md](../CONVENTIONS.md) and [ARCHITECTURE.md](../ARCHITECTURE.md)
+> for the live project; unfinished outcomes belong only in [ROADMAP.md](ROADMAP.md).
+
 **Domain:** Personal iOS bodybuilding / weight-training tracker (SwiftUI + SwiftData, local-only, single-user, phone-only)
 **Researched:** 2026-05-10
 **Confidence:** HIGH on core stack (Apple-native, Context7-verified). HIGH on exercise dataset (schema fetched and verified). MEDIUM on chart performance ceilings (forum/community evidence, not Apple-documented numbers).

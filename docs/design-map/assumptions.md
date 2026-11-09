@@ -49,7 +49,7 @@ The map uses the app's words, as listed in [conventions.md](conventions.md#words
 Every launch starts from an empty store (`-fitbod-reset-store`) with at most one seed.
 Seeds clash when they share a launch, because only one workout can be in progress and only one block can be active.
 A seed runs after the 702-exercise catalog import, which can finish after the tab bar appears, so the tour waits for an element the seed creates.
-The walks W01 to W16 follow the state matrix in [plan.md](plan.md#state-matrix-seed-walk---screens-and-states).
+The walks W01 to W16 follow the [captured walk coverage](#captured-walk-coverage) below.
 
 | Walk | Launch arguments | What the store holds |
 |---|---|---|
@@ -97,14 +97,33 @@ The iPhone 17e runs in light mode confirmed this list on 2026-10-31.
 - `BlockCard` and `BlockPickerMenu` are never drawn.
 - `RoutinesListView`, with its New folder and Move routine sheets, appears only in Xcode previews.
 
-## Open tickets that will change screens
+## Historical ticket cross-references
 
-The tickets in `docs/conway-specs/tickets/` were open at the base commit.
-When one merges, the screens it names change.
-[audit.md](audit.md) has one row for each ticket that covers a problem the map found, and that row names the screens where the map found it.
+The old map used Conway ticket IDs. They now appear beside canonical RM links in [audit.md](audit.md).
+Current work is [ROADMAP.md](../ROADMAP.md); the map and capture matrix below remain evidence of `61353088`, not a claim that these old defects still exist.
 
-- Copy and polish: T34 (done), T35 (done), T36 (done), T37 (done), T38 (done), T85 (done) and T98 (done).
-- The session editor: T110 (done), T111 (done) and T115 (done).
-- Other screens: T106 (done), T107 (done), T108 (done), T109 (done), T113 (done), T114 (done), T116 (done), [T118](../conway-specs/tickets/T118-weekly-tonnage-label-and-rows.md), [T120](../conway-specs/tickets/T120-new-block-toast-and-duration-steppers.md) and [T122](../conway-specs/tickets/T122-routine-session-drag-slots.md).
-- The whole look: [T43](../conway-specs/tickets/T43-design-refresh.md), a design refresh from a newer export.
-- Tickets that overlap the map itself: [T46](../conway-specs/tickets/T46-screenshot-tour.md), whose screenshot names the map's names match so its tour can replace the images one for one, and [T48](../conway-specs/tickets/T48-product-docs-roadmap-gallery.md).
+## Captured walk coverage
+
+Every walk starts with `-fitbod-reset-store`.
+Labels marked "verify" are confirmed from the first run's tree dumps.
+
+| Walk | Extra args | Ready element | Captures |
+|---|---|---|---|
+| W01 fresh | none | tab `Today` | today--empty, program--empty + templates, progress--empty, history--empty, library, library--filtered, filter-picker (muscle, equipment, mechanic), library--no-matches, exercise-detail (not logged), exercise-history--empty, custom-exercise--new (prefilled from search), custom-exercise--validation-error, muscle-picker, equipment-picker, photos-picker, dialog-custom-exercise-discard, custom exercise detail, Edit, dialog-delete-exercise |
+| W02 settings | none | tab `Today` | settings (all rows, kg relabel), plate-inventory, add-plate, dialog-reset-plate-inventory, plate-calculator (via "•••"), volume-targets, dialog-reset-volume-targets, component-gallery, share-sheet (export, backup), file-importer (restore); ends with terminate |
+| W03 demo | `-fitbod-seed-demo-workout` | `resumeSlab.resume` | today--resume, dialog-discard-workout-slab (after one logged set), history, workout-summary (history), logger with PREVIOUS, warm-up ramp, warm-ups skipped + undo, set-type menu, weight cell + plate stack disclosure, why-this-weight, decimal-rpe-picker, per-set-note, pinned-note capsule + sheet, workout-notes, dialog-workout-menu, swap-exercise, library-picker (add exercise; two-header check), dialog-remove-exercise, logger--set-logged, rest-timer dock RESTING and REST COMPLETE (minus 15 s taps), rest-timer expanded, PR banner, dialog-finish-workout, workout-summary--after-finish, program--resume-banner + dialog-discard-active, dialog-workout-in-progress (start another from the picker), session-template-detail "Last done", progress Recent, exercise-progress, exercise-history + intent empty, exercise-detail recent performance, weekly-tonnage 1 week; relaunch without reset for the resume journey |
+| W04 stalled | `-fitbod-seed-stalled-exercise` | STALLED badge | logger--stalled, suggested chip ADD VOLUME, logger--add-volume |
+| W05 calibrating | `-fitbod-seed-calibrating-set` | calibrating range | logger--calibrating, why-this-weight--calibrating |
+| W06 counts | `-fitbod-seed-empty-between` (and `-empty-today` if Compare needs it) | sessions count | today--streak, history--with-empty, workout-summary--empty, compare |
+| W07 recap | `-fitbod-seed-recap-with-empty -fitbod-start-program` | Program tab selected | tap Today: weekly-recap, today--recap-seen |
+| W08 active block | `-fitbod-seed-active-block` | "Live Block" | today--active-block (band, black slab, lift list, W1/4 strip), block-overview--active, routine-editor + session-editor with LiveEditBanner, program--active, EDIT from Today (sheet) and from Program (cover), new-block--edit, phase editor, dialog-end-block, block-overview--completed with archive, block-review (not-enough-sessions), Plan custom silent dismiss, Start next -> nested new-block |
+| W09 ended block | `-fitbod-seed-ended-block-recap -fitbod-start-program` | Program tab selected | tap Today: block-review, then weekly-recap--after-review, program DONE card |
+| W10 block states | `-fitbod-seed-block-states` | "States Routine" | program--states, block-overview--ready / --draft, swap-confirm ("Start Block?"), split-picker (attach routine), fixed-weekly training days, today scheduled session, dialog-cannot-archive-routine |
+| W11 past plan | `-fitbod-seed-block-states-past-plan` | "PLAN COMPLETE" | today band, program card, block-overview--plan-complete |
+| W12 powerbuilding | `-fitbod-seed-powerbuilding` | long block name | program--long-name, block-overview--long-name, routine screens, dialog-remove-session |
+| W13 progress | `-fitbod-seed-progress-history` | `progress.history` | progress, exercise-progress with all metric chips and e1RM caption, prs + intent toggle, pr-session placeholder (dead end, swipe back), volume, per-muscle-detail (heatmap tap, edit targets), exercise-detail--with-history, exercise-history |
+| W14 tonnage | `-fitbod-seed-weekly-tonnage 8` | `weeklyTonnage.chart` | weekly-tonnage + chips (block phase empty), week-detail (rows not tappable), history spark card |
+| W15 routines | none | tab `Program` | new-routine, routine-editor--new, slot-picker, session-editor (validation states), library-picker--from-editor + search, prescription rows, warmup-config, superset-assignment, dialog-session-menu, dialog-archive-session, dialog-discard-changes-session, dialog-save-routine-first (verify), dialog-remove-session, dialog-archive-routine, archived-routines + Restore, session-template-detail empty and populated, Start workout -> logger with no previous data, dialog-finish at 0 sets, dialog-discard at 0 sets |
+| W16 blocks | none | tab `Program` | start-choice, preset-picker, new-block--from-program (cover, NAME FIRST gate and each bottom-bar gate), new-block-template, new-block-duration, new-block-add-phase-type, new-block-phase-editor, new-block-split-picker, dialog-replace-phases, dialog-discard-block, phase delete + undo toast, SAVE DRAFT, SAVE AS READY, a block whose first phase is Deload started from the UI -> today--deload-week banner; from Today: new-block--from-today (sheet) |
+
+States no seed shows and no cheap UI path reaches go into `assumptions.md` and the final report as "not captured": DeloadAdvisoryBanner and the Fatigue Signals sheet from Today (needs three finished sessions with a signal), the stalled chips DROP INTENSITY, TRY VARIATION and CONSIDER DELOAD (zone-dependent), "ALL HISTORY" expansion (four done blocks), Block Review with e1RM deltas, archive-unreadable state, seed-failure state, restore success and error alerts (need a `.fitbodbackup` on the simulator; attempted through Save to Files, else code-only), the Live Activity.

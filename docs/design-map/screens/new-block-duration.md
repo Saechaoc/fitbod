@@ -2,7 +2,7 @@
 id: new-block-duration
 kind: sheet
 title: Edit block duration
-view: fitbod/Periodization/BlockBuilderView.swift:2986
+view: fitbod/Periodization/BlockBuilderView.swift
 tab: program
 presents_from: [new-block]
 closes_with: done

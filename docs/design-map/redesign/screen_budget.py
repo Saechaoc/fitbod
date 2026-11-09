@@ -39,7 +39,7 @@ STATES = {
     "Program P-RESUME":                 (13, 3, 0, 10, 1, 0),
 }
 
-# States allowed over ELEMENT_BUDGET, each with the reason evaluation.md records.
+# States allowed over ELEMENT_BUDGET, with each exception explained below.
 ACCEPTED_OVER_BUDGET = {
     "Program P-RESUME": "transient; the resume banner adds its three elements to P-ACTIVE",
     "Today T-TODAY (advisory notice)": "transient; the advisory adds one row to T-TODAY (or to any state without an open workout) until it is acted on or dismissed",

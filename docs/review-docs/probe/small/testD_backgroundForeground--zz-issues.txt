@@ -1,2 +1,0 @@
-[0] D before background: name='Probe Zercher Squat' Chest=true keyboard=1
-[0] D after foreground: name='Probe Zercher Squat' Chest=true keyboard=1

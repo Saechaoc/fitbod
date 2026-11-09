@@ -1,171 +1,64 @@
-<!-- GSD:project-start source:PROJECT.md -->
-## Project
+# Fitbod
 
-**Fitbod**
+A personal iPhone app for granular, prescriptive weight training: explicit exercise targets, selectable progression, training blocks, warmup ramps and muscle-volume tracking.
 
-A personal iOS app for comprehensive, detail-rich weight training tracking — built for one serious lifter (the developer) who finds existing apps (Strong, Hevy, Jefit, FitNotes, Fitbod) shallow on routine building, prescription, periodization, and progress visualization. It treats lifting like a discipline: per-exercise prescription, user-selectable smart progression, defined training blocks, auto warm-up ramps, and RP-style muscle-volume tracking.
+## Canonical workflow
 
-**Core Value:** **Granular, prescriptive workout sessions** — every set in a session is intentionally specified (intent, target reps, target RPE, smart-progressed weight) rather than a replay of last time, and progress is visible at the resolution serious lifters actually train at.
+Agent entrypoint: `AGENTS.md`; development/completion policy: `docs/DEVELOPMENT.md`; commands: `docs/SETUP.md`; code patterns: `CONVENTIONS.md`.
+`docs/ROADMAP.md` owns priorities, unfinished work, product decisions and acceptance criteria.
+Read the relevant RM entry before starting and update it when scope, status, dependencies or evidence changes.
+Keep stable RM IDs and original finding IDs; do not create competing backlogs, status handoffs or ticket ledgers.
+No GSD command or generated planning artifact is required before editing.
+Use a short execution plan in the conversation; existing implementation notes are subordinate input.
+Technical contracts live in `ARCHITECTURE.md`; approved design layouts and the design-map audit are references.
+Record concise test results and limitations in the relevant RM entry. Keep run logs and screenshots in CI artifacts or ignored local output; do not create report archives or evidence dumps in the repository.
+Routine verification is the agent's responsibility. Planned → Active → Done requires working agreed scope, appropriate passing checks and current docs, without routine personal sign-off.
+Finished implementation with unavailable required proof is Implemented; verification pending: name the exact open check in the roadmap, block only dependent work and continue independent planning/development. Ask for user involvement only for unavailable observations or product decisions.
+Separate Requires, Scheduled after and Verify when. Archive finished substantial plans under `docs/archive/features/` with historical scope, build/commit, results and RM backlink; keep pending device checks open in the roadmap. Preserve unsupported old completion claims as historically shipped; acceptance unrecorded, without a whole-app retest.
 
-### Constraints
-
-- **Tech stack** — SwiftUI + SwiftData (locked by the existing Xcode template; no good reason to swap)
-- **Platform** — iOS only (no Android, no web)
-- **Persistence** — Local-only SwiftData for v1; no backend, no auth, no cloud sync
-- **User scale** — Single user (the developer); no multi-tenant concerns
-- **Hardware** — Phone-only v1; no Apple Watch, no external sensors, no VBT hardware
-- **Distribution** — Personal install via Xcode; no App Store, no TestFlight required for v1
-<!-- GSD:project-end -->
-
-<!-- GSD:stack-start source:research/STACK.md -->
 ## Stack
 
-Swift 6 (strict concurrency) · SwiftUI · SwiftData (local-only) · iOS 26.4 target
-Swift Charts for all data charts; Canvas for the muscle heatmap body silhouette
-Swift Testing for unit tests; XCTest for UI tests only (Apple-confirmed gap — no `XCUIApplication` support)
-Exercise catalog: vendored free-exercise-db JSON (public domain, ~800 exercises), seeded on first launch, strength/powerlifting/olympic/strongman categories only
-
-Full rationale, alternatives, sources, install: docs/STACK-RESEARCH.md
-<!-- GSD:stack-end -->
+Swift 6 strict concurrency · SwiftUI · SwiftData local-only · iOS 26.4.
+Swift Charts for charts; Canvas/paths for the muscle silhouette.
+Swift Testing for unit/model tests; XCTest/XCUIApplication for UI tests.
+Bundled free-exercise-db catalog with stable-ID incremental seeding and local additions.
+Rationale: `docs/STACK-RESEARCH.md`. Setup/test tiers: `docs/SETUP.md`.
 
 ## Development stage: prototype
 
-We are still shaping workflows and visual design, so speed of learning comes first.
-Build the simplest working version, scale tests and polish to the change's maturity and risk, and never skip data integrity, correctness, privacy or security.
-Keep cheap accessibility foundations (native controls, BRU type and color roles, word labels); defer VoiceOver refinement, per-screen AX3 fixes and full two-phone runs until a workflow is stable.
-Details, deferral triggers and release-readiness conditions: `docs/DEVELOPMENT.md`.
-In this repo that guide takes precedence over general user-level guidance to fix every unrelated flaw or to ignore development cost.
+Learn quickly and scale effort to maturity/risk; never skip data integrity, correctness, privacy or security.
+Keep native/BRU controls, Dynamic Type roles, token colors and word labels.
+Workflow stability, testing effort and release gates: `docs/DEVELOPMENT.md`; that policy takes precedence over general advice to fix unrelated flaws. Commands and runner limits: `docs/SETUP.md`.
+Documentation/tooling-only work runs relevant checks. App changes run the unit target; run affected workflow UI tests when routes, interactions or stored-data behavior change. Copy/styling needs simulator inspection, not new copy-pinning tests.
 
-## Code Search Rules
+## Code search and changes
 
-- Prefer `rg` over `grep`.
-- Prefer `rg --files` or `fd` over `find`.
-- Start with narrow searches using file types and path filters.
-- Use `rg -n -C 2` for context instead of reading whole files.
-- Use `rg -l` to identify candidate files before reading.
-- Use `ast-grep` for syntax patterns, annotations, function calls, imports, hooks, exception handlers, and refactor candidates.
-- Use LSP/Serena tools for definitions, references, and symbol-level reads.
-- Do not search `node_modules`, build outputs, generated files, snapshots, lockfiles, coverage, or large fixtures unless explicitly relevant.
-- When a search returns many results, refine the query instead of reading all matches.
+- Prefer `rg`/`rg --files`, narrow paths/types and contextual reads. Use GitNexus flows/context/impact as required below.
+- Use `ast-grep` for syntax patterns and LSP/symbol tools for definitions/references.
+- Avoid generated files, build outputs, snapshots, lockfiles and large fixtures unless relevant.
+- Preserve unrelated workspace edits and untracked implementation plans; stage exact task-owned paths only.
+- Never add a Co-Authored-By trailer.
 
-## Milestone 1 baseline
+## Current app contracts
 
-- Tabs: Today, Program, Progress, Library. Native tab containment preserves
-  each navigation stack; BRU supplies the visible tab controls. Settings is a
-  sheet from Today. History opens from Progress → Workouts.
-- The tab bar hides in the logger and while the keyboard is visible.
-- At accessibility text sizes, headers separate titles/actions, tabs use two
-  columns, Today statistics stack, and logger inputs stack with 44pt targets.
-- SchemaV7 is the sole baseline. Incompatible stores are moved aside with
-  SQLite siblings, not migrated. The former schema history is preserved on
-  `archive/frozen-schema-history`.
-- Units relabel stored numbers without converting them; exercise overrides
-  win. Do not describe a canonical converted store or add implicit conversion.
-- Keep Pattern filtering hidden until catalog pattern metadata exists.
-- Run simulator tests serially on dedicated devices. DEBUG reset is initial
-  launch only; persistence journeys must relaunch without reset.
-- Current evidence, limitations and product decisions: `docs/VERIFICATION.md`,
-  `docs/MILESTONE-1-CLOSEOUT.md`, `docs/ROADMAP.md`.
+- Tabs: Today, Program, Progress, Library, with independent native navigation stacks and BRU tab controls. Settings is a Today sheet; History opens from Progress → Workouts.
+- Logger belongs only to Today's stack. Program/session/Live Activity entry uses `ResumeWorkoutRequest`; Back returns to Today. Tab controls hide in the logger/while editing.
+- SchemaV7 is the sole baseline, without the removed historical migration chain. Incompatible stores move aside with SQLite siblings; transient-open error classification remains an open roadmap risk.
+- Units relabel, never implicitly convert; exercise overrides win. Pattern filtering stays hidden until metadata exists.
+- Run simulator tests serially on dedicated devices. DEBUG reset is initial launch only; persistence relaunches omit reset.
+- Full program graph, freeze points, time/membership rules, correction transactions and delete rules: `ARCHITECTURE.md`.
+- Current results, limitations and acceptance: `docs/ROADMAP.md`. CI artifacts and ignored `.ci/` hold detailed run output.
 
-<!-- GSD:conventions-start source:CONVENTIONS.md -->
 ## Conventions
 
-### State & Reactivity
-- `@Observable` + `@State`/`@Bindable`/`.environment(_:)` only. Never `ObservableObject`, `@Published`, `@StateObject`, `@ObservedObject` in new code.
-- `@Query` directly in views. Never wrapped in a view model — SwiftUI dependency tracking breaks.
-- View models: `@Observable` class owned by `@State`, holding only non-persistent UI state.
-
-### Navigation
-- One `NavigationStack` per tab. Never wrap `TabView` in a parent `NavigationStack`.
-- Exercise library: `.searchable` with `Predicate<Exercise>` driving `@Query`; compose filters in predicate, not in memory.
-
-### What Not to Use
-- No Core Data, Realm, GRDB — SwiftData only.
-- No DGCharts or legacy `Charts` SPM name — Swift Charts only.
-- No RxSwift / ReactiveSwift / Combine-only architectures.
-- No CloudKit / iCloud sync — local-only per PROJECT.md.
-- No HealthKit — out of scope, defer to v2+.
-- No MVVM view models wrapping `@Query`.
-
-### Testing
-- Unit + model tests: Swift Testing (`@Test`, `#expect`) in `fitbodTests/`.
-- UI tests: XCTest with `XCUIApplication` in `fitbodUITests/` only.
-
-### SwiftData
-- Don't assign relationships in initializers — insert into context first.
-- Current baseline: `SchemaV7` only, with recoverable incompatible-store reset;
-  do not reintroduce the removed historical migration chain.
-- No `Codable` on `@Model` types — decode into DTO structs, map to `@Model` explicitly.
-- Cascade: Session→SessionExercise→SetEntry cascade; Split→slots cascade; Exercise→history nullify (soft-delete via `isArchived`). Session.slot + Block.split + Session.template = nullify; SplitSessionSlot.sessionTemplate = deny.
-
-### Charting
-- Swift Charts for all data charts. `Canvas` for the muscle heatmap body silhouette.
-<!-- GSD:conventions-end -->
-
-<!-- GSD:architecture-start source:ARCHITECTURE.md -->
-## Architecture
-
-### UI ⇔ Code Terminology Glossary (program graph, Schema V7 — pinned)
-| UI term | Code entity | Meaning |
-|---|---|---|
-| Session | `SessionTemplate` | One workout template (Push A: exercises + base prescription) |
-| Routine | `Split` | The split bundling sessions (PPL ×2, Upper/Lower) |
-| Block | `Block` | The schedule running one routine through weeks and phases |
-| (history) | `Session` | A logged workout instance — never user-facing as "Session" in template contexts |
-
-Never leak code names (`Split`, `SessionTemplate`) into UI copy. Authoritative design contract: `.planning/quick/training-block-spec/program-graph-spec.md`.
-
-### Entity Map (Schema V7, 2026-06-11)
-| Entity | Role | Key Relationships |
-|--------|------|-------------------|
-| `Exercise` | Catalog item (seeded from free-exercise-db + user-added customs) | many-to-many `MuscleGroup` (via `ExerciseMuscleStimulus`), many `SessionExerciseTemplate`, many `SessionExercise` |
-| `MuscleGroup` | 17 muscles from free-exercise-db | many-to-many `Exercise` via join entity |
-| `ExerciseMuscleStimulus` | Join entity: stimulus weight per muscle | belongs-to `Exercise` + `MuscleGroup` |
-| `SessionTemplate` | Workout template (UI: "Session"); was `Routine` pre-V7 | one-to-many `SessionExerciseTemplate`; legacy `block` ref DEPRECATED (Phase 8 — prescription resolves via active block; removal needs V8) |
-| `SessionExerciseTemplate` | Per-exercise prescription; was `RoutineExercise` pre-V7 | belongs-to `SessionTemplate` + `Exercise`; cascade `RoutineExerciseSetOverride` (name kept — naming debt) |
-| `Split` | The split (UI: "Routine") | cascade `slots: [SplitSessionSlot]` (ordered by `position`, contiguity = test invariant, NO `#Unique`); nullify `blocks: [Block]` inverse |
-| `SplitSessionSlot` | Ordered join Split↔SessionTemplate | `.deny` on `sessionTemplate` hard-delete while slotted; `position: Int` |
-| `Block` | Periodization schedule | `split: Split?` (nullify), `schedulingModeRaw`, `trainingDaysJoined` (write ONLY via `TrainingDaysWriter.sort`), `archivedConfigJSON` (freeze #2, written once by `BlockLifecycleService.end`); status DERIVED: completed → active → ready → draft; `isActive` = the only exclusivity bool |
-| `Session` | Logged workout instance | `template: SessionTemplate?` (nullify), `slot: SplitSessionSlot?` (nullify; nil = ad-hoc; rotation anchor), `templateName` snapshot |
-| `SessionExercise` / `SetEntry` | Logged exercise / one set — evaluated prescription copied at log time | Session→SessionExercise→SetEntry cascade |
-| `MuscleVolumeTarget` | User-tunable MEV/MAV/MRV per muscle | belongs-to `MuscleGroup` |
-
-**Template vs instance:** `SessionExerciseTemplate` is the prescription; `SessionExercise` is what was logged. Copy fields at log time — never project from template at read time. Two freeze points only: log time (prescription snapshot) and block end (`ArchivedBlockConfig`); everything else is live graph edges — the only exclusivity rule is one active block.
-
-**Engine services (Phase 8):** `TodayResolver` (rotation/fixedWeekly resolution → `TodayResolution` enum), `BlockLifecycleService` (one-save start/end/swap, split attach/swap gated to draft/ready, `assertSplitDeletable` conditional deny, `decodeArchive` w/ typed error, NO live-template fallback), `TrainingDaysWriter` (sort-once-at-write, injected Calendar). NO multi-level optional chains inside `#Predicate` — broad predicate + Swift post-filter.
-
-**Running a block:** start, end, routine attach/swap and delete (draft or ready blocks only) go through `BlockLifecycleService`, one save each through `SessionSetActions.saveOrRollBack`, so a failed save changes nothing. Ending a block from its overview or from Today's plan-complete note opens its review, which counts as seen once it opens (`Block.reviewedAt`); a finished block's overview reopens it with REVIEW ▸. Start next and Plan custom build New block with `BlockDraft.next(after:template:)`, which keeps the routine, scheduling and days. In a deload week the prescription step holds each lift at its last top set (`SessionFactory.holdingDeloadWeight`). P1 acceptance: `RelaunchPersistenceTests.blockRunSurvivesRelaunches`.
-
-**History corrections:** a workout's place in time is `Session.startedAt` (rotation anchor, previous session, PRs and volume all order by it); it belongs to the block running at its start. Correct a finished workout only through `SessionEditService.save` (one `WorkoutEdit` = one transaction, rolled back on failure; never rewrites the frozen prescription or slot). The Edit workout screen (`WorkoutEditView`, EDIT on a History summary) builds that edit from a `WorkoutEditDraft` and then bumps `HistoryEdits` (environment, from `RootView`) so views that cache finished-workout reads (Today, Progress, History, the summary) read again. Workout-level writes in the logger throw: `SessionSetActions.finish` / `deleteWorkout` / `remove`.
-<!-- GSD:architecture-end -->
-
-<!-- GSD:skills-start source:skills/ -->
-## Project Skills
-
-No project skills found. Add skills to any of: `.claude/skills/`, `.agents/skills/`, `.cursor/skills/`, `.github/skills/`, or `.codex/skills/` with a `SKILL.md` index file.
-<!-- GSD:skills-end -->
-
-<!-- GSD:workflow-start source:GSD defaults -->
-## GSD Workflow Enforcement
-
-Before using Edit, Write, or other file-changing tools, start work through a GSD command so planning artifacts and execution context stay in sync.
-
-Use these entry points:
-- `/gsd-quick` for small fixes, doc updates, and ad-hoc tasks
-- `/gsd-debug` for investigation and bug fixing
-- `/gsd-execute-phase` for planned phase work
-
-Do not make direct repo edits outside a GSD workflow unless the user explicitly asks to bypass it.
-<!-- GSD:workflow-end -->
-
-
-
-<!-- GSD:profile-start -->
-## Developer Profile
-
-> Profile not yet configured. Run `/gsd-profile-user` to generate your developer profile.
-> This section is managed by `generate-claude-profile` -- do not edit manually.
-<!-- GSD:profile-end -->
+- `@Observable` + `@State`/`@Bindable`/environment only in new code; no ObservableObject/Published/StateObject/ObservedObject.
+- `@Query` directly in views, never mirrored in a view model; transient observable state may be owned by the view.
+- One NavigationStack per tab, no parent stack around TabView. Library search uses `FilterState.swiftDataPredicate(with:)`; facets run after fetching through `applyPostFetchFilters(to:)` to avoid compiler/SwiftData translation failures. Avoid multi-level optional predicate chains.
+- Insert models before assigning relationships. DTOs handle Codable; no Codable on models. Containers go through FitbodModelContainer.
+- Preserve logged snapshots; throwing saves restore context and visible saved values on failure.
+- Reuse BRU tokens/components and existing helpers. No extra dependencies or persistence framework.
+- No CloudKit, accounts or HealthKit in v1; scope changes require a roadmap decision.
+- Additional code conventions: `CONVENTIONS.md`; shared UI rules: `docs/design-system/`.
 
 <!-- gitnexus:start -->
 # GitNexus — Code Intelligence

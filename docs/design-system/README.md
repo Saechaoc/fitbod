@@ -4,7 +4,7 @@ BRU is the visual language of the Fitbod iOS app: warm paper, black ink, one ora
 These docs define its tokens and rules and map each SwiftUI component to the reference design.
 The code is the source of truth; these files explain it and must change when it does.
 
-Status: milestone 1.
+Current work and acceptance live in [ROADMAP.md](../ROADMAP.md).
 
 | Read this file | when you need |
 | --- | --- |
@@ -17,7 +17,6 @@ Status: milestone 1.
 | [accessibility.md](accessibility.md) | Dynamic Type, VoiceOver, contrast, and how to test them |
 | [components.md](components.md) | every component, its states, what it replaces and where it is used |
 | [tokens_check.py](tokens_check.py) | run it for the live color table and contrast ratios |
-| [changelog.md](changelog.md) | what changed and why |
 
 | Code | Where |
 | --- | --- |

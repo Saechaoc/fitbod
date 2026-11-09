@@ -1,5 +1,9 @@
 # Today layouts
 
+Dated design/review reference (2026-11-01–2026-11-08). Proposed behavior is approved design input; delivery status is maintained in the roadmap.
+Current work/status/decisions live only in [ROADMAP.md](../../ROADMAP.md); current technical contracts are in [ARCHITECTURE.md](../../../ARCHITECTURE.md).
+Do not update this snapshot as a backlog.
+
 One wireframe per state in [hierarchy.md](hierarchy.md), drawn at 390pt with 16pt gutters (358pt of content).
 Every element names the BRU component that draws it.
 Copy is final unless marked "draft".

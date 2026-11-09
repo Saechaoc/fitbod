@@ -1,4 +1,9 @@
-# Milestone 1: screens and interactions
+# Core screens and interactions
+
+Current behavior reference, reconciled 2026-11-08. Approved future Today/Program
+layouts live in [design-map/redesign](design-map/redesign/); their delivery and
+acceptance live in [ROADMAP.md](ROADMAP.md). Historical captures describe their
+stated build and do not prove current acceptance.
 
 The identity is **BRU**: warm paper, architectural ink panels, a single orange
 action accent, condensed display headings and monospaced training data. The
@@ -14,7 +19,8 @@ The core journey can start from a session without creating a block.
 
 Four persistent tabs: Today, Program, Progress, Library. Settings opens from
 Today. Each tab owns its navigation stack. This follows the supplied design
-assets and the previous milestone handoff; it supersedes the older Settings tab.
+assets. Completed history opens from Progress → Workouts. Program/session/Live
+Activity entry requests the logger on Today's stack; Back returns to Today.
 
 ## Reference → native mapping
 
@@ -31,8 +37,7 @@ assets and the previous milestone handoff; it supersedes the older Settings tab.
 Assets live in `bru-screens/Fitbod-Session/screens/`. Preserve those exports as
 source designs; runtime screenshots are separately recorded verification
 evidence. The design system's component table maps native primitives to each
-reference screen. No live Claude Design connection is available in this Codex
-session, so refinement uses the supplied exports and native previews.
+reference screen. Use supplied exports, current approved layouts and native previews.
 
 ## Exercise library
 
@@ -74,13 +79,13 @@ Cable Rope Triceps Pushdown — 2 × 12–15, rest 1:30. Include long labels suc
 | Start | Copy template/session/exercise names and prescription into a workout instance. Reject a second active workout and offer Resume. Explain start failures. |
 | Weight and reps | Editable numeric fields start from prescription/previous values. Persist edits and completion. Keep the keyboard from obscuring the action being used. |
 | Complete / reopen | Completing a valid set records its values and starts rest. A completion glyph exposes both states and a word label. Reopening retains the entered weight/reps. |
-| Input validation | Reps must be positive, weight finite and non-negative. Loaded exercises require positive weight; bodyweight and weighted-bodyweight exercises may record zero added load. Invalid completion is disabled with an explanatory accessibility hint. |
+| Input validation | Reps must be positive and weight finite. Loaded exercises require positive weight; bodyweight may record zero added load, and signed assistance loads follow the shared validation rule. Invalid completion is disabled with an explanatory accessibility hint. |
 | Add / remove set | Append a planned working set; removing a set renumbers the survivors. The change affects this workout. |
 | Previous | Display performance from a finished earlier workout of the matching intent; exclude this workout and unfinished workouts. |
 | Rest | Countdown derives from an absolute deadline. ±15 seconds changes that deadline; Skip ends rest. Rest survives backgrounding, leaving the logger and relaunch. |
 | Resume | Today exposes the unfinished workout with accurate completed-set count and elapsed time. Relaunch must preserve entered values and rest deadline. |
-| Discard | An unlogged workout exposes Discard with confirmation. Cancel returns to logging; once a set is logged, use Finish to retain the workout. |
-| Finish | Confirm completion and show the summary, completed working sets, volume and previous performance. History rows reopen the summary. |
+| Discard | Today and the logger menu permit discard. Empty workouts discard immediately; logged sets require confirmation naming what will be lost. Program's visible discard row remains planned in RM-012. |
+| Finish | The BRU paper sheet shows logged-set count/elapsed time, Finish (Discard if empty) and Keep logging. Finishing opens the summary; History rows reopen it. |
 
 One-handed use prioritizes full-row set targets, 44pt controls and a prominent
 action near the active set. Long content scrolls; fixed chrome uses safe-area
@@ -97,8 +102,8 @@ stable presentation identities until their persisted IDs are assigned.
 - Preserve established BRU assets and bundled font licenses.
 - Keep baseline schema reset/recoverable store move-aside behavior from the
   prior authorized handoff; this is not a historical-data migration promise.
-- Keep the existing program model while completing the shorter usable workout
-  journey. Block refinements are subsequent milestones.
+- Preserve the current program graph and frozen-workout contracts in
+  [ARCHITECTURE.md](../ARCHITECTURE.md); remaining block refinements have RM owners.
 - The supplied reference filenames retain the older “routine builder” name;
   native UI copy uses “session” according to the established glossary.
 - Physical-device haptics, notification permission, lock-screen activity and

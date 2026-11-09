@@ -2,7 +2,7 @@
 id: pinned-note
 kind: sheet
 title: Pinned note
-view: fitbod/Sessions/PinnedNoteSheet.swift:24
+view: fitbod/Sessions/NoteSheet.swift
 tab: [today, program]
 presents_from: [logger]
 closes_with: verb
@@ -12,6 +12,8 @@ captured: 2026-10-31 61353088
 img: [img/17e-default-light-pinned-note.png, img/17e-default-dark-pinned-note.png, img/17e-ax3-light-pinned-note.png, img/17promax-default-light-pinned-note.png, img/17promax-ax3-light-pinned-note.png]
 tree: tree/pinned-note.txt
 ---
+
+Captured note-sheet source was consolidated into NoteSheet after this snapshot. Current scope: [RM-055](../../ROADMAP.md#rm-055).
 
 The lifter writes a note that stays pinned to an exercise in this workout, such as a cue.
 

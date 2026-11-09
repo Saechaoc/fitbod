@@ -27,9 +27,9 @@ The per-screen rules below marked as the release bar (AX3 on every screen, Voice
 - Traits match behavior: header titles carry `.isHeader`; selected segments and the active tab carry `.isSelected`; `BRUToggleStyle` keeps native toggle semantics.
 - Native tab containment excludes inactive destinations and their controls
   from the accessibility tree while preserving navigation state.
-- Prescribed weights offer an “Explain prescribed weight” accessibility action
-  alongside long-press disclosure. The October 5 gesture/action update still
-  needs its device rerun; see [verification](../VERIFICATION.md).
+- Prescribed weights offer a “Why this weight” accessibility action; the visible
+  exercise menu's “Why this weight?” stays reachable after logging too.
+  Physical VoiceOver traversal remains [RM-044](../ROADMAP.md#rm-044).
 - `BRUStepper` is one adjustable element: swipe up or down to change the value, and VoiceOver reads the formatted value.
 - Rows that show several facts combine them into one element with one label, so users do not swipe through fragments.
 - Every control a UI test drives has a stable `accessibilityIdentifier`.

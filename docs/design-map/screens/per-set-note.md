@@ -2,7 +2,7 @@
 id: per-set-note
 kind: sheet
 title: Set note
-view: fitbod/Sessions/PerSetNoteSheet.swift:30
+view: fitbod/Sessions/NoteSheet.swift
 tab: [today, program]
 presents_from: [logger]
 closes_with: verb
@@ -12,6 +12,8 @@ captured: 2026-10-31 61353088
 img: [img/17e-default-light-per-set-note.png, img/17e-default-dark-per-set-note.png, img/17e-ax3-light-per-set-note.png, img/17promax-default-light-per-set-note.png, img/17promax-ax3-light-per-set-note.png]
 tree: tree/per-set-note.txt
 ---
+
+Captured note-sheet source was consolidated into NoteSheet after this snapshot. Current scope: [RM-055](../../ROADMAP.md#rm-055).
 
 The lifter writes a note about one set, such as how a rep went.
 The header names the set, such as "Set 1 note".

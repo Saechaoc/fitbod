@@ -2,6 +2,17 @@
 
 Fitbod is a prototype: learn fast, scale effort to the change, never skip data integrity, correctness, privacy or security.
 Read `docs/DEVELOPMENT.md` for what can wait and when it comes back, and `CLAUDE.md` for the stack and conventions.
+Use `docs/SETUP.md` for build/test commands, `CONVENTIONS.md` for code patterns and `ARCHITECTURE.md` for technical contracts.
+
+`docs/ROADMAP.md` is the sole source for priorities, unfinished work, product decisions and acceptance criteria.
+Read the relevant RM entry before starting; update it when scope, status, dependencies or evidence changes.
+Keep stable RM IDs and original finding IDs. Do not maintain a separate backlog, ticket ledger, handoff status or mandatory GSD workflow.
+Technical contracts live in `ARCHITECTURE.md`; dated audits and design references supply evidence, not current status.
+Record concise test results and limitations in the relevant RM entry. Keep run logs and screenshots in CI artifacts or ignored local output; do not create report archives or evidence dumps in the repository.
+Routine verification belongs to the agent: Planned → Active → Done means agreed scope works, appropriate checks pass and docs are current; personal sign-off is not a routine gate.
+Use Implemented; verification pending for finished implementation with required unavailable proof. Keep the exact check open in the roadmap and continue independent work; involve the user only for unavailable observations or product decisions.
+Separate Requires (real prerequisites), Scheduled after (delivery order) and Verify when (stability/release triggers).
+Archive finished substantial implementation plans in `docs/archive/features/` with historical scope, build/commit, results and RM backlink, even when a separately recorded device check remains open. Older unsupported completion claims stay historically shipped; acceptance unrecorded, without a whole-app retest.
 
 <!-- gitnexus:start -->
 # GitNexus — Code Intelligence

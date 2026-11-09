@@ -1,2 +1,0 @@
-[0] A after typing: name='Probe Zercher Squat' Chest=true keyboard=1
-[0] A after muscle: name='Probe Zercher Squat' Chest=true keyboard=1

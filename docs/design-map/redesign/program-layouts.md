@@ -1,7 +1,11 @@
 # Program layouts
 
+Dated design/review reference (2026-11-01–2026-11-08). Proposed behavior is approved design input; delivery status is maintained in the roadmap.
+Current work/status/decisions live only in [ROADMAP.md](../../ROADMAP.md); current technical contracts are in [ARCHITECTURE.md](../../../ARCHITECTURE.md).
+Do not update this snapshot as a backlog.
+
 One wireframe per state in [hierarchy.md](hierarchy.md), at 390pt with 16pt gutters.
-The active-block slab follows the user's own mock-up, `bru-screens/Fitbod-Session/screens/phase-2--program.png`, which was never built, with the week cells left on Block overview (O-13 in [open-decisions.md](open-decisions.md)).
+The active-block slab follows the user's own mock-up, `bru-screens/Fitbod-Session/screens/phase-2--program.png`, which was never built, with the week cells left on Block overview (O-13 in [open-decisions.md](https://github.com/Saechaoc/fitbod/blob/ba27f304/docs/design-map/redesign/open-decisions.md)).
 The example week is the one Today's wireframes use: Thursday May 22, Push A scheduled, Pull A next on Saturday.
 
 Legend: `════` 2pt ink rule, `────` 1pt hair rule, `█` ink slab, `[ TEXT ▸ ]` BRUButton, `›` chevron on a tappable row.
