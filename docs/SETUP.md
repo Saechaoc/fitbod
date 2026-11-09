@@ -190,14 +190,20 @@ An incompatible store is moved, with its SQLite siblings, to
 `Application Support/IncompatibleStores/<timestamp>/` before a fresh store is
 created. This preserves the old files but does not convert their contents.
 Compatible additive changes open in place. Settings offers backup and export.
-The current catch also moves stores aside after transient open errors; safe
-classification/retry remains [RM-001](ROADMAP.md#rm-001). Prove populated
-backup/recovery ([RM-029](ROADMAP.md#rm-029)) before schema-changing work;
-move-aside preservation is not a tested restore or migration promise.
+A store is moved aside only when Core Data reports that it cannot infer a
+migration to the current schema.
+Any other failed open, such as an unreadable or damaged file, leaves the store
+files in place and shows the "Training data did not open" screen
+([RM-001](ROADMAP.md#rm-001)).
+Its Try again button opens the same store again.
+Prove populated backup/recovery ([RM-029](ROADMAP.md#rm-029)) before
+schema-changing work; move-aside preservation is not a tested restore or
+migration promise.
 
-The DEBUG-only `-fitbod-reset-store` launch argument moves the active store
-aside, clears seed stamps, and removes the app's pending and delivered
-notifications. It is for dedicated test simulators. Normal
+The DEBUG-only `-fitbod-reset-store` launch argument deletes the active store
+files, clears the app's saved defaults, seed stamps included, and removes the
+app's pending and delivered notifications.
+It is for dedicated test simulators. Normal
 launches do not reset data. Do not pass this argument when verifying relaunch.
 
 `-fitbod-seed-demo-workout` adds deterministic active and finished workouts for

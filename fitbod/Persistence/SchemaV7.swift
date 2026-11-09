@@ -12,9 +12,10 @@
 //
 //  The container is built from this schema WITHOUT a migration plan (see
 //  `FitbodModelContainer`). Additive changes (new optional or defaulted
-//  attributes, new entities) migrate automatically in place. A store SwiftData
-//  cannot open is moved aside into `IncompatibleStores/<timestamp>/` and a
-//  fresh store is created.
+//  attributes, new entities) migrate automatically in place. A store whose
+//  schema cannot be migrated is moved aside into
+//  `IncompatibleStores/<timestamp>/` and a fresh store is created. A store
+//  that does not open for any other reason stays where it is.
 //
 //  `models` is an explicit list of all 18 production types.
 //

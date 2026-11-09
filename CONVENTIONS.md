@@ -17,6 +17,7 @@
 ## What Not to Use
 
 - No `Core Data` directly — SwiftData is the supported API and already chosen.
+  The one exception is `FitbodModelContainer`, which asks Core Data, read-only, why a store did not open, because SwiftData does not say.
 - No `Realm`, `GRDB`, or `SQLite.swift` — redundant against SwiftData for v1 workload.
 - No `DGCharts` or the legacy `Charts` SPM name — use Swift Charts.
 - No `RxSwift` / `ReactiveSwift` / Combine-only architectures — `@Observable` + `AsyncSequence` covers the ground natively.

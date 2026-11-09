@@ -8,10 +8,11 @@
 //  incompatible on-disk store is moved aside into
 //  `IncompatibleStores/<timestamp>/` before a fresh store is created.
 //
-//  The container is constructed synchronously in `init()`. `make()` only
-//  throws when even the fresh store cannot be built, which is unrecoverable,
-//  so a `fatalError` is correct rather than silently routing the app to a
-//  degraded in-memory mode.
+//  The container is opened synchronously in `init()`. When `make()` throws,
+//  the store files are still on the phone, so the app shows
+//  `StoreOpenFailedView` instead of crashing or running on an empty store.
+//  Its "Try again" button calls `make()` again, and a retry that works
+//  shows the app with the same workouts.
 //
 //  Views consume the container via `.modelContainer(_)` environment
 //  injection, then use `@Query` / `@Bindable` directly against the schema
@@ -23,19 +24,26 @@ import SwiftData
 
 @main
 struct fitbodApp: App {
-    let container: ModelContainer
+    /// The open store, or why it did not open.
+    @State private var store: Result<ModelContainer, any Error>
 
     init() {
         DebugLaunchReset.runIfRequested()
-        do {
-            container = try FitbodModelContainer.make()
-        } catch {
-            fatalError("Failed to create ModelContainer: \(error)")
-        }
+        _store = State(initialValue: Self.openStore())
     }
 
     var body: some Scene {
-        WindowGroup { RootView() }
-            .modelContainer(container)
+        WindowGroup {
+            switch store {
+            case .success(let container):
+                RootView().modelContainer(container)
+            case .failure(let error):
+                StoreOpenFailedView(error: error) { store = Self.openStore() }
+            }
+        }
+    }
+
+    private static func openStore() -> Result<ModelContainer, any Error> {
+        Result { try FitbodModelContainer.make() }
     }
 }

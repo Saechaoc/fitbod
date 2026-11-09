@@ -20,8 +20,11 @@ Use UI terms in product copy. Templates may occur in multiple routines, twice in
 `SchemaV7` is the sole VersionedSchema, explicitly listing 18 production models.
 `FitbodModelContainer` builds it without a custom migration plan.
 SwiftData may apply compatible additive changes automatically in place; the historical V1–V6/custom V6→V7 chain was removed.
-Incompatible stores move recoverably, with -wal/-shm/support directory, into IncompatibleStores/&lt;timestamp&gt;; a fresh store resets seed stamps.
-The current catch also classifies transient open failures as incompatibility: an open data-integrity issue ([RM-001](docs/ROADMAP.md#rm-001)), not a safe error-classification guarantee.
+Incompatible stores move recoverably, with -wal/-shm/support directory, into IncompatibleStores/&lt;timestamp&gt;; the seed stamps are cleared so the fresh store is seeded.
+SwiftData throws the same error for every failed open, so `FitbodModelContainer` asks Core Data, read-only, for the reason.
+A store is incompatible only when Core Data reports that it cannot infer a migration (NSCocoaErrorDomain 134140).
+Every other failed open leaves all store files in place and throws `FitbodModelContainer.StoreOpenError`; the app shows a retry screen, and a later open uses the same store ([RM-001](docs/ROADMAP.md#rm-001)).
+A move-aside that fails partway puts the moved files back and throws.
 
 | Entity | Role and relationships |
 |---|---|
