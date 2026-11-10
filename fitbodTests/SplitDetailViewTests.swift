@@ -91,28 +91,11 @@ struct SplitDetailViewTests {
         let ctx = try makeContext()
         let (split, _) = makeSplitWithSlots(count: 3, in: ctx)
 
-        // Simulate addSlot logic: insert + assign + reindex
         let newTemplate = SessionTemplate()
         newTemplate.name = "New Session"
         ctx.insert(newTemplate)
-
-        let newSlot = SplitSessionSlot()
-        ctx.insert(newSlot)
-        newSlot.split = split
-        newSlot.sessionTemplate = newTemplate
-        // Mirror the production addSlot fix (CR-02): sentinel position, then pin the new
-        // slot to the end of the sort so it appends regardless of SwiftData's
-        // relationship-count timing or position collisions.
-        newSlot.position = 0  // sentinel — reindexSlots assigns the real value
-        let newSlotID = newSlot.id
-
-        let allSlots = (split.slots ?? []).sorted { a, b in
-            if a.id == newSlotID { return false }   // new slot sorts last (append)
-            if b.id == newSlotID { return true }
-            return a.position < b.position
-        }
-        reindexSlots(allSlots)
-        try? ctx.save()
+        try ctx.save()
+        try appendSessionSlot(for: newTemplate, to: split, context: ctx)
 
         let reloaded = (split.slots ?? []).sorted { $0.position < $1.position }
         let positions = reloaded.map { $0.position }
@@ -123,6 +106,32 @@ struct SplitDetailViewTests {
         #expect(reloaded.count == 4)
         // New slot is at the end (append semantics held)
         #expect(reloaded.last?.sessionTemplate?.name == "New Session")
+    }
+
+    @Test("A failed slot addition rolls back positions and relationships, then retries")
+    func failedSlotAdditionCanRetry() throws {
+        enum Failure: Error { case disk }
+        let ctx = try makeContext()
+        let (split, oldSlots) = makeSplitWithSlots(count: 2, in: ctx)
+        let template = SessionTemplate()
+        ctx.insert(template)
+        oldSlots[0].position = 4
+        oldSlots[1].position = 7
+        try ctx.save()
+
+        #expect(throws: Failure.self) {
+            try appendSessionSlot(for: template, to: split, context: ctx, save: { _ in throw Failure.disk })
+        }
+        #expect(!ctx.hasChanges)
+        #expect((split.slots ?? []).map(\.position).sorted() == [4, 7])
+        #expect(try ModelContext(ctx.container).fetchCount(FetchDescriptor<SplitSessionSlot>()) == 2)
+        #expect(try ModelContext(ctx.container).fetchCount(FetchDescriptor<SessionTemplate>()) == 3)
+
+        let added = try appendSessionSlot(for: template, to: split, context: ctx)
+        let persisted = try ModelContext(ctx.container).fetch(FetchDescriptor<SplitSessionSlot>(sortBy: [SortDescriptor(\.position)]))
+        #expect(persisted.map(\.position) == [0, 1, 2])
+        #expect(persisted.last?.id == added.id)
+        #expect(persisted.last?.sessionTemplate?.id == template.id)
     }
 
     // MARK: - Test 3: Remove slot — slot gone, template survives, reindex correct

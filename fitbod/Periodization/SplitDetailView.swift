@@ -55,6 +55,28 @@ internal func reindexSlots(_ slots: [SplitSessionSlot]) {
     }
 }
 
+/// Appends and saves one slot; a failed save leaves the routine unchanged.
+@MainActor
+@discardableResult
+func appendSessionSlot(
+    for template: SessionTemplate, to split: Split, context: ModelContext,
+    save: (ModelContext) throws -> Void = { try $0.save() }
+) throws -> SplitSessionSlot {
+    let existing = (split.slots ?? []).sorted { $0.position < $1.position }
+    let slot = SplitSessionSlot()
+    context.insert(slot)
+    slot.split = split
+    slot.sessionTemplate = template
+    reindexSlots(existing + [slot])
+    do {
+        try save(context)
+    } catch {
+        SessionSetActions.rollBack(context)
+        throw error
+    }
+    return slot
+}
+
 // MARK: - SplitDetailView
 
 public struct SplitDetailView: View {
@@ -781,6 +803,7 @@ fileprivate struct SlotPickerSheet: View {
     private var availableTemplates: [SessionTemplate]
 
     @State private var presentingNewSession: Bool = false
+    @State private var showSaveError = false
     /// Set by the builder's onSaved; attached when the builder sheet closes.
     @State private var pendingNewTemplate: SessionTemplate? = nil
 
@@ -864,32 +887,20 @@ fileprivate struct SlotPickerSheet: View {
                 onSaved: { pendingNewTemplate = $0 }
             )
         }
+        .alert("Couldn't add session", isPresented: $showSaveError) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text("The session wasn't added. Try again.")
+        }
     }
 
     private func addSlot(for template: SessionTemplate) {
-        // Insert slot into context first - then assign relationships (project convention)
-        let slot = SplitSessionSlot()
-        ctx.insert(slot)
-        slot.split = split
-        slot.sessionTemplate = template
-        // Sentinel position only - reindexSlots assigns the real, contiguous value below.
-        // Reading split.slots?.count here is unreliable: SwiftData may already include the
-        // just-inserted slot in the live relationship count (off-by-one) and the new slot's
-        // position can collide with an existing slot's, making the sort order ambiguous.
-        slot.position = 0
-
-        // Reindex all slots (including the new one) for contiguity. Sort by existing
-        // position, but pin the new slot to the end so it appends rather than landing
-        // at an arbitrary index among equal positions.
-        let newSlotID = slot.id
-        let allSlots = (split.slots ?? []).sorted { a, b in
-            if a.id == newSlotID { return false }   // new slot sorts last (append)
-            if b.id == newSlotID { return true }
-            return a.position < b.position
+        do {
+            try appendSessionSlot(for: template, to: split, context: ctx)
+            onDismiss()
+            dismiss()
+        } catch {
+            showSaveError = true
         }
-        reindexSlots(allSlots)
-        try? ctx.save()
-        onDismiss()
-        dismiss()
     }
 }

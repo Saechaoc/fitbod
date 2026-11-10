@@ -107,11 +107,11 @@ Review/rebase on 2026-11-10: no blocking findings; `f4548033` applies the implem
 
 ### <a id="rm-002"></a>RM-002 — Failed writes preserve work and explain retry
 
-**P1 · Planned: remaining write failures.** D-08, D-20, D-59 and D-153 remain: routine-editor errors/shared rollback improved, but slot addition, plate/volume resets and superset creation still contain ignored saves.
+**P1 · Active: remaining write failures.** D-08, D-20, D-59 and D-153 remain: routine-editor errors/shared rollback improved, but slot addition, plate/volume resets and superset creation still contain ignored saves.
 **Done when:** these paths show actionable errors, roll back pending mutations and permit later saves. Discarding a session editor leaves no orphan superset. Test failures through the real mutation paths; preserve shipped lifecycle/finish/history rollback (D-01/D-02/D-155).
 **Scope / sequence:** Deliver separately: slot addition (D-08), plate/volume resets (D-20/D-59), then superset creation/discard (D-153). For each, inject a failed save and prove rollback/error/retry before advancing. Shipped lifecycle/history rollback stays the baseline; no unrelated editor redesign.
 **Requires:** None; preserve shipped rollback contracts.
-**Evidence:** No passing acceptance is recorded for the remaining scope; cited commits/tests establish the shipped baseline only.
+**Evidence:** Slot addition D-08 is complete (2026-11-10): the picker saves through `appendSessionSlot`, keeps itself open and explains retry on failure. The regression injects a failed save through that real mutation, verifies positions/relationships and persisted counts are restored, then retries successfully. Unit target: 1,302 passed, one expected failure; `SlottedSessionDeleteUITests` passed 2/2 (`fast-20261110-080520`, iPhone 17/iOS 26.5). Plate/volume resets and superset creation/discard remain the next bounded deliveries.
 **References:** [D-08](design-map/audit.md#d-08), [slot picker](../fitbod/Periodization/SplitDetailView.swift), [supersets](../fitbod/Routines/SupersetAssignmentSheet.swift), [plates](../fitbod/Settings/PlateInventoryEditor.swift), [targets](../fitbod/Settings/MuscleVolumeTargetEditor.swift); `c3214985`, `dcd3cfcb`.
 
 ### <a id="rm-003"></a>RM-003 — Rendering missing volume targets never writes models
