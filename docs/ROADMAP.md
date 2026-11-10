@@ -14,7 +14,7 @@ Keep concise commands/results/limitations with their RM owner. Logs/screenshots 
 
 The user chose on 2026-11-10 to finish [RM-006](#rm-006), then complete Lane B.
 RM-006's six-slice implementation is Done. The product successor is [RM-010](#rm-010), which requires RM-003.
-Lane B, data safety: [RM-001](#rm-001) is reviewed and verified on current main. RM-002 and RM-003 are complete; continue RM-004 and RM-005, one bounded delivery at a time in an isolated worktree and on dedicated simulators.
+Lane B, data safety: [RM-001](#rm-001) is reviewed and verified on current main. RM-002 and RM-003 are complete; continue RM-004 and RM-005, one bounded delivery at a time in an isolated worktree, with exclusive simulator use during each run. Reuse existing devices across lanes; see [local simulator reuse](SETUP.md#local-simulator-reuse).
 Each slice lands on `main` when its local checks pass ([RM-053](#rm-053)).
 Move the next bounded outcome here when its implementation starts; a phone-pending feature does not occupy an active slot.
 
@@ -742,9 +742,21 @@ All checks below, [RM-029](#rm-029) populated restore and current data risks nee
 A slice lands on `main` and is pushed when the unit target and its affected UI classes pass locally; the full tier runs once per feature, before its last slice merges ([policy](DEVELOPMENT.md#scale-effort-to-the-change)).
 No pull request is needed per slice, and CI gates nothing.
 The workflow stays as it is for pull requests and manual dispatch.
+**Local simulator decision (user, 2026-11-10):** Reuse existing dedicated test
+devices across worktrees and sequential unit/UI/capture runs by default.
+One or two booted devices usually suffice; use more when concurrency,
+isolation or required model/runtime coverage needs them. There is no hard
+device limit. A device has one run at a time because verification resets app
+data; wait or use another dedicated device when it is busy. Shut down idle
+extras. Separate DerivedData remains per worktree.
+[Setup](SETUP.md#local-simulator-reuse) replaces the former per-task device
+allocation; scripts do not enforce exclusivity.
 **Scope / sequence:** Choose delivery trigger policy → implement chosen triggers → observe expected CI run. No CI performance redesign.
 **Requires:** None; the choice is made.
 **Evidence:** The user chose this on 2026-11-09. The last green CI run took 37 minutes (2026-10-04), and the PR #2 run was cancelled at the workflow's 120-minute limit. No workflow file changed; why that run hung was not investigated.
+**Simulator policy checks (2026-11-10):** `check_map.py --self-test`,
+`check_map.py` and `git diff --check` passed; the checker reported five existing
+unreferenced screenshots. Documentation only; no app tests rerun.
 **References:** [CI](../.github/workflows), original CI flag.
 
 ### <a id="rm-054"></a>RM-054 — Kept tests fail honestly/stay fast

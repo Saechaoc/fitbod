@@ -113,12 +113,13 @@ The full tier keeps each guarantee of the serial run:
 `-parallel-testing-enabled YES` is not used. xcodebuild reuses cached clones
 whose text size can differ from the device's, and a trial run hung.
 
-Keep two shards on the 12-core M4 Pro. On 2026-10-31, before T101's keyboard
-fix and T143's cut, four shards failed one or two tests that type text or
-close a sheet in each full run, a different test each time, all of which pass
-serially; two shards passed all four runs. Try more shards only with three
-clean full runs. Each shard's summary line counts idle-wait stalls, the
-60-second waits after typing that T101 removed, so a returning stall shows.
+Two shards are the tested default on the 12-core M4 Pro. On 2026-10-31,
+before T101's keyboard fix and T143's cut, four
+shards failed one or two tests that type text or close a sheet in each full
+run, a different test each time, all of which pass serially; two shards passed
+all four runs. Try more shards only with three clean full runs.
+Each shard's summary line counts idle-wait stalls, the 60-second
+waits after typing that T101 removed, so a returning stall shows.
 
 ### Captures and phone installs
 
@@ -132,8 +133,25 @@ A state behind a tap, such as a sheet, needs the simulator driven by hand.
 The id is the hardware UDID that `xcodebuild -showdestinations` prints; keep it out of the repository.
 The script does not launch the app, because iOS refuses a launch from the Mac while the phone is locked.
 
-Give each kind of local run its own simulator, so parallel work never shares a phone: the unit target on one iPhone 17, affected UI classes on its `shard 2` sibling, captures on an iPhone 17e (390pt), and a separate iPhone 17 for a second worktree.
-Running UI classes on a different phone from the unit target also avoids the reboot the unit host needs after UI tests.
+### Local simulator reuse
+
+Reuse existing dedicated test devices across tasks and worktrees by default.
+One or two booted devices will usually cover local work. Boot or create more
+when concurrent runs, isolation or required model/runtime coverage needs them;
+there is no hard device limit. Dedicated means disposable test data, not
+permanent ownership by one task. Never use a simulator containing personal
+workout data.
+
+Only one run may use a device at a time, including tests, captures and manual
+inspection: the scripts reset the installed app and its data. Reuse the same
+UUID for sequential unit and UI tests in either worktree. If it is busy, wait
+or use another dedicated device.
+Keep each worktree's separate DerivedData directory. The test runner already
+reboots a reused device when the unit host needs it after UI tests.
+
+Reuse the existing iPhone 17e for 390pt checks and existing matching shard
+devices for full runs. Shut down idle extras after use; shutdown does not erase
+data. Coordinate device use between runs; the scripts do not lock devices.
 
 ## First launch and offline use
 
