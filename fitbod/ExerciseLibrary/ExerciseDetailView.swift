@@ -408,16 +408,7 @@ struct ExerciseDetailView: View {
 
     // MARK: - Display strings
 
-    /// Equipment value rendered title-cased per UI-SPEC ("Barbell",
-    /// "Cable", "Weighted Bodyweight"). Splits underscored raws on
-    /// `_` and capitalizes each component, matching plan 03-02 D-6
-    /// convention. Single-word raws are a no-op for the split.
-    private var equipmentDisplay: String {
-        exercise.equipmentRaw
-            .split(separator: "_")
-            .map { $0.capitalized }
-            .joined(separator: " ")
-    }
+    private var equipmentDisplay: String { exercise.equipment.displayName }
 
     /// Mechanic value rendered "Compound" / "Isolation" per UI-SPEC.
     /// Raws are already single words, so `.capitalized` is sufficient.

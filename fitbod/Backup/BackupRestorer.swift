@@ -69,6 +69,7 @@ public final class BackupRestorer {
         case fileUnreadable
         case checksumMismatch
         case schemaVersionMismatch(found: String, expected: String)
+        case newerFormat(found: Int)
         case activeSessionInProgress
         case decompressionBombExceeded
         case pathTraversalDetected(entry: String)
@@ -142,6 +143,11 @@ public final class BackupRestorer {
             )
         }
 
+        // A newer format carries fields this build would drop silently.
+        guard manifest.formatVersion <= ExportDocument.currentFormatVersion else {
+            throw RestoreError.newerFormat(found: manifest.formatVersion)
+        }
+
         // 7. Active-session gate — restore wipes everything; an
         //    in-progress session would lose data unrecoverably.
         let inProgress = try context.fetch(
@@ -162,7 +168,8 @@ public final class BackupRestorer {
     public func performRestore(
         url: URL,
         manifest: BackupManifest,
-        currentContainer: ModelContainer
+        currentContainer: ModelContainer,
+        defaults: UserDefaults = .standard
     ) async throws {
         // Re-read the archive so we have fresh entry data.
         guard let data = try? Data(contentsOf: url) else {
@@ -276,6 +283,10 @@ public final class BackupRestorer {
         // attaches relationships using those maps.
         try insertDecodedDocument(doc, into: ctx, imageBytesByID: imageBytesByID)
         try ctx.save()
+        // The restored catalog is as old as the backup. Without the stamp
+        // the next launch re-seeds in place, which applies the bundled
+        // curation and adds rows the backup predates; it never deletes.
+        defaults.removeObject(forKey: ExerciseLibraryImporter.seedVersionKey)
 
         Self.log.info("BackupRestorer.performRestore complete — \(BRUCountLabel.text(doc.exercises.count, "exercise"), privacy: .public), \(BRUCountLabel.text(doc.sessions.count, "session"), privacy: .public), \(imageBytesByID.count) images")
     }
@@ -373,6 +384,13 @@ public final class BackupRestorer {
             ex.unitOverrideRaw = dto.unitOverrideRaw
             ex.plateauWindowOverride = dto.plateauWindowOverride
             ex.plateauToleranceOverride = dto.plateauToleranceOverride
+            ex.familyName = dto.familyName
+            ex.variantLabel = dto.variantLabel
+            ex.aliasesJoined = dto.aliasesJoined ?? ""
+            ex.trackingRaw = dto.trackingRaw
+            ex.brand = dto.brand
+            ex.loadingRaw = dto.loadingRaw
+            ex.isHidden = dto.isHidden ?? false
             if let bytes = imageBytesByID[dto.id] {
                 ex.imageData = bytes
             }
@@ -600,6 +618,10 @@ public final class BackupRestorer {
                     e.clusterSubRepsJoined = setDTO.clusterSubRepsJoined
                     e.isComplete = setDTO.isComplete
                     e.wasManualOverride = setDTO.wasManualOverride
+                    e.startedAt = setDTO.startedAt
+                    e.durationSeconds = setDTO.durationSeconds
+                    e.distanceMeters = setDTO.distanceMeters
+                    e.level = setDTO.level
                     e.sessionExercise = se
                     ctx.insert(e)
                 }

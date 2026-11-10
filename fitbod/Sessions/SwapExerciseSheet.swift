@@ -153,6 +153,10 @@ struct VariationUndoSnapshot {
         let clusterSubRepsJoined: String?
         let isComplete: Bool
         let wasManualOverride: Bool
+        let startedAt: Date?
+        let durationSeconds: Int?
+        let distanceMeters: Double?
+        let level: Double?
 
         init(_ set: SetEntry) {
             id = set.id
@@ -171,6 +175,10 @@ struct VariationUndoSnapshot {
             clusterSubRepsJoined = set.clusterSubRepsJoined
             isComplete = set.isComplete
             wasManualOverride = set.wasManualOverride
+            startedAt = set.startedAt
+            durationSeconds = set.durationSeconds
+            distanceMeters = set.distanceMeters
+            level = set.level
         }
 
         func apply(to set: SetEntry) {
@@ -190,6 +198,10 @@ struct VariationUndoSnapshot {
             set.clusterSubRepsJoined = clusterSubRepsJoined
             set.isComplete = isComplete
             set.wasManualOverride = wasManualOverride
+            set.startedAt = startedAt
+            set.durationSeconds = durationSeconds
+            set.distanceMeters = distanceMeters
+            set.level = level
         }
     }
 }

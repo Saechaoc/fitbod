@@ -2,13 +2,13 @@
 //  CSVExporterTests.swift
 //  fitbodTests
 //
-//  Wave-4 plan 06-09b — RFC 4180 + UTF-8 BOM + 23-column shape +
+//  Wave-4 plan 06-09b — RFC 4180 + UTF-8 BOM + 27-column shape +
 //  byte-stable golden-fixture coverage for the EXP-01 CSV export.
 //
 //  Six @Test functions:
 //
 //    1. bomPresent — first 3 bytes are 0xEF 0xBB 0xBF
-//    2. headerRow23Columns — UTF-8-decoded header row has 23 columns
+//    2. headerRowColumns — UTF-8-decoded header row has 27 columns
 //       in CONTEXT D-25 order
 //    3. rfc4180QuotingForEmbeddedCommaAndQuote — set_note with comma
 //       or embedded quote is properly escaped
@@ -105,10 +105,10 @@ struct CSVExporterTests {
         #expect(bytes == CSVExporter.utf8BOM)
     }
 
-    // MARK: - 2. header row 23 columns
+    // MARK: - 2. header row columns
 
-    @Test("headerRow23Columns — header row has 23 columns in CONTEXT D-25 order")
-    func headerRow23Columns() throws {
+    @Test("headerRowColumns — header row has 27 columns: CONTEXT D-25 order, then the set fields")
+    func headerRowColumns() throws {
         let ctx = try makeContext()
         let (entry, settings) = try makeFixtureEntry(ctx: ctx)
         let data = CSVExporter.render(setEntries: [entry], userSettings: settings)
@@ -118,7 +118,7 @@ struct CSVExporterTests {
         let s = try #require(String(data: stripped, encoding: .utf8))
         let firstLine = s.components(separatedBy: "\r\n").first ?? ""
         let cols = firstLine.components(separatedBy: ",")
-        #expect(cols.count == 23, "expected 23 columns, got \(cols.count)")
+        #expect(cols.count == 27, "expected 27 columns, got \(cols.count)")
         #expect(cols == CSVExporter.headerColumns)
     }
 
@@ -165,6 +165,24 @@ struct CSVExporterTests {
         let cols = dataLine.components(separatedBy: ",")
         // Index 16 = was_manual_override
         #expect(cols[16] == "true")
+    }
+
+    @Test("the set fields fill the last four columns, and stay empty when unset")
+    func setFieldColumns() throws {
+        let ctx = try makeContext()
+        let (entry, settings) = try makeFixtureEntry(ctx: ctx)
+        func lastFour() throws -> [String] {
+            let data = CSVExporter.render(setEntries: [entry], userSettings: settings)
+            let text = try #require(String(data: data.dropFirst(CSVExporter.utf8BOM.count), encoding: .utf8))
+            return Array(text.components(separatedBy: "\r\n")[1].components(separatedBy: ",").suffix(4))
+        }
+        #expect(try lastFour() == ["", "", "", ""])
+
+        entry.startedAt = Self.fixedDate.addingTimeInterval(-90)
+        entry.durationSeconds = 90
+        entry.distanceMeters = 402.3
+        entry.level = 8
+        #expect(try lastFour() == ["2023-11-14T22:11:50Z", "90", "402.3", "8"])
     }
 
     // MARK: - 6. empty for nil

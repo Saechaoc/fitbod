@@ -56,6 +56,59 @@ private enum AdditiveOldShape {
     }
 }
 
+/// `Exercise` and `SetEntry` as they were before the RM-022 / RM-062 catalog
+/// and set fields, attribute for attribute. The exercise's stimulus
+/// relationship is left out; a store without it still opens (the
+/// relationship column lives on the stimulus table).
+private enum PreCatalogShape {
+    @Model final class Exercise {
+        #Unique<Exercise>([\.externalID])
+
+        @Attribute(.unique) var id: UUID = UUID()
+        var externalID: String? = nil
+        var name: String = ""
+        var canonicalName: String = ""
+        var equipmentRaw: String = "other"
+        var mechanicRaw: String = "compound"
+        var forceRaw: String? = nil
+        var levelRaw: String? = nil
+        var patternRaw: String? = nil
+        var category: String = "strength"
+        var instructions: [String] = []
+        var imagePaths: [String] = []
+        @Attribute(.externalStorage) var imageData: Data? = nil
+        var isCustom: Bool = false
+        var primaryMuscleSlugsJoined: String = ""
+        var createdAt: Date = Date.now
+        var smallestIncrement: Double? = nil
+        var barWeightOverride: Double? = nil
+        var unitOverrideRaw: String? = nil
+        var plateauWindowOverride: Int? = nil
+        var plateauToleranceOverride: Double? = nil
+        init() {}
+    }
+
+    @Model final class SetEntry {
+        @Attribute(.unique) var id: UUID = UUID()
+        var orderIndex: Int = 0
+        var weight: Double = 0
+        var reps: Int = 0
+        var rpe: Double? = nil
+        var rir: Int? = nil
+        var restAfterSeconds: Int? = nil
+        var tempoActual: String? = nil
+        var notes: String? = nil
+        var isWarmup: Bool = false
+        var setTypeRaw: String = "working"
+        var completedAt: Date = Date.now
+        var partialReps: Int? = nil
+        var clusterSubRepsJoined: String? = nil
+        var isComplete: Bool = false
+        var wasManualOverride: Bool = false
+        init() {}
+    }
+}
+
 @MainActor
 @Suite("IncompatibleStoreRecovery", .serialized)
 struct IncompatibleStoreRecoveryTests {
@@ -192,6 +245,62 @@ struct IncompatibleStoreRecoveryTests {
         #expect(row.barWeight == 25)
         #expect(row.equipmentKindRaw == "dumbbell")
         #expect(row.updatedAt <= Date.now)
+    }
+
+    @Test("(b) a store from before the catalog and set fields opens in place with the new fields at their defaults")
+    func preCatalogStoreOpensInPlace() throws {
+        let dir = try makeDirectory()
+        defer { try? fm.removeItem(at: dir) }
+        let url = dir.appendingPathComponent("default.store")
+        let exerciseID = UUID()
+        let setID = UUID()
+
+        do {
+            let schema = Schema([PreCatalogShape.Exercise.self, PreCatalogShape.SetEntry.self])
+            let container = try ModelContainer(
+                for: schema, configurations: ModelConfiguration(schema: schema, url: url)
+            )
+            let ctx = ModelContext(container)
+            let dip = PreCatalogShape.Exercise()
+            dip.id = exerciseID
+            dip.name = "My Ring Dip"
+            dip.isCustom = true
+            dip.equipmentRaw = "bodyweight"
+            ctx.insert(dip)
+            let set = PreCatalogShape.SetEntry()
+            set.id = setID
+            set.weight = 0
+            set.reps = 12
+            set.isComplete = true
+            ctx.insert(set)
+            try ctx.save()
+        }
+
+        let container = try FitbodModelContainer.make(storeURL: url, defaults: try stampedDefaults().defaults)
+        #expect(!fm.fileExists(atPath: dir.appendingPathComponent("IncompatibleStores").path))
+
+        let ctx = ModelContext(container)
+        let exercise = try #require(try ctx.fetch(FetchDescriptor<Exercise>()).first)
+        #expect(exercise.id == exerciseID)
+        #expect(exercise.name == "My Ring Dip")
+        #expect(exercise.familyName == nil)
+        #expect(exercise.variantLabel == nil)
+        #expect(exercise.aliasesJoined == "")
+        #expect(exercise.trackingRaw == nil)
+        #expect(exercise.brand == nil)
+        #expect(exercise.loadingRaw == nil)
+        #expect(exercise.isHidden == false)
+        // An old custom bodyweight exercise still logs at zero added weight.
+        #expect(exercise.tracking == .reps)
+
+        let set = try #require(try ctx.fetch(FetchDescriptor<SetEntry>()).first)
+        #expect(set.id == setID)
+        #expect(set.reps == 12)
+        #expect(set.isComplete)
+        #expect(set.startedAt == nil)
+        #expect(set.durationSeconds == nil)
+        #expect(set.distanceMeters == nil)
+        #expect(set.level == nil)
     }
 
     // MARK: - (c) failures that are not the schema

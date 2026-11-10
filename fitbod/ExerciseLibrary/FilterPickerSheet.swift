@@ -113,7 +113,7 @@ public struct FilterPickerSheet: View {
     private var equipmentSection: some View {
         ForEach(Equipment.allCases, id: \.rawValue) { eq in
             selectableRow(
-                title: displayName(forEquipment: eq),
+                title: eq.displayName,
                 isSelected: filterState.selectedEquipmentRaw.contains(eq.rawValue)
             ) {
                 toggle(eq.rawValue, in: &filterState.selectedEquipmentRaw)
@@ -185,14 +185,6 @@ public struct FilterPickerSheet: View {
         .buttonStyle(.plain)
         .overlay(alignment: .bottom) { BRUDivider(.hair) }
         .accessibilityAddTraits(isSelected ? .isSelected : [])
-    }
-
-    /// Equipment display names — split the underscore raw values into
-    /// human-readable text (e.g. `weighted_bodyweight` → "Weighted Bodyweight").
-    private func displayName(forEquipment eq: Equipment) -> String {
-        eq.rawValue
-            .replacingOccurrences(of: "_", with: " ")
-            .capitalized
     }
 
     /// Pattern display names — handle the underscored cases like

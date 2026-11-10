@@ -521,7 +521,7 @@ public struct SettingsView: View {
             return "Couldn't read backup"
         case .checksumMismatch:
             return "Backup is damaged"
-        case .schemaVersionMismatch:
+        case .schemaVersionMismatch, .newerFormat:
             return "Backup version not supported"
         case .activeSessionInProgress:
             return "Finish your session first"
@@ -538,7 +538,7 @@ public struct SettingsView: View {
             return "Make sure the file is a `.fitbodbackup` file from Fitbod."
         case .checksumMismatch:
             return "This backup file's contents don't match its checksum. Try a different backup."
-        case .schemaVersionMismatch:
+        case .schemaVersionMismatch, .newerFormat:
             return "This backup is from a different version of Fitbod. Restore not supported."
         case .activeSessionInProgress:
             return "Restore replaces your data. Complete or discard your active session before restoring."

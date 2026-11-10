@@ -83,6 +83,13 @@ public struct ExportDocument: Codable, Equatable, Sendable {
     /// against this; backup manifest writes the same string.
     public static let canonicalSchemaVersion = "v7"
 
+    /// The format this build writes, in the document and in a backup's
+    /// manifest. Format 3 adds the optional catalog fields on exercises and
+    /// the optional duration, distance and level on sets; formats 1 and 2
+    /// still restore. A higher number is refused: restoring it would drop
+    /// fields this build does not know.
+    public static let currentFormatVersion = 3
+
     public init(
         formatVersion: Int,
         schemaVersion: String,
@@ -168,6 +175,15 @@ public struct ExportExerciseDTO: Codable, Equatable, Sendable {
     public let unitOverrideRaw: String?
     public let plateauWindowOverride: Int?
     public let plateauToleranceOverride: Double?
+    // Format 3. Optional so older documents decode; restore maps a missing
+    // value to the model's default.
+    public let familyName: String?
+    public let variantLabel: String?
+    public let aliasesJoined: String?
+    public let trackingRaw: String?
+    public let brand: String?
+    public let loadingRaw: String?
+    public let isHidden: Bool?
 
     public init(
         id: UUID,
@@ -189,8 +205,22 @@ public struct ExportExerciseDTO: Codable, Equatable, Sendable {
         barWeightOverride: Double?,
         unitOverrideRaw: String?,
         plateauWindowOverride: Int?,
-        plateauToleranceOverride: Double?
+        plateauToleranceOverride: Double?,
+        familyName: String?,
+        variantLabel: String?,
+        aliasesJoined: String?,
+        trackingRaw: String?,
+        brand: String?,
+        loadingRaw: String?,
+        isHidden: Bool?
     ) {
+        self.familyName = familyName
+        self.variantLabel = variantLabel
+        self.aliasesJoined = aliasesJoined
+        self.trackingRaw = trackingRaw
+        self.brand = brand
+        self.loadingRaw = loadingRaw
+        self.isHidden = isHidden
         self.id = id
         self.externalID = externalID
         self.name = name
@@ -440,6 +470,11 @@ public struct ExportSetEntryDTO: Codable, Equatable, Sendable {
     public let clusterSubRepsJoined: String?
     public let isComplete: Bool
     public let wasManualOverride: Bool
+    // Format 3; absent in older documents.
+    public let startedAt: Date?
+    public let durationSeconds: Int?
+    public let distanceMeters: Double?
+    public let level: Double?
 
     public init(
         id: UUID, orderIndex: Int, weight: Double, reps: Int,
@@ -447,8 +482,14 @@ public struct ExportSetEntryDTO: Codable, Equatable, Sendable {
         tempoActual: String?, notes: String?, isWarmup: Bool,
         setTypeRaw: String, completedAt: Date, partialReps: Int?,
         clusterSubRepsJoined: String?, isComplete: Bool,
-        wasManualOverride: Bool
+        wasManualOverride: Bool,
+        startedAt: Date?, durationSeconds: Int?,
+        distanceMeters: Double?, level: Double?
     ) {
+        self.startedAt = startedAt
+        self.durationSeconds = durationSeconds
+        self.distanceMeters = distanceMeters
+        self.level = level
         self.id = id; self.orderIndex = orderIndex
         self.weight = weight; self.reps = reps
         self.rpe = rpe; self.rir = rir

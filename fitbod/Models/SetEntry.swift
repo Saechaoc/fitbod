@@ -47,6 +47,14 @@ public final class SetEntry {
     public var isComplete: Bool = false
     public var wasManualOverride: Bool = false
 
+    // RM-062, all additive. `startedAt` and `durationSeconds` stay nil when
+    // the start of the set is unknown. Distance is stored in meters and
+    // converted for display, unlike weight, which is stored as entered.
+    public var startedAt: Date? = nil
+    public var durationSeconds: Int? = nil
+    public var distanceMeters: Double? = nil
+    public var level: Double? = nil
+
     public init() {}
 }
 

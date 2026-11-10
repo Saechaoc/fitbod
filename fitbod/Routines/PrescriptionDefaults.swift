@@ -37,7 +37,7 @@ public enum PrescriptionDefaults {
     /// `RoutineExerciseDraft` per ROUTINE-09 + CONTEXT.md Area 1.
     ///
     /// - Compound → rest 180s, isolation → rest 90s.
-    /// - Barbell + compound → strength-style rep range (4–6 reps).
+    /// - Barbell or trap bar + compound → strength-style rep range (4–6 reps).
     /// - Otherwise → hypertrophy-style rep range (8–12 reps).
     /// - Target RPE defaults to 8.0.
     ///
@@ -48,7 +48,7 @@ public enum PrescriptionDefaults {
     @MainActor
     public static func apply(to draft: RoutineExerciseDraft, from exercise: Exercise) {
         let isCompound = exercise.mechanic == .compound
-        let isBarbell = exercise.equipment == .barbell
+        let isBarbell = exercise.equipment == .barbell || exercise.equipment == .trapBar
 
         draft.prescribedRestSeconds = isCompound ? 180 : 90
 

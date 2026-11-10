@@ -116,7 +116,7 @@ public actor BackupArchiver {
 
         // 5. Build manifest record.
         let manifest = BackupManifest(
-            formatVersion: 2,
+            formatVersion: ExportDocument.currentFormatVersion,
             schemaVersion: ExportDocument.canonicalSchemaVersion,
             createdAt: now,
             checksum: checksum,

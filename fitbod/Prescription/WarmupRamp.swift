@@ -13,7 +13,7 @@
 //    - warmupConfig?.skipNextSession == true → skip ("Skip warm-ups this
 //      session only"; SessionFactory.start clears it at that start)
 //    - exercise?.mechanic != .compound → skip (machines, cables, bodyweight)
-//    - equipment NOT in {.barbell, .dumbbell} → skip
+//    - equipment NOT in {.barbell, .trapBar, .smithMachine, .dumbbell} → skip
 //    - topWorkingWeight < 1.5 × barWeight → skip (too light, no ramp needed)
 //    - barWeight == 0 → skip the 1.5× check for dumbbell (accept any weight)
 //
@@ -66,8 +66,8 @@ public enum WarmupRamp {
         // Guard 4: compound mechanics only (machines, cables, isolation → skip)
         guard exercise.mechanic == .compound else { return false }
 
-        // Guard 5: barbell or dumbbell only (bodyweight, cable, kettlebell, etc. → skip)
-        guard exercise.equipment == .barbell || exercise.equipment == .dumbbell else { return false }
+        // Guard 5: free bars, Smith machine and dumbbells only (bodyweight, cable, kettlebell, etc. → skip)
+        guard [.barbell, .trapBar, .smithMachine, .dumbbell].contains(exercise.equipment) else { return false }
 
         // Guard 6: light weight check — skip when top < 1.5 × bar weight.
         // For dumbbell, barWeight is typically 0 — skip the ratio check to avoid
@@ -98,12 +98,15 @@ public enum WarmupRamp {
     ///   - top: The top working weight (100% reference point).
     ///   - bar: The bar weight used by PlateCalculator (0 for dumbbell).
     ///   - plates: Available plate inventory as (weight, countPerSide) tuples.
+    ///   - increment: The rounding step for equipment without a plate inventory
+    ///     (Smith machine); nil rounds by the plates.
     ///   - isUnilateral: True for dumbbell (2-set ramp); false for barbell (4-set ramp).
     /// - Returns: Array of SetEntry instances (count 4 for barbell, 2 for dumbbell).
     public static func generate(
         top: Double,
         bar: Double,
         plates: [(weight: Double, countPerSide: Int)],
+        increment: Double? = nil,
         isUnilateral: Bool
     ) -> [SetEntry] {
         let steps: [(pct: Double, reps: Int)] = isUnilateral
@@ -116,7 +119,8 @@ public enum WarmupRamp {
             entry.weight = PlateCalculator.roundDown(
                 target: step.pct * top,
                 barWeight: bar,
-                plates: plates
+                plates: plates,
+                increment: increment
             )
             entry.reps = step.reps
             entry.setTypeRaw = "warmup"

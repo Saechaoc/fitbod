@@ -33,11 +33,13 @@
   ],
   "exercises" : [
     {
+      "aliasesJoined" : "flat bench|bench",
       "canonicalName" : "bench press",
       "category" : "strength",
       "createdAt" : "2023-11-14T22:13:20Z",
       "equipmentRaw" : "barbell",
       "externalID" : "bench-press-1",
+      "familyName" : "Bench Press",
       "forceRaw" : "push",
       "id" : "00000000-0000-0000-0000-000000000001",
       "imagePaths" : [
@@ -48,16 +50,19 @@
         "Press the bar."
       ],
       "isCustom" : false,
+      "isHidden" : false,
       "levelRaw" : "intermediate",
       "mechanicRaw" : "compound",
       "name" : "Bench Press",
       "patternRaw" : "horizontal_push",
       "primaryMuscleSlugsJoined" : "|chest|",
-      "smallestIncrement" : 2.5
+      "smallestIncrement" : 2.5,
+      "trackingRaw" : "weight_reps",
+      "variantLabel" : "Barbell"
     }
   ],
   "exportedAt" : "2023-11-14T22:13:20Z",
-  "formatVersion" : 2,
+  "formatVersion" : 3,
   "muscleGroups" : [
     {
       "displayName" : "Chest",
@@ -162,6 +167,7 @@
             },
             {
               "completedAt" : "2023-11-14T22:15:20Z",
+              "durationSeconds" : 45,
               "id" : "00000000-0000-0000-0000-00000000000C",
               "isComplete" : true,
               "isWarmup" : false,
@@ -170,6 +176,7 @@
               "restAfterSeconds" : 180,
               "rpe" : 8,
               "setTypeRaw" : "working",
+              "startedAt" : "2023-11-14T22:14:35Z",
               "wasManualOverride" : false,
               "weight" : 100
             }

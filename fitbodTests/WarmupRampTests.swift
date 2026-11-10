@@ -157,6 +157,23 @@ struct WarmupRampTests {
         #expect(result == false)
     }
 
+    @Test("trap bar and Smith machine compounds get a ramp; EZ bar and machines do not",
+          arguments: [(Equipment.trapBar, true), (.smithMachine, true), (.ezBar, false), (.machine, false)])
+    func rampEquipment(_ equipment: Equipment, expected: Bool) throws {
+        let ctx = try makeContext()
+        let se = makeSessionExercise(ctx: ctx, equipment: equipment, mechanic: .compound)
+        let result = WarmupRamp.shouldGenerate(
+            for: se, deloadActive: false, topWorkingWeight: 100, barWeight: 0, warmupConfig: nil
+        )
+        #expect(result == expected)
+    }
+
+    @Test("a ramp without a plate inventory rounds down to the increment, not to zero")
+    func rampRoundsByIncrementWithoutPlates() {
+        let ramp = WarmupRamp.generate(top: 205, bar: 0, plates: [], increment: 5, isUnilateral: false)
+        #expect(ramp.map(\.weight) == [80, 120, 150, 180])
+    }
+
     // MARK: - 5. Deload active skips ramp even on qualifying compound
 
     @Test("deloadActiveSkipsRamp")

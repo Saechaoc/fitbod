@@ -608,7 +608,7 @@ public struct SessionExerciseCard: View {
     /// a collapsed exercise still shows its progress (FT-12). Working sets
     /// only; warm-ups have their own ramp block above.
     private var equipmentSubline: String {
-        let equip = sessionExercise.exercise?.equipment.rawValue.capitalized ?? "Equipment"
+        let equip = sessionExercise.exercise?.equipment.displayName ?? "Equipment"
         let working = (sessionExercise.sets ?? []).filter { !$0.isWarmup }
         let done = working.filter(\.isComplete).count
         return "\(equip) · \(done)/\(BRUCountLabel.text(working.count, "set")) done"

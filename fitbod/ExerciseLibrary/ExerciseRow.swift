@@ -58,7 +58,7 @@ public struct ExerciseRow: View {
             if let muscle = Self.primaryMuscleLabel(exercise) {
                 BRUChip(muscle)
             }
-            BRUChip(Self.displayName(forEquipmentRaw: exercise.equipmentRaw))
+            BRUChip(exercise.equipment.displayName)
             BRUChip(exercise.mechanicRaw.capitalized)
             if exercise.isCustom {
                 BRUChip("Custom", color: .bruSignal)
@@ -104,12 +104,5 @@ public struct ExerciseRow: View {
             .map { $0.trimmingCharacters(in: .whitespaces) }
             .first { !$0.isEmpty }
         return first.map { $0.replacingOccurrences(of: "_", with: " ").capitalized }
-    }
-
-    /// Equipment display name. `weighted_bodyweight` is split on
-    /// underscore and capitalised so the UI reads "Weighted Bodyweight"
-    /// rather than "Weighted_bodyweight".
-    static func displayName(forEquipmentRaw raw: String) -> String {
-        raw.replacingOccurrences(of: "_", with: " ").capitalized
     }
 }

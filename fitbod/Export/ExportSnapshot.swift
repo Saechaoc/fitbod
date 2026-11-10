@@ -21,7 +21,7 @@ enum ExportSnapshot {
     static func document(in context: ModelContext, exportedAt: Date) throws -> ExportDocument {
         let userSettings = try context.fetch(FetchDescriptor<UserSettings>()).first.map(mapUserSettings)
         return ExportDocument(
-            formatVersion: 2,
+            formatVersion: ExportDocument.currentFormatVersion,
             schemaVersion: ExportDocument.canonicalSchemaVersion,
             exportedAt: exportedAt,
             unitSystem: userSettings?.unitsRaw ?? WeightUnit.default.rawValue,
@@ -73,7 +73,14 @@ enum ExportSnapshot {
             barWeightOverride: ex.barWeightOverride,
             unitOverrideRaw: ex.unitOverrideRaw,
             plateauWindowOverride: ex.plateauWindowOverride,
-            plateauToleranceOverride: ex.plateauToleranceOverride
+            plateauToleranceOverride: ex.plateauToleranceOverride,
+            familyName: ex.familyName,
+            variantLabel: ex.variantLabel,
+            aliasesJoined: ex.aliasesJoined,
+            trackingRaw: ex.trackingRaw,
+            brand: ex.brand,
+            loadingRaw: ex.loadingRaw,
+            isHidden: ex.isHidden
         )
     }
 
@@ -219,7 +226,11 @@ enum ExportSnapshot {
             partialReps: e.partialReps,
             clusterSubRepsJoined: e.clusterSubRepsJoined,
             isComplete: e.isComplete,
-            wasManualOverride: e.wasManualOverride
+            wasManualOverride: e.wasManualOverride,
+            startedAt: e.startedAt,
+            durationSeconds: e.durationSeconds,
+            distanceMeters: e.distanceMeters,
+            level: e.level
         )
     }
 

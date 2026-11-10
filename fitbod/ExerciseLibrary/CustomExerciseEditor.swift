@@ -15,7 +15,7 @@
 //
 //  - `BRUHeaderBar`: CANCEL, "New exercise" or "Edit exercise", SAVE.
 //  - NAME, in the condensed display font.
-//  - CLASSIFICATION: Equipment opens a BRU list of the nine
+//  - CLASSIFICATION: Equipment opens a BRU list of every
 //    `Equipment.allCases`; Mechanic is a `BRUSegmentedControl`. The
 //    design's PATTERN, TEMPO, BAR WT and INCREMENT cells are left out,
 //    because an exercise has no such fields.
@@ -203,7 +203,7 @@ struct CustomExerciseEditor: View {
                 HStack(spacing: BRUMetrics.Spacing.group) {
                     VStack(alignment: .leading, spacing: 2) {
                         fieldLabel("Equipment")
-                        Text(Self.equipmentDisplay(draft.equipment))
+                        Text(draft.equipment.displayName)
                             .font(BRUFont.bodyEmphasis)
                             .foregroundStyle(Color.bruInk)
                     }
@@ -219,7 +219,7 @@ struct CustomExerciseEditor: View {
             }
             .buttonStyle(.bruRow)
             .accessibilityLabel("Equipment")
-            .accessibilityValue(Self.equipmentDisplay(draft.equipment))
+            .accessibilityValue(draft.equipment.displayName)
             .accessibilityHint("Opens the equipment list")
             .accessibilityIdentifier("customExercise.equipment")
             .sheet(isPresented: $presentingEquipmentPicker) {
@@ -468,17 +468,6 @@ struct CustomExerciseEditor: View {
             ?? slug.capitalized
     }
 
-    /// Splits underscored Equipment raws to "Title Cased" form per
-    /// plan 03-02 D-6 ("weighted_bodyweight" → "Weighted Bodyweight").
-    /// Single-word raws (`barbell`, `cable`, etc.) are a no-op for
-    /// the split.
-    fileprivate static func equipmentDisplay(_ eq: Equipment) -> String {
-        eq.rawValue
-            .split(separator: "_")
-            .map { $0.capitalized }
-            .joined(separator: " ")
-    }
-
     // MARK: - Mutations
 
     private func cancel() {
@@ -578,7 +567,7 @@ private struct EquipmentPickerSheet: View {
                     .overlay(
                         Rectangle().strokeBorder(isSelected ? Color.bruSignal : Color.bruInk, lineWidth: 2)
                     )
-                Text(CustomExerciseEditor.equipmentDisplay(equipment))
+                Text(equipment.displayName)
                     .font(BRUFont.displayMedium)
                     .foregroundStyle(Color.bruInk)
                 Spacer(minLength: 0)
@@ -590,7 +579,7 @@ private struct EquipmentPickerSheet: View {
         }
         .buttonStyle(.plain)
         .overlay(alignment: .bottom) { BRUDivider(.hair) }
-        .accessibilityLabel(CustomExerciseEditor.equipmentDisplay(equipment))
+        .accessibilityLabel(equipment.displayName)
         .accessibilityAddTraits(isSelected ? .isSelected : [])
         .accessibilityIdentifier("customExercise.equipment.\(equipment.rawValue)")
     }

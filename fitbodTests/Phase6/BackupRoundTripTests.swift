@@ -148,227 +148,43 @@ struct BackupRoundTripTests {
 // MARK: - Normalization extension
 
 extension ExportDocument {
-    /// Sort every top-level entity array by id (sessions by startedAt
-    /// then id) AND truncate every Date field to whole-second
-    /// precision. The latter is necessary because the JSON round-trip
-    /// uses ISO-8601 with second precision, which loses any sub-second
-    /// fraction present in the original SwiftData Date (e.g. Date.now).
-    /// Without this normalization, an unmodified round-trip would
-    /// still fail Equatable because the original `createdAt = Date.now`
-    /// has microsecond-level precision while the restored value
-    /// rounds to the nearest second.
-    /// Per RESEARCH §"Backup round-trip Swift Testing pattern" line 647.
+    /// The document with every top-level array sorted (sessions by start,
+    /// then id) and every date at the precision a backup keeps.
+    ///
+    /// It goes through the backup's own JSON coder instead of rebuilding
+    /// each DTO by hand, so a field can never be left out of the comparison.
+    /// A restored store holds exactly what that coder decoded, so a
+    /// difference after this means the restore lost or changed something.
     func normalizedForEquality() -> ExportDocument {
-        ExportDocument(
-            formatVersion: formatVersion,
-            schemaVersion: schemaVersion,
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+        guard let data = try? JSONExporter.render(document: self),
+              let doc = try? decoder.decode(ExportDocument.self, from: data) else {
+            Issue.record("the document does not survive its own JSON coder")
+            return self
+        }
+        func byID<Row>(_ rows: [Row], _ id: (Row) -> UUID) -> [Row] {
+            rows.sorted { id($0).uuidString < id($1).uuidString }
+        }
+        return ExportDocument(
+            formatVersion: doc.formatVersion,
+            schemaVersion: doc.schemaVersion,
             exportedAt: Date(timeIntervalSince1970: 0),  // ignore exportedAt drift
-            unitSystem: unitSystem,
-            exercises: exercises
-                .map { $0.dateTruncated() }
-                .sorted { $0.id.uuidString < $1.id.uuidString },
-            routines: routines
-                .map { $0.dateTruncated() }
-                .sorted { $0.id.uuidString < $1.id.uuidString },
-            splits: (splits ?? [])
-                .map { ExportSplitDTO(id: $0.id, name: $0.name, createdAt: truncate($0.createdAt), isArchived: $0.isArchived, slots: $0.slots) }
-                .sorted { $0.id.uuidString < $1.id.uuidString },
-            routineFolders: routineFolders
-                .map { $0.dateTruncated() }
-                .sorted { $0.id.uuidString < $1.id.uuidString },
-            supersetGroups: supersetGroups
-                .map { $0.dateTruncated() }
-                .sorted { $0.id.uuidString < $1.id.uuidString },
-            sessions: sessions
-                .map { $0.dateTruncated() }
-                .sorted {
-                    if $0.startedAt == $1.startedAt {
-                        return $0.id.uuidString < $1.id.uuidString
-                    }
-                    return $0.startedAt < $1.startedAt
-                },
-            blocks: blocks
-                .map { $0.dateTruncated() }
-                .sorted { $0.id.uuidString < $1.id.uuidString },
-            muscleGroups: muscleGroups.sorted { $0.id.uuidString < $1.id.uuidString },
-            exerciseMuscleStimuli: exerciseMuscleStimuli.sorted { $0.id.uuidString < $1.id.uuidString },
-            muscleVolumeTargets: muscleVolumeTargets.sorted { $0.id.uuidString < $1.id.uuidString },
-            plateInventories: plateInventories
-                .map { $0.dateTruncated() }
-                .sorted { $0.id.uuidString < $1.id.uuidString },
-            userSettings: userSettings?.dateTruncated()
-        )
-    }
-}
-
-// MARK: - Per-DTO Date truncation (test-only)
-//
-// Each helper rounds every Date field to the nearest whole second
-// (matching ISO-8601 precision). The original DTOs are immutable
-// `let` — these helpers construct new DTOs with truncated values.
-
-private func truncate(_ d: Date) -> Date {
-    Date(timeIntervalSince1970: d.timeIntervalSince1970.rounded(.down))
-}
-
-private func truncate(_ d: Date?) -> Date? {
-    d.map(truncate)
-}
-
-private extension ExportExerciseDTO {
-    func dateTruncated() -> ExportExerciseDTO {
-        ExportExerciseDTO(
-            id: id, externalID: externalID, name: name,
-            canonicalName: canonicalName,
-            equipmentRaw: equipmentRaw, mechanicRaw: mechanicRaw,
-            forceRaw: forceRaw, levelRaw: levelRaw,
-            patternRaw: patternRaw, category: category,
-            instructions: instructions, imagePaths: imagePaths,
-            isCustom: isCustom,
-            primaryMuscleSlugsJoined: primaryMuscleSlugsJoined,
-            createdAt: truncate(createdAt),
-            smallestIncrement: smallestIncrement,
-            barWeightOverride: barWeightOverride,
-            unitOverrideRaw: unitOverrideRaw,
-            plateauWindowOverride: plateauWindowOverride,
-            plateauToleranceOverride: plateauToleranceOverride
-        )
-    }
-}
-
-private extension ExportRoutineDTO {
-    func dateTruncated() -> ExportRoutineDTO {
-        ExportRoutineDTO(
-            id: id, name: name, notes: notes,
-            createdAt: truncate(createdAt),
-            updatedAt: truncate(updatedAt),
-            isArchived: isArchived, blockID: blockID,
-            folderID: folderID, intentRaw: intentRaw,
-            progressionKindRaw: progressionKindRaw,
-            exercises: exercises
-        )
-    }
-}
-
-private extension ExportRoutineFolderDTO {
-    func dateTruncated() -> ExportRoutineFolderDTO {
-        ExportRoutineFolderDTO(
-            id: id, name: name, sortOrder: sortOrder,
-            createdAt: truncate(createdAt)
-        )
-    }
-}
-
-private extension ExportSupersetGroupDTO {
-    func dateTruncated() -> ExportSupersetGroupDTO {
-        ExportSupersetGroupDTO(
-            id: id, routineID: routineID,
-            kindRaw: kindRaw, sortOrder: sortOrder,
-            createdAt: truncate(createdAt)
-        )
-    }
-}
-
-private extension ExportSessionDTO {
-    func dateTruncated() -> ExportSessionDTO {
-        ExportSessionDTO(
-            id: id,
-            startedAt: truncate(startedAt),
-            completedAt: truncate(completedAt),
-            routineSnapshotName: routineSnapshotName,
-            sourceRoutineID: sourceRoutineID,
-            blockID: blockID, notes: notes,
-            totalDurationSeconds: totalDurationSeconds,
-            intentRaw: intentRaw,
-            progressionKindRaw: progressionKindRaw,
-            templateName: templateName,
-            slotPosition: slotPosition,
-            slotSplitName: slotSplitName,
-            exercises: exercises.map { $0.dateTruncated() }
-        )
-    }
-}
-
-private extension ExportSessionExerciseDTO {
-    func dateTruncated() -> ExportSessionExerciseDTO {
-        ExportSessionExerciseDTO(
-            id: id, exerciseID: exerciseID, exerciseName: exerciseName,
-            orderIndex: orderIndex, targetSets: targetSets,
-            targetRepsLow: targetRepsLow, targetRepsHigh: targetRepsHigh,
-            targetRPE: targetRPE, targetRIR: targetRIR,
-            prescribedRestSeconds: prescribedRestSeconds,
-            tempo: tempo, tracksTempo: tracksTempo,
-            tracksPartialReps: tracksPartialReps,
-            prescribedWeight: prescribedWeight,
-            pinnedNote: pinnedNote,
-            sets: sets.map { $0.dateTruncated() }
-        )
-    }
-}
-
-private extension ExportSetEntryDTO {
-    func dateTruncated() -> ExportSetEntryDTO {
-        ExportSetEntryDTO(
-            id: id, orderIndex: orderIndex,
-            weight: weight, reps: reps,
-            rpe: rpe, rir: rir,
-            restAfterSeconds: restAfterSeconds,
-            tempoActual: tempoActual, notes: notes,
-            isWarmup: isWarmup, setTypeRaw: setTypeRaw,
-            completedAt: truncate(completedAt),
-            partialReps: partialReps,
-            clusterSubRepsJoined: clusterSubRepsJoined,
-            isComplete: isComplete,
-            wasManualOverride: wasManualOverride
-        )
-    }
-}
-
-private extension ExportBlockDTO {
-    func dateTruncated() -> ExportBlockDTO {
-        ExportBlockDTO(
-            id: id, name: name,
-            startDate: truncate(startDate),
-            endDate: truncate(endDate),
-            notes: notes, isActive: isActive,
-            reviewedAt: truncate(reviewedAt),
-            schedulingModeRaw: schedulingModeRaw,
-            trainingDaysJoined: trainingDaysJoined,
-            archivedConfigJSON: archivedConfigJSON,
-            splitName: splitName,
-            phases: phases
-        )
-    }
-}
-
-private extension ExportPlateInventoryDTO {
-    func dateTruncated() -> ExportPlateInventoryDTO {
-        ExportPlateInventoryDTO(
-            id: id, equipmentKindRaw: equipmentKindRaw,
-            barWeight: barWeight,
-            availablePlatesData: availablePlatesData,
-            createdAt: truncate(createdAt),
-            updatedAt: truncate(updatedAt)
-        )
-    }
-}
-
-private extension ExportUserSettingsDTO {
-    func dateTruncated() -> ExportUserSettingsDTO {
-        ExportUserSettingsDTO(
-            id: id, unitsRaw: unitsRaw,
-            defaultProgressionKindRaw: defaultProgressionKindRaw,
-            warmupSchemeRaw: warmupSchemeRaw,
-            customWarmupPercents: customWarmupPercents,
-            plateauWindowSessions: plateauWindowSessions,
-            plateauTolerance: plateauTolerance,
-            deloadAlertEnabled: deloadAlertEnabled,
-            weekStartsMonday: weekStartsMonday,
-            defaultIncrementKg: defaultIncrementKg,
-            minCalibrationSets: minCalibrationSets,
-            frequencyHitMinSets: frequencyHitMinSets,
-            deloadAdvisoryDismissedWeekStart: truncate(deloadAdvisoryDismissedWeekStart),
-            weeklyRecapShownForWeekStart: truncate(weeklyRecapShownForWeekStart)
+            unitSystem: doc.unitSystem,
+            exercises: byID(doc.exercises, \.id),
+            routines: byID(doc.routines, \.id),
+            splits: byID(doc.splits ?? [], \.id),
+            routineFolders: byID(doc.routineFolders, \.id),
+            supersetGroups: byID(doc.supersetGroups, \.id),
+            sessions: doc.sessions.sorted {
+                $0.startedAt == $1.startedAt ? $0.id.uuidString < $1.id.uuidString : $0.startedAt < $1.startedAt
+            },
+            blocks: byID(doc.blocks, \.id),
+            muscleGroups: byID(doc.muscleGroups, \.id),
+            exerciseMuscleStimuli: byID(doc.exerciseMuscleStimuli, \.id),
+            muscleVolumeTargets: byID(doc.muscleVolumeTargets, \.id),
+            plateInventories: byID(doc.plateInventories, \.id),
+            userSettings: doc.userSettings
         )
     }
 }

@@ -48,6 +48,21 @@ struct PrescriptionDefaultsTests {
         #expect(draft.prescribedRestSeconds == 180)
     }
 
+    @Test("a trap bar compound gets the barbell strength range; a Smith machine compound does not")
+    func trapBarStrength() {
+        func repRange(_ equipment: Equipment) -> ClosedRange<Int> {
+            let exercise = Exercise(
+                name: "Sweep", canonicalName: "sweep",
+                equipmentRaw: equipment.rawValue, mechanicRaw: Mechanic.compound.rawValue
+            )
+            let draft = RoutineExerciseDraft()
+            PrescriptionDefaults.apply(to: draft, from: exercise)
+            return draft.targetRepsLow...draft.targetRepsHigh
+        }
+        #expect(repRange(.trapBar) == 4...6)
+        #expect(repRange(.smithMachine) == 8...12)
+    }
+
     @Test("compoundDumbbellHypertrophy — DB Press → 8-12 reps + 180s rest")
     func compoundDumbbellHypertrophy() {
         let dbPress = Exercise(

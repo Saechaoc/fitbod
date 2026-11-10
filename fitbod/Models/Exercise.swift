@@ -64,6 +64,17 @@ public final class Exercise {
     public var plateauWindowOverride: Int? = nil
     public var plateauToleranceOverride: Double? = nil
 
+    // RM-022 / RM-062 catalog fields, all additive. The seed's curation
+    // overlay writes them for seeded rows; the custom editor writes them for
+    // custom rows. `aliasesJoined` is "skull crusher|french press".
+    public var familyName: String? = nil
+    public var variantLabel: String? = nil
+    public var aliasesJoined: String = ""
+    public var trackingRaw: String? = nil
+    public var brand: String? = nil
+    public var loadingRaw: String? = nil
+    public var isHidden: Bool = false
+
     @Relationship(deleteRule: .cascade, inverse: \ExerciseMuscleStimulus.exercise)
     public var muscleStimuli: [ExerciseMuscleStimulus]? = []
 
@@ -111,6 +122,14 @@ extension Exercise {
     public var force: Force? { forceRaw.flatMap(Force.init) }
     public var level: Level? { levelRaw.flatMap(Level.init) }
     public var pattern: Pattern? { patternRaw.flatMap(Pattern.init) }
+    /// What a set of this exercise records. Unset, bodyweight equipment
+    /// tracks reps with optional load and everything else tracks weight and
+    /// reps, so custom exercises and rows curation does not list need no
+    /// stored value.
+    public var tracking: Tracking {
+        if let stored = trackingRaw.flatMap(Tracking.init) { return stored }
+        return equipment == .bodyweight || equipment == .weightedBodyweight ? .reps : .weightReps
+    }
     public var unitOverride: WeightUnit? {
         get { unitOverrideRaw.flatMap(WeightUnit.init(rawValue:)) }
         set { unitOverrideRaw = newValue?.rawValue }

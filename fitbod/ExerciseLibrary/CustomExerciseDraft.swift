@@ -91,7 +91,7 @@ public final class CustomExerciseDraft {
     public var name: String = ""
 
     /// Equipment kind. Always non-nil (default `.barbell`); per UI-SPEC
-    /// the picker exposes all 9 `Equipment` cases.
+    /// the picker exposes every `Equipment` case.
     public var equipment: Equipment = .barbell
 
     /// Mechanic kind. Always non-nil (default `.compound`); per UI-SPEC

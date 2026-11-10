@@ -28,7 +28,7 @@ A move-aside that fails partway puts the moved files back and throws.
 
 | Entity | Role and relationships |
 |---|---|
-| `Exercise` | Bundled/custom catalog, stable external ID, prescription/history/stimulus links |
+| `Exercise` | Bundled/custom catalog, stable external ID, prescription/history/stimulus links; optional family/variant/aliases, tracking type, brand/loading and hidden flag |
 | `MuscleGroup` | Catalog muscles with stimulus links/volume targets |
 | `ExerciseMuscleStimulus` | Exercise↔muscle join, stimulus weight, primary/secondary role |
 | `SessionTemplate` | Name, intent/progression and owned prescription children |
@@ -39,7 +39,7 @@ A move-aside that fails partway puts the moved files back and throws.
 | `BlockPhase` | Ordered kind/weeks/volume/intensity owned by block |
 | `Session` | Workout timestamps, template/name snapshot, block/optional slot, exercises |
 | `SessionExercise` | Frozen evaluated prescription/name and actual sets |
-| `SetEntry` | Weight/reps/RPE/completion/type/notes/tempo/partial/cluster actuals |
+| `SetEntry` | Weight/reps/RPE/completion/type/notes/tempo/partial/cluster actuals; optional start, duration, distance and level |
 | `MuscleVolumeTarget` | Per-muscle MV/MEV/MAV/MRV |
 | `PlateInventory` | Equipment bar/plates/counts/increments |
 | `UserSettings` | Units/calibration/fatigue thresholds/presentation settings |
@@ -53,6 +53,9 @@ Auxiliary model names are accepted naming debt.
 Persist enums as raw values with typed accessors.
 Export/backup use DTOs and shared ExportSnapshot mapping, not Codable on models.
 Restore validates before mutation and retains a pre-restore backup.
+Restore refuses a backup whose format is newer than the build writes (`ExportDocument.currentFormatVersion`), because it would drop fields the build does not know.
+Restore clears the exercise seed stamp, so the next launch re-seeds the restored catalog in place: it applies the bundled curation and adds rows the backup predates, and deletes nothing.
+`Exercise.tracking` reads the stored tracking type; unset, bodyweight and weighted-bodyweight equipment track reps with optional load and everything else tracks weight and reps, so custom and uncurated rows need no stored value.
 
 ## Program graph
 
@@ -143,6 +146,7 @@ Order workouts by start even when finish order differs; the former handoff's pro
 
 Units relabel stored numbers, never implicitly convert; exercise overrides win.
 There is no per-set unit provenance yet; do not call mixed-unit totals converted/comparable ([RM-021](docs/ROADMAP.md#rm-021)).
+Distance is the exception: `SetEntry.distanceMeters` is stored in meters and converted for entry and display, so it never needs provenance.
 
 SetEntry.countsAsWork means complete, neither warmup flag nor warmup type.
 Drop/failure/rest-pause count.

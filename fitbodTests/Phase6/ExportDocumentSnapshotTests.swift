@@ -84,7 +84,10 @@ struct ExportDocumentSnapshotTests {
             primaryMuscleSlugsJoined: "|chest|", createdAt: fixedDate,
             smallestIncrement: 2.5, barWeightOverride: nil,
             unitOverrideRaw: nil, plateauWindowOverride: nil,
-            plateauToleranceOverride: nil
+            plateauToleranceOverride: nil,
+            familyName: "Bench Press", variantLabel: "Barbell",
+            aliasesJoined: "flat bench|bench", trackingRaw: "weight_reps",
+            brand: nil, loadingRaw: nil, isHidden: false
         )
 
         let muscleGroup = ExportMuscleGroupDTO(
@@ -144,7 +147,8 @@ struct ExportDocumentSnapshotTests {
             isWarmup: true, setTypeRaw: "warmup",
             completedAt: fixedDate, partialReps: nil,
             clusterSubRepsJoined: nil, isComplete: true,
-            wasManualOverride: false
+            wasManualOverride: false,
+            startedAt: nil, durationSeconds: nil, distanceMeters: nil, level: nil
         )
 
         let workingSet = ExportSetEntryDTO(
@@ -154,7 +158,9 @@ struct ExportDocumentSnapshotTests {
             isWarmup: false, setTypeRaw: "working",
             completedAt: fixedDate.addingTimeInterval(120),
             partialReps: nil, clusterSubRepsJoined: nil,
-            isComplete: true, wasManualOverride: false
+            isComplete: true, wasManualOverride: false,
+            startedAt: fixedDate.addingTimeInterval(75), durationSeconds: 45,
+            distanceMeters: nil, level: nil
         )
 
         let sessionExercise = ExportSessionExerciseDTO(
@@ -228,7 +234,7 @@ struct ExportDocumentSnapshotTests {
         )
 
         return ExportDocument(
-            formatVersion: 2,
+            formatVersion: ExportDocument.currentFormatVersion,
             schemaVersion: ExportDocument.canonicalSchemaVersion,
             exportedAt: fixedDate,
             unitSystem: "kg",
@@ -254,7 +260,7 @@ struct ExportDocumentSnapshotTests {
         let doc = Self.makeFixture()
         let data = try JSONEncoder.exportConfigured().encode(doc)
         let json = try #require(try JSONSerialization.jsonObject(with: data) as? [String: Any])
-        #expect(json["formatVersion"] as? Int == 2)
+        #expect(json["formatVersion"] as? Int == 3)
         #expect(json["schemaVersion"] as? String == "v7")
         let splits = try #require(json["splits"] as? [[String: Any]])
         #expect(splits.count == 1)

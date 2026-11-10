@@ -10,7 +10,7 @@
 //  - UTF-8 with BOM (`EF BB BF`) — Excel opens UTF-8 CSVs correctly
 //    only when the BOM is present (Microsoft docs + Apple Numbers
 //    parity).
-//  - 23 columns in CONTEXT D-25 verbatim order (see headerColumns
+//  - 27 columns: CONTEXT D-25 order, then the set fields (see headerColumns
 //    below).
 //  - RFC 4180 quoting: fields containing `,` `"` `\r` `\n` are wrapped
 //    in double quotes; embedded `"` is escaped as `""`. Line terminator
@@ -57,7 +57,8 @@ public enum CSVExporter {
 
     // MARK: - Constants
 
-    /// Column order per CONTEXT D-25 — verbatim.
+    /// Column order per CONTEXT D-25, then the RM-062 set fields. New
+    /// columns go at the end so older readers keep their positions.
     public static let headerColumns: [String] = [
         "session_id", "session_started_at", "session_completed_at",
         "session_intent", "routine_id", "routine_name",
@@ -66,6 +67,7 @@ public enum CSVExporter {
         "actual_weight", "actual_reps", "actual_rpe",
         "was_manual_override", "partial_reps", "tempo",
         "rest_taken_sec", "e1rm", "set_note", "unit",
+        "set_started_at", "duration_sec", "distance_m", "level",
     ]
 
     /// UTF-8 BOM bytes — emitted at the very start of every CSV.
@@ -145,6 +147,10 @@ public enum CSVExporter {
             actualWeight, actualReps, actualRPE,
             wasManualOverride, partialReps, tempo,
             restTaken, e1rm, setNote, unit,
+            entry.startedAt.map(formatISO) ?? "",
+            entry.durationSeconds.map(String.init) ?? "",
+            entry.distanceMeters.map(formatDouble) ?? "",
+            entry.level.map(formatDouble) ?? "",
         ]
         return columns.map(rfc4180Quote).joined(separator: ",")
     }

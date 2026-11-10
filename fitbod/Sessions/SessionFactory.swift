@@ -333,6 +333,9 @@ public enum SessionFactory {
         let explanation: PrescriptionExplanation
         let barWeight: Double
         let plates: [(weight: Double, countPerSide: Int)]
+        /// The step equipment without a plate inventory rounds by; nil when
+        /// the inventory rounds.
+        let increment: Double?
         let previousWorkingSets: [SetEntry]
     }
 
@@ -386,7 +389,8 @@ public enum SessionFactory {
 
         // Configure a value copy so rounding cannot leak between exercises in a session.
         var configuredStrategy = strategy
-        configuredStrategy.roundingIncrement = inventory == nil ? smallestIncrement : nil
+        let roundingIncrement = inventory == nil ? smallestIncrement : nil
+        configuredStrategy.roundingIncrement = roundingIncrement
         let (progressedWeight, progressedExplanation) = configuredStrategy.prescribe(
             history: historyPoints,
             targetRepsLow: targetRepsLow,
@@ -413,6 +417,7 @@ public enum SessionFactory {
             explanation: explanation,
             barWeight: barWeight,
             plates: plates,
+            increment: roundingIncrement,
             previousWorkingSets: previousWorkingSets
         )
     }
@@ -477,6 +482,7 @@ public enum SessionFactory {
             top: prescription.weight,
             bar: prescription.barWeight,
             plates: prescription.plates,
+            increment: prescription.increment,
             isUnilateral: sessionExercise.exercise?.equipment == .dumbbell
         )
     }
@@ -586,11 +592,15 @@ public enum SessionFactory {
         return requested
     }
 
-    /// Only barbell and dumbbell exercises load a plate inventory.
+    /// Only free bars and dumbbells load a plate inventory. A Smith machine
+    /// has none: its bar weight differs per machine, so it rounds by the
+    /// exercise's increment like other machines.
     internal static func plateEquipmentKind(for equipment: Equipment) -> PlateEquipmentKind? {
         switch equipment {
         case .barbell:  return .barbell
         case .dumbbell: return .dumbbell
+        case .ezBar:    return .ezBar
+        case .trapBar:  return .trapBar
         default:        return nil
         }
     }

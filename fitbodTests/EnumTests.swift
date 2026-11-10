@@ -6,7 +6,7 @@
 //  Locks the case-set Day 1 so an accidental case rename in a future
 //  phase trips a test, not a silent rawValue-mismatch in production.
 //
-//  LIB-06 anchor: Equipment must have exactly 9 cases (the 7 from the
+//  LIB-06 anchor: Equipment raw values are pinned (the 7 from the
 //  requirement + `kettlebell` + `other` per RESEARCH Open Q #4). Every
 //  other enum's case count is pinned for the same reason — the rawValue
 //  strings end up persisted as on-disk SQLite cells, so a rename is a
@@ -40,22 +40,31 @@ struct EnumTests {
         ])
     }
 
-    // MARK: - Equipment (9 cases) — LIB-06 anchor
+    // MARK: - Equipment — LIB-06 anchor
 
-    @Test("Equipment has exactly 9 cases (LIB-06)")
-    func equipmentHasNineCases() {
-        #expect(Equipment.allCases.count == 9)
+    @Test("Equipment raw values are the stored vocabulary (LIB-06, RM-022)")
+    func equipmentRawValues() {
         #expect(Set(Equipment.allCases.map(\.rawValue)) == [
             "barbell",
+            "ez_bar",
+            "trap_bar",
             "dumbbell",
+            "kettlebell",
             "machine",
+            "smith_machine",
             "cable",
             "bands",
             "bodyweight",
             "weighted_bodyweight",
-            "kettlebell",
+            "suspension",
+            "medicine_ball",
+            "sled",
+            "cardio_machine",
             "other",
         ])
+        #expect(Equipment.ezBar.displayName == "EZ Bar")
+        #expect(Equipment.weightedBodyweight.displayName == "Weighted Bodyweight")
+        #expect(Equipment.smithMachine.displayName == "Smith Machine")
     }
 
     // MARK: - Mechanic (2 cases)
