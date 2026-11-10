@@ -124,6 +124,7 @@ public struct TodayView: View {
             liveRoutines: routines, sessions: sessionTemplates, now: now, calendar: calendar)
         let doneToday: Session? = if case .done(let workouts) = state { workouts.first } else { nil }
         let readyBlock: Block? = if case .ready(let block) = state { block } else { nil }
+        let pick: StartSlot.Suggestion? = if case .pick(let suggestion) = state { suggestion } else { nil }
         NavigationStack(path: $navigationPath) {
             ScrollView {
                 VStack(spacing: 0) {
@@ -192,8 +193,7 @@ public struct TodayView: View {
                                         slotCount: block.split?.slots?.count ?? 0
                                     ),
                                     phase: currentBlockPhase,
-                                    onStart: { startWorkout(routine, in: block.split) },
-                                    onChooseAnother: canChooseSession ? { @MainActor in choosingSession = true } : nil
+                                    onStart: { startWorkout(routine, in: block.split) }
                                 )
                             } else {
                                 noWorkoutScheduledEmptyState
@@ -211,16 +211,24 @@ public struct TodayView: View {
                             if !activeBlocks.isEmpty {
                                 // Block active but split not yet attached → empty state
                                 noWorkoutScheduledEmptyState
+                            } else if let pick {
+                                // No block, a session to train: the suggested
+                                // session leads as the one hero (T-PICK).
+                                BlackSlabCTA(
+                                    routine: pick.session,
+                                    label: BlackSlabCTA.heroLabel(routine: pick.slot?.split),
+                                    phase: nil,
+                                    onStart: { startWorkout(pick.session, in: pick.slot?.split) }
+                                )
                             }
-                            // No block at all: the Start-a-workout picker below
-                            // leads; the Start Block CTA follows it.
+                            // Otherwise the Start-a-workout picker below leads.
                         }
                     }
 
-                    // Start-a-workout picker whenever nothing is scheduled
-                    // and nothing is in progress (no block, rest day, empty
-                    // split), so an unscheduled workout is always one tap away.
-                    if activeSessions.isEmpty && todaysRoutine == nil {
+                    // Start-a-workout picker whenever nothing is scheduled or
+                    // suggested and nothing is in progress (a rest day, an
+                    // empty split, a ready block, a fresh store).
+                    if activeSessions.isEmpty && todaysRoutine == nil && pick == nil {
                         TodaySessionPicker(
                             onOpen: { openedSession = OpenedSession(template: $0, routine: $1) },
                             onStart: { startWorkout($0, in: $1) },
@@ -229,19 +237,31 @@ public struct TodayView: View {
                         )
                     }
 
-                    // No block at all → Start Block CTA (Phase 4 preserved),
-                    // after the picker so starting a workout stays primary.
-                    // A block runs on a routine, so with none the picker's
-                    // + New routine is the one routine action here (FT-15).
-                    if activeSessions.isEmpty && activeBlocks.isEmpty && readyBlock == nil && !routines.isEmpty {
-                        StartBlockCTA(onStart: { presentingCreateBlock = true })
-                    }
-
-                    // Lift list — only for a scheduled session not yet done
+                    // Lift list — for a scheduled session not yet done, or
+                    // the suggested one with no block
                     if let routine = todaysRoutine, doneToday == nil {
                         LiftListSection(routine: routine, phase: currentBlockPhase, onView: {
                             openedSession = OpenedSession(template: routine, routine: activeBlocks.first?.split)
                         })
+                    } else if let pick {
+                        LiftListSection(routine: pick.session, phase: nil, onView: {
+                            openedSession = OpenedSession(template: pick.session, routine: pick.slot?.split)
+                        })
+                    }
+
+                    // Under a hero, another session is one row and one tap away.
+                    if pick != nil || (todaysRoutine != nil && doneToday == nil && activeSessions.isEmpty) {
+                        TodayGhostRow(title: "Choose another session") { choosingSession = true }
+                            .accessibilityIdentifier("today.chooseSession")
+                    }
+
+                    // No block at all → Start Block CTA (Phase 4 preserved),
+                    // after the picker, or the hero and its exercises, so
+                    // starting a workout stays primary. A block runs on a
+                    // routine, so with none the picker's + New routine is
+                    // the one routine action here (FT-15).
+                    if activeSessions.isEmpty && activeBlocks.isEmpty && readyBlock == nil && !routines.isEmpty {
+                        StartBlockCTA(onStart: { presentingCreateBlock = true })
                     }
 
                     // ─── DEFENSIVE BOTTOM — Phase 5 FatigueSurfaceView ──
@@ -328,22 +348,15 @@ public struct TodayView: View {
                 SettingsView(onClose: { presentingSettings = false })
             }
             .sheet(isPresented: $choosingSession, onDismiss: startChosenSession) {
-                if let block = activeBlocks.first {
-                    BlockSessionChoiceSheet(
-                        block: block,
-                        markedSlotID: upNext(done: doneToday != nil, resolution)?.slot.id,
-                        onStart: { slot in
-                            pendingChoice = .session(slot)
-                            choosingSession = false
-                        },
-                        onStartEmpty: {
-                            pendingChoice = .empty
-                            choosingSession = false
-                        }
-                    )
-                    .presentationDetents([.medium, .large])
-                    .presentationDragIndicator(.hidden)
-                }
+                SessionSheet(
+                    content: SessionSheetContent(
+                        liveRoutines: routines, sessions: sessionTemplates, block: activeBlocks.first,
+                        resolution: resolution, finished: finished, now: now, calendar: calendar),
+                    phase: currentBlockPhase,
+                    onStart: { session, routine in choose(.start(session, routine)) },
+                    onOpen: { session in choose(.open(session)) },
+                    onStartEmpty: { choose(.empty) }
+                )
             }
             .navigationDestination(item: $openedSession) { opened in
                 SessionTemplateDetailView(template: opened.template, routine: opened.routine)
@@ -527,12 +540,10 @@ public struct TodayView: View {
         return nil
     }
 
-    /// What comes next: the resolver's session (today's, or a rotation's
-    /// next once today's is done), or once today's is done in a weekly
-    /// block, the next training day's, with its day. The done card's up next
-    /// and the session list's NEXT both read it, so they agree.
-    private func upNext(done: Bool, _ resolution: TodayResolution) -> (slot: SplitSessionSlot, day: Date?)? {
-        if done, let block = activeBlocks.first, block.schedulingMode == .fixedWeekly {
+    /// The done card's next session: the resolver's in a rotation block,
+    /// or the next training day's session and date in a weekly block.
+    private func upNext(_ resolution: TodayResolution) -> (slot: SplitSessionSlot, day: Date?)? {
+        if let block = activeBlocks.first, block.schedulingMode == .fixedWeekly {
             return TodayResolver.nextTrainingDay(block: block, after: now).map { ($0.slot, $0.day) }
         }
         if case .session(let slot) = resolution { return (slot, nil) }
@@ -541,7 +552,7 @@ public struct TodayView: View {
 
     /// The done card's up next, such as "Pull A · Wed".
     private func upNextLabel(_ resolution: TodayResolution) -> String? {
-        guard let next = upNext(done: true, resolution),
+        guard let next = upNext(resolution),
               let name = next.slot.sessionTemplate?.name
         else { return nil }
         guard let day = next.day else { return name }
@@ -589,16 +600,23 @@ public struct TodayView: View {
         }
     }
 
-    /// Starts what the session list picked, once the list has gone.
+    /// Keeps what the session sheet picked and closes the sheet.
+    @MainActor
+    private func choose(_ choice: PendingChoice) {
+        pendingChoice = choice
+        choosingSession = false
+    }
+
+    /// Acts on what the session sheet picked, once the sheet has gone.
     @MainActor
     private func startChosenSession() {
         guard let choice = pendingChoice else { return }
         pendingChoice = nil
         switch choice {
-        case .session(let slot):
-            if let template = slot.sessionTemplate {
-                startWorkout(template, in: slot.split)
-            }
+        case .start(let template, let routine):
+            startWorkout(template, in: routine)
+        case .open(let template):
+            openedSession = OpenedSession(template: template, routine: nil)
         case .empty:
             startEmptyWorkout()
         }
@@ -705,7 +723,10 @@ public struct TodayView: View {
     }
 
     private enum PendingChoice {
-        case session(SplitSessionSlot)
+        /// A routine's row: start the session from that routine.
+        case start(SessionTemplate, Split)
+        /// A session in no routine: open its detail.
+        case open(SessionTemplate)
         case empty
     }
 

@@ -233,8 +233,9 @@ final class MilestoneOneJourneyUITests: XCTestCase {
             let exists = element.exists
             let isSetInput = exists && element.identifier.hasPrefix("set.")
             if exists && !isSetInput && element.isHittable { return }
-            let container = app.collectionViews.allElementsBoundByIndex.last(where: { $0.isHittable })
-                ?? app.scrollViews.allElementsBoundByIndex.last(where: { $0.isHittable })
+            // Hidden tab scroll views can have invalid activation points.
+            let container = app.collectionViews.allElementsBoundByIndex.last(where: { !$0.frame.isEmpty && $0.isHittable })
+                ?? app.scrollViews.allElementsBoundByIndex.last(where: { !$0.frame.isEmpty && $0.isHittable })
             let page = container?.frame ?? app.frame
             let header = app.otherElements["workout.header"].firstMatch
             let top = (isSetInput && header.exists ? header.frame.maxY : page.minY) + 8

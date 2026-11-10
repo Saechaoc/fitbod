@@ -103,6 +103,12 @@ struct MilestoneOnePersistenceTests {
             #expect(sets.last?.reps == 6)
             #expect(sets.last?.isComplete == false)
 
+            let originalLift = try #require(exercise.exercise)
+            let replacement = LoggerFixtures.exercise("Dumbbell Press", in: context)
+            #expect(SwapExerciseSheet.swap(exercise, to: replacement, context: context))
+            #expect(sets.first?.sessionExercise?.exercise?.id == originalLift.id)
+            #expect(sets.first?.sessionExercise?.id != exercise.id)
+
             // Finish and change all upstream authoring records before closing again.
             workout.completedAt = .now
             workout.template?.name = "Renamed session"
@@ -111,7 +117,7 @@ struct MilestoneOnePersistenceTests {
             prescription.targetRepsLow = 12
             prescription.targetRepsHigh = 15
             prescription.prescribedRestSeconds = 45
-            exercise.exercise?.name = "Renamed custom exercise"
+            originalLift.name = "Renamed custom exercise"
             try context.save()
         }
 
@@ -126,8 +132,15 @@ struct MilestoneOnePersistenceTests {
             #expect(workout.id == sessionID)
             #expect(workout.templateName == "Push A")
             #expect(workout.routineSnapshotName == "Push A")
-            let exercise = try #require(workout.exercises?.first)
+            let exercises = (workout.exercises ?? []).sorted { $0.orderIndex < $1.orderIndex }
+            #expect(exercises.count == 2)
+            let replacement = try #require(exercises.last)
+            #expect(replacement.displayName == "Dumbbell Press")
+            #expect(replacement.sets?.count == 3)
+            #expect((replacement.sets ?? []).allSatisfy { !$0.isComplete && $0.weight == 0 && $0.reps == 0 })
+            let exercise = try #require(exercises.first)
             #expect(exercise.displayName == "Cambered Bar Bench Press")
+            #expect(exercise.sets?.count == 1)
             #expect(exercise.targetSets == 3)
             #expect(exercise.targetRepsLow == 5)
             #expect(exercise.targetRepsHigh == 8)

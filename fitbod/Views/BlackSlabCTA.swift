@@ -26,12 +26,12 @@ import SwiftData
 /// │  DELOAD WEEK · LIGHTER SETS                   │  in a deload week only
 /// │                                               │  16pt gap
 /// │  [       START WORKOUT ▸        ]             │  BRUPillButton signal
-/// │        CHOOSE ANOTHER SESSION ›               │  when onChooseAnother is set
 /// └───────────────────────────────────────────────┘
 /// ```
 ///
-/// The label is `heroLabel(mode:position:slotCount:)`: TODAY on a
-/// fixed-weekly block, the session's place in the cycle on a rotation. The
+/// The label is `heroLabel(mode:position:slotCount:)` in a block: TODAY on a
+/// fixed-weekly block, the session's place in the cycle on a rotation. With
+/// no block it is `heroLabel(routine:)`, which names the routine. The
 /// set count is the working sets the phase yields, the count the factory
 /// plans (`PeriodizationEngine.workingSetCount`), and a deload week says
 /// so under the meta line.
@@ -52,8 +52,6 @@ public struct BlackSlabCTA: View {
     /// The block's current phase; a deload cuts the set count and adds the caption.
     let phase: BlockPhase?
     let onStart: @MainActor () -> Void
-    /// Opens the block's other sessions; nil hides the link.
-    var onChooseAnother: (@MainActor () -> Void)? = nil
 
     // MARK: - Label
 
@@ -61,6 +59,13 @@ public struct BlackSlabCTA: View {
     /// the cycle, "NEXT UP · 2 OF 3" for `position` 1 of 3 slots.
     static func heroLabel(mode: SchedulingMode, position: Int, slotCount: Int) -> String {
         mode == .fixedWeekly ? "TODAY" : "NEXT UP · \(position + 1) OF \(slotCount)"
+    }
+
+    /// With no block: "NEXT UP · PUSH PULL LEGS", naming the routine the
+    /// suggested session comes from, or "NEXT UP" alone for a session that
+    /// sits in no routine.
+    static func heroLabel(routine: Split?) -> String {
+        routine.map { "NEXT UP · \($0.name)" } ?? "NEXT UP"
     }
 
     // MARK: - Computed
@@ -130,21 +135,6 @@ public struct BlackSlabCTA: View {
             Spacer().frame(height: 16)
 
             BRUPillButton("Start workout ▸", action: onStart)
-
-            if let onChooseAnother {
-                Button(action: onChooseAnother) {
-                    Text("Choose another session ›")
-                        .font(BRUFont.labelSmall)
-                        .tracking(1.2)
-                        .textCase(.uppercase)
-                        .foregroundStyle(Color.bruOnSlab.opacity(0.8))
-                        .frame(maxWidth: .infinity, minHeight: 44)
-                        .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-                .padding(.top, 4)
-                .accessibilityIdentifier("todaySlab.chooseAnother")
-            }
         }
         .padding(.vertical, 18)
         .padding(.horizontal, 16)

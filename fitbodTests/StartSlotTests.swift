@@ -7,113 +7,23 @@ import Testing
 /// start credits, what it skips, and the session Today suggests when no block runs.
 @MainActor
 @Suite("StartSlot")
-struct StartSlotTests {
-    private let ctx: ModelContext
-    private let bench: Exercise
-    /// A Tuesday, 22:13 UTC.
-    private let now = Date(timeIntervalSince1970: 1_700_000_000)
-    private let day: TimeInterval = 86_400
-    private let calendar: Calendar = {
-        var calendar = Calendar(identifier: .gregorian)
-        calendar.timeZone = TimeZone(identifier: "UTC")!
-        return calendar
-    }()
+struct StartSlotTests: ProgramFixtures {
+    let ctx: ModelContext
+    let bench: Exercise
+    let now = StartSlotTests.tuesdayEvening
+    let calendar = StartSlotTests.utcCalendar
 
     init() throws {
         ctx = ModelContext(try InMemoryContainer.makeCurrent())
-        bench = Exercise(name: "Bench Press", canonicalName: "bench press", equipmentRaw: "barbell", mechanicRaw: "compound")
-        ctx.insert(bench)
-    }
-
-    // MARK: Fixtures
-
-    private func makeRoutine(_ name: String = "Push Pull Legs") -> Split {
-        let routine = Split()
-        ctx.insert(routine)
-        routine.name = name
-        return routine
-    }
-
-    /// A session with one exercise, or none when `empty`, last edited at `updatedAt` (`now` when not given).
-    private func makeSession(_ name: String, empty: Bool = false, updatedAt: Date? = nil) -> SessionTemplate {
-        let session = SessionTemplate()
-        ctx.insert(session)
-        session.name = name
-        session.updatedAt = updatedAt ?? now
-        if !empty {
-            let row = SessionExerciseTemplate()
-            ctx.insert(row)
-            row.sessionTemplate = session
-            row.exercise = bench
-        }
-        return session
-    }
-
-    /// One slot per session, in the order given.
-    private func addSlots(_ sessions: [SessionTemplate], to routine: Split) -> [SplitSessionSlot] {
-        sessions.enumerated().map { position, session in
-            let slot = SplitSessionSlot()
-            ctx.insert(slot)
-            slot.split = routine
-            slot.position = position
-            slot.sessionTemplate = session
-            return slot
-        }
-    }
-
-    /// A routine with one session per name, each in its own slot; the names in `empty` have no exercises.
-    private func makeRoutine(
-        _ name: String = "Push Pull Legs", sessions: [String], empty: Set<String> = []
-    ) -> (Split, [SplitSessionSlot]) {
-        let routine = makeRoutine(name)
-        return (routine, addSlots(sessions.map { makeSession($0, empty: empty.contains($0)) }, to: routine))
-    }
-
-    /// A workout started `daysAgo` days before `now`: finished, with one logged work set, unless told otherwise.
-    @discardableResult
-    private func makeWorkout(
-        in slot: SplitSessionSlot?, daysAgo: Double, block: Block? = nil, finished: Bool = true, logged: Bool = true
-    ) -> Session {
-        let workout = Session()
-        ctx.insert(workout)
-        workout.startedAt = now.addingTimeInterval(-daysAgo * day)
-        workout.completedAt = finished ? workout.startedAt.addingTimeInterval(3_600) : nil
-        workout.slot = slot
-        workout.block = block
-        let exercise = SessionExercise()
-        ctx.insert(exercise)
-        exercise.session = workout
-        exercise.exercise = bench
-        let set = SetEntry()
-        ctx.insert(set)
-        set.sessionExercise = exercise
-        set.setTypeRaw = SetType.working.rawValue
-        set.weight = 100
-        set.reps = 5
-        set.isComplete = logged
-        return workout
-    }
-
-    /// An active block on `routine`: weekly on `days` (1 is Sunday) when given, else rotation.
-    private func makeBlock(on routine: Split?, weekly days: [Int]? = nil) -> Block {
-        let block = Block()
-        ctx.insert(block)
-        block.isActive = true
-        block.split = routine
-        if let days {
-            block.schedulingMode = .fixedWeekly
-            block.trainingDays = days
-        }
-        return block
+        bench = Self.makeBench(in: ctx)
     }
 
     /// NEXT in `block` as a caller gets it: the real resolver's answer for `date`, then the rule.
     private func next(in block: Block, at date: Date? = nil) throws -> SplitSessionSlot? {
         let date = date ?? now
-        let finished = try ctx.fetch(FetchDescriptor<Session>()).filter { $0.completedAt != nil }
         return StartSlot.next(
-            in: block, resolution: TodayResolver.resolve(block: block, context: ctx, today: date, calendar: calendar),
-            finished: finished, now: date, calendar: calendar)
+            in: block, resolution: resolution(for: block, at: date),
+            finished: try finishedWorkouts(), now: date, calendar: calendar)
     }
 
     // MARK: NEXT in a block
@@ -209,11 +119,9 @@ struct StartSlotTests {
 
     /// The slot a start of `session` from `routine` credits, asked the way the starter asks at the tap.
     private func slot(for session: SessionTemplate, startedFrom routine: Split?, block: Block? = nil) throws -> SplitSessionSlot? {
-        let finished = try ctx.fetch(FetchDescriptor<Session>()).filter { $0.completedAt != nil }
-        return StartSlot.slot(
-            for: session, startedFrom: routine, block: block,
-            resolution: block.map { TodayResolver.resolve(block: $0, context: ctx, today: now, calendar: calendar) } ?? .noBlock,
-            finished: finished, now: now, calendar: calendar)
+        StartSlot.slot(
+            for: session, startedFrom: routine, block: block, resolution: resolution(for: block, at: now),
+            finished: try finishedWorkouts(), now: now, calendar: calendar)
     }
 
     @Test("no block: a start takes its slot in the routine it starts from, counted from that routine's NEXT")

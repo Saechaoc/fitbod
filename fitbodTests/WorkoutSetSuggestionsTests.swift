@@ -93,6 +93,18 @@ struct WorkoutSetSuggestionsTests {
 
         workout.progressionKindRaw = ProgressionKind.rpe.rawValue
         #expect(offers(log, prior: [prior])[first.id] == WorkoutSetSuggestion(weight: 105, reps: 10))
+        first.weight = 102.5
+        #expect(offers(log, prior: [prior])[first.id]?.reps == 10)
+        workout.progressionKindRaw = ProgressionKind.hybrid.rawValue
+        #expect(offers(log, prior: [prior])[first.id]?.reps == 10)
+        first.weight = 0
+        log.prescribedWeight = nil
+        #expect(offers(log)[first.id]?.reps == 10)
+        first.weight = 95
+        first.reps = 4
+        #expect(try SessionSetActions.complete(first, context: ctx))
+        let second = try #require(SessionSetActions.ordered(log).last)
+        #expect(offers(log, prior: [prior])[second.id] == WorkoutSetSuggestion(weight: 95, reps: 4))
     }
 
     @Test("Programmed block targets survive a different current set and leave typed inputs alone")

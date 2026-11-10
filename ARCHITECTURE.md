@@ -85,7 +85,10 @@ NEXT is the resolver's slot in a rotation block; in a fixedWeekly block it is to
 With no block, a routine's NEXT follows its newest counted slotted workout, wraps and skips sessions with no exercises.
 A start credits NEXT when NEXT holds the session, otherwise the session's first slot after NEXT, so a session slotted twice never moves the rotation backwards.
 A start from no routine, an archived routine or a routine other than the active block's is unslotted.
-The session sheet and the no-block hero that read these rules are still planned under RM-006.
+With no block, Today's hero is `StartSlot.suggestion`: the NEXT of the routine trained most recently, else of the routine edited most recently, else the most recently edited session in no live routine.
+The session sheet reads the same rules through the pure `SessionSheetContent`: one row per session of each live routine, at most one usable NEXT mark, and the sessions a start skips (never in a fixedWeekly block).
+A sheet row starts its workout on the tap; a session in no live routine opens its detail instead.
+Other Today states still use the inline picker until RM-006's state-slab slice; obsolete picker files are removed at close-out.
 
 ## Snapshots and corrections
 
@@ -101,6 +104,7 @@ Two deliberate freeze points:
    Configuration freezes; review statistics still read correctable workouts.
 
 Pending working sets show weight and rep offers from their frozen prescription and completed performance. Programmed block targets take priority. Otherwise an earlier working set on the same lift in this workout takes priority over the corresponding set from the last finished matching-intent workout.
+RPE/hybrid offers use the upper rep target until current-workout performance takes priority; editing only the load does not change that target. Current-workout actual reps carry unchanged outside a block, including reps outside the programmed range.
 Entered values, including numbers stored by older versions, take priority per field. The checkmark saves the chosen weight, reps, and completion together. Unaccepted offers stay outside the store, and each set records its own effort.
 Swapping after logging keeps completed sets attached to the original lift and applies a fresh prescription to the replacement's pending sets.
 

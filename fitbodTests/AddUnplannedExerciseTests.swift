@@ -211,9 +211,14 @@ struct AddUnplannedExerciseTests {
 
         let added = try #require(session.exercises?.first { $0.exercise?.id == press.id })
         #expect(added.prescribedWeight == freshStart)
-        // The planned sets are still seeded from the last workout.
         let sets = added.sets ?? []
         #expect(sets.count == 3)
-        #expect(sets.allSatisfy { $0.weight == 60 })
+        #expect(sets.allSatisfy { $0.weight == 0 && $0.reps == 0 && !$0.isComplete })
+        let prior = try #require(PreviousMatchingIntent.lastWorkingSets(
+            exerciseID: press.id, intentRaw: session.intentRaw, context: ctx,
+            excludingSessionID: session.id
+        ))
+        let offers = WorkoutSetSuggestions(exercise: added, prior: prior.sets).offers()
+        #expect(sets.allSatisfy { offers[$0.id] == WorkoutSetSuggestion(weight: freshStart, reps: 8) })
     }
 }

@@ -89,10 +89,11 @@ struct WorkoutSetSuggestions {
     }
 
     private func repOffer(at weight: Double, reference: SetEntry?, fromCurrent: Bool) -> Int? {
+        if fromCurrent { return reference?.reps }
         guard programmed, let targetReps else {
             if let reference, weight <= reference.weight + 0.001 { return reference.reps }
             // A real increase from the selected progression model starts the rep range over.
-            if !fromCurrent, let prescribedWeight, Self.sameLoad(weight, prescribedWeight),
+            if let prescribedWeight, Self.sameLoad(weight, prescribedWeight),
                let highestPriorWeight, weight > highestPriorWeight + 0.001 {
                 return self.targetReps?.lowerBound
             }
@@ -100,8 +101,7 @@ struct WorkoutSetSuggestions {
         }
 
         let kind = exercise.session?.progressionKind ?? .default
-        if !fromCurrent, let prescribedWeight, Self.sameLoad(weight, prescribedWeight),
-           kind == .rpe || kind == .hybrid {
+        if kind == .rpe || kind == .hybrid {
             // These strategies calculate load against the upper rep target.
             return targetReps.upperBound
         }
@@ -110,7 +110,7 @@ struct WorkoutSetSuggestions {
         }
 
         let repeated = min(max(reference.reps, targetReps.lowerBound), targetReps.upperBound)
-        if !fromCurrent, !blockProgrammed, kind == .double, Self.sameLoad(weight, reference.weight),
+        if !blockProgrammed, kind == .double, Self.sameLoad(weight, reference.weight),
            reference.reps >= targetReps.lowerBound, repeated < targetReps.upperBound,
            (reference.rpe ?? 0) < (exercise.targetRPE ?? 10) {
             return repeated + 1
