@@ -16,10 +16,10 @@
 //
 //  This is NOT a parallel ViewModel mirroring `@Query`. It's a value-
 //  shaped mutation surface that the view binds to via `@Bindable`. The
-//  `save(into:context:)` method projects the draft onto an actual
+//  `persist(into:context:)` method projects the draft onto an actual
 //  `Routine` `@Model` row at the user's "Save" tap — until then, every
 //  mutation is in-memory only. The `@Query` integration on the routines
-//  list (plan 03-01) re-renders automatically when `save(...)` calls
+//  list (plan 03-01) re-renders automatically when `persist(...)` calls
 //  `ctx.save()`.
 //
 //  ## RESEARCH §6 Pitfall 8 — per-set override prune on targetSets shrink
@@ -100,6 +100,17 @@ public final class RoutineDraft {
     /// `RoutineBuilderView` rewrites the indices on every reorder
     /// (RESEARCH §6 Pitfall 10).
     public var exercises: [RoutineExerciseDraft] = []
+
+    /// New groups exist only in the draft until the whole session saves.
+    private(set) var newSupersetIDs: [UUID] = []
+
+    @discardableResult
+    func addSuperset(for exercise: RoutineExerciseDraft) -> UUID {
+        let id = UUID()
+        newSupersetIDs.append(id)
+        exercise.supersetGroupID = id
+        return id
+    }
 
     /// Phase 3.1 PIVOT-04 — session-level training intent for THIS
     /// routine. Bound directly to the Intent header picker in
@@ -202,6 +213,33 @@ public final class RoutineDraft {
         PrescriptionDefaults.apply(to: draft, from: exercise)
         draft.orderIndex = exercises.count
         exercises.append(draft)
+    }
+
+    /// Saves the session and its new groups together; the draft survives a failed save.
+    func persist(
+        into routine: SessionTemplate, context: ModelContext,
+        save: (ModelContext) throws -> Void = { try $0.save() }
+    ) throws {
+        do {
+            self.save(into: routine, context: context)
+            let routineID = routine.id
+            let groups = try context.fetch(FetchDescriptor<SupersetGroup>(
+                predicate: #Predicate { $0.routineID == routineID }
+            ))
+            let usedIDs = Set(exercises.compactMap(\.supersetGroupID))
+            var order = (groups.map(\.sortOrder).max() ?? -1) + 1
+            for id in newSupersetIDs where usedIDs.contains(id) && !groups.contains(where: { $0.id == id }) {
+                let group = SupersetGroup(routineID: routineID, sortOrder: order)
+                group.id = id
+                context.insert(group)
+                order += 1
+            }
+            try save(context)
+        } catch {
+            SessionSetActions.rollBack(context)
+            throw error
+        }
+        newSupersetIDs.removeAll()
     }
 
     /// Project the draft onto a `Routine` row.

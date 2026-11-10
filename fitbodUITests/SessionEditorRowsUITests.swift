@@ -56,6 +56,37 @@ final class SessionEditorRowsUITests: XCTestCase {
         XCTAssertTrue(name.waitForNonExistence(timeout: 5), "Remove must remove \(exercise)")
     }
 
+    @MainActor
+    func testSupersetDraftDiscardAndSaveSurviveRelaunch() throws {
+        let app = openEditor()
+        openSupersets(in: app)
+        UITestNavigation.hittable(app.buttons, "+ New superset", exactLabel: true).tap()
+        UITestNavigation.hittable(app.buttons, "Discard", exactLabel: true).tap()
+        XCTAssertTrue(UITestNavigation.appears(app.staticTexts.labeled("Discard changes?")))
+        UITestNavigation.hittable(app.buttons, "Discard", exactLabel: true).tap()
+        XCTAssertTrue(UITestNavigation.disappears(app.buttons["Save session ▸"]))
+        UITestNavigation.hittable(app.buttons, "Edit", exactLabel: true).tap()
+        openSupersets(in: app)
+        let group = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Superset A")).firstMatch
+        XCTAssertFalse(group.exists, "Discard must not leave an empty stored superset")
+        UITestNavigation.hittable(app.buttons, "+ New superset", exactLabel: true).tap()
+        UITestNavigation.hittable(app.buttons, "Save session ▸", exactLabel: true).tap()
+        UITestNavigation.relaunch(app)
+        openEditor(in: app)
+        openSupersets(in: app)
+        XCTAssertTrue(UITestNavigation.appears(group), "Saving the session must persist its group")
+        UITestNavigation.saveScreenshot("RM002", "superset-saved")
+    }
+
+    @MainActor
+    private func openSupersets(in app: XCUIApplication) {
+        let exercise = exerciseName(in: app)
+        UITestNavigation.reveal(exercise, in: app)
+        exercise.press(forDuration: 1.1)
+        UITestNavigation.hittable(app.buttons, "Make superset", exactLabel: true).tap()
+        XCTAssertTrue(UITestNavigation.appears(app.buttons.labeled("+ New superset")))
+    }
+
     // MARK: - Navigation
 
     /// The session editor on the active-block seed's "Live Push", opened
@@ -63,6 +94,12 @@ final class SessionEditorRowsUITests: XCTestCase {
     @MainActor
     private func openEditor(textSize: UITestNavigation.TextSize? = nil) -> XCUIApplication {
         let app = UITestNavigation.launch(UITestNavigation.activeBlock, textSize: textSize)
+        openEditor(in: app)
+        return app
+    }
+
+    @MainActor
+    private func openEditor(in app: XCUIApplication) {
         UITestNavigation.selectTab("Program", in: app)
         let routine = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "Live Routine")).firstMatch
         XCTAssertTrue(routine.exists || routine.waitForExistence(timeout: 10), "Program must list Live Routine")
@@ -75,7 +112,6 @@ final class SessionEditorRowsUITests: XCTestCase {
         UITestNavigation.hittable(app.buttons, "Edit", exactLabel: true).tap()
         let save = app.buttons["Save session ▸"]
         XCTAssertTrue(save.exists || save.waitForExistence(timeout: 10), "Edit must open the session editor")
-        return app
     }
 
     /// Drags the editor's list in its leading margin, clear of the rows'

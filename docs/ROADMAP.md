@@ -14,7 +14,7 @@ Keep concise commands/results/limitations with their RM owner. Logs/screenshots 
 
 The user chose on 2026-11-10 to finish [RM-006](#rm-006), then complete Lane B.
 RM-006's six-slice implementation is Done. The product successor is [RM-010](#rm-010), which requires RM-003.
-Lane B, data safety: [RM-001](#rm-001) is reviewed and verified on current main. Continue RM-002 to RM-005, one bounded delivery at a time in an isolated worktree and on dedicated simulators.
+Lane B, data safety: [RM-001](#rm-001) is reviewed and verified on current main. RM-002 is complete; continue RM-003 to RM-005, one bounded delivery at a time in an isolated worktree and on dedicated simulators.
 Each slice lands on `main` when its local checks pass ([RM-053](#rm-053)).
 Move the next bounded outcome here when its implementation starts; a phone-pending feature does not occupy an active slot.
 
@@ -24,7 +24,6 @@ This is the ordered dependency-ready queue; feature definitions below retain the
 
 | Order | Ready outcome | Boundary |
 |---|---|---|
-| 1 | [RM-002](#rm-002) remaining failed writes | Lane B after RM-001. Slot addition, resets and supersets are separate bounded deliveries. |
 | 2 | [RM-003](#rm-003) render missing targets without writes | Lane B. Before extending affected Volume rendering. |
 | 3 | [RM-004](#rm-004) strip custom-photo location | Lane B. Before extending photo/backup paths. |
 | 4 | [RM-005](#rm-005) numeric/tempo boundaries | Lane B. Current relabel-only units suffice; no circular wait for provenance. |
@@ -65,6 +64,7 @@ Done covers the bounded implementation, appropriate agent-run checks and updated
 
 | ID | Priority / status | Outcome and completion evidence | Dependencies / references |
 |---|---|---|---|
+| [RM-002](#rm-002) | P1 · Done | Failed slot additions/resets roll back and explain retry; superset drafts save with the session and Discard writes nothing. Unit/failure/relaunch evidence in RM-002. | Schema unchanged. |
 | [RM-001](#rm-001) | P1 · Done | Preserve unclassified store-open failures, retry, and rollback partial moves; disk/unit/relaunch and 390pt evidence in RM-001. | No schema change; populated recovery proof remains RM-029. |
 | [RM-006](#rm-006) | P1 · Done | StartSlot/shared starts, session sheet and all Today states; six slices, unit/full UI and 390pt evidence in RM-006; [plan/results](archive/features/today-session-sheet-and-state-slabs.md). | Retains the live Program template route until RM-011; broader AX/device checks at stability. |
 | [RM-043](#rm-043) | P3 · Done | Completion policy, bounded roadmap/dependency semantics, current setup/widget docs and selected plan archives. Verification in RM-043; [plan/results](archive/features/development-workflow.md). | Documentation only; no app-runtime claim. |
@@ -107,11 +107,11 @@ Review/rebase on 2026-11-10: no blocking findings; `f4548033` applies the implem
 
 ### <a id="rm-002"></a>RM-002 — Failed writes preserve work and explain retry
 
-**P1 · Active: remaining write failures.** D-08, D-20, D-59 and D-153 remain: routine-editor errors/shared rollback improved, but slot addition, plate/volume resets and superset creation still contain ignored saves.
+**P1 · Done (2026-11-10).** D-08, D-20, D-59 and D-153: slot addition and resets roll back failed saves and explain retry; new supersets stay in the draft until the session saves.
 **Done when:** these paths show actionable errors, roll back pending mutations and permit later saves. Discarding a session editor leaves no orphan superset. Test failures through the real mutation paths; preserve shipped lifecycle/finish/history rollback (D-01/D-02/D-155).
 **Scope / sequence:** Deliver separately: slot addition (D-08), plate/volume resets (D-20/D-59), then superset creation/discard (D-153). For each, inject a failed save and prove rollback/error/retry before advancing. Shipped lifecycle/history rollback stays the baseline; no unrelated editor redesign.
 **Requires:** None; preserve shipped rollback contracts.
-**Evidence:** Slot addition D-08 is complete (2026-11-10): the picker saves through `appendSessionSlot`, keeps itself open and explains retry on failure. The regression injects a failed save through that real mutation, verifies positions/relationships and persisted counts are restored, then retries successfully. Unit target: 1,302 passed, one expected failure; `SlottedSessionDeleteUITests` passed 2/2 (`fast-20261110-080520`, iPhone 17/iOS 26.5). Plate/volume resets D-20/D-59 are complete: each reset reports failure and rolls back all changed values/flags together; injected failures through both real reset functions leave no pending edits, preserve a fresh reader’s saved values, and retry successfully. Unit target: 1,304 passed, one expected failure (`fast-20261110-081049`). Superset creation/discard remains the final bounded delivery.
+**Evidence:** Slot addition D-08 is complete (2026-11-10): the picker saves through `appendSessionSlot`, keeps itself open and explains retry on failure. The regression injects a failed save through that real mutation, verifies positions/relationships and persisted counts are restored, then retries successfully. Unit target: 1,302 passed, one expected failure; `SlottedSessionDeleteUITests` passed 2/2 (`fast-20261110-080520`, iPhone 17/iOS 26.5). Plate/volume resets D-20/D-59 are complete: each reset reports failure and rolls back all changed values/flags together; injected failures through both real reset functions leave no pending edits, preserve a fresh reader’s saved values, and retry successfully. Unit target: 1,304 passed, one expected failure (`fast-20261110-081049`). Superset creation/discard D-153 is complete: new group IDs stay in `RoutineDraft`, unused groups are omitted, and session/group rows save together. Injected failure leaves saved rows unchanged and keeps the draft for a successful retry. The unit target passed 1,307 tests with one expected failure (`fast-20261110-081520`). `SessionEditorRowsUITests` passed 2/2 at 390pt/default/light (`fast-20261110-081641`), including Discard without a stored group, then Save/relaunch with the group preserved; the saved sheet capture was inspected. No schema change. Reset-failure presentation is wired to the same thrown errors tested in units; it has no separate UI fault-injection test.
 **References:** [D-08](design-map/audit.md#d-08), [slot picker](../fitbod/Periodization/SplitDetailView.swift), [supersets](../fitbod/Routines/SupersetAssignmentSheet.swift), [plates](../fitbod/Settings/PlateInventoryEditor.swift), [targets](../fitbod/Settings/MuscleVolumeTargetEditor.swift); `c3214985`, `dcd3cfcb`.
 
 ### <a id="rm-003"></a>RM-003 — Rendering missing volume targets never writes models

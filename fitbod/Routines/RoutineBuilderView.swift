@@ -23,7 +23,7 @@
 //
 //  ## State shape (unchanged)
 //  One presentation-owned RoutineDraft. Dirty-check via draft.snapshotHash().
-//  Save via draft.save(into:context:). Discard via dismiss().
+//  Save via draft.persist(into:context:). Discard via dismiss().
 //
 //  ## Phase 3.1 header pickers preserved
 //  Intent chip → Menu of Intent cases. Progression chip → Menu of available
@@ -206,7 +206,7 @@ public struct RoutineBuilderView: View {
             )
         ) {
             if let editing, let exDraft = pendingSupersetAssignment {
-                SupersetAssignmentSheet(routine: editing, exerciseDraft: exDraft)
+                SupersetAssignmentSheet(routine: editing, draft: draft, exerciseDraft: exDraft)
             }
         }
         // Warmup config sheet
@@ -569,13 +569,9 @@ public struct RoutineBuilderView: View {
             ctx.insert(routine)
         }
         draft.name = draft.name.trimmingCharacters(in: .whitespacesAndNewlines)
-        draft.save(into: routine, context: ctx)
         do {
-            try ctx.save()
+            try draft.persist(into: routine, context: ctx)
         } catch {
-            // Roll back so the refused change can't fail every later save;
-            // the draft keeps the edits for another try.
-            SessionSetActions.rollBack(ctx)
             saveErrorMessage = "The session wasn't saved. Try again."
             return
         }

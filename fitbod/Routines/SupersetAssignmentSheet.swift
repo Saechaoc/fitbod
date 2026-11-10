@@ -6,7 +6,7 @@
 //  with BRUHeaderBar("ADD TO SUPERSET") + BRU-styled rows.
 //
 //  Mutation surface: writes to RoutineExerciseDraft.supersetGroupID (in-memory draft).
-//  The persisted write happens at Save time via RoutineDraft.save(into:).
+//  The persisted write happens at Save time via RoutineDraft.persist(into:context:).
 //
 //  Verbatim copy: "ADD TO SUPERSET" / "Cancel" — anchored in RoutineBuilderBRUCopyTests.
 //
@@ -18,16 +18,15 @@ import SwiftUI
 import SwiftData
 
 public struct SupersetAssignmentSheet: View {
-    @Environment(\.modelContext) private var ctx
     @Environment(\.dismiss) private var dismiss
 
-    public let routine: SessionTemplate
+    @Bindable var draft: RoutineDraft
     public let exerciseDraft: RoutineExerciseDraft
 
     @Query private var groups: [SupersetGroup]
 
-    public init(routine: SessionTemplate, exerciseDraft: RoutineExerciseDraft) {
-        self.routine = routine
+    public init(routine: SessionTemplate, draft: RoutineDraft, exerciseDraft: RoutineExerciseDraft) {
+        self.draft = draft
         self.exerciseDraft = exerciseDraft
         let routineID = routine.id
         self._groups = Query(
@@ -41,37 +40,16 @@ public struct SupersetAssignmentSheet: View {
             VStack(spacing: 0) {
                 ScrollView {
                     VStack(spacing: 0) {
-                        // Existing superset groups
                         ForEach(groups) { group in
-                            Button {
-                                exerciseDraft.supersetGroupID = group.id
-                                dismiss()
-                            } label: {
-                                HStack {
-                                    Text(label(for: group))
-                                        .font(BRUFont.bodyEmphasis)
-                                        .foregroundStyle(Color.bruInk)
-                                        .multilineTextAlignment(.leading)
-                                    Spacer()
-                                }
-                                .padding(.horizontal, 16)
-                                .padding(.vertical, 14)
-                            }
-                            .buttonStyle(.plain)
-
-                            BRUDivider(.hair)
+                            groupRow(id: group.id, order: group.sortOrder)
+                        }
+                        ForEach(Array(draft.newSupersetIDs.enumerated()), id: \.element) { index, id in
+                            groupRow(id: id, order: (groups.map(\.sortOrder).max() ?? -1) + 1 + index)
                         }
 
                         // "New Superset" signal action row
                         BRUButton("+ New superset", kind: .signal, size: .md) {
-                            let newGroup = SupersetGroup(
-                                routineID: routine.id,
-                                kindRaw: SupersetKind.paired.rawValue,
-                                sortOrder: groups.count
-                            )
-                            ctx.insert(newGroup)
-                            try? ctx.save()
-                            exerciseDraft.supersetGroupID = newGroup.id
+                            draft.addSuperset(for: exerciseDraft)
                             dismiss()
                         }
                         .padding(.horizontal, 16)
@@ -91,19 +69,35 @@ public struct SupersetAssignmentSheet: View {
         }
     }
 
-    /// UI-SPEC § Routine builder verbatim format:
-    ///   "Superset A (Bench + Row)" / "Superset B (Squat + Curl)"
-    private func label(for group: SupersetGroup) -> String {
-        let letter = String(UnicodeScalar(UInt8(65 + min(group.sortOrder, 25))))
-        let routineExercises = (routine.exercises ?? [])
-            .filter { $0.supersetGroupID == group.id }
-        let names = routineExercises
+    private func groupRow(id: UUID, order: Int) -> some View {
+        VStack(spacing: 0) {
+            Button {
+                exerciseDraft.supersetGroupID = id
+                dismiss()
+            } label: {
+                HStack {
+                    Text(label(for: id, order: order))
+                        .font(BRUFont.bodyEmphasis)
+                        .foregroundStyle(Color.bruInk)
+                        .multilineTextAlignment(.leading)
+                    Spacer()
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 14)
+                .frame(minHeight: BRUMetrics.touchTarget)
+            }
+            .buttonStyle(.plain)
+            BRUDivider(.hair)
+        }
+    }
+
+    private func label(for id: UUID, order: Int) -> String {
+        let letter = String(UnicodeScalar(UInt8(65 + min(max(order, 0), 25))))
+        let names = draft.exercises
+            .filter { $0.supersetGroupID == id }
             .compactMap { $0.exercise?.name }
             .joined(separator: " + ")
-        if names.isEmpty {
-            return "Superset \(letter)"
-        }
-        return "Superset \(letter) (\(names))"
+        return names.isEmpty ? "Superset \(letter)" : "Superset \(letter) (\(names))"
     }
 }
 
@@ -117,7 +111,7 @@ public struct SupersetAssignmentSheet: View {
         container.mainContext.insert(routine)
         let draft = RoutineExerciseDraft()
         return AnyView(
-            SupersetAssignmentSheet(routine: routine, exerciseDraft: draft)
+            SupersetAssignmentSheet(routine: routine, draft: RoutineDraft(), exerciseDraft: draft)
                 .modelContainer(container)
         )
     } else {

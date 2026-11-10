@@ -171,6 +171,9 @@ Fatigue advice never mutates schedule.
 
 ## UI and state layers
 
+Session-editor changes, including new superset IDs, stay in `RoutineDraft` until Save.
+`persist(into:context:)` writes the session and its used new groups in one save; failure rolls back the store while keeping the draft for retry. Discard writes no groups.
+
 Four native tab containers preserve stacks: Today, Program, Progress, Library.
 Settings is a Today sheet; workout History opens from Progress.
 BRU draws visible tabs, hidden in logger/while editing.
