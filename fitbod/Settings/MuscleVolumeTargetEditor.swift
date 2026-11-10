@@ -38,6 +38,7 @@ public struct MuscleVolumeTargetEditor: View {
     @Query private var allTargets: [MuscleVolumeTarget]
     @State private var expandedSlug: String? = nil
     @State private var showingResetConfirmation: Bool = false
+    @State private var showSaveError = false
 
     public init() {}
 
@@ -85,6 +86,11 @@ public struct MuscleVolumeTargetEditor: View {
             Button("Cancel", role: .cancel) { }
         } message: {
             Text("Your custom values will be replaced with RP defaults for all 17 muscles.")
+        }
+        .alert("Couldn't reset targets", isPresented: $showSaveError) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text("Your custom targets weren't changed. Try resetting again.")
         }
     }
 
@@ -155,21 +161,28 @@ public struct MuscleVolumeTargetEditor: View {
         }
     }
 
-    // MARK: - Reset helper (PRESERVED verbatim from Phase 5 baseline)
+    @MainActor
+    static func reset(
+        _ targets: [MuscleVolumeTarget], context: ModelContext,
+        save: (ModelContext) throws -> Void = { try $0.save() }
+    ) throws {
+        for target in targets {
+            MuscleVolumeTargetStepper.applyRPDefaults(to: target)
+        }
+        do {
+            try save(context)
+        } catch {
+            SessionSetActions.rollBack(context)
+            throw error
+        }
+    }
 
     @MainActor
     private func resetAllToRPDefaults() {
-        for muscle in allMuscles {
-            let slug = muscle.slug
-            let landmark = RPVolumeLandmarks.landmark(for: slug)
-            if let target = allTargets.first(where: { $0.muscle?.slug == slug }) {
-                target.mv = landmark.mv
-                target.mev = landmark.mev
-                target.mav = landmark.mav
-                target.mrv = landmark.mrv
-                target.userEdited = false
-            }
+        do {
+            try Self.reset(allTargets, context: ctx)
+        } catch {
+            showSaveError = true
         }
-        try? ctx.save()
     }
 }

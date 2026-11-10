@@ -41,6 +41,7 @@ public struct PlateInventoryEditor: View {
 
     @State private var activeTab: PlateEquipmentKind = .barbell
     @State private var showResetConfirm: Bool = false
+    @State private var showSaveError = false
     @State private var showAddPlateSheet: Bool = false
     @State private var showCalculatorSheet: Bool = false
     @FocusState private var barWeightFocused: Bool
@@ -127,22 +128,38 @@ public struct PlateInventoryEditor: View {
         .alert("Reset plate inventory?", isPresented: $showResetConfirm) {    // UI-SPEC verbatim
             Button("Reset", role: .destructive) {
                 if let inv = activeInventory {
-                    inv.availablePlates = PlateInventoryDefaults.make(
-                        for: activeTab,
-                        unitSystem: currentUnit
-                    )
-                    inv.barWeight = PlateInventoryDefaults.barWeight(
-                        for: activeTab,
-                        unitSystem: currentUnit
-                    )
-                    inv.updatedAt = .now
-                    try? ctx.save()
+                    do {
+                        try Self.reset(inv, unit: currentUnit, context: ctx)
+                    } catch {
+                        showSaveError = true
+                    }
                 }
             }
             Button("Cancel", role: .cancel) {}
         } message: {
             // UI-SPEC line 280 verbatim
             Text("Replaces with the default \(unitLabel) plate set for \(activeTab.displayName).")
+        }
+        .alert("Couldn't reset inventory", isPresented: $showSaveError) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text("Your custom inventory wasn't changed. Try resetting again.")
+        }
+    }
+
+    @MainActor
+    static func reset(
+        _ inventory: PlateInventory, unit: WeightUnit, context: ModelContext,
+        save: (ModelContext) throws -> Void = { try $0.save() }
+    ) throws {
+        inventory.availablePlates = PlateInventoryDefaults.make(for: inventory.equipmentKind, unitSystem: unit)
+        inventory.barWeight = PlateInventoryDefaults.barWeight(for: inventory.equipmentKind, unitSystem: unit)
+        inventory.updatedAt = .now
+        do {
+            try save(context)
+        } catch {
+            SessionSetActions.rollBack(context)
+            throw error
         }
     }
 
