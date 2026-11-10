@@ -18,19 +18,19 @@ struct TempoPartsTests {
 
     @Test("No tempo reads as four blank parts, and four blank parts store nil",
           arguments: [nil, ""] as [String?])
-    func blankTempo(tempo: String?) {
+    func blankTempo(tempo: String?) throws {
         let parts = TempoParts.split(tempo)
         #expect(parts == ["", "", "", ""])
-        #expect(TempoParts.join(parts) == nil)
+        #expect(try TempoParts.join(parts) == nil)
     }
 
     @Test("A tempo reads back and joins back as entered", arguments: [
         ("3-1-2-0", ["3", "1", "2", "0"]),
         ("3--2-0", ["3", "", "2", "0"]),
     ])
-    func tempoReadsBackAsEntered(tempo: String, parts: [String]) {
+    func tempoReadsBackAsEntered(tempo: String, parts: [String]) throws {
         #expect(TempoParts.split(tempo) == parts)
-        #expect(TempoParts.join(parts) == tempo)
+        #expect(try TempoParts.join(parts) == tempo)
     }
 
     /// Each part alone, as the logger stores it, such as "-1--", and as the
@@ -42,26 +42,29 @@ struct TempoPartsTests {
         (["", "", "2", ""], "--2-", "--2"),
         (["", "", "", "0"], "---0", "---0"),
     ])
-    func eachPartAlone(parts: [String], tempo: String, editorTempo: String) {
+    func eachPartAlone(parts: [String], tempo: String, editorTempo: String) throws {
         #expect(TempoParts.split(tempo) == parts)
         #expect(TempoParts.split(editorTempo) == parts)
-        #expect(TempoParts.join(parts) == tempo)
+        #expect(try TempoParts.join(parts) == tempo)
     }
 
     /// The session editor wrote this back as "1-2--5".
     @Test("Setting one part leaves the others where they were")
-    func settingOnePartKeepsTheOthers() {
+    func settingOnePartKeepsTheOthers() throws {
         var parts = TempoParts.split("-1-2-")
         parts[3] = "5"
-        #expect(TempoParts.join(parts) == "-1-2-5")
+        #expect(try TempoParts.join(parts) == "-1-2-5")
     }
 
-    /// Only a paste puts a dash inside a part. A whole tempo pasted into Ecc
-    /// reads back as its four parts, as both rows read it before, and the
-    /// parts past the fourth are left out.
-    @Test("A whole tempo pasted into Ecc reads back as its four parts")
-    func pastedTempoReadsAsFourParts() {
-        let stored = TempoParts.join(["3-1-2-0", "", "", ""])
-        #expect(TempoParts.split(stored) == ["3", "1", "2", "0"])
+    @Test("Pasted separators cannot shift any part", arguments: ["3-1-2-0", "1–2", "1−2", "1—2", "1‑2"])
+    func pastedSeparatorsAreRejected(pasted: String) throws {
+        for index in 0..<4 {
+            var stored: String? = "-1-2-"
+            var edited = TempoParts.split(stored)
+            edited[index] = pasted
+            #expect(throws: TempoParts.ValidationError.self) { stored = try TempoParts.join(edited) }
+            #expect(stored == "-1-2-")
+        }
+        #expect(throws: TempoParts.ValidationError.self) { try TempoParts.join(["1", "2", "3", "4", "5"]) }
     }
 }

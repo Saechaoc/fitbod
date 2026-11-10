@@ -28,6 +28,7 @@ import SwiftData
 public struct TempoEntryRow: View {
     @Bindable public var entry: SetEntry
     @State private var components: [String] = ["", "", "", ""]
+    @State private var tempoError: String?
     @FocusState private var focusedField: Int?
 
     private let fieldLabels = ["ECC", "BOT", "CON", "TOP"]                        // UI-SPEC verbatim labels
@@ -59,8 +60,8 @@ public struct TempoEntryRow: View {
                         TextField("—", text: Binding(
                             get: { components[idx] },
                             set: { newValue in
+                                tempoError = nil
                                 components[idx] = newValue
-                                persistTempo()
                             }
                         ))
                         .font(BRUFont.bodyDefault)
@@ -71,30 +72,44 @@ public struct TempoEntryRow: View {
                         // A digit typed into the field replaces the one it
                         // shows (T39).
                         .selectsAllOnFocus(focusedField == idx)
-                        .frame(minWidth: 40, minHeight: 32)
+                        .frame(minWidth: 40, minHeight: BRUMetrics.touchTarget)
                         .overlay(
                             Rectangle()
                                 .stroke(Color.bruInk, lineWidth: 1)
                         )
+                        .accessibilityLabel("Tempo \(label)")
                         .accessibilityIdentifier("set.tempo.\(label.lowercased()).\(identifierSuffix)")
                     }
                 }
                 Spacer()
             }
+            if let tempoError {
+                Text(tempoError)
+                    .font(BRUFont.labelSmall)
+                    .foregroundStyle(Color.bruSignalText)
+                    .accessibilityIdentifier("set.tempo.error.\(identifierSuffix)")
+            }
         }
         .padding(.vertical, 4)
         // The focused row scrolls clear of the keyboard and its DONE (T39).
         .revealsAboveKeyboard(focusedField != nil)
-        .onAppear {
-            // Re-hydrate the four fields from the persisted tempoActual
-            components = TempoParts.split(entry.tempoActual)
+        .onAppear { components = TempoParts.split(entry.tempoActual) }
+        .onChange(of: components) { _, edited in
+            guard edited != TempoParts.split(entry.tempoActual) else { return }
+            persistTempo(edited)
         }
     }
 
     /// Persists the dash-joined tempo to SetEntry.tempoActual.
     /// Empty across the board → nil so history doesn't accumulate ghost rows.
-    private func persistTempo() {
-        entry.tempoActual = TempoParts.join(components)
+    private func persistTempo(_ edited: [String]) {
+        do {
+            entry.tempoActual = try TempoParts.join(edited)
+            tempoError = nil
+        } catch {
+            components = TempoParts.split(entry.tempoActual)
+            tempoError = error.localizedDescription
+        }
     }
 
     /// The set's identifier suffix, such as "1.S1", as SetRow gives it.

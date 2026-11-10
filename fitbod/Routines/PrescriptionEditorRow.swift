@@ -50,6 +50,7 @@ public struct PrescriptionEditorRow: View {
     public let hasBlock: Bool
 
     @State private var showingAdvanced: Bool = false
+    @State private var tempoError: String?
     @FocusState private var focusedTempoField: Int?
     /// One tempo field's drawn height, which sets how far its touch target
     /// reaches up and down.
@@ -224,6 +225,12 @@ public struct PrescriptionEditorRow: View {
                         .fixedSize(horizontal: true, vertical: false)
                 }
             }
+            if let tempoError {
+                Text(tempoError)
+                    .font(BRUFont.labelSmall)
+                    .foregroundStyle(Color.bruSignalText)
+                    .accessibilityIdentifier("prescription.tempo.error")
+            }
         }
     }
 
@@ -251,7 +258,12 @@ public struct PrescriptionEditorRow: View {
             set: { newValue in
                 var edited = TempoParts.split(draft.tempo)
                 edited[index] = newValue
-                draft.tempo = TempoParts.join(edited)
+                do {
+                    draft.tempo = try TempoParts.join(edited)
+                    tempoError = nil
+                } catch {
+                    tempoError = error.localizedDescription
+                }
             }
         )
         let verticalReach = max(0, (BRUMetrics.touchTarget - tempoFieldHeight) / 2)

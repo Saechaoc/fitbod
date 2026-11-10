@@ -12,9 +12,9 @@ Keep concise commands/results/limitations with their RM owner. Logs/screenshots 
 
 ## Active work
 
-The user chose on 2026-11-10 to finish [RM-006](#rm-006), then complete Lane B.
-RM-006's six-slice implementation is Done. The product successor is [RM-010](#rm-010), which requires RM-003.
-Lane B, data safety: [RM-001](#rm-001) is reviewed and verified on current main. RM-002 through RM-004 are complete; finish RM-005, one bounded delivery at a time in an isolated worktree, with exclusive simulator use during each run. Reuse existing devices across lanes; see [local simulator reuse](SETUP.md#local-simulator-reuse).
+[RM-006](#rm-006)'s six slices and Lane B ([RM-001](#rm-001)–[RM-005](#rm-005)) are Done.
+The next Today/volume delivery is [RM-010](#rm-010); its RM-006 and RM-003 prerequisites are complete.
+Keep exclusive simulator use during each run and reuse existing devices across lanes; see [local simulator reuse](SETUP.md#local-simulator-reuse).
 Each slice lands on `main` when its local checks pass ([RM-053](#rm-053)).
 Move the next bounded outcome here when its implementation starts; a phone-pending feature does not occupy an active slot.
 
@@ -24,9 +24,8 @@ This is the ordered dependency-ready queue; feature definitions below retain the
 
 | Order | Ready outcome | Boundary |
 |---|---|---|
-| 4 | [RM-005](#rm-005) numeric/tempo boundaries | Lane B. Current relabel-only units suffice; no circular wait for provenance. |
-| 5 | [RM-010](#rm-010) full volume behind a summary row | Lane A after RM-006; needs RM-003. |
-| 6 | [RM-019](#rm-019) stalled exercises outside a workout | Independent analytics stream; [RM-020](#rm-020) past recaps follows, then broader analytics. |
+| 1 | [RM-010](#rm-010) full volume behind a summary row | Lane A; RM-006 and RM-003 are complete. |
+| 2 | [RM-019](#rm-019) stalled exercises outside a workout | Independent analytics stream; [RM-020](#rm-020) past recaps follows, then broader analytics. |
 
 After RM-001, [RM-029](#rm-029) populated recovery proof takes priority over schema-changing work. Preserve the approved Today/Program order: **RM-006 → RM-010 → RM-011 → RM-012 → RM-013 → RM-014 → RM-015 → RM-016 → RM-017 → RM-018**. Successors enter this queue as preceding work lands; planning may proceed meanwhile. Authoring, catalog, logging and calculator deliveries use their actual conditional prerequisites below, not the whole redesign as a gate.
 
@@ -62,6 +61,7 @@ Done covers the bounded implementation, appropriate agent-run checks and updated
 
 | ID | Priority / status | Outcome and completion evidence | Dependencies / references |
 |---|---|---|---|
+| [RM-005](#rm-005) | P1 · Done | Locale-safe load entry, unique positive plate additions and shared tempo validation; unit/failure/relaunch, 390pt and full-suite evidence in RM-005. | Units still relabel; correction/completion rules unchanged. |
 | [RM-004](#rm-004) | P1 · Done | Photo metadata removed at pick/save/upgrade/export/restore; original-preserving failures and pre-delete validation verified. Evidence in RM-004. | Static photos, full pixel dimensions within decode bounds; no schema change. |
 | [RM-003](#rm-003) | P1 · Done | Both volume screens render missing targets without model writes; explicit creation rolls back and retries. Hosted before/after, units and 390pt route evidence in RM-003. | Unblocks RM-010; no schema or fatigue-math change. |
 | [RM-002](#rm-002) | P1 · Done | Failed slot additions/resets roll back and explain retry; superset drafts save with the session and Discard writes nothing. Unit/failure/relaunch evidence in RM-002. | Schema unchanged. |
@@ -131,17 +131,19 @@ Review/rebase on 2026-11-10: no blocking findings; `f4548033` applies the implem
 **Requires:** None.
 **Evidence:** A real geotagged JPEG fixture reproduced GPS leakage in backup bytes (`fast-20261110-083624`). Implementation sanitizes pixels at pick/save/export/restore and upgrades existing stored photos; failed replacements preserve originals. Static photos keep their pixel dimensions with orientation/mirroring baked into PNG pixels, subject to a 64MP/16,384px decode bound; the existing backup image-entry names stay compatible. All eight rotations/mirrors preserve the four-color fixture; GPS, camera/date/city tags are absent, canonical bytes are stable, failed saves keep originals, disk reopen keeps sanitized data, and malformed backup images fail before current workouts are deleted. Final unit target: 1,315 passed, one expected failure (`fast-20261110-125658`); the new photo Retry/Later/remove/Save/relaunch UI check passed at 390pt/default/light in that run. Five existing backup/share/restore UI checks passed (`fast-20261110-084606`). The startup alert proved unreliable during view changes, so failure uses an inline notice; its final 390pt capture was inspected. Camera/library expansion and physical photo picking were excluded. Canonical PNGs are decoded on each launch; optimize only if startup cost is measured.
 Rebased onto catalog/schema main `978cb48a`: the unit target recorded 1,325 passed, two fixture-dependent skips and one expected failure, and the photo UI journey passed (`fast-20261110-130422`). The backup journey first failed to find Save in the system Files picker, then passed unchanged in a focused rerun (`fast-20261110-130934`); this intermittent picker failure remains a test limitation. No photo regression was found.
-Final integration exposed a request-consumption race after the root notice container changed: starting from Program created a workout but sometimes left Program selected. Root now uses the change event's captured pending value before Today clears the request. `WorkoutExitUITests` passed Program start, resume and Back-to-Today (`fast-20261110-133853`); the unit target had passed with the route fix in `fast-20261110-133424`. The separate tempo-field failure in those runs remained with active RM-005.
+Final integration exposed a request-consumption race after the root notice container changed: starting from Program created a workout but sometimes left Program selected. Root now uses the change event's captured pending value before Today clears the request. `WorkoutExitUITests` passed Program start, resume and Back-to-Today (`fast-20261110-133853`); the unit target had passed with the route fix in `fast-20261110-133424`. The separate tempo-field failure in those runs is resolved and verified in RM-005.
 **References:** [D-111](design-map/audit.md#d-111), [photo picker](../fitbod/ExerciseLibrary/CustomExerciseImagePicker.swift).
 
 ### <a id="rm-005"></a>RM-005 — Numeric and tempo entry preserve the entered value
 
-**P1 · Active.** Preserve comma-decimal failures D-32/F355, duplicate/zero plate input D-31/D-189 and pasted tempo separators F383. T145 fixed ordinary empty-part tempo corruption F380.
+**P1 · Done (2026-11-10).** D-32/F355, D-31/D-189 and F383: loads round-trip in the current locale, plate additions require unique positive values, and pasted separators cannot shift tempo parts. T145's empty-part behavior F380 remains intact.
 **Done when:** locale-valid weights round-trip without prefix parsing; duplicates cannot create ambiguous plate row IDs; invalid/zero values explain rejection; pasted dashes cannot shift tempo parts. Test actual parsers/save boundaries and preserve signed assistance loads and history-correction validation.
 **Scope / sequence:** Deliver locale weight parsing, unique positive plate values, then pasted tempo validation at shared save boundaries. Keep relabel-only units; conversion/provenance is RM-021.
 **Requires:** None; current unit semantics suffice.
 **Evidence:** Locale load entry is complete (2026-11-10): the shared parser consumes the whole ungrouped decimal, supports localized digits and signed assistance, and leaves correction/completion validation unchanged. The unit target recorded 1,328 passed, two fixture-dependent skips and one expected failure (`fast-20261110-131630`); the existing logger type-over test passed. After correcting its completion-label assertion, the new German-locale journey passed: type `82,5`, log it and relaunch with the same stored load (`fast-20261110-131942`, 390pt/default/light). Its capture was inspected.
-Unique positive plates are complete: actual Add mutations reject invalid/zero/duplicate values before writing; injected save failure restores saved bytes/date and permits retry. Legacy duplicate denominations combine counts on read without changing stored bytes; the shared solver bounds its count before integer conversion so tiny positive plates cannot trap. Units recorded 1,332 passed, two fixture-dependent skips and one expected failure; both plate UI checks passed (`fast-20261110-132315`, 390pt/default/light). The German-locale UI rejected zero and duplicate `2,5`, then saved `3,75` and found exactly one row after relaunch; its error capture was inspected. Pasted tempo validation remains open.
+Unique positive plates are complete: actual Add mutations reject invalid/zero/duplicate values before writing; injected save failure restores saved bytes/date and permits retry. Legacy duplicate denominations combine counts on read without changing stored bytes; the shared solver bounds its count before integer conversion so tiny positive plates cannot trap. Units recorded 1,332 passed, two fixture-dependent skips and one expected failure; both plate UI checks passed (`fast-20261110-132315`, 390pt/default/light). The German-locale UI rejected zero and duplicate `2,5`, then saved `3,75` and found exactly one row after relaunch; its error capture was inspected.
+Tempo validation is complete: the shared join rejects ASCII/Unicode dashes in every part before writing; both editors explain rejection and preserve the prior parts. The logger restores the native text field after its binding change, so rejected text cannot remain visible over a different model value. The extended number-entry journey passed at 390pt/default/light (`fast-20261110-134212`): actual Paste in both editors, unchanged neighboring parts, then log/relaunch with `4-1--` preserved. Both error captures were inspected.
+Final combined verification, based on `d963df40` plus the final tempo source: `scripts/test.sh full` passed all 98 UI tests and 1,332 unit tests, with two fixture-dependent StoreRehearsal skips and one expected failure (`full-20261110-134446`, iPhone 17/iOS 26.5, two serial shards). The widget built; all 1,433 enumerated cases ran with none missing/repeated/unfinished and no UI idle-wait stalls. Documentation checker/self-test and token contrast checks passed, with the existing five-unreferenced-image warning. This verifies RM-006 and Lane B together; broader AX3/two-phone/physical VoiceOver remains with the stability/release owners.
 **References:** [D-31](design-map/audit.md#d-31), [D-32](design-map/audit.md#d-32), [D-189](design-map/audit.md#d-189), [tempo](../fitbod/Sessions/TempoEntryRow.swift); F355/F380/F383.
 
 ### <a id="rm-006"></a>RM-006 — Redesign 1.3: session sheet, StartSlot and state slabs

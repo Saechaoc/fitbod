@@ -15,13 +15,19 @@ import Foundation
 
 public enum TempoParts {
 
+    public enum ValidationError: LocalizedError {
+        case invalidParts
+
+        public var errorDescription: String? {
+            "Enter one tempo part per field, without dashes."
+        }
+    }
+
     /// Ecc, Bot, Con and Top.
     private static let count = 4
 
     /// The four parts of `tempo`, Ecc to Top, with "" for each blank part.
-    /// A tempo with fewer parts, such as "-1" for a Bot pause, leaves the
-    /// rest blank. Parts past the fourth, which only a pasted dash makes,
-    /// are left out, as the logger always read them.
+    /// Legacy tempos with fewer parts are padded; extra parts are read as before.
     public static func split(_ tempo: String?) -> [String] {
         let parts = (tempo ?? "")
             .split(separator: "-", omittingEmptySubsequences: false)
@@ -31,7 +37,12 @@ public enum TempoParts {
 
     /// The four parts joined with dashes, or nil when every part is blank,
     /// so no blank tempo is stored.
-    public static func join(_ parts: [String]) -> String? {
-        parts.allSatisfy(\.isEmpty) ? nil : parts.joined(separator: "-")
+    public static func join(_ parts: [String]) throws -> String? {
+        guard parts.count == count, parts.allSatisfy({ part in
+            !part.unicodeScalars.contains {
+                $0.properties.generalCategory == .dashPunctuation || $0.value == 0x2212
+            }
+        }) else { throw ValidationError.invalidParts }
+        return parts.allSatisfy(\.isEmpty) ? nil : parts.joined(separator: "-")
     }
 }

@@ -43,7 +43,7 @@ Documentation/tooling-only work runs relevant checks. App changes run the unit t
 
 - Tabs: Today, Program, Progress, Library, with independent native navigation stacks and BRU tab controls. Settings is a Today sheet; History opens from Progress → Workouts.
 - Logger belongs only to Today's stack. Program/session/Live Activity entry uses `ResumeWorkoutRequest`; Back returns to Today. Tab controls hide in the logger/while editing.
-- SchemaV7 is the sole baseline, without the removed historical migration chain. Incompatible stores move aside with SQLite siblings; transient-open error classification remains an open roadmap risk.
+- SchemaV7 is the sole baseline, without the removed historical migration chain. Only confirmed missing migration mappings move incompatible stores aside with SQLite siblings; other open failures preserve the store and offer retry (RM-001).
 - Units relabel, never implicitly convert; exercise overrides win. Pattern filtering stays hidden until metadata exists.
 - Run simulator tests serially on dedicated devices. DEBUG reset is initial launch only; persistence relaunches omit reset.
 - Full program graph, freeze points, time/membership rules, correction transactions and delete rules: `ARCHITECTURE.md`.

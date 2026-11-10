@@ -12,6 +12,7 @@
 //
 
 import XCTest
+import UIKit
 
 final class NumberEntryUITests: XCTestCase {
 
@@ -69,8 +70,6 @@ final class NumberEntryUITests: XCTestCase {
         UITestNavigation.saveScreenshot("T39", "logger-weight")
     }
 
-    // MARK: - Session editor
-
     @MainActor
     func testCommaDecimalWeightSurvivesLoggingAndRelaunch() throws {
         let localeArguments = ["-AppleLocale", "de_DE", "-AppleLanguages", "(en)"]
@@ -96,6 +95,8 @@ final class NumberEntryUITests: XCTestCase {
         XCTAssertEqual(app.buttons["set.complete.1.S1"].label, "Set 1 complete")
     }
 
+    // MARK: - Session editor
+
     /// A tempo given 2, then 3 typed over it, reads 3, and the save bar
     /// steps aside while the keyboard is up. The session's next workout
     /// tracks tempo and partial reps, whose fields type over theirs too.
@@ -110,6 +111,10 @@ final class NumberEntryUITests: XCTestCase {
         // The lifter moves on to the next field, then comes back to fix it.
         XCTAssertEqual(UITestNavigation.enter("1", into: app.otherElements["prescription.tempo.2"].textFields.firstMatch), "1")
         XCTAssertEqual(UITestNavigation.enter("3", into: tempo), "3", "3 typed over 2 must replace it")
+        pasteTempo(into: tempo, in: app)
+        XCTAssertTrue(app.staticTexts["prescription.tempo.error"].waitForExistence(timeout: 5))
+        XCTAssertEqual(tempo.value as? String, "3")
+        XCTAssertEqual(app.otherElements["prescription.tempo.2"].textFields.firstMatch.value as? String, "1")
         UITestNavigation.assertAboveKeyboard(tempo, in: app)
         // The row's last field sits at the trailing end, under DONE's column.
         UITestNavigation.assertAboveKeyboard(app.otherElements["prescription.tempo.4"].textFields.firstMatch, in: app)
@@ -122,14 +127,25 @@ final class NumberEntryUITests: XCTestCase {
         UITestNavigation.reveal(trackPartials, in: app)
         trackPartials.tap()
         save.tap()
-        UITestNavigation.hittable(app.buttons, "Start workout ▸", exactLabel: true).tap()
+        XCTAssertTrue(save.waitForNonExistence(timeout: 5))
+        let start = UITestNavigation.hittable(app.buttons, "Start workout ▸", exactLabel: true)
+        UITestNavigation.waitUntilStill(start)
+        start.tap()
         let ecc = app.textFields.matching(NSPredicate(format: "identifier BEGINSWITH %@", "set.tempo.ecc.")).firstMatch
         XCTAssertTrue(ecc.waitForExistence(timeout: 10), "The workout must track tempo")
         UITestNavigation.revealInLogger(ecc, in: app)
         XCTAssertEqual(UITestNavigation.enter("3", into: ecc), "3")
         closeKeyboard(in: app)
+        let bottom = app.textFields.matching(NSPredicate(format: "identifier BEGINSWITH %@", "set.tempo.bot.")).firstMatch
+        UITestNavigation.enter("1", into: bottom)
+        closeKeyboard(in: app)
         XCTAssertEqual(UITestNavigation.enter("4", into: ecc), "4", "4 typed over 3 must replace it")
         UITestNavigation.assertAboveKeyboard(ecc, in: app)
+        pasteTempo(into: ecc, in: app)
+        let tempoError = app.staticTexts.matching(NSPredicate(format: "identifier BEGINSWITH %@", "set.tempo.error.")).firstMatch
+        XCTAssertTrue(tempoError.waitForExistence(timeout: 5))
+        XCTAssertEqual(ecc.value as? String, "4")
+        UITestNavigation.saveScreenshot("RM005", "tempo-paste-error")
         closeKeyboard(in: app)
 
         let partials = app.textFields.matching(NSPredicate(format: "identifier BEGINSWITH %@", "set.partials.")).firstMatch
@@ -138,6 +154,21 @@ final class NumberEntryUITests: XCTestCase {
         closeKeyboard(in: app)
         XCTAssertEqual(UITestNavigation.enter("1", into: partials), "1", "1 typed over 2 must replace it")
         UITestNavigation.assertAboveKeyboard(partials, in: app)
+        closeKeyboard(in: app)
+        let weight = app.textFields["set.weight.1.S1"]
+        UITestNavigation.revealInLogger(weight, in: app)
+        UITestNavigation.enter("80", into: weight)
+        closeKeyboard(in: app)
+        UITestNavigation.enter("6", into: app.textFields["set.reps.1.S1"])
+        closeKeyboard(in: app)
+        app.buttons["set.complete.1.S1"].tap()
+        UITestNavigation.relaunch(app)
+        let resume = app.buttons["resumeSlab.resume"]
+        XCTAssertTrue(resume.waitForExistence(timeout: 15))
+        resume.tap()
+        XCTAssertTrue(ecc.waitForExistence(timeout: 10))
+        XCTAssertEqual(ecc.value as? String, "4")
+        XCTAssertEqual(bottom.value as? String, "1")
     }
 
     // MARK: - Plate Inventory
@@ -293,6 +324,15 @@ final class NumberEntryUITests: XCTestCase {
     }
 
     // MARK: - Helpers
+
+    @MainActor
+    private func pasteTempo(into field: XCUIElement, in app: XCUIApplication) {
+        UIPasteboard.general.string = "9-8-7-6"
+        field.press(forDuration: 1)
+        let paste = app.descendants(matching: .any).matching(NSPredicate(format: "label == %@", "Paste")).firstMatch
+        XCTAssertTrue(paste.waitForExistence(timeout: 5))
+        paste.tap()
+    }
 
     /// Taps `field`, which selects its number, and deletes every digit it
     /// shows, the way a lifter empties it.
