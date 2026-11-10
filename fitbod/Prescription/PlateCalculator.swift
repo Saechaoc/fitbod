@@ -70,8 +70,9 @@ public enum PlateCalculator {
 
         let sortedPlates = plates.sorted { $0.weight > $1.weight }
         for plate in sortedPlates {
-            guard plate.weight > 0 else { continue }  // guard divide-by-zero
-            let useCount = min(plate.countPerSide, Int(remaining / plate.weight))
+            guard plate.weight.isFinite, plate.weight > 0, plate.countPerSide > 0, remaining > 0 else { continue }
+            let needed = (remaining / plate.weight).rounded(.down)
+            let useCount = needed >= Double(plate.countPerSide) ? plate.countPerSide : Int(needed)
             if useCount > 0 {
                 used.append((plate.weight, useCount))
                 remaining -= plate.weight * Double(useCount)
@@ -128,8 +129,9 @@ public enum PlateCalculator {
 
         let sortedPlates = plates.sorted { $0.weight > $1.weight }
         for plate in sortedPlates {
-            guard plate.weight > 0 else { continue }  // guard divide-by-zero
-            let useCount = min(plate.countPerSide, Int(remaining / plate.weight))
+            guard plate.weight.isFinite, plate.weight > 0, plate.countPerSide > 0, remaining > 0 else { continue }
+            let needed = (remaining / plate.weight).rounded(.down)
+            let useCount = needed >= Double(plate.countPerSide) ? plate.countPerSide : Int(needed)
             if useCount > 0 {
                 usedPerSide.append((plate.weight, useCount))
                 remaining -= plate.weight * Double(useCount)

@@ -42,7 +42,24 @@ extension PlateInventory {
     }
 
     public var availablePlates: [PlateSpec] {
-        get { (try? JSONDecoder().decode([PlateSpec].self, from: availablePlatesData)) ?? [] }
+        get {
+            let decoded = (try? JSONDecoder().decode([PlateSpec].self, from: availablePlatesData)) ?? []
+            var plates: [PlateSpec] = []
+            // Old additions could duplicate a weight; combine counts without rewriting the saved bytes.
+            for plate in decoded where plate.weight.isFinite && plate.weight > 0 {
+                let count = max(0, plate.countPerSide)
+                if let index = plates.firstIndex(where: { $0.weight == plate.weight }) {
+                    let existing = plates[index]
+                    let total = existing.countPerSide.addingReportingOverflow(count)
+                    plates[index] = PlateSpec(weight: plate.weight,
+                        countPerSide: total.overflow ? Int.max : total.partialValue,
+                        color: existing.color ?? plate.color)
+                } else {
+                    plates.append(PlateSpec(weight: plate.weight, countPerSide: count, color: plate.color))
+                }
+            }
+            return plates
+        }
         set { availablePlatesData = (try? JSONEncoder().encode(newValue)) ?? Data() }
     }
 }

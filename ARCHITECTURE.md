@@ -146,6 +146,7 @@ Order workouts by start even when finish order differs; the former handoff's pro
 
 Units relabel stored numbers, never implicitly convert; exercise overrides win.
 Workout load fields parse the entire ungrouped decimal in the current locale, including signed assistance, and format it in that same locale. History corrections retain their nonnegative/range validation; parsing a load does not change set-completion rules.
+Plate inventory readers expose one finite positive denomination per weight, combining legacy duplicate counts without rewriting saved bytes. New plate additions validate before mutation and roll back failed saves; the editor keeps the entered text for retry.
 There is no per-set unit provenance yet; do not call mixed-unit totals converted/comparable ([RM-021](docs/ROADMAP.md#rm-021)).
 Distance is the exception: `SetEntry.distanceMeters` is stored in meters and converted for entry and display, so it never needs provenance.
 

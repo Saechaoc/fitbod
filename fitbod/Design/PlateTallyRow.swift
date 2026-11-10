@@ -89,7 +89,7 @@ public struct PlateTallyRow: View {
             .accessibilityAdjustableAction { direction in
                 switch direction {
                 case .increment:
-                    count = min(count + 1, 4)
+                    if count < 4 { count += 1 }
                 case .decrement:
                     count = max(count - 1, 0)
                 default:

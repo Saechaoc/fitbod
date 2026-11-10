@@ -163,6 +163,28 @@ public struct PlateInventoryEditor: View {
         }
     }
 
+    static func plateError(weight: Double, inventory: PlateInventory) -> PlateEntryError? {
+        guard weight.isFinite, weight > 0 else { return .invalidWeight }
+        return inventory.availablePlates.contains { $0.weight == weight } ? .duplicateWeight : nil
+    }
+
+    @MainActor
+    static func addPlate(
+        weight: Double, to inventory: PlateInventory, context: ModelContext,
+        save: (ModelContext) throws -> Void = { try $0.save() }
+    ) throws {
+        if let error = plateError(weight: weight, inventory: inventory) { throw error }
+        inventory.availablePlates = (inventory.availablePlates + [PlateSpec(weight: weight, countPerSide: 2)])
+            .sorted { $0.weight > $1.weight }
+        inventory.updatedAt = .now
+        do {
+            try save(context)
+        } catch {
+            SessionSetActions.rollBack(context)
+            throw error
+        }
+    }
+
     // MARK: - Equipment tab strip
 
     /// Custom 4-segment bruInk tab strip — replaces Picker(.segmented).
@@ -447,6 +469,17 @@ public struct PlateInventoryEditor: View {
 
 // MARK: - AddPlateSheet
 
+enum PlateEntryError: LocalizedError {
+    case invalidWeight, duplicateWeight
+
+    var errorDescription: String? {
+        switch self {
+        case .invalidWeight: "Enter a valid weight greater than zero."
+        case .duplicateWeight: "That plate is already listed. Change its count instead."
+        }
+    }
+}
+
 /// Private sheet — BRUHeaderBar + PLATE WEIGHT label + TextField + CANCEL/ADD buttons.
 /// Per UI-SPEC lines 272–276 verbatim. No NavigationStack — bare VStack.
 private struct AddPlateSheet: View {
@@ -455,8 +488,18 @@ private struct AddPlateSheet: View {
     let ctx: ModelContext
 
     @State private var newPlateWeightText: String = ""
+    @State private var showSaveError = false
     @FocusState private var weightFocused: Bool
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.locale) private var locale
+
+    private var validationError: String? {
+        guard !newPlateWeightText.isEmpty else { return nil }
+        guard let weight = WorkoutLoadInput.value(newPlateWeightText, locale: locale) else {
+            return PlateEntryError.invalidWeight.errorDescription
+        }
+        return PlateInventoryEditor.plateError(weight: weight, inventory: binv)?.errorDescription
+    }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -476,17 +519,15 @@ private struct AddPlateSheet: View {
                     // shows (T39).
                     .selectsAllOnFocus(weightFocused)
                     .font(BRUFont.bodyDefault)
+                    .frame(minHeight: BRUMetrics.touchTarget)
                     .accessibilityLabel("Plate weight")
                     .accessibilityIdentifier("addPlate.weight")
 
-                // Inline validation error per 03-UI-SPEC destructive pattern
-                // (bruSignal replaces systemRed per must_have: "Color(.system*) zero")
-                if !newPlateWeightText.isEmpty,
-                   Double(newPlateWeightText) == nil {
-                    Text("Enter a valid number.")
-                        .font(BRUFont.labelSmall)
-                        .tracking(1.2)
-                        .foregroundStyle(Color.bruSignal)                       // bruSignal replaces systemRed (was line 87)
+                if let validationError {
+                    Text(validationError)
+                        .font(BRUFont.bodyDefault)
+                        .foregroundStyle(Color.bruSignalText)
+                        .accessibilityIdentifier("addPlate.error")
                 }
 
                 HStack(spacing: 0) {
@@ -499,7 +540,7 @@ private struct AddPlateSheet: View {
                     BRUButton("Add", kind: .signal) {                          // UI-SPEC line 275 verbatim
                         addPlate()
                     }
-                    .disabled(Double(newPlateWeightText) == nil || newPlateWeightText.isEmpty)
+                    .disabled(newPlateWeightText.isEmpty || validationError != nil)
                     .frame(maxWidth: .infinity)
                 }
                 .padding(.top, 8)
@@ -511,18 +552,21 @@ private struct AddPlateSheet: View {
         .background(Color.bruPaper)
         // Number pads have no return key (T39).
         .keyboardDone()
+        .alert("Couldn't add plate", isPresented: $showSaveError) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text("Your inventory wasn't changed. Try adding the plate again.")
+        }
     }
 
     private func addPlate() {
-        guard let w = Double(newPlateWeightText), w > 0 else { return }
-        var updated = binv.availablePlates
-        updated.append(PlateSpec(weight: w, countPerSide: 2))
-        updated.sort(by: { $0.weight > $1.weight })
-        binv.availablePlates = updated
-        binv.updatedAt = .now
-        try? ctx.save()
-        newPlateWeightText = ""
-        dismiss()
+        guard let weight = WorkoutLoadInput.value(newPlateWeightText, locale: locale) else { return }
+        do {
+            try PlateInventoryEditor.addPlate(weight: weight, to: binv, context: ctx)
+            dismiss()
+        } catch {
+            showSaveError = true
+        }
     }
 }
 

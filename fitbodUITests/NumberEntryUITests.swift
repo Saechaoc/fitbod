@@ -173,6 +173,43 @@ final class NumberEntryUITests: XCTestCase {
 
     // MARK: - Exercise detail
 
+    @MainActor
+    func testPlateValidationAndCommaDecimalRelaunch() throws {
+        let app = UITestNavigation.launch(UITestNavigation.freshStore + ["-AppleLocale", "de_DE", "-AppleLanguages", "(en)"])
+        UITestNavigation.openSettings(in: app)
+        let inventory = app.buttons.labeled("Plate Inventory")
+        UITestNavigation.reveal(inventory, in: app)
+        inventory.tap()
+        let add = app.buttons.labeled("+ Add plate")
+        UITestNavigation.reveal(add, in: app)
+        add.tap()
+        let weight = app.textFields["addPlate.weight"]
+        let submit = app.buttons.labeled("Add")
+        UITestNavigation.enter("0", into: weight)
+        XCTAssertTrue(app.staticTexts["addPlate.error"].label.contains("greater than zero"))
+        XCTAssertFalse(submit.isEnabled)
+        closeKeyboard(in: app)
+        UITestNavigation.enter("2,5", into: weight)
+        XCTAssertTrue(app.staticTexts["addPlate.error"].label.contains("already listed"))
+        XCTAssertFalse(submit.isEnabled)
+        UITestNavigation.saveScreenshot("RM005", "duplicate-plate")
+        closeKeyboard(in: app)
+        UITestNavigation.enter("3,75", into: weight)
+        XCTAssertFalse(app.staticTexts["addPlate.error"].exists)
+        closeKeyboard(in: app)
+        XCTAssertTrue(submit.isEnabled)
+        submit.tap()
+        XCTAssertTrue(weight.waitForNonExistence(timeout: 5))
+        UITestNavigation.relaunch(app)
+        UITestNavigation.openSettings(in: app)
+        UITestNavigation.reveal(inventory, in: app)
+        inventory.tap()
+        let plate = app.otherElements.matching(NSPredicate(format: "label == %@", "3.75 lb plate"))
+        UITestNavigation.reveal(plate.firstMatch, in: app)
+        XCTAssertEqual(plate.count, 1)
+        XCTAssertEqual(plate.firstMatch.value as? String, "2 per side")
+    }
+
     /// The bench press's smallest increment and bar weight override each
     /// take a number typed over the one they show.
     @MainActor
