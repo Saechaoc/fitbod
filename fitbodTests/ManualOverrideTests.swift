@@ -14,7 +14,7 @@
 //      checkpoint.
 //    - nextSessionReadsActualNotPrescribed: SessionFactory history fetch reads
 //      SetEntry.weight (actualWeight), not SessionExercise.prescribedWeight.
-//      Asserted by checking that fetchHistoryPoints returns the overridden
+//      Asserted by checking that SessionFactory.historyPoints returns the overridden
 //      weight, not the prescription.
 //    - userSettingsMinCalibrationSetsHonored: inserting UserSettings with
 //      minCalibrationSets=20, then logging 15 working sets, then calling
@@ -181,12 +181,11 @@ struct ManualOverrideTests {
         ctx.insert(priorSet)
         try ctx.save()
 
-        // PRES-07: fetchHistoryPoints (which powers the next-session strategy
+        // PRES-07: SessionFactory.historyPoints (which powers the next-session strategy
         // call) reads SetEntry.weight (105), not SessionExercise.prescribedWeight (100).
-        let historyPoints = SessionFactory.fetchHistoryPoints(
-            exerciseID: ex.id,
-            intentRaw: Intent.strength.rawValue,
-            context: ctx
+        let historyPoints = SessionFactory.historyPoints(
+            in: PreviousMatchingIntent.logs(of: ex.id, context: ctx),
+            intentRaw: Intent.strength.rawValue
         )
 
         // With RPE 8.0 and 5 reps, TuchschererTable.percent should return ~0.811.
@@ -266,10 +265,9 @@ struct ManualOverrideTests {
         try ctx.save()
 
         // Fetch history points (15 sets with RPE — all eligible).
-        let historyPoints = SessionFactory.fetchHistoryPoints(
-            exerciseID: ex.id,
-            intentRaw: Intent.hypertrophy.rawValue,
-            context: ctx
+        let historyPoints = SessionFactory.historyPoints(
+            in: PreviousMatchingIntent.logs(of: ex.id, context: ctx),
+            intentRaw: Intent.hypertrophy.rawValue
         )
         #expect(historyPoints.count == 15, "Expected 15 history points; got \(historyPoints.count)")
 

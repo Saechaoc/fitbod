@@ -29,9 +29,9 @@ struct WhyUsesFinishedWorkoutsTests {
         try LoggerFixtures.session(exercise: ex, startedAt: .now, completedAt: nil,
                                    sets: [(100, 8, true), (100, 0, false), (100, 0, false)], in: ctx)
 
-        let reps = SessionFactory.lastSessionWorkingReps(
+        let reps = PreviousMatchingIntent.lastWorkingSets(
             exerciseID: ex.id, intentRaw: Intent.strength.rawValue, context: ctx
-        )
+        )?.sets.map(\.reps) ?? []
         #expect(reps == [12, 12, 12])
     }
 
@@ -47,8 +47,8 @@ struct WhyUsesFinishedWorkoutsTests {
                                                  sets: [(110, 5, true)], in: ctx)
         try logRPE(8, on: [finished, current], in: ctx)
 
-        let points = SessionFactory.fetchHistoryPoints(
-            exerciseID: ex.id, intentRaw: Intent.strength.rawValue, context: ctx
+        let points = SessionFactory.historyPoints(
+            in: PreviousMatchingIntent.logs(of: ex.id, context: ctx), intentRaw: Intent.strength.rawValue
         )
         #expect(points.count == 3)
         #expect(points.allSatisfy { $0.date == lastWeek })
@@ -68,8 +68,8 @@ struct WhyUsesFinishedWorkoutsTests {
         }
         try logRPE(8, on: sessions, in: ctx)
 
-        let points = SessionFactory.fetchHistoryPoints(
-            exerciseID: ex.id, intentRaw: Intent.strength.rawValue, context: ctx
+        let points = SessionFactory.historyPoints(
+            in: PreviousMatchingIntent.logs(of: ex.id, context: ctx), intentRaw: Intent.strength.rawValue
         )
         let expectedDates = Array(repeating: starts[2], count: 20)
             + Array(repeating: starts[1], count: 20)
@@ -122,15 +122,18 @@ struct WhyUsesFinishedWorkoutsTests {
         let exerciseID = se.exercise?.id
         let intentRaw = se.session?.intentRaw ?? Intent.strength.rawValue
         let inventory = SessionFactory.plateInventory(for: .barbell, context: ctx)
-        let lastReps = SessionFactory.lastSessionWorkingReps(
+        let lastReps = PreviousMatchingIntent.lastWorkingSets(
             exerciseID: exerciseID, intentRaw: intentRaw, context: ctx
-        )
+        )?.sets.map(\.reps) ?? []
         let lastHint = PreviousMatchingIntent.fetchTopWorkingSet(
             exerciseID: exerciseID, intentRaw: intentRaw, context: ctx,
             excludingSessionID: se.session?.id
         )
         let (_, explanation) = DoubleProgressionStrategy().prescribe(
-            history: SessionFactory.fetchHistoryPoints(exerciseID: exerciseID, intentRaw: intentRaw, context: ctx),
+            history: SessionFactory.historyPoints(
+                in: exerciseID.map { PreviousMatchingIntent.logs(of: $0, context: ctx) } ?? [],
+                intentRaw: intentRaw
+            ),
             targetRepsLow: se.targetRepsLow,
             targetRepsHigh: se.targetRepsHigh,
             targetRPE: se.targetRPE,

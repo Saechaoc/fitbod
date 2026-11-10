@@ -47,7 +47,7 @@
 //      WarmupRamp.generate for the first qualifying compound exercise.
 //      The step is `warmupRamp(for:...)`, which a mid-workout swap
 //      reuses to rebuild a pending or skipped ramp for the new exercise.
-//    - Internal-static helpers: fetchHistoryPoints, lastSessionWorkingReps,
+//    - Internal-static helpers: historyPoints(in:intentRaw:),
 //      plateInventory(for:context:), equipmentKind(for:) — declared
 //      `internal static` so tests and the exercise card can reuse them
 //      without duplicating the SwiftData query logic.
@@ -354,10 +354,12 @@ public enum SessionFactory {
     ) -> ExercisePrescription {
         // Use one matching finished workout for load progression and the
         // set-by-set offers. The active workout is separate evidence.
+        // The logger runs this on every card render, so the exercise's
+        // history is fetched once here and read twice.
+        let logs = exercise.map { PreviousMatchingIntent.logs(of: $0.id, context: context) } ?? []
         let previousWorkout = PreviousMatchingIntent.lastWorkingSets(
-            exerciseID: exercise?.id,
+            in: logs,
             intentRaw: session.intentRaw,
-            context: context,
             excludingSessionID: session.id
         )
         let previousSet = previousWorkout.flatMap { PreviousMatchingIntent.topWorkingSet(in: $0) }
@@ -376,13 +378,9 @@ public enum SessionFactory {
         )
 
         // Fetch history for the strategy (RESEARCH §Pitfall 7 filter applied
-        // inside fetchHistoryPoints — nil-RPE sets are excluded).
+        // inside historyPoints — nil-RPE sets are excluded).
         // PIVOT-02: intentRaw sourced from session-level snapshot.
-        let historyPoints = fetchHistoryPoints(
-            exerciseID: exercise?.id,
-            intentRaw: session.intentRaw,
-            context: context
-        )
+        let historyPoints = Self.historyPoints(in: logs, intentRaw: session.intentRaw)
 
         let lastRepsArray = previousWorkingSets.map(\.reps)
 
@@ -489,19 +487,14 @@ public enum SessionFactory {
     // card can reuse these query primitives without duplicating the
     // SwiftData #Predicate local-capture pattern (RESEARCH §6 Pitfall 1).
 
-    /// Fetches up to 50 most recent working, completed, RPE-logged SetEntry
-    /// rows for the given (exerciseID, intentRaw) pair, maps each to a
-    /// HistoryPoint via back-calculated e1RM, and returns them sorted
-    /// most-recent-first.
+    /// Takes the up to 50 most recent working, completed, RPE-logged sets
+    /// of `intentRaw` from logs fetched with `PreviousMatchingIntent.logs(of:)`,
+    /// maps each to a HistoryPoint via back-calculated e1RM, and returns
+    /// them sorted most-recent-first.
     ///
     /// RESEARCH §Pitfall 7: sets with nil RPE are excluded BEFORE the
     /// back-calc to avoid division-by-nil; sets whose Tuchscherer percent
     /// is nil (e.g. unknown RPE) are also skipped.
-    ///
-    /// RESEARCH §Pitfall 1: exerciseID and intentRaw are captured as local
-    /// constants BEFORE the #Predicate closure — related-entity ID compares
-    /// inside the predicate silently return empty on iOS 17/18 without this
-    /// local-capture workaround.
     ///
     /// Phase 3.1 PIVOT-05 / D-13: intent is a SESSION-level field after
     /// Plan 02. The #Predicate gates on the single-level `se.exercise?.id`
@@ -513,30 +506,18 @@ public enum SessionFactory {
     /// Only that exercise's rows are read. The logger rebuilds every card's
     /// explanation on each render, and fetching all completed sets in
     /// history here cost ~0.3 s per call with a year and a half of logs.
-    /// The sets are then sorted by `completedAt`, newest first, which is
-    /// the order the former all-history `completedAt` sort produced.
+    /// `prescription` fetches the rows once for this and `lastWorkingSets`.
+    /// The sets are sorted by `completedAt`, newest first, which is the
+    /// order the former all-history `completedAt` sort produced.
     ///
     /// Only sets from FINISHED sessions (`completedAt != nil`) count, the
     /// same rule as `PreviousMatchingIntent.fetchTopWorkingSet`. A set
     /// logged in the workout in progress never feeds its own explanation.
-    internal static func fetchHistoryPoints(
-        exerciseID: UUID?,
-        intentRaw: String,
-        context: ModelContext
+    internal static func historyPoints(
+        in sessionExercises: [SessionExercise],
+        intentRaw: String
     ) -> [HistoryPoint] {
-        guard let exerciseID else { return [] }
-
-        // RESEARCH §Pitfall 1 — local-let captures required before #Predicate.
-        let targetID = exerciseID
         let targetIntent = intentRaw
-
-        var descriptor = FetchDescriptor<SessionExercise>(
-            predicate: #Predicate { se in se.exercise?.id == targetID }
-        )
-        // Every row's session and sets are read below: load them in bulk
-        // instead of one fault per row.
-        descriptor.relationshipKeyPathsForPrefetching = [\.session, \.sets]
-        guard let sessionExercises = try? context.fetch(descriptor) else { return [] }
 
         var entries: [SetEntry] = []
         for se in sessionExercises {
@@ -562,35 +543,6 @@ public enum SessionFactory {
             let date = entry.sessionExercise?.session?.startedAt ?? entry.completedAt
             return HistoryPoint(e1RM: e1RM, date: date)
         }
-    }
-
-    /// Returns the working-set reps array for the most recent COMPLETED session
-    /// matching (exerciseID, intentRaw). Powers DoubleProgressionStrategy's bump
-    /// trigger. Returns empty array if no prior session exists.
-    ///
-    /// A session that logs the exercise more than once counts once: its reps
-    /// are read across all of those logs, in workout order and then set order.
-    /// A session whose logs hold no working set is skipped, and the walk back
-    /// stops after five sessions. The walk is
-    /// `PreviousMatchingIntent.lastWorkingSets`, which also picks
-    /// `fetchTopWorkingSet`'s session, so the bump reads the same workout as
-    /// the previous top set. Its fetch keeps the Phase 3.1 PIVOT-05 / D-13
-    /// shape: the #Predicate gates on the exercise only, and the session-level
-    /// intent gate is a Swift post-filter (RESEARCH §Pitfall 1).
-    ///
-    /// Only FINISHED sessions (`completedAt != nil`) count, the same rule
-    /// as `PreviousMatchingIntent.fetchTopWorkingSet`, so a set logged in
-    /// the workout in progress cannot change its own bump decision.
-    internal static func lastSessionWorkingReps(
-        exerciseID: UUID?,
-        intentRaw: String,
-        context: ModelContext
-    ) -> [Int] {
-        PreviousMatchingIntent.lastWorkingSets(
-            exerciseID: exerciseID,
-            intentRaw: intentRaw,
-            context: context
-        )?.sets.map(\.reps) ?? []
     }
 
     /// Returns the PlateInventory for the given equipment kind. If no row

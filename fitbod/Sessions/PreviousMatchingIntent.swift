@@ -13,7 +13,7 @@
 //  Centralizing the query prevents the two surfaces from drifting on
 //  subtle semantics (working-set filter, warmup exclusion, "top set"
 //  tie-breaking, intent split for ROUTINE-08). Its session walk,
-//  `lastWorkingSets`, also gives SessionFactory.lastSessionWorkingReps
+//  `lastWorkingSets`, also gives SessionFactory.prescription
 //  the reps behind double progression's bump, so the bump and the
 //  previous top set always read the same workout.
 //
@@ -77,7 +77,7 @@ public enum PreviousMatchingIntent {
     ///
     /// The session walk (which sessions count, the five-session walk back,
     /// the working-set filter and the order the sets come in) is
-    /// `lastWorkingSets`, shared with `SessionFactory.lastSessionWorkingReps`.
+    /// `lastWorkingSets`, shared with `SessionFactory.prescription`.
     ///
     /// Only FINISHED sessions count as "previous" (`completedAt != nil`),
     /// most recent first. The in-progress session and any abandoned,
@@ -127,7 +127,7 @@ public enum PreviousMatchingIntent {
     /// `excludingSessionID`. A session whose logs hold no working set is
     /// skipped, and the walk back stops after five sessions.
     ///
-    /// `fetchTopWorkingSet` and `SessionFactory.lastSessionWorkingReps`
+    /// `fetchTopWorkingSet` and `SessionFactory.prescription`
     /// both read it, so the previous top set and double progression's bump
     /// always come from the same workout.
     ///
@@ -148,22 +148,39 @@ public enum PreviousMatchingIntent {
         excludingSessionID: UUID? = nil
     ) -> (session: Session, sets: [SetEntry])? {
         guard let exerciseID else { return nil }
+        return lastWorkingSets(
+            in: logs(of: exerciseID, context: context),
+            intentRaw: intentRaw,
+            excludingSessionID: excludingSessionID
+        )
+    }
 
+    /// Every log of the exercise, in any session, with each log's session
+    /// and sets loaded in one fetch. `SessionFactory.prescription` reads
+    /// these rows once for both `lastWorkingSets(in:)` and
+    /// `SessionFactory.historyPoints(in:intentRaw:)`.
+    static func logs(of exerciseID: UUID, context: ModelContext) -> [SessionExercise] {
         // RESEARCH §6 Pitfall 1 — local-let captures before #Predicate.
         // SortDescriptor on optional keypath (\.session?.startedAt)
         // also caused type-checking failures in the Swift 6 toolchain
         // — sort in Swift after fetch.
         let targetID = exerciseID
-        let targetIntent = intentRaw
-
         var descriptor = FetchDescriptor<SessionExercise>(
             predicate: #Predicate { se in se.exercise?.id == targetID }
         )
-        // The filter below reads every row's session: one fetch, not one
-        // fault per row.
-        descriptor.relationshipKeyPathsForPrefetching = [\.session]
+        // Callers read every row's session and sets: load them in bulk
+        // instead of one fault per row.
+        descriptor.relationshipKeyPathsForPrefetching = [\.session, \.sets]
+        return (try? context.fetch(descriptor)) ?? []
+    }
 
-        guard let all = try? context.fetch(descriptor) else { return nil }
+    /// `lastWorkingSets` over logs the caller already fetched with `logs(of:)`.
+    static func lastWorkingSets(
+        in all: [SessionExercise],
+        intentRaw: String,
+        excludingSessionID: UUID? = nil
+    ) -> (session: Session, sets: [SetEntry])? {
+        let targetIntent = intentRaw
 
         // Each matching session's logs of the exercise, in the order the
         // sessions first appear. A session that logs the exercise several

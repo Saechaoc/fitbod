@@ -76,9 +76,9 @@ struct LastWorkoutRepsAcrossLogsTests {
     private typealias LoggedSet = (weight: Double, reps: Int, complete: Bool)
 
     private func lastReps(_ exercise: Exercise, in ctx: ModelContext) -> [Int] {
-        SessionFactory.lastSessionWorkingReps(
+        PreviousMatchingIntent.lastWorkingSets(
             exerciseID: exercise.id, intentRaw: Intent.strength.rawValue, context: ctx
-        )
+        )?.sets.map(\.reps) ?? []
     }
 
     /// A finished strength workout started `daysAgo` days ago that logs
