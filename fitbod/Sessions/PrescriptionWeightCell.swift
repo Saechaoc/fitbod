@@ -13,6 +13,7 @@ public struct PrescriptionWeightCell: View {
     public let onTapEmptyCell: () -> Void
     public let onEditCommitted: () -> Void
     private let enteredWeight: Binding<Double?>?
+    @Environment(\.locale) private var locale
 
     @State private var weightText: String
     @FocusState private var weightFocused: Bool
@@ -45,7 +46,7 @@ public struct PrescriptionWeightCell: View {
     }
 
     public var body: some View {
-        let prompt = displayedOffer.map(NumberText.weight) ?? "—"
+        let prompt = displayedOffer.map { WorkoutLoadInput.text($0, locale: locale) } ?? "—"
         TextField("Weight", text: $weightText, prompt: Text(prompt).foregroundStyle(Color.bruMuted))
             .keyboardType(.decimalPad)
             .focused($weightFocused)
@@ -67,7 +68,7 @@ public struct PrescriptionWeightCell: View {
                 }
             }
             .onChange(of: weightText) { _, text in
-                guard weightFocused, let value = Double(text), value.isFinite else { return }
+                guard weightFocused, let value = WorkoutLoadInput.value(text, locale: locale) else { return }
                 weight = value
                 // Zero can be an intentional unloaded set. Keep it even if
                 // a later set's offer changes to a positive load.
@@ -77,11 +78,11 @@ public struct PrescriptionWeightCell: View {
                 guard !focused else { return }
                 // Clearing the field keeps the last valid weight. Restore also
                 // reflects actions taken while the field was losing focus.
-                if Double(weightText) != weight { weightText = enteredWeightText }
+                if WorkoutLoadInput.value(weightText, locale: locale) != weight { weightText = enteredWeightText }
                 onEditCommitted()
             }
             .onChange(of: weight) { _, newWeight in
-                if !weightFocused, Double(weightText) != newWeight {
+                if !weightFocused, WorkoutLoadInput.value(weightText, locale: locale) != newWeight {
                     weightText = enteredWeightText
                 }
             }
@@ -90,6 +91,9 @@ public struct PrescriptionWeightCell: View {
             }
             .onAppear {
                 weightText = enteredWeightText
+            }
+            .onChange(of: locale) {
+                if !weightFocused { weightText = enteredWeightText }
             }
     }
 
@@ -100,12 +104,12 @@ public struct PrescriptionWeightCell: View {
 
     /// The row uses this value to reveal the focused field above the keyboard.
     private var weightInField: Double? {
-        weightFocused ? Double(weightText) ?? 0 : nil
+        weightFocused ? WorkoutLoadInput.value(weightText, locale: locale) ?? 0 : nil
     }
 
     var accessibilityValueText: String {
-        if let displayedOffer { return "\(NumberText.weight(displayedOffer)) \(unitLabel)" }
-        return weightText.isEmpty ? "none" : "\(NumberText.weight(weight)) \(unitLabel)"
+        if let displayedOffer { return "\(WorkoutLoadInput.text(displayedOffer, locale: locale)) \(unitLabel)" }
+        return weightText.isEmpty ? "none" : "\(WorkoutLoadInput.text(weight, locale: locale)) \(unitLabel)"
     }
 
     private var displayedOffer: Double? {
@@ -114,7 +118,7 @@ public struct PrescriptionWeightCell: View {
     }
 
     private var enteredWeightText: String {
-        Self.text(for: weight, enteredZero: wasManualOverride)
+        Self.text(for: weight, enteredZero: wasManualOverride, locale: locale)
     }
 
     /// Keep the override mark within the weight column and out of the tap target.
@@ -142,8 +146,8 @@ public struct PrescriptionWeightCell: View {
         return abs(value - prescription) > 0.001
     }
 
-    private static func text(for weight: Double, enteredZero: Bool) -> String {
-        weight > 0 || (weight == 0 && enteredZero) ? NumberText.weight(weight) : ""
+    private static func text(for weight: Double, enteredZero: Bool, locale: Locale = .current) -> String {
+        weight != 0 || enteredZero ? WorkoutLoadInput.text(weight, locale: locale) : ""
     }
 }
 

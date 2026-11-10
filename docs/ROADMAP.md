@@ -135,11 +135,11 @@ Rebased onto catalog/schema main `978cb48a`: the unit target recorded 1,325 pass
 
 ### <a id="rm-005"></a>RM-005 — Numeric and tempo entry preserve the entered value
 
-**P1 · Planned.** Preserve comma-decimal failures D-32/F355, duplicate/zero plate input D-31/D-189 and pasted tempo separators F383. T145 fixed ordinary empty-part tempo corruption F380.
+**P1 · Active.** Preserve comma-decimal failures D-32/F355, duplicate/zero plate input D-31/D-189 and pasted tempo separators F383. T145 fixed ordinary empty-part tempo corruption F380.
 **Done when:** locale-valid weights round-trip without prefix parsing; duplicates cannot create ambiguous plate row IDs; invalid/zero values explain rejection; pasted dashes cannot shift tempo parts. Test actual parsers/save boundaries and preserve signed assistance loads and history-correction validation.
 **Scope / sequence:** Deliver locale weight parsing, unique positive plate values, then pasted tempo validation at shared save boundaries. Keep relabel-only units; conversion/provenance is RM-021.
 **Requires:** None; current unit semantics suffice.
-**Evidence:** No passing acceptance is recorded for the remaining scope; cited commits/tests establish the shipped baseline only.
+**Evidence:** Locale load entry is complete (2026-11-10): the shared parser consumes the whole ungrouped decimal, supports localized digits and signed assistance, and leaves correction/completion validation unchanged. The unit target recorded 1,328 passed, two fixture-dependent skips and one expected failure (`fast-20261110-131630`); the existing logger type-over test passed. After correcting its completion-label assertion, the new German-locale journey passed: type `82,5`, log it and relaunch with the same stored load (`fast-20261110-131942`, 390pt/default/light). Its capture was inspected. Unique positive plates and pasted tempo validation remain open.
 **References:** [D-31](design-map/audit.md#d-31), [D-32](design-map/audit.md#d-32), [D-189](design-map/audit.md#d-189), [tempo](../fitbod/Sessions/TempoEntryRow.swift); F355/F380/F383.
 
 ### <a id="rm-006"></a>RM-006 — Redesign 1.3: session sheet, StartSlot and state slabs

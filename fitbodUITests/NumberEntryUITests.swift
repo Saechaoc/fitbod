@@ -71,6 +71,31 @@ final class NumberEntryUITests: XCTestCase {
 
     // MARK: - Session editor
 
+    @MainActor
+    func testCommaDecimalWeightSurvivesLoggingAndRelaunch() throws {
+        let localeArguments = ["-AppleLocale", "de_DE", "-AppleLanguages", "(en)"]
+        let app = UITestNavigation.launch(UITestNavigation.seededWorkout + localeArguments)
+        app.buttons["resumeSlab.resume"].tap()
+        let weight = app.textFields["set.weight.1.S1"]
+        UITestNavigation.revealInLogger(weight, in: app)
+        XCTAssertEqual(UITestNavigation.enter("82,5", into: weight), "82,5 lb")
+        closeKeyboard(in: app)
+        XCTAssertEqual(weight.value as? String, "82,5 lb")
+        UITestNavigation.enter("5", into: app.textFields["set.reps.1.S1"])
+        closeKeyboard(in: app)
+        app.buttons["set.complete.1.S1"].tap()
+        UITestNavigation.saveScreenshot("RM005", "comma-weight")
+        app.terminate()
+        app.launchArguments = localeArguments
+        app.launch()
+        let resume = app.buttons["resumeSlab.resume"]
+        XCTAssertTrue(resume.waitForExistence(timeout: 15))
+        resume.tap()
+        XCTAssertTrue(weight.waitForExistence(timeout: 10))
+        XCTAssertEqual(weight.value as? String, "82,5 lb")
+        XCTAssertEqual(app.buttons["set.complete.1.S1"].label, "Set 1 complete")
+    }
+
     /// A tempo given 2, then 3 typed over it, reads 3, and the save bar
     /// steps aside while the keyboard is up. The session's next workout
     /// tracks tempo and partial reps, whose fields type over theirs too.
