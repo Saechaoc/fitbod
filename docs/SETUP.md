@@ -217,6 +217,11 @@ Its Try again button opens the same store again.
 Prove populated backup/recovery ([RM-029](ROADMAP.md#rm-029)) before
 schema-changing work; move-aside preservation is not a tested restore or
 migration promise.
+`scripts/rehearse-store.sh` is that proof.
+`pull` copies the phone's store into ignored `.ci/phone-store/`; close the app on the phone first.
+`run <store folder>` opens a copy through the app's own container, checks that every row is still there, and checks that a backup of it restores to the same data.
+Run it on the unchanged code, then again after the model change with the first run's backup as the third argument.
+The copy is personal training data and never leaves `.ci/`.
 
 The DEBUG-only `-fitbod-reset-store` launch argument deletes the active store
 files, clears the app's saved defaults, seed stamps included, and removes the

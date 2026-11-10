@@ -376,7 +376,7 @@ Seed v4 adds `curation.json`, a local overlay keyed by upstream ID; it retags 39
 **P1 · Planned (user decision 2026-11-10).** A set stores only weight × reps today, so cardio and timed holds cannot be logged.
 **Done when:** each exercise has a tracking type (weight × reps, reps with optional load, assisted reps, time, time + distance, time + level); the logger shows matching columns and validates by type; every set records its duration automatically (start at rest end or first touch, editable), and the logger and History show exercise time ("8 × 10 · 3:00"); tonnage, e1RM, PRs and progression ignore non-load sets; export and backup carry the new fields and older backups still restore.
 **Scope / sequence:** Additive default-valued fields on `Exercise` and `SetEntry` in SchemaV7 → validation/columns → export/backup → set-duration capture and totals.
-**Requires:** A pre-change V7 store opening in place and a backup round-trip test for the new fields (the [RM-029](#rm-029) rule for schema changes).
+**Requires:** The store rehearsal (`scripts/rehearse-store.sh`) on a copy of the phone's store, passing before the model change and again after it, with the pre-change backup restoring into the new build; first run recorded under [RM-029](#rm-029). Old-shape stores opening in place and a backup round trip of the new fields stay in the unit suite.
 **Evidence:** None yet.
 
 ### <a id="rm-023"></a>RM-023 — Comparable analytics and useful detail routes
@@ -449,7 +449,7 @@ On a 390pt iPhone 17e at default text in light mode, an open set's effort rating
 **Requires:** [RM-001](#rm-001) safe open. Healthy populated fixtures suffice; RM-009 only for a restore claiming damaged-catalog repair.
 **Scheduled after:** [RM-001](#rm-001), ahead of schema-changing work; independent of the redesign sequence.
 **Verify when:** Before schema changes, sole-log reliance or release: populated second installation, corrupt/interrupted cases and recovery.
-**Evidence:** No passing acceptance is recorded for the remaining scope; cited commits/tests establish the shipped baseline only.
+**Evidence:** 2026-11-10 rehearsal on a copy of the iPhone 15 Pro Max store, code at `aef18229` (`scripts/rehearse-store.sh`, `StoreRehearsalTests`): the copy opened in place through `FitbodModelContainer.make` with nothing moved aside; SwiftData row counts equal the SQLite table counts (704 exercises, 2,117 stimuli, 4 workouts, 14 logged exercises, 43 sets, 4 plate inventories, 17 muscles and 17 targets, 1 settings row); a backup of it restored into a second, empty on-disk store and the two export documents were equal entity by entity. Limits: the second store was in the simulator test host, not on a second phone; that store holds no routines, splits or blocks, so those rest on the `BackupRoutinesRoundTripTests` fixtures. No passing acceptance is recorded for hostile, corrupt or interrupted input, pre-restore recovery or truthful backup state.
 **References:** EXP-01–04/N1/T41, D-60/D-144–D-146; [workflow](design-map/workflows/settings-units-backup-restore-export.md), [tests](../fitbodTests/Phase6/BackupRoundTripTests.swift).
 
 ### Deferred feature details
