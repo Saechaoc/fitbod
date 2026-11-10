@@ -10,10 +10,9 @@ struct WorkoutSetSuggestionsTests {
     func emptyWorkout() throws {
         let ctx = try LoggerFixtures.makeContext()
         let lift = LoggerFixtures.exercise("Bench", in: ctx)
-        guard case .started(let workout) = WorkoutStarter.startEmpty(context: ctx) else {
-            Issue.record("The empty workout did not start")
-            return
-        }
+        let workout = Session()
+        ctx.insert(workout)
+        try ctx.save()
         AddUnplannedExerciseButton.append(exercise: lift, to: workout, context: ctx)
         let log = try #require(workout.exercises?.first)
         let sets = SessionSetActions.ordered(log)
@@ -52,10 +51,10 @@ struct WorkoutSetSuggestionsTests {
         )
         other.intentRaw = Intent.hypertrophy.rawValue
         try ctx.save()
-        guard case .started(let workout) = WorkoutStarter.startEmpty(context: ctx, now: now) else {
-            Issue.record("The empty workout did not start")
-            return
-        }
+        let workout = Session()
+        ctx.insert(workout)
+        workout.startedAt = now
+        try ctx.save()
         AddUnplannedExerciseButton.append(exercise: lift, to: workout, context: ctx)
         let log = try #require(workout.exercises?.first)
         let sets = SessionSetActions.ordered(log)

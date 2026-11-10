@@ -95,16 +95,14 @@ final class NewBlockSavesUITests: XCTestCase {
         app.staticTexts.labeled("EDIT BLOCK")
     }
 
-    /// Today's Start a block, then Blank Block in Create block, as on
-    /// Program: New Block with three phases and no name.
+    /// Program's + NEW opens the current block-creation flow.
     @MainActor
     private func openStartABlock(in app: XCUIApplication) {
-        UITestNavigation.selectTab("Today", in: app)
-        let start = app.buttons.labeled("Start a block")
-        UITestNavigation.reveal(start, in: app)
-        start.tap()
+        UITestNavigation.selectTab("Program", in: app)
+        UITestNavigation.hittable(app.buttons, "+ NEW").tap()
+        UITestNavigation.hittable(app.buttons, "+ New block").tap()
         UITestNavigation.hittable(app.buttons, "Blank Block").tap()
-        XCTAssertTrue(UITestNavigation.appears(newBlockTitle(in: app)), "Start a block must open New Block")
+        XCTAssertTrue(UITestNavigation.appears(newBlockTitle(in: app)), "Program must open New Block")
     }
 
     /// Waits until the bottom action reads `label`. It stays tappable while

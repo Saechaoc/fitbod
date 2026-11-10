@@ -1,27 +1,5 @@
-//
-//  TodayViewBRUCopyTests.swift
-//  fitbodTests
-//
-//  Verbatim BRU copy + structural assertions for the TodayView rewrite.
-//  Phase 2.1 Plan 04 — Wave B audit items 10-17.
-//
-//  Strategy: source-file string search (same pattern as
-//  TodayViewBlockStackingTests, RoutinesListCopyTests, etc.). SwiftUI
-//  view trees are not amenable to unit-test introspection without a
-//  running host — source pinning is the project standard for copy contracts.
-//
-//  Assertions cover:
-//    1. Header copy — "Fitbod / Today"
-//    2. Stat strip labels — "Day streak" / "Sessions" / week pattern
-//    3. Black slab copy - "TODAY" / "NEXT UP · " / "Deload week · lighter sets" / "Start workout ▸"
-//    4. Exercises head - "Exercises · " / "View ›", never "Tap to reorder"
-//    5. Empty state — "No workout scheduled" / "Build a routine..." / "+ NEW ROUTINE"
-//    6. Resume slab copy — "RESUME" / "Resume ▸" / "Discard"
-//    7. BRU primitives presence — BRUHeaderBar / TodayStatStrip / BlockContextBand /
-//       BlackSlabCTA / ResumeWorkoutSlab / LiftListSection
-//    8. Phase 4/5 wiring preserved — DeloadAdvisoryBanner /
-//       FatigueSurfaceView / StartBlockCTA
-//
+// Legacy checks for retained Today primitives. State and route behavior
+// is covered by TodayStateTests and TodayStateRoutesUITests.
 
 import Foundation
 import Testing
@@ -68,16 +46,6 @@ struct TodayViewBRUCopyTests {
         #expect(sectionSource.contains("\"View ›\""))
         // "Tap to reorder" was a false affordance (nothing reorders); the head shows a count.
         #expect(!sectionSource.contains("\"Tap to reorder\""))
-    }
-
-    // MARK: - 5. Empty state copy
-
-    @Test("Empty state copy is verbatim per UI-SPEC line 309-311")
-    func emptyStateCopyVerbatim() throws {
-        let source = try todayViewSource()
-        #expect(source.contains("\"No workout scheduled\""))
-        #expect(source.contains("\"Build a routine or pick one from your library.\""))
-        #expect(source.contains("\"+ NEW ROUTINE\""))
     }
 
     // MARK: - 6. Resume slab copy
@@ -142,13 +110,6 @@ struct TodayViewBRUCopyTests {
         #expect(source.contains("isAdvisoryActive"))
     }
 
-    @Test("Phase 4 StartBlockCTA preserved in TodayView")
-    func phase4StartBlockCTAPreserved() throws {
-        let source = try todayViewSource()
-        #expect(source.contains("StartBlockCTA"))
-        #expect(source.contains("activeBlocks.isEmpty"))
-    }
-
     @Test("Phase 4 navigationDestinations preserved in TodayView")
     func phase4NavigationDestinationsPreserved() throws {
         let source = try todayViewSource()
@@ -170,28 +131,11 @@ struct TodayViewBRUCopyTests {
         #expect(source.contains("activeSessions"))
     }
 
-    // MARK: - 9. emptySplit fix-it copy (Phase 9 Plan 03)
-
-    @Test("TodayView emptySplit fix-it copy is verbatim")
-    func emptySplitFixItCopyVerbatim() throws {
-        let source = try todayViewSource()
-        #expect(source.contains("ROUTINE HAS NO SESSIONS"))
-        #expect(source.contains("The routine linked to this block has no sessions scheduled. Add a session to continue."))
-        #expect(source.contains("GO TO ROUTINE ▸"))
-    }
-
     @Test("TodayView emptySplit fix-it uses SplitDetailRoute on Today's own stack")
     func emptySplitFixItNavigationPattern() throws {
         let source = try todayViewSource()
         #expect(source.contains("navigationPath.append(SplitDetailRoute.detail(splitID:"))
         #expect(source.contains(".blockDestinations"))
-    }
-
-    @Test("TodayView rest-day empty-state copy is still present and unchanged")
-    func restDayEmptyStateCopyPreserved() throws {
-        let source = try todayViewSource()
-        #expect(source.contains("\"No workout scheduled\""))
-        #expect(source.contains("\"Build a routine or pick one from your library.\""))
     }
 
     // MARK: - Helpers

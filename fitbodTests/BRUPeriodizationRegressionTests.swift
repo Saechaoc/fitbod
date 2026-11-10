@@ -136,22 +136,6 @@ struct BRUPeriodizationRegressionTests {
                 "MesocycleWeekPage.swift must NOT use Capsule() in code (replaced by BRUChip)")
     }
 
-    // MARK: - 11. StartBlockCTA
-
-    @Test("StartBlockCTA — BRUFont + bruSignal CTA + no RoundedRectangle")
-    func startBlockCTABRUPrimitives() throws {
-        let source = try loadSource("StartBlockCTA.swift")
-        let codeOnly = try loadCodeOnly("StartBlockCTA.swift")
-        #expect(source.contains("BRUFont."),
-                "StartBlockCTA.swift must use BRUFont type roles")
-        #expect(source.contains("Color.bruSignal") || source.contains(".bruSignal"),
-                "StartBlockCTA.swift must use bruSignal for CTA text color")
-        #expect(!codeOnly.contains("RoundedRectangle(cornerRadius"),
-                "StartBlockCTA.swift must NOT use RoundedRectangle in code (sharp corners per 04-UI-SPEC line 36)")
-        #expect(!codeOnly.contains("Color.accentColor"),
-                "StartBlockCTA.swift must NOT use Color.accentColor in code")
-    }
-
     // MARK: - 13. BlockOverviewScreen
 
     @Test("BlockOverviewScreen — public struct + BRUHeaderBar + EDIT BLOCK + accessibility + real @Query<Session> data")
@@ -196,7 +180,6 @@ struct BRUPeriodizationRegressionTests {
             ("BlockReviewView.swift", "Periodization"),
             ("BlockPhaseColors.swift", "Periodization"),
             ("MesocycleWeekPage.swift", "Periodization"),
-            ("StartBlockCTA.swift", "Periodization"),
             ("BlockOverviewScreen.swift", "Periodization"),
         ]
 

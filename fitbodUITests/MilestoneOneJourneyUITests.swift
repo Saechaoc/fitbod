@@ -191,11 +191,15 @@ final class MilestoneOneJourneyUITests: XCTestCase {
         tap("Back")
         tap("Back")
         app.buttons["Today"].tap()
-        let sessionToOpen = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "M1 Push A"))
-            .allElementsBoundByIndex.first(where: { $0.isHittable })
-        XCTAssertNotNil(sessionToOpen)
-        sessionToOpen?.tap()
-        tap("Start workout ▸")
+        let choose = app.buttons["today.chooseSession"]
+        XCTAssertTrue(UITestNavigation.appears(choose))
+        reveal(choose)
+        choose.tap()
+        let secondStart = app.buttons.matching(NSPredicate(
+            format: "identifier BEGINSWITH %@ AND label BEGINSWITH %@", "sessionSheet.start.", "M1 Push A"
+        )).firstMatch
+        XCTAssertTrue(UITestNavigation.appears(secondStart))
+        secondStart.tap()
         let previous = app.descendants(matching: .any).matching(NSPredicate(format: "label BEGINSWITH %@", "Last time, same intent: 80 × 8")).firstMatch
         XCTAssertTrue(UITestNavigation.appears(previous, within: 15))
     }
@@ -233,9 +237,9 @@ final class MilestoneOneJourneyUITests: XCTestCase {
             let exists = element.exists
             let isSetInput = exists && element.identifier.hasPrefix("set.")
             if exists && !isSetInput && element.isHittable { return }
-            // Hidden tab scroll views can have invalid activation points.
-            let container = app.collectionViews.allElementsBoundByIndex.last(where: { !$0.frame.isEmpty && $0.isHittable })
-                ?? app.scrollViews.allElementsBoundByIndex.last(where: { !$0.frame.isEmpty && $0.isHittable })
+            // Sheet dismissal can change scroll-view indices between queries.
+            let container = app.collectionViews.allElementsBoundByAccessibilityElement.last(where: { $0.exists && !$0.frame.isEmpty && $0.isHittable })
+                ?? app.scrollViews.allElementsBoundByAccessibilityElement.last(where: { $0.exists && !$0.frame.isEmpty && $0.isHittable })
             let page = container?.frame ?? app.frame
             let header = app.otherElements["workout.header"].firstMatch
             let top = (isSetInput && header.exists ? header.frame.maxY : page.minY) + 8

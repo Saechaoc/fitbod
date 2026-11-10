@@ -116,12 +116,12 @@ final class BlockLifecycleEntryPointsUITests: XCTestCase {
                       "The band must open the active block's overview", file: file, line: line)
     }
 
-    /// Today drops the block band and says it has no active block.
+    /// Today drops the ended block's plan line and returns to the routine suggestion.
     @MainActor
     private func assertNoActiveBlockOnToday(in app: XCUIApplication, file: StaticString = #filePath, line: UInt = #line) {
         UITestNavigation.selectTab("Today", in: app)
-        XCTAssertTrue(UITestNavigation.appears(app.staticTexts.labeled("No active block.")),
-                      "Today must say it has no active block", file: file, line: line)
+        XCTAssertTrue(UITestNavigation.appears(app.staticTexts.labeled("NEXT UP · LIVE ROUTINE")),
+                      "Today must suggest a routine session after the block ends", file: file, line: line)
         XCTAssertFalse(app.buttons["today.planLine"].exists,
                        "Today must drop the ended block's band", file: file, line: line)
     }

@@ -88,7 +88,12 @@ A start from no routine, an archived routine or a routine other than the active 
 With no block, Today's hero is `StartSlot.suggestion`: the NEXT of the routine trained most recently, else of the routine edited most recently, else the most recently edited session in no live routine.
 The session sheet reads the same rules through the pure `SessionSheetContent`: one row per session of each live routine, at most one usable NEXT mark, and the sessions a start skips (never in a fixedWeekly block).
 A sheet row starts its workout on the tap; a session in no live routine opens its detail instead.
-Other Today states still use the inline picker until RM-006's state-slab slice; obsolete picker files are removed at close-out.
+Today renders one resolved state: first-run offers routine creation, empty sessions/routines offer repair on Today's stack, and rest/missing-routine states retain alternate-session access.
+No-block repair names the routine with the newest session edit, otherwise the newest routine, with deterministic ties.
+DONE lists all counted workouts started today, newest first, as paper rows opening their own history detail; PR counts use History's replay and refresh after corrections.
+READY names the oldest ready block, creation date and ready count; Start calls the lifecycle service, with Retry/Open on failure.
+Block creation stays on Program and the review's next-block flow. Today retains existing-block editing and has no empty-workout start.
+`BlockBuilderRoute.template` remains in use by Program's empty-state template cards until their Program redesign migration.
 
 ## Snapshots and corrections
 

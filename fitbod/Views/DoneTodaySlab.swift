@@ -1,19 +1,9 @@
 // DoneTodaySlab.swift
 // fitbod
 //
-// Today once today's workout is finished (design map: today-workout-done).
-// It takes the NEXT slab's place: the finished workout with a way to its
-// summary, and the session that comes next as upcoming rather than a fresh
-// START WORKOUT ▸.
-//
-// ┌──────────────────────────────────────────────┐  ← bruSlab (dark in both appearances)
-// │  DONE TODAY                                  │
-// │  Push A                                      │  hero
-// │  15 SETS · 55M · 4,230 LB                    │
-// │  UP NEXT · PULL A · WED                      │
-// │  [            VIEW WORKOUT ›            ]    │  paper outline
-// │             CHOOSE A SESSION ›               │  with a block only
-// └──────────────────────────────────────────────┘
+// Today's counted finished workouts, newest first, on paper in both
+// appearances. Each row opens its own saved workout. PRs use History's
+// chronological replay and refresh after a history correction.
 //
 // BRU contract: NO Capsule() / NO RoundedRectangle / NO accentColor / NO Image(systemName:)
 // NO .font(.body/.headline/.title*/.caption)
@@ -22,90 +12,83 @@ import SwiftUI
 import SwiftData
 
 public struct DoneTodaySlab: View {
-    let session: Session
-    /// The next session, such as "Pull A · Wed"; nil with no block.
+    @Environment(HistoryEdits.self) private var historyEdits: HistoryEdits?
+
+    let sessions: [Session]
+    let history: [Session]
     let upNext: String?
-    let unit: WeightUnit
-    let onView: @MainActor () -> Void
-    /// Opens the block's sessions, to train again; nil with no block.
-    let onChooseSession: (@MainActor () -> Void)?
+    let onView: @MainActor (Session) -> Void
+
+    @State private var prs: [UUID: SessionPRs] = [:]
+
+    private struct RecordsKey: Equatable {
+        let sessionIDs: [UUID]
+        let edits: Int
+    }
 
     public var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            Text("Done today")
+            Text(sessions.count == 1 ? "Done" : "Done · \(BRUCountLabel.text(sessions.count, "workout"))")
                 .font(BRUFont.labelSmall)
                 .tracking(1.5)
                 .textCase(.uppercase)
-                .foregroundStyle(Color.bruOnSlab.opacity(0.6))
+                .foregroundStyle(Color.bruMuted)
 
-            Spacer().frame(height: 6)
-            BRUDisplay(session.displayName, size: .hero, color: .bruOnSlab)
-            Spacer().frame(height: 12)
-
-            Text(metaLine)
-                .font(BRUFont.labelSmall)
-                .tracking(1.2)
-                .textCase(.uppercase)
-                .foregroundStyle(Color.bruOnSlab)
-                .fixedSize(horizontal: false, vertical: true)
+            ForEach(sessions) { session in
+                Button { onView(session) } label: {
+                    VStack(alignment: .leading, spacing: 8) {
+                        HStack(alignment: .firstTextBaseline, spacing: 12) {
+                            BRUDisplay(session.displayName, size: .large)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                            Text("›")
+                                .font(BRUFont.displayMedium)
+                                .foregroundStyle(Color.bruMuted)
+                                .accessibilityHidden(true)
+                        }
+                        Text(Self.caption(for: session, prCount: prs[session.id]?.count ?? 0))
+                            .font(BRUFont.labelSmall)
+                            .tracking(1.2)
+                            .textCase(.uppercase)
+                            .foregroundStyle(Color.bruMuted)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    .padding(.vertical, 12)
+                    .frame(maxWidth: .infinity, minHeight: BRUMetrics.touchTarget, alignment: .leading)
+                }
+                .buttonStyle(.bruRow)
+                .accessibilityIdentifier("doneToday.view.\(session.id)")
+            }
 
             if let upNext {
-                Text("Up next · \(upNext)")
+                Text(upNext)
                     .font(BRUFont.labelSmall)
                     .tracking(1.2)
                     .textCase(.uppercase)
-                    .foregroundStyle(Color.bruOnSlab.opacity(0.6))
+                    .foregroundStyle(Color.bruMuted)
                     .fixedSize(horizontal: false, vertical: true)
                     .padding(.top, 8)
                     .accessibilityIdentifier("doneToday.upNext")
             }
 
-            Spacer().frame(height: 16)
-
-            // Light outline on the dark slab, as the resume slab's DISCARD.
-            Button(action: onView) {
-                Text("View workout ›")
-                    .font(BRUFont.labelSmall)
-                    .tracking(1.2)
-                    .textCase(.uppercase)
-                    .foregroundStyle(Color.bruOnSlab)
-                    .frame(maxWidth: .infinity, minHeight: 44)
-                    .overlay(Rectangle().stroke(Color.bruOnSlab, lineWidth: 1.5))
-                    .contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
-            .accessibilityIdentifier("doneToday.view")
-
-            if let onChooseSession {
-                Button(action: onChooseSession) {
-                    Text("Choose a session ›")
-                        .font(BRUFont.labelSmall)
-                        .tracking(1.2)
-                        .textCase(.uppercase)
-                        .foregroundStyle(Color.bruOnSlab.opacity(0.8))
-                        .frame(maxWidth: .infinity, minHeight: 44)
-                        .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-                .padding(.top, 4)
-                .accessibilityIdentifier("doneToday.choose")
-            }
         }
-        .padding(.vertical, 18)
-        .padding(.horizontal, 16)
-        .background(Color.bruSlab)
+        .padding(16)
+        .background(Color.bruPaper)
         .frame(maxWidth: .infinity, alignment: .leading)
+        .overlay { Rectangle().strokeBorder(Color.bruInk, lineWidth: 2) }
+        .padding(16)
+        .task(id: RecordsKey(sessionIDs: history.map(\.id), edits: historyEdits?.version ?? 0)) {
+            prs = SessionSummary.prsBySession(history)
+        }
     }
 
-    /// "15 SETS · 55M · 4,230 LB": what the workout logged.
-    private var metaLine: String {
-        var parts = [BRUCountLabel.text(session.loggedSetCount, "set")]
+    static func caption(for session: Session, prCount: Int) -> String {
+        var parts: [String] = []
         if let seconds = session.totalDurationSeconds {
             parts.append(SessionHistoryFormat.duration(minutes: seconds / 60))
         }
-        let tonnage = SessionHistoryFormat.tonnage(of: session)
-        if tonnage > 0 {
-            parts.append("\(SessionHistoryFormat.compactTonnage(tonnage)) \(unit.rawValue)")
+        parts.append(BRUCountLabel.text(session.loggedSetCount, "set"))
+        if prCount > 0 {
+            parts.append(BRUCountLabel.text(prCount, "PR"))
         }
         return parts.joined(separator: " · ")
     }

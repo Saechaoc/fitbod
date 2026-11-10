@@ -1,26 +1,8 @@
 // TodayView.swift
 // fitbod — Phase 2.1 Plan 04
 //
-// Standalone Today tab root. Extracted from the 219-line `private struct TodayView`
-// in fitbod/App/RootView.swift (Wave B audit item #3). All Phase 4 + Phase 5
-// behaviors are preserved verbatim — only the presentation shell is replaced with
-// BRU primitives.
-//
-// Composition order (top to bottom per UI-SPEC line 533):
-//   safeAreaInset(top): BRUHeaderBar("Fitbod / Today", right: formatted date as plain text)
-//   ─── inside ScrollView VStack(spacing: 0) ───────────────────────────────
-//   [Defensive-top Phase 5 banners]
-//     DeloadAdvisoryBanner  (currentAdvisory != nil)
-//   [BRU Layer]
-//     TodayPlanLine  (block name over week and phase → Block overview)  — when block active
-//     ResumeWorkoutSlab  — when active session (completedAt == nil)
-//       OR DoneTodaySlab — when today's workout is finished
-//       OR BlackSlabCTA  — when no active session but routine scheduled
-//       OR Start-Block-CTA — when no block at all
-//       OR empty-state   — block active but no today routine
-//     LiftListSection  (BRUSectionHead + LazyVStack of LiftListRow)
-//   [Defensive-bottom Phase 5 surface]
-//     FatigueSurfaceView
+// Today's resolved state owns its hero, repair/start actions and alternate
+// session row. The logger and all pushed details stay on Today's stack.
 //
 // Navigation: NavigationStack(path: $navigationPath) wraps everything.
 // Chrome: BRUHeaderBar via .safeAreaInset(edge: .top) + .navigationBarHidden(true).
@@ -40,7 +22,6 @@ public struct TodayView: View {
     // MARK: - Environment
 
     @Environment(\.modelContext) private var ctx
-    @Environment(\.weightUnit) private var weightUnit
     @Environment(\.scenePhase) private var scenePhase
     @Environment(\.calendar) private var calendar
     @Environment(HistoryEdits.self) private var historyEdits: HistoryEdits?
@@ -85,10 +66,10 @@ public struct TodayView: View {
     @State private var navigationPath = NavigationPath()
     @State private var pendingBlockBuilder: BlockBuilderRoute? = nil
     @State private var pendingBlockReview: Block? = nil
-    /// Create block, the same choice Program's + NEW opens.
-    @State private var presentingCreateBlock = false
-    /// A failed block start or end, in plain words.
-    @State private var blockError: String? = nil
+    @State private var failedBlockStart: Block? = nil
+    #if DEBUG
+    @State private var failNextBlockStart = ProcessInfo.processInfo.arguments.contains("-fitbod-fail-block-start-once")
+    #endif
 
     // Phase 5 plan 04 — deload advisory state.
     @State private var currentAdvisory: DeloadAdvisory? = nil
@@ -98,16 +79,14 @@ public struct TodayView: View {
     /// The recap was due on a visit that showed a block review; it shows
     /// once the review closes.
     @State private var recapAfterReview: Bool = false
-    /// Session detail pushed from the hero's View or the Start-a-workout picker.
+    /// Session detail pushed from the hero, repair action or session sheet.
     @State private var openedSession: OpenedSession? = nil
-    /// A workout already in progress when the user tried to start another.
-    @State private var startConflict: Session? = nil
     @State private var startError: String? = nil
     @State private var discardError: String? = nil
     @State private var presentingSettings = false
-    /// The block's sessions, to start one other than today's.
+    /// All live sessions, grouped by routine.
     @State private var choosingSession = false
-    /// What the session list picked; it starts once the list has gone.
+    /// A sheet choice runs after its dismissal.
     @State private var pendingChoice: PendingChoice? = nil
 
     // MARK: - Body
@@ -116,15 +95,12 @@ public struct TodayView: View {
         // Resolved once per render: a rotation resolve fetches every
         // finished workout, and the CTA, picker and lift list all need it.
         let resolution = todaysResolution
-        let todaysRoutine = Self.scheduledRoutine(in: resolution)
         let finished = allSessions.filter { $0.completedAt != nil }
+        let readyBlocks = waitingBlocks.filter { $0.derivedStatus == .ready }
         let state = TodayState.resolve(
             openWorkouts: activeSessions, activeBlock: activeBlocks.first, resolution: resolution,
-            finishedWorkouts: finished, readyBlocks: waitingBlocks.filter { $0.derivedStatus == .ready },
+            finishedWorkouts: finished, readyBlocks: readyBlocks,
             liveRoutines: routines, sessions: sessionTemplates, now: now, calendar: calendar)
-        let doneToday: Session? = if case .done(let workouts) = state { workouts.first } else { nil }
-        let readyBlock: Block? = if case .ready(let block) = state { block } else { nil }
-        let pick: StartSlot.Suggestion? = if case .pick(let suggestion) = state { suggestion } else { nil }
         NavigationStack(path: $navigationPath) {
             ScrollView {
                 VStack(spacing: 0) {
@@ -144,131 +120,20 @@ public struct TodayView: View {
                         )
                     }
 
-                    if activeBlocks.isEmpty, activeSessions.isEmpty, let ready = readyBlock {
-                        ReadyBlockCard(
-                            block: ready,
-                            onStart: { startBlock(ready) },
-                            onOpen: { navigationPath.append(BlockOverviewRoute.summary(blockID: ready.id)) }
-                        )
-                    }
-
-                    // CTA slab — resume-in-progress wins (spec §5); otherwise
-                    // branch on the full TodayResolution so .emptySplit gets a
-                    // distinct repair surface (CR-02).
-                    if let active = activeSessions.first {
-                        // Active in-progress session → Resume slab
-                        ResumeWorkoutSlab(
-                            session: active,
-                            onResume: { navigationPath.append(SessionRoute.logger(active)) },
-                            onDiscard: {
-                                do {
-                                    try SessionSetActions.deleteWorkout(active, context: ctx)
-                                } catch {
-                                    discardError = "The workout wasn't discarded. Try again."
-                                }
-                            }
-                        )
-                    } else if let done = doneToday {
-                        // Today's workout is done: it, with a way to its
-                        // summary, and the next session as upcoming.
-                        DoneTodaySlab(
-                            session: done,
-                            upNext: upNextLabel(resolution),
-                            unit: weightUnit,
-                            onView: { navigationPath.append(SessionHistoryRoute.summary(sessionID: done.id)) },
-                            onChooseSession: canChooseSession ? { @MainActor in choosingSession = true } : nil
-                        )
-                    } else {
-                        switch resolution {
-                        case .session(let slot):
-                            if let routine = slot.sessionTemplate, let block = activeBlocks.first {
-                                // Scheduled session → Black slab CTA. It starts
-                                // from the block's routine, so the starter credits
-                                // the scheduled slot as the rotation anchor (CR-01).
-                                BlackSlabCTA(
-                                    routine: routine,
-                                    label: BlackSlabCTA.heroLabel(
-                                        mode: block.schedulingMode,
-                                        position: slot.position,
-                                        slotCount: block.split?.slots?.count ?? 0
-                                    ),
-                                    phase: currentBlockPhase,
-                                    onStart: { startWorkout(routine, in: block.split) }
-                                )
-                            } else {
-                                noWorkoutScheduledEmptyState
-                            }
-                        case .emptySplit:
-                            // CR-02: split emptied mid-block → distinct repair
-                            // surface, NOT the rest-day "No workout scheduled"
-                            // copy (spec §5 — the rest-day state would lie).
-                            // Phase 9: replace with SplitDetailView fix-it pointer.
-                            emptySplitFixItState
-                        case .restDay:
-                            // fixedWeekly today-not-a-training-day → rest-day empty state.
-                            noWorkoutScheduledEmptyState
-                        case .noBlock:
-                            if !activeBlocks.isEmpty {
-                                // Block active but split not yet attached → empty state
-                                noWorkoutScheduledEmptyState
-                            } else if let pick {
-                                // No block, a session to train: the suggested
-                                // session leads as the one hero (T-PICK).
-                                BlackSlabCTA(
-                                    routine: pick.session,
-                                    label: BlackSlabCTA.heroLabel(routine: pick.slot?.split),
-                                    phase: nil,
-                                    onStart: { startWorkout(pick.session, in: pick.slot?.split) }
-                                )
-                            }
-                            // Otherwise the Start-a-workout picker below leads.
-                        }
-                    }
-
-                    // Start-a-workout picker whenever nothing is scheduled or
-                    // suggested and nothing is in progress (a rest day, an
-                    // empty split, a ready block, a fresh store).
-                    if activeSessions.isEmpty && todaysRoutine == nil && pick == nil {
-                        TodaySessionPicker(
-                            onOpen: { openedSession = OpenedSession(template: $0, routine: $1) },
-                            onStart: { startWorkout($0, in: $1) },
-                            onNewRoutine: startNewRoutine,
-                            onStartEmpty: startEmptyWorkout
-                        )
-                    }
-
-                    // Lift list — for a scheduled session not yet done, or
-                    // the suggested one with no block
-                    if let routine = todaysRoutine, doneToday == nil {
-                        LiftListSection(routine: routine, phase: currentBlockPhase, onView: {
-                            openedSession = OpenedSession(template: routine, routine: activeBlocks.first?.split)
-                        })
-                    } else if let pick {
-                        LiftListSection(routine: pick.session, phase: nil, onView: {
-                            openedSession = OpenedSession(template: pick.session, routine: pick.slot?.split)
-                        })
-                    }
-
-                    // Under a hero, another session is one row and one tap away.
-                    if pick != nil || (todaysRoutine != nil && doneToday == nil && activeSessions.isEmpty) {
-                        TodayGhostRow(title: "Choose another session") { choosingSession = true }
-                            .accessibilityIdentifier("today.chooseSession")
-                    }
-
-                    // No block at all → Start Block CTA (Phase 4 preserved),
-                    // after the picker, or the hero and its exercises, so
-                    // starting a workout stays primary. A block runs on a
-                    // routine, so with none the picker's + New routine is
-                    // the one routine action here (FT-15).
-                    if activeSessions.isEmpty && activeBlocks.isEmpty && readyBlock == nil && !routines.isEmpty {
-                        StartBlockCTA(onStart: { presentingCreateBlock = true })
-                    }
+                    stateContent(state, resolution: resolution, finished: finished, readyCount: readyBlocks.count)
 
                     // ─── DEFENSIVE BOTTOM — Phase 5 FatigueSurfaceView ──
-                    FatigueSurfaceView(
-                        isAdvisoryActive: currentAdvisory != nil,
-                        navigationPath: $navigationPath
-                    )
+                    switch state {
+                    case .first:
+                        EmptyView()
+                    case .fix where activeBlocks.isEmpty:
+                        EmptyView()
+                    default:
+                        FatigueSurfaceView(
+                            isAdvisoryActive: currentAdvisory != nil,
+                            navigationPath: $navigationPath
+                        )
+                    }
                 }
             }
             .background(Color.bruPaper.ignoresSafeArea())
@@ -314,8 +179,11 @@ public struct TodayView: View {
                     route.builder(origin: .today)
                 }
             }
-            .blockCreateFlow(isPresented: $presentingCreateBlock) { pendingBlockBuilder = $0 }
-            .modifier(TodayBlockAlerts(blockError: $blockError))
+            .modifier(TodayBlockAlerts(
+                failedBlock: $failedBlockStart,
+                onRetry: startBlock,
+                onOpen: { navigationPath.append(BlockOverviewRoute.summary(blockID: $0.id)) }
+            ))
             // A recap due on the same visit waits for the review to close.
             .sheet(item: $pendingBlockReview, onDismiss: showRecapAfterReview) { block in
                 BlockReviewView(block: block)
@@ -354,28 +222,11 @@ public struct TodayView: View {
                         resolution: resolution, finished: finished, now: now, calendar: calendar),
                     phase: currentBlockPhase,
                     onStart: { session, routine in choose(.start(session, routine)) },
-                    onOpen: { session in choose(.open(session)) },
-                    onStartEmpty: { choose(.empty) }
+                    onOpen: { session in choose(.open(session)) }
                 )
             }
             .navigationDestination(item: $openedSession) { opened in
                 SessionTemplateDetailView(template: opened.template, routine: opened.routine)
-            }
-            .alert(
-                "Workout in progress",
-                isPresented: Binding(
-                    get: { startConflict != nil },
-                    set: { if !$0 { startConflict = nil } }
-                ),
-                presenting: startConflict
-            ) { active in
-                Button("Resume \(active.displayName)") {
-                    navigationPath.append(SessionRoute.logger(active))
-                    startConflict = nil
-                }
-                Button("Cancel", role: .cancel) { startConflict = nil }
-            } message: { _ in
-                Text("Finish or discard the current workout before starting another.")
             }
             .alert(
                 "Couldn't start workout",
@@ -429,54 +280,124 @@ public struct TodayView: View {
         }
     }
 
-    // MARK: - Empty-state surfaces
+    // MARK: - State content
 
-    /// Rest-day / no-routine empty state — UI-SPEC line 466 verbatim copy.
-    /// Used for `.restDay`, `.noBlock` (with a block active but no split), and
-    /// the defensive `.session` with a nil template.
     @ViewBuilder
-    private var noWorkoutScheduledEmptyState: some View {
-        VStack(spacing: 12) {
-            Text("No workout scheduled")
-                .font(BRUFont.displayLarge)
-                .foregroundStyle(Color.bruInk)
-
-            Text("Build a routine or pick one from your library.")
-                .font(BRUFont.bodyDefault)
-                .foregroundStyle(Color.bruMuted)
-                .multilineTextAlignment(.center)
-
-            Button {
-                startNewRoutine()
-            } label: {
-                Text("+ NEW ROUTINE")
-                    .font(BRUFont.labelSmall)
-                    .tracking(1.2)
-                    .textCase(.uppercase)
-                    .foregroundStyle(Color.bruSignal)
+    private func stateContent(
+        _ state: TodayState, resolution: TodayResolution, finished: [Session], readyCount: Int
+    ) -> some View {
+        switch state {
+        case .resume(let session):
+            ResumeWorkoutSlab(
+                session: session,
+                onResume: { navigationPath.append(SessionRoute.logger(session)) },
+                onDiscard: {
+                    do { try SessionSetActions.deleteWorkout(session, context: ctx) }
+                    catch { discardError = "The workout wasn't discarded. Try again." }
+                }
+            )
+        case .done(let sessions):
+            DoneTodaySlab(
+                sessions: sessions, history: finished, upNext: upNextLabel(resolution, finished: finished),
+                onView: { navigationPath.append(SessionHistoryRoute.summary(sessionID: $0.id)) }
+            )
+            chooseSessionRow("Start another workout")
+        case .ready(let block):
+            ReadyBlockCard(
+                block: block, readyCount: readyCount,
+                onStart: { startBlock(block) },
+                onOpen: { navigationPath.append(BlockOverviewRoute.summary(blockID: block.id)) }
+            )
+            chooseSessionRow("Start a workout instead")
+        case .fix(let fix):
+            repairSlab(fix)
+            if !activeBlocks.isEmpty && canChooseSession {
+                chooseSessionRow("Choose another session")
             }
-            .buttonStyle(.plain)
+        case .attach(let block):
+            TodayRepairSlab(
+                title: "Block has no routine",
+                message: "End \(block.name) to plan a new one.", actionTitle: "Open block ▸"
+            ) { navigationPath.append(BlockOverviewRoute.summary(blockID: block.id)) }
+            if canChooseSession { chooseSessionRow("Choose another session") }
+        case .rest:
+            Text("Rest day")
+                .font(BRUFont.condensedHeading)
+                .textCase(.uppercase)
+                .foregroundStyle(Color.bruInk)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(16)
+                .overlay { Rectangle().strokeBorder(Color.bruInk, lineWidth: 2) }
+                .padding(16)
+            chooseSessionRow("Start a workout anyway")
+        case .today(let block, let slot):
+            if let session = slot.sessionTemplate {
+                BlackSlabCTA(
+                    routine: session,
+                    label: BlackSlabCTA.heroLabel(
+                        mode: block.schedulingMode, position: slot.position, slotCount: block.split?.slots?.count ?? 0),
+                    phase: currentBlockPhase, onStart: { startWorkout(session, in: block.split) }
+                )
+                LiftListSection(routine: session, phase: currentBlockPhase) {
+                    openedSession = OpenedSession(template: session, routine: block.split)
+                }
+                chooseSessionRow("Choose another session")
+            }
+        case .pick(let pick):
+            BlackSlabCTA(
+                routine: pick.session, label: BlackSlabCTA.heroLabel(routine: pick.slot?.split),
+                phase: nil, onStart: { startWorkout(pick.session, in: pick.slot?.split) }
+            )
+            LiftListSection(routine: pick.session, phase: nil) {
+                openedSession = OpenedSession(template: pick.session, routine: pick.slot?.split)
+            }
+            chooseSessionRow("Choose another session")
+        case .first:
+            firstRoutinePrompt
         }
-        .padding(.vertical, 32)
-        .padding(.horizontal, 16)
     }
 
-    /// CR-02 / spec §5 / Phase 9: fix-it surface for a block whose split was
-    /// emptied mid-block (zero slots). Distinct from the rest-day
-    /// "No workout scheduled" copy — showing that copy would lie about why
-    /// nothing is scheduled. CTA navigates to SplitDetailView on Today's OWN
-    /// NavigationStack (no cross-tab navigation).
+    private func chooseSessionRow(_ title: String) -> some View {
+        TodayGhostRow(title: title) { choosingSession = true }
+            .accessibilityIdentifier("today.chooseSession")
+    }
+
     @ViewBuilder
-    private var emptySplitFixItState: some View {
-        if let split = activeBlocks.first?.split {
-            EmptySplitFixIt(onGoToRoutine: {
-                navigationPath.append(SplitDetailRoute.detail(splitID: split.id))
-            })
-        } else {
-            // Defensive: .emptySplit should only fire when a split is wired but
-            // has zero slots; if somehow split is nil, fall back gracefully.
-            noWorkoutScheduledEmptyState
+    private func repairSlab(_ fix: TodayState.Fix) -> some View {
+        switch fix {
+        case .routineHasNoSessions(let routine):
+            TodayRepairSlab(
+                title: "Routine has no sessions",
+                message: "Add a session to \(routine.name) to train from \(activeBlocks.isEmpty ? "it" : "this block").",
+                actionTitle: "Go to routine ▸"
+            ) { navigationPath.append(SplitDetailRoute.detail(splitID: routine.id)) }
+        case .routineHasNoExercises(let routine):
+            TodayRepairSlab(
+                title: "\(routine.name) has no exercises yet",
+                message: "Add exercises to its sessions to train from it.", actionTitle: "Go to routine ▸"
+            ) { navigationPath.append(SplitDetailRoute.detail(splitID: routine.id)) }
+        case .sessionHasNoExercises(let session):
+            TodayRepairSlab(
+                title: "\(session.name) has no exercises",
+                message: "Add exercises to \(session.name) to train it.", actionTitle: "Add exercises ▸"
+            ) { openedSession = OpenedSession(template: session, routine: activeBlocks.first?.split) }
         }
+    }
+
+    private var firstRoutinePrompt: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Build your first routine")
+                .font(BRUFont.condensedHeading)
+                .textCase(.uppercase)
+                .foregroundStyle(Color.bruInk)
+            Text("A routine is your split, like Push / Pull / Legs. Each session in it lists exercises with target sets and reps.")
+                .font(BRUFont.bodyDefault)
+                .foregroundStyle(Color.bruMuted)
+                .fixedSize(horizontal: false, vertical: true)
+            BRUButton("+ New routine", kind: .signal, size: .lg, action: startNewRoutine)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(16)
     }
 
     // MARK: - Formatted Date (BRU header right slot)
@@ -512,9 +433,16 @@ public struct TodayView: View {
     /// there is nothing to confirm.
     private func startBlock(_ block: Block) {
         do {
+            #if DEBUG
+            if failNextBlockStart {
+                failNextBlockStart = false
+                throw CocoaError(.fileWriteUnknown)
+            }
+            #endif
             try BlockLifecycleService.start(block: block, context: ctx)
+            failedBlockStart = nil
         } catch {
-            blockError = "The block didn't start. Try again."
+            failedBlockStart = block
         }
     }
 
@@ -530,41 +458,27 @@ public struct TodayView: View {
         return TodayResolver.resolve(block: block, context: ctx, today: now, calendar: calendar)
     }
 
-    /// The session template scheduled for today (nil unless the resolver
-    /// returns `.session(slot)` with a non-nil template). Drives
-    /// `LiftListSection`'s exercise preview.
-    private static func scheduledRoutine(in resolution: TodayResolution) -> SessionTemplate? {
-        if case .session(let slot) = resolution {
-            return slot.sessionTemplate
+    /// The same NEXT the sheet marks, with the schedule/routine context the done slab needs.
+    private func upNextLabel(_ resolution: TodayResolution, finished: [Session]) -> String? {
+        if let block = activeBlocks.first {
+            guard let slot = StartSlot.next(
+                in: block, resolution: resolution, finished: finished, now: now, calendar: calendar),
+                  StartSlot.hasExercises(slot.sessionTemplate), let session = slot.sessionTemplate else { return nil }
+            if block.schedulingMode == .fixedWeekly,
+               let next = TodayResolver.nextTrainingDay(block: block, after: now, calendar: calendar) {
+                return "Next: \(session.name) · \(next.day.formatted(.dateTime.weekday(.wide)))"
+            }
+            return "Next up: \(session.name)"
         }
-        return nil
-    }
-
-    /// The done card's next session: the resolver's in a rotation block,
-    /// or the next training day's session and date in a weekly block.
-    private func upNext(_ resolution: TodayResolution) -> (slot: SplitSessionSlot, day: Date?)? {
-        if let block = activeBlocks.first, block.schedulingMode == .fixedWeekly {
-            return TodayResolver.nextTrainingDay(block: block, after: now).map { ($0.slot, $0.day) }
+        guard let pick = StartSlot.suggestion(liveRoutines: routines, sessions: sessionTemplates, finished: finished) else {
+            return nil
         }
-        if case .session(let slot) = resolution { return (slot, nil) }
-        return nil
+        if let routine = pick.slot?.split { return "Next up: \(pick.session.name) · \(routine.name)" }
+        return "Next up: \(pick.session.name)"
     }
 
-    /// The done card's up next, such as "Pull A · Wed".
-    private func upNextLabel(_ resolution: TodayResolution) -> String? {
-        guard let next = upNext(resolution),
-              let name = next.slot.sessionTemplate?.name
-        else { return nil }
-        guard let day = next.day else { return name }
-        let label = Calendar.current.isDateInTomorrow(day)
-            ? "Tomorrow"
-            : day.formatted(.dateTime.weekday(.abbreviated))
-        return "\(name) · \(label)"
-    }
-
-    /// The block has sessions to choose from.
     private var canChooseSession: Bool {
-        !(activeBlocks.first?.split?.slots ?? []).isEmpty
+        sessionTemplates.contains { StartSlot.hasExercises($0) }
     }
 
     // MARK: - Workout Start
@@ -578,23 +492,9 @@ public struct TodayView: View {
         case .started(let session):
             navigationPath.append(SessionRoute.logger(session))
         case .alreadyInProgress(let active):
-            startConflict = active
+            navigationPath = NavigationPath([SessionRoute.logger(active)])
         case .emptyTemplate:
             startError = "Add at least one exercise to \(template.name) first."
-        case .failed(let message):
-            startError = message
-        }
-    }
-
-    @MainActor
-    private func startEmptyWorkout() {
-        switch WorkoutStarter.startEmpty(context: ctx) {
-        case .started(let session):
-            navigationPath.append(SessionRoute.logger(session))
-        case .alreadyInProgress(let active):
-            startConflict = active
-        case .emptyTemplate:
-            break
         case .failed(let message):
             startError = message
         }
@@ -617,8 +517,6 @@ public struct TodayView: View {
             startWorkout(template, in: routine)
         case .open(let template):
             openedSession = OpenedSession(template: template, routine: nil)
-        case .empty:
-            startEmptyWorkout()
         }
     }
 
@@ -727,7 +625,6 @@ public struct TodayView: View {
         case start(SessionTemplate, Split)
         /// A session in no routine: open its detail.
         case open(SessionTemplate)
-        case empty
     }
 
     /// A session's detail and the routine it was opened from, which decides
@@ -735,40 +632,6 @@ public struct TodayView: View {
     private struct OpenedSession: Hashable {
         let template: SessionTemplate
         let routine: Split?
-    }
-}
-
-// MARK: - EmptySplitFixIt
-
-/// CR-02 / Phase 9 Plan 03: shown when the active block's split has zero slots.
-/// Copy and layout verbatim from UI-SPEC §8 + Copywriting Contract.
-/// Caller supplies the navigation action so this view stays stack-agnostic.
-fileprivate struct EmptySplitFixIt: View {
-
-    let onGoToRoutine: () -> Void
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("ROUTINE HAS NO SESSIONS")
-                .font(BRUFont.bodyEmphasis)
-                .textCase(.uppercase)
-                .tracking(1.2)
-                .foregroundStyle(Color.bruInk)
-
-            Text("The routine linked to this block has no sessions scheduled. Add a session to continue.")
-                .font(BRUFont.bodyDefault)
-                .foregroundStyle(Color.bruMuted)
-
-            BRUButton("GO TO ROUTINE ▸", kind: .ghost) {
-                onGoToRoutine()
-            }
-        }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 24)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.bruPaper)
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel("Routine has no sessions. The routine linked to this block has no sessions scheduled. Add a session to continue.")
     }
 }
 
@@ -788,17 +651,20 @@ fileprivate struct EmptySplitFixIt: View {
 
 /// A failed block start, kept out of TodayView's body so the compiler can type-check it.
 private struct TodayBlockAlerts: ViewModifier {
-    @Binding var blockError: String?
+    @Binding var failedBlock: Block?
+    let onRetry: (Block) -> Void
+    let onOpen: (Block) -> Void
 
     func body(content: Content) -> some View {
         content
-            .alert("Couldn't Save", isPresented: Binding(
-                get: { blockError != nil },
-                set: { if !$0 { blockError = nil } }
-            )) {
-                Button("OK", role: .cancel) { blockError = nil }
-            } message: {
-                Text(blockError ?? "")
+            .alert("Couldn't start block", isPresented: Binding(
+                get: { failedBlock != nil },
+                set: { if !$0 { failedBlock = nil } }
+            ), presenting: failedBlock) { block in
+                Button("Try again") { onRetry(block) }
+                Button("Open block") { onOpen(block) }
+            } message: { _ in
+                Text("Try again, or open the block to review its setup.")
             }
     }
 }

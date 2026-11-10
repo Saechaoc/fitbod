@@ -4,8 +4,8 @@
 //
 //  A start credits the slot StartSlot gives it at the tap, through the real
 //  starter, factory and store: in a block, with no block, for a session
-//  slotted twice and after a slot is removed. An empty workout starts with
-//  nothing in it.
+//  slotted twice and after a slot is removed. A second start resumes the
+//  existing workout instead of creating another.
 //
 
 import Foundation
@@ -182,26 +182,16 @@ struct WorkoutStarterTests {
         #expect(second.slot == nil)
     }
 
-    // MARK: Empty workout
-
-    @Test("an empty workout starts in the active block with nothing in it, once")
-    func emptyWorkoutStarts() throws {
-        let (routine, _) = try routine(slots: ["A", "B", "C"])
-        let block = try activeBlock(on: routine)
-
-        guard case .started(let session) = WorkoutStarter.startEmpty(context: ctx) else {
-            Issue.record("The empty workout did not start")
-            return
-        }
-        #expect(session.completedAt == nil)
-        #expect((session.exercises ?? []).isEmpty)
-        #expect(session.block?.id == block.id && session.slot == nil)
-        #expect(session.displayName == "Workout")
-
-        guard case .alreadyInProgress(let active) = WorkoutStarter.startEmpty(context: ctx) else {
+    @Test("a second session start returns the existing workout without creating another")
+    func existingWorkoutIsResumed() throws {
+        let (routine, sessions) = try routine(slots: ["A", "B"])
+        let first = try start(sessions[0], in: routine)
+        let outcome = WorkoutStarter.start(sessions[1], in: routine, context: ctx)
+        guard case .alreadyInProgress(let active) = outcome else {
             Issue.record("A second start did not find the first")
             return
         }
-        #expect(active.id == session.id)
+        #expect(active.id == first.id)
+        #expect(try ctx.fetch(FetchDescriptor<Session>()).count == 1)
     }
 }

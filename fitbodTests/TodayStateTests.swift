@@ -255,6 +255,26 @@ struct TodayStateTests {
         #expect(resolve() == .first)
     }
 
+    @Test func fixNamesTheRoutineWithTheNewestSessionEdit() {
+        let older = routine(name: "Older", createdAt: now.addingTimeInterval(-100))
+        let newer = routine(name: "Newer", createdAt: now)
+        let (recent, _) = session(exerciseCount: 0, in: older)
+        let (stale, _) = session(exerciseCount: 0, in: newer)
+        recent.updatedAt = now
+        stale.updatedAt = now.addingTimeInterval(-10)
+        #expect(resolve(routines: [older, newer]) == .fix(.routineHasNoExercises(older)))
+        #expect(resolve(routines: [newer, older]) == .fix(.routineHasNoExercises(older)))
+    }
+
+    @Test func fixBreaksEqualDatesByNameThenID() {
+        let z = routine(name: "Z", createdAt: now)
+        let a = routine(name: "A", createdAt: now)
+        #expect(resolve(routines: [z, a]) == .fix(.routineHasNoSessions(a)))
+        let otherA = routine(name: "A", createdAt: now)
+        let first = a.id.uuidString < otherA.id.uuidString ? a : otherA
+        #expect(resolve(routines: [a, otherA]) == .fix(.routineHasNoSessions(first)))
+    }
+
     @Test func theDayTurnsOverWithNow() {
         let (block, slot, _) = scheduled()
         let done = workout(startedAt: now)

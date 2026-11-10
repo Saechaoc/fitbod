@@ -107,7 +107,7 @@ Going ‹ BACK to Today and tapping START ▸ on the picker row costs the same t
 
 ## Dead ends
 
-- [Today](../screens/today.md) offers no workout at all on a fresh store: the START A WORKOUT section holds only "Build your first routine", so a lifter who wants to log right away must build a routine and a session first (`fitbod/Views/TodaySessionPicker.swift:107`, `screens/img/17e-default-light-today--empty.png`).
+- [Today](../screens/today.md) offers no workout at all on a fresh store: the START A WORKOUT section holds only "Build your first routine", so a lifter who wants to log right away must build a routine and a session first ([captured source](https://github.com/Saechaoc/fitbod/blob/61353088/fitbod/Views/TodaySessionPicker.swift#L107), `screens/img/17e-default-light-today--empty.png`).
 - START A BLOCK on [Today](../screens/today.md) leads to [Choose routine](../screens/new-block-split-picker.md), a blank page with no routine to pick and no way to make one (`screens/img/17e-default-light-new-block-split-picker--fresh.png`).
 - In [Workout](../screens/logger.md), the set square stays disabled on a first workout until weight and reps are typed, and only the VoiceOver hint says why (`fitbod/Sessions/SetRow.swift:235`).
 

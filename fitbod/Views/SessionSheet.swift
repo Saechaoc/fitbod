@@ -114,8 +114,6 @@ struct SessionSheet: View {
     let onStart: (SessionTemplate, Split) -> Void
     /// Opens a session that sits in no live routine.
     let onOpen: (SessionTemplate) -> Void
-    /// Starts a workout with no session behind it.
-    let onStartEmpty: () -> Void
 
     var body: some View {
         VStack(spacing: 0) {
@@ -136,8 +134,6 @@ struct SessionSheet: View {
                             BRUDivider(.hair)
                         }
                     }
-                    emptyWorkoutRow
-                    BRUDivider(.hair)
                 }
             }
         }
@@ -183,12 +179,13 @@ struct SessionSheet: View {
                     .foregroundStyle(Color.bruMuted)
                     .fixedSize(horizontal: false, vertical: true)
             }
-            .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
+            .frame(maxWidth: .infinity, minHeight: BRUMetrics.touchTarget, alignment: .leading)
             .padding(.horizontal, 16)
             .padding(.vertical, 10)
         }
         .buttonStyle(.bruRow)
         .disabled(!row.canStart)
+        .accessibilityIdentifier("sessionSheet.start.\(row.session.id)")
         .accessibilityHint(row.canStart ? "Starts this workout" : "Add exercises to this session in Program first")
     }
 
@@ -214,36 +211,12 @@ struct SessionSheet: View {
                     .foregroundStyle(Color.bruMuted)
                     .accessibilityHidden(true)
             }
-            .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
+            .frame(maxWidth: .infinity, minHeight: BRUMetrics.touchTarget, alignment: .leading)
             .padding(.horizontal, 16)
             .padding(.vertical, 10)
         }
         .buttonStyle(.bruRow)
         .accessibilityHint("Shows the exercises in this session")
-    }
-
-    /// A workout with no session behind it, as Today's old lists offered.
-    /// RM-006 removes this start from Today; it stays here until that
-    /// removal is confirmed, so no slice takes it away early.
-    private var emptyWorkoutRow: some View {
-        Button(action: onStartEmpty) {
-            VStack(alignment: .leading, spacing: 3) {
-                Text("Empty workout")
-                    .font(BRUFont.displayMedium)
-                    .foregroundStyle(Color.bruInk)
-                Text("Add exercises as you go")
-                    .font(BRUFont.labelSmall)
-                    .tracking(1.0)
-                    .textCase(.uppercase)
-                    .foregroundStyle(Color.bruMuted)
-            }
-            .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
-            .padding(.horizontal, 16)
-            .padding(.vertical, 10)
-        }
-        .buttonStyle(.bruRow)
-        .padding(.top, 16)
-        .accessibilityIdentifier("today.startEmpty")
     }
 
     // MARK: Row text

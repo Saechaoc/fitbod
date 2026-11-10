@@ -72,15 +72,17 @@ final class EditorSwipeDismissUITests: XCTestCase {
         assertCloses(title, "Discard must close the custom exercise editor")
     }
 
-    /// Today's Start a block CTA presents the New Block builder as a sheet.
-    /// A picker the builder opens must still swipe away on its own.
+    /// Program presents the builder full-screen. Its edits survive a drag,
+    /// and a picker it opens can still swipe away on its own.
     @MainActor
-    func testNewBlockBuilderResistsSwipeDownOnlyWithUnsavedEdits() throws {
+    func testNewBlockBuilderKeepsEditsAndItsPickerCanSwipeAway() throws {
         let app = UITestNavigation.launch(UITestNavigation.freshStore)
         let title = app.staticTexts.labeled("NEW BLOCK")
         openNewBlock(in: app)
         UITestNavigation.dragSheetDown(from: title, in: app)
-        assertCloses(title, "An untouched New Block builder must close on swipe-down")
+        assertStaysOpen(title, "Program's full-screen builder stays open on swipe-down")
+        UITestNavigation.hittable(app.buttons, "Cancel", exactLabel: true).tap()
+        assertCloses(title, "CANCEL must close an untouched builder")
 
         openNewBlock(in: app)
         let fixedWeekly = app.buttons.labeled("FIXED WEEKLY scheduling")
@@ -104,7 +106,7 @@ final class EditorSwipeDismissUITests: XCTestCase {
         assertCloses(title, "Discard must close the New Block builder")
     }
 
-    /// CANCEL and "< TODAY" close an untouched New Block at once, and ask
+    /// CANCEL and "< PROGRAM" close an untouched New Block at once, and ask
     /// before they throw away an edited one.
     @MainActor
     func testNewBlockCancelAsksOnlyWithUnsavedEdits() throws {
@@ -124,21 +126,17 @@ final class EditorSwipeDismissUITests: XCTestCase {
         assertStaysOpen(title, "Keep editing must leave the New Block builder open")
         XCTAssertEqual(name.value as? String, "Summer Base", "Keep editing must keep the name")
 
-        UITestNavigation.hittable(app.buttons, "< TODAY", exactLabel: true).tap()
-        XCTAssertTrue(UITestNavigation.appears(dialog, within: 5), "< TODAY must also ask before it discards an edited block")
+        UITestNavigation.hittable(app.buttons, "< PROGRAM", exactLabel: true).tap()
+        XCTAssertTrue(UITestNavigation.appears(dialog, within: 5), "< PROGRAM must also ask before it discards an edited block")
         UITestNavigation.hittable(app.buttons, "Discard", exactLabel: true).tap()
         assertCloses(title, "Discard must close the New Block builder")
     }
 
     @MainActor
     private func openNewBlock(in app: XCUIApplication) {
-        // Today offers a block only once a routine exists.
-        UITestNavigation.makeRoutine("Starter", in: app)
-        UITestNavigation.selectTab("Today", in: app)
-        let start = app.buttons.labeled("Start a block")
-        UITestNavigation.reveal(start, in: app)
-        start.tap()
-        // Create block, as on Program.
+        UITestNavigation.selectTab("Program", in: app)
+        UITestNavigation.hittable(app.buttons, "+ NEW").tap()
+        UITestNavigation.hittable(app.buttons, "+ New block").tap()
         UITestNavigation.hittable(app.buttons, "Blank Block").tap()
         XCTAssertTrue(UITestNavigation.appears(app.staticTexts.labeled("NEW BLOCK")))
     }

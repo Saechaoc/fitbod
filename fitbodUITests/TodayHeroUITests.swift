@@ -58,6 +58,7 @@ final class TodayHeroUITests: XCTestCase {
                       "A session past NEXT must say what it skips, but reads \"\(row("Push A").label)\"")
         XCTAssertFalse(row("Legs A").isEnabled, "A session with no exercises must not start")
         XCTAssertTrue(row("Arms").exists, "A session in no routine must be listed")
+        UITestNavigation.saveScreenshot("RM006", "session-sheet")
 
         row("Arms").tap()
         XCTAssertTrue(UITestNavigation.appears(app.staticTexts.labeled("Session"), within: 5),

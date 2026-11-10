@@ -110,9 +110,12 @@ final class SessionHistoryBRUUITests: XCTestCase {
         let app = UITestNavigation.launch(
             UITestNavigation.freshStore + ["-AppleLocale", "de_DE", "-AppleLanguages", "(en)"]
         )
-        let start = app.buttons["today.startEmpty"]
-        XCTAssertTrue(UITestNavigation.appears(start))
-        start.tap()
+        tap("+ New routine", in: app)
+        UITestNavigation.type("Locale routine", into: app.textFields["newRoutine.name"])
+        tap("Save", in: app)
+        tap("+ Add session", in: app)
+        tap("+ New session", in: app)
+        UITestNavigation.type("Locale session", into: app.textFields["Session name"])
         tap("Add exercise", in: app)
         let search = app.textFields["library.search.picker"]
         XCTAssertTrue(UITestNavigation.appears(search))
@@ -123,6 +126,12 @@ final class SessionHistoryBRUUITests: XCTestCase {
         )).firstMatch
         XCTAssertTrue(UITestNavigation.appears(picked))
         picked.tap()
+        tap("Save session ▸", in: app)
+        let session = app.staticTexts["Locale session"].firstMatch
+        XCTAssertTrue(UITestNavigation.appears(session))
+        UITestNavigation.waitUntilStill(session)
+        session.tap()
+        tap("Start workout ▸", in: app)
         let loggedWeight = app.textFields.matching(NSPredicate(
             format: "identifier BEGINSWITH %@", "set.weight.1.S1"
         )).firstMatch
@@ -143,7 +152,7 @@ final class SessionHistoryBRUUITests: XCTestCase {
         confirmFinish.tap()
         XCTAssertTrue(UITestNavigation.appears(app.buttons["summary.done"]))
         app.buttons["summary.done"].tap()
-        let view = app.buttons["doneToday.view"]
+        let view = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "doneToday.view.")).firstMatch
         XCTAssertTrue(UITestNavigation.appears(view))
         view.tap()
         tap("Edit", in: app)

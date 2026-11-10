@@ -128,7 +128,6 @@ struct BRUPeriodizationAuditTests {
     @Test("testForbiddenPatternsAcrossAllPhase4Surfaces — 0 matches for all 25 forbidden patterns across the Phase 4 surfaces")
     func testForbiddenPatternsAcrossAllPhase4Surfaces() throws {
         let surfaces = [
-            "StartBlockCTA.swift",
             "MesocycleWeekPage.swift",
             // BlockBuilderView.swift retired from this audit in quick task 260528-vi2:
             // the New Block screen was redesigned to the rounded-card final-design.png

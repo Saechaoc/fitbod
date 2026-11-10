@@ -12,9 +12,9 @@ Keep concise commands/results/limitations with their RM owner. Logs/screenshots 
 
 ## Active work
 
-Two lanes run at once, as the user chose on 2026-11-09.
-Lane A, product: [RM-006](#rm-006), built in six slices (seeds, StartSlot rules, shared starts, session sheet and T-PICK hero, state slabs, removals).
-Lane B, data safety: [RM-001](#rm-001), then RM-002 to RM-005, one bounded delivery at a time in its own worktree and on its own simulator.
+The user chose on 2026-11-10 to finish [RM-006](#rm-006), then complete Lane B.
+RM-006's six-slice implementation is Done. The product successor is [RM-010](#rm-010), which requires RM-003.
+Lane B, data safety: review/rebase/merge [RM-001](#rm-001), then RM-002 to RM-005, one bounded delivery at a time in its own worktree and on its own simulator.
 Each slice lands on `main` when its local checks pass ([RM-053](#rm-053)).
 Move the next bounded outcome here when its implementation starts; a phone-pending feature does not occupy an active slot.
 
@@ -65,6 +65,7 @@ Done covers the bounded implementation, appropriate agent-run checks and updated
 
 | ID | Priority / status | Outcome and completion evidence | Dependencies / references |
 |---|---|---|---|
+| [RM-006](#rm-006) | P1 · Done | StartSlot/shared starts, session sheet and all Today states; six slices, unit/full UI and 390pt evidence in RM-006; [plan/results](archive/features/today-session-sheet-and-state-slabs.md). | Retains the live Program template route until RM-011; broader AX/device checks at stability. |
 | [RM-043](#rm-043) | P3 · Done | Completion policy, bounded roadmap/dependency semantics, current setup/widget docs and selected plan archives. Verification in RM-043; [plan/results](archive/features/development-workflow.md). | Documentation only; no app-runtime claim. |
 | [RM-053](#rm-053) | P3 · Done | Local checks are the delivery policy for `main`; CI stays for pull requests and manual runs. User decision 2026-11-09. | Policy only; no workflow change. |
 | <a id="rm-055"></a>RM-055 | P1 · Historically shipped; acceptance unrecorded | Gym day author/start/log/relaunch/finish/history; transactional corrections/frozen WHY/cache invalidation. D-01/D-02 slotted-delete/rollback, D-03/N1 backup routines, D-04 edit screen delivered. Recorded persistence/edit/backup tests; T40 `32c8b65`, T41 `027536d`, rollback refresh `c3214985`. | [history design](design-map/mockups/history-editing.html), [service](../fitbod/Sessions/SessionEditService.swift), [contracts](../ARCHITECTURE.md#snapshots-and-corrections); remaining failed writes RM-002. |
@@ -80,7 +81,7 @@ Done covers the bounded implementation, appropriate agent-run checks and updated
 ### <a id="current-focus"></a>Core correctness and the next redesign step
 
 Finish one gym day reliably, then running a block, then the approved Today/Program redesign in order: 1.1 → 1.2 → 1.3 → 1.4 → 1.5 → 1.6, followed by phase 2.
-Steps 1.1–1.2 shipped ([RM-057](#rm-057), [RM-058](#rm-058)); 1.3 is the next planned redesign step.
+Steps 1.1–1.3 shipped ([RM-057](#rm-057), [RM-058](#rm-058), [RM-006](#rm-006)); 1.4 ([RM-010](#rm-010)) follows after RM-003.
 Resolve data risks in the paths being changed before adding more prototype behavior.
 Each redesign step keeps affected tests serial on dedicated simulators and captures its changed 390pt states in light and dark. Broader AX3/two-phone/VoiceOver work returns at stability. For Program changes, keep NewBlockBuilderFidelityTests, ProgramViewFidelityTests and AdaptiveColorSourceTests in the affected checks.
 
@@ -131,22 +132,22 @@ Each redesign step keeps affected tests serial on dedicated simulators and captu
 
 ### <a id="rm-006"></a>RM-006 — Redesign 1.3: session sheet, StartSlot and state slabs
 
-**P1 · Active (2026-11-09).** Implement the approved [Today layouts](design-map/redesign/today-layouts.md) and [hierarchy](design-map/redesign/hierarchy.md). The [reconciled implementation notes](../.planning/quick/261106-ss3-session-sheet-startslot-and-state-slabs/261106-ss3-PLAN.md) are subordinate input; this entry owns scope and status. GSD/executor, capture-commit and full-suite mandates in the old notes are retired.
+**P1 · Done (2026-11-10).** The approved [Today layouts](design-map/redesign/today-layouts.md) and [hierarchy](design-map/redesign/hierarchy.md), with the live Program template-route exception below. The [implementation plan/results](archive/features/today-session-sheet-and-state-slabs.md) are archived; this entry owns current scope and acceptance. GSD/executor and capture-commit mandates in the old notes are retired.
 **Done when:**
 
 - One pure `StartSlot` rule serves hero, session sheet, Program and session detail. Rotation NEXT is the resolver's next slot; weekday NEXT is today's slot before a counted workout, otherwise the next training day's slot. No-block NEXT advances from the newest finished slotted workout, skips empty sessions and wraps.
 - A twice-slotted session passes NEXT when it matches, otherwise the first matching slot after NEXT. Outside-routine starts are unslotted. Rotation/no-block rows explain skipped sessions; weekday rows skip nothing. Detail computes at tap time so deleting a slot cannot leave a stale start.
 - The sheet has CANCEL, one start-on-tap row per distinct routine session, NEXT only on a usable row, disabled empty rows, and Other sessions opening detail. Rows fit content with 44pt minimum targets.
 - T-PICK suggests the eligible routine holding the newest finished slotted workout, otherwise the one holding the most recently updated usable session, otherwise a standalone session. A fresh store gives T-FIRST; an empty routine gives no-block T-FIX. Block repair/T-ATTACH retain another-session access when any usable session exists.
-- T-DONE lists every counted workout started today, newest first, and outranks T-READY. Its final slab is paper on paper in both appearances (FT-15); current dark `bruSlab` is interim. T-REST says REST DAY. T-READY starts the oldest ready block in one tap, shows creation date/ready count and reports failure.
-- Remove obsolete Today block-creation/empty-session placeholders, StartBlockCTA/template builder case and unused conflict presentation. Preserve the logger's Today route (O-16). Another session takes two taps from T-TODAY; mistaken start costs Back then Discard.
+- T-DONE lists every counted workout started today, newest first, and outranks T-READY. Its final slab is paper on paper in both appearances (FT-15). T-REST says REST DAY. T-READY starts the oldest ready block in one tap, shows creation date/ready count and reports failure.
+- Remove obsolete Today block-creation/empty-session placeholders, StartBlockCTA and unused conflict presentation. Keep `BlockBuilderRoute.template` while Program's template cards still call it; migrate that caller with RM-011. Preserve the logger's Today route (O-16). Another session takes two taps from T-TODAY; mistaken start costs Back then Discard.
 - Test state/slot precedence and starts through sheet/detail, including duplicate/deleted slots, two no-block starts, standalone/empty routines and two done workouts. Add ready/empty/done seeds with all finished-today timestamps between local midnight and launch. Run affected factory/resolver/start/journey checks and inspect 390pt/default/light states.
 
 **Scope / sequence:** Pure slot/state rules → shared starter/detail/Program callers → sheet/slabs → seeds and affected checks. SchemaV7 unchanged; volume summary RM-010, review RM-013 and next-day lines RM-014 are excluded.
 **Requires:** [RM-057](#rm-057), [RM-058](#rm-058). Resolve RM-001–RM-005 where the changed path relies on those safeguards; unrelated work continues.
-**Scheduled after:** Steps 1.1–1.2 are shipped; next Today/Program implementation.
+**Scheduled after:** Shipped steps 1.1–1.2.
 **Verify when:** Affected logic/UI starts and 390pt light/dark states at implementation; broader AX/phone checks at stability.
-**Evidence:** No passing acceptance is recorded for the remaining scope; cited commits/tests establish the shipped baseline only.
+**Evidence:** All six implementation slices are complete; validation and limits are recorded below.
 Slice 1 of 6, seeds (2026-11-09): `TodayStatesSeed` adds `-fitbod-seed-today-ready`, `-empty`, `-done`, `-rest`, `-attach` and `-pick`, so every Today state opens from a launch argument; T-TODAY, T-RESUME and T-FIRST had seeds already.
 `TodayStatesSeedTests` checks each seed against `TodayState.resolve`, and that done-today holds one minute after midnight.
 Unit target: 1,267 tests, 1,266 passed, 1 expected failure (iPhone 17, iOS 26.5).
@@ -170,8 +171,14 @@ The review removes the dead `upNext(done:)` parameter and tests the Other sessio
 Unit target after the final code edits: 1,298 tests, 1,297 passed, 1 expected failure (`scripts/test.sh fast`, iPhone 17, iOS 26.5; `fast-20261109-142347`).
 UI: `MilestoneOneJourneyUITests` and `TodayHeroUITests` passed 4 of 4 after the fixes (`scripts/test.sh fast -only-testing:fitbodUITests/MilestoneOneJourneyUITests -only-testing:fitbodUITests/TodayHeroUITests`, iPhone 17 shard 2, iOS 26.5; `fast-20261109-142452`). The other seven affected classes passed 25 of 25 in `fast-20261109-140437`, including ArchiveRoutineUITests.
 The earlier journey failure was during Library search: its scroll helper asked a zero-size hidden ScrollView for hittability, before reaching Today. The helper now rejects empty frames; the completed-workout state still has its inline picker in this slice, so that step needed no migration. Documentation checker/self-test passed, with the existing warning for five unreferenced images.
-The saved hero and sheet captures were inspected at 390pt/default text in light and dark. The sheet title wraps to two readable lines; long routine names and AX3 were not checked. Empty workout remains in the sheet for this slice. Slices 5 (state slabs) and 6 (removals/close-out) have not started.
-**References:** D-19/D-24/D-25/D-162–D-165, redesign R-4/R-5/R-10/R-12/R-19/R-23/R-25; [TodayState](../fitbod/Views/TodayState.swift), [sheet](../fitbod/Views/SessionSheet.swift), [picker](../fitbod/Views/TodaySessionPicker.swift), [session detail](../fitbod/Routines/SessionTemplateDetailView.swift), [O-2/O-3/O-6](#rm-042).
+The saved hero and sheet captures were inspected at 390pt/default text in light and dark. The sheet title wraps to two readable lines; long routine names and AX3 were not checked. Empty workout remained in the sheet at this checkpoint; slices 5 and 6 were pending.
+Slices 5 and 6 (implemented 2026-11-09, verified 2026-11-10): Today renders the resolved state directly; DONE lists each counted workout with History's PR counts on paper, READY shows creation/count and Retry/Open failure actions, and rest/repair/attach/first-run states have their intended actions.
+The no-block repair target now follows the newest session edit, then the newest routine, with deterministic ties. Obsolete inline/block pickers, Today block creation, empty starts and conflict presentation are removed. A second start resumes the current workout; the author/log/relaunch/history and correction tests use the retained routes.
+Scope correction from caller inspection: `BlockBuilderRoute.template` is live in `ProgramTemplateSection`; keep it until RM-011 migrates those cards. No Program template capability is removed in this Today delivery.
+Validation on the final app source, based on `0b1ac37e`: `scripts/test.sh fast` passed 1,291/1,292 unit tests with one expected failure (`fast-20261109-150446`). The full tier (`full-20261109-150847`) ran all 1,384 enumerated tests with no missing/repeated tests and built the widget: units passed, 91/92 UI tests passed, and the only failure expected the removed No active block placeholder. After updating that assertion, `BlockLifecycleEntryPointsUITests` passed 2/2 (`fast-20261110-073135`). After the final READY Open-button touch-area correction, the unit target and all six state-route tests passed: 1,297 passed, one expected failure (`fast-20261110-074553`), including an Open tap near the control’s top edge. All 92 UI tests therefore have passing evidence, including ready Retry/Open/relaunch, two done summaries, repair/alternate-start/discard, and the authored persistence journey.
+Integrated onto current main `7615f5f4` after the workout-progression merge: migrated its two retired `startEmpty` test callers to unplanned-session fixtures. Units passed 1,298 with one expected failure and state routes passed 6/6 (`fast-20261110-075330`). The journey caught a scroll-view index race during Library sheet dismissal; binding containers by accessibility identity fixed it, and the full author/log/relaunch/finish/history/second-start journey passed (`fast-20261110-075704`). The earlier full run remains the full-suite evidence; the combined version received these focused integration checks.
+Captured nine Today states at 390pt/default text in light/dark and inspected the changed first/done/ready/rest/repair/attach states. The sheet route also passed at 390pt in both appearances on 2026-11-10 (`fast-20261110-073611`, `fast-20261110-073648`), with captures confirming the empty-workout row is gone. Artifacts remain ignored local output. The sheet's two-line title is readable; long names, AX3 and physical VoiceOver stay with RM-044/RM-047 at workflow stability.
+**References:** D-19/D-24/D-25/D-162–D-165, redesign R-4/R-5/R-10/R-12/R-19/R-23/R-25; [TodayState](../fitbod/Views/TodayState.swift), [sheet](../fitbod/Views/SessionSheet.swift), [session detail](../fitbod/Routines/SessionTemplateDetailView.swift), [O-2/O-3/O-6](#rm-042).
 
 ### <a id="rm-007"></a>RM-007 — FT-19: identify the repeated permission prompt
 

@@ -1,18 +1,46 @@
 # Today redesign 1.3: session sheet, StartSlot and state slabs
 
-Reconciled 2026-11-08. These are subordinate implementation notes for
-[RM-006](../../../docs/ROADMAP.md#rm-006); the roadmap alone owns scope, status,
-product decisions and acceptance. This feature remains Planned. The original
-notes were preserved locally before reconciliation; their GSD/executor commands,
-fixed simulator UUIDs, line numbers, commit count and output mandates are retired.
+Archived 2026-11-10. Implementation scope for [RM-006](../../ROADMAP.md#rm-006)
+is complete; the roadmap owns current status and follow-up triggers. These are
+historical implementation notes, not a separate backlog.
+
+**Delivered:** StartSlot/shared start routes, deterministic state seeds, the
+session sheet/no-block hero, all Today state slabs and obsolete Today entry-point
+removals. SchemaV7 and logged snapshots are unchanged. Volume summary (RM-010),
+Program layout (RM-011), review notice (RM-013), next-day lines (RM-014), and broader
+accessibility/release checks were excluded. The shared `.template` builder route
+was retained because Program's live template cards still call it; its migration
+belongs to RM-011.
+
+**Build:** slices 1–4 landed as `0c9135be`, `9bb0a087`, `ca3ec867`, and `0b1ac37e`;
+slices 5–6 are delivered by the commit containing this archive, rebased from
+`0b1ac37e` onto `7615f5f4` (workout progression).
+**Results:** the final unit target passed 1,291 tests with one expected failure.
+The full tier enumerated and ran 1,384 tests, with no missing/repeated tests and a
+successful widget build. Its only UI failure was an obsolete “No active block”
+assertion; the corrected block lifecycle class passed 2/2 on 2026-11-10. All 92 UI
+tests have passing evidence across that run and the focused correction. A final
+44pt touch-area correction to READY’s Open button passed the unit target and all
+six state-route tests (1,297 passed, one expected failure), including a tap near
+the Open control’s top edge. Integration on `7615f5f4` then passed 1,298 unit
+tests with one expected failure, six state routes, and the author/relaunch/history
+journey after correcting its scroll-view index race. The 390pt/default first, done, ready, rest,
+repair and attach captures were inspected in light/dark. The sheet title wraps
+to two readable lines; long names, AX3 and physical VoiceOver remain at stability
+(RM-044/RM-047), not acceptance claims of this archive. Detailed output remains in
+ignored local artifacts; RM-006 records the concise run references.
+
+The notes below were reconciled on 2026-11-08 before implementation. Their original
+GSD/executor, fixed simulator, fixed commit-count and capture-commit mandates were
+retired by the current development policy.
 
 Read [AGENTS.md](../../../AGENTS.md), [CLAUDE.md](../../../CLAUDE.md),
-[DEVELOPMENT.md](../../../docs/DEVELOPMENT.md), [SETUP.md](../../../docs/SETUP.md)
+[DEVELOPMENT.md](../../DEVELOPMENT.md), [SETUP.md](../../SETUP.md)
 and [ARCHITECTURE.md](../../../ARCHITECTURE.md) before implementation.
-Approved design detail: [hierarchy](../../../docs/design-map/redesign/hierarchy.md),
-[Today layouts](../../../docs/design-map/redesign/today-layouts.md),
-[Program layouts](../../../docs/design-map/redesign/program-layouts.md) and
-[RM-042 O-1–O-16](../../../docs/ROADMAP.md#rm-042). Later approved calls win.
+Approved design detail: [hierarchy](../../design-map/redesign/hierarchy.md),
+[Today layouts](../../design-map/redesign/today-layouts.md),
+[Program layouts](../../design-map/redesign/program-layouts.md) and
+[RM-042 O-1–O-16](../../ROADMAP.md#rm-042). Later approved calls win.
 
 ## Outcome and boundaries
 

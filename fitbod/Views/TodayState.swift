@@ -62,7 +62,12 @@ enum TodayState: Equatable {
             return .pick(suggestion)
         }
 
-        if let routine = liveRoutines.max(by: { $0.createdAt < $1.createdAt }) {
+        let repairRoutine = liveRoutines.min { a, b in
+            let aEdited = (a.slots ?? []).compactMap { $0.sessionTemplate?.updatedAt }.max() ?? .distantPast
+            let bEdited = (b.slots ?? []).compactMap { $0.sessionTemplate?.updatedAt }.max() ?? .distantPast
+            return (bEdited, b.createdAt, a.name, a.id.uuidString) < (aEdited, a.createdAt, b.name, b.id.uuidString)
+        }
+        if let routine = repairRoutine {
             return (routine.slots ?? []).isEmpty ? .fix(.routineHasNoSessions(routine)) : .fix(.routineHasNoExercises(routine))
         }
         return .first
