@@ -121,7 +121,7 @@ struct MidSessionSwapTests {
 
     // MARK: - 2. Pending sets re-seed with matching-intent hint
 
-    @Test("swapResetsPendingSetsToNewHint — pending sets adopt the new exercise's hint")
+    @Test("Swap clears drafts and offers the replacement exercise's performance")
     func swapResetsPendingSetsToNewHint() throws {
         let ctx = try makeContext()
         let fx = try makeFixture(ctx: ctx)
@@ -159,12 +159,13 @@ struct MidSessionSwapTests {
         // Swap Bench → OHP.
         SwapExerciseSheet.swap(fx.sessionExercise, to: fx.ohp, context: ctx)
 
-        // Post-swap: pending sets re-seeded at 95 (the OHP strength hint).
         let pendingAfter = (fx.sessionExercise.sets ?? [])
-            .filter { !$0.isComplete }
-        #expect(pendingAfter.allSatisfy { $0.weight == 95 })
-        // Reps + rpe cleared on pending sets too.
-        #expect(pendingAfter.allSatisfy { $0.reps == 0 })
+            .filter { !$0.isComplete && !$0.isWarmup }
+        let offers = WorkoutSetSuggestions(exercise: fx.sessionExercise, prior: [priorSet]).offers()
+        let weight = try #require(fx.sessionExercise.prescribedWeight)
+        #expect(!pendingAfter.isEmpty)
+        #expect(pendingAfter.allSatisfy { offers[$0.id] == WorkoutSetSuggestion(weight: weight, reps: 5) })
+        #expect(pendingAfter.allSatisfy { $0.weight == 0 && $0.reps == 0 })
         #expect(pendingAfter.allSatisfy { $0.rpe == nil })
     }
 
@@ -189,11 +190,12 @@ struct MidSessionSwapTests {
         // Swap Bench → OHP.
         SwapExerciseSheet.swap(fx.sessionExercise, to: fx.ohp, context: ctx)
 
-        // Committed set retains its values; pending sets (sets 2-3) get re-seeded.
+        // Completed performance keeps its original lift.
         #expect(firstSet.weight == 145)
         #expect(firstSet.reps == 5)
         #expect(firstSet.rpe == 8.0)
         #expect(firstSet.isComplete == true)
+        #expect(firstSet.sessionExercise?.exercise?.id == fx.bench.id)
 
         // Sanity: the un-committed sets did mutate.
         let pendingAfter = (fx.sessionExercise.sets ?? [])

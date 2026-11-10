@@ -86,7 +86,7 @@ public struct SessionLoggerView: View {
                     SessionExerciseCard(
                         sessionExercise: se,
                         engine: engine,
-                        onCommitSet: { commitSet($0, for: se) },
+                        onCommitSet: { commitSet($0, for: se, suggestion: $1) },
                         onTapEmptyCell: { stopRestIfRunning() },
                         onSwap: { pendingSwap = $0 },
                         onRemove: { pendingRemove = $0 },
@@ -327,14 +327,18 @@ public struct SessionLoggerView: View {
 
     /// Commits a set: flips isComplete, saves, observes for PR detection, starts rest timer.
     /// RESEARCH §6 Pitfall 2 — save MUST precede engine.start.
-    private func commitSet(_ entry: SetEntry, for se: SessionExercise) {
-        guard SessionSetActions.canComplete(entry) else { return }
+    private func commitSet(_ entry: SetEntry, for se: SessionExercise, suggestion: WorkoutSetSuggestion) {
         // The set is done, so typing is too: drop the keyboard so the rest
         // dock and the next set are in view.
         dismissKeyboard()
         // Flips isComplete, stamps completedAt and saves BEFORE the rest
         // timer starts (RESEARCH §6 Pitfall 2).
-        SessionSetActions.complete(entry, at: .now, context: ctx)
+        do {
+            guard try SessionSetActions.complete(entry, at: .now, suggestion: suggestion, context: ctx) else { return }
+        } catch {
+            saveFailure = "The set couldn't be saved. Your entries are still here. Try again."
+            return
+        }
         prState.observeSave(set: entry)
         let prescribed = max(1, se.prescribedRestSeconds)
         engine.start(seconds: prescribed, exerciseName: se.displayName)

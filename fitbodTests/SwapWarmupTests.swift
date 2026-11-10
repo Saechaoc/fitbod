@@ -64,10 +64,16 @@ struct SwapWarmupTests {
         let rebuilt = pendingWarmups(of: bench)
         #expect(rebuilt.map(\.weight) == ramp.map(\.weight))
         #expect(rebuilt.map(\.reps) == ramp.map(\.reps))
-        // The working sets follow the ramp, re-seeded from the squat's last workout.
+        // The working sets follow the ramp, with offers outside the saved drafts.
         #expect(SessionSetActions.ordered(bench).map(\.orderIndex) == Array(0..<7))
         let working = (bench.sets ?? []).filter { !$0.isWarmup }
-        #expect(working.allSatisfy { $0.weight == 140 && $0.reps == 0 })
+        #expect(working.allSatisfy { $0.weight == 0 && $0.reps == 0 && !$0.isComplete })
+        let prior = try #require(PreviousMatchingIntent.lastWorkingSets(
+            exerciseID: fx.squat.id, intentRaw: bench.session?.intentRaw ?? Intent.strength.rawValue,
+            context: ctx, excludingSessionID: bench.session?.id
+        ))
+        let offers = WorkoutSetSuggestions(exercise: bench, prior: prior.sets).offers()
+        #expect(working.allSatisfy { offers[$0.id] == WorkoutSetSuggestion(weight: top, reps: 6) })
     }
 
     @Test("a swap never adds a ramp to an exercise that had none")

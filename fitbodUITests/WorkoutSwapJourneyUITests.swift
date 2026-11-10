@@ -79,8 +79,8 @@ final class WorkoutSwapJourneyUITests: XCTestCase {
         UITestNavigation.tapPickerButton("Done", in: app)
 
         pickVariation(in: app)
-        XCTAssertEqual(app.textFields["set.reps.1.S1"].value as? String, "—",
-                       "The variation keeps the explicit swap's input reset")
+        XCTAssertEqual(app.textFields["set.reps.1.S1"].value as? String, "5",
+                       "The variation offers its new rep target after clearing the old draft")
         enterPending(weight: "67.5", reps: "9", in: app)
         let undo = app.buttons["card.undoVariation"]
         UITestNavigation.revealInLogger(undo, in: app)

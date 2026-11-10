@@ -5,16 +5,13 @@
 //  The set-level mutations the session logger performs, pulled out of the
 //  SwiftUI views so they are unit-testable against a real ModelContext:
 //
-//    - complete    flip isComplete on + stamp completedAt (checkmark tap);
-//                  a working set's weight and reps carry to the next
-//                  untouched working set as its offer (FT-06)
+//    - complete    save the accepted inputs and completion timestamp
 //    - uncomplete  flip isComplete off (tap a completed checkmark); the
 //                  logged weight/reps stay so the user can fix and
 //                  re-check the set. The rest timer is NOT touched.
 //    - delete      remove one set and renumber the rest so orderIndex
 //                  stays contiguous (warm-ups first, then working sets)
-//    - addSet      append a planned working set at the end, offering the
-//                  last set's weight, and its reps once it is logged
+//    - addSet      append a pending set that receives the logger's offers
 //    - finish / deleteWorkout / remove   the workout-level writes; each
 //                  throws on a failed save so the logger can say so
 //
@@ -35,8 +32,12 @@ public enum SessionSetActions {
     /// Bodyweight uses added load, so zero is a valid recorded weight.
     /// All sets need positive reps and a finite, non-negative weight.
     @MainActor
-    public static func canComplete(_ entry: SetEntry) -> Bool {
-        isValidSet(weight: entry.weight, reps: entry.reps, equipment: entry.sessionExercise?.exercise?.equipment)
+    public static func canComplete(_ entry: SetEntry, suggestion: WorkoutSetSuggestion = .init()) -> Bool {
+        isValidSet(
+            weight: suggestion.weight(for: entry),
+            reps: suggestion.reps(for: entry),
+            equipment: entry.sessionExercise?.exercise?.equipment
+        )
     }
 
     /// `canComplete`'s rule on raw values, to check an edit before it is written.
@@ -45,38 +46,44 @@ public enum SessionSetActions {
         return weight > 0 || equipment == .bodyweight || equipment == .weightedBodyweight
     }
 
-    /// Mark a set complete. Returns false (and changes nothing) when the
-    /// set's input is invalid, matching SetRow's commit guard. A working
-    /// set's weight and reps then carry to the next untouched working set.
+    /// Save entered values and any accepted offers together as one logged set.
     @MainActor
     @discardableResult
-    public static func complete(_ entry: SetEntry, at date: Date = .now, context: ModelContext) -> Bool {
-        guard canComplete(entry) else { return false }
+    public static func complete(
+        _ entry: SetEntry,
+        at date: Date = .now,
+        suggestion: WorkoutSetSuggestion = .init(),
+        context: ModelContext,
+        save: (ModelContext) throws -> Void = { try $0.save() }
+    ) throws -> Bool {
+        guard !entry.isComplete, canComplete(entry, suggestion: suggestion) else { return false }
+        let oldWeight = entry.weight
+        let oldReps = entry.reps
+        let oldDate = entry.completedAt
+        entry.weight = suggestion.weight(for: entry)
+        entry.reps = suggestion.reps(for: entry)
         entry.isComplete = true
         entry.completedAt = date
-        carryForward(from: entry)
-        try? context.save()
-        return true
-    }
-
-    /// The next working set still to do takes `entry`'s weight and reps as
-    /// its offer, when nobody has touched it: no reps yet and no typed
-    /// weight. A set with its own numbers keeps them, and RPE never
-    /// carries, because effort is judged per set. Warm-ups carry nothing.
-    static func carryForward(from entry: SetEntry) {
-        guard !entry.isWarmup, let owner = entry.sessionExercise else { return }
-        let working = ordered(owner).filter { !$0.isWarmup }
-        guard let index = working.firstIndex(where: { $0.id == entry.id }),
-              let next = working[(index + 1)...].first(where: { !$0.isComplete }),
-              next.reps == 0, !next.wasManualOverride else { return }
-        next.weight = entry.weight
-        next.reps = entry.reps
+        do {
+            try save(context)
+            return true
+        } catch {
+            entry.isComplete = false
+            entry.completedAt = oldDate
+            entry.weight = oldWeight
+            entry.reps = oldReps
+            throw error
+        }
     }
 
     /// Undo a completion. Weight, reps and RPE are kept.
     @MainActor
     public static func uncomplete(_ entry: SetEntry, context: ModelContext) {
         guard entry.isComplete else { return }
+        if entry.weight == 0 && canComplete(entry) {
+            // The logged unloaded weight is still an entered value after Undo.
+            entry.wasManualOverride = true
+        }
         entry.isComplete = false
         try? context.save()
     }
@@ -92,31 +99,18 @@ public enum SessionSetActions {
         try? context.save()
     }
 
-    /// Append a planned working set. Weight is seeded from the last set
-    /// in this exercise when it has one, else from the previous finished
-    /// session, else 0. A logged last set offers its reps too; RPE stays
-    /// empty.
+    /// Append a planned working set with no entered values.
     @MainActor
     @discardableResult
     public static func addSet(to sessionExercise: SessionExercise, context: ModelContext) -> SetEntry {
-        let existing = ordered(sessionExercise)
-        let lastWorking = existing.last(where: { !$0.isWarmup && $0.weight > 0 })
-        let seedWeight = lastWorking?.weight ?? PreviousMatchingIntent.fetchTopWorkingSet(
-            exerciseID: sessionExercise.exercise?.id,
-            intentRaw: sessionExercise.session?.intentRaw ?? Intent.strength.rawValue,
-            context: context,
-            excludingSessionID: sessionExercise.session?.id
-        )?.weight ?? 0
-
+        let orderIndex = (sessionExercise.sets ?? []).count
         let entry = SetEntry()
         context.insert(entry)
         entry.sessionExercise = sessionExercise
-        entry.orderIndex = existing.count
+        entry.orderIndex = orderIndex
         entry.setTypeRaw = SetType.working.rawValue
         entry.isWarmup = false
         entry.isComplete = false
-        entry.weight = seedWeight
-        if let lastWorking, lastWorking.isComplete { entry.reps = lastWorking.reps }
         try? context.save()
         return entry
     }
@@ -189,11 +183,14 @@ public enum SessionSetActions {
         of sessionExercise: SessionExercise,
         fraction: Double,
         increment: Double,
+        offers: [UUID: WorkoutSetSuggestion] = [:],
         context: ModelContext
     ) {
         let step = increment > 0 ? increment : 2.5
-        for set in (sessionExercise.sets ?? []) where !set.isComplete && !set.isWarmup && set.weight > 0 {
-            let lowered = set.weight * (1 - fraction)
+        for set in (sessionExercise.sets ?? []) where !set.isComplete && !set.isWarmup && set.setType != .warmup {
+            let weight = offers[set.id]?.weight(for: set) ?? set.weight
+            guard weight.isFinite, weight > 0 else { continue }
+            let lowered = weight * (1 - fraction)
             set.weight = max(step, (lowered / step).rounded(.down) * step)
             set.wasManualOverride = true
         }

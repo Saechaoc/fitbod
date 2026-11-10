@@ -2,11 +2,7 @@
 //  WeightCellSeedingTests.swift
 //  fitbodTests
 //
-//  A weight field that appears holding 0 fills in the prescription only for
-//  an open set the lifter has not changed. A logged 0, such as weighted dips
-//  done with no added load, and a 0 the lifter typed both stay 0: before
-//  RM-024's weight guidance, a logged 0 turned into the prescription each
-//  time its row appeared, and the next save stored it.
+//  Rendering a suggested weight keeps the saved draft and actual values intact.
 //
 
 import SwiftData
@@ -20,11 +16,9 @@ import UIKit
 @Suite("WeightCellSeeding")
 struct WeightCellSeedingTests {
 
-    @Test("Only an untouched open set takes the prescription when its field appears")
+    @Test("An open field shows its offer without seeding a stored weight")
     func seedsOnlyUntouchedOpenSets() throws {
         let container = try InMemoryContainer.makeCurrent()
-        // The control: an open set nobody changed fills in the prescription,
-        // which shows the fields appeared.
         let untouched = entry(in: container)
         // A logged set keeps the 0 it logged.
         let logged = entry(in: container, isComplete: true)
@@ -36,18 +30,19 @@ struct WeightCellSeedingTests {
         )
         let window = UIWindow(windowScene: scene)
         window.frame = CGRect(x: 0, y: 0, width: 390, height: 300)
+        var appeared = false
         window.rootViewController = UIHostingController(rootView: VStack {
             cell(for: untouched)
             cell(for: logged)
             cell(for: typed)
-        })
+        }.onAppear { appeared = true })
         window.isHidden = false
         defer { window.isHidden = true }
 
-        // SwiftUI runs the three fields' onAppear in one pass, so once the
-        // control has filled in, the other two have had their turn.
-        HostedAccessibility.waitUntil { untouched.weight == 25 }
-        #expect(untouched.weight == 25)
+        HostedAccessibility.waitUntil { appeared }
+        #expect(appeared)
+        #expect(cell(for: untouched).accessibilityValueText == "25 lb")
+        #expect(untouched.weight == 0)
         #expect(logged.weight == 0)
         #expect(typed.weight == 0)
     }
@@ -73,6 +68,7 @@ struct WeightCellSeedingTests {
             weight: set.weight,
             prescribed: 25,
             range: nil,
+            offeredWeight: 25,
             unitLabel: "lb",
             wasManualOverride: set.wasManualOverride,
             isComplete: entry.isComplete

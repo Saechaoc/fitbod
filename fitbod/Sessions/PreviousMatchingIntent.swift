@@ -98,6 +98,10 @@ public enum PreviousMatchingIntent {
             excludingSessionID: excludingSessionID
         ) else { return nil }
 
+        return topWorkingSet(in: last)
+    }
+
+    static func topWorkingSet(in last: (session: Session, sets: [SetEntry])) -> PreviousMatchingIntentHit? {
         // The sets come in workout order, then set order, and `max(by:)`
         // keeps the first of equal elements, so the earlier set wins a tie
         // in weight, inside one log as across logs.
