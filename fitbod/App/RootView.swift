@@ -149,8 +149,9 @@ public struct RootView: View {
         }
         // Every way into the workout in progress goes through Today, where
         // the logger lives (FT-02).
-        .onChange(of: resumeRequest.isPending) {
-            if resumeRequest.isPending { selectedTab = .today }
+        .onChange(of: resumeRequest.isPending) { _, pending in
+            // Today may consume the request before this parent action runs.
+            if pending { selectedTab = .today }
         }
         .task {
             await runSeed()
