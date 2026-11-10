@@ -36,14 +36,8 @@ struct MuscleVolumeBarBRUTests {
         return m
     }
 
-    /// Build a minimal MuscleVolumeTarget without SwiftData.
-    private func makeTarget(mev: Int = 8, mav: Int = 18, mrv: Int = 22) -> MuscleVolumeTarget {
-        let t = MuscleVolumeTarget()
-        t.mev = mev
-        t.mav = mav
-        t.mrv = mrv
-        t.mv = 4
-        return t
+    private func makeTarget(mev: Int = 8, mav: Int = 18, mrv: Int = 22) -> RPVolumeLandmarks.Landmark {
+        RPVolumeLandmarks.Landmark(mv: 4, mev: mev, mav: mav, mrv: mrv)
     }
 
     // MARK: - Test 1: productive zone + headroom ≥ 2 → "ADD A SET"

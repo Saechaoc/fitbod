@@ -36,6 +36,7 @@ public struct PerMuscleDetailView: View {
     @Query private var allTargets: [MuscleVolumeTarget]
     @Query private var settingsList: [UserSettings]
     @State private var adjustTargetsExpanded: Bool = false
+    @State private var showCreateError = false
 
     public init(muscleSlug: String) {
         self.muscleSlug = muscleSlug
@@ -126,6 +127,11 @@ public struct PerMuscleDetailView: View {
         }
         .background(Color.bruPaper)
         .toolbar(.hidden, for: .navigationBar)
+        .alert("Couldn't create target", isPresented: $showCreateError) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text("The target wasn't saved. Try again.")
+        }
     }
 
     // MARK: - Section 1: This Week
@@ -134,7 +140,8 @@ public struct PerMuscleDetailView: View {
     private func thisWeekSection(muscle: MuscleGroup) -> some View {
         let total = FatigueModel.weeklyVolume(muscleSlug: muscleSlug, weekStart: weekStart, in: ctx)
         let delta = FatigueModel.weekOverWeekDelta(muscleSlug: muscleSlug, weekStart: weekStart, in: ctx)
-        let effectiveTarget = persistedTarget ?? transientTarget(for: muscle)
+        let effectiveTarget = persistedTarget.map(RPVolumeLandmarks.Landmark.init)
+            ?? RPVolumeLandmarks.landmark(for: muscle.slug)
         let zone = FatigueModel.volumeZone(
             currentSets: total.totalSetsRounded,
             mev: effectiveTarget.mev,
@@ -270,29 +277,38 @@ public struct PerMuscleDetailView: View {
 
     // MARK: - Helpers (PRESERVED verbatim from Phase 5 baseline)
 
-    private func transientTarget(for muscle: MuscleGroup) -> MuscleVolumeTarget {
-        let landmark = RPVolumeLandmarks.landmark(for: muscle.slug)
-        let t = MuscleVolumeTarget()
-        t.muscle = muscle
-        t.mv = landmark.mv
-        t.mev = landmark.mev
-        t.mav = landmark.mav
-        t.mrv = landmark.mrv
-        return t
+    @MainActor
+    @discardableResult
+    static func createTarget(
+        for muscle: MuscleGroup, context: ModelContext,
+        save: (ModelContext) throws -> Void = { try $0.save() }
+    ) throws -> MuscleVolumeTarget {
+        let muscleID = muscle.id
+        if let existing = try context.fetch(FetchDescriptor<MuscleVolumeTarget>(
+            predicate: #Predicate { $0.muscle?.id == muscleID }
+        )).first {
+            return existing
+        }
+        let target = MuscleVolumeTarget()
+        context.insert(target)
+        target.muscle = muscle
+        MuscleVolumeTargetStepper.applyRPDefaults(to: target)
+        do {
+            try save(context)
+        } catch {
+            SessionSetActions.rollBack(context)
+            throw error
+        }
+        return target
     }
 
     @MainActor
     private func createPersistentTarget(for muscle: MuscleGroup) {
-        let landmark = RPVolumeLandmarks.landmark(for: muscle.slug)
-        let t = MuscleVolumeTarget()
-        t.muscle = muscle
-        t.mv = landmark.mv
-        t.mev = landmark.mev
-        t.mav = landmark.mav
-        t.mrv = landmark.mrv
-        t.userEdited = false
-        ctx.insert(t)
-        try? ctx.save()
+        do {
+            try Self.createTarget(for: muscle, context: ctx)
+        } catch {
+            showCreateError = true
+        }
     }
 
     @MainActor

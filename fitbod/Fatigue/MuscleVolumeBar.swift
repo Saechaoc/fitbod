@@ -60,7 +60,7 @@ import SwiftUI
 
 public struct MuscleVolumeBar: View {
     public let muscle: MuscleGroup
-    public let target: MuscleVolumeTarget
+    public let target: RPVolumeLandmarks.Landmark
     public let total: WeightedSetTotal
     public let delta: WeekOverWeekDelta
     public var isAdvisoryActive: Bool = false
@@ -81,7 +81,7 @@ public struct MuscleVolumeBar: View {
 
     public init(
         muscle: MuscleGroup,
-        target: MuscleVolumeTarget,
+        target: RPVolumeLandmarks.Landmark,
         total: WeightedSetTotal,
         delta: WeekOverWeekDelta,
         isAdvisoryActive: Bool = false,

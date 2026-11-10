@@ -14,7 +14,7 @@ Keep concise commands/results/limitations with their RM owner. Logs/screenshots 
 
 The user chose on 2026-11-10 to finish [RM-006](#rm-006), then complete Lane B.
 RM-006's six-slice implementation is Done. The product successor is [RM-010](#rm-010), which requires RM-003.
-Lane B, data safety: [RM-001](#rm-001) is reviewed and verified on current main. RM-002 is complete; continue RM-003 to RM-005, one bounded delivery at a time in an isolated worktree and on dedicated simulators.
+Lane B, data safety: [RM-001](#rm-001) is reviewed and verified on current main. RM-002 and RM-003 are complete; continue RM-004 and RM-005, one bounded delivery at a time in an isolated worktree and on dedicated simulators.
 Each slice lands on `main` when its local checks pass ([RM-053](#rm-053)).
 Move the next bounded outcome here when its implementation starts; a phone-pending feature does not occupy an active slot.
 
@@ -24,7 +24,6 @@ This is the ordered dependency-ready queue; feature definitions below retain the
 
 | Order | Ready outcome | Boundary |
 |---|---|---|
-| 2 | [RM-003](#rm-003) render missing targets without writes | Lane B. Before extending affected Volume rendering. |
 | 3 | [RM-004](#rm-004) strip custom-photo location | Lane B. Before extending photo/backup paths. |
 | 4 | [RM-005](#rm-005) numeric/tempo boundaries | Lane B. Current relabel-only units suffice; no circular wait for provenance. |
 | 5 | [RM-010](#rm-010) full volume behind a summary row | Lane A after RM-006; needs RM-003. |
@@ -64,6 +63,7 @@ Done covers the bounded implementation, appropriate agent-run checks and updated
 
 | ID | Priority / status | Outcome and completion evidence | Dependencies / references |
 |---|---|---|---|
+| [RM-003](#rm-003) | P1 · Done | Both volume screens render missing targets without model writes; explicit creation rolls back and retries. Hosted before/after, units and 390pt route evidence in RM-003. | Unblocks RM-010; no schema or fatigue-math change. |
 | [RM-002](#rm-002) | P1 · Done | Failed slot additions/resets roll back and explain retry; superset drafts save with the session and Discard writes nothing. Unit/failure/relaunch evidence in RM-002. | Schema unchanged. |
 | [RM-001](#rm-001) | P1 · Done | Preserve unclassified store-open failures, retry, and rollback partial moves; disk/unit/relaunch and 390pt evidence in RM-001. | No schema change; populated recovery proof remains RM-029. |
 | [RM-006](#rm-006) | P1 · Done | StartSlot/shared starts, session sheet and all Today states; six slices, unit/full UI and 390pt evidence in RM-006; [plan/results](archive/features/today-session-sheet-and-state-slabs.md). | Retains the live Program template route until RM-011; broader AX/device checks at stability. |
@@ -116,11 +116,11 @@ Review/rebase on 2026-11-10: no blocking findings; `f4548033` applies the implem
 
 ### <a id="rm-003"></a>RM-003 — Rendering missing volume targets never writes models
 
-**P1 · Planned.** The former volume-boundary/render-audit priority is partly shipped: calendar arithmetic is fixed, but both volume views still construct fallback `MuscleVolumeTarget` models attached to persisted muscles while rendering.
+**P1 · Done (2026-11-10).** Both volume views render immutable landmark values from stored targets or RP defaults; neither creates fallback models. Calendar arithmetic remains unchanged.
 **Done when:** prove missing-target rendering inserts/changes no persisted object or relationship; use immutable fallbacks where needed. Explicit target creation stays validated and reports errors. Cover surface and muscle detail.
 **Scope / sequence:** Reproduce missing targets → replace render-time models → prove surface/detail render without writes. No fatigue-math or target-editor redesign.
 **Requires:** None.
-**Evidence:** No passing acceptance is recorded for the remaining scope; cited commits/tests establish the shipped baseline only.
+**Evidence:** The hosted 390pt regression failed on both original views (`fast-20261110-082250`): surface rendering inserted seven target models and detail inserted one. After the fix both screens leave `hasChanges`, inserted models, muscle relationships and persisted target counts unchanged. Explicit creation uses one validated RP target, reports a failed save, rolls it back and retries without duplicates. The unit target passed 1,309 tests with one expected failure (`fast-20261110-082418`); `PerMuscleDetailUITests` passed 1/1 at 390pt/default/light (`fast-20261110-082537`). SchemaV7, stored fields and fatigue math are unchanged.
 **References:** [volume surface](../fitbod/Fatigue/FatigueSurfaceView.swift), [muscle detail](../fitbod/Fatigue/PerMuscleDetailView.swift), [shipped calendar work](#rm-061).
 
 ### <a id="rm-004"></a>RM-004 — Custom photos do not carry location into backups

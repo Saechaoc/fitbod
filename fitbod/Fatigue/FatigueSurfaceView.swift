@@ -147,7 +147,7 @@ public struct FatigueSurfaceView: View {
     private func zoneMap(_ volumes: WeekVolumes) -> [String: VolumeZone] {
         var result: [String: VolumeZone] = [:]
         for muscle in allMuscles {
-            let target = allTargets.first { $0.muscle?.slug == muscle.slug } ?? transientTarget(for: muscle)
+            let target = targetFor(muscle)
             let total = volumes.total(muscle.slug)
             let zone = FatigueModel.volumeZone(
                 currentSets: total.totalSetsRounded,
@@ -400,24 +400,8 @@ public struct FatigueSurfaceView: View {
 
     // MARK: - Data helpers (PRESERVED from Phase 5 baseline)
 
-    /// Find the persisted MuscleVolumeTarget for `muscle`, or fall
-    /// back to a transient (non-inserted) MuscleVolumeTarget seeded
-    /// from RPVolumeLandmarks.
-    private func targetFor(_ muscle: MuscleGroup) -> MuscleVolumeTarget {
-        if let persisted = allTargets.first(where: { $0.muscle?.slug == muscle.slug }) {
-            return persisted
-        }
-        return transientTarget(for: muscle)
-    }
-
-    private func transientTarget(for muscle: MuscleGroup) -> MuscleVolumeTarget {
-        let fallback = MuscleVolumeTarget()
-        let landmark = RPVolumeLandmarks.landmark(for: muscle.slug)
-        fallback.mv = landmark.mv
-        fallback.mev = landmark.mev
-        fallback.mav = landmark.mav
-        fallback.mrv = landmark.mrv
-        fallback.muscle = muscle
-        return fallback
+    private func targetFor(_ muscle: MuscleGroup) -> RPVolumeLandmarks.Landmark {
+        allTargets.first { $0.muscle?.slug == muscle.slug }
+            .map(RPVolumeLandmarks.Landmark.init) ?? RPVolumeLandmarks.landmark(for: muscle.slug)
     }
 }

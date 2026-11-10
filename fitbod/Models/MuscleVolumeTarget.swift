@@ -37,3 +37,11 @@ public final class MuscleVolumeTarget {
 
     public init() {}
 }
+
+/// A render-only snapshot; it cannot attach a new model to a persisted muscle.
+extension RPVolumeLandmarks.Landmark {
+    @MainActor
+    init(_ target: MuscleVolumeTarget) {
+        self.init(mv: target.mv, mev: target.mev, mav: target.mav, mrv: target.mrv)
+    }
+}

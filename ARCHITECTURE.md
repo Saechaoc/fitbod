@@ -171,6 +171,8 @@ Fatigue advice never mutates schedule.
 
 ## UI and state layers
 
+Volume surfaces render immutable `RPVolumeLandmarks.Landmark` values from persisted targets or defaults. Rendering never constructs a target model or attaches one to a muscle; explicit creation saves one target and rolls back failure.
+
 Session-editor changes, including new superset IDs, stay in `RoutineDraft` until Save.
 `persist(into:context:)` writes the session and its used new groups in one save; failure rolls back the store while keeping the draft for retry. Discard writes no groups.
 
