@@ -69,7 +69,7 @@ struct ExportShareItemsTests {
         _ = try PRFixtures.seedKnownPRHistory(ctx: ctx)
         let pictured = Exercise(name: "Pictured Press", canonicalName: "pictured-press", equipmentRaw: "barbell", mechanicRaw: "compound")
         ctx.insert(pictured)
-        pictured.imageData = Data([0xFF, 0xD8, 0xFF, 0xE0])
+        pictured.imageData = try PhotoFixtures.image()
         try ctx.save()
         // An archive stamps every entry with the time it is built.
         let builtAt = Date(timeIntervalSince1970: 1_800_000_000)

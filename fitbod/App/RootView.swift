@@ -56,6 +56,7 @@ public struct RootView: View {
     @Query(RootView.anyExercise) private var exercises: [Exercise]
     @Query private var settingsList: [UserSettings]
     @State private var seedState = SeedState()
+    @State private var photoPreparationError: String?
     @State private var historyEdits = HistoryEdits()
     @State private var resumeRequest = ResumeWorkoutRequest()
 
@@ -127,11 +128,14 @@ public struct RootView: View {
     }
 
     public var body: some View {
-        Group {
-            if shouldShowSplash {
-                splash
-            } else {
-                tabBar
+        VStack(spacing: 0) {
+            photoPreparationNotice
+            Group {
+                if shouldShowSplash {
+                    splash
+                } else {
+                    tabBar
+                }
             }
         }
         .environment(\.weightUnit, settingsList.first?.weightUnit ?? .default)
@@ -150,6 +154,38 @@ public struct RootView: View {
         }
         .task {
             await runSeed()
+            await preparePhotos()
+        }
+    }
+
+    @ViewBuilder
+    private var photoPreparationNotice: some View {
+            if let message = photoPreparationError {
+                VStack(alignment: .leading, spacing: BRUMetrics.Spacing.group) {
+                    Text(message)
+                        .font(BRUFont.bodyDefault)
+                        .foregroundStyle(Color.bruInk)
+                        .accessibilityIdentifier("photoPreparation.message")
+                    HStack {
+                        BRUButton("Try again", kind: .signal, size: .md) {
+                            Task { await preparePhotos() }
+                        }
+                        .accessibilityIdentifier("photoPreparation.retry")
+                        BRUButton("Later", kind: .ghost, size: .md) { photoPreparationError = nil }
+                            .accessibilityIdentifier("photoPreparation.later")
+                    }
+                }
+                .padding(BRUMetrics.Spacing.gutter)
+                .background(Color.bruPaper)
+            }
+    }
+
+    private func preparePhotos() async {
+        do {
+            try await ExercisePhotoSanitizer(modelContainer: modelContext.container).run()
+            photoPreparationError = nil
+        } catch {
+            photoPreparationError = error.localizedDescription
         }
     }
 
@@ -328,6 +364,7 @@ public struct RootView: View {
             // idempotency via userEdited; safe to call on every
             // launch (RESEARCH §7.3).
             MuscleVolumeTargetSeeder.seedIfNeeded(in: modelContext)
+            try PhotoPrivacySeed.runIfRequested(in: modelContext)
             DemoWorkoutSeed.runIfRequested(in: modelContext) // DEBUG-only E2E hook; no-op without the launch argument
             StalledExerciseSeed.runIfRequested(in: modelContext) // DEBUG-only E2E hook; no-op without the launch argument
             ProgressHistorySeed.runIfRequested(in: modelContext) // DEBUG-only E2E hook; no-op without the launch argument

@@ -14,7 +14,7 @@ Keep concise commands/results/limitations with their RM owner. Logs/screenshots 
 
 The user chose on 2026-11-10 to finish [RM-006](#rm-006), then complete Lane B.
 RM-006's six-slice implementation is Done. The product successor is [RM-010](#rm-010), which requires RM-003.
-Lane B, data safety: [RM-001](#rm-001) is reviewed and verified on current main. RM-002 and RM-003 are complete; continue RM-004 and RM-005, one bounded delivery at a time in an isolated worktree, with exclusive simulator use during each run. Reuse existing devices across lanes; see [local simulator reuse](SETUP.md#local-simulator-reuse).
+Lane B, data safety: [RM-001](#rm-001) is reviewed and verified on current main. RM-002 through RM-004 are complete; finish RM-005, one bounded delivery at a time in an isolated worktree, with exclusive simulator use during each run. Reuse existing devices across lanes; see [local simulator reuse](SETUP.md#local-simulator-reuse).
 Each slice lands on `main` when its local checks pass ([RM-053](#rm-053)).
 Move the next bounded outcome here when its implementation starts; a phone-pending feature does not occupy an active slot.
 
@@ -24,7 +24,6 @@ This is the ordered dependency-ready queue; feature definitions below retain the
 
 | Order | Ready outcome | Boundary |
 |---|---|---|
-| 3 | [RM-004](#rm-004) strip custom-photo location | Lane B. Before extending photo/backup paths. |
 | 4 | [RM-005](#rm-005) numeric/tempo boundaries | Lane B. Current relabel-only units suffice; no circular wait for provenance. |
 | 5 | [RM-010](#rm-010) full volume behind a summary row | Lane A after RM-006; needs RM-003. |
 | 6 | [RM-019](#rm-019) stalled exercises outside a workout | Independent analytics stream; [RM-020](#rm-020) past recaps follows, then broader analytics. |
@@ -63,6 +62,7 @@ Done covers the bounded implementation, appropriate agent-run checks and updated
 
 | ID | Priority / status | Outcome and completion evidence | Dependencies / references |
 |---|---|---|---|
+| [RM-004](#rm-004) | P1 · Done | Photo metadata removed at pick/save/upgrade/export/restore; original-preserving failures and pre-delete validation verified. Evidence in RM-004. | Static photos, full pixel dimensions within decode bounds; no schema change. |
 | [RM-003](#rm-003) | P1 · Done | Both volume screens render missing targets without model writes; explicit creation rolls back and retries. Hosted before/after, units and 390pt route evidence in RM-003. | Unblocks RM-010; no schema or fatigue-math change. |
 | [RM-002](#rm-002) | P1 · Done | Failed slot additions/resets roll back and explain retry; superset drafts save with the session and Discard writes nothing. Unit/failure/relaunch evidence in RM-002. | Schema unchanged. |
 | [RM-001](#rm-001) | P1 · Done | Preserve unclassified store-open failures, retry, and rollback partial moves; disk/unit/relaunch and 390pt evidence in RM-001. | No schema change; populated recovery proof remains RM-029. |
@@ -125,11 +125,12 @@ Review/rebase on 2026-11-10: no blocking findings; `f4548033` applies the implem
 
 ### <a id="rm-004"></a>RM-004 — Custom photos do not carry location into backups
 
-**P1 · Planned.** D-111 found picked image data, including location metadata, retained in models/backups.
+**P1 · Done (2026-11-10).** D-111: picked, saved, upgraded, exported and restored exercise photos carry sanitized pixels rather than source metadata.
 **Done when:** reproduce with a geotagged photo; persist/export the intended image without location/unnecessary metadata, preserve orientation, and test the stored/backed-up result. Define how existing photos are sanitized without losing them.
 **Scope / sequence:** Reproduce metadata leakage → sanitize new and existing photos safely → inspect stored/exported bytes. Preserve the original until replacement succeeds; no photo-library expansion.
 **Requires:** None.
-**Evidence:** No passing acceptance is recorded for the remaining scope; cited commits/tests establish the shipped baseline only.
+**Evidence:** A real geotagged JPEG fixture reproduced GPS leakage in backup bytes (`fast-20261110-083624`). Implementation sanitizes pixels at pick/save/export/restore and upgrades existing stored photos; failed replacements preserve originals. Static photos keep their pixel dimensions with orientation/mirroring baked into PNG pixels, subject to a 64MP/16,384px decode bound; the existing backup image-entry names stay compatible. All eight rotations/mirrors preserve the four-color fixture; GPS, camera/date/city tags are absent, canonical bytes are stable, failed saves keep originals, disk reopen keeps sanitized data, and malformed backup images fail before current workouts are deleted. Final unit target: 1,315 passed, one expected failure (`fast-20261110-125658`); the new photo Retry/Later/remove/Save/relaunch UI check passed at 390pt/default/light in that run. Five existing backup/share/restore UI checks passed (`fast-20261110-084606`). The startup alert proved unreliable during view changes, so failure uses an inline notice; its final 390pt capture was inspected. Camera/library expansion and physical photo picking were excluded. Canonical PNGs are decoded on each launch; optimize only if startup cost is measured.
+Rebased onto catalog/schema main `978cb48a`: the unit target recorded 1,325 passed, two fixture-dependent skips and one expected failure, and the photo UI journey passed (`fast-20261110-130422`). The backup journey first failed to find Save in the system Files picker, then passed unchanged in a focused rerun (`fast-20261110-130934`); this intermittent picker failure remains a test limitation. No photo regression was found.
 **References:** [D-111](design-map/audit.md#d-111), [photo picker](../fitbod/ExerciseLibrary/CustomExerciseImagePicker.swift).
 
 ### <a id="rm-005"></a>RM-005 — Numeric and tempo entry preserve the entered value

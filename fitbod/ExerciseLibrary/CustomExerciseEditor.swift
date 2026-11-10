@@ -500,17 +500,12 @@ struct CustomExerciseEditor: View {
     private func save() {
         showingValidation = true
         guard draft.isValid else { return }
-        if isEditing {
-            draft.updateExisting(in: modelContext, allMuscles: allMuscles)
-        } else {
-            draft.materialize(into: modelContext, allMuscles: allMuscles)
-        }
         do {
-            try modelContext.save()
+            try draft.persist(in: modelContext, allMuscles: allMuscles)
             dismiss()
         } catch {
-            SessionSetActions.rollBack(modelContext)
-            persistenceError = "Your changes could not be stored. They are still in this form; try saving again."
+            persistenceError = (error as? ExercisePhotoError)?.errorDescription
+                ?? "Your changes could not be stored. They are still in this form; try saving again."
         }
     }
 

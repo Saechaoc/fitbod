@@ -198,6 +198,26 @@ public final class BackupRestorer {
         }
         try validateProgramGraph(doc)
 
+        // Validate and prepare every image before any destructive operation.
+        // Build image-bytes lookup from ZIP entries
+        // (defense-in-depth path validation: re-check whitelist before
+        // attaching to any Exercise).
+        var imageBytesByID: [UUID: Data] = [:]
+        for entry in entries {
+            guard entry.path.hasPrefix("images/"), entry.path.hasSuffix(".jpg") else {
+                continue
+            }
+            let trimmed = entry.path
+                .dropFirst("images/".count)
+                .dropLast(".jpg".count)
+            guard let uuid = UUID(uuidString: String(trimmed)) else { continue }
+            // Reject any pathological entry the ZIPReader didn't catch.
+            if entry.path.contains("..") || entry.path.hasPrefix("/") {
+                throw RestoreError.pathTraversalDetected(entry: entry.path)
+            }
+            imageBytesByID[uuid] = try ExercisePhoto.sanitized(entry.data)
+        }
+
         // Step 1 — Side-file insurance: snapshot current store to
         // documentDirectory/store-pre-restore-{ISO8601}.json.
         // We do this on a best-effort basis — if the snapshot fails,
@@ -258,25 +278,6 @@ public final class BackupRestorer {
         try ctx.delete(model: PlateInventory.self)
         try ctx.delete(model: UserSettings.self)
         try ctx.save()
-
-        // Step 3 — Build image-bytes lookup from ZIP entries
-        // (defense-in-depth path validation: re-check whitelist before
-        // attaching to any Exercise).
-        var imageBytesByID: [UUID: Data] = [:]
-        for entry in entries {
-            guard entry.path.hasPrefix("images/"), entry.path.hasSuffix(".jpg") else {
-                continue
-            }
-            let trimmed = entry.path
-                .dropFirst("images/".count)
-                .dropLast(".jpg".count)
-            guard let uuid = UUID(uuidString: String(trimmed)) else { continue }
-            // Reject any pathological entry the ZIPReader didn't catch.
-            if entry.path.contains("..") || entry.path.hasPrefix("/") {
-                throw RestoreError.pathTraversalDetected(entry: entry.path)
-            }
-            imageBytesByID[uuid] = entry.data
-        }
 
         // Step 4 — Insert the entities in dependency order, two-pass:
         // pass 1 builds value entities + collects by-id maps; pass 2

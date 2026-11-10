@@ -175,6 +175,8 @@ Fatigue advice never mutates schedule.
 
 ## UI and state layers
 
+Exercise photos are static PNG pixels with source metadata removed and orientation/mirroring baked in, within a 64MP/16,384px decode bound. Pick/save, startup upgrade, backup and restore use `ExercisePhoto`; each stored original remains until its replacement saves. Restore prepares all image bytes before deleting current rows. Backup entries retain their compatible `images/<UUID>.jpg` blob names. Startup preparation failures show a Retry/Later notice.
+
 Volume surfaces render immutable `RPVolumeLandmarks.Landmark` values from persisted targets or defaults. Rendering never constructs a target model or attaches one to a muscle; explicit creation saves one target and rolls back failure.
 
 Session-editor changes, including new superset IDs, stay in `RoutineDraft` until Save.

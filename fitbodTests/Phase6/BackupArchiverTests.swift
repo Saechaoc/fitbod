@@ -56,13 +56,13 @@ struct BackupArchiverTests {
         let container = try InMemoryContainer.makeCurrent()
         let ctx = container.mainContext
 
-        // Two custom Exercise rows with hand-injected JPEG bytes.
+        // Two custom Exercise rows with valid static photos.
         let bench = Exercise(name: "Bench", canonicalName: "bench", equipmentRaw: "barbell", mechanicRaw: "compound")
         let squat = Exercise(name: "Squat", canonicalName: "squat", equipmentRaw: "barbell", mechanicRaw: "compound")
         ctx.insert(bench)
         ctx.insert(squat)
-        bench.imageData = Data([0xFF, 0xD8, 0xFF, 0xE0])
-        squat.imageData = Data([0xFF, 0xD8, 0xFF, 0xE1])
+        bench.imageData = try PhotoFixtures.image()
+        squat.imageData = try PhotoFixtures.image(variant: true)
         try ctx.save()
 
         let archiver = BackupArchiver(modelContainer: container)

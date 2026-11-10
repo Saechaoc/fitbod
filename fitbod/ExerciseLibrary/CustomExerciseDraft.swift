@@ -226,7 +226,8 @@ public final class CustomExerciseDraft {
     public func materialize(
         into ctx: ModelContext,
         allMuscles: [MuscleGroup]
-    ) -> Exercise {
+    ) throws -> Exercise {
+        let photo = try imageData.map(ExercisePhoto.sanitized)
         let trimmedName = name.trimmingCharacters(in: .whitespacesAndNewlines)
         let canonical = trimmedName
             .lowercased()
@@ -246,7 +247,7 @@ public final class CustomExerciseDraft {
             isCustom: true,
             primaryMuscleSlugsJoined: joined
         )
-        ex.imageData = imageData
+        ex.imageData = photo
         ctx.insert(ex)
 
         // Use the failable `uniquingKeysWith:` initializer rather than
@@ -273,6 +274,27 @@ public final class CustomExerciseDraft {
         return ex
     }
 
+    @discardableResult
+    func persist(
+        in context: ModelContext, allMuscles: [MuscleGroup],
+        save: (ModelContext) throws -> Void = { try $0.save() }
+    ) throws -> Exercise {
+        do {
+            let exercise: Exercise
+            if let existing = editingExisting {
+                try updateExisting(in: context, allMuscles: allMuscles)
+                exercise = existing
+            } else {
+                exercise = try materialize(into: context, allMuscles: allMuscles)
+            }
+            try save(context)
+            return exercise
+        } catch {
+            SessionSetActions.rollBack(context)
+            throw error
+        }
+    }
+
     /// Rewrite an existing custom `Exercise` (set via `editingExisting`)
     /// to match the current draft. Called from the Save button handler
     /// when `editingExisting != nil`.
@@ -286,8 +308,9 @@ public final class CustomExerciseDraft {
     public func updateExisting(
         in ctx: ModelContext,
         allMuscles: [MuscleGroup]
-    ) {
+    ) throws {
         guard let target = editingExisting else { return }
+        let photo = try imageData.map(ExercisePhoto.sanitized)
         let trimmedName = name.trimmingCharacters(in: .whitespacesAndNewlines)
         target.name = trimmedName
         target.canonicalName = trimmedName
@@ -295,7 +318,7 @@ public final class CustomExerciseDraft {
             .folding(options: .diacriticInsensitive, locale: .current)
         target.equipmentRaw = equipment.rawValue
         target.mechanicRaw = mechanic.rawValue
-        target.imageData = imageData
+        target.imageData = photo
 
         // Replace stimulus rows wholesale.
         for old in target.muscleStimuli ?? [] {

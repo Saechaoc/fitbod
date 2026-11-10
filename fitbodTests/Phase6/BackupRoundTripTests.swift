@@ -45,7 +45,7 @@ struct BackupRoundTripTests {
 
         // Inject one image for round-trip image coverage.
         let exA = try ctxA.fetch(FetchDescriptor<Exercise>()).first!
-        exA.imageData = Data([0xFF, 0xD8, 0xFF, 0xE0, 0x00, 0x10, 0x4A, 0x46])
+        exA.imageData = try PhotoFixtures.image()
         try ctxA.save()
 
         // 2. Archive.
@@ -113,8 +113,8 @@ struct BackupRoundTripTests {
         )
         ctxA.insert(one)
         ctxA.insert(two)
-        one.imageData = Data([0xFF, 0xD8, 0xFF, 0xE0, 0x00, 0x10, 0x4A, 0x46])
-        two.imageData = Data([0xFF, 0xD8, 0xFF, 0xE1, 0x00, 0x10, 0x4A, 0x47])
+        one.imageData = try PhotoFixtures.image()
+        two.imageData = try PhotoFixtures.image(variant: true)
         try ctxA.save()
 
         let oneID = one.id
@@ -140,8 +140,8 @@ struct BackupRoundTripTests {
         let ctxB = containerB.mainContext
         let restored = try ctxB.fetch(FetchDescriptor<Exercise>())
         let byID = Dictionary(uniqueKeysWithValues: restored.map { ($0.id, $0) })
-        #expect(byID[oneID]?.imageData == Data([0xFF, 0xD8, 0xFF, 0xE0, 0x00, 0x10, 0x4A, 0x46]))
-        #expect(byID[twoID]?.imageData == Data([0xFF, 0xD8, 0xFF, 0xE1, 0x00, 0x10, 0x4A, 0x47]))
+        #expect(byID[oneID]?.imageData == (try PhotoFixtures.image()))
+        #expect(byID[twoID]?.imageData == (try PhotoFixtures.image(variant: true)))
     }
 }
 

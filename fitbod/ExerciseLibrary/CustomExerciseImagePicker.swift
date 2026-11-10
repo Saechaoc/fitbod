@@ -25,12 +25,12 @@
 //    .onChange(of: selection) { _, newValue in
 //        Task {
 //            if let data = try? await newValue?.loadTransferable(type: Data.self) {
-//                draft.imageData = data
+//                draft.imageData = try ExercisePhoto.sanitized(data)
 //            }
 //        }
 //    }
 //
-//  The fetched `Data` is written to `draft.imageData`; the editor's
+//  The fetched `Data` is sanitized before it reaches `draft.imageData`; the editor's
 //  `materialize(into:)` then writes it to the persisted
 //  `Exercise.imageData` (which is `@Attribute(.externalStorage)` so
 //  the blob lives outside the SQLite store).
@@ -57,6 +57,7 @@ import PhotosUI
 struct CustomExerciseImagePicker: View {
     @Bindable var draft: CustomExerciseDraft
     @State private var selection: PhotosPickerItem? = nil
+    @State private var showPhotoError = false
 
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
@@ -95,6 +96,7 @@ struct CustomExerciseImagePicker: View {
                     }
                     .buttonStyle(.plain)
                     .accessibilityLabel("Remove image")
+                    .accessibilityIdentifier("customExercise.removePhoto")
                 }
             }
         }
@@ -102,12 +104,23 @@ struct CustomExerciseImagePicker: View {
             // Async load — PhotosPickerItem.loadTransferable is async
             // by design (the picker may return a remote-fetched asset).
             Task { @MainActor in
-                if let data = try? await newValue?
-                    .loadTransferable(type: Data.self)
-                {
-                    draft.imageData = data
+                guard let newValue else { return }
+                do {
+                    guard let data = try await newValue.loadTransferable(type: Data.self) else {
+                        throw ExercisePhotoError.unreadable
+                    }
+                    let prepared = try ExercisePhoto.sanitized(data)
+                    guard selection == newValue else { return }
+                    draft.imageData = prepared
+                } catch {
+                    if selection == newValue { showPhotoError = true }
                 }
             }
+        }
+        .alert("Couldn't load photo", isPresented: $showPhotoError) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text("Try another photo. Your current photo is unchanged.")
         }
     }
 }

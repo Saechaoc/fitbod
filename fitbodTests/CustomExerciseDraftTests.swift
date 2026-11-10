@@ -118,7 +118,7 @@ struct CustomExerciseDraftTests {
         d.equipment = .barbell
         d.mechanic = .compound
         d.muscles = [.init(slug: "chest", role: .primary, weight: 1.0)]
-        d.materialize(into: ctx, allMuscles: [chest])
+        try d.materialize(into: ctx, allMuscles: [chest])
         try ctx.save()
 
         let exercises = try ctx.fetch(FetchDescriptor<Exercise>())
@@ -156,7 +156,7 @@ struct CustomExerciseDraftTests {
         let d = CustomExerciseDraft()
         d.name = " Zercher Squat "
         d.muscles = [.init(slug: "quadriceps", role: .primary, weight: 1.0)]
-        d.materialize(into: ctx, allMuscles: [quads])
+        try d.materialize(into: ctx, allMuscles: [quads])
         try ctx.save()
 
         let exercises = try ctx.fetch(FetchDescriptor<Exercise>())
@@ -189,7 +189,7 @@ struct CustomExerciseDraftTests {
         d.editingExisting = existing
         d.name = " Zercher Squat "
         d.muscles = [.init(slug: "quadriceps", role: .primary, weight: 1.0)]
-        d.updateExisting(in: ctx, allMuscles: [quads])
+        try d.updateExisting(in: ctx, allMuscles: [quads])
         try ctx.save()
 
         let exercises = try ctx.fetch(FetchDescriptor<Exercise>())
@@ -212,7 +212,7 @@ struct CustomExerciseDraftTests {
         let d = CustomExerciseDraft()
         d.name = "\nZercher  Squat \n"
         d.muscles = [.init(slug: "quadriceps", role: .primary, weight: 1.0)]
-        d.materialize(into: ctx, allMuscles: [quads])
+        try d.materialize(into: ctx, allMuscles: [quads])
         try ctx.save()
 
         let ex = try #require(try ctx.fetch(FetchDescriptor<Exercise>()).first)

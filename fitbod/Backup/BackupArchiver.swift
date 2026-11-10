@@ -105,11 +105,11 @@ public actor BackupArchiver {
 
         // 4. Collect image entries from custom exercises.
         let exercises = try fetchExercisesForImages()
-        let imageEntries: [ZIPWriter.Entry] = exercises.compactMap { ex in
+        let imageEntries: [ZIPWriter.Entry] = try exercises.compactMap { ex in
             guard let imageData = ex.imageData else { return nil }
             return ZIPWriter.Entry(
                 path: "images/\(ex.id.uuidString).jpg",
-                data: imageData,
+                data: try ExercisePhoto.sanitized(imageData),
                 lastModified: now
             )
         }
