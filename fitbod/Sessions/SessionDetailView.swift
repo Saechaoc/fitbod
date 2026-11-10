@@ -251,8 +251,9 @@ public struct SessionDetailView: View {
         .padding(.vertical, 14)
     }
 
-    /// One logged set: its number, weight × reps, the best set's tag and
-    /// the RPE. The tag turns signal when the exercise set a record.
+    /// One logged set: its number, its weight × reps or its time, the best
+    /// set's tag and the RPE. The tag turns signal when the exercise set a
+    /// record.
     private func setRow(number: Int, set: SessionSummary.LoggedSet, isRecord: Bool, unit: WeightUnit) -> some View {
         HStack(spacing: 12) {
             Text("\(number)")
@@ -260,7 +261,7 @@ public struct SessionDetailView: View {
                 .monospacedDigit()
                 .foregroundStyle(Color.bruMuted)
                 .frame(minWidth: 20, alignment: .leading)
-            Text("\(NumberText.weight(set.weight)) \(unit.rawValue) × \(set.reps)")
+            Text(set.resultText(unit: unit))
                 .font(BRUFont.bodyEmphasis)
                 .monospacedDigit()
                 .foregroundStyle(Color.bruInk)
@@ -317,7 +318,7 @@ public struct SessionDetailView: View {
     }
 
     private func setLabel(number: Int, set: SessionSummary.LoggedSet, unit: WeightUnit) -> String {
-        var label = "Set \(number), \(NumberText.weight(set.weight)) \(unit.rawValue) by \(set.reps)"
+        var label = "Set \(number), " + set.resultText(unit: unit).replacingOccurrences(of: "×", with: "by")
         if let rpe = set.rpe { label += ", RPE \(NumberText.weight(rpe))" }
         if set.isBest { label += ", best set" }
         return label

@@ -63,8 +63,9 @@ public enum WarmupRamp {
         // Guard 3: exercise metadata required
         guard let exercise = sessionExercise.exercise else { return false }
 
-        // Guard 4: compound mechanics only (machines, cables, isolation → skip)
-        guard exercise.mechanic == .compound else { return false }
+        // Guard 4: compound mechanics only (machines, cables, isolation → skip),
+        // and only lifts logged as weight × reps (a timed carry has no top weight)
+        guard exercise.mechanic == .compound, exercise.tracking == .weightReps else { return false }
 
         // Guard 5: free bars, Smith machine and dumbbells only (bodyweight, cable, kettlebell, etc. → skip)
         guard [.barbell, .trapBar, .smithMachine, .dumbbell].contains(exercise.equipment) else { return false }

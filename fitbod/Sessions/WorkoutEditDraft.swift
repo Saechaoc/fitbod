@@ -15,6 +15,11 @@ struct WorkoutEditDraft: Equatable {
         var values: WorkoutEdit.Values
         /// The values as logged; nil for a set added here.
         let logged: WorkoutEdit.Values?
+        /// The row edits a time, not reps. A logged set keeps the shape it
+        /// was logged in; an added one takes what its exercise tracks now.
+        let isTimed: Bool
+        /// The row's weight is assistance, stored negative and shown positive.
+        let isAssisted: Bool
 
         var isChanged: Bool { logged.map { $0 != values } ?? false }
     }
@@ -24,6 +29,10 @@ struct WorkoutEditDraft: Equatable {
         let name: String
         /// Display metadata only: stored weights are never converted.
         let unitOverride: WeightUnit?
+        /// What the exercise tracks now; nil when it is gone.
+        let tracking: Tracking?
+        /// What its timed rows edit beside their time.
+        let timedValue: TimedValue?
         var rows: [Row]
         var deleted: Set<UUID> = []
     }
@@ -45,15 +54,21 @@ struct WorkoutEditDraft: Equatable {
         exercises = (session.exercises ?? [])
             .sorted { $0.orderIndex < $1.orderIndex }
             .map { exercise in
-                Exercise(
+                let tracking = exercise.exercise?.tracking
+                return Exercise(
                     id: exercise.id,
                     name: exercise.displayName,
                     unitOverride: exercise.exercise?.unitOverride,
+                    tracking: tracking,
+                    timedValue: exercise.exercise?.timedValue,
                     rows: SessionSetActions.ordered(exercise)
                         .filter(\.countsAsWork)
                         .map { set in
-                            let values = WorkoutEdit.Values(weight: set.weight, reps: set.reps, rpe: set.rpe)
-                            return Row(id: set.id, values: values, logged: values)
+                            let values = WorkoutEdit.Values(set)
+                            return Row(
+                                id: set.id, values: values, logged: values, isTimed: set.isTimed,
+                                isAssisted: Self.isAssisted(weight: set.weight, tracking: tracking)
+                            )
                         }
                 )
             }
@@ -79,11 +94,36 @@ struct WorkoutEditDraft: Equatable {
         edit != WorkoutEdit(startedAt: loggedStart)
     }
 
-    /// Appends a set copied from the exercise's last one, as the mock-up asks.
+    /// Appends a set copied from the exercise's last one, as the mock-up
+    /// asks. It has the shape the exercise tracks now, which is the rule
+    /// SessionEditService holds an added set to, so it copies the last set
+    /// of that shape.
     mutating func addSet(to exerciseID: UUID) {
         guard let index = exercises.firstIndex(where: { $0.id == exerciseID }) else { return }
-        let values = exercises[index].rows.last?.values ?? WorkoutEdit.Values(weight: 0, reps: 0, rpe: nil)
-        exercises[index].rows.append(Row(id: UUID(), values: values, logged: nil))
+        let exercise = exercises[index]
+        let timed = exercise.tracking?.isTimed ?? exercise.rows.last?.isTimed ?? false
+        var values = exercise.rows.last { $0.isTimed == timed }?.values
+            ?? WorkoutEdit.Values(weight: 0, reps: 0, rpe: nil)
+        let assisted = !timed && Self.isAssisted(weight: values.weight, tracking: exercise.tracking)
+        // The copy may be of a set logged before the exercise was retagged.
+        if !timed { values.weight = Self.signed(values.weight, assisted: assisted) }
+        exercises[index].rows.append(Row(
+            id: UUID(), values: values, logged: nil, isTimed: timed, isAssisted: assisted
+        ))
+    }
+
+    /// Whether a rep set's weight is assistance. The exercise's tracking
+    /// decides; with none that speaks for rep sets (the exercise is gone or
+    /// timed now) the stored sign does.
+    static func isAssisted(weight: Double, tracking: Tracking?) -> Bool {
+        guard let tracking, !tracking.isTimed else { return weight < 0 }
+        return tracking == .assistedReps
+    }
+
+    /// A rep row's weight with the sign its column stands for: assistance
+    /// is negative, a load positive, and zero stays plain zero.
+    static func signed(_ weight: Double, assisted: Bool) -> Double {
+        assisted && weight != 0 ? -abs(weight) : abs(weight)
     }
 
     mutating func deleteRow(_ rowID: UUID, from exerciseID: UUID) {

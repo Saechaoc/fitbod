@@ -45,12 +45,21 @@ public struct PreviousMatchingIntentHit: Sendable {
     public let reps: Int
     public let rpe: Double?
     public let sessionStartedAt: Date
+    public let durationSeconds: Int?
+    public let distanceMeters: Double?
+    public let level: Double?
 
-    public init(weight: Double, reps: Int, rpe: Double?, sessionStartedAt: Date) {
+    public init(
+        weight: Double, reps: Int, rpe: Double?, sessionStartedAt: Date,
+        durationSeconds: Int? = nil, distanceMeters: Double? = nil, level: Double? = nil
+    ) {
         self.weight = weight
         self.reps = reps
         self.rpe = rpe
         self.sessionStartedAt = sessionStartedAt
+        self.durationSeconds = durationSeconds
+        self.distanceMeters = distanceMeters
+        self.level = level
     }
 }
 
@@ -62,7 +71,7 @@ public enum PreviousMatchingIntent {
     /// "Top working set" is defined as the highest-weight `SetEntry`
     /// among rows that are:
     ///   - non-warmup (`isWarmup == false`)
-    ///   - actually logged (`reps > 0`)
+    ///   - actually logged (`hasResult`: reps, or a time for a timed set)
     ///   - explicitly committed (`isComplete == true`)
     ///
     /// A session that logs the exercise more than once counts once: its
@@ -105,12 +114,17 @@ public enum PreviousMatchingIntent {
         // The sets come in workout order, then set order, and `max(by:)`
         // keeps the first of equal elements, so the earlier set wins a tie
         // in weight, inside one log as across logs.
-        guard let topSet = last.sets.max(by: { $0.weight < $1.weight }) else { return nil }
+        // The heaviest set; among timed sets of one load, the longest.
+        func rank(_ set: SetEntry) -> (Double, Int) { (set.weight, set.isTimed ? set.durationSeconds ?? 0 : 0) }
+        guard let topSet = last.sets.max(by: { rank($0) < rank($1) }) else { return nil }
         return PreviousMatchingIntentHit(
             weight: topSet.weight,
             reps: topSet.reps,
             rpe: topSet.rpe,
-            sessionStartedAt: last.session.startedAt
+            sessionStartedAt: last.session.startedAt,
+            durationSeconds: topSet.durationSeconds,
+            distanceMeters: topSet.distanceMeters,
+            level: topSet.level
         )
     }
 
@@ -118,7 +132,7 @@ public enum PreviousMatchingIntent {
     /// has any, read across every log of the exercise in it: in workout
     /// order, then set order (`orderIndex` both times), never in the order
     /// SwiftData returns them. A working set is non-warmup, logged
-    /// (`reps > 0`) and committed (`isComplete == true`). Returns nil when
+    /// (`hasResult`) and committed (`isComplete == true`). Returns nil when
     /// no such session exists.
     ///
     /// A session that logs the exercise more than once counts once, as in
@@ -175,10 +189,14 @@ public enum PreviousMatchingIntent {
     }
 
     /// `lastWorkingSets` over logs the caller already fetched with `logs(of:)`.
+    /// `counting` says which logged sets count: any with a result for
+    /// display, and for the next prescription only those in the shape the
+    /// exercise tracks now.
     static func lastWorkingSets(
         in all: [SessionExercise],
         intentRaw: String,
-        excludingSessionID: UUID? = nil
+        excludingSessionID: UUID? = nil,
+        counting: (SetEntry) -> Bool = { $0.hasResult }
     ) -> (session: Session, sets: [SetEntry])? {
         let targetIntent = intentRaw
 
@@ -210,7 +228,7 @@ public enum PreviousMatchingIntent {
                 .sorted { $0.orderIndex < $1.orderIndex }
                 .flatMap { se in
                     (se.sets ?? [])
-                        .filter { !$0.isWarmup && $0.reps > 0 && $0.isComplete }
+                        .filter { !$0.isWarmup && $0.isComplete && counting($0) }
                         .sorted { $0.orderIndex < $1.orderIndex }
                 }
             // This session logged the exercise but no working set was

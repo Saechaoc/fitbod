@@ -130,6 +130,18 @@ extension Exercise {
         if let stored = trackingRaw.flatMap(Tracking.init) { return stored }
         return equipment == .bodyweight || equipment == .weightedBodyweight ? .reps : .weightReps
     }
+
+    /// What a timed set of this exercise records beside its time: an
+    /// optional load for a hold or carry (a bodyweight one has none), a
+    /// distance, or a machine level. Nil for a rep-tracked exercise.
+    public var timedValue: TimedValue? {
+        switch tracking {
+        case .duration: equipment == .bodyweight ? nil : .weight
+        case .durationDistance: .distance
+        case .durationLevel: .level
+        case .weightReps, .reps, .assistedReps: nil
+        }
+    }
     public var unitOverride: WeightUnit? {
         get { unitOverrideRaw.flatMap(WeightUnit.init(rawValue:)) }
         set { unitOverrideRaw = newValue?.rawValue }

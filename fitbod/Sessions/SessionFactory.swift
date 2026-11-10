@@ -360,13 +360,32 @@ public enum SessionFactory {
         // The logger runs this on every card render, so the exercise's
         // history is fetched once here and read twice.
         let logs = exercise.map { PreviousMatchingIntent.logs(of: $0.id, context: context) } ?? []
+        // A set is evidence for the next workout only in the shape the
+        // exercise tracks now: a time for a timed exercise, reps otherwise.
+        let timed = exercise?.tracking.isTimed == true
         let previousWorkout = PreviousMatchingIntent.lastWorkingSets(
             in: logs,
             intentRaw: session.intentRaw,
-            excludingSessionID: session.id
+            excludingSessionID: session.id,
+            counting: { timed ? $0.isTimed : $0.reps > 0 }
         )
         let previousSet = previousWorkout.flatMap { PreviousMatchingIntent.topWorkingSet(in: $0) }
         let previousWorkingSets = previousWorkout?.sets ?? []
+
+        // Timed and assisted sets have no load to progress. Their offers
+        // come from the last workout's sets alone.
+        if let exercise, !exercise.tracking.progressesLoad {
+            return ExercisePrescription(
+                weight: 0,
+                explanation: PrescriptionExplanation(
+                    formulaName: "", roundedWeight: 0, roundedLine: "", status: .notApplicable
+                ),
+                barWeight: 0,
+                plates: [],
+                increment: nil,
+                previousWorkingSets: previousWorkingSets
+            )
+        }
 
         let inventory = plateEquipmentKind(for: exercise?.equipment ?? .other)
             .map { plateInventory(for: $0, context: context) }

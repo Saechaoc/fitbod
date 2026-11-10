@@ -56,6 +56,9 @@ Restore validates before mutation and retains a pre-restore backup.
 Restore refuses a backup whose format is newer than the build writes (`ExportDocument.currentFormatVersion`), because it would drop fields the build does not know.
 Restore clears the exercise seed stamp, so the next launch re-seeds the restored catalog in place: it applies the bundled curation and adds rows the backup predates, and deletes nothing.
 `Exercise.tracking` reads the stored tracking type; unset, bodyweight and weighted-bodyweight equipment track reps with optional load and everything else tracks weight and reps, so custom and uncurated rows need no stored value.
+The importer writes a seeded row's tracking from `curation.json` alone, so a row curation stops listing returns to the derived value.
+`Exercise.timedValue` names what a timed set records beside its time: an optional load for a hold or carry that is not bodyweight, a distance, or a machine level.
+A custom copy of an exercise carries its stored tracking, so a copy of a timed exercise stays timed.
 
 ## Program graph
 
@@ -118,6 +121,10 @@ Pending working sets show weight and rep offers from their frozen prescription a
 RPE/hybrid offers use the upper rep target until current-workout performance takes priority; editing only the load does not change that target. Current-workout actual reps carry unchanged outside a block, including reps outside the programmed range.
 Entered values, including numbers stored by older versions, take priority per field. The checkmark saves the chosen weight, reps, and completion together. Unaccepted offers stay outside the store, and each set records its own effort.
 Swapping after logging keeps completed sets attached to the original lift and applies a fresh prescription to the replacement's pending sets.
+Timed and assisted exercises have no load to progress: `SessionFactory.prescription` returns no weight without calling a strategy, and no warm-up ramp is built.
+A pending timed set is offered the time, and the load, distance or level its row shows, of the set just completed, else of the same set in the last finished matching-intent workout.
+An assisted set follows the rep offers above and carries its assistance forward.
+The next prescription reads earlier sets only in the shape the exercise tracks now, a time for a timed exercise and reps otherwise; Last time shows the latest logged set in any shape.
 
 A workout's place in time is Session.startedAt; completedAt marks finish/duration.
 A date correction shifts start, finish and all set timestamps one delta, rejects a resulting finish after now and preserves set times inside the workout.
@@ -126,7 +133,9 @@ SessionEditService.block(runningAt:in:) picks the latest applicable start.
 Date correction may rewrite Session.block, never Session.slot; the resolver ignores a slot outside the block's split.
 Other frozen fields stay unchanged.
 
-SessionEditService.save validates one WorkoutEdit before applying weight/reps/RPE, additions/deletions/reindexing and date movement in one transaction.
+SessionEditService.save validates one WorkoutEdit before applying weight/reps/RPE, a timed set's time/distance/level, additions/deletions/reindexing and date movement in one transaction.
+Only changed and added sets are validated: a changed set by the shape it was logged in, an added set by what its exercise tracks now.
+A set left alone is never judged again, so an old set cannot block a correction to the rest of its workout.
 New sets get ordered timestamps clamped inside the workout.
 Exercise membership/order and duration are not editable.
 Delete/finish/remove use throwing SessionSetActions paths.
@@ -151,9 +160,19 @@ Session-editor and logger tempo writes share `TempoParts.join`: exactly four par
 There is no per-set unit provenance yet; do not call mixed-unit totals converted/comparable ([RM-021](docs/ROADMAP.md#rm-021)).
 Distance is the exception: `SetEntry.distanceMeters` is stored in meters and converted for entry and display, so it never needs provenance.
 
+`SessionSetActions.isValidSet` is the one rule for completing a set, by what its exercise tracks.
+Weight and reps need both above zero; bodyweight reps take zero or more added load; assisted reps take a weight of zero or less, because assistance is stored negative; a timed set needs a time and stores zero reps.
+With no exercise, reps or a time is enough.
+A stored set is read by its own values, never by what its exercise tracks now: zero reps with a time is a timed set (`SetEntry.isTimed`), and History, exercise history, Last time, CSV and Edit workout print it that way (`SetText.result`).
+A row that curation later retags keeps its history exactly as logged.
+An exercise history made of timed sets alone shows the longest time in place of tonnage and leaves out the e1RM and the weight and reps footer.
+
 SetEntry.countsAsWork means complete, neither warmup flag nor warmup type.
 Drop/failure/rest-pause count.
-Tonnage is positive weight × positive reps; assistance/bodyweight adds none.
+`SetEntry.hasResult` means reps or a time; the workout summary, Last time and carry-forward count those sets.
+Tonnage is positive weight × positive reps; assistance/bodyweight/timed sets add none.
+Timed and assisted sets count as logged sets and toward muscle volume.
+e1RM, records, load progression, plateau and Compare need positive weight and reps, so they skip both; deload's missed-rep-range signal still reads an assisted set's reps.
 Counted workouts exclude empty finished workouts; readers promising finished history exclude open workouts.
 Weekly tonnage bins by set completion time, rotation/history by workout start.
 Muscle volume uses weighted stimulus; contributions need not equal physical count.

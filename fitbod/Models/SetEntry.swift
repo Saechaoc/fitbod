@@ -68,6 +68,17 @@ extension SetEntry {
         isComplete && !isWarmup && setType != .warmup
     }
 
+    /// The set recorded time instead of reps, whatever its exercise tracks
+    /// now. History and corrections read a set by its own values.
+    public var isTimed: Bool {
+        reps == 0 && (durationSeconds ?? 0) > 0
+    }
+
+    /// The set recorded reps or a time, so it has something to show and count.
+    public var hasResult: Bool {
+        reps > 0 || isTimed
+    }
+
     /// Weight × reps for a set that counts as work, or 0: an assisted
     /// (negative) or bodyweight load adds no tonnage.
     public var tonnage: Double {

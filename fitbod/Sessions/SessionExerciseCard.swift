@@ -105,7 +105,8 @@ public struct SessionExerciseCard: View {
 
     public var body: some View {
         let guidance = currentExplanation()
-        let explanation = guidance?.explanation
+        // Timed and assisted sets have no prescribed load to explain.
+        let explanation = tracking.progressesLoad ? guidance?.explanation : nil
         let offers = WorkoutSetSuggestions(exercise: sessionExercise, prior: guidance?.prior ?? []).offers()
 
         Section {
@@ -511,7 +512,7 @@ public struct SessionExerciseCard: View {
             explanation: explanation,
             unit: unit,
             loggedWeight: topLoggedWeight,
-            hasSetOffer: offers.values.contains { $0.weight != nil || $0.reps != nil }
+            hasSetOffer: offers.values.contains { $0.weight != nil || $0.reps != nil || $0.durationSeconds != nil }
         )
         .id(sessionExercise.exercise?.id)
 
@@ -531,7 +532,10 @@ public struct SessionExerciseCard: View {
                     Text("LAST TIME")
                         .font(BRUFont.labelSmall)
                         .tracking(1.2)
-                        .frame(width: WorkoutSetColumns.previous, alignment: .leading)
+                        .frame(
+                            width: tracking.isTimed ? WorkoutSetColumns.timedPrevious : WorkoutSetColumns.previous,
+                            alignment: .leading
+                        )
                         // A 44pt target in the strip; the negative padding
                         // keeps the strip's height.
                         .frame(minHeight: 44)
@@ -547,22 +551,27 @@ public struct SessionExerciseCard: View {
                 } message: {
                     Text("Your top working set from the last finished \(intentName) workout with this exercise. It stays empty until there is one.")
                 }
-                Text("WEIGHT")
+                if tracking.isTimed {
+                    // A timed row: its time, then a load, a distance or a level.
+                    columnHeading("TIME", width: WorkoutSetColumns.weight)
+                    switch sessionExercise.exercise?.timedValue {
+                    case .weight: columnHeading("WEIGHT", width: WorkoutSetColumns.weight)
+                    case .distance: columnHeading(unit == .lb ? "MILES" : "KM", width: WorkoutSetColumns.weight)
+                    case .level: columnHeading("LEVEL", width: WorkoutSetColumns.weight)
+                    case nil: EmptyView()
+                    }
+                } else {
+                    columnHeading(tracking == .assistedReps ? "ASSIST" : "WEIGHT", width: WorkoutSetColumns.weight)
+                    columnHeading("REPS", width: WorkoutSetColumns.reps)
+                    VStack(spacing: 0) {
+                        Text("Effort").textCase(.uppercase)
+                        Text("(RPE)")
+                    }
                     .font(BRUFont.labelSmall)
-                    .tracking(1.2)
-                    .frame(width: WorkoutSetColumns.weight, alignment: .leading)
-                Text("REPS")
-                    .font(BRUFont.labelSmall)
-                    .tracking(1.2)
-                    .frame(width: WorkoutSetColumns.reps, alignment: .leading)
-                VStack(spacing: 0) {
-                    Text("Effort").textCase(.uppercase)
-                    Text("(RPE)")
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.75)
+                    .frame(width: WorkoutSetColumns.effort)
                 }
-                .font(BRUFont.labelSmall)
-                .lineLimit(1)
-                .minimumScaleFactor(0.75)
-                .frame(width: WorkoutSetColumns.effort)
                 Spacer(minLength: 0)
                 Text("Done")
                     .font(BRUFont.labelSmall)
@@ -571,12 +580,22 @@ public struct SessionExerciseCard: View {
                     .minimumScaleFactor(0.75)
                     .frame(width: WorkoutSetColumns.done)
             }
+            // The strip keeps its own height. Offered less than a line by
+            // the stack around it, "Done" would shrink.
+            .fixedSize(horizontal: false, vertical: true)
             .foregroundStyle(Color.bruMuted)
             .padding(.horizontal, 16)
             .padding(.vertical, 6)
         }
 
         BRUDivider(.hair)
+    }
+
+    private func columnHeading(_ text: String, width: CGFloat) -> some View {
+        Text(text)
+            .font(BRUFont.labelSmall)
+            .tracking(1.2)
+            .frame(width: width, alignment: .leading)
     }
 
     /// The exercise's actions, in its ••• menu and its long-press menu.
@@ -653,6 +672,11 @@ public struct SessionExerciseCard: View {
     /// The exercise's own unit wins over the app-wide one.
     private var unit: WeightUnit {
         .effective(for: sessionExercise.exercise, default: defaultUnit)
+    }
+
+    /// What the exercise's sets record, as its set rows read it.
+    private var tracking: Tracking {
+        sessionExercise.exercise?.tracking ?? .weightReps
     }
 
     /// Bar and plates for this exercise, with no inventory for nonplate equipment.

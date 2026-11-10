@@ -3,7 +3,9 @@
 //  fitbod
 //
 //  LIB-06 anchor: maps the dataset's 12+ raw `equipment` string values onto
-//  the 9-case canonical `Equipment` enum (defined in `fitbod/Models/Enums/`).
+//  the canonical `Equipment` enum (defined in `fitbod/Models/Enums/`). The
+//  finer cases upstream has no label for, such as Smith machine, come from
+//  `curation.json`.
 //  Also publishes the strength-only `acceptedCategories` filter that plan 02-02
 //  applies before inserting `@Model Exercise` rows.
 //
@@ -16,7 +18,7 @@
 import Foundation
 
 /// Canonical translation layer between `ExerciseDTO.equipment` (free-form
-/// string from upstream) and `Equipment` (closed 9-case enum on `@Model Exercise`).
+/// string from upstream) and `Equipment` (the closed enum on `@Model Exercise`).
 public enum EquipmentMapper {
 
     /// Maps a raw dataset `equipment` string to the canonical `Equipment` enum.
@@ -32,11 +34,12 @@ public enum EquipmentMapper {
         case "bands":          return .bands
         case "body only":      return .bodyweight
         case "kettlebells":    return .kettlebell
-        case "e-z curl bar":   return .barbell    // collapse to canonical barbell
+        // Its own bar weight and plates (PlateEquipmentKind.ezBar).
+        case "e-z curl bar":   return .ezBar
+        case "medicine ball":  return .medicineBall
         // Soft-equipment + accessory categories that v1 doesn't model
         // explicitly — all land in `.other` (the catch-all bucket).
-        case "medicine ball",
-             "exercise ball",
+        case "exercise ball",
              "foam roll",
              "other":          return .other
         default:               return .other

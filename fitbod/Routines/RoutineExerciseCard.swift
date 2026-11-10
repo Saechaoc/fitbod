@@ -257,12 +257,18 @@ public struct RoutineExerciseCard: View {
         return "\(equipment) · \(prescriptionSummary)"
     }
 
-    /// "3×8–12 · 3:00" — sets × reps · rest.
+    /// "3×8–12 · 3:00": sets × reps · rest. A timed exercise has no rep
+    /// target, and its rest is named so it is not read as the time to
+    /// hold: "1 set · 3:00 rest".
     private var prescriptionSummary: String {
+        let rest = NumberText.minutesSeconds(draft.prescribedRestSeconds)
+        if draft.exercise?.tracking.isTimed == true {
+            return "\(BRUCountLabel.text(draft.targetSets, "set")) · \(rest) rest"
+        }
         let reps = draft.targetRepsLow == draft.targetRepsHigh
             ? "\(draft.targetRepsLow)"
             : "\(draft.targetRepsLow)–\(draft.targetRepsHigh)"
-        return "\(draft.targetSets)×\(reps) · \(NumberText.minutesSeconds(draft.prescribedRestSeconds))"
+        return "\(draft.targetSets)×\(reps) · \(rest)"
     }
 }
 

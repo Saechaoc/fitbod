@@ -35,12 +35,15 @@ public struct PreviousColumn: View {
     /// The in-progress session, excluded so the column never echoes a set
     /// logged in this same workout.
     public let currentSessionID: UUID?
+    /// Labels a timed set's distance; weights show without a unit.
+    public let unit: WeightUnit
     @State private var hint: PreviousMatchingIntentHit?
 
-    public init(exerciseID: UUID?, intentRaw: String, currentSessionID: UUID? = nil) {
+    public init(exerciseID: UUID?, intentRaw: String, currentSessionID: UUID? = nil, unit: WeightUnit = .default) {
         self.exerciseID = exerciseID
         self.intentRaw = intentRaw
         self.currentSessionID = currentSessionID
+        self.unit = unit
     }
 
     public var body: some View {
@@ -89,9 +92,19 @@ public struct PreviousColumn: View {
             .fixedSize(horizontal: true, vertical: false)
     }
 
+    /// The set by its own values, so a timed set reads as its time.
+    private func result(_ hit: PreviousMatchingIntentHit, compact: Bool) -> String {
+        SetText.result(
+            weight: hit.weight, reps: hit.reps,
+            durationSeconds: hit.durationSeconds, distanceMeters: hit.distanceMeters, level: hit.level,
+            unit: unit, compact: compact
+        )
+    }
+
     /// "175×8 @8", or "175×8" without the RPE (also when none was logged).
+    /// A timed set reads "20:00 L8".
     private func compactHint(_ hit: PreviousMatchingIntentHit, includeRPE: Bool) -> String {
-        let set = "\(NumberText.weight(hit.weight))×\(hit.reps)"
+        let set = result(hit, compact: true)
         guard includeRPE, let rpe = hit.rpe else { return set }
         return "\(set) @\(NumberText.weight(rpe))"
     }
@@ -101,7 +114,10 @@ public struct PreviousColumn: View {
     private func formatHint(_ hit: PreviousMatchingIntentHit) -> String {
         let day = hit.sessionStartedAt.formatted(.dateTime.weekday(.abbreviated))
         let rpeText = hit.rpe.map { " @ \(NumberText.weight($0))" } ?? ""
-        return "\(NumberText.weight(hit.weight)) × \(hit.reps)\(rpeText) (\(day))"
+        let set = hit.reps == 0 && hit.durationSeconds != nil
+            ? result(hit, compact: false)
+            : "\(NumberText.weight(hit.weight)) × \(hit.reps)"
+        return "\(set)\(rpeText) (\(day))"
     }
 }
 

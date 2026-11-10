@@ -292,6 +292,9 @@ public struct SwapExerciseSheet: View {
             set.reps = 0
             set.rpe = nil
             set.wasManualOverride = false
+            set.durationSeconds = nil
+            set.distanceMeters = nil
+            set.level = nil
         }
         do {
             try SessionSetActions.saveOrRollBack(context)

@@ -40,6 +40,8 @@ public enum PrescriptionDefaults {
     /// - Barbell or trap bar + compound → strength-style rep range (4–6 reps).
     /// - Otherwise → hypertrophy-style rep range (8–12 reps).
     /// - Target RPE defaults to 8.0.
+    /// - A timed exercise → one set, with no rep range or RPE target: its
+    ///   time is logged, never planned.
     ///
     /// Phase 3.1 PIVOT-04: this helper no longer writes per-exercise
     /// `intent` or `progressionKind` — those fields are gone from
@@ -52,7 +54,12 @@ public enum PrescriptionDefaults {
 
         draft.prescribedRestSeconds = isCompound ? 180 : 90
 
-        if isCompound && isBarbell {
+        if exercise.tracking.isTimed {
+            draft.targetSets = 1
+            draft.targetRepsLow = 0
+            draft.targetRepsHigh = 0
+            draft.targetRPE = nil
+        } else if isCompound && isBarbell {
             draft.targetRepsLow = 4
             draft.targetRepsHigh = 6
             draft.targetRPE = 8.0

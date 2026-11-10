@@ -49,6 +49,8 @@ public struct LiftListRow: View {
 
     private var setSubLine: String {
         let sets = PeriodizationEngine.workingSetCount(targetSets: routineExercise.targetSets, phase: phase)
+        // A timed exercise has no rep target.
+        if routineExercise.exercise?.tracking.isTimed == true { return BRUCountLabel.text(sets, "set") }
         return "\(sets) × \(routineExercise.targetRepsLow)-\(routineExercise.targetRepsHigh)"
     }
 

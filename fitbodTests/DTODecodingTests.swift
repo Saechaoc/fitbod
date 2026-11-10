@@ -6,7 +6,7 @@
 //   1. The bundled `exercises.json` decodes cleanly into `[ExerciseDTO]`.
 //   2. After the strength-category filter, at least 600 rows remain
 //      (typical: ~702 per the vendored snapshot in SOURCE.md).
-//   3. `SEED_VERSION.txt` is readable from the app bundle and equals `4`.
+//   3. `SEED_VERSION.txt` is readable from the app bundle and equals `5`.
 //   4. `EquipmentMapper.map(_:)` covers all 12 raw values + nil + empty.
 //   5. `MuscleRegionMap.region(for:)` covers all 17 dataset slugs and
 //      returns the expected canonical bucket for 3 sentinel slugs.
@@ -64,7 +64,7 @@ struct DTODecodingTests {
 
     // MARK: - SEED_VERSION.txt
 
-    @Test("SEED_VERSION.txt is bundled and equals 4")
+    @Test("SEED_VERSION.txt is bundled and equals 5")
     func seedVersionBundled() throws {
         let url = try #require(
             Bundle.main.url(forResource: "SEED_VERSION", withExtension: "txt"),
@@ -72,7 +72,7 @@ struct DTODecodingTests {
         )
         let raw = try String(contentsOf: url, encoding: .utf8)
         let trimmed = raw.trimmingCharacters(in: .whitespacesAndNewlines)
-        #expect(Int(trimmed) == 4, "Bodyweight equipment curation added at SEED_VERSION=4, got: \(trimmed)")
+        #expect(Int(trimmed) == 5, "Tracking curation and the finer equipment tags came at SEED_VERSION=5, got: \(trimmed)")
     }
 
     // MARK: - Equipment mapping (LIB-06)
@@ -87,15 +87,15 @@ struct DTODecodingTests {
             ("bands",          Equipment.bands),
             ("body only",      Equipment.bodyweight),
             ("kettlebells",    Equipment.kettlebell),
-            ("e-z curl bar",   Equipment.barbell),  // collapse
-            ("medicine ball",  Equipment.other),
+            ("e-z curl bar",   Equipment.ezBar),
+            ("medicine ball",  Equipment.medicineBall),
             ("exercise ball",  Equipment.other),
             ("foam roll",      Equipment.other),
             ("other",          Equipment.other),
             ("",               Equipment.other),
             // case-insensitivity
             ("BARBELL",        Equipment.barbell),
-            ("E-Z Curl Bar",   Equipment.barbell),
+            ("E-Z Curl Bar",   Equipment.ezBar),
         ] as [(String, Equipment)]
     )
     func equipmentMappingCovered(raw: String, expected: Equipment) {

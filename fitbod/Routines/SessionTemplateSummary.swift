@@ -61,16 +61,18 @@ public struct SessionTemplateSummary: Equatable, Sendable {
 }
 
 /// One-line prescription for an exercise row: "3 × 8–10 · @8 · 2:00 rest".
+/// A timed exercise has no rep or effort target: "1 set · 2:00 rest".
 public func prescriptionLine(
     sets: Int,
     repsLow: Int,
     repsHigh: Int,
     rpe: Double?,
-    restSeconds: Int
+    restSeconds: Int,
+    isTimed: Bool = false
 ) -> String {
     let reps = repsLow == repsHigh ? "\(repsLow)" : "\(repsLow)–\(repsHigh)"
-    var parts = ["\(sets) × \(reps)"]
-    if let rpe {
+    var parts = [isTimed ? BRUCountLabel.text(sets, "set") : "\(sets) × \(reps)"]
+    if let rpe, !isTimed {
         let text = rpe.rounded() == rpe ? String(Int(rpe)) : String(format: "%.1f", rpe)
         parts.append("@\(text)")
     }

@@ -185,7 +185,8 @@ public struct SessionTemplateDetailView: View {
                     repsLow: item.targetRepsLow,
                     repsHigh: item.targetRepsHigh,
                     rpe: item.targetRPE,
-                    restSeconds: item.prescribedRestSeconds
+                    restSeconds: item.prescribedRestSeconds,
+                    isTimed: item.exercise?.tracking.isTimed == true
                 ))
                 .font(BRUFont.labelSmall)
                 .tracking(1.0)

@@ -8,6 +8,8 @@ public struct PrescriptionWeightCell: View {
     public let range: ClosedRange<Double>?
     public let offeredWeight: Double?
     public let unitLabel: String
+    /// "Weight", or "Assistance" for an assisted exercise.
+    public let label: String
     @Binding public var wasManualOverride: Bool
     public let isComplete: Bool
     public let onTapEmptyCell: () -> Void
@@ -24,6 +26,7 @@ public struct PrescriptionWeightCell: View {
         range: ClosedRange<Double>?,
         offeredWeight: Double? = nil,
         unitLabel: String,
+        label: String = "Weight",
         wasManualOverride: Binding<Bool>,
         isComplete: Bool = false,
         onTapEmptyCell: @escaping () -> Void = {},
@@ -35,6 +38,7 @@ public struct PrescriptionWeightCell: View {
         self.range = range
         self.offeredWeight = offeredWeight
         self.unitLabel = unitLabel
+        self.label = label
         self._wasManualOverride = wasManualOverride
         self.isComplete = isComplete
         self.onTapEmptyCell = onTapEmptyCell
@@ -47,7 +51,7 @@ public struct PrescriptionWeightCell: View {
 
     public var body: some View {
         let prompt = displayedOffer.map { WorkoutLoadInput.text($0, locale: locale) } ?? "—"
-        TextField("Weight", text: $weightText, prompt: Text(prompt).foregroundStyle(Color.bruMuted))
+        TextField(label, text: $weightText, prompt: Text(prompt).foregroundStyle(Color.bruMuted))
             .keyboardType(.decimalPad)
             .focused($weightFocused)
             .selectsAllOnFocus(weightFocused)
@@ -59,9 +63,9 @@ public struct PrescriptionWeightCell: View {
                 if weightText.isEmpty { onTapEmptyCell() }
                 weightFocused = true
             }
-            .accessibilityLabel("Weight")
+            .accessibilityLabel(label)
             .accessibilityValue(accessibilityValueText)
-            .accessibilityHint(displayedOffer == nil ? "" : "Suggested weight. Tap to edit.")
+            .accessibilityHint(displayedOffer == nil ? "" : "Suggested \(label.lowercased()). Tap to edit.")
             .overlay(alignment: .leading) {
                 if wasManualOverride && !weightText.isEmpty && (weight != 0 || isManualOverride(weight)) {
                     overrideBadge

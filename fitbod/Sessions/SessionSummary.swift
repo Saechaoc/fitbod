@@ -9,8 +9,9 @@
 //  log-time snapshot (`SessionExercise.displayName`), and numbers come from
 //  completed SetEntry rows only. Nothing is projected from the template.
 //
-//  "Working set" here means a completed, non-warm-up set with reps > 0, so
-//  drop / failure / rest-pause sets count toward set and volume totals.
+//  "Working set" here means a completed, non-warm-up set with reps or a
+//  time (`SetEntry.hasResult`), so drop / failure / rest-pause sets count
+//  toward set and volume totals, and timed sets toward the set total.
 //  PRs use PRDetector's stricter working-set rule against a table built
 //  from finished sessions that started before this one.
 //
@@ -26,6 +27,9 @@ public struct SessionSummary: Sendable, Equatable {
         public let reps: Int
         public let rpe: Double?
         public let isBest: Bool
+        public var durationSeconds: Int? = nil
+        public var distanceMeters: Double? = nil
+        public var level: Double? = nil
     }
 
     public struct ExerciseLine: Sendable, Equatable, Identifiable {
@@ -71,10 +75,11 @@ public struct SessionSummary: Sendable, Equatable {
         for se in ordered {
             let working = SessionSetActions.ordered(se).filter(isCountedWorkingSet)
             let volume = working.reduce(0) { $0 + $1.tonnage }
-            let bestEntry = working.max { lhs, rhs in
-                if lhs.weight != rhs.weight { return lhs.weight < rhs.weight }
-                return lhs.reps < rhs.reps
+            // Heaviest, then most reps; among timed sets, the longest.
+            func rank(_ set: SetEntry) -> (Double, Int, Int) {
+                (set.weight, set.reps, set.isTimed ? set.durationSeconds ?? 0 : 0)
             }
+            let bestEntry = working.max { rank($0) < rank($1) }
             let kinds = prsByExercise[se.id] ?? []
             let name = se.displayName
             lines.append(ExerciseLine(
@@ -84,7 +89,10 @@ public struct SessionSummary: Sendable, Equatable {
                 volume: volume,
                 prKinds: PRKind.allCases.filter { kinds.contains($0) },
                 sets: working.map {
-                    LoggedSet(weight: $0.weight, reps: $0.reps, rpe: $0.rpe, isBest: $0.id == bestEntry?.id)
+                    LoggedSet(
+                        weight: $0.weight, reps: $0.reps, rpe: $0.rpe, isBest: $0.id == bestEntry?.id,
+                        durationSeconds: $0.durationSeconds, distanceMeters: $0.distanceMeters, level: $0.level
+                    )
                 }
             ))
         }
@@ -160,7 +168,7 @@ public struct SessionSummary: Sendable, Equatable {
     }
 
     private static func isCountedWorkingSet(_ set: SetEntry) -> Bool {
-        set.countsAsWork && set.reps > 0
+        set.countsAsWork && set.hasResult
     }
 }
 

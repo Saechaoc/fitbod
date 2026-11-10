@@ -87,21 +87,28 @@ public struct SetRowsContainer: View {
 
             Spacer()
 
-            // Reps — displayMedium 18pt right-aligned
-            Text("×\(row.reps)")
-                .font(BRUFont.displayMedium)
-                .foregroundStyle(Color.bruInk)
-                .multilineTextAlignment(.trailing)
+            if exercise.exercise?.tracking.isTimed == true {
+                // A timed set has no rep or effort target; its time is logged.
+                Text("Time")
+                    .font(BRUFont.displayMedium)
+                    .foregroundStyle(Color.bruInk)
+            } else {
+                // Reps: displayMedium 18pt right-aligned
+                Text("×\(row.reps)")
+                    .font(BRUFont.displayMedium)
+                    .foregroundStyle(Color.bruInk)
+                    .multilineTextAlignment(.trailing)
 
-            // RPE — displayMedium 18pt right-aligned
-            Text("@\(rpeString(row.rpe))")
-                .font(BRUFont.displayMedium)
-                .foregroundStyle(Color.bruInk)
-                .multilineTextAlignment(.trailing)
-                // VoiceOver reads a bare dash as "em dash".
-                .accessibilityLabel(row.rpe == nil
-                                    ? "No target RPE"
-                                    : "RPE \(rpeString(row.rpe))")
+                // RPE: displayMedium 18pt right-aligned
+                Text("@\(rpeString(row.rpe))")
+                    .font(BRUFont.displayMedium)
+                    .foregroundStyle(Color.bruInk)
+                    .multilineTextAlignment(.trailing)
+                    // VoiceOver reads a bare dash as "em dash".
+                    .accessibilityLabel(row.rpe == nil
+                                        ? "No target RPE"
+                                        : "RPE \(rpeString(row.rpe))")
+            }
         }
         .padding(.horizontal, 8)
         .padding(.vertical, 5)

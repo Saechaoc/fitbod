@@ -46,10 +46,12 @@ public struct ExerciseHistoryRow: View {
 
                 Spacer()
 
-                Text("e1RM \(entry.e1RMLabel)")
-                    .font(BRUFont.displayMedium)
-                    .monospacedDigit()
-                    .foregroundStyle(Color.bruInk)
+                if let e1RM = entry.e1RMLabel {
+                    Text("e1RM \(e1RM)")
+                        .font(BRUFont.displayMedium)
+                        .monospacedDigit()
+                        .foregroundStyle(Color.bruInk)
+                }
             }
 
             // Sub-line: TOP set + set count
@@ -143,7 +145,9 @@ public struct HistoryEntry: Identifiable {
     public let dateLabel: String       // e.g. "TODAY" or "THU MAY 16"
     public let intentLabel: String     // e.g. "HYP" or "STR"
     public let isPR: Bool
-    public let e1RMLabel: String       // e.g. "248"
+    /// "248", or "—" when no set gives an estimate. Nil for a workout of
+    /// timed sets, which has no e1RM to show.
+    public let e1RMLabel: String?
     public let topSetLabel: String     // e.g. "205×8 @9"
     public let setCount: Int
     public let setChips: [String]      // e.g. ["95×8 @4", "135×6 @5", ...]
@@ -153,7 +157,7 @@ public struct HistoryEntry: Identifiable {
         dateLabel: String,
         intentLabel: String,
         isPR: Bool,
-        e1RMLabel: String,
+        e1RMLabel: String?,
         topSetLabel: String,
         setCount: Int,
         setChips: [String]

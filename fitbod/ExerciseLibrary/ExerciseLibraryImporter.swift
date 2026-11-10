@@ -243,6 +243,9 @@ public actor ExerciseLibraryImporter {
                     ? ""
                     : "|" + dto.primaryMuscles.joined(separator: "|") + "|"
                 let equipmentRaw = curation[dto.id]?.equipment ?? EquipmentMapper.map(dto.equipment).rawValue
+                // Seeded rows take their tracking from curation alone, so a
+                // row curation stops listing goes back to the derived value.
+                let trackingRaw = curation[dto.id]?.tracking
                 let mechanicRaw = dto.mechanic ?? Mechanic.compound.rawValue
 
                 let exercise: Exercise
@@ -253,7 +256,8 @@ public actor ExerciseLibraryImporter {
                     stimulated = stimulatedSlugs[existing.persistentModelID] ?? []
                     if refresh(
                         existing, from: dto, canonicalName: canonicalName,
-                        equipmentRaw: equipmentRaw, mechanicRaw: mechanicRaw, primaryMuscleSlugsJoined: joined
+                        equipmentRaw: equipmentRaw, trackingRaw: trackingRaw,
+                        mechanicRaw: mechanicRaw, primaryMuscleSlugsJoined: joined
                     ) {
                         updatedCount += 1
                     }
@@ -272,6 +276,7 @@ public actor ExerciseLibraryImporter {
                         isCustom: false,
                         primaryMuscleSlugsJoined: joined
                     )
+                    exercise.trackingRaw = trackingRaw
                     // Pitfall #7 — insert FIRST, then the join rows reference it.
                     // SwiftData drops relationship links silently if the parent
                     // isn't yet inserted into the context.
@@ -365,6 +370,7 @@ public actor ExerciseLibraryImporter {
         from dto: ExerciseDTO,
         canonicalName: String,
         equipmentRaw: String,
+        trackingRaw: String?,
         mechanicRaw: String,
         primaryMuscleSlugsJoined joined: String
     ) -> Bool {
@@ -377,6 +383,7 @@ public actor ExerciseLibraryImporter {
         write(\.name, dto.name)
         write(\.canonicalName, canonicalName)
         write(\.equipmentRaw, equipmentRaw)
+        write(\.trackingRaw, trackingRaw)
         write(\.mechanicRaw, mechanicRaw)
         write(\.forceRaw, dto.force)
         write(\.levelRaw, dto.level)

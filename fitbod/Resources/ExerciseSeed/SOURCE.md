@@ -13,10 +13,14 @@
   JSON schema, `equipment: "machine"`, empty `images` arrays, and the existing 17-muscle taxonomy.
   `Single-Leg_Kneeling_Leg_Curl` (hamstrings, machine) added 2026-11-08 for playtest finding FT-05;
   the seed went to version 3 so an installed library picks it up in place.
-- **Curation overlay:** `curation.json` maps an upstream `id` to local corrections (today only
-  `equipment`, a canonical `Equipment` raw value). Seed version 4 (2026-11-10) retagged 45 bodyweight
-  moves that upstream left without equipment. A refresh keeps the overlay; `SeedTests` fails if an
-  overlay ID or equipment value no longer exists.
+- **Curation overlay:** `curation.json` maps an upstream `id` to local corrections: `equipment`
+  (a canonical `Equipment` raw value) and `tracking` (a `Tracking` raw value). Seed version 4
+  (2026-11-10) retagged 45 bodyweight moves that upstream left without equipment. Seed version 5
+  (2026-11-10) tags 9 holds and carries as `duration` and the band-assisted pull-up as
+  `assisted_reps`, retags the 20 Smith machine rows as `smith_machine` and Bodyweight Flyes as
+  `bodyweight`, and maps upstream `e-z curl bar` and `medicine ball` to their own equipment cases.
+  A refresh keeps the overlay; `SeedTests` fails if an overlay ID, equipment or tracking value no
+  longer exists.
 - **SEED_VERSION.txt:** Local stamp; bump to trigger re-seed via
   `UserDefaults["exercise_seed_version"]` (plan `02-02`).
 

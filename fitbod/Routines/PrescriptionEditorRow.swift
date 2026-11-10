@@ -86,17 +86,25 @@ public struct PrescriptionEditorRow: View {
 
     private var chipRow: some View {
         // Constrain long labels and reflow at accessibility text sizes.
-        let chips = [
+        let allChips = [
             (repsChipLabel, Color.bruInk),
             (rpeChipLabel, Color.bruInk),
             (restChipLabel, Color.bruInk),
         ]
+        // A timed exercise has no rep or effort target: its rest alone.
+        let chips = isTimed ? Array(allChips.suffix(1)) : allChips
         return BRUFlowLayout(spacing: 5, lineSpacing: 5) {
             ForEach(chips.indices, id: \.self) { i in
                 let (label, color) = chips[i]
                 BRUChip(label, color: color, fill: false, textCase: nil)
             }
         }
+    }
+
+    /// The exercise logs a time: it has sets and rest, and none of the rep
+    /// options.
+    private var isTimed: Bool {
+        draft.exercise?.tracking.isTimed == true
     }
 
     // MARK: Chip Labels
@@ -148,12 +156,16 @@ public struct PrescriptionEditorRow: View {
         if showingAdvanced {
             VStack(alignment: .leading, spacing: 14) {
                 setsStepper
-                repsSteppers
-                rpeRow
-                restStepper
-                tempoSection
-                partialRepsToggle
-                autoWarmupToggle
+                if isTimed {
+                    restStepper
+                } else {
+                    repsSteppers
+                    rpeRow
+                    restStepper
+                    tempoSection
+                    partialRepsToggle
+                    autoWarmupToggle
+                }
             }
             .transition(.opacity.combined(with: .move(edge: .top)))
         }

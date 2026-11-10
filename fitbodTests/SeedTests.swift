@@ -90,7 +90,7 @@ final class SeedTests {
         )
     }
 
-    @Test("curation.json names real rows and real equipment, and the seed applies it")
+    @Test("curation.json names real rows, equipment and tracking, and the seed applies it")
     func curationRetagsBodyweightMoves() async throws {
         let ids = try Self.bundledStrengthIDs()
         let url = try #require(Bundle.main.url(forResource: "curation", withExtension: "json"))
@@ -100,15 +100,38 @@ final class SeedTests {
             if let raw = entry.equipment {
                 #expect(Equipment(rawValue: raw) != nil, "\(id) has unknown equipment \(raw)")
             }
+            if let raw = entry.tracking {
+                #expect(Tracking(rawValue: raw) != nil, "\(id) has unknown tracking \(raw)")
+            }
         }
 
         let container = try InMemoryContainer.makeEmpty()
         try await ExerciseLibraryImporter(modelContainer: container).seedIfNeeded(defaults: defaults)
-        let dip = try #require(try ModelContext(container).fetch(FetchDescriptor<Exercise>(
-            predicate: #Predicate { $0.externalID == "Parallel_Bar_Dip" }
-        )).first)
+        let context = ModelContext(container)
+        func seeded(_ externalID: String) throws -> Exercise {
+            try #require(try context.fetch(FetchDescriptor<Exercise>(
+                predicate: #Predicate { $0.externalID == externalID }
+            )).first)
+        }
+        let dip = try seeded("Parallel_Bar_Dip")
         #expect(dip.equipment == .bodyweight)
-        #expect(SessionSetActions.isValidSet(weight: 0, reps: 10, equipment: dip.equipment))
+        #expect(SessionSetActions.isValidSet(weight: 0, reps: 10, tracking: dip.tracking))
+
+        // Seed 5: holds and carries are timed, a carry keeps its load, the
+        // band-assisted pull-up takes assistance, and Smith and EZ-bar rows
+        // have their own equipment.
+        let plank = try seeded("Plank")
+        #expect(plank.tracking == .duration)
+        #expect(plank.timedValue == nil)
+        #expect(try seeded("Farmers_Walk").timedValue == .weight)
+        #expect(try seeded("Band_Assisted_Pull-Up").tracking == .assistedReps)
+        #expect(try seeded("Smith_Machine_Squat").equipment == .smithMachine)
+        #expect(try seeded("EZ-Bar_Curl").equipment == .ezBar)
+        #expect(try seeded("Bodyweight_Flyes").equipment == .bodyweight)
+        // A row curation does not list keeps the tracking its equipment implies.
+        let bench = try seeded("Barbell_Bench_Press_-_Medium_Grip")
+        #expect(bench.trackingRaw == nil)
+        #expect(bench.tracking == .weightReps)
     }
 
     // MARK: - Test 2: MuscleGroup count

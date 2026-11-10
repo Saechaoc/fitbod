@@ -4,10 +4,31 @@ import Foundation
 public struct WorkoutSetSuggestion: Equatable, Sendable {
     public let weight: Double?
     public let reps: Int?
+    public let durationSeconds: Int?
+    public let distanceMeters: Double?
+    public let level: Double?
 
-    public init(weight: Double? = nil, reps: Int? = nil) {
+    public init(
+        weight: Double? = nil, reps: Int? = nil,
+        durationSeconds: Int? = nil, distanceMeters: Double? = nil, level: Double? = nil
+    ) {
         self.weight = weight
         self.reps = reps
+        self.durationSeconds = durationSeconds
+        self.distanceMeters = distanceMeters
+        self.level = level
+    }
+
+    func durationSeconds(for entry: SetEntry) -> Int? {
+        entry.durationSeconds ?? (entry.isComplete ? nil : durationSeconds)
+    }
+
+    func distanceMeters(for entry: SetEntry) -> Double? {
+        entry.distanceMeters ?? (entry.isComplete ? nil : distanceMeters)
+    }
+
+    func level(for entry: SetEntry) -> Double? {
+        entry.level ?? (entry.isComplete ? nil : level)
     }
 
     func weight(for entry: SetEntry) -> Double {
@@ -30,11 +51,13 @@ struct WorkoutSetSuggestions {
     private let targetReps: ClosedRange<Int>?
     private let programmed: Bool
     private let blockProgrammed: Bool
+    private let tracking: Tracking?
 
     init(exercise: SessionExercise, prior: [SetEntry]) {
         self.exercise = exercise
-        let equipment = exercise.exercise?.equipment
-        let eligiblePrior = prior.filter { Self.isReference($0, equipment: equipment) }
+        let tracking = exercise.exercise?.tracking
+        self.tracking = tracking
+        let eligiblePrior = prior.filter { Self.isReference($0, tracking: tracking) }
         self.prior = eligiblePrior
         highestPriorWeight = eligiblePrior.map(\.weight).max()
         prescribedWeight = exercise.prescribedWeight.flatMap { $0.isFinite && $0 > 0 ? $0 : nil }
@@ -54,17 +77,30 @@ struct WorkoutSetSuggestions {
     }
 
     func offers() -> [UUID: WorkoutSetSuggestion] {
-        let equipment = exercise.exercise?.equipment
         let working = SessionSetActions.ordered(exercise).filter(Self.isWorking)
-        var lastCompleted = precedingExerciseSet(equipment: equipment)
+        var lastCompleted = precedingExerciseSet()
         var offers: [UUID: WorkoutSetSuggestion] = [:]
 
         for (index, entry) in working.enumerated() {
             if entry.isComplete {
-                if Self.isReference(entry, equipment: equipment) { lastCompleted = entry }
+                if Self.isReference(entry, tracking: tracking) { lastCompleted = entry }
                 continue
             }
             let previous = prior.isEmpty ? nil : prior[min(index, prior.count - 1)]
+            if tracking?.isTimed == true {
+                // No progression: repeat the set just done, or the same set last time.
+                // Only the value its row shows comes along with the time.
+                if let reference = lastCompleted ?? previous {
+                    let value = exercise.exercise?.timedValue
+                    offers[entry.id] = WorkoutSetSuggestion(
+                        weight: value == .weight && reference.weight > 0 ? reference.weight : nil,
+                        durationSeconds: reference.durationSeconds,
+                        distanceMeters: value == .distance ? reference.distanceMeters : nil,
+                        level: value == .level ? reference.level : nil
+                    )
+                }
+                continue
+            }
             let fromCurrent = !blockProgrammed && lastCompleted != nil
             let reference = fromCurrent ? lastCompleted : previous ?? lastCompleted
             let startingWeight = initialWeight(previous: previous)
@@ -118,13 +154,13 @@ struct WorkoutSetSuggestions {
         return repeated
     }
 
-    private func precedingExerciseSet(equipment: Equipment?) -> SetEntry? {
+    private func precedingExerciseSet() -> SetEntry? {
         guard let id = exercise.exercise?.id else { return nil }
         let earlier = (exercise.session?.exercises ?? [])
             .filter { $0.orderIndex < exercise.orderIndex && $0.exercise?.id == id }
             .sorted { $0.orderIndex > $1.orderIndex }
         for log in earlier {
-            if let set = SessionSetActions.ordered(log).last(where: { Self.isReference($0, equipment: equipment) }) {
+            if let set = SessionSetActions.ordered(log).last(where: { Self.isReference($0, tracking: tracking) }) {
                 return set
             }
         }
@@ -135,9 +171,12 @@ struct WorkoutSetSuggestions {
         !entry.isWarmup && entry.setType == .working
     }
 
-    private static func isReference(_ entry: SetEntry, equipment: Equipment?) -> Bool {
+    private static func isReference(_ entry: SetEntry, tracking: Tracking?) -> Bool {
         entry.isComplete && isWorking(entry)
-            && SessionSetActions.isValidSet(weight: entry.weight, reps: entry.reps, equipment: equipment)
+            && SessionSetActions.isValidSet(
+                weight: entry.weight, reps: entry.reps,
+                durationSeconds: entry.durationSeconds, tracking: tracking
+            )
     }
 
     private static func sameLoad(_ lhs: Double, _ rhs: Double) -> Bool {

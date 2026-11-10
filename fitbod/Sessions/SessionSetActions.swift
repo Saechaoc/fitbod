@@ -29,21 +29,35 @@ import SwiftData
 
 public enum SessionSetActions {
 
-    /// Bodyweight uses added load, so zero is a valid recorded weight.
-    /// All sets need positive reps and a finite, non-negative weight.
+    /// Whether the set can be completed with its entered values and offers.
     @MainActor
     public static func canComplete(_ entry: SetEntry, suggestion: WorkoutSetSuggestion = .init()) -> Bool {
         isValidSet(
             weight: suggestion.weight(for: entry),
             reps: suggestion.reps(for: entry),
-            equipment: entry.sessionExercise?.exercise?.equipment
+            durationSeconds: suggestion.durationSeconds(for: entry),
+            tracking: entry.sessionExercise?.exercise?.tracking
         )
     }
 
-    /// `canComplete`'s rule on raw values, to check an edit before it is written.
-    public static func isValidSet(weight: Double, reps: Int, equipment: Equipment?) -> Bool {
-        guard reps > 0, weight.isFinite, weight >= 0 else { return false }
-        return weight > 0 || equipment == .bodyweight || equipment == .weightedBodyweight
+    /// `canComplete`'s rule on raw values, by what the exercise tracks:
+    /// load and reps need both, bodyweight reps take zero added load, assisted
+    /// reps take a weight of zero or less, and timed sets need a time. With
+    /// no tracking (the exercise is gone, or a stored set is read by its own
+    /// values) reps or a time is enough.
+    public static func isValidSet(
+        weight: Double, reps: Int, durationSeconds: Int? = nil, tracking: Tracking?
+    ) -> Bool {
+        guard weight.isFinite else { return false }
+        let timed = (durationSeconds ?? 0) > 0
+        switch tracking {
+        case .weightReps: return reps > 0 && weight > 0
+        case .reps: return reps > 0 && weight >= 0
+        // Assistance is stored as a negative weight (ARCHITECTURE.md).
+        case .assistedReps: return reps > 0 && weight <= 0
+        case .duration, .durationDistance, .durationLevel: return timed && weight >= 0
+        case nil: return reps > 0 || timed
+        }
     }
 
     /// Save entered values and any accepted offers together as one logged set.
@@ -60,8 +74,14 @@ public enum SessionSetActions {
         let oldWeight = entry.weight
         let oldReps = entry.reps
         let oldDate = entry.completedAt
+        let oldDuration = entry.durationSeconds
+        let oldDistance = entry.distanceMeters
+        let oldLevel = entry.level
         entry.weight = suggestion.weight(for: entry)
         entry.reps = suggestion.reps(for: entry)
+        entry.durationSeconds = suggestion.durationSeconds(for: entry)
+        entry.distanceMeters = suggestion.distanceMeters(for: entry)
+        entry.level = suggestion.level(for: entry)
         entry.isComplete = true
         entry.completedAt = date
         do {
@@ -72,6 +92,9 @@ public enum SessionSetActions {
             entry.completedAt = oldDate
             entry.weight = oldWeight
             entry.reps = oldReps
+            entry.durationSeconds = oldDuration
+            entry.distanceMeters = oldDistance
+            entry.level = oldLevel
             throw error
         }
     }

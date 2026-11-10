@@ -804,11 +804,13 @@ extension UITestNavigation {
     static func loggerSpan(in app: XCUIApplication) -> (top: CGFloat, bottom: CGFloat) {
         let header = app.otherElements["workout.header"].firstMatch
         let top = (header.exists ? header.frame.maxY : 0) + 8
-        let keyboard = app.keyboards.firstMatch
+        // One snapshot says both whether the keyboard is up and where: a
+        // keyboard that is sliding away can be gone between two reads.
+        let keyboardTop = (try? app.keyboards.firstMatch.snapshot())?.frame.minY
         // The DONE bar sits on top of the number pad.
-        var bottom = keyboard.exists ? keyboard.frame.minY - 66 : app.frame.maxY - 24
+        var bottom = keyboardTop.map { $0 - 66 } ?? app.frame.maxY - 24
         let dock = app.descendants(matching: .any).matching(identifier: "rest.status").firstMatch
-        if !keyboard.exists && dock.exists {
+        if keyboardTop == nil && dock.exists {
             bottom = min(bottom, dock.frame.minY - 16)
         }
         return (top, bottom)

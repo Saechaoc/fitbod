@@ -96,9 +96,10 @@ struct ExerciseDetailView: View {
     /// Unit label for the Prescription Settings fields. Per-exercise
     /// unitOverride takes precedence; falls back to global UserSettings;
     /// defaults to "lb" if no settings row exists yet.
-    private var unitLabel: String {
-        let effective = exercise.unitOverride ?? settingsList.first?.weightUnit ?? .lb
-        return effective.rawValue
+    private var unitLabel: String { unit.rawValue }
+
+    private var unit: WeightUnit {
+        exercise.unitOverride ?? settingsList.first?.weightUnit ?? .lb
     }
 
     var body: some View {
@@ -190,7 +191,7 @@ struct ExerciseDetailView: View {
 
     private var recentPerformanceSection: some View {
         VStack(spacing: 0) {
-            RecentPerformanceList(exercise: exercise, unitLabel: unitLabel)
+            RecentPerformanceList(exercise: exercise, unit: unit)
             NavigationLink {
                 ExerciseHistoryView(exercise: exercise)
             } label: {
@@ -435,6 +436,7 @@ struct ExerciseDetailView: View {
         draft.name = source.name + " (Copy)"
         draft.equipment = Equipment(rawValue: source.equipmentRaw) ?? .other
         draft.mechanic = Mechanic(rawValue: source.mechanicRaw) ?? .compound
+        draft.trackingRaw = source.trackingRaw
         for stim in (source.muscleStimuli ?? []) {
             // Defensive: skip stimulus rows whose `muscle`
             // relationship somehow didn't resolve. Same resilience
@@ -575,11 +577,11 @@ private struct ProgressEntryRow: View {
 /// best working set and working-set count. This is the "previous
 /// performance" a lifter checks before choosing today's load.
 struct RecentPerformanceList: View {
-    let unitLabel: String
+    let unit: WeightUnit
     @Query private var logged: [SessionExercise]
 
-    init(exercise: Exercise, unitLabel: String) {
-        self.unitLabel = unitLabel
+    init(exercise: Exercise, unit: WeightUnit) {
+        self.unit = unit
         let targetID: UUID? = exercise.id
         // Single-level optional chain only; deeper chains crash #Predicate.
         _logged = Query(filter: #Predicate<SessionExercise> { $0.exercise?.id == targetID })
@@ -597,7 +599,8 @@ struct RecentPerformanceList: View {
     /// workout: in log order, then set order (`orderIndex` both times),
     /// whatever order SwiftData returns them in. `max(by:)` keeps the
     /// first of equal elements, so the earlier set wins a tie for the
-    /// best set.
+    /// best set. The best set is the heaviest, then the one with the most
+    /// reps, and among timed sets the longest.
     static func entries(from logged: [SessionExercise]) -> [Entry] {
         let finishedLogs = logged.compactMap { item -> (session: Session, log: SessionExercise)? in
             guard let session = item.session, session.completedAt != nil else { return nil }
@@ -615,7 +618,10 @@ struct RecentPerformanceList: View {
                             .filter { $0.isComplete && !$0.isWarmup }
                             .sorted { $0.orderIndex < $1.orderIndex }
                     }
-                guard let best = working.max(by: { ($0.weight, $0.reps) < ($1.weight, $1.reps) }) else { return nil }
+                func rank(_ set: SetEntry) -> (Double, Int, Int) {
+                    (set.weight, set.reps, set.isTimed ? set.durationSeconds ?? 0 : 0)
+                }
+                guard let best = working.max(by: { rank($0) < rank($1) }) else { return nil }
                 return Entry(id: session.id, date: session.startedAt, best: best, workingSets: working.count)
             }
             .sorted { $0.date > $1.date }
@@ -646,7 +652,7 @@ struct RecentPerformanceList: View {
                             .foregroundStyle(Color.bruMuted)
                     }
                     Spacer()
-                    Text("\(entry.best.weight.formatted(.number.precision(.fractionLength(0...1)))) \(unitLabel) × \(entry.best.reps)")
+                    Text(entry.best.resultText(unit: unit))
                         .font(BRUFont.condensedLabel)
                         .foregroundStyle(Color.bruInk)
                 }

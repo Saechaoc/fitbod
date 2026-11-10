@@ -54,7 +54,8 @@ public struct AddUnplannedExerciseButton: View {
         }
     }
 
-    /// SESS-06 — append a fresh SessionExercise + 3 planned SetEntry rows.
+    /// SESS-06: append a fresh SessionExercise + 3 planned SetEntry rows,
+    /// or one row with no rep target for a timed exercise.
     /// The source Routine is untouched. The new exercise gets the
     /// prescription a workout start would give it. Saves immediately.
     @MainActor
@@ -69,9 +70,10 @@ public struct AddUnplannedExerciseButton: View {
         se.orderIndex = nextOrderIndex
         se.session = session
         // PIVOT-02 / PIVOT-05: intent is session-level after Plan 02.
-        se.targetSets = 3
-        se.targetRepsLow = 8
-        se.targetRepsHigh = 12
+        let timed = exercise.tracking.isTimed
+        se.targetSets = timed ? 1 : 3
+        se.targetRepsLow = timed ? 0 : 8
+        se.targetRepsHigh = timed ? 0 : 12
         se.prescribedRestSeconds = exercise.mechanic == .compound ? 180 : 90
         context.insert(se)
 
@@ -89,7 +91,7 @@ public struct AddUnplannedExerciseButton: View {
         )
         se.prescribedWeight = prescription.weight
 
-        for i in 0..<3 {
+        for i in 0..<se.targetSets {
             let entry = SetEntry()
             entry.sessionExercise = se
             entry.orderIndex = i

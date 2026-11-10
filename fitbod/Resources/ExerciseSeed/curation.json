@@ -9,6 +9,10 @@
     "equipment": "bodyweight"
   },
   "Band_Assisted_Pull-Up": {
+    "equipment": "bodyweight",
+    "tracking": "assisted_reps"
+  },
+  "Bodyweight_Flyes": {
     "equipment": "bodyweight"
   },
   "Bodyweight_Mid_Row": {
@@ -17,8 +21,14 @@
   "Bodyweight_Walking_Lunge": {
     "equipment": "bodyweight"
   },
+  "Crucifix": {
+    "tracking": "duration"
+  },
   "Decline_Push-Up": {
     "equipment": "bodyweight"
+  },
+  "Decline_Smith_Press": {
+    "equipment": "smith_machine"
   },
   "Dips_-_Chest_Version": {
     "equipment": "bodyweight"
@@ -35,6 +45,9 @@
   "Exercise_Ball_Pull-In": {
     "equipment": "bodyweight"
   },
+  "Farmers_Walk": {
+    "tracking": "duration"
+  },
   "Floor_Glute-Ham_Raise": {
     "equipment": "bodyweight"
   },
@@ -49,6 +62,12 @@
   },
   "Inverted_Row_with_Straps": {
     "equipment": "bodyweight"
+  },
+  "Isometric_Neck_Exercise_-_Front_And_Back": {
+    "tracking": "duration"
+  },
+  "Isometric_Neck_Exercise_-_Sides": {
+    "tracking": "duration"
   },
   "Kipping_Muscle_Up": {
     "equipment": "bodyweight"
@@ -74,6 +93,12 @@
   "Physioball_Hip_Bridge": {
     "equipment": "bodyweight"
   },
+  "Plank": {
+    "tracking": "duration"
+  },
+  "Plate_Pinch": {
+    "tracking": "duration"
+  },
   "Platform_Hamstring_Slides": {
     "equipment": "bodyweight"
   },
@@ -82,6 +107,9 @@
   },
   "Push-Ups_With_Feet_On_An_Exercise_Ball": {
     "equipment": "bodyweight"
+  },
+  "Rickshaw_Carry": {
+    "tracking": "duration"
   },
   "Ring_Dips": {
     "equipment": "bodyweight"
@@ -95,11 +123,71 @@
   "Scapular_Pull-Up": {
     "equipment": "bodyweight"
   },
+  "Side_Bridge": {
+    "tracking": "duration"
+  },
   "Side_To_Side_Chins": {
     "equipment": "bodyweight"
   },
   "Single-Leg_High_Box_Squat": {
     "equipment": "bodyweight"
+  },
+  "Smith_Incline_Shoulder_Raise": {
+    "equipment": "smith_machine"
+  },
+  "Smith_Machine_Behind_the_Back_Shrug": {
+    "equipment": "smith_machine"
+  },
+  "Smith_Machine_Bench_Press": {
+    "equipment": "smith_machine"
+  },
+  "Smith_Machine_Bent_Over_Row": {
+    "equipment": "smith_machine"
+  },
+  "Smith_Machine_Calf_Raise": {
+    "equipment": "smith_machine"
+  },
+  "Smith_Machine_Close-Grip_Bench_Press": {
+    "equipment": "smith_machine"
+  },
+  "Smith_Machine_Decline_Press": {
+    "equipment": "smith_machine"
+  },
+  "Smith_Machine_Hang_Power_Clean": {
+    "equipment": "smith_machine"
+  },
+  "Smith_Machine_Hip_Raise": {
+    "equipment": "smith_machine"
+  },
+  "Smith_Machine_Incline_Bench_Press": {
+    "equipment": "smith_machine"
+  },
+  "Smith_Machine_Leg_Press": {
+    "equipment": "smith_machine"
+  },
+  "Smith_Machine_One-Arm_Upright_Row": {
+    "equipment": "smith_machine"
+  },
+  "Smith_Machine_Overhead_Shoulder_Press": {
+    "equipment": "smith_machine"
+  },
+  "Smith_Machine_Pistol_Squat": {
+    "equipment": "smith_machine"
+  },
+  "Smith_Machine_Reverse_Calf_Raises": {
+    "equipment": "smith_machine"
+  },
+  "Smith_Machine_Squat": {
+    "equipment": "smith_machine"
+  },
+  "Smith_Machine_Stiff-Legged_Deadlift": {
+    "equipment": "smith_machine"
+  },
+  "Smith_Machine_Upright_Row": {
+    "equipment": "smith_machine"
+  },
+  "Smith_Single-Leg_Split_Squat": {
+    "equipment": "smith_machine"
   },
   "Suspended_Fallout": {
     "equipment": "bodyweight"
@@ -133,5 +221,8 @@
   },
   "Weighted_Squat": {
     "equipment": "weighted_bodyweight"
+  },
+  "Yoke_Walk": {
+    "tracking": "duration"
   }
 }

@@ -104,24 +104,38 @@ struct WorkoutWeightGuidance: View {
     private func guidanceText(suggestion: String?) -> String {
         var parts: [String] = []
         let programmed = WorkoutSetSuggestions.hasProgram(exercise.session)
+        let tracking = exercise.exercise?.tracking ?? .weightReps
         if let suggestion { parts.append("Suggested \(suggestion)") }
-        if programmed, let reps = targetReps {
-            // "1 rep", "5 reps" or "8–12 reps", as the prescription editor writes them.
-            let count = reps.lowerBound == reps.upperBound
-                ? BRUCountLabel.text(reps.lowerBound, "rep")
-                : "\(reps.lowerBound)–\(BRUCountLabel.text(reps.upperBound, "rep"))"
-            parts.append(suggestion == nil ? "Target \(count)" : count)
-        }
-        if let rpe = exercise.targetRPE, rpe.isFinite {
-            parts.append("Target RPE \(NumberText.weight(rpe))")
+        // A timed set has no rep or effort target, whatever its routine row
+        // held before the exercise was timed.
+        if !tracking.isTimed {
+            if programmed, let reps = targetReps {
+                // "1 rep", "5 reps" or "8–12 reps", as the prescription editor writes them.
+                let count = reps.lowerBound == reps.upperBound
+                    ? BRUCountLabel.text(reps.lowerBound, "rep")
+                    : "\(reps.lowerBound)–\(BRUCountLabel.text(reps.upperBound, "rep"))"
+                parts.append(suggestion == nil ? "Target \(count)" : count)
+            }
+            if let rpe = exercise.targetRPE, rpe.isFinite {
+                parts.append("Target RPE \(NumberText.weight(rpe))")
+            }
         }
         if suggestion == nil, loggedWeight == nil {
-            let equipment = exercise.exercise?.equipment
-            let bodyweight = equipment == .bodyweight || equipment == .weightedBodyweight
-            if programmed && !bodyweight {
-                parts.append("Choose a starting weight")
-            } else if !programmed && !hasSetOffer {
-                parts.append(bodyweight ? "Enter your starting reps" : "Enter a starting weight and reps")
+            switch tracking {
+            case .weightReps:
+                if programmed {
+                    parts.append("Choose a starting weight")
+                } else if !hasSetOffer {
+                    parts.append("Enter a starting weight and reps")
+                }
+            case .reps:
+                if !programmed, !hasSetOffer { parts.append("Enter your starting reps") }
+            case .assistedReps:
+                if !hasSetOffer {
+                    parts.append(programmed ? "Choose your assistance" : "Enter your assistance and reps")
+                }
+            case .duration, .durationDistance, .durationLevel:
+                if !hasSetOffer { parts.append("Enter your time") }
             }
         }
         return parts.joined(separator: " · ")

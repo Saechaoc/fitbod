@@ -110,6 +110,11 @@ public final class CustomExerciseDraft {
     /// SQLite store).
     public var imageData: Data? = nil
 
+    /// What a set records, when that is not what the equipment implies
+    /// (`Exercise.tracking`). A copy of a timed exercise takes it from its
+    /// source, so the copy stays timed.
+    public var trackingRaw: String? = nil
+
     /// Set by the editor when an existing custom `Exercise` is being
     /// edited (rather than created). When non-nil:
     ///   - the navigation title becomes "Edit Exercise",
@@ -248,6 +253,7 @@ public final class CustomExerciseDraft {
             primaryMuscleSlugsJoined: joined
         )
         ex.imageData = photo
+        ex.trackingRaw = trackingRaw
         ctx.insert(ex)
 
         // Use the failable `uniquingKeysWith:` initializer rather than

@@ -24,11 +24,36 @@ public struct WorkoutEdit: Equatable, Sendable {
         public var weight: Double
         public var reps: Int
         public var rpe: Double?
+        public var durationSeconds: Int?
+        public var distanceMeters: Double?
+        public var level: Double?
 
-        public init(weight: Double, reps: Int, rpe: Double?) {
+        public init(
+            weight: Double, reps: Int, rpe: Double?,
+            durationSeconds: Int? = nil, distanceMeters: Double? = nil, level: Double? = nil
+        ) {
             self.weight = weight
             self.reps = reps
             self.rpe = rpe
+            self.durationSeconds = durationSeconds
+            self.distanceMeters = distanceMeters
+            self.level = level
+        }
+
+        init(_ set: SetEntry) {
+            self.init(
+                weight: set.weight, reps: set.reps, rpe: set.rpe,
+                durationSeconds: set.durationSeconds, distanceMeters: set.distanceMeters, level: set.level
+            )
+        }
+
+        fileprivate func write(to set: SetEntry) {
+            set.weight = weight
+            set.reps = reps
+            set.rpe = rpe
+            set.durationSeconds = durationSeconds
+            set.distanceMeters = distanceMeters
+            set.level = level
         }
     }
 
@@ -84,6 +109,9 @@ enum WorkoutCorrectionInput {
         value.isFinite && value >= 0 && Int(exactly: value.rounded()) != nil
     }
 
+    /// A set's time stays under 100 hours, the most "99:59:59" can show.
+    static let durationLimit = 100 * 3600
+
     private static func decimalDigits(_ text: String) -> String? {
         guard !text.isEmpty else { return nil }
         var result = ""
@@ -113,21 +141,24 @@ public enum SessionEditService {
         let exercises = session.exercises ?? []
         var workoutVolume = 0.0
         for exercise in exercises {
-            let equipment = exercise.exercise?.equipment
+            let tracking = exercise.exercise?.tracking
             let kept = (exercise.sets ?? []).filter { !edit.deleted.contains($0.id) }
             let added = edit.added[exercise.id] ?? []
-            guard (kept.compactMap { edit.changed[$0.id] } + added)
-                .allSatisfy({ isValid($0, equipment: equipment) })
-            else {
+            // A set left alone is not judged again: it may have been logged
+            // under another tracking type, and it must never block a
+            // correction to the rest of its workout.
+            let changedAreValid = kept.allSatisfy { set in
+                edit.changed[set.id].map { isValid($0, tracking: rule(for: set, exerciseTracking: tracking)) } ?? true
+            }
+            guard changedAreValid, added.allSatisfy({ isValid($0, tracking: tracking) }) else {
                 throw SessionEditError.invalidSet
             }
             let proposed = kept.filter { $0.isComplete && !$0.isWarmup }.map {
-                edit.changed[$0.id] ?? WorkoutEdit.Values(weight: $0.weight, reps: $0.reps, rpe: $0.rpe)
+                edit.changed[$0.id] ?? WorkoutEdit.Values($0)
             } + added
             var exerciseVolume = 0.0
             for values in proposed {
-                guard isValid(values, equipment: equipment) else { throw SessionEditError.invalidSet }
-                exerciseVolume += values.weight * Double(values.reps)
+                exerciseVolume += SetEntry.tonnage(weight: values.weight, reps: values.reps)
                 guard WorkoutCorrectionInput.isSupported(exerciseVolume) else { throw SessionEditError.invalidSet }
             }
             workoutVolume += exerciseVolume
@@ -142,6 +173,7 @@ public enum SessionEditService {
                     session.completedAt = finishedAt.addingTimeInterval(delta)
                     for set in exercises.flatMap({ $0.sets ?? [] }) {
                         set.completedAt = set.completedAt.addingTimeInterval(delta)
+                        set.startedAt = set.startedAt?.addingTimeInterval(delta)
                     }
                     session.block = block(runningAt: edit.startedAt, in: blocks)
                 }
@@ -172,11 +204,7 @@ public enum SessionEditService {
                 context.delete(set)
                 continue
             }
-            if let values = edit.changed[set.id] {
-                set.weight = values.weight
-                set.reps = values.reps
-                set.rpe = values.rpe
-            }
+            edit.changed[set.id]?.write(to: set)
             kept.append(set)
         }
         // An added set is logged just after the last one, inside the workout.
@@ -185,9 +213,7 @@ public enum SessionEditService {
             let entry = SetEntry()
             context.insert(entry)
             entry.sessionExercise = exercise
-            entry.weight = values.weight
-            entry.reps = values.reps
-            entry.rpe = values.rpe
+            values.write(to: entry)
             entry.isComplete = true
             stamp = min(stamp.addingTimeInterval(1), end)
             entry.completedAt = stamp
@@ -198,12 +224,28 @@ public enum SessionEditService {
         }
     }
 
-    private static func isValid(_ values: WorkoutEdit.Values, equipment: Equipment?) -> Bool {
+    /// The rule a correction to a stored set must meet. The shape it was
+    /// logged in wins over what its exercise tracks now, which curation may
+    /// have changed since.
+    private static func rule(for set: SetEntry, exerciseTracking: Tracking?) -> Tracking? {
+        if set.isTimed { return .duration }
+        return exerciseTracking?.isTimed == false ? exerciseTracking : nil
+    }
+
+    private static func isValid(_ values: WorkoutEdit.Values, tracking: Tracking?) -> Bool {
         let rpeIsValid = values.rpe.map { $0.isFinite && (0...10).contains($0) } ?? true
-        return rpeIsValid
-            && SessionSetActions.isValidSet(weight: values.weight, reps: values.reps, equipment: equipment)
-            && WorkoutCorrectionInput.isSupported(values.weight)
+        // Assistance is a negative weight, so the size is what must be representable.
+        let load = abs(values.weight)
+        let extrasAreValid = [values.distanceMeters, values.level]
+            .allSatisfy { $0.map(WorkoutCorrectionInput.isSupported) ?? true }
+            && values.durationSeconds.map { (0..<WorkoutCorrectionInput.durationLimit).contains($0) } ?? true
+        return rpeIsValid && extrasAreValid
+            && SessionSetActions.isValidSet(
+                weight: values.weight, reps: values.reps,
+                durationSeconds: values.durationSeconds, tracking: tracking
+            )
+            && WorkoutCorrectionInput.isSupported(load)
             && Int(exactly: Double(values.reps)) != nil
-            && WorkoutCorrectionInput.isSupported(values.weight * Double(values.reps))
+            && WorkoutCorrectionInput.isSupported(load * Double(values.reps))
     }
 }

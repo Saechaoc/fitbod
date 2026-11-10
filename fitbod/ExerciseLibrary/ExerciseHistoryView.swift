@@ -116,6 +116,7 @@ private struct FilteredHistoryContent: View {
     let onHistoryChanged: (Int) -> Void
 
     @Query private var sessionExercises: [SessionExercise]
+    @Environment(\.weightUnit) private var defaultUnit
 
     init(exercise: Exercise, intentFilter: Binding<Intent?>, onHistoryChanged: @escaping (Int) -> Void) {
         self.exercise = exercise
@@ -138,18 +139,24 @@ private struct FilteredHistoryContent: View {
         let totalCount = completed.count
         // The PR replay runs once: the rows' "★ PR" and "PRs · 30d" read it.
         let prSetIDs = ExerciseHistoryView.prSets(from: completed)
-        let rows = ExerciseHistoryView.rows(from: completed, prSetIDs: prSetIDs)
+        let rows = ExerciseHistoryView.rows(
+            from: completed, prSetIDs: prSetIDs, unit: .effective(for: exercise, default: defaultUnit)
+        )
         let prFooter = prStats(from: completed)
 
         // 3-cell stat strip: side by side while every label fits on one
         // line, stacked otherwise, so no label breaks inside a word.
         let workouts = ExerciseHistoryView.workouts30d(from: completed)
-        let tonnage = tonnageLabel(from: completed)
+        // A history of timed sets has no load to total or rank: the strip
+        // shows the longest time, and the weight and reps footer is left out.
+        let longest = ExerciseHistoryView.longestTime(in: completed)
+        let middle = longest.map { BRUReadout(label: "Longest", value: SetText.duration($0), valueColor: .bruSignal) }
+            ?? BRUReadout(label: "Tonnage", value: tonnageLabel(from: completed), valueColor: .bruSignal)
         let prs = ExerciseHistoryView.prs30d(from: completed, prSetIDs: prSetIDs)
         ViewThatFits(in: .horizontal) {
-            HStack(spacing: 0) { statCells(sideBySide: true, workouts: workouts, tonnage: tonnage, prs: prs) }
+            HStack(spacing: 0) { statCells(sideBySide: true, workouts: workouts, middle: middle, prs: prs) }
             VStack(alignment: .leading, spacing: 0) {
-                statCells(sideBySide: false, workouts: workouts, tonnage: tonnage, prs: prs)
+                statCells(sideBySide: false, workouts: workouts, middle: middle, prs: prs)
             }
         }
         // Inform outer view of history count so it can show/hide PROGRESS
@@ -197,11 +204,13 @@ private struct FilteredHistoryContent: View {
             }
 
             // PR strip footer
-            PRStripFooter(
-                topWeight: prFooter.topWeight,
-                topReps: prFooter.topReps,
-                volPR: prFooter.volPR
-            )
+            if longest == nil {
+                PRStripFooter(
+                    topWeight: prFooter.topWeight,
+                    topReps: prFooter.topReps,
+                    volPR: prFooter.volPR
+                )
+            }
         }
     }
 
@@ -210,10 +219,10 @@ private struct FilteredHistoryContent: View {
     /// The strip's three cells. Side by side, each label keeps its one-line
     /// width and the cells share what is left; stacked, rules divide them.
     @ViewBuilder
-    private func statCells(sideBySide: Bool, workouts: Int, tonnage: String, prs: Int) -> some View {
+    private func statCells(sideBySide: Bool, workouts: Int, middle: BRUReadout, prs: Int) -> some View {
         statCell(BRUReadout(label: "Workouts · 30d", value: "\(workouts)"), sideBySide: sideBySide)
         statRule(sideBySide: sideBySide)
-        statCell(BRUReadout(label: "Tonnage", value: tonnage, valueColor: .bruSignal), sideBySide: sideBySide)
+        statCell(middle, sideBySide: sideBySide)
         statRule(sideBySide: sideBySide)
         statCell(BRUReadout(label: "PRs · 30d", value: "\(prs)"), sideBySide: sideBySide)
     }
@@ -332,6 +341,12 @@ private struct FilteredHistoryContent: View {
 
 extension ExerciseHistoryView {
 
+    /// The longest time among `sets` when every one of them is timed; nil
+    /// when any set has reps, or there are none.
+    static func longestTime(in sets: [(setEntry: SetEntry, sessionExercise: SessionExercise)]) -> Int? {
+        sets.allSatisfy(\.setEntry.isTimed) ? sets.compactMap(\.setEntry.durationSeconds).max() : nil
+    }
+
     /// The sets the history shows: the completed working sets of the
     /// exercise's logs, from the workouts of `intent`, or of any intent
     /// when it is nil.
@@ -427,16 +442,18 @@ extension ExerciseHistoryView {
     /// one day are two rows, and the row shows the date. A row reads every
     /// log of the exercise in its workout, so its top set, e1RM, set count
     /// and chips cover all of them. `prSetIDs` is `prSets(from:)` for the
-    /// same sets: a row shows "★ PR" when one of its sets is in it.
+    /// same sets: a row shows "★ PR" when one of its sets is in it. `unit`
+    /// names a timed set's distance; weights show without a unit.
     static func rows(
         from sets: [(setEntry: SetEntry, sessionExercise: SessionExercise)],
-        prSetIDs: Set<ObjectIdentifier>
+        prSetIDs: Set<ObjectIdentifier>,
+        unit: WeightUnit = .default
     ) -> [HistoryEntry] {
         Dictionary(grouping: sets) { $0.sessionExercise.session?.id }
             .values
             .compactMap { pairs -> (startedAt: Date, entry: HistoryEntry)? in
                 guard let session = pairs.first?.sessionExercise.session else { return nil }
-                return (session.startedAt, row(for: session, from: pairs, prSetIDs: prSetIDs))
+                return (session.startedAt, row(for: session, from: pairs, prSetIDs: prSetIDs, unit: unit))
             }
             .sorted { $0.startedAt > $1.startedAt }
             .map(\.entry)
@@ -446,7 +463,8 @@ extension ExerciseHistoryView {
     private static func row(
         for session: Session,
         from pairs: [(setEntry: SetEntry, sessionExercise: SessionExercise)],
-        prSetIDs: Set<ObjectIdentifier>
+        prSetIDs: Set<ObjectIdentifier>,
+        unit: WeightUnit
     ) -> HistoryEntry {
         // All working sets for this session, across every log of the
         // exercise in it: in log order, then set order (`orderIndex`
@@ -461,18 +479,21 @@ extension ExerciseHistoryView {
         // The top set is the set the e1RM comes from, the one with the
         // highest e1RM. When no set has an e1RM, all of them 0 or less so
         // the e1RM reads "—", it is the set with the most volume, weight
-        // times reps. `max(by:)` keeps the first of equal elements, so the
-        // earlier set wins a tie either way.
+        // times reps, and among timed sets the longest. `max(by:)` keeps
+        // the first of equal elements, so the earlier set wins a tie.
         let best = sets.max { e1RM(of: $0) < e1RM(of: $1) }
         let bestE1RM = best.map(e1RM(of:)) ?? 0
         let topSet = bestE1RM > 0
             ? best
-            : sets.max { $0.weight * Double($0.reps) < $1.weight * Double($1.reps) }
-        let e1RMLabel = bestE1RM > 0
-            ? (bestE1RM.truncatingRemainder(dividingBy: 1) == 0
-               ? "\(Int(bestE1RM))"
-               : String(format: "%.1f", bestE1RM))
-            : "—"
+            : sets.max { size(of: $0) < size(of: $1) }
+        // A workout of timed sets has no e1RM to show, not a missing one.
+        let e1RMLabel: String? = sets.allSatisfy(\.isTimed)
+            ? nil
+            : bestE1RM > 0
+                ? (bestE1RM.truncatingRemainder(dividingBy: 1) == 0
+                   ? "\(Int(bestE1RM))"
+                   : String(format: "%.1f", bestE1RM))
+                : "—"
 
         return HistoryEntry(
             id: session.id,
@@ -480,10 +501,15 @@ extension ExerciseHistoryView {
             intentLabel: shortIntentLabel(session.intent),
             isPR: sets.contains { prSetIDs.contains(ObjectIdentifier($0)) },
             e1RMLabel: e1RMLabel,
-            topSetLabel: topSet.map(setLabel) ?? "—",
+            topSetLabel: topSet.map { setLabel($0, unit: unit) } ?? "—",
             setCount: sets.count,
-            setChips: sets.map(setLabel)
+            setChips: sets.map { setLabel($0, unit: unit) }
         )
+    }
+
+    /// How a set ranks when no set has an e1RM: by volume, then by time.
+    private static func size(of set: SetEntry) -> (Double, Int) {
+        (set.weight * Double(set.reps), set.isTimed ? set.durationSeconds ?? 0 : 0)
     }
 
     /// A set's e1RM, as Progress and the PR list estimate it; 0 when the
@@ -492,15 +518,16 @@ extension ExerciseHistoryView {
         OneRepMaxEstimator.estimate(weight: set.weight, reps: set.reps) ?? 0
     }
 
-    /// A set as its chip and the TOP line read, such as "107.5×2 @9.5".
-    private static func setLabel(_ set: SetEntry) -> String {
-        let w = NumberText.weight(set.weight)
+    /// A set as its chip and the TOP line read, such as "107.5×2 @9.5", or
+    /// "20:00 2.5mi" for a timed set.
+    private static func setLabel(_ set: SetEntry, unit: WeightUnit) -> String {
+        let result = set.resultText(unit: unit, compact: true)
         if let rpe = set.rpe {
             let rpeStr = rpe.truncatingRemainder(dividingBy: 1) == 0
                 ? "\(Int(rpe))" : String(format: "%.1f", rpe)
-            return "\(w)×\(set.reps) @\(rpeStr)"
+            return "\(result) @\(rpeStr)"
         }
-        return "\(w)×\(set.reps)"
+        return result
     }
 
     private static func formatDateLabel(_ date: Date) -> String {

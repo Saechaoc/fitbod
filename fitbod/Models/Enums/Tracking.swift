@@ -21,4 +21,20 @@ public enum Tracking: String, CaseIterable, Sendable {
     case durationDistance = "duration_distance"
     /// Time and a machine level: stair climber, elliptical.
     case durationLevel = "duration_level"
+
+    /// Time is the main value, and reps stay zero.
+    public var isTimed: Bool {
+        self == .duration || self == .durationDistance || self == .durationLevel
+    }
+
+    /// The progression strategies prescribe a load for it. Timed and
+    /// assisted sets only carry the last workout's values forward.
+    public var progressesLoad: Bool {
+        self == .weightReps || self == .reps
+    }
+}
+
+/// What a timed set records beside its time.
+public enum TimedValue: Sendable {
+    case weight, distance, level
 }
