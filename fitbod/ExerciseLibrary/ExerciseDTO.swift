@@ -70,3 +70,11 @@ public struct ExerciseDTO: Codable, Equatable, Sendable {
         self.images = images
     }
 }
+
+/// A local correction to one upstream row in `curation.json`, keyed by the
+/// row's `id`. Upstream left many bodyweight moves without equipment, so
+/// they could not log with zero added weight.
+public struct ExerciseCuration: Codable, Equatable, Sendable {
+    /// A canonical `Equipment` raw value that replaces the mapped one.
+    public let equipment: String?
+}

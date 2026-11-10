@@ -361,12 +361,22 @@ Count outside view rendering, keyed by finished-workout changes and the week sta
 
 ### <a id="rm-022"></a>RM-022 — Catalog curation and safe import
 
-**P1 · Planned: next catalog update validation.** Stable-ID incremental import exists; FT-05 Single-Leg Kneeling Leg Curl (hamstrings/machine) shipped at seed v3 (`0892c2cf`). Former 900-record/702-import counts predate it.
-**Done when:** updates preserve customs, stable IDs, edited stimuli and historical links; validate duplicates, missing equipment/muscles, natural searches and offline/image fallbacks. Curate pattern/grip metadata before exposing filters. Duration/distance models precede expansion beyond supported lifting types; count alone is not acceptance.
-**Scope / sequence:** Next delivery: validate a stable-ID update on a healthy populated store, including customs/stimuli/duplicates/search/image fallbacks. Pattern/grip curation returns before exposing those filters; duration/distance support needs an approved model scope. Damaged-store repair stays RM-009.
+**P1 · Active: complete catalog (user decision 2026-11-10).** Stable-ID incremental import exists; FT-05 Single-Leg Kneeling Leg Curl (hamstrings/machine) shipped at seed v3 (`0892c2cf`).
+Seed v4 adds `curation.json`, a local overlay keyed by upstream ID; it retags 39 bodyweight and 6 weighted-bodyweight moves whose upstream equipment was blank or "other", so dips, chins, muscle-ups and inverted rows log at zero added weight.
+**Decisions (2026-11-10):** one exercise per implement, grouped under a family with equipment variants ("Triceps Extension (Cable)") plus colloquial aliases; curate existing rows in place (rename, retag, hide obscure rows, never delete or re-point history); cardio and timed moves arrive with [RM-062](#rm-062).
+**Done when:** every common exercise and its colloquial names are findable; updates preserve customs, stable IDs, edited stimuli and historical links; a seed validator rejects duplicates, variants without a family, load-tracked rows without equipment and colliding aliases. Curate pattern/grip metadata before exposing filters.
+**Scope / sequence:** (1) bodyweight equipment overlay, done; (2) RM-062 tracking fields; (3) cardio/plyometrics import and additions, Stair Climber first; (4) RM-062 set duration; (5) families, aliases, hidden rows and grouped Library/picker search; (6) coverage fill to roughly 250 families. Damaged-store repair stays RM-009.
 **Requires:** Existing importer. [RM-004](#rm-004) before extending custom-photo persistence; [RM-009](#rm-009) only for damaged-store recovery, not healthy-store curation.
-**Evidence:** No passing acceptance is recorded for the remaining scope; cited commits/tests establish the shipped baseline only.
+**Evidence:** Slice 1: `BodyweightSetUITests` reproduced the disabled Done on Parallel Bar Dip, then passed after the overlay; `SeedTests.curationRetagsBodyweightMoves` checks overlay IDs and equipment; unit target 1,311 tests passed (1 known issue); `ReseedRelaunchUITests` and `WorkoutSwapJourneyUITests` passed. Remaining slices have no acceptance yet.
 **References:** LIB-01–06/FT-05; [importer](../fitbod/ExerciseLibrary/ExerciseLibraryImporter.swift), [seed source](../fitbod/Resources/ExerciseSeed/SOURCE.md).
+
+### <a id="rm-062"></a>RM-062 — Tracking types, cardio and set duration
+
+**P1 · Planned (user decision 2026-11-10).** A set stores only weight × reps today, so cardio and timed holds cannot be logged.
+**Done when:** each exercise has a tracking type (weight × reps, reps with optional load, assisted reps, time, time + distance, time + level); the logger shows matching columns and validates by type; every set records its duration automatically (start at rest end or first touch, editable), and the logger and History show exercise time ("8 × 10 · 3:00"); tonnage, e1RM, PRs and progression ignore non-load sets; export and backup carry the new fields and older backups still restore.
+**Scope / sequence:** Additive default-valued fields on `Exercise` and `SetEntry` in SchemaV7 → validation/columns → export/backup → set-duration capture and totals.
+**Requires:** A pre-change V7 store opening in place and a backup round-trip test for the new fields (the [RM-029](#rm-029) rule for schema changes).
+**Evidence:** None yet.
 
 ### <a id="rm-023"></a>RM-023 — Comparable analytics and useful detail routes
 
@@ -564,7 +574,7 @@ Deferred stays open until its trigger. Visual work returns at workflow stability
 **Requires:** existing approved decisions; user direction only to change them.
 **Evidence:** dated approvals below; implementation evidence stays with each linked owner.
 
-- **Scope:** personal local-only SwiftUI/SwiftData iPhone lifting app, Swift 6/iOS 26.4. No accounts/backend/analytics, commercial distribution, Android/web, Watch, HealthKit, external sensors/VBT, social, nutrition/cardio/sleep or form-video analysis in v1. Session-level intent/progression supersedes original per-exercise intent (PIVOT-01–05); retain exercise targets/four progression strategies.
+- **Scope:** personal local-only SwiftUI/SwiftData iPhone lifting app, Swift 6/iOS 26.4. No accounts/backend/analytics, commercial distribution, Android/web, Watch, HealthKit, external sensors/VBT, social, nutrition/sleep or form-video analysis in v1; cardio and timed-exercise logging entered scope 2026-11-10 ([RM-062](#rm-062)). Session-level intent/progression supersedes original per-exercise intent (PIVOT-01–05); retain exercise targets/four progression strategies.
 - **Gym day (2026-11-03):** history edits date/start and set weight/reps/RPE, adds/deletes sets and confirms workout deletion. Shift all timestamps one delta, never future; duration/exercise membership/order/frozen prescription stay. Derived evidence recomputes without a records-moved summary. WHY shows frozen weight/notes live divergence. Technical contracts: [architecture](../ARCHITECTURE.md).
 - **Conway decisions 1–9:** one BlockTemplates catalog, including real 4-week 5/3/1; presets replace name/phases and confirm edited phases. Top named draft/bottom ready saves both need a name. Notes SAVE local copy; CANCEL/swipe drop it. Completed work counts, skipped warmups do not; empty finish discards and old empty history stays out of counts/Compare. Archive confirms/restores. Why/Use/Override remain reachable and dismiss/focus keyboard. Baseline PR celebration stays RM-036.
 - **Block run (2026-11-05):** never auto-end; training continues after final week. Start/end/handover/attach/swap are rollback-safe single saves. Only draft/ready delete; active end, finished history stays. Start next/Plan custom carry extant unarchived routine/schedule/days; custom uses default phases/no name, recommended its preset. Review EXPORT shares dated block sets with Settings CSV columns. Deload holds last top weight/cuts sets. Remove inert DAYS PER WEEK. Skip/undo/planned start/broader phase effects remain RM-031.

@@ -6,7 +6,7 @@
 //   1. The bundled `exercises.json` decodes cleanly into `[ExerciseDTO]`.
 //   2. After the strength-category filter, at least 600 rows remain
 //      (typical: ~702 per the vendored snapshot in SOURCE.md).
-//   3. `SEED_VERSION.txt` is readable from the app bundle and equals `3`.
+//   3. `SEED_VERSION.txt` is readable from the app bundle and equals `4`.
 //   4. `EquipmentMapper.map(_:)` covers all 12 raw values + nil + empty.
 //   5. `MuscleRegionMap.region(for:)` covers all 17 dataset slugs and
 //      returns the expected canonical bucket for 3 sentinel slugs.
@@ -64,7 +64,7 @@ struct DTODecodingTests {
 
     // MARK: - SEED_VERSION.txt
 
-    @Test("SEED_VERSION.txt is bundled and equals 3")
+    @Test("SEED_VERSION.txt is bundled and equals 4")
     func seedVersionBundled() throws {
         let url = try #require(
             Bundle.main.url(forResource: "SEED_VERSION", withExtension: "txt"),
@@ -72,7 +72,7 @@ struct DTODecodingTests {
         )
         let raw = try String(contentsOf: url, encoding: .utf8)
         let trimmed = raw.trimmingCharacters(in: .whitespacesAndNewlines)
-        #expect(Int(trimmed) == 3, "Single-Leg Kneeling Leg Curl added at SEED_VERSION=3 (FT-05), got: \(trimmed)")
+        #expect(Int(trimmed) == 4, "Bodyweight equipment curation added at SEED_VERSION=4, got: \(trimmed)")
     }
 
     // MARK: - Equipment mapping (LIB-06)

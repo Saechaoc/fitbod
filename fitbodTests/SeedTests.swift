@@ -5,7 +5,7 @@
 //  Plan 01-PLAN-02-02 anchor suite — proves the load-bearing
 //  `ExerciseLibraryImporter` (`@ModelActor`) seed pipeline.
 //
-//  Nine Swift Testing functions cover:
+//  Ten Swift Testing functions cover:
 //   1. `strengthOnlyCount` — at least 600 strength exercises after seed
 //      (typical: ~702 per the vendored snapshot).
 //   2. `muscleGroupCount` — exactly 17 canonical MuscleGroup rows.
@@ -20,6 +20,8 @@
 //      and keeps everything the lifter made or logged (T128, F296).
 //   9. `partialSeedResumes` — a seed that stopped partway resumes without
 //      duplicating what reached disk (review WR-01).
+//  10. `curationRetagsBodyweightMoves` — `curation.json` names real rows and
+//      equipment, and the seed applies it (RM-022).
 //
 //  ## Test isolation
 //
@@ -86,6 +88,27 @@ final class SeedTests {
             count >= 600,
             "Strength-filtered seed should yield ≥600 exercises (typical: ~702); got \(count)"
         )
+    }
+
+    @Test("curation.json names real rows and real equipment, and the seed applies it")
+    func curationRetagsBodyweightMoves() async throws {
+        let ids = try Self.bundledStrengthIDs()
+        let url = try #require(Bundle.main.url(forResource: "curation", withExtension: "json"))
+        let curation = try JSONDecoder().decode([String: ExerciseCuration].self, from: Data(contentsOf: url))
+        for (id, entry) in curation {
+            #expect(ids.contains(id), "curation.json names \(id), which the seed does not import")
+            if let raw = entry.equipment {
+                #expect(Equipment(rawValue: raw) != nil, "\(id) has unknown equipment \(raw)")
+            }
+        }
+
+        let container = try InMemoryContainer.makeEmpty()
+        try await ExerciseLibraryImporter(modelContainer: container).seedIfNeeded(defaults: defaults)
+        let dip = try #require(try ModelContext(container).fetch(FetchDescriptor<Exercise>(
+            predicate: #Predicate { $0.externalID == "Parallel_Bar_Dip" }
+        )).first)
+        #expect(dip.equipment == .bodyweight)
+        #expect(SessionSetActions.isValidSet(weight: 0, reps: 10, equipment: dip.equipment))
     }
 
     // MARK: - Test 2: MuscleGroup count

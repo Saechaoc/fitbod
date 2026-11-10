@@ -159,6 +159,15 @@ public actor ExerciseLibraryImporter {
             throw SeedError.decodeFailed(underlying: error)
         }
         let dtos = allDTOs.filter { EquipmentMapper.shouldImport(category: $0.category) }
+        guard let curationURL = bundle.url(forResource: "curation", withExtension: "json") else {
+            throw SeedError.bundledResourceMissing(name: "curation.json")
+        }
+        let curation: [String: ExerciseCuration]
+        do {
+            curation = try JSONDecoder().decode([String: ExerciseCuration].self, from: Data(contentsOf: curationURL))
+        } catch {
+            throw SeedError.decodeFailed(underlying: error)
+        }
         Self.log.info("Filtered \(allDTOs.count) → \(dtos.count) strength exercises")
 
         // Wrap the remaining steps so a mid-batch failure rolls back
@@ -233,7 +242,7 @@ public actor ExerciseLibraryImporter {
                 let joined = dto.primaryMuscles.isEmpty
                     ? ""
                     : "|" + dto.primaryMuscles.joined(separator: "|") + "|"
-                let equipmentRaw = EquipmentMapper.map(dto.equipment).rawValue
+                let equipmentRaw = curation[dto.id]?.equipment ?? EquipmentMapper.map(dto.equipment).rawValue
                 let mechanicRaw = dto.mechanic ?? Mechanic.compound.rawValue
 
                 let exercise: Exercise

@@ -1,0 +1,137 @@
+{
+  "Ab_Roller": {
+    "equipment": "bodyweight"
+  },
+  "Balance_Board": {
+    "equipment": "bodyweight"
+  },
+  "Ball_Leg_Curl": {
+    "equipment": "bodyweight"
+  },
+  "Band_Assisted_Pull-Up": {
+    "equipment": "bodyweight"
+  },
+  "Bodyweight_Mid_Row": {
+    "equipment": "bodyweight"
+  },
+  "Bodyweight_Walking_Lunge": {
+    "equipment": "bodyweight"
+  },
+  "Decline_Push-Up": {
+    "equipment": "bodyweight"
+  },
+  "Dips_-_Chest_Version": {
+    "equipment": "bodyweight"
+  },
+  "Donkey_Calf_Raises": {
+    "equipment": "bodyweight"
+  },
+  "Downward_Facing_Balance": {
+    "equipment": "bodyweight"
+  },
+  "Exercise_Ball_Crunch": {
+    "equipment": "bodyweight"
+  },
+  "Exercise_Ball_Pull-In": {
+    "equipment": "bodyweight"
+  },
+  "Floor_Glute-Ham_Raise": {
+    "equipment": "bodyweight"
+  },
+  "Gironda_Sternum_Chins": {
+    "equipment": "bodyweight"
+  },
+  "Hyperextensions_Back_Extensions": {
+    "equipment": "bodyweight"
+  },
+  "Inverted_Row": {
+    "equipment": "bodyweight"
+  },
+  "Inverted_Row_with_Straps": {
+    "equipment": "bodyweight"
+  },
+  "Kipping_Muscle_Up": {
+    "equipment": "bodyweight"
+  },
+  "Knee_Hip_Raise_On_Parallel_Bars": {
+    "equipment": "bodyweight"
+  },
+  "London_Bridges": {
+    "equipment": "bodyweight"
+  },
+  "Mixed_Grip_Chin": {
+    "equipment": "bodyweight"
+  },
+  "Muscle_Up": {
+    "equipment": "bodyweight"
+  },
+  "One_Arm_Chin-Up": {
+    "equipment": "bodyweight"
+  },
+  "Parallel_Bar_Dip": {
+    "equipment": "bodyweight"
+  },
+  "Physioball_Hip_Bridge": {
+    "equipment": "bodyweight"
+  },
+  "Platform_Hamstring_Slides": {
+    "equipment": "bodyweight"
+  },
+  "Prone_Manual_Hamstring": {
+    "equipment": "bodyweight"
+  },
+  "Push-Ups_With_Feet_On_An_Exercise_Ball": {
+    "equipment": "bodyweight"
+  },
+  "Ring_Dips": {
+    "equipment": "bodyweight"
+  },
+  "Rocky_Pull-Ups_Pulldowns": {
+    "equipment": "bodyweight"
+  },
+  "Rope_Climb": {
+    "equipment": "bodyweight"
+  },
+  "Scapular_Pull-Up": {
+    "equipment": "bodyweight"
+  },
+  "Side_To_Side_Chins": {
+    "equipment": "bodyweight"
+  },
+  "Single-Leg_High_Box_Squat": {
+    "equipment": "bodyweight"
+  },
+  "Suspended_Fallout": {
+    "equipment": "bodyweight"
+  },
+  "Suspended_Push-Up": {
+    "equipment": "bodyweight"
+  },
+  "Suspended_Reverse_Crunch": {
+    "equipment": "bodyweight"
+  },
+  "Suspended_Row": {
+    "equipment": "bodyweight"
+  },
+  "Suspended_Split_Squat": {
+    "equipment": "bodyweight"
+  },
+  "Weighted_Ball_Hyperextension": {
+    "equipment": "weighted_bodyweight"
+  },
+  "Weighted_Bench_Dip": {
+    "equipment": "weighted_bodyweight"
+  },
+  "Weighted_Crunches": {
+    "equipment": "weighted_bodyweight"
+  },
+  "Weighted_Pull_Ups": {
+    "equipment": "weighted_bodyweight"
+  },
+  "Weighted_Sit-Ups_-_With_Bands": {
+    "equipment": "weighted_bodyweight"
+  },
+  "Weighted_Squat": {
+    "equipment": "weighted_bodyweight"
+  }
+}
