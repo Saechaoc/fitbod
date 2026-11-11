@@ -16,7 +16,6 @@ Keep concise commands/results/limitations with their RM owner. Logs/screenshots 
 The next Today/volume delivery is [RM-010](#rm-010); its RM-006 and RM-003 prerequisites are complete.
 Keep exclusive simulator use during each run and reuse existing devices across lanes; see [local simulator reuse](SETUP.md#local-simulator-reuse).
 Each slice lands on `main` when its local checks pass ([RM-053](#rm-053)).
-[RM-053](#rm-053)'s CI triggers landed on 2026-11-10; its first push run on `main` and one manual run are being observed.
 Move the next bounded outcome here when its implementation starts; a phone-pending feature does not occupy an active slot.
 
 ## Next
@@ -72,6 +71,7 @@ Done covers the bounded implementation, appropriate agent-run checks and updated
 | [RM-006](#rm-006) | P1 · Done | StartSlot/shared starts, session sheet and all Today states; six slices, unit/full UI and 390pt evidence in RM-006; [plan/results](archive/features/today-session-sheet-and-state-slabs.md). | Retains the live Program template route until RM-011; broader AX/device checks at stability. |
 | [RM-043](#rm-043) | P3 · Done | Completion policy, bounded roadmap/dependency semantics, current setup/widget docs and selected plan archives. Verification in RM-043; [plan/results](archive/features/development-workflow.md). | Documentation only; no app-runtime claim. |
 | [RM-064](#rm-064) | P3 · Done | SwiftLint enforces the BRU and `CONVENTIONS.md` bans in an edit hook and both `scripts/test.sh` tiers; 163 source-reading tests deleted, unit target 1,383 → 1,220 and passing. Evidence in RM-064. | Lint only; no app behavior change. |
+| [RM-053](#rm-053) | P3 · Done | Local checks are the delivery policy for `main`; CI reports on `main` pushes and nightly, runs the UI suite only at night and in manual runs, and gates nothing. User decisions 2026-11-09 and 2026-11-10; run results in RM-053. | Workflow only; no app change. |
 | <a id="rm-055"></a>RM-055 | P1 · Historically shipped; acceptance unrecorded | Gym day author/start/log/relaunch/finish/history; transactional corrections/frozen WHY/cache invalidation. D-01/D-02 slotted-delete/rollback, D-03/N1 backup routines, D-04 edit screen delivered. Recorded persistence/edit/backup tests; T40 `32c8b65`, T41 `027536d`, rollback refresh `c3214985`. | [history design](design-map/mockups/history-editing.html), [service](../fitbod/Sessions/SessionEditService.swift), [contracts](../ARCHITECTURE.md#snapshots-and-corrections); remaining failed writes RM-002. |
 | <a id="rm-056"></a>RM-056 | P1 · Historically shipped; acceptance unrecorded | Block plan/reorder/reschedule/deload/end/archive/review/next delivered 2026-11-05; recorded `RelaunchPersistenceTests.blockRunSurvivesRelaunches` acceptance, `7933e4c3`/`6a67849c`. D-06/D-25/D-40/D-45/D-47/D-96/D-97/D-161/D-166 delivered; new notice/origin remains RM-006/RM-013/RM-016. | [relaunch test](../fitbodTests/RelaunchPersistenceTests.swift); real block stability still open. |
 | <a id="rm-057"></a>RM-057 | P1 · Done for step 1.1 | Redesign 1.1 TodayState/plan line/day refresh/oldest-ready/advisory. Removed stat strip/block band/week cells/deload banner/plan-complete note. 23 state tests/captures `a3b3ead4`–`56dc453c`; full run had 5 failures/1 expected, with fixes/remaining risks owned separately; [plan/results](archive/features/today-state-and-plan-line.md); D-159/D-341 elements replaced. R-2/R-4/R-6/R-8/R-13: today.root/Progress history entry, calendar refresh, shared BlockPosition and long-name layout shipped. | [state](../fitbod/Views/TodayState.swift), [position](../fitbod/Periodization/BlockPosition.swift); does not complete 1.3. |
@@ -828,7 +828,7 @@ All checks below, [RM-029](#rm-029) populated restore and current data risks nee
 
 ### <a id="rm-053"></a>RM-053 — Decide CI coverage for main
 
-**P3 · Active (2026-11-10): CI now reports on `main` pushes and nightly; the first push run and one manual run are next.**
+**P3 · Done (2026-11-11): CI reports on `main` pushes and nightly; the first push run passed, and the first manual run finished inside the limit.**
 Local checks stay the delivery policy, and CI gates nothing.
 **Done when:** choose/verify main/release triggers or explicitly adopt local/manual evidence as policy here.
 For the 2026-11-10 triggers: one push run on `main` is green, and one manual run with the UI suite finishes inside the 120-minute limit.
@@ -837,7 +837,7 @@ A slice lands on `main` and is pushed when the unit target and its affected UI c
 No pull request is needed per slice, and CI gates nothing.
 **CI decision (user, 2026-11-10):** CI also runs on `main` pushes and nightly, and only reports.
 Every push to `main` or `claude/**` and every pull request builds and runs the unit tests, about 13 minutes on the runner.
-The UI suite runs once, on the large iPhone, only in the nightly run (11:00 UTC) and in manual runs; it takes about 60 minutes, so those runs finish inside the 120-minute limit.
+The UI suite runs once, on the large iPhone, only in the nightly run (11:00 UTC) and in manual runs; it takes about 75 minutes, so those runs finish in about 90, inside the 120-minute limit.
 The small-phone UI step returns at release readiness ([RM-048](#rm-048)).
 SwiftLint reports Fitbod's own rules ([RM-064](#rm-064)) as annotations and never fails the job.
 **Local simulator decision (user, 2026-11-10):** Reuse existing dedicated test
@@ -855,6 +855,13 @@ Not included: porting CI to `scripts/test.sh`, sharding on the 3-core runner, an
 **Evidence:** The user chose this on 2026-11-09. The last green CI run took 37 minutes (2026-10-04), and the PR #2 run was cancelled at the workflow's 120-minute limit. The workflow file did not change for that decision, and why that run hung was not investigated.
 Workflow change (2026-11-10): only `.github/workflows/ios.yml` changed, and `scripts/ci/ios-ci.sh` did not.
 The UI step now runs only in nightly and manual runs, the small-phone step is gone, and the last step fails the run only when a step that ran did not pass.
+Push run (2026-11-10, `c72a40cd`): [run 42983128958](https://github.com/Saechaoc/fitbod/actions/runs/42983128958) passed in 14 minutes.
+SwiftLint found no violations, the unit target ran 1,220 (1,217 passed, 2 skipped, 1 expected failure, none failed), and the UI step was skipped.
+Manual run (2026-11-11, `90806f52`): [run 42986732910](https://github.com/Saechaoc/fitbod/actions/runs/42986732910) finished in 90 minutes: 3 for the build, 10 for the unit tests and 75 for the UI suite.
+It ran on iPhone 17 Pro Max/iOS 26.5 with Xcode 26.6; the unit target ran 1,224 (1,221 passed, 2 skipped, 1 expected failure, none failed), and 103 of the 104 UI tests passed.
+One UI test failed, so the run is marked failed: in `CustomExerciseEditorBRUUITests.testCardioSavesWithoutAMuscleAndKeepsItsTracking`, the name field read "T62 Arc Traine" after the test typed "T62 Arc Trainer".
+On the Mac its class ran three times on iPhone 17/iOS 26.5, and all nine test runs passed, so the test fails only on GitHub's runner; fixing that is separate work.
+At 90 minutes, the UI suite has about 30 minutes to grow before the nightly run reaches the limit.
 **Simulator policy checks (2026-11-10):** `check_map.py --self-test`,
 `check_map.py` and `git diff --check` passed; the checker reported five existing
 unreferenced screenshots. Documentation only; no app tests rerun.
