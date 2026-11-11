@@ -2,8 +2,9 @@
 //  ProgramViewFidelityTests.swift
 //  fitbodTests
 //
-//  Program's fonts and template rows. The look itself is checked on the
-//  simulator, not pinned in tests.
+//  Program's template rows. Its fonts load with every BRU face
+//  (BRUFoundationsTests); the look itself is checked on the simulator, not
+//  pinned in tests.
 //
 
 import Foundation
@@ -12,17 +13,6 @@ import Testing
 
 @Suite("ProgramView fidelity")
 struct ProgramViewFidelityTests {
-
-    /// The built app bundles Program's display and body fonts and registers
-    /// them at launch; without that, Program falls back to the system font.
-    @Test("Program's Bebas Neue and Geist fonts are bundled and registered")
-    func programFontsAreRegistered() {
-        let registered = Bundle.main.object(forInfoDictionaryKey: "UIAppFonts") as? [String] ?? []
-        for font in ["BebasNeue-Regular", "Geist-Regular"] {
-            #expect(registered.contains("\(font).ttf"), "\(font) must be listed in UIAppFonts.")
-            #expect(Bundle.main.url(forResource: font, withExtension: "ttf") != nil, "\(font).ttf must be in the app bundle.")
-        }
-    }
 
     @MainActor
     @Test("Each template row shows only its template's weeks, name and phases")

@@ -3,13 +3,8 @@
 //
 // BRU typography system. Every role is a `Font.custom(_:size:relativeTo:)`
 // value, so all text scales with Dynamic Type from the base sizes below.
-// Full token table and usage rules: docs/design-system/README.md § Typography.
-//
-// FACES (registered via UIAppFonts in Info.plist):
-//   Bebas Neue Regular      — condensed display: screen titles, hero numbers
-//   Space Grotesk Bold      — headings, exercise names, card titles
-//   JetBrains Mono Bold     — labels, chips, data values
-//   JetBrains Mono Regular  — body copy, metadata
+// Faces, roles and usage rules: docs/design-system/typography.md. The faces
+// are `BRUFace` below, loaded at launch from UIAppFonts in Info.plist.
 //
 // USAGE NOTES:
 //   - Apply .textCase(.uppercase) at the call site for label roles (the
@@ -25,8 +20,8 @@ import SwiftUI
 
 // MARK: - Faces
 
-/// The four BRU type faces, keyed by PostScript name.
-public enum BRUFace: String, Sendable {
+/// The BRU type faces, keyed by PostScript name.
+public enum BRUFace: String, Sendable, CaseIterable {
     case condensed = "BebasNeue-Regular"
     case grotesk = "SpaceGrotesk-Bold"
     case groteskSemibold = "SpaceGrotesk-SemiBold"

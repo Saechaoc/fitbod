@@ -86,13 +86,13 @@ public struct HeaderAction {
 /// - `.cancel`: Renders "Cancel" in bruInk. On tap, invokes SwiftUI's environment `dismiss`.
 /// - `.action(String, () -> Void)`: Renders the label in bruSignal with a tap closure.
 /// - `.text(String)`: Renders the label in bruInk with no tap action.
-/// - `.empty`: Renders nothing (equivalent to passing `nil`).
+///
+/// Pass `nil` for an empty slot.
 public enum HeaderSlot {
     case back
     case cancel
     case action(String, @MainActor () -> Void)
     case text(String)
-    case empty
 }
 
 // MARK: - BRUHeaderBar
@@ -393,7 +393,7 @@ private struct SlotView: View {
         case .text(let label):
             HeaderLabelText(label: label, isSignal: false)
 
-        case .empty, nil:
+        case nil:
             EmptyView()
         }
     }
