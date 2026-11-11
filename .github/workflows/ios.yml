@@ -1,10 +1,12 @@
 # Native build + simulator verification for the fitbod iOS app.
 #
-# Why this exists: the app is developed locally in Xcode, but agent sessions
-# (and reviewers) have no Mac. This workflow gives every claude/** branch a
-# real `xcodebuild` build plus unit and XCUITest runs on a small and a large
-# iPhone simulator. It is free for public repositories and can be removed or
-# disabled from the Actions tab without affecting the app.
+# It reports and gates nothing (RM-053). Every push to main or claude/**
+# and every pull request builds and runs the unit tests, about 13 minutes on
+# the runner. The UI suite runs once, on the large iPhone, only in the nightly
+# and manual runs: about 60 minutes, so those finish inside the 120-minute
+# limit. The small phone returns at release readiness (RM-048). SwiftLint
+# reports Fitbod's own rules as annotations and never fails the job. It is
+# free for public repositories and can be disabled from the Actions tab.
 #
 # Results, logs and screenshots are downloadable run artifacts, retained for
 # 14 days. Record relevant results and limitations in docs/ROADMAP.md.
@@ -13,7 +15,7 @@ name: iOS build & test
 
 on:
   push:
-    branches: ["claude/**"]
+    branches: [main, "claude/**"]
     paths-ignore:
       - "docs/**"
       - ".planning/**"
@@ -27,21 +29,23 @@ on:
       - "**/*.md"
       - ".agents/**"
       - "skills-lock.json"
+  schedule:
+    - cron: "0 11 * * *" # nightly, 3 AM Pacific standard time
   workflow_dispatch:
 
 permissions:
   contents: read
 
-# One run per branch at a time. A running job is allowed to finish (a full
-# pass with UI tests takes ~30 min and its evidence is the point); a newer
-# push waits, and any still-queued older run is replaced by it.
+# One run per branch at a time. A running job is allowed to finish (a run
+# with the UI suite takes about 75 min and its evidence is the point); a
+# newer run waits, and any still-queued older run is replaced by it.
 concurrency:
   group: ios-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
   ios:
-    name: Build, unit tests, UI journey (small + large iPhone)
+    name: Build, unit tests, nightly UI suite (large iPhone)
     runs-on: macos-26
     timeout-minutes: 120
     steps:
@@ -54,6 +58,12 @@ jobs:
           chmod +x scripts/ci/ios-ci.sh
           scripts/ci/ios-ci.sh select-xcode
           scripts/ci/ios-ci.sh inventory
+
+      - name: SwiftLint (reports only)
+        continue-on-error: true
+        run: |
+          command -v swiftlint >/dev/null || brew install swiftlint
+          swiftlint lint --reporter github-actions-logging || true
 
       - name: Create simulators
         run: scripts/ci/ios-ci.sh simulators
@@ -68,17 +78,11 @@ jobs:
         continue-on-error: true
         run: scripts/ci/ios-ci.sh unit
 
-      - name: UI journey + layout audit (large iPhone)
+      - name: UI suite (large iPhone, nightly and manual runs)
         id: ui_large
-        if: steps.build.outcome == 'success'
+        if: steps.build.outcome == 'success' && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
         continue-on-error: true
         run: scripts/ci/ios-ci.sh ui large
-
-      - name: UI journey + layout audit (small iPhone)
-        id: ui_small
-        if: steps.build.outcome == 'success'
-        continue-on-error: true
-        run: scripts/ci/ios-ci.sh ui small
 
       - name: Collect evidence
         if: always()
@@ -98,7 +102,7 @@ jobs:
         if: always()
         run: |
           if [ -f .ci/evidence/summary.md ]; then cat .ci/evidence/summary.md >> "$GITHUB_STEP_SUMMARY"; fi
-          echo "build=${{ steps.build.outcome }} unit=${{ steps.unit.outcome }} ui_large=${{ steps.ui_large.outcome }} ui_small=${{ steps.ui_small.outcome }}"
+          echo "build=${{ steps.build.outcome }} unit=${{ steps.unit.outcome }} ui_large=${{ steps.ui_large.outcome }}"
           if [ -f .ci/logs/build.log ]; then
             echo "---- compiler errors (first 150) ----"
             grep -E "error:" .ci/logs/build.log | sed "s|$GITHUB_WORKSPACE/||" | sort -u | head -150 || true
@@ -111,7 +115,7 @@ jobs:
             echo "---- test summary ----"
             grep -vE "^- (✅|⏭️)" .ci/evidence/summary.md | head -200
           fi
-          test "${{ steps.build.outcome }}" = "success"
-          test "${{ steps.unit.outcome }}" = "success"
-          test "${{ steps.ui_large.outcome }}" = "success"
-          test "${{ steps.ui_small.outcome }}" = "success"
+          # A step this run skipped, such as the UI suite on a push, does not count.
+          for outcome in "${{ steps.build.outcome }}" "${{ steps.unit.outcome }}" "${{ steps.ui_large.outcome }}"; do
+            [ "$outcome" = success ] || [ "$outcome" = skipped ] || exit 1
+          done

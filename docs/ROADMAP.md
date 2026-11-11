@@ -16,6 +16,7 @@ Keep concise commands/results/limitations with their RM owner. Logs/screenshots 
 The next Today/volume delivery is [RM-010](#rm-010); its RM-006 and RM-003 prerequisites are complete.
 Keep exclusive simulator use during each run and reuse existing devices across lanes; see [local simulator reuse](SETUP.md#local-simulator-reuse).
 Each slice lands on `main` when its local checks pass ([RM-053](#rm-053)).
+[RM-053](#rm-053)'s CI triggers landed on 2026-11-10; its first push run on `main` and one manual run are being observed.
 Move the next bounded outcome here when its implementation starts; a phone-pending feature does not occupy an active slot.
 
 ## Next
@@ -69,7 +70,6 @@ Done covers the bounded implementation, appropriate agent-run checks and updated
 | [RM-001](#rm-001) | P1 · Done | Preserve unclassified store-open failures, retry, and rollback partial moves; disk/unit/relaunch and 390pt evidence in RM-001. | No schema change; populated recovery proof remains RM-029. |
 | [RM-006](#rm-006) | P1 · Done | StartSlot/shared starts, session sheet and all Today states; six slices, unit/full UI and 390pt evidence in RM-006; [plan/results](archive/features/today-session-sheet-and-state-slabs.md). | Retains the live Program template route until RM-011; broader AX/device checks at stability. |
 | [RM-043](#rm-043) | P3 · Done | Completion policy, bounded roadmap/dependency semantics, current setup/widget docs and selected plan archives. Verification in RM-043; [plan/results](archive/features/development-workflow.md). | Documentation only; no app-runtime claim. |
-| [RM-053](#rm-053) | P3 · Done | Local checks are the delivery policy for `main`; CI stays for pull requests and manual runs. User decision 2026-11-09. | Policy only; no workflow change. |
 | [RM-064](#rm-064) | P3 · Done | SwiftLint enforces the BRU and `CONVENTIONS.md` bans in an edit hook and both `scripts/test.sh` tiers; 163 source-reading tests deleted, unit target 1,383 → 1,220 and passing. Evidence in RM-064. | Lint only; no app behavior change. |
 | <a id="rm-055"></a>RM-055 | P1 · Historically shipped; acceptance unrecorded | Gym day author/start/log/relaunch/finish/history; transactional corrections/frozen WHY/cache invalidation. D-01/D-02 slotted-delete/rollback, D-03/N1 backup routines, D-04 edit screen delivered. Recorded persistence/edit/backup tests; T40 `32c8b65`, T41 `027536d`, rollback refresh `c3214985`. | [history design](design-map/mockups/history-editing.html), [service](../fitbod/Sessions/SessionEditService.swift), [contracts](../ARCHITECTURE.md#snapshots-and-corrections); remaining failed writes RM-002. |
 | <a id="rm-056"></a>RM-056 | P1 · Historically shipped; acceptance unrecorded | Block plan/reorder/reschedule/deload/end/archive/review/next delivered 2026-11-05; recorded `RelaunchPersistenceTests.blockRunSurvivesRelaunches` acceptance, `7933e4c3`/`6a67849c`. D-06/D-25/D-40/D-45/D-47/D-96/D-97/D-161/D-166 delivered; new notice/origin remains RM-006/RM-013/RM-016. | [relaunch test](../fitbodTests/RelaunchPersistenceTests.swift); real block stability still open. |
@@ -815,12 +815,18 @@ All checks below, [RM-029](#rm-029) populated restore and current data risks nee
 
 ### <a id="rm-053"></a>RM-053 — Decide CI coverage for main
 
-**P3 · Done (2026-11-09): local checks are the policy.** CI includes claude/** pushes, PRs/manual dispatch; direct main pushes do not trigger it.
+**P3 · Active (2026-11-10): CI now reports on `main` pushes and nightly; the first push run and one manual run are next.**
+Local checks stay the delivery policy, and CI gates nothing.
 **Done when:** choose/verify main/release triggers or explicitly adopt local/manual evidence as policy here.
+For the 2026-11-10 triggers: one push run on `main` is green, and one manual run with the UI suite finishes inside the 120-minute limit.
 **Decision (user, 2026-11-09):** local evidence is the policy for `main`.
 A slice lands on `main` and is pushed when the unit target and its affected UI classes pass locally; the full tier runs once per feature, before its last slice merges ([policy](DEVELOPMENT.md#scale-effort-to-the-change)).
 No pull request is needed per slice, and CI gates nothing.
-The workflow stays as it is for pull requests and manual dispatch.
+**CI decision (user, 2026-11-10):** CI also runs on `main` pushes and nightly, and only reports.
+Every push to `main` or `claude/**` and every pull request builds and runs the unit tests, about 13 minutes on the runner.
+The UI suite runs once, on the large iPhone, only in the nightly run (11:00 UTC) and in manual runs; it takes about 60 minutes, so those runs finish inside the 120-minute limit.
+The small-phone UI step returns at release readiness ([RM-048](#rm-048)).
+SwiftLint reports Fitbod's own rules ([RM-064](#rm-064)) as annotations and never fails the job.
 **Local simulator decision (user, 2026-11-10):** Reuse existing dedicated test
 devices across worktrees and sequential unit/UI/capture runs by default.
 One or two booted devices usually suffice; use more when concurrency,
@@ -831,12 +837,15 @@ extras. Separate DerivedData remains per worktree.
 [Setup](SETUP.md#local-simulator-reuse) replaces the former per-task device
 allocation; scripts do not enforce exclusivity.
 **Scope / sequence:** Choose delivery trigger policy → implement chosen triggers → observe expected CI run. No CI performance redesign.
+Not included: porting CI to `scripts/test.sh`, sharding on the 3-core runner, and skipping nights with no commits.
 **Requires:** None; the choice is made.
-**Evidence:** The user chose this on 2026-11-09. The last green CI run took 37 minutes (2026-10-04), and the PR #2 run was cancelled at the workflow's 120-minute limit. No workflow file changed; why that run hung was not investigated.
+**Evidence:** The user chose this on 2026-11-09. The last green CI run took 37 minutes (2026-10-04), and the PR #2 run was cancelled at the workflow's 120-minute limit. The workflow file did not change for that decision, and why that run hung was not investigated.
+Workflow change (2026-11-10): only `.github/workflows/ios.yml` changed, and `scripts/ci/ios-ci.sh` did not.
+The UI step now runs only in nightly and manual runs, the small-phone step is gone, and the last step fails the run only when a step that ran did not pass.
 **Simulator policy checks (2026-11-10):** `check_map.py --self-test`,
 `check_map.py` and `git diff --check` passed; the checker reported five existing
 unreferenced screenshots. Documentation only; no app tests rerun.
-**References:** [CI](../.github/workflows), original CI flag.
+**References:** [workflow](../.github/workflows/ios.yml), [CI script](../scripts/ci/ios-ci.sh), original CI flag.
 
 ### <a id="rm-054"></a>RM-054 — Kept tests fail honestly/stay fast
 
