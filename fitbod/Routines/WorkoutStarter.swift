@@ -62,6 +62,25 @@ public enum WorkoutStarter {
         }
     }
 
+    /// Starts an empty workout: no session behind it, exercises added in
+    /// the logger. It belongs to the active block, for its volume, and
+    /// takes no slot, so the rotation stays where it is.
+    public static func startEmpty(context: ModelContext, now: Date = .now) -> WorkoutStartOutcome {
+        if let active = inProgressSession(in: context) {
+            return .alreadyInProgress(active)
+        }
+        let session = Session()
+        context.insert(session)
+        session.startedAt = now
+        session.block = activeBlock(in: context)
+        do {
+            try SessionSetActions.saveOrRollBack(context)
+        } catch {
+            return .failed("The new workout couldn't be saved. Try again.")
+        }
+        return .started(session)
+    }
+
     /// The slot a start of `template` from `routine` credits, read from the
     /// store as it is now and decided by `StartSlot`.
     private static func slot(

@@ -88,6 +88,9 @@ public struct TodayView: View {
     @State private var choosingSession = false
     /// A sheet choice runs after its dismissal.
     @State private var pendingChoice: PendingChoice? = nil
+    /// The week board's days and totals, counted when the finished workouts,
+    /// a History correction or the week change, never per render (RM-010).
+    @State private var week: TodayWeek? = nil
 
     // MARK: - Body
 
@@ -111,6 +114,13 @@ public struct TodayView: View {
                         }
                     }
 
+                    if let week {
+                        TodayWeekBoard(
+                            week: week, showsHeader: activeBlocks.isEmpty,
+                            todayNote: Self.todayNote(state), isRestDay: Self.isRestDay(state)
+                        ) { navigationPath.append(TodayRoute.volume) }
+                    }
+
                     if let advisory = currentAdvisory,
                        TodayState.showsDeloadAdvisory(state: state, phase: currentPhase) {
                         DeloadAdvisoryBanner(
@@ -121,20 +131,12 @@ public struct TodayView: View {
                     }
 
                     stateContent(state, resolution: resolution, finished: finished, readyCount: readyBlocks.count)
-
-                    // ─── DEFENSIVE BOTTOM — Phase 5 FatigueSurfaceView ──
-                    switch state {
-                    case .first:
-                        EmptyView()
-                    case .fix where activeBlocks.isEmpty:
-                        EmptyView()
-                    default:
-                        FatigueSurfaceView(
-                            isAdvisoryActive: currentAdvisory != nil,
-                            navigationPath: $navigationPath
-                        )
-                    }
                 }
+            }
+            .task(id: WeekKey(
+                finished: finished.map(\.persistentModelID), weekStart: weekStart,
+                today: calendar.startOfDay(for: now), edits: historyEdits?.version)) {
+                week = TodayWeek.make(finished: finished, weekStart: weekStart, now: now, calendar: calendar)
             }
             .background(Color.bruPaper.ignoresSafeArea())
             // Suppress default Apple navigation bar — BRUHeaderBar replaces it
@@ -159,7 +161,14 @@ public struct TodayView: View {
             }
             // Workout history from the Sessions stat cell.
             .sessionHistoryDestinations()
-            // Phase 5 plan 05 — per-muscle drill-down from heatmap + volume-bar taps.
+            // The week board opens Volume on Today's own stack (RM-010).
+            .navigationDestination(for: TodayRoute.self) { route in
+                switch route {
+                case .volume:
+                    VolumeScreen(path: $navigationPath)
+                }
+            }
+            // Phase 5 plan 05 — per-muscle drill-down from Volume's heatmap + volume-bar taps.
             .navigationDestination(for: MuscleSlugRoute.self) { route in
                 switch route {
                 case .detail(let slug):
@@ -338,7 +347,7 @@ public struct TodayView: View {
                         mode: block.schedulingMode, position: slot.position, slotCount: block.split?.slots?.count ?? 0),
                     phase: currentBlockPhase, onStart: { startWorkout(session, in: block.split) }
                 )
-                LiftListSection(routine: session, phase: currentBlockPhase) {
+                LiftListSection(routine: session, phase: currentBlockPhase, previewCount: 3) {
                     openedSession = OpenedSession(template: session, routine: block.split)
                 }
                 chooseSessionRow("Choose another session")
@@ -348,7 +357,7 @@ public struct TodayView: View {
                 routine: pick.session, label: BlackSlabCTA.heroLabel(routine: pick.slot?.split),
                 phase: nil, onStart: { startWorkout(pick.session, in: pick.slot?.split) }
             )
-            LiftListSection(routine: pick.session, phase: nil) {
+            LiftListSection(routine: pick.session, phase: nil, previewCount: 3) {
                 openedSession = OpenedSession(template: pick.session, routine: pick.slot?.split)
             }
             chooseSessionRow("Choose another session")
@@ -384,20 +393,54 @@ public struct TodayView: View {
         }
     }
 
+    /// First visit: a workout is one tap away, and planning comes second.
+    @ViewBuilder
     private var firstRoutinePrompt: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Build your first routine")
+            Text("Start lifting today")
                 .font(BRUFont.condensedHeading)
                 .textCase(.uppercase)
                 .foregroundStyle(Color.bruInk)
-            Text("A routine is your split, like Push / Pull / Legs. Each session in it lists exercises with target sets and reps.")
+            Text("Log a workout now and add exercises as you go. Plan a routine or block whenever you are ready.")
                 .font(BRUFont.bodyDefault)
                 .foregroundStyle(Color.bruMuted)
                 .fixedSize(horizontal: false, vertical: true)
-            BRUButton("+ New routine", kind: .signal, size: .lg, action: startNewRoutine)
+            BRUButton("Start workout ▸", kind: .signal, size: .lg, action: startEmptyWorkout)
+                .accessibilityIdentifier("today.startEmptyWorkout")
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(16)
+        TodayGhostRow(title: "Plan a routine or block", action: startNewRoutine)
+            .accessibilityIdentifier("today.planRoutine")
+    }
+
+    // MARK: - Week board
+
+    /// The week the board shows, from the user's week-start setting.
+    private var weekStart: Date {
+        now.mondayAtMidnightForToday(weekStartsMonday: settingsList.first?.weekStartsMonday ?? true, calendar: calendar)
+    }
+
+    static func todayNote(_ state: TodayState) -> String? {
+        switch state {
+        case .resume: "Live"
+        case .rest: "Rest"
+        default: nil
+        }
+    }
+
+    static func isRestDay(_ state: TodayState) -> Bool {
+        if case .rest = state { return true }
+        return false
+    }
+
+    /// What the week board's counts depend on.
+    private struct WeekKey: Equatable {
+        let finished: [PersistentIdentifier]
+        let weekStart: Date
+        /// Moves today's tile at a day change within the week.
+        let today: Date
+        let edits: Int?
     }
 
     // MARK: - Formatted Date (BRU header right slot)
@@ -533,6 +576,21 @@ public struct TodayView: View {
         guard let active = WorkoutStarter.inProgressSession(in: ctx) else { return }
         openedSession = nil
         navigationPath = NavigationPath([SessionRoute.logger(active)])
+    }
+
+    /// Starts a workout with nothing in it; exercises are added in the logger.
+    @MainActor
+    private func startEmptyWorkout() {
+        switch WorkoutStarter.startEmpty(context: ctx) {
+        case .started(let session):
+            navigationPath.append(SessionRoute.logger(session))
+        case .alreadyInProgress(let active):
+            navigationPath = NavigationPath([SessionRoute.logger(active)])
+        case .emptyTemplate:
+            break
+        case .failed(let message):
+            startError = message
+        }
     }
 
     /// Opens the name step on Today's own stack. The routine exists only once

@@ -64,9 +64,9 @@ public enum ProgressHomeRoute: Hashable, Sendable {
     case sessionComparison(UUID)
 }
 
-/// Progress → Volume: Today's volume surface on its own screen, so each
-/// muscle's detail is reachable from Progress as well as Today (FT-17).
-private struct VolumeScreen: View {
+/// Volume: the per-muscle surface on its own screen, opened from
+/// Progress and from Today's week board (FT-17, RM-010).
+struct VolumeScreen: View {
     @Binding var path: NavigationPath
     @Environment(\.dismiss) private var dismiss
 

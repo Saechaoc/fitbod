@@ -24,7 +24,7 @@ This is the ordered dependency-ready queue; feature definitions below retain the
 
 | Order | Ready outcome | Boundary |
 |---|---|---|
-| 1 | [RM-010](#rm-010) full volume behind a summary row | Lane A; RM-006 and RM-003 are complete. |
+| 1 | [RM-010](#rm-010) Today week board, full volume behind it | Lane A; active 2026-11-11. |
 | 2 | [RM-019](#rm-019) stalled exercises outside a workout | Independent analytics stream; [RM-020](#rm-020) past recaps follows, then broader analytics. |
 
 After RM-001, [RM-029](#rm-029) populated recovery proof takes priority over schema-changing work. Preserve the approved Today/Program order: **RM-006 → RM-010 → RM-011 → RM-012 → RM-013 → RM-014 → RM-015 → RM-016 → RM-017 → RM-018**. Successors enter this queue as preceding work lands; planning may proceed meanwhile. Authoring, catalog, logging and calculator deliveries use their actual conditional prerequisites below, not the whole redesign as a gate.
@@ -247,18 +247,17 @@ Open: the same check on the locked phone, plus adjustment, expiry and end. In da
 Within new analytics screens, the four approved must-have mockups come first: history editing and PR workout detail shipped; stalled exercises and past recaps remain.
 Unit provenance and catalog retain their existing P1 priority alongside the approved redesign sequence.
 
-### <a id="rm-010"></a>RM-010 — Redesign 1.4: full volume behind a summary row
+### <a id="rm-010"></a>RM-010 — Redesign 1.4: Today week board, full volume behind it
 
-**P1 · Planned: Today summary row.** Progress → Volume, muscle routes, neck detail, bar chevrons and map caption shipped early for FT-17/18 (`d89992fb`). Today still needs the compact row/removal of its full surface.
-**Done when:** Volume is one tap from Today/Progress, forwarding their stack paths. Today's VOLUME THIS WEEK counts finished counted workouts/their working sets, excludes open/empty workouts and refreshes at the calendar week boundary/activation/day change. Volume evaluates advice on appear; shared evaluator gates `deloadAlertEnabled` for both tabs. Test counts/calendar/alerts-off.
-Count outside view rendering, keyed by finished-workout changes and the week start, so Today does not run the full fatigue model on every render. The complete model runs when Volume opens.
-**Scope / sequence:** Shared weekly counts/evaluator gating → Today summary → remove Today full surface → week changes/routes. Existing Progress Volume stays; physical clipping is RM-045.
+**P1 · Active: Today week board.** Progress → Volume, muscle routes, neck detail, bar chevrons and map caption shipped early for FT-17/18 (`d89992fb`).
+**Decision (2026-11-11, user, Lavish review):** Today is a quick snapshot. The per-muscle MEV/MAV/MRV surface leaves Today; a week board replaces the planned VOLUME THIS WEEK row. It shows seven day tiles (each day's counted workout name and working sets; today outlined; REST on a rest day, LIVE with an open workout) and the week's totals, and opens Volume. In a block it sits under the plan line; without one it heads itself "This week · Nov 9–15". The exercise list previews three with a Show all row. First visit offers Start workout (an empty workout) first and "Plan a routine or block" second, reversing RM-006's removal of the empty start for that state only. Kept: the BRU header bar. Left out: a Recovery tab and recovery-generated workouts (no generator or exercise templates exist; a new tab needs its own roadmap decision).
+**Done when:** The board counts finished counted workouts and their `countsAsWork` sets in the user's calendar week, excludes open/empty workouts and refreshes on finished-workout changes, History corrections, activation and day change. Volume is one tap from Today and Progress on each tab's own stack. Volume evaluates advice on appear; shared evaluator gates `deloadAlertEnabled` for both tabs. Tests cover counts/calendar/alerts-off.
+**Scope / sequence:** `TodayWeek` model and board → remove Today full surface, Volume route → three-exercise preview → first-visit empty start → UI test migration and 390pt inspection. Existing Progress Volume stays; physical clipping is RM-045.
 **Requires:** Shared counted-workout rules; [RM-003](#rm-003) before extending affected volume rendering.
 **Scheduled after:** [RM-006](#rm-006).
 **Verify when:** Counts/routes/advice-off at implementation; [RM-045](#rm-045) physical reach remains separate.
-**Evidence:** No passing acceptance is recorded for the remaining scope; cited commits/tests establish the shipped baseline only.
-**References:** [Today layouts](design-map/redesign/today-layouts.md), D-131, redesign R-7/R-21; [Progress](../fitbod/Progress/ProgressHomeView.swift), [advisor](../fitbod/Fatigue/DeloadAdvisor.swift).
-**Design review (2026-11-11):** Updated [Today snapshot](../.lavish/today-snapshot/today-snapshot.html) using first party Apple Fitness, Hevy, Things and Gentler Streak references. Proposed hierarchy: workout action → weekly counts opening Volume → three-exercise preview with full-list disclosure; retains BRU and keeps muscle analysis in Volume. HTML browser checks passed at 390/1024/1440px in light/dark: four representative states, visible weekly summary, 44px controls, disclosure, destination previews and feedback (159 assertions; no browser errors). This is design evidence only; native scope/status and the acceptance checks above remain open. No iOS build/device checks for this artifact-only update.
+**Evidence (2026-11-11, uncommitted):** Unit target plus `TodayStateRoutesUITests` and `PerMuscleDetailUITests`: 1,224 tests, 1,221 passed, 0 failed, 2 skipped, 1 expected failure (`fast-20261111-093400`, iPhone 17 iOS 26.5), including `TodayWeekTests` (5) and the restored empty-start test. The other affected UI classes (MilestoneOneJourney, SessionHistoryBRU, TodayHero, BlockLifecycleEntryPoints, BlockWeekCounts, WorkoutExit) passed in `fast-20261111-092624`. 390pt light/dark captures inspected for ready, first-visit, rest, a Sunday-start week with a finished workout, and the deload notice. Open: the Show all row (no seed has more than three exercises), a phone install, and the Volume advice/alerts-off gating, which this slice does not change.
+**References:** [Today layouts](design-map/redesign/today-layouts.md), D-131, redesign R-7/R-21; [board](../fitbod/Views/TodayWeekBoard.swift), [week](../fitbod/Views/TodayWeek.swift), [Progress](../fitbod/Progress/ProgressHomeView.swift), [advisor](../fitbod/Fatigue/DeloadAdvisor.swift).
 
 ### <a id="rm-011"></a>RM-011 — Redesign 1.5: Program explains Now, Planned and Past
 

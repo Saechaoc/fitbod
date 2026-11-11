@@ -110,7 +110,8 @@ final class SessionHistoryBRUUITests: XCTestCase {
         let app = UITestNavigation.launch(
             UITestNavigation.freshStore + ["-AppleLocale", "de_DE", "-AppleLanguages", "(en)"]
         )
-        tap("+ New routine", in: app)
+        UITestNavigation.reveal(app.buttons["today.planRoutine"], in: app)
+        app.buttons["today.planRoutine"].tap()
         UITestNavigation.type("Locale routine", into: app.textFields["newRoutine.name"])
         tap("Save", in: app)
         tap("+ Add session", in: app)

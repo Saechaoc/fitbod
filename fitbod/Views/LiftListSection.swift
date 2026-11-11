@@ -23,8 +23,12 @@ public struct LiftListSection: View {
     let routine: SessionTemplate
     /// The block's current phase; a deload cuts each row's working sets.
     let phase: BlockPhase?
+    /// Rows shown before "Show all"; nil shows every row.
+    var previewCount: Int? = nil
     /// Opens the session, from the head's View ›.
     let onView: () -> Void
+
+    @State private var showsAll = false
 
     // MARK: - Computed
 
@@ -49,10 +53,17 @@ public struct LiftListSection: View {
                     .padding(.vertical, 24)
                     .padding(.horizontal, 16)
             } else {
+                let shown = showsAll ? sortedExercises.count : min(previewCount ?? .max, sortedExercises.count)
                 LazyVStack(spacing: 0) {
-                    ForEach(Array(sortedExercises.enumerated()), id: \.element.id) { offset, re in
+                    ForEach(Array(sortedExercises.prefix(shown).enumerated()), id: \.element.id) { offset, re in
                         LiftListRow(index: offset + 1, routineExercise: re, phase: phase)
                     }
+                }
+                if let previewCount, sortedExercises.count > previewCount {
+                    TodayGhostRow(title: showsAll ? "Show fewer exercises" : "Show all \(BRUCountLabel.text(sortedExercises.count, "exercise"))") {
+                        showsAll.toggle()
+                    }
+                    .accessibilityIdentifier("today.showAllExercises")
                 }
             }
         }

@@ -51,7 +51,8 @@ final class MilestoneOneJourneyUITests: XCTestCase {
         if app.keyboards.buttons["Search"].exists { app.keyboards.buttons["Search"].tap() }
         XCTAssertTrue(UITestNavigation.appears(app.buttons["Today"]))
         app.buttons["Today"].tap()
-        tap("+ New routine")
+        UITestNavigation.reveal(app.buttons["today.planRoutine"], in: app)
+        app.buttons["today.planRoutine"].tap()
         // The name step: SAVE stays off until the routine has a name, and
         // replaces the step with the routine's editor.
         let routineName = field("Routine name")

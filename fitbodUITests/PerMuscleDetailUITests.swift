@@ -2,7 +2,7 @@
 //  PerMuscleDetailUITests.swift
 //  fitbodUITests
 //
-//  Reaches the detail view via a volume-bar tap (more stable than
+//  Reaches the detail view from Today's week board, then a volume-bar tap (more stable than
 //  per-region heatmap path hit-testing across simulator runs).
 //
 //  T109: every test launches on a reset store with the demo Push A, so
@@ -50,7 +50,7 @@ final class PerMuscleDetailUITests: XCTestCase {
 }
 
 extension UITestNavigation {
-    /// `muscle`'s volume bar on Today, a button that reads "Chest: 6 sets
+    /// `muscle`'s volume bar on Volume, a button that reads "Chest: 6 sets
     /// this week, …", or "1 set" for one.
     static func volumeBar(_ muscle: String, in app: XCUIApplication) -> XCUIElement {
         app.buttons.matching(NSPredicate(
@@ -58,10 +58,14 @@ extension UITestNavigation {
         )).firstMatch
     }
 
-    /// Taps `muscle`'s volume bar on Today and waits for its screen.
+    /// Opens Volume from Today's week board, taps `muscle`'s volume bar and
+    /// waits for its screen.
     static func openMuscle(_ muscle: String, in app: XCUIApplication, file: StaticString = #filePath, line: UInt = #line) {
+        let board = app.buttons["today.weekBoard"]
+        XCTAssertTrue(appears(board), "Today must show the week board", file: file, line: line)
+        board.tap()
         let bar = volumeBar(muscle, in: app)
-        XCTAssertTrue(bar.exists || bar.waitForExistence(timeout: 10), "Today must show \(muscle)'s volume bar",
+        XCTAssertTrue(bar.exists || bar.waitForExistence(timeout: 10), "Volume must show \(muscle)'s volume bar",
                       file: file, line: line)
         reveal(bar, in: app)
         bar.tap()

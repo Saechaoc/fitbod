@@ -47,10 +47,10 @@ extension UITestNavigation {
 
     static func openEmptySessionBuilder() -> XCUIApplication {
         let app = launch(freshStore)
-        let newRoutine = app.buttons["+ New routine"]
+        let newRoutine = app.buttons["today.planRoutine"]
         reveal(newRoutine, in: app)
         newRoutine.tap()
-        // + New routine opens the name step; SAVE opens the routine.
+        // Plan a routine or block opens the name step; SAVE opens the routine.
         type("Push Pull Legs", into: app.textFields["newRoutine.name"])
         hittable(app.buttons, "Save", exactLabel: true).tap()
         let addSession = app.buttons["+ Add session"]

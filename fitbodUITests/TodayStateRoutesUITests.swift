@@ -8,7 +8,7 @@ final class TodayStateRoutesUITests: XCTestCase {
     @MainActor
     func testEmptyRoutineRepairReturnsToTheSavedRoutine() throws {
         let app = UITestNavigation.launch(UITestNavigation.freshStore)
-        UITestNavigation.hittable(app.buttons, "+ New routine").tap()
+        UITestNavigation.hittable(app.buttons, "Plan a routine or block").tap()
         UITestNavigation.type("First split", into: app.textFields["newRoutine.name"])
         UITestNavigation.hittable(app.buttons, "Save").tap()
         UITestNavigation.hittable(app.buttons, "Back").tap()
