@@ -216,7 +216,7 @@ public struct SessionDetailView: View {
                             .font(BRUFont.bodyEmphasis)
                             .foregroundStyle(Color.bruInk)
                             .fixedSize(horizontal: false, vertical: true)
-                        Text(SessionHistoryFormat.setsLine(count: line.workingSets, volume: line.volume, unit: unit))
+                        Text(setsLine(line, unit: unit))
                             .font(BRUFont.labelSmall)
                             .tracking(1.2)
                             .textCase(.uppercase)
@@ -315,6 +315,12 @@ public struct SessionDetailView: View {
 
     private func volumeLabel(_ volume: Double) -> String {
         SessionHistoryFormat.roundedVolume(volume)
+    }
+
+    /// "3 sets · 4,050 lb", then the exercise's time when it has one.
+    private func setsLine(_ line: SessionSummary.ExerciseLine, unit: WeightUnit) -> String {
+        let sets = SessionHistoryFormat.setsLine(count: line.workingSets, volume: line.volume, unit: unit)
+        return line.exerciseSeconds.map { sets + " · " + SetText.duration($0) } ?? sets
     }
 
     private func setLabel(number: Int, set: SessionSummary.LoggedSet, unit: WeightUnit) -> String {

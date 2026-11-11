@@ -36,11 +36,17 @@ public struct SetRow: View {
     public let onUncomplete: () -> Void
     /// A weight or reps field finished editing: persist now.
     public let onEditCommitted: () -> Void
+    /// The set its exercise does next, once the exercise is under way: it
+    /// offers START, so the lifter can mark when the set began (RM-062).
+    public let startsNext: Bool
 
     @State private var repsText: String = ""
     /// A timed set's time as typed, such as "1:30", and its distance or level.
     @State private var timeText = ""
     @State private var secondText = ""
+    /// A load set's own time while it is being corrected, as typed.
+    @State private var setTimeText = ""
+    @State private var editingSetTime = false
     @State private var presentingSetNote: Bool = false
     @Binding private var expandedEffortSetID: UUID?
     /// While the weight field has focus, the weight it holds; the row
@@ -50,7 +56,7 @@ public struct SetRow: View {
     @FocusState private var repsFocused: Bool
     @FocusState private var timedFocus: TimedField?
 
-    private enum TimedField { case time, second }
+    private enum TimedField { case time, second, setTime }
 
     @Environment(\.weightUnit) private var defaultUnit
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
@@ -77,7 +83,8 @@ public struct SetRow: View {
         onCommit: @escaping () -> Void,
         onTapEmptyCell: @escaping () -> Void,
         onUncomplete: @escaping () -> Void = {},
-        onEditCommitted: @escaping () -> Void = {}
+        onEditCommitted: @escaping () -> Void = {},
+        startsNext: Bool = false
     ) {
         self.entry = entry
         self.sessionExercise = sessionExercise
@@ -89,6 +96,7 @@ public struct SetRow: View {
         self.onTapEmptyCell = onTapEmptyCell
         self.onUncomplete = onUncomplete
         self.onEditCommitted = onEditCommitted
+        self.startsNext = startsNext
     }
 
     public var body: some View {
@@ -138,6 +146,14 @@ public struct SetRow: View {
                 .accessibilityIdentifier("set.complete.\(identifierSuffix)")
             }
 
+            // A timed set's time is its main field; a load set's goes here,
+            // under the last-time column.
+            if showsSetTimeLine {
+                setTimeLine.padding(
+                    .leading,
+                    dynamicTypeSize.isAccessibilitySize ? 0 : WorkoutSetColumns.number + WorkoutSetColumns.spacing
+                )
+            }
             if expandedEffortSetID == entry.id { effortPicker }
         }
         .padding(.vertical, 4)
@@ -177,9 +193,105 @@ public struct SetRow: View {
         // ("90" typed reads "1:30") and persists now.
         .onChange(of: timedFocus) { previous, _ in
             guard previous != nil else { return }
+            if previous == .setTime { commitSetTime() }
             showStoredTimedValues()
             onEditCommitted()
         }
+    }
+
+    // MARK: - Set time
+
+    /// A load set's time on a line of its own (RM-062): a set with a time
+    /// shows it, and a tap corrects it; the set done next offers START, and
+    /// then shows its time running.
+    @ViewBuilder
+    private var setTimeLine: some View {
+        if editingSetTime {
+            // Shaped like the chip it replaces, so the row keeps its height.
+            HStack(spacing: 6) {
+                Text("Time")
+                    .font(BRUFont.labelSmall)
+                    .tracking(1.2)
+                    .textCase(.uppercase)
+                    .foregroundStyle(Color.bruMuted)
+                    .accessibilityHidden(true)
+                TextField("Set time", text: $setTimeText, prompt: Text(storedSetTime).foregroundStyle(Color.bruMuted))
+                    .font(BRUFont.labelSmall)
+                    .monospacedDigit()
+                    .foregroundStyle(Color.bruInk)
+                    .keyboardType(.numberPad)
+                    .focused($timedFocus, equals: .setTime)
+                    .selectsAllOnFocus(timedFocus == .setTime)
+                    .frame(width: 48, alignment: .leading)
+                    .onAppear { timedFocus = .setTime }
+                    .onChange(of: setTimeText) { _, text in
+                        let entered = SetText.timeEntry(text)
+                        if entered != text { setTimeText = entered }
+                    }
+                    .accessibilityLabel("Time, set \(displayNumber)")
+                    .accessibilityIdentifier("set.durationField.\(identifierSuffix)")
+            }
+            .padding(.horizontal, 6)
+            .padding(.vertical, 3)
+            .overlay(Rectangle().stroke(Color.bruInk, lineWidth: 1.5))
+            .bruHitArea()
+        } else if let seconds = entry.durationSeconds {
+            Button {
+                setTimeText = ""
+                editingSetTime = true
+            } label: {
+                BRUChip("Time \(SetText.duration(seconds))", color: entry.isComplete ? Color.bruSignal : nil)
+            }
+            .buttonStyle(.plain)
+            .bruHitArea()
+            .accessibilityLabel("Time, set \(displayNumber)")
+            .accessibilityValue(SetText.duration(seconds))
+            .accessibilityHint("Double tap to correct it")
+            .accessibilityIdentifier("set.duration.\(identifierSuffix)")
+        } else if startsNext && !entry.isComplete {
+            Button(action: startSet) {
+                if let startedAt = entry.startedAt {
+                    TimelineView(.periodic(from: startedAt, by: 1)) { context in
+                        BRUChip("Set \(SetText.duration(max(0, Int(context.date.timeIntervalSince(startedAt)))))", fill: true)
+                    }
+                } else {
+                    BRUChip("Start")
+                }
+            }
+            .buttonStyle(.plain)
+            .bruHitArea()
+            .accessibilityLabel(entry.startedAt == nil ? "Start set \(displayNumber)" : "Set \(displayNumber) started")
+            .accessibilityHint(entry.startedAt == nil
+                ? "Marks when this set began, for its time"
+                : "Double tap to start it again from now")
+            .accessibilityIdentifier("set.start.\(identifierSuffix)")
+        }
+    }
+
+    private var showsSetTimeLine: Bool {
+        !tracking.isTimed && (editingSetTime || entry.durationSeconds != nil || startsNext && !entry.isComplete)
+    }
+
+    private var storedSetTime: String {
+        entry.durationSeconds.map(SetText.duration) ?? "—"
+    }
+
+    /// The set begins now: the rest before it is over, and Done reads this
+    /// start before the rest's.
+    private func startSet() {
+        onTapEmptyCell()
+        entry.startedAt = .now
+        onEditCommitted()
+    }
+
+    /// A corrected time moves the set's start, so its exercise time follows.
+    /// An empty or unreadable entry keeps the stored time.
+    private func commitSetTime() {
+        editingSetTime = false
+        guard let seconds = SetText.seconds(fromTyped: setTimeText),
+              seconds < WorkoutCorrectionInput.durationLimit else { return }
+        entry.durationSeconds = seconds
+        entry.startedAt = entry.completedAt.addingTimeInterval(-Double(seconds))
     }
 
     // MARK: - Fields

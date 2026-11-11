@@ -173,6 +173,15 @@ A stored set is read by its own values, never by what its exercise tracks now: z
 A row that curation later retags keeps its history exactly as logged.
 An exercise history made of timed sets alone shows the longest time in place of tonnage and leaves out the e1RM and the weight and reps footer.
 
+A set's start and duration are written at Done (RM-062).
+The rest timer keeps the rest it last ended, and `RestTimerEngine.setStart(doneAt:)` starts the set at the earlier of that rest's deadline and the moment it was stopped, or of the deadline and Done while the rest still runs.
+A START tap on the set's own row wins over the rest.
+`SessionSetActions.complete` stores the start and duration in the same save, only for a set with no time of its own, and only when the set lasted from one second to an hour; otherwise both stay unknown.
+Known limit: a set lifted after resting past the timer, including an exercise's first set after the walk to it, gets a time that includes the extra rest; tapping its time corrects it.
+A typed time and a re-checked set keep theirs, and a swap clears only a pending set's START.
+A load set with a duration is still a rep set, because `SetEntry.isTimed` needs zero reps.
+An exercise's time runs from its first working set's start, or that set's Done when its start is unknown, to its last Done (`SessionSetActions.exerciseSeconds`); the logger's card and History show it.
+
 SetEntry.countsAsWork means complete, neither warmup flag nor warmup type.
 Drop/failure/rest-pause count.
 `SetEntry.hasResult` means reps or a time; the workout summary, Last time and carry-forward count those sets.

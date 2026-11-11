@@ -61,11 +61,18 @@ public enum SessionSetActions {
     }
 
     /// Save entered values and any accepted offers together as one logged set.
+    ///
+    /// `startedAt` is when the set began, when the rest before it says so
+    /// (`RestTimerEngine.setStart(doneAt:)`). A start the set already has,
+    /// from its START chip, wins. A set with no time of its own gets its
+    /// start and duration from it; a typed time and a re-checked set keep
+    /// theirs (RM-062).
     @MainActor
     @discardableResult
     public static func complete(
         _ entry: SetEntry,
         at date: Date = .now,
+        startedAt: Date? = nil,
         suggestion: WorkoutSetSuggestion = .init(),
         context: ModelContext,
         save: (ModelContext) throws -> Void = { try $0.save() }
@@ -74,6 +81,7 @@ public enum SessionSetActions {
         let oldWeight = entry.weight
         let oldReps = entry.reps
         let oldDate = entry.completedAt
+        let oldStart = entry.startedAt
         let oldDuration = entry.durationSeconds
         let oldDistance = entry.distanceMeters
         let oldLevel = entry.level
@@ -82,6 +90,13 @@ public enum SessionSetActions {
         entry.durationSeconds = suggestion.durationSeconds(for: entry)
         entry.distanceMeters = suggestion.distanceMeters(for: entry)
         entry.level = suggestion.level(for: entry)
+        if entry.durationSeconds == nil {
+            let start = entry.startedAt ?? startedAt
+            let seconds = start.flatMap { setSeconds(from: $0, to: date) }
+            // Without a start Done can trust, the time stays unknown.
+            entry.startedAt = seconds == nil ? nil : start
+            entry.durationSeconds = seconds
+        }
         entry.isComplete = true
         entry.completedAt = date
         do {
@@ -92,11 +107,32 @@ public enum SessionSetActions {
             entry.completedAt = oldDate
             entry.weight = oldWeight
             entry.reps = oldReps
+            entry.startedAt = oldStart
             entry.durationSeconds = oldDuration
             entry.distanceMeters = oldDistance
             entry.level = oldLevel
             throw error
         }
+    }
+
+    /// The seconds from a set's start to its Done when they can be the set's
+    /// length: at least a second, and at most an hour. A start further back
+    /// is a rest that was never ended, not this set.
+    static func setSeconds(from start: Date, to done: Date) -> Int? {
+        let seconds = Int(done.timeIntervalSince(start).rounded())
+        return (1...3600).contains(seconds) ? seconds : nil
+    }
+
+    /// An exercise's time (RM-062): from its first working set's start to its
+    /// last Done, rest included. A set whose duration is unknown starts at its
+    /// Done. Nil until the span reaches a second.
+    static func exerciseSeconds(_ sets: [SetEntry]) -> Int? {
+        let done = sets.filter(\.countsAsWork)
+        guard let end = done.map(\.completedAt).max(),
+              let start = done.map({ $0.completedAt.addingTimeInterval(-Double($0.durationSeconds ?? 0)) }).min()
+        else { return nil }
+        let seconds = Int(end.timeIntervalSince(start).rounded())
+        return seconds > 0 ? seconds : nil
     }
 
     /// Undo a completion. Weight, reps and RPE are kept.

@@ -41,6 +41,8 @@ public struct SessionSummary: Sendable, Equatable {
         public let prKinds: [PRKind]
         /// Every counted working set, in logged order.
         public let sets: [LoggedSet]
+        /// From the first set's start to the last Done (RM-062), when known.
+        public var exerciseSeconds: Int? = nil
     }
 
     public let durationSeconds: Int
@@ -93,7 +95,8 @@ public struct SessionSummary: Sendable, Equatable {
                         weight: $0.weight, reps: $0.reps, rpe: $0.rpe, isBest: $0.id == bestEntry?.id,
                         durationSeconds: $0.durationSeconds, distanceMeters: $0.distanceMeters, level: $0.level
                     )
-                }
+                },
+                exerciseSeconds: SessionSetActions.exerciseSeconds(working)
             ))
         }
 

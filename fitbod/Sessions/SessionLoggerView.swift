@@ -333,8 +333,11 @@ public struct SessionLoggerView: View {
         dismissKeyboard()
         // Flips isComplete, stamps completedAt and saves BEFORE the rest
         // timer starts (RESEARCH §6 Pitfall 2).
+        let doneAt = Date.now
         do {
-            guard try SessionSetActions.complete(entry, at: .now, suggestion: suggestion, context: ctx) else { return }
+            guard try SessionSetActions.complete(
+                entry, at: doneAt, startedAt: engine.setStart(doneAt: doneAt), suggestion: suggestion, context: ctx
+            ) else { return }
         } catch {
             saveFailure = "The set couldn't be saved. Your entries are still here. Try again."
             return

@@ -292,6 +292,7 @@ public struct SwapExerciseSheet: View {
             set.reps = 0
             set.rpe = nil
             set.wasManualOverride = false
+            set.startedAt = nil
             set.durationSeconds = nil
             set.distanceMeters = nil
             set.level = nil

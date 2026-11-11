@@ -192,6 +192,20 @@ public final class RestTimerEngine {
     /// skipped or started the next set. The overlay shows "Rest complete".
     public var isFinished: Bool { isRunning && remaining <= 0 }
 
+    /// The rest that ended last: when it was due to end and when it was
+    /// stopped. Kept until the next rest starts, for the set after it.
+    private var endedRest: (deadline: Date, stoppedAt: Date)?
+
+    /// When the set completed at `doneAt` began, by the rest before it
+    /// (RM-062): the earlier of the rest's deadline and the moment it was
+    /// stopped, or Done itself while it still runs. A skip during the rest
+    /// starts the set at the skip; a tap after a set lifted in the overrun
+    /// does not move its start past the deadline. Nil with no rest before it.
+    public func setStart(doneAt: Date) -> Date? {
+        if let endsAt { return min(endsAt, doneAt) }
+        return endedRest.map { min($0.deadline, $0.stoppedAt) }
+    }
+
     // MARK: - Persistence
 
     /// Attach the engine to a session and rebuild any persisted rest
@@ -270,6 +284,7 @@ public final class RestTimerEngine {
     /// name, fresh notification scheduling). The `restartReplacesPriorState`
     /// test pins this.
     public func start(seconds: Int, exerciseName: String) {
+        endedRest = nil
         self.startedAt = now()
         self.targetSeconds = max(1, seconds)
         self.currentExerciseName = exerciseName
@@ -349,6 +364,7 @@ public final class RestTimerEngine {
     /// Idempotent — safe to call when not running.
     public func stop() {
         if let sessionID { store.clear(sessionID: sessionID) }
+        if let endsAt { endedRest = (endsAt, now()) }
         startedAt = nil
         targetSeconds = 0
         currentExerciseName = ""

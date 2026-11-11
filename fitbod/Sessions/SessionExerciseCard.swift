@@ -139,11 +139,16 @@ public struct SessionExerciseCard: View {
                                     .foregroundStyle(Color.bruInk)
                                     .fixedSize(horizontal: false, vertical: true)
 
-                                Text(equipmentSubline)
-                                    .font(BRUFont.labelSmall)
-                                    .tracking(1.2)
-                                    .textCase(.uppercase)
-                                    .foregroundStyle(Color.bruMuted)
+                                // The exercise's time joins the line when it
+                                // fits, else it takes a line of its own.
+                                let time = exerciseTime
+                                ViewThatFits(in: .horizontal) {
+                                    subline(time.map { equipmentSubline + " · " + $0 } ?? equipmentSubline)
+                                    VStack(alignment: .leading, spacing: 4) {
+                                        subline(equipmentSubline)
+                                        if let time { subline("Time " + time) }
+                                    }
+                                }
                             }
 
                             Spacer(minLength: 0)
@@ -243,7 +248,8 @@ public struct SessionExerciseCard: View {
                                 },
                                 onTapEmptyCell: onTapEmptyCell,
                                 onUncomplete: { onUncompleteSet(set) },
-                                onEditCommitted: onEditCommitted
+                                onEditCommitted: onEditCommitted,
+                                startsNext: set.id == nextSetID
                             )
                             // A swap/Undo changes the inputs behind these local
                             // text fields, not the persisted set's identity.
@@ -631,6 +637,27 @@ public struct SessionExerciseCard: View {
         let working = (sessionExercise.sets ?? []).filter { !$0.isWarmup }
         let done = working.filter(\.isComplete).count
         return "\(equip) · \(done)/\(BRUCountLabel.text(working.count, "set")) done"
+    }
+
+    /// The exercise's time so far (RM-062), once it has one.
+    private var exerciseTime: String? {
+        SessionSetActions.exerciseSeconds(sortedSets).map(SetText.duration)
+    }
+
+    private func subline(_ text: String) -> some View {
+        Text(text)
+            .font(BRUFont.labelSmall)
+            .tracking(1.2)
+            .textCase(.uppercase)
+            .foregroundStyle(Color.bruMuted)
+    }
+
+    /// The set the lifter does next, once this exercise is under way: its
+    /// first working set still to do, after one is done (RM-062).
+    private var nextSetID: UUID? {
+        let sets = sortedSets
+        guard sets.contains(where: \.isComplete) else { return nil }
+        return sets.first { !$0.isComplete }?.id
     }
 
     /// The heaviest logged working set's weight, for Why this weight? to
