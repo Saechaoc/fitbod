@@ -42,6 +42,7 @@ Only the named observation/decision is unavailable; this section does not pause 
 | [RM-036](#rm-036)–[RM-041](#rm-041) | First-log PRs, rep-miss threshold, aggregate labels, adherence, applied per-set targets and stack attribution | Only behavior each decision changes; existing semantics remain. |
 | [RM-021](#rm-021) | Provenance/legacy-data design | Stored unit changes. |
 | [RM-063](#rm-063) | The first MetricKit report on the phone, shared from Settings | Closing RM-063; it would also show whether [RM-024](#rm-024)'s phone exits are memory kills. |
+| [RM-053](#rm-053) | One nightly run on `main` that starts on its own, due 2026-11-12 at 11:17 UTC | Closing RM-053. |
 | [RM-022](#rm-022), [RM-062](#rm-062) | Seed 7 and grouped-list checks on the phone (logged names in History, Low Cable Triceps Extension listed, "side lateral raise" found, Bench Press folded into one line); the Arsenal Strength machine names; whether a treadmill records speed and incline | The coverage fill and treadmill tracking; the families, grouped list and editor pickers are done. |
 
 Gym ergonomics/stability and [RM-047](#rm-047) physical timer/VoiceOver checks return at workflow stability/release triggers. Request user involvement only for a specific unavailable observation or product choice, with build/reproduction details; routine checks stay with the agent.
@@ -71,7 +72,6 @@ Done covers the bounded implementation, appropriate agent-run checks and updated
 | [RM-006](#rm-006) | P1 · Done | StartSlot/shared starts, session sheet and all Today states; six slices, unit/full UI and 390pt evidence in RM-006; [plan/results](archive/features/today-session-sheet-and-state-slabs.md). | Retains the live Program template route until RM-011; broader AX/device checks at stability. |
 | [RM-043](#rm-043) | P3 · Done | Completion policy, bounded roadmap/dependency semantics, current setup/widget docs and selected plan archives. Verification in RM-043; [plan/results](archive/features/development-workflow.md). | Documentation only; no app-runtime claim. |
 | [RM-064](#rm-064) | P3 · Done | SwiftLint enforces the BRU and `CONVENTIONS.md` bans in an edit hook and both `scripts/test.sh` tiers; 163 source-reading tests deleted, unit target 1,383 → 1,220 and passing. Evidence in RM-064. | Lint only; no app behavior change. |
-| [RM-053](#rm-053) | P3 · Done | Local checks are the delivery policy for `main`; CI reports on `main` pushes and nightly, runs the UI suite only at night and in manual runs, and gates nothing. User decisions 2026-11-09 and 2026-11-10; run results in RM-053. | Workflow only; no app change. |
 | <a id="rm-055"></a>RM-055 | P1 · Historically shipped; acceptance unrecorded | Gym day author/start/log/relaunch/finish/history; transactional corrections/frozen WHY/cache invalidation. D-01/D-02 slotted-delete/rollback, D-03/N1 backup routines, D-04 edit screen delivered. Recorded persistence/edit/backup tests; T40 `32c8b65`, T41 `027536d`, rollback refresh `c3214985`. | [history design](design-map/mockups/history-editing.html), [service](../fitbod/Sessions/SessionEditService.swift), [contracts](../ARCHITECTURE.md#snapshots-and-corrections); remaining failed writes RM-002. |
 | <a id="rm-056"></a>RM-056 | P1 · Historically shipped; acceptance unrecorded | Block plan/reorder/reschedule/deload/end/archive/review/next delivered 2026-11-05; recorded `RelaunchPersistenceTests.blockRunSurvivesRelaunches` acceptance, `7933e4c3`/`6a67849c`. D-06/D-25/D-40/D-45/D-47/D-96/D-97/D-161/D-166 delivered; new notice/origin remains RM-006/RM-013/RM-016. | [relaunch test](../fitbodTests/RelaunchPersistenceTests.swift); real block stability still open. |
 | <a id="rm-057"></a>RM-057 | P1 · Done for step 1.1 | Redesign 1.1 TodayState/plan line/day refresh/oldest-ready/advisory. Removed stat strip/block band/week cells/deload banner/plan-complete note. 23 state tests/captures `a3b3ead4`–`56dc453c`; full run had 5 failures/1 expected, with fixes/remaining risks owned separately; [plan/results](archive/features/today-state-and-plan-line.md); D-159/D-341 elements replaced. R-2/R-4/R-6/R-8/R-13: today.root/Progress history entry, calendar refresh, shared BlockPosition and long-name layout shipped. | [state](../fitbod/Views/TodayState.swift), [position](../fitbod/Periodization/BlockPosition.swift); does not complete 1.3. |
@@ -828,16 +828,16 @@ All checks below, [RM-029](#rm-029) populated restore and current data risks nee
 
 ### <a id="rm-053"></a>RM-053 — Decide CI coverage for main
 
-**P3 · Done (2026-11-11): CI reports on `main` pushes and nightly; the first push run passed, and the first manual run finished inside the limit.**
+**P3 · Implemented; verification pending (2026-11-11): the push and manual runs passed their checks, but the first nightly run never started; one must start on its own.**
 Local checks stay the delivery policy, and CI gates nothing.
 **Done when:** choose/verify main/release triggers or explicitly adopt local/manual evidence as policy here.
-For the 2026-11-10 triggers: one push run on `main` is green, and one manual run with the UI suite finishes inside the 120-minute limit.
+For the 2026-11-10 triggers: one push run on `main` is green, one manual run with the UI suite finishes inside the 120-minute limit, and one nightly run starts on its own and finishes inside it.
 **Decision (user, 2026-11-09):** local evidence is the policy for `main`.
 A slice lands on `main` and is pushed when the unit target and its affected UI classes pass locally; the full tier runs once per feature, before its last slice merges ([policy](DEVELOPMENT.md#scale-effort-to-the-change)).
 No pull request is needed per slice, and CI gates nothing.
 **CI decision (user, 2026-11-10):** CI also runs on `main` pushes and nightly, and only reports.
 Every push to `main` or `claude/**` and every pull request builds and runs the unit tests, about 13 minutes on the runner.
-The UI suite runs once, on the large iPhone, only in the nightly run (11:00 UTC) and in manual runs; it takes about 75 minutes, so those runs finish in about 90, inside the 120-minute limit.
+The UI suite runs once, on the large iPhone, only in the nightly run (11:17 UTC) and in manual runs; it takes about 75 minutes, so those runs finish in about 90, inside the 120-minute limit.
 The small-phone UI step returns at release readiness ([RM-048](#rm-048)).
 SwiftLint reports Fitbod's own rules ([RM-064](#rm-064)) as annotations and never fails the job.
 **Local simulator decision (user, 2026-11-10):** Reuse existing dedicated test
@@ -852,6 +852,7 @@ allocation; scripts do not enforce exclusivity.
 **Scope / sequence:** Choose delivery trigger policy → implement chosen triggers → observe expected CI run. No CI performance redesign.
 Not included: porting CI to `scripts/test.sh`, sharding on the 3-core runner, and skipping nights with no commits.
 **Requires:** None; the choice is made.
+**Verify when:** The nightly run due on 2026-11-12 at 11:17 UTC; it must start on its own and finish inside the limit.
 **Evidence:** The user chose this on 2026-11-09. The last green CI run took 37 minutes (2026-10-04), and the PR #2 run was cancelled at the workflow's 120-minute limit. The workflow file did not change for that decision, and why that run hung was not investigated.
 Workflow change (2026-11-10): only `.github/workflows/ios.yml` changed, and `scripts/ci/ios-ci.sh` did not.
 The UI step now runs only in nightly and manual runs, the small-phone step is gone, and the last step fails the run only when a step that ran did not pass.
@@ -860,8 +861,11 @@ SwiftLint found no violations, the unit target ran 1,220 (1,217 passed, 2 skippe
 Manual run (2026-11-11, `90806f52`): [run 42986732910](https://github.com/Saechaoc/fitbod/actions/runs/42986732910) finished in 90 minutes: 3 for the build, 10 for the unit tests and 75 for the UI suite.
 It ran on iPhone 17 Pro Max/iOS 26.5 with Xcode 26.6; the unit target ran 1,224 (1,221 passed, 2 skipped, 1 expected failure, none failed), and 103 of the 104 UI tests passed.
 One UI test failed, so the run is marked failed: in `CustomExerciseEditorBRUUITests.testCardioSavesWithoutAMuscleAndKeepsItsTracking`, the name field read "T62 Arc Traine" after the test typed "T62 Arc Trainer".
-On the Mac its class ran three times on iPhone 17/iOS 26.5, and all nine test runs passed, so the test fails only on GitHub's runner; fixing that is separate work.
+On the Mac its class ran three times on iPhone 17/iOS 26.5, and all nine test runs passed, so the test fails only on GitHub's runner; the helper change and its runner results are in [RM-054](#rm-054).
 At 90 minutes, the UI suite has about 30 minutes to grow before the nightly run reaches the limit.
+Nightly run (2026-11-11): the first one, due at 11:00 UTC, never started, though the workflow was active on the default branch.
+GitHub can drop scheduled runs at the top of an hour, so the cron moved to 11:17 UTC.
+The CI summary now names the small phone only when its UI suite ran; before, it named a phone no step used.
 **Simulator policy checks (2026-11-10):** `check_map.py --self-test`,
 `check_map.py` and `git diff --check` passed; the checker reported five existing
 unreferenced screenshots. Documentation only; no app tests rerun.
@@ -876,6 +880,11 @@ T110-ext recorded an AX3 editor hang on the small iOS 26.5 phone: scroll EDIT PR
 **Requires:** Kept-test/helper reproduction or iteration-blocking slowdown.
 **Verify when:** On retained-test failures, necessary helper changes or iteration-blocking slowdowns.
 **Evidence:** No passing acceptance is recorded for remaining scope; historical references do not close it.
+Typing helper (2026-11-11): in manual CI [run 42986732910](https://github.com/Saechaoc/fitbod/actions/runs/42986732910), `CustomExerciseEditorBRUUITests.testCardioSavesWithoutAMuscleAndKeepsItsTracking` typed "T62 Arc Trainer" and return in one go, and the field held "T62 Arc Traine".
+It did not fail that way again in 55 runs on the Mac, including with the keyboard daemon or the whole simulator slowed, or in 30 runs on GitHub's runner ([run 43047416342](https://github.com/Saechaoc/fitbod/actions/runs/43047416342)).
+`UITestNavigation.type` now presses return only once the field shows the whole text, which removes the race between the last letter and return; whether that race caused the failure is unproven.
+With the change, the 16 UI classes that type through the helper passed on the Mac, 48 of 48, and the test passed 30 of 30 runs on the runner ([run 43047179496](https://github.com/Saechaoc/fitbod/actions/runs/43047179496)).
+Open, runner only: in one of the 30 runs with the old helper, the same test failed after a relaunch, when the Library tab button left the accessibility tree just after `UITestNavigation.selectTab` tapped it; XCUITest's check for interrupting alerts had taken 10 seconds before the tap.
 **References:** F17/F20/F22/F35/F42/F82/F86/F135/F150/F164/F180/F202/F208/F218/F239/F241/F263/F271/F299/F349/F374–379/F381/F386/F388; [guide](test-performance-guide.md), [helpers](../fitbodUITests/UITestNavigation.swift)/[logger helpers](../fitbodUITests/WorkoutUITestNavigation.swift).
 
 ### <a id="rm-063"></a>RM-063 - MetricKit reports shared from Settings
@@ -920,4 +929,9 @@ The unit target went from 1,383 tests to 1,220, a drop of 163: the 112 tests in 
 It passed on iPhone 17/iOS 26.5: 1,217 passed, 2 skipped, 1 expected failure, none failed.
 Four route tests now run under `MuscleSlugRoute` and the font license check under `Font licenses`; the Program font test now reads the app bundle, not the source.
 Kept on purpose: tests that run app code, read fixtures or guard stored data, and the two rule checks that parse string literals, `UICopyRulesTests` and `ExerciseDisplayNameSourceTests`.
+Review fixes (2026-11-11): one test now checks that every `BRUFace` loads at launch under its PostScript name, and no test registers a font by hand, which had hidden a missing `UIAppFonts` line.
+It replaced the Program font test and three `BRUFoundationsTests` font tests, one of which counted a fixed list and could not fail.
+The license test now checks that each font in the built app ships with its family's OFL file, so it covers all four licenses and any new font.
+Nine `BRUPrimitivesTests` that could only fail at build time were deleted, with the unused `HeaderSlot.empty`.
+With Geist's `UIAppFonts` line and license file removed, both tests failed; restored, the unit target passed on iPhone 17/iOS 26.5: 1,212 run, 1,209 passed, 2 skipped, 1 expected failure, none failed.
 **References:** [rules](../.swiftlint.yml), [hook](../scripts/lint-hook.sh), [test tiers](SETUP.md#test-tiers).
