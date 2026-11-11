@@ -37,6 +37,9 @@ These are cheap or protect the lifter's data, so they apply to every change at e
   - an `accessibilityIdentifier` on controls a UI test drives.
 - **The phone you lift with works.** Check each changed screen at default text, light mode, on a 390 pt phone (iPhone 17e simulator), because that is the support floor.
   `scripts/shot.sh` captures a seeded state there in one command (`docs/SETUP.md`, Captures and phone installs).
+  After `scripts/shot.sh`, open the capture beside the screen's approved reference, list each difference, and fix the clear ones in the same slice.
+  The reference is the `mock:` path, from the repository root, in the screen's `docs/design-map/screens/<id>.md`, or a `docs/design-map/mockups/*-390-*.png` when one exists; a screen with neither has no approved reference yet.
+  Pro Max captures stay with stable workflows, as the table below says.
 - **GitNexus impact check before editing a symbol, as `CLAUDE.md` requires.** It is one call and catches callers you did not know about.
 
 ## Scale effort to the change

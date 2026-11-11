@@ -7,6 +7,7 @@ A personal iPhone app for granular, prescriptive weight training: explicit exerc
 Agent entrypoint: `AGENTS.md`; development/completion policy: `docs/DEVELOPMENT.md`; commands: `docs/SETUP.md`; code patterns: `CONVENTIONS.md`.
 `docs/ROADMAP.md` owns priorities, unfinished work, product decisions and acceptance criteria.
 Read the relevant RM entry before starting and update it when scope, status, dependencies or evidence changes.
+Read only the roadmap index (the lines above `## Feature definitions`, about the first 80) and your own entry (`rg -n 'id="rm-0NN"' docs/ROADMAP.md`), never the whole file.
 Keep stable RM IDs and original finding IDs; do not create competing backlogs, status handoffs or ticket ledgers.
 No GSD command or generated planning artifact is required before editing.
 Use a short execution plan in the conversation; existing implementation notes are subordinate input.

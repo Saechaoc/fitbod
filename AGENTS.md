@@ -6,6 +6,7 @@ Use `docs/SETUP.md` for build/test commands, `CONVENTIONS.md` for code patterns 
 
 `docs/ROADMAP.md` is the sole source for priorities, unfinished work, product decisions and acceptance criteria.
 Read the relevant RM entry before starting; update it when scope, status, dependencies or evidence changes.
+Read only the roadmap index (the lines above `## Feature definitions`, about the first 80) and your own entry (`rg -n 'id="rm-0NN"' docs/ROADMAP.md`), never the whole file.
 Keep stable RM IDs and original finding IDs. Do not maintain a separate backlog, ticket ledger, handoff status or mandatory GSD workflow.
 Technical contracts live in `ARCHITECTURE.md`; dated audits and design references supply evidence, not current status.
 Record concise test results and limitations in the relevant RM entry. Keep run logs and screenshots in CI artifacts or ignored local output; do not create report archives or evidence dumps in the repository.
