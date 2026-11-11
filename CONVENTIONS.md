@@ -6,6 +6,7 @@
 - `@Query` lives directly in views with predicates and sort descriptors. Never wrap `@Query` in a view model — SwiftUI dependency tracking breaks.
 - View models are `@Observable` classes owned by their view with `@State`, holding only non-persistent UI state.
 - Cross-view ephemeral state (e.g., current active session) passes via `.environment(_:)` on an `@Observable` object.
+- Never rewrite a text field's text while it is being typed in, such as from an `onChange` that sets the text it observes: a digit typed just after the rewrite can show in the field and never reach its text. Format the text once editing ends, as the time fields do (RM-062).
 
 ## Navigation
 

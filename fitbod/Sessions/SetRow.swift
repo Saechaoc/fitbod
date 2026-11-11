@@ -224,10 +224,6 @@ public struct SetRow: View {
                     .selectsAllOnFocus(timedFocus == .setTime)
                     .frame(width: 48, alignment: .leading)
                     .onAppear { timedFocus = .setTime }
-                    .onChange(of: setTimeText) { _, text in
-                        let entered = SetText.timeEntry(text)
-                        if entered != text { setTimeText = entered }
-                    }
                     .accessibilityLabel("Time, set \(displayNumber)")
                     .accessibilityIdentifier("set.durationField.\(identifierSuffix)")
             }
@@ -421,16 +417,8 @@ public struct SetRow: View {
         let offered = entry.isComplete ? WorkoutSetSuggestion() : suggestion
 
         stackedLabel("Time")
-        valueField("Time", text: $timeText, offer: offered.durationSeconds.map(SetText.duration), field: .time)
+        valueField("Time", text: typedTime, offer: offered.durationSeconds.map(SetText.duration), field: .time)
             .keyboardType(.numberPad)
-            .onChange(of: timeText) { _, text in
-                // Digits read as a time while they are typed: "130" shows
-                // "1:30". The value is written in this same pass: SwiftUI
-                // does not call back for the text this action sets.
-                let entered = SetText.timeEntry(text)
-                if entered != text { timeText = entered }
-                if timedFocus == .time { entry.durationSeconds = SetText.seconds(fromTyped: entered) }
-            }
             .accessibilityIdentifier("set.time.\(identifierSuffix)")
 
         switch sessionExercise.exercise?.timedValue {
@@ -497,6 +485,21 @@ public struct SetRow: View {
 
     private var storedTimeText: String {
         entry.durationSeconds.map(SetText.duration) ?? ""
+    }
+
+    /// The time field's text. Each keystroke writes the time it reads as
+    /// ("130" is 1:30), so a DONE right after it cannot overtake it, and the
+    /// field shows the time with its colons once editing ends. The field is
+    /// never rewritten while it is typed in: a digit typed just after such a
+    /// rewrite could show in it and never reach its text (RM-062).
+    private var typedTime: Binding<String> {
+        Binding(
+            get: { timeText },
+            set: { text in
+                timeText = text
+                if timedFocus == .time { entry.durationSeconds = SetText.seconds(fromTyped: text) }
+            }
+        )
     }
 
     private var storedSecondText: String {

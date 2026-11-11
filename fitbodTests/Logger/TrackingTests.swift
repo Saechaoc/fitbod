@@ -288,9 +288,6 @@ struct TrackingTests {
         #expect(SetText.seconds(fromTyped: "0") == nil)
         #expect(SetText.seconds(fromTyped: "1.5") == nil)
         #expect(SetText.seconds(fromTyped: "1234567") == nil)
-        #expect(SetText.timeEntry("130") == "1:30")
-        #expect(SetText.timeEntry("13000") == "1:30:00")
-        #expect(SetText.timeEntry("9") == "9")
         // Every time a field can show reads back as itself.
         for seconds in [1, 59, 60, 61, 599, 3_599, 3_600, 86_399, WorkoutCorrectionInput.durationLimit - 1] {
             #expect(SetText.seconds(fromTyped: SetText.duration(seconds)) == seconds)

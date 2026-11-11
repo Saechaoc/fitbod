@@ -387,6 +387,7 @@ A whole name or alias ranks first, then names that start with the query or its f
 Unit target 1,370 passed (1 known issue), including `ExerciseSearchTests` (5) and `FilterStatePredicateTests` running the in-memory pipeline.
 Full tier 1,473 passed with no failure, 103 of them UI tests, including `LibrarySearchUITests`: "stairmaster" finds Stair Climber and shows the alias, and "press bench barbell medium" finds the medium-grip bench press.
 The first full run failed `ReseedRelaunchUITests`, which expected "1 match" for the bench press's full name, a search that now also finds the incline bench; it now checks that exactly one row carries that name.
+That run also failed `TimedSetUITests` on a lost digit, fixed under [RM-062](#rm-062).
 Inspected at 390pt, light mode: an alias match in the Library and in the swap picker, a search in any word order, a long result list, the empty state and the cleared list; the empty-state heading now quotes the search with curly quotes like the alias line.
 The test that every curated name, family and alias finds its row moves to the families slice, which seeds them.
 Open for this slice: VoiceOver, larger text and dark mode are unchecked, and search speed over the whole catalog is unmeasured on the phone.
@@ -423,6 +424,11 @@ Inspected at 390pt, light mode: START, the running set time, a completed set's t
 Known limit: a set lifted after resting past the timer, including an exercise's first set after the walk to it, gets a time that includes the extra rest; tapping its time corrects it.
 Open for this slice: VoiceOver, larger text, dark mode and the phone are unchecked.
 Verify on the phone: log two bench sets with a rest between them, confirm the second shows its time, and confirm History shows the exercise time.
+Fixed on the way (time entry, 2026-11-10): the three time fields (a timed set in the logger, a set's time correction and Edit workout) put their colons in while digits were typed, by rewriting the text from `onChange`.
+A digit typed just after that rewrite could show in the field and never reach its text, so "13000" typed fast saved 13:00 or 1:30: `TimedSetUITests` failed this way once in a full run, and a throwaway UI loop lost a digit in 4 of 40 rounds.
+SwiftUI draws a changed text only on a later pass, the window in which the digit is lost, so the fields now show the digits as typed and the colons once editing ends, and each logger keystroke writes its time at once.
+The loop then lost no digit in 30 rounds per field, screenshots showed the typed digits while typing and the time after DONE, and seven digits now read as no time instead of silently losing one.
+`TimedSetUITests` types the stair climber's time ten times; the full tier under [RM-022](#rm-022) slice 6 includes it.
 
 ### <a id="rm-023"></a>RM-023 — Comparable analytics and useful detail routes
 

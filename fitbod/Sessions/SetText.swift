@@ -38,19 +38,6 @@ enum SetText {
         return total > 0 ? total : nil
     }
 
-    /// Typed digits with the colons put in: "130" reads "1:30" while typing.
-    static func timeEntry(_ text: String) -> String {
-        guard let digits = Self.digits(in: text) else { return text }
-        var parts: [Substring] = []
-        var rest = Substring(digits.prefix(6))
-        while rest.count > 2 {
-            parts.insert(rest.suffix(2), at: 0)
-            rest = rest.dropLast(2)
-        }
-        parts.insert(rest, at: 0)
-        return parts.joined(separator: ":")
-    }
-
     /// The ASCII digits of `text`, with its colons dropped; nil when it holds
     /// anything else.
     private static func digits(in text: String) -> String? {

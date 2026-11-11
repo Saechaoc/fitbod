@@ -39,6 +39,13 @@ final class TimedSetUITests: XCTestCase {
         let level = app.textFields["set.level.1.S1"]
         XCTAssertTrue(level.exists, "A stair climber set records its level")
         XCTAssertFalse(app.textFields["set.weight.1.S1"].exists, "A cardio set has no weight")
+        // Typed fast, every digit counts, the one right after the field puts
+        // its colons in too: rewritten from onChange, the field lost it in
+        // about one round in ten (RM-062).
+        for _ in 1...10 {
+            type("13000", into: time, in: app)
+            XCTAssertEqual(time.value as? String, "1:30:00")
+        }
         type("2000", into: time, in: app)
         XCTAssertEqual(time.value as? String, "20:00")
         type("8", into: level, in: app)

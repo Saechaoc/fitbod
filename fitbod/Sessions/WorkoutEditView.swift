@@ -453,6 +453,13 @@ private struct WorkoutEditSetRow: View {
         }
         .onAppear { updateValues(rpe: row.values.rpe) }
         .onChange(of: [weightText, repsText, timeText, secondText]) { _, _ in updateValues(rpe: row.values.rpe) }
+        // A time shows its colons once editing ends ("130" reads "1:30"),
+        // never while it is typed in (RM-062).
+        .onChange(of: focus) { previous, _ in
+            if previous == .time, let seconds = SetText.seconds(fromTyped: timeText) {
+                timeText = SetText.duration(seconds)
+            }
+        }
     }
 
     /// The time, then the load, distance or level its exercise's timed sets take.
@@ -461,11 +468,6 @@ private struct WorkoutEditSetRow: View {
         field($timeText, .time, keyboard: .numberPad, changed: row.logged.map { $0.durationSeconds != row.values.durationSeconds } ?? false)
             .frame(maxWidth: .infinity)
             .accessibilityLabel("Time, set \(number)")
-            // Digits read as a time while they are typed: "130" shows "1:30".
-            .onChange(of: timeText) { _, text in
-                let entered = SetText.timeEntry(text)
-                if entered != text { timeText = entered }
-            }
         if let name = WorkoutEditGrid.secondName(timedValue, unit: unit) {
             let changed = row.logged.map {
                 $0.weight != row.values.weight || $0.distanceMeters != row.values.distanceMeters || $0.level != row.values.level
