@@ -61,13 +61,14 @@ enum TodayStatesSeed {
     static let emptySessionName = "Push B"
     static let standaloneSessionName = "Arms"
 
-    typealias SessionPlan = (name: String, exercises: [String])
-    private static let push: SessionPlan = ("Push A", ["Barbell Bench Press - Medium Grip", "Barbell Shoulder Press"])
-    private static let pull: SessionPlan = ("Pull A", ["Bent Over Barbell Row", "Wide-Grip Lat Pulldown"])
-    private static let legs: SessionPlan = ("Legs A", ["Barbell Squat", "Romanian Deadlift"])
-    private static let arms: SessionPlan = (standaloneSessionName, ["Barbell Curl", "Triceps Pushdown"])
-    /// Every catalog exercise the seeds name; a test store needs these rows first.
-    static var catalogNames: [String] { [push, pull, legs, arms].flatMap(\.exercises) }
+    /// (session name, catalog IDs), so a renamed catalog row is still found.
+    typealias SessionPlan = (name: String, exerciseIDs: [String])
+    private static let push: SessionPlan = ("Push A", ["Barbell_Bench_Press_-_Medium_Grip", "Barbell_Shoulder_Press"])
+    private static let pull: SessionPlan = ("Pull A", ["Bent_Over_Barbell_Row", "Wide-Grip_Lat_Pulldown"])
+    private static let legs: SessionPlan = ("Legs A", ["Barbell_Squat", "Romanian_Deadlift"])
+    private static let arms: SessionPlan = (standaloneSessionName, ["Barbell_Curl", "Triceps_Pushdown"])
+    /// Every catalog exercise the seeds use, by ID; a test store needs these rows first.
+    static var catalogIDs: [String] { [push, pull, legs, arms].flatMap(\.exerciseIDs) }
 
     /// Six weeks in three phases, so a block started eight days ago reads "Week 2 of 6".
     private static let phases: [(kind: BlockPhaseKind, weeks: Int)] = [
@@ -150,8 +151,8 @@ enum TodayStatesSeed {
         context.insert(template)
         template.name = plan.name
         template.intentRaw = Intent.hypertrophy.rawValue
-        let exercises = plan.exercises.compactMap { name in catalog.first { $0.name == name } }
-        assert(exercises.count == plan.exercises.count, "the catalog lacks an exercise \(plan.name) names")
+        let exercises = plan.exerciseIDs.compactMap { id in catalog.first { $0.externalID == id } }
+        assert(exercises.count == plan.exerciseIDs.count, "the catalog lacks an exercise \(plan.name) uses")
         for (index, exercise) in exercises.enumerated() {
             let item = SessionExerciseTemplate()
             context.insert(item)

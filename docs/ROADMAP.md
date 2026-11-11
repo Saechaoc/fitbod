@@ -391,6 +391,11 @@ That run also failed `TimedSetUITests` on a lost digit, fixed under [RM-062](#rm
 Not on the phone yet (2026-11-10): at landing (`fc8197f5`) the Mac listed the phone as unavailable, so Xcode found no destination; reconnect and unlock it, then run the [phone installer](SETUP.md#captures-and-phone-installs) from current main.
 Inspected at 390pt, light mode: an alias match in the Library and in the swap picker, a search in any word order, a long result list, the empty state and the cleared list; the empty-state heading now quotes the search with curly quotes like the alias line.
 The test that every curated name, family and alias finds its row moves to the families slice, which seeds them.
+Rename preparation (2026-11-10): the curated stimulus weights, the debug seeds and their tests find catalog rows by `externalID`, so the renames to come cannot break them.
+The weights used to be keyed by name, and only 18 of their 57 lifts matched a catalog row; 56 match now, and Pendlay Row arrives with the families.
+So on the first launch after this change, the 38 newly matched lifts take their curated muscle weights unless the lifter edited one, and weekly muscle volume, which reads those weights live, changes for every week that includes them.
+A seed now gives each workout logged before name snapshots (2026-10-02) its exercise's name before it writes any rename; `SeedTests.reseedKeepsLoggedNames` renames the bench under such a workout and fails when that step runs after the rename.
+Unit target 1,374 passed (1 known issue); full tier 1,477 passed with no failure, 103 of them UI tests.
 Open for this slice: VoiceOver, larger text and dark mode are unchecked, and search speed over the whole catalog is unmeasured on the phone.
 **References:** LIB-01–06/FT-05; [importer](../fitbod/ExerciseLibrary/ExerciseLibraryImporter.swift), [seed source](../fitbod/Resources/ExerciseSeed/SOURCE.md).
 

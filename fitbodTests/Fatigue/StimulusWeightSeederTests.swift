@@ -44,21 +44,22 @@ struct StimulusWeightSeederTests {
         return byslug
     }
 
-    /// Insert one Exercise per canonical name in
+    /// Insert one Exercise per catalog ID in
     /// `StimulusWeightTable.overrides`. Caller is responsible for
     /// pre-seeding the muscles via `seedAllMuscles` first.
     @discardableResult
     private func seedCuratedExercises(_ ctx: ModelContext) throws -> [String: Exercise] {
-        var byname: [String: Exercise] = [:]
-        for (canonicalName, _) in StimulusWeightTable.overrides {
+        var byID: [String: Exercise] = [:]
+        for (externalID, _) in StimulusWeightTable.overrides {
             let ex = Exercise()
-            ex.canonicalName = canonicalName
-            ex.name = canonicalName.capitalized
+            ex.externalID = externalID
+            ex.name = externalID
+            ex.canonicalName = externalID.lowercased()
             ctx.insert(ex)
-            byname[canonicalName] = ex
+            byID[externalID] = ex
         }
         try ctx.save()
-        return byname
+        return byID
     }
 
     // MARK: - 1. All 57 curated lifts write on first launch
@@ -73,14 +74,14 @@ struct StimulusWeightSeederTests {
 
         // For each curated key, assert that the Exercise has a stimulus
         // row matching each (muscleSlug, role, weight) triple.
-        for (canonicalName, triples) in StimulusWeightTable.overrides {
-            let ex = try #require(exercises[canonicalName])
+        for (externalID, triples) in StimulusWeightTable.overrides {
+            let ex = try #require(exercises[externalID])
             let stims = ex.muscleStimuli ?? []
             for triple in triples {
                 let match = stims.first { $0.muscle?.slug == triple.muscleSlug }
-                let row = try #require(match, "missing stimulus for \(canonicalName) → \(triple.muscleSlug)")
-                #expect(row.role == triple.role, "wrong role for \(canonicalName) → \(triple.muscleSlug)")
-                #expect(abs(row.weight - triple.weight) < 0.001, "wrong weight for \(canonicalName) → \(triple.muscleSlug): got \(row.weight) expected \(triple.weight)")
+                let row = try #require(match, "missing stimulus for \(externalID) → \(triple.muscleSlug)")
+                #expect(row.role == triple.role, "wrong role for \(externalID) → \(triple.muscleSlug)")
+                #expect(abs(row.weight - triple.weight) < 0.001, "wrong weight for \(externalID) → \(triple.muscleSlug): got \(row.weight) expected \(triple.weight)")
             }
         }
     }
@@ -91,7 +92,9 @@ struct StimulusWeightSeederTests {
     func userEditedRowsArePreservedAcrossReSeed() throws {
         let ctx = try FatigueTestFixtures.makeContext()
         let muscles = try seedAllMuscles(ctx)
+        // A curated lift, so the seeder visits it.
         let bench = Exercise()
+        bench.externalID = "Barbell_Bench_Press_-_Medium_Grip"
         bench.canonicalName = "barbell bench press"
         bench.name = "Barbell Bench Press"
         ctx.insert(bench)
@@ -201,7 +204,9 @@ struct StimulusWeightSeederTests {
     func seederDoesNotInsertDuplicateStimulusRows() throws {
         let ctx = try FatigueTestFixtures.makeContext()
         let muscles = try seedAllMuscles(ctx)
+        // A curated lift, so the seeder visits it.
         let bench = Exercise()
+        bench.externalID = "Barbell_Bench_Press_-_Medium_Grip"
         bench.canonicalName = "barbell bench press"
         bench.name = "Barbell Bench Press"
         ctx.insert(bench)

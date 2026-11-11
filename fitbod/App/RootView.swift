@@ -354,7 +354,7 @@ public struct RootView: View {
 
             // Phase 5 — VOL-01: write the curated stimulus weights onto
             // ExerciseMuscleStimulus rows. Runs AFTER the library
-            // importer so canonicalName lookups resolve. Row-level
+            // importer so the rows it finds by catalog ID exist. Row-level
             // idempotency via userEditedWeight; safe to call on every
             // launch (RESEARCH §6.3).
             StimulusWeightSeeder.seedIfNeeded(in: modelContext)

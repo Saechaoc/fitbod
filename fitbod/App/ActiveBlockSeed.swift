@@ -58,7 +58,7 @@ enum ActiveBlockSeed {
     static let routineName = "Live Routine"
     static let sessionName = "Live Push"
     static let blockName = "Live Block"
-    private static let exerciseNames = ["Barbell Bench Press - Medium Grip", "Bench Press - Powerlifting"]
+    private static let benchID = "Barbell_Bench_Press_-_Medium_Grip"
     private static let day: TimeInterval = 24 * 3600
 
     @MainActor
@@ -111,9 +111,7 @@ enum ActiveBlockSeed {
         let existing = (try? context.fetch(FetchDescriptor<Split>())) ?? []
         guard !existing.contains(where: { $0.name == routineName }) else { return nil }
         let exercises = (try? context.fetch(FetchDescriptor<Exercise>())) ?? []
-        guard let bench = exerciseNames.lazy.compactMap({ name in
-            exercises.first { $0.name == name }
-        }).first else { return nil }
+        guard let bench = exercises.first(where: { $0.externalID == benchID }) else { return nil }
 
         let template = SessionTemplate()
         context.insert(template)

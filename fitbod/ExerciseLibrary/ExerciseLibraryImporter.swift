@@ -208,6 +208,17 @@ public actor ExerciseLibraryImporter {
                 }
             }
 
+            // MARK: 3b. Keep the names logged exercises show
+            //
+            // A workout logged before name snapshots existed (2026-10-02)
+            // shows its exercise's live name. It gets that name now, before
+            // step 4 writes a curated rename, so History keeps the name the
+            // lifter logged (RM-022).
+            let unnamed = FetchDescriptor<SessionExercise>(predicate: #Predicate { $0.exerciseNameSnapshot == "" })
+            for logged in try modelContext.fetch(unnamed) {
+                if let name = logged.exercise?.name, !name.isEmpty { logged.exerciseNameSnapshot = name }
+            }
+
             // MARK: 4. Upsert Exercise rows + missing stimulus rows in 100-row batches
             var batchCount = 0
             var insertedCount = 0

@@ -15,8 +15,8 @@ struct TodayStatesSeedTests {
     /// Seeds `seed` into an empty store at `now` and resolves Today from what Today reads.
     private func state(after seed: TodayStatesSeed.State, now: Date) throws -> TodayState {
         let ctx = ModelContext(try InMemoryContainer.makeCurrent())
-        for name in TodayStatesSeed.catalogNames {
-            ctx.insert(Exercise(name: name, canonicalName: name.lowercased(), equipmentRaw: "barbell", mechanicRaw: "compound"))
+        for id in TodayStatesSeed.catalogIDs {
+            ctx.insert(Exercise(externalID: id, name: id, canonicalName: id.lowercased(), equipmentRaw: "barbell", mechanicRaw: "compound"))
         }
         TodayStatesSeed.seed(seed, in: ctx, now: now)
 

@@ -65,6 +65,7 @@ A row outside the strength categories is in the catalog only when curation impor
 A cardio row gets no stimulus rows and an empty `primaryMuscleSlugsJoined`, so cardio adds no muscle volume.
 Unset, a cardio machine tracks time and distance (`Tracking.implied(by:)`).
 A custom exercise stores a tracking choice only when it differs from what its equipment implies; one that tracks a time with a distance or a level is cardio and needs no primary muscle.
+Code finds a catalog row by its `externalID`, never by its name, because curation renames rows: the curated stimulus weights (`StimulusWeightTable`) and the debug seeds are keyed by ID.
 
 ## Program graph
 
@@ -116,6 +117,7 @@ Two deliberate freeze points:
 
 1. At workout start, or exercise add/swap, copy evaluated prescription, targets, intent/progression context and display names into the logged graph.
    Template/block/history edits never recompute those values.
+   A workout logged before name snapshots existed gets its exercise's name at the next seed, before any curated rename, so a rename never changes History.
    Pending inputs/actuals remain editable.
    WHY presents the frozen prescribed weight and notes live divergence.
 2. At block end, write ArchivedBlockConfig v1 once: name/start/end/mode/days/phases/routine/ordered slots/exercise prescriptions.

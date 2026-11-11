@@ -67,10 +67,10 @@ enum BlockStatesSeed {
     static let loggedSessionName = "Upper A"
     static let emptySessionName = "Upper B"
 
-    /// (session name, catalog name candidates)
-    private static let sessions: [(name: String, exercises: [String])] = [
-        (loggedSessionName, ["Barbell Bench Press - Medium Grip", "Bench Press - Powerlifting"]),
-        (emptySessionName, ["Bent Over Barbell Row", "Barbell Shoulder Press"]),
+    /// (session name, catalog ID)
+    private static let sessions: [(name: String, exerciseID: String)] = [
+        (loggedSessionName, "Barbell_Bench_Press_-_Medium_Grip"),
+        (emptySessionName, "Bent_Over_Barbell_Row"),
     ]
 
     private static let day: TimeInterval = 24 * 3600
@@ -80,9 +80,7 @@ enum BlockStatesSeed {
         let existing = (try? context.fetch(FetchDescriptor<Split>())) ?? []
         guard !existing.contains(where: { $0.name == routineName }) else { return }
         let catalog = (try? context.fetch(FetchDescriptor<Exercise>())) ?? []
-        let exercises = sessions.compactMap { session in
-            session.exercises.lazy.compactMap { name in catalog.first { $0.name == name } }.first
-        }
+        let exercises = sessions.compactMap { session in catalog.first { $0.externalID == session.exerciseID } }
         guard exercises.count == sessions.count else { return }
 
         let split = Split()

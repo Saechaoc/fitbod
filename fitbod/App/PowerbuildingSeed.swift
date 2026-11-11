@@ -45,11 +45,11 @@ enum PowerbuildingSeed {
     static let routineName = "Upper Lower"
     static let blockName = "Powerbuilding"
 
-    /// (session name, catalog name candidates)
-    private static let sessions: [(name: String, exercises: [String])] = [
-        ("Upper A", ["Barbell Bench Press - Medium Grip", "Bench Press - Powerlifting"]),
-        ("Lower A", ["Barbell Squat", "Barbell Full Squat"]),
-        ("Upper B", ["Bent Over Barbell Row", "Barbell Shoulder Press"]),
+    /// (session name, catalog ID)
+    private static let sessions: [(name: String, exerciseID: String)] = [
+        ("Upper A", "Barbell_Bench_Press_-_Medium_Grip"),
+        ("Lower A", "Barbell_Squat"),
+        ("Upper B", "Bent_Over_Barbell_Row"),
     ]
 
     private static let phases: [(kind: BlockPhaseKind, weeks: Int)] = [
@@ -63,9 +63,7 @@ enum PowerbuildingSeed {
         let existing = (try? context.fetch(FetchDescriptor<Split>())) ?? []
         guard !existing.contains(where: { $0.name == routineName }) else { return }
         let catalog = (try? context.fetch(FetchDescriptor<Exercise>())) ?? []
-        let exercises = sessions.compactMap { session in
-            session.exercises.lazy.compactMap { name in catalog.first { $0.name == name } }.first
-        }
+        let exercises = sessions.compactMap { session in catalog.first { $0.externalID == session.exerciseID } }
         guard exercises.count == sessions.count else { return }
 
         let split = Split()

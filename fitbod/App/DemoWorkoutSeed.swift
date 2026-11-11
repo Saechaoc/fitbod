@@ -85,13 +85,13 @@ enum DemoWorkoutSeed {
     }
 
     #if DEBUG
-    /// (catalog name candidates, sets, reps low/high, rest seconds, prior-session weight)
-    private static let plan: [(names: [String], sets: Int, low: Int, high: Int, rest: Int, priorWeight: Double)] = [
-        (["Barbell Bench Press - Medium Grip", "Bench Press - Powerlifting"], 3, 5, 8, 180, 100),
-        (["Incline Dumbbell Press"], 3, 8, 12, 120, 30),
-        (["Barbell Shoulder Press", "Dumbbell Shoulder Press"], 3, 6, 10, 150, 50),
-        (["Cable Seated Lateral Raise", "Side Lateral Raise"], 3, 12, 15, 60, 10),
-        (["Triceps Pushdown", "Triceps Pushdown - Rope Attachment"], 3, 10, 15, 60, 25),
+    /// (catalog ID, sets, reps low/high, rest seconds, prior-session weight)
+    private static let plan: [(id: String, sets: Int, low: Int, high: Int, rest: Int, priorWeight: Double)] = [
+        ("Barbell_Bench_Press_-_Medium_Grip", 3, 5, 8, 180, 100),
+        ("Incline_Dumbbell_Press", 3, 8, 12, 120, 30),
+        ("Barbell_Shoulder_Press", 3, 6, 10, 150, 50),
+        ("Cable_Seated_Lateral_Raise", 3, 12, 15, 60, 10),
+        ("Triceps_Pushdown", 3, 10, 15, 60, 25),
     ]
 
     @MainActor
@@ -176,7 +176,7 @@ enum DemoWorkoutSeed {
         let templates = (try? context.fetch(FetchDescriptor<SessionTemplate>())) ?? []
         let exercises = (try? context.fetch(FetchDescriptor<Exercise>())) ?? []
         guard !templates.contains(where: { $0.name == "Pull B" }),
-              let row = exercises.first(where: { $0.name == "Bent Over Barbell Row" }) else { return }
+              let row = exercises.first(where: { $0.externalID == "Bent_Over_Barbell_Row" }) else { return }
 
         let pullB = SessionTemplate()
         context.insert(pullB)
@@ -249,9 +249,7 @@ enum DemoWorkoutSeed {
 
         var priorWeights: [UUID: Double] = [:]
         for (index, row) in plan.enumerated() {
-            guard let exercise = row.names.lazy.compactMap({ name in
-                exercises.first { $0.name == name }
-            }).first else { continue }
+            guard let exercise = exercises.first(where: { $0.externalID == row.id }) else { continue }
             let item = SessionExerciseTemplate()
             context.insert(item)
             item.sessionTemplate = template

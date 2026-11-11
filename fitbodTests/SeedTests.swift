@@ -492,6 +492,44 @@ final class SeedTests {
         )
     }
 
+    @Test("A re-seed gives a logged exercise with no name snapshot the name it shows, before any rename")
+    @MainActor // LoggerFixtures is main-actor isolated.
+    func reseedKeepsLoggedNames() async throws {
+        let container = try InMemoryContainer.makeEmpty()
+        let importer = ExerciseLibraryImporter(modelContainer: container)
+        try await importer.seedIfNeeded(defaults: defaults)
+
+        let ctx = ModelContext(container)
+        let benchExternalID = "Barbell_Bench_Press_-_Medium_Grip"
+        let bench = try #require(try ctx.fetch(FetchDescriptor<Exercise>(
+            predicate: #Predicate { $0.externalID == benchExternalID }
+        )).first)
+        let startedAt = Date(timeIntervalSince1970: 1_790_000_000)
+        let workout = try LoggerFixtures.session(
+            exercise: bench, startedAt: startedAt, completedAt: startedAt.addingTimeInterval(3_600),
+            sets: [(100, 5, true)], in: ctx
+        )
+        // Logged before name snapshots existed (2026-10-02), under a name
+        // the catalog has changed since, so the re-seed renames the bench.
+        let logged = try #require(workout.exercises?.first)
+        logged.exerciseNameSnapshot = ""
+        let catalogName = bench.name
+        let shownName = "Bench Press (an older catalog name)"
+        bench.name = shownName
+        try ctx.save()
+        let loggedID = logged.id
+
+        defaults.removeObject(forKey: ExerciseLibraryImporter.seedVersionKey)
+        try await importer.seedIfNeeded(defaults: defaults)
+
+        let after = ModelContext(container)
+        let reread = try #require(try after.fetch(FetchDescriptor<SessionExercise>(
+            predicate: #Predicate { $0.id == loggedID }
+        )).first)
+        #expect(reread.exerciseNameSnapshot == shownName)
+        #expect(reread.exercise?.name == catalogName, "the re-seed must have renamed the bench")
+    }
+
     // MARK: - Test 9: a seed that stopped partway resumes (review WR-01)
 
     @Test("A seed that stopped partway resumes: what reached disk stays, the rest is inserted once")

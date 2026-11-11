@@ -52,11 +52,11 @@ public enum StimulusWeightSeeder {
             muscleBySlug[muscle.slug] = muscle
         }
 
-        for (canonicalName, triples) in StimulusWeightTable.overrides {
-            // 1. Locate the matching Exercise by canonicalName.
-            let target = canonicalName
+        for (externalID, triples) in StimulusWeightTable.overrides {
+            // 1. Locate the matching Exercise by its catalog ID.
+            let target: String? = externalID
             let descriptor = FetchDescriptor<Exercise>(
-                predicate: #Predicate<Exercise> { $0.canonicalName == target }
+                predicate: #Predicate<Exercise> { $0.externalID == target }
             )
             guard let exercise = (try? context.fetch(descriptor))?.first else { continue }
 

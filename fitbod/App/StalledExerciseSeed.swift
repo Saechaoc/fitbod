@@ -39,16 +39,14 @@ enum StalledExerciseSeed {
 
     #if DEBUG
     static let templateName = "Bench Stall"
-    private static let exerciseNames = ["Barbell Bench Press - Medium Grip", "Bench Press - Powerlifting"]
+    private static let benchID = "Barbell_Bench_Press_-_Medium_Grip"
 
     @MainActor
     private static func seed(in context: ModelContext, variationUndo: Bool) {
         let existing = (try? context.fetch(FetchDescriptor<SessionTemplate>())) ?? []
         guard !existing.contains(where: { $0.name == templateName }) else { return }
         let exercises = (try? context.fetch(FetchDescriptor<Exercise>())) ?? []
-        guard let bench = exerciseNames.lazy.compactMap({ name in
-            exercises.first { $0.name == name }
-        }).first else { return }
+        guard let bench = exercises.first(where: { $0.externalID == benchID }) else { return }
 
         let template = SessionTemplate()
         context.insert(template)
@@ -129,7 +127,7 @@ enum StalledExerciseSeed {
                 .first(where: { $0.muscle?.slug == slug }),
               let count = Int(exactly: (Double(target.mav) / primary.weight).rounded(.up)), count > 0,
               let candidate = exercises.first(where: {
-                  $0.name == "Dumbbell Bench Press" && $0.mechanicRaw == bench.mechanicRaw
+                  $0.externalID == "Dumbbell_Bench_Press" && $0.mechanicRaw == bench.mechanicRaw
                       && $0.primaryMuscleSlugsJoined.contains("|\(slug)|")
               })
         else { return }

@@ -49,7 +49,7 @@ enum WeeklyTonnageSeed {
 
     #if DEBUG
     static let workoutName = "Tonnage Weeks"
-    private static let benchNames = ["Barbell Bench Press - Medium Grip", "Bench Press - Powerlifting"]
+    private static let benchID = "Barbell_Bench_Press_-_Medium_Grip"
 
     @MainActor
     private static func seed(weeks: Int, in context: ModelContext) {
@@ -59,9 +59,7 @@ enum WeeklyTonnageSeed {
         ))) ?? []
         guard existing.isEmpty else { return }
         let exercises = (try? context.fetch(FetchDescriptor<Exercise>())) ?? []
-        guard let bench = benchNames.lazy.compactMap({ name in
-            exercises.first { $0.name == name }
-        }).first else { return }
+        guard let bench = exercises.first(where: { $0.externalID == benchID }) else { return }
 
         let now = Date.now
         let calendar = Calendar(identifier: .gregorian)

@@ -39,8 +39,8 @@ enum ProgressHistorySeed {
 
     #if DEBUG
     static let templateName = "Bench & Squat"
-    private static let benchNames = ["Barbell Bench Press - Medium Grip", "Bench Press - Powerlifting"]
-    private static let squatNames = ["Barbell Squat", "Barbell Full Squat"]
+    private static let benchID = "Barbell_Bench_Press_-_Medium_Grip"
+    private static let squatID = "Barbell_Squat"
 
     /// One logged set: weight, reps and RPE, nil when none was logged.
     private typealias LoggedSet = (weight: Double, reps: Int, rpe: Double?)
@@ -69,10 +69,8 @@ enum ProgressHistorySeed {
         let existing = (try? context.fetch(FetchDescriptor<SessionTemplate>())) ?? []
         guard !existing.contains(where: { $0.name == templateName }) else { return }
         let exercises = (try? context.fetch(FetchDescriptor<Exercise>())) ?? []
-        func find(_ names: [String]) -> Exercise? {
-            names.lazy.compactMap { name in exercises.first { $0.name == name } }.first
-        }
-        guard let bench = find(benchNames), let squat = find(squatNames) else { return }
+        func find(_ id: String) -> Exercise? { exercises.first { $0.externalID == id } }
+        guard let bench = find(benchID), let squat = find(squatID) else { return }
 
         let template = SessionTemplate()
         context.insert(template)
