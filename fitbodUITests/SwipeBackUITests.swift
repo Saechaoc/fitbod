@@ -42,7 +42,7 @@ final class SwipeBackUITests: XCTestCase {
     func testSwipeOnARootScreenDoesNothing() throws {
         let app = UITestNavigation.launch(UITestNavigation.freshStore)
 
-        let newRoutine = UITestNavigation.hittable(app.buttons, "+ NEW ROUTINE")
+        let newRoutine = UITestNavigation.hittable(app.buttons, "Plan a routine or block")
         assertRootIgnoresSwipe(newRoutine, alongRowOf: app.staticTexts["Fitbod / Today"], "Today", in: app)
         UITestNavigation.saveScreenshot("T18", "today-after-root-swipe")
         assertStillNavigates(from: newRoutine, to: nameStep(in: app), in: app)
