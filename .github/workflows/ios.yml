@@ -3,10 +3,11 @@
 # It reports and gates nothing (RM-053). Every push to main or claude/**
 # and every pull request builds and runs the unit tests, about 13 minutes on
 # the runner. The UI suite runs once, on the large iPhone, only in the nightly
-# and manual runs: about 60 minutes, so those finish inside the 120-minute
-# limit. The small phone returns at release readiness (RM-048). SwiftLint
-# reports Fitbod's own rules as annotations and never fails the job. It is
-# free for public repositories and can be disabled from the Actions tab.
+# and manual runs: about 75 minutes, so those finish in about 90, inside the
+# 120-minute limit. The small phone returns at release readiness (RM-048).
+# SwiftLint reports Fitbod's own rules as annotations and never fails the
+# job. It is free for public repositories and can be disabled from the
+# Actions tab.
 #
 # Results, logs and screenshots are downloadable run artifacts, retained for
 # 14 days. Record relevant results and limitations in docs/ROADMAP.md.
@@ -30,7 +31,9 @@ on:
       - ".agents/**"
       - "skills-lock.json"
   schedule:
-    - cron: "0 11 * * *" # nightly, 3 AM Pacific standard time
+    # Nightly at 3:17 AM Pacific standard time, off the hour: GitHub can drop
+    # scheduled runs at the top of an hour, and the 11:00 UTC one never ran.
+    - cron: "17 11 * * *"
   workflow_dispatch:
 
 permissions:

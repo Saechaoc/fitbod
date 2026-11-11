@@ -275,9 +275,12 @@ cmd_evidence() {
   log "Exporting screenshots and summaries"
   local out="$CI_DIR/evidence"
   rm -rf "$out"; mkdir -p "$out"
+  # The summary names the small phone only when its UI suite ran.
+  local small=""
+  if [[ -d "$RESULTS/ui-small.xcresult" ]]; then small="$SMALL_NAME"; fi
   python3 "$ROOT/scripts/ci/collect_evidence.py" \
     --results "$RESULTS" --out "$out" \
-    --small "$SMALL_NAME" --large "$LARGE_NAME" --runtime "$RUNTIME_NAME" \
+    --small "$small" --large "$LARGE_NAME" --runtime "$RUNTIME_NAME" \
     --xcode "$(xcodebuild -version | tr '\n' ' ')"
 }
 
