@@ -5,7 +5,7 @@
 //  Plan 01-PLAN-02-02 — the load-bearing one-time seed pipeline for the
 //  built-in exercise library. Authored as a model-actor so the work
 //  (decoding ~1.0 MB of JSON, resolving it through `ExerciseCatalog`, and
-//  inserting ~710 `Exercise` rows + 17 `MuscleGroup` rows + ~2200
+//  inserting ~840 `Exercise` rows + 19 `MuscleGroup` rows + ~2300
 //  `ExerciseMuscleStimulus` rows)
 //  runs off the main thread (PITFALLS.md #6 — never block the main
 //  thread on 800+ inserts).
@@ -22,18 +22,17 @@
 //
 //  A seed into a store that already holds the library finds each seeded
 //  exercise by `externalID` and each muscle by `slug`, updates the fields
-//  the dataset supplies, and inserts only what is missing. It deletes
-//  nothing: custom exercises, the exercise links of logged workouts and
-//  sessions, edited stimulus weights and volume targets, an exercise's own
-//  settings, and seeded exercises a newer dataset dropped all stay. The
-//  app runs the seed while Today and Progress already show these models,
-//  so a delete would invalidate instances the views hold and crash them.
-//  After an exercise's first seed its stimulus rows belong to
-//  `StimulusWeightSeeder` and the lifter, so a re-seed adds rows only for
-//  muscles the exercise has none for. A dataset that moves a muscle between
-//  primary and secondary, or drops it, therefore leaves the existing row as
-//  it is while `primaryMuscleSlugsJoined` follows the dataset; the bump that
-//  makes such a change must handle it.
+//  the dataset supplies, and inserts what is missing. Custom exercises, the
+//  exercise links of logged workouts and sessions, edited volume targets,
+//  an exercise's own settings, and seeded exercises a newer dataset dropped
+//  all stay.
+//  A catalog exercise's stimulus rows follow its muscle credits exactly
+//  (`muscles.json`, RM-065): a row for a muscle it no longer credits is
+//  deleted, unless the lifter edited its weight. The retired "shoulders"
+//  muscle is deleted with its volume target, after the rows of exercises
+//  outside the catalog move to a delt. Deletes are safe because `RootView` shows the
+//  library splash, and no tab, while a seed runs: a view holding a deleted
+//  model would crash on its next read.
 //
 //  ## Performance bar
 //
@@ -81,12 +80,12 @@ public actor ExerciseLibraryImporter {
     /// `UserDefaults` key storing the most-recently-applied seed version.
     public static let seedVersionKey = "exercise_seed_version"
 
-    /// Default stimulus weight for a primary-muscle contributor
-    /// (CONTEXT.md Area 1 — seed defaults; hand-curation deferred to Phase 5).
-    static let primaryWeight: Double = 1.0
-
-    /// Default stimulus weight for a secondary-muscle contributor.
-    static let secondaryWeight: Double = 0.5
+    /// True when the bundled catalog is newer than the one the store holds,
+    /// so the next `seedIfNeeded` writes. `RootView` keeps the tabs away
+    /// until it has run.
+    public static func seedIsPending(bundle: Bundle = .main, defaults: UserDefaults = .standard) -> Bool {
+        defaults.integer(forKey: seedVersionKey) < ((try? bundledSeedVersion(bundle: bundle)) ?? 0)
+    }
 
     /// Batch size for context-save calls. 100 rows keeps each SQLite
     /// transaction small while avoiding per-row save overhead.
@@ -116,11 +115,11 @@ public actor ExerciseLibraryImporter {
     /// 1. Reads `defaults[seedVersionKey]` and bundled `SEED_VERSION.txt`.
     /// 2. If stored ≥ bundled, returns immediately (no work).
     /// 3. Otherwise resolves the bundled catalog (`ExerciseCatalog`),
-    ///    upserts the 17 `MuscleGroup` rows by `slug`, upserts the
-    ///    catalog's exercises by `externalID` with any missing stimulus
-    ///    join rows in 100-row batches, and seeds the `UserSettings`
-    ///    singleton if absent. Nothing is deleted (see "Re-seeding in
-    ///    place" above).
+    ///    upserts the `MuscleGroup` rows by `slug`, upserts the catalog's
+    ///    exercises by `externalID` with their stimulus rows in 100-row
+    ///    batches, and seeds the `UserSettings` singleton if absent. Only
+    ///    stimulus rows and the retired "shoulders" muscle are deleted (see
+    ///    "Re-seeding in place" above).
     /// 4. On success stamps `defaults[seedVersionKey] = bundled`.
     /// 5. On mid-import failure rolls back unsaved changes and rethrows.
     ///    The next call finds the batches that did reach disk by
@@ -159,7 +158,7 @@ public actor ExerciseLibraryImporter {
         do {
             // MARK: 2. Upsert canonical MuscleGroup rows by slug
             //
-            // Single source of truth: `MuscleRegionMap.allSlugs` — the 17
+            // Single source of truth: `MuscleRegionMap.allSlugs` — the
             // canonical slugs. Iterating `allSlugs` (not `entries`) means every
             // canonical slug gets a row even if no dataset entry references
             // it yet, which keeps the muscle-volume-target wiring in Phase 5
@@ -188,6 +187,25 @@ public actor ExerciseLibraryImporter {
             // exercise) is enough for the stimulus join rows below to bind
             // to a real parent reference per Pitfall #7.
 
+            // MARK: 2b. Retire the one "shoulders" muscle (RM-065)
+            //
+            // Step 4 gives catalog exercises their delts. The shoulders
+            // credit of an exercise outside the catalog, a custom one or a
+            // row a newer dataset dropped, moves to the delt its family
+            // credits most, or to the front delts; the muscle itself goes
+            // once the exercises are saved.
+            let retired = musclesBySlug[MuscleRegionMap.retiredShouldersSlug]
+            if let retired {
+                let familyDelts = Self.familyDelts(entries)
+                let catalogIDs = Set(entries.map(\.id))
+                for stimulus in retired.stimuli ?? [] {
+                    guard let exercise = stimulus.exercise,
+                          !(exercise.externalID.map(catalogIDs.contains) ?? false) else { continue }
+                    let slug = exercise.familyName.flatMap { familyDelts[$0] } ?? "front delts"
+                    Self.move(stimulus, of: exercise, to: slug, muscle: musclesBySlug[slug], in: modelContext)
+                }
+            }
+
             // MARK: 3. Find the exercises an earlier seed inserted
             //
             // By externalID. Custom exercises have none, so the seed never
@@ -198,13 +216,13 @@ public actor ExerciseLibraryImporter {
                 guard let externalID = exercise.externalID, exercisesByExternalID[externalID] == nil else { continue }
                 exercisesByExternalID[externalID] = exercise
             }
-            // The muscles each of them already has a stimulus row for, from
-            // one fetch rather than one relationship fault per exercise.
-            var stimulatedSlugs: [PersistentIdentifier: Set<String>] = [:]
+            // Their stimulus rows, from one fetch rather than one
+            // relationship fault per exercise.
+            var stimuliByExercise: [PersistentIdentifier: [ExerciseMuscleStimulus]] = [:]
             if !exercisesByExternalID.isEmpty {
                 for stimulus in try modelContext.fetch(FetchDescriptor<ExerciseMuscleStimulus>()) {
-                    guard let exercise = stimulus.exercise, let slug = stimulus.muscle?.slug else { continue }
-                    stimulatedSlugs[exercise.persistentModelID, default: []].insert(slug)
+                    guard let exercise = stimulus.exercise, exercise.externalID != nil else { continue }
+                    stimuliByExercise[exercise.persistentModelID, default: []].append(stimulus)
                 }
             }
 
@@ -228,7 +246,7 @@ public actor ExerciseLibraryImporter {
                 if let exercise = planned.exercise { inUse.insert(exercise.persistentModelID) }
             }
 
-            // MARK: 4. Upsert Exercise rows + missing stimulus rows in 100-row batches
+            // MARK: 4. Upsert Exercise rows + their stimulus rows in 100-row batches
             var batchCount = 0
             var insertedCount = 0
             var updatedCount = 0
@@ -247,11 +265,11 @@ public actor ExerciseLibraryImporter {
                     : "|" + entry.primaryMuscles.joined(separator: "|") + "|"
 
                 let exercise: Exercise
-                // Muscles this exercise had a stimulus row for before this seed.
-                let stimulated: Set<String>
+                // The stimulus rows this exercise had before this seed.
+                let stimuli: [ExerciseMuscleStimulus]
                 if let existing = exercisesByExternalID[entry.id] {
                     exercise = existing
-                    stimulated = stimulatedSlugs[existing.persistentModelID] ?? []
+                    stimuli = stimuliByExercise[existing.persistentModelID] ?? []
                     let isHidden = entry.isHidden && !inUse.contains(existing.persistentModelID)
                     if refresh(
                         existing, from: entry, canonicalName: canonicalName,
@@ -286,43 +304,10 @@ public actor ExerciseLibraryImporter {
                     // isn't yet inserted into the context.
                     modelContext.insert(exercise)
                     exercisesByExternalID[entry.id] = exercise
-                    stimulated = []
+                    stimuli = []
                     insertedCount += 1
                 }
-
-                // Stimulus rows: 1.0 primary / 0.5 secondary (CONTEXT.md Area 1),
-                // only for muscles the exercise had no row for before this
-                // seed: an existing row's role and weight belong to
-                // `StimulusWeightSeeder` and the lifter.
-                // Unknown slugs (i.e., slugs not in `MuscleRegionMap.allSlugs`)
-                // are skipped with a debug log — a future dataset bump that
-                // adds a new slug would surface here.
-                for slug in entry.primaryMuscles where !stimulated.contains(slug) {
-                    guard let mg = musclesBySlug[slug] else {
-                        Self.log.debug("Unknown primary muscle slug '\(slug)' on \(entry.id): skipping stimulus row")
-                        continue
-                    }
-                    let stim = ExerciseMuscleStimulus(
-                        exercise: exercise,
-                        muscle: mg,
-                        role: "primary",
-                        weight: Self.primaryWeight
-                    )
-                    modelContext.insert(stim)
-                }
-                for slug in entry.secondaryMuscles where !stimulated.contains(slug) {
-                    guard let mg = musclesBySlug[slug] else {
-                        Self.log.debug("Unknown secondary muscle slug '\(slug)' on \(entry.id): skipping stimulus row")
-                        continue
-                    }
-                    let stim = ExerciseMuscleStimulus(
-                        exercise: exercise,
-                        muscle: mg,
-                        role: "secondary",
-                        weight: Self.secondaryWeight
-                    )
-                    modelContext.insert(stim)
-                }
+                syncStimuli(stimuli, of: exercise, to: entry, musclesBySlug: musclesBySlug)
 
                 batchCount += 1
                 if batchCount >= Self.batchSize {
@@ -332,6 +317,12 @@ public actor ExerciseLibraryImporter {
             }
             // Flush the trailing partial batch.
             if batchCount > 0 {
+                try modelContext.save()
+            }
+
+            // MARK: 4b. Delete the retired muscle and its volume target
+            if let retired {
+                modelContext.delete(retired)
                 try modelContext.save()
             }
 
@@ -404,5 +395,88 @@ public actor ExerciseLibraryImporter {
         write(\.imagePaths, entry.imagePaths)
         write(\.primaryMuscleSlugsJoined, joined)
         return changed
+    }
+
+    /// Makes a catalog exercise's stimulus rows match the entry's muscle
+    /// credits: a row keeps its identity and takes the credit's role and
+    /// weight, a credited muscle with no row gets one, and a row for a muscle
+    /// the entry no longer credits, or a second row for one muscle, is
+    /// deleted. A row whose weight the lifter edited stays as it is. Only
+    /// what differs is written, as in `refresh`.
+    private func syncStimuli(
+        _ stimuli: [ExerciseMuscleStimulus],
+        of exercise: Exercise,
+        to entry: CatalogEntry,
+        musclesBySlug: [String: MuscleGroup]
+    ) {
+        var covered = Set<String>()
+        for stimulus in stimuli {
+            guard let slug = stimulus.muscle?.slug else { continue }
+            if stimulus.userEditedWeight {
+                covered.insert(slug)
+            } else if let credit = entry.muscles.first(where: { $0.slug == slug }), covered.insert(slug).inserted {
+                if stimulus.role != credit.role { stimulus.role = credit.role }
+                if stimulus.weight != credit.weight { stimulus.weight = credit.weight }
+            } else {
+                modelContext.delete(stimulus)
+            }
+        }
+        for credit in entry.muscles where !covered.contains(credit.slug) {
+            guard let muscle = musclesBySlug[credit.slug] else {
+                Self.log.debug("Unknown muscle slug '\(credit.slug)' on \(entry.id): skipping stimulus row")
+                continue
+            }
+            modelContext.insert(ExerciseMuscleStimulus(
+                exercise: exercise, muscle: muscle, role: credit.role, weight: credit.weight
+            ))
+        }
+    }
+
+    /// For each family, the delt its catalog rows credit most, primary
+    /// before secondary and then front, side, rear.
+    static func familyDelts(_ entries: [CatalogEntry]) -> [String: String] {
+        let order = ["front delts": 0, "side delts": 1, "rear delts": 2]
+        var best: [String: (credit: MuscleCredit, rank: Int)] = [:]
+        for entry in entries {
+            guard let family = entry.familyName else { continue }
+            for credit in entry.muscles {
+                guard let rank = order[credit.slug] else { continue }
+                if let current = best[family],
+                   current.credit.weight > credit.weight
+                    || (current.credit.weight == credit.weight && current.rank <= rank) {
+                    continue
+                }
+                best[family] = (credit, rank)
+            }
+        }
+        return best.mapValues(\.credit.slug)
+    }
+
+    /// Moves a non-catalog exercise's retired shoulders credit to `slug`. When the
+    /// exercise already credits that delt, the stronger of the two credits
+    /// stays on its row and the shoulders row goes. The exercise's primary
+    /// muscle list follows.
+    static func move(
+        _ stimulus: ExerciseMuscleStimulus,
+        of exercise: Exercise,
+        to slug: String,
+        muscle: MuscleGroup?,
+        in context: ModelContext
+    ) {
+        guard let muscle else { return }
+        let retiredToken = "|\(MuscleRegionMap.retiredShouldersSlug)|"
+        if let existing = (exercise.muscleStimuli ?? []).first(where: { $0.muscle?.slug == slug }) {
+            if stimulus.role == "primary" { existing.role = "primary" }
+            existing.weight = max(existing.weight, stimulus.weight)
+            context.delete(stimulus)
+        } else {
+            stimulus.muscle = muscle
+        }
+        let joined = exercise.primaryMuscleSlugsJoined
+        guard joined.contains(retiredToken) else { return }
+        let replaced = joined.contains("|\(slug)|")
+            ? joined.replacingOccurrences(of: retiredToken, with: "|")
+            : joined.replacingOccurrences(of: retiredToken, with: "|\(slug)|")
+        exercise.primaryMuscleSlugsJoined = replaced == "|" ? "" : replaced
     }
 }

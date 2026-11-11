@@ -19,10 +19,10 @@
 //        + zone-color fill for totalSets; 2pt bruInk right-edge separator
 //        on the fill; 1pt bruInk MEV + MAV ticks and a 1pt bruSignal MRV
 //        tick, each running 3pt past the track. The track spans one axis
-//        shared by every row, as in the reference: 25 sets, the largest RP
-//        default MRV, or the largest MRV on screen if a user target runs
-//        past that. MRV sits inside the track, so volume past MRV shows as
-//        fill beyond the MRV tick.
+//        shared by every row: the reference's 25 sets, or the largest MRV
+//        on screen when one runs past that, such as the delts' 26 (RM-065)
+//        or a user target. MRV sits inside the track, so volume past MRV
+//        shows as fill beyond the MRV tick.
 //    (4) Footer HStack: BRUChip verb + 9pt mono bruMuted legend
 //
 //  Zone → bar fill color:
@@ -69,7 +69,7 @@ public struct MuscleVolumeBar: View {
     public var axisSets: Int = MuscleVolumeBar.minimumAxisSets
     public var onTap: (MuscleGroup) -> Void = { _ in }
 
-    /// The reference's axis: 25 sets, the largest RP default MRV.
+    /// The reference's axis: 25 sets. A list stretches it to its largest MRV.
     public static let minimumAxisSets = 25
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -104,7 +104,8 @@ public struct MuscleVolumeBar: View {
         total.totalSetsRounded == 0
     }
 
-    /// The volume zone, bypassed to .belowMEV for untrained muscles.
+    /// The volume zone of this week's sets. An untrained muscle shows
+    /// NOT TRAINED instead, whatever its zone (`isNotTrained`).
     var zone: VolumeZone {
         FatigueModel.volumeZone(
             currentSets: total.totalSetsRounded,
@@ -114,45 +115,26 @@ public struct MuscleVolumeBar: View {
         )
     }
 
-    /// BRU chip label per UI-SPEC §Copy overlay table.
-    var chipLabel: String {
-        if isNotTrained { return "NOT TRAINED" }
-        switch zone {
+    /// The BRU chip for a week of `sets` against `target`, per UI-SPEC
+    /// §Copy overlay table: its label, its color and whether it fills.
+    /// The muscle's detail screen shows the same chip.
+    static func chip(sets: Int, target: RPVolumeLandmarks.Landmark) -> (label: String, color: Color, fill: Bool) {
+        if sets == 0 { return ("NOT TRAINED", .bruMuted, false) }
+        switch FatigueModel.volumeZone(currentSets: sets, mev: target.mev, mav: target.mav, mrv: target.mrv) {
         case .belowMEV:
-            return "UNDER MEV"
+            return ("UNDER MEV", .bruAmber, true)
         case .productive:
-            let headroom = target.mav - total.totalSetsRounded
-            return headroom >= 2 ? "ADD A SET" : "HOLD"
+            return target.mav - sets >= 2 ? ("ADD A SET", .bruGreen, false) : ("HOLD", .bruInk, false)
         case .nearMRV:
-            return "NEAR MRV — DELOAD"
+            return ("NEAR MRV — DELOAD", .bruSignal, true)
         case .overMRV:
-            return "OVER MRV"
+            return ("OVER MRV", .bruSignal, true)
         }
     }
 
-    /// BRU chip color per UI-SPEC §Copy overlay table.
-    var chipColor: Color {
-        if isNotTrained { return .bruMuted }
-        switch zone {
-        case .belowMEV:   return .bruAmber
-        case .productive:
-            let headroom = target.mav - total.totalSetsRounded
-            return headroom >= 2 ? .bruGreen : .bruInk
-        case .nearMRV:    return .bruSignal
-        case .overMRV:    return .bruSignal
-        }
-    }
-
-    /// Whether the chip should render filled (background) vs outline.
-    var chipShouldFill: Bool {
-        if isNotTrained { return false }
-        switch zone {
-        case .belowMEV:   return true
-        case .productive: return false
-        case .nearMRV:    return true
-        case .overMRV:    return true
-        }
-    }
+    var chipLabel: String { Self.chip(sets: total.totalSetsRounded, target: target).label }
+    var chipColor: Color { Self.chip(sets: total.totalSetsRounded, target: target).color }
+    var chipShouldFill: Bool { Self.chip(sets: total.totalSetsRounded, target: target).fill }
 
     /// Bar fill color per zone.
     var barFillColor: Color {
@@ -190,8 +172,10 @@ public struct MuscleVolumeBar: View {
     /// The combined accessibility label — muscle name + set count + D-06 verbatim verb + delta.
     /// The chip label ("UNDER MEV", "ADD A SET", etc.) is NOT used here per
     /// UI-SPEC §Copy overlay: accessibility reads the full D-06 sentence.
+    /// An untrained muscle reads "Not trained", as its heatmap tile does.
     var accessibilityDescription: String {
-        "\(muscle.displayName): \(BRUCountLabel.text(total.totalSetsRounded, "set")) this week, \(zone.verb). \(delta.deltaCopy)."
+        let state = isNotTrained ? "Not trained" : zone.verb
+        return "\(muscle.displayName): \(BRUCountLabel.text(total.totalSetsRounded, "set")) this week, \(state). \(delta.deltaCopy)."
     }
 
     // MARK: - Body

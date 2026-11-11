@@ -626,6 +626,9 @@ Deferred stays open until its trigger. Visual work returns at workflow stability
 ### <a id="rm-038"></a>RM-038 — Muscle contributions versus physical set labels
 
 **P2 · Needs product direction for remaining aggregates.** Fatigue total sums weighted muscle contributions; one compound set contributes repeatedly. Redesign 1.4 Today row already specifies physical working sets.
+**Decision (user, 2026-11-11):** the week's total on Today and Progress (WORKING SETS · THIS WEEK and VS LAST WK) counts the working sets logged, each once, while the muscle bars keep stimulus-weighted sets; shipped with [RM-065](#rm-065).
+The agent's call: a set of an exercise that trains no muscle, such as cardio, is not counted, because the total heads the muscle volume and cardio adds none.
+The weekly recap's WORKING SETS counts the same sets; the recap's other aggregates still need a choice.
 **Done when:** choose muscle-set/physical labels per remaining summary, explain/reconcile them without changing per-muscle stimulus math silently.
 **Scope / sequence:** Choose labels per remaining aggregate → reconcile values to physical sets/contributions → check sparse/compound cases. Preserve stimulus math and RM-010's approved physical-set wording.
 **Requires:** User choice only for remaining aggregate labels.
@@ -935,3 +938,25 @@ The license test now checks that each font in the built app ships with its famil
 Nine `BRUPrimitivesTests` that could only fail at build time were deleted, with the unused `HeaderSlot.empty`.
 With Geist's `UIAppFonts` line and license file removed, both tests failed; restored, the unit target passed on iPhone 17/iOS 26.5: 1,212 run, 1,209 passed, 2 skipped, 1 expected failure, none failed.
 **References:** [rules](../.swiftlint.yml), [hook](../scripts/lint-hook.sh), [test tiers](SETUP.md#test-tiers).
+
+### <a id="rm-065"></a>RM-065 - Correct muscle credit: three delts and audited exercise tags
+
+**P1 · Active (user report and decisions 2026-11-11).**
+On a copy of the phone's store, Today showed Shoulders at 18 sets with "NEAR MRV — DELOAD" after a push day and a pull day, while lats and middle back showed 3 sets each.
+The app counted front, side and rear delts as one muscle, so presses, lateral raises, upright rows, rear delt flies and face pulls all filled one bar.
+Upstream tags added wrong credit: lat pulldowns credited shoulders, the band-assisted pull-up credited abs and not biceps, and the hack squat and hip thrust credited calves.
+The curated weights for 57 lifts never removed an upstream row, so those wrong rows stayed even on curated lifts.
+**Decisions (2026-11-11):** Shoulders becomes Front, Side and Rear Delts with RP's landmarks; the week's total on Today and Progress counts the working sets logged, not muscle shares ([RM-038](#rm-038)).
+**Done when:** every listed exercise but cardio takes its muscles from `muscles.json`, one profile per family with overrides for the variants that train the muscles differently; a seed makes each catalog exercise's stimulus rows match its credits exactly and moves a custom exercise's shoulders credit to a delt; the volume bars, heatmap, targets and muscle pickers show the three delts; the week's total counts sets; the phone's own week reads sensibly after the seed.
+**Scope / sequence:** Muscle list and landmarks → `muscles.json` and exact stimulus rows in the importer, replacing `StimulusWeightTable` and its seeder → retire the shoulders muscle → heatmap → the week's total → seed 8, with the library splash shown while a seed runs, because the seed now deletes rows that Today reads.
+The credit rules are in `fitbod/Resources/ExerciseSeed/SOURCE.md`; [RM-022](#rm-022) adds a profile with each new family.
+**Requires:** None; the schema is unchanged.
+**Evidence:** Reproduction (2026-11-11): the phone's store copy from 00:09, opened in the 390pt simulator with no reset, showed Shoulders 18 "NEAR MRV — DELOAD", Lats 3, Middle Back 3 and "56" working sets this week; the 35 sets actually logged include two band-assisted pull-up sets typed as warm-ups, which correctly do not count.
+After (2026-11-11), the same store copy with this build: seeds 7 and 8 ran behind the library splash.
+The store then had 19 muscles and 19 targets, no shoulders muscle, the same 5 workouts and 67 sets, and 838 exercises (714 before; none deleted).
+Today read 35 working sets, +23 vs last week (12 sets, the leg day), with Side Delts 6 (under MEV), Rear Delts 7, Front Delts 5, Chest 8, Triceps 7, Biceps 7, Middle Back 5, Traps 4, Lats 3, Forearms 2, Abdominals 3 and Calves 1; each equals the store's working sets times its exercise's credits.
+The capture also showed an older fault: the heatmap colored a muscle with no sets this week as under MEV, and its detail screen chipped UNDER MEV, while its bar read NOT TRAINED.
+Both now read NOT TRAINED, through one chip rule for the bar and the detail screen and no heatmap zone for an untrained muscle; VoiceOver reads "Not trained" on the bar too.
+Full tier (2026-11-11, two simulators): 1,326 of 1,326 enumerated tests ran, 1,323 passed, 0 failed, 2 skipped, 1 expected failure; lint clean; the widget build succeeded.
+A review then made the weekly recap's WORKING SETS count the same sets as Today, corrected the restore notes that said a re-seed deletes nothing, and added a test that a seed is pending until the importer runs; afterwards the unit target and WeeklyRecapUITests passed (1,226 tests: 1,223 passed, 0 failed, 2 skipped, 1 expected failure).
+Rollback point: a copy of the phone's store from 07:57, after seed 7 ran there (838 exercises, 17 muscles, 5 workouts, 67 sets), in ignored `.ci/phone-store/`.

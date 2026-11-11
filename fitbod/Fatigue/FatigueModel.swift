@@ -144,6 +144,22 @@ public enum FatigueModel {
         return totals
     }
 
+    // MARK: - workingSetCount
+
+    /// The working sets `weeklyVolumes` reads, each counted once however many
+    /// muscles it trains: the week's total on Today and Progress (RM-038).
+    /// A set of an exercise that trains no muscle, such as cardio, adds no
+    /// volume and is left out.
+    @MainActor
+    public static func workingSetCount(
+        weekStart: Date,
+        in context: ModelContext,
+        calendar: Calendar = .current
+    ) -> Int {
+        fetchWorkingSets(weekStart: weekStart, in: context, calendar: calendar)
+            .count { !($0.sessionExercise?.exercise?.muscleStimuli ?? []).isEmpty }
+    }
+
     // MARK: - contributionPerSession
 
     /// Per-session stimulus-weighted contribution to a single muscle,

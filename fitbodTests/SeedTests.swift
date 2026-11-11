@@ -8,7 +8,7 @@
 //  Ten Swift Testing functions cover:
 //   1. `strengthOnlyCount` — at least 600 strength exercises after seed
 //      (typical: ~702 per the vendored snapshot).
-//   2. `muscleGroupCount` — exactly 17 canonical MuscleGroup rows.
+//   2. `muscleGroupCount` — exactly 19 canonical MuscleGroup rows.
 //   3. `idempotent` — second call does not duplicate rows.
 //   4. `userSettingsSeeded` — UserSettings singleton with weightUnit == .lb.
 //   5. `stimulusWeightingDefaults` — primary=1.0, secondary=0.5.
@@ -171,7 +171,7 @@ final class SeedTests {
 
     // MARK: - Test 2: MuscleGroup count
 
-    @Test("Seed creates exactly 17 canonical MuscleGroup rows")
+    @Test("Seed creates exactly 19 canonical MuscleGroup rows")
     func muscleGroupCount() async throws {
         let container = try InMemoryContainer.makeEmpty()
         let importer = ExerciseLibraryImporter(modelContainer: container)
@@ -180,8 +180,8 @@ final class SeedTests {
         let ctx = ModelContext(container)
         let muscles = try ctx.fetch(FetchDescriptor<MuscleGroup>())
         #expect(
-            muscles.count == 17,
-            "Dataset taxonomy has exactly 17 muscle slugs; got \(muscles.count)"
+            muscles.count == 19,
+            "The app tracks 19 muscles; got \(muscles.count)"
         )
 
         // Spot-check that every slug from MuscleRegionMap.allSlugs is
@@ -242,7 +242,7 @@ final class SeedTests {
 
     // MARK: - Test 5: stimulus weighting defaults
 
-    @Test("Stimulus rows: primary=1.0, secondary=0.5, at least 1 per exercise")
+    @Test("Stimulus rows: primary=1.0, secondary 0.25 or 0.5, at least 1 per exercise")
     func stimulusWeightingDefaults() async throws {
         let container = try InMemoryContainer.makeEmpty()
         let importer = ExerciseLibraryImporter(modelContainer: container)
@@ -264,8 +264,8 @@ final class SeedTests {
         // than `primary` — just ensure the weight invariant holds for
         // every secondary row that does exist.
         #expect(
-            secondary.allSatisfy { $0.weight == 0.5 },
-            "All secondary stimulus rows must have weight = 0.5 (CONTEXT.md Area 1 default)"
+            secondary.allSatisfy { [0.25, 0.5].contains($0.weight) },
+            "A secondary stimulus row gets 0.5 or 0.25 of a set (muscles.json, RM-065)"
         )
 
         // Every exercise should have at least 1 primary stimulus row
@@ -430,7 +430,7 @@ final class SeedTests {
             try after.fetchCount(FetchDescriptor<ExerciseMuscleStimulus>()) == stimulusCount,
             "The re-seed must neither add nor remove stimulus rows"
         )
-        #expect(try after.fetchCount(FetchDescriptor<MuscleGroup>()) == 17)
+        #expect(try after.fetchCount(FetchDescriptor<MuscleGroup>()) == 19)
 
         // The bench press is the same row: its settings kept, its dataset fields refreshed.
         let benchAfter = try after.fetch(FetchDescriptor<Exercise>(predicate: #Predicate { $0.id == benchID })).first
@@ -624,5 +624,134 @@ final class SeedTests {
             defaults.integer(forKey: ExerciseLibraryImporter.seedVersionKey)
                 == (try ExerciseLibraryImporter.bundledSeedVersion())
         )
+    }
+
+    // MARK: - Muscle credits and the three delts (RM-065)
+
+    /// The rows an exercise has after a seed, as credits, in slug order.
+    private static func credits(of externalID: String, in ctx: ModelContext) throws -> [MuscleCredit] {
+        try ctx.fetch(FetchDescriptor<ExerciseMuscleStimulus>(
+            predicate: #Predicate { $0.exercise?.externalID == externalID }
+        ))
+        .map { MuscleCredit(slug: $0.muscle?.slug ?? "", role: $0.role, weight: $0.weight) }
+        .sorted { $0.slug < $1.slug }
+    }
+
+    private static func muscle(_ slug: String, in ctx: ModelContext) throws -> MuscleGroup {
+        try #require(try ctx.fetch(FetchDescriptor<MuscleGroup>(predicate: #Predicate { $0.slug == slug })).first)
+    }
+
+    /// Seed 7's store: upstream's one shoulders muscle with a volume target,
+    /// an upright row crediting it, and a hack squat with upstream's calves
+    /// row and an older glutes weight. Reads back by link query only.
+    @Test("A re-seed makes catalog stimulus rows match their muscle credits and deletes the shoulders muscle")
+    func reseedMatchesMuscleCredits() async throws {
+        let container = try InMemoryContainer.makeEmpty()
+        let importer = ExerciseLibraryImporter(modelContainer: container)
+        try await importer.seedIfNeeded(defaults: defaults)
+
+        let ctx = ModelContext(container)
+        func exercise(_ externalID: String) throws -> Exercise {
+            try #require(try ctx.fetch(FetchDescriptor<Exercise>(predicate: #Predicate { $0.externalID == externalID })).first)
+        }
+        let shoulders = MuscleGroup(slug: "shoulders", displayName: "Shoulders", region: .upper)
+        ctx.insert(shoulders)
+        let target = MuscleVolumeTarget()
+        ctx.insert(target)
+        target.muscle = shoulders
+        let upright = try exercise("Upright_Barbell_Row")
+        for stimulus in upright.muscleStimuli ?? [] { ctx.delete(stimulus) }
+        ctx.insert(ExerciseMuscleStimulus(exercise: upright, muscle: shoulders, role: "primary", weight: 1))
+        ctx.insert(ExerciseMuscleStimulus(exercise: upright, muscle: try Self.muscle("traps", in: ctx), role: "secondary", weight: 0.5))
+        upright.primaryMuscleSlugsJoined = "|shoulders|"
+        let hack = try exercise("Hack_Squat")
+        ctx.insert(ExerciseMuscleStimulus(exercise: hack, muscle: try Self.muscle("calves", in: ctx), role: "secondary", weight: 0.5))
+        try #require(hack.muscleStimuli?.first { $0.muscle?.slug == "glutes" }).weight = 0.4
+        try ctx.save()
+
+        defaults.removeObject(forKey: ExerciseLibraryImporter.seedVersionKey)
+        try await importer.seedIfNeeded(defaults: defaults)
+
+        let after = ModelContext(container)
+        let catalog = Dictionary(uniqueKeysWithValues: try ExerciseCatalog.bundled().map { ($0.id, $0) })
+        for id in ["Upright_Barbell_Row", "Hack_Squat"] {
+            let expected = try #require(catalog[id]).muscles.sorted { $0.slug < $1.slug }
+            #expect(try Self.credits(of: id, in: after) == expected, "\(id) must have exactly its muscle credits")
+        }
+        let uprightAfter = try #require(try after.fetch(FetchDescriptor<Exercise>(
+            predicate: #Predicate { $0.externalID == "Upright_Barbell_Row" }
+        )).first)
+        #expect(uprightAfter.primaryMuscleSlugsJoined == "|side delts|traps|")
+        #expect(try after.fetchCount(FetchDescriptor<MuscleGroup>(predicate: #Predicate { $0.slug == "shoulders" })) == 0)
+        #expect(try after.fetchCount(FetchDescriptor<MuscleVolumeTarget>()) == 0, "the shoulders target goes with its muscle")
+        #expect(try after.fetchCount(FetchDescriptor<MuscleGroup>()) == MuscleRegionMap.allSlugs.count)
+    }
+
+    @Test("A non-catalog exercise's shoulders credit moves to the delt its family credits most, or to the front delts")
+    func customShouldersCreditMovesToADelt() async throws {
+        let container = try InMemoryContainer.makeEmpty()
+        let importer = ExerciseLibraryImporter(modelContainer: container)
+        try await importer.seedIfNeeded(defaults: defaults)
+
+        let ctx = ModelContext(container)
+        let shoulders = MuscleGroup(slug: "shoulders", displayName: "Shoulders", region: .upper)
+        ctx.insert(shoulders)
+        func custom(_ name: String, family: String?, joined: String) -> Exercise {
+            let exercise = Exercise(
+                name: name, canonicalName: name.lowercased(), equipmentRaw: Equipment.machine.rawValue,
+                mechanicRaw: Mechanic.isolation.rawValue, isCustom: true, primaryMuscleSlugsJoined: joined
+            )
+            exercise.familyName = family
+            ctx.insert(exercise)
+            return exercise
+        }
+        // A machine in the Lateral Raise family: its shoulders credit is primary.
+        let raise = custom("Arsenal Lateral", family: "Lateral Raise", joined: "|shoulders|")
+        ctx.insert(ExerciseMuscleStimulus(exercise: raise, muscle: shoulders, role: "primary", weight: 1))
+        // No family, already crediting the front delts less than shoulders.
+        let press = custom("Odd Press", family: nil, joined: "|chest|")
+        ctx.insert(ExerciseMuscleStimulus(exercise: press, muscle: try Self.muscle("chest", in: ctx), role: "primary", weight: 1))
+        ctx.insert(ExerciseMuscleStimulus(exercise: press, muscle: shoulders, role: "secondary", weight: 0.5))
+        ctx.insert(ExerciseMuscleStimulus(exercise: press, muscle: try Self.muscle("front delts", in: ctx), role: "secondary", weight: 0.25))
+        // A row a newer dataset dropped keeps its credit too, on its family's delt.
+        let dropped = custom("Dropped Fly", family: "Rear Delt Fly", joined: "|shoulders|")
+        dropped.externalID = "Dropped_Rear_Fly"
+        dropped.isCustom = false
+        ctx.insert(ExerciseMuscleStimulus(exercise: dropped, muscle: shoulders, role: "primary", weight: 1))
+        try ctx.save()
+        let raiseID = raise.id, pressID = press.id, droppedID = dropped.id
+
+        defaults.removeObject(forKey: ExerciseLibraryImporter.seedVersionKey)
+        try await importer.seedIfNeeded(defaults: defaults)
+
+        let after = ModelContext(container)
+        func credits(_ id: UUID) throws -> [MuscleCredit] {
+            try after.fetch(FetchDescriptor<ExerciseMuscleStimulus>(predicate: #Predicate { $0.exercise?.id == id }))
+                .map { MuscleCredit(slug: $0.muscle?.slug ?? "", role: $0.role, weight: $0.weight) }
+                .sorted { $0.slug < $1.slug }
+        }
+        func joined(_ id: UUID) throws -> String? {
+            try after.fetch(FetchDescriptor<Exercise>(predicate: #Predicate { $0.id == id })).first?.primaryMuscleSlugsJoined
+        }
+        #expect(try credits(raiseID) == [MuscleCredit(slug: "side delts", role: "primary", weight: 1)])
+        #expect(try joined(raiseID) == "|side delts|")
+        #expect(try credits(pressID) == [
+            MuscleCredit(slug: "chest", role: "primary", weight: 1),
+            MuscleCredit(slug: "front delts", role: "secondary", weight: 0.5),
+        ])
+        #expect(try joined(pressID) == "|chest|")
+        #expect(try credits(droppedID) == [MuscleCredit(slug: "rear delts", role: "primary", weight: 1)])
+        #expect(try joined(droppedID) == "|rear delts|")
+        #expect(try after.fetchCount(FetchDescriptor<MuscleGroup>(predicate: #Predicate { $0.slug == "shoulders" })) == 0)
+    }
+
+    /// RootView keeps the tabs away while this is true, because a seed
+    /// deletes rows the tabs read (RM-065).
+    @Test("A seed is pending until the importer has seeded the bundled catalog")
+    func seedIsPendingUntilSeeded() async throws {
+        #expect(ExerciseLibraryImporter.seedIsPending(defaults: defaults))
+        let importer = ExerciseLibraryImporter(modelContainer: try InMemoryContainer.makeEmpty())
+        try await importer.seedIfNeeded(defaults: defaults)
+        #expect(!ExerciseLibraryImporter.seedIsPending(defaults: defaults))
     }
 }

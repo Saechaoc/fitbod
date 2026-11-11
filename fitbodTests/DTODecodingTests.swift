@@ -6,9 +6,10 @@
 //   1. The bundled `exercises.json` decodes cleanly into `[ExerciseDTO]`.
 //   2. After the strength-category filter, at least 600 rows remain
 //      (typical: ~702 per the vendored snapshot in SOURCE.md).
-//   3. `SEED_VERSION.txt` is readable from the app bundle and equals `5`.
+//   3. `SEED_VERSION.txt` is readable from the app bundle and holds the
+//      current seed version.
 //   4. `EquipmentMapper.map(_:)` covers all 12 raw values + nil + empty.
-//   5. `MuscleRegionMap.region(for:)` covers all 17 dataset slugs and
+//   5. `MuscleRegionMap.region(for:)` covers all 19 muscle slugs and
 //      returns the expected canonical bucket for 3 sentinel slugs.
 //
 //  Note: the test target runs inside the `fitbod` host app bundle, so
@@ -64,7 +65,7 @@ struct DTODecodingTests {
 
     // MARK: - SEED_VERSION.txt
 
-    @Test("SEED_VERSION.txt is bundled and equals 6")
+    @Test("SEED_VERSION.txt is bundled with the current seed version")
     func seedVersionBundled() throws {
         let url = try #require(
             Bundle.main.url(forResource: "SEED_VERSION", withExtension: "txt"),
@@ -72,7 +73,7 @@ struct DTODecodingTests {
         )
         let raw = try String(contentsOf: url, encoding: .utf8)
         let trimmed = raw.trimmingCharacters(in: .whitespacesAndNewlines)
-        #expect(Int(trimmed) == 7, "Families, variants and hidden rows came at SEED_VERSION=7, got: \(trimmed)")
+        #expect(Int(trimmed) == 8, "Muscle credits and the three delts came at SEED_VERSION=8, got: \(trimmed)")
     }
 
     // MARK: - Equipment mapping (LIB-06)
@@ -145,10 +146,11 @@ struct DTODecodingTests {
 
     // MARK: - Muscle region mapping (RESEARCH Open Q #3)
 
-    @Test("Region map handles all 17 dataset slugs")
-    func regionMapCovers17() {
+    @Test("Region map handles all 19 muscle slugs")
+    func regionMapCoversEveryMuscle() {
         let allSlugs = MuscleRegionMap.allSlugs
-        #expect(allSlugs.count == 17, "Dataset taxonomy has exactly 17 muscle slugs")
+        #expect(allSlugs.count == 19, "17 dataset slugs with shoulders split into three delts")
+        #expect(!allSlugs.contains(MuscleRegionMap.retiredShouldersSlug))
         for slug in allSlugs {
             let region = MuscleRegionMap.region(for: slug)
             #expect(
@@ -169,7 +171,7 @@ struct DTODecodingTests {
         #expect(MuscleRegionMap.region(for: "unknown_slug") == .upper)
     }
 
-    @Test("Region map bucket sizes match RESEARCH Open Q #3 (10/6/1)")
+    @Test("Region map bucket sizes match RESEARCH Open Q #3 with three delts (12/6/1)")
     func regionMapBucketSizes() {
         var upper = 0, lower = 0, core = 0
         for slug in MuscleRegionMap.allSlugs {
@@ -179,7 +181,7 @@ struct DTODecodingTests {
             case .core:  core  += 1
             }
         }
-        #expect(upper == 10, "Upper bucket: 10 slugs (chest, lats, middle back, lower back, traps, shoulders, biceps, triceps, forearms, neck)")
+        #expect(upper == 12, "Upper bucket: 12 slugs (chest, lats, middle back, lower back, traps, front, side and rear delts, biceps, triceps, forearms, neck)")
         #expect(lower == 6,  "Lower bucket: 6 slugs (quadriceps, hamstrings, glutes, calves, abductors, adductors)")
         #expect(core == 1,   "Core bucket: 1 slug (abdominals)")
     }

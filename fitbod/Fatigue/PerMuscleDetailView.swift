@@ -57,45 +57,6 @@ public struct PerMuscleDetailView: View {
         return Date.now.mondayAtMidnightForToday(weekStartsMonday: weekStartsMonday)
     }
 
-    // MARK: - Zone chip helpers (inline — mirrors MuscleVolumeBar mapping)
-
-    private func zoneChipLabel(for zone: VolumeZone, totalSets: Int, mav: Int) -> String {
-        switch zone {
-        case .belowMEV:
-            return "UNDER MEV"
-        case .productive:
-            let headroom = mav - totalSets
-            return headroom >= 2 ? "ADD A SET" : "HOLD"
-        case .nearMRV:
-            return "NEAR MRV — DELOAD"
-        case .overMRV:
-            return "OVER MRV"
-        }
-    }
-
-    private func zoneChipColor(for zone: VolumeZone, totalSets: Int, mav: Int) -> Color {
-        switch zone {
-        case .belowMEV:
-            return .bruAmber
-        case .productive:
-            let headroom = mav - totalSets
-            return headroom >= 2 ? .bruGreen : .bruInk
-        case .nearMRV:
-            return .bruSignal
-        case .overMRV:
-            return .bruSignal
-        }
-    }
-
-    private func zoneChipFill(for zone: VolumeZone) -> Bool {
-        switch zone {
-        case .belowMEV:   return true
-        case .productive: return false
-        case .nearMRV:    return true
-        case .overMRV:    return true
-        }
-    }
-
     // MARK: - Body
 
     public var body: some View {
@@ -142,15 +103,7 @@ public struct PerMuscleDetailView: View {
         let delta = FatigueModel.weekOverWeekDelta(muscleSlug: muscleSlug, weekStart: weekStart, in: ctx)
         let effectiveTarget = persistedTarget.map(RPVolumeLandmarks.Landmark.init)
             ?? RPVolumeLandmarks.landmark(for: muscle.slug)
-        let zone = FatigueModel.volumeZone(
-            currentSets: total.totalSetsRounded,
-            mev: effectiveTarget.mev,
-            mav: effectiveTarget.mav,
-            mrv: effectiveTarget.mrv
-        )
-        let chipLabel = zoneChipLabel(for: zone, totalSets: total.totalSetsRounded, mav: effectiveTarget.mav)
-        let chipColor = zoneChipColor(for: zone, totalSets: total.totalSetsRounded, mav: effectiveTarget.mav)
-        let chipFill = zoneChipFill(for: zone)
+        let chip = MuscleVolumeBar.chip(sets: total.totalSetsRounded, target: effectiveTarget)
 
         VStack(alignment: .leading, spacing: 0) {
             BRUSectionHead("This Week")
@@ -159,7 +112,7 @@ public struct PerMuscleDetailView: View {
                     .font(BRUFont.displayMedium)
                     .foregroundStyle(Color.bruInk)
                 Spacer()
-                BRUChip(chipLabel, color: chipColor, fill: chipFill)
+                BRUChip(chip.label, color: chip.color, fill: chip.fill)
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 12)

@@ -150,6 +150,45 @@ struct FatigueModelWeeklyVolumeTests {
         #expect(abs(chest.directSets - 3.0) < 0.001)
     }
 
+    /// The week's total on Today counts sets, not muscle shares (RM-038): a
+    /// bench set credits three muscles and still counts once.
+    @Test("workingSetCount counts each working set of the week once, without warm-ups, open sets, cardio or other weeks")
+    func workingSetCountCountsSetsLogged() throws {
+        let ctx = try FatigueTestFixtures.makeContext()
+        let ex = try makeBenchPressExercise(in: ctx)
+        let monday = mondayOfThisWeek()
+        // Cardio trains no muscle, so its sets stay out of the total.
+        let treadmill = Exercise()
+        treadmill.name = "Treadmill"
+        treadmill.canonicalName = "treadmill"
+        ctx.insert(treadmill)
+        try makeSession(in: ctx, startedAt: monday, exercise: treadmill, sets: [(0, 0, false, true, "working")])
+        try makeSession(
+            in: ctx,
+            startedAt: monday,
+            exercise: ex,
+            sets: [
+                (50, 8, true, true, "warmup"),
+                (60, 8, false, true, "warmup"),
+                (100, 5, false, true, "working"),
+                (100, 5, false, true, "drop"),
+                (100, 5, false, false, "working"),
+            ]
+        )
+        try makeSession(
+            in: ctx,
+            startedAt: FatigueModel.date(byAddingWeeks: -1, to: monday),
+            exercise: ex,
+            sets: [(100, 5, false, true, "working")]
+        )
+
+        #expect(FatigueModel.workingSetCount(weekStart: monday, in: ctx) == 2)
+        #expect(FatigueModel.workingSetCount(weekStart: FatigueModel.date(byAddingWeeks: -1, to: monday), in: ctx) == 1)
+        // The muscle bars weigh the same two sets by muscle.
+        let volumes = FatigueModel.weeklyVolumes(weekStart: monday, in: ctx)
+        #expect(volumes.values.reduce(0) { $0 + $1.totalSets } > 2)
+    }
+
     // MARK: - 2. D-01 warmup exclusion (isWarmup guard)
 
     @Test("weeklyVolume excludes isWarmup=true rows")

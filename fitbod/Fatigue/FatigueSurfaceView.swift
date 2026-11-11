@@ -8,7 +8,8 @@
 //    - Twin BodySilhouetteView instances (Plan 05.1-04) side-by-side
 //
 //  Layout top-to-bottom per bru-screens/volume.jsx + bru-screens/heatmap.jsx:
-//    (1) Summary ink slab   — full-bleed bruInk, WORKING SETS / VS LAST WK
+//    (1) Summary ink slab   — full-bleed bruInk, WORKING SETS / VS LAST WK,
+//                             counting the sets logged (RM-038)
 //    (2) Legend strip       — UNDER MEV / MEV→MAV / MRV swatches + labels,
 //                             stacked at accessibility sizes
 //    (3) Volume This Week   — BRUSectionHead + LazyVStack of MuscleVolumeBar rows
@@ -77,6 +78,9 @@ public struct FatigueSurfaceView: View {
     private struct WeekVolumes {
         let thisWeek: [String: WeightedSetTotal]
         let lastWeek: [String: WeightedSetTotal]
+        /// The working sets logged this week and last, each set once.
+        let thisWeekSets: Int
+        let lastWeekSets: Int
 
         /// Equals `FatigueModel.weeklyVolume` for the muscle.
         func total(_ slug: String) -> WeightedSetTotal {
@@ -94,9 +98,12 @@ public struct FatigueSurfaceView: View {
 
     private func readWeekVolumes() -> WeekVolumes {
         let start = weekStart
+        let previous = FatigueModel.date(byAddingWeeks: -1, to: start)
         return WeekVolumes(
             thisWeek: FatigueModel.weeklyVolumes(weekStart: start, in: ctx),
-            lastWeek: FatigueModel.weeklyVolumes(weekStart: FatigueModel.date(byAddingWeeks: -1, to: start), in: ctx)
+            lastWeek: FatigueModel.weeklyVolumes(weekStart: previous, in: ctx),
+            thisWeekSets: FatigueModel.workingSetCount(weekStart: start, in: ctx),
+            lastWeekSets: FatigueModel.workingSetCount(weekStart: previous, in: ctx)
         )
     }
 
@@ -113,21 +120,9 @@ public struct FatigueSurfaceView: View {
         return withVolume.sorted { $0.displayName < $1.displayName }
     }
 
-    /// Sum of `totalSetsRounded` across all visible muscles — displayed in the summary slab.
-    private func weeklyTotalRounded(_ muscles: [MuscleGroup], _ volumes: WeekVolumes) -> Int {
-        muscles.reduce(0) { acc, muscle in
-            acc + volumes.total(muscle.slug).totalSetsRounded
-        }
-    }
-
     /// Net delta copy per bru-screens/volume.jsx line 32: `+N`, `-N`, or `±0`.
-    /// Rounded to whole sets like `WeekOverWeekDelta.deltaCopy`; the
-    /// stimulus-weighted sum is fractional and read "+29.0" unrounded.
-    private func deltaCopy(_ muscles: [MuscleGroup], _ volumes: WeekVolumes) -> String {
-        let sum = muscles.reduce(0.0) { acc, muscle in
-            acc + volumes.delta(muscle.slug).delta
-        }
-        let net = Int(sum.rounded())
+    private func deltaCopy(_ volumes: WeekVolumes) -> String {
+        let net = volumes.thisWeekSets - volumes.lastWeekSets
         if net > 0 { return "+\(net)" }
         if net < 0 { return "\(net)" }
         return "±0"
@@ -145,7 +140,8 @@ public struct FatigueSurfaceView: View {
     /// so the heatmap can show context for untrained muscles.
     private func zoneMap(_ volumes: WeekVolumes) -> [String: VolumeZone] {
         var result: [String: VolumeZone] = [:]
-        for muscle in allMuscles {
+        // An untrained muscle gets no zone, so its tile reads NOT TRAINED like its bar.
+        for muscle in allMuscles where volumes.total(muscle.slug).totalSetsRounded > 0 {
             let target = targetFor(muscle)
             let total = volumes.total(muscle.slug)
             let zone = FatigueModel.volumeZone(
@@ -170,7 +166,7 @@ public struct FatigueSurfaceView: View {
         let volumes = readWeekVolumes()
         let muscles = visibleMuscles(volumes)
         VStack(spacing: 0) {
-            summarySlab(muscles, volumes)
+            summarySlab(volumes)
             if !muscles.isEmpty {
                 // The legend explains the bars, so it shows only with them.
                 legendStrip
@@ -185,7 +181,9 @@ public struct FatigueSurfaceView: View {
     // MARK: - (1) Summary ink slab
 
     /// Full-bleed bruSlab slab (dark in both appearances, FT-15) per bru-screens/volume.jsx lines 22–35.
-    private func summarySlab(_ muscles: [MuscleGroup], _ volumes: WeekVolumes) -> some View {
+    /// It counts the sets logged, as the user chose (RM-038); the reference's
+    /// "STIMULUS-WEIGHTED" caption went with the weighted sum it named.
+    private func summarySlab(_ volumes: WeekVolumes) -> some View {
         HStack(spacing: 0) {
             VStack(alignment: .leading, spacing: 2) {
                 // The reference says "7 DAYS", but the total runs from the
@@ -195,7 +193,7 @@ public struct FatigueSurfaceView: View {
                     .tracking(1.5)
                     .textCase(.uppercase)
                     .foregroundStyle(Color.bruOnSlab.opacity(0.6))
-                BRUDisplay("\(weeklyTotalRounded(muscles, volumes))", size: .hero, color: .bruOnSlab)
+                BRUDisplay("\(volumes.thisWeekSets)", size: .hero, color: .bruOnSlab)
             }
             Spacer()
             VStack(alignment: .trailing, spacing: 2) {
@@ -204,12 +202,7 @@ public struct FatigueSurfaceView: View {
                     .tracking(1.5)
                     .textCase(.uppercase)
                     .foregroundStyle(Color.bruOnSlab.opacity(0.6))
-                BRUDisplay(deltaCopy(muscles, volumes), size: .large, color: .bruSignal)
-                Text("STIMULUS-WEIGHTED")
-                    .font(BRUFont.labelMicro)
-                    .tracking(1.0)
-                    .textCase(.uppercase)
-                    .foregroundStyle(Color.bruOnSlab.opacity(0.6))
+                BRUDisplay(deltaCopy(volumes), size: .large, color: .bruSignal)
             }
         }
         .padding(.horizontal, 16)

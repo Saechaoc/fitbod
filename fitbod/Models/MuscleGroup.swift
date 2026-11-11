@@ -2,8 +2,9 @@
 //  MuscleGroup.swift
 //  fitbod
 //
-//  One of the 17 canonical muscle slugs from yuhonas/free-exercise-db,
-//  normalized to lower-snake-case (`"chest"`, `"lats"`, `"triceps"`).
+//  One of the 19 muscle slugs in `MuscleRegionMap.allSlugs`: the
+//  yuhonas/free-exercise-db slugs with "shoulders" split into three delts
+//  (RM-065), lowercased (`"chest"`, `"front delts"`, `"triceps"`).
 //  Bootstrap seed runs in Phase 1 Wave 2 (`01-PLAN-02-02`).
 //
 //  `slug` is unique (FOUND-04) — duplicate imports collapse cleanly.

@@ -107,6 +107,9 @@ struct MuscleVolumeBarBRUTests {
         #expect(bar.chipColor == .bruMuted, "NOT TRAINED chip outlines in bruMuted, as in the reference")
         #expect(bar.chipShouldFill == false)
         #expect(bar.countColor == .bruMuted, "the 0 count must stay readable")
+        #expect(bar.accessibilityDescription == "Chest: 0 sets this week, Not trained. no change vs last week.")
+        // The front delts' MEV is 0, so their zone at 0 sets is productive: the chip still reads NOT TRAINED.
+        #expect(MuscleVolumeBar.chip(sets: 0, target: makeTarget(mev: 0, mav: 7, mrv: 12)).label == "NOT TRAINED")
     }
 
     // MARK: - Test 5: set count color per zone

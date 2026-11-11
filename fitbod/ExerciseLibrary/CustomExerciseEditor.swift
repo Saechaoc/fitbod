@@ -36,7 +36,7 @@
 //  lists its muscles by weight, heaviest first; ties keep the order the
 //  muscles were added. A copy's muscles come from the store in no set
 //  order, so the sections are what keep a bench press copy's Chest above
-//  its Triceps and Shoulders. A role chip tap moves the muscle to the
+//  its Triceps and Front Delts. A role chip tap moves the muscle to the
 //  other section.
 //
 //  ## First muscle vs later ones

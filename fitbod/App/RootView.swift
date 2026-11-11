@@ -56,6 +56,10 @@ public struct RootView: View {
     @Query(RootView.anyExercise) private var exercises: [Exercise]
     @Query private var settingsList: [UserSettings]
     @State private var seedState = SeedState()
+    /// A newer bundled catalog waits to be seeded at launch. The seed can
+    /// delete stimulus rows and a muscle (RM-065), so the tabs, which read
+    /// them, stay away until it has run.
+    @State private var seedIsPending = ExerciseLibraryImporter.seedIsPending()
     @State private var photoPreparationError: String?
     @State private var historyEdits = HistoryEdits()
     @State private var resumeRequest = ResumeWorkoutRequest()
@@ -193,14 +197,14 @@ public struct RootView: View {
     /// Splash visibility predicate.
     ///
     /// The splash is shown only while the seed task is in flight (or
-    /// has not yet started) AND the store has no exercises. On the
-    /// second-and-later launches `@Query<Exercise>` returns the
-    /// previously-seeded rows immediately, so even with the seed task
-    /// still nominally running (it short-circuits in O(1) but the
-    /// `@State` transition is async), the tab bar renders without a
+    /// has not yet started) AND the store has no exercises or a newer
+    /// catalog waits to be seeded. On other launches `@Query<Exercise>`
+    /// returns the previously-seeded rows immediately, so even with the
+    /// seed task still nominally running (it short-circuits in O(1) but
+    /// the `@State` transition is async), the tab bar renders without a
     /// flash of splash.
     private var shouldShowSplash: Bool {
-        guard exercises.isEmpty else { return false }
+        guard exercises.isEmpty || seedIsPending else { return false }
         switch seedState.phase {
         case .idle, .loading:
             return true
@@ -351,13 +355,6 @@ public struct RootView: View {
             // "Reset to Defaults" button in Settings → Smart Progression → Plate Inventory.
             let unitSystem = (try? modelContext.fetch(FetchDescriptor<UserSettings>()).first?.weightUnit) ?? .lb
             PlateInventorySeeder.seedIfNeeded(in: modelContext, unitSystem: unitSystem)
-
-            // Phase 5 — VOL-01: write the curated stimulus weights onto
-            // ExerciseMuscleStimulus rows. Runs AFTER the library
-            // importer so the rows it finds by catalog ID exist. Row-level
-            // idempotency via userEditedWeight; safe to call on every
-            // launch (RESEARCH §6.3).
-            StimulusWeightSeeder.seedIfNeeded(in: modelContext)
 
             // Phase 5 plan 06 — VOL-03 / SET-05: seed MEV/MAV/MRV
             // targets from RP landmarks. Runs AFTER MuscleGroup rows

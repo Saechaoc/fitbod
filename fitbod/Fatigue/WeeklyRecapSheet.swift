@@ -751,17 +751,15 @@ public struct WeeklyRecapSheet: View {
             .reduce(0.0) { $0 + $1.tonnage }
     }
 
+    /// Counted as Today counts its week (RM-038), so cardio stays out.
     @MainActor
     private func weeklyTotalSetsCount() -> Int {
-        FatigueModel.completedWorkingSets(startedFrom: priorWeekStart, before: weekStart, in: ctx).count
+        FatigueModel.workingSetCount(weekStart: priorWeekStart, in: ctx)
     }
 
     @MainActor
     private func weeklySetsDelta() -> Int {
-        let thisWeekSets = weeklyTotalSetsCount()
-        let prior = weekBeforeLastStart
-        let priorSets = FatigueModel.completedWorkingSets(startedFrom: prior, before: priorWeekStart, in: ctx).count
-        return thisWeekSets - priorSets
+        weeklyTotalSetsCount() - FatigueModel.workingSetCount(weekStart: weekBeforeLastStart, in: ctx)
     }
 
     @MainActor

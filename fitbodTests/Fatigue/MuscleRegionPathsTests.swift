@@ -8,9 +8,9 @@
 //  REGISTRY shape independent of geometry.
 //
 //  TDD RED→GREEN: Written before the GridRegion-based implementation to
-//  drive the rewrite. Coverage note: the 10×12 heatmap grid covers 14 of
-//  the 17 free-exercise-db slugs directly. NECK is rendered as
-//  the neck as "neck" (FT-17). abductors + adductors are not on
+//  drive the rewrite. Coverage note: the 10×12 heatmap grid covers 17 of
+//  the 19 muscle slugs directly, the three delts among them (RM-065). NECK
+//  is rendered as the neck as "neck" (FT-17). abductors + adductors are not on
 //  the visible heatmap grid — they are intentionally excluded per
 //  bru-screens/heatmap.jsx verbatim contract.
 //
@@ -25,11 +25,11 @@ struct MuscleRegionPathsTests {
 
     // MARK: - 1. Slug coverage — grid-visible slugs
 
-    /// The 15 slugs that the 10×12 block-anatomy heatmap grid exposes.
+    /// The 17 slugs that the 10×12 block-anatomy heatmap grid exposes.
     /// Abductors and adductors are absent from bru-screens/heatmap.jsx —
     /// not rendered.
     private static let gridCoverableSlugs: Set<String> = [
-        "neck", "chest", "shoulders", "biceps", "forearms", "abdominals",
+        "neck", "chest", "front delts", "side delts", "rear delts", "biceps", "forearms", "abdominals",
         "quadriceps", "calves",
         "traps", "lats", "middle back", "lower back",
         "triceps", "glutes", "hamstrings",
@@ -130,7 +130,7 @@ struct MuscleRegionPathsTests {
         let labels = Set(MuscleRegionPaths.front.map(\.displayLabel))
         // Expected front labels per bru-screens/heatmap.jsx lines 14–38
         let required: Set<String> = [
-            "NECK", "DELT", "CHEST L", "CHEST R",
+            "NECK", "S.DELT", "F.DELT", "CHEST L", "CHEST R",
             "BICEP", "ABS L", "ABS R", "FORE", "QUAD", "CALF"
         ]
         for label in required {
@@ -143,7 +143,7 @@ struct MuscleRegionPathsTests {
         let labels = Set(MuscleRegionPaths.back.map(\.displayLabel))
         // Expected back labels per bru-screens/heatmap.jsx lines 40–66
         let required: Set<String> = [
-            "NECK", "TRAPS", "R.DELT", "UPPER BACK",
+            "NECK", "TRAPS", "S.DELT", "R.DELT", "UPPER BACK",
             "LAT", "TRI", "LOWER BACK", "GLUTE", "HAM", "CALF"
         ]
         for label in required {

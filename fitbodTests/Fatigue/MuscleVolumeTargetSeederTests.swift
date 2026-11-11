@@ -4,7 +4,7 @@
 //
 //  Pins MuscleVolumeTargetSeeder semantics per RESEARCH §7.3 +
 //  Threat T-05-02:
-//    1. Seeds 17 rows on an empty context (one per free-exercise-db
+//    1. Seeds 19 rows on an empty context (one per
 //       muscle slug seeded by Phase 1).
 //    2. User-edited rows (userEdited == true) preserved verbatim
 //       across re-seed — VOL-03 anchor.
@@ -27,7 +27,7 @@ struct MuscleVolumeTargetSeederTests {
 
     // MARK: - Helpers
 
-    /// Insert all 17 MuscleGroup rows (matches MuscleRegionMap.allSlugs).
+    /// Insert all 19 MuscleGroup rows (matches MuscleRegionMap.allSlugs).
     @discardableResult
     private func seedAllMuscles(_ ctx: ModelContext) throws -> [String: MuscleGroup] {
         var byslug: [String: MuscleGroup] = [:]
@@ -44,9 +44,9 @@ struct MuscleVolumeTargetSeederTests {
         return byslug
     }
 
-    // MARK: - 1. Seeds 17 rows on empty context
+    // MARK: - 1. Seeds 19 rows on empty context
 
-    @Test("Seeder writes 17 MuscleVolumeTarget rows from RP landmarks on an empty context")
+    @Test("Seeder writes 19 MuscleVolumeTarget rows from RP landmarks on an empty context")
     func seedsSeventeenRowsOnEmptyContext() throws {
         let ctx = try FatigueTestFixtures.makeContext()
         let muscles = try seedAllMuscles(ctx)
@@ -54,7 +54,7 @@ struct MuscleVolumeTargetSeederTests {
         MuscleVolumeTargetSeeder.seedIfNeeded(in: ctx)
 
         let count = (try? ctx.fetchCount(FetchDescriptor<MuscleVolumeTarget>())) ?? 0
-        #expect(count == 17)
+        #expect(count == 19)
 
         // Spot-check a few canonical slugs.
         for (slug, _) in muscles {
@@ -140,9 +140,9 @@ struct MuscleVolumeTargetSeederTests {
         MuscleVolumeTargetSeeder.seedIfNeeded(in: ctx)
         let after3 = (try? ctx.fetchCount(FetchDescriptor<MuscleVolumeTarget>())) ?? 0
 
-        #expect(after1 == 17)
-        #expect(after2 == 17)
-        #expect(after3 == 17)
+        #expect(after1 == 19)
+        #expect(after2 == 19)
+        #expect(after3 == 19)
     }
 
     @Test("A re-run with nothing to change saves no rows")

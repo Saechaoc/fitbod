@@ -3,8 +3,8 @@
 //  fitbodTests
 //
 //  The bundled catalog as the importer writes it (RM-022): the upstream
-//  snapshot, the local rows and the curation overlay resolved into one
-//  list, with no store.
+//  snapshot, the local rows, the curation overlay and the muscle credits
+//  (RM-065) resolved into one list, with no store.
 //
 
 import Foundation
@@ -55,14 +55,18 @@ struct ExerciseCatalogTests {
         #expect(climber.trackingRaw == Tracking.durationLevel.rawValue)
         #expect(climber.aliasesJoined == "stairmaster|stair stepper")
         // Cardio adds no muscle volume.
-        #expect(climber.primaryMuscles.isEmpty && climber.secondaryMuscles.isEmpty)
+        #expect(climber.muscles.isEmpty)
 
-        // A strength row keeps its name and muscles; curation may retag it.
+        // A strength row keeps its name and, with no muscle credits, the
+        // upstream muscles; curation may retag it.
         let squat = try #require(entries.first)
         #expect(squat.name == "Squat")
         #expect(squat.equipmentRaw == Equipment.smithMachine.rawValue)
         #expect(squat.trackingRaw == nil && squat.aliasesJoined.isEmpty)
-        #expect(squat.primaryMuscles == ["quadriceps"] && squat.secondaryMuscles == ["calves"])
+        #expect(squat.muscles == [
+            MuscleCredit(slug: "quadriceps", role: "primary", weight: 1),
+            MuscleCredit(slug: "calves", role: "secondary", weight: 0.5),
+        ])
         #expect(squat.familyName == nil && squat.variantLabel == nil && !squat.isHidden)
 
         let press = try #require(entries.last)
@@ -159,10 +163,80 @@ struct ExerciseCatalogTests {
         }
     }
 
-    @Test("every curated stimulus weight names a catalog row")
-    func stimulusWeightsResolve() throws {
-        let ids = Set(try ExerciseCatalog.bundled().map(\.id))
-        let missing = StimulusWeightTable.overrides.keys.filter { !ids.contains($0) }.sorted()
-        #expect(missing.isEmpty, "StimulusWeightTable names rows the catalog lacks: \(missing)")
+    @Test("a variant's own muscle credits win over its family's; a row with neither keeps upstream's tags")
+    func muscleCreditsPrecedence() throws {
+        var credits = MuscleCredits()
+        credits.families["Row"] = .init(primary: ["middle back", "lats"], secondary: ["biceps": 0.5])
+        credits.exercises["Kroc_Row"] = .init(primary: ["lats"], secondary: ["middle back": 0.5])
+        let entries = ExerciseCatalog.entries(
+            upstream: [row("Cable_Row"), row("Kroc_Row"), row("Old_Row")],
+            additions: [],
+            curation: try curation("""
+            { "Cable_Row": { "family": "Row" }, "Kroc_Row": { "family": "Row" }, "Old_Row": { "hidden": true } }
+            """),
+            muscles: credits
+        )
+        #expect(entries[0].muscles == [
+            MuscleCredit(slug: "middle back", role: "primary", weight: 1),
+            MuscleCredit(slug: "lats", role: "primary", weight: 1),
+            MuscleCredit(slug: "biceps", role: "secondary", weight: 0.5),
+        ])
+        #expect(entries[1].muscles == [
+            MuscleCredit(slug: "lats", role: "primary", weight: 1),
+            MuscleCredit(slug: "middle back", role: "secondary", weight: 0.5),
+        ])
+        #expect(entries[2].muscles.map(\.slug) == ["quadriceps", "calves"])
+    }
+
+    @Test("upstream's one shoulders muscle reads as the delt the row's force works, once per row")
+    func upstreamShouldersBecomeADelt() {
+        func credits(force: String?, primary: [String], secondary: [String]) -> [MuscleCredit] {
+            ExerciseCatalog.upstreamCredits(ExerciseDTO(
+                id: "Lift", name: "Lift", force: force, level: "beginner",
+                primaryMuscles: primary, secondaryMuscles: secondary, category: "strength"
+            ))
+        }
+        #expect(credits(force: "push", primary: ["chest"], secondary: ["shoulders", "triceps"]) == [
+            MuscleCredit(slug: "chest", role: "primary", weight: 1),
+            MuscleCredit(slug: "front delts", role: "secondary", weight: 0.5),
+            MuscleCredit(slug: "triceps", role: "secondary", weight: 0.5),
+        ])
+        #expect(credits(force: "pull", primary: ["shoulders"], secondary: []).map(\.slug) == ["rear delts"])
+        #expect(credits(force: nil, primary: ["shoulders"], secondary: []).map(\.slug) == ["side delts"])
+        // A muscle named twice keeps its first, stronger credit.
+        #expect(credits(force: "push", primary: ["shoulders"], secondary: ["shoulders"]) == [
+            MuscleCredit(slug: "front delts", role: "primary", weight: 1),
+        ])
+    }
+
+    @Test("every listed row but cardio takes its muscles from muscles.json, which names real families, rows and muscles")
+    func muscleCreditsCoverTheCatalog() throws {
+        let url = try #require(Bundle.main.url(forResource: "muscles", withExtension: "json"))
+        let credits = try JSONDecoder().decode(MuscleCredits.self, from: Data(contentsOf: url))
+        let listed = try ExerciseCatalog.bundled().filter { !$0.isHidden && $0.category.lowercased() != "cardio" }
+        let muscles = Set(MuscleRegionMap.allSlugs)
+
+        for entry in listed {
+            #expect(
+                credits.exercises[entry.id] != nil || entry.familyName.flatMap { credits.families[$0] } != nil,
+                "\(entry.id) (\(entry.name)) has no muscle credits"
+            )
+        }
+        let families = Set(listed.compactMap(\.familyName))
+        for family in credits.families.keys {
+            #expect(families.contains(family), "muscles.json credits \(family), which no listed row is in")
+        }
+        let ids = Set(listed.map(\.id))
+        for id in credits.exercises.keys {
+            #expect(ids.contains(id), "muscles.json credits \(id), which is not a listed row")
+        }
+        for (name, profile) in credits.families.merging(credits.exercises, uniquingKeysWith: { $1 }) {
+            #expect(!profile.primary.isEmpty, "\(name) has no primary muscle")
+            #expect(Set(profile.primary).isDisjoint(with: profile.secondary.keys), "\(name) names a muscle twice")
+            for slug in profile.primary + profile.secondary.keys where !muscles.contains(slug) {
+                Issue.record("\(name) names the unknown muscle \(slug)")
+            }
+            #expect(profile.secondary.values.allSatisfy { $0 > 0 && $0 < 1 }, "\(name) has a secondary weight outside 0 to 1")
+        }
     }
 }

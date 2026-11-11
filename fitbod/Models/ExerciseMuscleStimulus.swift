@@ -26,8 +26,8 @@ public final class ExerciseMuscleStimulus {
     public var role: String = "primary"
     public var weight: Double = 1.0
 
-    // Phase 5 — idempotency flag: StimulusWeightSeeder skips rows where this
-    // is true (VOL-01). Set to true by the per-exercise muscle weight editor.
+    // The importer leaves a row alone when this is true (VOL-01, RM-065). No
+    // screen sets it today; a restored backup can carry it.
     public var userEditedWeight: Bool = false
 
     public var exercise: Exercise? = nil

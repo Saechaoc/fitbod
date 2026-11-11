@@ -14,9 +14,15 @@
 //    - `MuscleRegionPaths.back: [GridRegion]`
 //    - `MuscleRegionPaths.regions(for: BodySide) -> [GridRegion]`
 //
-//  Coverage: combined front ∪ back covers all 17 free-exercise-db slugs.
+//  Coverage: combined front ∪ back covers every muscle slug but the
+//  abductors and adductors.
 //  Symmetrical pairs (CHEST L + CHEST R, BICEP × 2, etc.) share the
 //  same canonical slug — they render the same zone fill color.
+//
+//  Delts (RM-065): the side delts sit on the row above the shoulders on
+//  both figures, as the cap seen from the front and from the back; under
+//  them the front figure has the front delts and the back figure the rear
+//  delts, where the reference's one shoulders muscle sat.
 //
 //  NECK is a tracked muscle like the rest (slug "neck"): its tile takes
 //  the neck's zone fill and opens the neck's detail (FT-17).
@@ -92,11 +98,17 @@ public enum MuscleRegionPaths {
         // Neck
         GridRegion(slug: "neck", displayLabel: "NECK",
                    gridX: 4, gridY: 0, gridW: 2, gridH: 1),
-        // Shoulders — left
-        GridRegion(slug: "shoulders", displayLabel: "DELT",
+        // Side delts — left
+        GridRegion(slug: "side delts", displayLabel: "S.DELT",
+                   gridX: 1, gridY: 0, gridW: 2, gridH: 1),
+        // Side delts — right
+        GridRegion(slug: "side delts", displayLabel: "S.DELT",
+                   gridX: 7, gridY: 0, gridW: 2, gridH: 1),
+        // Front delts — left
+        GridRegion(slug: "front delts", displayLabel: "F.DELT",
                    gridX: 1, gridY: 1, gridW: 2, gridH: 1),
-        // Shoulders — right
-        GridRegion(slug: "shoulders", displayLabel: "DELT",
+        // Front delts — right
+        GridRegion(slug: "front delts", displayLabel: "F.DELT",
                    gridX: 7, gridY: 1, gridW: 2, gridH: 1),
         // Chest — left half
         GridRegion(slug: "chest", displayLabel: "CHEST L",
@@ -146,11 +158,17 @@ public enum MuscleRegionPaths {
         // Traps — central upper back
         GridRegion(slug: "traps", displayLabel: "TRAPS",
                    gridX: 3, gridY: 1, gridW: 4, gridH: 1),
+        // Side delts — left
+        GridRegion(slug: "side delts", displayLabel: "S.DELT",
+                   gridX: 1, gridY: 0, gridW: 2, gridH: 1),
+        // Side delts — right
+        GridRegion(slug: "side delts", displayLabel: "S.DELT",
+                   gridX: 7, gridY: 0, gridW: 2, gridH: 1),
         // Rear delts — left
-        GridRegion(slug: "shoulders", displayLabel: "R.DELT",
+        GridRegion(slug: "rear delts", displayLabel: "R.DELT",
                    gridX: 1, gridY: 1, gridW: 2, gridH: 1),
         // Rear delts — right
-        GridRegion(slug: "shoulders", displayLabel: "R.DELT",
+        GridRegion(slug: "rear delts", displayLabel: "R.DELT",
                    gridX: 7, gridY: 1, gridW: 2, gridH: 1),
         // Upper back (middle back)
         GridRegion(slug: "middle back", displayLabel: "UPPER BACK",

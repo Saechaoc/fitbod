@@ -285,8 +285,10 @@ public final class BackupRestorer {
         try insertDecodedDocument(doc, into: ctx, imageBytesByID: imageBytesByID)
         try ctx.save()
         // The restored catalog is as old as the backup. Without the stamp
-        // the next launch re-seeds in place, which applies the bundled
-        // curation and adds rows the backup predates; it never deletes.
+        // the next launch re-seeds in place: it applies the bundled
+        // curation, adds rows the backup predates, matches each catalog
+        // exercise's stimulus rows to its credits and retires the shoulders
+        // muscle (RM-065). Workouts and custom exercises stay.
         defaults.removeObject(forKey: ExerciseLibraryImporter.seedVersionKey)
 
         Self.log.info("BackupRestorer.performRestore complete — \(BRUCountLabel.text(doc.exercises.count, "exercise"), privacy: .public), \(BRUCountLabel.text(doc.sessions.count, "session"), privacy: .public), \(imageBytesByID.count) images")

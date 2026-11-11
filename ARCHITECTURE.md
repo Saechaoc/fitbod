@@ -54,7 +54,8 @@ Persist enums as raw values with typed accessors.
 Export/backup use DTOs and shared ExportSnapshot mapping, not Codable on models.
 Restore validates before mutation and retains a pre-restore backup.
 Restore refuses a backup whose format is newer than the build writes (`ExportDocument.currentFormatVersion`), because it would drop fields the build does not know.
-Restore clears the exercise seed stamp, so the next launch re-seeds the restored catalog in place: it applies the bundled curation and adds rows the backup predates, and deletes nothing.
+Restore clears the exercise seed stamp, so the next launch re-seeds the restored catalog in place: it applies the bundled curation, adds rows the backup predates, matches each catalog exercise's stimulus rows to its muscle credits and retires the shoulders muscle (RM-065).
+Workouts and custom exercises stay.
 `Exercise.tracking` reads the stored tracking type; unset, bodyweight and weighted-bodyweight equipment track reps with optional load and everything else tracks weight and reps, so custom and uncurated rows need no stored value.
 The importer writes a seeded row's tracking from `curation.json` alone, so a row curation stops listing returns to the derived value.
 `Exercise.timedValue` names what a timed set records beside its time: an optional load for a hold or carry that is not bodyweight, a distance, or a machine level.
@@ -67,7 +68,12 @@ A row outside the strength categories is in the catalog only when curation impor
 A cardio row gets no stimulus rows and an empty `primaryMuscleSlugsJoined`, so cardio adds no muscle volume.
 Unset, a cardio machine tracks time and distance (`Tracking.implied(by:)`).
 A custom exercise stores a tracking choice only when it differs from what its equipment implies; one that tracks a time with a distance or a level is cardio and needs no primary muscle.
-Code finds a catalog row by its `externalID`, never by its name, because curation renames rows: the curated stimulus weights (`StimulusWeightTable`) and the debug seeds are keyed by ID.
+Code finds a catalog row by its `externalID`, never by its name, because curation renames rows: the debug seeds are keyed by ID, and `muscles.json` keys its variant overrides by ID.
+A catalog exercise's stimulus rows match its muscle credits exactly (RM-065): `muscles.json` gives each family, and each variant that differs, its primary muscles (1.0 of a set) and secondary muscles (0.5 or 0.25); a row it does not cover keeps the upstream tags at 1.0 and 0.5.
+The muscles are the 17 upstream slugs with "shoulders" split into front, side and rear delts; a seed moves the shoulders credit of an exercise outside the catalog (a custom one, or a row a newer dataset dropped) to the delt its family credits most, or to the front delts, and deletes the shoulders muscle.
+A seed may delete stimulus rows, so `RootView` shows the library splash, not the tabs, while a newer catalog is seeded.
+Volume bars count stimulus-weighted sets per muscle; the week's total on Today and Progress counts the working sets logged of exercises that train a muscle, so cardio stays out (RM-038).
+A muscle whose weighted sets round to 0 this week reads NOT TRAINED on its bar, its heatmap tile and its detail screen, whatever its zone; `MuscleVolumeBar.chip(sets:target:)` is the one chip rule for the bar and the detail screen.
 
 ## Program graph
 

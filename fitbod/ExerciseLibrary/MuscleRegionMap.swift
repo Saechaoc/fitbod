@@ -2,34 +2,39 @@
 //  MuscleRegionMap.swift
 //  fitbod
 //
-//  RESEARCH Open Q #3 anchor: maps the dataset's 17 muscle slugs onto the
+//  RESEARCH Open Q #3 anchor: maps the app's 19 muscle slugs onto the
 //  3-region anatomical bucket (`MuscleRegion`: upper / lower / core).
 //  Plan 02-02's importer uses this to populate `MuscleGroup.regionRaw` when
-//  the 17 canonical `MuscleGroup` rows are seeded.
+//  the canonical `MuscleGroup` rows are seeded.
 //
 //  Bucket breakdown (locked per RESEARCH recommendation):
-//   - Upper (10): chest, lats, middle back, lower back, traps,
-//                 shoulders, biceps, triceps, forearms, neck
+//   - Upper (12): chest, lats, middle back, lower back, traps, front delts,
+//                 side delts, rear delts, biceps, triceps, forearms, neck
 //   - Lower (6):  quadriceps, hamstrings, glutes, calves, abductors, adductors
 //   - Core (1):   abdominals
 //
-//  Coverage tested in `fitbodTests/DTODecodingTests.regionMapCovers17`.
+//  Coverage tested in `fitbodTests/DTODecodingTests.regionMapCoversEveryMuscle`.
 //
 
 import Foundation
 
-/// Translation layer between dataset muscle slugs and the coarse
-/// anatomical `MuscleRegion` enum used by Phase 5's muscle heatmap.
+/// Translation layer between muscle slugs and the coarse anatomical
+/// `MuscleRegion` enum used by Phase 5's muscle heatmap.
 public enum MuscleRegionMap {
 
-    /// The 17 canonical muscle slugs from `yuhonas/free-exercise-db`.
-    /// Use this as the source of truth when seeding `MuscleGroup` rows in
-    /// plan 02-02 — iterate it, create one `MuscleGroup` per slug.
+    /// The muscles the app tracks: the 17 slugs of `yuhonas/free-exercise-db`
+    /// with its one "shoulders" muscle split into front, side and rear delts,
+    /// as the RP volume landmarks list them (RM-065). The importer creates
+    /// one `MuscleGroup` per slug.
     public static let allSlugs: [String] = [
         "abdominals", "abductors", "adductors", "biceps", "calves", "chest",
-        "forearms", "glutes", "hamstrings", "lats", "lower back", "middle back",
-        "neck", "quadriceps", "shoulders", "traps", "triceps"
+        "forearms", "front delts", "glutes", "hamstrings", "lats", "lower back",
+        "middle back", "neck", "quadriceps", "rear delts", "side delts", "traps", "triceps"
     ]
+
+    /// The slug upstream and earlier stores use for all three delts. The
+    /// importer moves its credits to the delts and removes it (RM-065).
+    public static let retiredShouldersSlug = "shoulders"
 
     /// Maps a muscle slug to its anatomical region. Defaults to `.upper`
     /// on unknown input so the importer never crashes on a future dataset
@@ -37,8 +42,8 @@ public enum MuscleRegionMap {
     public static func region(for slug: String) -> MuscleRegion {
         switch slug.lowercased() {
         case "chest", "lats", "middle back", "lower back",
-             "traps", "shoulders", "biceps", "triceps",
-             "forearms", "neck":
+             "traps", "front delts", "side delts", "rear delts",
+             "biceps", "triceps", "forearms", "neck":
             return .upper
         case "quadriceps", "hamstrings", "glutes", "calves",
              "abductors", "adductors":
