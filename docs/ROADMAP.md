@@ -504,6 +504,8 @@ Inspected at 390pt, light mode (iPhone 17e): the routine editor's empty and type
 Store rehearsal on a copy of the phone's store pulled 2026-11-11 15:01: on `main` (`d3b2ae3b`) and again on this build the copy opened in place with 838 exercises, 5 workouts, 22 logged exercises, 48 routine rows and 67 sets and survived a backup round trip, and the backup the `main` run wrote (format 4) restored into this build to equal data.
 Fixed on the way: a cardio card kept an empty band above its closing rule once its Add set row was gone, the plan's Time field showed a grey 20:00 that read as a plan, and CSV export crashed on a whole number past `Int`'s range, which only a hand-edited backup can restore (it now prints it, and `CSVExporterTests` checks it).
 Known limits: the resume banner, the Finish sheet and the delete warnings still count a finished bout as a logged set; VoiceOver, larger text and dark mode are unchecked.
+Installed on the phone on 2026-11-11 (`39ce98b5`) and launched from the Mac.
+The store pulled back after the real upgrade passed its integrity check with the same 838 exercises, 5 workouts, 22 logged exercises, 48 routine rows and 67 sets, every new column empty, the four machines seed 10 retags tagged, and nothing moved aside.
 Verify on the phone: plan the Stair Climber at 20:00 and speed 8 in a routine, start it, tap Done without typing, and confirm no rest starts and History reads "speed 8".
 
 ### <a id="rm-023"></a>RM-023 — Comparable analytics and useful detail routes
