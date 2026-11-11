@@ -44,7 +44,7 @@ Only the named observation/decision is unavailable; this section does not pause 
 | [RM-063](#rm-063) | The first MetricKit report on the phone, shared from Settings | Closing RM-063; it would also show whether [RM-024](#rm-024)'s phone exits are memory kills. |
 | [RM-053](#rm-053) | One nightly run on `main` that starts on its own, due 2026-11-12 at 11:17 UTC | Closing RM-053. |
 | [RM-022](#rm-022), [RM-062](#rm-062) | Seed 7 and grouped-list checks on the phone (logged names in History, Low Cable Triceps Extension listed, "side lateral raise" found, Bench Press folded into one line) | Closing the families and grouped-list slices; the coverage fill and treadmill tracking can proceed. |
-| [RM-066](#rm-066) | On the phone, with this build installed: the store opens in place with every workout, and a machine picked for Hack Squat (Machine) is still there after a relaunch | Closing RM-066; nothing else waits on it. |
+| [RM-066](#rm-066) | On the phone: a machine picked for Hack Squat (Machine) is still there after a relaunch; the store already opens in place with this build | Closing RM-066; nothing else waits on it. |
 
 Gym ergonomics/stability and [RM-047](#rm-047) physical timer/VoiceOver checks return at workflow stability/release triggers. Request user involvement only for a specific unavailable observation or product choice, with build/reproduction details; routine checks stay with the agent.
 
@@ -1015,7 +1015,8 @@ After the rebase onto the rest-timer refactor ([PR #4](https://github.com/Saecha
 The 390pt tour after the review fixes also showed the machine note calling Gym 2 hack new on its second card in the same workout; it would do the same for a machine used before only at another intent, since LAST TIME reads only finished workouts at the workout's intent.
 The note now reads only "LAST TIME shows <machine>, and its loads don't carry over.", and the tour passed at 390pt with it.
 Rehearsed on a copy of the phone's store pulled 2026-11-11 (5 workouts, 22 logged exercises, 67 sets): it opened in place with every row and survived a backup round trip; no logged exercise uses a Panatta row that seed 9 hides.
-**Open:** on the phone, with this build installed: the store opens in place with every workout, and a machine picked for Hack Squat (Machine) is still there after a relaunch.
+On the phone (2026-11-11, `0dbc3c7c` plus a throwaway hook that only added a routine): the store opened in place, gained the machine table, and still held its 5 workouts, 67 sets and 838 exercises in a copy pulled after the launch; the copy pulled before the install is the rollback.
+**Open:** on the phone, a machine picked for Hack Squat (Machine) is still there after a relaunch.
 VoiceOver, larger text, dark mode and the 430pt phone are unchecked.
 Not built: a plate step, bar or sled weight per machine (a machine uses its exercise's settings); changing a past workout's machine in Edit workout; renaming, merging or deleting a machine (a machine no log uses stays in the store and in backups, unlisted); a machine stored on a routine.
 The PR list ranks an exercise's best sets across machines without naming each set's machine.
